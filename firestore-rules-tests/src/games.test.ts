@@ -150,6 +150,16 @@ beforeAll(async () => {
     location_id: LOCATION_OVERDUE,
     is_active: true,
   });
+
+  await seedDoc(testEnv, "game_validation_signals/signal-game-active", {
+    game_id: GAME_ACTIVE,
+    type: "NO_CHECKINS",
+    severity: "MEDIUM",
+    score_delta: -25,
+    created_by: "system",
+    created_at: new Date(),
+    validation_version: 1,
+  });
 });
 
 afterAll(async () => {
@@ -276,6 +286,27 @@ describe("games — criação", () => {
         team1_score: null,
         team2_score: null,
       })
+    );
+  });
+
+  it("Player NÃO pode criar jogo injetando validation_score", async () => {
+    const db = asPlayerA(testEnv);
+    await assertFails(
+      db.doc("games/game-validation-create-player").set(validGamePayload({
+        validation_score: 100,
+        validation_status: "VALIDATED",
+      }))
+    );
+  });
+
+  it("Admin client NÃO pode criar jogo com campos server-only de validação", async () => {
+    const db = asAdmin(testEnv);
+    await assertFails(
+      db.doc("games/game-validation-create-admin").set(validGamePayload({
+        owner_id: UID_PLAYER_B,
+        validation_score: 100,
+        validation_status: "VALIDATED",
+      }))
     );
   });
 
@@ -566,6 +597,80 @@ describe("games — atualização", () => {
     );
   });
 
+  it("Dono NÃO pode alterar campos server-only de validação", async () => {
+    await seedDoc(testEnv, "games/game-validation-update-owner", {
+      title: "Validacao Owner",
+      owner_id: UID_PLAYER_A,
+      status: "SCHEDULED",
+      date_time: futureDate,
+      max_players: 10,
+      max_goalkeepers: 2,
+      players_count: 0,
+      goalkeepers_count: 0,
+      team1_score: null,
+      team2_score: null,
+      group_id: null,
+      co_organizers: [],
+    });
+
+    const db = asPlayerA(testEnv);
+    await assertFails(
+      db.doc("games/game-validation-update-owner").update({
+        validation_score: 100,
+        validation_status: "VALIDATED",
+      })
+    );
+  });
+
+  it("Dono NÃO pode alterar status de recompensa/XP server-only", async () => {
+    await seedDoc(testEnv, "games/game-reward-update-owner", {
+      title: "Reward Owner",
+      owner_id: UID_PLAYER_A,
+      status: "FINISHED",
+      date_time: futureDate,
+      max_players: 10,
+      max_goalkeepers: 2,
+      players_count: 10,
+      goalkeepers_count: 1,
+      team1_score: 2,
+      team2_score: 1,
+      xp_reward_status: "HELD_FOR_REVIEW",
+      co_organizers: [],
+    });
+
+    const db = asPlayerA(testEnv);
+    await assertFails(
+      db.doc("games/game-reward-update-owner").update({
+        xp_reward_status: "ELIGIBLE",
+      })
+    );
+  });
+
+  it("Admin client NÃO pode alterar campos server-only de validação", async () => {
+    await seedDoc(testEnv, "games/game-validation-update-admin", {
+      title: "Validacao Admin",
+      owner_id: UID_PLAYER_A,
+      status: "SCHEDULED",
+      date_time: futureDate,
+      max_players: 10,
+      max_goalkeepers: 2,
+      players_count: 0,
+      goalkeepers_count: 0,
+      team1_score: null,
+      team2_score: null,
+      group_id: null,
+      co_organizers: [],
+    });
+
+    const db = asAdmin(testEnv);
+    await assertFails(
+      db.doc("games/game-validation-update-admin").update({
+        validation_score: 100,
+        validation_status: "VALIDATED",
+      })
+    );
+  });
+
   it("Co-organizador pode atualizar o jogo", async () => {
     const db = asFieldOwner(testEnv);
     await assertSucceeds(
@@ -575,6 +680,62 @@ describe("games — atualização", () => {
         team1_score: null,
         team2_score: null,
         status: "SCHEDULED",
+      })
+    );
+  });
+
+  it("Dono NÃO pode iniciar jogo direto para LIVE pelo cliente", async () => {
+    await seedDoc(testEnv, "games/game-confirmed-client-live", {
+      title: "Jogo Confirmado",
+      owner_id: UID_PLAYER_A,
+      status: "CONFIRMED",
+      date_time: futureDate,
+      max_players: 10,
+      max_goalkeepers: 2,
+      players_count: 10,
+      goalkeepers_count: 1,
+      team1_score: 0,
+      team2_score: 0,
+      group_id: null,
+      co_organizers: [],
+    });
+
+    const db = asPlayerA(testEnv);
+    await assertFails(
+      db.doc("games/game-confirmed-client-live").update({
+        status: "LIVE",
+        players_count: 10,
+        goalkeepers_count: 1,
+        team1_score: 0,
+        team2_score: 0,
+      })
+    );
+  });
+
+  it("Dono NÃO pode finalizar jogo direto para FINISHED pelo cliente", async () => {
+    await seedDoc(testEnv, "games/game-live-client-finish", {
+      title: "Jogo Live",
+      owner_id: UID_PLAYER_A,
+      status: "LIVE",
+      date_time: futureDate,
+      max_players: 10,
+      max_goalkeepers: 2,
+      players_count: 10,
+      goalkeepers_count: 1,
+      team1_score: 2,
+      team2_score: 1,
+      group_id: null,
+      co_organizers: [],
+    });
+
+    const db = asPlayerA(testEnv);
+    await assertFails(
+      db.doc("games/game-live-client-finish").update({
+        status: "FINISHED",
+        players_count: 10,
+        goalkeepers_count: 1,
+        team1_score: 2,
+        team2_score: 1,
       })
     );
   });
@@ -668,5 +829,36 @@ describe("games — deleção", () => {
   it("Não-autenticado NÃO pode deletar jogo", async () => {
     const db = asAnon(testEnv);
     await assertFails(db.doc(`games/${GAME_ACTIVE}`).delete());
+  });
+});
+
+// ============================================================
+// SINAIS DE VALIDAÇÃO (GAME VALIDATION SIGNALS)
+// ============================================================
+
+describe("game_validation_signals", () => {
+  it("Admin pode ler sinais de validação", async () => {
+    const db = asAdmin(testEnv);
+    await assertSucceeds(
+      db.doc("game_validation_signals/signal-game-active").get()
+    );
+  });
+
+  it("Player NÃO pode ler sinais de validação", async () => {
+    const db = asPlayerA(testEnv);
+    await assertFails(
+      db.doc("game_validation_signals/signal-game-active").get()
+    );
+  });
+
+  it("Admin client NÃO pode escrever sinais de validação", async () => {
+    const db = asAdmin(testEnv);
+    await assertFails(
+      db.doc("game_validation_signals/admin-write").set({
+        game_id: GAME_ACTIVE,
+        type: "NO_CHECKINS",
+        severity: "MEDIUM",
+      })
+    );
   });
 });

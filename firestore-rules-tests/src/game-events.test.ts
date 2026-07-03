@@ -65,9 +65,9 @@ afterAll(async () => {
 });
 
 describe("game_events — create", () => {
-  it("Confirmed player pode criar evento com created_by proprio", async () => {
+  it("Confirmed player NÃO pode criar evento direto; deve usar Cloud Function", async () => {
     const db = asPlayerB(testEnv);
-    await assertSucceeds(
+    await assertFails(
       db.doc(`game_events/ge-create-confirmed`).set({
         game_id: GAME_ID,
         type: "GOAL",
@@ -79,9 +79,9 @@ describe("game_events — create", () => {
     );
   });
 
-  it("Game owner pode criar evento sem restricao", async () => {
+  it("Game owner NÃO pode criar evento direto", async () => {
     const db = asPlayerA(testEnv);
-    await assertSucceeds(
+    await assertFails(
       db.doc(`game_events/ge-create-owner`).set({
         game_id: GAME_ID,
         type: "ASSIST",
@@ -93,9 +93,9 @@ describe("game_events — create", () => {
     );
   });
 
-  it("Admin pode criar qualquer evento", async () => {
+  it("Admin client NÃO pode criar evento direto", async () => {
     const db = asAdmin(testEnv);
-    await assertSucceeds(
+    await assertFails(
       db.doc(`game_events/ge-create-admin`).set({
         game_id: GAME_ID,
         type: "YELLOW_CARD",
@@ -168,9 +168,9 @@ describe("game_events — read", () => {
 });
 
 describe("game_events — update", () => {
-  it("created_by pode atualizar seu proprio evento", async () => {
+  it("created_by NÃO pode atualizar evento direto", async () => {
     const db = asPlayerB(testEnv);
-    await assertSucceeds(
+    await assertFails(
       db.doc(`game_events/${EVENT_PLAYER_B}`).update({
         minute: 16,
       })
@@ -186,18 +186,18 @@ describe("game_events — update", () => {
     );
   });
 
-  it("Game owner pode atualizar qualquer evento", async () => {
+  it("Game owner NÃO pode atualizar evento direto", async () => {
     const db = asPlayerA(testEnv);
-    await assertSucceeds(
+    await assertFails(
       db.doc(`game_events/${EVENT_PLAYER_B}`).update({
         minute: 22,
       })
     );
   });
 
-  it("Admin pode atualizar qualquer evento", async () => {
+  it("Admin client NÃO pode atualizar evento direto", async () => {
     const db = asAdmin(testEnv);
-    await assertSucceeds(
+    await assertFails(
       db.doc(`game_events/${EVENT_PLAYER_B}`).update({
         minute: 45,
       })
@@ -215,7 +215,7 @@ describe("game_events — update", () => {
 });
 
 describe("game_events — delete", () => {
-  it("Game owner pode deletar evento do seu jogo", async () => {
+  it("Game owner NÃO pode deletar evento direto", async () => {
     await seedDoc(testEnv, `game_events/ge-del-owner`, {
       game_id: GAME_ID,
       type: "GOAL",
@@ -224,10 +224,10 @@ describe("game_events — delete", () => {
       minute: 10,
     });
     const db = asPlayerA(testEnv);
-    await assertSucceeds(db.doc(`game_events/ge-del-owner`).delete());
+    await assertFails(db.doc(`game_events/ge-del-owner`).delete());
   });
 
-  it("Admin pode deletar qualquer evento", async () => {
+  it("Admin client NÃO pode deletar evento direto", async () => {
     await seedDoc(testEnv, `game_events/ge-del-admin`, {
       game_id: GAME_ID,
       type: "GOAL",
@@ -236,10 +236,10 @@ describe("game_events — delete", () => {
       minute: 20,
     });
     const db = asAdmin(testEnv);
-    await assertSucceeds(db.doc(`game_events/ge-del-admin`).delete());
+    await assertFails(db.doc(`game_events/ge-del-admin`).delete());
   });
 
-  it("Confirmed player pode deletar evento proprio (created_by == self)", async () => {
+  it("Confirmed player NÃO pode deletar evento direto", async () => {
     await seedDoc(testEnv, `game_events/ge-del-self`, {
       game_id: GAME_ID,
       type: "ASSIST",
@@ -248,7 +248,7 @@ describe("game_events — delete", () => {
       minute: 33,
     });
     const db = asPlayerB(testEnv);
-    await assertSucceeds(db.doc(`game_events/ge-del-self`).delete());
+    await assertFails(db.doc(`game_events/ge-del-self`).delete());
   });
 
   it("Confirmed player NAO pode deletar evento de outro", async () => {

@@ -180,6 +180,11 @@ export function ProfileTab() {
       });
       items.push({
         icon: <EmojiEvents />,
+        label: 'Revisão de jogos',
+        onClick: () => navigate('/admin/game-reviews'),
+      });
+      items.push({
+        icon: <EmojiEvents />,
         label: t('profile.leagueSettings'),
         onClick: () => navigate('/settings/gamification'),
       });

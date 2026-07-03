@@ -13,10 +13,21 @@ import {FieldValue, Timestamp} from "firebase-admin/firestore";
 
 export interface Game {
     id: string;
+    team1_score?: number;
+    team2_score?: number;
     xp_processed?: boolean;
     xp_processing?: boolean;
     xp_processing_at?: Timestamp;
     xp_processing_error?: string;
+    xp_reward_status?: string;
+    xp_reward_held_at?: Timestamp;
+    xp_reward_hold_reasons?: string[];
+    xp_reward_review_decision?: string;
+    xp_reward_reviewed_at?: Timestamp;
+    xp_reward_reviewed_by?: string;
+    xp_reward_review_reason?: string;
+    xp_reward_review_previous_status?: string;
+    xp_reward_review_new_status?: string;
     status: string; // "FINISHED"
     mvp_id?: string;
     // Auditoria 2026-05-30 #1: vencedores de votacao gravados no game doc

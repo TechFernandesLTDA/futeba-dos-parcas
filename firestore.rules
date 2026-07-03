@@ -447,6 +447,78 @@ service cloud.firestore {
              (before == 'SCHEDULED' && after == 'CANCELLED');
     }
 
+    function isClientManagedGameStatusTransition(before, after) {
+      return (before == after) ||
+             (before == 'SCHEDULED' && after == 'CONFIRMED') ||
+             (before == 'CONFIRMED' && after == 'CANCELLED') ||
+             (before == 'SCHEDULED' && after == 'CANCELLED');
+    }
+
+    function hasNoGameValidationClientFields(data) {
+      return !data.keys().hasAny([
+        'validation_status',
+        'validation_score',
+        'validation_version',
+        'validation_updated_at',
+        'validation_mode',
+        'validation_reasons',
+        'validation_signals_summary',
+        'xp_processed',
+        'xp_reward_status',
+        'xp_reward_held_at',
+        'xp_reward_hold_reasons',
+        'xp_reward_review_decision',
+        'xp_reward_reviewed_at',
+        'xp_reward_reviewed_by',
+        'xp_reward_review_reason',
+        'xp_reward_review_previous_status',
+        'xp_reward_review_new_status',
+        'xp_processing_error',
+        'started_at',
+        'started_by',
+        'start_validation_score',
+        'finished_at',
+        'finished_by',
+        'finish_validation_score',
+        'reviewed_at',
+        'reviewed_by',
+        'review_reason'
+      ]);
+    }
+
+    // ATENCAO: manter esta lista espelhada com hasNoGameValidationClientFields().
+    function gameValidationFieldsUnchanged() {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+        'validation_status',
+        'validation_score',
+        'validation_version',
+        'validation_updated_at',
+        'validation_mode',
+        'validation_reasons',
+        'validation_signals_summary',
+        'xp_processed',
+        'xp_reward_status',
+        'xp_reward_held_at',
+        'xp_reward_hold_reasons',
+        'xp_reward_review_decision',
+        'xp_reward_reviewed_at',
+        'xp_reward_reviewed_by',
+        'xp_reward_review_reason',
+        'xp_reward_review_previous_status',
+        'xp_reward_review_new_status',
+        'xp_processing_error',
+        'started_at',
+        'started_by',
+        'start_validation_score',
+        'finished_at',
+        'finished_by',
+        'finish_validation_score',
+        'reviewed_at',
+        'reviewed_by',
+        'review_reason'
+      ]);
+    }
+
     // ============================================
     // FUNCOES DE RATE LIMITING
     // ============================================
@@ -712,6 +784,7 @@ service cloud.firestore {
       // PERF_001 P0 #30: Validação estrita de scores (max 100 gols por time)
       allow create: if isProfileComplete() &&
                        (isAdmin() || request.resource.data.owner_id == userId()) &&
+                       hasNoGameValidationClientFields(request.resource.data) &&
                        // SECFIX #866: status inicial deve ser SCHEDULED para prevenir criação em estado inválido
                        request.resource.data.status == 'SCHEDULED' &&
                        // SECFIX #422: data deve ser futura (1h tolerance)
@@ -749,7 +822,7 @@ service cloud.firestore {
       // Admins têm acesso total
       // PERF_001 P0 #30: Validação estrita de scores (max 100 gols por time)
       allow update: if isAuthenticated() && (
-        isAdmin() ||
+        (isAdmin() && gameValidationFieldsUnchanged()) ||
         // SECFIX #423: Dono pode atualizar mas com transicao status valida
         // (impede skip SCHEDULED->FINISHED e reversao FINISHED->X)
         // SECFIX #2607: fieldUnchanged em campos sensiveis — impedia backdating,
@@ -762,7 +835,8 @@ service cloud.firestore {
          fieldUnchanged('mvp_id') &&
          fieldUnchanged('xp_processed_at') &&
          fieldUnchanged('xp_processing') &&
-         isValidGameStatusTransition(resource.data.status, request.resource.data.status) &&
+         gameValidationFieldsUnchanged() &&
+         isClientManagedGameStatusTransition(resource.data.status, request.resource.data.status) &&
          // P0 #30: Validacao estrita de scores - Previne exploits de XP
          isValidScore(request.resource.data.team1_score) &&
          isValidScore(request.resource.data.team2_score) &&
@@ -2490,59 +2564,10 @@ service cloud.firestore {
     match /game_events/{eventId} {
       allow read: if isAuthenticated();
 
-      // FASE 5 #448: game_event create exige verified (30-day grace)
-      // SECURITY: Validacao na criacao de eventos
-      // 1. game_id obrigatorio
-      // 2. type deve ser um dos tipos validos
-      // 3. Campos de score (se presentes) devem ter bounds
-      // #1991: created_by deve SEMPRE refletir o auth.uid real — admin/owner não podem
-      // criar eventos atribuindo created_by a outro usuário (XP fraud/prevention).
-      allow create: if isVerifiedOrGrace() && (
-        isAdmin() ||
-        isGameOwner(request.resource.data.game_id) ||
-        isConfirmedPlayer(request.resource.data.game_id)
-      ) &&
-      // #1991: created_by SEMPRE deve ser o caller — previne admin/owner de injetar
-      // eventos com created_by de terceiros para inflar/deflar XP fraudulento
-      request.resource.data.created_by == userId() &&
-      // game_id obrigatorio
-      request.resource.data.game_id is string &&
-      request.resource.data.game_id.size() > 0 &&
-      // type obrigatorio e deve ser valido
-      request.resource.data.type is string &&
-      request.resource.data.type in ['GOAL', 'ASSIST', 'SAVE', 'YELLOW_CARD', 'RED_CARD', 'SUBSTITUTION', 'FOUL', 'PENALTY', 'OWN_GOAL', 'GAME_START', 'GAME_END', 'HALF_TIME', 'TIMEOUT', 'OTHER'];
-
-      allow update: if isAuthenticated() && (
-        isAdmin() ||
-        isGameOwner(resource.data.game_id) ||
-        (isConfirmedPlayer(resource.data.game_id) && resource.data.created_by == userId())
-      ) &&
-      // #2155: created_by e game_id sao imutaveis
-      fieldUnchanged('game_id') &&
-      fieldUnchanged('created_by');
-
-      // SECFIX #610: confirmedPlayer só pode deletar eventos que ELE mesmo criou.
-      // Sem o check de ownership, qualquer jogador confirmado poderia deletar gols/
-      // assistências de outros jogadores — privilege escalation em sistema gamificado.
-      //
-      // Fallback legacy: eventos antigos podem não ter `created_by` setado (Android
-      // não populava antes do fix). Pra esses, aceitamos `player_id == userId()`
-      // como ownership proxy — o jogador do evento pode auto-deletar. Não reabre
-      // privilege escalation (limitado a eventos próprios), apenas permite recovery
-      // de eventos legacy.
-      allow delete: if isAuthenticated() && (
-        isAdmin() ||
-        isGameOwner(resource.data.game_id) ||
-        (
-          isConfirmedPlayer(resource.data.game_id) && (
-            resource.data.created_by == userId() ||
-            (
-              (!('created_by' in resource.data) || resource.data.created_by == '') &&
-              resource.data.player_id == userId()
-            )
-          )
-        )
-      );
+      // #3211: eventos críticos são escritos apenas por Cloud Functions callables
+      // (`submitLiveGameEvent` / `deleteLiveGameEvent`) com validação de status,
+      // ator, player confirmado, time e consistência do placar.
+      allow create, update, delete: if false;
     }
 
     // ============================================
@@ -2551,35 +2576,9 @@ service cloud.firestore {
     match /live_scores/{scoreId} {
       allow read: if isAuthenticated();
 
-      // PERF_001 P0 #30: Validacao estrita de scores (max 100 gols por time)
-      // PERF_001 P0 #1: Otimizado - usa resource.data.owner_id em vez de get(games/{scoreId})
-      // scoreId é o próprio gameId, então owner_id está em resource.data
-      // SECFIX #869: isConfirmedPlayer branch removido — qualquer criação requer owner_id == userId()
-      // (game owner é o único caso legítimo; confirmed players não devem criar scores de outros)
-      allow create: if isAuthenticated() && (
-        isAdmin() ||
-        request.resource.data.owner_id == userId()
-      ) &&
-      // Validacao de bounds para placares
-      isValidScore(request.resource.data.get('team1_score', null)) &&
-      isValidScore(request.resource.data.get('team2_score', null));
-
-      // SECURITY: No update, owner_id nao pode ser alterado (previne transferencia de ownership)
-      // SECFIX #1603: isConfirmedPlayer removido — jogador confirmado nao pode alterar placar (anti-fraude)
-      // Apenas admin ou game owner (owner_id) podem atualizar live_scores
-      allow update: if isAuthenticated() && (
-        isAdmin() ||
-        resource.data.owner_id == userId()
-      ) &&
-      fieldUnchanged('owner_id') &&
-      // Validacao de bounds para placares
-      isValidScore(request.resource.data.get('team1_score', null)) &&
-      isValidScore(request.resource.data.get('team2_score', null));
-
-      allow delete: if isAuthenticated() && (
-        isAdmin() ||
-        resource.data.owner_id == userId()
-      );
+      // #3211: placar ao vivo é derivado e mantido apenas no servidor para evitar
+      // fraude por writes diretos no cliente.
+      allow create, update, delete: if false;
     }
 
     // ============================================
@@ -2588,42 +2587,9 @@ service cloud.firestore {
     match /live_player_stats/{statId} {
       allow read: if isAuthenticated();
 
-      // PERF_001 P0 #30: Validacao estrita de scores (goals, assists, saves - max 100)
-      // Previne exploits de XP inflados durante jogo ao vivo
-      // SECURITY: Separado create/update para validar fieldUnchanged('game_id') no update
-      // SECFIX #857: confirmed player só pode criar/atualizar as próprias stats (player_id == userId())
-      allow create: if isAuthenticated() && (
-        isAdmin() ||
-        isGameOwner(request.resource.data.game_id) ||
-        (isConfirmedPlayer(request.resource.data.game_id) &&
-         request.resource.data.player_id == userId())
-      ) &&
-      // game_id obrigatorio
-      request.resource.data.game_id is string &&
-      // Validacao de bounds para stats de jogo
-      isValidScore(request.resource.data.get('goals', null)) &&
-      isValidScore(request.resource.data.get('assists', null)) &&
-      isValidScore(request.resource.data.get('saves', null));
-
-      // SECURITY: No update, game_id nao pode ser alterado (previne mover stats entre jogos)
-      // SECFIX #857: confirmed player só pode atualizar as próprias stats (player_id == userId())
-      allow update: if isAuthenticated() && (
-        isAdmin() ||
-        isGameOwner(resource.data.game_id) ||
-        (isConfirmedPlayer(resource.data.game_id) &&
-         resource.data.player_id == userId())
-      ) &&
-      fieldUnchanged('game_id') &&
-      fieldUnchanged('player_id') &&
-      // Validacao de bounds para stats de jogo
-      isValidScore(request.resource.data.get('goals', null)) &&
-      isValidScore(request.resource.data.get('assists', null)) &&
-      isValidScore(request.resource.data.get('saves', null));
-
-      allow delete: if isAuthenticated() && (
-        isAdmin() ||
-        isGameOwner(resource.data.game_id)
-      );
+      // #3211: estatísticas derivadas do jogo ao vivo são mantidas apenas pelo
+      // servidor junto com o evento oficial.
+      allow create, update, delete: if false;
     }
 
     // ============================================
@@ -2641,25 +2607,22 @@ service cloud.firestore {
       );
       allow list: if isAdmin();
 
-      // FASE 5 #448: votar MVP exige verified (30-day grace)
-      allow create: if isVerifiedOrGrace() && (
-        isConfirmedPlayer(request.resource.data.game_id) &&
-        request.resource.data.voter_id == userId() &&
-        request.resource.data.mvp_id != userId() &&
-        isConfirmedUserForGame(request.resource.data.game_id, request.resource.data.mvp_id) &&
-        (
-          request.resource.data.best_gk_id == null ||
-          (request.resource.data.best_gk_id != userId() &&
-           isConfirmedUserForGame(request.resource.data.game_id, request.resource.data.best_gk_id))
-        ) &&
-        (
-          request.resource.data.worst_player_id == null ||
-          (request.resource.data.worst_player_id != userId() &&
-           isConfirmedUserForGame(request.resource.data.game_id, request.resource.data.worst_player_id))
-        )
-      );
+      // #3210: votos MVP sao escritos exclusivamente por Cloud Functions
+      // (`submitMvpVote`/`submitMvpVotes`) via Admin SDK.
+      allow create: if false;
 
       allow update, delete: if isAdmin();
+    }
+
+    // ============================================
+    // COLECAO: game_validation_signals
+    // ============================================
+    // Antifraude por evidencia (#3204/#3207). Escrita apenas via Cloud
+    // Functions/Admin SDK. Leitura inicialmente restrita a admin porque os
+    // sinais podem conter indicadores operacionais sensiveis.
+    match /game_validation_signals/{signalId} {
+      allow read: if isAdmin();
+      allow create, update, delete: if false;
     }
 
     // ============================================

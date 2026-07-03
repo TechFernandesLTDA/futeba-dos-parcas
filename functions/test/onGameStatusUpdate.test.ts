@@ -696,7 +696,7 @@ describe("onGameStatusUpdate", () => {
   // ==========================================
 
   describe("player count validation", () => {
-    test("should mark processed without XP when fewer than 6 players", async () => {
+    test("should hold XP for review before short-circuiting low-player finished games", async () => {
       setupStandardGameMocks({ playerCount: 4 });
 
       const event = createMockEvent("game1",
@@ -709,12 +709,11 @@ describe("onGameStatusUpdate", () => {
       // Transaction should run for the lock
       expect(mockRunTransaction).toHaveBeenCalledTimes(1);
 
-      // Game ref should be updated to mark as processed
-      // (via event.data.after.ref.update)
       expect(mockDocUpdate).toHaveBeenCalledWith(
         expect.objectContaining({
-          xp_processed: true,
           xp_processing: false,
+          xp_reward_status: "HELD_FOR_REVIEW",
+          xp_processing_error: "XP held by validation gate",
         })
       );
 
@@ -741,7 +740,7 @@ describe("onGameStatusUpdate", () => {
     // Sem o fix: 5 jogadores reais + 1 com userId vazio = 6 total → gate passava,
     // mas o 6º não era processado pois era inválido (filtrado por validConfirmations).
     test(
-      "should reject game when valid player count < 6, even if raw confirmations >= 6",
+      "should hold XP when valid player count < 6, even if raw confirmations >= 6",
       async () => {
         // 5 jogadores válidos + 1 com userId vazio = 6 no total bruto
         setupStandardGameMocks({ playerCount: 5 });
@@ -823,11 +822,11 @@ describe("onGameStatusUpdate", () => {
 
         await (onGameStatusUpdate as any)(event);
 
-        // Gate deve rejeitar: apenas 5 userId válidos, não 6
         expect(mockDocUpdate).toHaveBeenCalledWith(
           expect.objectContaining({
-            xp_processed: true,
             xp_processing: false,
+            xp_reward_status: "HELD_FOR_REVIEW",
+            xp_processing_error: "XP held by validation gate",
           })
         );
         // Nenhum XP deve ter sido commitado

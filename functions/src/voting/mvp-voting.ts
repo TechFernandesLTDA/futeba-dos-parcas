@@ -85,6 +85,18 @@ interface SubmitVoteRequest {
   category: VoteCategory;
 }
 
+/** Voto individual dentro de submissão em lote */
+interface SubmitVoteBatchItem {
+  votedPlayerId: string;
+  category: VoteCategory;
+}
+
+/** Dados de entrada para submissão atômica de múltiplos votos */
+interface SubmitVotesRequest {
+  gameId: string;
+  votes: SubmitVoteBatchItem[];
+}
+
 /** Dados de entrada para conclusão de votação */
 interface ConcludeVotingRequest {
   gameId: string;
@@ -426,6 +438,350 @@ export const submitMvpVote =
         logger.error(
           "[MVP_VOTE] Erro ao registrar " +
           `voto: ${errMsg}`
+        );
+        throw new HttpsError(
+          "internal",
+          ERROR_MSGS.INTERNAL_ERROR
+        );
+      }
+    }
+  );
+
+// ==========================================
+// CLOUD FUNCTION: submitMvpVotes
+// ==========================================
+
+/**
+ * Submete múltiplas categorias de voto em uma única
+ * transaction. Mantém a tela Web atômica ao registrar
+ * MVP, melhor goleiro e bola murcha juntos.
+ *
+ * @param {string} gameId - ID do jogo
+ * @param {SubmitVoteBatchItem[]} votes - Votos por categoria
+ * @return {object} Resultado dos votos registrados
+ */
+export const submitMvpVotes =
+  onCall<SubmitVotesRequest>(
+    {
+      region: "southamerica-east1",
+      memory: "256MiB",
+      enforceAppCheck:
+        process.env.FUNCTIONS_EMULATOR !== "true",
+      consumeAppCheckToken: true,
+    },
+    async (request) => {
+      requireProfileComplete(request);
+
+      if (!request.auth) {
+        throw new HttpsError("unauthenticated", ERROR_MSGS.UNAUTHENTICATED);
+      }
+      const voterId = request.auth.uid;
+
+      const {
+        allowed,
+        remaining,
+        resetAt,
+      } = await checkRateLimit(voterId, {
+        maxRequests: 10,
+        windowMs: 60 * 1000,
+        keyPrefix: "mvp_votes_batch",
+      });
+
+      if (!allowed) {
+        const resetInSeconds = Math.ceil(
+          (resetAt.getTime() - Date.now()) / 1000
+        );
+        throw new HttpsError(
+          "resource-exhausted",
+          // eslint-disable-next-line new-cap
+          ERROR_MSGS.RATE_LIMIT_RETRY(resetInSeconds),
+          {
+            retryAfter: resetInSeconds,
+            limit: 10,
+            remaining,
+          }
+        );
+      }
+
+      const {
+        gameId,
+        votes,
+      } = request.data;
+
+      if (
+        !gameId ||
+        typeof gameId !== "string" ||
+        gameId.length > 128
+      ) {
+        throw new HttpsError(
+          "invalid-argument",
+          ERROR_MSGS.GAME_ID_REQUIRED
+        );
+      }
+
+      if (gameId.includes("/")) {
+        throw new HttpsError(
+          "invalid-argument",
+          ERROR_MSGS.ID_INVALID_CHARS
+        );
+      }
+
+      if (
+        !Array.isArray(votes) ||
+        votes.length < 1 ||
+        votes.length > VALID_VOTE_CATEGORIES.length
+      ) {
+        throw new HttpsError(
+          "invalid-argument",
+          "Informe entre 1 e 3 votos."
+        );
+      }
+
+      const seenCategories = new Set<string>();
+      for (const vote of votes) {
+        if (
+          !vote ||
+          !vote.votedPlayerId ||
+          typeof vote.votedPlayerId !== "string" ||
+          vote.votedPlayerId.length > 128
+        ) {
+          throw new HttpsError(
+            "invalid-argument",
+            // eslint-disable-next-line new-cap
+            ERROR_MSGS.FIELD_REQUIRED("votedPlayerId")
+          );
+        }
+
+        if (
+          !vote.category ||
+          !VALID_VOTE_CATEGORIES.includes(vote.category)
+        ) {
+          throw new HttpsError(
+            "invalid-argument",
+            // eslint-disable-next-line new-cap
+            ERROR_MSGS.ALLOWED_VALUES(
+              "Categoria",
+              VALID_VOTE_CATEGORIES as readonly string[]
+            )
+          );
+        }
+
+        if (seenCategories.has(vote.category)) {
+          throw new HttpsError(
+            "invalid-argument",
+            "Categoria duplicada na votação."
+          );
+        }
+        seenCategories.add(vote.category);
+
+        if (voterId === vote.votedPlayerId) {
+          throw new HttpsError(
+            "invalid-argument",
+            ERROR_MSGS.CANNOT_VOTE_SELF
+          );
+        }
+
+        if (vote.votedPlayerId.includes("/")) {
+          throw new HttpsError(
+            "invalid-argument",
+            ERROR_MSGS.ID_INVALID_CHARS
+          );
+        }
+      }
+
+      const db = getFirestore();
+
+      try {
+        const result = await db.runTransaction(
+          async (transaction) => {
+            const gameRef = db
+              .collection("games")
+              .doc(gameId);
+            const gameSnap =
+              await transaction.get(gameRef);
+
+            if (!gameSnap.exists) {
+              throw new HttpsError(
+                "not-found",
+                ERROR_MSGS.GAME_NOT_FOUND
+              );
+            }
+
+            const gameData = gameSnap.data();
+            if (!gameData) {
+              throw new HttpsError(
+                "not-found",
+                "Dados do jogo indisponíveis"
+              );
+            }
+
+            if (gameData.status !== "FINISHED") {
+              throw new HttpsError(
+                "failed-precondition",
+                ERROR_MSGS.VOTING_NOT_STARTED
+              );
+            }
+
+            if (
+              gameData.voting_status ===
+              "CONCLUDED"
+            ) {
+              throw new HttpsError(
+                "failed-precondition",
+                ERROR_MSGS.VOTING_CLOSED
+              );
+            }
+
+            const gameDateTime =
+              gameData.dateTime;
+            let deadline: Date;
+            if (
+              gameDateTime &&
+              typeof gameDateTime.toDate ===
+              "function"
+            ) {
+              const gameStartDate =
+                gameDateTime.toDate();
+              const durationMin =
+                (gameData.duration_minutes as number) ?? 90;
+              const gameEndMs =
+                gameStartDate.getTime() +
+                durationMin * 60 * 1000;
+              deadline = new Date(
+                gameEndMs +
+                VOTE_WINDOW_HOURS *
+                60 * 60 * 1000
+              );
+            } else {
+              throw new HttpsError(
+                "internal",
+                "Dados do jogo incompletos: " +
+                "sem data de realização"
+              );
+            }
+            const now = new Date();
+            if (now > deadline) {
+              throw new HttpsError(
+                "failed-precondition",
+                ERROR_MSGS.VOTING_EXPIRED
+              );
+            }
+
+            const voterConfId =
+              `${gameId}_${voterId}`;
+            const voterConfRef = db
+              .collection("confirmations")
+              .doc(voterConfId);
+            const voterConfSnap =
+              await transaction.get(
+                voterConfRef
+              );
+
+            if (!voterConfSnap.exists) {
+              throw new HttpsError(
+                "permission-denied",
+                ERROR_MSGS.CONFIRMED_PLAYERS_ONLY
+              );
+            }
+
+            const voterConfData =
+              voterConfSnap.data();
+            if (
+              voterConfData?.status !==
+              "CONFIRMED"
+            ) {
+              throw new HttpsError(
+                "permission-denied",
+                ERROR_MSGS.CONFIRMED_PLAYERS_ONLY
+              );
+            }
+
+            const voteIds: string[] = [];
+            for (const vote of votes) {
+              const votedConfId =
+                `${gameId}_${vote.votedPlayerId}`;
+              const votedConfRef = db
+                .collection("confirmations")
+                .doc(votedConfId);
+              const votedConfSnap =
+                await transaction.get(
+                  votedConfRef
+                );
+
+              if (
+                !votedConfSnap.exists ||
+                votedConfSnap.data()?.status !==
+                "CONFIRMED"
+              ) {
+                throw new HttpsError(
+                  "invalid-argument",
+                  ERROR_MSGS.PLAYER_NOT_IN_GAME
+                );
+              }
+
+              const voteId =
+                `${gameId}_${voterId}` +
+                `_${vote.category}`;
+              const voteRef = db
+                .collection("mvp_votes")
+                .doc(voteId);
+              const existingVote =
+                await transaction.get(voteRef);
+
+              if (existingVote.exists) {
+                throw new HttpsError(
+                  "already-exists",
+                  // eslint-disable-next-line new-cap
+                  ERROR_MSGS.ALREADY_VOTED(vote.category)
+                );
+              }
+
+              transaction.set(voteRef, {
+                id: voteId,
+                game_id: gameId,
+                voter_id: voterId,
+                voted_player_id: vote.votedPlayerId,
+                category: vote.category,
+                voted_at:
+                  FieldValue
+                    .serverTimestamp(),
+                attempt_timestamp: Date.now(),
+              });
+              voteIds.push(voteId);
+            }
+
+            return {
+              voteIds,
+              categories: votes.map(
+                (vote) => vote.category
+              ),
+            };
+          }
+        );
+
+        logger.info(
+          "[MVP_VOTE] Votos registrados em lote: " +
+          `${voterId} (${result.categories.join(", ")}) ` +
+          `no jogo ${gameId}`
+        );
+
+        return {
+          success: true,
+          voteIds: result.voteIds,
+          message: ERROR_MSGS.VOTE_REGISTERED,
+        };
+      } catch (error: unknown) {
+        if (error instanceof HttpsError) {
+          throw error;
+        }
+
+        const errMsg =
+          error instanceof Error ?
+            error.message :
+            String(error);
+        logger.error(
+          "[MVP_VOTE] Erro ao registrar " +
+          `votos em lote: ${errMsg}`
         );
         throw new HttpsError(
           "internal",

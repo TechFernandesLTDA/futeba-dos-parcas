@@ -26,6 +26,12 @@ import {
   softDeleteGroup,
   restoreDeletedGame,
   restoreDeletedGroup,
+  startGameLifecycle,
+  finishGameLifecycle,
+  submitLiveGameEvent,
+  deleteLiveGameEvent,
+  reviewHeldGameRewards,
+  submitMvpVotes,
   updateUserPii,
 } from './cloudFunctions';
 
@@ -88,6 +94,94 @@ describe('cloudFunctions', () => {
     await updateUserPii({ gender: null });
 
     expect(mockCallable).toHaveBeenCalledWith('updateUserPii', { gender: null });
+  });
+
+  it('submitMvpVotes chama callable batch com votos por categoria', async () => {
+    mockCallable.mockResolvedValue({ data: { success: true, voteIds: ['game-1_u1_MVP'] } });
+
+    await submitMvpVotes({
+      gameId: 'game-1',
+      votes: [
+        { category: 'MVP', votedPlayerId: 'u2' },
+        { category: 'WORST', votedPlayerId: 'u3' },
+      ],
+    });
+
+    expect(mockCallable).toHaveBeenCalledWith('submitMvpVotes', {
+      gameId: 'game-1',
+      votes: [
+        { category: 'MVP', votedPlayerId: 'u2' },
+        { category: 'WORST', votedPlayerId: 'u3' },
+      ],
+    });
+  });
+
+  it('startGameLifecycle chama callable com gameId', async () => {
+    mockCallable.mockResolvedValue({ data: { success: true, status: 'LIVE' } });
+
+    await startGameLifecycle({ gameId: 'game-1' });
+
+    expect(mockCallable).toHaveBeenCalledWith('startGameLifecycle', { gameId: 'game-1' });
+  });
+
+  it('finishGameLifecycle chama callable com gameId', async () => {
+    mockCallable.mockResolvedValue({ data: { success: true, status: 'FINISHED' } });
+
+    await finishGameLifecycle({ gameId: 'game-1' });
+
+    expect(mockCallable).toHaveBeenCalledWith('finishGameLifecycle', { gameId: 'game-1' });
+  });
+
+  it('submitLiveGameEvent chama callable com payload validado', async () => {
+    mockCallable.mockResolvedValue({ data: { success: true, eventId: 'evt-1' } });
+
+    await submitLiveGameEvent({
+      gameId: 'game-1',
+      eventType: 'GOAL',
+      playerId: 'user-2',
+      playerName: 'Renan',
+      teamId: 'team-1',
+      minute: 12,
+    });
+
+    expect(mockCallable).toHaveBeenCalledWith('submitLiveGameEvent', {
+      gameId: 'game-1',
+      eventType: 'GOAL',
+      playerId: 'user-2',
+      playerName: 'Renan',
+      teamId: 'team-1',
+      minute: 12,
+    });
+  });
+
+  it('deleteLiveGameEvent chama callable com gameId e eventId', async () => {
+    mockCallable.mockResolvedValue({ data: { success: true, reverted: true } });
+
+    await deleteLiveGameEvent({
+      gameId: 'game-1',
+      eventId: 'evt-1',
+    });
+
+    expect(mockCallable).toHaveBeenCalledWith('deleteLiveGameEvent', {
+      gameId: 'game-1',
+      eventId: 'evt-1',
+    });
+  });
+
+  it('reviewHeldGameRewards chama callable com ação e motivo', async () => {
+    mockCallable.mockResolvedValue({ data: { success: true, newStatus: 'ELIGIBLE' } });
+
+    await reviewHeldGameRewards({
+      gameId: 'game-1',
+      action: 'APPROVE',
+      reason: 'Evidências complementares conferidas.',
+    });
+
+    expect(mockCallable).toHaveBeenCalledWith('reviewHeldGameRewards', {
+      gameId: 'game-1',
+      action: 'APPROVE',
+      reason: 'Evidências complementares conferidas.',
+    });
   });
 
   it('propaga erros de função', async () => {

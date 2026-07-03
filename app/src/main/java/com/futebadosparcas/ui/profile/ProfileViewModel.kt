@@ -5,13 +5,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.data.datasource.ProfilePhotoDataSource
 import com.futebadosparcas.data.model.AutoRatings
-import com.futebadosparcas.domain.model.Location
 import com.futebadosparcas.data.model.PerformanceRatingCalculator
-import com.futebadosparcas.data.repository.GameRepository
-import com.futebadosparcas.data.repository.LiveGameRepository
-import com.futebadosparcas.domain.model.User
 import com.futebadosparcas.data.repository.AuthRepository
+import com.futebadosparcas.data.repository.GameRepository
+import com.futebadosparcas.domain.model.Location
+import com.futebadosparcas.domain.model.User
 import com.futebadosparcas.domain.repository.GamificationRepository
+import com.futebadosparcas.domain.repository.LiveGameRepository
 import com.futebadosparcas.domain.repository.LocationRepository
 import com.futebadosparcas.domain.repository.StatisticsRepository
 import com.futebadosparcas.domain.repository.UserRepository

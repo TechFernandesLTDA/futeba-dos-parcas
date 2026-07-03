@@ -507,10 +507,78 @@ export const checkInToGame = httpsCallable<
   { success: boolean; distanceMeters?: number | null; method?: 'gps' | 'qr' }
 >(functions, 'checkInToGame');
 
+export type MvpVoteCategory = 'MVP' | 'BEST_GOALKEEPER' | 'WORST';
+
+export const submitMvpVote = httpsCallable<
+  { gameId: string; votedPlayerId: string; category: MvpVoteCategory },
+  { success: boolean; voteId: string; message: string }
+>(functions, 'submitMvpVote');
+
+export const submitMvpVotes = httpsCallable<
+  { gameId: string; votes: Array<{ votedPlayerId: string; category: MvpVoteCategory }> },
+  { success: boolean; voteIds: string[]; message: string }
+>(functions, 'submitMvpVotes');
+
 export const generateCheckinToken = httpsCallable<
   { gameId: string },
   { success: boolean; token: string }
 >(functions, 'generateCheckinToken');
+
+export const startGameLifecycle = httpsCallable<
+  { gameId: string },
+  { success: boolean; status: 'LIVE'; team1Id: string; team2Id: string }
+>(functions, 'startGameLifecycle');
+
+export const finishGameLifecycle = httpsCallable<
+  { gameId: string },
+  { success: boolean; status: 'FINISHED'; team1Score: number; team2Score: number; aggregatedPlayers: number }
+>(functions, 'finishGameLifecycle');
+
+export const submitLiveGameEvent = httpsCallable<
+  {
+    gameId: string;
+    eventType: 'GOAL' | 'SAVE' | 'YELLOW_CARD' | 'RED_CARD';
+    playerId: string;
+    playerName: string;
+    teamId: string;
+    minute?: number;
+    assistedById?: string | null;
+    assistedByName?: string | null;
+  },
+  {
+    success: boolean;
+    eventId: string;
+    eventType: 'GOAL' | 'SAVE' | 'YELLOW_CARD' | 'RED_CARD';
+    minute: number;
+  }
+>(functions, 'submitLiveGameEvent');
+
+export const deleteLiveGameEvent = httpsCallable<
+  {
+    gameId: string;
+    eventId: string;
+  },
+  {
+    success: boolean;
+    eventId: string;
+    reverted: boolean;
+  }
+>(functions, 'deleteLiveGameEvent');
+
+export const reviewHeldGameRewards = httpsCallable<
+  {
+    gameId: string;
+    action: 'APPROVE' | 'REJECT';
+    reason: string;
+  },
+  {
+    success: boolean;
+    gameId: string;
+    action: 'APPROVE' | 'REJECT';
+    previousStatus: 'HELD_FOR_REVIEW';
+    newStatus: 'ELIGIBLE' | 'REJECTED_BY_ADMIN';
+  }
+>(functions, 'reviewHeldGameRewards');
 
 // Reputacao pos-jogo
 export const submitPostGameReputation = httpsCallable<

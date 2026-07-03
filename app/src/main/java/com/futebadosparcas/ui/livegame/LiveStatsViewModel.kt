@@ -3,7 +3,7 @@ package com.futebadosparcas.ui.livegame
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.domain.model.LivePlayerStats
-import com.futebadosparcas.data.repository.LiveGameRepository
+import com.futebadosparcas.domain.repository.LiveGameRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch

@@ -341,18 +341,25 @@ fun GameDetailContent(
         ) {
             // Header
             item {
-                GameHeaderSection(
-                    game = state.game,
-                    canManage = state.canManageGame,
-                    confirmedCount = state.confirmations.count { it.status == "CONFIRMED" },
-                    onEdit = onEditGame,
-                    onCancel = { showCancelDialog = true },
-                    onToggleStatus = { viewModel.toggleGameStatus(gameId, it) },
-                    onStart = onStartGame,
-                    onFinish = { showFinishGameDialog = true },
-                    onLocationClick = { },
-                    onGenerateTeams = { showGenerateTeamsDialog = true }
-                )
+                Column {
+                    GameHeaderSection(
+                        game = state.game,
+                        canManage = state.canManageGame,
+                        confirmedCount = state.confirmations.count { it.status == "CONFIRMED" },
+                        onEdit = onEditGame,
+                        onCancel = { showCancelDialog = true },
+                        onToggleStatus = { viewModel.toggleGameStatus(gameId, it) },
+                        onStart = onStartGame,
+                        onFinish = { showFinishGameDialog = true },
+                        onLocationClick = { },
+                        onGenerateTeams = { showGenerateTeamsDialog = true }
+                    )
+                    GameValidationStatusCard(
+                        game = state.game,
+                        canManageGame = state.canManageGame,
+                        isAdmin = state.isAdmin
+                    )
+                }
             }
 
             // Live Match Section
@@ -469,6 +476,166 @@ fun GameDetailContent(
 }
 
 // --- Specific Composables ---
+
+private data class ValidationBannerUi(
+    val titleResId: Int,
+    val bodyResId: Int,
+    val containerColor: Color,
+    val contentColor: Color,
+)
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun GameValidationStatusCard(
+    game: Game,
+    canManageGame: Boolean,
+    isAdmin: Boolean,
+) {
+    if (game.status != GameStatus.FINISHED.name) return
+
+    val rewardStatus = game.xpRewardStatus
+    val validationStatus = game.validationStatus
+    val reasons = remember(game.validationReasons, game.xpRewardHoldReasons) {
+        (game.xpRewardHoldReasons.ifEmpty { game.validationReasons })
+            .filter { it.isNotBlank() }
+            .distinct()
+    }
+
+    val banner = when {
+        rewardStatus == "HELD_FOR_REVIEW" -> ValidationBannerUi(
+            titleResId = R.string.validation_banner_title_held,
+            bodyResId = if (isAdmin || canManageGame) {
+                R.string.validation_banner_body_held_admin
+            } else {
+                R.string.validation_banner_body_held_player
+            },
+            containerColor = MaterialTheme.colorScheme.errorContainer,
+            contentColor = MaterialTheme.colorScheme.onErrorContainer,
+        )
+        rewardStatus == "REJECTED_BY_ADMIN" -> ValidationBannerUi(
+            titleResId = R.string.validation_banner_title_rejected,
+            bodyResId = R.string.validation_banner_body_rejected,
+            containerColor = MaterialTheme.colorScheme.errorContainer,
+            contentColor = MaterialTheme.colorScheme.onErrorContainer,
+        )
+        rewardStatus == "ELIGIBLE" && game.xpRewardReviewDecision == "APPROVED" -> ValidationBannerUi(
+            titleResId = R.string.validation_banner_title_approved,
+            bodyResId = R.string.validation_banner_body_approved,
+            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+            contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+        )
+        validationStatus == "REVIEW_REQUIRED" -> ValidationBannerUi(
+            titleResId = R.string.validation_banner_title_review_required,
+            bodyResId = R.string.validation_banner_body_review_required,
+            containerColor = MaterialTheme.colorScheme.errorContainer,
+            contentColor = MaterialTheme.colorScheme.onErrorContainer,
+        )
+        validationStatus == "LOW_CONFIDENCE" -> ValidationBannerUi(
+            titleResId = R.string.validation_banner_title_low_confidence,
+            bodyResId = R.string.validation_banner_body_low_confidence,
+            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+            contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+        )
+        validationStatus == "VALIDATED" -> ValidationBannerUi(
+            titleResId = R.string.validation_banner_title_validated,
+            bodyResId = R.string.validation_banner_body_validated,
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+        )
+        else -> null
+    } ?: return
+
+    Card(
+        modifier = Modifier
+            .padding(horizontal = 16.dp)
+            .fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = banner.containerColor
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(
+                    imageVector = when (rewardStatus) {
+                        "HELD_FOR_REVIEW", "REJECTED_BY_ADMIN" -> Icons.Default.Warning
+                        "ELIGIBLE" -> Icons.Default.CheckCircle
+                        else -> Icons.Default.Verified
+                    },
+                    contentDescription = null,
+                    tint = banner.contentColor
+                )
+                Text(
+                    text = stringResource(banner.titleResId),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = banner.contentColor
+                )
+            }
+
+            Text(
+                text = stringResource(banner.bodyResId),
+                style = MaterialTheme.typography.bodyMedium,
+                color = banner.contentColor
+            )
+
+            if (game.validationScore != null || validationStatus != null) {
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    validationStatus?.let {
+                        AssistChip(
+                            onClick = {},
+                            enabled = false,
+                            label = { Text(it) }
+                        )
+                    }
+                    game.validationScore?.let {
+                        AssistChip(
+                            onClick = {},
+                            enabled = false,
+                            label = { Text(stringResource(R.string.validation_score_chip, it)) }
+                        )
+                    }
+                }
+            }
+
+            if (reasons.isNotEmpty()) {
+                Text(
+                    text = stringResource(R.string.validation_reasons_label),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = banner.contentColor
+                )
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    reasons.forEach { reason ->
+                        AssistChip(
+                            onClick = {},
+                            enabled = false,
+                            label = { Text(reason) }
+                        )
+                    }
+                }
+            }
+
+            game.xpRewardReviewReason?.takeIf { it.isNotBlank() }?.let { reviewReason ->
+                Text(
+                    text = stringResource(R.string.validation_review_reason_prefix, reviewReason),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = banner.contentColor
+                )
+            }
+        }
+    }
+}
 
 @Composable
 fun GameHeaderSection(

@@ -52,7 +52,7 @@ val appKoinModule = module {
         if (preferencesManager.isMockModeEnabled()) {
             com.futebadosparcas.data.repository.FakeGameRepository()
         } else {
-            GameRepositoryImpl(get(), get(), get(), get(), get(), get(), get(), get())
+            GameRepositoryImpl(get(), get(), get(), get(), get(), get(), get())
         }
     }
 

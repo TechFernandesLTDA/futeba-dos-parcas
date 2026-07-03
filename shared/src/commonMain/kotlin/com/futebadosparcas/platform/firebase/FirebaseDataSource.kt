@@ -93,6 +93,10 @@ expect class FirebaseDataSource() {
      */
     suspend fun updateUserPiiViaCallable(updates: Map<String, Any>): Result<Unit>
 
+    // ========== MVP VOTING ==========
+
+    suspend fun submitMvpVoteViaCallable(vote: MVPVote): Result<Unit>
+
     suspend fun searchUsers(query: String, limit: Int): Result<List<User>>
     suspend fun getAllUsers(): Result<List<User>>
     suspend fun updateUserRole(userId: String, newRole: String): Result<Unit>
@@ -126,6 +130,8 @@ expect class FirebaseDataSource() {
 
     // ========== LIVE GAME ==========
 
+    suspend fun startGameLifecycleViaCallable(gameId: String): Result<Unit>
+    suspend fun finishGameLifecycleViaCallable(gameId: String): Result<Unit>
     suspend fun startLiveGame(gameId: String, team1Id: String, team2Id: String): Result<LiveScore>
     suspend fun canManageGameEvents(gameId: String): Boolean
     suspend fun updateScoreForGoal(gameId: String, teamId: String): Result<Unit>

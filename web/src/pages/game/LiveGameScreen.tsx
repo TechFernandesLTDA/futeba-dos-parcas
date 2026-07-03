@@ -46,8 +46,9 @@ import {
 } from '@mui/icons-material';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
 import { PageContainer } from '../../components/common/PageContainer';
-import { doc, collection, query, where, onSnapshot, updateDoc, addDoc, setDoc, getDocs, increment, serverTimestamp, writeBatch } from 'firebase/firestore';
+import { doc, collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '../../services/firebase';
+import { finishGameLifecycle, startGameLifecycle, submitLiveGameEvent } from '../../services/cloudFunctions';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -73,6 +74,7 @@ interface ConfirmedPlayer {
   id: string;
   name: string;
   photo?: string;
+  teamId?: string;
 }
 
 function canManageGame(game: Game | null, uid?: string): boolean {
@@ -138,7 +140,6 @@ export const LiveGameScreen: React.FC = () => {
   const canManage = canManageGame(game, uid);
 
   const [actionLoading, setActionLoading] = useState(false);
-  const [scoreUpdating, setScoreUpdating] = useState(false);
   const [finishing, setFinishing] = useState(false);
   const [confirmFinishOpen, setConfirmFinishOpen] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(() => {
@@ -229,6 +230,7 @@ export const LiveGameScreen: React.FC = () => {
             id: raw.user_id,
             name: raw.user_name || 'Jogador',
             photo: raw.user_photo || undefined,
+            teamId: raw.team_id || undefined,
           };
         });
       setConfirmedPlayers(players);
@@ -327,22 +329,29 @@ export const LiveGameScreen: React.FC = () => {
       return;
     }
 
+    setActionLoading(true);
     try {
       const player = confirmedPlayers.find((p) => p.id === selectedPlayer);
-        await addDoc(collection(db, 'game_events'), {
-          game_id: gameId,
-          type: selectedEventType,
-        player_id: selectedPlayer,
-        player_name: player?.name || t('profile.defaultPlayerName'),
+      if (!player?.teamId) {
+        showError('Selecione um jogador confirmado com time definido para registrar o evento.');
+        return;
+      }
+
+      await submitLiveGameEvent({
+        gameId,
+        eventType: selectedEventType as 'GOAL' | 'SAVE' | 'YELLOW_CARD' | 'RED_CARD',
+        playerId: selectedPlayer,
+        playerName: player.name || t('profile.defaultPlayerName'),
+        teamId: player.teamId,
         minute: Math.floor(elapsedTime / 60),
-        created_by: uid,
-        created_at: serverTimestamp(),
       });
       setAddEventDialog(false);
       setSelectedPlayer('');
     } catch (err) {
       logger.error('Error adding event:', err);
       showError(getFirestoreErrorMessage(err, t('games.live.errorAddEvent')));
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -361,54 +370,7 @@ export const LiveGameScreen: React.FC = () => {
     setConfirmFinishOpen(false);
     setFinishing(true);
     try {
-      // #1530 (Opção A): Antes de finalizar, agregar game_events por jogador
-      // e escrever nas confirmações individuais (goals/assists/saves).
-      // Isso garante que as estatísticas do jogo fiquem sincronizadas antes
-      // do Cloud Function de XP processar o jogo finalizado.
-      const eventsSnap = await getDocs(
-        query(collection(db, 'game_events'), where('game_id', '==', gameId))
-      );
-
-      // Agrega contagens por jogador
-      const aggregated = new Map<string, { goals: number; assists: number; saves: number }>();
-      for (const eventDoc of eventsSnap.docs) {
-        const raw = eventDoc.data();
-        const playerId: string = raw.player_id ?? raw.playerId ?? '';
-        if (!playerId) continue;
-        const type: string = raw.event_type ?? raw.eventType ?? '';
-        const current = aggregated.get(playerId) ?? { goals: 0, assists: 0, saves: 0 };
-        if (type === 'GOAL') current.goals += 1;
-        else if (type === 'ASSIST') current.assists += 1;
-        else if (type === 'SAVE') current.saves += 1;
-        aggregated.set(playerId, current);
-      }
-
-      // #2291: escreve todas as confirmações em um único writeBatch atômico,
-      // evitando o estado inconsistente que Promise.allSettled permitia (parte
-      // dos jogadores atualizados, parte não). Contagem de jogadores << 500.
-      if (aggregated.size > 0) {
-        try {
-          const statsBatch = writeBatch(db);
-          for (const [playerId, stats] of aggregated.entries()) {
-            const confirmRef = doc(db, 'confirmations', `${gameId}_${playerId}`);
-            statsBatch.set(confirmRef, stats, { merge: true });
-          }
-          await statsBatch.commit();
-        } catch (statsErr) {
-          // Não bloquear o finish — o CF pode re-agregar via game_events se necessário,
-          // mas avisamos o usuário de forma não-bloqueante (#2291).
-          logger.error('Falha ao sincronizar stats de jogadores:', statsErr);
-          showError(t('games.live.statsDelayWarning'));
-        }
-      }
-
-      // Finaliza o jogo — o score já está populado via listener live_scores
-      await updateDoc(doc(db, 'games', gameId), {
-        status: 'FINISHED',
-        team1_score: score?.team1Score || 0,
-        team2_score: score?.team2Score || 0,
-        updated_at: serverTimestamp(),
-      });
+      await finishGameLifecycle({ gameId });
       navigate(`/game/${gameId}/vote`);
     } catch (err) {
       logger.error('Error finishing game:', err);
@@ -427,31 +389,11 @@ export const LiveGameScreen: React.FC = () => {
     }
     setActionLoading(true);
     try {
-      await updateDoc(doc(db, 'games', gameId), {
-        status: 'LIVE',
-        updated_at: serverTimestamp(),
-      });
+      await startGameLifecycle({ gameId });
     } catch (err: unknown) {
       showError(getFirestoreErrorMessage(err));
     } finally {
       setActionLoading(false);
-    }
-  };
-
-  // #1528: Incrementa ou decrementa o placar de um time no live_scores.
-  // Usa setDoc com merge para criar o documento caso ainda não exista.
-  const handleScoreUpdate = async (team: 1 | 2, delta: 1 | -1) => {
-    if (!gameId || !canManage) return;
-    setScoreUpdating(true);
-    try {
-      const scoreRef = doc(db, 'live_scores', gameId);
-      const field = team === 1 ? 'team1_score' : 'team2_score';
-      await setDoc(scoreRef, { [field]: increment(delta), updated_at: serverTimestamp() }, { merge: true });
-    } catch (err) {
-      logger.error('Erro ao atualizar placar:', err);
-      showError(getFirestoreErrorMessage(err, t('games.live.errorUpdateScore')));
-    } finally {
-      setScoreUpdating(false);
     }
   };
 
@@ -579,50 +521,11 @@ export const LiveGameScreen: React.FC = () => {
               );
             })()}
 
-            {/* #1528: Controles de placar — visíveis apenas para o organizador */}
+            {/* O placar segue apenas eventos validados no servidor. */}
             {canManage && isRunning && (
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2, gap: 1 }}>
-                <Box sx={{ display: 'flex', gap: 0.5, flex: 1, justifyContent: 'center' }}>
-                  <Button
-                    size="small"
-                    variant="outlined"
-                    onClick={() => handleScoreUpdate(1, -1)}
-                    disabled={scoreUpdating || (score?.team1Score ?? 0) <= 0}
-                    aria-label={t('games.live.decreaseScore', { team: game.team1Name || t('games.teamA') })}
-                  >
-                    −
-                  </Button>
-                  <Button
-                    size="small"
-                    variant="contained"
-                    onClick={() => handleScoreUpdate(1, 1)}
-                    disabled={scoreUpdating}
-                    aria-label={t('games.live.increaseScore', { team: game.team1Name || t('games.teamA') })}
-                  >
-                    +
-                  </Button>
-                </Box>
-                <Box sx={{ display: 'flex', gap: 0.5, flex: 1, justifyContent: 'center' }}>
-                  <Button
-                    size="small"
-                    variant="outlined"
-                    onClick={() => handleScoreUpdate(2, -1)}
-                    disabled={scoreUpdating || (score?.team2Score ?? 0) <= 0}
-                    aria-label={t('games.live.decreaseScore', { team: game.team2Name || t('games.teamB') })}
-                  >
-                    −
-                  </Button>
-                  <Button
-                    size="small"
-                    variant="contained"
-                    onClick={() => handleScoreUpdate(2, 1)}
-                    disabled={scoreUpdating}
-                    aria-label={t('games.live.increaseScore', { team: game.team2Name || t('games.teamB') })}
-                  >
-                    +
-                  </Button>
-                </Box>
-              </Box>
+              <Alert severity="info" sx={{ mt: 2 }}>
+                O placar ao vivo segue apenas eventos validados no servidor. Para ajustar o resultado, registre ou reverta eventos oficiais do jogo.
+              </Alert>
             )}
           </CardContent>
         </Card>

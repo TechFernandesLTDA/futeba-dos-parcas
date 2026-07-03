@@ -2,10 +2,15 @@ package com.futebadosparcas.ui.livegame
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.futebadosparcas.domain.model.*
-import com.futebadosparcas.domain.repository.AuthRepository
 import com.futebadosparcas.data.repository.GameRepository
-import com.futebadosparcas.data.repository.LiveGameRepository
+import com.futebadosparcas.domain.model.Game
+import com.futebadosparcas.domain.model.GameConfirmation
+import com.futebadosparcas.domain.model.GameEventType
+import com.futebadosparcas.domain.model.GameStatus
+import com.futebadosparcas.domain.model.LiveScore
+import com.futebadosparcas.domain.repository.AuthRepository
+import com.futebadosparcas.domain.repository.LiveGameRepository
+import com.futebadosparcas.domain.model.Team
 import com.futebadosparcas.domain.usecase.livegame.AddGameEventUseCase
 import com.futebadosparcas.domain.usecase.livegame.AddGameEventParams
 import com.futebadosparcas.domain.usecase.livegame.FinishLiveGameUseCase
@@ -40,14 +45,10 @@ class LiveGameViewModel(
     // Flag para evitar navegação múltipla para votação
     private var hasNavigatedToVote: Boolean = false
 
-    // Flag para evitar iniciar live game múltiplas vezes
-    private var hasTriedToStartLiveGame: Boolean = false
-
     fun loadGame(gameId: String) {
         scoreObserverJob?.cancel()
         currentGameId = gameId
         hasNavigatedToVote = false
-        hasTriedToStartLiveGame = false
 
         scoreObserverJob = viewModelScope.launch {
             _uiState.value = LiveGameUiState.Loading
@@ -103,20 +104,6 @@ class LiveGameViewModel(
                         }
                     }
 
-                    // Handler para iniciar jogo se necessário
-                    // Qualquer usuário confirmado pode iniciar se score não existir
-                    if (score == null && game.status == "LIVE" && !hasTriedToStartLiveGame) {
-                        hasTriedToStartLiveGame = true
-                        try {
-                            // Iniciar placar ao vivo (qualquer um pode fazer isso se ainda não existe)
-                            liveGameRepository.startLiveGame(gameId, team1.id, team2.id)
-                        } catch (e: Exception) {
-                            // Resetar flag para permitir nova tentativa em caso de falha (#1608)
-                            hasTriedToStartLiveGame = false
-                            com.futebadosparcas.util.AppLogger.e("LiveGameViewModel", "Falha ao iniciar jogo ao vivo: ${e.message}", e)
-                        }
-                    }
-
                     // Buscar confirmações para mapear nomes dos jogadores
                     val confirmationsResult = gameRepository.getGameConfirmations(gameId)
                     val confirmations = confirmationsResult.getOrNull() ?: emptyList()
@@ -126,7 +113,7 @@ class LiveGameViewModel(
 
                     _uiState.value = LiveGameUiState.Success(
                         game = game,
-                        score = score ?: LiveGameScore(
+                        score = score ?: LiveScore(
                             id = gameId,
                             gameId = gameId,
                             team1Id = team1.id,
@@ -273,7 +260,7 @@ sealed class LiveGameUiState {
     object Loading : LiveGameUiState()
     data class Success(
         val game: Game,
-        val score: LiveGameScore,
+        val score: LiveScore,
         val team1: Team,
         val team2: Team,
         val team1Players: List<GameConfirmation>,

@@ -42,6 +42,22 @@
     <string name="time">Horário</string>
     <string name="location">Local</string>
     <string name="price">Valor</string>
+    <string name="validation_banner_title_held">Recompensas retidas para revisão</string>
+    <string name="validation_banner_body_held_admin">O antifraude sinalizou este jogo. XP, ranking e badges aguardam decisão administrativa com justificativa auditável.</string>
+    <string name="validation_banner_body_held_player">Este jogo está em análise pelo antifraude. XP, ranking e badges ficam pausados até o fim da revisão.</string>
+    <string name="validation_banner_title_rejected">Recompensas rejeitadas</string>
+    <string name="validation_banner_body_rejected">A revisão administrativa rejeitou as recompensas deste jogo. XP, ranking e badges não serão processados.</string>
+    <string name="validation_banner_title_approved">Recompensas liberadas manualmente</string>
+    <string name="validation_banner_body_approved">A revisão administrativa liberou este jogo para processamento de XP e demais recompensas.</string>
+    <string name="validation_banner_title_review_required">Revisão necessária</string>
+    <string name="validation_banner_body_review_required">O jogo foi finalizado com sinais de risco e precisa de revisão antes de liberar recompensas automáticas.</string>
+    <string name="validation_banner_title_low_confidence">Baixa confiança</string>
+    <string name="validation_banner_body_low_confidence">O antifraude detectou baixa confiança neste jogo. A partida segue registrada, mas merece atenção operacional.</string>
+    <string name="validation_banner_title_validated">Jogo validado</string>
+    <string name="validation_banner_body_validated">As evidências coletadas validaram este jogo para processamento normal de recompensas.</string>
+    <string name="validation_reasons_label">Sinais observados</string>
+    <string name="validation_score_chip">Score %1$d</string>
+    <string name="validation_review_reason_prefix">Motivo da revisão: %1$s</string>
 
     <!-- Schedules -->
     <string name="my_schedules">Meus Horários</string>

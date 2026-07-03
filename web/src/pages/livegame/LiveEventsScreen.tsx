@@ -20,6 +20,7 @@ import {
   Button,
   TextField,
   CircularProgress,
+  MenuItem,
   ToggleButton,
   ToggleButtonGroup,
   useTheme,
@@ -29,13 +30,14 @@ import {
 import {
   ArrowBack as BackIcon,
   Add as AddIcon,
+  SaveAlt as SaveIcon,
   SportsSoccer as SoccerIcon,
   TrendingUp as TrendingIcon,
-  Star as StarIcon,
   Person as PersonIcon,
 } from '@mui/icons-material';
-import { collection, query, where, orderBy, onSnapshot, addDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore';
+import { collection, query, where, orderBy, onSnapshot, doc, getDoc } from 'firebase/firestore';
 import { db } from '../../services/firebase';
+import { submitLiveGameEvent } from '../../services/cloudFunctions';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { LoadingState } from '../../components/common/GameCard';
@@ -47,18 +49,26 @@ import { createLogger } from '../../utils/logger';
 import { getFirestoreErrorMessage } from '../../utils/firebaseErrors';
 import { PageContainer } from '../../components/common/PageContainer';
 import { pageSpacing } from '../../theme/pageTokens';
+import type { Team } from '../../types/game';
 
 const logger = createLogger('LiveEventsScreen');
 
 interface GameEvent {
   id: string;
-  type: 'GOAL' | 'ASSIST' | 'YELLOW_CARD' | 'RED_CARD' | 'SAVE';
+  type: 'GOAL' | 'YELLOW_CARD' | 'RED_CARD' | 'SAVE';
   playerId: string;
   playerName: string;
   playerPhoto?: string;
-  team: 'A' | 'B';
+  teamId?: string;
   minute: number;
   createdAt: Date;
+}
+
+interface EventPlayerOption {
+  id: string;
+  name: string;
+  teamId: string;
+  teamName: string;
 }
 
 // #2276: interface tipada para o doc games (substitui Record<string, any>).
@@ -80,11 +90,12 @@ export const LiveEventsScreen: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [canManage, setCanManage] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [eventType, setEventType] = useState<'GOAL' | 'ASSIST' | 'YELLOW_CARD' | 'RED_CARD' | 'SAVE'>('GOAL');
-  const [selectedTeam, setSelectedTeam] = useState<'A' | 'B'>('A');
+  const [eventType, setEventType] = useState<'GOAL' | 'YELLOW_CARD' | 'RED_CARD' | 'SAVE'>('GOAL');
+  const [selectedPlayerId, setSelectedPlayerId] = useState('');
   const [minute, setMinute] = useState('0');
-  const [playerName, setPlayerName] = useState('');
-  const [playerNameTouched, setPlayerNameTouched] = useState(false); // #2231
+  const [players, setPlayers] = useState<EventPlayerOption[]>([]);
+  const [teamsById, setTeamsById] = useState<Record<string, Team>>({});
+  const [selectedPlayerTouched, setSelectedPlayerTouched] = useState(false);
   const [minuteTouched, setMinuteTouched] = useState(false); // #2231
   const [submitting, setSubmitting] = useState(false);
   const { showError } = useToast();
@@ -130,9 +141,13 @@ export const LiveEventsScreen: React.FC = () => {
           const converted = snakeToCamel(raw);
           return {
             id: d.id,
-            ...converted,
+            type: String(converted.eventType ?? converted.type ?? 'GOAL') as GameEvent['type'],
+            playerId: String(converted.playerId ?? raw.player_id ?? ''),
+            playerName: String(converted.playerName ?? raw.player_name ?? 'Jogador'),
+            teamId: typeof (converted.teamId ?? raw.team_id) === 'string' ? String(converted.teamId ?? raw.team_id) : undefined,
+            minute: Number(converted.minute ?? raw.minute ?? 0),
             createdAt: (raw.created_at || raw.createdAt)?.toDate?.() || new Date(),
-          };
+          } satisfies GameEvent;
         }) as GameEvent[];
         setEvents(data);
         setLoading(false);
@@ -147,22 +162,100 @@ export const LiveEventsScreen: React.FC = () => {
     return () => unsubscribe();
   }, [gameId]);
 
+  useEffect(() => {
+    if (!gameId) return;
+    let currentTeamsById: Record<string, Team> = {};
+    let currentConfirmationDocs: Array<{ data: () => Record<string, unknown> }> = [];
+
+    const teamsQuery = query(collection(db, 'teams'), where('game_id', '==', gameId));
+    const confirmationsQuery = query(
+      collection(db, 'confirmations'),
+      where('game_id', '==', gameId),
+    );
+
+    const syncPlayers = () => {
+      const confirmedPlayers = currentConfirmationDocs
+        .filter((confirmationDoc) => confirmationDoc.data().status === 'CONFIRMED')
+        .map((confirmationDoc) => {
+          const raw = confirmationDoc.data();
+          const playerId = String(raw.user_id ?? '');
+          const explicitTeamId = typeof raw.team_id === 'string' ? raw.team_id : undefined;
+          const inferredTeamId = explicitTeamId ?? Object.values(currentTeamsById).find((team) => team.playerIds.includes(playerId))?.id;
+          if (!playerId || !inferredTeamId) return null;
+          return {
+            id: playerId,
+            name: String(raw.user_name ?? 'Jogador'),
+            teamId: inferredTeamId,
+            teamName: currentTeamsById[inferredTeamId]?.name ?? 'Time',
+          } satisfies EventPlayerOption;
+        })
+        .filter((player): player is EventPlayerOption => player !== null);
+
+      setPlayers(confirmedPlayers);
+    };
+
+    const unsubscribeTeams = onSnapshot(
+      teamsQuery,
+      (snapshot) => {
+        const mappedTeams = snapshot.docs.reduce<Record<string, Team>>((acc, teamDoc) => {
+          const raw = teamDoc.data();
+          const converted = snakeToCamel(raw);
+          acc[teamDoc.id] = {
+            id: teamDoc.id,
+            gameId: String(raw.game_id ?? converted.gameId ?? gameId),
+            name: String(raw.name ?? converted.name ?? 'Time'),
+            color: String(raw.color ?? converted.color ?? ''),
+            playerIds: Array.isArray(raw.player_ids) ? raw.player_ids as string[] : Array.isArray(converted.playerIds) ? converted.playerIds as string[] : [],
+            score: Number(raw.score ?? converted.score ?? 0),
+          };
+          return acc;
+        }, {});
+        currentTeamsById = mappedTeams;
+        setTeamsById(mappedTeams);
+        syncPlayers();
+      },
+      (err) => {
+        logger.error('Erro ao carregar times do jogo:', err);
+      },
+    );
+
+    const unsubscribeConfirmations = onSnapshot(
+      confirmationsQuery,
+      (snapshot) => {
+        currentConfirmationDocs = snapshot.docs;
+        syncPlayers();
+      },
+      (err) => {
+        logger.error('Erro ao carregar jogadores confirmados:', err);
+      },
+    );
+
+    return () => {
+      unsubscribeTeams();
+      unsubscribeConfirmations();
+    };
+  }, [gameId]);
+
   const handleAddEvent = async () => {
-    if (!gameId || !user || !playerName.trim() || !eventType) return;
+    if (!gameId || !user || !selectedPlayerId || !eventType) return;
     setSubmitting(true);
     try {
-      await addDoc(collection(db, 'game_events'), {
-        game_id: gameId,
-        type: eventType,
-        player_id: 'manual',
-        player_name: playerName,
-        team: selectedTeam,
-        minute: parseInt(minute) || 0,
-        created_by: user.id,
-        created_at: serverTimestamp(),
+      const selectedPlayer = players.find((player) => player.id === selectedPlayerId);
+      if (!selectedPlayer) {
+        showError('Selecione um jogador confirmado para registrar o evento.');
+        return;
+      }
+
+      await submitLiveGameEvent({
+        gameId,
+        eventType,
+        playerId: selectedPlayer.id,
+        playerName: selectedPlayer.name,
+        teamId: selectedPlayer.teamId,
+        minute: parseInt(minute, 10) || 0,
       });
       setDialogOpen(false);
-      setPlayerName('');
+      setSelectedPlayerId('');
       setMinute('0');
     } catch (err: unknown) {
       showError(getFirestoreErrorMessage(err, 'Erro ao adicionar evento'));
@@ -182,7 +275,7 @@ export const LiveEventsScreen: React.FC = () => {
       case 'RED_CARD':
         return <Box sx={{ width: 12, height: 16, bgcolor: 'error.main', borderRadius: 0.5 }} />;
       case 'SAVE':
-        return <StarIcon color="warning" />;
+        return <SaveIcon color="warning" />;
       default:
         return <PersonIcon />;
     }
@@ -298,7 +391,7 @@ export const LiveEventsScreen: React.FC = () => {
                         />
                       </Box>
                     }
-                    secondary={`Time ${event.team}`}
+                        secondary={event.teamId ? (teamsById[event.teamId]?.name ?? event.teamId) : 'Time não identificado'}
                   />
                   <Chip label={`${event.minute}'`} variant="outlined" />
                 </ListItem>
@@ -323,7 +416,7 @@ export const LiveEventsScreen: React.FC = () => {
         />
       )}
 
-      <Dialog open={dialogOpen} onClose={() => { setDialogOpen(false); setPlayerNameTouched(false); setMinuteTouched(false); }} fullWidth fullScreen={isMobile} aria-labelledby="add-event-dialog-title">
+      <Dialog open={dialogOpen} onClose={() => { setDialogOpen(false); setSelectedPlayerTouched(false); setMinuteTouched(false); }} fullWidth fullScreen={isMobile} aria-labelledby="add-event-dialog-title">
         <DialogTitle id="add-event-dialog-title">{t('games.live.addEvent')}</DialogTitle>
         <DialogContent>
           <Box sx={{ py: 2 }}>
@@ -336,34 +429,28 @@ export const LiveEventsScreen: React.FC = () => {
               aria-label={t('a11y.eventType')}
             >
               <ToggleButton value="GOAL">Gol</ToggleButton>
-              <ToggleButton value="ASSIST">Assist</ToggleButton>
+              <ToggleButton value="SAVE">Defesa</ToggleButton>
               <ToggleButton value="YELLOW_CARD">Amarelo</ToggleButton>
               <ToggleButton value="RED_CARD">Vermelho</ToggleButton>
             </ToggleButtonGroup>
 
-            <ToggleButtonGroup
-              value={selectedTeam}
-              exclusive
-              onChange={(_, v) => v && setSelectedTeam(v)}
-              fullWidth
-              sx={{ mb: 2 }}
-              aria-label={t('a11y.selectTeam')}
-            >
-              <ToggleButton value="A">Time A</ToggleButton>
-              <ToggleButton value="B">Time B</ToggleButton>
-            </ToggleButtonGroup>
-
             <TextField
+              select
               fullWidth
-              label="Nome do Jogador"
-              value={playerName}
-              onChange={(e) => setPlayerName(e.target.value)}
-              onBlur={() => setPlayerNameTouched(true)}
-              error={playerNameTouched && !playerName.trim()}
-              helperText={playerNameTouched && !playerName.trim() ? t('validation.required') : ' '}
+              label="Jogador confirmado"
+              value={selectedPlayerId}
+              onChange={(e) => setSelectedPlayerId(e.target.value)}
+              onBlur={() => setSelectedPlayerTouched(true)}
+              error={selectedPlayerTouched && !selectedPlayerId}
+              helperText={selectedPlayerTouched && !selectedPlayerId ? t('validation.selectRequired') : ' '}
               sx={{ mb: 2 }}
-              inputProps={{ maxLength: 100 }}
-            />
+            >
+              {players.map((player) => (
+                <MenuItem key={player.id} value={player.id}>
+                  {player.name} - {player.teamName}
+                </MenuItem>
+              ))}
+            </TextField>
 
             <TextField
               fullWidth
@@ -380,7 +467,7 @@ export const LiveEventsScreen: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDialogOpen(false)} disabled={submitting}>{t('common.cancel')}</Button>
-          <Button variant="contained" onClick={handleAddEvent} disabled={submitting || !playerName.trim() || !eventType} startIcon={submitting ? <CircularProgress size={16} /> : undefined}>
+          <Button variant="contained" onClick={handleAddEvent} disabled={submitting || !selectedPlayerId || !eventType} startIcon={submitting ? <CircularProgress size={16} /> : undefined}>
             {submitting ? t('common.loading') : t('games.live.add')}
           </Button>
         </DialogActions>

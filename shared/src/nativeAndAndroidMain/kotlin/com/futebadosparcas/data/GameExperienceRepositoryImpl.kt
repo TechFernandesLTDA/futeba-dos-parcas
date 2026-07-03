@@ -8,7 +8,6 @@ import com.futebadosparcas.platform.firebase.FirebaseDataSource
 import com.futebadosparcas.platform.logging.PlatformLogger
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.firestore.DocumentSnapshot
-import dev.gitlive.firebase.firestore.FieldValue
 import dev.gitlive.firebase.firestore.Timestamp
 import dev.gitlive.firebase.firestore.firestore
 import kotlinx.coroutines.flow.Flow
@@ -40,44 +39,7 @@ class GameExperienceRepositoryImpl(
         return try {
             PlatformLogger.d(TAG, "Enviando voto para jogo ${vote.gameId}")
 
-            // 1. Verificar janela de tempo de votação (24h)
-            val gameSnapshot = gamesCollection.document(vote.gameId).get()
-
-            val gameStatus = gameSnapshot.get<String?>("status")
-            if (gameStatus != GameStatus.FINISHED.name) {
-                return Result.failure(Exception("Votação disponível apenas para jogos finalizados"))
-            }
-
-            val gameDateTimeTs = gameSnapshot.get<Timestamp?>("dateTime")
-            if (gameDateTimeTs != null) {
-                val gameMs = gameDateTimeTs.seconds * 1000L + gameDateTimeTs.nanoseconds / 1_000_000L
-                val voteDeadlineMs = gameMs + (VOTE_WINDOW_HOURS * 60 * 60 * 1000L)
-                val nowMs = Clock.System.now().toEpochMilliseconds()
-                if (nowMs > voteDeadlineMs) {
-                    return Result.failure(Exception("Prazo de votação expirado (24h após o jogo)"))
-                }
-            }
-
-            // 2. ID determinístico para evitar votos duplicados na mesma categoria
-            val voteId = "${vote.gameId}_${vote.voterId}_${vote.category.name}"
-            val voteRef = votesCollection.document(voteId)
-
-            val existingVote = voteRef.get()
-            if (existingVote.exists) {
-                return Result.failure(Exception("Você já votou nesta categoria"))
-            }
-
-            voteRef.set(
-                mapOf(
-                    "id" to voteId,
-                    "game_id" to vote.gameId,
-                    "voter_id" to vote.voterId,
-                    "voted_player_id" to vote.votedPlayerId,
-                    "category" to vote.category.name,
-                    "voted_at" to FieldValue.serverTimestamp,
-                )
-            )
-
+            firebaseDataSource.submitMvpVoteViaCallable(vote).getOrThrow()
             PlatformLogger.d(TAG, "Voto enviado com sucesso")
             Result.success(Unit)
         } catch (e: Exception) {

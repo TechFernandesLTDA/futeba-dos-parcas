@@ -27,6 +27,9 @@ import {
   NotificationType,
   saveNotificationToFirestore,
 } from "../notifications/helpers";
+import {
+  calculatePresenceEvidence,
+} from "../game-validation/presence";
 
 const DEFAULT_RADIUS_METERS = 200;
 const MAX_RADIUS_METERS = 2000;
@@ -44,6 +47,26 @@ interface CheckInRequest {
 interface CheckInTransactionResult {
   already: boolean;
   playerName: string;
+}
+
+interface RecentCheckInCandidate {
+  confId: string;
+  gameId: string;
+  checkedInAtMs: number | null;
+  gameDateTimeMs: number | null;
+  lat: number | null;
+  lng: number | null;
+}
+
+export interface CheckInTravelSignal {
+  suspiciousImpossibleTravel: boolean;
+  suspiciousLateCheckIn: boolean;
+  distanceMeters: number | null;
+  minutesGap: number | null;
+  distanceBucket: string | null;
+  timeBucket: string | null;
+  lateCheckInMinutes: number | null;
+  conflictConfirmationIds: string[];
 }
 
 /**
@@ -69,6 +92,247 @@ function haversineMeters(
     Math.sin(dLng / 2) ** 2;
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
+}
+
+/**
+ * Converte timestamps heterogêneos do Firestore para epoch ms.
+ *
+ * @param {unknown} value Valor bruto.
+ * @return {number | null} Epoch ms ou null quando indisponível.
+ */
+function toTimestampMs(value: unknown): number | null {
+  if (
+    typeof value === "object" &&
+    value !== null &&
+    "toDate" in value &&
+    typeof (value as {toDate?: unknown}).toDate === "function"
+  ) {
+    return (value as {toDate: () => Date}).toDate().getTime();
+  }
+  if (value instanceof Date) {
+    return value.getTime();
+  }
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+  if (typeof value === "string") {
+    const parsed = Date.parse(value);
+    return Number.isNaN(parsed) ? null : parsed;
+  }
+  return null;
+}
+
+/**
+ * Agrupa distância para auditoria legível e agregações simples.
+ *
+ * @param {number} distanceMeters Distância em metros.
+ * @return {string} Bucket textual.
+ */
+function getDistanceBucket(distanceMeters: number): string {
+  if (distanceMeters >= 50000) return "50KM_PLUS";
+  if (distanceMeters >= 20000) return "20KM_50KM";
+  if (distanceMeters >= 5000) return "5KM_20KM";
+  return "UNDER_5KM";
+}
+
+/**
+ * Agrupa intervalo temporal entre check-ins para auditoria.
+ *
+ * @param {number} minutesGap Intervalo em minutos.
+ * @return {string} Bucket textual.
+ */
+function getTimeBucket(minutesGap: number): string {
+  if (minutesGap < 15) return "UNDER_15_MIN";
+  if (minutesGap < 60) return "15_TO_59_MIN";
+  if (minutesGap < 180) return "60_TO_179_MIN";
+  return "180_MIN_PLUS";
+}
+
+/**
+ * Classifica sinais complementares de check-in suspeito.
+ *
+ * @param {object} input Contexto do check-in atual e histórico recente.
+ * @return {CheckInTravelSignal} Sinais derivados para score/auditoria.
+ */
+export function classifyCheckInTravelSignal(input: {
+  gameStatus: string;
+  gameDateTimeMs: number | null;
+  checkedInAtMs: number;
+  lat: number;
+  lng: number;
+  recentCheckIns: RecentCheckInCandidate[];
+}): CheckInTravelSignal {
+  const nearestPrevious = input.recentCheckIns
+    .filter((item) => item.lat != null && item.lng != null)
+    .map((item) => ({
+      ...item,
+      referenceMs: item.checkedInAtMs ?? item.gameDateTimeMs,
+    }))
+    .filter((item) =>
+      item.referenceMs != null &&
+      item.referenceMs < input.checkedInAtMs,
+    )
+    .sort((a, b) => (b.referenceMs ?? 0) - (a.referenceMs ?? 0))[0];
+
+  const lateCheckInMinutes =
+    input.gameStatus !== "LIVE" &&
+      input.gameDateTimeMs != null ?
+      Math.max(
+        0,
+        Math.round(
+          (input.checkedInAtMs - input.gameDateTimeMs) / 60000,
+        ),
+      ) :
+      null;
+  const suspiciousLateCheckIn =
+    lateCheckInMinutes != null && lateCheckInMinutes > 180;
+
+  if (!nearestPrevious) {
+    return {
+      suspiciousImpossibleTravel: false,
+      suspiciousLateCheckIn,
+      distanceMeters: null,
+      minutesGap: null,
+      distanceBucket: null,
+      timeBucket: null,
+      lateCheckInMinutes,
+      conflictConfirmationIds: [],
+    };
+  }
+
+  const distanceMeters = haversineMeters(
+    input.lat,
+    input.lng,
+    nearestPrevious.lat!,
+    nearestPrevious.lng!,
+  );
+  const minutesGap = Math.max(
+    0,
+    Math.round(
+      (input.checkedInAtMs - (nearestPrevious.referenceMs ?? 0)) / 60000,
+    ),
+  );
+  const distanceKm = distanceMeters / 1000;
+  const suspiciousImpossibleTravel =
+    distanceMeters >= 20000 &&
+    minutesGap + 15 < distanceKm * 0.6;
+
+  return {
+    suspiciousImpossibleTravel,
+    suspiciousLateCheckIn,
+    distanceMeters: Math.round(distanceMeters),
+    minutesGap,
+    distanceBucket: getDistanceBucket(distanceMeters),
+    timeBucket: getTimeBucket(minutesGap),
+    lateCheckInMinutes,
+    conflictConfirmationIds:
+      suspiciousImpossibleTravel ? [nearestPrevious.confId] : [],
+  };
+}
+
+/**
+ * Persiste sinais suspeitos de check-in em confirmation e coleção de auditoria.
+ *
+ * @param {object} input Dados normalizados do check-in.
+ * @return {Promise<void>} Promise concluída após persistência.
+ */
+async function recordCheckInSignals(input: {
+  uid: string;
+  gameId: string;
+  gameStatus: string;
+  gameDateTime: Timestamp | undefined;
+  lat: number;
+  lng: number;
+  checkedInAtMs: number;
+  confId: string;
+}): Promise<void> {
+  const previousCheckInsSnap = await db()
+    .collection("confirmations")
+    .where("user_id", "==", input.uid)
+    .where("checked_in", "==", true)
+    .limit(50)
+    .get();
+
+  const signal = classifyCheckInTravelSignal({
+    gameStatus: input.gameStatus,
+    gameDateTimeMs: toTimestampMs(input.gameDateTime),
+    checkedInAtMs: input.checkedInAtMs,
+    lat: input.lat,
+    lng: input.lng,
+    recentCheckIns: previousCheckInsSnap.docs
+      .map((doc) => {
+        const data = doc.data();
+        return {
+          confId: doc.id,
+          gameId: String(data.game_id ?? ""),
+          checkedInAtMs: toTimestampMs(data.checked_in_at),
+          gameDateTimeMs: toTimestampMs(data.game_date_time),
+          lat:
+            typeof data.check_in_lat_approx === "number" ?
+              data.check_in_lat_approx :
+              null,
+          lng:
+            typeof data.check_in_lng_approx === "number" ?
+              data.check_in_lng_approx :
+              null,
+        };
+      })
+      .filter((item) =>
+        item.gameId.length > 0 &&
+        item.gameId !== input.gameId,
+      ),
+  });
+
+  if (
+    !signal.suspiciousImpossibleTravel &&
+    !signal.suspiciousLateCheckIn
+  ) {
+    return;
+  }
+
+  const batch = db().batch();
+  batch.set(
+    db().doc(`confirmations/${input.confId}`),
+    {
+      suspicious_impossible_travel:
+        signal.suspiciousImpossibleTravel,
+      suspicious_impossible_travel_distance_m:
+        signal.distanceMeters,
+      suspicious_impossible_travel_minutes_gap:
+        signal.minutesGap,
+      suspicious_impossible_travel_distance_bucket:
+        signal.distanceBucket,
+      suspicious_impossible_travel_time_bucket:
+        signal.timeBucket,
+      suspicious_late_checkin:
+        signal.suspiciousLateCheckIn,
+      suspicious_late_checkin_minutes:
+        signal.lateCheckInMinutes,
+    },
+    {merge: true},
+  );
+  batch.set(
+    db().doc(`game_validation_signals/checkin_${input.gameId}_${input.uid}`),
+    {
+      type: "CHECKIN_SIGNAL",
+      target_user_id: input.uid,
+      target_game_id: input.gameId,
+      source_confirmation_id: input.confId,
+      suspicious_impossible_travel:
+        signal.suspiciousImpossibleTravel,
+      suspicious_late_checkin:
+        signal.suspiciousLateCheckIn,
+      distance_m: signal.distanceMeters,
+      minutes_gap: signal.minutesGap,
+      distance_bucket: signal.distanceBucket,
+      time_bucket: signal.timeBucket,
+      late_checkin_minutes: signal.lateCheckInMinutes,
+      conflict_conf_ids: signal.conflictConfirmationIds,
+      timestamp: FieldValue.serverTimestamp(),
+    },
+    {merge: true},
+  );
+  await batch.commit();
 }
 
 export const checkInToGame = onCall(
@@ -291,7 +555,16 @@ export const checkInToGame = onCall(
     // confirmacao dentro de transaction para evitar
     // race entre checar checked_in e escrever.
     const confId = `${gameId}_${uid}`;
+    const checkedInAtMs = Date.now();
     const confRef = db().doc(`confirmations/${confId}`);
+    const presenceEvidence = calculatePresenceEvidence({
+      distanceMeters: hasGps ? dist : radius,
+      radiusMeters: radius,
+      accuracyMeters: typeof accuracy === "number" ?
+        Math.round(accuracy) :
+        null,
+      method: qrValid ? "qr" : "gps",
+    });
 
     const checkInResult = await db().runTransaction(
       async (tx): Promise<CheckInTransactionResult> => {
@@ -344,6 +617,8 @@ export const checkInToGame = onCall(
               null,
             check_in_distance_m: hasGps ? Math.round(dist) : null,
             check_in_method: qrValid ? "qr" : "gps",
+            check_in_radius_m: radius,
+            ...presenceEvidence,
             was_present: true,
           },
           {merge: true},
@@ -356,6 +631,27 @@ export const checkInToGame = onCall(
       });
 
     if (!checkInResult.already) {
+      try {
+        await recordCheckInSignals({
+          uid,
+          gameId,
+          gameStatus: status,
+          gameDateTime,
+          lat: lat!,
+          lng: lng!,
+          checkedInAtMs,
+          confId,
+        });
+      } catch (error) {
+        logger.warn("[CHECKIN_TRAVEL_SIGNAL_FAILED]", {
+          uid,
+          gameId,
+          error: error instanceof Error ?
+            error.message :
+            String(error),
+        });
+      }
+
       await notifyConfirmedPlayersAboutCheckIn(
         gameId,
         uid,

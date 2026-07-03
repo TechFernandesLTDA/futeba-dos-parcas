@@ -785,6 +785,49 @@ actual class FirebaseDataSource actual constructor() {
         }
     }
 
+    actual suspend fun submitMvpVoteViaCallable(vote: MVPVote): Result<Unit> {
+        return try {
+            if (vote.category == VoteCategory.CUSTOM) {
+                return Result.failure(Exception("Categoria de voto não suportada pelo servidor"))
+            }
+
+            val functions = Firebase.functions(FUNCTIONS_REGION)
+            functions.httpsCallable("submitMvpVote")
+                .invoke(
+                    mapOf(
+                        "gameId" to vote.gameId,
+                        "votedPlayerId" to vote.votedPlayerId,
+                        "category" to vote.category.name
+                    )
+                )
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    actual suspend fun startGameLifecycleViaCallable(gameId: String): Result<Unit> {
+        return try {
+            val functions = Firebase.functions(FUNCTIONS_REGION)
+            functions.httpsCallable("startGameLifecycle")
+                .invoke(mapOf("gameId" to gameId))
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    actual suspend fun finishGameLifecycleViaCallable(gameId: String): Result<Unit> {
+        return try {
+            val functions = Firebase.functions(FUNCTIONS_REGION)
+            functions.httpsCallable("finishGameLifecycle")
+                .invoke(mapOf("gameId" to gameId))
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     actual suspend fun searchUsers(query: String, limit: Int): Result<List<User>> {
         println("FirebaseDataSource: searchUsers called with query='$query', limit=$limit")
         return try {
@@ -1307,22 +1350,21 @@ actual class FirebaseDataSource actual constructor() {
 
     actual suspend fun addGameEvent(gameId: String, event: GameEvent): Result<GameEvent> {
         return try {
-            val docRef = firestore.collection("game_events").document
-            val eventData = mapOf(
-                "id" to docRef.id,
-                "game_id" to gameId,
-                "event_type" to event.eventType,
-                "player_id" to event.playerId,
-                "player_name" to event.playerName,
-                "team_id" to event.teamId,
-                "assisted_by_id" to event.assistedById,
-                "assisted_by_name" to event.assistedByName,
-                "minute" to event.minute,
-                "created_by" to event.createdBy,
-                "created_at" to FieldValue.serverTimestamp
-            )
-            docRef.set(eventData)
-            Result.success(event.copy(id = docRef.id))
+            val functions = Firebase.functions(FUNCTIONS_REGION)
+            functions.httpsCallable("submitLiveGameEvent")
+                .invoke(
+                    mapOf(
+                        "gameId" to gameId,
+                        "eventType" to event.eventType,
+                        "playerId" to event.playerId,
+                        "playerName" to event.playerName,
+                        "teamId" to event.teamId,
+                        "assistedById" to event.assistedById,
+                        "assistedByName" to event.assistedByName,
+                        "minute" to event.minute,
+                    )
+                )
+            Result.success(event)
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -1586,110 +1628,14 @@ actual class FirebaseDataSource actual constructor() {
 
     actual suspend fun deleteGameEvent(gameId: String, eventId: String): Result<Unit> {
         return try {
-            // Validar permissão
-            if (!canManageGameEvents(gameId)) {
-                return Result.failure(Exception("Você não tem permissão para deletar eventos"))
-            }
-
-            // Buscar o evento antes de deletar
-            val eventDoc = firestore.collection("game_events").document(eventId).get()
-            val event = eventDoc.toGameEventOrNull()
-                ?: return Result.failure(Exception("Evento não encontrado"))
-
-            val eventType = event.getEventTypeEnum()
-
-            // Reverter estatísticas em transação
-            firestore.runTransaction<Unit> {
-                val scoreDocRef = firestore.collection("live_scores").document(gameId)
-                val gameDocRef = firestore.collection("games").document(gameId)
-
-                // Reverter placar se for gol
-                if (eventType == GameEventType.GOAL) {
-                    val scoreSnapshot = get(scoreDocRef)
-                    val score = scoreSnapshot.toLiveScoreOrNull()
-
-                    if (score != null) {
-                        when {
-                            score.team1Id == event.teamId -> {
-                                val newScore = maxOf(0, score.team1Score - 1)
-                                update(scoreDocRef, mapOf("team1_score" to newScore))
-                                update(gameDocRef, mapOf("team1_score" to newScore))
-                            }
-                            score.team2Id == event.teamId -> {
-                                val newScore = maxOf(0, score.team2Score - 1)
-                                update(scoreDocRef, mapOf("team2_score" to newScore))
-                                update(gameDocRef, mapOf("team2_score" to newScore))
-                            }
-                        }
-                    }
-                }
-
-                // Reverter estatísticas do jogador
-                if (event.playerId.isNotEmpty()) {
-                    val statsId = "${gameId}_${event.playerId}"
-                    val statsDocRef = firestore.collection("live_player_stats").document(statsId)
-                    val confirmationId = "${gameId}_${event.playerId}"
-                    val confDocRef = firestore.collection("confirmations").document(confirmationId)
-
-                    val statsSnapshot = get(statsDocRef)
-
-                    if (statsSnapshot.exists) {
-                        when (eventType) {
-                            GameEventType.GOAL -> update(statsDocRef, mapOf("goals" to maxOf(0, statsSnapshot.getGoals() - 1)))
-                            GameEventType.SAVE -> update(statsDocRef, mapOf("saves" to maxOf(0, statsSnapshot.getSaves() - 1)))
-                            GameEventType.YELLOW_CARD -> update(statsDocRef, mapOf("yellow_cards" to maxOf(0, statsSnapshot.getYellowCards() - 1)))
-                            GameEventType.RED_CARD -> update(statsDocRef, mapOf("red_cards" to maxOf(0, statsSnapshot.getRedCards() - 1)))
-                            else -> {}
-                        }
-                    }
-
-                    // Reverter em confirmations
-                    val confSnapshot = get(confDocRef)
-                    if (confSnapshot.exists) {
-                        when (eventType) {
-                            GameEventType.GOAL -> {
-                                val currentGoals = confSnapshot.get<Long?>("goals") ?: 0
-                                update(confDocRef, mapOf("goals" to maxOf(0, currentGoals - 1)))
-                            }
-                            GameEventType.YELLOW_CARD -> {
-                                val currentYellow = confSnapshot.get<Long?>("yellow_cards") ?: 0
-                                update(confDocRef, mapOf("yellow_cards" to maxOf(0, currentYellow - 1)))
-                            }
-                            GameEventType.RED_CARD -> {
-                                val currentRed = confSnapshot.get<Long?>("red_cards") ?: 0
-                                update(confDocRef, mapOf("red_cards" to maxOf(0, currentRed - 1)))
-                            }
-                            GameEventType.SAVE -> {
-                                val currentSaves = confSnapshot.get<Long?>("saves") ?: 0
-                                update(confDocRef, mapOf("saves" to maxOf(0, currentSaves - 1)))
-                            }
-                            else -> {}
-                        }
-                    }
-                }
-
-                // Reverter assistência se for gol com assistência
-                if (eventType == GameEventType.GOAL && !event.assistedById.isNullOrEmpty()) {
-                    val assistStatsId = "${gameId}_${event.assistedById}"
-                    val assistStatsDocRef = firestore.collection("live_player_stats").document(assistStatsId)
-                    val assistConfDocRef = firestore.collection("confirmations").document(assistStatsId)
-
-                    val assistSnapshot = get(assistStatsDocRef)
-                    if (assistSnapshot.exists) {
-                        update(assistStatsDocRef, mapOf("assists" to maxOf(0, assistSnapshot.getAssists() - 1)))
-                    }
-
-                    val assistConfSnapshot = get(assistConfDocRef)
-                    if (assistConfSnapshot.exists) {
-                        val currentAssists = assistConfSnapshot.get<Long?>("assists") ?: 0
-                        update(assistConfDocRef, mapOf("assists" to maxOf(0, currentAssists - 1)))
-                    }
-                }
-
-                // Deletar o evento
-                delete(firestore.collection("game_events").document(eventId))
-            }
-
+            val functions = Firebase.functions(FUNCTIONS_REGION)
+            functions.httpsCallable("deleteLiveGameEvent")
+                .invoke(
+                    mapOf(
+                        "gameId" to gameId,
+                        "eventId" to eventId,
+                    )
+                )
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
@@ -3801,6 +3747,24 @@ private fun dev.gitlive.firebase.firestore.DocumentSnapshot.toGameOrNull(): Game
         visibility = get<String?>("visibility") ?: GameVisibility.GROUP_ONLY.name,
         createdAt = safeLong("created_at") ?: safeLong("createdAt"),
         xpProcessed = get<Boolean?>("xp_processed") ?: get<Boolean?>("xpProcessed") ?: false,
+        xpProcessing = get<Boolean?>("xp_processing") ?: get<Boolean?>("xpProcessing") ?: false,
+        xpRewardStatus = get<String?>("xp_reward_status") ?: get<String?>("xpRewardStatus"),
+        xpRewardHeldAt = safeLong("xp_reward_held_at") ?: safeLong("xpRewardHeldAt"),
+        xpRewardHoldReasons = ((get<List<*>?>("xp_reward_hold_reasons")
+            ?: get<List<*>?>("xpRewardHoldReasons")))?.mapNotNull { it as? String } ?: emptyList(),
+        xpRewardReviewDecision = get<String?>("xp_reward_review_decision") ?: get<String?>("xpRewardReviewDecision"),
+        xpRewardReviewedAt = safeLong("xp_reward_reviewed_at") ?: safeLong("xpRewardReviewedAt"),
+        xpRewardReviewedBy = get<String?>("xp_reward_reviewed_by") ?: get<String?>("xpRewardReviewedBy"),
+        xpRewardReviewReason = get<String?>("xp_reward_review_reason") ?: get<String?>("xpRewardReviewReason"),
+        xpRewardReviewPreviousStatus = get<String?>("xp_reward_review_previous_status") ?: get<String?>("xpRewardReviewPreviousStatus"),
+        xpRewardReviewNewStatus = get<String?>("xp_reward_review_new_status") ?: get<String?>("xpRewardReviewNewStatus"),
+        validationStatus = get<String?>("validation_status") ?: get<String?>("validationStatus"),
+        validationScore = safeInt("validation_score") ?: safeInt("validationScore"),
+        validationVersion = safeInt("validation_version") ?: safeInt("validationVersion"),
+        validationUpdatedAt = safeLong("validation_updated_at") ?: safeLong("validationUpdatedAt"),
+        validationMode = get<String?>("validation_mode") ?: get<String?>("validationMode"),
+        validationReasons = ((get<List<*>?>("validation_reasons")
+            ?: get<List<*>?>("validationReasons")))?.mapNotNull { it as? String } ?: emptyList(),
         mvpId = get<String?>("mvp_id") ?: get<String?>("mvpId"),
         team1Score = safeInt("team1_score") ?: safeInt("team1Score") ?: 0,
         team2Score = safeInt("team2_score") ?: safeInt("team2Score") ?: 0,

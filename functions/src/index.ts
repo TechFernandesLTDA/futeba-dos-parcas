@@ -20,6 +20,12 @@ import {
   getAllBadgesToAward,
 } from "./badges/badge-helper";
 import {isGameShape} from "./validation/guards";
+import {
+  buildGameValidationFromFirestore,
+} from "./game-validation/aggregate";
+import {
+  isScoreConsistentFromEventStream,
+} from "./games/live-events";
 
 // Padroniza região default de TODAS as functions v2 que não especificam
 // region explicitamente. Antes, 15 functions ficavam em us-central1
@@ -287,11 +293,24 @@ export const onGameStatusUpdate = onDocumentUpdated(
       );
     }
 
+    const releasedForProcessing =
+      before.status === "FINISHED" &&
+      after.status === "FINISHED" &&
+      before.xp_reward_status ===
+        "HELD_FOR_REVIEW" &&
+      after.xp_reward_status === "ELIGIBLE" &&
+      after.xp_reward_review_decision ===
+        "APPROVED";
+
     // Check Trigger Conditions:
-    // Status changed to FINISHED and xp not yet processed
+    // Status changed to FINISHED or admin released
+    // a held game back into processing.
     if (
-      before.status !== "FINISHED" &&
-      after.status === "FINISHED"
+      (
+        before.status !== "FINISHED" &&
+        after.status === "FINISHED"
+      ) ||
+      releasedForProcessing
     ) {
       const gameRef = event.data.after.ref;
       const lockResult = await db().runTransaction(
@@ -371,6 +390,7 @@ export const onGameStatusUpdate = onDocumentUpdated(
           settingsSnap,
           seasonSnap,
           gameSnap,
+          gameEventsSnap,
         ] = await Promise.all([
           db().collection("confirmations")
             .where("game_id", "==", gameId)
@@ -391,6 +411,10 @@ export const onGameStatusUpdate = onDocumentUpdated(
             .get(),
           db().collection("games")
             .doc(gameId)
+            .get(),
+          db().collection("game_events")
+            .where("game_id", "==", gameId)
+            .limit(500)
             .get(),
         ]);
 
@@ -454,6 +478,123 @@ export const onGameStatusUpdate = onDocumentUpdated(
               `${gameData.status}`,
           });
           return;
+        }
+
+        const manualRewardApproval =
+          gameData.xp_reward_review_decision ===
+          "APPROVED";
+        const liveScoreData =
+          liveScoreDoc.exists ?
+            liveScoreDoc.data() :
+            undefined;
+        const scoreEventConsistent =
+          liveScoreData &&
+          typeof liveScoreData.team1_id === "string" &&
+          typeof liveScoreData.team2_id === "string" ?
+            isScoreConsistentFromEventStream(
+              gameEventsSnap.docs,
+              liveScoreData.team1_id,
+              liveScoreData.team2_id,
+              typeof liveScoreData.team1_score ===
+                "number" ?
+                liveScoreData.team1_score :
+                gameData.team1_score ?? 0,
+              typeof liveScoreData.team2_score ===
+                "number" ?
+                liveScoreData.team2_score :
+                gameData.team2_score ?? 0,
+            ) :
+            undefined;
+
+        try {
+          const validationResult =
+            buildGameValidationFromFirestore({
+              confirmations: confirmationsSnap.docs
+                .map((doc) => doc.data()),
+              eventCount: gameEventsSnap.size,
+              scoreEventConsistent,
+              mode: "SOFT_GATE",
+            });
+          await event.data.after.ref.update({
+            ...validationResult,
+            xp_reward_status:
+              validationResult.validation_status ===
+                "REVIEW_REQUIRED" &&
+              !manualRewardApproval ?
+                "HELD_FOR_REVIEW" :
+                "ELIGIBLE",
+            validation_updated_at:
+              FieldValue.serverTimestamp(),
+          });
+          logger.info(
+            "[GAME_VALIDATION_GATE] " +
+            `Game ${gameId}: score ` +
+            `${validationResult.validation_score}, ` +
+            `status ${validationResult.validation_status}`,
+            {
+              reasons:
+                validationResult.validation_reasons,
+              version:
+                validationResult.validation_version,
+            },
+          );
+
+          if (
+            validationResult.validation_status ===
+              "REVIEW_REQUIRED" &&
+            !manualRewardApproval
+          ) {
+            await event.data.after.ref.update({
+              xp_processing: false,
+              xp_reward_status: "HELD_FOR_REVIEW",
+              xp_reward_held_at:
+                FieldValue.serverTimestamp(),
+              xp_reward_hold_reasons:
+                validationResult.validation_reasons,
+              xp_processing_error:
+                "XP held by validation gate",
+            });
+            logger.warn(
+              "[GAME_VALIDATION_GATE] XP held for " +
+              `game ${gameId}`,
+              {
+                score:
+                  validationResult.validation_score,
+                reasons:
+                  validationResult.validation_reasons,
+              },
+            );
+            return;
+          }
+
+          if (
+            validationResult.validation_status ===
+              "REVIEW_REQUIRED" &&
+            manualRewardApproval
+          ) {
+            logger.warn(
+              "[GAME_VALIDATION_GATE] Processing " +
+              `manual override for game ${gameId}`,
+              {
+                score:
+                  validationResult.validation_score,
+                reasons:
+                  validationResult.validation_reasons,
+                reviewedBy:
+                  gameData.xp_reward_reviewed_by,
+              },
+            );
+          }
+        } catch (validationError) {
+          logger.warn(
+            "[GAME_VALIDATION_GATE] Falha ao calcular " +
+            `score do jogo ${gameId}`,
+            {
+              error: validationError instanceof Error ?
+                validationError.message :
+                String(validationError),
+            },
+          );
         }
 
         // Validar que confirmações possuem
@@ -1187,6 +1328,7 @@ export const onGameStatusUpdate = onDocumentUpdated(
           xp_processed: true,
           xp_processing: false,
           xp_processed_at: now,
+          xp_reward_status: "PROCESSED",
         });
 
         logger.info(
@@ -2210,6 +2352,17 @@ export {onGameEventCreated} from "./voting/events-rate-limit";
 
 // SECFIX #426: server-side check-in com validacao GPS + distancia
 export {checkInToGame, generateCheckinToken} from "./voting/check-in";
+
+// #3208: lifecycle server-side para iniciar/finalizar jogos
+export {
+  startGameLifecycle,
+  finishGameLifecycle,
+} from "./games/lifecycle";
+export {reviewHeldGameRewards} from "./games/reward-review";
+export {
+  submitLiveGameEvent,
+  deleteLiveGameEvent,
+} from "./games/live-events";
 
 // Issue #2968: reputacao leve pos-jogo com agregacao server-side
 export {submitPostGameReputation} from "./reputation/post-game-reputation";

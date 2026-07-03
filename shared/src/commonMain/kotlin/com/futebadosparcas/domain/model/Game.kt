@@ -133,7 +133,22 @@ data class Game(
     @SerialName("xp_processed") val xpProcessed: Boolean = false,
     // Flag de lock: Cloud Function está processando XP (evita race condition com Android)
     @SerialName("xp_processing") val xpProcessing: Boolean = false,
+    @SerialName("xp_reward_status") val xpRewardStatus: String? = null,
+    @SerialName("xp_reward_held_at") val xpRewardHeldAt: Long? = null,
+    @SerialName("xp_reward_hold_reasons") val xpRewardHoldReasons: List<String> = emptyList(),
+    @SerialName("xp_reward_review_decision") val xpRewardReviewDecision: String? = null,
+    @SerialName("xp_reward_reviewed_at") val xpRewardReviewedAt: Long? = null,
+    @SerialName("xp_reward_reviewed_by") val xpRewardReviewedBy: String? = null,
+    @SerialName("xp_reward_review_reason") val xpRewardReviewReason: String? = null,
+    @SerialName("xp_reward_review_previous_status") val xpRewardReviewPreviousStatus: String? = null,
+    @SerialName("xp_reward_review_new_status") val xpRewardReviewNewStatus: String? = null,
     @SerialName("mvp_id") val mvpId: String? = null,
+    @SerialName("validation_status") val validationStatus: String? = null,
+    @SerialName("validation_score") val validationScore: Int? = null,
+    @SerialName("validation_version") val validationVersion: Int? = null,
+    @SerialName("validation_updated_at") val validationUpdatedAt: Long? = null,
+    @SerialName("validation_mode") val validationMode: String? = null,
+    @SerialName("validation_reasons") val validationReasons: List<String> = emptyList(),
 
     // Placar
     @SerialName("team1_score") val team1Score: Int = 0,
