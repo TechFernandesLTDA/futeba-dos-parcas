@@ -24,6 +24,24 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ## Android
 
+### [1.33.0] - 2026-07-03
+
+#### Adicionado
+- Suporte Android a lifecycle e live operations via callable em `StartGameUseCase`, `FinishLiveGameUseCase` e camadas de repositório.
+- Campos e mapeamentos de validação em `Game.kt`, `ModelMappers.kt` e fontes Firebase para refletir confidence score, review status e reward hold.
+
+#### Mudado
+- `GameDetailScreen`, `LiveGameViewModel`, `LiveEventsViewModel` e `LiveStatsViewModel` passaram a depender de fluxos server-side para ações sensíveis.
+- `GameExperienceRepositoryImpl` e repositórios Firebase foram alinhados ao gate de XP e aos novos estados do jogo.
+
+#### Corrigido
+- Ajustes de compatibilidade entre Android, shared e Functions para evitar início/fim de jogo fora do contrato novo de validação.
+
+#### Segurança
+- O cliente Android deixou de depender de escritas diretas para estados críticos do jogo e passou a operar com backend auditável.
+
+_Issues: #3208, #3209, #3211, #3213, #3214, #3215, #3216 · PRs: #3218_
+
 ### [1.32.2] - 2026-06-30
 
 #### Mudado
@@ -78,6 +96,26 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 - Bump de versão de manutenção após a mega audit wave de 2026-05-11, sem mudanças funcionais no Android nesta tag.
 
 ## Web
+
+### [1.46.0] - 2026-07-03
+
+#### Adicionado
+- `web/src/pages/admin/GameReviewQueueScreen.tsx` com fila de revisão para jogos retidos por antifraude e estados de decisão.
+- `web/src/services/cloudFunctions.ts` e testes para callable de lifecycle, live events e ações administrativas de revisão/recompensa.
+- Modelagem de validação expandida em `web/src/types/game.ts` para score, status, reward hold e auditoria visível na UI.
+
+#### Mudado
+- `GameDetailScreen`, `LiveGameScreen`, `LiveEventsScreen` e `MVPVoteScreen` passaram a consumir fluxos server-side para ações críticas.
+- `GamesTab`, `GroupsTab`, `ProfileTab` e `useGames` foram alinhados aos novos estados e restrições de antifraude.
+
+#### Corrigido
+- Follow-ups da auditoria: cap de milestones XP, temporada ativa, reativação de invite code, retry de push multi-device, paginação e deletes batch-safe, Grid2 no home e consistência de badges/leaderboard.
+- Regras e UX do web ficaram coerentes com o endurecimento de `firestore.rules` para impedir transições e escritas críticas no cliente.
+
+#### Segurança
+- Votação, início/fim de jogo, eventos críticos, score ao vivo e revisão de recompensa passaram a depender de validação no servidor e trilha de auditoria.
+
+_Issues: #3199, #3200, #3201, #3202, #3208, #3209, #3211, #3213, #3214, #3215, #3216, #3219, #3220, #3221, #3222, #3223, #3224, #3225, #3226 · PRs: #3218, #3227_
 
 ### [1.45.0] - 2026-07-02
 
@@ -794,6 +832,27 @@ _Issues: #1465, #1479, #1421, #1420 · PRs: #1465, #1479, #1421, #1420, #1417_
 _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
+
+### [1.5.0] - 2026-07-03
+
+#### Adicionado
+- `functions/src/games/lifecycle.ts` com callables server-side para iniciar e finalizar partidas com validações centrais.
+- `functions/src/games/live-events.ts`, `functions/src/voting/mvp-voting.ts` e `functions/src/voting/check-in.ts` para consolidar score, eventos críticos e voto MVP no servidor.
+- `functions/src/games/reward-review.ts` e agregadores em `functions/src/game-validation/` para revisão administrativa, confidence score e retenção/liberação de XP.
+
+#### Mudado
+- `functions/src/xp/pipeline.ts` e `functions/src/xp/processing.ts` agora bloqueiam ranking, badges e XP automáticos quando o jogo exige revisão ou liberação explícita.
+- `functions/src/games/auto-close-past-games.ts` passou a orientar fechamento por evidências em vez de premiar jogos de baixa confiança.
+- `functions/src/index.ts` foi reorganizado para expor os novos handlers de lifecycle, live events, reward review e antifraude.
+
+#### Corrigido
+- Audit follow-ups em temporada ativa, engine de recorrência, limits mensais, xp milestones, game badges, invite reactivation, batch sender, reminders paginados e season idempotency.
+- Correções de consistência transacional em cache de leaderboard, processamento de XP e composição de estatísticas derivadas.
+
+#### Segurança
+- `firestore.rules` e funções passaram a bloquear transições client-side para `LIVE` e `FINISHED`, votos diretos em `mvp_votes` e escritas críticas em `game_events` e dados derivados.
+
+_Issues: #3199, #3200, #3201, #3202, #3208, #3209, #3211, #3213, #3214, #3215, #3216, #3219, #3220, #3221, #3222, #3223, #3224, #3225 · PRs: #3218, #3227_
 
 ### [1.4.0] - 2026-07-02
 
