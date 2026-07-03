@@ -243,6 +243,54 @@ Ainda precisa de fechamento para review final do PR:
 - alinhar o estado final do PR remoto, pois parte dos commits locais pode
   depender de permissao de push/autenticacao GitHub.
 
+### Snapshot de prontidao para review (2026-07-03)
+
+Estado local observado ao final desta sessao:
+
+- branch local limpa em `feat/evidence-game-antifraud`;
+- branch local esta `1381` commits atras e `5` commits a frente de
+  `origin/feat/evidence-game-antifraud`;
+- PR draft remoto `#3218` ainda reflete o estado remoto anterior e, por isso,
+  ainda nao inclui os commits locais finais desta sessao.
+
+Commits locais mais relevantes ainda nao refletidos no PR remoto:
+
+- `135ff361` `feat: surface antifraud validation state on android`
+- `bc373852` `feat: wire antifraud validation state into android game details`
+- `b41dba90` `docs: capture antifraud branch progress snapshot`
+- `9aa83909` `feat: surface auto-close antifraud reviews in admin queue`
+
+Validacoes executadas localmente nesta fase final:
+
+- `cd web && npm run build` -> ok
+- `cd web && npm run lint` -> ok
+- `cd functions && npm ci` -> ok
+- `cd functions && npm run build` -> ok
+- `cd functions && npm run lint -- --quiet` -> ok
+- `cd functions && npx jest --no-coverage` -> ok (`66` suites, `1062` testes)
+- `./gradlew :shared:compileKotlinMetadata` -> ok
+- `./gradlew :app:compileDebugKotlin` -> bloqueado por ambiente
+  (`google-services.json` ausente), sem erro novo de Kotlin nas mudancas
+  antifraude
+
+Bloqueios restantes de ambiente/permissao:
+
+- `firestore-rules-tests` localmente nao roda nesta maquina com o comando atual
+  do Firebase CLI porque o ambiente so possui Java 17 e o emulador agora exige
+  Java 21+;
+- o PR remoto mostra checks de um estado antigo da branch e so refletira os
+  commits finais apos push;
+- push para GitHub permaneceu bloqueado por permissao (`403 Write access to
+  repository not granted`) durante esta iniciativa.
+
+Leitura pratica para o proximo passo:
+
+- do ponto de vista de codigo, os itens prioritarios (#3208, #3209, #3211,
+  #3213, #3214, #3215 e #3216) estao cobertos localmente;
+- do ponto de vista operacional, ainda falta sincronizar a branch remota,
+  rerodar os checks do PR sobre os commits finais e atualizar comentarios das
+  issues/PR antes de considerar `#3218` realmente pronto para review humano.
+
 ---
 
 ## Referencias
