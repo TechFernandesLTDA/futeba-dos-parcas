@@ -261,6 +261,7 @@ Commits locais mais relevantes ainda nao refletidos no PR remoto:
 - `9aa83909` `feat: surface auto-close antifraud reviews in admin queue`
 - `466a0f51` `docs: capture antifraud review readiness snapshot`
 - `0ed4d1ed` `fix: remove legacy live game write bypasses on web`
+- `6ea0c4f1` `refactor: align android live game flows with secure repository contract`
 
 Validacoes executadas localmente nesta fase final:
 
@@ -293,6 +294,9 @@ Leitura pratica para o proximo passo:
   ainda escreviam diretamente em `game_events` e um atalho de placar via
   `live_scores`, substituindo-os por callables e por placar orientado a
   eventos validados;
+- os consumidores Android de live game/viewmodels e use case de evento foram
+  alinhados para depender da interface de dominio segura, reduzindo acoplamento
+  ao repositório Android legado;
 - do ponto de vista operacional, ainda falta sincronizar a branch remota,
   rerodar os checks do PR sobre os commits finais e atualizar comentarios das
   issues/PR antes de considerar `#3218` realmente pronto para review humano.
