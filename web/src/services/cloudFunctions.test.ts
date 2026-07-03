@@ -26,6 +26,8 @@ import {
   softDeleteGroup,
   restoreDeletedGame,
   restoreDeletedGroup,
+  startGameLifecycle,
+  finishGameLifecycle,
   submitMvpVotes,
   updateUserPii,
 } from './cloudFunctions';
@@ -109,6 +111,22 @@ describe('cloudFunctions', () => {
         { category: 'WORST', votedPlayerId: 'u3' },
       ],
     });
+  });
+
+  it('startGameLifecycle chama callable com gameId', async () => {
+    mockCallable.mockResolvedValue({ data: { success: true, status: 'LIVE' } });
+
+    await startGameLifecycle({ gameId: 'game-1' });
+
+    expect(mockCallable).toHaveBeenCalledWith('startGameLifecycle', { gameId: 'game-1' });
+  });
+
+  it('finishGameLifecycle chama callable com gameId', async () => {
+    mockCallable.mockResolvedValue({ data: { success: true, status: 'FINISHED' } });
+
+    await finishGameLifecycle({ gameId: 'game-1' });
+
+    expect(mockCallable).toHaveBeenCalledWith('finishGameLifecycle', { gameId: 'game-1' });
   });
 
   it('propaga erros de função', async () => {

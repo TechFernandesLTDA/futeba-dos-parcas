@@ -54,7 +54,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { AppBreadcrumbs, FixedBottomBar } from '../../components/layout';
 import { useGameDetail, useConfirmPresence, useUpdateGameStatus } from '../../hooks/useGames';
 import { useDuplicateGameCopy } from '../../hooks/useDuplicateGameCopy';
-import { softDeleteGame, checkInToGame, generateCheckinToken } from '../../services/cloudFunctions';
+import { softDeleteGame, checkInToGame, generateCheckinToken, startGameLifecycle } from '../../services/cloudFunctions';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { getFirestoreErrorMessage } from '../../utils/firebaseErrors';
@@ -225,6 +225,7 @@ export const GameDetailScreen: React.FC = () => {
   const [qrDialogOpen, setQrDialogOpen] = useState(false);
   const [qrToken, setQrToken] = useState<string | null>(null);
   const [qrLoading, setQrLoading] = useState(false);
+  const [lifecycleLoading, setLifecycleLoading] = useState(false);
   const [calendarAnchorEl, setCalendarAnchorEl] = useState<null | HTMLElement>(null);
   const [moreAnchorEl, setMoreAnchorEl] = useState<null | HTMLElement>(null);
   const [editForm, setEditForm] = useState({
@@ -295,11 +296,14 @@ export const GameDetailScreen: React.FC = () => {
       if (game.status === 'SCHEDULED') {
         await updateStatus(gameId, 'CONFIRMED');
       } else if (game.status === 'CONFIRMED') {
-        await updateStatus(gameId, 'LIVE');
+        setLifecycleLoading(true);
+        await startGameLifecycle({ gameId });
         navigate(`/game/${gameId}/live`);
       }
     } catch (err) {
       showError(getFirestoreErrorMessage(err));
+    } finally {
+      setLifecycleLoading(false);
     }
   };
 
@@ -851,9 +855,9 @@ export const GameDetailScreen: React.FC = () => {
                       variant="contained"
                       color="success"
                       fullWidth
-                      startIcon={statusLoading ? <CircularProgress size={16} color="inherit" /> : <PlayIcon />}
+                      startIcon={statusLoading || lifecycleLoading ? <CircularProgress size={16} color="inherit" /> : <PlayIcon />}
                       onClick={handleStartGame}
-                      disabled={statusLoading}
+                      disabled={statusLoading || lifecycleLoading}
                     >
                       {t('games.live.startGame')}
                     </Button>

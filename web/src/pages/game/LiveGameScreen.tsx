@@ -46,8 +46,9 @@ import {
 } from '@mui/icons-material';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
 import { PageContainer } from '../../components/common/PageContainer';
-import { doc, collection, query, where, onSnapshot, updateDoc, addDoc, setDoc, getDocs, increment, serverTimestamp, writeBatch } from 'firebase/firestore';
+import { doc, collection, query, where, onSnapshot, addDoc, setDoc, increment, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../services/firebase';
+import { finishGameLifecycle, startGameLifecycle } from '../../services/cloudFunctions';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -361,54 +362,7 @@ export const LiveGameScreen: React.FC = () => {
     setConfirmFinishOpen(false);
     setFinishing(true);
     try {
-      // #1530 (Opção A): Antes de finalizar, agregar game_events por jogador
-      // e escrever nas confirmações individuais (goals/assists/saves).
-      // Isso garante que as estatísticas do jogo fiquem sincronizadas antes
-      // do Cloud Function de XP processar o jogo finalizado.
-      const eventsSnap = await getDocs(
-        query(collection(db, 'game_events'), where('game_id', '==', gameId))
-      );
-
-      // Agrega contagens por jogador
-      const aggregated = new Map<string, { goals: number; assists: number; saves: number }>();
-      for (const eventDoc of eventsSnap.docs) {
-        const raw = eventDoc.data();
-        const playerId: string = raw.player_id ?? raw.playerId ?? '';
-        if (!playerId) continue;
-        const type: string = raw.event_type ?? raw.eventType ?? '';
-        const current = aggregated.get(playerId) ?? { goals: 0, assists: 0, saves: 0 };
-        if (type === 'GOAL') current.goals += 1;
-        else if (type === 'ASSIST') current.assists += 1;
-        else if (type === 'SAVE') current.saves += 1;
-        aggregated.set(playerId, current);
-      }
-
-      // #2291: escreve todas as confirmações em um único writeBatch atômico,
-      // evitando o estado inconsistente que Promise.allSettled permitia (parte
-      // dos jogadores atualizados, parte não). Contagem de jogadores << 500.
-      if (aggregated.size > 0) {
-        try {
-          const statsBatch = writeBatch(db);
-          for (const [playerId, stats] of aggregated.entries()) {
-            const confirmRef = doc(db, 'confirmations', `${gameId}_${playerId}`);
-            statsBatch.set(confirmRef, stats, { merge: true });
-          }
-          await statsBatch.commit();
-        } catch (statsErr) {
-          // Não bloquear o finish — o CF pode re-agregar via game_events se necessário,
-          // mas avisamos o usuário de forma não-bloqueante (#2291).
-          logger.error('Falha ao sincronizar stats de jogadores:', statsErr);
-          showError(t('games.live.statsDelayWarning'));
-        }
-      }
-
-      // Finaliza o jogo — o score já está populado via listener live_scores
-      await updateDoc(doc(db, 'games', gameId), {
-        status: 'FINISHED',
-        team1_score: score?.team1Score || 0,
-        team2_score: score?.team2Score || 0,
-        updated_at: serverTimestamp(),
-      });
+      await finishGameLifecycle({ gameId });
       navigate(`/game/${gameId}/vote`);
     } catch (err) {
       logger.error('Error finishing game:', err);
@@ -427,10 +381,7 @@ export const LiveGameScreen: React.FC = () => {
     }
     setActionLoading(true);
     try {
-      await updateDoc(doc(db, 'games', gameId), {
-        status: 'LIVE',
-        updated_at: serverTimestamp(),
-      });
+      await startGameLifecycle({ gameId });
     } catch (err: unknown) {
       showError(getFirestoreErrorMessage(err));
     } finally {

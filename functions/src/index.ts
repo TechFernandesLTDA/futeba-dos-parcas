@@ -2256,6 +2256,12 @@ export {onGameEventCreated} from "./voting/events-rate-limit";
 // SECFIX #426: server-side check-in com validacao GPS + distancia
 export {checkInToGame, generateCheckinToken} from "./voting/check-in";
 
+// #3208: lifecycle server-side para iniciar/finalizar jogos
+export {
+  startGameLifecycle,
+  finishGameLifecycle,
+} from "./games/lifecycle";
+
 // Issue #2968: reputacao leve pos-jogo com agregacao server-side
 export {submitPostGameReputation} from "./reputation/post-game-reputation";
 

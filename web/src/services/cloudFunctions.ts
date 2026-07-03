@@ -524,6 +524,16 @@ export const generateCheckinToken = httpsCallable<
   { success: boolean; token: string }
 >(functions, 'generateCheckinToken');
 
+export const startGameLifecycle = httpsCallable<
+  { gameId: string },
+  { success: boolean; status: 'LIVE'; team1Id: string; team2Id: string }
+>(functions, 'startGameLifecycle');
+
+export const finishGameLifecycle = httpsCallable<
+  { gameId: string },
+  { success: boolean; status: 'FINISHED'; team1Score: number; team2Score: number; aggregatedPlayers: number }
+>(functions, 'finishGameLifecycle');
+
 // Reputacao pos-jogo
 export const submitPostGameReputation = httpsCallable<
   {
