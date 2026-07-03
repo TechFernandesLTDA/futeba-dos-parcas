@@ -13,7 +13,11 @@ import {
   GamificationSettings,
   UserStatistics,
 } from "../models";
-import {LEVEL_TABLE} from "../constants";
+import {
+  LEVEL_TABLE,
+  MAX_XP_PER_GAME,
+  MIN_XP_PER_GAME,
+} from "../constants";
 
 // ==========================================
 // CONSTANTS & LOGIC (Port from Kotlin)
@@ -219,4 +223,113 @@ export function checkMilestones(
     }
   }
   return {newMilestones: newM, xp};
+}
+
+/**
+ * Soma a recompensa configurada para os milestones informados.
+ * @param {string[]} milestoneNames Nomes dos milestones.
+ * @return {number} XP total dos milestones.
+ */
+export function getMilestoneXp(
+  milestoneNames: string[]
+): number {
+  return milestoneNames.reduce((sum, name) => {
+    const def = MILESTONES.find((milestone) =>
+      milestone.name === name
+    );
+    return sum + (def?.xpReward || 0);
+  }, 0);
+}
+
+/**
+ * Seleciona quais milestones realmente cabem sob o teto de XP por jogo.
+ * Quando um milestone grande estoura o teto, preserva milestones menores
+ * que ainda caibam, evitando perda permanente de recompensa.
+ *
+ * @param {number} baseXp XP do jogo antes dos milestones.
+ * @param {string[]} milestoneNames Milestones elegíveis para este jogo.
+ * @return {object} Milestones aplicados e overflow pendente.
+ */
+export function fitMilestonesWithinGameXpCap(
+  baseXp: number,
+  milestoneNames: string[]
+): {
+  appliedMilestones: string[];
+  appliedXp: number;
+  overflowMilestones: string[];
+} {
+  if (milestoneNames.length === 0) {
+    return {
+      appliedMilestones: [],
+      appliedXp: 0,
+      overflowMilestones: [],
+    };
+  }
+
+  const totalMilestoneXp =
+    getMilestoneXp(milestoneNames);
+  const baseClamped = Math.max(
+    MIN_XP_PER_GAME,
+    Math.min(baseXp, MAX_XP_PER_GAME)
+  );
+  const totalClamped = Math.max(
+    MIN_XP_PER_GAME,
+    Math.min(
+      baseXp + totalMilestoneXp,
+      MAX_XP_PER_GAME
+    )
+  );
+  const effectiveMilestoneXp = Math.max(
+    0,
+    totalClamped - baseClamped
+  );
+
+  if (effectiveMilestoneXp <= 0) {
+    return {
+      appliedMilestones: [],
+      appliedXp: 0,
+      overflowMilestones: [...milestoneNames],
+    };
+  }
+
+  const candidates = milestoneNames
+    .map((name, index) => ({
+      name,
+      index,
+      xpReward:
+        MILESTONES.find((milestone) =>
+          milestone.name === name
+        )?.xpReward || 0,
+    }))
+    .sort((a, b) =>
+      a.xpReward === b.xpReward ?
+        a.index - b.index :
+        a.xpReward - b.xpReward
+    );
+
+  const appliedNames = new Set<string>();
+  let appliedXp = 0;
+
+  for (const candidate of candidates) {
+    if (candidate.xpReward <= 0) continue;
+    if (
+      appliedXp + candidate.xpReward >
+      effectiveMilestoneXp
+    ) {
+      continue;
+    }
+
+    appliedNames.add(candidate.name);
+    appliedXp += candidate.xpReward;
+  }
+
+  return {
+    appliedMilestones: milestoneNames.filter(
+      (name) => appliedNames.has(name)
+    ),
+    appliedXp,
+    overflowMilestones: milestoneNames.filter(
+      (name) => !appliedNames.has(name)
+    ),
+  };
 }

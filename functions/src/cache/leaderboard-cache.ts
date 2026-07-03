@@ -41,6 +41,7 @@ import {
   sanitizeText,
 } from "../validation/index";
 import {
+  FIRESTORE_BATCH_SAFE_LIMIT,
   FIRESTORE_WHERE_IN_LIMIT,
   FUNCTION_REGION,
   GAME_GENDERS,
@@ -116,6 +117,37 @@ interface GetLeaderboardRequest {
 
 /** Chave de gênero combinada (sem segmentação). */
 const GENDER_ALL = "ALL";
+
+/**
+ * Remove documentos em lotes seguros para respeitar o limite de writes
+ * do Firestore por batch.
+ *
+ * @param {admin.firestore.Firestore} db Instância do Firestore.
+ * @param {admin.firestore.QueryDocumentSnapshot[]} docs Docs a remover.
+ * @return {Promise<number>} Quantidade de batches commitados.
+ */
+export async function deleteDocsInBatches(
+  db: admin.firestore.Firestore,
+  docs: admin.firestore.QueryDocumentSnapshot[]
+): Promise<number> {
+  let committedBatches = 0;
+
+  for (
+    let i = 0;
+    i < docs.length;
+    i += FIRESTORE_BATCH_SAFE_LIMIT
+  ) {
+    const chunk = docs.slice(i, i + FIRESTORE_BATCH_SAFE_LIMIT);
+    const batch = db.batch();
+    chunk.forEach((doc) => {
+      batch.delete(doc.ref);
+    });
+    await batch.commit();
+    committedBatches++;
+  }
+
+  return committedBatches;
+}
 
 /**
  * Normaliza o filtro de gênero do request para a chave de leitura.
@@ -599,17 +631,17 @@ export const invalidateLeaderboardOnParticipation = onDocumentWritten(
         return;
       }
 
-      // Deletar em batch (máx 500 por batch do Firestore)
-      const batch = db.batch();
-      cacheSnap.docs.forEach((doc) => {
-        batch.delete(doc.ref);
-      });
-      await batch.commit();
+      const committedBatches =
+        await deleteDocsInBatches(
+          db,
+          cacheSnap.docs
+        );
 
       logger.info(
         "[LEADERBOARD_CACHE] Invalidated " +
         `${cacheSnap.size} cache doc(s) ` +
-        `for season ${seasonId}`
+        `for season ${seasonId} ` +
+        `in ${committedBatches} batch(es)`
       );
     } catch (error) {
       // DECISÃO DE DESIGN (#1040): falha de invalidação é best-effort intencional.
@@ -625,3 +657,10 @@ export const invalidateLeaderboardOnParticipation = onDocumentWritten(
     }
   }
 );
+
+/**
+ * Helpers expostos para testes focados de escalabilidade.
+ */
+export const __testing = {
+  deleteDocsInBatches,
+};

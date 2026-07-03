@@ -16,7 +16,8 @@
 const mockBatchUpdate = jest.fn();
 const mockBatchSet = jest.fn();
 const mockBatchCommit = jest.fn().mockResolvedValue(undefined);
-const mockQueryGet = jest.fn();
+const mockGenericQueryGet = jest.fn();
+const mockStandingsQueryGet = jest.fn();
 const mockDocGet = jest.fn();
 
 // Mock de transação (FIX #1470: criação atômica da próxima season monthly).
@@ -46,7 +47,10 @@ const mockStandingsDoc = jest.fn().mockImplementation((id?: string) => {
 const mockStandingsCollection = {
   doc: mockStandingsDoc,
   where: jest.fn().mockReturnThis(),
-  get: mockQueryGet,
+  orderBy: jest.fn().mockReturnThis(),
+  limit: jest.fn().mockReturnThis(),
+  startAfter: jest.fn().mockReturnThis(),
+  get: mockStandingsQueryGet,
 };
 
 // Mock das demais coleções (participações e seasons)
@@ -57,7 +61,10 @@ const mockGenericDoc = jest.fn().mockReturnValue({
 const mockGenericCollection = {
   doc: mockGenericDoc,
   where: jest.fn().mockReturnThis(),
-  get: mockQueryGet,
+  orderBy: jest.fn().mockReturnThis(),
+  limit: jest.fn().mockReturnThis(),
+  startAfter: jest.fn().mockReturnThis(),
+  get: mockGenericQueryGet,
 };
 
 jest.mock("firebase-admin", () => {
@@ -172,6 +179,16 @@ describe("checkSeasonEnd — regressão #1281 standings idempotentes", () => {
     mockBatchCommit.mockResolvedValue(undefined);
     mockDocGet.mockResolvedValue({exists: false});
     mockTransactionGet.mockResolvedValue({exists: true});
+    mockGenericQueryGet.mockResolvedValue({
+      empty: true,
+      docs: [],
+      size: 0,
+    });
+    mockStandingsQueryGet.mockResolvedValue({
+      empty: true,
+      docs: [],
+      size: 0,
+    });
   });
 
   test("handler registrado pelo onSchedule", () => {
@@ -186,7 +203,7 @@ describe("checkSeasonEnd — regressão #1281 standings idempotentes", () => {
       makeParticipationDoc("player-beta"),
     ];
 
-    mockQueryGet
+    mockGenericQueryGet
       .mockResolvedValueOnce({
         // seasons expiradas
         empty: false,
@@ -196,12 +213,12 @@ describe("checkSeasonEnd — regressão #1281 standings idempotentes", () => {
         // participações da season
         empty: false,
         docs: participants,
-      })
-      .mockResolvedValueOnce({
-        // FIX #1290: standings já existentes (1º run = nenhum)
-        empty: true,
-        docs: [],
       });
+    mockStandingsQueryGet.mockResolvedValueOnce({
+      // FIX #1290: standings já existentes (1º run = nenhum)
+      empty: true,
+      docs: [],
+    });
 
     await checkSeasonEndHandlerRef!();
 
@@ -225,13 +242,13 @@ describe("checkSeasonEnd — regressão #1281 standings idempotentes", () => {
 
     // Simular 2 runs da função na mesma season (re-run por retry/timeout)
     const makeQueryMock = () =>
-      mockQueryGet
+      mockGenericQueryGet
         .mockResolvedValueOnce({empty: false, docs: [expiredSeason]})
-        .mockResolvedValueOnce({empty: false, docs: participants})
-        .mockResolvedValueOnce({empty: true, docs: []});
+        .mockResolvedValueOnce({empty: false, docs: participants});
 
     // Primeiro run
     makeQueryMock();
+    mockStandingsQueryGet.mockResolvedValueOnce({empty: true, docs: []});
     await checkSeasonEndHandlerRef!();
     const idsAfterFirstRun = [...capturedStandingDocIds];
 
@@ -242,6 +259,7 @@ describe("checkSeasonEnd — regressão #1281 standings idempotentes", () => {
     mockBatchCommit.mockResolvedValue(undefined);
     mockDocGet.mockResolvedValue({exists: false});
     makeQueryMock();
+    mockStandingsQueryGet.mockResolvedValueOnce({empty: true, docs: []});
     await checkSeasonEndHandlerRef!();
     const idsAfterSecondRun = [...capturedStandingDocIds];
 
@@ -262,10 +280,10 @@ describe("checkSeasonEnd — regressão #1281 standings idempotentes", () => {
     const expiredSeason = makeExpiredSeason(seasonId);
     const participants = [makeParticipationDoc("player-epsilon")];
 
-    mockQueryGet
+    mockGenericQueryGet
       .mockResolvedValueOnce({empty: false, docs: [expiredSeason]})
-      .mockResolvedValueOnce({empty: false, docs: participants})
-      .mockResolvedValueOnce({empty: true, docs: []});
+      .mockResolvedValueOnce({empty: false, docs: participants});
+    mockStandingsQueryGet.mockResolvedValueOnce({empty: true, docs: []});
 
     await checkSeasonEndHandlerRef!();
 
@@ -284,19 +302,20 @@ describe("checkSeasonEnd — regressão #1281 standings idempotentes", () => {
     const participants = [makeParticipationDoc("player-zeta")];
     const originalFrozenAt = {_type: "OriginalTimestamp"};
 
-    mockQueryGet
+    mockGenericQueryGet
       .mockResolvedValueOnce({empty: false, docs: [expiredSeason]})
-      .mockResolvedValueOnce({empty: false, docs: participants})
-      .mockResolvedValueOnce({
-        // standing já gravada num run anterior, com frozen_at original
-        empty: false,
-        docs: [
-          {
-            id: `${seasonId}_player-zeta`,
-            data: () => ({frozen_at: originalFrozenAt}),
-          },
-        ],
-      });
+      .mockResolvedValueOnce({empty: false, docs: participants});
+    mockStandingsQueryGet.mockResolvedValueOnce({
+      // standing já gravada num run anterior, com frozen_at original
+      empty: false,
+      size: 1,
+      docs: [
+        {
+          id: `${seasonId}_player-zeta`,
+          data: () => ({frozen_at: originalFrozenAt}),
+        },
+      ],
+    });
 
     await checkSeasonEndHandlerRef!();
 
@@ -316,10 +335,10 @@ describe("checkSeasonEnd — regressão #1281 standings idempotentes", () => {
       {data: () => ({user_id: undefined, division: "OURO", points: 0})},
     ];
 
-    mockQueryGet
+    mockGenericQueryGet
       .mockResolvedValueOnce({empty: false, docs: [expiredSeason]})
-      .mockResolvedValueOnce({empty: false, docs: participants})
-      .mockResolvedValueOnce({empty: true, docs: []});
+      .mockResolvedValueOnce({empty: false, docs: participants});
+    mockStandingsQueryGet.mockResolvedValueOnce({empty: true, docs: []});
 
     await checkSeasonEndHandlerRef!();
 

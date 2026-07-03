@@ -585,7 +585,21 @@ describe("XP Processing - Batch Operations", () => {
       );
 
       const results = await processXpBatch([
-        sampleTxn("game1", "user1", 100, ["WINS_10"]),
+        {
+          ...sampleTxn("game1", "user1", 100, ["WINS_10"]),
+          breakdown: {
+            participation: 25,
+            goals: 0,
+            assists: 0,
+            saves: 0,
+            result: 0,
+            mvp: 0,
+            cleanSheet: 0,
+            milestones: 75,
+            streak: 0,
+            penalty: 0,
+          },
+        },
       ]);
 
       const logSet = setCalls.find((call) =>
@@ -660,6 +674,91 @@ describe("XP Processing - Batch Operations", () => {
       expect(logSet?.data.xp_earned).toBe(480);
       expect(logSet?.data.xp_after).toBe(1480);
       expect(logSet?.data.xp_milestones).toBe(0);
+    });
+
+    test("preserva milestone menor quando milestone maior excede MAX_XP_PER_GAME", async () => {
+      const setCalls: Array<{ref: any; data: Record<string, unknown>}> = [];
+      const updateCalls: Array<{ref: any; data: Record<string, unknown>}> = [];
+
+      mockDb.collection.mockImplementation((coll: string) => ({
+        doc: jest.fn((id?: string) => ({
+          _path: `${coll}/${id ?? "auto"}`,
+          _id: id,
+          _collection: coll,
+        })),
+        where: jest.fn().mockReturnValue({
+          get: jest.fn().mockResolvedValue({empty: true, docs: []}),
+        }),
+      }));
+
+      mockDb.runTransaction.mockImplementation(
+        async (callback: (tx: any) => Promise<any>) => {
+          const tx = {
+            get: jest.fn(async (ref: any) => {
+              if (ref._collection === "users") {
+                return {
+                  exists: true,
+                  data: () => ({
+                    experience_points: 200,
+                    level: 0,
+                    milestones_achieved: [],
+                  }),
+                };
+              }
+              return {exists: false, data: () => ({})};
+            }),
+            update: jest.fn((ref: any, data: Record<string, unknown>) => {
+              updateCalls.push({ref, data});
+            }),
+            set: jest.fn((ref: any, data: Record<string, unknown>) => {
+              setCalls.push({ref, data});
+            }),
+          };
+          return callback(tx);
+        }
+      );
+
+      const cappedTxn = sampleTxn(
+        "game1",
+        "user1",
+        500,
+        ["GAMES_100", "GOALS_10"]
+      );
+      cappedTxn.breakdown = {
+        ...cappedTxn.breakdown,
+        participation: 450,
+        goals: 0,
+        assists: 0,
+        saves: 0,
+        result: 0,
+        mvp: 0,
+        cleanSheet: 0,
+        streak: 0,
+        penalty: 0,
+        milestones: 550,
+      };
+
+      await processXpBatch([cappedTxn]);
+
+      const logSet = setCalls.find((call) =>
+        call.ref._collection === "xp_logs"
+      );
+      const milestoneUpdate = updateCalls.find((call) =>
+        call.ref._collection === "users" &&
+        Object.prototype.hasOwnProperty.call(
+          call.data,
+          "milestones_achieved"
+        )
+      );
+
+      expect(logSet?.data.xp_earned).toBe(500);
+      expect(logSet?.data.xp_milestones).toBe(50);
+      expect(logSet?.data.milestones_unlocked).toEqual([
+        "GOALS_10",
+      ]);
+      expect(milestoneUpdate?.data).toMatchObject({
+        milestones_achieved: expect.anything(),
+      });
     });
 
     test("deve lidar com erro de commit na transaction", async () => {

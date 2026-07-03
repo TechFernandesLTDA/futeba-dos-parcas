@@ -95,6 +95,11 @@ describe("getNextDate", () => {
     expect(getNextDate("2026-06-03", "monthly")).toBe("2026-07-03");
   });
 
+  it("monthly: clampa para o último dia válido do mês alvo", () => {
+    expect(getNextDate("2026-01-31", "monthly")).toBe("2026-02-28");
+    expect(getNextDate("2024-01-31", "monthly")).toBe("2024-02-29");
+  });
+
   it("weekly atravessa virada de mês", () => {
     expect(getNextDate("2026-06-28", "weekly")).toBe("2026-07-05");
   });

@@ -5,6 +5,8 @@ import {FieldValue} from "firebase-admin/firestore";
 import {FUNCTION_REGION} from "../constants";
 import {sendNotificationToUser, NotificationType} from "../notifications/helpers";
 import {db} from "../_db";
+import {getLevelForXp} from "../xp/pipeline";
+import type {XpLog} from "../models";
 
 interface BadgeTrigger {
   badgeId: string;
@@ -17,6 +19,110 @@ interface BadgeTrigger {
     userDoc?: admin.firestore.DocumentSnapshot,
     confirmationsSnap?: admin.firestore.QuerySnapshot
   ) => Promise<boolean>;
+}
+
+/**
+ * Concede um badge com XP e cria xp_log idempotente por badge.
+ *
+ * @param {string} userId Usuário premiado.
+ * @param {BadgeTrigger} trigger Badge elegível.
+ * @return {Promise<boolean>} `true` quando o badge foi criado nesta execução.
+ */
+async function awardBadgeWithXp(
+  userId: string,
+  trigger: BadgeTrigger
+): Promise<boolean> {
+  const userRef = db().collection("users").doc(userId);
+  const badgeRef = userRef
+    .collection("badges")
+    .doc(trigger.badgeId);
+  const logRef = db()
+    .collection("xp_logs")
+    .doc(`badge_${trigger.badgeId}_user_${userId}`);
+
+  return db().runTransaction(async (tx) => {
+    const [userSnap, badgeSnap, logSnap] = await Promise.all([
+      tx.get(userRef),
+      tx.get(badgeRef),
+      tx.get(logRef),
+    ]);
+
+    if (badgeSnap.exists || logSnap.exists) {
+      return false;
+    }
+
+    if (!userSnap.exists) {
+      throw new Error(`Usuário ${userId} não encontrado para badge ${trigger.badgeId}`);
+    }
+
+    const userData = userSnap.data() || {};
+    const currentXp =
+      (userData.experience_points as number) || 0;
+    const nextXp = currentXp + trigger.xpReward;
+    const currentLevel =
+      getLevelForXp(currentXp);
+    const nextLevel =
+      getLevelForXp(nextXp);
+
+    const badgeData = {
+      badge_id: trigger.badgeId,
+      name: trigger.name,
+      icon: trigger.icon,
+      description: trigger.description,
+      type: trigger.badgeId,
+      xp_reward: trigger.xpReward,
+      earned_at: FieldValue.serverTimestamp(),
+      earned: true,
+    };
+
+    const xpLog: XpLog = {
+      user_id: userId,
+      game_id: `badge:${trigger.badgeId}`,
+      transaction_id:
+        `badge_${trigger.badgeId}_user_${userId}`,
+      source: "badge_earned",
+      source_collection: "users_badges",
+      source_event_id: trigger.badgeId,
+      xp_earned: trigger.xpReward,
+      xp_before: currentXp,
+      xp_after: nextXp,
+      level_before: currentLevel,
+      level_after: nextLevel,
+      xp_participation: 0,
+      xp_goals: 0,
+      xp_assists: 0,
+      xp_saves: 0,
+      xp_result: 0,
+      xp_mvp: 0,
+      xp_clean_sheet: 0,
+      xp_milestones: trigger.xpReward,
+      xp_streak: 0,
+      xp_penalty: 0,
+      goals: 0,
+      assists: 0,
+      saves: 0,
+      was_mvp: false,
+      was_clean_sheet: false,
+      was_worst_player: false,
+      game_result: "BADGE_REWARD",
+      game_status: "BADGE_AWARDED",
+      my_team_score: 0,
+      opponent_score: 0,
+      milestones_unlocked: [trigger.badgeId],
+      created_at: FieldValue.serverTimestamp(),
+    };
+
+    tx.set(badgeRef, badgeData);
+    tx.update(userRef, {
+      experience_points:
+        FieldValue.increment(trigger.xpReward),
+      level: nextLevel,
+      updated_at: FieldValue.serverTimestamp(),
+    });
+    tx.set(logRef, xpLog);
+
+    return true;
+  });
 }
 
 /**
@@ -317,33 +423,34 @@ export const onGameFinishedCheckBadges = onDocumentUpdated(
             ]);
           const earnedIds = new Set(earnedSnap.docs.map((d) => d.id));
 
-          const batch = db().batch();
           const earnedBadges: BadgeTrigger[] = [];
+          const userRef = db().collection("users").doc(userId);
           for (const trigger of BADGE_TRIGGERS) {
             try {
               if (earnedIds.has(trigger.badgeId)) continue;
 
               const earned = await trigger.check(userId, userDoc, allUserConfirmationsSnap);
               if (earned) {
-                const badgeData = {
-                  badge_id: trigger.badgeId,
-                  name: trigger.name,
-                  icon: trigger.icon,
-                  description: trigger.description,
-                  type: trigger.badgeId,
-                  earned_at: FieldValue.serverTimestamp(),
-                  earned: true,
-                };
-                batch.set(badgesRef.doc(trigger.badgeId), badgeData);
-                earnedBadges.push(trigger);
-                logger.info("Badge earned", {userId, badgeId: trigger.badgeId});
+                const awarded = await awardBadgeWithXp(
+                  userId,
+                  trigger
+                );
+                if (awarded) {
+                  earnedBadges.push(trigger);
+                  earnedIds.add(trigger.badgeId);
+                  logger.info("Badge earned", {
+                    userId,
+                    badgeId: trigger.badgeId,
+                    xpReward: trigger.xpReward,
+                    userPath: userRef.path,
+                  });
+                }
               }
             } catch (err) {
               logger.error("Error checking badge", {userId, badgeId: trigger.badgeId, err});
             }
           }
           if (earnedBadges.length > 0) {
-            await batch.commit();
             for (const trigger of earnedBadges) {
               try {
                 await sendNotificationToUser(userId, {

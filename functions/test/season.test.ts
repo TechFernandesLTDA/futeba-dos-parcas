@@ -41,6 +41,9 @@ jest.mock("firebase-admin", () => {
           ref: mockDocRef,
         }),
         where: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockReturnThis(),
+        startAfter: jest.fn().mockReturnThis(),
         get: mockQueryGet,
       }),
       batch: jest.fn(() => ({
@@ -164,6 +167,11 @@ describe("checkSeasonEnd - season lista vazia", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockBatchCommit.mockResolvedValue(undefined);
+    mockQueryGet.mockResolvedValue({
+      empty: true,
+      docs: [],
+      size: 0,
+    });
   });
 
   test("deve retornar sem processar quando não há seasons expiradas", async () => {
@@ -187,6 +195,11 @@ describe("checkSeasonEnd - encerramento de season expirada", () => {
     mockBatchCommit.mockResolvedValue(undefined);
     // Por padrão: próxima season não existe
     mockDocGet.mockResolvedValue({ exists: false });
+    mockQueryGet.mockResolvedValue({
+      empty: true,
+      docs: [],
+      size: 0,
+    });
   });
 
   test("deve marcar season como inativa quando end_date passou", async () => {

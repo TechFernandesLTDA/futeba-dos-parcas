@@ -148,6 +148,7 @@ jest.mock("firebase-admin/firestore", () => ({
 import {
   getLevelForXp,
   checkMilestones,
+  fitMilestonesWithinGameXpCap,
   getWeekKey,
   toGameConfirmation,
   toTeam,
@@ -317,6 +318,33 @@ describe("Index - checkMilestones", () => {
     expect(result.newMilestones).toContain("SAVES_25");
     expect(result.newMilestones).toContain("SAVES_50");
     expect(result.newMilestones).toContain("SAVES_100");
+  });
+
+  test("preserva milestones menores quando um milestone maior estoura o teto", () => {
+    const result = fitMilestonesWithinGameXpCap(450, [
+      "GAMES_100",
+      "GOALS_10",
+    ]);
+
+    expect(result.appliedMilestones).toEqual([
+      "GOALS_10",
+    ]);
+    expect(result.appliedXp).toBe(50);
+    expect(result.overflowMilestones).toEqual([
+      "GAMES_100",
+    ]);
+  });
+
+  test("não aplica milestone quando o teto já foi alcançado sem ele", () => {
+    const result = fitMilestonesWithinGameXpCap(500, [
+      "GOALS_10",
+    ]);
+
+    expect(result.appliedMilestones).toEqual([]);
+    expect(result.appliedXp).toBe(0);
+    expect(result.overflowMilestones).toEqual([
+      "GOALS_10",
+    ]);
   });
 });
 

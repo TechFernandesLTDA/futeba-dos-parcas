@@ -168,7 +168,11 @@ export const onGameFinishedCreateRecurrence = onDocumentUpdated(
 
     const recurrence = after.recurrence as string | undefined;
     if (!recurrence || recurrence === "none") return;
-    if (after.next_game_created === true) {
+    const hasPendingFollowUp =
+      after.next_game_created === true &&
+      after.next_game_confirmations_created !== true &&
+      typeof after.next_game_id === "string";
+    if (after.next_game_created === true && !hasPendingFollowUp) {
       logger.info(`[RECURRENCE] ${gameId} já possui próximo jogo, skip.`);
       return;
     }
@@ -244,6 +248,10 @@ export const onGameFinishedCreateRecurrence = onDocumentUpdated(
         location_id: after.location_id || null,
         location_name: after.location_name,
         location_address: after.location_address,
+        location_lat: after.location_lat ?? null,
+        location_lng: after.location_lng ?? null,
+        location_lat_approx: after.location_lat_approx ?? null,
+        location_lng_approx: after.location_lng_approx ?? null,
         field_id: after.field_id || null,
         field_name: after.field_name || null,
         visibility: after.visibility,
@@ -280,13 +288,30 @@ export const onGameFinishedCreateRecurrence = onDocumentUpdated(
         newGame.stream_url = after.stream_url;
       }
 
+      const targetNextGameId =
+        hasPendingFollowUp ?
+          after.next_game_id as string :
+          `recurring_${parentId}_${nextIndex}`;
       const newGameRef = db
         .collection("games")
-        .doc(`recurring_${parentId}_${nextIndex}`);
+        .doc(targetNextGameId);
 
-      const createdNewGame = await db.runTransaction(async (tx) => {
+      const transactionResult = await db.runTransaction(async (tx) => {
         const currentSnap = await tx.get(event.data!.after.ref);
-        if (currentSnap.get("next_game_created") === true) return false;
+        const currentNextGameCreated =
+          currentSnap.get("next_game_created") === true;
+        const currentNextGameId =
+          currentSnap.get("next_game_id") as string | undefined;
+        const currentConfirmationsCreated =
+          currentSnap.get("next_game_confirmations_created") === true;
+
+        if (currentNextGameCreated) {
+          return {
+            createdNewGame: false,
+            shouldProvisionParticipants: !currentConfirmationsCreated,
+            nextGameId: currentNextGameId || newGameRef.id,
+          };
+        }
 
         const existingChildSnap = await tx.get(newGameRef);
         if (!existingChildSnap.exists) {
@@ -296,23 +321,34 @@ export const onGameFinishedCreateRecurrence = onDocumentUpdated(
         tx.update(event.data!.after.ref, {
           next_game_created: true,
           next_game_id: newGameRef.id,
+          next_game_confirmations_created: false,
           updated_at: FieldValue.serverTimestamp(),
         });
 
-        return !existingChildSnap.exists;
+        return {
+          createdNewGame: !existingChildSnap.exists,
+          shouldProvisionParticipants: true,
+          nextGameId: newGameRef.id,
+        };
       });
 
-      if (!createdNewGame) {
+      if (!transactionResult.shouldProvisionParticipants) {
         logger.info(
           `[RECURRENCE] ${gameId} já criou próximo jogo ${newGameRef.id}, skip.`
         );
         return;
       }
 
-      logger.info(
-        `[RECURRENCE] Created recurring game ${newGameRef.id} from ${gameId}` +
-        ` (${recurrence}, date ${nextDate}, child ${childCount + 1}/52)`
-      );
+      if (transactionResult.createdNewGame) {
+        logger.info(
+          `[RECURRENCE] Created recurring game ${newGameRef.id} from ${gameId}` +
+          ` (${recurrence}, date ${nextDate}, child ${childCount + 1}/52)`
+        );
+      } else {
+        logger.info(
+          `[RECURRENCE] Retrying participant provisioning for ${newGameRef.id}`
+        );
+      }
 
       if (after.group_id) {
         try {
@@ -366,6 +402,10 @@ export const onGameFinishedCreateRecurrence = onDocumentUpdated(
           }
 
           await commitBatch();
+          await event.data!.after.ref.update({
+            next_game_confirmations_created: true,
+            updated_at: FieldValue.serverTimestamp(),
+          });
           logger.info(
             `[RECURRENCE] Auto-invited ${invites.length + 1} active members ` +
             `for recurring game ${newGameRef.id}`
@@ -404,10 +444,12 @@ export const onGameFinishedCreateRecurrence = onDocumentUpdated(
             `[RECURRENCE] Failed to auto-invite/notify for ${newGameRef.id}:`,
             err
           );
+          throw err;
         }
       }
     } catch (err) {
       logger.error(`[RECURRENCE] Failed to create recurrence for ${gameId}:`, err);
+      throw err;
     }
   }
 );

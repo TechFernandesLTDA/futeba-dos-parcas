@@ -29,6 +29,8 @@ jest.mock("firebase-admin", () => {
   const mockFieldValue = {
     serverTimestamp: jest.fn(() => ({})),
     delete: jest.fn(() => ({ _type: "FieldValueDelete" })),
+    arrayUnion: jest.fn((...values: unknown[]) => ({ _type: "FieldValueArrayUnion", values })),
+    arrayRemove: jest.fn((...values: unknown[]) => ({ _type: "FieldValueArrayRemove", values })),
     increment: jest.fn((n: number) => ({ _type: "Increment", operand: n })),
   };
 
@@ -106,6 +108,7 @@ jest.mock("firebase-functions/v2/https", () => ({
 }));
 
 import {
+  __testing,
   enqueueNotification,
   enqueueNotifications,
   QueuedNotification,
@@ -384,5 +387,63 @@ describe("enqueueNotifications", () => {
         createdAt: expect.any(Object),
       });
     }
+  });
+});
+
+describe("batch-sender retry por token", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  test("buildDispatchTokens reenvia apenas tokens pendentes em retry", () => {
+    const tokenMap = new Map<string, string[]>([
+      ["user1", ["token-a", "token-b"]],
+      ["user2", ["token-c"]],
+    ]);
+
+    const dispatch = __testing.buildDispatchTokens(
+      ["user1", "user2"],
+      tokenMap,
+      ["token-b"],
+      ["token-a"]
+    );
+
+    expect(dispatch.tokens).toEqual(["token-b"]);
+    expect(Array.from(dispatch.tokenToUser.entries())).toEqual([
+      ["token-b", "user1"],
+    ]);
+  });
+
+  test("sendMulticastInChunks mantém retry do token transiente mesmo com sucesso em outro device do mesmo usuário", async () => {
+    mockMessagingSendEach.mockResolvedValue({
+      successCount: 1,
+      failureCount: 1,
+      responses: [
+        {success: true},
+        {success: false, error: {code: "messaging/server-unavailable"}},
+      ],
+    });
+
+    const result = await __testing.sendMulticastInChunks(
+      ["token-a", "token-b"],
+      new Map<string, string>([
+        ["token-a", "user1"],
+        ["token-b", "user1"],
+      ]),
+      {
+        title: "Teste",
+        body: "Mensagem",
+        type: "GAME_INVITE",
+        data: {},
+      }
+    );
+
+    expect(result.sent).toBe(1);
+    expect(result.failed).toBe(0);
+    expect(result.transientFailed).toBe(1);
+    expect(Array.from(result.deliveredTokens)).toEqual(["token-a"]);
+    expect(Array.from(result.pendingTokens)).toEqual(["token-b"]);
+    expect(Array.from(result.deliveredUserIds)).toEqual(["user1"]);
+    expect(Array.from(result.pendingUserIds)).toEqual(["user1"]);
   });
 });

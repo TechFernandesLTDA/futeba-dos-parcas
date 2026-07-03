@@ -245,6 +245,28 @@ describe("auth/invite-code apadrinhamento", () => {
     });
   });
 
+  it("validateInviteCode nao reativa invite_codes desativado", async () => {
+    store.set("users/inviter-disabled", {
+      invite_code: "OFF123",
+      name: "Codigo Desativado",
+    });
+    store.set("invite_codes/OFF123", {
+      user_id: "inviter-disabled",
+      inviter_name: "Codigo Desativado",
+      active: false,
+    });
+
+    await expect(callableHandlers.validateInviteCode({
+      data: {inviteCode: "OFF123"},
+      rawRequest: {headers: {}, ip: "127.0.0.1"},
+    })).resolves.toEqual({valid: false});
+
+    expect(store.get("invite_codes/OFF123")).toMatchObject({
+      user_id: "inviter-disabled",
+      active: false,
+    });
+  });
+
   it("onUserCreatedProcessInvite registra aceite e credita XP ao padrinho", async () => {
     store.set("users/inviter-1", {
       invite_code: "ABC123",
@@ -283,6 +305,41 @@ describe("auth/invite-code apadrinhamento", () => {
       xp_earned: 50,
       xp_before: 90,
       xp_after: 140,
+    });
+  });
+
+  it("onUserCreatedProcessInvite ignora codigo desativado sem reativa-lo", async () => {
+    store.set("users/inviter-disabled", {
+      invite_code: "OFF123",
+      name: "Codigo Desativado",
+      invite_count: 2,
+      experience_points: 90,
+      level: 0,
+    });
+    store.set("invite_codes/OFF123", {
+      user_id: "inviter-disabled",
+      inviter_name: "Codigo Desativado",
+      active: false,
+    });
+    store.set("users/new-user-disabled", {
+      email: "novo@test.com",
+      invited_by_code: "OFF123",
+    });
+
+    await firestoreHandlers["users/{userId}"][1]({
+      params: {userId: "new-user-disabled"},
+      data: {data: () => store.get("users/new-user-disabled")},
+    });
+
+    expect(store.get("users/new-user-disabled")).toMatchObject({
+      invite_status: "INVALID_CODE",
+    });
+    expect(store.get("users/inviter-disabled")).toMatchObject({
+      invite_count: 2,
+      experience_points: 90,
+    });
+    expect(store.get("invite_codes/OFF123")).toMatchObject({
+      active: false,
     });
   });
 

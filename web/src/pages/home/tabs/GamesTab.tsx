@@ -17,11 +17,11 @@ import {
   alpha,
   useTheme,
   useMediaQuery,
-  Grid,
   IconButton,
   ToggleButtonGroup,
   ToggleButton,
 } from '@mui/material';
+import Grid from '@mui/material/Unstable_Grid2';
 import {
   Add,
   Search,
@@ -343,7 +343,7 @@ export function GamesTab() {
             const isLive = game.status === 'LIVE';
 
             return (
-              <Grid item xs={12} md={6} xl={4} key={game.id}>
+              <Grid xs={12} md={6} xl={4} key={game.id}>
               <Card sx={{ mb: { xs: 2, md: 0 }, ...(isLive ? { borderLeft: `3px solid ${theme.palette.error.main}` } : {}) }}>
                 <CardActionArea onClick={() => handleCardClick(game.id)}>
                   <CardContent sx={{ p: { xs: 2, md: 1.5 }, '&:last-child': { pb: { xs: 2, md: 1.5 } } }}>

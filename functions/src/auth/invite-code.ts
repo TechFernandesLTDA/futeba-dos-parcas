@@ -46,6 +46,14 @@ async function findInviterByCode(code: string): Promise<{
 } | null> {
   if (!/^[A-Z0-9]{6,10}$/.test(code)) return null;
 
+  const inviteCodeDoc = await db()
+    .collection("invite_codes")
+    .doc(code)
+    .get();
+  if (inviteCodeDoc.exists && inviteCodeDoc.data()?.active === false) {
+    return null;
+  }
+
   const snap = await db()
     .collection("users")
     .where("invite_code", "==", code)
@@ -77,15 +85,23 @@ async function syncInviteCodeOwner(
   code: string,
   inviter: {uid: string; name: string}
 ): Promise<void> {
-  await db()
+  const inviteCodeRef = db()
     .collection("invite_codes")
-    .doc(code)
-    .set({
-      user_id: inviter.uid,
-      inviter_name: inviter.name,
-      active: true,
-      updated_at: FieldValue.serverTimestamp(),
-    }, {merge: true});
+    .doc(code);
+  const inviteCodeDoc = await inviteCodeRef.get();
+
+  const payload: Record<string, unknown> = {
+    user_id: inviter.uid,
+    inviter_name: inviter.name,
+    updated_at: FieldValue.serverTimestamp(),
+  };
+
+  if (!inviteCodeDoc.exists) {
+    payload.active = true;
+    payload.created_at = FieldValue.serverTimestamp();
+  }
+
+  await inviteCodeRef.set(payload, {merge: true});
 }
 
 /**

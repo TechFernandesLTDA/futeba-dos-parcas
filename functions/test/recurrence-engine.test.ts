@@ -278,7 +278,10 @@ describe("onGameFinishedCreateRecurrence", () => {
 
     mockFirestore.mockReturnValue(fakeDb)
 
-    const afterRef = {path: "games/game-1"}
+    const afterRef = {
+      path: "games/game-1",
+      update: jest.fn().mockResolvedValue(undefined),
+    }
     const txGet = jest.fn((ref: any) => {
       if (ref === afterRef) {
         return Promise.resolve({
@@ -329,6 +332,10 @@ describe("onGameFinishedCreateRecurrence", () => {
             total_cost: 0,
             location_name: "Arena Central",
             location_address: "Rua A",
+            location_lat: -23.5505,
+            location_lng: -46.6333,
+            location_lat_approx: -23.551,
+            location_lng_approx: -46.633,
             visibility: "GROUP",
           }),
           ref: afterRef,
@@ -338,16 +345,163 @@ describe("onGameFinishedCreateRecurrence", () => {
     })
 
     expect(txSet).toHaveBeenCalledTimes(1)
+    expect(txSet).toHaveBeenCalledWith(
+      expect.objectContaining({id: "recurring_game-1_2"}),
+      expect.objectContaining({
+        location_lat: -23.5505,
+        location_lng: -46.6333,
+        location_lat_approx: -23.551,
+        location_lng_approx: -46.633,
+      })
+    )
     expect(txUpdate).toHaveBeenCalledWith(afterRef, expect.objectContaining({
       next_game_created: true,
       next_game_id: "recurring_game-1_2",
+      next_game_confirmations_created: false,
     }))
     expect(mockBatchSet).toHaveBeenCalledTimes(3)
     expect(mockBatchCommit).toHaveBeenCalledTimes(1)
+    expect(afterRef.update).toHaveBeenCalledWith(expect.objectContaining({
+      next_game_confirmations_created: true,
+    }))
     expect(mockSendNotificationToUsers).toHaveBeenCalledWith(
       ["member-1", "member-2"],
       expect.objectContaining({
         type: "GAME_INVITE",
+        data: {gameId: "recurring_game-1_2"},
+      }),
+      "group-1"
+    )
+  })
+
+  it("retoma confirmações pendentes quando o próximo jogo já existe", async () => {
+    const memberDocs = [
+      {
+        id: "member-1",
+        data: () => ({status: "ACTIVE", display_name: "Bia"}),
+      },
+    ]
+
+    const membersQueryGet = jest.fn().mockResolvedValue({
+      empty: false,
+      size: memberDocs.length,
+      docs: memberDocs,
+    })
+    const membersQuery: any = {
+      limit: jest.fn(() => membersQuery),
+      startAfter: jest.fn(() => membersQuery),
+      get: membersQueryGet,
+    }
+
+    const gamesCountGet = jest.fn().mockResolvedValue({
+      data: () => ({count: 1}),
+    })
+    const gamesWhereChain: any = {
+      count: jest.fn(() => ({
+        get: gamesCountGet,
+      })),
+    }
+
+    const gamesDoc = jest.fn((id: string) => ({
+      id,
+      path: `games/${id}`,
+    }))
+    const confirmationsDoc = jest.fn((id: string) => ({
+      id,
+      path: `confirmations/${id}`,
+    }))
+
+    const fakeDb: any = {
+      collection: jest.fn((name: string) => {
+        if (name === "groups") {
+          return {
+            doc: jest.fn(() => ({
+              collection: jest.fn(() => membersQuery),
+            })),
+          }
+        }
+
+        if (name === "games") {
+          return {
+            where: jest.fn(() => gamesWhereChain),
+            doc: gamesDoc,
+          }
+        }
+
+        if (name === "confirmations") {
+          return {
+            doc: confirmationsDoc,
+          }
+        }
+
+        throw new Error(`Unexpected collection ${name}`)
+      }),
+      runTransaction: mockRunTransaction,
+      batch: mockBatch,
+    }
+
+    mockFirestore.mockReturnValue(fakeDb)
+
+    const afterRef = {
+      path: "games/game-1",
+      update: jest.fn().mockResolvedValue(undefined),
+    }
+
+    mockRunTransaction.mockImplementation(async (callback: any) => callback({
+      get: jest.fn((ref: any) => {
+        if (ref === afterRef) {
+          return Promise.resolve({
+            get: (field: string) => {
+              if (field === "next_game_created") return true
+              if (field === "next_game_id") return "recurring_game-1_2"
+              if (field === "next_game_confirmations_created") return false
+              return undefined
+            },
+          })
+        }
+
+        return Promise.resolve({exists: true})
+      }),
+      set: jest.fn(),
+      update: jest.fn(),
+    }))
+
+    await onGameFinishedCreateRecurrence({
+      data: {
+        before: {
+          data: () => ({
+            status: "SCHEDULED",
+          }),
+        },
+        after: {
+          data: () => ({
+            status: "FINISHED",
+            recurrence: "weekly",
+            owner_id: "owner-1",
+            owner_name: "Owner",
+            group_id: "group-1",
+            next_game_created: true,
+            next_game_id: "recurring_game-1_2",
+            next_game_confirmations_created: false,
+            date: "2026-06-20",
+            time: "20:00",
+            location_name: "Arena Central",
+            visibility: "GROUP",
+          }),
+          ref: afterRef,
+        },
+      },
+      params: {gameId: "game-1"},
+    })
+
+    expect(mockBatchSet).toHaveBeenCalledTimes(2)
+    expect(mockBatchCommit).toHaveBeenCalledTimes(1)
+    expect(afterRef.update).toHaveBeenCalledWith(expect.objectContaining({
+      next_game_confirmations_created: true,
+    }))
+    expect(mockSendNotificationToUsers).toHaveBeenCalledWith(
+      ["member-1"],
+      expect.objectContaining({
         data: {gameId: "recurring_game-1_2"},
       }),
       "group-1"
