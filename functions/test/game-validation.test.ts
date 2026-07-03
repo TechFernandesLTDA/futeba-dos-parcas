@@ -5,6 +5,9 @@ import {
 import {
   buildGameValidationFromFirestore,
 } from "../src/game-validation/aggregate";
+import {
+  calculatePresenceEvidence,
+} from "../src/game-validation/presence";
 
 describe("game validation score", () => {
   test("classifica jogo com evidencias fortes como VALIDATED", () => {
@@ -139,6 +142,39 @@ describe("game validation firestore aggregation", () => {
         "TEMPORAL_OVERLAP",
         "IMPOSSIBLE_TRAVEL",
         "LOW_CONFIDENCE_PRESENCE",
+      ]),
+    );
+  });
+});
+
+describe("presence evidence", () => {
+  test("classifica check-in forte com QR como VALIDATED", () => {
+    const result = calculatePresenceEvidence({
+      distanceMeters: 30,
+      radiusMeters: 500,
+      accuracyMeters: 12,
+      method: "qr",
+    });
+
+    expect(result.presence_status).toBe("VALIDATED");
+    expect(result.presence_confidence).toBe(100);
+    expect(result.presence_reasons).toEqual([]);
+    expect(result.check_in_evidence_version).toBe(1);
+  });
+
+  test("marca baixa confianca quando distancia esta perto do limite e GPS ruim", () => {
+    const result = calculatePresenceEvidence({
+      distanceMeters: 190,
+      radiusMeters: 200,
+      accuracyMeters: 90,
+      method: "gps",
+    });
+
+    expect(result.presence_status).toBe("LOW_CONFIDENCE");
+    expect(result.presence_reasons).toEqual(
+      expect.arrayContaining([
+        "DISTANCE_NEAR_LIMIT",
+        "LOW_GPS_ACCURACY",
       ]),
     );
   });

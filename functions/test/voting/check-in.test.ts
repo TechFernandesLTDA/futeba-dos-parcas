@@ -210,14 +210,28 @@ describe("checkInToGame", () => {
 
   it("check-in bem sucedido retorna distance", async () => {
     mockDbDocGet.mockResolvedValueOnce(makeGameSnap());
+    const setMock = jest.fn();
     mockDbRunTransaction.mockImplementationOnce(async (cb: any) => {
-      const tx = { get: jest.fn().mockResolvedValue(makeConfSnap()), set: jest.fn() };
+      const tx = { get: jest.fn().mockResolvedValue(makeConfSnap()), set: setMock };
       return cb(tx);
     });
 
     const result = await checkInToGame(makeRequest());
     expect(result.success).toBe(true);
     expect(result.distance_m).toBeDefined();
+    expect(setMock).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        checked_in: true,
+        check_in_method: "gps",
+        check_in_radius_m: 200,
+        presence_confidence: 90,
+        presence_status: "VALIDATED",
+        presence_reasons: [],
+        check_in_evidence_version: 1,
+      }),
+      { merge: true },
+    );
   });
 
   it("notifica outros jogadores confirmados apos check-in bem sucedido", async () => {

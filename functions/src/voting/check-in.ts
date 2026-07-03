@@ -27,6 +27,9 @@ import {
   NotificationType,
   saveNotificationToFirestore,
 } from "../notifications/helpers";
+import {
+  calculatePresenceEvidence,
+} from "../game-validation/presence";
 
 const DEFAULT_RADIUS_METERS = 200;
 const MAX_RADIUS_METERS = 2000;
@@ -292,6 +295,14 @@ export const checkInToGame = onCall(
     // race entre checar checked_in e escrever.
     const confId = `${gameId}_${uid}`;
     const confRef = db().doc(`confirmations/${confId}`);
+    const presenceEvidence = calculatePresenceEvidence({
+      distanceMeters: hasGps ? dist : radius,
+      radiusMeters: radius,
+      accuracyMeters: typeof accuracy === "number" ?
+        Math.round(accuracy) :
+        null,
+      method: qrValid ? "qr" : "gps",
+    });
 
     const checkInResult = await db().runTransaction(
       async (tx): Promise<CheckInTransactionResult> => {
@@ -344,6 +355,8 @@ export const checkInToGame = onCall(
               null,
             check_in_distance_m: hasGps ? Math.round(dist) : null,
             check_in_method: qrValid ? "qr" : "gps",
+            check_in_radius_m: radius,
+            ...presenceEvidence,
             was_present: true,
           },
           {merge: true},
