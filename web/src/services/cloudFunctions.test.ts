@@ -28,6 +28,8 @@ import {
   restoreDeletedGroup,
   startGameLifecycle,
   finishGameLifecycle,
+  submitLiveGameEvent,
+  deleteLiveGameEvent,
   reviewHeldGameRewards,
   submitMvpVotes,
   updateUserPii,
@@ -128,6 +130,42 @@ describe('cloudFunctions', () => {
     await finishGameLifecycle({ gameId: 'game-1' });
 
     expect(mockCallable).toHaveBeenCalledWith('finishGameLifecycle', { gameId: 'game-1' });
+  });
+
+  it('submitLiveGameEvent chama callable com payload validado', async () => {
+    mockCallable.mockResolvedValue({ data: { success: true, eventId: 'evt-1' } });
+
+    await submitLiveGameEvent({
+      gameId: 'game-1',
+      eventType: 'GOAL',
+      playerId: 'user-2',
+      playerName: 'Renan',
+      teamId: 'team-1',
+      minute: 12,
+    });
+
+    expect(mockCallable).toHaveBeenCalledWith('submitLiveGameEvent', {
+      gameId: 'game-1',
+      eventType: 'GOAL',
+      playerId: 'user-2',
+      playerName: 'Renan',
+      teamId: 'team-1',
+      minute: 12,
+    });
+  });
+
+  it('deleteLiveGameEvent chama callable com gameId e eventId', async () => {
+    mockCallable.mockResolvedValue({ data: { success: true, reverted: true } });
+
+    await deleteLiveGameEvent({
+      gameId: 'game-1',
+      eventId: 'evt-1',
+    });
+
+    expect(mockCallable).toHaveBeenCalledWith('deleteLiveGameEvent', {
+      gameId: 'game-1',
+      eventId: 'evt-1',
+    });
   });
 
   it('reviewHeldGameRewards chama callable com ação e motivo', async () => {

@@ -46,9 +46,9 @@ import {
 } from '@mui/icons-material';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
 import { PageContainer } from '../../components/common/PageContainer';
-import { doc, collection, query, where, onSnapshot, addDoc, setDoc, increment, serverTimestamp } from 'firebase/firestore';
+import { doc, collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '../../services/firebase';
-import { finishGameLifecycle, startGameLifecycle } from '../../services/cloudFunctions';
+import { finishGameLifecycle, startGameLifecycle, submitLiveGameEvent } from '../../services/cloudFunctions';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -74,6 +74,7 @@ interface ConfirmedPlayer {
   id: string;
   name: string;
   photo?: string;
+  teamId?: string;
 }
 
 function canManageGame(game: Game | null, uid?: string): boolean {
@@ -139,7 +140,6 @@ export const LiveGameScreen: React.FC = () => {
   const canManage = canManageGame(game, uid);
 
   const [actionLoading, setActionLoading] = useState(false);
-  const [scoreUpdating, setScoreUpdating] = useState(false);
   const [finishing, setFinishing] = useState(false);
   const [confirmFinishOpen, setConfirmFinishOpen] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(() => {
@@ -230,6 +230,7 @@ export const LiveGameScreen: React.FC = () => {
             id: raw.user_id,
             name: raw.user_name || 'Jogador',
             photo: raw.user_photo || undefined,
+            teamId: raw.team_id || undefined,
           };
         });
       setConfirmedPlayers(players);
@@ -328,22 +329,29 @@ export const LiveGameScreen: React.FC = () => {
       return;
     }
 
+    setActionLoading(true);
     try {
       const player = confirmedPlayers.find((p) => p.id === selectedPlayer);
-        await addDoc(collection(db, 'game_events'), {
-          game_id: gameId,
-          type: selectedEventType,
-        player_id: selectedPlayer,
-        player_name: player?.name || t('profile.defaultPlayerName'),
+      if (!player?.teamId) {
+        showError('Selecione um jogador confirmado com time definido para registrar o evento.');
+        return;
+      }
+
+      await submitLiveGameEvent({
+        gameId,
+        eventType: selectedEventType as 'GOAL' | 'SAVE' | 'YELLOW_CARD' | 'RED_CARD',
+        playerId: selectedPlayer,
+        playerName: player.name || t('profile.defaultPlayerName'),
+        teamId: player.teamId,
         minute: Math.floor(elapsedTime / 60),
-        created_by: uid,
-        created_at: serverTimestamp(),
       });
       setAddEventDialog(false);
       setSelectedPlayer('');
     } catch (err) {
       logger.error('Error adding event:', err);
       showError(getFirestoreErrorMessage(err, t('games.live.errorAddEvent')));
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -386,23 +394,6 @@ export const LiveGameScreen: React.FC = () => {
       showError(getFirestoreErrorMessage(err));
     } finally {
       setActionLoading(false);
-    }
-  };
-
-  // #1528: Incrementa ou decrementa o placar de um time no live_scores.
-  // Usa setDoc com merge para criar o documento caso ainda não exista.
-  const handleScoreUpdate = async (team: 1 | 2, delta: 1 | -1) => {
-    if (!gameId || !canManage) return;
-    setScoreUpdating(true);
-    try {
-      const scoreRef = doc(db, 'live_scores', gameId);
-      const field = team === 1 ? 'team1_score' : 'team2_score';
-      await setDoc(scoreRef, { [field]: increment(delta), updated_at: serverTimestamp() }, { merge: true });
-    } catch (err) {
-      logger.error('Erro ao atualizar placar:', err);
-      showError(getFirestoreErrorMessage(err, t('games.live.errorUpdateScore')));
-    } finally {
-      setScoreUpdating(false);
     }
   };
 
@@ -530,50 +521,11 @@ export const LiveGameScreen: React.FC = () => {
               );
             })()}
 
-            {/* #1528: Controles de placar — visíveis apenas para o organizador */}
+            {/* O placar segue apenas eventos validados no servidor. */}
             {canManage && isRunning && (
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2, gap: 1 }}>
-                <Box sx={{ display: 'flex', gap: 0.5, flex: 1, justifyContent: 'center' }}>
-                  <Button
-                    size="small"
-                    variant="outlined"
-                    onClick={() => handleScoreUpdate(1, -1)}
-                    disabled={scoreUpdating || (score?.team1Score ?? 0) <= 0}
-                    aria-label={t('games.live.decreaseScore', { team: game.team1Name || t('games.teamA') })}
-                  >
-                    −
-                  </Button>
-                  <Button
-                    size="small"
-                    variant="contained"
-                    onClick={() => handleScoreUpdate(1, 1)}
-                    disabled={scoreUpdating}
-                    aria-label={t('games.live.increaseScore', { team: game.team1Name || t('games.teamA') })}
-                  >
-                    +
-                  </Button>
-                </Box>
-                <Box sx={{ display: 'flex', gap: 0.5, flex: 1, justifyContent: 'center' }}>
-                  <Button
-                    size="small"
-                    variant="outlined"
-                    onClick={() => handleScoreUpdate(2, -1)}
-                    disabled={scoreUpdating || (score?.team2Score ?? 0) <= 0}
-                    aria-label={t('games.live.decreaseScore', { team: game.team2Name || t('games.teamB') })}
-                  >
-                    −
-                  </Button>
-                  <Button
-                    size="small"
-                    variant="contained"
-                    onClick={() => handleScoreUpdate(2, 1)}
-                    disabled={scoreUpdating}
-                    aria-label={t('games.live.increaseScore', { team: game.team2Name || t('games.teamB') })}
-                  >
-                    +
-                  </Button>
-                </Box>
-              </Box>
+              <Alert severity="info" sx={{ mt: 2 }}>
+                O placar ao vivo segue apenas eventos validados no servidor. Para ajustar o resultado, registre ou reverta eventos oficiais do jogo.
+              </Alert>
             )}
           </CardContent>
         </Card>

@@ -534,6 +534,37 @@ export const finishGameLifecycle = httpsCallable<
   { success: boolean; status: 'FINISHED'; team1Score: number; team2Score: number; aggregatedPlayers: number }
 >(functions, 'finishGameLifecycle');
 
+export const submitLiveGameEvent = httpsCallable<
+  {
+    gameId: string;
+    eventType: 'GOAL' | 'SAVE' | 'YELLOW_CARD' | 'RED_CARD';
+    playerId: string;
+    playerName: string;
+    teamId: string;
+    minute?: number;
+    assistedById?: string | null;
+    assistedByName?: string | null;
+  },
+  {
+    success: boolean;
+    eventId: string;
+    eventType: 'GOAL' | 'SAVE' | 'YELLOW_CARD' | 'RED_CARD';
+    minute: number;
+  }
+>(functions, 'submitLiveGameEvent');
+
+export const deleteLiveGameEvent = httpsCallable<
+  {
+    gameId: string;
+    eventId: string;
+  },
+  {
+    success: boolean;
+    eventId: string;
+    reverted: boolean;
+  }
+>(functions, 'deleteLiveGameEvent');
+
 export const reviewHeldGameRewards = httpsCallable<
   {
     gameId: string;
