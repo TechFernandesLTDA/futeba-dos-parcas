@@ -40,8 +40,7 @@ class GameRepositoryImpl constructor(
     private val queryRepository: com.futebadosparcas.domain.repository.GameQueryRepository,
     private val confirmationRepository: com.futebadosparcas.domain.repository.GameConfirmationRepository,
     private val eventsRepository: com.futebadosparcas.domain.repository.GameEventsRepository,
-    private val teamRepository: com.futebadosparcas.domain.repository.GameTeamRepository,
-    private val liveGameRepository: LiveGameRepository
+    private val teamRepository: com.futebadosparcas.domain.repository.GameTeamRepository
 ) : GameRepository {
     private val gamesCollection = firestore.collection("games")
 

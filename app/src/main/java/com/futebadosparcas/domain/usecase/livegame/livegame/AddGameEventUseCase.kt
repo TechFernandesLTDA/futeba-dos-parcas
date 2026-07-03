@@ -1,8 +1,8 @@
 package com.futebadosparcas.domain.usecase.livegame
 
-import com.futebadosparcas.data.repository.LiveGameRepository
 import com.futebadosparcas.domain.model.GameEvent
 import com.futebadosparcas.domain.model.GameEventType
+import com.futebadosparcas.domain.repository.LiveGameRepository
 import com.futebadosparcas.util.AppLogger
 
 /**
