@@ -68,7 +68,10 @@ jest.mock("firebase-admin", () => ({
   firestore: ciFirestore,
 }));
 
-import { checkInToGame } from "../../src/voting/check-in";
+import {
+  checkInToGame,
+  classifyCheckInTravelSignal,
+} from "../../src/voting/check-in";
 import { checkRateLimit } from "../../src/middleware/rate-limiter";
 import { logger } from "firebase-functions/v2";
 
@@ -247,7 +250,7 @@ describe("checkInToGame", () => {
         ],
       }),
     };
-    mockDbCollection.mockReturnValueOnce(confirmationsQuery);
+    mockDbCollection.mockReturnValue(confirmationsQuery);
     mockDbDocGet.mockResolvedValueOnce(makeGameSnap({ location_name: "Arena Teste" }));
     mockDbRunTransaction.mockImplementationOnce(async (cb: any) => {
       const tx = { get: jest.fn().mockResolvedValue(makeConfSnap({ user_name: "Renan" })), set: jest.fn() };
@@ -288,7 +291,7 @@ describe("checkInToGame", () => {
       limit: jest.fn().mockReturnThis(),
       get: jest.fn().mockRejectedValue(new Error("Firestore unavailable")),
     };
-    mockDbCollection.mockReturnValueOnce(confirmationsQuery);
+    mockDbCollection.mockReturnValue(confirmationsQuery);
     mockDbDocGet.mockResolvedValueOnce(makeGameSnap({ location_name: undefined }));
     mockDbRunTransaction.mockImplementationOnce(async (cb: any) => {
       const tx = { get: jest.fn().mockResolvedValue(makeConfSnap({ user_name: undefined })), set: jest.fn() };
@@ -311,5 +314,69 @@ describe("checkInToGame", () => {
     await expect(
       checkInToGame(makeRequest({ data: { gameId: "g1", lat: 0.001, lng: 0.001 } })),
     ).rejects.toThrow();
+  });
+});
+
+describe("classifyCheckInTravelSignal", () => {
+  it("sinaliza viagem impossível entre check-ins distantes com intervalo curto", () => {
+    const result = classifyCheckInTravelSignal({
+      gameStatus: "CONFIRMED",
+      gameDateTimeMs: new Date("2026-07-03T21:00:00.000Z").getTime(),
+      checkedInAtMs: new Date("2026-07-03T21:10:00.000Z").getTime(),
+      lat: -22.9068,
+      lng: -43.1729,
+      recentCheckIns: [
+        {
+          confId: "old_conf",
+          gameId: "old_game",
+          checkedInAtMs: new Date("2026-07-03T20:55:00.000Z").getTime(),
+          gameDateTimeMs: new Date("2026-07-03T20:30:00.000Z").getTime(),
+          lat: -23.5505,
+          lng: -46.6333,
+        },
+      ],
+    });
+
+    expect(result.suspiciousImpossibleTravel).toBe(true);
+    expect(result.conflictConfirmationIds).toEqual(["old_conf"]);
+    expect(result.distanceBucket).toBe("50KM_PLUS");
+    expect(result.timeBucket).toBe("15_TO_59_MIN");
+  });
+
+  it("não sinaliza viagem impossível quando a distância é baixa ou o tempo é plausível", () => {
+    const result = classifyCheckInTravelSignal({
+      gameStatus: "CONFIRMED",
+      gameDateTimeMs: new Date("2026-07-03T21:00:00.000Z").getTime(),
+      checkedInAtMs: new Date("2026-07-03T23:30:00.000Z").getTime(),
+      lat: -23.561,
+      lng: -46.655,
+      recentCheckIns: [
+        {
+          confId: "old_conf",
+          gameId: "old_game",
+          checkedInAtMs: new Date("2026-07-03T21:00:00.000Z").getTime(),
+          gameDateTimeMs: new Date("2026-07-03T20:30:00.000Z").getTime(),
+          lat: -23.5505,
+          lng: -46.6333,
+        },
+      ],
+    });
+
+    expect(result.suspiciousImpossibleTravel).toBe(false);
+    expect(result.conflictConfirmationIds).toEqual([]);
+  });
+
+  it("marca check-in tardio em jogo ainda não live", () => {
+    const result = classifyCheckInTravelSignal({
+      gameStatus: "CONFIRMED",
+      gameDateTimeMs: new Date("2026-07-03T18:00:00.000Z").getTime(),
+      checkedInAtMs: new Date("2026-07-03T22:10:00.000Z").getTime(),
+      lat: -23.5505,
+      lng: -46.6333,
+      recentCheckIns: [],
+    });
+
+    expect(result.suspiciousLateCheckIn).toBe(true);
+    expect(result.lateCheckInMinutes).toBe(250);
   });
 });

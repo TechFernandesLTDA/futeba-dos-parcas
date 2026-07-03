@@ -126,6 +126,7 @@ describe("game validation firestore aggregation", () => {
       confirmations: [
         {checked_in: true, suspicious_overlap: true},
         {checked_in: true, suspiciousImpossibleTravel: true},
+        {checked_in: true, suspicious_late_checkin: true},
         {presence_status: "LOW_CONFIDENCE"},
       ],
       eventCount: 0,
@@ -135,12 +136,15 @@ describe("game validation firestore aggregation", () => {
       .toBe(1);
     expect(result.validation_signals_summary.impossible_travel_count)
       .toBe(1);
+    expect(result.validation_signals_summary.late_checkin_count)
+      .toBe(1);
     expect(result.validation_signals_summary.low_confidence_presence_count)
       .toBe(1);
     expect(result.validation_reasons).toEqual(
       expect.arrayContaining([
         "TEMPORAL_OVERLAP",
         "IMPOSSIBLE_TRAVEL",
+        "LATE_CHECKIN",
         "LOW_CONFIDENCE_PRESENCE",
       ]),
     );

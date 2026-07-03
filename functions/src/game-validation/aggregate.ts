@@ -44,6 +44,11 @@ export function buildGameValidationFromFirestore(
       confirmation.suspicious_impossible_travel === true ||
       confirmation.suspiciousImpossibleTravel === true,
   );
+  const lateCheckin = confirmations.filter(
+    (confirmation) =>
+      confirmation.suspicious_late_checkin === true ||
+      confirmation.suspiciousLateCheckin === true,
+  );
   const lowConfidencePresence = confirmations.filter(
     (confirmation) =>
       confirmation.presence_status === "LOW_CONFIDENCE" ||
@@ -64,6 +69,7 @@ export function buildGameValidationFromFirestore(
       scoreEventConsistent: input.scoreEventConsistent,
       suspiciousOverlapCount: suspiciousOverlap.length,
       impossibleTravelCount: impossibleTravel.length,
+      lateCheckinCount: lateCheckin.length,
       manualPresenceCount: manualPresence.length,
       lowConfidencePresenceCount: lowConfidencePresence.length,
     },

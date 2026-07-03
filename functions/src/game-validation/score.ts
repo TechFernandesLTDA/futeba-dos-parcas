@@ -17,6 +17,7 @@ export interface GameValidationSignalsInput {
   scoreEventConsistent?: boolean;
   suspiciousOverlapCount?: number;
   impossibleTravelCount?: number;
+  lateCheckinCount?: number;
   manualPresenceCount?: number;
   lowConfidencePresenceCount?: number;
   finishedTooEarly?: boolean;
@@ -32,6 +33,7 @@ export interface GameValidationSignalsSummary {
   score_event_consistent?: boolean;
   suspicious_overlap_count: number;
   impossible_travel_count: number;
+  late_checkin_count: number;
   manual_presence_count: number;
   low_confidence_presence_count: number;
 }
@@ -114,6 +116,9 @@ export function calculateGameValidationScore(
   const impossibleTravelCount = asNonNegativeInt(
     input.impossibleTravelCount,
   );
+  const lateCheckinCount = asNonNegativeInt(
+    input.lateCheckinCount,
+  );
   const manualPresenceCount = asNonNegativeInt(input.manualPresenceCount);
   const lowConfidencePresenceCount = asNonNegativeInt(
     input.lowConfidencePresenceCount,
@@ -170,6 +175,11 @@ export function calculateGameValidationScore(
     reasons.push("IMPOSSIBLE_TRAVEL");
   }
 
+  if (lateCheckinCount > 0) {
+    score -= Math.min(lateCheckinCount * 10, 30);
+    reasons.push("LATE_CHECKIN");
+  }
+
   if (
     confirmedCount > 0 &&
     manualPresenceCount / confirmedCount > 0.5
@@ -206,6 +216,7 @@ export function calculateGameValidationScore(
       score_event_consistent: input.scoreEventConsistent,
       suspicious_overlap_count: suspiciousOverlapCount,
       impossible_travel_count: impossibleTravelCount,
+      late_checkin_count: lateCheckinCount,
       manual_presence_count: manualPresenceCount,
       low_confidence_presence_count: lowConfidencePresenceCount,
     },
