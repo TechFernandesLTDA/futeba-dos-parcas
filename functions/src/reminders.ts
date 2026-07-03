@@ -15,8 +15,9 @@
 
 import {logger} from "firebase-functions";
 import {onSchedule} from "firebase-functions/v2/scheduler";
-import {FieldValue, Timestamp} from "firebase-admin/firestore";
+import {FieldPath, FieldValue, Timestamp} from "firebase-admin/firestore";
 import {
+  FIRESTORE_PAGINATION_LIMIT,
   FUNCTION_REGION,
 } from "./constants";
 import {
@@ -46,6 +47,7 @@ const REMINDER_24H_MS = 24 * 60 * 60 * 1000;
 const REMINDER_2H_MS = 2 * 60 * 60 * 1000;
 const ONE_HOUR_MS = 60 * 60 * 1000;
 const REMINDER_CONFIRMATIONS_PAGE_SIZE = 100;
+const REMINDER_MEMBERS_PAGE_SIZE = 100;
 
 // Tolerancia para a janela de busca.
 // #2993: o cron roda a cada 60 min mas o Cloud Scheduler nao garante
@@ -467,7 +469,7 @@ export async function fetchPendingConfirmations(
  * @return {Promise<string[]>} IDs dos membros
  *   sem confirmacao.
  */
-async function fetchGroupMembersWithoutConfirmation(
+export async function fetchGroupMembersWithoutConfirmation(
   gameId: string,
   groupId: string,
   reminderType: "24h" | "2h" | "1h"
@@ -479,53 +481,134 @@ async function fetchGroupMembersWithoutConfirmation(
         "reminder_2h_sent" :
         "reminder_1h_sent";
 
-  const membersSnap = await db()
-    .collection("groups")
-    .doc(groupId)
-    .collection("members")
-    .where(
-      "role",
-      "in",
-      ["MEMBER", "ADMIN", "OWNER"]
-    )
-    .get();
+  const memberIds: string[] = [];
+  let lastMemberDoc:
+    FirebaseFirestore.QueryDocumentSnapshot |
+    undefined;
 
-  const memberIds = membersSnap.docs.map(
-    (doc) => doc.id
-  );
+  while (true) {
+    let membersQuery: FirebaseFirestore.Query = db()
+      .collection("groups")
+      .doc(groupId)
+      .collection("members")
+      .where(
+        "role",
+        "in",
+        ["MEMBER", "ADMIN", "OWNER"]
+      )
+      .orderBy(FieldPath.documentId())
+      .limit(REMINDER_MEMBERS_PAGE_SIZE);
 
-  const confirmationsSnap = await db()
-    .collection("confirmations")
-    .where("game_id", "==", gameId)
-    .get();
+    if (lastMemberDoc) {
+      membersQuery = membersQuery.startAfter(lastMemberDoc);
+    }
+
+    const membersSnap = await membersQuery.get();
+    if (membersSnap.empty) {
+      break;
+    }
+
+    memberIds.push(
+      ...membersSnap.docs.map((doc) => doc.id)
+    );
+    lastMemberDoc =
+      membersSnap.docs[membersSnap.docs.length - 1];
+
+    const membersPageSize =
+      typeof membersSnap.size === "number" ?
+        membersSnap.size :
+        membersSnap.docs.length;
+    if (membersPageSize < REMINDER_MEMBERS_PAGE_SIZE) {
+      break;
+    }
+  }
 
   const usersWithConfirmation =
     new Set<string>();
   const usersAlreadyNotified =
     new Set<string>();
 
-  for (const doc of confirmationsSnap.docs) {
-    const data = doc.data();
-    const userId = data.user_id || data.userId;
-    usersWithConfirmation.add(userId);
+  let lastConfirmationDoc:
+    FirebaseFirestore.QueryDocumentSnapshot |
+    undefined;
 
-    if (data[reminderField] === true) {
-      usersAlreadyNotified.add(userId);
+  while (true) {
+    let confirmationsQuery: FirebaseFirestore.Query = db()
+      .collection("confirmations")
+      .where("game_id", "==", gameId)
+      .orderBy(FieldPath.documentId())
+      .limit(FIRESTORE_PAGINATION_LIMIT);
+
+    if (lastConfirmationDoc) {
+      confirmationsQuery =
+        confirmationsQuery.startAfter(lastConfirmationDoc);
+    }
+
+    const confirmationsSnap =
+      await confirmationsQuery.get();
+    if (confirmationsSnap.empty) {
+      break;
+    }
+
+    for (const doc of confirmationsSnap.docs) {
+      const data = doc.data();
+      const userId = data.user_id || data.userId;
+      usersWithConfirmation.add(userId);
+
+      if (data[reminderField] === true) {
+        usersAlreadyNotified.add(userId);
+      }
+    }
+
+    lastConfirmationDoc =
+      confirmationsSnap.docs[confirmationsSnap.docs.length - 1];
+    const confirmationsPageSize =
+      typeof confirmationsSnap.size === "number" ?
+        confirmationsSnap.size :
+        confirmationsSnap.docs.length;
+    if (confirmationsPageSize < FIRESTORE_PAGINATION_LIMIT) {
+      break;
     }
   }
 
   // B2: Verificar tambem tracking collection
   // para membros sem confirmacao (evita spam)
-  const trackingSnap = await db()
-    .collection("reminder_tracking")
-    .where("game_id", "==", gameId)
-    .where("reminder_type", "==", reminderType)
-    .get();
+  let lastTrackingDoc:
+    FirebaseFirestore.QueryDocumentSnapshot |
+    undefined;
 
-  for (const doc of trackingSnap.docs) {
-    const data = doc.data();
-    const userId = data.user_id || data.userId;
-    usersAlreadyNotified.add(userId);
+  while (true) {
+    let trackingQuery: FirebaseFirestore.Query = db()
+      .collection("reminder_tracking")
+      .where("game_id", "==", gameId)
+      .where("reminder_type", "==", reminderType)
+      .orderBy(FieldPath.documentId())
+      .limit(FIRESTORE_PAGINATION_LIMIT);
+
+    if (lastTrackingDoc) {
+      trackingQuery = trackingQuery.startAfter(lastTrackingDoc);
+    }
+
+    const trackingSnap = await trackingQuery.get();
+    if (trackingSnap.empty) {
+      break;
+    }
+
+    for (const doc of trackingSnap.docs) {
+      const data = doc.data();
+      const userId = data.user_id || data.userId;
+      usersAlreadyNotified.add(userId);
+    }
+
+    lastTrackingDoc =
+      trackingSnap.docs[trackingSnap.docs.length - 1];
+    const trackingPageSize =
+      typeof trackingSnap.size === "number" ?
+        trackingSnap.size :
+        trackingSnap.docs.length;
+    if (trackingPageSize < FIRESTORE_PAGINATION_LIMIT) {
+      break;
+    }
   }
 
   const membersWithoutConfirmation =

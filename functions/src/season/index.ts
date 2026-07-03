@@ -1,12 +1,65 @@
 import * as admin from "firebase-admin";
-import {FieldValue, Timestamp} from "firebase-admin/firestore";
+import {FieldPath, FieldValue, Timestamp} from "firebase-admin/firestore";
 import {onSchedule} from "firebase-functions/v2/scheduler";
 import {logger} from "firebase-functions/v2";
 import {
   FIRESTORE_BATCH_SAFE_LIMIT,
+  FIRESTORE_PAGINATION_LIMIT,
   FUNCTION_REGION,
 } from "../constants";
 import {db} from "../_db";
+
+/**
+ * Busca todos os docs de uma coleção filtrados por igualdade, em páginas por
+ * documentId, para evitar leituras não-limitadas.
+ *
+ * @param {string} collectionName Coleção alvo.
+ * @param {string} field Campo filtrado por igualdade.
+ * @param {unknown} value Valor do filtro.
+ * @return {Promise<admin.firestore.QueryDocumentSnapshot[]>} Docs acumulados.
+ */
+export async function fetchDocsByFieldPaginated(
+  collectionName: string,
+  field: string,
+  value: unknown
+): Promise<admin.firestore.QueryDocumentSnapshot[]> {
+  const docs:
+    admin.firestore.QueryDocumentSnapshot[] = [];
+  let lastDoc:
+    admin.firestore.QueryDocumentSnapshot |
+    undefined;
+
+  while (true) {
+    let query: admin.firestore.Query = db()
+      .collection(collectionName)
+      .where(field, "==", value)
+      .orderBy(FieldPath.documentId())
+      .limit(FIRESTORE_PAGINATION_LIMIT);
+
+    if (lastDoc) {
+      query = query.startAfter(lastDoc);
+    }
+
+    const snapshot = await query.get();
+    if (snapshot.empty) {
+      break;
+    }
+
+    docs.push(...snapshot.docs);
+    lastDoc =
+      snapshot.docs[snapshot.docs.length - 1];
+
+    const currentPageSize =
+      typeof snapshot.size === "number" ?
+        snapshot.size :
+        snapshot.docs.length;
+    if (currentPageSize < FIRESTORE_PAGINATION_LIMIT) {
+      break;
+    }
+  }
+
+  return docs;
+}
 
 
 /**
@@ -134,10 +187,12 @@ export const checkSeasonEnd = onSchedule(
 
       // 1. Snapshot Final Standings PRIMEIRO
       // PERF: Chunked para evitar timeout
-      const participationsSnap = await db()
-        .collection("season_participation")
-        .where("season_id", "==", seasonId)
-        .get();
+      const participationDocs =
+        await fetchDocsByFieldPaginated(
+          "season_participation",
+          "season_id",
+          seasonId
+        );
 
       // FIX #1290: preservar frozen_at original em re-runs idempotentes.
       // Como o ID é determinístico (#1281) e o set() faz overwrite total,
@@ -145,13 +200,15 @@ export const checkSeasonEnd = onSchedule(
       // is_active=false) reescrevia frozen_at com o timestamp da re-execução,
       // perdendo a data real de congelamento da temporada. Lemos os standings
       // já gravados (uma query season-scoped) e reaproveitamos o frozen_at.
-      const existingStandingsSnap = await db()
-        .collection("season_final_standings")
-        .where("season_id", "==", seasonId)
-        .get();
+      const existingStandingsDocs =
+        await fetchDocsByFieldPaginated(
+          "season_final_standings",
+          "season_id",
+          seasonId
+        );
       const existingFrozenAt =
         new Map<string, Timestamp>();
-      for (const d of existingStandingsSnap.docs || []) {
+      for (const d of existingStandingsDocs || []) {
         const fa = d.data().frozen_at;
         if (fa) existingFrozenAt.set(d.id, fa);
       }
@@ -163,14 +220,14 @@ export const checkSeasonEnd = onSchedule(
       // incompletas → histórico permanentemente parcial (#991 incompleto).
       let standingsComplete = true;
 
-      if (!participationsSnap.empty) {
+      if (participationDocs.length > 0) {
         // Processar em chunks se necessário
         // 100 participações por vez
         const CHUNK_SIZE = 100;
 
         for (
           let i = 0;
-          i < participationsSnap.docs.length;
+          i < participationDocs.length;
           i += CHUNK_SIZE
         ) {
           if (!hasTimeRemaining()) {
@@ -183,7 +240,7 @@ export const checkSeasonEnd = onSchedule(
             break;
           }
 
-          const chunk = participationsSnap.docs.slice(
+          const chunk = participationDocs.slice(
             i,
             i + CHUNK_SIZE
           );

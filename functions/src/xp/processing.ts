@@ -20,7 +20,8 @@ import {
 import {db} from "../_db";
 import {
   getLevelForXp,
-  MILESTONES,
+  getMilestoneXp,
+  fitMilestonesWithinGameXpCap,
 } from "./pipeline";
 
 
@@ -472,22 +473,6 @@ function buildXpLogData(
 }
 
 /**
- * Soma a recompensa configurada para os milestones informados.
- * @param {string[]} milestoneNames Nomes dos milestones.
- * @return {number} XP total dos milestones.
- */
-function getMilestoneXp(
-  milestoneNames: string[]
-): number {
-  return milestoneNames.reduce((sum, name) => {
-    const def = MILESTONES.find((m) =>
-      m.name === name
-    );
-    return sum + (def?.xpReward || 0);
-  }, 0);
-}
-
-/**
  * Recalcula XP/level/log contra o snapshot fresco do usuário.
  * @param {XpTransactionData} data Transação validada pelo chamador.
  * @param {FirebaseFirestore.DocumentData | undefined} userData
@@ -515,17 +500,28 @@ function withFreshUserProgress(
     );
   const skippedMilestoneXp =
     getMilestoneXp(skippedMilestones);
+  const rawMilestoneXp = Math.max(
+    0,
+    data.breakdown.milestones -
+      skippedMilestoneXp
+  );
   const rawBreakdownXp = Object.values(
     data.breakdown
   ).reduce((sum, value) => sum + value, 0);
   const rawXp = rawBreakdownXp !== 0 ?
     rawBreakdownXp :
     data.xpEarned;
+  const baseXp = rawXp - data.breakdown.milestones;
+  const cappedMilestones =
+    fitMilestonesWithinGameXpCap(
+      baseXp,
+      milestonesUnlocked
+    );
   const xpEarned = Math.max(
     MIN_XP_PER_GAME,
     Math.min(
       MAX_XP_PER_GAME,
-      rawXp - skippedMilestoneXp
+      baseXp + cappedMilestones.appliedXp
     )
   );
   const xpAfter = currentXp + xpEarned;
@@ -549,15 +545,15 @@ function withFreshUserProgress(
     levelAfter,
     breakdown: {
       ...data.breakdown,
-      milestones: Math.max(
-        0,
-        data.breakdown.milestones -
-          skippedMilestoneXp
+      milestones: Math.min(
+        rawMilestoneXp,
+        cappedMilestones.appliedXp
       ),
     },
     metadata: {
       ...data.metadata,
-      milestonesUnlocked,
+      milestonesUnlocked:
+        cappedMilestones.appliedMilestones,
     },
   };
 }

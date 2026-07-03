@@ -116,6 +116,11 @@ interface BatchSendResult {
   durationMs: number;
 }
 
+interface DispatchTokensResult {
+  tokens: string[];
+  tokenToUser: Map<string, string>;
+}
+
 // ==========================================
 // ENQUEUE: Adicionar notificação à fila
 // ==========================================
@@ -408,21 +413,23 @@ async function processNotificationQueue():
       totalTargeted =
         totalTargeted - userIds.length + filteredDocUserIds.length;
 
-      // Filtrar tokens válidos — inclui todos os tokens por usuário
-      // para suportar múltiplos dispositivos (#978)
-      const tokens: string[] = [];
-      const tokenToUser =
-        new Map<string, string>();
+      const pendingTokens =
+        ((data.pending_tokens as string[] | undefined) || [])
+          .filter(Boolean);
+      const deliveredTokens =
+        ((data.delivered_tokens as string[] | undefined) || [])
+          .filter(Boolean);
 
-      for (const userId of filteredDocUserIds) {
-        const userTokens = tokenMap.get(userId);
-        if (userTokens && userTokens.length > 0) {
-          for (const token of userTokens) {
-            tokens.push(token);
-            tokenToUser.set(token, userId);
-          }
-        }
-      }
+      // Em retries, reenvia apenas tokens realmente pendentes; em docs legados,
+      // exclui tokens já entregues para evitar duplicação entre dispositivos.
+      const dispatch =
+        buildDispatchTokens(
+          filteredDocUserIds,
+          tokenMap,
+          pendingTokens,
+          deliveredTokens
+        );
+      const {tokens, tokenToUser} = dispatch;
 
       if (tokens.length === 0) {
         // Nenhum token disponível
@@ -489,12 +496,16 @@ async function processNotificationQueue():
           Array.from(sendResult.pendingUserIds);
         const deliveredUserIdsArray =
           Array.from(sendResult.deliveredUserIds);
+        const pendingTokensArray =
+          Array.from(sendResult.pendingTokens);
+        const deliveredTokensArray =
+          Array.from(sendResult.deliveredTokens);
 
         if (
           nextRetryCount >= MAX_RETRY_COUNT ||
-          pendingUserIds.length === 0
+          pendingTokensArray.length === 0
         ) {
-          await doc.ref.update({
+          const terminalUpdate: Record<string, unknown> = {
             status: "FAILED",
             retry_count: nextRetryCount,
             failure_reason:
@@ -504,10 +515,7 @@ async function processNotificationQueue():
             sent_at:
               FieldValue
                 .serverTimestamp(),
-            delivered_user_ids:
-              deliveredUserIdsArray.length > 0 ?
-                FieldValue.arrayUnion(...deliveredUserIdsArray) :
-                FieldValue.delete(),
+            pending_tokens: FieldValue.delete(),
             result: {
               sent: sendResult.sent,
               failed: sendResult.failed,
@@ -516,16 +524,26 @@ async function processNotificationQueue():
                 sendResult.invalidTokensCleaned,
               totalTokens: tokens.length,
             },
+          };
+
+          if (deliveredUserIdsArray.length > 0) {
+            terminalUpdate.delivered_user_ids =
+              FieldValue.arrayUnion(...deliveredUserIdsArray);
+          }
+          if (deliveredTokensArray.length > 0) {
+            terminalUpdate.delivered_tokens =
+              FieldValue.arrayUnion(...deliveredTokensArray);
+          }
+
+          await doc.ref.update({
+            ...terminalUpdate,
           });
         } else {
-          await doc.ref.update({
+          const retryUpdate: Record<string, unknown> = {
             status: "PENDING",
             userIds: pendingUserIds,
+            pending_tokens: pendingTokensArray,
             retry_count: nextRetryCount,
-            delivered_user_ids:
-              deliveredUserIdsArray.length > 0 ?
-                FieldValue.arrayUnion(...deliveredUserIdsArray) :
-                FieldValue.delete(),
             sent_at:
               FieldValue
                 .serverTimestamp(),
@@ -537,14 +555,30 @@ async function processNotificationQueue():
                 sendResult.invalidTokensCleaned,
               totalTokens: tokens.length,
             },
-          });
+          };
+
+          if (deliveredUserIdsArray.length > 0) {
+            retryUpdate.delivered_user_ids =
+              FieldValue.arrayUnion(...deliveredUserIdsArray);
+          }
+          if (deliveredTokensArray.length > 0) {
+            retryUpdate.delivered_tokens =
+              FieldValue.arrayUnion(...deliveredTokensArray);
+          }
+
+          await doc.ref.update(retryUpdate);
         }
       } else {
-        await doc.ref.update({
+        const deliveredUserIdsArray =
+          Array.from(sendResult.deliveredUserIds);
+        const deliveredTokensArray =
+          Array.from(sendResult.deliveredTokens);
+        const sentUpdate: Record<string, unknown> = {
           status: "SENT",
           sent_at:
             FieldValue
               .serverTimestamp(),
+          pending_tokens: FieldValue.delete(),
           result: {
             sent: sendResult.sent,
             failed: sendResult.failed,
@@ -553,7 +587,18 @@ async function processNotificationQueue():
               sendResult.invalidTokensCleaned,
             totalTokens: tokens.length,
           },
-        });
+        };
+
+        if (deliveredUserIdsArray.length > 0) {
+          sentUpdate.delivered_user_ids =
+            FieldValue.arrayUnion(...deliveredUserIdsArray);
+        }
+        if (deliveredTokensArray.length > 0) {
+          sentUpdate.delivered_tokens =
+            FieldValue.arrayUnion(...deliveredTokensArray);
+        }
+
+        await doc.ref.update(sentUpdate);
       }
     }
   } catch (error) {
@@ -611,6 +656,8 @@ async function sendMulticastInChunks(
   failed: number;
   transientFailed: number;
   invalidTokensCleaned: number;
+  deliveredTokens: Set<string>;
+  pendingTokens: Set<string>;
   deliveredUserIds: Set<string>;
   pendingUserIds: Set<string>;
 }> {
@@ -619,14 +666,8 @@ async function sendMulticastInChunks(
   let transientFailed = 0;
   let invalidTokensCleaned = 0;
 
-  const userHadSuccess = new Map<string, boolean>();
-  const userHadTransient = new Map<string, boolean>();
-  for (const [, userId] of tokenToUser) {
-    if (!userHadSuccess.has(userId)) {
-      userHadSuccess.set(userId, false);
-      userHadTransient.set(userId, false);
-    }
-  }
+  const deliveredTokens = new Set<string>();
+  const pendingTokens = new Set<string>();
 
   // Dividir tokens em chunks de 500
   const chunks: string[][] = [];
@@ -699,10 +740,8 @@ async function sendMulticastInChunks(
         (sendResponse: admin.messaging.SendResponse, index: number) => {
           if (!sendResponse.success) return;
           const succeededToken = chunk[index];
-          const succeededUserId = tokenToUser.get(succeededToken);
-          if (succeededUserId) {
-            userHadSuccess.set(succeededUserId, true);
-          }
+          deliveredTokens.add(succeededToken);
+          pendingTokens.delete(succeededToken);
         }
       );
 
@@ -741,9 +780,7 @@ async function sendMulticastInChunks(
                   `[BATCH_FCM] Transient FCM error for token ${failedToken.slice(0, 8)}...: ${errorCode}`
                 );
                 transientFailed++;
-                if (userId) {
-                  userHadTransient.set(userId, true);
-                }
+                pendingTokens.add(failedToken);
               }
             }
           }
@@ -770,17 +807,85 @@ async function sendMulticastInChunks(
   failed -= transientFailed;
 
   const deliveredUserIds = new Set<string>();
-  const pendingUserIds = new Set<string>();
-  for (const [userId, hadSuccess] of userHadSuccess) {
-    if (hadSuccess) {
+  for (const token of deliveredTokens) {
+    const userId = tokenToUser.get(token);
+    if (userId) {
       deliveredUserIds.add(userId);
-    } else if (userHadTransient.get(userId)) {
+    }
+  }
+
+  const pendingUserIds = new Set<string>();
+  for (const token of pendingTokens) {
+    const userId = tokenToUser.get(token);
+    if (userId) {
       pendingUserIds.add(userId);
     }
   }
 
-  return {sent, failed, transientFailed, invalidTokensCleaned, deliveredUserIds, pendingUserIds};
+  return {
+    sent,
+    failed,
+    transientFailed,
+    invalidTokensCleaned,
+    deliveredTokens,
+    pendingTokens,
+    deliveredUserIds,
+    pendingUserIds,
+  };
 }
+
+/**
+ * Seleciona os tokens elegíveis para a tentativa atual do doc da fila.
+ *
+ * Em retry, prioriza explicitamente `pending_tokens`. Para docs legados sem
+ * esse campo, evita reenvio para tokens já entregues em tentativas anteriores.
+ *
+ * @param {string[]} userIds Usuários alvo desta tentativa.
+ * @param {Map<string, string[]>} tokenMap Tokens atuais por usuário.
+ * @param {string[]} pendingTokens Tokens pendentes persistidos no doc.
+ * @param {string[]} deliveredTokens Tokens já entregues persistidos no doc.
+ * @return {DispatchTokensResult} Tokens a enviar e mapa token -> usuário.
+ */
+function buildDispatchTokens(
+  userIds: string[],
+  tokenMap: Map<string, string[]>,
+  pendingTokens: string[] = [],
+  deliveredTokens: string[] = []
+): DispatchTokensResult {
+  const pendingTokenSet = new Set(pendingTokens);
+  const deliveredTokenSet = new Set(deliveredTokens);
+  const restrictToPendingTokens = pendingTokenSet.size > 0;
+
+  const tokens: string[] = [];
+  const tokenToUser = new Map<string, string>();
+
+  for (const userId of userIds) {
+    const userTokens = tokenMap.get(userId) || [];
+    for (const token of userTokens) {
+      if (restrictToPendingTokens && !pendingTokenSet.has(token)) {
+        continue;
+      }
+      if (!restrictToPendingTokens && deliveredTokenSet.has(token)) {
+        continue;
+      }
+      if (tokenToUser.has(token)) {
+        continue;
+      }
+      tokens.push(token);
+      tokenToUser.set(token, userId);
+    }
+  }
+
+  return {tokens, tokenToUser};
+}
+
+/**
+ * Helpers expostos para testes focados da fila FCM.
+ */
+export const __testing = {
+  buildDispatchTokens,
+  sendMulticastInChunks,
+};
 
 // ==========================================
 // HELPERS

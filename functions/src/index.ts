@@ -62,6 +62,7 @@ import {
   XP_WORST_PLAYER_PENALTY,
   getLevelForXp,
   checkMilestones,
+  fitMilestonesWithinGameXpCap,
 } from "./xp/pipeline";
 
 // Game helpers (conversores, resultados, fetch)
@@ -102,6 +103,8 @@ export {
   getLevelForXp,
   MILESTONES,
   checkMilestones,
+  getMilestoneXp,
+  fitMilestonesWithinGameXpCap,
   type MilestoneDef,
 } from "./xp/pipeline";
 
@@ -1092,11 +1095,18 @@ export const onGameStatusUpdate = onDocumentUpdated(
 
               const {
                 newMilestones,
-                xp: milesXp,
+                xp: rawMilestoneXp,
               } = checkMilestones(
                 newStats,
                 achievedMilestones
               );
+              const cappedMilestones =
+                fitMilestonesWithinGameXpCap(
+                  baseXp,
+                  newMilestones
+                );
+              const milesXp =
+                cappedMilestones.appliedXp;
 
               const playerXp = Math.max(
                 MIN_XP_PER_GAME,
@@ -1119,10 +1129,13 @@ export const onGameStatusUpdate = onDocumentUpdated(
                 level: newLevel,
                 updated_at: now,
               };
-              if (newMilestones.length > 0) {
+              if (
+                cappedMilestones.appliedMilestones.length > 0
+              ) {
                 userUpdate.milestones_achieved =
                   FieldValue.arrayUnion(
-                    ...newMilestones
+                    ...cappedMilestones
+                      .appliedMilestones
                   );
               }
               tx.update(userRef, userUpdate);
@@ -1228,10 +1241,24 @@ export const onGameStatusUpdate = onDocumentUpdated(
                   team, liveScore, teams
                 ),
                 game_status: "FINISHED",
-                milestones_unlocked: newMilestones,
+                milestones_unlocked:
+                  cappedMilestones.appliedMilestones,
                 created_at: now,
               };
               tx.set(logRef, log);
+
+              if (
+                cappedMilestones.overflowMilestones.length > 0 &&
+                rawMilestoneXp > milesXp
+              ) {
+                logger.warn(
+                  "[XP_CAP] Milestone XP capped for user " +
+                  `${uid} in game ${gameId}. ` +
+                  `Applied ${milesXp} of ${rawMilestoneXp}. ` +
+                  "Overflow milestones: " +
+                  cappedMilestones.overflowMilestones.join(", ")
+                );
+              }
 
               updateRankingDeltas(
                 tx,

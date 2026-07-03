@@ -10,7 +10,6 @@ import {
   Avatar,
   TextField,
   InputAdornment,
-  Grid,
   Skeleton,
   Button,
   IconButton,
@@ -20,6 +19,7 @@ import {
   Chip,
   alpha,
 } from '@mui/material';
+import Grid from '@mui/material/Unstable_Grid2';
 import {
   Add,
   Search,
@@ -218,7 +218,7 @@ export function GroupsTab() {
             const isOwner = group.role === 'OWNER';
 
             return (
-              <Grid item xs={12} md={6} lg={4} xl={3} key={group.id}>
+              <Grid xs={12} md={6} lg={4} xl={3} key={group.id}>
               <Card sx={{ ...(isMd ? { height: '100%' } : { mb: 2 }), ...(isOwner ? { borderLeft: `4px solid ${theme.palette.warning.main}` } : {}) }}>
                 <CardActionArea onClick={() => navigate(`/group/${group.id}`)}>
                   <CardContent>

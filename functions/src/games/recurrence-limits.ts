@@ -70,9 +70,25 @@ export function getNextDate(
   case "biweekly":
     date.setDate(date.getDate() + 14);
     break;
-  case "monthly":
-    date.setMonth(date.getMonth() + 1);
+  case "monthly": {
+    const originalDay = date.getDate();
+    const targetMonthIndex = date.getMonth() + 1;
+    const targetYear =
+      date.getFullYear() + Math.floor(targetMonthIndex / 12);
+    const normalizedTargetMonthIndex =
+      targetMonthIndex % 12;
+    const lastDayOfTargetMonth = new Date(
+      targetYear,
+      normalizedTargetMonthIndex + 1,
+      0
+    ).getDate();
+    date.setFullYear(
+      targetYear,
+      normalizedTargetMonthIndex,
+      Math.min(originalDay, lastDayOfTargetMonth)
+    );
     break;
+  }
   }
 
   const y = date.getFullYear();

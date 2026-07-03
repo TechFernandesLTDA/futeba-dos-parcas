@@ -75,26 +75,72 @@ export const startNewSeason = onSchedule(
       const groupId = groupDoc.id;
 
       try {
+        const seasonsRef = db()
+          .collection("groups")
+          .doc(groupId)
+          .collection("league_seasons");
         const seasonRef = db()
           .collection("groups")
           .doc(groupId)
           .collection("league_seasons")
           .doc(monthKey);
 
-        const exists = await seasonRef.get();
+        const [exists, activeSeasonsSnap] = await Promise.all([
+          seasonRef.get(),
+          seasonsRef.where("is_active", "==", true).get(),
+        ]);
+
+        const batch = db().batch();
+        let repairedActiveSeasons = 0;
+
+        for (const activeSeasonDoc of activeSeasonsSnap.docs) {
+          if (activeSeasonDoc.id === monthKey) continue;
+          batch.update(activeSeasonDoc.ref, {
+            is_active: false,
+            end_date: FieldValue.serverTimestamp(),
+            updated_at: FieldValue.serverTimestamp(),
+          });
+          repairedActiveSeasons += 1;
+        }
+
         if (exists.exists) {
-          logger.info("Season already exists", {groupId, monthKey});
+          const currentSeasonData = exists.data() || {};
+          const shouldReactivate =
+            currentSeasonData.is_active !== true;
+
+          if (shouldReactivate) {
+            batch.set(seasonRef, {
+              is_active: true,
+              updated_at: FieldValue.serverTimestamp(),
+            }, {merge: true});
+          }
+
+          if (repairedActiveSeasons > 0 || shouldReactivate) {
+            await batch.commit();
+          }
+
+          logger.info("Season already exists", {
+            groupId,
+            monthKey,
+            repairedActiveSeasons,
+            activatedExistingSeason: shouldReactivate,
+          });
           continue;
         }
 
-        await seasonRef.set({
+        batch.set(seasonRef, {
           name: `Temporada ${getMonthName(monthKey)}`,
           is_active: true,
           start_date: FieldValue.serverTimestamp(),
           created_at: FieldValue.serverTimestamp(),
         });
+        await batch.commit();
 
-        logger.info("Created season", {groupId, monthKey});
+        logger.info("Created season", {
+          groupId,
+          monthKey,
+          repairedActiveSeasons,
+        });
       } catch (err) {
         logger.error("Error creating season", {groupId, monthKey, err});
       }
@@ -169,7 +215,7 @@ export const archiveSeason = onSchedule(
           end_date: FieldValue.serverTimestamp(),
         });
 
-        if (mvp) {
+        if (mvp?.user_id) {
           const badgesRef = db()
             .collection("users")
             .doc(mvp.user_id)
@@ -181,6 +227,12 @@ export const archiveSeason = onSchedule(
             type: "MVP_LIGA",
             earned_at: FieldValue.serverTimestamp(),
             earned: true,
+          });
+        } else if (mvp) {
+          logger.warn("Season archived without MVP badge due to missing user_id", {
+            groupId,
+            monthKey,
+            mvp,
           });
         }
 
