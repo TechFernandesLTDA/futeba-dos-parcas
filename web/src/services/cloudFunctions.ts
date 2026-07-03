@@ -507,6 +507,18 @@ export const checkInToGame = httpsCallable<
   { success: boolean; distanceMeters?: number | null; method?: 'gps' | 'qr' }
 >(functions, 'checkInToGame');
 
+export type MvpVoteCategory = 'MVP' | 'BEST_GOALKEEPER' | 'WORST';
+
+export const submitMvpVote = httpsCallable<
+  { gameId: string; votedPlayerId: string; category: MvpVoteCategory },
+  { success: boolean; voteId: string; message: string }
+>(functions, 'submitMvpVote');
+
+export const submitMvpVotes = httpsCallable<
+  { gameId: string; votes: Array<{ votedPlayerId: string; category: MvpVoteCategory }> },
+  { success: boolean; voteIds: string[]; message: string }
+>(functions, 'submitMvpVotes');
+
 export const generateCheckinToken = httpsCallable<
   { gameId: string },
   { success: boolean; token: string }

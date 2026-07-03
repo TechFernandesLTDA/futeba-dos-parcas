@@ -26,6 +26,7 @@ import {
   softDeleteGroup,
   restoreDeletedGame,
   restoreDeletedGroup,
+  submitMvpVotes,
   updateUserPii,
 } from './cloudFunctions';
 
@@ -88,6 +89,26 @@ describe('cloudFunctions', () => {
     await updateUserPii({ gender: null });
 
     expect(mockCallable).toHaveBeenCalledWith('updateUserPii', { gender: null });
+  });
+
+  it('submitMvpVotes chama callable batch com votos por categoria', async () => {
+    mockCallable.mockResolvedValue({ data: { success: true, voteIds: ['game-1_u1_MVP'] } });
+
+    await submitMvpVotes({
+      gameId: 'game-1',
+      votes: [
+        { category: 'MVP', votedPlayerId: 'u2' },
+        { category: 'WORST', votedPlayerId: 'u3' },
+      ],
+    });
+
+    expect(mockCallable).toHaveBeenCalledWith('submitMvpVotes', {
+      gameId: 'game-1',
+      votes: [
+        { category: 'MVP', votedPlayerId: 'u2' },
+        { category: 'WORST', votedPlayerId: 'u3' },
+      ],
+    });
   });
 
   it('propaga erros de função', async () => {

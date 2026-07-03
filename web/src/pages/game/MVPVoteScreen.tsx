@@ -28,8 +28,9 @@ import {
   SentimentVeryDissatisfied as BolaMurchaIcon,
   PersonOff as PersonOffIcon,
 } from '@mui/icons-material';
-import { doc, collection, query, where, onSnapshot, writeBatch, serverTimestamp } from 'firebase/firestore';
+import { doc, collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '../../services/firebase';
+import { submitMvpVotes, type MvpVoteCategory } from '../../services/cloudFunctions';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { Game, GameConfirmation } from '../../types/game';
@@ -153,43 +154,19 @@ export const MVPVoteScreen: React.FC = () => {
     setSubmitting(true);
 
     try {
-      const batch = writeBatch(db);
-
-      const mvpVoteId = `${gameId}_${currentUser.uid}_MVP`;
-      batch.set(doc(db, 'mvp_votes', mvpVoteId), {
-        id: mvpVoteId,
-        game_id: gameId,
-        voter_id: currentUser.uid,
-        voted_player_id: mvpVote,
-        category: 'MVP',
-        voted_at: serverTimestamp(),
-      });
+      const votes: Array<{ category: MvpVoteCategory; votedPlayerId: string }> = [
+        { category: 'MVP', votedPlayerId: mvpVote },
+        { category: 'WORST', votedPlayerId: worstPlayerVote },
+      ];
 
       if (bestGkVote) {
-        const bestGkVoteId = `${gameId}_${currentUser.uid}_BEST_GOALKEEPER`;
-        batch.set(doc(db, 'mvp_votes', bestGkVoteId), {
-          id: bestGkVoteId,
-          game_id: gameId,
-          voter_id: currentUser.uid,
-          voted_player_id: bestGkVote,
-          category: 'BEST_GOALKEEPER',
-          voted_at: serverTimestamp(),
-        });
+        votes.push({ category: 'BEST_GOALKEEPER', votedPlayerId: bestGkVote });
       }
 
-      if (worstPlayerVote) {
-        const worstVoteId = `${gameId}_${currentUser.uid}_WORST`;
-        batch.set(doc(db, 'mvp_votes', worstVoteId), {
-          id: worstVoteId,
-          game_id: gameId,
-          voter_id: currentUser.uid,
-          voted_player_id: worstPlayerVote,
-          category: 'WORST',
-          voted_at: serverTimestamp(),
-        });
-      }
-
-      await batch.commit();
+      await submitMvpVotes({
+        gameId,
+        votes,
+      });
 
       setHasVoted(true);
     } catch (err) {
@@ -350,7 +327,7 @@ export const MVPVoteScreen: React.FC = () => {
                 >
                   <List disablePadding aria-label={t('a11y.bestGoalkeeperCandidates')}>
                     {confirmations
-                      .filter((p) => p.position === 'GOALKEEPER')
+                      .filter((p) => p.position === 'GOALKEEPER' && p.userId !== currentUser?.uid)
                       .map((player) => (
                         <ListItem
                           key={player.userId}
@@ -389,7 +366,7 @@ export const MVPVoteScreen: React.FC = () => {
                           />
                         </ListItem>
                       ))}
-                    {confirmations.filter((p) => p.position === 'GOALKEEPER').length === 0 && (
+                    {confirmations.filter((p) => p.position === 'GOALKEEPER' && p.userId !== currentUser?.uid).length === 0 && (
                       <EmptyState icon={<PersonOffIcon />} title={t('empty.noGoalkeeper')} description={t('empty.noGoalkeeperDesc')} animate={false} />
                     )}
                   </List>

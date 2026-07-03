@@ -106,6 +106,7 @@ jest.mock("../src/constants", () => ({
 
 // Capturar handlers registrados pelo onCall
 let submitMvpVoteHandler: ((request: any) => Promise<any>) | null = null;
+let submitMvpVotesHandler: ((request: any) => Promise<any>) | null = null;
 let concludeMvpVotingHandler: ((request: any) => Promise<any>) | null = null;
 
 const { onCall } = require("firebase-functions/v2/https");
@@ -115,6 +116,10 @@ beforeAll(() => {
   (onCall as jest.Mock).mockImplementationOnce((_config: any, handler: any) => {
     submitMvpVoteHandler = handler || _config;
     return submitMvpVoteHandler;
+  });
+  (onCall as jest.Mock).mockImplementationOnce((_config: any, handler: any) => {
+    submitMvpVotesHandler = handler || _config;
+    return submitMvpVotesHandler;
   });
   (onCall as jest.Mock).mockImplementationOnce((_config: any, handler: any) => {
     concludeMvpVotingHandler = handler || _config;
@@ -287,6 +292,82 @@ describe("submitMvpVote - submissão bem-sucedida", () => {
     expect(result.voteId).toContain("voter1");
     expect(result.voteId).toContain("MVP");
     expect(result.message).toBe("Voto registrado com sucesso.");
+  });
+});
+
+describe("submitMvpVotes - submissão em lote", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    const { checkRateLimit } = require("../src/middleware/rate-limiter");
+    (checkRateLimit as jest.Mock).mockResolvedValue({
+      allowed: true,
+      remaining: 9,
+      resetAt: new Date(Date.now() + 60000),
+    });
+  });
+
+  test("deve registrar múltiplas categorias em uma transaction", async () => {
+    const setMock = jest.fn();
+    mockRunTransaction.mockImplementation(async (callback: any) => {
+      let callIndex = 0;
+      const responses = [
+        { exists: true, data: () => makeFinishedGame() },
+        { exists: true, data: () => ({ status: "CONFIRMED", user_id: "voter1" }) },
+        { exists: true, data: () => ({ status: "CONFIRMED", user_id: "player2" }) },
+        { exists: false, data: () => null },
+        { exists: true, data: () => ({ status: "CONFIRMED", user_id: "player3" }) },
+        { exists: false, data: () => null },
+      ];
+
+      const mockTx = {
+        get: jest.fn().mockImplementation(() => {
+          const snap = responses[callIndex] || { exists: false, data: () => null };
+          callIndex++;
+          return Promise.resolve(snap);
+        }),
+        set: setMock,
+      };
+
+      return callback(mockTx);
+    });
+
+    const request = {
+      auth: { uid: "voter1", token: { profileComplete: true } },
+      data: {
+        gameId: "game1",
+        votes: [
+          { votedPlayerId: "player2", category: "MVP" },
+          { votedPlayerId: "player3", category: "WORST" },
+        ],
+      },
+    };
+
+    const result = await submitMvpVotesHandler!(request);
+
+    expect(result.success).toBe(true);
+    expect(result.voteIds).toEqual([
+      "game1_voter1_MVP",
+      "game1_voter1_WORST",
+    ]);
+    expect(setMock).toHaveBeenCalledTimes(2);
+  });
+
+  test("deve rejeitar categorias duplicadas antes da transaction", async () => {
+    const request = {
+      auth: { uid: "voter1", token: { profileComplete: true } },
+      data: {
+        gameId: "game1",
+        votes: [
+          { votedPlayerId: "player2", category: "MVP" },
+          { votedPlayerId: "player3", category: "MVP" },
+        ],
+      },
+    };
+
+    await expect(submitMvpVotesHandler!(request)).rejects.toThrow(
+      "Categoria duplicada"
+    );
+    expect(mockRunTransaction).not.toHaveBeenCalled();
   });
 });
 
