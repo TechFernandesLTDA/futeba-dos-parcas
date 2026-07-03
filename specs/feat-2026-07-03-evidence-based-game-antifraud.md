@@ -259,6 +259,8 @@ Commits locais mais relevantes ainda nao refletidos no PR remoto:
 - `bc373852` `feat: wire antifraud validation state into android game details`
 - `b41dba90` `docs: capture antifraud branch progress snapshot`
 - `9aa83909` `feat: surface auto-close antifraud reviews in admin queue`
+- `466a0f51` `docs: capture antifraud review readiness snapshot`
+- `0ed4d1ed` `fix: remove legacy live game write bypasses on web`
 
 Validacoes executadas localmente nesta fase final:
 
@@ -286,7 +288,11 @@ Bloqueios restantes de ambiente/permissao:
 Leitura pratica para o proximo passo:
 
 - do ponto de vista de codigo, os itens prioritarios (#3208, #3209, #3211,
-  #3213, #3214, #3215 e #3216) estao cobertos localmente;
+  #3213, #3214, #3215 e #3216 estao cobertos localmente;
+- nesta fase final tambem foram removidos dois caminhos legados do web que
+  ainda escreviam diretamente em `game_events` e um atalho de placar via
+  `live_scores`, substituindo-os por callables e por placar orientado a
+  eventos validados;
 - do ponto de vista operacional, ainda falta sincronizar a branch remota,
   rerodar os checks do PR sobre os commits finais e atualizar comentarios das
   issues/PR antes de considerar `#3218` realmente pronto para review humano.
