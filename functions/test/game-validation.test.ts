@@ -182,4 +182,17 @@ describe("presence evidence", () => {
       ]),
     );
   });
+
+  test("atribui bonus intermediario para distancia e precisao moderadas", () => {
+    const result = calculatePresenceEvidence({
+      distanceMeters: 80,
+      radiusMeters: 200,
+      accuracyMeters: 40,
+      method: "gps",
+    });
+
+    expect(result.presence_confidence).toBe(80);
+    expect(result.presence_status).toBe("VALIDATED");
+    expect(result.presence_reasons).toEqual([]);
+  });
 });
