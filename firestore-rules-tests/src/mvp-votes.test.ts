@@ -126,10 +126,9 @@ describe("mvp_votes — get (leitura individual)", () => {
 // ============================================================
 
 describe("mvp_votes — create", () => {
-  it("Confirmed player pode criar voto para outro confirmed player", async () => {
-    // player B vota em player A (ambos confirmados), voter_id == self, mvp_id != self
+  it("Cliente NAO pode criar voto direto; deve usar Cloud Function", async () => {
     const db = asPlayerB(testEnv);
-    await assertSucceeds(
+    await assertFails(
       db.doc(`mvp_votes/vote-create-test-b`).set({
         game_id: GAME_ID,
         voter_id: UID_PLAYER_B,

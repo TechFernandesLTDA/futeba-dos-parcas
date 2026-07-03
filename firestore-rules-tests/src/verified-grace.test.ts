@@ -120,7 +120,7 @@ describe("verified grace period — isVerifiedOrGrace() enforcement", () => {
     );
   });
 
-  it("Usuario nao verificado PODE criar MVP vote (dentro da grace ate 2026-08-03)", async () => {
+  it("Usuario nao verificado NAO pode criar MVP vote direto; deve usar Cloud Function", async () => {
     await seedDoc(testEnv, `games/grace-game-mvp`, {
       title: "Grace MVP Test",
       owner_id: UID_PLAYER_A,
@@ -150,7 +150,7 @@ describe("verified grace period — isVerifiedOrGrace() enforcement", () => {
       verified: false,
       profileComplete: true,
     });
-    await assertSucceeds(
+    await assertFails(
       unverifiedDb.doc(`mvp_votes/vote-grace-unverified`).set({
         game_id: "grace-game-mvp",
         voter_id: "uid-unverified-004",

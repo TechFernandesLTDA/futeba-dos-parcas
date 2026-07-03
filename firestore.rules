@@ -2685,23 +2685,9 @@ service cloud.firestore {
       );
       allow list: if isAdmin();
 
-      // FASE 5 #448: votar MVP exige verified (30-day grace)
-      allow create: if isVerifiedOrGrace() && (
-        isConfirmedPlayer(request.resource.data.game_id) &&
-        request.resource.data.voter_id == userId() &&
-        request.resource.data.mvp_id != userId() &&
-        isConfirmedUserForGame(request.resource.data.game_id, request.resource.data.mvp_id) &&
-        (
-          request.resource.data.best_gk_id == null ||
-          (request.resource.data.best_gk_id != userId() &&
-           isConfirmedUserForGame(request.resource.data.game_id, request.resource.data.best_gk_id))
-        ) &&
-        (
-          request.resource.data.worst_player_id == null ||
-          (request.resource.data.worst_player_id != userId() &&
-           isConfirmedUserForGame(request.resource.data.game_id, request.resource.data.worst_player_id))
-        )
-      );
+      // #3210: votos MVP sao escritos exclusivamente por Cloud Functions
+      // (`submitMvpVote`/`submitMvpVotes`) via Admin SDK.
+      allow create: if false;
 
       allow update, delete: if isAdmin();
     }
