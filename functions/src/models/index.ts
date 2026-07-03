@@ -13,6 +13,8 @@ import {FieldValue, Timestamp} from "firebase-admin/firestore";
 
 export interface Game {
     id: string;
+    team1_score?: number;
+    team2_score?: number;
     xp_processed?: boolean;
     xp_processing?: boolean;
     xp_processing_at?: Timestamp;
