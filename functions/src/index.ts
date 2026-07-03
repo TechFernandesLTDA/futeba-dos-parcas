@@ -470,15 +470,20 @@ export const onGameStatusUpdate = onDocumentUpdated(
               confirmations: confirmationsSnap.docs
                 .map((doc) => doc.data()),
               eventCount: gameEventsSnap.size,
-              mode: "AUDIT_ONLY",
+              mode: "SOFT_GATE",
             });
           await event.data.after.ref.update({
             ...validationResult,
+            xp_reward_status:
+              validationResult.validation_status ===
+              "REVIEW_REQUIRED" ?
+                "HELD_FOR_REVIEW" :
+                "ELIGIBLE",
             validation_updated_at:
               FieldValue.serverTimestamp(),
           });
           logger.info(
-            "[GAME_VALIDATION_AUDIT] " +
+            "[GAME_VALIDATION_GATE] " +
             `Game ${gameId}: score ` +
             `${validationResult.validation_score}, ` +
             `status ${validationResult.validation_status}`,
@@ -489,10 +494,37 @@ export const onGameStatusUpdate = onDocumentUpdated(
                 validationResult.validation_version,
             },
           );
+
+          if (
+            validationResult.validation_status ===
+            "REVIEW_REQUIRED"
+          ) {
+            await event.data.after.ref.update({
+              xp_processing: false,
+              xp_reward_status: "HELD_FOR_REVIEW",
+              xp_reward_held_at:
+                FieldValue.serverTimestamp(),
+              xp_reward_hold_reasons:
+                validationResult.validation_reasons,
+              xp_processing_error:
+                "XP held by validation gate",
+            });
+            logger.warn(
+              "[GAME_VALIDATION_GATE] XP held for " +
+              `game ${gameId}`,
+              {
+                score:
+                  validationResult.validation_score,
+                reasons:
+                  validationResult.validation_reasons,
+              },
+            );
+            return;
+          }
         } catch (validationError) {
           logger.warn(
-            "[GAME_VALIDATION_AUDIT] Falha ao calcular " +
-            `score audit-only do jogo ${gameId}`,
+            "[GAME_VALIDATION_GATE] Falha ao calcular " +
+            `score do jogo ${gameId}`,
             {
               error: validationError instanceof Error ?
                 validationError.message :
@@ -1232,6 +1264,7 @@ export const onGameStatusUpdate = onDocumentUpdated(
           xp_processed: true,
           xp_processing: false,
           xp_processed_at: now,
+          xp_reward_status: "PROCESSED",
         });
 
         logger.info(
