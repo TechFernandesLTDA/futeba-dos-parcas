@@ -447,6 +447,48 @@ service cloud.firestore {
              (before == 'SCHEDULED' && after == 'CANCELLED');
     }
 
+    function hasNoGameValidationClientFields(data) {
+      return !data.keys().hasAny([
+        'validation_status',
+        'validation_score',
+        'validation_version',
+        'validation_updated_at',
+        'validation_mode',
+        'validation_reasons',
+        'validation_signals_summary',
+        'started_at',
+        'started_by',
+        'start_validation_score',
+        'finished_at',
+        'finished_by',
+        'finish_validation_score',
+        'reviewed_at',
+        'reviewed_by',
+        'review_reason'
+      ]);
+    }
+
+    function gameValidationFieldsUnchanged() {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+        'validation_status',
+        'validation_score',
+        'validation_version',
+        'validation_updated_at',
+        'validation_mode',
+        'validation_reasons',
+        'validation_signals_summary',
+        'started_at',
+        'started_by',
+        'start_validation_score',
+        'finished_at',
+        'finished_by',
+        'finish_validation_score',
+        'reviewed_at',
+        'reviewed_by',
+        'review_reason'
+      ]);
+    }
+
     // ============================================
     // FUNCOES DE RATE LIMITING
     // ============================================
@@ -712,6 +754,7 @@ service cloud.firestore {
       // PERF_001 P0 #30: Validação estrita de scores (max 100 gols por time)
       allow create: if isProfileComplete() &&
                        (isAdmin() || request.resource.data.owner_id == userId()) &&
+                       hasNoGameValidationClientFields(request.resource.data) &&
                        // SECFIX #866: status inicial deve ser SCHEDULED para prevenir criação em estado inválido
                        request.resource.data.status == 'SCHEDULED' &&
                        // SECFIX #422: data deve ser futura (1h tolerance)
@@ -749,7 +792,7 @@ service cloud.firestore {
       // Admins têm acesso total
       // PERF_001 P0 #30: Validação estrita de scores (max 100 gols por time)
       allow update: if isAuthenticated() && (
-        isAdmin() ||
+        (isAdmin() && gameValidationFieldsUnchanged()) ||
         // SECFIX #423: Dono pode atualizar mas com transicao status valida
         // (impede skip SCHEDULED->FINISHED e reversao FINISHED->X)
         // SECFIX #2607: fieldUnchanged em campos sensiveis — impedia backdating,
@@ -762,6 +805,7 @@ service cloud.firestore {
          fieldUnchanged('mvp_id') &&
          fieldUnchanged('xp_processed_at') &&
          fieldUnchanged('xp_processing') &&
+         gameValidationFieldsUnchanged() &&
          isValidGameStatusTransition(resource.data.status, request.resource.data.status) &&
          // P0 #30: Validacao estrita de scores - Previne exploits de XP
          isValidScore(request.resource.data.team1_score) &&
@@ -2660,6 +2704,17 @@ service cloud.firestore {
       );
 
       allow update, delete: if isAdmin();
+    }
+
+    // ============================================
+    // COLECAO: game_validation_signals
+    // ============================================
+    // Antifraude por evidencia (#3204/#3207). Escrita apenas via Cloud
+    // Functions/Admin SDK. Leitura inicialmente restrita a admin porque os
+    // sinais podem conter indicadores operacionais sensiveis.
+    match /game_validation_signals/{signalId} {
+      allow read: if isAdmin();
+      allow create, update, delete: if false;
     }
 
     // ============================================

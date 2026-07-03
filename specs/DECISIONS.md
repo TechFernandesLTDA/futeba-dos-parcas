@@ -28,6 +28,39 @@ Registro de decisões técnicas e de produto. Cada entrada deve ter contexto, al
 
 ## Decisões Registradas
 
+### [2026-07-03] Validacao antifraude por evidencia antes de recompensas competitivas
+
+**Contexto:** Check-in, votacao MVP, transicoes de status e processamento de XP
+ja possuem protecoes pontuais, mas ainda nao havia uma decisao central sobre
+confiabilidade do jogo inteiro. Inicio/fim de jogo, presenca manual, eventos,
+estatisticas e recompensas precisam de uma camada server-side comum para reduzir
+fraude sem bloquear jogos legitimos de forma prematura.
+
+**Alternativas consideradas:**
+1. **Bloquear imediatamente jogos suspeitos por regras rigidas.** Protege rapido,
+   mas tem alto risco de falso positivo e suporte manual.
+2. **Manter apenas controles pontuais atuais.** Tem baixo atrito, mas nao fecha
+   o ciclo de integridade para XP, ranking, badges e reputacao.
+3. **Criar validacao por evidencia com rollout audit-only -> soft gate -> hard
+   gate.** Mede dados reais antes de bloquear e preserva explicabilidade.
+
+**Decisão:** **Opcao 3.** O sistema adotara `validation_score` e
+`validation_status` server-side por jogo, sinais auditaveis, callables para
+inicio/fim validados e gate de XP/ranking/badges por validacao aprovada.
+
+**Justificativa:** Fraude em jogo afeta progressao competitiva e confianca do
+produto, mas localizacao e comportamento em pelada real possuem variancia alta.
+O rollout em fases reduz falsos positivos e preserva os invariantes de XP:
+backend como fonte unica, processamento unico e atomicidade.
+
+**Consequências:** Novas PRs devem tratar campos de validacao como server-only,
+preferir Cloud Functions para acoes criticas e manter dados de localizacao
+minimizados. Durante audit-only, jogos continuam funcionando; em soft/hard gate,
+recompensas de jogos com baixa confianca ficam retidas ate revisao/aprovacao.
+
+**Relacionado:** `specs/feat-2026-07-03-evidence-based-game-antifraud.md`;
+issues #3204, #3205, #3206, #3207, #3208, #3209, #3217.
+
 ### [2026-06-25] iOS Liquid Glass: manter chrome translúcida no ComposeApp e adiar bridge SwiftUI nativa
 
 **Contexto:** A auditoria do épico iOS (#2670) mostrou que a chrome atual do

@@ -20,6 +20,9 @@ import {
   getAllBadgesToAward,
 } from "./badges/badge-helper";
 import {isGameShape} from "./validation/guards";
+import {
+  buildGameValidationFromFirestore,
+} from "./game-validation/aggregate";
 
 // Padroniza região default de TODAS as functions v2 que não especificam
 // region explicitamente. Antes, 15 functions ficavam em us-central1
@@ -371,6 +374,7 @@ export const onGameStatusUpdate = onDocumentUpdated(
           settingsSnap,
           seasonSnap,
           gameSnap,
+          gameEventsSnap,
         ] = await Promise.all([
           db().collection("confirmations")
             .where("game_id", "==", gameId)
@@ -391,6 +395,10 @@ export const onGameStatusUpdate = onDocumentUpdated(
             .get(),
           db().collection("games")
             .doc(gameId)
+            .get(),
+          db().collection("game_events")
+            .where("game_id", "==", gameId)
+            .limit(500)
             .get(),
         ]);
 
@@ -454,6 +462,43 @@ export const onGameStatusUpdate = onDocumentUpdated(
               `${gameData.status}`,
           });
           return;
+        }
+
+        try {
+          const validationResult =
+            buildGameValidationFromFirestore({
+              confirmations: confirmationsSnap.docs
+                .map((doc) => doc.data()),
+              eventCount: gameEventsSnap.size,
+              mode: "AUDIT_ONLY",
+            });
+          await event.data.after.ref.update({
+            ...validationResult,
+            validation_updated_at:
+              FieldValue.serverTimestamp(),
+          });
+          logger.info(
+            "[GAME_VALIDATION_AUDIT] " +
+            `Game ${gameId}: score ` +
+            `${validationResult.validation_score}, ` +
+            `status ${validationResult.validation_status}`,
+            {
+              reasons:
+                validationResult.validation_reasons,
+              version:
+                validationResult.validation_version,
+            },
+          );
+        } catch (validationError) {
+          logger.warn(
+            "[GAME_VALIDATION_AUDIT] Falha ao calcular " +
+            `score audit-only do jogo ${gameId}`,
+            {
+              error: validationError instanceof Error ?
+                validationError.message :
+                String(validationError),
+            },
+          );
         }
 
         // Validar que confirmações possuem

@@ -1177,7 +1177,7 @@ async function fetchAllBillingSummaryLocationDocs(): Promise<
  */
 async function fetchAllLocationDocsForBilling(): Promise<
   Array<FirebaseFirestore.QueryDocumentSnapshot>
-> {
+  > {
   const docs: Array<FirebaseFirestore.QueryDocumentSnapshot> = [];
   let lastDoc: FirebaseFirestore.QueryDocumentSnapshot | null = null;
 
