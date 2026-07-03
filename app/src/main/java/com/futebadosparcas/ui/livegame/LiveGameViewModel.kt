@@ -4,9 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.data.repository.GameRepository
 import com.futebadosparcas.domain.model.Game
+import com.futebadosparcas.domain.model.GameConfirmation
 import com.futebadosparcas.domain.model.GameEventType
 import com.futebadosparcas.domain.model.GameStatus
-import com.futebadosparcas.domain.model.LiveGameScore
+import com.futebadosparcas.domain.model.LiveScore
 import com.futebadosparcas.domain.repository.AuthRepository
 import com.futebadosparcas.domain.repository.LiveGameRepository
 import com.futebadosparcas.domain.model.Team
@@ -112,7 +113,7 @@ class LiveGameViewModel(
 
                     _uiState.value = LiveGameUiState.Success(
                         game = game,
-                        score = score ?: LiveGameScore(
+                        score = score ?: LiveScore(
                             id = gameId,
                             gameId = gameId,
                             team1Id = team1.id,
@@ -259,7 +260,7 @@ sealed class LiveGameUiState {
     object Loading : LiveGameUiState()
     data class Success(
         val game: Game,
-        val score: LiveGameScore,
+        val score: LiveScore,
         val team1: Team,
         val team2: Team,
         val team1Players: List<GameConfirmation>,
