@@ -28,39 +28,6 @@ Registro de decisões técnicas e de produto. Cada entrada deve ter contexto, al
 
 ## Decisões Registradas
 
-### [2026-07-03] Validacao antifraude por evidencia antes de recompensas competitivas
-
-**Contexto:** Check-in, votacao MVP, transicoes de status e processamento de XP
-ja possuem protecoes pontuais, mas ainda nao havia uma decisao central sobre
-confiabilidade do jogo inteiro. Inicio/fim de jogo, presenca manual, eventos,
-estatisticas e recompensas precisam de uma camada server-side comum para reduzir
-fraude sem bloquear jogos legitimos de forma prematura.
-
-**Alternativas consideradas:**
-1. **Bloquear imediatamente jogos suspeitos por regras rigidas.** Protege rapido,
-   mas tem alto risco de falso positivo e suporte manual.
-2. **Manter apenas controles pontuais atuais.** Tem baixo atrito, mas nao fecha
-   o ciclo de integridade para XP, ranking, badges e reputacao.
-3. **Criar validacao por evidencia com rollout audit-only -> soft gate -> hard
-   gate.** Mede dados reais antes de bloquear e preserva explicabilidade.
-
-**Decisão:** **Opcao 3.** O sistema adotara `validation_score` e
-`validation_status` server-side por jogo, sinais auditaveis, callables para
-inicio/fim validados e gate de XP/ranking/badges por validacao aprovada.
-
-**Justificativa:** Fraude em jogo afeta progressao competitiva e confianca do
-produto, mas localizacao e comportamento em pelada real possuem variancia alta.
-O rollout em fases reduz falsos positivos e preserva os invariantes de XP:
-backend como fonte unica, processamento unico e atomicidade.
-
-**Consequências:** Novas PRs devem tratar campos de validacao como server-only,
-preferir Cloud Functions para acoes criticas e manter dados de localizacao
-minimizados. Durante audit-only, jogos continuam funcionando; em soft/hard gate,
-recompensas de jogos com baixa confianca ficam retidas ate revisao/aprovacao.
-
-**Relacionado:** `specs/feat-2026-07-03-evidence-based-game-antifraud.md`;
-issues #3204, #3205, #3206, #3207, #3208, #3209, #3217.
-
 ### [2026-06-25] iOS Liquid Glass: manter chrome translúcida no ComposeApp e adiar bridge SwiftUI nativa
 
 **Contexto:** A auditoria do épico iOS (#2670) mostrou que a chrome atual do
@@ -705,6 +672,34 @@ CNPJ é PII empresarial e só é relevante no fluxo `venue_owner_onboarding`. Se
 `VerificationBanner` (countdown até 2026-08-03) era código morto: `ProtectedRoute` já redireciona `verified===false` incondicionalmente desde a Fase 5 do enforcement (#448). O hard gate é a política vigente; manter o banner só gerava mensagem contraditória.
 
 **Relacionado:** épico #3183, issues #3184-#3191, `specs/SPEC_FEATURE_AUTH_OVERHAUL_CNPJ_GOOGLE_LINK.md`, decisões #1311 e #3137.
+
+---
+
+## 2026-07-03 — Rede social da pelada: denormalização de autor, soft-delete e toggles de notif (épico #3240)
+
+**Contexto:** Specs DRAFT criadas para as duas issues `priority:high` do épico #3240 — chat por jogo (#3230, `feat-2026-07-03-game-chat-realtime.md`) e mural de provocações (#3232, `feat-2026-07-03-group-wall-banter.md`). Ambas compartilham decisões de modelagem de dados que vale registrar antes da implementação.
+
+**1. Denormalização de `sender_name`/`author_name` + photo URL no momento da escrita.**
+Snapshota-se nome e foto do autor no doc da mensagem/post, em vez de fazer join com `users/{uid}` ao renderizar. Pró: evita N reads de perfil em listas paginadas (chat com 50 msgs, mural com 20 posts → 50/20 reads economizadas por render). Contras aceitos: staleness se o usuário edita nome/foto depois (aceitável para conteúdo efêmero de pelada; perfil editado reflete em escritas futuras, não retroativas). Alternativa rejeitada: lookup on-the-fly por UID em cada item (custo proibitivo em listas + jank).
+
+**2. Soft-delete em vez de hard-delete para chat e mural.**
+Campos `deleted_by` + `deleted_at` (e `deleted_at == request.time` enforced em rules). Pró: preserva auditoria de moderação (quem deletou o quê, quando), contagem consistente, recuperação possível. UI filtra `deleted_at == null`. Hard-delete fica `allow delete: if false` em rules. Alternativa rejeitada: hard-delete direto (perda de trilha de moderação; dificulta investigar abuso).
+
+**3. `created_at` forçado como `request.time` em rules (não confiar no client).**
+Previne backdate tanto de mensagens de chat quanto de posts de mural. Já é prática do projeto em games (`isFutureGameDate`); estendida às novas subcoleções.
+
+**4. Toggles de notificação `gameChat` e `groupWall` adicionados a `notification_settings` com default `true`.**
+Mesmo padrão dos toggles existentes (`mvpVotes`, `achievements`, etc. em `useNotificationSettings.ts:12`). Usuário pode silenciar notifs de chat/mural sem desligar tudo. Alternativa rejeitada: notif sem toggle (ruído → churn).
+
+**5. Mural reserva campo `reactions: map | null` vazio desde o MVP.**
+A issue #3233 (reações genéricas) é dependência futura do mural. Em vez de bloquear o mural atrás de #3233, lança-se com campo reservado; quando #3233 mergear, `<ReactionBar />` passa a ler/escrever esse mapa. Evita migration posterior.
+
+**6. Chat por jogo arquivado (só-leitura) 7 dias após `game.date_time`.**
+Enforced em rules (`timestamp.value(game.date_time + 7d) > request.time` no `allow create`). Pró: contém crescimento da subcoleção, foca o chat na janela útil (coordenação + zoeira imediata pós-jogo). Contras aceitos: usuários perdedores de "memória" após 7 dias — mitigado pelo fato de highlights/fotos persistirem separadamente.
+
+**Consequências:** Modelagem consistente entre as duas features; regras de rules padronizadas (soft-delete, `request.time`, denormalização); notifs respeitam toggle. Risco residual: staleness de nome/foto aceito como trade-off.
+
+**Relacionado:** épico #3240, issues #3230 e #3232, `specs/feat-2026-07-03-game-chat-realtime.md`, `specs/feat-2026-07-03-group-wall-banter.md`.
 
 ---
 
