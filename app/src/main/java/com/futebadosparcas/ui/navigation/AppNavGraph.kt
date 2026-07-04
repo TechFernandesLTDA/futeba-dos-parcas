@@ -57,6 +57,7 @@ import com.futebadosparcas.ui.locations.FieldOwnerDashboardScreen
 import com.futebadosparcas.ui.games.GameDetailScreen
 import com.futebadosparcas.ui.games.GamesScreen
 import com.futebadosparcas.ui.groups.GroupDetailScreen
+import com.futebadosparcas.ui.groups.GroupWallScreen
 import com.futebadosparcas.ui.groups.GroupsScreen
 import com.futebadosparcas.ui.home.HomeScreen
 import com.futebadosparcas.ui.groups.InvitePlayersScreen
@@ -163,6 +164,9 @@ sealed class Screen(
     data object Cashbox : Screen("cashbox/{groupId}", titleResId = R.string.cashbox) {
         fun createRoute(groupId: String) = "cashbox/$groupId"
     }
+    data object GroupWall : Screen("group_wall/{groupId}", titleResId = R.string.group_wall_title) {
+        fun createRoute(groupId: String) = "group_wall/$groupId"
+    }
 
     // Locations
     data object LocationsMap : Screen("locations_map", titleResId = R.string.location_map_title)
@@ -203,6 +207,7 @@ object Routes {
     fun groupDetail(groupId: String) = Screen.GroupDetail.createRoute(groupId)
     fun invitePlayers(groupId: String) = Screen.InvitePlayers.createRoute(groupId)
     fun cashbox(groupId: String) = Screen.Cashbox.createRoute(groupId)
+    fun groupWall(groupId: String) = Screen.GroupWall.createRoute(groupId)
 }
 
 /**
@@ -670,6 +675,9 @@ fun AppNavHost(
                 onCreateGameInGroupClick = {
                     navController.navigate(Screen.CreateGame.createRoute(groupId = it))
                 },
+                onWallClick = { groupId ->
+                    navController.navigate(Screen.GroupWall.createRoute(groupId))
+                },
                 onBackClick = { navController.popBackStack() }
             )
         }
@@ -701,6 +709,9 @@ fun AppNavHost(
                 },
                 onNavigateToCashbox = {
                     navController.navigate(Screen.Cashbox.createRoute(groupId))
+                },
+                onNavigateToWall = {
+                    navController.navigate(Screen.GroupWall.createRoute(groupId))
                 },
                 onNavigateToCreateGame = {
                     navController.navigate(Screen.CreateGame.createRoute(groupId = groupId))
@@ -746,6 +757,30 @@ fun AppNavHost(
             CashboxScreen(
                 viewModel = viewModel,
                 groupId = groupId,
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = Screen.GroupWall.route,
+            arguments = listOf(navArgument("groupId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val groupId = backStackEntry.arguments?.getString("groupId") ?: ""
+            val groupDetailViewModel: com.futebadosparcas.ui.groups.GroupDetailViewModel = koinViewModel()
+            val uiState by groupDetailViewModel.uiState.collectAsStateWithLifecycle()
+            val myRole = (uiState as? com.futebadosparcas.ui.groups.GroupDetailUiState.Success)?.myRole
+            val isMember = myRole != null
+            val isAdmin = myRole == com.futebadosparcas.data.model.GroupMemberRole.OWNER ||
+                myRole == com.futebadosparcas.data.model.GroupMemberRole.ADMIN
+
+            LaunchedEffect(groupId) {
+                groupDetailViewModel.loadGroup(groupId)
+            }
+
+            GroupWallScreen(
+                groupId = groupId,
+                canPost = isMember,
+                canManage = isAdmin,
                 onNavigateBack = { navController.popBackStack() }
             )
         }

@@ -69,6 +69,7 @@ fun GroupsScreen(
     onInvitePlayersClick: (String) -> Unit = {},
     onCashboxClick: (String) -> Unit = {},
     onCreateGameInGroupClick: (String) -> Unit = {},
+    onWallClick: (String) -> Unit = {},
     onBackClick: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -139,7 +140,8 @@ fun GroupsScreen(
                             onGroupClick = onGroupClick,
                             onInvitePlayersClick = onInvitePlayersClick,
                             onCashboxClick = onCashboxClick,
-                            onCreateGameInGroupClick = onCreateGameInGroupClick
+                            onCreateGameInGroupClick = onCreateGameInGroupClick,
+                            onWallClick = onWallClick
                         )
                     }
                 }
@@ -234,7 +236,8 @@ private fun GroupsSuccessContent(
     onGroupClick: (String) -> Unit,
     onInvitePlayersClick: (String) -> Unit,
     onCashboxClick: (String) -> Unit,
-    onCreateGameInGroupClick: (String) -> Unit
+    onCreateGameInGroupClick: (String) -> Unit,
+    onWallClick: (String) -> Unit
 ) {
     // Mostra busca apenas se houver 3+ grupos
     val showSearch = groups.size >= 3
@@ -303,6 +306,7 @@ private fun GroupsSuccessContent(
                         onNavigateBack = { selectedGroupId = null },
                         onNavigateToInvite = { onInvitePlayersClick(groupId) },
                         onNavigateToCashbox = { onCashboxClick(groupId) },
+                        onNavigateToWall = { onWallClick(groupId) },
                         onNavigateToCreateGame = { onCreateGameInGroupClick(groupId) }
                     )
                 }

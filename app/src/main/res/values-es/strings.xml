@@ -265,4 +265,27 @@
     <string name="connected_accounts_unlink_confirm_title">¿Desvincular cuenta de Google?</string>
     <string name="connected_accounts_unlink_confirm_desc">Solo podrás iniciar sesión con email y contraseña. ¿Desvincular la cuenta de Google?</string>
     <string name="auth_error_credential_in_use">Esta cuenta de Google ya está vinculada a otra cuenta. Inicia sesión con tu método original y vincula Google desde tu perfil.</string>
+
+    <!-- Group Wall -->
+    <string name="group_wall_title">Muro del Grupo</string>
+    <string name="group_wall_subtitle">Charla, fotos y avisos</string>
+    <string name="group_wall_input_hint">Escribe algo para el grupo…</string>
+    <string name="group_wall_send">Publicar</string>
+    <string name="group_wall_create_post">Crear publicación</string>
+    <string name="group_wall_edit_post">Editar publicación</string>
+    <string name="group_wall_empty_title">Aún no hay publicaciones</string>
+    <string name="group_wall_empty_desc">¡Sé el primero en publicar en el muro!</string>
+    <string name="group_wall_add_photo">Agregar foto</string>
+    <string name="group_wall_remove_photo">Quitar foto</string>
+    <string name="group_wall_image_preview">Vista previa de la imagen</string>
+    <string name="group_wall_image_alt">Foto de %1$s</string>
+    <string name="group_wall_load_more">Cargar más</string>
+    <string name="group_wall_pinned">Fijado</string>
+    <string name="group_wall_pin">Fijar arriba</string>
+    <string name="group_wall_unpin">Desfijar</string>
+    <string name="group_wall_post_options">Opciones de publicación</string>
+    <string name="group_wall_edited">editado</string>
+    <string name="group_wall_must_be_member">Necesitas ser miembro del grupo para publicar.</string>
+    <string name="group_wall_delete_confirm">¿Eliminar publicación?</string>
+    <string name="group_wall_delete_message">Esta acción no se puede deshacer.</string>
 </resources>

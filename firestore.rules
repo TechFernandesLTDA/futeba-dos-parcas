@@ -2121,6 +2121,70 @@ service cloud.firestore {
         allow read: if isAuthenticated() && isGroupMember(groupId);
         allow write: if false;
       }
+
+      // ============================================
+      // SUB-COLECAO: wall_posts (mural de resenha/provocacoes do grupo)
+      // Issue #3232: feed social UGC por grupo.
+      // ============================================
+      match /wall_posts/{postId} {
+        // Leitura: membros ativos do grupo (inclui owner/admin)
+        allow read: if isAuthenticated() && (
+          isAdmin() ||
+          isGroupMember(groupId)
+        );
+
+        // Create: apenas membros ativos de grupo ativo
+        allow create: if isAuthenticated() &&
+          isGroupMember(groupId) &&
+          isGroupActive(groupId) &&
+          request.resource.data.author_id == userId() &&
+          request.resource.data.group_id == groupId &&
+          request.resource.data.text is string &&
+          request.resource.data.text.size() >= 1 &&
+          request.resource.data.text.size() <= 500 &&
+          request.resource.data.created_at == request.time &&
+          request.resource.data.pinned == false &&
+          request.resource.data.deleted_at == null &&
+          request.resource.data.deleted_by == null &&
+          request.resource.data.keys().hasOnly([
+            'group_id', 'author_id', 'author_name', 'author_photo_url',
+            'text', 'media_url', 'media_path', 'media_type', 'thumbnail_path',
+            'highlight_ref', 'reactions', 'comments_count', 'pinned', 'pinned_by', 'pinned_at',
+            'created_at', 'updated_at', 'edited_at', 'deleted_at', 'deleted_by'
+          ]);
+
+        // Update: autor edita texto, owner/admin fixa/desfixa, autor/owner/admin soft-delete
+        allow update: if isAuthenticated() && (
+          // Autor edita proprio texto
+          (
+            resource.data.author_id == userId() &&
+            onlyAllowedFields(['text', 'edited_at', 'updated_at']) &&
+            request.resource.data.text is string &&
+            request.resource.data.text.size() >= 1 &&
+            request.resource.data.text.size() <= 500 &&
+            request.resource.data.edited_at == request.time &&
+            request.resource.data.updated_at == request.time
+          ) ||
+          // Owner/admin fixa/desfixa post
+          (
+            isGroupAdmin(groupId) &&
+            onlyAllowedFields(['pinned', 'pinned_by', 'pinned_at', 'updated_at']) &&
+            request.resource.data.pinned_at == request.time &&
+            request.resource.data.updated_at == request.time
+          ) ||
+          // Autor ou owner/admin faz soft-delete
+          (
+            (resource.data.author_id == userId() || isGroupAdmin(groupId)) &&
+            onlyAllowedFields(['deleted_at', 'deleted_by', 'updated_at']) &&
+            request.resource.data.deleted_at == request.time &&
+            request.resource.data.deleted_by == userId() &&
+            request.resource.data.updated_at == request.time
+          )
+        );
+
+        // Hard delete: nunca (preserva auditoria)
+        allow delete: if false;
+      }
     }
 
     // ============================================

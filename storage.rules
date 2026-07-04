@@ -231,6 +231,27 @@ service firebase.storage {
     }
 
     // ============================================
+    // MIDIAS DO MURAL DO GRUPO
+    // Path: groups/{groupId}/wall_media/{postId}/{fileName}
+    // Membros ativos podem fazer upload de imagens no mural.
+    // Apenas autor, admin do grupo ou admin global pode deletar.
+    // ============================================
+    match /groups/{groupId}/wall_media/{postId}/{fileName} {
+      allow read: if isAuthenticated() && isGroupMember(groupId);
+
+      allow create: if isAuthenticated() &&
+        isGroupMember(groupId) &&
+        isImage() &&
+        isUnderSize(10) &&
+        fileName.matches('[A-Za-z0-9._-]+\\.(jpg|jpeg|png|webp)');
+
+      allow delete: if isAuthenticated() && (
+        isAdmin() ||
+        isGroupAdmin(groupId)
+      );
+    }
+
+    // ============================================
     // FOTOS DE LOCAIS — PATH FLAT (Web)
     // Path: locations/{locationId}/{fileName}
     // #2158: Web usa locations/{id}/photo.jpg (sem subpasta photos/).

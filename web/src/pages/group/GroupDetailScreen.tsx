@@ -51,6 +51,7 @@ import {
   EventRepeat as SchedulesIcon,
   MilitaryTech as ChallengesIcon,
   PhotoLibrary as PhotoLibraryIcon,
+  ChatBubbleOutline as WallIcon,
 } from '@mui/icons-material';
 import { collection, getDocs, limit, query, where } from 'firebase/firestore';
 import { AppBreadcrumbs, FixedBottomBar } from '../../components/layout';
@@ -73,6 +74,7 @@ import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
 import { iconSizes } from '../../theme/iconSizes';
 import { db } from '../../services/firebase';
+import { GroupWallTab } from './GroupWallTab';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -673,6 +675,7 @@ export const GroupDetailScreen: React.FC = () => {
               <Tab label={t('nav.league')} icon={<TrophyIcon />} iconPosition="start" />
               <Tab label={t('groupPolls.tab')} icon={<PollIcon />} iconPosition="start" />
               <Tab label={t('groupPhotos.tab')} icon={<PhotoLibraryIcon />} iconPosition="start" />
+              <Tab label={t('groupWall.tab')} icon={<WallIcon />} iconPosition="start" />
             </Tabs>
 
             <TabPanel value={tabValue} index={0}>
@@ -795,6 +798,10 @@ export const GroupDetailScreen: React.FC = () => {
 
             <TabPanel value={tabValue} index={5}>
               <GroupPhotosPanel games={photoGames} loadingGames={photoGamesLoading} />
+            </TabPanel>
+
+            <TabPanel value={tabValue} index={6}>
+              <GroupWallTab groupId={groupId!} isMember={isMember} isAdmin={isAdmin} />
             </TabPanel>
           </Card>
         );
