@@ -994,6 +994,29 @@ subir no ranking!</string>
     <string name="no_description">Sem descrição</string>
     <string name="invite">Convidar</string>
 
+    <!-- Group Wall -->
+    <string name="group_wall_title">Mural do Grupo</string>
+    <string name="group_wall_subtitle">Resenha, fotos e avisos dos parças</string>
+    <string name="group_wall_input_hint">Escreva algo para o grupo…</string>
+    <string name="group_wall_send">Publicar</string>
+    <string name="group_wall_create_post">Criar post</string>
+    <string name="group_wall_edit_post">Editar post</string>
+    <string name="group_wall_empty_title">Nenhuma publicação ainda</string>
+    <string name="group_wall_empty_desc">Seja o primeiro a postar no mural!</string>
+    <string name="group_wall_add_photo">Adicionar foto</string>
+    <string name="group_wall_remove_photo">Remover foto</string>
+    <string name="group_wall_image_preview">Pré-visualização da imagem</string>
+    <string name="group_wall_image_alt">Foto de %1$s</string>
+    <string name="group_wall_load_more">Carregar mais</string>
+    <string name="group_wall_pinned">Fixado</string>
+    <string name="group_wall_pin">Fixar no topo</string>
+    <string name="group_wall_unpin">Desfixar</string>
+    <string name="group_wall_post_options">Opções do post</string>
+    <string name="group_wall_edited">editado</string>
+    <string name="group_wall_must_be_member">Você precisa ser membro do grupo para publicar.</string>
+    <string name="group_wall_delete_confirm">Excluir publicação?</string>
+    <string name="group_wall_delete_message">Esta ação não pode ser desfeita.</string>
+
     <!-- Locations Screen -->
     <string name="manage_locations">Gerenciar Locais</string>
     <string name="add">Adicionar</string>

@@ -265,4 +265,27 @@
     <string name="connected_accounts_unlink_confirm_title">Unlink Google account?</string>
     <string name="connected_accounts_unlink_confirm_desc">You\'ll only be able to sign in with email and password. Unlink the Google account?</string>
     <string name="auth_error_credential_in_use">This Google account is already linked to another account. Sign in with your original method and link Google from your profile.</string>
+
+    <!-- Group Wall -->
+    <string name="group_wall_title">Group Wall</string>
+    <string name="group_wall_subtitle">Banter, photos and announcements</string>
+    <string name="group_wall_input_hint">Write something for the group…</string>
+    <string name="group_wall_send">Post</string>
+    <string name="group_wall_create_post">Create post</string>
+    <string name="group_wall_edit_post">Edit post</string>
+    <string name="group_wall_empty_title">No posts yet</string>
+    <string name="group_wall_empty_desc">Be the first to post on the wall!</string>
+    <string name="group_wall_add_photo">Add photo</string>
+    <string name="group_wall_remove_photo">Remove photo</string>
+    <string name="group_wall_image_preview">Image preview</string>
+    <string name="group_wall_image_alt">Photo by %1$s</string>
+    <string name="group_wall_load_more">Load more</string>
+    <string name="group_wall_pinned">Pinned</string>
+    <string name="group_wall_pin">Pin to top</string>
+    <string name="group_wall_unpin">Unpin</string>
+    <string name="group_wall_post_options">Post options</string>
+    <string name="group_wall_edited">edited</string>
+    <string name="group_wall_must_be_member">You need to be a group member to post.</string>
+    <string name="group_wall_delete_confirm">Delete post?</string>
+    <string name="group_wall_delete_message">This action cannot be undone.</string>
 </resources>

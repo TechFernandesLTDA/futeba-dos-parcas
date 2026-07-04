@@ -1,7 +1,43 @@
 {
   "platform": "android",
-  "generatedAt": "2026-07-03T20:05:44.266Z",
+  "generatedAt": "2026-07-04T04:32:50.123Z",
   "notes": [
+    {
+      "version": "1.34.0",
+      "buildNumber": 61,
+      "releaseDate": "2026-07-04",
+      "type": "minor",
+      "showPopup": true,
+      "published": true,
+      "headline": "**Mural de provocações do grupo**: posts, fotos e avisos dos parças direto no app Android.",
+      "highlights": [
+        {
+          "icon": "chat_bubble",
+          "title": "Mural do grupo",
+          "description": "Nova tela acessível pelo menu do grupo para ver e criar posts."
+        },
+        {
+          "icon": "push_pin",
+          "title": "Posts fixados",
+          "description": "Owner/admin podem fixar avisos no topo."
+        },
+        {
+          "icon": "image",
+          "title": "Fotos no mural",
+          "description": "Posts podem incluir uma foto anexa."
+        }
+      ],
+      "added": [
+        "Tela `GroupWallScreen` com lista em tempo real, estados vazio/erro/carregando e FAB para criar post.",
+        "Composer de post com texto e seleção de foto da galeria.",
+        "Edição, exclusão (soft-delete) e fixação de posts conforme permissões."
+      ],
+      "improved": [],
+      "fixed": [],
+      "issueRefs": [
+        3232
+      ]
+    },
     {
       "version": "1.33.0",
       "buildNumber": 60,

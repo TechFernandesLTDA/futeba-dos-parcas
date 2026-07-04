@@ -92,6 +92,7 @@ fun GroupDetailScreen(
     onNavigateToInvite: () -> Unit = {},
     onNavigateToCashbox: () -> Unit = {},
     onNavigateToCreateGame: () -> Unit = {},
+    onNavigateToWall: () -> Unit = {},
     onMemberClick: (userId: String) -> Unit = {},
     joinRequestViewModel: JoinRequestViewModel = koinViewModel()
 ) {
@@ -206,6 +207,7 @@ fun GroupDetailScreen(
                 onNavigateBack = onNavigateBack,
                 onInviteClick = onNavigateToInvite,
                 onCashboxClick = onNavigateToCashbox,
+                onWallClick = onNavigateToWall,
                 onCreateGameClick = onNavigateToCreateGame,
                 onEditClick = { showEditDialog = true },
                 onTransferOwnershipClick = {
@@ -322,6 +324,7 @@ private fun GroupDetailTopBar(
     onNavigateBack: () -> Unit,
     onInviteClick: () -> Unit,
     onCashboxClick: () -> Unit,
+    onWallClick: () -> Unit,
     onCreateGameClick: () -> Unit,
     onEditClick: () -> Unit,
     onTransferOwnershipClick: () -> Unit,
@@ -388,6 +391,20 @@ private fun GroupDetailTopBar(
                         Icon(Icons.Default.AccountBalanceWallet, contentDescription = stringResource(R.string.cd_cashbox))
                     }
                 )
+
+                // Wall (members)
+                if (myRole != null) {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.group_wall_title)) },
+                        onClick = {
+                            showMenu = false
+                            onWallClick()
+                        },
+                        leadingIcon = {
+                            Icon(Icons.Default.ChatBubbleOutline, contentDescription = stringResource(R.string.group_wall_title))
+                        }
+                    )
+                }
 
                 // Create Game (admin+)
                 if (isOwnerOrAdmin) {

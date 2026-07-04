@@ -1,7 +1,45 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-03T20:05:44.269Z",
+  "generatedAt": "2026-07-04T04:32:50.125Z",
   "notes": [
+    {
+      "version": "1.47.0",
+      "buildNumber": null,
+      "releaseDate": "2026-07-04",
+      "type": "minor",
+      "showPopup": true,
+      "published": true,
+      "headline": "**Mural de provocações do grupo**: posts, fotos, fixação e zoeira dos parças agora ficam no próprio grupo.",
+      "highlights": [
+        {
+          "icon": "chat_bubble",
+          "title": "Mural do grupo",
+          "description": "Nova aba no detalhe do grupo para posts de texto e foto dos membros."
+        },
+        {
+          "icon": "push_pin",
+          "title": "Posts fixados",
+          "description": "Admin/owner podem fixar avisos importantes no topo do mural."
+        },
+        {
+          "icon": "notifications",
+          "title": "Notificações",
+          "description": "Novo toggle \"Posts do mural\" nas preferências de notificações push."
+        }
+      ],
+      "added": [
+        "Nova aba \"Mural\" em `GroupDetailScreen` com lista em tempo real, estados vazio/erro/carregando e paginação.",
+        "Composer de post com suporte a texto (até 500 caracteres) e anexo de foto.",
+        "Edição e exclusão (soft-delete) de posts pelo autor; exclusão e fixação também permitidas para owner/admin."
+      ],
+      "improved": [
+        "`NotificationSettingsScreen` agora permite silenciar notificações de novos posts do mural."
+      ],
+      "fixed": [],
+      "issueRefs": [
+        3232
+      ]
+    },
     {
       "version": "1.46.0",
       "buildNumber": null,

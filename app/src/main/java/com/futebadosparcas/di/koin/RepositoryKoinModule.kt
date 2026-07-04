@@ -12,6 +12,7 @@ import com.futebadosparcas.data.GameRequestRepositoryImpl
 import com.futebadosparcas.data.GameSummonRepositoryImpl
 import com.futebadosparcas.data.GameTeamRepositoryImpl
 import com.futebadosparcas.data.GroupRepositoryImpl
+import com.futebadosparcas.data.repository.GroupWallRepository
 import com.futebadosparcas.data.LocationRepositoryImpl
 import com.futebadosparcas.data.NotificationRepositoryImpl
 import com.futebadosparcas.data.RankingRepositoryImpl
@@ -182,5 +183,9 @@ val repositoryKoinModule = module {
 
     single<com.futebadosparcas.data.repository.CachedGameRepository> {
         CachedGameRepository(get(), get())
+    }
+
+    single<GroupWallRepository> {
+        GroupWallRepository(get(), get(), get())
     }
 }

@@ -23,6 +23,7 @@ import com.futebadosparcas.ui.groups.DiscoverGroupsViewModel
 import com.futebadosparcas.ui.groups.GameSummonViewModel
 import com.futebadosparcas.ui.groups.JoinRequestViewModel
 import com.futebadosparcas.ui.groups.GroupDetailViewModel
+import com.futebadosparcas.ui.groups.GroupWallViewModel
 import com.futebadosparcas.ui.groups.GroupsViewModel
 import com.futebadosparcas.ui.groups.InviteViewModel
 import com.futebadosparcas.ui.home.HomeViewModel
@@ -241,6 +242,13 @@ val viewModelKoinModule = module {
             leaveGroupUseCase = get(),
             manageMembersUseCase = get(),
             transferOwnershipUseCase = get()
+        )
+    }
+
+    viewModel {
+        GroupWallViewModel(
+            repository = get(),
+            auth = get()
         )
     }
 
