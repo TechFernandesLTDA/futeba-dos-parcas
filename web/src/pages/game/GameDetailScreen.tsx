@@ -70,6 +70,7 @@ import { GamePlayersSection } from './GamePlayersSection';
 import { PositionReinforcementsPanel } from './PositionReinforcementsPanel';
 import { GameRidesPanel } from './GameRidesPanel';
 import { GamePhotosTab } from './GamePhotosTab';
+import { GameChatPanel } from './GameChatPanel';
 import { PostGameReputationPanel } from './PostGameReputationPanel';
 import { PostGameHighlightsPanel } from './PostGameHighlightsPanel';
 import { PostGameMessage, usePostGameMessages, useSavePostGameMessage } from '../../hooks/usePostGameMessages';
@@ -310,6 +311,11 @@ export const GameDetailScreen: React.FC = () => {
   const showPostGameMessages = game?.status === 'FINISHED';
   const canWritePostGameMessage = showPostGameMessages && (isConfirmed || !!canManage);
   const canManagePostGameContent = !!canManage;
+  // Chat do jogo: visível para qualquer jogo, arquivado 7d após date_time
+  const isChatArchived = useMemo(() => {
+    if (!game?.dateTime) return false;
+    return new Date().getTime() - game.dateTime.getTime() > 7 * 24 * 60 * 60 * 1000;
+  }, [game?.dateTime]);
   const rewardAlert = useMemo(
     () => (game ? getRewardAlertConfig(game, isCurrentUserAdmin, !!canManage) : null),
     [game, isCurrentUserAdmin, canManage],
@@ -833,6 +839,13 @@ export const GameDetailScreen: React.FC = () => {
                   onCheckIn={handleCheckIn}
                 />
               )}
+              <GameChatPanel
+                gameId={gameId!}
+                isConfirmedPlayer={isConfirmed}
+                isOwner={isOwner}
+                canManage={!!canManage}
+                isArchived={isChatArchived}
+              />
               {showPostGameMessages && (
                 <GamePhotosTab
                   gameId={gameId!}
@@ -913,6 +926,13 @@ export const GameDetailScreen: React.FC = () => {
               onCheckIn={handleCheckIn}
             />
           )}
+          <GameChatPanel
+            gameId={gameId!}
+            isConfirmedPlayer={isConfirmed}
+            isOwner={isOwner}
+            canManage={!!canManage}
+            isArchived={isChatArchived}
+          />
           {showPostGameMessages && (
             <GamePhotosTab
               gameId={gameId!}

@@ -1,6 +1,6 @@
 # SPEC: Chat em tempo real por jogo (pré/pós-partida)
 
-> **Status:** `DRAFT`
+> **Status:** `APPROVED`
 > **Autor:** Renan (via opencode)
 > **Data:** 2026-07-03
 > **PR:** #xxx (preencher quando criar)
@@ -313,3 +313,4 @@ Se o trigger for incluído, adicionar toggle `gameChat` ao modelo de `notificati
 | Data | Autor | Alteração |
 |------|-------|-----------|
 | 2026-07-03 | opencode | Criação inicial (DRAFT) |
+| 2026-07-03 | Renan | Aprovação → APPROVED (início implementação PR 1) |

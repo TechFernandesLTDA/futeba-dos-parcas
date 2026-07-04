@@ -18,6 +18,7 @@ interface NotificationSettings {
   mvpVotes: boolean;
   levelUp: boolean;
   systemAnnouncements: boolean;
+  gameChat: boolean;
   reminderTime: number;
   muteUntil: Date | null;
 }
@@ -31,6 +32,7 @@ const DEFAULT_SETTINGS: NotificationSettings = {
   mvpVotes: true,
   levelUp: true,
   systemAnnouncements: true,
+  gameChat: true,
   reminderTime: 30,
   muteUntil: null,
 };
@@ -64,6 +66,7 @@ export function useNotificationSettings(userId?: string) {
           mvpVotes: (converted.mvpVotes as boolean) ?? DEFAULT_SETTINGS.mvpVotes,
           levelUp: (converted.levelUp as boolean) ?? DEFAULT_SETTINGS.levelUp,
           systemAnnouncements: (converted.systemAnnouncements as boolean) ?? DEFAULT_SETTINGS.systemAnnouncements,
+          gameChat: (converted.gameChat as boolean) ?? DEFAULT_SETTINGS.gameChat,
           reminderTime: (converted.reminderTime as number) ?? DEFAULT_SETTINGS.reminderTime,
           muteUntil: (raw.mute_until as { toDate?: () => Date })?.toDate?.() || (converted.muteUntil as Date) || null,
         });
@@ -102,6 +105,7 @@ export function useNotificationSettings(userId?: string) {
         mvp_votes: newSettings.mvpVotes,
         level_up: newSettings.levelUp,
         system_announcements: newSettings.systemAnnouncements,
+        game_chat: newSettings.gameChat,
         reminder_time: newSettings.reminderTime,
         mute_until: newSettings.muteUntil,
         updated_at: serverTimestamp(),

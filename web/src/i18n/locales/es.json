@@ -1427,6 +1427,18 @@
     "save": "Guardar mensaje",
     "title": "Mensaje post-partido"
   },
+  "gameChat": {
+    "title": "Chat del partido",
+    "description": "Coordina el partido en tiempo real con los parças.",
+    "placeholder": "Manda tu mensaje...",
+    "send": "Enviar mensaje",
+    "delete": "Borrar mensaje",
+    "loadMore": "Cargar mensajes anteriores",
+    "emptyTitle": "Aún no hay mensajes",
+    "emptyDesc": "Sé el primero en decir algo en este partido.",
+    "archived": "Chat archivado",
+    "mustConfirm": "Confirma tu asistencia para unirte al chat."
+  },
   "postGameHighlights": {
     "bestDuo": "Mejor dupla",
     "bestDuoDescription": "La pareja con mayor impacto en goles, asistencias y atajadas registradas.",
@@ -2499,6 +2511,8 @@
       "muteTitle": "Silenciar notificaciones",
       "mvpVotes": "Votaciones MVP",
       "mvpVotesDescription": "Votaciones MVP",
+      "gameChat": "Mensajes del chat del partido",
+      "gameChatDescription": "Nuevos mensajes en el chat del partido",
       "pushDescription": "Recibir notificaciones push en el navegador",
       "pushTitle": "Notificaciones push",
       "pushToggle": "Activar notificaciones push",

@@ -956,6 +956,68 @@ service cloud.firestore {
         allow update: if false;
         allow delete: if isAuthenticated() && isGameOwner(gameId);
       }
+
+      // ============================================
+      // SUB-COLECAO: chat (games/{gameId}/chat/{messageId})
+      // #3230 / spec feat-2026-07-03-game-chat-realtime.md
+      // Chat em tempo real por jogo. Escrita restrita a confirmados,
+      // dono do jogo ou admin do grupo dono. Arquivamento 7d apos
+      // game.date_time (só-leitura). Soft-delete p/ auditoria.
+      // ============================================
+      match /chat/{messageId} {
+        // Leitura: quem ja pode ler o jogo (mesmo gate de visibility do pai).
+        // Reuses get() do pai para validar GROUP_ONLY + membership.
+        allow read: if isAuthenticated() && (
+          isAdmin() ||
+          (get(/databases/$(database)/documents/games/$(gameId)).data.get('visibility', null) != 'GROUP_ONLY') ||
+          isGroupMember(get(/databases/$(database)/documents/games/$(gameId)).data.get('group_id', null))
+        );
+
+        // Create: só confirmados, dono do jogo, ou admin do grupo dono.
+        // Valida sender_id == userId(), texto 1..500, created_at == request.time
+        // (previne backdate). Arquivamento: nao permite escrever se
+        // game.date_time + 7d < now. Admin tem bypass nas checagens de autor.
+        allow create: if isAuthenticated() &&
+          request.resource.data.sender_name is string &&
+          request.resource.data.text is string &&
+          request.resource.data.text.size() >= 1 &&
+          request.resource.data.text.size() <= 500 &&
+          request.resource.data.created_at == request.time &&
+          request.resource.data.deleted_at == null &&
+          (
+            isAdmin() ||
+            (
+              request.resource.data.sender_id == userId() &&
+              (isConfirmedPlayer(gameId) ||
+               isGameOwner(gameId) ||
+               (get(/databases/$(database)/documents/games/$(gameId)).data.get('group_id', null) != null &&
+                isGroupAdmin(get(/databases/$(database)/documents/games/$(gameId)).data.group_id)))
+            )
+          ) &&
+          // Arquivamento: só permite criar se game.date_time + 7d > now
+          // Padrão: timestamp.value(millis) — ver linha 425 (isFutureGameDate).
+          // game.date_time + 7d > now  <=>  game.date_time > now - 7d
+          timestamp.value(get(/databases/$(database)/documents/games/$(gameId)).data.date_time.toMillis()) >
+            timestamp.value(request.time.toMillis() - 7 * 24 * 60 * 60 * 1000);
+
+        // Update: apenas soft-delete (deleted_by + deleted_at).
+        // Autor, dono do jogo, ou admin do grupo podem soft-deletar.
+        // Admin global tem bypass no deleted_by == userId().
+        allow update: if isAuthenticated() &&
+          onlyAllowedFields(['deleted_by', 'deleted_at']) &&
+          request.resource.data.deleted_at == request.time &&
+          (
+            isAdmin() ||
+            (request.resource.data.deleted_by == userId() &&
+             (resource.data.sender_id == userId() ||
+              isGameOwner(gameId) ||
+              (get(/databases/$(database)/documents/games/$(gameId)).data.get('group_id', null) != null &&
+               isGroupAdmin(get(/databases/$(database)/documents/games/$(gameId)).data.group_id))))
+          );
+
+        // Hard delete: nunca (preserva auditoria). Soft-delete via update.
+        allow delete: if false;
+      }
     }
 
     // ============================================

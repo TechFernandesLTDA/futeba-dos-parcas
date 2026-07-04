@@ -101,6 +101,10 @@ export const NotificationSettingsScreen: React.FC = () => {
     setPreference('mvpVotes', e.target.checked);
   }, [setPreference]);
 
+  const handleGameChat = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setPreference('gameChat', e.target.checked);
+  }, [setPreference]);
+
   const handleLevelUp = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setPreference('levelUp', e.target.checked);
   }, [setPreference]);
@@ -257,6 +261,17 @@ export const NotificationSettingsScreen: React.FC = () => {
                     checked={settings.mvpVotes}
                     onChange={handleMvpVotes}
                     aria-label={t('settings.notifications.mvpVotes')}
+                  />
+                </Box>
+                <Divider sx={{ my: 1 }} />
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Typography variant="body2" color="text.secondary">
+                    {t('settings.notifications.gameChatDescription')}
+                  </Typography>
+                  <Switch
+                    checked={settings.gameChat}
+                    onChange={handleGameChat}
+                    aria-label={t('settings.notifications.gameChat')}
                   />
                 </Box>
                 <Divider sx={{ my: 1 }} />
