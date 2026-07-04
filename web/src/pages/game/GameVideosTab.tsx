@@ -95,6 +95,7 @@ function readVideoDuration(file: File): Promise<number> {
       URL.revokeObjectURL(url);
       reject(new Error('invalid-video'));
     };
+    // lgtm[js/xss-through-dom] Browser-generated blob URL for a local File, not DOM/user HTML.
     video.src = url;
   });
 }
