@@ -47,7 +47,6 @@ import { createLogger } from '../../utils/logger';
 
 const logger = createLogger('GameVideosTab');
 const MAX_VIDEO_SIZE_BYTES = 25 * 1024 * 1024;
-const MAX_VIDEO_DURATION_SEC = 30;
 const CAPTION_MAX_LENGTH = 200;
 const MAX_VIDEOS_PER_GAME = 10;
 const MAX_VIDEOS_PER_USER_PER_GAME = 3;
@@ -80,24 +79,6 @@ interface GameVideosTabProps {
 function safeVideoFileName(file: File) {
   const base = file.name.replace(/\.[^.]+$/, '').replace(/[^A-Za-z0-9._-]/g, '-').slice(0, 48) || 'clip';
   return `${Date.now()}-${base}-${crypto.randomUUID()}.mp4`;
-}
-
-function readVideoDuration(file: File): Promise<number> {
-  return new Promise((resolve, reject) => {
-    const url = URL.createObjectURL(file);
-    const video = document.createElement('video');
-    video.preload = 'metadata';
-    video.onloadedmetadata = () => {
-      URL.revokeObjectURL(url);
-      resolve(video.duration);
-    };
-    video.onerror = () => {
-      URL.revokeObjectURL(url);
-      reject(new Error('invalid-video'));
-    };
-    // lgtm[js/xss-through-dom] Browser-generated blob URL for a local File, not DOM/user HTML.
-    video.src = url;
-  });
 }
 
 export const GameVideosTab: React.FC<GameVideosTabProps> = ({
@@ -180,15 +161,11 @@ export const GameVideosTab: React.FC<GameVideosTabProps> = ({
     if (file.size > MAX_VIDEO_SIZE_BYTES) {
       throw new Error(t('gameVideos.sizeLimit'));
     }
-    const duration = await readVideoDuration(file);
-    if (!Number.isFinite(duration) || duration > MAX_VIDEO_DURATION_SEC) {
-      throw new Error(t('gameVideos.durationLimit'));
-    }
     const cleanCaption = caption.trim();
     if (cleanCaption.length > CAPTION_MAX_LENGTH) {
       throw new Error(t('gameVideos.captionTooLong', { max: CAPTION_MAX_LENGTH }));
     }
-    return { cleanCaption, duration };
+    return { cleanCaption };
   };
 
   const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
