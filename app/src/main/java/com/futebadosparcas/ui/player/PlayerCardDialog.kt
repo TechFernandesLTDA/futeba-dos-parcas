@@ -51,7 +51,12 @@ class PlayerCardDialog : DialogFragment() {
                                 user = uiState.user,
                                 stats = uiState.statistics,
                                 onClose = { dismiss() },
-                                onShare = { sharePlayerCard(this) }
+                                onShare = { sharePlayerCard(this) },
+                                canFollow = uiState.followState.canFollow,
+                                isFollowing = uiState.followState.isFollowing,
+                                isFollowUpdating = uiState.followState.isUpdating,
+                                followErrorMessage = uiState.followState.errorMessage,
+                                onToggleFollow = viewModel::toggleFollow
                             )
                         }
                         is PlayerCardUiState.Error -> {

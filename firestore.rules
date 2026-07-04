@@ -679,6 +679,9 @@ service cloud.firestore {
            fieldUnchanged('reputation_commitment_avg') &&
            fieldUnchanged('reputation_reviews_count') &&
            fieldUnchanged('reputation_updated_at') &&
+           // #3235: contadores sociais sao mantidos por Cloud Function
+           fieldUnchanged('followers_count') &&
+           fieldUnchanged('following_count') &&
            // SECFIX #578 STAGE 2: PII fields (email, fcm_token, birth_date,
            // height_cm, weight_kg, gender) NÃO podem ser escritos client-side em `users`.
            // Devem usar callable Cloud Function `updateUserPii` que escreve em
@@ -734,6 +737,120 @@ service cloud.firestore {
       match /badges/{badgeId} {
         allow read: if isAuthenticated() && request.auth.uid == userId;
         allow write: if false;
+      }
+
+      // ============================================
+      // SUBCOLECAO: blocked (bloqueio social)
+      // #3231: bloqueio 1:1 para mensagens diretas e descoberta social.
+      // O bloqueio de donos de jogo tem outra semantica e nao e reutilizado.
+      // ============================================
+      match /blocked/{targetUserId} {
+        allow read: if isAuthenticated() && (userId == userId() || isAdmin());
+        allow create, update: if isAuthenticated() &&
+          userId == userId() &&
+          targetUserId != userId() &&
+          request.resource.data.keys().hasOnly([
+            'target_user_id',
+            'created_at'
+          ]) &&
+          request.resource.data.target_user_id == targetUserId &&
+          request.resource.data.created_at == request.time;
+        allow delete: if isAuthenticated() && (userId == userId() || isAdmin());
+      }
+    }
+
+    // ============================================
+    // COLECAO: chats (mensagens diretas 1:1)
+    // #3231 / spec feat-2026-07-04-direct-messages.md
+    // Chat doc e criado exclusivamente por Cloud Function createDirectChat.
+    // Cliente escreve mensagens e metadados restritos da conversa.
+    // ============================================
+    match /chats/{chatId} {
+      function isChatParticipant() {
+        return isAuthenticated() && userId() in resource.data.participants;
+      }
+
+      function isChatParticipantOnCreate() {
+        return isAuthenticated() && userId() in request.resource.data.participants;
+      }
+
+      function isDirectMessageMetadataUpdate() {
+        return request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'last_message',
+          'last_message_at',
+          'last_sender_id',
+          'unread_count'
+        ]) &&
+        request.resource.data.last_sender_id == userId() &&
+        request.resource.data.last_message is string &&
+        request.resource.data.last_message.size() >= 1 &&
+        request.resource.data.last_message.size() <= 1000 &&
+        request.resource.data.last_message_at == request.time &&
+        request.resource.data.unread_count is map &&
+        request.resource.data.participants == resource.data.participants &&
+        request.resource.data.created_by == resource.data.created_by &&
+        request.resource.data.created_at == resource.data.created_at;
+      }
+
+      function isDirectMessageReadReceiptUpdate() {
+        return request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'unread_count'
+        ]) &&
+        request.resource.data.unread_count is map &&
+        request.resource.data.unread_count.diff(resource.data.unread_count).affectedKeys().hasOnly([userId()]) &&
+        request.resource.data.unread_count[userId()] == 0 &&
+        request.resource.data.participants == resource.data.participants &&
+        request.resource.data.created_by == resource.data.created_by &&
+        request.resource.data.created_at == resource.data.created_at;
+      }
+
+      allow read: if isChatParticipant();
+      allow create, delete: if false;
+
+      allow update: if isChatParticipant() &&
+        (isDirectMessageMetadataUpdate() || isDirectMessageReadReceiptUpdate());
+
+      match /messages/{messageId} {
+        allow read: if isAuthenticated() &&
+          userId() in get(/databases/$(database)/documents/chats/$(chatId)).data.participants;
+
+        allow create: if isAuthenticated() &&
+          userId() in get(/databases/$(database)/documents/chats/$(chatId)).data.participants &&
+          request.resource.data.keys().hasOnly([
+            'sender_id',
+            'sender_name',
+            'sender_photo_url',
+            'text',
+            'created_at',
+            'deleted_by',
+            'deleted_at'
+          ]) &&
+          request.resource.data.sender_id == userId() &&
+          request.resource.data.sender_name is string &&
+          request.resource.data.sender_name.size() > 0 &&
+          request.resource.data.sender_name.size() <= 120 &&
+          (request.resource.data.sender_photo_url == null ||
+           (request.resource.data.sender_photo_url is string &&
+            request.resource.data.sender_photo_url.size() <= 2048)) &&
+          request.resource.data.text is string &&
+          request.resource.data.text.size() >= 1 &&
+          request.resource.data.text.size() <= 1000 &&
+          request.resource.data.created_at == request.time &&
+          request.resource.data.deleted_by == null &&
+          request.resource.data.deleted_at == null;
+
+        allow update: if isAuthenticated() &&
+          userId() in get(/databases/$(database)/documents/chats/$(chatId)).data.participants &&
+          resource.data.deleted_at == null &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'deleted_by',
+            'deleted_at'
+          ]) &&
+          request.resource.data.deleted_by == userId() &&
+          resource.data.sender_id == userId() &&
+          request.resource.data.deleted_at == request.time;
+
+        allow delete: if false;
       }
     }
 
@@ -871,7 +988,24 @@ service cloud.firestore {
         // Bug fix: Apenas dono do jogo ou admin pode definir MVP, e jogo deve estar FINISHED
         ((canManageGame(resource.data) || isAdmin()) &&
          resource.data.status == 'FINISHED' &&
-         onlyAllowedFields(['mvp_id']))
+         onlyAllowedFields(['mvp_id'])) ||
+        // #3239: reações sociais no resultado da votação. O cliente só pode
+        // tocar no mapa dedicado; votos/contagens continuam server-only.
+        (
+          onlyAllowedFields(['vote_result_reactions']) &&
+          request.resource.data.vote_result_reactions is map &&
+          resource.data.voting_status == 'CONCLUDED' &&
+          resource.data.voting_concluded_at != null &&
+          timestamp.value(resource.data.voting_concluded_at.toMillis()) >
+            timestamp.value(request.time.toMillis() - 72 * 60 * 60 * 1000) &&
+          (
+            isAdmin() ||
+            isConfirmedPlayer(gameId) ||
+            isGameOwner(gameId) ||
+            (resource.data.get('group_id', null) != null &&
+             isGroupAdmin(resource.data.group_id))
+          )
+        )
       );
 
       // Apenas o dono ou admin pode deletar.
@@ -978,7 +1112,7 @@ service cloud.firestore {
       match /chat/{messageId} {
         // Leitura: quem ja pode ler o jogo (mesmo gate de visibility do pai).
         // Reuses get() do pai para validar GROUP_ONLY + membership.
-        allow read: if isAuthenticated() && (
+        allow read: if isVerifiedOrGrace() && (
           isAdmin() ||
           (get(/databases/$(database)/documents/games/$(gameId)).data.get('visibility', null) != 'GROUP_ONLY') ||
           isGroupMember(get(/databases/$(database)/documents/games/$(gameId)).data.get('group_id', null))
@@ -989,6 +1123,15 @@ service cloud.firestore {
         // (previne backdate). Arquivamento: nao permite escrever se
         // game.date_time + 7d < now. Admin tem bypass nas checagens de autor.
         allow create: if isAuthenticated() &&
+          request.resource.data.keys().hasOnly([
+            'sender_id',
+            'sender_name',
+            'sender_photo_url',
+            'text',
+            'created_at',
+            'deleted_by',
+            'deleted_at'
+          ]) &&
           request.resource.data.sender_name is string &&
           request.resource.data.text is string &&
           request.resource.data.text.size() >= 1 &&
@@ -1027,6 +1170,122 @@ service cloud.firestore {
           );
 
         // Hard delete: nunca (preserva auditoria). Soft-delete via update.
+        allow delete: if false;
+      }
+
+      // ============================================
+      // SUB-COLECAO: comments (games/{gameId}/comments/{commentId})
+      // #3234 / spec feat-2026-07-04-game-comments-thread.md
+      // Thread persistente de comentários por jogo. Diferente do chat,
+      // não arquiva após 7d e aceita 1 nível de resposta via parent_id.
+      // ============================================
+      match /comments/{commentId} {
+        // Leitura: mesmo gate do chat/jogo.
+        allow read: if isVerifiedOrGrace() && (
+          isAdmin() ||
+          (get(/databases/$(database)/documents/games/$(gameId)).data.get('visibility', null) != 'GROUP_ONLY') ||
+          isGroupMember(get(/databases/$(database)/documents/games/$(gameId)).data.get('group_id', null))
+        );
+
+        // Create: confirmados, dono do jogo, admin do grupo dono ou admin global.
+        allow create: if isAuthenticated() &&
+          request.resource.data.keys().hasOnly([
+            'author_id',
+            'author_name',
+            'author_photo_url',
+            'text',
+            'parent_id',
+            'created_at',
+            'edited_at',
+            'deleted_by',
+            'deleted_at',
+            'reactions',
+            'context'
+          ]) &&
+          request.resource.data.author_name is string &&
+          request.resource.data.author_name.size() > 0 &&
+          request.resource.data.author_name.size() <= 120 &&
+          (request.resource.data.author_photo_url == null ||
+           (request.resource.data.author_photo_url is string &&
+            request.resource.data.author_photo_url.size() <= 2048)) &&
+          request.resource.data.text is string &&
+          request.resource.data.text.size() >= 1 &&
+          (
+            (
+              (!('context' in request.resource.data) ||
+               request.resource.data.context == 'game') &&
+              request.resource.data.text.size() <= 500
+            ) ||
+            (
+              request.resource.data.context == 'vote_result' &&
+              request.resource.data.text.size() <= 200 &&
+              get(/databases/$(database)/documents/games/$(gameId)).data.voting_status == 'CONCLUDED' &&
+              get(/databases/$(database)/documents/games/$(gameId)).data.voting_concluded_at != null &&
+              timestamp.value(get(/databases/$(database)/documents/games/$(gameId)).data.voting_concluded_at.toMillis()) >
+                timestamp.value(request.time.toMillis() - 72 * 60 * 60 * 1000)
+            )
+          ) &&
+          (!('context' in request.resource.data) ||
+           request.resource.data.context in ['game', 'vote_result']) &&
+          (request.resource.data.parent_id == null ||
+           (request.resource.data.parent_id is string &&
+            request.resource.data.parent_id.size() > 0 &&
+            request.resource.data.parent_id.size() <= 120)) &&
+          request.resource.data.created_at == request.time &&
+          request.resource.data.edited_at == null &&
+          request.resource.data.deleted_at == null &&
+          request.resource.data.deleted_by == null &&
+          request.resource.data.reactions is map &&
+          (
+            isAdmin() ||
+            (
+              request.resource.data.author_id == userId() &&
+              (isConfirmedPlayer(gameId) ||
+               isGameOwner(gameId) ||
+               (get(/databases/$(database)/documents/games/$(gameId)).data.get('group_id', null) != null &&
+                isGroupAdmin(get(/databases/$(database)/documents/games/$(gameId)).data.group_id)))
+            )
+          );
+
+        // Update: autor edita texto proprio.
+        allow update: if isAuthenticated() && (
+          // Participante/gestor reage/desreage ao comentario.
+          (
+            onlyAllowedFields(['reactions']) &&
+            request.resource.data.reactions is map &&
+            (
+              isAdmin() ||
+              isConfirmedPlayer(gameId) ||
+              isGameOwner(gameId) ||
+              (get(/databases/$(database)/documents/games/$(gameId)).data.get('group_id', null) != null &&
+               isGroupAdmin(get(/databases/$(database)/documents/games/$(gameId)).data.group_id))
+            )
+          ) ||
+          (
+            resource.data.author_id == userId() &&
+            resource.data.deleted_at == null &&
+            onlyAllowedFields(['text', 'edited_at']) &&
+            request.resource.data.text is string &&
+            request.resource.data.text.size() >= 1 &&
+            request.resource.data.text.size() <= 500 &&
+            request.resource.data.edited_at == request.time
+          ) ||
+          // Soft-delete por autor, dono do jogo, admin do grupo ou admin global.
+          (
+            resource.data.deleted_at == null &&
+            onlyAllowedFields(['deleted_by', 'deleted_at']) &&
+            request.resource.data.deleted_at == request.time &&
+            (
+              isAdmin() ||
+              (request.resource.data.deleted_by == userId() &&
+               (resource.data.author_id == userId() ||
+                isGameOwner(gameId) ||
+                (get(/databases/$(database)/documents/games/$(gameId)).data.get('group_id', null) != null &&
+                 isGroupAdmin(get(/databases/$(database)/documents/games/$(gameId)).data.group_id))))
+            )
+          )
+        );
+
         allow delete: if false;
       }
     }
@@ -2180,8 +2439,27 @@ service cloud.firestore {
           (
             canModerateGroupWall(groupId) &&
             onlyAllowedFields(['pinned', 'pinned_by', 'pinned_at', 'updated_at']) &&
-            request.resource.data.pinned_at == request.time &&
-            request.resource.data.updated_at == request.time
+            request.resource.data.pinned is bool &&
+            request.resource.data.updated_at == request.time &&
+            (
+              (
+                request.resource.data.pinned == true &&
+                request.resource.data.pinned_at == request.time &&
+                request.resource.data.pinned_by == userId()
+              ) ||
+              (
+                request.resource.data.pinned == false &&
+                request.resource.data.pinned_at == null &&
+                request.resource.data.pinned_by == null
+              )
+            )
+          ) ||
+          // Membro reage/desreage ao post. O client usa arrayUnion/arrayRemove
+          // no mapa reactions.<emoji>; outras mutacoes seguem ramos separados.
+          (
+            canUseGroupWall(groupId) &&
+            onlyAllowedFields(['reactions']) &&
+            request.resource.data.reactions is map
           ) ||
           // Autor ou owner/admin faz soft-delete
           (
@@ -2196,6 +2474,21 @@ service cloud.firestore {
         // Hard delete: nunca (preserva auditoria)
         allow delete: if false;
       }
+    }
+
+    // ============================================
+    // COLLECTION GROUP: wall_posts
+    // Issue #3236: feed social agregado cross-grupo.
+    // ============================================
+    match /{path=**}/wall_posts/{postId} {
+      // Leitura agregada: cada post precisa pertencer a um grupo onde o usuário
+      // é membro ativo. Writes seguem exclusivamente pelo caminho canônico
+      // groups/{groupId}/wall_posts/{postId}.
+      allow read: if isAuthenticated() && (
+        isAdmin() ||
+        canUseGroupWall(resource.data.group_id)
+      );
+      allow create, update, delete: if false;
     }
 
     // ============================================
@@ -2647,6 +2940,39 @@ service cloud.firestore {
     }
 
     // ============================================
+    // SUB-COLECOES: users/{userId}/following e followers
+    // #3235: grafo social de seguir jogadores.
+    // Escrita é server-side via callable toggleFollowUser (Admin SDK) para
+    // manter espelho e contadores idempotentes. Clientes só leem.
+    // ============================================
+    match /users/{userId}/following/{targetUserId} {
+      allow read: if isAuthenticated();
+      allow create, update, delete: if false;
+    }
+
+    match /users/{userId}/followers/{followerUserId} {
+      allow read: if isAuthenticated();
+      allow create, update, delete: if false;
+    }
+
+    // Posts ocultos pelo proprio usuario no feed social (#3236).
+    match /users/{userId}/hidden_feed_posts/{hiddenPostId} {
+      allow read: if isAuthenticated() && request.auth.uid == userId;
+      allow create, update: if isAuthenticated() &&
+        request.auth.uid == userId &&
+        request.resource.data.user_id == userId &&
+        request.resource.data.group_id is string &&
+        request.resource.data.post_id is string &&
+        request.resource.data.post_key == hiddenPostId &&
+        request.resource.data.target_path is string &&
+        request.resource.data.hidden_at == request.time &&
+        request.resource.data.keys().hasOnly([
+          'user_id', 'group_id', 'post_id', 'post_key', 'target_path', 'hidden_at'
+        ]);
+      allow delete: if isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // ============================================
     // SUB-COLECAO: users/{userId}/dream_team
     // ============================================
     match /users/{userId}/dream_team/{docId} {
@@ -2894,6 +3220,30 @@ service cloud.firestore {
     }
 
     // ============================================
+    // COLECAO: reports (denuncias de conteudo social)
+    // ============================================
+    match /reports/{reportId} {
+      allow read: if isAdmin();
+      allow create: if isAuthenticated() &&
+        request.resource.data.reporter_id == userId() &&
+        request.resource.data.target_type == 'group_wall_post' &&
+        request.resource.data.group_id is string &&
+        request.resource.data.post_id is string &&
+        request.resource.data.target_path is string &&
+        request.resource.data.reason is string &&
+        request.resource.data.reason.size() >= 3 &&
+        request.resource.data.reason.size() <= 200 &&
+        request.resource.data.status == 'OPEN' &&
+        request.resource.data.created_at == request.time &&
+        request.resource.data.keys().hasOnly([
+          'reporter_id', 'target_type', 'group_id', 'post_id',
+          'target_path', 'reason', 'status', 'created_at'
+        ]);
+      allow update: if isAdmin() && onlyAllowedFields(['status', 'reviewed_at', 'reviewed_by']);
+      allow delete: if false;
+    }
+
+    // ============================================
     // COLECAO: challenges (desafios semanais)
     // ============================================
     match /challenges/{challengeId} {
@@ -3138,6 +3488,78 @@ service cloud.firestore {
     }
 
     // ============================================
+    // COLECAO: user_locations (opt-in LGPD para descoberta por proximidade)
+    // ============================================
+    // Coordenadas nao ficam em users/{uid}, pois perfis is_searchable ainda
+    // podem ser lidos por outros autenticados. Descoberta publica acontece
+    // apenas via Cloud Function discoverNearbyPlayers, com distancia aproximada.
+    match /user_locations/{userId} {
+      function allowedLocationFields() {
+        return [
+          'user_id',
+          'location_sharing_enabled',
+          'location_consent_at',
+          'location_updated_at',
+          'geohash',
+          'lat',
+          'lng'
+        ];
+      }
+
+      function hasValidGeohash(data) {
+        return data.geohash is string &&
+               data.geohash.size() >= 1 &&
+               data.geohash.size() <= 12;
+      }
+
+      function isEnabledLocationPayload(data) {
+        return data.keys().hasOnly(allowedLocationFields()) &&
+               data.keys().hasAll([
+                 'user_id',
+                 'location_sharing_enabled',
+                 'location_consent_at',
+                 'location_updated_at',
+                 'geohash',
+                 'lat',
+                 'lng'
+               ]) &&
+               data.user_id == userId &&
+               data.location_sharing_enabled == true &&
+               data.location_consent_at is timestamp &&
+               data.location_updated_at == request.time &&
+               hasValidGeohash(data) &&
+               isValidLatitude(data.lat) &&
+               isValidLongitude(data.lng);
+      }
+
+      function isDisabledLocationPayload(data) {
+        return data.keys().hasOnly([
+                 'user_id',
+                 'location_sharing_enabled',
+                 'location_updated_at'
+               ]) &&
+               data.user_id == userId &&
+               data.location_sharing_enabled == false &&
+               data.location_updated_at == request.time &&
+               !('geohash' in data) &&
+               !('lat' in data) &&
+               !('lng' in data);
+      }
+
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId) &&
+        (isEnabledLocationPayload(request.resource.data) ||
+         isDisabledLocationPayload(request.resource.data));
+      allow update: if isOwner(userId) &&
+        request.resource.data.user_id == resource.data.user_id &&
+        request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(allowedLocationFields()) &&
+        (isEnabledLocationPayload(request.resource.data) ||
+         isDisabledLocationPayload(request.resource.data));
+      allow delete: if isOwner(userId) || isAdmin();
+    }
+
+    // ============================================
     // COLECAO: cpf_index (lookup de duplicatas CPF)
     // ============================================
     // SECURITY: Hash CPF -> uid mapping. Apenas Cloud Functions acessa.
@@ -3263,6 +3685,7 @@ service cloud.firestore {
           'content_type',
           'size',
           'caption',
+          'reactions',
           'status',
           'created_at',
           'updated_at'
@@ -3285,6 +3708,7 @@ service cloud.firestore {
         request.resource.data.size < 10 * 1024 * 1024 &&
         request.resource.data.caption is string &&
         request.resource.data.caption.size() <= 160 &&
+        request.resource.data.reactions is map &&
         request.resource.data.status == 'ACTIVE' &&
         exists(/databases/$(database)/documents/games/$(request.resource.data.game_id)) &&
         get(/databases/$(database)/documents/games/$(request.resource.data.game_id)).data.status == 'FINISHED' &&
@@ -3293,7 +3717,15 @@ service cloud.firestore {
          canManageGame(get(/databases/$(database)/documents/games/$(request.resource.data.game_id)).data) ||
          isAdmin());
 
-      allow update: if false;
+      allow update: if isAuthenticated() &&
+        onlyAllowedFields(['reactions']) &&
+        request.resource.data.reactions is map &&
+        resource.data.game_id is string &&
+        exists(/databases/$(database)/documents/games/$(resource.data.game_id)) &&
+        ((get(/databases/$(database)/documents/confirmations/$(resource.data.game_id + '_' + userId())) != null &&
+          get(/databases/$(database)/documents/confirmations/$(resource.data.game_id + '_' + userId())).data.status == 'CONFIRMED') ||
+         canManageGame(get(/databases/$(database)/documents/games/$(resource.data.game_id)).data) ||
+         isAdmin());
 
       allow delete: if isAuthenticated() &&
         resource.data.game_id is string &&
@@ -3304,6 +3736,125 @@ service cloud.firestore {
           get(/databases/$(database)/documents/games/$(resource.data.game_id)).data.owner_id == userId() ||
           userId() in get(/databases/$(database)/documents/games/$(resource.data.game_id)).data.get('co_organizers', [])
         );
+    }
+
+    // ============================================
+    // COLECAO: game_videos (clipes curtos pós-jogo)
+    // ============================================
+    // Issue #3238: Mesma matriz de acesso de game_photos, com validação
+    // extra de MP4/25MB e status de processamento server-side.
+    match /game_videos/{videoId} {
+      allow read: if isAuthenticated();
+
+      allow create: if isAuthenticated() &&
+        request.resource.data.keys().hasOnly([
+          'game_id',
+          'url',
+          'storage_path',
+          'thumbnail_path',
+          'uploaded_by',
+          'uploaded_by_name',
+          'uploaded_by_photo',
+          'content_type',
+          'size',
+          'duration_sec',
+          'caption',
+          'reactions',
+          'status',
+          'rejection_reason',
+          'created_at',
+          'updated_at'
+        ]) &&
+        request.resource.data.game_id is string &&
+        request.resource.data.url is string &&
+        request.resource.data.url.size() > 0 &&
+        request.resource.data.url.size() <= 2048 &&
+        request.resource.data.storage_path is string &&
+        request.resource.data.storage_path.matches('^games/[^/]+/videos/' + userId() + '/[^/]+\\.mp4$') &&
+        request.resource.data.thumbnail_path == null &&
+        request.resource.data.uploaded_by == userId() &&
+        request.resource.data.uploaded_by_name is string &&
+        request.resource.data.uploaded_by_name.size() > 0 &&
+        request.resource.data.uploaded_by_name.size() <= 120 &&
+        request.resource.data.uploaded_by_photo is string &&
+        request.resource.data.uploaded_by_photo.size() <= 2048 &&
+        request.resource.data.content_type == 'video/mp4' &&
+        request.resource.data.size is int &&
+        request.resource.data.size > 0 &&
+        request.resource.data.size <= 25 * 1024 * 1024 &&
+        request.resource.data.duration_sec == null &&
+        request.resource.data.caption is string &&
+        request.resource.data.caption.size() <= 200 &&
+        request.resource.data.reactions is map &&
+        request.resource.data.status == 'PROCESSING' &&
+        request.resource.data.rejection_reason == null &&
+        request.resource.data.created_at == request.time &&
+        request.resource.data.updated_at == request.time &&
+        exists(/databases/$(database)/documents/games/$(request.resource.data.game_id)) &&
+        get(/databases/$(database)/documents/games/$(request.resource.data.game_id)).data.status == 'FINISHED' &&
+        ((get(/databases/$(database)/documents/confirmations/$(request.resource.data.game_id + '_' + userId())) != null &&
+          get(/databases/$(database)/documents/confirmations/$(request.resource.data.game_id + '_' + userId())).data.status == 'CONFIRMED') ||
+         canManageGame(get(/databases/$(database)/documents/games/$(request.resource.data.game_id)).data) ||
+         isAdmin());
+
+      allow update: if isAuthenticated() &&
+        onlyAllowedFields(['reactions']) &&
+        request.resource.data.reactions is map &&
+        resource.data.game_id is string &&
+        exists(/databases/$(database)/documents/games/$(resource.data.game_id)) &&
+        ((get(/databases/$(database)/documents/confirmations/$(resource.data.game_id + '_' + userId())) != null &&
+          get(/databases/$(database)/documents/confirmations/$(resource.data.game_id + '_' + userId())).data.status == 'CONFIRMED') ||
+         canManageGame(get(/databases/$(database)/documents/games/$(resource.data.game_id)).data) ||
+         isAdmin());
+
+      allow delete: if isAuthenticated() &&
+        resource.data.game_id is string &&
+        exists(/databases/$(database)/documents/games/$(resource.data.game_id)) &&
+        (
+          isAdmin() ||
+          resource.data.uploaded_by == userId() ||
+          get(/databases/$(database)/documents/games/$(resource.data.game_id)).data.owner_id == userId() ||
+          userId() in get(/databases/$(database)/documents/games/$(resource.data.game_id)).data.get('co_organizers', [])
+        );
+    }
+
+    // ============================================
+    // COLECAO: post_game_highlights (estado social dos highlights derivados)
+    // ============================================
+    // O conteudo dos highlights e derivado de games/confirmations no cliente.
+    // Este doc guarda apenas metadados sociais persistentes por jogo.
+    match /post_game_highlights/{gameId} {
+      allow read: if isAuthenticated();
+
+      allow create: if isAuthenticated() &&
+        request.resource.data.keys().hasOnly([
+          'game_id',
+          'reactions',
+          'updated_at'
+        ]) &&
+        request.resource.data.game_id == gameId &&
+        request.resource.data.reactions is map &&
+        request.resource.data.updated_at == request.time &&
+        exists(/databases/$(database)/documents/games/$(gameId)) &&
+        get(/databases/$(database)/documents/games/$(gameId)).data.status == 'FINISHED' &&
+        ((get(/databases/$(database)/documents/confirmations/$(gameId + '_' + userId())) != null &&
+          get(/databases/$(database)/documents/confirmations/$(gameId + '_' + userId())).data.status == 'CONFIRMED') ||
+         canManageGame(get(/databases/$(database)/documents/games/$(gameId)).data) ||
+         isAdmin());
+
+      allow update: if isAuthenticated() &&
+        onlyAllowedFields(['reactions', 'updated_at']) &&
+        request.resource.data.game_id == resource.data.game_id &&
+        resource.data.game_id == gameId &&
+        request.resource.data.reactions is map &&
+        request.resource.data.updated_at == request.time &&
+        exists(/databases/$(database)/documents/games/$(gameId)) &&
+        ((get(/databases/$(database)/documents/confirmations/$(gameId + '_' + userId())) != null &&
+          get(/databases/$(database)/documents/confirmations/$(gameId + '_' + userId())).data.status == 'CONFIRMED') ||
+         canManageGame(get(/databases/$(database)/documents/games/$(gameId)).data) ||
+         isAdmin());
+
+      allow delete: if false;
     }
 
     // ============================================

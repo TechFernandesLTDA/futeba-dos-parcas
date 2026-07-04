@@ -56,6 +56,8 @@ import com.futebadosparcas.ui.components.design.AppTopBar
 import com.futebadosparcas.ui.components.team.TeamBadgeById
 import com.futebadosparcas.ui.games.components.WaitlistSection
 import com.futebadosparcas.ui.games.components.GameChatSection
+import com.futebadosparcas.ui.games.components.GameCommentsSection
+import com.futebadosparcas.ui.games.components.GameVideosSection
 import com.futebadosparcas.ui.adaptive.adaptiveContentWidth
 import com.futebadosparcas.ui.theme.MatchEventColors
 import com.google.android.gms.location.LocationServices
@@ -455,6 +457,21 @@ fun GameDetailContent(
                     gameId = gameId,
                     canWrite = canWriteChat,
                     isArchived = isChatArchived,
+                    currentUserId = state.currentUserId,
+                    canManage = state.canManageGame,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                )
+                GameCommentsSection(
+                    gameId = gameId,
+                    canWrite = state.isUserConfirmed || state.canManageGame,
+                    currentUserId = state.currentUserId,
+                    canManage = state.canManageGame,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                )
+                GameVideosSection(
+                    gameId = gameId,
+                    canUpload = state.game.status == GameStatus.FINISHED.name &&
+                        (state.isUserConfirmed || state.canManageGame),
                     currentUserId = state.currentUserId,
                     canManage = state.canManageGame,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)

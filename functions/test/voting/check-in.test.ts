@@ -237,6 +237,62 @@ describe("checkInToGame", () => {
     );
   });
 
+  it("aceita payload legado do web com latitude/longitude", async () => {
+    mockDbDocGet.mockResolvedValueOnce(makeGameSnap());
+    const setMock = jest.fn();
+    mockDbRunTransaction.mockImplementationOnce(async (cb: any) => {
+      const tx = { get: jest.fn().mockResolvedValue(makeConfSnap()), set: setMock };
+      return cb(tx);
+    });
+
+    const result = await checkInToGame(makeRequest({
+      data: {
+        gameId: "game1",
+        latitude: -23.5505,
+        longitude: -46.6333,
+        accuracy: 10,
+      },
+    }));
+
+    expect(result.success).toBe(true);
+    expect(result.distance_m).toBeDefined();
+    expect(result.distanceMeters).toBe(result.distance_m);
+    expect(setMock).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        checked_in: true,
+        check_in_lat_approx: -23.55,
+        check_in_lng_approx: -46.633,
+      }),
+      { merge: true },
+    );
+  });
+
+  it("aceita qr_token legado quando GPS tambem e enviado", async () => {
+    mockDbDocGet.mockResolvedValueOnce(makeGameSnap({
+      checkin_qr_token: "qr-test",
+      checkin_qr_token_expires_at: {
+        toDate: () => new Date(Date.now() + 60 * 60 * 1000),
+      },
+    }));
+    mockDbRunTransaction.mockImplementationOnce(async (cb: any) => {
+      const tx = { get: jest.fn().mockResolvedValue(makeConfSnap()), set: jest.fn() };
+      return cb(tx);
+    });
+
+    const result = await checkInToGame(makeRequest({
+      data: {
+        gameId: "game1",
+        lat: -23.5505,
+        lng: -46.6333,
+        qr_token: "qr-test",
+      },
+    }));
+
+    expect(result.success).toBe(true);
+    expect(result.method).toBe("qr");
+  });
+
   it("notifica outros jogadores confirmados apos check-in bem sucedido", async () => {
     const confirmationsQuery = {
       where: jest.fn().mockReturnThis(),

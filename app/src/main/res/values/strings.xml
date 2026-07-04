@@ -1007,6 +1007,7 @@ subir no ranking!</string>
     <string name="group_wall_remove_photo">Remover foto</string>
     <string name="group_wall_image_preview">Pré-visualização da imagem</string>
     <string name="group_wall_image_alt">Foto de %1$s</string>
+    <string name="group_wall_image_too_large">Imagem muito grande. O limite é 10MB.</string>
     <string name="group_wall_load_more">Carregar mais</string>
     <string name="group_wall_pinned">Fixado</string>
     <string name="group_wall_pin">Fixar no topo</string>
@@ -1016,6 +1017,9 @@ subir no ranking!</string>
     <string name="group_wall_must_be_member">Você precisa ser membro do grupo para publicar.</string>
     <string name="group_wall_delete_confirm">Excluir publicação?</string>
     <string name="group_wall_delete_message">Esta ação não pode ser desfeita.</string>
+    <string name="reactions_add">Adicionar reação</string>
+    <string name="reactions_toggle_emoji">Alternar reação %1$s. %2$d reação(ões).</string>
+    <string name="reactions_update_error">Não foi possível atualizar a reação.</string>
 
     <!-- Locations Screen -->
     <string name="manage_locations">Gerenciar Locais</string>
@@ -2359,6 +2363,21 @@ subir no ranking!</string>
     <string name="players_generated_on">Gerado em</string>
     <string name="players_close">Fechar</string>
     <string name="players_share">Compartilhar</string>
+    <string name="follow_follow">Seguir</string>
+    <string name="follow_unfollow">Deixar de seguir</string>
+    <string name="follow_followers">Seguidores</string>
+    <string name="follow_following">Seguindo</string>
+    <string name="social_feed_title">Feed</string>
+    <string name="social_feed_empty_title">Nenhuma resenha no feed ainda</string>
+    <string name="social_feed_empty_desc">Quando os grupos publicarem no mural, os posts aparecem aqui.</string>
+    <string name="social_feed_empty_groups_title">Entre em um grupo para ver o feed</string>
+    <string name="social_feed_empty_groups_desc">O feed junta os murais dos grupos em que você participa.</string>
+    <string name="social_feed_hide_post">Ocultar do feed</string>
+    <string name="social_feed_report_post">Denunciar post</string>
+    <string name="social_feed_hidden_success">Post ocultado do seu feed.</string>
+    <string name="social_feed_hidden_error">Não foi possível ocultar o post.</string>
+    <string name="social_feed_report_success">Denúncia enviada para análise.</string>
+    <string name="social_feed_report_error">Não foi possível enviar a denúncia.</string>
 
     <!-- Preferences missing strings -->
     <string name="preferences_profile_visible">Perfil Visível</string>
@@ -4495,5 +4514,80 @@ subir no ranking!</string>
     <string name="game_chat_archived">Chat arquivado</string>
     <string name="game_chat_must_confirm">Confirme sua presença para participar do chat.</string>
     <string name="game_chat_retry">Tentar novamente</string>
+    <string name="game_comments_title">Comentários</string>
+    <string name="game_comments_description">Deixe a resenha permanente desse jogo.</string>
+    <string name="game_comments_input_hint">Comente o lance, a resenha ou a polêmica…</string>
+    <string name="game_comments_reply_hint">Responder comentário…</string>
+    <string name="game_comments_empty_title">Nenhum comentário ainda</string>
+    <string name="game_comments_empty_desc">A thread livre do jogo aparece aqui.</string>
+    <string name="game_comments_must_confirm">Confirme presença para comentar nesse jogo.</string>
+    <string name="game_comments_retry">Tentar novamente</string>
+    <string name="game_comments_edited">editado</string>
+    <string name="game_comments_replying_to">Respondendo %1$s</string>
+    <string name="game_comments_cancel_reply">Cancelar resposta</string>
+    <string name="game_videos_title">Vídeos do jogo</string>
+    <string name="game_videos_description">Anexe melhores lances e gols em MP4 de até 30 segundos.</string>
+    <string name="game_videos_empty_title">Nenhum vídeo ainda</string>
+    <string name="game_videos_empty_desc">Os lances enviados após o jogo aparecem aqui.</string>
+    <string name="game_videos_retry">Tentar novamente</string>
+    <string name="game_videos_caption_hint">Legenda opcional</string>
+    <string name="game_videos_upload">Enviar vídeo</string>
+    <string name="game_videos_must_finish">Vídeos ficam disponíveis após o jogo para jogadores confirmados.</string>
+    <string name="game_videos_upload_success">Vídeo enviado para processamento.</string>
+    <string name="game_videos_upload_error">Não foi possível enviar o vídeo.</string>
+    <string name="game_videos_delete">Excluir vídeo</string>
+    <string name="game_videos_delete_success">Vídeo excluído.</string>
+    <string name="game_videos_delete_error">Não foi possível excluir o vídeo.</string>
+    <string name="game_videos_invalid_type">Envie um arquivo MP4.</string>
+    <string name="game_videos_invalid_file">Não foi possível ler esse vídeo.</string>
+    <string name="game_videos_too_large">Vídeo muito grande. O limite é 25MB.</string>
+    <string name="game_videos_too_long">Vídeo muito longo. O limite é 30 segundos.</string>
+    <string name="game_videos_game_limit_reached">Esse jogo já atingiu o limite de 10 vídeos.</string>
+    <string name="game_videos_user_limit_reached">Você já atingiu o limite de 3 vídeos nesse jogo.</string>
+    <string name="game_videos_status_processing">Processando</string>
+    <string name="game_videos_status_ready">Pronto</string>
+    <string name="game_videos_status_rejected">Rejeitado</string>
+    <string name="game_videos_processing_desc">Estamos validando o vídeo e gerando a miniatura.</string>
+    <string name="game_videos_rejected_desc">Esse vídeo não passou na validação.</string>
+    <string name="vote_result_social_title">Resenha do resultado</string>
+    <string name="vote_result_social_description">Reaja e comente o resultado por até 72 horas após a apuração.</string>
+    <string name="vote_result_social_read_only">A janela de 72 horas acabou; a resenha ficou somente leitura.</string>
+
+    <!-- #3237: Descoberta de jogadores próximos -->
+    <string name="nearby_players_title">Jogadores próximos</string>
+    <string name="nearby_players_sharing_title">Compartilhar minha localização</string>
+    <string name="nearby_players_sharing_desc">Usamos sua localização em primeiro plano para outros jogadores encontrarem você por faixa de distância. Você pode desligar quando quiser.</string>
+    <string name="nearby_players_sharing_enabled">Localização compartilhada</string>
+    <string name="nearby_players_sharing_disabled">Localização removida</string>
+    <string name="nearby_players_sharing_error">Não foi possível atualizar sua localização</string>
+    <string name="nearby_players_permission_denied">Permita localização para buscar jogadores próximos</string>
+    <string name="nearby_players_idle_title">Procure reforços por perto</string>
+    <string name="nearby_players_idle_desc">Use sua localização atual para encontrar jogadores opt-in próximos, sem expor coordenadas exatas.</string>
+    <string name="nearby_players_empty_title">Nenhum jogador por perto</string>
+    <string name="nearby_players_empty_desc">Ajuste o raio ou tente novamente mais tarde.</string>
+    <string name="nearby_players_search">Usar localização atual</string>
+    <string name="nearby_players_radius_km">%1$d km</string>
+    <string name="nearby_players_filter_all">Todos</string>
+    <string name="nearby_players_filter_following">Quem eu sigo</string>
+    <string name="nearby_players_following">Seguindo</string>
+    <string name="nearby_players_band_under_1km">até 1 km</string>
+    <string name="nearby_players_band_under_5km">até 5 km</string>
+    <string name="nearby_players_band_under_10km">até 10 km</string>
+    <string name="nearby_players_band_under_25km">até 25 km</string>
+
+    <!-- #3231: Mensagens diretas -->
+    <string name="direct_messages_title">Mensagens</string>
+    <string name="direct_messages_message">Mensagem</string>
+    <string name="direct_messages_send">Enviar</string>
+    <string name="direct_messages_create_error">Não foi possível abrir a conversa</string>
+    <string name="direct_messages_empty_title">Nenhuma conversa ainda</string>
+    <string name="direct_messages_empty_desc">Encontre jogadores próximos ou do seu grupo para iniciar uma conversa.</string>
+    <string name="direct_messages_find_players">Encontrar jogadores</string>
+    <string name="direct_messages_no_messages">Nenhuma mensagem ainda</string>
+    <string name="direct_messages_placeholder">Escreva uma mensagem...</string>
+    <string name="direct_messages_counter">%1$d/%2$d caracteres</string>
+    <string name="direct_messages_empty_conversation_title">Comece a conversa</string>
+    <string name="direct_messages_empty_conversation_desc">Envie a primeira mensagem para combinar o próximo jogo.</string>
+    <string name="direct_messages_deleted">Mensagem excluída</string>
 
 </resources>

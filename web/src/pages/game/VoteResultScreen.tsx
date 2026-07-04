@@ -20,12 +20,16 @@ import {
   Star as StarIcon,
   PictureAsPdf as PdfIcon,
 } from '@mui/icons-material';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useToast } from '../../contexts/ToastContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { PlayerAvatar, LoadingState } from '../../components/common/GameCard';
 import { ErrorState } from '../../components/common/ErrorState';
 import { EmptyState } from '../../components/common/EmptyState';
+import { ReactionBar } from '../../components/reactions/ReactionBar';
+import { ReactionsMap } from '../../constants/reactions';
+import { GameCommentsPanel } from './GameCommentsPanel';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
 import { PageContainer } from '../../components/common/PageContainer';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
@@ -80,6 +84,8 @@ interface RawVoteGameDoc {
   bolaMurchaId?: string;
   mvpVotes?: number;
   bolaMurchaVotes?: number;
+  voteResultReactions?: ReactionsMap;
+  votingConcludedAt?: Date;
 }
 interface RawVoteUserDoc {
   name?: string;
@@ -93,6 +99,7 @@ export const VoteResultScreen: React.FC = () => {
   const theme = useTheme();
   const { gameId } = useParams<{ gameId: string }>();
   const { showError } = useToast();
+  const { currentUser } = useAuth();
   const showErrorRef = useRef(showError);
   showErrorRef.current = showError;
 
@@ -102,7 +109,13 @@ export const VoteResultScreen: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
   const [exporting, setExporting] = useState(false);
+  const [voteResultReactions, setVoteResultReactions] = useState<ReactionsMap>({});
+  const [votingConcludedAt, setVotingConcludedAt] = useState<Date | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
+  const interactionEndsAt = votingConcludedAt
+    ? new Date(votingConcludedAt.getTime() + 72 * 60 * 60 * 1000)
+    : null;
+  const canInteract = Boolean(currentUser?.uid && interactionEndsAt && interactionEndsAt.getTime() > Date.now());
 
   const handleRetry = () => {
     setError(null);
@@ -195,6 +208,23 @@ export const VoteResultScreen: React.FC = () => {
       cancelled = true;
     };
   }, [gameId, retryCount, t]);
+
+  useEffect(() => {
+    if (!gameId) return undefined;
+    const unsubscribe = onSnapshot(
+      doc(db, 'games', gameId),
+      (snapshot) => {
+        const raw = snapshot.data();
+        if (!raw) return;
+        setVoteResultReactions((raw.vote_result_reactions as ReactionsMap | undefined) ?? {});
+        setVotingConcludedAt(raw.voting_concluded_at?.toDate?.() ?? null);
+      },
+      (err) => {
+        logger.error('Error listening vote result social data:', err);
+      },
+    );
+    return () => unsubscribe();
+  }, [gameId]);
 
   if (error) {
     return <ErrorState message={error} onRetry={handleRetry} />;
@@ -299,6 +329,40 @@ export const VoteResultScreen: React.FC = () => {
           />
         )}
         </div>
+
+        {gameId && (voteResult?.mvp || voteResult?.bolaMurcha) && (
+          <Card sx={{ mt: 2 }}>
+            <CardContent>
+              <Typography variant="subtitle1" fontWeight={700}>
+                {t('voteResultSocial.title')}
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+                {canInteract
+                  ? t('voteResultSocial.description')
+                  : t('voteResultSocial.readOnly')}
+              </Typography>
+              <ReactionBar
+                targetPath={`games/${gameId}`}
+                reactions={voteResultReactions}
+                reactionField="vote_result_reactions"
+                enabled={canInteract}
+              />
+            </CardContent>
+          </Card>
+        )}
+
+        {gameId && (
+          <GameCommentsPanel
+            gameId={gameId}
+            canWrite={canInteract}
+            canManage={false}
+            context="vote_result"
+            title={t('voteResultSocial.commentsTitle')}
+            description={t('voteResultSocial.commentsDescription')}
+            emptyTitle={t('voteResultSocial.emptyTitle')}
+            emptyDesc={t('voteResultSocial.emptyDesc')}
+          />
+        )}
 
         <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
           <Button

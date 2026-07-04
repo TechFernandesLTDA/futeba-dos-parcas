@@ -27,6 +27,15 @@ import { useTranslation } from 'react-i18next';
 
 type CheckInState = 'loading' | 'confirming' | 'success' | 'error';
 
+function getCurrentPosition(): Promise<GeolocationPosition> {
+  return new Promise((resolve, reject) => {
+    navigator.geolocation.getCurrentPosition(resolve, reject, {
+      enableHighAccuracy: true,
+      timeout: 10000,
+    });
+  });
+}
+
 export const QrCheckInScreen: React.FC = () => {
   const { t } = useTranslation();
   useDocumentTitle(t('page.title.qrCheckIn'));
@@ -98,11 +107,20 @@ export const QrCheckInScreen: React.FC = () => {
       return;
     }
 
+    if (!navigator.geolocation) {
+      showError(t('games.detail.geolocationUnsupported'));
+      return;
+    }
+
     setCheckingIn(true);
     try {
+      const position = await getCurrentPosition();
       await checkInToGame({
         gameId,
-        qr_token: token,
+        qrToken: token,
+        lat: position.coords.latitude,
+        lng: position.coords.longitude,
+        accuracy: position.coords.accuracy,
       });
       setState('success');
     } catch (err) {

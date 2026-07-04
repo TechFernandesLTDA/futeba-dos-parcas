@@ -19,8 +19,12 @@ import {
   PushPin as PinIcon,
   Delete as DeleteIcon,
   Edit as EditIcon,
+  Groups as GroupsIcon,
+  Flag as ReportIcon,
+  VisibilityOff as HideIcon,
 } from '@mui/icons-material';
 import { PlayerAvatar } from '../../components/common/GameCard';
+import { ReactionBar } from '../../components/reactions/ReactionBar';
 import { WallPost } from '../../hooks/useGroupWall';
 import { formatRelativeTime } from '../../utils/dateUtils';
 
@@ -31,6 +35,10 @@ interface WallPostCardProps {
   onEdit?: (post: WallPost) => void;
   onDelete?: (post: WallPost) => void;
   onTogglePin?: (postId: string, pinned: boolean) => void;
+  originLabel?: string;
+  onOpenOrigin?: () => void;
+  onHide?: (post: WallPost) => void;
+  onReport?: (post: WallPost) => void;
 }
 
 export const WallPostCard: React.FC<WallPostCardProps> = ({
@@ -40,6 +48,10 @@ export const WallPostCard: React.FC<WallPostCardProps> = ({
   onEdit,
   onDelete,
   onTogglePin,
+  originLabel,
+  onOpenOrigin,
+  onHide,
+  onReport,
 }) => {
   const { t } = useTranslation();
   const theme = useTheme();
@@ -87,6 +99,16 @@ export const WallPostCard: React.FC<WallPostCardProps> = ({
                       variant="outlined"
                     />
                   )}
+                  {originLabel && (
+                    <Chip
+                      icon={<GroupsIcon fontSize="small" />}
+                      label={originLabel}
+                      size="small"
+                      variant="outlined"
+                      clickable={Boolean(onOpenOrigin)}
+                      onClick={onOpenOrigin}
+                    />
+                  )}
                   <Typography variant="caption" color="text.secondary">
                     {formatRelativeTime(post.createdAt)}
                   </Typography>
@@ -97,7 +119,7 @@ export const WallPostCard: React.FC<WallPostCardProps> = ({
                   )}
                 </Box>
               </Box>
-              {(isOwn || canManage) && (
+              {(isOwn || canManage || onHide || onReport) && (
                 <IconButton
                   size="small"
                   onClick={handleOpenMenu}
@@ -133,8 +155,15 @@ export const WallPostCard: React.FC<WallPostCardProps> = ({
                   objectFit: 'cover',
                   borderRadius: 1,
                   cursor: 'pointer',
-                  bgcolor: alpha(theme.palette.common.black, 0.04),
+                  bgcolor: theme.palette.action.hover,
                 }}
+              />
+            )}
+
+            {!post.deletedAt && (
+              <ReactionBar
+                targetPath={`groups/${post.groupId}/wall_posts/${post.id}`}
+                reactions={post.reactions ?? undefined}
               />
             )}
           </Stack>
@@ -180,6 +209,29 @@ export const WallPostCard: React.FC<WallPostCardProps> = ({
           >
             <DeleteIcon fontSize="small" sx={{ mr: 1 }} />
             {t('common.delete')}
+          </MenuItem>
+        )}
+        {onHide && (
+          <MenuItem
+            onClick={() => {
+              onHide(post);
+              handleCloseMenu();
+            }}
+          >
+            <HideIcon fontSize="small" sx={{ mr: 1 }} />
+            {t('socialFeed.hidePost')}
+          </MenuItem>
+        )}
+        {onReport && (
+          <MenuItem
+            onClick={() => {
+              onReport(post);
+              handleCloseMenu();
+            }}
+            sx={{ color: theme.palette.warning.main }}
+          >
+            <ReportIcon fontSize="small" sx={{ mr: 1 }} />
+            {t('socialFeed.reportPost')}
           </MenuItem>
         )}
       </Menu>

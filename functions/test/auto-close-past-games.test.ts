@@ -25,14 +25,27 @@ jest.mock("firebase-admin", () => ({
   firestore: jest.fn(),
 }));
 
+const mockDb = {
+  runTransaction: jest.fn(),
+};
+
+jest.mock("../src/_db", () => ({
+  db: () => mockDb,
+}));
+
 import {
   PAST_GAME_GRACE_DAYS,
+  cancelPastGameIfStillActive,
   decidePastGameClosure,
   getPastGameCutoff,
   summarizeAutoCloseEvidence,
 } from "../src/games/auto-close-past-games";
 
 describe("auto-close past games helpers", () => {
+  beforeEach(() => {
+    mockDb.runTransaction.mockReset();
+  });
+
   it("calcula cutoff usando a tolerância configurada", () => {
     const now = new Date("2026-06-21T12:00:00.000Z");
     const cutoff = getPastGameCutoff(now);
@@ -85,5 +98,44 @@ describe("auto-close past games helpers", () => {
       reviewRequired: false,
       reason: "NO_EVIDENCE_AUTO_CANCELLED",
     });
+  });
+
+  it("cancela em transação quando o jogo ainda está ativo", async () => {
+    const gameRef = {path: "games/game-live"} as FirebaseFirestore.DocumentReference;
+    const update = {status: "CANCELLED"};
+    const tx = {
+      get: jest.fn().mockResolvedValue({
+        exists: true,
+        data: () => ({status: "LIVE"}),
+      }),
+      update: jest.fn(),
+    };
+    mockDb.runTransaction.mockImplementationOnce(
+      async (fn: (txArg: typeof tx) => Promise<boolean>) => fn(tx)
+    );
+
+    await expect(cancelPastGameIfStillActive(gameRef, update))
+      .resolves.toBe(true);
+    expect(tx.get).toHaveBeenCalledWith(gameRef);
+    expect(tx.update).toHaveBeenCalledWith(gameRef, update);
+  });
+
+  it("nao sobrescreve jogo que virou FINISHED antes do commit", async () => {
+    const gameRef = {path: "games/game-finished"} as FirebaseFirestore.DocumentReference;
+    const tx = {
+      get: jest.fn().mockResolvedValue({
+        exists: true,
+        data: () => ({status: "FINISHED"}),
+      }),
+      update: jest.fn(),
+    };
+    mockDb.runTransaction.mockImplementationOnce(
+      async (fn: (txArg: typeof tx) => Promise<boolean>) => fn(tx)
+    );
+
+    await expect(cancelPastGameIfStillActive(gameRef, {status: "CANCELLED"}))
+      .resolves.toBe(false);
+    expect(tx.get).toHaveBeenCalledWith(gameRef);
+    expect(tx.update).not.toHaveBeenCalled();
   });
 });

@@ -131,6 +131,17 @@ describe("games/{gameId}/chat", () => {
     );
   });
 
+  it("rejeita campo extra arbitrário na criação", async () => {
+    await assertFails(
+      asPlayerA(testEnv).doc(`games/${GAME_ID_CONFIRMED}/chat/msg-extra-field`).set({
+        ...baseMessage,
+        sender_id: UID_PLAYER_A,
+        created_at: serverTimestamp(),
+        injected_blob: "x".repeat(1024),
+      })
+    );
+  });
+
   it("dono do jogo pode enviar mensagem mesmo sem confirmação", async () => {
     await assertSucceeds(
       asPlayerB(testEnv).doc(`games/${GAME_ID_CONFIRMED}/chat/msg-owner`).set({

@@ -36,6 +36,8 @@ export interface Player {
   reputationRespectAvg: number;
   reputationCommitmentAvg: number;
   reputationReviewsCount: number;
+  followersCount: number;
+  followingCount: number;
   lookingForGameToday?: boolean;
   lookingForGameTodayUntil?: Date | { toDate: () => Date };
   createdAt?: Date;
@@ -168,6 +170,8 @@ export const usePlayers = (groupId?: string) => {
               reputationRespectAvg: (data.reputationRespectAvg as number) ?? (raw.reputation_respect_avg as number) ?? 0,
               reputationCommitmentAvg: (data.reputationCommitmentAvg as number) ?? (raw.reputation_commitment_avg as number) ?? 0,
               reputationReviewsCount: (data.reputationReviewsCount as number) ?? (raw.reputation_reviews_count as number) ?? 0,
+              followersCount: (data.followersCount as number) ?? (raw.followers_count as number) ?? 0,
+              followingCount: (data.followingCount as number) ?? (raw.following_count as number) ?? 0,
               lookingForGameToday: data.lookingForGameToday === true,
               lookingForGameTodayUntil: (data.lookingForGameTodayUntil as Date | { toDate: () => Date } | undefined),
               createdAt: raw.created_at?.toDate?.() || (data.createdAt as { toDate?: () => Date })?.toDate?.(),
@@ -257,6 +261,8 @@ export const usePlayerDetail = (userId?: string) => {
               reputationRespectAvg: (data.reputationRespectAvg as number) ?? (raw.reputation_respect_avg as number) ?? 0,
               reputationCommitmentAvg: (data.reputationCommitmentAvg as number) ?? (raw.reputation_commitment_avg as number) ?? 0,
               reputationReviewsCount: (data.reputationReviewsCount as number) ?? (raw.reputation_reviews_count as number) ?? 0,
+              followersCount: (data.followersCount as number) ?? (raw.followers_count as number) ?? 0,
+              followingCount: (data.followingCount as number) ?? (raw.following_count as number) ?? 0,
               lookingForGameToday: data.lookingForGameToday === true,
               lookingForGameTodayUntil: (data.lookingForGameTodayUntil as Date | { toDate: () => Date } | undefined),
               createdAt: raw.created_at?.toDate?.() || (data.createdAt as Date | undefined),

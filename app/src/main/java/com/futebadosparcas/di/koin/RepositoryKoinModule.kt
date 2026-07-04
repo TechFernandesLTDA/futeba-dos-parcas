@@ -146,6 +146,16 @@ val repositoryKoinModule = module {
         com.futebadosparcas.data.repository.GameChatRepository(get(), get())
     }
 
+    // Issue #3234: Comentários livres por jogo (épico #3240)
+    single<com.futebadosparcas.data.repository.GameCommentsRepository> {
+        com.futebadosparcas.data.repository.GameCommentsRepository(get(), get())
+    }
+
+    // Issue #3235: follow/follower social graph (épico #3240)
+    single<com.futebadosparcas.data.repository.FollowRepository> {
+        com.futebadosparcas.data.repository.FollowRepository(get(), get(), get())
+    }
+
     single<com.futebadosparcas.platform.geocoding.GeocoderService> {
         com.futebadosparcas.platform.geocoding.GeocoderService(androidContext())
     }
@@ -191,6 +201,24 @@ val repositoryKoinModule = module {
     }
 
     single<GroupWallRepository> {
-        GroupWallRepository(get(), get(), get())
+        GroupWallRepository(get(), get(), get(), androidContext())
+    }
+
+    single<com.futebadosparcas.data.repository.SocialFeedRepository> {
+        com.futebadosparcas.data.repository.SocialFeedRepository(get(), get(), get(), get())
+    }
+
+    single<com.futebadosparcas.data.repository.NearbyPlayersRepository> {
+        com.futebadosparcas.data.repository.NearbyPlayersRepository(get(), get(), get())
+    }
+
+    // Issue #3231: mensagens diretas 1:1 entre jogadores
+    single<com.futebadosparcas.data.repository.DirectMessagesRepository> {
+        com.futebadosparcas.data.repository.DirectMessagesRepository(get(), get(), get())
+    }
+
+    // Issue #3238: vídeos curtos anexados ao jogo (épico #3240)
+    single<com.futebadosparcas.data.repository.GameVideosRepository> {
+        com.futebadosparcas.data.repository.GameVideosRepository(get(), get(), get())
     }
 }

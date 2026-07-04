@@ -703,4 +703,161 @@ Enforced em rules (`timestamp.value(game.date_time + 7d) > request.time` no `all
 
 ---
 
+## 2026-07-04 — Reações sociais unificadas: mapa de emoji para UIDs, 1 reação ativa por usuário (#3233/#3240)
+
+**Contexto:** O mural (#3232) já reserva `reactions`, e o épico social #3240
+define #3233 como fundação para posts, fotos, highlights e futuramente MVP
+(#3239). Era necessário fixar um modelo simples antes de criar componentes
+web/Android e rules.
+
+**Decisão:** Usar campo embutido `reactions: { emoji: [uid, ...] }` no documento
+alvo, com lista curada de emojis (`🔥`, `😂`, `👏`, `😡`, `💀`, `🤡`, `👑`, `⚽`)
+e no máximo **1 reação ativa por usuário por conteúdo**. A troca de reação
+remove o UID de todos os emojis permitidos e adiciona ao emoji novo usando
+operações atômicas `arrayRemove`/`arrayUnion`.
+
+**Justificativa:** O modelo reaproveita o campo já reservado em `wall_posts`,
+evita subcoleções e reads extras no MVP, e é suficiente para interações leves.
+`arrayUnion`/`arrayRemove` reduz race condition em relação a read-modify-write.
+Se conteúdos passarem de ~100 reações com frequência, migrar para subcoleção
+`reactions/{uid}` com agregados por emoji.
+
+**Consequências:** Rules devem permitir um ramo de update que altera somente
+`reactions`, separado de texto/pin/soft-delete. UI deve mostrar top 3 emojis +
+total e destacar a reação do usuário. MVP/Bola Murcha consome esta base em
+#3239, não nesta issue.
+
+**Relacionado:** specs/feat-2026-07-04-unified-reactions.md, #3233, #3239,
+#3240.
+
+---
+
+## 2026-07-04 — Comentários livres em jogos: subcoleção persistente separada de recados (#3234/#3240)
+
+**Contexto:** O jogo já possui chat em tempo real (`games/{gameId}/chat`) e
+recados pós-jogo 1-por-usuário (`post_game_messages`), mas nenhum deles serve
+como thread persistente de comentários. A issue #3234 pede uma base reutilizável
+para conversas sobre jogos e, depois, resultado MVP/Bola Murcha (#3239).
+
+**Decisão:** Criar `games/{gameId}/comments` como subcoleção própria, com
+campos snake_case, denormalização de autor, `parent_id` opcional para 1 nível de
+resposta, soft-delete e hard-delete bloqueado. `post_game_messages` permanece
+inalterado como recado destacado; não haverá migração nesta entrega.
+
+**Justificativa:** Separar os conceitos evita quebrar UX existente: chat segue
+efêmero/coordenação, recado segue destacado por usuário, comentários viram
+memória social do jogo. A topologia sob `games/{gameId}` permite copiar o gate
+de acesso do chat e mantém rules localizadas.
+
+**Consequências:** Rules precisam de ramos separados para criar, editar texto e
+soft-delete. UI deve filtrar deletados e tratar loading/error/empty/success.
+Comentários em mural e resultado de votação consomem esta base em issues
+posteriores.
+
+**Relacionado:** specs/feat-2026-07-04-game-comments-thread.md, #3234, #3239,
+#3240.
+
+---
+
+## 2026-07-04 — Seguir jogadores via callable transacional, não batch client-side (#3235/#3240)
+
+**Contexto:** O épico social #3240 precisa de um grafo de relações para
+alimentar o feed futuro (#3236). A issue #3235 propôs `following`/`followers`
+espelhados e contadores em `users`, mas deixou em aberto se a escrita seria por
+batch client-side ou Cloud Function.
+
+**Decisão:** Usar callable `toggleFollowUser` com Admin SDK e transaction para
+criar/remover `users/{uid}/following/{targetUid}`,
+`users/{targetUid}/followers/{uid}` e ajustar `following_count` /
+`followers_count`. Firestore rules bloqueiam writes client-side nessas
+subcoleções; clientes apenas leem e chamam a function.
+
+**Justificativa:** Contadores incrementados pelo cliente são frágeis em retries
+e exigiriam rules permitindo que um usuário altere contador de outro. A
+transaction server-side torna follow/unfollow idempotente e estreita a
+superfície de segurança.
+
+**Consequências:** Web/Android precisam chamar a function para mutação. Rules
+devem cobrir leitura autenticada e writes negados. #3236 pode consultar
+`following` como fonte de quem o usuário segue.
+
+**Relacionado:** specs/feat-2026-07-04-follow-system.md, #3235, #3236, #3240.
+
+---
+
+## 2026-07-04 — Feed social usa agregação client-side de murais, sem coleção global (#3236/#3240)
+
+**Contexto:** O mural por grupo (`groups/{groupId}/wall_posts`) já cobre UGC,
+mídia, pin, soft-delete e reações. A issue #3236 pede uma Home social agregada,
+mas criar uma coleção raiz `posts` abriria superfície nova de moderação, rules,
+fan-out e produto.
+
+**Decisão:** Entregar primeiro a Opção A: feed social client-side que consulta
+`collectionGroup('wall_posts')` com `where('group_id', 'in', chunkDeAte10)` e
+`orderBy('created_at', 'desc')`, mescla os chunks no cliente e reusa
+`WallPostCard`. Posts globais fora de grupo ficam fora desta issue.
+
+**Justificativa:** A opção reaproveita infraestrutura já testada do mural, limita
+exposição a grupos onde o usuário é membro e evita desenhar moderação pública
+antes de existir necessidade de produto.
+
+**Consequências:** É necessário índice de collection group para `wall_posts`
+por `group_id` + `created_at desc`, rules específicas para collection group e
+paginação inicialmente limitada por chunk/fonte, não por cursor global perfeito.
+
+**Relacionado:** specs/feat-2026-07-04-social-feed.md, #3236, #3235, #3240.
+
+---
+
+## 2026-07-04 — Jogadores próximos só via callable com opt-in e distância aproximada (#3237/#3240)
+
+**Contexto:** A issue #3237 pede descoberta de jogadores por proximidade, mas
+localização cria risco real de LGPD e stalking se coordenadas de usuários
+ficarem consultáveis diretamente em `users`.
+
+**Decisão:** Usar opt-in explícito em `user_locations/{uid}` com
+`location_sharing_enabled`, `location_consent_at`, `location_updated_at`,
+`geohash`, `lat` e `lng`, e bloquear leitura direta de coordenadas por
+terceiros nas rules. Embora a issue sugerisse campos em `users`, esse doc ainda
+e legivel para perfis `is_searchable` e Firestore Rules nao fazem mascara por
+campo; separar em `user_locations` evita o vazamento. A descoberta será feita exclusivamente pela callable
+`discoverNearbyPlayers`, protegida por auth, App Check e rate-limit, retornando
+somente perfil público mínimo e distância aproximada/faixa.
+
+**Justificativa:** O cliente precisa escrever a própria localização para ativar
+a descoberta, mas não deve ter permissão de consultar localização exata de
+outros jogadores. Centralizar a query no server permite validar raio, truncar a
+exposição, filtrar usuários inativos/deletados, aplicar limite de custo e
+registrar logs sem PII.
+
+**Consequências:** O release da feature depende de atualização da política de
+privacidade, strings de consentimento e testes de rules provando que coords de
+terceiros não vazam. Não haverá tracking em background; apenas localização em
+foreground no opt-in/refresh manual.
+
+**Relacionado:** specs/feat-2026-07-04-nearby-players.md, #3237, #3235, #3240.
+
+---
+
+## 2026-07-04 — Vídeos curtos usam ffmpeg estático sem ffprobe-static (#3238/#3240)
+
+**Contexto:** Videos anexados a jogos trazem risco de custo de Storage/egress e
+risco operacional em Cloud Functions por depender de ffmpeg/ffprobe para
+validar MIME/duracao real e gerar thumbnail. A issue #3238 marca esse spike
+como pre-requisito antes de codar UI.
+
+**Decisão:** Aprovar a spec usando `@ffmpeg-installer/ffmpeg` como binário
+determinístico para Functions v2 Node 22, sem `ffprobe-static` (descartado pelo
+tamanho). A duração real será extraída do stderr do próprio ffmpeg, e a função
+de thumbnail ficará separada em `functions/src/storage/generate-video-thumbnails.ts`
+com memória/timeout explícitos.
+
+**Justificativa:** Depender do ffmpeg presente no runtime seria frágil; empacotar
+ffprobe-static adicionaria ~351MB. O pacote ffmpeg Linux x64 fica na ordem de
+~68MB, aceitável para a função isolada, e evita uma dependência pesada extra.
+
+**Relacionado:** specs/feat-2026-07-04-game-videos.md, #3238, #3240.
+
+---
+
 <!-- Adicione novas decisões acima desta linha -->

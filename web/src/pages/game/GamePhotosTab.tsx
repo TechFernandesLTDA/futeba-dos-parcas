@@ -40,6 +40,7 @@ import { storage } from '../../services/firebaseStorage';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { EmptyState } from '../../components/common/EmptyState';
+import { ReactionBar } from '../../components/reactions/ReactionBar';
 import { getFirestoreErrorMessage } from '../../utils/firebaseErrors';
 import { createLogger } from '../../utils/logger';
 
@@ -57,6 +58,7 @@ interface GamePhoto {
   uploadedByName: string;
   uploadedByPhoto?: string;
   caption?: string;
+  reactions?: Record<string, string[]>;
   createdAt?: Date;
 }
 
@@ -97,6 +99,9 @@ export const GamePhotosTab: React.FC<GamePhotosTabProps> = ({
 
   showErrorRef.current = showError;
   const canUpload = isFinished && (isConfirmedPlayer || canManage);
+  const selectedPhotoLive = selectedPhoto
+    ? photos.find((photo) => photo.id === selectedPhoto.id) ?? selectedPhoto
+    : null;
 
   useEffect(() => {
     setLoading(true);
@@ -121,6 +126,7 @@ export const GamePhotosTab: React.FC<GamePhotosTabProps> = ({
             uploadedByName: raw.uploaded_by_name || t('common.player'),
             uploadedByPhoto: raw.uploaded_by_photo || undefined,
             caption: raw.caption || undefined,
+            reactions: raw.reactions || {},
             createdAt: raw.created_at?.toDate?.(),
           };
         }));
@@ -181,6 +187,7 @@ export const GamePhotosTab: React.FC<GamePhotosTabProps> = ({
         content_type: file.type,
         size: file.size,
         caption: cleanCaption,
+        reactions: {},
         status: 'ACTIVE',
         created_at: serverTimestamp(),
         updated_at: serverTimestamp(),
@@ -279,58 +286,64 @@ export const GamePhotosTab: React.FC<GamePhotosTabProps> = ({
           <Grid container spacing={1.5}>
             {photos.map((photo) => (
               <Grid xs={6} sm={4} md={3} key={photo.id}>
-                <Box
-                  sx={{
-                    position: 'relative',
-                    pt: '100%',
-                    borderRadius: 2,
-                    overflow: 'hidden',
-                    cursor: 'pointer',
-                    bgcolor: 'action.hover',
-                    '&:hover .photo-delete': { opacity: 1 },
-                  }}
-                  onClick={() => setSelectedPhoto(photo)}
-                >
+                <Stack spacing={0.75}>
                   <Box
-                    component="img"
-                    src={photo.url}
-                    alt={t('gamePhotos.photoAlt', { name: photo.uploadedByName })}
-                    loading="lazy"
-                    sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+                    sx={{
+                      position: 'relative',
+                      pt: '100%',
+                      borderRadius: 2,
+                      overflow: 'hidden',
+                      cursor: 'pointer',
+                      bgcolor: 'action.hover',
+                      '&:hover .photo-delete': { opacity: 1 },
+                    }}
+                    onClick={() => setSelectedPhoto(photo)}
+                  >
+                    <Box
+                      component="img"
+                      src={photo.url}
+                      alt={t('gamePhotos.photoAlt', { name: photo.uploadedByName })}
+                      loading="lazy"
+                      sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                    {canDelete(photo) && (
+                      <IconButton
+                        className="photo-delete"
+                        size="small"
+                        aria-label={t('gamePhotos.deletePhoto')}
+                        disabled={deletingId === photo.id}
+                        sx={{
+                          position: 'absolute',
+                          top: 6,
+                          right: 6,
+                          bgcolor: alpha(theme.palette.common.black, 0.58),
+                          color: theme.palette.common.white,
+                          opacity: { xs: 1, sm: 0 },
+                          transition: (transitionTheme) => transitionTheme.transitions.create('opacity', { duration: transitionTheme.transitions.duration.shorter }),
+                          '&:hover': { bgcolor: theme.palette.error.main },
+                        }}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          handleDelete(photo);
+                        }}
+                      >
+                        {deletingId === photo.id ? <CircularProgress size={16} color="inherit" /> : <DeleteIcon fontSize="small" />}
+                      </IconButton>
+                    )}
+                  </Box>
+                  <ReactionBar
+                    targetPath={`game_photos/${photo.id}`}
+                    reactions={photo.reactions}
                   />
-                  {canDelete(photo) && (
-                    <IconButton
-                      className="photo-delete"
-                      size="small"
-                      aria-label={t('gamePhotos.deletePhoto')}
-                      disabled={deletingId === photo.id}
-                      sx={{
-                        position: 'absolute',
-                        top: 6,
-                        right: 6,
-                        bgcolor: alpha(theme.palette.common.black, 0.58),
-                        color: theme.palette.common.white,
-                        opacity: { xs: 1, sm: 0 },
-                        transition: (transitionTheme) => transitionTheme.transitions.create('opacity', { duration: transitionTheme.transitions.duration.shorter }),
-                        '&:hover': { bgcolor: theme.palette.error.main },
-                      }}
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        handleDelete(photo);
-                      }}
-                    >
-                      {deletingId === photo.id ? <CircularProgress size={16} color="inherit" /> : <DeleteIcon fontSize="small" />}
-                    </IconButton>
-                  )}
-                </Box>
+                </Stack>
               </Grid>
             ))}
           </Grid>
         )}
       </CardContent>
 
-      <Dialog open={!!selectedPhoto} onClose={() => setSelectedPhoto(null)} maxWidth="md" fullWidth>
-        {selectedPhoto && (
+      <Dialog open={!!selectedPhotoLive} onClose={() => setSelectedPhoto(null)} maxWidth="md" fullWidth>
+        {selectedPhotoLive && (
           <>
             <Box sx={{ position: 'relative', bgcolor: theme.palette.common.black, display: 'flex', justifyContent: 'center' }}>
               <IconButton
@@ -340,20 +353,26 @@ export const GamePhotosTab: React.FC<GamePhotosTabProps> = ({
               >
                 <CloseIcon />
               </IconButton>
-              <Box component="img" src={selectedPhoto.url} alt={t('gamePhotos.photoAlt', { name: selectedPhoto.uploadedByName })} sx={{ maxWidth: '100%', maxHeight: '78vh', objectFit: 'contain' }} />
+              <Box component="img" src={selectedPhotoLive.url} alt={t('gamePhotos.photoAlt', { name: selectedPhotoLive.uploadedByName })} sx={{ maxWidth: '100%', maxHeight: '78vh', objectFit: 'contain' }} />
             </Box>
             <Stack direction="row" spacing={1.5} alignItems="center" sx={{ p: 2 }}>
-              <Avatar src={selectedPhoto.uploadedByPhoto}>{selectedPhoto.uploadedByName.charAt(0).toUpperCase()}</Avatar>
+              <Avatar src={selectedPhotoLive.uploadedByPhoto}>{selectedPhotoLive.uploadedByName.charAt(0).toUpperCase()}</Avatar>
               <Box sx={{ minWidth: 0, flex: 1 }}>
-                <Typography variant="body2" fontWeight={700}>{selectedPhoto.uploadedByName}</Typography>
-                {selectedPhoto.caption && <Typography variant="body2" color="text.secondary">{selectedPhoto.caption}</Typography>}
+                <Typography variant="body2" fontWeight={700}>{selectedPhotoLive.uploadedByName}</Typography>
+                {selectedPhotoLive.caption && <Typography variant="body2" color="text.secondary">{selectedPhotoLive.caption}</Typography>}
+                <Box sx={{ mt: 1 }}>
+                  <ReactionBar
+                    targetPath={`game_photos/${selectedPhotoLive.id}`}
+                    reactions={selectedPhotoLive.reactions}
+                  />
+                </Box>
               </Box>
-              {canDelete(selectedPhoto) && (
+              {canDelete(selectedPhotoLive) && (
                 <Button
                   color="error"
-                  startIcon={deletingId === selectedPhoto.id ? <CircularProgress size={16} color="inherit" /> : <DeleteIcon />}
-                  disabled={deletingId === selectedPhoto.id}
-                  onClick={() => handleDelete(selectedPhoto)}
+                  startIcon={deletingId === selectedPhotoLive.id ? <CircularProgress size={16} color="inherit" /> : <DeleteIcon />}
+                  disabled={deletingId === selectedPhotoLive.id}
+                  onClick={() => handleDelete(selectedPhotoLive)}
                 >
                   {t('common.delete')}
                 </Button>

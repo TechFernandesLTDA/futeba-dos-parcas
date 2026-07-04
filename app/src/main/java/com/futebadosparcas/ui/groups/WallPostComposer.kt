@@ -1,6 +1,8 @@
 package com.futebadosparcas.ui.groups
 
+import android.content.Context
 import android.net.Uri
+import android.provider.OpenableColumns
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
@@ -30,25 +32,61 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.futebadosparcas.R
 
 private const val MAX_TEXT_LENGTH = 500
+private const val MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024L
+
+private fun getUriSizeBytes(context: Context, uri: Uri): Long {
+    return try {
+        val descriptorSize = context.contentResolver
+            .openFileDescriptor(uri, "r")
+            ?.use { it.statSize } ?: -1L
+        if (descriptorSize >= 0L) {
+            return descriptorSize
+        }
+
+        context.contentResolver
+            .query(uri, arrayOf(OpenableColumns.SIZE), null, null, null)
+            ?.use { cursor ->
+                val sizeIndex = cursor.getColumnIndex(OpenableColumns.SIZE)
+                if (sizeIndex >= 0 && cursor.moveToFirst() && !cursor.isNull(sizeIndex)) {
+                    cursor.getLong(sizeIndex)
+                } else {
+                    Long.MAX_VALUE
+                }
+            } ?: Long.MAX_VALUE
+    } catch (_: Exception) {
+        Long.MAX_VALUE
+    }
+}
 
 @Composable
 fun WallPostComposer(
     sending: Boolean,
     initialText: String = "",
     onSubmit: (String, Uri?) -> Unit,
+    onImageError: ((String) -> Unit)? = null,
     onCancel: (() -> Unit)? = null
 ) {
+    val context = LocalContext.current
+    val imageTooLargeMessage = stringResource(R.string.group_wall_image_too_large)
     var text by remember { mutableStateOf(initialText) }
     var imageUri by remember { mutableStateOf<Uri?>(null) }
     val imagePicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri ->
+        if (uri == null) {
+            return@rememberLauncherForActivityResult
+        }
+        if (getUriSizeBytes(context, uri) > MAX_IMAGE_SIZE_BYTES) {
+            onImageError?.invoke(imageTooLargeMessage)
+            return@rememberLauncherForActivityResult
+        }
         imageUri = uri
     }
 

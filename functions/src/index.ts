@@ -512,6 +512,7 @@ export const onGameStatusUpdate = onDocumentUpdated(
         try {
           const validationResult =
             buildGameValidationFromFirestore({
+              game: gameData,
               confirmations: confirmationsSnap.docs
                 .map((doc) => doc.data()),
               eventCount: gameEventsSnap.size,
@@ -2319,6 +2320,7 @@ export {maintainStreaksData} from "./maintenance/compact-streaks";
 export * from "./monitoring/collect-metrics";
 export {collectCallableLatencyMetrics} from "./monitoring/collect-latency-metrics";
 export * from "./storage/generate-thumbnails";
+export * from "./storage/generate-video-thumbnails";
 
 // SPEC: feat-2026-05-08-consolidate-shareable-invites
 // Migra groups.invite_code (legacy) -> invites/ (canonical)
@@ -2533,3 +2535,10 @@ export {
   linkLocationToVenueAccount,
   unlinkLocationFromVenueAccount,
 } from "./admin/venue-accounts";
+
+// ==========================================
+// SOCIAL GRAPH (#3235 / #3240)
+// ==========================================
+export {toggleFollowUser} from "./social/follow";
+export {discoverNearbyPlayers} from "./social/nearby-players";
+export {createDirectChat} from "./social/direct-messages";

@@ -36,6 +36,8 @@ import com.futebadosparcas.ui.locations.LocationDetailViewModel
 import com.futebadosparcas.ui.locations.LocationsMapViewModel
 import com.futebadosparcas.ui.locations.ManageLocationsViewModel
 import com.futebadosparcas.ui.map.PublicGamesMapViewModel
+import com.futebadosparcas.ui.messages.ConversationViewModel
+import com.futebadosparcas.ui.messages.DirectMessagesViewModel
 import com.futebadosparcas.ui.notifications.NotificationsViewModel
 import com.futebadosparcas.ui.payments.PaymentViewModel
 import com.futebadosparcas.ui.player.PlayerCardViewModel
@@ -146,6 +148,18 @@ val viewModelKoinModule = module {
     }
 
     viewModel {
+        DirectMessagesViewModel(
+            repository = get()
+        )
+    }
+
+    viewModel {
+        ConversationViewModel(
+            repository = get()
+        )
+    }
+
+    viewModel {
         GameDetailViewModel(
             gameRepository = get(),
             authRepository = get<AndroidAuthRepository>(),
@@ -249,6 +263,18 @@ val viewModelKoinModule = module {
         GroupWallViewModel(
             repository = get(),
             auth = get()
+        )
+    }
+
+    viewModel {
+        com.futebadosparcas.ui.feed.SocialFeedViewModel(
+            repository = get()
+        )
+    }
+
+    viewModel {
+        com.futebadosparcas.ui.players.NearbyPlayersViewModel(
+            repository = get()
         )
     }
 
@@ -391,7 +417,8 @@ val viewModelKoinModule = module {
     viewModel {
         VoteResultViewModel(
             gameRepository = get(),
-            firestore = get()
+            firestore = get(),
+            auth = get()
         )
     }
 
@@ -436,7 +463,8 @@ val viewModelKoinModule = module {
     viewModel {
         PlayerCardViewModel(
             userRepository = get(),
-            statisticsRepository = get()
+            statisticsRepository = get(),
+            followRepository = get()
         )
     }
 
@@ -490,6 +518,21 @@ val viewModelKoinModule = module {
         com.futebadosparcas.ui.games.GameChatViewModel(
             gameChatRepository = get(),
             auth = get()
+        )
+    }
+
+    // Issue #3234: Comentários livres por jogo (épico #3240)
+    viewModel {
+        com.futebadosparcas.ui.games.GameCommentsViewModel(
+            gameCommentsRepository = get(),
+            auth = get()
+        )
+    }
+
+    // Issue #3238: vídeos curtos anexados ao jogo (épico #3240)
+    viewModel {
+        com.futebadosparcas.ui.games.GameVideosViewModel(
+            repository = get()
         )
     }
 }

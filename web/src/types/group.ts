@@ -4,12 +4,15 @@ export type GroupRole = 'OWNER' | 'ADMIN' | 'MEMBER';
 
 export type GroupType = 'PRIVATE' | 'PUBLIC';
 
+export type GroupMemberStatus = 'ACTIVE' | 'INACTIVE' | 'REMOVED' | 'BLOCKED' | 'BANNED';
+
 export interface GroupMember {
   userId: string;
   userName: string;
   userPhotoUrl?: string;
   favoriteTeam?: string;
   role: GroupRole;
+  status?: GroupMemberStatus;
   joinedAt: Date;
   totalGames: number;
   level: number;

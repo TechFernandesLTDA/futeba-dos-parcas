@@ -26,6 +26,7 @@ sealed class GroupWallActionState {
     object Sending : GroupWallActionState()
     object Editing : GroupWallActionState()
     object Pinning : GroupWallActionState()
+    object Reacting : GroupWallActionState()
     object Deleting : GroupWallActionState()
     data class Success(val message: String) : GroupWallActionState()
     data class Error(val message: String) : GroupWallActionState()
@@ -96,6 +97,21 @@ class GroupWallViewModel(
         }
     }
 
+    fun toggleReaction(
+        groupId: String,
+        post: GroupWallPost,
+        emoji: String
+    ) {
+        viewModelScope.launch {
+            _actionState.value = GroupWallActionState.Reacting
+            val result = repository.toggleReaction(groupId, post.id, post.reactions, emoji)
+            _actionState.value = result.fold(
+                onSuccess = { GroupWallActionState.Idle },
+                onFailure = { GroupWallActionState.Error(it.message ?: "Erro ao reagir") }
+            )
+        }
+    }
+
     fun deletePost(groupId: String, post: GroupWallPost) {
         viewModelScope.launch {
             _actionState.value = GroupWallActionState.Deleting
@@ -110,6 +126,8 @@ class GroupWallViewModel(
     fun resetActionState() {
         _actionState.value = GroupWallActionState.Idle
     }
+
+    fun currentUserId(): String? = auth.currentUser?.uid
 
     fun isCurrentUser(userId: String): Boolean = auth.currentUser?.uid == userId
 

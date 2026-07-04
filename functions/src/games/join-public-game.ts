@@ -91,6 +91,31 @@ function publicPhotoFromToken(token: unknown): string | null {
 }
 
 /**
+ * Resolve quais status consomem capacidade para entrada publica.
+ *
+ * Jogos publicos recorrentes podem nascer com convites PENDING para todo o
+ * grupo. Nessa configuracao, PENDING e convite, nao ocupacao confirmada.
+ *
+ * @param {Record<string, unknown>} game Dados do jogo.
+ * @return {string[]} Status que contam contra max_players.
+ */
+export function getPublicCapacityStatuses(
+  game: Record<string, unknown>
+): string[] {
+  const visibility = game.visibility;
+  const isLegacyPublic = game.is_public === true && !visibility;
+  const isPublic =
+    visibility === "PUBLIC_OPEN" || isLegacyPublic;
+  const recurrence = game.recurrence;
+  const isRecurring =
+    typeof recurrence === "string" && recurrence !== "none";
+
+  return isPublic && isRecurring ?
+    ["CONFIRMED"] :
+    ["CONFIRMED", "PENDING"];
+}
+
+/**
  * Entrada canônica em jogos públicos. Clientes não devem mutar games.players
  * diretamente; a confirmação é a fonte para presença, pagamento e ranking.
  */
@@ -155,10 +180,13 @@ export const joinPublicGame = onCall(
           }
         }
 
-        const confirmedQuery = db()
+        const capacityStatuses = getPublicCapacityStatuses(game);
+        const confirmedCollection = db()
           .collection("confirmations")
-          .where("game_id", "==", payload.gameId)
-          .where("status", "in", ["CONFIRMED", "PENDING"]);
+          .where("game_id", "==", payload.gameId);
+        const confirmedQuery = capacityStatuses.length === 1 ?
+          confirmedCollection.where("status", "==", capacityStatuses[0]) :
+          confirmedCollection.where("status", "in", capacityStatuses);
         const confirmedSnap = await tx.get(confirmedQuery);
         const maxPlayers =
           typeof game.max_players === "number" ? game.max_players : 0;
@@ -168,6 +196,12 @@ export const joinPublicGame = onCall(
             "Este jogo já está lotado."
           );
         }
+
+        const orderQuery = db()
+          .collection("confirmations")
+          .where("game_id", "==", payload.gameId)
+          .where("status", "in", ["CONFIRMED", "PENDING"]);
+        const orderSnap = await tx.get(orderQuery);
 
         const serverTs = FieldValue.serverTimestamp();
         tx.set(confirmationRef, {
@@ -181,7 +215,7 @@ export const joinPublicGame = onCall(
           payment_status: "PENDING",
           is_casual_player: payload.isCasualPlayer,
           is_guest: false,
-          confirmation_order: confirmedSnap.size + 1,
+          confirmation_order: orderSnap.size + 1,
           created_at: serverTs,
           confirmed_at: serverTs,
           updated_at: serverTs,

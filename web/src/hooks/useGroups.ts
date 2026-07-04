@@ -381,6 +381,7 @@ export function useCreateGroup() {
           user_name: displayName,
           user_photo_url: firebaseUser?.photoURL || user?.photoUrl || null,
           role: 'OWNER' as GroupRole,
+          status: 'ACTIVE',
           joined_at: serverTimestamp(),
           total_games: 0,
           level: user?.level || 1,
@@ -647,7 +648,10 @@ export function useIsGroupMember(groupId: string | null | undefined): { isMember
       // Subcoleção groups/{groupId}/members/{uid} é fonte canônica de membership.
       const memberRef = doc(db, 'groups', groupId, 'members', uid);
       const snap = await getDoc(memberRef);
-      return snap.exists();
+      if (snap.exists() && snap.data().status === 'ACTIVE') return true;
+
+      const groupSnap = await getDoc(doc(db, 'groups', groupId));
+      return groupSnap.exists() && groupSnap.data().owner_id === uid;
     },
     enabled: !!uid && !!groupId,
     staleTime: 60_000, // 1 min — membership não muda frequentemente

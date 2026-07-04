@@ -6,6 +6,7 @@ import {
   EmojiEvents,
   Person,
   Notifications as NotificationsIcon,
+  ChatBubble as MessagesIcon,
 } from '@mui/icons-material';
 
 export interface NavItem {
@@ -80,6 +81,13 @@ export const NAV_ITEMS: NavItem[] = [
     labelKey: 'nav.notifications',
     path: '/notifications',
     matchPaths: ['/notifications'],
+    showInBottomNav: false,
+  },
+  {
+    icon: React.createElement(MessagesIcon),
+    labelKey: 'nav.messages',
+    path: '/messages',
+    matchPaths: ['/messages'],
     showInBottomNav: false,
   },
 ];

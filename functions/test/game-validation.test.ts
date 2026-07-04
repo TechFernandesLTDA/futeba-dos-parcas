@@ -4,6 +4,7 @@ import {
 } from "../src/game-validation/score";
 import {
   buildGameValidationFromFirestore,
+  didFinishTooEarly,
 } from "../src/game-validation/aggregate";
 import {
   calculatePresenceEvidence,
@@ -148,6 +149,50 @@ describe("game validation firestore aggregation", () => {
         "LOW_CONFIDENCE_PRESENCE",
       ]),
     );
+  });
+
+  test("cableia FINISH_TOO_EARLY a partir do documento do jogo", () => {
+    const result = buildGameValidationFromFirestore({
+      game: {
+        dateTime: new Date("2026-07-04T20:00:00.000Z"),
+        finished_at: new Date("2026-07-04T20:35:00.000Z"),
+        duration_minutes: 90,
+      },
+      confirmations: [
+        {checked_in: true, check_in_method: "qr", was_present: true},
+        {checked_in: true, check_in_method: "gps", was_present: true},
+      ],
+      eventCount: 1,
+      scoreEventConsistent: true,
+    });
+
+    expect(result.validation_reasons).toContain("FINISH_TOO_EARLY");
+  });
+});
+
+describe("game validation finish timing", () => {
+  test("detecta encerramento antes de metade da duracao explicita", () => {
+    expect(didFinishTooEarly({
+      dateTime: new Date("2026-07-04T20:00:00.000Z"),
+      finished_at: new Date("2026-07-04T20:40:00.000Z"),
+      duration_minutes: 90,
+    })).toBe(true);
+  });
+
+  test("nao marca quando encerramento passou de metade da duracao", () => {
+    expect(didFinishTooEarly({
+      dateTime: new Date("2026-07-04T20:00:00.000Z"),
+      finished_at: new Date("2026-07-04T21:00:00.000Z"),
+      duration_minutes: 90,
+    })).toBe(false);
+  });
+
+  test("usa end_time como fallback de duracao agendada", () => {
+    expect(didFinishTooEarly({
+      dateTime: new Date("2026-07-04T20:00:00.000Z"),
+      finished_at: new Date("2026-07-04T20:50:00.000Z"),
+      end_time: "22:00",
+    })).toBe(true);
   });
 });
 

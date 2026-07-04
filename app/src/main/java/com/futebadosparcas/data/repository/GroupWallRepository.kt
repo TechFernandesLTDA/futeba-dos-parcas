@@ -1,7 +1,10 @@
 package com.futebadosparcas.data.repository
 
+import android.content.Context
 import android.net.Uri
+import android.provider.OpenableColumns
 import com.futebadosparcas.data.model.GroupWallPost
+import com.futebadosparcas.ui.components.reactions.SocialReactionEmojis
 import com.futebadosparcas.util.AppLogger
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
@@ -27,7 +30,8 @@ import java.util.UUID
 class GroupWallRepository constructor(
     private val firestore: FirebaseFirestore,
     private val auth: FirebaseAuth,
-    private val storage: FirebaseStorage
+    private val storage: FirebaseStorage,
+    private val context: Context
 ) {
     private fun wallCollection(groupId: String) =
         firestore.collection("groups").document(groupId).collection("wall_posts")
@@ -184,6 +188,45 @@ class GroupWallRepository constructor(
     }
 
     /**
+     * Alterna uma reação no post, mantendo no máximo uma reação ativa por usuário.
+     */
+    suspend fun toggleReaction(
+        groupId: String,
+        postId: String,
+        reactions: Map<String, List<String>>?,
+        emoji: String
+    ): Result<Unit> {
+        return try {
+            val currentUser = auth.currentUser
+                ?: throw IllegalStateException("Usuário não autenticado")
+            require(SocialReactionEmojis.contains(emoji)) {
+                "Reação inválida"
+            }
+
+            val uid = currentUser.uid
+            val currentEmoji = SocialReactionEmojis.firstOrNull { reaction ->
+                reactions?.get(reaction)?.contains(uid) == true
+            }
+            val updates = mutableMapOf<String, Any>()
+
+            SocialReactionEmojis.forEach { reaction ->
+                if (currentEmoji == emoji || reaction != emoji) {
+                    updates["reactions.$reaction"] = FieldValue.arrayRemove(uid)
+                }
+            }
+            if (currentEmoji != emoji) {
+                updates["reactions.$emoji"] = FieldValue.arrayUnion(uid)
+            }
+
+            wallCollection(groupId).document(postId).update(updates).await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            AppLogger.e(TAG, "Erro ao alternar reação do post $postId no grupo $groupId", e)
+            Result.failure(e)
+        }
+    }
+
+    /**
      * Soft-delete (deleted_by + deleted_at via serverTimestamp).
      * Rules validam que só autor/owner/admin pode soft-deletar.
      */
@@ -222,6 +265,10 @@ class GroupWallRepository constructor(
 
     private suspend fun uploadWallMedia(groupId: String, uri: Uri): Pair<String, String> {
         val currentUser = auth.currentUser ?: throw IllegalStateException("Usuário não autenticado")
+        val fileSize = getFileSize(uri)
+        if (fileSize > MAX_IMAGE_SIZE_BYTES) {
+            throw IllegalArgumentException("Imagem muito grande. O limite é 10MB.")
+        }
         val extension = "jpg"
         val fileName = "${System.currentTimeMillis()}-${UUID.randomUUID()}.$extension"
         val path = "groups/$groupId/wall_media/__draft__/${currentUser.uid}/$fileName"
@@ -234,5 +281,30 @@ class GroupWallRepository constructor(
         ref.putFile(uri, metadata).await()
         val downloadUrl = ref.downloadUrl.await().toString()
         return downloadUrl to path
+    }
+
+    private fun getFileSize(uri: Uri): Long {
+        return try {
+            val descriptorSize = context.contentResolver
+                .openFileDescriptor(uri, "r")
+                ?.use { it.statSize } ?: -1L
+            if (descriptorSize >= 0L) {
+                return descriptorSize
+            }
+
+            context.contentResolver
+                .query(uri, arrayOf(OpenableColumns.SIZE), null, null, null)
+                ?.use { cursor ->
+                    val sizeIndex = cursor.getColumnIndex(OpenableColumns.SIZE)
+                    if (sizeIndex >= 0 && cursor.moveToFirst() && !cursor.isNull(sizeIndex)) {
+                        cursor.getLong(sizeIndex)
+                    } else {
+                        Long.MAX_VALUE
+                    }
+                } ?: Long.MAX_VALUE
+        } catch (e: Exception) {
+            AppLogger.w(TAG) { "Erro ao obter tamanho da imagem: ${e.message}" }
+            Long.MAX_VALUE
+        }
     }
 }

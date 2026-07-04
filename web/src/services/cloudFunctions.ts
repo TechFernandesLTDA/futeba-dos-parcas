@@ -218,6 +218,35 @@ export const deleteLocation = httpsCallable<
   { success: boolean; deletedCount: number }
 >(functions, 'deleteLocation');
 
+export const createDirectChat = httpsCallable<
+  { targetUid: string },
+  { chatId: string }
+>(functions, 'createDirectChat');
+
+export type NearbyDistanceBand = 'under_1km' | 'under_5km' | 'under_10km' | 'under_25km';
+
+export interface NearbyPlayer {
+  id: string;
+  displayName: string;
+  photoUrl: string | null;
+  nickname: string | null;
+  preferredPosition: string | null;
+  followersCount: number;
+  isFollowing: boolean;
+  distanceKmApprox: number;
+  distanceBand: NearbyDistanceBand;
+  socialContext: 'following' | 'none';
+}
+
+export interface DiscoverNearbyPlayersResponse {
+  players: NearbyPlayer[];
+}
+
+export const discoverNearbyPlayers = httpsCallable<
+  { lat: number; lng: number; radiusKm: 1 | 5 | 10 | 25; socialFilter?: 'all' | 'following' },
+  DiscoverNearbyPlayersResponse
+>(functions, 'discoverNearbyPlayers');
+
 export const setLocationPublicationStatus = httpsCallable<
   {
     locationId: string;
@@ -492,6 +521,11 @@ export const joinPublicGame = httpsCallable<
   { success: boolean; alreadyConfirmed: boolean; confirmationId: string }
 >(functions, 'joinPublicGame');
 
+export const toggleFollowUser = httpsCallable<
+  { targetUserId: string; follow?: boolean },
+  { success: boolean; following: boolean; changed: boolean }
+>(functions, 'toggleFollowUser');
+
 // Exclusão de conta — LGPD art. 18 (direito ao esquecimento)
 export const deleteAccount = httpsCallable<void, { success: boolean }>(functions, 'deleteAccount');
 
@@ -503,8 +537,22 @@ export const restoreDeletedGroup = httpsCallable(functions, 'restoreDeletedGroup
 
 // Check-in
 export const checkInToGame = httpsCallable<
-  { gameId: string; latitude?: number; longitude?: number; qr_token?: string },
-  { success: boolean; distanceMeters?: number | null; method?: 'gps' | 'qr' }
+  {
+    gameId: string;
+    lat?: number;
+    lng?: number;
+    accuracy?: number;
+    latitude?: number;
+    longitude?: number;
+    qrToken?: string;
+    qr_token?: string;
+  },
+  {
+    success: boolean;
+    distance_m?: number | null;
+    distanceMeters?: number | null;
+    method?: 'gps' | 'qr';
+  }
 >(functions, 'checkInToGame');
 
 export type MvpVoteCategory = 'MVP' | 'BEST_GOALKEEPER' | 'WORST';

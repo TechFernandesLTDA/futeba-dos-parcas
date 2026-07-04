@@ -24,6 +24,25 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ## Android
 
+### [1.35.0] - 2026-07-04
+
+#### Adicionado
+- Repositórios, ViewModels, telas Compose e rotas para DMs, follow, feed social, jogadores próximos, comentários e vídeos.
+- `SocialReactionBar` reutilizável e integrações em mural, jogo e votação.
+- Strings em `pt-BR`, `en` e `es` para as novas superfícies sociais.
+
+#### Mudado
+- `AppNavGraph`, módulos Koin, home e telas de jogo/perfil foram integrados ao épico social.
+- `GameChatRepository` passou a ordenar desc + reverse local para evitar congelamento após 50 mensagens.
+
+#### Corrigido
+- Mural Android acompanha o contrato de rules para pin/unpin e validação de mídia.
+
+#### Segurança
+- Fluxos Android dependem das novas rules/callables para DMs, follows, localização, vídeos e comentários.
+
+_Issues: #3231, #3233, #3234, #3235, #3236, #3237, #3238, #3239, #3247, #3248, #3249_
+
 ### [1.34.0] - 2026-07-04
 
 #### Adicionado
@@ -107,6 +126,27 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 - Bump de versão de manutenção após a mega audit wave de 2026-05-11, sem mudanças funcionais no Android nesta tag.
 
 ## Web
+
+### [1.48.0] - 2026-07-04
+
+#### Adicionado
+- Hooks e telas web para DMs, reações, comentários de jogo, follow, feed social, jogadores próximos e vídeos.
+- Regras e índices para chats, follows, comentários, vídeos, localização opt-in, feed e targets sociais de votação.
+- Specs aprovadas em `specs/feat-2026-07-04-*.md` para as features do épico social.
+
+#### Mudado
+- `GameDetailScreen`, `VoteResultScreen`, `ProfileScreen`, home/nav e telas de grupo foram integradas às novas superfícies sociais.
+- `useGameChat` passou a usar paginação desc + reverse local para histórico estável.
+
+#### Corrigido
+- Check-in web/QR, unpin do mural, soft-delete visível no mural, validação de imagem e tint dark mode.
+- Billing parcial deixa de ativar quadra antes da soma de pagamentos aprovados cobrir a mensalidade.
+- Auto-close não sobrescreve jogo finalizado e FINISH_TOO_EARLY passou a ser sinal acionável.
+
+#### Segurança
+- Firestore Rules reforçadas para chat, mural, reações, comentários, vídeos, DMs, follows, localização e votação social.
+
+_Issues: #3231, #3233, #3234, #3235, #3236, #3237, #3238, #3239, #3246, #3247, #3248, #3249, #3250, #3251, #3252, #3253, #3254_
 
 ### [1.47.0] - 2026-07-04
 
@@ -859,6 +899,27 @@ _Issues: #1465, #1479, #1421, #1420 · PRs: #1465, #1479, #1421, #1420, #1417_
 _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
+
+### [1.6.0] - 2026-07-04
+
+#### Adicionado
+- `functions/src/social/` com handlers sociais e cobertura unitária de follow.
+- `functions/src/storage/generate-video-thumbnails.ts` para vídeos de jogos.
+- Rules-tests para DMs, follows, comentários, vídeos, localização, votação social e mural.
+
+#### Mudado
+- `joinPublicGame` diferencia capacidade de jogos públicos recorrentes.
+- `auto-close-past-games` cancela por transação com status ainda ativo.
+- `game-validation/aggregate` passa a receber o documento do jogo para avaliar FINISH_TOO_EARLY.
+
+#### Corrigido
+- `location-management` recomputa soma aprovada por período antes de ativar assinatura.
+- `voting/check-in` aceita payloads web canônicos e legados.
+
+#### Segurança
+- Firestore/Storage Rules endurecidas para escrita social, mídia de jogo, localização opt-in e voting-result social.
+
+_Issues: #3231, #3233, #3234, #3235, #3236, #3237, #3238, #3248, #3250, #3251, #3252, #3253, #3254_
 
 ### [1.5.0] - 2026-07-03
 

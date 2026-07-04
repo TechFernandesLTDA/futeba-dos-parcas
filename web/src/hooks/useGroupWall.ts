@@ -28,6 +28,8 @@ const logger = createLogger('useGroupWall');
 
 const POST_PAGE_SIZE = 20;
 const MAX_TEXT_LENGTH = 500;
+const MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024;
+const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
 export interface WallPost {
   id: string;
@@ -52,7 +54,7 @@ export interface WallPost {
   commentsCount: number;
 }
 
-function mapPost(docSnap: QueryDocumentSnapshot<DocumentData>): WallPost {
+export function mapPost(docSnap: QueryDocumentSnapshot<DocumentData>): WallPost {
   const raw = docSnap.data() as Record<string, unknown>;
   const converted = snakeToCamel<Record<string, unknown>>(raw);
   return {
@@ -118,7 +120,7 @@ export function useGroupWall(groupId?: string) {
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
-        const data = snapshot.docs.map(mapPost);
+        const data = snapshot.docs.map(mapPost).filter((post) => post.deletedAt === null);
         setPosts(data);
         setHasMore(snapshot.size === POST_PAGE_SIZE);
         if (snapshot.docs.length > 0) {
@@ -150,7 +152,7 @@ export function useGroupWall(groupId?: string) {
         limit(POST_PAGE_SIZE),
       );
       const snap = await getDocs(q);
-      const older = snap.docs.map(mapPost);
+      const older = snap.docs.map(mapPost).filter((post) => post.deletedAt === null);
       if (snap.docs.length > 0) {
         oldestDocRef.current = snap.docs[snap.docs.length - 1];
       }
@@ -182,6 +184,12 @@ export function useGroupWall(groupId?: string) {
       let mediaType: string | null = null;
 
       if (options?.imageFile) {
+        if (!ACCEPTED_IMAGE_TYPES.includes(options.imageFile.type)) {
+          throw new Error('Tipo de imagem inválido. Use JPG, PNG ou WebP.');
+        }
+        if (options.imageFile.size > MAX_IMAGE_SIZE_BYTES) {
+          throw new Error('Imagem muito grande. O limite é 10MB.');
+        }
         const ext = options.imageFile.type.split('/')[1]?.replace('jpeg', 'jpg') || 'jpg';
         const path = `groups/${groupId}/wall_media/__draft__/${Date.now()}-${crypto.randomUUID()}.${ext}`;
         const fileRef = storageRef(storage, path);

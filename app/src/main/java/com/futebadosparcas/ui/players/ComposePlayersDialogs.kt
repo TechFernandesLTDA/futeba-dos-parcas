@@ -6,6 +6,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.filled.PersonAdd
+import androidx.compose.material.icons.filled.PersonRemove
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -337,7 +339,12 @@ fun PlayerCardContent(
     stats: Statistics?,
     onClose: () -> Unit,
     onShare: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    canFollow: Boolean = false,
+    isFollowing: Boolean = false,
+    isFollowUpdating: Boolean = false,
+    followErrorMessage: String? = null,
+    onToggleFollow: () -> Unit = {}
 ) {
     Card(
         modifier = modifier
@@ -474,6 +481,68 @@ fun PlayerCardContent(
                 StatItem(label = stringResource(R.string.players_wins), value = stats?.totalWins?.toString() ?: "0")
                 StatItem(label = stringResource(R.string.players_mvps), value = stats?.mvpCount?.toString() ?: "0")
                 StatItem(label = stringResource(R.string.players_saves), value = stats?.totalSaves?.toString() ?: "0")
+            }
+
+            if (canFollow || user.followersCount > 0 || user.followingCount > 0) {
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    StatItem(
+                        label = stringResource(R.string.follow_followers),
+                        value = user.followersCount.toString()
+                    )
+                    StatItem(
+                        label = stringResource(R.string.follow_following),
+                        value = user.followingCount.toString()
+                    )
+                }
+            }
+
+            if (canFollow) {
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Button(
+                    onClick = onToggleFollow,
+                    enabled = !isFollowUpdating,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    if (isFollowUpdating) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(18.dp),
+                            strokeWidth = 2.dp,
+                            color = MaterialTheme.colorScheme.onPrimary
+                        )
+                    } else {
+                        Icon(
+                            imageVector = if (isFollowing) {
+                                androidx.compose.material.icons.Icons.Default.PersonRemove
+                            } else {
+                                androidx.compose.material.icons.Icons.Default.PersonAdd
+                            },
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = stringResource(
+                            if (isFollowing) R.string.follow_unfollow else R.string.follow_follow
+                        )
+                    )
+                }
+            }
+
+            followErrorMessage?.let { message ->
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = message,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.error,
+                    textAlign = TextAlign.Center
+                )
             }
             
             HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))

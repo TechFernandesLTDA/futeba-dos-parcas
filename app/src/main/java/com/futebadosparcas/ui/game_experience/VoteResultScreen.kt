@@ -74,11 +74,14 @@ import com.futebadosparcas.domain.model.VoteCategory
 import com.futebadosparcas.ui.components.EmptyState
 import com.futebadosparcas.ui.components.EmptyStateType
 import com.futebadosparcas.ui.components.LoadingView
+import com.futebadosparcas.ui.components.reactions.SocialReactionBar
+import com.futebadosparcas.ui.games.components.GameCommentsSection
 import com.futebadosparcas.ui.theme.GamificationColors
 import kotlinx.coroutines.delay
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
 import com.futebadosparcas.ui.adaptive.adaptiveContentWidth
+import java.util.Date
 
 /**
  * Tela de resultados da votação MVP.
@@ -125,12 +128,19 @@ fun VoteResultScreen(
 
             is VoteResultUiState.Success -> {
                 VoteResultContent(
+                    gameId = gameId,
                     results = state.results,
                     gameInfo = state.gameInfo,
+                    voteResultReactions = state.voteResultReactions,
+                    votingConcludedAt = state.votingConcludedAt,
+                    currentUserId = state.currentUserId,
                     modifier = Modifier.padding(padding),
                     onShareCard = { category ->
                         viewModel.shareResultCard(context, gameId, category)
-                    }
+                    },
+                    onToggleVoteResultReaction = { emoji ->
+                        viewModel.toggleVoteResultReaction(gameId, emoji)
+                    },
                 )
             }
 
@@ -159,14 +169,22 @@ fun VoteResultScreen(
 
 @Composable
 private fun VoteResultContent(
+    gameId: String,
     results: VoteResultsData,
     gameInfo: GameResultInfo?,
+    voteResultReactions: Map<String, List<String>>,
+    votingConcludedAt: Date?,
+    currentUserId: String?,
     modifier: Modifier = Modifier,
-    onShareCard: (VoteCategory) -> Unit = {}
+    onShareCard: (VoteCategory) -> Unit = {},
+    onToggleVoteResultReaction: (String) -> Unit = {}
 ) {
     var showMvp by remember { mutableStateOf(false) }
     var showGk by remember { mutableStateOf(false) }
     var showWorst by remember { mutableStateOf(false) }
+    val canInteract = votingConcludedAt?.let {
+        (it.time + 72 * 60 * 60 * 1000L) > System.currentTimeMillis()
+    } ?: false
 
     // Animação sequencial para revelar resultados
     LaunchedEffect(Unit) {
@@ -250,8 +268,75 @@ private fun VoteResultContent(
             }
         }
 
+        if (
+            results.mvpResults.isNotEmpty() ||
+            results.gkResults.isNotEmpty() ||
+            results.worstResults.isNotEmpty()
+        ) {
+            item {
+                VoteResultSocialSection(
+                    gameId = gameId,
+                    reactions = voteResultReactions,
+                    currentUserId = currentUserId,
+                    canInteract = canInteract,
+                    onToggleReaction = onToggleVoteResultReaction
+                )
+            }
+        }
+
         // Espaço no final
         item { Spacer(modifier = Modifier.height(32.dp)) }
+    }
+}
+
+@Composable
+private fun VoteResultSocialSection(
+    gameId: String,
+    reactions: Map<String, List<String>>,
+    currentUserId: String?,
+    canInteract: Boolean,
+    onToggleReaction: (String) -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text(
+                text = stringResource(R.string.vote_result_social_title),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = stringResource(
+                    if (canInteract) {
+                        R.string.vote_result_social_description
+                    } else {
+                        R.string.vote_result_social_read_only
+                    }
+                ),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            SocialReactionBar(
+                reactions = reactions,
+                currentUserId = currentUserId,
+                enabled = canInteract,
+                onToggleReaction = onToggleReaction
+            )
+            GameCommentsSection(
+                gameId = gameId,
+                canWrite = canInteract,
+                currentUserId = currentUserId,
+                canManage = false,
+                context = "vote_result"
+            )
+        }
     }
 }
 
@@ -677,7 +762,10 @@ sealed class VoteResultUiState {
     data object Loading : VoteResultUiState()
     data class Success(
         val results: VoteResultsData,
-        val gameInfo: GameResultInfo?
+        val gameInfo: GameResultInfo?,
+        val voteResultReactions: Map<String, List<String>> = emptyMap(),
+        val votingConcludedAt: Date? = null,
+        val currentUserId: String? = null
     ) : VoteResultUiState()
     data object Empty : VoteResultUiState()
     data class Error(val message: String) : VoteResultUiState()

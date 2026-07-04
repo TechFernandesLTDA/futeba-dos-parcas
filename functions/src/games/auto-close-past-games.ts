@@ -13,7 +13,6 @@ import {onSchedule} from "firebase-functions/v2/scheduler";
 import {logger} from "firebase-functions/v2";
 import {FieldValue, Timestamp} from "firebase-admin/firestore";
 import {
-  FIRESTORE_BATCH_SAFE_LIMIT,
   FUNCTION_REGION,
 } from "../constants";
 import {db} from "../_db";
@@ -147,10 +146,12 @@ async function getConfirmedCount(
  * Carrega sinais mínimos para auto-close orientado por evidência.
  *
  * @param {string} gameId - ID do jogo.
+ * @param {FirebaseFirestore.DocumentData} gameData - Dados do jogo.
  * @return {Promise<object>} Evidência agregada e score calculado.
  */
 async function getGameEvidence(
   gameId: string,
+  gameData: FirebaseFirestore.DocumentData,
 ): Promise<{
   evidence: AutoCloseEvidenceSummary;
   validationResult: ReturnType<
@@ -206,12 +207,39 @@ async function getGameEvidence(
       score_event_consistent: scoreEventConsistent,
     },
     validationResult: buildGameValidationFromFirestore({
+      game: gameData,
       confirmations,
       eventCount: gameEventsSnap.size,
       scoreEventConsistent,
       mode: "SOFT_GATE",
     }),
   };
+}
+
+/**
+ * Cancela um jogo antigo somente se ele ainda estiver ativo no momento do commit.
+ *
+ * @param {FirebaseFirestore.DocumentReference} gameRef Referencia do jogo.
+ * @param {FirebaseFirestore.UpdateData<FirebaseFirestore.DocumentData>} update Dados.
+ * @return {Promise<boolean>} true quando o jogo foi cancelado.
+ */
+export async function cancelPastGameIfStillActive(
+  gameRef: FirebaseFirestore.DocumentReference,
+  update: FirebaseFirestore.UpdateData<FirebaseFirestore.DocumentData>
+): Promise<boolean> {
+  return db().runTransaction(async (tx) => {
+    const freshGame = await tx.get(gameRef);
+    if (!freshGame.exists) {
+      return false;
+    }
+    const freshStatus = freshGame.data()?.status;
+    if (!ACTIVE_GAME_STATUSES.includes(freshStatus as ActiveGameStatus)) {
+      return false;
+    }
+
+    tx.update(gameRef, update);
+    return true;
+  });
 }
 
 /**
@@ -240,15 +268,6 @@ export async function closePastGames(
 
   const finished = 0;
   let cancelled = 0;
-  let ops = 0;
-  let batch = db().batch();
-
-  const commitIfNeeded = async () => {
-    if (ops === 0) return;
-    await batch.commit();
-    batch = db().batch();
-    ops = 0;
-  };
 
   for (const gameDoc of gamesSnap.docs) {
     const gameData = gameDoc.data();
@@ -266,7 +285,8 @@ export async function closePastGames(
       minPlayers
     );
     const {evidence, validationResult} = await getGameEvidence(
-      gameDoc.id
+      gameDoc.id,
+      gameData,
     );
     const evidenceDecision =
       summarizeAutoCloseEvidence(evidence);
@@ -302,7 +322,7 @@ export async function closePastGames(
       updated_at: serverTs,
     };
 
-    batch.update(gameDoc.ref, {
+    const didCancel = await cancelPastGameIfStillActive(gameDoc.ref, {
       ...commonUpdate,
       status: decision.status,
       auto_cancelled: true,
@@ -311,15 +331,10 @@ export async function closePastGames(
       cancelled_by: "system",
       cancelled_at: serverTs,
     });
-    cancelled++;
-
-    ops++;
-    if (ops >= FIRESTORE_BATCH_SAFE_LIMIT) {
-      await commitIfNeeded();
+    if (didCancel) {
+      cancelled++;
     }
   }
-
-  await commitIfNeeded();
 
   logger.info(
     "[AUTO_CLOSE_PAST_GAMES] Concluído: " +

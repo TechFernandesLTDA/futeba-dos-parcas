@@ -75,6 +75,10 @@ export interface User {
   inviteAcceptedAt?: Date;
   inviteCount: number;
 
+  // Social graph
+  followersCount?: number;
+  followingCount?: number;
+
   // Streak
   currentStreak: number;
   bestStreak: number;

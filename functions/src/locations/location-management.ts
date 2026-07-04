@@ -1124,6 +1124,64 @@ async function sumApprovedSubscriptionPayments(
 }
 
 /**
+ * Calcula status da assinatura apos registrar/aprovar pagamento.
+ * @param {object} params Dados do periodo e da location.
+ * @return {Promise<object>} Status e saldo recomputados.
+ */
+async function resolveSubscriptionStatusAfterApprovedPayment(params: {
+  locationId: string;
+  periodKey: string | null;
+  monthlyFeeCents: number;
+  newlyApprovedAmountCents: number;
+  currentSubscriptionStatus: unknown;
+  currentCommercialStatus: unknown;
+}): Promise<{
+  paidCents: number | null;
+  openBalanceCents: number | null;
+  subscriptionStatus: string | null;
+  commercialStatus: string | null;
+}> {
+  const currentSubscriptionStatus =
+    typeof params.currentSubscriptionStatus === "string" ?
+      params.currentSubscriptionStatus :
+      null;
+  const currentCommercialStatus =
+    typeof params.currentCommercialStatus === "string" ?
+      params.currentCommercialStatus :
+      currentSubscriptionStatus;
+  if (!params.periodKey || params.monthlyFeeCents <= 0) {
+    return {
+      paidCents: null,
+      openBalanceCents: null,
+      subscriptionStatus: "ACTIVE",
+      commercialStatus: "ACTIVE",
+    };
+  }
+
+  const alreadyApprovedCents = await sumApprovedSubscriptionPayments(
+    params.locationId,
+    params.periodKey
+  );
+  const paidCents = alreadyApprovedCents + params.newlyApprovedAmountCents;
+  const openBalanceCents = Math.max(params.monthlyFeeCents - paidCents, 0);
+  if (openBalanceCents <= 0) {
+    return {
+      paidCents,
+      openBalanceCents,
+      subscriptionStatus: "ACTIVE",
+      commercialStatus: "ACTIVE",
+    };
+  }
+
+  return {
+    paidCents,
+    openBalanceCents,
+    subscriptionStatus: currentSubscriptionStatus,
+    commercialStatus: currentCommercialStatus,
+  };
+}
+
+/**
  * Divide uma lista em chunks para controlar paralelismo de leituras.
  * @param {Array<T>} items Lista original.
  * @param {number} size Tamanho maximo por chunk.
@@ -2556,6 +2614,14 @@ secureCallable<RegisterLocationSubscriptionPaymentRequest>(
     const notes = optionalTrimmed(request.data.notes, 1000);
     const {locRef, locData} = await getExistingLocation(locationId);
     const paymentRef = locRef.collection("subscription_payments").doc();
+    const resolvedStatus = await resolveSubscriptionStatusAfterApprovedPayment({
+      locationId,
+      periodKey,
+      monthlyFeeCents: positiveCents(locData.monthly_fee_cents),
+      newlyApprovedAmountCents: amountCents,
+      currentSubscriptionStatus: locData.subscription_status,
+      currentCommercialStatus: locData.commercial_status,
+    });
     const {ledgerRef, data: ledgerData} = createSubscriptionLedgerRef(
       locationId,
       {
@@ -2567,9 +2633,9 @@ secureCallable<RegisterLocationSubscriptionPaymentRequest>(
         method,
         review_status: "APPROVED",
         previous_subscription_status: locData.subscription_status ?? null,
-        next_subscription_status: "ACTIVE",
+        next_subscription_status: resolvedStatus.subscriptionStatus,
         previous_commercial_status: locData.commercial_status ?? null,
-        next_commercial_status: "ACTIVE",
+        next_commercial_status: resolvedStatus.commercialStatus,
         reason: notes,
         effective_at: paidAt,
       }
@@ -2591,8 +2657,8 @@ secureCallable<RegisterLocationSubscriptionPaymentRequest>(
       reviewed_by: request.auth.uid,
     });
     batch.update(locRef, {
-      subscription_status: "ACTIVE",
-      commercial_status: "ACTIVE",
+      subscription_status: resolvedStatus.subscriptionStatus,
+      commercial_status: resolvedStatus.commercialStatus,
       last_payment_at: paidAt,
       last_payment_amount_cents: amountCents,
       last_payment_period_key: periodKey,
@@ -2611,10 +2677,12 @@ secureCallable<RegisterLocationSubscriptionPaymentRequest>(
         commercial_status: locData.commercial_status ?? null,
       },
       after: {
-        subscription_status: "ACTIVE",
-        commercial_status: "ACTIVE",
+        subscription_status: resolvedStatus.subscriptionStatus,
+        commercial_status: resolvedStatus.commercialStatus,
         amount_cents: amountCents,
         period_key: periodKey,
+        paid_cents: resolvedStatus.paidCents,
+        open_balance_cents: resolvedStatus.openBalanceCents,
       },
       reason: notes,
     });
@@ -2623,7 +2691,7 @@ secureCallable<RegisterLocationSubscriptionPaymentRequest>(
       success: true,
       locationId,
       paymentId: paymentRef.id,
-      subscriptionStatus: "ACTIVE",
+      subscriptionStatus: resolvedStatus.subscriptionStatus,
     };
   }
 );
@@ -2777,12 +2845,31 @@ secureCallable<ReviewLocationSubscriptionReceiptRequest>(
       review_notes: notes,
       updated_at: FieldValue.serverTimestamp(),
     };
+    const paymentAmountCents = positiveCents(paymentData.amount_cents);
+    const paymentPeriodKey = typeof paymentData.period_key === "string" ?
+      paymentData.period_key :
+      null;
+    const resolvedStatus = decision === "APPROVED" ?
+      await resolveSubscriptionStatusAfterApprovedPayment({
+        locationId,
+        periodKey: paymentPeriodKey,
+        monthlyFeeCents: positiveCents(locData.monthly_fee_cents),
+        newlyApprovedAmountCents: paymentAmountCents,
+        currentSubscriptionStatus: locData.subscription_status,
+        currentCommercialStatus: locData.commercial_status,
+      }) :
+      {
+        paidCents: null,
+        openBalanceCents: null,
+        subscriptionStatus: locData.subscription_status ?? null,
+        commercialStatus: locData.commercial_status ?? null,
+      };
 
     if (decision === "APPROVED") {
       batch.update(paymentRef, paymentUpdate);
       batch.update(locRef, {
-        subscription_status: "ACTIVE",
-        commercial_status: "ACTIVE",
+        subscription_status: resolvedStatus.subscriptionStatus,
+        commercial_status: resolvedStatus.commercialStatus,
         last_payment_at: paymentData.paid_at ?? null,
         last_payment_amount_cents: paymentData.amount_cents ?? null,
         last_payment_period_key: paymentData.period_key ?? null,
@@ -2809,11 +2896,9 @@ secureCallable<ReviewLocationSubscriptionReceiptRequest>(
         method: typeof paymentData.method === "string" ? paymentData.method : null,
         review_status: decision,
         previous_subscription_status: locData.subscription_status ?? null,
-        next_subscription_status: decision === "APPROVED" ? "ACTIVE" :
-          locData.subscription_status ?? null,
+        next_subscription_status: resolvedStatus.subscriptionStatus,
         previous_commercial_status: locData.commercial_status ?? null,
-        next_commercial_status: decision === "APPROVED" ? "ACTIVE" :
-          locData.commercial_status ?? null,
+        next_commercial_status: resolvedStatus.commercialStatus,
         reason: notes,
         effective_at: paymentData.paid_at ?? FieldValue.serverTimestamp(),
       }
@@ -2833,12 +2918,12 @@ secureCallable<ReviewLocationSubscriptionReceiptRequest>(
         payment_id: paymentId,
       },
       after: {
-        subscription_status: decision === "APPROVED" ? "ACTIVE" :
-          locData.subscription_status ?? null,
-        commercial_status: decision === "APPROVED" ? "ACTIVE" :
-          locData.commercial_status ?? null,
+        subscription_status: resolvedStatus.subscriptionStatus,
+        commercial_status: resolvedStatus.commercialStatus,
         payment_id: paymentId,
         review_status: decision,
+        paid_cents: resolvedStatus.paidCents,
+        open_balance_cents: resolvedStatus.openBalanceCents,
       },
       reason: notes,
     });
@@ -2848,8 +2933,7 @@ secureCallable<ReviewLocationSubscriptionReceiptRequest>(
       locationId,
       paymentId,
       reviewStatus: decision,
-      subscriptionStatus: decision === "APPROVED" ? "ACTIVE" :
-        locData.subscription_status ?? null,
+      subscriptionStatus: resolvedStatus.subscriptionStatus,
     };
   }
 );

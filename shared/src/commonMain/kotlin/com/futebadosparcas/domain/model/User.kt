@@ -126,6 +126,8 @@ data class User(
     val level: Int = 1,
     @SerialName("experience_points") val experiencePoints: Long = 0L,
     @SerialName("milestones_achieved") val milestonesAchieved: List<String> = emptyList(),
+    @SerialName("followers_count") val followersCount: Int = 0,
+    @SerialName("following_count") val followingCount: Int = 0,
 
     // Ratings automaticos
     @SerialName("auto_striker_rating") val autoStrikerRating: Double = 0.0,

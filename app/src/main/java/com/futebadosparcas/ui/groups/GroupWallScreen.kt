@@ -32,6 +32,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -44,6 +45,7 @@ import com.futebadosparcas.ui.components.EmptyState
 import com.futebadosparcas.ui.components.EmptyStateType
 import com.futebadosparcas.ui.components.states.LoadingItemType
 import com.futebadosparcas.ui.components.states.LoadingState
+import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -58,6 +60,7 @@ fun GroupWallScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val actionState by viewModel.actionState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
     val listState = rememberLazyListState()
     var showComposer by remember { mutableStateOf(false) }
     var editingPost by remember { mutableStateOf<GroupWallPost?>(null) }
@@ -141,6 +144,7 @@ fun GroupWallScreen(
                 is GroupWallUiState.Success -> {
                     val pinned = state.posts.filter { it.pinned }
                     val regular = state.posts.filter { !it.pinned }
+                    val currentUserId = viewModel.currentUserId()
 
                     LazyColumn(
                         state = listState,
@@ -156,6 +160,11 @@ fun GroupWallScreen(
                                         viewModel.createPost(groupId, text, imageUri)
                                         showComposer = false
                                     },
+                                    onImageError = { message ->
+                                        scope.launch {
+                                            snackbarHostState.showSnackbar(message)
+                                        }
+                                    },
                                     onCancel = { showComposer = false }
                                 )
                             }
@@ -166,6 +175,7 @@ fun GroupWallScreen(
                                 post = post,
                                 isOwn = viewModel.isCurrentUser(post.authorId),
                                 canManage = canManage,
+                                currentUserId = currentUserId,
                                 onEdit = if (viewModel.isCurrentUser(post.authorId)) {
                                     { editingPost = post }
                                 } else null,
@@ -173,6 +183,9 @@ fun GroupWallScreen(
                                 onTogglePin = if (canManage) {
                                     { viewModel.togglePin(groupId, post.id, !post.pinned) }
                                 } else null,
+                                onToggleReaction = { emoji ->
+                                    viewModel.toggleReaction(groupId, post, emoji)
+                                },
                                 onImageClick = { lightboxUrl = it }
                             )
                         }
@@ -182,6 +195,7 @@ fun GroupWallScreen(
                                 post = post,
                                 isOwn = viewModel.isCurrentUser(post.authorId),
                                 canManage = canManage,
+                                currentUserId = currentUserId,
                                 onEdit = if (viewModel.isCurrentUser(post.authorId)) {
                                     { editingPost = post }
                                 } else null,
@@ -189,6 +203,9 @@ fun GroupWallScreen(
                                 onTogglePin = if (canManage) {
                                     { viewModel.togglePin(groupId, post.id, !post.pinned) }
                                 } else null,
+                                onToggleReaction = { emoji ->
+                                    viewModel.toggleReaction(groupId, post, emoji)
+                                },
                                 onImageClick = { lightboxUrl = it }
                             )
                         }
@@ -220,6 +237,11 @@ fun GroupWallScreen(
                     onSubmit = { text, _ ->
                         viewModel.editPost(groupId, editingPost!!.id, text)
                         editingPost = null
+                    },
+                    onImageError = { message ->
+                        scope.launch {
+                            snackbarHostState.showSnackbar(message)
+                        }
                     }
                 )
             },
