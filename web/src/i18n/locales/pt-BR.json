@@ -1427,6 +1427,18 @@
     "save": "Salvar recado",
     "title": "Recado pós-jogo"
   },
+  "gameChat": {
+    "title": "Chat do jogo",
+    "description": "Combine a pelada em tempo real com os parças.",
+    "placeholder": "Manda a tua...",
+    "send": "Enviar mensagem",
+    "delete": "Apagar mensagem",
+    "loadMore": "Carregar mensagens anteriores",
+    "emptyTitle": "Nenhuma mensagem ainda",
+    "emptyDesc": "Seja o primeiro a mandar algo no jogo.",
+    "archived": "Chat arquivado",
+    "mustConfirm": "Confirme sua presença para participar do chat."
+  },
   "postGameHighlights": {
     "bestDuo": "Melhor dupla",
     "bestDuoDescription": "Combinação com maior impacto em gols, assistências e defesas registradas.",
@@ -2499,6 +2511,8 @@
       "muteTitle": "Silenciar notificações",
       "mvpVotes": "Votações MVP",
       "mvpVotesDescription": "Votações MVP",
+      "gameChat": "Mensagens do jogo",
+      "gameChatDescription": "Novas mensagens no chat do jogo",
       "pushDescription": "Receber notificações push no navegador",
       "pushTitle": "Push notifications",
       "pushToggle": "Ativar notificações push",

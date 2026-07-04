@@ -1,6 +1,6 @@
 # SPEC: Mural de provocações (banter wall) do grupo
 
-> **Status:** `DRAFT`
+> **Status:** `APPROVED`
 > **Autor:** Renan (via opencode)
 > **Data:** 2026-07-03
 > **PR:** #xxx (preencher quando criar)
@@ -365,3 +365,4 @@ Adicionar toggle `groupWall` ao modelo `notification_settings` (`useNotification
 | Data | Autor | Alteração |
 |------|-------|-----------|
 | 2026-07-03 | opencode | Criação inicial (DRAFT) |
+| 2026-07-03 | Renan | Aprovação → APPROVED |

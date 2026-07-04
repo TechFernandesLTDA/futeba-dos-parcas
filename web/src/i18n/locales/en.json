@@ -1427,6 +1427,18 @@
     "save": "Save note",
     "title": "Post-game note"
   },
+  "gameChat": {
+    "title": "Game chat",
+    "description": "Coordinate the match in real time with the squad.",
+    "placeholder": "Send a message...",
+    "send": "Send message",
+    "delete": "Delete message",
+    "loadMore": "Load earlier messages",
+    "emptyTitle": "No messages yet",
+    "emptyDesc": "Be the first to say something in this game.",
+    "archived": "Chat archived",
+    "mustConfirm": "Confirm your attendance to join the chat."
+  },
   "postGameHighlights": {
     "bestDuo": "Best duo",
     "bestDuoDescription": "The pair with the strongest impact across goals, assists, and saves.",
@@ -2499,6 +2511,8 @@
       "muteTitle": "Mute notifications",
       "mvpVotes": "MVP votes",
       "mvpVotesDescription": "MVP votes",
+      "gameChat": "Game chat messages",
+      "gameChatDescription": "New messages in game chat",
       "pushDescription": "Receive push notifications in the browser",
       "pushTitle": "Push notifications",
       "pushToggle": "Enable push notifications",
