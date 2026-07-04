@@ -266,6 +266,7 @@
     <string name="connected_accounts_unlink_confirm_desc">You\'ll only be able to sign in with email and password. Unlink the Google account?</string>
     <string name="auth_error_credential_in_use">This Google account is already linked to another account. Sign in with your original method and link Google from your profile.</string>
 
+<<<<<<< HEAD
     <!-- Group Wall -->
     <string name="group_wall_title">Group Wall</string>
     <string name="group_wall_subtitle">Banter, photos and announcements</string>
@@ -288,4 +289,14 @@
     <string name="group_wall_must_be_member">You need to be a group member to post.</string>
     <string name="group_wall_delete_confirm">Delete post?</string>
     <string name="group_wall_delete_message">This action cannot be undone.</string>
+
+    <!-- #3230: Game chat (epic #3240) -->
+    <string name="game_chat_title">Game chat</string>
+    <string name="game_chat_description">Coordinate the match in real time with the squad.</string>
+    <string name="game_chat_input_hint">Send a message…</string>
+    <string name="game_chat_empty_title">No messages yet</string>
+    <string name="game_chat_empty_desc">Be the first to say something in this game.</string>
+    <string name="game_chat_archived">Chat archived</string>
+    <string name="game_chat_must_confirm">Confirm your attendance to join the chat.</string>
+    <string name="game_chat_retry">Try again</string>
 </resources>

@@ -484,4 +484,12 @@ val viewModelKoinModule = module {
             functions = get()
         )
     }
+
+    // Issue #3230: Chat em tempo real por jogo (épico #3240)
+    viewModel {
+        com.futebadosparcas.ui.games.GameChatViewModel(
+            gameChatRepository = get(),
+            auth = get()
+        )
+    }
 }
