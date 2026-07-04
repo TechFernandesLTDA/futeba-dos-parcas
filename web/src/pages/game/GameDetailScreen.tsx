@@ -70,7 +70,9 @@ import { GamePlayersSection } from './GamePlayersSection';
 import { PositionReinforcementsPanel } from './PositionReinforcementsPanel';
 import { GameRidesPanel } from './GameRidesPanel';
 import { GamePhotosTab } from './GamePhotosTab';
+import { GameVideosTab } from './GameVideosTab';
 import { GameChatPanel } from './GameChatPanel';
+import { GameCommentsPanel } from './GameCommentsPanel';
 import { PostGameReputationPanel } from './PostGameReputationPanel';
 import { PostGameHighlightsPanel } from './PostGameHighlightsPanel';
 import { PostGameMessage, usePostGameMessages, useSavePostGameMessage } from '../../hooks/usePostGameMessages';
@@ -538,11 +540,12 @@ export const GameDetailScreen: React.FC = () => {
         try {
           const result = await checkInToGame({
             gameId,
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
           });
-          showSuccess(result.data.distanceMeters
-            ? t('games.detail.checkInSuccessDistance', { meters: Math.round(result.data.distanceMeters) })
+          const distanceMeters = result.data.distance_m ?? result.data.distanceMeters;
+          showSuccess(distanceMeters
+            ? t('games.detail.checkInSuccessDistance', { meters: Math.round(distanceMeters) })
             : t('games.detail.checkInSuccess'));
           queryClient.invalidateQueries({ queryKey: ['game', gameId] });
         } catch (err) {
@@ -846,8 +849,22 @@ export const GameDetailScreen: React.FC = () => {
                 canManage={!!canManage}
                 isArchived={isChatArchived}
               />
+              <GameCommentsPanel
+                gameId={gameId!}
+                canWrite={!!(isConfirmed || canManage)}
+                canManage={!!canManage}
+              />
               {showPostGameMessages && (
                 <GamePhotosTab
+                  gameId={gameId!}
+                  isFinished={showPostGameMessages}
+                  isConfirmedPlayer={isConfirmed}
+                  isOwner={isOwner}
+                  canManage={canManagePostGameContent}
+                />
+              )}
+              {showPostGameMessages && (
+                <GameVideosTab
                   gameId={gameId!}
                   isFinished={showPostGameMessages}
                   isConfirmedPlayer={isConfirmed}
@@ -935,6 +952,15 @@ export const GameDetailScreen: React.FC = () => {
           />
           {showPostGameMessages && (
             <GamePhotosTab
+              gameId={gameId!}
+              isFinished={showPostGameMessages}
+              isConfirmedPlayer={isConfirmed}
+              isOwner={isOwner}
+              canManage={canManagePostGameContent}
+            />
+          )}
+          {showPostGameMessages && (
+            <GameVideosTab
               gameId={gameId!}
               isFinished={showPostGameMessages}
               isConfirmedPlayer={isConfirmed}

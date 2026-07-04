@@ -90,6 +90,9 @@ fun HomeScreen(
     onCreateGameClick: () -> Unit = {},    // Navegacao para criar novo jogo
     onJoinGroupClick: () -> Unit = {},     // Navegacao para entrar em grupo
     onSeeAllGamesClick: () -> Unit = {},   // Navegacao para ver todos os jogos
+    onSocialFeedClick: () -> Unit = {},    // Navegacao para feed social
+    onNearbyPlayersClick: () -> Unit = {}, // Navegacao para jogadores proximos
+    onDirectMessagesClick: () -> Unit = {}, // Navegacao para mensagens diretas
     hapticManager: HapticManager? = null,
     /** ViewModel de onboarding para checklist de primeiros passos (Fase 1). */
     onboardingViewModel: com.futebadosparcas.ui.onboarding.OnboardingViewModel? = null
@@ -158,6 +161,9 @@ fun HomeScreen(
                             onCreateGameClick = onCreateGameClick,
                             onJoinGroupClick = onJoinGroupClick,
                             onSeeAllGamesClick = onSeeAllGamesClick,
+                            onSocialFeedClick = onSocialFeedClick,
+                            onNearbyPlayersClick = onNearbyPlayersClick,
+                            onDirectMessagesClick = onDirectMessagesClick,
                             onboardingViewModel = onboardingViewModel
                         )
                     }
@@ -226,6 +232,9 @@ private fun HomeSuccessContent(
     onCreateGameClick: () -> Unit,
     onJoinGroupClick: () -> Unit,
     onSeeAllGamesClick: () -> Unit,
+    onSocialFeedClick: () -> Unit,
+    onNearbyPlayersClick: () -> Unit,
+    onDirectMessagesClick: () -> Unit,
     onboardingViewModel: com.futebadosparcas.ui.onboarding.OnboardingViewModel? = null
 ) {
     var isRefreshing by remember { mutableStateOf(false) }
@@ -364,6 +373,27 @@ private fun HomeSuccessContent(
             )
         }
 
+        item(key = "social_feed_entry") {
+            SocialFeedEntryCard(
+                onClick = onSocialFeedClick,
+                modifier = Modifier.padding(top = AppDimensions.spacing_small)
+            )
+        }
+
+        item(key = "nearby_players_entry") {
+            NearbyPlayersEntryCard(
+                onClick = onNearbyPlayersClick,
+                modifier = Modifier.padding(top = AppDimensions.spacing_small)
+            )
+        }
+
+        item(key = "direct_messages_entry") {
+            DirectMessagesEntryCard(
+                onClick = onDirectMessagesClick,
+                modifier = Modifier.padding(top = AppDimensions.spacing_small)
+            )
+        }
+
         // Checklist de Primeiros Passos (Fase 1 — exibido antes do streak)
         if (checklistVisible && checklistSteps != null) {
             item(key = "first_steps_checklist") {
@@ -484,6 +514,87 @@ private fun HomeSuccessContent(
         modifier = Modifier.fillMaxSize()
     )
     } // fecha Box adaptativo
+}
+
+@Composable
+private fun SocialFeedEntryCard(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    ElevatedCard(
+        onClick = onClick,
+        modifier = modifier.fillMaxWidth()
+    ) {
+        Column(
+            modifier = Modifier.padding(AppDimensions.spacing_medium),
+            verticalArrangement = Arrangement.spacedBy(AppDimensions.spacing_small)
+        ) {
+            Text(
+                text = stringResource(R.string.social_feed_title),
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.primary
+            )
+            Text(
+                text = stringResource(R.string.social_feed_empty_desc),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+private fun NearbyPlayersEntryCard(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    ElevatedCard(
+        onClick = onClick,
+        modifier = modifier.fillMaxWidth()
+    ) {
+        Column(
+            modifier = Modifier.padding(AppDimensions.spacing_medium),
+            verticalArrangement = Arrangement.spacedBy(AppDimensions.spacing_small)
+        ) {
+            Text(
+                text = stringResource(R.string.nearby_players_title),
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.primary
+            )
+            Text(
+                text = stringResource(R.string.nearby_players_idle_desc),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+private fun DirectMessagesEntryCard(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    ElevatedCard(
+        onClick = onClick,
+        modifier = modifier.fillMaxWidth()
+    ) {
+        Column(
+            modifier = Modifier.padding(AppDimensions.spacing_medium),
+            verticalArrangement = Arrangement.spacedBy(AppDimensions.spacing_small)
+        ) {
+            Text(
+                text = stringResource(R.string.direct_messages_title),
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.primary
+            )
+            Text(
+                text = stringResource(R.string.direct_messages_empty_desc),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
 }
 
 @Composable

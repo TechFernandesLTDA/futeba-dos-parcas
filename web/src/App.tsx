@@ -69,6 +69,7 @@ const ForgotPasswordScreen = lazy(() => import('./pages/auth/ForgotPasswordScree
 
 // Home
 const HomeScreen = lazy(() => import('./pages/home/HomeScreen').then(m => ({ default: m.HomeScreen })));
+const SocialFeedScreen = lazy(() => import('./pages/feed/SocialFeedScreen').then(m => ({ default: m.SocialFeedScreen })));
 
 
 const GameDetailScreen = lazy(() => import('./pages/game/GameDetailScreen').then(m => ({ default: m.GameDetailScreen })));
@@ -99,6 +100,7 @@ const InvitePlayersScreen = lazy(() => import('./pages/groups/InvitePlayersScree
 const JoinByInviteScreen = lazy(() => import('./pages/group/JoinByInviteScreen').then(m => ({ default: m.JoinByInviteScreen })));
 const DiscoverGroupsScreen = lazy(() => import('./pages/group/DiscoverGroupsScreen').then(m => ({ default: m.DiscoverGroupsScreen })));
 const PlayersScreen = lazy(() => import('./pages/players/PlayersScreen').then(m => ({ default: m.PlayersScreen })));
+const NearbyPlayersScreen = lazy(() => import('./pages/players/NearbyPlayersScreen').then(m => ({ default: m.NearbyPlayersScreen })));
 const PublicGamesScreen = lazy(() => import('./pages/games/PublicGamesScreen').then(m => ({ default: m.PublicGamesScreen })));
 const InviteFriendScreen = lazy(() => import('./pages/InviteFriendScreen').then(m => ({ default: m.InviteFriendScreen })));
 const InviteRedirectScreen = lazy(() => import('./pages/InviteRedirectScreen').then(m => ({ default: m.InviteRedirectScreen })));
@@ -146,6 +148,8 @@ const NotificationSettingsScreen = lazy(() => import('./pages/settings/Notificat
 // Notifications & Search
 const NotificationsScreen = lazy(() => import('./pages/ranking/NotificationsScreen').then(m => ({ default: m.NotificationsScreen })));
 const GlobalSearchScreen = lazy(() => import('./pages/search/GlobalSearchScreen').then(m => ({ default: m.GlobalSearchScreen })));
+const DirectMessagesScreen = lazy(() => import('./pages/messages/DirectMessagesScreen').then(m => ({ default: m.DirectMessagesScreen })));
+const ConversationScreen = lazy(() => import('./pages/messages/ConversationScreen').then(m => ({ default: m.ConversationScreen })));
 
 // About & Admin
 const AboutScreen = lazy(() => import('./pages/about/AboutScreen').then(m => ({ default: m.AboutScreen })));
@@ -179,6 +183,7 @@ function RouteFallback() {
   if (path.startsWith('/locations')) return <CardGridSkeleton />;
   if (path.startsWith('/admin')) return <ListSkeleton />;
   if (path.startsWith('/settings')) return <FormSkeleton />;
+  if (path.startsWith('/messages')) return <ListSkeleton />;
 
   return <CardGridSkeleton />;
 }
@@ -428,12 +433,14 @@ function AppRoutes() {
       <Route element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><AppLayout /></Suspense></ProtectedRoute>}>
         {/* Home */}
         <Route path="/" element={<Suspense fallback={<RouteFallback />}><HomeScreen /></Suspense>} />
+        <Route path="/feed" element={<Suspense fallback={<RouteFallback />}><SocialFeedScreen /></Suspense>} />
         {/* Games */}
         <Route path="/game/:gameId" element={<Suspense fallback={<RouteFallback />}><GameDetailScreen /></Suspense>} />
         {/* GAP #7 (#1080): VerifiedRoute redireciona unverified pra onboarding em vez de deixar submit falhar silencioso no rules */}
         <Route path="/game/create" element={<VerifiedRoute><Suspense fallback={<RouteFallback />}><CreateGameScreen /></Suspense></VerifiedRoute>} />
         {/* Groups */}
         <Route path="/group/:groupId" element={<Suspense fallback={<RouteFallback />}><GroupDetailScreen /></Suspense>} />
+        <Route path="/group/:groupId/post/:postId" element={<Suspense fallback={<RouteFallback />}><GroupDetailScreen /></Suspense>} />
         {/* FIX #1033: apenas FIELD_OWNER ou ADMIN podem criar grupos via URL direta */}
         <Route path="/group/create" element={<FieldOwnerOrAdminRoute><Suspense fallback={<RouteFallback />}><CreateGroupScreen /></Suspense></FieldOwnerOrAdminRoute>} />
         {/* GAP-3: rotas privadas do grupo exigem membership (ou ADMIN). */}
@@ -449,6 +456,7 @@ function AppRoutes() {
         <Route path="/group/:groupId/league" element={<GroupMemberRoute><Suspense fallback={<RouteFallback />}><GroupLeagueScreen /></Suspense></GroupMemberRoute>} />
         <Route path="/groups" element={<Navigate to="/?tab=2" replace />} />
         <Route path="/groups/discover" element={<Suspense fallback={<RouteFallback />}><DiscoverGroupsScreen /></Suspense>} />
+        <Route path="/players/nearby" element={<Suspense fallback={<RouteFallback />}><NearbyPlayersScreen /></Suspense>} />
         {/* Profile + perfis públicos */}
         <Route path="/profile" element={<Navigate to="/?tab=4" replace />} />
         <Route path="/profile/:userId" element={<Suspense fallback={<RouteFallback />}><ProfileScreen /></Suspense>} />
@@ -494,6 +502,8 @@ function AppRoutes() {
         <Route path="/settings/feedbacks" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><MyFeedbacksScreen /></Suspense></ProtectedRoute>} />
         {/* Search & Notifications & About */}
         <Route path="/notifications" element={<Suspense fallback={<RouteFallback />}><NotificationsScreen /></Suspense>} />
+        <Route path="/messages" element={<Suspense fallback={<RouteFallback />}><DirectMessagesScreen /></Suspense>} />
+        <Route path="/messages/:chatId" element={<Suspense fallback={<RouteFallback />}><ConversationScreen /></Suspense>} />
         <Route path="/search" element={<Suspense fallback={<RouteFallback />}><GlobalSearchScreen /></Suspense>} />
         <Route path="/about" element={<Suspense fallback={<RouteFallback />}><AboutScreen /></Suspense>} />
         <Route path="/whats-new" element={<Suspense fallback={<RouteFallback />}><WhatsNewPage /></Suspense>} />

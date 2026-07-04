@@ -15,8 +15,10 @@ import {
   Image as ImageIcon,
   Close as CloseIcon,
 } from '@mui/icons-material';
+import { useToast } from '../../contexts/ToastContext';
 
 const MAX_TEXT_LENGTH = 500;
+const MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024;
 const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
 interface WallPostComposerProps {
@@ -33,6 +35,7 @@ export const WallPostComposer: React.FC<WallPostComposerProps> = ({
   onCancel,
 }) => {
   const { t } = useTranslation();
+  const { showError } = useToast();
   const theme = useTheme();
   const [text, setText] = useState(initialText);
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -43,6 +46,13 @@ export const WallPostComposer: React.FC<WallPostComposerProps> = ({
     const file = event.target.files?.[0];
     if (!file) return;
     if (!ACCEPTED_TYPES.includes(file.type)) {
+      showError(t('groupWall.invalidImageType'));
+      event.target.value = '';
+      return;
+    }
+    if (file.size > MAX_IMAGE_SIZE_BYTES) {
+      showError(t('groupWall.imageTooLarge'));
+      event.target.value = '';
       return;
     }
     setImageFile(file);
@@ -167,4 +177,3 @@ export const WallPostComposer: React.FC<WallPostComposerProps> = ({
     </Box>
   );
 };
-

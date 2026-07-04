@@ -448,6 +448,38 @@ service firebase.storage {
     }
 
     // ============================================
+    // VIDEOS DE JOGOS
+    // Path: games/{gameId}/videos/{userId}/{fileName}.mp4
+    // Clipes curtos anexados ao jogo. Validação server-side completa ocorre
+    // em Cloud Function on-finalize; Storage bloqueia tipo/tamanho/path.
+    // ============================================
+    match /games/{gameId}/videos/{userId}/{fileName} {
+      allow read: if isAuthenticated() &&
+                     firestore.exists(/databases/(default)/documents/games/$(gameId));
+
+      allow write: if isOwner(userId) &&
+                     firestore.exists(/databases/(default)/documents/games/$(gameId)) &&
+                     firestore.get(/databases/(default)/documents/games/$(gameId)).data.status == 'FINISHED' &&
+                     ((
+                       firestore.get(/databases/(default)/documents/confirmations/$(gameId + '_' + request.auth.uid)) != null &&
+                       firestore.get(/databases/(default)/documents/confirmations/$(gameId + '_' + request.auth.uid)).data.status == 'CONFIRMED'
+                     ) ||
+                       firestore.get(/databases/(default)/documents/games/$(gameId)).data.owner_id == request.auth.uid ||
+                       request.auth.uid in firestore.get(/databases/(default)/documents/games/$(gameId)).data.get('co_organizers', []) ||
+                       isAdmin()) &&
+                     request.resource.contentType == 'video/mp4' &&
+                     isUnderSize(25) &&
+                     fileName.matches('[A-Za-z0-9._-]+\\.mp4');
+
+      allow delete: if isAuthenticated() &&
+                      firestore.exists(/databases/(default)/documents/games/$(gameId)) &&
+                      (request.auth.uid == userId ||
+                       firestore.get(/databases/(default)/documents/games/$(gameId)).data.owner_id == request.auth.uid ||
+                       request.auth.uid in firestore.get(/databases/(default)/documents/games/$(gameId)).data.get('co_organizers', []) ||
+                       isAdmin());
+    }
+
+    // ============================================
     // SCREENSHOTS DE FEEDBACK
     // Path: feedback_screenshots/{userId}/{feedbackId}/{fileName}
     // ============================================

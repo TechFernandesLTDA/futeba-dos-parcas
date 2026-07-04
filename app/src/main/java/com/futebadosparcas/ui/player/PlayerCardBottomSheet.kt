@@ -55,7 +55,12 @@ class PlayerCardBottomSheet : BottomSheetDialogFragment() {
                                 user = uiState.user,
                                 stats = uiState.statistics,
                                 onClose = { dismiss() },
-                                onShare = { sharePlayerCard(this@apply) }
+                                onShare = { sharePlayerCard(this@apply) },
+                                canFollow = uiState.followState.canFollow,
+                                isFollowing = uiState.followState.isFollowing,
+                                isFollowUpdating = uiState.followState.isUpdating,
+                                followErrorMessage = uiState.followState.errorMessage,
+                                onToggleFollow = viewModel::toggleFollow
                             )
                         }
                         is PlayerCardUiState.Error -> {

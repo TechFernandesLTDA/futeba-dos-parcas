@@ -15,8 +15,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Flag
+import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PushPin
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
@@ -41,6 +45,7 @@ import coil3.compose.AsyncImage
 import com.futebadosparcas.R
 import com.futebadosparcas.data.model.GroupWallPost
 import com.futebadosparcas.ui.components.CachedProfileImage
+import com.futebadosparcas.ui.components.reactions.SocialReactionBar
 import com.futebadosparcas.util.DataConverter
 
 @Composable
@@ -48,10 +53,16 @@ fun WallPostCard(
     post: GroupWallPost,
     isOwn: Boolean,
     canManage: Boolean,
+    currentUserId: String?,
     onEdit: (() -> Unit)? = null,
     onDelete: (() -> Unit)? = null,
     onTogglePin: (() -> Unit)? = null,
-    onImageClick: ((String) -> Unit)? = null
+    onToggleReaction: ((String) -> Unit)? = null,
+    onImageClick: ((String) -> Unit)? = null,
+    originLabel: String? = null,
+    onOriginClick: (() -> Unit)? = null,
+    onHide: (() -> Unit)? = null,
+    onReport: (() -> Unit)? = null
 ) {
     var showMenu by remember { mutableStateOf(false) }
     val pinnedColor = if (post.pinned) {
@@ -98,9 +109,22 @@ fun WallPostCard(
                             )
                         }
                     }
+                    if (!originLabel.isNullOrBlank()) {
+                        AssistChip(
+                            onClick = { onOriginClick?.invoke() },
+                            label = { Text(originLabel) },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Default.Groups,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                        )
+                    }
                 }
 
-                if (isOwn || canManage) {
+                if (isOwn || canManage || onHide != null || onReport != null) {
                     Box {
                         IconButton(onClick = { showMenu = true }) {
                             Icon(
@@ -162,6 +186,36 @@ fun WallPostCard(
                                     }
                                 )
                             }
+                            if (onHide != null) {
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.social_feed_hide_post)) },
+                                    onClick = {
+                                        showMenu = false
+                                        onHide()
+                                    },
+                                    leadingIcon = {
+                                        Icon(
+                                            imageVector = Icons.Default.VisibilityOff,
+                                            contentDescription = null
+                                        )
+                                    }
+                                )
+                            }
+                            if (onReport != null) {
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.social_feed_report_post)) },
+                                    onClick = {
+                                        showMenu = false
+                                        onReport()
+                                    },
+                                    leadingIcon = {
+                                        Icon(
+                                            imageVector = Icons.Default.Flag,
+                                            contentDescription = null
+                                        )
+                                    }
+                                )
+                            }
                         }
                     }
                 }
@@ -186,6 +240,14 @@ fun WallPostCard(
                         .clickable(enabled = onImageClick != null) {
                             onImageClick?.invoke(post.mediaUrl!!)
                         }
+                )
+            }
+
+            if (onToggleReaction != null && !post.isDeleted()) {
+                SocialReactionBar(
+                    reactions = post.reactions,
+                    currentUserId = currentUserId,
+                    onToggleReaction = onToggleReaction
                 )
             }
         }

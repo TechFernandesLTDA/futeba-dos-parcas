@@ -6,7 +6,7 @@ import {
   query,
   orderBy,
   limit,
-  endBefore,
+  startAfter,
   getDocs,
   addDoc,
   updateDoc,
@@ -74,18 +74,18 @@ export function useGameChat(gameId?: string) {
 
     const q = query(
       collection(db, 'games', gameId, 'chat'),
-      orderBy('created_at', 'asc'),
+      orderBy('created_at', 'desc'),
       limit(MESSAGE_PAGE_SIZE),
     );
 
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
-        const data = snapshot.docs.map(mapMessage);
+        const data = snapshot.docs.map(mapMessage).reverse();
         setMessages(data);
         setHasMore(snapshot.size === MESSAGE_PAGE_SIZE);
         if (snapshot.docs.length > 0) {
-          oldestDocRef.current = snapshot.docs[0];
+          oldestDocRef.current = snapshot.docs[snapshot.docs.length - 1];
         }
         setLoading(false);
       },
@@ -105,14 +105,14 @@ export function useGameChat(gameId?: string) {
     try {
       const q = query(
         collection(db, 'games', gameId, 'chat'),
-        orderBy('created_at', 'asc'),
-        endBefore(oldestDocRef.current),
+        orderBy('created_at', 'desc'),
+        startAfter(oldestDocRef.current),
         limit(MESSAGE_PAGE_SIZE),
       );
       const snap = await getDocs(q);
-      const older = snap.docs.map(mapMessage);
+      const older = snap.docs.map(mapMessage).reverse();
       if (snap.docs.length > 0) {
-        oldestDocRef.current = snap.docs[0];
+        oldestDocRef.current = snap.docs[snap.docs.length - 1];
       }
       setHasMore(snap.size === MESSAGE_PAGE_SIZE);
       setMessages((prev) => [...older, ...prev]);

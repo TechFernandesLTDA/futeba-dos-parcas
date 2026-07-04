@@ -1,5 +1,6 @@
 package com.futebadosparcas.data.repository
 
+import android.content.Context
 import android.net.Uri
 import com.futebadosparcas.data.model.GroupWallPost
 import com.futebadosparcas.util.AppLogger
@@ -27,7 +28,8 @@ import java.util.UUID
 class GroupWallRepository constructor(
     private val firestore: FirebaseFirestore,
     private val auth: FirebaseAuth,
-    private val storage: FirebaseStorage
+    private val storage: FirebaseStorage,
+    private val context: Context
 ) {
     private fun wallCollection(groupId: String) =
         firestore.collection("groups").document(groupId).collection("wall_posts")
@@ -37,6 +39,7 @@ class GroupWallRepository constructor(
         private const val MAX_TEXT_LENGTH = 500
         private const val PAGE_SIZE = 20L
         private const val MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024L
+        private val ALLOWED_REACTIONS = listOf("🔥", "😂", "👏", "😡", "💀", "🤡", "👑", "⚽")
     }
 
     /**
@@ -184,6 +187,45 @@ class GroupWallRepository constructor(
     }
 
     /**
+     * Alterna uma reação no post, mantendo no máximo uma reação ativa por usuário.
+     */
+    suspend fun toggleReaction(
+        groupId: String,
+        postId: String,
+        reactions: Map<String, List<String>>?,
+        emoji: String
+    ): Result<Unit> {
+        return try {
+            val currentUser = auth.currentUser
+                ?: throw IllegalStateException("Usuário não autenticado")
+            require(ALLOWED_REACTIONS.contains(emoji)) {
+                "Reação inválida"
+            }
+
+            val uid = currentUser.uid
+            val currentEmoji = ALLOWED_REACTIONS.firstOrNull { reaction ->
+                reactions?.get(reaction)?.contains(uid) == true
+            }
+            val updates = mutableMapOf<String, Any>()
+
+            ALLOWED_REACTIONS.forEach { reaction ->
+                if (currentEmoji == emoji || reaction != emoji) {
+                    updates["reactions.$reaction"] = FieldValue.arrayRemove(uid)
+                }
+            }
+            if (currentEmoji != emoji) {
+                updates["reactions.$emoji"] = FieldValue.arrayUnion(uid)
+            }
+
+            wallCollection(groupId).document(postId).update(updates).await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            AppLogger.e(TAG, "Erro ao alternar reação do post $postId no grupo $groupId", e)
+            Result.failure(e)
+        }
+    }
+
+    /**
      * Soft-delete (deleted_by + deleted_at via serverTimestamp).
      * Rules validam que só autor/owner/admin pode soft-deletar.
      */
@@ -222,6 +264,10 @@ class GroupWallRepository constructor(
 
     private suspend fun uploadWallMedia(groupId: String, uri: Uri): Pair<String, String> {
         val currentUser = auth.currentUser ?: throw IllegalStateException("Usuário não autenticado")
+        val fileSize = getFileSize(uri)
+        if (fileSize > MAX_IMAGE_SIZE_BYTES) {
+            throw IllegalArgumentException("Imagem muito grande. O limite é 10MB.")
+        }
         val extension = "jpg"
         val fileName = "${System.currentTimeMillis()}-${UUID.randomUUID()}.$extension"
         val path = "groups/$groupId/wall_media/__draft__/${currentUser.uid}/$fileName"
@@ -234,5 +280,14 @@ class GroupWallRepository constructor(
         ref.putFile(uri, metadata).await()
         val downloadUrl = ref.downloadUrl.await().toString()
         return downloadUrl to path
+    }
+
+    private fun getFileSize(uri: Uri): Long {
+        return try {
+            context.contentResolver.openFileDescriptor(uri, "r")?.use { it.statSize } ?: 0L
+        } catch (e: Exception) {
+            AppLogger.w(TAG) { "Erro ao obter tamanho da imagem: ${e.message}" }
+            0L
+        }
     }
 }

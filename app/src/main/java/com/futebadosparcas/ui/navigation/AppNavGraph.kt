@@ -59,6 +59,7 @@ import com.futebadosparcas.ui.games.GamesScreen
 import com.futebadosparcas.ui.groups.GroupDetailScreen
 import com.futebadosparcas.ui.groups.GroupWallScreen
 import com.futebadosparcas.ui.groups.GroupsScreen
+import com.futebadosparcas.ui.feed.SocialFeedScreen
 import com.futebadosparcas.ui.home.HomeScreen
 import com.futebadosparcas.ui.groups.InvitePlayersScreen
 import com.futebadosparcas.ui.livegame.LiveGameScreen
@@ -66,7 +67,10 @@ import com.futebadosparcas.ui.locations.LocationDetailScreen
 import com.futebadosparcas.ui.locations.LocationsMapScreen
 import com.futebadosparcas.ui.locations.ManageLocationsScreen
 import com.futebadosparcas.ui.game_experience.MVPVoteScreen
+import com.futebadosparcas.ui.messages.ConversationScreen
+import com.futebadosparcas.ui.messages.DirectMessagesScreen
 import com.futebadosparcas.ui.notifications.NotificationsScreen
+import com.futebadosparcas.ui.players.NearbyPlayersScreen
 import com.futebadosparcas.ui.players.PlayersScreen
 import com.futebadosparcas.ui.preferences.PreferencesScreen
 import com.futebadosparcas.ui.profile.ProfileScreen
@@ -116,6 +120,12 @@ sealed class Screen(
     data object WeeklyRanking : Screen("weekly_ranking", titleResId = R.string.weekly_ranking)
 
     // Growth features
+    data object SocialFeed : Screen("social_feed", titleResId = R.string.social_feed_title)
+    data object NearbyPlayers : Screen("nearby_players", titleResId = R.string.nearby_players_title)
+    data object DirectMessages : Screen("direct_messages", titleResId = R.string.direct_messages_title)
+    data object DirectConversation : Screen("direct_conversation/{chatId}", titleResId = R.string.direct_messages_title) {
+        fun createRoute(chatId: String) = "direct_conversation/${Uri.encode(chatId)}"
+    }
     data object PublicGames : Screen("public_games", titleResId = R.string.public_games)
     data object InviteFriend : Screen("invite_friend", titleResId = R.string.invite_friend)
     data object DreamTeam : Screen("dream_team", titleResId = R.string.dream_team)
@@ -208,6 +218,8 @@ object Routes {
     fun invitePlayers(groupId: String) = Screen.InvitePlayers.createRoute(groupId)
     fun cashbox(groupId: String) = Screen.Cashbox.createRoute(groupId)
     fun groupWall(groupId: String) = Screen.GroupWall.createRoute(groupId)
+    fun socialFeed() = Screen.SocialFeed.route
+    fun directConversation(chatId: String) = Screen.DirectConversation.createRoute(chatId)
 }
 
 /**
@@ -323,6 +335,15 @@ fun AppNavHost(
                 },
                 onSeeAllGamesClick = {
                     navController.navigate(Screen.Games.route)
+                },
+                onSocialFeedClick = {
+                    navController.navigate(Screen.SocialFeed.route)
+                },
+                onNearbyPlayersClick = {
+                    navController.navigate(Screen.NearbyPlayers.route)
+                },
+                onDirectMessagesClick = {
+                    navController.navigate(Screen.DirectMessages.route)
                 }
             )
         }
@@ -355,6 +376,49 @@ fun AppNavHost(
                 onMapClick = {
                     navController.navigate(Screen.LocationsMap.route)
                 }
+            )
+        }
+
+        composable(Screen.SocialFeed.route) {
+            SocialFeedScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onOpenGroup = { groupId ->
+                    navController.navigate(Screen.GroupDetail.createRoute(groupId))
+                },
+                onDiscoverGroups = {
+                    navController.navigate(Screen.DiscoverGroups.route)
+                }
+            )
+        }
+
+        composable(Screen.NearbyPlayers.route) {
+            NearbyPlayersScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onOpenChat = { chatId ->
+                    navController.navigate(Screen.DirectConversation.createRoute(chatId))
+                }
+            )
+        }
+
+        composable(Screen.DirectMessages.route) {
+            DirectMessagesScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onOpenChat = { chatId ->
+                    navController.navigate(Screen.DirectConversation.createRoute(chatId))
+                },
+                onFindPlayers = {
+                    navController.navigate(Screen.NearbyPlayers.route)
+                }
+            )
+        }
+
+        composable(
+            route = Screen.DirectConversation.route,
+            arguments = listOf(navArgument("chatId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            ConversationScreen(
+                chatId = backStackEntry.arguments?.getString("chatId").orEmpty(),
+                onNavigateBack = { navController.popBackStack() }
             )
         }
 
@@ -427,7 +491,12 @@ fun AppNavHost(
                                     sheetScope.launch { playerSheetState.hide() }
                                         .invokeOnCompletion { selectedPlayerId = null }
                                 },
-                                onShare = {}
+                                onShare = {},
+                                canFollow = state.followState.canFollow,
+                                isFollowing = state.followState.isFollowing,
+                                isFollowUpdating = state.followState.isUpdating,
+                                followErrorMessage = state.followState.errorMessage,
+                                onToggleFollow = playerCardViewModel::toggleFollow
                             )
                         }
                         is com.futebadosparcas.ui.player.PlayerCardUiState.Loading -> {

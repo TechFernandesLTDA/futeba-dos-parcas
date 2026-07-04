@@ -34,12 +34,12 @@ class GameChatRepository constructor(
     }
 
     /**
-     * Observa mensagens do chat em tempo real (asc por created_at).
+     * Observa as 50 mensagens mais recentes do chat em tempo real.
      * Erros propagados via close(error) → consumer usa .catch {}.
      */
     fun observeMessages(gameId: String): Flow<List<GameChatMessage>> = callbackFlow {
         val listener = chatCollection(gameId)
-            .orderBy("created_at", Query.Direction.ASCENDING)
+            .orderBy("created_at", Query.Direction.DESCENDING)
             .limit(PAGE_SIZE)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
@@ -50,7 +50,7 @@ class GameChatRepository constructor(
 
                 val messages = snapshot?.documents?.mapNotNull { doc ->
                     doc.toObject(GameChatMessage::class.java)?.copy(id = doc.id)
-                }?.filter { it.deletedAt == null } ?: emptyList()
+                }?.asReversed()?.filter { it.deletedAt == null } ?: emptyList()
 
                 trySend(messages)
             }

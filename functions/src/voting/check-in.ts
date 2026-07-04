@@ -40,8 +40,11 @@ interface CheckInRequest {
   gameId: string;
   lat?: number;
   lng?: number;
+  latitude?: number;
+  longitude?: number;
   accuracy?: number;
   qrToken?: string;
+  qr_token?: string;
 }
 
 interface CheckInTransactionResult {
@@ -372,8 +375,17 @@ export const checkInToGame = onCall(
       );
     }
 
-    const {gameId, lat, lng, accuracy, qrToken} =
-      (data ?? {}) as CheckInRequest;
+    const requestData = (data ?? {}) as CheckInRequest;
+    const {gameId, accuracy} = requestData;
+    const lat = typeof requestData.lat === "number" ?
+      requestData.lat :
+      requestData.latitude;
+    const lng = typeof requestData.lng === "number" ?
+      requestData.lng :
+      requestData.longitude;
+    const qrToken = typeof requestData.qrToken === "string" ?
+      requestData.qrToken :
+      requestData.qr_token;
     if (typeof gameId !== "string") {
       throw new HttpsError(
         "invalid-argument",
@@ -663,6 +675,7 @@ export const checkInToGame = onCall(
     return {
       success: true,
       distance_m: hasGps ? Math.round(dist) : null,
+      distanceMeters: hasGps ? Math.round(dist) : null,
       method: qrValid ? "qr" : "gps",
     };
   },

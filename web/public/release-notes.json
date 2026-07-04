@@ -1,7 +1,65 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-04T13:49:01.301Z",
+  "generatedAt": "2026-07-04T17:49:23.789Z",
   "notes": [
+    {
+      "version": "1.48.0",
+      "buildNumber": null,
+      "releaseDate": "2026-07-04",
+      "type": "minor",
+      "showPopup": true,
+      "published": false,
+      "headline": "A rede social da pelada ficou completa no web, com DMs, reações, comentários, feed, jogadores próximos e vídeos.",
+      "highlights": [
+        {
+          "icon": "chat",
+          "title": "Conversas e comentários",
+          "description": "Mensagens diretas, comentários em jogos e interação nos resultados deixam a resenha mais viva."
+        },
+        {
+          "icon": "group",
+          "title": "Feed social",
+          "description": "Siga jogadores, veja posts dos grupos e descubra parças próximos com consentimento explícito."
+        },
+        {
+          "icon": "videocam",
+          "title": "Mídia do jogo",
+          "description": "Vídeos curtos entram ao lado de fotos, highlights e reações."
+        }
+      ],
+      "added": [
+        "Mensagens diretas 1:1 entre jogadores com lista de conversas, conversa em tempo real e contagem de não lidas.",
+        "Reações reutilizáveis em mural, fotos, highlights, comentários e resultado de votação.",
+        "Comentários livres em jogos, feed social agregado e descoberta de jogadores por proximidade.",
+        "Vídeos curtos anexados ao jogo com player web e validação de upload."
+      ],
+      "improved": [
+        "Mural do grupo agora permite desafixar posts, esconde soft-deletes no web e valida imagem/tamanho com feedback claro.",
+        "Chat em tempo real pagina mensagens antigas sem congelar após 50 itens.",
+        "Check-in web aceita coordenadas de forma consistente, inclusive no fluxo por QR Code.",
+        "Placeholder de imagem do mural acompanha melhor o dark mode."
+      ],
+      "fixed": [],
+      "issueRefs": [
+        3231,
+        3233,
+        3234,
+        3235,
+        3236,
+        3237,
+        3238,
+        3239,
+        3246,
+        3247,
+        3248,
+        3249,
+        3250,
+        3251,
+        3252,
+        3253,
+        3254
+      ]
+    },
     {
       "version": "1.47.0",
       "buildNumber": null,

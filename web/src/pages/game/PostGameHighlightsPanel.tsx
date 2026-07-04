@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   Avatar,
@@ -24,15 +24,22 @@ import {
   SportsHandball as SaveIcon,
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
+import { doc, onSnapshot } from 'firebase/firestore';
 import { EmptyState } from '../../components/common/EmptyState';
+import { ReactionBar } from '../../components/reactions/ReactionBar';
 import { useToast } from '../../contexts/ToastContext';
+import { db } from '../../services/firebase';
 import type { Game, GameConfirmation } from '../../types/game';
+import type { ReactionsMap } from '../../constants/reactions';
+import { createLogger } from '../../utils/logger';
 import {
   HighlightMoment,
   HighlightPlayer,
   buildPostGameHighlights,
   formatPostGameHighlightsShareText,
 } from '../../utils/postGameHighlights';
+
+const logger = createLogger('PostGameHighlightsPanel');
 
 interface PostGameHighlightsPanelProps {
   game: Game;
@@ -65,11 +72,29 @@ export const PostGameHighlightsPanel: React.FC<PostGameHighlightsPanelProps> = (
   const { t } = useTranslation();
   const theme = useTheme();
   const { showSuccess, showError } = useToast();
+  const [highlightReactions, setHighlightReactions] = useState<ReactionsMap>({});
 
   const highlights = useMemo(
     () => buildPostGameHighlights(game, confirmations),
     [game, confirmations],
   );
+
+  useEffect(() => {
+    const unsubscribe = onSnapshot(
+      doc(db, 'post_game_highlights', game.id),
+      (snapshot) => {
+        const data = snapshot.data();
+        setHighlightReactions((data?.reactions as ReactionsMap | undefined) ?? {});
+      },
+      (err) => {
+        setHighlightReactions({});
+        showError(t('reactions.loadError'));
+        logger.error('Error loading post-game highlight reactions:', err);
+      },
+    );
+
+    return () => unsubscribe();
+  }, [game.id, showError, t]);
 
   const momentLabel = useMemo(() => {
     const moment = highlights.moment;
@@ -89,6 +114,10 @@ export const PostGameHighlightsPanel: React.FC<PostGameHighlightsPanelProps> = (
     () => formatPostGameHighlightsShareText(game, highlights),
     [game, highlights],
   );
+  const reactionCreateData = useMemo(() => ({
+    game_id: game.id,
+    reactions: {},
+  }), [game.id]);
   const canUseNativeShare = typeof navigator !== 'undefined' && 'share' in navigator;
 
   const handleShare = async () => {
@@ -209,6 +238,12 @@ export const PostGameHighlightsPanel: React.FC<PostGameHighlightsPanelProps> = (
                 </Grid>
               </Grid>
             </Box>
+
+            <ReactionBar
+              targetPath={`post_game_highlights/${game.id}`}
+              reactions={highlightReactions}
+              createData={reactionCreateData}
+            />
 
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
               <Button

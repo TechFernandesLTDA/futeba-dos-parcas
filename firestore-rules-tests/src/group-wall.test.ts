@@ -216,6 +216,30 @@ describe("groups/{groupId}/wall_posts", () => {
         updated_at: serverTimestamp(),
       })
     );
+    await assertSucceeds(
+      asPlayerA(testEnv).doc(`groups/${GROUP_ID}/wall_posts/post-pin`).update({
+        pinned: false,
+        pinned_by: null,
+        pinned_at: null,
+        updated_at: serverTimestamp(),
+      })
+    );
+  });
+
+  it("owner/admin nao pode atribuir pin a outro uid", async () => {
+    await seedDoc(testEnv, `groups/${GROUP_ID}/wall_posts/post-pin-forged`, {
+      ...validPost,
+      author_id: UID_PLAYER_B,
+      created_at: new Date(),
+    });
+    await assertFails(
+      asPlayerA(testEnv).doc(`groups/${GROUP_ID}/wall_posts/post-pin-forged`).update({
+        pinned: true,
+        pinned_by: UID_PLAYER_C,
+        pinned_at: serverTimestamp(),
+        updated_at: serverTimestamp(),
+      })
+    );
   });
 
   it("membro comum nao pode fixar post", async () => {
@@ -230,6 +254,46 @@ describe("groups/{groupId}/wall_posts", () => {
         pinned_by: UID_PLAYER_B,
         pinned_at: serverTimestamp(),
         updated_at: serverTimestamp(),
+      })
+    );
+  });
+
+  it("membro pode reagir ao post alterando apenas reactions", async () => {
+    await seedDoc(testEnv, `groups/${GROUP_ID}/wall_posts/post-react`, {
+      ...validPost,
+      author_id: UID_PLAYER_B,
+      created_at: new Date(),
+    });
+    await assertSucceeds(
+      asPlayerA(testEnv).doc(`groups/${GROUP_ID}/wall_posts/post-react`).update({
+        "reactions.🔥": [UID_PLAYER_A],
+      })
+    );
+  });
+
+  it("nao-membro nao pode reagir ao post", async () => {
+    await seedDoc(testEnv, `groups/${GROUP_ID}/wall_posts/post-react-outsider`, {
+      ...validPost,
+      author_id: UID_PLAYER_B,
+      created_at: new Date(),
+    });
+    await assertFails(
+      asUser(testEnv, UID_OUTSIDER).doc(`groups/${GROUP_ID}/wall_posts/post-react-outsider`).update({
+        "reactions.🔥": [UID_OUTSIDER],
+      })
+    );
+  });
+
+  it("membro nao pode misturar reacao com edicao de texto", async () => {
+    await seedDoc(testEnv, `groups/${GROUP_ID}/wall_posts/post-react-extra`, {
+      ...validPost,
+      author_id: UID_PLAYER_B,
+      created_at: new Date(),
+    });
+    await assertFails(
+      asPlayerB(testEnv).doc(`groups/${GROUP_ID}/wall_posts/post-react-extra`).update({
+        "reactions.🔥": [UID_PLAYER_B],
+        text: "Tentando misturar alteracoes",
       })
     );
   });
@@ -287,6 +351,112 @@ describe("groups/{groupId}/wall_posts", () => {
     });
     await assertFails(
       asPlayerB(testEnv).doc(`groups/${GROUP_ID}/wall_posts/post-hard-delete`).delete()
+    );
+  });
+
+  it("membro pode listar mural via collection group filtrado por group_id", async () => {
+    await seedDoc(testEnv, `groups/${GROUP_ID}/wall_posts/post-feed-member`, {
+      ...validPost,
+      author_id: UID_PLAYER_B,
+      created_at: new Date(),
+    });
+
+    await assertSucceeds(
+      asPlayerB(testEnv)
+        .collectionGroup("wall_posts")
+        .where("group_id", "in", [GROUP_ID])
+        .orderBy("created_at", "desc")
+        .get()
+    );
+  });
+
+  it("nao-membro nao pode listar mural via collection group", async () => {
+    await seedDoc(testEnv, `groups/${GROUP_ID}/wall_posts/post-feed-outsider`, {
+      ...validPost,
+      author_id: UID_PLAYER_B,
+      created_at: new Date(),
+    });
+
+    await assertFails(
+      asUser(testEnv, UID_OUTSIDER)
+        .collectionGroup("wall_posts")
+        .where("group_id", "in", [GROUP_ID])
+        .orderBy("created_at", "desc")
+        .get()
+    );
+  });
+
+  it("anonimo nao pode listar mural via collection group", async () => {
+    await assertFails(
+      asAnon(testEnv)
+        .collectionGroup("wall_posts")
+        .where("group_id", "in", [GROUP_ID])
+        .orderBy("created_at", "desc")
+        .get()
+    );
+  });
+
+  it("usuario pode ocultar post do proprio feed", async () => {
+    await assertSucceeds(
+      asPlayerB(testEnv)
+        .doc(`users/${UID_PLAYER_B}/hidden_feed_posts/${GROUP_ID}_post-feed-member`)
+        .set({
+          user_id: UID_PLAYER_B,
+          group_id: GROUP_ID,
+          post_id: "post-feed-member",
+          post_key: `${GROUP_ID}_post-feed-member`,
+          target_path: `groups/${GROUP_ID}/wall_posts/post-feed-member`,
+          hidden_at: serverTimestamp(),
+        })
+    );
+  });
+
+  it("usuario nao pode ocultar post no feed de outro usuario", async () => {
+    await assertFails(
+      asPlayerB(testEnv)
+        .doc(`users/${UID_PLAYER_A}/hidden_feed_posts/${GROUP_ID}_post-feed-member`)
+        .set({
+          user_id: UID_PLAYER_A,
+          group_id: GROUP_ID,
+          post_id: "post-feed-member",
+          post_key: `${GROUP_ID}_post-feed-member`,
+          target_path: `groups/${GROUP_ID}/wall_posts/post-feed-member`,
+          hidden_at: serverTimestamp(),
+        })
+    );
+  });
+
+  it("usuario pode denunciar post de mural", async () => {
+    await assertSucceeds(
+      asPlayerB(testEnv)
+        .collection("reports")
+        .add({
+          reporter_id: UID_PLAYER_B,
+          target_type: "group_wall_post",
+          group_id: GROUP_ID,
+          post_id: "post-feed-member",
+          target_path: `groups/${GROUP_ID}/wall_posts/post-feed-member`,
+          reason: "inappropriate_content",
+          status: "OPEN",
+          created_at: serverTimestamp(),
+        })
+    );
+  });
+
+  it("usuario nao pode forjar reporter_id em denuncia", async () => {
+    await assertFails(
+      asPlayerB(testEnv)
+        .collection("reports")
+        .add({
+          reporter_id: UID_PLAYER_A,
+          target_type: "group_wall_post",
+          group_id: GROUP_ID,
+          post_id: "post-feed-member",
+          target_path: `groups/${GROUP_ID}/wall_posts/post-feed-member`,
+          reason: "inappropriate_content",
+          status: "OPEN",
+          created_at: serverTimestamp(),
+        })
     );
   });
 });

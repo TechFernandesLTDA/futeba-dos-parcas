@@ -8,6 +8,9 @@ import com.futebadosparcas.data.model.MVPVoteResult
 import com.futebadosparcas.data.model.MVPVote
 import com.futebadosparcas.domain.model.VoteCategory
 import com.futebadosparcas.data.repository.GameRepository
+import com.futebadosparcas.ui.components.reactions.SocialReactionEmojis
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,7 +27,8 @@ import java.util.Locale
  */
 class VoteResultViewModel(
     private val gameRepository: GameRepository,
-    private val firestore: FirebaseFirestore
+    private val firestore: FirebaseFirestore,
+    private val auth: FirebaseAuth
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<VoteResultUiState>(VoteResultUiState.Loading)
@@ -53,6 +57,9 @@ class VoteResultViewModel(
                 // 1. Buscar detalhes do jogo
                 val gameResult = gameRepository.getGameDetails(gameId)
                 val game = gameResult.getOrNull()
+                val gameSnap = firestore.collection("games").document(gameId).get().await()
+                val voteResultReactions = readReactions(gameSnap.data?.get("vote_result_reactions"))
+                val votingConcludedAt = gameSnap.getTimestamp("voting_concluded_at")?.toDate()
 
                 // 2. Buscar confirmações com dados de votação
                 val confirmationsResult = gameRepository.getGameConfirmations(gameId)
@@ -91,7 +98,10 @@ class VoteResultViewModel(
 
                 _uiState.value = VoteResultUiState.Success(
                     results = votesResult,
-                    gameInfo = gameInfo
+                    gameInfo = gameInfo,
+                    voteResultReactions = voteResultReactions,
+                    votingConcludedAt = votingConcludedAt,
+                    currentUserId = auth.currentUser?.uid
                 )
 
             } catch (e: Exception) {
@@ -255,5 +265,40 @@ class VoteResultViewModel(
             gameInfo = state.gameInfo,
             scope = viewModelScope
         )
+    }
+
+    fun toggleVoteResultReaction(gameId: String, emoji: String) {
+        val state = _uiState.value as? VoteResultUiState.Success ?: return
+        val uid = auth.currentUser?.uid ?: return
+        if (emoji !in SocialReactionEmojis) return
+
+        viewModelScope.launch {
+            val currentEmoji = SocialReactionEmojis.firstOrNull { reaction ->
+                state.voteResultReactions[reaction].orEmpty().contains(uid)
+            }
+            val updates = mutableMapOf<String, Any>()
+            SocialReactionEmojis.forEach { reaction ->
+                if (currentEmoji == emoji || reaction != emoji) {
+                    updates["vote_result_reactions.$reaction"] = FieldValue.arrayRemove(uid)
+                }
+            }
+            if (currentEmoji != emoji) {
+                updates["vote_result_reactions.$emoji"] = FieldValue.arrayUnion(uid)
+            }
+            firestore.collection("games").document(gameId).update(updates).await()
+            currentGameId = null
+            loadResults(gameId)
+        }
+    }
+
+    private fun readReactions(raw: Any?): Map<String, List<String>> {
+        return (raw as? Map<*, *>)
+            ?.mapNotNull { (emoji, users) ->
+                val key = emoji as? String ?: return@mapNotNull null
+                val value = (users as? List<*>)?.filterIsInstance<String>().orEmpty()
+                key to value
+            }
+            ?.toMap()
+            .orEmpty()
     }
 }

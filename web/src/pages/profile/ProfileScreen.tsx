@@ -45,6 +45,8 @@ import {
   Handshake as HandshakeIcon,
   AccessTime as TimeIcon,
   TaskAlt as CommitmentIcon,
+  PersonAdd as PersonAddIcon,
+  PersonRemove as PersonRemoveIcon,
 } from '@mui/icons-material';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useQueryClient } from '@tanstack/react-query';
@@ -63,6 +65,7 @@ import { useTranslation } from 'react-i18next';
 import { getEffectiveRating, type User } from '../../types/user';
 import { isLookingForGameToday } from '../../utils/lookingForGameToday';
 import { useFavoriteSquads } from '../../hooks/useFavoriteSquads';
+import { useFollowUser } from '../../hooks/useFollowUser';
 
 function useCountUp(target: number, duration = 800) {
   const [value, setValue] = useState(0);
@@ -108,7 +111,10 @@ export const ProfileScreen: React.FC = () => {
   const animatedLevel = useCountUp(profile?.level ?? 0);
   const animatedXp = useCountUp(profile?.xp ?? 0);
   const animatedMvps = useCountUp(profile?.mvpCount ?? 0);
+  const animatedFollowers = useCountUp(profile?.followersCount ?? 0);
+  const animatedFollowing = useCountUp(profile?.followingCount ?? 0);
   const lookingForGameToday = isLookingForGameToday(profile);
+  const follow = useFollowUser(isOwnProfile ? null : targetUserId);
 
   if (loading) {
     return <LoadingScreen variant="cards" />;
@@ -204,14 +210,26 @@ export const ProfileScreen: React.FC = () => {
                         mt: 0.5,
                       }}
                     />
-                    {lookingForGameToday && (
-                      <Chip
-                        label={t('profile.lookingForGameActive')}
-                        size="small"
-                        color="success"
-                        sx={{ mt: 0.5, ml: 0.75 }}
-                      />
-                    )}
+                    <Stack direction="row" spacing={0.75} alignItems="center" flexWrap="wrap" sx={{ mt: 0.75 }}>
+                      {lookingForGameToday && (
+                        <Chip
+                          label={t('profile.lookingForGameActive')}
+                          size="small"
+                          color="success"
+                        />
+                      )}
+                      {!isOwnProfile && follow.canFollow && (
+                        <Button
+                          size="small"
+                          variant={follow.following ? 'outlined' : 'contained'}
+                          startIcon={follow.following ? <PersonRemoveIcon /> : <PersonAddIcon />}
+                          onClick={follow.toggle}
+                          disabled={follow.loading || follow.updating}
+                        >
+                          {follow.updating ? t('follow.updating') : follow.following ? t('follow.unfollow') : t('follow.follow')}
+                        </Button>
+                      )}
+                    </Stack>
                   </Box>
                 </Box>
 
@@ -243,6 +261,26 @@ export const ProfileScreen: React.FC = () => {
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
                         {t('profile.mvps')}
+                      </Typography>
+                    </Paper>
+                  </Grid>
+                  <Grid xs={6} sm={4} md={3} lg={3} xl={3}>
+                    <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}>
+                      <Typography variant="h5" fontWeight={700} color="success.main">
+                        {animatedFollowers}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {t('follow.followers')}
+                      </Typography>
+                    </Paper>
+                  </Grid>
+                  <Grid xs={6} sm={4} md={3} lg={3} xl={3}>
+                    <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}>
+                      <Typography variant="h5" fontWeight={700} color="info.main">
+                        {animatedFollowing}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {t('follow.following')}
                       </Typography>
                     </Paper>
                   </Grid>

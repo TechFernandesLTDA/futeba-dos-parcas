@@ -1856,7 +1856,7 @@ describe("location commercial admin callables", () => {
       auth: {uid: "admin-1"},
       data: {
         locationId: "location-1",
-        amountCents: 9900,
+        amountCents: 19990,
         periodKey: "2026-07",
         paidAtIso: "2026-07-05T12:00:00.000Z",
         method: "pix",
@@ -1874,7 +1874,7 @@ describe("location commercial admin callables", () => {
     expect(location).toMatchObject({
       subscription_status: "ACTIVE",
       commercial_status: "ACTIVE",
-      last_payment_amount_cents: 9900,
+      last_payment_amount_cents: 19990,
       last_payment_period_key: "2026-07",
       updated_by: "admin-1",
     });
@@ -1885,7 +1885,7 @@ describe("location commercial admin callables", () => {
     expect(ledger).toMatchObject({
       type: "PAYMENT_REGISTERED",
       actor_user_id: "admin-1",
-      amount_cents: 9900,
+      amount_cents: 19990,
       period_key: "2026-07",
       review_status: "APPROVED",
       previous_subscription_status: "TRIAL",
@@ -1909,7 +1909,7 @@ describe("location commercial admin callables", () => {
       auth: {uid: "admin-1"},
       data: {
         locationId: "location-1",
-        amountCents: 15000,
+        amountCents: 19990,
         periodKey: "2026-09",
         method: "boleto",
         notes: "Regularizado",
@@ -1919,7 +1919,7 @@ describe("location commercial admin callables", () => {
     const [, ledger] = findFirstDoc("locations/location-1/subscription_ledger");
     expect(ledger).toMatchObject({
       type: "PAYMENT_REGISTERED",
-      amount_cents: 15000,
+      amount_cents: 19990,
       period_key: "2026-09",
       method: "boleto",
       previous_subscription_status: "OVERDUE",
@@ -1927,6 +1927,81 @@ describe("location commercial admin callables", () => {
       previous_commercial_status: "SUSPENDED",
       next_commercial_status: "ACTIVE",
       reason: "Regularizado",
+    });
+  });
+
+  it("nao ativa assinatura quando pagamento admin nao cobre mensalidade", async () => {
+    firestoreStore.set("locations/location-1", {
+      ...firestoreStore.get("locations/location-1"),
+      subscription_status: "OVERDUE",
+      commercial_status: "SUSPENDED",
+      monthly_fee_cents: 19990,
+    });
+
+    await expect(registerLocationSubscriptionPayment({
+      auth: {uid: "admin-1"},
+      data: {
+        locationId: "location-1",
+        amountCents: 9900,
+        periodKey: "2026-07",
+      },
+    })).resolves.toMatchObject({
+      success: true,
+      subscriptionStatus: "OVERDUE",
+    });
+
+    expect(firestoreStore.get("locations/location-1")).toMatchObject({
+      subscription_status: "OVERDUE",
+      commercial_status: "SUSPENDED",
+      last_payment_amount_cents: 9900,
+      last_payment_period_key: "2026-07",
+    });
+    const [, ledger] = findFirstDoc("locations/location-1/subscription_ledger");
+    expect(ledger).toMatchObject({
+      type: "PAYMENT_REGISTERED",
+      next_subscription_status: "OVERDUE",
+      next_commercial_status: "SUSPENDED",
+    });
+  });
+
+  it("ativa assinatura quando pagamento admin completa mensalidade acumulada", async () => {
+    firestoreStore.set("locations/location-1", {
+      ...firestoreStore.get("locations/location-1"),
+      subscription_status: "OVERDUE",
+      commercial_status: "SUSPENDED",
+      monthly_fee_cents: 19990,
+    });
+    firestoreStore.set("locations/location-1/subscription_payments/payment-old", {
+      amount_cents: 9900,
+      period_key: "2026-07",
+      status: "APPROVED",
+      review_status: "APPROVED",
+    });
+
+    await expect(registerLocationSubscriptionPayment({
+      auth: {uid: "admin-1"},
+      data: {
+        locationId: "location-1",
+        amountCents: 10090,
+        periodKey: "2026-07",
+      },
+    })).resolves.toMatchObject({
+      success: true,
+      subscriptionStatus: "ACTIVE",
+    });
+
+    expect(firestoreStore.get("locations/location-1")).toMatchObject({
+      subscription_status: "ACTIVE",
+      commercial_status: "ACTIVE",
+      last_payment_amount_cents: 10090,
+      last_payment_period_key: "2026-07",
+    });
+    const [, ledger] = findFirstDoc("locations/location-1/subscription_ledger");
+    expect(ledger).toMatchObject({
+      type: "PAYMENT_REGISTERED",
+      amount_cents: 10090,
+      next_subscription_status: "ACTIVE",
+      next_commercial_status: "ACTIVE",
     });
   });
 
@@ -2171,7 +2246,7 @@ describe("location commercial admin callables", () => {
 
   it("admin aprova comprovante pendente e ativa assinatura", async () => {
     firestoreStore.set("locations/location-1/subscription_payments/payment-1", {
-      amount_cents: 12990,
+      amount_cents: 19990,
       period_key: "2026-07",
       paid_at: new Date("2026-07-08T12:00:00.000Z"),
       receipt_storage_path:
@@ -2207,7 +2282,7 @@ describe("location commercial admin callables", () => {
     expect(firestoreStore.get("locations/location-1")).toMatchObject({
       subscription_status: "ACTIVE",
       commercial_status: "ACTIVE",
-      last_payment_amount_cents: 12990,
+      last_payment_amount_cents: 19990,
       last_payment_period_key: "2026-07",
       last_payment_id: "payment-1",
       updated_by: "admin-1",
@@ -2216,7 +2291,7 @@ describe("location commercial admin callables", () => {
     expect(ledger).toMatchObject({
       type: "PAYMENT_RECEIPT_APPROVED",
       actor_user_id: "admin-1",
-      amount_cents: 12990,
+      amount_cents: 19990,
       period_key: "2026-07",
       payment_id: "payment-1",
       review_status: "APPROVED",
@@ -2236,7 +2311,7 @@ describe("location commercial admin callables", () => {
       commercial_status: "SUSPENDED",
     });
     firestoreStore.set("locations/location-1/subscription_payments/payment-1", {
-      amount_cents: 15990,
+      amount_cents: 19990,
       period_key: "2026-08",
       method: "pix",
       paid_at: new Date("2026-08-08T12:00:00.000Z"),
@@ -2258,12 +2333,109 @@ describe("location commercial admin callables", () => {
     const [, ledger] = findFirstDoc("locations/location-1/subscription_ledger");
     expect(ledger).toMatchObject({
       type: "PAYMENT_RECEIPT_APPROVED",
-      amount_cents: 15990,
+      amount_cents: 19990,
       period_key: "2026-08",
       method: "pix",
       previous_subscription_status: "OVERDUE",
       next_subscription_status: "ACTIVE",
       previous_commercial_status: "SUSPENDED",
+      next_commercial_status: "ACTIVE",
+    });
+  });
+
+  it("aprova comprovante parcial sem ativar assinatura", async () => {
+    firestoreStore.set("locations/location-1", {
+      ...firestoreStore.get("locations/location-1"),
+      subscription_status: "OVERDUE",
+      commercial_status: "SUSPENDED",
+      monthly_fee_cents: 19990,
+    });
+    firestoreStore.set("locations/location-1/subscription_payments/payment-1", {
+      amount_cents: 9900,
+      period_key: "2026-07",
+      paid_at: new Date("2026-07-08T12:00:00.000Z"),
+      receipt_storage_path:
+        "locations/location-1/subscription_receipts/owner-1/2026-07.pdf",
+      status: "PENDING_REVIEW",
+      review_status: "PENDING_REVIEW",
+    });
+
+    await expect(reviewLocationSubscriptionReceipt({
+      auth: {uid: "admin-1", token: {role: "ADMIN"}},
+      data: {
+        locationId: "location-1",
+        paymentId: "payment-1",
+        decision: "APPROVED",
+      },
+    })).resolves.toMatchObject({
+      success: true,
+      reviewStatus: "APPROVED",
+      subscriptionStatus: "OVERDUE",
+    });
+
+    expect(firestoreStore.get("locations/location-1")).toMatchObject({
+      subscription_status: "OVERDUE",
+      commercial_status: "SUSPENDED",
+      last_payment_amount_cents: 9900,
+      last_payment_period_key: "2026-07",
+      last_payment_id: "payment-1",
+    });
+    const [, ledger] = findFirstDoc("locations/location-1/subscription_ledger");
+    expect(ledger).toMatchObject({
+      type: "PAYMENT_RECEIPT_APPROVED",
+      next_subscription_status: "OVERDUE",
+      next_commercial_status: "SUSPENDED",
+    });
+  });
+
+  it("ativa assinatura quando aprovacao de comprovante completa mensalidade acumulada", async () => {
+    firestoreStore.set("locations/location-1", {
+      ...firestoreStore.get("locations/location-1"),
+      subscription_status: "OVERDUE",
+      commercial_status: "SUSPENDED",
+      monthly_fee_cents: 19990,
+    });
+    firestoreStore.set("locations/location-1/subscription_payments/payment-old", {
+      amount_cents: 9900,
+      period_key: "2026-07",
+      status: "APPROVED",
+      review_status: "APPROVED",
+    });
+    firestoreStore.set("locations/location-1/subscription_payments/payment-1", {
+      amount_cents: 10090,
+      period_key: "2026-07",
+      paid_at: new Date("2026-07-08T12:00:00.000Z"),
+      receipt_storage_path:
+        "locations/location-1/subscription_receipts/owner-1/2026-07.pdf",
+      status: "PENDING_REVIEW",
+      review_status: "PENDING_REVIEW",
+    });
+
+    await expect(reviewLocationSubscriptionReceipt({
+      auth: {uid: "admin-1", token: {role: "ADMIN"}},
+      data: {
+        locationId: "location-1",
+        paymentId: "payment-1",
+        decision: "APPROVED",
+      },
+    })).resolves.toMatchObject({
+      success: true,
+      reviewStatus: "APPROVED",
+      subscriptionStatus: "ACTIVE",
+    });
+
+    expect(firestoreStore.get("locations/location-1")).toMatchObject({
+      subscription_status: "ACTIVE",
+      commercial_status: "ACTIVE",
+      last_payment_amount_cents: 10090,
+      last_payment_period_key: "2026-07",
+      last_payment_id: "payment-1",
+    });
+    const [, ledger] = findFirstDoc("locations/location-1/subscription_ledger");
+    expect(ledger).toMatchObject({
+      type: "PAYMENT_RECEIPT_APPROVED",
+      amount_cents: 10090,
+      next_subscription_status: "ACTIVE",
       next_commercial_status: "ACTIVE",
     });
   });
