@@ -24,6 +24,26 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ## Android
 
+### [1.36.0] - 2026-07-04
+
+#### Adicionado
+- Repositórios, ViewModels, telas Compose e rotas para DMs, follow, feed social, jogadores próximos, comentários e vídeos.
+- `SocialReactionBar` reutilizável e integrações em mural, jogo e votação.
+- Strings em `pt-BR`, `en` e `es` para as novas superfícies sociais.
+
+#### Mudado
+- `AppNavGraph`, módulos Koin, home e telas de jogo/perfil foram integrados ao épico social.
+- `GameChatRepository` passou a ordenar desc + reverse local para evitar congelamento após 50 mensagens.
+- `versions.json` e `app/build.gradle.kts` foram alinhados para Android 1.36.0, build 63.
+
+#### Corrigido
+- Mural Android acompanha o contrato de rules para pin/unpin e validação de mídia.
+
+#### Segurança
+- Fluxos Android dependem das novas rules/callables para DMs, follows, localização, vídeos e comentários.
+
+_Issues: #3231, #3233, #3234, #3235, #3236, #3237, #3238, #3239, #3247, #3248, #3249 · PRs: #3258_
+
 ### [1.35.0] - 2026-07-04
 
 #### Adicionado
