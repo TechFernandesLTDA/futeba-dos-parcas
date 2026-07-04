@@ -1,6 +1,6 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-04T17:49:23.789Z",
+  "generatedAt": "2026-07-04T21:53:04.567Z",
   "notes": [
     {
       "version": "1.48.0",
@@ -8,7 +8,7 @@
       "releaseDate": "2026-07-04",
       "type": "minor",
       "showPopup": true,
-      "published": false,
+      "published": true,
       "headline": "A rede social da pelada ficou completa no web, com DMs, reações, comentários, feed, jogadores próximos e vídeos.",
       "highlights": [
         {
