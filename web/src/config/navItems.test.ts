@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { getActiveNavIndex, getSectionFallback, NAV_ITEMS } from './navItems';
 
-// Índices em NAV_ITEMS: 0=Home, 1=Jogos, 2=Grupos, 3=Liga, 4=Perfil, 5=Notif.
+// Índices em NAV_ITEMS: 0=Home, 1=Jogos, 2=Grupos, 3=Liga, 4=Perfil, 5=Notif, 6=DMs.
 
 describe('getActiveNavIndex (#2226)', () => {
   it('destaca Home na raiz sem tab', () => {
@@ -93,7 +93,7 @@ describe('getSectionFallback (#2233/#2224)', () => {
     expect(getSectionFallback('/totally-unknown')).toBe('/');
   });
 
-  it('NAV_ITEMS expõe os 6 itens esperados na ordem canônica', () => {
+  it('NAV_ITEMS expõe os 7 itens esperados na ordem canônica', () => {
     expect(NAV_ITEMS.map((i) => i.path)).toEqual([
       '/?tab=0',
       '/?tab=1',
@@ -101,6 +101,7 @@ describe('getSectionFallback (#2233/#2224)', () => {
       '/?tab=3',
       '/?tab=4',
       '/notifications',
+      '/messages',
     ]);
   });
 });
