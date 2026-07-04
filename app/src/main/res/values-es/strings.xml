@@ -266,7 +266,6 @@
     <string name="connected_accounts_unlink_confirm_desc">Solo podrás iniciar sesión con email y contraseña. ¿Desvincular la cuenta de Google?</string>
     <string name="auth_error_credential_in_use">Esta cuenta de Google ya está vinculada a otra cuenta. Inicia sesión con tu método original y vincula Google desde tu perfil.</string>
 
-<<<<<<< HEAD
     <!-- Group Wall -->
     <string name="group_wall_title">Muro del Grupo</string>
     <string name="group_wall_subtitle">Charla, fotos y avisos</string>

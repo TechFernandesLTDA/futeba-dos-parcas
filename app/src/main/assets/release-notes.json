@@ -1,6 +1,6 @@
 {
   "platform": "android",
-  "generatedAt": "2026-07-04T04:32:50.123Z",
+  "generatedAt": "2026-07-04T13:49:01.298Z",
   "notes": [
     {
       "version": "1.34.0",
@@ -9,8 +9,13 @@
       "type": "minor",
       "showPopup": true,
       "published": true,
-      "headline": "**Mural de provocações do grupo**: posts, fotos e avisos dos parças direto no app Android.",
+      "headline": "**Rede social da pelada**: chat por jogo e mural de provocações do grupo chegam ao app Android.",
       "highlights": [
+        {
+          "icon": "chat",
+          "title": "Chat do jogo",
+          "description": "Converse em tempo real com os parças confirmados no jogo."
+        },
         {
           "icon": "chat_bubble",
           "title": "Mural do grupo",
@@ -20,14 +25,10 @@
           "icon": "push_pin",
           "title": "Posts fixados",
           "description": "Owner/admin podem fixar avisos no topo."
-        },
-        {
-          "icon": "image",
-          "title": "Fotos no mural",
-          "description": "Posts podem incluir uma foto anexa."
         }
       ],
       "added": [
+        "Chat em tempo real por jogo, integrado na tela de detalhes do jogo, apenas para jogadores confirmados.",
         "Tela `GroupWallScreen` com lista em tempo real, estados vazio/erro/carregando e FAB para criar post.",
         "Composer de post com texto e seleção de foto da galeria.",
         "Edição, exclusão (soft-delete) e fixação de posts conforme permissões."
@@ -35,6 +36,7 @@
       "improved": [],
       "fixed": [],
       "issueRefs": [
+        3230,
         3232
       ]
     },

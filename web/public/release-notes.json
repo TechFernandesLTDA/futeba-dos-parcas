@@ -1,6 +1,6 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-04T04:32:50.125Z",
+  "generatedAt": "2026-07-04T13:49:01.301Z",
   "notes": [
     {
       "version": "1.47.0",
@@ -9,8 +9,13 @@
       "type": "minor",
       "showPopup": true,
       "published": true,
-      "headline": "**Mural de provocações do grupo**: posts, fotos, fixação e zoeira dos parças agora ficam no próprio grupo.",
+      "headline": "**Rede social da pelada**: chat por jogo e mural de provocações do grupo chegam ao web.",
       "highlights": [
+        {
+          "icon": "chat",
+          "title": "Chat do jogo",
+          "description": "Converse em tempo real com os parças confirmados no jogo."
+        },
         {
           "icon": "chat_bubble",
           "title": "Mural do grupo",
@@ -20,23 +25,19 @@
           "icon": "push_pin",
           "title": "Posts fixados",
           "description": "Admin/owner podem fixar avisos importantes no topo do mural."
-        },
-        {
-          "icon": "notifications",
-          "title": "Notificações",
-          "description": "Novo toggle \"Posts do mural\" nas preferências de notificações push."
         }
       ],
       "added": [
-        "Nova aba \"Mural\" em `GroupDetailScreen` com lista em tempo real, estados vazio/erro/carregando e paginação.",
-        "Composer de post com suporte a texto (até 500 caracteres) e anexo de foto.",
-        "Edição e exclusão (soft-delete) de posts pelo autor; exclusão e fixação também permitidas para owner/admin."
+        "Chat em tempo real por jogo, acessível na tela de detalhes do jogo, apenas para jogadores confirmados.",
+        "Mural do grupo com posts, fotos, fixação, edição e exclusão (soft-delete) conforme permissões.",
+        "Composer de post com suporte a texto (até 500 caracteres) e anexo de foto."
       ],
       "improved": [
         "`NotificationSettingsScreen` agora permite silenciar notificações de novos posts do mural."
       ],
       "fixed": [],
       "issueRefs": [
+        3230,
         3232
       ]
     },
