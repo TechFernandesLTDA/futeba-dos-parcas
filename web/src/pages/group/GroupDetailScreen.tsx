@@ -369,9 +369,12 @@ export const GroupDetailScreen: React.FC = () => {
   const [deleteLoading, setDeleteLoading] = useState(false);
 
   const myMember = members.find((m) => m.userId === currentUser?.uid);
-  const isOwner = myMember?.role === 'OWNER';
-  const isAdmin = myMember?.role === 'ADMIN' || isOwner;
-  const isMember = !!myMember;
+  const isGroupOwner = group?.ownerId === currentUser?.uid;
+  const hasActiveMember = myMember?.status === 'ACTIVE';
+  const isLegacyOwnerMember = isGroupOwner && myMember?.status === undefined;
+  const isOwner = isGroupOwner || (myMember?.role === 'OWNER' && hasActiveMember);
+  const isAdmin = isOwner || (myMember?.role === 'ADMIN' && hasActiveMember);
+  const isMember = isGroupOwner || hasActiveMember || isLegacyOwnerMember;
   const canCreateGroupGame = isMember;
   // Habilita listener de join request apenas se nao-membro em grupo publico.
   const shouldTrackJoinRequest = !isMember && group?.isPublic === true;
