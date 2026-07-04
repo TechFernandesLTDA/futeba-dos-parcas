@@ -2,6 +2,7 @@ package com.futebadosparcas.ui.groups
 
 import android.content.Context
 import android.net.Uri
+import android.provider.OpenableColumns
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
@@ -42,9 +43,25 @@ private const val MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024L
 
 private fun getUriSizeBytes(context: Context, uri: Uri): Long {
     return try {
-        context.contentResolver.openFileDescriptor(uri, "r")?.use { it.statSize } ?: 0L
+        val descriptorSize = context.contentResolver
+            .openFileDescriptor(uri, "r")
+            ?.use { it.statSize } ?: -1L
+        if (descriptorSize >= 0L) {
+            return descriptorSize
+        }
+
+        context.contentResolver
+            .query(uri, arrayOf(OpenableColumns.SIZE), null, null, null)
+            ?.use { cursor ->
+                val sizeIndex = cursor.getColumnIndex(OpenableColumns.SIZE)
+                if (sizeIndex >= 0 && cursor.moveToFirst() && !cursor.isNull(sizeIndex)) {
+                    cursor.getLong(sizeIndex)
+                } else {
+                    Long.MAX_VALUE
+                }
+            } ?: Long.MAX_VALUE
     } catch (_: Exception) {
-        0L
+        Long.MAX_VALUE
     }
 }
 

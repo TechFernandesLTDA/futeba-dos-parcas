@@ -97,13 +97,13 @@ async function shareActiveGroup(uidA: string, uidB: string): Promise<boolean> {
     .limit(20)
     .get();
 
-  for (const member of memberships.docs) {
+  const checks = memberships.docs.map(async (member) => {
     const groupRef = member.ref.parent.parent;
-    if (!groupRef) continue;
+    if (!groupRef) return false;
     const peer = await groupRef.collection("members").doc(uidB).get();
-    if (peer.exists && peer.data()?.status === "ACTIVE") return true;
-  }
-  return false;
+    return peer.exists && peer.data()?.status === "ACTIVE";
+  });
+  return (await Promise.all(checks)).some(Boolean);
 }
 
 /**
@@ -114,20 +114,30 @@ async function shareActiveGroup(uidA: string, uidB: string): Promise<boolean> {
  * @return {Promise<boolean>} true se compartilham jogo.
  */
 async function shareConfirmedGame(uidA: string, uidB: string): Promise<boolean> {
-  const confirmations = await db()
-    .collection("confirmations")
-    .where("user_id", "==", uidA)
-    .where("status", "==", "CONFIRMED")
-    .limit(50)
-    .get();
+  const [aConfirmations, bConfirmations] = await Promise.all([
+    db()
+      .collection("confirmations")
+      .where("user_id", "==", uidA)
+      .where("status", "==", "CONFIRMED")
+      .limit(100)
+      .get(),
+    db()
+      .collection("confirmations")
+      .where("user_id", "==", uidB)
+      .where("status", "==", "CONFIRMED")
+      .limit(100)
+      .get(),
+  ]);
 
-  for (const confirmation of confirmations.docs) {
+  const aGameIds = new Set(
+    aConfirmations.docs
+      .map((confirmation) => confirmation.data().game_id)
+      .filter(isNonEmptyString)
+  );
+  return bConfirmations.docs.some((confirmation) => {
     const gameId = confirmation.data().game_id;
-    if (!isNonEmptyString(gameId)) continue;
-    const peer = await db().doc(`confirmations/${gameId}_${uidB}`).get();
-    if (peer.exists && peer.data()?.status === "CONFIRMED") return true;
-  }
-  return false;
+    return isNonEmptyString(gameId) && aGameIds.has(gameId);
+  });
 }
 
 /**

@@ -2,7 +2,9 @@ package com.futebadosparcas.data.repository
 
 import android.content.Context
 import android.net.Uri
+import android.provider.OpenableColumns
 import com.futebadosparcas.data.model.GroupWallPost
+import com.futebadosparcas.ui.components.reactions.SocialReactionEmojis
 import com.futebadosparcas.util.AppLogger
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
@@ -39,7 +41,6 @@ class GroupWallRepository constructor(
         private const val MAX_TEXT_LENGTH = 500
         private const val PAGE_SIZE = 20L
         private const val MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024L
-        private val ALLOWED_REACTIONS = listOf("🔥", "😂", "👏", "😡", "💀", "🤡", "👑", "⚽")
     }
 
     /**
@@ -198,17 +199,17 @@ class GroupWallRepository constructor(
         return try {
             val currentUser = auth.currentUser
                 ?: throw IllegalStateException("Usuário não autenticado")
-            require(ALLOWED_REACTIONS.contains(emoji)) {
+            require(SocialReactionEmojis.contains(emoji)) {
                 "Reação inválida"
             }
 
             val uid = currentUser.uid
-            val currentEmoji = ALLOWED_REACTIONS.firstOrNull { reaction ->
+            val currentEmoji = SocialReactionEmojis.firstOrNull { reaction ->
                 reactions?.get(reaction)?.contains(uid) == true
             }
             val updates = mutableMapOf<String, Any>()
 
-            ALLOWED_REACTIONS.forEach { reaction ->
+            SocialReactionEmojis.forEach { reaction ->
                 if (currentEmoji == emoji || reaction != emoji) {
                     updates["reactions.$reaction"] = FieldValue.arrayRemove(uid)
                 }
@@ -284,10 +285,26 @@ class GroupWallRepository constructor(
 
     private fun getFileSize(uri: Uri): Long {
         return try {
-            context.contentResolver.openFileDescriptor(uri, "r")?.use { it.statSize } ?: 0L
+            val descriptorSize = context.contentResolver
+                .openFileDescriptor(uri, "r")
+                ?.use { it.statSize } ?: -1L
+            if (descriptorSize >= 0L) {
+                return descriptorSize
+            }
+
+            context.contentResolver
+                .query(uri, arrayOf(OpenableColumns.SIZE), null, null, null)
+                ?.use { cursor ->
+                    val sizeIndex = cursor.getColumnIndex(OpenableColumns.SIZE)
+                    if (sizeIndex >= 0 && cursor.moveToFirst() && !cursor.isNull(sizeIndex)) {
+                        cursor.getLong(sizeIndex)
+                    } else {
+                        Long.MAX_VALUE
+                    }
+                } ?: Long.MAX_VALUE
         } catch (e: Exception) {
             AppLogger.w(TAG) { "Erro ao obter tamanho da imagem: ${e.message}" }
-            0L
+            Long.MAX_VALUE
         }
     }
 }

@@ -114,11 +114,11 @@ class GameVideosRepository(
     }.onFailure { AppLogger.e(TAG, "Erro ao enviar vídeo do jogo $gameId", it) }
 
     suspend fun deleteVideo(video: GameVideo): Result<Unit> = runCatching {
-        firestore.collection("game_videos").document(video.id).delete().await()
-        runCatching { storage.reference.child(video.storagePath).delete().await() }
+        storage.reference.child(video.storagePath).delete().await()
         video.thumbnailPath?.takeIf { it.isNotBlank() }?.let { path ->
-            runCatching { storage.reference.child(path).delete().await() }
+            storage.reference.child(path).delete().await()
         }
+        firestore.collection("game_videos").document(video.id).delete().await()
         Unit
     }.onFailure { AppLogger.e(TAG, "Erro ao excluir vídeo ${video.id}", it) }
 
