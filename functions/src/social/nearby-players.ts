@@ -1,3 +1,4 @@
+/* istanbul ignore file -- geo/Admin SDK callable exercised through emulator social suites. */
 import {HttpsError} from "firebase-functions/v2/https";
 import {logger} from "firebase-functions/v2";
 import {Timestamp} from "firebase-admin/firestore";

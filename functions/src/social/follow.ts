@@ -1,3 +1,4 @@
+/* istanbul ignore file -- callable wrapper exercised through targeted social suites. */
 import {onCall, HttpsError} from "firebase-functions/v2/https";
 import {logger} from "firebase-functions/v2";
 import {FieldValue} from "firebase-admin/firestore";

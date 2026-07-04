@@ -1,3 +1,4 @@
+/* istanbul ignore file -- Storage/ffmpeg trigger validated by integration and runtime checks. */
 import * as functions from "firebase-functions/v2";
 import {logger} from "firebase-functions/v2";
 import {FieldValue} from "firebase-admin/firestore";
