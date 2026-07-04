@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 import {
   Card,
   CardContent,
-  Avatar,
   Typography,
   IconButton,
   Menu,
@@ -31,7 +30,7 @@ interface WallPostCardProps {
   canManage: boolean;
   onEdit?: (post: WallPost) => void;
   onDelete?: (post: WallPost) => void;
-  onTogglePin?: (post: WallPost, pinned: boolean) => void;
+  onTogglePin?: (postId: string, pinned: boolean) => void;
 }
 
 export const WallPostCard: React.FC<WallPostCardProps> = ({
@@ -152,7 +151,7 @@ export const WallPostCard: React.FC<WallPostCardProps> = ({
         {canManage && onTogglePin && (
           <MenuItem
             onClick={() => {
-              onTogglePin(post, !post.pinned);
+              onTogglePin(post.id, !post.pinned);
               handleCloseMenu();
             }}
           >

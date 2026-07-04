@@ -86,7 +86,7 @@ fun WallPostCard(
                     )
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
-                            text = DataConverter.formatRelativeTime(post.createdAt),
+                            text = if (post.createdAt != null) DataConverter().formatRelativeTime(post.createdAt!!) else "",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

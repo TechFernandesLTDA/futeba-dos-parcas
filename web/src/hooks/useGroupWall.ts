@@ -66,7 +66,14 @@ function mapPost(docSnap: QueryDocumentSnapshot<DocumentData>): WallPost {
     mediaPath: (converted.mediaPath as string | null) ?? (raw.media_path as string | null) ?? null,
     mediaType: (converted.mediaType as string | null) ?? (raw.media_type as string | null) ?? null,
     thumbnailPath: (converted.thumbnailPath as string | null) ?? (raw.thumbnail_path as string | null) ?? null,
-    highlightRef: (converted.highlightRef as { gameId: string; highlightId: string } | null) ?? (raw.highlight_ref as { game_id: string; highlight_id: string } | null) ?? null,
+    highlightRef: (converted.highlightRef as { gameId: string; highlightId: string } | null) ??
+      ((raw.highlight_ref as { game_id?: unknown; highlight_id?: unknown } | undefined)
+        ? {
+            gameId: String((raw.highlight_ref as { game_id?: unknown }).game_id),
+            highlightId: String((raw.highlight_ref as { highlight_id?: unknown }).highlight_id),
+          }
+        : null) ??
+      null,
     pinned: (converted.pinned as boolean) ?? (raw.pinned as boolean) ?? false,
     pinnedBy: (converted.pinnedBy as string | null) ?? (raw.pinned_by as string | null) ?? null,
     createdAt: toDate(raw.created_at as never),

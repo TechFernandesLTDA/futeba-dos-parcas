@@ -107,5 +107,5 @@ data class HighlightRef(
     @set:PropertyName("highlight_id")
     var highlightId: String = ""
 ) {
-    constructor() : this()
+    constructor() : this("", "")
 }

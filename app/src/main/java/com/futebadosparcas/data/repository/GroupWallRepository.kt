@@ -208,7 +208,7 @@ class GroupWallRepository constructor(
                 try {
                     storage.getReference(mediaPath).delete().await()
                 } catch (e: Exception) {
-                    AppLogger.w(TAG, "Falha ao deletar mídia $mediaPath", e)
+                    AppLogger.w(TAG) { "Falha ao deletar mídia $mediaPath: ${e.message}" }
                 }
             }
 
