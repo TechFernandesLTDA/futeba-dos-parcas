@@ -19,6 +19,7 @@ import {
 let testEnv: RulesTestEnvironment;
 
 const GROUP_ID = "group-wall-test";
+const LEGACY_OWNER_GROUP_ID = "group-wall-legacy-owner";
 const UID_OUTSIDER = "uid-wall-outsider";
 
 const validPost = {
@@ -70,6 +71,19 @@ beforeAll(async () => {
     role: "ADMIN",
     status: "ACTIVE",
   });
+
+  await seedDoc(testEnv, `groups/${LEGACY_OWNER_GROUP_ID}`, {
+    name: "Legacy Owner Wall Test Group",
+    owner_id: UID_PLAYER_A,
+    is_public: false,
+    status: "ACTIVE",
+    member_count: 1,
+  });
+
+  await seedDoc(testEnv, `groups/${LEGACY_OWNER_GROUP_ID}/members/${UID_PLAYER_A}`, {
+    user_id: UID_PLAYER_A,
+    role: "OWNER",
+  });
 });
 
 afterAll(async () => {
@@ -117,6 +131,18 @@ describe("groups/{groupId}/wall_posts", () => {
         ...validPost,
         author_id: UID_PLAYER_C,
         text: "Aviso oficial",
+        created_at: serverTimestamp(),
+      })
+    );
+  });
+
+  it("owner legado sem status ACTIVE no member doc pode criar post", async () => {
+    await assertSucceeds(
+      asPlayerA(testEnv).doc(`groups/${LEGACY_OWNER_GROUP_ID}/wall_posts/post-legacy-owner`).set({
+        ...validPost,
+        group_id: LEGACY_OWNER_GROUP_ID,
+        author_id: UID_PLAYER_A,
+        text: "Post do owner legado",
         created_at: serverTimestamp(),
       })
     );

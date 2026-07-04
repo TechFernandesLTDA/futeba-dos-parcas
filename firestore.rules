@@ -250,6 +250,17 @@ service cloud.firestore {
         && memberDoc.data.status == 'ACTIVE';
     }
 
+    // Compatibilidade para grupos criados no web antes do member OWNER gravar
+    // status='ACTIVE'. O owner_id do documento do grupo continua sendo a fonte
+    // autoritativa para permitir o mural sem liberar visitantes/public groups.
+    function canUseGroupWall(groupId) {
+      return isGroupMember(groupId) || isGroupOwnerById(groupId);
+    }
+
+    function canModerateGroupWall(groupId) {
+      return isGroupAdmin(groupId) || isGroupOwnerById(groupId);
+    }
+
     // C-003 FIX: Valida se o ID de confirmation segue o padrao esperado
     // Padrão: {gameId}_{userId}
     function isValidConfirmationId(confirmationId, gameId, userId) {
@@ -2127,15 +2138,15 @@ service cloud.firestore {
       // Issue #3232: feed social UGC por grupo.
       // ============================================
       match /wall_posts/{postId} {
-        // Leitura: membros ativos do grupo (inclui owner/admin)
+        // Leitura: membros ativos do grupo (inclui owner/admin) ou owner legado
         allow read: if isAuthenticated() && (
           isAdmin() ||
-          isGroupMember(groupId)
+          canUseGroupWall(groupId)
         );
 
-        // Create: apenas membros ativos de grupo ativo
+        // Create: apenas membros ativos/owner legado de grupo ativo
         allow create: if isAuthenticated() &&
-          isGroupMember(groupId) &&
+          canUseGroupWall(groupId) &&
           isGroupActive(groupId) &&
           request.resource.data.author_id == userId() &&
           request.resource.data.group_id == groupId &&
@@ -2167,14 +2178,14 @@ service cloud.firestore {
           ) ||
           // Owner/admin fixa/desfixa post
           (
-            isGroupAdmin(groupId) &&
+            canModerateGroupWall(groupId) &&
             onlyAllowedFields(['pinned', 'pinned_by', 'pinned_at', 'updated_at']) &&
             request.resource.data.pinned_at == request.time &&
             request.resource.data.updated_at == request.time
           ) ||
           // Autor ou owner/admin faz soft-delete
           (
-            (resource.data.author_id == userId() || isGroupAdmin(groupId)) &&
+            (resource.data.author_id == userId() || canModerateGroupWall(groupId)) &&
             onlyAllowedFields(['deleted_at', 'deleted_by', 'updated_at']) &&
             request.resource.data.deleted_at == request.time &&
             request.resource.data.deleted_by == userId() &&
