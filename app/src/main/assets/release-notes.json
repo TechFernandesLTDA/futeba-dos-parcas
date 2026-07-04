@@ -1,7 +1,57 @@
 {
   "platform": "android",
-  "generatedAt": "2026-07-04T17:49:23.786Z",
+  "generatedAt": "2026-07-04T22:37:09.976Z",
   "notes": [
+    {
+      "version": "1.36.0",
+      "buildNumber": 63,
+      "releaseDate": "2026-07-04",
+      "type": "minor",
+      "showPopup": true,
+      "published": true,
+      "headline": "A rede social da pelada chegou mais completa ao Android, agora com versionamento final 1.36.0.",
+      "highlights": [
+        {
+          "icon": "chat",
+          "title": "Conversas",
+          "description": "Mensagens diretas, comentários de jogo e chat mais estável."
+        },
+        {
+          "icon": "groups",
+          "title": "Feed e parças",
+          "description": "Siga jogadores, veja o feed social e encontre jogadores próximos com permissão."
+        },
+        {
+          "icon": "videocam",
+          "title": "Vídeos e reações",
+          "description": "Vídeos curtos, reações e resultado de votação mais interativo."
+        }
+      ],
+      "added": [
+        "Telas Android para DMs, feed social, jogadores próximos, vídeos, comentários e interações no resultado de votação.",
+        "Botões de seguir e mensagem integrados a perfis/cartões de jogador.",
+        "Reações reutilizáveis em conteúdos sociais."
+      ],
+      "improved": [
+        "Mural do grupo valida imagem grande antes do upload e permite desafixar posts.",
+        "Chat do jogo usa paginação segura para históricos maiores.",
+        "Versionamento Android atualizado para 1.36.0, build 63."
+      ],
+      "fixed": [],
+      "issueRefs": [
+        3231,
+        3233,
+        3234,
+        3235,
+        3236,
+        3237,
+        3238,
+        3239,
+        3247,
+        3248,
+        3249
+      ]
+    },
     {
       "version": "1.35.0",
       "buildNumber": 62,
