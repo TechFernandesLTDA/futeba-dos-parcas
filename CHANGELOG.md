@@ -27,15 +27,13 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 ### [1.34.0] - 2026-07-04
 
 #### Adicionado
-- `app/src/main/java/com/futebadosparcas/data/model/GroupWallPost.kt`: modelo Firestore do post.
-- `app/src/main/java/com/futebadosparcas/data/repository/GroupWallRepository.kt`: repository realtime com upload de mídia.
-- `app/src/main/java/com/futebadosparcas/ui/groups/GroupWallViewModel.kt`: ViewModel com estados e ações.
-- `app/src/main/java/com/futebadosparcas/ui/groups/GroupWallScreen.kt`, `WallPostCard.kt`, `WallPostComposer.kt`: UI Compose.
+- Chat por jogo: `GameChatMessage.kt`, `GameChatRepository.kt`, `GameChatViewModel.kt`, `GameChatSection.kt` e testes `GameChatViewModelTest.kt`.
+- Mural do grupo: `GroupWallPost.kt`, `GroupWallRepository.kt`, `GroupWallViewModel.kt`, `GroupWallScreen.kt`, `WallPostCard.kt`, `WallPostComposer.kt`.
 - Rota `Screen.GroupWall` e navegação a partir do menu de `GroupDetailScreen`.
 - Registro Koin em `RepositoryKoinModule` e `ViewModelKoinModule`.
 - Strings em `pt-BR`, `en` e `es`.
 
-_Issues: #3232_
+_Issues: #3230, #3232_
 
 ### [1.33.0] - 2026-07-03
 
@@ -113,18 +111,18 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 ### [1.47.0] - 2026-07-04
 
 #### Adicionado
-- `web/src/hooks/useGroupWall.ts`: hook realtime para posts do mural (listener, paginação, create/edit/delete/pin).
-- `web/src/pages/group/GroupWallTab.tsx`, `WallPostCard.tsx`, `WallPostComposer.tsx`: UI do mural.
+- Chat por jogo: `web/src/hooks/useGameChat.ts`, `web/src/pages/game/GameChatSection.tsx`, `GameChatComposer.tsx`, `GameChatMessageBubble.tsx`.
+- Mural do grupo: `web/src/hooks/useGroupWall.ts`, `web/src/pages/group/GroupWallTab.tsx`, `WallPostCard.tsx`, `WallPostComposer.tsx`.
 - `web/src/utils/dateUtils.ts`: helper `formatRelativeTime`.
-- Regras `firestore.rules` para subcoleção `groups/{groupId}/wall_posts` (leitura só membro, write com validação de autor, texto, pin, soft-delete).
+- Regras `firestore.rules` para subcoleções `games/{gameId}/chat` e `groups/{groupId}/wall_posts`.
 - Índices `firestore.indexes.json` e regras `storage.rules` para `groups/{groupId}/wall_media/`.
 - Toggle `groupWall` em `useNotificationSettings.ts` e `NotificationSettingsScreen`.
 
 #### Mudado
-- `GroupDetailScreen` ganhou sétima aba "Mural" integrada via `GroupWallTab`.
+- `GroupDetailScreen` ganhou aba "Mural" integrada via `GroupWallTab`.
 - i18n atualizado em `pt-BR`, `en` e `es`.
 
-_Issues: #3232_
+_Issues: #3230, #3232_
 
 ### [1.46.0] - 2026-07-03
 

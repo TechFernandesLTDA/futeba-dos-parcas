@@ -141,6 +141,11 @@ val repositoryKoinModule = module {
         LiveGameRepositoryImpl(get())
     }
 
+    // Issue #3230: Chat em tempo real por jogo (épico #3240)
+    single<com.futebadosparcas.data.repository.GameChatRepository> {
+        com.futebadosparcas.data.repository.GameChatRepository(get(), get())
+    }
+
     single<com.futebadosparcas.platform.geocoding.GeocoderService> {
         com.futebadosparcas.platform.geocoding.GeocoderService(androidContext())
     }

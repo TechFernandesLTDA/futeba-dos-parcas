@@ -55,6 +55,7 @@ import com.futebadosparcas.ui.components.CachedProfileImage
 import com.futebadosparcas.ui.components.design.AppTopBar
 import com.futebadosparcas.ui.components.team.TeamBadgeById
 import com.futebadosparcas.ui.games.components.WaitlistSection
+import com.futebadosparcas.ui.games.components.GameChatSection
 import com.futebadosparcas.ui.adaptive.adaptiveContentWidth
 import com.futebadosparcas.ui.theme.MatchEventColors
 import com.google.android.gms.location.LocationServices
@@ -441,6 +442,22 @@ fun GameDetailContent(
                         showPositionDialog = true
                     },
                     onDeclineClick = { viewModel.toggleConfirmation(gameId) }
+                )
+            }
+
+            // Issue #3230: Chat em tempo real por jogo (épico #3240)
+            item {
+                val now = System.currentTimeMillis()
+                val gameTs = state.game.dateTimeRaw
+                val isChatArchived = gameTs > 0 && (now - gameTs) > 7 * 24 * 60 * 60 * 1000L
+                val canWriteChat = (state.isUserConfirmed || state.canManageGame) && !isChatArchived
+                GameChatSection(
+                    gameId = gameId,
+                    canWrite = canWriteChat,
+                    isArchived = isChatArchived,
+                    currentUserId = state.currentUserId,
+                    canManage = state.canManageGame,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                 )
             }
         }

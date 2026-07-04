@@ -288,4 +288,14 @@
     <string name="group_wall_must_be_member">You need to be a group member to post.</string>
     <string name="group_wall_delete_confirm">Delete post?</string>
     <string name="group_wall_delete_message">This action cannot be undone.</string>
+
+    <!-- #3230: Game chat (epic #3240) -->
+    <string name="game_chat_title">Game chat</string>
+    <string name="game_chat_description">Coordinate the match in real time with the squad.</string>
+    <string name="game_chat_input_hint">Send a message…</string>
+    <string name="game_chat_empty_title">No messages yet</string>
+    <string name="game_chat_empty_desc">Be the first to say something in this game.</string>
+    <string name="game_chat_archived">Chat archived</string>
+    <string name="game_chat_must_confirm">Confirm your attendance to join the chat.</string>
+    <string name="game_chat_retry">Try again</string>
 </resources>
