@@ -4463,4 +4463,14 @@ subir no ranking!</string>
     <string name="connected_accounts_unlink_confirm_desc">Você poderá entrar apenas com email e senha. Deseja desvincular a conta Google?</string>
     <string name="auth_error_credential_in_use">Esta conta Google já está vinculada a outra conta. Entre com seu login original e vincule o Google pelo perfil.</string>
 
+    <!-- #3230: Chat em tempo real por jogo (épico #3240) -->
+    <string name="game_chat_title">Chat do jogo</string>
+    <string name="game_chat_description">Combine a pelada em tempo real com os parças.</string>
+    <string name="game_chat_input_hint">Manda a tua…</string>
+    <string name="game_chat_empty_title">Nenhuma mensagem ainda</string>
+    <string name="game_chat_empty_desc">Seja o primeiro a mandar algo no jogo.</string>
+    <string name="game_chat_archived">Chat arquivado</string>
+    <string name="game_chat_must_confirm">Confirme sua presença para participar do chat.</string>
+    <string name="game_chat_retry">Tentar novamente</string>
+
 </resources>

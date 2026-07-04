@@ -265,4 +265,14 @@
     <string name="connected_accounts_unlink_confirm_title">¿Desvincular cuenta de Google?</string>
     <string name="connected_accounts_unlink_confirm_desc">Solo podrás iniciar sesión con email y contraseña. ¿Desvincular la cuenta de Google?</string>
     <string name="auth_error_credential_in_use">Esta cuenta de Google ya está vinculada a otra cuenta. Inicia sesión con tu método original y vincula Google desde tu perfil.</string>
+
+    <!-- #3230: Chat del partido (épico #3240) -->
+    <string name="game_chat_title">Chat del partido</string>
+    <string name="game_chat_description">Coordina el partido en tiempo real con los parças.</string>
+    <string name="game_chat_input_hint">Manda tu mensaje…</string>
+    <string name="game_chat_empty_title">Aún no hay mensajes</string>
+    <string name="game_chat_empty_desc">Sé el primero en decir algo en este partido.</string>
+    <string name="game_chat_archived">Chat archivado</string>
+    <string name="game_chat_must_confirm">Confirma tu asistencia para unirte al chat.</string>
+    <string name="game_chat_retry">Intentar de nuevo</string>
 </resources>

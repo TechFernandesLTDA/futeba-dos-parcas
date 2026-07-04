@@ -265,4 +265,14 @@
     <string name="connected_accounts_unlink_confirm_title">Unlink Google account?</string>
     <string name="connected_accounts_unlink_confirm_desc">You\'ll only be able to sign in with email and password. Unlink the Google account?</string>
     <string name="auth_error_credential_in_use">This Google account is already linked to another account. Sign in with your original method and link Google from your profile.</string>
+
+    <!-- #3230: Game chat (epic #3240) -->
+    <string name="game_chat_title">Game chat</string>
+    <string name="game_chat_description">Coordinate the match in real time with the squad.</string>
+    <string name="game_chat_input_hint">Send a message…</string>
+    <string name="game_chat_empty_title">No messages yet</string>
+    <string name="game_chat_empty_desc">Be the first to say something in this game.</string>
+    <string name="game_chat_archived">Chat archived</string>
+    <string name="game_chat_must_confirm">Confirm your attendance to join the chat.</string>
+    <string name="game_chat_retry">Try again</string>
 </resources>
