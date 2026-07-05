@@ -82,6 +82,8 @@ import { TeamBadge } from '../../components/team/TeamBadge';
 import { GameCard } from '../../components/common/GameCard';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
+import { FirstStepsChecklist } from '../../components/onboarding/FirstStepsChecklist';
+import type { ChecklistStep } from '../../components/onboarding/FirstStepsChecklist';
 import { iconSizes } from '../../theme/iconSizes';
 import { formatDateShort } from '../../utils/dateFormatters';
 import { db } from '../../services/firebase';
@@ -585,6 +587,7 @@ export const GroupDetailScreen: React.FC = () => {
   const [inviteCode, setInviteCode] = useState('');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [ownerChecklistDismissed, setOwnerChecklistDismissed] = useState(false);
 
   const myMember = members.find((m) => m.userId === currentUser?.uid);
   const isGroupOwner = group?.ownerId === currentUser?.uid;
@@ -735,6 +738,57 @@ export const GroupDetailScreen: React.FC = () => {
   const balanceValue = group.totalBalance || 0;
   const balanceLabel = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(balanceValue);
   const nextGame = upcomingGames[0];
+  const ownerChecklistSteps: ChecklistStep[] = [
+    {
+      id: 'configure_group',
+      label: t('onboarding.ownerChecklistConfigureGroup'),
+      subtitle: t('onboarding.ownerChecklistConfigureGroupDesc'),
+      actionLabel: t('groups.editGroup'),
+      navigateTo: `/group/${groupId}/edit`,
+      completed: Boolean(group.description || group.photoUrl || group.isPublic),
+    },
+    {
+      id: 'invite_players',
+      label: t('onboarding.ownerChecklistInvitePlayers'),
+      subtitle: t('onboarding.ownerChecklistInvitePlayersDesc'),
+      actionLabel: t('groupDetail.invite'),
+      navigateTo: `/group/${groupId}?tab=members`,
+      onAction: () => {
+        setTabValue(3);
+        setInviteDialogOpen(true);
+      },
+      completed: activeMembersCount > 1,
+    },
+    {
+      id: 'reach_min_members',
+      label: t('onboarding.ownerChecklistReachMinMembers'),
+      subtitle: t('onboarding.ownerChecklistReachMinMembersDesc'),
+      actionLabel: t('groupDetail.invite'),
+      navigateTo: `/group/${groupId}?tab=members`,
+      onAction: () => {
+        setTabValue(3);
+        setInviteDialogOpen(true);
+      },
+      completed: activeMembersCount >= 5,
+    },
+    {
+      id: 'create_first_game',
+      label: t('onboarding.ownerChecklistCreateGame'),
+      subtitle: t('onboarding.ownerChecklistCreateGameDesc'),
+      actionLabel: t('games.createGame'),
+      navigateTo: `/game/create?groupId=${groupId}`,
+      completed: games.length > 0,
+    },
+    {
+      id: 'open_cashbox',
+      label: t('onboarding.ownerChecklistCashbox'),
+      subtitle: t('onboarding.ownerChecklistCashboxDesc'),
+      actionLabel: t('group.tabCashbox'),
+      navigateTo: `/group/${groupId}/cashbox`,
+      completed: balanceValue !== 0,
+    },
+  ];
+  const ownerChecklistVisible = !ownerChecklistDismissed && (isOwner || isAdmin) && ownerChecklistSteps.some((step) => !step.completed);
 
   const quickActions: GroupQuickAction[] = [
     {
@@ -892,6 +946,14 @@ export const GroupDetailScreen: React.FC = () => {
             <GroupStatCard icon={<MoneyIcon />} label={t('groupDetail.currentBalance')} value={balanceLabel} helper={t('groupDetail.cashboxHint')} color={balanceValue >= 0 ? 'warning' : 'error'} />
           </Grid>
         </Grid>
+
+        <FirstStepsChecklist
+          steps={ownerChecklistSteps}
+          visible={ownerChecklistVisible}
+          title={t('onboarding.ownerFirstStepsTitle')}
+          onDismiss={() => setOwnerChecklistDismissed(true)}
+          maxIncomplete={3}
+        />
 
         {isMember && <GroupQuickActions actions={quickActions} />}
 

@@ -4,7 +4,9 @@
   "description": "Organize suas peladas! Gerencie jogos, grupos e estatísticas de futebol amador.",
   "id": "/",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui", "browser"],
   "background_color": "#FCFCFC",
   "theme_color": "#00852A",
   "orientation": "portrait-primary",
@@ -34,38 +36,23 @@
       "purpose": "maskable"
     }
   ],
-  "screenshots": [
-    {
-      "src": "/screenshots/wide.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "form_factor": "wide",
-      "label": "Tela inicial do Futeba dos Parças"
-    },
-    {
-      "src": "/screenshots/narrow.png",
-      "sizes": "750x1334",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "Partida e estatísticas"
-    }
-  ],
   "shortcuts": [
     {
       "name": "Nova Partida",
       "short_name": "Partida",
       "description": "Criar uma nova partida",
-      "url": "/games/new",
+      "url": "/game/create",
       "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
     },
     {
       "name": "Grupos",
       "short_name": "Grupos",
       "description": "Ver seus grupos",
-      "url": "/groups",
+      "url": "/?tab=2",
       "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
     }
   ],
   "categories": ["sports", "social"],
+  "prefer_related_applications": false,
   "lang": "pt-BR"
 }

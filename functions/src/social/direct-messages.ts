@@ -4,15 +4,33 @@ import {FieldValue} from "firebase-admin/firestore";
 import {FUNCTION_REGION} from "../constants";
 import {db} from "../_db";
 import {isRecord} from "../validation/guards";
+import {checkRateLimit} from "../middleware/rate-limiter";
 
 interface CreateDirectChatRequest {
   targetUid: string;
+}
+
+interface SubmitDirectMessageRequest {
+  chatId: string;
+  text: string;
 }
 
 interface PublicUser {
   name: string;
   photo: string | null;
 }
+
+const DIRECT_MESSAGE_MAX_LENGTH = 1000;
+const DIRECT_MESSAGE_RATE_LIMIT = {
+  maxRequests: 20,
+  windowMs: 60 * 1000,
+  keyPrefix: "direct_message_send",
+};
+const DIRECT_CHAT_CREATE_RATE_LIMIT = {
+  maxRequests: 10,
+  windowMs: 60 * 1000,
+  keyPrefix: "direct_chat_create",
+};
 
 /**
  * Valida string nao vazia.
@@ -37,6 +55,40 @@ function parseCreateDirectChatRequest(
     throw new HttpsError("invalid-argument", "targetUid obrigatório.");
   }
   return {targetUid: data.targetUid.trim()};
+}
+
+/**
+ * Parseia payload de envio de mensagem direta.
+ *
+ * @param {unknown} data Payload cru.
+ * @return {SubmitDirectMessageRequest} Payload normalizado.
+ */
+function parseSubmitDirectMessageRequest(
+  data: unknown
+): SubmitDirectMessageRequest {
+  if (
+    !isRecord(data) ||
+    !isNonEmptyString(data.chatId) ||
+    !isNonEmptyString(data.text)
+  ) {
+    throw new HttpsError(
+      "invalid-argument",
+      "chatId e text são obrigatórios."
+    );
+  }
+
+  const text = data.text.trim();
+  if (text.length > DIRECT_MESSAGE_MAX_LENGTH) {
+    throw new HttpsError(
+      "invalid-argument",
+      `Mensagem deve ter até ${DIRECT_MESSAGE_MAX_LENGTH} caracteres.`
+    );
+  }
+
+  return {
+    chatId: data.chatId.trim(),
+    text,
+  };
 }
 
 /**
@@ -156,6 +208,19 @@ export const createDirectChat = onCall(
 
     const uid = request.auth.uid;
     const {targetUid} = parseCreateDirectChatRequest(request.data);
+    const rateLimit = await checkRateLimit(uid, DIRECT_CHAT_CREATE_RATE_LIMIT);
+    if (!rateLimit.allowed) {
+      const resetSec = Math.max(
+        1,
+        Math.ceil((rateLimit.resetAt.getTime() - Date.now()) / 1000)
+      );
+      throw new HttpsError(
+        "resource-exhausted",
+        `Muitas conversas iniciadas. Tente novamente em ${resetSec}s.`,
+        {retryAfter: resetSec}
+      );
+    }
+
     if (targetUid === uid) {
       throw new HttpsError(
         "failed-precondition",
@@ -215,5 +280,106 @@ export const createDirectChat = onCall(
     });
 
     return {chatId};
+  }
+);
+
+/**
+ * Envia mensagem direta com rate limit server-side e update atomico
+ * do preview/unread_count do chat.
+ */
+export const submitDirectMessage = onCall(
+  {
+    region: FUNCTION_REGION,
+    enforceAppCheck: process.env.FUNCTIONS_EMULATOR !== "true",
+    consumeAppCheckToken: true,
+  },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "Login obrigatório.");
+    }
+
+    const uid = request.auth.uid;
+    const {chatId, text} =
+      parseSubmitDirectMessageRequest(request.data);
+
+    const rateLimit = await checkRateLimit(uid, DIRECT_MESSAGE_RATE_LIMIT);
+    if (!rateLimit.allowed) {
+      const resetSec = Math.max(
+        1,
+        Math.ceil((rateLimit.resetAt.getTime() - Date.now()) / 1000)
+      );
+      throw new HttpsError(
+        "resource-exhausted",
+        `Muitas mensagens. Tente novamente em ${resetSec}s.`,
+        {retryAfter: resetSec}
+      );
+    }
+
+    const chatRef = db().doc(`chats/${chatId}`);
+    const messageRef = chatRef.collection("messages").doc();
+    const currentUser = await getPublicUser(uid);
+
+    await db().runTransaction(async (tx) => {
+      const chatSnap = await tx.get(chatRef);
+      if (!chatSnap.exists) {
+        throw new HttpsError("not-found", "Conversa não encontrada.");
+      }
+
+      const chat = chatSnap.data() ?? {};
+      const participants = Array.isArray(chat.participants) ?
+        chat.participants.filter((item): item is string =>
+          typeof item === "string") :
+        [];
+      if (!participants.includes(uid)) {
+        throw new HttpsError(
+          "permission-denied",
+          "Você não participa desta conversa."
+        );
+      }
+
+      const recipients = participants.filter((participant) =>
+        participant !== uid);
+      const blockRefs = recipients.flatMap((recipient) => [
+        db().doc(`users/${uid}/blocked/${recipient}`),
+        db().doc(`users/${recipient}/blocked/${uid}`),
+      ]);
+      const blockSnaps = await Promise.all(
+        blockRefs.map((blockRef) => tx.get(blockRef))
+      );
+      if (blockSnaps.some((blockSnap) => blockSnap.exists)) {
+        throw new HttpsError(
+          "permission-denied",
+          "Conversa indisponível por bloqueio social."
+        );
+      }
+
+      tx.set(messageRef, {
+        sender_id: uid,
+        sender_name: currentUser.name,
+        sender_photo_url: currentUser.photo,
+        text,
+        created_at: FieldValue.serverTimestamp(),
+        deleted_by: null,
+        deleted_at: null,
+      });
+
+      const unreadUpdates = recipients.reduce<Record<string, unknown>>(
+        (acc, participant) => {
+          acc[`unread_count.${participant}`] = FieldValue.increment(1);
+          return acc;
+        },
+        {}
+      );
+
+      tx.update(chatRef, {
+        last_message: text,
+        last_message_at: FieldValue.serverTimestamp(),
+        last_sender_id: uid,
+        [`unread_count.${uid}`]: 0,
+        ...unreadUpdates,
+      });
+    });
+
+    return {messageId: messageRef.id};
   }
 );

@@ -72,6 +72,9 @@ Documentação organizada do projeto Futeba dos Parças.
 | Arquivo | Descrição |
 |---------|-----------|
 | [CI_CD_SETUP.md](CI_CD_SETUP.md) | GitHub Actions, Firebase deploy |
+| [production-launch/README.md](production-launch/README.md) | Plano operacional para lançamento público, domínio, monitoramento, custos, beta e campanha |
+| [support/incident-runbook.md](support/incident-runbook.md) | Canal de suporte, triagem de incidentes, comunicação, rollback e hotfix |
+| [privacy/lgpd-terms-deletion-checklist.md](privacy/lgpd-terms-deletion-checklist.md) | Checklist LGPD, termos, privacidade e exclusão de conta |
 
 ---
 
@@ -137,5 +140,5 @@ Regras específicas para Claude Code em [../.claude/rules/](../.claude/rules/)
 
 ---
 
-**Última Atualização:** 2026-06-28
+**Última Atualização:** 2026-07-05
 **Status:** ✅ Documentação organizada e atualizada

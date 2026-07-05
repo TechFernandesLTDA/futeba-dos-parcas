@@ -381,7 +381,25 @@ export const CashboxScreen: React.FC = () => {
           <EmptyState
             icon={<HistoryIcon />}
             title={t('empty.noTransaction')}
-            description={t('empty.noTransactionDesc')}
+            description={isAdminOrOwner ? t('cashbox.emptyAdminDesc') : t('cashbox.emptyMemberDesc')}
+            actionLabel={isAdminOrOwner ? t('cashbox.addIncome') : undefined}
+            actionIcon={isAdminOrOwner ? <TrendingIcon /> : undefined}
+            onAction={isAdminOrOwner ? () => {
+              setTransactionType('INCOME');
+              setAmountTouched(false);
+              setDescriptionTouched(false);
+              setReceiptFile(null);
+              setDialogOpen(true);
+            } : undefined}
+            secondaryActionLabel={isAdminOrOwner ? t('cashbox.addExpense') : undefined}
+            secondaryActionIcon={isAdminOrOwner ? <TrendingDownIcon /> : undefined}
+            onSecondaryAction={isAdminOrOwner ? () => {
+              setTransactionType('EXPENSE');
+              setAmountTouched(false);
+              setDescriptionTouched(false);
+              setReceiptFile(null);
+              setDialogOpen(true);
+            } : undefined}
           />
         ) : displayedTransactions.length === 0 ? (
           <EmptyState

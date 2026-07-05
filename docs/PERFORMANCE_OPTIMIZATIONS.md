@@ -1,5 +1,22 @@
 # Performance Optimizations - Futeba dos Parças
 
+## Web PWA/SEO and First Open Baseline - 2026-07-05
+
+Scope: issues #3308, #3309 and #3311, web-only.
+
+Changes made in this pass:
+- PWA manifest now uses valid installed-app shortcut routes (`/game/create` and `/?tab=2`), declares app scope and `display_override`, and no longer references screenshot files that are not shipped in `web/public`.
+- `index.html` now has canonical URL, explicit light/dark color scheme, Apple standalone metadata, Twitter URL, and early preconnect hints for Firestore/Auth endpoints used during the first authenticated open.
+- `robots.txt` and a minimal sitemap were added for public entrypoints.
+- Home prefetch for user groups is capped at the 20 most recent memberships to avoid unbounded reads during first authenticated load.
+
+Measurement notes:
+- Baseline before changes: `npm run build` succeeded; largest gzip chunks were `vendor-mui` 176.95 kB, `vendor-firebase` 147.45 kB, `vendor-charts` 147.17 kB, `jspdf` 129.51 kB, `i18n-locales` 109.19 kB, and app entry `index` 30.85 kB.
+- After changes: `npm run build` succeeded; `dist/index.html` changed from 6.45 kB / 1.95 kB gzip to 6.33 kB / 1.92 kB gzip. Largest gzip chunks were effectively unchanged (`vendor-mui` 176.95 kB, `vendor-firebase` 147.44 kB, `vendor-charts` 147.17 kB, `jspdf` 129.51 kB, `i18n-locales` 109.19 kB, app entry `index` 30.91 kB).
+- Local `npm run lighthouse` on `http://localhost:4173/` completed 3 runs. Median performance was 0.64 and LCP was 7359.7418 ms, both warnings against the current CI budget (performance >= 0.70, LCP <= 6000 ms). Generated local artifacts under `web/.lighthouseci/`.
+- Vite reported `@mui/icons-material/esm/index.js` as a large barrel module during build. Keep future icon work on direct icon imports and consider transform-imports only after measuring CI/build impact.
+- Lighthouse config already exists at `web/.lighthouserc.cjs`; run it against `npm run preview` when a stable local browser profile is available.
+
 > **Agent-UI Mission Complete** ✅
 > Otimizações de UI/UX, eliminação de memory leaks e melhorias de performance implementadas.
 

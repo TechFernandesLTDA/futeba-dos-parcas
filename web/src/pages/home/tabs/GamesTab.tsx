@@ -114,6 +114,8 @@ export function GamesTab() {
   const { games, loading, error, refetch } = useGames(gamesQueryFilters);
   const { groups, loading: groupsLoading } = useGroups();
   const hasGroups = groups.length > 0;
+  const ownerGroups = groups.filter((group) => group.role === 'OWNER');
+  const hasQualifiedOwnerGroup = ownerGroups.some((group) => (group.memberCount ?? 0) >= 5);
 
   const hasActiveFilters = searchQuery !== '' || statusFilter !== 'all' || genderFilter !== 'all';
 
@@ -324,12 +326,14 @@ export function GamesTab() {
           ))
         ) : filteredGames.length === 0 ? (
           <EmptyState
-            icon={hasActiveFilters || hasGroups ? <SportsSoccer /> : <People />}
+            icon={hasActiveFilters || hasQualifiedOwnerGroup ? <SportsSoccer /> : <People />}
             title={
               hasActiveFilters
                 ? t('games.empty.filteredTitle')
-                : hasGroups
+                : hasQualifiedOwnerGroup
                   ? t('games.empty.noScheduledTitle')
+                  : hasGroups
+                    ? t('games.empty.noQualifiedGroupTitle')
                   : t('games.empty.joinGroupTitle')
             }
             description={
@@ -337,17 +341,22 @@ export function GamesTab() {
                 ? t('games.empty.filteredDesc')
                 : !hasGroups
                   ? t('games.empty.joinGroupDesc')
+                  : !hasQualifiedOwnerGroup
+                    ? t('games.empty.noQualifiedGroupDesc')
                   : statusFilter === 'all'
-                  ? t('games.empty.noneAvailable')
-                  : statusFilter === 'SCHEDULED'
-                    ? t('games.empty.noneOpen')
-                    : statusFilter === 'LIVE'
-                      ? t('games.empty.noneLive')
-                      : t('games.empty.noneFinished')
+                    ? t('games.empty.noneAvailable')
+                    : statusFilter === 'SCHEDULED'
+                      ? t('games.empty.noneOpen')
+                      : statusFilter === 'LIVE'
+                        ? t('games.empty.noneLive')
+                        : t('games.empty.noneFinished')
             }
-            actionLabel={hasActiveFilters ? t('games.empty.clearFilters') : hasGroups ? t('games.createGame') : t('groups.discoverGroupsBtn')}
-            actionIcon={hasActiveFilters ? <FilterListOff /> : hasGroups ? <Add /> : <People />}
-            onAction={hasActiveFilters ? clearFilters : () => navigate(hasGroups ? '/game/create' : '/groups/discover')}
+            actionLabel={hasActiveFilters ? t('games.empty.clearFilters') : hasQualifiedOwnerGroup ? t('games.createGame') : hasGroups ? t('common.viewGroups') : t('groups.discoverGroupsBtn')}
+            actionIcon={hasActiveFilters ? <FilterListOff /> : hasQualifiedOwnerGroup ? <Add /> : <People />}
+            onAction={hasActiveFilters ? clearFilters : () => navigate(hasQualifiedOwnerGroup ? '/game/create' : hasGroups ? '/?tab=2' : '/groups/discover')}
+            secondaryActionLabel={!hasActiveFilters && !hasQualifiedOwnerGroup ? t('groups.createGroup') : undefined}
+            secondaryActionIcon={!hasActiveFilters && !hasQualifiedOwnerGroup ? <Add /> : undefined}
+            onSecondaryAction={!hasActiveFilters && !hasQualifiedOwnerGroup ? () => navigate('/group/create') : undefined}
           />
         ) : (
           <Box sx={{ px: isLg ? 1 : 0 }}>

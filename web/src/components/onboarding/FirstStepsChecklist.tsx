@@ -34,7 +34,12 @@ export type OnboardingStepId =
   | 'complete_profile'
   | 'join_or_create_group'
   | 'confirm_presence'
-  | 'play_first_game';
+  | 'play_first_game'
+  | 'configure_group'
+  | 'invite_players'
+  | 'reach_min_members'
+  | 'create_first_game'
+  | 'open_cashbox';
 
 export interface ChecklistStep {
   id: OnboardingStepId;
@@ -42,6 +47,7 @@ export interface ChecklistStep {
   subtitle: string;
   actionLabel: string;
   navigateTo: string;
+  onAction?: () => void;
   completed: boolean;
 }
 
@@ -49,11 +55,13 @@ interface FirstStepsChecklistProps {
   steps: ChecklistStep[];
   visible: boolean;
   onDismiss: () => void;
+  title?: string;
+  progressLabel?: string;
   /** Max incomplete items shown before truncation (default: all). */
   maxIncomplete?: number;
 }
 
-export function FirstStepsChecklist({ steps, visible, onDismiss, maxIncomplete }: FirstStepsChecklistProps) {
+export function FirstStepsChecklist({ steps, visible, onDismiss, title, progressLabel, maxIncomplete }: FirstStepsChecklistProps) {
   const { t } = useTranslation();
   const theme = useTheme();
   const navigate = useNavigate();
@@ -94,10 +102,10 @@ export function FirstStepsChecklist({ steps, visible, onDismiss, maxIncomplete }
           <Stack direction="row" justifyContent="space-between" alignItems="flex-start" mb={1}>
             <Box>
               <Typography variant="subtitle1" fontWeight={700}>
-                Primeiros Passos
+                {title || t('onboarding.firstStepsTitle')}
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                {completedCount}/{steps.length} concluídos
+                {progressLabel || t('onboarding.checklistProgress', { completed: completedCount, total: steps.length })}
               </Typography>
             </Box>
             <IconButton
@@ -161,7 +169,7 @@ export function FirstStepsChecklist({ steps, visible, onDismiss, maxIncomplete }
                     {step.label}
                   </Typography>
                   {!step.completed && (
-                    <Typography variant="caption" color="text.secondary" noWrap>
+                    <Typography variant="caption" color="text.secondary">
                       {step.subtitle}
                     </Typography>
                   )}
@@ -171,7 +179,7 @@ export function FirstStepsChecklist({ steps, visible, onDismiss, maxIncomplete }
                   <Button
                     size="small"
                     variant="text"
-                    onClick={() => navigate(step.navigateTo)}
+                    onClick={() => step.onAction?.() ?? navigate(step.navigateTo)}
                     aria-label={step.actionLabel}
                     sx={{ flexShrink: 0, minHeight: 36 }}
                   >
@@ -201,14 +209,14 @@ export function FirstStepsChecklist({ steps, visible, onDismiss, maxIncomplete }
                           <Typography variant="body2" fontWeight={600}>
                             {step.label}
                           </Typography>
-                          <Typography variant="caption" color="text.secondary" noWrap>
+                          <Typography variant="caption" color="text.secondary">
                             {step.subtitle}
                           </Typography>
                         </Box>
                         <Button
                           size="small"
                           variant="text"
-                          onClick={() => navigate(step.navigateTo)}
+                          onClick={() => step.onAction?.() ?? navigate(step.navigateTo)}
                           aria-label={step.actionLabel}
                           sx={{ flexShrink: 0, minHeight: 36 }}
                         >
@@ -225,7 +233,7 @@ export function FirstStepsChecklist({ steps, visible, onDismiss, maxIncomplete }
                   endIcon={expanded ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
                   sx={{ alignSelf: 'center', fontSize: '0.75rem' }}
                 >
-                  {expanded ? 'Ver menos' : `Ver todos (${hiddenSteps.length})`}
+                  {expanded ? t('onboarding.showLess') : t('onboarding.showAllSteps', { count: hiddenSteps.length })}
                 </Button>
               </>
             )}

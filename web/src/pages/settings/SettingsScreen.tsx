@@ -34,6 +34,7 @@ import {
   DeleteForever as DeleteForeverIcon,
   Notifications as NotificationsIcon,
   NewReleases as NewReleasesIcon,
+  RocketLaunch as RocketLaunchIcon,
 } from '@mui/icons-material';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../services/firebase';
@@ -255,6 +256,13 @@ export const SettingsScreen: React.FC = () => {
                     <NotificationsIcon />
                   </ListItemIcon>
                   <ListItemText primary={t('nav.notifications')} secondary={t('settings.notificationsPrefs')} />
+                </ListItemButton>
+                <Divider />
+                <ListItemButton onClick={() => navigate('/guide')}>
+                  <ListItemIcon>
+                    <RocketLaunchIcon />
+                  </ListItemIcon>
+                  <ListItemText primary={t('settings.playerGuide')} secondary={t('settings.playerGuideDesc')} />
                 </ListItemButton>
                 <Divider />
                 <ListItemButton onClick={() => navigate('/owner/onboarding')}>

@@ -23,6 +23,26 @@ export const validateInviteCode = httpsCallable<
   InviteCodeValidationResponse
 >(functions, 'validateInviteCode');
 
+export const submitDirectMessage = httpsCallable<
+  {
+    chatId: string;
+    text: string;
+  },
+  { messageId: string }
+>(functions, 'submitDirectMessage');
+
+export const submitContentReport = httpsCallable<
+  {
+    targetType: 'group_wall_post' | 'game_chat_message' | 'game_comment' | 'game_photo' | 'game_video';
+    groupId?: string;
+    postId?: string;
+    gameId?: string;
+    targetId?: string;
+    reason: 'inappropriate_content' | 'abusive_language' | 'spam' | 'harassment' | 'other';
+  },
+  { reportId: string }
+>(functions, 'submitContentReport');
+
 export interface AdminOwnerSummary {
   totalLocations: number;
   publishedLocations: number;

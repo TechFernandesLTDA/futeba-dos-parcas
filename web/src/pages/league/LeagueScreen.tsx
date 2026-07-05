@@ -691,6 +691,9 @@ export const LeagueScreen: React.FC = () => {
             actionLabel={t('league.createGame')}
             actionIcon={<SoccerIcon />}
             onAction={() => navigate('/game/create')}
+            secondaryActionLabel={t('groups.discoverGroupsBtn')}
+            secondaryActionIcon={<PersonAddIcon />}
+            onSecondaryAction={() => navigate('/groups/discover')}
           />
         ) : (
           <Fade in key={tabValue}>

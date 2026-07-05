@@ -784,9 +784,15 @@ export function HomeTab() {
   const {
     state: onboardingState,
     loading: onboardingLoading,
+    hasSeenCarousel,
     onChecklistDismissed,
   } = useOnboarding();
   const { groups, loading: groupsLoading, error: groupsError } = useGroups();
+
+  useEffect(() => {
+    if (onboardingLoading || hasSeenCarousel()) return;
+    navigate('/guide');
+  }, [hasSeenCarousel, navigate, onboardingLoading]);
 
   // Deriva passos de dados de domínio existentes — não são checkboxes manuais
   const checklistSteps: ChecklistStep[] = useMemo(() => [
@@ -1096,6 +1102,7 @@ export function HomeTab() {
             <FirstStepsChecklist
               steps={checklistSteps}
               visible={checklistVisible}
+              title={t('onboarding.playerFirstStepsTitle')}
               onDismiss={() => {
                 const stepsDone = checklistSteps.filter(s => s.completed).length;
                 onChecklistDismissed(stepsDone, checklistSteps.length);
@@ -1131,6 +1138,7 @@ export function HomeTab() {
           <FirstStepsChecklist
             steps={checklistSteps}
             visible={checklistVisible}
+            title={t('onboarding.playerFirstStepsTitle')}
             onDismiss={() => {
               const stepsDone = checklistSteps.filter(s => s.completed).length;
               onChecklistDismissed(stepsDone, checklistSteps.length);
