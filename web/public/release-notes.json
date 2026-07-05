@@ -1,7 +1,53 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-05T04:01:57.176Z",
+  "generatedAt": "2026-07-05T05:24:50.615Z",
   "notes": [
+    {
+      "version": "1.48.1",
+      "buildNumber": null,
+      "releaseDate": "2026-07-05",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "Correções de segurança e estabilidade deixam mural, DMs e privacidade social mais consistentes no web.",
+      "highlights": [
+        {
+          "icon": "lock",
+          "title": "Privacidade social",
+          "description": "Perfis pesquisáveis e relações de follow passam por regras mais restritas."
+        },
+        {
+          "icon": "groups",
+          "title": "Mural mais previsível",
+          "description": "Posts sem texto são bloqueados antes do envio e o mural evita listeners duplicados."
+        },
+        {
+          "icon": "chat",
+          "title": "DMs mais confiáveis",
+          "description": "Metadados de conversa deixam de aceitar manipulação direta pelo cliente."
+        }
+      ],
+      "added": [],
+      "improved": [
+        "O mural do grupo no web usa apenas um listener Firestore por aba, reduzindo reads e erros duplicados.",
+        "Posts de mural agora exigem texto antes de anexar mídia, alinhando web, Android e regras.",
+        "A remoção de posts com mídia ficou mais segura contra arquivos órfãos."
+      ],
+      "fixed": [
+        "Evita envio de post vazio com imagem chegando até uma rejeição de backend.",
+        "Corrige inconsistências de release notes exibidas para o usuário.",
+        "Cleanup de mídia do mural cobre paths publicados e reduz retenção de arquivos após soft-delete.",
+        "Lighthouse CI recebeu instalação mais determinística para evitar falhas por binários ausentes."
+      ],
+      "issueRefs": [
+        3261,
+        3262,
+        3263,
+        3264,
+        3267,
+        3268
+      ]
+    },
     {
       "version": "1.48.0",
       "buildNumber": null,

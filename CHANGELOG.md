@@ -24,6 +24,19 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ## Android
 
+### [1.36.1][android-1.36.1] - 2026-07-05
+
+#### Mudado
+- `GroupWallRepository` observa posts recentes e fixados separadamente, deduplicando por `id`.
+- Composer Android valida texto obrigatório antes de permitir envio.
+- Bundles Android de release notes foram regenerados com correções técnicas.
+
+#### Corrigido
+- Posts fixados fora da janela dos 20 mais recentes deixam de desaparecer do topo.
+- Cleanup cliente tenta remover `mediaPath` e `thumbnailPath` em falhas de escrita/remoção.
+
+_Issues: #3265, #3266, #3267, #3271 · PRs: #3274, #3275, #3277_
+
 ### [1.36.0][android-1.36.0] - 2026-07-04
 
 #### Adicionado
@@ -146,6 +159,21 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 - Bump de versão de manutenção após a mega audit wave de 2026-05-11, sem mudanças funcionais no Android nesta tag.
 
 ## Web
+
+### [1.48.1][web-1.48.1] - 2026-07-05
+
+#### Mudado
+- Hooks do mural foram separados entre listener e mutations para evitar `onSnapshot` duplicado.
+- Bundles de release notes passaram a incluir correções técnicas publicadas.
+
+#### Corrigido
+- Cleanup de mídia do mural cobre paths publicados e reduz retenção de arquivos após soft-delete.
+- Lighthouse CI recebeu instalação mais determinística para evitar falhas por binários ausentes.
+
+#### Segurança
+- Firestore Rules endurecidas para perfis públicos, follows, DMs e `wall_posts`.
+
+_Issues: #3261, #3262, #3263, #3264, #3267, #3268 · PRs: #3274, #3275, #3276, #3277_
 
 ### [1.48.0][web-1.48.0] - 2026-07-04
 
@@ -920,6 +948,21 @@ _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
 
+### [1.6.1][functions-1.6.1] - 2026-07-05
+
+#### Adicionado
+- Cloud Function `onGroupWallPostSoftDeletedCleanupMedia` para limpeza de mídia publicada do mural.
+- Testes para cleanup de mídia e novos cenários de segurança em Firestore Rules.
+
+#### Mudado
+- Discovery social deixou de usar email como fallback de nome público.
+- Rules de DMs bloquearam update client-side isolado de preview/unread metadata.
+
+#### Segurança
+- `users/{uid}`, `following/followers`, DMs e `groups/{groupId}/wall_posts` receberam validações mais restritivas.
+
+_Issues: #3261, #3262, #3263, #3264, #3267 · PRs: #3276, #3277_
+
 ### [1.6.0][functions-1.6.0] - 2026-07-04
 
 #### Adicionado
@@ -1292,6 +1335,7 @@ _Issues: #2981_
 _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 
 
+[android-1.36.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.36.1.md
 [android-1.36.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.36.0.md
 [android-1.35.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.35.0.md
 [android-1.34.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.34.0.md
@@ -1301,6 +1345,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.48.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.48.1.md
 [web-1.48.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.48.0.md
 [web-1.47.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.47.0.md
 [web-1.46.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.46.0.md
@@ -1370,6 +1415,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [web-1.26.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.26.1.md
 [web-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.26.0.md
 [ios-1.6.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.0.md
+[functions-1.6.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.6.1.md
 [functions-1.6.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.6.0.md
 [functions-1.5.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.5.0.md
 [functions-1.4.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.4.0.md
