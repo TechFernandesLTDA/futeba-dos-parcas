@@ -167,6 +167,8 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 - `useGames` passou a aceitar ordenação opcional por data para carregar histórico recente de grupos.
 - Traduções web de grupos foram atualizadas em pt-BR, en e es.
 
+_PRs: #3279_
+
 ### [1.48.1][web-1.48.1] - 2026-07-05
 
 #### Mudado
