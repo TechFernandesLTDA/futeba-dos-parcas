@@ -1,7 +1,33 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-05T14:22:53.660Z",
+  "generatedAt": "2026-07-05T14:41:43.127Z",
   "notes": [
+    {
+      "version": "1.48.6",
+      "buildNumber": null,
+      "releaseDate": "2026-07-05",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "O Feed voltou a carregar os posts recentes dos murais dos seus grupos.",
+      "highlights": [
+        {
+          "icon": "dynamic_feed",
+          "title": "Feed corrigido",
+          "description": "A tela de Feed deixa de exibir o erro de índice ausente do Firestore."
+        }
+      ],
+      "added": [],
+      "improved": [
+        "O índice necessário para buscar posts de mural por grupo e data foi adicionado ao Firestore."
+      ],
+      "fixed": [
+        "`firestore.indexes.json` adiciona índice `COLLECTION_GROUP` para `wall_posts` com `group_id ASC` e `created_at DESC`, usado por `useSocialFeed`."
+      ],
+      "issueRefs": [
+        3286
+      ]
+    },
     {
       "version": "1.48.5",
       "buildNumber": null,

@@ -160,6 +160,13 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.48.6][web-1.48.6] - 2026-07-05
+
+#### Corrigido
+- `firestore.indexes.json` adiciona índice `COLLECTION_GROUP` para `wall_posts` com `group_id ASC` e `created_at DESC`, usado por `useSocialFeed`.
+
+_Issues: #3286_
+
 ### [1.48.5][web-1.48.5] - 2026-07-05
 
 #### Corrigido
@@ -1378,6 +1385,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.48.6]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.48.6.md
 [web-1.48.5]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.48.5.md
 [web-1.48.4]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.48.4.md
 [web-1.48.3]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.48.3.md
