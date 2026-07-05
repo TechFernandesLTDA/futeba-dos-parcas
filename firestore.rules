@@ -588,13 +588,13 @@ service cloud.firestore {
         isAuthenticated() &&
         resource.data.is_searchable == true &&
         (!('deleted_at' in resource.data) || resource.data.deleted_at == null) &&
-        (!('email' in resource.data) || resource.data.email == null) &&
+        (!('email' in resource.data) || resource.data.email == null || resource.data.email == '') &&
         (!('fcm_token' in resource.data) || resource.data.fcm_token == null) &&
         (!('birth_date' in resource.data) || resource.data.birth_date == null) &&
         (!('height_cm' in resource.data) || resource.data.height_cm == null) &&
         (!('weight_kg' in resource.data) || resource.data.weight_kg == null) &&
         (!('gender' in resource.data) || resource.data.gender == null) &&
-        (!('phone' in resource.data) || resource.data.phone == null) &&
+        (!('phone' in resource.data) || resource.data.phone == null || resource.data.phone == '') &&
         (!('phone_verified' in resource.data) || resource.data.phone_verified == null)
       );
 
@@ -2461,6 +2461,7 @@ service cloud.firestore {
         }
 
         function isValidWallHighlightRef(ref) {
+          // Compatibilidade legada: aceitamos snake_case e camelCase enquanto os clientes convergem.
           return ref == null || (
             ref is map &&
             (
@@ -2480,11 +2481,8 @@ service cloud.firestore {
 
         function isValidWallPostCreateText() {
           return request.resource.data.text is string &&
-            request.resource.data.text.size() <= 500 &&
-            (
-              request.resource.data.text.size() >= 1 ||
-              request.resource.data.media_path != null
-            );
+            request.resource.data.text.size() >= 1 &&
+            request.resource.data.text.size() <= 500;
         }
 
         // Leitura: membros ativos do grupo (inclui owner/admin) ou owner legado

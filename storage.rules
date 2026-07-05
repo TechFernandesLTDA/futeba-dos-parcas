@@ -279,7 +279,8 @@ service firebase.storage {
         isUnderSize(10) &&
         isWallMediaFile(fileName);
 
-      allow delete: if isAuthenticated() && (
+      allow delete: if isAuthenticated() &&
+        postId == '__draft__' && (
         isAdmin() ||
         isGroupAdmin(groupId) ||
         ownerId == request.auth.uid

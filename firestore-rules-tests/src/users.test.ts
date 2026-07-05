@@ -27,6 +27,7 @@ let testEnv: RulesTestEnvironment;
 const UID_USERS_A = "uid-users-a-001";
 const UID_USERS_B = "uid-users-b-001";
 const UID_USERS_C = "uid-users-c-001";
+const UID_USERS_D = "uid-users-d-001";
 
 function asUsersA() {
   return asUser(testEnv, UID_USERS_A);
@@ -84,6 +85,23 @@ beforeAll(async () => {
     gk_rating: 2.5,
   });
 
+  await seedDoc(testEnv, `users/${UID_USERS_D}`, {
+    name: "Jogador D",
+    email: "",
+    phone: "",
+    phone_verified: null,
+    role: "PLAYER",
+    is_searchable: true,
+    experience_points: 150,
+    level: 2,
+    milestones_achieved: [],
+    created_at: new Date(),
+    striker_rating: 2.8,
+    mid_rating: 2.6,
+    defender_rating: 2.4,
+    gk_rating: 2.2,
+  });
+
   await seedDoc(testEnv, `users/${UID_ADMIN}`, {
     name: "Admin",
     email: "admin@test.com",
@@ -135,6 +153,11 @@ describe("users — leitura", () => {
   it("Player NÃO pode ler perfil pesquisável quando o doc ainda expõe PII", async () => {
     const db = asUsersA();
     await assertFails(db.doc(`users/${UID_USERS_C}`).get());
+  });
+
+  it('Player pode ler perfil pesquisável com email/phone vazios', async () => {
+    const db = asUsersA();
+    await assertSucceeds(db.doc(`users/${UID_USERS_D}`).get());
   });
 
   it("Não-autenticado NÃO pode ler perfil nenhum", async () => {

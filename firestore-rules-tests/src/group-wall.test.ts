@@ -204,6 +204,20 @@ describe("groups/{groupId}/wall_posts", () => {
     );
   });
 
+  it("bloqueia create com media mas sem texto", async () => {
+    await assertFails(
+      asWallMember().doc(`groups/${GROUP_ID}/wall_posts/post-media-empty`).set({
+        ...validPost,
+        author_id: UID_WALL_MEMBER,
+        text: "",
+        media_url: "https://firebasestorage.googleapis.com/v0/b/demo/o/groups%2Fgroup-wall-test%2Fwall_media%2F__draft__%2Fmedia.jpg?alt=media",
+        media_path: "groups/group-wall-test/wall_media/__draft__/media.jpg",
+        media_type: "image/jpeg",
+        created_at: serverTimestamp(),
+      })
+    );
+  });
+
   it("bloqueia backdate", async () => {
     await assertFails(
       asWallMember().doc(`groups/${GROUP_ID}/wall_posts/post-backdate`).set({
