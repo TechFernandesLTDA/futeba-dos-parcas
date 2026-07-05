@@ -1,6 +1,5 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { useGamificationColors } from '../../hooks/useGamificationColors';
-import { useNavigate } from 'react-router-dom';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
   Box,
@@ -90,6 +89,13 @@ function getDateGroup(date: Date): DateGroupKey {
   return 'older';
 }
 
+function getGroupInviteId(notification: { referenceId?: string; referenceType?: string; action?: string }): string | null {
+  const match = /^group_invite\/([^/]+)$/.exec(notification.action || '');
+  if (match?.[1]) return match[1];
+  if (notification.referenceType === 'invite' && notification.referenceId) return notification.referenceId;
+  return match?.[1] ?? null;
+}
+
 function getTypeIcon(type: string, gColors: ReturnType<typeof useGamificationColors>): React.ReactNode {
   switch (type) {
     case 'GAME_INVITE':
@@ -151,7 +157,6 @@ function getTimeAgo(date: Date, t: ReturnType<typeof useTranslation>['t']): stri
 export const NotificationsScreen: React.FC = () => {
   const { t } = useTranslation();
   useDocumentTitle(t('page.title.notifications'));
-  const navigate = useNavigate();
   const goBack = useNavigateBack();
   const theme = useTheme();
   const gColors = useGamificationColors();
@@ -167,6 +172,7 @@ export const NotificationsScreen: React.FC = () => {
     deleteNotification,
     toggleRead,
     declineGameInvite,
+    respondToGroupInvite,
     restoreNotification,
     deleteOldNotifications,
     acting,
@@ -201,10 +207,10 @@ export const NotificationsScreen: React.FC = () => {
     setActiveActionId(notification.id);
     setActionPending(true);
     try {
-      if (notification.type === 'GROUP_INVITE' && notification.referenceId) {
-        await markAsRead(notification.id);
-        navigate(`/group/${notification.referenceId}`);
-        showSuccess(t('feedback.notifications.navigatingToGroup'));
+      if (notification.type === 'GROUP_INVITE') {
+        const inviteId = getGroupInviteId(notification);
+        if (!inviteId) throw new Error('Convite de grupo inválido.');
+        await respondToGroupInvite(notification.id, inviteId, 'ACCEPTED');
       } else if ((notification.type === 'GAME_INVITE' || notification.type === 'GAME_SUMMON') && notification.referenceId) {
         await confirmPresence(notification.referenceId);
         await markAsRead(notification.id);
@@ -215,7 +221,7 @@ export const NotificationsScreen: React.FC = () => {
       setActiveActionId(null);
       setActionPending(false);
     }
-  }, [confirmPresence, markAsRead, showSuccess, showError, navigate, t]);
+  }, [confirmPresence, markAsRead, respondToGroupInvite, showError, t]);
 
   const handleDecline = useCallback(async (notification: typeof notifications[0]) => {
     setActiveActionId(notification.id);
@@ -223,6 +229,10 @@ export const NotificationsScreen: React.FC = () => {
     try {
       if ((notification.type === 'GAME_INVITE' || notification.type === 'GAME_SUMMON') && notification.referenceId) {
         await declineGameInvite(notification.id, notification.referenceId);
+      } else if (notification.type === 'GROUP_INVITE') {
+        const inviteId = getGroupInviteId(notification);
+        if (!inviteId) throw new Error('Convite de grupo inválido.');
+        await respondToGroupInvite(notification.id, inviteId, 'DECLINED');
       } else {
         await markAsRead(notification.id);
         showSuccess(t('feedback.notifications.inviteDeclined'));
@@ -233,7 +243,7 @@ export const NotificationsScreen: React.FC = () => {
       setActiveActionId(null);
       setActionPending(false);
     }
-  }, [declineGameInvite, markAsRead, showSuccess, showError, t]);
+  }, [declineGameInvite, markAsRead, respondToGroupInvite, showSuccess, showError, t]);
 
   const handleDeleteWithUndo = useCallback(async (notification: typeof notifications[0]) => {
     const deletedNotif = notification;

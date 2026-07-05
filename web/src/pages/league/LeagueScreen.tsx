@@ -41,6 +41,13 @@ import {
   TableSortLabel,
   Switch,
   FormControlLabel,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Radio,
+  RadioGroup,
+  CircularProgress,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -57,6 +64,7 @@ import {
   Sort as SortIcon,
   SportsSoccer as SoccerIcon,
   Close as CloseIcon,
+  PersonAdd as PersonAddIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -66,6 +74,7 @@ import { PageContainer } from '../../components/common/PageContainer';
 import { EmptyState } from '../../components/common/EmptyState';
 import { ScreenFab } from '../../components/layout';
 import { useLeague, LeaguePlayer, LeagueFilters } from '../../hooks/useLeague';
+import { useLeagueInvites, LeagueInviteOption } from '../../hooks/useLeagueInvites';
 import type { GameGender } from '../../types/game';
 import { PullToRefresh } from '../../components/common/PullToRefresh';
 import { useActiveSeason } from '../../hooks/useActiveSeason';
@@ -116,6 +125,8 @@ export const LeagueScreen: React.FC = () => {
   const isMdUp = useMediaQuery(theme.breakpoints.up('md'));
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [dense, setDense] = useState(true);
+  const [inviteTarget, setInviteTarget] = useState<LeaguePlayer | null>(null);
+  const [selectedInviteOptionId, setSelectedInviteOptionId] = useState('');
 
   // Monitoramento de performance
   const { metrics } = usePerformanceMonitoring({ screenName: 'LeagueScreen' });
@@ -153,6 +164,12 @@ export const LeagueScreen: React.FC = () => {
     filters,
     { enabled: !!effectiveSeasonId }
   );
+  const {
+    inviteOptions,
+    loading: inviteOptionsLoading,
+    sending: inviteSending,
+    sendInvite,
+  } = useLeagueInvites();
 
   // Derivar players filtrados por divisão (client-side, sem query extra)
   const players = useMemo(
@@ -382,6 +399,41 @@ export const LeagueScreen: React.FC = () => {
       setSortDirection('desc');
     }
   }, [sortField]);
+
+  const canInviteFromLeague = useCallback((player: LeaguePlayer) => (
+    !!user &&
+    !player.isCurrentUser &&
+    player.canReceiveInvites === true &&
+    inviteOptions.length > 0
+  ), [inviteOptions.length, user]);
+
+  const handleOpenInvite = useCallback((player: LeaguePlayer) => {
+    setInviteTarget(player);
+    setSelectedInviteOptionId((prev) => {
+      if (prev && inviteOptions.some((option) => option.id === prev)) return prev;
+      return inviteOptions[0]?.id ?? '';
+    });
+  }, [inviteOptions]);
+
+  const handleCloseInvite = useCallback(() => {
+    if (inviteSending) return;
+    setInviteTarget(null);
+  }, [inviteSending]);
+
+  const selectedInviteOption = useMemo<LeagueInviteOption | undefined>(
+    () => inviteOptions.find((option) => option.id === selectedInviteOptionId),
+    [inviteOptions, selectedInviteOptionId],
+  );
+
+  const handleSendInvite = useCallback(async () => {
+    if (!inviteTarget || !selectedInviteOption) return;
+    await sendInvite({
+      userId: inviteTarget.userId,
+      userName: inviteTarget.userName,
+      userPhoto: inviteTarget.userPhoto,
+    }, selectedInviteOption);
+    setInviteTarget(null);
+  }, [inviteTarget, selectedInviteOption, sendInvite]);
 
   return (
     <Box>
@@ -771,6 +823,9 @@ export const LeagueScreen: React.FC = () => {
                             %
                           </TableSortLabel>
                         </TableCell>
+                        {inviteOptions.length > 0 && (
+                          <TableCell align="right" sx={{ fontWeight: 700 }}>{t('common.actions')}</TableCell>
+                        )}
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -817,6 +872,22 @@ export const LeagueScreen: React.FC = () => {
                             <TableCell align="right">—</TableCell>
                             <TableCell align="right">{player.mvpCount || 0}</TableCell>
                             <TableCell align="right">{winRate}%</TableCell>
+                            {inviteOptions.length > 0 && (
+                              <TableCell align="right">
+                                {canInviteFromLeague(player) && (
+                                  <Tooltip title={t('league.invitePlayer')} arrow>
+                                    <IconButton
+                                      size="small"
+                                      aria-label={t('league.invitePlayerAria', { name: player.userName })}
+                                      onClick={() => handleOpenInvite(player)}
+                                      disabled={inviteSending}
+                                    >
+                                      <PersonAddIcon fontSize="small" />
+                                    </IconButton>
+                                  </Tooltip>
+                                )}
+                              </TableCell>
+                            )}
                           </TableRow>
                         );
                       })}
@@ -843,6 +914,9 @@ export const LeagueScreen: React.FC = () => {
                       isRelegZone={isRelegZone}
                       cardRef={player.isCurrentUser ? userCardRef : undefined}
                       totalPlayers={allPlayers.length}
+                      canInvite={canInviteFromLeague(player)}
+                      inviteDisabled={inviteSending}
+                      onInvite={handleOpenInvite}
                     />
                   );
                 })}
@@ -888,6 +962,63 @@ export const LeagueScreen: React.FC = () => {
         message={t('league.positionCopied', 'Posição copiada!')}
       />
 
+      <Dialog
+        open={!!inviteTarget}
+        onClose={handleCloseInvite}
+        fullWidth
+        maxWidth="sm"
+        aria-labelledby="league-invite-dialog-title"
+      >
+        <DialogTitle id="league-invite-dialog-title">
+          {t('league.inviteDialogTitle', { name: inviteTarget?.userName ?? '' })}
+        </DialogTitle>
+        <DialogContent>
+          {inviteOptionsLoading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
+              <CircularProgress size={28} />
+            </Box>
+          ) : inviteOptions.length === 0 ? (
+            <Alert severity="info">{t('league.noInviteOptions')}</Alert>
+          ) : (
+            <RadioGroup
+              value={selectedInviteOptionId}
+              onChange={(event) => setSelectedInviteOptionId(event.target.value)}
+            >
+              {inviteOptions.map((option) => (
+                <FormControlLabel
+                  key={option.id}
+                  value={option.id}
+                  control={<Radio />}
+                  label={
+                    <Box sx={{ py: 0.5 }}>
+                      <Typography variant="body2" fontWeight={600}>
+                        {option.type === 'group' ? t('league.inviteToGroup') : t('league.inviteToGame')}: {option.label}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {option.helper}
+                      </Typography>
+                    </Box>
+                  }
+                />
+              ))}
+            </RadioGroup>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseInvite} disabled={inviteSending}>
+            {t('common.cancel')}
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleSendInvite}
+            disabled={!selectedInviteOption || inviteSending}
+            startIcon={inviteSending ? <CircularProgress size={16} /> : <PersonAddIcon />}
+          >
+            {t('league.sendInvite')}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       {/* Performance Overlay (dev mode apenas) */}
       <PerformanceOverlay metrics={metrics} />
     </Box>
@@ -905,6 +1036,9 @@ const LeaguePlayerItem = React.memo(function LeaguePlayerItem({
   isRelegZone,
   cardRef,
   totalPlayers,
+  canInvite,
+  inviteDisabled,
+  onInvite,
 }: {
   player: LeaguePlayer;
   position: number;
@@ -916,6 +1050,9 @@ const LeaguePlayerItem = React.memo(function LeaguePlayerItem({
   isRelegZone: boolean;
   cardRef?: React.Ref<HTMLDivElement>;
   totalPlayers: number;
+  canInvite: boolean;
+  inviteDisabled: boolean;
+  onInvite: (player: LeaguePlayer) => void;
 }) {
   const theme = useTheme();
   const { t } = useTranslation();
@@ -936,6 +1073,11 @@ const LeaguePlayerItem = React.memo(function LeaguePlayerItem({
     e.stopPropagation();
     onToggleExpand(player.id);
   }, [onToggleExpand, player.id]);
+
+  const handleInvite = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    onInvite(player);
+  }, [onInvite, player]);
 
   return (
     <Card
@@ -1050,6 +1192,18 @@ const LeaguePlayerItem = React.memo(function LeaguePlayerItem({
               }}
             />
           </Box>
+
+          {canInvite && (
+            <Tooltip title={t('league.invitePlayer')} arrow>
+              <IconButton
+                onClick={handleInvite}
+                aria-label={t('league.invitePlayerAria', { name: player.userName })}
+                disabled={inviteDisabled}
+              >
+                <PersonAddIcon />
+              </IconButton>
+            </Tooltip>
+          )}
 
           <IconButton onClick={handleToggle} aria-label={isExpanded ? 'Recolher' : 'Expandir'}>
             {isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}

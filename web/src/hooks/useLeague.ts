@@ -61,6 +61,7 @@ export interface LeaguePlayer {
   division: LeagueDivision;
   isCurrentUser?: boolean;
   experiencePoints?: number;
+  canReceiveInvites?: boolean;
 }
 
 // Busca dados de usuários em batch (chunks de 10)
@@ -180,6 +181,7 @@ async function fetchLeagueData(
       level: getLevelForXp(userData.xp),
       experiencePoints: userData.xp,
       isCurrentUser: p.userId === currentUserId,
+      canReceiveInvites: true,
     };
   });
 
