@@ -113,6 +113,7 @@ export const CashboxScreen: React.FC = () => {
   const amountValid = !!amount && !isNaN(parsedAmount) && parsedAmount > 0;
   const descriptionValid = description.trim().length > 0;
   const formValid = amountValid && descriptionValid;
+  const currentUserId = firebaseUser?.uid;
 
   const handleRetry = () => {
     setError(null);
@@ -156,17 +157,24 @@ export const CashboxScreen: React.FC = () => {
       }
     );
 
-    // Check if user is admin/owner via members subcollection
-    if (user) {
-      getDoc(doc(db, 'groups', groupId, 'members', user.id))
-        .then((memberDoc) => {
-          if (!cancelled && memberDoc.exists()) {
-            const memberData = memberDoc.data();
-            const memberRole = memberData.role as string | undefined;
-            const memberStatus = memberData.status as string | undefined;
-            setIsAdminOrOwner(memberRole === 'ADMIN' || memberRole === 'OWNER');
-            setIsConfirmedMember(memberStatus === 'ACTIVE' || !memberStatus);
-          }
+    // Check role using the canonical Firebase Auth UID. GroupMemberRoute also
+    // allows legacy owners via groups/{groupId}.owner_id, so mirror that here.
+    if (currentUserId) {
+      Promise.all([
+        getDoc(doc(db, 'groups', groupId, 'members', currentUserId)),
+        getDoc(doc(db, 'groups', groupId)),
+      ])
+        .then(([memberDoc, groupDoc]) => {
+          if (cancelled) return;
+
+          const memberData = memberDoc.exists() ? memberDoc.data() : null;
+          const memberRole = memberData?.role as string | undefined;
+          const memberStatus = memberData?.status as string | undefined;
+          const isActiveMember = memberStatus === 'ACTIVE';
+          const isOwnerByGroupDoc = groupDoc.exists() && groupDoc.data().owner_id === currentUserId;
+
+          setIsAdminOrOwner(isOwnerByGroupDoc || (isActiveMember && (memberRole === 'ADMIN' || memberRole === 'OWNER')));
+          setIsConfirmedMember(isOwnerByGroupDoc || isActiveMember);
         })
         .catch((err) => {
           logger.error('Error checking member status:', err);
@@ -178,7 +186,7 @@ export const CashboxScreen: React.FC = () => {
       cancelled = true;
       unsubscribe();
     };
-  }, [groupId, user, retryCount, t, showError]);
+  }, [groupId, currentUserId, retryCount, t, showError]);
 
   const displayedTransactions = transactions.filter((transaction) => {
     if (filter === 'VOIDED') return transaction.status === 'VOIDED';
@@ -215,7 +223,7 @@ export const CashboxScreen: React.FC = () => {
 
   const handleAddTransaction = useCallback(async () => {
     const parsedAmount = parseFloat(amount);
-    if (!groupId || !user || !description.trim() || isNaN(parsedAmount) || parsedAmount <= 0) return;
+    if (!groupId || !currentUserId || !description.trim() || isNaN(parsedAmount) || parsedAmount <= 0) return;
     setSubmitting(true);
     try {
       const userName = firebaseUser?.displayName || user?.name || t('cashbox.defaultUserName');
@@ -229,7 +237,7 @@ export const CashboxScreen: React.FC = () => {
         category: 'OTHER',
         status: 'ACTIVE',
         receipt_url: receiptUrl,
-        created_by: user?.id,
+        created_by: currentUserId,
         created_by_name: userName,
         created_at: serverTimestamp(),
       });
@@ -246,15 +254,15 @@ export const CashboxScreen: React.FC = () => {
     } finally {
       setSubmitting(false);
     }
-  }, [amount, description, groupId, user, firebaseUser, transactionType, uploadReceipt, showSuccess, showError, t]);
+  }, [amount, description, groupId, currentUserId, user, firebaseUser, transactionType, uploadReceipt, showSuccess, showError, t]);
 
   const handleVoidTransaction = useCallback(async (transactionId: string) => {
-    if (!groupId || !user) return;
+    if (!groupId || !currentUserId) return;
     setVoidingId(transactionId);
     try {
       await updateDoc(doc(db, 'groups', groupId, 'cashbox', transactionId), {
         status: 'VOIDED',
-        voided_by: user.id,
+        voided_by: currentUserId,
         voided_at: serverTimestamp(),
         updated_at: serverTimestamp(),
       });
@@ -264,7 +272,7 @@ export const CashboxScreen: React.FC = () => {
     } finally {
       setVoidingId(null);
     }
-  }, [groupId, user, showError, showSuccess, t]);
+  }, [groupId, currentUserId, showError, showSuccess, t]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat(navigator.language || 'pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
