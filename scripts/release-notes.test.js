@@ -15,6 +15,9 @@
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const os = require('node:os');
+const path = require('node:path');
 
 const {
   parseScalar,
@@ -24,6 +27,8 @@ const {
   validateNote,
   buildAutogen,
   toClientNote,
+  buildBundlePayload,
+  validateBundleTargets,
   compareVersionsDesc,
 } = require('./release-notes');
 
@@ -195,6 +200,51 @@ function fixedNotes() {
   ];
 }
 
+function clientNotesFixture() {
+  const body = validBody();
+  return [
+    {
+      platform: 'android',
+      version: '1.22.0',
+      file: 'android.md',
+      fm: validFm(),
+      body,
+    },
+    {
+      platform: 'web',
+      version: '2.4.0',
+      file: 'web.md',
+      fm: {
+        platform: 'web',
+        version: '2.4.0',
+        type: 'minor',
+        showPopup: true,
+        date: '2026-05-10',
+        milestone: 'web-2.4.0',
+        issues: [321],
+        prs: [654],
+      },
+      body,
+    },
+    {
+      platform: 'ios',
+      version: '1.6.0',
+      file: 'ios.md',
+      fm: {
+        platform: 'ios',
+        version: '1.6.0',
+        type: 'minor',
+        showPopup: false,
+        date: '2026-05-22',
+        buildNumber: 17,
+        milestone: 'ios-1.6.0',
+        published: false,
+      },
+      body,
+    },
+  ];
+}
+
 test('buildAutogen: deterministico — duas chamadas com a mesma entrada sao identicas', () => {
   const first = buildAutogen(fixedNotes());
   const second = buildAutogen(fixedNotes());
@@ -209,8 +259,8 @@ test('buildAutogen: independente da ordem de entrada', () => {
 
 test('buildAutogen: versoes ordenadas da mais nova para a mais antiga', () => {
   const out = buildAutogen(fixedNotes());
-  const idxNew = out.indexOf('[1.22.0]');
-  const idxOld = out.indexOf('[1.21.0]');
+  const idxNew = out.indexOf('[1.22.0][android-1.22.0]');
+  const idxOld = out.indexOf('[1.21.0][android-1.21.0]');
   assert.ok(idxNew !== -1 && idxOld !== -1, 'ambas as versoes devem aparecer');
   assert.ok(idxNew < idxOld, '1.22.0 deve vir antes de 1.21.0');
 });
@@ -221,6 +271,86 @@ test('buildAutogen: inclui rotulos PT-BR e refs de issues/PRs', () => {
   assert.ok(out.includes('#### Corrigido'), 'esperava rotulo PT-BR "Corrigido"');
   assert.ok(out.includes('Issues: #123, #456'), 'esperava refs de issues');
   assert.ok(out.includes('PRs: #789'), 'esperava refs de PRs');
+  assert.ok(
+    out.includes('[android-1.22.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.22.0.md'),
+    'esperava ref platform-scoped apontando para o arquivo-fonte'
+  );
+});
+
+test('buildAutogen: desambigua labels quando plataformas compartilham a mesma versao', () => {
+  const out = buildAutogen([
+    {
+      platform: 'ios',
+      version: '1.6.0',
+      fm: { date: '2026-05-22', issues: [], prs: [] },
+      body: { 'Técnico': { Added: ['Preview iOS'] } },
+    },
+    {
+      platform: 'functions',
+      version: '1.6.0',
+      fm: { date: '2026-07-04', issues: [], prs: [] },
+      body: { 'Técnico': { Fixed: ['Release publish'] } },
+    },
+  ]);
+  assert.ok(out.includes('### [1.6.0][ios-1.6.0] - 2026-05-22'));
+  assert.ok(out.includes('### [1.6.0][functions-1.6.0] - 2026-07-04'));
+});
+
+test('validateBundleTargets: aceita bundles gerados pelo mesmo payload', () => {
+  const notes = clientNotesFixture();
+  const rootDir = fs.mkdtempSync(path.join(os.tmpdir(), 'release-notes-ok-'));
+  const bundleTargets = {
+    android: ['android.json'],
+    web: ['web.json'],
+    ios: ['ios-a.json', 'ios-b.json'],
+  };
+
+  try {
+    for (const platform of Object.keys(bundleTargets)) {
+      const payload = buildBundlePayload(platform, notes, '2026-07-05T00:00:00.000Z');
+      const json = `${JSON.stringify(payload, null, 2)}\n`;
+      for (const relativePath of bundleTargets[platform]) {
+        const target = path.join(rootDir, relativePath);
+        fs.mkdirSync(path.dirname(target), { recursive: true });
+        fs.writeFileSync(target, json);
+      }
+    }
+
+    const errors = [];
+    validateBundleTargets(notes, errors, { rootDir, bundleTargets });
+    assert.deepEqual(errors, []);
+  } finally {
+    fs.rmSync(rootDir, { recursive: true, force: true });
+  }
+});
+
+test('validateBundleTargets: reporta bundle stale quando payload muta', () => {
+  const notes = clientNotesFixture();
+  const rootDir = fs.mkdtempSync(path.join(os.tmpdir(), 'release-notes-stale-'));
+  const bundleTargets = {
+    android: ['android.json'],
+    web: ['web.json'],
+    ios: ['ios.json'],
+  };
+
+  try {
+    for (const platform of Object.keys(bundleTargets)) {
+      const payload = buildBundlePayload(platform, notes, '2026-07-05T00:00:00.000Z');
+      const target = path.join(rootDir, bundleTargets[platform][0]);
+      fs.writeFileSync(target, `${JSON.stringify(payload, null, 2)}\n`);
+    }
+
+    const staleTarget = path.join(rootDir, 'web.json');
+    const stalePayload = JSON.parse(fs.readFileSync(staleTarget, 'utf-8'));
+    stalePayload.notes[0].headline = 'Bundle mutado fora do gerador';
+    fs.writeFileSync(staleTarget, `${JSON.stringify(stalePayload, null, 2)}\n`);
+
+    const errors = [];
+    validateBundleTargets(notes, errors, { rootDir, bundleTargets });
+    assert.ok(errors.some((error) => error.includes('web.json: bundle fora de sincronia')));
+  } finally {
+    fs.rmSync(rootDir, { recursive: true, force: true });
+  }
 });
 
 // ==========================================================================
@@ -258,12 +388,26 @@ test('toClientNote: extrai a nota de cliente do formato-fonte', () => {
   assert.equal(client.highlights.length, 1);
   assert.equal(client.highlights[0].icon, 'star');
   assert.deepEqual(client.issueRefs, [123, 456]);
+  assert.deepEqual(client.fixed, ['Corrigido crash no login', 'Race condition no XP']);
 });
 
 test('toClientNote: published omitido vira true; published:false vira false', () => {
   const base = { version: '1.0.0', file: 'f.md', body: validBody() };
   assert.equal(toClientNote({ ...base, fm: validFm() }).published, true);
   assert.equal(toClientNote({ ...base, fm: { ...validFm(), published: false } }).published, false);
+});
+
+test('toClientNote: usa Fixed tecnico quando Correções do usuario estiver vazio', () => {
+  const body = validBody();
+  body['Para o usuário'].Correções = [];
+  body['Técnico'].Fixed = ['Contrato do mural alinhado'];
+  const client = toClientNote({
+    version: '1.36.0',
+    file: 'f.md',
+    fm: validFm(),
+    body,
+  });
+  assert.deepEqual(client.fixed, ['Contrato do mural alinhado']);
 });
 
 test('parseBody: estrutura H2/H3/itens corretamente', () => {
