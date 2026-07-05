@@ -602,6 +602,11 @@
     "description": "An unexpected error occurred. Please try again.",
     "errorCode": "Error code:",
     "goHome": "Go Home",
+    "report": "Report error",
+    "reported": "Error reported",
+    "reportError": "Could not send the report right now. Copy the details and try again later.",
+    "reporting": "Sending...",
+    "reportLoginRequired": "Sign in to send this report automatically.",
     "reload": "Reload",
     "title": "Oops! Something went wrong"
   },

@@ -160,6 +160,16 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.49.0][web-1.49.0] - 2026-07-05
+
+#### Adicionado
+- `ErrorBoundary` ganhou ação de reporte para criar documentos em `user_feedback` como `bug/high`.
+- `errorFeedbackReporter` centraliza o payload seguro para feedback originado por crash.
+- Firestore Rules de `user_feedback` aceitam `user_email` vazio para usuários autenticados sem e-mail no token, sem permitir spoofing de e-mail.
+- Testes cobrem envio autenticado e orientação de login no fallback global de erro.
+
+_Issues: #3294_
+
 ### [1.48.9][web-1.48.9] - 2026-07-05
 
 #### Corrigido
@@ -1413,6 +1423,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.49.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.49.0.md
 [web-1.48.9]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.48.9.md
 [web-1.48.8]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.48.8.md
 [web-1.48.7]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.48.7.md
