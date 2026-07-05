@@ -395,6 +395,15 @@ describe('useCreateGame', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockCollection.mockReturnValue('mock-collection');
+    mockDoc.mockReturnValue('mock-doc');
+    mockGetDoc.mockResolvedValue({
+      exists: () => true,
+      data: () => ({
+        owner_id: 'test-user-id',
+        member_count: 5,
+        status: 'ACTIVE',
+      }),
+    });
     mockAddDoc.mockResolvedValue({ id: 'new-game-id' });
   });
 
@@ -406,6 +415,7 @@ describe('useCreateGame', () => {
         date: '2026-03-20',
         time: '19:00',
         maxPlayers: 14,
+        groupId: 'group-qualified',
       });
       expect(id).toBe('new-game-id');
     });
@@ -416,10 +426,27 @@ describe('useCreateGame', () => {
         owner_id: 'test-user-id',
         owner_name: 'Test User',
         status: 'SCHEDULED',
+        group_id: 'group-qualified',
         players_count: 0,
         xp_processed: false,
       })
     );
+  });
+
+  it('bloqueia criação sem grupo qualificado', async () => {
+    const { result } = renderHook(() => useCreateGame(), { wrapper: createTestWrapper() });
+
+    await expect(
+      act(async () => {
+        await result.current.createGame({
+          date: '2026-03-20',
+          time: '19:00',
+          maxPlayers: 14,
+        });
+      })
+    ).rejects.toThrow('Selecione um grupo seu com pelo menos 5 membros para criar o jogo.');
+
+    expect(mockAddDoc).not.toHaveBeenCalled();
   });
 
   it('exige autenticação para criar jogo', async () => {
