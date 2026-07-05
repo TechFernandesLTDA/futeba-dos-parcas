@@ -18,6 +18,7 @@ const UID_INCOMPLETE = "uid-profile-incomplete";
 const UID_FALLBACK = "uid-profile-fallback";
 const UID_EMPTY = "uid-profile-empty";
 const futureDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+const gameGroupId = (ownerId: string) => `profile-game-group-${ownerId}`;
 
 beforeAll(async () => {
   testEnv = await initTestEnv();
@@ -25,6 +26,14 @@ beforeAll(async () => {
     phoneVerifiedAt: new Date(),
     cpfVerifiedAt: new Date(),
   });
+  for (const uid of [UID_COMPLETE, UID_INCOMPLETE, UID_FALLBACK, UID_EMPTY]) {
+    await seedDoc(testEnv, `groups/${gameGroupId(uid)}`, {
+      name: "Grupo Profile Gate",
+      owner_id: uid,
+      status: "ACTIVE",
+      member_count: 5,
+    });
+  }
 });
 
 afterAll(async () => {
@@ -51,7 +60,7 @@ function validGame(ownerId: string) {
     goalkeepers_count: 0,
     team1_score: null,
     team2_score: null,
-    group_id: null,
+    group_id: gameGroupId(ownerId),
     co_organizers: [],
   };
 }

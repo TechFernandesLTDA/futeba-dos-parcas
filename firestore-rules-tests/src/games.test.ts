@@ -37,6 +37,9 @@ const LOCATION_SUSPENDED = "loc-suspended-game-001";
 const LOCATION_OVERDUE = "loc-overdue-game-001";
 const FIELD_ACTIVE = "field-active-game-001";
 const FIELD_INACTIVE = "field-inactive-game-001";
+const GROUP_PLAYER_A_QUALIFIED = "group-player-a-qualified";
+const GROUP_PLAYER_A_SMALL = "group-player-a-small";
+const GROUP_PLAYER_B_QUALIFIED = "group-player-b-qualified";
 
 // Data futura para evitar rejeição de data passada (SECFIX #422)
 const futureDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
@@ -52,13 +55,32 @@ const validGamePayload = (overrides: Record<string, unknown> = {}) => ({
   goalkeepers_count: 0,
   team1_score: null,
   team2_score: null,
-  group_id: null,
+  group_id: GROUP_PLAYER_A_QUALIFIED,
   co_organizers: [],
   ...overrides,
 });
 
 beforeAll(async () => {
   testEnv = await initTestEnv();
+
+  await seedDoc(testEnv, `groups/${GROUP_PLAYER_A_QUALIFIED}`, {
+    name: "Grupo Player A Qualificado",
+    owner_id: UID_PLAYER_A,
+    status: "ACTIVE",
+    member_count: 5,
+  });
+  await seedDoc(testEnv, `groups/${GROUP_PLAYER_A_SMALL}`, {
+    name: "Grupo Player A Pequeno",
+    owner_id: UID_PLAYER_A,
+    status: "ACTIVE",
+    member_count: 4,
+  });
+  await seedDoc(testEnv, `groups/${GROUP_PLAYER_B_QUALIFIED}`, {
+    name: "Grupo Player B Qualificado",
+    owner_id: UID_PLAYER_B,
+    status: "ACTIVE",
+    member_count: 5,
+  });
 
   // Jogo ativo — dono é player A
   await seedDoc(testEnv, `games/${GAME_ACTIVE}`, {
@@ -72,7 +94,7 @@ beforeAll(async () => {
     goalkeepers_count: 0,
     team1_score: null,
     team2_score: null,
-    group_id: null,
+    group_id: GROUP_PLAYER_A_QUALIFIED,
     co_organizers: [],
   });
 
@@ -105,7 +127,7 @@ beforeAll(async () => {
     team1_score: null,
     team2_score: null,
     co_organizers: [UID_FIELD_OWNER], // co-organizer
-    group_id: null,
+    group_id: GROUP_PLAYER_A_QUALIFIED,
   });
 
   const baseLocation = {
@@ -271,6 +293,33 @@ describe("games — criação", () => {
     );
   });
 
+  it("Player NÃO pode criar jogo sem grupo base qualificado", async () => {
+    const db = asPlayerA(testEnv);
+    await assertFails(
+      db.doc("games/game-without-qualified-group").set(validGamePayload({
+        group_id: null,
+      }))
+    );
+  });
+
+  it("Player NÃO pode criar jogo com grupo de outro dono", async () => {
+    const db = asPlayerA(testEnv);
+    await assertFails(
+      db.doc("games/game-other-owner-group").set(validGamePayload({
+        group_id: GROUP_PLAYER_B_QUALIFIED,
+      }))
+    );
+  });
+
+  it("Player NÃO pode criar jogo com grupo próprio abaixo de 5 membros", async () => {
+    const db = asPlayerA(testEnv);
+    await assertFails(
+      db.doc("games/game-small-owner-group").set(validGamePayload({
+        group_id: GROUP_PLAYER_A_SMALL,
+      }))
+    );
+  });
+
   it("Admin pode criar jogo com qualquer owner_id", async () => {
     const db = asAdmin(testEnv);
     await assertSucceeds(
@@ -378,7 +427,7 @@ describe("games — criação", () => {
         goalkeepers_count: 0,
         team1_score: null,
         team2_score: null,
-        group_id: null,
+        group_id: GROUP_PLAYER_A_QUALIFIED,
         co_organizers: [],
       })
     );
@@ -436,7 +485,7 @@ describe("games — criação", () => {
         goalkeepers_count: 0,
         team1_score: null,
         team2_score: null,
-        group_id: null,
+        group_id: GROUP_PLAYER_A_QUALIFIED,
         co_organizers: [],
       })
     );
@@ -459,7 +508,7 @@ describe("games — criação", () => {
         goalkeepers_count: 0,
         team1_score: null,
         team2_score: null,
-        group_id: null,
+        group_id: GROUP_PLAYER_A_QUALIFIED,
         co_organizers: [],
       })
     );
@@ -481,7 +530,7 @@ describe("games — criação", () => {
         goalkeepers_count: 0,
         team1_score: null,
         team2_score: null,
-        group_id: null,
+        group_id: GROUP_PLAYER_A_QUALIFIED,
         co_organizers: [],
       })
     );
@@ -544,7 +593,7 @@ describe("games — criação", () => {
         goalkeepers_count: 0,
         team1_score: null,
         team2_score: null,
-        group_id: null,
+        group_id: GROUP_PLAYER_A_QUALIFIED,
         co_organizers: [],
       })
     );
@@ -565,7 +614,7 @@ describe("games — criação", () => {
         goalkeepers_count: 0,
         team1_score: null,
         team2_score: null,
-        group_id: null,
+        group_id: GROUP_PLAYER_A_QUALIFIED,
         co_organizers: [],
       })
     );
@@ -609,7 +658,7 @@ describe("games — atualização", () => {
       goalkeepers_count: 0,
       team1_score: null,
       team2_score: null,
-      group_id: null,
+      group_id: GROUP_PLAYER_A_QUALIFIED,
       co_organizers: [],
     });
 
@@ -658,7 +707,7 @@ describe("games — atualização", () => {
       goalkeepers_count: 0,
       team1_score: null,
       team2_score: null,
-      group_id: null,
+      group_id: GROUP_PLAYER_A_QUALIFIED,
       co_organizers: [],
     });
 
@@ -696,7 +745,7 @@ describe("games — atualização", () => {
       goalkeepers_count: 1,
       team1_score: 0,
       team2_score: 0,
-      group_id: null,
+      group_id: GROUP_PLAYER_A_QUALIFIED,
       co_organizers: [],
     });
 
@@ -724,7 +773,7 @@ describe("games — atualização", () => {
       goalkeepers_count: 1,
       team1_score: 2,
       team2_score: 1,
-      group_id: null,
+      group_id: GROUP_PLAYER_A_QUALIFIED,
       co_organizers: [],
     });
 

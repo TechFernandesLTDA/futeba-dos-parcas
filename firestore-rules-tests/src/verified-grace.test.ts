@@ -17,9 +17,24 @@ import {
 let testEnv: RulesTestEnvironment;
 
 const FUTURE_DATE = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+const UID_UNVERIFIED_GAME_OWNER = "uid-unverified-001";
+const GROUP_UNVERIFIED_QUALIFIED = "grace-group-unverified-qualified";
+const GROUP_PLAYER_A_QUALIFIED = "grace-group-player-a-qualified";
 
 beforeAll(async () => {
   testEnv = await initTestEnv();
+  await seedDoc(testEnv, `groups/${GROUP_UNVERIFIED_QUALIFIED}`, {
+    name: "Grupo Grace Unverified",
+    owner_id: UID_UNVERIFIED_GAME_OWNER,
+    status: "ACTIVE",
+    member_count: 5,
+  });
+  await seedDoc(testEnv, `groups/${GROUP_PLAYER_A_QUALIFIED}`, {
+    name: "Grupo Grace Player A",
+    owner_id: UID_PLAYER_A,
+    status: "ACTIVE",
+    member_count: 5,
+  });
 });
 
 afterAll(async () => {
@@ -28,7 +43,7 @@ afterAll(async () => {
 
 describe("verified grace period — isVerifiedOrGrace() enforcement", () => {
   it("Usuario nao verificado PODE criar game (dentro da grace period ate 2026-08-03)", async () => {
-    const unverifiedDb = asUser(testEnv, "uid-unverified-001", {
+    const unverifiedDb = asUser(testEnv, UID_UNVERIFIED_GAME_OWNER, {
       role: "PLAYER",
       verified: false,
       profileComplete: true,
@@ -36,7 +51,7 @@ describe("verified grace period — isVerifiedOrGrace() enforcement", () => {
     await assertSucceeds(
       unverifiedDb.doc("games/game-unverified").set({
         title: "Jogo Unverified",
-        owner_id: "uid-unverified-001",
+        owner_id: UID_UNVERIFIED_GAME_OWNER,
         status: "SCHEDULED",
         date_time: FUTURE_DATE,
         max_players: 10,
@@ -45,7 +60,7 @@ describe("verified grace period — isVerifiedOrGrace() enforcement", () => {
         goalkeepers_count: 0,
         team1_score: null,
         team2_score: null,
-        group_id: null,
+        group_id: GROUP_UNVERIFIED_QUALIFIED,
         co_organizers: [],
       })
     );
@@ -176,7 +191,7 @@ describe("verified grace period — isVerifiedOrGrace() enforcement", () => {
         goalkeepers_count: 0,
         team1_score: null,
         team2_score: null,
-        group_id: null,
+        group_id: GROUP_PLAYER_A_QUALIFIED,
         co_organizers: [],
       })
     );
