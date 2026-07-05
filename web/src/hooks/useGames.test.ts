@@ -156,6 +156,11 @@ describe('useGames', () => {
     expect(mockLimit).toHaveBeenCalledWith(5);
   });
 
+  it('permite ordenar jogos por data descendente', () => {
+    renderHook(() => useGames({ orderDirection: 'desc' }), { wrapper: createTestWrapper() });
+    expect(mockOrderBy).toHaveBeenCalledWith('dateTime', 'desc');
+  });
+
   it('trata erros do getDocs', async () => {
     // useGames usa useQuery/getDocs — simular erro via mockRejectedValue.
     mockGetDocs.mockRejectedValueOnce(new Error('Firestore error'));

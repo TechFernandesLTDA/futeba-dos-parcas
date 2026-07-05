@@ -52,6 +52,15 @@ import {
   MilitaryTech as ChallengesIcon,
   PhotoLibrary as PhotoLibraryIcon,
   ChatBubbleOutline as WallIcon,
+  AdminPanelSettings as AdminIcon,
+  CalendarMonth as CalendarIcon,
+  ChevronRight as ChevronRightIcon,
+  Forum as ForumIcon,
+  History as HistoryIcon,
+  Insights as StatsIcon,
+  Lock as LockIcon,
+  PersonAddAlt as InviteIcon,
+  Public as PublicIcon,
 } from '@mui/icons-material';
 import { collection, getDocs, limit, query, where } from 'firebase/firestore';
 import { AppBreadcrumbs, FixedBottomBar } from '../../components/layout';
@@ -65,6 +74,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { getFirestoreErrorMessage } from '../../utils/firebaseErrors';
 import { GroupRole } from '../../types/group';
+import { Game } from '../../types/game';
 import { PlayerAvatar, ShimmerLoading } from '../../components/common/GameCard';
 import { EmptyState } from '../../components/common/EmptyState';
 import { ErrorScreen } from '../../components/common/ErrorScreen';
@@ -73,6 +83,7 @@ import { GameCard } from '../../components/common/GameCard';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
 import { iconSizes } from '../../theme/iconSizes';
+import { formatDateShort } from '../../utils/dateFormatters';
 import { db } from '../../services/firebase';
 import { GroupWallTab } from './GroupWallTab';
 
@@ -98,7 +109,7 @@ const PollsPanel: React.FC<{ groupId: string; canCreate: boolean }> = ({ groupId
   const [optionsText, setOptionsText] = useState('Domingo de manhã\nQuarta à noite');
 
   return (
-    <CardContent>
+    <Box sx={{ p: 2 }}>
       <Stack spacing={2}>
         {canCreate && (
           <Card variant="outlined" sx={{ bgcolor: alpha(theme.palette.primary.main, 0.04) }}>
@@ -132,7 +143,7 @@ const PollsPanel: React.FC<{ groupId: string; canCreate: boolean }> = ({ groupId
           <PollCard key={poll.id} poll={poll} voting={votePoll.isPending} onVote={(optionId) => votePoll.mutate({ pollId: poll.id, optionId })} />
         ))}
       </Stack>
-    </CardContent>
+    </Box>
   );
 };
 
@@ -338,6 +349,214 @@ const GroupPhotosPanel: React.FC<{
 
 import { getRoleColor } from '../../constants/group';
 
+interface GroupStatCardProps {
+  icon: React.ReactNode;
+  label: string;
+  value: React.ReactNode;
+  helper?: string;
+  color?: 'primary' | 'success' | 'warning' | 'info' | 'error';
+}
+
+const GroupStatCard: React.FC<GroupStatCardProps> = ({ icon, label, value, helper, color = 'primary' }) => {
+  const theme = useTheme();
+  return (
+    <Card
+      variant="outlined"
+      sx={{
+        height: '100%',
+        borderRadius: 2,
+        bgcolor: alpha(theme.palette[color].main, 0.04),
+      }}
+    >
+      <CardContent sx={{ p: { xs: 1.5, sm: 2 }, '&:last-child': { pb: { xs: 1.5, sm: 2 } } }}>
+        <Stack direction="row" spacing={1.25} alignItems="center">
+          <Box
+            sx={{
+              width: 38,
+              height: 38,
+              borderRadius: 1.5,
+              bgcolor: alpha(theme.palette[color].main, 0.12),
+              color: theme.palette[color].main,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
+          >
+            {icon}
+          </Box>
+          <Box sx={{ minWidth: 0 }}>
+            <Typography variant="h6" fontWeight={800} lineHeight={1.1}>
+              {value}
+            </Typography>
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+              {label}
+            </Typography>
+          </Box>
+        </Stack>
+        {helper && (
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+            {helper}
+          </Typography>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+
+interface GroupQuickAction {
+  label: string;
+  description: string;
+  icon: React.ReactNode;
+  onClick: () => void;
+  emphasized?: boolean;
+}
+
+const GroupQuickActions: React.FC<{ actions: GroupQuickAction[] }> = ({ actions }) => {
+  const { t } = useTranslation();
+
+  return (
+    <Card variant="outlined" sx={{ mb: 2 }}>
+      <CardContent>
+        <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1.5 }}>
+          <AdminIcon color="primary" />
+          <Box>
+            <Typography variant="subtitle1" fontWeight={800}>
+              {t('groupDetail.manageHub')}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              {t('groupDetail.manageHubDesc')}
+            </Typography>
+          </Box>
+        </Stack>
+        <Grid container spacing={1}>
+          {actions.map((action) => (
+            <Grid xs={12} sm={6} key={action.label}>
+              <Button
+                fullWidth
+                variant={action.emphasized ? 'contained' : 'outlined'}
+                startIcon={action.icon}
+                endIcon={<ChevronRightIcon />}
+                onClick={action.onClick}
+                sx={{
+                  minHeight: 56,
+                  justifyContent: 'space-between',
+                  textTransform: 'none',
+                  px: 1.5,
+                  '& .MuiButton-startIcon': { mr: 1 },
+                  '& .MuiButton-endIcon': { ml: 'auto' },
+                }}
+              >
+                <Box sx={{ minWidth: 0, textAlign: 'left', flex: 1 }}>
+                  <Typography variant="body2" fontWeight={800} noWrap>
+                    {action.label}
+                  </Typography>
+                  <Typography
+                    variant="caption"
+                    sx={{ display: 'block', color: action.emphasized ? 'inherit' : 'text.secondary' }}
+                    noWrap
+                  >
+                    {action.description}
+                  </Typography>
+                </Box>
+              </Button>
+            </Grid>
+          ))}
+        </Grid>
+      </CardContent>
+    </Card>
+  );
+};
+
+const GamesPanel: React.FC<{
+  games: Game[];
+  loading: boolean;
+  canCreate: boolean;
+  onCreate: () => void;
+  onOpenGame: (gameId: string) => void;
+}> = ({ games, loading, canCreate, onCreate, onOpenGame }) => {
+  const { t } = useTranslation();
+  const now = new Date();
+  const sortedAsc = [...games].sort((a, b) => (a.dateTime?.getTime() || 0) - (b.dateTime?.getTime() || 0));
+  const sortedDesc = [...games].sort((a, b) => (b.dateTime?.getTime() || 0) - (a.dateTime?.getTime() || 0));
+  const upcomingGames = sortedAsc.filter((game) => game.status !== 'FINISHED' && game.status !== 'CANCELLED' && (!game.dateTime || game.dateTime >= now));
+  const pastGames = sortedDesc.filter((game) => game.status === 'FINISHED' || (game.dateTime && game.dateTime < now));
+  const visibleHistory = pastGames.length > 0 ? pastGames.slice(0, 8) : sortedDesc.slice(0, 8);
+
+  if (loading) {
+    return <ShimmerLoading count={3} type="card" />;
+  }
+
+  if (games.length === 0) {
+    return (
+      <EmptyState
+        icon={<SoccerIcon sx={{ fontSize: iconSizes.xxl, color: 'text.disabled' }} />}
+        title={t('groupDetail.noGames')}
+        description={t('groupDetail.noGamesDesc')}
+        actionLabel={canCreate ? t('games.createGame') : undefined}
+        onAction={canCreate ? onCreate : undefined}
+      />
+    );
+  }
+
+  return (
+    <Stack spacing={2}>
+      <Card variant="outlined">
+        <CardContent>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} justifyContent="space-between" alignItems={{ xs: 'stretch', sm: 'center' }}>
+            <Stack direction="row" spacing={1.25} alignItems="center">
+              <CalendarIcon color="primary" />
+              <Box>
+                <Typography variant="subtitle1" fontWeight={800}>
+                  {t('groupDetail.groupGames')}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {t('groupDetail.groupGamesDesc', { count: games.length })}
+                </Typography>
+              </Box>
+            </Stack>
+            {canCreate && (
+              <Button variant="contained" startIcon={<AddIcon />} onClick={onCreate}>
+                {t('groupDetail.newGame')}
+              </Button>
+            )}
+          </Stack>
+        </CardContent>
+      </Card>
+
+      {upcomingGames.length > 0 && (
+        <Box>
+          <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+            <SoccerIcon color="primary" fontSize="small" />
+            <Typography variant="subtitle2" fontWeight={800}>
+              {t('groupDetail.nextGames')}
+            </Typography>
+          </Stack>
+          <Stack spacing={1.5}>
+            {upcomingGames.slice(0, 3).map((game) => (
+              <GameCard key={game.id} game={game} onClick={() => onOpenGame(game.id)} />
+            ))}
+          </Stack>
+        </Box>
+      )}
+
+      <Box>
+        <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+          <HistoryIcon color="primary" fontSize="small" />
+          <Typography variant="subtitle2" fontWeight={800}>
+            {t('groupDetail.gameHistory')}
+          </Typography>
+        </Stack>
+        <Stack spacing={1.5}>
+          {visibleHistory.map((game) => (
+            <GameCard key={game.id} game={game} onClick={() => onOpenGame(game.id)} />
+          ))}
+        </Stack>
+      </Box>
+    </Stack>
+  );
+};
+
 export const GroupDetailScreen: React.FC = () => {
   const { t } = useTranslation();
   useDocumentTitle(t('group.detailTitle'));
@@ -358,8 +577,7 @@ export const GroupDetailScreen: React.FC = () => {
   const containerMaxWidth: 'sm' | 'md' | 'xl' = isLg ? 'xl' : isMd ? 'md' : 'sm';
 
   const { group, groupDeleted, members, loading, error } = useGroupDetail(groupId || null);
-  const { games, loading: gamesLoading } = useGames({ groupId: groupId || undefined, limitCount: 5 });
-  const { games: photoGames, loading: photoGamesLoading } = useGames({ groupId: groupId || undefined, limitCount: 50 });
+  const { games, loading: gamesLoading } = useGames({ groupId: groupId || undefined, limitCount: 50, orderDirection: 'desc' });
   const { generateInviteCode, loading: inviteLoading } = useInvitePlayers();
 
   const [tabValue, setTabValue] = useState(0);
@@ -506,6 +724,69 @@ export const GroupDetailScreen: React.FC = () => {
     );
   }
 
+  const now = new Date();
+  const sortedGamesDesc = [...games].sort((a, b) => (b.dateTime?.getTime() || 0) - (a.dateTime?.getTime() || 0));
+  const sortedGamesAsc = [...games].sort((a, b) => (a.dateTime?.getTime() || 0) - (b.dateTime?.getTime() || 0));
+  const finishedGames = games.filter((game) => game.status === 'FINISHED').length;
+  const upcomingGames = sortedGamesAsc.filter((game) => game.status !== 'FINISHED' && game.status !== 'CANCELLED' && (!game.dateTime || game.dateTime >= now));
+  const lastGame = sortedGamesDesc.find((game) => game.status === 'FINISHED' || (game.dateTime && game.dateTime < now));
+  const activeMembersCount = members.filter((member) => member.status === undefined || member.status === 'ACTIVE').length || group.memberCount || 0;
+  const totalGamesCount = group.totalGamesPlayed || games.length;
+  const balanceValue = group.totalBalance || 0;
+  const balanceLabel = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(balanceValue);
+  const nextGame = upcomingGames[0];
+
+  const quickActions: GroupQuickAction[] = [
+    {
+      label: t('games.createGame'),
+      description: t('groupDetail.actionCreateGameDesc'),
+      icon: <AddIcon />,
+      onClick: () => navigate(`/game/create?groupId=${groupId}`),
+      emphasized: true,
+    },
+    {
+      label: t('groupWall.tab'),
+      description: t('groupDetail.actionWallDesc'),
+      icon: <ForumIcon />,
+      onClick: () => setTabValue(0),
+    },
+    {
+      label: t('group.tabMembers'),
+      description: t('groupDetail.actionMembersDesc'),
+      icon: <PeopleIcon />,
+      onClick: () => setTabValue(3),
+    },
+    {
+      label: t('groupDetail.schedules'),
+      description: t('groupDetail.actionSchedulesDesc'),
+      icon: <SchedulesIcon />,
+      onClick: () => navigate(`/group/${groupId}/schedules`),
+    },
+    {
+      label: t('groupDetail.challenges'),
+      description: t('groupDetail.actionChallengesDesc'),
+      icon: <ChallengesIcon />,
+      onClick: () => navigate(`/group/${groupId}/challenges`),
+    },
+    ...(isAdmin ? [{
+      label: t('groups.invitePlayers'),
+      description: t('groupDetail.actionInviteDesc'),
+      icon: <InviteIcon />,
+      onClick: () => setInviteDialogOpen(true),
+    }] : []),
+  ];
+
+  const tabItems = [
+    { label: t('groupWall.tab'), icon: <WallIcon />, value: 0 },
+    { label: t('group.tabGames'), icon: <SoccerIcon />, value: 1 },
+    { label: t('groupDetail.statsTab'), icon: <StatsIcon />, value: 2 },
+    { label: t('group.tabMembers'), icon: <PeopleIcon />, value: 3 },
+    { label: t('nav.league'), icon: <TrophyIcon />, value: 4 },
+    { label: t('groupPolls.tab'), icon: <PollIcon />, value: 5 },
+    { label: t('groupPhotos.tab'), icon: <PhotoLibraryIcon />, value: 6 },
+    { label: t('group.tabCashbox'), icon: <MoneyIcon />, value: 7 },
+  ];
+
   return (
     <Box sx={{ pb: 10 }}>
       <ScreenHeader
@@ -539,310 +820,324 @@ export const GroupDetailScreen: React.FC = () => {
         ]}
       />
 
-      {/* Painel de informações do grupo — reutilizado em xs/sm (inline) e lg (sidebar) */}
-      {(() => {
-        const infoPanel = (
-          <Card sx={{ mb: 2, overflow: 'hidden' }}>
-            <Box
-              sx={{
-                height: 120,
-                background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
-                position: 'relative',
-              }}
-            >
+      <PageContainer maxWidth="detail">
+        <Card sx={{ mb: 2, overflow: 'hidden' }}>
+          <Box
+            sx={{
+              p: { xs: 2, sm: 3 },
+              color: theme.palette.common.white,
+              background: `
+                linear-gradient(135deg, ${alpha(theme.palette.primary.dark, 0.96)}, ${alpha(theme.palette.success.dark, 0.88)}),
+                repeating-linear-gradient(90deg, ${alpha(theme.palette.common.white, 0.12)} 0 1px, transparent 1px 42px)
+              `,
+            }}
+          >
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ xs: 'flex-start', sm: 'center' }}>
               <Avatar
                 src={group.photoUrl}
                 sx={{
-                  position: 'absolute',
-                  bottom: -36,
-                  left: 20,
-                  width: 72,
-                  height: 72,
-                  bgcolor: 'primary.main',
-                  border: `4px solid ${theme.palette.background.paper}`,
-                  fontSize: '2rem',
+                  width: { xs: 72, sm: 88 },
+                  height: { xs: 72, sm: 88 },
+                  bgcolor: alpha(theme.palette.common.white, 0.18),
+                  border: `3px solid ${alpha(theme.palette.common.white, 0.8)}`,
+                  fontSize: { xs: '2rem', sm: '2.4rem' },
                 }}
               >
                 {group.name.charAt(0).toUpperCase()}
               </Avatar>
-            </Box>
-            <CardContent sx={{ pt: 5.5 }}>
-              <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2, mb: 2 }}>
-                <Box sx={{ flex: 1 }}>
-                  <Typography variant="h5" fontWeight={700}>
+              <Box sx={{ minWidth: 0, flex: 1 }}>
+                <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
+                  <Typography variant={isMobile ? 'h5' : 'h4'} fontWeight={900} sx={{ color: 'inherit' }}>
                     {group.name}
                   </Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1, flexWrap: 'wrap' }}>
-                    <Chip icon={<GroupIcon />} label={t('groups.membersCount', { count: group.memberCount ?? 0 })} size="small" />
-                    <Chip icon={<SoccerIcon />} label={t('groups.gamesCount', { count: games.length })} size="small" variant="outlined" />
-                    {group.isPublic && (
-                      <Chip label={t('group.public')} size="small" variant="outlined" />
-                    )}
-                  </Box>
-                </Box>
-              </Box>
-
-              {group.description && (
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                  {group.description}
-                </Typography>
-              )}
-
-              {isMember && (
-                <Box sx={{ mt: 2 }}>
-                  <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: 0.8 }}>
-                    {t('groupDetail.quickActions')}
+                  <Chip
+                    icon={group.isPublic ? <PublicIcon /> : <LockIcon />}
+                    label={group.isPublic ? t('group.public') : t('groups.privateGroupLabel')}
+                    size="small"
+                    sx={{
+                      bgcolor: alpha(theme.palette.common.white, 0.16),
+                      color: 'inherit',
+                      '& .MuiChip-icon': { color: 'inherit' },
+                    }}
+                  />
+                </Stack>
+                {group.description && (
+                  <Typography variant="body2" sx={{ mt: 1, maxWidth: 780, color: alpha(theme.palette.common.white, 0.86) }}>
+                    {group.description}
                   </Typography>
-                  <Grid container spacing={1} sx={{ mt: 0.5 }}>
-                    {[
-                      { label: t('group.tabMembers'), icon: <PeopleIcon />, to: `/group/${groupId}/players` },
-                      { label: t('groupDetail.schedules'), icon: <SchedulesIcon />, to: `/group/${groupId}/schedules` },
-                      { label: t('groupDetail.challenges'), icon: <ChallengesIcon />, to: `/group/${groupId}/challenges` },
-                      ...(isAdmin ? [{ label: t('groups.invitePlayers'), icon: <ShareIcon />, to: `/group/${groupId}/invite` }] : []),
-                    ].map((action) => (
-                      <Grid xs={6} key={action.to}>
-                        <Button
-                          variant="outlined"
-                          fullWidth
-                          size="small"
-                          startIcon={action.icon}
-                          onClick={() => navigate(action.to)}
-                          sx={{ justifyContent: 'flex-start', textTransform: 'none' }}
-                        >
-                          {action.label}
-                        </Button>
-                      </Grid>
-                    ))}
-                  </Grid>
-                </Box>
-              )}
+                )}
+                <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ mt: 2 }}>
+                  <Chip icon={<PeopleIcon />} label={t('groups.membersCount', { count: activeMembersCount })} size="small" sx={{ bgcolor: alpha(theme.palette.common.white, 0.16), color: 'inherit', '& .MuiChip-icon': { color: 'inherit' } }} />
+                  <Chip icon={<SoccerIcon />} label={t('groups.gamesCount', { count: totalGamesCount })} size="small" sx={{ bgcolor: alpha(theme.palette.common.white, 0.16), color: 'inherit', '& .MuiChip-icon': { color: 'inherit' } }} />
+                  {nextGame && (
+                    <Chip icon={<CalendarIcon />} label={`${t('groups.nextGame')}: ${formatDateShort(nextGame.dateTime)}`} size="small" sx={{ bgcolor: alpha(theme.palette.common.white, 0.16), color: 'inherit', '& .MuiChip-icon': { color: 'inherit' } }} />
+                  )}
+                </Stack>
+              </Box>
+            </Stack>
+          </Box>
+        </Card>
 
-              {shouldTrackJoinRequest && (
-                <Box sx={{ mt: 2 }}>
-                  {!joinRequest && (
-                    <Button
-                      variant="contained"
-                      fullWidth
-                      onClick={requestJoin}
-                      disabled={joinSubmitting}
-                    >
-                      {joinSubmitting ? t('group.sending') : t('group.requestJoin')}
-                    </Button>
-                  )}
-                  {joinRequest?.status === 'PENDING' && (
-                    <Stack spacing={1}>
-                      <Alert severity="info" icon={false}>
-                        {t('group.awaitingApproval')}
-                      </Alert>
-                      <Button
-                        variant="outlined"
-                        fullWidth
-                        onClick={cancelRequest}
-                        disabled={joinSubmitting}
-                      >
-                        {joinSubmitting ? t('group.cancelling') : t('group.cancelRequest')}
-                      </Button>
-                    </Stack>
-                  )}
-                  {joinRequest?.status === 'REJECTED' && (
-                    <Alert severity="warning" icon={false}>
-                      {t('group.requestRejected')}
-                    </Alert>
-                  )}
-                </Box>
+        <Grid container spacing={1.5} sx={{ mb: 2 }}>
+          <Grid xs={6} md={3}>
+            <GroupStatCard icon={<PeopleIcon />} label={t('groupDetail.activeMembers')} value={activeMembersCount} helper={t('groupDetail.activeMembersHint')} />
+          </Grid>
+          <Grid xs={6} md={3}>
+            <GroupStatCard icon={<SoccerIcon />} label={t('groupDetail.playedGames')} value={totalGamesCount} helper={t('groupDetail.playedGamesHint', { count: finishedGames })} color="success" />
+          </Grid>
+          <Grid xs={6} md={3}>
+            <GroupStatCard icon={<CalendarIcon />} label={t('groupDetail.nextGames')} value={upcomingGames.length} helper={nextGame ? formatDateShort(nextGame.dateTime) : t('groupDetail.noNextGame')} color="info" />
+          </Grid>
+          <Grid xs={6} md={3}>
+            <GroupStatCard icon={<MoneyIcon />} label={t('groupDetail.currentBalance')} value={balanceLabel} helper={t('groupDetail.cashboxHint')} color={balanceValue >= 0 ? 'warning' : 'error'} />
+          </Grid>
+        </Grid>
+
+        {isMember && <GroupQuickActions actions={quickActions} />}
+
+        {shouldTrackJoinRequest && (
+          <Card variant="outlined" sx={{ mb: 2 }}>
+            <CardContent>
+              {!joinRequest && (
+                <Button
+                  variant="contained"
+                  fullWidth
+                  onClick={requestJoin}
+                  disabled={joinSubmitting}
+                  startIcon={joinSubmitting ? <CircularProgress size={16} color="inherit" /> : <InviteIcon />}
+                >
+                  {joinSubmitting ? t('group.sending') : t('group.requestJoin')}
+                </Button>
+              )}
+              {joinRequest?.status === 'PENDING' && (
+                <Stack spacing={1}>
+                  <Alert severity="info" icon={false}>
+                    {t('group.awaitingApproval')}
+                  </Alert>
+                  <Button
+                    variant="outlined"
+                    fullWidth
+                    onClick={cancelRequest}
+                    disabled={joinSubmitting}
+                  >
+                    {joinSubmitting ? t('group.cancelling') : t('group.cancelRequest')}
+                  </Button>
+                </Stack>
+              )}
+              {joinRequest?.status === 'REJECTED' && (
+                <Alert severity="warning" icon={false}>
+                  {t('group.requestRejected')}
+                </Alert>
               )}
             </CardContent>
           </Card>
-        );
+        )}
 
-        const mainContent = (
-          <Card sx={{ mb: 2 }}>
-            <Tabs
-              value={tabValue}
-              onChange={(_, v) => setTabValue(v)}
-              variant={isMobile ? 'scrollable' : 'fullWidth'}
-              scrollButtons={isMobile ? 'auto' : false}
-              allowScrollButtonsMobile
-              aria-label={t('groupDetail.sectionsAria')}
-              sx={{
-                borderBottom: `1px solid ${theme.palette.divider}`,
-                '& .MuiTab-root': {
-                  minWidth: isMobile ? 112 : undefined,
-                  px: isMobile ? 1.5 : undefined,
-                },
-              }}
-            >
-              <Tab label={t('group.tabMembers')} />
-              <Tab label={t('group.tabGames')} />
-              <Tab label={t('group.tabCashbox')} />
-              <Tab label={t('nav.league')} icon={<TrophyIcon />} iconPosition="start" />
-              <Tab label={t('groupPolls.tab')} icon={<PollIcon />} iconPosition="start" />
-              <Tab label={t('groupPhotos.tab')} icon={<PhotoLibraryIcon />} iconPosition="start" />
-              <Tab label={t('groupWall.tab')} icon={<WallIcon />} iconPosition="start" />
-            </Tabs>
+        <Box
+          sx={{
+            position: { xs: 'sticky', md: 'static' },
+            top: { xs: 0, md: 'auto' },
+            zIndex: (theme) => theme.zIndex.appBar - 1,
+            bgcolor: 'background.default',
+            py: 1,
+            mb: 1,
+          }}
+        >
+          <Tabs
+            value={tabValue}
+            onChange={(_, v) => setTabValue(v)}
+            variant={isMobile ? 'scrollable' : 'fullWidth'}
+            scrollButtons={isMobile ? 'auto' : false}
+            allowScrollButtonsMobile
+            aria-label={t('groupDetail.sectionsAria')}
+            sx={{
+              minHeight: 48,
+              borderRadius: 2,
+              bgcolor: 'background.paper',
+              border: `1px solid ${theme.palette.divider}`,
+              '& .MuiTab-root': {
+                minHeight: 48,
+                minWidth: isMobile ? 112 : undefined,
+                px: isMobile ? 1.5 : undefined,
+                textTransform: 'none',
+                fontWeight: 800,
+              },
+            }}
+          >
+            {tabItems.map((item) => (
+              <Tab key={item.value} label={item.label} icon={item.icon} iconPosition="start" />
+            ))}
+          </Tabs>
+        </Box>
 
-            <TabPanel value={tabValue} index={0}>
-              {isAdmin && (
-                <Box sx={{ display: 'flex', justifyContent: 'flex-end', p: 2, pb: 0 }}>
-                  <Button
-                    startIcon={<AddIcon />}
-                    onClick={() => {
-                      setInviteDialogOpen(true);
-                    }}
-                  >
-                    {t('groupDetail.invite')}
-                  </Button>
-                </Box>
-              )}
+        <TabPanel value={tabValue} index={0}>
+          <GroupWallTab groupId={groupId!} isMember={isMember} isAdmin={isAdmin} />
+        </TabPanel>
 
-              {members.length === 0 ? (
-                <EmptyState
-                  icon={<PersonIcon sx={{ fontSize: iconSizes.xxl, color: 'text.disabled' }} />}
-                  title={t('groupDetail.noMembers')}
-                  description={t('groupDetail.noMembersDesc')}
-                  actionLabel={isAdmin ? t('groupDetail.invite') : undefined}
-                  onAction={isAdmin ? () => setInviteDialogOpen(true) : undefined}
-                />
-              ) : (
-                <List disablePadding aria-label={t('group.membersAria')}>
-                  {members.map((member, index) => (
-                    <GroupMemberItem
-                      key={member.userId}
-                      member={member}
-                      showDivider={index < members.length - 1}
-                    />
-                  ))}
-                </List>
-              )}
-            </TabPanel>
+        <TabPanel value={tabValue} index={1}>
+          <GamesPanel
+            games={games}
+            loading={gamesLoading}
+            canCreate={canCreateGroupGame}
+            onCreate={() => navigate(`/game/create?groupId=${groupId}`)}
+            onOpenGame={(gameId) => navigate(`/game/${gameId}`)}
+          />
+        </TabPanel>
 
-            <TabPanel value={tabValue} index={1}>
-              {canCreateGroupGame && (
-                <Box sx={{ display: 'flex', justifyContent: 'flex-end', p: 2, pb: 0 }}>
-                  <Button
-                    startIcon={<AddIcon />}
-                    onClick={() => navigate(`/game/create?groupId=${groupId}`)}
-                  >
-                    {t('groupDetail.newGame')}
-                  </Button>
-                </Box>
-              )}
+        <TabPanel value={tabValue} index={2}>
+          <Grid container spacing={2}>
+            <Grid xs={12} md={7}>
+              <Box sx={{ height: '100%' }}>
+                <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
+                  <StatsIcon color="primary" />
+                  <Typography variant="subtitle1" fontWeight={800}>
+                    {t('groupDetail.groupStats')}
+                  </Typography>
+                </Stack>
+                <Grid container spacing={1.5}>
+                  <Grid xs={6}>
+                    <GroupStatCard icon={<PeopleIcon />} label={t('groupDetail.activeMembers')} value={activeMembersCount} />
+                  </Grid>
+                  <Grid xs={6}>
+                    <GroupStatCard icon={<SoccerIcon />} label={t('groupDetail.playedGames')} value={totalGamesCount} color="success" />
+                  </Grid>
+                  <Grid xs={6}>
+                    <GroupStatCard icon={<HistoryIcon />} label={t('groupDetail.finishedGames')} value={finishedGames} color="info" />
+                  </Grid>
+                  <Grid xs={6}>
+                    <GroupStatCard icon={<MoneyIcon />} label={t('groupDetail.currentBalance')} value={balanceLabel} color={balanceValue >= 0 ? 'warning' : 'error'} />
+                  </Grid>
+                </Grid>
+              </Box>
+            </Grid>
+            <Grid xs={12} md={5}>
+              <Stack spacing={2}>
+                <Card variant="outlined">
+                  <CardContent>
+                    <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+                      <HistoryIcon color="primary" />
+                      <Typography variant="subtitle1" fontWeight={800}>
+                        {t('groupDetail.latestResult')}
+                      </Typography>
+                    </Stack>
+                    {lastGame ? (
+                      <Button fullWidth variant="outlined" endIcon={<ChevronRightIcon />} onClick={() => navigate(`/game/${lastGame.id}`)} sx={{ justifyContent: 'space-between', textTransform: 'none' }}>
+                        <Box sx={{ minWidth: 0, textAlign: 'left' }}>
+                          <Typography variant="body2" fontWeight={800} noWrap>
+                            {lastGame.locationName || t('games.game')}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {formatDateShort(lastGame.dateTime)}
+                          </Typography>
+                        </Box>
+                      </Button>
+                    ) : (
+                      <Typography variant="body2" color="text.secondary">
+                        {t('groupDetail.noLatestResult')}
+                      </Typography>
+                    )}
+                  </CardContent>
+                </Card>
+                <Card variant="outlined">
+                  <CardContent>
+                    <Typography variant="subtitle1" fontWeight={800} gutterBottom>
+                      {t('groupDetail.groupLeague')}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                      {t('groupDetail.groupLeagueDesc')}
+                    </Typography>
+                    <Button fullWidth variant="contained" startIcon={<TrophyIcon />} onClick={() => navigate(`/group/${groupId}/league`)}>
+                      {t('groupDetail.viewStandings')}
+                    </Button>
+                  </CardContent>
+                </Card>
+              </Stack>
+            </Grid>
+          </Grid>
+        </TabPanel>
 
-              {gamesLoading ? (
-                <ShimmerLoading count={2} type="card" />
-              ) : games.length === 0 ? (
-                <EmptyState
-                  icon={<SoccerIcon sx={{ fontSize: iconSizes.xxl, color: 'text.disabled' }} />}
-                  title={t('groupDetail.noGames')}
-                  description={t('groupDetail.noGamesDesc')}
-                  actionLabel={canCreateGroupGame ? t('games.createGame') : undefined}
-                  onAction={canCreateGroupGame ? () => navigate(`/game/create?groupId=${groupId}`) : undefined}
-                />
-              ) : (
-                <Box className="stagger-fade-in" sx={{ p: 2 }}>
-                  {games.map((game) => (
-                    <GameCard
-                      key={game.id}
-                      game={game}
-                      onClick={() => navigate(`/game/${game.id}`)}
-                    />
-                  ))}
-                </Box>
-              )}
-            </TabPanel>
+        <TabPanel value={tabValue} index={3}>
+          <Card variant="outlined">
+            {isAdmin && (
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end', p: 2, pb: 0 }}>
+                <Button startIcon={<AddIcon />} onClick={() => setInviteDialogOpen(true)}>
+                  {t('groupDetail.invite')}
+                </Button>
+              </Box>
+            )}
+            {members.length === 0 ? (
+              <EmptyState
+                icon={<PersonIcon sx={{ fontSize: iconSizes.xxl, color: 'text.disabled' }} />}
+                title={t('groupDetail.noMembers')}
+                description={t('groupDetail.noMembersDesc')}
+                actionLabel={isAdmin ? t('groupDetail.invite') : undefined}
+                onAction={isAdmin ? () => setInviteDialogOpen(true) : undefined}
+              />
+            ) : (
+              <List disablePadding aria-label={t('group.membersAria')}>
+                {members.map((member, index) => (
+                  <GroupMemberItem
+                    key={member.userId}
+                    member={member}
+                    showDivider={index < members.length - 1}
+                  />
+                ))}
+              </List>
+            )}
+          </Card>
+        </TabPanel>
 
-            <TabPanel value={tabValue} index={2}>
-              <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-                  <Typography variant="subtitle1" fontWeight={600}>
+        <TabPanel value={tabValue} index={4}>
+          <Card variant="outlined">
+            <CardContent sx={{ textAlign: 'center', py: 4 }}>
+              <TrophyIcon sx={{ fontSize: iconSizes.xxl, color: 'text.disabled', mb: 2 }} />
+              <Typography variant="subtitle1" fontWeight={800} gutterBottom>
+                {t('groupDetail.groupLeague')}
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                {t('groupDetail.groupLeagueDesc')}
+              </Typography>
+              <Button variant="contained" startIcon={<TrophyIcon />} onClick={() => navigate(`/group/${groupId}/league`)}>
+                {t('groupDetail.viewStandings')}
+              </Button>
+            </CardContent>
+          </Card>
+        </TabPanel>
+
+        <TabPanel value={tabValue} index={5}>
+          <PollsPanel groupId={groupId!} canCreate={isAdmin} />
+        </TabPanel>
+
+        <TabPanel value={tabValue} index={6}>
+          <Card variant="outlined">
+            <GroupPhotosPanel games={games} loadingGames={gamesLoading} />
+          </Card>
+        </TabPanel>
+
+        <TabPanel value={tabValue} index={7}>
+          <Card variant="outlined">
+            <CardContent>
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ xs: 'stretch', sm: 'center' }} justifyContent="space-between">
+                <Box>
+                  <Typography variant="subtitle1" fontWeight={800}>
                     {t('groupDetail.currentBalance')}
                   </Typography>
                   <Typography
                     variant="h4"
-                    fontWeight={700}
-                    color={(group.totalBalance || 0) >= 0 ? 'success.main' : 'error.main'}
+                    fontWeight={800}
+                    color={balanceValue >= 0 ? 'success.main' : 'error.main'}
                   >
-                    R$ {(group.totalBalance || 0).toFixed(2)}
+                    {balanceLabel}
                   </Typography>
                 </Box>
-                <Button
-                  fullWidth
-                  variant="outlined"
-                  startIcon={<MoneyIcon />}
-                  onClick={() => navigate(`/group/${groupId}/cashbox`)}
-                >
+                <Button variant="outlined" startIcon={<MoneyIcon />} onClick={() => navigate(`/group/${groupId}/cashbox`)}>
                   {t('groupDetail.viewDetails')}
                 </Button>
-              </CardContent>
-            </TabPanel>
-
-            <TabPanel value={tabValue} index={3}>
-              <CardContent sx={{ textAlign: 'center', py: 4 }}>
-                <TrophyIcon sx={{ fontSize: iconSizes.xxl, color: 'text.disabled', mb: 2 }} />
-                <Typography variant="subtitle1" fontWeight={600} gutterBottom>
-                  {t('groupDetail.groupLeague')}
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                  {t('groupDetail.groupLeagueDesc')}
-                </Typography>
-                <Button
-                  variant="contained"
-                  startIcon={<TrophyIcon />}
-                  onClick={() => navigate(`/group/${groupId}/league`)}
-                >
-                  {t('groupDetail.viewStandings')}
-                </Button>
-              </CardContent>
-            </TabPanel>
-
-            <TabPanel value={tabValue} index={4}>
-              <PollsPanel groupId={groupId!} canCreate={isAdmin} />
-            </TabPanel>
-
-            <TabPanel value={tabValue} index={5}>
-              <GroupPhotosPanel games={photoGames} loadingGames={photoGamesLoading} />
-            </TabPanel>
-
-            <TabPanel value={tabValue} index={6}>
-              <GroupWallTab groupId={groupId!} isMember={isMember} isAdmin={isAdmin} />
-            </TabPanel>
+              </Stack>
+            </CardContent>
           </Card>
-        );
-
-        // lg+: split-pane com sidebar de informações
-        if (isLg) {
-          return (
-            <PageContainer maxWidth="detail">
-              <Grid container spacing={3}>
-                <Grid xs={12} lg={4}>
-                  {infoPanel}
-                </Grid>
-                <Grid xs={12} lg={8}>
-                  {mainContent}
-                </Grid>
-              </Grid>
-            </PageContainer>
-          );
-        }
-
-        // md: container mais largo, layout linear
-        if (isMd) {
-          return (
-            <PageContainer maxWidth="detail">
-              {infoPanel}
-              {mainContent}
-            </PageContainer>
-          );
-        }
-
-        // xs/sm: comportamento original (sem mudança)
-        return (
-          <PageContainer maxWidth="detail">
-            {infoPanel}
-            {mainContent}
-          </PageContainer>
-        );
-      })()}
+        </TabPanel>
+      </PageContainer>
 
       {/* #1328: spacer p/ a barra fixa "Criar Jogo" nunca sobrepor o último
           conteúdo (mobile bottom-bar e barra flutuante desktop). */}

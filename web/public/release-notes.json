@@ -1,7 +1,42 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-05T05:24:50.615Z",
+  "generatedAt": "2026-07-05T12:46:38.614Z",
   "notes": [
+    {
+      "version": "1.48.2",
+      "buildNumber": null,
+      "releaseDate": "2026-07-05",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "A tela de grupos ficou mais organizada, com resenha, jogos e estatísticas mais fáceis de acessar no celular.",
+      "highlights": [
+        {
+          "icon": "groups",
+          "title": "Grupo mais claro",
+          "description": "O topo agora resume membros, jogos, tipo do grupo e próximo jogo sem esconder informações importantes."
+        },
+        {
+          "icon": "chat",
+          "title": "Resenha em primeiro",
+          "description": "O mural do grupo passa a abrir como primeira seção para facilitar avisos, fotos e conversa."
+        },
+        {
+          "icon": "sports_soccer",
+          "title": "Jogos e histórico",
+          "description": "Próximos jogos, últimos resultados e estatísticas do grupo ficam separados em áreas mais fáceis de navegar."
+        }
+      ],
+      "added": [],
+      "improved": [
+        "A tela de detalhe do grupo ganhou central de ações rápidas para criar jogo, abrir resenha, ver membros, recorrências, desafios e convites.",
+        "A navegação por seções foi reorganizada com ícones e prioridade para resenha, jogos e estatísticas.",
+        "A aba de jogos separa próximos jogos do histórico recente do grupo.",
+        "A nova seção de estatísticas destaca membros ativos, jogos, finalizados, saldo e último jogo."
+      ],
+      "fixed": [],
+      "issueRefs": []
+    },
     {
       "version": "1.48.1",
       "buildNumber": null,
