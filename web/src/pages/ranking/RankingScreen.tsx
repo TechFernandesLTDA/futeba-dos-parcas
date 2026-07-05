@@ -31,6 +31,7 @@ import { VirtualList } from '../../components/common/VirtualList';
 import { PageContainer } from '../../components/common/PageContainer';
 import { PlayerCard } from '../../components/player/PlayerCard';
 import { TeamBadge } from '../../components/team/TeamBadge';
+import { DemoDataChip } from '../../components/common/DemoDataChip';
 import { useLeague, LeaguePlayer, LeagueFilters } from '../../hooks/useLeague';
 import type { GameGender } from '../../types/game';
 import { useActiveSeason } from '../../hooks/useActiveSeason';
@@ -196,8 +197,8 @@ export const RankingScreen: React.FC = () => {
                 overscan={3}
                 getItemKey={(index) => listRanked[index].id}
                 renderItem={(player, index) => (
-                  <RankingItem
-                    player={player}
+                <RankingItem
+                  player={player}
                     position={index + 4}
                     positionStyle={getPositionStyle(index + 4)}
                     tabValue={tabValue}
@@ -286,6 +287,9 @@ const PodiumSection = React.memo(function PodiumSection({
               <Typography variant="subtitle2" fontWeight={700} noWrap>
                 {player.userName}
               </Typography>
+              <Box sx={{ mt: 0.5, display: 'flex', justifyContent: 'center' }}>
+                <DemoDataChip data={player} />
+              </Box>
               <Typography variant="caption" color="text.secondary">
                 {player.points} pts
               </Typography>
@@ -364,6 +368,7 @@ const RankingItem = React.memo(function RankingItem({
               {player.isCurrentUser && (
                 <Chip label={t('ranking.you')} size="small" color="primary" />
               )}
+              <DemoDataChip data={player} />
             </Box>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Typography variant="caption" color="text.secondary">

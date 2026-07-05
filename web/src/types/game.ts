@@ -148,6 +148,11 @@ export interface LivePlayerStats {
 export interface Game {
   id: string;
   scheduleId?: string;
+  isMock?: boolean;
+  demoData?: boolean;
+  dataOrigin?: 'REAL' | 'DEMO' | 'TEST' | 'UNKNOWN';
+  seedId?: string;
+  demoDataReason?: string;
   
   // Date & Time
   date: string;

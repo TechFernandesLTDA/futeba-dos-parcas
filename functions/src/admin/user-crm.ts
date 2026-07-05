@@ -102,6 +102,14 @@ interface AdminUserCrmRow {
   lastLoginAtIso: string | null;
   gamesPlayed: number;
   level: number;
+  isMock: boolean;
+  demoData: boolean;
+  dataOrigin: string | null;
+  seedId: string | null;
+  demoDataReason: string | null;
+  cpfVerified: boolean;
+  phoneVerified: boolean;
+  realDataProtected: boolean;
   ownerSummary: OwnerSummary;
   ownerLocations: OwnerLocationSummary[];
   ownerOnboarding: OwnerOnboardingSummary | null;
@@ -237,6 +245,15 @@ function stringOrEmpty(value: unknown): string {
 function stringArray(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
   return value.filter((item): item is string => typeof item === "string");
+}
+
+/**
+ * Retorna booleano estrito, aceitando apenas true como verdadeiro.
+ * @param {unknown} value Valor bruto.
+ * @return {boolean} Boolean normalizado.
+ */
+function isTrue(value: unknown): boolean {
+  return value === true;
 }
 
 /**
@@ -642,6 +659,18 @@ export const searchAdminUsers = secureCallable<
         lastLoginAtIso: toIso(data.last_login_at || data.lastLoginAt),
         gamesPlayed: numberOrDefault(data.games_played || data.gamesPlayed, 0),
         level: numberOrDefault(data.level, 1),
+        isMock: isTrue(data.is_mock || data.isMock),
+        demoData: isTrue(data.demo_data || data.demoData),
+        dataOrigin:
+          stringOrEmpty(data.data_origin || data.dataOrigin) || null,
+        seedId: stringOrEmpty(data.seed_id || data.seedId) || null,
+        demoDataReason:
+          stringOrEmpty(data.demo_data_reason || data.demoDataReason) || null,
+        cpfVerified: Boolean(data.cpfVerifiedAt || data.cpf_verified_at),
+        phoneVerified: isTrue(data.phone_verified || data.phoneVerified),
+        realDataProtected: isTrue(
+          data.real_data_protected || data.realDataProtected
+        ),
         ownerSummary,
         ownerLocations,
         ownerOnboarding,

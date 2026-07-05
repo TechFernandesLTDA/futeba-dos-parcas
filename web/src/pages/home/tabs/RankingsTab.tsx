@@ -58,6 +58,7 @@ import { useTranslation } from 'react-i18next';
 import { ErrorState } from '../../../components/common/ErrorState';
 import { ScreenHeader } from '../../../components/common/ScreenHeader';
 import { useDocumentTitle } from '../../../hooks/useDocumentTitle';
+import { DemoDataChip } from '../../../components/common/DemoDataChip';
 
 const spinnerKeyframes = {
   '@keyframes spin': {
@@ -118,6 +119,9 @@ const PodiumCard: React.FC<{
         <Typography variant="caption" fontWeight={700} sx={{ color: config.borderColor, mb: 1, display: 'block' }}>
           {config.label}
         </Typography>
+        <Box sx={{ mb: 0.75, display: 'flex', justifyContent: 'center' }}>
+          <DemoDataChip data={player} />
+        </Box>
         <Box
           onClick={() => onAvatarClick(player.userId)}
           sx={{ cursor: 'pointer', display: 'inline-block' }}
@@ -512,6 +516,7 @@ export function RankingsTab() {
                     <Typography variant="subtitle2" color="text.secondary">
                       {t('ranking.myPosition')}
                     </Typography>
+                    <DemoDataChip data={currentPlayer} />
                     <Typography variant="h5" fontWeight={700} color="primary.main">
                       #{currentUserRank}
                     </Typography>
@@ -817,6 +822,7 @@ const RankingCard = React.memo(function RankingCard({
               {player.isCurrentUser && (
                 <Chip label="Você" size="small" color="primary" sx={{ height: 18, fontSize: '0.75rem' }} />
               )}
+              <DemoDataChip data={player} />
             </Box>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Typography variant="caption" color="text.secondary" noWrap>

@@ -112,6 +112,14 @@ export interface AdminUserCrmRow {
   lastLoginAtIso: string | null;
   gamesPlayed: number;
   level: number;
+  isMock?: boolean;
+  demoData?: boolean;
+  dataOrigin?: string | null;
+  seedId?: string | null;
+  demoDataReason?: string | null;
+  cpfVerified?: boolean;
+  phoneVerified?: boolean;
+  realDataProtected?: boolean;
   ownerSummary: AdminOwnerSummary;
   ownerLocations: AdminOwnerLocationSummary[];
   ownerOnboarding: AdminOwnerOnboardingSummary | null;
