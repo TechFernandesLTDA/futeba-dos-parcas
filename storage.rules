@@ -52,10 +52,26 @@ service firebase.storage {
              memberDoc.data.status == 'ACTIVE';
     }
 
+    function isGroupOwnerById(groupId) {
+      let groupDoc = firestore.get(/databases/(default)/documents/groups/$(groupId));
+      return isAuthenticated() &&
+             groupDoc != null &&
+             groupDoc.data.owner_id == request.auth.uid &&
+             groupDoc.data.status == 'ACTIVE';
+    }
+
+    function canUseGroupWall(groupId) {
+      return isGroupMember(groupId) || isGroupOwnerById(groupId);
+    }
+
     // Verifica se o usuário é admin do sistema via Custom Claims (zero Firestore reads).
     // Requer token JWT atualizado — usuário precisa re-logar após promoção para obter claim.
     function isAdmin() {
       return isAuthenticated() && request.auth.token.role == 'ADMIN';
+    }
+
+    function isWallMediaFile(fileName) {
+      return fileName.matches('[A-Za-z0-9._-]+\\.(jpg|jpeg|png|webp)');
     }
 
     function getLocation(locationId) {
@@ -234,20 +250,40 @@ service firebase.storage {
     // MIDIAS DO MURAL DO GRUPO
     // Path: groups/{groupId}/wall_media/{postId}/{fileName}
     // Membros ativos podem fazer upload de imagens no mural.
-    // Apenas autor, admin do grupo ou admin global pode deletar.
+    // Web usa path flat em __draft__; Android inclui um ownerId intermediário.
+    // Midia publicada e limpa via Cloud Function no soft-delete do post.
     // ============================================
     match /groups/{groupId}/wall_media/{postId}/{fileName} {
-      allow read: if isAuthenticated() && isGroupMember(groupId);
+      allow read: if isAuthenticated() && canUseGroupWall(groupId);
 
       allow create: if isAuthenticated() &&
-        isGroupMember(groupId) &&
+        canUseGroupWall(groupId) &&
         isImage() &&
         isUnderSize(10) &&
-        fileName.matches('[A-Za-z0-9._-]+\\.(jpg|jpeg|png|webp)');
+        isWallMediaFile(fileName);
 
       allow delete: if isAuthenticated() && (
         isAdmin() ||
         isGroupAdmin(groupId)
+      );
+    }
+
+    match /groups/{groupId}/wall_media/{postId}/{ownerId}/{fileName} {
+      allow read: if isAuthenticated() && canUseGroupWall(groupId);
+
+      allow create: if isAuthenticated() &&
+        canUseGroupWall(groupId) &&
+        postId == '__draft__' &&
+        ownerId == request.auth.uid &&
+        isImage() &&
+        isUnderSize(10) &&
+        isWallMediaFile(fileName);
+
+      allow delete: if isAuthenticated() &&
+        postId == '__draft__' && (
+        isAdmin() ||
+        isGroupAdmin(groupId) ||
+        ownerId == request.auth.uid
       );
     }
 

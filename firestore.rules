@@ -570,7 +570,8 @@ service cloud.firestore {
     // ============================================
     match /users/{userId} {
       // S-001 FIX: Restringir leitura - apenas proprio usuario ou admin pode ver perfil completo
-      // Exceção: usuarios marcados como is_searchable podem ser lidos por qualquer autenticado
+      // Exceção: perfis pesquisáveis só podem ser lidos publicamente quando
+      // o documento já não carrega PII sensível materializada.
       // PERF_001: fcm_token é SEMPRE privado (não exposto em leitura pública)
       // Bug fix: Usuarios soft-deleted nao devem ser encontraveis via busca
       //
@@ -580,9 +581,22 @@ service cloud.firestore {
       // STAGE 2 (PR futuro): clientes leem PII de users_private (apenas owner+admin),
       // PII removida de users via cleanup callable. Firestore não tem field-level
       // deny on read — denormalização é o approach correto.
-      // FIXME: STAGE 2 — PII fields exposed to any authenticated user when is_searchable.
-      // Migrate to users_private collection. See #2630.
-      allow read: if isOwner(userId) || isAdmin() || (isAuthenticated() && resource.data.is_searchable == true && (!('deleted_at' in resource.data) || resource.data.deleted_at == null));
+      // FIXME: STAGE 2 — clientes devem migrar leitura pública para um doc
+      // denormalizado sem PII. Até lá, só liberamos leitura pública quando o
+      // próprio doc pesquisável não expõe campos sensíveis.
+      allow read: if isOwner(userId) || isAdmin() || (
+        isAuthenticated() &&
+        resource.data.is_searchable == true &&
+        (!('deleted_at' in resource.data) || resource.data.deleted_at == null) &&
+        (!('email' in resource.data) || resource.data.email == null || resource.data.email == '') &&
+        (!('fcm_token' in resource.data) || resource.data.fcm_token == null) &&
+        (!('birth_date' in resource.data) || resource.data.birth_date == null) &&
+        (!('height_cm' in resource.data) || resource.data.height_cm == null) &&
+        (!('weight_kg' in resource.data) || resource.data.weight_kg == null) &&
+        (!('gender' in resource.data) || resource.data.gender == null) &&
+        (!('phone' in resource.data) || resource.data.phone == null || resource.data.phone == '') &&
+        (!('phone_verified' in resource.data) || resource.data.phone_verified == null)
+      );
 
       // Usuario so pode criar seu proprio perfil (com role padrao PLAYER)
       // Validações de dados obrigatorias na criacao
@@ -807,8 +821,11 @@ service cloud.firestore {
       allow read: if isChatParticipant();
       allow create, delete: if false;
 
+      // Preview metadata (last_message/last_message_at/last_sender_id) passa a
+      // ser server-side. As rules nao conseguem provar com seguranca a
+      // existencia da mensagem correspondente no mesmo fluxo client-side.
       allow update: if isChatParticipant() &&
-        (isDirectMessageMetadataUpdate() || isDirectMessageReadReceiptUpdate());
+        isDirectMessageReadReceiptUpdate();
 
       match /messages/{messageId} {
         allow read: if isAuthenticated() &&
@@ -2397,6 +2414,77 @@ service cloud.firestore {
       // Issue #3232: feed social UGC por grupo.
       // ============================================
       match /wall_posts/{postId} {
+        function isValidWallAuthorName() {
+          let authUser = getUser();
+          return authUser != null &&
+            request.resource.data.author_name is string &&
+            request.resource.data.author_name.size() >= 1 &&
+            request.resource.data.author_name.size() <= 120 &&
+            (
+              request.resource.data.author_name == authUser.data.get('name', null) ||
+              request.resource.data.author_name == authUser.data.get('display_name', null)
+            );
+        }
+
+        function isValidWallAuthorPhoto() {
+          let authUser = getUser();
+          return authUser != null &&
+            (
+              request.resource.data.author_photo_url == null ||
+              (
+                request.resource.data.author_photo_url is string &&
+                request.resource.data.author_photo_url.size() <= 2048
+              )
+            ) &&
+            (
+              request.resource.data.author_photo_url == authUser.data.get('photo_url', null) ||
+              request.resource.data.author_photo_url == authUser.data.get('photoUrl', null)
+            );
+        }
+
+        function isValidWallMedia() {
+          return (
+            request.resource.data.media_url == null &&
+            request.resource.data.media_path == null &&
+            request.resource.data.media_type == null &&
+            request.resource.data.thumbnail_path == null
+          ) || (
+            request.resource.data.media_url is string &&
+            request.resource.data.media_url.size() > 0 &&
+            request.resource.data.media_url.size() <= 2048 &&
+            request.resource.data.media_url.matches('https://firebasestorage.googleapis.com/.*') &&
+            request.resource.data.media_path is string &&
+            request.resource.data.media_path.matches('groups/' + groupId + '/wall_media/[A-Za-z0-9._/-]+\\.(jpg|jpeg|png|webp)') &&
+            request.resource.data.media_type in ['image/jpeg', 'image/png', 'image/webp'] &&
+            request.resource.data.thumbnail_path == null
+          );
+        }
+
+        function isValidWallHighlightRef(ref) {
+          // Compatibilidade legada: aceitamos snake_case e camelCase enquanto os clientes convergem.
+          return ref == null || (
+            ref is map &&
+            (
+              (
+                ref.keys().hasOnly(['gameId', 'highlightId']) &&
+                isValidStringLength(ref.gameId, 1, 120) &&
+                isValidStringLength(ref.highlightId, 1, 120)
+              ) ||
+              (
+                ref.keys().hasOnly(['game_id', 'highlight_id']) &&
+                isValidStringLength(ref.game_id, 1, 120) &&
+                isValidStringLength(ref.highlight_id, 1, 120)
+              )
+            )
+          );
+        }
+
+        function isValidWallPostCreateText() {
+          return request.resource.data.text is string &&
+            request.resource.data.text.size() >= 1 &&
+            request.resource.data.text.size() <= 500;
+        }
+
         // Leitura: membros ativos do grupo (inclui owner/admin) ou owner legado
         allow read: if isAuthenticated() && (
           isAdmin() ||
@@ -2409,11 +2497,19 @@ service cloud.firestore {
           isGroupActive(groupId) &&
           request.resource.data.author_id == userId() &&
           request.resource.data.group_id == groupId &&
-          request.resource.data.text is string &&
-          request.resource.data.text.size() >= 1 &&
-          request.resource.data.text.size() <= 500 &&
+          isValidWallAuthorName() &&
+          isValidWallAuthorPhoto() &&
+          isValidWallPostCreateText() &&
+          isValidWallMedia() &&
+          isValidWallHighlightRef(request.resource.data.highlight_ref) &&
           request.resource.data.created_at == request.time &&
+          request.resource.data.updated_at == request.time &&
+          request.resource.data.edited_at == null &&
           request.resource.data.pinned == false &&
+          request.resource.data.pinned_by == null &&
+          request.resource.data.pinned_at == null &&
+          request.resource.data.reactions is map &&
+          request.resource.data.comments_count == 0 &&
           request.resource.data.deleted_at == null &&
           request.resource.data.deleted_by == null &&
           request.resource.data.keys().hasOnly([
@@ -2425,9 +2521,9 @@ service cloud.firestore {
 
         // Update: autor edita texto, owner/admin fixa/desfixa, autor/owner/admin soft-delete
         allow update: if isAuthenticated() && (
-          // Autor edita proprio texto
           (
             resource.data.author_id == userId() &&
+            resource.data.deleted_at == null &&
             onlyAllowedFields(['text', 'edited_at', 'updated_at']) &&
             request.resource.data.text is string &&
             request.resource.data.text.size() >= 1 &&
@@ -2435,9 +2531,9 @@ service cloud.firestore {
             request.resource.data.edited_at == request.time &&
             request.resource.data.updated_at == request.time
           ) ||
-          // Owner/admin fixa/desfixa post
           (
             canModerateGroupWall(groupId) &&
+            resource.data.deleted_at == null &&
             onlyAllowedFields(['pinned', 'pinned_by', 'pinned_at', 'updated_at']) &&
             request.resource.data.pinned is bool &&
             request.resource.data.updated_at == request.time &&
@@ -2454,16 +2550,15 @@ service cloud.firestore {
               )
             )
           ) ||
-          // Membro reage/desreage ao post. O client usa arrayUnion/arrayRemove
-          // no mapa reactions.<emoji>; outras mutacoes seguem ramos separados.
           (
             canUseGroupWall(groupId) &&
+            resource.data.deleted_at == null &&
             onlyAllowedFields(['reactions']) &&
             request.resource.data.reactions is map
           ) ||
-          // Autor ou owner/admin faz soft-delete
           (
             (resource.data.author_id == userId() || canModerateGroupWall(groupId)) &&
+            resource.data.deleted_at == null &&
             onlyAllowedFields(['deleted_at', 'deleted_by', 'updated_at']) &&
             request.resource.data.deleted_at == request.time &&
             request.resource.data.deleted_by == userId() &&
@@ -2946,12 +3041,12 @@ service cloud.firestore {
     // manter espelho e contadores idempotentes. Clientes só leem.
     // ============================================
     match /users/{userId}/following/{targetUserId} {
-      allow read: if isAuthenticated();
+      allow read: if isAuthenticated() && (isOwner(userId) || isAdmin());
       allow create, update, delete: if false;
     }
 
     match /users/{userId}/followers/{followerUserId} {
-      allow read: if isAuthenticated();
+      allow read: if isAuthenticated() && (isOwner(userId) || isAdmin());
       allow create, update, delete: if false;
     }
 

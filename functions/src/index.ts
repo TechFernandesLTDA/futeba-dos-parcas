@@ -2542,3 +2542,4 @@ export {
 export {toggleFollowUser} from "./social/follow";
 export {discoverNearbyPlayers} from "./social/nearby-players";
 export {createDirectChat} from "./social/direct-messages";
+export {onGroupWallPostSoftDeletedCleanupMedia} from "./groups/wall-media-cleanup";

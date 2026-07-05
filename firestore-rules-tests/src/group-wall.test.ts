@@ -5,15 +5,9 @@ import type { RulesTestEnvironment } from "@firebase/rules-unit-testing";
 import {
   initTestEnv,
   asAdmin,
-  asPlayerA,
-  asPlayerB,
-  asPlayerC,
   asUser,
   asAnon,
   seedDoc,
-  UID_PLAYER_A,
-  UID_PLAYER_B,
-  UID_PLAYER_C,
 } from "./helpers.js";
 
 let testEnv: RulesTestEnvironment;
@@ -21,6 +15,21 @@ let testEnv: RulesTestEnvironment;
 const GROUP_ID = "group-wall-test";
 const LEGACY_OWNER_GROUP_ID = "group-wall-legacy-owner";
 const UID_OUTSIDER = "uid-wall-outsider";
+const UID_WALL_OWNER = "uid-wall-owner-001";
+const UID_WALL_MEMBER = "uid-wall-member-001";
+const UID_WALL_ADMIN = "uid-wall-admin-001";
+
+function asWallOwner() {
+  return asUser(testEnv, UID_WALL_OWNER);
+}
+
+function asWallMember() {
+  return asUser(testEnv, UID_WALL_MEMBER);
+}
+
+function asWallAdmin() {
+  return asUser(testEnv, UID_WALL_ADMIN);
+}
 
 const validPost = {
   group_id: GROUP_ID,
@@ -46,42 +55,58 @@ const validPost = {
 beforeAll(async () => {
   testEnv = await initTestEnv();
 
+  await seedDoc(testEnv, `users/${UID_WALL_OWNER}`, {
+    name: "Player A",
+    photo_url: null,
+    role: "PLAYER",
+  });
+  await seedDoc(testEnv, `users/${UID_WALL_MEMBER}`, {
+    name: "Player B",
+    photo_url: null,
+    role: "PLAYER",
+  });
+  await seedDoc(testEnv, `users/${UID_WALL_ADMIN}`, {
+    name: "Player C",
+    photo_url: null,
+    role: "PLAYER",
+  });
+
   await seedDoc(testEnv, `groups/${GROUP_ID}`, {
     name: "Wall Test Group",
-    owner_id: UID_PLAYER_A,
+    owner_id: UID_WALL_OWNER,
     is_public: true,
     status: "ACTIVE",
     member_count: 3,
   });
 
-  await seedDoc(testEnv, `groups/${GROUP_ID}/members/${UID_PLAYER_A}`, {
-    user_id: UID_PLAYER_A,
+  await seedDoc(testEnv, `groups/${GROUP_ID}/members/${UID_WALL_OWNER}`, {
+    user_id: UID_WALL_OWNER,
     role: "OWNER",
     status: "ACTIVE",
   });
 
-  await seedDoc(testEnv, `groups/${GROUP_ID}/members/${UID_PLAYER_B}`, {
-    user_id: UID_PLAYER_B,
+  await seedDoc(testEnv, `groups/${GROUP_ID}/members/${UID_WALL_MEMBER}`, {
+    user_id: UID_WALL_MEMBER,
     role: "MEMBER",
     status: "ACTIVE",
   });
 
-  await seedDoc(testEnv, `groups/${GROUP_ID}/members/${UID_PLAYER_C}`, {
-    user_id: UID_PLAYER_C,
+  await seedDoc(testEnv, `groups/${GROUP_ID}/members/${UID_WALL_ADMIN}`, {
+    user_id: UID_WALL_ADMIN,
     role: "ADMIN",
     status: "ACTIVE",
   });
 
   await seedDoc(testEnv, `groups/${LEGACY_OWNER_GROUP_ID}`, {
     name: "Legacy Owner Wall Test Group",
-    owner_id: UID_PLAYER_A,
+    owner_id: UID_WALL_OWNER,
     is_public: false,
     status: "ACTIVE",
     member_count: 1,
   });
 
-  await seedDoc(testEnv, `groups/${LEGACY_OWNER_GROUP_ID}/members/${UID_PLAYER_A}`, {
-    user_id: UID_PLAYER_A,
+  await seedDoc(testEnv, `groups/${LEGACY_OWNER_GROUP_ID}/members/${UID_WALL_OWNER}`, {
+    user_id: UID_WALL_OWNER,
     role: "OWNER",
   });
 });
@@ -93,7 +118,7 @@ afterAll(async () => {
 describe("groups/{groupId}/wall_posts", () => {
   it("membro pode ler posts do mural", async () => {
     await assertSucceeds(
-      asPlayerB(testEnv).collection(`groups/${GROUP_ID}/wall_posts`).get()
+      asWallMember().collection(`groups/${GROUP_ID}/wall_posts`).get()
     );
   });
 
@@ -117,9 +142,9 @@ describe("groups/{groupId}/wall_posts", () => {
 
   it("membro pode criar post", async () => {
     await assertSucceeds(
-      asPlayerB(testEnv).doc(`groups/${GROUP_ID}/wall_posts/post-1`).set({
+      asWallMember().doc(`groups/${GROUP_ID}/wall_posts/post-1`).set({
         ...validPost,
-        author_id: UID_PLAYER_B,
+        author_id: UID_WALL_MEMBER,
         created_at: serverTimestamp(),
       })
     );
@@ -127,9 +152,10 @@ describe("groups/{groupId}/wall_posts", () => {
 
   it("admin do grupo pode criar post", async () => {
     await assertSucceeds(
-      asPlayerC(testEnv).doc(`groups/${GROUP_ID}/wall_posts/post-admin`).set({
+      asWallAdmin().doc(`groups/${GROUP_ID}/wall_posts/post-admin`).set({
         ...validPost,
-        author_id: UID_PLAYER_C,
+        author_id: UID_WALL_ADMIN,
+        author_name: "Player C",
         text: "Aviso oficial",
         created_at: serverTimestamp(),
       })
@@ -138,10 +164,11 @@ describe("groups/{groupId}/wall_posts", () => {
 
   it("owner legado sem status ACTIVE no member doc pode criar post", async () => {
     await assertSucceeds(
-      asPlayerA(testEnv).doc(`groups/${LEGACY_OWNER_GROUP_ID}/wall_posts/post-legacy-owner`).set({
+      asWallOwner().doc(`groups/${LEGACY_OWNER_GROUP_ID}/wall_posts/post-legacy-owner`).set({
         ...validPost,
         group_id: LEGACY_OWNER_GROUP_ID,
-        author_id: UID_PLAYER_A,
+        author_id: UID_WALL_OWNER,
+        author_name: "Player A",
         text: "Post do owner legado",
         created_at: serverTimestamp(),
       })
@@ -150,9 +177,9 @@ describe("groups/{groupId}/wall_posts", () => {
 
   it("bloqueia forjar autoria", async () => {
     await assertFails(
-      asPlayerB(testEnv).doc(`groups/${GROUP_ID}/wall_posts/post-forge`).set({
+      asWallMember().doc(`groups/${GROUP_ID}/wall_posts/post-forge`).set({
         ...validPost,
-        author_id: UID_PLAYER_A,
+        author_id: UID_WALL_OWNER,
         created_at: serverTimestamp(),
       })
     );
@@ -160,18 +187,32 @@ describe("groups/{groupId}/wall_posts", () => {
 
   it("bloqueia texto vazio ou muito longo", async () => {
     await assertFails(
-      asPlayerB(testEnv).doc(`groups/${GROUP_ID}/wall_posts/post-empty`).set({
+      asWallMember().doc(`groups/${GROUP_ID}/wall_posts/post-empty`).set({
         ...validPost,
-        author_id: UID_PLAYER_B,
+        author_id: UID_WALL_MEMBER,
         text: "",
         created_at: serverTimestamp(),
       })
     );
     await assertFails(
-      asPlayerB(testEnv).doc(`groups/${GROUP_ID}/wall_posts/post-long`).set({
+      asWallMember().doc(`groups/${GROUP_ID}/wall_posts/post-long`).set({
         ...validPost,
-        author_id: UID_PLAYER_B,
+        author_id: UID_WALL_MEMBER,
         text: "x".repeat(501),
+        created_at: serverTimestamp(),
+      })
+    );
+  });
+
+  it("bloqueia create com media mas sem texto", async () => {
+    await assertFails(
+      asWallMember().doc(`groups/${GROUP_ID}/wall_posts/post-media-empty`).set({
+        ...validPost,
+        author_id: UID_WALL_MEMBER,
+        text: "",
+        media_url: "https://firebasestorage.googleapis.com/v0/b/demo/o/groups%2Fgroup-wall-test%2Fwall_media%2F__draft__%2Fmedia.jpg?alt=media",
+        media_path: "groups/group-wall-test/wall_media/__draft__/media.jpg",
+        media_type: "image/jpeg",
         created_at: serverTimestamp(),
       })
     );
@@ -179,9 +220,9 @@ describe("groups/{groupId}/wall_posts", () => {
 
   it("bloqueia backdate", async () => {
     await assertFails(
-      asPlayerB(testEnv).doc(`groups/${GROUP_ID}/wall_posts/post-backdate`).set({
+      asWallMember().doc(`groups/${GROUP_ID}/wall_posts/post-backdate`).set({
         ...validPost,
-        author_id: UID_PLAYER_B,
+        author_id: UID_WALL_MEMBER,
         created_at: new Date(Date.now() - 24 * 60 * 60 * 1000),
       })
     );
@@ -189,9 +230,9 @@ describe("groups/{groupId}/wall_posts", () => {
 
   it("bloqueia pinned=true no create", async () => {
     await assertFails(
-      asPlayerB(testEnv).doc(`groups/${GROUP_ID}/wall_posts/post-pinned`).set({
+      asWallMember().doc(`groups/${GROUP_ID}/wall_posts/post-pinned`).set({
         ...validPost,
-        author_id: UID_PLAYER_B,
+        author_id: UID_WALL_MEMBER,
         pinned: true,
         created_at: serverTimestamp(),
       })
@@ -201,11 +242,11 @@ describe("groups/{groupId}/wall_posts", () => {
   it("autor pode editar proprio texto", async () => {
     await seedDoc(testEnv, `groups/${GROUP_ID}/wall_posts/post-edit-self`, {
       ...validPost,
-      author_id: UID_PLAYER_B,
+      author_id: UID_WALL_MEMBER,
       created_at: new Date(),
     });
     await assertSucceeds(
-      asPlayerB(testEnv).doc(`groups/${GROUP_ID}/wall_posts/post-edit-self`).update({
+      asWallMember().doc(`groups/${GROUP_ID}/wall_posts/post-edit-self`).update({
         text: "Texto atualizado",
         edited_at: serverTimestamp(),
         updated_at: serverTimestamp(),
@@ -216,11 +257,11 @@ describe("groups/{groupId}/wall_posts", () => {
   it("outro membro nao pode editar texto de terceiro", async () => {
     await seedDoc(testEnv, `groups/${GROUP_ID}/wall_posts/post-edit-other`, {
       ...validPost,
-      author_id: UID_PLAYER_B,
+      author_id: UID_WALL_MEMBER,
       created_at: new Date(),
     });
     await assertFails(
-      asPlayerC(testEnv).doc(`groups/${GROUP_ID}/wall_posts/post-edit-other`).update({
+      asWallAdmin().doc(`groups/${GROUP_ID}/wall_posts/post-edit-other`).update({
         text: "Texto alterado",
         edited_at: serverTimestamp(),
         updated_at: serverTimestamp(),
@@ -231,19 +272,19 @@ describe("groups/{groupId}/wall_posts", () => {
   it("owner/admin pode fixar/desfixar post", async () => {
     await seedDoc(testEnv, `groups/${GROUP_ID}/wall_posts/post-pin`, {
       ...validPost,
-      author_id: UID_PLAYER_B,
+      author_id: UID_WALL_MEMBER,
       created_at: new Date(),
     });
     await assertSucceeds(
-      asPlayerA(testEnv).doc(`groups/${GROUP_ID}/wall_posts/post-pin`).update({
+      asWallOwner().doc(`groups/${GROUP_ID}/wall_posts/post-pin`).update({
         pinned: true,
-        pinned_by: UID_PLAYER_A,
+        pinned_by: UID_WALL_OWNER,
         pinned_at: serverTimestamp(),
         updated_at: serverTimestamp(),
       })
     );
     await assertSucceeds(
-      asPlayerA(testEnv).doc(`groups/${GROUP_ID}/wall_posts/post-pin`).update({
+      asWallOwner().doc(`groups/${GROUP_ID}/wall_posts/post-pin`).update({
         pinned: false,
         pinned_by: null,
         pinned_at: null,
@@ -255,13 +296,13 @@ describe("groups/{groupId}/wall_posts", () => {
   it("owner/admin nao pode atribuir pin a outro uid", async () => {
     await seedDoc(testEnv, `groups/${GROUP_ID}/wall_posts/post-pin-forged`, {
       ...validPost,
-      author_id: UID_PLAYER_B,
+      author_id: UID_WALL_MEMBER,
       created_at: new Date(),
     });
     await assertFails(
-      asPlayerA(testEnv).doc(`groups/${GROUP_ID}/wall_posts/post-pin-forged`).update({
+      asWallOwner().doc(`groups/${GROUP_ID}/wall_posts/post-pin-forged`).update({
         pinned: true,
-        pinned_by: UID_PLAYER_C,
+        pinned_by: UID_WALL_ADMIN,
         pinned_at: serverTimestamp(),
         updated_at: serverTimestamp(),
       })
@@ -271,13 +312,13 @@ describe("groups/{groupId}/wall_posts", () => {
   it("membro comum nao pode fixar post", async () => {
     await seedDoc(testEnv, `groups/${GROUP_ID}/wall_posts/post-pin-denied`, {
       ...validPost,
-      author_id: UID_PLAYER_B,
+      author_id: UID_WALL_MEMBER,
       created_at: new Date(),
     });
     await assertFails(
-      asPlayerB(testEnv).doc(`groups/${GROUP_ID}/wall_posts/post-pin-denied`).update({
+      asWallMember().doc(`groups/${GROUP_ID}/wall_posts/post-pin-denied`).update({
         pinned: true,
-        pinned_by: UID_PLAYER_B,
+        pinned_by: UID_WALL_MEMBER,
         pinned_at: serverTimestamp(),
         updated_at: serverTimestamp(),
       })
@@ -287,12 +328,12 @@ describe("groups/{groupId}/wall_posts", () => {
   it("membro pode reagir ao post alterando apenas reactions", async () => {
     await seedDoc(testEnv, `groups/${GROUP_ID}/wall_posts/post-react`, {
       ...validPost,
-      author_id: UID_PLAYER_B,
+      author_id: UID_WALL_MEMBER,
       created_at: new Date(),
     });
     await assertSucceeds(
-      asPlayerA(testEnv).doc(`groups/${GROUP_ID}/wall_posts/post-react`).update({
-        "reactions.🔥": [UID_PLAYER_A],
+      asWallOwner().doc(`groups/${GROUP_ID}/wall_posts/post-react`).update({
+        "reactions.🔥": [UID_WALL_OWNER],
       })
     );
   });
@@ -300,7 +341,7 @@ describe("groups/{groupId}/wall_posts", () => {
   it("nao-membro nao pode reagir ao post", async () => {
     await seedDoc(testEnv, `groups/${GROUP_ID}/wall_posts/post-react-outsider`, {
       ...validPost,
-      author_id: UID_PLAYER_B,
+      author_id: UID_WALL_MEMBER,
       created_at: new Date(),
     });
     await assertFails(
@@ -313,12 +354,12 @@ describe("groups/{groupId}/wall_posts", () => {
   it("membro nao pode misturar reacao com edicao de texto", async () => {
     await seedDoc(testEnv, `groups/${GROUP_ID}/wall_posts/post-react-extra`, {
       ...validPost,
-      author_id: UID_PLAYER_B,
+      author_id: UID_WALL_MEMBER,
       created_at: new Date(),
     });
     await assertFails(
-      asPlayerB(testEnv).doc(`groups/${GROUP_ID}/wall_posts/post-react-extra`).update({
-        "reactions.🔥": [UID_PLAYER_B],
+      asWallMember().doc(`groups/${GROUP_ID}/wall_posts/post-react-extra`).update({
+        "reactions.🔥": [UID_WALL_MEMBER],
         text: "Tentando misturar alteracoes",
       })
     );
@@ -327,13 +368,13 @@ describe("groups/{groupId}/wall_posts", () => {
   it("autor pode soft-deletar proprio post", async () => {
     await seedDoc(testEnv, `groups/${GROUP_ID}/wall_posts/post-delete-self`, {
       ...validPost,
-      author_id: UID_PLAYER_B,
+      author_id: UID_WALL_MEMBER,
       created_at: new Date(),
     });
     await assertSucceeds(
-      asPlayerB(testEnv).doc(`groups/${GROUP_ID}/wall_posts/post-delete-self`).update({
+      asWallMember().doc(`groups/${GROUP_ID}/wall_posts/post-delete-self`).update({
         deleted_at: serverTimestamp(),
-        deleted_by: UID_PLAYER_B,
+        deleted_by: UID_WALL_MEMBER,
         updated_at: serverTimestamp(),
       })
     );
@@ -342,13 +383,13 @@ describe("groups/{groupId}/wall_posts", () => {
   it("admin do grupo pode soft-deletar post de terceiro", async () => {
     await seedDoc(testEnv, `groups/${GROUP_ID}/wall_posts/post-delete-admin`, {
       ...validPost,
-      author_id: UID_PLAYER_B,
+      author_id: UID_WALL_MEMBER,
       created_at: new Date(),
     });
     await assertSucceeds(
-      asPlayerC(testEnv).doc(`groups/${GROUP_ID}/wall_posts/post-delete-admin`).update({
+      asWallAdmin().doc(`groups/${GROUP_ID}/wall_posts/post-delete-admin`).update({
         deleted_at: serverTimestamp(),
-        deleted_by: UID_PLAYER_C,
+        deleted_by: UID_WALL_ADMIN,
         updated_at: serverTimestamp(),
       })
     );
@@ -357,13 +398,13 @@ describe("groups/{groupId}/wall_posts", () => {
   it("owner pode soft-deletar post de terceiro", async () => {
     await seedDoc(testEnv, `groups/${GROUP_ID}/wall_posts/post-delete-owner`, {
       ...validPost,
-      author_id: UID_PLAYER_B,
+      author_id: UID_WALL_MEMBER,
       created_at: new Date(),
     });
     await assertSucceeds(
-      asPlayerA(testEnv).doc(`groups/${GROUP_ID}/wall_posts/post-delete-owner`).update({
+      asWallOwner().doc(`groups/${GROUP_ID}/wall_posts/post-delete-owner`).update({
         deleted_at: serverTimestamp(),
-        deleted_by: UID_PLAYER_A,
+        deleted_by: UID_WALL_OWNER,
         updated_at: serverTimestamp(),
       })
     );
@@ -372,23 +413,23 @@ describe("groups/{groupId}/wall_posts", () => {
   it("hard delete e bloqueado", async () => {
     await seedDoc(testEnv, `groups/${GROUP_ID}/wall_posts/post-hard-delete`, {
       ...validPost,
-      author_id: UID_PLAYER_B,
+      author_id: UID_WALL_MEMBER,
       created_at: new Date(),
     });
     await assertFails(
-      asPlayerB(testEnv).doc(`groups/${GROUP_ID}/wall_posts/post-hard-delete`).delete()
+      asWallMember().doc(`groups/${GROUP_ID}/wall_posts/post-hard-delete`).delete()
     );
   });
 
   it("membro pode listar mural via collection group filtrado por group_id", async () => {
     await seedDoc(testEnv, `groups/${GROUP_ID}/wall_posts/post-feed-member`, {
       ...validPost,
-      author_id: UID_PLAYER_B,
+      author_id: UID_WALL_MEMBER,
       created_at: new Date(),
     });
 
     await assertSucceeds(
-      asPlayerB(testEnv)
+      asWallMember()
         .collectionGroup("wall_posts")
         .where("group_id", "in", [GROUP_ID])
         .orderBy("created_at", "desc")
@@ -399,7 +440,7 @@ describe("groups/{groupId}/wall_posts", () => {
   it("nao-membro nao pode listar mural via collection group", async () => {
     await seedDoc(testEnv, `groups/${GROUP_ID}/wall_posts/post-feed-outsider`, {
       ...validPost,
-      author_id: UID_PLAYER_B,
+      author_id: UID_WALL_MEMBER,
       created_at: new Date(),
     });
 
@@ -424,10 +465,10 @@ describe("groups/{groupId}/wall_posts", () => {
 
   it("usuario pode ocultar post do proprio feed", async () => {
     await assertSucceeds(
-      asPlayerB(testEnv)
-        .doc(`users/${UID_PLAYER_B}/hidden_feed_posts/${GROUP_ID}_post-feed-member`)
+      asWallMember()
+        .doc(`users/${UID_WALL_MEMBER}/hidden_feed_posts/${GROUP_ID}_post-feed-member`)
         .set({
-          user_id: UID_PLAYER_B,
+          user_id: UID_WALL_MEMBER,
           group_id: GROUP_ID,
           post_id: "post-feed-member",
           post_key: `${GROUP_ID}_post-feed-member`,
@@ -439,10 +480,10 @@ describe("groups/{groupId}/wall_posts", () => {
 
   it("usuario nao pode ocultar post no feed de outro usuario", async () => {
     await assertFails(
-      asPlayerB(testEnv)
-        .doc(`users/${UID_PLAYER_A}/hidden_feed_posts/${GROUP_ID}_post-feed-member`)
+      asWallMember()
+        .doc(`users/${UID_WALL_OWNER}/hidden_feed_posts/${GROUP_ID}_post-feed-member`)
         .set({
-          user_id: UID_PLAYER_A,
+          user_id: UID_WALL_OWNER,
           group_id: GROUP_ID,
           post_id: "post-feed-member",
           post_key: `${GROUP_ID}_post-feed-member`,
@@ -454,10 +495,10 @@ describe("groups/{groupId}/wall_posts", () => {
 
   it("usuario pode denunciar post de mural", async () => {
     await assertSucceeds(
-      asPlayerB(testEnv)
+      asWallMember()
         .collection("reports")
         .add({
-          reporter_id: UID_PLAYER_B,
+          reporter_id: UID_WALL_MEMBER,
           target_type: "group_wall_post",
           group_id: GROUP_ID,
           post_id: "post-feed-member",
@@ -471,10 +512,10 @@ describe("groups/{groupId}/wall_posts", () => {
 
   it("usuario nao pode forjar reporter_id em denuncia", async () => {
     await assertFails(
-      asPlayerB(testEnv)
+      asWallMember()
         .collection("reports")
         .add({
-          reporter_id: UID_PLAYER_A,
+          reporter_id: UID_WALL_OWNER,
           target_type: "group_wall_post",
           group_id: GROUP_ID,
           post_id: "post-feed-member",
