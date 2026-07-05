@@ -7,7 +7,7 @@
  *
  * Rule (resumo):
  *   read:   isAuthenticated() && (isGroupMember(groupId) || isGroupOwnerById(groupId)) ← sem isAdmin() bypass
- *   create: (isAdmin() || isVerifiedOrGrace()) && (isAdmin() || isGroupAdmin() || isGroupOwnerById()) && isGroupActive() && amount>0 && amount<=100000 && type in [INCOME,EXPENSE]
+ *   create: (isAdmin() || isVerifiedOrGrace()) && admin/owner && isGroupActive() && shape/auditoria travados
  *   update: (isGroupAdmin() || isGroupOwnerById()) && isGroupActive() && affectedKeys hasOnly [status,voided_at,voided_by,updated_at] && status==VOIDED && voided_by==userId() && voided_at==request.time
  *   delete: false
  */
@@ -183,10 +183,14 @@ describe("cashbox — create: validações de campo", () => {
       db
         .doc(`groups/${GROUP_INACTIVE}/cashbox/entry-inactive-group`)
         .set({
+          group_id: GROUP_INACTIVE,
           type: "INCOME",
           amount: 50,
+          description: "Entrada em grupo inativo",
+          category: "OTHER",
           status: "ACTIVE",
-          created_at: new Date(),
+          created_by: UID_PLAYER_A,
+          created_at: serverTimestamp(),
         })
     );
   });
@@ -195,11 +199,93 @@ describe("cashbox — create: validações de campo", () => {
     const db = asPlayerA(testEnv);
     await assertSucceeds(
       db.doc(`groups/${GROUP_OWNER_ONLY}/cashbox/entry-owner-only-create`).set({
+        group_id: GROUP_OWNER_ONLY,
         type: "INCOME",
         amount: 120,
         status: "ACTIVE",
         description: "Mensalidade",
         category: "OTHER",
+        created_by: UID_PLAYER_A,
+        created_at: serverTimestamp(),
+      })
+    );
+  });
+
+  it("Create rejeita spoof de created_by", async () => {
+    const db = asPlayerA(testEnv);
+    await assertFails(
+      db.doc(`groups/${GROUP_CASHBOX}/cashbox/entry-spoof-author`).set({
+        group_id: GROUP_CASHBOX,
+        type: "INCOME",
+        amount: 10,
+        description: "Autor falso",
+        category: "OTHER",
+        status: "ACTIVE",
+        created_by: UID_PLAYER_B,
+        created_at: serverTimestamp(),
+      })
+    );
+  });
+
+  it("Create rejeita created_at de cliente", async () => {
+    const db = asPlayerA(testEnv);
+    await assertFails(
+      db.doc(`groups/${GROUP_CASHBOX}/cashbox/entry-client-date`).set({
+        group_id: GROUP_CASHBOX,
+        type: "INCOME",
+        amount: 10,
+        description: "Data cliente",
+        category: "OTHER",
+        status: "ACTIVE",
+        created_by: UID_PLAYER_A,
+        created_at: new Date(),
+      })
+    );
+  });
+
+  it("Create rejeita status diferente de ACTIVE", async () => {
+    const db = asPlayerA(testEnv);
+    await assertFails(
+      db.doc(`groups/${GROUP_CASHBOX}/cashbox/entry-invalid-status`).set({
+        group_id: GROUP_CASHBOX,
+        type: "EXPENSE",
+        amount: 10,
+        description: "Status invalido",
+        category: "OTHER",
+        status: "VOIDED",
+        created_by: UID_PLAYER_A,
+        created_at: serverTimestamp(),
+      })
+    );
+  });
+
+  it("Create rejeita campo extra fora da whitelist", async () => {
+    const db = asPlayerA(testEnv);
+    await assertFails(
+      db.doc(`groups/${GROUP_CASHBOX}/cashbox/entry-extra-field`).set({
+        group_id: GROUP_CASHBOX,
+        type: "EXPENSE",
+        amount: 10,
+        description: "Campo extra",
+        category: "OTHER",
+        status: "ACTIVE",
+        created_by: UID_PLAYER_A,
+        created_at: serverTimestamp(),
+        approved_by: UID_PLAYER_A,
+      })
+    );
+  });
+
+  it("Create rejeita group_id divergente do path", async () => {
+    const db = asPlayerA(testEnv);
+    await assertFails(
+      db.doc(`groups/${GROUP_CASHBOX}/cashbox/entry-wrong-group`).set({
+        group_id: GROUP_OWNER_ONLY,
+        type: "INCOME",
+        amount: 10,
+        description: "Grupo divergente",
+        category: "OTHER",
+        status: "ACTIVE",
         created_by: UID_PLAYER_A,
         created_at: serverTimestamp(),
       })

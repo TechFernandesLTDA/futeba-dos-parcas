@@ -444,9 +444,9 @@ export function useCashbox(groupId: string | null) {
         const transactionsData = snapshot.docs.map((d) => {
           const raw = d.data();
           const converted = snakeToCamel(raw);
-          if (raw.type === 'INCOME') {
+          if (raw.status !== 'VOIDED' && raw.type === 'INCOME') {
             totalBalance += raw.amount as number;
-          } else {
+          } else if (raw.status !== 'VOIDED') {
             totalBalance -= raw.amount as number;
           }
           const createdAt = ((raw.created_at || raw.createdAt) as { toDate?: () => Date })?.toDate?.();

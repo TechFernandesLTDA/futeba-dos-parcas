@@ -11,6 +11,7 @@
 import { describe, it, beforeAll, afterAll } from "vitest";
 import { assertFails, assertSucceeds } from "@firebase/rules-unit-testing";
 import type { RulesTestEnvironment } from "@firebase/rules-unit-testing";
+import { serverTimestamp } from "firebase/firestore";
 import {
   initTestEnv,
   asAdmin,
@@ -429,12 +430,14 @@ describe("groups/cashbox — permissões", () => {
     const db = asPlayerA(testEnv); // owner = group admin
     await assertSucceeds(
       db.doc(`groups/${GROUP_FOR_CASHBOX}/cashbox/entry-new`).set({
+        group_id: GROUP_FOR_CASHBOX,
         type: "INCOME",
         amount: 100,
         description: "Mensalidade",
         category: "MONTHLY_FEE",
         status: "ACTIVE",
-        created_at: new Date(),
+        created_by: UID_PLAYER_A,
+        created_at: serverTimestamp(),
       })
     );
   });
@@ -443,10 +446,14 @@ describe("groups/cashbox — permissões", () => {
     const db = asPlayerB(testEnv); // MEMBER, não admin
     await assertFails(
       db.doc(`groups/${GROUP_FOR_CASHBOX}/cashbox/entry-member-hack`).set({
+        group_id: GROUP_FOR_CASHBOX,
         type: "INCOME",
         amount: 50,
+        description: "Tentativa indevida",
+        category: "OTHER",
         status: "ACTIVE",
-        created_at: new Date(),
+        created_by: UID_PLAYER_B,
+        created_at: serverTimestamp(),
       })
     );
   });
@@ -469,10 +476,14 @@ describe("groups/cashbox — permissões", () => {
     const db = asPlayerA(testEnv); // owner
     await assertFails(
       db.doc(`groups/${GROUP_FOR_CASHBOX}/cashbox/entry-huge`).set({
+        group_id: GROUP_FOR_CASHBOX,
         type: "INCOME",
         amount: 200000, // acima do limite
+        description: "Valor alto",
+        category: "OTHER",
         status: "ACTIVE",
-        created_at: new Date(),
+        created_by: UID_PLAYER_A,
+        created_at: serverTimestamp(),
       })
     );
   });
@@ -481,10 +492,14 @@ describe("groups/cashbox — permissões", () => {
     const db = asPlayerA(testEnv);
     await assertFails(
       db.doc(`groups/${GROUP_FOR_CASHBOX}/cashbox/entry-zero`).set({
+        group_id: GROUP_FOR_CASHBOX,
         type: "EXPENSE",
         amount: 0, // inválido
+        description: "Valor zero",
+        category: "OTHER",
         status: "ACTIVE",
-        created_at: new Date(),
+        created_by: UID_PLAYER_A,
+        created_at: serverTimestamp(),
       })
     );
   });

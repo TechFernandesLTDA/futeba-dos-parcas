@@ -2342,9 +2342,22 @@ service cloud.firestore {
         // Previne entradas absurdas que poderiam indicar exploit ou erro
         // #1018: admin nunca bloqueado por isVerifiedOrGrace()
         // H2 FIX: validacao de campos obrigatorios (description, category, reference_date)
+        // #3284: trava auditoria e shape do create para evitar spoof de autor/timestamp.
         allow create: if (isAdmin() || isVerifiedOrGrace()) &&
                          (isAdmin() || isGroupAdmin(groupId) || isGroupOwnerById(groupId)) &&
                          isGroupActive(groupId) &&
+                         request.resource.data.keys().hasOnly([
+                           'group_id', 'type', 'amount', 'description', 'category', 'status',
+                           'receipt_url', 'created_by', 'created_by_name', 'created_at'
+                         ]) &&
+                         request.resource.data.keys().hasAll([
+                           'group_id', 'type', 'amount', 'description', 'category', 'status',
+                           'created_by', 'created_at'
+                         ]) &&
+                         request.resource.data.group_id == groupId &&
+                         request.resource.data.status == 'ACTIVE' &&
+                         request.resource.data.created_by == userId() &&
+                         request.resource.data.created_at == request.time &&
                          request.resource.data.amount > 0 &&
                          request.resource.data.amount <= 100000 &&
                          (request.resource.data.type == 'INCOME' || request.resource.data.type == 'EXPENSE') &&
