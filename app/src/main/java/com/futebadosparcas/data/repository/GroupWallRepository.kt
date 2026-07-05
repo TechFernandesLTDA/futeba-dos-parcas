@@ -50,8 +50,13 @@ class GroupWallRepository constructor(
     fun observePosts(groupId: String): Flow<List<GroupWallPost>> = callbackFlow {
         var recentPosts = emptyList<GroupWallPost>()
         var pinnedPosts = emptyList<GroupWallPost>()
+        var hasInitialRecentSnapshot = false
+        var hasInitialPinnedSnapshot = false
 
         fun emitMergedPosts() {
+            if (!hasInitialRecentSnapshot || !hasInitialPinnedSnapshot) {
+                return
+            }
             trySend(mergeRecentAndPinnedPosts(recentPosts, pinnedPosts))
         }
 
@@ -68,6 +73,7 @@ class GroupWallRepository constructor(
                 recentPosts = snapshot?.documents?.mapNotNull { doc ->
                     doc.toObject(GroupWallPost::class.java)?.copy(id = doc.id)
                 } ?: emptyList()
+                hasInitialRecentSnapshot = true
 
                 emitMergedPosts()
             }
@@ -84,6 +90,7 @@ class GroupWallRepository constructor(
                 pinnedPosts = snapshot?.documents?.mapNotNull { doc ->
                     doc.toObject(GroupWallPost::class.java)?.copy(id = doc.id)
                 } ?: emptyList()
+                hasInitialPinnedSnapshot = true
 
                 emitMergedPosts()
             }
@@ -104,7 +111,7 @@ class GroupWallRepository constructor(
                 ?: throw IllegalStateException("Usuário não autenticado")
             val cleanText = text.trim()
             require(cleanText.isNotEmpty()) {
-                "Adicione um texto antes de enviar a foto."
+                "O texto nao pode estar vazio."
             }
             require(cleanText.length <= MAX_TEXT_LENGTH) {
                 "Texto deve ter no máximo $MAX_TEXT_LENGTH caracteres"

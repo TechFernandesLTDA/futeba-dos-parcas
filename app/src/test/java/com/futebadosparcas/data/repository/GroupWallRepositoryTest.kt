@@ -2,8 +2,8 @@ package com.futebadosparcas.data.repository
 
 import com.futebadosparcas.data.model.GroupWallPost
 import com.google.common.truth.Truth.assertThat
-import org.junit.Test
 import java.util.Date
+import org.junit.jupiter.api.Test
 
 class GroupWallRepositoryTest {
 
