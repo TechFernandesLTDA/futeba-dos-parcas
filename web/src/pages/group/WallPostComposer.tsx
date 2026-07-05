@@ -41,6 +41,8 @@ export const WallPostComposer: React.FC<WallPostComposerProps> = ({
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cleanText = text.trim();
+  const textRequired = cleanText.length === 0;
 
   const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -72,13 +74,16 @@ export const WallPostComposer: React.FC<WallPostComposerProps> = ({
   const handleSubmit = () => {
     const cleanText = text.trim();
     if (cleanText.length > MAX_TEXT_LENGTH) return;
-    if (cleanText.length === 0 && !imageFile) return;
+    if (cleanText.length === 0) {
+      showError(t('groupWall.textRequired'));
+      return;
+    }
     onSubmit(cleanText, imageFile ?? undefined);
     setText('');
     handleRemoveImage();
   };
 
-  const isValid = text.trim().length <= MAX_TEXT_LENGTH && (text.trim().length > 0 || !!imageFile);
+  const isValid = cleanText.length <= MAX_TEXT_LENGTH && cleanText.length > 0;
 
   return (
     <Box
@@ -106,6 +111,8 @@ export const WallPostComposer: React.FC<WallPostComposerProps> = ({
         inputProps={{ maxLength: MAX_TEXT_LENGTH }}
         disabled={sending}
         aria-label={t('groupWall.placeholder')}
+        error={textRequired && !!imageFile}
+        helperText={textRequired && !!imageFile ? t('groupWall.textRequired') : ' '}
       />
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1 }}>
         <Typography variant="caption" color="text.secondary">

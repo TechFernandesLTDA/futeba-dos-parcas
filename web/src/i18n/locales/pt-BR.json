@@ -1434,6 +1434,7 @@
     "imageAlt": "Foto de {{name}}",
     "invalidImageType": "Formato inválido. Use JPG, PNG ou WebP.",
     "imageTooLarge": "Imagem muito grande. O limite é 10MB.",
+    "textRequired": "O texto não pode estar vazio.",
     "loadMore": "Carregar mais",
     "pinned": "Fixado",
     "pin": "Fixar no topo",

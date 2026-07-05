@@ -23,6 +23,7 @@ import { storage } from '../services/firebaseStorage';
 import { getFirestoreErrorMessage } from '../utils/firebaseErrors';
 import { snakeToCamel, toDate } from '../utils/firestoreHelpers';
 import { createLogger } from '../utils/logger';
+import { useTranslation } from 'react-i18next';
 
 const logger = createLogger('useGroupWall');
 
@@ -30,6 +31,17 @@ const POST_PAGE_SIZE = 20;
 const MAX_TEXT_LENGTH = 500;
 const MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024;
 const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+
+interface CreateWallPostOptions {
+  imageFile?: File;
+  highlightRef?: { gameId: string; highlightId: string };
+}
+
+interface UploadedWallMedia {
+  mediaUrl: string;
+  mediaPath: string;
+  mediaType: string;
+}
 
 export interface WallPost {
   id: string;
@@ -88,6 +100,113 @@ export function mapPost(docSnap: QueryDocumentSnapshot<DocumentData>): WallPost 
   };
 }
 
+async function uploadWallMedia(groupId: string, imageFile: File): Promise<UploadedWallMedia> {
+  if (!ACCEPTED_IMAGE_TYPES.includes(imageFile.type)) {
+    throw new Error('Tipo de imagem inválido. Use JPG, PNG ou WebP.');
+  }
+  if (imageFile.size > MAX_IMAGE_SIZE_BYTES) {
+    throw new Error('Imagem muito grande. O limite é 10MB.');
+  }
+
+  const ext = imageFile.type.split('/')[1]?.replace('jpeg', 'jpg') || 'jpg';
+  const mediaPath = `groups/${groupId}/wall_media/__draft__/${Date.now()}-${crypto.randomUUID()}.${ext}`;
+  const fileRef = storageRef(storage, mediaPath);
+
+  await uploadBytes(fileRef, imageFile, { contentType: imageFile.type });
+  const mediaUrl = await getDownloadURL(fileRef);
+
+  return {
+    mediaUrl,
+    mediaPath,
+    mediaType: imageFile.type,
+  };
+}
+
+async function deleteWallMediaPaths(paths: Array<string | null | undefined>) {
+  const uniquePaths = [...new Set(paths.filter((path): path is string => Boolean(path)))];
+
+  await Promise.all(
+    uniquePaths.map(async (path) => {
+      try {
+        await deleteObject(storageRef(storage, path));
+      } catch (err) {
+        const code = typeof err === 'object' && err && 'code' in err ? String(err.code) : '';
+        if (code !== 'storage/object-not-found') {
+          logger.warn('Erro ao deletar mídia do mural:', err);
+        }
+      }
+    }),
+  );
+}
+
+async function createWallPostDocument(params: {
+  groupId: string;
+  currentUserUid: string;
+  authorName: string;
+  authorPhotoUrl: string | null;
+  text: string;
+  options?: CreateWallPostOptions;
+}) {
+  const { groupId, currentUserUid, authorName, authorPhotoUrl, text, options } = params;
+  const cleanText = text.trim();
+
+  if (cleanText.length === 0) {
+    throw new Error('O texto nao pode estar vazio.');
+  }
+  if (cleanText.length > MAX_TEXT_LENGTH) {
+    throw new Error(`Máximo ${MAX_TEXT_LENGTH} caracteres.`);
+  }
+
+  let uploadedMedia: UploadedWallMedia | null = null;
+
+  try {
+    if (options?.imageFile) {
+      uploadedMedia = await uploadWallMedia(groupId, options.imageFile);
+    }
+
+    await addDoc(collection(db, 'groups', groupId, 'wall_posts'), {
+      group_id: groupId,
+      author_id: currentUserUid,
+      author_name: authorName,
+      author_photo_url: authorPhotoUrl,
+      text: cleanText,
+      media_url: uploadedMedia?.mediaUrl ?? null,
+      media_path: uploadedMedia?.mediaPath ?? null,
+      media_type: uploadedMedia?.mediaType ?? null,
+      thumbnail_path: null,
+      highlight_ref: options?.highlightRef ?? null,
+      pinned: false,
+      pinned_by: null,
+      pinned_at: null,
+      reactions: {},
+      comments_count: 0,
+      created_at: serverTimestamp(),
+      updated_at: serverTimestamp(),
+      edited_at: null,
+      deleted_by: null,
+      deleted_at: null,
+    });
+  } catch (err) {
+    if (uploadedMedia?.mediaPath) {
+      await deleteWallMediaPaths([uploadedMedia.mediaPath]);
+    }
+    throw err;
+  }
+}
+
+async function softDeleteWallPost(groupId: string, currentUserUid: string, post: WallPost) {
+  const batch = writeBatch(db);
+  const postRef = doc(db, 'groups', groupId, 'wall_posts', post.id);
+  batch.update(postRef, {
+    deleted_by: currentUserUid,
+    deleted_at: serverTimestamp(),
+    updated_at: serverTimestamp(),
+  });
+
+  await batch.commit();
+  await deleteWallMediaPaths([post.mediaPath, post.thumbnailPath]);
+}
+
 export function useGroupWall(groupId?: string) {
   const { currentUser, user } = useAuth();
   const { showError } = useToast();
@@ -98,6 +217,8 @@ export function useGroupWall(groupId?: string) {
   const [loadingMore, setLoadingMore] = useState(false);
   const newestDocRef = useRef<QueryDocumentSnapshot<DocumentData> | null>(null);
   const oldestDocRef = useRef<QueryDocumentSnapshot<DocumentData> | null>(null);
+  const showErrorRef = useRef(showError);
+  showErrorRef.current = showError;
 
   useEffect(() => {
     if (!groupId) {
@@ -134,12 +255,12 @@ export function useGroupWall(groupId?: string) {
         const message = getFirestoreErrorMessage(err);
         setError(message);
         setLoading(false);
-        showError(message);
+        showErrorRef.current(message);
       },
     );
 
     return () => unsubscribe();
-  }, [groupId, showError]);
+  }, [groupId]);
 
   const loadMore = useCallback(async () => {
     if (!groupId || !oldestDocRef.current || loadingMore || !hasMore) return;
@@ -169,57 +290,15 @@ export function useGroupWall(groupId?: string) {
   }, [groupId, loadingMore, hasMore, showError]);
 
   const createPost = useCallback(
-    async (text: string, options?: { imageFile?: File; highlightRef?: { gameId: string; highlightId: string } }) => {
+    async (text: string, options?: CreateWallPostOptions) => {
       if (!groupId || !currentUser?.uid) throw new Error('Grupo não encontrado.');
-      const cleanText = text.trim();
-      if (cleanText.length === 0 && !options?.imageFile) {
-        throw new Error('Escreva algo ou anexe uma foto.');
-      }
-      if (cleanText.length > MAX_TEXT_LENGTH) {
-        throw new Error(`Máximo ${MAX_TEXT_LENGTH} caracteres.`);
-      }
-
-      let mediaUrl: string | null = null;
-      let mediaPath: string | null = null;
-      let mediaType: string | null = null;
-
-      if (options?.imageFile) {
-        if (!ACCEPTED_IMAGE_TYPES.includes(options.imageFile.type)) {
-          throw new Error('Tipo de imagem inválido. Use JPG, PNG ou WebP.');
-        }
-        if (options.imageFile.size > MAX_IMAGE_SIZE_BYTES) {
-          throw new Error('Imagem muito grande. O limite é 10MB.');
-        }
-        const ext = options.imageFile.type.split('/')[1]?.replace('jpeg', 'jpg') || 'jpg';
-        const path = `groups/${groupId}/wall_media/__draft__/${Date.now()}-${crypto.randomUUID()}.${ext}`;
-        const fileRef = storageRef(storage, path);
-        await uploadBytes(fileRef, options.imageFile, { contentType: options.imageFile.type });
-        mediaUrl = await getDownloadURL(fileRef);
-        mediaPath = path;
-        mediaType = options.imageFile.type;
-      }
-
-      await addDoc(collection(db, 'groups', groupId, 'wall_posts'), {
-        group_id: groupId,
-        author_id: currentUser.uid,
-        author_name: user?.name || currentUser.displayName || 'Jogador',
-        author_photo_url: user?.photoUrl ?? currentUser.photoURL ?? null,
-        text: cleanText,
-        media_url: mediaUrl,
-        media_path: mediaPath,
-        media_type: mediaType,
-        thumbnail_path: null,
-        highlight_ref: options?.highlightRef ?? null,
-        pinned: false,
-        pinned_by: null,
-        pinned_at: null,
-        reactions: {},
-        comments_count: 0,
-        created_at: serverTimestamp(),
-        updated_at: serverTimestamp(),
-        edited_at: null,
-        deleted_by: null,
-        deleted_at: null,
+      await createWallPostDocument({
+        groupId,
+        currentUserUid: currentUser.uid,
+        authorName: user?.name || currentUser.displayName || 'Jogador',
+        authorPhotoUrl: user?.photoUrl ?? currentUser.photoURL ?? null,
+        text,
+        options,
       });
     },
     [groupId, currentUser, user],
@@ -257,26 +336,7 @@ export function useGroupWall(groupId?: string) {
   const deletePost = useCallback(
     async (post: WallPost) => {
       if (!groupId || !currentUser?.uid) throw new Error('Grupo não encontrado.');
-      const batch = writeBatch(db);
-      const postRef = doc(db, 'groups', groupId, 'wall_posts', post.id);
-      batch.update(postRef, {
-        deleted_by: currentUser.uid,
-        deleted_at: serverTimestamp(),
-        updated_at: serverTimestamp(),
-      });
-
-      if (post.mediaPath) {
-        try {
-          await deleteObject(storageRef(storage, post.mediaPath));
-        } catch (err) {
-          const code = typeof err === 'object' && err && 'code' in err ? String(err.code) : '';
-          if (code !== 'storage/object-not-found') {
-            logger.warn('Erro ao deletar mídia do mural:', err);
-          }
-        }
-      }
-
-      await batch.commit();
+      await softDeleteWallPost(groupId, currentUser.uid, post);
     },
     [groupId, currentUser],
   );
@@ -297,15 +357,35 @@ export function useGroupWall(groupId?: string) {
 }
 
 export function useCreateWallPost(groupId?: string) {
-  const { createPost } = useGroupWall(groupId);
+  const { currentUser, user } = useAuth();
   const { showError, showSuccess } = useToast();
+  const { t } = useTranslation();
   const [sending, setSending] = useState(false);
 
   const create = useCallback(
-    async (text: string, options?: { imageFile?: File; highlightRef?: { gameId: string; highlightId: string } }) => {
+    async (text: string, options?: CreateWallPostOptions) => {
+      const cleanText = text.trim();
+      if (!groupId || !currentUser?.uid) {
+        const error = new Error('Grupo não encontrado.');
+        showError(error.message);
+        throw error;
+      }
+      if (cleanText.length === 0) {
+        const error = new Error(t('groupWall.textRequired'));
+        showError(error.message);
+        throw error;
+      }
+
       setSending(true);
       try {
-        await createPost(text, options);
+        await createWallPostDocument({
+          groupId,
+          currentUserUid: currentUser.uid,
+          authorName: user?.name || currentUser.displayName || 'Jogador',
+          authorPhotoUrl: user?.photoUrl ?? currentUser.photoURL ?? null,
+          text: cleanText,
+          options,
+        });
         showSuccess('Publicado no mural.');
       } catch (err) {
         showError(err instanceof Error && !('code' in err) ? err.message : getFirestoreErrorMessage(err));
@@ -314,22 +394,28 @@ export function useCreateWallPost(groupId?: string) {
         setSending(false);
       }
     },
-    [createPost, showError, showSuccess],
+    [groupId, currentUser, user, showError, showSuccess, t],
   );
 
   return { create, sending };
 }
 
 export function useDeleteWallPost(groupId?: string) {
-  const { deletePost } = useGroupWall(groupId);
+  const { currentUser } = useAuth();
   const { showError } = useToast();
   const [deleting, setDeleting] = useState(false);
 
   const remove = useCallback(
     async (post: WallPost) => {
+      if (!groupId || !currentUser?.uid) {
+        const error = new Error('Grupo não encontrado.');
+        showError(error.message);
+        throw error;
+      }
+
       setDeleting(true);
       try {
-        await deletePost(post);
+        await softDeleteWallPost(groupId, currentUser.uid, post);
       } catch (err) {
         showError(err instanceof Error && !('code' in err) ? err.message : getFirestoreErrorMessage(err));
         throw err;
@@ -337,7 +423,7 @@ export function useDeleteWallPost(groupId?: string) {
         setDeleting(false);
       }
     },
-    [deletePost, showError],
+    [groupId, currentUser, showError],
   );
 
   return { remove, deleting };

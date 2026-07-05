@@ -1434,6 +1434,7 @@
     "imageAlt": "Photo by {{name}}",
     "invalidImageType": "Invalid format. Use JPG, PNG, or WebP.",
     "imageTooLarge": "Image too large. The limit is 10MB.",
+    "textRequired": "Text cannot be empty.",
     "loadMore": "Load more",
     "pinned": "Pinned",
     "pin": "Pin to top",
