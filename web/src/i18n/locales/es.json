@@ -602,6 +602,11 @@
     "description": "Ocurrió un error inesperado. Por favor, intenta de nuevo.",
     "errorCode": "Código de error:",
     "goHome": "Ir al Inicio",
+    "report": "Reportar error",
+    "reported": "Error reportado",
+    "reportError": "No se pudo enviar el reporte ahora. Copia los detalles e inténtalo de nuevo más tarde.",
+    "reporting": "Enviando...",
+    "reportLoginRequired": "Inicia sesión para enviar este reporte automáticamente.",
     "reload": "Recargar",
     "title": "¡Ups! Algo salió mal"
   },

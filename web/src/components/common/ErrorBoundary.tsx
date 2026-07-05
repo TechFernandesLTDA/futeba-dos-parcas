@@ -1,11 +1,17 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { Box, Typography, Button, Container, Paper, Chip } from '@mui/material';
-import { Error as ErrorIcon, Refresh as RefreshIcon, Home as HomeIcon } from '@mui/icons-material';
+import React, { Component, ErrorInfo, ReactNode, useState } from 'react';
+import { Alert, Box, Typography, Button, CircularProgress, Container, Paper, Chip } from '@mui/material';
+import {
+  Error as ErrorIcon,
+  Refresh as RefreshIcon,
+  Home as HomeIcon,
+  BugReport as BugReportIcon,
+} from '@mui/icons-material';
 import { iconSizes } from '../../theme/iconSizes';
 import { createLogger } from '../../utils/logger';
 import { logError } from '../../utils/errorLogger';
 import { ErrorDetailsButton } from './ErrorDetailsButton';
 import type { ErrorLogEntry } from '../../utils/errorLogger';
+import { submitErrorFeedbackReport, type ErrorFeedbackResult } from '../../utils/errorFeedbackReporter';
 import { useTranslation } from 'react-i18next';
 
 const logger = createLogger('ErrorBoundary');
@@ -114,6 +120,19 @@ interface ErrorFallbackProps {
 // eslint-disable-next-line react-refresh/only-export-components
 const ErrorFallback: React.FC<ErrorFallbackProps> = ({ errorId, logEntry, error, errorInfo, onRefresh, onGoHome }) => {
   const { t } = useTranslation();
+  const [reporting, setReporting] = useState(false);
+  const [reportResult, setReportResult] = useState<ErrorFeedbackResult | null>(null);
+
+  const handleReportError = async () => {
+    if (reporting || reportResult?.ok) return;
+
+    setReporting(true);
+    setReportResult(null);
+    const result = await submitErrorFeedbackReport({ errorId, logEntry, error, errorInfo });
+    setReportResult(result);
+    setReporting(false);
+  };
+
   return (
     <Box
       sx={{
@@ -204,10 +223,30 @@ const ErrorFallback: React.FC<ErrorFallbackProps> = ({ errorId, logEntry, error,
             >
               {t('errorBoundary.reload')}
             </Button>
+            <Button
+              variant="outlined"
+              color={reportResult?.ok ? 'success' : 'primary'}
+              startIcon={reporting ? <CircularProgress size={16} /> : <BugReportIcon />}
+              onClick={handleReportError}
+              disabled={reporting || reportResult?.ok}
+            >
+              {reportResult?.ok
+                ? t('errorBoundary.reported')
+                : reporting
+                  ? t('errorBoundary.reporting')
+                  : t('errorBoundary.report')}
+            </Button>
             {logEntry && (
               <ErrorDetailsButton entry={logEntry} />
             )}
           </Box>
+          {reportResult && !reportResult.ok && (
+            <Alert severity="warning" sx={{ mt: 3, textAlign: 'left' }}>
+              {reportResult.reason === 'unauthenticated'
+                ? t('errorBoundary.reportLoginRequired')
+                : t('errorBoundary.reportError')}
+            </Alert>
+          )}
         </Paper>
       </Container>
     </Box>

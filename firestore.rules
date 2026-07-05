@@ -3728,7 +3728,10 @@ service cloud.firestore {
       allow list: if isAuthenticated() && isAdmin();
       allow create: if isAuthenticated()
         && request.resource.data.user_id == request.auth.uid
-        && request.resource.data.user_email == request.auth.token.email
+        && (
+          ('email' in request.auth.token && request.auth.token.email is string && request.resource.data.user_email == request.auth.token.email) ||
+          (!('email' in request.auth.token) && request.resource.data.user_email == '')
+        )
         && request.resource.data.type in ['bug', 'problem', 'improvement', 'suggestion']
         && request.resource.data.severity in ['low', 'medium', 'high', 'critical']
         && request.resource.data.status == 'open'

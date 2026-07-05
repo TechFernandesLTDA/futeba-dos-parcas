@@ -1,7 +1,34 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-05T16:38:40.360Z",
+  "generatedAt": "2026-07-05T17:12:06.827Z",
   "notes": [
+    {
+      "version": "1.49.0",
+      "buildNumber": null,
+      "releaseDate": "2026-07-05",
+      "type": "minor",
+      "showPopup": true,
+      "published": true,
+      "headline": "Ficou mais fácil avisar quando uma tela quebra.",
+      "highlights": [
+        {
+          "icon": "bug",
+          "title": "Reportar erro pela própria falha",
+          "description": "A tela global de erro agora permite enviar um relatório direto para a fila interna de feedback, com o código da falha e a tela onde aconteceu."
+        }
+      ],
+      "added": [],
+      "improved": [
+        "Usuários autenticados podem registrar falhas visíveis sem precisar copiar detalhes manualmente.",
+        "O envio também funciona para contas autenticadas que não têm e-mail no token.",
+        "O relatório inclui rota, URL, código do erro, navegador, versão do app e contexto técnico limitado para acelerar a triagem.",
+        "Quando o envio automático não é possível, a tela informa o próximo passo sem esconder os botões de recarregar, voltar ao início ou copiar detalhes."
+      ],
+      "fixed": [],
+      "issueRefs": [
+        3294
+      ]
+    },
     {
       "version": "1.48.9",
       "buildNumber": null,
