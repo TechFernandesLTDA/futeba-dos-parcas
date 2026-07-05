@@ -208,7 +208,7 @@ function useLoginRedirectReady(firebaseUser: FirebaseUser | null, loading: boole
       return;
     }
 
-    const timer = window.setTimeout(() => setReady(true), 1200);
+    const timer = window.setTimeout(() => setReady(true), 300);
     return () => window.clearTimeout(timer);
   }, [firebaseUser, loading]);
 

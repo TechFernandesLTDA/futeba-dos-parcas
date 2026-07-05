@@ -1,12 +1,18 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getToken, onMessage } from 'firebase/messaging';
-import { doc, runTransaction, arrayUnion } from 'firebase/firestore';
-import { db } from '../services/firebase';
-import { messagingPromise } from '../services/firebaseMessaging';
 import { useAuth } from '../contexts/AuthContext';
 import { createLogger } from '../utils/logger';
 
 const logger = createLogger('useNotificationPermission');
+
+function scheduleIdle(callback: () => void): () => void {
+  if ('requestIdleCallback' in window) {
+    const id = window.requestIdleCallback(callback, { timeout: 4000 });
+    return () => window.cancelIdleCallback(id);
+  }
+
+  const id = globalThis.setTimeout(callback, 2000);
+  return () => globalThis.clearTimeout(id);
+}
 
 interface BackgroundNotificationPayload {
   type: string;
@@ -26,27 +32,41 @@ export function useNotificationPermission() {
     let unsubscribe: (() => void) | undefined;
     let mounted = true;
 
-    // FIX #1562: adiciona .catch() para evitar unhandled promise rejection
-    // quando o service worker não está disponível ou o messaging falha ao inicializar
-    messagingPromise.then((messaging) => {
-      if (!mounted || !messaging) return;
-      unsubscribe = onMessage(messaging, (payload) => {
-        if (Notification.permission === 'granted' && payload.notification) {
-          new Notification(payload.notification.title || 'Futeba dos Parças', {
-            body: payload.notification.body,
-            icon: '/favicon.ico',
+    if (permission !== 'granted') {
+      return () => {
+        mounted = false;
+      };
+    }
+
+    const cancelIdle = scheduleIdle(() => {
+      Promise.all([
+        import('../services/firebaseMessaging'),
+        import('firebase/messaging'),
+      ]).then(([{ messagingPromise }, { onMessage }]) => {
+        messagingPromise.then((messaging) => {
+          if (!mounted || !messaging) return;
+          unsubscribe = onMessage(messaging, (payload) => {
+            if (Notification.permission === 'granted' && payload.notification) {
+              new Notification(payload.notification.title || 'Futeba dos Parças', {
+                body: payload.notification.body,
+                icon: '/favicon.ico',
+              });
+            }
           });
-        }
+        }).catch((err) => {
+          logger.error('Falha ao inicializar messaging:', err);
+        });
+      }).catch((err) => {
+        logger.error('Falha ao carregar Firebase Messaging:', err);
       });
-    }).catch((err) => {
-      logger.error('Falha ao inicializar messaging:', err);
     });
 
     return () => {
       mounted = false;
+      cancelIdle();
       if (unsubscribe) unsubscribe();
     };
-  }, []);
+  }, [permission]);
 
   useEffect(() => {
     const handleServiceWorkerMessage = (event: MessageEvent) => {
@@ -78,6 +98,12 @@ export function useNotificationPermission() {
       setPermission(result);
 
       if (result === 'granted' && user?.id) {
+        const [{ messagingPromise }, { getToken }, { doc, runTransaction, arrayUnion }, { db }] = await Promise.all([
+          import('../services/firebaseMessaging'),
+          import('firebase/messaging'),
+          import('firebase/firestore'),
+          import('../services/firebase'),
+        ]);
         const messaging = await messagingPromise;
         if (!messaging) return;
 

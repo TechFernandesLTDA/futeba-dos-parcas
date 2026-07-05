@@ -16,7 +16,6 @@ import {
   AutoAwesome,
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
-import { usePrefetchHome } from '../../hooks/usePrefetchHome';
 import { usePerformanceMonitoring } from '../../hooks/usePerformanceMonitoring';
 import { PerformanceOverlay } from '../../hooks/usePerformanceMonitoring';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
@@ -61,8 +60,6 @@ export function HomeScreen() {
   const { t } = useTranslation();
   const theme = useTheme();
   useDocumentTitle(t('common.appName'));
-
-  usePrefetchHome();
 
   const { metrics } = usePerformanceMonitoring({ screenName: 'HomeScreen' });
 
