@@ -160,6 +160,15 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.48.9][web-1.48.9] - 2026-07-05
+
+#### Corrigido
+- `GamesTab` envia filtros de status/data para `useGames` antes da consulta Firestore.
+- `useGames` passa a aceitar `statuses` e `startDateTime`, usando `where('status', 'in', ...)` e `where('dateTime', '>=', ...)`.
+- Testes unitários cobrem os novos filtros `status in` e `dateTime >=`.
+
+_Issues: #3292_
+
 ### [1.48.8][web-1.48.8] - 2026-07-05
 
 #### Corrigido
@@ -1404,6 +1413,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.48.9]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.48.9.md
 [web-1.48.8]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.48.8.md
 [web-1.48.7]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.48.7.md
 [web-1.48.6]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.48.6.md

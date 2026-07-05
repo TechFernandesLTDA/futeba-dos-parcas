@@ -146,6 +146,17 @@ describe('useGames', () => {
     expect(mockWhere).toHaveBeenCalledWith('status', '==', 'LIVE');
   });
 
+  it('filtra jogos por múltiplos status', () => {
+    renderHook(() => useGames({ statuses: ['SCHEDULED', 'CONFIRMED'] }), { wrapper: createTestWrapper() });
+    expect(mockWhere).toHaveBeenCalledWith('status', 'in', ['SCHEDULED', 'CONFIRMED']);
+  });
+
+  it('filtra jogos por data/hora inicial', () => {
+    const startDateTime = new Date('2026-07-08T00:00:00');
+    renderHook(() => useGames({ startDateTime }), { wrapper: createTestWrapper() });
+    expect(mockWhere).toHaveBeenCalledWith('dateTime', '>=', startDateTime);
+  });
+
   it('filtra jogos por groupId', () => {
     renderHook(() => useGames({ groupId: 'group-1' }), { wrapper: createTestWrapper() });
     expect(mockWhere).toHaveBeenCalledWith('group_id', '==', 'group-1');

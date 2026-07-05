@@ -13,6 +13,7 @@ import {
   where,
   orderBy,
   limit,
+  QueryConstraint,
   onSnapshot,
   serverTimestamp,
   Timestamp,
@@ -58,29 +59,38 @@ const DEFAULT_GAMES_LIMIT = 50;
 // Busca jogos com filtros
 async function fetchGames(filters?: {
   status?: GameStatus;
+  statuses?: GameStatus[];
   groupId?: string;
   date?: string;
+  startDateTime?: Date;
   limitCount?: number;
   orderDirection?: 'asc' | 'desc';
 }): Promise<Game[]> {
   const gamesRef = collection(db, 'games');
-  let q = query(gamesRef, orderBy('dateTime', filters?.orderDirection ?? 'asc'));
+  const constraints: QueryConstraint[] = [];
 
   if (filters?.status) {
-    q = query(q, where('status', '==', filters.status));
+    constraints.push(where('status', '==', filters.status));
+  } else if (filters?.statuses?.length) {
+    constraints.push(where('status', 'in', filters.statuses.slice(0, 10)));
   }
   if (filters?.groupId) {
-    q = query(q, where('group_id', '==', filters.groupId));
+    constraints.push(where('group_id', '==', filters.groupId));
   }
   if (filters?.date) {
-    q = query(q, where('date', '==', filters.date));
+    constraints.push(where('date', '==', filters.date));
   }
+  if (filters?.startDateTime) {
+    constraints.push(where('dateTime', '>=', filters.startDateTime));
+  }
+  constraints.push(orderBy('dateTime', filters?.orderDirection ?? 'asc'));
 
   // SEMPRE aplicar limit p/ evitar scan completo da collection (#1121).
   // Default 50; caller pode override via filters.limitCount.
   const limitCount = filters?.limitCount ?? DEFAULT_GAMES_LIMIT;
-  q = query(q, limit(limitCount));
+  constraints.push(limit(limitCount));
 
+  const q = query(gamesRef, ...constraints);
   const snapshot = await getDocs(q);
   return snapshot.docs
     .map((d) => parseGameDoc(d.id, d.data()))
@@ -93,15 +103,34 @@ async function fetchGames(filters?: {
 
 export function useGames(filters?: {
   status?: GameStatus;
+  statuses?: GameStatus[];
   groupId?: string;
   date?: string;
+  startDateTime?: Date;
   limitCount?: number;
   orderDirection?: 'asc' | 'desc';
 }) {
   // Chave de query estável baseada nos filtros primitivos
   const queryKey = useMemo(
-    () => ['games', filters?.status, filters?.groupId, filters?.date, filters?.limitCount, filters?.orderDirection] as const,
-    [filters?.status, filters?.groupId, filters?.date, filters?.limitCount, filters?.orderDirection]
+    () => [
+      'games',
+      filters?.status,
+      filters?.statuses?.join(','),
+      filters?.groupId,
+      filters?.date,
+      filters?.startDateTime?.getTime(),
+      filters?.limitCount,
+      filters?.orderDirection,
+    ] as const,
+    [
+      filters?.status,
+      filters?.statuses,
+      filters?.groupId,
+      filters?.date,
+      filters?.startDateTime,
+      filters?.limitCount,
+      filters?.orderDirection,
+    ]
   );
 
   const { data: games = [], isLoading: loading, error: queryError, refetch } = useQuery({
