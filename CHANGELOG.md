@@ -24,7 +24,7 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ## Android
 
-### [1.36.0] - 2026-07-04
+### [1.36.0][android-1.36.0] - 2026-07-04
 
 #### Adicionado
 - Repositórios, ViewModels, telas Compose e rotas para DMs, follow, feed social, jogadores próximos, comentários e vídeos.
@@ -44,7 +44,7 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 _Issues: #3231, #3233, #3234, #3235, #3236, #3237, #3238, #3239, #3247, #3248, #3249 · PRs: #3258_
 
-### [1.35.0] - 2026-07-04
+### [1.35.0][android-1.35.0] - 2026-07-04
 
 #### Adicionado
 - Repositórios, ViewModels, telas Compose e rotas para DMs, follow, feed social, jogadores próximos, comentários e vídeos.
@@ -63,7 +63,7 @@ _Issues: #3231, #3233, #3234, #3235, #3236, #3237, #3238, #3239, #3247, #3248, #
 
 _Issues: #3231, #3233, #3234, #3235, #3236, #3237, #3238, #3239, #3247, #3248, #3249_
 
-### [1.34.0] - 2026-07-04
+### [1.34.0][android-1.34.0] - 2026-07-04
 
 #### Adicionado
 - Chat por jogo: `GameChatMessage.kt`, `GameChatRepository.kt`, `GameChatViewModel.kt`, `GameChatSection.kt` e testes `GameChatViewModelTest.kt`.
@@ -74,7 +74,7 @@ _Issues: #3231, #3233, #3234, #3235, #3236, #3237, #3238, #3239, #3247, #3248, #
 
 _Issues: #3230, #3232_
 
-### [1.33.0] - 2026-07-03
+### [1.33.0][android-1.33.0] - 2026-07-03
 
 #### Adicionado
 - Suporte Android a lifecycle e live operations via callable em `StartGameUseCase`, `FinishLiveGameUseCase` e camadas de repositório.
@@ -92,7 +92,7 @@ _Issues: #3230, #3232_
 
 _Issues: #3208, #3209, #3211, #3213, #3214, #3215, #3216 · PRs: #3218_
 
-### [1.32.2] - 2026-06-30
+### [1.32.2][android-1.32.2] - 2026-06-30
 
 #### Mudado
 - `Location` no Android e no KMP agora inclui campos comerciais, de conta de quadra e agregados de descoberta.
@@ -102,14 +102,14 @@ _Issues: #3208, #3209, #3211, #3213, #3214, #3215, #3216 · PRs: #3218_
 
 _Issues: #3109, #3129 · PRs: #3166_
 
-### [1.32.1] - 2026-06-28
+### [1.32.1][android-1.32.1] - 2026-06-28
 
 #### Corrigido
 - `CreateGameScreen` usa `KeyboardOptions` adequadas para campos numéricos.
 - `NumberStepper` passa a exibir helper text com os limites aceitos.
 - Recursos de string do fluxo de Criar Jogo foram atualizados para documentar ranges e exemplos.
 
-### [1.26.0] - 2026-05-22
+### [1.26.0][android-1.26.0] - 2026-05-22
 
 #### Adicionado
 - Histórico de busca persistente e contadores na checklist de onboarding (#1413).
@@ -126,7 +126,7 @@ _Issues: #3109, #3129 · PRs: #3166_
 
 _Issues: #1405, #1410, #1402, #1403, #1404, #1406 · PRs: #1480, #1466, #1415, #1414, #1413_
 
-### [1.25.0] - 2026-05-17
+### [1.25.0][android-1.25.0] - 2026-05-17
 
 #### Adicionado
 - Onboarding moderno: welcome carousel + checklist gamificada, Fase 1 (#1295).
@@ -140,14 +140,14 @@ _Issues: #1405, #1410, #1402, #1403, #1404, #1406 · PRs: #1480, #1466, #1415, #
 
 _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
-### [1.24.0] - 2026-05-11
+### [1.24.0][android-1.24.0] - 2026-05-11
 
 #### Mudado
 - Bump de versão de manutenção após a mega audit wave de 2026-05-11, sem mudanças funcionais no Android nesta tag.
 
 ## Web
 
-### [1.48.0] - 2026-07-04
+### [1.48.0][web-1.48.0] - 2026-07-04
 
 #### Adicionado
 - Hooks e telas web para DMs, reações, comentários de jogo, follow, feed social, jogadores próximos e vídeos.
@@ -168,7 +168,7 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 _Issues: #3231, #3233, #3234, #3235, #3236, #3237, #3238, #3239, #3246, #3247, #3248, #3249, #3250, #3251, #3252, #3253, #3254_
 
-### [1.47.0] - 2026-07-04
+### [1.47.0][web-1.47.0] - 2026-07-04
 
 #### Adicionado
 - Chat por jogo: `web/src/hooks/useGameChat.ts`, `web/src/pages/game/GameChatSection.tsx`, `GameChatComposer.tsx`, `GameChatMessageBubble.tsx`.
@@ -184,7 +184,7 @@ _Issues: #3231, #3233, #3234, #3235, #3236, #3237, #3238, #3239, #3246, #3247, #
 
 _Issues: #3230, #3232_
 
-### [1.46.0] - 2026-07-03
+### [1.46.0][web-1.46.0] - 2026-07-03
 
 #### Adicionado
 - `web/src/pages/admin/GameReviewQueueScreen.tsx` com fila de revisão para jogos retidos por antifraude e estados de decisão.
@@ -204,7 +204,7 @@ _Issues: #3230, #3232_
 
 _Issues: #3199, #3200, #3201, #3202, #3208, #3209, #3211, #3213, #3214, #3215, #3216, #3219, #3220, #3221, #3222, #3223, #3224, #3225, #3226 · PRs: #3218, #3227_
 
-### [1.45.0] - 2026-07-02
+### [1.45.0][web-1.45.0] - 2026-07-02
 
 #### Adicionado
 - `web/src/utils/cnpjValidator.ts`: validador CNPJ (mod-11), máscara progressiva, strip — sincronizado com `functions/src/validation/cnpj.ts` e `shared/.../CnpjValidator.kt` (3 camadas).
@@ -228,7 +228,7 @@ _Issues: #3199, #3200, #3201, #3202, #3208, #3209, #3211, #3213, #3214, #3215, #
 
 _Issues: #3186, #3187, #3188, #3189 · PRs: #3194, #3195, #3196_
 
-### [1.44.3] - 2026-07-01
+### [1.44.3][web-1.44.3] - 2026-07-01
 
 #### Corrigido
 - Alinha `md3TypeScale` da web aos valores canônicos de `shared/design-tokens.json`.
@@ -236,19 +236,19 @@ _Issues: #3186, #3187, #3188, #3189 · PRs: #3194, #3195, #3196_
 
 _Issues: #3181_
 
-### [1.44.2] - 2026-07-01
+### [1.44.2][web-1.44.2] - 2026-07-01
 
 #### Corrigido
 - Atualiza `og:image` e metadados Twitter para usar `/logo.png`, o asset canônico do splash.
 - Declara tipo, dimensões e texto alternativo da imagem social.
 
-### [1.44.1] - 2026-07-01
+### [1.44.1][web-1.44.1] - 2026-07-01
 
 #### Corrigido
 - Remove o link interpolado do texto enviado ao Web Share API, mantendo a URL apenas no campo `url`.
 - Mantém as traduções de convite alinhadas em PT-BR, EN e ES.
 
-### [1.44.0] - 2026-07-01
+### [1.44.0][web-1.44.0] - 2026-07-01
 
 #### Adicionado
 - Integra o cadastro Web com a callable `validateInviteCode` para validar códigos de apadrinhamento antes da criação do perfil.
@@ -258,32 +258,32 @@ _Issues: #3181_
 - Bloqueia criação automática de perfil sem convite no AuthContext.
 - Encerra sessão de novos usuários Google sem convite, mantendo login normal para usuários existentes.
 
-### [1.43.38] - 2026-06-30
+### [1.43.38][web-1.43.38] - 2026-06-30
 
 #### Corrigido
 - Centraliza no Web o cálculo de valor esperado de confirmação a partir de `daily_price`, com fallback para `total_cost / max_players` em jogos legados.
 - Persiste `payment_status`, `partial_payment`, `expected_payment` e `expected_payment_cents` na criação de confirmações Web e Android/KMP.
 - Expande as Firestore Rules para permitir apenas os novos campos financeiros seguros na criação de confirmações.
 
-### [1.43.37] - 2026-06-30
+### [1.43.37][web-1.43.37] - 2026-06-30
 
 #### Corrigido
 - Corrige o cálculo de `totalCost` na tela de criação de jogo para usar `hourlyPrice * duração / 60`.
 - Adiciona helpers testáveis para normalizar preço por hora em reais ou centavos e preservar compatibilidade com cadastros antigos.
 
-### [1.43.36] - 2026-06-30
+### [1.43.36][web-1.43.36] - 2026-06-30
 
 #### Corrigido
 - Restaura a paridade de chaves i18n entre `pt-BR`, `en` e `es`, corrigindo a falha do `Web CI`.
 
-### [1.43.35] - 2026-06-30
+### [1.43.35][web-1.43.35] - 2026-06-30
 
 #### Mudado
 - Fortalece o contrato visual E2E para telas administrativas e de quadras em desktop e mobile.
 - Atualiza fixtures e seeds E2E para usuários admin/dono de quadra completos e autenticáveis.
 - Desativa App Check no modo emulador para evitar ruído falso de `403` em testes locais.
 
-### [1.43.34] - 2026-06-30
+### [1.43.34][web-1.43.34] - 2026-06-30
 
 #### Mudado
 - `ManageLocationsScreen` passa a renderizar rankings derivados do conjunto filtrado.
@@ -292,7 +292,7 @@ _Issues: #3181_
 
 _Issues: #3107 · PRs: #3166_
 
-### [1.43.33] - 2026-06-30
+### [1.43.33][web-1.43.33] - 2026-06-30
 
 #### Mudado
 - `FieldOwnerDashboardScreen` passa a consumir agregados denormalizados em `locations`.
@@ -301,7 +301,7 @@ _Issues: #3107 · PRs: #3166_
 
 _Issues: #3106, #3128 · PRs: #3166_
 
-### [1.43.32] - 2026-06-30
+### [1.43.32][web-1.43.32] - 2026-06-30
 
 #### Corrigido
 - `isLocationCommerciallyAvailable` não usa mais `venueAccountStatus` como substituto silencioso de `subscriptionStatus`.
@@ -309,7 +309,7 @@ _Issues: #3106, #3128 · PRs: #3166_
 
 _Issues: #3121 · PRs: #3166_
 
-### [1.43.31] - 2026-06-30
+### [1.43.31][web-1.43.31] - 2026-06-30
 
 #### Adicionado
 - Campos editáveis de funcionamento no `LocationFormScreen`.
@@ -320,7 +320,7 @@ _Issues: #3121 · PRs: #3166_
 
 _Issues: #3122_
 
-### [1.43.30] - 2026-06-30
+### [1.43.30][web-1.43.30] - 2026-06-30
 
 #### Adicionado
 - Formulário web em `/admin/users` usando a callable `upsertVenueAccount`.
@@ -331,7 +331,7 @@ _Issues: #3122_
 
 _Issues: #3121_
 
-### [1.43.29] - 2026-06-30
+### [1.43.29][web-1.43.29] - 2026-06-30
 
 #### Adicionado
 - Modelo web de `Field` e drafts de quadra com `playersPerTeam`, `minBookingMinutes`, `rules` e `amenities`.
@@ -343,7 +343,7 @@ _Issues: #3121_
 
 _Issues: #3122_
 
-### [1.43.28] - 2026-06-30
+### [1.43.28][web-1.43.28] - 2026-06-30
 
 #### Adicionado
 - Cobertura adicionada para garantir que uma conta comercial agregada suspensa bloqueia a disponibilidade mesmo quando o status legado da quadra está ativo.
@@ -354,7 +354,7 @@ _Issues: #3122_
 
 _Issues: #3125, #3135_
 
-### [1.43.27] - 2026-06-30
+### [1.43.27][web-1.43.27] - 2026-06-30
 
 #### Adicionado
 - Integração web com `venueAccount` no CRM admin e com campos `venueAccount*` no resumo financeiro de quadras.
@@ -365,7 +365,7 @@ _Issues: #3125, #3135_
 
 _Issues: #3087, #3119, #3122, #3135_
 
-### [1.43.26] - 2026-06-29
+### [1.43.26][web-1.43.26] - 2026-06-29
 
 #### Adicionado
 - Novos campos comerciais para plano, ciclo, valor base e exceção comercial no contrato web de `Location`.
@@ -377,7 +377,7 @@ _Issues: #3087, #3119, #3122, #3135_
 
 _Issues: #3121, #3125_
 
-### [1.43.25] - 2026-06-29
+### [1.43.25][web-1.43.25] - 2026-06-29
 
 #### Adicionado
 - Contrato web para `requestLocationCommercialReview` e `reviewLocationCommercialRequest`.
@@ -389,7 +389,7 @@ _Issues: #3121, #3125_
 
 _Issues: #3115, #3125_
 
-### [1.43.24] - 2026-06-29
+### [1.43.24][web-1.43.24] - 2026-06-29
 
 #### Adicionado
 - Novo helper testável `ownerDashboard` para centralizar métricas, checklist comercial, preço médio e status por quadra.
@@ -401,7 +401,7 @@ _Issues: #3115, #3125_
 
 _Issues: #3103_
 
-### [1.43.23] - 2026-06-29
+### [1.43.23][web-1.43.23] - 2026-06-29
 
 #### Adicionado
 - Novo helper testável `publicLocationFilters` para centralizar filtros, ordenação, distância, preço e funcionamento por horário.
@@ -412,7 +412,7 @@ _Issues: #3103_
 
 _Issues: #3105_
 
-### [1.43.22] - 2026-06-29
+### [1.43.22][web-1.43.22] - 2026-06-29
 
 #### Adicionado
 - `LocationDetailScreen` passa a ler `commercial_events` e `subscription_ledger` com estados de loading, erro e vazio.
@@ -423,7 +423,7 @@ _Issues: #3105_
 
 _Issues: #3100_
 
-### [1.43.21] - 2026-06-29
+### [1.43.21][web-1.43.21] - 2026-06-29
 
 #### Adicionado
 - Helper testável centraliza os filtros comerciais de `ManageLocationsScreen`.
@@ -434,7 +434,7 @@ _Issues: #3100_
 
 _Issues: #3099_
 
-### [1.43.20] - 2026-06-29
+### [1.43.20][web-1.43.20] - 2026-06-29
 
 #### Mudado
 - `UserManagementScreen` passa a consumir `lastLoginAtIso` da callable `searchAdminUsers`.
@@ -443,7 +443,7 @@ _Issues: #3099_
 
 _Issues: #3101_
 
-### [1.43.19] - 2026-06-29
+### [1.43.19][web-1.43.19] - 2026-06-29
 
 #### Mudado
 - `UserManagementScreen` reutiliza a mensagem calculada por `getFunctionsErrorMessage` no toast.
@@ -453,7 +453,7 @@ _Issues: #3101_
 
 _Issues: #3149_
 
-### [1.43.18] - 2026-06-29
+### [1.43.18][web-1.43.18] - 2026-06-29
 
 #### Adicionado
 - Novos campos tipados em `AdminLocationBillingSummaryRow` para ciclo atual.
@@ -463,7 +463,7 @@ _Issues: #3149_
 
 _Issues: #3132, #3124, #3119, #3086, #3084_
 
-### [1.43.17] - 2026-06-29
+### [1.43.17][web-1.43.17] - 2026-06-29
 
 #### Adicionado
 - Integração web com `getAdminLocationBillingSummary`.
@@ -474,7 +474,7 @@ _Issues: #3132, #3124, #3119, #3086, #3084_
 
 _Issues: #3124, #3119, #3086, #3084_
 
-### [1.43.16] - 2026-06-29
+### [1.43.16][web-1.43.16] - 2026-06-29
 
 #### Adicionado
 - Leitura de `locations/{locationId}/subscription_ledger` no gerenciamento de quadras.
@@ -484,7 +484,7 @@ _Issues: #3124, #3119, #3086, #3084_
 
 _Issues: #3114, #3091, #3084_
 
-### [1.43.15] - 2026-06-29
+### [1.43.15][web-1.43.15] - 2026-06-29
 
 #### Adicionado
 - Rota web `/owner/onboarding` para solicitação de dono de quadra.
@@ -493,7 +493,7 @@ _Issues: #3114, #3091, #3084_
 
 _Issues: #3137, #3115, #3125, #3088, #3084_
 
-### [1.43.14] - 2026-06-29
+### [1.43.14][web-1.43.14] - 2026-06-29
 
 #### Mudado
 - `UserManagementScreen` passa a renderizar o detalhe comercial usando dados retornados por `searchAdminUsers`.
@@ -501,7 +501,7 @@ _Issues: #3137, #3115, #3125, #3088, #3084_
 
 _Issues: #3126, #3101, #3087, #3084_
 
-### [1.43.13] - 2026-06-29
+### [1.43.13][web-1.43.13] - 2026-06-29
 
 #### Mudado
 - `UserManagementScreen` deixa de depender apenas do primeiro lote local de 50 usuários para busca e filtros.
@@ -510,7 +510,7 @@ _Issues: #3126, #3101, #3087, #3084_
 
 _Issues: #3136, #3101, #3087, #3084_
 
-### [1.43.12] - 2026-06-29
+### [1.43.12][web-1.43.12] - 2026-06-29
 
 #### Mudado
 - `ManageLocationsScreen` passou a listar os últimos pagamentos da subcoleção `subscription_payments` para owner/admin.
@@ -519,7 +519,7 @@ _Issues: #3136, #3101, #3087, #3084_
 
 _Issues: #3123, #3119, #3084_
 
-### [1.43.11] - 2026-06-29
+### [1.43.11][web-1.43.11] - 2026-06-29
 
 #### Adicionado
 - Tela `ManageLocationsScreen` ganhou diálogo de comprovantes com upload privado, pendências e ações de aprovação/rejeição.
@@ -531,7 +531,7 @@ _Issues: #3123, #3119, #3084_
 
 _Issues: #3133, #3091, #3084_
 
-### [1.43.10] - 2026-06-28
+### [1.43.10][web-1.43.10] - 2026-06-28
 
 #### Adicionado
 - `ManageLocationsScreen` ganhou o painel "Dono e gerentes" para transferência administrativa e convites de managers.
@@ -544,7 +544,7 @@ _Issues: #3133, #3091, #3084_
 
 _Issues: #3102, #3127, #3087, #3091_
 
-### [1.43.9] - 2026-06-28
+### [1.43.9][web-1.43.9] - 2026-06-28
 
 #### Mudado
 - `CreateGameScreen` limpa selecoes de locais que deixam de estar disponiveis e exige `fieldId` ativo para locais catalogados.
@@ -556,7 +556,7 @@ _Issues: #3102, #3127, #3087, #3091_
 
 _Issues: #3120, #3084, #3091_
 
-### [1.43.8] - 2026-06-28
+### [1.43.8][web-1.43.8] - 2026-06-28
 
 #### Adicionado
 - Editor reutilizável para CRUD de campos dentro do cadastro de locais.
@@ -571,7 +571,7 @@ _Issues: #3120, #3084, #3091_
 
 _Issues: #3084, #3085, #3088, #3097, #3098_
 
-### [1.43.7] - 2026-06-28
+### [1.43.7][web-1.43.7] - 2026-06-28
 
 #### Adicionado
 - Helpers compartilhados para comodidades comerciais de quadras.
@@ -585,7 +585,7 @@ _Issues: #3084, #3085, #3088, #3097, #3098_
 
 _Issues: #3084, #3099, #3100, #3101, #3103, #3105_
 
-### [1.43.6] - 2026-06-28
+### [1.43.6][web-1.43.6] - 2026-06-28
 
 #### Adicionado
 - Contrato web para status de publicação, assinatura e mensalidade de quadras.
@@ -600,20 +600,20 @@ _Issues: #3084, #3099, #3100, #3101, #3103, #3105_
 
 _Issues: #3084, #3092, #3093, #3094, #3095, #3096, #3104_
 
-### [1.43.5] - 2026-06-28
+### [1.43.5][web-1.43.5] - 2026-06-28
 
 #### Mudado
 - `FieldAvailabilityTimeline` passa a renderizar uma experiência compacta em telas pequenas.
 - `CreateGameScreen` deduplica sugestões de horário e evita blocos repetidos no fluxo de data e horário.
 
-### [1.43.4] - 2026-06-28
+### [1.43.4][web-1.43.4] - 2026-06-28
 
 #### Corrigido
 - `CreateGameScreen` separa rascunho de digitação dos valores numéricos validados.
 - Payload de criação usa os valores normalizados no submit, evitando envio de número antigo após campo limpo.
 - Traduções `pt-BR`, `en` e `es` mantidas em paridade para novas mensagens do formulário.
 
-### [1.43.3] - 2026-06-28
+### [1.43.3][web-1.43.3] - 2026-06-28
 
 #### Corrigido
 - `GroupDetailScreen` passa a condicionar ações sensíveis por membership/admin e usa tabs scrollable no mobile.
@@ -624,18 +624,18 @@ _Issues: #3084, #3092, #3093, #3094, #3095, #3096, #3104_
 
 _Issues: #3030, #3031, #3032, #3033, #3034, #3035, #3036, #3037, #3038_
 
-### [1.43.2] - 2026-06-28
+### [1.43.2][web-1.43.2] - 2026-06-28
 
 #### Corrigido
 - `usePlayerCard`, `useStatistics`, `usePlayers` e `AuthContext` passam a ler `statistics/{uid}` e `user_streaks` como fonte canônica.
 - Adiciona normalizador compartilhado para mapear `gamesWon`, `bestPlayerCount`, `totalGames` e campos legados sem drift.
 
-### [1.43.1] - 2026-06-28
+### [1.43.1][web-1.43.1] - 2026-06-28
 
 #### Corrigido
 - Adiciona `maxHeight`/`overflowY` responsivo no modal do `PlayerCard` e compacta estilos `xs` para viewport mobile com barras do navegador.
 
-### [1.43.0] - 2026-06-28
+### [1.43.0][web-1.43.0] - 2026-06-28
 
 #### Adicionado
 - Teste de componente para validar a renderização do novo `PlayerCard` com dados mockados.
@@ -643,12 +643,12 @@ _Issues: #3030, #3031, #3032, #3033, #3034, #3035, #3036, #3037, #3038_
 #### Mudado
 - Reestrutura `web/src/components/player/PlayerCard.tsx` com layout novo, tiles de estatísticas e barras de atributos redesenhadas.
 
-### [1.42.1] - 2026-06-28
+### [1.42.1][web-1.42.1] - 2026-06-28
 
 #### Corrigido
 - Remove o wrapper `AdaptiveFormSheet` da `CreateGameScreen` para evitar Drawer lateral no desktop.
 
-### [1.42.0] - 2026-06-28
+### [1.42.0][web-1.42.0] - 2026-06-28
 
 #### Adicionado
 - Componente local de seção para a tela de criação de jogo.
@@ -658,7 +658,7 @@ _Issues: #3030, #3031, #3032, #3033, #3034, #3035, #3036, #3037, #3038_
 - Reorganização visual da tela `CreateGameScreen` com layout responsivo em grade.
 - Testes atualizados para cobrir o novo hero, seções e resumo.
 
-### [1.41.0] - 2026-06-27
+### [1.41.0][web-1.41.0] - 2026-06-27
 
 #### Adicionado
 - Utilitário `groupMatchmaking` para pontuar e ordenar grupos oficiais.
@@ -669,7 +669,7 @@ _Issues: #3030, #3031, #3032, #3033, #3034, #3035, #3036, #3037, #3038_
 
 _Issues: #2975_
 
-### [1.40.0] - 2026-06-27
+### [1.40.0][web-1.40.0] - 2026-06-27
 
 #### Adicionado
 - Utilitário `friendlyComparison` para montar resumo, headline e texto compartilhável.
@@ -680,7 +680,7 @@ _Issues: #2975_
 
 _Issues: #2976_
 
-### [1.39.0] - 2026-06-27
+### [1.39.0][web-1.39.0] - 2026-06-27
 
 #### Adicionado
 - Utilitário `headToHeadPeriod` com tipo `HeadToHeadPeriod` e função `isGameWithinHeadToHeadPeriod`.
@@ -691,7 +691,7 @@ _Issues: #2976_
 
 _Issues: #2977_
 
-### [1.38.0] - 2026-06-27
+### [1.38.0][web-1.38.0] - 2026-06-27
 
 #### Adicionado
 - Utilitário `compareGroupLeagueStandings` com desempate por presença e critérios esportivos.
@@ -702,7 +702,7 @@ _Issues: #2977_
 
 _Issues: #2978_
 
-### [1.37.0] - 2026-06-27
+### [1.37.0][web-1.37.0] - 2026-06-27
 
 #### Adicionado
 - Utilitário `buildPostGameHighlights` com heurística testável para MVP, melhor dupla e lance marcante.
@@ -711,7 +711,7 @@ _Issues: #2978_
 
 _Issues: #2969_
 
-### [1.36.0] - 2026-06-27
+### [1.36.0][web-1.36.0] - 2026-06-27
 
 #### Adicionado
 - Hook web `usePostGameReputation` para carregar avaliações enviadas e chamar a Function server-side.
@@ -723,7 +723,7 @@ _Issues: #2969_
 
 _Issues: #2968_
 
-### [1.35.0] - 2026-06-27
+### [1.35.0][web-1.35.0] - 2026-06-27
 
 #### Adicionado
 - Hook `useGameRides` com listener em tempo real para `game_rides`.
@@ -735,7 +735,7 @@ _Issues: #2968_
 
 _Issues: #2980_
 
-### [1.34.0] - 2026-06-27
+### [1.34.0][web-1.34.0] - 2026-06-27
 
 #### Adicionado
 - Componente social de check-in usando `checked_in`/`checked_in_at` das confirmações.
@@ -745,7 +745,7 @@ _Issues: #2980_
 
 _Issues: #2981_
 
-### [1.33.0] - 2026-06-27
+### [1.33.0][web-1.33.0] - 2026-06-27
 
 #### Adicionado
 - Componente web `GamePhotosTab` integrado ao `GameDetailScreen`.
@@ -757,7 +757,7 @@ _Issues: #2981_
 
 _Issues: #2982_
 
-### [1.32.0] - 2026-06-27
+### [1.32.0][web-1.32.0] - 2026-06-27
 
 #### Adicionado
 - Hook `useUpdateChallengeProgress` para progresso/finalização com toast e notificação interna.
@@ -771,7 +771,7 @@ _Issues: #2982_
 
 _Issues: #2984_
 
-### [1.31.0] - 2026-06-27
+### [1.31.0][web-1.31.0] - 2026-06-27
 
 #### Adicionado
 - Hook `useFavoriteSquads` com listener, toasts e validação client-side.
@@ -786,7 +786,7 @@ _Issues: #2984_
 
 _Issues: #2985_
 
-### [1.30.0] - 2026-06-27
+### [1.30.0][web-1.30.0] - 2026-06-27
 
 #### Adicionado
 - Utilitário testável `getReconnectSuggestions` para priorizar grupos que merecem reencontro.
@@ -801,7 +801,7 @@ _Issues: #2985_
 
 _Issues: #2986_
 
-### [1.29.0] - 2026-06-27
+### [1.29.0][web-1.29.0] - 2026-06-27
 
 #### Adicionado
 - Utilitário testável `groupNotificationsByContext` para organizar notificações por contexto.
@@ -816,7 +816,7 @@ _Issues: #2986_
 
 _Issues: #2987_
 
-### [1.28.0] - 2026-06-27
+### [1.28.0][web-1.28.0] - 2026-06-27
 
 #### Adicionado
 - Campo `lastGameDate` no parse web de usuários para consumir `last_game_date` do Firestore.
@@ -831,7 +831,7 @@ _Issues: #2987_
 
 _Issues: #2972_
 
-### [1.27.0] - 2026-06-27
+### [1.27.0][web-1.27.0] - 2026-06-27
 
 #### Adicionado
 - `useLookingForGameToday` e badge de disponibilidade nas telas de perfil/busca.
@@ -846,7 +846,7 @@ _Issues: #2972_
 
 _Issues: #2974, #2973 · PRs: #3002, #3003_
 
-### [1.26.3] - 2026-06-21
+### [1.26.3][web-1.26.3] - 2026-06-21
 
 #### Mudado
 - `canSendSmsOtp` mantém App Check obrigatório, mas não consome o token antes do Firebase Phone Auth.
@@ -858,7 +858,7 @@ _Issues: #2974, #2973 · PRs: #3002, #3003_
 
 _PRs: #2810_
 
-### [1.26.2] - 2026-06-21
+### [1.26.2][web-1.26.2] - 2026-06-21
 
 #### Adicionado
 - `autoClosePastGames` roda de hora em hora e fecha jogos ativos com mais de 2 dias de atraso.
@@ -873,7 +873,7 @@ _PRs: #2810_
 
 _PRs: #2810_
 
-### [1.26.1] - 2026-06-21
+### [1.26.1][web-1.26.1] - 2026-06-21
 
 #### Mudado
 - `useScrollRestoration` agora chaveia por `pathname + search`, rola para o topo em navegações novas e restaura posição apenas em navegação `POP`.
@@ -886,7 +886,7 @@ _PRs: #2810_
 
 _PRs: #2810_
 
-### [1.26.0] - 2026-05-22
+### [1.26.0][web-1.26.0] - 2026-05-22
 
 #### Adicionado
 - Tela "Novidades" / release notes (spec feat-2026-05-22).
@@ -903,7 +903,7 @@ _Issues: #1465, #1479, #1421, #1420 · PRs: #1465, #1479, #1421, #1420, #1417_
 
 ## iOS
 
-### [1.6.0] - 2026-05-22
+### [1.6.0][ios-1.6.0] - 2026-05-22
 
 #### Adicionado
 - Fundação iOS: shared/iosMain e scaffold composeApp com navegação e Koin (#1294).
@@ -920,7 +920,7 @@ _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
 
-### [1.6.0] - 2026-07-04
+### [1.6.0][functions-1.6.0] - 2026-07-04
 
 #### Adicionado
 - `functions/src/social/` com handlers sociais e cobertura unitária de follow.
@@ -941,7 +941,7 @@ _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 _Issues: #3231, #3233, #3234, #3235, #3236, #3237, #3238, #3248, #3250, #3251, #3252, #3253, #3254_
 
-### [1.5.0] - 2026-07-03
+### [1.5.0][functions-1.5.0] - 2026-07-03
 
 #### Adicionado
 - `functions/src/games/lifecycle.ts` com callables server-side para iniciar e finalizar partidas com validações centrais.
@@ -962,7 +962,7 @@ _Issues: #3231, #3233, #3234, #3235, #3236, #3237, #3238, #3248, #3250, #3251, #
 
 _Issues: #3199, #3200, #3201, #3202, #3208, #3209, #3211, #3213, #3214, #3215, #3216, #3219, #3220, #3221, #3222, #3223, #3224, #3225 · PRs: #3218, #3227_
 
-### [1.4.0] - 2026-07-02
+### [1.4.0][functions-1.4.0] - 2026-07-02
 
 #### Adicionado
 - `functions/src/validation/cnpj.ts`: `isValidCnpj` (mod-11 c/ pesos CNPJ), `stripCnpj`, `hashCnpj` (SHA-256 + `CPF_SALT` + prefixo `cnpj:` para evitar colisão cross-domain com hashes de CPF), `maskCnpj`.
@@ -981,7 +981,7 @@ _Issues: #3199, #3200, #3201, #3202, #3208, #3209, #3211, #3213, #3214, #3215, #
 
 _Issues: #3186, #3187, #3188 · PRs: #3194, #3195_
 
-### [1.3.0] - 2026-07-01
+### [1.3.0][functions-1.3.0] - 2026-07-01
 
 #### Adicionado
 - Adiciona a callable pública `validateInviteCode` com rate limit por IP.
@@ -992,7 +992,7 @@ _Issues: #3186, #3187, #3188 · PRs: #3194, #3195_
 - Sincroniza `invite_codes/{code}` com o dono do código para validação nas Firestore Rules.
 - Bloqueia updates client-side em `invite_code`, `invite_count`, `invited_by`, `invited_by_code`, `invite_accepted_at` e `invite_source`.
 
-### [1.2.23] - 2026-06-30
+### [1.2.23][functions-1.2.23] - 2026-06-30
 
 #### Adicionado
 - `recomputeLocationCommercialStats` para recomputar uma quadra específica ou um lote limitado.
@@ -1002,7 +1002,7 @@ _Issues: #3186, #3187, #3188 · PRs: #3194, #3195_
 
 _Issues: #3106, #3128 · PRs: #3166_
 
-### [1.2.22] - 2026-06-30
+### [1.2.22][functions-1.2.22] - 2026-06-30
 
 #### Corrigido
 - `backfill-venue-commercial-data` compara o snapshot existente antes de marcar conta agregada como pendente de sync.
@@ -1011,7 +1011,7 @@ _Issues: #3106, #3128 · PRs: #3166_
 
 _Issues: #3121 · PRs: #3166_
 
-### [1.2.21] - 2026-06-30
+### [1.2.21][functions-1.2.21] - 2026-06-30
 
 #### Corrigido
 - `upsertVenueAccount` passa a validar `billingDueDay` com limite máximo de 31.
@@ -1019,7 +1019,7 @@ _Issues: #3121 · PRs: #3166_
 
 _Issues: #3122_
 
-### [1.2.20] - 2026-06-30
+### [1.2.20][functions-1.2.20] - 2026-06-30
 
 #### Mudado
 - `buildLocationCommercialRequestSnapshot` adiciona pendências `geolocation` e `operating-hours`.
@@ -1027,7 +1027,7 @@ _Issues: #3122_
 
 _Issues: #3122_
 
-### [1.2.19] - 2026-06-30
+### [1.2.19][functions-1.2.19] - 2026-06-30
 
 #### Mudado
 - `setLocationPublicationStatus` calcula o snapshot comercial antes de publicar e bloqueia `PUBLISHED` quando `ready_for_publication_approval` não é verdadeiro.
@@ -1037,7 +1037,7 @@ _Issues: #3122_
 
 _Issues: #3121_
 
-### [1.2.18] - 2026-06-30
+### [1.2.18][functions-1.2.18] - 2026-06-30
 
 #### Adicionado
 - Nova coleção `venue_accounts/{ownerUid}` com eventos imutáveis em subcoleção e auditoria global.
@@ -1050,7 +1050,7 @@ _Issues: #3121_
 
 _Issues: #3087, #3119, #3122, #3135_
 
-### [1.2.17] - 2026-06-29
+### [1.2.17][functions-1.2.17] - 2026-06-29
 
 #### Adicionado
 - Validações de `billingPlanCode`, `billingCycle`, `billingBaseFeeCents` e coerência entre início e fim de cobrança em `setLocationSubscription`.
@@ -1062,7 +1062,7 @@ _Issues: #3087, #3119, #3122, #3135_
 
 _Issues: #3121_
 
-### [1.2.16] - 2026-06-29
+### [1.2.16][functions-1.2.16] - 2026-06-29
 
 #### Adicionado
 - Novas callables `requestLocationCommercialReview` e `reviewLocationCommercialRequest`.
@@ -1075,7 +1075,7 @@ _Issues: #3121_
 
 _Issues: #3115_
 
-### [1.2.15] - 2026-06-29
+### [1.2.15][functions-1.2.15] - 2026-06-29
 
 #### Mudado
 - `searchAdminUsers` adiciona `lastLoginAtIso` ao contrato da linha de usuário.
@@ -1083,7 +1083,7 @@ _Issues: #3115_
 
 _Issues: #3101_
 
-### [1.2.14] - 2026-06-29
+### [1.2.14][functions-1.2.14] - 2026-06-29
 
 #### Corrigido
 - `searchAdminUsers` passa a usar `consumeAppCheckToken: false`, mantendo `enforceAppCheck` ativo para a callable.
@@ -1094,7 +1094,7 @@ _Issues: #3101_
 
 _Issues: #3149_
 
-### [1.2.13] - 2026-06-29
+### [1.2.13][functions-1.2.13] - 2026-06-29
 
 #### Corrigido
 - `secureCallable` passa a separar `enforceAppCheck` de `consumeAppCheckToken`.
@@ -1106,7 +1106,7 @@ _Issues: #3149_
 
 _Issues: #3149_
 
-### [1.2.12] - 2026-06-29
+### [1.2.12][functions-1.2.12] - 2026-06-29
 
 #### Corrigido
 - `getAdminLocationBillingSummary` usa paginacao por `documentId` com `scanComplete: true` apenas apos varrer todas as paginas.
@@ -1118,7 +1118,7 @@ _Issues: #3149_
 
 _Issues: #3149_
 
-### [1.2.11] - 2026-06-29
+### [1.2.11][functions-1.2.11] - 2026-06-29
 
 #### Corrigido
 - `setLocationSubscription` agora distingue campo ausente de campo explicitamente `null`.
@@ -1130,7 +1130,7 @@ _Issues: #3149_
 
 _Issues: #3148, #3132, #3121_
 
-### [1.2.10] - 2026-06-29
+### [1.2.10][functions-1.2.10] - 2026-06-29
 
 #### Adicionado
 - Scheduler `processLocationBillingCycles` diario em America/Sao_Paulo.
@@ -1145,7 +1145,7 @@ _Issues: #3148, #3132, #3121_
 
 _Issues: #3132, #3124, #3119, #3091, #3086, #3084_
 
-### [1.2.9] - 2026-06-29
+### [1.2.9][functions-1.2.9] - 2026-06-29
 
 #### Adicionado
 - Callable `getAdminLocationBillingSummary` exclusiva para admins.
@@ -1157,7 +1157,7 @@ _Issues: #3132, #3124, #3119, #3091, #3086, #3084_
 
 _Issues: #3124, #3119, #3091, #3086, #3084_
 
-### [1.2.8] - 2026-06-29
+### [1.2.8][functions-1.2.8] - 2026-06-29
 
 #### Adicionado
 - Subcoleção `locations/{locationId}/subscription_ledger`.
@@ -1170,7 +1170,7 @@ _Issues: #3124, #3119, #3091, #3086, #3084_
 
 _Issues: #3114, #3091, #3084_
 
-### [1.2.7] - 2026-06-29
+### [1.2.7][functions-1.2.7] - 2026-06-29
 
 #### Adicionado
 - Callables `requestVenueOwnerOnboarding` e `reviewVenueOwnerOnboarding`.
@@ -1184,7 +1184,7 @@ _Issues: #3114, #3091, #3084_
 
 _Issues: #3137, #3115, #3125, #3088, #3084_
 
-### [1.2.6] - 2026-06-29
+### [1.2.6][functions-1.2.6] - 2026-06-29
 
 #### Mudado
 - `searchAdminUsers` retorna `ownerLocations`, contatos básicos, timestamps de atualização e agregados financeiros por owner.
@@ -1195,7 +1195,7 @@ _Issues: #3137, #3115, #3125, #3088, #3084_
 
 _Issues: #3126, #3101, #3087, #3084_
 
-### [1.2.5] - 2026-06-29
+### [1.2.5][functions-1.2.5] - 2026-06-29
 
 #### Adicionado
 - Callable admin-only `searchAdminUsers` com paginação, busca textual e filtros por role/status comercial.
@@ -1206,7 +1206,7 @@ _Issues: #3126, #3101, #3087, #3084_
 
 _Issues: #3136, #3101, #3087, #3084_
 
-### [1.2.4] - 2026-06-29
+### [1.2.4][functions-1.2.4] - 2026-06-29
 
 #### Adicionado
 - Callable `submitLocationSubscriptionReceipt` para owner/admin criar pagamento `PENDING_REVIEW` com `receipt_storage_path` privado.
@@ -1219,7 +1219,7 @@ _Issues: #3136, #3101, #3087, #3084_
 
 _Issues: #3133, #3091, #3084_
 
-### [1.2.3] - 2026-06-28
+### [1.2.3][functions-1.2.3] - 2026-06-28
 
 #### Adicionado
 - Callable `assignLocationOwner` para administradores transferirem ownership de uma location.
@@ -1235,7 +1235,7 @@ _Issues: #3133, #3091, #3084_
 
 _Issues: #3102, #3127, #3087, #3091_
 
-### [1.2.2] - 2026-06-28
+### [1.2.2][functions-1.2.2] - 2026-06-28
 
 #### Adicionado
 - Callable `setLocationPublicationStatus` para publicar, suspender ou reprovar quadras.
@@ -1249,13 +1249,13 @@ _Issues: #3102, #3127, #3087, #3091_
 
 _Issues: #3084, #3092, #3093, #3094, #3095, #3096_
 
-### [1.2.1] - 2026-06-28
+### [1.2.1][functions-1.2.1] - 2026-06-28
 
 #### Segurança
 - `xp_logs` passam a gravar `transaction_id`, `source`, `source_collection`, `source_event_id` e `source_confirmation_id` no fluxo principal.
 - XP de votação passa a gravar metadados da votação, incluindo categoria e contagem de votos.
 
-### [1.2.0] - 2026-06-27
+### [1.2.0][functions-1.2.0] - 2026-06-27
 
 #### Adicionado
 - Callable `submitPostGameReputation` com App Check, perfil completo e rate limit.
@@ -1267,7 +1267,7 @@ _Issues: #3084, #3092, #3093, #3094, #3095, #3096_
 
 _Issues: #2968_
 
-### [1.1.0] - 2026-06-27
+### [1.1.0][functions-1.1.0] - 2026-06-27
 
 #### Adicionado
 - `checkInToGame` salva notificações `checkin` para outros confirmados após check-in novo.
@@ -1278,7 +1278,7 @@ _Issues: #2968_
 
 _Issues: #2981_
 
-### [1.0.0] - 2026-05-22
+### [1.0.0][functions-1.0.0] - 2026-05-22
 
 #### Adicionado
 - Versão 1.0.0 definida como linha de base das Cloud Functions no versions.json.
@@ -1290,6 +1290,116 @@ _Issues: #2981_
 - Mocks de testes desatualizados restaurados (#1516).
 
 _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
+
+
+[android-1.36.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.36.0.md
+[android-1.35.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.35.0.md
+[android-1.34.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.34.0.md
+[android-1.33.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.33.0.md
+[android-1.32.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.32.2.md
+[android-1.32.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.32.1.md
+[android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
+[android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
+[android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.48.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.48.0.md
+[web-1.47.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.47.0.md
+[web-1.46.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.46.0.md
+[web-1.45.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.45.0.md
+[web-1.44.3]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.44.3.md
+[web-1.44.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.44.2.md
+[web-1.44.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.44.1.md
+[web-1.44.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.44.0.md
+[web-1.43.38]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.43.38.md
+[web-1.43.37]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.43.37.md
+[web-1.43.36]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.43.36.md
+[web-1.43.35]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.43.35.md
+[web-1.43.34]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.43.34.md
+[web-1.43.33]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.43.33.md
+[web-1.43.32]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.43.32.md
+[web-1.43.31]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.43.31.md
+[web-1.43.30]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.43.30.md
+[web-1.43.29]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.43.29.md
+[web-1.43.28]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.43.28.md
+[web-1.43.27]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.43.27.md
+[web-1.43.26]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.43.26.md
+[web-1.43.25]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.43.25.md
+[web-1.43.24]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.43.24.md
+[web-1.43.23]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.43.23.md
+[web-1.43.22]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.43.22.md
+[web-1.43.21]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.43.21.md
+[web-1.43.20]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.43.20.md
+[web-1.43.19]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.43.19.md
+[web-1.43.18]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.43.18.md
+[web-1.43.17]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.43.17.md
+[web-1.43.16]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.43.16.md
+[web-1.43.15]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.43.15.md
+[web-1.43.14]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.43.14.md
+[web-1.43.13]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.43.13.md
+[web-1.43.12]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.43.12.md
+[web-1.43.11]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.43.11.md
+[web-1.43.10]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.43.10.md
+[web-1.43.9]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.43.9.md
+[web-1.43.8]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.43.8.md
+[web-1.43.7]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.43.7.md
+[web-1.43.6]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.43.6.md
+[web-1.43.5]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.43.5.md
+[web-1.43.4]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.43.4.md
+[web-1.43.3]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.43.3.md
+[web-1.43.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.43.2.md
+[web-1.43.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.43.1.md
+[web-1.43.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.43.0.md
+[web-1.42.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.42.1.md
+[web-1.42.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.42.0.md
+[web-1.41.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.41.0.md
+[web-1.40.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.40.0.md
+[web-1.39.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.39.0.md
+[web-1.38.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.38.0.md
+[web-1.37.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.37.0.md
+[web-1.36.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.36.0.md
+[web-1.35.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.35.0.md
+[web-1.34.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.34.0.md
+[web-1.33.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.33.0.md
+[web-1.32.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.32.0.md
+[web-1.31.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.31.0.md
+[web-1.30.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.30.0.md
+[web-1.29.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.29.0.md
+[web-1.28.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.28.0.md
+[web-1.27.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.27.0.md
+[web-1.26.3]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.26.3.md
+[web-1.26.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.26.2.md
+[web-1.26.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.26.1.md
+[web-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.26.0.md
+[ios-1.6.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.0.md
+[functions-1.6.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.6.0.md
+[functions-1.5.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.5.0.md
+[functions-1.4.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.4.0.md
+[functions-1.3.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.3.0.md
+[functions-1.2.23]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.2.23.md
+[functions-1.2.22]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.2.22.md
+[functions-1.2.21]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.2.21.md
+[functions-1.2.20]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.2.20.md
+[functions-1.2.19]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.2.19.md
+[functions-1.2.18]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.2.18.md
+[functions-1.2.17]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.2.17.md
+[functions-1.2.16]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.2.16.md
+[functions-1.2.15]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.2.15.md
+[functions-1.2.14]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.2.14.md
+[functions-1.2.13]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.2.13.md
+[functions-1.2.12]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.2.12.md
+[functions-1.2.11]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.2.11.md
+[functions-1.2.10]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.2.10.md
+[functions-1.2.9]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.2.9.md
+[functions-1.2.8]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.2.8.md
+[functions-1.2.7]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.2.7.md
+[functions-1.2.6]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.2.6.md
+[functions-1.2.5]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.2.5.md
+[functions-1.2.4]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.2.4.md
+[functions-1.2.3]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.2.3.md
+[functions-1.2.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.2.2.md
+[functions-1.2.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.2.1.md
+[functions-1.2.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.2.0.md
+[functions-1.1.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.1.0.md
+[functions-1.0.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.0.0.md
 
 <!-- AUTOGEN:END -->
 

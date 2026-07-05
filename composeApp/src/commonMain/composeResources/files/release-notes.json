@@ -1,6 +1,6 @@
 {
   "platform": "ios",
-  "generatedAt": "2026-07-04T17:49:23.789Z",
+  "generatedAt": "2026-07-05T04:01:57.178Z",
   "notes": [
     {
       "version": "1.6.0",
@@ -15,7 +15,9 @@
         "App iOS em desenvolvimento sobre Kotlin Multiplatform e Compose Multiplatform."
       ],
       "improved": [],
-      "fixed": [],
+      "fixed": [
+        "Geração dos 9 PNGs de AppIcon a partir do logo da marca (#1468)."
+      ],
       "issueRefs": [
         1297
       ]

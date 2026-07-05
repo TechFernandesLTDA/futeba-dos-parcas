@@ -23,6 +23,7 @@ import { storage } from '../services/firebaseStorage';
 import { getFirestoreErrorMessage } from '../utils/firebaseErrors';
 import { snakeToCamel, toDate } from '../utils/firestoreHelpers';
 import { createLogger } from '../utils/logger';
+import { useTranslation } from 'react-i18next';
 
 const logger = createLogger('useGroupWall');
 
@@ -149,8 +150,8 @@ async function createWallPostDocument(params: {
   const { groupId, currentUserUid, authorName, authorPhotoUrl, text, options } = params;
   const cleanText = text.trim();
 
-  if (cleanText.length === 0 && !options?.imageFile) {
-    throw new Error('Escreva algo ou anexe uma foto.');
+  if (cleanText.length === 0) {
+    throw new Error('O texto nao pode estar vazio.');
   }
   if (cleanText.length > MAX_TEXT_LENGTH) {
     throw new Error(`Máximo ${MAX_TEXT_LENGTH} caracteres.`);
@@ -358,12 +359,19 @@ export function useGroupWall(groupId?: string) {
 export function useCreateWallPost(groupId?: string) {
   const { currentUser, user } = useAuth();
   const { showError, showSuccess } = useToast();
+  const { t } = useTranslation();
   const [sending, setSending] = useState(false);
 
   const create = useCallback(
     async (text: string, options?: CreateWallPostOptions) => {
+      const cleanText = text.trim();
       if (!groupId || !currentUser?.uid) {
         const error = new Error('Grupo não encontrado.');
+        showError(error.message);
+        throw error;
+      }
+      if (cleanText.length === 0) {
+        const error = new Error(t('groupWall.textRequired'));
         showError(error.message);
         throw error;
       }
@@ -375,7 +383,7 @@ export function useCreateWallPost(groupId?: string) {
           currentUserUid: currentUser.uid,
           authorName: user?.name || currentUser.displayName || 'Jogador',
           authorPhotoUrl: user?.photoUrl ?? currentUser.photoURL ?? null,
-          text,
+          text: cleanText,
           options,
         });
         showSuccess('Publicado no mural.');
@@ -386,7 +394,7 @@ export function useCreateWallPost(groupId?: string) {
         setSending(false);
       }
     },
-    [groupId, currentUser, user, showError, showSuccess],
+    [groupId, currentUser, user, showError, showSuccess, t],
   );
 
   return { create, sending };

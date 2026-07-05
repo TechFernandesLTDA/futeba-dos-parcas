@@ -75,7 +75,7 @@ fun WallPostComposer(
 ) {
     val context = LocalContext.current
     val imageTooLargeMessage = stringResource(R.string.group_wall_image_too_large)
-    val textRequiredForPhotoMessage = stringResource(R.string.group_wall_text_required_for_photo)
+    val textRequiredMessage = stringResource(R.string.group_wall_text_required_for_photo)
     var text by remember { mutableStateOf(initialText) }
     var imageUri by remember { mutableStateOf<Uri?>(null) }
     val imagePicker = rememberLauncherForActivityResult(
@@ -91,7 +91,7 @@ fun WallPostComposer(
         imageUri = uri
     }
 
-    val requiresTextForImage = imageUri != null && text.trim().isEmpty()
+    val textRequired = text.trim().isEmpty()
     val isValid = text.trim().length <= MAX_TEXT_LENGTH && text.trim().isNotEmpty()
 
     Column(
@@ -106,10 +106,10 @@ fun WallPostComposer(
             minLines = 2,
             maxLines = 5,
             enabled = !sending,
-            isError = requiresTextForImage,
+            isError = textRequired && imageUri != null,
             supportingText = {
-                if (requiresTextForImage) {
-                    Text(textRequiredForPhotoMessage)
+                if (textRequired && imageUri != null) {
+                    Text(textRequiredMessage)
                 }
             }
         )
@@ -173,8 +173,8 @@ fun WallPostComposer(
                 }
                 IconButton(
                     onClick = {
-                        if (requiresTextForImage) {
-                            onImageError?.invoke(textRequiredForPhotoMessage)
+                        if (textRequired) {
+                            onImageError?.invoke(textRequiredMessage)
                             return@IconButton
                         }
                         onSubmit(text.trim(), imageUri)

@@ -280,7 +280,7 @@
     <string name="group_wall_image_preview">Vista previa de la imagen</string>
     <string name="group_wall_image_alt">Foto de %1$s</string>
     <string name="group_wall_image_too_large">Imagen demasiado grande. El límite es 10MB.</string>
-    <string name="group_wall_text_required_for_photo">Agrega texto antes de enviar la foto.</string>
+    <string name="group_wall_text_required_for_photo">El texto no puede estar vacío.</string>
     <string name="group_wall_load_more">Cargar más</string>
     <string name="group_wall_pinned">Fijado</string>
     <string name="group_wall_pin">Fijar arriba</string>

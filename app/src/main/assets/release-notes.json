@@ -1,6 +1,6 @@
 {
   "platform": "android",
-  "generatedAt": "2026-07-04T22:37:09.976Z",
+  "generatedAt": "2026-07-05T04:01:57.173Z",
   "notes": [
     {
       "version": "1.36.0",
@@ -37,7 +37,9 @@
         "Chat do jogo usa paginação segura para históricos maiores.",
         "Versionamento Android atualizado para 1.36.0, build 63."
       ],
-      "fixed": [],
+      "fixed": [
+        "Mural Android acompanha o contrato de rules para pin/unpin e validação de mídia."
+      ],
       "issueRefs": [
         3231,
         3233,
@@ -86,7 +88,9 @@
         "Mural do grupo valida imagem grande antes do upload e permite desafixar posts.",
         "Chat do jogo usa paginação segura para históricos maiores."
       ],
-      "fixed": [],
+      "fixed": [
+        "Mural Android acompanha o contrato de rules para pin/unpin e validação de mídia."
+      ],
       "issueRefs": [
         3231,
         3233,
@@ -172,7 +176,8 @@
         "O perfil e os dados de jogo no app passaram a refletir melhor retenções e liberações de XP."
       ],
       "fixed": [
-        "Ajustes no fluxo de jogo ao vivo e nos mapeamentos de modelo reduziram brechas de inconsistência entre cliente e servidor."
+        "Ajustes no fluxo de jogo ao vivo e nos mapeamentos de modelo reduziram brechas de inconsistência entre cliente e servidor.",
+        "Ajustes de compatibilidade entre Android, shared e Functions para evitar início/fim de jogo fora do contrato novo de validação."
       ],
       "issueRefs": [
         3208,
@@ -219,7 +224,10 @@
       "fixed": [
         "Adiciona placeholders e teclado numérico/decimal nos campos de preço e jogadores.",
         "Mostra exemplos e faixas aceitas para preço, jogadores, goleiros, times e recorrência.",
-        "Deixa mais claro quando usar `0` em jogos sem cobrança."
+        "Deixa mais claro quando usar `0` em jogos sem cobrança.",
+        "`CreateGameScreen` usa `KeyboardOptions` adequadas para campos numéricos.",
+        "`NumberStepper` passa a exibir helper text com os limites aceitos.",
+        "Recursos de string do fluxo de Criar Jogo foram atualizados para documentar ranges e exemplos."
       ],
       "issueRefs": []
     },
@@ -255,7 +263,10 @@
       "fixed": [
         "Corrigido o corte do destaque no resumo semanal.",
         "Corrigido o contraste do perfil no modo escuro.",
-        "Corrigidos vazamentos de memória em telas de tempo real."
+        "Corrigidos vazamentos de memória em telas de tempo real.",
+        "fontSize via MaterialTheme e overflow do hero no WeeklyRecap (#1480).",
+        "TacticalBoard no dark mode; persistência do histórico de busca (#1413).",
+        "Cashbox Android, getMyGroupsFlow, blockPlayer atômico e memory leaks."
       ],
       "issueRefs": [
         1405,
@@ -294,7 +305,9 @@
         "Verificação anti-bot (telefone + CPF) mais robusta logo após o login."
       ],
       "fixed": [
-        "Corrigida a verificação que podia ficar incompleta ao trocar de tela."
+        "Corrigida a verificação que podia ficar incompleta ao trocar de tela.",
+        "Saga de token refresh do CPF portada de web para Android (#1312).",
+        "Falhas de CI: badge helper, testes desatualizados, avisos do detekt (#1286)."
       ],
       "issueRefs": [
         443,
