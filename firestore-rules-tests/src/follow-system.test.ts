@@ -4,6 +4,7 @@ import { serverTimestamp } from "firebase/firestore";
 import type { RulesTestEnvironment } from "@firebase/rules-unit-testing";
 import {
   initTestEnv,
+  asAdmin,
   asPlayerA,
   asPlayerB,
   asAnon,
@@ -48,12 +49,27 @@ afterAll(async () => {
 });
 
 describe("follow system rules", () => {
-  it("usuario autenticado pode ler following/followers", async () => {
+  it("owner do grafo pode ler apenas os próprios docs de following/followers", async () => {
     await assertSucceeds(
       asPlayerA(testEnv).doc(`users/${UID_PLAYER_A}/following/${UID_PLAYER_B}`).get()
     );
     await assertSucceeds(
       asPlayerB(testEnv).doc(`users/${UID_PLAYER_B}/followers/${UID_PLAYER_A}`).get()
+    );
+  });
+
+  it("outro usuario autenticado nao pode mapear o grafo social alheio", async () => {
+    await assertFails(
+      asPlayerB(testEnv).doc(`users/${UID_PLAYER_A}/following/${UID_PLAYER_B}`).get()
+    );
+    await assertFails(
+      asPlayerA(testEnv).doc(`users/${UID_PLAYER_B}/followers/${UID_PLAYER_A}`).get()
+    );
+  });
+
+  it("admin ainda pode ler o grafo social quando necessário", async () => {
+    await assertSucceeds(
+      asAdmin(testEnv).doc(`users/${UID_PLAYER_A}/following/${UID_PLAYER_B}`).get()
     );
   });
 

@@ -117,8 +117,8 @@ describe("direct messages", () => {
     );
   });
 
-  it("participante atualiza somente metadata de ultima mensagem", async () => {
-    await assertSucceeds(
+  it("participante nao pode atualizar metadata da conversa diretamente", async () => {
+    await assertFails(
       asPlayerA(testEnv).doc(`chats/${CHAT_ID}`).update({
         last_message: "Fala, bora jogar de novo?",
         last_message_at: serverTimestamp(),

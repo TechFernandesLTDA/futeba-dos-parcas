@@ -140,6 +140,30 @@ export function roundDistanceKm(distanceKm: number): number {
 }
 
 /**
+ * Resolve nome público seguro sem fallback para email/PII.
+ *
+ * @param {Record<string, unknown>} data Documento bruto do usuário.
+ * @return {string} Nome público sanitizado.
+ */
+export function resolvePublicDisplayName(
+  data: Record<string, unknown>
+): string {
+  const candidates = [
+    data.name,
+    data.display_name,
+    data.nickname,
+  ];
+
+  for (const candidate of candidates) {
+    if (typeof candidate === "string" && candidate.trim().length > 0) {
+      return candidate.trim();
+    }
+  }
+
+  return "Jogador";
+}
+
+/**
  * Garante que a localizacao ainda esta dentro da janela de retencao.
  *
  * @param {Timestamp | undefined} updatedAt Timestamp de atualizacao.
@@ -231,11 +255,9 @@ async function loadPublicProfiles(
         return null;
       }
 
-      const rawName = data.name ?? data.display_name ?? data.email;
-      const displayName =
-        typeof rawName === "string" && rawName.trim().length > 0 ?
-          rawName.trim() :
-          "Jogador";
+      const displayName = resolvePublicDisplayName(
+        data as Record<string, unknown>
+      );
 
       return [
         candidateId,

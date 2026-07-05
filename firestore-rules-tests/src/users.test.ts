@@ -2,7 +2,8 @@
  * Testes de Firestore Security Rules — Coleção: users
  *
  * Cobre:
- * - Leitura: admin vê tudo, player vê a si mesmo ou usuários is_searchable
+ * - Leitura: admin vê tudo, player vê a si mesmo ou apenas perfis
+ *   pesquisáveis sem PII materializada no doc público
  * - Criação: usuário cria apenas seu próprio doc com role=PLAYER
  * - Atualização: campos imutáveis (role, experience_points, created_at) protegidos
  * - Deleção: bloqueada para todos
@@ -16,24 +17,31 @@ import { serverTimestamp } from "firebase/firestore";
 import {
   initTestEnv,
   asAdmin,
-  asPlayerA,
-  asPlayerB,
+  asUser,
   asAnon,
   seedDoc,
   UID_ADMIN,
-  UID_PLAYER_A,
-  UID_PLAYER_B,
 } from "./helpers.js";
 
 let testEnv: RulesTestEnvironment;
+const UID_USERS_A = "uid-users-a-001";
+const UID_USERS_B = "uid-users-b-001";
+const UID_USERS_C = "uid-users-c-001";
+
+function asUsersA() {
+  return asUser(testEnv, UID_USERS_A);
+}
+
+function asUsersB() {
+  return asUser(testEnv, UID_USERS_B);
+}
 
 beforeAll(async () => {
   testEnv = await initTestEnv();
 
-  // Seed: perfil do player A (público/pesquisável)
-  await seedDoc(testEnv, `users/${UID_PLAYER_A}`, {
+  await seedDoc(testEnv, `users/${UID_USERS_A}`, {
     name: "Jogador A",
-    email: "player.a@test.com",
+    email: null,
     role: "PLAYER",
     is_searchable: true,
     experience_points: 500,
@@ -46,8 +54,7 @@ beforeAll(async () => {
     gk_rating: 1.0,
   });
 
-  // Seed: perfil do player B (não pesquisável)
-  await seedDoc(testEnv, `users/${UID_PLAYER_B}`, {
+  await seedDoc(testEnv, `users/${UID_USERS_B}`, {
     name: "Jogador B",
     email: "player.b@test.com",
     role: "PLAYER",
@@ -62,7 +69,21 @@ beforeAll(async () => {
     gk_rating: 2.0,
   });
 
-  // Seed: perfil do admin
+  await seedDoc(testEnv, `users/${UID_USERS_C}`, {
+    name: "Jogador C",
+    email: "player.c@test.com",
+    role: "PLAYER",
+    is_searchable: true,
+    experience_points: 200,
+    level: 2,
+    milestones_achieved: [],
+    created_at: new Date(),
+    striker_rating: 2.5,
+    mid_rating: 2.5,
+    defender_rating: 2.5,
+    gk_rating: 2.5,
+  });
+
   await seedDoc(testEnv, `users/${UID_ADMIN}`, {
     name: "Admin",
     email: "admin@test.com",
@@ -79,7 +100,7 @@ beforeAll(async () => {
   });
 
   await seedDoc(testEnv, "invite_codes/ABC123", {
-    user_id: UID_PLAYER_A,
+    user_id: UID_USERS_A,
     inviter_name: "Jogador A",
     active: true,
     created_at: new Date(),
@@ -90,45 +111,40 @@ afterAll(async () => {
   await testEnv.cleanup();
 });
 
-// ============================================================
-// LEITURA (READ)
-// ============================================================
-
 describe("users — leitura", () => {
   it("Admin pode ler qualquer perfil", async () => {
     const db = asAdmin(testEnv);
-    await assertSucceeds(db.doc(`users/${UID_PLAYER_B}`).get());
+    await assertSucceeds(db.doc(`users/${UID_USERS_B}`).get());
   });
 
   it("Player pode ler seu próprio perfil", async () => {
-    const db = asPlayerA(testEnv);
-    await assertSucceeds(db.doc(`users/${UID_PLAYER_A}`).get());
+    const db = asUsersA();
+    await assertSucceeds(db.doc(`users/${UID_USERS_A}`).get());
   });
 
-  it("Player pode ler perfil de outro com is_searchable=true", async () => {
-    const db = asPlayerB(testEnv);
-    await assertSucceeds(db.doc(`users/${UID_PLAYER_A}`).get());
+  it("Player pode ler perfil de outro com is_searchable=true e sem PII no doc", async () => {
+    const db = asUsersB();
+    await assertSucceeds(db.doc(`users/${UID_USERS_A}`).get());
   });
 
   it("Player NÃO pode ler perfil de outro com is_searchable=false", async () => {
-    const db = asPlayerA(testEnv);
-    await assertFails(db.doc(`users/${UID_PLAYER_B}`).get());
+    const db = asUsersA();
+    await assertFails(db.doc(`users/${UID_USERS_B}`).get());
+  });
+
+  it("Player NÃO pode ler perfil pesquisável quando o doc ainda expõe PII", async () => {
+    const db = asUsersA();
+    await assertFails(db.doc(`users/${UID_USERS_C}`).get());
   });
 
   it("Não-autenticado NÃO pode ler perfil nenhum", async () => {
     const db = asAnon(testEnv);
-    await assertFails(db.doc(`users/${UID_PLAYER_A}`).get());
+    await assertFails(db.doc(`users/${UID_USERS_A}`).get());
   });
 });
 
-// ============================================================
-// CRIAÇÃO (CREATE)
-// ============================================================
-
 describe("users — criação", () => {
   it("Player pode criar seu próprio doc com role=PLAYER", async () => {
-    const db = asPlayerA(testEnv);
-    // Usa UID diferente para não conflitar com seed
     const newUid = "uid-new-player-create-test";
     const userCtx = testEnv
       .authenticatedContext(newUid, { role: "PLAYER", verified: true })
@@ -176,7 +192,7 @@ describe("users — criação", () => {
       userCtx.doc(`users/${newUid}`).set({
         name: "Hacker",
         email: "hacker@test.com",
-        role: "ADMIN", // escalação de privilégio
+        role: "ADMIN",
         striker_rating: 0,
         mid_rating: 0,
         defender_rating: 0,
@@ -186,9 +202,9 @@ describe("users — criação", () => {
   });
 
   it("Player NÃO pode criar doc de outro usuário", async () => {
-    const db = asPlayerA(testEnv);
+    const db = asUsersA();
     await assertFails(
-      db.doc(`users/${UID_PLAYER_B}`).set({
+      db.doc(`users/${UID_USERS_B}`).set({
         name: "Invasor",
         email: "invasor@test.com",
         role: "PLAYER",
@@ -203,7 +219,7 @@ describe("users — criação", () => {
   it("Não-autenticado NÃO pode criar perfil", async () => {
     const db = asAnon(testEnv);
     await assertFails(
-      db.doc(`users/uid-anon-create`).set({
+      db.doc("users/uid-anon-create").set({
         name: "Anon",
         email: "anon@test.com",
         role: "PLAYER",
@@ -212,36 +228,32 @@ describe("users — criação", () => {
   });
 });
 
-// ============================================================
-// ATUALIZAÇÃO (UPDATE) — campos imutáveis
-// ============================================================
-
 describe("users — campos imutáveis (atualização)", () => {
   it("Player NÃO pode alterar o campo 'role'", async () => {
-    const db = asPlayerA(testEnv);
+    const db = asUsersA();
     await assertFails(
-      db.doc(`users/${UID_PLAYER_A}`).update({ role: "ADMIN" })
+      db.doc(`users/${UID_USERS_A}`).update({ role: "ADMIN" })
     );
   });
 
   it("Player NÃO pode alterar 'experience_points'", async () => {
-    const db = asPlayerA(testEnv);
+    const db = asUsersA();
     await assertFails(
-      db.doc(`users/${UID_PLAYER_A}`).update({ experience_points: 99999 })
+      db.doc(`users/${UID_USERS_A}`).update({ experience_points: 99999 })
     );
   });
 
   it("Player NÃO pode alterar 'level'", async () => {
-    const db = asPlayerA(testEnv);
+    const db = asUsersA();
     await assertFails(
-      db.doc(`users/${UID_PLAYER_A}`).update({ level: 10 })
+      db.doc(`users/${UID_USERS_A}`).update({ level: 10 })
     );
   });
 
   it("Player NÃO pode alterar contador ou código de convite", async () => {
-    const db = asPlayerA(testEnv);
+    const db = asUsersA();
     await assertFails(
-      db.doc(`users/${UID_PLAYER_A}`).update({
+      db.doc(`users/${UID_USERS_A}`).update({
         invite_count: 999,
         invite_code: "HACK99",
       })
@@ -249,19 +261,16 @@ describe("users — campos imutáveis (atualização)", () => {
   });
 
   it("Player NÃO pode alterar 'created_at'", async () => {
-    const db = asPlayerA(testEnv);
+    const db = asUsersA();
     await assertFails(
-      db.doc(`users/${UID_PLAYER_A}`).update({ created_at: new Date() })
+      db.doc(`users/${UID_USERS_A}`).update({ created_at: new Date() })
     );
   });
 
   it("Player pode atualizar campos básicos do próprio perfil (name, ratings)", async () => {
-    // SECFIX #578 STAGE 2: PII fields (email, fcm_token, birth_date, height_cm,
-    // weight_kg, gender) NÃO podem ser escritos client-side em users.
-    // Devem usar callable updateUserPii → users_private.
-    const db = asPlayerA(testEnv);
+    const db = asUsersA();
     await assertSucceeds(
-      db.doc(`users/${UID_PLAYER_A}`).update({
+      db.doc(`users/${UID_USERS_A}`).update({
         name: "Jogador A Atualizado",
         striker_rating: 3.0,
         mid_rating: 2.5,
@@ -272,9 +281,9 @@ describe("users — campos imutáveis (atualização)", () => {
   });
 
   it("Player pode atualizar status publico de procurando jogo hoje", async () => {
-    const db = asPlayerA(testEnv);
+    const db = asUsersA();
     await assertSucceeds(
-      db.doc(`users/${UID_PLAYER_A}`).update({
+      db.doc(`users/${UID_USERS_A}`).update({
         looking_for_game_today: true,
         looking_for_game_today_until: new Date("2026-06-27T23:59:59.999-03:00"),
         looking_for_game_today_updated_at: serverTimestamp(),
@@ -283,9 +292,9 @@ describe("users — campos imutáveis (atualização)", () => {
   });
 
   it("Player NÃO pode gravar status procurando jogo hoje com tipos inválidos", async () => {
-    const db = asPlayerA(testEnv);
+    const db = asUsersA();
     await assertFails(
-      db.doc(`users/${UID_PLAYER_A}`).update({
+      db.doc(`users/${UID_USERS_A}`).update({
         looking_for_game_today: "sim",
         looking_for_game_today_until: "fim do dia",
       })
@@ -293,44 +302,42 @@ describe("users — campos imutáveis (atualização)", () => {
   });
 
   it("SECFIX #578: Player NÃO pode atualizar PII (email, birth_date, etc) em users", async () => {
-    const db = asPlayerA(testEnv);
+    const db = asUsersA();
     await assertFails(
-      db.doc(`users/${UID_PLAYER_A}`).update({
+      db.doc(`users/${UID_USERS_A}`).update({
         email: "tentativa@hack.com",
       })
     );
     await assertFails(
-      db.doc(`users/${UID_PLAYER_A}`).update({
+      db.doc(`users/${UID_USERS_A}`).update({
         birth_date: 946684800000,
       })
     );
     await assertFails(
-      db.doc(`users/${UID_PLAYER_A}`).update({
+      db.doc(`users/${UID_USERS_A}`).update({
         height_cm: 180,
       })
     );
   });
 
-  // CPF-audit #1306: campos mirror gravados exclusivamente por Cloud Function
   it("CPF-audit #1306: Player NÃO pode escrever 'cpfVerifiedAt' diretamente", async () => {
-    const db = asPlayerA(testEnv);
+    const db = asUsersA();
     await assertFails(
-      db.doc(`users/${UID_PLAYER_A}`).update({ cpfVerifiedAt: new Date() })
+      db.doc(`users/${UID_USERS_A}`).update({ cpfVerifiedAt: new Date() })
     );
   });
 
   it("CPF-audit #1306: Player NÃO pode escrever 'verifiedAt' diretamente", async () => {
-    const db = asPlayerA(testEnv);
+    const db = asUsersA();
     await assertFails(
-      db.doc(`users/${UID_PLAYER_A}`).update({ verifiedAt: new Date() })
+      db.doc(`users/${UID_USERS_A}`).update({ verifiedAt: new Date() })
     );
   });
 
   it("CPF-audit #1306: Player PODE atualizar campos básicos normalmente (regressão)", async () => {
-    // Garante que as novas restricoes nao quebraram o caminho legítimo de edicao de perfil
-    const db = asPlayerA(testEnv);
+    const db = asUsersA();
     await assertSucceeds(
-      db.doc(`users/${UID_PLAYER_A}`).update({
+      db.doc(`users/${UID_USERS_A}`).update({
         name: "Jogador A Regressao",
         nickname: "joga_a",
         striker_rating: 4.0,
@@ -341,30 +348,26 @@ describe("users — campos imutáveis (atualização)", () => {
   it("Admin pode atualizar qualquer campo do perfil", async () => {
     const db = asAdmin(testEnv);
     await assertSucceeds(
-      db.doc(`users/${UID_PLAYER_A}`).update({ name: "Admin Changed Name" })
+      db.doc(`users/${UID_USERS_A}`).update({ name: "Admin Changed Name" })
     );
   });
 
   it("Player NÃO pode atualizar perfil de outro usuário", async () => {
-    const db = asPlayerA(testEnv);
+    const db = asUsersA();
     await assertFails(
-      db.doc(`users/${UID_PLAYER_B}`).update({ name: "Invasão" })
+      db.doc(`users/${UID_USERS_B}`).update({ name: "Invasão" })
     );
   });
 });
 
-// ============================================================
-// DELEÇÃO (DELETE)
-// ============================================================
-
 describe("users — deleção", () => {
   it("Nenhum usuário pode deletar perfis (delete=false nas rules)", async () => {
     const db = asAdmin(testEnv);
-    await assertFails(db.doc(`users/${UID_PLAYER_B}`).delete());
+    await assertFails(db.doc(`users/${UID_USERS_B}`).delete());
   });
 
   it("Player NÃO pode deletar seu próprio perfil", async () => {
-    const db = asPlayerA(testEnv);
-    await assertFails(db.doc(`users/${UID_PLAYER_A}`).delete());
+    const db = asUsersA();
+    await assertFails(db.doc(`users/${UID_USERS_A}`).delete());
   });
 });
