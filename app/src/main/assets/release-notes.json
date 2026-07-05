@@ -1,7 +1,49 @@
 {
   "platform": "android",
-  "generatedAt": "2026-07-05T04:01:57.173Z",
+  "generatedAt": "2026-07-05T05:24:50.612Z",
   "notes": [
+    {
+      "version": "1.36.1",
+      "buildNumber": 64,
+      "releaseDate": "2026-07-05",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "Mural Android mais estável, com posts fixados sempre visíveis e envio de mídia alinhado às regras.",
+      "highlights": [
+        {
+          "icon": "push_pin",
+          "title": "Fixados no topo",
+          "description": "Posts fixados antigos continuam aparecendo mesmo em grupos com muitos posts recentes."
+        },
+        {
+          "icon": "edit",
+          "title": "Texto obrigatório",
+          "description": "O app bloqueia envio sem texto antes de subir a mídia."
+        },
+        {
+          "icon": "delete",
+          "title": "Menos mídia órfã",
+          "description": "Falhas durante criação/remoção tentam limpar arquivos temporários com mais segurança."
+        }
+      ],
+      "added": [],
+      "improved": [
+        "Mural combina posts recentes e fixados sem duplicar itens.",
+        "Mensagens de validação ficaram mais claras quando o texto do post está vazio.",
+        "Release notes Android 1.36.0/1.36.1 ficam alinhadas entre fonte, asset e GitHub Release."
+      ],
+      "fixed": [
+        "Posts fixados fora da janela dos 20 mais recentes deixam de desaparecer do topo.",
+        "Cleanup cliente tenta remover `mediaPath` e `thumbnailPath` em falhas de escrita/remoção."
+      ],
+      "issueRefs": [
+        3265,
+        3266,
+        3267,
+        3271
+      ]
+    },
     {
       "version": "1.36.0",
       "buildNumber": 63,
