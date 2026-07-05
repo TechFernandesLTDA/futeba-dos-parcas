@@ -32,6 +32,8 @@ import {
   deleteLiveGameEvent,
   reviewHeldGameRewards,
   submitMvpVotes,
+  submitDirectMessage,
+  submitContentReport,
   updateUserPii,
 } from './cloudFunctions';
 
@@ -113,6 +115,38 @@ describe('cloudFunctions', () => {
         { category: 'MVP', votedPlayerId: 'u2' },
         { category: 'WORST', votedPlayerId: 'u3' },
       ],
+    });
+  });
+
+  it('submitDirectMessage chama callable com payload de mensagem direta', async () => {
+    mockCallable.mockResolvedValue({ data: { messageId: 'msg-1' } });
+
+    await submitDirectMessage({
+      chatId: 'chat-1',
+      text: 'Bora jogar?',
+    });
+
+    expect(mockCallable).toHaveBeenCalledWith('submitDirectMessage', {
+      chatId: 'chat-1',
+      text: 'Bora jogar?',
+    });
+  });
+
+  it('submitContentReport chama callable com payload de denuncia', async () => {
+    mockCallable.mockResolvedValue({ data: { reportId: 'report-1' } });
+
+    await submitContentReport({
+      targetType: 'group_wall_post',
+      groupId: 'group-1',
+      postId: 'post-1',
+      reason: 'inappropriate_content',
+    });
+
+    expect(mockCallable).toHaveBeenCalledWith('submitContentReport', {
+      targetType: 'group_wall_post',
+      groupId: 'group-1',
+      postId: 'post-1',
+      reason: 'inappropriate_content',
     });
   });
 

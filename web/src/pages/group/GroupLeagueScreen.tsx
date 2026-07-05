@@ -185,6 +185,9 @@ export const GroupLeagueScreen: React.FC = () => {
             actionLabel={t('empty.createGame')}
             actionIcon={<SoccerIcon />}
             onAction={() => navigate(`/game/create?groupId=${groupId}`)}
+            secondaryActionLabel={t('group.tabGames')}
+            secondaryActionIcon={<SoccerIcon />}
+            onSecondaryAction={() => navigate(`/group/${groupId}`)}
           />
         ) : (
           <Box>

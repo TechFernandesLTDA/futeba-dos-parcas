@@ -160,6 +160,20 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.51.0][web-1.51.0] - 2026-07-05
+
+#### Adicionado
+- `FeedbackOperationsScreen` e `useAdminFeedbackQueue` criam a fila administrativa de `user_feedback`.
+- `FirstStepsChecklist` adiciona onboarding reutilizavel para jogador e dono de grupo.
+- `robots.txt` e `sitemap.xml` adicionam descoberta publica basica.
+
+#### Mudado
+- `usePrefetchHome` limita o prefetch de grupos recentes.
+- Manifesto PWA e metadados HTML foram ajustados para installability e compartilhamento.
+- Telas principais ganharam empty states e CTAs consistentes.
+
+_Issues: #3304, #3305, #3306, #3307, #3309, #3311, #3315_
+
 ### [1.50.0][web-1.50.0] - 2026-07-05
 
 #### Adicionado
@@ -1037,6 +1051,22 @@ _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
 
+### [1.7.0][functions-1.7.0] - 2026-07-05
+
+#### Adicionado
+- `submitDirectMessage` escreve mensagens diretas via Cloud Functions com App Check, rate limit e transacao atomica.
+- `submitContentReport` cria denuncias com Admin SDK apos validar tipo, motivo, existencia do alvo e limite de uso.
+- Testes de Firestore Rules cobrem bloqueio de escrita direta em mensagens e novos tipos de denuncia.
+
+#### Mudado
+- `createDirectChat` passou a aplicar rate limit server-side.
+- Regras de Firestore bloqueiam `chats/{chatId}/messages` e `reports` client-side create e restringem revisao de `reports` a admins.
+
+#### Segurança
+- Dados publicos do remetente de DM agora sao derivados do usuario autenticado no backend, evitando spoofing pelo cliente.
+
+_Issues: #3302, #3303_
+
 ### [1.6.2][functions-1.6.2] - 2026-07-05
 
 #### Mudado
@@ -1441,6 +1471,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.51.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.0.md
 [web-1.50.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.50.0.md
 [web-1.49.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.49.0.md
 [web-1.48.9]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.48.9.md
@@ -1521,6 +1552,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [web-1.26.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.26.1.md
 [web-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.26.0.md
 [ios-1.6.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.0.md
+[functions-1.7.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.7.0.md
 [functions-1.6.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.6.2.md
 [functions-1.6.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.6.1.md
 [functions-1.6.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.6.0.md

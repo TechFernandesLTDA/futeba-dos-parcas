@@ -179,6 +179,11 @@ export function ProfileTab() {
         onClick: () => navigate('/admin/users'),
       });
       items.push({
+        icon: <BugReport />,
+        label: 'Feedbacks e suporte',
+        onClick: () => navigate('/admin/feedback'),
+      });
+      items.push({
         icon: <EmojiEvents />,
         label: 'Revisão de jogos',
         onClick: () => navigate('/admin/game-reviews'),

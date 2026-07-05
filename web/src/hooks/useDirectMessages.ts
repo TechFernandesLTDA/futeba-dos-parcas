@@ -3,7 +3,6 @@ import {
   collection,
   doc,
   getDocs,
-  increment,
   limit,
   onSnapshot,
   orderBy,
@@ -13,12 +12,11 @@ import {
   startAfter,
   updateDoc,
   where,
-  writeBatch,
   type DocumentData,
 } from 'firebase/firestore';
 import { useAuth } from '../contexts/AuthContext';
 import { db } from '../services/firebase';
-import { createDirectChat } from '../services/cloudFunctions';
+import { createDirectChat, submitDirectMessage } from '../services/cloudFunctions';
 import { getFirestoreErrorMessage } from '../utils/firebaseErrors';
 import { toDate } from '../utils/firestoreHelpers';
 import { createLogger } from '../utils/logger';
@@ -145,7 +143,7 @@ export function useDirectChats() {
 }
 
 export function useDirectChat(chatId?: string) {
-  const { currentUser, user } = useAuth();
+  const { currentUser } = useAuth();
   const [chat, setChat] = useState<DirectChat | null>(null);
   const [messages, setMessages] = useState<DirectMessage[]>([]);
   const [loading, setLoading] = useState(true);
@@ -248,31 +246,11 @@ export function useDirectChat(chatId?: string) {
       throw new Error(`A mensagem deve ter entre 1 e ${DIRECT_MESSAGE_MAX_LENGTH} caracteres.`);
     }
 
-    const recipients = chat.participants.filter((participant) => participant !== currentUser.uid);
-    const messageRef = doc(collection(db, 'chats', chatId, 'messages'));
-    const batch = writeBatch(db);
-    batch.set(messageRef, {
-      sender_id: currentUser.uid,
-      sender_name: user?.name || currentUser.displayName || 'Jogador',
-      sender_photo_url: user?.photoUrl ?? currentUser.photoURL ?? null,
+    await submitDirectMessage({
+      chatId,
       text: cleanText,
-      created_at: serverTimestamp(),
-      deleted_by: null,
-      deleted_at: null,
     });
-    const unreadUpdates = recipients.reduce<Record<string, ReturnType<typeof increment>>>((acc, participant) => {
-      acc[`unread_count.${participant}`] = increment(1);
-      return acc;
-    }, {});
-    batch.update(doc(db, 'chats', chatId), {
-      last_message: cleanText,
-      last_message_at: serverTimestamp(),
-      last_sender_id: currentUser.uid,
-      [`unread_count.${currentUser.uid}`]: 0,
-      ...unreadUpdates,
-    });
-    await batch.commit();
-  }, [chat, chatId, currentUser, user]);
+  }, [chat, chatId, currentUser]);
 
   const deleteMessage = useCallback(async (messageId: string) => {
     if (!chatId || !currentUser?.uid) throw new Error('Conversa não encontrada.');

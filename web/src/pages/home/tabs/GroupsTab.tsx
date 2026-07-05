@@ -101,7 +101,7 @@ export function GroupsTab() {
               startIcon={<Explore />}
               onClick={() => navigate('/groups/discover')}
             >
-              Descobrir Grupos
+              {t('groups.discoverGroupsBtn')}
             </Button>
             <Button
               variant="contained"
@@ -142,10 +142,10 @@ export function GroupsTab() {
           <Stack direction="row" alignItems="center" spacing={1}>
             <GroupsIcon fontSize="small" color="primary" />
             <Typography variant="subtitle2" color="primary.main" fontWeight={600}>
-              Meus Grupos
+              {t('groups.myGroups')}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              {loading ? '...' : `${filteredGroups.length} grupo${filteredGroups.length !== 1 ? 's' : ''}`}
+              {loading ? '...' : t('groups.groupCountLabel', { count: filteredGroups.length })}
             </Typography>
           </Stack>
           <Button
@@ -155,7 +155,7 @@ export function GroupsTab() {
             onClick={() => navigate('/groups/discover')}
             sx={{ display: { xs: 'inline-flex', md: 'none' }, fontWeight: 600 }}
           >
-            Descobrir
+            {t('groups.discoverGroupsShort')}
           </Button>
         </Stack>
       </Box>
@@ -203,11 +203,11 @@ export function GroupsTab() {
             <EmptyState
               icon={<People />}
               title={t('groups.noResults')}
-              description={t('groups.createOrJoin')}
+              description={t('groups.emptyFirstGroupDesc')}
               actionLabel={t('groups.createGroup')}
               actionIcon={<Add />}
               onAction={() => navigate('/group/create')}
-              secondaryActionLabel="Descobrir Grupos"
+              secondaryActionLabel={t('groups.discoverGroupsBtn')}
               secondaryActionIcon={<Explore />}
               onSecondaryAction={() => navigate('/groups/discover')}
             />
@@ -266,7 +266,7 @@ export function GroupsTab() {
                           {group.type === 'PUBLIC' && (
                             <Chip
                               icon={<Public sx={{ fontSize: iconSizes.xs }} />}
-                              label="Aberto"
+                              label={t('groups.openGroup')}
                               size="small"
                               color="success"
                               variant="outlined"
@@ -353,10 +353,10 @@ export function GroupsTab() {
                   </Box>
                   <Box flex={1}>
                     <Typography variant="subtitle2" fontWeight={600}>
-                      Descobrir mais grupos
+                      {t('groups.discoverMoreGroups')}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      Encontre grupos oficiais por região, dia da semana ou tipo de campo. Entre com 1 clique!
+                      {t('groups.discoverMoreGroupsDesc')}
                     </Typography>
                   </Box>
                   <ArrowForward color="action" sx={{ flexShrink: 0 }} />

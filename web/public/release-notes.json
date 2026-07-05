@@ -1,7 +1,54 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-05T17:48:35.683Z",
+  "generatedAt": "2026-07-05T19:16:14.252Z",
   "notes": [
+    {
+      "version": "1.51.0",
+      "buildNumber": null,
+      "releaseDate": "2026-07-05",
+      "type": "minor",
+      "showPopup": true,
+      "published": true,
+      "headline": "O app ganhou uma base mais pronta para uso diario, suporte e lancamento publico.",
+      "highlights": [
+        {
+          "icon": "support",
+          "title": "Feedback acompanhado",
+          "description": "Erros e sugestoes enviados no app agora entram em uma fila operacional para triagem."
+        },
+        {
+          "icon": "checklist",
+          "title": "Primeiros passos",
+          "description": "A tela inicial, grupos e configuracoes orientam melhor novos jogadores e donos de grupo."
+        },
+        {
+          "icon": "rocket_launch",
+          "title": "App mais instalavel",
+          "description": "Manifesto, atalhos, SEO basico e preconexoes foram revisados para melhorar a primeira abertura."
+        }
+      ],
+      "added": [
+        "Nova tela administrativa para acompanhar feedbacks, erros reportados, severidade, status, responsavel, issue, PR e release.",
+        "A tela de configuracoes ganhou acesso ao guia de primeiros passos e aos feedbacks enviados.",
+        "A experiencia de grupo agora mostra um checklist de dono com proximos passos para chegar a jogos ativos."
+      ],
+      "improved": [
+        "Estados vazios de jogos, grupos, liga e caixa ficaram mais claros e acionaveis.",
+        "O prefetch da home passou a limitar grupos recentes para reduzir leitura e carga inicial.",
+        "O app publicou `robots.txt`, `sitemap.xml` e atalhos PWA alinhados com rotas reais.",
+        "A documentacao de suporte, performance e lancamento publico foi consolidada para operacao diaria."
+      ],
+      "fixed": [],
+      "issueRefs": [
+        3304,
+        3305,
+        3306,
+        3307,
+        3309,
+        3311,
+        3315
+      ]
+    },
     {
       "version": "1.50.0",
       "buildNumber": null,
