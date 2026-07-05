@@ -59,6 +59,7 @@ export interface Notification {
   senderPhoto?: string;
   groupId?: string;
   actionType?: string;
+  action?: string;
   readAt?: Date;
 }
 

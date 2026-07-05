@@ -1,7 +1,39 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-05T17:12:06.827Z",
+  "generatedAt": "2026-07-05T17:48:35.683Z",
   "notes": [
+    {
+      "version": "1.50.0",
+      "buildNumber": null,
+      "releaseDate": "2026-07-05",
+      "type": "minor",
+      "showPopup": true,
+      "published": true,
+      "headline": "Convites agora podem sair direto da tela de Liga.",
+      "highlights": [
+        {
+          "icon": "group",
+          "title": "Convidar pela Liga",
+          "description": "Donos e administradores conseguem chamar jogadores visíveis no ranking para grupos ou jogos futuros que gerenciam."
+        },
+        {
+          "icon": "soccer",
+          "title": "Convite para jogo",
+          "description": "Convites para jogo criam presença pendente, convocação e notificação acionável."
+        }
+      ],
+      "added": [],
+      "improved": [
+        "A Liga mostra a ação de convite apenas para outros jogadores pesquisáveis e quando o usuário tem grupo ou jogo elegível.",
+        "O diálogo permite escolher entre grupo ou jogo antes de enviar.",
+        "O envio bloqueia duplicidade de convite pendente para o mesmo grupo e presença/convite já existente no mesmo jogo.",
+        "Notificações de convite de grupo no web passam a aceitar ou recusar o convite usando o ID salvo pelo backend."
+      ],
+      "fixed": [],
+      "issueRefs": [
+        3296
+      ]
+    },
     {
       "version": "1.49.0",
       "buildNumber": null,

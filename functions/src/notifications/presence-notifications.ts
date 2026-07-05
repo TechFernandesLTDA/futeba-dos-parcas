@@ -29,6 +29,104 @@ const getDb = () => admin.firestore();
 // Tempo de expiração de convites de grupo (48h em ms)
 const INVITE_EXPIRATION_MS = 48 * 60 * 60 * 1000;
 
+/**
+ * Lê um campo string aceitando schema snake_case ou camelCase.
+ *
+ * @param {Record<string, unknown>} data Dados de origem.
+ * @param {string} snakeKey Nome snake_case.
+ * @param {string} camelKey Nome camelCase.
+ * @param {string} fallback Valor padrão.
+ * @return {string} Valor string normalizado.
+ */
+function getStringField(
+  data: Record<string, unknown>,
+  snakeKey: string,
+  camelKey: string,
+  fallback = ""
+): string {
+  const value = data[snakeKey] ?? data[camelKey];
+  return typeof value === "string" ? value : fallback;
+}
+
+/**
+ * Materializa membership quando um convite direto de grupo é aceito.
+ *
+ * @param {string} inviteId ID do convite.
+ * @param {Record<string, unknown>} invite Dados do convite.
+ * @return {Promise<void>} Promise resolvida após a escrita.
+ */
+async function createMembershipForAcceptedGroupInvite(
+  inviteId: string,
+  invite: Record<string, unknown>
+): Promise<void> {
+  const groupId = getStringField(invite, "group_id", "groupId");
+  const invitedUserId = getStringField(
+    invite,
+    "invited_user_id",
+    "invitedUserId"
+  );
+
+  if (!groupId || !invitedUserId) {
+    logger.warn(
+      "[GROUP_INVITE_RESPONSE] Convite aceito sem group_id/invited_user_id",
+      {inviteId}
+    );
+    return;
+  }
+
+  const db = getDb();
+  const groupRef = db.collection("groups").doc(groupId);
+  const memberRef = groupRef.collection("members").doc(invitedUserId);
+  const userRef = db.collection("users").doc(invitedUserId);
+  const userGroupRef = userRef.collection("groups").doc(groupId);
+
+  await db.runTransaction(async (tx) => {
+    const [groupSnap, userSnap] = await Promise.all([
+      tx.get(groupRef),
+      tx.get(userRef),
+    ]);
+
+    if (!groupSnap.exists) {
+      throw new Error(`Grupo ${groupId} nao encontrado para convite ${inviteId}`);
+    }
+
+    const group = groupSnap.data() ?? {};
+    const user = userSnap.data() ?? {};
+    const userName =
+      getStringField(invite, "invited_user_name", "invitedUserName") ||
+      getStringField(user, "name", "name", "Jogador");
+    const userPhoto =
+      getStringField(invite, "invited_user_photo", "invitedUserPhoto") ||
+      getStringField(user, "photo_url", "photoUrl");
+    const groupName =
+      getStringField(invite, "group_name", "groupName") ||
+      getStringField(group, "name", "name", "Grupo");
+    const groupPhoto =
+      getStringField(invite, "group_photo", "groupPhoto") ||
+      getStringField(group, "photo_url", "photoUrl");
+
+    tx.set(memberRef, {
+      id: invitedUserId,
+      user_id: invitedUserId,
+      user_name: userName,
+      user_photo_url: userPhoto || null,
+      role: "MEMBER",
+      status: "ACTIVE",
+      joined_at: FieldValue.serverTimestamp(),
+      total_games: 0,
+      level: typeof user.level === "number" ? user.level : 1,
+    }, {merge: true});
+
+    tx.set(userGroupRef, {
+      group_id: groupId,
+      group_name: groupName,
+      group_photo: groupPhoto || null,
+      role: "MEMBER",
+      joined_at: FieldValue.serverTimestamp(),
+    }, {merge: true});
+  });
+}
+
 // ==========================================
 // IDEMPOTÊNCIA: guard contra reentrega at-least-once
 // ==========================================
@@ -398,6 +496,7 @@ export const onGroupInviteResponse =
 
       try {
         if (afterStatus === "ACCEPTED") {
+          await createMembershipForAcceptedGroupInvite(inviteId, after);
           const grpId =
             after.group_id || after.groupId;
           // FIX #2527: docId determinístico p/ idempotência

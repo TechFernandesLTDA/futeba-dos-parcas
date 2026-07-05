@@ -157,6 +157,35 @@ export const useNotifications = (userId?: string) => {
     }
   }, [userId, showSuccess, showError, t]);
 
+  const respondToGroupInvite = useCallback(async (
+    notificationId: string,
+    inviteId: string,
+    status: 'ACCEPTED' | 'DECLINED',
+  ) => {
+    setActing(true);
+    try {
+      const batch = writeBatch(db);
+      batch.update(doc(db, 'group_invites', inviteId), {
+        status,
+        updated_at: serverTimestamp(),
+      });
+      batch.update(doc(db, 'notifications', notificationId), {
+        read: true,
+        read_at: serverTimestamp(),
+      });
+      await batch.commit();
+      showSuccess(status === 'ACCEPTED'
+        ? t('feedback.notifications.inviteAccepted')
+        : t('feedback.notifications.inviteDeclined'));
+    } catch (err) {
+      logger.error('Error responding group invite:', err);
+      showError(t('feedback.notifications.groupInviteResponseError'));
+      throw err;
+    } finally {
+      setActing(false);
+    }
+  }, [showSuccess, showError, t]);
+
   const restoreNotification = useCallback(async (notification: Notification) => {
     try {
       const { addDoc } = await import('firebase/firestore');
@@ -229,6 +258,7 @@ export const useNotifications = (userId?: string) => {
     deleteNotification,
     toggleRead,
     declineGameInvite,
+    respondToGroupInvite,
     restoreNotification,
     deleteOldNotifications,
   };

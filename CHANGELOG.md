@@ -160,6 +160,17 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.50.0][web-1.50.0] - 2026-07-05
+
+#### Adicionado
+- `useLeagueInvites` centraliza opções de grupo/jogo e escrita de `group_invites`, `game_summons`, `confirmations` e `notifications`.
+- `LeagueScreen` ganhou botão e diálogo de convite no layout mobile e desktop.
+
+#### Mudado
+- Notificações web interpretam `action=group_invite/<id>` para responder convites diretos de grupo.
+
+_Issues: #3296_
+
 ### [1.49.0][web-1.49.0] - 2026-07-05
 
 #### Adicionado
@@ -1026,6 +1037,13 @@ _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
 
+### [1.6.2][functions-1.6.2] - 2026-07-05
+
+#### Mudado
+- `onGroupInviteResponse` passou a criar membership idempotente antes de notificar o convidador sobre aceite.
+
+_Issues: #3296_
+
 ### [1.6.1][functions-1.6.1] - 2026-07-05
 
 #### Adicionado
@@ -1423,6 +1441,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.50.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.50.0.md
 [web-1.49.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.49.0.md
 [web-1.48.9]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.48.9.md
 [web-1.48.8]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.48.8.md
@@ -1502,6 +1521,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [web-1.26.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.26.1.md
 [web-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.26.0.md
 [ios-1.6.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.0.md
+[functions-1.6.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.6.2.md
 [functions-1.6.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.6.1.md
 [functions-1.6.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.6.0.md
 [functions-1.5.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.5.0.md
