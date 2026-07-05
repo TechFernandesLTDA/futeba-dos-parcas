@@ -340,11 +340,13 @@ function buildBundlePayload(platform, notes, generatedAt = new Date().toISOStrin
   };
 }
 
-function validateBundleTargets(notes, errors) {
+function validateBundleTargets(notes, errors, options = {}) {
+  const rootDir = options.rootDir || ROOT;
+  const bundleTargets = options.bundleTargets || BUNDLE_TARGETS;
   for (const platform of CLIENT_PLATFORMS) {
     const expected = buildBundlePayload(platform, notes, '1970-01-01T00:00:00.000Z');
-    for (const relativePath of BUNDLE_TARGETS[platform]) {
-      const target = path.join(ROOT, relativePath);
+    for (const relativePath of bundleTargets[platform] || []) {
+      const target = path.join(rootDir, relativePath);
       if (!fs.existsSync(target)) {
         errors.push(`${relativePath}: bundle ausente — rode "node scripts/release-notes.js bundle"`);
         continue;
@@ -361,6 +363,7 @@ function validateBundleTargets(notes, errors) {
         generatedAt: '1970-01-01T00:00:00.000Z',
         notes: parsed.notes,
       };
+      // Seguro aqui: os dois lados sao gerados por `JSON.stringify(..., null, 2)`.
       if (JSON.stringify(actual) !== JSON.stringify(expected)) {
         errors.push(
           `${relativePath}: bundle fora de sincronia com release-notes/${platform}/*.md — rode ` +
@@ -608,5 +611,7 @@ module.exports = {
   validateNote,
   buildAutogen,
   toClientNote,
+  buildBundlePayload,
+  validateBundleTargets,
   compareVersionsDesc,
 };

@@ -15,6 +15,9 @@
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const os = require('node:os');
+const path = require('node:path');
 
 const {
   parseScalar,
@@ -24,6 +27,8 @@ const {
   validateNote,
   buildAutogen,
   toClientNote,
+  buildBundlePayload,
+  validateBundleTargets,
   compareVersionsDesc,
 } = require('./release-notes');
 
@@ -195,6 +200,51 @@ function fixedNotes() {
   ];
 }
 
+function clientNotesFixture() {
+  const body = validBody();
+  return [
+    {
+      platform: 'android',
+      version: '1.22.0',
+      file: 'android.md',
+      fm: validFm(),
+      body,
+    },
+    {
+      platform: 'web',
+      version: '2.4.0',
+      file: 'web.md',
+      fm: {
+        platform: 'web',
+        version: '2.4.0',
+        type: 'minor',
+        showPopup: true,
+        date: '2026-05-10',
+        milestone: 'web-2.4.0',
+        issues: [321],
+        prs: [654],
+      },
+      body,
+    },
+    {
+      platform: 'ios',
+      version: '1.6.0',
+      file: 'ios.md',
+      fm: {
+        platform: 'ios',
+        version: '1.6.0',
+        type: 'minor',
+        showPopup: false,
+        date: '2026-05-22',
+        buildNumber: 17,
+        milestone: 'ios-1.6.0',
+        published: false,
+      },
+      body,
+    },
+  ];
+}
+
 test('buildAutogen: deterministico — duas chamadas com a mesma entrada sao identicas', () => {
   const first = buildAutogen(fixedNotes());
   const second = buildAutogen(fixedNotes());
@@ -244,6 +294,63 @@ test('buildAutogen: desambigua labels quando plataformas compartilham a mesma ve
   ]);
   assert.ok(out.includes('### [1.6.0][ios-1.6.0] - 2026-05-22'));
   assert.ok(out.includes('### [1.6.0][functions-1.6.0] - 2026-07-04'));
+});
+
+test('validateBundleTargets: aceita bundles gerados pelo mesmo payload', () => {
+  const notes = clientNotesFixture();
+  const rootDir = fs.mkdtempSync(path.join(os.tmpdir(), 'release-notes-ok-'));
+  const bundleTargets = {
+    android: ['android.json'],
+    web: ['web.json'],
+    ios: ['ios-a.json', 'ios-b.json'],
+  };
+
+  try {
+    for (const platform of Object.keys(bundleTargets)) {
+      const payload = buildBundlePayload(platform, notes, '2026-07-05T00:00:00.000Z');
+      const json = `${JSON.stringify(payload, null, 2)}\n`;
+      for (const relativePath of bundleTargets[platform]) {
+        const target = path.join(rootDir, relativePath);
+        fs.mkdirSync(path.dirname(target), { recursive: true });
+        fs.writeFileSync(target, json);
+      }
+    }
+
+    const errors = [];
+    validateBundleTargets(notes, errors, { rootDir, bundleTargets });
+    assert.deepEqual(errors, []);
+  } finally {
+    fs.rmSync(rootDir, { recursive: true, force: true });
+  }
+});
+
+test('validateBundleTargets: reporta bundle stale quando payload muta', () => {
+  const notes = clientNotesFixture();
+  const rootDir = fs.mkdtempSync(path.join(os.tmpdir(), 'release-notes-stale-'));
+  const bundleTargets = {
+    android: ['android.json'],
+    web: ['web.json'],
+    ios: ['ios.json'],
+  };
+
+  try {
+    for (const platform of Object.keys(bundleTargets)) {
+      const payload = buildBundlePayload(platform, notes, '2026-07-05T00:00:00.000Z');
+      const target = path.join(rootDir, bundleTargets[platform][0]);
+      fs.writeFileSync(target, `${JSON.stringify(payload, null, 2)}\n`);
+    }
+
+    const staleTarget = path.join(rootDir, 'web.json');
+    const stalePayload = JSON.parse(fs.readFileSync(staleTarget, 'utf-8'));
+    stalePayload.notes[0].headline = 'Bundle mutado fora do gerador';
+    fs.writeFileSync(staleTarget, `${JSON.stringify(stalePayload, null, 2)}\n`);
+
+    const errors = [];
+    validateBundleTargets(notes, errors, { rootDir, bundleTargets });
+    assert.ok(errors.some((error) => error.includes('web.json: bundle fora de sincronia')));
+  } finally {
+    fs.rmSync(rootDir, { recursive: true, force: true });
+  }
 });
 
 // ==========================================================================
