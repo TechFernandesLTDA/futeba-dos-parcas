@@ -59,9 +59,10 @@ async function fetchGames(filters?: {
   groupId?: string;
   date?: string;
   limitCount?: number;
+  orderDirection?: 'asc' | 'desc';
 }): Promise<Game[]> {
   const gamesRef = collection(db, 'games');
-  let q = query(gamesRef, orderBy('dateTime', 'asc'));
+  let q = query(gamesRef, orderBy('dateTime', filters?.orderDirection ?? 'asc'));
 
   if (filters?.status) {
     q = query(q, where('status', '==', filters.status));
@@ -93,11 +94,12 @@ export function useGames(filters?: {
   groupId?: string;
   date?: string;
   limitCount?: number;
+  orderDirection?: 'asc' | 'desc';
 }) {
   // Chave de query estável baseada nos filtros primitivos
   const queryKey = useMemo(
-    () => ['games', filters?.status, filters?.groupId, filters?.date, filters?.limitCount] as const,
-    [filters?.status, filters?.groupId, filters?.date, filters?.limitCount]
+    () => ['games', filters?.status, filters?.groupId, filters?.date, filters?.limitCount, filters?.orderDirection] as const,
+    [filters?.status, filters?.groupId, filters?.date, filters?.limitCount, filters?.orderDirection]
   );
 
   const { data: games = [], isLoading: loading, error: queryError, refetch } = useQuery({
