@@ -302,6 +302,7 @@ describe('useCashbox', () => {
           { id: 'tx-1', data: () => ({ type: 'INCOME', amount: 100, date: { toDate: () => new Date() } }) },
           { id: 'tx-2', data: () => ({ type: 'EXPENSE', amount: 30, date: { toDate: () => new Date() } }) },
           { id: 'tx-3', data: () => ({ type: 'INCOME', amount: 50, date: { toDate: () => new Date() } }) },
+          { id: 'tx-4', data: () => ({ type: 'EXPENSE', amount: 90, status: 'VOIDED', date: { toDate: () => new Date() } }) },
         ],
       });
       return vi.fn();
@@ -309,7 +310,7 @@ describe('useCashbox', () => {
     const { result } = renderHook(() => useCashbox('group-1'), { wrapper: createTestWrapper() });
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.balance).toBe(120);
-    expect(result.current.transactions).toHaveLength(3);
+    expect(result.current.transactions).toHaveLength(4);
   });
 
   it('trata erros do snapshot', async () => {
