@@ -236,14 +236,14 @@ service firebase.storage {
     // ============================================
     match /groups/{groupId}/receipts/{fileName} {
       // Membros do grupo podem ver os comprovantes
-      allow read: if isAuthenticated() && isGroupMember(groupId);
+      allow read: if isAuthenticated() && (isGroupMember(groupId) || isGroupOwnerById(groupId));
 
       // Apenas admins podem fazer upload de comprovantes
       // Máximo 5MB, apenas imagem
-      allow write: if isAuthenticated() && isGroupAdmin(groupId) && isImage() && isUnderSize(5);
+      allow write: if isAuthenticated() && (isGroupAdmin(groupId) || isGroupOwnerById(groupId)) && isImage() && isUnderSize(5);
 
       // Apenas admins podem deletar
-      allow delete: if isAuthenticated() && isGroupAdmin(groupId);
+      allow delete: if isAuthenticated() && (isGroupAdmin(groupId) || isGroupOwnerById(groupId));
     }
 
     // ============================================

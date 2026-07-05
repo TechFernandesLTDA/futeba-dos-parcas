@@ -1,7 +1,41 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-05T13:28:58.600Z",
+  "generatedAt": "2026-07-05T14:01:51.118Z",
   "notes": [
+    {
+      "version": "1.48.4",
+      "buildNumber": null,
+      "releaseDate": "2026-07-05",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "A tela de caixa do grupo voltou a abrir e operar corretamente para donos de grupos.",
+      "highlights": [
+        {
+          "icon": "payments",
+          "title": "Caixa liberado",
+          "description": "Donos de grupos legados agora conseguem ler, adicionar e estornar entradas do caixa."
+        },
+        {
+          "icon": "receipt",
+          "title": "Comprovantes",
+          "description": "Upload e leitura de comprovantes seguem a mesma regra de dono/admin do grupo."
+        }
+      ],
+      "added": [],
+      "improved": [
+        "A tela de caixa usa o UID real do Firebase Auth para checar permissões.",
+        "As regras de Firestore e Storage foram alinhadas com o mesmo fallback de dono usado pela rota do grupo."
+      ],
+      "fixed": [
+        "`CashboxScreen` deixou de usar `user.id` para checar/gravar permissões e passou a usar `firebaseUser.uid`.",
+        "`firestore.rules` permite owner por `owner_id` em `cashbox` e `cashbox_summary` quando o doc legado em `members/{uid}` não existe.",
+        "`storage.rules` aplica o mesmo fallback para recibos em `groups/{groupId}/receipts`."
+      ],
+      "issueRefs": [
+        3282
+      ]
+    },
     {
       "version": "1.48.3",
       "buildNumber": null,

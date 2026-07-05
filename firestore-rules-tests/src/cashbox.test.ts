@@ -3,12 +3,12 @@
  *
  * Complementa groups.test.ts (que cobre 8 casos básicos de cashbox).
  * Foco aqui: casos de borda, shape enforcement no update, grupo inativo,
- * cashbox_summary, e ausência de bypass isAdmin() na leitura.
+ * cashbox_summary, fallback de owner_id legado, e ausência de bypass isAdmin() na leitura.
  *
  * Rule (resumo):
- *   read:   isAuthenticated() && isGroupMember(groupId)          ← sem isAdmin() bypass
- *   create: (isAdmin() || isVerifiedOrGrace()) && (isAdmin() || isGroupAdmin()) && isGroupActive() && amount>0 && amount<=100000 && type in [INCOME,EXPENSE]
- *   update: isGroupAdmin() && isGroupActive() && affectedKeys hasOnly [status,voided_at,voided_by,updated_at] && status==VOIDED && voided_by==userId() && voided_at==request.time
+ *   read:   isAuthenticated() && (isGroupMember(groupId) || isGroupOwnerById(groupId)) ← sem isAdmin() bypass
+ *   create: (isAdmin() || isVerifiedOrGrace()) && (isAdmin() || isGroupAdmin() || isGroupOwnerById()) && isGroupActive() && amount>0 && amount<=100000 && type in [INCOME,EXPENSE]
+ *   update: (isGroupAdmin() || isGroupOwnerById()) && isGroupActive() && affectedKeys hasOnly [status,voided_at,voided_by,updated_at] && status==VOIDED && voided_by==userId() && voided_at==request.time
  *   delete: false
  */
 
@@ -35,7 +35,9 @@ let testEnv: RulesTestEnvironment;
 // IDs fixos para evitar colisão com groups.test.ts
 const GROUP_CASHBOX = "group-cashbox-ext-001";
 const GROUP_INACTIVE = "group-cashbox-inactive-001";
+const GROUP_OWNER_ONLY = "group-cashbox-owner-only-001";
 const ENTRY_EXISTING = "cashbox-entry-existing-ext";
+const ENTRY_OWNER_ONLY = "cashbox-entry-owner-only-ext";
 
 beforeAll(async () => {
   testEnv = await initTestEnv();
@@ -87,6 +89,28 @@ beforeAll(async () => {
     role: "OWNER",
     status: "ACTIVE",
   });
+
+  // Grupo legado: owner_id aponta para player A, mas nao ha doc members/{uid}.
+  // A rota web permite esse owner; as rules precisam permitir o mesmo.
+  await seedDoc(testEnv, `groups/${GROUP_OWNER_ONLY}`, {
+    name: "Grupo Cashbox Owner Only",
+    owner_id: UID_PLAYER_A,
+    is_public: true,
+    status: "ACTIVE",
+    description: "Grupo legado sem members para o owner",
+    member_count: 0,
+  });
+  await seedDoc(
+    testEnv,
+    `groups/${GROUP_OWNER_ONLY}/cashbox/${ENTRY_OWNER_ONLY}`,
+    {
+      type: "EXPENSE",
+      amount: 40,
+      status: "ACTIVE",
+      created_by: UID_PLAYER_A,
+      created_at: new Date(),
+    }
+  );
 });
 
 afterAll(async () => {
@@ -111,6 +135,13 @@ describe("cashbox — leitura: ausência de bypass isAdmin()", () => {
     const db = asAnon(testEnv);
     await assertFails(
       db.doc(`groups/${GROUP_CASHBOX}/cashbox/${ENTRY_EXISTING}`).get()
+    );
+  });
+
+  it("Owner legado pode ler cashbox mesmo sem doc members/{uid}", async () => {
+    const db = asPlayerA(testEnv);
+    await assertSucceeds(
+      db.doc(`groups/${GROUP_OWNER_ONLY}/cashbox/${ENTRY_OWNER_ONLY}`).get()
     );
   });
 });
@@ -157,6 +188,21 @@ describe("cashbox — create: validações de campo", () => {
           status: "ACTIVE",
           created_at: new Date(),
         })
+    );
+  });
+
+  it("Owner legado pode criar entrada mesmo sem doc members/{uid}", async () => {
+    const db = asPlayerA(testEnv);
+    await assertSucceeds(
+      db.doc(`groups/${GROUP_OWNER_ONLY}/cashbox/entry-owner-only-create`).set({
+        type: "INCOME",
+        amount: 120,
+        status: "ACTIVE",
+        description: "Mensalidade",
+        category: "OTHER",
+        created_by: UID_PLAYER_A,
+        created_at: serverTimestamp(),
+      })
     );
   });
 });
@@ -231,6 +277,18 @@ describe("cashbox — update: void (shape enforcement)", () => {
         })
     );
   });
+
+  it("Owner legado pode fazer void mesmo sem doc members/{uid}", async () => {
+    const db = asPlayerA(testEnv);
+    await assertSucceeds(
+      db.doc(`groups/${GROUP_OWNER_ONLY}/cashbox/${ENTRY_OWNER_ONLY}`).update({
+        status: "VOIDED",
+        voided_at: serverTimestamp(),
+        voided_by: UID_PLAYER_A,
+        updated_at: serverTimestamp(),
+      })
+    );
+  });
 });
 
 // ============================================================
@@ -283,6 +341,23 @@ describe("cashbox_summary — permissões", () => {
     );
   });
 
+  it("Owner legado pode ler cashbox_summary mesmo sem doc members/{uid}", async () => {
+    await seedDoc(
+      testEnv,
+      `groups/${GROUP_OWNER_ONLY}/cashbox_summary/current`,
+      {
+        balance: 80,
+        total_income: 120,
+        total_expense: 40,
+        updated_at: new Date(),
+      }
+    );
+    const db = asPlayerA(testEnv);
+    await assertSucceeds(
+      db.doc(`groups/${GROUP_OWNER_ONLY}/cashbox_summary/current`).get()
+    );
+  });
+
   it("Group admin pode criar/atualizar cashbox_summary", async () => {
     const db = asPlayerA(testEnv); // owner = group admin
     await assertSucceeds(
@@ -302,6 +377,20 @@ describe("cashbox_summary — permissões", () => {
     await assertFails(
       db.doc(`groups/${GROUP_CASHBOX}/cashbox_summary/current`).set({
         balance: 999,
+        updated_at: new Date(),
+      })
+    );
+  });
+
+  it("Owner legado pode criar/atualizar cashbox_summary", async () => {
+    const db = asPlayerA(testEnv);
+    await assertSucceeds(
+      db.doc(`groups/${GROUP_OWNER_ONLY}/cashbox_summary/current`).set({
+        balance: 300,
+        total_income: 350,
+        total_expense: 50,
+        period_start: "2026-07-01",
+        period_end: "2026-07-31",
         updated_at: new Date(),
       })
     );
