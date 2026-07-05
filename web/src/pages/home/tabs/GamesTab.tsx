@@ -68,6 +68,10 @@ const SORT_OPTIONS: { value: SortBy; labelKey: string; icon: React.ReactNode }[]
   { value: 'nearest', labelKey: 'games.sort.nearest', icon: <AccessTime fontSize="small" /> },
 ];
 
+function getActiveGamesThreshold() {
+  return new Date(Date.now() - ACTIVE_GAME_DISPLAY_GRACE_MS);
+}
+
 function getGameStartTime(game: { dateTime?: Date; date: string; time?: string }): number | null {
   if (game.dateTime instanceof Date && !Number.isNaN(game.dateTime.getTime())) {
     return game.dateTime.getTime();
@@ -95,8 +99,19 @@ export function GamesTab() {
   const [sortBy, setSortBy] = useState<SortBy>('date');
   const [genderFilter, setGenderFilter] = useState<'all' | GameGender>('all');
   const debouncedSearch = useDebounce(searchQuery, 300);
+  const activeGamesThreshold = useMemo(() => getActiveGamesThreshold(), []);
+  const gamesQueryFilters = useMemo(() => ({
+    ...(statusFilter === 'all'
+      ? { statuses: ACTIVE_STATUSES, startDateTime: activeGamesThreshold }
+      : {
+          status: statusFilter,
+          ...(ACTIVE_STATUSES.includes(statusFilter) ? { startDateTime: activeGamesThreshold } : {}),
+        }),
+    limitCount: statusFilter === 'all' ? 150 : 100,
+    orderDirection: statusFilter === 'FINISHED' ? 'desc' as const : 'asc' as const,
+  }), [activeGamesThreshold, statusFilter]);
 
-  const { games, loading, error, refetch } = useGames();
+  const { games, loading, error, refetch } = useGames(gamesQueryFilters);
   const { groups, loading: groupsLoading } = useGroups();
   const hasGroups = groups.length > 0;
 

@@ -1,7 +1,36 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-05T15:21:27.706Z",
+  "generatedAt": "2026-07-05T16:38:40.360Z",
   "notes": [
+    {
+      "version": "1.48.9",
+      "buildNumber": null,
+      "releaseDate": "2026-07-05",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "A lista de jogos voltou a mostrar jogos futuros nas abas corretas.",
+      "highlights": [
+        {
+          "icon": "calendar",
+          "title": "Agendados corrigidos",
+          "description": "Jogos marcados para datas futuras, como o dia 8, deixam de sumir da aba Agendados por causa de um recorte antigo da lista."
+        }
+      ],
+      "added": [],
+      "improved": [],
+      "fixed": [
+        "A aba Agendados passa a buscar jogos agendados futuros diretamente no banco.",
+        "A aba Todos passa a buscar jogos ativos futuros/recentes, sem depender dos 50 primeiros jogos globais.",
+        "A aba Finalizados mantém uma consulta própria para jogos encerrados.",
+        "`GamesTab` envia filtros de status/data para `useGames` antes da consulta Firestore.",
+        "`useGames` passa a aceitar `statuses` e `startDateTime`, usando `where('status', 'in', ...)` e `where('dateTime', '>=', ...)`.",
+        "Testes unitários cobrem os novos filtros `status in` e `dateTime >=`."
+      ],
+      "issueRefs": [
+        3292
+      ]
+    },
     {
       "version": "1.48.8",
       "buildNumber": null,
