@@ -63,6 +63,7 @@ import { useToast } from '../../contexts/ToastContext';
 import { PlayerAvatar, LoadingState } from '../../components/common/GameCard';
 // #2176: EmptyState canônico (rico, com i18n) vive em common/EmptyState — não no GameCard.
 import { EmptyState } from '../../components/common/EmptyState';
+import { DemoDataChip } from '../../components/common/DemoDataChip';
 import { createLogger } from '../../utils/logger';
 import { getFunctionsErrorMessage } from '../../utils/firebaseErrors';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
@@ -87,6 +88,14 @@ interface UserWithRole {
   lastLoginAt?: Date;
   gamesPlayed: number;
   level: number;
+  isMock?: boolean;
+  demoData?: boolean;
+  dataOrigin?: string | null;
+  seedId?: string | null;
+  demoDataReason?: string | null;
+  cpfVerified?: boolean;
+  phoneVerified?: boolean;
+  realDataProtected?: boolean;
 }
 
 interface OwnerSummary {
@@ -119,6 +128,14 @@ const parseAdminUser = (data: AdminUserCrmRow): UserWithRole => ({
   lastLoginAt: data.lastLoginAtIso ? new Date(data.lastLoginAtIso) : undefined,
   gamesPlayed: data.gamesPlayed || 0,
   level: data.level || 1,
+  isMock: data.isMock,
+  demoData: data.demoData,
+  dataOrigin: data.dataOrigin,
+  seedId: data.seedId,
+  demoDataReason: data.demoDataReason,
+  cpfVerified: data.cpfVerified,
+  phoneVerified: data.phoneVerified,
+  realDataProtected: data.realDataProtected,
 });
 
 const formatAdminDateTime = (date?: Date): string => {
@@ -935,6 +952,10 @@ export const UserManagementScreen: React.FC = () => {
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                   {u.name}
                                   {u.id === currentUser?.id && <Chip label="Você" size="small" color="primary" variant="outlined" />}
+                                  <DemoDataChip data={u} />
+                                  {u.realDataProtected && (
+                                    <Chip label="Real validado" size="small" color="success" variant="outlined" />
+                                  )}
                                   <Chip
                                     label={u.role}
                                     size="small"

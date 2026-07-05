@@ -35,6 +35,7 @@ import { formatGameDate } from '../../utils/dateFormatters';
 import { InteractiveCard } from './InteractiveCard';
 import { useContextMenu, ContextMenuItem } from '../../hooks/useContextMenu';
 import { TeamBadge } from '../team/TeamBadge';
+import { DemoDataChip } from './DemoDataChip';
 
 interface GameCardProps {
   game: Game;
@@ -198,6 +199,7 @@ export const GameCard: React.FC<GameCardProps> = React.memo(({
                   variant="outlined"
                   sx={{ fontSize: '0.75rem' }}
                 />
+                <DemoDataChip data={game} />
                 {/* Badge de gênero: exibido apenas para MALE ou FEMALE (MIXED = sem badge) */}
                 {(game.gender === 'MALE' || game.gender === 'FEMALE') && (
                   <Chip

@@ -160,6 +160,16 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.51.1][web-1.51.1] - 2026-07-05
+
+#### Adicionado
+- `DemoDataChip` centraliza o indicador visual de dados ficticios.
+- Tipos de usuario e jogo ganharam metadados de origem (`dataOrigin`, `demoData`, `seedId`).
+- `scripts/maintenance/demo-data-governance.js` adiciona inventario, marcacao e dry-run de limpeza futura.
+
+#### Mudado
+- Rankings e cards de jogo passam a respeitar metadados `is_mock`, `demo_data` e `data_origin`.
+
 ### [1.51.0][web-1.51.0] - 2026-07-05
 
 #### Adicionado
@@ -1051,6 +1061,11 @@ _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
 
+### [1.7.1][functions-1.7.1] - 2026-07-05
+
+#### Mudado
+- `searchAdminUsers` passa a retornar `isMock`, `demoData`, `dataOrigin`, `seedId`, `cpfVerified`, `phoneVerified` e `realDataProtected`.
+
 ### [1.7.0][functions-1.7.0] - 2026-07-05
 
 #### Adicionado
@@ -1471,6 +1486,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.51.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.1.md
 [web-1.51.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.0.md
 [web-1.50.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.50.0.md
 [web-1.49.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.49.0.md
@@ -1552,6 +1568,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [web-1.26.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.26.1.md
 [web-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.26.0.md
 [ios-1.6.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.0.md
+[functions-1.7.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.7.1.md
 [functions-1.7.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.7.0.md
 [functions-1.6.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.6.2.md
 [functions-1.6.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.6.1.md

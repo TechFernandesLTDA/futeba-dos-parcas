@@ -1,7 +1,24 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-05T19:16:14.252Z",
+  "generatedAt": "2026-07-05T23:42:54.828Z",
   "notes": [
+    {
+      "version": "1.51.1",
+      "buildNumber": null,
+      "releaseDate": "2026-07-05",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "Dados ficticios agora ficam identificados no app antes da entrada dos primeiros testadores reais.",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "Jogos, rankings e usuarios vindos de seed/mock passam a exibir um selo \"Ficticio\" ou \"Teste\".",
+        "O CRM administrativo mostra quais usuarios sao ficticios e quais estao protegidos como reais validados."
+      ],
+      "fixed": [],
+      "issueRefs": []
+    },
     {
       "version": "1.51.0",
       "buildNumber": null,

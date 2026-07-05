@@ -43,6 +43,11 @@ interface RawSeasonParticipation {
   assists?: number;
   mvpCount?: number;
   division?: string;
+  isMock?: boolean;
+  demoData?: boolean;
+  dataOrigin?: string;
+  seedId?: string;
+  demoDataReason?: string;
 }
 
 export interface LeaguePlayer {
@@ -62,12 +67,29 @@ export interface LeaguePlayer {
   isCurrentUser?: boolean;
   experiencePoints?: number;
   canReceiveInvites?: boolean;
+  isMock?: boolean;
+  demoData?: boolean;
+  dataOrigin?: string;
+  seedId?: string;
+  demoDataReason?: string;
 }
 
 // Busca dados de usuários em batch (chunks de 10)
 // Privacy: jogadores com is_searchable=false ficam ocultos no ranking (#1027)
-async function fetchUserDataBatch(userIds: string[]): Promise<Map<string, { name: string; photoUrl: string | null; xp: number; favoriteTeam?: string }>> {
-  const usersMap = new Map<string, { name: string; photoUrl: string | null; xp: number; favoriteTeam?: string }>();
+interface LeagueUserData {
+  name: string;
+  photoUrl: string | null;
+  xp: number;
+  favoriteTeam?: string;
+  isMock?: boolean;
+  demoData?: boolean;
+  dataOrigin?: string;
+  seedId?: string;
+  demoDataReason?: string;
+}
+
+async function fetchUserDataBatch(userIds: string[]): Promise<Map<string, LeagueUserData>> {
+  const usersMap = new Map<string, LeagueUserData>();
   if (userIds.length === 0) return usersMap;
 
   const chunks: string[][] = [];
@@ -95,6 +117,11 @@ async function fetchUserDataBatch(userIds: string[]): Promise<Map<string, { name
         photoUrl: (d.photo_url as string) || (d.photoUrl as string) || null,
         xp,
         favoriteTeam: (d.favorite_team as string) || (d.favoriteTeam as string) || undefined,
+        isMock: d.is_mock === true || d.isMock === true,
+        demoData: d.demo_data === true || d.demoData === true,
+        dataOrigin: (d.data_origin as string) || (d.dataOrigin as string) || undefined,
+        seedId: (d.seed_id as string) || (d.seedId as string) || undefined,
+        demoDataReason: (d.demo_data_reason as string) || (d.demoDataReason as string) || undefined,
       });
     }
   }
@@ -163,6 +190,11 @@ async function fetchLeagueData(
       assists: seg ? num(seg.assists) : data.assists || 0,
       mvpCount: seg ? num(seg.mvp_count) : data.mvpCount || raw.mvp_count || 0,
       division: (data.division || 'BRONZE') as LeagueDivision,
+      isMock: data.isMock === true || raw.is_mock === true,
+      demoData: data.demoData === true || raw.demo_data === true,
+      dataOrigin: data.dataOrigin || raw.data_origin,
+      seedId: data.seedId || raw.seed_id,
+      demoDataReason: data.demoDataReason || raw.demo_data_reason,
     };
   });
 
@@ -182,6 +214,11 @@ async function fetchLeagueData(
       experiencePoints: userData.xp,
       isCurrentUser: p.userId === currentUserId,
       canReceiveInvites: true,
+      isMock: userData.isMock === true || p.isMock === true,
+      demoData: userData.demoData === true || p.demoData === true,
+      dataOrigin: userData.dataOrigin || (p.dataOrigin as string | undefined),
+      seedId: userData.seedId || (p.seedId as string | undefined),
+      demoDataReason: userData.demoDataReason || (p.demoDataReason as string | undefined),
     };
   });
 

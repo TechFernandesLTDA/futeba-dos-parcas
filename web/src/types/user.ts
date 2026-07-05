@@ -63,6 +63,12 @@ export interface User {
   
   isSearchable: boolean;
   isVerified: boolean;
+  isMock?: boolean;
+  demoData?: boolean;
+  dataOrigin?: 'REAL' | 'DEMO' | 'TEST' | 'UNKNOWN';
+  seedId?: string;
+  demoDataReason?: string;
+  realDataProtected?: boolean;
   lookingForGameToday?: boolean;
   lookingForGameTodayUntil?: Date;
   lookingForGameTodayUpdatedAt?: Date;
