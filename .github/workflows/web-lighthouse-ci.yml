@@ -40,7 +40,16 @@ jobs:
           cache-dependency-path: web/package-lock.json
 
       - name: Install dependencies
-        run: npm ci --legacy-peer-deps
+        env:
+          NPM_CONFIG_PRODUCTION: 'false'
+        run: npm ci --legacy-peer-deps --include=dev
+
+      - name: Verify Lighthouse toolchain
+        run: |
+          test -x node_modules/.bin/vite
+          test -x node_modules/.bin/lhci
+          ./node_modules/.bin/vite --version
+          ./node_modules/.bin/lhci --version
 
       - name: Build
         run: npm run build

@@ -1,6 +1,6 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-04T21:53:04.567Z",
+  "generatedAt": "2026-07-05T04:01:57.176Z",
   "notes": [
     {
       "version": "1.48.0",
@@ -39,7 +39,11 @@
         "Check-in web aceita coordenadas de forma consistente, inclusive no fluxo por QR Code.",
         "Placeholder de imagem do mural acompanha melhor o dark mode."
       ],
-      "fixed": [],
+      "fixed": [
+        "Check-in web/QR, unpin do mural, soft-delete visível no mural, validação de imagem e tint dark mode.",
+        "Billing parcial deixa de ativar quadra antes da soma de pagamentos aprovados cobrir a mensalidade.",
+        "Auto-close não sobrescreve jogo finalizado e FINISH_TOO_EARLY passou a ser sinal acionável."
+      ],
       "issueRefs": [
         3231,
         3233,
@@ -134,7 +138,9 @@
       ],
       "fixed": [
         "Ajustes de placar, badges, convites, recorrência, temporada ativa, notificações e exclusões em lote eliminaram inconsistências encontradas na auditoria final.",
-        "A navegação e a leitura de jogos ao vivo ficaram mais consistentes após a migração dos fluxos críticos para Cloud Functions."
+        "A navegação e a leitura de jogos ao vivo ficaram mais consistentes após a migração dos fluxos críticos para Cloud Functions.",
+        "Follow-ups da auditoria: cap de milestones XP, temporada ativa, reativação de invite code, retry de push multi-device, paginação e deletes batch-safe, Grid2 no home e consistência de badges/leaderboard.",
+        "Regras e UX do web ficaram coerentes com o endurecimento de `firestore.rules` para impedir transições e escritas críticas no cliente."
       ],
       "issueRefs": [
         3199,
@@ -176,7 +182,14 @@
         "**Convite bypassável via Google corrigido**: o cadastro via Google agora valida o convite no servidor antes de criar a conta — antes era possível contornar o gate de convite logando com Google.",
         "**Mensagens de erro de login limpas**: erros de autenticação agora mostram mensagens amigáveis em PT-BR em vez do texto cru do Firebase. Login com senha errada, Google, recuperação de senha e criação de conta todos mapeados.",
         "**Setup de perfil não reabre mais**: após salvar o perfil no onboarding, o app não reabre mais o modal de perfil incompleto (o claim `profileComplete` é recomputado antes de navegar).",
-        "**Verificação de CPF com auditoria correta**: falhas de verificação recusadas pelo servidor agora são auditadas com a razão certa (antes eram classificadas como formato inválido)."
+        "**Verificação de CPF com auditoria correta**: falhas de verificação recusadas pelo servidor agora são auditadas com a razão certa (antes eram classificadas como formato inválido).",
+        "`AuthContext.signInWithGoogle`: valida convite server-side antes de criar doc; remove conta Auth órfã se rejeitada (#3186).",
+        "`ProfileSetupScreen`: `recomputeMyProfileClaim` + `refreshClaims` antes de navegar (fix re-gate loop, #3187).",
+        "`AuthContext.setError`: sempre mapeado via `getAuthErrorMessage` (nunca mensagem crua).",
+        "`CpfVerificationScreen`: erro `app/cpf-verification-failed` para auditoria precisa.",
+        "`RegisterScreen`: min-length unificado em 2 via `validateName`.",
+        "`OwnerOnboardingScreen`: campo CNPJ estruturado + mapeamento anti-enumeration de CNPJ duplicado.",
+        "`VerificationBanner` removido (código morto)."
       ],
       "issueRefs": [
         3186,
@@ -198,7 +211,10 @@
       "improved": [
         "Ajusta pesos e espaçamento de textos MD3 na web para combinar com Android e iOS, deixando cards, rótulos e seções com aparência mais consistente."
       ],
-      "fixed": [],
+      "fixed": [
+        "Alinha `md3TypeScale` da web aos valores canônicos de `shared/design-tokens.json`.",
+        "Amplia `scripts/check-design-tokens-parity.js` para validar peso e tracking da escala tipográfica web contra os tokens compartilhados."
+      ],
       "issueRefs": [
         3181
       ]
@@ -216,7 +232,10 @@
       "improved": [
         "Links de convite e outras páginas do Web passam a exibir a imagem bonita da bola usada na abertura do app."
       ],
-      "fixed": [],
+      "fixed": [
+        "Atualiza `og:image` e metadados Twitter para usar `/logo.png`, o asset canônico do splash.",
+        "Declara tipo, dimensões e texto alternativo da imagem social."
+      ],
       "issueRefs": []
     },
     {
@@ -233,7 +252,10 @@
         "O texto de compartilhar convite ficou mais claro e mais direto.",
         "O link de convite deixa de aparecer duplicado em apps de compartilhamento como WhatsApp e Telegram."
       ],
-      "fixed": [],
+      "fixed": [
+        "Remove o link interpolado do texto enviado ao Web Share API, mantendo a URL apenas no campo `url`.",
+        "Mantém as traduções de convite alinhadas em PT-BR, EN e ES."
+      ],
       "issueRefs": []
     },
     {
@@ -268,7 +290,10 @@
       "fixed": [
         "Ao confirmar presença, o jogador vê o valor por pessoa já calculado pela duração escolhida na criação do jogo.",
         "A confirmação deixa de depender de qualquer recálculo por hora e passa a usar o valor proporcional salvo no jogo.",
-        "O registro financeiro da presença guarda o valor esperado para manter relatórios e pagamentos alinhados."
+        "O registro financeiro da presença guarda o valor esperado para manter relatórios e pagamentos alinhados.",
+        "Centraliza no Web o cálculo de valor esperado de confirmação a partir de `daily_price`, com fallback para `total_cost / max_players` em jogos legados.",
+        "Persiste `payment_status`, `partial_payment`, `expected_payment` e `expected_payment_cents` na criação de confirmações Web e Android/KMP.",
+        "Expande as Firestore Rules para permitir apenas os novos campos financeiros seguros na criação de confirmações."
       ],
       "issueRefs": []
     },
@@ -286,7 +311,9 @@
       "fixed": [
         "Ao escolher uma quadra com preço por hora, o total do jogo passa a acompanhar o horário de início e fim.",
         "Quadras de R$ 350,00/h agora calculam R$ 700,00 em 2h, R$ 525,00 em 1h30 e demais durações proporcionais.",
-        "A seção de pagamento mostra o cálculo por hora, duração e total para deixar a cobrança mais clara."
+        "A seção de pagamento mostra o cálculo por hora, duração e total para deixar a cobrança mais clara.",
+        "Corrige o cálculo de `totalCost` na tela de criação de jogo para usar `hourlyPrice * duração / 60`.",
+        "Adiciona helpers testáveis para normalizar preço por hora em reais ou centavos e preservar compatibilidade com cadastros antigos."
       ],
       "issueRefs": []
     },
@@ -302,7 +329,8 @@
       "added": [],
       "improved": [],
       "fixed": [
-        "Corrige as traduções em inglês e espanhol das telas de criar e editar local."
+        "Corrige as traduções em inglês e espanhol das telas de criar e editar local.",
+        "Restaura a paridade de chaves i18n entre `pt-BR`, `en` e `es`, corrigindo a falha do `Web CI`."
       ],
       "issueRefs": []
     },
@@ -378,7 +406,10 @@
         "A listagem pública usa o status comercial individual da quadra para disponibilidade.",
         "O painel administrativo mostra a pendência específica de conta comercial irregular sem duplicar a pendência de mensalidade."
       ],
-      "fixed": [],
+      "fixed": [
+        "`isLocationCommerciallyAvailable` não usa mais `venueAccountStatus` como substituto silencioso de `subscriptionStatus`.",
+        "`getLocationCommercialIssues` torna mutuamente exclusivos os avisos de mensalidade individual e conta agregada."
+      ],
       "issueRefs": [
         3121
       ]
@@ -398,7 +429,9 @@
         "O checklist comercial passa a exigir ponto no mapa e horários de funcionamento antes de considerar o cadastro completo.",
         "O painel do dono de quadra usa latitude/longitude no checklist, evitando pendências fantasmas quando a localização já está completa."
       ],
-      "fixed": [],
+      "fixed": [
+        "`ownerDashboard` agora propaga latitude/longitude para o checklist de completude."
+      ],
       "issueRefs": [
         3122
       ]
@@ -1003,7 +1036,10 @@
       "fixed": [
         "Corrige campos numéricos que preenchiam outro valor automaticamente quando o usuário apagava tudo.",
         "Adiciona exemplos, placeholders e mensagens de validação para jogadores, goleiros, times, recorrência e valores.",
-        "Permite deixar preço vazio durante a edição; ao salvar, vazio é tratado como sem cobrança."
+        "Permite deixar preço vazio durante a edição; ao salvar, vazio é tratado como sem cobrança.",
+        "`CreateGameScreen` separa rascunho de digitação dos valores numéricos validados.",
+        "Payload de criação usa os valores normalizados no submit, evitando envio de número antigo após campo limpo.",
+        "Traduções `pt-BR`, `en` e `es` mantidas em paridade para novas mensagens do formulário."
       ],
       "issueRefs": []
     },
@@ -1039,7 +1075,12 @@
         "Corrige botão de criar jogo aparecendo para visitante ou não-membro.",
         "Corrige menu de ações de membros aparecendo vazio para quem não tinha permissão.",
         "Corrige upload de logo do grupo para respeitar JPG, PNG e WebP.",
-        "Remove textos soltos e melhora truncamento/descoberta de ações na tela de grupos."
+        "Remove textos soltos e melhora truncamento/descoberta de ações na tela de grupos.",
+        "`GroupDetailScreen` passa a condicionar ações sensíveis por membership/admin e usa tabs scrollable no mobile.",
+        "`CashboxScreen` adiciona ledger com filtros, `receipt_url` opcional e fluxo de `VOIDED` auditável.",
+        "`GroupEditScreen` e `storage.rules` alinham extensões reais de logo do grupo.",
+        "`GroupSettingsScreen` oculta menus sem ações possíveis e remove textos hardcoded.",
+        "`GroupPhotosPanel` agrega `game_photos` a partir de jogos reais do grupo sem duplicar dados."
       ],
       "issueRefs": [
         3030,
@@ -1083,7 +1124,9 @@
       "fixed": [
         "Corrige jogadores aparecendo com jogos, gols, assistências ou MVPs zerados mesmo quando já tinham partidas processadas.",
         "Corrige divergência entre a tela de estatísticas e o card do jogador.",
-        "Mantém fallback legado apenas quando a estatística oficial ainda não existe."
+        "Mantém fallback legado apenas quando a estatística oficial ainda não existe.",
+        "`usePlayerCard`, `useStatistics`, `usePlayers` e `AuthContext` passam a ler `statistics/{uid}` e `user_streaks` como fonte canônica.",
+        "Adiciona normalizador compartilhado para mapear `gamesWon`, `bestPlayerCount`, `totalGames` e campos legados sem drift."
       ],
       "issueRefs": []
     },
@@ -1118,7 +1161,9 @@
         "Ajusta espaçamentos, tamanhos e grade de estatísticas para telas pequenas.",
         "Mantém o visual do redesign e o compartilhamento/baixar imagem."
       ],
-      "fixed": [],
+      "fixed": [
+        "Adiciona `maxHeight`/`overflowY` responsivo no modal do `PlayerCard` e compacta estilos `xs` para viewport mobile com barras do navegador."
+      ],
       "issueRefs": []
     },
     {
@@ -1185,7 +1230,9 @@
         "Corrige a renderização desktop que deixava o Criar Jogo preso em um painel lateral estreito.",
         "Mantém o comportamento mobile e as proteções de rascunho/alterações não salvas."
       ],
-      "fixed": [],
+      "fixed": [
+        "Remove o wrapper `AdaptiveFormSheet` da `CreateGameScreen` para evitar Drawer lateral no desktop."
+      ],
       "issueRefs": []
     },
     {
@@ -1377,7 +1424,9 @@
         "Ranking recalcula em tempo real para a temporada selecionada.",
         "Estado de temporada única continua visível e bloqueia troca durante carregamento."
       ],
-      "fixed": [],
+      "fixed": [
+        "`useGroupLeague` agora usa a temporada selecionada no query key, fetch e listener em tempo real."
+      ],
       "issueRefs": [
         2978
       ]
@@ -1527,7 +1576,8 @@
       "improved": [],
       "fixed": [
         "O botão de check-in deixa de aparecer depois que o jogador já fez check-in.",
-        "Removida a aba antiga de fotos que duplicava o álbum em partidas finalizadas."
+        "Removida a aba antiga de fotos que duplicava o álbum em partidas finalizadas.",
+        "Condição web agora usa `checkedIn` em vez de depender do status `CHECKED_IN`, que a Cloud Function não grava."
       ],
       "issueRefs": [
         2981
@@ -1606,7 +1656,8 @@
         "Validações client-side reduzem envios incompletos."
       ],
       "fixed": [
-        "Corrigido o envio de desafios que não gravava `created_by`, causando bloqueio pelas Firestore Rules."
+        "Corrigido o envio de desafios que não gravava `created_by`, causando bloqueio pelas Firestore Rules.",
+        "Criação web de desafios passa a gravar `created_by`, `updated_at`, meta, alvo e prazo."
       ],
       "issueRefs": [
         2984
@@ -1806,7 +1857,8 @@
         "Convocações de reforço agora criam confirmação pendente, registro de convocação e notificação em uma operação atômica."
       ],
       "fixed": [
-        "Regras do Firestore para convocações de jogo agora bloqueiam campos arbitrários, status inicial inválido e posições fora do catálogo."
+        "Regras do Firestore para convocações de jogo agora bloqueiam campos arbitrários, status inicial inválido e posições fora do catálogo.",
+        "Fluxo de convocação de reforço usa `writeBatch()` para manter confirmação pendente, summon e notificação consistentes."
       ],
       "issueRefs": [
         2974,
@@ -1847,7 +1899,8 @@
       ],
       "fixed": [
         "Corrigido caso em que a etapa de SMS podia não abrir corretamente no web mobile.",
-        "Corrigido caso em que o botão de enviar SMS no Android podia não disparar se a tela recebesse um contexto embrulhado."
+        "Corrigido caso em que o botão de enviar SMS no Android podia não disparar se a tela recebesse um contexto embrulhado.",
+        "Fluxo de verificação por SMS deixa de bloquear cadastro legítimo em falhas transitórias do preflight."
       ],
       "issueRefs": []
     },
@@ -1885,7 +1938,8 @@
         "A aba de jogos ignora partidas ativas antigas no filtro principal."
       ],
       "fixed": [
-        "Corrigidos casos em que jogos antigos ainda apareciam como abertos, confirmados ou próximos."
+        "Corrigidos casos em que jogos antigos ainda apareciam como abertos, confirmados ou próximos.",
+        "Listas e cards de próximo jogo não priorizam mais partidas antigas que ficaram com status ativo no Firestore."
       ],
       "issueRefs": []
     },
@@ -1924,7 +1978,9 @@
       ],
       "fixed": [
         "Corrigido o comportamento em que algumas páginas abriam levemente roladas para baixo.",
-        "Corrigidos casos em que botões e links podiam quebrar de forma apertada no menor breakpoint mobile."
+        "Corrigidos casos em que botões e links podiam quebrar de forma apertada no menor breakpoint mobile.",
+        "Scroll inicial de páginas e abas web ajustado para não ficar escondido sob a topbar.",
+        "Bundle de release notes web atualizado para refletir as mudanças recentes."
       ],
       "issueRefs": []
     },
@@ -1962,7 +2018,9 @@
       ],
       "fixed": [
         "Removidas mensagens de erro duplicadas (alerta + toast) em vários formulários.",
-        "Corrigidos contrastes e tokens de cor no modo escuro."
+        "Corrigidos contrastes e tokens de cor no modo escuro.",
+        "LiveGameScreen com maxWidth no desktop e MuiDialog no tema escuro (#1479).",
+        "Erros duplicados Alert+Toast em EditProfile e no fluxo de CPF (#1421, #1420)."
       ],
       "issueRefs": [
         1465,

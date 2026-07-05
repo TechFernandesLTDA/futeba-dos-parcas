@@ -209,8 +209,8 @@ test('buildAutogen: independente da ordem de entrada', () => {
 
 test('buildAutogen: versoes ordenadas da mais nova para a mais antiga', () => {
   const out = buildAutogen(fixedNotes());
-  const idxNew = out.indexOf('[1.22.0]');
-  const idxOld = out.indexOf('[1.21.0]');
+  const idxNew = out.indexOf('[1.22.0][android-1.22.0]');
+  const idxOld = out.indexOf('[1.21.0][android-1.21.0]');
   assert.ok(idxNew !== -1 && idxOld !== -1, 'ambas as versoes devem aparecer');
   assert.ok(idxNew < idxOld, '1.22.0 deve vir antes de 1.21.0');
 });
@@ -221,6 +221,29 @@ test('buildAutogen: inclui rotulos PT-BR e refs de issues/PRs', () => {
   assert.ok(out.includes('#### Corrigido'), 'esperava rotulo PT-BR "Corrigido"');
   assert.ok(out.includes('Issues: #123, #456'), 'esperava refs de issues');
   assert.ok(out.includes('PRs: #789'), 'esperava refs de PRs');
+  assert.ok(
+    out.includes('[android-1.22.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.22.0.md'),
+    'esperava ref platform-scoped apontando para o arquivo-fonte'
+  );
+});
+
+test('buildAutogen: desambigua labels quando plataformas compartilham a mesma versao', () => {
+  const out = buildAutogen([
+    {
+      platform: 'ios',
+      version: '1.6.0',
+      fm: { date: '2026-05-22', issues: [], prs: [] },
+      body: { 'Técnico': { Added: ['Preview iOS'] } },
+    },
+    {
+      platform: 'functions',
+      version: '1.6.0',
+      fm: { date: '2026-07-04', issues: [], prs: [] },
+      body: { 'Técnico': { Fixed: ['Release publish'] } },
+    },
+  ]);
+  assert.ok(out.includes('### [1.6.0][ios-1.6.0] - 2026-05-22'));
+  assert.ok(out.includes('### [1.6.0][functions-1.6.0] - 2026-07-04'));
 });
 
 // ==========================================================================
@@ -258,12 +281,26 @@ test('toClientNote: extrai a nota de cliente do formato-fonte', () => {
   assert.equal(client.highlights.length, 1);
   assert.equal(client.highlights[0].icon, 'star');
   assert.deepEqual(client.issueRefs, [123, 456]);
+  assert.deepEqual(client.fixed, ['Corrigido crash no login', 'Race condition no XP']);
 });
 
 test('toClientNote: published omitido vira true; published:false vira false', () => {
   const base = { version: '1.0.0', file: 'f.md', body: validBody() };
   assert.equal(toClientNote({ ...base, fm: validFm() }).published, true);
   assert.equal(toClientNote({ ...base, fm: { ...validFm(), published: false } }).published, false);
+});
+
+test('toClientNote: usa Fixed tecnico quando Correções do usuario estiver vazio', () => {
+  const body = validBody();
+  body['Para o usuário'].Correções = [];
+  body['Técnico'].Fixed = ['Contrato do mural alinhado'];
+  const client = toClientNote({
+    version: '1.36.0',
+    file: 'f.md',
+    fm: validFm(),
+    body,
+  });
+  assert.deepEqual(client.fixed, ['Contrato do mural alinhado']);
 });
 
 test('parseBody: estrutura H2/H3/itens corretamente', () => {

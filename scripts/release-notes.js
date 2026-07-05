@@ -24,6 +24,8 @@ const path = require('path');
 const ROOT = path.resolve(__dirname, '..');
 const NOTES_DIR = path.join(ROOT, 'release-notes');
 const CHANGELOG_PATH = path.join(ROOT, 'CHANGELOG.md');
+const REPO_RELEASE_NOTES_BASE_URL =
+  'https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes';
 
 const PLATFORMS = ['android', 'web', 'ios', 'functions'];
 // Plataformas com app cliente: recebem bundle embarcado e doc no Firestore.
@@ -288,12 +290,25 @@ function compareVersionsDesc(a, b) {
   return 0;
 }
 
+function uniqueNonEmpty(items) {
+  return [...new Set(items.filter((item) => typeof item === 'string' && item.trim() !== ''))];
+}
+
+function buildReleaseNoteLinkLabel(note) {
+  return `${note.platform}-${note.version}`;
+}
+
+function buildReleaseNoteSourceUrl(note) {
+  return `${REPO_RELEASE_NOTES_BASE_URL}/${note.platform}/${note.version}.md`;
+}
+
 // ==========================================================================
 // Transformacao para nota de cliente (bundle / publish)
 // ==========================================================================
 
 function toClientNote(note) {
   const user = note.body[SECTION_USER] || {};
+  const tech = note.body[SECTION_TECH] || {};
   const highlights = (user.Destaques || [])
     .map((d) => parseHighlight(d, note.file, []))
     .filter(Boolean);
@@ -308,9 +323,52 @@ function toClientNote(note) {
     highlights,
     added: user.Novidades || [],
     improved: user.Melhorias || [],
-    fixed: user.Correções || [],
+    fixed: uniqueNonEmpty([...(user.Correções || []), ...(tech.Fixed || [])]),
     issueRefs: note.fm.issues || [],
   };
+}
+
+function buildBundlePayload(platform, notes, generatedAt = new Date().toISOString()) {
+  const platformNotes = notes
+    .filter((n) => n.platform === platform)
+    .sort((a, b) => compareVersionsDesc(a.version, b.version))
+    .map(toClientNote);
+  return {
+    platform,
+    generatedAt,
+    notes: platformNotes,
+  };
+}
+
+function validateBundleTargets(notes, errors) {
+  for (const platform of CLIENT_PLATFORMS) {
+    const expected = buildBundlePayload(platform, notes, '1970-01-01T00:00:00.000Z');
+    for (const relativePath of BUNDLE_TARGETS[platform]) {
+      const target = path.join(ROOT, relativePath);
+      if (!fs.existsSync(target)) {
+        errors.push(`${relativePath}: bundle ausente — rode "node scripts/release-notes.js bundle"`);
+        continue;
+      }
+      let parsed;
+      try {
+        parsed = JSON.parse(fs.readFileSync(target, 'utf-8'));
+      } catch (error) {
+        errors.push(`${relativePath}: JSON invalido (${error.message})`);
+        continue;
+      }
+      const actual = {
+        platform: parsed.platform,
+        generatedAt: '1970-01-01T00:00:00.000Z',
+        notes: parsed.notes,
+      };
+      if (JSON.stringify(actual) !== JSON.stringify(expected)) {
+        errors.push(
+          `${relativePath}: bundle fora de sincronia com release-notes/${platform}/*.md — rode ` +
+            '"node scripts/release-notes.js bundle"'
+        );
+      }
+    }
+  }
 }
 
 // ==========================================================================
@@ -319,6 +377,7 @@ function toClientNote(note) {
 
 function cmdValidate() {
   const { notes, errors } = collectNotes();
+  validateBundleTargets(notes, errors);
   if (errors.length) {
     printErrors(errors);
     process.exit(1);
@@ -332,6 +391,7 @@ function cmdValidate() {
 
 function buildAutogen(notes) {
   const lines = [];
+  const linkRefs = [];
   for (const platform of PLATFORMS) {
     const platformNotes = notes
       .filter((n) => n.platform === platform)
@@ -339,7 +399,8 @@ function buildAutogen(notes) {
     if (platformNotes.length === 0) continue;
     lines.push(`## ${PLATFORM_LABEL[platform]}`, '');
     for (const note of platformNotes) {
-      lines.push(`### [${note.version}] - ${note.fm.date}`, '');
+      const refLabel = buildReleaseNoteLinkLabel(note);
+      lines.push(`### [${note.version}][${refLabel}] - ${note.fm.date}`, '');
       const tech = note.body[SECTION_TECH] || {};
       for (const sec of TECH_SECTIONS) {
         const items = tech[sec] || [];
@@ -348,15 +409,19 @@ function buildAutogen(notes) {
         for (const item of items) lines.push(`- ${item}`);
         lines.push('');
       }
-      const refs = [];
+      const itemRefs = [];
       if (note.fm.issues && note.fm.issues.length) {
-        refs.push(`Issues: ${note.fm.issues.map((i) => `#${i}`).join(', ')}`);
+        itemRefs.push(`Issues: ${note.fm.issues.map((i) => `#${i}`).join(', ')}`);
       }
       if (note.fm.prs && note.fm.prs.length) {
-        refs.push(`PRs: ${note.fm.prs.map((i) => `#${i}`).join(', ')}`);
+        itemRefs.push(`PRs: ${note.fm.prs.map((i) => `#${i}`).join(', ')}`);
       }
-      if (refs.length) lines.push(`_${refs.join(' · ')}_`, '');
+      if (itemRefs.length) lines.push(`_${itemRefs.join(' · ')}_`, '');
+      linkRefs.push(`[${refLabel}]: ${buildReleaseNoteSourceUrl(note)}`);
     }
+  }
+  if (linkRefs.length) {
+    lines.push('', ...linkRefs);
   }
   return lines.join('\n').trimEnd();
 }
@@ -387,21 +452,13 @@ function cmdChangelog() {
 function cmdBundle() {
   const notes = loadNotesOrExit();
   for (const platform of CLIENT_PLATFORMS) {
-    const platformNotes = notes
-      .filter((n) => n.platform === platform)
-      .sort((a, b) => compareVersionsDesc(a.version, b.version))
-      .map(toClientNote);
-    const payload = {
-      platform,
-      generatedAt: new Date().toISOString(),
-      notes: platformNotes,
-    };
+    const payload = buildBundlePayload(platform, notes);
     const json = `${JSON.stringify(payload, null, 2)}\n`;
     for (const relativePath of BUNDLE_TARGETS[platform]) {
       const target = path.join(ROOT, relativePath);
       fs.mkdirSync(path.dirname(target), { recursive: true });
       fs.writeFileSync(target, json);
-      console.log(`bundle: ${relativePath} — ${platformNotes.length} nota(s).`);
+      console.log(`bundle: ${relativePath} — ${payload.notes.length} nota(s).`);
     }
   }
 }

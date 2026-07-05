@@ -123,4 +123,6 @@ subseção precisa ter conteúdo.
 node scripts/release-notes.js validate
 ```
 
-Roda na CI. Falha (exit ≠ 0) se qualquer arquivo violar o formato acima.
+Roda na CI. Falha (exit ≠ 0) se qualquer arquivo violar o formato acima ou se
+algum bundle embarcado (`app/.../release-notes.json`, `web/public/...`,
+`ios.../release-notes.json`) estiver fora de sincronia com a fonte.
