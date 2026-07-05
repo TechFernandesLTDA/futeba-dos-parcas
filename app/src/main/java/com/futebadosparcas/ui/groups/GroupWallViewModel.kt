@@ -115,7 +115,7 @@ class GroupWallViewModel(
     fun deletePost(groupId: String, post: GroupWallPost) {
         viewModelScope.launch {
             _actionState.value = GroupWallActionState.Deleting
-            val result = repository.deletePost(groupId, post.id, post.mediaPath)
+            val result = repository.deletePost(groupId, post)
             _actionState.value = result.fold(
                 onSuccess = { GroupWallActionState.Success("Post removido") },
                 onFailure = { GroupWallActionState.Error(it.message ?: "Erro ao remover") }

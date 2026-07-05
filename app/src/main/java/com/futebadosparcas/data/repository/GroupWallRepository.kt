@@ -10,13 +10,13 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
-import com.google.firebase.firestore.QueryDocumentSnapshot
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 import java.util.UUID
+import java.util.Date
 
 /**
  * Repository do mural de resenha/provocações do grupo (issue #3232, épico #3240).
@@ -48,7 +48,14 @@ class GroupWallRepository constructor(
      * Erros propagados via close(error) → consumer usa .catch {}.
      */
     fun observePosts(groupId: String): Flow<List<GroupWallPost>> = callbackFlow {
-        val listener = wallCollection(groupId)
+        var recentPosts = emptyList<GroupWallPost>()
+        var pinnedPosts = emptyList<GroupWallPost>()
+
+        fun emitMergedPosts() {
+            trySend(mergeRecentAndPinnedPosts(recentPosts, pinnedPosts))
+        }
+
+        val recentListener = wallCollection(groupId)
             .orderBy("created_at", Query.Direction.DESCENDING)
             .limit(PAGE_SIZE)
             .addSnapshotListener { snapshot, error ->
@@ -58,14 +65,33 @@ class GroupWallRepository constructor(
                     return@addSnapshotListener
                 }
 
-                val posts = snapshot?.documents?.mapNotNull { doc ->
+                recentPosts = snapshot?.documents?.mapNotNull { doc ->
                     doc.toObject(GroupWallPost::class.java)?.copy(id = doc.id)
-                }?.filter { !it.isDeleted() } ?: emptyList()
+                } ?: emptyList()
 
-                trySend(posts)
+                emitMergedPosts()
             }
 
-        awaitClose { listener.remove() }
+        val pinnedListener = wallCollection(groupId)
+            .whereEqualTo("pinned", true)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    AppLogger.e(TAG, "Erro ao observar fixados do mural do grupo $groupId", error)
+                    close(error)
+                    return@addSnapshotListener
+                }
+
+                pinnedPosts = snapshot?.documents?.mapNotNull { doc ->
+                    doc.toObject(GroupWallPost::class.java)?.copy(id = doc.id)
+                } ?: emptyList()
+
+                emitMergedPosts()
+            }
+
+        awaitClose {
+            recentListener.remove()
+            pinnedListener.remove()
+        }
     }
 
     /**
@@ -77,8 +103,8 @@ class GroupWallRepository constructor(
             val currentUser = auth.currentUser
                 ?: throw IllegalStateException("Usuário não autenticado")
             val cleanText = text.trim()
-            require(cleanText.isNotEmpty() || imageUri != null) {
-                "Escreva algo ou anexe uma foto"
+            require(cleanText.isNotEmpty()) {
+                "Adicione um texto antes de enviar a foto."
             }
             require(cleanText.length <= MAX_TEXT_LENGTH) {
                 "Texto deve ter no máximo $MAX_TEXT_LENGTH caracteres"
@@ -95,30 +121,36 @@ class GroupWallRepository constructor(
                 mediaType = "image/jpeg"
             }
 
-            val post = mapOf(
-                "group_id" to groupId,
-                "author_id" to currentUser.uid,
-                "author_name" to (currentUser.displayName ?: "Jogador"),
-                "author_photo_url" to (currentUser.photoUrl?.toString() ?: null),
-                "text" to cleanText,
-                "media_url" to mediaUrl,
-                "media_path" to mediaPath,
-                "media_type" to mediaType,
-                "thumbnail_path" to null,
-                "highlight_ref" to null,
-                "pinned" to false,
-                "pinned_by" to null,
-                "pinned_at" to null,
-                "reactions" to emptyMap<String, List<String>>(),
-                "comments_count" to 0,
-                "created_at" to FieldValue.serverTimestamp(),
-                "updated_at" to FieldValue.serverTimestamp(),
-                "edited_at" to null,
-                "deleted_by" to null,
-                "deleted_at" to null
-            )
+            try {
+                val post = mapOf(
+                    "group_id" to groupId,
+                    "author_id" to currentUser.uid,
+                    "author_name" to (currentUser.displayName ?: "Jogador"),
+                    "author_photo_url" to (currentUser.photoUrl?.toString() ?: null),
+                    "text" to cleanText,
+                    "media_url" to mediaUrl,
+                    "media_path" to mediaPath,
+                    "media_type" to mediaType,
+                    "thumbnail_path" to null,
+                    "highlight_ref" to null,
+                    "pinned" to false,
+                    "pinned_by" to null,
+                    "pinned_at" to null,
+                    "reactions" to emptyMap<String, List<String>>(),
+                    "comments_count" to 0,
+                    "created_at" to FieldValue.serverTimestamp(),
+                    "updated_at" to FieldValue.serverTimestamp(),
+                    "edited_at" to null,
+                    "deleted_by" to null,
+                    "deleted_at" to null
+                )
 
-            wallCollection(groupId).add(post).await()
+                wallCollection(groupId).add(post).await()
+            } catch (e: Exception) {
+                deleteStoragePaths(storage, TAG, mediaPath)
+                throw e
+            }
+
             AppLogger.d(TAG) { "Post criado no mural do grupo $groupId" }
             Result.success(Unit)
         } catch (e: Exception) {
@@ -230,13 +262,13 @@ class GroupWallRepository constructor(
      * Soft-delete (deleted_by + deleted_at via serverTimestamp).
      * Rules validam que só autor/owner/admin pode soft-deletar.
      */
-    suspend fun deletePost(groupId: String, postId: String, mediaPath: String?): Result<Unit> {
+    suspend fun deletePost(groupId: String, post: GroupWallPost): Result<Unit> {
         return try {
             val currentUser = auth.currentUser
                 ?: throw IllegalStateException("Usuário não autenticado")
 
             val batch = firestore.batch()
-            val postRef = wallCollection(groupId).document(postId)
+            val postRef = wallCollection(groupId).document(post.id)
             batch.update(
                 postRef,
                 mapOf(
@@ -247,18 +279,12 @@ class GroupWallRepository constructor(
             )
             batch.commit().await()
 
-            if (!mediaPath.isNullOrBlank()) {
-                try {
-                    storage.getReference(mediaPath).delete().await()
-                } catch (e: Exception) {
-                    AppLogger.w(TAG) { "Falha ao deletar mídia $mediaPath: ${e.message}" }
-                }
-            }
+            deleteStoragePaths(storage, TAG, post.mediaPath, post.thumbnailPath)
 
-            AppLogger.d(TAG) { "Post $postId soft-deletado no grupo $groupId" }
+            AppLogger.d(TAG) { "Post ${post.id} soft-deletado no grupo $groupId" }
             Result.success(Unit)
         } catch (e: Exception) {
-            AppLogger.e(TAG, "Erro ao deletar post $postId no grupo $groupId", e)
+            AppLogger.e(TAG, "Erro ao deletar post ${post.id} no grupo $groupId", e)
             Result.failure(e)
         }
     }
@@ -307,4 +333,37 @@ class GroupWallRepository constructor(
             Long.MAX_VALUE
         }
     }
+}
+
+internal fun mergeRecentAndPinnedPosts(
+    recentPosts: List<GroupWallPost>,
+    pinnedPosts: List<GroupWallPost>
+): List<GroupWallPost> {
+    val pinned = (recentPosts + pinnedPosts)
+        .filter { it.pinned && !it.isDeleted() }
+        .distinctBy { it.id }
+        .sortedWith(
+            compareByDescending<GroupWallPost> { it.pinnedAt ?: it.createdAt ?: Date(0) }
+                .thenByDescending { it.createdAt ?: Date(0) }
+        )
+
+    val regular = recentPosts
+        .filter { !it.pinned && !it.isDeleted() }
+        .distinctBy { it.id }
+
+    return pinned + regular
+}
+
+private suspend fun deleteStoragePaths(storage: FirebaseStorage, tag: String, vararg paths: String?) {
+    paths
+        .filterNotNull()
+        .filter { it.isNotBlank() }
+        .distinct()
+        .forEach { path ->
+            try {
+                storage.getReference(path).delete().await()
+            } catch (e: Exception) {
+                AppLogger.w(tag) { "Falha ao deletar mídia $path: ${e.message}" }
+            }
+        }
 }

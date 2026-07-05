@@ -1008,6 +1008,7 @@ subir no ranking!</string>
     <string name="group_wall_image_preview">Pré-visualização da imagem</string>
     <string name="group_wall_image_alt">Foto de %1$s</string>
     <string name="group_wall_image_too_large">Imagem muito grande. O limite é 10MB.</string>
+    <string name="group_wall_text_required_for_photo">Adicione um texto antes de enviar a foto.</string>
     <string name="group_wall_load_more">Carregar mais</string>
     <string name="group_wall_pinned">Fixado</string>
     <string name="group_wall_pin">Fixar no topo</string>
