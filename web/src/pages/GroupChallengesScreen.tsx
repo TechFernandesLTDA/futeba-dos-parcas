@@ -32,6 +32,7 @@ import {
   EmojiEvents as GoalIcon,
 } from "@mui/icons-material";
 import { useGroupChallenges, useChallengeGroup, useRespondChallenge, useUpdateChallengeProgress, GroupChallenge } from "../hooks/useGroupChallenges";
+import { useGroupDetail } from "../hooks/useGroups";
 import { useOfficialGroups } from "../hooks/useOfficialGroups";
 import { EmptyState } from "../components/common/EmptyState";
 import { ErrorState } from "../components/common/ErrorState";
@@ -47,6 +48,7 @@ export const GroupChallengesScreen: React.FC = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down("sm")); // #2238
   const { data: challenges, isLoading, error, refetch } = useGroupChallenges(groupId);
   const { data: officialGroups = [] } = useOfficialGroups();
+  const { group, loading: groupLoading } = useGroupDetail(groupId ?? null);
   const challengeGroup = useChallengeGroup();
   const respond = useRespondChallenge();
   const updateProgress = useUpdateChallengeProgress();
@@ -64,7 +66,9 @@ export const GroupChallengesScreen: React.FC = () => {
   const [respondingId, setRespondingId] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
-  const currentGroup = officialGroups.find((g) => g.id === groupId);
+  const officialCurrentGroup = officialGroups.find((g) => g.id === groupId);
+  const currentGroup = officialCurrentGroup ?? group;
+  const challengeTargets = officialGroups.filter((g) => g.id !== groupId);
 
   const handleSendChallenge = async () => {
     if (!currentGroup || !selectedGroupId || !goal.trim() || targetCount < 1 || !deadline) return;
@@ -137,7 +141,7 @@ export const GroupChallengesScreen: React.FC = () => {
           variant="contained"
           startIcon={<SendIcon />}
           onClick={() => setChallengeDialogOpen(true)}
-          disabled={!currentGroup}
+          disabled={groupLoading || !currentGroup || challengeTargets.length === 0}
         >
           {t("challenges.challenge")}
         </Button>
@@ -306,8 +310,7 @@ export const GroupChallengesScreen: React.FC = () => {
               SelectProps={{ native: true }}
             >
               <option value="">{t("challenges.selectGroup")}</option>
-              {officialGroups
-                .filter((g) => g.id !== groupId)
+              {challengeTargets
                 .map((g) => (
                   <option key={g.id} value={g.id}>
                     {g.name}

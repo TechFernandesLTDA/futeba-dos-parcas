@@ -1,7 +1,38 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-05T12:46:38.614Z",
+  "generatedAt": "2026-07-05T13:28:58.600Z",
   "notes": [
+    {
+      "version": "1.48.3",
+      "buildNumber": null,
+      "releaseDate": "2026-07-05",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "A tela de desafios do grupo voltou a carregar corretamente para grupos normais.",
+      "highlights": [
+        {
+          "icon": "sports_soccer",
+          "title": "Desafios no grupo",
+          "description": "O botão de desafiar agora reconhece o grupo aberto mesmo quando ele não vem da lista de grupos oficiais."
+        },
+        {
+          "icon": "bolt",
+          "title": "Carregamento ajustado",
+          "description": "As consultas de desafios ganharam os índices necessários para listar enviados e recebidos por data."
+        }
+      ],
+      "added": [],
+      "improved": [
+        "A tela de desafios passa a usar o documento real do grupo como fonte do nome do desafiante.",
+        "O botão de criar desafio só fica ativo quando o grupo atual e a lista de adversários estão disponíveis."
+      ],
+      "fixed": [
+        "`GroupChallengesScreen` deixou de depender exclusivamente de `official-groups` para resolver o grupo atual.",
+        "Firestore indexes adicionados para `group-challenges` por `challenged_group_id/created_at` e `challenger_group_id/created_at`."
+      ],
+      "issueRefs": []
+    },
     {
       "version": "1.48.2",
       "buildNumber": null,
