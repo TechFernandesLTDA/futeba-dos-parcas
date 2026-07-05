@@ -66,6 +66,19 @@ export default defineConfig({
           if (id.includes('@mui/') || id.includes('@emotion/')) {
             return 'vendor-mui'
           }
+          // Firebase side services: keep cold-path SDKs out of the initial auth/data chunk.
+          if (id.includes('firebase/messaging')) {
+            return 'vendor-firebase-messaging'
+          }
+          if (id.includes('firebase/storage')) {
+            return 'vendor-firebase-storage'
+          }
+          if (id.includes('firebase/functions')) {
+            return 'vendor-firebase-functions'
+          }
+          if (id.includes('firebase/analytics')) {
+            return 'vendor-firebase-analytics'
+          }
           // Firebase SDK
           if (id.includes('firebase/')) {
             return 'vendor-firebase'

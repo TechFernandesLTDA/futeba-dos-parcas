@@ -160,6 +160,16 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.48.7][web-1.48.7] - 2026-07-05
+
+#### Mudado
+- `HomeScreen` deixa de chamar `usePrefetchHome()` no primeiro render, removendo consultas redundantes de games, grupos e notificações.
+- `useNotificationPermission` carrega Firebase Messaging sob demanda e após idle quando notificações já estão concedidas.
+- O timeout de proteção contra flicker no redirect para login foi reduzido de 1200ms para 300ms.
+- `vite.config.ts` separa chunks frios de Firebase Messaging, Storage, Functions e Analytics do chunk Firebase principal.
+
+_Issues: #3288_
+
 ### [1.48.6][web-1.48.6] - 2026-07-05
 
 #### Corrigido
@@ -1385,6 +1395,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.48.7]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.48.7.md
 [web-1.48.6]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.48.6.md
 [web-1.48.5]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.48.5.md
 [web-1.48.4]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.48.4.md

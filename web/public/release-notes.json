@@ -1,7 +1,32 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-05T14:41:43.127Z",
+  "generatedAt": "2026-07-05T14:57:14.746Z",
   "notes": [
+    {
+      "version": "1.48.7",
+      "buildNumber": null,
+      "releaseDate": "2026-07-05",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "A primeira abertura do app web ficou mais leve.",
+      "highlights": [
+        {
+          "icon": "speed",
+          "title": "Abertura mais rápida",
+          "description": "A Home deixa de disparar trabalho secundário enquanto a tela inicial ainda está carregando."
+        }
+      ],
+      "added": [],
+      "improved": [
+        "O app reduz o tempo de espera antes de redirecionar sessões sem login para a tela de entrada.",
+        "A inicialização de notificações fica adiada até ser necessária, evitando trabalho extra no primeiro render."
+      ],
+      "fixed": [],
+      "issueRefs": [
+        3288
+      ]
+    },
     {
       "version": "1.48.6",
       "buildNumber": null,
