@@ -160,6 +160,12 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.48.3][web-1.48.3] - 2026-07-05
+
+#### Corrigido
+- `GroupChallengesScreen` deixou de depender exclusivamente de `official-groups` para resolver o grupo atual.
+- Firestore indexes adicionados para `group-challenges` por `challenged_group_id/created_at` e `challenger_group_id/created_at`.
+
 ### [1.48.2][web-1.48.2] - 2026-07-05
 
 #### Mudado
@@ -1354,6 +1360,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.48.3]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.48.3.md
 [web-1.48.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.48.2.md
 [web-1.48.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.48.1.md
 [web-1.48.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.48.0.md
