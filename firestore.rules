@@ -273,6 +273,17 @@ service cloud.firestore {
       return groupDoc != null && (groupDoc.data.status == 'ACTIVE' || !('status' in groupDoc.data));
     }
 
+    // Criar jogo exige um grupo base qualificado: dono atual + >= 5 membros.
+    function canCreateGameForQualifiedOwnedGroup(data) {
+      return data.get('group_id', null) is string &&
+             data.group_id.size() > 0 &&
+             get(/databases/$(database)/documents/groups/$(data.group_id)) != null &&
+             get(/databases/$(database)/documents/groups/$(data.group_id)).data.owner_id == userId() &&
+             (get(/databases/$(database)/documents/groups/$(data.group_id)).data.status == 'ACTIVE' ||
+              !('status' in get(/databases/$(database)/documents/groups/$(data.group_id)).data)) &&
+             get(/databases/$(database)/documents/groups/$(data.group_id)).data.get('member_count', 0) >= 5;
+    }
+
     // ============================================
     // FUNCOES DE VALIDACAO DE DADOS
     // ============================================
@@ -934,10 +945,8 @@ service cloud.firestore {
                        request.resource.data.status == 'SCHEDULED' &&
                        // SECFIX #422: data deve ser futura (1h tolerance)
                        isFutureGameDate(request.resource.data) &&
-                       // SECFIX #424: se group_id presente, exige membership
-                       (request.resource.data.get('group_id', null) == null ||
-                        isGroupMember(request.resource.data.group_id) ||
-                        isAdmin()) &&
+                       // Criacao de jogo exige grupo base do proprio dono com >=5 membros.
+                       (isAdmin() || canCreateGameForQualifiedOwnedGroup(request.resource.data)) &&
                        // Validacao de max_players (2-50) - #28
                        isValidMaxPlayers(request.resource.data.max_players) &&
                        // Validacao de max_goalkeepers (0-10) - #28

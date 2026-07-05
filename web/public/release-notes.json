@@ -1,7 +1,36 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-05T14:57:14.746Z",
+  "generatedAt": "2026-07-05T15:21:27.706Z",
   "notes": [
+    {
+      "version": "1.48.8",
+      "buildNumber": null,
+      "releaseDate": "2026-07-05",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "A criação de jogos agora exige um grupo formado.",
+      "highlights": [
+        {
+          "icon": "groups",
+          "title": "Grupo obrigatório",
+          "description": "Para marcar jogo, o organizador precisa ser dono de um grupo com pelo menos 5 membros."
+        }
+      ],
+      "added": [],
+      "improved": [],
+      "fixed": [
+        "A tela de criar jogo passa a listar somente grupos próprios com 5 membros ou mais.",
+        "Usuários sem grupo elegível recebem uma mensagem clara antes de tentar criar o jogo.",
+        "A criação rápida por template segue a mesma regra de grupo qualificado.",
+        "`CreateGameScreen` remove a opção de criar jogo sem grupo e filtra grupos inelegíveis.",
+        "`useCreateGame` valida o grupo antes de gravar em `games`.",
+        "`firestore.rules` rejeita criação direta de jogo sem `group_id`, com grupo de outro dono, inativo/deletado ou com `member_count < 5`."
+      ],
+      "issueRefs": [
+        3290
+      ]
+    },
     {
       "version": "1.48.7",
       "buildNumber": null,

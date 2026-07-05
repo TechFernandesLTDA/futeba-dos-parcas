@@ -32,6 +32,8 @@ import { resolveExpectedPayment, toPaymentCents } from '../utils/gamePayment';
 
 const logger = createLogger('useGames');
 
+const MIN_GROUP_MEMBERS_TO_CREATE_GAME = 5;
+
 // Converte documento Firestore para objeto Game
 function parseGameDoc(docId: string, raw: Record<string, unknown>): Game {
   const converted = snakeToCamel(raw);
@@ -311,6 +313,30 @@ export function useCreateGame() {
       try {
         const gamesRef = collection(db, 'games');
         const displayName = firebaseUser?.displayName || user?.name || 'Organizador';
+
+        if (!gameData.groupId) {
+          throw new Error(t('games.create.errorQualifiedOwnerGroupRequired'));
+        }
+
+        const groupSnap = await getDoc(doc(db, 'groups', gameData.groupId));
+        if (!groupSnap.exists()) {
+          throw new Error(t('games.create.errorQualifiedOwnerGroupRequired'));
+        }
+
+        const groupData = snakeToCamel(groupSnap.data()) as {
+          ownerId?: string;
+          memberCount?: number;
+          status?: string;
+        };
+        const memberCount = Number(groupData.memberCount ?? 0);
+
+        if (
+          groupData.ownerId !== uid ||
+          groupData.status === 'DELETED' ||
+          memberCount < MIN_GROUP_MEMBERS_TO_CREATE_GAME
+        ) {
+          throw new Error(t('games.create.errorQualifiedOwnerGroupRequired'));
+        }
 
         // Converter campos do formulário para snake_case do Firestore
         const snakeGameData = camelToSnake(gameData);

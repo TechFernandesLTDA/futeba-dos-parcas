@@ -86,6 +86,7 @@ import { FieldType, PixKeyType, GameVisibility, GameTemplate, Game, GameGender, 
 import { FIELD_TYPE_LABELS, PIX_KEY_TYPE_LABELS } from '../../types/game';
 import { Field, Location as FutebaLocation } from '../../types/location';
 import { snakeToCamel, normalizeField } from '../../utils/firestoreHelpers';
+import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { createLogger } from '../../utils/logger';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
@@ -163,6 +164,7 @@ interface GameFormData {
 }
 
 const CUSTOM_LOCATION = '__custom__';
+const MIN_GROUP_MEMBERS_TO_CREATE_GAME = 5;
 
 // Teto inviolável da série recorrente (1 ano de jogos semanais).
 // Espelha RECURRENCE_HARD_CAP do backend (functions/src/games/recurrence-limits.ts)
@@ -356,6 +358,8 @@ export const CreateGameScreen: React.FC = () => {
   const { recentGames, loading: duplicateGamesLoading } = useDuplicateGame();
   const { recentIds, favoriteIds, isFavorite } = useRecentLocations();
   const { showSuccess, showError } = useToast();
+  const { user, firebaseUser } = useAuth();
+  const currentUserId = firebaseUser?.uid || user?.id;
   const showErrorRef = useRef(showError);
   showErrorRef.current = showError;
   const tRef = useRef(t);
@@ -428,6 +432,21 @@ export const CreateGameScreen: React.FC = () => {
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [userInteracted, setUserInteracted] = useState(false);
   const isDirty = userInteracted && JSON.stringify(formData) !== JSON.stringify(defaultFormData);
+  const eligibleOwnedGroups = useMemo(
+    () => userGroups.filter((candidateGroup) => {
+      const isOwner = candidateGroup.role === 'OWNER' || candidateGroup.ownerId === currentUserId;
+      return isOwner && (candidateGroup.memberCount ?? 0) >= MIN_GROUP_MEMBERS_TO_CREATE_GAME;
+    }),
+    [currentUserId, userGroups],
+  );
+  const selectedEligibleGroup = useMemo(
+    () => eligibleOwnedGroups.find((candidateGroup) => candidateGroup.id === formData.groupId),
+    [eligibleOwnedGroups, formData.groupId],
+  );
+  const hasAnyOwnedGroup = useMemo(
+    () => userGroups.some((candidateGroup) => candidateGroup.role === 'OWNER' || candidateGroup.ownerId === currentUserId),
+    [currentUserId, userGroups],
+  );
   const isRestoringRef = useRef(false);
 
   const getLocationDisplayAddress = useCallback((loc: FutebaLocation) => {
@@ -791,8 +810,8 @@ export const CreateGameScreen: React.FC = () => {
     } else if (formData.endTime && formData.endTime <= formData.time) {
       errors.endTime = t('games.create.errorEndTimeBeforeStart');
     }
-    if (formData.visibility === 'GROUP_ONLY' && !formData.groupId) {
-      errors.visibility = t('games.create.errorGroupRequiredForVisibility');
+    if (!formData.groupId || !selectedEligibleGroup) {
+      errors.groupId = t('games.create.errorQualifiedOwnerGroupRequired');
     }
     if (formData.streamUrl.trim() && !/^https?:\/\/.+\..+/.test(formData.streamUrl.trim())) {
       errors.streamUrl = t('games.create.errorStreamUrlInvalid');
@@ -1002,7 +1021,7 @@ export const CreateGameScreen: React.FC = () => {
         rules: template.rules || '',
         totalCost: template.total_cost || 0,
         dailyPrice: template.daily_price || 0,
-        visibility: (template.visibility as GameVisibility) || 'PUBLIC_CLOSED',
+        visibility: (template.visibility as GameVisibility) || 'PUBLIC_OPEN',
         recurrenceEnabled: !!template.recurrence_type,
         recurrenceType: (template.recurrence_type as 'weekly' | 'biweekly' | 'monthly') || 'weekly',
         date,
@@ -1029,7 +1048,7 @@ export const CreateGameScreen: React.FC = () => {
         totalCost: template.total_cost || 0,
         pixPaymentEnabled: false,
         rules: template.rules || '',
-        visibility: template.visibility || 'PUBLIC_CLOSED',
+        visibility: template.visibility || 'PUBLIC_OPEN',
         recurrence: template.recurrence_type || 'none',
         team1Name: 'Time 1',
         team2Name: 'Time 2',
@@ -1038,15 +1057,18 @@ export const CreateGameScreen: React.FC = () => {
         checkinRadiusMeters: 100,
       };
 
-      if (groupId) {
-        gamePayload.groupId = groupId;
-        gamePayload.groupName = formData.groupName;
+      if (!selectedEligibleGroup) {
+        showError(t('games.create.errorQualifiedOwnerGroupRequired'));
+        return;
       }
+
+      gamePayload.groupId = selectedEligibleGroup.id;
+      gamePayload.groupName = selectedEligibleGroup.name;
 
       const gameId = await createGame(gamePayload as Partial<Game>);
 
-      if (formData.groupId && formData.autoInviteMembers) {
-        const invitedCount = await autoInvite(gameId, formData.groupId);
+      if (formData.autoInviteMembers) {
+        const invitedCount = await autoInvite(gameId, selectedEligibleGroup.id);
         if (invitedCount > 0) {
           showSuccess(`Jogo "${template.name}" criado e ${invitedCount} membros convidados!`);
         }
@@ -1237,8 +1259,8 @@ export const CreateGameScreen: React.FC = () => {
       if (formData.fieldName) gamePayload.fieldName = formData.fieldName;
       if (formData.locationLat) gamePayload.locationLat = formData.locationLat;
       if (formData.locationLng) gamePayload.locationLng = formData.locationLng;
-      if (formData.groupId) gamePayload.groupId = formData.groupId;
-      if (formData.groupName) gamePayload.groupName = formData.groupName;
+      gamePayload.groupId = selectedEligibleGroup?.id;
+      gamePayload.groupName = selectedEligibleGroup?.name;
       if (formData.pixPaymentEnabled) {
         gamePayload.pixKey = formData.pixKey;
         gamePayload.pixKeyType = formData.pixKeyType;
@@ -1253,8 +1275,8 @@ export const CreateGameScreen: React.FC = () => {
       const gameId = await createGame(gamePayload as Partial<import('../../types/game').Game>);
 
       // Auto-invite group members (only if checkbox is checked)
-      if (formData.groupId && formData.autoInviteMembers) {
-        const invited = await autoInvite(gameId, formData.groupId);
+      if (selectedEligibleGroup && formData.autoInviteMembers) {
+        const invited = await autoInvite(gameId, selectedEligibleGroup.id);
         if (invited > 0) {
           showSuccess(`Jogo criado e ${invited} membros do grupo convidados!`);
         }
@@ -1293,35 +1315,49 @@ export const CreateGameScreen: React.FC = () => {
   // #2250: render functions for the single-page form
   const renderLocationSection = () => (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-      {formData.groupName && (
+      {selectedEligibleGroup && (
         <Alert severity="info">
-          {t('games.create.creatingForGroup')} <strong>{formData.groupName}</strong>
+          {t('games.create.creatingForGroup')} <strong>{selectedEligibleGroup.name}</strong>
         </Alert>
       )}
 
-      {!groupId && userGroups && userGroups.length > 0 && (
+      {!groupsLoading && eligibleOwnedGroups.length === 0 && (
+        <Alert severity="warning">
+          {hasAnyOwnedGroup ? t('games.create.noQualifiedGroups') : t('games.create.noOwnedGroups')}
+        </Alert>
+      )}
+
+      {groupId && formData.groupId && !groupsLoading && !selectedEligibleGroup && (
+        <Alert severity="error">
+          {t('games.create.currentGroupNotQualified')}
+        </Alert>
+      )}
+
+      {!groupId && (
         <TextField
           select
           label={t('games.create.group')}
           value={formData.groupId || ''}
           onChange={(e) => {
-            const selectedGroup = userGroups.find((g) => g.id === e.target.value);
+            const selectedGroup = eligibleOwnedGroups.find((g) => g.id === e.target.value);
             setFormData((prev) => ({
               ...prev,
               groupId: selectedGroup?.id,
               groupName: selectedGroup?.name,
-              visibility: selectedGroup ? 'GROUP_ONLY' : prev.visibility,
+              visibility: selectedGroup ? 'PUBLIC_OPEN' : prev.visibility,
             }));
           }}
-          helperText={groupsLoading ? t('games.create.loadingGroups') : t('games.create.selectGroupOptional')}
+          disabled={groupsLoading || eligibleOwnedGroups.length === 0}
+          error={!!formErrors.groupId}
+          helperText={
+            formErrors.groupId ||
+            (groupsLoading ? t('games.create.loadingGroups') : t('games.create.selectQualifiedGroupRequired'))
+          }
           fullWidth
         >
-          <MenuItem value="">
-            <em>{t('games.create.noGroup')}</em>
-          </MenuItem>
-          {userGroups.map((g) => (
+          {eligibleOwnedGroups.map((g) => (
             <MenuItem key={g.id} value={g.id}>
-              {g.name}
+              {g.name} ({t('games.create.membersCount', { count: g.memberCount ?? 0 })})
             </MenuItem>
           ))}
         </TextField>
