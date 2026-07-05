@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
-  addDoc,
   collection,
   collectionGroup,
   doc,
@@ -14,6 +13,7 @@ import {
   where,
 } from 'firebase/firestore';
 import { db } from '../services/firebase';
+import { submitContentReport } from '../services/cloudFunctions';
 import { useAuth } from '../contexts/AuthContext';
 import { useGroups } from './useGroups';
 import { mapPost, WallPost } from './useGroupWall';
@@ -126,15 +126,11 @@ export function useSocialFeed() {
 
   const reportPost = async (post: WallPost) => {
     if (!currentUserId) throw new Error('Usuário não autenticado');
-    await addDoc(collection(db, 'reports'), {
-      reporter_id: currentUserId,
-      target_type: 'group_wall_post',
-      group_id: post.groupId,
-      post_id: post.id,
-      target_path: `groups/${post.groupId}/wall_posts/${post.id}`,
+    await submitContentReport({
+      targetType: 'group_wall_post',
+      groupId: post.groupId,
+      postId: post.id,
       reason: 'inappropriate_content',
-      status: 'OPEN',
-      created_at: serverTimestamp(),
     });
   };
 

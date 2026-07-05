@@ -68,11 +68,11 @@ export function usePrefetchHome() {
       }
     };
 
-    // Prefetch grupos (apenas IDs, dados completos carregados sob demanda)
+    // Prefetch grupos recentes (apenas IDs, dados completos carregados sob demanda)
     const prefetchGroups = async () => {
       try {
         const userGroupsRef = collection(db, 'users', uid, 'groups');
-        const q = query(userGroupsRef, orderBy('joined_at', 'desc'));
+        const q = query(userGroupsRef, orderBy('joined_at', 'desc'), limit(20));
         await getDocs(q);
       } catch (err) {
         logger.warn('Prefetch groups failed:', err);

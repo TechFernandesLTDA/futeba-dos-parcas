@@ -493,8 +493,8 @@ describe("groups/{groupId}/wall_posts", () => {
     );
   });
 
-  it("usuario pode denunciar post de mural", async () => {
-    await assertSucceeds(
+  it("usuario nao cria denuncia diretamente; envio passa por Cloud Function", async () => {
+    await assertFails(
       asWallMember()
         .collection("reports")
         .add({

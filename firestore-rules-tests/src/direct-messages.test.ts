@@ -76,8 +76,8 @@ describe("direct messages", () => {
     await assertFails(asUser(testEnv, UID_OUTSIDER).doc(`chats/${CHAT_ID}`).get());
   });
 
-  it("participante cria mensagem valida", async () => {
-    await assertSucceeds(
+  it("participante nao cria mensagem diretamente; envio passa por Cloud Function", async () => {
+    await assertFails(
       asPlayerA(testEnv).doc(`chats/${CHAT_ID}/messages/msg-valid`).set(validMessage())
     );
   });

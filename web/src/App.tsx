@@ -156,6 +156,7 @@ const AboutScreen = lazy(() => import('./pages/about/AboutScreen').then(m => ({ 
 const WhatsNewPage = lazy(() => import('./pages/whatsnew/WhatsNewPage').then(m => ({ default: m.WhatsNewPage })));
 const UserManagementScreen = lazy(() => import('./pages/admin/UserManagementScreen').then(m => ({ default: m.UserManagementScreen })));
 const GameReviewQueueScreen = lazy(() => import('./pages/admin/GameReviewQueueScreen').then(m => ({ default: m.GameReviewQueueScreen })));
+const FeedbackOperationsScreen = lazy(() => import('./pages/admin/FeedbackOperationsScreen').then(m => ({ default: m.FeedbackOperationsScreen })));
 const DevToolsScreen = lazy(() => import('./pages/devtools/DevToolsScreen').then(m => ({ default: m.DevToolsScreen })));
 const PerformanceDashboard = lazy(() => import('./pages/admin/PerformanceDashboard').then(m => ({ default: m.PerformanceDashboard })));
 
@@ -509,6 +510,7 @@ function AppRoutes() {
         <Route path="/whats-new" element={<Suspense fallback={<RouteFallback />}><WhatsNewPage /></Suspense>} />
         {/* Admin */}
         <Route path="/admin/users" element={<AdminRoute><Suspense fallback={<RouteFallback />}><UserManagementScreen /></Suspense></AdminRoute>} />
+        <Route path="/admin/feedback" element={<AdminRoute><Suspense fallback={<RouteFallback />}><FeedbackOperationsScreen /></Suspense></AdminRoute>} />
         <Route path="/admin/game-reviews" element={<AdminRoute><Suspense fallback={<RouteFallback />}><GameReviewQueueScreen /></Suspense></AdminRoute>} />
         <Route path="/dev" element={<AdminRoute><Suspense fallback={<RouteFallback />}><DevToolsScreen /></Suspense></AdminRoute>} />
         <Route path="/admin/performance" element={<AdminRoute><Suspense fallback={<RouteFallback />}><PerformanceDashboard /></Suspense></AdminRoute>} />

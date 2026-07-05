@@ -4,13 +4,16 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
     <meta name="theme-color" content="#00852A" />
     <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#4ADE80" />
     <meta name="description" content="Futeba dos Parças - Organize suas peladas com gamificação!" />
     <meta name="application-name" content="Futeba dos Parças" />
     <meta name="apple-mobile-web-app-title" content="Futeba" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="canonical" href="https://futebadosparcas.web.app/" />
     <meta property="og:title" content="Futeba dos Parças" />
     <meta property="og:description" content="Organize peladas, acompanhe estatísticas e suba de nível!" />
     <meta property="og:type" content="website" />
@@ -26,6 +29,7 @@
     <meta name="twitter:description" content="Organize peladas, acompanhe estatísticas e suba de nível!" />
     <meta name="twitter:image" content="https://futebadosparcas.web.app/logo.png" />
     <meta name="twitter:image:alt" content="Bola do Futeba dos Parças" />
+    <meta name="twitter:url" content="https://futebadosparcas.web.app/" />
     <meta property="al:android:package" content="com.futebadosparcas" />
     <meta property="al:android:url" content="https://futebadosparcas.web.app" />
     <meta property="al:android:app_name" content="Futeba dos Parças" />
@@ -35,14 +39,14 @@
     <!-- PWA -->
     <link rel="manifest" href="/manifest.json" />
     <link rel="apple-touch-icon" href="/icons/icon-192.png" />
-    <link rel="apple-touch-startup-image" media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3)" href="/icons/splash-430x932.png" />
-    <link rel="apple-touch-startup-image" media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3)" href="/icons/splash-393x852.png" />
-    <link rel="apple-touch-startup-image" media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3)" href="/icons/splash-390x844.png" />
-    <link rel="apple-touch-startup-image" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)" href="/icons/splash-375x812.png" />
     
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin />
+    <link rel="preconnect" href="https://identitytoolkit.googleapis.com" crossorigin />
+    <link rel="dns-prefetch" href="https://securetoken.googleapis.com" />
+    <link rel="dns-prefetch" href="https://www.googleapis.com" />
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
     <style>
       @font-face {

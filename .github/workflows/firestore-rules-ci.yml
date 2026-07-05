@@ -49,12 +49,14 @@ jobs:
 
       - name: Executar testes das Security Rules
         # O emulators:exec sobe o emulador, roda os testes e derruba automaticamente
+        # Runner self-hosted Mac pode matar o Firebase CLI quando o Vitest abre
+        # muitos workers contra o mesmo emulador. Rodar sequencial estabiliza o CI.
         run: |
           cd firestore-rules-tests
           npx firebase-tools emulators:exec \
             --only firestore \
             --project futebadosparcas \
-            'FIRESTORE_EMULATOR_HOST=127.0.0.1:8085 npx vitest run --reporter=verbose'
+            'FIRESTORE_EMULATOR_HOST=127.0.0.1:8085 npx vitest run --reporter=verbose --no-file-parallelism --maxWorkers=1'
         env:
           # CI=true faz o Vitest sair com código de erro se algum teste falhar
           CI: "true"

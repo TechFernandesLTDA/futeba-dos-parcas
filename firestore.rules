@@ -842,30 +842,10 @@ service cloud.firestore {
         allow read: if isAuthenticated() &&
           userId() in get(/databases/$(database)/documents/chats/$(chatId)).data.participants;
 
-        allow create: if isAuthenticated() &&
-          userId() in get(/databases/$(database)/documents/chats/$(chatId)).data.participants &&
-          request.resource.data.keys().hasOnly([
-            'sender_id',
-            'sender_name',
-            'sender_photo_url',
-            'text',
-            'created_at',
-            'deleted_by',
-            'deleted_at'
-          ]) &&
-          request.resource.data.sender_id == userId() &&
-          request.resource.data.sender_name is string &&
-          request.resource.data.sender_name.size() > 0 &&
-          request.resource.data.sender_name.size() <= 120 &&
-          (request.resource.data.sender_photo_url == null ||
-           (request.resource.data.sender_photo_url is string &&
-            request.resource.data.sender_photo_url.size() <= 2048)) &&
-          request.resource.data.text is string &&
-          request.resource.data.text.size() >= 1 &&
-          request.resource.data.text.size() <= 1000 &&
-          request.resource.data.created_at == request.time &&
-          request.resource.data.deleted_by == null &&
-          request.resource.data.deleted_at == null;
+        // Mensagens novas passam por submitDirectMessage (Cloud Function)
+        // para aplicar rate limit server-side e atualizar preview/unread_count
+        // de forma atomica via Admin SDK.
+        allow create: if false;
 
         allow update: if isAuthenticated() &&
           userId() in get(/databases/$(database)/documents/chats/$(chatId)).data.participants &&
@@ -3342,23 +3322,63 @@ service cloud.firestore {
     // COLECAO: reports (denuncias de conteudo social)
     // ============================================
     match /reports/{reportId} {
+      function isAllowedReportTargetType() {
+        return request.resource.data.target_type in [
+          'group_wall_post',
+          'game_chat_message',
+          'game_comment',
+          'game_photo',
+          'game_video'
+        ];
+      }
+
+      function hasValidReportTargetFields() {
+        return (
+          request.resource.data.target_type == 'group_wall_post' &&
+          request.resource.data.group_id is string &&
+          request.resource.data.post_id is string &&
+          request.resource.data.target_path ==
+            'groups/' + request.resource.data.group_id +
+            '/wall_posts/' + request.resource.data.post_id
+        ) || (
+          request.resource.data.target_type == 'game_chat_message' &&
+          request.resource.data.game_id is string &&
+          request.resource.data.target_id is string &&
+          request.resource.data.target_path ==
+            'games/' + request.resource.data.game_id +
+            '/chat/' + request.resource.data.target_id
+        ) || (
+          request.resource.data.target_type == 'game_comment' &&
+          request.resource.data.game_id is string &&
+          request.resource.data.target_id is string &&
+          request.resource.data.target_path ==
+            'games/' + request.resource.data.game_id +
+            '/comments/' + request.resource.data.target_id
+        ) || (
+          request.resource.data.target_type == 'game_photo' &&
+          request.resource.data.game_id is string &&
+          request.resource.data.target_id is string &&
+          request.resource.data.target_path ==
+            'games/' + request.resource.data.game_id +
+            '/photos/' + request.resource.data.target_id
+        ) || (
+          request.resource.data.target_type == 'game_video' &&
+          request.resource.data.game_id is string &&
+          request.resource.data.target_id is string &&
+          request.resource.data.target_path ==
+            'games/' + request.resource.data.game_id +
+            '/videos/' + request.resource.data.target_id
+        );
+      }
+
       allow read: if isAdmin();
-      allow create: if isAuthenticated() &&
-        request.resource.data.reporter_id == userId() &&
-        request.resource.data.target_type == 'group_wall_post' &&
-        request.resource.data.group_id is string &&
-        request.resource.data.post_id is string &&
-        request.resource.data.target_path is string &&
-        request.resource.data.reason is string &&
-        request.resource.data.reason.size() >= 3 &&
-        request.resource.data.reason.size() <= 200 &&
-        request.resource.data.status == 'OPEN' &&
-        request.resource.data.created_at == request.time &&
-        request.resource.data.keys().hasOnly([
-          'reporter_id', 'target_type', 'group_id', 'post_id',
-          'target_path', 'reason', 'status', 'created_at'
-        ]);
-      allow update: if isAdmin() && onlyAllowedFields(['status', 'reviewed_at', 'reviewed_by']);
+      // Criacao passa por Cloud Function para aplicar rate limit e validar alvo.
+      allow create: if false;
+      allow update: if isAdmin() &&
+        onlyAllowedFields(['status', 'reviewed_at', 'reviewed_by']) &&
+        request.resource.data.status in ['OPEN', 'REVIEWING', 'RESOLVED', 'DISMISSED'] &&
+        request.resource.data.reviewed_at == request.time &&
+        request.resource.data.reviewed_by == userId();
       allow delete: if false;
     }
 

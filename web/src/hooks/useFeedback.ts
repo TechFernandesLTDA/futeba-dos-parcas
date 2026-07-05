@@ -16,7 +16,7 @@ export interface UserFeedback {
   title: string;
   description: string;
   severity: 'low' | 'medium' | 'high' | 'critical';
-  status: 'open' | 'triaged' | 'issue_created' | 'resolved' | 'wontfix' | 'duplicate';
+  status: 'open' | 'triaged' | 'issue_created' | 'in_progress' | 'released' | 'rejected' | 'resolved' | 'wontfix' | 'duplicate';
   github_issue_number?: number;
   github_issue_url?: string;
   context: Record<string, unknown>;
