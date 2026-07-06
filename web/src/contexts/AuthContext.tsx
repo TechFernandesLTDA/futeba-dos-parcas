@@ -25,13 +25,23 @@ import { getAuthErrorMessage, AppAuthError, APP_AUTH_ERROR_CODES } from '../util
 import { addBreadcrumb, clearBreadcrumbs } from '../utils/errorContext';
 import { markClaimRefresh } from '../utils/authRetry';
 import { useTranslation } from 'react-i18next';
-import { syncFieldOwnerClaim, validateInviteCode } from '../services/cloudFunctions';
+import type { validateInviteCode as validateInviteCodeType, syncFieldOwnerClaim as syncFieldOwnerClaimType } from '../services/cloudFunctions';
 import { normalizePlayerStats } from '../utils/playerStats';
 
 const logger = createLogger('AuthContext');
 const USER_ROLES: UserRole[] = ['PLAYER', 'FIELD_OWNER', 'ADMIN'];
 const INVITE_REQUIRED_MESSAGE = 'Para criar sua conta, abra um convite de outro membro do Futeba dos Parças.';
 const INVITE_INVALID_MESSAGE = 'Convite inválido ou expirado. Peça um novo convite para quem te chamou.';
+
+const loadValidateInviteCode = async (): Promise<typeof validateInviteCodeType> => {
+  const module = await import('../services/cloudFunctions');
+  return module.validateInviteCode;
+};
+
+const loadSyncFieldOwnerClaim = async (): Promise<typeof syncFieldOwnerClaimType> => {
+  const module = await import('../services/cloudFunctions');
+  return module.syncFieldOwnerClaim;
+};
 
 // #3187: erros de convite agora carregam `.code` (AppAuthError) — telas mapeiam
 // por código via getAuthErrorMessage. Comparação por código, não por message.
@@ -176,7 +186,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // FIX #578: PII (email, fcm_token, birth_date, height_cm, weight_kg, gender)
   // está em `users_private/{uid}` (only owner reads). Merge users + users_private
   // pra construir User completo (apenas pro próprio user — owner-only access).
-  const fetchUserData = async (uid: string, includePrivate = false): Promise<User | null> => {
+  const fetchUserData = async (
+    uid: string,
+    options: { includePrivate?: boolean; includeStats?: boolean } = {},
+  ): Promise<User | null> => {
     try {
       const userDoc = await getDoc(doc(db, 'users', uid));
       if (!userDoc.exists()) return null;
@@ -184,10 +197,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const raw = userDoc.data();
       const converted = snakeToCamel(raw);
 
+      const includeStats = options.includeStats === true;
       const [statsDoc, streakSnap, privateDoc] = await Promise.all([
-        getDoc(doc(db, 'statistics', uid)),
-        getDocs(query(collection(db, 'user_streaks'), where('user_id', '==', uid), limit(1))),
-        includePrivate
+        includeStats ? getDoc(doc(db, 'statistics', uid)) : Promise.resolve(null),
+        includeStats
+          ? getDocs(query(collection(db, 'user_streaks'), where('user_id', '==', uid), limit(1)))
+          : Promise.resolve(null),
+        options.includePrivate
           ? getDoc(doc(db, 'users_private', uid)).catch((privateErr) => {
             logger.debug('users_private read denied:', privateErr);
             return null;
@@ -196,8 +212,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       ]);
 
       const piiData = privateDoc?.exists() ? snakeToCamel(privateDoc.data()) : {};
-      const statsRaw = statsDoc.exists() ? statsDoc.data() : {};
-      const streakRaw = streakSnap.docs[0]?.data() ?? {};
+      const statsRaw = statsDoc?.exists() ? statsDoc.data() : {};
+      const streakRaw = streakSnap?.docs[0]?.data() ?? {};
 
       return mergeUserStats(normalizeUserData(
         { ...converted, ...piiData },
@@ -310,7 +326,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setFirebaseUser(firebaseUser);
 
         if (firebaseUser) {
-          let userData = await fetchUserDataRef.current(firebaseUser.uid, true);
+          let userData = await fetchUserDataRef.current(firebaseUser.uid);
           const claimRole = await getClaimRole(firebaseUser);
 
           // FIX #584/H4: descarta resultado se uid mudou durante fetch
@@ -338,7 +354,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               lastClaimSyncUidRef.current !== firebaseUser.uid
             ) {
               lastClaimSyncUidRef.current = firebaseUser.uid;
-              syncFieldOwnerClaim()
+              loadSyncFieldOwnerClaim()
+                .then((syncFieldOwnerClaim) => syncFieldOwnerClaim())
                 .then((result) => {
                   if (result.data.synced) {
                     logger.info('Claim synced after auth load:', result.data.role);
@@ -437,6 +454,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           throw new AppAuthError(APP_AUTH_ERROR_CODES.inviteRequired, INVITE_REQUIRED_MESSAGE);
         }
 
+        const validateInviteCode = await loadValidateInviteCode();
         let inviteValidation: Awaited<ReturnType<typeof validateInviteCode>>;
         try {
           inviteValidation = await validateInviteCode({ inviteCode: normalizedInviteCode });
@@ -477,6 +495,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new AppAuthError(APP_AUTH_ERROR_CODES.inviteRequired, INVITE_REQUIRED_MESSAGE);
       }
 
+      const validateInviteCode = await loadValidateInviteCode();
       const inviteValidation = await validateInviteCode({ inviteCode: normalizedInviteCode });
       if (!inviteValidation.data.valid || !inviteValidation.data.inviteCode) {
         throw new AppAuthError(APP_AUTH_ERROR_CODES.inviteInvalid, INVITE_INVALID_MESSAGE);
@@ -548,7 +567,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const currentUser = firebaseUserRef.current;
     if (!currentUser) return;
     try {
-      const userData = await fetchUserDataRef.current(currentUser.uid, true);
+      const userData = await fetchUserDataRef.current(currentUser.uid, { includePrivate: true, includeStats: true });
       if (userData) {
         const claimRole = await getClaimRole(currentUser);
         setUser(applyClaimRole(userData, claimRole));

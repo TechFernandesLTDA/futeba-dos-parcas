@@ -34,6 +34,7 @@ import {
 import { useGroupChallenges, useChallengeGroup, useRespondChallenge, useUpdateChallengeProgress, GroupChallenge } from "../hooks/useGroupChallenges";
 import { useGroupDetail } from "../hooks/useGroups";
 import { useOfficialGroups } from "../hooks/useOfficialGroups";
+import { useAuth } from "../contexts/AuthContext";
 import { EmptyState } from "../components/common/EmptyState";
 import { ErrorState } from "../components/common/ErrorState";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
@@ -48,7 +49,8 @@ export const GroupChallengesScreen: React.FC = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down("sm")); // #2238
   const { data: challenges, isLoading, error, refetch } = useGroupChallenges(groupId);
   const { data: officialGroups = [] } = useOfficialGroups();
-  const { group, loading: groupLoading } = useGroupDetail(groupId ?? null);
+  const { group, members, loading: groupLoading } = useGroupDetail(groupId ?? null);
+  const { firebaseUser, user } = useAuth();
   const challengeGroup = useChallengeGroup();
   const respond = useRespondChallenge();
   const updateProgress = useUpdateChallengeProgress();
@@ -69,6 +71,10 @@ export const GroupChallengesScreen: React.FC = () => {
   const officialCurrentGroup = officialGroups.find((g) => g.id === groupId);
   const currentGroup = officialCurrentGroup ?? group;
   const challengeTargets = officialGroups.filter((g) => g.id !== groupId);
+  const currentUserId = firebaseUser?.uid || user?.id;
+  const myMember = members.find((member) => member.userId === currentUserId);
+  const isActiveManager = myMember?.status === "ACTIVE" && (myMember.role === "OWNER" || myMember.role === "ADMIN");
+  const canManageChallenges = Boolean(currentUserId && (group?.ownerId === currentUserId || isActiveManager));
 
   const handleSendChallenge = async () => {
     if (!currentGroup || !selectedGroupId || !goal.trim() || targetCount < 1 || !deadline) return;
@@ -137,14 +143,16 @@ export const GroupChallengesScreen: React.FC = () => {
         <Typography variant="h6" fontWeight="bold" flex={1} noWrap>
           {t("challenges.title")}
         </Typography>
-        <Button
-          variant="contained"
-          startIcon={<SendIcon />}
-          onClick={() => setChallengeDialogOpen(true)}
-          disabled={groupLoading || !currentGroup || challengeTargets.length === 0}
-        >
-          {t("challenges.challenge")}
-        </Button>
+        {canManageChallenges && (
+          <Button
+            variant="contained"
+            startIcon={<SendIcon />}
+            onClick={() => setChallengeDialogOpen(true)}
+            disabled={groupLoading || !currentGroup || challengeTargets.length === 0}
+          >
+            {t("challenges.challenge")}
+          </Button>
+        )}
       </Stack>
 
       {isLoading && (
@@ -239,7 +247,7 @@ export const GroupChallengesScreen: React.FC = () => {
                       />
                     </Box>
                   </Box>
-                  {challenge.status === "PENDING" && (
+                  {canManageChallenges && challenge.status === "PENDING" && (
                     <Stack direction="row" spacing={1}>
                       <Button
                         variant="contained"
@@ -267,7 +275,7 @@ export const GroupChallengesScreen: React.FC = () => {
                       </IconButton>
                     </Stack>
                   )}
-                  {challenge.status === "ACCEPTED" && (
+                  {canManageChallenges && challenge.status === "ACCEPTED" && (
                     <Stack direction="row" spacing={1} justifyContent="flex-end">
                       <Button
                         variant="outlined"
@@ -294,7 +302,7 @@ export const GroupChallengesScreen: React.FC = () => {
         </Stack>
       )}
 
-      <Dialog open={challengeDialogOpen} onClose={resetDialog} maxWidth="sm" fullWidth fullScreen={isMobile} aria-labelledby="challenge-dialog-title">
+      <Dialog open={canManageChallenges && challengeDialogOpen} onClose={resetDialog} maxWidth="sm" fullWidth fullScreen={isMobile} aria-labelledby="challenge-dialog-title">
         <DialogTitle id="challenge-dialog-title">{t("challenges.challengeGroup")}</DialogTitle>
         <DialogContent>
           <Stack spacing={2} mt={1}>

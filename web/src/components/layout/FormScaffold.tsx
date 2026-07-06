@@ -119,7 +119,8 @@ export function FormScaffold({
           width: '100%',
           mx: 'auto',
           px: { xs: 2, md: 3 },
-          py: { xs: 2, md: 3 },
+          pt: { xs: 2, md: 3 },
+          pb: footer ? { xs: 1.5, md: 2 } : { xs: 2, md: 3 },
         }}
       >
         {children}
@@ -129,18 +130,22 @@ export function FormScaffold({
         <Box
           sx={{
             position: 'sticky',
-            bottom: 0,
+            bottom: {
+              xs: `calc(${pageSpacing.bottomBarHeight}px + env(safe-area-inset-bottom, 0px))`,
+              md: 0,
+            },
             borderTop: 1,
             borderColor: 'divider',
             bgcolor: 'background.paper',
             px: { xs: 2, md: 3 },
-            py: 2,
+            py: 1.5,
             display: 'flex',
             justifyContent: { xs: 'stretch', md: 'flex-end' },
             gap: 1,
             // Safe-area + keyboard inset dinâmico (visualViewport API, iOS Safari)
-            // env(safe-area-inset-bottom) é estático; kbdInset compensa o teclado virtual
-            pb: { xs: `calc(env(safe-area-inset-bottom, 0px) + ${kbdInset}px + 16px)`, md: 2 },
+            // O bottom offset já sobe a barra acima da bottom nav; aqui mantemos
+            // apenas o respiro interno + teclado para evitar padding duplicado.
+            pb: { xs: `calc(${kbdInset}px + 12px)`, md: 1.5 },
           }}
         >
           {footer}

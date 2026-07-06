@@ -47,6 +47,7 @@ import { ErrorState } from '../../../components/common/ErrorState';
 import { EmptyState } from '../../../components/common/EmptyState';
 import { useDocumentTitle } from '../../../hooks/useDocumentTitle';
 import { ScreenFab } from '../../../components/layout';
+import { getGameStartTime, sortGamesForDisplay } from '../../../utils/gameSorting';
 
 const livePulseKeyframes = {
   '@keyframes livePulse': {
@@ -70,15 +71,6 @@ const SORT_OPTIONS: { value: SortBy; labelKey: string; icon: React.ReactNode }[]
 
 function getActiveGamesThreshold() {
   return new Date(Date.now() - ACTIVE_GAME_DISPLAY_GRACE_MS);
-}
-
-function getGameStartTime(game: { dateTime?: Date; date: string; time?: string }): number | null {
-  if (game.dateTime instanceof Date && !Number.isNaN(game.dateTime.getTime())) {
-    return game.dateTime.getTime();
-  }
-
-  const parsed = new Date(`${game.date}T${game.time || '00:00'}:00`);
-  return Number.isNaN(parsed.getTime()) ? null : parsed.getTime();
 }
 
 function isExpiredActiveGame(game: { status: GameStatus; dateTime?: Date; date: string; time?: string }): boolean {
@@ -150,15 +142,7 @@ export function GamesTab() {
       );
     }
 
-    if (sortBy === 'spots') {
-      result.sort((a, b) => (b.maxPlayers - b.playersCount) - (a.maxPlayers - a.playersCount));
-    } else if (sortBy === 'nearest') {
-      result.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-    } else {
-      result.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    }
-
-    return result;
+    return sortGamesForDisplay(result, sortBy, statusFilter);
   }, [games, debouncedSearch, statusFilter, genderFilter, sortBy]);
 
   // Estabilizado: navigate é estável, dep array vazio seguro

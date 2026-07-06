@@ -180,12 +180,12 @@ export function ProfileTab() {
       });
       items.push({
         icon: <BugReport />,
-        label: 'Feedbacks e suporte',
+        label: t('profile.adminMenu.feedbackOperations'),
         onClick: () => navigate('/admin/feedback'),
       });
       items.push({
         icon: <EmojiEvents />,
-        label: 'Revisão de jogos',
+        label: t('profile.adminMenu.gameReview'),
         onClick: () => navigate('/admin/game-reviews'),
       });
       items.push({

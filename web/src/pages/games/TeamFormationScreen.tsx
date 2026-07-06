@@ -125,7 +125,7 @@ export const TeamFormationScreen: React.FC = () => {
           const ownerId = gameData.ownerId || gameData.owner_id;
           const currentUser = userRef.current;
           if (currentUser && currentUser.id !== ownerId) {
-            showErrorRef.current('Apenas o dono do jogo pode formar os times.');
+            showErrorRef.current(t('teamFormation.ownerOnlyError'));
             navigateRef.current(`/game/${gameId}`);
             return;
           }
@@ -148,7 +148,7 @@ export const TeamFormationScreen: React.FC = () => {
           const userData = usersById.get(uid);
           return {
             id: uid,
-            name: (userData?.name as string | undefined) || conf.user_name || 'Jogador',
+            name: (userData?.name as string | undefined) || conf.user_name || t('profile.defaultPlayerName'),
             photoUrl: (userData?.photoUrl as string | undefined) || conf.user_photo,
             level: getLevelForXp((userData?.experiencePoints as number | undefined) ?? 0),
             position: conf.position || 'FIELD',
@@ -173,7 +173,7 @@ export const TeamFormationScreen: React.FC = () => {
         logger.error('Error fetching game:', error);
         if (!cancelled) {
           setError(t('feedback.generic.loadDataError'));
-          showErrorRef.current('Erro ao carregar dados. Tente novamente.');
+          showErrorRef.current(t('feedback.generic.loadDataError'));
         }
       } finally {
         if (!cancelled) setLoading(false);

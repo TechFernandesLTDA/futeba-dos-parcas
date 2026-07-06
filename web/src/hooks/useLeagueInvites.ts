@@ -63,14 +63,17 @@ function parseGameDoc(id: string, raw: Record<string, unknown>): Game {
 }
 
 async function fetchOwnedUpcomingGames(ownerId: string): Promise<Game[]> {
+  const now = new Date();
   const gamesQuery = query(
     collection(db, 'games'),
     where('owner_id', '==', ownerId),
+    where('status', 'in', ACTIVE_GAME_STATUSES),
+    where('dateTime', '>=', Timestamp.fromDate(now)),
     orderBy('dateTime', 'asc'),
     limit(50),
   );
   const snapshot = await getDocs(gamesQuery);
-  const now = Date.now();
+  const nowMs = now.getTime();
 
   return snapshot.docs
     .map((gameDoc) => parseGameDoc(gameDoc.id, gameDoc.data()))
@@ -78,9 +81,8 @@ async function fetchOwnedUpcomingGames(ownerId: string): Promise<Game[]> {
       const gameDateTime = game.dateTime?.getTime?.() ?? null;
       const hasOpenSpot = (game.playersCount ?? 0) < (game.maxPlayers ?? 0);
       return (
-        ACTIVE_GAME_STATUSES.includes(game.status) &&
         hasOpenSpot &&
-        (!gameDateTime || gameDateTime >= now)
+        (!gameDateTime || gameDateTime >= nowMs)
       );
     });
 }

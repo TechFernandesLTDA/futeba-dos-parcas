@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
+  Alert,
   Box,
   Typography,
   Card,
@@ -98,9 +99,15 @@ export const LiveEventsScreen: React.FC = () => {
   const [selectedPlayerTouched, setSelectedPlayerTouched] = useState(false);
   const [minuteTouched, setMinuteTouched] = useState(false); // #2231
   const [submitting, setSubmitting] = useState(false);
+  const [rosterError, setRosterError] = useState<string | null>(null);
+  const [rosterRetryKey, setRosterRetryKey] = useState(0);
   const { showError } = useToast();
   const showErrorRef = useRef(showError);
   showErrorRef.current = showError;
+  const retryRosterListeners = () => {
+    setRosterError(null);
+    setRosterRetryKey((current) => current + 1);
+  };
 
   useEffect(() => {
     if (!gameId || !user) return;
@@ -166,6 +173,7 @@ export const LiveEventsScreen: React.FC = () => {
     if (!gameId) return;
     let currentTeamsById: Record<string, Team> = {};
     let currentConfirmationDocs: Array<{ data: () => Record<string, unknown> }> = [];
+    setRosterError(null);
 
     const teamsQuery = query(collection(db, 'teams'), where('game_id', '==', gameId));
     const confirmationsQuery = query(
@@ -212,10 +220,14 @@ export const LiveEventsScreen: React.FC = () => {
         }, {});
         currentTeamsById = mappedTeams;
         setTeamsById(mappedTeams);
+        setRosterError(null);
         syncPlayers();
       },
       (err) => {
         logger.error('Erro ao carregar times do jogo:', err);
+        const message = getFirestoreErrorMessage(err, 'Erro ao carregar times do jogo.');
+        setRosterError(message);
+        showErrorRef.current(message);
       },
     );
 
@@ -223,10 +235,14 @@ export const LiveEventsScreen: React.FC = () => {
       confirmationsQuery,
       (snapshot) => {
         currentConfirmationDocs = snapshot.docs;
+        setRosterError(null);
         syncPlayers();
       },
       (err) => {
         logger.error('Erro ao carregar jogadores confirmados:', err);
+        const message = getFirestoreErrorMessage(err, 'Erro ao carregar jogadores confirmados.');
+        setRosterError(message);
+        showErrorRef.current(message);
       },
     );
 
@@ -234,7 +250,7 @@ export const LiveEventsScreen: React.FC = () => {
       unsubscribeTeams();
       unsubscribeConfirmations();
     };
-  }, [gameId]);
+  }, [gameId, rosterRetryKey]);
 
   const handleAddEvent = async () => {
     if (!gameId || !user || !selectedPlayerId || !eventType) return;
@@ -359,6 +375,19 @@ export const LiveEventsScreen: React.FC = () => {
       </Box>
 
       <PageContainer maxWidth="list">
+        {rosterError && (
+          <Alert
+            severity="error"
+            sx={{ mb: 2 }}
+            action={
+              <Button color="inherit" size="small" onClick={retryRosterListeners}>
+                {t('common.retry')}
+              </Button>
+            }
+          >
+            {rosterError}
+          </Alert>
+        )}
         {loading ? (
           <LoadingState shimmerCount={6} itemType="LIST" />
         ) : events.length === 0 ? (
@@ -420,6 +449,19 @@ export const LiveEventsScreen: React.FC = () => {
         <DialogTitle id="add-event-dialog-title">{t('games.live.addEvent')}</DialogTitle>
         <DialogContent>
           <Box sx={{ py: 2 }}>
+            {rosterError && (
+              <Alert
+                severity="error"
+                sx={{ mb: 2 }}
+                action={
+                  <Button color="inherit" size="small" onClick={retryRosterListeners}>
+                    {t('common.retry')}
+                  </Button>
+                }
+              >
+                {rosterError}
+              </Alert>
+            )}
             <ToggleButtonGroup
               value={eventType}
               exclusive
@@ -439,6 +481,7 @@ export const LiveEventsScreen: React.FC = () => {
               fullWidth
               label="Jogador confirmado"
               value={selectedPlayerId}
+              disabled={Boolean(rosterError)}
               onChange={(e) => setSelectedPlayerId(e.target.value)}
               onBlur={() => setSelectedPlayerTouched(true)}
               error={selectedPlayerTouched && !selectedPlayerId}
@@ -467,7 +510,12 @@ export const LiveEventsScreen: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDialogOpen(false)} disabled={submitting}>{t('common.cancel')}</Button>
-          <Button variant="contained" onClick={handleAddEvent} disabled={submitting || !selectedPlayerId || !eventType} startIcon={submitting ? <CircularProgress size={16} /> : undefined}>
+          <Button
+            variant="contained"
+            onClick={handleAddEvent}
+            disabled={submitting || !selectedPlayerId || !eventType || Boolean(rosterError)}
+            startIcon={submitting ? <CircularProgress size={16} /> : undefined}
+          >
             {submitting ? t('common.loading') : t('games.live.add')}
           </Button>
         </DialogActions>

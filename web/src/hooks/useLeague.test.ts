@@ -14,6 +14,7 @@ const mockOrderBy = vi.fn();
 const mockLimit = vi.fn();
 const mockWhere = vi.fn();
 const mockDocumentId = vi.fn(() => '__name__');
+const mockStartAfter = vi.fn();
 
 vi.mock('firebase/firestore', () => ({
   collection: (...args: any[]) => mockCollection(...args),
@@ -24,6 +25,7 @@ vi.mock('firebase/firestore', () => ({
   where: (...args: any[]) => mockWhere(...args),
   orderBy: (...args: any[]) => mockOrderBy(...args),
   limit: (...args: any[]) => mockLimit(...args),
+  startAfter: (...args: any[]) => mockStartAfter(...args),
   onSnapshot: (...args: any[]) => mockOnSnapshot(...args),
   documentId: () => mockDocumentId(),
 }));
@@ -48,6 +50,7 @@ describe('useLeague', () => {
     mockDoc.mockReturnValue('mock-doc-ref');
     mockOrderBy.mockReturnValue('mock-order');
     mockLimit.mockReturnValue('mock-limit');
+    mockStartAfter.mockReturnValue('mock-start-after');
   });
 
   it('retorna loading=true inicialmente', () => {
@@ -169,5 +172,28 @@ describe('useLeague', () => {
       expect(result.current.error).toBe('League error');
       expect(result.current.loading).toBe(false);
     });
+  });
+
+  it('busca próxima página usando cursor em vez de aumentar o limite', async () => {
+    const lastDoc = { id: 'cursor-doc', data: () => ({ user_id: 'u1', points: 100, division: 'BRONZE' }) };
+    mockGetDocs
+      .mockResolvedValueOnce({
+        docs: Array.from({ length: 200 }, (_, index) => ({
+          id: `sp-${index}`,
+          data: () => ({ user_id: `u${index}`, points: 200 - index, division: 'BRONZE' }),
+        })).map((doc, index, docs) => (index === docs.length - 1 ? lastDoc : doc)),
+      })
+      .mockResolvedValue({ docs: [] });
+
+    const { result } = renderHook(() => useLeague('u1'), { wrapper: createTestWrapper() });
+
+    await waitFor(() => {
+      expect(result.current.hasMore).toBe(true);
+    });
+
+    await result.current.loadMore();
+
+    expect(mockStartAfter).toHaveBeenCalledWith(lastDoc);
+    expect(mockLimit).toHaveBeenCalledWith(200);
   });
 });

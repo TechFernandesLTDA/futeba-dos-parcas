@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { snakeToCamel } from '../utils/firestoreHelpers';
@@ -25,6 +25,17 @@ export function useTeams() {
   // sem este gate a query/listener disparava nao-autenticado -> permission-denied
   // no console + toast de erro na tela de login.
   const { currentUser } = useAuth();
+  const [canLoadTeams, setCanLoadTeams] = useState(false);
+
+  useEffect(() => {
+    if (!currentUser) {
+      setCanLoadTeams(false);
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => setCanLoadTeams(true), 800);
+    return () => window.clearTimeout(timeoutId);
+  }, [currentUser]);
 
   const {
     data: teams = [],
@@ -33,7 +44,7 @@ export function useTeams() {
   } = useQuery({
     queryKey: [COLLECTION],
     queryFn: fetchTeams,
-    enabled: !!currentUser,
+    enabled: !!currentUser && canLoadTeams,
     staleTime: 24 * 60 * 60 * 1000,
     gcTime: 7 * 24 * 60 * 60 * 1000,
   });

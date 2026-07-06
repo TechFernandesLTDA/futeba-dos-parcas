@@ -9,8 +9,10 @@ import {
   documentId,
   where,
   QueryConstraint,
+  startAfter,
 } from 'firebase/firestore';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import type { QueryDocumentSnapshot, DocumentData } from 'firebase/firestore';
+import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import { db } from '../services/firebase';
 import { snakeToCamel } from '../utils/firestoreHelpers';
 import { LeagueDivision, getLevelForXp } from '../types/gamification';
@@ -138,10 +140,17 @@ export interface LeagueFilters {
   gender?: GameGender | null;
 }
 
+interface LeaguePage {
+  players: LeaguePlayer[];
+  lastDoc: QueryDocumentSnapshot<DocumentData> | null;
+  hasMore: boolean;
+}
+
 async function fetchLeagueData(
   currentUserId?: string,
-  filters?: LeagueFilters
-): Promise<LeaguePlayer[]> {
+  filters?: LeagueFilters,
+  cursor?: QueryDocumentSnapshot<DocumentData> | null,
+): Promise<LeaguePage> {
   const seasonRef = collection(db, 'season_participation');
 
   // Combinado ordena pelo ponto plano; segmentado pelo ponto da
@@ -152,7 +161,6 @@ async function fetchLeagueData(
 
   const constraints: QueryConstraint[] = [
     orderBy(orderField, 'desc'),
-    limit(filters?.maxResults ?? 200)
   ];
   if (filters?.seasonId) {
     constraints.push(where('season_id', '==', filters.seasonId));
@@ -160,11 +168,18 @@ async function fetchLeagueData(
   if (filters?.groupId) {
     constraints.push(where('group_id', '==', filters.groupId));
   }
+  if (cursor) {
+    constraints.push(startAfter(cursor));
+  }
+  const pageSize = filters?.maxResults ?? 200;
+  constraints.push(limit(pageSize));
 
   const q = query(seasonRef, ...constraints);
   const snapshot = await getDocs(q);
 
-  if (snapshot.empty) return [];
+  if (snapshot.empty) {
+    return { players: [], lastDoc: null, hasMore: false };
+  }
 
   // Extrair dados de participação e IDs de usuários
   const participationData = snapshot.docs.map((docSnapshot) => {
@@ -230,7 +245,11 @@ async function fetchLeagueData(
       uniqueMap.set(p.userId, p);
     }
   }
-  return Array.from(uniqueMap.values());
+  return {
+    players: Array.from(uniqueMap.values()),
+    lastDoc: snapshot.docs[snapshot.docs.length - 1] ?? null,
+    hasMore: snapshot.docs.length === pageSize,
+  };
 }
 
 export interface UseLeagueOptions {
@@ -250,13 +269,25 @@ export const useLeague = (
 
   const enabled = options?.enabled ?? true;
 
-  const { data: players = [], isLoading: loading, error: queryError, refetch } = useQuery({
+  const {
+    data,
+    isLoading: loading,
+    isFetchingNextPage: loadingMore,
+    hasNextPage,
+    fetchNextPage,
+    error: queryError,
+    refetch,
+  } = useInfiniteQuery({
     queryKey: ['league', currentUserId, filters?.groupId, filters?.seasonId, filters?.maxResults, filters?.gender],
-    queryFn: () => fetchLeagueData(currentUserId, filters),
+    queryFn: ({ pageParam }) => fetchLeagueData(currentUserId, filters, pageParam),
+    initialPageParam: null as QueryDocumentSnapshot<DocumentData> | null,
+    getNextPageParam: (lastPage) => lastPage.hasMore ? lastPage.lastDoc : undefined,
     staleTime: 3 * 60 * 1000, // 3 minutos
     gcTime: 10 * 60 * 1000,
     enabled,
   });
+
+  const players = data?.pages.flatMap((page) => page.players) ?? [];
 
   // Listener real-time: único por seasonId/groupId (sem division)
   // Usa showErrorRef para não recriar listener quando showError muda
@@ -298,5 +329,13 @@ export const useLeague = (
 
   const error = listenerError || (queryError ? (queryError as Error).message : null);
 
-  return { players, loading, error, refetch };
+  return {
+    players,
+    loading,
+    error,
+    refetch,
+    loadMore: fetchNextPage,
+    hasMore: hasNextPage === true,
+    loadingMore,
+  };
 };

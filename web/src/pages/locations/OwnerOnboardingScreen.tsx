@@ -56,15 +56,6 @@ const toDate = (value: unknown): Date | null => {
   return null;
 };
 
-const statusLabel: Record<VenueOwnerOnboardingStatus, string> = {
-  LEAD: 'Lead',
-  IN_REVIEW: 'Em revisão',
-  APPROVED: 'Aprovado',
-  REJECTED: 'Rejeitado',
-  SUSPENDED: 'Suspenso',
-  CANCELLED: 'Cancelado',
-};
-
 const statusColor = (status?: VenueOwnerOnboardingStatus): 'default' | 'info' | 'success' | 'warning' | 'error' => {
   if (status === 'APPROVED') return 'success';
   if (status === 'IN_REVIEW') return 'info';
@@ -74,10 +65,19 @@ const statusColor = (status?: VenueOwnerOnboardingStatus): 'default' | 'info' | 
 };
 
 export const OwnerOnboardingScreen: React.FC = () => {
-  useDocumentTitle('Onboarding comercial de quadra');
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  useDocumentTitle(t('ownerOnboarding.pageTitle'));
   const { user } = useAuth();
   const { showSuccess, showError } = useToast();
+  const locale = i18n.resolvedLanguage || i18n.language || navigator.language;
+  const statusLabels: Record<VenueOwnerOnboardingStatus, string> = {
+    LEAD: t('ownerOnboarding.statusLead'),
+    IN_REVIEW: t('ownerOnboarding.statusInReview'),
+    APPROVED: t('ownerOnboarding.statusApproved'),
+    REJECTED: t('ownerOnboarding.statusRejected'),
+    SUSPENDED: t('ownerOnboarding.statusSuspended'),
+    CANCELLED: t('ownerOnboarding.statusCancelled'),
+  };
   const navigate = useNavigate();
   const goBack = useNavigateBack('/settings');
   const [loading, setLoading] = useState(true);
@@ -128,12 +128,12 @@ export const OwnerOnboardingScreen: React.FC = () => {
       },
       (error) => {
         logger.error('Error loading venue owner onboarding:', error);
-        showError('Não foi possível carregar seu onboarding comercial.');
+        showError(t('ownerOnboarding.loadError'));
         setLoading(false);
       },
     );
     return unsubscribe;
-  }, [showError, user]);
+  }, [showError, t, user]);
 
   // CNPJ é opcional: submit permitido quando vazio OU válido (#3188)
   const cnpjDigits = stripCnpj(cnpj);
@@ -141,11 +141,11 @@ export const OwnerOnboardingScreen: React.FC = () => {
 
   const handleSubmit = async () => {
     if (!contactName.trim()) {
-      showError('Informe o nome do responsável.');
+      showError(t('ownerOnboarding.contactNameRequired'));
       return;
     }
     if (!contactEmail.trim() && !phone.trim()) {
-      showError('Informe email ou telefone comercial.');
+      showError(t('ownerOnboarding.contactRequired'));
       return;
     }
     if (cnpjInvalid) {
@@ -153,7 +153,7 @@ export const OwnerOnboardingScreen: React.FC = () => {
       return;
     }
     if (!termsAccepted) {
-      showError('Aceite os termos comerciais para enviar a solicitação.');
+      showError(t('ownerOnboarding.termsRequired'));
       return;
     }
     setSubmitting(true);
@@ -168,7 +168,7 @@ export const OwnerOnboardingScreen: React.FC = () => {
         notes: notes.trim() || null,
         termsAccepted: true,
       });
-      showSuccess('Solicitação enviada para revisão do administrador.');
+      showSuccess(t('ownerOnboarding.submitSuccess'));
       setTermsAccepted(false);
     } catch (error) {
       logger.error('Error submitting venue owner onboarding:', error);
@@ -177,7 +177,7 @@ export const OwnerOnboardingScreen: React.FC = () => {
       if (code === 'functions/already-exists' || code === 'already-exists') {
         showError(t('ownerOnboarding.cnpjAlreadyExists'));
       } else {
-        showError(getFunctionsErrorMessage(error, 'requestVenueOwnerOnboarding', 'Não foi possível enviar a solicitação.'));
+        showError(getFunctionsErrorMessage(error, 'requestVenueOwnerOnboarding', t('ownerOnboarding.submitError')));
       }
     } finally {
       setSubmitting(false);
@@ -192,11 +192,11 @@ export const OwnerOnboardingScreen: React.FC = () => {
     <Box sx={{ pb: 4 }}>
       <Box sx={{ position: 'sticky', top: 0, bgcolor: 'background.paper', zIndex: 10, borderBottom: 1, borderColor: 'divider' }}>
         <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={goBack} aria-label="Voltar">
+          <IconButton onClick={goBack} aria-label={t('common.back')}>
             <BackIcon />
           </IconButton>
           <Typography variant="h6" sx={{ ml: 1 }}>
-            Quero cadastrar minha quadra
+            {t('ownerOnboarding.headerTitle')}
           </Typography>
         </Box>
       </Box>
@@ -206,24 +206,23 @@ export const OwnerOnboardingScreen: React.FC = () => {
           <CardContent>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
               <BusinessIcon color="primary" />
-              <Typography variant="h6">Onboarding comercial</Typography>
-              <Chip label={statusLabel[currentStatus]} color={statusColor(currentStatus)} size="small" sx={{ ml: 'auto' }} />
+              <Typography variant="h6">{t('ownerOnboarding.cardTitle')}</Typography>
+              <Chip label={statusLabels[currentStatus]} color={statusColor(currentStatus)} size="small" sx={{ ml: 'auto' }} />
             </Box>
             <Typography variant="body2" color="text.secondary">
-              Envie seus dados para virar dono de quadra no Futeba dos Parças. Um administrador revisa contato,
-              cadastro comercial, termos e pendências antes de liberar publicação de quadras.
+              {t('ownerOnboarding.description')}
             </Typography>
           </CardContent>
         </Card>
 
         {approved && (
-          <Alert severity="success" sx={{ mb: 2 }} action={<Button color="inherit" size="small" onClick={() => navigate('/locations')}>Gerenciar</Button>}>
-            Sua conta de dono de quadra está aprovada. Faça login novamente se o menu de quadras ainda não aparecer.
+          <Alert severity="success" sx={{ mb: 2 }} action={<Button color="inherit" size="small" onClick={() => navigate('/locations')}>{t('ownerOnboarding.manageAction')}</Button>}>
+            {t('ownerOnboarding.approvedAlert')}
           </Alert>
         )}
         {onboarding?.reviewReason && (
           <Alert severity={currentStatus === 'REJECTED' ? 'warning' : 'info'} sx={{ mb: 2 }}>
-            Motivo da revisão: {onboarding.reviewReason}
+            {t('ownerOnboarding.reviewReason', { reason: onboarding.reviewReason })}
           </Alert>
         )}
 
@@ -232,12 +231,12 @@ export const OwnerOnboardingScreen: React.FC = () => {
             {loading ? (
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <CircularProgress size={20} />
-                <Typography variant="body2">Carregando solicitação...</Typography>
+                <Typography variant="body2">{t('ownerOnboarding.loading')}</Typography>
               </Box>
             ) : (
               <>
                 <TextField
-                  label="Responsável comercial"
+                  label={t('ownerOnboarding.contactNameLabel')}
                   value={contactName}
                   onChange={(event) => setContactName(event.target.value)}
                   disabled={submitting || approved || locked}
@@ -245,7 +244,7 @@ export const OwnerOnboardingScreen: React.FC = () => {
                   required
                 />
                 <TextField
-                  label="Email comercial"
+                  label={t('ownerOnboarding.contactEmailLabel')}
                   type="email"
                   value={contactEmail}
                   onChange={(event) => setContactEmail(event.target.value)}
@@ -253,15 +252,15 @@ export const OwnerOnboardingScreen: React.FC = () => {
                   inputProps={{ maxLength: 254 }}
                 />
                 <TextField
-                  label="Telefone/WhatsApp"
+                  label={t('ownerOnboarding.phoneLabel')}
                   value={phone}
                   onChange={(event) => setPhone(event.target.value)}
                   disabled={submitting || approved || locked}
                   inputProps={{ maxLength: 40 }}
-                  helperText="Informe email ou telefone para o admin conseguir revisar."
+                  helperText={t('ownerOnboarding.contactHelper')}
                 />
                 <TextField
-                  label="Nome da empresa/quadra"
+                  label={t('ownerOnboarding.businessNameLabel')}
                   value={businessName}
                   onChange={(event) => setBusinessName(event.target.value)}
                   disabled={submitting || approved || locked}
@@ -283,7 +282,7 @@ export const OwnerOnboardingScreen: React.FC = () => {
                   inputProps={{ maxLength: 18, inputMode: 'numeric', autoComplete: 'off' }}
                 />
                 <TextField
-                  label="Documento comercial (opcional)"
+                  label={t('ownerOnboarding.commercialDocumentLabel')}
                   value={commercialDocument}
                   onChange={(event) => setCommercialDocument(event.target.value)}
                   disabled={submitting || approved || locked}
@@ -291,7 +290,7 @@ export const OwnerOnboardingScreen: React.FC = () => {
                   helperText={t('ownerOnboarding.commercialDocumentHelper')}
                 />
                 <TextField
-                  label="Observações para revisão"
+                  label={t('ownerOnboarding.notesLabel')}
                   value={notes}
                   onChange={(event) => setNotes(event.target.value)}
                   disabled={submitting || approved || locked}
@@ -308,7 +307,7 @@ export const OwnerOnboardingScreen: React.FC = () => {
                         sx={{ p: 1.25 }}
                       />
                     }
-                    label="Entendo que a publicação das quadras e a mensalidade dependem de aprovação administrativa."
+                    label={t('ownerOnboarding.termsLabel')}
                     sx={{ alignItems: 'flex-start', minHeight: 44 }}
                   />
                 )}
@@ -318,11 +317,13 @@ export const OwnerOnboardingScreen: React.FC = () => {
                   disabled={submitting || approved || locked}
                   startIcon={submitting ? <CircularProgress size={18} /> : undefined}
                 >
-                  {currentStatus === 'IN_REVIEW' ? 'Atualizar solicitação' : 'Enviar para revisão'}
+                  {currentStatus === 'IN_REVIEW' ? t('ownerOnboarding.updateAction') : t('ownerOnboarding.submitAction')}
                 </Button>
                 {onboarding?.submittedAt && (
                   <Typography variant="caption" color="text.secondary">
-                    Último envio: {onboarding.submittedAt.toLocaleString()}
+                    {t('ownerOnboarding.lastSubmittedAt', {
+                      date: onboarding.submittedAt.toLocaleString(locale),
+                    })}
                   </Typography>
                 )}
               </>

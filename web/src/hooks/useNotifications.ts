@@ -26,6 +26,44 @@ const logger = createLogger('useNotifications');
 
 export type { Notification, NotificationType };
 
+export const useUnreadNotificationCount = (userId?: string) => {
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!userId) {
+      setUnreadCount(0);
+      setLoading(false);
+      setError(null);
+      return;
+    }
+
+    setLoading(true);
+    const notifRef = collection(db, 'notifications');
+    const q = query(
+      notifRef,
+      where('user_id', '==', userId),
+      where('read', '==', false),
+      limit(100),
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      setUnreadCount(snapshot.size);
+      setLoading(false);
+      setError(null);
+    }, (err) => {
+      logger.error('Erro no listener de contador de notificações:', err);
+      setError(getFirestoreErrorMessage(err));
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [userId]);
+
+  return { unreadCount, loading, error };
+};
+
 export const useNotifications = (userId?: string) => {
   const { t } = useTranslation();
   const { showError, showSuccess } = useToast();

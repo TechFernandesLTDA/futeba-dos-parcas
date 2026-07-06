@@ -270,8 +270,8 @@ export const SettingsScreen: React.FC = () => {
                     <BusinessIcon />
                   </ListItemIcon>
                   <ListItemText
-                    primary="Cadastrar minha quadra"
-                    secondary="Solicite aprovação comercial para virar dono de quadra"
+                    primary={t('settings.ownerOnboardingTitle')}
+                    secondary={t('settings.ownerOnboardingDesc')}
                   />
                 </ListItemButton>
                 <Divider />

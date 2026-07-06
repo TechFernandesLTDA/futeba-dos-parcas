@@ -18,6 +18,7 @@ import {
   alpha,
   useTheme,
 } from '@mui/material';
+import Grid from '@mui/material/Unstable_Grid2';
 import {
   ArrowBack as BackIcon,
   Refresh as RefreshIcon,
@@ -60,7 +61,7 @@ export const PublicGamesScreen: React.FC = () => {
   };
 
   return (
-    <PageContainer maxWidth="list">
+    <PageContainer maxWidth="dashboard">
       <Stack direction="row" alignItems="center" spacing={1} mb={3}>
         <IconButton onClick={goBack} aria-label={t('a11y.back')}>
           <BackIcon />
@@ -85,7 +86,8 @@ export const PublicGamesScreen: React.FC = () => {
           exclusive
           onChange={(_, v: 'all' | GameGender | null) => { if (v !== null) setGenderFilter(v); }}
           size="small"
-          aria-label={t('games.genderFilter.all')}
+          aria-label={t('games.genderFilter.ariaLabel')}
+          sx={{ flexWrap: 'wrap' }}
         >
           <ToggleButton value="all" sx={{ px: 1.5, py: 0.5, textTransform: 'none', fontSize: '0.8rem' }}>
             {t('games.genderFilter.all')}
@@ -137,82 +139,84 @@ export const PublicGamesScreen: React.FC = () => {
       )}
 
       {!isLoading && !error && filteredGames && filteredGames.length > 0 && (
-        <Stack spacing={2}>
+        <Grid container spacing={2}>
           {filteredGames.map((game) => (
-            <Card key={game.id}>
-              <CardContent>
-                <Stack direction="row" spacing={2} alignItems="center">
-                  <Avatar sx={{ bgcolor: 'primary.main', width: 56, height: 56 }}>
-                    <SoccerIcon />
-                  </Avatar>
-                  <Box flex={1} minWidth={0}>
-                    <Typography variant="h6" noWrap fontWeight="bold">
-                      {game.locationName || 'Pelada'}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary" noWrap>
-                      {game.locationAddress || ''}
-                    </Typography>
-                    <Stack direction="row" spacing={1} mt={1} flexWrap="wrap" useFlexGap>
-                      <Chip icon={<CalendarIcon />} label={game.date} size="small" variant="outlined" />
-                      <Chip icon={<TimerIcon />} label={game.time} size="small" variant="outlined" />
-                      <Chip
-                        icon={<SoccerIcon />}
-                        label={FIELD_TYPE_LABELS[game.fieldType] || 'Society'}
-                        size="small"
-                        variant="outlined"
-                      />
-                      {/* Badge de gênero: exibido apenas para MALE ou FEMALE */}
-                      {(game.gender === 'MALE' || game.gender === 'FEMALE') && (
+            <Grid key={game.id} xs={12} md={6} xl={4}>
+              <Card sx={{ height: '100%' }}>
+                <CardContent sx={{ height: '100%' }}>
+                  <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ xs: 'flex-start', sm: 'center' }} sx={{ height: '100%' }}>
+                    <Avatar sx={{ bgcolor: 'primary.main', width: 56, height: 56, flexShrink: 0 }}>
+                      <SoccerIcon />
+                    </Avatar>
+                    <Box flex={1} minWidth={0}>
+                      <Typography variant="h6" fontWeight="bold" sx={{ overflowWrap: 'anywhere' }}>
+                        {game.locationName || 'Pelada'}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary" sx={{ overflowWrap: 'anywhere' }}>
+                        {game.locationAddress || ''}
+                      </Typography>
+                      <Stack direction="row" spacing={1} mt={1} flexWrap="wrap" useFlexGap>
+                        <Chip icon={<CalendarIcon />} label={game.date} size="small" variant="outlined" />
+                        <Chip icon={<TimerIcon />} label={game.time} size="small" variant="outlined" />
                         <Chip
-                          label={game.gender === 'MALE' ? t('games.genderFilter.male') : t('games.genderFilter.female')}
+                          icon={<SoccerIcon />}
+                          label={FIELD_TYPE_LABELS[game.fieldType] || 'Society'}
                           size="small"
-                          sx={{
-                            fontWeight: 600,
-                            backgroundColor: alpha(
-                              game.gender === 'MALE'
-                                ? theme.palette.info.main
-                                : theme.palette.secondary.main,
-                              0.12
-                            ),
-                            color: theme.palette.mode === 'dark'
-                              ? (game.gender === 'MALE' ? theme.palette.info.light : theme.palette.secondary.light)
-                              : (game.gender === 'MALE' ? theme.palette.info.dark : theme.palette.secondary.dark),
-                          }}
+                          variant="outlined"
                         />
-                      )}
-                      <Chip
-                        icon={<GroupIcon />}
-                        label={`${game.playersCount ?? 0}/${game.maxPlayers}`}
-                        size="small"
-                        color={game.playersCount >= game.maxPlayers ? 'error' : 'success'}
-                        variant="outlined"
-                      />
-                    </Stack>
-                  </Box>
-                  <Stack direction="column" spacing={1} alignItems="center">
-                    {game.playersCount >= game.maxPlayers ? (
-                      <Chip label={t('games.public.full')} color="error" size="small" />
-                    ) : (
-                      <Button
-                        variant="contained"
-                        size="small"
-                        disabled={joiningId === game.id}
-                        onClick={() => handleJoin(game)}
-                        sx={{ minWidth: 100 }}
-                      >
-                        {joiningId === game.id ? (
-                          <CircularProgress size={20} color="inherit" />
-                        ) : (
-                          t('games.public.join')
+                        {/* Badge de gênero: exibido apenas para MALE ou FEMALE */}
+                        {(game.gender === 'MALE' || game.gender === 'FEMALE') && (
+                          <Chip
+                            label={game.gender === 'MALE' ? t('games.genderFilter.male') : t('games.genderFilter.female')}
+                            size="small"
+                            sx={{
+                              fontWeight: 600,
+                              backgroundColor: alpha(
+                                game.gender === 'MALE'
+                                  ? theme.palette.info.main
+                                  : theme.palette.secondary.main,
+                                0.12
+                              ),
+                              color: theme.palette.mode === 'dark'
+                                ? (game.gender === 'MALE' ? theme.palette.info.light : theme.palette.secondary.light)
+                                : (game.gender === 'MALE' ? theme.palette.info.dark : theme.palette.secondary.dark),
+                            }}
+                          />
                         )}
-                      </Button>
-                    )}
+                        <Chip
+                          icon={<GroupIcon />}
+                          label={`${game.playersCount ?? 0}/${game.maxPlayers}`}
+                          size="small"
+                          color={game.playersCount >= game.maxPlayers ? 'error' : 'success'}
+                          variant="outlined"
+                        />
+                      </Stack>
+                    </Box>
+                    <Stack direction="column" spacing={1} alignItems={{ xs: 'stretch', sm: 'center' }} sx={{ minWidth: { xs: '100%', sm: 120 } }}>
+                      {game.playersCount >= game.maxPlayers ? (
+                        <Chip label={t('games.public.full')} color="error" size="small" />
+                      ) : (
+                        <Button
+                          variant="contained"
+                          size="small"
+                          disabled={joiningId === game.id}
+                          onClick={() => handleJoin(game)}
+                          sx={{ minWidth: 100 }}
+                        >
+                          {joiningId === game.id ? (
+                            <CircularProgress size={20} color="inherit" />
+                          ) : (
+                            t('games.public.join')
+                          )}
+                        </Button>
+                      )}
+                    </Stack>
                   </Stack>
-                </Stack>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </Grid>
           ))}
-        </Stack>
+        </Grid>
       )}
     </PageContainer>
   );

@@ -160,6 +160,28 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.51.3][web-1.51.3] - 2026-07-06
+
+#### Adicionado
+- Testes novos para parsing monetario, auto-convite, validacao de agenda, ordenacao de jogos, merge realtime e busca.
+- Cobertura adicional de Firestore Rules para polls, votes, rides, disponibilidade, posts ocultos e `users_private`.
+- Indices Firestore alinhados com consultas web por `dateTime`, busca e filtros.
+
+#### Mudado
+- `AuthContext`, notificacoes, times favoritos e ranking reduzem trabalho no caminho inicial.
+- Chat e mural agora fazem merge realtime por id sem descartar paginas antigas.
+- A liga deixa de depender de limite crescente e passa a usar paginacao por cursor.
+- Telas admin, public games, mobile forms e dialogs receberam ajustes de layout e a11y.
+
+#### Corrigido
+- `CashboxScreen` normaliza moeda PT-BR.
+- `useAutoInviteMembers` limita convites automaticos a membros `ACTIVE`.
+- Edicao/configuracao de grupo respeita donos legados por `owner_id`.
+- `GroupChallengesScreen` e rules restringem acoes sensiveis a dono/admin.
+- `GamesTab` e `CreateGameScreen` validam horario real de jogo.
+
+_Issues: #3320, #3321, #3322, #3323, #3324, #3325, #3326, #3327, #3328, #3329, #3330, #3331, #3332, #3333, #3334, #3335, #3336, #3337, #3338, #3339, #3340, #3341_
+
 ### [1.51.2][web-1.51.2] - 2026-07-05
 
 #### Adicionado
@@ -1500,6 +1522,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.51.3]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.3.md
 [web-1.51.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.2.md
 [web-1.51.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.1.md
 [web-1.51.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.0.md

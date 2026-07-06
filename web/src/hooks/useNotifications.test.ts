@@ -64,7 +64,7 @@ vi.mock('../contexts/ToastContext', () => ({
   useToast: () => ({ showSuccess: vi.fn(), showError: vi.fn(), showWarning: vi.fn(), showInfo: vi.fn() }),
   ToastProvider: ({ children }) => children,
 }));
-import { useNotifications } from './useNotifications';
+import { useNotifications, useUnreadNotificationCount } from './useNotifications';
 
 describe('useNotifications', () => {
   beforeEach(() => {
@@ -99,6 +99,25 @@ describe('useNotifications', () => {
     expect(mockWhere).toHaveBeenCalledWith('user_id', '==', 'user-1');
     expect(mockOrderBy).toHaveBeenCalledWith('created_at', 'desc');
     expect(mockLimit).toHaveBeenCalledWith(50);
+  });
+
+  it('useUnreadNotificationCount escuta apenas notificações não-lidas', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    mockOnSnapshot.mockImplementation((q: any, onNext: any) => {
+      onNext({ docs: [{ id: 'notif-1' }, { id: 'notif-2' }], size: 2 });
+      return vi.fn();
+    });
+
+    const { result } = renderHook(() => useUnreadNotificationCount('user-1'), { wrapper: createTestWrapper() });
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    expect(mockWhere).toHaveBeenCalledWith('user_id', '==', 'user-1');
+    expect(mockWhere).toHaveBeenCalledWith('read', '==', false);
+    expect(mockLimit).toHaveBeenCalledWith(100);
+    expect(result.current.unreadCount).toBe(2);
   });
 
   it('calcula contagem de não-lidos corretamente', async () => {

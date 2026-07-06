@@ -280,6 +280,7 @@ const GroupLeagueItem = React.memo(function GroupLeagueItem({
   onToggleExpand: (id: string) => void;
 }) {
   const theme = useTheme();
+  const { t } = useTranslation();
   const winRate = standing.gamesPlayed > 0 ? Math.round((standing.wins / standing.gamesPlayed) * 100) : 0;
 
   const handleToggle = useCallback(
@@ -373,7 +374,7 @@ const GroupLeagueItem = React.memo(function GroupLeagueItem({
             <StatBox label="Gols Pró" value={standing.goalsScored} color={theme.palette.primary.main} />
             <StatBox label="Gols Contra" value={standing.goalsConceded} color={theme.palette.error.main} />
             <StatBox label="Saldo" value={standing.goalDifference >= 0 ? `+${standing.goalDifference}` : standing.goalDifference} color={standing.goalDifference >= 0 ? theme.palette.success.main : theme.palette.error.main} />
-            <StatBox label="Win Rate" value={`${winRate}%`} color={theme.palette.info.main} />
+            <StatBox label={t('statistics.winRate')} value={`${winRate}%`} color={theme.palette.info.main} />
             <StatBox label="MVPs" value={standing.mvpCount} color={theme.palette.secondary.main} />
           </Box>
         </Collapse>

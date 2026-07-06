@@ -27,6 +27,7 @@ import {
   Avatar,
   Chip,
 } from '@mui/material';
+import { getContrastRatio } from '@mui/material/styles';
 import Grid from '@mui/material/Unstable_Grid2';
 import {
   SportsSoccer as SoccerIcon,
@@ -580,6 +581,16 @@ export const GameDetailScreen: React.FC = () => {
     ? `${window.location.origin}/checkin/${gameId}/${qrToken}`
     : null;
 
+  const qrColors = useMemo(() => {
+    const paper = theme.palette.background.paper;
+    const text = theme.palette.text.primary;
+    const contrast = getContrastRatio(text, paper);
+    if (theme.palette.mode === 'light' && contrast >= 7) {
+      return { dark: text, light: paper };
+    }
+    return { dark: '#000000', light: '#ffffff' };
+  }, [theme.palette.background.paper, theme.palette.mode, theme.palette.text.primary]);
+
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [qrGenerateError, setQrGenerateError] = useState<string | null>(null);
 
@@ -587,7 +598,7 @@ export const GameDetailScreen: React.FC = () => {
     if (qrCheckInUrl) {
       import('qrcode')
         .then(({ default: QRCode }) =>
-          QRCode.toDataURL(qrCheckInUrl, { width: 250, margin: 2, color: { dark: '#000000', light: '#ffffff' } })
+          QRCode.toDataURL(qrCheckInUrl, { width: 280, margin: 2, color: qrColors })
         )
         .then((url: string) => {
           setQrDataUrl(url);
@@ -601,7 +612,7 @@ export const GameDetailScreen: React.FC = () => {
       setQrDataUrl(null);
       setQrGenerateError(null);
     }
-  }, [qrCheckInUrl]);
+  }, [qrCheckInUrl, qrColors]);
 
   const handleDownloadQr = () => {
     if (!qrDataUrl || !gameId) return;
@@ -999,7 +1010,7 @@ export const GameDetailScreen: React.FC = () => {
                   onClick={handleGenerateQr}
                   disabled={qrLoading}
                 >
-                  QR Code
+                  {t('games.detail.qrCode')}
                 </Button>
               )}
               {isConfirmed ? (
@@ -1233,10 +1244,17 @@ export const GameDetailScreen: React.FC = () => {
         </DialogActions>
       </Dialog>
 
-      <Dialog open={qrDialogOpen} onClose={() => setQrDialogOpen(false)} fullWidth maxWidth="xs" aria-labelledby="qr-dialog-title">
+      <Dialog
+        open={qrDialogOpen}
+        onClose={() => setQrDialogOpen(false)}
+        fullScreen={isMobile}
+        fullWidth
+        maxWidth="xs"
+        aria-labelledby="qr-dialog-title"
+      >
         <DialogTitle id="qr-dialog-title">{t('games.detail.qrCheckInTitle')}</DialogTitle>
-        <DialogContent>
-          <Box sx={{ textAlign: 'center', py: 2 }}>
+        <DialogContent sx={{ px: { xs: 2, sm: 3 }, pb: { xs: 3, sm: 2 } }}>
+          <Box sx={{ textAlign: 'center', py: 2, maxWidth: 360, mx: 'auto' }}>
             {qrCheckInUrl && qrDataUrl ? (
               <>
                 <Box
@@ -1244,10 +1262,11 @@ export const GameDetailScreen: React.FC = () => {
                   src={qrDataUrl}
                   alt={t('games.detail.qrAlt')}
                   sx={{
-                    width: 250,
-                    height: 250,
+                    width: '100%',
+                    maxWidth: 280,
+                    aspectRatio: '1 / 1',
                     mb: 2,
-                    bgcolor: 'common.white',
+                    bgcolor: qrColors.light,
                     p: 1,
                     borderRadius: 1,
                     border: (theme) =>
@@ -1259,7 +1278,7 @@ export const GameDetailScreen: React.FC = () => {
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                   {t('games.detail.qrInstructions')}
                 </Typography>
-                <Box sx={{ display: 'flex', gap: 1 }}>
+                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
                   <Button
                     variant="outlined"
                     fullWidth
@@ -1281,7 +1300,7 @@ export const GameDetailScreen: React.FC = () => {
                   >
                     {t('games.detail.downloadQrCode')}
                   </Button>
-                </Box>
+                </Stack>
               </>
             ) : qrGenerateError ? (
               <Typography variant="body2" color="error" sx={{ py: 4 }}>

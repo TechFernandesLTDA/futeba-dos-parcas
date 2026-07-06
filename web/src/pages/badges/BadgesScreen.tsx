@@ -218,7 +218,7 @@ const BadgeItem = React.memo(function BadgeItem({
         onClick={onClick}
         role="button"
         tabIndex={0}
-        aria-label={badge.name}
+        aria-label={isUnlocked ? `${badge.name}. ${t('badges.clickForDetails')}` : `${badge.name}. ${badge.requirement}`}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
@@ -312,10 +312,19 @@ function BadgeDetailDialog({
   if (!badge) return null;
 
   const rarityColor = rarityMap[badge.rarity] ?? rarityMap.COMUM;
+  const titleId = 'badge-dialog-title';
+  const descriptionId = 'badge-dialog-description';
 
   return (
-    <Dialog open={true} onClose={onClose} maxWidth="xs" fullWidth aria-label={badge.name}>
-      <DialogTitle sx={{ textAlign: 'right', p: 1 }}>
+    <Dialog
+      open={true}
+      onClose={onClose}
+      maxWidth="xs"
+      fullWidth
+      aria-labelledby={titleId}
+      aria-describedby={descriptionId}
+    >
+      <DialogTitle id={titleId} sx={{ textAlign: 'right', p: 1 }}>
         <IconButton onClick={onClose} aria-label={t('common.close')}>
           <CloseIcon aria-hidden="true" />
         </IconButton>
@@ -345,7 +354,7 @@ function BadgeDetailDialog({
           {badge.name}
         </Typography>
 
-        <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
+        <Typography id={descriptionId} variant="body1" color="text.secondary" sx={{ mb: 2 }}>
           {badge.description}
         </Typography>
 

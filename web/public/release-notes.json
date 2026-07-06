@@ -1,7 +1,60 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-06T00:09:01.127Z",
+  "generatedAt": "2026-07-06T04:40:07.189Z",
   "notes": [
+    {
+      "version": "1.51.3",
+      "buildNumber": null,
+      "releaseDate": "2026-07-06",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "O beta web ficou mais consistente, rapido e seguro para uso real em jogos, grupos, ranking e operacao admin.",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "Primeira abertura autenticada reduz leituras e carregamentos que nao eram essenciais.",
+        "Liga e rankings usam paginacao e textos mais consistentes.",
+        "Dados ficticios ficam menos expostos para usuarios comuns em vitrines publicas.",
+        "Textos em PT-BR, glossario e traducoes foram padronizados em telas principais."
+      ],
+      "fixed": [
+        "O fluxo de caixa agora trata valores com virgula decimal sem perder centavos.",
+        "A criacao de jogos valida melhor membros elegiveis, horario, dono do grupo e ordenacao dos proximos jogos.",
+        "Desafios entre grupos passam a respeitar permissao de dono/admin.",
+        "Busca, chat, mural e filtros de jogos preservam melhor resultados e historico paginado.",
+        "Barras de acao mobile, layout admin, QR do jogo e acessibilidade receberam ajustes de responsividade.",
+        "`CashboxScreen` normaliza moeda PT-BR.",
+        "`useAutoInviteMembers` limita convites automaticos a membros `ACTIVE`.",
+        "Edicao/configuracao de grupo respeita donos legados por `owner_id`.",
+        "`GroupChallengesScreen` e rules restringem acoes sensiveis a dono/admin.",
+        "`GamesTab` e `CreateGameScreen` validam horario real de jogo."
+      ],
+      "issueRefs": [
+        3320,
+        3321,
+        3322,
+        3323,
+        3324,
+        3325,
+        3326,
+        3327,
+        3328,
+        3329,
+        3330,
+        3331,
+        3332,
+        3333,
+        3334,
+        3335,
+        3336,
+        3337,
+        3338,
+        3339,
+        3340,
+        3341
+      ]
+    },
     {
       "version": "1.51.2",
       "buildNumber": null,

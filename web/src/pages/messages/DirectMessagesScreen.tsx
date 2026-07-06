@@ -22,6 +22,8 @@ import { PageContainer } from '../../components/common/PageContainer';
 import { EmptyState } from '../../components/common/EmptyState';
 import { LoadingState } from '../../components/common/GameCard';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import { ScreenHeader } from '../../components/common/ScreenHeader';
+import { useNavigateBack } from '../../hooks/useNavigateBack';
 import { getDirectChatPeer, useDirectChats } from '../../hooks/useDirectMessages';
 
 function formatChatTime(date?: Date) {
@@ -37,20 +39,23 @@ function formatChatTime(date?: Date) {
 export const DirectMessagesScreen: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const goBack = useNavigateBack();
   const { chats, loading, error, currentUserId } = useDirectChats();
   useDocumentTitle(t('directMessages.title'));
 
   return (
     <PageContainer maxWidth="focused">
       <Stack spacing={2} sx={{ py: 2 }}>
-        <Box>
-          <Typography variant="h5" fontWeight={700}>
-            {t('directMessages.title')}
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            {t('directMessages.subtitle')}
-          </Typography>
-        </Box>
+        <ScreenHeader
+          title={t('directMessages.title')}
+          onBack={goBack}
+          backAriaLabel={t('common.back')}
+          sticky={false}
+          headerSx={{ p: 0, height: 'auto' }}
+        />
+        <Typography variant="body2" color="text.secondary">
+          {t('directMessages.subtitle')}
+        </Typography>
 
         {error && (
           <Alert
