@@ -12,8 +12,7 @@
   "hosting": {
     "public": "web/dist",
     "predeploy": [
-      "npm --prefix web ci",
-      "npm --prefix web run build"
+      "node scripts/deploy/build-web-hosting.js"
     ],
     "ignore": [
       "firebase.json",

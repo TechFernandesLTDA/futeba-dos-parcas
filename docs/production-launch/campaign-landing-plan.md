@@ -21,9 +21,8 @@ Primeira versão deve ser simples e acionável:
 - Links para Termos, Privacidade, Exclusão de Conta e Suporte.
 - Domínio final do produto quando #3299 estiver concluída.
 
-Não construir uma grande landing se outra frente estiver mexendo na UI pública.
-Se for necessário publicar rápido, preferir seção leve no app web ou página
-estática pequena no Hosting.
+Implementação atual: rota React pública `/launch`, usando asset local
+`/logo.png`, CTA para cadastro, suporte temporário e links legais.
 
 ## Roteiro de vídeo curto
 
@@ -70,8 +69,8 @@ Mensagem curta:
 > um só lugar. Estamos abrindo um beta controlado e queremos testar com grupos
 > reais por 2 semanas. Posso te ajudar a criar o primeiro grupo?
 
-## Pendências de código/UI
+## Pendências externas
 
-- Definir se a landing será rota React, página estática ou seção no domínio raiz.
-- Adicionar CTA/lista de espera se ainda não existir fluxo pronto.
 - Atualizar e-mails e links oficiais após a decisão de domínio.
+- Apontar o domínio oficial para a rota/SPA após DNS e Firebase Hosting.
+- Produzir vídeo curto com dados fictícios ou conta de demonstração marcada.

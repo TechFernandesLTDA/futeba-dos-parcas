@@ -4,9 +4,11 @@ Objetivo: definir a presença pública oficial do Futeba dos Parças antes do
 lançamento amplo, com domínio de produto, redirecionamentos e e-mails alinhados
 à marca.
 
-## Decisão pendente
+## Decisão operacional
 
-Escolher o domínio principal do produto. Candidatos aceitáveis:
+Domínio recomendado para lançamento público: `futebadosparcas.com.br`.
+Manter `https://futebadosparcas.web.app` como fallback técnico, preview e
+rollback de comunicação. Candidatos/aliases aceitáveis:
 
 | Opção | Uso recomendado | Observação |
 | --- | --- | --- |
@@ -15,12 +17,11 @@ Escolher o domínio principal do produto. Candidatos aceitáveis:
 | `app.futebadosparcas.com.br` | App web | Pode apontar para Firebase Hosting se o domínio raiz virar site institucional. |
 | `techfernandes.com.br` | Institucional | Não deve ser o domínio principal do app público. |
 
-Recomendação: usar `futebadosparcas.com.br` como domínio principal público e
-manter `https://futebadosparcas.web.app` como fallback técnico.
+Não usar `techfernandes.com.br` como domínio principal do app público.
 
 ## DNS e Firebase Hosting
 
-Checklist:
+Checklist externo:
 
 - [ ] Registrar domínio escolhido e habilitar renovação automática.
 - [ ] Adicionar domínio no Firebase Console > Hosting > Add custom domain.
@@ -75,7 +76,15 @@ Configuração mínima:
 ## Pontos que exigem código/configuração
 
 - Firebase Hosting custom domain e redirects em `firebase.json`, se os redirects
-  forem controlados pelo Hosting.
+  forem controlados pelo Hosting após DNS.
 - Substituir `techfernandesltda@gmail.com` nas páginas públicas por e-mails do
   domínio próprio após as caixas existirem.
 - Configurar provedor transacional quando houver envio ativo de e-mails pelo app.
+
+## Evidência no app
+
+- Landing pública: `/launch`.
+- Termos: `/terms_of_service.html`.
+- Privacidade: `/privacy_policy.html`.
+- Exclusão de conta: `/delete_account.html`.
+- Suporte temporário: `techfernandesltda@gmail.com`.
