@@ -283,7 +283,7 @@ export const GameReviewQueueScreen: React.FC = () => {
         </Alert>
 
         <Grid container spacing={2}>
-          <Grid xs={12} md={3}>
+          <Grid xs={6} md={3}>
             <Card>
               <CardContent>
                 <Typography variant="overline" color="text.secondary">Pendentes</Typography>
@@ -291,7 +291,7 @@ export const GameReviewQueueScreen: React.FC = () => {
               </CardContent>
             </Card>
           </Grid>
-          <Grid xs={12} md={3}>
+          <Grid xs={6} md={3}>
             <Card>
               <CardContent>
                 <Typography variant="overline" color="text.secondary">Liberados manualmente</Typography>
@@ -299,7 +299,7 @@ export const GameReviewQueueScreen: React.FC = () => {
               </CardContent>
             </Card>
           </Grid>
-          <Grid xs={12} md={3}>
+          <Grid xs={6} md={3}>
             <Card>
               <CardContent>
                 <Typography variant="overline" color="text.secondary">Rejeitados</Typography>
@@ -307,7 +307,7 @@ export const GameReviewQueueScreen: React.FC = () => {
               </CardContent>
             </Card>
           </Grid>
-          <Grid xs={12} md={3}>
+          <Grid xs={6} md={3}>
             <Card>
               <CardContent>
                 <Typography variant="overline" color="text.secondary">Auto-close com revisão</Typography>
@@ -322,14 +322,26 @@ export const GameReviewQueueScreen: React.FC = () => {
             exclusive
             color="primary"
             value={filter}
+            fullWidth
             onChange={(_event, value) => {
               if (value) setFilter(value);
             }}
+            sx={{
+              flexWrap: 'wrap',
+              gap: 1,
+              '& .MuiToggleButtonGroup-grouped': {
+                borderRadius: 1,
+                border: '1px solid',
+                borderColor: 'divider',
+                m: 0,
+                flex: { xs: '1 1 calc(50% - 4px)', sm: '0 1 auto' },
+              },
+            }}
           >
-            <ToggleButton value="HELD_FOR_REVIEW">Pendentes</ToggleButton>
-            <ToggleButton value="ELIGIBLE">Liberados</ToggleButton>
-            <ToggleButton value="REJECTED_BY_ADMIN">Rejeitados</ToggleButton>
-            <ToggleButton value="AUTO_CLOSE_REVIEW">Auto-close</ToggleButton>
+            <ToggleButton value="HELD_FOR_REVIEW" sx={{ textTransform: 'none' }}>Pendentes</ToggleButton>
+            <ToggleButton value="ELIGIBLE" sx={{ textTransform: 'none' }}>Liberados</ToggleButton>
+            <ToggleButton value="REJECTED_BY_ADMIN" sx={{ textTransform: 'none' }}>Rejeitados</ToggleButton>
+            <ToggleButton value="AUTO_CLOSE_REVIEW" sx={{ textTransform: 'none' }}>Auto-close</ToggleButton>
           </ToggleButtonGroup>
           <TextField
             value={search}

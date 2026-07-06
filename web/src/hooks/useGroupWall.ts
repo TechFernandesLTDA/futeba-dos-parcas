@@ -24,6 +24,7 @@ import { getFirestoreErrorMessage } from '../utils/firebaseErrors';
 import { snakeToCamel, toDate } from '../utils/firestoreHelpers';
 import { createLogger } from '../utils/logger';
 import { useTranslation } from 'react-i18next';
+import { mergeRealtimePageById } from './realtimePageMerge';
 
 const logger = createLogger('useGroupWall');
 
@@ -222,6 +223,11 @@ export function useGroupWall(groupId?: string) {
 
   useEffect(() => {
     if (!groupId) {
+      setPosts([]);
+      setError(null);
+      setHasMore(false);
+      newestDocRef.current = null;
+      oldestDocRef.current = null;
       setLoading(false);
       return;
     }
@@ -241,8 +247,9 @@ export function useGroupWall(groupId?: string) {
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
+        const snapshotIds = snapshot.docs.map((docSnap) => docSnap.id);
         const data = snapshot.docs.map(mapPost).filter((post) => post.deletedAt === null);
-        setPosts(data);
+        setPosts((prev) => mergeRealtimePageById(prev, data, snapshotIds, 'prepend'));
         setHasMore(snapshot.size === POST_PAGE_SIZE);
         if (snapshot.docs.length > 0) {
           newestDocRef.current = snapshot.docs[0];

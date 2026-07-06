@@ -51,6 +51,7 @@ import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { createLogger } from '../../utils/logger';
 import { getFirestoreErrorMessage } from '../../utils/firebaseErrors';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
+import { formatCashboxAmountInput, parseCashboxAmount } from '../../utils/cashboxAmount';
 
 const logger = createLogger('CashboxScreen');
 
@@ -109,8 +110,8 @@ export const CashboxScreen: React.FC = () => {
   const { showSuccess, showError } = useToast();
 
   // #2231: validação em tempo real do formulário de transação.
-  const parsedAmount = parseFloat(amount);
-  const amountValid = !!amount && !isNaN(parsedAmount) && parsedAmount > 0;
+  const parsedAmount = parseCashboxAmount(amount);
+  const amountValid = parsedAmount !== null;
   const descriptionValid = description.trim().length > 0;
   const formValid = amountValid && descriptionValid;
   const currentUserId = firebaseUser?.uid;
@@ -222,8 +223,8 @@ export const CashboxScreen: React.FC = () => {
   }, [groupId, receiptFile]);
 
   const handleAddTransaction = useCallback(async () => {
-    const parsedAmount = parseFloat(amount);
-    if (!groupId || !currentUserId || !description.trim() || isNaN(parsedAmount) || parsedAmount <= 0) return;
+    const parsedAmount = parseCashboxAmount(amount);
+    if (!groupId || !currentUserId || !description.trim() || parsedAmount === null) return;
     setSubmitting(true);
     try {
       const userName = firebaseUser?.displayName || user?.name || t('cashbox.defaultUserName');
@@ -480,14 +481,20 @@ export const CashboxScreen: React.FC = () => {
             autoFocus
             margin="none"
             label={t('cashbox.amountLabel')}
-            type="number"
+            type="text"
             fullWidth
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
-            onBlur={() => setAmountTouched(true)}
+            onBlur={() => {
+              setAmountTouched(true);
+              const normalizedAmount = parseCashboxAmount(amount);
+              if (normalizedAmount !== null) {
+                setAmount(formatCashboxAmountInput(normalizedAmount));
+              }
+            }}
             error={amountTouched && !amountValid}
             helperText={amountTouched && !amountValid ? t('cashbox.amountError') : ' '}
-            inputProps={{ min: 0, step: '0.01' }}
+            inputProps={{ inputMode: 'decimal' }}
             sx={{ mb: 1 }}
           />
           <TextField

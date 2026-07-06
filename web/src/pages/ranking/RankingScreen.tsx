@@ -47,6 +47,7 @@ export const RankingScreen: React.FC = () => {
   const theme = useTheme();
   const { user } = useAuth();
   const { t } = useTranslation();
+  const showDemoData = user?.role === 'ADMIN' || import.meta.env.DEV;
 
   // Monitoramento de performance
   const { metrics } = usePerformanceMonitoring({ screenName: 'RankingScreen' });
@@ -83,7 +84,7 @@ export const RankingScreen: React.FC = () => {
   }, [players, tabValue]);
 
   const getPositionStyle = (position: number) => getPositionBadgeStyle(position, theme);
-  const columnLabel = tabValue === 1 ? 'MVPs' : tabValue === 2 ? 'Gols' : 'Pts';
+  const columnLabel = tabValue === 1 ? t('ranking.tabMvps') : tabValue === 2 ? t('ranking.tabScorers') : t('ranking.pts');
   const hasPodium = ranked.length >= 3;
   const listRanked = hasPodium ? ranked.slice(3) : ranked;
 
@@ -171,7 +172,11 @@ export const RankingScreen: React.FC = () => {
           </Box>
         ) : (
           <>
-          <PodiumSection players={ranked.slice(0, 3)} onAvatarClick={setSelectedPlayerId} />
+          <PodiumSection
+            players={ranked.slice(0, 3)}
+            onAvatarClick={setSelectedPlayerId}
+            showDemoData={showDemoData}
+          />
           <Box
             sx={{
               display: 'flex',
@@ -183,7 +188,7 @@ export const RankingScreen: React.FC = () => {
             }}
           >
             <Typography variant="caption" color="text.secondary" sx={{ flex: 1, fontWeight: 700 }}>
-              Jogador
+              {t('ranking.playerColumn')}
             </Typography>
             <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700 }}>
               {columnLabel}
@@ -203,6 +208,7 @@ export const RankingScreen: React.FC = () => {
                     positionStyle={getPositionStyle(index + 4)}
                     tabValue={tabValue}
                     onAvatarClick={setSelectedPlayerId}
+                    showDemoData={showDemoData}
                   />
                 )}
               />
@@ -215,6 +221,7 @@ export const RankingScreen: React.FC = () => {
                     positionStyle={getPositionStyle(index + (hasPodium ? 4 : 1))}
                   tabValue={tabValue}
                   onAvatarClick={setSelectedPlayerId}
+                  showDemoData={showDemoData}
                 />
               ))
             )}
@@ -241,11 +248,14 @@ const PODIUM_ORDER = [1, 0, 2];
 const PodiumSection = React.memo(function PodiumSection({
   players,
   onAvatarClick,
+  showDemoData,
 }: {
   players: LeaguePlayer[];
   onAvatarClick: (userId: string) => void;
+  showDemoData: boolean;
 }) {
   const theme = useTheme();
+  const { t } = useTranslation();
   const medals = ['1º', '2º', '3º'];
 
   if (players.length < 3) return null;
@@ -288,10 +298,10 @@ const PodiumSection = React.memo(function PodiumSection({
                 {player.userName}
               </Typography>
               <Box sx={{ mt: 0.5, display: 'flex', justifyContent: 'center' }}>
-                <DemoDataChip data={player} />
+                {showDemoData && <DemoDataChip data={player} />}
               </Box>
               <Typography variant="caption" color="text.secondary">
-                {player.points} pts
+                {player.points} {t('ranking.pts')}
               </Typography>
             </CardContent>
           </Card>
@@ -307,12 +317,14 @@ const RankingItem = React.memo(function RankingItem({
   positionStyle,
   tabValue,
   onAvatarClick,
+  showDemoData,
 }: {
   player: LeaguePlayer;
   position: number;
   positionStyle: { bgcolor: string; color: string };
   tabValue: number;
   onAvatarClick: (userId: string) => void;
+  showDemoData: boolean;
 }) {
   const theme = useTheme();
   const { t } = useTranslation();
@@ -368,7 +380,7 @@ const RankingItem = React.memo(function RankingItem({
               {player.isCurrentUser && (
                 <Chip label={t('ranking.you')} size="small" color="primary" />
               )}
-              <DemoDataChip data={player} />
+              {showDemoData && <DemoDataChip data={player} />}
             </Box>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Typography variant="caption" color="text.secondary">

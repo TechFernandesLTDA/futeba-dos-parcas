@@ -79,7 +79,7 @@ export const GroupEditScreen: React.FC = () => {
   // Verificar permissão: apenas owner ou admin pode editar
   const uid = firebaseUser?.uid || user?.id;
   const myMember = members.find((m) => m.userId === uid);
-  const isOwner = myMember?.role === 'OWNER';
+  const isOwner = group?.ownerId === uid || myMember?.role === 'OWNER';
   const isAdmin = myMember?.role === 'ADMIN' || isOwner;
 
   // Preencher formulário com dados do grupo carregado

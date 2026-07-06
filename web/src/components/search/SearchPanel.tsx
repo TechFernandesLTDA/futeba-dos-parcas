@@ -45,6 +45,7 @@ import { avatarSizes, iconSizes } from '../../theme/iconSizes';
 import { useToast } from '../../contexts';
 import { useTranslation } from 'react-i18next';
 import { isLookingForGameToday } from '../../utils/lookingForGameToday';
+import { getPrefixSearchUpperBound } from './searchPrefixes';
 
 const logger = createLogger('SearchPanel');
 
@@ -173,20 +174,30 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
   const doSearch = useCallback(async (q: string, tab: number) => {
     // Gera ID único para este request; requests antigos são descartados ao retornar
     const requestId = ++requestIdRef.current;
+    const searchTerm = q.trim();
+    const prefixUpperBound = getPrefixSearchUpperBound(searchTerm);
     setLoading(true);
     try {
       const all: SearchResult[] = [];
+      const pushUniqueResult = (result: SearchResult) => {
+        if (!all.some((existing) => existing.id === result.id && existing.type === result.type)) {
+          all.push(result);
+        }
+      };
 
       if (tab === 0 || tab === 1) {
         // Privacidade: apenas jogadores com is_searchable=true aparecem na busca (#1027)
         const snap = await getDocs(query(
           collection(db, 'users'),
           where('is_searchable', '==', true),
-          where('name', '>=', q), where('name', '<=', q + ''), limit(10)
+          where('name', '>=', searchTerm),
+          where('name', '<=', prefixUpperBound),
+          orderBy('name'),
+          limit(10),
         ));
         snap.docs.forEach((d) => {
           const data = snakeToCamel(d.data()) as Record<string, unknown>;
-          all.push({
+          pushUniqueResult({
             id: d.id, type: 'user',
             name: (data.name as string) || 'Jogador',
             subtitle: `Nível ${getLevelForXp((data.experiencePoints as number) ?? 0)}`,
@@ -199,11 +210,14 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
       if (tab === 0 || tab === 2) {
         const snap = await getDocs(query(
           collection(db, 'groups'),
-          where('name', '>=', q), where('name', '<=', q + ''), limit(10)
+          where('name', '>=', searchTerm),
+          where('name', '<=', prefixUpperBound),
+          orderBy('name'),
+          limit(10),
         ));
         snap.docs.forEach((d) => {
           const data = snakeToCamel(d.data()) as Record<string, unknown>;
-          all.push({
+          pushUniqueResult({
             id: d.id, type: 'group',
             name: (data.name as string) || 'Grupo',
             subtitle: `${(data.memberCount as number) || 0} membros`,
@@ -213,13 +227,39 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
       }
 
       if (tab === 0 || tab === 3) {
-        const snap = await getDocs(query(collection(db, 'games'), orderBy('dateTime', 'desc'), limit(20)));
-        snap.docs.forEach((d) => {
-          const data = snakeToCamel(d.data()) as Record<string, unknown>;
-          const loc = data.locationName as string | undefined;
-          if (loc?.toLowerCase().includes(q.toLowerCase())) {
-            all.push({ id: d.id, type: 'game', name: loc || 'Jogo', subtitle: formatGameDate((data.dateTime || data.date) as never) });
+        const gameQueries = [
+          query(
+            collection(db, 'games'),
+            where('locationName', '>=', searchTerm),
+            where('locationName', '<=', prefixUpperBound),
+            orderBy('locationName'),
+            limit(10),
+          ),
+          query(
+            collection(db, 'games'),
+            where('location_name', '>=', searchTerm),
+            where('location_name', '<=', prefixUpperBound),
+            orderBy('location_name'),
+            limit(10),
+          ),
+        ];
+        const snapshots = await Promise.allSettled(gameQueries.map((gameQuery) => getDocs(gameQuery)));
+
+        snapshots.forEach((snapshotResult) => {
+          if (snapshotResult.status !== 'fulfilled') {
+            return;
           }
+
+          snapshotResult.value.docs.forEach((d) => {
+            const data = snakeToCamel(d.data()) as Record<string, unknown>;
+            const loc = (data.locationName as string | undefined) || (d.data().location_name as string | undefined);
+            pushUniqueResult({
+              id: d.id,
+              type: 'game',
+              name: loc || 'Jogo',
+              subtitle: formatGameDate((data.dateTime || data.date) as never),
+            });
+          });
         });
       }
 

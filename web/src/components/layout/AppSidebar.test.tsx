@@ -41,6 +41,7 @@ vi.mock('../../contexts/AuthContext', () => ({
 
 vi.mock('../../hooks/useNotifications', () => ({
   useNotifications: () => ({ unreadCount: 0 }),
+  useUnreadNotificationCount: () => ({ unreadCount: 0, loading: false, error: null }),
 }));
 
 vi.mock('../common/AppLogo', () => ({

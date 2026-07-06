@@ -12,6 +12,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { createLogger } from '../utils/logger';
 import { useTranslation } from 'react-i18next';
+import { getActiveMembersToInvite } from '../utils/autoInviteMembers';
 
 const logger = createLogger('useAutoInviteMembers');
 
@@ -29,7 +30,7 @@ export function useAutoInviteMembers() {
         const membersRef = collection(db, 'groups', groupId, 'members');
         const snapshot = await getDocs(membersRef);
 
-        const membersToInvite = snapshot.docs.filter((d) => d.id !== uid);
+        const membersToInvite = getActiveMembersToInvite(snapshot.docs, uid);
         if (membersToInvite.length === 0) return 0;
 
         const ownerName = firebaseUser?.displayName || user?.name || 'Organizador';

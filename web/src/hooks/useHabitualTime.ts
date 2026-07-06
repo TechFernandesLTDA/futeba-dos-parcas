@@ -3,6 +3,7 @@ import { collection, query, where, orderBy, limit, getDocs } from 'firebase/fire
 import { useQuery } from '@tanstack/react-query';
 import { db } from '../services/firebase';
 import { useAuth } from '../contexts/AuthContext';
+import type { GameStatus } from '../types/game';
 
 interface HabitualTime {
   dayOfWeek: number;
@@ -21,6 +22,13 @@ const DAY_LABELS: Record<number, string> = {
   6: 'Sábado',
 };
 
+const NON_CANCELLED_GAME_STATUSES: GameStatus[] = [
+  'SCHEDULED',
+  'CONFIRMED',
+  'LIVE',
+  'FINISHED',
+];
+
 async function fetchHabitualTime(
   uid: string,
   locationId: string,
@@ -32,8 +40,7 @@ async function fetchHabitualTime(
     gamesRef,
     where('owner_id', '==', uid),
     where('location_id', '==', locationId),
-    where('status', '!=', 'CANCELLED'),
-    orderBy('status'),
+    where('status', 'in', NON_CANCELLED_GAME_STATUSES),
     orderBy('date', 'desc'),
     limit(30),
   );

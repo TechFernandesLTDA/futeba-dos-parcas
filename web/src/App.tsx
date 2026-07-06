@@ -19,7 +19,7 @@ import { useScrollRestoration } from './hooks/useScrollRestoration';
 import { useAutoBreadcrumbs } from './hooks/useAutoBreadcrumbs';
 import { useNavigateBack } from './hooks/useNavigateBack';
 import { useSwipeBack } from './hooks/useSwipeBack';
-import { useNotifications } from './hooks/useNotifications';
+import { useUnreadNotificationCount } from './hooks/useNotifications';
 import { useReducedMotion } from './hooks/useReducedMotion';
 import { useVerifiedClaim } from './hooks/useVerifiedClaim';
 import { ShortcutsDialog } from './components/common/ShortcutsDialog';
@@ -550,7 +550,7 @@ const SafeScreen = withErrorBoundary(AppRoutes);
 
 function MobileShell({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
-  const { unreadCount } = useNotifications(user?.id);
+  const { unreadCount } = useUnreadNotificationCount(user?.id);
   const location = useLocation();
   const breadcrumbs = useAutoBreadcrumbs();
   // #2193: rotas secundárias = qualquer path que não seja a raiz (tabs vivem

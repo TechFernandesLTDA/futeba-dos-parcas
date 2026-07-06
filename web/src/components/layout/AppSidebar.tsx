@@ -29,7 +29,7 @@ import {
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
-import { useNotifications } from '../../hooks/useNotifications';
+import { useUnreadNotificationCount } from '../../hooks/useNotifications';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
 import { AppLogo } from '../common/AppLogo';
 import { avatarSizes, iconSizes } from '../../theme/iconSizes';
@@ -51,7 +51,7 @@ export function AppSidebar() {
   const location = useLocation();
   const { t } = useTranslation();
   const { user } = useAuth();
-  const { unreadCount } = useNotifications(user?.id);
+  const { unreadCount } = useUnreadNotificationCount(user?.id);
   const userInitial = user?.name?.charAt(0).toUpperCase() || 'U';
   const reducedMotion = useReducedMotion();
 

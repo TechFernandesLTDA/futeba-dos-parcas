@@ -36,6 +36,7 @@ import {
   TableRow,
   TableSortLabel,
   CircularProgress,
+  Stack,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -664,31 +665,38 @@ export const UserManagementScreen: React.FC = () => {
           borderBottom: `1px solid ${theme.palette.divider}`,
         }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={goBack} aria-label={t('a11y.back')}>
-            <BackIcon />
-          </IconButton>
-          <Typography variant="h6" sx={{ ml: 1 }}>
-            Gerenciar Usuários
-          </Typography>
+        <Stack
+          direction={{ xs: 'column', sm: 'row' }}
+          spacing={1}
+          alignItems={{ xs: 'stretch', sm: 'center' }}
+          sx={{ p: 1 }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', minWidth: 0 }}>
+            <IconButton onClick={goBack} aria-label={t('a11y.back')}>
+              <BackIcon />
+            </IconButton>
+            <Typography variant="h6" sx={{ ml: 1, minWidth: 0 }}>
+              Gerenciar Usuários
+            </Typography>
+          </Box>
           {selectedUsers.size > 0 && (
             <Button
               startIcon={<EditIcon />}
               onClick={() => setBulkDialogOpen(true)}
-              sx={{ ml: 'auto' }}
+              sx={{ ml: { xs: 0, sm: 'auto' }, alignSelf: { xs: 'flex-start', sm: 'center' } }}
               variant="outlined"
               size="small"
             >
               Alterar ({selectedUsers.size})
             </Button>
           )}
-        </Box>
+        </Stack>
         <Box
           sx={{
             px: 2,
             pb: 2,
             display: 'grid',
-            gridTemplateColumns: { xs: '1fr', sm: '1fr 180px 220px' },
+            gridTemplateColumns: { xs: '1fr', sm: 'minmax(0, 1fr) 180px 220px' },
             gap: 1,
             '& .MuiInputBase-root': {
               minHeight: { xs: 44, sm: 'auto' },
@@ -779,8 +787,8 @@ export const UserManagementScreen: React.FC = () => {
               {hasMore ? ' · mais disponíveis' : ''}
             </Typography>
             {isMdUp ? (
-              <TableContainer>
-                <Table size="small">
+              <TableContainer sx={{ overflowX: 'auto' }}>
+                <Table size="small" sx={{ minWidth: 980 }}>
                   <TableHead>
                     <TableRow>
                       <TableCell padding="checkbox">
@@ -839,10 +847,12 @@ export const UserManagementScreen: React.FC = () => {
                           <TableCell>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                               <PlayerAvatar name={u.name} photoUrl={u.photoUrl} size={32} level={u.level} />
-                              <Typography variant="body2" fontWeight={600}>
-                                {u.name}
-                                {u.id === currentUser?.id && <Chip label="Você" size="small" color="primary" variant="outlined" sx={{ ml: 0.5, height: 18, fontSize: '0.7rem' }} />}
-                              </Typography>
+                              <Box sx={{ minWidth: 0 }}>
+                                <Typography variant="body2" fontWeight={600} sx={{ overflowWrap: 'anywhere' }}>
+                                  {u.name}
+                                </Typography>
+                                {u.id === currentUser?.id && <Chip label="Você" size="small" color="primary" variant="outlined" sx={{ mt: 0.25, height: 18, fontSize: '0.7rem' }} />}
+                              </Box>
                             </Box>
                           </TableCell>
                           <TableCell>
@@ -931,6 +941,7 @@ export const UserManagementScreen: React.FC = () => {
                       <Box key={u.id}>
                         {index > 0 && <Divider />}
                         <ListItem
+                          sx={{ alignItems: 'flex-start' }}
                           secondaryAction={
                             <IconButton edge="end" aria-label={t('a11y.managePermissions')} onClick={() => { setSelectedUser(u); setDialogOpen(true); setError(null); }}>
                               <AdminIcon />
@@ -944,12 +955,13 @@ export const UserManagementScreen: React.FC = () => {
                             sx={{ p: 1.25, mr: 1 }}
                           />
                           <ListItemButton
+                            sx={{ alignItems: 'flex-start', pr: 7 }}
                             onClick={() => { setSelectedUser(u); setDialogOpen(true); setError(null); }}
                           >
                             <PlayerAvatar name={u.name} photoUrl={u.photoUrl} size={48} level={u.level} />
                             <ListItemText
                               primary={
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap', minWidth: 0 }}>
                                   {u.name}
                                   {u.id === currentUser?.id && <Chip label="Você" size="small" color="primary" variant="outlined" />}
                                   <DemoDataChip data={u} />

@@ -118,7 +118,7 @@ export const LeagueScreen: React.FC = () => {
   const [shareSnack, setShareSnack] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [showSort, setShowSort] = useState(false);
-  const [maxResults, setMaxResults] = useState(200);
+  const pageSize = 200;
   const [selectedSeasonId, setSelectedSeasonId] = useState<string | null>(null);
   // Fase 4b: filtro de gênero do ranking ('ALL' = combinado).
   const [genderFilter, setGenderFilter] = useState<'ALL' | GameGender>('ALL');
@@ -155,11 +155,19 @@ export const LeagueScreen: React.FC = () => {
 
   const filters: LeagueFilters = useMemo(() => ({
     seasonId: effectiveSeasonId,
-    maxResults,
+    maxResults: pageSize,
     gender: genderFilter === 'ALL' ? null : genderFilter,
-  }), [effectiveSeasonId, maxResults, genderFilter]);
+  }), [effectiveSeasonId, genderFilter]);
 
-  const { players: allPlayers, loading, error, refetch } = useLeague(
+  const {
+    players: allPlayers,
+    loading,
+    error,
+    refetch,
+    loadMore,
+    hasMore,
+    loadingMore,
+  } = useLeague(
     user?.id,
     filters,
     { enabled: !!effectiveSeasonId }
@@ -383,12 +391,11 @@ export const LeagueScreen: React.FC = () => {
   const isLoading = loading || seasonLoading;
 
   const handleLoadMore = useCallback(() => {
-    setMaxResults((prev) => prev + 200);
-  }, []);
+    void loadMore();
+  }, [loadMore]);
 
   const handleSeasonChange = useCallback((seasonId: string) => {
     setSelectedSeasonId(seasonId);
-    setMaxResults(200);
   }, []);
 
   const handleTableSort = useCallback((field: SortField) => {
@@ -926,14 +933,15 @@ export const LeagueScreen: React.FC = () => {
               </List>
             )}
 
-            {filteredAndSorted.length >= maxResults && (
+            {hasMore && (
               <Box sx={{ textAlign: 'center', py: 2 }}>
                 <Button
                   variant="outlined"
                   onClick={handleLoadMore}
-                  disabled={loading}
+                  disabled={loadingMore}
+                  startIcon={loadingMore ? <CircularProgress size={16} color="inherit" /> : undefined}
                 >
-                  {loading ? t('common.loading') : t('league.loadMore')}
+                  {loadingMore ? t('common.loading') : t('league.loadMore')}
                 </Button>
               </Box>
             )}
@@ -1208,7 +1216,11 @@ const LeaguePlayerItem = React.memo(function LeaguePlayerItem({
             </Tooltip>
           )}
 
-          <IconButton onClick={handleToggle} aria-label={isExpanded ? 'Recolher' : 'Expandir'}>
+          <IconButton
+            onClick={handleToggle}
+            aria-label={t('league.togglePlayerAria', { name: player.userName })}
+            aria-expanded={isExpanded}
+          >
             {isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
           </IconButton>
         </Box>
@@ -1218,7 +1230,7 @@ const LeaguePlayerItem = React.memo(function LeaguePlayerItem({
           <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1.5, textAlign: 'center' }}>
             <StatBox label={t('league.victories')} value={player.wins} color={theme.palette.success.main} />
             <StatBox label={t('statistics.losses')} value={Math.max(0, player.gamesPlayed - player.wins)} color={theme.palette.error.main} />
-            <StatBox label="Win Rate" value={`${winRate}%`} color={theme.palette.primary.main} />
+            <StatBox label={t('statistics.winRate')} value={`${winRate}%`} color={theme.palette.primary.main} />
             <StatBox label={t('league.goals')} value={player.goals} color={theme.palette.warning.main} />
             <StatBox label={t('league.assists')} value={player.assists || 0} color={theme.palette.info.main} />
             <StatBox label={t('league.mvpCount')} value={player.mvpCount || 0} color={theme.palette.secondary.main} />

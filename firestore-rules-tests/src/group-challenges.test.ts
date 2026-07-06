@@ -61,6 +61,11 @@ beforeAll(async () => {
     role: "OWNER",
     status: "ACTIVE",
   });
+  await seedDoc(testEnv, `groups/${CHALLENGED_GROUP}/members/${UID_PLAYER_C}`, {
+    user_id: UID_PLAYER_C,
+    role: "MEMBER",
+    status: "ACTIVE",
+  });
 
   await seedDoc(testEnv, `group-challenges/${CHALLENGE_ID}`, validChallenge);
 });
@@ -107,6 +112,17 @@ describe("group-challenges", () => {
       asPlayerB(testEnv).doc(`group-challenges/${CHALLENGE_ID}`).update({
         status: "ACCEPTED",
         responded_by: UID_PLAYER_B,
+        responded_at: new Date(),
+        updated_at: new Date(),
+      })
+    );
+  });
+
+  it("membro simples do grupo desafiado nao pode aceitar desafio", async () => {
+    await assertFails(
+      asPlayerC(testEnv).doc(`group-challenges/${CHALLENGE_ID}`).update({
+        status: "ACCEPTED",
+        responded_by: UID_PLAYER_C,
         responded_at: new Date(),
         updated_at: new Date(),
       })

@@ -425,11 +425,10 @@ function NextGameWidget() {
 
 // ─── MiniRankingWidget ───────────────────────────────────────────────────────
 
-function MiniRankingWidget() {
+function MiniRankingWidget({ groups }: { groups: Group[] }) {
   const { t } = useTranslation();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { groups } = useGroups();
   const gColors = useGamificationColors();
 
   const primaryGroup = groups?.[0];
@@ -1120,7 +1119,7 @@ export function HomeTab() {
 
             <NextGameWidget />
 
-            <MiniRankingWidget />
+            <MiniRankingWidget groups={groups} />
           </Grid>
 
           <Grid xs={12} md={5} sx={{ display: 'flex', flexDirection: 'column' }}>
@@ -1158,7 +1157,7 @@ export function HomeTab() {
 
           <StreakWidget streak={user?.currentStreak || 0} bestStreak={user?.bestStreak} mb={3} />
 
-          <MiniRankingWidget />
+          <MiniRankingWidget groups={groups} />
 
           <Divider sx={{ mx: -2, my: 2.5, borderColor: 'divider' }} />
 

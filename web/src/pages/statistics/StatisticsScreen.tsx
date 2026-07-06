@@ -175,7 +175,7 @@ export const StatisticsScreen: React.FC = () => {
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                   <PlayerAvatar
-                    name={user?.name || 'Jogador'}
+                    name={user?.name || t('profile.defaultPlayerName')}
                     photoUrl={user?.photoUrl}
                     size={64}
                     level={stats.level}
@@ -183,7 +183,7 @@ export const StatisticsScreen: React.FC = () => {
                   <Box sx={{ flex: 1 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <Typography variant="h5" fontWeight={700}>
-                        {user?.name || 'Jogador'}
+                        {user?.name || t('profile.defaultPlayerName')}
                       </Typography>
                       <TeamBadge teamId={user?.favoriteTeam} size={24} />
                     </Box>

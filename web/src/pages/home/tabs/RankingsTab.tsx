@@ -89,8 +89,11 @@ const PodiumCard: React.FC<{
   showXP: boolean;
   positionChange: number | null;
   onAvatarClick: (userId: string) => void;
-}> = ({ player, config, showXP, positionChange, onAvatarClick }) => {
+  showDemoData: boolean;
+}> = ({ player, config, showXP, positionChange, onAvatarClick, showDemoData }) => {
   const theme = useTheme();
+  const { t, i18n } = useTranslation();
+  const locale = i18n.resolvedLanguage || i18n.language || navigator.language;
   // #2163: color theme-aware (dark/OLED); label/minPoints vêm do config estático
   const divisionConfig = {
     ...(DIVISION_CONFIG[player.division] || DIVISION_CONFIG.BRONZE),
@@ -120,7 +123,7 @@ const PodiumCard: React.FC<{
           {config.label}
         </Typography>
         <Box sx={{ mb: 0.75, display: 'flex', justifyContent: 'center' }}>
-          <DemoDataChip data={player} />
+          {showDemoData && <DemoDataChip data={player} />}
         </Box>
         <Box
           onClick={() => onAvatarClick(player.userId)}
@@ -175,11 +178,11 @@ const PodiumCard: React.FC<{
         <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 0.5, mt: 0.25 }}>
           <TeamBadge teamId={player.favoriteTeam} size={16} />
           {player.isCurrentUser && (
-            <Chip label="Você" size="small" color="primary" sx={{ height: 18, fontSize: '0.75rem' }} />
+            <Chip label={t('ranking.you')} size="small" color="primary" sx={{ height: 18, fontSize: '0.75rem' }} />
           )}
         </Box>
         <Typography variant="subtitle2" fontWeight={700} color={showXP ? 'primary.main' : divisionConfig.color} sx={{ mt: 0.5 }}>
-          {(showXP ? (player.experiencePoints || 0) : player.points).toLocaleString('pt-BR')}
+          {(showXP ? (player.experiencePoints || 0) : player.points).toLocaleString(locale)}
         </Typography>
         <Typography variant="caption" color="text.secondary">
           {showXP ? 'XP' : divisionConfig.label} · Nv. {player.level}
@@ -204,7 +207,8 @@ const PodiumSection: React.FC<{
   showXP: boolean;
   positionChanges: Record<string, number | null>;
   onAvatarClick: (userId: string) => void;
-}> = ({ players, showXP, positionChanges, onAvatarClick }) => {
+  showDemoData: boolean;
+}> = ({ players, showXP, positionChanges, onAvatarClick, showDemoData }) => {
   const theme = useTheme();
   const gColors = useGamificationColors();
   const isXs = useMediaQuery(theme.breakpoints.down('sm'));
@@ -262,6 +266,7 @@ const PodiumSection: React.FC<{
                 showXP={showXP}
                 positionChange={positionChanges[first.userId]}
                 onAvatarClick={onAvatarClick}
+                showDemoData={showDemoData}
               />
             </Box>
           </Box>
@@ -277,6 +282,7 @@ const PodiumSection: React.FC<{
                   showXP={showXP}
                   positionChange={positionChanges[second.userId]}
                   onAvatarClick={onAvatarClick}
+                  showDemoData={showDemoData}
                 />
               </Box>
             )}
@@ -288,6 +294,7 @@ const PodiumSection: React.FC<{
                   showXP={showXP}
                   positionChange={positionChanges[third.userId]}
                   onAvatarClick={onAvatarClick}
+                  showDemoData={showDemoData}
                 />
               </Box>
             )}
@@ -311,6 +318,7 @@ const PodiumSection: React.FC<{
             showXP={showXP}
             positionChange={positionChanges[player.userId]}
             onAvatarClick={onAvatarClick}
+            showDemoData={showDemoData}
           />
         );
       })}
@@ -319,12 +327,15 @@ const PodiumSection: React.FC<{
 };
 
 export function RankingsTab() {
-    const theme = useTheme();
-    const gColors = useGamificationColors();
-    const navigate = useNavigate();
+  const theme = useTheme();
+  const gColors = useGamificationColors();
+  const navigate = useNavigate();
   const { user } = useAuth();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   useDocumentTitle(t('nav.league'));
+  const locale = i18n.resolvedLanguage || i18n.language || navigator.language;
+  const showDemoData = user?.role === 'ADMIN' || import.meta.env.DEV;
+  const formatNumber = useCallback((value: number) => value.toLocaleString(locale), [locale]);
 
   const [tabValue, setTabValue] = useState(0); // 0=Liga, 1=XP Global, 2=Sistema XP
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
@@ -516,17 +527,17 @@ export function RankingsTab() {
                     <Typography variant="subtitle2" color="text.secondary">
                       {t('ranking.myPosition')}
                     </Typography>
-                    <DemoDataChip data={currentPlayer} />
+                    {showDemoData && <DemoDataChip data={currentPlayer} />}
                     <Typography variant="h5" fontWeight={700} color="primary.main">
                       #{currentUserRank}
                     </Typography>
                   </Box>
                   <Box sx={{ textAlign: 'right' }}>
                     <Typography variant="h5" fontWeight={700}>
-                      {(tabValue === 1 ? currentPlayer.experiencePoints : currentPlayer.points)?.toLocaleString('pt-BR')}
+                      {formatNumber((tabValue === 1 ? currentPlayer.experiencePoints : currentPlayer.points) || 0)}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
-                      {tabValue === 1 ? 'XP Total' : t('ranking.points')}
+                      {tabValue === 1 ? t('ranking.totalXp') : t('ranking.points')}
                     </Typography>
                     {tabValue === 0 && (
                       <Chip
@@ -550,7 +561,7 @@ export function RankingsTab() {
                         {t('profile.level')} {currentPlayer.level}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
-                        {currentPlayer.experiencePoints?.toLocaleString('pt-BR')} XP
+                        {formatNumber(currentPlayer.experiencePoints || 0)} XP
                       </Typography>
                     </Box>
                     <LinearProgress
@@ -701,6 +712,7 @@ export function RankingsTab() {
                 showXP={tabValue === 1}
                 positionChanges={positionChanges}
                 onAvatarClick={setSelectedPlayerId}
+                showDemoData={showDemoData}
               />
               {sortedPlayers.slice(3).map((player, index) => (
                 <RankingCard
@@ -711,6 +723,8 @@ export function RankingsTab() {
                   showXP={tabValue === 1}
                   onAvatarClick={setSelectedPlayerId}
                   positionChange={positionChanges[player.userId]}
+                  showDemoData={showDemoData}
+                  locale={locale}
                 />
               ))}
             </>
@@ -736,6 +750,8 @@ const RankingCard = React.memo(function RankingCard({
   showXP,
   onAvatarClick,
   positionChange,
+  showDemoData,
+  locale,
 }: {
   player: LeaguePlayer;
   position: number;
@@ -743,8 +759,11 @@ const RankingCard = React.memo(function RankingCard({
   showXP: boolean;
   onAvatarClick: (userId: string) => void;
   positionChange: number | null;
+  showDemoData: boolean;
+  locale: string;
 }) {
   const theme = useTheme();
+  const { t } = useTranslation();
   // #2163: color theme-aware (dark/OLED)
   const divisionConfig = {
     ...(DIVISION_CONFIG[player.division as LeagueDivision] || DIVISION_CONFIG.BRONZE),
@@ -820,13 +839,13 @@ const RankingCard = React.memo(function RankingCard({
               </Typography>
               <TeamBadge teamId={player.favoriteTeam} size={18} />
               {player.isCurrentUser && (
-                <Chip label="Você" size="small" color="primary" sx={{ height: 18, fontSize: '0.75rem' }} />
+                <Chip label={t('ranking.you')} size="small" color="primary" sx={{ height: 18, fontSize: '0.75rem' }} />
               )}
-              <DemoDataChip data={player} />
+              {showDemoData && <DemoDataChip data={player} />}
             </Box>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Typography variant="caption" color="text.secondary" noWrap>
-                {player.gamesPlayed.toLocaleString('pt-BR')}J · {player.wins.toLocaleString('pt-BR')}V · {player.goals.toLocaleString('pt-BR')}G
+                {player.gamesPlayed.toLocaleString(locale)}J · {player.wins.toLocaleString(locale)}V · {player.goals.toLocaleString(locale)}G
               </Typography>
               {positionChange !== null && positionChange !== 0 && (
                 <Typography variant="caption" fontWeight={700} color={positionChange > 0 ? 'success.main' : 'error.main'} sx={{ whiteSpace: 'nowrap' }}>
@@ -844,7 +863,7 @@ const RankingCard = React.memo(function RankingCard({
           {/* Pontuação */}
           <Box sx={{ textAlign: 'right', flexShrink: 0 }}>
             <Typography variant="subtitle1" fontWeight={700} color={showXP ? 'primary.main' : divisionConfig.color}>
-              {(showXP ? (player.experiencePoints || 0) : player.points).toLocaleString('pt-BR')}
+              {(showXP ? (player.experiencePoints || 0) : player.points).toLocaleString(locale)}
             </Typography>
             <Typography variant="caption" color="text.secondary">
               {showXP ? 'XP' : divisionConfig.label}

@@ -103,6 +103,7 @@ import {
   getGameDurationMinutes,
   normalizeHourlyPriceForGame,
 } from '../../utils/gamePricing';
+import { isScheduledDateTimeInPast } from '../../utils/gameScheduleValidation';
 
 const logger = createLogger('CreateGameScreen');
 
@@ -807,6 +808,8 @@ export const CreateGameScreen: React.FC = () => {
     }
     if (!formData.time) {
       errors.time = t('games.create.errorTimeRequired');
+    } else if (formData.date && isScheduledDateTimeInPast(formData.date, formData.time)) {
+      errors.time = t('games.create.errorTimePastToday');
     } else if (formData.endTime && formData.endTime <= formData.time) {
       errors.endTime = t('games.create.errorEndTimeBeforeStart');
     }
@@ -2339,10 +2342,10 @@ export const CreateGameScreen: React.FC = () => {
             </Box>
             <Box>
               <Typography variant="subtitle1" fontWeight={800}>
-                Acelere a criação
+                {t('games.create.quickStartTitle')}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Use um template, duplique um jogo anterior ou salve este rascunho como padrão.
+                {t('games.create.quickStartDescription')}
               </Typography>
             </Box>
           </Box>
@@ -2353,7 +2356,7 @@ export const CreateGameScreen: React.FC = () => {
               startIcon={<SaveIcon />}
               onClick={() => setTemplateDialogOpen(true)}
             >
-              Salvar template
+              {t('games.create.saveAsTemplate')}
             </Button>
             <Button
               variant="contained"
@@ -2362,7 +2365,7 @@ export const CreateGameScreen: React.FC = () => {
               onClick={() => setDuplicateDialogOpen(true)}
               disabled={recentGames.length === 0}
             >
-              Duplicar anterior
+              {t('games.duplicateGame')}
             </Button>
           </Box>
         </Box>
@@ -2373,7 +2376,7 @@ export const CreateGameScreen: React.FC = () => {
           </Box>
         ) : templates.length === 0 ? (
           <Typography variant="body2" color="text.secondary">
-            Nenhum template salvo ainda. Depois de preencher um jogo redondo, salve como template para criar o próximo em poucos toques.
+            {t('games.create.noTemplatesDescription')}
           </Typography>
         ) : (
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))' }, gap: 1 }}>
@@ -2385,13 +2388,13 @@ export const CreateGameScreen: React.FC = () => {
                       {tpl.name}
                     </Typography>
                     <Typography variant="caption" color="text.secondary" noWrap>
-                      {tpl.location_name || 'Sem local'} {tpl.time ? `· ${tpl.time}` : ''} {tpl.recurrence_type ? `· ${tpl.recurrence_type === 'weekly' ? 'Semanal' : tpl.recurrence_type === 'biweekly' ? 'Quinzenal' : 'Mensal'}` : ''} {tpl.max_players ? `· ${tpl.max_players} jog.` : ''}
+                      {tpl.location_name || t('games.create.noLocationLabel')} {tpl.time ? `· ${tpl.time}` : ''} {tpl.recurrence_type ? `· ${tpl.recurrence_type === 'weekly' ? t('games.create.frequencyWeekly') : tpl.recurrence_type === 'biweekly' ? t('games.create.frequencyBiweekly') : t('games.create.frequencyMonthly')}` : ''} {tpl.max_players ? `· ${tpl.max_players} ${t('games.playersShort')}` : ''}
                     </Typography>
                   </Box>
                   <Button size="small" variant="outlined" onClick={() => handleLoadTemplate(tpl.id)}>
-                    Carregar
+                    {t('common.load')}
                   </Button>
-                  <Tooltip title={tpl.time ? 'Criar usando a próxima ocorrência' : 'Template sem horário definido'}>
+                  <Tooltip title={tpl.time ? t('games.create.quickCreateTooltip') : t('games.create.templateWithoutTimeTooltip')}>
                     <span>
                       <Button
                         size="small"
@@ -2400,7 +2403,7 @@ export const CreateGameScreen: React.FC = () => {
                         disabled={!tpl.time}
                         onClick={() => handleQuickCreateFromTemplate(tpl)}
                       >
-                        Criar
+                        {t('games.createGame')}
                       </Button>
                     </span>
                   </Tooltip>
@@ -2540,9 +2543,7 @@ export const CreateGameScreen: React.FC = () => {
           </Alert>
         )}
         {hasDraft && !draftPromptOpen && (
-          <Alert severity="success" sx={{ mb: 2 }}>
-            Rascunho restaurado! Continue de onde parou.
-          </Alert>
+          <Alert severity="success" sx={{ mb: 2 }}>{t('games.create.draftRestored')}</Alert>
         )}
 
         {renderCreateHero()}
@@ -2587,10 +2588,10 @@ export const CreateGameScreen: React.FC = () => {
           aria-labelledby="draft-prompt-dialog-title"
           disableEscapeKeyDown
         >
-          <DialogTitle id="draft-prompt-dialog-title">Rascunho encontrado</DialogTitle>
+          <DialogTitle id="draft-prompt-dialog-title">{t('games.create.draftFoundTitle')}</DialogTitle>
           <DialogContent>
             <Typography variant="body2" color="text.secondary">
-              Você tem um rascunho salvo deste formulário. Deseja continuar de onde parou?
+              {t('games.create.draftFoundDescription')}
             </Typography>
           </DialogContent>
           <DialogActions>
@@ -2599,17 +2600,17 @@ export const CreateGameScreen: React.FC = () => {
               setFormData(initialFormData);
               setUserInteracted(false);
             }} color="error">
-              Descartar
+              {t('common.discard')}
             </Button>
             <Button onClick={() => restoreDraft()} variant="contained" autoFocus>
-              Continuar
+              {t('common.continue')}
             </Button>
           </DialogActions>
         </Dialog>
 
         {/* Duplicate game dialog */}
         <Dialog open={duplicateDialogOpen} onClose={() => setDuplicateDialogOpen(false)} fullWidth maxWidth="sm" aria-labelledby="duplicate-dialog-title">
-          <DialogTitle id="duplicate-dialog-title">Duplicar jogo anterior</DialogTitle>
+          <DialogTitle id="duplicate-dialog-title">{t('games.duplicateGame')}</DialogTitle>
           <DialogContent>
             {duplicateGamesLoading ? (
               <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
@@ -2617,7 +2618,7 @@ export const CreateGameScreen: React.FC = () => {
               </Box>
             ) : recentGames.length === 0 ? (
               <Typography variant="body2" color="text.secondary">
-                Nenhum jogo anterior encontrado.
+                {t('games.create.noPreviousGames')}
               </Typography>
             ) : (
               <List>

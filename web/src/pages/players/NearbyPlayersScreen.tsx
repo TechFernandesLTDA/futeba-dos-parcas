@@ -30,6 +30,8 @@ import { PageContainer } from '../../components/common/PageContainer';
 import { EmptyState } from '../../components/common/EmptyState';
 import { LoadingState } from '../../components/common/GameCard';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import { ScreenHeader } from '../../components/common/ScreenHeader';
+import { useNavigateBack } from '../../hooks/useNavigateBack';
 import { NearbyRadiusKm, NearbySocialFilter, useNearbyPlayers } from '../../hooks/useNearbyPlayers';
 import { useToast } from '../../contexts/ToastContext';
 import { useCreateDirectChat } from '../../hooks/useDirectMessages';
@@ -40,6 +42,7 @@ const FILTERS: NearbySocialFilter[] = ['all', 'following'];
 export const NearbyPlayersScreen: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const goBack = useNavigateBack();
   const theme = useTheme();
   const { showError, showSuccess } = useToast();
   const { create: createDirectChat, creating: creatingChat } = useCreateDirectChat();
@@ -94,14 +97,16 @@ export const NearbyPlayersScreen: React.FC = () => {
   return (
     <PageContainer maxWidth="focused">
       <Stack spacing={2} sx={{ py: 2 }}>
-        <Box>
-          <Typography variant="h5" fontWeight={700}>
-            {t('nearbyPlayers.title')}
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            {t('nearbyPlayers.subtitle')}
-          </Typography>
-        </Box>
+        <ScreenHeader
+          title={t('nearbyPlayers.title')}
+          onBack={goBack}
+          backAriaLabel={t('common.back')}
+          sticky={false}
+          headerSx={{ p: 0, height: 'auto' }}
+        />
+        <Typography variant="body2" color="text.secondary">
+          {t('nearbyPlayers.subtitle')}
+        </Typography>
 
         <Card>
           <CardContent>

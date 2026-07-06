@@ -22,7 +22,7 @@ import {
 import MenuItem from '@mui/material/MenuItem';
 import { FormScaffold, AdaptiveFormSheet } from '../../components/layout';
 import { useCreateGroup } from '../../hooks/useGroups';
-import { GameGender, GAME_GENDER_LABELS } from '../../types/game';
+import { GameGender } from '../../types/game';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { createLogger } from '../../utils/logger';
@@ -238,11 +238,9 @@ export const CreateGroupScreen: React.FC = () => {
                 <MenuItem value="">
                   <em>{t('groups.defaultGenderNone')}</em>
                 </MenuItem>
-                {(Object.entries(GAME_GENDER_LABELS) as [GameGender, string][]).map(([value, label]) => (
-                  <MenuItem key={value} value={value}>
-                    {label}
-                  </MenuItem>
-                ))}
+                <MenuItem value="MALE">{t('games.genderFilter.male')}</MenuItem>
+                <MenuItem value="FEMALE">{t('games.genderFilter.female')}</MenuItem>
+                <MenuItem value="MIXED">{t('games.genderFilter.mixed')}</MenuItem>
               </TextField>
 
               <Alert severity="info">

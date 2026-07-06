@@ -3526,17 +3526,20 @@ service cloud.firestore {
           data.status in ['PENDING', 'ACCEPTED', 'DECLINED', 'FINISHED'];
       }
 
+      function canManageGroupChallengeGroup(groupId) {
+        return isGroupAdmin(groupId) || isGroupOwnerById(groupId);
+      }
+
       function canWriteGroupChallenge(data) {
         return isAdmin() ||
-          data.created_by == userId() ||
-          isGroupMember(data.challenger_group_id) ||
-          isGroupMember(data.challenged_group_id);
+          canManageGroupChallengeGroup(data.challenger_group_id) ||
+          canManageGroupChallengeGroup(data.challenged_group_id);
       }
 
       allow read: if isAuthenticated();
       allow create: if isAuthenticated() &&
         request.resource.data.created_by == userId() &&
-        isGroupMember(request.resource.data.challenger_group_id) &&
+        canManageGroupChallengeGroup(request.resource.data.challenger_group_id) &&
         request.resource.data.status == 'PENDING' &&
         request.resource.data.current_progress == 0 &&
         request.resource.data.keys().hasOnly([

@@ -525,5 +525,50 @@ describe("groups/{groupId}/wall_posts", () => {
           created_at: serverTimestamp(),
         })
     );
+        });
   });
-});
+
+  it("bloqueia ocultacao com hidden_at fora do request.time", async () => {
+    await assertFails(
+      asWallMember()
+        .doc(`users/${UID_WALL_MEMBER}/hidden_feed_posts/${GROUP_ID}_post-feed-member`)
+        .set({
+          user_id: UID_WALL_MEMBER,
+          group_id: GROUP_ID,
+          post_id: "post-feed-member",
+          post_key: `${GROUP_ID}_post-feed-member`,
+          target_path: `groups/${GROUP_ID}/wall_posts/post-feed-member`,
+          hidden_at: new Date(),
+        })
+    );
+  });
+
+  it("bloqueia ocultacao com target_path com formato invalido", async () => {
+    await assertFails(
+      asWallMember()
+        .doc(`users/${UID_WALL_MEMBER}/hidden_feed_posts/${GROUP_ID}_post-feed-member`)
+        .set({
+          user_id: UID_WALL_MEMBER,
+          group_id: GROUP_ID,
+          post_id: "post-feed-member",
+          post_key: `${GROUP_ID}_post-feed-member`,
+          target_path: 123,
+          hidden_at: serverTimestamp(),
+        })
+    );
+  });
+
+  it("bloqueia ocultacao com post_key divergente do documentId", async () => {
+    await assertFails(
+      asWallMember()
+        .doc(`users/${UID_WALL_MEMBER}/hidden_feed_posts/${GROUP_ID}_post-feed-member`)
+        .set({
+          user_id: UID_WALL_MEMBER,
+          group_id: GROUP_ID,
+          post_id: "post-feed-member",
+          post_key: `${GROUP_ID}_other`,
+          target_path: `groups/${GROUP_ID}/wall_posts/post-feed-member`,
+          hidden_at: serverTimestamp(),
+        })
+    );
+  });
