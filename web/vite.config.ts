@@ -41,6 +41,8 @@ export default defineConfig({
 
         const deferInitialPreload = [
           'vendor-charts',
+          'vendor-firebase-functions',
+          'vendor-firebase-storage',
           'vendor-google-maps',
           'vendor-mui-icons',
           'i18n-locales',

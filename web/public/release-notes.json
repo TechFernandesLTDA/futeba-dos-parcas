@@ -1,7 +1,36 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-05T23:42:54.828Z",
+  "generatedAt": "2026-07-06T00:09:01.127Z",
   "notes": [
+    {
+      "version": "1.51.2",
+      "buildNumber": null,
+      "releaseDate": "2026-07-05",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "O app ganhou a primeira landing publica de lancamento e a preparacao tecnica para abrir o beta com mais seguranca.",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "Nova rota publica `/launch` com chamada para cadastro, suporte e links legais.",
+        "Deploy web ficou mais confiavel quando o runner nao cria atalhos em `node_modules/.bin`.",
+        "Primeira abertura web evita preload de chunks frios de Storage e Functions."
+      ],
+      "fixed": [],
+      "issueRefs": [
+        3281,
+        3298,
+        3299,
+        3300,
+        3301,
+        3308,
+        3310,
+        3312,
+        3313,
+        3314
+      ]
+    },
     {
       "version": "1.51.1",
       "buildNumber": null,

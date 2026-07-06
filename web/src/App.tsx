@@ -66,6 +66,7 @@ const AppLayout = lazy(() => import('./components/layout/AppLayout').then(m => (
 const LoginScreen = lazy(() => import('./pages/auth/LoginScreen').then(m => ({ default: m.LoginScreen })));
 const RegisterScreen = lazy(() => import('./pages/auth/RegisterScreen').then(m => ({ default: m.RegisterScreen })));
 const ForgotPasswordScreen = lazy(() => import('./pages/auth/ForgotPasswordScreen').then(m => ({ default: m.ForgotPasswordScreen })));
+const LaunchPage = lazy(() => import('./pages/launch/LaunchPage').then(m => ({ default: m.LaunchPage })));
 
 // Home
 const HomeScreen = lazy(() => import('./pages/home/HomeScreen').then(m => ({ default: m.HomeScreen })));
@@ -427,6 +428,7 @@ function AppRoutes() {
       <Route path="/login" element={<PublicRoute><Suspense fallback={<RouteFallback />}><LoginScreen /></Suspense></PublicRoute>} />
       <Route path="/register" element={<PublicRoute><Suspense fallback={<RouteFallback />}><RegisterScreen /></Suspense></PublicRoute>} />
       <Route path="/forgot-password" element={<PublicRoute><Suspense fallback={<RouteFallback />}><ForgotPasswordScreen /></Suspense></PublicRoute>} />
+      <Route path="/launch" element={<Suspense fallback={<RouteFallback />}><LaunchPage /></Suspense>} />
 
       {/* Games — redireciona para tab=1 (HomeScreen) para manter o menu de navegação */}
       <Route path="/games" element={<Navigate to="/?tab=1" replace />} />

@@ -160,6 +160,20 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.51.2][web-1.51.2] - 2026-07-05
+
+#### Adicionado
+- `scripts/deploy/build-web-hosting.js` centraliza o predeploy do Firebase Hosting com Node 22, `npm ci --include=dev` e build sequencial.
+- `docs/production-launch/go-no-go-checklist.md` consolida evidencias por issue e bloqueios externos.
+- `docs/production-launch/performance-readiness.md` registra build, chunks e proximas metas de Web Vitals.
+
+#### Mudado
+- `web/package.json` chama TypeScript, Vite e ESLint pelos entrypoints dos pacotes, sem depender de `.bin`.
+- `vite.config.ts` remove Storage e Functions do preload inicial.
+- Docs de dominio/e-mail, campanha e readiness foram promovidos de draft para pacote repo-ready.
+
+_Issues: #3281, #3298, #3299, #3300, #3301, #3308, #3310, #3312, #3313, #3314_
+
 ### [1.51.1][web-1.51.1] - 2026-07-05
 
 #### Adicionado
@@ -1486,6 +1500,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.51.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.2.md
 [web-1.51.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.1.md
 [web-1.51.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.0.md
 [web-1.50.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.50.0.md
