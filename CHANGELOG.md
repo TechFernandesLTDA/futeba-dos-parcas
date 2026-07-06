@@ -160,6 +160,15 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.51.4][web-1.51.4] - 2026-07-06
+
+#### Mudado
+- `useLeague` passa a usar usuarios pesquisaveis como base da lista e sobrepor dados de `season_participation`.
+- O listener em tempo real da Liga tambem observa mudancas na base de jogadores.
+
+#### Corrigido
+- A Liga nao fica vazia ou incompleta quando usuarios reais ainda nao geraram XP na temporada ativa.
+
 ### [1.51.3][web-1.51.3] - 2026-07-06
 
 #### Adicionado
@@ -1522,6 +1531,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.51.4]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.4.md
 [web-1.51.3]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.3.md
 [web-1.51.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.2.md
 [web-1.51.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.1.md
