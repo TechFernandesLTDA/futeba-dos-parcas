@@ -131,6 +131,48 @@ async function fetchUserDataBatch(userIds: string[]): Promise<Map<string, League
   return usersMap;
 }
 
+async function fetchSearchableUsers(): Promise<Map<string, LeagueUserData>> {
+  const usersMap = new Map<string, LeagueUserData>();
+  const snap = await getDocs(query(collection(db, 'users'), where('is_searchable', '==', true)));
+
+  for (const docSnap of snap.docs) {
+    const d = docSnap.data();
+    const xp = (d.experience_points ?? d.experiencePoints ?? 0) as number;
+    usersMap.set(docSnap.id, {
+      name: (d.name as string) || 'Jogador',
+      photoUrl: (d.photo_url as string) || (d.photoUrl as string) || null,
+      xp,
+      favoriteTeam: (d.favorite_team as string) || (d.favoriteTeam as string) || undefined,
+      isMock: d.is_mock === true || d.isMock === true,
+      demoData: d.demo_data === true || d.demoData === true,
+      dataOrigin: (d.data_origin as string) || (d.dataOrigin as string) || undefined,
+      seedId: (d.seed_id as string) || (d.seedId as string) || undefined,
+      demoDataReason: (d.demo_data_reason as string) || (d.demoDataReason as string) || undefined,
+    });
+  }
+
+  return usersMap;
+}
+
+async function fetchGroupMemberUserIds(groupId: string): Promise<string[]> {
+  const membersSnap = await getDocs(collection(db, 'groups', groupId, 'members'));
+  return membersSnap.docs
+    .map((docSnap) => {
+      const data = docSnap.data();
+      return (data.user_id as string) || (data.userId as string) || docSnap.id;
+    })
+    .filter(Boolean);
+}
+
+async function fetchLeagueUsers(filters?: LeagueFilters): Promise<Map<string, LeagueUserData>> {
+  if (!filters?.groupId) {
+    return fetchSearchableUsers();
+  }
+
+  const userIds = await fetchGroupMemberUserIds(filters.groupId);
+  return fetchUserDataBatch([...new Set(userIds)]);
+}
+
 export interface LeagueFilters {
   groupId?: string | null;
   seasonId?: string | null;
@@ -175,11 +217,10 @@ async function fetchLeagueData(
   constraints.push(limit(pageSize));
 
   const q = query(seasonRef, ...constraints);
-  const snapshot = await getDocs(q);
-
-  if (snapshot.empty) {
-    return { players: [], lastDoc: null, hasMore: false };
-  }
+  const [snapshot, usersMap] = await Promise.all([
+    getDocs(q),
+    fetchLeagueUsers(filters),
+  ]);
 
   // Extrair dados de participação e IDs de usuários
   const participationData = snapshot.docs.map((docSnapshot) => {
@@ -213,42 +254,51 @@ async function fetchLeagueData(
     };
   });
 
-  // Batch fetch de todos os dados de usuários (elimina N+1)
-  const userIds = [...new Set(participationData.map((p) => p.userId))];
-  const usersMap = await fetchUserDataBatch(userIds);
+  const participationByUser = new Map<string, typeof participationData[number]>();
+  for (const participation of participationData) {
+    const existing = participationByUser.get(participation.userId);
+    if (!existing || participation.points > existing.points) {
+      participationByUser.set(participation.userId, participation);
+    }
+  }
 
-  // Combinar dados
-  const players: LeaguePlayer[] = participationData.map((p) => {
-    const userData = usersMap.get(p.userId) || { name: 'Jogador', photoUrl: null, xp: 0, favoriteTeam: undefined };
+  // Combinar usuarios pesquisaveis com stats da temporada.
+  // Quem ainda nao pontuou entra com zeros, mas continua visivel na Liga.
+  const players: LeaguePlayer[] = Array.from(usersMap.entries()).map(([userId, userData]) => {
+    const participation = participationByUser.get(userId);
     return {
-      ...p,
+      id: participation?.id ?? userId,
+      userId,
       userName: userData.name,
       userPhoto: userData.photoUrl || undefined,
       favoriteTeam: userData.favoriteTeam,
       level: getLevelForXp(userData.xp),
+      points: participation?.points ?? 0,
+      gamesPlayed: participation?.gamesPlayed ?? 0,
+      wins: participation?.wins ?? 0,
+      goals: participation?.goals ?? 0,
+      assists: participation?.assists ?? 0,
+      mvpCount: participation?.mvpCount ?? 0,
+      division: participation?.division ?? 'BRONZE',
       experiencePoints: userData.xp,
-      isCurrentUser: p.userId === currentUserId,
+      isCurrentUser: userId === currentUserId,
       canReceiveInvites: true,
-      isMock: userData.isMock === true || p.isMock === true,
-      demoData: userData.demoData === true || p.demoData === true,
-      dataOrigin: userData.dataOrigin || (p.dataOrigin as string | undefined),
-      seedId: userData.seedId || (p.seedId as string | undefined),
-      demoDataReason: userData.demoDataReason || (p.demoDataReason as string | undefined),
+      isMock: userData.isMock === true || participation?.isMock === true,
+      demoData: userData.demoData === true || participation?.demoData === true,
+      dataOrigin: userData.dataOrigin || (participation?.dataOrigin as string | undefined),
+      seedId: userData.seedId || (participation?.seedId as string | undefined),
+      demoDataReason: userData.demoDataReason || (participation?.demoDataReason as string | undefined),
     };
   });
 
-  // BUG 13 fix: Deduplicação defensiva por userId (protege contra dados legacy ou race conditions)
-  const uniqueMap = new Map<string, LeaguePlayer>();
-  for (const p of players) {
-    const existing = uniqueMap.get(p.userId);
-    if (!existing || p.points > existing.points) {
-      uniqueMap.set(p.userId, p);
-    }
-  }
   return {
-    players: Array.from(uniqueMap.values()),
+    players: players.sort((a, b) =>
+      b.points - a.points ||
+      (b.experiencePoints ?? 0) - (a.experiencePoints ?? 0) ||
+      a.userName.localeCompare(b.userName)
+    ),
     lastDoc: snapshot.docs[snapshot.docs.length - 1] ?? null,
-    hasMore: snapshot.docs.length === pageSize,
+    hasMore: false,
   };
 }
 
@@ -308,23 +358,42 @@ export const useLeague = (
       listenerConstraints.push(where('group_id', '==', filters.groupId));
     }
     const q = query(seasonRef, ...listenerConstraints);
-    let isFirstSnapshot = true;
+    let isFirstSeasonSnapshot = true;
+    let isFirstBaseSnapshot = true;
 
-    const unsubscribe = onSnapshot(q, () => {
-      if (isFirstSnapshot) {
-        isFirstSnapshot = false;
+    const invalidateLeague = (source: 'season' | 'base') => {
+      if (source === 'season' && isFirstSeasonSnapshot) {
+        isFirstSeasonSnapshot = false;
+        return;
+      }
+      if (source === 'base' && isFirstBaseSnapshot) {
+        isFirstBaseSnapshot = false;
         return;
       }
       queryClient.invalidateQueries({
         queryKey: ['league', currentUserId, filters?.groupId, filters?.seasonId, filters?.maxResults, filters?.gender],
       });
-    }, (err) => {
+    };
+
+    const unsubscribeSeason = onSnapshot(q, () => invalidateLeague('season'), (err) => {
       logger.error('Error in league listener:', err);
       setListenerError(err.message);
       showErrorRef.current('Erro ao carregar ranking em tempo real');
     });
 
-    return () => unsubscribe();
+    const baseRef = filters?.groupId
+      ? collection(db, 'groups', filters.groupId, 'members')
+      : query(collection(db, 'users'), where('is_searchable', '==', true));
+    const unsubscribeBase = onSnapshot(baseRef, () => invalidateLeague('base'), (err) => {
+      logger.error('Error in league users listener:', err);
+      setListenerError(err.message);
+      showErrorRef.current('Erro ao carregar jogadores da liga em tempo real');
+    });
+
+    return () => {
+      unsubscribeSeason();
+      unsubscribeBase();
+    };
   }, [queryClient, currentUserId, filters?.seasonId, filters?.groupId, filters?.maxResults, filters?.gender, enabled]);
 
   const error = listenerError || (queryError ? (queryError as Error).message : null);

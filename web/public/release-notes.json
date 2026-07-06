@@ -1,7 +1,25 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-06T04:40:07.189Z",
+  "generatedAt": "2026-07-06T21:10:07.257Z",
   "notes": [
+    {
+      "version": "1.51.4",
+      "buildNumber": null,
+      "releaseDate": "2026-07-06",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "A Liga agora mostra todos os jogadores pesquisaveis, mesmo quem ainda nao tem XP.",
+      "highlights": [],
+      "added": [],
+      "improved": [],
+      "fixed": [
+        "Jogadores sem participacao na temporada passam a aparecer na Liga com pontos, jogos e estatisticas zerados.",
+        "A classificacao continua usando os pontos da temporada quando eles existem.",
+        "A Liga nao fica vazia ou incompleta quando usuarios reais ainda nao geraram XP na temporada ativa."
+      ],
+      "issueRefs": []
+    },
     {
       "version": "1.51.3",
       "buildNumber": null,
