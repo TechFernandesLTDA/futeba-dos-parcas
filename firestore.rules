@@ -597,7 +597,7 @@ service cloud.firestore {
       // próprio doc pesquisável não expõe campos sensíveis.
       allow read: if isOwner(userId) || isAdmin() || (
         isAuthenticated() &&
-        resource.data.is_searchable == true &&
+        (resource.data.is_searchable == true || resource.data.isSearchable == true) &&
         (!('deleted_at' in resource.data) || resource.data.deleted_at == null) &&
         (!('email' in resource.data) || resource.data.email == null || resource.data.email == '') &&
         (!('fcm_token' in resource.data) || resource.data.fcm_token == null) &&
@@ -2654,9 +2654,19 @@ service cloud.firestore {
       // H2 FIX: verifica status ACTIVE — admin banido nao pode gerenciar convites
       function canManageInvites(gId) {
         let member = get(/databases/$(database)/documents/groups/$(gId)/members/$(request.auth.uid));
-        return member != null
+        let groupDoc = get(/databases/$(database)/documents/groups/$(gId));
+        return (
+          member != null
           && (member.data.role == 'OWNER' || member.data.role == 'ADMIN')
-          && member.data.status == 'ACTIVE';
+          && member.data.status == 'ACTIVE'
+        ) || (
+          groupDoc != null
+          && groupDoc.data.owner_id == userId()
+        );
+      }
+
+      function inviteNotExpired() {
+        return !('expires_at' in resource.data) || resource.data.expires_at > request.time;
       }
 
       allow read: if isAuthenticated() && (
@@ -2677,11 +2687,14 @@ service cloud.firestore {
       allow update: if isAuthenticated() && (
         // Invitee aceita ou rejeita o convite
         (resource.data.invited_user_id == userId() &&
+         resource.data.status == 'PENDING' &&
+         inviteNotExpired() &&
          request.resource.data.diff(resource.data).affectedKeys()
            .hasOnly(['status', 'updated_at']) &&
          request.resource.data.status in ['ACCEPTED', 'DECLINED']) ||
         // Inviter cancela o convite
         (resource.data.invited_by_id == userId() &&
+         resource.data.status == 'PENDING' &&
          request.resource.data.diff(resource.data).affectedKeys()
            .hasOnly(['status', 'updated_at']) &&
          request.resource.data.status == 'CANCELLED')

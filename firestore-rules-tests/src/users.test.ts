@@ -28,6 +28,7 @@ const UID_USERS_A = "uid-users-a-001";
 const UID_USERS_B = "uid-users-b-001";
 const UID_USERS_C = "uid-users-c-001";
 const UID_USERS_D = "uid-users-d-001";
+const UID_USERS_E = "uid-users-e-001";
 
 function asUsersA() {
   return asUser(testEnv, UID_USERS_A);
@@ -102,6 +103,21 @@ beforeAll(async () => {
     gk_rating: 2.2,
   });
 
+  await seedDoc(testEnv, `users/${UID_USERS_E}`, {
+    name: "Jogador E",
+    email: null,
+    role: "PLAYER",
+    isSearchable: true,
+    experience_points: 180,
+    level: 2,
+    milestones_achieved: [],
+    created_at: new Date(),
+    striker_rating: 2.8,
+    mid_rating: 2.6,
+    defender_rating: 2.4,
+    gk_rating: 2.2,
+  });
+
   await seedDoc(testEnv, `users/${UID_ADMIN}`, {
     name: "Admin",
     email: "admin@test.com",
@@ -158,6 +174,11 @@ describe("users — leitura", () => {
   it('Player pode ler perfil pesquisável com email/phone vazios', async () => {
     const db = asUsersA();
     await assertSucceeds(db.doc(`users/${UID_USERS_D}`).get());
+  });
+
+  it("Player pode ler perfil legado com isSearchable=true e sem PII no doc", async () => {
+    const db = asUsersA();
+    await assertSucceeds(db.doc(`users/${UID_USERS_E}`).get());
   });
 
   it("Não-autenticado NÃO pode ler perfil nenhum", async () => {

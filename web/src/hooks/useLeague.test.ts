@@ -204,6 +204,35 @@ describe('useLeague', () => {
     });
   });
 
+  it('inclui jogador legado com isSearchable camelCase', async () => {
+    mockGetDocs
+      .mockResolvedValueOnce({
+        docs: [{ id: 'sp-1', data: () => ({ user_id: 'u1', points: 100, division: 'BRONZE' }) }],
+      })
+      .mockResolvedValueOnce({
+        docs: [],
+      })
+      .mockResolvedValueOnce({
+        docs: [
+          { id: 'u1', data: () => ({ name: 'Jogador legado', photo_url: null, isSearchable: true, experience_points: 250 }) },
+        ],
+      });
+
+    const { result } = renderHook(() => useLeague('u1', { seasonId: 'season-1' }), { wrapper: createTestWrapper() });
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    expect(result.current.players).toHaveLength(1);
+    expect(result.current.players[0]).toMatchObject({
+      userId: 'u1',
+      userName: 'Jogador legado',
+      points: 100,
+      experiencePoints: 250,
+    });
+  });
+
   it('trata erros do getDocs', async () => {
     // useLeague usa useQuery/getDocs — testar erro via mockRejectedValue. #2330
     mockGetDocs.mockRejectedValueOnce(new Error('League error'));

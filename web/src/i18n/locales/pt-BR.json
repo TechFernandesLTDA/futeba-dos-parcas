@@ -705,6 +705,7 @@
       "invalidInviteCode": "Código de convite inválido ou expirado",
       "inviteCodeGenerated": "Código de convite gerado!",
       "inviteCodeError": "Erro ao gerar código de convite.",
+      "inviteAlreadyPending": "Este jogador já tem um convite pendente para este grupo.",
       "inviteError": "Erro ao enviar convite. Tente novamente.",
       "joinError": "Erro ao entrar no grupo.",
       "joinSuccess": "Você entrou no grupo!",

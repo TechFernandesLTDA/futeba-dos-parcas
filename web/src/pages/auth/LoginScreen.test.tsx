@@ -3,6 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ThemeProvider, createTheme } from '@mui/material';
 import { MemoryRouter } from 'react-router-dom';
+import type { ComponentProps } from 'react';
 
 // Mock dependências antes de importar o componente
 const mockNavigate = vi.fn();
@@ -42,10 +43,10 @@ import { LoginScreen } from './LoginScreen';
 
 const theme = createTheme();
 
-function renderLoginScreen() {
+function renderLoginScreen(initialEntries: ComponentProps<typeof MemoryRouter>['initialEntries'] = ['/']) {
   return render(
     <ThemeProvider theme={theme}>
-      <MemoryRouter>
+      <MemoryRouter initialEntries={initialEntries}>
         <LoginScreen />
       </MemoryRouter>
     </ThemeProvider>
@@ -81,6 +82,20 @@ describe('LoginScreen', () => {
   it('renderiza link de criar conta', () => {
     renderLoginScreen();
     expect(screen.getByText(/criar conta/i)).toBeInTheDocument();
+  });
+
+  it('preserva convite do deep link ao navegar para cadastro', () => {
+    renderLoginScreen([
+      {
+        pathname: '/login',
+        state: { from: { pathname: '/join/ABC123', search: '', hash: '' } },
+      },
+    ]);
+
+    expect(screen.getByRole('link', { name: /criar conta/i })).toHaveAttribute(
+      'href',
+      '/register?invite=ABC123&redirect=%2Fjoin%2FABC123',
+    );
   });
 
   it('mostra erro quando campos estão vazios ao submeter', async () => {

@@ -90,6 +90,23 @@ interface LeagueUserData {
   demoDataReason?: string;
 }
 
+function addLeagueUser(usersMap: Map<string, LeagueUserData>, userId: string, raw: Record<string, unknown>) {
+  if (raw.is_searchable === false || raw.isSearchable === false) return;
+
+  const xp = (raw.experience_points ?? raw.experiencePoints ?? 0) as number;
+  usersMap.set(userId, {
+    name: (raw.name as string) || 'Jogador',
+    photoUrl: (raw.photo_url as string) || (raw.photoUrl as string) || null,
+    xp,
+    favoriteTeam: (raw.favorite_team as string) || (raw.favoriteTeam as string) || undefined,
+    isMock: raw.is_mock === true || raw.isMock === true,
+    demoData: raw.demo_data === true || raw.demoData === true,
+    dataOrigin: (raw.data_origin as string) || (raw.dataOrigin as string) || undefined,
+    seedId: (raw.seed_id as string) || (raw.seedId as string) || undefined,
+    demoDataReason: (raw.demo_data_reason as string) || (raw.demoDataReason as string) || undefined,
+  });
+}
+
 async function fetchUserDataBatch(userIds: string[]): Promise<Map<string, LeagueUserData>> {
   const usersMap = new Map<string, LeagueUserData>();
   if (userIds.length === 0) return usersMap;
@@ -101,9 +118,10 @@ async function fetchUserDataBatch(userIds: string[]): Promise<Map<string, League
 
   // Usar allSettled para que falha em um chunk não derrube os demais
   const settled = await Promise.allSettled(
-    chunks.map((chunk) =>
-      getDocs(query(collection(db, 'users'), where(documentId(), 'in', chunk), where('is_searchable', '==', true)))
-    )
+    chunks.flatMap((chunk) => [
+      getDocs(query(collection(db, 'users'), where(documentId(), 'in', chunk), where('is_searchable', '==', true))),
+      getDocs(query(collection(db, 'users'), where(documentId(), 'in', chunk), where('isSearchable', '==', true))),
+    ])
   );
 
   for (const result of settled) {
@@ -112,19 +130,7 @@ async function fetchUserDataBatch(userIds: string[]): Promise<Map<string, League
       continue;
     }
     for (const docSnap of result.value.docs) {
-      const d = docSnap.data();
-      const xp = (d.experience_points ?? d.experiencePoints ?? 0) as number;
-      usersMap.set(docSnap.id, {
-        name: (d.name as string) || 'Jogador',
-        photoUrl: (d.photo_url as string) || (d.photoUrl as string) || null,
-        xp,
-        favoriteTeam: (d.favorite_team as string) || (d.favoriteTeam as string) || undefined,
-        isMock: d.is_mock === true || d.isMock === true,
-        demoData: d.demo_data === true || d.demoData === true,
-        dataOrigin: (d.data_origin as string) || (d.dataOrigin as string) || undefined,
-        seedId: (d.seed_id as string) || (d.seedId as string) || undefined,
-        demoDataReason: (d.demo_data_reason as string) || (d.demoDataReason as string) || undefined,
-      });
+      addLeagueUser(usersMap, docSnap.id, docSnap.data());
     }
   }
 
@@ -133,22 +139,19 @@ async function fetchUserDataBatch(userIds: string[]): Promise<Map<string, League
 
 async function fetchSearchableUsers(): Promise<Map<string, LeagueUserData>> {
   const usersMap = new Map<string, LeagueUserData>();
-  const snap = await getDocs(query(collection(db, 'users'), where('is_searchable', '==', true)));
+  const settled = await Promise.allSettled([
+    getDocs(query(collection(db, 'users'), where('is_searchable', '==', true))),
+    getDocs(query(collection(db, 'users'), where('isSearchable', '==', true))),
+  ]);
 
-  for (const docSnap of snap.docs) {
-    const d = docSnap.data();
-    const xp = (d.experience_points ?? d.experiencePoints ?? 0) as number;
-    usersMap.set(docSnap.id, {
-      name: (d.name as string) || 'Jogador',
-      photoUrl: (d.photo_url as string) || (d.photoUrl as string) || null,
-      xp,
-      favoriteTeam: (d.favorite_team as string) || (d.favoriteTeam as string) || undefined,
-      isMock: d.is_mock === true || d.isMock === true,
-      demoData: d.demo_data === true || d.demoData === true,
-      dataOrigin: (d.data_origin as string) || (d.dataOrigin as string) || undefined,
-      seedId: (d.seed_id as string) || (d.seedId as string) || undefined,
-      demoDataReason: (d.demo_data_reason as string) || (d.demoDataReason as string) || undefined,
-    });
+  for (const result of settled) {
+    if (result.status === 'rejected') {
+      logger.error('Falha ao ler usuários da liga (dados parciais):', result.reason);
+      continue;
+    }
+    for (const docSnap of result.value.docs) {
+      addLeagueUser(usersMap, docSnap.id, docSnap.data());
+    }
   }
 
   return usersMap;
@@ -381,18 +384,35 @@ export const useLeague = (
       showErrorRef.current('Erro ao carregar ranking em tempo real');
     });
 
-    const baseRef = filters?.groupId
-      ? collection(db, 'groups', filters.groupId, 'members')
-      : query(collection(db, 'users'), where('is_searchable', '==', true));
-    const unsubscribeBase = onSnapshot(baseRef, () => invalidateLeague('base'), (err) => {
+    const handleBaseSnapshotError = (err: Error) => {
       logger.error('Error in league users listener:', err);
       setListenerError(err.message);
       showErrorRef.current('Erro ao carregar jogadores da liga em tempo real');
-    });
+    };
+    const unsubscribeBase = filters?.groupId
+      ? [
+          onSnapshot(
+            collection(db, 'groups', filters.groupId, 'members'),
+            () => invalidateLeague('base'),
+            handleBaseSnapshotError,
+          ),
+        ]
+      : [
+          onSnapshot(
+            query(collection(db, 'users'), where('is_searchable', '==', true)),
+            () => invalidateLeague('base'),
+            handleBaseSnapshotError,
+          ),
+          onSnapshot(
+            query(collection(db, 'users'), where('isSearchable', '==', true)),
+            () => invalidateLeague('base'),
+            handleBaseSnapshotError,
+          ),
+        ];
 
     return () => {
       unsubscribeSeason();
-      unsubscribeBase();
+      unsubscribeBase.forEach((unsubscribe) => unsubscribe());
     };
   }, [queryClient, currentUserId, filters?.seasonId, filters?.groupId, filters?.maxResults, filters?.gender, enabled]);
 

@@ -120,6 +120,27 @@ describe("group_invites — criação", () => {
     );
   });
 
+  it("Owner legado pelo owner_id pode criar invite mesmo sem member doc", async () => {
+    const legacyGroup = "group-legacy-owner-invites";
+    await seedDoc(testEnv, `groups/${legacyGroup}`, {
+      name: "Grupo legado",
+      owner_id: UID_PLAYER_C,
+      is_public: false,
+      status: "ACTIVE",
+    });
+
+    const db = asPlayerC(testEnv);
+    await assertSucceeds(
+      db.doc("group_invites/invite-legacy-owner-creates").set({
+        group_id: legacyGroup,
+        invited_by_id: UID_PLAYER_C,
+        invited_user_id: UID_PLAYER_B,
+        status: "PENDING",
+        created_at: new Date(),
+      })
+    );
+  });
+
   it("Membro simples (MEMBER) NÃO pode criar invite", async () => {
     const db = asPlayerB(testEnv); // role MEMBER
     await assertFails(
@@ -165,16 +186,63 @@ describe("group_invites — criação", () => {
 
 describe("group_invites — atualização", () => {
   it("Destinatário pode atualizar o invite (ex: aceitar)", async () => {
+    await seedDoc(testEnv, "group_invites/invite-accept-success", {
+      group_id: INVITE_GROUP,
+      invited_by_id: UID_PLAYER_A,
+      invited_user_id: UID_PLAYER_C,
+      status: "PENDING",
+      created_at: new Date(),
+      expires_at: new Date(Date.now() + 60_000),
+    });
     const db = asPlayerC(testEnv);
     await assertSucceeds(
-      db.doc(`group_invites/${INVITE_A_TO_C}`).update({ status: "ACCEPTED" })
+      db.doc("group_invites/invite-accept-success").update({ status: "ACCEPTED" })
     );
   });
 
   it("Remetente pode atualizar o invite", async () => {
+    await seedDoc(testEnv, "group_invites/invite-cancel-success", {
+      group_id: INVITE_GROUP,
+      invited_by_id: UID_PLAYER_A,
+      invited_user_id: UID_PLAYER_C,
+      status: "PENDING",
+      created_at: new Date(),
+    });
     const db = asPlayerA(testEnv);
     await assertSucceeds(
-      db.doc(`group_invites/${INVITE_A_TO_C}`).update({ status: "CANCELLED" })
+      db.doc("group_invites/invite-cancel-success").update({ status: "CANCELLED" })
+    );
+  });
+
+  it("Destinatário NÃO pode aceitar invite expirado", async () => {
+    await seedDoc(testEnv, "group_invites/invite-expired-accept", {
+      group_id: INVITE_GROUP,
+      invited_by_id: UID_PLAYER_A,
+      invited_user_id: UID_PLAYER_C,
+      status: "PENDING",
+      created_at: new Date(Date.now() - 120_000),
+      expires_at: new Date(Date.now() - 60_000),
+    });
+
+    const db = asPlayerC(testEnv);
+    await assertFails(
+      db.doc("group_invites/invite-expired-accept").update({ status: "ACCEPTED" })
+    );
+  });
+
+  it("Destinatário NÃO pode reabrir invite já cancelado", async () => {
+    await seedDoc(testEnv, "group_invites/invite-cancelled-reopen", {
+      group_id: INVITE_GROUP,
+      invited_by_id: UID_PLAYER_A,
+      invited_user_id: UID_PLAYER_C,
+      status: "CANCELLED",
+      created_at: new Date(),
+      expires_at: new Date(Date.now() + 60_000),
+    });
+
+    const db = asPlayerC(testEnv);
+    await assertFails(
+      db.doc("group_invites/invite-cancelled-reopen").update({ status: "ACCEPTED" })
     );
   });
 
