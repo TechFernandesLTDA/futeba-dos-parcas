@@ -70,6 +70,12 @@ const DEFAULT_LEADERBOARD_LIMIT = 100;
 /** Limite absoluto para evitar queries caras */
 const ABSOLUTE_MAX_LIMIT = 500;
 
+/** Limite de candidatos saneados para montar o diretorio da Liga. */
+const LEAGUE_DIRECTORY_SCAN_LIMIT = 5000;
+
+/** Tamanho de lote para varrer usuarios pesquisaveis. */
+const SEARCHABLE_USERS_BATCH_SIZE = 500;
+
 // ==========================================
 // INTERFACES
 // ==========================================
@@ -314,12 +320,12 @@ export const getLeaguePlayers = onCall<GetLeaguePlayersRequest>(
         seasonId,
         groupId,
         genderKey,
-        ABSOLUTE_MAX_LIMIT
+        LEAGUE_DIRECTORY_SCAN_LIMIT
       ),
       groupId ?
         fetchActiveGroupMemberIds(groupId)
           .then((userIds) => fetchPublicUsersByIds(userIds)) :
-        fetchSearchableLeagueUsers(ABSOLUTE_MAX_LIMIT),
+        fetchSearchableLeagueUsers(LEAGUE_DIRECTORY_SCAN_LIMIT),
     ]);
 
     const participationByUser = new Map<
@@ -408,7 +414,7 @@ function parsePageToken(raw: unknown): number {
   if (!Number.isFinite(offset) || offset < 0) {
     throw new HttpsError("invalid-argument", "pageToken inválido");
   }
-  return Math.min(offset, ABSOLUTE_MAX_LIMIT);
+  return Math.min(offset, LEAGUE_DIRECTORY_SCAN_LIMIT);
 }
 
 /**
@@ -721,20 +727,37 @@ async function fetchSearchableLeagueUsers(
 ): Promise<Map<string, PublicLeagueUser>> {
   const db = getDb();
   const usersMap = new Map<string, PublicLeagueUser>();
-  const snaps = await Promise.all([
-    db.collection("users")
-      .where("is_searchable", "==", true)
-      .limit(resultLimit)
-      .get(),
-    db.collection("users")
-      .where("isSearchable", "==", true)
-      .limit(resultLimit)
-      .get(),
-  ]);
+  const fields = ["is_searchable", "isSearchable"];
 
-  snaps.flatMap((snap) => snap.docs).forEach((doc) => {
-    addPublicLeagueUser(usersMap, doc.id, doc.data());
-  });
+  await Promise.all(fields.map(async (field) => {
+    let lastDoc: FirebaseFirestore.QueryDocumentSnapshot | null = null;
+    let scanned = 0;
+
+    while (scanned < resultLimit) {
+      const batchSize = Math.min(
+        SEARCHABLE_USERS_BATCH_SIZE,
+        resultLimit - scanned
+      );
+      let q: FirebaseFirestore.Query = db.collection("users")
+        .where(field, "==", true)
+        .orderBy(FieldPath.documentId())
+        .limit(batchSize);
+      if (lastDoc) {
+        q = q.startAfter(lastDoc);
+      }
+
+      const snap = await q.get();
+      if (snap.empty) break;
+
+      snap.docs.forEach((doc) => {
+        addPublicLeagueUser(usersMap, doc.id, doc.data());
+      });
+
+      scanned += snap.size;
+      lastDoc = snap.docs[snap.docs.length - 1];
+      if (snap.size < batchSize) break;
+    }
+  }));
 
   return usersMap;
 }

@@ -28,6 +28,7 @@ const logger = createLogger('useLeagueInvites');
 
 const ACTIVE_GAME_STATUSES: GameStatus[] = ['SCHEDULED', 'CONFIRMED'];
 const INVITE_EXPIRATION_MS = 48 * 60 * 60 * 1000;
+const MAX_PENDING_GROUP_INVITES = 20;
 
 export interface LeagueInviteTarget {
   userId: string;
@@ -144,6 +145,14 @@ export function useLeagueInvites() {
       if (!uid) throw new Error('Usuário não autenticado.');
       if (target.userId === uid) throw new Error('Não é possível convidar você mesmo.');
 
+      const memberSnap = await getDoc(doc(db, 'groups', group.id, 'members', target.userId));
+      if (memberSnap.exists()) {
+        const status = memberSnap.data().status;
+        if (status === 'ACTIVE' || status === null || status === undefined) {
+          throw new Error('Este jogador já faz parte deste grupo.');
+        }
+      }
+
       const pendingQuery = query(
         collection(db, 'group_invites'),
         where('invited_by_id', '==', uid),
@@ -157,6 +166,9 @@ export function useLeagueInvites() {
       });
       if (alreadyPending) {
         throw new Error('Já existe um convite pendente para este jogador neste grupo.');
+      }
+      if (pending.size >= MAX_PENDING_GROUP_INVITES) {
+        throw new Error(`Você já tem ${pending.size} convites pendentes neste grupo. Aguarde respostas antes de enviar mais.`);
       }
 
       await setDoc(doc(collection(db, 'group_invites')), {

@@ -81,9 +81,10 @@ async function createMembershipForAcceptedGroupInvite(
   const userGroupRef = userRef.collection("groups").doc(groupId);
 
   await db.runTransaction(async (tx) => {
-    const [groupSnap, userSnap] = await Promise.all([
+    const [groupSnap, userSnap, memberSnap] = await Promise.all([
       tx.get(groupRef),
       tx.get(userRef),
+      tx.get(memberRef),
     ]);
 
     if (!groupSnap.exists) {
@@ -104,6 +105,18 @@ async function createMembershipForAcceptedGroupInvite(
     const groupPhoto =
       getStringField(invite, "group_photo", "groupPhoto") ||
       getStringField(group, "photo_url", "photoUrl");
+    const existingMember = memberSnap.data();
+    const existingStatus = existingMember ?
+      getStringField(existingMember, "status", "status") :
+      "";
+    if (memberSnap.exists && existingStatus !== "REMOVED") {
+      logger.warn(
+        "[GROUP_INVITE_RESPONSE] Convite aceito para membro existente; " +
+        "membership preservada",
+        {inviteId, groupId, invitedUserId, existingStatus}
+      );
+      return;
+    }
 
     tx.set(memberRef, {
       id: invitedUserId,
@@ -113,7 +126,10 @@ async function createMembershipForAcceptedGroupInvite(
       role: "MEMBER",
       status: "ACTIVE",
       joined_at: FieldValue.serverTimestamp(),
-      total_games: 0,
+      total_games:
+        typeof existingMember?.total_games === "number" ?
+          existingMember.total_games :
+          0,
       level: typeof user.level === "number" ? user.level : 1,
     }, {merge: true});
 

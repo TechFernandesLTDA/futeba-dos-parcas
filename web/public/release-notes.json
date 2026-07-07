@@ -1,7 +1,29 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-07T03:04:19.308Z",
+  "generatedAt": "2026-07-07T03:36:05.426Z",
   "notes": [
+    {
+      "version": "1.51.9",
+      "buildNumber": null,
+      "releaseDate": "2026-07-07",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "A Liga paginada ficou mais estavel ao buscar, ordenar e mostrar posicoes.",
+      "highlights": [],
+      "added": [],
+      "improved": [],
+      "fixed": [
+        "Busca por nome ou ID deixa de piscar resultados enquanto a digitacao ainda esta em debounce.",
+        "Indicadores de zona de promocao/rebaixamento aparecem apenas quando a ordenacao e contexto permitem leitura correta.",
+        "Convite pela Liga passa a bloquear jogador que ja faz parte do grupo e respeitar limite de convites pendentes.",
+        "Compartilhamento da posicao passa a mostrar XP em vez de pontos de temporada.",
+        "Remove inconsistencia entre busca local imediata e busca server-side debounced.",
+        "Evita mensagens de ranking baseadas em janela parcial quando a tela esta ordenada por outro campo.",
+        "`useLeagueInvites` replica as validacoes de membership e limite de pendentes da tela dedicada de convites."
+      ],
+      "issueRefs": []
+    },
     {
       "version": "1.51.8",
       "buildNumber": null,
