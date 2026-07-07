@@ -27,9 +27,13 @@ export default defineConfig({
     'import.meta.env.VITE_APP_BUILD': JSON.stringify(appBuild),
   },
   resolve: {
-    alias: {
-      '@': path.resolve(__dirname, './src'),
-    },
+    alias: [
+      // Rolldown can double-wrap the CommonJS icon modules, making Button startIcon
+      // receive an object instead of a React component in production builds.
+      { find: /^@mui\/icons-material$/, replacement: '@mui/icons-material/esm' },
+      { find: /^@mui\/icons-material\/(?!esm\/)(.*)$/, replacement: '@mui/icons-material/esm/$1' },
+      { find: '@', replacement: path.resolve(__dirname, './src') },
+    ],
   },
   build: {
     outDir: 'dist',

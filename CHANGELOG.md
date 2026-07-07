@@ -160,6 +160,12 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.51.15][web-1.51.15] - 2026-07-07
+
+#### Corrigido
+- O build web passa a resolver `@mui/icons-material` para os módulos ESM, evitando que o Rolldown empacote ícones CommonJS como objetos e dispare React #130 em `Button startIcon`.
+- Feedback operacional relacionado: `/game/1R8x9xxbT5Ra5gAYTt4A`.
+
 ### [1.51.14][web-1.51.14] - 2026-07-07
 
 #### Corrigido
@@ -1682,6 +1688,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.51.15]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.15.md
 [web-1.51.14]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.14.md
 [web-1.51.13]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.13.md
 [web-1.51.12]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.12.md
