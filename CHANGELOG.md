@@ -1157,6 +1157,16 @@ _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
 
+### [1.7.5][functions-1.7.5] - 2026-07-07
+
+#### Corrigido
+- Adiciona `checkRateLimit` em `toggleFollowUser` e `joinPublicGame`.
+- Troca o agregado de reputacao por somas incrementais persistidas em `users/{uid}`.
+- Mantem seed legado fora da transacao para perfis que ainda nao possuem os campos de soma.
+- Cobre rejeicao `resource-exhausted` e regressao contra full-scan transacional nos testes de Functions.
+
+_Issues: #3343, #3344_
+
 ### [1.7.4][functions-1.7.4] - 2026-07-07
 
 #### Corrigido
@@ -1703,6 +1713,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [web-1.26.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.26.1.md
 [web-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.26.0.md
 [ios-1.6.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.0.md
+[functions-1.7.5]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.7.5.md
 [functions-1.7.4]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.7.4.md
 [functions-1.7.3]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.7.3.md
 [functions-1.7.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.7.2.md

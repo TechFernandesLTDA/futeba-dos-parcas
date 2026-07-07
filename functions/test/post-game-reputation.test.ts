@@ -97,41 +97,35 @@ function setupFirestore({
   },
   targetUser = {name: "Target"},
   existingReview = null,
-  targetReviews = [],
+  legacyReviews = [],
 }: {
   game?: SnapData | null;
   reviewerConfirmation?: SnapData | null;
   targetConfirmation?: SnapData | null;
   targetUser?: SnapData | null;
   existingReview?: SnapData | null;
-  targetReviews?: Array<{id: string; data: SnapData}>;
+  legacyReviews?: Array<{id: string; data: SnapData}>;
 } = {}) {
-  const refsByPath = new Map<string, {path: string}>();
+  const snapForPath = (path: string) => {
+    switch (path) {
+    case "games/game1":
+      return makeSnap(game);
+    case "confirmations/game1_reviewer1":
+      return makeSnap(reviewerConfirmation);
+    case "confirmations/game1_target1":
+      return makeSnap(targetConfirmation);
+    case "users/target1":
+      return makeSnap(targetUser);
+    case "post_game_reputation/game1_reviewer1_target1":
+      return makeSnap(existingReview);
+    default:
+      return makeSnap(null);
+    }
+  };
+  const refsByPath = new Map<string, {path: string; get: jest.Mock}>();
   const tx = {
     get: jest.fn((ref: any) => {
-      if (ref?._query === "targetReviews") {
-        return Promise.resolve({
-          docs: targetReviews.map((review) => ({
-            id: review.id,
-            data: () => review.data,
-          })),
-        });
-      }
-
-      switch (ref?.path) {
-      case "games/game1":
-        return Promise.resolve(makeSnap(game));
-      case "confirmations/game1_reviewer1":
-        return Promise.resolve(makeSnap(reviewerConfirmation));
-      case "confirmations/game1_target1":
-        return Promise.resolve(makeSnap(targetConfirmation));
-      case "users/target1":
-        return Promise.resolve(makeSnap(targetUser));
-      case "post_game_reputation/game1_reviewer1_target1":
-        return Promise.resolve(makeSnap(existingReview));
-      default:
-        return Promise.resolve(makeSnap(null));
-      }
+      return Promise.resolve(snapForPath(ref?.path));
     }),
     set: jest.fn(),
     update: jest.fn(),
@@ -139,12 +133,22 @@ function setupFirestore({
 
   mockDoc.mockImplementation((path: string) => {
     if (!refsByPath.has(path)) {
-      refsByPath.set(path, {path});
+      refsByPath.set(path, {
+        path,
+        get: jest.fn(() => Promise.resolve(snapForPath(path))),
+      });
     }
     return refsByPath.get(path);
   });
   mockCollection.mockReturnValue({
-    where: jest.fn(() => ({_query: "targetReviews"})),
+    where: jest.fn(() => ({
+      get: jest.fn(() => Promise.resolve({
+        docs: legacyReviews.map((review) => ({
+          id: review.id,
+          data: () => review.data,
+        })),
+      })),
+    })),
   });
   mockRunTransaction.mockImplementation(async (callback: any) => callback(tx));
 
@@ -273,28 +277,31 @@ describe("submitPostGameReputation", () => {
         reputation_respect_avg: 4,
         reputation_commitment_avg: 3,
         reputation_overall_avg: 4,
+        reputation_punctuality_sum: 5,
+        reputation_respect_sum: 4,
+        reputation_commitment_sum: 3,
+        reputation_overall_sum_centi: 400,
         reputation_reviews_count: 1,
       })
     );
+    expect(mockCollection).not.toHaveBeenCalled();
   });
 
-  it("atualiza avaliacao existente e recalcula agregado com reviews validas", async () => {
+  it("atualiza avaliacao existente com agregado incremental sem full-scan", async () => {
     const {tx} = setupFirestore({
-      existingReview: {overall: 3},
-      targetReviews: [
-        {
-          id: "game1_reviewer1_target1",
-          data: {punctuality: 1, respect: 1, commitment: 1, overall: 1},
-        },
-        {
-          id: "game0_other_target1",
-          data: {punctuality: 3, respect: 3, commitment: 3, overall: 3},
-        },
-        {
-          id: "broken",
-          data: {punctuality: 0, respect: 0, commitment: 0, overall: 0},
-        },
-      ],
+      targetUser: {
+        reputation_reviews_count: 2,
+        reputation_punctuality_sum: 4,
+        reputation_respect_sum: 4,
+        reputation_commitment_sum: 4,
+        reputation_overall_sum_centi: 400,
+      },
+      existingReview: {
+        punctuality: 1,
+        respect: 1,
+        commitment: 1,
+        overall: 1,
+      },
     });
 
     const result = await submitPostGameReputation(makeRequest({
@@ -322,8 +329,63 @@ describe("submitPostGameReputation", () => {
         reputation_respect_avg: 3.5,
         reputation_commitment_avg: 4,
         reputation_overall_avg: 3.67,
+        reputation_punctuality_sum: 7,
+        reputation_respect_sum: 7,
+        reputation_commitment_sum: 8,
+        reputation_overall_sum_centi: 733,
         reputation_reviews_count: 2,
       })
+    );
+    expect(mockCollection).not.toHaveBeenCalled();
+    expect(tx.get.mock.calls).not.toEqual(
+      expect.arrayContaining([[expect.objectContaining({_query: expect.anything()})]])
+    );
+  });
+
+  it("faz seed legado fora da transacao quando perfil antigo nao tem somas", async () => {
+    const {tx} = setupFirestore({
+      targetUser: {
+        reputation_reviews_count: 2,
+        reputation_overall_avg: 2,
+      },
+      existingReview: {
+        punctuality: 1,
+        respect: 1,
+        commitment: 1,
+        overall: 1,
+      },
+      legacyReviews: [
+        {
+          id: "game1_reviewer1_target1",
+          data: {punctuality: 1, respect: 1, commitment: 1, overall: 1},
+        },
+        {
+          id: "game0_other_target1",
+          data: {punctuality: 3, respect: 3, commitment: 3, overall: 3},
+        },
+        {
+          id: "broken",
+          data: {punctuality: 0, respect: 0, commitment: 0, overall: 0},
+        },
+      ],
+    });
+
+    const result = await submitPostGameReputation(makeRequest({
+      punctuality: 4,
+      respect: 4,
+      commitment: 5,
+      comment: null,
+    }));
+
+    expect(result).toMatchObject({
+      success: true,
+      updated: true,
+      reviewsCount: 2,
+      overallAvg: 3.67,
+    });
+    expect(mockCollection).toHaveBeenCalledWith("post_game_reputation");
+    expect(tx.get.mock.calls).not.toEqual(
+      expect.arrayContaining([[expect.objectContaining({_query: expect.anything()})]])
     );
   });
 });

@@ -5,6 +5,13 @@ import {FieldValue} from "firebase-admin/firestore";
 import {FUNCTION_REGION} from "../constants";
 import {db} from "../_db";
 import {isRecord} from "../validation/guards";
+import {checkRateLimit} from "../middleware/rate-limiter";
+
+export const TOGGLE_FOLLOW_RATE_LIMIT = {
+  maxRequests: 30,
+  windowMs: 60 * 1000,
+  keyPrefix: "toggle_follow",
+};
 
 interface ToggleFollowRequest {
   targetUserId: string;
@@ -43,6 +50,26 @@ function parseToggleFollowRequest(data: unknown): ToggleFollowRequest {
     targetUserId: data.targetUserId.trim(),
     follow: data.follow !== false,
   };
+}
+
+/**
+ * Aplica rate limit ao endpoint de follow antes da transacao.
+ *
+ * @param {string} uid Usuario autenticado.
+ */
+async function assertToggleFollowRateLimit(uid: string): Promise<void> {
+  const rateLimit = await checkRateLimit(uid, TOGGLE_FOLLOW_RATE_LIMIT);
+  if (rateLimit.allowed) return;
+
+  const retryAfter = Math.max(
+    1,
+    Math.ceil((rateLimit.resetAt.getTime() - Date.now()) / 1000)
+  );
+  throw new HttpsError(
+    "resource-exhausted",
+    `Muitas tentativas. Tente novamente em ${retryAfter} segundos.`,
+    {retryAfter}
+  );
 }
 
 /**
@@ -93,6 +120,8 @@ export const toggleFollowUser = onCall(
         "Você não pode seguir seu próprio perfil."
       );
     }
+
+    await assertToggleFollowRateLimit(uid);
 
     const currentUserRef = db().doc(`users/${uid}`);
     const targetUserRef = db().doc(`users/${targetUserId}`);
