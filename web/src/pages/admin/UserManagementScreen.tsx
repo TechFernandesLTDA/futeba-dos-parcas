@@ -969,9 +969,10 @@ export const UserManagementScreen: React.FC = () => {
                           sx={{
                             alignItems: 'stretch',
                             display: 'grid',
-                            gridTemplateColumns: '40px minmax(0, 1fr) 44px',
-                            columnGap: 0.5,
-                            px: 1,
+                            gridTemplateColumns: '36px minmax(0, 1fr) 44px',
+                            columnGap: 0.75,
+                            rowGap: 0.75,
+                            px: 1.25,
                             py: 1.25,
                           }}
                         >
@@ -988,86 +989,92 @@ export const UserManagementScreen: React.FC = () => {
                           />
                           <ListItemButton
                             sx={{
+                              gridColumn: '2 / 3',
+                              display: 'grid',
+                              gridTemplateColumns: '56px minmax(0, 1fr)',
+                              columnGap: 1,
                               alignItems: 'flex-start',
                               borderRadius: 1.5,
                               minWidth: 0,
                               p: 0.5,
+                              overflow: 'hidden',
                             }}
                             onClick={() => { setSelectedUser(u); setDialogOpen(true); setError(null); }}
                           >
-                            <Box sx={{ display: 'flex', gap: 1.25, minWidth: 0, width: '100%' }}>
-                              <Box sx={{ flex: '0 0 auto', pt: 0.25 }}>
-                                <PlayerAvatar name={u.name} photoUrl={u.photoUrl} size={44} level={u.level} />
+                            <Box sx={{ width: 56, minWidth: 56, display: 'flex', justifyContent: 'flex-start', pt: 0.25 }}>
+                              <PlayerAvatar name={u.name} photoUrl={u.photoUrl} size={40} level={u.level} />
+                            </Box>
+                            <Box sx={{ minWidth: 0, width: '100%' }}>
+                              <Typography
+                                variant="subtitle2"
+                                component="span"
+                                sx={{
+                                  display: 'block',
+                                  lineHeight: 1.25,
+                                  overflowWrap: 'anywhere',
+                                  wordBreak: 'break-word',
+                                }}
+                              >
+                                {u.name}
+                              </Typography>
+                              <Box
+                                sx={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: 0.5,
+                                  flexWrap: 'wrap',
+                                  mt: 0.5,
+                                  '& .MuiChip-root': {
+                                    maxWidth: '100%',
+                                  },
+                                  '& .MuiChip-label': {
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                  },
+                                }}
+                              >
+                                {u.id === currentUser?.id && <Chip label="Você" size="small" color="primary" variant="outlined" />}
+                                {likelyQaUser && <Chip label="QA/teste" size="small" color="warning" variant="outlined" />}
+                                <DemoDataChip data={u} />
+                                {u.realDataProtected && (
+                                  <Chip label="Real validado" size="small" color="success" variant="outlined" />
+                                )}
+                                <Chip
+                                  label={u.role}
+                                  size="small"
+                                  sx={{
+                                    bgcolor: alpha(getRoleColor(u.role), 0.1),
+                                    color: getRoleColor(u.role),
+                                    fontWeight: 700,
+                                  }}
+                                />
                               </Box>
-                              <Box sx={{ minWidth: 0, flex: 1 }}>
-                                <Typography
-                                  variant="subtitle2"
-                                  component="span"
-                                  sx={{
-                                    display: 'block',
-                                    lineHeight: 1.25,
-                                    overflowWrap: 'anywhere',
-                                  }}
-                                >
-                                  {u.name}
-                                </Typography>
-                                <Typography
-                                  variant="body2"
-                                  color="text.secondary"
-                                  sx={{
-                                    mt: 0.25,
-                                    lineHeight: 1.35,
-                                    overflowWrap: 'anywhere',
-                                  }}
-                                >
-                                  {u.email || 'Email não cadastrado'}
-                                </Typography>
-                                <Typography
-                                  variant="caption"
-                                  color="text.secondary"
-                                  sx={{ display: 'block', mt: 0.25 }}
-                                >
-                                  {u.gamesPlayed} jogo{u.gamesPlayed !== 1 ? 's' : ''}
-                                </Typography>
-                                <Box
-                                  sx={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: 0.5,
-                                    flexWrap: 'wrap',
-                                    mt: 0.75,
-                                    '& .MuiChip-root': {
-                                      maxWidth: '100%',
-                                    },
-                                    '& .MuiChip-label': {
-                                      overflow: 'hidden',
-                                      textOverflow: 'ellipsis',
-                                    },
-                                  }}
-                                >
-                                  {u.id === currentUser?.id && <Chip label="Você" size="small" color="primary" variant="outlined" />}
-                                  {likelyQaUser && <Chip label="QA/teste" size="small" color="warning" variant="outlined" />}
-                                  <DemoDataChip data={u} />
-                                  {u.realDataProtected && (
-                                    <Chip label="Real validado" size="small" color="success" variant="outlined" />
-                                  )}
-                                  <Chip
-                                    label={u.role}
-                                    size="small"
-                                    sx={{
-                                      bgcolor: alpha(getRoleColor(u.role), 0.1),
-                                      color: getRoleColor(u.role),
-                                      fontWeight: 700,
-                                    }}
-                                  />
-                                </Box>
-                              </Box>
+                              <Typography
+                                variant="body2"
+                                color="text.secondary"
+                                sx={{
+                                  mt: 0.5,
+                                  lineHeight: 1.35,
+                                  overflowWrap: 'anywhere',
+                                  wordBreak: 'break-word',
+                                }}
+                              >
+                                {u.email || 'Email não cadastrado'}
+                              </Typography>
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                sx={{ display: 'block', mt: 0.25 }}
+                              >
+                                {u.gamesPlayed} jogo{u.gamesPlayed !== 1 ? 's' : ''}
+                              </Typography>
                             </Box>
                           </ListItemButton>
                           <IconButton
                             aria-label={t('a11y.managePermissions')}
                             onClick={() => { setSelectedUser(u); setDialogOpen(true); setError(null); }}
                             sx={{
+                              gridColumn: '3 / 4',
                               alignSelf: 'flex-start',
                               justifySelf: 'center',
                               color: likelyQaUser ? 'warning.main' : 'text.secondary',
@@ -1082,10 +1089,13 @@ export const UserManagementScreen: React.FC = () => {
                                 display: 'flex',
                                 gap: 0.5,
                                 flexWrap: 'wrap',
-                                pt: 0.75,
                                 pl: 0.5,
                                 '& .MuiChip-root': {
                                   maxWidth: '100%',
+                                },
+                                '& .MuiChip-label': {
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
                                 },
                               }}
                             >

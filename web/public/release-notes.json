@@ -1,7 +1,27 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-07T04:43:57.993Z",
+  "generatedAt": "2026-07-07T11:13:08.400Z",
   "notes": [
+    {
+      "version": "1.51.11",
+      "buildNumber": null,
+      "releaseDate": "2026-07-07",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "As listas de usuarios no mobile ficam mais legiveis, sem avatar cobrindo nome, badges ou e-mail.",
+      "highlights": [],
+      "added": [],
+      "improved": [],
+      "fixed": [
+        "A tela administrativa de usuarios passa a separar avatar, nome, badges, e-mail e acoes em colunas estaveis no mobile.",
+        "Nomes e e-mails longos quebram linha sem invadir o avatar, o checkbox ou o botao de permissao.",
+        "As listas de membros e convite de jogadores tambem recebem a mesma protecao visual para nomes e e-mails longos.",
+        "`UserManagementScreen` reserva largura fixa para o avatar e aplica `minWidth: 0`/quebra responsiva na coluna textual.",
+        "`PlayersScreen` e `InvitePlayersScreen` passam a renderizar nome/e-mail com wrapping controlado em linhas de lista com avatar e acoes."
+      ],
+      "issueRefs": []
+    },
     {
       "version": "1.51.10",
       "buildNumber": null,
