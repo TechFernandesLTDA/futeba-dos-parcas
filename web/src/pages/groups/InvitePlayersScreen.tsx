@@ -177,6 +177,14 @@ export const InvitePlayersScreen: React.FC = () => {
         where('status', '==', 'PENDING')
       );
       const existing = await getDocs(existingQuery);
+      const alreadyPending = existing.docs.some((inviteDoc) => {
+        const data = inviteDoc.data();
+        return data.invited_user_id === targetUser.id || data.invitedUserId === targetUser.id;
+      });
+      if (alreadyPending) {
+        showError(t('feedback.groups.inviteAlreadyPending', 'Este jogador já tem um convite pendente para este grupo.'));
+        return;
+      }
       if (existing.size >= MAX_PENDING_INVITES) {
         showError(`Você já tem ${existing.size} convites pendentes neste grupo. Aguarde respostas antes de enviar mais.`);
         return;
@@ -185,8 +193,12 @@ export const InvitePlayersScreen: React.FC = () => {
       await addDoc(collection(db, 'group_invites'), {
         group_id: groupId,
         group_name: groupName,
+        group_photo: null,
         invited_by_id: user.id,
+        invited_by_name: user.name || 'Organizador',
         invited_user_id: targetUser.id,
+        invited_user_name: targetUser.name,
+        invited_user_photo: targetUser.photoUrl || null,
         status: 'PENDING',
         // AUDIT: client-clock drift accepted for 24h invite expiry window
         expires_at: Timestamp.fromDate(new Date(Date.now() + 24 * 60 * 60 * 1000)),

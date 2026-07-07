@@ -705,6 +705,7 @@
       "invalidInviteCode": "Código de invitación inválido o expirado",
       "inviteCodeGenerated": "Código de invitación generado!",
       "inviteCodeError": "Error al generar el código de invitación.",
+      "inviteAlreadyPending": "Este jugador ya tiene una invitación pendiente para este grupo.",
       "inviteError": "Error al enviar invitación. Inténtalo de nuevo.",
       "joinError": "Error al entrar en el grupo.",
       "joinSuccess": "Te uniste al grupo!",

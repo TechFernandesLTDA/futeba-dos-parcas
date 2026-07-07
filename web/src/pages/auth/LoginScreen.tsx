@@ -85,6 +85,22 @@ export function LoginScreen() {
       : '/';
   };
 
+  const buildRegisterLink = (): string => {
+    const redirect = resolveRedirect();
+    const params = new URLSearchParams();
+    const inviteMatch = redirect.match(/^\/join\/([^/?#]+)/);
+
+    if (inviteMatch?.[1]) {
+      params.set('invite', inviteMatch[1].toUpperCase());
+    }
+    if (redirect !== '/') {
+      params.set('redirect', redirect);
+    }
+
+    const queryString = params.toString();
+    return queryString ? `/register?${queryString}` : '/register';
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     // #1339: normaliza email (trim + lowercase) — evita mismatch de auth por
@@ -327,7 +343,7 @@ export function LoginScreen() {
           <Box sx={{ textAlign: 'center', mt: 3 }}>
             <Typography variant="body2" color="text.secondary">
               {t('auth.noAccount')}{' '}
-              <Link component={RouterLink} to="/register" underline="hover" sx={{ whiteSpace: 'nowrap' }}>
+              <Link component={RouterLink} to={buildRegisterLink()} underline="hover" sx={{ whiteSpace: 'nowrap' }}>
                 {t('auth.createAccount')}
               </Link>
             </Typography>

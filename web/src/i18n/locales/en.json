@@ -705,6 +705,7 @@
       "invalidInviteCode": "Invalid or expired invite code",
       "inviteCodeGenerated": "Invite code generated!",
       "inviteCodeError": "Error generating invite code.",
+      "inviteAlreadyPending": "This player already has a pending invite for this group.",
       "inviteError": "Error sending invite. Please try again.",
       "joinError": "Error joining group.",
       "joinSuccess": "You joined the group!",
