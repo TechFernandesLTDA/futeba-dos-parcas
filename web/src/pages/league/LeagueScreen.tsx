@@ -65,6 +65,7 @@ import {
   SportsSoccer as SoccerIcon,
   Close as CloseIcon,
   PersonAdd as PersonAddIcon,
+  Message as MessageIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -73,8 +74,10 @@ import { TeamBadge } from '../../components/team/TeamBadge';
 import { PageContainer } from '../../components/common/PageContainer';
 import { EmptyState } from '../../components/common/EmptyState';
 import { ScreenFab } from '../../components/layout';
-import { useLeague, LeaguePlayer, LeagueFilters } from '../../hooks/useLeague';
+import { useLeague, LeaguePlayer, LeagueFilters, LeagueSortField } from '../../hooks/useLeague';
 import { useLeagueInvites, LeagueInviteOption } from '../../hooks/useLeagueInvites';
+import { useCreateDirectChat } from '../../hooks/useDirectMessages';
+import { useDebounce } from '../../hooks/useDebounce';
 import type { GameGender } from '../../types/game';
 import { PullToRefresh } from '../../components/common/PullToRefresh';
 import { useActiveSeason } from '../../hooks/useActiveSeason';
@@ -83,10 +86,12 @@ import { DIVISION_CONFIG, LeagueDivision, getDivisionColor } from '../../types/g
 import { useTranslation, Trans } from 'react-i18next';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 
-type SortField = 'points' | 'goals' | 'wins' | 'gamesPlayed' | 'assists' | 'mvpCount' | 'winRate' | 'losses' | 'name';
+type SortField = LeagueSortField;
 
 const SORT_OPTIONS: { value: SortField; labelKey: string }[] = [
+  { value: 'experiencePoints', labelKey: 'league.sortXp' },
   { value: 'points', labelKey: 'league.sortPoints' },
+  { value: 'name', labelKey: 'league.sortName' },
   { value: 'goals', labelKey: 'league.sortGoals' },
   { value: 'wins', labelKey: 'league.sortWins' },
   { value: 'gamesPlayed', labelKey: 'league.sortGames' },
@@ -112,13 +117,14 @@ export const LeagueScreen: React.FC = () => {
 
   const [tabValue, setTabValue] = useState(0);
   const [search, setSearch] = useState('');
-  const [sortField, setSortField] = useState<SortField>('points');
+  const debouncedSearch = useDebounce(search, 300);
+  const [sortField, setSortField] = useState<SortField>('experiencePoints');
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [showSticky, setShowSticky] = useState(false);
   const [shareSnack, setShareSnack] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [showSort, setShowSort] = useState(false);
-  const pageSize = 200;
+  const pageSize = 25;
   const [selectedSeasonId, setSelectedSeasonId] = useState<string | null>(null);
   // Fase 4b: filtro de gênero do ranking ('ALL' = combinado).
   const [genderFilter, setGenderFilter] = useState<'ALL' | GameGender>('ALL');
@@ -126,7 +132,10 @@ export const LeagueScreen: React.FC = () => {
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [dense, setDense] = useState(true);
   const [inviteTarget, setInviteTarget] = useState<LeaguePlayer | null>(null);
+  const [actionTarget, setActionTarget] = useState<LeaguePlayer | null>(null);
+  const [messageTargetId, setMessageTargetId] = useState<string | null>(null);
   const [selectedInviteOptionId, setSelectedInviteOptionId] = useState('');
+  const { create: createDirectChat, creating: creatingChat } = useCreateDirectChat();
 
   // Monitoramento de performance
   const { metrics } = usePerformanceMonitoring({ screenName: 'LeagueScreen' });
@@ -157,10 +166,14 @@ export const LeagueScreen: React.FC = () => {
     seasonId: effectiveSeasonId,
     maxResults: pageSize,
     gender: genderFilter === 'ALL' ? null : genderFilter,
-  }), [effectiveSeasonId, genderFilter]);
+    search: debouncedSearch.trim() || null,
+    sortField,
+    sortDirection,
+  }), [effectiveSeasonId, genderFilter, debouncedSearch, sortField, sortDirection]);
 
   const {
     players: allPlayers,
+    totalCount,
     loading,
     error,
     refetch,
@@ -201,7 +214,10 @@ export const LeagueScreen: React.FC = () => {
     let result = players;
     if (search.trim()) {
       const q = normalizeText(search.trim());
-      result = result.filter(p => normalizeText(p.userName).includes(q));
+      result = result.filter(p =>
+        normalizeText(p.userName).includes(q) ||
+        p.userId.toLowerCase().includes(q.toLowerCase())
+      );
     }
     const dir = sortDirection === 'asc' ? 1 : -1;
     const getVal = (p: LeaguePlayer, field: SortField): number => {
@@ -209,12 +225,13 @@ export const LeagueScreen: React.FC = () => {
         case 'winRate': return p.gamesPlayed > 0 ? (p.wins / p.gamesPlayed) : 0;
         case 'losses': return Math.max(0, p.gamesPlayed - p.wins);
         case 'name': return 0;
+        case 'experiencePoints': return p.experiencePoints ?? 0;
         default: return p[field] || 0;
       }
     };
     if (sortField === 'name') {
       result = [...result].sort((a, b) => dir * a.userName.localeCompare(b.userName));
-    } else if (sortField !== 'points' || sortDirection !== 'desc') {
+    } else if (sortField !== 'experiencePoints' || sortDirection !== 'desc') {
       result = [...result].sort((a, b) => {
         const aVal = getVal(a, sortField);
         const bVal = getVal(b, sortField);
@@ -226,7 +243,11 @@ export const LeagueScreen: React.FC = () => {
 
   // Sort consolidado: 1 único sort usado por realPositions E pointsToNext
   const sortedByPoints = useMemo(
-    () => [...allPlayers].sort((a, b) => b.points - a.points),
+    () => [...allPlayers].sort((a, b) =>
+      (b.experiencePoints ?? 0) - (a.experiencePoints ?? 0) ||
+      b.points - a.points ||
+      a.userName.localeCompare(b.userName)
+    ),
     [allPlayers]
   );
 
@@ -252,7 +273,7 @@ export const LeagueScreen: React.FC = () => {
     if (!currentUserPosition || currentUserPosition <= 1) return null;
     const above = sortedByPoints[currentUserPosition - 2];
     if (!above || !currentUserPlayer) return null;
-    const diff = above.points - currentUserPlayer.points;
+    const diff = (above.experiencePoints ?? 0) - (currentUserPlayer.experiencePoints ?? 0);
     return { name: above.userName, diff, position: currentUserPosition - 1 };
   }, [sortedByPoints, currentUserPosition, currentUserPlayer]);
 
@@ -427,6 +448,15 @@ export const LeagueScreen: React.FC = () => {
     setInviteTarget(null);
   }, [inviteSending]);
 
+  const handleOpenActions = useCallback((player: LeaguePlayer) => {
+    setActionTarget(player);
+  }, []);
+
+  const handleCloseActions = useCallback(() => {
+    if (creatingChat || inviteSending) return;
+    setActionTarget(null);
+  }, [creatingChat, inviteSending]);
+
   const selectedInviteOption = useMemo<LeagueInviteOption | undefined>(
     () => inviteOptions.find((option) => option.id === selectedInviteOptionId),
     [inviteOptions, selectedInviteOptionId],
@@ -441,6 +471,29 @@ export const LeagueScreen: React.FC = () => {
     }, selectedInviteOption);
     setInviteTarget(null);
   }, [inviteTarget, selectedInviteOption, sendInvite]);
+
+  const canMessageFromLeague = useCallback((player: LeaguePlayer) => (
+    !!user && !player.isCurrentUser
+  ), [user]);
+
+  const handleMessagePlayer = useCallback(async (player: LeaguePlayer) => {
+    if (!canMessageFromLeague(player)) return;
+    setMessageTargetId(player.userId);
+    try {
+      const chatId = await createDirectChat(player.userId);
+      setActionTarget(null);
+      navigate(`/messages/${chatId}`);
+    } catch (err) {
+      showError(err instanceof Error ? err.message : t('directMessages.createError'));
+    } finally {
+      setMessageTargetId(null);
+    }
+  }, [canMessageFromLeague, createDirectChat, navigate, showError, t]);
+
+  const handleInviteFromActions = useCallback((player: LeaguePlayer) => {
+    setActionTarget(null);
+    handleOpenInvite(player);
+  }, [handleOpenInvite]);
 
   return (
     <Box>
@@ -523,7 +576,8 @@ export const LeagueScreen: React.FC = () => {
 
         {!isMdUp && (
         <Collapse in={showSort}>
-          <Box sx={{ px: 2, pb: 1, overflowX: 'auto', scrollbarWidth: 'none', '&::-webkit-scrollbar': { display: 'none' } }}>
+          <Box sx={{ px: 2, pb: 1, display: 'flex', gap: 1, alignItems: 'center' }}>
+            <Box sx={{ overflowX: 'auto', scrollbarWidth: 'none', '&::-webkit-scrollbar': { display: 'none' }, flex: 1 }}>
             <ToggleButtonGroup
               value={sortField}
               exclusive
@@ -537,6 +591,16 @@ export const LeagueScreen: React.FC = () => {
                 </ToggleButton>
               ))}
             </ToggleButtonGroup>
+            </Box>
+            <Tooltip title={sortDirection === 'desc' ? t('league.sortDesc') : t('league.sortAsc')} arrow>
+              <IconButton
+                size="small"
+                onClick={() => setSortDirection((prev) => prev === 'desc' ? 'asc' : 'desc')}
+                aria-label={sortDirection === 'desc' ? t('league.sortDesc') : t('league.sortAsc')}
+              >
+                {sortDirection === 'desc' ? <ArrowDownIcon /> : <ArrowUpIcon />}
+              </IconButton>
+            </Tooltip>
           </Box>
         </Collapse>
         )}
@@ -651,7 +715,9 @@ export const LeagueScreen: React.FC = () => {
               height: 20,
             }}
           />
-          <Typography variant="body2" fontWeight={700}>{currentUserPlayer.points} pts</Typography>
+          <Typography variant="body2" fontWeight={700}>
+            {currentUserPlayer.experiencePoints ?? 0} XP
+          </Typography>
         </Box>
       )}
 
@@ -717,6 +783,14 @@ export const LeagueScreen: React.FC = () => {
 
             {allPlayers.length > 0 && (
               <Box sx={{ mb: 2, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                  <Chip
+                    label={t('league.loadedCount', {
+                      loaded: allPlayers.length,
+                      total: totalCount,
+                    })}
+                    size="small"
+                    sx={{ bgcolor: alpha(theme.palette.info.main, 0.08), color: 'text.primary' }}
+                  />
                   <Chip
                     label={
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
@@ -796,8 +870,8 @@ export const LeagueScreen: React.FC = () => {
                           </TableSortLabel>
                         </TableCell>
                         <TableCell align="right" sx={{ fontWeight: 700 }}>
-                          <TableSortLabel active={sortField === 'points'} direction={sortField === 'points' ? sortDirection : 'desc'} onClick={() => handleTableSort('points')}>
-                            {t('league.sortPoints')}
+                          <TableSortLabel active={sortField === 'experiencePoints'} direction={sortField === 'experiencePoints' ? sortDirection : 'desc'} onClick={() => handleTableSort('experiencePoints')}>
+                            {t('league.sortXp')}
                           </TableSortLabel>
                         </TableCell>
                         <TableCell align="right" sx={{ fontWeight: 700 }}>
@@ -833,7 +907,7 @@ export const LeagueScreen: React.FC = () => {
                             %
                           </TableSortLabel>
                         </TableCell>
-                        {inviteOptions.length > 0 && (
+                        {!!user && (
                           <TableCell align="right" sx={{ fontWeight: 700 }}>{t('common.actions')}</TableCell>
                         )}
                       </TableRow>
@@ -861,7 +935,23 @@ export const LeagueScreen: React.FC = () => {
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                 <PlayerAvatar name={player.userName} photoUrl={player.userPhoto} size={32} level={player.level} />
                                 <Box sx={{ minWidth: 0 }}>
-                                  <Typography variant="body2" fontWeight={600} noWrap>{player.userName}</Typography>
+                                  <Button
+                                    color="inherit"
+                                    size="small"
+                                    onClick={() => handleOpenActions(player)}
+                                    sx={{
+                                      minWidth: 0,
+                                      p: 0,
+                                      justifyContent: 'flex-start',
+                                      textTransform: 'none',
+                                      fontWeight: 700,
+                                      maxWidth: '100%',
+                                    }}
+                                  >
+                                    <Typography variant="body2" fontWeight={600} noWrap>
+                                      {player.userName}
+                                    </Typography>
+                                  </Button>
                                   <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center', flexWrap: 'wrap' }}>
                                     <TeamBadge teamId={player.favoriteTeam} size={14} />
                                     <Chip label={DIVISION_CONFIG[player.division]?.label ?? player.division} size="small" sx={{ height: 16, fontSize: '0.65rem' }} />
@@ -871,7 +961,9 @@ export const LeagueScreen: React.FC = () => {
                               </Box>
                             </TableCell>
                             <TableCell align="right">
-                              <Typography variant="body2" fontWeight={700} color={getDivisionColor(player.division, theme)}>{player.points}</Typography>
+                              <Typography variant="body2" fontWeight={700} color={getDivisionColor(player.division, theme)}>
+                                {player.experiencePoints ?? 0}
+                              </Typography>
                             </TableCell>
                             <TableCell align="right">{player.gamesPlayed}</TableCell>
                             <TableCell align="right">{player.wins}</TableCell>
@@ -882,7 +974,7 @@ export const LeagueScreen: React.FC = () => {
                             <TableCell align="right">—</TableCell>
                             <TableCell align="right">{player.mvpCount || 0}</TableCell>
                             <TableCell align="right">{winRate}%</TableCell>
-                            {inviteOptions.length > 0 && (
+                            {!!user && (
                               <TableCell align="right">
                                 {canInviteFromLeague(player) && (
                                   <Tooltip title={t('league.invitePlayer')} arrow>
@@ -893,6 +985,22 @@ export const LeagueScreen: React.FC = () => {
                                       disabled={inviteSending}
                                     >
                                       <PersonAddIcon fontSize="small" />
+                                    </IconButton>
+                                  </Tooltip>
+                                )}
+                                {canMessageFromLeague(player) && (
+                                  <Tooltip title={t('league.messagePlayer')} arrow>
+                                    <IconButton
+                                      size="small"
+                                      aria-label={t('league.messagePlayerAria', { name: player.userName })}
+                                      onClick={() => handleMessagePlayer(player)}
+                                      disabled={creatingChat || messageTargetId === player.userId}
+                                    >
+                                      {messageTargetId === player.userId ? (
+                                        <CircularProgress size={18} />
+                                      ) : (
+                                        <MessageIcon fontSize="small" />
+                                      )}
                                     </IconButton>
                                   </Tooltip>
                                 )}
@@ -927,6 +1035,11 @@ export const LeagueScreen: React.FC = () => {
                       canInvite={canInviteFromLeague(player)}
                       inviteDisabled={inviteSending}
                       onInvite={handleOpenInvite}
+                      canMessage={canMessageFromLeague(player)}
+                      messageDisabled={creatingChat}
+                      messageLoading={messageTargetId === player.userId}
+                      onMessage={handleMessagePlayer}
+                      onOpenActions={handleOpenActions}
                     />
                   );
                 })}
@@ -972,6 +1085,68 @@ export const LeagueScreen: React.FC = () => {
         onClose={() => setShareSnack(false)}
         message={t('league.positionCopied', 'Posição copiada!')}
       />
+
+      <Dialog
+        open={!!actionTarget}
+        onClose={handleCloseActions}
+        fullWidth
+        maxWidth="xs"
+        aria-labelledby="league-player-actions-title"
+      >
+        <DialogTitle id="league-player-actions-title">
+          {t('league.playerActionsTitle', { name: actionTarget?.userName ?? '' })}
+        </DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, py: 1 }}>
+            <PlayerAvatar
+              name={actionTarget?.userName || ''}
+              photoUrl={actionTarget?.userPhoto}
+              size={48}
+              level={actionTarget?.level || 0}
+            />
+            <Box sx={{ minWidth: 0 }}>
+              <Typography variant="subtitle1" fontWeight={700} noWrap>
+                {actionTarget?.userName}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {actionTarget?.experiencePoints ?? 0} XP
+              </Typography>
+            </Box>
+          </Box>
+        </DialogContent>
+        <DialogActions
+          sx={{
+            justifyContent: 'space-between',
+            alignItems: { xs: 'stretch', sm: 'center' },
+            flexDirection: { xs: 'column', sm: 'row' },
+            gap: 1,
+            px: 3,
+            pb: 2,
+          }}
+        >
+          <Button onClick={handleCloseActions} disabled={creatingChat || inviteSending}>
+            {t('common.cancel')}
+          </Button>
+          <Box sx={{ display: 'flex', gap: 1, flexDirection: { xs: 'column', sm: 'row' } }}>
+            <Button
+              variant="outlined"
+              startIcon={messageTargetId === actionTarget?.userId ? <CircularProgress size={16} /> : <MessageIcon />}
+              disabled={!actionTarget || !canMessageFromLeague(actionTarget) || creatingChat}
+              onClick={() => actionTarget && handleMessagePlayer(actionTarget)}
+            >
+              {t('league.messagePlayer')}
+            </Button>
+            <Button
+              variant="contained"
+              startIcon={<PersonAddIcon />}
+              disabled={!actionTarget || !canInviteFromLeague(actionTarget) || inviteSending}
+              onClick={() => actionTarget && handleInviteFromActions(actionTarget)}
+            >
+              {t('league.invitePlayer')}
+            </Button>
+          </Box>
+        </DialogActions>
+      </Dialog>
 
       <Dialog
         open={!!inviteTarget}
@@ -1050,6 +1225,11 @@ const LeaguePlayerItem = React.memo(function LeaguePlayerItem({
   canInvite,
   inviteDisabled,
   onInvite,
+  canMessage,
+  messageDisabled,
+  messageLoading,
+  onMessage,
+  onOpenActions,
 }: {
   player: LeaguePlayer;
   position: number;
@@ -1064,6 +1244,11 @@ const LeaguePlayerItem = React.memo(function LeaguePlayerItem({
   canInvite: boolean;
   inviteDisabled: boolean;
   onInvite: (player: LeaguePlayer) => void;
+  canMessage: boolean;
+  messageDisabled: boolean;
+  messageLoading: boolean;
+  onMessage: (player: LeaguePlayer) => void;
+  onOpenActions: (player: LeaguePlayer) => void;
 }) {
   const theme = useTheme();
   const { t } = useTranslation();
@@ -1089,6 +1274,16 @@ const LeaguePlayerItem = React.memo(function LeaguePlayerItem({
     e.stopPropagation();
     onInvite(player);
   }, [onInvite, player]);
+
+  const handleMessage = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    onMessage(player);
+  }, [onMessage, player]);
+
+  const handleOpenActions = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    onOpenActions(player);
+  }, [onOpenActions, player]);
 
   return (
     <Card
@@ -1157,9 +1352,22 @@ const LeaguePlayerItem = React.memo(function LeaguePlayerItem({
 
           <Box sx={{ flex: 1, minWidth: 0 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Typography variant="subtitle1" fontWeight={600} noWrap>
-                {player.userName}
-              </Typography>
+              <Button
+                color="inherit"
+                size="small"
+                onClick={handleOpenActions}
+                sx={{
+                  minWidth: 0,
+                  p: 0,
+                  justifyContent: 'flex-start',
+                  textTransform: 'none',
+                  fontWeight: 700,
+                }}
+              >
+                <Typography variant="subtitle1" fontWeight={600} noWrap>
+                  {player.userName}
+                </Typography>
+              </Button>
               <TeamBadge teamId={player.favoriteTeam} size={18} />
               {player.isCurrentUser && (
                 <Chip label="Você" size="small" color="primary" />
@@ -1187,7 +1395,7 @@ const LeaguePlayerItem = React.memo(function LeaguePlayerItem({
               fontWeight={700}
               color={divisionConfig.color}
             >
-              {player.points}
+              {player.experiencePoints ?? 0}
             </Typography>
             <Chip
               label={divisionConfig.label}
@@ -1212,6 +1420,18 @@ const LeaguePlayerItem = React.memo(function LeaguePlayerItem({
                 disabled={inviteDisabled}
               >
                 <PersonAddIcon />
+              </IconButton>
+            </Tooltip>
+          )}
+
+          {canMessage && (
+            <Tooltip title={t('league.messagePlayer')} arrow>
+              <IconButton
+                onClick={handleMessage}
+                aria-label={t('league.messagePlayerAria', { name: player.userName })}
+                disabled={messageDisabled}
+              >
+                {messageLoading ? <CircularProgress size={20} /> : <MessageIcon />}
               </IconButton>
             </Tooltip>
           )}

@@ -18,6 +18,18 @@ import { useToast } from '../contexts/ToastContext';
 
 const logger = createLogger('useLeague');
 
+export type LeagueSortField =
+  | 'experiencePoints'
+  | 'points'
+  | 'name'
+  | 'gamesPlayed'
+  | 'wins'
+  | 'goals'
+  | 'assists'
+  | 'mvpCount'
+  | 'losses'
+  | 'winRate';
+
 // Fase 4b: gêneros válidos para segmentação do ranking.
 const SEGMENT_GENDERS: readonly GameGender[] = ['MALE', 'FEMALE', 'MIXED'];
 
@@ -61,22 +73,32 @@ export interface LeagueFilters {
   // Fase 4b: filtro de gênero. Ausente/inválido = combinado (campos
   // planos). MALE/FEMALE/MIXED = segmentado (by_gender.{G}).
   gender?: GameGender | null;
+  search?: string | null;
+  sortField?: LeagueSortField | null;
+  sortDirection?: 'asc' | 'desc' | null;
 }
 
 interface LeaguePage {
   players: LeaguePlayer[];
   hasMore: boolean;
+  nextPageToken: string | null;
+  totalCount: number;
 }
 
 async function fetchLeagueData(
   currentUserId?: string,
   filters?: LeagueFilters,
+  pageToken?: string | null,
 ): Promise<LeaguePage> {
   const response = await getLeaguePlayers({
     seasonId: filters?.seasonId ?? null,
     groupId: filters?.groupId ?? null,
     limit: filters?.maxResults ?? 200,
     gender: resolveSegmentGender(filters?.gender),
+    search: filters?.search ?? null,
+    sortField: filters?.sortField ?? 'experiencePoints',
+    sortDirection: filters?.sortDirection ?? 'desc',
+    pageToken: pageToken ?? null,
   });
 
   return {
@@ -85,7 +107,9 @@ async function fetchLeagueData(
       division: player.division as LeagueDivision,
       isCurrentUser: player.userId === currentUserId,
     })),
-    hasMore: false,
+    hasMore: response.data.hasMore === true,
+    nextPageToken: response.data.nextPageToken ?? null,
+    totalCount: response.data.totalCount ?? response.data.players.length,
   };
 }
 
@@ -115,10 +139,20 @@ export const useLeague = (
     error: queryError,
     refetch,
   } = useInfiniteQuery({
-    queryKey: ['league', currentUserId, filters?.groupId, filters?.seasonId, filters?.maxResults, filters?.gender],
-    queryFn: () => fetchLeagueData(currentUserId, filters),
-    initialPageParam: null,
-    getNextPageParam: () => undefined,
+    queryKey: [
+      'league',
+      currentUserId,
+      filters?.groupId,
+      filters?.seasonId,
+      filters?.maxResults,
+      filters?.gender,
+      filters?.search,
+      filters?.sortField,
+      filters?.sortDirection,
+    ],
+    queryFn: ({ pageParam }) => fetchLeagueData(currentUserId, filters, pageParam),
+    initialPageParam: null as string | null,
+    getNextPageParam: (lastPage) => lastPage.hasMore ? lastPage.nextPageToken : undefined,
     staleTime: 3 * 60 * 1000, // 3 minutos
     gcTime: 10 * 60 * 1000,
     enabled,
@@ -140,7 +174,7 @@ export const useLeague = (
         return;
       }
       queryClient.invalidateQueries({
-        queryKey: ['league', currentUserId, filters?.groupId, filters?.seasonId, filters?.maxResults, filters?.gender],
+        queryKey: ['league', currentUserId],
       });
     };
 
@@ -180,7 +214,7 @@ export const useLeague = (
             return;
           }
           queryClient.invalidateQueries({
-            queryKey: ['league', currentUserId, filters?.groupId, filters?.seasonId, filters?.maxResults, filters?.gender],
+            queryKey: ['league', currentUserId],
           });
         },
         handleBaseSnapshotError,
@@ -193,9 +227,11 @@ export const useLeague = (
   }, [queryClient, currentUserId, filters?.seasonId, filters?.groupId, filters?.maxResults, filters?.gender, enabled]);
 
   const error = listenerError || (queryError ? (queryError as Error).message : null);
+  const totalCount = data?.pages[0]?.totalCount ?? players.length;
 
   return {
     players,
+    totalCount,
     loading,
     error,
     refetch,

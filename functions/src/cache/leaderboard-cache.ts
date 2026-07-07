@@ -121,6 +121,10 @@ interface GetLeaguePlayersRequest {
   groupId?: string | null;
   limit?: number;
   gender?: string | null;
+  search?: string | null;
+  sortField?: string | null;
+  sortDirection?: string | null;
+  pageToken?: string | null;
 }
 
 interface PublicLeagueUser {
@@ -174,6 +178,20 @@ interface PublicLeaguePlayer {
   seedId?: string;
   demoDataReason?: string;
 }
+
+type LeagueSortField =
+  "experiencePoints" |
+  "points" |
+  "name" |
+  "gamesPlayed" |
+  "wins" |
+  "goals" |
+  "assists" |
+  "mvpCount" |
+  "losses" |
+  "winRate";
+
+type SortDirection = "asc" | "desc";
 
 /** Chave de gênero combinada (sem segmentação). */
 const GENDER_ALL = "ALL";
@@ -271,9 +289,17 @@ export const getLeaguePlayers = onCall<GetLeaguePlayersRequest>(
       "groupId"
     );
     const resultLimit = Math.min(
-      Math.max(readNumber(request.data?.limit) || DEFAULT_LEADERBOARD_LIMIT, 1),
+      Math.max(
+        readNumber(request.data?.limit) || DEFAULT_LEADERBOARD_LIMIT,
+        1
+      ),
       ABSOLUTE_MAX_LIMIT
     );
+    const pageOffset = parsePageToken(request.data?.pageToken);
+    const searchQuery = normalizeSearchQuery(request.data?.search);
+    const sortField = resolveLeagueSortField(request.data?.sortField);
+    const sortDirection =
+      resolveSortDirection(request.data?.sortDirection);
     const genderKey = resolveGenderKey(request.data?.gender);
     if (groupId) {
       await assertCanReadLeagueGroup(
@@ -288,12 +314,12 @@ export const getLeaguePlayers = onCall<GetLeaguePlayersRequest>(
         seasonId,
         groupId,
         genderKey,
-        resultLimit
+        ABSOLUTE_MAX_LIMIT
       ),
       groupId ?
         fetchActiveGroupMemberIds(groupId)
           .then((userIds) => fetchPublicUsersByIds(userIds)) :
-        fetchSearchableLeagueUsers(resultLimit),
+        fetchSearchableLeagueUsers(ABSOLUTE_MAX_LIMIT),
     ]);
 
     const participationByUser = new Map<
@@ -307,7 +333,7 @@ export const getLeaguePlayers = onCall<GetLeaguePlayersRequest>(
       }
     }
 
-    const players: PublicLeaguePlayer[] = Array.from(usersMap.entries())
+    const allPlayers: PublicLeaguePlayer[] = Array.from(usersMap.entries())
       .map(([userId, userData]) => {
         const participation = participationByUser.get(userId);
         return {
@@ -343,20 +369,174 @@ export const getLeaguePlayers = onCall<GetLeaguePlayersRequest>(
             participation?.demoDataReason,
         };
       })
+      .filter((player) => matchesLeagueSearch(player, searchQuery))
       .sort((a, b) =>
-        b.points - a.points ||
-        b.experiencePoints - a.experiencePoints ||
-        a.userName.localeCompare(b.userName)
-      )
-      .slice(0, resultLimit);
+        compareLeaguePlayers(a, b, sortField, sortDirection)
+      );
+    const players = allPlayers.slice(
+      pageOffset,
+      pageOffset + resultLimit
+    );
+    const nextOffset = pageOffset + players.length;
 
     return {
       success: true,
       players,
+      totalCount: allPlayers.length,
       count: players.length,
+      hasMore: nextOffset < allPlayers.length,
+      nextPageToken:
+        nextOffset < allPlayers.length ?
+          String(nextOffset) :
+          null,
     };
   }
 );
+
+/**
+ * Converte pageToken numerico em offset seguro.
+ *
+ * @param {unknown} raw Token recebido da UI.
+ * @return {number} Offset zero-based.
+ */
+function parsePageToken(raw: unknown): number {
+  if (raw == null || raw === "") return 0;
+  if (typeof raw !== "string") {
+    throw new HttpsError("invalid-argument", "pageToken inválido");
+  }
+  const offset = Number.parseInt(raw, 10);
+  if (!Number.isFinite(offset) || offset < 0) {
+    throw new HttpsError("invalid-argument", "pageToken inválido");
+  }
+  return Math.min(offset, ABSOLUTE_MAX_LIMIT);
+}
+
+/**
+ * Normaliza texto para busca sem acento/case.
+ *
+ * @param {unknown} raw Termo bruto.
+ * @return {string} Termo normalizado.
+ */
+function normalizeSearchQuery(raw: unknown): string {
+  if (raw == null) return "";
+  if (typeof raw !== "string") {
+    throw new HttpsError("invalid-argument", "Busca inválida");
+  }
+  return normalizeSearchText(sanitizeText(raw).slice(0, 120));
+}
+
+/**
+ * Remove acentos e case para comparacao de busca.
+ *
+ * @param {string} value Texto original.
+ * @return {string} Texto normalizado.
+ */
+function normalizeSearchText(value: string): string {
+  return value
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
+}
+
+/**
+ * Resolve campo de ordenacao aceito pela Liga.
+ *
+ * @param {unknown} raw Valor bruto.
+ * @return {LeagueSortField} Campo seguro.
+ */
+function resolveLeagueSortField(raw: unknown): LeagueSortField {
+  const allowed: readonly LeagueSortField[] = [
+    "experiencePoints",
+    "points",
+    "name",
+    "gamesPlayed",
+    "wins",
+    "goals",
+    "assists",
+    "mvpCount",
+    "losses",
+    "winRate",
+  ];
+  return typeof raw === "string" &&
+    (allowed as readonly string[]).includes(raw) ?
+    raw as LeagueSortField :
+    "experiencePoints";
+}
+
+/**
+ * Resolve direcao de ordenacao.
+ *
+ * @param {unknown} raw Valor bruto.
+ * @return {SortDirection} Direcao segura.
+ */
+function resolveSortDirection(raw: unknown): SortDirection {
+  return raw === "asc" ? "asc" : "desc";
+}
+
+/**
+ * Verifica se um jogador casa com a busca por UID ou nome.
+ *
+ * @param {PublicLeaguePlayer} player Jogador publico.
+ * @param {string} query Termo normalizado.
+ * @return {boolean} True quando deve permanecer na lista.
+ */
+function matchesLeagueSearch(
+  player: PublicLeaguePlayer,
+  query: string
+): boolean {
+  if (!query) return true;
+  return normalizeSearchText(player.userName).includes(query) ||
+    player.userId.toLowerCase().includes(query);
+}
+
+/**
+ * Ordena jogadores com desempate estavel por XP, nome e UID.
+ *
+ * @param {PublicLeaguePlayer} a Primeiro jogador.
+ * @param {PublicLeaguePlayer} b Segundo jogador.
+ * @param {LeagueSortField} sortField Campo principal.
+ * @param {SortDirection} direction Direcao.
+ * @return {number} Comparador Array.sort.
+ */
+function compareLeaguePlayers(
+  a: PublicLeaguePlayer,
+  b: PublicLeaguePlayer,
+  sortField: LeagueSortField,
+  direction: SortDirection
+): number {
+  const factor = direction === "asc" ? 1 : -1;
+  if (sortField === "name") {
+    return factor * a.userName.localeCompare(b.userName) ||
+      b.experiencePoints - a.experiencePoints ||
+      a.userId.localeCompare(b.userId);
+  }
+
+  const numericValue = (player: PublicLeaguePlayer): number => {
+    switch (sortField) {
+    case "points": return player.points;
+    case "gamesPlayed": return player.gamesPlayed;
+    case "wins": return player.wins;
+    case "goals": return player.goals;
+    case "assists": return player.assists;
+    case "mvpCount": return player.mvpCount;
+    case "losses":
+      return Math.max(0, player.gamesPlayed - player.wins);
+    case "winRate":
+      return player.gamesPlayed > 0 ?
+        player.wins / player.gamesPlayed :
+        0;
+    case "experiencePoints":
+    default: return player.experiencePoints;
+    }
+  };
+
+  return factor * (numericValue(a) - numericValue(b)) ||
+    b.experiencePoints - a.experiencePoints ||
+    b.points - a.points ||
+    a.userName.localeCompare(b.userName) ||
+    a.userId.localeCompare(b.userId);
+}
 
 /**
  * Le string publica opcional com trim.
@@ -576,7 +756,7 @@ async function fetchActiveGroupMemberIds(
     .get();
 
   return snap.docs
-    .filter((doc) => doc.data().status !== "REMOVED")
+    .filter((doc) => doc.data().status === "ACTIVE")
     .map((doc) => {
       const data = doc.data();
       return readString(data.user_id) ||
@@ -610,10 +790,10 @@ async function assertCanReadLeagueGroup(
   }
 
   const group = groupSnap.data() ?? {};
-  if (group.is_public === true) return;
   if (group.deleted_at != null || group.status !== "ACTIVE") {
     throw new HttpsError("permission-denied", "Acesso negado");
   }
+  if (group.is_public === true) return;
   if (group.owner_id === uid) return;
 
   const memberSnap = await db
