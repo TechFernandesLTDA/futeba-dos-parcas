@@ -1,7 +1,26 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-06T21:10:07.257Z",
+  "generatedAt": "2026-07-07T00:46:27.633Z",
   "notes": [
+    {
+      "version": "1.51.5",
+      "buildNumber": null,
+      "releaseDate": "2026-07-06",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "A tela de gerenciamento de usuarios ficou mais legivel no celular.",
+      "highlights": [],
+      "added": [],
+      "improved": [],
+      "fixed": [
+        "A lista de usuarios no admin agora evita sobreposicao entre avatar, nome, email, badges e botoes de acao.",
+        "Contas provaveis de QA/teste ficam sinalizadas visualmente, sem afetar usuarios reais validados.",
+        "Emails longos e nomes grandes passam a quebrar linha corretamente no mobile.",
+        "Corrige overflow visual na lista mobile de usuarios administrativos."
+      ],
+      "issueRefs": []
+    },
     {
       "version": "1.51.4",
       "buildNumber": null,

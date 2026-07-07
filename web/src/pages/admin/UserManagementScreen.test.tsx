@@ -218,6 +218,49 @@ describe('UserManagementScreen', () => {
     expect(await screen.findByText('R$ 150,00')).toBeInTheDocument();
   });
 
+  it('sinaliza contas prováveis de QA na lista', async () => {
+    mockSearchAdminUsers.mockResolvedValueOnce({
+      data: {
+        users: [
+          {
+            id: 'qa-1',
+            name: 'Admin QA Futeba',
+            email: 'test.admin@futeba.test',
+            role: 'ADMIN',
+            photoUrl: null,
+            gamesPlayed: 0,
+            level: 1,
+            createdAtIso: new Date().toISOString(),
+            ownerSummary: {
+              totalLocations: 0,
+              publishedLocations: 0,
+              pendingLocations: 0,
+              overdueLocations: 0,
+              incompleteLocations: 0,
+              activeSubscriptionLocations: 0,
+              monthlyFeeTotalCents: 0,
+              managersTotal: 0,
+            },
+            phone: null,
+            updatedAtIso: null,
+            lastLoginAtIso: null,
+            ownerLocations: [],
+            ownerOnboarding: null,
+            venueAccount: null,
+          },
+        ],
+        nextPageToken: null,
+        totalMatched: 1,
+        scannedUsers: 1,
+        scannedLocations: 0,
+        scanComplete: true,
+      },
+    });
+
+    renderWithTheme(<UserManagementScreen />);
+    expect(await screen.findByText('QA/teste')).toBeInTheDocument();
+  });
+
   it('mostra último login separado da última atualização na ficha comercial', async () => {
     const user = userEvent.setup();
     renderWithTheme(<UserManagementScreen />);

@@ -139,6 +139,17 @@ const parseAdminUser = (data: AdminUserCrmRow): UserWithRole => ({
   realDataProtected: data.realDataProtected,
 });
 
+const isLikelyQaUser = (user: UserWithRole): boolean => {
+  const email = user.email.toLowerCase();
+  const name = user.name.toLowerCase();
+
+  return email.endsWith('@futeba.test') ||
+    email.includes('+test') ||
+    name.includes(' qa ') ||
+    name.endsWith(' qa') ||
+    name.includes('qa futeba');
+};
+
 const formatAdminDateTime = (date?: Date): string => {
   if (!date || Number.isNaN(date.getTime())) {
     return 'Não informada';
@@ -833,6 +844,7 @@ export const UserManagementScreen: React.FC = () => {
                   <TableBody>
                     {filteredUsers.map((u) => {
                       const venueAccount = ownerProfiles[u.id]?.venueAccount;
+                      const likelyQaUser = isLikelyQaUser(u);
 
                       return (
                         <TableRow key={u.id} hover selected={selectedUsers.has(u.id)}>
@@ -870,7 +882,10 @@ export const UserManagementScreen: React.FC = () => {
                             />
                           </TableCell>
                           <TableCell>
-                            <Chip label="Ativo" size="small" color="success" variant="outlined" />
+                            <Box sx={{ display: 'inline-flex', flexWrap: 'wrap', gap: 0.5 }}>
+                              <Chip label="Ativo" size="small" color="success" variant="outlined" />
+                              {likelyQaUser && <Chip label="QA/teste" size="small" color="warning" variant="outlined" />}
+                            </Box>
                             {(u.role === 'FIELD_OWNER' || (ownerSummaries[u.id]?.totalLocations || 0) > 0) && (
                               <Box sx={{ display: 'inline-flex', flexWrap: 'wrap', gap: 0.5, ml: 0.5 }}>
                                 <Chip
@@ -932,38 +947,106 @@ export const UserManagementScreen: React.FC = () => {
                 </Table>
               </TableContainer>
             ) : (
-              <Card>
-                <List disablePadding aria-label={t('a11y.userList')}>
+              <Card
+                variant="outlined"
+                sx={{
+                  borderRadius: 2,
+                  overflow: 'hidden',
+                  boxShadow: 'none',
+                }}
+              >
+                <List disablePadding aria-label={t('a11y.userList')} sx={{ bgcolor: 'background.paper' }}>
                   {filteredUsers.map((u, index) => {
                     const venueAccount = ownerProfiles[u.id]?.venueAccount;
+                    const ownerSummary = ownerSummaries[u.id];
+                    const likelyQaUser = isLikelyQaUser(u);
 
                     return (
                       <Box key={u.id}>
                         {index > 0 && <Divider />}
                         <ListItem
-                          sx={{ alignItems: 'flex-start' }}
-                          secondaryAction={
-                            <IconButton edge="end" aria-label={t('a11y.managePermissions')} onClick={() => { setSelectedUser(u); setDialogOpen(true); setError(null); }}>
-                              <AdminIcon />
-                            </IconButton>
-                          }
+                          disablePadding
+                          sx={{
+                            alignItems: 'stretch',
+                            display: 'grid',
+                            gridTemplateColumns: '40px minmax(0, 1fr) 44px',
+                            columnGap: 0.5,
+                            px: 1,
+                            py: 1.25,
+                          }}
                         >
                           <Checkbox
                             checked={selectedUsers.has(u.id)}
                             onChange={() => toggleSelect(u.id)}
                             disabled={u.id === currentUser?.id}
-                            sx={{ p: 1.25, mr: 1 }}
+                            sx={{
+                              alignSelf: 'flex-start',
+                              justifySelf: 'center',
+                              p: 0.75,
+                              mt: 0.25,
+                            }}
                           />
                           <ListItemButton
-                            sx={{ alignItems: 'flex-start', pr: 7 }}
+                            sx={{
+                              alignItems: 'flex-start',
+                              borderRadius: 1.5,
+                              minWidth: 0,
+                              p: 0.5,
+                            }}
                             onClick={() => { setSelectedUser(u); setDialogOpen(true); setError(null); }}
                           >
-                            <PlayerAvatar name={u.name} photoUrl={u.photoUrl} size={48} level={u.level} />
-                            <ListItemText
-                              primary={
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap', minWidth: 0 }}>
+                            <Box sx={{ display: 'flex', gap: 1.25, minWidth: 0, width: '100%' }}>
+                              <Box sx={{ flex: '0 0 auto', pt: 0.25 }}>
+                                <PlayerAvatar name={u.name} photoUrl={u.photoUrl} size={44} level={u.level} />
+                              </Box>
+                              <Box sx={{ minWidth: 0, flex: 1 }}>
+                                <Typography
+                                  variant="subtitle2"
+                                  component="span"
+                                  sx={{
+                                    display: 'block',
+                                    lineHeight: 1.25,
+                                    overflowWrap: 'anywhere',
+                                  }}
+                                >
                                   {u.name}
+                                </Typography>
+                                <Typography
+                                  variant="body2"
+                                  color="text.secondary"
+                                  sx={{
+                                    mt: 0.25,
+                                    lineHeight: 1.35,
+                                    overflowWrap: 'anywhere',
+                                  }}
+                                >
+                                  {u.email || 'Email não cadastrado'}
+                                </Typography>
+                                <Typography
+                                  variant="caption"
+                                  color="text.secondary"
+                                  sx={{ display: 'block', mt: 0.25 }}
+                                >
+                                  {u.gamesPlayed} jogo{u.gamesPlayed !== 1 ? 's' : ''}
+                                </Typography>
+                                <Box
+                                  sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 0.5,
+                                    flexWrap: 'wrap',
+                                    mt: 0.75,
+                                    '& .MuiChip-root': {
+                                      maxWidth: '100%',
+                                    },
+                                    '& .MuiChip-label': {
+                                      overflow: 'hidden',
+                                      textOverflow: 'ellipsis',
+                                    },
+                                  }}
+                                >
                                   {u.id === currentUser?.id && <Chip label="Você" size="small" color="primary" variant="outlined" />}
+                                  {likelyQaUser && <Chip label="QA/teste" size="small" color="warning" variant="outlined" />}
                                   <DemoDataChip data={u} />
                                   {u.realDataProtected && (
                                     <Chip label="Real validado" size="small" color="success" variant="outlined" />
@@ -974,48 +1057,70 @@ export const UserManagementScreen: React.FC = () => {
                                     sx={{
                                       bgcolor: alpha(getRoleColor(u.role), 0.1),
                                       color: getRoleColor(u.role),
+                                      fontWeight: 700,
                                     }}
                                   />
                                 </Box>
-                              }
-                              secondary={`${u.email} • ${u.gamesPlayed} jogos`}
-                              sx={{ ml: 1 }}
-                            />
+                              </Box>
+                            </Box>
                           </ListItemButton>
-                        </ListItem>
-                        {(u.role === 'FIELD_OWNER' || (ownerSummaries[u.id]?.totalLocations || 0) > 0) && (
-                          <Box sx={{ px: 2, pb: 1, display: 'flex', gap: 0.75, flexWrap: 'wrap' }}>
-                            <Chip label={`${ownerSummaries[u.id]?.totalLocations || 0} quadra(s)`} size="small" variant="outlined" />
-                            <Chip label={`${ownerSummaries[u.id]?.publishedLocations || 0} publicada(s)`} size="small" color="success" variant="outlined" />
-                            {(ownerSummaries[u.id]?.monthlyFeeTotalCents || 0) > 0 && (
-                              <Chip label={formatCurrency(ownerSummaries[u.id]?.monthlyFeeTotalCents)} size="small" color="success" variant="outlined" />
-                            )}
-                            {venueAccount && (
-                              <>
-                                <Chip
-                                  label={getVenueAccountStatusLabel(venueAccount.status)}
-                                  size="small"
-                                  color={getVenueAccountStatusColor(venueAccount.status)}
-                                  variant="outlined"
-                                />
-                                <Chip
-                                  label={getVenueAccountScopeLabel(venueAccount.billingScope)}
-                                  size="small"
-                                  variant="outlined"
-                                />
-                              </>
-                            )}
-                            {(ownerSummaries[u.id]?.pendingLocations || 0) > 0 && (
-                              <Chip label={`${ownerSummaries[u.id]?.pendingLocations} em revisão`} size="small" color="info" variant="outlined" />
-                            )}
-                            {(ownerSummaries[u.id]?.overdueLocations || 0) > 0 && (
-                              <Chip label={`${ownerSummaries[u.id]?.overdueLocations} com pendência`} size="small" color="warning" />
-                            )}
-                            {(ownerSummaries[u.id]?.incompleteLocations || 0) > 0 && (
-                              <Chip label={`${ownerSummaries[u.id]?.incompleteLocations} incompleta(s)`} size="small" color="info" />
-                            )}
-                          </Box>
+                          <IconButton
+                            aria-label={t('a11y.managePermissions')}
+                            onClick={() => { setSelectedUser(u); setDialogOpen(true); setError(null); }}
+                            sx={{
+                              alignSelf: 'flex-start',
+                              justifySelf: 'center',
+                              color: likelyQaUser ? 'warning.main' : 'text.secondary',
+                            }}
+                          >
+                            <AdminIcon />
+                          </IconButton>
+                          {(u.role === 'FIELD_OWNER' || (ownerSummary?.totalLocations || 0) > 0) && (
+                            <Box
+                              sx={{
+                                gridColumn: '2 / 4',
+                                display: 'flex',
+                                gap: 0.5,
+                                flexWrap: 'wrap',
+                                pt: 0.75,
+                                pl: 0.5,
+                                '& .MuiChip-root': {
+                                  maxWidth: '100%',
+                                },
+                              }}
+                            >
+                              <Chip label={`${ownerSummary?.totalLocations || 0} quadra(s)`} size="small" variant="outlined" />
+                              <Chip label={`${ownerSummary?.publishedLocations || 0} publicada(s)`} size="small" color="success" variant="outlined" />
+                              {(ownerSummary?.monthlyFeeTotalCents || 0) > 0 && (
+                                <Chip label={formatCurrency(ownerSummary?.monthlyFeeTotalCents)} size="small" color="success" variant="outlined" />
+                              )}
+                              {venueAccount && (
+                                <>
+                                  <Chip
+                                    label={getVenueAccountStatusLabel(venueAccount.status)}
+                                    size="small"
+                                    color={getVenueAccountStatusColor(venueAccount.status)}
+                                    variant="outlined"
+                                  />
+                                  <Chip
+                                    label={getVenueAccountScopeLabel(venueAccount.billingScope)}
+                                    size="small"
+                                    variant="outlined"
+                                  />
+                                </>
+                              )}
+                              {(ownerSummary?.pendingLocations || 0) > 0 && (
+                                <Chip label={`${ownerSummary?.pendingLocations} em revisão`} size="small" color="info" variant="outlined" />
+                              )}
+                              {(ownerSummary?.overdueLocations || 0) > 0 && (
+                                <Chip label={`${ownerSummary?.overdueLocations} com pendência`} size="small" color="warning" />
+                              )}
+                              {(ownerSummary?.incompleteLocations || 0) > 0 && (
+                                <Chip label={`${ownerSummary?.incompleteLocations} incompleta(s)`} size="small" color="info" />
+                              )}
+                            </Box>
                           )}
+                        </ListItem>
                       </Box>
                     );
                   })}
