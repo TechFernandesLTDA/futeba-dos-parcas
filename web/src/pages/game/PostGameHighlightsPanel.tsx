@@ -14,15 +14,13 @@ import {
   useTheme,
 } from '@mui/material';
 import Grid from '@mui/material/Unstable_Grid2';
-import {
-  AutoAwesome as HighlightIcon,
-  ContentCopy as CopyIcon,
-  EmojiEvents as TrophyIcon,
-  Groups as DuoIcon,
-  Share as ShareIcon,
-  SportsSoccer as GoalIcon,
-  SportsHandball as SaveIcon,
-} from '@mui/icons-material';
+import HighlightIcon from '@mui/icons-material/AutoAwesome';
+import CopyIcon from '@mui/icons-material/ContentCopy';
+import TrophyIcon from '@mui/icons-material/EmojiEvents';
+import DuoIcon from '@mui/icons-material/Groups';
+import ShareIcon from '@mui/icons-material/Share';
+import GoalIcon from '@mui/icons-material/SportsSoccer';
+import SaveIcon from '@mui/icons-material/SportsHandball';
 import { useTranslation } from 'react-i18next';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { EmptyState } from '../../components/common/EmptyState';

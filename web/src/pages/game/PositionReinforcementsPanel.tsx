@@ -22,11 +22,9 @@ import {
   Switch,
   Typography,
 } from '@mui/material';
-import {
-  PersonSearch as PersonSearchIcon,
-  Send as SendIcon,
-  SportsSoccer as SportsSoccerIcon,
-} from '@mui/icons-material';
+import PersonSearchIcon from '@mui/icons-material/PersonSearch';
+import SendIcon from '@mui/icons-material/Send';
+import SportsSoccerIcon from '@mui/icons-material/SportsSoccer';
 import { useTranslation } from 'react-i18next';
 import type { Game, GameConfirmation } from '../../types/game';
 import { useToast } from '../../contexts/ToastContext';

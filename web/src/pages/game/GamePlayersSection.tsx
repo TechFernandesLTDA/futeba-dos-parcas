@@ -14,10 +14,8 @@ import {
   Typography,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import {
-  People as PeopleIcon,
-  SportsSoccer as SoccerIcon,
-} from '@mui/icons-material';
+import PeopleIcon from '@mui/icons-material/People';
+import SoccerIcon from '@mui/icons-material/SportsSoccer';
 import { PlayerAvatar, StatusChip } from '../../components/common/GameCard';
 import { EmptyState } from '../../components/common/EmptyState';
 import { TeamBadge } from '../../components/team/TeamBadge';

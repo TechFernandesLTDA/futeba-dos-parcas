@@ -1,7 +1,26 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-07T12:59:15.723Z",
+  "generatedAt": "2026-07-07T13:26:41.735Z",
   "notes": [
+    {
+      "version": "1.51.12",
+      "buildNumber": null,
+      "releaseDate": "2026-07-07",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "A tela de detalhes do jogo volta a abrir sem erro inesperado em partidas agendadas.",
+      "highlights": [],
+      "added": [],
+      "improved": [],
+      "fixed": [
+        "Corrigido um crash reportado ao acessar a rota de detalhes de jogo.",
+        "A abertura da tela de jogo fica mais estavel em web desktop e mobile.",
+        "`GameDetailScreen` e componentes filhos passam a importar icones MUI por caminho direto, evitando que o bundle de producao renderize um objeto no lugar de um componente React.",
+        "Feedback operacional relacionado: `QdqEkNJyKN2ahxBYA6AA`."
+      ],
+      "issueRefs": []
+    },
     {
       "version": "1.51.11",
       "buildNumber": null,
