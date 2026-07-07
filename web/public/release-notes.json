@@ -1,7 +1,26 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-07T19:46:50.602Z",
+  "generatedAt": "2026-07-07T21:01:49.345Z",
   "notes": [
+    {
+      "version": "1.51.15",
+      "buildNumber": null,
+      "releaseDate": "2026-07-07",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "Corrigimos de forma definitiva a falha ao abrir detalhes de jogo.",
+      "highlights": [],
+      "added": [],
+      "improved": [],
+      "fixed": [
+        "A tela de detalhes do jogo volta a abrir sem erro inesperado em jogos finalizados.",
+        "Os botões com ícones da tela de jogo ficaram mais estáveis no bundle de produção.",
+        "O build web passa a resolver `@mui/icons-material` para os módulos ESM, evitando que o Rolldown empacote ícones CommonJS como objetos e dispare React #130 em `Button startIcon`.",
+        "Feedback operacional relacionado: `/game/1R8x9xxbT5Ra5gAYTt4A`."
+      ],
+      "issueRefs": []
+    },
     {
       "version": "1.51.14",
       "buildNumber": null,
