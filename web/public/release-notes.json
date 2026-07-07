@@ -1,7 +1,27 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-07T00:46:27.633Z",
+  "generatedAt": "2026-07-07T01:40:24.968Z",
   "notes": [
+    {
+      "version": "1.51.6",
+      "buildNumber": null,
+      "releaseDate": "2026-07-07",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "A Liga e os convites de grupo ficaram mais confiaveis para usuarios reais.",
+      "highlights": [],
+      "added": [],
+      "improved": [],
+      "fixed": [
+        "Usuarios validados voltam a aparecer corretamente nas telas de Liga e XP global.",
+        "O fluxo de convite preserva o link quando uma pessoa precisa criar conta antes de entrar no grupo.",
+        "Donos de grupo conseguem convidar jogadores pela busca com menos falhas e sem convites duplicados pendentes.",
+        "Corrige perda de contexto de `/join/:code` ao navegar do login para o cadastro.",
+        "Bloqueia aceite de convite expirado e transicoes invalidas de status nas regras do Firestore."
+      ],
+      "issueRefs": []
+    },
     {
       "version": "1.51.5",
       "buildNumber": null,

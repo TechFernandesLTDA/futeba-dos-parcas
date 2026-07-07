@@ -160,6 +160,18 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.51.6][web-1.51.6] - 2026-07-07
+
+#### Mudado
+- A leitura de usuarios da Liga aceita os campos `is_searchable` e `isSearchable`, com deduplicacao.
+- Convites de grupo passam a gravar metadados adicionais para listagens e notificacoes.
+
+#### Corrigido
+- Corrige perda de contexto de `/join/:code` ao navegar do login para o cadastro.
+- Bloqueia aceite de convite expirado e transicoes invalidas de status nas regras do Firestore.
+
+_PRs: #3347_
+
 ### [1.51.5][web-1.51.5] - 2026-07-06
 
 #### Mudado
@@ -1540,6 +1552,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.51.6]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.6.md
 [web-1.51.5]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.5.md
 [web-1.51.4]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.4.md
 [web-1.51.3]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.3.md
