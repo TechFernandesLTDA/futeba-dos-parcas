@@ -170,6 +170,8 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 #### Corrigido
 - Remove leituras client-side de `users/{uid}` na Liga, evitando `PERMISSION_DENIED` em perfis com PII.
 
+_PRs: #3349_
+
 ### [1.51.6][web-1.51.6] - 2026-07-07
 
 #### Mudado
@@ -1144,6 +1146,8 @@ _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 #### Corrigido
 - Evita que regras de privacidade de `users/{uid}` bloqueiem a tela de Liga quando os docs contem PII.
+
+_PRs: #3349_
 
 ### [1.7.1][functions-1.7.1] - 2026-07-05
 
