@@ -1,10 +1,17 @@
 const mockBatchDelete = jest.fn();
+const mockBatchSet = jest.fn();
 const mockBatchCommit = jest.fn().mockResolvedValue(undefined);
+const mockDoc = jest.fn();
+const mockCollection = jest.fn();
+const mockGetAll = jest.fn();
 
 jest.mock("firebase-admin", () => ({
   firestore: jest.fn(() => ({
+    collection: mockCollection,
+    getAll: mockGetAll,
     batch: jest.fn(() => ({
       delete: mockBatchDelete,
+      set: mockBatchSet,
       commit: mockBatchCommit,
     })),
   })),
@@ -14,7 +21,21 @@ jest.mock("firebase-admin/firestore", () => ({
   FieldPath: {
     documentId: jest.fn(() => "__name__"),
   },
-  Timestamp: class Timestamp {},
+  Timestamp: class Timestamp {
+    private readonly ms: number;
+
+    constructor(ms = 0) {
+      this.ms = ms;
+    }
+
+    static fromMillis(ms: number) {
+      return new Timestamp(ms);
+    }
+
+    toMillis() {
+      return this.ms;
+    }
+  },
 }));
 
 jest.mock("firebase-functions", () => ({
@@ -55,6 +76,13 @@ jest.mock("../src/constants", () => ({
   FIRESTORE_WHERE_IN_LIMIT: 10,
   FUNCTION_REGION: "southamerica-east1",
   GAME_GENDERS: ["MALE", "FEMALE", "MIXED"],
+  LEVEL_TABLE: {
+    levels: [
+      {level: 0, xpRequired: 0},
+      {level: 1, xpRequired: 100},
+      {level: 2, xpRequired: 300},
+    ],
+  },
 }));
 
 import {__testing} from "../src/cache/leaderboard-cache";
@@ -62,6 +90,15 @@ import {__testing} from "../src/cache/leaderboard-cache";
 describe("leaderboard-cache batching", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockDoc.mockImplementation((id: string) => ({
+      id,
+      path: `cache_leaderboard/${id}`,
+      collection: mockCollection,
+    }));
+    mockCollection.mockImplementation(() => ({
+      doc: mockDoc,
+    }));
+    mockGetAll.mockReset();
   });
 
   it("deleteDocsInBatches divide deletes acima de 500 em batches seguros", async () => {
@@ -83,5 +120,278 @@ describe("leaderboard-cache batching", () => {
     expect(fakeDb.batch).toHaveBeenCalledTimes(3);
     expect(mockBatchDelete).toHaveBeenCalledTimes(905);
     expect(mockBatchCommit).toHaveBeenCalledTimes(3);
+  });
+
+  it("writeLeaguePlayersDirectoryCache divide diretorio em chunks", async () => {
+    const players = Array.from({length: 501}, (_, index) => ({
+      id: `player-${index}`,
+      userId: `user-${index}`,
+      userName: `Jogador ${index}`,
+      userPhoto: index === 0 ? undefined : `https://img.test/${index}.jpg`,
+      level: 1,
+      points: index,
+      gamesPlayed: 0,
+      wins: 0,
+      goals: 0,
+      assists: 0,
+      mvpCount: 0,
+      division: "BRONZE",
+      experiencePoints: index,
+      canReceiveInvites: true,
+    }));
+
+    await __testing.writeLeaguePlayersDirectoryCache(
+      "league_players__season-1__global__ALL",
+      "season-1",
+      null,
+      "ALL",
+      players
+    );
+
+    expect(mockBatchSet).toHaveBeenCalledTimes(4);
+    expect(mockBatchSet).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        path: "cache_leaderboard/league_players__season-1__global__ALL",
+      }),
+      expect.objectContaining({
+        kind: "league_players_directory",
+        season_id: "season-1",
+        group_id: null,
+        gender_key: "ALL",
+        count: 501,
+        chunk_count: 3,
+      })
+    );
+    expect(mockBatchSet).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({path: "cache_leaderboard/0000"}),
+      expect.objectContaining({
+        index: 0,
+        players: expect.arrayContaining([
+          expect.objectContaining({userId: "user-0"}),
+        ]),
+      })
+    );
+    const firstChunkPayload = mockBatchSet.mock.calls[1][1];
+    expect(firstChunkPayload.players[0]).not.toHaveProperty("userPhoto");
+    expect(mockBatchSet).toHaveBeenNthCalledWith(
+      4,
+      expect.objectContaining({path: "cache_leaderboard/0002"}),
+      expect.objectContaining({
+        index: 2,
+        players: [expect.objectContaining({userId: "user-500"})],
+      })
+    );
+    expect(mockBatchCommit).toHaveBeenCalledTimes(1);
+  });
+
+  it("readLeaguePlayersDirectoryCache carrega chunks validos", async () => {
+    const {Timestamp} = jest.requireMock("firebase-admin/firestore");
+    const chunkDoc = jest.fn((id: string) => ({path: `chunks/${id}`}));
+    const cacheRef = {
+      path: "cache_leaderboard/league_players__season-1__global__ALL",
+      get: jest.fn().mockResolvedValue({
+        exists: true,
+        data: () => ({
+          kind: "league_players_directory",
+          schema_version: 1,
+          expires_at: Timestamp.fromMillis(Date.now() + 60_000),
+          chunk_count: 2,
+        }),
+      }),
+      collection: jest.fn(() => ({doc: chunkDoc})),
+    };
+    mockDoc.mockReturnValue(cacheRef);
+    mockGetAll.mockResolvedValue([
+      {data: () => ({players: [{userId: "u1", userName: "Ana"}]})},
+      {data: () => ({players: [{userId: "u2", userName: "Bia"}]})},
+    ]);
+
+    const players = await __testing.readLeaguePlayersDirectoryCache(
+      "league_players__season-1__global__ALL"
+    );
+
+    expect(chunkDoc).toHaveBeenCalledWith("0000");
+    expect(chunkDoc).toHaveBeenCalledWith("0001");
+    expect(mockGetAll).toHaveBeenCalledTimes(1);
+    expect(players).toEqual([
+      {userId: "u1", userName: "Ana"},
+      {userId: "u2", userName: "Bia"},
+    ]);
+  });
+
+  it("readLeaguePlayersDirectoryCache ignora cache expirado", async () => {
+    const {Timestamp} = jest.requireMock("firebase-admin/firestore");
+    mockDoc.mockReturnValue({
+      get: jest.fn().mockResolvedValue({
+        exists: true,
+        data: () => ({
+          kind: "league_players_directory",
+          schema_version: 1,
+          expires_at: Timestamp.fromMillis(Date.now() - 1),
+          chunk_count: 1,
+        }),
+      }),
+    });
+
+    await expect(
+      __testing.readLeaguePlayersDirectoryCache(
+        "league_players__season-1__global__ALL"
+      )
+    ).resolves.toBeNull();
+    expect(mockGetAll).not.toHaveBeenCalled();
+  });
+
+  it("getCachedLeaguePlayersDirectory faz fallback se cache falha", async () => {
+    const logger = jest.requireMock("firebase-functions").logger;
+    const cacheRef = {
+      path: "cache_leaderboard/league_players__all_seasons__global__ALL",
+      get: jest.fn().mockRejectedValue(new Error("cache read failed")),
+      collection: jest.fn(() => ({
+        doc: jest.fn((id: string) => ({path: `chunks/${id}`})),
+      })),
+    };
+    const usersQuery = {
+      where: jest.fn(() => usersQuery),
+      orderBy: jest.fn(() => usersQuery),
+      limit: jest.fn(() => usersQuery),
+      get: jest.fn()
+        .mockResolvedValueOnce({
+          empty: false,
+          size: 1,
+          docs: [{
+            id: "u1",
+            data: () => ({
+              name: "Ana Liga",
+              is_searchable: true,
+              experience_points: 320,
+            }),
+          }],
+        })
+        .mockResolvedValueOnce({
+          empty: true,
+          size: 0,
+          docs: [],
+        }),
+    };
+    mockCollection.mockImplementation((name: string) => {
+      if (name === "cache_leaderboard") return {doc: () => cacheRef};
+      if (name === "users") return usersQuery;
+      return {doc: mockDoc};
+    });
+    mockBatchCommit.mockRejectedValueOnce(new Error("cache write failed"));
+
+    const players = await __testing.getCachedLeaguePlayersDirectory(
+      null,
+      null,
+      "ALL"
+    );
+
+    expect(players).toEqual([
+      expect.objectContaining({
+        userId: "u1",
+        userName: "Ana Liga",
+        experiencePoints: 320,
+        points: 0,
+      }),
+    ]);
+    expect(logger.warn).toHaveBeenCalledTimes(2);
+  });
+
+  it("buildLeaguePlayersDirectory junta membros, perfis publicos e melhor participacao", async () => {
+    const seasonQuery = {
+      where: jest.fn(() => seasonQuery),
+      orderBy: jest.fn(() => seasonQuery),
+      limit: jest.fn(() => seasonQuery),
+      get: jest.fn().mockResolvedValue({
+        docs: [
+          {
+            id: "p-low",
+            data: () => ({
+              user_id: "u1",
+              season_id: "season-1",
+              group_id: "group-1",
+              points: 10,
+              games_played: 2,
+              wins: 1,
+            }),
+          },
+          {
+            id: "p-high",
+            data: () => ({
+              user_id: "u1",
+              season_id: "season-1",
+              group_id: "group-1",
+              points: 35,
+              games_played: 4,
+              wins: 3,
+              goals_scored: 5,
+              assists: 2,
+              mvp_count: 1,
+              division: "SILVER",
+            }),
+          },
+        ],
+      }),
+    };
+    const membersRef = {
+      get: jest.fn().mockResolvedValue({
+        docs: [
+          {id: "member-doc", data: () => ({status: "ACTIVE", user_id: "u1"})},
+          {id: "inactive", data: () => ({status: "PENDING", user_id: "u2"})},
+        ],
+      }),
+    };
+    const usersQuery = {
+      where: jest.fn(() => usersQuery),
+      get: jest.fn().mockResolvedValue({
+        docs: [{
+          id: "u1",
+          data: () => ({
+            display_name: "Carlos Campo",
+            photo_url: "https://img.test/u1.jpg",
+            is_searchable: true,
+            experience_points: 150,
+            favorite_team: "Palmeiras",
+          }),
+        }],
+      }),
+    };
+    const groupDoc = {
+      collection: jest.fn(() => membersRef),
+    };
+    mockCollection.mockImplementation((name: string) => {
+      if (name === "season_participation") return seasonQuery;
+      if (name === "groups") return {doc: jest.fn(() => groupDoc)};
+      if (name === "users") return usersQuery;
+      return {doc: mockDoc};
+    });
+
+    const players = await __testing.buildLeaguePlayersDirectory(
+      "season-1",
+      "group-1",
+      "ALL"
+    );
+
+    expect(players).toEqual([
+      expect.objectContaining({
+        id: "p-high",
+        userId: "u1",
+        userName: "Carlos Campo",
+        userPhoto: "https://img.test/u1.jpg",
+        favoriteTeam: "Palmeiras",
+        level: 1,
+        points: 35,
+        gamesPlayed: 4,
+        wins: 3,
+        goals: 5,
+        assists: 2,
+        mvpCount: 1,
+        division: "SILVER",
+        experiencePoints: 150,
+        canReceiveInvites: true,
+      }),
+    ]);
   });
 });
