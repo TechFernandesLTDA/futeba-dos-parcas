@@ -343,7 +343,7 @@ const PlayerMemberItem = React.memo(function PlayerMemberItem({
     <Box>
       {showDivider && <Divider />}
       <ListItem
-        sx={{ py: 1.5 }}
+        sx={{ py: 1.5, alignItems: 'flex-start' }}
         secondaryAction={
           isOwner && member.role !== 'OWNER' ? (
             isActionLoading ? (
@@ -374,9 +374,20 @@ const PlayerMemberItem = React.memo(function PlayerMemberItem({
           </Box>
         </ListItemAvatar>
         <ListItemText
+          sx={{ minWidth: 0, pr: isOwner && member.role !== 'OWNER' ? 1 : 0 }}
           primary={
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              {member.name}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexWrap: 'wrap', minWidth: 0 }}>
+              <Typography
+                variant="body1"
+                component="span"
+                sx={{
+                  minWidth: 0,
+                  overflowWrap: 'anywhere',
+                  wordBreak: 'break-word',
+                }}
+              >
+                {member.name}
+              </Typography>
               <TeamBadge teamId={member.favoriteTeam} size={18} />
               {member.role !== 'MEMBER' && (
                 <Chip
@@ -391,7 +402,21 @@ const PlayerMemberItem = React.memo(function PlayerMemberItem({
               )}
             </Box>
           }
-          secondary={['OWNER', 'ADMIN'].includes(currentUserRole ?? '') ? member.email : ''}
+          secondary={['OWNER', 'ADMIN'].includes(currentUserRole ?? '') ? (
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              component="span"
+              sx={{
+                display: 'block',
+                mt: 0.25,
+                overflowWrap: 'anywhere',
+                wordBreak: 'break-word',
+              }}
+            >
+              {member.email}
+            </Typography>
+          ) : null}
         />
       </ListItem>
     </Box>

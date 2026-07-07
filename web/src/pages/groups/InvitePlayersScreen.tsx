@@ -266,6 +266,7 @@ export const InvitePlayersScreen: React.FC = () => {
                 <Box key={result.id}>
                   {index > 0 && <Divider />}
                   <ListItem
+                    sx={{ alignItems: 'flex-start' }}
                     secondaryAction={
                       <IconButton
                         edge="end"
@@ -285,8 +286,35 @@ export const InvitePlayersScreen: React.FC = () => {
                       <PlayerAvatar name={result.name} photoUrl={result.photoUrl} size={40} />
                     </ListItemAvatar>
                     <ListItemText
-                      primary={result.name}
-                      secondary={result.email}
+                      sx={{ minWidth: 0, pr: 1 }}
+                      primary={
+                        <Typography
+                          variant="body1"
+                          component="span"
+                          sx={{
+                            display: 'block',
+                            minWidth: 0,
+                            overflowWrap: 'anywhere',
+                            wordBreak: 'break-word',
+                          }}
+                        >
+                          {result.name}
+                        </Typography>
+                      }
+                      secondary={
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          component="span"
+                          sx={{
+                            display: 'block',
+                            overflowWrap: 'anywhere',
+                            wordBreak: 'break-word',
+                          }}
+                        >
+                          {result.email}
+                        </Typography>
+                      }
                     />
                   </ListItem>
                 </Box>
@@ -315,20 +343,45 @@ export const InvitePlayersScreen: React.FC = () => {
               {members.map((member, index) => (
                 <Box key={member.id}>
                   {index > 0 && <Divider />}
-                  <ListItem>
+                  <ListItem sx={{ alignItems: 'flex-start' }}>
                     <ListItemAvatar>
                       <PlayerAvatar name={member.name} photoUrl={member.photoUrl} size={40} />
                     </ListItemAvatar>
                     <ListItemText
+                      sx={{ minWidth: 0 }}
                       primary={
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          {member.name}
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexWrap: 'wrap', minWidth: 0 }}>
+                          <Typography
+                            variant="body1"
+                            component="span"
+                            sx={{
+                              minWidth: 0,
+                              overflowWrap: 'anywhere',
+                              wordBreak: 'break-word',
+                            }}
+                          >
+                            {member.name}
+                          </Typography>
                           {member.role === 'OWNER' && (
                             <Chip label="Dono" size="small" color="primary" />
                           )}
                         </Box>
                       }
-                      secondary={member.email}
+                      secondary={
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          component="span"
+                          sx={{
+                            display: 'block',
+                            mt: 0.25,
+                            overflowWrap: 'anywhere',
+                            wordBreak: 'break-word',
+                          }}
+                        >
+                          {member.email}
+                        </Typography>
+                      }
                     />
                   </ListItem>
                 </Box>
