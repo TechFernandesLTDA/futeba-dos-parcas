@@ -1186,6 +1186,16 @@ _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
 
+### [1.7.7][functions-1.7.7] - 2026-07-07
+
+#### Mudado
+- `getLeaguePlayers` grava o diretório público da Liga em cache Firestore chunked, chaveado por temporada, grupo e gênero, e aplica busca/ordenação/paginação sobre essa base reutilizada.
+- `discoverNearbyPlayers` troca leituras pontuais `doc.get()` por `getAll` chunked para perfis públicos e `following`.
+- Adiciona regressões para cache chunked do diretório da Liga.
+- Adiciona regressões para batching de leituras em `nearby-players`.
+
+_Issues: #3358, #3359_
+
 ### [1.7.6][functions-1.7.6] - 2026-07-07
 
 #### Corrigido
@@ -1754,6 +1764,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [web-1.26.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.26.1.md
 [web-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.26.0.md
 [ios-1.6.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.0.md
+[functions-1.7.7]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.7.7.md
 [functions-1.7.6]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.7.6.md
 [functions-1.7.5]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.7.5.md
 [functions-1.7.4]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.7.4.md

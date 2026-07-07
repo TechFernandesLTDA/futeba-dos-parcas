@@ -76,6 +76,18 @@ const LEAGUE_DIRECTORY_SCAN_LIMIT = 5000;
 /** Tamanho de lote para varrer usuarios pesquisaveis. */
 const SEARCHABLE_USERS_BATCH_SIZE = 500;
 
+/** Tipo de cache usado pelo diretorio publico da Liga. */
+const LEAGUE_PLAYERS_CACHE_KIND = "league_players_directory";
+
+/** Versao do schema do cache de diretorio da Liga. */
+const LEAGUE_PLAYERS_CACHE_SCHEMA_VERSION = 1;
+
+/** Quantidade de jogadores por chunk para evitar o limite de 1 MiB/doc. */
+const LEAGUE_PLAYERS_CACHE_CHUNK_SIZE = 250;
+
+/** Subcolecao dos chunks do diretorio cacheado. */
+const LEAGUE_PLAYERS_CACHE_CHUNKS_COLLECTION = "chunks";
+
 // ==========================================
 // INTERFACES
 // ==========================================
@@ -185,6 +197,18 @@ interface PublicLeaguePlayer {
   demoDataReason?: string;
 }
 
+interface CachedLeaguePlayersDirectory {
+  kind: string;
+  schema_version: number;
+  season_id: string | null;
+  group_id: string | null;
+  gender_key: string;
+  cached_at: Timestamp;
+  expires_at: Timestamp;
+  count: number;
+  chunk_count: number;
+}
+
 type LeagueSortField =
   "experiencePoints" |
   "points" |
@@ -246,6 +270,43 @@ function resolveGenderKey(raw: unknown): string {
     }
   }
   return GENDER_ALL;
+}
+
+/**
+ * Divide uma lista em chunks de tamanho fixo.
+ *
+ * @param {Array<T>} items Itens a dividir.
+ * @param {number} size Tamanho de cada chunk.
+ * @return {Array<Array<T>>} Lista de chunks.
+ */
+function chunkArray<T>(items: T[], size: number): T[][] {
+  const chunks: T[][] = [];
+  for (let index = 0; index < items.length; index += size) {
+    chunks.push(items.slice(index, index + size));
+  }
+  return chunks;
+}
+
+/**
+ * Remove campos undefined antes de persistir objetos no Firestore.
+ *
+ * @param {unknown} value Valor a limpar.
+ * @return {unknown} Valor sem propriedades undefined.
+ */
+function removeUndefinedDeep(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map(removeUndefinedDeep);
+  }
+
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>)
+        .filter(([, child]) => child !== undefined)
+        .map(([key, child]) => [key, removeUndefinedDeep(child)])
+    );
+  }
+
+  return value;
 }
 
 /**
@@ -315,66 +376,13 @@ export const getLeaguePlayers = onCall<GetLeaguePlayersRequest>(
       );
     }
 
-    const [participations, usersMap] = await Promise.all([
-      fetchLeagueParticipations(
-        seasonId,
-        groupId,
-        genderKey,
-        LEAGUE_DIRECTORY_SCAN_LIMIT
-      ),
-      groupId ?
-        fetchActiveGroupMemberIds(groupId)
-          .then((userIds) => fetchPublicUsersByIds(userIds)) :
-        fetchSearchableLeagueUsers(LEAGUE_DIRECTORY_SCAN_LIMIT),
-    ]);
+    const directoryPlayers = await getCachedLeaguePlayersDirectory(
+      seasonId,
+      groupId,
+      genderKey
+    );
 
-    const participationByUser = new Map<
-      string,
-      LeagueParticipationStats
-    >();
-    for (const participation of participations) {
-      const existing = participationByUser.get(participation.userId);
-      if (!existing || participation.points > existing.points) {
-        participationByUser.set(participation.userId, participation);
-      }
-    }
-
-    const allPlayers: PublicLeaguePlayer[] = Array.from(usersMap.entries())
-      .map(([userId, userData]) => {
-        const participation = participationByUser.get(userId);
-        return {
-          id: participation?.id ?? userId,
-          userId,
-          userName: userData.name,
-          userPhoto: userData.photoUrl || undefined,
-          favoriteTeam: userData.favoriteTeam,
-          level: getLevelForXpServer(userData.xp),
-          points: participation?.points ?? 0,
-          gamesPlayed: participation?.gamesPlayed ?? 0,
-          wins: participation?.wins ?? 0,
-          goals: participation?.goals ?? 0,
-          assists: participation?.assists ?? 0,
-          mvpCount: participation?.mvpCount ?? 0,
-          division: participation?.division ?? "BRONZE",
-          experiencePoints: userData.xp,
-          canReceiveInvites: true,
-          isMock:
-            userData.isMock === true ||
-            participation?.isMock === true,
-          demoData:
-            userData.demoData === true ||
-            participation?.demoData === true,
-          dataOrigin:
-            userData.dataOrigin ||
-            participation?.dataOrigin,
-          seedId:
-            userData.seedId ||
-            participation?.seedId,
-          demoDataReason:
-            userData.demoDataReason ||
-            participation?.demoDataReason,
-        };
-      })
+    const allPlayers: PublicLeaguePlayer[] = directoryPlayers
       .filter((player) => matchesLeagueSearch(player, searchQuery))
       .sort((a, b) =>
         compareLeaguePlayers(a, b, sortField, sortDirection)
@@ -398,6 +406,250 @@ export const getLeaguePlayers = onCall<GetLeaguePlayersRequest>(
     };
   }
 );
+
+/**
+ * Monta chave estavel do cache do diretorio da Liga.
+ *
+ * @param {string | null} seasonId Temporada opcional.
+ * @param {string | null} groupId Grupo opcional.
+ * @param {string} genderKey Filtro de genero normalizado.
+ * @return {string} ID do documento de cache.
+ */
+function buildLeaguePlayersCacheKey(
+  seasonId: string | null,
+  groupId: string | null,
+  genderKey: string
+): string {
+  return [
+    "league_players",
+    seasonId ?? "all_seasons",
+    groupId ?? "global",
+    genderKey,
+  ].join("__");
+}
+
+/**
+ * Tenta ler o diretorio publico cacheado.
+ *
+ * @param {string} cacheKey Chave do cache.
+ * @return {Promise<PublicLeaguePlayer[] | null>} Jogadores ou null.
+ */
+async function readLeaguePlayersDirectoryCache(
+  cacheKey: string
+): Promise<PublicLeaguePlayer[] | null> {
+  const db = getDb();
+  const cacheRef = db.collection(CACHE_COLLECTION).doc(cacheKey);
+  const cacheSnap = await cacheRef.get();
+  if (!cacheSnap.exists) return null;
+
+  const data = cacheSnap.data() as CachedLeaguePlayersDirectory | undefined;
+  if (
+    !data ||
+    data.kind !== LEAGUE_PLAYERS_CACHE_KIND ||
+    data.schema_version !== LEAGUE_PLAYERS_CACHE_SCHEMA_VERSION ||
+    !(data.expires_at instanceof Timestamp) ||
+    data.expires_at.toMillis() <= Date.now()
+  ) {
+    return null;
+  }
+
+  const chunkCount = readNumber(data.chunk_count);
+  if (chunkCount <= 0) return [];
+
+  const chunkRefs = Array.from({length: chunkCount}, (_, index) =>
+    cacheRef
+      .collection(LEAGUE_PLAYERS_CACHE_CHUNKS_COLLECTION)
+      .doc(String(index).padStart(4, "0"))
+  );
+  const chunkSnaps = await db.getAll(...chunkRefs);
+
+  const players: PublicLeaguePlayer[] = [];
+  chunkSnaps.forEach((snap) => {
+    const rawPlayers = snap.data()?.players;
+    if (Array.isArray(rawPlayers)) {
+      players.push(...rawPlayers as PublicLeaguePlayer[]);
+    }
+  });
+
+  return players;
+}
+
+/**
+ * Escreve o diretorio publico em chunks para evitar documento gigante.
+ *
+ * @param {string} cacheKey Chave do cache.
+ * @param {string | null} seasonId Temporada opcional.
+ * @param {string | null} groupId Grupo opcional.
+ * @param {string} genderKey Filtro de genero.
+ * @param {PublicLeaguePlayer[]} players Jogadores publicos.
+ */
+async function writeLeaguePlayersDirectoryCache(
+  cacheKey: string,
+  seasonId: string | null,
+  groupId: string | null,
+  genderKey: string,
+  players: PublicLeaguePlayer[]
+): Promise<void> {
+  const db = getDb();
+  const nowMs = Date.now();
+  const cachedAt = Timestamp.fromMillis(nowMs);
+  const expiresAt = Timestamp.fromMillis(nowMs + CACHE_TTL_MS);
+  const chunks = chunkArray(players, LEAGUE_PLAYERS_CACHE_CHUNK_SIZE);
+  const cacheRef = db.collection(CACHE_COLLECTION).doc(cacheKey);
+  const batch = db.batch();
+
+  batch.set(cacheRef, {
+    kind: LEAGUE_PLAYERS_CACHE_KIND,
+    schema_version: LEAGUE_PLAYERS_CACHE_SCHEMA_VERSION,
+    season_id: seasonId,
+    group_id: groupId,
+    gender_key: genderKey,
+    cached_at: cachedAt,
+    expires_at: expiresAt,
+    count: players.length,
+    chunk_count: chunks.length,
+  });
+
+  chunks.forEach((chunk, index) => {
+    batch.set(
+      cacheRef
+        .collection(LEAGUE_PLAYERS_CACHE_CHUNKS_COLLECTION)
+        .doc(String(index).padStart(4, "0")),
+      {
+        index,
+        players: removeUndefinedDeep(chunk),
+        updated_at: cachedAt,
+      }
+    );
+  });
+
+  await batch.commit();
+}
+
+/**
+ * Carrega o diretorio publico de jogadores, usando cache curto por base.
+ *
+ * @param {string | null} seasonId Temporada opcional.
+ * @param {string | null} groupId Grupo opcional.
+ * @param {string} genderKey Filtro de genero.
+ * @return {Promise<PublicLeaguePlayer[]>} Jogadores publicos.
+ */
+async function getCachedLeaguePlayersDirectory(
+  seasonId: string | null,
+  groupId: string | null,
+  genderKey: string
+): Promise<PublicLeaguePlayer[]> {
+  const cacheKey = buildLeaguePlayersCacheKey(seasonId, groupId, genderKey);
+
+  try {
+    const cachedPlayers = await readLeaguePlayersDirectoryCache(cacheKey);
+    if (cachedPlayers) {
+      return cachedPlayers;
+    }
+  } catch (error) {
+    logger.warn("[LEAGUE_PLAYERS] Falha ao ler cache do diretorio", {
+      cacheKey,
+      error,
+    });
+  }
+
+  const players = await buildLeaguePlayersDirectory(
+    seasonId,
+    groupId,
+    genderKey
+  );
+
+  try {
+    await writeLeaguePlayersDirectoryCache(
+      cacheKey,
+      seasonId,
+      groupId,
+      genderKey,
+      players
+    );
+  } catch (error) {
+    logger.warn("[LEAGUE_PLAYERS] Falha ao gravar cache do diretorio", {
+      cacheKey,
+      error,
+    });
+  }
+
+  return players;
+}
+
+/**
+ * Monta o diretorio publico a partir de users e season_participation.
+ *
+ * @param {string | null} seasonId Temporada opcional.
+ * @param {string | null} groupId Grupo opcional.
+ * @param {string} genderKey Filtro de genero.
+ * @return {Promise<PublicLeaguePlayer[]>} Jogadores publicos.
+ */
+async function buildLeaguePlayersDirectory(
+  seasonId: string | null,
+  groupId: string | null,
+  genderKey: string
+): Promise<PublicLeaguePlayer[]> {
+  const [participations, usersMap] = await Promise.all([
+    fetchLeagueParticipations(
+      seasonId,
+      groupId,
+      genderKey,
+      LEAGUE_DIRECTORY_SCAN_LIMIT
+    ),
+    groupId ?
+      fetchActiveGroupMemberIds(groupId)
+        .then((userIds) => fetchPublicUsersByIds(userIds)) :
+      fetchSearchableLeagueUsers(LEAGUE_DIRECTORY_SCAN_LIMIT),
+  ]);
+
+  const participationByUser = new Map<
+    string,
+    LeagueParticipationStats
+  >();
+  for (const participation of participations) {
+    const existing = participationByUser.get(participation.userId);
+    if (!existing || participation.points > existing.points) {
+      participationByUser.set(participation.userId, participation);
+    }
+  }
+
+  return Array.from(usersMap.entries()).map(([userId, userData]) => {
+    const participation = participationByUser.get(userId);
+    return {
+      id: participation?.id ?? userId,
+      userId,
+      userName: userData.name,
+      userPhoto: userData.photoUrl || undefined,
+      favoriteTeam: userData.favoriteTeam,
+      level: getLevelForXpServer(userData.xp),
+      points: participation?.points ?? 0,
+      gamesPlayed: participation?.gamesPlayed ?? 0,
+      wins: participation?.wins ?? 0,
+      goals: participation?.goals ?? 0,
+      assists: participation?.assists ?? 0,
+      mvpCount: participation?.mvpCount ?? 0,
+      division: participation?.division ?? "BRONZE",
+      experiencePoints: userData.xp,
+      canReceiveInvites: true,
+      isMock:
+        userData.isMock === true ||
+        participation?.isMock === true,
+      demoData:
+        userData.demoData === true ||
+        participation?.demoData === true,
+      dataOrigin:
+        userData.dataOrigin ||
+        participation?.dataOrigin,
+      seedId:
+        userData.seedId ||
+        participation?.seedId,
+      demoDataReason:
+        userData.demoDataReason ||
+        participation?.demoDataReason,
+    };
+  });
+}
 
 /**
  * Converte pageToken numerico em offset seguro.
@@ -1402,4 +1654,7 @@ export const invalidateLeaderboardOnParticipation = onDocumentWritten(
  */
 export const __testing = {
   deleteDocsInBatches,
+  buildLeaguePlayersCacheKey,
+  chunkArray,
+  writeLeaguePlayersDirectoryCache,
 };

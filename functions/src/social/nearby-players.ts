@@ -14,6 +14,7 @@ const ALLOWED_RADII_KM = [1, 5, 10, 25] as const;
 const MAX_RESULTS = 50;
 const MAX_LOCATION_AGE_MS = 30 * 24 * 60 * 60 * 1000;
 const LOCATION_QUERY_LIMIT_PER_BOUND = 100;
+const FIRESTORE_GET_ALL_CHUNK_SIZE = 300;
 
 type AllowedRadiusKm = typeof ALLOWED_RADII_KM[number];
 
@@ -176,6 +177,31 @@ function isFreshLocation(updatedAt: Timestamp | undefined, nowMs: number) {
 }
 
 /**
+ * Carrega referencias por getAll em chunks para evitar N chamadas RPC.
+ *
+ * @param {FirebaseFirestore.DocumentReference[]} refs Referencias a carregar.
+ * @return {Promise<FirebaseFirestore.DocumentSnapshot[]>} Snapshots na ordem.
+ */
+async function getAllInChunks(
+  refs: FirebaseFirestore.DocumentReference[]
+): Promise<FirebaseFirestore.DocumentSnapshot[]> {
+  const snapshots: FirebaseFirestore.DocumentSnapshot[] = [];
+  const firestore = db();
+
+  for (
+    let index = 0;
+    index < refs.length;
+    index += FIRESTORE_GET_ALL_CHUNK_SIZE
+  ) {
+    const chunk = refs.slice(index, index + FIRESTORE_GET_ALL_CHUNK_SIZE);
+    if (chunk.length === 0) continue;
+    snapshots.push(...await firestore.getAll(...chunk));
+  }
+
+  return snapshots;
+}
+
+/**
  * Converte documento Firestore de user_locations em candidato interno.
  *
  * @param {FirebaseFirestore.QueryDocumentSnapshot} snap Snapshot Firestore.
@@ -223,15 +249,20 @@ async function loadFollowingSet(
   candidateIds: string[]
 ): Promise<Set<string>> {
   const uniqueIds = [...new Set(candidateIds)];
-  const snaps = await Promise.all(
-    uniqueIds.map((candidateId) =>
-      db()
-        .doc(`users/${uid}/following/${candidateId}`)
-        .get()
-        .then((snap) => [candidateId, snap.exists] as const)
-    )
+  if (uniqueIds.length === 0) return new Set();
+
+  const firestore = db();
+  const refs = uniqueIds.map((candidateId) =>
+    firestore.doc(`users/${uid}/following/${candidateId}`)
   );
-  return new Set(snaps.filter(([, exists]) => exists).map(([id]) => id));
+  const snaps = await getAllInChunks(refs);
+
+  return new Set(
+    snaps
+      .map((snap, index) => [uniqueIds[index], snap.exists] as const)
+      .filter(([, exists]) => exists)
+      .map(([id]) => id)
+  );
 }
 
 /**
@@ -245,42 +276,48 @@ async function loadPublicProfiles(
   candidateIds: string[],
   followingIds: Set<string>
 ): Promise<Map<string, PublicUserProfile>> {
-  const entries = await Promise.all(
-    candidateIds.map(async (candidateId) => {
-      const snap = await db().doc(`users/${candidateId}`).get();
-      if (!snap.exists) return null;
+  const uniqueIds = [...new Set(candidateIds)];
+  if (uniqueIds.length === 0) return new Map();
 
-      const data = snap.data() ?? {};
-      if (data.is_searchable !== true || data.deleted_at != null) {
-        return null;
-      }
-
-      const displayName = resolvePublicDisplayName(
-        data as Record<string, unknown>
-      );
-
-      return [
-        candidateId,
-        {
-          id: candidateId,
-          displayName,
-          photoUrl:
-            typeof data.photo_url === "string" ? data.photo_url : null,
-          nickname:
-            typeof data.nickname === "string" ? data.nickname : null,
-          preferredPosition:
-            typeof data.preferred_position === "string" ?
-              data.preferred_position :
-              null,
-          followersCount:
-            typeof data.followers_count === "number" ?
-              data.followers_count :
-              0,
-          isFollowing: followingIds.has(candidateId),
-        } satisfies PublicUserProfile,
-      ] as const;
-    })
+  const firestore = db();
+  const refs = uniqueIds.map((candidateId) =>
+    firestore.doc(`users/${candidateId}`)
   );
+  const snaps = await getAllInChunks(refs);
+  const entries = snaps.map((snap, index) => {
+    const candidateId = uniqueIds[index];
+    if (!snap.exists) return null;
+
+    const data = snap.data() ?? {};
+    if (data.is_searchable !== true || data.deleted_at != null) {
+      return null;
+    }
+
+    const displayName = resolvePublicDisplayName(
+      data as Record<string, unknown>
+    );
+
+    return [
+      candidateId,
+      {
+        id: candidateId,
+        displayName,
+        photoUrl:
+          typeof data.photo_url === "string" ? data.photo_url : null,
+        nickname:
+          typeof data.nickname === "string" ? data.nickname : null,
+        preferredPosition:
+          typeof data.preferred_position === "string" ?
+            data.preferred_position :
+            null,
+        followersCount:
+          typeof data.followers_count === "number" ?
+            data.followers_count :
+            0,
+        isFollowing: followingIds.has(candidateId),
+      } satisfies PublicUserProfile,
+    ] as const;
+  });
 
   return new Map(
     entries.filter((entry): entry is readonly [string, PublicUserProfile] =>
@@ -358,7 +395,10 @@ export const discoverNearbyPlayers = secureCallable<
       const filteredCandidateIds = payload.socialFilter === "following" ?
         candidateIds.filter((candidateId) => followingIds.has(candidateId)) :
         candidateIds;
-      const profiles = await loadPublicProfiles(filteredCandidateIds, followingIds);
+      const profiles = await loadPublicProfiles(
+        filteredCandidateIds,
+        followingIds
+      );
 
       const players = filteredCandidateIds
         .map((candidateId) => {
@@ -398,3 +438,9 @@ export const discoverNearbyPlayers = secureCallable<
     }
   }
 );
+
+export const __testing = {
+  getAllInChunks,
+  loadFollowingSet,
+  loadPublicProfiles,
+};
