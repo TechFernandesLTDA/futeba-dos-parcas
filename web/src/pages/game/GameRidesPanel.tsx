@@ -21,11 +21,9 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import {
-  DirectionsCar as DirectionsCarIcon,
-  NearMe as NearMeIcon,
-  PersonPinCircle as PersonPinCircleIcon,
-} from '@mui/icons-material';
+import DirectionsCarIcon from '@mui/icons-material/DirectionsCar';
+import NearMeIcon from '@mui/icons-material/NearMe';
+import PersonPinCircleIcon from '@mui/icons-material/PersonPinCircle';
 import { useTranslation } from 'react-i18next';
 import type { Game } from '../../types/game';
 import { useToast } from '../../contexts/ToastContext';

@@ -9,13 +9,11 @@ import {
   alpha,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import {
-  LocationOn as LocationIcon,
-  AccessTime as TimeIcon,
-  People as PeopleIcon,
-  Payments as PaymentIcon,
-  Navigation as NavIcon,
-} from '@mui/icons-material';
+import LocationIcon from '@mui/icons-material/LocationOn';
+import TimeIcon from '@mui/icons-material/AccessTime';
+import PeopleIcon from '@mui/icons-material/People';
+import PaymentIcon from '@mui/icons-material/Payments';
+import NavIcon from '@mui/icons-material/Navigation';
 import { getStatusChipColors } from '../../types/game';
 import { formatGameDateLong } from '../../utils/dateFormatters';
 import type { Game } from '../../types/game';

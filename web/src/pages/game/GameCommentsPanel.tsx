@@ -16,13 +16,11 @@ import {
   alpha,
   useTheme,
 } from '@mui/material';
-import {
-  ChatBubbleOutline as CommentsIcon,
-  DeleteOutline as DeleteIcon,
-  Edit as EditIcon,
-  Reply as ReplyIcon,
-  Send as SendIcon,
-} from '@mui/icons-material';
+import CommentsIcon from '@mui/icons-material/ChatBubbleOutline';
+import DeleteIcon from '@mui/icons-material/DeleteOutline';
+import EditIcon from '@mui/icons-material/Edit';
+import ReplyIcon from '@mui/icons-material/Reply';
+import SendIcon from '@mui/icons-material/Send';
 import { useTranslation } from 'react-i18next';
 import { EmptyState } from '../../components/common/EmptyState';
 import { ReactionBar } from '../../components/reactions/ReactionBar';

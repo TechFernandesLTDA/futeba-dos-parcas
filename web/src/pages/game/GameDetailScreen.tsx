@@ -29,24 +29,22 @@ import {
 } from '@mui/material';
 import { getContrastRatio } from '@mui/material/styles';
 import Grid from '@mui/material/Unstable_Grid2';
-import {
-  SportsSoccer as SoccerIcon,
-  Check as CheckIcon,
-  PlayArrow as PlayIcon,
-  HowToReg as CheckInIcon,
-  HowToVote as VoteIcon,
-  Share as ShareIcon,
-  Delete as DeleteIcon,
-  Edit as EditIcon,
-  QrCode2 as QrCodeIcon,
-  ArrowBack as BackIcon,
-  ContentCopy as DuplicateIcon,
-  CalendarMonth as CalendarIcon,
-  MoreVert as MoreVertIcon,
-  ChatBubbleOutline as MessageIcon,
-  CheckCircle as CheckCircleIcon,
-  Place as PlaceIcon,
-} from '@mui/icons-material';
+import SoccerIcon from '@mui/icons-material/SportsSoccer';
+import CheckIcon from '@mui/icons-material/Check';
+import PlayIcon from '@mui/icons-material/PlayArrow';
+import CheckInIcon from '@mui/icons-material/HowToReg';
+import VoteIcon from '@mui/icons-material/HowToVote';
+import ShareIcon from '@mui/icons-material/Share';
+import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit';
+import QrCodeIcon from '@mui/icons-material/QrCode2';
+import BackIcon from '@mui/icons-material/ArrowBack';
+import DuplicateIcon from '@mui/icons-material/ContentCopy';
+import CalendarIcon from '@mui/icons-material/CalendarMonth';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import MessageIcon from '@mui/icons-material/ChatBubbleOutline';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import PlaceIcon from '@mui/icons-material/Place';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
 import { PageContainer } from '../../components/common/PageContainer';
 import { doc, updateDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
