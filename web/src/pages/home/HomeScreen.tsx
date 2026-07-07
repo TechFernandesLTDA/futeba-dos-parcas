@@ -23,7 +23,7 @@ import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 const HomeTab = lazy(() => import('./tabs/HomeTab').then(m => ({ default: m.HomeTab })));
 const GamesTab = lazy(() => import('./tabs/GamesTab').then(m => ({ default: m.GamesTab })));
 const GroupsTab = lazy(() => import('./tabs/GroupsTab').then(m => ({ default: m.GroupsTab })));
-const RankingsTab = lazy(() => import('./tabs/RankingsTab').then(m => ({ default: m.RankingsTab })));
+const LeagueScreen = lazy(() => import('../league/LeagueScreen').then(m => ({ default: m.LeagueScreen })));
 const ProfileTab = lazy(() => import('./tabs/ProfileTab').then(m => ({ default: m.ProfileTab })));
 
 const HOME_TAB_COUNT = 5;
@@ -133,7 +133,7 @@ export function HomeScreen() {
           {mountedTabs.has(0) && <Box sx={{ display: tabValue === 0 ? 'block' : 'none' }}><HomeTab /></Box>}
           {mountedTabs.has(1) && <Box sx={{ display: tabValue === 1 ? 'block' : 'none' }}><GamesTab /></Box>}
           {mountedTabs.has(2) && <Box sx={{ display: tabValue === 2 ? 'block' : 'none' }}><GroupsTab /></Box>}
-          {mountedTabs.has(3) && <Box sx={{ display: tabValue === 3 ? 'block' : 'none' }}><RankingsTab /></Box>}
+          {mountedTabs.has(3) && <Box sx={{ display: tabValue === 3 ? 'block' : 'none' }}><LeagueScreen embedded /></Box>}
           {mountedTabs.has(4) && <Box sx={{ display: tabValue === 4 ? 'block' : 'none' }}><ProfileTab /></Box>}
         </Suspense>
       </Box>

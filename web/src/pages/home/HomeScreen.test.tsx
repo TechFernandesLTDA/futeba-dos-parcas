@@ -39,7 +39,7 @@ vi.mock('../../hooks/useNotificationPermission', () => ({
 vi.mock('./tabs/HomeTab', () => ({ HomeTab: () => <div>Home Tab</div> }));
 vi.mock('./tabs/GamesTab', () => ({ GamesTab: () => <div>Jogos</div> }));
 vi.mock('./tabs/GroupsTab', () => ({ GroupsTab: () => <div>Grupos</div> }));
-vi.mock('./tabs/RankingsTab', () => ({ RankingsTab: () => <div>Rankings</div> }));
+vi.mock('../league/LeagueScreen', () => ({ LeagueScreen: ({ embedded }: { embedded?: boolean }) => <div>{embedded ? 'Liga Nova' : 'Liga'}</div> }));
 vi.mock('./tabs/ProfileTab', () => ({ ProfileTab: () => <div>Perfil</div> }));
 vi.mock('../../pages/ranking/NotificationsScreen', () => ({
   NotificationsScreen: () => <div>Notificações</div>,
@@ -115,5 +115,11 @@ describe('HomeScreen', () => {
     renderWithProviders(<HomeScreen />, ['/?tab=liga']);
     expect(await screen.findByText('Home Tab')).toBeInTheDocument();
     expect(screen.getByRole('tabpanel')).toHaveAttribute('aria-labelledby', 'tab-0');
+  });
+
+  it('usa a tela completa de Liga na aba ?tab=3', async () => {
+    renderWithProviders(<HomeScreen />, ['/?tab=3']);
+    expect(await screen.findByText('Liga Nova')).toBeInTheDocument();
+    expect(screen.getByRole('tabpanel')).toHaveAttribute('aria-labelledby', 'tab-3');
   });
 });

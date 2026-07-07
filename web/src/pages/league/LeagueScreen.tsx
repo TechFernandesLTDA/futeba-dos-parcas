@@ -88,6 +88,10 @@ import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 
 type SortField = LeagueSortField;
 
+export interface LeagueScreenProps {
+  embedded?: boolean;
+}
+
 const SORT_OPTIONS: { value: SortField; labelKey: string }[] = [
   { value: 'experiencePoints', labelKey: 'league.sortXp' },
   { value: 'points', labelKey: 'league.sortPoints' },
@@ -106,7 +110,7 @@ const LEAGUE_DIVISIONS: LeagueDivision[] = ['BRONZE', 'SILVER', 'GOLD', 'PLATINU
 // Normalização fora do componente (função pura, não recriada)
 const normalizeText = (text: string) => text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
-export const LeagueScreen: React.FC = () => {
+export const LeagueScreen: React.FC<LeagueScreenProps> = ({ embedded = false }) => {
   const navigate = useNavigate();
   const goBack = useNavigateBack('/?tab=3');
   const theme = useTheme();
@@ -525,10 +529,12 @@ export const LeagueScreen: React.FC = () => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', p: 1, gap: 0.5 }}>
-          <IconButton onClick={goBack} aria-label={t('common.back')}>
-            <BackIcon />
-          </IconButton>
-          <Typography variant="h6" sx={{ ml: 1, flex: 1 }}>
+          {!embedded && (
+            <IconButton onClick={goBack} aria-label={t('common.back')}>
+              <BackIcon />
+            </IconButton>
+          )}
+          <Typography variant="h6" sx={{ ml: embedded ? 0 : 1, flex: 1 }}>
             {t('nav.league')}
           </Typography>
           <IconButton onClick={() => setShowSearch(v => !v)} aria-label={t('a11y.searchPlayer')} size="small">
