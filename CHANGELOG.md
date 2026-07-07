@@ -167,6 +167,8 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 - `useLeague` passa a suportar paginas infinitas reais e total de jogadores carregados.
 - Acoes sociais da Liga reutilizam os fluxos existentes de convites e mensagens diretas.
 
+_PRs: #3350_
+
 ### [1.51.7][web-1.51.7] - 2026-07-07
 
 #### Mudado
@@ -1155,6 +1157,8 @@ _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 #### Corrigido
 - Leitura de Liga em grupo passa a considerar somente membros `ACTIVE`.
 - Grupo arquivado ou inativo deixa de liberar leitura publica.
+
+_PRs: #3350_
 
 ### [1.7.2][functions-1.7.2] - 2026-07-07
 
