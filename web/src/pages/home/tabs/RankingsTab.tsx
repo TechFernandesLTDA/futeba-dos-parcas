@@ -352,7 +352,7 @@ export function RankingsTab() {
     seasonId: activeSeasonId,
   }), [selectedGroupId, activeSeasonId]);
 
-  const { players, loading, error: errorState, refetch } = useLeague(user?.id, filters, { enabled: !!activeSeasonId });
+  const { players, loading, error: errorState, refetch } = useLeague(user?.id, filters, { enabled: !seasonLoading });
 
   // Position change tracking via localStorage (#1238)
   useEffect(() => {

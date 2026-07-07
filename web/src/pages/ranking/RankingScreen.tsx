@@ -68,7 +68,7 @@ export const RankingScreen: React.FC = () => {
   const { players, loading, error, refetch } = useLeague(
     user?.id,
     filters,
-    { enabled: !!activeSeasonId }
+    { enabled: !seasonLoading }
   );
 
   const ranked = useMemo(() => {

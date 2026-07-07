@@ -1,56 +1,59 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
+import type { ReactNode } from 'react';
 import { createTestWrapper } from '../test/renderWithProviders';
 
-// useLeague usa useQuery/getDocs para dados + onSnapshot para invalidação (#2351)
 const mockOnSnapshot = vi.fn();
-const mockGetDoc = vi.fn();
-const mockGetDocs = vi.fn().mockResolvedValue({ docs: [] });
 const mockCollection = vi.fn();
-const mockDoc = vi.fn();
 const mockQuery = vi.fn();
 const mockOrderBy = vi.fn();
 const mockLimit = vi.fn();
 const mockWhere = vi.fn();
-const mockDocumentId = vi.fn(() => '__name__');
-const mockStartAfter = vi.fn();
+const mockGetLeaguePlayers = vi.fn();
 
 vi.mock('firebase/firestore', () => ({
   collection: (...args: any[]) => mockCollection(...args),
-  doc: (...args: any[]) => mockDoc(...args),
-  getDoc: (...args: any[]) => mockGetDoc(...args),
-  getDocs: (...args: any[]) => mockGetDocs(...args),
   query: (...args: any[]) => mockQuery(...args),
   where: (...args: any[]) => mockWhere(...args),
   orderBy: (...args: any[]) => mockOrderBy(...args),
   limit: (...args: any[]) => mockLimit(...args),
-  startAfter: (...args: any[]) => mockStartAfter(...args),
   onSnapshot: (...args: any[]) => mockOnSnapshot(...args),
-  documentId: () => mockDocumentId(),
 }));
 
 vi.mock('../services/firebase', () => ({
   db: {},
 }));
 
+vi.mock('../services/cloudFunctions', () => ({
+  getLeaguePlayers: (...args: any[]) => mockGetLeaguePlayers(...args),
+}));
+
 vi.mock('../contexts/ToastContext', () => ({
   useToast: () => ({ showSuccess: vi.fn(), showError: vi.fn(), showWarning: vi.fn(), showInfo: vi.fn() }),
-  ToastProvider: ({ children }: { children: React.ReactNode }) => children,
+  ToastProvider: ({ children }: { children: ReactNode }) => children,
 }));
+
 import { useLeague } from './useLeague';
+
+const callableResponse = (players: Array<Record<string, unknown>>) => ({
+  data: {
+    success: true,
+    count: players.length,
+    players,
+  },
+});
 
 describe('useLeague', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockOnSnapshot.mockReturnValue(vi.fn());
-    mockGetDocs.mockResolvedValue({ docs: [] });
     mockQuery.mockReturnValue('mock-query');
     mockCollection.mockReturnValue('mock-collection');
-    mockDoc.mockReturnValue('mock-doc-ref');
     mockOrderBy.mockReturnValue('mock-order');
     mockLimit.mockReturnValue('mock-limit');
-    mockStartAfter.mockReturnValue('mock-start-after');
+    mockWhere.mockReturnValue('mock-where');
+    mockGetLeaguePlayers.mockResolvedValue(callableResponse([]));
   });
 
   it('retorna loading=true inicialmente', () => {
@@ -58,55 +61,80 @@ describe('useLeague', () => {
     expect(result.current.loading).toBe(true);
   });
 
-  it('configura listener na coleção season_participation', () => {
-    renderHook(() => useLeague('user-1'), { wrapper: createTestWrapper() });
-    expect(mockCollection).toHaveBeenCalledWith({}, 'season_participation');
+  it('carrega jogadores pesquisáveis mesmo sem temporada ativa', async () => {
+    mockGetLeaguePlayers.mockResolvedValueOnce(callableResponse([
+      {
+        id: 'u2',
+        userId: 'u2',
+        userName: 'Jogador sem temporada',
+        level: 1,
+        points: 0,
+        gamesPlayed: 0,
+        wins: 0,
+        goals: 0,
+        assists: 0,
+        mvpCount: 0,
+        division: 'BRONZE',
+        experiencePoints: 0,
+        canReceiveInvites: true,
+      },
+    ]));
+
+    const { result } = renderHook(() => useLeague('u2', { seasonId: null }), { wrapper: createTestWrapper() });
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    expect(mockGetLeaguePlayers).toHaveBeenCalledWith({
+      seasonId: null,
+      groupId: null,
+      limit: 200,
+      gender: null,
+    });
+    expect(result.current.players[0]).toMatchObject({
+      userId: 'u2',
+      userName: 'Jogador sem temporada',
+      points: 0,
+      isCurrentUser: true,
+      canReceiveInvites: true,
+    });
   });
 
   it('marca o jogador atual com isCurrentUser=true', async () => {
-    // useLeague usa getDocs via useQuery — simular via mockGetDocs. #2330
-    mockGetDoc.mockResolvedValue({
-      exists: () => true,
-      data: () => ({ name: 'Jogador 1', photo_url: null }),
-    });
-
-    mockGetDocs.mockResolvedValueOnce({
-      docs: [
-        {
-          id: 'sp-1',
-          data: () => ({
-            user_id: 'current-user',
-            points: 500,
-            level: 8,
-            games_played: 20,
-            wins: 10,
-            goals: 15,
-            assists: 5,
-            mvp_count: 3,
-            division: 'GOLD',
-          }),
-        },
-        {
-          id: 'sp-2',
-          data: () => ({
-            user_id: 'other-user',
-            points: 300,
-            level: 5,
-            games_played: 10,
-            wins: 5,
-            goals: 8,
-            assists: 2,
-            mvp_count: 1,
-            division: 'SILVER',
-          }),
-        },
-      ],
-    }).mockResolvedValueOnce({
-      docs: [
-        { id: 'current-user', data: () => ({ name: 'Jogador 1', photo_url: null, is_searchable: true }) },
-        { id: 'other-user', data: () => ({ name: 'Jogador 2', photo_url: null, is_searchable: true }) },
-      ],
-    });
+    mockGetLeaguePlayers.mockResolvedValueOnce(callableResponse([
+      {
+        id: 'sp-1',
+        userId: 'current-user',
+        userName: 'Jogador 1',
+        userPhoto: undefined,
+        level: 8,
+        points: 500,
+        gamesPlayed: 20,
+        wins: 10,
+        goals: 15,
+        assists: 5,
+        mvpCount: 3,
+        division: 'GOLD',
+        experiencePoints: 1200,
+        canReceiveInvites: true,
+      },
+      {
+        id: 'sp-2',
+        userId: 'other-user',
+        userName: 'Jogador 2',
+        level: 5,
+        points: 300,
+        gamesPlayed: 10,
+        wins: 5,
+        goals: 8,
+        assists: 2,
+        mvpCount: 1,
+        division: 'SILVER',
+        experiencePoints: 700,
+        canReceiveInvites: true,
+      },
+    ]));
 
     const { result } = renderHook(() => useLeague('current-user'), { wrapper: createTestWrapper() });
 
@@ -116,126 +144,50 @@ describe('useLeague', () => {
 
     expect(result.current.players).toHaveLength(2);
     const currentPlayer = result.current.players.find((p) => p.isCurrentUser);
-    expect(currentPlayer).toBeDefined();
     expect(currentPlayer?.userId).toBe('current-user');
   });
 
-  it('mantém divisão da participação quando ela existe', async () => {
-    // useLeague usa getDocs — a filtragem por divisão é feita na query Firestore.
-    mockGetDoc.mockResolvedValue({
-      exists: () => true,
-      data: () => ({ name: 'Player', photo_url: null }),
-    });
-
-    mockGetDocs.mockResolvedValueOnce({
-      docs: [
-        { id: 'sp-1', data: () => ({ user_id: 'u1', points: 500, division: 'GOLD' }) },
-        { id: 'sp-3', data: () => ({ user_id: 'u3', points: 600, division: 'GOLD' }) },
-      ],
-    }).mockResolvedValueOnce({
-      docs: [
-        { id: 'u1', data: () => ({ name: 'Jogador 1', photo_url: null, is_searchable: true }) },
-        { id: 'u3', data: () => ({ name: 'Jogador 3', photo_url: null, is_searchable: true }) },
-      ],
-    });
-
-    const { result } = renderHook(() => useLeague('u1', { seasonId: 'season-1' }), { wrapper: createTestWrapper() });
+  it('envia filtros de temporada, grupo e gênero para a callable', async () => {
+    const { result } = renderHook(
+      () => useLeague('u1', {
+        seasonId: 'season-1',
+        groupId: 'group-1',
+        maxResults: 50,
+        gender: 'FEMALE',
+      }),
+      { wrapper: createTestWrapper() }
+    );
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
     });
 
-    expect(result.current.players).toHaveLength(2);
-    expect(result.current.players.every((p) => p.division === 'GOLD')).toBe(true);
+    expect(mockGetLeaguePlayers).toHaveBeenCalledWith({
+      seasonId: 'season-1',
+      groupId: 'group-1',
+      limit: 50,
+      gender: 'FEMALE',
+    });
   });
 
-  it('busca dados do usuário para cada jogador', async () => {
-    // useLeague usa getDocs (whereIn) para buscar dados dos usuários — não getDoc. #2330
-    // 1ª chamada: season_participation; 2ª chamada: users whereIn
-    mockGetDocs
-      .mockResolvedValueOnce({
-        docs: [{ id: 'sp-1', data: () => ({ user_id: 'u1', points: 100, division: 'BRONZE' }) }],
-      })
-      .mockResolvedValueOnce({
-        docs: [{ id: 'u1', data: () => ({ name: 'Jogador X', photo_url: 'http://photo.jpg', is_searchable: true }) }],
-      });
-
-    const { result } = renderHook(() => useLeague('u1'), { wrapper: createTestWrapper() });
+  it('não abre listener direto em users', async () => {
+    const { result } = renderHook(() => useLeague('u1', { seasonId: null }), { wrapper: createTestWrapper() });
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
     });
 
-    // getDocs foi chamado pelo menos 2 vezes (season_participation + users)
-    expect(mockGetDocs).toHaveBeenCalled();
-    expect(result.current.players[0].userName).toBe('Jogador X');
+    expect(mockCollection).not.toHaveBeenCalledWith({}, 'users');
   });
 
-  it('inclui jogador pesquisável sem participação ou XP na Liga', async () => {
-    mockGetDocs
-      .mockResolvedValueOnce({
-        docs: [{ id: 'sp-1', data: () => ({ user_id: 'u1', points: 100, division: 'BRONZE' }) }],
-      })
-      .mockResolvedValueOnce({
-        docs: [
-          { id: 'u1', data: () => ({ name: 'Jogador com XP', photo_url: null, is_searchable: true, experience_points: 500 }) },
-          { id: 'u2', data: () => ({ name: 'Jogador sem XP', photo_url: null, is_searchable: true }) },
-        ],
-      });
-
-    const { result } = renderHook(() => useLeague('u2', { seasonId: 'season-1' }), { wrapper: createTestWrapper() });
-
-    await waitFor(() => {
-      expect(result.current.loading).toBe(false);
-    });
-
-    const zeroXpPlayer = result.current.players.find((p) => p.userId === 'u2');
-    expect(zeroXpPlayer).toMatchObject({
-      userName: 'Jogador sem XP',
-      points: 0,
-      gamesPlayed: 0,
-      wins: 0,
-      goals: 0,
-      assists: 0,
-      mvpCount: 0,
-      division: 'BRONZE',
-      experiencePoints: 0,
-      isCurrentUser: true,
-    });
+  it('configura listener de season_participation quando há temporada', () => {
+    renderHook(() => useLeague('user-1', { seasonId: 'season-1' }), { wrapper: createTestWrapper() });
+    expect(mockCollection).toHaveBeenCalledWith({}, 'season_participation');
+    expect(mockWhere).toHaveBeenCalledWith('season_id', '==', 'season-1');
   });
 
-  it('inclui jogador legado com isSearchable camelCase', async () => {
-    mockGetDocs
-      .mockResolvedValueOnce({
-        docs: [{ id: 'sp-1', data: () => ({ user_id: 'u1', points: 100, division: 'BRONZE' }) }],
-      })
-      .mockResolvedValueOnce({
-        docs: [],
-      })
-      .mockResolvedValueOnce({
-        docs: [
-          { id: 'u1', data: () => ({ name: 'Jogador legado', photo_url: null, isSearchable: true, experience_points: 250 }) },
-        ],
-      });
-
-    const { result } = renderHook(() => useLeague('u1', { seasonId: 'season-1' }), { wrapper: createTestWrapper() });
-
-    await waitFor(() => {
-      expect(result.current.loading).toBe(false);
-    });
-
-    expect(result.current.players).toHaveLength(1);
-    expect(result.current.players[0]).toMatchObject({
-      userId: 'u1',
-      userName: 'Jogador legado',
-      points: 100,
-      experiencePoints: 250,
-    });
-  });
-
-  it('trata erros do getDocs', async () => {
-    // useLeague usa useQuery/getDocs — testar erro via mockRejectedValue. #2330
-    mockGetDocs.mockRejectedValueOnce(new Error('League error'));
+  it('trata erros da callable', async () => {
+    mockGetLeaguePlayers.mockRejectedValueOnce(new Error('League error'));
 
     const { result } = renderHook(() => useLeague('u1'), { wrapper: createTestWrapper() });
 
@@ -243,33 +195,5 @@ describe('useLeague', () => {
       expect(result.current.error).toBe('League error');
       expect(result.current.loading).toBe(false);
     });
-  });
-
-  it('retorna todos os jogadores pesquisáveis em uma única página', async () => {
-    const lastDoc = { id: 'cursor-doc', data: () => ({ user_id: 'u1', points: 100, division: 'BRONZE' }) };
-    mockGetDocs
-      .mockResolvedValueOnce({
-        docs: Array.from({ length: 200 }, (_, index) => ({
-          id: `sp-${index}`,
-          data: () => ({ user_id: `u${index}`, points: 200 - index, division: 'BRONZE' }),
-        })).map((doc, index, docs) => (index === docs.length - 1 ? lastDoc : doc)),
-      })
-      .mockResolvedValueOnce({
-        docs: Array.from({ length: 200 }, (_, index) => ({
-          id: `u${index}`,
-          data: () => ({ name: `Jogador ${index}`, photo_url: null, is_searchable: true }),
-        })),
-      });
-
-    const { result } = renderHook(() => useLeague('u1'), { wrapper: createTestWrapper() });
-
-    await waitFor(() => {
-      expect(result.current.loading).toBe(false);
-    });
-
-    expect(result.current.players).toHaveLength(200);
-    expect(result.current.hasMore).toBe(false);
-    expect(mockStartAfter).not.toHaveBeenCalled();
-    expect(mockLimit).toHaveBeenCalledWith(200);
   });
 });
