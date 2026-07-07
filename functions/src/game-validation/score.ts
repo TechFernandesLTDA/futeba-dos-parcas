@@ -199,6 +199,24 @@ export function calculateGameValidationScore(
   }
 
   const validationScore = clampScore(score);
+  const validationSignalsSummary: GameValidationSignalsSummary = {
+    confirmed_count: confirmedCount,
+    checked_in_count: checkedInCount,
+    checked_in_ratio: Number(checkedInRatio.toFixed(4)),
+    qr_checkin_count: qrCheckinCount,
+    gps_checkin_count: gpsCheckinCount,
+    event_count: eventCount,
+    suspicious_overlap_count: suspiciousOverlapCount,
+    impossible_travel_count: impossibleTravelCount,
+    late_checkin_count: lateCheckinCount,
+    manual_presence_count: manualPresenceCount,
+    low_confidence_presence_count: lowConfidencePresenceCount,
+  };
+
+  if (typeof input.scoreEventConsistent === "boolean") {
+    validationSignalsSummary.score_event_consistent =
+      input.scoreEventConsistent;
+  }
 
   return {
     validation_status: getValidationStatus(validationScore),
@@ -206,19 +224,6 @@ export function calculateGameValidationScore(
     validation_version: GAME_VALIDATION_VERSION,
     validation_mode: mode,
     validation_reasons: reasons,
-    validation_signals_summary: {
-      confirmed_count: confirmedCount,
-      checked_in_count: checkedInCount,
-      checked_in_ratio: Number(checkedInRatio.toFixed(4)),
-      qr_checkin_count: qrCheckinCount,
-      gps_checkin_count: gpsCheckinCount,
-      event_count: eventCount,
-      score_event_consistent: input.scoreEventConsistent,
-      suspicious_overlap_count: suspiciousOverlapCount,
-      impossible_travel_count: impossibleTravelCount,
-      late_checkin_count: lateCheckinCount,
-      manual_presence_count: manualPresenceCount,
-      low_confidence_presence_count: lowConfidencePresenceCount,
-    },
+    validation_signals_summary: validationSignalsSummary,
   };
 }

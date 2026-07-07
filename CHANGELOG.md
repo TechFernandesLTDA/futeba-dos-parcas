@@ -1174,6 +1174,14 @@ _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
 
+### [1.7.6][functions-1.7.6] - 2026-07-07
+
+#### Corrigido
+- `calculateGameValidationScore` omite `score_event_consistent` do resumo quando o sinal e indefinido, evitando `undefined` em updates do Firestore.
+- Adiciona regressao para preservar `false` quando ha divergencia real e omitir o campo quando nao existe evidencia de placar.
+
+_Issues: #3355 · PRs: #3356_
+
 ### [1.7.5][functions-1.7.5] - 2026-07-07
 
 #### Corrigido
@@ -1732,6 +1740,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [web-1.26.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.26.1.md
 [web-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.26.0.md
 [ios-1.6.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.0.md
+[functions-1.7.6]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.7.6.md
 [functions-1.7.5]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.7.5.md
 [functions-1.7.4]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.7.4.md
 [functions-1.7.3]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.7.3.md
