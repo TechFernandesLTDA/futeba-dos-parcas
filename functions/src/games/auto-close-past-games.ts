@@ -60,6 +60,30 @@ interface AutoCloseEvidenceDecision {
 }
 
 /**
+ * Remove valores undefined de payloads antes de gravar no Firestore.
+ *
+ * @param {T} value - Valor original.
+ * @return {T} Valor sem campos undefined.
+ */
+function stripUndefinedValues<T>(value: T): T {
+  if (Array.isArray(value)) {
+    return value
+      .filter((item) => item !== undefined)
+      .map((item) => stripUndefinedValues(item)) as T;
+  }
+
+  if (!value || typeof value !== "object") {
+    return value;
+  }
+
+  return Object.fromEntries(
+    Object.entries(value as Record<string, unknown>)
+      .filter(([, entryValue]) => entryValue !== undefined)
+      .map(([key, entryValue]) => [key, stripUndefinedValues(entryValue)])
+  ) as T;
+}
+
+/**
  * Calcula o limite de expiração de jogos ativos.
  *
  * @param {Date} now - Data de referência.
@@ -237,7 +261,11 @@ export async function cancelPastGameIfStillActive(
       return false;
     }
 
-    tx.update(gameRef, update);
+    tx.update(
+      gameRef,
+      stripUndefinedValues(update) as
+      FirebaseFirestore.UpdateData<FirebaseFirestore.DocumentData>,
+    );
     return true;
   });
 }
@@ -292,7 +320,7 @@ export async function closePastGames(
       summarizeAutoCloseEvidence(evidence);
 
     const serverTs = FieldValue.serverTimestamp();
-    const commonUpdate = {
+    const commonUpdate = stripUndefinedValues({
       auto_closed: true,
       auto_closed_by: "system",
       auto_closed_at: serverTs,
@@ -320,7 +348,7 @@ export async function closePastGames(
         validationResult.validation_signals_summary,
       validation_updated_at: serverTs,
       updated_at: serverTs,
-    };
+    });
 
     const didCancel = await cancelPastGameIfStillActive(gameDoc.ref, {
       ...commonUpdate,

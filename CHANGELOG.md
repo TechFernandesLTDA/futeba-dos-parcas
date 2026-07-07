@@ -160,6 +160,12 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.51.14][web-1.51.14] - 2026-07-07
+
+#### Corrigido
+- `GameDetailScreen` volta a importar ícones MUI diretamente por componente, removendo o resolvedor de módulos que podia entregar um objeto para o React e disparar React #130.
+- Feedback operacional relacionado: `/game/1R8x9xxbT5Ra5gAYTt4A`.
+
 ### [1.51.13][web-1.51.13] - 2026-07-07
 
 #### Corrigido
@@ -1186,6 +1192,12 @@ _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
 
+### [1.7.8][functions-1.7.8] - 2026-07-07
+
+#### Corrigido
+- `autoClosePastGames` remove valores `undefined` recursivamente antes de chamar `tx.update`, evitando rejeição do Firestore em metadados opcionais de validação.
+- Adicionada regressão cobrindo payload de validação com `score_event_consistent` ausente.
+
 ### [1.7.7][functions-1.7.7] - 2026-07-07
 
 #### Mudado
@@ -1670,6 +1682,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.51.14]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.14.md
 [web-1.51.13]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.13.md
 [web-1.51.12]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.12.md
 [web-1.51.11]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.11.md
@@ -1764,6 +1777,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [web-1.26.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.26.1.md
 [web-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.26.0.md
 [ios-1.6.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.0.md
+[functions-1.7.8]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.7.8.md
 [functions-1.7.7]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.7.7.md
 [functions-1.7.6]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.7.6.md
 [functions-1.7.5]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.7.5.md

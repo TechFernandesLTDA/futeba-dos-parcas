@@ -45,6 +45,16 @@ jest.mock("../src/_db", () => ({
   db: () => mockDb,
 }));
 
+jest.mock("../src/game-validation/aggregate", () => {
+  const actual = jest.requireActual("../src/game-validation/aggregate");
+  return {
+    ...actual,
+    buildGameValidationFromFirestore: jest.fn(
+      actual.buildGameValidationFromFirestore
+    ),
+  };
+});
+
 import {
   PAST_GAME_GRACE_DAYS,
   cancelPastGameIfStillActive,
@@ -53,6 +63,7 @@ import {
   getPastGameCutoff,
   summarizeAutoCloseEvidence,
 } from "../src/games/auto-close-past-games";
+import {buildGameValidationFromFirestore} from "../src/game-validation/aggregate";
 
 function makeQueryMock(snapshot: unknown) {
   return {
@@ -73,6 +84,11 @@ describe("auto-close past games helpers", () => {
   beforeEach(() => {
     mockDb.collection.mockReset();
     mockDb.runTransaction.mockReset();
+    jest.mocked(buildGameValidationFromFirestore).mockReset();
+    jest.mocked(buildGameValidationFromFirestore).mockImplementation(
+      jest.requireActual("../src/game-validation/aggregate")
+        .buildGameValidationFromFirestore
+    );
   });
 
   it("calcula cutoff usando a tolerância configurada", () => {
@@ -205,6 +221,98 @@ describe("auto-close past games helpers", () => {
       }),
       update: jest.fn(),
     };
+
+    mockDb.collection.mockImplementation((collectionName: string) => {
+      if (collectionName === "games") return gamesQuery;
+      if (collectionName === "confirmations") {
+        return makeQueryMock(confirmationsSnaps.shift() ?? {
+          size: 0,
+          docs: [],
+        });
+      }
+      if (collectionName === "game_events") return eventsQuery;
+      if (collectionName === "live_scores") return liveScoresCollection;
+      throw new Error(`Unexpected collection: ${collectionName}`);
+    });
+    mockDb.runTransaction.mockImplementationOnce(
+      async (fn: (txArg: typeof tx) => Promise<boolean>) => fn(tx)
+    );
+
+    await expect(closePastGames(new Date("2026-06-21T12:00:00.000Z")))
+      .resolves.toEqual({
+        inspected: 1,
+        finished: 0,
+        cancelled: 1,
+      });
+
+    expect(tx.update).toHaveBeenCalledTimes(1);
+    const updatePayload = tx.update.mock.calls[0][1];
+    expect(updatePayload.auto_close_validation_signals_summary)
+      .not.toHaveProperty("score_event_consistent");
+    expect(updatePayload.validation_signals_summary)
+      .not.toHaveProperty("score_event_consistent");
+    expect(hasUndefined(updatePayload)).toBe(false);
+  });
+
+  it("remove undefined defensivamente antes do update no Firestore", async () => {
+    const gameRef = {
+      path: "games/game-with-optional-validation-gap",
+    } as FirebaseFirestore.DocumentReference;
+    const oldGameDoc = {
+      id: "game-with-optional-validation-gap",
+      ref: gameRef,
+      data: () => ({
+        status: "LIVE",
+        min_players: 6,
+        dateTime: new Date("2026-06-18T20:00:00.000Z"),
+      }),
+    };
+    const gamesQuery = makeQueryMock({
+      size: 1,
+      docs: [oldGameDoc],
+    });
+    const confirmationsSnaps = [
+      {size: 0, docs: []},
+      {size: 0, docs: []},
+    ];
+    const eventsQuery = makeQueryMock({size: 0, docs: []});
+    const liveScoresCollection = {
+      doc: jest.fn().mockReturnValue({
+        get: jest.fn().mockResolvedValue({
+          exists: false,
+          data: () => undefined,
+        }),
+      }),
+    };
+    const tx = {
+      get: jest.fn().mockResolvedValue({
+        exists: true,
+        data: () => ({status: "LIVE"}),
+      }),
+      update: jest.fn(),
+    };
+
+    jest.mocked(buildGameValidationFromFirestore).mockReturnValueOnce({
+      validation_status: "LOW_CONFIDENCE",
+      validation_score: 42,
+      validation_version: 1,
+      validation_mode: "SOFT_GATE",
+      validation_reasons: ["NO_CHECKINS"],
+      validation_signals_summary: {
+        confirmed_count: 0,
+        checked_in_count: 0,
+        checked_in_ratio: 0,
+        qr_checkin_count: 0,
+        gps_checkin_count: 0,
+        event_count: 0,
+        score_event_consistent: undefined,
+        suspicious_overlap_count: 0,
+        impossible_travel_count: 0,
+        late_checkin_count: 0,
+        manual_presence_count: 0,
+        low_confidence_presence_count: 0,
+      },
+    });
 
     mockDb.collection.mockImplementation((collectionName: string) => {
       if (collectionName === "games") return gamesQuery;
