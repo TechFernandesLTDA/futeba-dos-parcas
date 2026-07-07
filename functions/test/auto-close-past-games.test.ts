@@ -25,7 +25,19 @@ jest.mock("firebase-admin", () => ({
   firestore: jest.fn(),
 }));
 
+jest.mock("firebase-admin/firestore", () => ({
+  FieldValue: {
+    serverTimestamp: jest.fn(() => "__SERVER_TIMESTAMP__"),
+  },
+  Timestamp: {
+    fromDate: jest.fn((date: Date) => ({
+      __timestamp: date.toISOString(),
+    })),
+  },
+}));
+
 const mockDb = {
+  collection: jest.fn(),
   runTransaction: jest.fn(),
 };
 
@@ -36,13 +48,30 @@ jest.mock("../src/_db", () => ({
 import {
   PAST_GAME_GRACE_DAYS,
   cancelPastGameIfStillActive,
+  closePastGames,
   decidePastGameClosure,
   getPastGameCutoff,
   summarizeAutoCloseEvidence,
 } from "../src/games/auto-close-past-games";
 
+function makeQueryMock(snapshot: unknown) {
+  return {
+    where: jest.fn().mockReturnThis(),
+    orderBy: jest.fn().mockReturnThis(),
+    limit: jest.fn().mockReturnThis(),
+    get: jest.fn().mockResolvedValue(snapshot),
+  };
+}
+
+function hasUndefined(value: unknown): boolean {
+  if (value === undefined) return true;
+  if (!value || typeof value !== "object") return false;
+  return Object.values(value as Record<string, unknown>).some(hasUndefined);
+}
+
 describe("auto-close past games helpers", () => {
   beforeEach(() => {
+    mockDb.collection.mockReset();
     mockDb.runTransaction.mockReset();
   });
 
@@ -137,5 +166,75 @@ describe("auto-close past games helpers", () => {
       .resolves.toBe(false);
     expect(tx.get).toHaveBeenCalledWith(gameRef);
     expect(tx.update).not.toHaveBeenCalled();
+  });
+
+  it("nao grava score_event_consistent undefined no auto-close", async () => {
+    const gameRef = {
+      path: "games/game-without-score",
+    } as FirebaseFirestore.DocumentReference;
+    const oldGameDoc = {
+      id: "game-without-score",
+      ref: gameRef,
+      data: () => ({
+        status: "LIVE",
+        min_players: 6,
+        dateTime: new Date("2026-06-18T20:00:00.000Z"),
+      }),
+    };
+    const gamesQuery = makeQueryMock({
+      size: 1,
+      docs: [oldGameDoc],
+    });
+    const confirmationsSnaps = [
+      {size: 0, docs: []},
+      {size: 0, docs: []},
+    ];
+    const eventsQuery = makeQueryMock({size: 0, docs: []});
+    const liveScoresCollection = {
+      doc: jest.fn().mockReturnValue({
+        get: jest.fn().mockResolvedValue({
+          exists: false,
+          data: () => undefined,
+        }),
+      }),
+    };
+    const tx = {
+      get: jest.fn().mockResolvedValue({
+        exists: true,
+        data: () => ({status: "LIVE"}),
+      }),
+      update: jest.fn(),
+    };
+
+    mockDb.collection.mockImplementation((collectionName: string) => {
+      if (collectionName === "games") return gamesQuery;
+      if (collectionName === "confirmations") {
+        return makeQueryMock(confirmationsSnaps.shift() ?? {
+          size: 0,
+          docs: [],
+        });
+      }
+      if (collectionName === "game_events") return eventsQuery;
+      if (collectionName === "live_scores") return liveScoresCollection;
+      throw new Error(`Unexpected collection: ${collectionName}`);
+    });
+    mockDb.runTransaction.mockImplementationOnce(
+      async (fn: (txArg: typeof tx) => Promise<boolean>) => fn(tx)
+    );
+
+    await expect(closePastGames(new Date("2026-06-21T12:00:00.000Z")))
+      .resolves.toEqual({
+        inspected: 1,
+        finished: 0,
+        cancelled: 1,
+      });
+
+    expect(tx.update).toHaveBeenCalledTimes(1);
+    const updatePayload = tx.update.mock.calls[0][1];
+    expect(updatePayload.auto_close_validation_signals_summary)
+      .not.toHaveProperty("score_event_consistent");
+    expect(updatePayload.validation_signals_summary)
+      .not.toHaveProperty("score_event_consistent");
+    expect(hasUndefined(updatePayload)).toBe(false);
   });
 });

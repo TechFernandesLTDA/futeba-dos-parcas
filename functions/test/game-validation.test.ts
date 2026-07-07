@@ -88,6 +88,32 @@ describe("game validation score", () => {
     expect(result.validation_signals_summary.event_count).toBe(0);
     expect(result.validation_reasons).toContain("NO_CONFIRMED_PLAYERS");
   });
+
+  test("omite score_event_consistent quando o sinal nao foi calculado", () => {
+    const result = calculateGameValidationScore({
+      confirmedCount: 2,
+      checkedInCount: 0,
+      eventCount: 0,
+    });
+
+    expect(result.validation_signals_summary)
+      .not.toHaveProperty("score_event_consistent");
+    expect(JSON.stringify(result.validation_signals_summary))
+      .not.toContain("undefined");
+  });
+
+  test("preserva score_event_consistent false para auditoria", () => {
+    const result = calculateGameValidationScore({
+      confirmedCount: 2,
+      checkedInCount: 1,
+      eventCount: 2,
+      scoreEventConsistent: false,
+    });
+
+    expect(result.validation_signals_summary.score_event_consistent)
+      .toBe(false);
+    expect(result.validation_reasons).toContain("EVENT_SCORE_MISMATCH");
+  });
 });
 
 describe("game validation firestore aggregation", () => {
