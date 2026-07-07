@@ -1656,5 +1656,8 @@ export const __testing = {
   deleteDocsInBatches,
   buildLeaguePlayersCacheKey,
   chunkArray,
+  readLeaguePlayersDirectoryCache,
   writeLeaguePlayersDirectoryCache,
+  getCachedLeaguePlayersDirectory,
+  buildLeaguePlayersDirectory,
 };
