@@ -1,7 +1,28 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-07T04:08:00.391Z",
+  "generatedAt": "2026-07-07T04:43:57.993Z",
   "notes": [
+    {
+      "version": "1.51.10",
+      "buildNumber": null,
+      "releaseDate": "2026-07-07",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "A aba Liga do menu principal agora abre a tela completa de Liga.",
+      "highlights": [],
+      "added": [],
+      "improved": [],
+      "fixed": [
+        "O atalho `/?tab=3` passa a usar a mesma tela de Liga com busca, ordenacao, paginacao e acoes de convidar ou mandar mensagem.",
+        "No menu principal, a Liga deixa de mostrar a experiencia antiga de ranking que nao tinha os controles novos.",
+        "A tela completa da Liga fica embutida na Home sem botao de voltar redundante.",
+        "`HomeScreen` passa a montar `LeagueScreen` na aba `tab=3`, mantendo `/league` como rota secundaria equivalente.",
+        "`LeagueScreen` recebe modo `embedded` para preservar o comportamento correto quando usada dentro da navegacao por abas.",
+        "Cobertura focada garante que `/?tab=3` renderiza a tela nova."
+      ],
+      "issueRefs": []
+    },
     {
       "version": "1.51.9",
       "buildNumber": null,

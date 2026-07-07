@@ -160,6 +160,15 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.51.10][web-1.51.10] - 2026-07-07
+
+#### Corrigido
+- `HomeScreen` passa a montar `LeagueScreen` na aba `tab=3`, mantendo `/league` como rota secundaria equivalente.
+- `LeagueScreen` recebe modo `embedded` para preservar o comportamento correto quando usada dentro da navegacao por abas.
+- Cobertura focada garante que `/?tab=3` renderiza a tela nova.
+
+_PRs: #3353_
+
 ### [1.51.9][web-1.51.9] - 2026-07-07
 
 #### Corrigido
@@ -1623,6 +1632,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.51.10]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.10.md
 [web-1.51.9]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.9.md
 [web-1.51.8]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.8.md
 [web-1.51.7]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.7.md
