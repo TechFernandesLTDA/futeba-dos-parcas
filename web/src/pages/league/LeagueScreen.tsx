@@ -188,6 +188,7 @@ export const LeagueScreen: React.FC = () => {
   const {
     inviteOptions,
     loading: inviteOptionsLoading,
+    error: inviteOptionsError,
     sending: inviteSending,
     sendInvite,
   } = useLeagueInvites();
@@ -212,8 +213,8 @@ export const LeagueScreen: React.FC = () => {
 
   const filteredAndSorted = useMemo(() => {
     let result = players;
-    if (search.trim()) {
-      const q = normalizeText(search.trim());
+    if (debouncedSearch.trim()) {
+      const q = normalizeText(debouncedSearch.trim());
       result = result.filter(p =>
         normalizeText(p.userName).includes(q) ||
         p.userId.toLowerCase().includes(q.toLowerCase())
@@ -239,7 +240,17 @@ export const LeagueScreen: React.FC = () => {
       });
     }
     return result;
-  }, [players, search, sortField, sortDirection]);
+  }, [players, debouncedSearch, sortField, sortDirection]);
+
+  const isDefaultRankView = sortField === 'experiencePoints' &&
+    sortDirection === 'desc' &&
+    !debouncedSearch.trim();
+  const hasCompleteLeagueWindow = !hasMore && allPlayers.length >= totalCount;
+  const displayPositions = useMemo(() => {
+    const posMap = new Map<string, number>();
+    filteredAndSorted.forEach((p, i) => posMap.set(p.id, i + 1));
+    return posMap;
+  }, [filteredAndSorted]);
 
   // Sort consolidado: 1 único sort usado por realPositions E pointsToNext
   const sortedByPoints = useMemo(
@@ -264,18 +275,19 @@ export const LeagueScreen: React.FC = () => {
   );
 
   const currentUserPosition = useMemo(
-    () => currentUserPlayer ? realPositions.get(currentUserPlayer.id) || null : null,
-    [currentUserPlayer, realPositions]
+    () => currentUserPlayer && isDefaultRankView ? realPositions.get(currentUserPlayer.id) || null : null,
+    [currentUserPlayer, isDefaultRankView, realPositions]
   );
 
   // pointsToNext reutiliza sortedByPoints (sem sort duplicado)
   const pointsToNext = useMemo(() => {
+    if (!isDefaultRankView) return null;
     if (!currentUserPosition || currentUserPosition <= 1) return null;
     const above = sortedByPoints[currentUserPosition - 2];
     if (!above || !currentUserPlayer) return null;
     const diff = (above.experiencePoints ?? 0) - (currentUserPlayer.experiencePoints ?? 0);
     return { name: above.userName, diff, position: currentUserPosition - 1 };
-  }, [sortedByPoints, currentUserPosition, currentUserPlayer]);
+  }, [isDefaultRankView, sortedByPoints, currentUserPosition, currentUserPlayer]);
 
   const divisionProgress = useMemo(() => {
     if (!currentUserPlayer) return null;
@@ -322,7 +334,7 @@ export const LeagueScreen: React.FC = () => {
     if (!currentUserPlayer || !currentUserPosition) return;
     const divParam = currentUserPlayer.division.toLowerCase();
     const url = `https://futebadosparcas.web.app/league?division=${divParam}`;
-    const text = `Estou em ${currentUserPosition}º lugar na Liga ${DIVISION_CONFIG[currentUserPlayer.division]?.label || currentUserPlayer.division} com ${currentUserPlayer.points} pontos!`;
+    const text = `Estou em ${currentUserPosition}º lugar na Liga ${DIVISION_CONFIG[currentUserPlayer.division]?.label || currentUserPlayer.division} com ${currentUserPlayer.experiencePoints ?? 0} XP!`;
     if (navigator.share) {
       try { await navigator.share({ text, url }); } catch { /* cancelled */ }
     } else if (navigator.clipboard) {
@@ -401,13 +413,18 @@ export const LeagueScreen: React.FC = () => {
 
   const getPositionTooltip = useCallback((position: number): string => {
     if (position <= 0) return 'Sem classificação';
+    if (!isDefaultRankView) return `${position}ª posição nesta ordenação`;
     if (position === 1) return 'Líder da temporada!';
     if (position === 2) return 'Vice-líder, quase lá!';
     if (position === 3) return 'Top 3 - Zona de promoção';
     if (position <= PROMO_TOP) return 'Zona de promoção';
-    if (position > allPlayers.length - RELEG_BOTTOM && allPlayers.length > RELEG_BOTTOM * 2) return 'Zona de rebaixamento';
+    if (
+      hasCompleteLeagueWindow &&
+      position > allPlayers.length - RELEG_BOTTOM &&
+      allPlayers.length > RELEG_BOTTOM * 2
+    ) return 'Zona de rebaixamento';
     return `${position}ª posição`;
-  }, [allPlayers.length]);
+  }, [allPlayers.length, hasCompleteLeagueWindow, isDefaultRankView]);
 
   const isLoading = loading || seasonLoading;
 
@@ -801,7 +818,7 @@ export const LeagueScreen: React.FC = () => {
                     size="small"
                     sx={{ bgcolor: alpha(theme.palette.success.main, 0.08), color: 'text.primary' }}
                   />
-                  {allPlayers.length > RELEG_BOTTOM * 2 && (
+                  {isDefaultRankView && hasCompleteLeagueWindow && allPlayers.length > RELEG_BOTTOM * 2 && (
                     <Chip
                       label={
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
@@ -914,7 +931,7 @@ export const LeagueScreen: React.FC = () => {
                     </TableHead>
                     <TableBody>
                       {filteredAndSorted.map((player) => {
-                        const position = realPositions.get(player.id) ?? -1;
+                        const position = (isDefaultRankView ? realPositions : displayPositions).get(player.id) ?? -1;
                         const winRate = player.gamesPlayed > 0 ? Math.round((player.wins / player.gamesPlayed) * 100) : 0;
                         const lossCount = Math.max(0, player.gamesPlayed - player.wins);
                         return (
@@ -1016,9 +1033,13 @@ export const LeagueScreen: React.FC = () => {
             ) : (
               <List disablePadding aria-label={t('league.standingsAria')}>
                 {filteredAndSorted.map((player) => {
-                  const position = realPositions.get(player.id) ?? -1;
-                  const isPromoZone = position >= 1 && position <= PROMO_TOP;
-                  const isRelegZone = position > allPlayers.length - RELEG_BOTTOM && allPlayers.length > RELEG_BOTTOM * 2 && position > 0;
+                  const position = (isDefaultRankView ? realPositions : displayPositions).get(player.id) ?? -1;
+                  const isPromoZone = isDefaultRankView && position >= 1 && position <= PROMO_TOP;
+                  const isRelegZone = isDefaultRankView &&
+                    hasCompleteLeagueWindow &&
+                    position > allPlayers.length - RELEG_BOTTOM &&
+                    allPlayers.length > RELEG_BOTTOM * 2 &&
+                    position > 0;
                   return (
                     <LeaguePlayerItem
                       key={player.id}
@@ -1031,7 +1052,6 @@ export const LeagueScreen: React.FC = () => {
                       isPromoZone={isPromoZone}
                       isRelegZone={isRelegZone}
                       cardRef={player.isCurrentUser ? userCardRef : undefined}
-                      totalPlayers={allPlayers.length}
                       canInvite={canInviteFromLeague(player)}
                       inviteDisabled={inviteSending}
                       onInvite={handleOpenInvite}
@@ -1163,6 +1183,8 @@ export const LeagueScreen: React.FC = () => {
             <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
               <CircularProgress size={28} />
             </Box>
+          ) : inviteOptionsError ? (
+            <Alert severity="error">{inviteOptionsError}</Alert>
           ) : inviteOptions.length === 0 ? (
             <Alert severity="info">{t('league.noInviteOptions')}</Alert>
           ) : (
@@ -1221,7 +1243,6 @@ const LeaguePlayerItem = React.memo(function LeaguePlayerItem({
   isPromoZone,
   isRelegZone,
   cardRef,
-  totalPlayers,
   canInvite,
   inviteDisabled,
   onInvite,
@@ -1240,7 +1261,6 @@ const LeaguePlayerItem = React.memo(function LeaguePlayerItem({
   isPromoZone: boolean;
   isRelegZone: boolean;
   cardRef?: React.Ref<HTMLDivElement>;
-  totalPlayers: number;
   canInvite: boolean;
   inviteDisabled: boolean;
   onInvite: (player: LeaguePlayer) => void;
@@ -1457,7 +1477,7 @@ const LeaguePlayerItem = React.memo(function LeaguePlayerItem({
           </Box>
           {player.isCurrentUser && (
             <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textAlign: 'center', mt: 1 }}>
-              {position >= 1 && position <= 3 ? 'Você está na zona de promoção!' : position > totalPlayers - RELEG_BOTTOM && totalPlayers > RELEG_BOTTOM * 2 ? 'Atenção: zona de rebaixamento' : 'Continue jogando para subir!'}
+              {isPromoZone ? 'Você está na zona de promoção!' : isRelegZone ? 'Atenção: zona de rebaixamento' : 'Continue jogando para subir!'}
             </Typography>
           )}
         </Collapse>
