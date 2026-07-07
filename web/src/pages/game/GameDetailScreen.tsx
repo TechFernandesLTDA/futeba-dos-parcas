@@ -29,22 +29,22 @@ import {
 } from '@mui/material';
 import { getContrastRatio } from '@mui/material/styles';
 import Grid from '@mui/material/Unstable_Grid2';
-import SoccerIcon from '@mui/icons-material/SportsSoccer';
-import CheckIcon from '@mui/icons-material/Check';
-import PlayIcon from '@mui/icons-material/PlayArrow';
-import CheckInIcon from '@mui/icons-material/HowToReg';
-import VoteIcon from '@mui/icons-material/HowToVote';
-import ShareIcon from '@mui/icons-material/Share';
-import DeleteIcon from '@mui/icons-material/Delete';
-import EditIcon from '@mui/icons-material/Edit';
-import QrCodeIcon from '@mui/icons-material/QrCode2';
-import BackIcon from '@mui/icons-material/ArrowBack';
-import DuplicateIcon from '@mui/icons-material/ContentCopy';
-import CalendarIcon from '@mui/icons-material/CalendarMonth';
-import MoreVertIcon from '@mui/icons-material/MoreVert';
-import MessageIcon from '@mui/icons-material/ChatBubbleOutline';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import PlaceIcon from '@mui/icons-material/Place';
+import * as SoccerIconModule from '@mui/icons-material/SportsSoccer';
+import * as CheckIconModule from '@mui/icons-material/Check';
+import * as PlayIconModule from '@mui/icons-material/PlayArrow';
+import * as CheckInIconModule from '@mui/icons-material/HowToReg';
+import * as VoteIconModule from '@mui/icons-material/HowToVote';
+import * as ShareIconModule from '@mui/icons-material/Share';
+import * as DeleteIconModule from '@mui/icons-material/Delete';
+import * as EditIconModule from '@mui/icons-material/Edit';
+import * as QrCodeIconModule from '@mui/icons-material/QrCode2';
+import * as BackIconModule from '@mui/icons-material/ArrowBack';
+import * as DuplicateIconModule from '@mui/icons-material/ContentCopy';
+import * as CalendarIconModule from '@mui/icons-material/CalendarMonth';
+import * as MoreVertIconModule from '@mui/icons-material/MoreVert';
+import * as MessageIconModule from '@mui/icons-material/ChatBubbleOutline';
+import * as CheckCircleIconModule from '@mui/icons-material/CheckCircle';
+import * as PlaceIconModule from '@mui/icons-material/Place';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
 import { PageContainer } from '../../components/common/PageContainer';
 import { doc, updateDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
@@ -81,6 +81,34 @@ const currencyFormatter = new Intl.NumberFormat('pt-BR', {
   style: 'currency',
   currency: 'BRL',
 });
+
+const resolveIconComponent = (iconModule: unknown): React.ElementType => {
+  let component = iconModule;
+  for (let depth = 0; depth < 3; depth += 1) {
+    if (!component || typeof component !== 'object' || !('default' in component)) {
+      break;
+    }
+    component = (component as { default?: unknown }).default;
+  }
+  return component as React.ElementType;
+};
+
+const SoccerIcon = resolveIconComponent(SoccerIconModule);
+const CheckIcon = resolveIconComponent(CheckIconModule);
+const PlayIcon = resolveIconComponent(PlayIconModule);
+const CheckInIcon = resolveIconComponent(CheckInIconModule);
+const VoteIcon = resolveIconComponent(VoteIconModule);
+const ShareIcon = resolveIconComponent(ShareIconModule);
+const DeleteIcon = resolveIconComponent(DeleteIconModule);
+const EditIcon = resolveIconComponent(EditIconModule);
+const QrCodeIcon = resolveIconComponent(QrCodeIconModule);
+const BackIcon = resolveIconComponent(BackIconModule);
+const DuplicateIcon = resolveIconComponent(DuplicateIconModule);
+const CalendarIcon = resolveIconComponent(CalendarIconModule);
+const MoreVertIcon = resolveIconComponent(MoreVertIconModule);
+const MessageIcon = resolveIconComponent(MessageIconModule);
+const CheckCircleIcon = resolveIconComponent(CheckCircleIconModule);
+const PlaceIcon = resolveIconComponent(PlaceIconModule);
 
 const PostGameMessagesPanel: React.FC<{ gameId: string; canWrite: boolean }> = ({ gameId, canWrite }) => {
   const { t } = useTranslation();
