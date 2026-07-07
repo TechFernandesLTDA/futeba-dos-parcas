@@ -1,4 +1,4 @@
-import {FieldValue} from "firebase-admin/firestore";
+import {FieldValue, type Firestore} from "firebase-admin/firestore";
 import {onCall, HttpsError} from "firebase-functions/v2/https";
 import {logger} from "firebase-functions/v2";
 import {db} from "../_db";
@@ -25,6 +25,18 @@ interface ReputationReview {
   respect: number;
   commitment: number;
   overall: number;
+}
+
+interface ReputationTotals {
+  punctuality: number;
+  respect: number;
+  commitment: number;
+  overallCenti: number;
+}
+
+interface ReputationAggregateState {
+  count: number;
+  totals: ReputationTotals;
 }
 
 /**
@@ -101,31 +113,224 @@ function round2(value: number): number {
 }
 
 /**
- * Calcula agregados persistidos no perfil do usuario avaliado.
+ * Converte nota media para centesimos inteiros.
  *
- * @param {ReputationReview[]} reviews Avaliacoes consideradas.
- * @return {Record<string, unknown>} Campos agregados em snake_case.
+ * @param {number} value Nota em escala 1..5.
+ * @return {number} Nota em centesimos.
  */
-function buildAggregate(reviews: ReputationReview[]) {
-  const count = reviews.length;
-  const totals = reviews.reduce(
-    (acc, review) => ({
-      punctuality: acc.punctuality + review.punctuality,
-      respect: acc.respect + review.respect,
-      commitment: acc.commitment + review.commitment,
-      overall: acc.overall + review.overall,
-    }),
-    {punctuality: 0, respect: 0, commitment: 0, overall: 0}
-  );
+function toCenti(value: number): number {
+  return Math.round(value * 100);
+}
+
+/**
+ * Le numero finito de um documento Firestore.
+ *
+ * @param {Record<string, unknown>} data Documento bruto.
+ * @param {string} field Campo esperado.
+ * @return {number | null} Valor numerico.
+ */
+function readNumber(
+  data: Record<string, unknown>,
+  field: string
+): number | null {
+  const value = data[field];
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+/**
+ * Converte snapshot de review existente para scores validos.
+ *
+ * @param {Record<string, unknown> | undefined} data Dados brutos.
+ * @return {ReputationReview | null} Review valida.
+ */
+function readReview(
+  data: Record<string, unknown> | undefined
+): ReputationReview | null {
+  if (!data) return null;
+  const punctuality = readNumber(data, "punctuality");
+  const respect = readNumber(data, "respect");
+  const commitment = readNumber(data, "commitment");
+  const overall = readNumber(data, "overall");
+  if (
+    punctuality == null ||
+    respect == null ||
+    commitment == null ||
+    overall == null ||
+    punctuality < MIN_SCORE ||
+    respect < MIN_SCORE ||
+    commitment < MIN_SCORE ||
+    overall < MIN_SCORE
+  ) {
+    return null;
+  }
+  return {punctuality, respect, commitment, overall};
+}
+
+/**
+ * Indica se o perfil ja tem somas incrementais de reputacao.
+ *
+ * @param {Record<string, unknown>} data Dados do usuario avaliado.
+ * @return {boolean} True quando os campos novos existem.
+ */
+function hasReputationSums(data: Record<string, unknown>): boolean {
+  return readNumber(data, "reputation_punctuality_sum") != null &&
+    readNumber(data, "reputation_respect_sum") != null &&
+    readNumber(data, "reputation_commitment_sum") != null &&
+    readNumber(data, "reputation_overall_sum_centi") != null;
+}
+
+/**
+ * Decide se um perfil legado precisa de seed historico exato.
+ *
+ * @param {Record<string, unknown>} data Dados do usuario avaliado.
+ * @return {boolean} True quando ha contagem antiga sem somas novas.
+ */
+function needsLegacySeed(data: Record<string, unknown>): boolean {
+  return !hasReputationSums(data) &&
+    (readNumber(data, "reputation_reviews_count") ?? 0) > 0;
+}
+
+/**
+ * Le agregado atual do perfil a partir das somas persistidas.
+ *
+ * @param {Record<string, unknown>} data Dados do usuario avaliado.
+ * @param {ReputationAggregateState | null} legacySeed Somas legadas exatas.
+ * @return {ReputationAggregateState} Estado agregado atual.
+ */
+function readAggregateState(
+  data: Record<string, unknown>,
+  legacySeed: ReputationAggregateState | null
+): ReputationAggregateState {
+  if (!hasReputationSums(data)) {
+    return legacySeed ?? {
+      count: 0,
+      totals: {
+        punctuality: 0,
+        respect: 0,
+        commitment: 0,
+        overallCenti: 0,
+      },
+    };
+  }
 
   return {
-    reputation_punctuality_avg: count > 0 ? round2(totals.punctuality / count) : 0,
-    reputation_respect_avg: count > 0 ? round2(totals.respect / count) : 0,
-    reputation_commitment_avg: count > 0 ? round2(totals.commitment / count) : 0,
-    reputation_overall_avg: count > 0 ? round2(totals.overall / count) : 0,
+    count: Math.max(
+      0,
+      Math.trunc(readNumber(data, "reputation_reviews_count") ?? 0)
+    ),
+    totals: {
+      punctuality: readNumber(data, "reputation_punctuality_sum") ?? 0,
+      respect: readNumber(data, "reputation_respect_sum") ?? 0,
+      commitment: readNumber(data, "reputation_commitment_sum") ?? 0,
+      overallCenti: readNumber(data, "reputation_overall_sum_centi") ?? 0,
+    },
+  };
+}
+
+/**
+ * Soma reviews historicas apenas para perfis legados sem somas incrementais.
+ * Roda fora da transacao para nao colocar query ilimitada no read-set.
+ *
+ * @param {Firestore} firestore Firestore admin.
+ * @param {string} targetUserId Usuario avaliado.
+ * @return {Promise<ReputationAggregateState>} Somas historicas.
+ */
+async function loadLegacyAggregateSeed(
+  firestore: Firestore,
+  targetUserId: string
+): Promise<ReputationAggregateState> {
+  const reviewsSnap = await firestore
+    .collection("post_game_reputation")
+    .where("target_user_id", "==", targetUserId)
+    .get();
+
+  const totals: ReputationTotals = {
+    punctuality: 0,
+    respect: 0,
+    commitment: 0,
+    overallCenti: 0,
+  };
+  let count = 0;
+
+  for (const doc of reviewsSnap.docs) {
+    const review = readReview(doc.data());
+    if (!review) continue;
+    totals.punctuality += review.punctuality;
+    totals.respect += review.respect;
+    totals.commitment += review.commitment;
+    totals.overallCenti += toCenti(review.overall);
+    count++;
+  }
+
+  return {count, totals};
+}
+
+/**
+ * Monta campos agregados de reputacao a partir de somas.
+ *
+ * @param {ReputationAggregateState} state Estado agregado.
+ * @return {Record<string, unknown>} Campos do perfil.
+ */
+function buildAggregateFromState(state: ReputationAggregateState) {
+  const count = state.count;
+  const totals = state.totals;
+  return {
+    reputation_punctuality_avg: count > 0 ?
+      round2(totals.punctuality / count) :
+      0,
+    reputation_respect_avg: count > 0 ?
+      round2(totals.respect / count) :
+      0,
+    reputation_commitment_avg: count > 0 ?
+      round2(totals.commitment / count) :
+      0,
+    reputation_overall_avg: count > 0 ?
+      round2((totals.overallCenti / 100) / count) :
+      0,
+    reputation_punctuality_sum: totals.punctuality,
+    reputation_respect_sum: totals.respect,
+    reputation_commitment_sum: totals.commitment,
+    reputation_overall_sum_centi: totals.overallCenti,
     reputation_reviews_count: count,
     reputation_updated_at: FieldValue.serverTimestamp(),
   };
+}
+
+/**
+ * Calcula o proximo agregado sem consultar todas as reviews do alvo.
+ *
+ * @param {Record<string, unknown>} targetUser Perfil atual.
+ * @param {ReputationReview | null} previousReview Review anterior.
+ * @param {ReputationReview} nextReview Nova review.
+ * @param {ReputationAggregateState | null} legacySeed Somas legadas.
+ * @return {Record<string, unknown>} Campos agregados.
+ */
+export function buildNextAggregate(
+  targetUser: Record<string, unknown>,
+  previousReview: ReputationReview | null,
+  nextReview: ReputationReview,
+  legacySeed: ReputationAggregateState | null = null
+) {
+  const state = readAggregateState(targetUser, legacySeed);
+  const previousCounted = previousReview != null && state.count > 0;
+  const totals = {...state.totals};
+
+  if (previousCounted) {
+    totals.punctuality -= previousReview.punctuality;
+    totals.respect -= previousReview.respect;
+    totals.commitment -= previousReview.commitment;
+    totals.overallCenti -= toCenti(previousReview.overall);
+  }
+
+  totals.punctuality += nextReview.punctuality;
+  totals.respect += nextReview.respect;
+  totals.commitment += nextReview.commitment;
+  totals.overallCenti += toCenti(nextReview.overall);
+
+  return buildAggregateFromState({
+    count: previousCounted ? state.count : state.count + 1,
+    totals,
+  });
 }
 
 export const submitPostGameReputation = onCall(
@@ -175,18 +380,25 @@ export const submitPostGameReputation = onCall(
     }
 
     const firestore = db();
+    const targetUserRef = firestore.doc(`users/${targetUserId}`);
+    const targetUserPreflight = await targetUserRef.get();
+    const targetUserPreflightData =
+      targetUserPreflight.data() as Record<string, unknown> | undefined;
+    const legacySeed =
+      targetUserPreflight.exists &&
+      targetUserPreflightData &&
+      needsLegacySeed(targetUserPreflightData) ?
+        await loadLegacyAggregateSeed(firestore, targetUserId) :
+        null;
     const reviewId = `${gameId}_${reviewerId}_${targetUserId}`;
+
     const result = await firestore.runTransaction(async (tx) => {
       const gameRef = firestore.doc(`games/${gameId}`);
       const reviewerConfirmationRef =
         firestore.doc(`confirmations/${gameId}_${reviewerId}`);
       const targetConfirmationRef =
         firestore.doc(`confirmations/${gameId}_${targetUserId}`);
-      const targetUserRef = firestore.doc(`users/${targetUserId}`);
       const reviewRef = firestore.doc(`post_game_reputation/${reviewId}`);
-      const targetReviewsQuery = firestore
-        .collection("post_game_reputation")
-        .where("target_user_id", "==", targetUserId);
 
       const [
         gameSnap,
@@ -194,14 +406,12 @@ export const submitPostGameReputation = onCall(
         targetConfirmationSnap,
         targetUserSnap,
         existingReviewSnap,
-        targetReviewsSnap,
       ] = await Promise.all([
         tx.get(gameRef),
         tx.get(reviewerConfirmationRef),
         tx.get(targetConfirmationRef),
         tx.get(targetUserRef),
         tx.get(reviewRef),
-        tx.get(targetReviewsQuery),
       ]);
 
       if (!gameSnap.exists) {
@@ -248,29 +458,15 @@ export const submitPostGameReputation = onCall(
         commitment,
         overall,
       };
-      const reviews = targetReviewsSnap.docs
-        .map((doc) => {
-          if (doc.id === reviewId) return nextReview;
-          const review = doc.data();
-          return {
-            punctuality: Number(review.punctuality ?? 0),
-            respect: Number(review.respect ?? 0),
-            commitment: Number(review.commitment ?? 0),
-            overall: Number(review.overall ?? 0),
-          };
-        })
-        .filter((review) =>
-          review.punctuality >= MIN_SCORE &&
-          review.respect >= MIN_SCORE &&
-          review.commitment >= MIN_SCORE &&
-          review.overall >= MIN_SCORE
-        );
+      const aggregate = buildNextAggregate(
+        targetUserSnap.data() as Record<string, unknown>,
+        readReview(
+          existingReviewSnap.data() as Record<string, unknown> | undefined
+        ),
+        nextReview,
+        legacySeed
+      );
 
-      if (!existingReviewSnap.exists) {
-        reviews.push(nextReview);
-      }
-
-      const aggregate = buildAggregate(reviews);
       tx.set(reviewRef, {
         game_id: gameId,
         group_id: (game.group_id as string | undefined) ?? null,
@@ -294,7 +490,7 @@ export const submitPostGameReputation = onCall(
 
       return {
         updated: existingReviewSnap.exists,
-        reviewsCount: reviews.length,
+        reviewsCount: aggregate.reputation_reviews_count,
         overallAvg: aggregate.reputation_overall_avg,
       };
     });
