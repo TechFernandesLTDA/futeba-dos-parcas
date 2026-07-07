@@ -167,6 +167,8 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 - Evita mensagens de ranking baseadas em janela parcial quando a tela esta ordenada por outro campo.
 - `useLeagueInvites` replica as validacoes de membership e limite de pendentes da tela dedicada de convites.
 
+_PRs: #3351_
+
 ### [1.51.8][web-1.51.8] - 2026-07-07
 
 #### Adicionado
@@ -1161,6 +1163,8 @@ _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 - Separa limite de pagina do limite de varredura do diretorio publico da Liga.
 - Varre `is_searchable` e `isSearchable` com cursor por ID de documento para montar a lista deduplicada.
 - Trigger de convite aceito deixa de sobrescrever `role`, `joined_at` e `total_games` de membro ja existente.
+
+_PRs: #3351_
 
 ### [1.7.3][functions-1.7.3] - 2026-07-07
 
