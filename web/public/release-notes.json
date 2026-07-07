@@ -1,7 +1,26 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-07T02:29:09.744Z",
+  "generatedAt": "2026-07-07T03:02:50.667Z",
   "notes": [
+    {
+      "version": "1.51.8",
+      "buildNumber": null,
+      "releaseDate": "2026-07-07",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "A Liga agora tem busca, paginacao, ordenacao por XP e atalhos para convidar ou enviar mensagem aos jogadores.",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "Busca por nome ou ID do usuario na Liga.",
+        "Ordenacao por XP, nome, pontos e estatisticas do ranking.",
+        "Carregamento paginado para desktop e mobile.",
+        "Clique no nome do jogador abre acoes rapidas para convite ao grupo ou mensagem direta."
+      ],
+      "fixed": [],
+      "issueRefs": []
+    },
     {
       "version": "1.51.7",
       "buildNumber": null,

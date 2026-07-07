@@ -302,6 +302,9 @@ export interface GetLeaguePlayersResponse {
   success: boolean;
   players: LeaguePlayerSummary[];
   count: number;
+  totalCount: number;
+  hasMore: boolean;
+  nextPageToken: string | null;
 }
 
 export const getLeaguePlayers = httpsCallable<
@@ -310,6 +313,10 @@ export const getLeaguePlayers = httpsCallable<
     groupId?: string | null;
     limit?: number;
     gender?: string | null;
+    search?: string | null;
+    sortField?: string | null;
+    sortDirection?: 'asc' | 'desc' | null;
+    pageToken?: string | null;
   },
   GetLeaguePlayersResponse
 >(functions, 'getLeaguePlayers');

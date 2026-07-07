@@ -160,6 +160,13 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.51.8][web-1.51.8] - 2026-07-07
+
+#### Adicionado
+- A tela de Liga envia busca, ordenacao e `pageToken` para `getLeaguePlayers`.
+- `useLeague` passa a suportar paginas infinitas reais e total de jogadores carregados.
+- Acoes sociais da Liga reutilizam os fluxos existentes de convites e mensagens diretas.
+
 ### [1.51.7][web-1.51.7] - 2026-07-07
 
 #### Mudado
@@ -1139,6 +1146,16 @@ _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
 
+### [1.7.3][functions-1.7.3] - 2026-07-07
+
+#### Adicionado
+- `getLeaguePlayers` aceita `search`, `sortField`, `sortDirection` e `pageToken`.
+- A callable retorna `totalCount`, `hasMore` e `nextPageToken`.
+
+#### Corrigido
+- Leitura de Liga em grupo passa a considerar somente membros `ACTIVE`.
+- Grupo arquivado ou inativo deixa de liberar leitura publica.
+
 ### [1.7.2][functions-1.7.2] - 2026-07-07
 
 #### Adicionado
@@ -1574,6 +1591,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.51.8]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.8.md
 [web-1.51.7]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.7.md
 [web-1.51.6]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.6.md
 [web-1.51.5]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.5.md
@@ -1662,6 +1680,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [web-1.26.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.26.1.md
 [web-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.26.0.md
 [ios-1.6.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.0.md
+[functions-1.7.3]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.7.3.md
 [functions-1.7.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.7.2.md
 [functions-1.7.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.7.1.md
 [functions-1.7.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.7.0.md
