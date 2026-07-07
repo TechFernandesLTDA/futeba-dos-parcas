@@ -1,7 +1,26 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-07T16:54:23.460Z",
+  "generatedAt": "2026-07-07T19:46:50.602Z",
   "notes": [
+    {
+      "version": "1.51.14",
+      "buildNumber": null,
+      "releaseDate": "2026-07-07",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "Corrigimos uma falha ao abrir a tela de detalhes de jogo.",
+      "highlights": [],
+      "added": [],
+      "improved": [],
+      "fixed": [
+        "A rota de detalhes do jogo volta a abrir sem cair na tela global de erro inesperado.",
+        "Os botões e ações da tela de jogo ficam mais estáveis no bundle de produção.",
+        "`GameDetailScreen` volta a importar ícones MUI diretamente por componente, removendo o resolvedor de módulos que podia entregar um objeto para o React e disparar React #130.",
+        "Feedback operacional relacionado: `/game/1R8x9xxbT5Ra5gAYTt4A`."
+      ],
+      "issueRefs": []
+    },
     {
       "version": "1.51.13",
       "buildNumber": null,
