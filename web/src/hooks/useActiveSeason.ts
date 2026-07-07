@@ -17,10 +17,23 @@ export function useActiveSeason() {
     queryKey: ['activeSeason'],
     queryFn: async () => {
       try {
-        const snap = await getDocs(
-          query(collection(db, 'seasons'), where('isActive', '==', true), limit(1))
-        );
-        return snap.docs[0]?.id || null;
+        const [camelResult, snakeResult] = await Promise.allSettled([
+          getDocs(query(collection(db, 'seasons'), where('isActive', '==', true), limit(1))),
+          getDocs(query(collection(db, 'seasons'), where('is_active', '==', true), limit(1))),
+        ]);
+
+        if (camelResult.status === 'fulfilled' && !camelResult.value.empty) {
+          return camelResult.value.docs[0].id;
+        }
+        if (snakeResult.status === 'fulfilled' && !snakeResult.value.empty) {
+          return snakeResult.value.docs[0].id;
+        }
+
+        const rejected = [camelResult, snakeResult]
+          .find((result): result is PromiseRejectedResult => result.status === 'rejected');
+        if (rejected) throw rejected.reason;
+
+        return null;
       } catch (err) {
         logger.error('Error fetching active season:', err);
         throw err;

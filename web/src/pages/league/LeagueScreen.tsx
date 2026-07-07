@@ -170,7 +170,7 @@ export const LeagueScreen: React.FC = () => {
   } = useLeague(
     user?.id,
     filters,
-    { enabled: !!effectiveSeasonId }
+    { enabled: !seasonLoading }
   );
   const {
     inviteOptions,

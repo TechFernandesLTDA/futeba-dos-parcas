@@ -45,6 +45,7 @@ import {
   FIRESTORE_WHERE_IN_LIMIT,
   FUNCTION_REGION,
   GAME_GENDERS,
+  LEVEL_TABLE,
 } from "../constants";
 import {ERROR_MSGS} from "../error-messages";
 
@@ -115,6 +116,65 @@ interface GetLeaderboardRequest {
   gender?: string;
 }
 
+interface GetLeaguePlayersRequest {
+  seasonId?: string | null;
+  groupId?: string | null;
+  limit?: number;
+  gender?: string | null;
+}
+
+interface PublicLeagueUser {
+  name: string;
+  photoUrl: string | null;
+  xp: number;
+  favoriteTeam?: string;
+  isMock?: boolean;
+  demoData?: boolean;
+  dataOrigin?: string;
+  seedId?: string;
+  demoDataReason?: string;
+}
+
+interface LeagueParticipationStats {
+  id: string;
+  userId: string;
+  points: number;
+  gamesPlayed: number;
+  wins: number;
+  goals: number;
+  assists: number;
+  mvpCount: number;
+  division: string;
+  isMock?: boolean;
+  demoData?: boolean;
+  dataOrigin?: string;
+  seedId?: string;
+  demoDataReason?: string;
+}
+
+interface PublicLeaguePlayer {
+  id: string;
+  userId: string;
+  userName: string;
+  userPhoto?: string;
+  favoriteTeam?: string;
+  level: number;
+  points: number;
+  gamesPlayed: number;
+  wins: number;
+  goals: number;
+  assists: number;
+  mvpCount: number;
+  division: string;
+  experiencePoints: number;
+  canReceiveInvites: boolean;
+  isMock?: boolean;
+  demoData?: boolean;
+  dataOrigin?: string;
+  seedId?: string;
+  demoDataReason?: string;
+}
+
 /** Chave de gênero combinada (sem segmentação). */
 const GENDER_ALL = "ALL";
 
@@ -162,6 +222,482 @@ function resolveGenderKey(raw: unknown): string {
     }
   }
   return GENDER_ALL;
+}
+
+/**
+ * Retorna a lista publica de jogadores da Liga/XP.
+ *
+ * Esta callable existe porque Firestore Rules nao conseguem mascarar campos:
+ * os docs em users/{uid} contem PII, entao o cliente nao pode le-los para
+ * montar a Liga. O Admin SDK le os dados completos e devolve apenas campos
+ * publicos/sanitizados.
+ */
+export const getLeaguePlayers = onCall<GetLeaguePlayersRequest>(
+  {
+    region: FUNCTION_REGION,
+    memory: "512MiB",
+    enforceAppCheck: !process.env.FUNCTIONS_EMULATOR,
+    consumeAppCheckToken: false,
+  },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError(
+        "unauthenticated",
+        ERROR_MSGS.UNAUTHENTICATED
+      );
+    }
+
+    const rateLimitResult = await checkRateLimit(
+      request.auth.uid,
+      {
+        maxRequests: 50,
+        windowMs: 60000,
+        keyPrefix: "league_players",
+      }
+    );
+    if (!rateLimitResult.allowed) {
+      throw new HttpsError(
+        "resource-exhausted",
+        ERROR_MSGS.RATE_LIMIT_GENERIC
+      );
+    }
+
+    const seasonId = sanitizeOptionalId(
+      request.data?.seasonId,
+      "seasonId"
+    );
+    const groupId = sanitizeOptionalId(
+      request.data?.groupId,
+      "groupId"
+    );
+    const resultLimit = Math.min(
+      Math.max(readNumber(request.data?.limit) || DEFAULT_LEADERBOARD_LIMIT, 1),
+      ABSOLUTE_MAX_LIMIT
+    );
+    const genderKey = resolveGenderKey(request.data?.gender);
+    if (groupId) {
+      await assertCanReadLeagueGroup(
+        groupId,
+        request.auth.uid,
+        request.auth.token?.role === "ADMIN"
+      );
+    }
+
+    const [participations, usersMap] = await Promise.all([
+      fetchLeagueParticipations(
+        seasonId,
+        groupId,
+        genderKey,
+        resultLimit
+      ),
+      groupId ?
+        fetchActiveGroupMemberIds(groupId)
+          .then((userIds) => fetchPublicUsersByIds(userIds)) :
+        fetchSearchableLeagueUsers(resultLimit),
+    ]);
+
+    const participationByUser = new Map<
+      string,
+      LeagueParticipationStats
+    >();
+    for (const participation of participations) {
+      const existing = participationByUser.get(participation.userId);
+      if (!existing || participation.points > existing.points) {
+        participationByUser.set(participation.userId, participation);
+      }
+    }
+
+    const players: PublicLeaguePlayer[] = Array.from(usersMap.entries())
+      .map(([userId, userData]) => {
+        const participation = participationByUser.get(userId);
+        return {
+          id: participation?.id ?? userId,
+          userId,
+          userName: userData.name,
+          userPhoto: userData.photoUrl || undefined,
+          favoriteTeam: userData.favoriteTeam,
+          level: getLevelForXpServer(userData.xp),
+          points: participation?.points ?? 0,
+          gamesPlayed: participation?.gamesPlayed ?? 0,
+          wins: participation?.wins ?? 0,
+          goals: participation?.goals ?? 0,
+          assists: participation?.assists ?? 0,
+          mvpCount: participation?.mvpCount ?? 0,
+          division: participation?.division ?? "BRONZE",
+          experiencePoints: userData.xp,
+          canReceiveInvites: true,
+          isMock:
+            userData.isMock === true ||
+            participation?.isMock === true,
+          demoData:
+            userData.demoData === true ||
+            participation?.demoData === true,
+          dataOrigin:
+            userData.dataOrigin ||
+            participation?.dataOrigin,
+          seedId:
+            userData.seedId ||
+            participation?.seedId,
+          demoDataReason:
+            userData.demoDataReason ||
+            participation?.demoDataReason,
+        };
+      })
+      .sort((a, b) =>
+        b.points - a.points ||
+        b.experiencePoints - a.experiencePoints ||
+        a.userName.localeCompare(b.userName)
+      )
+      .slice(0, resultLimit);
+
+    return {
+      success: true,
+      players,
+      count: players.length,
+    };
+  }
+);
+
+/**
+ * Le string publica opcional com trim.
+ *
+ * @param {unknown} value Valor bruto.
+ * @param {string | undefined} fallback Fallback opcional.
+ * @return {string | undefined} String normalizada ou fallback.
+ */
+function readString(
+  value: unknown,
+  fallback?: string
+): string | undefined {
+  return typeof value === "string" && value.trim().length > 0 ?
+    value.trim() :
+    fallback;
+}
+
+/**
+ * Le numero finito com fallback zero.
+ *
+ * @param {unknown} value Valor bruto.
+ * @return {number} Numero seguro.
+ */
+function readNumber(value: unknown): number {
+  return typeof value === "number" && Number.isFinite(value) ?
+    value :
+    0;
+}
+
+/**
+ * Calcula nivel a partir da tabela compartilhada de XP.
+ *
+ * @param {number} totalXp XP total do usuario.
+ * @return {number} Nivel correspondente.
+ */
+function getLevelForXpServer(totalXp: number): number {
+  let level = 0;
+  for (const entry of LEVEL_TABLE.levels) {
+    if (totalXp >= entry.xpRequired) {
+      level = entry.level;
+    } else {
+      break;
+    }
+  }
+  return level;
+}
+
+/**
+ * Sanitiza IDs opcionais usados em queries server-side.
+ *
+ * @param {unknown} value Valor bruto.
+ * @param {string} fieldName Nome do campo para mensagem de erro.
+ * @return {string | null} ID seguro ou null.
+ */
+function sanitizeOptionalId(
+  value: unknown,
+  fieldName: string
+): string | null {
+  if (value == null || value === "") return null;
+  if (typeof value !== "string") {
+    throw new HttpsError(
+      "invalid-argument",
+      `${fieldName} inválido`
+    );
+  }
+
+  const safeValue = sanitizeText(value);
+  if (
+    safeValue.length === 0 ||
+    safeValue.length > 100 ||
+    /[/\\.]/.test(safeValue)
+  ) {
+    throw new HttpsError(
+      "invalid-argument",
+      `${fieldName} contém caracteres inválidos`
+    );
+  }
+  return safeValue;
+}
+
+/**
+ * Verifica se o perfil pode aparecer em buscas publicas da Liga.
+ *
+ * @param {FirebaseFirestore.DocumentData} data Documento users/{uid}.
+ * @return {boolean} True quando o usuario e pesquisavel.
+ */
+function isPublicSearchableUser(
+  data: FirebaseFirestore.DocumentData
+): boolean {
+  if (data.deleted_at != null || data.deletedAt != null) return false;
+  if (data.is_searchable === false || data.isSearchable === false) {
+    return false;
+  }
+  return data.is_searchable === true || data.isSearchable === true;
+}
+
+/**
+ * Adiciona ao mapa apenas o subset publico do perfil.
+ *
+ * @param {Map<string, PublicLeagueUser>} usersMap Mapa de usuarios.
+ * @param {string} userId UID do usuario.
+ * @param {FirebaseFirestore.DocumentData} data Documento users/{uid}.
+ */
+function addPublicLeagueUser(
+  usersMap: Map<string, PublicLeagueUser>,
+  userId: string,
+  data: FirebaseFirestore.DocumentData
+) {
+  if (!isPublicSearchableUser(data)) return;
+
+  const xp = readNumber(
+    data.experience_points ?? data.experiencePoints
+  );
+  usersMap.set(userId, {
+    name:
+      readString(data.name) ||
+      readString(data.display_name) ||
+      readString(data.nickname) ||
+      "Jogador",
+    photoUrl:
+      readString(data.photo_url) ||
+      readString(data.photoUrl) ||
+      null,
+    xp,
+    favoriteTeam:
+      readString(data.favorite_team) ||
+      readString(data.favoriteTeam),
+    isMock: data.is_mock === true || data.isMock === true,
+    demoData: data.demo_data === true || data.demoData === true,
+    dataOrigin:
+      readString(data.data_origin) ||
+      readString(data.dataOrigin),
+    seedId:
+      readString(data.seed_id) ||
+      readString(data.seedId),
+    demoDataReason:
+      readString(data.demo_data_reason) ||
+      readString(data.demoDataReason),
+  });
+}
+
+/**
+ * Busca perfis publicos por IDs usando chunks seguros de whereIn.
+ *
+ * @param {string[]} userIds UIDs candidatos.
+ * @return {Promise<Map<string, PublicLeagueUser>>} Usuarios publicos.
+ */
+async function fetchPublicUsersByIds(
+  userIds: string[]
+): Promise<Map<string, PublicLeagueUser>> {
+  const db = getDb();
+  const usersMap = new Map<string, PublicLeagueUser>();
+  const uniqueIds = [...new Set(userIds)].filter(Boolean);
+
+  for (
+    let i = 0;
+    i < uniqueIds.length;
+    i += FIRESTORE_WHERE_IN_LIMIT
+  ) {
+    const chunk = uniqueIds.slice(i, i + FIRESTORE_WHERE_IN_LIMIT);
+    const snap = await db
+      .collection("users")
+      .where(FieldPath.documentId(), "in", chunk)
+      .get();
+
+    snap.docs.forEach((doc) => {
+      addPublicLeagueUser(usersMap, doc.id, doc.data());
+    });
+  }
+
+  return usersMap;
+}
+
+/**
+ * Busca usuarios pesquisaveis globais considerando campos legado e atual.
+ *
+ * @param {number} resultLimit Limite maximo por campo de busca.
+ * @return {Promise<Map<string, PublicLeagueUser>>} Usuarios deduplicados.
+ */
+async function fetchSearchableLeagueUsers(
+  resultLimit: number
+): Promise<Map<string, PublicLeagueUser>> {
+  const db = getDb();
+  const usersMap = new Map<string, PublicLeagueUser>();
+  const snaps = await Promise.all([
+    db.collection("users")
+      .where("is_searchable", "==", true)
+      .limit(resultLimit)
+      .get(),
+    db.collection("users")
+      .where("isSearchable", "==", true)
+      .limit(resultLimit)
+      .get(),
+  ]);
+
+  snaps.flatMap((snap) => snap.docs).forEach((doc) => {
+    addPublicLeagueUser(usersMap, doc.id, doc.data());
+  });
+
+  return usersMap;
+}
+
+/**
+ * Carrega IDs de membros ativos de um grupo.
+ *
+ * @param {string} groupId ID do grupo.
+ * @return {Promise<string[]>} UIDs dos membros ativos.
+ */
+async function fetchActiveGroupMemberIds(
+  groupId: string
+): Promise<string[]> {
+  const db = getDb();
+  const snap = await db
+    .collection("groups")
+    .doc(groupId)
+    .collection("members")
+    .get();
+
+  return snap.docs
+    .filter((doc) => doc.data().status !== "REMOVED")
+    .map((doc) => {
+      const data = doc.data();
+      return readString(data.user_id) ||
+        readString(data.userId) ||
+        doc.id;
+    })
+    .filter((userId): userId is string => Boolean(userId));
+}
+
+/**
+ * Replica a autorizacao de leitura de grupo antes de expor membros via Admin.
+ *
+ * @param {string} groupId ID do grupo.
+ * @param {string} uid UID autenticado.
+ * @param {boolean} isAdmin Indica custom claim ADMIN.
+ */
+async function assertCanReadLeagueGroup(
+  groupId: string,
+  uid: string,
+  isAdmin: boolean
+): Promise<void> {
+  if (isAdmin) return;
+
+  const db = getDb();
+  const groupSnap = await db
+    .collection("groups")
+    .doc(groupId)
+    .get();
+  if (!groupSnap.exists) {
+    throw new HttpsError("not-found", "Grupo não encontrado");
+  }
+
+  const group = groupSnap.data() ?? {};
+  if (group.is_public === true) return;
+  if (group.deleted_at != null || group.status !== "ACTIVE") {
+    throw new HttpsError("permission-denied", "Acesso negado");
+  }
+  if (group.owner_id === uid) return;
+
+  const memberSnap = await db
+    .collection("groups")
+    .doc(groupId)
+    .collection("members")
+    .doc(uid)
+    .get();
+  const member = memberSnap.data();
+  if (memberSnap.exists && member?.status === "ACTIVE") return;
+
+  throw new HttpsError("permission-denied", "Acesso negado");
+}
+
+/**
+ * Carrega participacoes de temporada usadas para pontuar a lista publica.
+ *
+ * @param {string | null} seasonId ID da temporada ou null.
+ * @param {string | null} groupId ID do grupo ou null.
+ * @param {string} genderKey Chave de genero ou ALL.
+ * @param {number} resultLimit Limite de documentos.
+ * @return {Promise<LeagueParticipationStats[]>} Stats de participacao.
+ */
+async function fetchLeagueParticipations(
+  seasonId: string | null,
+  groupId: string | null,
+  genderKey: string,
+  resultLimit: number
+): Promise<LeagueParticipationStats[]> {
+  if (!seasonId) return [];
+
+  const db = getDb();
+  const isSegmented = genderKey !== GENDER_ALL;
+  const orderField = isSegmented ?
+    `by_gender.${genderKey}.points` :
+    "points";
+  let q: FirebaseFirestore.Query = db
+    .collection("season_participation")
+    .where("season_id", "==", seasonId);
+
+  if (groupId) {
+    q = q.where("group_id", "==", groupId);
+  }
+
+  const snap = await q
+    .orderBy(orderField, "desc")
+    .orderBy("user_id", "asc")
+    .limit(resultLimit)
+    .get();
+
+  return snap.docs.map((doc) => {
+    const data = doc.data();
+    const src = isSegmented ?
+      ((data.by_gender || {})[genderKey] || {}) :
+      data;
+    const userId = readString(data.user_id) ||
+      readString(data.userId) ||
+      doc.id;
+
+    return {
+      id: doc.id,
+      userId,
+      points: readNumber(src.points),
+      gamesPlayed: readNumber(
+        src.games_played ?? src.gamesPlayed
+      ),
+      wins: readNumber(src.wins),
+      goals: readNumber(src.goals_scored ?? src.goals),
+      assists: readNumber(src.assists),
+      mvpCount: readNumber(src.mvp_count ?? src.mvpCount),
+      division: readString(data.division, "BRONZE") || "BRONZE",
+      isMock: data.is_mock === true || data.isMock === true,
+      demoData: data.demo_data === true || data.demoData === true,
+      dataOrigin:
+        readString(data.data_origin) ||
+        readString(data.dataOrigin),
+      seedId:
+        readString(data.seed_id) ||
+        readString(data.seedId),
+      demoDataReason:
+        readString(data.demo_data_reason) ||
+        readString(data.demoDataReason),
+    };
+  });
 }
 
 // ==========================================

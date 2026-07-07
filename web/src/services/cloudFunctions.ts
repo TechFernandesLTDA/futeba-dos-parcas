@@ -275,6 +275,45 @@ export const discoverNearbyPlayers = httpsCallable<
   DiscoverNearbyPlayersResponse
 >(functions, 'discoverNearbyPlayers');
 
+export interface LeaguePlayerSummary {
+  id: string;
+  userId: string;
+  userName: string;
+  userPhoto?: string;
+  favoriteTeam?: string;
+  level: number;
+  points: number;
+  gamesPlayed: number;
+  wins: number;
+  goals: number;
+  assists: number;
+  mvpCount: number;
+  division: string;
+  experiencePoints: number;
+  canReceiveInvites: boolean;
+  isMock?: boolean;
+  demoData?: boolean;
+  dataOrigin?: string;
+  seedId?: string;
+  demoDataReason?: string;
+}
+
+export interface GetLeaguePlayersResponse {
+  success: boolean;
+  players: LeaguePlayerSummary[];
+  count: number;
+}
+
+export const getLeaguePlayers = httpsCallable<
+  {
+    seasonId?: string | null;
+    groupId?: string | null;
+    limit?: number;
+    gender?: string | null;
+  },
+  GetLeaguePlayersResponse
+>(functions, 'getLeaguePlayers');
+
 export const setLocationPublicationStatus = httpsCallable<
   {
     locationId: string;

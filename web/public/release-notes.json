@@ -1,7 +1,26 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-07T01:40:24.968Z",
+  "generatedAt": "2026-07-07T02:29:09.744Z",
   "notes": [
+    {
+      "version": "1.51.7",
+      "buildNumber": null,
+      "releaseDate": "2026-07-07",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "Jogadores reais voltam a aparecer na Liga e no XP global mesmo quando ainda nao existe temporada ativa.",
+      "highlights": [],
+      "added": [],
+      "improved": [],
+      "fixed": [
+        "A tela de Liga deixa de ficar vazia quando nao ha temporada ativa cadastrada.",
+        "XP global e rankings carregam usuarios pesquisaveis com zero pontos de temporada.",
+        "A lista de jogadores passa a usar um backend seguro para permitir convites sem expor dados privados do perfil.",
+        "Remove leituras client-side de `users/{uid}` na Liga, evitando `PERMISSION_DENIED` em perfis com PII."
+      ],
+      "issueRefs": []
+    },
     {
       "version": "1.51.6",
       "buildNumber": null,
