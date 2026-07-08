@@ -111,6 +111,15 @@ let concludeMvpVotingHandler: ((request: any) => Promise<any>) | null = null;
 
 const { onCall } = require("firebase-functions/v2/https");
 
+const eligibleConfirmationDoc = (userId: string) => ({
+  ref: { id: `confirmation-${userId}` },
+  data: () => ({
+    status: "CONFIRMED",
+    user_id: userId,
+    checked_in: true,
+  }),
+});
+
 beforeAll(() => {
   // Registrar os dois handlers na ordem de importação
   (onCall as jest.Mock).mockImplementationOnce((_config: any, handler: any) => {
@@ -532,10 +541,10 @@ describe("concludeMvpVoting - contagem de votos e vencedor", () => {
   test("deve eleger corretamente o MVP com mais votos", async () => {
     // 3 votos para playerA, 1 voto para playerB
     const votes = [
-      { category: "MVP", voted_player_id: "playerA" },
-      { category: "MVP", voted_player_id: "playerA" },
-      { category: "MVP", voted_player_id: "playerA" },
-      { category: "MVP", voted_player_id: "playerB" },
+      { category: "MVP", voter_id: "voter1", voted_player_id: "playerA" },
+      { category: "MVP", voter_id: "voter2", voted_player_id: "playerA" },
+      { category: "MVP", voter_id: "voter3", voted_player_id: "playerA" },
+      { category: "MVP", voter_id: "voter4", voted_player_id: "playerB" },
     ];
 
     // Mock: transaction interna (votos lidos dentro da transaction, não fora)
@@ -557,7 +566,17 @@ describe("concludeMvpVoting - contagem de votos e vencedor", () => {
           }),
         },
         // 3º get: confirmations query (FIX #617 — agora via transaction.get())
-        { docs: [], empty: true },
+        {
+          docs: [
+            eligibleConfirmationDoc("voter1"),
+            eligibleConfirmationDoc("voter2"),
+            eligibleConfirmationDoc("voter3"),
+            eligibleConfirmationDoc("voter4"),
+            eligibleConfirmationDoc("playerA"),
+            eligibleConfirmationDoc("playerB"),
+          ],
+          empty: false,
+        },
       ];
 
       const mockTx = {
@@ -586,9 +605,9 @@ describe("concludeMvpVoting - contagem de votos e vencedor", () => {
 
   test("grava log de XP do MVP com origem auditavel da votacao", async () => {
     const votes = [
-      { category: "MVP", voted_player_id: "playerA" },
-      { category: "MVP", voted_player_id: "playerA" },
-      { category: "MVP", voted_player_id: "playerB" },
+      { category: "MVP", voter_id: "voter1", voted_player_id: "playerA" },
+      { category: "MVP", voter_id: "voter2", voted_player_id: "playerA" },
+      { category: "MVP", voter_id: "voter3", voted_player_id: "playerB" },
     ];
 
     const votingTx = {
@@ -610,7 +629,16 @@ describe("concludeMvpVoting - contagem de votos e vencedor", () => {
           owner_id: "owner1",
         }),
       },
-      { docs: [], empty: true },
+      {
+        docs: [
+          eligibleConfirmationDoc("voter1"),
+          eligibleConfirmationDoc("voter2"),
+          eligibleConfirmationDoc("voter3"),
+          eligibleConfirmationDoc("playerA"),
+          eligibleConfirmationDoc("playerB"),
+        ],
+        empty: false,
+      },
     ];
     votingTx.get.mockImplementation(() => {
       const snap = votingResponses[votingCallIndex++] ||
@@ -691,8 +719,8 @@ describe("concludeMvpVoting - contagem de votos e vencedor", () => {
   test("deve resolver empate pelo playerId alfabético (determinístico)", async () => {
     // Empate entre "zebra" e "alpha" - deve vencer "alpha" (alfabético)
     const votes = [
-      { category: "MVP", voted_player_id: "zebra" },
-      { category: "MVP", voted_player_id: "alpha" },
+      { category: "MVP", voter_id: "voter1", voted_player_id: "zebra" },
+      { category: "MVP", voter_id: "voter2", voted_player_id: "alpha" },
     ];
 
     mockRunTransaction.mockImplementation(async (callback: any) => {
@@ -713,7 +741,15 @@ describe("concludeMvpVoting - contagem de votos e vencedor", () => {
           }),
         },
         // 3º get: confirmations query (FIX #617 — agora via transaction.get())
-        { docs: [], empty: true },
+        {
+          docs: [
+            eligibleConfirmationDoc("voter1"),
+            eligibleConfirmationDoc("voter2"),
+            eligibleConfirmationDoc("zebra"),
+            eligibleConfirmationDoc("alpha"),
+          ],
+          empty: false,
+        },
       ];
 
       const mockTx = {
@@ -833,7 +869,13 @@ describe("concludeMvpVoting - contagem de votos e vencedor", () => {
     let votingCallIndex = 0;
     const votingResponses = [
       {
-        docs: [{data: () => ({category: "WORST", voted_player_id: "playerZ"})}],
+        docs: [{
+          data: () => ({
+            category: "WORST",
+            voter_id: "voter1",
+            voted_player_id: "playerZ",
+          }),
+        }],
         empty: false,
       },
       {
@@ -844,7 +886,13 @@ describe("concludeMvpVoting - contagem de votos e vencedor", () => {
           owner_id: "owner1",
         }),
       },
-      {docs: [], empty: true},
+      {
+        docs: [
+          eligibleConfirmationDoc("voter1"),
+          eligibleConfirmationDoc("playerZ"),
+        ],
+        empty: false,
+      },
     ];
     votingTx.get.mockImplementation(() => {
       const snap = votingResponses[votingCallIndex++] || {exists: false, data: () => ({})};
@@ -900,7 +948,13 @@ describe("concludeMvpVoting - contagem de votos e vencedor", () => {
     let votingCallIndex = 0;
     const votingResponses = [
       {
-        docs: [{data: () => ({category: "WORST", voted_player_id: "playerY"})}],
+        docs: [{
+          data: () => ({
+            category: "WORST",
+            voter_id: "voter1",
+            voted_player_id: "playerY",
+          }),
+        }],
         empty: false,
       },
       {
@@ -911,7 +965,13 @@ describe("concludeMvpVoting - contagem de votos e vencedor", () => {
           owner_id: "owner1",
         }),
       },
-      {docs: [], empty: true},
+      {
+        docs: [
+          eligibleConfirmationDoc("voter1"),
+          eligibleConfirmationDoc("playerY"),
+        ],
+        empty: false,
+      },
     ];
     votingTx.get.mockImplementation(() => {
       const snap = votingResponses[votingCallIndex++] || {exists: false, data: () => ({})};

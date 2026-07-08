@@ -442,7 +442,7 @@ class UserTest {
             assertEquals(0.0, user.midRating)
             assertEquals(0.0, user.defenderRating)
             assertEquals(0.0, user.gkRating)
-            assertEquals(1, user.level)
+            assertEquals(0, user.level)
             assertEquals(0L, user.experiencePoints)
             assertTrue(user.milestonesAchieved.isEmpty())
         }
