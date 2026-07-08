@@ -146,11 +146,6 @@ export const LeagueScreen: React.FC<LeagueScreenProps> = ({ embedded = false }) 
 
   const userCardRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
-  const listContainerRef = useRef<HTMLDivElement>(null);
-  const pullStartY = useRef<number | null>(null);
-  const pullDelta = useRef(0);
-  const [pullProgress, setPullProgress] = useState(0);
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const [headerHeight, setHeaderHeight] = useState(96);
 
   const { seasonId: activeSeasonId, loading: seasonLoading } = useActiveSeason();
@@ -375,36 +370,6 @@ export const LeagueScreen: React.FC<LeagueScreenProps> = ({ embedded = false }) 
     };
   }, [currentUserId]);
 
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    if (listContainerRef.current && listContainerRef.current.scrollTop === 0) {
-      pullStartY.current = e.touches[0].clientY;
-    }
-  }, []);
-
-  const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    if (pullStartY.current === null) return;
-    const delta = e.touches[0].clientY - pullStartY.current;
-    if (delta > 0) {
-      pullDelta.current = delta;
-      setPullProgress(Math.min(delta / 100, 1));
-    }
-  }, []);
-
-  // Pull-to-refresh com timeout de proteção (10s)
-  const handleTouchEnd = useCallback(() => {
-    if (pullDelta.current > 60 && !isRefreshing) {
-      setIsRefreshing(true);
-      const timeoutId = setTimeout(() => setIsRefreshing(false), 10000);
-      refetch().finally(() => {
-        clearTimeout(timeoutId);
-        setIsRefreshing(false);
-      });
-    }
-    pullStartY.current = null;
-    pullDelta.current = 0;
-    setPullProgress(0);
-  }, [isRefreshing, refetch]);
-
   // getPositionStyle memoizado com Map cache por position
   const positionStyleCache = useRef(new Map<number, { bgcolor: string; color: string }>());
   const getPositionStyle = useCallback((position: number) => {
@@ -537,16 +502,38 @@ export const LeagueScreen: React.FC<LeagueScreenProps> = ({ embedded = false }) 
           <Typography variant="h6" sx={{ ml: embedded ? 0 : 1, flex: 1 }}>
             {t('nav.league')}
           </Typography>
-          <IconButton onClick={() => setShowSearch(v => !v)} aria-label={t('a11y.searchPlayer')} size="small">
+          <IconButton
+            onClick={() => {
+              setShowSearch((visible) => {
+                const next = !visible;
+                if (next) setShowSort(false);
+                return next;
+              });
+            }}
+            aria-label={t('a11y.searchPlayer')}
+            size="small"
+            sx={{ width: 44, height: 44 }}
+          >
             <SearchIcon />
           </IconButton>
           {!isMdUp && (
-            <IconButton onClick={() => setShowSort(v => !v)} aria-label={t('a11y.sort')} size="small">
+            <IconButton
+              onClick={() => {
+                setShowSort((visible) => {
+                  const next = !visible;
+                  if (next) setShowSearch(false);
+                  return next;
+                });
+              }}
+              aria-label={t('a11y.sort')}
+              size="small"
+              sx={{ width: 44, height: 44 }}
+            >
               <SortIcon />
             </IconButton>
           )}
           {currentUserPlayer && (
-            <IconButton onClick={handleShare} aria-label={t('a11y.sharePosition')} size="small">
+            <IconButton onClick={handleShare} aria-label={t('a11y.sharePosition')} size="small" sx={{ width: 44, height: 44 }}>
               <ShareIcon />
             </IconButton>
           )}
@@ -599,27 +586,40 @@ export const LeagueScreen: React.FC<LeagueScreenProps> = ({ embedded = false }) 
 
         {!isMdUp && (
         <Collapse in={showSort}>
-          <Box sx={{ px: 2, pb: 1, display: 'flex', gap: 1, alignItems: 'center' }}>
-            <Box sx={{ overflowX: 'auto', scrollbarWidth: 'none', '&::-webkit-scrollbar': { display: 'none' }, flex: 1 }}>
-            <ToggleButtonGroup
-              value={sortField}
-              exclusive
-              onChange={(_, v) => v && setSortField(v)}
-              size="small"
-              sx={{ flexWrap: 'nowrap' }}
-            >
-              {SORT_OPTIONS.map(opt => (
-                <ToggleButton key={opt.value} value={opt.value} sx={{ textTransform: 'none', fontSize: '0.75rem', px: 1.5 }}>
-                  {t(opt.labelKey)}
-                </ToggleButton>
-              ))}
-            </ToggleButtonGroup>
-            </Box>
+          <Box sx={{ px: 1.5, pb: 1, display: 'flex', gap: 1, alignItems: 'center' }}>
+            <FormControl size="small" sx={{ flex: 1, minWidth: 0 }}>
+              <InputLabel id="league-mobile-sort-label">{t('common.sort')}</InputLabel>
+              <Select
+                labelId="league-mobile-sort-label"
+                label={t('common.sort')}
+                value={sortField}
+                onChange={(e) => setSortField(e.target.value as SortField)}
+                sx={{
+                  fontSize: '0.875rem',
+                  '& .MuiSelect-select': {
+                    py: 1,
+                    pr: 4,
+                  },
+                }}
+              >
+                {SORT_OPTIONS.map(opt => (
+                  <MenuItem key={opt.value} value={opt.value}>
+                    {t(opt.labelKey)}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
             <Tooltip title={sortDirection === 'desc' ? t('league.sortDesc') : t('league.sortAsc')} arrow>
               <IconButton
-                size="small"
+                size="medium"
                 onClick={() => setSortDirection((prev) => prev === 'desc' ? 'asc' : 'desc')}
                 aria-label={sortDirection === 'desc' ? t('league.sortDesc') : t('league.sortAsc')}
+                sx={{
+                  width: 44,
+                  height: 44,
+                  border: `1px solid ${theme.palette.divider}`,
+                  borderRadius: 1,
+                }}
               >
                 {sortDirection === 'desc' ? <ArrowDownIcon /> : <ArrowUpIcon />}
               </IconButton>
@@ -628,25 +628,34 @@ export const LeagueScreen: React.FC<LeagueScreenProps> = ({ embedded = false }) 
         </Collapse>
         )}
 
-        <Box sx={{ px: 2, pb: 1, overflowX: 'auto', scrollbarWidth: 'none', '&::-webkit-scrollbar': { display: 'none' } }}>
+        <Box sx={{ px: { xs: 1.5, md: 2 }, pb: 1, overflowX: { xs: 'visible', md: 'auto' }, scrollbarWidth: 'none', '&::-webkit-scrollbar': { display: 'none' } }}>
           <ToggleButtonGroup
             value={genderFilter}
             exclusive
             size="small"
             onChange={(_, v) => v && setGenderFilter(v)}
             aria-label={t('games.genderFilter.all')}
-            sx={{ flexWrap: 'nowrap' }}
+            sx={{
+              width: { xs: '100%', md: 'auto' },
+              display: 'flex',
+              flexWrap: 'nowrap',
+              '& .MuiToggleButton-root': {
+                flex: { xs: 1, md: '0 0 auto' },
+                minWidth: 0,
+                whiteSpace: 'nowrap',
+              },
+            }}
           >
-            <ToggleButton value="ALL" sx={{ textTransform: 'none', fontSize: '0.75rem', px: 1.5 }}>
+            <ToggleButton value="ALL" sx={{ textTransform: 'none', fontSize: '0.75rem', px: { xs: 0.5, md: 1.5 } }}>
               {t('games.genderFilter.all')}
             </ToggleButton>
-            <ToggleButton value="MALE" sx={{ textTransform: 'none', fontSize: '0.75rem', px: 1.5 }}>
+            <ToggleButton value="MALE" sx={{ textTransform: 'none', fontSize: '0.75rem', px: { xs: 0.5, md: 1.5 } }}>
               {t('games.genderFilter.male')}
             </ToggleButton>
-            <ToggleButton value="FEMALE" sx={{ textTransform: 'none', fontSize: '0.75rem', px: 1.5 }}>
+            <ToggleButton value="FEMALE" sx={{ textTransform: 'none', fontSize: '0.75rem', px: { xs: 0.5, md: 1.5 } }}>
               {t('games.genderFilter.female')}
             </ToggleButton>
-            <ToggleButton value="MIXED" sx={{ textTransform: 'none', fontSize: '0.75rem', px: 1.5 }}>
+            <ToggleButton value="MIXED" sx={{ textTransform: 'none', fontSize: '0.75rem', px: { xs: 0.5, md: 1.5 } }}>
               {t('games.genderFilter.mixed')}
             </ToggleButton>
           </ToggleButtonGroup>
@@ -658,6 +667,15 @@ export const LeagueScreen: React.FC<LeagueScreenProps> = ({ embedded = false }) 
           variant="scrollable"
           scrollButtons="auto"
           aria-label={t('a11y.leagueDivisions')}
+          sx={{
+            minHeight: { xs: 40, md: 48 },
+            '& .MuiTab-root': {
+              minHeight: { xs: 40, md: 48 },
+              minWidth: { xs: 86, md: 90 },
+              px: { xs: 1, md: 2 },
+              fontSize: { xs: '0.75rem', md: '0.875rem' },
+            },
+          }}
         >
           <Tab
             label={
@@ -695,14 +713,6 @@ export const LeagueScreen: React.FC<LeagueScreenProps> = ({ embedded = false }) 
           ))}
         </Tabs>
 
-        {isRefreshing && <LinearProgress sx={{ position: 'absolute', bottom: 0, left: 0, right: 0 }} />}
-        {pullProgress > 0 && !isRefreshing && (
-          <LinearProgress
-            variant="determinate"
-            value={pullProgress * 100}
-            sx={{ position: 'absolute', bottom: 0, left: 0, right: 0, opacity: 0.6 }}
-          />
-        )}
       </Box>
 
       {showSticky && currentUserPlayer && currentUserPosition && (
@@ -745,12 +755,7 @@ export const LeagueScreen: React.FC<LeagueScreenProps> = ({ embedded = false }) 
       )}
 
       <PullToRefresh onRefresh={handleRefresh}>
-      <Box
-        ref={listContainerRef}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-      >
+      <Box>
       <PageContainer maxWidth="list">
         {isLoading ? (
           <LoadingState shimmerCount={8} itemType="RANKING" />
@@ -805,7 +810,20 @@ export const LeagueScreen: React.FC<LeagueScreenProps> = ({ embedded = false }) 
             )}
 
             {allPlayers.length > 0 && (
-              <Box sx={{ mb: 2, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+              <Box
+                sx={{
+                  mb: 2,
+                  display: 'flex',
+                  gap: 1,
+                  flexWrap: { xs: 'nowrap', sm: 'wrap' },
+                  overflowX: { xs: 'auto', sm: 'visible' },
+                  scrollbarWidth: 'none',
+                  '&::-webkit-scrollbar': { display: 'none' },
+                  '& .MuiChip-root': {
+                    flexShrink: 0,
+                  },
+                }}
+              >
                   <Chip
                     label={t('league.loadedCount', {
                       loaded: allPlayers.length,
@@ -1098,7 +1116,7 @@ export const LeagueScreen: React.FC<LeagueScreenProps> = ({ embedded = false }) 
           aria-label={t('a11y.goToMyPosition')}
           onClick={scrollToMe}
           sx={{
-            bottom: { xs: 80, md: 24 },
+            bottom: { xs: 'calc(80px + env(safe-area-inset-bottom, 0px))', md: 24 },
             right: { xs: 16, md: 24 },
             zIndex: 12,
           }}
@@ -1328,6 +1346,8 @@ const LeaguePlayerItem = React.memo(function LeaguePlayerItem({
       sx={{
         mb: 1,
         cursor: 'pointer',
+        borderRadius: 2,
+        overflow: 'hidden',
         transition: (t) => t.transitions.create('all', { duration: t.transitions.duration.standard }),
         bgcolor: player.isCurrentUser
           ? (t) => alpha(t.palette.primary.main, 0.1)
@@ -1350,18 +1370,27 @@ const LeaguePlayerItem = React.memo(function LeaguePlayerItem({
         }),
       }}
     >
-      <CardContent sx={{ py: 1.5 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+      <CardContent sx={{ p: 1.25, '&:last-child': { pb: 1.25 } }}>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: 'auto auto minmax(0, 1fr) auto',
+            alignItems: 'center',
+            columnGap: 1,
+            rowGap: 0.75,
+          }}
+        >
           <Tooltip title={positionTooltip} arrow placement="top">
             <Box
               sx={{
-                width: 32,
-                height: 32,
+                width: 30,
+                height: 30,
                 borderRadius: '50%',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 fontWeight: 700,
+                fontSize: '0.8rem',
                 ...positionStyle,
               }}
             >
@@ -1372,12 +1401,12 @@ const LeaguePlayerItem = React.memo(function LeaguePlayerItem({
           <PlayerAvatar
             name={player.userName}
             photoUrl={player.userPhoto}
-            size={48}
+            size={42}
             level={player.level}
           />
 
           <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, minWidth: 0 }}>
               <Button
                 color="inherit"
                 size="small"
@@ -1388,92 +1417,131 @@ const LeaguePlayerItem = React.memo(function LeaguePlayerItem({
                   justifyContent: 'flex-start',
                   textTransform: 'none',
                   fontWeight: 700,
+                  maxWidth: '100%',
                 }}
               >
-                <Typography variant="subtitle1" fontWeight={600} noWrap>
+                <Typography variant="subtitle2" fontWeight={700} noWrap>
                   {player.userName}
                 </Typography>
               </Button>
-              <TeamBadge teamId={player.favoriteTeam} size={18} />
+              <TeamBadge teamId={player.favoriteTeam} size={16} />
               {player.isCurrentUser && (
-                <Chip label="Você" size="small" color="primary" />
+                <Chip label="Você" size="small" color="primary" sx={{ height: 18, fontSize: '0.68rem' }} />
               )}
             </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
-              <Typography variant="caption" color="text.secondary">
-                {player.gamesPlayed} jogos
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                {player.wins}V
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                {player.goals}g
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                {player.assists || 0}a
-              </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, minWidth: 0, mt: 0.25 }}>
+              <Chip
+                label={divisionConfig.label}
+                size="small"
+                variant="outlined"
+                sx={{
+                  maxWidth: '100%',
+                  bgcolor: alpha(divisionConfig.color, 0.12),
+                  color: 'text.primary',
+                  borderColor: divisionConfig.color,
+                  fontWeight: 600,
+                  fontSize: '0.68rem',
+                  height: 20,
+                  '& .MuiChip-label': {
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                  },
+                }}
+              />
             </Box>
           </Box>
 
-          <Box sx={{ textAlign: 'right', flexShrink: 0 }}>
+          <Box sx={{ textAlign: 'right', flexShrink: 0, minWidth: 52 }}>
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', lineHeight: 1 }}>
+              XP
+            </Typography>
             <Typography
               variant="h6"
               fontWeight={700}
               color={divisionConfig.color}
+              sx={{ lineHeight: 1.05 }}
             >
               {player.experiencePoints ?? 0}
             </Typography>
-            <Chip
-              label={divisionConfig.label}
-              size="small"
-              variant="outlined"
-              sx={{
-                bgcolor: alpha(divisionConfig.color, 0.12),
-                color: 'text.primary',
-                borderColor: divisionConfig.color,
-                fontWeight: 600,
-                fontSize: '0.75rem',
-                height: 20,
-              }}
-            />
+          </Box>
+        </Box>
+
+        <Box
+          sx={{
+            mt: 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 1,
+            minWidth: 0,
+          }}
+        >
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 0.5,
+              minWidth: 0,
+              overflow: 'hidden',
+            }}
+          >
+            <MobileStatPill value={`${player.gamesPlayed}J`} />
+            <MobileStatPill value={`${player.wins}V`} />
+            <MobileStatPill value={`${player.goals}G`} />
+            <MobileStatPill value={`${player.assists || 0}A`} />
           </Box>
 
-          {canInvite && (
-            <Tooltip title={t('league.invitePlayer')} arrow>
-              <IconButton
-                onClick={handleInvite}
-                aria-label={t('league.invitePlayerAria', { name: player.userName })}
-                disabled={inviteDisabled}
-              >
-                <PersonAddIcon />
-              </IconButton>
-            </Tooltip>
-          )}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25, flexShrink: 0 }}>
+            {canInvite && (
+              <Tooltip title={t('league.invitePlayer')} arrow>
+                <IconButton
+                  onClick={handleInvite}
+                  aria-label={t('league.invitePlayerAria', { name: player.userName })}
+                  disabled={inviteDisabled}
+                  size="small"
+                  sx={{ width: 40, height: 40 }}
+                >
+                  <PersonAddIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            )}
 
-          {canMessage && (
-            <Tooltip title={t('league.messagePlayer')} arrow>
-              <IconButton
-                onClick={handleMessage}
-                aria-label={t('league.messagePlayerAria', { name: player.userName })}
-                disabled={messageDisabled}
-              >
-                {messageLoading ? <CircularProgress size={20} /> : <MessageIcon />}
-              </IconButton>
-            </Tooltip>
-          )}
+            {canMessage && (
+              <Tooltip title={t('league.messagePlayer')} arrow>
+                <IconButton
+                  onClick={handleMessage}
+                  aria-label={t('league.messagePlayerAria', { name: player.userName })}
+                  disabled={messageDisabled}
+                  size="small"
+                  sx={{ width: 40, height: 40 }}
+                >
+                  {messageLoading ? <CircularProgress size={18} /> : <MessageIcon fontSize="small" />}
+                </IconButton>
+              </Tooltip>
+            )}
 
-          <IconButton
-            onClick={handleToggle}
-            aria-label={t('league.togglePlayerAria', { name: player.userName })}
-            aria-expanded={isExpanded}
-          >
-            {isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-          </IconButton>
+            <IconButton
+              onClick={handleToggle}
+              aria-label={t('league.togglePlayerAria', { name: player.userName })}
+              aria-expanded={isExpanded}
+              size="small"
+              sx={{ width: 40, height: 40 }}
+            >
+              {isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+            </IconButton>
+          </Box>
         </Box>
 
         <Collapse in={isExpanded}>
           <Divider sx={{ my: 1.5 }} />
-          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1.5, textAlign: 'center' }}>
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: { xs: 'repeat(2, minmax(0, 1fr))', sm: 'repeat(3, minmax(0, 1fr))' },
+              gap: 1,
+              textAlign: 'center',
+            }}
+          >
             <StatBox label={t('league.victories')} value={player.wins} color={theme.palette.success.main} />
             <StatBox label={t('statistics.losses')} value={Math.max(0, player.gamesPlayed - player.wins)} color={theme.palette.error.main} />
             <StatBox label={t('statistics.winRate')} value={`${winRate}%`} color={theme.palette.primary.main} />
@@ -1492,13 +1560,45 @@ const LeaguePlayerItem = React.memo(function LeaguePlayerItem({
   );
 });
 
+const MobileStatPill = React.memo(function MobileStatPill({ value }: { value: string }) {
+  return (
+    <Box
+      component="span"
+      sx={(theme) => ({
+        px: 0.75,
+        py: 0.25,
+        minWidth: 0,
+        borderRadius: 1,
+        bgcolor: alpha(theme.palette.text.primary, 0.06),
+        color: 'text.secondary',
+        fontSize: '0.7rem',
+        fontWeight: 700,
+        lineHeight: 1.35,
+        whiteSpace: 'nowrap',
+      })}
+    >
+      {value}
+    </Box>
+  );
+});
+
 const StatBox = React.memo(function StatBox({ label, value, color }: { label: string; value: string | number; color: string }) {
   return (
-    <Box>
-      <Typography variant="h6" fontWeight={700} sx={{ color }}>
+    <Box sx={{ minWidth: 0 }}>
+      <Typography variant="subtitle1" fontWeight={700} sx={{ color, lineHeight: 1.15 }}>
         {value}
       </Typography>
-      <Typography variant="caption" color="text.secondary">
+      <Typography
+        variant="caption"
+        color="text.secondary"
+        sx={{
+          display: 'block',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+          fontSize: '0.68rem',
+        }}
+      >
         {label}
       </Typography>
     </Box>

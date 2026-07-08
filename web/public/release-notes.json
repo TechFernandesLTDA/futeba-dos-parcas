@@ -1,7 +1,26 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-08T21:18:11.858Z",
+  "generatedAt": "2026-07-08T21:37:21.182Z",
   "notes": [
+    {
+      "version": "1.51.27",
+      "buildNumber": null,
+      "releaseDate": "2026-07-08",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "A tela de Liga ficou mais legível e confortável no web mobile.",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "Os cards dos jogadores no celular agora separam nome, XP, estatísticas e ações sem espremer tudo na mesma linha.",
+        "A ordenação no mobile usa um seletor compacto, e busca/ordenação não ficam abertas ao mesmo tempo.",
+        "Filtros e abas da Liga ocupam menos espaço e evitam quebras tortas em telas pequenas.",
+        "O gesto de puxar para atualizar usa apenas o padrão da tela, reduzindo risco de atualização duplicada."
+      ],
+      "fixed": [],
+      "issueRefs": []
+    },
     {
       "version": "1.51.26",
       "buildNumber": null,
