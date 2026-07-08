@@ -9,6 +9,8 @@ import { createLogger } from '../utils/logger';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { getIsPublicFromVisibility } from '../utils/gameLifecycle';
+import { resolveExpectedPayment } from '../utils/gamePayment';
+import { getGameDurationMinutes } from '../utils/gamePricing';
 
 const logger = createLogger('useDuplicateGameCopy');
 
@@ -68,6 +70,7 @@ export function useDuplicateGameCopy() {
         const [year, month, day] = newDate.split('-').map(Number);
         const [hours, minutes] = (source.time || '19:00').split(':').map(Number);
         const dateTime = Timestamp.fromDate(new Date(year, month - 1, day, hours, minutes));
+        const expectedPayment = resolveExpectedPayment(source);
 
         const newGameData: Record<string, unknown> = {
           location_id: source.locationId,
@@ -78,14 +81,16 @@ export function useDuplicateGameCopy() {
           date: newDate,
           time: source.time,
           end_time: source.endTime || null,
+          duration_minutes: source.durationMinutes ?? getGameDurationMinutes(source.time, source.endTime),
           dateTime: dateTime,
           field_type: source.fieldType,
           game_type: source.gameType || source.fieldType,
           max_players: source.maxPlayers,
           max_goalkeepers: source.maxGoalkeepers,
           number_of_teams: source.numberOfTeams,
-          daily_price: source.dailyPrice,
+          daily_price: expectedPayment,
           total_cost: source.totalCost,
+          price_manual_override: source.priceManualOverride === true,
           pix_payment_enabled: source.pixPaymentEnabled,
           pix_key: source.pixKey || '',
           pix_key_type: source.pixKeyType || 'RANDOM',

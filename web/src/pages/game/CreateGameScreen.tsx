@@ -102,6 +102,7 @@ import {
   formatGameDurationLabel,
   getGameDurationMinutes,
   normalizeHourlyPriceForGame,
+  resolveGamePricingForSave,
 } from '../../utils/gamePricing';
 import { isScheduledDateTimeInPast } from '../../utils/gameScheduleValidation';
 
@@ -947,6 +948,12 @@ export const CreateGameScreen: React.FC = () => {
   const handleDuplicateGame = (gameId: string) => {
     const game = recentGames.find((g) => g.id === gameId);
     if (!game) return;
+    const duplicatedPricing = resolveGamePricingForSave({
+      totalCost: game.totalCost || game.dailyPrice * game.maxPlayers,
+      maxPlayers: game.maxPlayers,
+      dailyPrice: game.dailyPrice,
+      priceManualOverride: game.priceManualOverride === true,
+    });
 
     setFormData((prev) => ({
       ...prev,
@@ -959,9 +966,9 @@ export const CreateGameScreen: React.FC = () => {
       maxPlayers: game.maxPlayers,
       maxGoalkeepers: game.maxGoalkeepers,
       numberOfTeams: game.numberOfTeams,
-      totalCost: game.dailyPrice * game.maxPlayers,
-      dailyPrice: game.dailyPrice,
-      priceManualOverride: true,
+      totalCost: duplicatedPricing.totalCost,
+      dailyPrice: duplicatedPricing.dailyPrice,
+      priceManualOverride: duplicatedPricing.priceManualOverride,
       visibility: game.visibility as GameVisibility,
       groupId: game.groupId || prev.groupId,
       groupName: game.groupName || prev.groupName,
@@ -1109,15 +1116,22 @@ export const CreateGameScreen: React.FC = () => {
     if (!validateForm()) return;
 
     try {
-      const maxPlayersValue = parseIntegerDraft(numericDrafts.maxPlayers) ?? formData.maxPlayers;
-      const maxGoalkeepersValue = parseIntegerDraft(numericDrafts.maxGoalkeepers) ?? formData.maxGoalkeepers;
-      const numberOfTeamsValue = parseIntegerDraft(numericDrafts.numberOfTeams) ?? formData.numberOfTeams;
-      const totalCostValue = parseCurrencyDraft(numericDrafts.totalCost) ?? 0;
-      const dailyPriceValue = parseCurrencyDraft(numericDrafts.dailyPrice) ?? 0;
+      const maxPlayersValue = formData.maxPlayers;
+      const maxGoalkeepersValue = formData.maxGoalkeepers;
+      const numberOfTeamsValue = formData.numberOfTeams;
+      const pricingForSave = resolveGamePricingForSave({
+        totalCost: formData.totalCost,
+        maxPlayers: maxPlayersValue,
+        dailyPrice: formData.dailyPrice,
+        priceManualOverride: formData.priceManualOverride,
+      });
+      const totalCostValue = pricingForSave.totalCost;
+      const dailyPriceValue = pricingForSave.dailyPrice;
       const recurrenceCountValue = parseIntegerDraft(numericDrafts.recurrenceCount) ?? formData.recurrenceCount;
       const [year, month, day] = formData.date.split('-').map(Number);
       const [hours, minutes] = formData.time.split(':').map(Number);
       const dateTime = Timestamp.fromDate(new Date(year, month - 1, day, hours, minutes));
+      const durationMinutes = getGameDurationMinutes(formData.time, formData.endTime);
 
       // Verificar sobreposição de horários
       if (formData.fieldId && formData.date) {
@@ -1229,6 +1243,7 @@ export const CreateGameScreen: React.FC = () => {
         date: formData.date,
         time: formData.time,
         endTime: formData.endTime || null,
+        durationMinutes,
         dateTime,
         fieldType: formData.fieldType,
         gameType: formData.gameType || formData.fieldType,
@@ -1237,6 +1252,7 @@ export const CreateGameScreen: React.FC = () => {
         numberOfTeams: numberOfTeamsValue,
         dailyPrice: dailyPriceValue,
         totalCost: totalCostValue,
+        priceManualOverride: pricingForSave.priceManualOverride,
         pixPaymentEnabled: formData.pixPaymentEnabled,
         rules: formData.rules || '',
         visibility: formData.visibility,
@@ -1298,7 +1314,7 @@ export const CreateGameScreen: React.FC = () => {
         fieldName: formData.fieldName,
         locationAddress: formData.locationAddress,
         maxPlayers: formData.maxPlayers,
-        dailyPrice: formData.dailyPrice,
+        dailyPrice: dailyPriceValue,
         rules: formData.rules,
       });
       setShareDialogOpen(true);

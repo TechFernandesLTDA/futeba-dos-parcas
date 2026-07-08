@@ -100,6 +100,7 @@ import {
   formatGameDurationLabel,
   getGameDurationMinutes,
   normalizeHourlyPriceForGame,
+  resolveGamePricingForSave,
 } from '../../utils/gamePricing';
 
 const theme = createTheme();
@@ -193,5 +194,31 @@ describe('CreateGameScreen pricing helpers', () => {
     expect(getGameDurationMinutes('18:00', '')).toBe(60);
     expect(formatGameDurationLabel(90)).toBe('1h30');
     expect(calculateFieldRentalCost(35000, '18:00')).toBe(350);
+  });
+
+  it('resolve preço automático para salvar a partir do custo total atual', () => {
+    expect(resolveGamePricingForSave({
+      totalCost: 525,
+      maxPlayers: 14,
+      dailyPrice: 21,
+      priceManualOverride: false,
+    })).toEqual({
+      totalCost: 525,
+      dailyPrice: 37.5,
+      priceManualOverride: false,
+    });
+  });
+
+  it('preserva preço manual quando o organizador opta por sobrescrever', () => {
+    expect(resolveGamePricingForSave({
+      totalCost: 525,
+      maxPlayers: 14,
+      dailyPrice: 21,
+      priceManualOverride: true,
+    })).toEqual({
+      totalCost: 525,
+      dailyPrice: 21,
+      priceManualOverride: true,
+    });
   });
 });

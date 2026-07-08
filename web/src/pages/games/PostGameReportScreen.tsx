@@ -40,6 +40,7 @@ import { getLevelForXp, getLevelEntry, getXpProgress } from '../../types/gamific
 import { useTranslation } from 'react-i18next';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
 import { getUsersByIds } from '../../utils/userBatch';
+import { resolveExpectedPayment } from '../../utils/gamePayment';
 
 const logger = createLogger('PostGameReportScreen');
 
@@ -97,6 +98,9 @@ interface RawGameReportDoc {
   assistants?: PostGameStats['assistants'];
   participants?: PostGameStats['participants'];
   dailyPrice?: number;
+  totalCost?: number;
+  maxPlayers?: number;
+  priceManualOverride?: boolean;
 }
 interface RawConfirmationDoc {
   userId?: string;
@@ -215,7 +219,12 @@ export const PostGameReportScreen: React.FC = () => {
             (c) => c.status === 'CONFIRMED' && c.paymentStatus !== 'PAID' && c.paymentStatus !== 'paid'
           );
 
-          const dailyPrice = data.dailyPrice || 0;
+          const dailyPrice = resolveExpectedPayment({
+            dailyPrice: data.dailyPrice || 0,
+            totalCost: data.totalCost || 0,
+            maxPlayers: data.maxPlayers || 0,
+            priceManualOverride: data.priceManualOverride,
+          });
           setFinancialData({
             totalCollected: paidConfirmations.length * dailyPrice,
             totalPending: unpaidConfirmations.length * dailyPrice,

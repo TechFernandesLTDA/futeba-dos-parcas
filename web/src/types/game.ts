@@ -158,6 +158,7 @@ export interface Game {
   date: string;
   time: string;
   endTime?: string;
+  durationMinutes?: number;
   dateTime?: Date;
   
   // Status
@@ -191,6 +192,7 @@ export interface Game {
   // Price
   dailyPrice: number;
   totalCost: number;
+  priceManualOverride?: boolean;
   pixKey: string;
   pixKeyType: PixKeyType;
   pixBeneficiaryName: string;

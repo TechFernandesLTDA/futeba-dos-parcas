@@ -46,3 +46,30 @@ export const calculatePerPlayerPrice = (totalCost: number, maxPlayers: number) =
   if (totalCost <= 0 || maxPlayers <= 0) return 0;
   return roundCurrency(totalCost / maxPlayers);
 };
+
+export interface GamePricingForSaveInput {
+  totalCost: number;
+  maxPlayers: number;
+  dailyPrice?: number | null;
+  priceManualOverride?: boolean;
+}
+
+export const resolveGamePricingForSave = ({
+  totalCost,
+  maxPlayers,
+  dailyPrice,
+  priceManualOverride = false,
+}: GamePricingForSaveInput) => {
+  const safeTotalCost = Number.isFinite(totalCost) && totalCost > 0 ? roundCurrency(totalCost) : 0;
+  const safeDailyPrice = Number.isFinite(dailyPrice) && dailyPrice && dailyPrice > 0
+    ? roundCurrency(dailyPrice)
+    : 0;
+
+  return {
+    totalCost: safeTotalCost,
+    dailyPrice: priceManualOverride
+      ? safeDailyPrice
+      : calculatePerPlayerPrice(safeTotalCost, maxPlayers),
+    priceManualOverride,
+  };
+};

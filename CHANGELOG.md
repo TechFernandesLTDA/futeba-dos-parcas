@@ -160,6 +160,13 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.51.16][web-1.51.16] - 2026-07-08
+
+#### Corrigido
+- `CreateGameScreen` agora resolve o preco final no submit a partir de `formData.totalCost` e `maxPlayers`, evitando `numericDrafts.dailyPrice` antigo quando outro campo numerico esta ativo.
+- O app persiste `price_manual_override` e `duration_minutes` nos jogos criados.
+- `resolveExpectedPayment` passa a preferir `total_cost / max_players` para jogos automaticos e preserva `daily_price` apenas quando o preco manual esta marcado.
+
 ### [1.51.15][web-1.51.15] - 2026-07-07
 
 #### Corrigido
@@ -1198,6 +1205,11 @@ _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
 
+### [1.7.9][functions-1.7.9] - 2026-07-08
+
+#### Corrigido
+- `onGameFinishedCreateRecurrence` copia `duration_minutes` e `price_manual_override`, evitando que recorrencias caiam em fallback de duracao ou percam a distincao entre preco automatico e manual.
+
 ### [1.7.8][functions-1.7.8] - 2026-07-07
 
 #### Corrigido
@@ -1688,6 +1700,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.51.16]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.16.md
 [web-1.51.15]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.15.md
 [web-1.51.14]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.14.md
 [web-1.51.13]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.13.md
@@ -1784,6 +1797,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [web-1.26.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.26.1.md
 [web-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.26.0.md
 [ios-1.6.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.0.md
+[functions-1.7.9]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.7.9.md
 [functions-1.7.8]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.7.8.md
 [functions-1.7.7]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.7.7.md
 [functions-1.7.6]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.7.6.md
