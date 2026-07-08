@@ -5,34 +5,37 @@ const mockWhere = jest.fn().mockReturnThis();
 const mockOrderBy = jest.fn().mockReturnThis();
 const mockLimit = jest.fn().mockReturnThis();
 
-const queryChain: any = { where: mockWhere, orderBy: mockOrderBy, limit: mockLimit, get: mockCollectionGet };
+const queryChain: any = {
+  where: mockWhere,
+  orderBy: mockOrderBy,
+  limit: mockLimit,
+  get: mockCollectionGet,
+};
 mockWhere.mockReturnValue(queryChain);
 mockLimit.mockReturnValue(queryChain);
 mockOrderBy.mockReturnValue(queryChain);
 
 let mockGroupMemberCount = 5;
 let mockGroupExists = true;
+let mockMemberDocs: Array<{ id: string; data: () => Record<string, unknown> }> = [];
 
-const mockTxUpdate = jest.fn();
-const mockRunTransaction = jest.fn(
-  async (callback: (tx: Record<string, unknown>) => Promise<unknown>) => {
-    const tx = {
-      get: jest.fn().mockResolvedValue({
-        exists: mockGroupExists,
-        data: () => mockGroupExists ? { member_count: mockGroupMemberCount } : undefined,
-      }),
-      update: mockTxUpdate,
-    };
-    return callback(tx);
-  },
-);
+function setMemberDocs(statuses: Array<string | undefined>) {
+  mockMemberDocs = statuses.map((status, index) => ({
+    id: `user${index + 1}`,
+    data: () => status === undefined ? {} : { status },
+  }));
+}
 
 const mockDoc = jest.fn((id: string) => ({
   id,
   get: mockDocGet,
   update: mockDocUpdate,
   collection: jest.fn(() => ({
-    doc: jest.fn((sid: string) => ({ id: sid, get: mockDocGet, update: mockDocUpdate })),
+    doc: jest.fn((sid: string) => ({
+      id: sid,
+      get: mockDocGet,
+      update: mockDocUpdate,
+    })),
     where: mockWhere,
     orderBy: mockOrderBy,
     limit: mockLimit,
@@ -65,7 +68,7 @@ const memberFirestore = jest.fn(() => ({
     update: mockDocUpdate,
   })),
   batch: jest.fn(),
-  runTransaction: mockRunTransaction,
+  runTransaction: jest.fn(),
 })) as any;
 memberFirestore.FieldValue = memberFieldValue;
 memberFirestore.Timestamp = memberTimestamp;
@@ -95,119 +98,131 @@ describe("Member Counter", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockDocUpdate.mockResolvedValue(undefined);
-    mockTxUpdate.mockResolvedValue(undefined);
     mockGroupMemberCount = 5;
     mockGroupExists = true;
-    mockRunTransaction.mockImplementation(
-      async (callback: (tx: Record<string, unknown>) => Promise<unknown>) => {
-        const tx = {
-          get: jest.fn().mockResolvedValue({
-            exists: mockGroupExists,
-            data: () => mockGroupExists ? { member_count: mockGroupMemberCount } : undefined,
-          }),
-          update: mockTxUpdate,
-        };
-        return callback(tx);
-      },
-    );
+    setMemberDocs(["ACTIVE", "ACTIVE", "ACTIVE", "ACTIVE", "ACTIVE"]);
+    mockDocGet.mockImplementation(async () => ({
+      exists: mockGroupExists,
+      data: () => mockGroupExists ?
+        { member_count: mockGroupMemberCount } :
+        undefined,
+    }));
+    mockCollectionGet.mockImplementation(async () => ({ docs: mockMemberDocs }));
   });
 
-  it("incrementa member_count em CREATE ACTIVE", async () => {
+  it("reconta member_count em CREATE ACTIVE", async () => {
+    setMemberDocs([
+      "ACTIVE",
+      "ACTIVE",
+      "ACTIVE",
+      "ACTIVE",
+      "ACTIVE",
+      "ACTIVE",
+    ]);
+
     await onMemberWritten(makeEvent(undefined, { status: "ACTIVE" }));
 
-    expect(mockRunTransaction).toHaveBeenCalled();
-    expect(mockTxUpdate).toHaveBeenCalledWith(
-      expect.anything(),
+    expect(mockDocUpdate).toHaveBeenCalledWith(
       expect.objectContaining({
         member_count: 6,
       }),
     );
   });
 
-  it("nao incrementa quando status nao e ACTIVE", async () => {
+  it("nao escreve quando status nao e ACTIVE e contador ja esta correto", async () => {
     await onMemberWritten(makeEvent(undefined, { status: "PENDING" }));
 
-    expect(mockRunTransaction).not.toHaveBeenCalled();
+    expect(mockCollectionGet).toHaveBeenCalled();
+    expect(mockDocUpdate).not.toHaveBeenCalled();
   });
 
-  it("decrementa member_count em DELETE (before existia)", async () => {
+  it("reconta member_count em DELETE de membro ativo", async () => {
+    setMemberDocs(["ACTIVE", "ACTIVE", "ACTIVE", "ACTIVE"]);
+
     await onMemberWritten(makeEvent({ status: "ACTIVE" }, undefined));
 
-    expect(mockRunTransaction).toHaveBeenCalled();
-    expect(mockTxUpdate).toHaveBeenCalledWith(
-      expect.anything(),
+    expect(mockDocUpdate).toHaveBeenCalledWith(
       expect.objectContaining({
         member_count: 4,
       }),
     );
   });
 
-  it("decrementa quando status muda de ACTIVE para INACTIVE", async () => {
+  it("reconta quando status muda de ACTIVE para INACTIVE", async () => {
+    setMemberDocs(["ACTIVE", "ACTIVE", "ACTIVE", "ACTIVE"]);
+
     await onMemberWritten(makeEvent(
       { status: "ACTIVE" },
       { status: "INACTIVE" },
     ));
 
-    expect(mockRunTransaction).toHaveBeenCalled();
-    expect(mockTxUpdate).toHaveBeenCalledWith(
-      expect.anything(),
+    expect(mockDocUpdate).toHaveBeenCalledWith(
       expect.objectContaining({
         member_count: 4,
       }),
     );
   });
 
-  it("faz no-op quando wasActive e isActive sao iguais", async () => {
+  it("cura drift mesmo quando wasActive e isActive sao iguais", async () => {
+    mockGroupMemberCount = 2;
+    setMemberDocs(["ACTIVE"]);
+
     await onMemberWritten(makeEvent(
       { status: "ACTIVE" },
       { status: "ACTIVE" },
     ));
 
-    expect(mockRunTransaction).not.toHaveBeenCalled();
+    expect(mockDocUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        member_count: 1,
+      }),
+    );
   });
 
-  it("faz no-op quando ambos nao sao ACTIVE", async () => {
+  it("faz no-op quando ambos nao sao ACTIVE e contador ja esta correto", async () => {
     await onMemberWritten(makeEvent(
       { status: "PENDING" },
       { status: "REMOVED" },
     ));
 
-    expect(mockRunTransaction).not.toHaveBeenCalled();
+    expect(mockDocUpdate).not.toHaveBeenCalled();
   });
 
-  it("skip quando counted_by_join_request e CREATE", async () => {
+  it("nao duplica join-request ja contado quando contador esta correto", async () => {
+    mockGroupMemberCount = 6;
+    setMemberDocs([
+      "ACTIVE",
+      "ACTIVE",
+      "ACTIVE",
+      "ACTIVE",
+      "ACTIVE",
+      "ACTIVE",
+    ]);
+
     await onMemberWritten(makeEvent(
       undefined,
       { status: "ACTIVE", _counted_by_join_request: true },
     ));
 
-    expect(mockRunTransaction).not.toHaveBeenCalled();
+    expect(mockDocUpdate).not.toHaveBeenCalled();
   });
 
-  it("nao impede decrement mesmo com counted_by_join_request (nao e CREATE)", async () => {
-    await onMemberWritten(makeEvent(
-      { status: "ACTIVE" },
-      { status: "INACTIVE", _counted_by_join_request: true },
-    ));
+  it("reativacao (INACTIVE -> ACTIVE) reconta member_count", async () => {
+    setMemberDocs([
+      "ACTIVE",
+      "ACTIVE",
+      "ACTIVE",
+      "ACTIVE",
+      "ACTIVE",
+      "ACTIVE",
+    ]);
 
-    expect(mockRunTransaction).toHaveBeenCalled();
-    expect(mockTxUpdate).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.objectContaining({
-        member_count: 4,
-      }),
-    );
-  });
-
-  it("reativacao (INACTIVE -> ACTIVE) incrementa member_count", async () => {
     await onMemberWritten(makeEvent(
       { status: "INACTIVE" },
       { status: "ACTIVE" },
     ));
 
-    expect(mockRunTransaction).toHaveBeenCalled();
-    expect(mockTxUpdate).toHaveBeenCalledWith(
-      expect.anything(),
+    expect(mockDocUpdate).toHaveBeenCalledWith(
       expect.objectContaining({
         member_count: 6,
       }),
@@ -215,54 +230,45 @@ describe("Member Counter", () => {
   });
 
   it("trata erro do Firestore sem lancar excecao", async () => {
-    mockRunTransaction.mockRejectedValueOnce(new Error("Firestore error"));
+    mockCollectionGet.mockRejectedValueOnce(new Error("Firestore error"));
 
     await expect(
       onMemberWritten(makeEvent(undefined, { status: "ACTIVE" })),
     ).resolves.toBeUndefined();
   });
 
-  it("skip quando grupo nao existe na transacao", async () => {
+  it("skip quando grupo nao existe", async () => {
     mockGroupExists = false;
 
     await onMemberWritten(makeEvent(undefined, { status: "ACTIVE" }));
 
-    expect(mockRunTransaction).toHaveBeenCalled();
-    expect(mockTxUpdate).not.toHaveBeenCalled();
+    expect(mockCollectionGet).toHaveBeenCalled();
+    expect(mockDocUpdate).not.toHaveBeenCalled();
   });
 
-  it("nao permite member_count negativo (floor em 0)", async () => {
+  it("considera status ausente como membro ativo legacy", async () => {
     mockGroupMemberCount = 0;
+    setMemberDocs([undefined]);
 
-    await onMemberWritten(makeEvent({ status: "ACTIVE" }, undefined));
+    await onMemberWritten(makeEvent(undefined, {}));
 
-    expect(mockRunTransaction).toHaveBeenCalled();
-    expect(mockTxUpdate).toHaveBeenCalledWith(
-      expect.anything(),
+    expect(mockDocUpdate).toHaveBeenCalledWith(
       expect.objectContaining({
-        member_count: 0,
+        member_count: 1,
       }),
     );
   });
 
   it("usa member_count=0 quando campo esta ausente no grupo", async () => {
-    mockRunTransaction.mockImplementation(
-      async (callback: (tx: Record<string, unknown>) => Promise<unknown>) => {
-        const tx = {
-          get: jest.fn().mockResolvedValue({
-            exists: true,
-            data: () => ({}),
-          }),
-          update: mockTxUpdate,
-        };
-        return callback(tx);
-      },
-    );
+    mockDocGet.mockImplementation(async () => ({
+      exists: true,
+      data: () => ({}),
+    }));
+    setMemberDocs(["ACTIVE"]);
 
     await onMemberWritten(makeEvent(undefined, { status: "ACTIVE" }));
 
-    expect(mockTxUpdate).toHaveBeenCalledWith(
-      expect.anything(),
+    expect(mockDocUpdate).toHaveBeenCalledWith(
       expect.objectContaining({
         member_count: 1,
       }),
