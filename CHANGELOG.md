@@ -167,6 +167,14 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.51.27][web-1.51.27] - 2026-07-08
+
+#### Mudado
+- Reorganiza `LeaguePlayerItem` para mobile com grid responsivo, pílulas de estatísticas e ações em faixa própria.
+- Ajusta filtros mobile, chips de promoção/rebaixamento e tabs de divisões com breakpoints específicos.
+- Remove handlers locais duplicados de pull-to-refresh em `LeagueScreen`.
+- Ajusta offset do FAB da Liga com `env(safe-area-inset-bottom)`.
+
 ### [1.51.26][web-1.51.26] - 2026-07-08
 
 #### Mudado
@@ -1803,6 +1811,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.51.27]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.27.md
 [web-1.51.26]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.26.md
 [web-1.51.25]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.25.md
 [web-1.51.24]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.24.md
