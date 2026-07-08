@@ -160,6 +160,12 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.51.21][web-1.51.21] - 2026-07-08
+
+#### Corrigido
+- `AuthContext` mantém um convite pendente em `useRef` e usa esse código quando `onAuthStateChanged` cria `users/{uid}` antes do submit terminar.
+- Teste de regressão cobre o cenário em que `createUserWithEmailAndPassword` dispara o observer antes de `signUp` chamar `createUserDocument`.
+
 ### [1.51.20][web-1.51.20] - 2026-07-08
 
 #### Mudado
@@ -1236,6 +1242,13 @@ _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
 
+### [1.7.10][functions-1.7.10] - 2026-07-08
+
+#### Corrigido
+- `validateInviteCode` grava `pending_app_invites/{uid}` para usuarios autenticados, com validade curta.
+- `onUserCreatedProcessInvite` usa essa pendencia como fallback antes de desistir com "User created without app invite code".
+- Testes de regressao cobrem o fallback de cadastro Google sem `invited_by_code`.
+
 ### [1.7.9][functions-1.7.9] - 2026-07-08
 
 #### Corrigido
@@ -1731,6 +1744,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.51.21]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.21.md
 [web-1.51.20]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.20.md
 [web-1.51.19]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.19.md
 [web-1.51.18]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.18.md
@@ -1832,6 +1846,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [web-1.26.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.26.1.md
 [web-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.26.0.md
 [ios-1.6.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.0.md
+[functions-1.7.10]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.7.10.md
 [functions-1.7.9]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.7.9.md
 [functions-1.7.8]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.7.8.md
 [functions-1.7.7]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.7.7.md

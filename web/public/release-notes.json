@@ -1,7 +1,26 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-08T15:54:23.411Z",
+  "generatedAt": "2026-07-08T16:37:44.353Z",
   "notes": [
+    {
+      "version": "1.51.21",
+      "buildNumber": null,
+      "releaseDate": "2026-07-08",
+      "type": "patch",
+      "showPopup": false,
+      "published": true,
+      "headline": "Cadastros feitos por convite preservam melhor a recompensa de XP do padrinho.",
+      "highlights": [],
+      "added": [],
+      "improved": [],
+      "fixed": [
+        "O cadastro web guarda o código de convite enquanto o Firebase Auth finaliza a sessão, evitando que o perfil seja criado sem vínculo ao convite.",
+        "O fluxo de Google e email/senha fica mais resistente a corridas no primeiro acesso.",
+        "`AuthContext` mantém um convite pendente em `useRef` e usa esse código quando `onAuthStateChanged` cria `users/{uid}` antes do submit terminar.",
+        "Teste de regressão cobre o cenário em que `createUserWithEmailAndPassword` dispara o observer antes de `signUp` chamar `createUserDocument`."
+      ],
+      "issueRefs": []
+    },
     {
       "version": "1.51.20",
       "buildNumber": null,
