@@ -24,6 +24,13 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ## Android
 
+### [1.36.2][android-1.36.2] - 2026-07-08
+
+#### Corrigido
+- `LevelCalculator` passa a ser uma fachada sobre `LevelTable`.
+- Defaults de `User`, `XpLog` e validacao de nivel foram alinhados para 0-20.
+- Testes compartilhados e JVM foram atualizados para a curva canonica.
+
 ### [1.36.1][android-1.36.1] - 2026-07-05
 
 #### Mudado
@@ -159,6 +166,13 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 - Bump de versão de manutenção após a mega audit wave de 2026-05-11, sem mudanças funcionais no Android nesta tag.
 
 ## Web
+
+### [1.51.22][web-1.51.22] - 2026-07-08
+
+#### Corrigido
+- Adiciona normalizador `xpAccounting` para aliases `xp_earned`, `level_after`, `experience_points` e legados.
+- Remove fallbacks `|| 1` em leituras de nivel e usa a tabela canonica para derivar nivel por XP.
+- Cobre regressao para preservar nivel 0 e ler logs de XP atuais.
 
 ### [1.51.21][web-1.51.21] - 2026-07-08
 
@@ -1242,6 +1256,15 @@ _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
 
+### [1.7.11][functions-1.7.11] - 2026-07-08
+
+#### Corrigido
+- `isParticipationEligible` centraliza status, overlap suspeito e campos `checked_in`/`was_present`.
+- `onGameStatusUpdate` calcula streak dentro da transaction de XP e grava `user_streaks`.
+- `submitMvpVote`, `submitMvpVotes` e `concludeMvpVoting` filtram participantes inelegiveis.
+- `processXpBatch` deduplica entradas repetidas no mesmo input antes de incrementar XP.
+- Scripts de auditoria somam `xp_earned` e aceitam aliases legados sem subcontar logs atuais.
+
 ### [1.7.10][functions-1.7.10] - 2026-07-08
 
 #### Corrigido
@@ -1734,6 +1757,7 @@ _Issues: #2981_
 _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 
 
+[android-1.36.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.36.2.md
 [android-1.36.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.36.1.md
 [android-1.36.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.36.0.md
 [android-1.35.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.35.0.md
@@ -1744,6 +1768,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.51.22]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.22.md
 [web-1.51.21]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.21.md
 [web-1.51.20]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.20.md
 [web-1.51.19]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.19.md
@@ -1846,6 +1871,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [web-1.26.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.26.1.md
 [web-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.26.0.md
 [ios-1.6.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.0.md
+[functions-1.7.11]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.7.11.md
 [functions-1.7.10]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.7.10.md
 [functions-1.7.9]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.7.9.md
 [functions-1.7.8]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.7.8.md

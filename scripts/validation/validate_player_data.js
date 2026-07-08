@@ -85,10 +85,15 @@ async function validatePlayerData() {
     const xpByUser = new Map();
     xpSnapshot.forEach(doc => {
       const log = doc.data();
-      if (!xpByUser.has(log.userId)) {
-        xpByUser.set(log.userId, 0);
+      const userId = log.user_id || log.userId;
+      const xpEarned = log.xp_earned ?? log.xpEarned ?? log.amount ?? 0;
+      if (!userId) {
+        return;
       }
-      xpByUser.set(log.userId, xpByUser.get(log.userId) + (log.amount || 0));
+      if (!xpByUser.has(userId)) {
+        xpByUser.set(userId, 0);
+      }
+      xpByUser.set(userId, xpByUser.get(userId) + xpEarned);
     });
 
     for (const user of users) {

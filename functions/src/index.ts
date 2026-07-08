@@ -74,7 +74,7 @@ import {
   getWeekKey,
   determineGameResults,
   getOpponentScore,
-  fetchAllStreaks,
+  isParticipationEligible,
   updateRankingDeltas,
   updateSeasonParticipation,
 } from "./game/helpers";
@@ -188,6 +188,118 @@ async function getNotifications(): Promise<NotificationModule> {
     notificationImported = true;
   }
   return notificationModule!;
+}
+
+/**
+ * Formata a data do jogo na chave yyyy-MM-dd em America/Sao_Paulo.
+ * @param {Date} date Data do jogo.
+ * @return {string} Chave local BRT.
+ */
+export function brtDateKey(date: Date): string {
+  return date.toLocaleDateString("en-CA", {
+    timeZone: "America/Sao_Paulo",
+  });
+}
+
+/**
+ * Converte uma chave yyyy-MM-dd em Date UTC seguro para diff em dias.
+ * @param {unknown} dateKey Valor bruto do campo de data.
+ * @return {Date | null} Data normalizada ou null.
+ */
+export function parseDateKeyAsUtc(dateKey?: unknown): Date | null {
+  if (typeof dateKey !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(dateKey)) {
+    return null;
+  }
+  const parsed = new Date(`${dateKey}T00:00:00.000Z`);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+/**
+ * Lê o primeiro campo numérico finito de um documento.
+ * @param {admin.firestore.DocumentData | undefined} data Documento bruto.
+ * @param {string[]} keys Aliases aceitos.
+ * @param {number} fallback Valor padrão.
+ * @return {number} Número encontrado ou fallback.
+ */
+export function getFiniteNumber(
+  data: admin.firestore.DocumentData | undefined,
+  keys: string[],
+  fallback = 0
+): number {
+  for (const key of keys) {
+    const value = data?.[key];
+    if (typeof value === "number" && Number.isFinite(value)) return value;
+  }
+  return fallback;
+}
+
+/**
+ * Calcula o streak após processar o jogo atual.
+ * @param {admin.firestore.DocumentData | undefined} raw Doc de streak.
+ * @param {string} gameDateKey Data do jogo em yyyy-MM-dd.
+ * @return {object} Streak anterior, atual, recorde e início.
+ */
+export function calculateNextParticipationStreak(
+  raw: admin.firestore.DocumentData | undefined,
+  gameDateKey: string
+) {
+  const previousCurrent = getFiniteNumber(
+    raw,
+    ["current_streak", "currentStreak"]
+  );
+  const previousLongest = getFiniteNumber(
+    raw,
+    ["longest_streak", "longestStreak"]
+  );
+  const lastGameDate =
+    typeof raw?.last_game_date === "string" ?
+      raw.last_game_date :
+      typeof raw?.lastGameDate === "string" ?
+        raw.lastGameDate :
+        undefined;
+  const lastDate = parseDateKeyAsUtc(lastGameDate);
+  const currentDate = parseDateKeyAsUtc(gameDateKey);
+  const gapDays = lastDate && currentDate ?
+    Math.round(
+      (currentDate.getTime() - lastDate.getTime()) / 86400000
+    ) :
+    null;
+  const keepsStreak =
+    previousCurrent > 0 &&
+    (gapDays === null || (gapDays >= 0 && gapDays <= 1));
+  const currentStreak = keepsStreak ? previousCurrent + 1 : 1;
+  const previousStartedAt =
+    typeof raw?.streak_started_at === "string" ?
+      raw.streak_started_at :
+      typeof raw?.streakStartedAt === "string" ?
+        raw.streakStartedAt :
+        undefined;
+
+  return {
+    previousStreak: previousCurrent,
+    currentStreak,
+    longestStreak: Math.max(previousLongest, currentStreak),
+    streakStartedAt: keepsStreak ?
+      (previousStartedAt || gameDateKey) :
+      gameDateKey,
+  };
+}
+
+/**
+ * Calcula o bônus de XP pelo streak atual.
+ * @param {number} streak Streak de participação atualizado.
+ * @param {GamificationSettings} settings Configuração de XP.
+ * @return {number} XP de streak aplicável.
+ */
+export function calculateStreakXp(
+  streak: number,
+  settings: GamificationSettings
+): number {
+  if (streak >= 10) return settings.xp_streak_10;
+  if (streak >= 7) return settings.xp_streak_7;
+  if (streak >= 5) return settings.xp_streak_5;
+  if (streak >= 3) return settings.xp_streak_3;
+  return 0;
 }
 
 admin.initializeApp();
@@ -653,6 +765,24 @@ export const onGameStatusUpdate = onDocumentUpdated(
           );
         }
 
+        const presenceExcluded = validConfirmations.filter(
+          (c) => !isParticipationEligible(c)
+        );
+        if (presenceExcluded.length > 0) {
+          for (const c of presenceExcluded) {
+            logger.warn(
+              "[XP_ELIGIBILITY][PRESENCE] Jogador confirmado sem presença " +
+              `real foi excluído do processamento de XP: userId=${c.userId}, ` +
+              `gameId=${gameId}`
+            );
+          }
+          validConfirmations.splice(
+            0,
+            validConfirmations.length,
+            ...validConfirmations.filter(isParticipationEligible)
+          );
+        }
+
         // VALIDAÇÕES ANTI-CHEAT (SERVER-SIDE) — clamp and warn, don't throw
         // FIX #2525: mutamos conf.goals/assists/saves aqui (piso 0 + teto MAX)
         // para que TODOS os sinks downstream (statistics, xp_logs, ranking_deltas,
@@ -770,25 +900,13 @@ export const onGameStatusUpdate = onDocumentUpdated(
           );
         }
 
-        // 3. Pre-fetch player streaks in parallel.
-        // XP, level, stats and milestones are read again inside
-        // the per-player transaction so concurrent games for the
-        // same user serialize on fresh state (#2905).
-        const userIds = validConfirmations
-          .map((c) => c.userId);
-
-        const streaksMap =
-          await fetchAllStreaks(userIds);
-
         const now = FieldValue.serverTimestamp();
 
         // Date keys for Rankings (BRT timezone)
         const d = getGameDate(gameDoc);
+        const gameDateKey = brtDateKey(d);
         // yyyy-MM
-        const monthKey =
-          d.toLocaleDateString("en-CA", {
-            timeZone: "America/Sao_Paulo",
-          }).substring(0, 7);
+        const monthKey = gameDateKey.substring(0, 7);
         const weekKey = getWeekKey(d);
 
         // Coletar promises de notificações de
@@ -829,19 +947,12 @@ export const onGameStatusUpdate = onDocumentUpdated(
           conf.assists = cappedAssists;
           conf.saves = cappedSaves;
 
-          const streak =
-            streaksMap.get(uid) || 0;
-
           // SECURITY FIX (CVE-2): Validate MVP
           // was actually confirmed by checking
           // confirmations list
           const isMvpAndConfirmed =
             after.mvp_id === uid &&
-            confirmations.some(
-              (c) =>
-                c.userId === uid &&
-                c.status === "CONFIRMED"
-            );
+            validConfirmations.some((c) => c.userId === uid);
 
           // Log fraud attempts
           // (MVP claimed without confirmation)
@@ -868,11 +979,7 @@ export const onGameStatusUpdate = onDocumentUpdated(
           // Murcha (griefing: -10 XP + worstPlayerCount++) sem voto real.
           const isWorstAndConfirmed =
             after.worst_player_id === uid &&
-            confirmations.some(
-              (c) =>
-                c.userId === uid &&
-                c.status === "CONFIRMED"
-            );
+            validConfirmations.some((c) => c.userId === uid);
 
           // Log fraud attempts (worst flag set sem voto agregado)
           if (
@@ -926,47 +1033,6 @@ export const onGameStatusUpdate = onDocumentUpdated(
           }
           xp += cleanSheetXp;
 
-          // Streak XP (escalonado: 3->5->7->10)
-          let streakXp = 0;
-          if (streak >= 10) {
-            streakXp = settings.xp_streak_10;
-          } else if (streak >= 7) {
-            streakXp = settings.xp_streak_7;
-          } else if (streak >= 5) {
-            // NOVO: Bonus intermediário
-            streakXp = settings.xp_streak_5;
-          } else if (streak >= 3) {
-            streakXp = settings.xp_streak_3;
-          }
-          xp += streakXp;
-
-          // Enviar notificação de streak se
-          // atingiu milestone (3, 7, 10 ou 30)
-          // PERF_001: Lazy load notifications
-          // module para otimizar cold start
-          // As promises são coletadas e
-          // aguardadas após o loop para não
-          // perder notificações
-          streakNotificationPromises.push(
-            (async () => {
-              try {
-                const notifModule =
-                  await getNotifications();
-                await notifModule
-                  .sendStreakNotificationIfMilestone(
-                    uid, streak
-                  );
-              } catch (err) {
-                logger.error(
-                  "[STREAK] Error sending " +
-                  "notification for " +
-                  `user ${uid}:`,
-                  err
-                );
-              }
-            })()
-          );
-
           // "Bola Murcha" Penalty (worst player)
           // synced with XPCalculator.kt
           let penaltyXp = 0;
@@ -981,7 +1047,7 @@ export const onGameStatusUpdate = onDocumentUpdated(
           }
           xp += penaltyXp;
 
-          const baseXp = xp;
+          const baseXpWithoutStreak = xp;
           const transactionResult = await db().runTransaction(
             async (tx) => {
               const userRef = db()
@@ -996,21 +1062,29 @@ export const onGameStatusUpdate = onDocumentUpdated(
               const logRef = db()
                 .collection("xp_logs")
                 .doc(`game_${gameId}_user_${uid}`);
+              const streakQuery = db()
+                .collection("user_streaks")
+                .where("user_id", "==", uid)
+                .limit(1);
 
               const [
                 logSnap,
                 userSnap,
                 statsSnap,
+                streakSnap,
               ] = await Promise.all([
                 tx.get(logRef),
                 tx.get(userRef),
                 tx.get(statsRef),
+                tx.get(streakQuery),
               ]);
 
               if (logSnap.exists) {
                 return {
                   alreadyProcessed: true,
                   xp: 0,
+                  streak: 0,
+                  previousStreak: 0,
                 };
               }
 
@@ -1022,6 +1096,22 @@ export const onGameStatusUpdate = onDocumentUpdated(
 
               const userEntry =
                 userSnap.data() || {};
+              const streakDoc =
+                streakSnap.docs[0];
+              const streakRef = streakDoc?.ref ||
+                db().collection("user_streaks").doc(uid);
+              const streakState =
+                calculateNextParticipationStreak(
+                  streakDoc?.data(),
+                  gameDateKey
+                );
+              const streakXp =
+                calculateStreakXp(
+                  streakState.currentStreak,
+                  settings
+                );
+              const baseXp =
+                baseXpWithoutStreak + streakXp;
               const currentXp =
                 (userEntry
                   .experience_points as number) || 0;
@@ -1181,6 +1271,22 @@ export const onGameStatusUpdate = onDocumentUpdated(
                 {merge: true}
               );
 
+              tx.set(
+                streakRef,
+                {
+                  user_id: uid,
+                  current_streak:
+                    streakState.currentStreak,
+                  longest_streak:
+                    streakState.longestStreak,
+                  last_game_date: gameDateKey,
+                  streak_started_at:
+                    streakState.streakStartedAt,
+                  updated_at: now,
+                },
+                {merge: true}
+              );
+
               tx.update(
                 confirmationRef,
                 {xp_earned: playerXp}
@@ -1306,7 +1412,7 @@ export const onGameStatusUpdate = onDocumentUpdated(
                     currentMvpStreak:
                       newStats.currentMvpStreak,
                   },
-                  streak,
+                  streak: streakState.currentStreak,
                   newMvpStreak,
                   newLevel,
                   currentLevel,
@@ -1335,6 +1441,9 @@ export const onGameStatusUpdate = onDocumentUpdated(
               return {
                 alreadyProcessed: false,
                 xp: playerXp,
+                streak: streakState.currentStreak,
+                previousStreak:
+                  streakState.previousStreak,
               };
             }
           );
@@ -1344,6 +1453,28 @@ export const onGameStatusUpdate = onDocumentUpdated(
               "[XP_IDEMPOTENCY] Player " +
               `${uid} already processed for ` +
               `game ${gameId} inside transaction`
+            );
+          } else {
+            streakNotificationPromises.push(
+              (async () => {
+                try {
+                  const notifModule =
+                    await getNotifications();
+                  await notifModule
+                    .sendStreakNotificationIfMilestone(
+                      uid,
+                      transactionResult.streak,
+                      transactionResult.previousStreak
+                    );
+                } catch (err) {
+                  logger.error(
+                    "[STREAK] Error sending " +
+                    "notification for " +
+                    `user ${uid}:`,
+                    err
+                  );
+                }
+              })()
             );
           }
         }

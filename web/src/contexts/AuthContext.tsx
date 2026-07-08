@@ -27,6 +27,7 @@ import { markClaimRefresh } from '../utils/authRetry';
 import { useTranslation } from 'react-i18next';
 import type { validateInviteCode as validateInviteCodeType, syncFieldOwnerClaim as syncFieldOwnerClaimType } from '../services/cloudFunctions';
 import { normalizePlayerStats } from '../utils/playerStats';
+import { getEffectiveLevel, getExperiencePoints } from '../utils/xpAccounting';
 
 const logger = createLogger('AuthContext');
 const USER_ROLES: UserRole[] = ['PLAYER', 'FIELD_OWNER', 'ADMIN'];
@@ -64,11 +65,13 @@ function toDate(val: unknown): Date | undefined {
   return undefined;
 }
 function normalizeUserData(converted: Record<string, unknown>, id: string, raw: Record<string, unknown>): User {
+  const xp = getExperiencePoints({ ...raw, ...converted });
   return {
     ...converted,
     id,
     name: (converted.name as string) || 'Usuário',
-    level: typeof converted.level === 'number' ? converted.level : 1,
+    experiencePoints: xp,
+    level: getEffectiveLevel({ ...raw, ...converted }, xp),
     strikerRating: typeof converted.strikerRating === 'number' ? converted.strikerRating : 0,
     midRating: typeof converted.midRating === 'number' ? converted.midRating : 0,
     defenderRating: typeof converted.defenderRating === 'number' ? converted.defenderRating : 0,

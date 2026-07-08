@@ -658,7 +658,7 @@ export const searchAdminUsers = secureCallable<
         updatedAtIso: toIso(data.updated_at || data.updatedAt),
         lastLoginAtIso: toIso(data.last_login_at || data.lastLoginAt),
         gamesPlayed: numberOrDefault(data.games_played || data.gamesPlayed, 0),
-        level: numberOrDefault(data.level, 1),
+        level: numberOrDefault(data.level, 0),
         isMock: isTrue(data.is_mock || data.isMock),
         demoData: isTrue(data.demo_data || data.demoData),
         dataOrigin:

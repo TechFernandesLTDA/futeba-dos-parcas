@@ -545,6 +545,34 @@ describe("XP Processing - Batch Operations", () => {
       expect(user2?.success).toBe(true);
     });
 
+    test("deduplica transações repetidas no mesmo input", async () => {
+      const mockTransactions = [
+        sampleTxn("game1", "user1"),
+        sampleTxn("game1", "user1", 80),
+        sampleTxn("game1", "user2", 60),
+      ];
+
+      mockTxnExistsMap({});
+
+      const results = await processXpBatch(mockTransactions);
+
+      const user1Results = results.filter((r) =>
+        r.transactionId === "game_game1_user_user1"
+      );
+      const user2 = results.find((r) =>
+        r.transactionId === "game_game1_user_user2"
+      );
+
+      expect(results).toHaveLength(3);
+      expect(user1Results).toHaveLength(2);
+      expect(user1Results.filter((r) => r.alreadyProcessed))
+        .toHaveLength(1);
+      expect(user1Results.filter((r) => !r.alreadyProcessed))
+        .toHaveLength(1);
+      expect(user2?.success).toBe(true);
+      expect(user2?.alreadyProcessed).toBe(false);
+    });
+
     test("usa user snapshot fresco para level e não duplica XP de milestone", async () => {
       const setCalls: Array<{ref: any; data: Record<string, unknown>}> = [];
 

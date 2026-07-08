@@ -130,7 +130,7 @@ async function createMembershipForAcceptedGroupInvite(
         typeof existingMember?.total_games === "number" ?
           existingMember.total_games :
           0,
-      level: typeof user.level === "number" ? user.level : 1,
+      level: typeof user.level === "number" ? user.level : 0,
     }, {merge: true});
 
     tx.set(userGroupRef, {

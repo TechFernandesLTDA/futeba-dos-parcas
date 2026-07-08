@@ -867,8 +867,41 @@ export async function processXpBatch(
     );
   }
 
-  // Substituir transactions pelas validadas
-  transactions = validatedTransactions;
+  const duplicateResults:
+    XpProcessingResult[] = [];
+  const seenTransactionIds =
+    new Set<string>();
+  const uniqueTransactions:
+    XpTransactionData[] = [];
+
+  for (const txn of validatedTransactions) {
+    const transactionId = generateTransactionId(
+      txn.gameId,
+      txn.userId
+    );
+    if (seenTransactionIds.has(transactionId)) {
+      duplicateResults.push({
+        success: true,
+        transactionId,
+        alreadyProcessed: true,
+      });
+      continue;
+    }
+    seenTransactionIds.add(transactionId);
+    uniqueTransactions.push(txn);
+  }
+
+  if (duplicateResults.length > 0) {
+    logger.warn(
+      "[XP_BATCH] " +
+      `${duplicateResults.length} transação(ões) ` +
+      "duplicada(s) no mesmo batch foram " +
+      "deduplicadas antes da transaction"
+    );
+  }
+
+  // Substituir transactions pelas validadas e deduplicadas
+  transactions = uniqueTransactions;
 
   // SECFIX #441: Idempotência atômica via runTransaction
   //
@@ -1041,7 +1074,13 @@ export async function processXpBatch(
     }
   }
 
-  const successCount = results.filter(
+  const allResults = [
+    ...validationFailures,
+    ...duplicateResults,
+    ...results,
+  ];
+
+  const successCount = allResults.filter(
     (r) => r.success
   ).length;
   const failSuffix =
@@ -1049,15 +1088,21 @@ export async function processXpBatch(
       `, ${validationFailures.length}` +
         " rejeitados na validação" :
       "";
+  const duplicateSuffix =
+    duplicateResults.length > 0 ?
+      `, ${duplicateResults.length}` +
+        " duplicados no input" :
+      "";
 
   logger.info(
     "[XP_BATCH] Processamento completo: " +
     `${successCount}/` +
     `${inputTransactions.length} sucesso` +
-    failSuffix
+    failSuffix +
+    duplicateSuffix
   );
 
-  return [...validationFailures, ...results];
+  return allResults;
 }
 
 // ==========================================

@@ -18,8 +18,8 @@ class XpLogTest {
         xpEarned: Long = 50,
         xpBefore: Long = 100,
         xpAfter: Long = 150,
-        levelBefore: Int = 1,
-        levelAfter: Int = 1
+        levelBefore: Int = 0,
+        levelAfter: Int = 0
     ) = XpLog(
         id = "log-1",
         userId = "user-1",
@@ -83,8 +83,8 @@ class XpLogTest {
             assertEquals(0L, log.xpEarned)
             assertEquals(0L, log.xpBefore)
             assertEquals(0L, log.xpAfter)
-            assertEquals(1, log.levelBefore)
-            assertEquals(1, log.levelAfter)
+            assertEquals(0, log.levelBefore)
+            assertEquals(0, log.levelAfter)
             assertEquals(0, log.xpParticipation)
             assertEquals(0, log.xpGoals)
             assertEquals(0, log.xpAssists)

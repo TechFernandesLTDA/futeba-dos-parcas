@@ -1,7 +1,28 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-08T16:37:44.353Z",
+  "generatedAt": "2026-07-08T18:37:41.668Z",
   "notes": [
+    {
+      "version": "1.51.22",
+      "buildNumber": null,
+      "releaseDate": "2026-07-08",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "O XP e o nivel exibidos na web passam a acompanhar os logs reais de producao.",
+      "highlights": [],
+      "added": [],
+      "improved": [],
+      "fixed": [
+        "A tela Rumo ao Estrelato mostra XP ganho e nivel apos cada evento usando os campos atuais de `xp_logs`.",
+        "Rankings, perfil, detalhes de jogador, confronto direto e pos-jogo deixam de transformar nivel 0 em nivel 1 artificial.",
+        "A jornada de nivel passa a atualizar em tempo real quando um novo XP log e gravado.",
+        "Adiciona normalizador `xpAccounting` para aliases `xp_earned`, `level_after`, `experience_points` e legados.",
+        "Remove fallbacks `|| 1` em leituras de nivel e usa a tabela canonica para derivar nivel por XP.",
+        "Cobre regressao para preservar nivel 0 e ler logs de XP atuais."
+      ],
+      "issueRefs": []
+    },
     {
       "version": "1.51.21",
       "buildNumber": null,

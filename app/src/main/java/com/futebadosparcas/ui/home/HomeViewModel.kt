@@ -291,7 +291,7 @@ class HomeViewModel(
      */
     private fun buildGamificationSummary(user: com.futebadosparcas.domain.model.User): GamificationSummary {
         val (progressXp, neededXp) = com.futebadosparcas.domain.model.LevelTable.getXpProgress(user.experiencePoints)
-        val isMaxLevel = user.level >= 10
+        val isMaxLevel = com.futebadosparcas.domain.model.LevelTable.isMaxLevel(user.level)
         val percent = if (isMaxLevel) 100 else {
             if (neededXp > 0L) (progressXp * 100L / neededXp).toInt() else 100
         }

@@ -60,6 +60,9 @@ export interface GameConfirmation {
     // trigger onConfirmationCreated (temporal-overlap.ts). Quando true,
     // o jogador não recebe XP, estatísticas ou participação na season.
     suspiciousOverlap?: boolean;
+    checkedIn?: boolean;
+    wasPresent?: boolean;
+    hasPresenceSignal?: boolean;
 }
 
 export interface Team {

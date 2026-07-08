@@ -43,6 +43,11 @@ import {db} from "../_db";
 export function toGameConfirmation(
   raw: admin.firestore.DocumentData
 ): GameConfirmation {
+  const hasPresenceSignal =
+    "checked_in" in raw ||
+    "checkedIn" in raw ||
+    "was_present" in raw ||
+    "wasPresent" in raw;
   return {
     userId: raw.user_id ?? raw.userId ?? "",
     status: raw.status ?? "CONFIRMED",
@@ -64,7 +69,45 @@ export function toGameConfirmation(
       false,
     // SECFIX #430 / FIX #2797: lê flag de overlap temporal do Firestore.
     suspiciousOverlap: raw.suspicious_overlap === true,
+    checkedIn: raw.checked_in === true || raw.checkedIn === true,
+    wasPresent: raw.was_present === true || raw.wasPresent === true,
+    hasPresenceSignal,
   };
+}
+
+/**
+ * Define se uma confirmação pode gerar XP/estatística/voto.
+ *
+ * Jogos legados podem não ter campos de check-in. Nesse caso, `CONFIRMED`
+ * continua elegível para não quebrar processamento histórico. Quando o doc
+ * já possui sinal de presença (`checked_in`/`was_present`), presença real é
+ * obrigatória.
+ *
+ * @param {GameConfirmation} confirmation Confirmação do jogador.
+ * @return {boolean} true quando o jogador participou de fato.
+ */
+export function isParticipationEligible(
+  confirmation: GameConfirmation
+): boolean {
+  if (confirmation.status !== "CONFIRMED") return false;
+  if (confirmation.suspiciousOverlap === true) return false;
+  if (confirmation.hasPresenceSignal) {
+    return confirmation.checkedIn === true ||
+      confirmation.wasPresent === true;
+  }
+  return true;
+}
+
+/**
+ * Variante para docs brutos de confirmação usados em callables de votação.
+ * @param {admin.firestore.DocumentData | undefined} raw Dados da confirmação.
+ * @return {boolean} true quando o jogador pode votar/receber voto.
+ */
+export function isRawParticipationEligible(
+  raw?: admin.firestore.DocumentData
+): boolean {
+  if (!raw) return false;
+  return isParticipationEligible(toGameConfirmation(raw));
 }
 
 /**

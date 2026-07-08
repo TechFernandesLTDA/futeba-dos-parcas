@@ -416,14 +416,20 @@ async function analyzeXPLogs() {
   for (const doc of snapshot.docs) {
     const data = doc.data();
     let hasIssue = false;
+    const xpAmount =
+      data.xp_earned ??
+      data.xpEarned ??
+      data.amount ??
+      data.xpGained ??
+      0;
 
     // Verificar XP negativo
-    if (data.amount !== undefined && data.amount < 0) {
+    if (xpAmount < 0) {
       addIssue(
         "xp_logs",
         doc.id,
-        "amount",
-        `XP negativo: ${data.amount}`,
+        "xp_earned",
+        `XP negativo: ${xpAmount}`,
         "warning"
       );
       stats.negativeXP++;
@@ -431,12 +437,12 @@ async function analyzeXPLogs() {
     }
 
     // Verificar XP excessivo
-    if (data.amount !== undefined && data.amount > MAX_XP_PER_GAME) {
+    if (xpAmount > MAX_XP_PER_GAME) {
       addIssue(
         "xp_logs",
         doc.id,
-        "amount",
-        `XP excessivo: ${data.amount} (max: ${MAX_XP_PER_GAME})`,
+        "xp_earned",
+        `XP excessivo: ${xpAmount} (max: ${MAX_XP_PER_GAME})`,
         "warning"
       );
       stats.excessiveXP++;

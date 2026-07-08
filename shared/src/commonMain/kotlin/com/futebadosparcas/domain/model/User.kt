@@ -123,7 +123,7 @@ data class User(
     @SerialName("experience_years") val experienceYears: Int? = null,
 
     // Gamificacao
-    val level: Int = 1,
+    val level: Int = 0,
     @SerialName("experience_points") val experiencePoints: Long = 0L,
     @SerialName("milestones_achieved") val milestonesAchieved: List<String> = emptyList(),
     @SerialName("followers_count") val followersCount: Int = 0,

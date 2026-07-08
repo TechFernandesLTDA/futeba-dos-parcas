@@ -80,7 +80,7 @@ export const onUserCreate = auth
 
           // Role and gamification (defaults)
           role: "PLAYER",
-          level: 1,
+          level: 0,
           experience_points: 0,
           milestones_achieved: [],
 

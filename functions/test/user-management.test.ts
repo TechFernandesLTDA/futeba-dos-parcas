@@ -126,7 +126,7 @@ describe("User Management - onUserCreate", () => {
 
     // Role e gamificação
     expect(createdDoc.role).toBe("PLAYER");
-    expect(createdDoc.level).toBe(1);
+    expect(createdDoc.level).toBe(0);
     expect(createdDoc.experience_points).toBe(0);
     expect(createdDoc.milestones_achieved).toEqual([]);
   });

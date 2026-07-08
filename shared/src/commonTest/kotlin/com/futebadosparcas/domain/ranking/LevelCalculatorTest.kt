@@ -2,118 +2,50 @@ package com.futebadosparcas.domain.ranking
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-/**
- * Testes compartilhados para LevelCalculator — tabela de niveis de gamificacao.
- * Executam em Android (JVM) e iOS (Native).
- */
 class LevelCalculatorTest {
 
-    // ---- getLevelFromXp ----
-
     @Test
-    fun getLevelFromXp_xpZero_retornaLevel1() {
-        assertEquals(1, LevelCalculator.getLevelFromXp(0L))
+    fun getLevelFromXp_usaTabelaCanonicaComNivelZero() {
+        assertEquals(0, LevelCalculator.getLevelFromXp(0L))
+        assertEquals(0, LevelCalculator.getLevelFromXp(99L))
+        assertEquals(1, LevelCalculator.getLevelFromXp(100L))
+        assertEquals(2, LevelCalculator.getLevelFromXp(350L))
+        assertEquals(20, LevelCalculator.getLevelFromXp(528500L))
+        assertEquals(20, LevelCalculator.getLevelFromXp(999999L))
     }
 
     @Test
-    fun getLevelFromXp_xp99_retornaLevel1() {
-        // Nivel 2 comeca em 100 XP; 99 ainda e nivel 1
-        assertEquals(1, LevelCalculator.getLevelFromXp(99L))
+    fun getLevelInfo_retornaJanelaDeXpDaTabelaCanonica() {
+        val level0 = LevelCalculator.getLevelInfo(0)
+        assertEquals(0, level0.level)
+        assertEquals("Novato", level0.title)
+        assertEquals(0L, level0.xpRequired)
+        assertEquals(100L, level0.xpForNextLevel)
+
+        val maxLevel = LevelCalculator.getLevelInfo(20)
+        assertEquals(20, maxLevel.level)
+        assertEquals(528500L, maxLevel.xpRequired)
+        assertEquals(0L, maxLevel.xpForNextLevel)
     }
 
     @Test
-    fun getLevelFromXp_xp100_retornaLevel2() {
-        assertEquals(2, LevelCalculator.getLevelFromXp(100L))
+    fun progressoENextXp_respeitamNivelAtual() {
+        assertEquals(0f, LevelCalculator.getProgressToNextLevel(0L))
+        assertEquals(0.5f, LevelCalculator.getProgressToNextLevel(50L))
+        assertEquals(1f, LevelCalculator.getProgressToNextLevel(528500L))
+
+        assertEquals(100L, LevelCalculator.getXpForNextLevel(0L))
+        assertEquals(50L, LevelCalculator.getXpForNextLevel(50L))
+        assertEquals(0L, LevelCalculator.getXpForNextLevel(528500L))
     }
 
     @Test
-    fun getLevelFromXp_xp350_retornaLevel3() {
-        assertEquals(3, LevelCalculator.getLevelFromXp(350L))
-    }
-
-    @Test
-    fun getLevelFromXp_xp750_retornaLevel4() {
-        assertEquals(4, LevelCalculator.getLevelFromXp(750L))
-    }
-
-    @Test
-    fun getLevelFromXp_xpMaximo_retornaLevel10() {
-        // 8800 XP ou mais -> nivel 10 (Imortal)
-        assertEquals(10, LevelCalculator.getLevelFromXp(8800L))
-        assertEquals(10, LevelCalculator.getLevelFromXp(99999L))
-    }
-
-    // ---- getLevelInfo ----
-
-    @Test
-    fun getLevelInfo_level1_titulo_eIniciante() {
-        val info = LevelCalculator.getLevelInfo(1)
-        assertEquals("Iniciante", info.title)
-    }
-
-    @Test
-    fun getLevelInfo_level10_titulo_eImortal() {
-        val info = LevelCalculator.getLevelInfo(10)
-        assertEquals("Imortal", info.title)
-    }
-
-    @Test
-    fun getLevelInfo_level1_xpRequired_eZero() {
-        val info = LevelCalculator.getLevelInfo(1)
-        assertEquals(0L, info.xpRequired)
-    }
-
-    @Test
-    fun getLevelInfo_level1_xpForNextLevel_e100() {
-        val info = LevelCalculator.getLevelInfo(1)
-        assertEquals(100L, info.xpForNextLevel)
-    }
-
-    // ---- getProgressToNextLevel ----
-
-    @Test
-    fun getProgressToNextLevel_xpZero_retorna0() {
-        val progress = LevelCalculator.getProgressToNextLevel(0L)
-        assertEquals(0f, progress)
-    }
-
-    @Test
-    fun getProgressToNextLevel_xp50_retornaMeioCaminho() {
-        // Nivel 1: 0 -> 100 XP. Em 50 XP, progresso = 50%
-        val progress = LevelCalculator.getProgressToNextLevel(50L)
-        assertEquals(0.5f, progress)
-    }
-
-    @Test
-    fun getProgressToNextLevel_nivelMaximo_retorna1() {
-        // Nivel 10 = maximo; progresso e 100%
-        val progress = LevelCalculator.getProgressToNextLevel(8800L)
-        assertEquals(1f, progress)
-    }
-
-    @Test
-    fun getProgressToNextLevel_sempreEntre0e1() {
-        // Propriedade invariante: progresso sempre entre 0 e 1
-        val values = listOf(0L, 50L, 100L, 500L, 1000L, 5000L, 9000L)
-        for (xp in values) {
-            val p = LevelCalculator.getProgressToNextLevel(xp)
-            assertTrue(p in 0f..1f, "Progresso fora do intervalo para XP=$xp: $p")
-        }
-    }
-
-    // ---- getLevelInfoFromXp ----
-
-    @Test
-    fun getLevelInfoFromXp_xp100_retornaInfoLevel2() {
-        val info = LevelCalculator.getLevelInfoFromXp(100L)
-        assertEquals(2, info.level)
-    }
-
-    @Test
-    fun getLevelInfoFromXp_xp0_retornaInfoLevel1() {
-        val info = LevelCalculator.getLevelInfoFromXp(0L)
-        assertEquals(1, info.level)
+    fun didLevelUp_detectaMudancaRealDeNivel() {
+        assertTrue(LevelCalculator.didLevelUp(99L, 100L))
+        assertFalse(LevelCalculator.didLevelUp(0L, 50L))
+        assertFalse(LevelCalculator.didLevelUp(100L, 100L))
     }
 }
