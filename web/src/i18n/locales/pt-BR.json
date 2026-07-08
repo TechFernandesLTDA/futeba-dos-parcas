@@ -2335,6 +2335,13 @@
     "termsRequired": "Aceite os termos comerciais para enviar a solicitação.",
     "updateAction": "Atualizar solicitação"
   },
+  "pwa": {
+    "androidInstallHint": "Abra em tela cheia, com acesso rápido e menos distração.",
+    "desktopInstallHint": "Instale no computador para abrir em tela cheia e acessar mais rápido.",
+    "installAction": "Instalar",
+    "installTitle": "Usar como app",
+    "iosInstallHint": "No iPhone: Safari > Compartilhar > Adicionar à Tela de Início."
+  },
   "page": {
     "title": {
       "about": "Sobre",

@@ -2335,6 +2335,13 @@
     "termsRequired": "Acepta los términos comerciales antes de enviar la solicitud.",
     "updateAction": "Actualizar solicitud"
   },
+  "pwa": {
+    "androidInstallHint": "Ábrelo en pantalla completa, con acceso rápido y menos distracciones.",
+    "desktopInstallHint": "Instálalo en esta computadora para abrirlo en pantalla completa y entrar más rápido.",
+    "installAction": "Instalar",
+    "installTitle": "Usar como app",
+    "iosInstallHint": "En iPhone: Safari > Compartir > Agregar a pantalla de inicio."
+  },
   "page": {
     "title": {
       "about": "Acerca de",

@@ -12,13 +12,15 @@
 // v5 → v6: invalida assets antigos apos correcoes criticas no fluxo de perfil.
 // v6 → v7: invalida bundle antigo apos correcao critica do OTP no web mobile.
 // v7 → v8: limpa HTML/chunks antigos presos no PWA mobile apos hotfix de assets.
-const CACHE_NAME = 'futeba-v8';
+// v8 → v9: inclui metadados/icone de instalacao PWA mobile.
+const CACHE_NAME = 'futeba-v9';
 const OFFLINE_URL = '/offline.html';
 const STATIC_ASSETS = [
   '/',
   '/offline.html',
   '/manifest.json',
   '/favicon.svg',
+  '/icons/apple-touch-icon.png',
   '/icons/icon-192.png',
   '/icons/icon-512.png',
 ];

@@ -31,6 +31,7 @@ const HOME_TAB_COUNT = 5;
 import { useNotificationPermission } from '../../hooks/useNotificationPermission';
 import { WhatsNewPopupHost } from '../../components/whatsnew/WhatsNewPopupHost';
 import { QuickActions } from '../../components/home/QuickActions';
+import { InstallAppPrompt } from '../../components/common/InstallAppPrompt';
 import { pageSpacing } from '../../theme/pageTokens';
 
 const TeamOfTheWeek = lazy(() => import('../../components/game/TeamOfTheWeek').then(m => ({ default: m.TeamOfTheWeek })));
@@ -81,6 +82,7 @@ export function HomeScreen() {
     <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
       {tabValue === 0 && (
         <Box sx={{ flexShrink: 0, px: pageSpacing.pagePadding, pt: { xs: 1, md: 0.75 }, pb: towExpanded ? 0 : { xs: 0.5, md: 0 } }}>
+          <InstallAppPrompt sx={{ mb: { xs: 1, md: 1.25 } }} />
           <Box
             onClick={() => setTowExpanded(!towExpanded)}
             role="button"
