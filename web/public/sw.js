@@ -13,7 +13,8 @@
 // v6 → v7: invalida bundle antigo apos correcao critica do OTP no web mobile.
 // v7 → v8: limpa HTML/chunks antigos presos no PWA mobile apos hotfix de assets.
 // v8 → v9: inclui metadados/icone de instalacao PWA mobile.
-const CACHE_NAME = 'futeba-v9';
+// v9 → v10: invalida caches apos watchdog de inicializacao auth para Vivaldi mobile.
+const CACHE_NAME = 'futeba-v10';
 const OFFLINE_URL = '/offline.html';
 const STATIC_ASSETS = [
   '/',
