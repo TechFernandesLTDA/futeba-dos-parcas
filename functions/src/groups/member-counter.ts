@@ -8,8 +8,8 @@
  * negava op antes do member doc ser commit).
  *
  * Agora: client apenas escreve `members/{uid}` (com status ACTIVE etc), e este
- * trigger calcula delta + atualiza `groups/{gid}.member_count` via admin SDK
- * (bypassa rules).
+ * trigger reconta os membros ativos da subcollection e grava o valor absoluto
+ * em `groups/{gid}.member_count` via admin SDK (bypassa rules).
  */
 import {logger} from "firebase-functions";
 import {onDocumentWritten} from "firebase-functions/v2/firestore";
@@ -38,43 +38,48 @@ const ACTIVE_STATUSES = new Set([
 function isActiveMember(data: Record<string, unknown> | undefined): boolean {
   if (!data) return false;
   const status = data.status as string | undefined;
-  if (!status) return false;
+  if (!status) return true;
   return ACTIVE_STATUSES.has(status);
 }
 
 /**
- * Detecta se o member foi criado via join-request approval,
- * que já incrementou member_count atomicamente na transação.
+ * Reconta os documentos de membros ativos na fonte autoritativa.
  *
- * @param {Record<string, unknown> | undefined} data Member doc data
- * @return {boolean} true se ja foi contado pelo join-request
+ * @param {string} groupId Group id
+ * @return {Promise<number>} Quantidade real de membros ativos
  */
-function isCountedByJoinRequest(
-  data: Record<string, unknown> | undefined
-): boolean {
-  return data?._counted_by_join_request === true;
+async function countActiveMembers(groupId: string): Promise<number> {
+  const membersSnap = await db()
+    .collection("groups")
+    .doc(groupId)
+    .collection("members")
+    .get();
+
+  return membersSnap.docs.reduce((total, memberDoc) => {
+    const data = memberDoc.data() as Record<string, unknown> | undefined;
+    return total + (isActiveMember(data) ? 1 : 0);
+  }, 0);
 }
 
 /**
  * Trigger fire em CREATE, UPDATE ou DELETE de `groups/{gid}/members/{uid}`.
  *
- * Calcula delta baseado em transição de "active member" antes/depois e aplica
- * `FieldValue.increment(delta)` em `groups/{gid}.member_count`.
+ * Reconta o total de "active member" em `groups/{gid}/members` e aplica o
+ * valor absoluto em `groups/{gid}.member_count`.
  *
  * Cenários:
- * | Before active | After active | Delta | Cenário              |
- * |---------------|--------------|-------|----------------------|
- * | -             | yes          | +1    | CREATE (join)        |
- * | yes           | -            | -1    | DELETE (rare)        |
- * | yes           | no           | -1    | leave/kick (status)  |
- * | no            | yes          | +1    | re-activate          |
- * | yes           | yes          |  0    | profile update       |
- * | no            | no           |  0    | INACTIVE → REMOVED   |
+ * | Before active | After active | Cenário             | Ação             |
+ * |---------------|--------------|---------------------|------------------|
+ * | -             | yes          | CREATE (join)       | recount absoluto |
+ * | yes           | -            | DELETE (rare)       | recount absoluto |
+ * | yes           | no           | leave/kick (status) | recount absoluto |
+ * | no            | yes          | re-activate         | recount absoluto |
+ * | yes           | yes          | profile update      | heal se houver drift |
+ * | no            | no           | INACTIVE → REMOVED  | heal se houver drift |
  *
- * Idempotency: trigger pode re-fire em retry. Se delta=0 (sem mudança),
- * skip update — sem efeito colateral. Se delta != 0, increment é aplicado mesmo
- * em retry, mas Eventarc dedup minimiza repetição. Tolerável em sistema de
- * gamificação (member_count é counter, não financeiro).
+ * Idempotency: trigger pode re-fire em retry. Como gravamos o valor absoluto
+ * recontado da subcollection, retries, aprovações via join-request e drift
+ * legado convergem para o mesmo `member_count`.
  */
 export const onMemberWritten = onDocumentWritten(
   {
@@ -88,80 +93,55 @@ export const onMemberWritten = onDocumentWritten(
     const before = event.data?.before?.data();
     const after = event.data?.after?.data();
 
-    // FIX #651-B1: join-request approval already increments member_count
-    // atomically in a transaction. Skip double-count on CREATE only.
-    // FIX #1144: Subsequent writes (kicks, leaves) must go through delta
-    // logic to decrement — flag was never cleared on those paths.
-    const beforeExists = !!event.data?.before?.exists;
-    if (!beforeExists && isCountedByJoinRequest(after)) {
-      logger.info(
-        `[MEMBER_COUNTER] Skipping CREATE for ${groupId}/${memberId} — ` +
-        "member_count already incremented by join-request approval"
-      );
-      return;
-    }
-
-    // FIX #651-B2: member doc status changed away from ACTIVE
-    // via soft-delete or other mechanisms. onMemberWritten detects
-    // the transition and decrements.
     const wasActive = isActiveMember(before);
     const isActive = isActiveMember(after);
 
-    let delta = 0;
     let reason = "";
 
     if (!wasActive && isActive) {
-      delta = 1;
       reason = !before ? "CREATE_ACTIVE" : "REACTIVATED";
     } else if (wasActive && !isActive) {
-      delta = -1;
       reason = !after ? "DELETE_WAS_ACTIVE" : "DEACTIVATED";
     } else {
-      // Sem mudança em count semantics — skip
-      logger.info(
-        `[MEMBER_COUNTER] No-op for ${groupId}/${memberId} ` +
-        `(wasActive=${wasActive}, isActive=${isActive})`
-      );
-      return;
+      reason = "RECOUNT_NO_SEMANTIC_CHANGE";
     }
 
     try {
-      // #1751: transação para read-modify-write atômico do counter.
-      // Lê member_count atual, aplica delta e escreve valor absoluto —
-      // previne drift em triggers concorrentes (ex: múltiplos join/leave
-      // simultâneos no mesmo grupo).
       const groupRef = db().doc(`groups/${groupId}`);
-      const newCount = await db().runTransaction(
-        async (tx) => {
-          const groupSnap = await tx.get(groupRef);
-          if (!groupSnap.exists) {
-            return null;
-          }
-          const groupData =
-            groupSnap.data() as Record<string, unknown>;
-          const currentCount =
-            typeof groupData.member_count === "number" ?
-              groupData.member_count : 0;
-          const updated = Math.max(
-            0, currentCount + delta
-          );
-          tx.update(groupRef, {
-            member_count: updated,
-            updated_at: FieldValue.serverTimestamp(),
-          });
-          return updated;
-        }
-      );
-      if (newCount === null) {
+      const [activeCount, groupSnap] = await Promise.all([
+        countActiveMembers(groupId),
+        groupRef.get(),
+      ]);
+
+      if (!groupSnap.exists) {
         logger.info(
           `[MEMBER_COUNTER] Group ${groupId} not found, ` +
           "skipping counter update"
         );
         return;
       }
+
+      const groupData = groupSnap.data() as Record<string, unknown>;
+      const currentCount =
+        typeof groupData.member_count === "number" ?
+          groupData.member_count : 0;
+
+      if (currentCount === activeCount) {
+        logger.info(
+          `[MEMBER_COUNTER] ${reason}: groups/${groupId}.member_count ` +
+          `already consistent at ${activeCount} (member ${memberId})`
+        );
+        return;
+      }
+
+      await groupRef.update({
+        member_count: activeCount,
+        updated_at: FieldValue.serverTimestamp(),
+      });
+
       logger.info(
         `[MEMBER_COUNTER] ${reason}: groups/${groupId}.member_count ` +
-        `${delta > 0 ? "+" : ""}${delta} → ${newCount} (member ${memberId})`
+        `${currentCount} → ${activeCount} (member ${memberId})`
       );
     } catch (err) {
       // Group doc pode ter sido deleted enquanto trigger rodava (cascade).

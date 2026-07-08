@@ -1284,6 +1284,13 @@ _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
 
+### [1.7.12][functions-1.7.12] - 2026-07-08
+
+#### Corrigido
+- `onMemberWritten` deixa de depender de delta acumulado e grava o valor absoluto recontado de `groups/{gid}/members`.
+- Escritas repetidas, aprovacoes de join-request ja contadas e dados legados convergem para o mesmo `member_count`.
+- Teste cobre drift real: grupo salvo com 2 membros e apenas 1 membro ativo.
+
 ### [1.7.11][functions-1.7.11] - 2026-07-08
 
 #### Corrigido
@@ -1903,6 +1910,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [web-1.26.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.26.1.md
 [web-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.26.0.md
 [ios-1.6.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.0.md
+[functions-1.7.12]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.7.12.md
 [functions-1.7.11]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.7.11.md
 [functions-1.7.10]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.7.10.md
 [functions-1.7.9]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.7.9.md
