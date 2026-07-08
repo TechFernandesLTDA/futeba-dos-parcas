@@ -32,6 +32,7 @@ const logger = createLogger('AuthContext');
 const USER_ROLES: UserRole[] = ['PLAYER', 'FIELD_OWNER', 'ADMIN'];
 const INVITE_REQUIRED_MESSAGE = 'Para criar sua conta, abra um convite de outro membro do Futeba dos Parças.';
 const INVITE_INVALID_MESSAGE = 'Convite inválido ou expirado. Peça um novo convite para quem te chamou.';
+const AUTH_STARTUP_WATCHDOG_MS = 8_000;
 
 const loadValidateInviteCode = async (): Promise<typeof validateInviteCodeType> => {
   const module = await import('../services/cloudFunctions');
@@ -313,8 +314,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Agora: rastreia uid em closure local; descarta resultados se uid
     // mudou enquanto o fetch estava pendente.
     let lastFetchUid: string | null = null;
+    let initialAuthResolved = false;
 
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+    const handleAuthStateChange = async (firebaseUser: FirebaseUser | null) => {
       const currentUid = firebaseUser?.uid ?? null;
       lastFetchUid = currentUid;
 
@@ -391,14 +393,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             t('feedback.auth.verifyAuthError'));
         }
       }
+    };
+
+    const startupWatchdog = window.setTimeout(() => {
+      if (initialAuthResolved) return;
+      initialAuthResolved = true;
+      logger.warn('Auth observer did not resolve during startup; continuing with current auth state.');
+      void handleAuthStateChange(auth.currentUser);
+    }, AUTH_STARTUP_WATCHDOG_MS);
+
+    const resolveInitialAuth = () => {
+      if (initialAuthResolved) return;
+      initialAuthResolved = true;
+      window.clearTimeout(startupWatchdog);
+    };
+
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      resolveInitialAuth();
+      await handleAuthStateChange(firebaseUser);
     },
     (err) => {
+      resolveInitialAuth();
       logger.error('onAuthStateChanged observer error:', err);
       setError(t('feedback.auth.monitorAuthError'));
       setLoading(false);
     });
 
-    return () => unsubscribe();
+    return () => {
+      window.clearTimeout(startupWatchdog);
+      unsubscribe();
+    };
   }, [t]);
 
   // Sign in with email/password

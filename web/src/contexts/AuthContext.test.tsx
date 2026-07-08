@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, renderHook, screen, waitFor, act } from '@testing-library/react';
 import { AuthProvider, useAuth } from './AuthContext';
 
@@ -131,6 +131,10 @@ describe('AuthContext', () => {
     });
   });
 
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('fornece estado de loading inicial', () => {
     // Não dispara callback imediatamente
     mockOnAuthStateChanged.mockImplementation(() => vi.fn());
@@ -154,6 +158,28 @@ describe('AuthContext', () => {
     await waitFor(() => {
       expect(screen.getByTestId('loading').textContent).toBe('false');
     });
+    expect(screen.getByTestId('user').textContent).toBe('null');
+  });
+
+  it('destrava o loading quando o observer de auth não responde', async () => {
+    vi.useFakeTimers();
+    mockOnAuthStateChanged.mockImplementation(() => vi.fn());
+
+    render(
+      <AuthProvider>
+        <AuthConsumer />
+      </AuthProvider>
+    );
+
+    expect(screen.getByTestId('loading').textContent).toBe('true');
+
+    await act(async () => {
+      vi.advanceTimersByTime(8_000);
+      await Promise.resolve();
+    });
+
+    expect(screen.getByTestId('loading').textContent).toBe('false');
+    expect(screen.getByTestId('firebase-user').textContent).toBe('null');
     expect(screen.getByTestId('user').textContent).toBe('null');
   });
 

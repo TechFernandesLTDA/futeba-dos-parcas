@@ -1,7 +1,24 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-08T05:26:01.168Z",
+  "generatedAt": "2026-07-08T15:54:23.411Z",
   "notes": [
+    {
+      "version": "1.51.20",
+      "buildNumber": null,
+      "releaseDate": "2026-07-08",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "O web app ficou mais resistente quando o navegador mobile prende cache ou autenticação no carregamento.",
+      "highlights": [],
+      "added": [],
+      "improved": [],
+      "fixed": [
+        "Corrigido um caso em que navegadores mobile com estado local travado, como Vivaldi, podiam ficar presos na tela de carregamento.",
+        "O service worker agora força uma troca de cache para remover arquivos antigos do PWA no próximo acesso."
+      ],
+      "issueRefs": []
+    },
     {
       "version": "1.51.19",
       "buildNumber": null,
