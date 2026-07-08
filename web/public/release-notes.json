@@ -1,7 +1,27 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-08T20:27:06.497Z",
+  "generatedAt": "2026-07-08T20:35:36.463Z",
   "notes": [
+    {
+      "version": "1.51.25",
+      "buildNumber": null,
+      "releaseDate": "2026-07-08",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "O envio da foto do grupo foi corrigido para não falhar por permissão do Firebase Storage.",
+      "highlights": [],
+      "added": [],
+      "improved": [],
+      "fixed": [
+        "A criação e a edição do grupo agora enviam o logo por um caminho de Storage próprio do usuário autenticado.",
+        "Isso remove a dependência de uma validação instável do Storage que consultava permissões do grupo no Firestore durante o upload.",
+        "Move o upload web de logos de grupo para `users/{uid}/group-logos/{groupId}/logo.{ext}`.",
+        "Adiciona regra de Storage específica para esse path, validando dono do diretório, tipo de imagem e tamanho.",
+        "Mantém `groups/{groupId}.photo_url` como fonte exibida para os demais usuários."
+      ],
+      "issueRefs": []
+    },
     {
       "version": "1.51.24",
       "buildNumber": null,

@@ -24,7 +24,6 @@ import MenuItem from '@mui/material/MenuItem';
 import { FormScaffold } from '../../components/layout';
 import { GameGender, GAME_GENDER_LABELS } from '../../types/game';
 import { doc, updateDoc, serverTimestamp, collection, getDocs, writeBatch, deleteField } from 'firebase/firestore';
-import { ref as storageRef, getDownloadURL } from 'firebase/storage';
 import { db } from '../../services/firebase';
 import { storage } from '../../services/firebaseStorage';
 import { useGroupDetail } from '../../hooks/useGroups';
@@ -35,18 +34,12 @@ import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { ShimmerLoading } from '../../components/common/GameCard';
 import { validateGroupForm } from '../../utils/groupValidation';
 import { useTranslation } from 'react-i18next';
-import { uploadImageWithStorageAuthRetry } from '../../utils/storageUpload';
+import { uploadGroupLogo } from '../../utils/groupLogoStorage';
 
 const logger = createLogger('GroupEditScreen');
 
 const GROUP_PHOTO_MAX_BYTES = 2 * 1024 * 1024;
 const GROUP_PHOTO_ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-const GROUP_PHOTO_EXTENSION_BY_TYPE: Record<string, string> = {
-  'image/jpeg': 'jpg',
-  'image/png': 'png',
-  'image/webp': 'webp',
-};
-
 export const GroupEditScreen: React.FC = () => {
   const { t } = useTranslation();
   useDocumentTitle(t('page.title.editGroup'));
@@ -143,10 +136,8 @@ export const GroupEditScreen: React.FC = () => {
   }, [previewUrl]);
 
   const handleUploadPhoto = async (file: File): Promise<string> => {
-    const extension = GROUP_PHOTO_EXTENSION_BY_TYPE[file.type] || 'jpg';
-    const groupPhotoRef = storageRef(storage, `groups/${groupId}/logo.${extension}`);
-    await uploadImageWithStorageAuthRetry(groupPhotoRef, file);
-    return getDownloadURL(groupPhotoRef);
+    if (!groupId || !uid) throw new Error('Missing group upload context');
+    return uploadGroupLogo(storage, uid, groupId, file);
   };
 
   const handleSubmit = async () => {

@@ -282,7 +282,7 @@ describe('useCreateGroup', () => {
       expect(id).toBe('new-group-id');
     });
 
-    expect(storageRef).toHaveBeenCalledWith({}, 'groups/new-group-id/logo.jpg');
+    expect(storageRef).toHaveBeenCalledWith({}, 'users/test-user-id/group-logos/new-group-id/logo.png');
     expect(uploadBytes).toHaveBeenCalledWith('mock-storage-ref', logo, { contentType: 'image/png' });
     expect(getDownloadURL).toHaveBeenCalledWith('mock-storage-ref');
     expect(mockBatchCommit.mock.invocationCallOrder[0]).toBeLessThan(

@@ -6,6 +6,7 @@ rules_version = '2';
 //
 // Estrutura de Caminhos Padronizada:
 // - users/{userId}/profile.jpg
+// - users/{userId}/group-logos/{groupId}/logo.{jpg|jpeg|png|webp}
 // - groups/{groupId}/logo.{jpg|jpeg|png|webp}
 // - groups/{groupId}/receipts/{timestamp}.{jpg|png|webp}
 // - locations/{locationId}/photos/{timestamp}.jpg
@@ -163,6 +164,26 @@ service firebase.storage {
 
       // Apenas o próprio usuário pode deletar
       allow delete: if isOwner(userId) && fileName in ['profile.jpg', 'thumb.jpg'];
+    }
+
+    // ============================================
+    // LOGOS DE GRUPOS ENVIADOS PELO WEB
+    // Path: users/{userId}/group-logos/{groupId}/logo.{jpg|jpeg|png|webp}
+    //
+    // Este path evita depender de firestore.get() dentro do Storage Rules
+    // durante criacao/edicao do grupo. A permissao de editar o grupo segue
+    // sendo validada no Firestore quando o app grava groups/{groupId}.photo_url.
+    // ============================================
+    match /users/{userId}/group-logos/{groupId}/{fileName} {
+      allow read: if isAuthenticated() && fileName.matches('logo\\.(jpg|jpeg|png|webp)');
+
+      allow write: if isOwner(userId) &&
+                   fileName.matches('logo\\.(jpg|jpeg|png|webp)') &&
+                   isImage() &&
+                   isUnderSize(5);
+
+      allow delete: if isOwner(userId) &&
+                    fileName.matches('logo\\.(jpg|jpeg|png|webp)');
     }
 
     // ============================================
