@@ -24,7 +24,7 @@ import MenuItem from '@mui/material/MenuItem';
 import { FormScaffold } from '../../components/layout';
 import { GameGender, GAME_GENDER_LABELS } from '../../types/game';
 import { doc, updateDoc, serverTimestamp, collection, getDocs, writeBatch, deleteField } from 'firebase/firestore';
-import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { ref as storageRef, getDownloadURL } from 'firebase/storage';
 import { db } from '../../services/firebase';
 import { storage } from '../../services/firebaseStorage';
 import { useGroupDetail } from '../../hooks/useGroups';
@@ -35,6 +35,7 @@ import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { ShimmerLoading } from '../../components/common/GameCard';
 import { validateGroupForm } from '../../utils/groupValidation';
 import { useTranslation } from 'react-i18next';
+import { uploadImageWithStorageAuthRetry } from '../../utils/storageUpload';
 
 const logger = createLogger('GroupEditScreen');
 
@@ -144,7 +145,7 @@ export const GroupEditScreen: React.FC = () => {
   const handleUploadPhoto = async (file: File): Promise<string> => {
     const extension = GROUP_PHOTO_EXTENSION_BY_TYPE[file.type] || 'jpg';
     const groupPhotoRef = storageRef(storage, `groups/${groupId}/logo.${extension}`);
-    await uploadBytes(groupPhotoRef, file, { contentType: file.type });
+    await uploadImageWithStorageAuthRetry(groupPhotoRef, file);
     return getDownloadURL(groupPhotoRef);
   };
 

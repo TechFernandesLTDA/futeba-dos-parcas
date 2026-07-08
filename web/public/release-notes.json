@@ -1,7 +1,27 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-08T20:08:43.838Z",
+  "generatedAt": "2026-07-08T20:27:06.497Z",
   "notes": [
+    {
+      "version": "1.51.24",
+      "buildNumber": null,
+      "releaseDate": "2026-07-08",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "O envio do logo do grupo ficou mais resistente logo após criar ou editar um grupo.",
+      "highlights": [],
+      "added": [],
+      "improved": [],
+      "fixed": [
+        "Corrige a falha intermitente em que o grupo era criado, mas o logo não subia porque o Storage ainda não reconhecia a permissão de dono recém-gravada.",
+        "A edição do grupo também passa a repetir automaticamente o upload quando o Storage demora alguns segundos para validar a permissão.",
+        "Adiciona retry curto para uploads de imagem que retornem `storage/unauthorized` ou `storage/unknown` durante a propagação de autorização.",
+        "Reutiliza o mesmo retry no fluxo de criação e no fluxo de edição de grupo.",
+        "Cobre o caso com teste em `useGroups.test.ts`."
+      ],
+      "issueRefs": []
+    },
     {
       "version": "1.51.23",
       "buildNumber": null,

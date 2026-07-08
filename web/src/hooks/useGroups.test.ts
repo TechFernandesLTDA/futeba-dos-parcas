@@ -303,7 +303,9 @@ describe('useCreateGroup', () => {
 
   it('mantém grupo criado quando upload do logo falha', async () => {
     const logo = new File(['logo'], 'logo.png', { type: 'image/png' });
-    vi.mocked(uploadBytes).mockRejectedValueOnce(new Error('storage/unauthorized'));
+    vi.mocked(uploadBytes).mockRejectedValueOnce(
+      Object.assign(new Error('storage/canceled'), { code: 'storage/canceled' })
+    );
     const { result } = renderHook(() => useCreateGroup(), { wrapper: createTestWrapper() });
 
     await act(async () => {
@@ -313,6 +315,36 @@ describe('useCreateGroup', () => {
 
     expect(mockBatchCommit).toHaveBeenCalled();
     expect(mockUpdateDoc).not.toHaveBeenCalled();
+  });
+
+  it('repete upload quando Storage ainda não reconhece o dono recém-criado', async () => {
+    vi.useFakeTimers();
+    vi.mocked(uploadBytes)
+      .mockRejectedValueOnce(Object.assign(new Error('storage/unauthorized'), { code: 'storage/unauthorized' }))
+      .mockResolvedValueOnce({} as never);
+    const logo = new File(['logo'], 'logo.png', { type: 'image/png' });
+    const { result } = renderHook(() => useCreateGroup(), { wrapper: createTestWrapper() });
+
+    const createPromise = act(async () => {
+      const id = await result.current.createGroup({ name: 'Novo Grupo' }, logo);
+      expect(id).toBe('new-group-id');
+    });
+
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(uploadBytes).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(750);
+    });
+    await createPromise;
+    vi.useRealTimers();
+
+    expect(uploadBytes).toHaveBeenCalledTimes(2);
+    expect(mockUpdateDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'new-group-id' }),
+      expect.objectContaining({ photo_url: 'https://storage.example/group-logo.jpg' })
+    );
   });
 
   it('exige autenticação para criar grupo', async () => {
