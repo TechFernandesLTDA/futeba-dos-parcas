@@ -2,8 +2,6 @@ import { useState, useEffect, lazy, Suspense } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
   Box,
-  Snackbar,
-  Button,
   Skeleton,
   Collapse,
   Typography,
@@ -28,10 +26,10 @@ const ProfileTab = lazy(() => import('./tabs/ProfileTab').then(m => ({ default: 
 
 const HOME_TAB_COUNT = 5;
 
-import { useNotificationPermission } from '../../hooks/useNotificationPermission';
 import { WhatsNewPopupHost } from '../../components/whatsnew/WhatsNewPopupHost';
 import { QuickActions } from '../../components/home/QuickActions';
 import { InstallAppPrompt } from '../../components/common/InstallAppPrompt';
+import { AppPermissionsPrompt } from '../../components/common/AppPermissionsPrompt';
 import { pageSpacing } from '../../theme/pageTokens';
 
 const TeamOfTheWeek = lazy(() => import('../../components/game/TeamOfTheWeek').then(m => ({ default: m.TeamOfTheWeek })));
@@ -54,8 +52,6 @@ function getSafeHomeTabValue(value: string | null): number {
 export function HomeScreen() {
   const [searchParams] = useSearchParams();
   const tabValue = getSafeHomeTabValue(searchParams.get('tab'));
-  const { permission, requestPermission } = useNotificationPermission();
-  const [showNotifBanner, setShowNotifBanner] = useState(false);
   const [mountedTabs, setMountedTabs] = useState<Set<number>>(() => new Set([tabValue]));
   const [towExpanded, setTowExpanded] = useState(false);
   const { t } = useTranslation();
@@ -63,13 +59,6 @@ export function HomeScreen() {
   useDocumentTitle(t('common.appName'));
 
   const { metrics } = usePerformanceMonitoring({ screenName: 'HomeScreen' });
-
-  useEffect(() => {
-    if (permission === 'default') {
-      const timer = setTimeout(() => setShowNotifBanner(true), 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [permission]);
 
   useEffect(() => {
     setMountedTabs(prev => {
@@ -83,6 +72,7 @@ export function HomeScreen() {
       {tabValue === 0 && (
         <Box sx={{ flexShrink: 0, px: pageSpacing.pagePadding, pt: { xs: 1, md: 0.75 }, pb: towExpanded ? 0 : { xs: 0.5, md: 0 } }}>
           <InstallAppPrompt sx={{ mb: { xs: 1, md: 1.25 } }} />
+          <AppPermissionsPrompt />
           <Box
             onClick={() => setTowExpanded(!towExpanded)}
             role="button"
@@ -139,23 +129,6 @@ export function HomeScreen() {
           {mountedTabs.has(4) && <Box sx={{ display: tabValue === 4 ? 'block' : 'none' }}><ProfileTab /></Box>}
         </Suspense>
       </Box>
-
-      <Snackbar
-        open={showNotifBanner}
-        message={t('notifications.bannerMessage', 'Ative as notificações para receber alertas de jogos!')}
-        action={
-          <>
-            <Button color="secondary" size="small" onClick={() => setShowNotifBanner(false)}>
-              {t('common.later', 'Depois')}
-            </Button>
-            <Button color="primary" size="small" onClick={() => { requestPermission(); setShowNotifBanner(false); }}>
-              {t('common.activate', 'Ativar')}
-            </Button>
-          </>
-        }
-        onClose={() => setShowNotifBanner(false)}
-        sx={{ bottom: { xs: pageSpacing.bottomBarHeight + 16, md: 16 } }}
-      />
 
       <WhatsNewPopupHost />
       <PerformanceOverlay metrics={metrics} />

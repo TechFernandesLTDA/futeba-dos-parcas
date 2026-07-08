@@ -8,6 +8,7 @@ export * from './useNotifications';
 export * from './useRealtime';
 export * from './usePaginatedQuery';
 export * from './useNotificationPermission';
+export * from './useAppPermissions';
 export * from './useDebounce';
 export * from './useLocalStorage';
 export * from './useNetworkStatus';
@@ -28,4 +29,3 @@ export * from './useSeasons';
 export * from './useGameDraft';
 export * from './useHabitualTime';
 export * from './useDuplicateGameCopy';
-

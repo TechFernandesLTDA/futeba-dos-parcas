@@ -2342,6 +2342,27 @@
     "installTitle": "Usar como app",
     "iosInstallHint": "En iPhone: Safari > Compartir > Agregar a pantalla de inicio."
   },
+  "permissions": {
+    "allowAction": "Permitir",
+    "blocked": "Bloqueado",
+    "blockedHint": "Actívalo en la configuración del navegador cuando quieras usarlo.",
+    "description": "Recibe avisos, encuentra partidos cerca de ti y mantén datos útiles disponibles.",
+    "items": {
+      "location": {
+        "description": "Se usa para partidos cercanos, mapa y check-in cuando sea necesario.",
+        "title": "Ubicación"
+      },
+      "notifications": {
+        "description": "Alertas de partidos, invitaciones y mensajes importantes.",
+        "title": "Notificaciones"
+      },
+      "storage": {
+        "description": "Ayuda al app instalado a abrir rápido y guardar datos offline.",
+        "title": "Espacio del app"
+      }
+    },
+    "title": "Activar recursos del app"
+  },
   "page": {
     "title": {
       "about": "Acerca de",

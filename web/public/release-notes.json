@@ -1,7 +1,25 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-08T04:55:00.632Z",
+  "generatedAt": "2026-07-08T05:26:01.168Z",
   "notes": [
+    {
+      "version": "1.51.19",
+      "buildNumber": null,
+      "releaseDate": "2026-07-08",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "O web app agora orienta melhor as permissões importantes no celular.",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "A Home mostra um painel discreto para ativar notificações, localização e espaço do app.",
+        "As permissões só são solicitadas quando o usuário toca em Permitir.",
+        "A localização também continua sendo pedida no momento certo em recursos como mapa, jogos próximos e check-in."
+      ],
+      "fixed": [],
+      "issueRefs": []
+    },
     {
       "version": "1.51.18",
       "buildNumber": null,
