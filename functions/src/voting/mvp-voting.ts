@@ -51,6 +51,7 @@ import {getLevelForXp} from "../xp/pipeline";
 import {
   getGameDate,
   getWeekKey,
+  isRawParticipationEligible,
   normalizeGameGender,
 } from "../game/helpers";
 import {Game} from "../models";
@@ -343,8 +344,9 @@ export const submitMvpVote =
             const voterConfData =
               voterConfSnap.data();
             if (
-              voterConfData?.status !==
-              "CONFIRMED"
+              !isRawParticipationEligible(
+                voterConfData
+              )
             ) {
               throw new HttpsError(
                 "permission-denied",
@@ -364,8 +366,9 @@ export const submitMvpVote =
 
             if (
               !votedConfSnap.exists ||
-              votedConfSnap.data()?.status !==
-              "CONFIRMED"
+              !isRawParticipationEligible(
+                votedConfSnap.data()
+              )
             ) {
               throw new HttpsError(
                 "invalid-argument",
@@ -687,8 +690,9 @@ export const submitMvpVotes =
             const voterConfData =
               voterConfSnap.data();
             if (
-              voterConfData?.status !==
-              "CONFIRMED"
+              !isRawParticipationEligible(
+                voterConfData
+              )
             ) {
               throw new HttpsError(
                 "permission-denied",
@@ -710,8 +714,9 @@ export const submitMvpVotes =
 
               if (
                 !votedConfSnap.exists ||
-                votedConfSnap.data()?.status !==
-                "CONFIRMED"
+                !isRawParticipationEligible(
+                  votedConfSnap.data()
+                )
               ) {
                 throw new HttpsError(
                   "invalid-argument",
@@ -997,31 +1002,10 @@ export const concludeMvpVoting =
                 };
               }
 
-              // 2.7: Contar votos
-              const mvpCounts =
-                tallyVotes(votes, "MVP");
-              const bestGkCounts =
-                tallyVotes(
-                  votes,
-                  "BEST_GOALKEEPER"
-                );
-              const worstCounts =
-                tallyVotes(votes, "WORST");
-
-              // 2.8: Resolver vencedores
-              // (determinístico em empate)
-              const mvpId =
-                resolveWinner(mvpCounts);
-              const bestGkId =
-                resolveWinner(bestGkCounts);
-              const worstPlayerId =
-                resolveWinner(worstCounts);
-
-              // 2.9: Buscar confirmações
-              // FIX #617: usar transaction.get() em vez de db.get()
-              // para evitar janela TOCTOU — se uma confirmation mudar
-              // entre a query e o commit, a transaction detecta conflito
-              // e retenta automaticamente com dados frescos.
+              // 2.7: Buscar confirmações elegíveis antes da apuração.
+              // FIX XP/accounting: votos antigos de jogadores que só
+              // confirmaram, mas não compareceram, não podem gerar
+              // MVP/Bola Murcha nem delta de XP.
               const confirmationsRef = db
                 .collection("confirmations")
                 .where("game_id", "==", gameId)
@@ -1030,6 +1014,58 @@ export const concludeMvpVoting =
                 await transaction.get(
                   confirmationsRef
                 );
+              const eligibleUserIds = new Set<string>();
+              for (const confDoc of confirmationsSnap.docs) {
+                const confData = confDoc.data();
+                if (!isRawParticipationEligible(confData)) {
+                  continue;
+                }
+                const confUserId =
+                  confData.user_id ||
+                  confData.userId;
+                if (confUserId) {
+                  eligibleUserIds.add(confUserId);
+                }
+              }
+
+              const validVotes = votes.filter((vote) => {
+                const voterId =
+                  vote.voter_id || vote.voterId;
+                const votedId =
+                  vote.voted_player_id ||
+                  vote.votedPlayerId;
+                return eligibleUserIds.has(voterId) &&
+                  eligibleUserIds.has(votedId);
+              });
+
+              if (validVotes.length !== votes.length) {
+                logger.warn(
+                  "[MVP_CONCLUDE] Ignoring " +
+                  `${votes.length - validVotes.length} ` +
+                  "vote(s) from ineligible players " +
+                  `in game ${gameId}`
+                );
+              }
+
+              // 2.8: Contar votos
+              const mvpCounts =
+                tallyVotes(validVotes, "MVP");
+              const bestGkCounts =
+                tallyVotes(
+                  validVotes,
+                  "BEST_GOALKEEPER"
+                );
+              const worstCounts =
+                tallyVotes(validVotes, "WORST");
+
+              // 2.9: Resolver vencedores
+              // (determinístico em empate)
+              const mvpId =
+                resolveWinner(mvpCounts);
+              const bestGkId =
+                resolveWinner(bestGkCounts);
+              const worstPlayerId =
+                resolveWinner(worstCounts);
 
               // 2.10: Atualizar confirmações
               for (
@@ -1073,7 +1109,9 @@ export const concludeMvpVoting =
                       .serverTimestamp(),
                   voting_concluded_by:
                     userId,
-                  total_votes: votes.length,
+                  total_votes: validVotes.length,
+                  ignored_votes:
+                    votes.length - validVotes.length,
                 };
 
               if (mvpId) {
@@ -1099,7 +1137,7 @@ export const concludeMvpVoting =
                 mvpId,
                 bestGkId,
                 worstPlayerId,
-                totalVotes: votes.length,
+                totalVotes: validVotes.length,
                 mvpVotes:
                   countTalliedVotes(mvpCounts),
                 bestGkVotes:

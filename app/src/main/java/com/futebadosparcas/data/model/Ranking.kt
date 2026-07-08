@@ -37,10 +37,10 @@ data class XpLog(
     var xpAfter: Long = 0L,
     @get:PropertyName("level_before")
     @set:PropertyName("level_before")
-    var levelBefore: Int = 1,
+    var levelBefore: Int = 0,
     @get:PropertyName("level_after")
     @set:PropertyName("level_after")
-    var levelAfter: Int = 1,
+    var levelAfter: Int = 0,
     // Breakdown detalhado do XP
     @get:PropertyName("xp_participation")
     @set:PropertyName("xp_participation")

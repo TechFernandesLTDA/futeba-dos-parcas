@@ -108,7 +108,7 @@ export function RecentActivityFeed({ activities, loading }: RecentActivityFeedPr
   const theme = useTheme();
   const { user } = useAuth();
   const gColors = useGamificationColors();
-  const levelColor = getLevelColor(user?.level || 1, theme);
+  const levelColor = getLevelColor(user?.level ?? 0, theme);
   const reducedMotion = useReducedMotion();
   const latestActivity = activities[0] ?? null;
   const latestActivityActorName = latestActivity?.actorName;

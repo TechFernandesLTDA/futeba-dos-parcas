@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { getLevelForXp, getXpProgress, getLevelEntry, getXpRemaining } from '../../../types/gamification';
+import { getEffectiveLevel } from '../../../utils/xpAccounting';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useOnboarding } from '../../../hooks/useOnboarding';
 import { PullToRefresh } from '../../../components/common/PullToRefresh';
@@ -488,7 +489,7 @@ function MiniRankingWidget({ groups }: { groups: Group[] }) {
           userName: userData.name,
           userPhoto: userData.photoUrl || undefined,
           favoriteTeam: userData.favoriteTeam,
-          level: (data.level as number) || 1,
+          level: getEffectiveLevel({ ...raw, ...data }),
           points: (data.points as number) || 0,
           gamesPlayed: (data.gamesPlayed as number) || 0,
           wins: (data.wins as number) || 0,

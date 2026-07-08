@@ -51,6 +51,7 @@ import { createLogger } from '../../utils/logger';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '../../contexts/ToastContext';
 import { buildFriendlyComparisonSummary, type FriendlyComparisonLabels } from '../../utils/friendlyComparison';
+import { getEffectiveLevel } from '../../utils/xpAccounting';
 
 const logger = createLogger('HeadToHeadScreen');
 
@@ -82,7 +83,7 @@ async function searchPlayers(term: string): Promise<PlayerSearchResult[]> {
         name: (data.name as string) || 'Jogador',
         photoUrl: (data.photoUrl as string) || (raw.photo_url as string) || undefined,
         favoriteTeam: (data.favoriteTeam as string) || (raw.favorite_team as string) || undefined,
-        level: (data.level as number) || 1,
+        level: getEffectiveLevel({ ...raw, ...data }),
       };
     });
   } catch (err) {

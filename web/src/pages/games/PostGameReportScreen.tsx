@@ -38,6 +38,7 @@ import { PageContainer } from '../../components/common/PageContainer';
 import { createLogger } from '../../utils/logger';
 import { getLevelForXp, getLevelEntry, getXpProgress } from '../../types/gamification';
 import { useTranslation } from 'react-i18next';
+import { getExperiencePoints, getXpEarned } from '../../utils/xpAccounting';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
 import { getUsersByIds } from '../../utils/userBatch';
 import { resolveExpectedPayment } from '../../utils/gamePayment';
@@ -235,9 +236,10 @@ export const PostGameReportScreen: React.FC = () => {
           const userDoc = await getDoc(doc(db, 'users', uid));
           if (cancelled) return;
           if (userDoc.exists()) {
-            const userData = snakeToCamel<RawNamedUserDoc>(userDoc.data());
-            const currentXp = userData.xp || userData.totalXp || 0;
-            const xpEarned = myConfirmation?.xpEarned || 0;
+            const rawUserData = userDoc.data();
+            const userData = snakeToCamel<RawNamedUserDoc>(rawUserData);
+            const currentXp = getExperiencePoints({ ...rawUserData, ...userData });
+            const xpEarned = getXpEarned((myConfirmation ?? {}) as Record<string, unknown>);
             const xpBefore = currentXp - xpEarned;
             const levelBefore = getLevelForXp(xpBefore > 0 ? xpBefore : 0);
             const levelAfter = getLevelForXp(currentXp);

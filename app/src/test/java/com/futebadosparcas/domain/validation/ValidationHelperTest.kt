@@ -171,21 +171,21 @@ class ValidationHelperTest {
         }
     }
 
-    // ==================== TESTES DE LEVEL (0-10) ====================
+    // ==================== TESTES DE LEVEL (0-20) ====================
 
     @Nested
-    @DisplayName("Validação de Level (0-10)")
+    @DisplayName("Validação de Level (0-20)")
     inner class LevelValidation {
 
         @ParameterizedTest
-        @ValueSource(ints = [0, 1, 5, 10])
-        @DisplayName("Level válido (0-10) deve retornar true")
+        @ValueSource(ints = [0, 1, 5, 10, 20])
+        @DisplayName("Level válido (0-20) deve retornar true")
         fun `valid level should return true`(level: Int) {
             assertTrue(ValidationHelper.isValidLevel(level))
         }
 
         @ParameterizedTest
-        @ValueSource(ints = [-1, -5, 11, 100])
+        @ValueSource(ints = [-1, -5, 21, 100])
         @DisplayName("Level inválido deve retornar false")
         fun `invalid level should return false`(level: Int) {
             assertFalse(ValidationHelper.isValidLevel(level))
@@ -443,7 +443,7 @@ class ValidationHelperTest {
             assertEquals(0.0, ValidationHelper.LEAGUE_RATING_MIN)
             assertEquals(100.0, ValidationHelper.LEAGUE_RATING_MAX)
             assertEquals(0, ValidationHelper.LEVEL_MIN)
-            assertEquals(10, ValidationHelper.LEVEL_MAX)
+            assertEquals(20, ValidationHelper.LEVEL_MAX)
             assertEquals(0L, ValidationHelper.XP_MIN)
             assertEquals(15, ValidationHelper.MAX_GOALS_PER_GAME)
             assertEquals(10, ValidationHelper.MAX_ASSISTS_PER_GAME)

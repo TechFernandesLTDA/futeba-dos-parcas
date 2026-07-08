@@ -264,6 +264,10 @@ jest.mock("../src/game/helpers", () => ({
   fetchAllUsers: jest.fn(() => new Map()),
   fetchAllStats: jest.fn(() => new Map()),
   fetchAllStreaks: jest.fn(() => new Map()),
+  isParticipationEligible: jest.fn((c: any) =>
+    c.status === "CONFIRMED" &&
+    c.suspiciousOverlap !== true
+  ),
   updateRankingDeltas: jest.fn(),
   updateSeasonParticipation: jest.fn(),
 }));

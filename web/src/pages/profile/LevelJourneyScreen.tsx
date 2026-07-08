@@ -27,7 +27,7 @@ import {
   ExpandMore as ExpandMoreIcon,
   ExpandLess as ExpandLessIcon,
 } from '@mui/icons-material';
-import { doc, getDoc, collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, orderBy, limit, getDocs, onSnapshot } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -49,6 +49,7 @@ import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { createLogger } from '../../utils/logger';
 import { TeamBadge } from '../../components/team/TeamBadge';
 import { useTranslation } from 'react-i18next';
+import { getExperiencePoints, getLogLevelAfter, getXpEarned } from '../../utils/xpAccounting';
 
 const logger = createLogger('LevelJourneyScreen');
 
@@ -99,7 +100,7 @@ export const LevelJourneyScreen: React.FC = () => {
       if (userDoc.exists()) {
         const raw = userDoc.data();
         const data = snakeToCamel(raw) as Record<string, unknown>;
-        const xp = (data.experiencePoints as number) || (data.xp as number) || 0;
+        const xp = getExperiencePoints({ ...raw, ...data });
         setCurrentXp(xp);
         setCurrentLevel(getLevelForXp(xp));
       }
@@ -113,10 +114,11 @@ export const LevelJourneyScreen: React.FC = () => {
       const historyData = snapshot.docs.map((d) => {
         const rawLog = d.data();
         const logData = snakeToCamel(rawLog) as Record<string, unknown>;
+        const xpAfter = getExperiencePoints({ ...rawLog, ...logData });
         return {
-          level: (logData.newLevel as number) || 0,
+          level: getLogLevelAfter({ ...rawLog, ...logData }, xpAfter),
           achievedAt: (logData.createdAt as { toDate?: () => Date })?.toDate?.() || new Date(),
-          xpGained: (logData.xpGained as number) || 0,
+          xpGained: getXpEarned({ ...rawLog, ...logData }),
           source: (logData.source as string) || t('level.xpSourceGame'),
         };
       });
@@ -136,9 +138,73 @@ export const LevelJourneyScreen: React.FC = () => {
 
   useEffect(() => {
     cancelledRef.current = false;
-    fetchLevelData();
-    return () => { cancelledRef.current = true; };
-  }, [fetchLevelData]);
+    if (!targetUserId) {
+      setLoading(false);
+      return () => { cancelledRef.current = true; };
+    }
+
+    setLoading(true);
+    setError(null);
+    let userReady = false;
+    let historyReady = false;
+    const markReady = () => {
+      if (userReady && historyReady && !cancelledRef.current) setLoading(false);
+    };
+    const handleSnapshotError = (err: unknown) => {
+      if (cancelledRef.current) return;
+      logger.error('Error subscribing to level data:', err);
+      const message = t('profile.levelHistoryLoadError');
+      setError(message);
+      setLoading(false);
+      showErrorRef.current(message);
+    };
+
+    const unsubscribeUser = onSnapshot(
+      doc(db, 'users', targetUserId),
+      (userDoc) => {
+        if (cancelledRef.current) return;
+        if (userDoc.exists()) {
+          const raw = userDoc.data();
+          const data = snakeToCamel(raw) as Record<string, unknown>;
+          const xp = getExperiencePoints({ ...raw, ...data });
+          setCurrentXp(xp);
+          setCurrentLevel(getLevelForXp(xp));
+        }
+        userReady = true;
+        markReady();
+      },
+      handleSnapshotError,
+    );
+
+    const xpLogsRef = collection(db, 'xp_logs');
+    const q = query(xpLogsRef, where('user_id', '==', targetUserId), orderBy('created_at', 'desc'), limit(10));
+    const unsubscribeHistory = onSnapshot(
+      q,
+      (snapshot) => {
+        if (cancelledRef.current) return;
+        const historyData = snapshot.docs.map((d) => {
+          const rawLog = d.data();
+          const logData = snakeToCamel(rawLog) as Record<string, unknown>;
+          return {
+            level: getLogLevelAfter({ ...rawLog, ...logData }),
+            achievedAt: (logData.createdAt as { toDate?: () => Date })?.toDate?.() || new Date(),
+            xpGained: getXpEarned({ ...rawLog, ...logData }),
+            source: (logData.source as string) || t('level.xpSourceGame'),
+          };
+        });
+        setHistory(historyData);
+        historyReady = true;
+        markReady();
+      },
+      handleSnapshotError,
+    );
+
+    return () => {
+      cancelledRef.current = true;
+      unsubscribeUser();
+      unsubscribeHistory();
+    };
+  }, [targetUserId, t]);
 
   const progress = getXpProgress(currentXp);
   const xpRemaining = getXpRemaining(currentXp);

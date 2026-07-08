@@ -128,7 +128,7 @@ const parseAdminUser = (data: AdminUserCrmRow): UserWithRole => ({
   updatedAt: data.updatedAtIso ? new Date(data.updatedAtIso) : undefined,
   lastLoginAt: data.lastLoginAtIso ? new Date(data.lastLoginAtIso) : undefined,
   gamesPlayed: data.gamesPlayed || 0,
-  level: data.level || 1,
+  level: data.level ?? 0,
   isMock: data.isMock,
   demoData: data.demoData,
   dataOrigin: data.dataOrigin,

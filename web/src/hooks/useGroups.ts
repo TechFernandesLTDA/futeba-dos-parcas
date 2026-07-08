@@ -384,7 +384,7 @@ export function useCreateGroup() {
           status: 'ACTIVE',
           joined_at: serverTimestamp(),
           total_games: 0,
-          level: user?.level || 1,
+          level: user?.level ?? 0,
         });
 
         // Escrever na subcoleção users/{uid}/groups (igual ao Android)

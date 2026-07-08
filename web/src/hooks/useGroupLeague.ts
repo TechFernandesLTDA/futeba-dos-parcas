@@ -15,6 +15,7 @@ import { createLogger } from '../utils/logger';
 import { useToast } from '../contexts/ToastContext';
 import { useEffect, useState, useRef } from 'react';
 import { compareGroupLeagueStandings } from '../utils/groupLeagueStandings';
+import { getEffectiveLevel, getExperiencePoints } from '../utils/xpAccounting';
 
 const logger = createLogger('useGroupLeague');
 
@@ -89,7 +90,7 @@ async function fetchGroupLeagueStandings(
     return {
       id: doc.id,
       userId: (data.userId as string) || (raw.user_id as string) || doc.id,
-      level: (data.level as number) || 1,
+      level: getEffectiveLevel({ ...raw, ...data }),
       points: (data.points as number) || 0,
       gamesPlayed: (data.gamesPlayed as number) || (raw.games_played as number) || 0,
       wins: (data.wins as number) || 0,
@@ -123,18 +124,18 @@ async function fetchGroupLeagueStandings(
     }
     for (const docSnap of result.value.docs) {
       const d = docSnap.data();
-      const xp = (d.experience_points ?? d.experiencePoints ?? 0) as number;
+      const xp = getExperiencePoints(d);
       usersMap.set(docSnap.id, {
         name: (d.name as string) || 'Jogador',
         photoUrl: (d.photo_url as string) || (d.photoUrl as string) || null,
         favoriteTeam: (d.favorite_team as string) || (d.favoriteTeam as string) || undefined,
-        level: Math.max(1, Math.floor(xp / 500) + 1),
+        level: getEffectiveLevel(d, xp),
       });
     }
   }
 
   return standingData.map((s) => {
-    const userData = usersMap.get(s.userId) || { name: 'Jogador', photoUrl: null, favoriteTeam: undefined, level: 1 };
+    const userData = usersMap.get(s.userId) || { name: 'Jogador', photoUrl: null, favoriteTeam: undefined, level: s.level };
     return {
       ...s,
       userName: userData.name,

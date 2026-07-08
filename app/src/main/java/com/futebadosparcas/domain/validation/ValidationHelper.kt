@@ -51,7 +51,7 @@ object ValidationHelper {
     const val LEVEL_MIN = 0
 
     /** Nível máximo do jogador */
-    const val LEVEL_MAX = 10
+    const val LEVEL_MAX = 20
 
     /** XP mínimo */
     const val XP_MIN = 0L
@@ -418,7 +418,7 @@ object ValidationHelper {
     }
 
     /**
-     * Verifica se o nível está no range válido (0 - 10).
+     * Verifica se o nível está no range válido (0 - 20).
      */
     fun isValidLevel(level: Int?): Boolean {
         if (level == null) return true

@@ -54,7 +54,7 @@ class GeminiTeamBalancer constructor(
                 
                 // Fallback para rating padrão se não avaliado
                 val effectiveRating = if (rating > 0) rating else DEFAULT_RATING
-                val level = user?.level ?: 1
+                val level = user?.level ?: 0
 
                 val score = (effectiveRating * RATING_WEIGHT) + level
                 Pair(confirmation, score)

@@ -4,6 +4,7 @@ import { db } from '../services/firebase';
 import { snakeToCamel } from '../utils/firestoreHelpers';
 import { createLogger } from '../utils/logger';
 import { normalizePlayerStats } from '../utils/playerStats';
+import { getEffectiveLevel, getExperiencePoints } from '../utils/xpAccounting';
 
 const logger = createLogger('usePlayers');
 
@@ -133,6 +134,7 @@ export const usePlayers = (groupId?: string) => {
           const playersData = allUserDocs.map((userDoc) => {
             const raw = userDoc.data();
             const data = snakeToCamel(raw) as Record<string, unknown>;
+            const xp = getExperiencePoints({ ...raw, ...data });
             const stats = normalizePlayerStats(
               {
                 ...(statsByUserId.get(userDoc.id) ?? {}),
@@ -147,8 +149,8 @@ export const usePlayers = (groupId?: string) => {
               email: (data.email as string) || '',
               photoUrl: (data.photoUrl as string) || raw.photo_url || '',
               favoriteTeam: (data.favoriteTeam as string) ?? raw.favorite_team ?? undefined,
-              level: (data.level as number) || 1,
-              xp: (data.experiencePoints as number) ?? (data.xp as number) ?? 0,
+              level: getEffectiveLevel({ ...raw, ...data }, xp),
+              xp,
               division: (data.division as string) || 'BRONZE',
               gamesPlayed: stats.totalGames,
               wins: stats.totalWins,
@@ -223,6 +225,7 @@ export const usePlayerDetail = (userId?: string) => {
         if (userDoc.exists()) {
           const raw = userDoc.data();
           const data = snakeToCamel(raw) as Record<string, unknown>;
+          const xp = getExperiencePoints({ ...raw, ...data });
           const stats = normalizePlayerStats(
             {
               ...(statsDoc.exists() ? statsDoc.data() : {}),
@@ -238,8 +241,8 @@ export const usePlayerDetail = (userId?: string) => {
               email: (data.email as string) || '',
               photoUrl: (data.photoUrl as string) || raw.photo_url || '',
               favoriteTeam: (data.favoriteTeam as string) ?? raw.favorite_team ?? undefined,
-              level: (data.level as number) || 1,
-              xp: (data.experiencePoints as number) ?? (data.xp as number) ?? 0,
+              level: getEffectiveLevel({ ...raw, ...data }, xp),
+              xp,
               division: (data.division as string) || 'BRONZE',
               gamesPlayed: stats.totalGames,
               wins: stats.totalWins,

@@ -158,6 +158,10 @@ import {
   MILESTONES,
   UserStatistics,
 } from "../src/index";
+import {
+  isParticipationEligible,
+  isRawParticipationEligible,
+} from "../src/game/helpers";
 
 // ==========================================
 // getLevelForXp
@@ -469,6 +473,41 @@ describe("Index - toGameConfirmation", () => {
     expect(result.goals).toBe(2);
     expect(result.assists).toBe(1);
     expect(result.saves).toBe(0);
+  });
+
+  test("marca sinal de presença e bloqueia ausente moderno", () => {
+    const result = toGameConfirmation({
+      user_id: "user4",
+      status: "CONFIRMED",
+      checked_in: false,
+      was_present: false,
+    });
+
+    expect(result.hasPresenceSignal).toBe(true);
+    expect(isParticipationEligible(result)).toBe(false);
+  });
+
+  test("mantém compatibilidade para confirmação legada sem presença", () => {
+    const result = toGameConfirmation({
+      user_id: "legacy",
+      status: "CONFIRMED",
+    });
+
+    expect(result.hasPresenceSignal).toBe(false);
+    expect(isParticipationEligible(result)).toBe(true);
+  });
+
+  test("valida docs brutos de votação com presença real", () => {
+    expect(isRawParticipationEligible({
+      user_id: "checked",
+      status: "CONFIRMED",
+      checked_in: true,
+    })).toBe(true);
+    expect(isRawParticipationEligible({
+      user_id: "absent",
+      status: "CONFIRMED",
+      was_present: false,
+    })).toBe(false);
   });
 });
 

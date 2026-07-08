@@ -156,8 +156,8 @@ data class XpLog(
     @SerialName("xp_earned") val xpEarned: Long = 0,
     @SerialName("xp_before") val xpBefore: Long = 0,
     @SerialName("xp_after") val xpAfter: Long = 0,
-    @SerialName("level_before") val levelBefore: Int = 1,
-    @SerialName("level_after") val levelAfter: Int = 1,
+    @SerialName("level_before") val levelBefore: Int = 0,
+    @SerialName("level_after") val levelAfter: Int = 0,
 
     // Breakdown do XP
     @SerialName("xp_participation") val xpParticipation: Int = 0,
@@ -179,8 +179,8 @@ data class XpLog(
     @SerialName("created_at") val createdAt: Long? = null
 ) {
     init {
-        require(levelBefore >= 1) { "levelBefore deve ser >= 1: $levelBefore" }
-        require(levelAfter >= 1) { "levelAfter deve ser >= 1: $levelAfter" }
+        require(levelBefore >= 0) { "levelBefore deve ser >= 0: $levelBefore" }
+        require(levelAfter >= 0) { "levelAfter deve ser >= 0: $levelAfter" }
         require(goals >= 0) { "goals nao pode ser negativo: $goals" }
         require(assists >= 0) { "assists nao pode ser negativo: $assists" }
         require(saves >= 0) { "saves nao pode ser negativo: $saves" }

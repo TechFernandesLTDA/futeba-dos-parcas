@@ -122,7 +122,7 @@ export function useJoinOfficialGroup() {
         role: 'MEMBER',
         joined_at: serverTimestamp(),
         total_games: 0,
-        level: 1,
+        level: 0,
         status: 'ACTIVE',
       });
 
