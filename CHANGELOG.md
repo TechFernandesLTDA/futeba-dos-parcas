@@ -167,6 +167,13 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.51.23][web-1.51.23] - 2026-07-08
+
+#### Corrigido
+- Reordena `useCreateGroup` para gravar `groups/{groupId}` e `groups/{groupId}/members/{uid}` antes do upload em `groups/{groupId}/logo.jpg`.
+- Atualiza `photo_url` e o espelho `users/{uid}/groups/{groupId}.group_photo` após `getDownloadURL`.
+- Reforça `storage.rules` para aceitar dono por `owner_id` além de member-doc admin/owner em logos e thumbs de grupo.
+
 ### [1.51.22][web-1.51.22] - 2026-07-08
 
 #### Corrigido
@@ -1768,6 +1775,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.51.23]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.23.md
 [web-1.51.22]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.22.md
 [web-1.51.21]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.21.md
 [web-1.51.20]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.20.md

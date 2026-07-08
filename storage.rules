@@ -180,9 +180,8 @@ service firebase.storage {
     // LOGOS DE GRUPOS
     // Path: groups/{groupId}/logo.{jpg|jpeg|png|webp}
     //
-    // SEGURANÇA: Upload restrito a admins/owners do grupo via isGroupAdmin().
-    // A função isGroupAdmin() lê o documento groups/{groupId}/members/{uid}
-    // via firestore.get(), verificando role == 'OWNER' || role == 'ADMIN'.
+    // SEGURANÇA: Upload restrito a admins/owners do grupo via isGroupAdmin()
+    // ou ao owner_id do documento do grupo via isGroupOwnerById().
     //
     // LIMITAÇÃO CONHECIDA: Storage Rules têm cota limitada de leituras ao
     // Firestore (firestore.get/exists). Em cenários de alta frequência de
@@ -199,14 +198,14 @@ service firebase.storage {
       // Máximo 5MB, apenas imagem
       allow write: if isAuthenticated() &&
                    fileName.matches('logo\\.(jpg|jpeg|png|webp)') &&
-                   isGroupAdmin(groupId) &&
+                   (isGroupAdmin(groupId) || isGroupOwnerById(groupId)) &&
                    isImage() &&
                    isUnderSize(5);
 
       // Apenas admins ou owners do grupo podem deletar o logo
       allow delete: if isAuthenticated() &&
                     fileName.matches('logo\\.(jpg|jpeg|png|webp)') &&
-                    isGroupAdmin(groupId);
+                    (isGroupAdmin(groupId) || isGroupOwnerById(groupId));
     }
 
     // ============================================
@@ -216,8 +215,8 @@ service firebase.storage {
     // ============================================
     match /groups/{groupId}/thumb.jpg {
       allow read: if isAuthenticated();
-      allow write: if isAuthenticated() && isGroupAdmin(groupId) && isImage() && isUnderSize(5);
-      allow delete: if isAuthenticated() && isGroupAdmin(groupId);
+      allow write: if isAuthenticated() && (isGroupAdmin(groupId) || isGroupOwnerById(groupId)) && isImage() && isUnderSize(5);
+      allow delete: if isAuthenticated() && (isGroupAdmin(groupId) || isGroupOwnerById(groupId));
     }
 
     // ============================================
