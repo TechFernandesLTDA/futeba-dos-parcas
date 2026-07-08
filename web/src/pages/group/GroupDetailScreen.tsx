@@ -29,6 +29,7 @@ import {
   Tab,
   Tabs,
   LinearProgress,
+  Tooltip,
   useTheme,
   useMediaQuery,
   alpha,
@@ -52,10 +53,8 @@ import {
   MilitaryTech as ChallengesIcon,
   PhotoLibrary as PhotoLibraryIcon,
   ChatBubbleOutline as WallIcon,
-  AdminPanelSettings as AdminIcon,
   CalendarMonth as CalendarIcon,
   ChevronRight as ChevronRightIcon,
-  Forum as ForumIcon,
   History as HistoryIcon,
   Insights as StatsIcon,
   Lock as LockIcon,
@@ -96,7 +95,14 @@ interface TabPanelProps {
 }
 
 const TabPanel: React.FC<TabPanelProps> = ({ children, value, index }) => (
-  <Box hidden={value !== index} sx={{ py: 2 }}>
+  <Box
+    role="tabpanel"
+    id={`group-tabpanel-${index}`}
+    aria-labelledby={`group-tab-${index}`}
+    hidden={value !== index}
+    tabIndex={value === index ? 0 : -1}
+    sx={{ py: 2 }}
+  >
     {value === index && children}
   </Box>
 );
@@ -408,7 +414,6 @@ const GroupStatCard: React.FC<GroupStatCardProps> = ({ icon, label, value, helpe
 
 interface GroupQuickAction {
   label: string;
-  description: string;
   icon: React.ReactNode;
   onClick: () => void;
   emphasized?: boolean;
@@ -418,53 +423,34 @@ const GroupQuickActions: React.FC<{ actions: GroupQuickAction[] }> = ({ actions 
   const { t } = useTranslation();
 
   return (
-    <Card variant="outlined" sx={{ mb: 2 }}>
-      <CardContent>
-        <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1.5 }}>
-          <AdminIcon color="primary" />
-          <Box>
-            <Typography variant="subtitle1" fontWeight={800}>
-              {t('groupDetail.manageHub')}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              {t('groupDetail.manageHubDesc')}
-            </Typography>
-          </Box>
-        </Stack>
-        <Grid container spacing={1}>
+    <Card variant="outlined" sx={{ mb: 2, borderRadius: 2 }}>
+      <CardContent sx={{ p: { xs: 1.25, sm: 1.5 }, '&:last-child': { pb: { xs: 1.25, sm: 1.5 } } }}>
+        <Stack
+          direction={{ xs: 'column', sm: 'row' }}
+          spacing={1}
+          alignItems="stretch"
+          aria-label={t('groupDetail.manageHub')}
+        >
           {actions.map((action) => (
-            <Grid xs={12} sm={6} key={action.label}>
-              <Button
-                fullWidth
-                variant={action.emphasized ? 'contained' : 'outlined'}
-                startIcon={action.icon}
-                endIcon={<ChevronRightIcon />}
-                onClick={action.onClick}
-                sx={{
-                  minHeight: 56,
-                  justifyContent: 'space-between',
-                  textTransform: 'none',
-                  px: 1.5,
-                  '& .MuiButton-startIcon': { mr: 1 },
-                  '& .MuiButton-endIcon': { ml: 'auto' },
-                }}
-              >
-                <Box sx={{ minWidth: 0, textAlign: 'left', flex: 1 }}>
-                  <Typography variant="body2" fontWeight={800} noWrap>
-                    {action.label}
-                  </Typography>
-                  <Typography
-                    variant="caption"
-                    sx={{ display: 'block', color: action.emphasized ? 'inherit' : 'text.secondary' }}
-                    noWrap
-                  >
-                    {action.description}
-                  </Typography>
-                </Box>
-              </Button>
-            </Grid>
+            <Button
+              key={action.label}
+              fullWidth
+              variant={action.emphasized ? 'contained' : 'outlined'}
+              startIcon={action.icon}
+              onClick={action.onClick}
+              sx={{
+                minHeight: 44,
+                flex: 1,
+                justifyContent: 'center',
+                textTransform: 'none',
+                fontWeight: 800,
+                px: 1.5,
+              }}
+            >
+              {action.label}
+            </Button>
           ))}
-        </Grid>
+        </Stack>
       </CardContent>
     </Card>
   );
@@ -791,43 +777,22 @@ export const GroupDetailScreen: React.FC = () => {
   const ownerChecklistVisible = !ownerChecklistDismissed && (isOwner || isAdmin) && ownerChecklistSteps.some((step) => !step.completed);
 
   const quickActions: GroupQuickAction[] = [
-    {
+    ...(!isMobile ? [{
       label: t('games.createGame'),
-      description: t('groupDetail.actionCreateGameDesc'),
       icon: <AddIcon />,
       onClick: () => navigate(`/game/create?groupId=${groupId}`),
       emphasized: true,
-    },
-    {
-      label: t('groupWall.tab'),
-      description: t('groupDetail.actionWallDesc'),
-      icon: <ForumIcon />,
-      onClick: () => setTabValue(0),
-    },
-    {
-      label: t('group.tabMembers'),
-      description: t('groupDetail.actionMembersDesc'),
-      icon: <PeopleIcon />,
-      onClick: () => setTabValue(3),
-    },
+    }] : []),
     {
       label: t('groupDetail.schedules'),
-      description: t('groupDetail.actionSchedulesDesc'),
       icon: <SchedulesIcon />,
       onClick: () => navigate(`/group/${groupId}/schedules`),
     },
     {
       label: t('groupDetail.challenges'),
-      description: t('groupDetail.actionChallengesDesc'),
       icon: <ChallengesIcon />,
       onClick: () => navigate(`/group/${groupId}/challenges`),
     },
-    ...(isAdmin ? [{
-      label: t('groups.invitePlayers'),
-      description: t('groupDetail.actionInviteDesc'),
-      icon: <InviteIcon />,
-      onClick: () => setInviteDialogOpen(true),
-    }] : []),
   ];
 
   const tabItems = [
@@ -849,19 +814,25 @@ export const GroupDetailScreen: React.FC = () => {
         actions={
           <>
             {isAdmin && (
-              <IconButton onClick={() => navigate(`/group/${groupId}/edit`)} aria-label={t('groups.editGroup')}>
-                <EditIcon />
-              </IconButton>
+              <Tooltip title={t('groups.editGroup')}>
+                <IconButton onClick={() => navigate(`/group/${groupId}/edit`)} aria-label={t('groups.editGroup')}>
+                  <EditIcon />
+                </IconButton>
+              </Tooltip>
             )}
             {isMember && (
-              <IconButton onClick={() => navigate(`/group/${groupId}/settings`)} aria-label={t('groupDetail.groupSettings')}>
-                <SettingsIcon />
-              </IconButton>
+              <Tooltip title={t('groupDetail.groupSettings')}>
+                <IconButton onClick={() => navigate(`/group/${groupId}/settings`)} aria-label={t('groupDetail.groupSettings')}>
+                  <SettingsIcon />
+                </IconButton>
+              </Tooltip>
             )}
             {isOwner && (
-              <IconButton onClick={() => setDeleteDialogOpen(true)} color="error" aria-label={t('groups.deleteGroup')}>
-                <DeleteIcon />
-              </IconButton>
+              <Tooltip title={t('groups.deleteGroup')}>
+                <IconButton onClick={() => setDeleteDialogOpen(true)} color="error" aria-label={t('groups.deleteGroup')}>
+                  <DeleteIcon />
+                </IconButton>
+              </Tooltip>
             )}
           </>
         }
@@ -1027,7 +998,14 @@ export const GroupDetailScreen: React.FC = () => {
             }}
           >
             {tabItems.map((item) => (
-              <Tab key={item.value} label={item.label} icon={item.icon} iconPosition="start" />
+              <Tab
+                key={item.value}
+                id={`group-tab-${item.value}`}
+                aria-controls={`group-tabpanel-${item.value}`}
+                label={item.label}
+                icon={item.icon}
+                iconPosition="start"
+              />
             ))}
           </Tabs>
         </Box>
@@ -1120,13 +1098,28 @@ export const GroupDetailScreen: React.FC = () => {
 
         <TabPanel value={tabValue} index={3}>
           <Card variant="outlined">
-            {isAdmin && (
-              <Box sx={{ display: 'flex', justifyContent: 'flex-end', p: 2, pb: 0 }}>
-                <Button startIcon={<AddIcon />} onClick={() => setInviteDialogOpen(true)}>
-                  {t('groupDetail.invite')}
-                </Button>
-              </Box>
-            )}
+            <CardContent sx={{ p: { xs: 1.5, sm: 2 }, '&:last-child': { pb: { xs: 1.5, sm: 2 } } }}>
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems={{ xs: 'stretch', sm: 'center' }} justifyContent="space-between">
+                <Box>
+                  <Typography variant="subtitle1" fontWeight={800}>
+                    {t('group.tabMembers')}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {t('groups.membersCount', { count: activeMembersCount })}
+                  </Typography>
+                </Box>
+                {isAdmin && (
+                  <Button
+                    variant="contained"
+                    startIcon={<InviteIcon />}
+                    onClick={() => setInviteDialogOpen(true)}
+                    sx={{ minHeight: 44 }}
+                  >
+                    {t('groupDetail.invite')}
+                  </Button>
+                )}
+              </Stack>
+            </CardContent>
             {members.length === 0 ? (
               <EmptyState
                 icon={<PersonIcon sx={{ fontSize: iconSizes.xxl, color: 'text.disabled' }} />}
@@ -1203,11 +1196,11 @@ export const GroupDetailScreen: React.FC = () => {
 
       {/* #1328: spacer p/ a barra fixa "Criar Jogo" nunca sobrepor o último
           conteúdo (mobile bottom-bar e barra flutuante desktop). */}
-      <Box aria-hidden sx={{ height: { xs: 80, sm: 88 } }} />
+      {canCreateGroupGame && isMobile && <Box aria-hidden sx={{ height: 80 }} />}
 
       {/* #2164/#2270: barra fixa via FixedBottomBar (centralizada no conteúdo
           + safe-area), substituindo a versão hand-rolled centrada no viewport. */}
-      {canCreateGroupGame && (
+      {canCreateGroupGame && isMobile && (
         <FixedBottomBar>
           <PageContainer maxWidth="detail" disablePadding>
             <Button
