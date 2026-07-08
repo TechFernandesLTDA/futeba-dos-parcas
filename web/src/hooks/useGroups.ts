@@ -346,17 +346,10 @@ export function useCreateGroup() {
         const memberRef = doc(collection(db, 'groups', groupRef.id, 'members'), uid);
         const displayName = firebaseUser?.displayName || user?.name || 'Dono';
 
-        let photoUrl: string | null = null;
-        if (photoFile) {
-          const groupPhotoRef = storageRef(storage, `groups/${groupRef.id}/logo.jpg`);
-          await uploadBytes(groupPhotoRef, photoFile, { contentType: photoFile.type });
-          photoUrl = await getDownloadURL(groupPhotoRef);
-        }
-
         const newGroup: Record<string, unknown> = {
           name: groupData.name,
           description: groupData.description || '',
-          photo_url: photoUrl,
+          photo_url: null,
           type: groupData.isPublic ? 'PUBLIC' : 'PRIVATE',
           is_public: groupData.isPublic || false,
           owner_id: uid,
@@ -392,13 +385,35 @@ export function useCreateGroup() {
         batch.set(userGroupRef, {
           group_id: groupRef.id,
           group_name: groupData.name,
-          group_photo: photoUrl,
+          group_photo: null,
           role: 'OWNER',
           member_count: 1,
           joined_at: serverTimestamp(),
         });
 
         await batch.commit();
+
+        if (photoFile) {
+          try {
+            const groupPhotoRef = storageRef(storage, `groups/${groupRef.id}/logo.jpg`);
+            await uploadBytes(groupPhotoRef, photoFile, { contentType: photoFile.type });
+            const photoUrl = await getDownloadURL(groupPhotoRef);
+
+            await Promise.all([
+              updateDoc(groupRef, {
+                photo_url: photoUrl,
+                updated_at: serverTimestamp(),
+              }),
+              updateDoc(userGroupRef, {
+                group_photo: photoUrl,
+              }),
+            ]);
+          } catch (photoErr) {
+            logger.error('Error uploading group logo after creation:', photoErr);
+            showError(t('feedback.groups.logoUploadError'));
+          }
+        }
+
         // Invalidar cache de grupos após criar
         queryClient.invalidateQueries({ queryKey: ['groups', uid] });
         showSuccess(t('feedback.groups.createSuccess'));

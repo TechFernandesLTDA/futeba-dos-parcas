@@ -94,6 +94,7 @@ vi.mock('../utils/logger', () => ({
 }));
 
 import { useGroups, useGroupDetail, useCreateGroup, useCashbox, useInvitePlayers } from './useGroups';
+import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 // Helper para configurar batch mock
 function setupBatchMock() {
@@ -123,6 +124,9 @@ describe('useGroups', () => {
       signInWithGoogle: vi.fn(), resetPassword: vi.fn(), updateUserProfile: vi.fn(),
       refreshUser: vi.fn(), currentUser: { uid: 'test-user-id' },
     };
+    vi.mocked(storageRef).mockReturnValue('mock-storage-ref' as never);
+    vi.mocked(uploadBytes).mockResolvedValue({} as never);
+    vi.mocked(getDownloadURL).mockResolvedValue('https://storage.example/group-logo.jpg');
   });
 
   it('retorna loading=true inicialmente', () => {
@@ -267,6 +271,48 @@ describe('useCreateGroup', () => {
     const { result } = renderHook(() => useCreateGroup(), { wrapper: createTestWrapper() });
     await act(async () => { await result.current.createGroup({ name: 'Novo Grupo' }); });
     expect(mockDoc).toHaveBeenCalledWith({}, 'users', 'test-user-id', 'groups', 'new-group-id');
+  });
+
+  it('envia logo somente depois de criar grupo e membership', async () => {
+    const logo = new File(['logo'], 'logo.png', { type: 'image/png' });
+    const { result } = renderHook(() => useCreateGroup(), { wrapper: createTestWrapper() });
+
+    await act(async () => {
+      const id = await result.current.createGroup({ name: 'Novo Grupo' }, logo);
+      expect(id).toBe('new-group-id');
+    });
+
+    expect(storageRef).toHaveBeenCalledWith({}, 'groups/new-group-id/logo.jpg');
+    expect(uploadBytes).toHaveBeenCalledWith('mock-storage-ref', logo, { contentType: 'image/png' });
+    expect(getDownloadURL).toHaveBeenCalledWith('mock-storage-ref');
+    expect(mockBatchCommit.mock.invocationCallOrder[0]).toBeLessThan(
+      vi.mocked(uploadBytes).mock.invocationCallOrder[0]
+    );
+    expect(vi.mocked(uploadBytes).mock.invocationCallOrder[0]).toBeLessThan(
+      mockUpdateDoc.mock.invocationCallOrder[0]
+    );
+    expect(mockUpdateDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'new-group-id' }),
+      expect.objectContaining({ photo_url: 'https://storage.example/group-logo.jpg' })
+    );
+    expect(mockUpdateDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'new-group-id' }),
+      { group_photo: 'https://storage.example/group-logo.jpg' }
+    );
+  });
+
+  it('mantém grupo criado quando upload do logo falha', async () => {
+    const logo = new File(['logo'], 'logo.png', { type: 'image/png' });
+    vi.mocked(uploadBytes).mockRejectedValueOnce(new Error('storage/unauthorized'));
+    const { result } = renderHook(() => useCreateGroup(), { wrapper: createTestWrapper() });
+
+    await act(async () => {
+      const id = await result.current.createGroup({ name: 'Novo Grupo' }, logo);
+      expect(id).toBe('new-group-id');
+    });
+
+    expect(mockBatchCommit).toHaveBeenCalled();
+    expect(mockUpdateDoc).not.toHaveBeenCalled();
   });
 
   it('exige autenticação para criar grupo', async () => {

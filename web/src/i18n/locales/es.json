@@ -698,6 +698,7 @@
       "autoInviteError": "Error al invitar automáticamente miembros del grupo.",
       "createError": "Error al crear el grupo.",
       "createSuccess": "Grupo creado!",
+      "logoUploadError": "Grupo creado, pero no se pudo subir el logo. Puedes intentarlo de nuevo editando el grupo.",
       "deleteSuccess": "Grupo eliminado con éxito.",
       "demoteError": "Error al degradar miembro. Inténtalo de nuevo.",
       "demoteSuccess": "Miembro degradado a Miembro.",

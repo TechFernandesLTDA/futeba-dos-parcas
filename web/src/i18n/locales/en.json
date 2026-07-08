@@ -698,6 +698,7 @@
       "autoInviteError": "Error auto-inviting group members.",
       "createError": "Error creating group.",
       "createSuccess": "Group created!",
+      "logoUploadError": "Group created, but the logo could not be uploaded. You can try again by editing the group.",
       "deleteSuccess": "Group deleted successfully.",
       "demoteError": "Error demoting member. Please try again.",
       "demoteSuccess": "Member demoted to Member.",
