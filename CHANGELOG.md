@@ -167,6 +167,13 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.51.24][web-1.51.24] - 2026-07-08
+
+#### Corrigido
+- Adiciona retry curto para uploads de imagem que retornem `storage/unauthorized` ou `storage/unknown` durante a propagação de autorização.
+- Reutiliza o mesmo retry no fluxo de criação e no fluxo de edição de grupo.
+- Cobre o caso com teste em `useGroups.test.ts`.
+
 ### [1.51.23][web-1.51.23] - 2026-07-08
 
 #### Corrigido
@@ -1775,6 +1782,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.51.24]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.24.md
 [web-1.51.23]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.23.md
 [web-1.51.22]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.22.md
 [web-1.51.21]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.21.md

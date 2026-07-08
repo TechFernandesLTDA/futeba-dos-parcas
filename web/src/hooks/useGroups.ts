@@ -17,7 +17,7 @@ import {
   documentId,
   Timestamp,
 } from 'firebase/firestore';
-import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { ref as storageRef, getDownloadURL } from 'firebase/storage';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { db } from '../services/firebase';
 import { storage } from '../services/firebaseStorage';
@@ -28,6 +28,7 @@ import { snakeToCamel, toDate } from '../utils/firestoreHelpers';
 import { createLogger } from '../utils/logger';
 import { getFirestoreErrorMessage } from '../utils/firebaseErrors';
 import { useTranslation } from 'react-i18next';
+import { uploadImageWithStorageAuthRetry } from '../utils/storageUpload';
 
 const logger = createLogger('useGroups');
 
@@ -396,7 +397,7 @@ export function useCreateGroup() {
         if (photoFile) {
           try {
             const groupPhotoRef = storageRef(storage, `groups/${groupRef.id}/logo.jpg`);
-            await uploadBytes(groupPhotoRef, photoFile, { contentType: photoFile.type });
+            await uploadImageWithStorageAuthRetry(groupPhotoRef, photoFile);
             const photoUrl = await getDownloadURL(groupPhotoRef);
 
             await Promise.all([
