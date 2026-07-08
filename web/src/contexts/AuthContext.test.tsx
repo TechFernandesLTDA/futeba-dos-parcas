@@ -339,6 +339,60 @@ describe('AuthContext', () => {
     );
   });
 
+  it('usa convite pendente se o observer criar o perfil durante o signUp', async () => {
+    let authCallback: ((user: unknown) => Promise<void>) | undefined;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    mockOnAuthStateChanged.mockImplementation((_auth: any, callback: any) => {
+      authCallback = callback;
+      return vi.fn();
+    });
+
+    const mockResult = {
+      user: {
+        uid: 'race-user',
+        email: 'race@test.com',
+        displayName: 'Jogador Corrida',
+        photoURL: '',
+        getIdToken: vi.fn().mockResolvedValue('token'),
+        getIdTokenResult: vi.fn().mockResolvedValue({ claims: {} }),
+      },
+    };
+    mockCreateUserWithEmailAndPassword.mockImplementation(async () => {
+      await authCallback?.(mockResult.user);
+      return mockResult;
+    });
+    mockUpdateProfile.mockResolvedValue(undefined);
+    mockGetDoc.mockResolvedValue({ exists: () => false });
+    mockSetDoc.mockResolvedValue(undefined);
+
+    let signUpFn: ((email: string, password: string, name: string, inviteCode: string) => Promise<void>) | undefined;
+    function Extractor() {
+      const auth = useAuth();
+      signUpFn = auth.signUp;
+      return null;
+    }
+
+    render(
+      <AuthProvider>
+        <Extractor />
+      </AuthProvider>
+    );
+
+    await waitFor(() => expect(signUpFn).toBeDefined());
+
+    await act(async () => {
+      await signUpFn!('race@test.com', 'password123', 'Jogador Corrida', 'ABC123');
+    });
+
+    expect(mockSetDoc).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        invited_by_code: 'ABC123',
+        invite_source: 'email_password_auth_observer',
+      })
+    );
+  });
+
   it('signUp rejeita cadastro sem convite', async () => {
     let signUpFn: ((email: string, password: string, name: string, inviteCode?: string) => Promise<void>) | undefined;
     function Extractor() {

@@ -15,12 +15,19 @@ import {getLevelForXp} from "../xp/pipeline";
 const db = () => admin.firestore();
 const INVITE_CODE_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 const APP_INVITE_ACCEPTED_XP = 50;
+const PENDING_APP_INVITE_TTL_MS = 30 * 60 * 1000;
 
 interface InviteValidationResult {
   valid: boolean;
   inviteCode?: string;
   inviterName?: string;
   xpReward?: number;
+}
+
+interface PendingAppInvite {
+  inviteCode: string;
+  inviterId?: string;
+  inviterName?: string;
 }
 
 /**
@@ -32,6 +39,90 @@ function normalizeInviteCode(input: unknown): string {
   return typeof input === "string" ?
     input.trim().toUpperCase().replace(/[^A-Z0-9]/g, "") :
     "";
+}
+
+/**
+ * Converte timestamps Firestore/Date para millis sem depender do SDK em testes.
+ * @param {unknown} value Timestamp, Date ou numero.
+ * @return {number|null} Epoch millis, se reconhecido.
+ */
+function timestampLikeToMillis(value: unknown): number | null {
+  if (typeof value === "number") return value;
+  if (value instanceof Date) return value.getTime();
+  if (value && typeof value === "object" && "toMillis" in value) {
+    const toMillis = (value as {toMillis?: () => number}).toMillis;
+    if (typeof toMillis === "function") return toMillis.call(value);
+  }
+  if (value && typeof value === "object" && "toDate" in value) {
+    const toDate = (value as {toDate?: () => Date}).toDate;
+    if (typeof toDate === "function") return toDate.call(value).getTime();
+  }
+  return null;
+}
+
+/**
+ * Registra convite pendente para fluxos Google onde o Auth user ja existe
+ * antes do doc users/{uid}. O trigger de criacao usa isso como fallback caso
+ * o profile seja criado por uma corrida sem invited_by_code.
+ * @param {string | undefined} uid Usuario autenticado que validou o convite.
+ * @param {string} inviteCode Codigo validado.
+ * @param {{uid: string, name: string}} inviter Dono do codigo.
+ */
+async function persistPendingInviteForAuthUser(
+  uid: string | undefined,
+  inviteCode: string,
+  inviter: {uid: string; name: string}
+): Promise<void> {
+  if (!uid || uid === inviter.uid) return;
+
+  await db()
+    .collection("pending_app_invites")
+    .doc(uid)
+    .set({
+      invite_code: inviteCode,
+      inviter_id: inviter.uid,
+      inviter_name: inviter.name,
+      source: "validateInviteCode",
+      created_at: FieldValue.serverTimestamp(),
+      expires_at: new Date(Date.now() + PENDING_APP_INVITE_TTL_MS),
+    }, {merge: true});
+}
+
+/**
+ * Busca convite pendente ainda valido para um usuario.
+ * @param {string} userId Usuario recem-criado.
+ * @return {Promise<PendingAppInvite|null>} Convite pendente valido, se houver.
+ */
+async function findPendingInviteForUser(
+  userId: string
+): Promise<PendingAppInvite | null> {
+  const pendingDoc = await db()
+    .collection("pending_app_invites")
+    .doc(userId)
+    .get();
+  if (!pendingDoc.exists) return null;
+
+  const pendingData = pendingDoc.data() || {};
+  const expiresAt = timestampLikeToMillis(pendingData.expires_at);
+  if (expiresAt !== null && expiresAt < Date.now()) {
+    logger.warn("Pending app invite expired before user profile creation", {
+      userId,
+    });
+    return null;
+  }
+
+  const inviteCode = normalizeInviteCode(pendingData.invite_code);
+  if (!inviteCode) return null;
+
+  return {
+    inviteCode,
+    inviterId: typeof pendingData.inviter_id === "string" ?
+      pendingData.inviter_id :
+      undefined,
+    inviterName: typeof pendingData.inviter_name === "string" ?
+      pendingData.inviter_name :
+      undefined,
+  };
 }
 
 /**
@@ -249,7 +340,18 @@ export const onUserCreatedProcessInvite = onDocumentCreated(
     const data = event.data?.data();
     if (!data) return;
 
-    const inviteCode = normalizeInviteCode(data.invited_by_code);
+    let inviteCode = normalizeInviteCode(data.invited_by_code);
+    const pendingInvite = inviteCode ?
+      null :
+      await findPendingInviteForUser(userId);
+    if (!inviteCode && pendingInvite?.inviteCode) {
+      inviteCode = pendingInvite.inviteCode;
+      logger.info("Recovered app invite code from pending validation", {
+        userId,
+        inviteCode,
+      });
+    }
+
     if (!inviteCode) {
       logger.warn("User created without app invite code", {userId});
       return;
@@ -280,6 +382,15 @@ export const onUserCreatedProcessInvite = onDocumentCreated(
     }
 
     const invitedByUid = inviter.uid;
+    if (pendingInvite?.inviterId && pendingInvite.inviterId !== invitedByUid) {
+      logger.warn("Pending app invite owner mismatch", {
+        userId,
+        inviteCode,
+        pendingInviterId: pendingInvite.inviterId,
+        resolvedInviterId: invitedByUid,
+      });
+      return;
+    }
 
     // FIX #2650: validate that the invite code is NOT triggered by
     // an invite code field from the requesting user itself (self-referral).
@@ -349,7 +460,10 @@ export const onUserCreatedProcessInvite = onDocumentCreated(
 
         tx.update(invitedUserRef, {
           invited_by: invitedByUid,
+          invited_by_code: inviteCode,
           invite_accepted_at: now,
+          invite_source: data.invite_source ||
+            (pendingInvite ? "pending_validation" : "profile_create"),
         });
 
         tx.set(redemptionRef, {
@@ -524,6 +638,15 @@ export const validateInviteCode = onCall(
       uid: inviter.uid,
       name: inviter.name,
     });
+
+    await persistPendingInviteForAuthUser(
+      request.auth?.uid,
+      inviteCode,
+      {
+        uid: inviter.uid,
+        name: inviter.name,
+      }
+    );
 
     return {
       valid: true,

@@ -182,6 +182,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const firebaseUserRef = useRef(firebaseUser);
   firebaseUserRef.current = firebaseUser;
   const lastClaimSyncUidRef = useRef<string | null>(null);
+  const pendingInviteRef = useRef<{ code: string; source: string } | null>(null);
 
   // Fetch user data from Firestore
   // FIX #578: PII (email, fcm_token, birth_date, height_cm, weight_kg, gender)
@@ -341,7 +342,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
 
           if (!userData) {
-            userData = await createUserDocumentRef.current(firebaseUser);
+            const pendingInvite = pendingInviteRef.current;
+            userData = await createUserDocumentRef.current(
+              firebaseUser,
+              pendingInvite
+                ? {
+                    invited_by_code: pendingInvite.code,
+                    invite_source: pendingInvite.source,
+                  }
+                : undefined,
+            );
             // Re-check após segunda await
             if (lastFetchUid !== firebaseUser.uid) return;
           }
@@ -449,6 +459,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setError(null);
     try {
       const normalizedInviteCode = normalizeInviteCode(inviteCode);
+      pendingInviteRef.current = normalizedInviteCode
+        ? { code: normalizedInviteCode, source: 'google_auth_observer' }
+        : null;
       const result = await signInWithPopup(auth, googleProvider);
 
       // Uma única leitura distingue usuário novo (sem doc) de existente.
@@ -501,7 +514,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           throw new AppAuthError(APP_AUTH_ERROR_CODES.inviteRequired, INVITE_REQUIRED_MESSAGE);
         }
       }
+      pendingInviteRef.current = null;
     } catch (err: unknown) {
+      pendingInviteRef.current = null;
       if (err instanceof FirebaseError && err.code === 'auth/popup-closed-by-user') return;
       // FIX #942 + #3187: sempre mapear pelo código (inclui account-exists-with-
       // different-credential e os códigos app/invite-*) — nunca mensagem crua.
@@ -524,6 +539,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!inviteValidation.data.valid || !inviteValidation.data.inviteCode) {
         throw new AppAuthError(APP_AUTH_ERROR_CODES.inviteInvalid, INVITE_INVALID_MESSAGE);
       }
+      pendingInviteRef.current = {
+        code: inviteValidation.data.inviteCode,
+        source: 'email_password_auth_observer',
+      };
 
       const result = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(result.user, { displayName: name });
@@ -541,7 +560,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         invited_by_code: inviteValidation.data.inviteCode,
         invite_source: 'email_password',
       });
+      pendingInviteRef.current = null;
     } catch (err) {
+      pendingInviteRef.current = null;
       // #3187: mapeia por código (inclui app/invite-*) — nunca mensagem crua
       setError(getAuthErrorMessage(err, t('auth.registerFailed')));
       throw err;
