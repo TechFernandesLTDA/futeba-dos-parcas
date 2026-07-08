@@ -2342,6 +2342,27 @@
     "installTitle": "Use as an app",
     "iosInstallHint": "On iPhone: Safari > Share > Add to Home Screen."
   },
+  "permissions": {
+    "allowAction": "Allow",
+    "blocked": "Blocked",
+    "blockedHint": "Enable it in browser settings when you want to use it.",
+    "description": "Receive alerts, find nearby games, and keep useful data available.",
+    "items": {
+      "location": {
+        "description": "Used for nearby games, map, and check-in when needed.",
+        "title": "Location"
+      },
+      "notifications": {
+        "description": "Game alerts, invites, and important messages.",
+        "title": "Notifications"
+      },
+      "storage": {
+        "description": "Helps the installed app open fast and keep data offline.",
+        "title": "App storage"
+      }
+    },
+    "title": "Enable app features"
+  },
   "page": {
     "title": {
       "about": "About",

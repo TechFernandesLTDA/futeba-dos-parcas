@@ -2342,6 +2342,27 @@
     "installTitle": "Usar como app",
     "iosInstallHint": "No iPhone: Safari > Compartilhar > Adicionar à Tela de Início."
   },
+  "permissions": {
+    "allowAction": "Permitir",
+    "blocked": "Bloqueado",
+    "blockedHint": "Ative nas configurações do navegador quando quiser usar.",
+    "description": "Receba avisos, encontre jogos perto de você e mantenha dados úteis disponíveis.",
+    "items": {
+      "location": {
+        "description": "Usada para jogos próximos, mapa e check-in quando necessário.",
+        "title": "Localização"
+      },
+      "notifications": {
+        "description": "Alertas de jogos, convites e mensagens importantes.",
+        "title": "Notificações"
+      },
+      "storage": {
+        "description": "Ajuda o app instalado a abrir rápido e manter dados offline.",
+        "title": "Espaço do app"
+      }
+    },
+    "title": "Ativar recursos do app"
+  },
   "page": {
     "title": {
       "about": "Sobre",

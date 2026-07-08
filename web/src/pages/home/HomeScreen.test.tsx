@@ -55,6 +55,10 @@ vi.mock('../../components/whatsnew/WhatsNewPopupHost', () => ({
   WhatsNewPopupHost: () => null,
 }));
 
+vi.mock('../../components/common/AppPermissionsPrompt', () => ({
+  AppPermissionsPrompt: () => <div data-testid="app-permissions-prompt" />,
+}));
+
 import { HomeScreen } from './HomeScreen';
 
 const theme = createTheme();
