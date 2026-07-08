@@ -11,7 +11,8 @@
 // evitar erro Cache.put quando extensoes interceptam requests.
 // v5 → v6: invalida assets antigos apos correcoes criticas no fluxo de perfil.
 // v6 → v7: invalida bundle antigo apos correcao critica do OTP no web mobile.
-const CACHE_NAME = 'futeba-v7';
+// v7 → v8: limpa HTML/chunks antigos presos no PWA mobile apos hotfix de assets.
+const CACHE_NAME = 'futeba-v8';
 const OFFLINE_URL = '/offline.html';
 const STATIC_ASSETS = [
   '/',
