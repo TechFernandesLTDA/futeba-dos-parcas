@@ -160,6 +160,13 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.51.17][web-1.51.17] - 2026-07-08
+
+#### Corrigido
+- Hosting passa a responder um fallback JavaScript para chunks antigos em `/assets/**`, evitando servir `index.html` como se fosse modulo JS.
+- O fallback remove service workers/caches antigos e recarrega a pagina atual com cache bust.
+- `sw.js` foi atualizado para `futeba-v8`, purgando caches PWA anteriores na proxima ativacao.
+
 ### [1.51.16][web-1.51.16] - 2026-07-08
 
 #### Corrigido
@@ -1700,6 +1707,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.51.17]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.17.md
 [web-1.51.16]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.16.md
 [web-1.51.15]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.15.md
 [web-1.51.14]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.14.md

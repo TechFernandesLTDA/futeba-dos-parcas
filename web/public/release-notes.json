@@ -1,7 +1,28 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-08T03:29:44.608Z",
+  "generatedAt": "2026-07-08T04:01:38.151Z",
   "notes": [
+    {
+      "version": "1.51.17",
+      "buildNumber": null,
+      "releaseDate": "2026-07-08",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "Corrigimos a abertura do web mobile em celulares com cache antigo.",
+      "highlights": [],
+      "added": [],
+      "improved": [],
+      "fixed": [
+        "O app instalado ou aberto no celular agora limpa caches antigos quando encontra um bundle que nao existe mais.",
+        "A versao web forca atualizacao do service worker para evitar tela em branco causada por arquivos antigos do app.",
+        "Rotas mobile continuam abrindo normalmente e redirecionam para login quando o usuario nao esta autenticado.",
+        "Hosting passa a responder um fallback JavaScript para chunks antigos em `/assets/**`, evitando servir `index.html` como se fosse modulo JS.",
+        "O fallback remove service workers/caches antigos e recarrega a pagina atual com cache bust.",
+        "`sw.js` foi atualizado para `futeba-v8`, purgando caches PWA anteriores na proxima ativacao."
+      ],
+      "issueRefs": []
+    },
     {
       "version": "1.51.16",
       "buildNumber": null,
