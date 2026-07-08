@@ -1,7 +1,27 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-08T04:01:38.151Z",
+  "generatedAt": "2026-07-08T04:55:00.632Z",
   "notes": [
+    {
+      "version": "1.51.18",
+      "buildNumber": null,
+      "releaseDate": "2026-07-08",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "Melhoramos a instalação do web app no celular.",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "A tela de login e a home agora mostram uma chamada clara para usar o Futeba como app.",
+        "No Android e em navegadores compatíveis, o botão de instalar abre o prompt nativo do navegador.",
+        "No iPhone, a tela orienta o fluxo correto pelo Safari para adicionar o app à Tela de Início."
+      ],
+      "fixed": [
+        "Service worker atualizado para `futeba-v9`, cacheando o novo ícone PWA e invalidando caches antigos após o deploy."
+      ],
+      "issueRefs": []
+    },
     {
       "version": "1.51.17",
       "buildNumber": null,

@@ -2335,6 +2335,13 @@
     "termsRequired": "Accept the commercial terms before sending the request.",
     "updateAction": "Update request"
   },
+  "pwa": {
+    "androidInstallHint": "Open full screen with quick access and fewer distractions.",
+    "desktopInstallHint": "Install on this computer for full-screen access and a faster launch.",
+    "installAction": "Install",
+    "installTitle": "Use as an app",
+    "iosInstallHint": "On iPhone: Safari > Share > Add to Home Screen."
+  },
   "page": {
     "title": {
       "about": "About",

@@ -33,6 +33,7 @@ import { getAuthErrorMessage } from '../../utils/firebaseErrors';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useTranslation } from 'react-i18next';
 import { AppLogo } from '../../components/common/AppLogo';
+import { InstallAppPrompt } from '../../components/common/InstallAppPrompt';
 import { sxPresets } from '../../theme/sxPresets';
 import { pageSpacing } from '../../theme/pageTokens';
 
@@ -198,16 +199,18 @@ export function LoginScreen() {
           boxShadow: isMd ? undefined : (t) => t.shadows[16],
         }}
       >
-        <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
+        <CardContent sx={{ p: { xs: 2.25, sm: 4 } }}>
           {!isMd && (
-          <Box sx={{ textAlign: 'center', mb: { xs: 3, sm: 4 } }}>
+          <Box sx={{ textAlign: 'center', mb: { xs: 2.25, sm: 4 } }}>
             <AppLogo
               size="large"
               shape="circle"
               alt={t('alt.logo')}
               sx={{
+                width: { xs: 96, sm: 120 },
+                height: { xs: 96, sm: 120 },
                 mx: 'auto',
-                mb: 2,
+                mb: { xs: 1.5, sm: 2 },
                 boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.4)}`,
               }}
             />
@@ -220,11 +223,13 @@ export function LoginScreen() {
               >
                 {t('common.appName')}
               </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
               {t('auth.tagline')}
             </Typography>
           </Box>
           )}
+
+          <InstallAppPrompt />
 
           {error && (
             <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }} role="alert" aria-live="assertive">
@@ -327,6 +332,7 @@ export function LoginScreen() {
             sx={{
               py: 1.5,
               px: { xs: 1.25, sm: 2 },
+              fontSize: { xs: '0.95rem', sm: '1rem' },
               whiteSpace: 'nowrap',
               borderColor: theme.palette.info.main,
               color: theme.palette.info.main,
