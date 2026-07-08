@@ -776,6 +776,68 @@ describe("concludeMvpVoting - contagem de votos e vencedor", () => {
     expect(result.results.mvpId).toBe("alpha");
   });
 
+  test("ignora votos de jogadores sem presença real", async () => {
+    const votes = [
+      { category: "MVP", voter_id: "voter1", voted_player_id: "playerA" },
+      { category: "MVP", voter_id: "ghost", voted_player_id: "playerA" },
+    ];
+
+    mockRunTransaction.mockImplementation(async (callback: any) => {
+      let callIndex = 0;
+      const responses = [
+        {
+          docs: votes.map((v) => ({ data: () => v })),
+          empty: false,
+        },
+        {
+          exists: true,
+          data: () => ({
+            status: "FINISHED",
+            voting_status: "OPEN",
+            owner_id: "owner1",
+          }),
+        },
+        {
+          docs: [
+            eligibleConfirmationDoc("voter1"),
+            eligibleConfirmationDoc("playerA"),
+            {
+              ref: { id: "confirmation-ghost" },
+              data: () => ({
+                status: "CONFIRMED",
+                user_id: "ghost",
+                checked_in: false,
+              }),
+            },
+          ],
+          empty: false,
+        },
+      ];
+
+      const mockTx = {
+        get: jest.fn().mockImplementation(() => {
+          const snap = responses[callIndex++] ||
+            { exists: false, data: () => ({}) };
+          return Promise.resolve(snap);
+        }),
+        update: jest.fn(),
+        set: jest.fn(),
+      };
+
+      return callback(mockTx);
+    });
+
+    const request = {
+      auth: { uid: "owner1", token: { profileComplete: true } },
+      data: { gameId: "game1" },
+    };
+
+    const result = await concludeMvpVotingHandler!(request);
+
+    expect(result.success).toBe(true);
+    expect(result.results.mvpId).toBe("playerA");
+  });
+
   test("deve encerrar sem vencedor quando não há votos", async () => {
     // Nenhum voto registrado
     mockRunTransaction.mockImplementation(async (callback: any) => {

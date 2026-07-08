@@ -154,6 +154,11 @@ import {
   toTeam,
   toLiveScore,
   getGameDate,
+  brtDateKey,
+  parseDateKeyAsUtc,
+  getFiniteNumber,
+  calculateNextParticipationStreak,
+  calculateStreakXp,
   LEVELS,
   MILESTONES,
   UserStatistics,
@@ -232,6 +237,118 @@ describe("Index - getLevelForXp", () => {
     for (const { xp, level } of expectedLevels) {
       expect(getLevelForXp(xp)).toBe(level);
     }
+  });
+});
+
+// ==========================================
+// XP streak helpers
+// ==========================================
+
+describe("Index - XP streak helpers", () => {
+  const settings = {
+    xp_participation: 10,
+    xp_win: 20,
+    xp_draw: 10,
+    xp_goal: 5,
+    xp_assist: 5,
+    xp_save: 2,
+    xp_mvp: 30,
+    xp_streak_3: 15,
+    xp_streak_5: 30,
+    xp_streak_7: 50,
+    xp_streak_10: 80,
+  };
+
+  test("brtDateKey formata data no fuso America/Sao_Paulo", () => {
+    expect(brtDateKey(new Date("2026-07-08T02:30:00.000Z")))
+      .toBe("2026-07-07");
+  });
+
+  test("parseDateKeyAsUtc aceita somente yyyy-MM-dd válido", () => {
+    expect(parseDateKeyAsUtc("2026-07-08")?.toISOString())
+      .toBe("2026-07-08T00:00:00.000Z");
+    expect(parseDateKeyAsUtc("08/07/2026")).toBeNull();
+    expect(parseDateKeyAsUtc(undefined)).toBeNull();
+  });
+
+  test("getFiniteNumber usa aliases e fallback para valores inválidos", () => {
+    expect(getFiniteNumber(
+      { currentStreak: 4 },
+      ["current_streak", "currentStreak"]
+    )).toBe(4);
+    expect(getFiniteNumber(
+      { current_streak: Number.NaN },
+      ["current_streak"],
+      2
+    )).toBe(2);
+  });
+
+  test("calculateNextParticipationStreak preserva sequência diária", () => {
+    expect(calculateNextParticipationStreak(
+      {
+        current_streak: 2,
+        longest_streak: 4,
+        last_game_date: "2026-07-07",
+        streak_started_at: "2026-07-06",
+      },
+      "2026-07-08"
+    )).toEqual({
+      previousStreak: 2,
+      currentStreak: 3,
+      longestStreak: 4,
+      streakStartedAt: "2026-07-06",
+    });
+  });
+
+  test("calculateNextParticipationStreak usa data atual quando início falta", () => {
+    expect(calculateNextParticipationStreak(
+      {
+        current_streak: 1,
+        longest_streak: 1,
+        last_game_date: "2026-07-07",
+      },
+      "2026-07-08"
+    )).toEqual({
+      previousStreak: 1,
+      currentStreak: 2,
+      longestStreak: 2,
+      streakStartedAt: "2026-07-08",
+    });
+  });
+
+  test("calculateNextParticipationStreak reinicia quando há lacuna", () => {
+    expect(calculateNextParticipationStreak(
+      {
+        currentStreak: 5,
+        longestStreak: 5,
+        lastGameDate: "2026-07-01",
+        streakStartedAt: "2026-06-27",
+      },
+      "2026-07-08"
+    )).toEqual({
+      previousStreak: 5,
+      currentStreak: 1,
+      longestStreak: 5,
+      streakStartedAt: "2026-07-08",
+    });
+  });
+
+  test("calculateNextParticipationStreak inicia quando datas legadas faltam", () => {
+    expect(calculateNextParticipationStreak(undefined, "2026-07-08"))
+      .toEqual({
+        previousStreak: 0,
+        currentStreak: 1,
+        longestStreak: 1,
+        streakStartedAt: "2026-07-08",
+      });
+  });
+
+  test("calculateStreakXp aplica marcos progressivos", () => {
+    expect(calculateStreakXp(2, settings)).toBe(0);
+    expect(calculateStreakXp(3, settings)).toBe(15);
+    expect(calculateStreakXp(5, settings)).toBe(30);
+    expect(calculateStreakXp(7, settings)).toBe(50);
+    expect(calculateStreakXp(10, settings)).toBe(80);
   });
 });
 

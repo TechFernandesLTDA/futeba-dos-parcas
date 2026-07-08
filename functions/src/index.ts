@@ -195,7 +195,7 @@ async function getNotifications(): Promise<NotificationModule> {
  * @param {Date} date Data do jogo.
  * @return {string} Chave local BRT.
  */
-function brtDateKey(date: Date): string {
+export function brtDateKey(date: Date): string {
   return date.toLocaleDateString("en-CA", {
     timeZone: "America/Sao_Paulo",
   });
@@ -206,7 +206,7 @@ function brtDateKey(date: Date): string {
  * @param {unknown} dateKey Valor bruto do campo de data.
  * @return {Date | null} Data normalizada ou null.
  */
-function parseDateKeyAsUtc(dateKey?: unknown): Date | null {
+export function parseDateKeyAsUtc(dateKey?: unknown): Date | null {
   if (typeof dateKey !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(dateKey)) {
     return null;
   }
@@ -221,7 +221,7 @@ function parseDateKeyAsUtc(dateKey?: unknown): Date | null {
  * @param {number} fallback Valor padrão.
  * @return {number} Número encontrado ou fallback.
  */
-function getFiniteNumber(
+export function getFiniteNumber(
   data: admin.firestore.DocumentData | undefined,
   keys: string[],
   fallback = 0
@@ -239,7 +239,7 @@ function getFiniteNumber(
  * @param {string} gameDateKey Data do jogo em yyyy-MM-dd.
  * @return {object} Streak anterior, atual, recorde e início.
  */
-function calculateNextParticipationStreak(
+export function calculateNextParticipationStreak(
   raw: admin.firestore.DocumentData | undefined,
   gameDateKey: string
 ) {
@@ -291,7 +291,7 @@ function calculateNextParticipationStreak(
  * @param {GamificationSettings} settings Configuração de XP.
  * @return {number} XP de streak aplicável.
  */
-function calculateStreakXp(
+export function calculateStreakXp(
   streak: number,
   settings: GamificationSettings
 ): number {

@@ -248,6 +248,10 @@ jest.mock("../src/game/helpers", () => ({
     redCards: 0,
     game_id: d.game_id ?? "",
     is_worst_player: false,
+    checkedIn: d.checked_in,
+    wasPresent: d.was_present,
+    hasPresenceSignal:
+      d.checked_in !== undefined || d.was_present !== undefined,
     // FIX #2797: mapeamento de suspicious_overlap → suspiciousOverlap
     suspiciousOverlap: d.suspicious_overlap === true,
   })),
@@ -266,7 +270,8 @@ jest.mock("../src/game/helpers", () => ({
   fetchAllStreaks: jest.fn(() => new Map()),
   isParticipationEligible: jest.fn((c: any) =>
     c.status === "CONFIRMED" &&
-    c.suspiciousOverlap !== true
+    c.suspiciousOverlap !== true &&
+    (!c.hasPresenceSignal || c.checkedIn === true || c.wasPresent === true)
   ),
   updateRankingDeltas: jest.fn(),
   updateSeasonParticipation: jest.fn(),
@@ -478,5 +483,82 @@ describe("FIX #2797 — onGameStatusUpdate exclui suspicious_overlap do XP", () 
       msg.includes("[ANTI-CHEAT][OVERLAP]")
     );
     expect(hasOverlapWarn).toBe(false);
+  });
+
+  it("loga [XP_ELIGIBILITY][PRESENCE] para confirmado sem presença real", async () => {
+    mockCollectionGet.mockReset();
+    mockDocGet.mockReset();
+    mockWarnFn.mockReset();
+
+    mockRunTransaction.mockImplementation(
+      async (cb: (tx: any) => Promise<any>) => {
+        const tx = {
+          get: jest.fn().mockResolvedValue({
+            exists: true,
+            data: () => ({
+              status: "FINISHED",
+              xp_processed: false,
+              xp_processing: false,
+              owner_id: "owner1",
+            }),
+          }),
+          update: jest.fn(),
+        };
+        return cb(tx);
+      }
+    );
+
+    const absentUser = "user-absent";
+    const allConfirmations = [
+      {
+        user_id: absentUser,
+        status: "CONFIRMED",
+        goals: 0,
+        assists: 0,
+        saves: 0,
+        checked_in: false,
+        game_id: gameId,
+      },
+      ...normalUsers.map((uid) => ({
+        user_id: uid,
+        status: "CONFIRMED",
+        goals: 0,
+        assists: 0,
+        saves: 0,
+        game_id: gameId,
+      })),
+    ];
+
+    mockCollectionGet
+      .mockResolvedValueOnce(makeSnap(allConfirmations))
+      .mockResolvedValueOnce(makeSnap([{
+        player_ids: [absentUser, ...normalUsers],
+        score: 0,
+      }]))
+      .mockResolvedValueOnce(makeSnap([{ is_active: true }]));
+
+    mockDocGet
+      .mockResolvedValueOnce({ exists: true, data: () => ({ uid: "owner1" }) })
+      .mockResolvedValueOnce({ exists: false })
+      .mockResolvedValueOnce({ exists: false })
+      .mockResolvedValueOnce({
+        exists: true,
+        data: () => ({
+          status: "FINISHED",
+          owner_id: "owner1",
+          group_id: "group1",
+          mvp_id: null,
+          worst_player_id: null,
+        }),
+      })
+      .mockResolvedValue({ exists: false });
+
+    await onGameStatusUpdate(makeFinishedEvent() as any);
+
+    const warnMessages = mockWarnFn.mock.calls
+      .map((args: any[]) => String(args[0]));
+    expect(warnMessages.some((msg) =>
+      msg.includes("[XP_ELIGIBILITY][PRESENCE]")
+    )).toBe(true);
   });
 });
