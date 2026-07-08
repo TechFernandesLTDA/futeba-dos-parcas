@@ -1,7 +1,28 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-07T21:01:49.345Z",
+  "generatedAt": "2026-07-08T03:29:44.608Z",
   "notes": [
+    {
+      "version": "1.51.16",
+      "buildNumber": null,
+      "releaseDate": "2026-07-08",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "Corrigimos o valor por jogador em jogos com duracao maior que uma hora.",
+      "highlights": [],
+      "added": [],
+      "improved": [],
+      "fixed": [
+        "Jogos marcados com 1h30 passam a salvar e exibir o valor proporcional correto por jogador.",
+        "A tela de detalhe, cards de jogos, confirmacao de presenca e relatorio pos-jogo usam a mesma conta do aluguel total dividido pelas vagas quando o preco nao foi definido manualmente.",
+        "O jogo reportado para 09/07, das 19:30 as 21:00, foi corrigido para R$ 37,50 por jogador.",
+        "`CreateGameScreen` agora resolve o preco final no submit a partir de `formData.totalCost` e `maxPlayers`, evitando `numericDrafts.dailyPrice` antigo quando outro campo numerico esta ativo.",
+        "O app persiste `price_manual_override` e `duration_minutes` nos jogos criados.",
+        "`resolveExpectedPayment` passa a preferir `total_cost / max_players` para jogos automaticos e preserva `daily_price` apenas quando o preco manual esta marcado."
+      ],
+      "issueRefs": []
+    },
     {
       "version": "1.51.15",
       "buildNumber": null,

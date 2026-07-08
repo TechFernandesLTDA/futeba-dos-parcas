@@ -17,6 +17,7 @@ import NavIcon from '@mui/icons-material/Navigation';
 import { getStatusChipColors } from '../../types/game';
 import { formatGameDateLong } from '../../utils/dateFormatters';
 import type { Game } from '../../types/game';
+import { resolveExpectedPayment } from '../../utils/gamePayment';
 
 interface GameInfoPanelProps {
   game: Game;
@@ -24,6 +25,7 @@ interface GameInfoPanelProps {
 
 export const GameInfoPanel: React.FC<GameInfoPanelProps> = ({ game }) => {
   const theme = useTheme();
+  const expectedPayment = resolveExpectedPayment(game);
 
   return (
     <>
@@ -84,12 +86,12 @@ export const GameInfoPanel: React.FC<GameInfoPanelProps> = ({ game }) => {
               </Box>
             </Box>
 
-            {game.dailyPrice > 0 && (
+            {expectedPayment > 0 && (
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                 <PaymentIcon color="primary" />
                 <Box>
                   <Typography variant="subtitle1">
-                    R$ {game.dailyPrice.toFixed(2)} por jogador
+                    R$ {expectedPayment.toFixed(2)} por jogador
                   </Typography>
                   {game.pixKey && (
                     <Typography variant="body2" color="text.secondary">

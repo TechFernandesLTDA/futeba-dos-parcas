@@ -19,6 +19,8 @@ interface RecentGame {
   maxGoalkeepers: number;
   numberOfTeams: number;
   dailyPrice: number;
+  totalCost: number;
+  priceManualOverride?: boolean;
   visibility: string;
   groupId?: string;
   groupName?: string;
@@ -70,6 +72,8 @@ export function useDuplicateGame() {
           maxGoalkeepers: (raw.maxGoalkeepers as number) || 2,
           numberOfTeams: (raw.numberOfTeams as number) || 2,
           dailyPrice: (raw.dailyPrice as number) || 0,
+          totalCost: (raw.totalCost as number) || 0,
+          priceManualOverride: raw.priceManualOverride as boolean | undefined,
           visibility: (raw.visibility as string) || 'PUBLIC_CLOSED',
           groupId: raw.groupId as string | undefined,
           groupName: raw.groupName as string | undefined,

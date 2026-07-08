@@ -48,6 +48,7 @@ import { EmptyState } from '../../../components/common/EmptyState';
 import { useDocumentTitle } from '../../../hooks/useDocumentTitle';
 import { ScreenFab } from '../../../components/layout';
 import { getGameStartTime, sortGamesForDisplay } from '../../../utils/gameSorting';
+import { resolveExpectedPayment } from '../../../utils/gamePayment';
 
 const livePulseKeyframes = {
   '@keyframes livePulse': {
@@ -349,6 +350,7 @@ export function GamesTab() {
             const progress = game.maxPlayers > 0 ? Math.min((game.playersCount / game.maxPlayers) * 100, 100) : 0;
             const isFull = game.maxPlayers > 0 && game.playersCount >= game.maxPlayers;
             const isLive = game.status === 'LIVE';
+            const expectedPayment = resolveExpectedPayment(game);
 
             return (
               <Grid xs={12} md={6} xl={4} key={game.id}>
@@ -453,9 +455,9 @@ export function GamesTab() {
                             {game.playersCount}/{game.maxPlayers} jogadores
                           </Typography>
                         </Box>
-                        {game.status === 'SCHEDULED' && game.dailyPrice > 0 && (
+                        {game.status === 'SCHEDULED' && expectedPayment > 0 && (
                           <Typography variant="body2" fontWeight="bold" color="primary">
-                            R$ {game.dailyPrice.toFixed(0)}
+                            R$ {expectedPayment.toFixed(0)}
                           </Typography>
                         )}
                         {(game.status === 'LIVE' || game.status === 'FINISHED') && (

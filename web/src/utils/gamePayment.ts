@@ -2,15 +2,16 @@ import type { Game } from '../types/game';
 
 const roundCurrency = (value: number) => Math.round(value * 100) / 100;
 
-type GamePaymentSource = Pick<Game, 'dailyPrice' | 'totalCost' | 'maxPlayers'>;
+type GamePaymentSource = Pick<Game, 'dailyPrice' | 'totalCost' | 'maxPlayers' | 'priceManualOverride'>;
 
 export const resolveExpectedPayment = (game?: GamePaymentSource | null) => {
   if (!game) return 0;
+  if (Number.isFinite(game.totalCost) && game.totalCost > 0 && game.maxPlayers > 0) {
+    const calculatedPerPlayer = roundCurrency(game.totalCost / game.maxPlayers);
+    if (!game.priceManualOverride) return calculatedPerPlayer;
+  }
   if (Number.isFinite(game.dailyPrice) && game.dailyPrice > 0) {
     return roundCurrency(game.dailyPrice);
-  }
-  if (Number.isFinite(game.totalCost) && game.totalCost > 0 && game.maxPlayers > 0) {
-    return roundCurrency(game.totalCost / game.maxPlayers);
   }
   return 0;
 };

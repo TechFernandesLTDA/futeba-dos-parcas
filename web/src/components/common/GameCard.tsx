@@ -32,6 +32,7 @@ import { useTranslation } from 'react-i18next';
 import { iconSizes } from '../../theme/iconSizes';
 import { Game, FIELD_TYPE_LABELS, getStatusChipColors, ConfirmationPaletteKey } from '../../types/game';
 import { formatGameDate } from '../../utils/dateFormatters';
+import { resolveExpectedPayment } from '../../utils/gamePayment';
 import { InteractiveCard } from './InteractiveCard';
 import { useContextMenu, ContextMenuItem } from '../../hooks/useContextMenu';
 import { TeamBadge } from '../team/TeamBadge';
@@ -98,6 +99,7 @@ export const GameCard: React.FC<GameCardProps> = React.memo(({
   const progress = game.maxPlayers > 0 ? (game.playersCount / game.maxPlayers) * 100 : 0;
   const isFull = game.playersCount >= game.maxPlayers;
   const countdown = game.status === 'SCHEDULED' ? getCountdown(game.date, game.time) : null;
+  const expectedPayment = resolveExpectedPayment(game);
 
   // Dono do jogo pode cancelar; nao-donos nao veem a opcao
   const isGameOwner = Boolean(currentUserId && game.ownerId === currentUserId);
@@ -307,9 +309,9 @@ export const GameCard: React.FC<GameCardProps> = React.memo(({
                   {game.playersCount}/{game.maxPlayers} jogadores
                 </Typography>
               </Box>
-              {game.dailyPrice > 0 && (
+              {expectedPayment > 0 && (
                 <Typography variant="body2" fontWeight={600} color="primary">
-                  R$ {game.dailyPrice.toFixed(2)}
+                  R$ {expectedPayment.toFixed(2)}
                 </Typography>
               )}
             </Box>
