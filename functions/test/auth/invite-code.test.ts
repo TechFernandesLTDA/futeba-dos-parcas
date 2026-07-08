@@ -384,6 +384,134 @@ describe("auth/invite-code apadrinhamento", () => {
     });
   });
 
+  it("onUserCreatedProcessInvite aceita convite pendente com formatos Firestore de expires_at", async () => {
+    store.set("users/inviter-formats", {
+      invite_code: "FORM123",
+      name: "Fernanda Formatos",
+      invite_count: 0,
+      experience_points: 10,
+      level: 0,
+    });
+
+    const pendingCases = [
+      {
+        userId: "date-user",
+        expiresAt: new Date(Date.now() + 60_000),
+      },
+      {
+        userId: "to-millis-user",
+        expiresAt: {toMillis: () => Date.now() + 60_000},
+        inviterId: "inviter-formats",
+        inviterName: "Fernanda Formatos",
+      },
+      {
+        userId: "to-date-user",
+        expiresAt: {toDate: () => new Date(Date.now() + 60_000)},
+        inviterId: "inviter-formats",
+      },
+      {
+        userId: "no-expiry-user",
+        expiresAt: {},
+      },
+    ];
+
+    for (const pendingCase of pendingCases) {
+      store.set(`pending_app_invites/${pendingCase.userId}`, {
+        invite_code: "FORM123",
+        inviter_id: pendingCase.inviterId,
+        inviter_name: pendingCase.inviterName,
+        expires_at: pendingCase.expiresAt,
+      });
+      store.set(`users/${pendingCase.userId}`, {
+        email: `${pendingCase.userId}@test.com`,
+      });
+
+      await firestoreHandlers["users/{userId}"][1]({
+        params: {userId: pendingCase.userId},
+        data: {data: () => store.get(`users/${pendingCase.userId}`)},
+      });
+
+      expect(store.get(`users/${pendingCase.userId}`)).toMatchObject({
+        invited_by: "inviter-formats",
+        invited_by_code: "FORM123",
+        invite_source: "pending_validation",
+      });
+    }
+
+    expect(store.get("users/inviter-formats")).toMatchObject({
+      invite_count: 4,
+      experience_points: 210,
+      level: 1,
+    });
+  });
+
+  it("onUserCreatedProcessInvite ignora convite pendente expirado ou sem codigo", async () => {
+    store.set("users/inviter-stale", {
+      invite_code: "STALE1",
+      name: "Silvia Stale",
+      invite_count: 0,
+      experience_points: 25,
+      level: 0,
+    });
+    store.set("pending_app_invites/expired-user", {
+      invite_code: "STALE1",
+      inviter_id: "inviter-stale",
+      expires_at: {toMillis: () => Date.now() - 1_000},
+    });
+    store.set("pending_app_invites/missing-code-user", {
+      expires_at: undefined,
+    });
+
+    await firestoreHandlers["users/{userId}"][1]({
+      params: {userId: "expired-user"},
+      data: {data: () => ({email: "expired@test.com"})},
+    });
+    await firestoreHandlers["users/{userId}"][1]({
+      params: {userId: "missing-code-user"},
+      data: {data: () => ({email: "missing-code@test.com"})},
+    });
+
+    expect(store.get("users/inviter-stale")).toMatchObject({
+      invite_count: 0,
+      experience_points: 25,
+    });
+    expect(store.has("app_invite_redemptions/expired-user")).toBe(false);
+    expect(store.has("app_invite_redemptions/missing-code-user")).toBe(false);
+  });
+
+  it("onUserCreatedProcessInvite bloqueia convite pendente com dono divergente", async () => {
+    store.set("users/inviter-real", {
+      invite_code: "REAL12",
+      name: "Rita Real",
+      invite_count: 0,
+      experience_points: 30,
+      level: 0,
+    });
+    store.set("pending_app_invites/mismatch-user", {
+      invite_code: "REAL12",
+      inviter_id: "other-inviter",
+      inviter_name: "Outro Dono",
+      expires_at: {toDate: () => new Date(Date.now() + 60_000)},
+    });
+    store.set("users/mismatch-user", {
+      email: "mismatch@test.com",
+    });
+
+    await firestoreHandlers["users/{userId}"][1]({
+      params: {userId: "mismatch-user"},
+      data: {data: () => store.get("users/mismatch-user")},
+    });
+
+    expect(store.get("users/inviter-real")).toMatchObject({
+      invite_count: 0,
+      experience_points: 30,
+    });
+    expect(store.get("users/mismatch-user")).not.toMatchObject({
+      invited_by: "inviter-real",
+    });
+    expect(store.has("app_invite_redemptions/mismatch-user")).toBe(false);
+  });
+
   it("onUserCreatedProcessInvite ignora codigo desativado sem reativa-lo", async () => {
     store.set("users/inviter-disabled", {
       invite_code: "OFF123",
