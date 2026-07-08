@@ -167,6 +167,13 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.51.26][web-1.51.26] - 2026-07-08
+
+#### Mudado
+- Compacta `GroupQuickActions` e remove descrições redundantes dos botões.
+- Deduplica CTA de criar jogo por breakpoint.
+- Adiciona `role="tabpanel"`, `aria-controls`, `aria-labelledby` e tooltips nas ações de cabeçalho.
+
 ### [1.51.25][web-1.51.25] - 2026-07-08
 
 #### Corrigido
@@ -1789,6 +1796,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.51.26]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.26.md
 [web-1.51.25]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.25.md
 [web-1.51.24]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.24.md
 [web-1.51.23]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.23.md

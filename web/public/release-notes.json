@@ -1,7 +1,25 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-08T20:35:36.463Z",
+  "generatedAt": "2026-07-08T20:54:43.325Z",
   "notes": [
+    {
+      "version": "1.51.26",
+      "buildNumber": null,
+      "releaseDate": "2026-07-08",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "A tela do grupo ficou mais limpa, com menos ações repetidas e navegação mais direta.",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "A Central do grupo agora mostra só ações reais, sem repetir atalhos que já existem nas abas.",
+        "O botão de criar jogo deixa de aparecer duplicado no desktop; no mobile, continua fixo embaixo para ficar fácil de tocar.",
+        "O convite de jogadores fica junto da seção de Membros, onde a ação faz mais sentido."
+      ],
+      "fixed": [],
+      "issueRefs": []
+    },
     {
       "version": "1.51.25",
       "buildNumber": null,
