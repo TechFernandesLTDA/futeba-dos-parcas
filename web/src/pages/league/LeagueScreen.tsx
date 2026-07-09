@@ -48,6 +48,7 @@ import {
   Radio,
   RadioGroup,
   CircularProgress,
+  ButtonBase,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -70,6 +71,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { PlayerAvatar, LoadingState } from '../../components/common/GameCard';
+import { PlayerCard } from '../../components/player/PlayerCard';
 import { TeamBadge } from '../../components/team/TeamBadge';
 import { PageContainer } from '../../components/common/PageContainer';
 import { EmptyState } from '../../components/common/EmptyState';
@@ -137,6 +139,7 @@ export const LeagueScreen: React.FC<LeagueScreenProps> = ({ embedded = false }) 
   const [dense, setDense] = useState(true);
   const [inviteTarget, setInviteTarget] = useState<LeaguePlayer | null>(null);
   const [actionTarget, setActionTarget] = useState<LeaguePlayer | null>(null);
+  const [selectedPlayerCardId, setSelectedPlayerCardId] = useState<string | null>(null);
   const [messageTargetId, setMessageTargetId] = useState<string | null>(null);
   const [selectedInviteOptionId, setSelectedInviteOptionId] = useState('');
   const { create: createDirectChat, creating: creatingChat } = useCreateDirectChat();
@@ -436,6 +439,10 @@ export const LeagueScreen: React.FC<LeagueScreenProps> = ({ embedded = false }) 
 
   const handleOpenActions = useCallback((player: LeaguePlayer) => {
     setActionTarget(player);
+  }, []);
+
+  const handleOpenPlayerCard = useCallback((userId: string) => {
+    setSelectedPlayerCardId(userId);
   }, []);
 
   const handleCloseActions = useCallback(() => {
@@ -974,7 +981,13 @@ export const LeagueScreen: React.FC<LeagueScreenProps> = ({ embedded = false }) 
                             </TableCell>
                             <TableCell>
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <PlayerAvatar name={player.userName} photoUrl={player.userPhoto} size={32} level={player.level} />
+                                <ButtonBase
+                                  onClick={() => handleOpenPlayerCard(player.userId)}
+                                  aria-label={t('players.viewPlayerCardAria', { name: player.userName })}
+                                  sx={{ borderRadius: '50%', flexShrink: 0 }}
+                                >
+                                  <PlayerAvatar name={player.userName} photoUrl={player.userPhoto} size={32} level={player.level} />
+                                </ButtonBase>
                                 <Box sx={{ minWidth: 0 }}>
                                   <Button
                                     color="inherit"
@@ -1084,6 +1097,7 @@ export const LeagueScreen: React.FC<LeagueScreenProps> = ({ embedded = false }) 
                       messageLoading={messageTargetId === player.userId}
                       onMessage={handleMessagePlayer}
                       onOpenActions={handleOpenActions}
+                      onOpenPlayerCard={handleOpenPlayerCard}
                     />
                   );
                 })}
@@ -1128,6 +1142,11 @@ export const LeagueScreen: React.FC<LeagueScreenProps> = ({ embedded = false }) 
         autoHideDuration={3000}
         onClose={() => setShareSnack(false)}
         message={t('league.positionCopied', 'Posição copiada!')}
+      />
+
+      <PlayerCard
+        userId={selectedPlayerCardId}
+        onClose={() => setSelectedPlayerCardId(null)}
       />
 
       <Dialog
@@ -1275,6 +1294,7 @@ const LeaguePlayerItem = React.memo(function LeaguePlayerItem({
   messageLoading,
   onMessage,
   onOpenActions,
+  onOpenPlayerCard,
 }: {
   player: LeaguePlayer;
   position: number;
@@ -1293,6 +1313,7 @@ const LeaguePlayerItem = React.memo(function LeaguePlayerItem({
   messageLoading: boolean;
   onMessage: (player: LeaguePlayer) => void;
   onOpenActions: (player: LeaguePlayer) => void;
+  onOpenPlayerCard: (userId: string) => void;
 }) {
   const theme = useTheme();
   const { t } = useTranslation();
@@ -1328,6 +1349,11 @@ const LeaguePlayerItem = React.memo(function LeaguePlayerItem({
     e.stopPropagation();
     onOpenActions(player);
   }, [onOpenActions, player]);
+
+  const handleOpenPlayerCard = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    onOpenPlayerCard(player.userId);
+  }, [onOpenPlayerCard, player.userId]);
 
   return (
     <Card
@@ -1398,12 +1424,18 @@ const LeaguePlayerItem = React.memo(function LeaguePlayerItem({
             </Box>
           </Tooltip>
 
-          <PlayerAvatar
-            name={player.userName}
-            photoUrl={player.userPhoto}
-            size={42}
-            level={player.level}
-          />
+          <ButtonBase
+            onClick={handleOpenPlayerCard}
+            aria-label={t('players.viewPlayerCardAria', { name: player.userName })}
+            sx={{ borderRadius: '50%', flexShrink: 0 }}
+          >
+            <PlayerAvatar
+              name={player.userName}
+              photoUrl={player.userPhoto}
+              size={42}
+              level={player.level}
+            />
+          </ButtonBase>
 
           <Box sx={{ flex: 1, minWidth: 0 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, minWidth: 0 }}>

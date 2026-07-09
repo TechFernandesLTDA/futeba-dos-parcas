@@ -101,8 +101,6 @@ export function useLeagueInvites() {
   const manageableGroups = useMemo(
     () =>
       groups.filter((group) =>
-        group.role === 'OWNER' ||
-        group.role === 'ADMIN' ||
         group.ownerId === uid,
       ),
     [groups, uid],
@@ -144,6 +142,7 @@ export function useLeagueInvites() {
     async (target: LeagueInviteTarget, group: Group) => {
       if (!uid) throw new Error('Usuário não autenticado.');
       if (target.userId === uid) throw new Error('Não é possível convidar você mesmo.');
+      if (group.ownerId !== uid) throw new Error('Apenas o dono do grupo pode convidar jogadores.');
 
       const memberSnap = await getDoc(doc(db, 'groups', group.id, 'members', target.userId));
       if (memberSnap.exists()) {

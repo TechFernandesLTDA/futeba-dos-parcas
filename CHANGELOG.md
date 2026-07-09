@@ -173,6 +173,14 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.51.29][web-1.51.29] - 2026-07-09
+
+#### Corrigido
+- `LeagueScreen` conecta o avatar ao `PlayerCard` em desktop e web mobile.
+- `useLeagueInvites` filtra somente grupos com `ownerId` do usuário atual.
+- `group_invites` nas Firestore Rules exige `owner_id` do grupo para criação.
+- `InvitePlayersScreen` usa o UID canônico do Firebase como `invited_by_id`.
+
 ### [1.51.28][web-1.51.28] - 2026-07-09
 
 #### Corrigido
@@ -1832,6 +1840,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.51.29]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.29.md
 [web-1.51.28]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.28.md
 [web-1.51.27]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.27.md
 [web-1.51.26]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.26.md

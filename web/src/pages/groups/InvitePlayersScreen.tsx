@@ -55,8 +55,9 @@ export const InvitePlayersScreen: React.FC = () => {
   const { t } = useTranslation();
   useDocumentTitle(t('page.title.invitePlayers'));
   const { groupId } = useParams<{ groupId: string }>();
-  const { user } = useAuth();
+  const { user, firebaseUser } = useAuth();
   const { showError } = useToast();
+  const uid = firebaseUser?.uid || user?.id;
   const closeDestination = groupId ? `/group/${groupId}` : '/?tab=2';
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -67,6 +68,7 @@ export const InvitePlayersScreen: React.FC = () => {
   const [searching, setSearching] = useState(false);
   const [inviting, setInviting] = useState<string | null>(null);
   const [groupName, setGroupName] = useState('Grupo');
+  const [canInviteGroup, setCanInviteGroup] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
 
@@ -86,9 +88,18 @@ export const InvitePlayersScreen: React.FC = () => {
         const groupDoc = await getDoc(doc(db, 'groups', groupId));
         if (cancelled) return;
         if (groupDoc.exists()) {
-          const groupData = snakeToCamel(groupDoc.data()) as Record<string, unknown>;
+          const rawGroupData = groupDoc.data();
+          const groupData = snakeToCamel(rawGroupData) as Record<string, unknown>;
 
           setGroupName((groupData.name as string) || 'Grupo');
+          const ownerId = (rawGroupData.owner_id as string | undefined) || (groupData.ownerId as string | undefined);
+          const isOwner = Boolean(uid && ownerId === uid);
+          setCanInviteGroup(isOwner);
+
+          if (!isOwner) {
+            setError('Apenas o dono do grupo pode convidar jogadores.');
+            return;
+          }
 
           // Query members from subcollection (schema: groups/{id}/members/{uid})
           const membersSnap = await getDocs(collection(db, 'groups', groupId, 'members'));
@@ -131,10 +142,14 @@ export const InvitePlayersScreen: React.FC = () => {
     fetchMembers();
 
     return () => { cancelled = true; };
-  }, [groupId, showError, retryCount, t]);
+  }, [groupId, showError, retryCount, t, uid]);
 
   const handleSearch = async () => {
     if (searchQuery.trim().length < 2) return;
+    if (!canInviteGroup) {
+      showError('Apenas o dono do grupo pode convidar jogadores.');
+      return;
+    }
     // #2216: bloqueia reentrada enquanto uma busca está em andamento
     // (evita chamadas concorrentes ao apertar Enter repetidamente).
     if (searching) return;
@@ -160,7 +175,11 @@ export const InvitePlayersScreen: React.FC = () => {
   };
 
   const handleInvite = async (targetUser: SearchResult) => {
-    if (!groupId || !user) return;
+    if (!groupId || !uid) return;
+    if (!canInviteGroup) {
+      showError('Apenas o dono do grupo pode convidar jogadores.');
+      return;
+    }
 
     setInviting(targetUser.id);
     try {
@@ -193,7 +212,7 @@ export const InvitePlayersScreen: React.FC = () => {
 
       const senderPendingQuery = query(
         collection(db, 'group_invites'),
-        where('invited_by_id', '==', user.id),
+        where('invited_by_id', '==', uid),
         where('group_id', '==', groupId),
         where('status', '==', 'PENDING')
       );
@@ -207,8 +226,8 @@ export const InvitePlayersScreen: React.FC = () => {
         group_id: groupId,
         group_name: groupName,
         group_photo: null,
-        invited_by_id: user.id,
-        invited_by_name: user.name || 'Organizador',
+        invited_by_id: uid,
+        invited_by_name: user?.name || firebaseUser?.displayName || 'Organizador',
         invited_user_id: targetUser.id,
         invited_user_name: targetUser.name,
         invited_user_photo: targetUser.photoUrl || null,
@@ -254,11 +273,12 @@ export const InvitePlayersScreen: React.FC = () => {
           inputProps={{ maxLength: 200 }}
           InputProps={{
             endAdornment: (
-              <IconButton onClick={handleSearch} disabled={searching} aria-label={t('a11y.search')}>
+              <IconButton onClick={handleSearch} disabled={searching || !canInviteGroup} aria-label={t('a11y.search')}>
                 {searching ? <CircularProgress size={24} /> : <SearchIcon />}
               </IconButton>
             ),
           }}
+          disabled={!canInviteGroup}
           sx={{ mb: 2 }}
         />
 
@@ -285,7 +305,7 @@ export const InvitePlayersScreen: React.FC = () => {
                       <IconButton
                         edge="end"
                         onClick={() => handleInvite(result)}
-                        disabled={inviting === result.id}
+                        disabled={inviting === result.id || !canInviteGroup}
                         aria-label={`Convidar ${result.name}`}
                       >
                         {inviting === result.id ? (
