@@ -24,6 +24,12 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ## Android
 
+### [1.36.3][android-1.36.3] - 2026-07-09
+
+#### Corrigido
+- `InviteRepositoryImpl` remove escritas client-side de membership, `member_count`, espelho `users/{uid}/groups` e notificacoes de resposta.
+- `GroupInvite` passa a mapear `updated_at`.
+
 ### [1.36.2][android-1.36.2] - 2026-07-08
 
 #### Corrigido
@@ -166,6 +172,13 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 - Bump de versão de manutenção após a mega audit wave de 2026-05-11, sem mudanças funcionais no Android nesta tag.
 
 ## Web
+
+### [1.51.28][web-1.51.28] - 2026-07-09
+
+#### Corrigido
+- `signUp` limpa a conta Auth recem-criada se a criacao do documento `users/{uid}` falhar.
+- `useLeagueInvites` deduplica por `group_id + invited_user_id + status` e usa transacao para convites de jogo.
+- `useInvitePlayers` e `InvitePlayersScreen` seguem o mesmo contrato de convite direto.
 
 ### [1.51.27][web-1.51.27] - 2026-07-08
 
@@ -1292,6 +1305,13 @@ _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
 
+### [1.7.13][functions-1.7.13] - 2026-07-09
+
+#### Corrigido
+- `onGroupInviteResponse` cria membership antes do guard de deduplicacao da notificacao.
+- `onInviteRedeemed` valida `expires_at` antes de chamar `toMillis`.
+- `onUserCreatedProcessInvite` so loga processamento quando a transacao concede XP.
+
 ### [1.7.12][functions-1.7.12] - 2026-07-08
 
 #### Corrigido
@@ -1800,6 +1820,7 @@ _Issues: #2981_
 _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 
 
+[android-1.36.3]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.36.3.md
 [android-1.36.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.36.2.md
 [android-1.36.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.36.1.md
 [android-1.36.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.36.0.md
@@ -1811,6 +1832,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.51.28]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.28.md
 [web-1.51.27]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.27.md
 [web-1.51.26]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.26.md
 [web-1.51.25]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.25.md
@@ -1919,6 +1941,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [web-1.26.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.26.1.md
 [web-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.26.0.md
 [ios-1.6.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.0.md
+[functions-1.7.13]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.7.13.md
 [functions-1.7.12]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.7.12.md
 [functions-1.7.11]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.7.11.md
 [functions-1.7.10]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.7.10.md

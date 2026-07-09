@@ -35,6 +35,8 @@ let testEnv: RulesTestEnvironment;
 // IDs das notificações
 const NOTIF_FOR_PLAYER_B = "notif-for-player-b-001";
 const NOTIF_FOR_ADMIN = "notif-for-admin-001";
+const GAME_FOR_INVITE = "game-notification-invite-001";
+const GROUP_FOR_INVITE = "group-notification-invite-001";
 
 beforeAll(async () => {
   testEnv = await initTestEnv();
@@ -54,7 +56,7 @@ beforeAll(async () => {
     defender_rating: 2.0,
     gk_rating: 2.0,
   });
-  await seedDoc(testEnv, `users/${UID_ADMIN}`, {
+	  await seedDoc(testEnv, `users/${UID_ADMIN}`, {
     name: "Admin",
     email: "admin@test.com",
     role: "ADMIN",
@@ -67,7 +69,21 @@ beforeAll(async () => {
     mid_rating: null,
     defender_rating: null,
     gk_rating: null,
-  });
+	  });
+
+	  await seedDoc(testEnv, `games/${GAME_FOR_INVITE}`, {
+	    owner_id: UID_PLAYER_A,
+	    status: "SCHEDULED",
+	  });
+	  await seedDoc(testEnv, `groups/${GROUP_FOR_INVITE}`, {
+	    owner_id: UID_PLAYER_A,
+	    status: "ACTIVE",
+	  });
+	  await seedDoc(testEnv, `groups/${GROUP_FOR_INVITE}/members/${UID_PLAYER_A}`, {
+	    user_id: UID_PLAYER_A,
+	    role: "OWNER",
+	    status: "ACTIVE",
+	  });
 
   // Notificação para player B (enviada por player A)
   await seedDoc(testEnv, `notifications/${NOTIF_FOR_PLAYER_B}`, {
@@ -131,18 +147,76 @@ describe("notifications — leitura", () => {
 // ============================================================
 
 describe("notifications — criação", () => {
-  it("Player pode criar notificação para outro usuário existente", async () => {
-    const db = asPlayerA(testEnv);
-    await assertSucceeds(
-      db.doc("notifications/notif-new-valid").set({
-        created_by: UID_PLAYER_A,
-        user_id: UID_PLAYER_B, // destinatário diferente
-        type: "GAME_INVITE",
-        title: "Venha jogar!",
-        body: "Convite para a proxima partida.",
-      })
-    );
-  });
+	  it("Player pode criar notificação não acionável para outro usuário existente", async () => {
+	    const db = asPlayerA(testEnv);
+	    await assertSucceeds(
+	      db.doc("notifications/notif-new-valid").set({
+	        created_by: UID_PLAYER_A,
+	        user_id: UID_PLAYER_B, // destinatário diferente
+	        type: "system",
+	        title: "Aviso",
+	        body: "Mensagem entre usuários com vínculo permitido pelo app.",
+	      })
+	    );
+	  });
+
+	  it("NÃO permite GAME_SUMMON sem game_id", async () => {
+	    const db = asPlayerA(testEnv);
+	    await assertFails(
+	      db.doc("notifications/notif-game-summon-no-game").set({
+	        created_by: UID_PLAYER_A,
+	        user_id: UID_PLAYER_B,
+	        sender_id: UID_PLAYER_A,
+	        type: "GAME_SUMMON",
+	        title: "Venha jogar!",
+	        body: "Convite para a proxima partida.",
+	      })
+	    );
+	  });
+
+	  it("Player dono do jogo pode criar GAME_SUMMON com game_id", async () => {
+	    const db = asPlayerA(testEnv);
+	    await assertSucceeds(
+	      db.doc("notifications/notif-game-summon-valid").set({
+	        created_by: UID_PLAYER_A,
+	        user_id: UID_PLAYER_B,
+	        sender_id: UID_PLAYER_A,
+	        type: "GAME_SUMMON",
+	        title: "Venha jogar!",
+	        body: "Convite para a proxima partida.",
+	        game_id: GAME_FOR_INVITE,
+	      })
+	    );
+	  });
+
+	  it("NÃO permite GROUP_INVITE sem group_id", async () => {
+	    const db = asPlayerA(testEnv);
+	    await assertFails(
+	      db.doc("notifications/notif-group-invite-no-group").set({
+	        created_by: UID_PLAYER_A,
+	        user_id: UID_PLAYER_B,
+	        sender_id: UID_PLAYER_A,
+	        type: "GROUP_INVITE",
+	        title: "Convite para grupo",
+	        body: "Entre no grupo.",
+	      })
+	    );
+	  });
+
+	  it("Admin do grupo pode criar GROUP_INVITE com group_id", async () => {
+	    const db = asPlayerA(testEnv);
+	    await assertSucceeds(
+	      db.doc("notifications/notif-group-invite-valid").set({
+	        created_by: UID_PLAYER_A,
+	        user_id: UID_PLAYER_B,
+	        sender_id: UID_PLAYER_A,
+	        type: "GROUP_INVITE",
+	        title: "Convite para grupo",
+	        body: "Entre no grupo.",
+	        group_id: GROUP_FOR_INVITE,
+	      })
+	    );
+	  });
 
   it("Player NÃO pode criar notificação para si mesmo (created_by == user_id)", async () => {
     const db = asPlayerA(testEnv);

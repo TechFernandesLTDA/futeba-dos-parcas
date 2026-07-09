@@ -170,23 +170,36 @@ export const InvitePlayersScreen: React.FC = () => {
       // de codigos compartilhaveis (doc-id == code); o write antigo aqui caia
       // no catch-all deny da rule de `invites`.
       const MAX_PENDING_INVITES = 20;
+      const memberSnap = await getDoc(doc(db, 'groups', groupId, 'members', targetUser.id));
+      if (memberSnap.exists()) {
+        const status = memberSnap.data().status;
+        if (status !== 'REMOVED' && status !== 'INACTIVE') {
+          showError('Este jogador já possui vínculo ativo ou bloqueado neste grupo.');
+          return;
+        }
+      }
+
       const existingQuery = query(
+        collection(db, 'group_invites'),
+        where('group_id', '==', groupId),
+        where('invited_user_id', '==', targetUser.id),
+        where('status', '==', 'PENDING')
+      );
+      const existing = await getDocs(existingQuery);
+      if (!existing.empty) {
+        showError(t('feedback.groups.inviteAlreadyPending', 'Este jogador já tem um convite pendente para este grupo.'));
+        return;
+      }
+
+      const senderPendingQuery = query(
         collection(db, 'group_invites'),
         where('invited_by_id', '==', user.id),
         where('group_id', '==', groupId),
         where('status', '==', 'PENDING')
       );
-      const existing = await getDocs(existingQuery);
-      const alreadyPending = existing.docs.some((inviteDoc) => {
-        const data = inviteDoc.data();
-        return data.invited_user_id === targetUser.id || data.invitedUserId === targetUser.id;
-      });
-      if (alreadyPending) {
-        showError(t('feedback.groups.inviteAlreadyPending', 'Este jogador já tem um convite pendente para este grupo.'));
-        return;
-      }
-      if (existing.size >= MAX_PENDING_INVITES) {
-        showError(`Você já tem ${existing.size} convites pendentes neste grupo. Aguarde respostas antes de enviar mais.`);
+      const senderPending = await getDocs(senderPendingQuery);
+      if (senderPending.size >= MAX_PENDING_INVITES) {
+        showError(`Você já tem ${senderPending.size} convites pendentes neste grupo. Aguarde respostas antes de enviar mais.`);
         return;
       }
 
@@ -203,6 +216,7 @@ export const InvitePlayersScreen: React.FC = () => {
         // AUDIT: client-clock drift accepted for 24h invite expiry window
         expires_at: Timestamp.fromDate(new Date(Date.now() + 24 * 60 * 60 * 1000)),
         created_at: serverTimestamp(),
+        updated_at: serverTimestamp(),
       });
       setSearchResults((prev) => prev.filter((r) => r.id !== targetUser.id));
     } catch (error) {
