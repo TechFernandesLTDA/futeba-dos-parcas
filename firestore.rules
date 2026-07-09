@@ -2375,9 +2375,6 @@ service cloud.firestore {
         allow read: if isAuthenticated() && (isGroupMember(groupId) || isGroupOwnerById(groupId));
         // H2 FIX: validacao de campos obrigatorios no cashbox_summary
         allow create, update: if isAuthenticated() && (isGroupAdmin(groupId) || isGroupOwnerById(groupId)) &&
-          !request.resource.data.keys().hasAny([
-            'recomputed_by_server', 'source_event_version', 'recomputed_at', 'truncated'
-          ]) &&
           request.resource.data.total_income is number &&
           request.resource.data.total_income >= 0 &&
           request.resource.data.total_expense is number &&

@@ -66,28 +66,6 @@ function isActiveGroupManager(
 }
 
 /**
- * Usa somente summaries que tenham sido materializados pelo Admin SDK.
- * @param {Record<string, unknown> | undefined} data Summary persistido.
- * @return {CashboxSummaryState | null} Estado confiável ou null.
- */
-function readTrustedSummary(
-  data: Record<string, unknown> | undefined
-): CashboxSummaryState | null {
-  if (!data || data.recomputed_by_server !== true || data.truncated === true) {
-    return null;
-  }
-  const entryCount = typeof data.entry_count === "number" ?
-    Math.max(0, Math.trunc(data.entry_count)) : -1;
-  if (entryCount < 0) return null;
-  return {
-    balanceCents: cashboxAmountToCents(data.balance),
-    totalIncomeCents: cashboxAmountToCents(data.total_income),
-    totalExpenseCents: cashboxAmountToCents(data.total_expense),
-    entryCount,
-  };
-}
-
-/**
  * Recalcula o estado monetário a partir do ledger inteiro.
  * @param {Array<object>} docs Docs do ledger.
  * @return {CashboxSummaryState} Totais e saldo em centavos.
@@ -204,10 +182,9 @@ export const createCashboxEntry = functions.https.onCall<CreateCashboxEntryData>
   try {
     const result = await db().runTransaction(async (tx) => {
       const entryRef = cashboxRef.doc(requestId);
-      const [groupDoc, memberDoc, summaryDoc, userDoc, existingEntryDoc] = await Promise.all([
+      const [groupDoc, memberDoc, userDoc, existingEntryDoc] = await Promise.all([
         tx.get(groupRef),
         tx.get(memberRef),
-        tx.get(summaryRef),
         tx.get(userRef),
         tx.get(entryRef),
       ]);
@@ -236,21 +213,16 @@ export const createCashboxEntry = functions.https.onCall<CreateCashboxEntryData>
         );
       }
 
-      let summaryState = readTrustedSummary(
-        summaryDoc.exists ? summaryDoc.data() || {} : undefined
+      const ledgerSnap = await tx.get(
+        cashboxRef.limit(MAX_LEDGER_FALLBACK_DOCS + 1)
       );
-      if (!summaryState) {
-        const ledgerSnap = await tx.get(
-          cashboxRef.limit(MAX_LEDGER_FALLBACK_DOCS + 1)
+      if (ledgerSnap.docs.length > MAX_LEDGER_FALLBACK_DOCS) {
+        throw new functions.https.HttpsError(
+          "failed-precondition",
+          "Resumo do caixa em atualização; tente novamente"
         );
-        if (ledgerSnap.docs.length > MAX_LEDGER_FALLBACK_DOCS) {
-          throw new functions.https.HttpsError(
-            "failed-precondition",
-            "Resumo do caixa em atualização; tente novamente"
-          );
-        }
-        summaryState = summarizeLedgerFromDocs(ledgerSnap.docs);
       }
+      const summaryState = summarizeLedgerFromDocs(ledgerSnap.docs);
       if (existingEntryDoc.exists) {
         const existingData = existingEntryDoc.data() || {};
         return {
@@ -312,7 +284,6 @@ export const createCashboxEntry = functions.https.onCall<CreateCashboxEntryData>
         entry_count: summaryState.entryCount + 1,
         last_entry_at: FieldValue.serverTimestamp(),
         truncated: false,
-        recomputed_by_server: true,
         recomputed_at: FieldValue.serverTimestamp(),
       }, {merge: true});
 

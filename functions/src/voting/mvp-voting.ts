@@ -1484,11 +1484,21 @@ async function applyVotingXpDelta(
         timeZone: "America/Sao_Paulo",
       }).substring(0, 7);
       weekKey = getWeekKey(gameDate);
-      gameSeasonId =
-        typeof rawGame?.season_id === "string" &&
-        rawGame.season_id.trim().length > 0 ?
-          rawGame.season_id.trim() :
-          monthKey;
+      const explicitSeasonId =
+        typeof rawGame?.season_id === "string" ? rawGame.season_id.trim() : "";
+      if (explicitSeasonId) {
+        gameSeasonId = explicitSeasonId;
+      } else {
+        const activeSeasonSnap = await txn.get(
+          db.collection("seasons")
+            .where("is_active", "==", true)
+            .limit(1)
+        );
+        gameSeasonId = activeSeasonSnap.empty === false &&
+          Array.isArray(activeSeasonSnap.docs) &&
+          activeSeasonSnap.docs[0]?.id ?
+          activeSeasonSnap.docs[0].id : null;
+      }
 
       // FIX #726: MVP bonus (voting reward) is applied OVER the
       // MAX_XP_PER_GAME cap. The cap only limits game-performance XP

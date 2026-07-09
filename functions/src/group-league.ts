@@ -97,6 +97,35 @@ type StoredGroupLeagueMatch = {
 };
 
 /**
+ * Recover real team ids from legacy player results.
+ * @param {StoredGroupLeagueMatch} matchData Stored legacy match.
+ * @return {[string, string]} Team ids aligned with team1/team2 scores.
+ */
+function getLegacyTeamIds(matchData: StoredGroupLeagueMatch): [string, string] {
+  const playerResults = Array.isArray(matchData.player_results) ?
+    matchData.player_results : [];
+  const ids = [...new Set(playerResults.map(({team_id: teamId}) => teamId)
+    .filter((teamId): teamId is string => Boolean(teamId)))];
+  if (ids.length < 2) return [ids[0] || "team1", "team2"];
+
+  const score1 = matchData.team1_score ?? 0;
+  const score2 = matchData.team2_score ?? 0;
+  const maxScore = Math.max(score1, score2);
+  const minScore = Math.min(score1, score2);
+  const result1 = rankResult(score1, maxScore, minScore);
+  const result2 = rankResult(score2, maxScore, minScore);
+  const resultByTeam = new Map(ids.map((teamId) => [
+    teamId,
+    playerResults.find((result) => result.team_id === teamId)?.result,
+  ]));
+  const team1Id = ids.find((teamId) => resultByTeam.get(teamId) === result1) || ids[0];
+  const team2Id = ids.find((teamId) =>
+    teamId !== team1Id && resultByTeam.get(teamId) === result2
+  ) || ids.find((teamId) => teamId !== team1Id) || ids[1];
+  return [team1Id, team2Id];
+}
+
+/**
  * Return the standings points awarded for one match result.
  *
  * @param {LeagueResult} result Match result.
@@ -172,7 +201,7 @@ export function buildGroupLeaguePlayerResults(
  * @param {StoredGroupLeagueMatch} matchData Stored match data.
  * @return {GroupLeagueTeamSummary[]} Team summaries for the stored match.
  */
-function getStoredTeamSummaries(
+export function getStoredTeamSummaries(
   matchData: StoredGroupLeagueMatch,
 ): GroupLeagueTeamSummary[] {
   if (Array.isArray(matchData.teams) && matchData.teams.length > 0) {
@@ -180,9 +209,10 @@ function getStoredTeamSummaries(
   }
 
   const fallback: GroupLeagueTeamSummary[] = [];
+  const [team1Id, team2Id] = getLegacyTeamIds(matchData);
   if (matchData.team1_name) {
     fallback.push({
-      team_id: "team1",
+      team_id: team1Id,
       name: matchData.team1_name,
       score: matchData.team1_score ?? 0,
       result: "DRAW",
@@ -190,13 +220,43 @@ function getStoredTeamSummaries(
   }
   if (matchData.team2_name) {
     fallback.push({
-      team_id: "team2",
+      team_id: team2Id,
       name: matchData.team2_name,
       score: matchData.team2_score ?? 0,
       result: "DRAW",
     });
   }
   return fallback;
+}
+
+/**
+ * Prefer the canonical game score for legacy two-team matches.
+ * @param {string} teamId Team document id.
+ * @param {number} index Team position when legacy ids are absent.
+ * @param {number} teamCount Number of team docs.
+ * @param {number} storedScore Score stored on the team doc.
+ * @param {Record<string, unknown>} gameData Finished game data.
+ * @return {number} Resolved score.
+ */
+export function resolveFinishedTeamScore(
+  teamId: string,
+  index: number,
+  teamCount: number,
+  storedScore: number,
+  gameData: Record<string, unknown>,
+): number {
+  if (teamCount !== 2) return storedScore;
+  const team1Id = typeof gameData.team1_id === "string" ? gameData.team1_id : "";
+  const team2Id = typeof gameData.team2_id === "string" ? gameData.team2_id : "";
+  if (teamId === team1Id || (!team1Id && index === 0)) {
+    return typeof gameData.team1_score === "number" ?
+      gameData.team1_score : storedScore;
+  }
+  if (teamId === team2Id || (!team2Id && index === 1)) {
+    return typeof gameData.team2_score === "number" ?
+      gameData.team2_score : storedScore;
+  }
+  return storedScore;
 }
 
 /**
@@ -368,12 +428,23 @@ export const onGameFinishedGroupLeague = onDocumentWritten(
             assists: (doc.data().assists as number) || 0,
             isMvp: (doc.data().is_mvp as boolean) || false,
           }));
-        const teams: ProcessedTeam[] = teamsSnap.docs.map((doc) => ({
-          id: doc.id,
-          name: (doc.data().name as string) || "Time",
-          playerIds: (doc.data().player_ids as string[]) || [],
-          score: (doc.data().score as number) || 0,
-        }));
+        const teams: ProcessedTeam[] = teamsSnap.docs.map((doc, index) => {
+          const teamData = doc.data();
+          const storedScore = typeof teamData.score === "number" ?
+            teamData.score : 0;
+          return {
+            id: doc.id,
+            name: (teamData.name as string) || "Time",
+            playerIds: (teamData.player_ids as string[]) || [],
+            score: resolveFinishedTeamScore(
+              doc.id,
+              index,
+              teamsSnap.docs.length,
+              storedScore,
+              after,
+            ),
+          };
+        });
 
         if (teams.length >= 2 && confirmations.length > 0) {
           const teamSummaries = buildGroupLeagueTeamSummaries(teams);

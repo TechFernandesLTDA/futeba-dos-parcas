@@ -165,7 +165,6 @@ describe("createCashboxEntry", () => {
       total_expense: 0.3,
       entry_count: 2,
       truncated: false,
-      recomputed_by_server: true,
       recomputed_at: mockServerTimestampValue,
     }), {merge: true});
   });
@@ -182,8 +181,8 @@ describe("createCashboxEntry", () => {
             return {
               exists: true,
               data: () => ({
-                balance: 0.2,
-                total_income: 0.2,
+                balance: 100,
+                total_income: 100,
                 total_expense: 0,
                 entry_count: 1,
                 truncated: false,
@@ -278,7 +277,6 @@ describe("createCashboxEntry", () => {
       total_expense: 5,
       entry_count: 3,
       truncated: false,
-      recomputed_by_server: true,
       recomputed_at: mockServerTimestampValue,
     }), {merge: true});
   });

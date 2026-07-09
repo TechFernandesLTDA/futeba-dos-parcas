@@ -103,7 +103,6 @@ export const onCashboxEntryWritten = onDocumentWritten(
             Timestamp.fromMillis(lastEntryMillis) :
             null,
           truncated: false,
-          recomputed_by_server: true,
           recomputed_at: FieldValue.serverTimestamp(),
           source_event_version: eventVersion,
         }, {merge: true});

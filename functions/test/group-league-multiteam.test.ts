@@ -22,6 +22,8 @@ import {
   opponentAverage,
   buildGroupLeaguePlayerResults,
   buildGroupLeagueTeamSummaries,
+  getStoredTeamSummaries,
+  resolveFinishedTeamScore,
 } from "../src/group-league";
 
 type LeagueTestDocument = Record<string, unknown>;
@@ -275,6 +277,38 @@ describe("group-league multi-team scoring (#2494)", () => {
     const byUser = new Map(playerResults.map((result) => [result.user_id, result]));
     expect(byUser.get("u1")?.result).toBe("WIN");
     expect(byUser.get("u2")?.result).toBe("LOSS");
+  });
+
+  it("prefere o placar canonico do jogo para dois times", () => {
+    const game = {
+      team1_id: "team-a",
+      team2_id: "team-b",
+      team1_score: 4,
+      team2_score: 1,
+    };
+    expect(resolveFinishedTeamScore("team-a", 0, 2, 0, game)).toBe(4);
+    expect(resolveFinishedTeamScore("team-b", 1, 2, 0, game)).toBe(1);
+  });
+
+  it("recupera ids reais ao reverter partida legada", () => {
+    const summaries = getStoredTeamSummaries({
+      team1_name: "A",
+      team2_name: "B",
+      team1_score: 3,
+      team2_score: 1,
+      player_results: [
+        {
+          user_id: "u1", team_id: "real-a", goals: 1, assists: 0,
+          is_mvp: false, result: "WIN",
+        },
+        {
+          user_id: "u2", team_id: "real-b", goals: 0, assists: 0,
+          is_mvp: false, result: "LOSS",
+        },
+      ],
+    });
+    expect(summaries.map(({team_id: teamId}) => teamId))
+      .toEqual(["real-a", "real-b"]);
   });
 });
 

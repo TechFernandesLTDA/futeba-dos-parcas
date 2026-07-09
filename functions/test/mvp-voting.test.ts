@@ -684,6 +684,7 @@ describe("concludeMvpVoting - contagem de votos e vencedor", () => {
           gender: "mixed",
         }),
       },
+      {empty: false, docs: [{id: "season-active"}]},
       {
         exists: true,
         data: () => ({
@@ -790,6 +791,7 @@ describe("concludeMvpVoting - contagem de votos e vencedor", () => {
           gender: "mixed",
         }),
       },
+      {empty: false, docs: [{id: "season-active"}]},
       {
         exists: true,
         data: () => ({
