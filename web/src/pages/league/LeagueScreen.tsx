@@ -1243,7 +1243,7 @@ export const LeagueScreen: React.FC<LeagueScreenProps> = ({ embedded = false }) 
                   label={
                     <Box sx={{ py: 0.5 }}>
                       <Typography variant="body2" fontWeight={600}>
-                        {option.type === 'group' ? t('league.inviteToGroup') : t('league.inviteToGame')}: {option.label}
+                        {t('league.inviteToGroup')}: {option.label}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
                         {option.helper}
