@@ -1163,6 +1163,24 @@
       ]
     },
     {
+      "collectionGroup": "group_invites",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "group_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "invited_user_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
       "collectionGroup": "game_summons",
       "queryScope": "COLLECTION",
       "fields": [
