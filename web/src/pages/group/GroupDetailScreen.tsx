@@ -1108,7 +1108,7 @@ export const GroupDetailScreen: React.FC = () => {
                     {t('groups.membersCount', { count: activeMembersCount })}
                   </Typography>
                 </Box>
-                {isAdmin && (
+                {isOwner && (
                   <Button
                     variant="contained"
                     startIcon={<InviteIcon />}
@@ -1125,8 +1125,8 @@ export const GroupDetailScreen: React.FC = () => {
                 icon={<PersonIcon sx={{ fontSize: iconSizes.xxl, color: 'text.disabled' }} />}
                 title={t('groupDetail.noMembers')}
                 description={t('groupDetail.noMembersDesc')}
-                actionLabel={isAdmin ? t('groupDetail.invite') : undefined}
-                onAction={isAdmin ? () => setInviteDialogOpen(true) : undefined}
+                actionLabel={isOwner ? t('groupDetail.invite') : undefined}
+                onAction={isOwner ? () => setInviteDialogOpen(true) : undefined}
               />
             ) : (
               <List disablePadding aria-label={t('group.membersAria')}>

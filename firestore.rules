@@ -2667,6 +2667,11 @@ service cloud.firestore {
         );
       }
 
+      function isInviteGroupOwner(gId) {
+        let groupDoc = get(/databases/$(database)/documents/groups/$(gId));
+        return groupDoc != null && groupDoc.data.owner_id == userId();
+      }
+
       function inviteNotExpired() {
         return ('expires_at' in resource.data) && resource.data.expires_at > request.time;
       }
@@ -2700,7 +2705,7 @@ service cloud.firestore {
                          request.resource.data.group_id,
                          request.resource.data.invited_user_id
                        ) &&
-                       canManageInvites(request.resource.data.group_id);
+                       isInviteGroupOwner(request.resource.data.group_id);
 
       // FIX #577: era update sem field restriction → invitee podia overwrite group_id/invited_by_id.
       // Agora invitee só muda status (ACCEPTED/DECLINED) + updated_at; inviter cancela (CANCELLED).

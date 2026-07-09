@@ -3,12 +3,12 @@
  *
  * Regras (firestore.rules, linha 1162):
  * - read: destinatário, remetente ou admin do grupo
- * - create: remetente == caller + canManageInvites (role OWNER ou ADMIN no grupo)
+ * - create: remetente == caller + owner_id do grupo
  * - update: destinatário ou remetente
  * - delete: remetente ou canManageInvites
  *
  * Cobre:
- * - Apenas group admin (OWNER/ADMIN role no grupo) pode criar invite
+ * - Apenas dono do grupo pode criar invite
  * - MEMBER simples NÃO pode criar invite
  * - Destinatário pode ler/atualizar próprio invite
  * - Player aleatório NÃO tem acesso
@@ -56,6 +56,11 @@ beforeAll(async () => {
   await seedDoc(testEnv, `groups/${INVITE_GROUP}/members/${UID_PLAYER_B}`, {
     user_id: UID_PLAYER_B,
     role: "MEMBER",
+    status: "ACTIVE",
+  });
+  await seedDoc(testEnv, `groups/${INVITE_GROUP}/members/${UID_ADMIN}`, {
+    user_id: UID_ADMIN,
+    role: "ADMIN",
     status: "ACTIVE",
   });
 
@@ -107,7 +112,7 @@ describe("group_invites — leitura", () => {
 // ============================================================
 
 describe("group_invites — criação", () => {
-  it("Group admin (OWNER) pode criar invite", async () => {
+  it("Dono do grupo pode criar invite", async () => {
     const db = asPlayerA(testEnv);
 	    await assertSucceeds(
 	      db.doc("group_invites/invite-a-creates").set({
@@ -123,6 +128,23 @@ describe("group_invites — criação", () => {
 	      })
 	    );
 	  });
+
+  it("Administrador do grupo NÃO pode criar invite", async () => {
+    const db = asAdmin(testEnv);
+    await assertFails(
+      db.doc("group_invites/invite-admin-denied").set({
+        group_id: INVITE_GROUP,
+        group_name: "Grupo de Convites",
+        invited_by_id: UID_ADMIN,
+        invited_user_id: UID_PLAYER_C,
+        invited_user_name: "Jogador C",
+        status: "PENDING",
+        created_at: new Date(),
+        updated_at: new Date(),
+        expires_at: new Date(Date.now() + 60_000),
+      })
+    );
+  });
 
   it("Owner legado pelo owner_id pode criar invite mesmo sem member doc", async () => {
     const legacyGroup = "group-legacy-owner-invites";
