@@ -1898,7 +1898,7 @@
     "loadError": "Error loading league: {{error}}",
     "loadMore": "Load more",
     "mvpCount": "MVPs",
-    "noInviteOptions": "You need to manage at least one group or upcoming game to invite from League.",
+    "noInviteOptions": "You need to own at least one group to invite players from League.",
     "points": "Points",
     "position": "Position",
     "positionCopied": "Position copied!",

@@ -1898,7 +1898,7 @@
     "loadError": "Erro ao carregar liga: {{error}}",
     "loadMore": "Carregar mais",
     "mvpCount": "MVPs",
-    "noInviteOptions": "Você precisa gerenciar ao menos um grupo ou jogo futuro para convidar pela Liga.",
+    "noInviteOptions": "Você precisa ser dono de ao menos um grupo para convidar jogadores pela Liga.",
     "points": "Pontos",
     "position": "Posição",
     "positionCopied": "Posição copiada!",

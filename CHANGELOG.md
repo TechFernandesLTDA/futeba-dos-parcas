@@ -173,6 +173,13 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.51.30][web-1.51.30] - 2026-07-09
+
+#### Corrigido
+- `useLeagueInvites` restringe opções a grupos próprios e remove alvos de jogo do modal da Liga.
+- A consulta de convite pendente inclui `invited_by_id`, evitando `permission-denied` nas regras.
+- `group-invites` ganhou teste de leitura por remetente, grupo, destinatário e status.
+
 ### [1.51.29][web-1.51.29] - 2026-07-09
 
 #### Corrigido
@@ -1840,6 +1847,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.51.30]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.30.md
 [web-1.51.29]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.29.md
 [web-1.51.28]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.28.md
 [web-1.51.27]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.27.md

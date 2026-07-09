@@ -93,6 +93,18 @@ describe("group_invites — leitura", () => {
     await assertSucceeds(db.doc(`group_invites/${INVITE_A_TO_C}`).get());
   });
 
+  it("Remetente pode consultar convite pendente por grupo e destinatário", async () => {
+    const db = asPlayerA(testEnv);
+    await assertSucceeds(
+      db.collection("group_invites")
+        .where("invited_by_id", "==", UID_PLAYER_A)
+        .where("group_id", "==", INVITE_GROUP)
+        .where("invited_user_id", "==", UID_PLAYER_C)
+        .where("status", "==", "PENDING")
+        .get()
+    );
+  });
+
   it("Player aleatório (não destinatário, não remetente, não admin do grupo) NÃO pode ler", async () => {
     // Player B é member do grupo mas não é destinatário nem remetente
     // canManageInvites(groupId) verifica role OWNER ou ADMIN
