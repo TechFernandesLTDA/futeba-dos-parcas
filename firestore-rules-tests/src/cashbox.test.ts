@@ -481,4 +481,33 @@ describe("cashbox_summary — permissões", () => {
       })
     );
   });
+
+  it("cliente não pode criar ou alterar metadados server-only do summary", async () => {
+    const path = `groups/${GROUP_CASHBOX}/cashbox_summary/current`;
+    const db = asPlayerA(testEnv);
+    const base = {
+      balance: 200,
+      total_income: 250,
+      total_expense: 50,
+      period_start: "2026-07-01",
+      period_end: "2026-07-31",
+    };
+
+    await assertFails(db.doc(path).set({
+      ...base,
+      source_event_version: "9999-01-01T00:00:00.000Z",
+    }));
+
+    await seedDoc(testEnv, path, {
+      ...base,
+      recomputed_by_server: true,
+      source_event_version: "2026-07-09T12:00:00.000Z",
+      recomputed_at: new Date(),
+      truncated: false,
+    });
+    await assertSucceeds(db.doc(path).update({balance: 201}));
+    await assertFails(db.doc(path).update({
+      source_event_version: "9999-01-01T00:00:00.000Z",
+    }));
+  });
 });

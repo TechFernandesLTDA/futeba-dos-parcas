@@ -30,7 +30,7 @@ interface CashboxSummaryState {
   entryCount: number;
 }
 
-const MAX_LEDGER_FALLBACK_DOCS = 1000;
+const LEDGER_PAGE_SIZE = 500;
 const VERIFICATION_GRACE_END_MS = Date.UTC(2026, 7, 3);
 
 /**
@@ -213,16 +213,17 @@ export const createCashboxEntry = functions.https.onCall<CreateCashboxEntryData>
         );
       }
 
-      const ledgerSnap = await tx.get(
-        cashboxRef.limit(MAX_LEDGER_FALLBACK_DOCS + 1)
-      );
-      if (ledgerSnap.docs.length > MAX_LEDGER_FALLBACK_DOCS) {
-        throw new functions.https.HttpsError(
-          "failed-precondition",
-          "Resumo do caixa em atualização; tente novamente"
-        );
+      const ledgerDocs: Array<{data: () => Record<string, unknown>}> = [];
+      let ledgerQuery: FirebaseFirestore.Query = cashboxRef.limit(LEDGER_PAGE_SIZE);
+      while (true) {
+        const ledgerPage = await tx.get(ledgerQuery);
+        ledgerDocs.push(...ledgerPage.docs);
+        if (ledgerPage.size < LEDGER_PAGE_SIZE) break;
+        ledgerQuery = cashboxRef
+          .startAfter(ledgerPage.docs[ledgerPage.docs.length - 1])
+          .limit(LEDGER_PAGE_SIZE);
       }
-      const summaryState = summarizeLedgerFromDocs(ledgerSnap.docs);
+      const summaryState = summarizeLedgerFromDocs(ledgerDocs);
       if (existingEntryDoc.exists) {
         const existingData = existingEntryDoc.data() || {};
         return {
@@ -284,6 +285,7 @@ export const createCashboxEntry = functions.https.onCall<CreateCashboxEntryData>
         entry_count: summaryState.entryCount + 1,
         last_entry_at: FieldValue.serverTimestamp(),
         truncated: false,
+        recomputed_by_server: true,
         recomputed_at: FieldValue.serverTimestamp(),
       }, {merge: true});
 

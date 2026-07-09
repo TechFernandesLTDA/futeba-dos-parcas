@@ -146,6 +146,7 @@ describe("onCashboxEntryWritten", () => {
       total_expense: 0.3,
       entry_count: 502,
       truncated: false,
+      recomputed_by_server: true,
       recomputed_at: mockServerTimestampValue,
       source_event_version: "2026-07-09T12:00:00.000Z",
     });

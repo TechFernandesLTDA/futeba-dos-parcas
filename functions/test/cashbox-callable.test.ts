@@ -9,6 +9,7 @@ const mockCashboxRef = {
   path: "groups/group-1/cashbox",
   doc: mockCashboxDoc,
   limit: jest.fn(() => mockLedgerQuery),
+  startAfter: jest.fn(() => mockCashboxRef),
 };
 const mockGroupRef = {
   path: "groups/group-1",
@@ -114,6 +115,7 @@ describe("createCashboxEntry", () => {
           }
           if (ref === mockLedgerQuery) {
             return {
+              size: 1,
               docs: [{data: () => ({type: "INCOME", amount: 10, status: "ACTIVE"})}],
             };
           }
@@ -165,6 +167,7 @@ describe("createCashboxEntry", () => {
       total_expense: 0.3,
       entry_count: 2,
       truncated: false,
+      recomputed_by_server: true,
       recomputed_at: mockServerTimestampValue,
     }), {merge: true});
   });
@@ -191,6 +194,7 @@ describe("createCashboxEntry", () => {
           }
           if (ref === mockLedgerQuery) {
             return {
+              size: 1,
               docs: [{data: () => ({type: "INCOME", amount: 0.2, status: "ACTIVE"})}],
             };
           }
@@ -242,6 +246,7 @@ describe("createCashboxEntry", () => {
           }
           if (ref === mockLedgerQuery) {
             return {
+              size: 2,
               docs: [
                 {data: () => ({type: "INCOME", amount: 5, status: "ACTIVE"})},
                 {data: () => ({type: "EXPENSE", amount: 1.25, status: "ACTIVE"})},
@@ -277,7 +282,49 @@ describe("createCashboxEntry", () => {
       total_expense: 5,
       entry_count: 3,
       truncated: false,
+      recomputed_by_server: true,
       recomputed_at: mockServerTimestampValue,
     }), {merge: true});
+  });
+
+  it("pagina o ledger além de mil lançamentos sem bloquear o caixa", async () => {
+    let ledgerPage = 0;
+    mockRunTransaction.mockImplementationOnce(async (callback: (tx: unknown) => Promise<unknown>) => {
+      const tx = {
+        get: jest.fn(async (ref: {path?: string}) => {
+          if (ref === mockGroupRef) return groupSnapshot;
+          if (ref === mockMemberRef) return memberSnapshot;
+          if (ref === mockUserRef) return userSnapshot;
+          if (ref === mockEntryDoc) return mockEntryDoc;
+          if (ref === mockLedgerQuery) {
+            ledgerPage += 1;
+            const size = ledgerPage <= 2 ? 500 : 1;
+            return {
+              size,
+              docs: Array.from({length: size}, () => ({
+                data: () => ({type: "INCOME", amount: 1, status: "ACTIVE"}),
+              })),
+            };
+          }
+          throw new Error(`Unexpected tx.get ref: ${ref.path}`);
+        }),
+        set: jest.fn(),
+      };
+      return callback(tx);
+    });
+
+    const result = await createCashboxEntry({
+      auth: {uid: "user-1", token: {name: "Renan", verified: true}},
+      data: {
+        requestId: "cashbox-request-1001",
+        groupId: "group-1",
+        type: "EXPENSE",
+        amount: 1,
+        description: "Despesa após paginação",
+      },
+    });
+
+    expect(result.balanceCents).toBe(100000);
+    expect(mockCashboxRef.startAfter).toHaveBeenCalledTimes(2);
   });
 });
