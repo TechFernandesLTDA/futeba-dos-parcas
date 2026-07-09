@@ -75,6 +75,14 @@ export function useAutoBreadcrumbs(): BreadcrumbItem[] {
     const segments = pathname.split('/').filter(Boolean);
     const items: BreadcrumbItem[] = [];
     let accumulatedPath = '';
+    const pushItem = (item: BreadcrumbItem) => {
+      const lastItem = items[items.length - 1];
+      if (lastItem?.label === item.label) {
+        items[items.length - 1] = item;
+        return;
+      }
+      items.push(item);
+    };
 
     for (let i = 0; i < segments.length; i++) {
       const segment = segments[i];
@@ -88,22 +96,22 @@ export function useAutoBreadcrumbs(): BreadcrumbItem[] {
         const parentSegment = segments[i - 1];
         const parentLabelKey = DYNAMIC_LABEL_KEYS[parentSegment];
         const parentLabel = parentLabelKey ? t(parentLabelKey) : parentSegment;
-        items.push({
+        pushItem({
           label: `${parentLabel}`,
           to: accumulatedPath,
         });
       } else if (SUB_ROUTE_LABEL_KEYS[segment]) {
-        items.push({
+        pushItem({
           label: t(SUB_ROUTE_LABEL_KEYS[segment]),
           to: accumulatedPath,
         });
       } else if (ROUTE_LABEL_KEYS[accumulatedPath]) {
-        items.push({
+        pushItem({
           label: t(ROUTE_LABEL_KEYS[accumulatedPath]),
           to: accumulatedPath,
         });
       } else if (DYNAMIC_LABEL_KEYS[segment]) {
-        items.push({
+        pushItem({
           label: t(DYNAMIC_LABEL_KEYS[segment]),
           to: accumulatedPath,
         });

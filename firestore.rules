@@ -2373,15 +2373,36 @@ service cloud.firestore {
       match /cashbox_summary/{docId} {
         // #1037.4: isGroupMember() faz get() — garante autenticação explícita primeiro
         allow read: if isAuthenticated() && (isGroupMember(groupId) || isGroupOwnerById(groupId));
-        // H2 FIX: validacao de campos obrigatorios no cashbox_summary
-        allow create, update: if isAuthenticated() && (isGroupAdmin(groupId) || isGroupOwnerById(groupId)) &&
-          request.resource.data.total_income is number &&
+        function hasValidCashboxSummaryShape() {
+          return request.resource.data.total_income is number &&
           request.resource.data.total_income >= 0 &&
           request.resource.data.total_expense is number &&
           request.resource.data.total_expense >= 0 &&
           request.resource.data.balance is number &&
           request.resource.data.period_start is string &&
           request.resource.data.period_end is string;
+        }
+
+        // Metadados server-only podem ser preservados ou todos removidos por
+        // clientes legados, mas nunca criados/alterados pelo cliente.
+        allow create: if isAuthenticated() &&
+          (isGroupAdmin(groupId) || isGroupOwnerById(groupId)) &&
+          !request.resource.data.keys().hasAny([
+            'recomputed_by_server', 'source_event_version', 'recomputed_at', 'truncated'
+          ]) &&
+          hasValidCashboxSummaryShape();
+
+        allow update: if isAuthenticated() &&
+          (isGroupAdmin(groupId) || isGroupOwnerById(groupId)) &&
+          (
+            !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+              'recomputed_by_server', 'source_event_version', 'recomputed_at', 'truncated'
+            ]) ||
+            !request.resource.data.keys().hasAny([
+              'recomputed_by_server', 'source_event_version', 'recomputed_at', 'truncated'
+            ])
+          ) &&
+          hasValidCashboxSummaryShape();
       }
 
       // ============================================

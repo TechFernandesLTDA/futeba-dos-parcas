@@ -108,4 +108,21 @@ describe('useFormDraft', () => {
     });
     expect(localStorage.getItem('draft:test')).toBeNull();
   });
+
+  it('persiste a última edição pendente ao desmontar antes do debounce', () => {
+    const { result, unmount } = renderHook(() => useFormDraft('pending'));
+
+    act(() => {
+      result.current.saveDraft({ name: 'Última edição', notes: 'rascunho' });
+    });
+
+    expect(localStorage.getItem('draft:pending')).toBeNull();
+
+    unmount();
+
+    const raw = localStorage.getItem('draft:pending');
+    expect(raw).not.toBeNull();
+    const parsed = JSON.parse(raw!);
+    expect(parsed.data).toEqual({ name: 'Última edição', notes: 'rascunho' });
+  });
 });

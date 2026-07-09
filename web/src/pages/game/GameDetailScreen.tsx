@@ -47,12 +47,13 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import PlaceIcon from '@mui/icons-material/Place';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
 import { PageContainer } from '../../components/common/PageContainer';
-import { doc, updateDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
+import { doc, runTransaction, serverTimestamp, Timestamp } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useQueryClient } from '@tanstack/react-query';
 import { AppBreadcrumbs, FixedBottomBar } from '../../components/layout';
 import { useGameDetail, useConfirmPresence, useUpdateGameStatus } from '../../hooks/useGames';
 import { useDuplicateGameCopy } from '../../hooks/useDuplicateGameCopy';
+import { useWaitlist } from '../../hooks/useWaitlist';
 import { softDeleteGame, checkInToGame, generateCheckinToken, startGameLifecycle } from '../../services/cloudFunctions';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -81,6 +82,23 @@ const currencyFormatter = new Intl.NumberFormat('pt-BR', {
   style: 'currency',
   currency: 'BRL',
 });
+
+function isEditableGameStatus(status: Game['status']) {
+  return status === 'SCHEDULED' || status === 'CONFIRMED';
+}
+
+function toTimestampMillis(value: unknown) {
+  if (value instanceof Date) return value.getTime();
+  if (value && typeof value === 'object') {
+    if ('toMillis' in value && typeof value.toMillis === 'function') {
+      return value.toMillis();
+    }
+    if ('toDate' in value && typeof value.toDate === 'function') {
+      return value.toDate().getTime();
+    }
+  }
+  return null;
+}
 
 const PostGameMessagesPanel: React.FC<{ gameId: string; canWrite: boolean }> = ({ gameId, canWrite }) => {
   const { t } = useTranslation();
@@ -281,6 +299,11 @@ export const GameDetailScreen: React.FC = () => {
   const { confirmPresence, cancelPresence, loading: confirmLoading } = useConfirmPresence();
   const { updateStatus, loading: statusLoading } = useUpdateGameStatus();
   const { duplicateGame, loading: duplicateGameLoading } = useDuplicateGameCopy();
+  const {
+    waitlist: waitlistEntries,
+    loading: waitlistLoading,
+    error: waitlistError,
+  } = useWaitlist(gameId || null);
 
   const [tabValue, setTabValue] = useState(0);
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
@@ -309,6 +332,7 @@ export const GameDetailScreen: React.FC = () => {
   const isOwner = game?.ownerId === currentUser?.uid;
   const isCurrentUserAdmin = user?.role === 'ADMIN';
   const canManage = game && (isOwner || isCurrentUserAdmin || (game.coOrganizers?.includes(currentUser?.uid || '') ?? false));
+  const canEditGame = !!game && !!canManage && isEditableGameStatus(game.status);
   const showPostGameMessages = game?.status === 'FINISHED';
   const canWritePostGameMessage = showPostGameMessages && (isConfirmed || !!canManage);
   const canManagePostGameContent = !!canManage;
@@ -339,8 +363,16 @@ export const GameDetailScreen: React.FC = () => {
     [confirmedPlayers],
   );
   const waitlist = useMemo(
-    () => confirmations.filter((c) => c.status === 'WAITLIST'),
-    [confirmations],
+    () => waitlistEntries.map((entry) => ({
+      id: entry.id,
+      userId: entry.userId,
+      userName: entry.userName,
+      userPhoto: entry.userPhoto ?? undefined,
+      favoriteTeam: undefined,
+      queuePosition: entry.queuePosition,
+      position: entry.position === 'GOALKEEPER' ? 'GOALKEEPER' : 'FIELD',
+    })),
+    [waitlistEntries],
   );
   const expectedPayment = useMemo(() => resolveExpectedPayment(game), [game]);
 
@@ -476,6 +508,10 @@ export const GameDetailScreen: React.FC = () => {
   // Abre dialog de edição populando form com valores atuais
   const openEditDialog = () => {
     if (!game) return;
+    if (!isEditableGameStatus(game.status)) {
+      showError(t('games.detail.editUnavailableStatus'));
+      return;
+    }
     setEditForm({
       date: game.date ?? '',
       time: game.time ?? '',
@@ -506,13 +542,31 @@ export const GameDetailScreen: React.FC = () => {
       const dateTime = Timestamp.fromDate(new Date(year, month - 1, day, hours, minutes));
 
       const gameRef = doc(db, 'games', gameId);
-      await updateDoc(gameRef, {
-        date: editForm.date,
-        time: editForm.time,
-        dateTime: dateTime,
-        max_players: editForm.maxPlayers,
-        rules: editForm.rules,
-        updated_at: serverTimestamp(),
+      await runTransaction(db, async (transaction) => {
+        const latestGameSnap = await transaction.get(gameRef);
+        if (!latestGameSnap.exists()) {
+          throw new Error(t('games.notFound'));
+        }
+
+        const latestStatus = latestGameSnap.get('status') as Game['status'];
+        if (!isEditableGameStatus(latestStatus)) {
+          throw new Error(t('games.detail.editUnavailableStatus'));
+        }
+
+        const expectedUpdatedAtMs = game.updatedAt?.getTime() ?? null;
+        const latestUpdatedAtMs = toTimestampMillis(latestGameSnap.get('updated_at') ?? latestGameSnap.get('updatedAt'));
+        if (expectedUpdatedAtMs !== latestUpdatedAtMs) {
+          throw new Error(t('games.detail.editConflict'));
+        }
+
+        transaction.update(gameRef, {
+          date: editForm.date,
+          time: editForm.time,
+          dateTime: dateTime,
+          max_players: editForm.maxPlayers,
+          rules: editForm.rules,
+          updated_at: serverTimestamp(),
+        });
       });
 
       queryClient.invalidateQueries({ queryKey: ['games'], exact: false });
@@ -737,7 +791,7 @@ export const GameDetailScreen: React.FC = () => {
                     </ListItemIcon>
                     <ListItemText>{t('tooltip.duplicateGame')}</ListItemText>
                   </MenuItem>
-                  <MenuItem onClick={() => { setMoreAnchorEl(null); openEditDialog(); }}>
+                  <MenuItem onClick={() => { setMoreAnchorEl(null); openEditDialog(); }} disabled={!canEditGame}>
                     <ListItemIcon><EditIcon fontSize="small" /></ListItemIcon>
                     <ListItemText>{t('games.detail.editGame')}</ListItemText>
                   </MenuItem>
@@ -768,7 +822,7 @@ export const GameDetailScreen: React.FC = () => {
                     </IconButton>
                   </Tooltip>
                   <Tooltip title={t('games.detail.editGame')}>
-                    <IconButton onClick={openEditDialog} aria-label={t('games.detail.editGame')}>
+                    <IconButton onClick={openEditDialog} aria-label={t('games.detail.editGame')} disabled={!canEditGame}>
                       <EditIcon />
                     </IconButton>
                   </Tooltip>
@@ -828,11 +882,13 @@ export const GameDetailScreen: React.FC = () => {
               <GamePlayersSection
                 game={game}
                 confirmedPlayers={confirmedPlayers}
-                goalkeepers={goalkeepers}
-                waitlist={waitlist}
-                confirmations={confirmations}
-                tabValue={tabValue}
-                onTabChange={setTabValue}
+              goalkeepers={goalkeepers}
+              waitlist={waitlist}
+              waitlistLoading={waitlistLoading}
+              waitlistError={waitlistError}
+              confirmations={confirmations}
+              tabValue={tabValue}
+              onTabChange={setTabValue}
               />
               <PositionReinforcementsPanel
                 game={game}
@@ -931,6 +987,8 @@ export const GameDetailScreen: React.FC = () => {
             confirmedPlayers={confirmedPlayers}
             goalkeepers={goalkeepers}
             waitlist={waitlist}
+            waitlistLoading={waitlistLoading}
+            waitlistError={waitlistError}
             confirmations={confirmations}
             tabValue={tabValue}
             onTabChange={setTabValue}
@@ -1114,7 +1172,7 @@ export const GameDetailScreen: React.FC = () => {
               variant="outlined"
               fullWidth
               onClick={() => handleConfirmPresence('FIELD')}
-              disabled={game.goalkeepersCount >= game.maxGoalkeepers && game.goalkeepersCount > 0}
+              disabled={confirmLoading || game.playersCount >= game.maxPlayers}
             >
               {t('games.detail.fieldPlayer')}
             </Button>
@@ -1122,7 +1180,7 @@ export const GameDetailScreen: React.FC = () => {
               variant="outlined"
               fullWidth
               onClick={() => handleConfirmPresence('GOALKEEPER')}
-              disabled={game.goalkeepersCount >= game.maxGoalkeepers}
+              disabled={confirmLoading || game.playersCount >= game.maxPlayers || game.goalkeepersCount >= game.maxGoalkeepers}
             >
               {t('profile.goalkeeper')}
             </Button>

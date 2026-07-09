@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { collection, doc, getDocs, limit, orderBy, query, serverTimestamp, setDoc, where } from 'firebase/firestore';
+import { collection, doc, getDocs, limit, orderBy, query, runTransaction, serverTimestamp, where } from 'firebase/firestore';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { db } from '../services/firebase';
@@ -58,14 +58,18 @@ export function useSavePostGameMessage(gameId?: string) {
       if (!gameId || !currentUser?.uid) throw new Error('Jogo não encontrado.');
       const cleanMessage = message.trim();
       if (cleanMessage.length < 2 || cleanMessage.length > 240) throw new Error('O recado deve ter entre 2 e 240 caracteres.');
-      await setDoc(doc(db, 'post_game_messages', `${gameId}_${currentUser.uid}`), {
-        game_id: gameId,
-        user_id: currentUser.uid,
-        user_name: user?.name || currentUser.displayName || 'Jogador',
-        message: cleanMessage,
-        updated_at: serverTimestamp(),
-        created_at: serverTimestamp(),
-      }, { merge: true });
+      const messageRef = doc(db, 'post_game_messages', `${gameId}_${currentUser.uid}`);
+      await runTransaction(db, async (transaction) => {
+        const current = await transaction.get(messageRef);
+        transaction.set(messageRef, {
+          game_id: gameId,
+          user_id: currentUser.uid,
+          user_name: user?.name || currentUser.displayName || 'Jogador',
+          message: cleanMessage,
+          updated_at: serverTimestamp(),
+          ...(current.exists() ? {} : { created_at: serverTimestamp() }),
+        }, { merge: true });
+      });
     },
     onSuccess: () => {
       showSuccess('Recado salvo.');

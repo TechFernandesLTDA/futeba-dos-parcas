@@ -1,18 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 
+const mockDoc = vi.fn((_db: unknown, collectionName: string, id: string) => ({ collectionName, id }));
 const mockSetDoc = vi.fn();
 const mockUpdateDoc = vi.fn();
 const mockDeleteDoc = vi.fn();
-const mockAddDoc = vi.fn();
 
 vi.mock('firebase/firestore', () => ({
-  doc: vi.fn(() => 'mock-doc'),
-  collection: vi.fn(() => 'mock-collection'),
+  doc: (...args: unknown[]) => mockDoc(...args as [unknown, string, string]),
   setDoc: (...args: unknown[]) => mockSetDoc(...args),
   updateDoc: (...args: unknown[]) => mockUpdateDoc(...args),
   deleteDoc: (...args: unknown[]) => mockDeleteDoc(...args),
-  addDoc: (...args: unknown[]) => mockAddDoc(...args),
   limit: vi.fn((...args) => args[0]),
   serverTimestamp: vi.fn(() => ({ _seconds: 0 })),
 }));
@@ -136,5 +134,80 @@ describe('useOfflineQueue', () => {
       id2 = result.current.enqueue({ collection: 'games', operation: 'set', data: { b: 2 }, docId: '2' });
     });
     expect(id1!).not.toBe(id2!);
+  });
+
+  it('reagenda flush quando uma mutação falha e depois volta a funcionar', async () => {
+    Object.defineProperty(navigator, 'onLine', {
+      value: false,
+      writable: true,
+      configurable: true,
+    });
+    mockSetDoc
+      .mockRejectedValueOnce(new Error('temporary failure'))
+      .mockResolvedValueOnce(undefined);
+
+    const { result } = renderHook(() => useOfflineQueue());
+
+    await waitFor(() => {
+      expect(result.current.queueLength).toBe(0);
+    });
+
+    act(() => {
+      result.current.enqueue({ collection: 'games', operation: 'set', data: { name: 'retry' }, docId: 'doc-1' });
+    });
+
+    act(() => {
+      Object.defineProperty(navigator, 'onLine', {
+        value: true,
+        writable: true,
+        configurable: true,
+      });
+      window.dispatchEvent(new Event('online'));
+    });
+
+    await waitFor(() => {
+      expect(mockSetDoc).toHaveBeenCalledTimes(2);
+      expect(result.current.queueLength).toBe(0);
+    });
+  });
+
+  it('torna operações add idempotentes ao reutilizar o mesmo docId no retry', async () => {
+    Object.defineProperty(navigator, 'onLine', {
+      value: false,
+      writable: true,
+      configurable: true,
+    });
+    mockSetDoc
+      .mockRejectedValueOnce(new Error('temporary failure'))
+      .mockResolvedValueOnce(undefined);
+
+    const { result } = renderHook(() => useOfflineQueue());
+
+    await waitFor(() => {
+      expect(result.current.queueLength).toBe(0);
+    });
+
+    act(() => {
+      result.current.enqueue({ collection: 'feedback', operation: 'add', data: { message: 'hello' } });
+    });
+
+    act(() => {
+      Object.defineProperty(navigator, 'onLine', {
+        value: true,
+        writable: true,
+        configurable: true,
+      });
+      window.dispatchEvent(new Event('online'));
+    });
+
+    await waitFor(() => {
+      expect(mockSetDoc).toHaveBeenCalledTimes(2);
+    });
+
+    const firstDocRef = mockSetDoc.mock.calls[0][0] as { collectionName: string; id: string };
+    const secondDocRef = mockSetDoc.mock.calls[1][0] as { collectionName: string; id: string };
+
+    expect(firstDocRef.collectionName).toBe('feedback');
+    expect(firstDocRef.id).toBe(secondDocRef.id);
   });
 });

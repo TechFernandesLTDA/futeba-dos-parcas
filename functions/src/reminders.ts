@@ -37,6 +37,10 @@ import {
 } from "./notifications/preferences";
 
 import {db} from "./_db";
+import {
+  acquireSchedulerLock,
+  releaseSchedulerLock,
+} from "./utils/scheduler-lock";
 
 // ==========================================
 // CONSTANTES
@@ -192,6 +196,18 @@ export function formatGameDateTime(
 }
 
 /**
+ * Normaliza uma data para a chave calendario em BRT.
+ *
+ * @param {Date} date Data base.
+ * @return {string} Chave yyyy-mm-dd em America/Sao_Paulo.
+ */
+function toBrtDateKey(date: Date): string {
+  return date.toLocaleDateString("en-CA", {
+    timeZone: "America/Sao_Paulo",
+  });
+}
+
+/**
  * Busca jogos que estao na janela de lembrete.
  *
  * @param {number} hoursBeforeGame - Horas antes
@@ -199,7 +215,7 @@ export function formatGameDateTime(
  * @return {Promise<GameForReminder[]>} Jogos
  *   na janela.
  */
-async function fetchGamesInReminderWindow(
+export async function fetchGamesInReminderWindow(
   hoursBeforeGame: number
 ): Promise<GameForReminder[]> {
   const now = new Date();
@@ -288,15 +304,16 @@ async function fetchGamesInReminderWindow(
     });
   }
 
-  // B3: Buscar jogos sem dateTime com fallback
-  // para created_at. Jogos criados antes da
-  // migracao podem nao ter o campo dateTime.
+  // Jogos legados sem dateTime devem ser ancorados
+  // na data/horario real do jogo, nunca em created_at.
   try {
+    const minDate = toBrtDateKey(windowStart);
+    const maxDate = toBrtDateKey(windowEnd);
     const noDateTimeSnap = await db()
       .collection("games")
       .where("dateTime", "==", null)
-      .orderBy("created_at", "desc")
-      .limit(50)
+      .where("date", ">=", minDate)
+      .where("date", "<=", maxDate)
       .get();
 
     for (const doc of noDateTimeSnap.docs) {
@@ -309,21 +326,22 @@ async function fetchGamesInReminderWindow(
         continue;
       }
 
-      if (!data.created_at) continue;
-
-      const createdAt =
-        typeof data.created_at.toDate === "function" ?
-          data.created_at.toDate() :
-          null;
-      if (!createdAt) continue;
-
-      const createdTarget =
-        new Date(
-          createdAt.getTime() + reminderTimeMs
-        );
+      const gameDateTime = getGameDateTime({
+        id: doc.id,
+        dateTime: data.dateTime || null,
+        date: data.date || null,
+        time: data.time || null,
+        status,
+        group_id: data.group_id || null,
+        location_name:
+          data.location_name ||
+          data.locationName ||
+          null,
+      });
+      if (!gameDateTime) continue;
       if (
-        createdTarget >= windowStart &&
-        createdTarget <= windowEnd
+        gameDateTime >= windowStart &&
+        gameDateTime <= windowEnd
       ) {
         games.push({
           id: doc.id,
@@ -344,8 +362,7 @@ async function fetchGamesInReminderWindow(
       logger.info(
         "[REMINDERS] " +
         `${noDateTimeSnap.size} jogos sem` +
-        " dateTime processados (fallback" +
-        " created_at)"
+        " dateTime processados via date/time"
       );
     }
   } catch (e) {
@@ -1130,6 +1147,7 @@ export const testGameReminders = onSchedule(
 
 const AUTO_CANCEL_WINDOW_MS = 2 * 60 * 60 * 1000;
 const AUTO_CANCEL_MIN_PLAYERS = 6;
+const AUTO_CANCEL_LOCK_TTL_MS = 25 * 60 * 1000;
 
 /**
  * Funcao agendada que roda a cada 30 minutos
@@ -1148,6 +1166,20 @@ export const autoCancelLowQuorum = onSchedule(
     memory: "256MiB",
   },
   async () => {
+    const lockId = "auto_cancel_low_quorum";
+    const lockAcquired = await acquireSchedulerLock(
+      lockId,
+      AUTO_CANCEL_LOCK_TTL_MS
+    );
+    if (!lockAcquired) {
+      logger.warn(
+        "[AUTO_CANCEL] Execucao concorrente detectada; pulando esta rodada"
+      );
+      return;
+    }
+
+    let lockStatus: "completed" | "failed" = "failed";
+
     logger.info(
       "\n====================================" +
       "===="
@@ -1305,12 +1337,26 @@ export const autoCancelLowQuorum = onSchedule(
         "====================================" +
         "====\n"
       );
+      lockStatus = "completed";
     } catch (error) {
       logger.error(
         "[AUTO_CANCEL] Erro fatal:",
         error
       );
       throw error;
+    } finally {
+      try {
+        await releaseSchedulerLock(
+          lockId,
+          lockAcquired,
+          lockStatus
+        );
+      } catch (lockError) {
+        logger.warn(
+          "[AUTO_CANCEL] Falha ao liberar scheduler lock:",
+          lockError
+        );
+      }
     }
   }
 );

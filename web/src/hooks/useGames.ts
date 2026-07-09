@@ -8,13 +8,13 @@ import {
   addDoc,
   updateDoc,
   setDoc,
-  deleteDoc,
   query,
   where,
   orderBy,
   limit,
   QueryConstraint,
   onSnapshot,
+  writeBatch,
   serverTimestamp,
   Timestamp,
 } from 'firebase/firestore';
@@ -34,6 +34,26 @@ import { resolveExpectedPayment, toPaymentCents } from '../utils/gamePayment';
 const logger = createLogger('useGames');
 
 const MIN_GROUP_MEMBERS_TO_CREATE_GAME = 5;
+const JOINABLE_GAME_STATUSES: GameStatus[] = ['SCHEDULED', 'CONFIRMED'];
+
+function isJoinableGameStatus(status: GameStatus) {
+  return JOINABLE_GAME_STATUSES.includes(status);
+}
+
+function isGameInPast(game: Game) {
+  const gameDateTime = toDate(game.dateTime as Timestamp | Date | null | undefined);
+  return !!gameDateTime && gameDateTime.getTime() <= Date.now();
+}
+
+function shouldCancelRideOnPresenceCancellation(raw: Record<string, unknown>) {
+  if (raw.status === 'CANCELLED') return false;
+  return !(
+    raw.fully_covered === true ||
+    raw.fullyCovered === true ||
+    raw.covered === true ||
+    raw.fulfilled === true
+  );
+}
 
 // Converte documento Firestore para objeto Game
 function parseGameDoc(docId: string, raw: Record<string, unknown>): Game {
@@ -239,13 +259,53 @@ export function useConfirmPresence() {
         const confirmationId = `${gameId}_${uid}`;
         const confirmationRef = doc(db, 'confirmations', confirmationId);
         const gameRef = doc(db, 'games', gameId);
-        const gameSnap = await getDoc(gameRef);
+        const [gameSnap, confirmationSnap, confirmationsSnap] = await Promise.all([
+          getDoc(gameRef),
+          getDoc(confirmationRef),
+          getDocs(query(collection(db, 'confirmations'), where('game_id', '==', gameId))),
+        ]);
 
         if (!gameSnap.exists()) {
           throw new Error('Game not found');
         }
 
         const game = parseGameDoc(gameSnap.id, gameSnap.data());
+        if (!isJoinableGameStatus(game.status)) {
+          throw new Error(t('games.detail.confirmationClosed'));
+        }
+        if (isGameInPast(game)) {
+          throw new Error(t('games.detail.confirmationPast'));
+        }
+
+        const currentConfirmation = confirmationSnap.exists()
+          ? snakeToCamel(confirmationSnap.data() as Record<string, unknown>) as Partial<GameConfirmation>
+          : null;
+        if (currentConfirmation?.status === 'CONFIRMED' && currentConfirmation.position === position) {
+          setLoading(false);
+          return true;
+        }
+
+        const confirmedConfirmations = confirmationsSnap.docs
+          .map((confirmationDoc) => snakeToCamel(confirmationDoc.data() as Record<string, unknown>) as Partial<GameConfirmation>)
+          .filter((confirmation) => confirmation.status === 'CONFIRMED');
+        const confirmedPlayersCount = confirmedConfirmations.length;
+        const confirmedGoalkeepersCount = confirmedConfirmations.filter(
+          (confirmation) => confirmation.position === 'GOALKEEPER',
+        ).length;
+        const alreadyConfirmed = currentConfirmation?.status === 'CONFIRMED';
+        const currentWasGoalkeeper = currentConfirmation?.position === 'GOALKEEPER';
+
+        if (!alreadyConfirmed && confirmedPlayersCount >= game.maxPlayers) {
+          throw new Error(t('games.detail.listFull'));
+        }
+        if (
+          position === 'GOALKEEPER' &&
+          confirmedGoalkeepersCount >= game.maxGoalkeepers &&
+          !currentWasGoalkeeper
+        ) {
+          throw new Error(t('games.detail.goalkeeperFull'));
+        }
+
         const expectedPayment = resolveExpectedPayment(game);
 
         const displayName = firebaseUser?.displayName || user?.name || 'Jogador';
@@ -303,9 +363,24 @@ export function useConfirmPresence() {
           throw new Error('Confirmation not found');
         }
 
-        // Apenas deletar a confirmação (igual ao Android)
-        // O Cloud Function trigger (onConfirmationWrite) atualiza os contadores do jogo
-        await deleteDoc(confirmationRef);
+        const batch = writeBatch(db);
+        batch.update(confirmationRef, {
+          status: 'CANCELLED' as ConfirmationStatus,
+          updated_at: serverTimestamp(),
+        });
+
+        const rideRef = doc(db, 'game_rides', `${gameId}_${uid}`);
+        const rideDoc = await getDoc(rideRef);
+        if (rideDoc.exists() && shouldCancelRideOnPresenceCancellation(rideDoc.data() as Record<string, unknown>)) {
+          batch.update(rideRef, {
+            status: 'CANCELLED',
+            updated_at: serverTimestamp(),
+          });
+        }
+
+        // Mantem a confirmação marcada como CANCELLED para disparar os triggers
+        // server-side de vacancy/waitlist promotion.
+        await batch.commit();
         queryClient.invalidateQueries({ queryKey: ['games'], exact: false });
         showSuccess(t('feedback.games.cancelSuccess'));
         setLoading(false);

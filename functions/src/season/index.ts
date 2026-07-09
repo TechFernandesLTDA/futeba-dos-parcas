@@ -286,6 +286,10 @@ export const checkSeasonEnd = onSchedule(
               draws: p.draws ?? 0,
               losses: p.losses ?? 0,
               games_played: p.games_played ?? 0,
+              goals_scored: p.goals_scored ?? 0,
+              goals_conceded: p.goals_conceded ?? 0,
+              goal_difference: p.goal_difference ?? 0,
+              mvp_count: p.mvp_count ?? 0,
               // FIX #1290: mantém o frozen_at original se já existe;
               // só usa serverTimestamp() na primeira gravação.
               frozen_at:

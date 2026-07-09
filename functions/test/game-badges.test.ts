@@ -244,6 +244,12 @@ describe("badges/game-badges", () => {
       xp_reward: 100,
       earned: true,
     });
+    expect(store.get("user_badges/user1_mvp_1")).toMatchObject({
+      user_id: "user1",
+      badge_id: "mvp_1",
+      xp_reward: 100,
+      earned: true,
+    });
     expect(store.get("users/user1")).toMatchObject({
       experience_points: 200,
       level: 1,

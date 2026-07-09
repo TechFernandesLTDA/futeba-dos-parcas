@@ -6,7 +6,7 @@ import {
   getDocs,
   query,
   where,
-  writeBatch,
+  runTransaction,
   serverTimestamp,
   getDoc,
 } from "firebase/firestore";
@@ -135,12 +135,14 @@ export function useSaveDreamTeam() {
 
       // #2166: sem showError aqui — o onError abaixo já exibe o toast.
       const ref = doc(db, "users", uid, "dream_team", "current");
-      const batch = writeBatch(db);
-      batch.set(ref, {
-        players,
-        created_at: serverTimestamp(),
+      await runTransaction(db, async (transaction) => {
+        const current = await transaction.get(ref);
+        transaction.set(ref, {
+          players,
+          updated_at: serverTimestamp(),
+          ...(current.exists() ? {} : { created_at: serverTimestamp() }),
+        }, { merge: true });
       });
-      await batch.commit();
     },
     onSuccess: () => {
       showSuccess(t("feedback.dreamTeam.saveSuccess"));

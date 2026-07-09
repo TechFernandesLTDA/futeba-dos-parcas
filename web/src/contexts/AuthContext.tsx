@@ -28,6 +28,7 @@ import { useTranslation } from 'react-i18next';
 import type { validateInviteCode as validateInviteCodeType, syncFieldOwnerClaim as syncFieldOwnerClaimType } from '../services/cloudFunctions';
 import { normalizePlayerStats } from '../utils/playerStats';
 import { getEffectiveLevel, getExperiencePoints } from '../utils/xpAccounting';
+import { unregisterBrowserFcmToken } from '../services/firebaseMessaging';
 
 const logger = createLogger('AuthContext');
 const USER_ROLES: UserRole[] = ['PLAYER', 'FIELD_OWNER', 'ADMIN'];
@@ -592,7 +593,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(async () => {
     setError(null);
     try {
-      addBreadcrumb('auth', 'Logout iniciado', { uid: auth.currentUser?.uid });
+      const currentUid = auth.currentUser?.uid ?? null;
+      addBreadcrumb('auth', 'Logout iniciado', { uid: currentUid });
+      if (currentUid) {
+        await unregisterBrowserFcmToken(currentUid);
+      }
       await signOut(auth);
       // Limpar cache do TanStack Query para evitar vazamento de dados entre contas
       queryClient.clear();

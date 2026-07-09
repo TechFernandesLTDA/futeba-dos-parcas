@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 type InstallPlatform = 'android' | 'ios' | 'desktop' | 'unknown';
+const DISMISS_STORAGE_KEY = 'pwa_install_prompt_dismissed';
 
 function getInstallPlatform(): InstallPlatform {
   if (typeof window === 'undefined') return 'unknown';
@@ -28,10 +29,31 @@ function getStandaloneMode(): boolean {
 }
 
 export function usePwaInstall() {
+  const [dismissed, setDismissed] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    try {
+      return localStorage.getItem(DISMISS_STORAGE_KEY) === '1';
+    } catch {
+      return false;
+    }
+  });
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isStandalone, setIsStandalone] = useState(getStandaloneMode);
   const [isInstalled, setIsInstalled] = useState(false);
   const platform = useMemo(getInstallPlatform, []);
+
+  const setDismissedState = useCallback((value: boolean) => {
+    setDismissed(value);
+    try {
+      if (value) {
+        localStorage.setItem(DISMISS_STORAGE_KEY, '1');
+      } else {
+        localStorage.removeItem(DISMISS_STORAGE_KEY);
+      }
+    } catch {
+      // noop
+    }
+  }, []);
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (event: BeforeInstallPromptEvent) => {
@@ -43,6 +65,7 @@ export function usePwaInstall() {
       setIsInstalled(true);
       setDeferredPrompt(null);
       setIsStandalone(true);
+      setDismissedState(false);
     };
 
     const standaloneMedia = typeof window.matchMedia === 'function'
@@ -73,7 +96,11 @@ export function usePwaInstall() {
         standaloneMedia.removeListener(handleStandaloneChange);
       }
     };
-  }, []);
+  }, [setDismissedState]);
+
+  const dismiss = useCallback(() => {
+    setDismissedState(true);
+  }, [setDismissedState]);
 
   const install = useCallback(async () => {
     if (!deferredPrompt) return 'unavailable' as const;
@@ -83,17 +110,22 @@ export function usePwaInstall() {
     setDeferredPrompt(null);
     if (choice.outcome === 'accepted') {
       setIsInstalled(true);
+      setDismissedState(false);
+    } else {
+      setDismissedState(true);
     }
 
     return choice.outcome;
-  }, [deferredPrompt]);
+  }, [deferredPrompt, setDismissedState]);
 
   return {
     canPrompt: Boolean(deferredPrompt),
+    dismiss,
     install,
+    dismissed,
     isInstalled,
     isStandalone,
     platform,
-    shouldShow: !isStandalone && !isInstalled && (Boolean(deferredPrompt) || platform === 'ios'),
+    shouldShow: !dismissed && !isStandalone && !isInstalled && (Boolean(deferredPrompt) || platform === 'ios'),
   };
 }

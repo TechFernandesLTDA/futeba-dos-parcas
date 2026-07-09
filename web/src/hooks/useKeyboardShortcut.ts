@@ -25,12 +25,15 @@ export function useKeyboardShortcut(
   callback: (e: KeyboardEvent) => void
 ): void {
   const { key, modifiers = [], fireInInputs = true } = options;
+  const modifiersKey = [...modifiers].sort().join('|');
 
   useEffect(() => {
+    const activeModifiers = new Set(modifiersKey ? modifiersKey.split('|') : []);
+
     function handleKeyDown(e: KeyboardEvent) {
-      const needsCmdOrCtrl = modifiers.includes('cmd') || modifiers.includes('ctrl');
-      const needsShift = modifiers.includes('shift');
-      const needsAlt = modifiers.includes('alt');
+      const needsCmdOrCtrl = activeModifiers.has('cmd') || activeModifiers.has('ctrl');
+      const needsShift = activeModifiers.has('shift');
+      const needsAlt = activeModifiers.has('alt');
 
       // cmd e ctrl são tratados como equivalentes (Cmd no Mac, Ctrl no Windows/Linux)
       if (needsCmdOrCtrl && !(e.metaKey || e.ctrlKey)) return;
@@ -50,5 +53,5 @@ export function useKeyboardShortcut(
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [key, modifiers, fireInInputs, callback]);
+  }, [key, modifiersKey, fireInInputs, callback]);
 }

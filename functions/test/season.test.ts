@@ -240,6 +240,10 @@ describe("checkSeasonEnd - encerramento de season expirada", () => {
           wins: 10,
           draws: 0,
           losses: 2,
+          goals_scored: 18,
+          goals_conceded: 9,
+          goal_difference: 9,
+          mvp_count: 4,
         }),
       },
       {
@@ -270,12 +274,16 @@ describe("checkSeasonEnd - encerramento de season expirada", () => {
 
     // Deve ter criado final standings via batch.set (mínimo 2: um por participação)
     expect(mockBatchSet.mock.calls.length).toBeGreaterThanOrEqual(2);
-    expect(mockBatchSet).toHaveBeenCalledWith(
+      expect(mockBatchSet).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({
         season_id: "monthly_2026_01",
         user_id: "player1",
         final_division: "OURO",
+        goals_scored: 18,
+        goals_conceded: 9,
+        goal_difference: 9,
+        mvp_count: 4,
       })
     );
     expect(mockBatchCommit).toHaveBeenCalled();

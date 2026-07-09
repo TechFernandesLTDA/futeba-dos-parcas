@@ -4,6 +4,9 @@ const mockSendAndSaveNotification = jest.fn().mockResolvedValue(true);
 const mockBatch = jest.fn(() => ({ update: jest.fn(), set: jest.fn(), commit: jest.fn().mockResolvedValue([]) }));
 const mockRunTransaction = jest.fn();
 const mockDocGet = jest.fn();
+const mockDocUpdate = jest.fn().mockResolvedValue(undefined);
+const mockDocDelete = jest.fn().mockResolvedValue(undefined);
+const mockDocCreate = jest.fn().mockResolvedValue(undefined);
 const mockCollectionGet = jest.fn();
 const mockWhere = jest.fn().mockReturnThis();
 const mockOrderBy = jest.fn().mockReturnThis();
@@ -17,8 +20,17 @@ mockOrderBy.mockReturnValue(queryChain);
 const mockDoc = jest.fn((id: string) => ({
   id,
   get: mockDocGet,
+  update: mockDocUpdate,
+  delete: mockDocDelete,
+  create: mockDocCreate,
   collection: jest.fn(() => ({
-    doc: jest.fn((sid: string) => ({ id: sid, get: mockDocGet })),
+    doc: jest.fn((sid: string) => ({
+      id: sid,
+      get: mockDocGet,
+      update: mockDocUpdate,
+      delete: mockDocDelete,
+      create: mockDocCreate,
+    })),
     where: mockWhere,
     get: mockCollectionGet,
   })),
@@ -93,6 +105,7 @@ describe("Achievement Notifications", () => {
   describe("onLevelUp", () => {
     it("notifica level up quando level aumenta", async () => {
       await onLevelUp({
+        id: "evt-level-up-1",
         data: {
           before: { data: () => ({ level: 1 }) },
           after: { data: () => ({ level: 2 }) },
@@ -104,10 +117,16 @@ describe("Achievement Notifications", () => {
         "user1",
         expect.objectContaining({ title: "Subiu de nível!" }),
       );
+      expect(mockSaveNotificationToFirestore).toHaveBeenCalledWith(
+        "user1",
+        expect.objectContaining({ type: "LEVEL_UP" }),
+        "level_up_user1_2",
+      );
     });
 
     it("nao notifica quando level nao muda", async () => {
       await onLevelUp({
+        id: "evt-level-up-2",
         data: {
           before: { data: () => ({ level: 3 }) },
           after: { data: () => ({ level: 3 }) },
@@ -120,6 +139,7 @@ describe("Achievement Notifications", () => {
 
     it("inclui nome do level na mensagem", async () => {
       await onLevelUp({
+        id: "evt-level-up-3",
         data: {
           before: { data: () => ({ level: 0 }) },
           after: { data: () => ({ level: 1 }) },
@@ -135,6 +155,7 @@ describe("Achievement Notifications", () => {
 
     it("usa 'Nivel N' para levels alem do array", async () => {
       await onLevelUp({
+        id: "evt-level-up-4",
         data: {
           before: { data: () => ({ level: 10 }) },
           after: { data: () => ({ level: 15 }) },
@@ -147,6 +168,50 @@ describe("Achievement Notifications", () => {
         expect.objectContaining({ body: expect.stringContaining("Nivel 15") }),
       );
     });
+
+    it("ignora reentrega do mesmo evento de level up", async () => {
+      mockDocCreate.mockRejectedValueOnce({ code: 6 });
+
+      await onLevelUp({
+        id: "evt-level-up-dup",
+        data: {
+          before: { data: () => ({ level: 1 }) },
+          after: { data: () => ({ level: 2 }) },
+        },
+        params: { userId: "user1" },
+      });
+
+      expect(mockSendNotificationToUser).not.toHaveBeenCalled();
+      expect(mockSaveNotificationToFirestore).not.toHaveBeenCalled();
+    });
+
+    it("libera a claim quando a entrega falha e permite retry", async () => {
+      mockSendNotificationToUser.mockRejectedValueOnce(
+        new Error("FCM unavailable"),
+      );
+
+      await expect(onLevelUp({
+        id: "evt-level-up-retry",
+        data: {
+          before: { data: () => ({ level: 1 }) },
+          after: { data: () => ({ level: 2 }) },
+        },
+        params: { userId: "user1" },
+      })).rejects.toThrow("FCM unavailable");
+
+      expect(mockDocDelete).toHaveBeenCalled();
+
+      await onLevelUp({
+        id: "evt-level-up-retry",
+        data: {
+          before: { data: () => ({ level: 1 }) },
+          after: { data: () => ({ level: 2 }) },
+        },
+        params: { userId: "user1" },
+      });
+
+      expect(mockSendNotificationToUser).toHaveBeenCalledTimes(2);
+    });
   });
 
   describe("onBadgeAwarded", () => {
@@ -157,6 +222,7 @@ describe("Achievement Notifications", () => {
       });
 
       await onBadgeAwarded({
+        id: "evt-badge-1",
         data: { data: () => ({ user_id: "user1", badge_id: "badge1" }) },
         params: { badgeDocId: "bd1" },
       });
@@ -168,11 +234,13 @@ describe("Achievement Notifications", () => {
       expect(mockSaveNotificationToFirestore).toHaveBeenCalledWith(
         "user1",
         expect.objectContaining({ title: "Conquista Desbloqueada!" }),
+        "badge_awarded_bd1",
       );
     });
 
     it("ignora quando faltam user_id ou badge_id", async () => {
       await onBadgeAwarded({
+        id: "evt-badge-2",
         data: { data: () => ({ user_id: "user1" }) },
         params: { badgeDocId: "bd1" },
       });
@@ -180,6 +248,7 @@ describe("Achievement Notifications", () => {
       expect(mockSendNotificationToUser).not.toHaveBeenCalled();
 
       await onBadgeAwarded({
+        id: "evt-badge-3",
         data: { data: () => ({ badge_id: "badge1" }) },
         params: { badgeDocId: "bd2" },
       });
@@ -189,6 +258,7 @@ describe("Achievement Notifications", () => {
 
     it("nao faz nada sem dados", async () => {
       await onBadgeAwarded({
+        id: "evt-badge-4",
         data: { data: () => null },
         params: { badgeDocId: "bd1" },
       });
@@ -200,6 +270,7 @@ describe("Achievement Notifications", () => {
       mockDocGet.mockResolvedValueOnce({ exists: false, data: () => null });
 
       await onBadgeAwarded({
+        id: "evt-badge-5",
         data: { data: () => ({ user_id: "user1", badge_id: "badge_unknown" }) },
         params: { badgeDocId: "bd1" },
       });
@@ -208,6 +279,19 @@ describe("Achievement Notifications", () => {
         "user1",
         expect.objectContaining({ body: expect.stringContaining("badge_unknown") }),
       );
+    });
+
+    it("ignora reentrega do mesmo evento de badge", async () => {
+      mockDocCreate.mockRejectedValueOnce({ code: 6 });
+
+      await onBadgeAwarded({
+        id: "evt-badge-dup",
+        data: { data: () => ({ user_id: "user1", badge_id: "badge1" }) },
+        params: { badgeDocId: "bd1" },
+      });
+
+      expect(mockSendNotificationToUser).not.toHaveBeenCalled();
+      expect(mockSaveNotificationToFirestore).not.toHaveBeenCalled();
     });
   });
 

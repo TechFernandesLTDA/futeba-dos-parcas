@@ -69,6 +69,29 @@ interface ConfirmationData {
 interface RawGameOwner {
   ownerId?: string;
   owner_id?: string;
+  team1Players?: string[];
+  team1_players?: string[];
+  team2Players?: string[];
+  team2_players?: string[];
+  teamFormationVersion?: number;
+  team_formation_version?: number;
+}
+
+function resolveSavedTeams(players: TeamPlayer[], team1PlayerIds: string[], team2PlayerIds: string[]) {
+  const playersById = new Map(players.map((player) => [player.id, player]));
+  const teamA = team1PlayerIds
+    .map((playerId) => playersById.get(playerId))
+    .filter((player): player is TeamPlayer => !!player);
+  const teamB = team2PlayerIds
+    .map((playerId) => playersById.get(playerId))
+    .filter((player): player is TeamPlayer => !!player);
+  const assignedCount = teamA.length + teamB.length;
+
+  if (assignedCount !== players.length) {
+    return null;
+  }
+
+  return { teamA, teamB };
 }
 
 export const TeamFormationScreen: React.FC = () => {
@@ -92,6 +115,7 @@ export const TeamFormationScreen: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [expectedVersion, setExpectedVersion] = useState<number | null>(null);
   const [retryCount, setRetryCount] = useState(0);
   const [draggedPlayer, setDraggedPlayer] = useState<TeamPlayer | null>(null);
   const [dragFromTeam, setDragFromTeam] = useState<'A' | 'B' | null>(null);
@@ -129,45 +153,62 @@ export const TeamFormationScreen: React.FC = () => {
             navigateRef.current(`/game/${gameId}`);
             return;
           }
-        }
 
-        // Buscar confirmações da coleção raiz (igual ao Android)
-        const confirmationsRef = collection(db, 'confirmations');
-        const q = query(confirmationsRef, where('game_id', '==', gameId));
-        const snapshot = await getDocs(q);
+          setExpectedVersion(
+            gameData.teamFormationVersion ??
+            gameData.team_formation_version ??
+            0,
+          );
 
-        const confirmedDocs = snapshot.docs
-          .filter((d) => d.data().status === 'CONFIRMED')
-          .map((d) => d.data() as ConfirmationData);
+          const savedTeam1Players = (gameData.team1Players ?? gameData.team1_players ?? []).filter(Boolean);
+          const savedTeam2Players = (gameData.team2Players ?? gameData.team2_players ?? []).filter(Boolean);
 
-        const usersById = await getUsersByIds(confirmedDocs.map((conf) => conf.user_id));
-        if (cancelled) return;
+          // Buscar confirmações da coleção raiz (igual ao Android)
+          const confirmationsRef = collection(db, 'confirmations');
+          const q = query(confirmationsRef, where('game_id', '==', gameId));
+          const snapshot = await getDocs(q);
 
-        const players: TeamPlayer[] = confirmedDocs.map((conf: ConfirmationData) => {
-          const uid = conf.user_id;
-          const userData = usersById.get(uid);
-          return {
-            id: uid,
-            name: (userData?.name as string | undefined) || conf.user_name || t('profile.defaultPlayerName'),
-            photoUrl: (userData?.photoUrl as string | undefined) || conf.user_photo,
-            level: getLevelForXp((userData?.experiencePoints as number | undefined) ?? 0),
-            position: conf.position || 'FIELD',
-          };
-        });
+          const confirmedDocs = snapshot.docs
+            .filter((d) => d.data().status === 'CONFIRMED')
+            .map((d) => d.data() as ConfirmationData);
 
-        if (players.length > 0 && !cancelled) {
-          const drawPlayers: PlayerForDraw[] = players.map((p) => ({
-            id: p.id,
-            name: p.name,
-            photoUrl: p.photoUrl,
-            level: p.level,
-            position: p.position === 'GOALKEEPER' ? 'GOALKEEPER' : 'FIELD',
-          }));
-          const result = balancedDraw(drawPlayers, 2, 1, 'SNAKE_DRAFT');
-          const teamAPlayers = players.filter((p) => result.teams[0].players.some((dp) => dp.id === p.id));
-          const teamBPlayers = players.filter((p) => result.teams[1].players.some((dp) => dp.id === p.id));
-          setTeamA(teamAPlayers);
-          setTeamB(teamBPlayers);
+          const usersById = await getUsersByIds(confirmedDocs.map((conf) => conf.user_id));
+          if (cancelled) return;
+
+          const players: TeamPlayer[] = confirmedDocs.map((conf: ConfirmationData) => {
+            const uid = conf.user_id;
+            const userData = usersById.get(uid);
+            return {
+              id: uid,
+              name: (userData?.name as string | undefined) || conf.user_name || t('profile.defaultPlayerName'),
+              photoUrl: (userData?.photoUrl as string | undefined) || conf.user_photo,
+              level: getLevelForXp((userData?.experiencePoints as number | undefined) ?? 0),
+              position: conf.position || 'FIELD',
+            };
+          });
+
+          const savedTeams = resolveSavedTeams(players, savedTeam1Players, savedTeam2Players);
+          if (savedTeams && !cancelled) {
+            setTeamA(savedTeams.teamA);
+            setTeamB(savedTeams.teamB);
+            return;
+          }
+
+          if (players.length > 0 && !cancelled) {
+            const drawPlayers: PlayerForDraw[] = players.map((p) => ({
+              id: p.id,
+              name: p.name,
+              photoUrl: p.photoUrl,
+              level: p.level,
+              position: p.position === 'GOALKEEPER' ? 'GOALKEEPER' : 'FIELD',
+            }));
+            const result = balancedDraw(drawPlayers, 2, 1, 'SNAKE_DRAFT');
+            const teamAPlayers = players.filter((p) => result.teams[0].players.some((dp) => dp.id === p.id));
+            const teamBPlayers = players.filter((p) => result.teams[1].players.some((dp) => dp.id === p.id));
+            setTeamA(teamAPlayers);
+            setTeamB(teamBPlayers);
+          }
+          return;
         }
       } catch (error) {
         logger.error('Error fetching game:', error);
@@ -341,7 +382,7 @@ export const TeamFormationScreen: React.FC = () => {
   }, [draggedPlayer, dragFromTeam, dropTarget, movePlayer]);
 
   const handleSaveTeams = async () => {
-    if (!gameId) return;
+    if (!gameId || expectedVersion === null) return;
     setSaving(true);
     try {
       const gameRef = doc(db, 'games', gameId);
@@ -352,19 +393,23 @@ export const TeamFormationScreen: React.FC = () => {
         const gameSnap = await tx.get(gameRef);
         if (!gameSnap.exists()) throw new Error(t('games.notFound'));
         const currentVersion = gameSnap.data()?.team_formation_version ?? 0;
+        if (currentVersion !== expectedVersion) {
+          throw new Error(t('teamFormation.concurrentUpdateError'));
+        }
         tx.update(gameRef, {
           team1_players: teamA.map(p => p.id),
           team2_players: teamB.map(p => p.id),
           team1_name: t('games.teams.A'),
           team2_name: t('games.teams.B'),
-          team_formation_version: currentVersion + 1,
+          team_formation_version: expectedVersion + 1,
           updated_at: serverTimestamp(),
         });
       });
+      setExpectedVersion((current) => (current ?? 0) + 1);
       navigateBack();
     } catch (error) {
       logger.error('Error saving teams:', error);
-      showError(t('games.teams.saveError'));
+      showError(error instanceof Error ? error.message : t('games.teams.saveError'));
     } finally {
       setSaving(false);
     }

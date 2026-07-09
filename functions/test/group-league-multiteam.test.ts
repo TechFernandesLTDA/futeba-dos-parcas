@@ -3,7 +3,201 @@
  * placar"). Testa as funções puras de resultado/saldo, garantindo que o caso
  * de 2 times reduz EXATAMENTE ao comportamento clássico.
  */
-import {rankResult, opponentAverage} from "../src/group-league";
+const mockDb = jest.fn();
+let mockOnGameWrittenHandler: ((event: any) => Promise<void>) | null = null;
+
+jest.mock("../src/_db", () => ({
+  db: mockDb,
+}));
+
+jest.mock("firebase-functions/v2/firestore", () => ({
+  onDocumentWritten: jest.fn((_options: unknown, handler: any) => {
+    mockOnGameWrittenHandler = handler;
+    return handler;
+  }),
+}));
+
+import {
+  rankResult,
+  opponentAverage,
+  buildGroupLeaguePlayerResults,
+  buildGroupLeagueTeamSummaries,
+  getStoredTeamSummaries,
+  resolveFinishedTeamScore,
+} from "../src/group-league";
+
+type LeagueTestDocument = Record<string, unknown>;
+
+function storedHistoricalMatch(): LeagueTestDocument {
+  return {
+    game_id: "game-1",
+    group_id: "group-1",
+    season_id: "season-old",
+    teams: [
+      {team_id: "team-a", name: "A", score: 2, result: "WIN"},
+      {team_id: "team-b", name: "B", score: 1, result: "LOSS"},
+    ],
+    player_results: [
+      {
+        user_id: "u1",
+        team_id: "team-a",
+        goals: 1,
+        assists: 0,
+        is_mvp: true,
+        result: "WIN",
+      },
+      {
+        user_id: "u2",
+        team_id: "team-b",
+        goals: 0,
+        assists: 0,
+        is_mvp: false,
+        result: "LOSS",
+      },
+    ],
+  };
+}
+
+function createLeagueFirestore(initialMatch?: LeagueTestDocument) {
+  const matchPath = "groups/group-1/league_matches/game-1";
+  const matches = new Map<string, LeagueTestDocument>();
+  if (initialMatch) matches.set(matchPath, initialMatch);
+
+  const writes: Array<{kind: "set" | "delete"; path: string; data?: any}> = [];
+  const transactionEvents: string[][] = [];
+  let externalMatchReads = 0;
+  let activeSeasonReads = 0;
+  let transactionQueue = Promise.resolve();
+
+  const snapshot = (data?: LeagueTestDocument) => ({
+    exists: Boolean(data),
+    data: () => data,
+  });
+  const querySnapshot = (docs: Array<{id: string; data: () => any}>) => ({
+    docs,
+    empty: docs.length === 0,
+  });
+
+  const makeQuery = (path: string): any => ({
+    path,
+    where: jest.fn(function() {
+      return this;
+    }),
+    limit: jest.fn(function() {
+      return this;
+    }),
+    get: jest.fn(async () => {
+      if (path === "confirmations") {
+        return querySnapshot([
+          {id: "confirmation-u1", data: () => ({
+            user_id: "u1", status: "CONFIRMED", goals: 2, assists: 0,
+            is_mvp: true,
+          })},
+          {id: "confirmation-u2", data: () => ({
+            user_id: "u2", status: "CONFIRMED", goals: 0, assists: 1,
+            is_mvp: false,
+          })},
+        ]);
+      }
+      if (path === "teams") {
+        return querySnapshot([
+          {id: "team-a", data: () => ({
+            name: "A", player_ids: ["u1"], score: 3,
+          })},
+          {id: "team-b", data: () => ({
+            name: "B", player_ids: ["u2"], score: 0,
+          })},
+        ]);
+      }
+      return querySnapshot([]);
+    }),
+  });
+
+  const makeDocument = (path: string): any => ({
+    path,
+    id: path.split("/").at(-1),
+    collection: (name: string) => makeCollection(`${path}/${name}`),
+    get: jest.fn(async () => {
+      if (path.includes("/league_matches/")) externalMatchReads++;
+      return snapshot(matches.get(path));
+    }),
+  });
+  const makeCollection = (path: string): any => ({
+    path,
+    doc: (id: string) => makeDocument(`${path}/${id}`),
+    where: jest.fn(() => makeQuery(path)),
+  });
+
+  const firestore = {
+    collection: (name: string) => makeCollection(name),
+    runTransaction: jest.fn((callback: (tx: any) => Promise<void>) => {
+      const run = transactionQueue.then(async () => {
+        let wrote = false;
+        const events: string[] = [];
+        transactionEvents.push(events);
+        const assertCanRead = () => {
+          if (wrote) throw new Error("Firestore transaction read after write");
+        };
+        const tx = {
+          getAll: jest.fn(async (...refs: any[]) => {
+            assertCanRead();
+            events.push("read:matches");
+            return refs.map((ref) => snapshot(matches.get(ref.path)));
+          }),
+          get: jest.fn(async (query: any) => {
+            assertCanRead();
+            events.push("read:active-season");
+            activeSeasonReads++;
+            return querySnapshot([
+              {id: "season-new", data: () => ({is_active: true})},
+            ]);
+          }),
+          set: jest.fn((ref: any, data: any) => {
+            wrote = true;
+            events.push(`write:set:${ref.path}`);
+            writes.push({kind: "set", path: ref.path, data});
+            if (ref.path.includes("/league_matches/")) {
+              matches.set(ref.path, data);
+            }
+          }),
+          delete: jest.fn((ref: any) => {
+            wrote = true;
+            events.push(`write:delete:${ref.path}`);
+            writes.push({kind: "delete", path: ref.path});
+            matches.delete(ref.path);
+          }),
+        };
+        await callback(tx);
+      });
+      transactionQueue = run.catch(() => undefined);
+      return run;
+    }),
+  };
+
+  return {
+    firestore,
+    matchPath,
+    matches,
+    writes,
+    transactionEvents,
+    get externalMatchReads() {
+      return externalMatchReads;
+    },
+    get activeSeasonReads() {
+      return activeSeasonReads;
+    },
+  };
+}
+
+function gameWriteEvent(before: any, after: any) {
+  return {
+    params: {gameId: "game-1"},
+    data: {
+      before: {data: () => before},
+      after: {data: () => after},
+    },
+  };
+}
 
 describe("group-league multi-team scoring (#2494)", () => {
   describe("rankResult", () => {
@@ -55,5 +249,127 @@ describe("group-league multi-team scoring (#2494)", () => {
     ];
     expect(5 - opponentAverage("a", scores)).toBeGreaterThan(0);
     expect(1 - opponentAverage("c", scores)).toBeLessThan(0);
+  });
+
+  it("usa o score do proprio doc do time, sem depender da ordem do array", () => {
+    const summaries = buildGroupLeagueTeamSummaries([
+      {id: "team-b", name: "B", playerIds: ["u2"], score: 1},
+      {id: "team-a", name: "A", playerIds: ["u1"], score: 4},
+    ]);
+
+    const byId = new Map(summaries.map((summary) => [summary.team_id, summary]));
+    expect(byId.get("team-a")?.result).toBe("WIN");
+    expect(byId.get("team-b")?.result).toBe("LOSS");
+  });
+
+  it("atribui o resultado do jogador pelo score do time dele", () => {
+    const playerResults = buildGroupLeaguePlayerResults(
+      [
+        {userId: "u1", goals: 2, assists: 1, isMvp: true},
+        {userId: "u2", goals: 0, assists: 0, isMvp: false},
+      ],
+      [
+        {id: "team-b", name: "B", playerIds: ["u2"], score: 0},
+        {id: "team-a", name: "A", playerIds: ["u1"], score: 3},
+      ],
+    );
+
+    const byUser = new Map(playerResults.map((result) => [result.user_id, result]));
+    expect(byUser.get("u1")?.result).toBe("WIN");
+    expect(byUser.get("u2")?.result).toBe("LOSS");
+  });
+
+  it("prefere o placar canonico do jogo para dois times", () => {
+    const game = {
+      team1_id: "team-a",
+      team2_id: "team-b",
+      team1_score: 4,
+      team2_score: 1,
+    };
+    expect(resolveFinishedTeamScore("team-a", 0, 2, 0, game)).toBe(4);
+    expect(resolveFinishedTeamScore("team-b", 1, 2, 0, game)).toBe(1);
+  });
+
+  it("recupera ids reais ao reverter partida legada", () => {
+    const summaries = getStoredTeamSummaries({
+      team1_name: "A",
+      team2_name: "B",
+      team1_score: 3,
+      team2_score: 1,
+      player_results: [
+        {
+          user_id: "u1", team_id: "real-a", goals: 1, assists: 0,
+          is_mvp: false, result: "WIN",
+        },
+        {
+          user_id: "u2", team_id: "real-b", goals: 0, assists: 0,
+          is_mvp: false, result: "LOSS",
+        },
+      ],
+    });
+    expect(summaries.map(({team_id: teamId}) => teamId))
+      .toEqual(["real-a", "real-b"]);
+  });
+});
+
+describe("group-league historical match transactions (#3438)", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it("rebuilds an edited historical game in its stored season", async () => {
+    const fake = createLeagueFirestore(storedHistoricalMatch());
+    mockDb.mockReturnValue(fake.firestore);
+
+    await mockOnGameWrittenHandler!(gameWriteEvent(
+      {status: "FINISHED", group_id: "group-1"},
+      {status: "FINISHED", group_id: "group-1", date: "2026-01-10"},
+    ));
+
+    expect(fake.externalMatchReads).toBe(0);
+    expect(fake.activeSeasonReads).toBe(0);
+    expect(fake.matches.get(fake.matchPath)?.season_id).toBe("season-old");
+
+    const standingWrites = fake.writes.filter(
+      ({kind, path}) => kind === "set" && path.includes("/league_standings/"),
+    );
+    expect(standingWrites).toHaveLength(4);
+    expect(standingWrites.every(({path}) => path.includes("/season-old_")))
+      .toBe(true);
+    expect(standingWrites.some(({path}) => path.includes("season-new")))
+      .toBe(false);
+
+    const events = fake.transactionEvents[0];
+    expect(events[0]).toBe("read:matches");
+    expect(events.slice(1).every((event) => event.startsWith("write:")))
+      .toBe(true);
+  });
+
+  it("claims a historical delete atomically across concurrent redelivery", async () => {
+    const fake = createLeagueFirestore(storedHistoricalMatch());
+    mockDb.mockReturnValue(fake.firestore);
+    const deletion = gameWriteEvent(
+      {status: "FINISHED", group_id: "group-1"},
+      undefined,
+    );
+
+    await Promise.all([
+      mockOnGameWrittenHandler!(deletion),
+      mockOnGameWrittenHandler!(deletion),
+    ]);
+
+    expect(fake.externalMatchReads).toBe(0);
+    expect(fake.transactionEvents).toHaveLength(2);
+    expect(fake.transactionEvents.map((events) => events[0]))
+      .toEqual(["read:matches", "read:matches"]);
+    expect(fake.matches.has(fake.matchPath)).toBe(false);
+
+    const standingReverts = fake.writes.filter(
+      ({kind, path}) => kind === "set" && path.includes("/league_standings/"),
+    );
+    expect(standingReverts).toHaveLength(2);
+    expect(fake.writes.filter(({kind}) => kind === "delete"))
+      .toHaveLength(1);
+    expect(fake.transactionEvents[1]).toEqual(["read:matches"]);
   });
 });

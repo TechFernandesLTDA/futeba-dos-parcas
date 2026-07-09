@@ -52,6 +52,8 @@ export interface LeaguePlayer {
   points: number;
   gamesPlayed: number;
   wins: number;
+  draws?: number;
+  losses?: number;
   goals: number;
   assists: number;
   mvpCount: number;

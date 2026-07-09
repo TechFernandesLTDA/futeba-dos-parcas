@@ -105,6 +105,7 @@ import {
   resolveGamePricingForSave,
 } from '../../utils/gamePricing';
 import { isScheduledDateTimeInPast } from '../../utils/gameScheduleValidation';
+import { calculateNextOccurrence } from './recurringGameHelpers';
 
 const logger = createLogger('CreateGameScreen');
 
@@ -480,7 +481,14 @@ export const CreateGameScreen: React.FC = () => {
   const { popularTimes } = usePopularTimes(formData.fieldId);
   const { habitualTime } = useHabitualTime(formData.locationId);
 
-  const { data: fieldGames } = useFieldGames(formData.fieldId, 60);
+  const selectedLocation = useMemo(
+    () => locations.find((location) => location.id === formData.locationId),
+    [formData.locationId, locations],
+  );
+  const { data: fieldGames } = useFieldGames(formData.fieldId, 60, {
+    openingTime: selectedLocation?.openingTime,
+    closingTime: selectedLocation?.closingTime,
+  });
   const selectedField = useMemo(
     () => fields.find((field) => field.id === formData.fieldId),
     [fields, formData.fieldId],
@@ -973,34 +981,12 @@ export const CreateGameScreen: React.FC = () => {
       groupId: game.groupId || prev.groupId,
       groupName: game.groupName || prev.groupName,
       rules: game.rules,
-      recurrenceEnabled: game.recurrence !== 'none',
-      recurrenceType: (game.recurrence as 'weekly' | 'biweekly' | 'monthly') || 'weekly',
+      recurrenceEnabled: false,
+      recurrenceType: 'weekly',
     }));
     setDuplicateDialogOpen(false);
     setUserInteracted(true);
     showSuccess(t('feedback.games.previousGameLoaded'));
-  };
-
-  const calculateNextOccurrence = (time: string, recurrenceType?: string): { date: string; time: string } => {
-    const now = new Date();
-    const today = formatDate(now, 'yyyy-MM-dd');
-    const [hours, minutes] = time.split(':').map(Number);
-    const targetMinutes = hours * 60 + minutes;
-    const nowMinutes = now.getHours() * 60 + now.getMinutes();
-
-    if (recurrenceType === 'weekly' || recurrenceType === 'biweekly' || recurrenceType === 'monthly') {
-      const maxDays = recurrenceType === 'monthly' ? 7 : recurrenceType === 'biweekly' ? 14 : 7;
-      for (let d = 0; d < maxDays; d++) {
-        const checkDate = formatDate(addDays(now, d), 'yyyy-MM-dd');
-        if (d === 0 && targetMinutes <= nowMinutes) continue;
-        return { date: checkDate, time };
-      }
-    }
-
-    const nextDate = targetMinutes <= nowMinutes
-      ? formatDate(addDays(now, 1), 'yyyy-MM-dd')
-      : today;
-    return { date: nextDate, time };
   };
 
   const handleQuickCreateFromTemplate = async (template: GameTemplate) => {
@@ -1874,6 +1860,8 @@ export const CreateGameScreen: React.FC = () => {
         fieldId={formData.fieldId}
         selectedDate={formData.date}
         selectedTime={formData.time}
+        openingTime={selectedLocation?.openingTime}
+        closingTime={selectedLocation?.closingTime}
         onSlotSelect={(date, time) => {
           handleInputChange('date', date);
           handleStartTimeChange(time);

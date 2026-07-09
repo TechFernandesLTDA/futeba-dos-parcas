@@ -7,6 +7,8 @@ import { createLogger } from '../utils/logger';
 import { useTranslation } from 'react-i18next';
 
 const logger = createLogger('useFeedback');
+const FEEDBACK_RATE_LIMIT_WINDOW_MS = 60 * 1000;
+const FEEDBACK_DUPLICATE_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 export interface UserFeedback {
   id: string;
@@ -30,6 +32,10 @@ interface SubmitFeedbackInput {
   description: string;
   severity: UserFeedback['severity'];
   context: Record<string, unknown>;
+}
+
+function normalizeFeedbackText(value: string) {
+  return value.trim().replace(/\s+/g, ' ').toLowerCase();
 }
 
 export function useFeedback() {
@@ -85,12 +91,56 @@ export function useFeedback() {
       return null;
     }
 
+    const cleanTitle = input.title.trim().replace(/\s+/g, ' ');
+    const cleanDescription = input.description.trim().replace(/\s+/g, ' ');
+
+    if (!cleanTitle || !cleanDescription) {
+      showError(t('feedback.feedback.whitespaceError'));
+      return null;
+    }
+
+    const now = Date.now();
+    const normalizedSignature = [
+      input.type,
+      normalizeFeedbackText(cleanTitle),
+      normalizeFeedbackText(cleanDescription),
+    ].join('::');
+
+    const latestFeedback = myFeedbacks[0];
+    if (
+      latestFeedback?.created_at &&
+      now - latestFeedback.created_at.getTime() < FEEDBACK_RATE_LIMIT_WINDOW_MS
+    ) {
+      showError(t('feedback.feedback.rateLimitError'));
+      return null;
+    }
+
+    const hasRecentDuplicate = myFeedbacks.some((feedback) => {
+      if (!feedback.created_at) return false;
+      if (now - feedback.created_at.getTime() > FEEDBACK_DUPLICATE_WINDOW_MS) return false;
+
+      const existingSignature = [
+        feedback.type,
+        normalizeFeedbackText(feedback.title),
+        normalizeFeedbackText(feedback.description),
+      ].join('::');
+
+      return existingSignature === normalizedSignature;
+    });
+
+    if (hasRecentDuplicate) {
+      showError(t('feedback.feedback.duplicateError'));
+      return null;
+    }
+
     setLoading(true);
     try {
       const docRef = await addDoc(collection(db, 'user_feedback'), {
         user_id: currentUser.uid,
         user_email: currentUser.email || '',
         ...input,
+        title: cleanTitle,
+        description: cleanDescription,
         status: 'open',
         created_at: serverTimestamp(),
         updated_at: serverTimestamp(),

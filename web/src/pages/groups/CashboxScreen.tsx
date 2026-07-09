@@ -1,5 +1,5 @@
 import { PageContainer } from '../../components/common/PageContainer';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
@@ -37,7 +37,7 @@ import {
   ReceiptLong as ReceiptIcon,
   Block as VoidIcon,
 } from '@mui/icons-material';
-import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, doc, getDoc, updateDoc } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, serverTimestamp, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db } from '../../services/firebase';
 import { storage } from '../../services/firebaseStorage';
@@ -51,7 +51,14 @@ import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { createLogger } from '../../utils/logger';
 import { getFirestoreErrorMessage } from '../../utils/firebaseErrors';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
-import { formatCashboxAmountInput, parseCashboxAmount } from '../../utils/cashboxAmount';
+import {
+  cashboxAmountToCents,
+  centsToCashboxAmount,
+  formatCashboxAmountInput,
+  normalizeCashboxAmount,
+  parseCashboxAmountToCents,
+} from '../../utils/cashboxAmount';
+import { createCashboxEntry } from '../../services/cloudFunctions';
 
 const logger = createLogger('CashboxScreen');
 
@@ -87,11 +94,11 @@ export const CashboxScreen: React.FC = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { groupId } = useParams<{ groupId: string }>();
-  const { user, firebaseUser } = useAuth();
+  const { firebaseUser } = useAuth();
 
   const [transactions, setTransactions] = useState<CashboxTransaction[]>([]);
   const [loading, setLoading] = useState(true);
-  const [balance, setBalance] = useState(0);
+  const [balanceCents, setBalanceCents] = useState(0);
   const [isAdminOrOwner, setIsAdminOrOwner] = useState(false);
   const [isConfirmedMember, setIsConfirmedMember] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -107,14 +114,24 @@ export const CashboxScreen: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
+  const createRequestIdRef = useRef<string | null>(null);
   const { showSuccess, showError } = useToast();
 
+  const closeTransactionDialog = useCallback(() => {
+    createRequestIdRef.current = null;
+    setDialogOpen(false);
+  }, []);
+
   // #2231: validação em tempo real do formulário de transação.
-  const parsedAmount = parseCashboxAmount(amount);
-  const amountValid = parsedAmount !== null;
+  const parsedAmountCents = parseCashboxAmountToCents(amount);
+  const amountValid = parsedAmountCents !== null;
   const descriptionValid = description.trim().length > 0;
-  const formValid = amountValid && descriptionValid;
+  const insufficientBalance = transactionType === 'EXPENSE' &&
+    parsedAmountCents !== null &&
+    parsedAmountCents > balanceCents;
+  const formValid = amountValid && descriptionValid && !insufficientBalance;
   const currentUserId = firebaseUser?.uid;
+  const balance = centsToCashboxAmount(balanceCents);
 
   const handleRetry = () => {
     setError(null);
@@ -136,19 +153,22 @@ export const CashboxScreen: React.FC = () => {
         const data = snapshot.docs.map((d) => {
           const raw = d.data();
           const converted = snakeToCamel(raw);
+          const normalizedAmount = normalizeCashboxAmount(raw.amount ?? converted.amount);
           return {
             id: d.id,
             ...converted,
+            amount: normalizedAmount,
             createdAt: (raw.created_at || raw.createdAt)?.toDate?.() || new Date(),
           };
         }) as CashboxTransaction[];
         setTransactions(data);
 
-        const total = data.reduce((sum, t) => {
+        const totalCents = data.reduce((sum, t) => {
           if (t.status === 'VOIDED') return sum;
-          return t.type === 'INCOME' ? sum + t.amount : sum - t.amount;
+          const amountCents = cashboxAmountToCents(t.amount);
+          return t.type === 'INCOME' ? sum + amountCents : sum - amountCents;
         }, 0);
-        setBalance(total);
+        setBalanceCents(totalCents);
         setLoading(false);
       },
       (err) => {
@@ -223,27 +243,27 @@ export const CashboxScreen: React.FC = () => {
   }, [groupId, receiptFile]);
 
   const handleAddTransaction = useCallback(async () => {
-    const parsedAmount = parseCashboxAmount(amount);
-    if (!groupId || !currentUserId || !description.trim() || parsedAmount === null) return;
+    if (!groupId || !currentUserId || !description.trim() || parsedAmountCents === null) return;
+    if (transactionType === 'EXPENSE' && parsedAmountCents > balanceCents) {
+      showError(t('cashbox.insufficientBalance'));
+      return;
+    }
     setSubmitting(true);
     try {
-      const userName = firebaseUser?.displayName || user?.name || t('cashbox.defaultUserName');
       const receiptUrl = await uploadReceipt();
+      const requestId = createRequestIdRef.current ?? crypto.randomUUID();
+      createRequestIdRef.current = requestId;
 
-      await addDoc(collection(db, 'groups', groupId, 'cashbox'), {
-        group_id: groupId,
+      await createCashboxEntry({
+        groupId,
+        requestId,
         type: transactionType,
-        amount: parsedAmount,
+        amount: centsToCashboxAmount(parsedAmountCents),
         description: description.trim(),
-        category: 'OTHER',
-        status: 'ACTIVE',
-        receipt_url: receiptUrl,
-        created_by: currentUserId,
-        created_by_name: userName,
-        created_at: serverTimestamp(),
+        receiptUrl,
       });
 
-      setDialogOpen(false);
+      closeTransactionDialog();
       setAmount('');
       setDescription('');
       setReceiptFile(null);
@@ -255,7 +275,7 @@ export const CashboxScreen: React.FC = () => {
     } finally {
       setSubmitting(false);
     }
-  }, [amount, description, groupId, currentUserId, user, firebaseUser, transactionType, uploadReceipt, showSuccess, showError, t]);
+  }, [balanceCents, closeTransactionDialog, currentUserId, description, groupId, parsedAmountCents, showError, showSuccess, t, transactionType, uploadReceipt]);
 
   const handleVoidTransaction = useCallback(async (transactionId: string) => {
     if (!groupId || !currentUserId) return;
@@ -472,7 +492,7 @@ export const CashboxScreen: React.FC = () => {
         )}
       </PageContainer>
 
-      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} fullScreen={isMobile} fullWidth maxWidth="sm" aria-labelledby="cashbox-dialog-title">
+      <Dialog open={dialogOpen} onClose={closeTransactionDialog} fullScreen={isMobile} fullWidth maxWidth="sm" aria-labelledby="cashbox-dialog-title">
         <DialogTitle id="cashbox-dialog-title">
           {transactionType === 'INCOME' ? t('cashbox.addIncome') : t('cashbox.addExpense')}
         </DialogTitle>
@@ -487,13 +507,19 @@ export const CashboxScreen: React.FC = () => {
             onChange={(e) => setAmount(e.target.value)}
             onBlur={() => {
               setAmountTouched(true);
-              const normalizedAmount = parseCashboxAmount(amount);
-              if (normalizedAmount !== null) {
-                setAmount(formatCashboxAmountInput(normalizedAmount));
+              const normalizedAmountCents = parseCashboxAmountToCents(amount);
+              if (normalizedAmountCents !== null) {
+                setAmount(formatCashboxAmountInput(centsToCashboxAmount(normalizedAmountCents)));
               }
             }}
-            error={amountTouched && !amountValid}
-            helperText={amountTouched && !amountValid ? t('cashbox.amountError') : ' '}
+            error={amountTouched && (!amountValid || insufficientBalance)}
+            helperText={
+              amountTouched && !amountValid ?
+                t('cashbox.amountError') :
+                amountTouched && insufficientBalance ?
+                  t('cashbox.insufficientBalance') :
+                  ' '
+            }
             inputProps={{ inputMode: 'decimal' }}
             sx={{ mb: 1 }}
           />
@@ -525,7 +551,7 @@ export const CashboxScreen: React.FC = () => {
           </Button>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDialogOpen(false)} disabled={submitting}>{t('common.cancel')}</Button>
+          <Button onClick={closeTransactionDialog} disabled={submitting}>{t('common.cancel')}</Button>
           <Button onClick={handleAddTransaction} variant="contained" color={transactionType === 'INCOME' ? 'success' : 'error'} disabled={submitting || !formValid} startIcon={submitting ? <CircularProgress size={16} /> : undefined}>
             {submitting ? t('cashbox.confirming') : t('common.confirm')}
           </Button>

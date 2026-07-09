@@ -7,6 +7,7 @@ import {sendNotificationToUser, NotificationType} from "../notifications/helpers
 import {db} from "../_db";
 import {getLevelForXp} from "../xp/pipeline";
 import type {XpLog} from "../models";
+import {buildUserBadgeAggregateDoc} from "./user-badge-docs";
 
 interface BadgeTrigger {
   badgeId: string;
@@ -36,6 +37,9 @@ async function awardBadgeWithXp(
   const badgeRef = userRef
     .collection("badges")
     .doc(trigger.badgeId);
+  const aggregateBadgeRef = db()
+    .collection("user_badges")
+    .doc(`${userId}_${trigger.badgeId}`);
   const logRef = db()
     .collection("xp_logs")
     .doc(`badge_${trigger.badgeId}_user_${userId}`);
@@ -113,6 +117,18 @@ async function awardBadgeWithXp(
     };
 
     tx.set(badgeRef, badgeData);
+    tx.set(aggregateBadgeRef, buildUserBadgeAggregateDoc(userId, {
+      badgeId: trigger.badgeId,
+      name: trigger.name,
+      icon: trigger.icon,
+      description: trigger.description,
+      type: trigger.badgeId,
+      xpReward: trigger.xpReward,
+      earnedAt: badgeData.earned_at,
+      lastEarnedAt: badgeData.earned_at,
+      earned: true,
+      count: 1,
+    }), {merge: true});
     tx.update(userRef, {
       experience_points:
         FieldValue.increment(trigger.xpReward),

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigateBack } from "../hooks/useNavigateBack";
 import {
   Avatar,
@@ -26,6 +26,14 @@ import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import { useTranslation } from "react-i18next";
 import { ErrorState } from "../components/common/ErrorState";
 
+const DEFAULT_DREAM_TEAM_SLOTS: DreamTeamPlayer[] = [
+  { userId: "", position: "GOALKEEPER" },
+  { userId: "", position: "DEFENDER" },
+  { userId: "", position: "DEFENDER" },
+  { userId: "", position: "MIDFIELDER" },
+  { userId: "", position: "STRIKER" },
+];
+
 export const DreamTeamScreen: React.FC = () => {
   const { t } = useTranslation();
   useDocumentTitle(t("dreamTeam.title"));
@@ -42,14 +50,19 @@ export const DreamTeamScreen: React.FC = () => {
   ];
 
   const [selectedPlayers, setSelectedPlayers] = useState<DreamTeamPlayer[]>(
-    currentTeam?.players || [
-      { userId: "", position: "GOALKEEPER" },
-      { userId: "", position: "DEFENDER" },
-      { userId: "", position: "DEFENDER" },
-      { userId: "", position: "MIDFIELDER" },
-      { userId: "", position: "STRIKER" },
-    ]
+    currentTeam?.players || DEFAULT_DREAM_TEAM_SLOTS
   );
+
+  useEffect(() => {
+    if (currentTeam?.players?.length) {
+      setSelectedPlayers(currentTeam.players);
+      return;
+    }
+
+    if (!teamLoading && !currentTeam) {
+      setSelectedPlayers(DEFAULT_DREAM_TEAM_SLOTS);
+    }
+  }, [currentTeam, teamLoading]);
 
   const handleSelect = (index: number, userId: string) => {
     setSelectedPlayers((prev) => {

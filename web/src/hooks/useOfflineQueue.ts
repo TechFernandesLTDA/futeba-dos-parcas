@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { doc, setDoc, updateDoc, deleteDoc, addDoc, collection } from 'firebase/firestore';
+import { doc, setDoc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { useNetworkStatus } from './useNetworkStatus';
 import { createLogger } from '../utils/logger';
@@ -10,6 +10,7 @@ const STORAGE_KEY = 'offline_write_queue';
 const KEY_STORAGE_KEY = 'offline_queue_enc_key';
 
 const MAX_RETRIES = 5;
+const CONTINUE_FLUSH_DELAY_MS = 0;
 
 interface QueuedMutation {
   id: string;
@@ -113,6 +114,7 @@ export function useOfflineQueue() {
     mountedRef.current = true;
     loadQueue().then((loaded) => {
       if (mountedRef.current) {
+        queueRef.current = loaded;
         setQueue(loaded);
         setQueueLoaded(true);
       }
@@ -132,7 +134,11 @@ export function useOfflineQueue() {
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       enqueuedAt: Date.now(),
     };
-    setQueue(prev => [...prev, entry]);
+    setQueue(prev => {
+      const nextQueue = [...prev, entry];
+      queueRef.current = nextQueue;
+      return nextQueue;
+    });
     return entry.id;
   }, []);
 
@@ -148,7 +154,10 @@ export function useOfflineQueue() {
         await deleteDoc(doc(db, mutation.collection, mutation.docId!));
         break;
       case 'add':
-        await addDoc(collection(db, mutation.collection), mutation.data);
+        await setDoc(
+          doc(db, mutation.collection, mutation.docId ?? mutation.id),
+          mutation.data,
+        );
         break;
     }
   }, []);
@@ -164,6 +173,7 @@ export function useOfflineQueue() {
     const batch = [...queueRef.current];
     const processedIds = new Set<string>();
     const retried: QueuedMutation[] = [];
+    let shouldContinueFlush = false;
 
     for (const mutation of batch) {
       try {
@@ -186,18 +196,28 @@ export function useOfflineQueue() {
 
     // #2171: remove apenas as processadas com sucesso (ou descartadas) e mantém
     // tanto as re-enfileiradas quanto as novas mutações chegadas durante o loop.
-    setQueue(prev => {
-      const remaining = prev.filter(m => !processedIds.has(m.id));
-      // Atualiza retries das que falharam mas continuam na fila
-      return remaining.map(m => {
-        const r = retried.find(x => x.id === m.id);
-        return r ? { ...m, retries: r.retries } : m;
+    const nextQueue = queueRef.current
+      .filter((mutation) => !processedIds.has(mutation.id))
+      .map((mutation) => {
+        const retriedMutation = retried.find((candidate) => candidate.id === mutation.id);
+        return retriedMutation
+          ? { ...mutation, retries: retriedMutation.retries }
+          : mutation;
       });
-    });
+    shouldContinueFlush = nextQueue.length > 0;
+    queueRef.current = nextQueue;
+    setQueue(nextQueue);
 
     setProcessing(false);
     processingRef.current = false;
-  }, [runMutation, t]);
+    if (isOnline && shouldContinueFlush && mountedRef.current) {
+      window.setTimeout(() => {
+        if (mountedRef.current) {
+          void processQueue();
+        }
+      }, CONTINUE_FLUSH_DELAY_MS);
+    }
+  }, [isOnline, runMutation, t]);
 
   useEffect(() => {
     if (isOnline && queue.length > 0 && !processingRef.current) {

@@ -33,6 +33,7 @@ import { updateProfile } from 'firebase/auth';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { createLogger } from '../../utils/logger';
 import { avatarSizes } from '../../theme/iconSizes';
+import type { PreferredPosition } from '../../types/user';
 import { useTranslation } from 'react-i18next';
 
 const logger = createLogger('ProfileSetupScreen');
@@ -49,7 +50,7 @@ export const ProfileSetupScreen: React.FC = () => {
   const [name, setName] = useState(firebaseUser?.displayName || '');
   const [nickname, setNickname] = useState('');
   const [favoriteTeam, setFavoriteTeam] = useState<string | null>(null);
-  const [preferredPosition, setPreferredPosition] = useState<string | null>(null);
+  const [preferredPosition, setPreferredPosition] = useState<PreferredPosition | null>(null);
   const [preferredFieldTypes, setPreferredFieldTypes] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -224,15 +225,15 @@ export const ProfileSetupScreen: React.FC = () => {
           <ToggleButtonGroup
             value={preferredPosition}
             exclusive
-            onChange={(_, val) => setPreferredPosition(val)}
+            onChange={(_, val: PreferredPosition | null) => setPreferredPosition(val)}
             aria-label={t('a11y.preferredPosition')}
             size="small"
             fullWidth
           >
-            <ToggleButton value="GK" aria-label={t('a11y.goalkeeper')}>GK</ToggleButton>
-            <ToggleButton value="DEF" aria-label={t('a11y.defender')}>DEF</ToggleButton>
-            <ToggleButton value="MID" aria-label={t('a11y.midfielder')}>MID</ToggleButton>
-            <ToggleButton value="STR" aria-label={t('a11y.forward')}>STR</ToggleButton>
+            <ToggleButton value="GOLEIRO" aria-label={t('a11y.goalkeeper')}>GK</ToggleButton>
+            <ToggleButton value="ZAGUEIRO" aria-label={t('a11y.defender')}>DEF</ToggleButton>
+            <ToggleButton value="MEIA" aria-label={t('a11y.midfielder')}>MID</ToggleButton>
+            <ToggleButton value="ATACANTE" aria-label={t('a11y.forward')}>STR</ToggleButton>
           </ToggleButtonGroup>
         </Box>
 

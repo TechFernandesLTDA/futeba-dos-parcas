@@ -17,14 +17,18 @@ const mockGetUser = jest.fn().mockResolvedValue({
 });
 const mockDocGet = jest.fn();
 const mockDocUpdate = jest.fn().mockResolvedValue(undefined);
+const mockDocSet = jest.fn().mockResolvedValue(undefined);
 const mockCollectionAdd = jest.fn().mockResolvedValue({ id: "audit_log_1" });
+const mockOrderBy = jest.fn().mockReturnThis();
 const mockDoc = jest.fn().mockReturnValue({
   get: mockDocGet,
   update: mockDocUpdate,
+  set: mockDocSet,
 });
 const mockCollection = jest.fn().mockReturnValue({
   doc: mockDoc,
   add: mockCollectionAdd,
+  orderBy: mockOrderBy,
   limit: jest.fn().mockReturnThis(),
   startAfter: jest.fn().mockReturnThis(),
   get: jest.fn().mockResolvedValue({ empty: true, docs: [] }),
@@ -58,6 +62,9 @@ jest.mock("firebase-admin", () => {
 jest.mock("firebase-admin/firestore", () => ({
   FieldValue: {
     serverTimestamp: jest.fn(() => ({ _type: "ServerTimestamp" })),
+  },
+  FieldPath: {
+    documentId: jest.fn(() => "__name__"),
   },
 }));
 
@@ -432,5 +439,23 @@ describe("Custom Claims - migrateAllUsersToCustomClaims", () => {
     await expect(migrateHandler!(request)).rejects.toThrow(
       "This operation requires: ADMIN"
     );
+  });
+
+  test("pagina usuarios com orderBy(documentId) antes de startAfter", async () => {
+    const request = {
+      auth: {
+        uid: "admin1",
+        token: { role: "ADMIN" },
+      },
+    };
+
+    mockDocGet.mockResolvedValueOnce({
+      exists: false,
+      data: () => null,
+    });
+
+    await migrateHandler!(request);
+
+    expect(mockOrderBy).toHaveBeenCalled();
   });
 });

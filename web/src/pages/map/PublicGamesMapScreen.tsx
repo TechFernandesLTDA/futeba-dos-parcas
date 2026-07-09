@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
@@ -31,7 +31,53 @@ import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { pageSpacing } from '../../theme/pageTokens';
 import { useTranslation } from 'react-i18next';
 
-function PublicGamesMapView({ games, onGameClick }: { games: Game[]; onGameClick: (game: Game) => void }) {
+function getPublicGamesMapCenter(
+  games: Game[],
+  userPosition?: { latitude: number; longitude: number } | null,
+) {
+  if (userPosition) {
+    return {
+      lat: userPosition.latitude,
+      lng: userPosition.longitude,
+    };
+  }
+
+  const markers = games.filter(
+    (game) => typeof game.locationLat === 'number' && typeof game.locationLng === 'number',
+  );
+  if (markers.length === 0) return { lat: -23.55, lng: -46.63 };
+  if (markers.length === 1) return { lat: markers[0].locationLat!, lng: markers[0].locationLng! };
+
+  const bounds = markers.reduce(
+    (acc, game) => ({
+      minLat: Math.min(acc.minLat, game.locationLat!),
+      maxLat: Math.max(acc.maxLat, game.locationLat!),
+      minLng: Math.min(acc.minLng, game.locationLng!),
+      maxLng: Math.max(acc.maxLng, game.locationLng!),
+    }),
+    {
+      minLat: markers[0].locationLat!,
+      maxLat: markers[0].locationLat!,
+      minLng: markers[0].locationLng!,
+      maxLng: markers[0].locationLng!,
+    },
+  );
+
+  return {
+    lat: (bounds.minLat + bounds.maxLat) / 2,
+    lng: (bounds.minLng + bounds.maxLng) / 2,
+  };
+}
+
+function PublicGamesMapView({
+  games,
+  onGameClick,
+  mapCenter,
+}: {
+  games: Game[];
+  onGameClick: (game: Game) => void;
+  mapCenter: { lat: number; lng: number };
+}) {
   const theme = useTheme();
   const { t } = useTranslation();
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
@@ -64,11 +110,7 @@ function PublicGamesMapView({ games, onGameClick }: { games: Game[]; onGameClick
   return (
     <GoogleMap
       mapContainerStyle={{ width: '100%', height: '100%' }}
-      center={
-        games.length > 0 && games[0].locationLat
-          ? { lat: games[0].locationLat, lng: games[0].locationLng || 0 }
-          : { lat: -23.55, lng: -46.63 }
-      }
+      center={mapCenter}
       zoom={12}
     >
       {games
@@ -113,12 +155,40 @@ export const PublicGamesMapScreen: React.FC = () => {
   useAuth();
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [userPosition, setUserPosition] = useState<{ latitude: number; longitude: number } | null>(null);
 
   const { games, loading, error, refetch } = usePublicGames('map');
 
   const filteredGames = games.filter((game) =>
     (game.locationName || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
+  const mapCenter = useMemo(
+    () => getPublicGamesMapCenter(filteredGames, userPosition),
+    [filteredGames, userPosition],
+  );
+
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+    let cancelled = false;
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        if (cancelled) return;
+        setUserPosition({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+        });
+      },
+      () => {
+        if (!cancelled) setUserPosition(null);
+      },
+      { enableHighAccuracy: false, maximumAge: 10 * 60 * 1000, timeout: 5000 },
+    );
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handleGameClick = (game: Game) => {
     navigate(`/game/${game.id}`);
@@ -172,7 +242,7 @@ export const PublicGamesMapScreen: React.FC = () => {
 
       {/* Mapa */}
       <Box sx={{ height: 250, position: 'relative' }}>
-        <PublicGamesMapView games={filteredGames} onGameClick={handleGameClick} />
+        <PublicGamesMapView games={filteredGames} onGameClick={handleGameClick} mapCenter={mapCenter} />
       </Box>
 
       <PageContainer maxWidth="list">

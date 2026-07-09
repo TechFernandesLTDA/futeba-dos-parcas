@@ -109,4 +109,20 @@ describe('useKeyboardShortcut', () => {
 
     expect(callback).not.toHaveBeenCalled();
   });
+
+  it('não re-subscreve quando modifiers inline mantêm o mesmo valor', () => {
+    const callback = vi.fn();
+    const addSpy = vi.spyOn(window, 'addEventListener');
+    const removeSpy = vi.spyOn(window, 'removeEventListener');
+
+    const { rerender } = renderHook(
+      ({ modifiers }) => useKeyboardShortcut({ key: 's', modifiers }, callback),
+      { initialProps: { modifiers: ['shift', 'alt'] as const } },
+    );
+
+    rerender({ modifiers: ['alt', 'shift'] as const });
+
+    expect(addSpy).toHaveBeenCalledTimes(1);
+    expect(removeSpy).not.toHaveBeenCalled();
+  });
 });

@@ -117,6 +117,15 @@ function mapPhoneVerificationFailureReason(code?: string): VerificationFailureRe
   }
 }
 
+function canFallbackToOlderVerificationId(code?: string): boolean {
+  return (
+    code === 'auth/code-expired' ||
+    code === 'auth/invalid-verification-id' ||
+    code === 'auth/missing-verification-id' ||
+    code === 'auth/session-expired'
+  );
+}
+
 function auditPhoneVerificationFailure(reason: VerificationFailureReason): void {
   logVerificationFailure({ reason, stage: 'phone' }).catch((auditErr) => {
     logger.error('Failed to audit phone verification failure:', auditErr);
@@ -417,14 +426,7 @@ export const PhoneVerificationScreen: React.FC = () => {
         } catch (attemptErr) {
           const attemptCode = (attemptErr as { code?: string }).code;
           lastAttemptError = attemptErr;
-          if (
-            attemptCode === 'auth/invalid-verification-code' ||
-            attemptCode === 'auth/code-expired' ||
-            attemptCode === 'auth/invalid-credential' ||
-            attemptCode === 'auth/invalid-verification-id' ||
-            attemptCode === 'auth/missing-verification-id' ||
-            attemptCode === 'auth/session-expired'
-          ) {
+          if (canFallbackToOlderVerificationId(attemptCode)) {
             continue;
           }
           throw attemptErr;

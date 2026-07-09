@@ -27,6 +27,7 @@ function createBeforeInstallPromptEvent(outcome: 'accepted' | 'dismissed' = 'acc
 
 describe('usePwaInstall', () => {
   beforeEach(() => {
+    localStorage.clear();
     setNavigatorValue('userAgent', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)');
     setNavigatorValue('platform', 'MacIntel');
     setNavigatorValue('maxTouchPoints', 0);
@@ -84,5 +85,27 @@ describe('usePwaInstall', () => {
 
     expect(result.current.isStandalone).toBe(true);
     expect(result.current.shouldShow).toBe(false);
+  });
+
+  it('permite dispensar o prompt e não reapresenta após remontar', () => {
+    const firstRender = renderHook(() => usePwaInstall());
+    const { event } = createBeforeInstallPromptEvent();
+
+    act(() => {
+      window.dispatchEvent(event);
+    });
+
+    expect(firstRender.result.current.shouldShow).toBe(true);
+
+    act(() => {
+      firstRender.result.current.dismiss();
+    });
+
+    expect(firstRender.result.current.shouldShow).toBe(false);
+
+    firstRender.unmount();
+
+    const secondRender = renderHook(() => usePwaInstall());
+    expect(secondRender.result.current.shouldShow).toBe(false);
   });
 });

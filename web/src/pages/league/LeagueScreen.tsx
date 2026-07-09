@@ -87,6 +87,7 @@ import { useSeasons } from '../../hooks/useSeasons';
 import { DIVISION_CONFIG, LeagueDivision, getDivisionColor } from '../../types/gamification';
 import { useTranslation, Trans } from 'react-i18next';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import { getLeagueDrawCount, getLeagueLossCount, getLeagueWinRate } from '../../utils/leagueRecord';
 
 type SortField = LeagueSortField;
 
@@ -225,8 +226,8 @@ export const LeagueScreen: React.FC<LeagueScreenProps> = ({ embedded = false }) 
     const dir = sortDirection === 'asc' ? 1 : -1;
     const getVal = (p: LeaguePlayer, field: SortField): number => {
       switch (field) {
-        case 'winRate': return p.gamesPlayed > 0 ? (p.wins / p.gamesPlayed) : 0;
-        case 'losses': return Math.max(0, p.gamesPlayed - p.wins);
+        case 'winRate': return getLeagueWinRate(p);
+        case 'losses': return getLeagueLossCount(p);
         case 'name': return 0;
         case 'experiencePoints': return p.experiencePoints ?? 0;
         default: return p[field] || 0;
@@ -384,19 +385,19 @@ export const LeagueScreen: React.FC<LeagueScreenProps> = ({ embedded = false }) 
   }, [theme]);
 
   const getPositionTooltip = useCallback((position: number): string => {
-    if (position <= 0) return 'Sem classificação';
-    if (!isDefaultRankView) return `${position}ª posição nesta ordenação`;
-    if (position === 1) return 'Líder da temporada!';
-    if (position === 2) return 'Vice-líder, quase lá!';
-    if (position === 3) return 'Top 3 - Zona de promoção';
-    if (position <= PROMO_TOP) return 'Zona de promoção';
+    if (position <= 0) return t('league.positionTooltipUnranked');
+    if (!isDefaultRankView) return t('league.positionTooltipOrdered', { position });
+    if (position === 1) return t('league.positionTooltipLeader');
+    if (position === 2) return t('league.positionTooltipRunnerUp');
+    if (position === 3) return t('league.positionTooltipTopThreePromotion');
+    if (position <= PROMO_TOP) return t('league.positionTooltipPromotionZone');
     if (
       hasCompleteLeagueWindow &&
       position > allPlayers.length - RELEG_BOTTOM &&
       allPlayers.length > RELEG_BOTTOM * 2
-    ) return 'Zona de rebaixamento';
-    return `${position}ª posição`;
-  }, [allPlayers.length, hasCompleteLeagueWindow, isDefaultRankView]);
+    ) return t('league.positionTooltipRelegationZone');
+    return t('league.positionTooltipDefault', { position });
+  }, [allPlayers.length, hasCompleteLeagueWindow, isDefaultRankView, t]);
 
   const isLoading = loading || seasonLoading;
 
@@ -561,7 +562,7 @@ export const LeagueScreen: React.FC<LeagueScreenProps> = ({ embedded = false }) 
               >
                 {seasons.map((s) => (
                   <MenuItem key={s.id} value={s.id}>
-                    {s.name}{s.isActive ? ' (Ativa)' : ''}
+                    {s.name}{s.isActive ? t('league.activeSeasonSuffix') : ''}
                   </MenuItem>
                 ))}
               </Select>
@@ -963,8 +964,9 @@ export const LeagueScreen: React.FC<LeagueScreenProps> = ({ embedded = false }) 
                     <TableBody>
                       {filteredAndSorted.map((player) => {
                         const position = (isDefaultRankView ? realPositions : displayPositions).get(player.id) ?? -1;
-                        const winRate = player.gamesPlayed > 0 ? Math.round((player.wins / player.gamesPlayed) * 100) : 0;
-                        const lossCount = Math.max(0, player.gamesPlayed - player.wins);
+                        const winRate = getLeagueWinRate(player);
+                        const drawCount = getLeagueDrawCount(player);
+                        const lossCount = getLeagueLossCount(player);
                         return (
                           <TableRow
                             key={player.id}
@@ -1009,7 +1011,7 @@ export const LeagueScreen: React.FC<LeagueScreenProps> = ({ embedded = false }) 
                                   <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center', flexWrap: 'wrap' }}>
                                     <TeamBadge teamId={player.favoriteTeam} size={14} />
                                     <Chip label={DIVISION_CONFIG[player.division]?.label ?? player.division} size="small" sx={{ height: 16, fontSize: '0.65rem' }} />
-                                    {player.isCurrentUser && <Chip label="Você" size="small" color="primary" sx={{ height: 16, fontSize: '0.65rem' }} />}
+                                    {player.isCurrentUser && <Chip label={t('common.you')} size="small" color="primary" sx={{ height: 16, fontSize: '0.65rem' }} />}
                                   </Box>
                                 </Box>
                               </Box>
@@ -1021,7 +1023,7 @@ export const LeagueScreen: React.FC<LeagueScreenProps> = ({ embedded = false }) 
                             </TableCell>
                             <TableCell align="right">{player.gamesPlayed}</TableCell>
                             <TableCell align="right">{player.wins}</TableCell>
-                            <TableCell align="right">—</TableCell>
+                            <TableCell align="right">{drawCount}</TableCell>
                             <TableCell align="right">{lossCount}</TableCell>
                             <TableCell align="right">{player.goals}</TableCell>
                             <TableCell align="right">—</TableCell>
@@ -1322,7 +1324,9 @@ const LeaguePlayerItem = React.memo(function LeaguePlayerItem({
     ...(DIVISION_CONFIG[player.division] || DIVISION_CONFIG.BRONZE),
     color: getDivisionColor(player.division, theme),
   };
-  const winRate = player.gamesPlayed > 0 ? Math.round((player.wins / player.gamesPlayed) * 100) : 0;
+  const winRate = getLeagueWinRate(player);
+  const drawCount = getLeagueDrawCount(player);
+  const lossCount = getLeagueLossCount(player);
 
   const zoneColor = isPromoZone
     ? theme.palette.success.main
@@ -1458,7 +1462,7 @@ const LeaguePlayerItem = React.memo(function LeaguePlayerItem({
               </Button>
               <TeamBadge teamId={player.favoriteTeam} size={16} />
               {player.isCurrentUser && (
-                <Chip label="Você" size="small" color="primary" sx={{ height: 18, fontSize: '0.68rem' }} />
+                <Chip label={t('common.you')} size="small" color="primary" sx={{ height: 18, fontSize: '0.68rem' }} />
               )}
             </Box>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, minWidth: 0, mt: 0.25 }}>
@@ -1575,7 +1579,8 @@ const LeaguePlayerItem = React.memo(function LeaguePlayerItem({
             }}
           >
             <StatBox label={t('league.victories')} value={player.wins} color={theme.palette.success.main} />
-            <StatBox label={t('statistics.losses')} value={Math.max(0, player.gamesPlayed - player.wins)} color={theme.palette.error.main} />
+            <StatBox label={t('statistics.draws')} value={drawCount} color={theme.palette.warning.main} />
+            <StatBox label={t('statistics.losses')} value={lossCount} color={theme.palette.error.main} />
             <StatBox label={t('statistics.winRate')} value={`${winRate}%`} color={theme.palette.primary.main} />
             <StatBox label={t('league.goals')} value={player.goals} color={theme.palette.warning.main} />
             <StatBox label={t('league.assists')} value={player.assists || 0} color={theme.palette.info.main} />
@@ -1583,7 +1588,11 @@ const LeaguePlayerItem = React.memo(function LeaguePlayerItem({
           </Box>
           {player.isCurrentUser && (
             <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textAlign: 'center', mt: 1 }}>
-              {isPromoZone ? 'Você está na zona de promoção!' : isRelegZone ? 'Atenção: zona de rebaixamento' : 'Continue jogando para subir!'}
+              {isPromoZone
+                ? t('league.positionStatusPromo')
+                : isRelegZone
+                  ? t('league.positionStatusRelegation')
+                  : t('league.positionStatusNeutral')}
             </Typography>
           )}
         </Collapse>

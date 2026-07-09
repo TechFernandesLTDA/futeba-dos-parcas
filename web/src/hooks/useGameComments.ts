@@ -19,6 +19,7 @@ import { db } from '../services/firebase';
 import { getFirestoreErrorMessage } from '../utils/firebaseErrors';
 import { snakeToCamel, toDate } from '../utils/firestoreHelpers';
 import { createLogger } from '../utils/logger';
+import { mergeRealtimePageById } from './realtimePageMerge';
 import type { ReactionsMap } from '../constants/reactions';
 
 const logger = createLogger('useGameComments');
@@ -76,6 +77,8 @@ export function useGameComments(gameId?: string, context: GameCommentContext = '
     if (!gameId) {
       setLoading(false);
       setComments([]);
+      setHasMore(false);
+      oldestDocRef.current = null;
       return undefined;
     }
 
@@ -91,12 +94,13 @@ export function useGameComments(gameId?: string, context: GameCommentContext = '
     const unsubscribe = onSnapshot(
       commentsQuery,
       (snapshot) => {
+        const snapshotIds = snapshot.docs.map((docSnap) => docSnap.id);
         const data = snapshot.docs.map(mapComment).reverse();
-        setComments(data);
+        setComments((prev) => mergeRealtimePageById(prev, data, snapshotIds, 'append'));
         setHasMore(snapshot.size === COMMENT_PAGE_SIZE);
-        oldestDocRef.current = snapshot.docs.length > 0
-          ? snapshot.docs[snapshot.docs.length - 1]
-          : null;
+        if (snapshot.docs.length > 0) {
+          oldestDocRef.current = snapshot.docs[snapshot.docs.length - 1];
+        }
         setLoading(false);
       },
       (err) => {

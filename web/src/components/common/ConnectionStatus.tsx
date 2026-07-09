@@ -2,36 +2,11 @@ import { useState, useEffect, useRef } from 'react';
 import { Box, Typography, Slide } from '@mui/material';
 import { WifiOff as OfflineIcon, Wifi as OnlineIcon } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
+import { useNetworkStatus } from '../../hooks/useNetworkStatus';
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const useOnlineStatus = () => {
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
-
-  useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
-
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-
-    const checkOnline = async () => {
-      try {
-        await fetch('/favicon.svg', { method: 'HEAD', cache: 'no-store' });
-        setIsOnline(true);
-      } catch {
-        setIsOnline(navigator.onLine);
-      }
-    };
-    const interval = setInterval(checkOnline, 30000);
-    checkOnline();
-
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-      clearInterval(interval);
-    };
-  }, []);
-
+  const { isOnline } = useNetworkStatus();
   return isOnline;
 };
 

@@ -167,5 +167,4 @@ describe('EditProfileScreen', () => {
       expect(screen.getByText('Editar Perfil')).toBeInTheDocument();
     }, { timeout: 10000 });
   });
-
 });

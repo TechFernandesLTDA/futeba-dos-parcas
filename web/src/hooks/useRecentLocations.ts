@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { collection, query, where, limit, getDocs } from 'firebase/firestore';
+import { collection, query, where, limit, getDocs, orderBy } from 'firebase/firestore';
 import { useQuery } from '@tanstack/react-query';
 import { db } from '../services/firebase';
 import { useAuth } from '../contexts/AuthContext';
@@ -31,14 +31,14 @@ export function toggleFavoriteLocation(locationId: string): boolean {
   return index < 0;
 }
 
-async function fetchRecentLocationIds(uid: string): Promise<string[]> {
+export async function fetchRecentLocationIds(uid: string): Promise<string[]> {
   if (!uid) return [];
 
   const gamesRef = collection(db, 'games');
   const q = query(
     gamesRef,
     where('owner_id', '==', uid),
-    where('status', '!=', 'CANCELLED'),
+    orderBy('dateTime', 'desc'),
     limit(20),
   );
 
@@ -49,6 +49,7 @@ async function fetchRecentLocationIds(uid: string): Promise<string[]> {
 
     snapshot.docs.forEach((d) => {
       const data = d.data();
+      if (data.status === 'CANCELLED') return;
       const locId = data.location_id as string;
       if (locId && !seen.has(locId)) {
         seen.add(locId);

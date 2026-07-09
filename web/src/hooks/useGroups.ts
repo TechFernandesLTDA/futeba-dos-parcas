@@ -5,6 +5,7 @@ import {
   doc,
   getDoc,
   getDocs,
+  runTransaction,
   setDoc,
   updateDoc,
   query,
@@ -28,9 +29,53 @@ import { createLogger } from '../utils/logger';
 import { getFirestoreErrorMessage } from '../utils/firebaseErrors';
 import { useTranslation } from 'react-i18next';
 import { uploadGroupLogo } from '../utils/groupLogoStorage';
+import { cashboxAmountToCents, centsToCashboxAmount, normalizeCashboxAmount } from '../utils/cashboxAmount';
 
 const logger = createLogger('useGroups');
 const MAX_INVITE_CODE_GENERATION_ATTEMPTS = 5;
+const GROUP_CONFIRMATION_CLEANUP_STATUSES = new Set(['SCHEDULED', 'CONFIRMED']);
+
+function isActiveGroupMemberStatus(status?: GroupMember['status']): boolean {
+  return status === undefined || status === 'ACTIVE';
+}
+
+function isGroupUnavailable(raw: Record<string, unknown> | undefined): boolean {
+  if (!raw) return true;
+  return (raw.deleted_at !== null && raw.deleted_at !== undefined) ||
+    (raw.deletedAt !== null && raw.deletedAt !== undefined) ||
+    raw.status === 'DELETED' ||
+    raw.is_active === false;
+}
+
+export async function removeGroupMembershipArtifacts(
+  groupId: string,
+  userId: string,
+  nextStatus: 'INACTIVE' | 'REMOVED',
+  options?: { cleanupConfirmations?: boolean },
+): Promise<{ confirmationDeletes: number }> {
+  const batch = writeBatch(db);
+  let confirmationDeletes = 0;
+
+  batch.update(doc(db, 'groups', groupId, 'members', userId), {
+    status: nextStatus,
+    updated_at: serverTimestamp(),
+  });
+  batch.delete(doc(db, 'users', userId, 'groups', groupId));
+
+  if (options?.cleanupConfirmations !== false) {
+    const gamesSnap = await getDocs(query(collection(db, 'games'), where('group_id', '==', groupId)));
+    for (const gameDoc of gamesSnap.docs) {
+      const gameData = gameDoc.data();
+      if (gameData.deleted_at || gameData.deletedAt) continue;
+      if (!GROUP_CONFIRMATION_CLEANUP_STATUSES.has(String(gameData.status || ''))) continue;
+      batch.delete(doc(db, 'confirmations', `${gameDoc.id}_${userId}`));
+      confirmationDeletes += 1;
+    }
+  }
+
+  await batch.commit();
+  return { confirmationDeletes };
+}
 
 // ====== Group Document Parser ======
 
@@ -293,7 +338,7 @@ export function useGroupDetail(groupId: string | null) {
             id: d.id,
             joinedAt: ((raw.joined_at || raw.joinedAt) as { toDate?: () => Date })?.toDate?.() || new Date(),
           };
-        });
+        }).filter((member) => isActiveGroupMemberStatus(member.status));
         setMembers(membersData);
       },
       (err) => {
@@ -396,7 +441,7 @@ export function useCreateGroup() {
 
         if (photoFile) {
           try {
-            const photoUrl = await uploadGroupLogo(storage, uid, groupRef.id, photoFile);
+            const photoUrl = await uploadGroupLogo(storage, uid, groupRef.id, photoFile, null);
 
             await Promise.all([
               updateDoc(groupRef, {
@@ -435,7 +480,7 @@ export function useCreateGroup() {
 // ====== useCashbox ======
 export function useCashbox(groupId: string | null) {
   const [transactions, setTransactions] = useState<CashboxTransaction[]>([]);
-  const [balance, setBalance] = useState(0);
+  const [balanceCents, setBalanceCents] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -454,26 +499,29 @@ export function useCashbox(groupId: string | null) {
     const unsubscribe = onSnapshot(
       query(cashboxRef, orderBy('created_at', 'desc')),
       (snapshot) => {
-        let totalBalance = 0;
+        let totalBalanceCents = 0;
         const transactionsData = snapshot.docs.map((d) => {
           const raw = d.data();
           const converted = snakeToCamel(raw);
+          const normalizedAmount = normalizeCashboxAmount(raw.amount ?? converted.amount);
+          const amountCents = cashboxAmountToCents(normalizedAmount);
           if (raw.status !== 'VOIDED' && raw.type === 'INCOME') {
-            totalBalance += raw.amount as number;
+            totalBalanceCents += amountCents;
           } else if (raw.status !== 'VOIDED') {
-            totalBalance -= raw.amount as number;
+            totalBalanceCents -= amountCents;
           }
           const createdAt = ((raw.created_at || raw.createdAt) as { toDate?: () => Date })?.toDate?.();
           return {
             id: d.id,
             ...converted,
+            amount: normalizedAmount,
             // #2214: usa created_at como fallback quando 'date' não existe (docs legados)
             date: (raw.date as { toDate?: () => Date })?.toDate?.() ?? createdAt,
             createdAt,
           } as CashboxTransaction;
         });
         setTransactions(transactionsData);
-        setBalance(totalBalance);
+        setBalanceCents(totalBalanceCents);
         setLoading(false);
       },
       (err) => {
@@ -486,7 +534,12 @@ export function useCashbox(groupId: string | null) {
     return () => unsubscribe();
   }, [groupId]);
 
-  return { transactions, balance, loading, error };
+  return {
+    transactions,
+    balance: centsToCashboxAmount(balanceCents),
+    loading,
+    error,
+  };
 }
 
 // ====== useInvitePlayers ======
@@ -560,22 +613,51 @@ export function useInvitePlayers() {
       setError(null);
 
       try {
-        // #2351: lookup por doc-id == code (get), nao where('code') (LIST).
         const inviteRef = doc(db, 'invites', code.toUpperCase());
-        const inviteSnap = await getDoc(inviteRef);
+        const groupId = await runTransaction(db, async (transaction) => {
+          // #3391: resgate do invite precisa ser atômico. A transação revalida
+          // `used`/expiração no momento do commit e evita que um membro ACTIVE
+          // já existente "queime" um código single-use sem efeito.
+          const inviteSnap = await transaction.get(inviteRef);
+          if (!inviteSnap.exists()) {
+            throw new Error(t('feedback.groups.invalidInviteCode'));
+          }
 
-        if (!inviteSnap.exists() || inviteSnap.data()?.used === true) {
-          throw new Error(t('feedback.groups.invalidInviteCode'));
-        }
+          const inviteData = inviteSnap.data();
+          if (!inviteData || inviteData.used === true) {
+            throw new Error(t('feedback.groups.invalidInviteCode'));
+          }
 
-        const inviteData = inviteSnap.data();
+          if (inviteData.expires_at && (inviteData.expires_at as Timestamp).toMillis() < Date.now()) {
+            throw new Error(t('feedback.groups.expiredInviteCode'));
+          }
 
-        // #1541: verificar se o convite expirou
-        if (inviteData.expires_at && (inviteData.expires_at as Timestamp).toMillis() < Date.now()) {
-          throw new Error(t('feedback.groups.expiredInviteCode'));
-        }
+          const resolvedGroupId = inviteData.group_id || inviteData.groupId;
+          if (typeof resolvedGroupId !== 'string' || resolvedGroupId.trim().length === 0) {
+            throw new Error(t('feedback.groups.invalidInviteCode'));
+          }
 
-        const groupId = inviteData.group_id || inviteData.groupId;
+          const groupRef = doc(db, 'groups', resolvedGroupId);
+          const groupSnap = await transaction.get(groupRef);
+          if (!groupSnap.exists() || isGroupUnavailable(groupSnap.data() as Record<string, unknown> | undefined)) {
+            throw new Error(t('feedback.groups.invalidInviteCode'));
+          }
+
+          const memberRef = doc(db, 'groups', resolvedGroupId, 'members', uid);
+          const memberSnap = await transaction.get(memberRef);
+          const memberStatus = memberSnap.data()?.status as GroupMember['status'] | undefined;
+          if (memberSnap.exists() && isActiveGroupMemberStatus(memberStatus)) {
+            throw new Error('Você já faz parte deste grupo.');
+          }
+
+          transaction.update(inviteRef, {
+            used: true,
+            used_by: uid,
+            used_at: serverTimestamp(),
+          });
+
+          return resolvedGroupId;
+        });
 
         // FIX #2515 / #2517 (regressão #2153): o cliente NÃO cria mais o member
         // doc nem o users/{uid}/groups. Antes, o self-create MEMBER via cliente
@@ -588,14 +670,6 @@ export function useInvitePlayers() {
         // cria a membership via admin SDK (bypassa rules), funcionando tanto p/
         // grupo público quanto privado, espelhando `onJoinRequestApproved`.
         // O counter member_count é mantido por `onMemberWritten`.
-        //
-        // A rule de update de invites exige hasOnly(['used','used_by','used_at']),
-        // used==true e used_by==self.
-        await updateDoc(inviteRef, {
-          used: true,
-          used_by: uid,
-          used_at: serverTimestamp(),
-        });
 
         // FIX #2517: a membership é criada de forma ASSÍNCRONA pelo trigger
         // `onInviteRedeemed`. Em grupo PRIVADO, navegar pro detalhe antes do

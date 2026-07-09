@@ -52,6 +52,10 @@ interface GroupMember {
   joinedAt?: Date;
 }
 
+function isActiveMemberStatus(status?: unknown) {
+  return status === undefined || status === 'ACTIVE';
+}
+
 export const PlayersScreen: React.FC = () => {
   const { t } = useTranslation();
   useDocumentTitle(t('page.title.players'));
@@ -93,14 +97,28 @@ export const PlayersScreen: React.FC = () => {
         const groupDoc = await getDoc(doc(db, 'groups', groupId));
         if (cancelled) return;
         if (groupDoc.exists()) {
-          const groupData = snakeToCamel(groupDoc.data()) as Record<string, unknown>;
-          const memberIds = (groupData.members as string[]) || [];
+          const rawGroupData = groupDoc.data();
+          const groupData = snakeToCamel(rawGroupData) as Record<string, unknown>;
           const ownerId = groupData.ownerId as string;
-          const admins = (groupData.admins as string[]) || [];
+          const adminIds = ((rawGroupData.admin_ids as string[] | undefined) ||
+            (groupData.adminIds as string[] | undefined) ||
+            []) as string[];
+          const membersSnap = await getDocs(collection(db, 'groups', groupId, 'members'));
+          if (cancelled) return;
+
+          const activeMemberDocs = membersSnap.docs.filter((memberDoc) => isActiveMemberStatus(memberDoc.data().status));
+          const memberIds = Array.from(new Set([ownerId, ...activeMemberDocs.map((memberDoc) => memberDoc.id)]));
+          const memberRoleById = new Map<string, string>();
+          const memberJoinedAtById = new Map<string, Date | undefined>();
+          activeMemberDocs.forEach((memberDoc) => {
+            const memberData = memberDoc.data();
+            memberRoleById.set(memberDoc.id, String(memberData.role || 'MEMBER'));
+            memberJoinedAtById.set(memberDoc.id, memberData.joined_at?.toDate?.() || memberData.joinedAt?.toDate?.());
+          });
 
           // Privacidade: apenas membros do grupo podem ver a lista de jogadores (#1028)
           const isGroupMember =
-            ownerId === user.id || admins.includes(user.id) || memberIds.includes(user.id);
+            ownerId === user.id || adminIds.includes(user.id) || memberIds.includes(user.id);
           if (!isGroupMember) {
             if (!cancelled) {
               setIsMember(false);
@@ -111,7 +129,7 @@ export const PlayersScreen: React.FC = () => {
 
           if (ownerId === user.id) {
             setCurrentUserRole('OWNER');
-          } else if (admins.includes(user.id)) {
+          } else if (adminIds.includes(user.id) || memberRoleById.get(user.id) === 'ADMIN') {
             setCurrentUserRole('ADMIN');
           } else {
             setCurrentUserRole('MEMBER');
@@ -140,10 +158,10 @@ export const PlayersScreen: React.FC = () => {
           const membersData: (GroupMember | null)[] = memberIds.map((uid: string) => {
             const entry = userDataMap.get(uid);
             if (!entry) return null;
-            const { raw, camel: d } = entry;
+            const { camel: d } = entry;
             let role: 'OWNER' | 'ADMIN' | 'MEMBER' = 'MEMBER';
             if (uid === ownerId) role = 'OWNER';
-            else if (admins.includes(uid)) role = 'ADMIN';
+            else if (memberRoleById.get(uid) === 'ADMIN' || adminIds.includes(uid)) role = 'ADMIN';
 
             return {
               id: uid,
@@ -152,7 +170,7 @@ export const PlayersScreen: React.FC = () => {
               photoUrl: d.photoUrl as string | undefined,
               favoriteTeam: ((d.favorite_team || d.favoriteTeam) as string | undefined),
               role,
-              joinedAt: ((raw.joined_at || raw.joinedAt) as { toDate?: () => Date } | undefined)?.toDate?.(),
+              joinedAt: memberJoinedAtById.get(uid),
             };
           });
 
@@ -183,6 +201,7 @@ export const PlayersScreen: React.FC = () => {
 
       batch.update(doc(db, 'groups', groupId), {
         members: arrayRemove(memberId),
+        admin_ids: arrayRemove(memberId),
       });
 
       const memberRef = doc(db, 'groups', groupId, 'members', memberId);

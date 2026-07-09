@@ -30,7 +30,7 @@
  */
 
 import * as admin from "firebase-admin";
-import {FieldValue} from "firebase-admin/firestore";
+import {FieldPath, FieldValue} from "firebase-admin/firestore";
 import "../types/firestore-count";
 import {db} from "../_db";
 
@@ -150,7 +150,12 @@ export async function runMigration(): Promise<MigrationStats> {
 
     // eslint-disable-next-line no-constant-condition
     while (true) {
-      let query = db().collection("users").limit(500);
+      let query = db()
+        .collection("users")
+        .orderBy(
+          FieldPath.documentId()
+        )
+        .limit(500);
 
       if (lastDoc) {
         query = query.startAfter(lastDoc);

@@ -7,6 +7,10 @@ import {
   limit,
   getDocs,
   documentId,
+  startAfter,
+  type DocumentData,
+  type QueryDocumentSnapshot,
+  type QuerySnapshot,
 } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { snakeToCamel } from '../utils/firestoreHelpers';
@@ -37,6 +41,8 @@ interface TeamDoc {
   playerIds: string[];
   score: number;
 }
+
+export type HeadToHeadResult = 'WIN' | 'LOSS' | 'DRAW';
 
 interface ConfirmationDoc {
   id: string;
@@ -94,6 +100,84 @@ export interface HeadToHeadStats {
   matches: HeadToHeadMatch[];
 }
 
+const CONFIRMATIONS_PAGE_SIZE = 500;
+
+export function resolveTeamResult(teamId: string, teams: TeamDoc[]): HeadToHeadResult {
+  const team = teams.find((entry) => entry.id === teamId);
+  if (!team || teams.length === 0) {
+    return 'DRAW';
+  }
+
+  const scores = teams.map((entry) => entry.score);
+  const maxScore = Math.max(...scores);
+  const minScore = Math.min(...scores);
+
+  if (maxScore === minScore) {
+    return 'DRAW';
+  }
+
+  if (team.score === maxScore) {
+    return 'WIN';
+  }
+
+  if (team.score === minScore) {
+    return 'LOSS';
+  }
+
+  return 'DRAW';
+}
+
+export function resolveHeadToHeadResults(
+  player1TeamId: string,
+  player2TeamId: string,
+  teams: TeamDoc[]
+): { p1Result: HeadToHeadResult; p2Result: HeadToHeadResult } {
+  return {
+    p1Result: resolveTeamResult(player1TeamId, teams),
+    p2Result: resolveTeamResult(player2TeamId, teams),
+  };
+}
+
+export function calculateHeadToHeadWinRates(
+  stats: Pick<HeadToHeadStats, 'gamesAgainst' | 'p1WinsAgainst' | 'p2WinsAgainst'>
+) {
+  if (stats.gamesAgainst <= 0) {
+    return { p1WinRate: 0, p2WinRate: 0 };
+  }
+
+  return {
+    p1WinRate: Math.round((stats.p1WinsAgainst / stats.gamesAgainst) * 100),
+    p2WinRate: Math.round((stats.p2WinsAgainst / stats.gamesAgainst) * 100),
+  };
+}
+
+export async function fetchConfirmedConfirmationDocs(userId: string) {
+  const docs: QueryDocumentSnapshot<DocumentData>[] = [];
+  let lastDoc: QueryDocumentSnapshot<DocumentData> | null = null;
+  let hasMore = true;
+
+  while (hasMore) {
+    const constraints = [
+      where('user_id', '==', userId),
+      where('status', '==', 'CONFIRMED'),
+      orderBy('game_id'),
+      limit(CONFIRMATIONS_PAGE_SIZE),
+    ];
+
+    const snapshot: QuerySnapshot<DocumentData> = await getDocs(query(
+      collection(db, 'confirmations'),
+      ...(lastDoc ? [...constraints, startAfter(lastDoc)] : constraints)
+    ));
+
+    docs.push(...snapshot.docs);
+
+    hasMore = snapshot.docs.length === CONFIRMATIONS_PAGE_SIZE;
+    lastDoc = hasMore ? snapshot.docs[snapshot.docs.length - 1] : null;
+  }
+
+  return docs;
+}
+
 async function fetchHeadToHead(
   player1Id: string,
   player2Id: string,
@@ -120,29 +204,13 @@ async function fetchHeadToHead(
     matches: [],
   };
 
-  const [p1ConfSnap, p2ConfSnap] = await Promise.all([
-    getDocs(
-      query(
-        collection(db, 'confirmations'),
-        where('user_id', '==', player1Id),
-        where('status', '==', 'CONFIRMED'),
-        orderBy('game_id'),
-        limit(500)
-      )
-    ),
-    getDocs(
-      query(
-        collection(db, 'confirmations'),
-        where('user_id', '==', player2Id),
-        where('status', '==', 'CONFIRMED'),
-        orderBy('game_id'),
-        limit(500)
-      )
-    ),
+  const [p1ConfDocs, p2ConfDocs] = await Promise.all([
+    fetchConfirmedConfirmationDocs(player1Id),
+    fetchConfirmedConfirmationDocs(player2Id),
   ]);
 
-  const p1GameIds = new Set(p1ConfSnap.docs.map((d) => d.data().game_id as string));
-  const p2GameIds = new Set(p2ConfSnap.docs.map((d) => d.data().game_id as string));
+  const p1GameIds = new Set(p1ConfDocs.map((d) => d.data().game_id as string));
+  const p2GameIds = new Set(p2ConfDocs.map((d) => d.data().game_id as string));
 
   const sharedGameIds = [...p1GameIds].filter((id) => p2GameIds.has(id));
 
@@ -225,11 +293,13 @@ async function fetchHeadToHead(
     }
   }
 
+  const finishedGameIdSet = new Set(finishedGameIds);
+
   const p1ConfMap = new Map<string, ConfirmationDoc>();
-  for (const doc of p1ConfSnap.docs) {
+  for (const doc of p1ConfDocs) {
     const raw = doc.data();
     const gameId = (raw.game_id as string) || '';
-    if (finishedGameIds.includes(gameId)) {
+    if (finishedGameIdSet.has(gameId)) {
       p1ConfMap.set(gameId, {
         id: doc.id,
         gameId,
@@ -246,10 +316,10 @@ async function fetchHeadToHead(
   }
 
   const p2ConfMap = new Map<string, ConfirmationDoc>();
-  for (const doc of p2ConfSnap.docs) {
+  for (const doc of p2ConfDocs) {
     const raw = doc.data();
     const gameId = (raw.game_id as string) || '';
-    if (finishedGameIds.includes(gameId)) {
+    if (finishedGameIdSet.has(gameId)) {
       p2ConfMap.set(gameId, {
         id: doc.id,
         gameId,
@@ -283,28 +353,11 @@ async function fetchHeadToHead(
 
     const sameTeam = p1Team.id === p2Team.id;
 
-    let p1Result: 'WIN' | 'LOSS' | 'DRAW' = 'DRAW';
-    let p2Result: 'WIN' | 'LOSS' | 'DRAW' = 'DRAW';
-
-    if (teams.length >= 2) {
-      const team1 = teams[0];
-      const team1Won = game.team1Score > game.team2Score;
-      const draw = game.team1Score === game.team2Score;
-
-      const p1OnTeam1 = p1Team.id === team1.id;
-      const p2OnTeam1 = p2Team.id === team1.id;
-
-      if (draw) {
-        p1Result = 'DRAW';
-        p2Result = 'DRAW';
-      } else if (team1Won) {
-        p1Result = p1OnTeam1 ? 'WIN' : 'LOSS';
-        p2Result = p2OnTeam1 ? 'WIN' : 'LOSS';
-      } else {
-        p1Result = p1OnTeam1 ? 'LOSS' : 'WIN';
-        p2Result = p2OnTeam1 ? 'LOSS' : 'WIN';
-      }
-    }
+    const { p1Result, p2Result } = resolveHeadToHeadResults(
+      p1Team.id,
+      p2Team.id,
+      teams
+    );
 
     const match: HeadToHeadMatch = {
       gameId,
@@ -360,11 +413,9 @@ async function fetchHeadToHead(
   matches.sort((a, b) => b.date.localeCompare(a.date));
   stats.matches = matches;
 
-  const gamesForRate = stats.gamesAgainst > 0 ? stats.gamesAgainst : stats.totalGames;
-  if (gamesForRate > 0) {
-    stats.p1WinRate = Math.round((stats.p1WinsAgainst / gamesForRate) * 100);
-    stats.p2WinRate = Math.round((stats.p2WinsAgainst / gamesForRate) * 100);
-  }
+  const { p1WinRate, p2WinRate } = calculateHeadToHeadWinRates(stats);
+  stats.p1WinRate = p1WinRate;
+  stats.p2WinRate = p2WinRate;
 
   return stats;
 }

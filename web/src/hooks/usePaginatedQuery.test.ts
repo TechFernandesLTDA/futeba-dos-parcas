@@ -49,6 +49,16 @@ vi.mock('../contexts/ToastContext', () => ({
 
 import { usePaginatedQuery } from './usePaginatedQuery';
 
+function createDeferred<T>() {
+  let resolve!: (value: T) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+  return { promise, resolve, reject };
+}
+
 describe('usePaginatedQuery', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -303,5 +313,74 @@ describe('usePaginatedQuery', () => {
     });
 
     expect(result.current.data).toEqual([{ id: 'user-1', name: 'User 1' }]);
+  });
+
+  it('refresh invalida loadMore antigo para não desalinhar lista e cursor', async () => {
+    const firstPageDocs = [
+      { id: 'doc-1', data: () => ({ name: 'Item 1' }) },
+      { id: 'doc-2', data: () => ({ name: 'Item 2' }) },
+      { id: 'doc-3', data: () => ({ name: 'Item 3' }) },
+    ];
+    const staleLoadMoreDocs = [
+      { id: 'doc-4', data: () => ({ name: 'Older 1' }) },
+      { id: 'doc-5', data: () => ({ name: 'Older 2' }) },
+    ];
+    const refreshedDocs = [
+      { id: 'doc-fresh-1', data: () => ({ name: 'Fresh item 1' }) },
+      { id: 'doc-fresh-2', data: () => ({ name: 'Fresh item 2' }) },
+      { id: 'doc-fresh-3', data: () => ({ name: 'Fresh item 3' }) },
+    ];
+    const pendingLoadMore = createDeferred<{ docs: typeof staleLoadMoreDocs }>();
+
+    mockGetDocs
+      .mockResolvedValueOnce({ docs: [...firstPageDocs] })
+      .mockImplementationOnce(() => pendingLoadMore.promise)
+      .mockResolvedValueOnce({ docs: refreshedDocs })
+      .mockResolvedValueOnce({ docs: [] });
+
+    const { result } = renderHook(() =>
+      usePaginatedQuery({ collectionName: 'games', pageSize: 2 })
+    , { wrapper: createTestWrapper() });
+
+    await act(async () => {
+      await result.current.fetchData();
+    });
+
+    expect(result.current.data).toHaveLength(2);
+    expect(result.current.hasMore).toBe(true);
+
+    act(() => {
+      result.current.loadMore();
+    });
+
+    await act(async () => {
+      result.current.refresh();
+    });
+
+    await waitFor(() => {
+      expect(result.current.data).toEqual([
+        { id: 'doc-fresh-1', name: 'Fresh item 1' },
+        { id: 'doc-fresh-2', name: 'Fresh item 2' },
+      ]);
+      expect(result.current.hasMore).toBe(true);
+    });
+
+    await act(async () => {
+      pendingLoadMore.resolve({ docs: staleLoadMoreDocs });
+      await pendingLoadMore.promise;
+    });
+
+    expect(result.current.data).toEqual([
+      { id: 'doc-fresh-1', name: 'Fresh item 1' },
+      { id: 'doc-fresh-2', name: 'Fresh item 2' },
+    ]);
+
+    act(() => {
+      result.current.loadMore();
+    });
+
+    await waitFor(() => {
+      expect(mockStartAfter).toHaveBeenLastCalledWith(refreshedDocs[1]);
+    });
   });
 });

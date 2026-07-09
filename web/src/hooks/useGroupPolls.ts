@@ -22,6 +22,10 @@ export interface GroupPoll {
   totalVotes: number;
 }
 
+function isEligiblePollMemberStatus(status: unknown): boolean {
+  return status === undefined || status === 'ACTIVE';
+}
+
 export function useGroupPolls(groupId?: string) {
   const { currentUser } = useAuth();
   const uid = currentUser?.uid;
@@ -29,6 +33,12 @@ export function useGroupPolls(groupId?: string) {
     queryKey: ['group-polls', groupId, uid],
     queryFn: async () => {
       if (!groupId || !uid) return [];
+      const membersSnap = await getDocs(collection(db, 'groups', groupId, 'members'));
+      const activeMemberIds = new Set(
+        membersSnap.docs
+          .filter((memberDoc) => isEligiblePollMemberStatus(memberDoc.data().status))
+          .map((memberDoc) => memberDoc.id),
+      );
       const pollsSnap = await getDocs(query(
         collection(db, 'group_polls'),
         where('group_id', '==', groupId),
@@ -47,8 +57,9 @@ export function useGroupPolls(groupId?: string) {
           status: 'ACTIVE' | 'CLOSED';
         };
         const voteSnap = await getDocs(query(collection(db, 'group_poll_votes'), where('poll_id', '==', pollDoc.id)));
-        const myVoteDoc = voteSnap.docs.find((vote) => vote.data().user_id === uid);
-        const voteCounts = voteSnap.docs.reduce<Record<string, number>>((acc, vote) => {
+        const eligibleVotes = voteSnap.docs.filter((vote) => activeMemberIds.has(String(vote.data().user_id || '')));
+        const myVoteDoc = eligibleVotes.find((vote) => vote.data().user_id === uid);
+        const voteCounts = eligibleVotes.reduce<Record<string, number>>((acc, vote) => {
           const optionId = vote.data().option_id;
           if (typeof optionId === 'string') acc[optionId] = (acc[optionId] ?? 0) + 1;
           return acc;

@@ -4,7 +4,12 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { ThemeProvider, createTheme } from '@mui/material';
 import { MemoryRouter } from 'react-router-dom';
 
-const mockNavigate = vi.fn();
+const mockNavigate = vi.hoisted(() => vi.fn());
+const mockLogout = vi.hoisted(() => vi.fn());
+const mockShowSuccess = vi.hoisted(() => vi.fn());
+const mockShowError = vi.hoisted(() => vi.fn());
+const mockDeleteAccount = vi.hoisted(() => vi.fn());
+const mockQueryClientClear = vi.hoisted(() => vi.fn());
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom');
   return {
@@ -17,13 +22,14 @@ vi.mock('../../contexts/AuthContext', () => ({
   useAuth: () => ({
     user: { id: 'test-id', name: 'Jogador Teste', email: 'test@test.com' },
     loading: false,
+    logout: mockLogout,
   }),
 }));
 
 vi.mock('../../contexts/ToastContext', () => ({
   useToast: () => ({
-    showSuccess: vi.fn(),
-    showError: vi.fn(),
+    showSuccess: mockShowSuccess,
+    showError: mockShowError,
   }),
 }));
 
@@ -42,7 +48,7 @@ vi.mock('firebase/auth', () => ({
 }));
 
 vi.mock('../../services/cloudFunctions', () => ({
-  deleteAccount: vi.fn(),
+  deleteAccount: mockDeleteAccount,
 }));
 
 vi.mock('firebase/functions', () => ({
@@ -55,6 +61,10 @@ vi.mock('../../services/firebase', () => ({
   app: {},
   db: {},
   auth: {},
+}));
+
+vi.mock('../../services/queryClient', () => ({
+  queryClient: { clear: mockQueryClientClear },
 }));
 
 vi.mock('../../utils/firestoreHelpers', () => ({
@@ -107,6 +117,8 @@ function renderSettingsScreen() {
 describe('SettingsScreen', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockDeleteAccount.mockResolvedValue({ data: { success: true } });
+    mockLogout.mockResolvedValue(undefined);
   });
 
   it('renderiza título "Configurações"', async () => {
@@ -142,4 +154,5 @@ describe('SettingsScreen', () => {
 
   // NOTA: botão "Sair" foi removido do SettingsScreen — logout só ocorre após
   // exclusão de conta (fluxo LGPD). Testes antigos de logout removidos. #2330
+
 });

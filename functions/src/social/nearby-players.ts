@@ -177,6 +177,36 @@ function isFreshLocation(updatedAt: Timestamp | undefined, nowMs: number) {
 }
 
 /**
+ * Exige que o proprio caller esteja compartilhando localizacao recente.
+ *
+ * @param {string} uid UID do caller.
+ * @param {number} nowMs Agora em milissegundos.
+ * @return {Promise<void>} Resolve quando o compartilhamento e valido.
+ */
+async function assertCallerSharingEnabled(
+  uid: string,
+  nowMs: number
+): Promise<void> {
+  const callerLocationSnap = await db()
+    .doc(`user_locations/${uid}`)
+    .get();
+  const callerData = callerLocationSnap.data() ?? {};
+  const sharingEnabled =
+    callerData.location_sharing_enabled === true;
+  const updatedAt =
+    callerData.location_updated_at instanceof Timestamp ?
+      callerData.location_updated_at :
+      undefined;
+
+  if (!sharingEnabled || !isFreshLocation(updatedAt, nowMs)) {
+    throw new HttpsError(
+      "failed-precondition",
+      "Ative e atualize seu compartilhamento de localizacao para descobrir jogadores proximos."
+    );
+  }
+}
+
+/**
  * Carrega referencias por getAll em chunks para evitar N chamadas RPC.
  *
  * @param {FirebaseFirestore.DocumentReference[]} refs Referencias a carregar.
@@ -359,6 +389,8 @@ export const discoverNearbyPlayers = secureCallable<
     const nowMs = Date.now();
 
     try {
+      await assertCallerSharingEnabled(uid, nowMs);
+
       const snapshots = await Promise.all(
         bounds.map(([start, end]) =>
           db()
@@ -440,6 +472,7 @@ export const discoverNearbyPlayers = secureCallable<
 );
 
 export const __testing = {
+  assertCallerSharingEnabled,
   getAllInChunks,
   loadFollowingSet,
   loadPublicProfiles,

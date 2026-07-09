@@ -25,7 +25,7 @@ import { PageContainer } from '../../components/common/PageContainer';
 import { TeamSelector } from '../../components/team/TeamSelector';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
-import { doc, updateDoc, getDoc } from 'firebase/firestore';
+import { doc, updateDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db } from '../../services/firebase';
 import { storage } from '../../services/firebaseStorage';
@@ -157,6 +157,7 @@ export const EditProfileScreen: React.FC = () => {
   const previewUrlRef = useRef<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const saveLockRef = useRef(false);
 
   // Sync ref for cleanup (avoids stale closure in unmount effect)
   previewUrlRef.current = previewUrl;
@@ -280,16 +281,23 @@ export const EditProfileScreen: React.FC = () => {
 
   const uploadAvatar = async (file: File, uid: string): Promise<string> => {
     // Path alinhado com storage.rules: users/{uid}/{fileName}
-    const fileRef = storageRef(storage, `users/${uid}/avatar.jpg`);
+    const fileRef = storageRef(storage, `users/${uid}/profile.jpg`);
     await uploadBytes(fileRef, file, { contentType: file.type });
     return getDownloadURL(fileRef);
   };
 
   const handleSave = async () => {
-    if (!validate() || !currentUser) return;
+    if (saveLockRef.current || !currentUser) return;
+    if (!validate()) return;
 
+    saveLockRef.current = true;
     setSaving(true);
     setError(null);
+
+    const releaseSaveLock = () => {
+      saveLockRef.current = false;
+      setSaving(false);
+    };
 
     const ratingsChanged =
       initialData &&
@@ -306,7 +314,7 @@ export const EditProfileScreen: React.FC = () => {
         console.warn('Failed to read rating rate limit from localStorage:', error);
       }
       if (Date.now() - lastChanged < RATING_RATE_LIMIT_MS) {
-        setSaving(false);
+        releaseSaveLock();
         showError(t('feedback.profile.ratingCooldown'));
         return;
       }
@@ -328,7 +336,7 @@ export const EditProfileScreen: React.FC = () => {
         setError(t('profile.avatarUploadError'));
         showError(t('profile.avatarUploadError'));
         setUploadingAvatar(false);
-        setSaving(false);
+        releaseSaveLock();
         return;
       }
       setUploadingAvatar(false);
@@ -338,7 +346,7 @@ export const EditProfileScreen: React.FC = () => {
     const trimmedName = formData.name.trim();
     if (!trimmedName) {
       showError(t('feedback.profile.nameRequired'));
-      setSaving(false);
+      releaseSaveLock();
       return;
     }
 
@@ -373,7 +381,13 @@ export const EditProfileScreen: React.FC = () => {
         mid_rating_set: true,
         defender_rating_set: true,
         gk_rating_set: true,
+        updated_at: serverTimestamp(),
       });
+
+      // O perfil público já foi persistido. Se a gravação de PII falhar abaixo,
+      // mantemos o dirty guard alinhado com o que realmente ficou salvo.
+      setSelectedFile(null);
+      setInitialData(formData);
 
       // Persiste gênero via callable, porque users_private é read-only para
       // clientes nas regras Firestore. Valor vazio limpa o campo no doc privado.
@@ -389,8 +403,6 @@ export const EditProfileScreen: React.FC = () => {
       }
 
       setSuccess(true);
-      setSelectedFile(null); // limpa file pendente após sucesso
-      setInitialData(formData); // sync para evitar dirty guard após save
       setInitialGender(gender); // idem para o gênero (PII, fora de formData)
       navigate('/?tab=4');
     } catch (err) {
@@ -399,7 +411,7 @@ export const EditProfileScreen: React.FC = () => {
       logger.error('Falha ao salvar perfil:', err);
       setError(getFirestoreErrorMessage(err, t('profile.editProfileError')));
     } finally {
-      setSaving(false);
+      releaseSaveLock();
     }
   };
 

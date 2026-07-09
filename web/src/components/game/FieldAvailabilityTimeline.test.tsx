@@ -9,7 +9,8 @@ import { FieldAvailabilityTimeline } from './FieldAvailabilityTimeline';
 const mockUseFieldGames = vi.fn();
 
 vi.mock('../../hooks/useFieldGames', () => ({
-  useFieldGames: (fieldId: string, daysAhead?: number) => mockUseFieldGames(fieldId, daysAhead),
+  useFieldGames: (fieldId: string, daysAhead?: number, availabilityWindow?: { openingTime?: string; closingTime?: string }) =>
+    mockUseFieldGames(fieldId, daysAhead, availabilityWindow),
 }));
 
 const defaultData = {
@@ -25,6 +26,8 @@ const renderTimeline = (props: {
   selectedDate?: string;
   selectedTime?: string;
   onSlotSelect?: (date: string, time: string) => void;
+  openingTime?: string;
+  closingTime?: string;
 }) => {
   return render(
     <ThemeProvider theme={theme}>
@@ -32,6 +35,8 @@ const renderTimeline = (props: {
         fieldId={props.fieldId}
         selectedDate={props.selectedDate || ''}
         selectedTime={props.selectedTime || ''}
+        openingTime={props.openingTime}
+        closingTime={props.closingTime}
         onSlotSelect={props.onSlotSelect || vi.fn()}
       />
     </ThemeProvider>
@@ -87,6 +92,14 @@ describe('FieldAvailabilityTimeline', () => {
     renderTimeline({ fieldId: 'field-1' });
     const papers = document.querySelectorAll('.MuiPaper-root');
     expect(papers.length).toBe(7);
+  });
+
+  it('passes configured opening and closing hours to the availability hook', () => {
+    renderTimeline({ fieldId: 'field-1', openingTime: '08:00', closingTime: '22:00' });
+    expect(mockUseFieldGames).toHaveBeenCalledWith('field-1', 7, {
+      openingTime: '08:00',
+      closingTime: '22:00',
+    });
   });
 
   it('renders legend (free/occupied/selected)', () => {

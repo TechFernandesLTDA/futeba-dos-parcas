@@ -22,7 +22,7 @@ import {logger} from "firebase-functions";
 import * as functions from "firebase-functions/v2";
 import {FieldValue} from "firebase-admin/firestore";
 import {
-  softDelete,
+  softDeleteGameCascade,
   restoreSoftDeleted,
   softDeleteGroupCascade,
   cleanupSoftDeleted,
@@ -32,10 +32,15 @@ import {
 } from "../middleware/rate-limiter.js";
 import {db} from "../_db";
 import {ERROR_MSGS} from "../error-messages";
+import {
+  acquireSchedulerLock,
+  releaseSchedulerLock,
+} from "../utils/scheduler-lock";
 
 
 /** Dias de retenção antes de deletar */
 const RETENTION_DAYS = 30;
+const CLEANUP_LOCK_TTL_MS = 15 * 60 * 1000;
 
 // ==========================================
 // CALLABLE: Soft Delete Game
@@ -138,12 +143,9 @@ export const softDeleteGame =
         );
       }
 
-      // Executar soft-delete usando helper
-      const result = await softDelete(
-        "games", gameId, userId, {
-          reason: reason || "",
-          setStatusDeleted: true,
-        }
+      // Deleta o jogo e seus dados operacionais associados em cascata.
+      const result = await softDeleteGameCascade(
+        gameId, userId, reason || ""
       );
 
       if (!result.success) {
@@ -663,6 +665,20 @@ export const cleanupAllSoftDeleted =
     timeoutSeconds: 540,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   }, async (_event) => {
+    const lockId = "cleanup_all_soft_deleted";
+    const lockAcquired = await acquireSchedulerLock(
+      lockId,
+      CLEANUP_LOCK_TTL_MS
+    );
+    if (!lockAcquired) {
+      logger.warn(
+        "[SOFT_DELETE_CLEANUP] Execucao concorrente detectada; pulando"
+      );
+      return;
+    }
+
+    let lockStatus: "completed" | "failed" = "failed";
+
     // FIX #1040: try/catch externo para re-throw — aciona retry do Cloud Scheduler.
     // Sem isso, erros eram swallowed e documentos expirados ficavam acumulados.
     try {
@@ -735,6 +751,7 @@ export const cleanupAllSoftDeleted =
       `${totalDuration}ms. Total removido: ` +
       `${totalDeleted} documentos`
     );
+    lockStatus = "completed";
     } catch (error) {
       // Re-throw para acionar retry automático do Cloud Scheduler.
       // Sem o throw, falhas silenciosas passavam despercebidas e documentos
@@ -743,5 +760,18 @@ export const cleanupAllSoftDeleted =
         "[SOFT_DELETE_CLEANUP] Erro fatal no cleanup:", error
       );
       throw error;
+    } finally {
+      try {
+        await releaseSchedulerLock(
+          lockId,
+          lockAcquired,
+          lockStatus
+        );
+      } catch (lockError) {
+        logger.warn(
+          "[SOFT_DELETE_CLEANUP] Falha ao liberar scheduler lock:",
+          lockError
+        );
+      }
     }
   });

@@ -2,6 +2,7 @@ import {FieldValue, Timestamp} from "firebase-admin/firestore";
 import {logger} from "firebase-functions/v2";
 import {onDocumentWritten} from "firebase-functions/v2/firestore";
 import {db} from "../_db";
+import {cashboxAmountToCents, centsToCashboxAmount} from "./money";
 
 /**
  * Auditoria 2026-05-30 #2352 — recompute server-side de cashbox_summary.
@@ -18,10 +19,11 @@ import {db} from "../_db";
  * reais, independente do que o cliente gravou.
  *
  * Espelha a logica de `recalculateCashboxBalance` (FirebaseDataSource.kt):
- * soma INCOME/EXPENSE de entries nao-VOIDED, com teto de 1000 entradas
- * (#952). Inclui legacy entries sem campo `status` (#2363).
+ * soma INCOME/EXPENSE de entries nao-VOIDED. Inclui legacy entries sem
+ * campo `status` (#2363) e normaliza valores antigos para centavos antes
+ * de voltar para BRL no summary.
  */
-const MAX_ENTRIES = 1000;
+const PAGE_SIZE = 500;
 
 export const onCashboxEntryWritten = onDocumentWritten(
   {
@@ -33,43 +35,36 @@ export const onCashboxEntryWritten = onDocumentWritten(
   async (event) => {
     const groupId = event.params.groupId;
     try {
-      await db().runTransaction(async (tx) => {
-        // #2991: orderBy created_at desc garante que, quando o livro
-        // ultrapassa MAX_ENTRIES, a janela somada seja deterministica e
-        // composta pelas entradas MAIS RECENTES (e nao por __name__ /
-        // subconjunto arbitrario). Sem isto o balance divergia do ledger.
-        const snap = await tx.get(
-          db()
-            .collection("groups")
-            .doc(groupId)
-            .collection("cashbox")
-            .orderBy("created_at", "desc")
-            .limit(MAX_ENTRIES + 1)
-        );
+      const groupRef = db().collection("groups").doc(groupId);
+      const cashboxRef = groupRef.collection("cashbox");
 
-        const truncated = snap.size > MAX_ENTRIES;
-        if (truncated) {
-          logger.warn(
-            `[CASHBOX] grupo ${groupId} tem >${MAX_ENTRIES} entradas; ` +
-            "summary truncado para as mais recentes (saldo parcial)."
-          );
+      let totalIncomeCents = 0;
+      let totalExpenseCents = 0;
+      let entryCount = 0;
+      let lastEntryMillis = 0;
+      let lastDoc: FirebaseFirestore.QueryDocumentSnapshot | null = null;
+
+      while (true) {
+        let pageQuery: FirebaseFirestore.Query = cashboxRef.limit(PAGE_SIZE);
+        if (lastDoc) {
+          pageQuery = pageQuery.startAfter(lastDoc);
         }
 
-        let totalIncome = 0;
-        let totalExpense = 0;
-        let entryCount = 0;
-        let lastEntryMillis = 0;
+        const page = await pageQuery.get();
+        if (page.empty) break;
 
-        snap.docs.slice(0, MAX_ENTRIES).forEach((doc) => {
-          const data = doc.data();
-          if (data.status === "VOIDED") return;
-          const amount = typeof data.amount === "number" ? data.amount : 0;
+        for (const snapshot of page.docs) {
+          const data = snapshot.data();
+          if (data.status === "VOIDED") continue;
+
+          const amountCents = cashboxAmountToCents(data.amount);
           if (data.type === "INCOME") {
-            totalIncome += amount;
+            totalIncomeCents += amountCents;
+            entryCount += 1;
           } else if (data.type === "EXPENSE") {
-            totalExpense += amount;
+            totalExpenseCents += amountCents;
+            entryCount += 1;
           }
-          entryCount++;
 
           const createdAt = data.created_at;
           let createdMillis = 0;
@@ -78,38 +73,46 @@ export const onCashboxEntryWritten = onDocumentWritten(
           } else if (typeof createdAt === "number") {
             createdMillis = createdAt;
           }
+
           if (createdMillis > lastEntryMillis) {
             lastEntryMillis = createdMillis;
           }
-        });
+        }
 
-        const balance = totalIncome - totalExpense;
+        if (page.size < PAGE_SIZE) break;
+        lastDoc = page.docs[page.docs.length - 1] || null;
+      }
 
-        tx.set(
-          db()
-            .collection("groups")
-            .doc(groupId)
-            .collection("cashbox_summary")
-            .doc("current"),
-          {
-            balance,
-            total_income: totalIncome,
-            total_expense: totalExpense,
-            entry_count: entryCount,
-            last_entry_at: lastEntryMillis > 0 ?
-              Timestamp.fromMillis(lastEntryMillis) :
-              null,
-            // #2991: sinaliza para a UI que o saldo e parcial (livro
-            // excede MAX_ENTRIES e so as entradas mais recentes foram somadas).
-            truncated,
-            recomputed_at: FieldValue.serverTimestamp(),
-          },
-          {merge: true}
-        );
+      const balanceCents = totalIncomeCents - totalExpenseCents;
+
+      const summaryRef = groupRef.collection("cashbox_summary").doc("current");
+      const eventVersion = event.time || "";
+      const updated = await db().runTransaction(async (tx) => {
+        const currentSummary = await tx.get(summaryRef);
+        const currentVersion = currentSummary.exists &&
+          typeof currentSummary.data()?.source_event_version === "string" ?
+          currentSummary.data()?.source_event_version as string : "";
+        if (eventVersion && currentVersion > eventVersion) return false;
+
+        tx.set(summaryRef, {
+          balance: centsToCashboxAmount(balanceCents),
+          total_income: centsToCashboxAmount(totalIncomeCents),
+          total_expense: centsToCashboxAmount(totalExpenseCents),
+          entry_count: entryCount,
+          last_entry_at: lastEntryMillis > 0 ?
+            Timestamp.fromMillis(lastEntryMillis) :
+            null,
+          truncated: false,
+          recomputed_by_server: true,
+          recomputed_at: FieldValue.serverTimestamp(),
+          source_event_version: eventVersion,
+        }, {merge: true});
+        return true;
       });
 
-      logger.info(
-        `[CASHBOX] summary recomputado grupo ${groupId}`
+      logger.info(updated ?
+        `[CASHBOX] summary recomputado grupo ${groupId}` :
+        `[CASHBOX] recompute obsoleto ignorado grupo ${groupId}`
       );
     } catch (err) {
       logger.error(

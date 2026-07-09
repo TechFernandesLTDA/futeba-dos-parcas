@@ -1,10 +1,12 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import {
+  Alert,
   Box,
   Card,
   CardContent,
   Chip,
+  CircularProgress,
   Tab,
   Tabs,
   List,
@@ -38,7 +40,16 @@ interface GamePlayersSectionProps {
   game: Game;
   confirmedPlayers: GameConfirmation[];
   goalkeepers: GameConfirmation[];
-  waitlist: GameConfirmation[];
+  waitlist: Array<{
+    id: string;
+    userName: string;
+    userPhoto?: string;
+    favoriteTeam?: string;
+    position?: string | null;
+    queuePosition?: number;
+  }>;
+  waitlistLoading: boolean;
+  waitlistError: string | null;
   confirmations: GameConfirmation[];
   tabValue: number;
   onTabChange: (value: number) => void;
@@ -49,6 +60,8 @@ export const GamePlayersSection: React.FC<GamePlayersSectionProps> = ({
   confirmedPlayers,
   goalkeepers,
   waitlist,
+  waitlistLoading,
+  waitlistError,
   confirmations,
   tabValue,
   onTabChange,
@@ -144,7 +157,13 @@ export const GamePlayersSection: React.FC<GamePlayersSectionProps> = ({
         </TabPanel>
 
         <TabPanel value={tabValue} index={2}>
-          {waitlist.length === 0 ? (
+          {waitlistLoading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
+              <CircularProgress size={28} />
+            </Box>
+          ) : waitlistError ? (
+            <Alert severity="error">{waitlistError}</Alert>
+          ) : waitlist.length === 0 ? (
             <EmptyState
               icon={<PeopleIcon sx={{ fontSize: 48, color: 'text.disabled' }} />}
               title={t('empty.noWaitlist')}
@@ -164,6 +183,7 @@ export const GamePlayersSection: React.FC<GamePlayersSectionProps> = ({
                         <TeamBadge teamId={player.favoriteTeam} size={18} />
                       </Box>
                     }
+                    secondary={player.queuePosition ? `#${player.queuePosition}` : undefined}
                   />
                 </ListItem>
               ))}

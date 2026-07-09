@@ -8,6 +8,10 @@ import {
   getDocs,
   onSnapshot,
   documentId,
+  startAfter,
+  type DocumentData,
+  type QueryDocumentSnapshot,
+  type QuerySnapshot,
 } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { snakeToCamel } from '../utils/firestoreHelpers';
@@ -73,18 +77,30 @@ async function fetchGroupLeagueStandings(
   seasonId: string,
   currentUserId?: string
 ): Promise<GroupLeagueStanding[]> {
-  const standingsSnap = await getDocs(
-    query(
-      collection(db, 'groups', groupId, 'league_standings'),
+  const standingsDocs: QueryDocumentSnapshot<DocumentData>[] = [];
+  let lastDoc: QueryDocumentSnapshot<DocumentData> | null = null;
+  let hasMore = true;
+
+  while (hasMore) {
+    const constraints = [
       where('season_id', '==', seasonId),
       orderBy('points', 'desc'),
-      limit(200)
-    )
-  );
+      limit(200),
+    ];
+    const standingsSnap: QuerySnapshot<DocumentData> = await getDocs(query(
+      collection(db, 'groups', groupId, 'league_standings'),
+      ...(lastDoc ? [...constraints, startAfter(lastDoc)] : constraints)
+    ));
 
-  if (standingsSnap.empty) return [];
+    standingsDocs.push(...standingsSnap.docs);
 
-  const standingData = standingsSnap.docs.map((doc) => {
+    hasMore = standingsSnap.docs.length === 200;
+    lastDoc = hasMore ? standingsSnap.docs[standingsSnap.docs.length - 1] : null;
+  }
+
+  if (standingsDocs.length === 0) return [];
+
+  const standingData = standingsDocs.map((doc) => {
     const raw = doc.data();
     const data = snakeToCamel(raw) as Record<string, unknown>;
     return {
@@ -212,8 +228,7 @@ export function useGroupLeague(groupId?: string, currentUserId?: string, selecte
     const q = query(
       standingsRef,
       where('season_id', '==', selectedSeason.id),
-      orderBy('points', 'desc'),
-      limit(200)
+      orderBy('points', 'desc')
     );
 
     let isFirstSnapshot = true;

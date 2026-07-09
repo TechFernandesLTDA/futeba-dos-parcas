@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { getIsPublicFromVisibility } from '../utils/gameLifecycle';
 import { resolveExpectedPayment } from '../utils/gamePayment';
 import { getGameDurationMinutes } from '../utils/gamePricing';
+import { getNextRecurringDate } from '../pages/game/recurringGameHelpers';
 
 const logger = createLogger('useDuplicateGameCopy');
 
@@ -22,16 +23,6 @@ function parseGameFromDoc(docId: string, raw: Record<string, unknown>): Game {
     dateTime: raw.dateTime as Date | undefined,
     createdAt: raw.created_at as Date | undefined,
   } as Game;
-}
-
-function getNextWeekSameDay(dateString: string): string {
-  const [year, month, day] = dateString.split('-').map(Number);
-  const date = new Date(year, month - 1, day);
-  date.setDate(date.getDate() + 7);
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
 }
 
 export function useDuplicateGameCopy() {
@@ -65,7 +56,9 @@ export function useDuplicateGameCopy() {
         const raw = gameSnap.data();
         const source = parseGameFromDoc(gameSnap.id, raw);
 
-        const newDate = source.date ? getNextWeekSameDay(source.date) : '';
+        const newDate = source.date
+          ? getNextRecurringDate(source.date, source.recurrence === 'none' ? undefined : source.recurrence)
+          : '';
 
         const [year, month, day] = newDate.split('-').map(Number);
         const [hours, minutes] = (source.time || '19:00').split(':').map(Number);
@@ -98,7 +91,7 @@ export function useDuplicateGameCopy() {
           rules: source.rules || '',
           visibility: source.visibility,
           is_public: getIsPublicFromVisibility(source.visibility),
-          recurrence: source.recurrence || 'none',
+          recurrence: 'none',
           group_id: source.groupId || null,
           group_name: source.groupName || null,
           stream_url: source.streamUrl || null,

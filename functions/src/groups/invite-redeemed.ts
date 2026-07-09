@@ -138,11 +138,13 @@ export const onInviteRedeemed = onDocumentUpdated(
     }
     const groupMeta = groupSnap.data() as Record<string, unknown>;
     const groupStatus = (groupMeta.status as string | undefined) ?? "ACTIVE";
-    if (groupStatus !== "ACTIVE") {
+    const groupDeleted = groupMeta.deleted_at != null || groupMeta.is_active === false;
+    if (groupStatus !== "ACTIVE" || groupDeleted) {
       logger.warn("invite redeemed mas grupo inativo — abortando", {
         groupId,
         userId,
         groupStatus,
+        groupDeleted,
       });
       return;
     }
@@ -171,6 +173,32 @@ export const onInviteRedeemed = onDocumentUpdated(
     }
 
     await db().runTransaction(async (tx) => {
+      // A leitura precisa estar na transação: se a cascata mudar o grupo para
+      // DELETING/DELETED em paralelo, o Firestore repete a transação e esta
+      // tentativa não cria uma membership ACTIVE após a varredura de membros.
+      const txGroupSnap = await tx.get(groupRef);
+      if (!txGroupSnap.exists) {
+        logger.warn("invite redeemed: grupo não encontrado na transação", {
+          groupId,
+          userId,
+        });
+        return;
+      }
+      const txGroupMeta = txGroupSnap.data() as Record<string, unknown>;
+      const txGroupStatus =
+        (txGroupMeta.status as string | undefined) ?? "ACTIVE";
+      const txGroupDeleted =
+        txGroupMeta.deleted_at != null || txGroupMeta.is_active === false;
+      if (txGroupStatus !== "ACTIVE" || txGroupDeleted) {
+        logger.warn("invite redeemed: grupo inativo na transação", {
+          groupId,
+          userId,
+          groupStatus: txGroupStatus,
+          groupDeleted: txGroupDeleted,
+        });
+        return;
+      }
+
       // FIX #2517: idempotência sob entrega duplicada (triggers são
       // at-least-once). Checagem DENTRO da transação garante atomicidade.
       const txMemberSnap = await tx.get(memberRef);

@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { useAuth } from '../contexts/AuthContext';
+import { getCompletedWeekKey } from '../utils/weeklyRankingWeek';
 
 interface WeeklyRankingPlayer {
   userId: string;
@@ -26,14 +27,6 @@ interface WeeklyRanking {
   totalGames: number;
 }
 
-function getWeekKey(): string {
-  const now = new Date();
-  const startOfYear = new Date(now.getFullYear(), 0, 1);
-  const days = Math.floor((now.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000));
-  const weekNum = Math.ceil((days + startOfYear.getDay() + 1) / 7);
-  return `${now.getFullYear()}-${String(weekNum).padStart(2, '0')}`;
-}
-
 /**
  * #2251: expõe INTENCIONALMENTE o resultado bruto de useQuery
  * (data/isLoading/error/refetch). Consumidores usam a API do TanStack Query.
@@ -42,11 +35,11 @@ function getWeekKey(): string {
 export function useWeeklyRanking() {
   const { user } = useAuth();
   const uid = user?.id ?? '';
+  const weekKey = getCompletedWeekKey();
 
   return useQuery({
-    queryKey: ['weekly-ranking', getWeekKey()],
+    queryKey: ['weekly-ranking', weekKey],
     queryFn: async () => {
-      const weekKey = getWeekKey();
       const ref = doc(db, 'weekly-rankings', weekKey);
       const snap = await getDoc(ref);
       if (!snap.exists()) return null;

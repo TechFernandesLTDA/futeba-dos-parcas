@@ -16,6 +16,9 @@ const mockQuery = vi.fn();
 const mockWhere = vi.fn();
 const mockOrderBy = vi.fn();
 const mockLimit = vi.fn();
+const mockBatchSet = vi.fn();
+const mockBatchUpdate = vi.fn();
+const mockBatchCommit = vi.fn().mockResolvedValue(undefined);
 // mockGetDocs é usado pelos testes de useGames (migrado para useQuery/getDocs)
 const mockGetDocs = vi.fn().mockResolvedValue({ docs: [] });
 
@@ -50,7 +53,7 @@ vi.mock('firebase/firestore', () => {
     serverTimestamp: vi.fn(() => ({ _seconds: 0 })),
     Timestamp: MockTimestamp,
     runTransaction: vi.fn(),
-    writeBatch: vi.fn(() => ({ set: vi.fn(), update: vi.fn(), commit: vi.fn().mockResolvedValue(undefined) })),
+    writeBatch: vi.fn(() => ({ set: mockBatchSet, update: mockBatchUpdate, commit: mockBatchCommit })),
   };
 });
 
@@ -97,6 +100,7 @@ import { useGames, useGameDetail, useConfirmPresence, useCreateGame, useUpdateGa
 describe('useGames', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockBatchCommit.mockResolvedValue(undefined);
     // useGames usa useQuery/getDocs (migrado de onSnapshot em #2351)
     mockGetDocs.mockResolvedValue({ docs: [] });
     mockOnSnapshot.mockReturnValue(vi.fn()); // useGameDetail ainda usa onSnapshot
@@ -312,15 +316,21 @@ describe('useConfirmPresence', () => {
     vi.clearAllMocks();
     mockDoc.mockReturnValue('mock-doc-ref');
     mockSetDoc.mockResolvedValue(undefined);
+    mockCollection.mockReturnValue('mock-collection');
+    mockQuery.mockReturnValue('mock-query');
     mockGetDoc.mockResolvedValue({
       id: 'game-1',
       exists: () => true,
       data: () => ({
+        status: 'SCHEDULED',
         daily_price: 87.5,
         total_cost: 700,
         max_players: 8,
+        max_goalkeepers: 2,
+        dateTime: new Date('2026-08-10T19:00:00'),
       }),
     });
+    mockGetDocs.mockResolvedValue({ docs: [] });
     mockDeleteDoc.mockResolvedValue(undefined);
   });
 
@@ -353,6 +363,110 @@ describe('useConfirmPresence', () => {
     );
   });
 
+  it('bloqueia confirmação quando o jogo não aceita mais confirmações', async () => {
+    mockGetDoc.mockResolvedValueOnce({
+      id: 'game-1',
+      exists: () => true,
+      data: () => ({
+        status: 'LIVE',
+        daily_price: 87.5,
+        total_cost: 700,
+        max_players: 8,
+        max_goalkeepers: 2,
+        dateTime: new Date('2026-08-10T19:00:00'),
+      }),
+    });
+
+    const { result } = renderHook(() => useConfirmPresence(), { wrapper: createTestWrapper() });
+
+    await expect(
+      act(async () => {
+        await result.current.confirmPresence('game-1');
+      }),
+    ).rejects.toThrow('Este jogo não aceita mais confirmações.');
+
+    expect(mockSetDoc).not.toHaveBeenCalled();
+  });
+
+  it('bloqueia confirmação quando o horário do jogo já passou', async () => {
+    mockGetDoc.mockResolvedValueOnce({
+      id: 'game-1',
+      exists: () => true,
+      data: () => ({
+        status: 'SCHEDULED',
+        daily_price: 87.5,
+        total_cost: 700,
+        max_players: 8,
+        max_goalkeepers: 2,
+        dateTime: new Date('2020-08-10T19:00:00'),
+      }),
+    });
+
+    const { result } = renderHook(() => useConfirmPresence(), { wrapper: createTestWrapper() });
+
+    await expect(
+      act(async () => {
+        await result.current.confirmPresence('game-1');
+      }),
+    ).rejects.toThrow('Não é possível confirmar presença depois do horário do jogo.');
+
+    expect(mockSetDoc).not.toHaveBeenCalled();
+  });
+
+  it('bloqueia confirmação quando a lista já está cheia', async () => {
+    mockGetDocs.mockResolvedValueOnce({
+      docs: Array.from({ length: 8 }, (_, index) => ({
+        data: () => ({
+          status: 'CONFIRMED',
+          user_id: `user-${index}`,
+          position: 'FIELD',
+        }),
+      })),
+    });
+
+    const { result } = renderHook(() => useConfirmPresence(), { wrapper: createTestWrapper() });
+
+    await expect(
+      act(async () => {
+        await result.current.confirmPresence('game-1');
+      }),
+    ).rejects.toThrow('Lista Cheia');
+  });
+
+  it('permite jogador de linha mesmo quando as vagas de goleiro estão cheias', async () => {
+    mockGetDocs.mockResolvedValueOnce({
+      docs: [
+        { data: () => ({ status: 'CONFIRMED', user_id: 'gk-1', position: 'GOALKEEPER' }) },
+        { data: () => ({ status: 'CONFIRMED', user_id: 'gk-2', position: 'GOALKEEPER' }) },
+      ],
+    });
+
+    const { result } = renderHook(() => useConfirmPresence(), { wrapper: createTestWrapper() });
+
+    await act(async () => {
+      await result.current.confirmPresence('game-1', 'FIELD');
+    });
+
+    expect(mockSetDoc).toHaveBeenCalled();
+  });
+
+  it('bloqueia confirmação de goleiro quando as vagas de goleiro acabaram', async () => {
+    mockGetDocs.mockResolvedValueOnce({
+      docs: [
+        { data: () => ({ status: 'CONFIRMED', user_id: 'gk-1', position: 'GOALKEEPER' }) },
+        { data: () => ({ status: 'CONFIRMED', user_id: 'gk-2', position: 'GOALKEEPER' }) },
+      ],
+    });
+
+    const { result } = renderHook(() => useConfirmPresence(), { wrapper: createTestWrapper() });
+
+    await expect(
+      act(async () => {
+        await result.current.confirmPresence('game-1', 'GOALKEEPER');
+      }),
+    ).rejects.toThrow('As vagas de goleiro já foram preenchidas.');
+  });
+
   it('exige autenticação para confirmar presença', async () => {
     mockUseAuth.mockReturnValueOnce({
       user: null,
@@ -379,7 +493,17 @@ describe('useConfirmPresence', () => {
     ).rejects.toThrow('User not authenticated');
   });
 
-  it('cancelPresence deleta o documento de confirmação', async () => {
+  it('cancelPresence marca a confirmação como CANCELLED', async () => {
+    mockGetDoc
+      .mockResolvedValueOnce({
+        exists: () => true,
+        data: () => ({ status: 'CONFIRMED' }),
+      })
+      .mockResolvedValueOnce({
+        exists: () => false,
+        data: () => null,
+      });
+
     const { result } = renderHook(() => useConfirmPresence(), { wrapper: createTestWrapper() });
 
     await act(async () => {
@@ -387,6 +511,60 @@ describe('useConfirmPresence', () => {
     });
 
     expect(mockDoc).toHaveBeenCalledWith({}, 'confirmations', 'game-1_test-user-id');
+    expect(mockDeleteDoc).not.toHaveBeenCalled();
+    expect(mockBatchUpdate).toHaveBeenCalledWith(
+      'mock-doc-ref',
+      expect.objectContaining({
+        status: 'CANCELLED',
+      }),
+    );
+    expect(mockBatchCommit).toHaveBeenCalled();
+  });
+
+  it('cancelPresence cancela a carona ativa do usuário', async () => {
+    mockDoc.mockImplementation((_db, collectionName) => `${collectionName}-ref`);
+    mockGetDoc
+      .mockResolvedValueOnce({
+        exists: () => true,
+        data: () => ({ status: 'CONFIRMED' }),
+      })
+      .mockResolvedValueOnce({
+        exists: () => true,
+        data: () => ({ status: 'ACTIVE' }),
+      });
+
+    const { result } = renderHook(() => useConfirmPresence(), { wrapper: createTestWrapper() });
+
+    await act(async () => {
+      await result.current.cancelPresence('game-1');
+    });
+
+    expect(mockBatchUpdate).toHaveBeenNthCalledWith(
+      2,
+      'game_rides-ref',
+      expect.objectContaining({ status: 'CANCELLED' }),
+    );
+  });
+
+  it('cancelPresence preserva carona já totalmente coberta', async () => {
+    mockDoc.mockImplementation((_db, collectionName) => `${collectionName}-ref`);
+    mockGetDoc
+      .mockResolvedValueOnce({
+        exists: () => true,
+        data: () => ({ status: 'CONFIRMED' }),
+      })
+      .mockResolvedValueOnce({
+        exists: () => true,
+        data: () => ({ status: 'ACTIVE', fully_covered: true }),
+      });
+
+    const { result } = renderHook(() => useConfirmPresence(), { wrapper: createTestWrapper() });
+
+    await act(async () => {
+      await result.current.cancelPresence('game-1');
+    });
+
+    expect(mockBatchUpdate).toHaveBeenCalledTimes(1);
   });
 
   it('cancelPresence falha se confirmação não existir', async () => {

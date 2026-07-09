@@ -1,16 +1,25 @@
-const mockOrderBy = jest.fn();
 const mockLimit = jest.fn();
-const mockSummaryDoc = {path: "groups/group1/cashbox_summary/current"};
+const mockStartAfter = jest.fn();
+const mockCashboxGet = jest.fn();
+const mockSummarySet = jest.fn();
+const mockRunTransaction = jest.fn();
+const mockSummaryDoc = {
+  path: "groups/group1/cashbox_summary/current",
+  set: mockSummarySet,
+};
 const mockSummaryCollection = {
   doc: jest.fn(() => mockSummaryDoc),
 };
 const mockCashboxQuery = {
-  orderBy: mockOrderBy,
+  startAfter: mockStartAfter,
+  get: mockCashboxGet,
+};
+const mockCashboxCollection = {
   limit: mockLimit,
 };
 const mockGroupDoc = {
   collection: jest.fn((name: string) => {
-    if (name === "cashbox") return mockCashboxQuery;
+    if (name === "cashbox") return mockCashboxCollection;
     if (name === "cashbox_summary") return mockSummaryCollection;
     throw new Error(`Unexpected subcollection: ${name}`);
   }),
@@ -18,13 +27,11 @@ const mockGroupDoc = {
 const mockGroupsCollection = {
   doc: jest.fn(() => mockGroupDoc),
 };
-const mockRunTransaction = jest.fn();
 const mockDb = {
   collection: jest.fn(() => mockGroupsCollection),
   runTransaction: mockRunTransaction,
 };
 const mockLoggerInfo = jest.fn();
-const mockLoggerWarn = jest.fn();
 const mockLoggerError = jest.fn();
 const mockServerTimestampValue = {_type: "ServerTimestamp"};
 
@@ -35,7 +42,6 @@ jest.mock("firebase-functions/v2/firestore", () => ({
 jest.mock("firebase-functions/v2", () => ({
   logger: {
     info: mockLoggerInfo,
-    warn: mockLoggerWarn,
     error: mockLoggerError,
   },
 }));
@@ -72,60 +78,98 @@ const {onCashboxEntryWritten} = require("../src/cashbox/summary-recompute");
 describe("onCashboxEntryWritten", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockOrderBy.mockReturnValue(mockCashboxQuery);
     mockLimit.mockReturnValue(mockCashboxQuery);
+    mockStartAfter.mockReturnValue(mockCashboxQuery);
+    mockRunTransaction.mockImplementation(async (callback: (tx: unknown) => Promise<unknown>) => callback({
+      get: jest.fn(async () => ({exists: false, data: () => undefined})),
+      set: mockSummarySet,
+    }));
   });
 
-  it("recalcula com orderBy deterministico e sinaliza truncamento parcial", async () => {
-    const newestMillis = Date.UTC(2026, 5, 26, 12, 0, 0);
-    const docs = Array.from({length: 1000}, (_, index) => ({
+  it("pagina todo o ledger e soma em centavos sem truncar o saldo", async () => {
+    const newestMillis = Date.UTC(2026, 6, 9, 12, 0, 0);
+    const firstPageDocs = Array.from({length: 500}, (_, index) => ({
+      id: `doc-${index}`,
       data: () => ({
-        status: "OPEN",
+        status: "ACTIVE",
         type: "INCOME",
         amount: 1,
         created_at: new Timestamp(newestMillis - index),
       }),
     }));
-    docs.push({
-      data: () => ({
-        status: "OPEN",
-        type: "EXPENSE",
-        amount: 9999,
-        created_at: new Timestamp(newestMillis - 5000),
-      }),
-    });
+    const secondPageDocs = [
+      {
+        id: "doc-500",
+        data: () => ({
+          status: "ACTIVE",
+          type: "EXPENSE",
+          amount: 0.1,
+          created_at: new Timestamp(newestMillis - 1000),
+        }),
+      },
+      {
+        id: "doc-501",
+        data: () => ({
+          status: "ACTIVE",
+          type: "EXPENSE",
+          amount: 0.2,
+          created_at: new Timestamp(newestMillis - 1001),
+        }),
+      },
+    ];
 
-    const tx = {
-      get: jest.fn().mockResolvedValue({
-        size: docs.length,
-        docs,
-      }),
-      set: jest.fn(),
-    };
-
-    mockRunTransaction.mockImplementation(async (callback: (arg0: typeof tx) => Promise<void>) => {
-      await callback(tx);
-    });
+    mockCashboxGet
+      .mockResolvedValueOnce({
+        empty: false,
+        size: firstPageDocs.length,
+        docs: firstPageDocs,
+      })
+      .mockResolvedValueOnce({
+        empty: false,
+        size: secondPageDocs.length,
+        docs: secondPageDocs,
+      });
 
     await onCashboxEntryWritten({
       params: {groupId: "group1"},
+      time: "2026-07-09T12:00:00.000Z",
     });
 
-    expect(mockOrderBy).toHaveBeenCalledWith("created_at", "desc");
-    expect(mockLimit).toHaveBeenCalledWith(1001);
-    expect(tx.set).toHaveBeenCalledTimes(1);
+    expect(mockLimit).toHaveBeenCalledWith(500);
+    expect(mockStartAfter).toHaveBeenCalledWith(firstPageDocs[firstPageDocs.length - 1]);
+    expect(mockSummarySet).toHaveBeenCalledTimes(1);
 
-    const [, summary, options] = tx.set.mock.calls[0];
+    const [, summary, options] = mockSummarySet.mock.calls[0];
     expect(summary).toMatchObject({
-      balance: 1000,
-      total_income: 1000,
-      total_expense: 0,
-      entry_count: 1000,
-      truncated: true,
+      balance: 499.7,
+      total_income: 500,
+      total_expense: 0.3,
+      entry_count: 502,
+      truncated: false,
+      recomputed_by_server: true,
       recomputed_at: mockServerTimestampValue,
+      source_event_version: "2026-07-09T12:00:00.000Z",
     });
     expect(summary.last_entry_at.toMillis()).toBe(newestMillis);
     expect(options).toEqual({merge: true});
-    expect(mockLoggerWarn).toHaveBeenCalled();
+  });
+
+  it("ignora recompute que termina depois de um evento mais novo", async () => {
+    mockCashboxGet.mockResolvedValueOnce({empty: true, size: 0, docs: []});
+    mockRunTransaction.mockImplementationOnce(async (callback: (tx: unknown) => Promise<unknown>) => callback({
+      get: jest.fn(async () => ({
+        exists: true,
+        data: () => ({source_event_version: "2026-07-09T12:00:01.000Z"}),
+      })),
+      set: mockSummarySet,
+    }));
+
+    await onCashboxEntryWritten({
+      params: {groupId: "group1"},
+      time: "2026-07-09T12:00:00.000Z",
+    });
+
+    expect(mockSummarySet).not.toHaveBeenCalled();
+    expect(mockLoggerInfo).toHaveBeenCalledWith(expect.stringContaining("obsoleto ignorado"));
   });
 });

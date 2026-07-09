@@ -131,6 +131,8 @@ export const maintainStreaksData = onSchedule(
         let query: admin.firestore.Query = db()
           .collection("user_streaks")
           .where("current_streak", ">", 0)
+          .orderBy("current_streak")
+          .orderBy(FieldPath.documentId())
           .limit(5000);
 
         if (lastDoc) {

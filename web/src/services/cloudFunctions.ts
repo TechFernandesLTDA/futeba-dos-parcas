@@ -43,6 +43,26 @@ export const submitContentReport = httpsCallable<
   { reportId: string }
 >(functions, 'submitContentReport');
 
+export interface CreateCashboxEntryRequest {
+  groupId: string;
+  requestId: string;
+  type: 'INCOME' | 'EXPENSE';
+  amount: number;
+  description: string;
+  receiptUrl?: string | null;
+}
+
+export interface CreateCashboxEntryResponse {
+  entryId: string;
+  balance: number;
+  balanceCents: number;
+}
+
+export const createCashboxEntry = httpsCallable<
+  CreateCashboxEntryRequest,
+  CreateCashboxEntryResponse
+>(functions, 'createCashboxEntry');
+
 export interface AdminOwnerSummary {
   totalLocations: number;
   publishedLocations: number;

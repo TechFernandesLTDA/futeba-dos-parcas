@@ -12,6 +12,7 @@ import {
   ToggleButtonGroup,
   useTheme,
   alpha,
+  CircularProgress,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -20,7 +21,7 @@ import {
   SportsSoccer as SoccerIcon,
 } from '@mui/icons-material';
 import Grid from '@mui/material/Unstable_Grid2';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -31,6 +32,7 @@ import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { createLogger } from '../../utils/logger';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useTranslation } from 'react-i18next';
+import { getUsersByIds } from '../../utils/userBatch';
 
 
 
@@ -51,6 +53,21 @@ interface RawPlayerData {
   photoUrl?: string;
 }
 
+interface RawGameData {
+  ownerId?: string;
+  owner_id?: string;
+  team1Players?: string[];
+  team1_players?: string[];
+  team2Players?: string[];
+  team2_players?: string[];
+  team1TacticalPositions?: Array<{ userId?: string; user_id?: string; x?: number; y?: number }>;
+  team1_tactical_positions?: Array<{ userId?: string; user_id?: string; x?: number; y?: number }>;
+  team2TacticalPositions?: Array<{ userId?: string; user_id?: string; x?: number; y?: number }>;
+  team2_tactical_positions?: Array<{ userId?: string; user_id?: string; x?: number; y?: number }>;
+  tacticalFormationIndex?: number;
+  tactical_formation_index?: number;
+}
+
 const FORMATIONS = [
   { name: '4-4-2', positions: [[50, 90], [20, 70], [40, 70], [60, 70], [80, 70], [20, 45], [40, 45], [60, 45], [80, 45], [35, 20], [65, 20]] },
   { name: '4-3-3', positions: [[50, 90], [20, 70], [40, 70], [60, 70], [80, 70], [30, 45], [50, 45], [70, 45], [25, 20], [50, 15], [75, 20]] },
@@ -61,19 +78,23 @@ export const TacticalBoardScreen: React.FC = () => {
   const { t } = useTranslation();
   useDocumentTitle(t('page.title.tacticalBoard'));
   const navigateBack = useNavigateBack('/?tab=1');
-    const theme = useTheme();
+  const theme = useTheme();
   const { gameId } = useParams<{ gameId: string }>();
-  useAuth();
-  const { showError } = useToast();
+  const { user } = useAuth();
+  const { showError, showSuccess } = useToast();
   const showErrorRef = useRef(showError);
   showErrorRef.current = showError;
+  const showSuccessRef = useRef(showSuccess);
+  showSuccessRef.current = showSuccess;
 
   const [players, setPlayers] = useState<TacticalPlayer[]>([]);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [selectedFormation, setSelectedFormation] = useState(0);
   const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
+  const [canSave, setCanSave] = useState(false);
 
   const handleRetry = () => {
     setError(null);
@@ -89,24 +110,47 @@ export const TacticalBoardScreen: React.FC = () => {
       try {
         const gameDoc = await getDoc(doc(db, 'games', gameId));
         if (gameDoc.exists() && !cancelled) {
-          const data = snakeToCamel(gameDoc.data()) as Record<string, RawPlayerData[]>;
-          const teamA = (data.teamA || []).map((p: RawPlayerData, i: number) => ({
-            id: p.id || `a-${i}`,
-            name: p.name || t('tactical.defaultPlayerName'),
-            photoUrl: p.photoUrl,
-            x: FORMATIONS[0].positions[i]?.[0] || 50,
-            y: FORMATIONS[0].positions[i]?.[1] || 70,
-            team: 'A' as const,
-          }));
-          const teamB = (data.teamB || []).map((p: RawPlayerData, i: number) => ({
-            id: p.id || `b-${i}`,
-            name: p.name || t('tactical.defaultPlayerName'),
-            photoUrl: p.photoUrl,
-            x: FORMATIONS[0].positions[i]?.[0] || 50,
-            y: FORMATIONS[0].positions[i]?.[1] || 30,
-            team: 'B' as const,
-          }));
-          if (!cancelled) setPlayers([...teamA, ...teamB]);
+          const data = snakeToCamel(gameDoc.data()) as RawGameData;
+          const ownerId = data.ownerId || data.owner_id;
+          const team1PlayerIds = data.team1Players ?? data.team1_players ?? [];
+          const team2PlayerIds = data.team2Players ?? data.team2_players ?? [];
+          const formationIndex = data.tacticalFormationIndex ?? data.tactical_formation_index ?? 0;
+          const normalizedFormationIndex = FORMATIONS[formationIndex] ? formationIndex : 0;
+          const team1SavedPositions = data.team1TacticalPositions ?? data.team1_tactical_positions ?? [];
+          const team2SavedPositions = data.team2TacticalPositions ?? data.team2_tactical_positions ?? [];
+          const usersById = await getUsersByIds([...team1PlayerIds, ...team2PlayerIds]);
+          if (cancelled) return;
+
+          setCanSave(user?.id === ownerId);
+          setSelectedFormation(normalizedFormationIndex);
+
+          const teamA = team1PlayerIds.map((playerId, index) => {
+            const savedPosition = team1SavedPositions.find((position) => (position.userId ?? position.user_id) === playerId);
+            const userData = usersById.get(playerId) as RawPlayerData | undefined;
+            const fallbackPosition = FORMATIONS[normalizedFormationIndex].positions[index] ?? [50, 90];
+            return {
+              id: playerId || `a-${index}`,
+              name: userData?.name || t('tactical.defaultPlayerName'),
+              photoUrl: userData?.photoUrl,
+              x: typeof savedPosition?.x === 'number' ? savedPosition.x : fallbackPosition[0],
+              y: typeof savedPosition?.y === 'number' ? savedPosition.y : fallbackPosition[1],
+              team: 'A' as const,
+            };
+          });
+          const teamB = team2PlayerIds.map((playerId, index) => {
+            const savedPosition = team2SavedPositions.find((position) => (position.userId ?? position.user_id) === playerId);
+            const userData = usersById.get(playerId) as RawPlayerData | undefined;
+            const fallbackPosition = FORMATIONS[normalizedFormationIndex].positions[index] ?? [50, 10];
+            return {
+              id: playerId || `b-${index}`,
+              name: userData?.name || t('tactical.defaultPlayerName'),
+              photoUrl: userData?.photoUrl,
+              x: typeof savedPosition?.x === 'number' ? savedPosition.x : fallbackPosition[0],
+              y: typeof savedPosition?.y === 'number' ? savedPosition.y : 100 - fallbackPosition[1],
+              team: 'B' as const,
+            };
+          });
+          setPlayers([...teamA, ...teamB]);
         }
       } catch (error) {
         logger.error('Error fetching players:', error);
@@ -123,31 +167,54 @@ export const TacticalBoardScreen: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [gameId, retryCount, t]);
+  }, [gameId, retryCount, t, user?.id]);
 
   const applyFormation = (formationIndex: number) => {
     setSelectedFormation(formationIndex);
     const positions = FORMATIONS[formationIndex].positions;
     setPlayers((prev) => {
-      const teamA = prev.filter((p) => p.team === 'A');
-      const teamB = prev.filter((p) => p.team === 'B');
-      
-      teamA.forEach((p, i) => {
-        if (positions[i]) {
-          p.x = positions[i][0];
-          p.y = positions[i][1];
-        }
-      });
-      
-      teamB.forEach((p, i) => {
-        if (positions[i]) {
-          p.x = positions[i][0];
-          p.y = 100 - positions[i][1];
-        }
-      });
-      
+      const teamA = prev
+        .filter((p) => p.team === 'A')
+        .map((player, index) => ({
+          ...player,
+          x: positions[index]?.[0] ?? player.x,
+          y: positions[index]?.[1] ?? player.y,
+        }));
+      const teamB = prev
+        .filter((p) => p.team === 'B')
+        .map((player, index) => ({
+          ...player,
+          x: positions[index]?.[0] ?? player.x,
+          y: positions[index] ? 100 - positions[index][1] : player.y,
+        }));
+
       return [...teamA, ...teamB];
     });
+  };
+
+  const handleSave = async () => {
+    if (!gameId || !canSave || players.length === 0) return;
+
+    setSaving(true);
+    try {
+      const gameRef = doc(db, 'games', gameId);
+      await updateDoc(gameRef, {
+        tactical_formation_index: selectedFormation,
+        team1_tactical_positions: players
+          .filter((player) => player.team === 'A')
+          .map((player) => ({ user_id: player.id, x: player.x, y: player.y })),
+        team2_tactical_positions: players
+          .filter((player) => player.team === 'B')
+          .map((player) => ({ user_id: player.id, x: player.x, y: player.y })),
+        updated_at: serverTimestamp(),
+      });
+      showSuccessRef.current(t('tactical.saveSuccess'));
+    } catch (error) {
+      logger.error('Error saving tactical board:', error);
+      showErrorRef.current(t('tactical.saveError'));
+    } finally {
+      setSaving(false);
+    }
   };
 
   if (error) {
@@ -176,11 +243,15 @@ export const TacticalBoardScreen: React.FC = () => {
           <Typography variant="h6" sx={{ ml: 1, flex: 1 }}>
             {t('tactical.title')}
           </Typography>
-          <IconButton onClick={() => setSelectedFormation(0)} aria-label={t('a11y.resetFormation')}>
+          <IconButton onClick={() => applyFormation(0)} aria-label={t('a11y.resetFormation')}>
             <RefreshIcon />
           </IconButton>
-          <IconButton aria-label={t('a11y.saveFormation')}>
-            <SaveIcon />
+          <IconButton
+            onClick={handleSave}
+            aria-label={t('a11y.saveFormation')}
+            disabled={!canSave || saving || players.length === 0}
+          >
+            {saving ? <CircularProgress size={20} /> : <SaveIcon />}
           </IconButton>
         </Box>
       </Box>
