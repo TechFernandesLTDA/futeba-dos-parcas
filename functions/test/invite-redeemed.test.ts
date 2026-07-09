@@ -195,16 +195,28 @@ describe("onInviteRedeemed", () => {
     expect(mockRunTransaction).not.toHaveBeenCalled();
   });
 
-  it("convite expirado não cria membership", async () => {
-    const event = makeEvent(
-      {used: false, group_id: "g1", used_by: "joiner-uid"},
-      {used: true, group_id: "g1", used_by: "joiner-uid",
-        expires_at: pastExpiry}
-    );
-    await (onInviteRedeemed as unknown as
-      (e: MockEvent) => Promise<void>)(event);
-    expect(mockRunTransaction).not.toHaveBeenCalled();
-  });
+	  it("convite expirado não cria membership", async () => {
+	    const event = makeEvent(
+	      {used: false, group_id: "g1", used_by: "joiner-uid"},
+	      {used: true, group_id: "g1", used_by: "joiner-uid",
+	        expires_at: pastExpiry}
+	    );
+	    await (onInviteRedeemed as unknown as
+	      (e: MockEvent) => Promise<void>)(event);
+	    expect(mockRunTransaction).not.toHaveBeenCalled();
+	  });
+
+	  it("convite com expires_at malformado aborta sem derrubar trigger", async () => {
+	    const event = makeEvent(
+	      {used: false, group_id: "g1", used_by: "joiner-uid"},
+	      {used: true, group_id: "g1", used_by: "joiner-uid",
+	        expires_at: {}}
+	    );
+	    await (onInviteRedeemed as unknown as
+	      (e: MockEvent) => Promise<void>)(event);
+	    expect(mockRunTransaction).not.toHaveBeenCalled();
+	    expect(mockTxSet).not.toHaveBeenCalled();
+	  });
 
   it("member já existente é idempotente (skip)", async () => {
     mockMemberGet.mockResolvedValue({exists: true});

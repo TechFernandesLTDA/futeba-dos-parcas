@@ -1,7 +1,29 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-08T21:37:21.182Z",
+  "generatedAt": "2026-07-09T01:15:37.989Z",
   "notes": [
+    {
+      "version": "1.51.28",
+      "buildNumber": null,
+      "releaseDate": "2026-07-09",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "Convites de cadastro, grupo e Liga ficaram mais confiaveis.",
+      "highlights": [],
+      "added": [],
+      "improved": [],
+      "fixed": [
+        "Cadastro por convite agora so conclui quando o perfil foi criado corretamente, evitando conta sem XP de apadrinhamento.",
+        "Convites de grupo evitam duplicidade entre administradores diferentes.",
+        "Geracao de codigo de convite tenta outro codigo quando encontra uma colisao rara.",
+        "Falhas de entrada por convite mostram uma unica mensagem de erro.",
+        "`signUp` limpa a conta Auth recem-criada se a criacao do documento `users/{uid}` falhar.",
+        "`useLeagueInvites` deduplica por `group_id + invited_user_id + status` e usa transacao para convites de jogo.",
+        "`useInvitePlayers` e `InvitePlayersScreen` seguem o mesmo contrato de convite direto."
+      ],
+      "issueRefs": []
+    },
     {
       "version": "1.51.27",
       "buildNumber": null,

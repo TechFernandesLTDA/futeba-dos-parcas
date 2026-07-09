@@ -408,6 +408,7 @@ describe('useInvitePlayers', () => {
     mockAddDoc.mockResolvedValue({ id: 'invite-1' });
     mockCollection.mockReturnValue('mock-collection');
     mockDoc.mockReturnValue({ ref: 'mock-ref' });
+    mockGetDoc.mockResolvedValue({ exists: () => false });
     mockQuery.mockReturnValue('mock-query');
     mockWhere.mockReturnValue('mock-where');
     setupBatchMock();

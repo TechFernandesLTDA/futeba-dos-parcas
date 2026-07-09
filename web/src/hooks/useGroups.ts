@@ -30,6 +30,7 @@ import { useTranslation } from 'react-i18next';
 import { uploadGroupLogo } from '../utils/groupLogoStorage';
 
 const logger = createLogger('useGroups');
+const MAX_INVITE_CODE_GENERATION_ATTEMPTS = 5;
 
 // ====== Group Document Parser ======
 
@@ -492,7 +493,7 @@ export function useCashbox(groupId: string | null) {
 export function useInvitePlayers() {
   const { t } = useTranslation();
   const { user, firebaseUser } = useAuth();
-  const { showSuccess, showError } = useToast();
+  const { showSuccess } = useToast();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const queryClient = useQueryClient();
@@ -505,25 +506,38 @@ export function useInvitePlayers() {
       setError(null);
 
       try {
-        const code = Math.random().toString(36).substring(2, 8).toUpperCase();
         const displayName = firebaseUser?.displayName || user?.name || 'Organizador';
 
         // #1541: expires_at precisa ser 7 dias no futuro; serverTimestamp() criava
         // convites já expirados imediatamente.
         // AUDIT: client-clock drift accepted for 7-day invite expiry window
         const expiresAt = Timestamp.fromMillis(Date.now() + 7 * 24 * 60 * 60 * 1000);
-        // #2351: doc-id == code — lookup por getDoc(code), sem where('code')
-        // (que era LIST e permitia enumerar todos os convites).
-        await setDoc(doc(db, 'invites', code), {
-          code,
-          group_id: groupId,
-          group_name: groupName,
-          inviter_id: uid,
-          inviter_name: displayName,
-          created_at: serverTimestamp(),
-          expires_at: expiresAt,
-          used: false,
-        });
+        let code: string | null = null;
+        for (let attempt = 0; attempt < MAX_INVITE_CODE_GENERATION_ATTEMPTS; attempt += 1) {
+          const candidate = Math.random().toString(36).substring(2, 8).toUpperCase();
+          const inviteRef = doc(db, 'invites', candidate);
+          const existingInvite = await getDoc(inviteRef);
+          if (existingInvite.exists()) continue;
+
+          // #2351: doc-id == code — lookup por getDoc(code), sem where('code')
+          // (que era LIST e permitia enumerar todos os convites).
+          await setDoc(inviteRef, {
+            code: candidate,
+            group_id: groupId,
+            group_name: groupName,
+            inviter_id: uid,
+            inviter_name: displayName,
+            created_at: serverTimestamp(),
+            expires_at: expiresAt,
+            used: false,
+          });
+          code = candidate;
+          break;
+        }
+
+        if (!code) {
+          throw new Error('Não foi possível gerar um código único. Tente novamente.');
+        }
 
         showSuccess(t('feedback.groups.inviteCodeGenerated'));
         setLoading(false);
@@ -532,11 +546,10 @@ export function useInvitePlayers() {
         logger.error('Error generating invite:', err);
         setError((err as Error).message);
         setLoading(false);
-        showError((err as Error).message || t('feedback.groups.inviteCodeError'));
         throw err;
       }
     },
-    [firebaseUser, user, showSuccess, showError, t]
+    [firebaseUser, user, showSuccess, t]
   );
 
   const joinByInviteCode = useCallback(
@@ -627,11 +640,10 @@ export function useInvitePlayers() {
         logger.error('Error joining group:', err);
         setError((err as Error).message);
         setLoading(false);
-        showError((err as Error).message || t('feedback.groups.joinError'));
         throw err;
       }
     },
-    [firebaseUser, user, queryClient, showSuccess, showError, t]
+    [firebaseUser, user, queryClient, showSuccess, t]
   );
 
   return { generateInviteCode, joinByInviteCode, loading, error };

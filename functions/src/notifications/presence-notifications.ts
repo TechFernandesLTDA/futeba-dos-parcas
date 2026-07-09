@@ -109,7 +109,11 @@ async function createMembershipForAcceptedGroupInvite(
     const existingStatus = existingMember ?
       getStringField(existingMember, "status", "status") :
       "";
-    if (memberSnap.exists && existingStatus !== "REMOVED") {
+    if (
+      memberSnap.exists &&
+      existingStatus !== "REMOVED" &&
+      existingStatus !== "INACTIVE"
+    ) {
       logger.warn(
         "[GROUP_INVITE_RESPONSE] Convite aceito para membro existente; " +
         "membership preservada",
@@ -501,18 +505,21 @@ export const onGroupInviteResponse =
         return;
       }
 
-      // Guard de idempotência: pula reentregas at-least-once
-      if (!await claimOnce(event.id)) return;
-
       logger.info(
         "[GROUP_INVITE_RESPONSE] Convite" +
         ` ${inviteId}: ${beforeStatus}` +
         ` -> ${afterStatus}`
       );
 
+      if (afterStatus === "ACCEPTED") {
+        await createMembershipForAcceptedGroupInvite(inviteId, after);
+      }
+
+      // Guard de idempotência: só marca processado depois da membership crítica.
+      if (!await claimOnce(event.id)) return;
+
       try {
         if (afterStatus === "ACCEPTED") {
-          await createMembershipForAcceptedGroupInvite(inviteId, after);
           const grpId =
             after.group_id || after.groupId;
           // FIX #2527: docId determinístico p/ idempotência

@@ -61,6 +61,11 @@ data class GroupInvite(
     @set:PropertyName("expires_at")
     var expiresAt: Date? = null,
 
+    @ServerTimestamp
+    @get:PropertyName("updated_at")
+    @set:PropertyName("updated_at")
+    var updatedAt: Date? = null,
+
     @get:PropertyName("responded_at")
     @set:PropertyName("responded_at")
     var respondedAt: Date? = null

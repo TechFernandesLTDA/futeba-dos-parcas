@@ -43,6 +43,16 @@ interface InviteData {
 }
 
 /**
+ * Verifica se um valor se comporta como Timestamp do Firestore.
+ *
+ * @param {unknown} value Valor vindo do snapshot.
+ * @return {boolean} true quando possui toMillis().
+ */
+function hasToMillis(value: unknown): value is {toMillis: () => number} {
+  return isRecord(value) && typeof value.toMillis === "function";
+}
+
+/**
  * FIX #2517: valida o shape mínimo de um invite (`used` boolean) antes do
  * cast cego sobre dados crus do Firestore.
  * @param {unknown} data dados crus do snapshot
@@ -95,6 +105,13 @@ export const onInviteRedeemed = onDocumentUpdated(
 
     // Defesa em profundidade: convite expirado não cria membership mesmo se
     // o update tiver passado (clock skew etc).
+    if (after.expires_at && !hasToMillis(after.expires_at)) {
+      logger.error("invite redeemed com expires_at malformado — abortando", {
+        code,
+        userId,
+      });
+      return;
+    }
     if (after.expires_at && after.expires_at.toMillis() < Date.now()) {
       logger.warn("invite redeemed mas expirado — abortando", {code, userId});
       return;

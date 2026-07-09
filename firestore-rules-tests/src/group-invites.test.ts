@@ -109,16 +109,20 @@ describe("group_invites — leitura", () => {
 describe("group_invites — criação", () => {
   it("Group admin (OWNER) pode criar invite", async () => {
     const db = asPlayerA(testEnv);
-    await assertSucceeds(
-      db.doc("group_invites/invite-a-creates").set({
-        group_id: INVITE_GROUP,
-        invited_by_id: UID_PLAYER_A,
-        invited_user_id: UID_PLAYER_C,
-        status: "PENDING",
-        created_at: new Date(),
-      })
-    );
-  });
+	    await assertSucceeds(
+	      db.doc("group_invites/invite-a-creates").set({
+	        group_id: INVITE_GROUP,
+	        group_name: "Grupo de Convites",
+	        invited_by_id: UID_PLAYER_A,
+	        invited_user_id: UID_PLAYER_C,
+	        invited_user_name: "Jogador C",
+	        status: "PENDING",
+	        created_at: new Date(),
+	        updated_at: new Date(),
+	        expires_at: new Date(Date.now() + 60_000),
+	      })
+	    );
+	  });
 
   it("Owner legado pelo owner_id pode criar invite mesmo sem member doc", async () => {
     const legacyGroup = "group-legacy-owner-invites";
@@ -130,16 +134,53 @@ describe("group_invites — criação", () => {
     });
 
     const db = asPlayerC(testEnv);
-    await assertSucceeds(
-      db.doc("group_invites/invite-legacy-owner-creates").set({
-        group_id: legacyGroup,
-        invited_by_id: UID_PLAYER_C,
-        invited_user_id: UID_PLAYER_B,
-        status: "PENDING",
-        created_at: new Date(),
-      })
-    );
-  });
+	    await assertSucceeds(
+	      db.doc("group_invites/invite-legacy-owner-creates").set({
+	        group_id: legacyGroup,
+	        group_name: "Grupo legado",
+	        invited_by_id: UID_PLAYER_C,
+	        invited_user_id: UID_PLAYER_B,
+	        invited_user_name: "Jogador B",
+	        status: "PENDING",
+	        created_at: new Date(),
+	        updated_at: new Date(),
+	        expires_at: new Date(Date.now() + 60_000),
+	      })
+	    );
+	  });
+
+	  it("NÃO permite criar invite sem expires_at", async () => {
+	    const db = asPlayerA(testEnv);
+	    await assertFails(
+	      db.doc("group_invites/invite-missing-expiry").set({
+	        group_id: INVITE_GROUP,
+	        group_name: "Grupo de Convites",
+	        invited_by_id: UID_PLAYER_A,
+	        invited_user_id: UID_PLAYER_C,
+	        invited_user_name: "Jogador C",
+	        status: "PENDING",
+	        created_at: new Date(),
+	        updated_at: new Date(),
+	      })
+	    );
+	  });
+
+	  it("NÃO permite auto-convite", async () => {
+	    const db = asPlayerA(testEnv);
+	    await assertFails(
+	      db.doc("group_invites/invite-self").set({
+	        group_id: INVITE_GROUP,
+	        group_name: "Grupo de Convites",
+	        invited_by_id: UID_PLAYER_A,
+	        invited_user_id: UID_PLAYER_A,
+	        invited_user_name: "Jogador A",
+	        status: "PENDING",
+	        created_at: new Date(),
+	        updated_at: new Date(),
+	        expires_at: new Date(Date.now() + 60_000),
+	      })
+	    );
+	  });
 
   it("Membro simples (MEMBER) NÃO pode criar invite", async () => {
     const db = asPlayerB(testEnv); // role MEMBER

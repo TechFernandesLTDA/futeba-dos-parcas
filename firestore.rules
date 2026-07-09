@@ -2310,6 +2310,8 @@ service cloud.firestore {
         allow update: if isAuthenticated() &&
           (isGroupOwnerById(groupId) || isGroupAdmin(groupId)) &&
           resource.data.status == 'PENDING' &&
+          request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['status', 'responded_at', 'responded_by']) &&
           (request.resource.data.status == 'APPROVED' || request.resource.data.status == 'REJECTED') &&
           request.resource.data.responded_by == userId();
 
@@ -2666,7 +2668,14 @@ service cloud.firestore {
       }
 
       function inviteNotExpired() {
-        return !('expires_at' in resource.data) || resource.data.expires_at > request.time;
+        return ('expires_at' in resource.data) && resource.data.expires_at > request.time;
+      }
+
+      function inviteTargetCanBeInvited(gId, targetId) {
+        let memberPath = /databases/$(database)/documents/groups/$(gId)/members/$(targetId);
+        return targetId != userId() &&
+          (!exists(memberPath) ||
+           get(memberPath).data.status in ['REMOVED', 'INACTIVE']);
       }
 
       allow read: if isAuthenticated() && (
@@ -2677,8 +2686,20 @@ service cloud.firestore {
 
       // SECFIX #867: status inicial deve ser PENDING para prevenir criação em estado inválido
       allow create: if isAuthenticated() &&
+                       request.resource.data.keys().hasAll([
+                         'group_id', 'group_name', 'invited_by_id',
+                         'invited_user_id', 'invited_user_name', 'status',
+                         'expires_at', 'created_at', 'updated_at'
+                       ]) &&
                        request.resource.data.invited_by_id == userId() &&
+                       request.resource.data.invited_user_id is string &&
                        request.resource.data.status == 'PENDING' &&
+                       request.resource.data.expires_at > request.time &&
+                       request.resource.data.expires_at < request.time + duration.value(7, "d") &&
+                       inviteTargetCanBeInvited(
+                         request.resource.data.group_id,
+                         request.resource.data.invited_user_id
+                       ) &&
                        canManageInvites(request.resource.data.group_id);
 
       // FIX #577: era update sem field restriction → invitee podia overwrite group_id/invited_by_id.
@@ -2882,6 +2903,26 @@ service cloud.firestore {
     // COLECAO: notifications
     // ============================================
     match /notifications/{notificationId} {
+      function hasValidActionableInviteReference() {
+        let t = request.resource.data.type;
+        return !(t in [
+          'GROUP_INVITE', 'GROUP_INVITE_ACCEPTED', 'GROUP_INVITE_DECLINED',
+          'group_invite', 'GAME_INVITE', 'GAME_SUMMON', 'game_invite'
+        ]) ||
+        (
+          t in ['GROUP_INVITE', 'GROUP_INVITE_ACCEPTED', 'GROUP_INVITE_DECLINED', 'group_invite'] &&
+          ('group_id' in request.resource.data) &&
+          request.resource.data.sender_id == userId() &&
+          (isGroupAdmin(request.resource.data.group_id) || isAdmin())
+        ) ||
+        (
+          t in ['GAME_INVITE', 'GAME_SUMMON', 'game_invite'] &&
+          ('game_id' in request.resource.data) &&
+          request.resource.data.sender_id == userId() &&
+          (isGameOwner(request.resource.data.game_id) || isAdmin())
+        );
+      }
+
       allow read: if isAuthenticated() && resource.data.user_id == userId();
 
       // C-003 fix: validacao de created_by e user_id
@@ -2910,10 +2951,11 @@ service cloud.firestore {
            (request.resource.data.message is string &&
             request.resource.data.message.size() <= 500)
          ) &&
-         exists(/databases/$(database)/documents/users/$(request.resource.data.user_id)) &&
-         request.resource.data.keys().hasAll(['created_by', 'user_id', 'type', 'title']) &&
-         request.resource.data.keys().hasAny(['body', 'message']))
-      );
+	         exists(/databases/$(database)/documents/users/$(request.resource.data.user_id)) &&
+	         request.resource.data.keys().hasAll(['created_by', 'user_id', 'type', 'title']) &&
+	         request.resource.data.keys().hasAny(['body', 'message']) &&
+	         hasValidActionableInviteReference())
+	      );
 
       allow update: if isAuthenticated() &&
                        resource.data.user_id == userId() &&

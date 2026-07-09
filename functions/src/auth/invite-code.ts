@@ -414,7 +414,7 @@ export const onUserCreatedProcessInvite = onDocumentCreated(
         .collection("xp_logs")
         .doc(`app_invite_${invitedByUid}_${userId}`);
 
-      await db().runTransaction(async (tx) => {
+      const processed = await db().runTransaction(async (tx) => {
         const [inviterDoc, redemptionDoc] = await Promise.all([
           tx.get(inviterRef),
           tx.get(redemptionRef),
@@ -425,12 +425,12 @@ export const onUserCreatedProcessInvite = onDocumentCreated(
             invitedByUid,
             invitedUser: userId,
           });
-          return;
+          return false;
         }
 
         if (!inviterDoc.exists) {
           logger.warn("Inviter not found", {invitedByUid});
-          return;
+          return false;
         }
 
         const inviterData = inviterDoc.data();
@@ -440,7 +440,7 @@ export const onUserCreatedProcessInvite = onDocumentCreated(
             invitedUser: userId,
             inviteCode,
           });
-          return;
+          return false;
         }
 
         const xpBefore =
@@ -515,13 +515,16 @@ export const onUserCreatedProcessInvite = onDocumentCreated(
           milestones_unlocked: ["APP_INVITE_ACCEPTED"],
           created_at: now,
         });
+        return true;
       });
 
-      logger.info("Processed app invite for inviter", {
-        inviterUid: invitedByUid,
-        invitedUser: userId,
-        xpAwarded: APP_INVITE_ACCEPTED_XP,
-      });
+      if (processed) {
+        logger.info("Processed app invite for inviter", {
+          inviterUid: invitedByUid,
+          invitedUser: userId,
+          xpAwarded: APP_INVITE_ACCEPTED_XP,
+        });
+      }
     } catch (err) {
       logger.error("Failed to process invite for user", {userId, err});
     }

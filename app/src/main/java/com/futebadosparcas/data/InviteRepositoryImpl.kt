@@ -31,7 +31,6 @@ class InviteRepositoryImpl constructor(
     private val groupsCollection = firestore.collection("groups")
     private val invitesCollection = firestore.collection("group_invites")
     private val usersCollection = firestore.collection("users")
-    private val notificationsCollection = firestore.collection("notifications")
 
     override suspend fun createInvite(groupId: String, invitedUserId: String): Result<GroupInvite> {
         return try {
@@ -114,29 +113,7 @@ class InviteRepositoryImpl constructor(
                 expiresAt = calculateGroupInviteExpirationDate()
             )
 
-            // Criar notificação
-            val notificationRef = notificationsCollection.document()
-            val notification = AppNotification(
-                id = notificationRef.id,
-                userId = invitedUserId,
-                type = NotificationType.GROUP_INVITE,
-                title = "Convite para grupo",
-                message = "$currentUserName convidou você para o grupo $groupName",
-                senderId = currentUserId,
-                senderName = currentUserName,
-                senderPhoto = currentUser.photoUrl,
-                referenceId = inviteRef.id,
-                referenceType = "invite",
-                actionType = NotificationAction.ACCEPT_DECLINE,
-                createdAt = System.currentTimeMillis(),
-                expiresAt = androidInvite.expiresAt
-            )
-
-            // Salvar convite e notificação em transação
-            firestore.runTransaction { transaction ->
-                transaction.set(inviteRef, androidInvite)
-                transaction.set(notificationRef, notification)
-            }.await()
+            invitesCollection.document(inviteRef.id).set(androidInvite).await()
 
             Result.success(androidInvite)
         } catch (e: Exception) {
@@ -294,76 +271,10 @@ class InviteRepositoryImpl constructor(
                 return Result.failure(Exception("Convite expirado ou já respondido"))
             }
 
-            // Buscar dados do usuário
-            val userDoc = usersCollection.document(userId).get().await()
-            val user = userDoc.toObject(User::class.java) ?: User(id = userId, name = userDoc.getString("name") ?: "")
-            val userNameDisplay = user.getDisplayName()
-
-            // Buscar contagem atual de membros
-            val groupDoc = groupsCollection.document(invite.groupId).get().await()
-            val currentMemberCount = groupDoc.getLong("member_count")?.toInt() ?: 0
-            val newMemberCount = currentMemberCount + 1
-
-            // Executar transação
-            firestore.runTransaction { transaction ->
-                // 1. Atualizar status do convite
-                val inviteRef = invitesCollection.document(inviteId)
-                transaction.update(inviteRef, mapOf(
-                    "status" to InviteStatus.ACCEPTED.name,
-                    "responded_at" to FieldValue.serverTimestamp()
-                ))
-
-                // 2. Adicionar como membro do grupo
-                val memberRef = groupsCollection.document(invite.groupId)
-                    .collection("members").document(userId)
-
-                val member = GroupMember(
-                    id = userId,
-                    groupId = invite.groupId,
-                    userId = userId,
-                    userName = user.name, // Mantem nome original
-                    nickname = user.nickname, // Adiciona apelido
-                    userPhoto = user.photoUrl,
-                    role = GroupMemberRole.MEMBER.name,
-                    joinedAt = System.currentTimeMillis()
-                )
-                transaction.set(memberRef, member)
-
-                // 3. Atualizar member_count no grupo principal
-                val groupRef = groupsCollection.document(invite.groupId)
-                transaction.update(groupRef, "member_count", newMemberCount)
-
-                // 4. Adicionar referência no usuário que está entrando
-                val userGroupRef = usersCollection.document(userId)
-                    .collection("groups").document(invite.groupId)
-                val userGroup = UserGroup(
-                    id = invite.groupId,
-                    userId = userId,
-                    groupId = invite.groupId,
-                    groupName = invite.groupName,
-                    groupPhoto = invite.groupPhoto,
-                    role = GroupMemberRole.MEMBER.name,
-                    joinedAt = System.currentTimeMillis()
-                )
-                transaction.set(userGroupRef, userGroup)
-
-                // 5. Criar notificação para quem convidou
-                val notificationRef = notificationsCollection.document()
-                val notification = AppNotification(
-                    id = notificationRef.id,
-                    userId = invite.invitedById,
-                    type = NotificationType.GROUP_INVITE_ACCEPTED,
-                    title = "Convite aceito",
-                    message = "$userNameDisplay aceitou o convite para o grupo ${invite.groupName}",
-                    senderId = userId,
-                    senderName = userNameDisplay,
-                    referenceId = invite.groupId,
-                    referenceType = "group",
-                    actionType = NotificationAction.VIEW_DETAILS,
-                    createdAt = System.currentTimeMillis()
-                )
-                transaction.set(notificationRef, notification)
-            }.await()
+            invitesCollection.document(inviteId).update(mapOf(
+                "status" to InviteStatus.ACCEPTED.name,
+                "updated_at" to FieldValue.serverTimestamp()
+            )).await()
 
             Result.success(Unit)
         } catch (e: Exception) {
@@ -393,37 +304,10 @@ class InviteRepositoryImpl constructor(
                 return Result.failure(Exception("Convite expirado ou já respondido"))
             }
 
-            // Buscar dados do usuário
-            val userDoc = usersCollection.document(userId).get().await()
-            val user = userDoc.toObject(User::class.java) ?: User(id = userId, name = userDoc.getString("name") ?: "")
-            val userNameDisplay = user.getDisplayName()
-
-            // Executar transação
-            firestore.runTransaction { transaction ->
-                // 1. Atualizar status do convite
-                val inviteRef = invitesCollection.document(inviteId)
-                transaction.update(inviteRef, mapOf(
-                    "status" to InviteStatus.DECLINED.name,
-                    "responded_at" to FieldValue.serverTimestamp()
-                ))
-
-                // 2. Criar notificação para quem convidou
-                val notificationRef = notificationsCollection.document()
-                val notification = AppNotification(
-                    id = notificationRef.id,
-                    userId = invite.invitedById,
-                    type = NotificationType.GROUP_INVITE_DECLINED,
-                    title = "Convite recusado",
-                    message = "$userNameDisplay recusou o convite para o grupo ${invite.groupName}",
-                    senderId = userId,
-                    senderName = userNameDisplay,
-                    referenceId = invite.groupId,
-                    referenceType = "group",
-                    actionType = NotificationAction.NONE,
-                    createdAt = System.currentTimeMillis()
-                )
-                transaction.set(notificationRef, notification)
-            }.await()
+            invitesCollection.document(inviteId).update(mapOf(
+                "status" to InviteStatus.DECLINED.name,
+                "updated_at" to FieldValue.serverTimestamp()
+            )).await()
 
             Result.success(Unit)
         } catch (e: Exception) {
@@ -464,7 +348,7 @@ class InviteRepositoryImpl constructor(
             // Cancelar convite
             invitesCollection.document(inviteId).update(mapOf(
                 "status" to InviteStatus.CANCELLED.name,
-                "responded_at" to FieldValue.serverTimestamp()
+                "updated_at" to FieldValue.serverTimestamp()
             )).await()
 
             Result.success(Unit)

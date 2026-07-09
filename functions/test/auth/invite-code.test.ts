@@ -547,6 +547,148 @@ describe("auth/invite-code apadrinhamento", () => {
     });
   });
 
+  it("onUserCreatedProcessInvite nao processa invite_codes com dono ausente", async () => {
+    store.set("invite_codes/ORPHAN", {
+      user_id: "missing-inviter",
+      inviter_name: "Dono Ausente",
+      active: true,
+    });
+    store.set("users/orphan-user", {
+      email: "orphan@test.com",
+      invited_by_code: "ORPHAN",
+    });
+
+    await firestoreHandlers["users/{userId}"][1]({
+      params: {userId: "orphan-user"},
+      data: {data: () => store.get("users/orphan-user")},
+    });
+
+    expect(store.get("users/orphan-user")).not.toMatchObject({
+      invited_by: "missing-inviter",
+    });
+    expect(store.has("app_invite_redemptions/orphan-user")).toBe(false);
+    expect(store.has("xp_logs/app_invite_missing-inviter_orphan-user")).toBe(false);
+  });
+
+  it("onUserCreatedProcessInvite nao processa quando codigo nao pertence mais ao dono", async () => {
+    store.set("invite_codes/STALE2", {
+      user_id: "inviter-stale-owner",
+      inviter_name: "Dono Antigo",
+      active: true,
+    });
+    store.set("users/inviter-stale-owner", {
+      invite_code: "FRESH2",
+      name: "Dono Atualizado",
+      invite_count: 0,
+      experience_points: 10,
+    });
+    store.set("users/stale-code-user", {
+      email: "stale-code@test.com",
+      invited_by_code: "STALE2",
+    });
+
+    await firestoreHandlers["users/{userId}"][1]({
+      params: {userId: "stale-code-user"},
+      data: {data: () => store.get("users/stale-code-user")},
+    });
+
+    expect(store.get("users/inviter-stale-owner")).toMatchObject({
+      invite_count: 0,
+      experience_points: 10,
+    });
+    expect(store.get("users/stale-code-user")).not.toMatchObject({
+      invited_by: "inviter-stale-owner",
+    });
+    expect(store.has("app_invite_redemptions/stale-code-user")).toBe(false);
+    expect(store.has("xp_logs/app_invite_inviter-stale-owner_stale-code-user")).toBe(false);
+  });
+
+  it("onUserCreatedProcessInvite nao processa se o padrinho sumir durante a transacao", async () => {
+    store.set("users/race-missing-inviter", {
+      invite_code: "RACE01",
+      name: "Padrinho Corrida",
+      invite_count: 0,
+      experience_points: 10,
+    });
+    store.set("users/race-missing-user", {
+      email: "race-missing@test.com",
+      invited_by_code: "RACE01",
+    });
+    firestore.runTransaction.mockImplementationOnce(async (callback) =>
+      callback({
+        get: async (ref: {path: string}) => {
+          if (ref.path === "users/race-missing-inviter") {
+            return {exists: false, data: () => undefined};
+          }
+          return snap(ref.path);
+        },
+        set: (ref: {path: string}, data: Record<string, unknown>) =>
+          applySet(ref.path, data),
+        update: (ref: {path: string}, data: Record<string, unknown>) =>
+          applyUpdate(ref.path, data),
+      })
+    );
+
+    await firestoreHandlers["users/{userId}"][1]({
+      params: {userId: "race-missing-user"},
+      data: {data: () => store.get("users/race-missing-user")},
+    });
+
+    expect(store.get("users/race-missing-user")).not.toMatchObject({
+      invited_by: "race-missing-inviter",
+    });
+    expect(store.has("app_invite_redemptions/race-missing-user")).toBe(false);
+  });
+
+  it("onUserCreatedProcessInvite nao processa se o codigo mudar durante a transacao", async () => {
+    store.set("users/race-mismatch-inviter", {
+      invite_code: "RACE02",
+      name: "Padrinho Atualizado",
+      invite_count: 0,
+      experience_points: 10,
+    });
+    store.set("users/race-mismatch-user", {
+      email: "race-mismatch@test.com",
+      invited_by_code: "RACE02",
+    });
+    firestore.runTransaction.mockImplementationOnce(async (callback) =>
+      callback({
+        get: async (ref: {path: string}) => {
+          if (ref.path === "users/race-mismatch-inviter") {
+            return {
+              exists: true,
+              data: () => ({
+                invite_code: "NEW002",
+                name: "Padrinho Atualizado",
+                invite_count: 0,
+                experience_points: 10,
+              }),
+            };
+          }
+          return snap(ref.path);
+        },
+        set: (ref: {path: string}, data: Record<string, unknown>) =>
+          applySet(ref.path, data),
+        update: (ref: {path: string}, data: Record<string, unknown>) =>
+          applyUpdate(ref.path, data),
+      })
+    );
+
+    await firestoreHandlers["users/{userId}"][1]({
+      params: {userId: "race-mismatch-user"},
+      data: {data: () => store.get("users/race-mismatch-user")},
+    });
+
+    expect(store.get("users/race-mismatch-inviter")).toMatchObject({
+      invite_count: 0,
+      experience_points: 10,
+    });
+    expect(store.get("users/race-mismatch-user")).not.toMatchObject({
+      invited_by: "race-mismatch-inviter",
+    });
+    expect(store.has("app_invite_redemptions/race-mismatch-user")).toBe(false);
+  });
+
   it("onUserCreatedGenerateInviteCode gera codigo com owner para novo usuario", async () => {
     store.set("users/member-3", {
       name: "Carla Criadora",

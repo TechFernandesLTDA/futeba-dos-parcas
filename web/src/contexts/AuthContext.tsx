@@ -531,6 +531,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Sign up with email/password
   const signUp = useCallback(async (email: string, password: string, name: string, inviteCode?: string) => {
     setError(null);
+    let createdAuthUser: FirebaseUser | null = null;
     try {
       const normalizedInviteCode = normalizeInviteCode(inviteCode);
       if (!normalizedInviteCode) {
@@ -548,6 +549,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       };
 
       const result = await createUserWithEmailAndPassword(auth, email, password);
+      createdAuthUser = result.user;
       await updateProfile(result.user, { displayName: name });
 
       // NOTA (#1023): forçar refresh do token ANTES de qualquer escrita no Firestore
@@ -558,13 +560,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         logger.warn('Falha ao forçar refresh de token após cadastro:', tokenErr);
       }
 
-      await createUserDocumentRef.current(result.user, {
+      const created = await createUserDocumentRef.current(result.user, {
         name,
         invited_by_code: inviteValidation.data.inviteCode,
         invite_source: 'email_password',
       });
+      if (!created) {
+        throw new AppAuthError(APP_AUTH_ERROR_CODES.inviteRequired, INVITE_REQUIRED_MESSAGE);
+      }
       pendingInviteRef.current = null;
     } catch (err) {
+      if (createdAuthUser) {
+        try {
+          await createdAuthUser.delete();
+        } catch (deleteErr) {
+          logger.warn('Falha ao remover conta Auth recém-criada após erro no cadastro:', deleteErr);
+        }
+        await signOut(auth).catch((signOutErr) => {
+          logger.warn('Falha ao encerrar sessão após erro no cadastro:', signOutErr);
+        });
+        queryClient.clear();
+      }
       pendingInviteRef.current = null;
       // #3187: mapeia por código (inclui app/invite-*) — nunca mensagem crua
       setError(getAuthErrorMessage(err, t('auth.registerFailed')));

@@ -7,11 +7,11 @@ import {
   limit,
   orderBy,
   query,
+  runTransaction,
   serverTimestamp,
   setDoc,
   Timestamp,
   where,
-  writeBatch,
 } from 'firebase/firestore';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { db } from '../services/firebase';
@@ -148,27 +148,31 @@ export function useLeagueInvites() {
       const memberSnap = await getDoc(doc(db, 'groups', group.id, 'members', target.userId));
       if (memberSnap.exists()) {
         const status = memberSnap.data().status;
-        if (status === 'ACTIVE' || status === null || status === undefined) {
-          throw new Error('Este jogador já faz parte deste grupo.');
+        if (status !== 'REMOVED' && status !== 'INACTIVE') {
+          throw new Error('Este jogador já possui vínculo ativo ou bloqueado neste grupo.');
         }
       }
 
       const pendingQuery = query(
         collection(db, 'group_invites'),
+        where('group_id', '==', group.id),
+        where('invited_user_id', '==', target.userId),
+        where('status', '==', 'PENDING'),
+      );
+      const pending = await getDocs(pendingQuery);
+      if (!pending.empty) {
+        throw new Error('Já existe um convite pendente para este jogador neste grupo.');
+      }
+
+      const senderPendingQuery = query(
+        collection(db, 'group_invites'),
         where('invited_by_id', '==', uid),
         where('group_id', '==', group.id),
         where('status', '==', 'PENDING'),
       );
-      const pending = await getDocs(pendingQuery);
-      const alreadyPending = pending.docs.some((inviteDoc) => {
-        const data = inviteDoc.data();
-        return data.invited_user_id === target.userId || data.invitedUserId === target.userId;
-      });
-      if (alreadyPending) {
-        throw new Error('Já existe um convite pendente para este jogador neste grupo.');
-      }
-      if (pending.size >= MAX_PENDING_GROUP_INVITES) {
-        throw new Error(`Você já tem ${pending.size} convites pendentes neste grupo. Aguarde respostas antes de enviar mais.`);
+      const senderPending = await getDocs(senderPendingQuery);
+      if (senderPending.size >= MAX_PENDING_GROUP_INVITES) {
+        throw new Error(`Você já tem ${senderPending.size} convites pendentes neste grupo. Aguarde respostas antes de enviar mais.`);
       }
 
       await setDoc(doc(collection(db, 'group_invites')), {
@@ -196,64 +200,73 @@ export function useLeagueInvites() {
 
       const confirmationId = `${game.id}_${target.userId}`;
       const confirmationRef = doc(db, 'confirmations', confirmationId);
-      const existingConfirmation = await getDoc(confirmationRef);
-      if (existingConfirmation.exists()) {
+      const summonRef = doc(db, 'game_summons', confirmationId);
+      const pendingSummon = await getDoc(summonRef);
+      if (pendingSummon.exists() && pendingSummon.data().status === 'PENDING') {
         throw new Error('Este jogador já tem presença ou convite para este jogo.');
       }
 
-      const batch = writeBatch(db);
-      const summonRef = doc(collection(db, 'game_summons'));
       const notificationRef = doc(collection(db, 'notifications'));
       const message = `${displayName} chamou você para jogar em ${game.locationName || 'um jogo'}.`;
 
-      batch.set(confirmationRef, {
-        id: confirmationId,
-        game_id: game.id,
-        user_id: target.userId,
-        user_name: target.userName,
-        user_photo: target.userPhoto || '',
-        position: 'FIELD',
-        status: 'PENDING',
-        is_casual_player: false,
-        payment_status: 'PENDING',
-        created_at: serverTimestamp(),
-      });
+      await runTransaction(db, async (transaction) => {
+        const existingConfirmation = await transaction.get(confirmationRef);
+        if (existingConfirmation.exists()) {
+          throw new Error('Este jogador já tem presença ou convite para este jogo.');
+        }
 
-      batch.set(summonRef, {
-        game_id: game.id,
-        group_id: game.groupId || null,
-        user_id: target.userId,
-        user_name: target.userName,
-        summoned_by: uid,
-        summoned_by_name: displayName,
-        position: 'ANY_FIELD',
-        confirmation_position: 'FIELD',
-        status: 'PENDING',
-        game_location: game.locationName || '',
-        game_date: game.date || '',
-        game_time: game.time || '',
-        created_at: serverTimestamp(),
-      });
+        const existingSummon = await transaction.get(summonRef);
+        if (existingSummon.exists() && existingSummon.data().status === 'PENDING') {
+          throw new Error('Este jogador já tem presença ou convite para este jogo.');
+        }
 
-      batch.set(notificationRef, {
-        user_id: target.userId,
-        created_by: uid,
-        type: 'GAME_SUMMON',
-        title: `Convite para jogo: ${game.locationName || 'Futeba'}`,
-        body: message,
-        message,
-        reference_id: game.id,
-        reference_type: 'game',
-        action_type: 'OPEN_GAME',
-        game_id: game.id,
-        group_id: game.groupId || null,
-        sender_id: uid,
-        sender_name: displayName,
-        read: false,
-        created_at: serverTimestamp(),
-      });
+        transaction.set(confirmationRef, {
+          id: confirmationId,
+          game_id: game.id,
+          user_id: target.userId,
+          user_name: target.userName,
+          user_photo: target.userPhoto || '',
+          position: 'FIELD',
+          status: 'PENDING',
+          is_casual_player: false,
+          payment_status: 'PENDING',
+          created_at: serverTimestamp(),
+        });
 
-      await batch.commit();
+        transaction.set(summonRef, {
+          game_id: game.id,
+          group_id: game.groupId || null,
+          user_id: target.userId,
+          user_name: target.userName,
+          summoned_by: uid,
+          summoned_by_name: displayName,
+          position: 'ANY_FIELD',
+          confirmation_position: 'FIELD',
+          status: 'PENDING',
+          game_location: game.locationName || '',
+          game_date: game.date || '',
+          game_time: game.time || '',
+          created_at: serverTimestamp(),
+        });
+
+        transaction.set(notificationRef, {
+          user_id: target.userId,
+          created_by: uid,
+          type: 'GAME_SUMMON',
+          title: `Convite para jogo: ${game.locationName || 'Futeba'}`,
+          body: message,
+          message,
+          reference_id: game.id,
+          reference_type: 'game',
+          action_type: 'OPEN_GAME',
+          game_id: game.id,
+          group_id: game.groupId || null,
+          sender_id: uid,
+          sender_name: displayName,
+          read: false,
+          created_at: serverTimestamp(),
+        });
+      });
       queryClient.invalidateQueries({ queryKey: ['game', game.id] });
       queryClient.invalidateQueries({ queryKey: ['games'], exact: false });
     },
