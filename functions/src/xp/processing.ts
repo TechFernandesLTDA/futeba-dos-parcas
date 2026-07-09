@@ -19,6 +19,10 @@ import {
 } from "../constants";
 import {db} from "../_db";
 import {
+  buildMilestoneBadgeDoc,
+  buildUserBadgeAggregateDoc,
+} from "../badges/user-badge-docs";
+import {
   getLevelForXp,
   getMilestoneXp,
   fitMilestonesWithinGameXpCap,
@@ -750,6 +754,22 @@ export async function processXpIdempotent(
                     .milestonesUnlocked
                 ),
           });
+          for (const milestoneName of data.metadata.milestonesUnlocked) {
+            const badgeRef = db()
+              .collection("user_badges")
+              .doc(`${data.userId}_${milestoneName}`);
+            transaction.set(
+              badgeRef,
+              buildUserBadgeAggregateDoc(
+                data.userId,
+                buildMilestoneBadgeDoc(
+                  milestoneName,
+                  FieldValue.serverTimestamp()
+                )
+              ),
+              {merge: true}
+            );
+          }
         }
 
         // 2.4: Criar XP log com doc ID determinístico (transaction_id)
@@ -1020,6 +1040,22 @@ export async function processXpBatch(
                         .milestonesUnlocked
                     ),
               });
+              for (const milestoneName of data.metadata.milestonesUnlocked) {
+                const badgeRef = db()
+                  .collection("user_badges")
+                  .doc(`${data.userId}_${milestoneName}`);
+                tx.set(
+                  badgeRef,
+                  buildUserBadgeAggregateDoc(
+                    data.userId,
+                    buildMilestoneBadgeDoc(
+                      milestoneName,
+                      FieldValue.serverTimestamp()
+                    )
+                  ),
+                  {merge: true}
+                );
+              }
             }
 
             tx.set(

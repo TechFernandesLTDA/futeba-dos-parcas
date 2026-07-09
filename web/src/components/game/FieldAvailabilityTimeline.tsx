@@ -34,6 +34,8 @@ interface FieldAvailabilityTimelineProps {
   selectedDate: string;
   selectedTime: string;
   onSlotSelect: (date: string, time: string) => void;
+  openingTime?: string;
+  closingTime?: string;
 }
 
 export const FieldAvailabilityTimeline: React.FC<FieldAvailabilityTimelineProps> = ({
@@ -41,8 +43,10 @@ export const FieldAvailabilityTimeline: React.FC<FieldAvailabilityTimelineProps>
   selectedDate,
   selectedTime,
   onSlotSelect,
+  openingTime,
+  closingTime,
 }) => {
-  const { data, loading, error } = useFieldGames(fieldId, 7);
+  const { data, loading, error } = useFieldGames(fieldId, 7, { openingTime, closingTime });
   const { byDate } = data;
   const isMobile = useMediaQuery('(max-width:600px)');
   const [expanded, setExpanded] = useState(false);
@@ -59,9 +63,12 @@ export const FieldAvailabilityTimeline: React.FC<FieldAvailabilityTimelineProps>
     return day === selectedDate && selectedMinutes === slotStart;
   };
 
+  const dayStart = openingTime ? parseTime(openingTime) : HOUR_START * 60;
+  const rawDayEnd = closingTime ? parseTime(closingTime) : HOUR_END * 60;
+  const dayEnd = rawDayEnd > dayStart ? rawDayEnd : HOUR_END * 60;
   const slots = Array.from(
-    { length: (HOUR_END - HOUR_START) * 2 },
-    (_, i) => HOUR_START * 60 + i * 30,
+    { length: Math.max(0, (dayEnd - dayStart) / 30) },
+    (_, i) => dayStart + i * 30,
   );
   const selectedDay = selectedDate || format(new Date(), 'yyyy-MM-dd');
   const quickFreeSlots = slots

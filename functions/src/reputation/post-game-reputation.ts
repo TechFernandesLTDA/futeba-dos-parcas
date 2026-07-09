@@ -2,14 +2,17 @@ import {FieldValue, type Firestore} from "firebase-admin/firestore";
 import {onCall, HttpsError} from "firebase-functions/v2/https";
 import {logger} from "firebase-functions/v2";
 import {db} from "../_db";
-import {FUNCTION_REGION} from "../constants";
+import {FUNCTION_REGION, MVP_VOTE_WINDOW_HOURS} from "../constants";
 import {ERROR_MSGS} from "../error-messages";
+import {getGameDate} from "../game/helpers";
 import {checkRateLimit} from "../middleware/rate-limiter";
 import {requireProfileComplete} from "../middleware/require-profile-complete";
 
 const MIN_SCORE = 1;
 const MAX_SCORE = 5;
 const COMMENT_MAX_LENGTH = 160;
+const POST_GAME_REPUTATION_WINDOW_MS =
+  MVP_VOTE_WINDOW_HOURS * 60 * 60 * 1000;
 
 interface SubmitPostGameReputationRequest {
   gameId: string;
@@ -426,6 +429,16 @@ export const submitPostGameReputation = onCall(
         throw new HttpsError(
           "failed-precondition",
           ERROR_MSGS.GAME_NOT_FINALIZED
+        );
+      }
+      const gameEndedAt = getGameDate(game as never);
+      const reputationDeadlineMs =
+        gameEndedAt.getTime() +
+        POST_GAME_REPUTATION_WINDOW_MS;
+      if (Date.now() > reputationDeadlineMs) {
+        throw new HttpsError(
+          "failed-precondition",
+          "A janela para enviar ou editar reputacao deste jogo ja encerrou."
         );
       }
 

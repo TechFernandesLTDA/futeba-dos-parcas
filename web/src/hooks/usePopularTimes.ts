@@ -9,30 +9,27 @@ interface PopularTime {
   percentage: number;
 }
 
-async function fetchPopularTimes(fieldId: string): Promise<PopularTime[]> {
-  if (!fieldId) return [];
+interface PopularTimeGame {
+  status?: string;
+  time?: string;
+}
 
-  const gamesRef = collection(db, 'games');
-  const q = query(
-    gamesRef,
-    where('field_id', '==', fieldId),
-    where('status', '!=', 'CANCELLED'),
-    orderBy('status'),
-    orderBy('date', 'desc'),
-    limit(30),
-  );
-
-  const snapshot = await getDocs(q);
+export function buildPopularTimes(games: PopularTimeGame[]): PopularTime[] {
   const timeCounts = new Map<string, number>();
   let total = 0;
 
-  snapshot.docs.forEach((d) => {
-    const data = d.data();
-    const time = data.time as string;
-    if (time) {
-      timeCounts.set(time, (timeCounts.get(time) || 0) + 1);
-      total++;
+  games.forEach((game) => {
+    if (game.status === 'CANCELLED') {
+      return;
     }
+
+    const time = game.time;
+    if (!time) {
+      return;
+    }
+
+    timeCounts.set(time, (timeCounts.get(time) || 0) + 1);
+    total += 1;
   });
 
   return Array.from(timeCounts.entries())
@@ -43,6 +40,21 @@ async function fetchPopularTimes(fieldId: string): Promise<PopularTime[]> {
     }))
     .sort((a, b) => b.count - a.count)
     .slice(0, 3);
+}
+
+async function fetchPopularTimes(fieldId: string): Promise<PopularTime[]> {
+  if (!fieldId) return [];
+
+  const gamesRef = collection(db, 'games');
+  const q = query(
+    gamesRef,
+    where('field_id', '==', fieldId),
+    orderBy('date', 'desc'),
+    limit(30),
+  );
+
+  const snapshot = await getDocs(q);
+  return buildPopularTimes(snapshot.docs.map((doc) => doc.data() as PopularTimeGame));
 }
 
 export function usePopularTimes(fieldId: string) {

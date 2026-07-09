@@ -9,7 +9,7 @@ import {
   query,
   where,
   serverTimestamp,
-  updateDoc,
+  runTransaction,
 } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { useAuth } from '../contexts/AuthContext';
@@ -215,10 +215,23 @@ export function usePendingJoinRequests(groupId: string | undefined) {
     async (requesterId: string) => {
       if (!groupId || !uid) return;
       try {
-        await updateDoc(doc(db, `groups/${groupId}/join_requests/${requesterId}`), {
-          status: 'APPROVED',
-          responded_at: serverTimestamp(),
-          responded_by: uid,
+        const requestRef = doc(db, `groups/${groupId}/join_requests/${requesterId}`);
+        await runTransaction(db, async (transaction) => {
+          const requestSnap = await transaction.get(requestRef);
+          if (!requestSnap.exists()) {
+            throw new Error('Solicitação não encontrada.');
+          }
+
+          const currentStatus = requestSnap.data()?.status;
+          if (currentStatus !== 'PENDING') {
+            throw new Error('Esta solicitação já foi respondida.');
+          }
+
+          transaction.update(requestRef, {
+            status: 'APPROVED',
+            responded_at: serverTimestamp(),
+            responded_by: uid,
+          });
         });
       } catch (e) {
         const err = e as Error;
@@ -234,10 +247,23 @@ export function usePendingJoinRequests(groupId: string | undefined) {
     async (requesterId: string) => {
       if (!groupId || !uid) return;
       try {
-        await updateDoc(doc(db, `groups/${groupId}/join_requests/${requesterId}`), {
-          status: 'REJECTED',
-          responded_at: serverTimestamp(),
-          responded_by: uid,
+        const requestRef = doc(db, `groups/${groupId}/join_requests/${requesterId}`);
+        await runTransaction(db, async (transaction) => {
+          const requestSnap = await transaction.get(requestRef);
+          if (!requestSnap.exists()) {
+            throw new Error('Solicitação não encontrada.');
+          }
+
+          const currentStatus = requestSnap.data()?.status;
+          if (currentStatus !== 'PENDING') {
+            throw new Error('Esta solicitação já foi respondida.');
+          }
+
+          transaction.update(requestRef, {
+            status: 'REJECTED',
+            responded_at: serverTimestamp(),
+            responded_by: uid,
+          });
         });
       } catch (e) {
         const err = e as Error;

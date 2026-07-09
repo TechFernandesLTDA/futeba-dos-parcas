@@ -28,7 +28,7 @@ import {
   Delete as DeleteIcon,
   Schedule as ScheduleIcon,
 } from '@mui/icons-material';
-import { collection, query, where, orderBy, onSnapshot, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, where, orderBy, onSnapshot, addDoc, updateDoc, deleteDoc, doc, getDocs, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useToast } from '../../contexts/ToastContext';
 import { LoadingState } from '../../components/common/GameCard';
@@ -39,6 +39,7 @@ import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useTranslation } from 'react-i18next';
 import { createLogger } from '../../utils/logger';
 import { getFirestoreErrorMessage } from '../../utils/firebaseErrors';
+import { hasDuplicateScheduleSlot } from '../../utils/gameScheduleValidation';
 
 const logger = createLogger('SchedulesScreen');
 
@@ -152,6 +153,23 @@ export const SchedulesScreen: React.FC = () => {
     if (!groupId || !newScheduleName.trim() || !newScheduleTime) return;
     setActionLoading(true);
     try {
+      const existingSnapshot = await getDocs(
+        query(collection(db, 'schedules'), where('group_id', '==', groupId)),
+      );
+      const existingSlots = existingSnapshot.docs.map((scheduleDoc) => {
+        const data = scheduleDoc.data();
+        return {
+          dayOfWeek: Number(data.day_of_week),
+          time: String(data.time ?? ''),
+          isActive: data.is_active !== false,
+        };
+      });
+
+      if (hasDuplicateScheduleSlot(existingSlots, newScheduleDay, newScheduleTime)) {
+        showError(t('feedback.schedules.duplicateSlot'));
+        return;
+      }
+
       await addDoc(collection(db, 'schedules'), {
         group_id: groupId,
         name: newScheduleName.trim(),

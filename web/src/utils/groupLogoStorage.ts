@@ -1,4 +1,9 @@
-import { getDownloadURL, ref as storageRef, type FirebaseStorage } from 'firebase/storage';
+import {
+  deleteObject,
+  getDownloadURL,
+  ref as storageRef,
+  type FirebaseStorage,
+} from 'firebase/storage';
 import { uploadImageWithStorageAuthRetry } from './storageUpload';
 
 const GROUP_LOGO_EXTENSION_BY_TYPE: Record<string, string> = {
@@ -17,8 +22,20 @@ export async function uploadGroupLogo(
   userId: string,
   groupId: string,
   file: File,
+  previousPhotoUrl?: string | null,
 ) {
   const groupPhotoRef = storageRef(storage, getGroupLogoStoragePath(userId, groupId, file));
   await uploadImageWithStorageAuthRetry(groupPhotoRef, file);
-  return getDownloadURL(groupPhotoRef);
+  const photoUrl = await getDownloadURL(groupPhotoRef);
+
+  if (previousPhotoUrl && previousPhotoUrl !== photoUrl) {
+    await deleteObject(storageRef(storage, previousPhotoUrl)).catch((err) => {
+      const code = typeof err === 'object' && err && 'code' in err ? String(err.code) : '';
+      if (code !== 'storage/object-not-found') {
+        throw err;
+      }
+    });
+  }
+
+  return photoUrl;
 }

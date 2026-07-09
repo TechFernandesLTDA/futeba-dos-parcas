@@ -119,10 +119,10 @@ export const GroupLeagueScreen: React.FC = () => {
     return (
       <PageContainer maxWidth="dashboard">
         <Alert severity="warning" sx={{ mb: 2 }}>
-          Você precisa ser membro do grupo para ver a liga.
+          {t('feedback.app.mustBeGroupMember')}
         </Alert>
         <Button startIcon={<BackIcon />} onClick={goBack}>
-          Voltar
+          {t('common.back')}
         </Button>
       </PageContainer>
     );
@@ -131,7 +131,7 @@ export const GroupLeagueScreen: React.FC = () => {
   return (
     <Box sx={{ pb: 4 }}>
       <ScreenHeader
-        title="Liga do Grupo"
+        title={t('groupDetail.groupLeague')}
         onBack={goBack}
         actions={
           <IconButton onClick={() => refetch()} aria-label={t('a11y.refresh')} size="small">
@@ -155,7 +155,7 @@ export const GroupLeagueScreen: React.FC = () => {
               {seasons.map((s) => (
                 <MenuItem key={s.id} value={s.id}>
                   {s.name}
-                  {s.isActive ? ' (Ativa)' : ''}
+                  {s.isActive ? t('league.activeSeasonSuffix') : ''}
                 </MenuItem>
               ))}
             </Select>
@@ -212,7 +212,10 @@ export const GroupLeagueScreen: React.FC = () => {
                         {currentUserStanding.userName}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
-                        {currentUserStanding.gamesPlayed} jogos • {currentUserStanding.wins}V
+                        {t('league.groupStandingSummary', {
+                          games: currentUserStanding.gamesPlayed,
+                          wins: currentUserStanding.wins,
+                        })}
                       </Typography>
                     </Box>
                     <Typography variant="h6" fontWeight={700} color="primary">
@@ -306,7 +309,7 @@ const GroupLeagueItem = React.memo(function GroupLeagueItem({
     >
       <CardContent sx={{ py: 1.5 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Tooltip title={`${position}ª posição`} arrow placement="top">
+          <Tooltip title={t('league.positionTooltipDefault', { position })} arrow placement="top">
             <Box
               sx={{
                 width: 32,
@@ -336,17 +339,18 @@ const GroupLeagueItem = React.memo(function GroupLeagueItem({
                 {standing.userName}
               </Typography>
               <TeamBadge teamId={standing.favoriteTeam} size={18} />
-              {standing.isCurrentUser && <Chip label="Você" size="small" color="primary" />}
+              {standing.isCurrentUser && <Chip label={t('common.you')} size="small" color="primary" />}
             </Box>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
               <Typography variant="caption" color="text.secondary">
-                {standing.gamesPlayed}J
+                {standing.gamesPlayed}{t('league.gamesShort')}
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                {standing.wins}V {standing.draws}E {standing.losses}D
+                {standing.wins}{t('league.winsShort')} {standing.draws}{t('league.drawsShort')}{' '}
+                {standing.losses}{t('league.lossesShort')}
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                {standing.goalsScored}G
+                {standing.goalsScored}{t('league.goalsShort')}
               </Typography>
             </Box>
           </Box>
@@ -356,11 +360,16 @@ const GroupLeagueItem = React.memo(function GroupLeagueItem({
               {standing.points}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              pts
+              {t('league.pointsShort')}
             </Typography>
           </Box>
 
-          <IconButton onClick={handleToggle} aria-label={isExpanded ? 'Recolher' : 'Expandir'}>
+          <IconButton
+            onClick={handleToggle}
+            aria-label={t(isExpanded ? 'league.collapsePlayerAria' : 'league.togglePlayerAria', {
+              name: standing.userName,
+            })}
+          >
             {isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
           </IconButton>
         </Box>
@@ -368,14 +377,14 @@ const GroupLeagueItem = React.memo(function GroupLeagueItem({
         <Collapse in={isExpanded}>
           <Divider sx={{ my: 1.5 }} />
           <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1.5, textAlign: 'center' }}>
-            <StatBox label="Vitórias" value={standing.wins} color={theme.palette.success.main} />
-            <StatBox label="Empates" value={standing.draws} color={theme.palette.warning.main} />
-            <StatBox label="Derrotas" value={standing.losses} color={theme.palette.error.main} />
-            <StatBox label="Gols Pró" value={standing.goalsScored} color={theme.palette.primary.main} />
-            <StatBox label="Gols Contra" value={standing.goalsConceded} color={theme.palette.error.main} />
-            <StatBox label="Saldo" value={standing.goalDifference >= 0 ? `+${standing.goalDifference}` : standing.goalDifference} color={standing.goalDifference >= 0 ? theme.palette.success.main : theme.palette.error.main} />
+            <StatBox label={t('statistics.wins')} value={standing.wins} color={theme.palette.success.main} />
+            <StatBox label={t('statistics.draws')} value={standing.draws} color={theme.palette.warning.main} />
+            <StatBox label={t('statistics.losses')} value={standing.losses} color={theme.palette.error.main} />
+            <StatBox label={t('league.goalsFor')} value={standing.goalsScored} color={theme.palette.primary.main} />
+            <StatBox label={t('league.goalsAgainst')} value={standing.goalsConceded} color={theme.palette.error.main} />
+            <StatBox label={t('league.saldo')} value={standing.goalDifference >= 0 ? `+${standing.goalDifference}` : standing.goalDifference} color={standing.goalDifference >= 0 ? theme.palette.success.main : theme.palette.error.main} />
             <StatBox label={t('statistics.winRate')} value={`${winRate}%`} color={theme.palette.info.main} />
-            <StatBox label="MVPs" value={standing.mvpCount} color={theme.palette.secondary.main} />
+            <StatBox label={t('league.mvpCount')} value={standing.mvpCount} color={theme.palette.secondary.main} />
           </Box>
         </Collapse>
       </CardContent>

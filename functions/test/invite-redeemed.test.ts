@@ -13,6 +13,9 @@
  */
 
 const mockTxSet = jest.fn();
+const mockTxGet = jest.fn(
+  (ref: {get: () => Promise<unknown>}) => ref.get()
+);
 
 const mockMemberGet = jest.fn().mockResolvedValue({exists: false});
 const mockGroupGet = jest.fn().mockResolvedValue({
@@ -36,7 +39,7 @@ const mockUserGet = jest.fn().mockResolvedValue({
 const mockRunTransaction = jest.fn(
   async (callback: (tx: Record<string, unknown>) => Promise<void>) => {
     const tx = {
-      get: jest.fn((ref: {get: () => Promise<unknown>}) => ref.get()),
+      get: mockTxGet,
       set: mockTxSet,
     };
     await callback(tx);
@@ -45,12 +48,12 @@ const mockRunTransaction = jest.fn(
 
 const mockDoc = jest.fn((path: string) => {
   if (path?.includes("/members/")) {
-    return {get: mockMemberGet};
+    return {path, get: mockMemberGet};
   }
   if (path?.startsWith("users/")) {
-    return {get: mockUserGet};
+    return {path, get: mockUserGet};
   }
-  return {get: mockGroupGet};
+  return {path, get: mockGroupGet};
 });
 
 jest.mock("firebase-admin", () => {
@@ -112,6 +115,9 @@ const pastExpiry = {toMillis: () => Date.now() - 86400000};
 describe("onInviteRedeemed", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockTxGet.mockImplementation(
+      (ref: {get: () => Promise<unknown>}) => ref.get()
+    );
     mockMemberGet.mockResolvedValue({exists: false});
     mockGroupGet.mockResolvedValue({
       exists: true,
@@ -133,7 +139,7 @@ describe("onInviteRedeemed", () => {
     mockRunTransaction.mockImplementation(
       async (callback: (tx: Record<string, unknown>) => Promise<void>) => {
         const tx = {
-          get: jest.fn((ref: {get: () => Promise<unknown>}) => ref.get()),
+          get: mockTxGet,
           set: mockTxSet,
         };
         await callback(tx);
@@ -228,6 +234,54 @@ describe("onInviteRedeemed", () => {
     await (onInviteRedeemed as unknown as
       (e: MockEvent) => Promise<void>)(event);
     expect(mockRunTransaction).not.toHaveBeenCalled();
+    expect(mockTxSet).not.toHaveBeenCalled();
+  });
+
+  it("grupo soft-deletado aborta a redenção do convite", async () => {
+    mockGroupGet.mockResolvedValue({
+      exists: true,
+      data: () => ({
+        name: "Grupo Privado",
+        photo_url: "https://example.com/g.jpg",
+        status: "DELETED",
+        deleted_at: {toDate: () => new Date()},
+      }),
+    });
+
+    const event = makeEvent(
+      {used: false, group_id: "g1", used_by: "joiner-uid"},
+      {used: true, group_id: "g1", used_by: "joiner-uid",
+        expires_at: futureExpiry}
+    );
+    await (onInviteRedeemed as unknown as
+      (e: MockEvent) => Promise<void>)(event);
+
+    expect(mockRunTransaction).not.toHaveBeenCalled();
+    expect(mockTxSet).not.toHaveBeenCalled();
+  });
+
+  it("não cria member quando o grupo entra em DELETING durante a transação", async () => {
+    mockTxGet.mockImplementation((ref: {path: string; get: () => Promise<unknown>}) => {
+      if (ref.path === "groups/g1") {
+        return Promise.resolve({
+          exists: true,
+          data: () => ({name: "Grupo Privado", status: "DELETING"}),
+        });
+      }
+      return ref.get();
+    });
+    const event = makeEvent(
+      {used: false, group_id: "g1", used_by: "joiner-uid"},
+      {used: true, group_id: "g1", used_by: "joiner-uid", expires_at: futureExpiry}
+    );
+
+    await (onInviteRedeemed as unknown as
+      (e: MockEvent) => Promise<void>)(event);
+
+    expect(mockRunTransaction).toHaveBeenCalled();
+    expect(mockTxGet).toHaveBeenCalledWith(
+      expect.objectContaining({path: "groups/g1"})
+    );
     expect(mockTxSet).not.toHaveBeenCalled();
   });
 

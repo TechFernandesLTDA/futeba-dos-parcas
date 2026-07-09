@@ -3,11 +3,9 @@ import { renderHook, act, waitFor } from '@testing-library/react';
 
 const mockGetToken = vi.fn();
 const mockOnMessage = vi.fn();
-const mockUpdateDoc = vi.fn();
-const mockGetDoc = vi.fn();
-const mockDoc = vi.fn();
-const mockArrayUnion = vi.fn();
-const mockArrayRemove = vi.fn();
+const mockRegisterBrowserFcmToken = vi.fn();
+const mockShouldShowForegroundNotification = vi.fn(() => true);
+const mockShowError = vi.fn();
 
 vi.mock('firebase/messaging', () => ({
   getMessaging: vi.fn(() => ({})),
@@ -18,16 +16,11 @@ vi.mock('firebase/messaging', () => ({
 
 vi.mock('../services/firebaseMessaging', () => ({
   messagingPromise: Promise.resolve({}),
+  registerBrowserFcmToken: (...args: unknown[]) => mockRegisterBrowserFcmToken(...args),
+  shouldShowForegroundNotification: (...args: unknown[]) => mockShouldShowForegroundNotification(...args),
 }));
 
 vi.mock('firebase/firestore', () => ({
-  doc: (...args: unknown[]) => mockDoc(...args),
-  updateDoc: (...args: unknown[]) => mockUpdateDoc(...args),
-  getDoc: (...args: unknown[]) => mockGetDoc(...args),
-  arrayUnion: (...args: unknown[]) => mockArrayUnion(...args),
-  arrayRemove: (...args: unknown[]) => mockArrayRemove(...args),
-  // runTransaction é usado no fluxo de token FCM
-  runTransaction: vi.fn().mockResolvedValue(undefined),
   limit: vi.fn((...args) => args[0]),
   serverTimestamp: vi.fn(() => ({ _seconds: 0 })),
 }));
@@ -50,6 +43,10 @@ vi.mock('../contexts/AuthContext', () => ({
   useAuth: () => ({ user: { id: 'user-1' } }),
 }));
 
+vi.mock('../contexts/ToastContext', () => ({
+  useToast: () => ({ showError: mockShowError }),
+}));
+
 import { useNotificationPermission } from './useNotificationPermission';
 
 describe('useNotificationPermission', () => {
@@ -57,8 +54,8 @@ describe('useNotificationPermission', () => {
     vi.clearAllMocks();
     mockGetToken.mockResolvedValue(null);
     mockOnMessage.mockReturnValue(vi.fn());
-    mockUpdateDoc.mockResolvedValue(undefined);
-    mockGetDoc.mockResolvedValue({ exists: () => false });
+    mockRegisterBrowserFcmToken.mockResolvedValue(null);
+    mockShouldShowForegroundNotification.mockReturnValue(true);
   });
 
   it('retorna estado de permissão padrão', () => {
@@ -163,5 +160,27 @@ describe('useNotificationPermission', () => {
     });
 
     expect(result.current.permission).toBe('granted');
+  });
+
+  it('mostra feedback quando a permissão é negada', async () => {
+    const mockRequestPermission = vi.fn().mockResolvedValue('denied');
+    Object.defineProperty(globalThis, 'Notification', {
+      value: {
+        permission: 'default',
+        requestPermission: mockRequestPermission,
+      },
+      writable: true,
+    });
+
+    const { result } = renderHook(() => useNotificationPermission());
+
+    await act(async () => {
+      await result.current.requestPermission();
+    });
+
+    expect(mockShowError).toHaveBeenCalledWith(
+      'As notificações foram bloqueadas no navegador. Libere a permissão para receber alertas.',
+    );
+    expect(result.current.permission).toBe('denied');
   });
 });

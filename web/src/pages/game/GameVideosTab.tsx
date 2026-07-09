@@ -28,12 +28,14 @@ import {
   orderBy,
   query,
   serverTimestamp,
+  updateDoc,
   where,
 } from 'firebase/firestore';
 import {
   deleteObject,
   getDownloadURL,
   ref as storageRef,
+  type UploadTask,
   uploadBytesResumable,
 } from 'firebase/storage';
 import { db } from '../../services/firebase';
@@ -93,6 +95,8 @@ export const GameVideosTab: React.FC<GameVideosTabProps> = ({
   const { showSuccess, showError } = useToast();
   const showErrorRef = useRef(showError);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const uploadTaskRef = useRef<UploadTask | null>(null);
+  const mountedRef = useRef(true);
 
   const [videos, setVideos] = useState<GameVideo[]>([]);
   const [loading, setLoading] = useState(true);
@@ -101,6 +105,7 @@ export const GameVideosTab: React.FC<GameVideosTabProps> = ({
   const [uploadProgress, setUploadProgress] = useState(0);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [caption, setCaption] = useState('');
+  const [thumbnailUrls, setThumbnailUrls] = useState<Record<string, string>>({});
 
   showErrorRef.current = showError;
   const activeVideoCount = videos.filter((video) => video.status !== 'REJECTED').length;
@@ -108,6 +113,14 @@ export const GameVideosTab: React.FC<GameVideosTabProps> = ({
   const hasReachedGameLimit = activeVideoCount >= MAX_VIDEOS_PER_GAME;
   const hasReachedUserLimit = userVideoCount >= MAX_VIDEOS_PER_USER_PER_GAME;
   const canUpload = isFinished && (isConfirmedPlayer || canManage) && !hasReachedGameLimit && !hasReachedUserLimit;
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      uploadTaskRef.current?.cancel();
+    };
+  }, []);
 
   useEffect(() => {
     setLoading(true);
@@ -154,6 +167,32 @@ export const GameVideosTab: React.FC<GameVideosTabProps> = ({
     return () => unsubscribe();
   }, [gameId, t]);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadThumbnailUrls = async () => {
+      const nextUrls: Record<string, string> = {};
+      await Promise.all(videos.map(async (video) => {
+        if (!video.thumbnailPath) return;
+        try {
+          nextUrls[video.id] = await getDownloadURL(storageRef(storage, video.thumbnailPath));
+        } catch (err) {
+          logger.warn('Failed to resolve video thumbnail URL:', err);
+        }
+      }));
+
+      if (!cancelled) {
+        setThumbnailUrls(nextUrls);
+      }
+    };
+
+    void loadThumbnailUrls();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [videos]);
+
   const validateVideo = async (file: File) => {
     if (file.type !== 'video/mp4') {
       throw new Error(t('gameVideos.invalidType'));
@@ -174,10 +213,12 @@ export const GameVideosTab: React.FC<GameVideosTabProps> = ({
 
     setUploading(true);
     setUploadProgress(0);
+    let uploadedPath: string | null = null;
     try {
       const { cleanCaption } = await validateVideo(file);
       const path = `games/${gameId}/videos/${currentUser.uid}/${safeVideoFileName(file)}`;
       const fileRef = storageRef(storage, path);
+      uploadedPath = path;
       const uploadTask = uploadBytesResumable(fileRef, file, {
         contentType: 'video/mp4',
         customMetadata: {
@@ -185,17 +226,20 @@ export const GameVideosTab: React.FC<GameVideosTabProps> = ({
           uploadedBy: currentUser.uid,
         },
       });
+      uploadTaskRef.current = uploadTask;
 
       await new Promise<void>((resolve, reject) => {
         uploadTask.on(
           'state_changed',
           (snapshot) => {
+            if (!mountedRef.current) return;
             setUploadProgress(Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100));
           },
           reject,
           () => resolve(),
         );
       });
+      uploadTaskRef.current = null;
 
       const downloadUrl = await getDownloadURL(fileRef);
       await addDoc(collection(db, 'game_videos'), {
@@ -217,15 +261,31 @@ export const GameVideosTab: React.FC<GameVideosTabProps> = ({
         updated_at: serverTimestamp(),
       });
 
-      setCaption('');
-      showSuccess(t('gameVideos.uploadSuccess'));
+      if (mountedRef.current) {
+        setCaption('');
+        showSuccess(t('gameVideos.uploadSuccess'));
+      }
     } catch (err) {
+      uploadTaskRef.current = null;
+      const code = typeof err === 'object' && err && 'code' in err ? String(err.code) : '';
+      if (code === 'storage/canceled') {
+        return;
+      }
+      if (uploadedPath) {
+        await deleteObject(storageRef(storage, uploadedPath)).catch((storageErr) => {
+          logger.warn('Failed to clean orphaned game video upload:', storageErr);
+        });
+      }
       logger.error('Error uploading game video:', err);
-      showError(err instanceof Error && !('code' in err) ? err.message : getFirestoreErrorMessage(err, t('gameVideos.uploadError')));
+      if (mountedRef.current) {
+        showError(err instanceof Error && !('code' in err) ? err.message : getFirestoreErrorMessage(err, t('gameVideos.uploadError')));
+      }
     } finally {
-      setUploading(false);
-      setUploadProgress(0);
-      if (fileInputRef.current) fileInputRef.current.value = '';
+      if (mountedRef.current) {
+        setUploading(false);
+        setUploadProgress(0);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+      }
     }
   };
 
@@ -242,12 +302,33 @@ export const GameVideosTab: React.FC<GameVideosTabProps> = ({
 
     setDeletingId(video.id);
     try {
-      await deleteDoc(doc(db, 'game_videos', video.id));
       if (video.storagePath) {
         await deleteObject(storageRef(storage, video.storagePath)).catch((storageErr) => {
-          logger.warn('Failed to delete video storage object:', storageErr);
+          const code = typeof storageErr === 'object' && storageErr && 'code' in storageErr ? String(storageErr.code) : '';
+          if (code !== 'storage/object-not-found') {
+            throw storageErr;
+          }
         });
       }
+      if (video.thumbnailPath) {
+        await deleteObject(storageRef(storage, video.thumbnailPath)).catch((storageErr) => {
+          const code = typeof storageErr === 'object' && storageErr && 'code' in storageErr ? String(storageErr.code) : '';
+          if (code !== 'storage/object-not-found') {
+            throw storageErr;
+          }
+        });
+      }
+      await deleteDoc(doc(db, 'game_videos', video.id)).catch(async (deleteErr) => {
+        await updateDoc(doc(db, 'game_videos', video.id), {
+          url: '',
+          storage_path: null,
+          thumbnail_path: null,
+          updated_at: serverTimestamp(),
+        }).catch((recoveryErr) => {
+          logger.warn('Failed to scrub game video document after storage deletion:', recoveryErr);
+        });
+        throw deleteErr;
+      });
       showSuccess(t('gameVideos.deleteSuccess'));
     } catch (err) {
       logger.error('Error deleting game video:', err);
@@ -337,7 +418,7 @@ export const GameVideosTab: React.FC<GameVideosTabProps> = ({
                         <Box
                           component="video"
                           src={video.url}
-                          poster={undefined}
+                          poster={thumbnailUrls[video.id]}
                           muted
                           controls
                           playsInline

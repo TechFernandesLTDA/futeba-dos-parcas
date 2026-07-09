@@ -46,6 +46,7 @@ import { useToast } from '../../contexts';
 import { useTranslation } from 'react-i18next';
 import { isLookingForGameToday } from '../../utils/lookingForGameToday';
 import { getPrefixSearchUpperBound } from './searchPrefixes';
+import { buildPublicGroupSearchQuery } from './searchQueries';
 
 const logger = createLogger('SearchPanel');
 
@@ -196,7 +197,8 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
           limit(10),
         ));
         snap.docs.forEach((d) => {
-          const data = snakeToCamel(d.data()) as Record<string, unknown>;
+          const raw = d.data() as Record<string, unknown>;
+          const data = snakeToCamel(raw) as Record<string, unknown>;
           pushUniqueResult({
             id: d.id, type: 'user',
             name: (data.name as string) || 'Jogador',
@@ -208,15 +210,10 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
       }
 
       if (tab === 0 || tab === 2) {
-        const snap = await getDocs(query(
-          collection(db, 'groups'),
-          where('name', '>=', searchTerm),
-          where('name', '<=', prefixUpperBound),
-          orderBy('name'),
-          limit(10),
-        ));
+        const snap = await getDocs(buildPublicGroupSearchQuery(searchTerm, prefixUpperBound));
         snap.docs.forEach((d) => {
-          const data = snakeToCamel(d.data()) as Record<string, unknown>;
+          const raw = d.data() as Record<string, unknown>;
+          const data = snakeToCamel(raw) as Record<string, unknown>;
           pushUniqueResult({
             id: d.id, type: 'group',
             name: (data.name as string) || 'Grupo',
@@ -251,8 +248,9 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
           }
 
           snapshotResult.value.docs.forEach((d) => {
-            const data = snakeToCamel(d.data()) as Record<string, unknown>;
-            const loc = (data.locationName as string | undefined) || (d.data().location_name as string | undefined);
+            const raw = d.data() as Record<string, unknown>;
+            const data = snakeToCamel(raw) as Record<string, unknown>;
+            const loc = (data.locationName as string | undefined) || (raw.location_name as string | undefined);
             pushUniqueResult({
               id: d.id,
               type: 'game',

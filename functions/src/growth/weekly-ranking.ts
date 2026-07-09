@@ -1,7 +1,7 @@
 import {onSchedule} from "firebase-functions/v2/scheduler";
 import {logger} from "firebase-functions/v2";
 import * as admin from "firebase-admin";
-import {FieldValue, Timestamp} from "firebase-admin/firestore";
+import {FieldPath, FieldValue, Timestamp} from "firebase-admin/firestore";
 import {FUNCTION_REGION} from "../constants";
 import {sendNotificationToUsers, NotificationType} from "../notifications/helpers";
 
@@ -279,6 +279,7 @@ export const processWeeklyRanking = onSchedule(
       const DREAM_TEAM_PAGE_LIMIT = 500;
       while (true) {
         let dtQuery = db().collectionGroup("dream_team")
+          .orderBy(FieldPath.documentId())
           .limit(DREAM_TEAM_PAGE_LIMIT);
         if (lastDoc) {
           dtQuery = dtQuery.startAfter(lastDoc);

@@ -65,6 +65,7 @@ import {
   isPublicLocationOpenAt,
   parseHourlyPriceFilter,
 } from './publicLocationFilters';
+import { getLocationMapCenter } from './locationMapCenter';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useToast } from '../../contexts/ToastContext';
@@ -88,10 +89,11 @@ function getFieldTypeLabel(type?: FieldType) {
   return FIELD_TYPE_CONFIG[type || 'OUTROS']?.label || FIELD_TYPE_CONFIG.OUTROS.label;
 }
 
-function LocationsMapView({ locations, selectedLocation, onLocationSelect }: {
+function LocationsMapView({ locations, selectedLocation, onLocationSelect, mapCenter }: {
   locations: Location[];
   selectedLocation: Location | null;
   onLocationSelect: (loc: Location | null) => void;
+  mapCenter: { lat: number; lng: number };
 }) {
   const { t } = useTranslation();
   const theme = useTheme();
@@ -124,11 +126,7 @@ function LocationsMapView({ locations, selectedLocation, onLocationSelect }: {
   return (
     <GoogleMap
       mapContainerStyle={{ width: '100%', height: '100%' }}
-      center={
-        locations.length > 0 && locations[0].latitude
-          ? { lat: locations[0].latitude, lng: locations[0].longitude || 0 }
-          : { lat: -23.55, lng: -46.63 }
-      }
+      center={mapCenter}
       zoom={12}
     >
       {locations
@@ -280,6 +278,10 @@ export const LocationsMapScreen: React.FC = () => {
     filters,
     publicLocationMetrics,
   ), [filters, locations, publicLocationMetrics]);
+  const mapCenter = useMemo(
+    () => getLocationMapCenter(filteredLocations, userPosition),
+    [filteredLocations, userPosition],
+  );
 
   const activeFilterCount = countActivePublicLocationFilters(filters);
   const maxPriceCents = parseHourlyPriceFilter(filters.maxHourlyPrice);
@@ -492,7 +494,12 @@ export const LocationsMapScreen: React.FC = () => {
 
       {/* Mapa */}
       <Box sx={{ height: { xs: 240, md: 360 }, position: 'relative' }}>
-        <LocationsMapView locations={filteredLocations} selectedLocation={selectedLocation} onLocationSelect={setSelectedLocation} />
+        <LocationsMapView
+          locations={filteredLocations}
+          selectedLocation={selectedLocation}
+          onLocationSelect={setSelectedLocation}
+          mapCenter={mapCenter}
+        />
       </Box>
 
       <PageContainer maxWidth="list">

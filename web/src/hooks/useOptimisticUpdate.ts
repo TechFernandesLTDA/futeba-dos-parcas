@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react';
+import { useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '../contexts/ToastContext';
 import { useTranslation } from 'react-i18next';
@@ -15,11 +15,10 @@ export function useOptimisticUpdate() {
   const queryClient = useQueryClient();
   const { showSuccess, showError } = useToast();
   const { t } = useTranslation();
-  const snapshotRef = useRef<unknown>(null);
 
   const execute = useCallback(
     async ({ queryKey, mutationFn, optimisticData, successMessage, errorMessage }: OptimisticOptions) => {
-      snapshotRef.current = queryClient.getQueryData(queryKey);
+      const snapshot = queryClient.getQueryData(queryKey);
 
       queryClient.setQueryData(queryKey, (old: unknown) => optimisticData(old));
 
@@ -28,7 +27,7 @@ export function useOptimisticUpdate() {
         queryClient.invalidateQueries({ queryKey });
         if (successMessage) showSuccess(successMessage);
       } catch {
-        queryClient.setQueryData(queryKey, snapshotRef.current);
+        queryClient.setQueryData(queryKey, snapshot);
         showError(errorMessage || t('feedback.optimistic.saveError'));
       }
     },

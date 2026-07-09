@@ -52,7 +52,7 @@ import {
   History as HistoryIcon,
   AssignmentTurnedIn as ChecklistIcon,
 } from '@mui/icons-material';
-import { doc, collection, query, orderBy, limit, addDoc, serverTimestamp, onSnapshot } from 'firebase/firestore';
+import { doc, collection, query, orderBy, limit, serverTimestamp, onSnapshot, setDoc } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { LoadingState } from '../../components/common/GameCard';
@@ -73,6 +73,7 @@ import {
   getLocationQualityChecklist,
   getLocationSubscriptionStatus,
 } from './manageLocationFilters';
+import { dedupeLocationReviewsByUser, getLocationReviewStats } from './locationReviews';
 import { createLogger } from '../../utils/logger';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useAuth } from '../../contexts/AuthContext';
@@ -203,7 +204,7 @@ export const LocationDetailScreen: React.FC = () => {
             createdAt: (raw.created_at || raw.createdAt)?.toDate?.() || new Date(),
           };
         }) as LocationReview[];
-        setReviews(data);
+        setReviews(dedupeLocationReviewsByUser(data));
       },
       (err) => {
         logger.error('Erro ao carregar avaliações:', err);
@@ -350,7 +351,7 @@ export const LocationDetailScreen: React.FC = () => {
     setReviewCommentError(false);
     setSubmittingReview(true);
     try {
-      await addDoc(collection(db, 'locations', locationId, 'reviews'), {
+      await setDoc(doc(db, 'locations', locationId, 'reviews', user.id), {
         user_id: user.id,
         user_name: user.name || 'Anônimo',
         user_photo: user.photoUrl || null,
@@ -410,8 +411,10 @@ export const LocationDetailScreen: React.FC = () => {
     );
   }
 
-  const averageRating = reviews.length > 0 ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length : location.averageRating || location.rating || 0;
-  const reviewCount = reviews.length || location.reviewCount || location.ratingCount || 0;
+  const { averageRating, reviewCount } = getLocationReviewStats(reviews, user?.id, {
+    averageRating: location.averageRating || location.rating || 0,
+    reviewCount: location.reviewCount || location.ratingCount || 0,
+  });
   const fullAddress = [location.address, location.district, location.city, location.state].filter(Boolean).join(', ');
   const fieldTypeLabel = location.fieldType ? FIELD_TYPE_CONFIG[location.fieldType]?.label || location.fieldType : 'Campo';
   const publicationStatus = getLocationPublicationStatus(location);

@@ -9,11 +9,17 @@ import { isSchedulingBlockingStatus } from '../utils/gameLifecycle';
 const logger = createLogger('useFieldGames');
 
 const DEFAULT_GAME_DURATION_MINUTES = 60;
+const MINUTES_PER_DAY = 24 * 60;
 
 const parseTime = (t: string) => {
   const [h, m] = t.split(':').map(Number);
   return h * 60 + m;
 };
+
+export interface AvailabilityWindow {
+  openingTime?: string;
+  closingTime?: string;
+}
 
 export interface FieldGame {
   date: string;
@@ -27,15 +33,34 @@ export interface FieldGameSet {
   conflictDates: Set<string>;
 }
 
-const processSnapshot = (docs: Array<{ data: () => Record<string, unknown> }>): FieldGameSet => {
+function getAvailabilityWindowMinutes(window?: AvailabilityWindow) {
+  const openingTime = window?.openingTime || '';
+  const closingTime = window?.closingTime || '';
+  if (!openingTime || !closingTime) {
+    return { dayStart: 0, dayEnd: MINUTES_PER_DAY };
+  }
+
+  const dayStart = parseTime(openingTime);
+  const rawDayEnd = parseTime(closingTime);
+  const dayEnd = rawDayEnd <= dayStart ? rawDayEnd + MINUTES_PER_DAY : rawDayEnd;
+
+  return { dayStart, dayEnd };
+}
+
+const processSnapshot = (
+  docs: Array<{ data: () => Record<string, unknown> }>,
+  availabilityWindow?: AvailabilityWindow,
+): FieldGameSet => {
   const byDate = new Map<string, FieldGame[]>();
+  const { dayStart, dayEnd } = getAvailabilityWindowMinutes(availabilityWindow);
 
   docs.forEach((d) => {
     const g = d.data();
     if (!isSchedulingBlockingStatus(g.status)) return;
     const gDate = g.date as string;
     const gStart = g.time ? parseTime(g.time as string) : 0;
-    const gEnd = g.end_time ? parseTime(g.end_time as string) : gStart + DEFAULT_GAME_DURATION_MINUTES;
+    const rawEnd = g.end_time ? parseTime(g.end_time as string) : gStart + DEFAULT_GAME_DURATION_MINUTES;
+    const gEnd = rawEnd <= gStart ? rawEnd + MINUTES_PER_DAY : rawEnd;
 
     if (!byDate.has(gDate)) byDate.set(gDate, []);
     byDate.get(gDate)!.push({ date: gDate, startMinutes: gStart, endMinutes: gEnd });
@@ -47,26 +72,39 @@ const processSnapshot = (docs: Array<{ data: () => Record<string, unknown> }>): 
   for (const [date, games] of byDate) {
     games.sort((a, b) => a.startMinutes - b.startMinutes);
 
-    let bookedSlots = 0;
-    let lastEnd = 6 * 60;
+    let hasConflict = false;
+    let freeMinutes = 0;
+    let lastEnd = dayStart;
     for (const g of games) {
-      if (g.startMinutes > lastEnd) {
-        bookedSlots += g.startMinutes - lastEnd;
-      }
-      lastEnd = Math.max(lastEnd, g.endMinutes);
-    }
-    const dayEnd = 23 * 60;
-    if (lastEnd < dayEnd) bookedSlots += dayEnd - lastEnd;
+      const clampedStart = Math.max(g.startMinutes, dayStart);
+      const clampedEnd = Math.min(g.endMinutes, dayEnd);
+      if (clampedEnd <= dayStart || clampedStart >= dayEnd) continue;
 
-    if (bookedSlots <= 0) fullyBookedDates.add(date);
-    if (games.length >= 1) conflictDates.add(date);
+      if (clampedStart < lastEnd) {
+        hasConflict = true;
+      }
+      if (clampedStart > lastEnd) {
+        freeMinutes += clampedStart - lastEnd;
+      }
+      lastEnd = Math.max(lastEnd, clampedEnd);
+    }
+    if (lastEnd < dayEnd) freeMinutes += dayEnd - lastEnd;
+
+    if (freeMinutes <= 0) fullyBookedDates.add(date);
+    if (hasConflict) conflictDates.add(date);
   }
 
   return { byDate, fullyBookedDates, conflictDates };
 };
 
-export function useFieldGames(fieldId: string, daysAhead: number = 60) {
+export function useFieldGames(
+  fieldId: string,
+  daysAhead: number = 60,
+  availabilityWindow?: AvailabilityWindow,
+) {
   const { t } = useTranslation();
+  const openingTime = availabilityWindow?.openingTime;
+  const closingTime = availabilityWindow?.closingTime;
   const [data, setData] = useState<FieldGameSet>({
     byDate: new Map(),
     fullyBookedDates: new Set(),
@@ -103,7 +141,7 @@ export function useFieldGames(fieldId: string, daysAhead: number = 60) {
       unsubscribe = onSnapshot(
         q,
         (snapshot) => {
-          const result = processSnapshot(snapshot.docs);
+          const result = processSnapshot(snapshot.docs, { openingTime, closingTime });
           setData(result);
           setLoading(false);
           setError(null);
@@ -123,7 +161,7 @@ export function useFieldGames(fieldId: string, daysAhead: number = 60) {
     return () => {
       if (unsubscribe) unsubscribe();
     };
-  }, [fieldId, daysAhead, t]);
+  }, [closingTime, daysAhead, fieldId, openingTime, t]);
 
   return { data, loading, error };
 }

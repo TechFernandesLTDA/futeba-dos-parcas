@@ -1,6 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import {
-
   collection,
   query,
   where,
@@ -45,6 +44,7 @@ export function usePaginatedQuery<T = Record<string, unknown>>(options: UsePagin
   const [hasMore, setHasMore] = useState(true);
   const lastDocRef = useRef<DocumentSnapshot | null>(null);
   const loadingRef = useRef(false);
+  const activeRequestCountRef = useRef(0);
   const requestVersionRef = useRef(0);
   const whereClausesKey = JSON.stringify(whereClauses);
 
@@ -58,6 +58,7 @@ export function usePaginatedQuery<T = Record<string, unknown>>(options: UsePagin
     // respostas em voo e limpamos o estado para não exibir dados stale da
     // consulta anterior.
     requestVersionRef.current += 1;
+    activeRequestCountRef.current = 0;
     loadingRef.current = false;
     lastDocRef.current = null;
     setData([]);
@@ -66,10 +67,17 @@ export function usePaginatedQuery<T = Record<string, unknown>>(options: UsePagin
     setLoading(false);
   }, [collectionName, pageSize, orderByField, orderDirection, whereClausesKey]);
 
-  const fetchData = useCallback(async (reset = false) => {
-    if (loadingRef.current) return;
+  const fetchData = useCallback(async (reset = false, options?: { force?: boolean }) => {
+    const force = options?.force ?? false;
+    if (loadingRef.current && !force) return;
 
-    const requestVersion = requestVersionRef.current;
+    const requestVersion = force
+      ? requestVersionRef.current + 1
+      : requestVersionRef.current;
+    if (force) {
+      requestVersionRef.current = requestVersion;
+    }
+    activeRequestCountRef.current += 1;
     loadingRef.current = true;
     setLoading(true);
     setError(null);
@@ -104,8 +112,9 @@ export function usePaginatedQuery<T = Record<string, unknown>>(options: UsePagin
         constraints.push(orderBy(orderByField, orderDirection));
       }
 
-      if (lastDocRef.current && !reset) {
-        constraints.push(startAfter(lastDocRef.current));
+      const cursor = reset ? null : lastDocRef.current;
+      if (cursor) {
+        constraints.push(startAfter(cursor));
       }
 
       constraints.push(limit(pageSize + 1));
@@ -140,7 +149,8 @@ export function usePaginatedQuery<T = Record<string, unknown>>(options: UsePagin
       setError(err as Error);
       showError(t('feedback.generic.loadDataError'));
     } finally {
-      if (requestVersion === requestVersionRef.current) {
+      activeRequestCountRef.current = Math.max(0, activeRequestCountRef.current - 1);
+      if (activeRequestCountRef.current === 0) {
         loadingRef.current = false;
         setLoading(false);
       }
@@ -148,22 +158,26 @@ export function usePaginatedQuery<T = Record<string, unknown>>(options: UsePagin
   }, [collectionName, pageSize, orderByField, orderDirection, showError, t]);
 
   const loadMore = useCallback(() => {
-    if (hasMore && !loading) {
+    if (hasMore && !loadingRef.current) {
       fetchData(false);
     }
-  }, [hasMore, loading, fetchData]);
+  }, [hasMore, fetchData]);
 
   const refresh = useCallback(() => {
     lastDocRef.current = null;
     setHasMore(true);
-    fetchData(true);
+    void fetchData(true, { force: true });
   }, [fetchData]);
 
   const reset = useCallback(() => {
+    requestVersionRef.current += 1;
+    activeRequestCountRef.current = 0;
+    loadingRef.current = false;
     setData([]);
     lastDocRef.current = null;
     setHasMore(true);
     setError(null);
+    setLoading(false);
   }, []);
 
   return {
@@ -174,6 +188,6 @@ export function usePaginatedQuery<T = Record<string, unknown>>(options: UsePagin
     loadMore,
     refresh,
     reset,
-    fetchData: () => fetchData(true),
+    fetchData: () => fetchData(true, { force: true }),
   };
 }

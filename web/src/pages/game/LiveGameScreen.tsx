@@ -689,7 +689,6 @@ export const LiveGameScreen: React.FC = () => {
             >
               {[
                 { value: 'GOAL', label: t('games.events.goal') },
-                { value: 'ASSIST', label: t('games.events.assist') },
                 { value: 'SAVE', label: t('games.events.save') },
                 { value: 'YELLOW_CARD', label: t('games.events.yellow_card') },
                 { value: 'RED_CARD', label: t('games.events.red_card') },

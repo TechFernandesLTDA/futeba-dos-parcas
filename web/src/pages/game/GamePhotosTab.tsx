@@ -11,6 +11,7 @@ import {
   CircularProgress,
   Dialog,
   IconButton,
+  LinearProgress,
   Stack,
   TextField,
   Typography,
@@ -34,7 +35,7 @@ import {
   serverTimestamp,
   where,
 } from 'firebase/firestore';
-import { deleteObject, getDownloadURL, ref as storageRef, uploadBytes } from 'firebase/storage';
+import { deleteObject, getDownloadURL, ref as storageRef, uploadBytesResumable } from 'firebase/storage';
 import { db } from '../../services/firebase';
 import { storage } from '../../services/firebaseStorage';
 import { useAuth } from '../../contexts/AuthContext';
@@ -93,6 +94,7 @@ export const GamePhotosTab: React.FC<GamePhotosTabProps> = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [caption, setCaption] = useState('');
   const [selectedPhoto, setSelectedPhoto] = useState<GamePhoto | null>(null);
@@ -163,17 +165,31 @@ export const GamePhotosTab: React.FC<GamePhotosTabProps> = ({
     if (!file || !currentUser?.uid) return;
 
     setUploading(true);
+    let uploadedPath: string | null = null;
     try {
       const cleanCaption = validatePhoto(file);
       const path = `games/${gameId}/photos/${currentUser.uid}/${safeFileName(file)}`;
       const fileRef = storageRef(storage, path);
+      uploadedPath = path;
 
-      await uploadBytes(fileRef, file, {
+      const uploadTask = uploadBytesResumable(fileRef, file, {
         contentType: file.type,
         customMetadata: {
           gameId,
           uploadedBy: currentUser.uid,
         },
+      });
+      await new Promise<void>((resolve, reject) => {
+        uploadTask.on(
+          'state_changed',
+          (snapshot) => {
+            setUploadProgress(snapshot.totalBytes > 0
+              ? Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100)
+              : null);
+          },
+          reject,
+          () => resolve(),
+        );
       });
       const downloadUrl = await getDownloadURL(fileRef);
 
@@ -196,10 +212,16 @@ export const GamePhotosTab: React.FC<GamePhotosTabProps> = ({
       setCaption('');
       showSuccess(t('gamePhotos.uploadSuccess'));
     } catch (err) {
+      if (uploadedPath) {
+        await deleteObject(storageRef(storage, uploadedPath)).catch((storageErr) => {
+          logger.warn('Failed to clean orphaned game photo upload:', storageErr);
+        });
+      }
       logger.error('Error uploading game photo:', err);
       showError(err instanceof Error && !('code' in err) ? err.message : getFirestoreErrorMessage(err, t('gamePhotos.uploadError')));
     } finally {
       setUploading(false);
+      setUploadProgress(null);
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
@@ -268,6 +290,18 @@ export const GamePhotosTab: React.FC<GamePhotosTabProps> = ({
               >
                 {uploading ? t('gamePhotos.uploading') : t('gamePhotos.addPhoto')}
               </Button>
+              {uploading && uploadProgress !== null && (
+                <Box sx={{ mt: 1, maxWidth: 260 }}>
+                  <LinearProgress
+                    variant="determinate"
+                    value={uploadProgress}
+                    aria-label={t('gamePhotos.uploading')}
+                  />
+                  <Typography variant="caption" color="text.secondary">
+                    {uploadProgress}%
+                  </Typography>
+                </Box>
+              )}
             </Box>
           </Stack>
         )}

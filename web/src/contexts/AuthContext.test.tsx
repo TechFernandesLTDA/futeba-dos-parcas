@@ -415,6 +415,43 @@ describe('AuthContext', () => {
     expect(mockCreateUserWithEmailAndPassword).not.toHaveBeenCalled();
   });
 
+  it('remove conta Auth recém-criada quando criação do perfil falha', async () => {
+    const mockDelete = vi.fn().mockResolvedValue(undefined);
+    const mockResult = {
+      user: {
+        uid: 'orphan-uid',
+        email: 'orphan@test.com',
+        displayName: null,
+        photoURL: null,
+        getIdToken: vi.fn().mockResolvedValue('token'),
+        delete: mockDelete,
+      },
+    };
+    mockCreateUserWithEmailAndPassword.mockResolvedValue(mockResult);
+    mockUpdateProfile.mockResolvedValue(undefined);
+    mockGetDoc.mockResolvedValue({ exists: () => false });
+    mockRunTransaction.mockRejectedValue(new Error('firestore-down'));
+
+    let signUpFn: ((email: string, password: string, name: string, inviteCode: string) => Promise<void>) | undefined;
+    function Extractor() {
+      const auth = useAuth();
+      signUpFn = auth.signUp;
+      return null;
+    }
+
+    render(
+      <AuthProvider>
+        <Extractor />
+      </AuthProvider>
+    );
+
+    await waitFor(() => expect(signUpFn).toBeDefined());
+
+    await expect(signUpFn!('orphan@test.com', 'password123', 'Jogador Órfão', 'ABC123')).rejects.toThrow();
+    expect(mockDelete).toHaveBeenCalled();
+    expect(mockSignOut).toHaveBeenCalled();
+  });
+
   it('trata erros de autenticação definindo error state', async () => {
     mockSignInWithEmailAndPassword.mockRejectedValue({
       code: 'auth/invalid-credential',

@@ -137,7 +137,7 @@ export const GroupEditScreen: React.FC = () => {
 
   const handleUploadPhoto = async (file: File): Promise<string> => {
     if (!groupId || !uid) throw new Error('Missing group upload context');
-    return uploadGroupLogo(storage, uid, groupId, file);
+    return uploadGroupLogo(storage, uid, groupId, file, group?.photoUrl || null);
   };
 
   const handleSubmit = async () => {

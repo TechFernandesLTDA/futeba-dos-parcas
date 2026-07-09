@@ -110,7 +110,18 @@ export function buildDirectChatId(uidA: string, uidB: string): string {
  */
 async function getPublicUser(uid: string): Promise<PublicUser> {
   const snap = await db().doc(`users/${uid}`).get();
-  const data = snap.data() ?? {};
+  return resolvePublicUser(snap.data() ?? {});
+}
+
+/**
+ * Normaliza snapshot publico de usuario para metadata do chat.
+ *
+ * @param {Record<string, unknown>} data Dados crus do usuario.
+ * @return {PublicUser} Nome e avatar publicos.
+ */
+function resolvePublicUser(
+  data: Record<string, unknown>
+): PublicUser {
   const name = data.name;
   const photo = data.photo_url ?? data.photoUrl;
   return {
@@ -339,19 +350,41 @@ export const submitDirectMessage = onCall(
 
       const recipients = participants.filter((participant) =>
         participant !== uid);
+      const participantUserRefs = participants.map((participant) =>
+        db().doc(`users/${participant}`)
+      );
       const blockRefs = recipients.flatMap((recipient) => [
         db().doc(`users/${uid}/blocked/${recipient}`),
         db().doc(`users/${recipient}/blocked/${uid}`),
       ]);
-      const blockSnaps = await Promise.all(
-        blockRefs.map((blockRef) => tx.get(blockRef))
-      );
+      const [
+        participantUserSnaps,
+        blockSnaps,
+      ] = await Promise.all([
+        Promise.all(
+          participantUserRefs.map((userRef) => tx.get(userRef))
+        ),
+        Promise.all(
+          blockRefs.map((blockRef) => tx.get(blockRef))
+        ),
+      ]);
       if (blockSnaps.some((blockSnap) => blockSnap.exists)) {
         throw new HttpsError(
           "permission-denied",
           "Conversa indisponível por bloqueio social."
         );
       }
+
+      const participantNames: Record<string, string> = {};
+      const participantPhotos: Record<string, string | null> = {};
+      participantUserSnaps.forEach((participantSnap, index) => {
+        const participantId = participants[index];
+        const publicUser = resolvePublicUser(
+          (participantSnap.data() ?? {}) as Record<string, unknown>
+        );
+        participantNames[participantId] = publicUser.name;
+        participantPhotos[participantId] = publicUser.photo;
+      });
 
       tx.set(messageRef, {
         sender_id: uid,
@@ -372,6 +405,8 @@ export const submitDirectMessage = onCall(
       );
 
       tx.update(chatRef, {
+        participant_names: participantNames,
+        participant_photos: participantPhotos,
         last_message: text,
         last_message_at: FieldValue.serverTimestamp(),
         last_sender_id: uid,

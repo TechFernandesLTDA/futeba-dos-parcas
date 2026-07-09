@@ -20,6 +20,11 @@ import {
   sendAndSaveNotification,
 } from "./helpers";
 import {ACHIEVEMENT_NOTIFICATIONS} from "./notification-messages";
+import {
+  claimNotificationEventOnce,
+  completeNotificationEvent,
+  releaseNotificationEvent,
+} from "./dedup";
 
 // Lazy initialization para evitar erro de initializeApp
 const getDb = () => admin.firestore();
@@ -38,37 +43,67 @@ export const onLevelUp = onDocumentUpdated(
     const before = event.data?.before.data();
     const after = event.data?.after.data();
     if (!before || !after) return;
+    if (!await claimNotificationEventOnce(`level_up:${event.id}`)) {
+      return;
+    }
 
     const userId = event.params.userId;
 
     const beforeLevel = before.level || 0;
     const afterLevel = after.level || 0;
 
-    if (afterLevel > beforeLevel) {
-      const levelNames = [
-        "Novato", "Iniciante", "Amador",
-        "Regular", "Experiente", "Habilidoso",
-        "Profissional", "Expert", "Mestre",
-        "Lenda", "Imortal",
-      ];
-      const levelName =
+    try {
+      if (afterLevel > beforeLevel) {
+        const levelNames = [
+          "Novato", "Iniciante", "Amador",
+          "Regular", "Experiente", "Habilidoso",
+          "Profissional", "Expert", "Mestre",
+          "Lenda", "Imortal",
+        ];
+        const levelName =
         levelNames[afterLevel] ||
         "Nivel " + afterLevel;
 
-      const imgBase =
+        const imgBase =
         "https://firebasestorage.googleapis.com";
-      const imgPath =
+        const imgPath =
         "/v0/b/futeba-dos-parcas.appspot.com" +
         "/o/badges%2Flevel_up.png?alt=media";
-
-      await sendNotificationToUser(userId, {
-        title: ACHIEVEMENT_NOTIFICATIONS.LEVEL_UP.title["pt-BR"](),
-        body: ACHIEVEMENT_NOTIFICATIONS.LEVEL_UP.body["pt-BR"]({
+        const title =
+        ACHIEVEMENT_NOTIFICATIONS.LEVEL_UP.title["pt-BR"]();
+        const body =
+        ACHIEVEMENT_NOTIFICATIONS.LEVEL_UP.body["pt-BR"]({
           levelName,
-        }),
-        type: NotificationType.LEVEL_UP,
-        imageUrl: imgBase + imgPath,
-      });
+        });
+        const notificationDocId =
+        `level_up_${userId}_${afterLevel}`;
+
+        await saveNotificationToFirestore(
+          userId,
+          {
+            userId,
+            title,
+            body,
+            type: NotificationType.LEVEL_UP,
+            action: "achievements",
+          },
+          notificationDocId
+        );
+
+        await sendNotificationToUser(userId, {
+          title,
+          body,
+          type: NotificationType.LEVEL_UP,
+          imageUrl: imgBase + imgPath,
+          data: {
+            action: "achievements",
+          },
+        });
+      }
+      await completeNotificationEvent(`level_up:${event.id}`);
+    } catch (error) {
+      await releaseNotificationEvent(`level_up:${event.id}`);
+      throw error;
     }
   }
 );
@@ -91,6 +126,9 @@ export const onBadgeAwarded = onDocumentCreated(
       );
       return;
     }
+    if (!await claimNotificationEventOnce(`badge_awarded:${event.id}`)) {
+      return;
+    }
 
     const badgeDocId = event.params.badgeDocId;
     const userId = userBadge.user_id;
@@ -101,6 +139,7 @@ export const onBadgeAwarded = onDocumentCreated(
         "[onBadgeAwarded] Missing user_id" +
         ` or badge_id in document ${badgeDocId}`
       );
+      await completeNotificationEvent(`badge_awarded:${event.id}`);
       return;
     }
 
@@ -125,14 +164,20 @@ export const onBadgeAwarded = onDocumentCreated(
         badge?.icon_url ||
         badge?.iconUrl ||
         null;
+      const title =
+        ACHIEVEMENT_NOTIFICATIONS.BADGE_AWARDED.title["pt-BR"]();
+      const body =
+        ACHIEVEMENT_NOTIFICATIONS.BADGE_AWARDED.body["pt-BR"]({
+          badgeName,
+        });
+      const notificationDocId =
+        `badge_awarded_${badgeDocId}`;
 
       // Enviar notificação push
       const notificationSent =
         await sendNotificationToUser(userId, {
-          title: ACHIEVEMENT_NOTIFICATIONS.BADGE_AWARDED.title["pt-BR"](),
-          body: ACHIEVEMENT_NOTIFICATIONS.BADGE_AWARDED.body["pt-BR"]({
-            badgeName,
-          }),
+          title,
+          body,
           type: NotificationType.ACHIEVEMENT,
           imageUrl: badgeIconUrl || undefined,
           data: {
@@ -149,13 +194,11 @@ export const onBadgeAwarded = onDocumentCreated(
       // Salvar notificação no Firestore
       await saveNotificationToFirestore(userId, {
         userId,
-        title: ACHIEVEMENT_NOTIFICATIONS.BADGE_AWARDED.title["pt-BR"](),
-        body: ACHIEVEMENT_NOTIFICATIONS.BADGE_AWARDED.body["pt-BR"]({
-          badgeName,
-        }),
+        title,
+        body,
         type: NotificationType.ACHIEVEMENT,
         action: "badges",
-      });
+      }, notificationDocId);
 
       logger.info(
         "[onBadgeAwarded] Notification saved" +
@@ -167,7 +210,10 @@ export const onBadgeAwarded = onDocumentCreated(
         " badge notification:",
         error
       );
+      await releaseNotificationEvent(`badge_awarded:${event.id}`);
+      throw error;
     }
+    await completeNotificationEvent(`badge_awarded:${event.id}`);
   }
 );
 

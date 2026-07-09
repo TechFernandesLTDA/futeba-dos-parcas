@@ -2,6 +2,10 @@ const mockSendNotificationToUsers = jest.fn().mockResolvedValue(1);
 const mockSendNotificationToUser = jest.fn().mockResolvedValue(true);
 const mockSaveNotificationToFirestore = jest.fn().mockResolvedValue("notif-id");
 const mockDocUpdate = jest.fn().mockResolvedValue(undefined);
+const mockDocSet = jest.fn().mockResolvedValue(undefined);
+const mockRunTransaction = jest.fn();
+const mockTransactionGet = jest.fn();
+const mockTransactionSet = jest.fn();
 const mockCollectionGet = jest.fn();
 const mockWhere = jest.fn().mockReturnThis();
 
@@ -12,6 +16,7 @@ const mockDoc = jest.fn((id: string) => ({
   id,
   get: jest.fn(),
   update: mockDocUpdate,
+  set: mockDocSet,
 }));
 
 const mockCollection = jest.fn(() => ({
@@ -32,6 +37,7 @@ const mockFirestore = jest.fn(() => ({
   collection: mockCollection,
   FieldValue: mockFieldValue,
   Timestamp: mockTimestamp,
+  runTransaction: mockRunTransaction,
 }));
 
 (mockFirestore as any).FieldValue = mockFieldValue;
@@ -63,6 +69,16 @@ import { autoCancelLowQuorum } from "../src/reminders";
 describe("autoCancelLowQuorum", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockRunTransaction.mockImplementation(async (callback: any) =>
+      callback({
+        get: mockTransactionGet,
+        set: mockTransactionSet,
+      })
+    );
+    mockTransactionGet.mockResolvedValue({
+      exists: false,
+      data: () => null,
+    });
   });
 
   it("cancela jogo CONFIRMED com poucos jogadores dentro de 2h", async () => {
@@ -200,5 +216,13 @@ describe("autoCancelLowQuorum", () => {
     await autoCancelLowQuorum();
 
     expect(mockDocUpdate).not.toHaveBeenCalled();
+  });
+
+  it("pula execucao quando lock agendado ja esta em andamento", async () => {
+    mockRunTransaction.mockResolvedValueOnce(false);
+
+    await autoCancelLowQuorum();
+
+    expect(mockCollectionGet).not.toHaveBeenCalled();
   });
 });

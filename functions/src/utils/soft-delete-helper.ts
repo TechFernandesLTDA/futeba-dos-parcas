@@ -86,6 +86,11 @@ export interface CleanupResult {
   durationMs: number;
 }
 
+/** Resultado da cascata de dependências de um jogo. */
+export interface SoftDeleteGameCascadeResult extends SoftDeleteResult {
+  dependentsDeleted: number;
+}
+
 // ==========================================
 // FUNÇÕES PRINCIPAIS
 // ==========================================
@@ -363,6 +368,167 @@ export async function isSoftDeleted(
 }
 
 /**
+ * Soft-delete de um jogo e de seus dados operacionais associados.
+ *
+ * As coleções raiz são paginadas por `game_id`; as subcoleções do jogo são
+ * percorridas diretamente. O jogo só recebe `deleted_at` depois dos filhos,
+ * para que uma falha parcial permaneça repetível sem deixar o pai terminal.
+ *
+ * @param {string} gameId ID do jogo
+ * @param {string} deletedBy UID de quem solicitou a exclusão
+ * @param {string} reason Motivo opcional
+ * @return {Promise<SoftDeleteGameCascadeResult>} resultado da cascata
+ */
+export async function softDeleteGameCascade(
+  gameId: string,
+  deletedBy: string,
+  reason = ""
+): Promise<SoftDeleteGameCascadeResult> {
+  const db = getDb();
+  const now = new Date();
+  const gameRef = db.collection("games").doc(gameId);
+  const BATCH_LIMIT = 450;
+  const PAGE_SIZE = 500;
+  let dependentsDeleted = 0;
+
+  try {
+    const gameSnap = await gameRef.get();
+    if (!gameSnap.exists) {
+      return {
+        success: false,
+        docId: gameId,
+        collection: "games",
+        deletedAt: now,
+        deletedBy,
+        dependentsDeleted,
+        error: "Jogo não encontrado",
+      };
+    }
+
+    const gameData = gameSnap.data();
+    if (gameData?.deleted_at) {
+      return {
+        success: true,
+        docId: gameId,
+        collection: "games",
+        deletedAt: gameData.deleted_at.toDate ?
+          gameData.deleted_at.toDate() : now,
+        deletedBy: gameData.deleted_by || deletedBy,
+        dependentsDeleted,
+      };
+    }
+
+    const deletedFields = {
+      deleted_at: FieldValue.serverTimestamp(),
+      deleted_by: deletedBy,
+      deleted_reason: reason || "Jogo deletado pelo proprietário",
+      updated_at: FieldValue.serverTimestamp(),
+    };
+    let batch = db.batch();
+    let ops = 0;
+    const flush = async () => {
+      if (ops === 0) return;
+      await batch.commit();
+      batch = db.batch();
+      ops = 0;
+    };
+    const queueUpdate = (
+      doc: admin.firestore.QueryDocumentSnapshot,
+      fields: Record<string, unknown>
+    ) => {
+      if (doc.data().deleted_at) return;
+      batch.update(doc.ref, {...deletedFields, ...fields});
+      ops++;
+      dependentsDeleted++;
+    };
+    const cascadeRootCollection = async (
+      collectionName: string,
+      fields: Record<string, unknown>
+    ) => {
+      let lastDoc: admin.firestore.QueryDocumentSnapshot | undefined;
+      while (true) {
+        let query = db.collection(collectionName)
+          .where("game_id", "==", gameId)
+          .orderBy(FieldPath.documentId())
+          .limit(PAGE_SIZE);
+        if (lastDoc) query = query.startAfter(lastDoc);
+
+        const snapshot = await query.get();
+        if (snapshot.empty) break;
+        for (const doc of snapshot.docs) {
+          queueUpdate(doc, fields);
+          if (ops >= BATCH_LIMIT) await flush();
+        }
+        lastDoc = snapshot.docs[snapshot.docs.length - 1];
+        if (snapshot.size < PAGE_SIZE) break;
+      }
+    };
+    const cascadeSubcollection = async (
+      collectionName: string,
+      fields: Record<string, unknown>
+    ) => {
+      let lastDoc: admin.firestore.QueryDocumentSnapshot | undefined;
+      while (true) {
+        let query = gameRef.collection(collectionName)
+          .orderBy(FieldPath.documentId())
+          .limit(PAGE_SIZE);
+        if (lastDoc) query = query.startAfter(lastDoc);
+
+        const snapshot = await query.get();
+        if (snapshot.empty) break;
+        for (const doc of snapshot.docs) {
+          queueUpdate(doc, fields);
+          if (ops >= BATCH_LIMIT) await flush();
+        }
+        lastDoc = snapshot.docs[snapshot.docs.length - 1];
+        if (snapshot.size < PAGE_SIZE) break;
+      }
+    };
+
+    await cascadeRootCollection("confirmations", {status: "CANCELLED"});
+    await cascadeRootCollection("game_rides", {status: "CANCELLED"});
+    await cascadeSubcollection("chat", {});
+    await cascadeSubcollection("comments", {});
+    await cascadeSubcollection("waitlist", {status: "CANCELLED"});
+    await flush();
+
+    await gameRef.update({
+      ...deletedFields,
+      status: "DELETED",
+    });
+
+    logger.info(
+      "[SOFT_DELETE_CASCADE] Jogo " +
+      `${gameId}: 1 jogo + ${dependentsDeleted} dependências soft-deleted`
+    );
+    return {
+      success: true,
+      docId: gameId,
+      collection: "games",
+      deletedAt: now,
+      deletedBy,
+      dependentsDeleted,
+    };
+  } catch (error: unknown) {
+    const typedError = error as Record<string, unknown>;
+    logger.error(
+      "[SOFT_DELETE_CASCADE] Erro para jogo " +
+      `${gameId}:`,
+      error
+    );
+    return {
+      success: false,
+      docId: gameId,
+      collection: "games",
+      deletedAt: now,
+      deletedBy,
+      dependentsDeleted,
+      error: (typedError.message as string) || "Erro desconhecido",
+    };
+  }
+}
+
+/**
  * Cleanup genérico de documentos soft-deleted
  * antigos. Remove permanentemente documentos que
  * foram soft-deleted há mais de `retentionDays`.
@@ -520,6 +686,7 @@ export async function softDeleteGroupCascade(
   try {
     const now =
       FieldValue.serverTimestamp();
+    const nowTimestamp = Timestamp.now();
 
     // 1. Soft-delete do grupo
     const groupRef = db
@@ -598,15 +765,163 @@ export async function softDeleteGroupCascade(
       if (gamesSnap.size < 500) break;
     }
 
-    // Flush dos jogos restantes ANTES de marcar o grupo.
+    // Flush dos jogos restantes antes de bloquear novas memberships.
     await flush();
 
-    // Marca o grupo por ÚLTIMO (retry-safety: se algo acima falhar, o grupo
-    // segue ativo e a cascata pode ser reexecutada).
+    // Marca o início da deleção antes de escanear membros. A transação de
+    // onInviteRedeemed lê este estado, impedindo que um resgate concorrente
+    // crie membership ACTIVE depois que esta varredura passar pelo usuário.
+    // Não usa deleted_at aqui: se a cascata falhar, uma nova execução ainda
+    // consegue retomá-la e só o estado final DELETED é terminal.
+    await groupRef.update({
+      status: "DELETING",
+      deletion_started_at: now,
+      updated_at: now,
+    });
+
+    let lastMemberDoc: admin.firestore.QueryDocumentSnapshot | undefined;
+    while (true) {
+      let q = groupRef.collection("members")
+        .orderBy(FieldPath.documentId())
+        .limit(500);
+      if (lastMemberDoc) q = q.startAfter(lastMemberDoc);
+
+      const membersSnap = await q.get();
+      if (membersSnap.empty) break;
+
+      for (const memberDoc of membersSnap.docs) {
+        const memberData = memberDoc.data();
+        const memberUserId =
+          typeof memberData.user_id === "string" ?
+            memberData.user_id :
+            memberDoc.id;
+
+        if (memberData.status !== "INACTIVE" && memberData.status !== "REMOVED") {
+          batch.update(memberDoc.ref, {
+            status: "INACTIVE",
+            updated_at: now,
+          });
+          ops++;
+        }
+
+        batch.delete(db.doc(`users/${memberUserId}/groups/${groupId}`));
+        ops++;
+        if (ops >= BATCH_LIMIT) await flush();
+      }
+
+      lastMemberDoc = membersSnap.docs[membersSnap.docs.length - 1];
+      if (membersSnap.size < 500) break;
+    }
+
+    let lastJoinRequestDoc: admin.firestore.QueryDocumentSnapshot | undefined;
+    while (true) {
+      let q = groupRef.collection("join_requests")
+        .orderBy(FieldPath.documentId())
+        .limit(500);
+      if (lastJoinRequestDoc) q = q.startAfter(lastJoinRequestDoc);
+
+      const joinRequestsSnap = await q.get();
+      if (joinRequestsSnap.empty) break;
+
+      for (const joinRequestDoc of joinRequestsSnap.docs) {
+        batch.delete(joinRequestDoc.ref);
+        ops++;
+        if (ops >= BATCH_LIMIT) await flush();
+      }
+
+      lastJoinRequestDoc = joinRequestsSnap.docs[joinRequestsSnap.docs.length - 1];
+      if (joinRequestsSnap.size < 500) break;
+    }
+
+    let lastWallPostDoc: admin.firestore.QueryDocumentSnapshot | undefined;
+    while (true) {
+      let q = groupRef.collection("wall_posts")
+        .orderBy(FieldPath.documentId())
+        .limit(500);
+      if (lastWallPostDoc) q = q.startAfter(lastWallPostDoc);
+
+      const wallPostsSnap = await q.get();
+      if (wallPostsSnap.empty) break;
+
+      for (const wallPostDoc of wallPostsSnap.docs) {
+        if (wallPostDoc.data().deleted_at) continue;
+        batch.update(wallPostDoc.ref, {
+          deleted_at: now,
+          deleted_by: deletedBy,
+          updated_at: now,
+        });
+        ops++;
+        if (ops >= BATCH_LIMIT) await flush();
+      }
+
+      lastWallPostDoc = wallPostsSnap.docs[wallPostsSnap.docs.length - 1];
+      if (wallPostsSnap.size < 500) break;
+    }
+
+    const cascadeRootCollection = async (
+      collectionName: string,
+      applyDoc: (doc: admin.firestore.QueryDocumentSnapshot) => boolean,
+    ) => {
+      let lastDoc: admin.firestore.QueryDocumentSnapshot | undefined;
+      while (true) {
+        let q = db.collection(collectionName)
+          .where("group_id", "==", groupId)
+          .orderBy(FieldPath.documentId())
+          .limit(500);
+        if (lastDoc) q = q.startAfter(lastDoc);
+
+        const snap = await q.get();
+        if (snap.empty) break;
+
+        for (const collectionDoc of snap.docs) {
+          if (!applyDoc(collectionDoc)) continue;
+          ops++;
+          if (ops >= BATCH_LIMIT) await flush();
+        }
+
+        lastDoc = snap.docs[snap.docs.length - 1];
+        if (snap.size < 500) break;
+      }
+    };
+
+    await cascadeRootCollection("group_polls", (pollDoc) => {
+      if (pollDoc.data().status === "CLOSED") return false;
+      batch.update(pollDoc.ref, {
+        status: "CLOSED",
+        updated_at: now,
+      });
+      return true;
+    });
+
+    await cascadeRootCollection("group_invites", (inviteDoc) => {
+      const status = inviteDoc.data().status;
+      if (status === "ACCEPTED" || status === "REJECTED" || status === "CANCELLED") {
+        return false;
+      }
+      batch.update(inviteDoc.ref, {
+        status: "CANCELLED",
+        updated_at: now,
+      });
+      return true;
+    });
+
+    await cascadeRootCollection("invites", (inviteDoc) => {
+      if (inviteDoc.data().used === true) return false;
+      batch.update(inviteDoc.ref, {
+        expires_at: nowTimestamp,
+      });
+      return true;
+    });
+
+    await flush();
+
+    // Estado terminal é aplicado por último; DELETING mantém o grupo fechado
+    // a convites enquanto permite retomar uma cascata interrompida.
     await groupRef.update({
       deleted_at: now,
       deleted_by: deletedBy,
       deleted_reason: reason || "Grupo deletado pelo proprietário",
+      status: "DELETED",
       updated_at: now,
     });
 

@@ -1,8 +1,12 @@
 const mockSendNotificationToUsers = jest.fn().mockResolvedValue(1);
 const mockBatch = jest.fn(() => ({ update: jest.fn(), set: jest.fn(), commit: jest.fn().mockResolvedValue([]) }));
 const mockRunTransaction = jest.fn();
+const mockTransactionGet = jest.fn();
+const mockTransactionUpdate = jest.fn();
 const mockDocGet = jest.fn();
 const mockDocUpdate = jest.fn().mockResolvedValue(undefined);
+const mockDocDelete = jest.fn().mockResolvedValue(undefined);
+const mockDocCreate = jest.fn().mockResolvedValue(undefined);
 const mockCollectionGet = jest.fn();
 const mockWhere = jest.fn().mockReturnThis();
 const mockOrderBy = jest.fn().mockReturnThis();
@@ -28,8 +32,16 @@ const mockDoc = jest.fn((id: string) => ({
   id,
   get: mockDocGet,
   update: mockDocUpdate,
+  delete: mockDocDelete,
+  create: mockDocCreate,
   collection: jest.fn(() => ({
-    doc: jest.fn((sid: string) => ({ id: sid, get: mockDocGet, update: mockDocUpdate })),
+    doc: jest.fn((sid: string) => ({
+      id: sid,
+      get: mockDocGet,
+      update: mockDocUpdate,
+      delete: mockDocDelete,
+      create: mockDocCreate,
+    })),
     where: mockWhere,
     orderBy: mockOrderBy,
     limit: mockLimit,
@@ -107,6 +119,19 @@ import {
 describe("Game Notifications", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockRunTransaction.mockImplementation(async (callback: any) =>
+      callback({
+        get: mockTransactionGet,
+        update: mockTransactionUpdate,
+      })
+    );
+    mockTransactionGet.mockResolvedValue({
+      exists: true,
+      data: () => ({
+        status: "SCHEDULED",
+        max_players: 14,
+      }),
+    });
     mockCountGet.mockResolvedValue({
       data: () => ({ count: 0 }),
     });
@@ -250,7 +275,20 @@ describe("Game Notifications", () => {
 
     it("nao envia notificacao duplicada quando invite_notification_sent=true", async () => {
       await onGameCreated({
+        id: "evt-created-1",
         data: { data: () => ({ owner_id: "owner1", group_id: "group1", invite_notification_sent: true }) },
+        params: { gameId: "game1" },
+      });
+
+      expect(mockSendNotificationToUsers).not.toHaveBeenCalled();
+    });
+
+    it("ignora reentrega do mesmo evento de criacao", async () => {
+      mockDocCreate.mockRejectedValueOnce({ code: 6 });
+
+      await onGameCreated({
+        id: "evt-created-dup",
+        data: { data: () => ({ owner_id: "owner1", group_id: "group1" }) },
         params: { gameId: "game1" },
       });
 
@@ -276,7 +314,7 @@ describe("Game Notifications", () => {
     });
 
     it("filtra o owner da lista de membros", async () => {
-      mockDocGet.mockResolvedValueOnce({
+      mockDocGet.mockResolvedValue({
         exists: true,
         data: () => ({ name: "Joao" }),
       });
@@ -333,15 +371,49 @@ describe("Game Notifications", () => {
       expect(mockSendNotificationToUsers).not.toHaveBeenCalled();
     });
 
-    it("trata erro ao buscar membros do grupo graciosamente", async () => {
-      mockDocGet.mockRejectedValue(new Error("Firestore error"));
+    it("propaga erro ao buscar membros para permitir retry", async () => {
+      mockCollectionGet.mockResolvedValue({
+        docs: [{ id: "member1", data: () => ({ role: "MEMBER" }) }],
+        size: 1,
+      });
+      mockDocGet.mockRejectedValueOnce(new Error("Firestore error"));
 
       await expect(
         onGameCreated({
           data: { data: () => ({ owner_id: "owner1", group_id: "group1" }) },
           params: { gameId: "game1" },
         }),
-      ).resolves.toBeUndefined();
+      ).rejects.toThrow("Firestore error");
+    });
+
+    it("libera a claim quando a entrega falha e permite retry", async () => {
+      mockDocGet.mockResolvedValue({
+        exists: true,
+        data: () => ({ name: "Joao" }),
+      });
+      mockCollectionGet.mockResolvedValue({
+        docs: [{ id: "member1", data: () => ({ role: "MEMBER" }) }],
+        size: 1,
+      });
+      mockSendNotificationToUsers.mockRejectedValueOnce(
+        new Error("FCM unavailable"),
+      );
+
+      await expect(onGameCreated({
+        id: "evt-created-retry",
+        data: { data: () => ({ owner_id: "owner1", group_id: "group1" }) },
+        params: { gameId: "game1" },
+      })).rejects.toThrow("FCM unavailable");
+
+      expect(mockDocDelete).toHaveBeenCalled();
+
+      await onGameCreated({
+        id: "evt-created-retry",
+        data: { data: () => ({ owner_id: "owner1", group_id: "group1" }) },
+        params: { gameId: "game1" },
+      });
+
+      expect(mockSendNotificationToUsers).toHaveBeenCalledTimes(2);
     });
   });
 
@@ -382,15 +454,26 @@ describe("Game Notifications", () => {
     });
 
     it("notifica confirmados quando data muda", async () => {
+      mockTransactionGet.mockResolvedValueOnce({
+        exists: true,
+        data: () => ({
+          date: "2024-01-15",
+          location_id: "loc1",
+        }),
+      });
       mockCollectionGet.mockResolvedValue({
         docs: [{ data: () => ({ user_id: "user1" }) }],
         size: 1,
       });
 
       await onGameUpdatedNotification({
+        id: "evt-updated-date",
         data: {
           before: { data: () => ({ status: "SCHEDULED", date: "2024-01-01", location_id: "loc1" }) },
-          after: { data: () => ({ status: "SCHEDULED", date: "2024-01-15", location_id: "loc1" }) },
+          after: {
+            data: () => ({ status: "SCHEDULED", date: "2024-01-15", location_id: "loc1" }),
+            ref: { id: "game1" },
+          },
         },
         params: { gameId: "game1" },
       });
@@ -402,20 +485,57 @@ describe("Game Notifications", () => {
     });
 
     it("notifica confirmados quando location muda", async () => {
+      mockTransactionGet.mockResolvedValueOnce({
+        exists: true,
+        data: () => ({
+          date: "2024-01-01",
+          location_id: "loc2",
+        }),
+      });
       mockCollectionGet.mockResolvedValue({
         docs: [{ data: () => ({ user_id: "user1" }) }],
         size: 1,
       });
 
       await onGameUpdatedNotification({
+        id: "evt-updated-location",
         data: {
           before: { data: () => ({ status: "SCHEDULED", date: "2024-01-01", location_id: "loc1" }) },
-          after: { data: () => ({ status: "SCHEDULED", date: "2024-01-01", location_id: "loc2" }) },
+          after: {
+            data: () => ({ status: "SCHEDULED", date: "2024-01-01", location_id: "loc2" }),
+            ref: { id: "game1" },
+          },
         },
         params: { gameId: "game1" },
       });
 
       expect(mockSendNotificationToUsers).toHaveBeenCalled();
+    });
+
+    it("nao reenvia GAME_UPDATED quando o mesmo estado ja foi notificado", async () => {
+      mockTransactionGet.mockResolvedValueOnce({
+        exists: true,
+        data: () => ({
+          date: "2024-01-15",
+          location_id: "loc1",
+          last_game_update_notification_key: "loc1|2024-01-15|",
+        }),
+      });
+
+      await onGameUpdatedNotification({
+        id: "evt-updated-dedup",
+        data: {
+          before: { data: () => ({ status: "SCHEDULED", date: "2024-01-01", location_id: "loc1" }) },
+          after: {
+            data: () => ({ status: "SCHEDULED", date: "2024-01-15", location_id: "loc1" }),
+            ref: { id: "game1" },
+          },
+        },
+        params: { gameId: "game1" },
+      });
+
+      expect(mockSendNotificationToUsers).not.toHaveBeenCalled();
+      expect(mockTransactionUpdate).not.toHaveBeenCalled();
     });
 
     it("nao notifica quando nao ha confirmados", async () => {
@@ -444,13 +564,19 @@ describe("Game Notifications", () => {
 
   describe("onGameVacancy", () => {
     it("notifica waitlist quando vaga abre (CONFIRMED -> CANCELLED)", async () => {
-      mockDocGet.mockResolvedValue({
+      mockTransactionGet.mockResolvedValueOnce({
         exists: true,
-        data: () => ({ status: "SCHEDULED", max_players: 14, location_name: "Campo 1", date: "2024-01-15" }),
+        data: () => ({
+          status: "SCHEDULED",
+          max_players: 14,
+          location_name: "Campo 1",
+          date: "2024-01-15",
+        }),
       });
       mockCollectionGet.mockResolvedValue({ empty: true, size: 0, docs: [] });
 
       await onGameVacancy({
+        id: "evt-vacancy-1",
         data: {
           before: { data: () => ({ status: "CONFIRMED", game_id: "game1" }) },
           after: { data: () => ({ status: "CANCELLED", game_id: "game1" }) },
@@ -458,7 +584,8 @@ describe("Game Notifications", () => {
         params: { confirmationId: "conf1" },
       });
 
-      expect(mockDocUpdate).toHaveBeenCalled();
+      expect(mockRunTransaction).toHaveBeenCalled();
+      expect(mockTransactionUpdate).toHaveBeenCalled();
     });
 
     it("nao notifica se nao era CONFIRMED", async () => {
@@ -474,12 +601,13 @@ describe("Game Notifications", () => {
     });
 
     it("nao notifica se jogo nao esta SCHEDULED ou CONFIRMED", async () => {
-      mockDocGet.mockResolvedValueOnce({
+      mockTransactionGet.mockResolvedValueOnce({
         exists: true,
         data: () => ({ status: "FINISHED", max_players: 14 }),
       });
 
       await onGameVacancy({
+        id: "evt-vacancy-closed",
         data: {
           before: { data: () => ({ status: "CONFIRMED", game_id: "game1" }) },
           after: { data: () => ({ status: "CANCELLED", game_id: "game1" }) },
@@ -492,7 +620,7 @@ describe("Game Notifications", () => {
 
     it("respeita idempotencia vacancy_notified_at < 5 min", async () => {
       const recentDate = new Date(Date.now() - 60 * 1000);
-      mockDocGet.mockResolvedValueOnce({
+      mockTransactionGet.mockResolvedValueOnce({
         exists: true,
         data: () => ({
           status: "SCHEDULED",
@@ -502,6 +630,7 @@ describe("Game Notifications", () => {
       });
 
       await onGameVacancy({
+        id: "evt-vacancy-throttle",
         data: {
           before: { data: () => ({ status: "CONFIRMED", game_id: "game1" }) },
           after: { data: () => ({ status: "CANCELLED", game_id: "game1" }) },
@@ -513,7 +642,7 @@ describe("Game Notifications", () => {
     });
 
     it("nao notifica quando jogo continua cheio (currentPlayers >= maxPlayers)", async () => {
-      mockDocGet.mockResolvedValueOnce({
+      mockTransactionGet.mockResolvedValueOnce({
         exists: true,
         data: () => ({ status: "SCHEDULED", max_players: 14, location_name: "Campo" }),
       });
@@ -522,6 +651,7 @@ describe("Game Notifications", () => {
       });
 
       await onGameVacancy({
+        id: "evt-vacancy-full",
         data: {
           before: { data: () => ({ status: "CONFIRMED", game_id: "game1" }) },
           after: { data: () => ({ status: "CANCELLED", game_id: "game1" }) },
@@ -533,7 +663,7 @@ describe("Game Notifications", () => {
     });
 
     it("notifica membros elegiveis do grupo quando a waitlist e pequena", async () => {
-      mockDocGet.mockResolvedValueOnce({
+      mockTransactionGet.mockResolvedValueOnce({
         exists: true,
         data: () => ({
           status: "SCHEDULED",
@@ -569,6 +699,7 @@ describe("Game Notifications", () => {
         });
 
       await onGameVacancy({
+        id: "evt-vacancy-group",
         data: {
           before: { data: () => ({ status: "CONFIRMED", game_id: "game1" }) },
           after: { data: () => ({ status: "CANCELLED", game_id: "game1" }) },
@@ -580,6 +711,26 @@ describe("Game Notifications", () => {
         ["member-1", "member-2"],
         expect.objectContaining({ title: "Vaga disponível!" }),
       );
+    });
+
+    it("usa claim transacional para evitar TOCTOU no throttle de vaga", async () => {
+      mockRunTransaction.mockResolvedValueOnce({
+        shouldNotify: false,
+        reason: "throttled",
+        game: null,
+      });
+
+      await onGameVacancy({
+        id: "evt-vacancy-race",
+        data: {
+          before: { data: () => ({ status: "CONFIRMED", game_id: "game1" }) },
+          after: { data: () => ({ status: "CANCELLED", game_id: "game1" }) },
+        },
+        params: { confirmationId: "conf1" },
+      });
+
+      expect(mockSendNotificationToUsers).not.toHaveBeenCalled();
+      expect(mockRunTransaction).toHaveBeenCalled();
     });
   });
 });

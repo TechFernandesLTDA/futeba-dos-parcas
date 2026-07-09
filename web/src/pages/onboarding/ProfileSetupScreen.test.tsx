@@ -120,4 +120,18 @@ describe('ProfileSetupScreen', () => {
     expect(payload).not.toHaveProperty('created_at');
     expect(payload).not.toHaveProperty('updated_at');
   });
+
+  it('grava preferred_position usando o enum canônico do perfil', async () => {
+    const user = userEvent.setup();
+
+    renderWithProviders();
+
+    await user.click(screen.getByRole('button', { name: /def/i }));
+    await user.click(screen.getByRole('button', { name: /continuar/i }));
+
+    await waitFor(() => expect(mockUpdateDoc).toHaveBeenCalledTimes(1));
+
+    const payload = mockUpdateDoc.mock.calls[0][1] as Record<string, unknown>;
+    expect(payload.preferred_position).toBe('ZAGUEIRO');
+  });
 });

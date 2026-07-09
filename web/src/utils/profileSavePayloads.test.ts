@@ -17,7 +17,7 @@ function sliceBetween(source: string, start: string, end: string) {
 }
 
 describe('profile save payloads', () => {
-  it('não enviam updated_at protegido em updates client-side de users/{uid}', () => {
+  it('mantém updated_at protegido fora do AuthContext e grava timestamp no edit profile', () => {
     const authContext = readRepoFile('web/src/contexts/AuthContext.tsx');
     const authUpdateProfile = sliceBetween(
       authContext,
@@ -28,7 +28,7 @@ describe('profile save payloads', () => {
 
     const editProfile = readRepoFile('web/src/pages/profile/EditProfileScreen.tsx');
     const editProfileSave = sliceBetween(editProfile, 'const handleSave = async () => {', '  const handleCancel = () => {');
-    expect(editProfileSave).not.toContain('updated_at');
+    expect(editProfileSave).toContain('updated_at: serverTimestamp()');
 
     const phoneVerification = readRepoFile('web/src/pages/onboarding/PhoneVerificationScreen.tsx');
     expect(phoneVerification).not.toContain('updated_at: serverTimestamp()');
@@ -54,6 +54,12 @@ describe('profile save payloads', () => {
     expect(phoneVerification).toContain('linkWithPhoneNumber');
     expect(phoneVerification).toContain('attempt.confirmationResult.confirm(otp)');
     expect(phoneVerification).toContain('PhoneAuthProvider.credential(attempt.verificationId, otp)');
+    expect(phoneVerification).toContain('canFallbackToOlderVerificationId(attemptCode)');
+    expect(sliceBetween(
+      phoneVerification,
+      'function canFallbackToOlderVerificationId',
+      'function auditPhoneVerificationFailure'
+    )).not.toContain('auth/invalid-verification-code');
     expect(phoneVerification).toContain('if (resendCooldown > 0)');
     expect(phoneVerification).toContain('disabled={loading || resendCooldown > 0}');
     expect(phoneVerification).toContain('linkedCredential.user ?? auth.currentUser ?? currentUser');
@@ -63,5 +69,54 @@ describe('profile save payloads', () => {
     expect(app).toContain('function useLoginRedirectReady');
     expect(app).toContain('const activeUser = firebaseUser ?? auth.currentUser');
     expect(app).toContain('if (!loginRedirectReady) return <SplashLoadingFallback />;');
+  });
+
+  it('não mascara deleção de conta bem-sucedida quando logout local falha', () => {
+    const settingsScreen = readRepoFile('web/src/pages/settings/SettingsScreen.tsx');
+    const deleteFlow = sliceBetween(
+      settingsScreen,
+      'const handleDeleteAccountConfirm = async () => {',
+      '  return ('
+    );
+    const successPath = sliceBetween(deleteFlow, 'try {', '} catch (err) {');
+    const cleanupPath = sliceBetween(deleteFlow, '} finally {', '      setDeleting(false);');
+
+    expect(successPath).toContain('await deleteAccount();');
+    expect(successPath).toContain("navigate('/login', { replace: true });");
+    expect(successPath).not.toContain('await logout();');
+    expect(cleanupPath).toContain('await logout();');
+    expect(cleanupPath).toContain('queryClient.clear();');
+  });
+
+  it('preserva timestamps originais em saves determinísticos de pós-jogo', () => {
+    const dreamTeam = readRepoFile('web/src/hooks/useDreamTeam.ts');
+    const saveDreamTeam = sliceBetween(dreamTeam, 'export function useSaveDreamTeam()', '    onSuccess: () => {');
+    expect(saveDreamTeam).toContain('runTransaction');
+    expect(saveDreamTeam).toContain('updated_at: serverTimestamp()');
+    expect(saveDreamTeam).toContain("current.exists() ? {} : { created_at: serverTimestamp() }");
+
+    const postGameMessages = readRepoFile('web/src/hooks/usePostGameMessages.ts');
+    const savePostGameMessage = sliceBetween(postGameMessages, 'export function useSavePostGameMessage', '    onSuccess: () => {');
+    expect(savePostGameMessage).toContain('runTransaction');
+    expect(savePostGameMessage).toContain('updated_at: serverTimestamp()');
+    expect(savePostGameMessage).toContain("current.exists() ? {} : { created_at: serverTimestamp() }");
+  });
+
+  it('mantém comentários paginados ao receber snapshot realtime', () => {
+    const comments = readRepoFile('web/src/hooks/useGameComments.ts');
+    expect(comments).toContain("import { mergeRealtimePageById } from './realtimePageMerge';");
+    expect(comments).toContain("mergeRealtimePageById(prev, data, snapshotIds, 'append')");
+    expect(comments).toContain('startAfter(oldestDocRef.current)');
+  });
+
+  it('alinha live events e fotos de jogo com constraints do backend e UX', () => {
+    const liveGame = readRepoFile('web/src/pages/game/LiveGameScreen.tsx');
+    const addEventDialog = sliceBetween(liveGame, '<Dialog open={addEventDialog}', '</Dialog>');
+    expect(addEventDialog).not.toContain("value: 'ASSIST'");
+
+    const photosTab = readRepoFile('web/src/pages/game/GamePhotosTab.tsx');
+    expect(photosTab).toContain('uploadBytesResumable');
+    expect(photosTab).toContain('setUploadProgress');
+    expect(photosTab).toContain('<LinearProgress');
   });
 });

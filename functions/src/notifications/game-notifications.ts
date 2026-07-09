@@ -20,10 +20,59 @@ import {
 } from "./helpers";
 import {GAME_NOTIFICATIONS} from "./notification-messages";
 import {db} from "../_db";
+import {
+  claimNotificationEventOnce,
+  completeNotificationEvent,
+  releaseNotificationEvent,
+} from "./dedup";
 
 const CONFIRMATION_PAGE_SIZE = 100;
 const GROUP_MEMBER_PAGE_SIZE = 50;
 const MAX_GROUP_VACANCY_NOTIFICATIONS = 20;
+const VACANCY_NOTIFICATION_COOLDOWN_MS = 5 * 60 * 1000;
+
+/**
+ * Decide se a atualização alterou a data ou local do jogo.
+ *
+ * @param {Record<string, unknown>} before
+ * @param {Record<string, unknown>} after
+ * @return {boolean}
+ */
+function hasGameUpdateNotificationRelevantChange(
+  before: Record<string, unknown>,
+  after: Record<string, unknown>
+): boolean {
+  return (
+    before.date !== after.date ||
+    before.dateTime !== after.dateTime ||
+    before.location_id !== after.location_id ||
+    before.locationId !== after.locationId
+  );
+}
+
+/**
+ * Gera chave estável do estado notificado de data/local.
+ *
+ * @param {Record<string, unknown>} game
+ * @return {string}
+ */
+function buildGameUpdateNotificationKey(
+  game: Record<string, unknown>
+): string {
+  const locationId =
+    (game.location_id as string | undefined) ||
+    (game.locationId as string | undefined) ||
+    "";
+  const date = String(game.date || "");
+  const dateTime = game.dateTime &&
+    typeof game.dateTime === "object" &&
+    "toMillis" in game.dateTime &&
+    typeof game.dateTime.toMillis === "function" ?
+    String(game.dateTime.toMillis()) :
+    "";
+
+  return `${locationId}|${date}|${dateTime}`;
+}
 
 /**
  * Busca IDs de usuários confirmados para um jogo de forma paginada.
@@ -181,6 +230,9 @@ export const onGameCreated = onDocumentCreated(
   async (event) => {
     const game = event.data?.data();
     if (!game) return;
+    if (!await claimNotificationEventOnce(`game_created:${event.id}`)) {
+      return;
+    }
 
     const gameId = event.params.gameId;
     const ownerId = game.owner_id;
@@ -192,6 +244,7 @@ export const onGameCreated = onDocumentCreated(
         ` game ${gameId} already sent,` +
         " skipping (idempotent)."
       );
+      await completeNotificationEvent(`game_created:${event.id}`);
       return;
     }
 
@@ -255,8 +308,11 @@ export const onGameCreated = onDocumentCreated(
           "Erro ao notificar membros do grupo:",
           e
         );
+        await releaseNotificationEvent(`game_created:${event.id}`);
+        throw e;
       }
     }
+    await completeNotificationEvent(`game_created:${event.id}`);
   }
 );
 
@@ -276,6 +332,9 @@ export const onGameUpdatedNotification =
       const before = event.data?.before.data();
       const after = event.data?.after.data();
       if (!before || !after) return;
+      if (!await claimNotificationEventOnce(`game_updated:${event.id}`)) {
+        return;
+      }
 
       const gameId = event.params.gameId;
       let confirmedUserIds:
@@ -313,14 +372,61 @@ export const onGameUpdatedNotification =
             "Erro ao notificar cancelamento:",
             e
           );
+          await releaseNotificationEvent(`game_updated:${event.id}`);
+          throw e;
         }
       }
 
       if (
-        before.date !== after.date ||
-        before.location_id !== after.location_id
+        hasGameUpdateNotificationRelevantChange(before, after)
       ) {
         try {
+          const updateKey = buildGameUpdateNotificationKey(after);
+          const gameRef =
+            event.data?.after.ref ||
+            db().collection("games").doc(gameId);
+
+          const shouldNotifyUpdate =
+            await db().runTransaction(async (tx) => {
+              const freshSnap =
+                await tx.get(gameRef);
+              const freshData = freshSnap.data() as
+                Record<string, unknown> |
+                undefined;
+              if (!freshData) {
+                return false;
+              }
+
+              // Skip stale deliveries if the game has already moved
+              // to another date/location state since this event.
+              if (
+                buildGameUpdateNotificationKey(freshData) !==
+                updateKey
+              ) {
+                return false;
+              }
+
+              if (
+                freshData.last_game_update_notification_key ===
+                updateKey
+              ) {
+                return false;
+              }
+
+              tx.update(gameRef, {
+                last_game_update_notification_key:
+                  updateKey,
+                last_game_update_notification_at:
+                  FieldValue.serverTimestamp(),
+              });
+              return true;
+            });
+
+          if (!shouldNotifyUpdate) {
+            await completeNotificationEvent(`game_updated:${event.id}`);
+            return;
+          }
+
           const userIds =
             confirmedUserIds ??
             await fetchConfirmedUserIdsForGame(
@@ -347,8 +453,11 @@ export const onGameUpdatedNotification =
             "Erro ao notificar atualizacao:",
             e
           );
+          await releaseNotificationEvent(`game_updated:${event.id}`);
+          throw e;
         }
       }
+      await completeNotificationEvent(`game_updated:${event.id}`);
     }
   );
 
@@ -383,6 +492,9 @@ export const onGameVacancy = onDocumentUpdated(
     const gameId =
       after.game_id || after.gameId;
     if (!gameId) return;
+    if (!await claimNotificationEventOnce(`game_vacancy:${event.id}`)) {
+      return;
+    }
 
     logger.info(
       "[GAME_VACANCY] Vaga aberta no" +
@@ -391,67 +503,109 @@ export const onGameVacancy = onDocumentUpdated(
     );
 
     try {
-      // Buscar dados do jogo
-      const gameDoc = await db()
+      const gameRef = db()
         .collection("games")
-        .doc(gameId)
-        .get();
-      if (!gameDoc.exists) return;
+        .doc(gameId);
+      const vacancyClaim =
+        await db().runTransaction(async (tx) => {
+          const gameDoc = await tx.get(gameRef);
+          if (!gameDoc.exists) {
+            return {
+              shouldNotify: false,
+              reason: "missing",
+              game: null,
+            };
+          }
 
-      const game = gameDoc.data();
-      if (!game) return;
+          const game = gameDoc.data() as
+            Record<string, unknown> |
+            undefined;
+          if (!game) {
+            return {
+              shouldNotify: false,
+              reason: "missing",
+              game: null,
+            };
+          }
 
-      // Só notifica se jogo ainda aberto
-      if (
-        game.status !== "SCHEDULED" &&
-        game.status !== "CONFIRMED"
-      ) {
+          if (
+            game.status !== "SCHEDULED" &&
+            game.status !== "CONFIRMED"
+          ) {
+            return {
+              shouldNotify: false,
+              reason: "closed",
+              game: null,
+            };
+          }
+
+          const notifiedAt =
+            game.vacancy_notified_at &&
+            typeof game.vacancy_notified_at === "object" &&
+            "toDate" in game.vacancy_notified_at &&
+            typeof game.vacancy_notified_at.toDate === "function" ?
+              game.vacancy_notified_at.toDate() as Date :
+              null;
+
+          if (
+            notifiedAt &&
+            (Date.now() - notifiedAt.getTime()) <
+              VACANCY_NOTIFICATION_COOLDOWN_MS
+          ) {
+            return {
+              shouldNotify: false,
+              reason: "throttled",
+              game: null,
+            };
+          }
+
+          tx.update(gameRef, {
+            vacancy_notified_at:
+              FieldValue.serverTimestamp(),
+          });
+
+          return {
+            shouldNotify: true,
+            reason: "claimed",
+            game,
+          };
+        });
+
+      if (!vacancyClaim.shouldNotify || !vacancyClaim.game) {
+        if (vacancyClaim.reason === "throttled") {
+          logger.info(
+            "[GAME_VACANCY] Vaga ja notificada recentemente" +
+            ` para jogo ${gameId}, ignorando.`
+          );
+        }
+        await completeNotificationEvent(`game_vacancy:${event.id}`);
         return;
       }
 
-      // B2: Idempotencia - verificar se vaga ja foi
-      // notificada recentemente (evita envio duplicado
-      // quando multiplos jogadores cancelam em seguida)
-      if (game.vacancy_notified_at) {
-        const notifiedAt =
-            game.vacancy_notified_at.toDate();
-        const now = new Date();
-        const minutesSince =
-            (now.getTime() - notifiedAt.getTime()) /
-            60000;
-        if (minutesSince < 5) {
-          logger.info(
-            "[GAME_VACANCY] Vaga ja notificada" +
-              ` ha ${minutesSince.toFixed(1)}min` +
-              ` para jogo ${gameId}, ignorando.`
-          );
-          return;
-        }
-      }
-
-      // Marcar como notificada para idempotencia
-      // (antes de enviar, para evitar race condition
-      // com triggers paralelos)
-      await db()
-        .collection("games")
-        .doc(gameId)
-        .update({
-          vacancy_notified_at:
-              FieldValue
-                .serverTimestamp(),
-        });
+      const game = vacancyClaim.game;
 
       const maxPlayers =
-        game.max_players ||
-        game.maxPlayers ||
-        14;
+        typeof game.max_players === "number" ?
+          game.max_players :
+          typeof game.maxPlayers === "number" ?
+            game.maxPlayers :
+            14;
       const groupId =
-        game.group_id || game.groupId;
+        typeof game.group_id === "string" ?
+          game.group_id :
+          typeof game.groupId === "string" ?
+            game.groupId :
+            undefined;
       const gameName =
-        game.location_name ||
-        game.field_name ||
-        "o jogo";
-      const gameDate = game.date || "";
+        typeof game.location_name === "string" ?
+          game.location_name :
+          typeof game.field_name === "string" ?
+            game.field_name :
+            "o jogo";
+      const gameDate =
+        typeof game.date === "string" ?
+          game.date :
+          "";
 
       // Contar confirmações atuais
       const currentPlayers =
@@ -568,6 +722,9 @@ export const onGameVacancy = onDocumentUpdated(
         " processar vaga:",
         e
       );
+      await releaseNotificationEvent(`game_vacancy:${event.id}`);
+      throw e;
     }
+    await completeNotificationEvent(`game_vacancy:${event.id}`);
   }
 );

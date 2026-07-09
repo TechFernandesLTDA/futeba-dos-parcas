@@ -1,5 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
+import { registerBrowserFcmToken, shouldShowForegroundNotification } from '../services/firebaseMessaging';
 import { createLogger } from '../utils/logger';
 
 const logger = createLogger('useNotificationPermission');
@@ -21,7 +24,9 @@ interface BackgroundNotificationPayload {
 }
 
 export function useNotificationPermission() {
+  const { t } = useTranslation();
   const { user } = useAuth();
+  const { showError } = useToast();
   const [permission, setPermission] = useState<NotificationPermission>(
     typeof Notification !== 'undefined' ? Notification.permission : 'default'
   );
@@ -46,7 +51,11 @@ export function useNotificationPermission() {
         messagingPromise.then((messaging) => {
           if (!mounted || !messaging) return;
           unsubscribe = onMessage(messaging, (payload) => {
-            if (Notification.permission === 'granted' && payload.notification) {
+            if (
+              Notification.permission === 'granted' &&
+              payload.notification &&
+              shouldShowForegroundNotification(payload)
+            ) {
               new Notification(payload.notification.title || 'Futeba dos Parças', {
                 body: payload.notification.body,
                 icon: '/favicon.ico',
@@ -98,41 +107,9 @@ export function useNotificationPermission() {
       setPermission(result);
 
       if (result === 'granted' && user?.id) {
-        const [{ messagingPromise }, { getToken }, { doc, runTransaction, arrayUnion }, { db }] = await Promise.all([
-          import('../services/firebaseMessaging'),
-          import('firebase/messaging'),
-          import('firebase/firestore'),
-          import('../services/firebase'),
-        ]);
-        const messaging = await messagingPromise;
-        if (!messaging) return;
-
-        const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY;
-        if (!vapidKey) {
-          logger.warn('VITE_FIREBASE_VAPID_KEY não configurado');
-          return;
-        }
-
-        const token = await getToken(messaging, { vapidKey });
-        if (token) {
-          const MAX_FCM_TOKENS = 5;
-          const userRef = doc(db, 'users', user.id);
-          // FIX #1550: usa runTransaction para leitura+escrita atômica do array de tokens
-          // sem transaction: dois dispositivos simultâneos podiam exceder o limite de 5
-          await runTransaction(db, async (transaction) => {
-            const snap = await transaction.get(userRef);
-            const currentTokens: string[] = snap.exists()
-              ? (snap.data().fcmTokens as string[]) || []
-              : [];
-            const newTokens = [...new Set([...currentTokens, token])]; // dedup
-            if (newTokens.length > MAX_FCM_TOKENS) {
-              // mantém os mais recentes (slice do final)
-              transaction.update(userRef, { fcmTokens: newTokens.slice(-MAX_FCM_TOKENS) });
-            } else {
-              transaction.update(userRef, { fcmTokens: arrayUnion(token) });
-            }
-          });
-        }
+        await registerBrowserFcmToken(user.id);
+      } else if (result === 'denied') {
+        showError(t('feedback.notifications.permissionDenied'));
       }
     } catch (error) {
       logger.error('Erro ao solicitar permissão de notificação:', error);
@@ -140,7 +117,7 @@ export function useNotificationPermission() {
     } finally {
       setLoading(false);
     }
-  }, [user?.id]);
+  }, [showError, t, user?.id]);
 
   return { permission, requestPermission, loading, backgroundNotificationTick };
 }

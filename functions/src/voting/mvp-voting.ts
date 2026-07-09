@@ -47,7 +47,10 @@ import {
   MIN_XP_PER_GAME,
 } from "../constants";
 import {ERROR_MSGS} from "../error-messages";
-import {getLevelForXp} from "../xp/pipeline";
+import {
+  checkMilestones,
+  getLevelForXp,
+} from "../xp/pipeline";
 import {
   getGameDate,
   getWeekKey,
@@ -56,6 +59,10 @@ import {
 } from "../game/helpers";
 import {Game} from "../models";
 import {isGameShape} from "../validation/guards";
+import {
+  buildMilestoneBadgeDoc,
+  buildUserBadgeAggregateDoc,
+} from "../badges/user-badge-docs";
 
 import {db as getFirestore} from "../_db";
 
@@ -1403,28 +1410,12 @@ async function applyVotingXpDelta(
   const logRef = db
     .collection("xp_logs")
     .doc(logId);
+  const mainXpLogRef = db
+    .collection("xp_logs")
+    .doc(`game_${gameId}_user_${userId}`);
   const userRef = db
     .collection("users")
     .doc(userId);
-
-  let activeSeasonId: string | null = null;
-
-  try {
-    const seasonSnap = await db
-      .collection("seasons")
-      .where("is_active", "==", true)
-      .limit(1)
-      .get();
-    activeSeasonId = !seasonSnap.empty ?
-      seasonSnap.docs[0].id :
-      null;
-  } catch (fetchError) {
-    logger.error(
-      `[VOTING_XP] Could not fetch active season: ${fetchError}. ` +
-      "Aborting to prevent XP drift."
-    );
-    throw fetchError;
-  }
 
   try {
     await db.runTransaction(async (txn) => {
@@ -1438,12 +1429,11 @@ async function applyVotingXpDelta(
         return;
       }
 
+      const mainXpLog = await txn.get(mainXpLogRef);
+      const mainXpLogData = mainXpLog.data();
+
       if (reason === "MVP") {
-        const mainXpLogRef = db
-          .collection("xp_logs")
-          .doc(`game_${gameId}_user_${userId}`);
-        const mainXpLog = await txn.get(mainXpLogRef);
-        if (mainXpLog.exists && (mainXpLog.data()?.xp_mvp as number) > 0) {
+        if (mainXpLog.exists && (mainXpLogData?.xp_mvp as number) > 0) {
           logger.info(
             `[VOTING_XP] Skipping MVP XP for ${userId} in ${gameId} ` +
             "- main trigger already paid MVP XP (dedup)"
@@ -1458,15 +1448,10 @@ async function applyVotingXpDelta(
       // gravando xp_penalty < 0 / was_worst_player no log principal. Sem
       // esta verificacao, o caminho de votacao pagaria -10 de novo (-20 total).
       if (reason === "BOLA_MURCHA") {
-        const mainXpLogRef = db
-          .collection("xp_logs")
-          .doc(`game_${gameId}_user_${userId}`);
-        const mainXpLog = await txn.get(mainXpLogRef);
-        const mainData = mainXpLog.data();
         const mainXpPenalty =
-          mainData?.xp_penalty as number | undefined;
+          mainXpLogData?.xp_penalty as number | undefined;
         const mainWasWorstPlayer =
-          mainData?.was_worst_player === true;
+          mainXpLogData?.was_worst_player === true;
         if (
           mainXpLog.exists &&
           ((typeof mainXpPenalty === "number" &&
@@ -1483,11 +1468,15 @@ async function applyVotingXpDelta(
 
       let weekKey: string | null = null;
       let monthKey: string | null = null;
+      let gameSeasonId: string | null = null;
 
       const gameSnap = await txn.get(
         db.collection("games").doc(gameId)
       );
-      const rawGame = gameSnap.data();
+      const rawGame =
+        typeof gameSnap.data === "function" ?
+          gameSnap.data() :
+          {};
       const gameDoc: Game | undefined =
         isGameShape(rawGame) ? rawGame : undefined;
       const gameDate = getGameDate(gameDoc);
@@ -1495,6 +1484,11 @@ async function applyVotingXpDelta(
         timeZone: "America/Sao_Paulo",
       }).substring(0, 7);
       weekKey = getWeekKey(gameDate);
+      gameSeasonId =
+        typeof rawGame?.season_id === "string" &&
+        rawGame.season_id.trim().length > 0 ?
+          rawGame.season_id.trim() :
+          monthKey;
 
       // FIX #726: MVP bonus (voting reward) is applied OVER the
       // MAX_XP_PER_GAME cap. The cap only limits game-performance XP
@@ -1544,23 +1538,6 @@ async function applyVotingXpDelta(
         return;
       }
 
-      if (reason === "MVP") {
-        const statsRef = db.collection("statistics").doc(userId);
-        const statsDoc = await txn.get(statsRef);
-        const statsData = statsDoc.data() || {};
-        const currentMvpStreak =
-          ((statsData.currentMvpStreak as number) || 0) + 1;
-        const bestMvpStreak = Math.max(
-          (statsData.bestMvpStreak as number) || 0,
-          currentMvpStreak
-        );
-        txn.set(statsRef, {
-          bestPlayerCount: FieldValue.increment(1),
-          currentMvpStreak,
-          bestMvpStreak,
-        }, {merge: true});
-      }
-
       const currentXp =
         (userDoc.data()
           ?.experience_points as number) || 0;
@@ -1575,7 +1552,63 @@ async function applyVotingXpDelta(
       const clampedXpDelta = (currentXp + xpDelta < MIN_XP_PER_GAME) ?
         MIN_XP_PER_GAME - currentXp :
         xpDelta;
-      const newXp = Math.max(MIN_XP_PER_GAME, currentXp + xpDelta);
+      const isMvp = reason === "MVP";
+      const now = FieldValue.serverTimestamp();
+      let milestoneXp = 0;
+      let newMilestones: string[] = [];
+
+      if (reason === "MVP") {
+        const statsRef = db.collection("statistics").doc(userId);
+        const statsDoc = await txn.get(statsRef);
+        const statsData = statsDoc.data() || {};
+        const currentMvpStreak =
+          ((statsData.currentMvpStreak as number) || 0) + 1;
+        const bestMvpStreak = Math.max(
+          (statsData.bestMvpStreak as number) || 0,
+          currentMvpStreak
+        );
+        const achievedMilestones = Array.isArray(
+          userDoc.data()?.milestones_achieved
+        ) ?
+          userDoc.data()?.milestones_achieved as string[] :
+          [];
+        const milestoneResult = checkMilestones(
+          {
+            totalGames: (statsData.totalGames as number) || 0,
+            totalGoals: (statsData.totalGoals as number) || 0,
+            totalAssists: (statsData.totalAssists as number) || 0,
+            totalSaves: (statsData.totalSaves as number) || 0,
+            totalYellowCards:
+              (statsData.totalYellowCards as number) || 0,
+            totalRedCards:
+              (statsData.totalRedCards as number) || 0,
+            gamesWon: (statsData.gamesWon as number) || 0,
+            gamesLost: (statsData.gamesLost as number) || 0,
+            gamesDraw: (statsData.gamesDraw as number) || 0,
+            bestPlayerCount:
+              ((statsData.bestPlayerCount as number) || 0) + 1,
+            worstPlayerCount:
+              (statsData.worstPlayerCount as number) || 0,
+            currentMvpStreak,
+            bestMvpStreak,
+          },
+          achievedMilestones
+        );
+        newMilestones = milestoneResult.newMilestones;
+        milestoneXp = milestoneResult.xp;
+        txn.set(statsRef, {
+          bestPlayerCount: FieldValue.increment(1),
+          currentMvpStreak,
+          bestMvpStreak,
+          updated_at: now,
+        }, {merge: true});
+      }
+      const totalGrantedXp =
+        clampedXpDelta + milestoneXp;
+      const newXp = Math.max(
+        MIN_XP_PER_GAME,
+        currentXp + totalGrantedXp
+      );
 
       // FIX #1993: usa getLevelForXp() canônico de xp/pipeline.ts
       // em vez de recalcular level inline (evita drift por inconsistência).
@@ -1585,22 +1618,21 @@ async function applyVotingXpDelta(
       const sourceCategoryVotes =
         typeof audit.categoryVotes === "number" ? audit.categoryVotes : null;
 
-      // FIX #1990: atualizar season_participation e ranking_deltas
-      // para que o XP de voto conte nos rankings de temporada.
-      const isMvp = reason === "MVP";
-      const now = FieldValue.serverTimestamp();
-
-      if (activeSeasonId) {
-        const seasonPartId = `${activeSeasonId}_${userId}`;
+      // FIX #1990 + #3457: aplicar o delta na temporada do jogo.
+      if (gameSeasonId) {
+        const seasonPartId = `${gameSeasonId}_${userId}`;
         // Fase 4: espelha o delta de XP/mvp do voto na visão
         // segmentada by_gender.{gender} (campo plano = combinado).
-        const gender = normalizeGameGender(rawGame?.gender);
+        const gender = normalizeGameGender(
+          (rawGame?.gender as string | undefined) ?? "MIXED"
+        );
         const inc = FieldValue.increment;
         const genderUpdate: Record<string, unknown> = {
-          total_xp: inc(clampedXpDelta),
+          total_xp: inc(totalGrantedXp),
         };
         const seasonPartUpdate: Record<string, unknown> = {
-          total_xp: inc(clampedXpDelta),
+          season_id: gameSeasonId,
+          total_xp: inc(totalGrantedXp),
           updated_at: now,
         };
         if (isMvp) {
@@ -1619,7 +1651,7 @@ async function applyVotingXpDelta(
         const weekDeltaId = `week_${weekKey}_${userId}`;
         const monthDeltaId = `month_${monthKey}_${userId}`;
         const rankingFields: Record<string, unknown> = {
-          xp_added: FieldValue.increment(clampedXpDelta),
+          xp_added: FieldValue.increment(totalGrantedXp),
           updated_at: now,
         };
         if (isMvp) {
@@ -1641,11 +1673,18 @@ async function applyVotingXpDelta(
       txn.set(logRef, {
         user_id: userId,
         game_id: gameId,
-        xp_earned: clampedXpDelta,
+        xp_earned: totalGrantedXp,
         xp_before: currentXp,
         xp_after: newXp,
         level_before: currentLevel,
         level_after: newLevel,
+        xp_mvp: isMvp ? clampedXpDelta : 0,
+        xp_milestones: milestoneXp,
+        xp_penalty: isMvp ? 0 : clampedXpDelta,
+        milestones_unlocked: newMilestones,
+        game_status: "FINISHED",
+        was_mvp: isMvp,
+        was_worst_player: reason === "BOLA_MURCHA",
         reason,
         transaction_id: logId,
         source: "mvp_voting_concluded",
@@ -1657,16 +1696,48 @@ async function applyVotingXpDelta(
         created_at: FieldValue
           .serverTimestamp(),
       });
+      if (newMilestones.length > 0) {
+        for (const milestoneName of newMilestones) {
+          const badgeRef = db
+            .collection("user_badges")
+            .doc(`${userId}_${milestoneName}`);
+          txn.set(
+            badgeRef,
+            buildUserBadgeAggregateDoc(
+              userId,
+              buildMilestoneBadgeDoc(
+                milestoneName,
+                now
+              )
+            ),
+            {merge: true}
+          );
+        }
+      }
       txn.update(userRef, {
         experience_points:
-          FieldValue.increment(clampedXpDelta),
+          FieldValue.increment(totalGrantedXp),
         level: newLevel,
         updated_at: FieldValue
           .serverTimestamp(),
+        ...(newMilestones.length > 0 ? {
+          milestones_achieved:
+            FieldValue.arrayUnion(...newMilestones),
+        } : {}),
       });
+      if (mainXpLog.exists) {
+        txn.set(mainXpLogRef, {
+          was_mvp: isMvp ? true : mainXpLogData?.was_mvp === true,
+          was_worst_player:
+            reason === "BOLA_MURCHA" ?
+              true :
+              mainXpLogData?.was_worst_player === true,
+          updated_at: now,
+        }, {merge: true});
+      }
 
       logger.info(
-        `[VOTING_XP] Applied ${clampedXpDelta} XP ` +
+        `[VOTING_XP] Applied ${totalGrantedXp} XP ` +
         `to ${userId} for ${reason} ` +
         `in ${gameId} ` +
         `(${currentXp} → ${newXp}, ` +

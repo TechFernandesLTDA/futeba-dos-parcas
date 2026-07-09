@@ -70,8 +70,11 @@ export const onGameEventCreated = onDocumentCreated(
 
       // Delete o evento atual + audit log (atomic)
       txn.delete(eventRef);
+      const auditLogRef = db()
+        .collection("audit_logs")
+        .doc(`game_event_rate_limit_${event.params.eventId}`);
       txn.set(
-        db().collection("audit_logs").doc(),
+        auditLogRef,
         {
           type: "GAME_EVENTS_RATE_LIMIT_EXCEEDED",
           target_user_id: createdBy,

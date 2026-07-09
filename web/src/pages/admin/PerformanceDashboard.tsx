@@ -23,6 +23,7 @@ import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useTranslation } from 'react-i18next';
+import { buildScreenPerformanceStats } from '../../utils/performanceDashboard';
 
 interface PerformanceRecord {
   id: string;
@@ -91,28 +92,7 @@ export const PerformanceDashboard: React.FC = () => {
   }, [user]);
 
   // Agrupar por tela
-  const screenStats = records.reduce((acc, record) => {
-    if (!acc[record.screenName]) {
-      acc[record.screenName] = {
-        count: 0,
-        avgTTI: 0,
-        avgLCP: 0,
-        violations: 0,
-      };
-    }
-    
-    const stats = acc[record.screenName];
-    stats.count++;
-    stats.avgTTI = (stats.avgTTI * (stats.count - 1) + record.timeToInteractive) / stats.count;
-    if (record.lcp) {
-      stats.avgLCP = (stats.avgLCP * (stats.count - 1) + record.lcp) / stats.count;
-    }
-    if (record.performanceViolations) {
-      stats.violations++;
-    }
-    
-    return acc;
-  }, {} as Record<string, { count: number; avgTTI: number; avgLCP: number; violations: number }>);
+  const screenStats = buildScreenPerformanceStats(records);
 
   const sortedScreens = Object.entries(screenStats).sort((a, b) => b[1].count - a[1].count);
 

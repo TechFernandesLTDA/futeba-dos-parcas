@@ -41,7 +41,7 @@ import {
 } from '@mui/icons-material';
 import { doc, writeBatch } from 'firebase/firestore';
 import { db } from '../../services/firebase';
-import { useGroupDetail } from '../../hooks/useGroups';
+import { removeGroupMembershipArtifacts, useGroupDetail } from '../../hooks/useGroups';
 import { usePendingJoinRequests } from '../../hooks/useJoinRequests';
 import { softDeleteGroup } from '../../services/cloudFunctions';
 import { useAuth } from '../../contexts/AuthContext';
@@ -85,8 +85,10 @@ export const GroupSettingsScreen: React.FC = () => {
   const myMember = members.find((m) => m.userId === uid);
   const isOwner = group?.ownerId === uid || myMember?.role === 'OWNER';
   const isAdminOrOwner = isOwner || myMember?.role === 'ADMIN';
+  const isActiveMember = (member: (typeof members)[0]) => member.status === undefined || member.status === 'ACTIVE';
   const canManageMember = (member: (typeof members)[0]) => {
     if (member.userId === uid) return false;
+    if (!isActiveMember(member)) return false;
     if (isOwner) return true;
     return myMember?.role === 'ADMIN' && member.role === 'MEMBER';
   };
@@ -111,10 +113,7 @@ export const GroupSettingsScreen: React.FC = () => {
     setActionLoading(true);
 
     try {
-      const batch = writeBatch(db);
-      batch.update(doc(db, 'groups', groupId, 'members', uid), { status: 'INACTIVE' });
-      batch.delete(doc(db, 'users', uid, 'groups', groupId));
-      await batch.commit();
+      await removeGroupMembershipArtifacts(groupId, uid, 'INACTIVE');
 
       logger.info('Usuário saiu do grupo', { groupId, uid });
       showSuccess(t('feedback.groups.leaveSuccess'));
@@ -191,10 +190,9 @@ export const GroupSettingsScreen: React.FC = () => {
     if (!groupId || !selectedMember) return;
     setKickLoading(true);
     try {
-      const batch = writeBatch(db);
-      batch.update(doc(db, 'groups', groupId, 'members', selectedMember.userId), { status: 'REMOVED' });
-      batch.delete(doc(db, 'users', selectedMember.userId, 'groups', groupId));
-      await batch.commit();
+      await removeGroupMembershipArtifacts(groupId, selectedMember.userId, 'REMOVED', {
+        cleanupConfirmations: isOwner,
+      });
       showSuccess(t('group.settings.memberRemoved', { name: selectedMember.userName }));
       setKickDialogOpen(false);
       setSelectedMember(null);
@@ -208,6 +206,10 @@ export const GroupSettingsScreen: React.FC = () => {
 
   const handleTransferOwnership = async () => {
     if (!groupId || !selectedMember || !uid) return;
+    if (!isActiveMember(selectedMember)) {
+      showError('Selecione um membro ativo para transferir a propriedade.');
+      return;
+    }
     setTransferLoading(true);
     try {
       const batch = writeBatch(db);

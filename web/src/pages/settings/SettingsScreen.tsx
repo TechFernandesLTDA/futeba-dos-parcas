@@ -51,6 +51,7 @@ import { ConnectedAccounts } from '../../components/settings/ConnectedAccounts';
 import { deleteAccount } from '../../services/cloudFunctions';
 import { getFunctionErrorMessage } from '../../utils/firebaseErrors';
 import { TeamBadge } from '../../components/team/TeamBadge';
+import { queryClient } from '../../services/queryClient';
 
 const logger = createLogger('SettingsScreen');
 
@@ -152,13 +153,19 @@ export const SettingsScreen: React.FC = () => {
     setDeleting(true);
     try {
       await deleteAccount();
-      await logout();
       showSuccess(t('settings.deleteAccountSuccess'));
       navigate('/login', { replace: true });
     } catch (err) {
       logger.error('Error deleting account:', err);
       showError(getFunctionErrorMessage(err, 'deleteAccount', t('settings.deleteAccountError')));
+      return;
     } finally {
+      try {
+        await logout();
+      } catch (logoutErr) {
+        logger.warn('Account deleted but local logout failed:', logoutErr);
+        queryClient.clear();
+      }
       setDeleting(false);
       setDeleteStep2Open(false);
     }

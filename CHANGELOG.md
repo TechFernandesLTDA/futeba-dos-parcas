@@ -173,6 +173,17 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.51.31][web-1.51.31] - 2026-07-09
+
+#### Corrigido
+- Hooks de Firestore e telas de grupos, jogos, locais, liga e perfil validam entradas, preservam timestamps e tratam falhas e concorrência de escrita.
+- Fluxos de presença, fila de espera, convites, auto-invite e solicitações de entrada foram alinhados aos contratos server-authoritative.
+- Storage e mídia usam paths compatíveis, limpeza compensatória e cancelamento de uploads; mensagens e notificações respeitam o contexto da tela.
+- Consultas de busca, recentes, avaliações, standings, head-to-head, ranking e mapas foram corrigidas para ordenação, paginação, filtros e cálculos consistentes.
+- A fila offline, atualizações otimistas, cache de DevTools, atalhos, breadcrumbs, PWA e autosave foram endurecidos contra retries, desmontagem e dependências instáveis.
+
+_Issues: #3382, #3383, #3384, #3385, #3386, #3387, #3388, #3389, #3391, #3393, #3394, #3395, #3396, #3397, #3398, #3399, #3400, #3401, #3402, #3403, #3404, #3405, #3406, #3407, #3408, #3409, #3410, #3412, #3413, #3414, #3415, #3416, #3417, #3418, #3419, #3420, #3421, #3422, #3423, #3424, #3425, #3426, #3427, #3429, #3430, #3431, #3432, #3434, #3440, #3442, #3444, #3448, #3450, #3452, #3454, #3456, #3458, #3460, #3462, #3465, #3467, #3468, #3469, #3470, #3471, #3472, #3473, #3474, #3475, #3476, #3477, #3478, #3479, #3480, #3481_
+
 ### [1.51.30][web-1.51.30] - 2026-07-09
 
 #### Corrigido
@@ -1320,6 +1331,17 @@ _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
 
+### [1.7.14][functions-1.7.14] - 2026-07-09
+
+#### Corrigido
+- Soft delete de grupos e jogos ganhou cascatas, limites de iteração e bloqueio de concorrência; convites de grupos removidos são invalidados.
+- Triggers de criação e atualização de jogos, notificações, badges e level-up usam guards de idempotência, deduplicação e transações adequadas.
+- Paginação de migrações, rankings e manutenção passou a usar ordenação estável; jobs concorrentes são serializados quando necessário.
+- Ligas e temporadas corrigem recomputação de standings, atribuição de placar, archive de estatísticas, reputação e XP por temporada.
+- Cashbox usa centavos inteiros e pagina o histórico completo; validações de janela pós-jogo e privacidade de nearby players foram alinhadas às regras de negócio.
+
+_Issues: #3390, #3392, #3411, #3422, #3428, #3429, #3433, #3435, #3436, #3437, #3438, #3439, #3441, #3443, #3445, #3446, #3447, #3449, #3451, #3453, #3455, #3457, #3459, #3461, #3463, #3464, #3466, #3467_
+
 ### [1.7.13][functions-1.7.13] - 2026-07-09
 
 #### Corrigido
@@ -1847,6 +1869,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.51.31]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.31.md
 [web-1.51.30]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.30.md
 [web-1.51.29]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.29.md
 [web-1.51.28]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.28.md
@@ -1958,6 +1981,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [web-1.26.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.26.1.md
 [web-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.26.0.md
 [ios-1.6.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.0.md
+[functions-1.7.14]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.7.14.md
 [functions-1.7.13]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.7.13.md
 [functions-1.7.12]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.7.12.md
 [functions-1.7.11]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.7.11.md

@@ -242,6 +242,20 @@ describe("submitPostGameReputation", () => {
       .rejects.toMatchObject({code: "failed-precondition"});
   });
 
+  it("rejeita submissao fora da janela pos-jogo de 24h", async () => {
+    const oldDate = new Date(Date.now() - 48 * 60 * 60 * 1000);
+    setupFirestore({
+      game: {
+        status: "FINISHED",
+        group_id: "group1",
+        dateTime: {toDate: () => oldDate},
+      },
+    });
+
+    await expect(submitPostGameReputation(makeRequest()))
+      .rejects.toMatchObject({code: "failed-precondition"});
+  });
+
   it("cria avaliacao e grava agregado inicial no perfil", async () => {
     const {tx, refsByPath} = setupFirestore();
 

@@ -32,6 +32,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useTranslation } from 'react-i18next';
+import { clearDeveloperCache } from './devToolsCache';
 
 export const DevToolsScreen: React.FC = () => {
   const { t } = useTranslation();
@@ -41,21 +42,21 @@ export const DevToolsScreen: React.FC = () => {
   const { user } = useAuth();
 
   const [lastAction, setLastAction] = useState<string | null>(null);
+  const [simulateCrash, setSimulateCrash] = useState(false);
 
   // Versão e build lidos em build time via Vite define (package.json + CI run number).
   const appVersion = import.meta.env.VITE_APP_VERSION ?? 'dev';
   const buildNumber = import.meta.env.VITE_APP_BUILD ?? 'dev';
 
+  if (simulateCrash) {
+    throw new Error('Simulated DevTools error');
+  }
+
   const handleClearCache = () => {
     try {
-      localStorage.clear();
+      clearDeveloperCache(import.meta.env.MODE);
     } catch (error) {
-      console.warn('Failed to clear localStorage:', error);
-    }
-    try {
-      sessionStorage.clear();
-    } catch (error) {
-      console.warn('Failed to clear sessionStorage:', error);
+      console.warn('Failed to clear developer cache:', error);
     }
     setLastAction('Cache limpo com sucesso!');
   };
@@ -177,7 +178,7 @@ export const DevToolsScreen: React.FC = () => {
                 />
               </ListItemButton>
               <Divider />
-              <ListItemButton onClick={() => setLastAction('Erro simulado com sucesso')}>
+              <ListItemButton onClick={() => setSimulateCrash(true)}>
                 <ListItemIcon>
                   <BuildIcon />
                 </ListItemIcon>

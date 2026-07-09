@@ -30,6 +30,7 @@ export function useGameDraft<T extends Record<string, unknown>>({
   const [draftSavedAt, setDraftSavedAt] = useState<Date | null>(null);
   const [pendingData, setPendingData] = useState<T | null>(null);
   const isRestoringRef = useRef(false);
+  const pendingDataRef = useRef<T | null>(null);
 
   const debouncedData = useDebounce(pendingData, debounceMs);
 
@@ -53,10 +54,12 @@ export function useGameDraft<T extends Record<string, unknown>>({
     if (isRestoringRef.current) return;
     if (debouncedData && Object.keys(debouncedData).length > 0) {
       saveDraft(key, debouncedData as unknown as Record<string, unknown>);
+      pendingDataRef.current = null;
     }
   }, [debouncedData, key]);
 
   const saveDraftData = useCallback((data: T) => {
+    pendingDataRef.current = data;
     setPendingData(data);
   }, []);
 
@@ -70,6 +73,7 @@ export function useGameDraft<T extends Record<string, unknown>>({
     setDraftSavedAt(null);
     setShowPrompt(false);
     setPendingData(null);
+    pendingDataRef.current = null;
   }, [key]);
 
   const clearDraft = useCallback(() => {
@@ -77,11 +81,25 @@ export function useGameDraft<T extends Record<string, unknown>>({
     setDraft(null);
     setDraftSavedAt(null);
     setPendingData(null);
+    pendingDataRef.current = null;
   }, [key]);
 
   const dismissPrompt = useCallback(() => {
     setShowPrompt(false);
   }, []);
+
+  useEffect(() => {
+    return () => {
+      if (
+        !isRestoringRef.current &&
+        pendingDataRef.current &&
+        Object.keys(pendingDataRef.current).length > 0
+      ) {
+        saveDraft(key, pendingDataRef.current as unknown as Record<string, unknown>);
+        pendingDataRef.current = null;
+      }
+    };
+  }, [key]);
 
   return {
     draft,

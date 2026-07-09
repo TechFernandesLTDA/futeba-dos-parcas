@@ -73,6 +73,7 @@ jest.mock("../src/notifications", () => ({
 import {
   getGameDateTime,
   formatGameDateTime,
+  fetchGamesInReminderWindow,
   fetchPendingConfirmations,
   GameForReminder,
   EXCLUDED_GAME_STATUSES,
@@ -266,6 +267,45 @@ describe("Reminders - formatGameDateTime", () => {
       expect(typeof result).toBe("string");
       expect(result.length).toBeGreaterThan(0);
     }
+  });
+});
+
+describe("Reminders - fetchGamesInReminderWindow", () => {
+  test("ancora jogos legados sem dateTime na data real do jogo, nao em created_at", async () => {
+    const realGameDate = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    const realDateKey = realGameDate.toLocaleDateString("en-CA", {
+      timeZone: "America/Sao_Paulo",
+    });
+    const realTime = realGameDate.toLocaleTimeString("en-GB", {
+      timeZone: "America/Sao_Paulo",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+
+    mockCollectionGet
+      .mockResolvedValueOnce({docs: []})
+      .mockResolvedValueOnce({
+        size: 1,
+        docs: [{
+          id: "legacy-game",
+          data: () => ({
+            status: "SCHEDULED",
+            dateTime: null,
+            date: realDateKey,
+            time: realTime,
+            created_at: {
+              toDate: () => new Date("2020-01-01T00:00:00Z"),
+            },
+          }),
+        }],
+      });
+
+    await fetchGamesInReminderWindow(24);
+
+    expect(mockWhere).toHaveBeenCalledWith("dateTime", "==", null);
+    expect(mockWhere).toHaveBeenCalledWith("date", ">=", expect.any(String));
+    expect(mockWhere).toHaveBeenCalledWith("date", "<=", expect.any(String));
   });
 });
 

@@ -83,10 +83,12 @@ export function useSocialFeed() {
       );
 
       const merged: SocialFeedPost[] = [];
+      let firstChunkError: unknown = null;
       for (const result of results) {
         if (result.status === 'rejected') {
           logger.error('Erro ao carregar chunk do feed social:', result.reason);
-          throw result.reason;
+          firstChunkError ??= result.reason;
+          continue;
         }
         merged.push(
           ...result.value
@@ -97,6 +99,10 @@ export function useSocialFeed() {
               groupName: groupMap.get(post.groupId) ?? 'Grupo',
             })),
         );
+      }
+
+      if (merged.length === 0 && firstChunkError) {
+        throw firstChunkError;
       }
 
       return merged

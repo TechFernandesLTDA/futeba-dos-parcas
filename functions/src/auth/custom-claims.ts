@@ -25,7 +25,7 @@ import {
   onDocumentCreated,
 } from "firebase-functions/v2/firestore";
 import {logger} from "firebase-functions/v2";
-import {FieldValue} from "firebase-admin/firestore";
+import {FieldPath, FieldValue} from "firebase-admin/firestore";
 import {
   secureCallable,
 } from "../middleware/secure-callable-wrapper";
@@ -549,6 +549,9 @@ export const migrateAllUsersToCustomClaims = secureCallable(
       while (hasMore) {
         let query = db()
           .collection("users")
+          .orderBy(
+            FieldPath.documentId()
+          )
           .limit(FIRESTORE_PAGINATION_LIMIT);
 
         if (lastDoc) {

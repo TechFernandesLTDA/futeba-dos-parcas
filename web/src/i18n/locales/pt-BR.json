@@ -337,6 +337,7 @@
     "filtersAria": "Filtros do caixa",
     "groupTitle": "Caixa do Grupo",
     "income": "Entrada",
+    "insufficientBalance": "Saldo insuficiente para registrar essa saída",
     "noFilteredTransactions": "Nenhuma transação nesse filtro",
     "noFilteredTransactionsDesc": "Troque o filtro para ver outros lançamentos do caixa.",
     "readOnly": "Somente leitura",
@@ -460,6 +461,7 @@
     "appName": "Futeba dos Parças",
     "appearance": "Aparência",
     "back": "Voltar",
+    "you": "Você",
     "cancel": "Cancelar",
     "actions": "Ações",
     "charCount": "{{current}}/{{max}} caracteres",
@@ -665,10 +667,13 @@
       "success": "Jogo duplicado com sucesso!"
     },
     "feedback": {
+      "duplicateError": "Você já enviou um feedback igual recentemente.",
       "loadError": "Erro ao carregar feedbacks",
       "loginRequired": "Você precisa estar logado para enviar feedback",
+      "rateLimitError": "Espere um pouco antes de enviar outro feedback.",
       "sendError": "Erro ao enviar feedback. Tente novamente.",
-      "sendSuccess": "Feedback enviado com sucesso!"
+      "sendSuccess": "Feedback enviado com sucesso!",
+      "whitespaceError": "Preencha título e descrição com conteúdo válido."
     },
     "fieldGames": {
       "loadError": "Erro ao carregar jogos do campo"
@@ -781,6 +786,7 @@
       "markAllReadSuccess": "Notificações marcadas como lidas: {{count}}.",
       "markReadError": "Erro ao marcar notificação como lida.",
       "navigatingToGroup": "Navegando para o grupo!",
+      "permissionDenied": "As notificações foram bloqueadas no navegador. Libere a permissão para receber alertas.",
       "restoreError": "Erro ao restaurar notificação.",
       "restoreSuccess": "Notificação restaurada.",
       "settingsSaveError": "Erro ao salvar configurações.",
@@ -842,6 +848,7 @@
     "schedules": {
       "createError": "Erro ao criar horário. Tente novamente.",
       "createSuccess": "Horário criado com sucesso!",
+      "duplicateSlot": "Já existe um horário ativo para este dia e hora.",
       "deleteError": "Erro ao excluir horário. Tente novamente.",
       "deleteSuccess": "Horário excluído com sucesso.",
       "loadError": "Erro ao carregar horários.",
@@ -1104,12 +1111,17 @@
       "deleteGame": "Excluir Jogo",
       "deleteSuccess": "Jogo excluído com sucesso",
       "editGame": "Editar Jogo",
+      "editConflict": "Este jogo foi atualizado em outro lugar. Reabra a edição e tente novamente.",
+      "editUnavailableStatus": "Só é possível editar jogos agendados ou confirmados.",
+      "confirmationClosed": "Este jogo não aceita mais confirmações.",
+      "confirmationPast": "Não é possível confirmar presença depois do horário do jogo.",
       "errorDateTimeRequired": "Informe data e horário",
       "errorMaxPlayersRange": "Número máximo de jogadores deve ser entre 2 e 50",
       "fieldPlayer": "Jogador de Linha",
       "gameActionsMenu": "Menu de ações do jogo",
       "gameOn": "Jogo {{date}}",
       "geolocationUnsupported": "Geolocalização não suportada pelo navegador.",
+      "goalkeeperFull": "As vagas de goleiro já foram preenchidas.",
       "listFull": "Lista Cheia",
       "locationCaptureError": "Erro ao capturar localização. Verifique as permissões.",
       "maxPlayersHelper": "Entre 2 e 50",
@@ -1902,6 +1914,27 @@
     "points": "Pontos",
     "position": "Posição",
     "positionCopied": "Posição copiada!",
+    "positionStatusNeutral": "Continue jogando para subir!",
+    "positionStatusPromo": "Você está na zona de promoção!",
+    "positionStatusRelegation": "Atenção: zona de rebaixamento",
+    "positionTooltipDefault": "{{position}}ª posição",
+    "positionTooltipLeader": "Líder da temporada!",
+    "positionTooltipOrdered": "{{position}}ª posição nesta ordenação",
+    "positionTooltipPromotionZone": "Zona de promoção",
+    "positionTooltipRelegationZone": "Zona de rebaixamento",
+    "positionTooltipRunnerUp": "Vice-líder, quase lá!",
+    "positionTooltipTopThreePromotion": "Top 3 - Zona de promoção",
+    "positionTooltipUnranked": "Sem classificação",
+    "activeSeasonSuffix": " (Ativa)",
+    "collapsePlayerAria": "Recolher detalhes de {{name}}",
+    "drawsShort": "E",
+    "gamesShort": "J",
+    "goalsAgainst": "Gols Contra",
+    "goalsFor": "Gols Pró",
+    "goalsShort": "G",
+    "groupStandingSummary": "{{games}} jogos • {{wins}}V",
+    "lossesShort": "D",
+    "pointsShort": "pts",
     "presenceTieBreaker": "Critério: pontos + presença",
     "saldo": "Saldo",
     "season": "Temporada",
@@ -1910,6 +1943,7 @@
     "silver": "Prata",
     "standingsAria": "Classificação da liga",
     "tabAll": "Geral",
+    "winsShort": "V",
     "title": "Liga",
     "togglePlayerAria": "Expandir detalhes de {{name}}",
     "victories": "Vitórias",
@@ -2055,6 +2089,7 @@
       "validation": {
         "addressRequired": "Endereço é obrigatório",
         "cityRequired": "Cidade é obrigatória",
+        "coordinatesPairRequired": "Informe latitude e longitude juntas, ou deixe ambas em branco.",
         "fieldCountMin": "Mínimo 1 campo",
         "latitudeRange": "Latitude deve estar entre -90 e 90.",
         "longitudeRange": "Longitude deve estar entre -180 e 180.",
@@ -2921,6 +2956,7 @@
     "yourStats": "Suas Estatísticas"
   },
   "teamFormation": {
+    "concurrentUpdateError": "Os times foram alterados em outro lugar. Recarregue a tela antes de salvar de novo.",
     "ownerOnlyError": "Apenas o dono do jogo pode formar os times."
   },
   "feedbackOperations": {
@@ -2999,7 +3035,9 @@
     "playersCount_other": "{{count}} jogadores",
     "selectPlayerAria": "Selecionar jogador {{name}}",
     "title": "Prancheta Tática",
-    "playersCount": "{{count}} jogadores"
+    "playersCount": "{{count}} jogadores",
+    "saveError": "Erro ao salvar a prancheta tática.",
+    "saveSuccess": "Prancheta tática salva."
   },
   "theme": {
     "auto": "Automático (sistema)",

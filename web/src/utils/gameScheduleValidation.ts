@@ -40,3 +40,23 @@ export function isScheduledDateTimeInPast(date: string, time: string, now = new 
 
   return scheduledAt.getTime() <= now.getTime();
 }
+
+interface ScheduleSlot {
+  dayOfWeek: number;
+  time: string;
+  isActive: boolean;
+}
+
+export function hasDuplicateScheduleSlot(
+  schedules: ScheduleSlot[],
+  dayOfWeek: number,
+  time: string,
+): boolean {
+  const normalizedTime = time.trim();
+  return schedules.some(
+    (schedule) =>
+      schedule.isActive &&
+      schedule.dayOfWeek === dayOfWeek &&
+      schedule.time.trim() === normalizedTime,
+  );
+}

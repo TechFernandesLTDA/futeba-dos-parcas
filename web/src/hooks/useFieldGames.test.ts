@@ -140,8 +140,8 @@ describe('useFieldGames', () => {
     expect(june10Games[1].startMinutes).toBe(20 * 60 + 30);
     expect(june10Games[1].endMinutes).toBe(21 * 60 + 30);
 
-    expect(result.current.data.conflictDates.has('2026-06-10')).toBe(true);
-    expect(result.current.data.conflictDates.has('2026-06-12')).toBe(true);
+    expect(result.current.data.conflictDates.has('2026-06-10')).toBe(false);
+    expect(result.current.data.conflictDates.has('2026-06-12')).toBe(false);
   });
 
   it('skips cancelled games', async () => {
@@ -205,7 +205,10 @@ describe('useFieldGames', () => {
       return mockUnsubscribe;
     });
 
-    const { result } = renderHook(() => useFieldGames('field-1'), {
+    const { result } = renderHook(() => useFieldGames('field-1', 60, {
+      openingTime: '06:00',
+      closingTime: '23:00',
+    }), {
       wrapper: createTestWrapper(),
     });
 
@@ -214,6 +217,37 @@ describe('useFieldGames', () => {
     });
 
     expect(result.current.data.fullyBookedDates.has('2026-06-10')).toBe(true);
+  });
+
+  it('does not mark a single non-overlapping game as conflict', async () => {
+    const mockUnsubscribe = vi.fn();
+    mockOnSnapshot.mockImplementation((_query: any, onNext: (snapshot: any) => void) => {
+      setTimeout(() => {
+        onNext({
+          docs: [
+            {
+              data: () => ({
+                date: '2026-06-10',
+                time: '19:00',
+                end_time: '20:00',
+                status: 'CONFIRMED',
+              }),
+            },
+          ],
+        });
+      }, 10);
+      return mockUnsubscribe;
+    });
+
+    const { result } = renderHook(() => useFieldGames('field-1'), {
+      wrapper: createTestWrapper(),
+    });
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    expect(result.current.data.conflictDates.has('2026-06-10')).toBe(false);
   });
 
   it('handles error from onSnapshot', async () => {

@@ -71,6 +71,8 @@ jest.mock("../src/middleware/rate-limiter", () => ({
 // Mock constants
 jest.mock("../src/constants", () => ({
   MVP_VOTE_WINDOW_HOURS: 24,
+  GAME_GENDERS: ["MALE", "FEMALE", "MIXED"],
+  DEFAULT_GAME_GENDER: "MIXED",
   XP_ACTIONS: {
     MVP: 30,
     WORST_PLAYER: -10,
@@ -170,6 +172,25 @@ function makeTransactionMock(snapshots: Record<string, { exists: boolean; data: 
     }),
     set: jest.fn(),
     update: jest.fn(),
+  };
+}
+
+function makeReadBeforeWriteTransaction(responses: any[]) {
+  let callIndex = 0;
+  let wrote = false;
+  const markWrite = () => {
+    wrote = true;
+  };
+
+  return {
+    get: jest.fn(async () => {
+      if (wrote) {
+        throw new Error("Firestore transaction read after write");
+      }
+      return responses[callIndex++] || {exists: false, data: () => ({})};
+    }),
+    set: jest.fn(markWrite),
+    update: jest.fn(markWrite),
   };
 }
 
@@ -714,6 +735,200 @@ describe("concludeMvpVoting - contagem de votos e vencedor", () => {
       source_total_votes: 3,
       source_category_votes: 3,
     }));
+  });
+
+  test("atribui milestone de MVP na temporada do jogo e marca o log principal", async () => {
+    const votes = [
+      {category: "MVP", voter_id: "voter1", voted_player_id: "playerA"},
+      {category: "MVP", voter_id: "voter2", voted_player_id: "playerA"},
+    ];
+
+    const votingTx = {
+      get: jest.fn(),
+      update: jest.fn(),
+      set: jest.fn(),
+    };
+    let votingCallIndex = 0;
+    const votingResponses = [
+      {docs: votes.map((vote) => ({data: () => vote})), empty: false},
+      {
+        exists: true,
+        data: () => ({
+          status: "FINISHED",
+          voting_status: "OPEN",
+          owner_id: "owner1",
+        }),
+      },
+      {
+        docs: [
+          eligibleConfirmationDoc("voter1"),
+          eligibleConfirmationDoc("voter2"),
+          eligibleConfirmationDoc("playerA"),
+        ],
+        empty: false,
+      },
+    ];
+    votingTx.get.mockImplementation(() => {
+      const snap = votingResponses[votingCallIndex++] ||
+        {exists: false, data: () => ({})};
+      return Promise.resolve(snap);
+    });
+
+    const xpTx = {
+      get: jest.fn(),
+      update: jest.fn(),
+      set: jest.fn(),
+    };
+    let xpCallIndex = 0;
+    const xpResponses = [
+      {exists: false, data: () => null},
+      {exists: true, data: () => ({xp_mvp: 0, was_mvp: false})},
+      {
+        exists: true,
+        data: () => ({
+          dateTime: {toDate: () => new Date("2026-06-15T12:00:00-03:00")},
+          gender: "mixed",
+        }),
+      },
+      {
+        exists: true,
+        data: () => ({
+          experience_points: 1000,
+          level: 4,
+          milestones_achieved: [],
+        }),
+      },
+      {
+        exists: true,
+        data: () => ({
+          bestPlayerCount: 9,
+          currentMvpStreak: 2,
+          bestMvpStreak: 2,
+        }),
+      },
+    ];
+    xpTx.get.mockImplementation(() => {
+      const snap = xpResponses[xpCallIndex++] ||
+        {exists: false, data: () => ({})};
+      return Promise.resolve(snap);
+    });
+
+    mockRunTransaction
+      .mockImplementationOnce(async (callback: any) => callback(votingTx))
+      .mockImplementationOnce(async (callback: any) => callback(xpTx));
+
+    await concludeMvpVotingHandler!({
+      auth: {uid: "owner1", token: {profileComplete: true}},
+      data: {gameId: "game1"},
+    });
+
+    const milestoneBadgeSet = xpTx.set.mock.calls.find(
+      ([, data]) => data?.badge_id === "MVP_10"
+    );
+    const votingLogSet = xpTx.set.mock.calls.find(
+      ([, data]) => data?.reason === "MVP"
+    );
+    const mainXpLogSync = xpTx.set.mock.calls.find(
+      ([, data]) => data?.was_mvp === true && data?.updated_at
+    );
+
+    expect(votingLogSet?.[1]).toEqual(expect.objectContaining({
+      xp_earned: 430,
+      xp_mvp: 30,
+      xp_milestones: 400,
+      milestones_unlocked: ["MVP_5", "MVP_10"],
+    }));
+    expect(milestoneBadgeSet?.[1]).toEqual(expect.objectContaining({
+      badge_id: "MVP_10",
+      user_id: "playerA",
+      xp_reward: 300,
+    }));
+    expect(mainXpLogSync?.[1]).toEqual(expect.objectContaining({
+      was_mvp: true,
+    }));
+  });
+
+  test("lê tudo antes de escrever XP de MVP e Bola Murcha", async () => {
+    const votes = [
+      {category: "MVP", voter_id: "voter1", voted_player_id: "playerA"},
+      {category: "MVP", voter_id: "voter2", voted_player_id: "playerA"},
+      {category: "WORST", voter_id: "voter3", voted_player_id: "playerZ"},
+      {category: "WORST", voter_id: "voter4", voted_player_id: "playerZ"},
+    ];
+    const votingTx = {
+      get: jest.fn(),
+      update: jest.fn(),
+      set: jest.fn(),
+    };
+    const votingResponses = [
+      {docs: votes.map((vote) => ({data: () => vote})), empty: false},
+      {
+        exists: true,
+        data: () => ({
+          status: "FINISHED",
+          voting_status: "OPEN",
+          owner_id: "owner1",
+        }),
+      },
+      {
+        docs: [
+          eligibleConfirmationDoc("voter1"),
+          eligibleConfirmationDoc("voter2"),
+          eligibleConfirmationDoc("voter3"),
+          eligibleConfirmationDoc("voter4"),
+          eligibleConfirmationDoc("playerA"),
+          eligibleConfirmationDoc("playerZ"),
+        ],
+        empty: false,
+      },
+    ];
+    votingTx.get.mockImplementation(async () =>
+      votingResponses.shift() || {exists: false, data: () => ({})}
+    );
+
+    const gameSnap = {
+      exists: true,
+      data: () => makeFinishedGame({
+        season_id: "season-1",
+        gender: "MIXED",
+      }),
+    };
+    const userSnap = {
+      exists: true,
+      data: () => ({experience_points: 100, level: 1}),
+    };
+    const mvpXpTx = makeReadBeforeWriteTransaction([
+      {exists: false, data: () => null},
+      {exists: true, data: () => ({was_mvp: false})},
+      gameSnap,
+      userSnap,
+      {exists: true, data: () => ({bestPlayerCount: 0})},
+    ]);
+    const worstXpTx = makeReadBeforeWriteTransaction([
+      {exists: false, data: () => null},
+      {
+        exists: true,
+        data: () => ({xp_penalty: 0, was_worst_player: false}),
+      },
+      gameSnap,
+      userSnap,
+    ]);
+
+    mockRunTransaction
+      .mockImplementationOnce(async (callback: any) => callback(votingTx))
+      .mockImplementationOnce(async (callback: any) => callback(mvpXpTx))
+      .mockImplementationOnce(async (callback: any) => callback(worstXpTx));
+
+    const result = await concludeMvpVotingHandler!({
+      auth: {uid: "owner1", token: {profileComplete: true}},
+      data: {gameId: "game1"},
+    });
+
+    expect(result.xpApplied).toEqual({mvp: true, worst: true, allOk: true});
+    expect(mvpXpTx.get).toHaveBeenCalledTimes(5);
+    expect(worstXpTx.get).toHaveBeenCalledTimes(4);
+    expect(mvpXpTx.set).toHaveBeenCalled();
+    expect(worstXpTx.set).toHaveBeenCalled();
   });
 
   test("deve resolver empate pelo playerId alfabético (determinístico)", async () => {

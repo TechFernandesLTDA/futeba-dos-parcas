@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
@@ -15,9 +16,11 @@ const mockWhere = vi.fn();
 const mockOrderBy = vi.fn();
 const mockBatchSet = vi.fn();
 const mockBatchUpdate = vi.fn();
+const mockBatchDelete = vi.fn();
 const mockBatchCommit = vi.fn();
 const mockWriteBatch = vi.fn();
 const mockUpdateDoc = vi.fn();
+const mockRunTransaction = vi.fn();
 
 vi.mock('firebase/firestore', () => ({
   collection: (...args: any[]) => mockCollection(...args),
@@ -26,6 +29,7 @@ vi.mock('firebase/firestore', () => ({
   getDocs: (...args: any[]) => mockGetDocs(...args),
   addDoc: (...args: any[]) => mockAddDoc(...args),
   updateDoc: (...args: any[]) => mockUpdateDoc(...args),
+  runTransaction: (...args: any[]) => mockRunTransaction(...args),
   setDoc: vi.fn(),
   deleteDoc: vi.fn(),
   writeBatch: (...args: any[]) => mockWriteBatch(...args),
@@ -64,6 +68,7 @@ vi.mock('firebase/storage', () => ({
   ref: vi.fn(),
   uploadBytes: vi.fn(),
   getDownloadURL: vi.fn(),
+  deleteObject: vi.fn(),
 }));
 
 vi.mock('../contexts/ToastContext', () => ({
@@ -93,18 +98,30 @@ vi.mock('../utils/logger', () => ({
   createLogger: () => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }),
 }));
 
-import { useGroups, useGroupDetail, useCreateGroup, useCashbox, useInvitePlayers } from './useGroups';
+import { removeGroupMembershipArtifacts, useGroups, useGroupDetail, useCreateGroup, useCashbox, useInvitePlayers } from './useGroups';
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
+
+function makeDocRef(...segments: unknown[]) {
+  const path = segments
+    .filter((segment) => typeof segment === 'string')
+    .join('/');
+  const parts = path.split('/');
+  return {
+    id: parts[parts.length - 1],
+    path,
+  };
+}
 
 // Helper para configurar batch mock
 function setupBatchMock() {
   mockBatchSet.mockClear();
   mockBatchUpdate.mockClear();
+  mockBatchDelete.mockClear();
   mockBatchCommit.mockClear().mockResolvedValue(undefined);
   mockWriteBatch.mockReturnValue({
     set: mockBatchSet,
     update: mockBatchUpdate,
-    delete: vi.fn(),
+    delete: mockBatchDelete,
     commit: mockBatchCommit,
   });
 }
@@ -237,6 +254,64 @@ describe('useGroupDetail', () => {
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.group).not.toBeNull();
     expect(result.current.members).toHaveLength(1);
+  });
+
+  it('filtra membros INACTIVE/REMOVED da lista retornada', async () => {
+    let callCount = 0;
+    mockOnSnapshot.mockImplementation((ref: any, onNext: any) => {
+      callCount++;
+      if (callCount === 1) {
+        onNext({ exists: () => true, id: 'group-1', data: () => ({ name: 'Meu Grupo', member_count: 3, owner_id: 'user-1' }) });
+      } else {
+        onNext({
+          docs: [
+            { id: 'owner', data: () => ({ user_id: 'user-1', user_name: 'Owner', role: 'OWNER', status: 'ACTIVE' }) },
+            { id: 'inactive', data: () => ({ user_id: 'user-2', user_name: 'Inactive', role: 'MEMBER', status: 'INACTIVE' }) },
+            { id: 'removed', data: () => ({ user_id: 'user-3', user_name: 'Removed', role: 'MEMBER', status: 'REMOVED' }) },
+          ],
+        });
+      }
+      return vi.fn();
+    });
+
+    const { result } = renderHook(() => useGroupDetail('group-1'), { wrapper: createTestWrapper() });
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.members.map((member) => member.userId)).toEqual(['user-1']);
+  });
+});
+
+describe('removeGroupMembershipArtifacts', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    setupBatchMock();
+    mockDoc.mockImplementation((...segments: unknown[]) => makeDocRef(...segments));
+    mockCollection.mockImplementation((...segments: unknown[]) => makeDocRef(...segments));
+    mockQuery.mockImplementation((...args: unknown[]) => args);
+    mockWhere.mockImplementation((...args: unknown[]) => args);
+  });
+
+  it('remove vínculo do usuário e apaga confirmações futuras do grupo', async () => {
+    mockGetDocs.mockResolvedValue({
+      docs: [
+        { id: 'game-1', data: () => ({ status: 'SCHEDULED', group_id: 'group-1' }) },
+        { id: 'game-2', data: () => ({ status: 'CONFIRMED', group_id: 'group-1' }) },
+        { id: 'game-3', data: () => ({ status: 'FINISHED', group_id: 'group-1' }) },
+        { id: 'game-4', data: () => ({ status: 'SCHEDULED', group_id: 'group-1', deleted_at: { seconds: 1 } }) },
+      ],
+    });
+
+    const result = await removeGroupMembershipArtifacts('group-1', 'user-1', 'REMOVED');
+
+    expect(result.confirmationDeletes).toBe(2);
+    expect(mockBatchUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ path: 'groups/group-1/members/user-1' }),
+      expect.objectContaining({ status: 'REMOVED' }),
+    );
+    expect(mockBatchDelete).toHaveBeenCalledWith(expect.objectContaining({ path: 'users/user-1/groups/group-1' }));
+    expect(mockBatchDelete).toHaveBeenCalledWith(expect.objectContaining({ path: 'confirmations/game-1_user-1' }));
+    expect(mockBatchDelete).toHaveBeenCalledWith(expect.objectContaining({ path: 'confirmations/game-2_user-1' }));
+    expect(mockBatchCommit).toHaveBeenCalled();
   });
 });
 
@@ -373,7 +448,7 @@ describe('useCashbox', () => {
     await waitFor(() => expect(result.current.loading).toBe(false));
   });
 
-  it('calcula saldo corretamente com receitas e despesas', async () => {
+  it('calcula saldo corretamente com receitas, despesas e floats legados', async () => {
     mockOnSnapshot.mockImplementation((q: any, onNext: any) => {
       onNext({
         docs: [
@@ -381,14 +456,18 @@ describe('useCashbox', () => {
           { id: 'tx-2', data: () => ({ type: 'EXPENSE', amount: 30, date: { toDate: () => new Date() } }) },
           { id: 'tx-3', data: () => ({ type: 'INCOME', amount: 50, date: { toDate: () => new Date() } }) },
           { id: 'tx-4', data: () => ({ type: 'EXPENSE', amount: 90, status: 'VOIDED', date: { toDate: () => new Date() } }) },
+          { id: 'tx-5', data: () => ({ type: 'INCOME', amount: 0.1, date: { toDate: () => new Date() } }) },
+          { id: 'tx-6', data: () => ({ type: 'INCOME', amount: 0.2, date: { toDate: () => new Date() } }) },
         ],
       });
       return vi.fn();
     });
     const { result } = renderHook(() => useCashbox('group-1'), { wrapper: createTestWrapper() });
     await waitFor(() => expect(result.current.loading).toBe(false));
-    expect(result.current.balance).toBe(120);
-    expect(result.current.transactions).toHaveLength(4);
+    expect(result.current.balance).toBe(120.3);
+    expect(result.current.transactions).toHaveLength(6);
+    expect(result.current.transactions[4]?.amount).toBe(0.1);
+    expect(result.current.transactions[5]?.amount).toBe(0.2);
   });
 
   it('trata erros do snapshot', async () => {
@@ -411,6 +490,7 @@ describe('useInvitePlayers', () => {
     mockGetDoc.mockResolvedValue({ exists: () => false });
     mockQuery.mockReturnValue('mock-query');
     mockWhere.mockReturnValue('mock-where');
+    mockRunTransaction.mockReset();
     setupBatchMock();
     mockAuthReturn = {
       user: { id: 'test-user-id', name: 'Test User', photoUrl: null, level: 5 },
@@ -432,17 +512,37 @@ describe('useInvitePlayers', () => {
   });
 
   it('joinByInviteCode (#2515/#2517) marca convite usado e aguarda membership do trigger', async () => {
-    // #2351: joinByInviteCode usa getDoc(doc(invites, code)) — não getDocs + where. #2330
-    mockGetDoc.mockResolvedValue({
-      exists: () => true,
-      data: () => ({
-        group_id: 'group-1',
-        group_name: 'Grupo Teste',
-        used: false,
-        expires_at: { toMillis: () => Date.now() + 86400000 }, // expira amanhã
-      }),
+    mockDoc.mockImplementation((...segments: unknown[]) => makeDocRef(...segments));
+    mockRunTransaction.mockImplementation(async (_db: unknown, callback: (tx: { get: (ref: { path: string }) => Promise<unknown>; update: (ref: { path: string }, data: unknown) => void }) => Promise<string>) => {
+      const updates: Array<{ ref: { path: string }; data: unknown }> = [];
+      const result = await callback({
+        get: async (ref) => {
+          if (ref.path === 'groups/group-1/members/test-user-id') {
+            return {
+              exists: () => false,
+              data: () => undefined,
+            };
+          }
+
+          return {
+            exists: () => true,
+            data: () => ({
+              group_id: 'group-1',
+              group_name: 'Grupo Teste',
+              used: false,
+              expires_at: { toMillis: () => Date.now() + 86400000 },
+            }),
+          };
+        },
+        update: (ref, data) => {
+          updates.push({ ref, data });
+        },
+      });
+
+      expect(updates).toHaveLength(1);
+      expect(updates[0]?.ref.path).toBe('invites/ABC123');
+      return result;
     });
-    mockUpdateDoc.mockResolvedValue(undefined);
     // #2517: Opção A — o cliente NÃO cria mais member doc; só marca o convite
     // usado e aguarda o member doc aparecer (criado pelo trigger onInviteRedeemed).
     // O onSnapshot dispara imediatamente com exists()=true para resolver o wait.
@@ -455,17 +555,102 @@ describe('useInvitePlayers', () => {
       const groupId = await result.current.joinByInviteCode('ABC123');
       expect(groupId).toBe('group-1');
     });
-    // Opção A: marca invite used via updateDoc — NÃO usa writeBatch nem cria member.
-    expect(mockUpdateDoc).toHaveBeenCalled();
+    expect(mockRunTransaction).toHaveBeenCalled();
+    // Opção A: marca invite used dentro da transação — NÃO usa writeBatch nem cria member.
+    expect(mockUpdateDoc).not.toHaveBeenCalled();
     expect(mockWriteBatch).not.toHaveBeenCalled();
     expect(mockBatchSet).not.toHaveBeenCalled();
     // Aguardou a membership assíncrona via listener.
     expect(mockOnSnapshot).toHaveBeenCalled();
   });
 
+  it('joinByInviteCode não consome convite quando o usuário já é membro ACTIVE', async () => {
+    mockDoc.mockImplementation((...segments: unknown[]) => makeDocRef(...segments));
+    mockRunTransaction.mockImplementation(async (_db: unknown, callback: (tx: { get: (ref: { path: string }) => Promise<unknown>; update: (ref: { path: string }, data: unknown) => void }) => Promise<string>) => {
+      await callback({
+        get: async (ref) => {
+          if (ref.path === 'groups/group-1/members/test-user-id') {
+            return {
+              exists: () => true,
+              data: () => ({ status: 'ACTIVE' }),
+            };
+          }
+
+          return {
+            exists: () => true,
+            data: () => ({
+              group_id: 'group-1',
+              used: false,
+              expires_at: { toMillis: () => Date.now() + 86400000 },
+            }),
+          };
+        },
+        update: vi.fn(),
+      });
+
+      return 'group-1';
+    });
+
+    const { result } = renderHook(() => useInvitePlayers(), { wrapper: createTestWrapper() });
+
+    await expect(act(async () => {
+      await result.current.joinByInviteCode('ABC123');
+    })).rejects.toThrow('Você já faz parte deste grupo.');
+
+    expect(mockOnSnapshot).not.toHaveBeenCalled();
+  });
+
+  it('joinByInviteCode falha quando o grupo já foi soft-deletado', async () => {
+    mockDoc.mockImplementation((...segments: unknown[]) => makeDocRef(...segments));
+    mockRunTransaction.mockImplementation(async (_db: unknown, callback: (tx: { get: (ref: { path: string }) => Promise<unknown>; update: (ref: { path: string }, data: unknown) => void }) => Promise<string>) => {
+      await callback({
+        get: async (ref) => {
+          if (ref.path === 'groups/group-1') {
+            return {
+              exists: () => true,
+              data: () => ({ deleted_at: { seconds: 1 }, status: 'DELETED' }),
+            };
+          }
+          if (ref.path === 'groups/group-1/members/test-user-id') {
+            return {
+              exists: () => false,
+              data: () => ({}),
+            };
+          }
+
+          return {
+            exists: () => true,
+            data: () => ({
+              group_id: 'group-1',
+              used: false,
+              expires_at: { toMillis: () => Date.now() + 86400000 },
+            }),
+          };
+        },
+        update: vi.fn(),
+      });
+      return 'group-1';
+    });
+
+    const { result } = renderHook(() => useInvitePlayers(), { wrapper: createTestWrapper() });
+
+    await expect(act(async () => {
+      await result.current.joinByInviteCode('ABC123');
+    })).rejects.toThrow('Código de convite inválido ou expirado');
+  });
+
   it('joinByInviteCode falha com código inválido', async () => {
-    // Código inválido: getDoc retorna documento inexistente. #2330
-    mockGetDoc.mockResolvedValue({ exists: () => false, data: () => null });
+    mockDoc.mockImplementation((...segments: unknown[]) => makeDocRef(...segments));
+    mockRunTransaction.mockImplementation(async (_db: unknown, callback: (tx: { get: (ref: { path: string }) => Promise<unknown>; update: (ref: { path: string }, data: unknown) => void }) => Promise<string>) => {
+      await callback({
+        get: async () => ({
+          exists: () => false,
+          data: () => null,
+        }),
+        update: vi.fn(),
+      });
+      return 'group-1';
+    });
     const { result } = renderHook(() => useInvitePlayers(), { wrapper: createTestWrapper() });
     await expect(act(async () => { await result.current.joinByInviteCode('INVALID'); }))
       .rejects.toThrow('Código de convite inválido ou expirado');

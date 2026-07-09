@@ -573,7 +573,17 @@ export const onUserDeleted = auth
         try {
           let groupsTotal = 0;
           let lastDoc: admin.firestore.DocumentSnapshot | null = null;
+          let groupsIterations = 0;
           while (true) {
+            if (++groupsIterations > MAX_ANON_ITERATIONS) {
+              logger.error(
+                `[ACCOUNT_CLEANUP] Limite de ${MAX_ANON_ITERATIONS} ` +
+                  "iterações excedido ao anonimizar grupos " +
+                  `para ${uid} — abortando para evitar loop infinito`
+              );
+              anonFailed = true;
+              break;
+            }
             let query = db.collection("groups").limit(500);
             if (lastDoc) query = query.startAfter(lastDoc);
             const groupsSnap = await query.get();

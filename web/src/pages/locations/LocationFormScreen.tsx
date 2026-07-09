@@ -129,6 +129,20 @@ const OPERATING_DAY_OPTIONS = [
   { value: 7, label: 'Dom' },
 ];
 
+const safeStorageName = (name: string) =>
+  name.replace(/\.[^.]+$/, '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^A-Za-z0-9._-]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 80) || 'foto';
+
+function buildSafeStorageFileName(file: File, index: number) {
+  const extension = file.type.split('/')[1] || 'jpg';
+  return `${Date.now()}-${index}-${safeStorageName(file.name)}.${extension.replace('jpeg', 'jpg')}`;
+}
+
 export const LocationFormScreen: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -300,6 +314,13 @@ export const LocationFormScreen: React.FC = () => {
     if (form.website && !/^https?:\/\/.+/.test(form.website)) {
       e.website = t('locations.form.validation.websiteInvalid');
     }
+    const hasLatitude = form.latitude !== null;
+    const hasLongitude = form.longitude !== null;
+    if (hasLatitude !== hasLongitude) {
+      const message = t('locations.form.validation.coordinatesPairRequired');
+      if (!hasLatitude) e.latitude = message;
+      if (!hasLongitude) e.longitude = message;
+    }
     if (form.latitude !== null && (form.latitude < -90 || form.latitude > 90)) {
       e.latitude = t('locations.form.validation.latitudeRange');
     }
@@ -413,7 +434,7 @@ export const LocationFormScreen: React.FC = () => {
   const uploadFiles = async (basePath: string, files: File[]) => {
     const urls: string[] = [];
     for (const [index, file] of files.entries()) {
-      const ref = storageRef(storage, `${basePath}/${Date.now()}-${index}-${file.name}`);
+      const ref = storageRef(storage, `${basePath}/${buildSafeStorageFileName(file, index)}`);
       await uploadBytes(ref, file, { contentType: file.type });
       urls.push(await getDownloadURL(ref));
     }
@@ -764,7 +785,7 @@ export const LocationFormScreen: React.FC = () => {
                       disabled={geoLoading}
                       fullWidth
                     >
-                      {form.latitude && form.longitude
+                      {form.latitude !== null && form.longitude !== null
                         ? t('locations.form.coordinatesValue', {
                             latitude: form.latitude.toFixed(6),
                             longitude: form.longitude.toFixed(6),

@@ -1,10 +1,14 @@
-const mockSoftDelete = jest.fn();
+const mockSoftDeleteGameCascade = jest.fn();
 const mockRestoreSoftDeleted = jest.fn();
 const mockSoftDeleteGroupCascade = jest.fn();
 const mockCleanupSoftDeleted = jest.fn();
 const mockCheckRateLimit = jest.fn().mockResolvedValue({ allowed: true, remaining: 10, resetAt: new Date(Date.now() + 60000) });
 const mockDocGet = jest.fn();
 const mockDocUpdate = jest.fn();
+const mockDocSet = jest.fn();
+const mockRunTransaction = jest.fn();
+const mockTransactionGet = jest.fn();
+const mockTransactionSet = jest.fn();
 const mockCollectionGet = jest.fn();
 const mockCollectionAdd = jest.fn().mockResolvedValue({ id: "metric1" });
 const mockWhere = jest.fn().mockReturnThis();
@@ -20,6 +24,7 @@ const mockDoc = jest.fn((id: string) => ({
   id,
   get: mockDocGet,
   update: mockDocUpdate,
+  set: mockDocSet,
   collection: jest.fn(() => ({
     doc: jest.fn((sid: string) => ({ id: sid, get: mockDocGet, update: mockDocUpdate })),
     where: mockWhere,
@@ -50,7 +55,7 @@ const mockTimestamp = {
 const mockFirestore = jest.fn(() => ({
   collection: mockCollection,
   batch: jest.fn(() => ({ update: jest.fn(), delete: jest.fn(), commit: jest.fn().mockResolvedValue([]) })),
-  runTransaction: jest.fn(),
+  runTransaction: mockRunTransaction,
 }));
 (mockFirestore as any).FieldValue = mockFieldValue;
 (mockFirestore as any).Timestamp = mockTimestamp;
@@ -89,7 +94,7 @@ jest.mock("../../src/middleware/rate-limiter", () => ({
 }));
 
 jest.mock("../../src/utils/soft-delete-helper", () => ({
-  softDelete: mockSoftDelete,
+  softDeleteGameCascade: mockSoftDeleteGameCascade,
   restoreSoftDeleted: mockRestoreSoftDeleted,
   softDeleteGroupCascade: mockSoftDeleteGroupCascade,
   cleanupSoftDeleted: mockCleanupSoftDeleted,
@@ -99,6 +104,7 @@ jest.mock("../../src/_db", () => {
   const dbFn = jest.fn(() => ({
     collection: mockCollection,
     batch: jest.fn(() => ({ update: jest.fn(), delete: jest.fn(), commit: jest.fn().mockResolvedValue([]) })),
+    runTransaction: mockRunTransaction,
   }));
   return { db: dbFn };
 });
@@ -114,8 +120,24 @@ const makeAuthRequest = (overrides: any = {}) => ({
 describe("Soft Delete — Callables", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockRunTransaction.mockImplementation(async (callback: any) =>
+      callback({
+        get: mockTransactionGet,
+        set: mockTransactionSet,
+      })
+    );
+    mockTransactionGet.mockResolvedValue({
+      exists: false,
+      data: () => null,
+    });
     mockDocUpdate.mockResolvedValue(undefined);
-    mockSoftDelete.mockReset().mockResolvedValue({ success: true, deletedAt: new Date(), docId: "game1" });
+    mockDocSet.mockResolvedValue(undefined);
+    mockSoftDeleteGameCascade.mockReset().mockResolvedValue({
+      success: true,
+      deletedAt: new Date(),
+      docId: "game1",
+      dependentsDeleted: 5,
+    });
     mockRestoreSoftDeleted.mockReset().mockResolvedValue({ success: true, docId: "game1" });
     mockSoftDeleteGroupCascade.mockReset().mockResolvedValue({ groupDeleted: true, gamesDeleted: 3 });
     mockCleanupSoftDeleted.mockReset().mockResolvedValue({ totalDeleted: 5, batchCount: 1, collection: "games" });
@@ -132,7 +154,9 @@ describe("Soft Delete — Callables", () => {
 
       expect(result.success).toBe(true);
       expect(result.gameId).toBe("game1");
-      expect(mockSoftDelete).toHaveBeenCalledWith("games", "game1", "user1", expect.any(Object));
+      expect(mockSoftDeleteGameCascade).toHaveBeenCalledWith(
+        "game1", "user1", "Test"
+      );
     });
 
     it("rejeita sem autenticacao", async () => {
@@ -185,7 +209,7 @@ describe("Soft Delete — Callables", () => {
 
       await softDeleteGame(makeAuthRequest({ auth: { uid: "admin1", token: { role: "ADMIN" } } }));
 
-      expect(mockSoftDelete).toHaveBeenCalled();
+      expect(mockSoftDeleteGameCascade).toHaveBeenCalled();
     });
 
     it("e idempotente quando jogo ja deletado", async () => {
@@ -197,7 +221,7 @@ describe("Soft Delete — Callables", () => {
       const result = await softDeleteGame(makeAuthRequest());
 
       expect(result.alreadyDeleted).toBe(true);
-      expect(mockSoftDelete).not.toHaveBeenCalled();
+      expect(mockSoftDeleteGameCascade).not.toHaveBeenCalled();
     });
 
     it("escreve audit log apos soft-delete de jogo", async () => {
@@ -359,6 +383,14 @@ describe("Soft Delete — Callables", () => {
           total_deleted: 0,
         }),
       );
+    });
+
+    it("pula cleanup quando scheduler lock ja esta em andamento", async () => {
+      mockRunTransaction.mockResolvedValueOnce(false);
+
+      await cleanupAllSoftDeleted();
+
+      expect(mockCleanupSoftDeleted).not.toHaveBeenCalled();
     });
   });
 });

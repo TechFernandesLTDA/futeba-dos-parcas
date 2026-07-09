@@ -68,6 +68,7 @@ jest.mock("firebase-admin", () => {
   const mockAdmin: any = {
     apps: [{ name: "test" }],
     firestore: jest.fn(() => ({
+      doc: mockDocRef,
       collection: jest.fn().mockReturnValue({
         doc: mockDocRef,
         where: mockWhere,
@@ -101,6 +102,7 @@ import {
   restoreSoftDeleted,
   isSoftDeleted,
   cleanupSoftDeleted,
+  softDeleteGameCascade,
   softDeleteGroupCascade,
 } from "../src/utils/soft-delete-helper";
 
@@ -518,10 +520,118 @@ describe("cleanupSoftDeleted", () => {
 });
 
 // ==========================================
+// softDeleteGameCascade
+// ==========================================
+
+describe("softDeleteGameCascade", () => {
+  const emptyQuerySnapshot = {empty: true, docs: [], size: 0};
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockDocGet.mockReset();
+    mockQueryGet.mockReset();
+    mockBatchUpdate.mockReset();
+    mockBatchCommit.mockReset().mockResolvedValue(undefined);
+    mockDocUpdate.mockReset().mockResolvedValue(undefined);
+  });
+
+  test("soft-deleta confirmações, caronas, chat, comentários e waitlist", async () => {
+    mockDocGet.mockResolvedValue({
+      exists: true,
+      data: () => ({status: "SCHEDULED"}),
+    });
+    const makeDoc = (id: string) => ({
+      id,
+      ref: {id},
+      data: () => ({deleted_at: null}),
+    });
+    mockQueryGet
+      .mockResolvedValueOnce({empty: false, docs: [makeDoc("confirmation-1")], size: 1})
+      .mockResolvedValueOnce({empty: false, docs: [makeDoc("ride-1")], size: 1})
+      .mockResolvedValueOnce({empty: false, docs: [makeDoc("chat-1")], size: 1})
+      .mockResolvedValueOnce({empty: false, docs: [makeDoc("comment-1")], size: 1})
+      .mockResolvedValueOnce({empty: false, docs: [makeDoc("waitlist-1")], size: 1});
+
+    const result = await softDeleteGameCascade("game1", "user1", "Encerramento");
+
+    expect(result).toMatchObject({success: true, dependentsDeleted: 5});
+    expect(mockBatchUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({id: "confirmation-1"}),
+      expect.objectContaining({status: "CANCELLED", deleted_by: "user1"})
+    );
+    expect(mockBatchUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({id: "ride-1"}),
+      expect.objectContaining({status: "CANCELLED", deleted_by: "user1"})
+    );
+    expect(mockBatchUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({id: "chat-1"}),
+      expect.objectContaining({deleted_by: "user1"})
+    );
+    expect(mockBatchUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({id: "comment-1"}),
+      expect.objectContaining({deleted_by: "user1"})
+    );
+    expect(mockBatchUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({id: "waitlist-1"}),
+      expect.objectContaining({status: "CANCELLED", deleted_by: "user1"})
+    );
+    expect(mockDocUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({status: "DELETED", deleted_by: "user1"})
+    );
+  });
+
+  test("respeita o limite de 450 operações por batch", async () => {
+    mockDocGet.mockResolvedValue({
+      exists: true,
+      data: () => ({status: "SCHEDULED"}),
+    });
+    const confirmationDocs = Array.from({length: 451}, (_, index) => ({
+      id: `confirmation-${index}`,
+      ref: {id: `confirmation-${index}`},
+      data: () => ({deleted_at: null}),
+    }));
+    mockQueryGet
+      .mockResolvedValueOnce({
+        empty: false,
+        docs: confirmationDocs,
+        size: confirmationDocs.length,
+      })
+      .mockResolvedValueOnce(emptyQuerySnapshot)
+      .mockResolvedValueOnce(emptyQuerySnapshot)
+      .mockResolvedValueOnce(emptyQuerySnapshot)
+      .mockResolvedValueOnce(emptyQuerySnapshot);
+
+    const result = await softDeleteGameCascade("game1", "user1");
+
+    expect(result).toMatchObject({success: true, dependentsDeleted: 451});
+    expect(mockBatchCommit).toHaveBeenCalledTimes(2);
+  });
+
+  test("é idempotente quando o jogo já está deletado", async () => {
+    mockDocGet.mockResolvedValue({
+      exists: true,
+      data: () => ({deleted_at: {toDate: () => new Date()}}),
+    });
+
+    const result = await softDeleteGameCascade("game1", "user1");
+
+    expect(result.success).toBe(true);
+    expect(mockQueryGet).not.toHaveBeenCalled();
+    expect(mockDocUpdate).not.toHaveBeenCalled();
+  });
+});
+
+// ==========================================
 // softDeleteGroupCascade
 // ==========================================
 
 describe("softDeleteGroupCascade", () => {
+  const emptyQuerySnapshot = {
+    empty: true,
+    docs: [],
+    size: 0,
+  };
+
   beforeEach(() => {
     jest.clearAllMocks();
     mockBatchUpdate.mockReturnValue(undefined);
@@ -535,28 +645,103 @@ describe("softDeleteGroupCascade", () => {
       data: () => ({ name: "Pelada dos Parcas" }), // sem deleted_at
     });
 
-    // Mock dos jogos do grupo
-    const mockGameDocs = [
-      {
-        ref: { id: "game1", update: jest.fn() },
-        data: () => ({ status: "SCHEDULED", group_id: "group1" }),
-      },
-      {
-        ref: { id: "game2", update: jest.fn() },
-        data: () => ({ status: "CONFIRMED", group_id: "group1" }),
-      },
-    ];
-    mockQueryGet.mockResolvedValue({
-      empty: false,
-      docs: mockGameDocs,
-      size: 2,
-    });
+    mockQueryGet
+      .mockResolvedValueOnce({
+        empty: false,
+        docs: [
+          {
+            ref: { id: "game1", update: jest.fn() },
+            data: () => ({ status: "SCHEDULED", group_id: "group1" }),
+          },
+          {
+            ref: { id: "game2", update: jest.fn() },
+            data: () => ({ status: "CONFIRMED", group_id: "group1" }),
+          },
+        ],
+        size: 2,
+      })
+      .mockResolvedValueOnce({
+        empty: false,
+        docs: [
+          {
+            id: "member-1",
+            ref: { id: "member-1" },
+            data: () => ({ user_id: "user-a", status: "ACTIVE" }),
+          },
+        ],
+        size: 1,
+      })
+      .mockResolvedValueOnce(emptyQuerySnapshot)
+      .mockResolvedValueOnce({
+        empty: false,
+        docs: [
+          {
+            id: "post-1",
+            ref: { id: "post-1" },
+            data: () => ({ deleted_at: null }),
+          },
+        ],
+        size: 1,
+      })
+      .mockResolvedValueOnce({
+        empty: false,
+        docs: [
+          {
+            id: "poll-1",
+            ref: { id: "poll-1" },
+            data: () => ({ status: "ACTIVE" }),
+          },
+        ],
+        size: 1,
+      })
+      .mockResolvedValueOnce({
+        empty: false,
+        docs: [
+          {
+            id: "group-invite-1",
+            ref: { id: "group-invite-1" },
+            data: () => ({ status: "PENDING" }),
+          },
+        ],
+        size: 1,
+      })
+      .mockResolvedValueOnce({
+        empty: false,
+        docs: [
+          {
+            id: "invite-1",
+            ref: { id: "invite-1" },
+            data: () => ({ used: false }),
+          },
+        ],
+        size: 1,
+      });
 
     const result = await softDeleteGroupCascade("group1", "user1", "Encerramento do grupo");
 
     expect(result.groupDeleted).toBe(true);
     expect(result.gamesDeleted).toBe(2);
     expect(mockBatchCommit).toHaveBeenCalled();
+    expect(mockBatchDelete).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "users/user-a/groups/group1" })
+    );
+    expect(mockBatchUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "post-1" }),
+      expect.objectContaining({ deleted_by: "user1" })
+    );
+    expect(mockBatchUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "poll-1" }),
+      expect.objectContaining({ status: "CLOSED" })
+    );
+    const deletingCall = mockDocUpdate.mock.calls.find(
+      ([fields]) => fields.status === "DELETING"
+    );
+    expect(deletingCall).toBeDefined();
+    expect(
+      mockDocUpdate.mock.invocationCallOrder[
+        mockDocUpdate.mock.calls.indexOf(deletingCall!)
+      ]
+    ).toBeLessThan(mockQueryGet.mock.invocationCallOrder[1]);
   });
 
   test("deve retornar erro quando grupo não existe", async () => {
@@ -593,26 +778,31 @@ describe("softDeleteGroupCascade", () => {
       data: () => ({ name: "Grupo" }), // grupo ativo
     });
 
-    const mockGameDocs = [
-      {
-        ref: { id: "game1", update: jest.fn() },
-        data: () => ({ status: "SCHEDULED", group_id: "group1" }),
-      },
-      {
-        ref: { id: "game2", update: jest.fn() },
-        // game2 já está deletado — deve ser pulado
-        data: () => ({
-          status: "DELETED",
-          group_id: "group1",
-          deleted_at: { toDate: () => new Date() },
-        }),
-      },
-    ];
-    mockQueryGet.mockResolvedValue({
-      empty: false,
-      docs: mockGameDocs,
-      size: 2,
-    });
+    mockQueryGet
+      .mockResolvedValueOnce({
+        empty: false,
+        docs: [
+          {
+            ref: { id: "game1", update: jest.fn() },
+            data: () => ({ status: "SCHEDULED", group_id: "group1" }),
+          },
+          {
+            ref: { id: "game2", update: jest.fn() },
+            data: () => ({
+              status: "DELETED",
+              group_id: "group1",
+              deleted_at: { toDate: () => new Date() },
+            }),
+          },
+        ],
+        size: 2,
+      })
+      .mockResolvedValueOnce(emptyQuerySnapshot)
+      .mockResolvedValueOnce(emptyQuerySnapshot)
+      .mockResolvedValueOnce(emptyQuerySnapshot)
+      .mockResolvedValueOnce(emptyQuerySnapshot)
+      .mockResolvedValueOnce(emptyQuerySnapshot)
+      .mockResolvedValueOnce(emptyQuerySnapshot);
 
     const result = await softDeleteGroupCascade("group1", "user1");
 

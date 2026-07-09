@@ -68,9 +68,11 @@ function makePaginatedQuery(totalDocs: number, pageSize = 500) {
 const mockCollectionGet = jest.fn();
 const mockWhere = jest.fn().mockReturnThis();
 const mockLimit = jest.fn().mockReturnThis();
+const mockStartAfter = jest.fn().mockReturnThis();
 const mockCollection = jest.fn().mockReturnValue({
   where: mockWhere,
   limit: mockLimit,
+  startAfter: mockStartAfter,
   get: mockCollectionGet,
 });
 
@@ -348,5 +350,44 @@ describe("onUserDeleted — regressão #2323 loop infinito anonimização", () =
       // 3 subcoleções consultadas uma vez cada (todas vazias).
       expect(mockCollectionGroupGet).toHaveBeenCalledTimes(3);
     }
+  );
+
+  test(
+    "aborta quando a paginação de grupos não avança e atinge MAX_ANON_ITERATIONS",
+    async () => {
+      const repeatingGroupDocs = Array.from({length: 500}, (_, i) => ({
+        id: `group_${i}`,
+        ref: {id: `group_${i}`},
+        data: () => ({
+          ownerId: "other-user",
+          members: [],
+        }),
+      }));
+
+      let collectionGetCalls = 0;
+      mockCollectionGet.mockImplementation(() => {
+        collectionGetCalls++;
+        if (collectionGetCalls <= 12) {
+          return Promise.resolve({
+            docs: [],
+            empty: true,
+            size: 0,
+          });
+        }
+
+        return Promise.resolve({
+          docs: repeatingGroupDocs,
+          empty: false,
+          size: repeatingGroupDocs.length,
+        });
+      });
+
+      await expect(
+        onUserDeleted(makeUserRecord())
+      ).rejects.toThrow("PII anonymization incomplete");
+
+      expect(mockStartAfter).toHaveBeenCalled();
+    },
+    10000
   );
 });

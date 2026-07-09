@@ -19,6 +19,10 @@ import {
 import {
   getAllBadgesToAward,
 } from "./badges/badge-helper";
+import {
+  buildMilestoneBadgeDoc,
+  buildUserBadgeAggregateDoc,
+} from "./badges/user-badge-docs";
 import {isGameShape} from "./validation/guards";
 import {
   buildGameValidationFromFirestore,
@@ -1230,6 +1234,23 @@ export const onGameStatusUpdate = onDocumentUpdated(
                   );
               }
               tx.update(userRef, userUpdate);
+              for (const milestoneName of
+                cappedMilestones.appliedMilestones) {
+                const badgeRef = db()
+                  .collection("user_badges")
+                  .doc(`${uid}_${milestoneName}`);
+                tx.set(
+                  badgeRef,
+                  buildUserBadgeAggregateDoc(
+                    uid,
+                    buildMilestoneBadgeDoc(
+                      milestoneName,
+                      now
+                    )
+                  ),
+                  {merge: true}
+                );
+              }
 
               tx.set(
                 statsRef,
@@ -2641,9 +2662,12 @@ export {startNewSeason, archiveSeason} from "./growth/season-cycle";
 // ==========================================
 // CASHBOX (auditoria 2026-05-30 #2352)
 // ==========================================
+// - createCashboxEntry: valida saldo/role e grava entrada sem arredondamento
+//   flutuante acumulado no boundary do backend.
 // - onCashboxEntryWritten: recomputa cashbox_summary/current do ledger
 //   imutavel a cada escrita de entry (summary self-healing, balance sempre
 //   consistente com income/expense reais).
+export {createCashboxEntry} from "./cashbox/callable";
 export {onCashboxEntryWritten} from "./cashbox/summary-recompute";
 
 // ==========================================

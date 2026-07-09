@@ -1,6 +1,6 @@
-import { Box, Button, Typography, alpha, useTheme } from '@mui/material';
+import { Box, Button, IconButton, Typography, alpha, useTheme } from '@mui/material';
 import type { SxProps, Theme } from '@mui/material/styles';
-import { Download, IosShare } from '@mui/icons-material';
+import { Close, Download, IosShare } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { usePwaInstall } from '../../hooks/usePwaInstall';
 
@@ -11,7 +11,7 @@ interface InstallAppPromptProps {
 export function InstallAppPrompt({ sx }: InstallAppPromptProps) {
   const { t } = useTranslation();
   const theme = useTheme();
-  const { canPrompt, install, platform, shouldShow } = usePwaInstall();
+  const { canPrompt, dismiss, install, platform, shouldShow } = usePwaInstall();
 
   if (!shouldShow) return null;
 
@@ -28,7 +28,7 @@ export function InstallAppPrompt({ sx }: InstallAppPromptProps) {
       sx={[
         {
           display: 'grid',
-          gridTemplateColumns: canPrompt ? '1fr auto' : 'auto 1fr',
+          gridTemplateColumns: `${isIOS ? 'auto ' : ''}1fr auto${canPrompt ? ' auto' : ''}`,
           alignItems: 'center',
           gap: 1.25,
           p: 1.25,
@@ -74,6 +74,14 @@ export function InstallAppPrompt({ sx }: InstallAppPromptProps) {
           {t('pwa.installAction')}
         </Button>
       )}
+      <IconButton
+        size="small"
+        onClick={dismiss}
+        aria-label={t('a11y.close')}
+        sx={{ alignSelf: 'start', mt: 0.125 }}
+      >
+        <Close fontSize="small" />
+      </IconButton>
     </Box>
   );
 }

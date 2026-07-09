@@ -3,6 +3,7 @@ import {
 
   collection,
   doc,
+  getDoc,
   getDocs,
   writeBatch,
   serverTimestamp,
@@ -38,15 +39,18 @@ export function useAutoInviteMembers() {
         // Criar confirmação do owner como CONFIRMED
         const ownerConfirmationRef = doc(db, 'confirmations', `${gameId}_${uid}`);
         const batch = writeBatch(db);
-        batch.set(ownerConfirmationRef, {
-          game_id: gameId,
-          user_id: uid,
-          user_name: ownerName,
-          status: 'CONFIRMED',
-          position: 'FIELD',
-          is_casual_player: false,
-          created_at: serverTimestamp(),
-        });
+        const ownerConfirmationSnap = await getDoc(ownerConfirmationRef);
+        if (!ownerConfirmationSnap.exists()) {
+          batch.set(ownerConfirmationRef, {
+            game_id: gameId,
+            user_id: uid,
+            user_name: ownerName,
+            status: 'CONFIRMED',
+            position: 'FIELD',
+            is_casual_player: false,
+            created_at: serverTimestamp(),
+          });
+        }
 
         // Criar PENDING para os membros do grupo
         let inviteCount = 0;
@@ -56,6 +60,8 @@ export function useAutoInviteMembers() {
           const memberName = memberData.display_name || memberData.name || 'Membro';
 
           const confirmationRef = doc(db, 'confirmations', `${gameId}_${memberId}`);
+          const confirmationSnap = await getDoc(confirmationRef);
+          if (confirmationSnap.exists()) continue;
           batch.set(confirmationRef, {
             game_id: gameId,
             user_id: memberId,

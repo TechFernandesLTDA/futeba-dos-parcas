@@ -127,4 +127,20 @@ describe("nearby players batched reads", () => {
     expect(mockDoc).not.toHaveBeenCalled();
     expect(mockGetAll).not.toHaveBeenCalled();
   });
+
+  it("bloqueia descoberta quando o caller nao esta compartilhando localizacao", async () => {
+    mockDoc.mockImplementation((path: string) => ({
+      path,
+      get: jest.fn().mockResolvedValue({
+        exists: true,
+        data: () => ({
+          location_sharing_enabled: false,
+        }),
+      }),
+    }));
+
+    await expect(
+      __testing.assertCallerSharingEnabled("user-1", Date.now())
+    ).rejects.toMatchObject({code: "failed-precondition"});
+  });
 });

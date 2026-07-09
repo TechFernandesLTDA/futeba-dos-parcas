@@ -33,6 +33,7 @@ export function useFormDraft<T extends Record<string, unknown>>(
 } {
   const storageKey = `draft:${formKey}`;
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingDraftRef = useRef<T | null>(null);
 
   const [draft, setDraft] = useState<T | null>(() => {
     try {
@@ -50,25 +51,34 @@ export function useFormDraft<T extends Record<string, unknown>>(
     }
   });
 
+  const persistDraft = useCallback((data: T, updateState = true) => {
+    const entry: DraftEntry<T> = { data, savedAt: Date.now() };
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(entry));
+    } catch (error) {
+      console.warn('Failed to save form draft to localStorage:', error);
+    }
+    if (updateState) {
+      setDraft(data);
+    }
+  }, [storageKey]);
+
   const saveDraft = useCallback(
     (data: T) => {
       if (timerRef.current) clearTimeout(timerRef.current);
+      const sanitized = sanitize(data);
+      pendingDraftRef.current = sanitized;
       timerRef.current = setTimeout(() => {
-        const sanitized = sanitize(data);
-        const entry: DraftEntry<T> = { data: sanitized, savedAt: Date.now() };
-        try {
-          localStorage.setItem(storageKey, JSON.stringify(entry));
-        } catch (error) {
-          console.warn('Failed to save form draft to localStorage:', error);
-        }
-        setDraft(sanitized);
+        persistDraft(sanitized);
+        pendingDraftRef.current = null;
       }, DEBOUNCE_MS);
     },
-    [storageKey],
+    [persistDraft],
   );
 
   const clearDraft = useCallback(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
+    pendingDraftRef.current = null;
     try {
       localStorage.removeItem(storageKey);
     } catch (error) {
@@ -79,9 +89,15 @@ export function useFormDraft<T extends Record<string, unknown>>(
 
   useEffect(() => {
     return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
+      if (pendingDraftRef.current) {
+        persistDraft(pendingDraftRef.current, false);
+        pendingDraftRef.current = null;
+      }
     };
-  }, []);
+  }, [persistDraft]);
 
   return { draft, saveDraft, clearDraft, hasDraft: draft !== null };
 }

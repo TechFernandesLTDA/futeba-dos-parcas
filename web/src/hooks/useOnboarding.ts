@@ -7,7 +7,7 @@
  * Fallback para localStorage se o usuário não estiver autenticado.
  */
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { createLogger } from '../utils/logger';
@@ -38,12 +38,22 @@ const DEFAULT_STATE: OnboardingState = {
   version: CURRENT_ONBOARDING_VERSION,
 };
 
+type FirestoreTimestamp = { toMillis?: () => number };
+
+function toMillis(value: unknown): number | null {
+  if (typeof value === 'number') return value;
+  if (value && typeof value === 'object' && typeof (value as FirestoreTimestamp).toMillis === 'function') {
+    return (value as FirestoreTimestamp).toMillis!();
+  }
+  return null;
+}
+
 function mapFromFirestore(data: Record<string, unknown>): OnboardingState {
   return {
-    carouselCompletedAt: (data['carousel_completed_at'] as number) ?? null,
+    carouselCompletedAt: toMillis(data['carousel_completed_at']),
     carouselSkipped: (data['carousel_skipped'] as boolean) ?? false,
     checklistSteps: (data['checklist_steps'] as Record<string, boolean>) ?? {},
-    checklistCompletedAt: (data['checklist_completed_at'] as number) ?? null,
+    checklistCompletedAt: toMillis(data['checklist_completed_at']),
     checklistDismissed: (data['checklist_dismissed'] as boolean) ?? false,
     rewardGranted: (data['reward_granted'] as boolean) ?? false,
     version: (data['version'] as number) ?? CURRENT_ONBOARDING_VERSION,
@@ -160,7 +170,7 @@ export function useOnboarding() {
     const now = Date.now();
     setState(prev => ({ ...prev, carouselCompletedAt: now, version: CURRENT_ONBOARDING_VERSION }));
     await persistUpdates({
-      carousel_completed_at: now,
+      carousel_completed_at: serverTimestamp(),
       carousel_skipped: false,
       version: CURRENT_ONBOARDING_VERSION,
     });
@@ -183,7 +193,7 @@ export function useOnboarding() {
     const now = Date.now();
     setState(prev => ({ ...prev, checklistCompletedAt: now, rewardGranted: true }));
     await persistUpdates({
-      checklist_completed_at: now,
+      checklist_completed_at: serverTimestamp(),
       reward_granted: true,
     });
   }, [persistUpdates]);
