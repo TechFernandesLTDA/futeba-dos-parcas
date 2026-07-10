@@ -1,7 +1,33 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-10T13:02:23.563Z",
+  "generatedAt": "2026-07-10T16:18:21.643Z",
   "notes": [
+    {
+      "version": "1.51.37",
+      "buildNumber": null,
+      "releaseDate": "2026-07-10",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "O Mural do grupo agora funciona como uma timeline contínua, com histórico, reações e mídia.",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "Publicações mostram autor, avatar, dia e horário exatos, com separadores por data.",
+        "A timeline mantém as publicações mais recentes visíveis e permite carregar posts anteriores sem perder atualizações novas.",
+        "Reações continuam sincronizadas em tempo real para todos os membros conectados.",
+        "Posts agora aceitam fotos e vídeos MP4, com pré-visualização, controles, retry e mensagens claras de erro."
+      ],
+      "fixed": [
+        "Uploads do Mural passam a validar formato e tamanho antes do envio, evitando falhas silenciosas.",
+        "Regras do Firestore e Storage protegem mídias do grupo e bloqueiam tipos/extensões não suportados.",
+        "Feed do Mural ordenado cronologicamente com paginação deduplicada e atualização realtime.",
+        "Reprodução de mídia com fallback e retry acessível."
+      ],
+      "issueRefs": [
+        3514
+      ]
+    },
     {
       "version": "1.51.36",
       "buildNumber": null,
