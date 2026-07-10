@@ -6,7 +6,8 @@ import { createLogger } from '../utils/logger';
 
 const logger = createLogger('useSeasons');
 
-export function useSeasons() {
+export function useSeasons(options?: { enabled?: boolean }) {
+  const enabled = options?.enabled ?? true;
   const { data: seasons = [], isLoading: loading, error } = useQuery<Season[], Error>({
     queryKey: ['seasons'],
     queryFn: async () => {
@@ -35,6 +36,7 @@ export function useSeasons() {
     staleTime: 10 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
     retry: 2,
+    enabled,
   });
 
   return { seasons, loading, error };

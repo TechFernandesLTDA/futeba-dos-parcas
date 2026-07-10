@@ -228,17 +228,18 @@ export function useDiscoverPublicGroups() {
 }
 
 // ====== useGroups ======
-export function useGroups() {
+export function useGroups(options?: { enabled?: boolean }) {
   const { user, firebaseUser } = useAuth();
   const { showError } = useToast();
   const { t } = useTranslation();
   const uid = firebaseUser?.uid || user?.id;
+  const enabled = options?.enabled ?? true;
   const queryClient = useQueryClient();
 
   const { data: groups = [], isLoading: loading, error: queryError, refetch } = useQuery({
     queryKey: ['groups', uid],
     queryFn: () => fetchUserGroups(uid!),
-    enabled: !!uid,
+    enabled: !!uid && enabled,
     staleTime: 2 * 60 * 1000, // 2 minutos - grupos mudam com menos frequência
     gcTime: 10 * 60 * 1000, // 10 minutos no garbage collection
   });
@@ -255,7 +256,7 @@ export function useGroups() {
   tRef.current = t;
 
   useEffect(() => {
-    if (!uid) return;
+    if (!uid || !enabled) return;
 
     const userGroupsRef = collection(db, 'users', uid, 'groups');
     const q = query(userGroupsRef, orderBy('joined_at', 'desc'));
@@ -274,7 +275,7 @@ export function useGroups() {
     });
 
     return () => unsubscribe();
-  }, [uid, queryClient]);
+  }, [uid, queryClient, enabled]);
 
   const error = listenerError || (queryError ? (queryError as Error).message : null);
 

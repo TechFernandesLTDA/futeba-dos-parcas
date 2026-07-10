@@ -93,6 +93,7 @@ type SortField = LeagueSortField;
 
 export interface LeagueScreenProps {
   embedded?: boolean;
+  active?: boolean;
 }
 
 const SORT_OPTIONS: { value: SortField; labelKey: string }[] = [
@@ -113,7 +114,7 @@ const LEAGUE_DIVISIONS: LeagueDivision[] = ['BRONZE', 'SILVER', 'GOLD', 'PLATINU
 // Normalização fora do componente (função pura, não recriada)
 const normalizeText = (text: string) => text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
-export const LeagueScreen: React.FC<LeagueScreenProps> = ({ embedded = false }) => {
+export const LeagueScreen: React.FC<LeagueScreenProps> = ({ embedded = false, active = true }) => {
   const navigate = useNavigate();
   const goBack = useNavigateBack('/?tab=3');
   const theme = useTheme();
@@ -152,8 +153,8 @@ export const LeagueScreen: React.FC<LeagueScreenProps> = ({ embedded = false }) 
   const headerRef = useRef<HTMLDivElement>(null);
   const [headerHeight, setHeaderHeight] = useState(96);
 
-  const { seasonId: activeSeasonId, loading: seasonLoading } = useActiveSeason();
-  const { seasons } = useSeasons();
+  const { seasonId: activeSeasonId, loading: seasonLoading } = useActiveSeason({ enabled: active });
+  const { seasons } = useSeasons({ enabled: active });
 
   useEffect(() => {
     if (!selectedSeasonId && activeSeasonId) {
@@ -186,7 +187,7 @@ export const LeagueScreen: React.FC<LeagueScreenProps> = ({ embedded = false }) 
   } = useLeague(
     user?.id,
     filters,
-    { enabled: !seasonLoading }
+    { enabled: active && !seasonLoading }
   );
   const {
     inviteOptions,
@@ -194,7 +195,7 @@ export const LeagueScreen: React.FC<LeagueScreenProps> = ({ embedded = false }) 
     error: inviteOptionsError,
     sending: inviteSending,
     sendInvite,
-  } = useLeagueInvites();
+  } = useLeagueInvites({ enabled: active });
 
   // Derivar players filtrados por divisão (client-side, sem query extra)
   const players = useMemo(

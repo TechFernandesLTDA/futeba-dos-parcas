@@ -38,6 +38,8 @@ import { getLevelColor } from '../../types/user';
 import { useGamificationColors } from '../../hooks/useGamificationColors';
 
 const logger = createLogger('PlayerCard');
+const PLAYER_CARD_CORNER_RADIUS = '6px';
+const PLAYER_CARD_INNER_CORNER_RADIUS = '4px';
 
 interface StatTileProps {
   icon: React.ReactNode;
@@ -459,6 +461,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
           width: { xs: 'calc(100vw - 14px)', sm: 472 },
           maxWidth: { xs: 'calc(100vw - 14px)', sm: 472 },
           maxHeight: { xs: 'calc(100dvh - 14px)', sm: 'calc(100dvh - 64px)' },
+          borderRadius: PLAYER_CARD_CORNER_RADIUS,
         },
       }}
       sx={{
@@ -557,7 +560,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
           sx={{
             position: 'relative',
             overflow: 'hidden',
-            borderRadius: { xs: 3.25, sm: 5 },
+            borderRadius: PLAYER_CARD_CORNER_RADIUS,
             background: fieldGradient,
             boxShadow: `0 28px 90px ${alpha(theme.palette.common.black, 0.48)}, 0 0 0 1px ${alpha(theme.palette.common.white, 0.12)}`,
             border: `1px solid ${alpha(theme.palette.common.white, 0.16)}`,
@@ -581,10 +584,11 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
             }}
           />
           <Box
+            data-testid="player-card-inner-outline"
             sx={{
               position: 'absolute',
               inset: { xs: 9, sm: 14 },
-              borderRadius: { xs: 3, sm: 4 },
+              borderRadius: PLAYER_CARD_INNER_CORNER_RADIUS,
               border: `1px solid ${alpha(theme.palette.common.white, 0.16)}`,
               pointerEvents: 'none',
               zIndex: 0,

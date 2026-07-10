@@ -1,7 +1,28 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-10T03:27:18.952Z",
+  "generatedAt": "2026-07-10T04:28:14.190Z",
   "notes": [
+    {
+      "version": "1.51.33",
+      "buildNumber": null,
+      "releaseDate": "2026-07-10",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "Liga mais rápida e card do jogador com acabamento mais discreto.",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "A Liga reduz o trabalho em segundo plano ao trocar de aba e evita atualizações de rede desnecessárias.",
+        "O card do jogador agora usa cantos uniformes com arredondamento sutil nos quatro pontos.",
+        "A validação de links externos e recursos em segundo plano ficou mais rigorosa contra endereços malformados."
+      ],
+      "fixed": [],
+      "issueRefs": [
+        3486,
+        3487
+      ]
+    },
     {
       "version": "1.51.32",
       "buildNumber": null,

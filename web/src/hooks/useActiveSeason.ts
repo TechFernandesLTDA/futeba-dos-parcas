@@ -12,7 +12,8 @@ const logger = createLogger('useActiveSeason');
  * Cache de 10 minutos (staleTime) para evitar queries repetidas.
  * Retorna { seasonId, loading, error }.
  */
-export function useActiveSeason() {
+export function useActiveSeason(options?: { enabled?: boolean }) {
+  const enabled = options?.enabled ?? true;
   const { data: seasonId = null, isLoading: loading, error } = useQuery<string | null, Error>({
     queryKey: ['activeSeason'],
     queryFn: async () => {
@@ -42,6 +43,7 @@ export function useActiveSeason() {
     staleTime: 10 * 60 * 1000, // 10 minutos
     gcTime: 30 * 60 * 1000, // 30 minutos
     retry: 2,
+    enabled,
   });
 
   return { seasonId, loading, error };

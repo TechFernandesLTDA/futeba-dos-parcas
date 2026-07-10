@@ -54,7 +54,8 @@ test('NextGameWidget - query otimizada', async ({ page }) => {
   let firestoreQueries = 0;
   
   page.on('request', (request) => {
-    if (request.url().includes('firestore.googleapis.com')) {
+    const requestUrl = new URL(request.url());
+    if (requestUrl.protocol === 'https:' && requestUrl.hostname === 'firestore.googleapis.com') {
       firestoreQueries++;
     }
   });

@@ -36,14 +36,14 @@ export interface LeagueInviteOption {
   group: Group;
 }
 
-export function useLeagueInvites() {
+export function useLeagueInvites(options?: { enabled?: boolean }) {
   const { user, firebaseUser } = useAuth();
   const { showError, showSuccess } = useToast();
   const uid = firebaseUser?.uid || user?.id;
   const displayName = firebaseUser?.displayName || user?.name || 'Organizador';
   const [sending, setSending] = useState(false);
 
-  const { groups, loading: groupsLoading } = useGroups();
+  const { groups, loading: groupsLoading } = useGroups(options);
 
   const manageableGroups = useMemo(
     () =>

@@ -1,5 +1,3 @@
-/* eslint-disable no-undef */
-
 // Bump version a cada deploy que precisa invalidar cache.
 // v1 → v2: corrige bug em que cache-first travava assets antigos
 // mesmo após hash de bundle mudar (BadgesScreen-BexbiUlU.js sticky).
@@ -14,7 +12,10 @@
 // v7 → v8: limpa HTML/chunks antigos presos no PWA mobile apos hotfix de assets.
 // v8 → v9: inclui metadados/icone de instalacao PWA mobile.
 // v9 → v10: invalida caches apos watchdog de inicializacao auth para Vivaldi mobile.
-const CACHE_NAME = 'futeba-v10';
+// v10 → v11: restringe o cache a requests HTTP(S) da mesma origem. Evita que
+// assets de terceiros sejam administrados pelo app e substitui allowlists por
+// substring que aceitavam hosts parecidos com dominios do Firebase/Google.
+const CACHE_NAME = 'futeba-v11';
 const OFFLINE_URL = '/offline.html';
 const STATIC_ASSETS = [
   '/',
@@ -48,15 +49,20 @@ self.addEventListener('activate', (event) => {
 // - Firebase APIs: passthrough
 self.addEventListener('fetch', (event) => {
   const { request } = event;
-  const url = new URL(request.url);
 
-  // Ignorar requests não-GET e Firebase
+  // O service worker administra somente conteúdo GET da própria origem. APIs
+  // Firebase, fontes e qualquer outro terceiro seguem direto para a rede.
   if (request.method !== 'GET') return;
-  if (url.protocol !== 'http:' && url.protocol !== 'https:') return;
-  if (url.hostname.includes('googleapis.com')) return;
-  if (url.hostname.includes('firebaseio.com')) return;
-  if (url.hostname.includes('gstatic.com')) return;
-  if (url.hostname.includes('firebasestorage.app')) return;
+
+  let url;
+  try {
+    url = new URL(request.url);
+  } catch {
+    return;
+  }
+
+  const isHttp = url.protocol === 'http:' || url.protocol === 'https:';
+  if (!isHttp || url.origin !== self.location.origin) return;
 
   // Navegação (HTML): network-first com fallback de cache offline
   if (request.mode === 'navigate') {

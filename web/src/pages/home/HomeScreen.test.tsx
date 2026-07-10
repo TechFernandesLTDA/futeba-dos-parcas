@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { ThemeProvider, createTheme } from '@mui/material';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, useNavigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 vi.mock('../../services/firebase', () => ({
@@ -39,7 +39,11 @@ vi.mock('../../hooks/useNotificationPermission', () => ({
 vi.mock('./tabs/HomeTab', () => ({ HomeTab: () => <div>Home Tab</div> }));
 vi.mock('./tabs/GamesTab', () => ({ GamesTab: () => <div>Jogos</div> }));
 vi.mock('./tabs/GroupsTab', () => ({ GroupsTab: () => <div>Grupos</div> }));
-vi.mock('../league/LeagueScreen', () => ({ LeagueScreen: ({ embedded }: { embedded?: boolean }) => <div>{embedded ? 'Liga Nova' : 'Liga'}</div> }));
+vi.mock('../league/LeagueScreen', () => ({
+  LeagueScreen: ({ embedded, active }: { embedded?: boolean; active?: boolean }) => (
+    <div data-testid="league-screen" data-active={String(active)}>{embedded ? 'Liga Nova' : 'Liga'}</div>
+  ),
+}));
 vi.mock('./tabs/ProfileTab', () => ({ ProfileTab: () => <div>Perfil</div> }));
 vi.mock('../../pages/ranking/NotificationsScreen', () => ({
   NotificationsScreen: () => <div>Notificações</div>,
@@ -72,6 +76,11 @@ function renderWithProviders(ui: React.ReactElement, initialEntries = ['/']) {
       </MemoryRouter>
     </QueryClientProvider>
   );
+}
+
+function GoToHomeButton() {
+  const navigate = useNavigate();
+  return <button onClick={() => navigate('/?tab=0')}>Ir para início</button>;
 }
 
 describe('HomeScreen', () => {
@@ -124,6 +133,25 @@ describe('HomeScreen', () => {
   it('usa a tela completa de Liga na aba ?tab=3', async () => {
     renderWithProviders(<HomeScreen />, ['/?tab=3']);
     expect(await screen.findByText('Liga Nova')).toBeInTheDocument();
+    expect(screen.getByTestId('league-screen')).toHaveAttribute('data-active', 'true');
     expect(screen.getByRole('tabpanel')).toHaveAttribute('aria-labelledby', 'tab-3');
+  });
+
+  it('pausa a Liga preservada ao trocar para outra aba', async () => {
+    renderWithProviders(
+      <>
+        <GoToHomeButton />
+        <HomeScreen />
+      </>,
+      ['/?tab=3'],
+    );
+
+    expect(await screen.findByTestId('league-screen')).toHaveAttribute('data-active', 'true');
+    fireEvent.click(screen.getByRole('button', { name: 'Ir para início' }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('league-screen')).toHaveAttribute('data-active', 'false');
+    });
+    expect(await screen.findByText('Home Tab')).toBeInTheDocument();
   });
 });
