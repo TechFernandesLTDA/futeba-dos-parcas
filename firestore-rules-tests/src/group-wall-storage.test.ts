@@ -27,6 +27,7 @@ const UID_INACTIVE = "uid-storage-inactive";
 const UID_OUTSIDER = "uid-storage-outsider";
 
 const smallJpeg = new Uint8Array([0xff, 0xd8, 0xff, 0xd9]);
+const smallMp4 = new Uint8Array([0, 0, 0, 24, 0x66, 0x74, 0x79, 0x70]);
 const draftPath = (uid: string, fileName = "photo.jpg") =>
   `groups/${GROUP_ID}/wall_media/__draft__/${uid}/${fileName}`;
 
@@ -98,13 +99,23 @@ describe("Storage Rules — groups/{groupId}/wall_media", () => {
     await assertFails(uploadAs(UID_OUTSIDER));
   });
 
-  it("nega tipo não-imagem e arquivo no limite de 10MB", async () => {
+  it("permite vídeo MP4 de até 25MB e bloqueia tipos/extensões inválidos", async () => {
+    await assertSucceeds(uploadAs(UID_ACTIVE, draftPath(UID_ACTIVE, "clip.mp4"), smallMp4, "video/mp4"));
     await assertFails(uploadAs(UID_ACTIVE, draftPath(UID_ACTIVE, "photo.jpg"), smallJpeg, "text/plain"));
+    await assertFails(uploadAs(UID_ACTIVE, draftPath(UID_ACTIVE, "clip.webm"), smallMp4, "video/webm"));
     await assertFails(
       uploadAs(
         UID_ACTIVE,
         draftPath(UID_ACTIVE, "limit.jpg"),
         new Uint8Array(10 * 1024 * 1024),
+      ),
+    );
+    await assertFails(
+      uploadAs(
+        UID_ACTIVE,
+        draftPath(UID_ACTIVE, "limit.mp4"),
+        new Uint8Array(25 * 1024 * 1024),
+        "video/mp4",
       ),
     );
   });

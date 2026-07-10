@@ -97,4 +97,28 @@ describe('createWallPostDocument', () => {
     expect(mediaPath).toContain('/__draft__/user-1/');
     expect(mockDeleteObject).toHaveBeenCalledWith(`storage:${mediaPath}`);
   });
+
+  it('envia vídeo MP4 com extensão e content type preservados', async () => {
+    const video = new File(['video'], 'partida.mp4', { type: 'video/mp4' });
+
+    await createWallPostDocument({
+      groupId: 'group-1',
+      currentUserUid: 'user-1',
+      authorName: 'Jordi',
+      authorPhotoUrl: null,
+      text: '',
+      options: { mediaFile: video },
+    });
+
+    const mediaPath = mockStorageRef.mock.calls[0]?.[1] as string;
+    expect(mediaPath).toMatch(/^groups\/group-1\/wall_media\/__draft__\/user-1\/.*\.mp4$/);
+    expect(mockUploadWithRetry).toHaveBeenCalledWith(`storage:${mediaPath}`, video);
+    expect(mockAddDoc).toHaveBeenCalledWith(
+      'wall-posts-collection',
+      expect.objectContaining({
+        media_path: mediaPath,
+        media_type: 'video/mp4',
+      }),
+    );
+  });
 });

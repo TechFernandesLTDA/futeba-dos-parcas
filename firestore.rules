@@ -2422,8 +2422,8 @@ service cloud.firestore {
             request.resource.data.media_url.size() <= 2048 &&
             request.resource.data.media_url.matches('https://firebasestorage.googleapis.com/.*') &&
             request.resource.data.media_path is string &&
-            request.resource.data.media_path.matches('groups/' + groupId + '/wall_media/[A-Za-z0-9._/-]+\\.(jpg|jpeg|png|webp)') &&
-            request.resource.data.media_type in ['image/jpeg', 'image/png', 'image/webp'] &&
+            request.resource.data.media_path.matches('groups/' + groupId + '/wall_media/[A-Za-z0-9._/-]+\\.(jpg|jpeg|png|webp|mp4)') &&
+            request.resource.data.media_type in ['image/jpeg', 'image/png', 'image/webp', 'video/mp4'] &&
             request.resource.data.thumbnail_path == null
           );
         }

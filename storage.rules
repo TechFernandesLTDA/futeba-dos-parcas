@@ -75,7 +75,16 @@ service firebase.storage {
     }
 
     function isWallMediaFile(fileName) {
-      return fileName.matches('[A-Za-z0-9._-]+\\.(jpg|jpeg|png|webp)');
+      return fileName.matches('[A-Za-z0-9._-]+\\.(jpg|jpeg|png|webp|mp4)');
+    }
+
+    function isWallMedia() {
+      return isImage() || request.resource.contentType == 'video/mp4';
+    }
+
+    function isUnderWallMediaSize() {
+      return (request.resource.contentType == 'video/mp4' && isUnderSize(25)) ||
+             (request.resource.contentType != 'video/mp4' && isUnderSize(10));
     }
 
     function getLocation(locationId) {
@@ -272,7 +281,7 @@ service firebase.storage {
     // ============================================
     // MIDIAS DO MURAL DO GRUPO
     // Path: groups/{groupId}/wall_media/{postId}/{fileName}
-    // Membros ativos podem fazer upload de imagens no mural.
+    // Membros ativos podem fazer upload de imagens e vídeos MP4 no mural.
     // Clientes atuais incluem ownerId em __draft__, permitindo rollback seguro pelo autor.
     // O path flat permanece legível/gravável por compatibilidade com clientes legados.
     // Midia publicada e limpa via Cloud Function no soft-delete do post.
@@ -282,8 +291,8 @@ service firebase.storage {
 
       allow create: if isAuthenticated() &&
         canUseGroupWall(groupId) &&
-        isImage() &&
-        isUnderSize(10) &&
+        isWallMedia() &&
+        isUnderWallMediaSize() &&
         isWallMediaFile(fileName);
 
       allow delete: if isAuthenticated() && (
@@ -299,8 +308,8 @@ service firebase.storage {
         canUseGroupWall(groupId) &&
         postId == '__draft__' &&
         ownerId == request.auth.uid &&
-        isImage() &&
-        isUnderSize(10) &&
+        isWallMedia() &&
+        isUnderWallMediaSize() &&
         isWallMediaFile(fileName);
 
       allow delete: if isAuthenticated() &&

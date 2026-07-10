@@ -56,25 +56,32 @@ export const WallPostCard: React.FC<WallPostCardProps> = ({
   onHide,
   onReport,
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const theme = useTheme();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [lightboxOpen, setLightboxOpen] = useState(false);
-  const [imageLoading, setImageLoading] = useState(Boolean(post.mediaUrl));
-  const [imageFailed, setImageFailed] = useState(false);
-  const [imageRetry, setImageRetry] = useState(0);
+  const [mediaLoading, setMediaLoading] = useState(Boolean(post.mediaUrl));
+  const [mediaFailed, setMediaFailed] = useState(false);
+  const [mediaRetry, setMediaRetry] = useState(0);
   const menuOpen = Boolean(anchorEl);
+  const isVideo = post.mediaType?.startsWith('video/') ?? false;
+  const exactDateTime = post.createdAt
+    ? new Intl.DateTimeFormat(i18n.resolvedLanguage || i18n.language || 'pt-BR', {
+      dateStyle: 'short',
+      timeStyle: 'short',
+    }).format(post.createdAt)
+    : '';
 
   useEffect(() => {
-    setImageLoading(Boolean(post.mediaUrl));
-    setImageFailed(false);
-    setImageRetry(0);
+    setMediaLoading(Boolean(post.mediaUrl));
+    setMediaFailed(false);
+    setMediaRetry(0);
   }, [post.mediaUrl]);
 
-  const handleRetryImage = () => {
-    setImageFailed(false);
-    setImageLoading(true);
-    setImageRetry((current) => current + 1);
+  const handleRetryMedia = () => {
+    setMediaFailed(false);
+    setMediaLoading(true);
+    setMediaRetry((current) => current + 1);
   };
 
   const handleOpenMenu = (event: React.MouseEvent<HTMLElement>) => {
@@ -127,8 +134,14 @@ export const WallPostCard: React.FC<WallPostCardProps> = ({
                       onClick={onOpenOrigin}
                     />
                   )}
-                  <Typography variant="caption" color="text.secondary">
-                    {formatRelativeTime(post.createdAt)}
+                  <Typography
+                    component="time"
+                    dateTime={post.createdAt?.toISOString()}
+                    variant="caption"
+                    color="text.secondary"
+                    title={exactDateTime}
+                  >
+                    {formatRelativeTime(post.createdAt)}{exactDateTime ? ` · ${exactDateTime}` : ''}
                   </Typography>
                   {post.editedAt && (
                     <Typography variant="caption" color="text.secondary">
@@ -169,10 +182,10 @@ export const WallPostCard: React.FC<WallPostCardProps> = ({
                   overflow: 'hidden',
                   borderRadius: 2,
                   bgcolor: theme.palette.action.hover,
-                  minHeight: imageLoading ? 180 : 0,
+                  minHeight: mediaLoading ? 180 : 0,
                 }}
               >
-                {imageLoading && !imageFailed && (
+                {mediaLoading && !mediaFailed && (
                   <Skeleton
                     variant="rectangular"
                     height={280}
@@ -181,19 +194,19 @@ export const WallPostCard: React.FC<WallPostCardProps> = ({
                     sx={{ position: 'absolute', inset: 0, zIndex: 1 }}
                   />
                 )}
-                {!imageFailed && (
+                {!mediaFailed && (
                   <Box
-                    key={imageRetry}
-                    component="button"
-                    type="button"
-                    onClick={() => setLightboxOpen(true)}
-                    aria-label={t('groupWall.openPhoto', { name: post.authorName })}
+                    key={mediaRetry}
+                    component={isVideo ? 'div' : 'button'}
+                    type={isVideo ? undefined : 'button'}
+                    onClick={isVideo ? undefined : () => setLightboxOpen(true)}
+                    aria-label={isVideo ? undefined : t('groupWall.openPhoto', { name: post.authorName })}
                     sx={{
-                      display: 'block',
-                      width: '100%',
-                      p: 0,
-                      border: 0,
-                      cursor: 'pointer',
+                        display: 'block',
+                        width: '100%',
+                        p: 0,
+                        border: isVideo ? 0 : undefined,
+                        cursor: isVideo ? 'default' : 'pointer',
                       bgcolor: 'transparent',
                       '&:focus-visible': {
                         outline: `3px solid ${theme.palette.primary.main}`,
@@ -201,37 +214,61 @@ export const WallPostCard: React.FC<WallPostCardProps> = ({
                       },
                     }}
                   >
-                    <Box
-                      component="img"
-                      src={post.mediaUrl}
-                      alt={t('groupWall.imageAlt', { name: post.authorName })}
-                      loading="lazy"
-                      onLoad={() => setImageLoading(false)}
-                      onError={() => {
-                        setImageLoading(false);
-                        setImageFailed(true);
-                      }}
-                      sx={{
-                        display: 'block',
-                        width: '100%',
-                        maxHeight: 420,
-                        objectFit: 'cover',
-                        opacity: imageLoading ? 0 : 1,
-                      }}
-                    />
+                    {isVideo ? (
+                      <Box
+                        component="video"
+                        src={post.mediaUrl}
+                        controls
+                        playsInline
+                        preload="metadata"
+                        aria-label={t('groupWall.openVideo', { name: post.authorName })}
+                        onLoadedMetadata={() => setMediaLoading(false)}
+                        onError={() => {
+                          setMediaLoading(false);
+                          setMediaFailed(true);
+                        }}
+                        sx={{
+                          display: 'block',
+                          width: '100%',
+                          maxHeight: 420,
+                          objectFit: 'contain',
+                          bgcolor: theme.palette.common.black,
+                          opacity: mediaLoading ? 0 : 1,
+                        }}
+                      />
+                    ) : (
+                      <Box
+                        component="img"
+                        src={post.mediaUrl}
+                        alt={t('groupWall.imageAlt', { name: post.authorName })}
+                        loading="lazy"
+                        onLoad={() => setMediaLoading(false)}
+                        onError={() => {
+                          setMediaLoading(false);
+                          setMediaFailed(true);
+                        }}
+                        sx={{
+                          display: 'block',
+                          width: '100%',
+                          maxHeight: 420,
+                          objectFit: 'cover',
+                          opacity: mediaLoading ? 0 : 1,
+                        }}
+                      />
+                    )}
                   </Box>
                 )}
-                {imageFailed && (
+                {mediaFailed && (
                   <Alert
                     severity="warning"
                     action={(
-                      <Button color="inherit" size="small" onClick={handleRetryImage}>
-                        {t('groupWall.retryImage')}
+                      <Button color="inherit" size="small" onClick={handleRetryMedia}>
+                        {t(isVideo ? 'groupWall.retryVideo' : 'groupWall.retryImage')}
                       </Button>
                     )}
                     sx={{ borderRadius: 0 }}
                   >
-                    {t('groupWall.imageLoadError')}
+                    {t(isVideo ? 'groupWall.videoLoadError' : 'groupWall.imageLoadError')}
                   </Alert>
                 )}
               </Box>
@@ -315,16 +352,28 @@ export const WallPostCard: React.FC<WallPostCardProps> = ({
 
       <Dialog open={lightboxOpen} onClose={() => setLightboxOpen(false)} maxWidth="lg">
         {post.mediaUrl && (
-          <Box
-            component="img"
-            src={post.mediaUrl}
-            alt={t('groupWall.imageAlt', { name: post.authorName })}
-            sx={{
-              width: '100%',
-              maxHeight: '90vh',
-              objectFit: 'contain',
-            }}
-          />
+          isVideo ? (
+            <Box
+              component="video"
+              src={post.mediaUrl}
+              controls
+              autoPlay
+              playsInline
+              aria-label={t('groupWall.openVideo', { name: post.authorName })}
+              sx={{ width: '100%', maxHeight: '90vh', bgcolor: theme.palette.common.black }}
+            />
+          ) : (
+            <Box
+              component="img"
+              src={post.mediaUrl}
+              alt={t('groupWall.imageAlt', { name: post.authorName })}
+              sx={{
+                width: '100%',
+                maxHeight: '90vh',
+                objectFit: 'contain',
+              }}
+            />
+          )
         )}
       </Dialog>
     </>

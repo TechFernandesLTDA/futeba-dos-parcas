@@ -35,10 +35,13 @@ const logger = createLogger('useGroupWall');
 const POST_PAGE_SIZE = 20;
 const MAX_TEXT_LENGTH = 500;
 const MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024;
+const MAX_VIDEO_SIZE_BYTES = 25 * 1024 * 1024;
 const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const ACCEPTED_VIDEO_TYPES = ['video/mp4'];
 
 interface CreateWallPostOptions {
   imageFile?: File;
+  mediaFile?: File;
   highlightRef?: { gameId: string; highlightId: string };
 }
 
@@ -108,33 +111,36 @@ export function mapPost(docSnap: QueryDocumentSnapshot<DocumentData>): WallPost 
 async function uploadWallMedia(
   groupId: string,
   currentUserUid: string,
-  imageFile: File,
+  mediaFile: File,
   refreshCredentials?: () => Promise<void>,
 ): Promise<UploadedWallMedia> {
-  if (!ACCEPTED_IMAGE_TYPES.includes(imageFile.type)) {
-    throw new Error('Tipo de imagem inválido. Use JPG, PNG ou WebP.');
+  const isImage = ACCEPTED_IMAGE_TYPES.includes(mediaFile.type);
+  const isVideo = ACCEPTED_VIDEO_TYPES.includes(mediaFile.type);
+  if (!isImage && !isVideo) {
+    throw new Error('Formato inválido. Use JPG, PNG, WebP ou vídeo MP4.');
   }
-  if (imageFile.size >= MAX_IMAGE_SIZE_BYTES) {
-    throw new Error('Imagem muito grande. O limite é 10MB.');
+  const maxSize = isVideo ? MAX_VIDEO_SIZE_BYTES : MAX_IMAGE_SIZE_BYTES;
+  if (mediaFile.size >= maxSize) {
+    throw new Error(isVideo ? 'Vídeo muito grande. O limite é 25MB.' : 'Imagem muito grande. O limite é 10MB.');
   }
 
-  const ext = imageFile.type.split('/')[1]?.replace('jpeg', 'jpg') || 'jpg';
+  const ext = isVideo ? 'mp4' : mediaFile.type.split('/')[1]?.replace('jpeg', 'jpg') || 'jpg';
   // Keep the owner in the draft path so Storage Rules let the author clean up
   // an upload when the subsequent Firestore write fails.
   const mediaPath = `groups/${groupId}/wall_media/__draft__/${currentUserUid}/${Date.now()}-${crypto.randomUUID()}.${ext}`;
   const fileRef = storageRef(storage, mediaPath);
 
   if (refreshCredentials) {
-    await uploadImageWithStorageAuthRetry(fileRef, imageFile, { refreshCredentials });
+    await uploadImageWithStorageAuthRetry(fileRef, mediaFile, { refreshCredentials });
   } else {
-    await uploadImageWithStorageAuthRetry(fileRef, imageFile);
+    await uploadImageWithStorageAuthRetry(fileRef, mediaFile);
   }
   const mediaUrl = await getDownloadURL(fileRef);
 
   return {
     mediaUrl,
     mediaPath,
-    mediaType: imageFile.type,
+    mediaType: mediaFile.type,
   };
 }
 
@@ -166,9 +172,10 @@ export async function createWallPostDocument(params: {
 }) {
   const { groupId, currentUserUid, authorName, authorPhotoUrl, text, options, refreshCredentials } = params;
   const cleanText = text.trim();
+  const mediaFile = options?.mediaFile ?? options?.imageFile;
 
-  if (cleanText.length === 0 && !options?.imageFile) {
-    throw new Error('Adicione uma mensagem ou foto.');
+  if (cleanText.length === 0 && !mediaFile) {
+    throw new Error('Adicione uma mensagem, foto ou vídeo.');
   }
   if (cleanText.length > MAX_TEXT_LENGTH) {
     throw new Error(`Máximo ${MAX_TEXT_LENGTH} caracteres.`);
@@ -177,11 +184,11 @@ export async function createWallPostDocument(params: {
   let uploadedMedia: UploadedWallMedia | null = null;
 
   try {
-    if (options?.imageFile) {
+    if (mediaFile) {
       uploadedMedia = await uploadWallMedia(
         groupId,
         currentUserUid,
-        options.imageFile,
+        mediaFile,
         refreshCredentials,
       );
     }
@@ -306,16 +313,21 @@ export function useGroupWall(groupId?: string) {
         oldestDocRef.current = snap.docs[snap.docs.length - 1];
       }
       setHasMore(snap.size === POST_PAGE_SIZE);
-      setPosts((prev) => [...prev, ...older]);
+      setPosts((prev) => mergeRealtimePageById(
+        prev,
+        older,
+        snap.docs.map((docSnap) => docSnap.id),
+        'append',
+      ));
     } catch (err) {
       logger.error('Erro ao paginar posts antigos:', err);
       const message = getFirestoreErrorMessage(err);
       setError(message);
-      showError(message);
+      showErrorRef.current(message);
     } finally {
       setLoadingMore(false);
     }
-  }, [groupId, loadingMore, hasMore, showError]);
+  }, [groupId, loadingMore, hasMore]);
 
   const createPost = useCallback(
     async (text: string, options?: CreateWallPostOptions) => {
@@ -399,7 +411,7 @@ export function useCreateWallPost(groupId?: string) {
         showError(error.message);
         throw error;
       }
-      if (cleanText.length === 0 && !options?.imageFile) {
+      if (cleanText.length === 0 && !(options?.mediaFile ?? options?.imageFile)) {
         const error = new Error(t('groupWall.textRequired'));
         showError(error.message);
         throw error;
@@ -422,7 +434,7 @@ export function useCreateWallPost(groupId?: string) {
           ? String((err as { code?: unknown }).code)
           : '';
         const message = code.startsWith('storage/')
-          ? t('groupWall.uploadError')
+          ? t('groupWall.mediaUploadError')
           : err instanceof Error && !code
             ? err.message
             : getFirestoreErrorMessage(err, t('groupWall.publishError'));
