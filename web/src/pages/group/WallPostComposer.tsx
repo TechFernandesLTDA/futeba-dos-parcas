@@ -12,19 +12,23 @@ import {
 } from '@mui/material';
 import {
   Send as SendIcon,
-  Image as ImageIcon,
+  PermMedia as MediaIcon,
   Close as CloseIcon,
 } from '@mui/icons-material';
 import { useToast } from '../../contexts/ToastContext';
 
 const MAX_TEXT_LENGTH = 500;
 const MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024;
-const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const MAX_VIDEO_SIZE_BYTES = 25 * 1024 * 1024;
+const MAX_VIDEO_DURATION_SECONDS = 30;
+const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const ACCEPTED_VIDEO_TYPES = ['video/mp4'];
+const ACCEPTED_TYPES = [...ACCEPTED_IMAGE_TYPES, ...ACCEPTED_VIDEO_TYPES];
 
 interface WallPostComposerProps {
   initialText?: string;
   sending: boolean;
-  onSubmit: (text: string, imageFile?: File) => Promise<void>;
+  onSubmit: (text: string, mediaFile?: File) => Promise<void>;
   onCancel?: () => void;
 }
 
@@ -38,34 +42,46 @@ export const WallPostComposer: React.FC<WallPostComposerProps> = ({
   const { showError } = useToast();
   const theme = useTheme();
   const [text, setText] = useState(initialText);
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [mediaFile, setMediaFile] = useState<File | null>(null);
+  const [mediaPreview, setMediaPreview] = useState<string | null>(null);
+  const [mediaDuration, setMediaDuration] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cleanText = text.trim();
   const textRequired = cleanText.length === 0;
 
-  const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+  React.useEffect(() => () => {
+    if (mediaPreview?.startsWith('blob:')) URL.revokeObjectURL(mediaPreview);
+  }, [mediaPreview]);
+
+  const handleMediaSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
     if (!ACCEPTED_TYPES.includes(file.type)) {
-      showError(t('groupWall.invalidImageType'));
+      showError(t('groupWall.invalidMediaType'));
       event.target.value = '';
       return;
     }
-    if (file.size >= MAX_IMAGE_SIZE_BYTES) {
-      showError(t('groupWall.imageTooLarge'));
+    const isVideo = ACCEPTED_VIDEO_TYPES.includes(file.type);
+    if (file.size >= (isVideo ? MAX_VIDEO_SIZE_BYTES : MAX_IMAGE_SIZE_BYTES)) {
+      showError(t(isVideo ? 'groupWall.videoTooLarge' : 'groupWall.imageTooLarge'));
       event.target.value = '';
       return;
     }
-    setImageFile(file);
+    setMediaFile(file);
+    setMediaDuration(null);
+    if (isVideo) {
+      setMediaPreview(URL.createObjectURL(file));
+      return;
+    }
     const reader = new FileReader();
-    reader.onloadend = () => setImagePreview(reader.result as string);
+    reader.onloadend = () => setMediaPreview(reader.result as string);
     reader.readAsDataURL(file);
   };
 
-  const handleRemoveImage = () => {
-    setImageFile(null);
-    setImagePreview(null);
+  const handleRemoveMedia = () => {
+    setMediaFile(null);
+    setMediaPreview(null);
+    setMediaDuration(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -74,20 +90,26 @@ export const WallPostComposer: React.FC<WallPostComposerProps> = ({
   const handleSubmit = async () => {
     const cleanText = text.trim();
     if (cleanText.length > MAX_TEXT_LENGTH) return;
-    if (cleanText.length === 0 && !imageFile) {
+    if (cleanText.length === 0 && !mediaFile) {
       showError(t('groupWall.textRequired'));
       return;
     }
+    if (mediaFile?.type === 'video/mp4' && mediaDuration !== null && mediaDuration > MAX_VIDEO_DURATION_SECONDS) {
+      showError(t('groupWall.videoTooLong', { max: MAX_VIDEO_DURATION_SECONDS }));
+      return;
+    }
     try {
-      await onSubmit(cleanText, imageFile ?? undefined);
+      await onSubmit(cleanText, mediaFile ?? undefined);
       setText('');
-      handleRemoveImage();
+      handleRemoveMedia();
     } catch {
       // The mutation owns the error toast. Keep the draft so the user can retry.
     }
   };
 
-  const isValid = cleanText.length <= MAX_TEXT_LENGTH && (cleanText.length > 0 || Boolean(imageFile));
+  const isValid = cleanText.length <= MAX_TEXT_LENGTH &&
+    (cleanText.length > 0 || Boolean(mediaFile)) &&
+    !(mediaFile?.type === 'video/mp4' && mediaDuration !== null && mediaDuration > MAX_VIDEO_DURATION_SECONDS);
 
   return (
     <Box
@@ -115,7 +137,7 @@ export const WallPostComposer: React.FC<WallPostComposerProps> = ({
         inputProps={{ maxLength: MAX_TEXT_LENGTH }}
         disabled={sending}
         aria-label={t('groupWall.placeholder')}
-        helperText={textRequired && imageFile ? t('groupWall.photoCaptionOptional') : ' '}
+        helperText={textRequired && mediaFile ? t('groupWall.mediaCaptionOptional') : ' '}
       />
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1 }}>
         <Typography variant="caption" color="text.secondary">
@@ -130,10 +152,10 @@ export const WallPostComposer: React.FC<WallPostComposerProps> = ({
           <IconButton
             onClick={() => fileInputRef.current?.click()}
             disabled={sending}
-            aria-label={t('groupWall.addPhoto')}
-            color={imageFile ? 'primary' : 'default'}
+            aria-label={t('groupWall.addMedia')}
+            color={mediaFile ? 'primary' : 'default'}
           >
-            <ImageIcon />
+            <MediaIcon />
           </IconButton>
           <IconButton
             onClick={() => void handleSubmit()}
@@ -146,11 +168,56 @@ export const WallPostComposer: React.FC<WallPostComposerProps> = ({
         </Box>
       </Box>
 
-      {imagePreview && (
+      {mediaPreview && mediaFile?.type === 'video/mp4' && (
+        <Box sx={{ position: 'relative', mt: 2 }}>
+          <Box
+            component="video"
+            src={mediaPreview}
+            controls
+            muted
+            playsInline
+            preload="metadata"
+            onLoadedMetadata={(event: React.SyntheticEvent<HTMLVideoElement>) => {
+              const duration = event.currentTarget.duration;
+              setMediaDuration(Number.isFinite(duration) ? duration : null);
+            }}
+            onError={() => showError(t('groupWall.videoPreviewError'))}
+            aria-label={t('groupWall.videoPreview')}
+            sx={{
+              display: 'block',
+              width: '100%',
+              maxHeight: 240,
+              borderRadius: 1,
+              bgcolor: theme.palette.common.black,
+            }}
+          />
+          {mediaDuration !== null && mediaDuration > MAX_VIDEO_DURATION_SECONDS && (
+            <Typography variant="caption" color="error" sx={{ display: 'block', mt: 0.5 }}>
+              {t('groupWall.videoTooLong', { max: MAX_VIDEO_DURATION_SECONDS })}
+            </Typography>
+          )}
+          <IconButton
+            size="small"
+            onClick={handleRemoveMedia}
+            sx={{
+              position: 'absolute',
+              top: -8,
+              right: -8,
+              bgcolor: theme.palette.background.paper,
+              boxShadow: theme.shadows[1],
+            }}
+            aria-label={t('groupWall.removeMedia')}
+          >
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        </Box>
+      )}
+
+      {mediaPreview && mediaFile?.type.startsWith('image/') && (
         <Box sx={{ position: 'relative', mt: 2, display: 'inline-block' }}>
           <Box
             component="img"
-            src={imagePreview}
+            src={mediaPreview}
             alt={t('groupWall.imagePreview')}
             sx={{
               height: 120,
@@ -161,7 +228,7 @@ export const WallPostComposer: React.FC<WallPostComposerProps> = ({
           />
           <IconButton
             size="small"
-            onClick={handleRemoveImage}
+            onClick={handleRemoveMedia}
             sx={{
               position: 'absolute',
               top: -8,
@@ -169,7 +236,7 @@ export const WallPostComposer: React.FC<WallPostComposerProps> = ({
               bgcolor: theme.palette.background.paper,
               boxShadow: theme.shadows[1],
             }}
-            aria-label={t('groupWall.removePhoto')}
+            aria-label={t('groupWall.removeMedia')}
           >
             <CloseIcon fontSize="small" />
           </IconButton>
@@ -180,7 +247,7 @@ export const WallPostComposer: React.FC<WallPostComposerProps> = ({
         ref={fileInputRef}
         type="file"
         accept={ACCEPTED_TYPES.join(',')}
-        onChange={handleImageSelect}
+        onChange={handleMediaSelect}
         style={{ display: 'none' }}
         aria-hidden
       />

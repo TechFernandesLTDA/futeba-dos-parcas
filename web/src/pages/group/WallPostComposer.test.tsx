@@ -63,4 +63,21 @@ describe('WallPostComposer', () => {
     expect(screen.getByRole('textbox')).toHaveValue('Pós-jogo');
     expect(screen.getByAltText('Pré-visualização da imagem')).toBeInTheDocument();
   });
+
+  it('aceita vídeo MP4 e mantém a prévia durante o envio', async () => {
+    const onSubmit = vi.fn().mockResolvedValue(undefined);
+    const createObjectURL = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:wall-video');
+    const { container } = renderWithProviders(
+      <WallPostComposer sending={false} onSubmit={onSubmit} />,
+    );
+    const video = new File(['video'], 'partida.mp4', { type: 'video/mp4' });
+
+    selectImage(container, video);
+
+    expect(screen.getByLabelText('Pré-visualização do vídeo')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Publicar' }));
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledWith('', video));
+
+    createObjectURL.mockRestore();
+  });
 });
