@@ -1,7 +1,29 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-10T20:08:05.494Z",
+  "generatedAt": "2026-07-10T20:59:37.244Z",
   "notes": [
+    {
+      "version": "1.51.40",
+      "buildNumber": null,
+      "releaseDate": "2026-07-10",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "O envio de fotos e vídeos no Mural agora se recupera automaticamente quando a conexão rejeita o upload com progresso.",
+      "highlights": [],
+      "added": [],
+      "improved": [],
+      "fixed": [
+        "Mantém o progresso real na primeira tentativa de envio.",
+        "Alterna automaticamente para um modo de upload mais compatível após falhas transitórias de rede ou autorização.",
+        "Preserva as tentativas com renovação de sessão e App Check sem perder o texto ou a mídia selecionada.",
+        "O retry do Storage deixa de repetir exclusivamente o protocolo resumível e usa `uploadBytes` como fallback compatível.",
+        "Adiciona cobertura unitária para a troca de protocolo após `storage/network-request-failed`."
+      ],
+      "issueRefs": [
+        3522
+      ]
+    },
     {
       "version": "1.51.39",
       "buildNumber": null,
