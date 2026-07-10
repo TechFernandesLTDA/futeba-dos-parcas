@@ -69,6 +69,15 @@ export function FirstStepsChecklist({ steps, visible, onDismiss, title, progress
 
   const completedCount = steps.filter(s => s.completed).length;
   const progress = steps.length > 0 ? completedCount / steps.length : 0;
+  const nextStepId = steps.find(step => !step.completed)?.id;
+
+  const handleStepAction = (step: ChecklistStep) => {
+    if (step.onAction) {
+      step.onAction();
+      return;
+    }
+    navigate(step.navigateTo);
+  };
 
   const visibleSteps: ChecklistStep[] = [];
   const hiddenSteps: ChecklistStep[] = [];
@@ -142,6 +151,15 @@ export function FirstStepsChecklist({ steps, visible, onDismiss, title, progress
                 direction="row"
                 alignItems="center"
                 spacing={1.5}
+                sx={{
+                  p: 1.25,
+                  borderRadius: 2,
+                  border: '1px solid',
+                  borderColor: step.id === nextStepId ? 'primary.main' : 'divider',
+                  bgcolor: step.id === nextStepId
+                    ? alpha(theme.palette.primary.main, 0.08)
+                    : 'background.paper',
+                }}
               >
                 {step.completed ? (
                   <CheckCircleIcon
@@ -178,8 +196,8 @@ export function FirstStepsChecklist({ steps, visible, onDismiss, title, progress
                 {!step.completed && (
                   <Button
                     size="small"
-                    variant="text"
-                    onClick={() => step.onAction?.() ?? navigate(step.navigateTo)}
+                    variant={step.id === nextStepId ? 'contained' : 'outlined'}
+                    onClick={() => handleStepAction(step)}
                     aria-label={step.actionLabel}
                     sx={{ flexShrink: 0, minHeight: 36 }}
                   >
@@ -199,6 +217,13 @@ export function FirstStepsChecklist({ steps, visible, onDismiss, title, progress
                         direction="row"
                         alignItems="center"
                         spacing={1.5}
+                        sx={{
+                          p: 1.25,
+                          borderRadius: 2,
+                          border: '1px solid',
+                          borderColor: 'divider',
+                          bgcolor: 'background.paper',
+                        }}
                       >
                         <UncheckedIcon
                           fontSize="small"
@@ -215,8 +240,8 @@ export function FirstStepsChecklist({ steps, visible, onDismiss, title, progress
                         </Box>
                         <Button
                           size="small"
-                          variant="text"
-                          onClick={() => step.onAction?.() ?? navigate(step.navigateTo)}
+                          variant="outlined"
+                          onClick={() => handleStepAction(step)}
                           aria-label={step.actionLabel}
                           sx={{ flexShrink: 0, minHeight: 36 }}
                         >

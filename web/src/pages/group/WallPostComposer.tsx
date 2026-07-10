@@ -24,7 +24,7 @@ const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 interface WallPostComposerProps {
   initialText?: string;
   sending: boolean;
-  onSubmit: (text: string, imageFile?: File) => void;
+  onSubmit: (text: string, imageFile?: File) => Promise<void>;
   onCancel?: () => void;
 }
 
@@ -52,7 +52,7 @@ export const WallPostComposer: React.FC<WallPostComposerProps> = ({
       event.target.value = '';
       return;
     }
-    if (file.size > MAX_IMAGE_SIZE_BYTES) {
+    if (file.size >= MAX_IMAGE_SIZE_BYTES) {
       showError(t('groupWall.imageTooLarge'));
       event.target.value = '';
       return;
@@ -71,19 +71,23 @@ export const WallPostComposer: React.FC<WallPostComposerProps> = ({
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const cleanText = text.trim();
     if (cleanText.length > MAX_TEXT_LENGTH) return;
-    if (cleanText.length === 0) {
+    if (cleanText.length === 0 && !imageFile) {
       showError(t('groupWall.textRequired'));
       return;
     }
-    onSubmit(cleanText, imageFile ?? undefined);
-    setText('');
-    handleRemoveImage();
+    try {
+      await onSubmit(cleanText, imageFile ?? undefined);
+      setText('');
+      handleRemoveImage();
+    } catch {
+      // The mutation owns the error toast. Keep the draft so the user can retry.
+    }
   };
 
-  const isValid = cleanText.length <= MAX_TEXT_LENGTH && cleanText.length > 0;
+  const isValid = cleanText.length <= MAX_TEXT_LENGTH && (cleanText.length > 0 || Boolean(imageFile));
 
   return (
     <Box
@@ -105,14 +109,13 @@ export const WallPostComposer: React.FC<WallPostComposerProps> = ({
         onKeyDown={(e) => {
           if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
             e.preventDefault();
-            if (isValid && !sending) handleSubmit();
+            if (isValid && !sending) void handleSubmit();
           }
         }}
         inputProps={{ maxLength: MAX_TEXT_LENGTH }}
         disabled={sending}
         aria-label={t('groupWall.placeholder')}
-        error={textRequired && !!imageFile}
-        helperText={textRequired && !!imageFile ? t('groupWall.textRequired') : ' '}
+        helperText={textRequired && imageFile ? t('groupWall.photoCaptionOptional') : ' '}
       />
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1 }}>
         <Typography variant="caption" color="text.secondary">
@@ -133,7 +136,7 @@ export const WallPostComposer: React.FC<WallPostComposerProps> = ({
             <ImageIcon />
           </IconButton>
           <IconButton
-            onClick={handleSubmit}
+            onClick={() => void handleSubmit()}
             disabled={!isValid || sending}
             aria-label={t('groupWall.send')}
             color="primary"

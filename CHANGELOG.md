@@ -173,6 +173,17 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.51.32][web-1.51.32] - 2026-07-10
+
+#### Corrigido
+- A confirmação OTP e a sincronização de sessão do Firebase receberam timeouts e navegação não bloqueante.
+- Composer, hook, Firestore Rules e Storage Rules do mural passaram a aceitar mídia sem legenda e a limpar drafts pelo próprio autor.
+- Imagens do mural agora expõem loading, erro, retry, navegação por teclado e lightbox sem bloquear o carregamento lazy.
+- O checklist executa ações customizadas sem navegar em seguida, evitando desmontar diálogos recém-abertos.
+- Foram adicionados testes de onboarding, convites, mural, regras e acessibilidade do card do jogador.
+
+_Issues: #3484 · PRs: #3485_
+
 ### [1.51.31][web-1.51.31] - 2026-07-09
 
 #### Corrigido
@@ -1869,6 +1880,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.51.32]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.32.md
 [web-1.51.31]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.31.md
 [web-1.51.30]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.30.md
 [web-1.51.29]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.29.md

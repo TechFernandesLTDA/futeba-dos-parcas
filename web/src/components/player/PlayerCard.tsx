@@ -51,6 +51,8 @@ const StatTile: React.FC<StatTileProps> = ({ icon, label, value, tone }) => {
 
   return (
     <Box
+      role="listitem"
+      aria-label={`${label}: ${value}`}
       sx={{
         position: 'relative',
         overflow: 'hidden',
@@ -130,7 +132,14 @@ const AttributeLane: React.FC<AttributeLaneProps> = ({ label, value, tone }) => 
   const percent = Math.round((normalized / 5) * 100);
 
   return (
-    <Box sx={{ minWidth: 0 }}>
+    <Box
+      role="progressbar"
+      aria-label={label}
+      aria-valuemin={0}
+      aria-valuemax={5}
+      aria-valuenow={normalized}
+      sx={{ minWidth: 0 }}
+    >
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 0.75, mb: { xs: 0.35, sm: 0.55 } }}>
         <Typography
           variant="caption"
@@ -173,6 +182,9 @@ const AttributeLane: React.FC<AttributeLaneProps> = ({ label, value, tone }) => 
             background: `linear-gradient(90deg, ${tone}, ${alpha(theme.palette.common.white, 0.9)})`,
             boxShadow: normalized > 0 ? `0 0 18px ${alpha(tone, 0.4)}` : 'none',
             transition: (transitionTheme) => transitionTheme.transitions.create('width', { duration: 700 }),
+            '@media (prefers-reduced-motion: reduce)': {
+              transition: 'none',
+            },
           }}
         />
       </Box>
@@ -232,12 +244,14 @@ function getRatingValue(primary: number, fallback: number): number {
   return primary > 0 ? primary : fallback;
 }
 
-function getCardEdition(level: number): string {
-  if (level >= 20) return 'LEGEND';
-  if (level >= 15) return 'ELITE';
-  if (level >= 10) return 'PRO';
-  if (level >= 5) return 'RISING';
-  return 'ROOKIE';
+type CardEdition = 'legend' | 'elite' | 'pro' | 'rising' | 'rookie';
+
+function getCardEdition(level: number): CardEdition {
+  if (level >= 20) return 'legend';
+  if (level >= 15) return 'elite';
+  if (level >= 10) return 'pro';
+  if (level >= 5) return 'rising';
+  return 'rookie';
 }
 
 function getFitPlayerName(name: string): string {
@@ -337,7 +351,9 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
   const winRate = useMemo(() => player && player.totalGames > 0
     ? Math.round((player.totalWins / player.totalGames) * 100)
     : 0, [player]);
-  const cardEdition = player ? getCardEdition(player.level) : 'PLAYER';
+  const cardEdition = player
+    ? t(`player.card.editions.${getCardEdition(player.level)}`)
+    : t('player.card.sticker');
   const positionCode = getPositionCode(player?.preferredPosition);
   const levelTag = player ? t('player.card.levelShort', { level: player.level }) : t('player.card.level');
 
@@ -467,16 +483,20 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
       >
         <Box
           sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
+            display: 'grid',
+            gridTemplateColumns: '44px minmax(0, 1fr) 44px',
             alignItems: 'center',
-            mb: { xs: 0.5, sm: 1 },
-            px: 0.5,
+            gap: 1,
+            mb: { xs: 0.75, sm: 1 },
+            p: 0.5,
             position: 'sticky',
             top: 0,
             zIndex: 3,
-            pointerEvents: 'none',
-            '& > *': { pointerEvents: 'auto' },
+            borderRadius: 3,
+            bgcolor: alpha(theme.palette.background.paper, 0.92),
+            border: `1px solid ${alpha(theme.palette.divider, 0.72)}`,
+            boxShadow: theme.shadows[4],
+            backdropFilter: 'blur(12px)',
           }}
         >
           <Tooltip title={t('tooltip.close')} disableTouchListener>
@@ -484,16 +504,30 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
               onClick={onClose}
               aria-label={t('a11y.closePlayerCard')}
               sx={{
-                bgcolor: alpha(theme.palette.background.paper, 0.82),
+                width: 44,
+                height: 44,
                 color: 'text.primary',
-                boxShadow: theme.shadows[4],
-                backdropFilter: 'blur(8px)',
-                '&:hover': { bgcolor: theme.palette.background.paper },
+                '&:hover': { bgcolor: theme.palette.action.hover },
               }}
             >
               <CloseIcon />
             </IconButton>
           </Tooltip>
+
+          <Typography
+            variant="subtitle2"
+            component="h2"
+            noWrap
+            sx={{
+              textAlign: 'center',
+              color: 'text.primary',
+              fontWeight: 800,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+            }}
+          >
+            {t('player.card.sticker')}
+          </Typography>
 
           <Tooltip title={typeof navigator.share === 'function' ? t('player.card.shareWhatsApp') : t('player.card.downloadImage')} disableTouchListener>
             <span>
@@ -502,6 +536,8 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                 disabled={sharing || loading || !player}
                 aria-label={t('a11y.sharePlayerCard')}
                 sx={{
+                  width: 44,
+                  height: 44,
                   bgcolor: alpha(theme.palette.primary.main, 0.92),
                   color: theme.palette.primary.contrastText,
                   boxShadow: `0 10px 24px ${alpha(theme.palette.primary.main, 0.3)}`,
@@ -517,6 +553,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
 
         <Box
           ref={cardRef}
+          role="article"
           sx={{
             position: 'relative',
             overflow: 'hidden',
@@ -660,8 +697,8 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
               <Box
                 sx={{
                   display: 'grid',
-                  gridTemplateColumns: { xs: '1fr', sm: '150px 1fr' },
-                  gap: { xs: 1, sm: 2 },
+                  gridTemplateColumns: { xs: '104px minmax(0, 1fr)', sm: '150px 1fr' },
+                  gap: { xs: 1.5, sm: 2 },
                   px: { xs: 1.55, sm: 2.75 },
                   pt: { xs: 0.8, sm: 1.75 },
                   alignItems: 'center',
@@ -670,9 +707,9 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                 <Box
                   sx={{
                     position: 'relative',
-                    justifySelf: { xs: 'center', sm: 'start' },
-                    width: { xs: 116, sm: 148 },
-                    height: { xs: 116, sm: 148 },
+                    justifySelf: 'start',
+                    width: { xs: 104, sm: 148 },
+                    height: { xs: 104, sm: 148 },
                   }}
                 >
                   <Box
@@ -690,9 +727,9 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                     slotProps={{ img: { loading: 'lazy' } }}
                     sx={{
                       position: 'absolute',
-                      inset: { xs: 8, sm: 10 },
-                      width: { xs: 100, sm: 128 },
-                      height: { xs: 100, sm: 128 },
+                      inset: { xs: 7, sm: 10 },
+                      width: { xs: 90, sm: 128 },
+                      height: { xs: 90, sm: 128 },
                       bgcolor: alpha(levelColor, 0.32),
                       color: theme.palette.common.white,
                       fontSize: { xs: '2.35rem', sm: '3.15rem' },
@@ -726,7 +763,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                   </Box>
                 </Box>
 
-                <Box sx={{ minWidth: 0, textAlign: { xs: 'center', sm: 'left' } }}>
+                <Box sx={{ minWidth: 0, textAlign: 'left' }}>
                   <Typography
                     variant="h4"
                     component="p"
@@ -738,7 +775,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                       textTransform: 'uppercase',
                       textWrap: 'balance',
                       textShadow: `0 8px 20px ${alpha(theme.palette.common.black, 0.36)}`,
-                      fontSize: { xs: '1.62rem', sm: theme.typography.h4.fontSize },
+                      fontSize: { xs: '1.35rem', sm: theme.typography.h4.fontSize },
                     }}
                   >
                     {getFitPlayerName(player.name)}
@@ -759,7 +796,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                     sx={{
                       display: 'flex',
                       alignItems: 'center',
-                      justifyContent: { xs: 'center', sm: 'flex-start' },
+                      justifyContent: 'flex-start',
                       gap: 0.8,
                       mt: { xs: 0.75, sm: 1.15 },
                       minWidth: 0,
@@ -785,6 +822,8 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
               </Box>
 
               <Box
+                role="group"
+                aria-label={t('player.card.ratingBreakdown')}
                 sx={{
                   mx: { xs: 1.35, sm: 2.75 },
                   mt: { xs: 1.15, sm: 2 },
@@ -847,9 +886,14 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
               </Box>
 
               <Box
+                role="list"
+                aria-label={t('player.card.performanceSummary')}
                 sx={{
                   display: 'grid',
-                  gridTemplateColumns: { xs: 'repeat(2, minmax(0, 1fr))', sm: 'repeat(3, minmax(0, 1fr))' },
+                  gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+                  '@media (min-width: 360px)': {
+                    gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+                  },
                   gap: { xs: 0.75, sm: 1 },
                   p: { xs: 1.35, sm: 2.75 },
                   pt: { xs: 1.15, sm: 1.5 },

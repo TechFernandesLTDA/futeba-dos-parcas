@@ -2508,8 +2508,11 @@ service cloud.firestore {
 
         function isValidWallPostCreateText() {
           return request.resource.data.text is string &&
-            request.resource.data.text.size() >= 1 &&
-            request.resource.data.text.size() <= 500;
+            request.resource.data.text.size() <= 500 &&
+            (
+              request.resource.data.text.size() >= 1 ||
+              request.resource.data.media_url != null
+            );
         }
 
         // Leitura: membros ativos do grupo (inclui owner/admin) ou owner legado

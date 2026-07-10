@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Card,
@@ -13,6 +13,9 @@ import {
   useTheme,
   alpha,
   Dialog,
+  Alert,
+  Button,
+  Skeleton,
 } from '@mui/material';
 import {
   MoreVert as MoreIcon,
@@ -57,7 +60,22 @@ export const WallPostCard: React.FC<WallPostCardProps> = ({
   const theme = useTheme();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [imageLoading, setImageLoading] = useState(Boolean(post.mediaUrl));
+  const [imageFailed, setImageFailed] = useState(false);
+  const [imageRetry, setImageRetry] = useState(0);
   const menuOpen = Boolean(anchorEl);
+
+  useEffect(() => {
+    setImageLoading(Boolean(post.mediaUrl));
+    setImageFailed(false);
+    setImageRetry(0);
+  }, [post.mediaUrl]);
+
+  const handleRetryImage = () => {
+    setImageFailed(false);
+    setImageLoading(true);
+    setImageRetry((current) => current + 1);
+  };
 
   const handleOpenMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -131,33 +149,92 @@ export const WallPostCard: React.FC<WallPostCardProps> = ({
               )}
             </Box>
 
-            <Typography
-              variant="body1"
-              sx={{
-                whiteSpace: 'pre-wrap',
-                wordBreak: 'break-word',
-                color: post.deletedAt ? 'text.secondary' : 'text.primary',
-              }}
-            >
-              {post.text}
-            </Typography>
+            {post.text && (
+              <Typography
+                variant="body1"
+                sx={{
+                  whiteSpace: 'pre-wrap',
+                  wordBreak: 'break-word',
+                  color: post.deletedAt ? 'text.secondary' : 'text.primary',
+                }}
+              >
+                {post.text}
+              </Typography>
+            )}
 
             {post.mediaUrl && (
               <Box
-                component="img"
-                src={post.mediaUrl}
-                alt={t('groupWall.imageAlt', { name: post.authorName })}
-                loading="lazy"
-                onClick={() => setLightboxOpen(true)}
                 sx={{
-                  width: '100%',
-                  maxHeight: 360,
-                  objectFit: 'cover',
-                  borderRadius: 1,
-                  cursor: 'pointer',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  borderRadius: 2,
                   bgcolor: theme.palette.action.hover,
+                  minHeight: imageLoading ? 180 : 0,
                 }}
-              />
+              >
+                {imageLoading && !imageFailed && (
+                  <Skeleton
+                    variant="rectangular"
+                    height={280}
+                    animation="wave"
+                    aria-label={t('common.loading')}
+                    sx={{ position: 'absolute', inset: 0, zIndex: 1 }}
+                  />
+                )}
+                {!imageFailed && (
+                  <Box
+                    key={imageRetry}
+                    component="button"
+                    type="button"
+                    onClick={() => setLightboxOpen(true)}
+                    aria-label={t('groupWall.openPhoto', { name: post.authorName })}
+                    sx={{
+                      display: 'block',
+                      width: '100%',
+                      p: 0,
+                      border: 0,
+                      cursor: 'pointer',
+                      bgcolor: 'transparent',
+                      '&:focus-visible': {
+                        outline: `3px solid ${theme.palette.primary.main}`,
+                        outlineOffset: -3,
+                      },
+                    }}
+                  >
+                    <Box
+                      component="img"
+                      src={post.mediaUrl}
+                      alt={t('groupWall.imageAlt', { name: post.authorName })}
+                      loading="lazy"
+                      onLoad={() => setImageLoading(false)}
+                      onError={() => {
+                        setImageLoading(false);
+                        setImageFailed(true);
+                      }}
+                      sx={{
+                        display: 'block',
+                        width: '100%',
+                        maxHeight: 420,
+                        objectFit: 'cover',
+                        opacity: imageLoading ? 0 : 1,
+                      }}
+                    />
+                  </Box>
+                )}
+                {imageFailed && (
+                  <Alert
+                    severity="warning"
+                    action={(
+                      <Button color="inherit" size="small" onClick={handleRetryImage}>
+                        {t('groupWall.retryImage')}
+                      </Button>
+                    )}
+                    sx={{ borderRadius: 0 }}
+                  >
+                    {t('groupWall.imageLoadError')}
+                  </Alert>
+                )}
+              </Box>
             )}
 
             {!post.deletedAt && (

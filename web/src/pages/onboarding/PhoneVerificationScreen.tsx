@@ -51,6 +51,8 @@ import type { VerificationFailureReason } from '../../utils/onboardingSecurity';
 const logger = createLogger('PhoneVerification');
 const PHONE_VERIFICATION_SESSION_KEY = 'futeba.phoneVerification';
 const PHONE_VERIFICATION_TTL_MS = 9 * 60 * 1000;
+const OTP_CONFIRMATION_TIMEOUT_MS = 20_000;
+const PHONE_SESSION_SYNC_TIMEOUT_MS = 8_000;
 
 type PhoneVerificationSession = {
   attempts: PhoneVerificationAttempt[];
@@ -420,8 +422,16 @@ export const PhoneVerificationScreen: React.FC = () => {
         try {
           credential = PhoneAuthProvider.credential(attempt.verificationId, otp);
           linkedCredential = attempt.confirmationResult
-            ? await attempt.confirmationResult.confirm(otp)
-            : await linkWithCredential(currentUser, credential);
+            ? await withTimeout(
+                attempt.confirmationResult.confirm(otp),
+                OTP_CONFIRMATION_TIMEOUT_MS,
+                'otp-confirmation-timeout',
+              )
+            : await withTimeout(
+                linkWithCredential(currentUser, credential),
+                OTP_CONFIRMATION_TIMEOUT_MS,
+                'otp-confirmation-timeout',
+              );
           break;
         } catch (attemptErr) {
           const attemptCode = (attemptErr as { code?: string }).code;
@@ -435,13 +445,31 @@ export const PhoneVerificationScreen: React.FC = () => {
 
       if (!linkedCredential) throw lastAttemptError ?? new Error('otp-confirmation-failed');
       const linkedUser = linkedCredential.user ?? auth.currentUser ?? currentUser;
-      await linkedUser.reload();
-      // Force token refresh pra Firebase popular phoneNumber no userRecord
-      await linkedUser.getIdToken(true);
-
       clearVerificationSession();
       attemptsRef.current = [];
+      setStep('success');
       navigate('/onboarding/cpf', { replace: true });
+
+      // O vínculo do telefone já foi concluído quando confirm()/linkWithCredential()
+      // resolve. reload/getIdToken servem apenas para sincronizar o objeto local e
+      // não podem bloquear a navegação (Safari/App Check podem deixá-los pendentes).
+      // A tela de CPF faz seu próprio refresh obrigatório antes da callable.
+      void (async () => {
+        try {
+          await withTimeout(
+            linkedUser.reload(),
+            PHONE_SESSION_SYNC_TIMEOUT_MS,
+            'phone-reload-timeout',
+          );
+          await withTimeout(
+            linkedUser.getIdToken(true),
+            PHONE_SESSION_SYNC_TIMEOUT_MS,
+            'phone-token-refresh-timeout',
+          );
+        } catch (syncErr) {
+          logger.warn('Phone linked; deferred session sync did not finish:', syncErr);
+        }
+      })();
     } catch (err) {
       logger.error('Phone verification failed:', err);
       const code = (err as { code?: string }).code;
@@ -453,7 +481,9 @@ export const PhoneVerificationScreen: React.FC = () => {
         return;
       }
       let msg = t('feedback.phoneVerification.invalidCode');
-      if (code === 'auth/invalid-verification-code') msg = t('feedback.phoneVerification.incorrectCode');
+      if (code === 'otp-confirmation-timeout') {
+        msg = t('feedback.phoneVerification.confirmationTimeout');
+      } else if (code === 'auth/invalid-verification-code') msg = t('feedback.phoneVerification.incorrectCode');
       else if (
         code === 'auth/code-expired' ||
         code === 'auth/invalid-verification-id' ||
@@ -476,7 +506,9 @@ export const PhoneVerificationScreen: React.FC = () => {
         setStep('phone');
         setResendCooldown(0);
       }
-      auditPhoneVerificationFailure(mapPhoneOtpFailureReason(code));
+      if (code !== 'otp-confirmation-timeout') {
+        auditPhoneVerificationFailure(mapPhoneOtpFailureReason(code));
+      }
       setError(msg);
     } finally {
       setLoading(false);
