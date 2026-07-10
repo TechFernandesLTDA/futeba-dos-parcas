@@ -215,7 +215,7 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 - O retry do Storage deixa de repetir exclusivamente o protocolo resumível e usa `uploadBytes` como fallback compatível.
 - Adiciona cobertura unitária para a troca de protocolo após `storage/network-request-failed`.
 
-_Issues: #3522_
+_Issues: #3522 · PRs: #3523_
 
 ### [1.51.39][web-1.51.39] - 2026-07-10
 
