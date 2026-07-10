@@ -1,7 +1,31 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-10T16:18:21.643Z",
+  "generatedAt": "2026-07-10T17:32:53.558Z",
   "notes": [
+    {
+      "version": "1.51.38",
+      "buildNumber": null,
+      "releaseDate": "2026-07-10",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "Vídeos do Mural continuam publicáveis mesmo quando o navegador não consegue gerar a pré-visualização.",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "A pré-visualização de vídeos usa um ciclo de vida seguro para o arquivo local, evitando que o navegador revogue o conteúdo antes da reprodução.",
+        "Quando a pré-visualização falhar, o Mural informa o problema sem bloquear a publicação."
+      ],
+      "fixed": [
+        "Corrigido o erro “Não foi possível preparar este vídeo para visualização” ao anexar vídeos aos posts do grupo.",
+        "Object URLs de vídeos MP4 são criadas e revogadas no ciclo de vida do arquivo selecionado, com cobertura para React Strict Mode.",
+        "Falhas do elemento `<video>` agora exibem estado não bloqueante e preservam o envio do arquivo original.",
+        "Adicionado teste de regressão para publicar vídeo após falha da pré-visualização."
+      ],
+      "issueRefs": [
+        3516
+      ]
+    },
     {
       "version": "1.51.37",
       "buildNumber": null,
