@@ -31,7 +31,7 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 - Intents de FCM, notificações e alarmes são explicitamente limitadas ao pacote do aplicativo.
 - Ranking usa `collectLatest` e aguarda o preenchimento paralelo do cache antes de emitir o estado de sucesso.
 
-_Issues: #3497_
+_Issues: #3497 · PRs: #3498_
 
 ### [1.36.5][android-1.36.5] - 2026-07-10
 
@@ -205,7 +205,7 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 - Testes renderizam `Unstable_Grid2` e todos os ícones usados pela tela, cobrindo defaults aninhados.
 - A sincronização best-effort de claims registra falhas e a configuração pública usa o SDK config Web oficial.
 
-_Issues: #3497_
+_Issues: #3497 · PRs: #3498_
 
 ### [1.51.34][web-1.51.34] - 2026-07-10
 
@@ -1403,7 +1403,7 @@ _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 - `sanitizeText` usa normalização NFKC e parsing estrutural em vez de substituições regex incompletas, corrigindo o alerta CodeQL de severidade alta.
 - Contrato automatizado mantém a query `dateTime == null` alinhada ao índice composto `dateTime/date/__name__`.
 
-_Issues: #3497_
+_Issues: #3497 · PRs: #3498_
 
 ### [1.7.15][functions-1.7.15] - 2026-07-10
 
