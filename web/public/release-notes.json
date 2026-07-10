@@ -1,7 +1,30 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-10T21:01:33.154Z",
+  "generatedAt": "2026-07-10T23:32:09.082Z",
   "notes": [
+    {
+      "version": "1.51.41",
+      "buildNumber": null,
+      "releaseDate": "2026-07-10",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "Vídeos MP4 enviados ao Mural agora aparecem com o player e os controles visíveis imediatamente no celular.",
+      "highlights": [],
+      "added": [],
+      "improved": [],
+      "fixed": [
+        "O player não fica mais invisível enquanto o navegador móvel adia o carregamento dos metadados.",
+        "O skeleton de carregamento deixa de cobrir e bloquear os controles nativos do vídeo.",
+        "Eventos de metadados, dados e reprodução pronta encerram corretamente o estado de carregamento.",
+        "A permissão entre Firebase Storage e Firestore foi restaurada para liberar uploads autorizados de membros e proprietários do grupo.",
+        "Mantém o elemento `video` com opacidade total e altura mínima enquanto o MP4 prepara a reprodução.",
+        "Adiciona cobertura regressiva para controles visíveis antes de `loadedmetadata` em navegadores móveis."
+      ],
+      "issueRefs": [
+        3522
+      ]
+    },
     {
       "version": "1.51.40",
       "buildNumber": null,

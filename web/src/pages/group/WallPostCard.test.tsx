@@ -60,4 +60,25 @@ describe('WallPostCard', () => {
     expect(screen.queryByText('Não foi possível carregar esta foto.')).not.toBeInTheDocument();
     expect(screen.getByAltText('Foto de Jordi')).toBeInTheDocument();
   });
+
+  it('mantém o player de vídeo e os controles visíveis antes dos metadados', () => {
+    const videoPost: WallPost = {
+      ...post,
+      mediaUrl: 'https://firebasestorage.googleapis.com/clip.mp4',
+      mediaPath: 'groups/group-1/wall_media/__draft__/user-1/clip.mp4',
+      mediaType: 'video/mp4',
+    };
+    const { container } = renderWithProviders(
+      <WallPostCard post={videoPost} isOwn={false} canManage={false} />,
+    );
+
+    const video = screen.getByLabelText('Abrir vídeo de Jordi');
+    expect(video).toBeVisible();
+    expect(video).toHaveAttribute('controls');
+    expect(video).toHaveStyle({ opacity: '1', minHeight: '180px' });
+    expect(container.querySelector('.MuiSkeleton-root')).not.toBeInTheDocument();
+
+    fireEvent.loadedMetadata(video);
+    expect(video).toBeVisible();
+  });
 });
