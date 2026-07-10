@@ -182,7 +182,7 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 - O checklist executa ações customizadas sem navegar em seguida, evitando desmontar diálogos recém-abertos.
 - Foram adicionados testes de onboarding, convites, mural, regras e acessibilidade do card do jogador.
 
-_Issues: #3484_
+_Issues: #3484 · PRs: #3485_
 
 ### [1.51.31][web-1.51.31] - 2026-07-09
 
