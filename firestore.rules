@@ -228,10 +228,31 @@ service cloud.firestore {
              ('co_organizers' in gameData && userId() in gameData.co_organizers);
     }
 
+    // Leitura do estado ao vivo: participantes/gestores do jogo e qualquer
+    // usuário autenticado quando o próprio jogo é público.
+    function canViewLiveGame(gameId) {
+      let gameDoc = get(/databases/$(database)/documents/games/$(gameId));
+      return isAuthenticated() && gameDoc != null && (
+        isAdmin() ||
+        canManageGame(gameDoc.data) ||
+        isConfirmedPlayer(gameId) ||
+        gameDoc.data.visibility == 'PUBLIC_OPEN' ||
+        gameDoc.data.visibility == 'PUBLIC_CLOSED'
+      );
+    }
+
     // Verifica se um usuario especifico esta confirmado no jogo
     function isConfirmedUserForGame(gameId, targetUserId) {
       let confirmationDoc = get(/databases/$(database)/documents/confirmations/$(gameId + "_" + targetUserId));
       return confirmationDoc != null && confirmationDoc.data.status == 'CONFIRMED';
+    }
+
+    // IDs de votos são gerados no servidor como gameId_uid_categoria. Autoriza
+    // o próprio eleitor a observar também o doc ainda inexistente, necessário
+    // para onSnapshot/get determinístico sem liberar listagem ou votos alheios.
+    function isOwnMvpVoteId(voteId) {
+      return isAuthenticated() &&
+        voteId.matches('^.{1,128}_' + userId() + '_(MVP|BEST_GOALKEEPER|WORST)$');
     }
 
     // Helper para verificar se usuario e membro ativo de um grupo
@@ -1495,38 +1516,16 @@ service cloud.firestore {
     // COLECAO: live_games (estado em tempo real)
     // ============================================
     match /live_games/{gameId} {
-      allow read: if isAuthenticated();
+      allow read: if canViewLiveGame(gameId);
 
-      // PERF_001 P0 #1: Otimizado - usa resource.data.owner_id em vez de get(games/{gameId})
-      // gameId é o próprio ID do documento do jogo, então owner_id está em resource.data
-      allow create: if isAuthenticated() &&
-                      (isAdmin() || request.resource.data.owner_id == userId());
-
-      allow update, delete: if isAuthenticated() &&
-                              (isAdmin() || resource.data.owner_id == userId());
+      // Coleção legada. O fluxo oficial usa games/live_scores/game_events e
+      // todas as mutações passam pelas Cloud Functions transacionais.
+      allow create, update, delete: if false;
 
       // Sub-colecao: eventos do jogo
       match /events/{eventId} {
-        allow read: if isAuthenticated();
-        // #1036: confirmado não-owner só pode agir em eventos criados por si mesmo.
-        // Owner e admin operam sem restrição de autoria.
-        // SECFIX #2649: type whitelist — previne criação de eventos com tipos
-        // arbitrários que o cliente não deveria emitir.
-        allow create: if isAuthenticated() && (
-          isAdmin() ||
-          isGameOwner(gameId) ||
-          (isConfirmedPlayer(gameId) && request.resource.data.created_by == userId())
-        ) && request.resource.data.type in ['goal', 'assist', 'save', 'foul', 'yellow_card', 'red_card', 'substitution', 'other'];
-        allow update: if isAuthenticated() && (
-          isAdmin() ||
-          isGameOwner(gameId) ||
-          (isConfirmedPlayer(gameId) && resource.data.created_by == userId())
-        );
-        allow delete: if isAuthenticated() && (
-          isAdmin() ||
-          isGameOwner(gameId) ||
-          (isConfirmedPlayer(gameId) && resource.data.created_by == userId())
-        );
+        allow read: if canViewLiveGame(gameId);
+        allow create, update, delete: if false;
       }
     }
 
@@ -3208,7 +3207,7 @@ service cloud.firestore {
     // SECURITY: Validacao de tipo de evento e campos obrigatorios
     // Previne criacao de eventos com tipos invalidos ou dados fabricados
     match /game_events/{eventId} {
-      allow read: if isAuthenticated();
+      allow read: if canViewLiveGame(resource.data.game_id);
 
       // #3211: eventos críticos são escritos apenas por Cloud Functions callables
       // (`submitLiveGameEvent` / `deleteLiveGameEvent`) com validação de status,
@@ -3220,7 +3219,7 @@ service cloud.firestore {
     // COLECAO: live_scores (placar ao vivo)
     // ============================================
     match /live_scores/{scoreId} {
-      allow read: if isAuthenticated();
+      allow read: if canViewLiveGame(scoreId);
 
       // #3211: placar ao vivo é derivado e mantido apenas no servidor para evitar
       // fraude por writes diretos no cliente.
@@ -3231,7 +3230,7 @@ service cloud.firestore {
     // COLECAO: live_player_stats (estatisticas ao vivo)
     // ============================================
     match /live_player_stats/{statId} {
-      allow read: if isAuthenticated();
+      allow read: if canViewLiveGame(resource.data.game_id);
 
       // #3211: estatísticas derivadas do jogo ao vivo são mantidas apenas pelo
       // servidor junto com o evento oficial.
@@ -3246,10 +3245,9 @@ service cloud.firestore {
       // SECFIX #2632: list removido para nao-admins — o doc contem voter_id e mvp_id,
       // quebrando a anonimidade declarada. Agregacao de resultados e server-side (Cloud Function).
       allow get: if isAuthenticated() && (
+        isOwnMvpVoteId(voteId) ||
         resource.data.voter_id == userId() ||
-        isAdmin() ||
-        isGameOwner(resource.data.game_id) ||
-        isConfirmedPlayer(resource.data.game_id)
+        isAdmin()
       );
       allow list: if isAdmin();
 

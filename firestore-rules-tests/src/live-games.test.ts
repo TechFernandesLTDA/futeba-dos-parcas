@@ -6,10 +6,9 @@
  *   - live_player_stats/{statId}
  *
  * Cobre:
- * - live_games: leitura para qualquer autenticado; write apenas owner ou admin
- * - live_games/events: leitura auth; create/update/delete owner/admin ou confirmed player (próprios eventos)
- * - live_scores: leitura auth; escrita client-side bloqueada (somente Cloud Functions)
- * - live_player_stats: leitura auth; escrita client-side bloqueada (somente Cloud Functions)
+ * - estado ao vivo: leitura para gestor/confirmado (ou jogo público)
+ * - coleções legadas: escrita client-side bloqueada
+ * - live_scores/live_player_stats: escrita client-side bloqueada
  */
 
 import { describe, it, beforeAll, afterAll } from "vitest";
@@ -111,8 +110,13 @@ afterAll(async () => {
 // ============================================================
 
 describe("live_games — leitura", () => {
-  it("Qualquer autenticado pode ler live_games", async () => {
+  it("Autenticado sem acesso NÃO pode ler live_games privado", async () => {
     const db = asPlayerC(testEnv); // não é owner nem confirmed
+    await assertFails(db.doc(`live_games/${LIVE_GAME_ID}`).get());
+  });
+
+  it("Jogador confirmado pode ler live_games", async () => {
+    const db = asPlayerB(testEnv);
     await assertSucceeds(db.doc(`live_games/${LIVE_GAME_ID}`).get());
   });
 
@@ -123,7 +127,7 @@ describe("live_games — leitura", () => {
 });
 
 describe("live_games — escrita (create/update/delete)", () => {
-  it("Game owner pode criar documento live_games com owner_id == userId()", async () => {
+  it("Game owner NÃO pode criar documento legado direto", async () => {
     await seedDoc(testEnv, `games/live-game-new`, {
       title: "Novo Jogo Live",
       owner_id: UID_PLAYER_A,
@@ -139,7 +143,7 @@ describe("live_games — escrita (create/update/delete)", () => {
       co_organizers: [],
     });
     const db = asPlayerA(testEnv);
-    await assertSucceeds(
+    await assertFails(
       db.doc(`live_games/live-game-new`).set({
         owner_id: UID_PLAYER_A,
         status: "LIVE",
@@ -148,9 +152,9 @@ describe("live_games — escrita (create/update/delete)", () => {
     );
   });
 
-  it("Admin pode criar documento live_games", async () => {
+  it("Admin client NÃO pode criar documento live_games", async () => {
     const db = asAdmin(testEnv);
-    await assertSucceeds(
+    await assertFails(
       db.doc(`live_games/live-game-admin`).set({
         owner_id: UID_ADMIN,
         status: "LIVE",
@@ -173,9 +177,9 @@ describe("live_games — escrita (create/update/delete)", () => {
     );
   });
 
-  it("Game owner pode atualizar live_games", async () => {
+  it("Game owner NÃO pode atualizar live_games direto", async () => {
     const db = asPlayerA(testEnv);
-    await assertSucceeds(
+    await assertFails(
       db.doc(`live_games/${LIVE_GAME_ID}`).update({
         status: "LIVE",
         updated_at: new Date(),
@@ -191,14 +195,14 @@ describe("live_games — escrita (create/update/delete)", () => {
     );
   });
 
-  it("Game owner pode deletar live_games", async () => {
+  it("Game owner NÃO pode deletar live_games direto", async () => {
     await seedDoc(testEnv, `live_games/live-game-delete`, {
       owner_id: UID_PLAYER_A,
       status: "LIVE",
       started_at: new Date(),
     });
     const db = asPlayerA(testEnv);
-    await assertSucceeds(db.doc(`live_games/live-game-delete`).delete());
+    await assertFails(db.doc(`live_games/live-game-delete`).delete());
   });
 });
 
@@ -207,16 +211,23 @@ describe("live_games — escrita (create/update/delete)", () => {
 // ============================================================
 
 describe("live_games/events — leitura e escrita", () => {
-  it("Qualquer autenticado pode ler eventos", async () => {
+  it("Autenticado sem acesso NÃO pode ler eventos privados", async () => {
     const db = asPlayerC(testEnv);
+    await assertFails(
+      db.doc(`live_games/${LIVE_GAME_ID}/events/${EVENT_EXISTING}`).get()
+    );
+  });
+
+  it("Jogador confirmado pode ler eventos", async () => {
+    const db = asPlayerB(testEnv);
     await assertSucceeds(
       db.doc(`live_games/${LIVE_GAME_ID}/events/${EVENT_EXISTING}`).get()
     );
   });
 
-  it("Game owner pode criar evento", async () => {
+  it("Game owner NÃO pode criar evento legado direto", async () => {
     const db = asPlayerA(testEnv);
-    await assertSucceeds(
+    await assertFails(
       db.doc(`live_games/${LIVE_GAME_ID}/events/event-owner-create`).set({
         type: "assist",
         player_id: UID_PLAYER_B,
@@ -226,10 +237,10 @@ describe("live_games/events — leitura e escrita", () => {
     );
   });
 
-  it("Confirmed player pode criar evento com created_by == self", async () => {
+  it("Confirmed player NÃO pode criar evento legado direto", async () => {
     // Rule: isConfirmedPlayer(gameId) && created_by == userId()
     const db = asPlayerB(testEnv);
-    await assertSucceeds(
+    await assertFails(
       db.doc(`live_games/${LIVE_GAME_ID}/events/event-confirmed-create`).set({
         type: "goal",
         player_id: UID_PLAYER_B,
@@ -264,16 +275,16 @@ describe("live_games/events — leitura e escrita", () => {
     );
   });
 
-  it("Game owner pode atualizar qualquer evento", async () => {
+  it("Game owner NÃO pode atualizar evento legado direto", async () => {
     const db = asPlayerA(testEnv);
-    await assertSucceeds(
+    await assertFails(
       db
         .doc(`live_games/${LIVE_GAME_ID}/events/${EVENT_EXISTING}`)
         .update({ type: "ASSIST" })
     );
   });
 
-  it("Game owner pode deletar qualquer evento", async () => {
+  it("Game owner NÃO pode deletar evento legado direto", async () => {
     await seedDoc(
       testEnv,
       `live_games/${LIVE_GAME_ID}/events/event-owner-delete`,
@@ -285,7 +296,7 @@ describe("live_games/events — leitura e escrita", () => {
       }
     );
     const db = asPlayerA(testEnv);
-    await assertSucceeds(
+    await assertFails(
       db.doc(`live_games/${LIVE_GAME_ID}/events/event-owner-delete`).delete()
     );
   });
@@ -296,8 +307,13 @@ describe("live_games/events — leitura e escrita", () => {
 // ============================================================
 
 describe("live_scores — leitura e escrita", () => {
-  it("Qualquer autenticado pode ler live_scores", async () => {
+  it("Autenticado sem acesso NÃO pode ler live_scores privado", async () => {
     const db = asPlayerC(testEnv);
+    await assertFails(db.doc(`live_scores/${LIVE_GAME_ID}`).get());
+  });
+
+  it("Jogador confirmado pode ler live_scores", async () => {
+    const db = asPlayerB(testEnv);
     await assertSucceeds(db.doc(`live_scores/${LIVE_GAME_ID}`).get());
   });
 
@@ -371,8 +387,15 @@ describe("live_scores — leitura e escrita", () => {
 // ============================================================
 
 describe("live_player_stats — leitura e escrita", () => {
-  it("Qualquer autenticado pode ler live_player_stats", async () => {
+  it("Autenticado sem acesso NÃO pode ler live_player_stats privado", async () => {
     const db = asPlayerC(testEnv);
+    await assertFails(
+      db.doc(`live_player_stats/${LIVE_GAME_ID}_${UID_PLAYER_B}`).get()
+    );
+  });
+
+  it("Jogador confirmado pode ler live_player_stats", async () => {
+    const db = asPlayerB(testEnv);
     await assertSucceeds(
       db.doc(`live_player_stats/${LIVE_GAME_ID}_${UID_PLAYER_B}`).get()
     );

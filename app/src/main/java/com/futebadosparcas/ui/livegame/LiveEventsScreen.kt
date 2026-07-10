@@ -19,6 +19,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.futebadosparcas.domain.model.GameEvent
+import com.futebadosparcas.ui.components.EmptyState
+import com.futebadosparcas.ui.components.EmptyStateType
 import com.futebadosparcas.ui.components.ShimmerBox
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
@@ -47,6 +49,7 @@ fun LiveEventsScreen(
     gameId: String = ""
 ) {
     val events by viewModel.events.collectAsStateWithLifecycle()
+    val error by viewModel.error.collectAsStateWithLifecycle()
 
     LaunchedEffect(gameId) {
         if (gameId.isNotEmpty()) {
@@ -59,7 +62,17 @@ fun LiveEventsScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-        if (events.isEmpty()) {
+        if (error != null) {
+            EmptyState(
+                type = EmptyStateType.Error(
+                    title = stringResource(R.string.error),
+                    description = error.orEmpty(),
+                    actionLabel = stringResource(R.string.retry),
+                    onRetry = { viewModel.observeEvents(gameId) }
+                ),
+                modifier = Modifier.fillMaxSize()
+            )
+        } else if (events.isEmpty()) {
             LiveEventsEmptyState()
         } else {
             LiveEventsContent(
@@ -103,6 +116,7 @@ private fun GameEventCard(
     modifier: Modifier = Modifier
 ) {
     Card(
+        onClick = onClick,
         modifier = modifier
             .fillMaxWidth()
             .heightIn(min = 80.dp),
@@ -172,7 +186,7 @@ private fun GameEventCard(
                 color = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
             ) {
                 Text(
-                    text = "⏱",
+                    text = "${event.minute}'",
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.padding(6.dp),
                     color = MaterialTheme.colorScheme.onSurface
@@ -229,12 +243,13 @@ private fun getEventColor(eventType: String): androidx.compose.ui.graphics.Color
 /**
  * Obtém ícone baseado no tipo de evento
  */
-private fun getEventIcon(eventType: String) = when (eventType.lowercase()) {
-    "goal" -> Icons.Default.Stars
-    "substitution" -> Icons.Default.Person
-    "yellowcard" -> Icons.Default.Warning
-    "redcard" -> Icons.Default.Close
-    "foul" -> Icons.Default.Gavel
+private fun getEventIcon(eventType: String) = when (eventType.uppercase()) {
+    "GOAL" -> Icons.Default.Stars
+    "SAVE" -> Icons.Default.SportsHandball
+    "SUBSTITUTION" -> Icons.Default.Person
+    "YELLOW_CARD" -> Icons.Default.Warning
+    "RED_CARD" -> Icons.Default.Close
+    "FOUL" -> Icons.Default.Gavel
     else -> Icons.AutoMirrored.Filled.EventNote
 }
 
@@ -243,20 +258,23 @@ private fun getEventIcon(eventType: String) = when (eventType.lowercase()) {
  */
 @Composable
 private fun getEventTypeLabel(eventType: String): String {
-    val prefix = when (eventType.lowercase()) {
-        "goal" -> "⚽ "
-        "substitution" -> "🔄 "
-        "yellowcard" -> "🟨 "
-        "redcard" -> "🔴 "
-        "foul" -> "⚠️ "
+    val normalized = eventType.uppercase()
+    val prefix = when (normalized) {
+        "GOAL" -> "⚽ "
+        "SAVE" -> "🧤 "
+        "SUBSTITUTION" -> "🔄 "
+        "YELLOW_CARD" -> "🟨 "
+        "RED_CARD" -> "🔴 "
+        "FOUL" -> "⚠️ "
         else -> "📝 "
     }
-    val label = when (eventType.lowercase()) {
-        "goal" -> stringResource(R.string.live_game_event_goal)
-        "substitution" -> stringResource(R.string.live_game_event_substitution)
-        "yellowcard" -> stringResource(R.string.live_game_event_yellow_card)
-        "redcard" -> stringResource(R.string.live_game_event_red_card)
-        "foul" -> stringResource(R.string.live_game_event_foul)
+    val label = when (normalized) {
+        "GOAL" -> stringResource(R.string.live_game_event_goal)
+        "SAVE" -> stringResource(R.string.live_game_save_label)
+        "SUBSTITUTION" -> stringResource(R.string.live_game_event_substitution)
+        "YELLOW_CARD" -> stringResource(R.string.live_game_event_yellow_card)
+        "RED_CARD" -> stringResource(R.string.live_game_event_red_card)
+        "FOUL" -> stringResource(R.string.live_game_event_foul)
         else -> stringResource(R.string.live_game_event_default)
     }
     return prefix + label

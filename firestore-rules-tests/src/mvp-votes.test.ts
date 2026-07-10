@@ -2,8 +2,8 @@
  * Testes de Firestore Security Rules — Coleção: mvp_votes/{voteId}
  *
  * Cobre:
- * - get: voter_id == self OU admin OU game owner OU confirmed player
- * - list: admin OU game owner OU confirmed player (sem branch voter_id)
+ * - get: somente voter_id == self OU admin
+ * - list: somente admin
  * - create: isVerifiedOrGrace + confirmed player + voter_id == self + mvp_id != self
  *           + mvp_id deve ser confirmed + best_gk_id/worst_player_id validados
  * - create: não-confirmado negado
@@ -93,20 +93,40 @@ describe("mvp_votes — get (leitura individual)", () => {
     await assertSucceeds(db.doc(`mvp_votes/${VOTE_PLAYER_B}`).get());
   });
 
+  it("Voter pode observar seu documento determinístico antes de ele existir", async () => {
+    const db = asPlayerB(testEnv);
+    await assertSucceeds(
+      db.doc(`mvp_votes/${GAME_ID}_${UID_PLAYER_B}_MVP`).get()
+    );
+  });
+
+  it("Voter NÃO pode ler documento determinístico de outro eleitor", async () => {
+    await seedDoc(testEnv, `mvp_votes/${GAME_ID}_${UID_PLAYER_A}_MVP`, {
+      game_id: GAME_ID,
+      voter_id: UID_PLAYER_A,
+      voted_player_id: UID_PLAYER_B,
+      category: "MVP",
+      voted_at: new Date(),
+    });
+    const db = asPlayerB(testEnv);
+    await assertFails(
+      db.doc(`mvp_votes/${GAME_ID}_${UID_PLAYER_A}_MVP`).get()
+    );
+  });
+
   it("Admin pode ler qualquer voto", async () => {
     const db = asAdmin(testEnv);
     await assertSucceeds(db.doc(`mvp_votes/${VOTE_PLAYER_B}`).get());
   });
 
-  it("Game owner pode ler votos do próprio jogo", async () => {
-    // player A é owner do jogo — pode fazer get
+  it("Game owner NÃO pode ler voto de outro jogador", async () => {
     const db = asPlayerA(testEnv);
-    await assertSucceeds(db.doc(`mvp_votes/${VOTE_PLAYER_B}`).get());
+    await assertFails(db.doc(`mvp_votes/${VOTE_PLAYER_B}`).get());
   });
 
-  it("Confirmed player pode ler votos do jogo em que está confirmado", async () => {
-    const db = asPlayerB(testEnv);
-    await assertSucceeds(db.doc(`mvp_votes/${VOTE_PLAYER_B}`).get());
+  it("Confirmed player NÃO pode ler voto de outro jogador", async () => {
+    const db = asPlayerA(testEnv);
+    await assertFails(db.doc(`mvp_votes/${VOTE_PLAYER_B}`).get());
   });
 
   it("Não-confirmado (player C) NÃO pode ler votos de um jogo alheio", async () => {

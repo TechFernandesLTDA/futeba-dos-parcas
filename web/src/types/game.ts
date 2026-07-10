@@ -237,6 +237,12 @@ export interface Game {
   worstPlayerId?: string;
   votingDeadline?: Date;
   votingConcluded: boolean;
+  votingStatus?: 'OPEN' | 'CONCLUDED';
+  votingConcludedAt?: Date;
+  votingSubmittedCount?: number;
+  mvpVotes?: number;
+  bestGkVotes?: number;
+  worstPlayerVotes?: number;
   
   // XP
   xpProcessed: boolean;

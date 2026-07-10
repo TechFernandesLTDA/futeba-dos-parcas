@@ -151,8 +151,13 @@ describe("game_events — create", () => {
 });
 
 describe("game_events — read", () => {
-  it("Player autenticado pode ler eventos", async () => {
+  it("Player sem acesso NÃO pode ler eventos privados", async () => {
     const db = asPlayerC(testEnv);
+    await assertFails(db.doc(`game_events/${EVENT_PLAYER_B}`).get());
+  });
+
+  it("Player confirmado pode ler eventos", async () => {
+    const db = asPlayerB(testEnv);
     await assertSucceeds(db.doc(`game_events/${EVENT_PLAYER_B}`).get());
   });
 

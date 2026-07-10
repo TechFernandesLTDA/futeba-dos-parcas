@@ -5,6 +5,7 @@ vi.mock('../../services/cloudFunctions', () => ({
   finishGameLifecycle: vi.fn(),
   startGameLifecycle: vi.fn(),
   submitLiveGameEvent: vi.fn(),
+  deleteLiveGameEvent: vi.fn(),
 }));
 vi.mock('../../contexts/AuthContext', () => ({useAuth: vi.fn()}));
 vi.mock('../../contexts/ToastContext', () => ({useToast: vi.fn()}));

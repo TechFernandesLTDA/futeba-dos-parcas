@@ -1,7 +1,32 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-10T04:28:14.190Z",
+  "generatedAt": "2026-07-10T06:10:47.574Z",
   "notes": [
+    {
+      "version": "1.51.34",
+      "buildNumber": null,
+      "releaseDate": "2026-07-10",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "Placar, gols, eventos e votação agora acompanham a partida em tempo real em todas as telas abertas.",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "Eventos do jogo aparecem automaticamente para os participantes conectados, com assistência opcional e feedback imediato.",
+        "A votação retoma categorias já enviadas, permite encerramento pelos gestores e publica o resultado sem atualizar a página.",
+        "Falhas temporárias dos listeners exibem erro persistente e botão para reconectar."
+      ],
+      "fixed": [
+        "Impede gols duplicados em retries, exclusão de evento de outro jogo e divergência entre o último evento e o placar final.",
+        "Live Game usa quatro listeners Firestore recriáveis, mutações via callables transacionais e `requestId` estável por tentativa lógica.",
+        "Votação em lote respeita a exigência read-before-write do Firestore e resultados consomem apenas agregados autoritativos do jogo.",
+        "Regras limitam votos brutos ao próprio eleitor/admin e autorizam observação determinística do documento próprio ainda inexistente."
+      ],
+      "issueRefs": [
+        3495
+      ]
+    },
     {
       "version": "1.51.33",
       "buildNumber": null,

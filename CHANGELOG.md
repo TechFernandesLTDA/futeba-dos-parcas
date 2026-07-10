@@ -24,6 +24,15 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ## Android
 
+### [1.36.5][android-1.36.5] - 2026-07-10
+
+#### Corrigido
+- Flows de placar, eventos e estatísticas propagam falhas para a UI em vez de substituí-las por valores vazios.
+- O cliente não lista votos brutos; lê somente os documentos determinísticos do próprio eleitor e conclui via callable.
+- Resultado da votação consome exclusivamente os agregados autoritativos e reações do documento do jogo.
+
+_Issues: #3495_
+
 ### [1.36.4][android-1.36.4] - 2026-07-09
 
 #### Mudado
@@ -179,6 +188,15 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 - Bump de versão de manutenção após a mega audit wave de 2026-05-11, sem mudanças funcionais no Android nesta tag.
 
 ## Web
+
+### [1.51.34][web-1.51.34] - 2026-07-10
+
+#### Corrigido
+- Live Game usa quatro listeners Firestore recriáveis, mutações via callables transacionais e `requestId` estável por tentativa lógica.
+- Votação em lote respeita a exigência read-before-write do Firestore e resultados consomem apenas agregados autoritativos do jogo.
+- Regras limitam votos brutos ao próprio eleitor/admin e autorizam observação determinística do documento próprio ainda inexistente.
+
+_Issues: #3495_
 
 ### [1.51.33][web-1.51.33] - 2026-07-10
 
@@ -1361,6 +1379,15 @@ _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
 
+### [1.7.15][functions-1.7.15] - 2026-07-10
+
+#### Corrigido
+- `submitLiveGameEvent` usa documento determinístico por `requestId` e valida o vínculo entre `eventId` e `gameId` na reversão.
+- `finishGameLifecycle` usa lock transacional recuperável para serializar eventos e agregação sem expor status transitório aos clientes.
+- `submitMvpVotes` executa todas as leituras antes das escritas e `concludeMvpVoting` persiste vencedores, totais e time vencedor canônicos.
+
+_Issues: #3495_
+
 ### [1.7.14][functions-1.7.14] - 2026-07-09
 
 #### Corrigido
@@ -1887,6 +1914,7 @@ _Issues: #2981_
 _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 
 
+[android-1.36.5]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.36.5.md
 [android-1.36.4]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.36.4.md
 [android-1.36.3]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.36.3.md
 [android-1.36.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.36.2.md
@@ -1900,6 +1928,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.51.34]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.34.md
 [web-1.51.33]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.33.md
 [web-1.51.32]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.32.md
 [web-1.51.31]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.31.md
@@ -2014,6 +2043,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [web-1.26.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.26.1.md
 [web-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.26.0.md
 [ios-1.6.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.0.md
+[functions-1.7.15]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.7.15.md
 [functions-1.7.14]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.7.14.md
 [functions-1.7.13]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.7.13.md
 [functions-1.7.12]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.7.12.md

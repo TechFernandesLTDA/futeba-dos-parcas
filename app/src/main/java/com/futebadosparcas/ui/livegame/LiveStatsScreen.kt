@@ -53,6 +53,7 @@ fun LiveStatsScreen(
     gameId: String = ""
 ) {
     val stats by viewModel.stats.collectAsStateWithLifecycle()
+    val error by viewModel.error.collectAsStateWithLifecycle()
 
     LaunchedEffect(gameId) {
         if (gameId.isNotEmpty()) {
@@ -65,7 +66,17 @@ fun LiveStatsScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-        if (stats.isEmpty()) {
+        if (error != null) {
+            EmptyState(
+                type = EmptyStateType.Error(
+                    title = stringResource(R.string.error),
+                    description = error.orEmpty(),
+                    actionLabel = stringResource(R.string.retry),
+                    onRetry = { viewModel.observeStats(gameId) }
+                ),
+                modifier = Modifier.fillMaxSize()
+            )
+        } else if (stats.isEmpty()) {
             EmptyState(
                 type = EmptyStateType.NoData(
                     title = stringResource(R.string.live_game_no_stats),
@@ -116,6 +127,7 @@ private fun PlayerStatsCard(
     modifier: Modifier = Modifier
 ) {
     Card(
+        onClick = onClick,
         modifier = modifier
             .fillMaxWidth()
             .heightIn(min = 100.dp),
@@ -323,4 +335,3 @@ private fun StatBadge(
         }
     }
 }
-

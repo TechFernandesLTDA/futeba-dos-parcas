@@ -800,7 +800,16 @@ class GameDetailViewModel(
     fun deleteGameEvent(eventId: String) {
         val gId = gameId ?: return
         viewModelScope.launch {
-            gameRepository.deleteGameEvent(gId, eventId)
+            val result = gameRepository.deleteGameEvent(gId, eventId)
+            val current = _uiState.value as? GameDetailUiState.Success
+                ?: return@launch
+            _uiState.value = current.copy(
+                userMessage = if (result.isSuccess) {
+                    "Evento removido e placar atualizado."
+                } else {
+                    "Erro ao remover evento: ${result.exceptionOrNull()?.message}"
+                }
+            )
         }
     }
 

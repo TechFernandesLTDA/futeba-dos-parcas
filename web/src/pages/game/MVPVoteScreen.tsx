@@ -20,6 +20,10 @@ import {
   useTheme,
   alpha,
   CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -30,7 +34,11 @@ import {
 } from '@mui/icons-material';
 import { doc, collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '../../services/firebase';
-import { submitMvpVotes, type MvpVoteCategory } from '../../services/cloudFunctions';
+import {
+  concludeMvpVoting,
+  submitMvpVotes,
+  type MvpVoteCategory,
+} from '../../services/cloudFunctions';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { Game, GameConfirmation } from '../../types/game';
@@ -55,7 +63,7 @@ export const MVPVoteScreen: React.FC = () => {
   const navigate = useNavigate();
   const navigateBack = useNavigateBack('/?tab=1');
   const theme = useTheme();
-  const { currentUser } = useAuth();
+  const { currentUser, user } = useAuth();
   const { showError } = useToast();
   const reduceMotion = useReducedMotion();
   const showErrorRef = useRef(showError);
@@ -69,6 +77,11 @@ export const MVPVoteScreen: React.FC = () => {
   const [bestGkVote, setBestGkVote] = useState<string>('');
   const [worstPlayerVote, setWorstPlayerVote] = useState<string>('');
   const [hasVoted, setHasVoted] = useState(false);
+  const [redirectAfterVote, setRedirectAfterVote] = useState(false);
+  const [ballotVotes, setBallotVotes] = useState<Partial<Record<MvpVoteCategory, string>>>({});
+  const [loadedBallotCategories, setLoadedBallotCategories] = useState<Set<MvpVoteCategory>>(new Set());
+  const [concludeDialogOpen, setConcludeDialogOpen] = useState(false);
+  const [concluding, setConcluding] = useState(false);
 
   useEffect(() => {
     if (!gameId) return;
@@ -118,14 +131,53 @@ export const MVPVoteScreen: React.FC = () => {
   }, [gameId, t]);
 
   useEffect(() => {
-    if (!hasVoted) return;
+    if (!gameId || !currentUser?.uid) {
+      setBallotVotes({});
+      setLoadedBallotCategories(new Set());
+      return undefined;
+    }
+
+    const categories: MvpVoteCategory[] = ['MVP', 'BEST_GOALKEEPER', 'WORST'];
+    const unsubscribes = categories.map((category) => onSnapshot(
+      doc(db, 'mvp_votes', `${gameId}_${currentUser.uid}_${category}`),
+      (snapshot) => {
+        const votedPlayerId = snapshot.exists()
+          ? String(snapshot.data().voted_player_id ?? '')
+          : '';
+        setBallotVotes((current) => {
+          const next = { ...current };
+          if (votedPlayerId) next[category] = votedPlayerId;
+          else delete next[category];
+          return next;
+        });
+        setLoadedBallotCategories((current) => new Set(current).add(category));
+      },
+      (err) => {
+        logger.error(`Error in own ${category} vote listener:`, err);
+        showErrorRef.current(t('mvp.ballotLoadError', { defaultValue: 'Erro ao carregar seu voto.' }));
+        setLoadedBallotCategories((current) => new Set(current).add(category));
+      },
+    ));
+
+    return () => unsubscribes.forEach((unsubscribe) => unsubscribe());
+  }, [currentUser?.uid, gameId, t]);
+
+  useEffect(() => {
+    if (ballotVotes.MVP) setMvpVote(ballotVotes.MVP);
+    if (ballotVotes.BEST_GOALKEEPER) setBestGkVote(ballotVotes.BEST_GOALKEEPER);
+    if (ballotVotes.WORST) setWorstPlayerVote(ballotVotes.WORST);
+    setHasVoted(Boolean(ballotVotes.MVP && ballotVotes.WORST));
+  }, [ballotVotes]);
+
+  useEffect(() => {
+    if (!hasVoted || !redirectAfterVote) return;
 
     const timer = setTimeout(() => {
       navigate(`/game/${gameId}`);
     }, 2000);
 
     return () => clearTimeout(timer);
-  }, [hasVoted, gameId, navigate]);
+  }, [hasVoted, redirectAfterVote, gameId, navigate]);
 
   // #2724: motion de celebração no reveal de voto registrado. Respeita prefers-reduced-motion.
   useEffect(() => {
@@ -140,12 +192,23 @@ export const MVPVoteScreen: React.FC = () => {
     });
   }, [hasVoted, reduceMotion]);
 
-  const handleVote = async () => {
-    if (!mvpVote || !gameId || !currentUser) return;
+  const ballotReady = loadedBallotCategories.size === 3;
+  const myConfirmation = confirmations.find(
+    (confirmation) => confirmation.userId === currentUser?.uid && confirmation.status === 'CONFIRMED'
+  );
+  const canVote = Boolean(myConfirmation);
+  const canManageVoting = Boolean(
+    currentUser?.uid && game && (
+      user?.role === 'ADMIN'
+      || game.ownerId === currentUser.uid
+      || game.coOrganizers?.includes(currentUser.uid)
+    )
+  );
+  const votingConcluded = Boolean(game?.votingConcluded || game?.votingStatus === 'CONCLUDED');
 
-    const myConfirmation = confirmations.find(
-      (c) => c.userId === currentUser.uid && c.status === 'CONFIRMED'
-    );
+  const handleVote = async () => {
+    if (!mvpVote || !worstPlayerVote || !gameId || !currentUser || !ballotReady) return;
+
     if (!myConfirmation) {
       showError(t('feedback.games.onlyConfirmedCanVote'));
       return;
@@ -154,21 +217,26 @@ export const MVPVoteScreen: React.FC = () => {
     setSubmitting(true);
 
     try {
-      const votes: Array<{ category: MvpVoteCategory; votedPlayerId: string }> = [
-        { category: 'MVP', votedPlayerId: mvpVote },
-        { category: 'WORST', votedPlayerId: worstPlayerVote },
-      ];
+      const votes: Array<{ category: MvpVoteCategory; votedPlayerId: string }> = [];
+      if (!ballotVotes.MVP) votes.push({ category: 'MVP', votedPlayerId: mvpVote });
+      if (!ballotVotes.WORST) votes.push({ category: 'WORST', votedPlayerId: worstPlayerVote });
 
-      if (bestGkVote) {
+      if (bestGkVote && !ballotVotes.BEST_GOALKEEPER) {
         votes.push({ category: 'BEST_GOALKEEPER', votedPlayerId: bestGkVote });
       }
 
-      await submitMvpVotes({
+      if (votes.length === 0) {
+        setHasVoted(true);
+        return;
+      }
+
+      const response = await submitMvpVotes({
         gameId,
         votes,
       });
 
-      setHasVoted(true);
+      setRedirectAfterVote(response.data.ballotComplete);
+      setHasVoted(response.data.ballotComplete);
     } catch (err) {
       logger.error('Error submitting vote:', err);
       showError((err as Error)?.message || t('feedback.mvp.submitVoteError'));
@@ -176,6 +244,49 @@ export const MVPVoteScreen: React.FC = () => {
       setSubmitting(false);
     }
   };
+
+  const handleConcludeVoting = async () => {
+    if (!gameId || !canManageVoting) return;
+    setConcluding(true);
+    try {
+      await concludeMvpVoting({ gameId });
+      setConcludeDialogOpen(false);
+      navigate(`/game/${gameId}/results`);
+    } catch (err) {
+      logger.error('Error concluding MVP voting:', err);
+      showError((err as Error)?.message || t('mvp.concludeError', {
+        defaultValue: 'Não foi possível encerrar a votação.',
+      }));
+    } finally {
+      setConcluding(false);
+    }
+  };
+
+  const concludeDialog = (
+    <Dialog open={concludeDialogOpen} onClose={() => !concluding && setConcludeDialogOpen(false)} maxWidth="xs" fullWidth>
+      <DialogTitle>{t('mvp.concludeVoting', { defaultValue: 'Encerrar votação' })}</DialogTitle>
+      <DialogContent>
+        <Typography>
+          {t('mvp.concludeConfirm', {
+            defaultValue: 'Encerrar a votação agora e publicar o resultado para todos?',
+          })}
+        </Typography>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={() => setConcludeDialogOpen(false)} disabled={concluding}>{t('common.cancel')}</Button>
+        <Button
+          variant="contained"
+          onClick={handleConcludeVoting}
+          disabled={concluding}
+          startIcon={concluding ? <CircularProgress size={16} color="inherit" /> : <TrophyIcon />}
+        >
+          {concluding
+            ? t('mvp.concluding', { defaultValue: 'Encerrando...' })
+            : t('mvp.concludeVoting', { defaultValue: 'Encerrar votação' })}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
 
   if (loading) {
     return (
@@ -210,6 +321,40 @@ export const MVPVoteScreen: React.FC = () => {
     );
   }
 
+  if (votingConcluded) {
+    return (
+      <PageContainer maxWidth="form">
+        <Card>
+          <CardContent sx={{ py: 6, textAlign: 'center' }}>
+            <TrophyIcon sx={{ fontSize: 64, color: 'warning.main', mb: 2 }} />
+            <Typography variant="h5" gutterBottom>{t('mvp.results')}</Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+              {t('mvp.resultsAvailable', { defaultValue: 'A votação foi encerrada e o resultado já está disponível.' })}
+            </Typography>
+            <Button variant="contained" onClick={() => navigate(`/game/${gameId}/results`)}>
+              {t('mvp.viewResults', { defaultValue: 'Ver resultados' })}
+            </Button>
+          </CardContent>
+        </Card>
+      </PageContainer>
+    );
+  }
+
+  if (game.status !== 'FINISHED') {
+    return (
+      <PageContainer maxWidth="form">
+        <Alert severity="info">
+          {t('mvp.availableAfterFinish', {
+            defaultValue: 'A votação fica disponível assim que a partida for finalizada.',
+          })}
+        </Alert>
+        <Button startIcon={<BackIcon />} onClick={navigateBack} sx={{ mt: 2 }}>
+          {t('common.back')}
+        </Button>
+      </PageContainer>
+    );
+  }
+
   if (hasVoted) {
     return (
       <PageContainer maxWidth="form">
@@ -222,8 +367,19 @@ export const MVPVoteScreen: React.FC = () => {
             <Typography variant="body2" color="text.secondary">
               {t('mvp.thankYou')}
             </Typography>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mt: 3 }}>
+              {canManageVoting && (
+                <Button variant="contained" onClick={() => setConcludeDialogOpen(true)}>
+                  {t('mvp.concludeVoting', { defaultValue: 'Encerrar votação' })}
+                </Button>
+              )}
+              <Button variant="outlined" onClick={() => navigate(`/game/${gameId}`)}>
+                {t('common.back')}
+              </Button>
+            </Box>
           </CardContent>
         </Card>
+        {concludeDialog}
       </PageContainer>
     );
   }
@@ -234,6 +390,16 @@ export const MVPVoteScreen: React.FC = () => {
       <ScreenHeader title={t('mvp.title')} onBack={navigateBack} />
 
       <PageContainer maxWidth="form">
+        {!ballotReady && (
+          <Alert severity="info" sx={{ mb: 2 }}>
+            {t('mvp.loadingBallot', { defaultValue: 'Carregando seu voto...' })}
+          </Alert>
+        )}
+        {ballotReady && !canVote && (
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            {t('feedback.games.onlyConfirmedCanVote')}
+          </Alert>
+        )}
         <Card sx={{ mb: 2, bgcolor: alpha(theme.palette.warning.main, 0.1) }}>
           <CardContent>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -252,7 +418,7 @@ export const MVPVoteScreen: React.FC = () => {
 
         <Card sx={{ mb: 2 }}>
           <CardContent>
-            <FormControl component="fieldset" sx={{ width: '100%' }}>
+            <FormControl component="fieldset" sx={{ width: '100%' }} disabled={Boolean(ballotVotes.MVP)}>
               <FormLabel component="legend">
                 <Typography variant="subtitle1" fontWeight={600}>
                   <TrophyIcon sx={{ verticalAlign: 'middle', mr: 1 }} />
@@ -271,7 +437,7 @@ export const MVPVoteScreen: React.FC = () => {
                     <ListItem
                       key={player.userId}
                       dense
-                      onClick={() => setMvpVote(player.userId)}
+                      onClick={() => !ballotVotes.MVP && setMvpVote(player.userId)}
                       secondaryAction={
                         <Radio
                           checked={mvpVote === player.userId}
@@ -314,7 +480,7 @@ export const MVPVoteScreen: React.FC = () => {
 
           <Card sx={{ mb: 2 }}>
             <CardContent>
-              <FormControl component="fieldset" sx={{ width: '100%' }}>
+              <FormControl component="fieldset" sx={{ width: '100%' }} disabled={Boolean(ballotVotes.BEST_GOALKEEPER)}>
                 <FormLabel component="legend">
                   <Typography variant="subtitle1" fontWeight={600}>
                     {t('mvp.bestGoalkeeper')}
@@ -332,7 +498,7 @@ export const MVPVoteScreen: React.FC = () => {
                         <ListItem
                           key={player.userId}
                           dense
-                          onClick={() => setBestGkVote(player.userId)}
+                          onClick={() => !ballotVotes.BEST_GOALKEEPER && setBestGkVote(player.userId)}
                           secondaryAction={
                             <Radio
                               checked={bestGkVote === player.userId}
@@ -393,7 +559,7 @@ export const MVPVoteScreen: React.FC = () => {
 
           <Card sx={{ mb: 2 }}>
             <CardContent>
-              <FormControl component="fieldset" sx={{ width: '100%' }}>
+              <FormControl component="fieldset" sx={{ width: '100%' }} disabled={Boolean(ballotVotes.WORST)}>
                 <FormLabel component="legend">
                   <Typography variant="subtitle1" fontWeight={600}>
                     <BolaMurchaIcon sx={{ verticalAlign: 'middle', mr: 1, color: theme.palette.error.main }} />
@@ -412,7 +578,7 @@ export const MVPVoteScreen: React.FC = () => {
                         <ListItem
                           key={player.userId}
                           dense
-                          onClick={() => setWorstPlayerVote(player.userId)}
+                          onClick={() => !ballotVotes.WORST && setWorstPlayerVote(player.userId)}
                           secondaryAction={
                             <Radio
                               checked={worstPlayerVote === player.userId}
@@ -458,11 +624,22 @@ export const MVPVoteScreen: React.FC = () => {
           centraliza no viewport — sem offset de sidebar. */}
       <FixedBottomBar inLayout={false}>
         <Box sx={{ width: '100%' }}>
+          {canManageVoting && (
+            <Button
+              variant="outlined"
+              fullWidth
+              sx={{ mb: 1 }}
+              onClick={() => setConcludeDialogOpen(true)}
+              disabled={concluding}
+            >
+              {t('mvp.concludeVoting', { defaultValue: 'Encerrar votação' })}
+            </Button>
+          )}
           <Button
             variant="contained"
             fullWidth
             size="large"
-            disabled={!mvpVote || !worstPlayerVote || submitting}
+            disabled={!canVote || !ballotReady || !mvpVote || !worstPlayerVote || submitting}
             onClick={handleVote}
             startIcon={submitting ? <CircularProgress size={20} /> : <VoteIcon />}
           >
@@ -470,6 +647,7 @@ export const MVPVoteScreen: React.FC = () => {
           </Button>
         </Box>
       </FixedBottomBar>
+      {concludeDialog}
     </Box>
   );
 };

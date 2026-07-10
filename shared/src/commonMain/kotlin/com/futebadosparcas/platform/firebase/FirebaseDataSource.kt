@@ -96,6 +96,7 @@ expect class FirebaseDataSource() {
     // ========== MVP VOTING ==========
 
     suspend fun submitMvpVoteViaCallable(vote: MVPVote): Result<Unit>
+    suspend fun concludeMvpVotingViaCallable(gameId: String): Result<Unit>
 
     suspend fun searchUsers(query: String, limit: Int): Result<List<User>>
     suspend fun getAllUsers(): Result<List<User>>

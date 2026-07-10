@@ -344,8 +344,10 @@ describe("submitMvpVotes - submissão em lote", () => {
         { exists: true, data: () => makeFinishedGame() },
         { exists: true, data: () => ({ status: "CONFIRMED", user_id: "voter1" }) },
         { exists: true, data: () => ({ status: "CONFIRMED", user_id: "player2" }) },
-        { exists: false, data: () => null },
         { exists: true, data: () => ({ status: "CONFIRMED", user_id: "player3" }) },
+        { exists: false, data: () => null },
+        { exists: false, data: () => null },
+        { exists: false, data: () => null },
         { exists: false, data: () => null },
       ];
 
@@ -356,6 +358,7 @@ describe("submitMvpVotes - submissão em lote", () => {
           return Promise.resolve(snap);
         }),
         set: setMock,
+        update: jest.fn(),
       };
 
       return callback(mockTx);
@@ -380,6 +383,35 @@ describe("submitMvpVotes - submissão em lote", () => {
       "game1_voter1_WORST",
     ]);
     expect(setMock).toHaveBeenCalledTimes(2);
+  });
+
+  test("faz todas as leituras antes da primeira escrita", async () => {
+    const transaction = makeReadBeforeWriteTransaction([
+      {exists: true, data: () => makeFinishedGame()},
+      {exists: true, data: () => ({status: "CONFIRMED", user_id: "voter1"})},
+      {exists: true, data: () => ({status: "CONFIRMED", user_id: "player2"})},
+      {exists: true, data: () => ({status: "CONFIRMED", user_id: "player3"})},
+      {exists: false, data: () => null},
+      {exists: false, data: () => null},
+      {exists: false, data: () => null},
+      {exists: false, data: () => null},
+    ]);
+    mockRunTransaction.mockImplementation(async (callback: any) => callback(transaction));
+
+    const result = await submitMvpVotesHandler!({
+      auth: {uid: "voter1", token: {profileComplete: true}},
+      data: {
+        gameId: "game1",
+        votes: [
+          {votedPlayerId: "player2", category: "MVP"},
+          {votedPlayerId: "player3", category: "WORST"},
+        ],
+      },
+    });
+
+    expect(result.ballotComplete).toBe(true);
+    expect(transaction.set).toHaveBeenCalledTimes(2);
+    expect(transaction.update).toHaveBeenCalledTimes(1);
   });
 
   test("deve rejeitar categorias duplicadas antes da transaction", async () => {

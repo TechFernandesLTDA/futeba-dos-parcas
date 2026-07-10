@@ -1,6 +1,7 @@
 package com.futebadosparcas.platform.firebase
 
 import com.futebadosparcas.domain.model.*
+import com.futebadosparcas.platform.UuidGenerator
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.auth.auth
 import dev.gitlive.firebase.firestore.Direction
@@ -806,6 +807,17 @@ actual class FirebaseDataSource actual constructor() {
         }
     }
 
+    actual suspend fun concludeMvpVotingViaCallable(gameId: String): Result<Unit> {
+        return try {
+            val functions = Firebase.functions(FUNCTIONS_REGION)
+            functions.httpsCallable("concludeMvpVoting")
+                .invoke(mapOf("gameId" to gameId))
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     actual suspend fun startGameLifecycleViaCallable(gameId: String): Result<Unit> {
         return try {
             val functions = Firebase.functions(FUNCTIONS_REGION)
@@ -1350,10 +1362,15 @@ actual class FirebaseDataSource actual constructor() {
 
     actual suspend fun addGameEvent(gameId: String, event: GameEvent): Result<GameEvent> {
         return try {
+            // A mesma chave acompanha todo retry interno do callable. O backend
+            // usa esse valor no ID determinístico do evento e devolve o evento
+            // existente quando a resposta anterior se perde na rede.
+            val requestId = event.id.ifBlank { UuidGenerator.generate() }
             val functions = Firebase.functions(FUNCTIONS_REGION)
             functions.httpsCallable("submitLiveGameEvent")
                 .invoke(
                     mapOf(
+                        "requestId" to requestId,
                         "gameId" to gameId,
                         "eventType" to event.eventType,
                         "playerId" to event.playerId,
@@ -1364,7 +1381,7 @@ actual class FirebaseDataSource actual constructor() {
                         "minute" to event.minute,
                     )
                 )
-            Result.success(event)
+            Result.success(event.copy(id = "${gameId}_${requestId}"))
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -3766,6 +3783,27 @@ private fun dev.gitlive.firebase.firestore.DocumentSnapshot.toGameOrNull(): Game
         validationReasons = ((get<List<*>?>("validation_reasons")
             ?: get<List<*>?>("validationReasons")))?.mapNotNull { it as? String } ?: emptyList(),
         mvpId = get<String?>("mvp_id") ?: get<String?>("mvpId"),
+        bestGkId = get<String?>("best_gk_id") ?: get<String?>("bestGkId"),
+        worstPlayerId = get<String?>("worst_player_id") ?: get<String?>("worstPlayerId"),
+        mvpVotes = safeInt("mvp_votes") ?: safeInt("mvpVotes") ?: 0,
+        mvpTotalVotes = safeInt("mvp_total_votes") ?: safeInt("mvpTotalVotes") ?: 0,
+        bestGkVotes = safeInt("best_gk_votes") ?: safeInt("bestGkVotes") ?: 0,
+        bestGkTotalVotes = safeInt("best_gk_total_votes") ?: safeInt("bestGkTotalVotes") ?: 0,
+        worstPlayerVotes = safeInt("worst_player_votes") ?: safeInt("worstPlayerVotes") ?: 0,
+        worstPlayerTotalVotes = safeInt("worst_player_total_votes") ?: safeInt("worstPlayerTotalVotes") ?: 0,
+        votingStatus = get<String?>("voting_status") ?: get<String?>("votingStatus"),
+        votingConcluded = get<Boolean?>("voting_concluded") ?: get<Boolean?>("votingConcluded") ?: false,
+        votingConcludedAt = safeLong("voting_concluded_at") ?: safeLong("votingConcludedAt"),
+        votingSubmittedCount = safeInt("voting_submitted_count") ?: safeInt("votingSubmittedCount") ?: 0,
+        voteResultReactions = (get<Map<*, *>?>("vote_result_reactions")
+            ?: get<Map<*, *>?>("voteResultReactions"))
+            ?.mapNotNull { (emoji, users) ->
+                val key = emoji as? String ?: return@mapNotNull null
+                key to (users as? List<*>)?.filterIsInstance<String>().orEmpty()
+            }
+            ?.toMap()
+            .orEmpty(),
+        winnerTeam = get<String?>("winner_team") ?: get<String?>("winnerTeam"),
         team1Score = safeInt("team1_score") ?: safeInt("team1Score") ?: 0,
         team2Score = safeInt("team2_score") ?: safeInt("team2Score") ?: 0,
         team1Name = get<String?>("team1_name") ?: get<String?>("team1Name") ?: "Time 1",

@@ -82,6 +82,25 @@ const VALID_VOTE_CATEGORIES = [
 type VoteCategory =
   typeof VALID_VOTE_CATEGORIES[number];
 
+const REQUIRED_VOTE_CATEGORIES = [
+  "MVP",
+  "WORST",
+] as const;
+
+/**
+ * Retorna se o eleitor completou as categorias obrigatórias.
+ *
+ * @param {ReadonlySet<string>} categories Categorias já registradas.
+ * @return {boolean} Verdadeiro quando o ballot obrigatório está completo.
+ */
+function isBallotComplete(
+  categories: ReadonlySet<string>
+): boolean {
+  return REQUIRED_VOTE_CATEGORIES.every(
+    (category) => categories.has(category)
+  );
+}
+
 // ==========================================
 // INTERFACES
 // ==========================================
@@ -389,8 +408,26 @@ export const submitMvpVote =
             const voteRef = db
               .collection("mvp_votes")
               .doc(voteId);
-            const existingVote =
-              await transaction.get(voteRef);
+            const requiredVoteRefs =
+              REQUIRED_VOTE_CATEGORIES.map(
+                (requiredCategory) => db
+                  .collection("mvp_votes")
+                  .doc(
+                    `${gameId}_${voterId}` +
+                    `_${requiredCategory}`
+                  )
+              );
+            const [
+              existingVote,
+              requiredVoteSnaps,
+            ] = await Promise.all([
+              transaction.get(voteRef),
+              Promise.all(
+                requiredVoteRefs.map(
+                  (ref) => transaction.get(ref)
+                )
+              ),
+            ]);
 
             if (existingVote.exists) {
               throw new HttpsError(
@@ -399,6 +436,21 @@ export const submitMvpVote =
                 ERROR_MSGS.ALREADY_VOTED(category)
               );
             }
+
+            const categoriesBefore = new Set<string>();
+            requiredVoteSnaps.forEach((snap, index) => {
+              if (snap.exists) {
+                categoriesBefore.add(
+                  REQUIRED_VOTE_CATEGORIES[index]
+                );
+              }
+            });
+            const categoriesAfter =
+              new Set(categoriesBefore);
+            categoriesAfter.add(category);
+            const completedNow =
+              !isBallotComplete(categoriesBefore) &&
+              isBallotComplete(categoriesAfter);
 
             // 3.8: Escrever voto
             // (DENTRO da transaction)
@@ -415,10 +467,22 @@ export const submitMvpVote =
               attempt_timestamp: Date.now(),
             });
 
+            if (completedNow) {
+              transaction.update(gameRef, {
+                voting_status: "OPEN",
+                voting_submitted_count:
+                  FieldValue.increment(1),
+                updated_at:
+                  FieldValue.serverTimestamp(),
+              });
+            }
+
             return {
               voteId,
               category,
               votedPlayerId,
+              ballotComplete:
+                isBallotComplete(categoriesAfter),
             };
           }
         );
@@ -434,6 +498,7 @@ export const submitMvpVote =
         return {
           success: true,
           voteId: result.voteId,
+          ballotComplete: result.ballotComplete,
           message: ERROR_MSGS.VOTE_REGISTERED,
         };
       } catch (error: unknown) {
@@ -707,18 +772,58 @@ export const submitMvpVotes =
               );
             }
 
-            const voteIds: string[] = [];
-            for (const vote of votes) {
-              const votedConfId =
-                `${gameId}_${vote.votedPlayerId}`;
-              const votedConfRef = db
-                .collection("confirmations")
-                .doc(votedConfId);
-              const votedConfSnap =
-                await transaction.get(
-                  votedConfRef
-                );
+            const voteContexts = votes.map((vote) => {
+              const voteId =
+                `${gameId}_${voterId}` +
+                `_${vote.category}`;
+              return {
+                vote,
+                voteId,
+                votedConfRef: db
+                  .collection("confirmations")
+                  .doc(`${gameId}_${vote.votedPlayerId}`),
+                voteRef: db
+                  .collection("mvp_votes")
+                  .doc(voteId),
+              };
+            });
+            const requiredVoteRefs =
+              REQUIRED_VOTE_CATEGORIES.map(
+                (requiredCategory) => db
+                  .collection("mvp_votes")
+                  .doc(
+                    `${gameId}_${voterId}` +
+                    `_${requiredCategory}`
+                  )
+              );
 
+            // Firestore exige todas as leituras antes da primeira escrita.
+            const [
+              votedConfSnaps,
+              existingVoteSnaps,
+              requiredVoteSnaps,
+            ] = await Promise.all([
+              Promise.all(
+                voteContexts.map(
+                  ({votedConfRef}) =>
+                    transaction.get(votedConfRef)
+                )
+              ),
+              Promise.all(
+                voteContexts.map(
+                  ({voteRef}) =>
+                    transaction.get(voteRef)
+                )
+              ),
+              Promise.all(
+                requiredVoteRefs.map(
+                  (ref) => transaction.get(ref)
+                )
+              ),
+            ]);
+
+            voteContexts.forEach(({vote}, index) => {
+              const votedConfSnap = votedConfSnaps[index];
               if (
                 !votedConfSnap.exists ||
                 !isRawParticipationEligible(
@@ -730,24 +835,33 @@ export const submitMvpVotes =
                   ERROR_MSGS.PLAYER_NOT_IN_GAME
                 );
               }
-
-              const voteId =
-                `${gameId}_${voterId}` +
-                `_${vote.category}`;
-              const voteRef = db
-                .collection("mvp_votes")
-                .doc(voteId);
-              const existingVote =
-                await transaction.get(voteRef);
-
-              if (existingVote.exists) {
+              if (existingVoteSnaps[index].exists) {
                 throw new HttpsError(
                   "already-exists",
                   // eslint-disable-next-line new-cap
                   ERROR_MSGS.ALREADY_VOTED(vote.category)
                 );
               }
+            });
 
+            const categoriesBefore = new Set<string>();
+            requiredVoteSnaps.forEach((snap, index) => {
+              if (snap.exists) {
+                categoriesBefore.add(
+                  REQUIRED_VOTE_CATEGORIES[index]
+                );
+              }
+            });
+            const categoriesAfter =
+              new Set(categoriesBefore);
+            votes.forEach((vote) =>
+              categoriesAfter.add(vote.category)
+            );
+            const completedNow =
+              !isBallotComplete(categoriesBefore) &&
+              isBallotComplete(categoriesAfter);
+
+            voteContexts.forEach(({vote, voteId, voteRef}) => {
               transaction.set(voteRef, {
                 id: voteId,
                 game_id: gameId,
@@ -755,18 +869,27 @@ export const submitMvpVotes =
                 voted_player_id: vote.votedPlayerId,
                 category: vote.category,
                 voted_at:
-                  FieldValue
-                    .serverTimestamp(),
+                  FieldValue.serverTimestamp(),
                 attempt_timestamp: Date.now(),
               });
-              voteIds.push(voteId);
+            });
+            if (completedNow) {
+              transaction.update(gameRef, {
+                voting_status: "OPEN",
+                voting_submitted_count:
+                  FieldValue.increment(1),
+                updated_at:
+                  FieldValue.serverTimestamp(),
+              });
             }
 
             return {
-              voteIds,
+              voteIds: voteContexts.map(({voteId}) => voteId),
               categories: votes.map(
                 (vote) => vote.category
               ),
+              ballotComplete:
+                isBallotComplete(categoriesAfter),
             };
           }
         );
@@ -780,6 +903,7 @@ export const submitMvpVotes =
         return {
           success: true,
           voteIds: result.voteIds,
+          ballotComplete: result.ballotComplete,
           message: ERROR_MSGS.VOTE_REGISTERED,
         };
       } catch (error: unknown) {
@@ -987,16 +1111,33 @@ export const concludeMvpVoting =
               // 2.6: Sem votos, encerrar
               // sem vencedor
               if (votes.length === 0) {
+                const team1Score =
+                  Number(gameData.team1_score ?? 0);
+                const team2Score =
+                  Number(gameData.team2_score ?? 0);
                 transaction.update(
                   gameRef,
                   {
                     voting_status:
                       "CONCLUDED",
+                    voting_concluded: true,
                     voting_concluded_at:
                       FieldValue
                         .serverTimestamp(),
                     voting_concluded_by:
                       userId,
+                    mvp_votes: 0,
+                    mvp_total_votes: 0,
+                    best_gk_votes: 0,
+                    best_gk_total_votes: 0,
+                    worst_player_votes: 0,
+                    worst_player_total_votes: 0,
+                    winner_team:
+                      team1Score > team2Score ?
+                        "A" :
+                        team2Score > team1Score ?
+                          "B" :
+                          "DRAW",
                   }
                 );
 
@@ -1073,6 +1214,26 @@ export const concludeMvpVoting =
                 resolveWinner(bestGkCounts);
               const worstPlayerId =
                 resolveWinner(worstCounts);
+              const mvpWinnerVotes = mvpId ?
+                mvpCounts.find(
+                  (item) => item.playerId === mvpId
+                )?.count ?? 0 :
+                0;
+              const bestGkWinnerVotes = bestGkId ?
+                bestGkCounts.find(
+                  (item) => item.playerId === bestGkId
+                )?.count ?? 0 :
+                0;
+              const worstWinnerVotes = worstPlayerId ?
+                worstCounts.find(
+                  (item) =>
+                    item.playerId === worstPlayerId
+                )?.count ?? 0 :
+                0;
+              const team1Score =
+                Number(gameData.team1_score ?? 0);
+              const team2Score =
+                Number(gameData.team2_score ?? 0);
 
               // 2.10: Atualizar confirmações
               for (
@@ -1111,6 +1272,7 @@ export const concludeMvpVoting =
               const gameUpdates:
                 Record<string, unknown> = {
                   voting_status: "CONCLUDED",
+                  voting_concluded: true,
                   voting_concluded_at:
                     FieldValue
                       .serverTimestamp(),
@@ -1119,6 +1281,22 @@ export const concludeMvpVoting =
                   total_votes: validVotes.length,
                   ignored_votes:
                     votes.length - validVotes.length,
+                  mvp_votes: mvpWinnerVotes,
+                  mvp_total_votes:
+                    countTalliedVotes(mvpCounts),
+                  best_gk_votes: bestGkWinnerVotes,
+                  best_gk_total_votes:
+                    countTalliedVotes(bestGkCounts),
+                  worst_player_votes:
+                    worstWinnerVotes,
+                  worst_player_total_votes:
+                    countTalliedVotes(worstCounts),
+                  winner_team:
+                    team1Score > team2Score ?
+                      "A" :
+                      team2Score > team1Score ?
+                        "B" :
+                        "DRAW",
                 };
 
               if (mvpId) {
