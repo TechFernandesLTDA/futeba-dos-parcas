@@ -209,6 +209,17 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.51.39][web-1.51.39] - 2026-07-10
+
+#### Adicionado
+- Upload resumível com progresso monotônico e proteção contra callbacks de operações antigas.
+
+#### Corrigido
+- Preview de imagem e vídeo usa Object URL com cleanup, reduzindo o uso de memória no navegador.
+- O compositor mantém estados acessíveis de envio, erro e rascunho preservado.
+
+_PRs: #3520_
+
 ### [1.51.38][web-1.51.38] - 2026-07-10
 
 #### Corrigido
@@ -1449,6 +1460,14 @@ _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
 
+### [1.7.18][functions-1.7.18] - 2026-07-10
+
+#### Corrigido
+- `wall-media-cleanup` aceita JPG, JPEG, PNG, WebP e MP4 sob o prefixo autorizado do grupo.
+- Exclusões permanecem idempotentes com `ignoreNotFound` e preservam os guardrails existentes.
+
+_PRs: #3520_
+
 ### [1.7.17][functions-1.7.17] - 2026-07-10
 
 #### Adicionado
@@ -2021,6 +2040,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.51.39]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.39.md
 [web-1.51.38]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.38.md
 [web-1.51.37]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.37.md
 [web-1.51.36]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.36.md
@@ -2141,6 +2161,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [web-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.26.0.md
 [ios-1.6.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.1.md
 [ios-1.6.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.0.md
+[functions-1.7.18]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.7.18.md
 [functions-1.7.17]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.7.17.md
 [functions-1.7.16]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.7.16.md
 [functions-1.7.15]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.7.15.md
