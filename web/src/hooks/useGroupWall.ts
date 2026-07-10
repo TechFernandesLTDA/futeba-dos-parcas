@@ -15,7 +15,7 @@ import {
   QueryDocumentSnapshot,
   writeBatch,
 } from 'firebase/firestore';
-import { deleteObject, ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { deleteObject, ref as storageRef, getDownloadURL } from 'firebase/storage';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { db } from '../services/firebase';
@@ -23,6 +23,7 @@ import { storage } from '../services/firebaseStorage';
 import { getFirestoreErrorMessage } from '../utils/firebaseErrors';
 import { snakeToCamel, toDate } from '../utils/firestoreHelpers';
 import { createLogger } from '../utils/logger';
+import { uploadImageWithStorageAuthRetry } from '../utils/storageUpload';
 import { useTranslation } from 'react-i18next';
 import { mergeRealtimePageById } from './realtimePageMerge';
 
@@ -101,19 +102,25 @@ export function mapPost(docSnap: QueryDocumentSnapshot<DocumentData>): WallPost 
   };
 }
 
-async function uploadWallMedia(groupId: string, imageFile: File): Promise<UploadedWallMedia> {
+async function uploadWallMedia(
+  groupId: string,
+  currentUserUid: string,
+  imageFile: File,
+): Promise<UploadedWallMedia> {
   if (!ACCEPTED_IMAGE_TYPES.includes(imageFile.type)) {
     throw new Error('Tipo de imagem inválido. Use JPG, PNG ou WebP.');
   }
-  if (imageFile.size > MAX_IMAGE_SIZE_BYTES) {
+  if (imageFile.size >= MAX_IMAGE_SIZE_BYTES) {
     throw new Error('Imagem muito grande. O limite é 10MB.');
   }
 
   const ext = imageFile.type.split('/')[1]?.replace('jpeg', 'jpg') || 'jpg';
-  const mediaPath = `groups/${groupId}/wall_media/__draft__/${Date.now()}-${crypto.randomUUID()}.${ext}`;
+  // Keep the owner in the draft path so Storage Rules let the author clean up
+  // an upload when the subsequent Firestore write fails.
+  const mediaPath = `groups/${groupId}/wall_media/__draft__/${currentUserUid}/${Date.now()}-${crypto.randomUUID()}.${ext}`;
   const fileRef = storageRef(storage, mediaPath);
 
-  await uploadBytes(fileRef, imageFile, { contentType: imageFile.type });
+  await uploadImageWithStorageAuthRetry(fileRef, imageFile);
   const mediaUrl = await getDownloadURL(fileRef);
 
   return {
@@ -140,7 +147,7 @@ async function deleteWallMediaPaths(paths: Array<string | null | undefined>) {
   );
 }
 
-async function createWallPostDocument(params: {
+export async function createWallPostDocument(params: {
   groupId: string;
   currentUserUid: string;
   authorName: string;
@@ -151,8 +158,8 @@ async function createWallPostDocument(params: {
   const { groupId, currentUserUid, authorName, authorPhotoUrl, text, options } = params;
   const cleanText = text.trim();
 
-  if (cleanText.length === 0) {
-    throw new Error('O texto nao pode estar vazio.');
+  if (cleanText.length === 0 && !options?.imageFile) {
+    throw new Error('Adicione uma mensagem ou foto.');
   }
   if (cleanText.length > MAX_TEXT_LENGTH) {
     throw new Error(`Máximo ${MAX_TEXT_LENGTH} caracteres.`);
@@ -162,7 +169,7 @@ async function createWallPostDocument(params: {
 
   try {
     if (options?.imageFile) {
-      uploadedMedia = await uploadWallMedia(groupId, options.imageFile);
+      uploadedMedia = await uploadWallMedia(groupId, currentUserUid, options.imageFile);
     }
 
     await addDoc(collection(db, 'groups', groupId, 'wall_posts'), {
@@ -377,7 +384,7 @@ export function useCreateWallPost(groupId?: string) {
         showError(error.message);
         throw error;
       }
-      if (cleanText.length === 0) {
+      if (cleanText.length === 0 && !options?.imageFile) {
         const error = new Error(t('groupWall.textRequired'));
         showError(error.message);
         throw error;
@@ -395,7 +402,15 @@ export function useCreateWallPost(groupId?: string) {
         });
         showSuccess('Publicado no mural.');
       } catch (err) {
-        showError(err instanceof Error && !('code' in err) ? err.message : getFirestoreErrorMessage(err));
+        const code = typeof err === 'object' && err !== null && 'code' in err
+          ? String((err as { code?: unknown }).code)
+          : '';
+        const message = code.startsWith('storage/')
+          ? t('groupWall.uploadError')
+          : err instanceof Error && !code
+            ? err.message
+            : getFirestoreErrorMessage(err, t('groupWall.publishError'));
+        showError(message);
         throw err;
       } finally {
         setSending(false);

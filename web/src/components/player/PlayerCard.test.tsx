@@ -58,7 +58,7 @@ describe('PlayerCard', () => {
 
     expect(screen.getByLabelText('Card do jogador Renan Fernandes')).toBeInTheDocument();
     expect(screen.getByText('FUTEBA DOS PARÇAS')).toBeInTheDocument();
-    expect(screen.getByText('RISING')).toBeInTheDocument();
+    expect(screen.getByText('ASCENSÃO')).toBeInTheDocument();
     expect(screen.getByText('83')).toBeInTheDocument();
     expect(screen.getByText('ATQ')).toBeInTheDocument();
     expect(screen.getByText('Renan Fernandes')).toBeInTheDocument();
@@ -67,5 +67,8 @@ describe('PlayerCard', () => {
     expect(screen.getByText('42')).toBeInTheDocument();
     expect(screen.getByText('19')).toBeInTheDocument();
     expect(screen.getByText('60%')).toBeInTheDocument();
+    expect(screen.getByRole('group', { name: 'Detalhamento da nota' })).toBeInTheDocument();
+    expect(screen.getByRole('list', { name: 'Resumo de desempenho' })).toBeInTheDocument();
+    expect(screen.getByRole('progressbar', { name: 'ATA' })).toHaveAttribute('aria-valuenow', '4.5');
   });
 });

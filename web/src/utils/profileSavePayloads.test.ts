@@ -63,7 +63,16 @@ describe('profile save payloads', () => {
     expect(phoneVerification).toContain('if (resendCooldown > 0)');
     expect(phoneVerification).toContain('disabled={loading || resendCooldown > 0}');
     expect(phoneVerification).toContain('linkedCredential.user ?? auth.currentUser ?? currentUser');
-    expect(phoneVerification).toContain('await linkedUser.reload()');
+    expect(phoneVerification).toContain('OTP_CONFIRMATION_TIMEOUT_MS');
+    expect(phoneVerification).toContain('PHONE_SESSION_SYNC_TIMEOUT_MS');
+    expect(phoneVerification).toContain('linkedUser.reload(),');
+    const verifiedPhonePath = sliceBetween(
+      phoneVerification,
+      "if (!linkedCredential) throw",
+      "    } catch (err) {"
+    );
+    expect(verifiedPhonePath.indexOf("navigate('/onboarding/cpf'"))
+      .toBeLessThan(verifiedPhonePath.indexOf('linkedUser.reload(),'));
 
     const app = readRepoFile('web/src/App.tsx');
     expect(app).toContain('function useLoginRedirectReady');

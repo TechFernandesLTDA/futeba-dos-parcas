@@ -71,6 +71,7 @@ import { StreakWidget } from './StreakWidget';
 import { RecentActivityFeed } from './RecentActivityFeed';
 import type { Activity } from './RecentActivityFeed';
 import { QuickCreateCard } from '../../../components/game/QuickCreateCard';
+import { HomeInviteCard } from '../../../components/invite/HomeInviteCard';
 import {
   getReconnectSuggestions,
   RECONNECT_WINDOW_DAYS,
@@ -1095,6 +1096,8 @@ export function HomeTab() {
           </Button>
         </CardContent>
       </Card>
+
+      <HomeInviteCard onInvite={() => navigate('/invite-friend')} />
 
       {isMd ? (
         <Grid container spacing={2} sx={{ flex: 1, minHeight: 0, alignItems: 'stretch' }}>
