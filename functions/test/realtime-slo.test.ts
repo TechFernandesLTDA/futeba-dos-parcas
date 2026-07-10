@@ -1,4 +1,6 @@
 import {HttpsError} from "firebase-functions/v2/https";
+import {db} from "../src/_db";
+import {checkRateLimit} from "../src/middleware/rate-limiter";
 
 jest.mock("../src/_db", () => ({
   db: jest.fn(),
@@ -150,6 +152,23 @@ describe("realtime SLO metric contract", () => {
       new Date("2026-07-10T12:00:00Z")
     );
   });
+
+  test("usa as dependências padrão para persistir uma amostra", async () => {
+    const create = jest.fn().mockResolvedValue(undefined);
+    const collection = jest.fn(() => ({
+      doc: jest.fn(() => ({create})),
+    }));
+    (db as jest.Mock).mockReturnValue({collection});
+    (checkRateLimit as jest.Mock).mockResolvedValue({allowed: true});
+
+    await expect(handleRealtimeMetricRequest({
+      auth: {uid: "default-deps-user"} as never,
+      app: {} as never,
+      data: validMetric,
+    })).resolves.toEqual({accepted: true});
+    expect(collection).toHaveBeenCalled();
+    expect(create).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe("realtime SLO storage and aggregation", () => {
@@ -165,6 +184,8 @@ describe("realtime SLO storage and aggregation", () => {
       now,
       recordedAt
     );
+    const documentWithServerTimestamp = buildRealtimeSampleDocument(validMetric, now);
+    expect(documentWithServerTimestamp.recorded_at).toBeDefined();
     expect(document.recorded_at).toBe(recordedAt);
     expect(document.expires_at.getTime() - now.getTime()).toBe(
       REALTIME_SAMPLE_TTL_HOURS * 60 * 60 * 1000
@@ -181,6 +202,8 @@ describe("realtime SLO storage and aggregation", () => {
   });
 
   test("calcula percentis, erro e sinais correlacionados por release", () => {
+    expect(realtimePercentile([], 50)).toBe(0);
+    expect(realtimePercentile([7], 50)).toBe(7);
     expect(realtimePercentile([10, 20, 30, 40, 50], 50)).toBe(30);
     expect(realtimePercentile([10, 20, 30, 40, 50], 95)).toBe(48);
     expect(realtimePercentile([10, 20, 30, 40, 50], 99)).toBe(50);
@@ -281,5 +304,23 @@ describe("realtime SLO storage and aggregation", () => {
       new Date("2026-07-10T12:15:00Z"),
       result
     );
+  });
+
+  test("ordena grupos e continua quando o Cloud Logging está indisponível", async () => {
+    const persist = jest.fn().mockResolvedValue(undefined);
+    const result = await runRealtimeSloAggregation({
+      now: () => new Date("2026-07-10T12:15:00Z"),
+      fetchSamples: jest.fn().mockResolvedValue([
+        {...validMetric, flow: "public_games_map", release: "1.51.35"},
+        {...validMetric, flow: "games", release: "1.51.34"},
+      ]),
+      fetchSignals: jest.fn().mockRejectedValue(new Error("logging offline")),
+      persist,
+    });
+    expect(result.groups.map((group) => `${group.flow}:${group.release}`)).toEqual([
+      "games:1.51.34",
+      "public_games_map:1.51.35",
+    ]);
+    expect(persist).toHaveBeenCalledTimes(1);
   });
 });
