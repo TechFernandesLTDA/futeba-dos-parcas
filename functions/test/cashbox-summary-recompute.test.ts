@@ -1,175 +1,203 @@
-const mockLimit = jest.fn();
-const mockStartAfter = jest.fn();
-const mockCashboxGet = jest.fn();
 const mockSummarySet = jest.fn();
+const mockOperationSet = jest.fn();
 const mockRunTransaction = jest.fn();
-const mockSummaryDoc = {
+const mockCashboxOrderBy = jest.fn();
+const mockSummaryGet = jest.fn();
+const mockSummaryRef = {
   path: "groups/group1/cashbox_summary/current",
-  set: mockSummarySet,
+  get: mockSummaryGet,
 };
-const mockSummaryCollection = {
-  doc: jest.fn(() => mockSummaryDoc),
+const mockOperationRef = {path: "groups/group1/cashbox_summary_ops/create_entry-1"};
+const mockPageGet = jest.fn();
+const mockPageStartAfter = jest.fn();
+const mockPageLimit = jest.fn();
+const mockPageQuery = {
+  get: mockPageGet,
+  startAfter: mockPageStartAfter,
+  limit: mockPageLimit,
 };
-const mockCashboxQuery = {
-  startAfter: mockStartAfter,
-  get: mockCashboxGet,
-};
-const mockCashboxCollection = {
-  limit: mockLimit,
-};
-const mockGroupDoc = {
+const mockCashboxRef = {orderBy: mockCashboxOrderBy};
+const mockGroupRef = {
   collection: jest.fn((name: string) => {
-    if (name === "cashbox") return mockCashboxCollection;
-    if (name === "cashbox_summary") return mockSummaryCollection;
-    throw new Error(`Unexpected subcollection: ${name}`);
+    if (name === "cashbox_summary") return {doc: jest.fn(() => mockSummaryRef)};
+    if (name === "cashbox_summary_ops") return {doc: jest.fn(() => mockOperationRef)};
+    if (name === "cashbox") return mockCashboxRef;
+    throw new Error(`Unexpected collection ${name}`);
   }),
 };
-const mockGroupsCollection = {
-  doc: jest.fn(() => mockGroupDoc),
-};
 const mockDb = {
-  collection: jest.fn(() => mockGroupsCollection),
+  collection: jest.fn(() => ({doc: jest.fn(() => mockGroupRef)})),
   runTransaction: mockRunTransaction,
 };
-const mockLoggerInfo = jest.fn();
-const mockLoggerError = jest.fn();
-const mockServerTimestampValue = {_type: "ServerTimestamp"};
+const mockServerTimestamp = {_type: "ServerTimestamp"};
 
 jest.mock("firebase-functions/v2/firestore", () => ({
   onDocumentWritten: jest.fn((_config: unknown, handler: unknown) => handler),
 }));
-
 jest.mock("firebase-functions/v2", () => ({
-  logger: {
-    info: mockLoggerInfo,
-    error: mockLoggerError,
+  logger: {info: jest.fn(), error: jest.fn()},
+}));
+jest.mock("firebase-admin/firestore", () => ({
+  FieldValue: {serverTimestamp: jest.fn(() => mockServerTimestamp)},
+  FieldPath: {documentId: jest.fn(() => "__name__")},
+  Timestamp: class MockTimestamp {
+    constructor(private readonly millis: number) {}
+    toMillis() { return this.millis; }
+    static fromMillis(millis: number) { return new this(millis); }
   },
 }));
+jest.mock("../src/_db", () => ({db: jest.fn(() => mockDb)}));
 
-jest.mock("firebase-admin/firestore", () => {
-  class MockTimestamp {
-    private readonly millis: number;
-    constructor(millis: number) {
-      this.millis = millis;
-    }
-    toMillis() {
-      return this.millis;
-    }
-    static fromMillis(millis: number) {
-      return new MockTimestamp(millis);
-    }
-  }
-
-  return {
-    FieldValue: {
-      serverTimestamp: jest.fn(() => mockServerTimestampValue),
-    },
-    Timestamp: MockTimestamp,
-  };
-});
-
-jest.mock("../src/_db", () => ({
-  db: jest.fn(() => mockDb),
-}));
-
-const {Timestamp} = require("firebase-admin/firestore");
 const {onCashboxEntryWritten} = require("../src/cashbox/summary-recompute");
+const {reconcileCashboxSummaryForGroup} = require("../src/cashbox/summary");
 
-describe("onCashboxEntryWritten", () => {
+function snapshot(exists: boolean, data?: Record<string, unknown>) {
+  return {exists, data: () => data};
+}
+
+describe("onCashboxEntryWritten incremental", () => {
+  let markerExists = false;
+  let summaryData: Record<string, unknown>;
+
   beforeEach(() => {
     jest.clearAllMocks();
-    mockLimit.mockReturnValue(mockCashboxQuery);
-    mockStartAfter.mockReturnValue(mockCashboxQuery);
+    markerExists = false;
+    mockCashboxOrderBy.mockReturnValue(mockPageQuery);
+    mockPageLimit.mockReturnValue(mockPageQuery);
+    mockPageStartAfter.mockReturnValue(mockPageQuery);
+    summaryData = {
+      balance: 10,
+      total_income: 10,
+      total_expense: 0,
+      balance_cents: 1000,
+      total_income_cents: 1000,
+      total_expense_cents: 0,
+      entry_count: 1,
+      ledger_version: 4,
+      recomputed_by_server: true,
+      truncated: false,
+    };
     mockRunTransaction.mockImplementation(async (callback: (tx: unknown) => Promise<unknown>) => callback({
-      get: jest.fn(async () => ({exists: false, data: () => undefined})),
-      set: mockSummarySet,
-    }));
-  });
-
-  it("pagina todo o ledger e soma em centavos sem truncar o saldo", async () => {
-    const newestMillis = Date.UTC(2026, 6, 9, 12, 0, 0);
-    const firstPageDocs = Array.from({length: 500}, (_, index) => ({
-      id: `doc-${index}`,
-      data: () => ({
-        status: "ACTIVE",
-        type: "INCOME",
-        amount: 1,
-        created_at: new Timestamp(newestMillis - index),
+      get: jest.fn(async (ref: unknown) => ref === mockSummaryRef ?
+        snapshot(true, summaryData) : snapshot(markerExists)),
+      set: jest.fn((ref: unknown, data: Record<string, unknown>, options?: unknown) => {
+        if (ref === mockSummaryRef) mockSummarySet(ref, data, options);
+        if (ref === mockOperationRef) {
+          markerExists = true;
+          mockOperationSet(ref, data, options);
+        }
       }),
     }));
-    const secondPageDocs = [
-      {
-        id: "doc-500",
-        data: () => ({
-          status: "ACTIVE",
-          type: "EXPENSE",
-          amount: 0.1,
-          created_at: new Timestamp(newestMillis - 1000),
-        }),
-      },
-      {
-        id: "doc-501",
-        data: () => ({
-          status: "ACTIVE",
-          type: "EXPENSE",
-          amount: 0.2,
-          created_at: new Timestamp(newestMillis - 1001),
-        }),
-      },
-    ];
-
-    mockCashboxGet
-      .mockResolvedValueOnce({
-        empty: false,
-        size: firstPageDocs.length,
-        docs: firstPageDocs,
-      })
-      .mockResolvedValueOnce({
-        empty: false,
-        size: secondPageDocs.length,
-        docs: secondPageDocs,
-      });
-
-    await onCashboxEntryWritten({
-      params: {groupId: "group1"},
-      time: "2026-07-09T12:00:00.000Z",
-    });
-
-    expect(mockLimit).toHaveBeenCalledWith(500);
-    expect(mockStartAfter).toHaveBeenCalledWith(firstPageDocs[firstPageDocs.length - 1]);
-    expect(mockSummarySet).toHaveBeenCalledTimes(1);
-
-    const [, summary, options] = mockSummarySet.mock.calls[0];
-    expect(summary).toMatchObject({
-      balance: 499.7,
-      total_income: 500,
-      total_expense: 0.3,
-      entry_count: 502,
-      truncated: false,
-      recomputed_by_server: true,
-      recomputed_at: mockServerTimestampValue,
-      source_event_version: "2026-07-09T12:00:00.000Z",
-    });
-    expect(summary.last_entry_at.toMillis()).toBe(newestMillis);
-    expect(options).toEqual({merge: true});
   });
 
-  it("ignora recompute que termina depois de um evento mais novo", async () => {
-    mockCashboxGet.mockResolvedValueOnce({empty: true, size: 0, docs: []});
-    mockRunTransaction.mockImplementationOnce(async (callback: (tx: unknown) => Promise<unknown>) => callback({
-      get: jest.fn(async () => ({
-        exists: true,
-        data: () => ({source_event_version: "2026-07-09T12:00:01.000Z"}),
-      })),
-      set: mockSummarySet,
-    }));
+  it("aplica create por delta e ignora a reentrega do mesmo evento", async () => {
+    const event = {
+      id: "evt-1",
+      time: "2026-07-10T12:00:00.000Z",
+      params: {groupId: "group1", entryId: "entry-1"},
+      data: {
+        before: snapshot(false),
+        after: snapshot(true, {
+          status: "ACTIVE",
+          type: "INCOME",
+          amount: 2.5,
+          created_by: "user-1",
+        }),
+      },
+    };
 
-    await onCashboxEntryWritten({
-      params: {groupId: "group1"},
-      time: "2026-07-09T12:00:00.000Z",
+    await onCashboxEntryWritten(event);
+    await onCashboxEntryWritten(event);
+
+    expect(mockSummarySet).toHaveBeenCalledTimes(1);
+    expect(mockSummarySet).toHaveBeenCalledWith(mockSummaryRef, expect.objectContaining({
+      balance_cents: 1250,
+      total_income_cents: 1250,
+      entry_count: 2,
+      ledger_version: 5,
+      summary_source: "legacy_trigger",
+    }), {merge: true});
+    expect(mockOperationSet).toHaveBeenCalledTimes(1);
+    expect(mockCashboxOrderBy).not.toHaveBeenCalled();
+  });
+
+  it("estorno reverte receita sem full scan", async () => {
+    const event = {
+      id: "evt-void",
+      time: "2026-07-10T12:01:00.000Z",
+      params: {groupId: "group1", entryId: "entry-1"},
+      data: {
+        before: snapshot(true, {status: "ACTIVE", type: "INCOME", amount: 4}),
+        after: snapshot(true, {
+          status: "VOIDED",
+          type: "INCOME",
+          amount: 4,
+          created_by: "user-1",
+          updated_at: mockServerTimestamp,
+        }),
+      },
+    };
+
+    await onCashboxEntryWritten(event);
+
+    expect(mockSummarySet).toHaveBeenCalledWith(mockSummaryRef, expect.objectContaining({
+      balance_cents: 600,
+      total_income_cents: 600,
+      entry_count: 0,
+      ledger_version: 5,
+    }), {merge: true});
+    expect(mockCashboxOrderBy).not.toHaveBeenCalled();
+  });
+
+  it("reconcilia páginas e repete quando ledger_version muda", async () => {
+    const docs = Array.from({length: 500}, (_, index) => ({
+      id: `entry-${index}`,
+      data: () => ({status: "ACTIVE", type: "INCOME", amount: 1}),
+    }));
+    mockSummaryGet
+      .mockResolvedValueOnce(snapshot(true, {...summaryData, ledger_version: 4}))
+      .mockResolvedValueOnce(snapshot(true, {...summaryData, ledger_version: 5}));
+    mockPageGet
+      .mockResolvedValueOnce({size: 500, docs})
+      .mockResolvedValueOnce({size: 1, docs: [{
+        id: "entry-500",
+        data: () => ({status: "ACTIVE", type: "EXPENSE", amount: 0.5}),
+      }]})
+      .mockResolvedValueOnce({size: 1, docs: [{
+        id: "entry-final",
+        data: () => ({status: "ACTIVE", type: "INCOME", amount: 3}),
+      }]});
+
+    let commitAttempt = 0;
+    mockRunTransaction.mockImplementation(async (callback: (tx: unknown) => Promise<unknown>) => {
+      commitAttempt += 1;
+      return callback({
+        get: jest.fn(async () => snapshot(true, {
+          ...summaryData,
+          ledger_version: commitAttempt === 1 ? 5 : 5,
+        })),
+        set: jest.fn((ref: unknown, data: Record<string, unknown>, options?: unknown) => {
+          if (ref === mockSummaryRef) mockSummarySet(ref, data, options);
+        }),
+      });
     });
 
-    expect(mockSummarySet).not.toHaveBeenCalled();
-    expect(mockLoggerInfo).toHaveBeenCalledWith(expect.stringContaining("obsoleto ignorado"));
+    const result = await reconcileCashboxSummaryForGroup("group1", {source: "test"});
+
+    expect(commitAttempt).toBe(2);
+    expect(mockPageStartAfter).toHaveBeenCalledWith(docs[docs.length - 1]);
+    expect(result).toMatchObject({
+      incomeCents: 300,
+      expenseCents: 0,
+      balanceCents: 300,
+      entryCount: 1,
+      ledgerVersion: 5,
+    });
+    expect(mockSummarySet).toHaveBeenCalledTimes(1);
+    expect(mockSummarySet).toHaveBeenCalledWith(mockSummaryRef, expect.objectContaining({
+      ledger_version: 5,
+      summary_version: 5,
+      summary_source: "test",
+    }), {merge: true});
   });
 });

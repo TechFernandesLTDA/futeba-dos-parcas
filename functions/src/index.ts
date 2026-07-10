@@ -2336,6 +2336,8 @@ export const onGroupDeleted = onDocumentDeleted(
 // (admin remove player). Self-correcting via subsequent updates,
 // mas inconsistência observável.
 // FIX #752: options object com region explícita (era 2-arg sem region → us-central1 default)
+const CONFIRMATION_COUNTER_EVENT_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+
 export const onConfirmationWrite =
   onDocumentWritten(
     {
@@ -2365,6 +2367,22 @@ export const onConfirmationWrite =
       // statusBefore === statusAfter retornava antes de checar position.
       const positionBefore = before?.position;
       const positionAfter = after?.position;
+
+      // #3501: o callable canônico atualiza games + confirmation na mesma
+      // transaction e troca este token interno. Nesse evento o delta já foi
+      // aplicado; pular evita double count. Cancelamentos/deletes feitos pelo
+      // cliente preservam o token e continuam sendo reconciliados abaixo.
+      const capacitySyncBefore = before?.capacity_sync_token;
+      const capacitySyncAfter = after?.capacity_sync_token;
+      if (typeof capacitySyncAfter === "string" &&
+          capacitySyncAfter.length > 0 &&
+          capacitySyncAfter !== capacitySyncBefore) {
+        logger.info(
+          `[SYNC] Confirmation ${event.params.confirmationId} ` +
+          "already synchronized by canonical callable"
+        );
+        return;
+      }
 
       if (statusBefore === statusAfter &&
           positionBefore === positionAfter) return;
@@ -2400,6 +2418,19 @@ export const onConfirmationWrite =
 
       if (delta === 0 && gkDelta === 0) return;
 
+      const eventId = event.id;
+      if (!eventId) {
+        const error = new Error(
+          "Confirmation counter event is missing CloudEvent id"
+        );
+        logger.error("[SYNC] Invalid confirmation counter event", {
+          gameId,
+          confirmationId: event.params.confirmationId,
+          error: error.message,
+        });
+        throw error;
+      }
+
       try {
         logger.info(
           "[SYNC] Confirmation status " +
@@ -2418,11 +2449,48 @@ export const onConfirmationWrite =
             FieldValue.increment(gkDelta);
         }
 
-        // Increment atômico — seguro
-        // cross-instance, sem race condition
-        await db().collection("games")
-          .doc(gameId)
-          .update(updateFields);
+        const gameRef = db().collection("games").doc(gameId);
+        const markerRef = gameRef
+          .collection("confirmation_counter_events")
+          .doc(encodeURIComponent(eventId));
+        const outcome = await db().runTransaction(async (transaction) => {
+          const [markerSnap, gameSnap] = await Promise.all([
+            transaction.get(markerRef),
+            transaction.get(gameRef),
+          ]);
+          if (markerSnap.exists) return "DUPLICATE" as const;
+          if (!gameSnap.exists) return "GAME_MISSING" as const;
+
+          transaction.update(gameRef, updateFields);
+          transaction.create(markerRef, {
+            event_id: eventId,
+            confirmation_id: event.params.confirmationId,
+            players_delta: delta,
+            goalkeepers_delta: gkDelta,
+            processed_at: FieldValue.serverTimestamp(),
+            expires_at: new Date(
+              Date.now() + CONFIRMATION_COUNTER_EVENT_TTL_MS
+            ),
+          });
+          return "APPLIED" as const;
+        });
+
+        if (outcome === "DUPLICATE") {
+          logger.info("[SYNC] Duplicate confirmation event ignored", {
+            eventId,
+            gameId,
+            confirmationId: event.params.confirmationId,
+          });
+          return;
+        }
+        if (outcome === "GAME_MISSING") {
+          logger.warn("[SYNC] Game missing for confirmation counter", {
+            eventId,
+            gameId,
+            confirmationId: event.params.confirmationId,
+          });
+          return;
+        }
 
         logger.info(
           `[SYNC] Game ${gameId}: ` +
@@ -2471,6 +2539,10 @@ export {maintainStreaksData} from "./maintenance/compact-streaks";
 // Arquivo keep-warm.ts deletado (#2643).
 export * from "./monitoring/collect-metrics";
 export {collectCallableLatencyMetrics} from "./monitoring/collect-latency-metrics";
+export {
+  aggregateRealtimeSloMetrics,
+  reportRealtimeSloMetric,
+} from "./monitoring/realtime-slo";
 export * from "./storage/generate-thumbnails";
 export * from "./storage/generate-video-thumbnails";
 
@@ -2667,7 +2739,11 @@ export {startNewSeason, archiveSeason} from "./growth/season-cycle";
 // - onCashboxEntryWritten: recomputa cashbox_summary/current do ledger
 //   imutavel a cada escrita de entry (summary self-healing, balance sempre
 //   consistente com income/expense reais).
-export {createCashboxEntry} from "./cashbox/callable";
+export {
+  createCashboxEntry,
+  voidCashboxEntry,
+  reconcileCashboxSummary,
+} from "./cashbox/callable";
 export {onCashboxEntryWritten} from "./cashbox/summary-recompute";
 
 // ==========================================
@@ -2675,7 +2751,10 @@ export {onCashboxEntryWritten} from "./cashbox/summary-recompute";
 // ==========================================
 export {onGameFinishedCreateRecurrence} from "./games/recurrence-engine";
 export {autoClosePastGames} from "./games/auto-close-past-games";
-export {joinPublicGame} from "./games/join-public-game";
+export {
+  confirmGamePresence,
+  joinPublicGame,
+} from "./games/join-public-game";
 
 // ==========================================
 // ADMIN CRM

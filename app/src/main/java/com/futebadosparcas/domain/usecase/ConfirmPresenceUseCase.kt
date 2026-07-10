@@ -47,62 +47,8 @@ class ConfirmPresenceUseCase constructor(
         val userName = currentUser.displayName ?: "Jogador"
         val userPhoto = currentUser.photoUrl?.toString()
 
-        // 2. Buscar detalhes do jogo
-        val gameResult = firebaseDataSource.getGameById(gameId)
-        val game = gameResult.getOrNull() ?: return Result.failure(
-            gameResult.exceptionOrNull() ?: Exception("Jogo nao encontrado")
-        )
-
-        // 3. Validar status do jogo
-        if (game.getStatusEnum() !in listOf(GameStatus.SCHEDULED, GameStatus.CONFIRMED)) {
-            return Result.failure(
-                IllegalStateException("Não é possível confirmar presença neste jogo (status: ${game.status})")
-            )
-        }
-
-        // 4. Verificar se já confirmou
-        val confirmationsResult = firebaseDataSource.getGameConfirmations(gameId)
-        if (confirmationsResult.isFailure) {
-            return Result.failure(confirmationsResult.exceptionOrNull() ?: Exception("Erro ao buscar confirmacoes"))
-        }
-
-        val existingConfirmations = confirmationsResult.getOrNull() ?: emptyList()
-        val alreadyConfirmed = existingConfirmations.any { it.userId == userId }
-
-        if (alreadyConfirmed) {
-            return Result.failure(
-                IllegalStateException("Você já confirmou presença neste jogo")
-            )
-        }
-
-        // 5. Verificar limite de jogadores
-        val positionEnum = try {
-            PlayerPosition.valueOf(position)
-        } catch (e: Exception) {
-            PlayerPosition.LINE
-        }
-
-        val confirmedCount = existingConfirmations.filter {
-            it.getStatusEnum() == ConfirmationStatus.CONFIRMED
-        }
-
-        val isGoalkeeper = positionEnum == PlayerPosition.GOALKEEPER
-        val currentCount = if (isGoalkeeper) {
-            confirmedCount.count { it.getPositionEnum() == PlayerPosition.GOALKEEPER }
-        } else {
-            confirmedCount.count { it.getPositionEnum() != PlayerPosition.GOALKEEPER }
-        }
-
-        val maxAllowed = if (isGoalkeeper) game.maxGoalkeepers else game.maxPlayers
-
-        if (currentCount >= maxAllowed) {
-            val positionName = if (isGoalkeeper) "goleiros" else "jogadores de linha"
-            return Result.failure(
-                IllegalStateException("Limite de $positionName atingido ($currentCount/$maxAllowed)")
-            )
-        }
-
-        // 6. Criar confirmação
+        // O callable valida status, horario, idempotencia e capacidade dentro
+        // da mesma transaction que grava confirmation + contadores do jogo.
         val confirmationResult = firebaseDataSource.confirmPresence(
             gameId = gameId,
             userId = userId,
@@ -111,31 +57,6 @@ class ConfirmPresenceUseCase constructor(
             position = position,
             isCasualPlayer = isCasualPlayer
         )
-
-        if (confirmationResult.isFailure) {
-            return confirmationResult
-        }
-
-        // 7. Atualizar contadores do jogo
-        val updates = mutableMapOf<String, Any>()
-        if (isGoalkeeper) {
-            updates["goalkeepers_count"] = currentCount + 1
-        } else {
-            updates["players_count"] = currentCount + 1
-        }
-
-        // FIXME: domain.model.Game não tem lista de players (apenas playersCount)
-        // A lista de jogadores é gerenciada via GameConfirmation collection
-        // if (!game.players.contains(userId)) {
-        //     updates["players"] = game.players + userId
-        // }
-
-        val updateResult = firebaseDataSource.updateGame(gameId, updates)
-        if (updateResult.isFailure) {
-            AppLogger.w(TAG) {
-                "Confirmação criada mas falha ao atualizar contadores: ${updateResult.exceptionOrNull()?.message}"
-            }
-        }
 
         AppLogger.d(TAG) { "Presença confirmada com sucesso: ${confirmationResult.getOrNull()?.id}" }
         return confirmationResult
@@ -154,58 +75,11 @@ class ConfirmPresenceUseCase constructor(
         val userId = auth.currentUser?.uid
             ?: return Result.failure(IllegalStateException("Usuário não autenticado"))
 
-        // 2. Buscar confirmação existente
-        val confirmationsResult = firebaseDataSource.getGameConfirmations(gameId)
-        if (confirmationsResult.isFailure) {
-            return Result.failure(confirmationsResult.exceptionOrNull() ?: Exception("Erro ao buscar confirmacoes"))
-        }
-
-        val confirmations = confirmationsResult.getOrNull() ?: emptyList()
-        val userConfirmation = confirmations.find { it.userId == userId }
-            ?: return Result.failure(IllegalStateException("Confirmação não encontrada"))
-
-        // 3. Buscar detalhes do jogo
-        val gameResult = firebaseDataSource.getGameById(gameId)
-        if (gameResult.isFailure) {
-            return Result.failure(gameResult.exceptionOrNull() ?: Exception("Erro ao buscar jogo"))
-        }
-        val game = gameResult.getOrNull()
-            ?: return Result.failure(Exception("Jogo nao encontrado"))
-
-        // 4. Validar se pode cancelar
-        if (game.getStatusEnum() !in listOf(GameStatus.SCHEDULED, GameStatus.CONFIRMED)) {
-            return Result.failure(
-                IllegalStateException("Não é possível cancelar confirmação neste jogo (status: ${game.status})")
-            )
-        }
-
-        // 5. Cancelar confirmação
+        // A exclusao/cancelamento dispara onConfirmationWrite, que aplica o
+        // delta uma unica vez. Nao atualizar games diretamente no cliente.
         val cancelResult = firebaseDataSource.cancelConfirmation(gameId, userId)
         if (cancelResult.isFailure) {
             return cancelResult
-        }
-
-        // 6. Atualizar contadores do jogo
-        val isGoalkeeper = userConfirmation.getPositionEnum() == PlayerPosition.GOALKEEPER
-        val updates = mutableMapOf<String, Any>()
-
-        if (isGoalkeeper) {
-            updates["goalkeepers_count"] = (game.goalkeepersCount - 1).coerceAtLeast(0)
-        } else {
-            updates["players_count"] = (game.playersCount - 1).coerceAtLeast(0)
-        }
-
-        // FIXME: domain.model.Game não tem lista de players (apenas playersCount)
-        // A lista de jogadores é gerenciada via GameConfirmation collection
-        // if (game.players.contains(userId)) {
-        //     updates["players"] = game.players.filter { it != userId }
-        // }
-
-        val updateResult = firebaseDataSource.updateGame(gameId, updates)
-        if (updateResult.isFailure) {
-            AppLogger.w(TAG) {
-                "Confirmação cancelada mas falha ao atualizar contadores: ${updateResult.exceptionOrNull()?.message}"
-            }
         }
 
         AppLogger.d(TAG) { "Confirmação cancelada com sucesso" }

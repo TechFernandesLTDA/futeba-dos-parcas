@@ -49,7 +49,6 @@ import {
   PersonRemove as PersonRemoveIcon,
 } from '@mui/icons-material';
 import Grid from '@mui/material/Unstable_Grid2';
-import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePlayerDetail } from '../../hooks/usePlayers';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
@@ -92,7 +91,6 @@ export const ProfileScreen: React.FC = () => {
   const { user: currentUser } = useAuth();
   const { t } = useTranslation();
   useDocumentTitle(t('page.title.profile'));
-  const queryClient = useQueryClient();
 
   // Monitoramento de performance
   const { metrics } = usePerformanceMonitoring({ screenName: 'ProfileScreen' });
@@ -100,7 +98,7 @@ export const ProfileScreen: React.FC = () => {
   const isOwnProfile = !userId || userId === currentUser?.id;
   const targetUserId = userId || currentUser?.id;
 
-  const { player: profile, loading, error } = usePlayerDetail(targetUserId);
+  const { player: profile, loading, error, refetch } = usePlayerDetail(targetUserId);
   const {
     squads: favoriteSquads,
     loading: favoriteSquadsLoading,
@@ -125,7 +123,7 @@ export const ProfileScreen: React.FC = () => {
       // #2178: ErrorScreen padronizado
       <ErrorScreen
         message={t('profile.loadError', { error })}
-        onRetry={() => queryClient.invalidateQueries({ queryKey: ['player', targetUserId] })}
+        onRetry={refetch}
         onBack={navigateBack}
         backLabel={t('common.back')}
       />

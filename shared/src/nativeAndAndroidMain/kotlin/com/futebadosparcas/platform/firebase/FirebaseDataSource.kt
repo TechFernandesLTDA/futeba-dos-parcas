@@ -27,8 +27,6 @@ import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
-import kotlin.math.round
-import kotlin.math.roundToLong
 
 /**
  * Implementação multiplataforma do FirebaseDataSource usando GitLive Firebase SDK 2.4.0.
@@ -254,47 +252,22 @@ actual class FirebaseDataSource actual constructor() {
         isCasualPlayer: Boolean
     ): Result<GameConfirmation> {
         return try {
-            // Usar ID determinístico {gameId}_{userId} para consistência com security rules
             val docId = "${gameId}_${userId}"
             val docRef = firestore.collection(COLLECTION_CONFIRMATIONS).document(docId)
-            val game = firestore.collection(COLLECTION_GAMES)
-                .document(gameId)
-                .get()
-                .toGameOrNull()
-                ?: return Result.failure(Exception("Jogo não encontrado"))
-            val expectedPayment = game.expectedPaymentForConfirmation()
+            Firebase.functions(FUNCTIONS_REGION)
+                .httpsCallable("confirmGamePresence")
+                .invoke(
+                    mapOf(
+                        "gameId" to gameId,
+                        "position" to if (position == "GOALKEEPER") "GOALKEEPER" else "FIELD",
+                        "isCasualPlayer" to isCasualPlayer
+                    )
+                )
 
-            val confirmationData = mapOf(
-                "id" to docId,
-                "game_id" to gameId,
-                "user_id" to userId,
-                "user_name" to userName,
-                "user_photo" to (userPhoto ?: ""),
-                "position" to position,
-                "status" to "CONFIRMED",
-                "payment_status" to PaymentStatus.PENDING.name,
-                "partial_payment" to 0.0,
-                "expected_payment" to expectedPayment,
-                "expected_payment_cents" to expectedPayment.toPaymentCents(),
-                "is_casual_player" to isCasualPlayer,
-                "created_at" to FieldValue.serverTimestamp
-            )
-            docRef.set(confirmationData)
-
-            val confirmation = GameConfirmation(
-                id = docId,
-                gameId = gameId,
-                userId = userId,
-                userName = userName,
-                userPhoto = userPhoto,
-                position = position,
-                status = "CONFIRMED",
-                paymentStatus = PaymentStatus.PENDING.name,
-                partialPayment = 0.0,
-                expectedPayment = expectedPayment,
-                expectedPaymentCents = expectedPayment.toPaymentCents(),
-                isCasualPlayer = isCasualPlayer
-            )
+            val confirmation = docRef.get().toGameConfirmationOrNull()
+                ?: return Result.failure(
+                    Exception("Confirmação não encontrada após callable: $docId")
+                )
             Result.success(confirmation)
         } catch (e: Exception) {
             Result.failure(e)
@@ -405,57 +378,35 @@ actual class FirebaseDataSource actual constructor() {
         position: String
     ): Result<GameConfirmation> {
         return try {
-            // Buscar confirmacao existente com status PENDING pelo ID determinístico
+            // O convite precisa existir, mas a promoção para CONFIRMED é
+            // exclusivamente server-authoritative. A callable revalida vagas e
+            // goleiros na mesma transação e é idempotente para retries.
             val docRef = firestore.collection(COLLECTION_CONFIRMATIONS).document("${gameId}_${userId}")
             val doc = docRef.get()
-
-            if (!doc.exists) {
-                // Fallback: buscar por query
+            val invitation = if (doc.exists) {
+                doc
+            } else {
                 val snapshot = firestore.collection(COLLECTION_CONFIRMATIONS)
                     .where { "game_id" equalTo gameId }
                     .where { "user_id" equalTo userId }
                     .get()
-
                 if (snapshot.documents.isEmpty()) {
                     return Result.failure(Exception("Convite não encontrado"))
                 }
-
-                val fallbackDoc = snapshot.documents[0]
-                val updates = mapOf("status" to "CONFIRMED", "position" to position)
-                fallbackDoc.reference.update(updates)
-
-                val confirmation = GameConfirmation(
-                    id = fallbackDoc.id,
-                    gameId = gameId,
-                    userId = userId,
-                    userName = fallbackDoc.get<String?>("user_name") ?: fallbackDoc.get<String?>("userName") ?: "",
-                    userPhoto = fallbackDoc.get<String?>("user_photo") ?: fallbackDoc.get<String?>("userPhoto"),
-                    position = position,
-                    status = "CONFIRMED",
-                    isCasualPlayer = fallbackDoc.get<Boolean?>("is_casual_player") ?: fallbackDoc.get<Boolean?>("isCasualPlayer") ?: false
-                )
-                return Result.success(confirmation)
+                snapshot.documents[0]
             }
 
-            val updates = mapOf(
-                "status" to "CONFIRMED",
-                "position" to position
-            )
-            docRef.update(updates)
-
-            // Construir confirmacao atualizada
-            val confirmation = GameConfirmation(
-                id = doc.id,
+            confirmPresence(
                 gameId = gameId,
                 userId = userId,
-                userName = doc.get<String?>("user_name") ?: doc.get<String?>("userName") ?: "",
-                userPhoto = doc.get<String?>("user_photo") ?: doc.get<String?>("userPhoto"),
+                userName = invitation.get<String?>("user_name")
+                    ?: invitation.get<String?>("userName") ?: "",
+                userPhoto = invitation.get<String?>("user_photo")
+                    ?: invitation.get<String?>("userPhoto"),
                 position = position,
-                status = "CONFIRMED",
-                isCasualPlayer = doc.get<Boolean?>("is_casual_player") ?: doc.get<Boolean?>("isCasualPlayer") ?: false
+                isCasualPlayer = invitation.get<Boolean?>("is_casual_player")
+                    ?: invitation.get<Boolean?>("isCasualPlayer") ?: false
             )
-
-            Result.success(confirmation)
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -1408,21 +1359,14 @@ actual class FirebaseDataSource actual constructor() {
             .catch { e -> emit(Result.failure(e)) }
     }
 
-    actual fun getLiveScoreFlow(gameId: String): Flow<Result<LiveScore>> = flow {
-        // Emitir valor padrão inicialmente para jogos que não estão live
-        emit(Result.success(LiveScore()))
+    actual fun getLiveScoreFlow(gameId: String): Flow<Result<LiveScore?>> =
         firestore.collection("live_scores")
             .document(gameId)
             .snapshots()
-            .collect { snapshot ->
-                if (snapshot.exists) {
-                    val score = snapshot.toLiveScoreOrNull()
-                    if (score != null) {
-                        emit(Result.success(score))
-                    }
-                }
+            .map { snapshot ->
+                Result.success(if (snapshot.exists) snapshot.toLiveScoreOrNull() else null)
             }
-    }.catch { e -> emit(Result.failure(e)) }
+            .catch { e -> emit(Result.failure(e)) }
 
     // ========== LIVE GAME (NOVOS MÉTODOS) ==========
 
@@ -1847,8 +1791,8 @@ actual class FirebaseDataSource actual constructor() {
                     .collection("members").document(userId)
                 update(memberRef, mapOf("status" to "INACTIVE"))
 
-                val groupRef = firestore.collection(COLLECTION_GROUPS).document(groupId)
-                update(groupRef, mapOf("member_count" to FieldValue.increment(-1)))
+                // member_count é server-authoritative. onMemberWritten observa
+                // ACTIVE -> INACTIVE e aplica o único delta idempotente.
 
                 val userGroupRef = firestore.collection("users")
                     .document(userId)
@@ -2651,51 +2595,36 @@ actual class FirebaseDataSource actual constructor() {
 
     actual suspend fun addCashboxEntry(groupId: String, entry: CashboxEntry, receiptFilePath: String?): Result<String> {
         return try {
-            val userId = auth.currentUser?.uid ?: return Result.failure(Exception("Usuário não autenticado"))
-            val memberDoc = firestore.collection(COLLECTION_GROUPS).document(groupId)
-                .collection("members").document(userId).get()
-            if (!memberDoc.exists) return Result.failure(Exception("Usuário não é membro do grupo"))
-            val role = memberDoc.get<String?>("role")
-            if (role != "ADMIN" && role != "OWNER") return Result.failure(Exception("Apenas administradores podem lançar no caixa"))
+            val requestId = entry.id.trim()
+            if (!requestId.matches(Regex("^[A-Za-z0-9_-]{16,128}$"))) {
+                return Result.failure(Exception("requestId idempotente inválido"))
+            }
             val finalEntry = if (receiptFilePath != null) {
                 val up = uploadCashboxReceipt(groupId, receiptFilePath)
                 if (up.isSuccess) entry.copy(receiptUrl = up.getOrNull()) else entry
             } else entry
-            val userName = memberDoc.get<String?>("user_name") ?: ""
-            val entryRef = firestore.collection(COLLECTION_GROUPS).document(groupId).collection(SUBCOLLECTION_CASHBOX).document
-            val summaryRef = firestore.collection(COLLECTION_GROUPS).document(groupId).collection(SUBCOLLECTION_CASHBOX_SUMMARY).document("current")
-            if (finalEntry.amount <= 0) return Result.failure(Exception("O valor deve ser maior que zero"))
-            val entryData = mapOf(
-                "id" to entryRef.id, "type" to finalEntry.type, "category" to finalEntry.category,
-                "custom_category" to (finalEntry.customCategory ?: ""), "amount" to finalEntry.amount,
-                "description" to finalEntry.description, "created_by_id" to userId, "created_by_name" to userName,
-                "reference_date" to finalEntry.referenceDate.toString(),
-                "created_at" to (finalEntry.createdAt?.toString() ?: FieldValue.serverTimestamp),
-                "player_id" to (finalEntry.playerId ?: ""), "player_name" to (finalEntry.playerName ?: ""),
-                "game_id" to (finalEntry.gameId ?: ""), "receipt_url" to (finalEntry.receiptUrl ?: ""),
-                "status" to finalEntry.status
-            )
-            // Transação garante que a entrada e o summary são atualizados atomicamente (#945)
-            val amount = finalEntry.amount
-            firestore.runTransaction<Unit> {
-                val summaryDoc = get(summaryRef)
-                val balance = summaryDoc.get<Double?>("balance") ?: 0.0
-                val totalIncome = summaryDoc.get<Double?>("total_income") ?: 0.0
-                val totalExpense = summaryDoc.get<Double?>("total_expense") ?: 0.0
-                val entryCount = (summaryDoc.get<Long?>("entry_count") ?: 0L) + 1L
-                val newSummary = if (finalEntry.isIncome()) mapOf(
-                    "balance" to (balance + amount), "total_income" to (totalIncome + amount),
-                    "total_expense" to totalExpense, "last_entry_at" to FieldValue.serverTimestamp,
-                    "entry_count" to entryCount
-                ) else mapOf(
-                    "balance" to (balance - amount), "total_income" to totalIncome,
-                    "total_expense" to (totalExpense + amount), "last_entry_at" to FieldValue.serverTimestamp,
-                    "entry_count" to entryCount
+            val response = Firebase.functions(FUNCTIONS_REGION)
+                .httpsCallable("createCashboxEntry")
+                .invoke(
+                    mapOf(
+                        "groupId" to groupId,
+                        "type" to finalEntry.type,
+                        "amount" to finalEntry.amount,
+                        "description" to finalEntry.description,
+                        "receiptUrl" to finalEntry.receiptUrl,
+                        "requestId" to requestId,
+                        "category" to finalEntry.category,
+                        "customCategory" to finalEntry.customCategory,
+                        "referenceDate" to finalEntry.referenceDate,
+                        "playerId" to finalEntry.playerId,
+                        "playerName" to finalEntry.playerName,
+                        "gameId" to finalEntry.gameId
+                    )
                 )
-                set(entryRef, entryData)
-                set(summaryRef, newSummary)
-            }
-            Result.success(entryRef.id)
+                .data<Map<String, Any?>>()
+            val entryId = response["entryId"] as? String
+                ?: return Result.failure(Exception("Resposta inválida ao criar entrada"))
+            Result.success(entryId)
         } catch (e: Exception) {
             println("FirebaseDataSource: Erro ao adicionar entrada no caixa: ${e.message}")
             Result.failure(e)
@@ -2787,34 +2716,9 @@ actual class FirebaseDataSource actual constructor() {
 
     actual suspend fun deleteCashboxEntry(groupId: String, entryId: String): Result<Unit> {
         return try {
-            val userId = auth.currentUser?.uid ?: return Result.failure(Exception("Usuário não autenticado"))
-            val memberDoc = firestore.collection(COLLECTION_GROUPS).document(groupId).collection("members").document(userId).get()
-            if (!memberDoc.exists) return Result.failure(Exception("Você não é membro deste grupo"))
-            // Alinha com as Firestore Rules que permitem isGroupAdmin (OWNER ou ADMIN) estornar entradas (#951)
-            val role = memberDoc.get<String?>("role")
-            if (role != "OWNER" && role != "ADMIN") return Result.failure(Exception("Apenas administradores do grupo podem estornar entradas"))
-            val entryDoc = firestore.collection(COLLECTION_GROUPS).document(groupId).collection(SUBCOLLECTION_CASHBOX).document(entryId).get()
-            if (!entryDoc.exists) return Result.failure(Exception("Entrada não encontrada"))
-            val entry = entryDoc.toCashboxEntryOrNull() ?: return Result.failure(Exception("Erro ao converter entrada"))
-            if (entry.status == CashboxAppStatus.VOIDED.name) return Result.failure(Exception("Esta entrada já foi estornada"))
-            // Transação garante que o estorno da entrada e o summary são atualizados atomicamente (#945)
-            val summaryRef = firestore.collection(COLLECTION_GROUPS).document(groupId).collection(SUBCOLLECTION_CASHBOX_SUMMARY).document("current")
-            firestore.runTransaction<Unit> {
-                val summaryDoc = get(summaryRef)
-                val balance = summaryDoc.get<Double?>("balance") ?: 0.0
-                val totalIncome = summaryDoc.get<Double?>("total_income") ?: 0.0
-                val totalExpense = summaryDoc.get<Double?>("total_expense") ?: 0.0
-                val entryCount = (summaryDoc.get<Long?>("entry_count") ?: 0L)
-                update(summaryRef, mapOf(
-                    "balance" to (balance + (if (entry.isIncome()) -entry.amount else entry.amount)),
-                    "total_income" to (if (entry.isIncome()) totalIncome - entry.amount else totalIncome),
-                    "total_expense" to (if (entry.isExpense()) totalExpense - entry.amount else totalExpense),
-                    "last_entry_at" to FieldValue.serverTimestamp,
-                    "entry_count" to (entryCount - 1L).coerceAtLeast(0L)
-                ))
-                val entryRef = firestore.collection(COLLECTION_GROUPS).document(groupId).collection(SUBCOLLECTION_CASHBOX).document(entryId)
-                update(entryRef, mapOf("status" to CashboxAppStatus.VOIDED.name, "voided_at" to FieldValue.serverTimestamp, "voided_by" to userId))
-            }
+            Firebase.functions(FUNCTIONS_REGION)
+                .httpsCallable("voidCashboxEntry")
+                .invoke(mapOf("groupId" to groupId, "entryId" to entryId))
             Result.success(Unit)
         } catch (e: Exception) {
             println("FirebaseDataSource: Erro ao deletar entrada do caixa: ${e.message}")
@@ -2824,34 +2728,22 @@ actual class FirebaseDataSource actual constructor() {
 
     actual suspend fun recalculateCashboxBalance(groupId: String): Result<CashboxSummary> {
         return try {
-            val userId = auth.currentUser?.uid ?: return Result.failure(Exception("Usuário não autenticado"))
-            val memberDoc = firestore.collection(COLLECTION_GROUPS).document(groupId).collection("members").document(userId).get()
-            val role = memberDoc.get<String?>("role")
-            if (role != "ADMIN" && role != "OWNER") return Result.failure(Exception("Apenas administradores podem recalcular o saldo"))
-            // Limite de segurança: grupos com >1000 entradas ativas são muito incomuns; sem limite a query pode ser cara (#952)
-            val maxEntries = 1000
-            val entriesSnapshot = firestore.collection(COLLECTION_GROUPS).document(groupId)
-                .collection(SUBCOLLECTION_CASHBOX).where { "status" equalTo CashboxAppStatus.ACTIVE.name }
-                .limit(maxEntries + 1).get()
-            var totalIncome = 0.0; var totalExpense = 0.0
-            val allDocs = entriesSnapshot.documents.mapNotNull { it.toCashboxEntryOrNull() }
-            if (allDocs.size > maxEntries) {
-                println("FirebaseDataSource: AVISO — recalculateCashboxBalance truncou em $maxEntries entradas para o grupo $groupId; saldo pode estar incompleto")
-            }
-            val entries = allDocs.take(maxEntries)
-            val sortedEntries = entries.sortedByDescending { it.createdAt ?: 0L }
-            sortedEntries.forEach { if (it.isIncome()) totalIncome += it.amount else totalExpense += it.amount }
-            val lastEntryMillis: Long? = sortedEntries.firstOrNull()?.createdAt
-            val lastEntryDate: Timestamp? = lastEntryMillis?.let { millis ->
-                Timestamp(millis / 1000, ((millis % 1000) * 1_000_000).toInt())
-            }
-            val balance = totalIncome - totalExpense
-            val summary = CashboxSummary(balance = balance, totalIncome = totalIncome, totalExpense = totalExpense,
-                lastEntryAt = lastEntryMillis, entryCount = entries.size)
-            firestore.collection(COLLECTION_GROUPS).document(groupId).collection(SUBCOLLECTION_CASHBOX_SUMMARY).document("current")
-                .set(mapOf("balance" to balance, "total_income" to totalIncome, "total_expense" to totalExpense,
-                    "last_entry_at" to (lastEntryDate ?: FieldValue.serverTimestamp), "entry_count" to entries.size))
-            Result.success(summary)
+            val response = Firebase.functions(FUNCTIONS_REGION)
+                .httpsCallable("reconcileCashboxSummary")
+                .invoke(mapOf("groupId" to groupId))
+                .data<Map<String, Any?>>()
+            val balance = (response["balance"] as? Number)?.toDouble() ?: 0.0
+            val totalIncome = (response["totalIncome"] as? Number)?.toDouble() ?: 0.0
+            val totalExpense = (response["totalExpense"] as? Number)?.toDouble() ?: 0.0
+            val entryCount = (response["entryCount"] as? Number)?.toInt() ?: 0
+            Result.success(
+                CashboxSummary(
+                    balance = balance,
+                    totalIncome = totalIncome,
+                    totalExpense = totalExpense,
+                    entryCount = entryCount
+                )
+            )
         } catch (e: Exception) {
             println("FirebaseDataSource: Erro ao recalcular saldo do caixa: ${e.message}")
             Result.failure(e)
@@ -3839,18 +3731,6 @@ private fun dev.gitlive.firebase.firestore.DocumentSnapshot.toGameConfirmationOr
         wasPresent = get<Boolean?>("was_present") ?: get<Boolean?>("wasPresent") ?: false
     )
 }
-
-private fun Game?.expectedPaymentForConfirmation(): Double {
-    val raw = when {
-        this == null -> 0.0
-        dailyPrice > 0.0 -> dailyPrice
-        totalCost > 0.0 && maxPlayers > 0 -> totalCost / maxPlayers
-        else -> 0.0
-    }
-    return round(raw * 100.0) / 100.0
-}
-
-private fun Double.toPaymentCents(): Long = (this * 100.0).roundToLong()
 
 private fun dev.gitlive.firebase.firestore.DocumentSnapshot.toStatisticsOrNull(): Statistics? {
     if (!exists) return null

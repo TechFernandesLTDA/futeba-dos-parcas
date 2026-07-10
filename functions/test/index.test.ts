@@ -150,6 +150,7 @@ import { recalculateLeagueRating, onGameDeleted, onGroupDeleted, onConfirmationW
 describe("Index — Funcoes do index.ts", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockRunTransaction.mockReset();
     mockBatchCommit.mockResolvedValue([]);
     mockDocUpdate.mockResolvedValue(undefined);
   });
@@ -340,7 +341,8 @@ describe("Index — Funcoes do index.ts", () => {
   });
 
   describe("onConfirmationWrite", () => {
-    const makeEvent = (before: any, after: any) => ({
+    const makeEvent = (before: any, after: any, id: string | null = "event-1") => ({
+      ...(id === null ? {} : {id}),
       data: {
         before: { data: () => before },
         after: { data: () => after },
@@ -348,13 +350,37 @@ describe("Index — Funcoes do index.ts", () => {
       params: { confirmationId: "g1_u1" },
     });
 
+    const installIdempotentTransaction = (markerInitiallyExists = false) => {
+      let markerExists = markerInitiallyExists;
+      const transactionUpdate = jest.fn();
+      const transactionCreate = jest.fn(() => {
+        markerExists = true;
+      });
+      mockRunTransaction.mockImplementation(async (callback: any) => {
+        let readIndex = 0;
+        return callback({
+          get: jest.fn(async () => {
+            readIndex += 1;
+            return readIndex === 1 ?
+              {exists: markerExists} :
+              {exists: true, data: () => ({})};
+          }),
+          update: transactionUpdate,
+          create: transactionCreate,
+        });
+      });
+      return {transactionUpdate, transactionCreate};
+    };
+
     it("incrementa players_count quando status muda para CONFIRMED", async () => {
+      const {transactionUpdate} = installIdempotentTransaction();
       await onConfirmationWrite(makeEvent(
         { status: "PENDING", game_id: "game1" },
         { status: "CONFIRMED", game_id: "game1" },
       ));
 
-      expect(mockDocUpdate).toHaveBeenCalledWith(
+      expect(transactionUpdate).toHaveBeenCalledWith(
+        expect.any(Object),
         expect.objectContaining({
           players_count: { operand: 1 },
         }),
@@ -362,16 +388,145 @@ describe("Index — Funcoes do index.ts", () => {
     });
 
     it("decrementa players_count quando status sai de CONFIRMED", async () => {
+      const {transactionUpdate} = installIdempotentTransaction();
       await onConfirmationWrite(makeEvent(
         { status: "CONFIRMED", game_id: "game1" },
         { status: "CANCELLED", game_id: "game1" },
       ));
 
-      expect(mockDocUpdate).toHaveBeenCalledWith(
+      expect(transactionUpdate).toHaveBeenCalledWith(
+        expect.any(Object),
         expect.objectContaining({
           players_count: { operand: -1 },
         }),
       );
+    });
+
+    it("ignora delivery duplicada do mesmo cancelamento", async () => {
+      const {transactionUpdate, transactionCreate} = installIdempotentTransaction();
+      const event = makeEvent(
+        {status: "CONFIRMED", game_id: "game1"},
+        {status: "CANCELLED", game_id: "game1"},
+        "cancel/event-1",
+      );
+
+      await onConfirmationWrite(event);
+      await onConfirmationWrite(event);
+
+      expect(transactionUpdate).toHaveBeenCalledTimes(1);
+      expect(transactionCreate).toHaveBeenCalledTimes(1);
+      expect(mockSubCol).toHaveBeenCalledWith(
+        "confirmation_counter_events",
+      );
+      expect(mockSubColDoc).toHaveBeenCalledWith("cancel%2Fevent-1");
+      expect(transactionCreate).toHaveBeenCalledWith(
+        expect.any(Object),
+        expect.objectContaining({
+          event_id: "cancel/event-1",
+          confirmation_id: "g1_u1",
+          players_delta: -1,
+          goalkeepers_delta: 0,
+          expires_at: expect.any(Date),
+        }),
+      );
+      expect(mockRunTransaction).toHaveBeenCalledTimes(2);
+    });
+
+    it("ignora delivery duplicada de delete confirmado", async () => {
+      const {transactionUpdate, transactionCreate} = installIdempotentTransaction();
+      const event = makeEvent(
+        {status: "CONFIRMED", position: "GOALKEEPER", game_id: "game1"},
+        undefined,
+        "delete-event-1",
+      );
+
+      await onConfirmationWrite(event);
+      await onConfirmationWrite(event);
+
+      expect(transactionUpdate).toHaveBeenCalledTimes(1);
+      expect(transactionUpdate).toHaveBeenCalledWith(
+        expect.any(Object),
+        expect.objectContaining({
+          players_count: {operand: -1},
+          goalkeepers_count: {operand: -1},
+        }),
+      );
+      expect(transactionCreate).toHaveBeenCalledTimes(1);
+    });
+
+    it("ignora delivery duplicada de troca de posicao", async () => {
+      const {transactionUpdate, transactionCreate} = installIdempotentTransaction();
+      const event = makeEvent(
+        {status: "CONFIRMED", position: "FIELD", game_id: "game1"},
+        {status: "CONFIRMED", position: "GOALKEEPER", game_id: "game1"},
+        "position-event-1",
+      );
+
+      await onConfirmationWrite(event);
+      await onConfirmationWrite(event);
+
+      expect(transactionUpdate).toHaveBeenCalledTimes(1);
+      expect(transactionUpdate).toHaveBeenCalledWith(
+        expect.any(Object),
+        expect.objectContaining({
+          players_count: {operand: 0},
+          goalkeepers_count: {operand: 1},
+        }),
+      );
+      expect(transactionCreate).toHaveBeenCalledTimes(1);
+    });
+
+    it("reprocessa com sucesso depois de falha transacional", async () => {
+      const transactionFailure = new Error("temporary transaction failure");
+      mockRunTransaction.mockRejectedValueOnce(transactionFailure);
+      const transactionUpdate = jest.fn();
+      const transactionCreate = jest.fn();
+      mockRunTransaction.mockImplementationOnce(async (callback: any) => {
+        let readIndex = 0;
+        return callback({
+          get: jest.fn(async () => {
+            readIndex += 1;
+            return readIndex === 1 ? {exists: false} : {exists: true};
+          }),
+          update: transactionUpdate,
+          create: transactionCreate,
+        });
+      });
+      const event = makeEvent(
+        {status: "CONFIRMED", game_id: "game1"},
+        {status: "CANCELLED", game_id: "game1"},
+        "retry-event-1",
+      );
+
+      await expect(onConfirmationWrite(event)).rejects.toThrow(
+        "temporary transaction failure",
+      );
+      await onConfirmationWrite(event);
+
+      expect(transactionUpdate).toHaveBeenCalledTimes(1);
+      expect(transactionCreate).toHaveBeenCalledTimes(1);
+    });
+
+    it("falha evento relevante sem CloudEvent id", async () => {
+      await expect(onConfirmationWrite(makeEvent(
+        {status: "CONFIRMED", game_id: "game1"},
+        {status: "CANCELLED", game_id: "game1"},
+        null,
+      ))).rejects.toThrow("missing CloudEvent id");
+      expect(mockRunTransaction).not.toHaveBeenCalled();
+    });
+
+    it("preserva skip do token do callable canonico", async () => {
+      await onConfirmationWrite(makeEvent(
+        {status: "PENDING", game_id: "game1"},
+        {
+          status: "CONFIRMED",
+          game_id: "game1",
+          capacity_sync_token: "canonical-token",
+        },
+        null,
+      ));
+      expect(mockRunTransaction).not.toHaveBeenCalled();
     });
 
     it("nao faz nada quando status nao mudou", async () => {
@@ -380,7 +535,7 @@ describe("Index — Funcoes do index.ts", () => {
         { status: "CONFIRMED", game_id: "game1" },
       ));
 
-      expect(mockDocUpdate).not.toHaveBeenCalled();
+      expect(mockRunTransaction).not.toHaveBeenCalled();
     });
 
     it("nao faz nada quando game_id ausente", async () => {
@@ -389,11 +544,13 @@ describe("Index — Funcoes do index.ts", () => {
         { status: "CONFIRMED" },
       ));
 
-      expect(mockDocUpdate).not.toHaveBeenCalled();
+      expect(mockRunTransaction).not.toHaveBeenCalled();
     });
 
     it("trata CREATE sem before (before undefined)", async () => {
+      const {transactionUpdate} = installIdempotentTransaction();
       await onConfirmationWrite({
+        id: "create-event-1",
         data: {
           before: { data: () => undefined },
           after: { data: () => ({ status: "CONFIRMED", game_id: "game1" }) },
@@ -401,7 +558,8 @@ describe("Index — Funcoes do index.ts", () => {
         params: { confirmationId: "g1_u2" },
       });
 
-      expect(mockDocUpdate).toHaveBeenCalledWith(
+      expect(transactionUpdate).toHaveBeenCalledWith(
+        expect.any(Object),
         expect.objectContaining({
           players_count: { operand: 1 },
         }),

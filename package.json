@@ -8,6 +8,7 @@
   "scripts": {
     "prepare": "husky",
     "test:scripts": "node --test scripts/*.test.js scripts/**/*.test.js",
+    "test:load:realtime": "node scripts/load/realtime-multiuser.js",
     "check:tokens": "node scripts/check-design-tokens-parity.js"
   },
   "overrides": {

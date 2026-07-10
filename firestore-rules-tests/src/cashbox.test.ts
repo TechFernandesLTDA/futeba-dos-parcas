@@ -7,9 +7,7 @@
  *
  * Rule (resumo):
  *   read:   isAuthenticated() && (isGroupMember(groupId) || isGroupOwnerById(groupId)) ← sem isAdmin() bypass
- *   create: (isAdmin() || isVerifiedOrGrace()) && admin/owner && isGroupActive() && shape/auditoria travados
- *   update: (isGroupAdmin() || isGroupOwnerById()) && isGroupActive() && affectedKeys hasOnly [status,voided_at,voided_by,updated_at] && status==VOIDED && voided_by==userId() && voided_at==request.time
- *   delete: false
+ *   create/update/delete: false — somente callables canônicas via Admin SDK
  */
 
 import { describe, it, beforeAll, afterAll } from "vitest";
@@ -195,9 +193,9 @@ describe("cashbox — create: validações de campo", () => {
     );
   });
 
-  it("Owner legado pode criar entrada mesmo sem doc members/{uid}", async () => {
+  it("Owner legado NÃO pode criar entrada diretamente", async () => {
     const db = asPlayerA(testEnv);
-    await assertSucceeds(
+    await assertFails(
       db.doc(`groups/${GROUP_OWNER_ONLY}/cashbox/entry-owner-only-create`).set({
         group_id: GROUP_OWNER_ONLY,
         type: "INCOME",
@@ -206,6 +204,22 @@ describe("cashbox — create: validações de campo", () => {
         description: "Mensalidade",
         category: "OTHER",
         created_by: UID_PLAYER_A,
+        created_at: serverTimestamp(),
+      })
+    );
+  });
+
+  it("Admin global NÃO pode criar entrada diretamente", async () => {
+    const db = asAdmin(testEnv);
+    await assertFails(
+      db.doc(`groups/${GROUP_CASHBOX}/cashbox/entry-admin-direct`).set({
+        group_id: GROUP_CASHBOX,
+        type: "INCOME",
+        amount: 100,
+        description: "Tentativa admin direta",
+        category: "OTHER",
+        status: "ACTIVE",
+        created_by: UID_ADMIN,
         created_at: serverTimestamp(),
       })
     );
@@ -297,17 +311,26 @@ describe("cashbox — create: validações de campo", () => {
 // ATUALIZAÇÃO — cashbox: void com shape enforcement
 // ============================================================
 
-describe("cashbox — update: void (shape enforcement)", () => {
-  it("Group admin (owner) pode fazer void com shape correta", async () => {
-    // Campos permitidos: ['status', 'voided_at', 'voided_by', 'updated_at']
-    // status == 'VOIDED', voided_by == userId(), voided_at == request.time
-    // FIX: voided_at DEVE ser serverTimestamp() pra match com request.time na rule
+describe("cashbox — update: somente callable", () => {
+  it("Group admin (owner) NÃO pode fazer void diretamente", async () => {
     const db = asPlayerA(testEnv);
-    await assertSucceeds(
+    await assertFails(
       db.doc(`groups/${GROUP_CASHBOX}/cashbox/${ENTRY_EXISTING}`).update({
         status: "VOIDED",
         voided_at: serverTimestamp(),
         voided_by: UID_PLAYER_A,
+        updated_at: serverTimestamp(),
+      })
+    );
+  });
+
+  it("Admin global NÃO pode fazer void diretamente", async () => {
+    const db = asAdmin(testEnv);
+    await assertFails(
+      db.doc(`groups/${GROUP_CASHBOX}/cashbox/${ENTRY_EXISTING}`).update({
+        status: "VOIDED",
+        voided_at: serverTimestamp(),
+        voided_by: UID_ADMIN,
         updated_at: serverTimestamp(),
       })
     );
@@ -364,9 +387,9 @@ describe("cashbox — update: void (shape enforcement)", () => {
     );
   });
 
-  it("Owner legado pode fazer void mesmo sem doc members/{uid}", async () => {
+  it("Owner legado NÃO pode fazer void diretamente", async () => {
     const db = asPlayerA(testEnv);
-    await assertSucceeds(
+    await assertFails(
       db.doc(`groups/${GROUP_OWNER_ONLY}/cashbox/${ENTRY_OWNER_ONLY}`).update({
         status: "VOIDED",
         voided_at: serverTimestamp(),
@@ -444,9 +467,9 @@ describe("cashbox_summary — permissões", () => {
     );
   });
 
-  it("Group admin pode criar/atualizar cashbox_summary", async () => {
+  it("Group admin NÃO pode criar/atualizar cashbox_summary diretamente", async () => {
     const db = asPlayerA(testEnv); // owner = group admin
-    await assertSucceeds(
+    await assertFails(
       db.doc(`groups/${GROUP_CASHBOX}/cashbox_summary/current`).set({
         balance: 200,
         total_income: 250,
@@ -468,9 +491,9 @@ describe("cashbox_summary — permissões", () => {
     );
   });
 
-  it("Owner legado pode criar/atualizar cashbox_summary", async () => {
+  it("Owner legado NÃO pode criar/atualizar cashbox_summary diretamente", async () => {
     const db = asPlayerA(testEnv);
-    await assertSucceeds(
+    await assertFails(
       db.doc(`groups/${GROUP_OWNER_ONLY}/cashbox_summary/current`).set({
         balance: 300,
         total_income: 350,
@@ -478,6 +501,19 @@ describe("cashbox_summary — permissões", () => {
         period_start: "2026-07-01",
         period_end: "2026-07-31",
         updated_at: new Date(),
+      })
+    );
+  });
+
+  it("Admin global NÃO pode criar cashbox_summary diretamente", async () => {
+    const db = asAdmin(testEnv);
+    await assertFails(
+      db.doc(`groups/${GROUP_CASHBOX}/cashbox_summary/admin-direct`).set({
+        balance: 0,
+        total_income: 0,
+        total_expense: 0,
+        period_start: "2026-07-01",
+        period_end: "2026-07-31",
       })
     );
   });
@@ -505,7 +541,7 @@ describe("cashbox_summary — permissões", () => {
       recomputed_at: new Date(),
       truncated: false,
     });
-    await assertSucceeds(db.doc(path).update({balance: 201}));
+    await assertFails(db.doc(path).update({balance: 201}));
     await assertFails(db.doc(path).update({
       source_event_version: "9999-01-01T00:00:00.000Z",
     }));

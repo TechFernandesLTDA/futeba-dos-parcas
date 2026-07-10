@@ -344,6 +344,7 @@ function buildEventPayload(
   eventId: string,
   request: SubmitLiveGameEventRequest,
   createdBy: string,
+  scoreField: "team1_score" | "team2_score" | null,
 ): Record<string, unknown> {
   return {
     id: eventId,
@@ -360,9 +361,24 @@ function buildEventPayload(
     minute: request.minute ?? 0,
     created_by: createdBy,
     request_id: request.requestId ?? null,
+    score_field: scoreField,
     created_at: FieldValue.serverTimestamp(),
     updated_at: FieldValue.serverTimestamp(),
   };
+}
+
+function resolveScoreField(
+  teamId: string,
+  team1Id: string,
+  team2Id: string,
+): "team1_score" | "team2_score" {
+  if (teamId === team1Id) return "team1_score";
+  if (teamId === team2Id) return "team2_score";
+
+  throw new HttpsError(
+    "failed-precondition",
+    "Time do evento não bate com o placar ao vivo.",
+  );
 }
 
 export function isScoreConsistentFromEventStream(
@@ -477,12 +493,24 @@ export const submitLiveGameEvent = onCall<
       db().collection("game_events")
         .doc(`${payload.gameId}_${payload.requestId}`) :
       db().collection("game_events").doc();
+    const liveScoreSnap = await liveScoreRef.get();
+    const liveScoreData = liveScoreSnap.data() ?? {};
+    const team1Id =
+      typeof liveScoreData.team1_id === "string" ?
+        liveScoreData.team1_id :
+        teams[0]?.id ?? "";
+    const team2Id =
+      typeof liveScoreData.team2_id === "string" ?
+        liveScoreData.team2_id :
+        teams[1]?.id ?? "";
+    const scoreField = payload.eventType === "GOAL" ?
+      resolveScoreField(payload.teamId, team1Id, team2Id) :
+      null;
 
     const result = await db().runTransaction(
       async (tx) => {
         const [
           gameSnap,
-          liveScoreSnap,
           playerConfirmationSnap,
           playerStatsSnap,
           callerConfirmationSnap,
@@ -491,7 +519,6 @@ export const submitLiveGameEvent = onCall<
           existingEventSnap,
         ] = await Promise.all([
           tx.get(gameRef),
-          tx.get(liveScoreRef),
           tx.get(playerConfirmationRef),
           tx.get(playerStatsRef),
           tx.get(callerConfirmationRef),
@@ -553,14 +580,6 @@ export const submitLiveGameEvent = onCall<
 
           return {
             eventId: eventRef.id,
-            team1Score: readCounter(
-              liveScoreSnap.data(),
-              "team1_score",
-            ),
-            team2Score: readCounter(
-              liveScoreSnap.data(),
-              "team2_score",
-            ),
             duplicate: true,
           };
         }
@@ -570,57 +589,26 @@ export const submitLiveGameEvent = onCall<
           confirmedPayload(assistedConfirmationSnap);
         }
 
-        const liveScoreData =
-          liveScoreSnap.data() ?? {};
-        const team1Id =
-          typeof liveScoreData.team1_id === "string" ?
-            liveScoreData.team1_id :
-            teams[0]?.id ?? "";
-        const team2Id =
-          typeof liveScoreData.team2_id === "string" ?
-            liveScoreData.team2_id :
-            teams[1]?.id ?? "";
-        let nextTeam1Score =
-          readCounter(liveScoreData, "team1_score");
-        let nextTeam2Score =
-          readCounter(liveScoreData, "team2_score");
-
-        if (payload.eventType === "GOAL") {
-          if (payload.teamId === team1Id) {
-            nextTeam1Score += 1;
-          } else if (payload.teamId === team2Id) {
-            nextTeam2Score += 1;
-          } else {
-            throw new HttpsError(
-              "failed-precondition",
-              "Time do evento não bate com o placar ao vivo.",
-            );
-          }
-        }
-
         tx.set(
           eventRef,
-          buildEventPayload(eventRef.id, payload, uid),
+          buildEventPayload(
+            eventRef.id,
+            payload,
+            uid,
+            scoreField,
+          ),
         );
 
-        if (payload.eventType === "GOAL") {
+        if (scoreField) {
           tx.set(liveScoreRef, {
             game_id: payload.gameId,
             owner_id: game.owner_id,
             team1_id: team1Id,
             team2_id: team2Id,
-            team1_score: nextTeam1Score,
-            team2_score: nextTeam2Score,
+            [scoreField]: FieldValue.increment(1),
             updated_at:
               FieldValue.serverTimestamp(),
           }, {merge: true});
-
-          tx.update(gameRef, {
-            team1_score: nextTeam1Score,
-            team2_score: nextTeam2Score,
-            updated_at:
-              FieldValue.serverTimestamp(),
-          });
         }
 
         const playerDelta: EventDelta = {
@@ -694,12 +682,13 @@ export const submitLiveGameEvent = onCall<
 
         return {
           eventId: eventRef.id,
-          team1Score: nextTeam1Score,
-          team2Score: nextTeam2Score,
           duplicate: false,
         };
       },
     );
+
+    const projectedScoreSnap = await liveScoreRef.get();
+    const projectedScore = projectedScoreSnap.data();
 
     logger.info(
       "[LIVE_GAME_EVENT_SUBMIT]",
@@ -715,8 +704,8 @@ export const submitLiveGameEvent = onCall<
     return {
       success: true,
       eventId: result.eventId,
-      team1Score: result.team1Score,
-      team2Score: result.team2Score,
+      team1Score: readCounter(projectedScore, "team1_score"),
+      team2Score: readCounter(projectedScore, "team2_score"),
       duplicate: result.duplicate,
     };
   },
@@ -758,18 +747,26 @@ export const deleteLiveGameEvent = onCall<
     const callerConfirmationRef = db()
       .collection("confirmations")
       .doc(`${payload.gameId}_${uid}`);
+    const liveScoreSnap = await liveScoreRef.get();
+    const liveScoreData = liveScoreSnap.data() ?? {};
+    const team1Id =
+      typeof liveScoreData.team1_id === "string" ?
+        liveScoreData.team1_id :
+        teams[0]?.id ?? "";
+    const team2Id =
+      typeof liveScoreData.team2_id === "string" ?
+        liveScoreData.team2_id :
+        teams[1]?.id ?? "";
 
-    const result = await db().runTransaction(
+    await db().runTransaction(
       async (tx) => {
         const [
           gameSnap,
           eventSnap,
-          liveScoreSnap,
           callerConfirmationSnap,
         ] = await Promise.all([
           tx.get(gameRef),
           tx.get(eventRef),
-          tx.get(liveScoreRef),
           tx.get(callerConfirmationRef),
         ]);
 
@@ -843,34 +840,13 @@ export const deleteLiveGameEvent = onCall<
             eventData.assisted_by_id.trim() :
             null;
 
-        const liveScoreData =
-          liveScoreSnap.data() ?? {};
-        const team1Id =
-          typeof liveScoreData.team1_id === "string" ?
-            liveScoreData.team1_id :
-            teams[0]?.id ?? "";
-        const team2Id =
-          typeof liveScoreData.team2_id === "string" ?
-            liveScoreData.team2_id :
-            teams[1]?.id ?? "";
-        let nextTeam1Score =
-          readCounter(liveScoreData, "team1_score");
-        let nextTeam2Score =
-          readCounter(liveScoreData, "team2_score");
-
-        if (eventType === "GOAL") {
-          if (teamId === team1Id) {
-            nextTeam1Score = Math.max(
-              0,
-              nextTeam1Score - 1,
-            );
-          } else if (teamId === team2Id) {
-            nextTeam2Score = Math.max(
-              0,
-              nextTeam2Score - 1,
-            );
-          }
-        }
+        const storedScoreField = eventData.score_field;
+        const scoreField = eventType === "GOAL" ?
+          storedScoreField === "team1_score" ||
+          storedScoreField === "team2_score" ?
+            storedScoreField :
+            resolveScoreField(teamId, team1Id, team2Id) :
+          null;
 
         const playerConfirmationRef = db()
           .collection("confirmations")
@@ -958,33 +934,26 @@ export const deleteLiveGameEvent = onCall<
           );
         }
 
-        if (eventType === "GOAL") {
+        if (scoreField) {
           tx.set(liveScoreRef, {
             game_id: payload.gameId,
             owner_id: game.owner_id,
             team1_id: team1Id,
             team2_id: team2Id,
-            team1_score: nextTeam1Score,
-            team2_score: nextTeam2Score,
+            [scoreField]: FieldValue.increment(-1),
             updated_at:
               FieldValue.serverTimestamp(),
           }, {merge: true});
-          tx.update(gameRef, {
-            team1_score: nextTeam1Score,
-            team2_score: nextTeam2Score,
-            updated_at:
-              FieldValue.serverTimestamp(),
-          });
         }
 
         tx.delete(eventRef);
 
-        return {
-          team1Score: nextTeam1Score,
-          team2Score: nextTeam2Score,
-        };
+        return {deleted: true};
       },
     );
+
+    const projectedScoreSnap = await liveScoreRef.get();
+    const projectedScore = projectedScoreSnap.data();
 
     logger.info(
       "[LIVE_GAME_EVENT_DELETE]",
@@ -998,8 +967,8 @@ export const deleteLiveGameEvent = onCall<
     return {
       success: true,
       eventId: payload.eventId,
-      team1Score: result.team1Score,
-      team2Score: result.team2Score,
+      team1Score: readCounter(projectedScore, "team1_score"),
+      team2Score: readCounter(projectedScore, "team2_score"),
     };
   },
 );

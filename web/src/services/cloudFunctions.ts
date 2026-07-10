@@ -63,6 +63,23 @@ export const createCashboxEntry = httpsCallable<
   CreateCashboxEntryResponse
 >(functions, 'createCashboxEntry');
 
+export const voidCashboxEntry = httpsCallable<
+  { groupId: string; entryId: string },
+  { entryId: string; balance: number; balanceCents: number; duplicate: boolean }
+>(functions, 'voidCashboxEntry');
+
+export const reconcileCashboxSummary = httpsCallable<
+  { groupId: string },
+  {
+    balance: number;
+    balanceCents: number;
+    totalIncome: number;
+    totalExpense: number;
+    entryCount: number;
+    ledgerVersion: number;
+  }
+>(functions, 'reconcileCashboxSummary');
+
 export interface AdminOwnerSummary {
   totalLocations: number;
   publishedLocations: number;
@@ -612,8 +629,27 @@ export const requestAccountMerge = httpsCallable<
 
 export const joinPublicGame = httpsCallable<
   { gameId: string; position?: 'GOALKEEPER' | 'FIELD'; isCasualPlayer?: boolean },
-  { success: boolean; alreadyConfirmed: boolean; confirmationId: string }
+  {
+    success: boolean;
+    alreadyConfirmed: boolean;
+    confirmationId: string;
+    position: 'GOALKEEPER' | 'FIELD';
+    expectedPayment: number;
+    expectedPaymentCents: number;
+  }
 >(functions, 'joinPublicGame');
+
+export const confirmGamePresence = httpsCallable<
+  { gameId: string; position?: 'GOALKEEPER' | 'FIELD'; isCasualPlayer?: boolean },
+  {
+    success: boolean;
+    alreadyConfirmed: boolean;
+    confirmationId: string;
+    position: 'GOALKEEPER' | 'FIELD';
+    expectedPayment: number;
+    expectedPaymentCents: number;
+  }
+>(functions, 'confirmGamePresence');
 
 export const toggleFollowUser = httpsCallable<
   { targetUserId: string; follow?: boolean },

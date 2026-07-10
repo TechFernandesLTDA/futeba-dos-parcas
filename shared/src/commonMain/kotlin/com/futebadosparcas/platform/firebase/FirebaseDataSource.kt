@@ -155,7 +155,7 @@ expect class FirebaseDataSource() {
     suspend fun addGameEvent(gameId: String, event: GameEvent): Result<GameEvent>
     suspend fun getGameEvents(gameId: String): Result<List<GameEvent>>
     fun getGameEventsFlow(gameId: String): Flow<Result<List<GameEvent>>>
-    fun getLiveScoreFlow(gameId: String): Flow<Result<LiveScore>>
+    fun getLiveScoreFlow(gameId: String): Flow<Result<LiveScore?>>
 
     // ========== GROUPS MANAGEMENT ==========
 

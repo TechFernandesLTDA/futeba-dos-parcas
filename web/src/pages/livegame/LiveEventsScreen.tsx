@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
@@ -36,7 +36,21 @@ import {
   TrendingUp as TrendingIcon,
   Person as PersonIcon,
 } from '@mui/icons-material';
-import { collection, query, where, orderBy, onSnapshot, doc, getDoc } from 'firebase/firestore';
+import {
+  collection,
+  query,
+  where,
+  orderBy,
+  onSnapshot,
+  doc,
+  getDoc,
+  getDocs,
+  limit,
+  startAfter,
+  documentId,
+  type DocumentData,
+  type QueryDocumentSnapshot,
+} from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { submitLiveGameEvent } from '../../services/cloudFunctions';
 import { useAuth } from '../../contexts/AuthContext';
@@ -51,8 +65,17 @@ import { getFirestoreErrorMessage } from '../../utils/firebaseErrors';
 import { PageContainer } from '../../components/common/PageContainer';
 import { pageSpacing } from '../../theme/pageTokens';
 import type { Team } from '../../types/game';
+import { mergeRealtimePageById } from '../../hooks/realtimePageMerge';
 
 const logger = createLogger('LiveEventsScreen');
+const EVENT_PAGE_SIZE = 50;
+
+function createEventRequestId(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return `${Date.now()}_${Math.random().toString(36).slice(2, 14)}`;
+}
 
 interface GameEvent {
   id: string;
@@ -78,6 +101,22 @@ interface RawGameOwner {
   owner_id?: string;
 }
 
+function mapGameEvent(eventDoc: QueryDocumentSnapshot<DocumentData>): GameEvent {
+  const raw = eventDoc.data();
+  const converted = snakeToCamel(raw);
+  return {
+    id: eventDoc.id,
+    type: String(converted.eventType ?? converted.type ?? 'GOAL') as GameEvent['type'],
+    playerId: String(converted.playerId ?? raw.player_id ?? ''),
+    playerName: String(converted.playerName ?? raw.player_name ?? 'Jogador'),
+    teamId: typeof (converted.teamId ?? raw.team_id) === 'string'
+      ? String(converted.teamId ?? raw.team_id)
+      : undefined,
+    minute: Number(converted.minute ?? raw.minute ?? 0),
+    createdAt: (raw.created_at || raw.createdAt)?.toDate?.() || new Date(),
+  };
+}
+
 export const LiveEventsScreen: React.FC = () => {
   const { t } = useTranslation();
   useDocumentTitle(t('page.title.liveEvents'));
@@ -89,6 +128,10 @@ export const LiveEventsScreen: React.FC = () => {
 
   const [events, setEvents] = useState<GameEvent[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const [eventsError, setEventsError] = useState<string | null>(null);
+  const [eventsRetryKey, setEventsRetryKey] = useState(0);
   const [canManage, setCanManage] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [eventType, setEventType] = useState<'GOAL' | 'YELLOW_CARD' | 'RED_CARD' | 'SAVE'>('GOAL');
@@ -104,6 +147,20 @@ export const LiveEventsScreen: React.FC = () => {
   const { showError } = useToast();
   const showErrorRef = useRef(showError);
   showErrorRef.current = showError;
+  const oldestEventDocRef = useRef<QueryDocumentSnapshot<DocumentData> | null>(null);
+  const historyLoadedRef = useRef(false);
+  const activeEventsGameIdRef = useRef<string | null>(null);
+  const pendingEventRequestIdRef = useRef<string | null>(null);
+  const openEventDialog = () => {
+    pendingEventRequestIdRef.current ??= createEventRequestId();
+    setDialogOpen(true);
+  };
+  const closeEventDialog = () => {
+    pendingEventRequestIdRef.current = null;
+    setDialogOpen(false);
+    setSelectedPlayerTouched(false);
+    setMinuteTouched(false);
+  };
   const retryRosterListeners = () => {
     setRosterError(null);
     setRosterRetryKey((current) => current + 1);
@@ -135,39 +192,118 @@ export const LiveEventsScreen: React.FC = () => {
   }, [gameId, user]);
 
   useEffect(() => {
-    if (!gameId) return;
+    if (!gameId) {
+      setEvents([]);
+      setEventsError(t('games.notFound'));
+      setLoading(false);
+      return undefined;
+    }
+
+    let cancelled = false;
+    if (activeEventsGameIdRef.current !== gameId) {
+      activeEventsGameIdRef.current = gameId;
+      setEvents([]);
+      setHasMore(false);
+      oldestEventDocRef.current = null;
+      historyLoadedRef.current = false;
+    }
+    setLoading(true);
+    setEventsError(null);
 
     const eventsRef = collection(db, 'game_events');
-    const q = query(eventsRef, where('game_id', '==', gameId), orderBy('created_at', 'desc'));
+    const q = query(
+      eventsRef,
+      where('game_id', '==', gameId),
+      orderBy('created_at', 'desc'),
+      orderBy(documentId(), 'desc'),
+      limit(EVENT_PAGE_SIZE),
+    );
 
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
-        const data = snapshot.docs.map((d) => {
-          const raw = d.data();
-          const converted = snakeToCamel(raw);
-          return {
-            id: d.id,
-            type: String(converted.eventType ?? converted.type ?? 'GOAL') as GameEvent['type'],
-            playerId: String(converted.playerId ?? raw.player_id ?? ''),
-            playerName: String(converted.playerName ?? raw.player_name ?? 'Jogador'),
-            teamId: typeof (converted.teamId ?? raw.team_id) === 'string' ? String(converted.teamId ?? raw.team_id) : undefined,
-            minute: Number(converted.minute ?? raw.minute ?? 0),
-            createdAt: (raw.created_at || raw.createdAt)?.toDate?.() || new Date(),
-          } satisfies GameEvent;
-        }) as GameEvent[];
-        setEvents(data);
+        if (cancelled) return;
+        const snapshotIds = snapshot.docs.map((eventDoc) => eventDoc.id);
+        const liveEvents = snapshot.docs.map(mapGameEvent);
+        setEvents((current) => mergeRealtimePageById(current, liveEvents, snapshotIds, 'prepend'));
+
+        if (!historyLoadedRef.current) {
+          setHasMore(snapshot.size === EVENT_PAGE_SIZE);
+          oldestEventDocRef.current = snapshot.docs[snapshot.docs.length - 1] ?? null;
+        }
+
+        // A removed change in a limited query can mean either a real deletion or
+        // a document shifted past the live window. Confirm existence so loaded
+        // history is not accidentally truncated when a new event arrives.
+        const removedDocs = snapshot.docChanges().filter((change) => change.type === 'removed');
+        if (removedDocs.length > 0) {
+          void Promise.all(removedDocs.map(async (change) => ({
+            id: change.doc.id,
+            exists: (await getDoc(change.doc.ref)).exists(),
+          }))).then((removedStates) => {
+            if (cancelled) return;
+            const deletedIds = new Set(
+              removedStates.filter((removed) => !removed.exists).map((removed) => removed.id),
+            );
+            if (deletedIds.size > 0) {
+              setEvents((current) => current.filter((event) => !deletedIds.has(event.id)));
+            }
+          }).catch((error) => {
+            logger.error('Error resolving removed live game events:', error);
+          });
+        }
+
+        setEventsError(null);
         setLoading(false);
       },
       (err) => {
+        if (cancelled) return;
         logger.error('Error in live game events listener:', err);
-        showErrorRef.current('Erro ao carregar eventos do jogo.');
+        const message = getFirestoreErrorMessage(err, 'Erro ao carregar eventos do jogo.');
+        setEventsError(message);
+        showErrorRef.current(message);
         setLoading(false);
       }
     );
 
-    return () => unsubscribe();
-  }, [gameId]);
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
+  }, [eventsRetryKey, gameId, t]);
+
+  const loadMoreEvents = useCallback(async () => {
+    if (!gameId || !oldestEventDocRef.current || loadingMore || !hasMore) return;
+    const cursor = oldestEventDocRef.current;
+    setLoadingMore(true);
+    try {
+      const olderQuery = query(
+        collection(db, 'game_events'),
+        where('game_id', '==', gameId),
+        orderBy('created_at', 'desc'),
+        orderBy(documentId(), 'desc'),
+        startAfter(cursor),
+        limit(EVENT_PAGE_SIZE),
+      );
+      const snapshot = await getDocs(olderQuery);
+      const olderEvents = snapshot.docs.map(mapGameEvent);
+      const olderIds = snapshot.docs.map((eventDoc) => eventDoc.id);
+      oldestEventDocRef.current = snapshot.docs[snapshot.docs.length - 1] ?? cursor;
+      historyLoadedRef.current = true;
+      setHasMore(snapshot.size === EVENT_PAGE_SIZE);
+      setEvents((current) => mergeRealtimePageById(current, olderEvents, olderIds, 'append'));
+    } catch (error) {
+      logger.error('Error loading older live game events:', error);
+      showErrorRef.current(getFirestoreErrorMessage(error, 'Erro ao carregar eventos anteriores.'));
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [gameId, hasMore, loadingMore]);
+
+  const retryEventsListener = useCallback(() => {
+    setEventsError(null);
+    setEventsRetryKey((current) => current + 1);
+  }, []);
 
   useEffect(() => {
     if (!gameId) return;
@@ -262,15 +398,18 @@ export const LiveEventsScreen: React.FC = () => {
         return;
       }
 
+      const requestId = pendingEventRequestIdRef.current ?? createEventRequestId();
+      pendingEventRequestIdRef.current = requestId;
       await submitLiveGameEvent({
         gameId,
+        requestId,
         eventType,
         playerId: selectedPlayer.id,
         playerName: selectedPlayer.name,
         teamId: selectedPlayer.teamId,
         minute: parseInt(minute, 10) || 0,
       });
-      setDialogOpen(false);
+      closeEventDialog();
       setSelectedPlayerId('');
       setMinute('0');
     } catch (err: unknown) {
@@ -365,7 +504,7 @@ export const LiveEventsScreen: React.FC = () => {
             <Button
               variant="contained"
               startIcon={<AddIcon />}
-              onClick={() => setDialogOpen(true)}
+              onClick={openEventDialog}
               sx={{ display: { xs: 'none', md: 'inline-flex' } }}
             >
               Adicionar Evento
@@ -375,6 +514,19 @@ export const LiveEventsScreen: React.FC = () => {
       </Box>
 
       <PageContainer maxWidth="list">
+        {eventsError && (
+          <Alert
+            severity="error"
+            sx={{ mb: 2 }}
+            action={
+              <Button color="inherit" size="small" onClick={retryEventsListener}>
+                {t('common.retry')}
+              </Button>
+            }
+          >
+            {eventsError}
+          </Alert>
+        )}
         {rosterError && (
           <Alert
             severity="error"
@@ -390,45 +542,64 @@ export const LiveEventsScreen: React.FC = () => {
         )}
         {loading ? (
           <LoadingState shimmerCount={6} itemType="LIST" />
-        ) : events.length === 0 ? (
+        ) : events.length === 0 && !eventsError ? (
           <EmptyState
             icon={<SoccerIcon />}
             title={t('empty.noEvent')}
             description={t('empty.noEventDesc')}
           />
-        ) : (
-          <List disablePadding aria-label={t('a11y.gameEvents')}>
-            {events.map((event, _index) => {
-              const eventStyle = getEventStyle(event.type);
-              return (
-              <Card key={event.id} sx={{ mb: 1, ...eventStyle, borderWidth: 1, borderStyle: 'solid' }}>
-                <ListItem sx={{ py: 1.5 }}>
-                  <ListItemAvatar>
-                    {/* #2213: avatar decorativo (ícone do evento) — texto adjacente já descreve. */}
-                    <Avatar aria-hidden="true" sx={{ bgcolor: alpha(theme.palette.primary.main, 0.1) }}>
-                      {getEventIcon(event.type)}
-                    </Avatar>
-                  </ListItemAvatar>
-                  <ListItemText
-                    primary={
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        {event.playerName}
-                        <Chip
-                          label={getEventLabel(event.type)}
-                          size="small"
-                          color={event.type === 'GOAL' ? 'success' : event.type === 'RED_CARD' ? 'error' : 'default'}
-                        />
-                      </Box>
-                    }
-                        secondary={event.teamId ? (teamsById[event.teamId]?.name ?? event.teamId) : 'Time não identificado'}
-                  />
-                  <Chip label={`${event.minute}'`} variant="outlined" />
-                </ListItem>
-              </Card>
-              );
-            })}
-          </List>
-        )}
+        ) : events.length > 0 ? (
+          <>
+            <List disablePadding aria-label={t('a11y.gameEvents')}>
+              {events.map((event) => {
+                const eventStyle = getEventStyle(event.type);
+                return (
+                <Card key={event.id} sx={{ mb: 1, ...eventStyle, borderWidth: 1, borderStyle: 'solid' }}>
+                  <ListItem sx={{ py: 1.5 }}>
+                    <ListItemAvatar>
+                      {/* #2213: avatar decorativo (ícone do evento) — texto adjacente já descreve. */}
+                      <Avatar aria-hidden="true" sx={{ bgcolor: alpha(theme.palette.primary.main, 0.1) }}>
+                        {getEventIcon(event.type)}
+                      </Avatar>
+                    </ListItemAvatar>
+                    <ListItemText
+                      primary={
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          {event.playerName}
+                          <Chip
+                            label={getEventLabel(event.type)}
+                            size="small"
+                            color={event.type === 'GOAL' ? 'success' : event.type === 'RED_CARD' ? 'error' : 'default'}
+                          />
+                        </Box>
+                      }
+                      secondary={event.teamId ? (teamsById[event.teamId]?.name ?? event.teamId) : 'Time não identificado'}
+                    />
+                    <Chip label={`${event.minute}'`} variant="outlined" />
+                  </ListItem>
+                </Card>
+                );
+              })}
+            </List>
+            {hasMore && (
+              <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+                <Button
+                  variant="outlined"
+                  onClick={loadMoreEvents}
+                  disabled={loadingMore}
+                  aria-label={t('common.loadMore', { defaultValue: 'Carregar mais' })}
+                >
+                  {loadingMore ? (
+                    <>
+                      <CircularProgress size={18} sx={{ mr: 1 }} />
+                      {t('common.loadingMore', { defaultValue: 'Carregando mais...' })}
+                    </>
+                  ) : t('common.loadMore', { defaultValue: 'Carregar mais' })}
+                </Button>
+              </Box>
+            )}
+          </>
+        ) : null}
       </PageContainer>
 
       {/* #2178: ScreenFab padronizado — #2161: acima da bottom nav */}
@@ -436,7 +607,7 @@ export const LiveEventsScreen: React.FC = () => {
         <ScreenFab
           icon={<AddIcon />}
           aria-label={t('a11y.addEvent')}
-          onClick={() => setDialogOpen(true)}
+          onClick={openEventDialog}
           sx={{
             display: { xs: 'flex', md: 'none' },
             bottom: { xs: pageSpacing.bottomBarHeight + 16, md: 24 },
@@ -445,7 +616,7 @@ export const LiveEventsScreen: React.FC = () => {
         />
       )}
 
-      <Dialog open={dialogOpen} onClose={() => { setDialogOpen(false); setSelectedPlayerTouched(false); setMinuteTouched(false); }} fullWidth fullScreen={isMobile} aria-labelledby="add-event-dialog-title">
+      <Dialog open={dialogOpen} onClose={() => { if (!submitting) closeEventDialog(); }} fullWidth fullScreen={isMobile} aria-labelledby="add-event-dialog-title">
         <DialogTitle id="add-event-dialog-title">{t('games.live.addEvent')}</DialogTitle>
         <DialogContent>
           <Box sx={{ py: 2 }}>
@@ -509,7 +680,7 @@ export const LiveEventsScreen: React.FC = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDialogOpen(false)} disabled={submitting}>{t('common.cancel')}</Button>
+          <Button onClick={closeEventDialog} disabled={submitting}>{t('common.cancel')}</Button>
           <Button
             variant="contained"
             onClick={handleAddEvent}

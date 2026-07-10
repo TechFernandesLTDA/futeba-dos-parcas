@@ -19,8 +19,10 @@ const mockLimit = vi.fn();
 const mockBatchSet = vi.fn();
 const mockBatchUpdate = vi.fn();
 const mockBatchCommit = vi.fn().mockResolvedValue(undefined);
-// mockGetDocs é usado pelos testes de useGames (migrado para useQuery/getDocs)
+const mockConfirmGamePresence = vi.fn();
 const mockGetDocs = vi.fn().mockResolvedValue({ docs: [] });
+let mockGamesSnapshotNext: ((snapshot: { docs: any[] }) => void) | undefined;
+let mockGamesSnapshotError: ((error: Error) => void) | undefined;
 
 vi.mock('firebase/firestore', () => {
   // Timestamp precisa ser classe/construtora para instanceof funcionar em
@@ -62,6 +64,10 @@ vi.mock('../services/firebase', () => ({
   auth: { currentUser: null },
 }));
 
+vi.mock('../services/cloudFunctions', () => ({
+  confirmGamePresence: (...args: unknown[]) => mockConfirmGamePresence(...args),
+}));
+
 const mockUseAuth = vi.fn(() => ({
   user: { id: 'test-user-id', name: 'Test User', photoUrl: null, level: 5 },
   firebaseUser: { uid: 'test-user-id', displayName: 'Test User', photoURL: null },
@@ -101,9 +107,14 @@ describe('useGames', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockBatchCommit.mockResolvedValue(undefined);
-    // useGames usa useQuery/getDocs (migrado de onSnapshot em #2351)
     mockGetDocs.mockResolvedValue({ docs: [] });
-    mockOnSnapshot.mockReturnValue(vi.fn()); // useGameDetail ainda usa onSnapshot
+    mockGamesSnapshotNext = undefined;
+    mockGamesSnapshotError = undefined;
+    mockOnSnapshot.mockImplementation((_reference, next, error) => {
+      mockGamesSnapshotNext = next;
+      mockGamesSnapshotError = error;
+      return vi.fn();
+    });
     mockQuery.mockReturnValue('mock-query');
     mockCollection.mockReturnValue('mock-collection');
     mockOrderBy.mockReturnValue('mock-order');
@@ -114,16 +125,17 @@ describe('useGames', () => {
     expect(result.current.loading).toBe(true);
   });
 
-  it('configura query na coleção games via getDocs', () => {
-    // useGames foi migrado de onSnapshot → useQuery/getDocs (#2351).
+  it('configura listener na coleção games', () => {
     renderHook(() => useGames(), { wrapper: createTestWrapper() });
     expect(mockCollection).toHaveBeenCalledWith({}, 'games');
   });
 
-  it('retorna jogos quando getDocs emite dados', async () => {
-    // useGames usa useQuery/getDocs — simular retorno via mockGetDocs.
-    mockGetDocs.mockResolvedValueOnce({
-      docs: [
+  it('retorna jogos quando o snapshot emite dados', async () => {
+    const { result } = renderHook(() => useGames(), { wrapper: createTestWrapper() });
+
+    act(() => {
+      mockGamesSnapshotNext?.({
+        docs: [
         {
           id: 'game-1',
           data: () => ({
@@ -132,10 +144,9 @@ describe('useGames', () => {
             dateTime: { toDate: () => new Date('2026-01-01') },
           }),
         },
-      ],
+        ],
+      });
     });
-
-    const { result } = renderHook(() => useGames(), { wrapper: createTestWrapper() });
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
@@ -176,11 +187,9 @@ describe('useGames', () => {
     expect(mockOrderBy).toHaveBeenCalledWith('dateTime', 'desc');
   });
 
-  it('trata erros do getDocs', async () => {
-    // useGames usa useQuery/getDocs — simular erro via mockRejectedValue.
-    mockGetDocs.mockRejectedValueOnce(new Error('Firestore error'));
-
+  it('trata erros do listener', async () => {
     const { result } = renderHook(() => useGames(), { wrapper: createTestWrapper() });
+    act(() => mockGamesSnapshotError?.(new Error('Firestore error')));
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
@@ -189,19 +198,18 @@ describe('useGames', () => {
     expect(result.current.error).toBe('Firestore error');
   });
 
-  it('usa getDocs (não onSnapshot) para buscar jogos', () => {
-    // useGames usa useQuery/getDocs — não cria listener onSnapshot.
-    // Garantir que a collection 'games' é consultada via getDocs.
+  it('usa onSnapshot sem fetch duplicado por getDocs', () => {
     renderHook(() => useGames(), { wrapper: createTestWrapper() });
     expect(mockCollection).toHaveBeenCalledWith({}, 'games');
-    // onSnapshot NÃO deve ser chamado pelo hook useGames principal
-    expect(mockOnSnapshot).not.toHaveBeenCalled();
+    expect(mockOnSnapshot).toHaveBeenCalledOnce();
+    expect(mockGetDocs).not.toHaveBeenCalled();
   });
 
   it('exclui jogos com deletedAt do resultado', async () => {
-    // useGames usa getDocs e filtra deletedAt no lado cliente.
-    mockGetDocs.mockResolvedValueOnce({
-      docs: [
+    const { result } = renderHook(() => useGames(), { wrapper: createTestWrapper() });
+    act(() => {
+      mockGamesSnapshotNext?.({
+        docs: [
         {
           id: 'game-1',
           data: () => ({
@@ -218,10 +226,9 @@ describe('useGames', () => {
             deleted_at: new Date(),
           }),
         },
-      ],
+        ],
+      });
     });
-
-    const { result } = renderHook(() => useGames(), { wrapper: createTestWrapper() });
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
@@ -332,139 +339,66 @@ describe('useConfirmPresence', () => {
     });
     mockGetDocs.mockResolvedValue({ docs: [] });
     mockDeleteDoc.mockResolvedValue(undefined);
+    mockConfirmGamePresence.mockResolvedValue({
+      data: {
+        success: true,
+        alreadyConfirmed: false,
+        confirmationId: 'game-1_test-user-id',
+        position: 'FIELD',
+        expectedPayment: 87.5,
+        expectedPaymentCents: 8750,
+      },
+    });
   });
 
-  it('cria confirmação com o padrão correto de doc ID (gameId_userId)', async () => {
+  it('confirma presença exclusivamente pelo callable canônico', async () => {
     const { result } = renderHook(() => useConfirmPresence(), { wrapper: createTestWrapper() });
 
     await act(async () => {
-      await result.current.confirmPresence('game-1');
+      await result.current.confirmPresence('game-1', 'GOALKEEPER');
     });
 
-    // Verifica que o doc ID é determinístico
-    expect(mockDoc).toHaveBeenCalledWith({}, 'confirmations', 'game-1_test-user-id');
-  });
-
-  it('grava o valor esperado da confirmação a partir do daily_price proporcional do jogo', async () => {
-    const { result } = renderHook(() => useConfirmPresence(), { wrapper: createTestWrapper() });
-
-    await act(async () => {
-      await result.current.confirmPresence('game-1');
+    expect(mockConfirmGamePresence).toHaveBeenCalledWith({
+      gameId: 'game-1',
+      position: 'GOALKEEPER',
+      isCasualPlayer: false,
     });
-
-    expect(mockSetDoc).toHaveBeenCalledWith(
-      'mock-doc-ref',
-      expect.objectContaining({
-        payment_status: 'PENDING',
-        partial_payment: 0,
-        expected_payment: 87.5,
-        expected_payment_cents: 8750,
-      })
-    );
-  });
-
-  it('bloqueia confirmação quando o jogo não aceita mais confirmações', async () => {
-    mockGetDoc.mockResolvedValueOnce({
-      id: 'game-1',
-      exists: () => true,
-      data: () => ({
-        status: 'LIVE',
-        daily_price: 87.5,
-        total_cost: 700,
-        max_players: 8,
-        max_goalkeepers: 2,
-        dateTime: new Date('2026-08-10T19:00:00'),
-      }),
-    });
-
-    const { result } = renderHook(() => useConfirmPresence(), { wrapper: createTestWrapper() });
-
-    await expect(
-      act(async () => {
-        await result.current.confirmPresence('game-1');
-      }),
-    ).rejects.toThrow('Este jogo não aceita mais confirmações.');
-
     expect(mockSetDoc).not.toHaveBeenCalled();
   });
 
-  it('bloqueia confirmação quando o horário do jogo já passou', async () => {
-    mockGetDoc.mockResolvedValueOnce({
-      id: 'game-1',
-      exists: () => true,
-      data: () => ({
-        status: 'SCHEDULED',
-        daily_price: 87.5,
-        total_cost: 700,
-        max_players: 8,
-        max_goalkeepers: 2,
-        dateTime: new Date('2020-08-10T19:00:00'),
-      }),
+  it('trata retry idempotente do callable como sucesso', async () => {
+    mockConfirmGamePresence.mockResolvedValueOnce({
+      data: {
+        success: true,
+        alreadyConfirmed: true,
+        confirmationId: 'game-1_test-user-id',
+        position: 'FIELD',
+        expectedPayment: 87.5,
+        expectedPaymentCents: 8750,
+      },
+    });
+    const { result } = renderHook(() => useConfirmPresence(), { wrapper: createTestWrapper() });
+
+    let succeeded = false;
+    await act(async () => {
+      succeeded = await result.current.confirmPresence('game-1');
     });
 
+    expect(succeeded).toBe(true);
+    expect(mockConfirmGamePresence).toHaveBeenCalledTimes(1);
+  });
+
+  it('propaga rejeição de capacidade retornada pelo servidor', async () => {
+    mockConfirmGamePresence.mockRejectedValueOnce(new Error('Este jogo já está lotado.'));
     const { result } = renderHook(() => useConfirmPresence(), { wrapper: createTestWrapper() });
 
     await expect(
       act(async () => {
         await result.current.confirmPresence('game-1');
       }),
-    ).rejects.toThrow('Não é possível confirmar presença depois do horário do jogo.');
+    ).rejects.toThrow('Este jogo já está lotado.');
 
     expect(mockSetDoc).not.toHaveBeenCalled();
-  });
-
-  it('bloqueia confirmação quando a lista já está cheia', async () => {
-    mockGetDocs.mockResolvedValueOnce({
-      docs: Array.from({ length: 8 }, (_, index) => ({
-        data: () => ({
-          status: 'CONFIRMED',
-          user_id: `user-${index}`,
-          position: 'FIELD',
-        }),
-      })),
-    });
-
-    const { result } = renderHook(() => useConfirmPresence(), { wrapper: createTestWrapper() });
-
-    await expect(
-      act(async () => {
-        await result.current.confirmPresence('game-1');
-      }),
-    ).rejects.toThrow('Lista Cheia');
-  });
-
-  it('permite jogador de linha mesmo quando as vagas de goleiro estão cheias', async () => {
-    mockGetDocs.mockResolvedValueOnce({
-      docs: [
-        { data: () => ({ status: 'CONFIRMED', user_id: 'gk-1', position: 'GOALKEEPER' }) },
-        { data: () => ({ status: 'CONFIRMED', user_id: 'gk-2', position: 'GOALKEEPER' }) },
-      ],
-    });
-
-    const { result } = renderHook(() => useConfirmPresence(), { wrapper: createTestWrapper() });
-
-    await act(async () => {
-      await result.current.confirmPresence('game-1', 'FIELD');
-    });
-
-    expect(mockSetDoc).toHaveBeenCalled();
-  });
-
-  it('bloqueia confirmação de goleiro quando as vagas de goleiro acabaram', async () => {
-    mockGetDocs.mockResolvedValueOnce({
-      docs: [
-        { data: () => ({ status: 'CONFIRMED', user_id: 'gk-1', position: 'GOALKEEPER' }) },
-        { data: () => ({ status: 'CONFIRMED', user_id: 'gk-2', position: 'GOALKEEPER' }) },
-      ],
-    });
-
-    const { result } = renderHook(() => useConfirmPresence(), { wrapper: createTestWrapper() });
-
-    await expect(
-      act(async () => {
-        await result.current.confirmPresence('game-1', 'GOALKEEPER');
-      }),
-    ).rejects.toThrow('As vagas de goleiro já foram preenchidas.');
   });
 
   it('exige autenticação para confirmar presença', async () => {

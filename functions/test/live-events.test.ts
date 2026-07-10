@@ -1,6 +1,7 @@
 const mockRunTransaction = jest.fn();
 const mockCollection = jest.fn();
 const mockTeamsGet = jest.fn();
+const mockDirectGet = jest.fn();
 
 let generatedEventCounter = 0;
 
@@ -16,6 +17,7 @@ jest.mock("firebase-admin", () => {
 
   mockAdmin.firestore.FieldValue = {
     serverTimestamp: jest.fn(() => ({_type: "ServerTimestamp"})),
+    increment: jest.fn((value: number) => ({_type: "Increment", value})),
   };
 
   return mockAdmin;
@@ -49,6 +51,7 @@ function makeDocRef(collectionName: string, id?: string) {
     id: resolvedId,
     path: `${collectionName}/${resolvedId}`,
     collectionName,
+    get: jest.fn(() => mockDirectGet(`${collectionName}/${resolvedId}`)),
   };
 }
 
@@ -63,6 +66,17 @@ beforeEach(() => {
   jest.clearAllMocks();
   jest.resetModules();
   generatedEventCounter = 0;
+  mockDirectGet.mockImplementation((path: string) => {
+    if (path.startsWith("live_scores/")) {
+      return Promise.resolve(makeSnapshot({
+        team1_id: "teamA",
+        team2_id: "teamB",
+        team1_score: 0,
+        team2_score: 0,
+      }));
+    }
+    return Promise.resolve(makeSnapshot(undefined));
+  });
 
   mockCollection.mockImplementation((collectionName: string) => ({
     doc: jest.fn((id?: string) => makeDocRef(collectionName, id)),
@@ -214,7 +228,7 @@ describe("live game event callables", () => {
     });
   });
 
-  test("submitLiveGameEvent registra GOAL e atualiza placar/stats no servidor", async () => {
+  test("submitLiveGameEvent registra GOAL com projeção atômica sem atualizar games", async () => {
     const txSet = jest.fn();
     const txUpdate = jest.fn();
 
@@ -224,6 +238,19 @@ describe("live game event callables", () => {
         {id: "teamB", data: () => ({player_ids: ["player2"]})},
       ],
     });
+    mockDirectGet
+      .mockResolvedValueOnce(makeSnapshot({
+        team1_id: "teamA",
+        team2_id: "teamB",
+        team1_score: 0,
+        team2_score: 0,
+      }))
+      .mockResolvedValueOnce(makeSnapshot({
+        team1_id: "teamA",
+        team2_id: "teamB",
+        team1_score: 1,
+        team2_score: 0,
+      }));
 
     mockRunTransaction.mockImplementation(async (callback: any) => callback({
       get: jest.fn((ref: {path: string}) => {
@@ -284,22 +311,19 @@ describe("live game event callables", () => {
         event_type: "GOAL",
         player_id: "player1",
         assisted_by_id: "assist1",
+        score_field: "team1_score",
       }),
     );
     expect(txSet).toHaveBeenCalledWith(
       expect.objectContaining({path: "live_scores/game1"}),
       expect.objectContaining({
-        team1_score: 1,
-        team2_score: 0,
+        team1_score: expect.anything(),
       }),
       {merge: true},
     );
-    expect(txUpdate).toHaveBeenCalledWith(
+    expect(txUpdate).not.toHaveBeenCalledWith(
       expect.objectContaining({path: "games/game1"}),
-      expect.objectContaining({
-        team1_score: 1,
-        team2_score: 0,
-      }),
+      expect.anything(),
     );
   });
 
@@ -312,6 +336,12 @@ describe("live game event callables", () => {
         {id: "teamB", data: () => ({player_ids: ["player2"]})},
       ],
     });
+    mockDirectGet.mockResolvedValue(makeSnapshot({
+      team1_id: "teamA",
+      team2_id: "teamB",
+      team1_score: 2,
+      team2_score: 1,
+    }));
     mockRunTransaction.mockImplementation(async (callback: any) => callback({
       get: jest.fn((ref: {path: string}) => {
         if (ref.path === "games/game1") {
@@ -378,6 +408,19 @@ describe("live game event callables", () => {
         {id: "teamB", data: () => ({player_ids: ["player2"]})},
       ],
     });
+    mockDirectGet
+      .mockResolvedValueOnce(makeSnapshot({
+        team1_id: "teamA",
+        team2_id: "teamB",
+        team1_score: 2,
+        team2_score: 1,
+      }))
+      .mockResolvedValueOnce(makeSnapshot({
+        team1_id: "teamA",
+        team2_id: "teamB",
+        team1_score: 1,
+        team2_score: 1,
+      }));
 
     mockRunTransaction.mockImplementation(async (callback: any) => callback({
       get: jest.fn((ref: {path: string}) => {
@@ -394,6 +437,7 @@ describe("live game event callables", () => {
               event_type: "GOAL",
               player_id: "player1",
               team_id: "teamA",
+              score_field: "team1_score",
               created_by: "owner1",
               assisted_by_id: "assist1",
             }));
@@ -450,8 +494,7 @@ describe("live game event callables", () => {
     expect(txSet).toHaveBeenCalledWith(
       expect.objectContaining({path: "live_scores/game1"}),
       expect.objectContaining({
-        team1_score: 1,
-        team2_score: 1,
+        team1_score: expect.anything(),
       }),
       {merge: true},
     );
@@ -531,4 +574,97 @@ describe("live game event callables", () => {
       ),
     ).toBe(false);
   });
+
+  test("rajadas preservam exatamente 100 eventos no mesmo jogo e 1000 em 50 jogos", async () => {
+    const events = new Map<string, Record<string, unknown>>();
+    const scores = new Map<string, number>();
+    let transactionQueue = Promise.resolve();
+
+    mockTeamsGet.mockResolvedValue({
+      docs: [
+        {id: "teamA", data: () => ({player_ids: ["player1"]})},
+        {id: "teamB", data: () => ({player_ids: ["player2"]})},
+      ],
+    });
+    mockDirectGet.mockImplementation((path: string) => {
+      const gameId = path.split("/")[1];
+      return Promise.resolve(makeSnapshot({
+        team1_id: "teamA",
+        team2_id: "teamB",
+        team1_score: scores.get(gameId) ?? 0,
+        team2_score: 0,
+      }));
+    });
+    mockRunTransaction.mockImplementation((callback: any) => {
+      const run = transactionQueue.then(async () => callback({
+        get: jest.fn((ref: {path: string}) => {
+          if (ref.path.startsWith("games/")) {
+            return Promise.resolve(makeSnapshot({
+              owner_id: "owner1",
+              status: "LIVE",
+              co_organizers: [],
+            }));
+          }
+          if (ref.path.startsWith("game_events/")) {
+            return Promise.resolve(makeSnapshot(events.get(ref.path)));
+          }
+          if (ref.path.startsWith("confirmations/")) {
+            return Promise.resolve(makeSnapshot({status: "CONFIRMED"}));
+          }
+          return Promise.resolve(makeSnapshot(undefined));
+        }),
+        set: jest.fn((ref: {path: string}, data: Record<string, unknown>) => {
+          if (ref.path.startsWith("game_events/")) {
+            events.set(ref.path, data);
+          } else if (
+            ref.path.startsWith("live_scores/") &&
+            data.team1_score !== undefined
+          ) {
+            const gameId = ref.path.split("/")[1];
+            scores.set(gameId, (scores.get(gameId) ?? 0) + 1);
+          }
+        }),
+        update: jest.fn(),
+      }));
+      transactionQueue = run.then(() => undefined, () => undefined);
+      return run;
+    });
+
+    const {submitLiveGameEvent} = require("../src/games/live-events");
+    const submit = (gameId: string, requestId: string) =>
+      submitLiveGameEvent(makeRequest({
+        gameId,
+        requestId,
+        eventType: "GOAL",
+        playerId: "player1",
+        playerName: "Player 1",
+        teamId: "teamA",
+      }));
+
+    const sameGameIds = Array.from(
+      {length: 100},
+      (_, index) => `same${index.toString().padStart(5, "0")}`,
+    );
+    await Promise.all([
+      ...sameGameIds.map((requestId) => submit("hot-game", requestId)),
+      ...sameGameIds.map((requestId) => submit("hot-game", requestId)),
+    ]);
+    expect(scores.get("hot-game")).toBe(100);
+    expect(
+      [...events.keys()].filter((path) => path.includes("hot-game_")),
+    ).toHaveLength(100);
+
+    await Promise.all(Array.from({length: 1000}, (_, index) => {
+      const gameId = `game-${index % 50}`;
+      return submit(
+        gameId,
+        `bulk${index.toString().padStart(5, "0")}`,
+      );
+    }));
+
+    for (let gameIndex = 0; gameIndex < 50; gameIndex += 1) {
+      expect(scores.get(`game-${gameIndex}`)).toBe(20);
+    }
+    expect(events.size).toBe(1100);
+  }, 30000);
 });

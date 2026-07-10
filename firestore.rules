@@ -1391,9 +1391,9 @@ service cloud.firestore {
       //   - user_id != self (impede self-confirmation via summon)
       //   - doc-id pattern enforcement (mesmo que self-create)
       //   - status PENDING obrigatorio (impede pre-CONFIRMED falso)
-      // C-003 FIX: Usuario pode criar sua propria confirmacao com validação de ID
-      // ID deve seguir padrao: {gameId}_{userId}
-      // OU o dono do jogo pode criar convites (summon) para outros
+      // #3501: CONFIRMED e escrito exclusivamente pelo callable transacional
+      // confirmGamePresence. Cliente so pode criar summon PENDING; cancelamento,
+      // waitlist e server writes continuam com seus fluxos existentes.
       // #1018: isAdmin() nunca pode ficar bloqueado por isVerifiedOrGrace() — admin é sempre permitido
       // #2154: whitelist de campos expandida para schema real do Web (id, user_name,
       // user_photo, is_casual_player) alem dos campos base. Bloqueia self-injection
@@ -1411,18 +1411,12 @@ service cloud.firestore {
                        isNonNegativeNumber(request.resource.data.get('expected_payment_cents', 0)) &&
                        request.resource.data.get('expected_payment', 0) <= 500 &&
                        request.resource.data.get('expected_payment_cents', 0) <= 50000 &&
+                       request.resource.data.get('status', 'PENDING') == 'PENDING' &&
                        ((
-                         // Self-confirm: exige jogo existente, status != CANCELLED/FINISHED
-                         request.resource.data.user_id == userId() &&
-                         isValidConfirmationId(confirmationId, request.resource.data.game_id, userId()) &&
-                         exists(/databases/$(database)/documents/games/$(request.resource.data.game_id)) &&
-                         get(/databases/$(database)/documents/games/$(request.resource.data.game_id)).data.status in ['SCHEDULED', 'CONFIRMED']
-                       ) || (
                          // Summon by game owner
                          isGameOwner(request.resource.data.game_id) &&
                          request.resource.data.user_id != userId() &&
-                         isValidConfirmationId(confirmationId, request.resource.data.game_id, request.resource.data.user_id) &&
-                         request.resource.data.get('status', 'PENDING') == 'PENDING'
+                         isValidConfirmationId(confirmationId, request.resource.data.game_id, request.resource.data.user_id)
                        ) ||
                         isAdmin());
 
@@ -1438,14 +1432,23 @@ service cloud.firestore {
         fieldUnchanged('user_id') &&
         fieldUnchanged('game_id') &&
         (
-        // Self-update: apenas campos de ETA
+        // Self-update: campos de ETA ou cancelamento explicito. CANCELLED
+        // preserva o documento para onGameVacancy promover/notificar waitlist.
         (resource.data.user_id == userId() &&
-         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['is_on_the_way', 'eta_minutes', 'on_the_way_at', 'updated_at'])) ||
+         (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['is_on_the_way', 'eta_minutes', 'on_the_way_at', 'updated_at']) ||
+          (resource.data.status == 'CONFIRMED' &&
+           request.resource.data.status == 'CANCELLED' &&
+           get(/databases/$(database)/documents/games/$(resource.data.game_id)).data.status in ['SCHEDULED', 'CONFIRMED'] &&
+           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updated_at'])))) ||
         // SECFIX #434: dono do jogo restrito a campos de stats/MVP/status.
         // Antes podia escrever em QUALQUER campo — permitia injetar
         // own_stats (goals=15, assists=10) antes de FINISHED -> XP fraud.
         // O dono do JOGO pode atualizar campos de stats/MVP/status only.
         (isGameOwner(resource.data.game_id) &&
+         // Elevar PENDING/CANCELLED para CONFIRMED tambem deve reservar vaga
+         // no callable. Owner ainda pode cancelar/moderar e editar stats.
+         (request.resource.data.get('status', resource.data.status) != 'CONFIRMED' ||
+          resource.data.status == 'CONFIRMED') &&
          request.resource.data.diff(resource.data).affectedKeys().hasOnly([
            'status', 'goals', 'assists', 'saves', 'goalkeeper',
            'is_mvp', 'is_best_gk', 'is_worst_player', 'was_present',
@@ -2327,81 +2330,17 @@ service cloud.firestore {
         // groups/{groupId}/members/{uid} ainda nao existe/nao esta ACTIVE.
         allow read: if isAuthenticated() && (isGroupMember(groupId) || isGroupOwnerById(groupId));
 
-        // FASE 5 #448: cashbox create exige verified (30-day grace)
-        // SECURITY: Validacao de bounds no amount (max R$ 100.000)
-        // Previne entradas absurdas que poderiam indicar exploit ou erro
-        // #1018: admin nunca bloqueado por isVerifiedOrGrace()
-        // H2 FIX: validacao de campos obrigatorios (description, category, reference_date)
-        // #3284: trava auditoria e shape do create para evitar spoof de autor/timestamp.
-        allow create: if (isAdmin() || isVerifiedOrGrace()) &&
-                         (isAdmin() || isGroupAdmin(groupId) || isGroupOwnerById(groupId)) &&
-                         isGroupActive(groupId) &&
-                         request.resource.data.keys().hasOnly([
-                           'group_id', 'type', 'amount', 'description', 'category', 'status',
-                           'receipt_url', 'created_by', 'created_by_name', 'created_at'
-                         ]) &&
-                         request.resource.data.keys().hasAll([
-                           'group_id', 'type', 'amount', 'description', 'category', 'status',
-                           'created_by', 'created_at'
-                         ]) &&
-                         request.resource.data.group_id == groupId &&
-                         request.resource.data.status == 'ACTIVE' &&
-                         request.resource.data.created_by == userId() &&
-                         request.resource.data.created_at == request.time &&
-                         request.resource.data.amount > 0 &&
-                         request.resource.data.amount <= 100000 &&
-                         (request.resource.data.type == 'INCOME' || request.resource.data.type == 'EXPENSE') &&
-                         request.resource.data.description is string &&
-                         request.resource.data.description.size() >= 1 &&
-                         request.resource.data.description.size() <= 500 &&
-                         request.resource.data.category is string &&
-                         request.resource.data.category.size() >= 1;
-
-        // M-001 fix: validacao de timestamp em voided_at
-        allow update: if isAuthenticated() && (isGroupAdmin(groupId) || isGroupOwnerById(groupId)) &&
-                      isGroupActive(groupId) &&
-                      // #1037.1: updated_at incluido para permitir que cliente persista timestamp junto ao void
-                      request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'voided_at', 'voided_by', 'updated_at']) &&
-                      request.resource.data.status == 'VOIDED' &&
-                      request.resource.data.voided_by == userId() &&
-                      request.resource.data.voided_at == request.time;
-
-      allow delete: if false;
-    }
+        // Ledger financeiro e server-authoritative. Clientes, inclusive admin,
+        // usam createCashboxEntry/voidCashboxEntry; Admin SDK ignora rules.
+        allow create, update, delete: if false;
+      }
 
       match /cashbox_summary/{docId} {
         // #1037.4: isGroupMember() faz get() — garante autenticação explícita primeiro
         allow read: if isAuthenticated() && (isGroupMember(groupId) || isGroupOwnerById(groupId));
-        function hasValidCashboxSummaryShape() {
-          return request.resource.data.total_income is number &&
-          request.resource.data.total_income >= 0 &&
-          request.resource.data.total_expense is number &&
-          request.resource.data.total_expense >= 0 &&
-          request.resource.data.balance is number &&
-          request.resource.data.period_start is string &&
-          request.resource.data.period_end is string;
-        }
 
-        // Metadados server-only podem ser preservados ou todos removidos por
-        // clientes legados, mas nunca criados/alterados pelo cliente.
-        allow create: if isAuthenticated() &&
-          (isGroupAdmin(groupId) || isGroupOwnerById(groupId)) &&
-          !request.resource.data.keys().hasAny([
-            'recomputed_by_server', 'source_event_version', 'recomputed_at', 'truncated'
-          ]) &&
-          hasValidCashboxSummaryShape();
-
-        allow update: if isAuthenticated() &&
-          (isGroupAdmin(groupId) || isGroupOwnerById(groupId)) &&
-          (
-            !request.resource.data.diff(resource.data).affectedKeys().hasAny([
-              'recomputed_by_server', 'source_event_version', 'recomputed_at', 'truncated'
-            ]) ||
-            !request.resource.data.keys().hasAny([
-              'recomputed_by_server', 'source_event_version', 'recomputed_at', 'truncated'
-            ])
-          ) &&
-          hasValidCashboxSummaryShape();
+        // Resumo e derivado exclusivamente pelo backend canonico.
+        allow create, update, delete: if false;
       }
 
       // ============================================

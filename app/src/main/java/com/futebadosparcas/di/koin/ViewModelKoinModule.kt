@@ -268,7 +268,8 @@ val viewModelKoinModule = module {
 
     viewModel {
         com.futebadosparcas.ui.feed.SocialFeedViewModel(
-            repository = get()
+            repository = get(),
+            realtimeTelemetry = get()
         )
     }
 
@@ -296,7 +297,8 @@ val viewModelKoinModule = module {
     viewModel {
         LocationsMapViewModel(
             locationRepository = get(),
-            locationAnalytics = get()
+            locationAnalytics = get(),
+            realtimeTelemetry = get()
         )
     }
 
@@ -477,7 +479,8 @@ val viewModelKoinModule = module {
 
     viewModel {
         PublicGamesMapViewModel(
-            firestore = get()
+            firestore = get(),
+            realtimeTelemetry = get()
         )
     }
 

@@ -33,10 +33,16 @@ object AppRoutes {
     // Telas reais já existentes em ui/core/ cabeadas a partir do detalhe do jogo
     // (hub do organizador). Eliminam telas órfãs no NavHost (AC#4 da #2671).
     /** Relatório pós-jogo (presentes, pagamentos, placar, MVP). */
-    const val POST_GAME_REPORT = "post_game_report"
+    const val POST_GAME_REPORT = "post_game_report/{gameId}"
 
     /** Estatísticas do organizador (jogos organizados, presença média, receita). */
-    const val OWNER_STATS = "owner_stats"
+    const val OWNER_STATS = "owner_stats/{ownerId}"
+
+    /** Formação dos times de um jogo (requer gameId). */
+    const val TEAM_FORMATION = "team_formation/{gameId}"
+
+    /** Votação pós-jogo; indisponibilidade é apresentada explicitamente enquanto não portada. */
+    const val MVP_VOTING = "mvp_voting/{gameId}"
 
     /** Convidar jogadores para um grupo (requer groupId). */
     const val INVITE_PLAYERS = "invite_players/{groupId}"
@@ -71,6 +77,18 @@ object AppRoutes {
      */
     fun invitePlayers(groupId: String): String =
         "invite_players/${requireRouteId(groupId, "groupId")}"
+
+    fun postGameReport(gameId: String): String =
+        "post_game_report/${requireRouteId(gameId, "gameId")}"
+
+    fun ownerStats(ownerId: String): String =
+        "owner_stats/${requireRouteId(ownerId, "ownerId")}"
+
+    fun teamFormation(gameId: String): String =
+        "team_formation/${requireRouteId(gameId, "gameId")}"
+
+    fun mvpVoting(gameId: String): String =
+        "mvp_voting/${requireRouteId(gameId, "gameId")}"
 
     private fun requireRouteId(value: String, name: String): String {
         val trimmed = value.trim()

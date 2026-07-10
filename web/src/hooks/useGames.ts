@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
 
   collection,
@@ -7,7 +7,6 @@ import {
   getDocs,
   addDoc,
   updateDoc,
-  setDoc,
   query,
   where,
   orderBy,
@@ -17,8 +16,10 @@ import {
   writeBatch,
   serverTimestamp,
   Timestamp,
+  type DocumentData,
+  type Query,
 } from 'firebase/firestore';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { db } from '../services/firebase';
 import { Game, GameConfirmation, GameStatus, ConfirmationStatus } from '../types/game';
 import { useAuth } from '../contexts/AuthContext';
@@ -29,22 +30,12 @@ import { createLogger } from '../utils/logger';
 import { getFirestoreErrorMessage } from '../utils/firebaseErrors';
 import { useTranslation } from 'react-i18next';
 import { getIsPublicFromVisibility } from '../utils/gameLifecycle';
-import { resolveExpectedPayment, toPaymentCents } from '../utils/gamePayment';
+import { confirmGamePresence as confirmGamePresenceCallable } from '../services/cloudFunctions';
+import { realtimeTelemetry, type RealtimeMeasurement } from '../utils/realtimeTelemetry';
 
 const logger = createLogger('useGames');
 
 const MIN_GROUP_MEMBERS_TO_CREATE_GAME = 5;
-const JOINABLE_GAME_STATUSES: GameStatus[] = ['SCHEDULED', 'CONFIRMED'];
-
-function isJoinableGameStatus(status: GameStatus) {
-  return JOINABLE_GAME_STATUSES.includes(status);
-}
-
-function isGameInPast(game: Game) {
-  const gameDateTime = toDate(game.dateTime as Timestamp | Date | null | undefined);
-  return !!gameDateTime && gameDateTime.getTime() <= Date.now();
-}
-
 function shouldCancelRideOnPresenceCancellation(raw: Record<string, unknown>) {
   if (raw.status === 'CANCELLED') return false;
   return !(
@@ -76,8 +67,7 @@ function parseGameDoc(docId: string, raw: Record<string, unknown>): Game {
 // Default limit para evitar full-collection scans (#1121)
 const DEFAULT_GAMES_LIMIT = 50;
 
-// Busca jogos com filtros
-async function fetchGames(filters?: {
+interface GamesFilters {
   status?: GameStatus;
   statuses?: GameStatus[];
   groupId?: string;
@@ -85,7 +75,9 @@ async function fetchGames(filters?: {
   startDateTime?: Date;
   limitCount?: number;
   orderDirection?: 'asc' | 'desc';
-}): Promise<Game[]> {
+}
+
+function buildGamesQuery(filters?: GamesFilters): Query<DocumentData> {
   const gamesRef = collection(db, 'games');
   const constraints: QueryConstraint[] = [];
 
@@ -94,79 +86,207 @@ async function fetchGames(filters?: {
   } else if (filters?.statuses?.length) {
     constraints.push(where('status', 'in', filters.statuses.slice(0, 10)));
   }
-  if (filters?.groupId) {
-    constraints.push(where('group_id', '==', filters.groupId));
-  }
-  if (filters?.date) {
-    constraints.push(where('date', '==', filters.date));
-  }
-  if (filters?.startDateTime) {
-    constraints.push(where('dateTime', '>=', filters.startDateTime));
-  }
+  if (filters?.groupId) constraints.push(where('group_id', '==', filters.groupId));
+  if (filters?.date) constraints.push(where('date', '==', filters.date));
+  if (filters?.startDateTime) constraints.push(where('dateTime', '>=', filters.startDateTime));
   constraints.push(orderBy('dateTime', filters?.orderDirection ?? 'asc'));
+  constraints.push(limit(filters?.limitCount ?? DEFAULT_GAMES_LIMIT));
+  return query(gamesRef, ...constraints);
+}
 
-  // SEMPRE aplicar limit p/ evitar scan completo da collection (#1121).
-  // Default 50; caller pode override via filters.limitCount.
-  const limitCount = filters?.limitCount ?? DEFAULT_GAMES_LIMIT;
-  constraints.push(limit(limitCount));
-
-  const q = query(gamesRef, ...constraints);
+// Busca jogos com filtros
+async function fetchGames(filters?: GamesFilters): Promise<Game[]> {
+  const q = buildGamesQuery(filters);
   const snapshot = await getDocs(q);
   return snapshot.docs
     .map((d) => parseGameDoc(d.id, d.data()))
     .filter((g) => !g.deletedAt);
 }
 
+interface GamesSubscriber {
+  onLoading: () => void;
+  onData: () => void;
+  onError: (error: Error) => void;
+}
+
+interface GamesSubscription {
+  queryClient: QueryClient;
+  queryKey: readonly unknown[];
+  firestoreQuery: Query<DocumentData>;
+  subscribers: Set<GamesSubscriber>;
+  unsubscribe?: () => void;
+  lifecycle?: RealtimeMeasurement;
+  hasConnected?: boolean;
+}
+
+const gamesSubscriptions = new WeakMap<QueryClient, Map<string, GamesSubscription>>();
+
+function startGamesSubscription(subscription: GamesSubscription) {
+  subscription.unsubscribe?.();
+  subscription.lifecycle?.cancel();
+  subscription.lifecycle = realtimeTelemetry.start(
+    'games',
+    subscription.hasConnected ? 'reconnect' : 'bootstrap',
+  );
+  subscription.subscribers.forEach((subscriber) => subscriber.onLoading());
+  subscription.unsubscribe = onSnapshot(
+    subscription.firestoreQuery,
+    (snapshot) => {
+      const applyMeasurement = realtimeTelemetry.start('games', 'apply');
+      try {
+        const games = snapshot.docs
+          .map((gameDoc) => parseGameDoc(gameDoc.id, gameDoc.data()))
+          .filter((game) => !game.deletedAt);
+        subscription.queryClient.setQueryData(subscription.queryKey, games);
+        applyMeasurement.finish();
+        subscription.lifecycle?.finish();
+        subscription.lifecycle = undefined;
+        subscription.hasConnected = true;
+        subscription.subscribers.forEach((subscriber) => subscriber.onData());
+      } catch (error) {
+        applyMeasurement.error();
+        subscription.lifecycle?.cancel();
+        subscription.lifecycle = undefined;
+        const normalized = error instanceof Error ? error : new Error('Realtime apply failed');
+        subscription.subscribers.forEach((subscriber) => subscriber.onError(normalized));
+      }
+    },
+    (error) => {
+      if (subscription.lifecycle) {
+        subscription.lifecycle.error();
+        subscription.lifecycle = undefined;
+      } else {
+        realtimeTelemetry.record('games', 'error');
+      }
+      const normalized = error instanceof Error ? error : new Error(getFirestoreErrorMessage(error));
+      subscription.subscribers.forEach((subscriber) => subscriber.onError(normalized));
+    },
+  );
+}
+
+function acquireGamesSubscription(
+  queryClient: QueryClient,
+  registryKey: string,
+  queryKey: readonly unknown[],
+  firestoreQuery: Query<DocumentData>,
+  subscriber: GamesSubscriber,
+) {
+  let clientSubscriptions = gamesSubscriptions.get(queryClient);
+  if (!clientSubscriptions) {
+    clientSubscriptions = new Map();
+    gamesSubscriptions.set(queryClient, clientSubscriptions);
+  }
+  let subscription = clientSubscriptions.get(registryKey);
+  if (!subscription) {
+    subscription = {
+      queryClient,
+      queryKey,
+      firestoreQuery,
+      subscribers: new Set(),
+    };
+    clientSubscriptions.set(registryKey, subscription);
+  }
+  subscription.subscribers.add(subscriber);
+  if (!subscription.unsubscribe) startGamesSubscription(subscription);
+  else if (queryClient.getQueryData(queryKey) !== undefined) subscriber.onData();
+
+  return {
+    restart: () => startGamesSubscription(subscription!),
+    release: () => {
+      subscription!.subscribers.delete(subscriber);
+      if (subscription!.subscribers.size === 0) {
+        subscription!.unsubscribe?.();
+        subscription!.lifecycle?.cancel();
+        clientSubscriptions!.delete(registryKey);
+      }
+    },
+  };
+}
+
 // Busca jogos públicos (scheduled/confirmed, is_public=true)
 // #2254: usePublicGames consolidado em hooks/usePublicGames.ts (variantes
 // 'open' e 'map'). A versão duplicada que existia aqui foi removida.
 
-export function useGames(filters?: {
-  status?: GameStatus;
-  statuses?: GameStatus[];
-  groupId?: string;
-  date?: string;
-  startDateTime?: Date;
-  limitCount?: number;
-  orderDirection?: 'asc' | 'desc';
-}) {
+export function useGames(filters?: GamesFilters) {
+  const queryClient = useQueryClient();
+  const status = filters?.status;
+  const statusesKey = filters?.statuses?.join(',');
+  const groupId = filters?.groupId;
+  const date = filters?.date;
+  const startDateTimeMs = filters?.startDateTime?.getTime();
+  const limitCount = filters?.limitCount;
+  const orderDirection = filters?.orderDirection;
+  const normalizedFilters = useMemo<GamesFilters>(() => ({
+    status,
+    statuses: statusesKey ? statusesKey.split(',') as GameStatus[] : undefined,
+    groupId,
+    date,
+    startDateTime: startDateTimeMs === undefined ? undefined : new Date(startDateTimeMs),
+    limitCount,
+    orderDirection,
+  }), [date, groupId, limitCount, orderDirection, startDateTimeMs, status, statusesKey]);
   // Chave de query estável baseada nos filtros primitivos
   const queryKey = useMemo(
     () => [
       'games',
-      filters?.status,
-      filters?.statuses?.join(','),
-      filters?.groupId,
-      filters?.date,
-      filters?.startDateTime?.getTime(),
-      filters?.limitCount,
-      filters?.orderDirection,
+      status,
+      statusesKey,
+      groupId,
+      date,
+      startDateTimeMs,
+      limitCount,
+      orderDirection,
     ] as const,
-    [
-      filters?.status,
-      filters?.statuses,
-      filters?.groupId,
-      filters?.date,
-      filters?.startDateTime,
-      filters?.limitCount,
-      filters?.orderDirection,
-    ]
+    [date, groupId, limitCount, orderDirection, startDateTimeMs, status, statusesKey]
   );
-
-  const { data: games = [], isLoading: loading, error: queryError, refetch } = useQuery({
+  const registryKey = useMemo(() => JSON.stringify(queryKey), [queryKey]);
+  const firestoreQuery = useMemo(() => buildGamesQuery(normalizedFilters), [normalizedFilters]);
+  const [listenerLoading, setListenerLoading] = useState(
+    () => queryClient.getQueryData(queryKey) === undefined,
+  );
+  const [listenerError, setListenerError] = useState<string | null>(null);
+  const subscriptionControlRef = useRef<{ restart: () => void; release: () => void } | null>(null);
+  const { data: games = [] } = useQuery({
     queryKey,
-    queryFn: () => fetchGames(filters),
-    staleTime: 1 * 60 * 1000, // 1 minuto - jogos mudam com frequência
+    queryFn: () => fetchGames(normalizedFilters),
+    enabled: false,
+    staleTime: Infinity,
     gcTime: 5 * 60 * 1000,
-    // PERF: mutations (useCreateGame, useUpdateGameStatus) já chamam invalidateQueries.
-    // Remover onSnapshot redundante que causava double-fetch a cada mudança:
-    // snapshot disparava invalidação → getDocs era chamado novamente além do fetch da mutation.
-    refetchOnWindowFocus: false,
   });
 
-  const error = queryError ? (queryError as Error).message : null;
+  useEffect(() => {
+    setListenerLoading(queryClient.getQueryData(queryKey) === undefined);
+    setListenerError(null);
+    const subscriber: GamesSubscriber = {
+      onLoading: () => setListenerLoading(true),
+      onData: () => {
+        setListenerLoading(false);
+        setListenerError(null);
+      },
+      onError: (error) => {
+        setListenerLoading(false);
+        setListenerError(error.message);
+      },
+    };
+    const control = acquireGamesSubscription(
+      queryClient,
+      registryKey,
+      queryKey,
+      firestoreQuery,
+      subscriber,
+    );
+    subscriptionControlRef.current = control;
+    return () => {
+      control.release();
+      if (subscriptionControlRef.current === control) subscriptionControlRef.current = null;
+    };
+  }, [firestoreQuery, queryClient, queryKey, registryKey]);
 
-  return { games, loading, error, refetch };
+  const refetch = useCallback(async () => {
+    subscriptionControlRef.current?.restart();
+  }, []);
+
+  return { games, loading: listenerLoading, error: listenerError, refetch };
 }
 
 export function useGameDetail(gameId: string | null) {
@@ -255,81 +375,11 @@ export function useConfirmPresence() {
       setError(null);
 
       try {
-        // Doc ID determinístico {gameId}_{userId} (igual ao Android)
-        const confirmationId = `${gameId}_${uid}`;
-        const confirmationRef = doc(db, 'confirmations', confirmationId);
-        const gameRef = doc(db, 'games', gameId);
-        const [gameSnap, confirmationSnap, confirmationsSnap] = await Promise.all([
-          getDoc(gameRef),
-          getDoc(confirmationRef),
-          getDocs(query(collection(db, 'confirmations'), where('game_id', '==', gameId))),
-        ]);
-
-        if (!gameSnap.exists()) {
-          throw new Error('Game not found');
-        }
-
-        const game = parseGameDoc(gameSnap.id, gameSnap.data());
-        if (!isJoinableGameStatus(game.status)) {
-          throw new Error(t('games.detail.confirmationClosed'));
-        }
-        if (isGameInPast(game)) {
-          throw new Error(t('games.detail.confirmationPast'));
-        }
-
-        const currentConfirmation = confirmationSnap.exists()
-          ? snakeToCamel(confirmationSnap.data() as Record<string, unknown>) as Partial<GameConfirmation>
-          : null;
-        if (currentConfirmation?.status === 'CONFIRMED' && currentConfirmation.position === position) {
-          setLoading(false);
-          return true;
-        }
-
-        const confirmedConfirmations = confirmationsSnap.docs
-          .map((confirmationDoc) => snakeToCamel(confirmationDoc.data() as Record<string, unknown>) as Partial<GameConfirmation>)
-          .filter((confirmation) => confirmation.status === 'CONFIRMED');
-        const confirmedPlayersCount = confirmedConfirmations.length;
-        const confirmedGoalkeepersCount = confirmedConfirmations.filter(
-          (confirmation) => confirmation.position === 'GOALKEEPER',
-        ).length;
-        const alreadyConfirmed = currentConfirmation?.status === 'CONFIRMED';
-        const currentWasGoalkeeper = currentConfirmation?.position === 'GOALKEEPER';
-
-        if (!alreadyConfirmed && confirmedPlayersCount >= game.maxPlayers) {
-          throw new Error(t('games.detail.listFull'));
-        }
-        if (
-          position === 'GOALKEEPER' &&
-          confirmedGoalkeepersCount >= game.maxGoalkeepers &&
-          !currentWasGoalkeeper
-        ) {
-          throw new Error(t('games.detail.goalkeeperFull'));
-        }
-
-        const expectedPayment = resolveExpectedPayment(game);
-
-        const displayName = firebaseUser?.displayName || user?.name || 'Jogador';
-        const photoURL = firebaseUser?.photoURL || user?.photoUrl || null;
-
-        // Apenas escrever na coleção confirmations (igual ao Android)
-        // O Cloud Function trigger (onConfirmationWrite) atualiza os contadores do jogo
-        const confirmationData = {
-          id: confirmationId,
-          game_id: gameId,
-          user_id: uid,
-          user_name: displayName,
-          user_photo: photoURL || '',
+        await confirmGamePresenceCallable({
+          gameId,
           position,
-          status: 'CONFIRMED' as ConfirmationStatus,
-          payment_status: 'PENDING',
-          partial_payment: 0,
-          expected_payment: expectedPayment,
-          expected_payment_cents: toPaymentCents(expectedPayment),
-          is_casual_player: false,
-          created_at: serverTimestamp(),
-        };
-
-        await setDoc(confirmationRef, confirmationData);
+          isCasualPlayer: false,
+        });
         queryClient.invalidateQueries({ queryKey: ['games'], exact: false });
         showSuccess(t('feedback.games.confirmSuccess'));
         setLoading(false);

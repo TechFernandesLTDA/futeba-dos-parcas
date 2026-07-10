@@ -5,19 +5,19 @@ import com.futebadosparcas.data.util.BatchOperationHelper
 import com.futebadosparcas.domain.util.RetryPolicy
 import com.futebadosparcas.domain.util.suspendWithRetryResult
 import com.futebadosparcas.util.AppLogger
+import com.futebadosparcas.util.FirebaseRegions
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.SetOptions
+import com.google.firebase.functions.FirebaseFunctions
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 import java.util.*
-import kotlin.math.round
-import kotlin.math.roundToLong
 import com.google.firebase.firestore.FieldPath as FirestoreFieldPath
 
 /**
@@ -31,7 +31,8 @@ import com.google.firebase.firestore.FieldPath as FirestoreFieldPath
  */
 class FirebaseDataSourceImpl constructor(
     private val firestore: FirebaseFirestore,
-    private val auth: FirebaseAuth
+    private val auth: FirebaseAuth,
+    private val functions: FirebaseFunctions = FirebaseFunctions.getInstance(FirebaseRegions.FUNCTIONS)
 ) : FirebaseDataSource {
 
     companion object {
@@ -286,54 +287,26 @@ class FirebaseDataSourceImpl constructor(
     ): Result<GameConfirmation> {
         return suspendWithRetryResult(RetryPolicy.DEFAULT) {
             AppLogger.d(TAG) { "Confirmando presença: userId=$userId, gameId=$gameId" }
+            functions.getHttpsCallable("confirmGamePresence")
+                .call(
+                    mapOf(
+                        "gameId" to gameId,
+                        "position" to if (position == "GOALKEEPER") "GOALKEEPER" else "FIELD",
+                        "isCasualPlayer" to isCasualPlayer
+                    )
+                )
+                .await()
 
-            val game = firestore.collection(COLLECTION_GAMES)
-                .document(gameId)
+            val confirmationId = "${gameId}_${userId}"
+            val confirmation = firestore.collection(COLLECTION_CONFIRMATIONS)
+                .document(confirmationId)
                 .get()
                 .await()
-                .toObject(Game::class.java)
-                ?: throw NoSuchElementException("Jogo não encontrado: $gameId")
-            val expectedPayment = game.expectedPaymentForConfirmation()
+                .toObject(GameConfirmation::class.java)
+                ?: throw NoSuchElementException("Confirmação não encontrada após callable: $confirmationId")
 
-            val confirmation = GameConfirmation(
-                id = "${gameId}_${userId}",
-                gameId = gameId,
-                userId = userId,
-                userName = userName,
-                userPhoto = userPhoto,
-                position = position,
-                status = ConfirmationStatus.CONFIRMED.name,
-                paymentStatus = PaymentStatus.PENDING.name,
-                partialPayment = 0.0,
-                expectedPayment = expectedPayment,
-                expectedPaymentCents = expectedPayment.toPaymentCents(),
-                isCasualPlayer = isCasualPlayer,
-                confirmedAt = Date().time
-            )
-
-            val docRef = firestore.collection(COLLECTION_CONFIRMATIONS).document(confirmation.id)
-            val finalConfirmation = confirmation
-
-            val confirmationData = mapOf(
-                "id" to finalConfirmation.id,
-                "game_id" to gameId,
-                "user_id" to userId,
-                "user_name" to userName,
-                "user_photo" to (userPhoto ?: ""),
-                "position" to position,
-                "status" to ConfirmationStatus.CONFIRMED.name,
-                "payment_status" to PaymentStatus.PENDING.name,
-                "partial_payment" to 0.0,
-                "expected_payment" to expectedPayment,
-                "expected_payment_cents" to expectedPayment.toPaymentCents(),
-                "is_casual_player" to isCasualPlayer,
-                "created_at" to FieldValue.serverTimestamp()
-            )
-
-            docRef.set(confirmationData).await()
-            AppLogger.d(TAG) { "Presença confirmada: ${docRef.id}" }
-
-            finalConfirmation
+            AppLogger.d(TAG) { "Presença confirmada via callable: $confirmationId" }
+            confirmation
         }
     }
 
@@ -751,15 +724,3 @@ class FirebaseDataSourceImpl constructor(
         }
     }
 }
-
-private fun Game?.expectedPaymentForConfirmation(): Double {
-    val raw = when {
-        this == null -> 0.0
-        dailyPrice > 0.0 -> dailyPrice
-        totalCost > 0.0 && maxPlayers > 0 -> totalCost / maxPlayers
-        else -> 0.0
-    }
-    return round(raw * 100.0) / 100.0
-}
-
-private fun Double.toPaymentCents(): Long = (this * 100.0).roundToLong()

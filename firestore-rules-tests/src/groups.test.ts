@@ -4,7 +4,7 @@
  * Cobre:
  * - groups: owner/admin edita, member só lê, não-member negado
  * - groups/members: subcoleção de membros
- * - groups/cashbox: apenas group admin cria/atualiza, member apenas lê
+ * - groups/cashbox: member autorizado lê; writes são somente via callable/Admin SDK
  * - Não-autenticado: negado em tudo
  */
 
@@ -426,9 +426,9 @@ describe("groups/cashbox — permissões", () => {
     );
   });
 
-  it("Group admin (owner) pode criar entrada de cashbox", async () => {
+  it("Group admin (owner) NÃO pode criar entrada diretamente", async () => {
     const db = asPlayerA(testEnv); // owner = group admin
-    await assertSucceeds(
+    await assertFails(
       db.doc(`groups/${GROUP_FOR_CASHBOX}/cashbox/entry-new`).set({
         group_id: GROUP_FOR_CASHBOX,
         type: "INCOME",
@@ -437,6 +437,22 @@ describe("groups/cashbox — permissões", () => {
         category: "MONTHLY_FEE",
         status: "ACTIVE",
         created_by: UID_PLAYER_A,
+        created_at: serverTimestamp(),
+      })
+    );
+  });
+
+  it("Admin global NÃO pode criar entrada diretamente", async () => {
+    const db = asAdmin(testEnv);
+    await assertFails(
+      db.doc(`groups/${GROUP_FOR_CASHBOX}/cashbox/entry-admin-direct`).set({
+        group_id: GROUP_FOR_CASHBOX,
+        type: "INCOME",
+        amount: 100,
+        description: "Tentativa admin direta",
+        category: "OTHER",
+        status: "ACTIVE",
+        created_by: UID_ADMIN,
         created_at: serverTimestamp(),
       })
     );

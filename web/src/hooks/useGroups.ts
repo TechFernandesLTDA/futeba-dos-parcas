@@ -401,7 +401,8 @@ export function useCreateGroup() {
           is_public: groupData.isPublic || false,
           owner_id: uid,
           owner_name: displayName,
-          member_count: 1,
+          // onMemberWritten conta o owner ACTIVE criado no mesmo batch.
+          member_count: 0,
           members: [uid],
           total_games_played: 0,
           status: 'ACTIVE',
