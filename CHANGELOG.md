@@ -31,8 +31,9 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 #### Corrigido
 - Paginação com dedupe para feed, jogos públicos e locais; zero refetch por emissão no live game.
+- Upload de perfil valida o payload comprimido abaixo de 2 MiB e preserva o formulário quando o envio falha.
 
-_Issues: #3499, #3501, #3504, #3508, #3510 · PRs: #3511_
+_Issues: #3267, #3499, #3501, #3504, #3508, #3510 · PRs: #3511_
 
 ### [1.36.6][android-1.36.6] - 2026-07-10
 
@@ -216,8 +217,9 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 #### Corrigido
 - Listeners compartilhados por query, merge por ID e cursores determinísticos para históricos realtime.
 - Confirmação e caixa usam callables idempotentes e server-authoritative.
+- Upload de imagem compartilha retry para falhas transitórias e informa separadamente permissão, cancelamento e rede.
 
-_Issues: #3499, #3500, #3501, #3503, #3505, #3506, #3507, #3510 · PRs: #3511_
+_Issues: #3267, #3499, #3500, #3501, #3503, #3505, #3506, #3507, #3510 · PRs: #3511_
 
 ### [1.51.35][web-1.51.35] - 2026-07-10
 
@@ -1435,8 +1437,9 @@ _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 #### Segurança
 - Jogo privado exige owner, membership ativa ou convite para confirmar presença.
 - Firestore Rules bloqueiam writes diretos no ledger e no resumo do caixa.
+- Firestore e Storage Rules reconhecem membros legados sem `status` como ativos, mantendo `INACTIVE` e outsiders bloqueados.
 
-_Issues: #3499, #3500, #3501, #3502, #3503, #3504, #3510 · PRs: #3511_
+_Issues: #3267, #3499, #3500, #3501, #3502, #3503, #3504, #3510 · PRs: #3511_
 
 ### [1.7.16][functions-1.7.16] - 2026-07-10
 

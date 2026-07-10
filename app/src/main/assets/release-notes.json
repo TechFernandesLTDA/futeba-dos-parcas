@@ -1,6 +1,6 @@
 {
   "platform": "android",
-  "generatedAt": "2026-07-10T10:22:38.662Z",
+  "generatedAt": "2026-07-10T13:02:23.559Z",
   "notes": [
     {
       "version": "1.36.7",
@@ -21,9 +21,12 @@
         "Aceitar convite ou convocação usa a confirmação transacional do servidor.",
         "Caixa usa operações idempotentes e não altera mais saldo diretamente no Firestore.",
         "Grupo novo converge para um membro, sem contagem duplicada do owner.",
-        "Paginação com dedupe para feed, jogos públicos e locais; zero refetch por emissão no live game."
+        "Fotos de câmera de até 10 MiB são comprimidas antes do limite final do Storage; uma falha no envio não é mais ignorada ao salvar o perfil.",
+        "Paginação com dedupe para feed, jogos públicos e locais; zero refetch por emissão no live game.",
+        "Upload de perfil valida o payload comprimido abaixo de 2 MiB e preserva o formulário quando o envio falha."
       ],
       "issueRefs": [
+        3267,
         3499,
         3501,
         3504,

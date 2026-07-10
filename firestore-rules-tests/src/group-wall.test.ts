@@ -17,6 +17,8 @@ const LEGACY_OWNER_GROUP_ID = "group-wall-legacy-owner";
 const UID_OUTSIDER = "uid-wall-outsider";
 const UID_WALL_OWNER = "uid-wall-owner-001";
 const UID_WALL_MEMBER = "uid-wall-member-001";
+const UID_WALL_LEGACY_MEMBER = "uid-wall-legacy-member-001";
+const UID_WALL_INACTIVE = "uid-wall-inactive-001";
 const UID_WALL_ADMIN = "uid-wall-admin-001";
 
 function asWallOwner() {
@@ -25,6 +27,14 @@ function asWallOwner() {
 
 function asWallMember() {
   return asUser(testEnv, UID_WALL_MEMBER);
+}
+
+function asWallLegacyMember() {
+  return asUser(testEnv, UID_WALL_LEGACY_MEMBER);
+}
+
+function asWallInactiveMember() {
+  return asUser(testEnv, UID_WALL_INACTIVE);
 }
 
 function asWallAdmin() {
@@ -70,6 +80,16 @@ beforeAll(async () => {
     photo_url: null,
     role: "PLAYER",
   });
+  await seedDoc(testEnv, `users/${UID_WALL_LEGACY_MEMBER}`, {
+    name: "Legacy Member",
+    photo_url: null,
+    role: "PLAYER",
+  });
+  await seedDoc(testEnv, `users/${UID_WALL_INACTIVE}`, {
+    name: "Inactive Member",
+    photo_url: null,
+    role: "PLAYER",
+  });
 
   await seedDoc(testEnv, `groups/${GROUP_ID}`, {
     name: "Wall Test Group",
@@ -97,6 +117,17 @@ beforeAll(async () => {
     status: "ACTIVE",
   });
 
+  await seedDoc(testEnv, `groups/${GROUP_ID}/members/${UID_WALL_LEGACY_MEMBER}`, {
+    user_id: UID_WALL_LEGACY_MEMBER,
+    role: "MEMBER",
+  });
+
+  await seedDoc(testEnv, `groups/${GROUP_ID}/members/${UID_WALL_INACTIVE}`, {
+    user_id: UID_WALL_INACTIVE,
+    role: "MEMBER",
+    status: "INACTIVE",
+  });
+
   await seedDoc(testEnv, `groups/${LEGACY_OWNER_GROUP_ID}`, {
     name: "Legacy Owner Wall Test Group",
     owner_id: UID_WALL_OWNER,
@@ -119,6 +150,36 @@ describe("groups/{groupId}/wall_posts", () => {
   it("membro pode ler posts do mural", async () => {
     await assertSucceeds(
       asWallMember().collection(`groups/${GROUP_ID}/wall_posts`).get()
+    );
+  });
+
+  it("membro legado sem status pode ler e criar post", async () => {
+    await assertSucceeds(
+      asWallLegacyMember().collection(`groups/${GROUP_ID}/wall_posts`).get()
+    );
+    await assertSucceeds(
+      asWallLegacyMember().doc(`groups/${GROUP_ID}/wall_posts/post-legacy-member`).set({
+        ...validPost,
+        author_id: UID_WALL_LEGACY_MEMBER,
+        author_name: "Legacy Member",
+        text: "Post de membro legado",
+        created_at: serverTimestamp(),
+      })
+    );
+  });
+
+  it("membro INACTIVE não pode ler nem criar post", async () => {
+    await assertFails(
+      asWallInactiveMember().collection(`groups/${GROUP_ID}/wall_posts`).get()
+    );
+    await assertFails(
+      asWallInactiveMember().doc(`groups/${GROUP_ID}/wall_posts/post-inactive`).set({
+        ...validPost,
+        author_id: UID_WALL_INACTIVE,
+        author_name: "Inactive Member",
+        text: "Post bloqueado",
+        created_at: serverTimestamp(),
+      })
     );
   });
 

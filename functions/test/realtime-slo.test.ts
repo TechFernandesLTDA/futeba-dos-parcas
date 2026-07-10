@@ -86,6 +86,25 @@ describe("realtime SLO metric contract", () => {
     );
   });
 
+  test.each([
+    ["payload", null],
+    ["payload", []],
+    ["platform", "desktop"],
+    ["flow", "unknown_flow"],
+    ["phase", "waiting"],
+    ["duration", -1],
+    ["duration", 1.5],
+  ])("rejeita %s fora do contrato: %p", (field, value) => {
+    const payload = field === "payload" ? value : {
+      ...validMetric,
+      [field]: value,
+    };
+    expectHttpsCode(
+      () => validateRealtimeMetric(payload),
+      "invalid-argument"
+    );
+  });
+
   test("exige autenticação, App Check e rate limit", async () => {
     const deps = {
       allowRequest: jest.fn().mockResolvedValue(true),

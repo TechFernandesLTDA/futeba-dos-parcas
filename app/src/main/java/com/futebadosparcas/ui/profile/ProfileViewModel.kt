@@ -235,19 +235,34 @@ class ProfileViewModel(
                         is ProfilePhotoDataSource.UploadResult.Success -> uploadResult.url
                         is ProfilePhotoDataSource.UploadResult.FileTooLarge -> {
                             AppLogger.w(TAG) { "Foto muito grande para upload" }
-                            currentUser.photoUrl // Manter foto atual
+                            restoreProfileAfterUploadFailure(
+                                currentState,
+                                "A foto é muito grande. Escolha uma imagem de até 10 MB."
+                            )
+                            return@launch
                         }
                         is ProfilePhotoDataSource.UploadResult.InvalidImage -> {
                             AppLogger.w(TAG) { "Arquivo de imagem inválido" }
-                            currentUser.photoUrl // Manter foto atual
+                            restoreProfileAfterUploadFailure(
+                                currentState,
+                                "Não foi possível ler essa foto. Escolha uma imagem JPG, PNG ou WebP."
+                            )
+                            return@launch
                         }
                         is ProfilePhotoDataSource.UploadResult.Error -> {
                             AppLogger.e(TAG, "Erro no upload: ${uploadResult.message}")
-                            currentUser.photoUrl // Manter foto atual
+                            restoreProfileAfterUploadFailure(
+                                currentState,
+                                "Não foi possível enviar sua foto. Verifique sua conexão e tente novamente."
+                            )
+                            return@launch
                         }
                         is ProfilePhotoDataSource.UploadResult.Progress -> {
-                            // Progress não deveria ser retornado na versão simplificada
-                            currentUser.photoUrl
+                            restoreProfileAfterUploadFailure(
+                                currentState,
+                                "Não foi possível concluir o envio da foto. Tente novamente."
+                            )
+                            return@launch
                         }
                     }
                 }
@@ -325,6 +340,14 @@ class ProfileViewModel(
                 loadProfile()
             }
         }
+    }
+
+    private suspend fun restoreProfileAfterUploadFailure(
+        previousState: ProfileUiState.Success,
+        message: String
+    ) {
+        _uiState.value = previousState
+        _uiEvents.send(ProfileUiEvent.ProfileUpdateFailed(message))
     }
 
     fun logout() {
@@ -435,4 +458,5 @@ sealed class ProfileUiState {
 sealed class ProfileUiEvent {
     object LoadComplete : ProfileUiEvent()
     object ProfileUpdated : ProfileUiEvent()
+    data class ProfileUpdateFailed(val message: String) : ProfileUiEvent()
 }

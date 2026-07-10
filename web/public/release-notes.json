@@ -1,6 +1,6 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-10T10:22:38.666Z",
+  "generatedAt": "2026-07-10T13:02:23.563Z",
   "notes": [
     {
       "version": "1.51.36",
@@ -21,10 +21,13 @@
         "Retry de gol ou evento usa o mesmo identificador e não duplica placar ou estatísticas.",
         "Mensagens antigas deixam de desaparecer quando chega uma atualização nova.",
         "Trocar rapidamente de perfil não mostra mais dados da pessoa anterior.",
+        "Membros de grupos antigos voltam a anexar fotos no mural; avatar e onboarding renovam credenciais de Auth/App Check ao repetir uploads transitórios.",
         "Listeners compartilhados por query, merge por ID e cursores determinísticos para históricos realtime.",
-        "Confirmação e caixa usam callables idempotentes e server-authoritative."
+        "Confirmação e caixa usam callables idempotentes e server-authoritative.",
+        "Upload de imagem compartilha retry para falhas transitórias e informa separadamente permissão, cancelamento e rede."
       ],
       "issueRefs": [
+        3267,
         3499,
         3500,
         3501,

@@ -255,11 +255,14 @@ service cloud.firestore {
         voteId.matches('^.{1,128}_' + userId() + '_(MVP|BEST_GOALKEEPER|WORST)$');
     }
 
-    // Helper para verificar se usuario e membro ativo de um grupo
+    // Helper para verificar se usuario e membro ativo de um grupo.
+    // Memberships legados não possuem `status`; nesses documentos, a própria
+    // existência representa vínculo ativo. Status explícito não-ACTIVE é negado.
     // #2151: usa apenas get() + null check (antes usava exists()+get() = double read)
     function isGroupMember(groupId) {
       let memberDoc = get(/databases/$(database)/documents/groups/$(groupId)/members/$(userId()));
-      return memberDoc != null && memberDoc.data.status == 'ACTIVE';
+      return memberDoc != null &&
+        (!('status' in memberDoc.data) || memberDoc.data.status == 'ACTIVE');
     }
 
     // Helper para verificar se usuario e admin/owner de um grupo
@@ -268,7 +271,7 @@ service cloud.firestore {
       let memberDoc = get(/databases/$(database)/documents/groups/$(groupId)/members/$(userId()));
       return memberDoc != null
         && (memberDoc.data.role == 'OWNER' || memberDoc.data.role == 'ADMIN')
-        && memberDoc.data.status == 'ACTIVE';
+        && (!('status' in memberDoc.data) || memberDoc.data.status == 'ACTIVE');
     }
 
     // Compatibilidade para grupos criados no web antes do member OWNER gravar

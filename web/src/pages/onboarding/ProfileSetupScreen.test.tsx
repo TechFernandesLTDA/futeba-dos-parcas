@@ -14,6 +14,9 @@ const mockRefreshUser = vi.hoisted(() => vi.fn());
 const mockRefreshClaims = vi.hoisted(() => vi.fn().mockResolvedValue(undefined));
 const mockRecomputeClaim = vi.hoisted(() => vi.fn().mockResolvedValue({success: true, profileComplete: true}));
 const mockShowError = vi.hoisted(() => vi.fn());
+const mockUploadProfileAvatar = vi.hoisted(() =>
+  vi.fn(() => Promise.resolve('https://example.com/profile.jpg?v=1'))
+);
 
 vi.mock('firebase/firestore', () => ({
   doc: vi.fn((...parts: unknown[]) => parts.join('/')),
@@ -33,6 +36,12 @@ vi.mock('../../services/firebase', () => ({
 
 vi.mock('../../services/cloudFunctions', () => ({
   recomputeMyProfileClaim: (...args: unknown[]) => mockRecomputeClaim(...args),
+}));
+
+vi.mock('../../utils/profileAvatar', () => ({
+  validateProfileAvatar: vi.fn(() => null),
+  uploadProfileAvatar: (...args: unknown[]) => mockUploadProfileAvatar(...args),
+  getProfileAvatarUploadErrorKey: vi.fn(() => 'profile.avatarUploadError'),
 }));
 
 vi.mock('../../contexts/AuthContext', () => ({
@@ -90,6 +99,15 @@ describe('ProfileSetupScreen', () => {
     mockUpdateDoc.mockResolvedValue(undefined);
     mockUpdateProfile.mockResolvedValue(undefined);
     mockRefreshUser.mockResolvedValue(undefined);
+    mockUploadProfileAvatar.mockResolvedValue('https://example.com/profile.jpg?v=1');
+    Object.defineProperty(URL, 'createObjectURL', {
+      configurable: true,
+      value: vi.fn(() => 'blob:onboarding-avatar'),
+    });
+    Object.defineProperty(URL, 'revokeObjectURL', {
+      configurable: true,
+      value: vi.fn(),
+    });
   });
 
   it('atualiza perfil existente sem enviar campos protegidos pelas rules', async () => {
@@ -133,5 +151,31 @@ describe('ProfileSetupScreen', () => {
 
     const payload = mockUpdateDoc.mock.calls[0][1] as Record<string, unknown>;
     expect(payload.preferred_position).toBe('ZAGUEIRO');
+  });
+
+  it('permite escolher e salvar a foto durante o onboarding', async () => {
+    const user = userEvent.setup();
+    renderWithProviders();
+
+    const file = new File(['avatar'], 'avatar.png', { type: 'image/png' });
+    await user.upload(screen.getByLabelText(/selecionar foto/i), file);
+    await user.click(screen.getByRole('button', { name: /continuar/i }));
+
+    await waitFor(() => expect(mockUploadProfileAvatar).toHaveBeenCalledTimes(1));
+    expect(mockUploadProfileAvatar).toHaveBeenCalledWith(
+      file,
+      expect.objectContaining({ uid: 'user-1' }),
+    );
+    expect(mockUpdateProfile).toHaveBeenCalledWith(
+      expect.objectContaining({ uid: 'user-1' }),
+      expect.objectContaining({
+        displayName: 'Caio',
+        photoURL: 'https://example.com/profile.jpg?v=1',
+      }),
+    );
+    expect(mockUpdateDoc).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ photo_url: 'https://example.com/profile.jpg?v=1' }),
+    );
   });
 });

@@ -11,6 +11,9 @@ const mockUpdateDoc = vi.hoisted(() => vi.fn());
 const mockUpdateUserPii = vi.hoisted(() =>
   vi.fn(() => Promise.resolve({ data: { success: true, updated: ['gender'] } }))
 );
+const mockUploadProfileAvatar = vi.hoisted(() =>
+  vi.fn(() => Promise.resolve('https://example.com/photo.jpg?v=1'))
+);
 
 vi.mock('firebase/firestore', () => ({
   doc: vi.fn((...parts: unknown[]) => parts.join('/')),
@@ -43,6 +46,12 @@ vi.mock('../../services/cloudFunctions', () => ({
   updateUserPii: mockUpdateUserPii,
 }));
 
+vi.mock('../../utils/profileAvatar', () => ({
+  validateProfileAvatar: vi.fn(() => null),
+  uploadProfileAvatar: (...args: unknown[]) => mockUploadProfileAvatar(...args),
+  getProfileAvatarUploadErrorKey: vi.fn(() => 'profile.avatarUploadError'),
+}));
+
 vi.mock('../../utils/logger', () => ({
   createLogger: () => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }),
 }));
@@ -58,6 +67,9 @@ vi.mock('react-i18next', () => ({
         'common.save': 'Salvar',       // botão no footer do FormScaffold
         'common.cancel': 'Cancelar',
         'common.saving': 'Salvando...',
+        'profile.selectPhotoAria': 'Selecionar foto de perfil',
+        'profile.changePhotoAria': 'Alterar foto de perfil',
+        'profile.avatarUploadError': 'Falha ao enviar foto. Tente novamente.',
       };
       return map[key] || key;
     },
@@ -125,6 +137,8 @@ describe('EditProfileScreen', () => {
     vi.clearAllMocks();
     mockUpdateDoc.mockResolvedValue(undefined);
     mockUpdateUserPii.mockResolvedValue({ data: { success: true, updated: ['gender'] } });
+    mockUpdateUserProfile.mockResolvedValue(undefined);
+    mockUploadProfileAvatar.mockResolvedValue('https://example.com/photo.jpg?v=1');
     mockGetDoc.mockImplementation((path: string) => Promise.resolve(
       path.includes('users_private')
         ? { exists: () => false }
@@ -167,4 +181,5 @@ describe('EditProfileScreen', () => {
       expect(screen.getByText('Editar Perfil')).toBeInTheDocument();
     }, { timeout: 10000 });
   });
+
 });
