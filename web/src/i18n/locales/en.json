@@ -1535,6 +1535,7 @@
     "publishError": "We couldn't publish right now. Try again.",
     "imageLoadError": "We couldn't load this photo.",
     "videoPreviewError": "We couldn't prepare this video for preview.",
+    "videoPreviewUnavailable": "We couldn't preview this video, but you can still publish it.",
     "videoLoadError": "We couldn't load this video.",
     "retryImage": "Try loading again",
     "retryVideo": "Try loading again",

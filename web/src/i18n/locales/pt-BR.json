@@ -1535,6 +1535,7 @@
     "publishError": "Não foi possível publicar agora. Tente novamente.",
     "imageLoadError": "Não foi possível carregar esta foto.",
     "videoPreviewError": "Não foi possível preparar este vídeo para visualização.",
+    "videoPreviewUnavailable": "Não foi possível pré-visualizar este vídeo, mas você ainda pode publicá-lo.",
     "videoLoadError": "Não foi possível carregar este vídeo.",
     "retryImage": "Tentar carregar novamente",
     "retryVideo": "Tentar carregar novamente",
