@@ -1,6 +1,5 @@
 package com.futebadosparcas.ui.groups
 
-import android.net.Uri
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,11 +12,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ChatBubbleOutline
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -30,6 +26,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -62,7 +59,7 @@ fun GroupWallScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val listState = rememberLazyListState()
-    var showComposer by remember { mutableStateOf(false) }
+    var clearDraftSignal by remember(groupId) { mutableIntStateOf(0) }
     var editingPost by remember { mutableStateOf<GroupWallPost?>(null) }
     var deletingPost by remember { mutableStateOf<GroupWallPost?>(null) }
     var lightboxUrl by remember { mutableStateOf<String?>(null) }
@@ -73,6 +70,11 @@ fun GroupWallScreen(
 
     LaunchedEffect(actionState) {
         when (val action = actionState) {
+            is GroupWallActionState.PostCreated -> {
+                clearDraftSignal++
+                snackbarHostState.showSnackbar(action.message)
+                viewModel.resetActionState()
+            }
             is GroupWallActionState.Success -> {
                 snackbarHostState.showSnackbar(action.message)
                 viewModel.resetActionState()
@@ -99,127 +101,120 @@ fun GroupWallScreen(
                 }
             )
         },
-        floatingActionButton = {
-            if (canPost && !showComposer) {
-                FloatingActionButton(onClick = { showComposer = true }) {
-                    Icon(
-                        imageVector = Icons.Default.ChatBubbleOutline,
-                        contentDescription = stringResource(R.string.group_wall_create_post)
-                    )
-                }
-            }
-        },
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
     ) { paddingValues ->
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            when (val state = uiState) {
-                is GroupWallUiState.Loading -> {
-                    LoadingState(
-                        shimmerCount = 4,
-                        itemType = LoadingItemType.CARD
-                    )
-                }
-                is GroupWallUiState.Empty -> {
-                    EmptyState(
-                        type = EmptyStateType.NoData(
-                            title = stringResource(R.string.group_wall_empty_title),
-                            description = stringResource(R.string.group_wall_empty_desc)
+            Box(modifier = Modifier.weight(1f)) {
+                when (val state = uiState) {
+                    is GroupWallUiState.Loading -> {
+                        LoadingState(
+                            shimmerCount = 4,
+                            itemType = LoadingItemType.CARD
                         )
-                    )
-                }
-                is GroupWallUiState.Error -> {
-                    EmptyState(
-                        type = EmptyStateType.Error(
-                            title = stringResource(R.string.error),
-                            description = state.message,
-                            actionLabel = stringResource(R.string.retry),
-                            onRetry = { viewModel.observePosts(groupId) }
+                    }
+                    is GroupWallUiState.Empty -> {
+                        EmptyState(
+                            type = EmptyStateType.NoData(
+                                title = stringResource(R.string.group_wall_empty_title),
+                                description = stringResource(R.string.group_wall_empty_desc)
+                            )
                         )
-                    )
-                }
-                is GroupWallUiState.Success -> {
-                    val pinned = state.posts.filter { it.pinned }
-                    val regular = state.posts.filter { !it.pinned }
-                    val currentUserId = viewModel.currentUserId()
+                    }
+                    is GroupWallUiState.Error -> {
+                        EmptyState(
+                            type = EmptyStateType.Error(
+                                title = stringResource(R.string.error),
+                                description = state.message,
+                                actionLabel = stringResource(R.string.retry),
+                                onRetry = { viewModel.observePosts(groupId) }
+                            )
+                        )
+                    }
+                    is GroupWallUiState.Success -> {
+                        val pinned = state.posts.filter { it.pinned }
+                        val regular = state.posts.filter { !it.pinned }
+                        val currentUserId = viewModel.currentUserId()
 
-                    LazyColumn(
-                        state = listState,
-                        contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                        if (showComposer && canPost) {
-                            item(key = "composer") {
-                                WallPostComposer(
-                                    sending = actionState is GroupWallActionState.Sending,
-                                    onSubmit = { text, imageUri ->
-                                        viewModel.createPost(groupId, text, imageUri)
-                                        showComposer = false
+                        LazyColumn(
+                            state = listState,
+                            contentPadding = PaddingValues(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            items(pinned, key = { "pinned-${it.id}" }) { post ->
+                                WallPostCard(
+                                    post = post,
+                                    isOwn = viewModel.isCurrentUser(post.authorId),
+                                    canManage = canManage,
+                                    currentUserId = currentUserId,
+                                    onEdit = if (viewModel.isCurrentUser(post.authorId)) {
+                                        { editingPost = post }
+                                    } else null,
+                                    onDelete = { deletingPost = post },
+                                    onTogglePin = if (canManage) {
+                                        { viewModel.togglePin(groupId, post.id, !post.pinned) }
+                                    } else null,
+                                    onToggleReaction = { emoji ->
+                                        viewModel.toggleReaction(groupId, post, emoji)
                                     },
-                                    onImageError = { message ->
-                                        scope.launch {
-                                            snackbarHostState.showSnackbar(message)
-                                        }
-                                    },
-                                    onCancel = { showComposer = false }
+                                    onImageClick = { lightboxUrl = it }
                                 )
                             }
-                        }
 
-                        items(pinned, key = { "pinned-${it.id}" }) { post ->
-                            WallPostCard(
-                                post = post,
-                                isOwn = viewModel.isCurrentUser(post.authorId),
-                                canManage = canManage,
-                                currentUserId = currentUserId,
-                                onEdit = if (viewModel.isCurrentUser(post.authorId)) {
-                                    { editingPost = post }
-                                } else null,
-                                onDelete = { deletingPost = post },
-                                onTogglePin = if (canManage) {
-                                    { viewModel.togglePin(groupId, post.id, !post.pinned) }
-                                } else null,
-                                onToggleReaction = { emoji ->
-                                    viewModel.toggleReaction(groupId, post, emoji)
-                                },
-                                onImageClick = { lightboxUrl = it }
-                            )
-                        }
-
-                        items(regular, key = { it.id }) { post ->
-                            WallPostCard(
-                                post = post,
-                                isOwn = viewModel.isCurrentUser(post.authorId),
-                                canManage = canManage,
-                                currentUserId = currentUserId,
-                                onEdit = if (viewModel.isCurrentUser(post.authorId)) {
-                                    { editingPost = post }
-                                } else null,
-                                onDelete = { deletingPost = post },
-                                onTogglePin = if (canManage) {
-                                    { viewModel.togglePin(groupId, post.id, !post.pinned) }
-                                } else null,
-                                onToggleReaction = { emoji ->
-                                    viewModel.toggleReaction(groupId, post, emoji)
-                                },
-                                onImageClick = { lightboxUrl = it }
-                            )
+                            items(regular, key = { it.id }) { post ->
+                                WallPostCard(
+                                    post = post,
+                                    isOwn = viewModel.isCurrentUser(post.authorId),
+                                    canManage = canManage,
+                                    currentUserId = currentUserId,
+                                    onEdit = if (viewModel.isCurrentUser(post.authorId)) {
+                                        { editingPost = post }
+                                    } else null,
+                                    onDelete = { deletingPost = post },
+                                    onTogglePin = if (canManage) {
+                                        { viewModel.togglePin(groupId, post.id, !post.pinned) }
+                                    } else null,
+                                    onToggleReaction = { emoji ->
+                                        viewModel.toggleReaction(groupId, post, emoji)
+                                    },
+                                    onImageClick = { lightboxUrl = it }
+                                )
+                            }
                         }
                     }
                 }
             }
 
-            if (uiState is GroupWallUiState.Success && !canPost) {
+            if (canPost) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                ) {
+                    WallPostComposer(
+                        sending = actionState is GroupWallActionState.Sending,
+                        clearDraftSignal = clearDraftSignal,
+                        onSubmit = { text, imageUri ->
+                            viewModel.createPost(groupId, text, imageUri)
+                        },
+                        onImageError = { message ->
+                            scope.launch {
+                                snackbarHostState.showSnackbar(message)
+                            }
+                        }
+                    )
+                }
+            } else if (uiState is GroupWallUiState.Success) {
                 Text(
                     text = stringResource(R.string.group_wall_must_be_member),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier
-                        .align(Alignment.BottomCenter)
+                        .align(Alignment.CenterHorizontally)
                         .padding(16.dp)
                 )
             }

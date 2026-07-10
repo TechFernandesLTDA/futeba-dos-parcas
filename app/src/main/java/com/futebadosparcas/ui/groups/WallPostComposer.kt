@@ -24,6 +24,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -69,6 +70,7 @@ private fun getUriSizeBytes(context: Context, uri: Uri): Long {
 fun WallPostComposer(
     sending: Boolean,
     initialText: String = "",
+    clearDraftSignal: Int = 0,
     onSubmit: (String, Uri?) -> Unit,
     onImageError: ((String) -> Unit)? = null,
     onCancel: (() -> Unit)? = null
@@ -78,6 +80,13 @@ fun WallPostComposer(
     val textRequiredMessage = stringResource(R.string.group_wall_text_required_for_photo)
     var text by remember { mutableStateOf(initialText) }
     var imageUri by remember { mutableStateOf<Uri?>(null) }
+
+    LaunchedEffect(clearDraftSignal) {
+        if (clearDraftSignal > 0) {
+            text = ""
+            imageUri = null
+        }
+    }
     val imagePicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri ->
@@ -178,8 +187,6 @@ fun WallPostComposer(
                             return@IconButton
                         }
                         onSubmit(text.trim(), imageUri)
-                        text = ""
-                        imageUri = null
                     },
                     enabled = isValid && !sending
                 ) {

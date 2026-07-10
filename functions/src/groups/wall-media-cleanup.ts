@@ -17,7 +17,7 @@ export function isManagedWallMediaPath(
   return typeof mediaPath === "string" &&
     mediaPath.startsWith(`groups/${groupId}/wall_media/`) &&
     !mediaPath.includes("..") &&
-    /(^|\/)[A-Za-z0-9._-]+\.(jpg|jpeg|png|webp)$/i.test(mediaPath);
+    /(^|\/)[A-Za-z0-9._-]+\.(jpg|jpeg|png|webp|mp4)$/i.test(mediaPath);
 }
 
 export const onGroupWallPostSoftDeletedCleanupMedia = onDocumentUpdated(

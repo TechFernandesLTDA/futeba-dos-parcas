@@ -82,6 +82,15 @@ describe("group wall media cleanup helper", () => {
     ).toBe(true);
   });
 
+  test("aceita vídeo MP4 no draft do próprio autor", () => {
+    expect(
+      isManagedWallMediaPath(
+        "group-1",
+        "groups/group-1/wall_media/__draft__/uid-player-a-001/video.mp4"
+      )
+    ).toBe(true);
+  });
+
   test("rejeita path fora do prefixo do grupo", () => {
     expect(
       isManagedWallMediaPath(
@@ -102,6 +111,12 @@ describe("group wall media cleanup helper", () => {
       isManagedWallMediaPath(
         "group-1",
         "groups/group-1/wall_media/__draft__/file.gif"
+      )
+    ).toBe(false);
+    expect(
+      isManagedWallMediaPath(
+        "group-1",
+        "groups/group-1/wall_media/__draft__/file.mkv"
       )
     ).toBe(false);
   });
@@ -206,6 +221,28 @@ describe("onGroupWallPostSoftDeletedCleanupMedia", () => {
         ],
       })
     );
+  });
+
+  test("remove vídeo MP4 válido após soft-delete", async () => {
+    const mediaPath =
+      "groups/group-1/wall_media/__draft__/uid-player-a-001/video.mp4";
+
+    await expect(
+      onGroupWallPostSoftDeletedCleanupMedia(
+        buildEvent({
+          before: {deleted_at: null},
+          after: {
+            deleted_at: "2026-07-05T00:05:00.000Z",
+            media_path: mediaPath,
+            thumbnail_path: null,
+          },
+        })
+      )
+    ).resolves.toBeUndefined();
+
+    expect(mockFile).toHaveBeenCalledWith(mediaPath);
+    expect(mockDelete).toHaveBeenCalledTimes(1);
+    expect(mockDelete).toHaveBeenCalledWith({ignoreNotFound: true});
   });
 
   test("propaga erro de storage após logar contexto", async () => {

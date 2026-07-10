@@ -1,5 +1,6 @@
 package com.futebadosparcas.ui.groups
 
+import android.view.ViewGroup
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -29,8 +30,11 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -38,9 +42,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.media3.common.MediaItem
+import androidx.media3.common.PlaybackException
+import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.ui.PlayerView
 import coil3.compose.AsyncImage
 import com.futebadosparcas.R
 import com.futebadosparcas.data.model.GroupWallPost
@@ -228,19 +240,24 @@ fun WallPostCard(
                 )
             }
 
-            if (!post.mediaUrl.isNullOrBlank()) {
-                AsyncImage(
-                    model = post.mediaUrl,
-                    contentDescription = stringResource(R.string.group_wall_image_alt, post.authorName),
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(200.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .clickable(enabled = onImageClick != null) {
-                            onImageClick?.invoke(post.mediaUrl!!)
-                        }
-                )
+            val mediaUrl = post.mediaUrl
+            if (!mediaUrl.isNullOrBlank()) {
+                when (resolveWallMediaKind(post.mediaType, mediaUrl)) {
+                    WallMediaKind.VIDEO -> WallPostVideoPlayer(mediaUrl)
+                    WallMediaKind.IMAGE -> AsyncImage(
+                        model = mediaUrl,
+                        contentDescription = stringResource(R.string.group_wall_image_alt, post.authorName),
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable(enabled = onImageClick != null) {
+                                onImageClick?.invoke(mediaUrl)
+                            }
+                    )
+                    WallMediaKind.UNSUPPORTED -> UnsupportedWallMedia()
+                }
             }
 
             if (onToggleReaction != null && !post.isDeleted()) {
@@ -252,4 +269,100 @@ fun WallPostCard(
             }
         }
     }
+}
+
+internal enum class WallMediaKind {
+    IMAGE,
+    VIDEO,
+    UNSUPPORTED
+}
+
+internal fun resolveWallMediaKind(mediaType: String?, mediaUrl: String): WallMediaKind {
+    val normalizedType = mediaType?.trim()?.lowercase().orEmpty()
+    val normalizedUrl = mediaUrl.substringBefore('?').substringBefore('#').lowercase()
+    return when {
+        normalizedType.startsWith("video/") -> WallMediaKind.VIDEO
+        normalizedType.startsWith("image/") -> WallMediaKind.IMAGE
+        normalizedType.isBlank() && normalizedUrl.endsWith(".mp4") -> WallMediaKind.VIDEO
+        normalizedType.isBlank() -> WallMediaKind.IMAGE
+        else -> WallMediaKind.UNSUPPORTED
+    }
+}
+
+@OptIn(UnstableApi::class)
+@Composable
+private fun WallPostVideoPlayer(url: String) {
+    val context = LocalContext.current
+    var retryKey by remember(url) { mutableIntStateOf(0) }
+    var playbackFailed by remember(url, retryKey) { mutableStateOf(false) }
+    val player = remember(url, retryKey) {
+        ExoPlayer.Builder(context).build().apply {
+            setMediaItem(MediaItem.fromUri(url))
+            playWhenReady = false
+        }
+    }
+
+    DisposableEffect(player) {
+        val listener = object : Player.Listener {
+            override fun onPlayerError(error: PlaybackException) {
+                playbackFailed = true
+            }
+        }
+        player.addListener(listener)
+        player.prepare()
+        onDispose {
+            player.removeListener(listener)
+            player.release()
+        }
+    }
+
+    if (playbackFailed) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = stringResource(R.string.error_loading_data),
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            TextButton(
+                onClick = {
+                    playbackFailed = false
+                    retryKey++
+                }
+            ) {
+                Text(stringResource(R.string.retry))
+            }
+        }
+    } else {
+        AndroidView(
+            factory = { viewContext ->
+                PlayerView(viewContext).apply {
+                    this.player = player
+                    useController = true
+                    layoutParams = ViewGroup.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.MATCH_PARENT
+                    )
+                }
+            },
+            update = { it.player = player },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(220.dp)
+                .clip(RoundedCornerShape(8.dp))
+        )
+    }
+}
+
+@Composable
+private fun UnsupportedWallMedia() {
+    Text(
+        text = stringResource(R.string.error_loading_data),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(vertical = 12.dp)
+    )
 }
