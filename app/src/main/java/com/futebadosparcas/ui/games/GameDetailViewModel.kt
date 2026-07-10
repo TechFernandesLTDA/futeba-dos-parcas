@@ -804,10 +804,11 @@ class GameDetailViewModel(
             val current = _uiState.value as? GameDetailUiState.Success
                 ?: return@launch
             _uiState.value = current.copy(
-                userMessage = if (result.isSuccess) {
-                    "Evento removido e placar atualizado."
+                userMessage = null,
+                userMessageResId = if (result.isSuccess) {
+                    R.string.live_game_event_removed
                 } else {
-                    "Erro ao remover evento: ${result.exceptionOrNull()?.message}"
+                    R.string.live_game_event_remove_error
                 }
             )
         }

@@ -44,7 +44,9 @@ class MVPVoteViewModel(
             currentUserId = userRepository.getCurrentUserId()
             val uid = currentUserId
             if (uid == null) {
-                _uiState.value = MVPVoteUiState.Error("Usuario nao autenticado")
+                _uiState.value = MVPVoteUiState.Error(
+                    errorResId = R.string.mvp_vote_error_not_auth
+                )
                 return@launch
             }
 
@@ -54,9 +56,9 @@ class MVPVoteViewModel(
             ) { gameResult, confirmationsResult ->
                 gameResult.getOrThrow() to confirmationsResult.getOrThrow()
             }
-                .catch { error ->
+                .catch {
                     _uiState.value = MVPVoteUiState.Error(
-                        error.message ?: "Erro ao carregar votação"
+                        errorResId = R.string.mvp_vote_error_load_candidates
                     )
                 }
                 .collectLatest { (game, confirmations) ->
@@ -64,8 +66,8 @@ class MVPVoteViewModel(
                         uid in game.coOrganizers
                     if (game.status != com.futebadosparcas.domain.model.GameStatus.FINISHED.name) {
                         _uiState.value = MVPVoteUiState.Error(
-                            "Finalize o jogo antes de iniciar a votação.",
-                            isOwner
+                            isOwner = isOwner,
+                            errorResId = R.string.mvp_vote_error_game_not_finished
                         )
                         return@collectLatest
                     }
@@ -79,9 +81,8 @@ class MVPVoteViewModel(
                     }
                     if (allConfirmations.isEmpty()) {
                         _uiState.value = MVPVoteUiState.Error(
-                            "Nenhum outro jogador confirmado para votar.",
-                            isOwner,
-                            R.string.mvp_vote_error_no_players
+                            isOwner = isOwner,
+                            errorResId = R.string.mvp_vote_error_no_players
                         )
                         return@collectLatest
                     }
@@ -90,9 +91,8 @@ class MVPVoteViewModel(
                         .getUserVoteCategories(gameId, uid)
                     if (categoriesResult.isFailure) {
                         _uiState.value = MVPVoteUiState.Error(
-                            categoriesResult.exceptionOrNull()?.message
-                                ?: "Erro ao verificar seus votos",
-                            isOwner
+                            isOwner = isOwner,
+                            errorResId = R.string.mvp_vote_error_load_votes
                         )
                         return@collectLatest
                     }
@@ -153,7 +153,10 @@ class MVPVoteViewModel(
              _uiState.value = currentState.copy(isSubmitting = true)
              val currentUser = userRepository.getCurrentUserId()
              if (currentUser == null) {
-                 _uiState.value = MVPVoteUiState.Error("Usuario nao autenticado", isOwner)
+                 _uiState.value = MVPVoteUiState.Error(
+                     isOwner = isOwner,
+                     errorResId = R.string.mvp_vote_error_not_auth
+                 )
                  return@launch
              }
              
@@ -180,7 +183,8 @@ class MVPVoteViewModel(
                      } else {
                          _uiState.value = MVPVoteUiState.AlreadyVoted(isOwner)
 
-                         // Verifica se todos votaram para finalizar automaticamente
+                         // Só gestores podem chamar concludeMvpVoting. O contador
+                         // autoritativo atualiza em tempo real para o CTA do gestor.
                          if (isOwner) gameExperienceRepository.checkAllVoted(gameId)
                             .onSuccess { allVoted ->
                                 if (allVoted) {
@@ -189,10 +193,10 @@ class MVPVoteViewModel(
                             }
                      }
                  }
-                 .onFailure { error ->
+                 .onFailure {
                      _uiState.value = MVPVoteUiState.Error(
-                         error.message ?: "Erro ao enviar voto",
-                         isOwner
+                         isOwner = isOwner,
+                         errorResId = R.string.mvp_vote_error_submit
                      )
                  }
         }
@@ -212,7 +216,10 @@ class MVPVoteViewModel(
                     _uiState.value = MVPVoteUiState.Finished(currentState.isOwner)
                 }
                 .onFailure {
-                    _uiState.value = MVPVoteUiState.Error("Erro ao concluir votação: ${it.message}", currentState.isOwner)
+                    _uiState.value = MVPVoteUiState.Error(
+                        isOwner = currentState.isOwner,
+                        errorResId = R.string.mvp_vote_error_finalize_generic
+                    )
                 }
         }
     }
@@ -236,5 +243,9 @@ sealed class MVPVoteUiState {
         val isSubmitting: Boolean = false
     ) : MVPVoteUiState()
     data class Finished(override val isOwner: Boolean) : MVPVoteUiState()
-    data class Error(val message: String, override val isOwner: Boolean = false, @StringRes val errorResId: Int? = null) : MVPVoteUiState()
+    data class Error(
+        val message: String = "",
+        override val isOwner: Boolean = false,
+        @StringRes val errorResId: Int? = null
+    ) : MVPVoteUiState()
 }

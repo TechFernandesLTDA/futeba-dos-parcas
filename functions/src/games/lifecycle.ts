@@ -416,6 +416,12 @@ export const finishGameLifecycle = onCall<GameLifecycleRequest>(
             updated_at: FieldValue.serverTimestamp(),
           });
         }
+      }).catch((rollbackError) => {
+        logger.error("[GAME_LIFECYCLE_FINISH_ROLLBACK_FAILED]", {
+          gameId,
+          uid,
+          rollbackError,
+        });
       });
       throw error;
     }

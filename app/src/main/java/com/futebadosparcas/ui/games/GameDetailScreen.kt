@@ -719,6 +719,8 @@ fun GameHeaderSection(
                         Spacer(Modifier.width(4.dp))
                         Text(stringResource(R.string.edit), maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
+                    // startGameLifecycle aceita somente CONFIRMED: a lista deve
+                    // ser fechada antes de a partida entrar em LIVE.
                     if (game.status == "CONFIRMED") {
                         FilledTonalButton(
                             onClick = onStart,

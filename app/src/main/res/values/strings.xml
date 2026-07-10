@@ -4456,6 +4456,11 @@ subir no ranking!</string>
     <string name="mvp_vote_error_submit">Erro ao enviar voto</string>
     <string name="mvp_vote_error_finalize">Erro ao concluir votação: %1$s</string>
     <string name="mvp_vote_error_not_auth">Usuário não autenticado</string>
+    <string name="mvp_vote_error_game_not_finished">Finalize o jogo antes de iniciar a votação.</string>
+    <string name="mvp_vote_error_load_votes">Erro ao verificar seus votos</string>
+    <string name="mvp_vote_error_finalize_generic">Erro ao concluir votação</string>
+    <string name="live_game_event_removed">Evento removido e placar atualizado.</string>
+    <string name="live_game_event_remove_error">Não foi possível remover o evento.</string>
 
     <!-- ==================== TEAM FORMATION ERRORS ==================== -->
     <string name="team_formation_error_no_formation_players">Nenhum jogador desta formação está disponível</string>
