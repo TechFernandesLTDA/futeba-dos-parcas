@@ -1,6 +1,10 @@
 import { getToken } from 'firebase/app-check';
 import type { User as FirebaseUser } from 'firebase/auth';
-import { type StorageReference, uploadBytes } from 'firebase/storage';
+import {
+  type StorageReference,
+  uploadBytes,
+  uploadBytesResumable,
+} from 'firebase/storage';
 import { appCheck } from '../services/firebase';
 import { createLogger } from './logger';
 
@@ -24,8 +28,9 @@ function isRetryableStorageUploadError(err: unknown) {
     code === 'storage/network-request-failed';
 }
 
-interface StorageUploadRetryOptions {
+export interface StorageUploadOptions {
   refreshCredentials?: () => Promise<void>;
+  onProgress?: (percentage: number) => void;
 }
 
 export async function refreshFirebaseUploadCredentials(user: FirebaseUser) {
@@ -36,15 +41,47 @@ export async function refreshFirebaseUploadCredentials(user: FirebaseUser) {
 export async function uploadImageWithStorageAuthRetry(
   storageReference: StorageReference,
   file: File,
-  options: StorageUploadRetryOptions = {},
+  options: StorageUploadOptions = {},
 ) {
   let lastErr: unknown;
+  let highestProgress = -1;
+
+  const reportProgress = (percentage: number) => {
+    if (!options.onProgress) return;
+    const normalized = Math.max(0, Math.min(100, Math.round(percentage)));
+    if (normalized <= highestProgress) return;
+    highestProgress = normalized;
+    options.onProgress(normalized);
+  };
+
+  const uploadWithProgress = () => new Promise((resolve, reject) => {
+    const uploadTask = uploadBytesResumable(storageReference, file, {
+      contentType: file.type,
+    });
+    uploadTask.on(
+      'state_changed',
+      (snapshot) => {
+        const percentage = snapshot.totalBytes > 0
+          ? (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+          : 0;
+        reportProgress(percentage);
+      },
+      reject,
+      () => {
+        reportProgress(100);
+        resolve(uploadTask.snapshot);
+      },
+    );
+  });
+
+  if (options.onProgress) reportProgress(0);
 
   for (let attempt = 0; attempt < STORAGE_UPLOAD_RETRY_DELAYS_MS.length; attempt += 1) {
     const delayMs = STORAGE_UPLOAD_RETRY_DELAYS_MS[attempt];
     if (delayMs > 0) await wait(delayMs);
 
     try {
+      if (options.onProgress) return await uploadWithProgress();
       return await uploadBytes(storageReference, file, { contentType: file.type });
     } catch (err) {
       lastErr = err;

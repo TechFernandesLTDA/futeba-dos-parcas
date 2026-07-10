@@ -50,10 +50,9 @@ export const GroupWallTab: React.FC<GroupWallTabProps> = ({
     togglePin,
     currentUserId,
   } = useGroupWall(groupId);
-  const { create, sending } = useCreateWallPost(groupId);
+  const { create, sending, uploadProgress } = useCreateWallPost(groupId);
   const { remove, deleting } = useDeleteWallPost(groupId);
   const [editingPost, setEditingPost] = useState<WallPost | null>(null);
-  const [composerOpen, setComposerOpen] = useState(false);
   const [showNewPosts, setShowNewPosts] = useState(false);
   const timelineEndRef = useRef<HTMLDivElement | null>(null);
   const nearBottomRef = useRef(true);
@@ -125,7 +124,6 @@ export const GroupWallTab: React.FC<GroupWallTabProps> = ({
 
   const handleCreate = async (text: string, mediaFile?: File) => {
     await create(text, { mediaFile });
-    setComposerOpen(false);
   };
 
   const handleEdit = async (text: string) => {
@@ -138,22 +136,10 @@ export const GroupWallTab: React.FC<GroupWallTabProps> = ({
     <Box sx={{ p: { xs: 1, sm: 2 } }}>
       <Stack spacing={2}>
         {canPost && (
-          <Box sx={{ display: { xs: 'block', md: 'none' } }}>
-            <Button
-              fullWidth
-              variant="outlined"
-              startIcon={<WallIcon />}
-              onClick={() => setComposerOpen(true)}
-            >
-              {t('groupWall.createPost')}
-            </Button>
-          </Box>
-        )}
-
-        {canPost && (
-          <Box sx={{ display: { xs: 'none', md: 'block' } }}>
+          <Box>
             <WallPostComposer
               sending={sending}
+              uploadProgress={uploadProgress}
               onSubmit={handleCreate}
             />
           </Box>
@@ -273,23 +259,6 @@ export const GroupWallTab: React.FC<GroupWallTabProps> = ({
           </Box>
         )}
       </Stack>
-
-      <Dialog
-        open={composerOpen}
-        onClose={() => setComposerOpen(false)}
-        fullScreen={isMobile}
-        fullWidth
-        maxWidth="sm"
-      >
-        <DialogTitle>{t('groupWall.createPost')}</DialogTitle>
-        <DialogContent>
-          <WallPostComposer
-            sending={sending}
-            onSubmit={handleCreate}
-            onCancel={() => setComposerOpen(false)}
-          />
-        </DialogContent>
-      </Dialog>
 
       <Dialog
         open={editingPost !== null}

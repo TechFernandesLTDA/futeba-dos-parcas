@@ -28,6 +28,7 @@ sealed class GroupWallActionState {
     object Pinning : GroupWallActionState()
     object Reacting : GroupWallActionState()
     object Deleting : GroupWallActionState()
+    data class PostCreated(val message: String) : GroupWallActionState()
     data class Success(val message: String) : GroupWallActionState()
     data class Error(val message: String) : GroupWallActionState()
 }
@@ -69,7 +70,7 @@ class GroupWallViewModel(
             _actionState.value = GroupWallActionState.Sending
             val result = repository.createPost(groupId, text, imageUri)
             _actionState.value = result.fold(
-                onSuccess = { GroupWallActionState.Success("Publicado no mural") },
+                onSuccess = { GroupWallActionState.PostCreated("Publicado no mural") },
                 onFailure = { GroupWallActionState.Error(it.message ?: "Erro ao publicar") }
             )
         }

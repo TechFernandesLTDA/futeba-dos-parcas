@@ -113,6 +113,7 @@ async function uploadWallMedia(
   currentUserUid: string,
   mediaFile: File,
   refreshCredentials?: () => Promise<void>,
+  onUploadProgress?: (percentage: number) => void,
 ): Promise<UploadedWallMedia> {
   const isImage = ACCEPTED_IMAGE_TYPES.includes(mediaFile.type);
   const isVideo = ACCEPTED_VIDEO_TYPES.includes(mediaFile.type);
@@ -130,12 +131,24 @@ async function uploadWallMedia(
   const mediaPath = `groups/${groupId}/wall_media/__draft__/${currentUserUid}/${Date.now()}-${crypto.randomUUID()}.${ext}`;
   const fileRef = storageRef(storage, mediaPath);
 
-  if (refreshCredentials) {
-    await uploadImageWithStorageAuthRetry(fileRef, mediaFile, { refreshCredentials });
+  if (refreshCredentials || onUploadProgress) {
+    await uploadImageWithStorageAuthRetry(fileRef, mediaFile, {
+      ...(refreshCredentials ? { refreshCredentials } : {}),
+      ...(onUploadProgress ? { onProgress: onUploadProgress } : {}),
+    });
   } else {
     await uploadImageWithStorageAuthRetry(fileRef, mediaFile);
   }
-  const mediaUrl = await getDownloadURL(fileRef);
+
+  let mediaUrl: string;
+  try {
+    mediaUrl = await getDownloadURL(fileRef);
+  } catch (err) {
+    // O upload já existe, mas ainda não foi associado a um post. Cleanup é
+    // best-effort e não pode mascarar o erro original de obtenção da URL.
+    await deleteWallMediaPaths([mediaPath]);
+    throw err;
+  }
 
   return {
     mediaUrl,
@@ -169,8 +182,18 @@ export async function createWallPostDocument(params: {
   text: string;
   options?: CreateWallPostOptions;
   refreshCredentials?: () => Promise<void>;
+  onUploadProgress?: (percentage: number) => void;
 }) {
-  const { groupId, currentUserUid, authorName, authorPhotoUrl, text, options, refreshCredentials } = params;
+  const {
+    groupId,
+    currentUserUid,
+    authorName,
+    authorPhotoUrl,
+    text,
+    options,
+    refreshCredentials,
+    onUploadProgress,
+  } = params;
   const cleanText = text.trim();
   const mediaFile = options?.mediaFile ?? options?.imageFile;
 
@@ -190,6 +213,7 @@ export async function createWallPostDocument(params: {
         currentUserUid,
         mediaFile,
         refreshCredentials,
+        onUploadProgress,
       );
     }
 
@@ -402,6 +426,8 @@ export function useCreateWallPost(groupId?: string) {
   const { showError, showSuccess } = useToast();
   const { t } = useTranslation();
   const [sending, setSending] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+  const createOperationRef = useRef(0);
 
   const create = useCallback(
     async (text: string, options?: CreateWallPostOptions) => {
@@ -417,7 +443,11 @@ export function useCreateWallPost(groupId?: string) {
         throw error;
       }
 
+      const mediaFile = options?.mediaFile ?? options?.imageFile;
+      const operationId = createOperationRef.current + 1;
+      createOperationRef.current = operationId;
       setSending(true);
+      setUploadProgress(mediaFile ? 0 : null);
       try {
         await createWallPostDocument({
           groupId,
@@ -427,6 +457,13 @@ export function useCreateWallPost(groupId?: string) {
           text: cleanText,
           options,
           refreshCredentials: () => refreshFirebaseUploadCredentials(currentUser),
+          onUploadProgress: mediaFile
+            ? (percentage) => {
+                if (createOperationRef.current === operationId) {
+                  setUploadProgress(percentage);
+                }
+              }
+            : undefined,
         });
         showSuccess('Publicado no mural.');
       } catch (err) {
@@ -441,13 +478,16 @@ export function useCreateWallPost(groupId?: string) {
         showError(message);
         throw err;
       } finally {
-        setSending(false);
+        if (createOperationRef.current === operationId) {
+          setSending(false);
+          setUploadProgress(null);
+        }
       }
     },
     [groupId, currentUser, user, showError, showSuccess, t],
   );
 
-  return { create, sending };
+  return { create, sending, uploadProgress };
 }
 
 export function useDeleteWallPost(groupId?: string) {
