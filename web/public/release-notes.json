@@ -1,7 +1,31 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-10T17:32:53.558Z",
+  "generatedAt": "2026-07-10T20:08:05.494Z",
   "notes": [
+    {
+      "version": "1.51.39",
+      "buildNumber": null,
+      "releaseDate": "2026-07-10",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "O Mural agora abre direto para conversar, enviar fotos e publicar vídeos.",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "O botão “Criar post” foi removido: o campo de mensagem fica disponível diretamente no Mural, inclusive no celular.",
+        "Fotos e vídeos mostram uma prévia compacta antes do envio, sem ocupar a tela inteira.",
+        "Uploads de mídia exibem progresso real e continuam mais confiáveis em conexões móveis.",
+        "Texto e anexo permanecem no compositor quando a publicação falha, permitindo tentar novamente."
+      ],
+      "fixed": [
+        "Envios duplicados por toque ou clique rápido são bloqueados.",
+        "Falhas ao finalizar a URL da mídia removem o arquivo temporário sem perder o erro original.",
+        "Preview de imagem e vídeo usa Object URL com cleanup, reduzindo o uso de memória no navegador.",
+        "O compositor mantém estados acessíveis de envio, erro e rascunho preservado."
+      ],
+      "issueRefs": []
+    },
     {
       "version": "1.51.38",
       "buildNumber": null,
