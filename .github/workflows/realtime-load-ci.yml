@@ -44,7 +44,8 @@ jobs:
     runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
     timeout-minutes: 30
     env:
-      FIRESTORE_EMULATOR_HOST: 127.0.0.1:8085
+      # Dedicated port: rules/web/function jobs share self-hosted runners.
+      FIRESTORE_EMULATOR_HOST: 127.0.0.1:8086
       GCLOUD_PROJECT: demo-realtime-load
 
     steps:
@@ -80,9 +81,16 @@ jobs:
             echo "vus=10" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Configure isolated Firestore emulator port
+        run: |
+          cp firebase.json "$RUNNER_TEMP/firebase-realtime.json"
+          node -e 'const fs=require("fs"); const p=process.env.RUNNER_TEMP+"/firebase-realtime.json"; const c=JSON.parse(fs.readFileSync(p,"utf8")); c.emulators ??= {}; c.emulators.firestore ??= {}; c.emulators.firestore.port=8086; fs.writeFileSync(p, JSON.stringify(c));'
+          lsof -ti:8086 | xargs kill -9 2>/dev/null || true
+
       - name: Run isolated realtime load gate
         run: |
           firebase emulators:exec \
+            --config "$RUNNER_TEMP/firebase-realtime.json" \
             --only firestore \
             --project demo-realtime-load \
             "npm run test:load:realtime -- --vus ${{ steps.profile.outputs.vus }} --output test-results/realtime-load"
