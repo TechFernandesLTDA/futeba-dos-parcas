@@ -97,7 +97,9 @@ export const InvitePlayersScreen: React.FC = () => {
           setCanInviteGroup(isOwner);
 
           if (!isOwner) {
-            setError('Apenas o dono do grupo pode convidar jogadores.');
+            setError(t('feedback.groups.onlyOwnerInvite', {
+              defaultValue: 'Apenas o dono do grupo pode convidar jogadores.',
+            }));
             return;
           }
 
@@ -147,7 +149,9 @@ export const InvitePlayersScreen: React.FC = () => {
   const handleSearch = async () => {
     if (searchQuery.trim().length < 2) return;
     if (!canInviteGroup) {
-      showError('Apenas o dono do grupo pode convidar jogadores.');
+      showError(t('feedback.groups.onlyOwnerInvite', {
+        defaultValue: 'Apenas o dono do grupo pode convidar jogadores.',
+      }));
       return;
     }
     // #2216: bloqueia reentrada enquanto uma busca está em andamento
@@ -177,7 +181,9 @@ export const InvitePlayersScreen: React.FC = () => {
   const handleInvite = async (targetUser: SearchResult) => {
     if (!groupId || !uid) return;
     if (!canInviteGroup) {
-      showError('Apenas o dono do grupo pode convidar jogadores.');
+      showError(t('feedback.groups.onlyOwnerInvite', {
+        defaultValue: 'Apenas o dono do grupo pode convidar jogadores.',
+      }));
       return;
     }
 
@@ -193,7 +199,9 @@ export const InvitePlayersScreen: React.FC = () => {
       if (memberSnap.exists()) {
         const status = memberSnap.data().status;
         if (status !== 'REMOVED' && status !== 'INACTIVE') {
-          showError('Este jogador já possui vínculo ativo ou bloqueado neste grupo.');
+          showError(t('feedback.groups.memberAlreadyLinked', {
+            defaultValue: 'Este jogador já possui vínculo ativo ou bloqueado neste grupo.',
+          }));
           return;
         }
       }
