@@ -183,7 +183,7 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 - Testes cobrem pausa da aba preservada, ausência de consultas desativadas, estabilidade da lista e raio visual do card.
 - URLs usadas pelo service worker e por integrações externas passam por parsing e validação explícita de origem, host e protocolo.
 
-_Issues: #3486, #3487_
+_Issues: #3486, #3487 · PRs: #3488_
 
 ### [1.51.32][web-1.51.32] - 2026-07-10
 
