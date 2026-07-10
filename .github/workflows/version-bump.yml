@@ -1,16 +1,27 @@
-name: Auto Version Bump
+name: Prepare Android Version Bump
 
-# #028 - Semantic Versioning Automation
-# Automatically bumps version based on conventional commits when merging to master
+# Prepares a version PR only. Tags, GitHub Releases, and store publication must
+# happen from the merged master commit through the documented release process.
 
 on:
-  push:
-    branches:
-      - master
-      - main
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: Semantic version increment for Android
+        required: true
+        default: patch
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+
+concurrency:
+  group: android-version-bump
+  cancel-in-progress: false
 
 jobs:
-  bump-version:
+  prepare-version-pr:
     runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
     timeout-minutes: 15
     permissions:
@@ -18,77 +29,76 @@ jobs:
       pull-requests: write
 
     steps:
-      - name: Checkout
+      - name: Checkout master
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Fetch all history for tags
+          ref: master
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
 
-      - name: Run version bump script
+      - name: Bump Android version
         id: bump
         run: |
-          # Auto-bump apenas Android no merge a master. Web/iOS/functions sao
-          # bumpados manualmente (versionamento independente por plataforma).
-          node scripts/bump-version.js android
+          node scripts/bump-version.js android "${{ inputs.bump }}"
 
-          # Check if version changed
-          if git diff --quiet app/build.gradle.kts; then
-            echo "changed=false" >> $GITHUB_OUTPUT
-          else
-            echo "changed=true" >> $GITHUB_OUTPUT
-            # Extract new version
-            NEW_VERSION=$(grep 'versionName =' app/build.gradle.kts | sed 's/.*versionName = "\(.*\)".*/\1/')
-            echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          if git diff --quiet -- app/build.gradle.kts versions.json; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
 
-      - name: Commit and push to branch + create PR
-        id: push_pr
+          NEW_VERSION=$(grep 'versionName =' app/build.gradle.kts | sed 's/.*versionName = "\(.*\)".*/\1/')
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+          echo "version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Create draft pull request
         if: steps.bump.outputs.changed == 'true'
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-          # Tag escopada por plataforma (este workflow auto-bumpa o ANDROID).
-          TAG="android-v${{ steps.bump.outputs.version }}"
-          BRANCH="chore/bump-android-${{ steps.bump.outputs.version }}"
-
-          # Idempotência: se a tag já existe (local ou remoto), pula totalmente.
-          # Master é protegido — push direto bloqueado por branch protection.
-          # O bump é puramente informativo (build.gradle.kts), sem necessidade de commit.
-          if git rev-parse "$TAG" >/dev/null 2>&1 || \
-             git ls-remote --tags origin "refs/tags/$TAG" | grep -q "$TAG"; then
-            echo "::warning::Tag $TAG já existe — pulando (master é protegido, push desnecessário)"
-            echo "tag_skipped=true" >> $GITHUB_OUTPUT
-          else
-            git checkout -b "$BRANCH"
-            git add app/build.gradle.kts versions.json
-            git commit -m "chore: bump version to ${{ steps.bump.outputs.version }} [skip ci]"
-            git tag "$TAG"
-            git push origin "$BRANCH" --tags
-            gh pr create --base master --head "$BRANCH" \
-              --title "chore: bump version to ${{ steps.bump.outputs.version }}" \
-              --body "Auto-generated version bump from conventional commits. Tag: $TAG"
-          fi
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.bump.outputs.version }}
+        run: |
+          BRANCH="chore/bump-android-$VERSION"
+          TAG="android-v$VERSION"
 
-      - name: Create GitHub Release
-        if: steps.bump.outputs.changed == 'true' && steps.push_pr.outputs.tag_skipped != 'true'
-        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65  # v2
-        with:
-          tag_name: android-v${{ steps.bump.outputs.version }}
-          name: Android Release v${{ steps.bump.outputs.version }}
-          body: |
-            ## What's Changed
+          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1; then
+            echo "::error::Tag $TAG already exists. Refusing to prepare a duplicate release."
+            exit 1
+          fi
 
-            Auto-generated release from conventional commits.
+          if git ls-remote --exit-code --heads origin "refs/heads/$BRANCH" >/dev/null 2>&1; then
+            echo "::error::Branch $BRANCH already exists. Reuse or close its pull request first."
+            exit 1
+          fi
 
-            See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/master/CHANGELOG.md) for details.
-          draft: false
-          prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          git add app/build.gradle.kts versions.json
+          git commit -m "chore(android): bump version to $VERSION"
+          git push --set-upstream origin "$BRANCH"
+
+          gh pr create \
+            --base master \
+            --head "$BRANCH" \
+            --draft \
+            --title "chore(android): prepare release $VERSION" \
+            --body "$(printf '%s\n' \
+              '## Summary' \
+              '' \
+              "Prepare Android $VERSION from the current master branch." \
+              '' \
+              '## Required before marking ready' \
+              '' \
+              '- Add release-notes/android/<version>.md.' \
+              '- Run release-notes validate, changelog, and bundle.' \
+              '- Run the Android release checks.' \
+              '- Link the release issue.' \
+              '' \
+              'No tag or GitHub Release was created. Publish them only after this PR is green and merged.')"
+
+      - name: Report unchanged version
+        if: steps.bump.outputs.changed != 'true'
+        run: echo "No Android version change was generated."
