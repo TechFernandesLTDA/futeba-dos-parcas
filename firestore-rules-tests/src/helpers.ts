@@ -24,7 +24,8 @@ const RULES_PATH = resolve(__dirname, "../../firestore.rules");
 export const PROJECT_ID = "futebadosparcas";
 
 // Porta do emulador (deve bater com firebase.json)
-export const EMULATOR_PORT = 8085;
+export const EMULATOR_PORT = Number(process.env.FIRESTORE_EMULATOR_PORT || "8085");
+export const STORAGE_EMULATOR_PORT = Number(process.env.STORAGE_EMULATOR_PORT || "9199");
 
 // UIDs fixos usados nos testes
 export const UID_ADMIN = "uid-admin-001";

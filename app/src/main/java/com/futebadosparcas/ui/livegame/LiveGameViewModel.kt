@@ -15,7 +15,6 @@ import com.futebadosparcas.domain.usecase.livegame.AddGameEventUseCase
 import com.futebadosparcas.domain.usecase.livegame.AddGameEventParams
 import com.futebadosparcas.domain.usecase.livegame.FinishLiveGameUseCase
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
@@ -53,20 +52,44 @@ class LiveGameViewModel(
         scoreObserverJob = viewModelScope.launch {
             _uiState.value = LiveGameUiState.Loading
 
-            // Combinar fluxos de Jogo e Placar
+            // Mantém toda a tela reativa sem refazer leituras pontuais a cada placar.
             val gameFlow = gameRepository.getGameDetailsFlow(gameId)
             val scoreFlow = liveGameRepository.observeLiveScore(gameId)
+            val teamsFlow = gameRepository.getGameTeamsFlow(gameId)
+            val confirmationsFlow = gameRepository.getGameConfirmationsFlow(gameId)
 
-            combine(gameFlow, scoreFlow) { gameResult, score ->
-                Pair(gameResult, score)
+            combine(gameFlow, scoreFlow, teamsFlow, confirmationsFlow) {
+                    gameResult,
+                    score,
+                    teamsResult,
+                    confirmationsResult ->
+                LiveGameSnapshot(
+                    gameResult = gameResult,
+                    score = score,
+                    teamsResult = teamsResult,
+                    confirmationsResult = confirmationsResult
+                )
             }
             .catch { e ->
                 com.futebadosparcas.util.AppLogger.e("LiveGameViewModel", "Erro no combine de flows", e)
                 _uiState.value = LiveGameUiState.Error(e.message ?: "Erro ao carregar jogo")
             }
-            .collect { (gameResult, score) ->
-                val game = gameResult.getOrElse {
+            .collect { snapshot ->
+                val game = snapshot.gameResult.getOrElse {
                     _uiState.value = LiveGameUiState.Error(it.message ?: "Erro ao carregar jogo")
+                    return@collect
+                }
+                val teams = snapshot.teamsResult.getOrElse {
+                    _uiState.value = LiveGameUiState.Error(it.message ?: "Erro ao carregar times")
+                    return@collect
+                }
+                val confirmations = snapshot.confirmationsResult.getOrElse {
+                    _uiState.value = LiveGameUiState.Error(it.message ?: "Erro ao carregar confirmações")
+                    return@collect
+                }
+                val score = snapshot.score
+                if (score == null) {
+                    _uiState.value = LiveGameUiState.Loading
                     return@collect
                 }
                 currentGame = game
@@ -79,10 +102,6 @@ class LiveGameViewModel(
                     _navigationEvent.emit(LiveGameNavigationEvent.NavigateToVote)
                 }
 
-                // Buscar times
-                val teamsResult = gameRepository.getGameTeams(gameId)
-                val teams = teamsResult.getOrNull() ?: emptyList()
-
                 if (teams.size < 2) {
                     _uiState.value = LiveGameUiState.Error("Times não definidos.")
                 } else {
@@ -90,37 +109,23 @@ class LiveGameViewModel(
                     var team1 = sortedTeams[0]
                     var team2 = sortedTeams[1]
 
-                    // Se já existe placar, respeitar os IDs salvos
-                    if (score != null) {
-                        val savedTeam1 = teams.find { it.id == score.team1Id }
-                        val savedTeam2 = teams.find { it.id == score.team2Id }
-                        
-                        if (savedTeam1 != null && savedTeam2 != null) {
-                            team1 = savedTeam1
-                            team2 = savedTeam2
-                        } else {
-                            // Fallback logging se times mudaram/foram deletados
-                            com.futebadosparcas.util.AppLogger.w("LiveGameViewModel") { "Times do placar salvo não encontrados. Usando padrão." }
-                        }
-                    }
+                    val savedTeam1 = teams.find { it.id == score.team1Id }
+                    val savedTeam2 = teams.find { it.id == score.team2Id }
 
-                    // Buscar confirmações para mapear nomes dos jogadores
-                    val confirmationsResult = gameRepository.getGameConfirmations(gameId)
-                    val confirmations = confirmationsResult.getOrNull() ?: emptyList()
+                    if (savedTeam1 != null && savedTeam2 != null) {
+                        team1 = savedTeam1
+                        team2 = savedTeam2
+                    } else {
+                        // Fallback apenas de ordenação de times; o placar nunca é fabricado.
+                        com.futebadosparcas.util.AppLogger.w("LiveGameViewModel") { "Times do placar salvo não encontrados. Usando padrão." }
+                    }
 
                     val team1Players = confirmations.filter { team1.playerIds.contains(it.userId) }
                     val team2Players = confirmations.filter { team2.playerIds.contains(it.userId) }
 
                     _uiState.value = LiveGameUiState.Success(
                         game = game,
-                        score = score ?: LiveScore(
-                            id = gameId,
-                            gameId = gameId,
-                            team1Id = team1.id,
-                            team2Id = team2.id,
-                            team1Score = 0,
-                            team2Score = 0
-                        ),
+                        score = score,
                         team1 = team1,
                         team2 = team2,
                         team1Players = team1Players,
@@ -131,6 +136,13 @@ class LiveGameViewModel(
             }
         }
     }
+
+    private data class LiveGameSnapshot(
+        val gameResult: Result<Game>,
+        val score: LiveScore?,
+        val teamsResult: Result<List<Team>>,
+        val confirmationsResult: Result<List<GameConfirmation>>
+    )
 
     fun finishGame() {
         viewModelScope.launch {

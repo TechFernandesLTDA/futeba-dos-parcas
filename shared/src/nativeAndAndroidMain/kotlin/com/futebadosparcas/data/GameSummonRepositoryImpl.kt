@@ -35,7 +35,6 @@ class GameSummonRepositoryImpl(
     private val groupsCollection = firestore.collection("groups")
     private val usersCollection = firestore.collection("users")
     private val notificationsCollection = firestore.collection("notifications")
-    private val confirmationsCollection = firestore.collection("confirmations")
 
     override suspend fun createSummonsForGame(
         gameId: String,
@@ -197,6 +196,16 @@ class GameSummonRepositoryImpl(
             val userName = userDoc.get<String?>("name") ?: ""
             val userPhoto = userDoc.get<String?>("photo_url")
 
+            firebaseDataSource.confirmPresence(
+                gameId = gameId,
+                userId = userId,
+                userName = userName,
+                userPhoto = userPhoto,
+                position = position.name,
+                isCasualPlayer = false
+            ).getOrElse { return Result.failure(it) }
+            val confirmedGameDoc = gamesCollection.document(gameId).get()
+
             firestore.runTransaction<Unit> {
                 val summonRef = summonsCollection.document(summonId)
                 update(
@@ -208,30 +217,6 @@ class GameSummonRepositoryImpl(
                     )
                 )
 
-                val confirmationId = "${gameId}_${userId}"
-                val confirmationRef = confirmationsCollection.document(confirmationId)
-                set(
-                    confirmationRef,
-                    mapOf(
-                        "id" to confirmationId,
-                        "game_id" to gameId,
-                        "user_id" to userId,
-                        "user_name" to userName,
-                        "user_photo" to userPhoto,
-                        "position" to position.name,
-                        "status" to "CONFIRMED",
-                        "payment_status" to "PENDING",
-                        "confirmed_at" to FieldValue.serverTimestamp,
-                    )
-                )
-
-                val gameRef = gamesCollection.document(gameId)
-                if (position == PlayerPosition.GOALKEEPER) {
-                    update(gameRef, "goalkeepers_count" to FieldValue.increment(1))
-                } else {
-                    update(gameRef, "players_count" to FieldValue.increment(1))
-                }
-
                 val upcomingGameRef = usersCollection.document(userId)
                     .collection("upcoming_games")
                     .document(gameId)
@@ -241,16 +226,16 @@ class GameSummonRepositoryImpl(
                     mapOf(
                         "id" to gameId,
                         "game_id" to gameId,
-                        "group_id" to (gameDoc.get<String?>("group_id") ?: ""),
-                        "group_name" to (gameDoc.get<String?>("group_name") ?: ""),
-                        "date_time" to gameDoc.get<Timestamp?>("dateTime"),
-                        "location_name" to (gameDoc.get<String?>("location_name") ?: ""),
-                        "location_address" to (gameDoc.get<String?>("location_address") ?: ""),
-                        "field_name" to (gameDoc.get<String?>("field_name") ?: ""),
-                        "status" to (gameDoc.get<String?>("status") ?: "SCHEDULED"),
+                        "group_id" to (confirmedGameDoc.get<String?>("group_id") ?: ""),
+                        "group_name" to (confirmedGameDoc.get<String?>("group_name") ?: ""),
+                        "date_time" to confirmedGameDoc.get<Timestamp?>("dateTime"),
+                        "location_name" to (confirmedGameDoc.get<String?>("location_name") ?: ""),
+                        "location_address" to (confirmedGameDoc.get<String?>("location_address") ?: ""),
+                        "field_name" to (confirmedGameDoc.get<String?>("field_name") ?: ""),
+                        "status" to (confirmedGameDoc.get<String?>("status") ?: "SCHEDULED"),
                         "my_position" to position.name,
-                        "confirmed_count" to ((gameDoc.get<Long?>("players_count")?.toInt() ?: 0) + 1),
-                        "max_players" to (gameDoc.get<Long?>("max_players")?.toInt() ?: 14),
+                        "confirmed_count" to (confirmedGameDoc.get<Long?>("players_count")?.toInt() ?: 0),
+                        "max_players" to (confirmedGameDoc.get<Long?>("max_players")?.toInt() ?: 14),
                     )
                 )
             }
@@ -340,7 +325,9 @@ class GameSummonRepositoryImpl(
 
             val summonId = gameSummonId(gameId, userId)
             val summonDoc = summonsCollection.document(summonId).get()
-            val position = summonDoc.get<String?>("position")
+
+            firebaseDataSource.cancelConfirmation(gameId, userId)
+                .getOrElse { return Result.failure(it) }
 
             firestore.runTransaction<Unit> {
                 val summonRef = summonsCollection.document(summonId)
@@ -353,17 +340,6 @@ class GameSummonRepositoryImpl(
                             "responded_at" to null,
                         )
                     )
-                }
-
-                val confirmationId = "${gameId}_${userId}"
-                val confirmationRef = confirmationsCollection.document(confirmationId)
-                delete(confirmationRef)
-
-                val gameRef = gamesCollection.document(gameId)
-                if (position == PlayerPosition.GOALKEEPER.name) {
-                    update(gameRef, "goalkeepers_count" to FieldValue.increment(-1))
-                } else {
-                    update(gameRef, "players_count" to FieldValue.increment(-1))
                 }
 
                 val upcomingGameRef = usersCollection.document(userId)

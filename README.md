@@ -126,8 +126,15 @@ Execute primeiro o menor gate que cobre a mudança; antes de um PR, rode o gate 
 | Android completo | `./gradlew :app:assembleDebug && ./gradlew lint && ./gradlew detekt` |
 | Firestore Rules | `cd firestore-rules-tests && npm ci && npm test` |
 | Scripts do repositório | `npm run test:scripts` |
+| Realtime multiusuário | `npm run test:load:realtime -- --profile 10` com Firestore Emulator |
 
 Testes E2E e de performance possuem requisitos adicionais. Use [`docs/QA_SMOKE_MATRIX.md`](docs/QA_SMOKE_MATRIX.md) como fonte do gate de release.
+
+O harness realtime simula 10, 100 ou 1.000 sessões concorrentes, mede p50/p95/p99,
+erros e invariantes de fan-out, contenção e escritas distribuídas. Ele bloqueia
+explicitamente qualquer host que não seja local: nunca execute carga contra o
+Firestore de produção. O CI roda 10 sessões em PRs; os perfis maiores ficam no
+workflow agendado/manual `Realtime load CI`.
 
 ## Estrutura do repositório
 

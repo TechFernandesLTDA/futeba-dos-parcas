@@ -126,6 +126,7 @@ web/.env.test
 
 # Playwright output
 web/test-results/
+test-results/
 web/playwright-report/
 
 # Cloud Functions build output

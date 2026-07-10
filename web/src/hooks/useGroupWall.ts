@@ -23,7 +23,10 @@ import { storage } from '../services/firebaseStorage';
 import { getFirestoreErrorMessage } from '../utils/firebaseErrors';
 import { snakeToCamel, toDate } from '../utils/firestoreHelpers';
 import { createLogger } from '../utils/logger';
-import { uploadImageWithStorageAuthRetry } from '../utils/storageUpload';
+import {
+  refreshFirebaseUploadCredentials,
+  uploadImageWithStorageAuthRetry,
+} from '../utils/storageUpload';
 import { useTranslation } from 'react-i18next';
 import { mergeRealtimePageById } from './realtimePageMerge';
 
@@ -106,6 +109,7 @@ async function uploadWallMedia(
   groupId: string,
   currentUserUid: string,
   imageFile: File,
+  refreshCredentials?: () => Promise<void>,
 ): Promise<UploadedWallMedia> {
   if (!ACCEPTED_IMAGE_TYPES.includes(imageFile.type)) {
     throw new Error('Tipo de imagem inválido. Use JPG, PNG ou WebP.');
@@ -120,7 +124,11 @@ async function uploadWallMedia(
   const mediaPath = `groups/${groupId}/wall_media/__draft__/${currentUserUid}/${Date.now()}-${crypto.randomUUID()}.${ext}`;
   const fileRef = storageRef(storage, mediaPath);
 
-  await uploadImageWithStorageAuthRetry(fileRef, imageFile);
+  if (refreshCredentials) {
+    await uploadImageWithStorageAuthRetry(fileRef, imageFile, { refreshCredentials });
+  } else {
+    await uploadImageWithStorageAuthRetry(fileRef, imageFile);
+  }
   const mediaUrl = await getDownloadURL(fileRef);
 
   return {
@@ -154,8 +162,9 @@ export async function createWallPostDocument(params: {
   authorPhotoUrl: string | null;
   text: string;
   options?: CreateWallPostOptions;
+  refreshCredentials?: () => Promise<void>;
 }) {
-  const { groupId, currentUserUid, authorName, authorPhotoUrl, text, options } = params;
+  const { groupId, currentUserUid, authorName, authorPhotoUrl, text, options, refreshCredentials } = params;
   const cleanText = text.trim();
 
   if (cleanText.length === 0 && !options?.imageFile) {
@@ -169,7 +178,12 @@ export async function createWallPostDocument(params: {
 
   try {
     if (options?.imageFile) {
-      uploadedMedia = await uploadWallMedia(groupId, currentUserUid, options.imageFile);
+      uploadedMedia = await uploadWallMedia(
+        groupId,
+        currentUserUid,
+        options.imageFile,
+        refreshCredentials,
+      );
     }
 
     await addDoc(collection(db, 'groups', groupId, 'wall_posts'), {
@@ -313,6 +327,7 @@ export function useGroupWall(groupId?: string) {
         authorPhotoUrl: user?.photoUrl ?? currentUser.photoURL ?? null,
         text,
         options,
+        refreshCredentials: () => refreshFirebaseUploadCredentials(currentUser),
       });
     },
     [groupId, currentUser, user],
@@ -399,6 +414,7 @@ export function useCreateWallPost(groupId?: string) {
           authorPhotoUrl: user?.photoUrl ?? currentUser.photoURL ?? null,
           text: cleanText,
           options,
+          refreshCredentials: () => refreshFirebaseUploadCredentials(currentUser),
         });
         showSuccess('Publicado no mural.');
       } catch (err) {

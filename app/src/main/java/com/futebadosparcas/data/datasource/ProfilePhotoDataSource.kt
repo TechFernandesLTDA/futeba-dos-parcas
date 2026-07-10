@@ -47,10 +47,6 @@ class ProfilePhotoDataSource constructor(
     companion object {
         private const val TAG = "ProfilePhotoDataSource"
 
-        // Limites de tamanho
-        private const val MAX_FILE_SIZE_MB = 2
-        private const val MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024
-
         // Dimensões otimizadas
         private const val PROFILE_PHOTO_SIZE = 400  // 400x400 é suficiente para profile
         private const val THUMBNAIL_SIZE = 150       // Para listagens
@@ -108,6 +104,14 @@ class ProfilePhotoDataSource constructor(
 
             // 2. Decodificar e processar imagem
             val processedData = processImage(imageUri)
+            if (!ProfilePhotoValidation.isUploadSizeAllowed(processedData.bytes.size)) {
+                AppLogger.w(TAG) {
+                    "Compressed profile photo is outside the Storage limit: ${processedData.bytes.size} bytes"
+                }
+                trySend(UploadResult.FileTooLarge)
+                close()
+                return@callbackFlow
+            }
             val thumbnailData = createThumbnail(processedData.bitmap)
 
             AppLogger.d(TAG) { "Processing complete - Main: ${processedData.bytes.size}KB, Thumb: ${thumbnailData.size}KB" }
@@ -186,6 +190,12 @@ class ProfilePhotoDataSource constructor(
 
                 // 2. Decodificar e processar imagem
                 val processedData = processImage(imageUri)
+                if (!ProfilePhotoValidation.isUploadSizeAllowed(processedData.bytes.size)) {
+                    AppLogger.w(TAG) {
+                        "Compressed profile photo is outside the Storage limit: ${processedData.bytes.size} bytes"
+                    }
+                    return@withContext UploadResult.FileTooLarge
+                }
 
                 AppLogger.d(TAG) { "Processing complete - Size: ${processedData.bytes.size}KB, " +
                         "Format: ${processedData.format}, ${processedData.bitmap.width}x${processedData.bitmap.height}" }
@@ -240,8 +250,10 @@ class ProfilePhotoDataSource constructor(
     private fun validateImageFile(uri: Uri): UploadResult? {
         // Validar tamanho
         val fileSize = getFileSize(uri)
-        if (fileSize > MAX_FILE_SIZE_BYTES) {
-            AppLogger.w(TAG) { "File too large: ${fileSize / 1024 / 1024}MB (max: $MAX_FILE_SIZE_MB MB)" }
+        if (!ProfilePhotoValidation.isSourceSizeAllowed(fileSize)) {
+            AppLogger.w(TAG) {
+                "Source profile photo is too large: ${fileSize / 1024 / 1024} MiB (max: 10 MiB)"
+            }
             return UploadResult.FileTooLarge
         }
 
@@ -438,7 +450,12 @@ class ProfilePhotoDataSource constructor(
             setCustomMetadata("width", width.toString())
             setCustomMetadata("height", height.toString())
             setCustomMetadata("format", format)
-            setCustomMetadata("compression_ratio", "${((1 - compressedSize.toFloat() / originalSize) * 100).toInt()}%")
+            val compressionRatio = if (originalSize > 0) {
+                ((1 - compressedSize.toFloat() / originalSize) * 100).toInt()
+            } else {
+                0
+            }
+            setCustomMetadata("compression_ratio", "$compressionRatio%")
         }
     }
 

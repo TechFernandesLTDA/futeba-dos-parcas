@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { collection, doc, documentId, getDoc, getDocs, limit, query, where } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { snakeToCamel } from '../utils/firestoreHelpers';
@@ -205,14 +205,26 @@ export const usePlayerDetail = (userId?: string) => {
   const [player, setPlayer] = useState<Player | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [resolvedUserId, setResolvedUserId] = useState<string | undefined>(undefined);
+  const [refetchKey, setRefetchKey] = useState(0);
+
+  const refetch = useCallback(() => {
+    setRefetchKey((current) => current + 1);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
+
+    setResolvedUserId(userId);
+    setPlayer(null);
+    setError(null);
 
     if (!userId) {
       setLoading(false);
       return;
     }
+
+    setLoading(true);
 
     const fetchPlayer = async () => {
       try {
@@ -271,6 +283,8 @@ export const usePlayerDetail = (userId?: string) => {
               createdAt: raw.created_at?.toDate?.() || (data.createdAt as Date | undefined),
             });
           }
+        } else {
+          setPlayer(null);
         }
         if (!cancelled) {
           setLoading(false);
@@ -283,9 +297,15 @@ export const usePlayerDetail = (userId?: string) => {
       }
     };
 
-    fetchPlayer();
+    void fetchPlayer();
     return () => { cancelled = true; };
-  }, [userId]);
+  }, [refetchKey, userId]);
 
-  return { player, loading, error };
+  const isCurrentRequest = resolvedUserId === userId;
+  return {
+    player: isCurrentRequest ? player : null,
+    loading: userId ? !isCurrentRequest || loading : false,
+    error: isCurrentRequest ? error : null,
+    refetch,
+  };
 };

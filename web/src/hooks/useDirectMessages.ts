@@ -20,6 +20,7 @@ import { createDirectChat, submitDirectMessage } from '../services/cloudFunction
 import { getFirestoreErrorMessage } from '../utils/firebaseErrors';
 import { toDate } from '../utils/firestoreHelpers';
 import { createLogger } from '../utils/logger';
+import { mergeRealtimePageById } from './realtimePageMerge';
 
 const logger = createLogger('useDirectMessages');
 
@@ -151,6 +152,7 @@ export function useDirectChat(chatId?: string) {
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const oldestDocRef = useRef<QueryDocumentSnapshot<DocumentData> | null>(null);
+  const historyLoadedRef = useRef(false);
 
   const peer = useMemo(() => chat ? getDirectChatPeer(chat, currentUser?.uid) : null, [chat, currentUser?.uid]);
 
@@ -158,13 +160,20 @@ export function useDirectChat(chatId?: string) {
     if (!chatId || !currentUser?.uid) {
       setChat(null);
       setMessages([]);
+      setError(null);
+      setHasMore(false);
+      oldestDocRef.current = null;
+      historyLoadedRef.current = false;
       setLoading(false);
       return;
     }
 
     setLoading(true);
     setError(null);
+    setMessages([]);
+    setHasMore(false);
     oldestDocRef.current = null;
+    historyLoadedRef.current = false;
 
     const chatRef = doc(db, 'chats', chatId);
     const messagesQuery = query(
@@ -188,9 +197,16 @@ export function useDirectChat(chatId?: string) {
     const unsubscribeMessages = onSnapshot(
       messagesQuery,
       (snapshot) => {
-        setMessages(snapshot.docs.map(mapMessage).reverse());
-        setHasMore(snapshot.size === DIRECT_MESSAGE_PAGE_SIZE);
-        oldestDocRef.current = snapshot.docs[snapshot.docs.length - 1] ?? null;
+        const snapshotIds = snapshot.docs.map((docSnapshot) => docSnapshot.id);
+        const liveMessages = snapshot.docs.map(mapMessage).reverse();
+        setMessages((current) => mergeRealtimePageById(current, liveMessages, snapshotIds, 'append'));
+
+        // Once older pages have been loaded, the history cursor must not move
+        // back to the edge of the live window whenever a new message arrives.
+        if (!historyLoadedRef.current) {
+          setHasMore(snapshot.size === DIRECT_MESSAGE_PAGE_SIZE);
+          oldestDocRef.current = snapshot.docs[snapshot.docs.length - 1] ?? null;
+        }
         setLoading(false);
       },
       (err) => {
@@ -228,9 +244,11 @@ export function useDirectChat(chatId?: string) {
       );
       const snapshot = await getDocs(olderQuery);
       const older = snapshot.docs.map(mapMessage).reverse();
+      const olderIds = snapshot.docs.map((docSnapshot) => docSnapshot.id);
       oldestDocRef.current = snapshot.docs[snapshot.docs.length - 1] ?? oldestDocRef.current;
+      historyLoadedRef.current = true;
       setHasMore(snapshot.size === DIRECT_MESSAGE_PAGE_SIZE);
-      setMessages((prev) => [...older, ...prev]);
+      setMessages((current) => mergeRealtimePageById(current, older, olderIds, 'prepend'));
     } catch (err) {
       logger.error('Erro ao paginar mensagens diretas:', err);
       setError(getFirestoreErrorMessage(err));

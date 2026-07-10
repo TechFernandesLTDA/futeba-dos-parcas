@@ -1,5 +1,5 @@
 import { PageContainer } from '../../components/common/PageContainer';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
@@ -35,6 +35,11 @@ import { createLogger } from '../../utils/logger';
 import { avatarSizes } from '../../theme/iconSizes';
 import type { PreferredPosition } from '../../types/user';
 import { useTranslation } from 'react-i18next';
+import {
+  getProfileAvatarUploadErrorKey,
+  uploadProfileAvatar,
+  validateProfileAvatar,
+} from '../../utils/profileAvatar';
 
 const logger = createLogger('ProfileSetupScreen');
 
@@ -53,21 +58,67 @@ export const ProfileSetupScreen: React.FC = () => {
   const [preferredPosition, setPreferredPosition] = useState<PreferredPosition | null>(null);
   const [preferredFieldTypes, setPreferredFieldTypes] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const previewUrlRef = useRef<string | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const validationError = validateProfileAvatar(file);
+    if (validationError === 'invalid-type') {
+      showError(t('profile.avatarInvalidType'));
+      event.target.value = '';
+      return;
+    }
+    if (validationError === 'too-large') {
+      showError(t('profile.avatarTooLarge'));
+      event.target.value = '';
+      return;
+    }
+
+    if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+    const nextPreviewUrl = URL.createObjectURL(file);
+    previewUrlRef.current = nextPreviewUrl;
+    setPreviewUrl(nextPreviewUrl);
+    setSelectedFile(file);
+  };
+
+  useEffect(() => () => {
+    if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+  }, []);
 
   const handleSave = async () => {
     if (!firebaseUser || !name.trim()) return;
 
     setLoading(true);
     const originalDisplayName = firebaseUser.displayName;
+    const originalPhotoURL = firebaseUser.photoURL;
     const trimmedName = name.trim();
     try {
-      await updateProfile(firebaseUser, { displayName: trimmedName });
+      let uploadedPhotoUrl = firebaseUser.photoURL || '';
+      if (selectedFile) {
+        try {
+          uploadedPhotoUrl = await uploadProfileAvatar(selectedFile, firebaseUser);
+        } catch (uploadErr) {
+          logger.error('Falha ao enviar foto de perfil no onboarding:', uploadErr);
+          showError(t(getProfileAvatarUploadErrorKey(uploadErr)));
+          return;
+        }
+      }
+
+      await updateProfile(firebaseUser, {
+        displayName: trimmedName,
+        ...(selectedFile ? { photoURL: uploadedPhotoUrl } : {}),
+      });
       
       try {
         const userRef = doc(db, 'users', firebaseUser.uid);
         const profileData = {
           name: trimmedName,
-          photo_url: firebaseUser.photoURL || '',
+          photo_url: uploadedPhotoUrl,
           nickname: nickname.trim(),
           preferred_position: preferredPosition,
           preferred_field_types: preferredFieldTypes,
@@ -94,7 +145,10 @@ export const ProfileSetupScreen: React.FC = () => {
       } catch (firestoreErr) {
         logger.error('Firestore setDoc failed, rolling back Auth:', firestoreErr);
         try {
-          await updateProfile(firebaseUser, { displayName: originalDisplayName ?? undefined });
+          await updateProfile(firebaseUser, {
+            displayName: originalDisplayName ?? undefined,
+            photoURL: originalPhotoURL ?? undefined,
+          });
         } catch (rollbackErr) {
           logger.error('Rollback do Auth falhou:', rollbackErr);
           showError(t('feedback.auth.profileInconsistent'));
@@ -153,6 +207,14 @@ export const ProfileSetupScreen: React.FC = () => {
       <PageContainer maxWidth="focused">
         <Box sx={{ textAlign: 'center', mb: 4 }}>
           <Box sx={{ position: 'relative', display: 'inline-block' }}>
+            <input
+              type="file"
+              accept="image/*"
+              ref={fileInputRef}
+              hidden
+              aria-label={t('profile.selectPhotoAria')}
+              onChange={handleFileChange}
+            />
             <Avatar
               sx={{
                 width: avatarSizes.xxl,
@@ -160,11 +222,13 @@ export const ProfileSetupScreen: React.FC = () => {
                 bgcolor: theme.palette.primary.main,
                 fontSize: 48,
               }}
-              src={firebaseUser?.photoURL || undefined}
+              src={previewUrl || firebaseUser?.photoURL || undefined}
             >
               {name?.charAt(0)?.toUpperCase() || '?'}
             </Avatar>
             <IconButton
+              onClick={() => fileInputRef.current?.click()}
+              disabled={loading}
               sx={{
                 position: 'absolute',
                 bottom: 0,

@@ -26,9 +26,7 @@ import { TeamSelector } from '../../components/team/TeamSelector';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { doc, updateDoc, getDoc, serverTimestamp } from 'firebase/firestore';
-import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db } from '../../services/firebase';
-import { storage } from '../../services/firebaseStorage';
 import { updateUserPii } from '../../services/cloudFunctions';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
@@ -36,18 +34,19 @@ import { PreferredPosition, UserGender } from '../../types/user';
 import { getFirestoreErrorMessage } from '../../utils/firebaseErrors';
 import { createLogger } from '../../utils/logger';
 import { useTranslation } from 'react-i18next';
+import {
+  getProfileAvatarUploadErrorKey,
+  uploadProfileAvatar,
+  validateProfileAvatar,
+} from '../../utils/profileAvatar';
 
 const logger = createLogger('EditProfileScreen');
 
 // Opções de gênero do perfil — alinhadas com enum Android User.Gender
 const USER_GENDER_VALUES: UserGender[] = ['MALE', 'FEMALE', 'OTHER', 'NOT_INFORMED'];
 
-// Limites para upload do avatar (alinhados com storage.rules: 2MB, image/*)
 const RATING_RATE_LIMIT_MS = 60_000;
 const RATING_RATE_LIMIT_KEY = 'rating_last_changed_at';
-
-const AVATAR_MAX_BYTES = 2 * 1024 * 1024;
-const AVATAR_ACCEPTED_PREFIX = 'image/';
 
 const POSITION_VALUES: PreferredPosition[] = [
   'GOLEIRO',
@@ -168,14 +167,12 @@ export const EditProfileScreen: React.FC = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Valida tipo (storage.rules exige image/*)
-    if (!file.type.startsWith(AVATAR_ACCEPTED_PREFIX)) {
+    const validationError = validateProfileAvatar(file);
+    if (validationError === 'invalid-type') {
       showError(t('profile.avatarInvalidType'));
       return;
     }
-
-    // Valida tamanho (storage.rules limita a 2MB)
-    if (file.size > AVATAR_MAX_BYTES) {
+    if (validationError === 'too-large') {
       showError(t('profile.avatarTooLarge'));
       return;
     }
@@ -279,13 +276,6 @@ export const EditProfileScreen: React.FC = () => {
     return Object.keys(errors).length === 0;
   };
 
-  const uploadAvatar = async (file: File, uid: string): Promise<string> => {
-    // Path alinhado com storage.rules: users/{uid}/{fileName}
-    const fileRef = storageRef(storage, `users/${uid}/profile.jpg`);
-    await uploadBytes(fileRef, file, { contentType: file.type });
-    return getDownloadURL(fileRef);
-  };
-
   const handleSave = async () => {
     if (saveLockRef.current || !currentUser) return;
     if (!validate()) return;
@@ -330,11 +320,12 @@ export const EditProfileScreen: React.FC = () => {
     if (selectedFile) {
       setUploadingAvatar(true);
       try {
-        uploadedPhotoUrl = await uploadAvatar(selectedFile, currentUser.uid);
+        uploadedPhotoUrl = await uploadProfileAvatar(selectedFile, currentUser);
       } catch (err) {
         logger.error('Falha ao enviar foto de perfil:', err);
-        setError(t('profile.avatarUploadError'));
-        showError(t('profile.avatarUploadError'));
+        const errorMessage = t(getProfileAvatarUploadErrorKey(err));
+        setError(errorMessage);
+        showError(errorMessage);
         setUploadingAvatar(false);
         releaseSaveLock();
         return;

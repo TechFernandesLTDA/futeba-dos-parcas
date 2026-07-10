@@ -58,7 +58,7 @@ class CpfValidatorTest {
     }
 
     @Test
-    fun `mask returns *** for invalid CPF`() {
+    fun `mask returns redacted value for invalid CPF`() {
         assertEquals("***", CpfValidator.mask("123"))
     }
 

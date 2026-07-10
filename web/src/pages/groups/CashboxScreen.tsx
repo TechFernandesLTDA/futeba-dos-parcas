@@ -37,11 +37,10 @@ import {
   ReceiptLong as ReceiptIcon,
   Block as VoidIcon,
 } from '@mui/icons-material';
-import { collection, query, orderBy, onSnapshot, serverTimestamp, doc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db } from '../../services/firebase';
 import { storage } from '../../services/firebaseStorage';
-import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { LoadingState } from '../../components/common/GameCard';
@@ -52,30 +51,18 @@ import { createLogger } from '../../utils/logger';
 import { getFirestoreErrorMessage } from '../../utils/firebaseErrors';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
 import {
-  cashboxAmountToCents,
   centsToCashboxAmount,
   formatCashboxAmountInput,
-  normalizeCashboxAmount,
   parseCashboxAmountToCents,
 } from '../../utils/cashboxAmount';
-import { createCashboxEntry } from '../../services/cloudFunctions';
+import {
+  createCashboxEntry,
+  reconcileCashboxSummary,
+  voidCashboxEntry,
+} from '../../services/cloudFunctions';
+import { useCashboxData } from '../../hooks/useCashboxData';
 
 const logger = createLogger('CashboxScreen');
-
-interface CashboxTransaction {
-  id: string;
-  groupId: string;
-  type: 'INCOME' | 'EXPENSE';
-  amount: number;
-  description: string;
-  createdBy: string;
-  createdByName: string;
-  createdAt: Date;
-  status?: 'ACTIVE' | 'VOIDED';
-  receiptUrl?: string;
-  voidedBy?: string;
-  voidedAt?: Date;
-}
 
 type CashboxFilter = 'ALL' | 'INCOME' | 'EXPENSE' | 'VOIDED';
 
@@ -96,9 +83,6 @@ export const CashboxScreen: React.FC = () => {
   const { groupId } = useParams<{ groupId: string }>();
   const { firebaseUser } = useAuth();
 
-  const [transactions, setTransactions] = useState<CashboxTransaction[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [balanceCents, setBalanceCents] = useState(0);
   const [isAdminOrOwner, setIsAdminOrOwner] = useState(false);
   const [isConfirmedMember, setIsConfirmedMember] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -112,10 +96,20 @@ export const CashboxScreen: React.FC = () => {
   const [filter, setFilter] = useState<CashboxFilter>('ALL');
   const [voidingId, setVoidingId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
   const createRequestIdRef = useRef<string | null>(null);
+  const reconciliationAttemptRef = useRef<string | null>(null);
   const { showSuccess, showError } = useToast();
+  const {
+    transactions,
+    balanceCents,
+    loading,
+    error: dataError,
+    summaryNeedsReconciliation,
+    hasMore,
+    loadingMore,
+    loadMore,
+  } = useCashboxData(groupId, retryCount);
 
   const closeTransactionDialog = useCallback(() => {
     createRequestIdRef.current = null;
@@ -132,82 +126,53 @@ export const CashboxScreen: React.FC = () => {
   const formValid = amountValid && descriptionValid && !insufficientBalance;
   const currentUserId = firebaseUser?.uid;
   const balance = centsToCashboxAmount(balanceCents);
+  const canManageCashbox = isAdminOrOwner &&
+    !loading &&
+    !dataError &&
+    !summaryNeedsReconciliation;
 
   const handleRetry = () => {
-    setError(null);
-    setLoading(true);
     setRetryCount((n) => n + 1);
   };
 
   useEffect(() => {
-    if (!groupId) return;
-
+    if (!groupId || !currentUserId) return;
     let cancelled = false;
-
-    const cashRef = collection(db, 'groups', groupId, 'cashbox');
-    const q = query(cashRef, orderBy('created_at', 'desc'));
-
-    const unsubscribe = onSnapshot(
-      q,
-      (snapshot) => {
-        const data = snapshot.docs.map((d) => {
-          const raw = d.data();
-          const converted = snakeToCamel(raw);
-          const normalizedAmount = normalizeCashboxAmount(raw.amount ?? converted.amount);
-          return {
-            id: d.id,
-            ...converted,
-            amount: normalizedAmount,
-            createdAt: (raw.created_at || raw.createdAt)?.toDate?.() || new Date(),
-          };
-        }) as CashboxTransaction[];
-        setTransactions(data);
-
-        const totalCents = data.reduce((sum, t) => {
-          if (t.status === 'VOIDED') return sum;
-          const amountCents = cashboxAmountToCents(t.amount);
-          return t.type === 'INCOME' ? sum + amountCents : sum - amountCents;
-        }, 0);
-        setBalanceCents(totalCents);
-        setLoading(false);
-      },
-      (err) => {
-        logger.error('Error in cashbox transactions listener:', err);
-        setError(t('feedback.cashbox.loadError'));
-        setLoading(false);
-      }
-    );
-
-    // Check role using the canonical Firebase Auth UID. GroupMemberRoute also
-    // allows legacy owners via groups/{groupId}.owner_id, so mirror that here.
-    if (currentUserId) {
-      Promise.all([
-        getDoc(doc(db, 'groups', groupId, 'members', currentUserId)),
-        getDoc(doc(db, 'groups', groupId)),
-      ])
-        .then(([memberDoc, groupDoc]) => {
-          if (cancelled) return;
-
-          const memberData = memberDoc.exists() ? memberDoc.data() : null;
-          const memberRole = memberData?.role as string | undefined;
-          const memberStatus = memberData?.status as string | undefined;
-          const isActiveMember = memberStatus === 'ACTIVE';
-          const isOwnerByGroupDoc = groupDoc.exists() && groupDoc.data().owner_id === currentUserId;
-
-          setIsAdminOrOwner(isOwnerByGroupDoc || (isActiveMember && (memberRole === 'ADMIN' || memberRole === 'OWNER')));
-          setIsConfirmedMember(isOwnerByGroupDoc || isActiveMember);
-        })
-        .catch((err) => {
-          logger.error('Error checking member status:', err);
-          showError(t('feedback.cashbox.roleCheckFailed'));
-        });
-    }
-
+    Promise.all([
+      getDoc(doc(db, 'groups', groupId, 'members', currentUserId)),
+      getDoc(doc(db, 'groups', groupId)),
+    ]).then(([memberDoc, groupDoc]) => {
+      if (cancelled) return;
+      const memberData = memberDoc.exists() ? memberDoc.data() : null;
+      const memberRole = memberData?.role as string | undefined;
+      const memberStatus = memberData?.status as string | undefined;
+      const isActiveMember = memberStatus === 'ACTIVE';
+      const isOwnerByGroupDoc = groupDoc.exists() &&
+        groupDoc.data().owner_id === currentUserId;
+      setIsAdminOrOwner(
+        isOwnerByGroupDoc ||
+        (isActiveMember && (memberRole === 'ADMIN' || memberRole === 'OWNER'))
+      );
+      setIsConfirmedMember(isOwnerByGroupDoc || isActiveMember);
+    }).catch((cause) => {
+      logger.error('Error checking member status:', cause);
+      showError(t('feedback.cashbox.roleCheckFailed'));
+    });
     return () => {
       cancelled = true;
-      unsubscribe();
     };
   }, [groupId, currentUserId, retryCount, t, showError]);
+
+  useEffect(() => {
+    if (!groupId || !isAdminOrOwner || !summaryNeedsReconciliation) return;
+    const attemptKey = `${groupId}:${retryCount}`;
+    if (reconciliationAttemptRef.current === attemptKey) return;
+    reconciliationAttemptRef.current = attemptKey;
+    void reconcileCashboxSummary({ groupId }).catch((cause) => {
+      logger.error('Error reconciling cashbox summary:', cause);
+      showError(getFirestoreErrorMessage(cause, t('feedback.cashbox.loadError')));
+    });
+  }, [groupId, isAdminOrOwner, retryCount, showError, summaryNeedsReconciliation, t]);
 
   const displayedTransactions = transactions.filter((transaction) => {
     if (filter === 'VOIDED') return transaction.status === 'VOIDED';
@@ -281,12 +246,7 @@ export const CashboxScreen: React.FC = () => {
     if (!groupId || !currentUserId) return;
     setVoidingId(transactionId);
     try {
-      await updateDoc(doc(db, 'groups', groupId, 'cashbox', transactionId), {
-        status: 'VOIDED',
-        voided_by: currentUserId,
-        voided_at: serverTimestamp(),
-        updated_at: serverTimestamp(),
-      });
+      await voidCashboxEntry({ groupId, entryId: transactionId });
       showSuccess(t('cashbox.voidSuccess'));
     } catch (err: unknown) {
       showError(getFirestoreErrorMessage(err, t('cashbox.voidError')));
@@ -345,7 +305,7 @@ export const CashboxScreen: React.FC = () => {
           </CardContent>
         </Card>
 
-        {isAdminOrOwner && (
+        {canManageCashbox && (
           <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
             <Button
               variant="contained"
@@ -394,27 +354,27 @@ export const CashboxScreen: React.FC = () => {
           ))}
         </Stack>
 
-        {error ? (
-          <ErrorState message={error} onRetry={handleRetry} />
+        {dataError ? (
+          <ErrorState message={t('feedback.cashbox.loadError')} onRetry={handleRetry} />
         ) : loading ? (
           <LoadingState shimmerCount={5} itemType="LIST" />
         ) : transactions.length === 0 ? (
           <EmptyState
             icon={<HistoryIcon />}
             title={t('empty.noTransaction')}
-            description={isAdminOrOwner ? t('cashbox.emptyAdminDesc') : t('cashbox.emptyMemberDesc')}
-            actionLabel={isAdminOrOwner ? t('cashbox.addIncome') : undefined}
-            actionIcon={isAdminOrOwner ? <TrendingIcon /> : undefined}
-            onAction={isAdminOrOwner ? () => {
+            description={canManageCashbox ? t('cashbox.emptyAdminDesc') : t('cashbox.emptyMemberDesc')}
+            actionLabel={canManageCashbox ? t('cashbox.addIncome') : undefined}
+            actionIcon={canManageCashbox ? <TrendingIcon /> : undefined}
+            onAction={canManageCashbox ? () => {
               setTransactionType('INCOME');
               setAmountTouched(false);
               setDescriptionTouched(false);
               setReceiptFile(null);
               setDialogOpen(true);
             } : undefined}
-            secondaryActionLabel={isAdminOrOwner ? t('cashbox.addExpense') : undefined}
-            secondaryActionIcon={isAdminOrOwner ? <TrendingDownIcon /> : undefined}
-            onSecondaryAction={isAdminOrOwner ? () => {
+            secondaryActionLabel={canManageCashbox ? t('cashbox.addExpense') : undefined}
+            secondaryActionIcon={canManageCashbox ? <TrendingDownIcon /> : undefined}
+            onSecondaryAction={canManageCashbox ? () => {
               setTransactionType('EXPENSE');
               setAmountTouched(false);
               setDescriptionTouched(false);
@@ -429,14 +389,15 @@ export const CashboxScreen: React.FC = () => {
             description={t('cashbox.noFilteredTransactionsDesc')}
           />
         ) : (
-          <List disablePadding aria-label={t('a11y.transactionHistory')}>
-            {displayedTransactions.map((transaction, index) => (
-              <Box key={transaction.id}>
+          <>
+            <List disablePadding aria-label={t('a11y.transactionHistory')}>
+              {displayedTransactions.map((transaction, index) => (
+                <Box key={transaction.id}>
                 {index > 0 && <Divider />}
                 <ListItem
                   sx={{ py: 1.5, opacity: transaction.status === 'VOIDED' ? 0.64 : 1 }}
                   secondaryAction={
-                    isAdminOrOwner && transaction.status !== 'VOIDED' ? (
+                    canManageCashbox && transaction.status !== 'VOIDED' ? (
                       <IconButton
                         edge="end"
                         color="warning"
@@ -481,14 +442,22 @@ export const CashboxScreen: React.FC = () => {
                     variant="subtitle1"
                     fontWeight={600}
                     color={transaction.status === 'VOIDED' ? 'text.disabled' : transaction.type === 'INCOME' ? 'success.main' : 'error.main'}
-                    sx={{ pr: isAdminOrOwner && transaction.status !== 'VOIDED' ? 5 : 0 }}
+                    sx={{ pr: canManageCashbox && transaction.status !== 'VOIDED' ? 5 : 0 }}
                   >
                     {transaction.type === 'INCOME' ? '+' : '-'}{formatCurrency(transaction.amount)}
                   </Typography>
                 </ListItem>
+                </Box>
+              ))}
+            </List>
+            {hasMore && (
+              <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+                <Button onClick={() => void loadMore()} disabled={loadingMore}>
+                  {loadingMore ? t('common.loadingMore') : t('common.loadMore')}
+                </Button>
               </Box>
-            ))}
-          </List>
+            )}
+          </>
         )}
       </PageContainer>
 

@@ -342,6 +342,21 @@ describe('useCreateGroup', () => {
     expect(mockBatchCommit).toHaveBeenCalled();
   });
 
+  it('converge para 1 owner sem pré-contar o trigger no grupo principal', async () => {
+    const { result } = renderHook(() => useCreateGroup(), { wrapper: createTestWrapper() });
+    await act(async () => { await result.current.createGroup({ name: 'Novo Grupo' }); });
+
+    const payloads = mockBatchSet.mock.calls.map(([, payload]) => payload as Record<string, unknown>);
+    const group = payloads.find((payload) => payload.owner_id === 'test-user-id');
+    const owner = payloads.find((payload) => payload.role === 'OWNER' && payload.user_id === 'test-user-id');
+    const mirror = payloads.find((payload) => payload.group_id === 'new-group-id');
+
+    expect(group).toMatchObject({ member_count: 0, owner_id: 'test-user-id' });
+    expect(owner).toMatchObject({ role: 'OWNER', status: 'ACTIVE' });
+    expect(mirror).toMatchObject({ role: 'OWNER', member_count: 1 });
+    expect(Number(group?.member_count) + 1).toBe(mirror?.member_count);
+  });
+
   it('escreve na subcoleção users/{uid}/groups', async () => {
     const { result } = renderHook(() => useCreateGroup(), { wrapper: createTestWrapper() });
     await act(async () => { await result.current.createGroup({ name: 'Novo Grupo' }); });

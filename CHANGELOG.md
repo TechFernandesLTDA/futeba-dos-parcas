@@ -24,6 +24,17 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ## Android
 
+### [1.36.7][android-1.36.7] - 2026-07-10
+
+#### Adicionado
+- Telemetria realtime tipada, amostrada em até 5% e sem IDs, nomes, paths ou mensagens.
+
+#### Corrigido
+- Paginação com dedupe para feed, jogos públicos e locais; zero refetch por emissão no live game.
+- Upload de perfil valida o payload comprimido abaixo de 2 MiB e preserva o formulário quando o envio falha.
+
+_Issues: #3267, #3499, #3501, #3504, #3508, #3510 · PRs: #3511_
+
 ### [1.36.6][android-1.36.6] - 2026-07-10
 
 #### Corrigido
@@ -197,6 +208,18 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 - Bump de versão de manutenção após a mega audit wave de 2026-05-11, sem mudanças funcionais no Android nesta tag.
 
 ## Web
+
+### [1.51.36][web-1.51.36] - 2026-07-10
+
+#### Adicionado
+- Harness local de 10, 100 e 1.000 sessões e telemetria SLO amostrada sem PII.
+
+#### Corrigido
+- Listeners compartilhados por query, merge por ID e cursores determinísticos para históricos realtime.
+- Confirmação e caixa usam callables idempotentes e server-authoritative.
+- Upload de imagem compartilha retry para falhas transitórias e informa separadamente permissão, cancelamento e rede.
+
+_Issues: #3267, #3499, #3500, #3501, #3503, #3505, #3506, #3507, #3510 · PRs: #3511_
 
 ### [1.51.35][web-1.51.35] - 2026-07-10
 
@@ -1380,6 +1403,14 @@ _Issues: #1465, #1479, #1421, #1420 · PRs: #1465, #1479, #1421, #1420, #1417_
 
 ## iOS
 
+### [1.6.1][ios-1.6.1] - 2026-07-10
+
+#### Mudado
+- `LiveGameRepositoryImpl` foi unificado em `nativeAndAndroidMain`, com lifecycle, reconexão e request ID idempotente.
+- DI e navegação iOS propagam `gameId`, `groupId` e `ownerId` reais.
+
+_Issues: #3499, #3504, #3509 · PRs: #3511_
+
 ### [1.6.0][ios-1.6.0] - 2026-05-22
 
 #### Adicionado
@@ -1396,6 +1427,19 @@ _Issues: #1465, #1479, #1421, #1420 · PRs: #1465, #1479, #1421, #1420, #1417_
 _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
+
+### [1.7.17][functions-1.7.17] - 2026-07-10
+
+#### Adicionado
+- Rollup de SLO realtime com p50, p95, p99, erro, trigger lag, `ABORTED` e `RESOURCE_EXHAUSTED`.
+- Markers idempotentes com TTL para contadores de membros, confirmações e operações do caixa.
+
+#### Segurança
+- Jogo privado exige owner, membership ativa ou convite para confirmar presença.
+- Firestore Rules bloqueiam writes diretos no ledger e no resumo do caixa.
+- Firestore e Storage Rules reconhecem membros legados sem `status` como ativos, mantendo `INACTIVE` e outsiders bloqueados.
+
+_Issues: #3267, #3499, #3500, #3501, #3502, #3503, #3504, #3510 · PRs: #3511_
 
 ### [1.7.16][functions-1.7.16] - 2026-07-10
 
@@ -1940,6 +1984,7 @@ _Issues: #2981_
 _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 
 
+[android-1.36.7]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.36.7.md
 [android-1.36.6]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.36.6.md
 [android-1.36.5]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.36.5.md
 [android-1.36.4]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.36.4.md
@@ -1955,6 +2000,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.51.36]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.36.md
 [web-1.51.35]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.35.md
 [web-1.51.34]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.34.md
 [web-1.51.33]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.33.md
@@ -2070,7 +2116,9 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [web-1.26.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.26.2.md
 [web-1.26.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.26.1.md
 [web-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.26.0.md
+[ios-1.6.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.1.md
 [ios-1.6.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.0.md
+[functions-1.7.17]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.7.17.md
 [functions-1.7.16]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.7.16.md
 [functions-1.7.15]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.7.15.md
 [functions-1.7.14]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.7.14.md

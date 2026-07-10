@@ -164,8 +164,8 @@ node scripts/release-notes.js publish --platform android --version 1.27.0
 
 ## Notas e limitações conhecidas
 
-- **iOS ainda não publica.** O app iOS não está na App Store. A nota
-  `release-notes/ios/1.6.0.md` está com `published: false` — entra no
+- **iOS ainda não publica.** O app iOS não está na App Store. A nota iOS mais
+  recente deve permanecer com `published: false` — entra no
   `CHANGELOG.md` e no bundle, mas **não** vai ao Firestore. Quando o iOS for
   lançado, troque para `published: true` e publique.
 - **`functions` não tem app cliente.** Entra só no `CHANGELOG.md` — sem `bundle`

@@ -34,11 +34,14 @@ service firebase.storage {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
-    // Verifica se o usuário é membro ATIVO do grupo
-    // #2160: exige status == ACTIVE — membro banido/removido não mantém acesso
+    // Verifica se o usuário é membro ATIVO do grupo.
+    // Compatibilidade: memberships legados não possuem `status`; a existência
+    // do documento era o indicador de vínculo ativo antes desse campo existir.
+    // Status explícito diferente de ACTIVE continua bloqueado.
     function isGroupMember(groupId) {
       let memberDoc = firestore.get(/databases/(default)/documents/groups/$(groupId)/members/$(request.auth.uid));
-      return memberDoc != null && memberDoc.data.status == 'ACTIVE';
+      return memberDoc != null &&
+             (!('status' in memberDoc.data) || memberDoc.data.status == 'ACTIVE');
     }
 
     // Verifica se o usuário é admin do grupo.
@@ -50,7 +53,7 @@ service firebase.storage {
       return isAuthenticated() &&
              memberDoc != null &&
              memberDoc.data.role in ['OWNER', 'ADMIN'] &&
-             memberDoc.data.status == 'ACTIVE';
+             (!('status' in memberDoc.data) || memberDoc.data.status == 'ACTIVE');
     }
 
     function isGroupOwnerById(groupId) {

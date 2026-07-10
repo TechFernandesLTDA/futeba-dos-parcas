@@ -7,6 +7,14 @@ import {
   cashboxAmountToCents,
   centsToCashboxAmount,
 } from "./money";
+import {
+  CashboxSummaryState,
+  cashboxContribution,
+  cashboxOperationExpiresAt,
+  cashboxSummaryPayload,
+  cashboxSummaryState,
+  reconcileCashboxSummaryForGroup,
+} from "./summary";
 
 interface CreateCashboxEntryData {
   groupId: string;
@@ -23,14 +31,6 @@ interface CreateCashboxEntryData {
   gameId?: string | null;
 }
 
-interface CashboxSummaryState {
-  balanceCents: number;
-  totalIncomeCents: number;
-  totalExpenseCents: number;
-  entryCount: number;
-}
-
-const LEDGER_PAGE_SIZE = 500;
 const VERIFICATION_GRACE_END_MS = Date.UTC(2026, 7, 3);
 
 /**
@@ -65,36 +65,13 @@ function isActiveGroupManager(
   return status === "ACTIVE" && (role === "ADMIN" || role === "OWNER");
 }
 
-/**
- * Recalcula o estado monetário a partir do ledger inteiro.
- * @param {Array<object>} docs Docs do ledger.
- * @return {CashboxSummaryState} Totais e saldo em centavos.
- */
-function summarizeLedgerFromDocs(docs: Array<{data: () => Record<string, unknown>}>): CashboxSummaryState {
-  let totalIncomeCents = 0;
-  let totalExpenseCents = 0;
-  let entryCount = 0;
+interface VoidCashboxEntryData {
+  groupId: string;
+  entryId: string;
+}
 
-  for (const snapshot of docs) {
-    const data = snapshot.data();
-    if (data.status === "VOIDED") continue;
-
-    const amountCents = cashboxAmountToCents(data.amount);
-    if (data.type === "INCOME") {
-      totalIncomeCents += amountCents;
-      entryCount += 1;
-    } else if (data.type === "EXPENSE") {
-      totalExpenseCents += amountCents;
-      entryCount += 1;
-    }
-  }
-
-  return {
-    balanceCents: totalIncomeCents - totalExpenseCents,
-    totalIncomeCents,
-    totalExpenseCents,
-    entryCount,
-  };
+interface ReconcileCashboxSummaryData {
+  groupId: string;
 }
 
 export const createCashboxEntry = functions.https.onCall<CreateCashboxEntryData>({
@@ -178,15 +155,26 @@ export const createCashboxEntry = functions.https.onCall<CreateCashboxEntryData>
   const summaryRef = groupRef.collection("cashbox_summary").doc("current");
   const userRef = db().collection("users").doc(userId);
   const cashboxRef = groupRef.collection("cashbox");
+  const operationRef = groupRef.collection("cashbox_summary_ops")
+    .doc(`create_${requestId}`);
 
   try {
     const result = await db().runTransaction(async (tx) => {
       const entryRef = cashboxRef.doc(requestId);
-      const [groupDoc, memberDoc, userDoc, existingEntryDoc] = await Promise.all([
+      const [
+        groupDoc,
+        memberDoc,
+        userDoc,
+        existingEntryDoc,
+        summaryDoc,
+        operationDoc,
+      ] = await Promise.all([
         tx.get(groupRef),
         tx.get(memberRef),
         tx.get(userRef),
         tx.get(entryRef),
+        tx.get(summaryRef),
+        tx.get(operationRef),
       ]);
 
       if (!groupDoc.exists) {
@@ -213,26 +201,23 @@ export const createCashboxEntry = functions.https.onCall<CreateCashboxEntryData>
         );
       }
 
-      const ledgerDocs: Array<{data: () => Record<string, unknown>}> = [];
-      let ledgerQuery: FirebaseFirestore.Query = cashboxRef.limit(LEDGER_PAGE_SIZE);
-      while (true) {
-        const ledgerPage = await tx.get(ledgerQuery);
-        ledgerDocs.push(...ledgerPage.docs);
-        if (ledgerPage.size < LEDGER_PAGE_SIZE) break;
-        ledgerQuery = cashboxRef
-          .startAfter(ledgerPage.docs[ledgerPage.docs.length - 1])
-          .limit(LEDGER_PAGE_SIZE);
-      }
-      const summaryState = summarizeLedgerFromDocs(ledgerDocs);
-      if (existingEntryDoc.exists) {
+      const summaryState = cashboxSummaryState(summaryDoc);
+      if (existingEntryDoc.exists || operationDoc.exists) {
         const existingData = existingEntryDoc.data() || {};
         return {
           entryId: entryRef.id,
-          balance: centsToCashboxAmount(summaryState.balanceCents),
-          balanceCents: summaryState.balanceCents,
+          balance: centsToCashboxAmount(summaryState?.balanceCents ?? 0),
+          balanceCents: summaryState?.balanceCents ?? 0,
           duplicate: true,
           existingType: existingData.type,
         };
+      }
+
+      if (!summaryState) {
+        throw new functions.https.HttpsError(
+          "failed-precondition",
+          "Resumo do caixa precisa ser reconciliado"
+        );
       }
 
       if (type === "EXPENSE" && amountCents > summaryState.balanceCents) {
@@ -250,13 +235,16 @@ export const createCashboxEntry = functions.https.onCall<CreateCashboxEntryData>
           userDoc.data()?.name.trim() :
           "Usuário";
       const normalizedAmount = centsToCashboxAmount(amountCents);
-      const nextTotalIncomeCents = type === "INCOME" ?
-        summaryState.totalIncomeCents + amountCents :
-        summaryState.totalIncomeCents;
-      const nextTotalExpenseCents = type === "EXPENSE" ?
-        summaryState.totalExpenseCents + amountCents :
-        summaryState.totalExpenseCents;
-      const nextBalanceCents = nextTotalIncomeCents - nextTotalExpenseCents;
+      const contribution = cashboxContribution({type, amount: normalizedAmount});
+      const nextState: CashboxSummaryState = {
+        incomeCents: summaryState.incomeCents + contribution.incomeCents,
+        expenseCents: summaryState.expenseCents + contribution.expenseCents,
+        balanceCents: summaryState.balanceCents +
+          contribution.incomeCents - contribution.expenseCents,
+        entryCount: summaryState.entryCount + 1,
+        ledgerVersion: summaryState.ledgerVersion + 1,
+        lastEntryAt: FieldValue.serverTimestamp(),
+      };
 
       tx.set(entryRef, {
         group_id: groupId,
@@ -278,21 +266,24 @@ export const createCashboxEntry = functions.https.onCall<CreateCashboxEntryData>
         created_at: FieldValue.serverTimestamp(),
       });
 
-      tx.set(summaryRef, {
-        balance: centsToCashboxAmount(nextBalanceCents),
-        total_income: centsToCashboxAmount(nextTotalIncomeCents),
-        total_expense: centsToCashboxAmount(nextTotalExpenseCents),
-        entry_count: summaryState.entryCount + 1,
-        last_entry_at: FieldValue.serverTimestamp(),
-        truncated: false,
-        recomputed_by_server: true,
-        recomputed_at: FieldValue.serverTimestamp(),
-      }, {merge: true});
+      tx.set(
+        summaryRef,
+        cashboxSummaryPayload(nextState, "create_callable"),
+        {merge: true}
+      );
+      tx.set(operationRef, {
+        operation: "CREATE",
+        entry_id: entryRef.id,
+        ledger_version: nextState.ledgerVersion,
+        applied_at: FieldValue.serverTimestamp(),
+        expires_at: cashboxOperationExpiresAt(),
+      });
 
       return {
         entryId: entryRef.id,
-        balance: centsToCashboxAmount(nextBalanceCents),
-        balanceCents: nextBalanceCents,
+        balance: centsToCashboxAmount(nextState.balanceCents),
+        balanceCents: nextState.balanceCents,
+        duplicate: false,
       };
     });
 
@@ -310,3 +301,170 @@ export const createCashboxEntry = functions.https.onCall<CreateCashboxEntryData>
     );
   }
 });
+
+export const voidCashboxEntry = functions.https.onCall<VoidCashboxEntryData>({
+  region: "southamerica-east1",
+  enforceAppCheck: process.env.FUNCTIONS_EMULATOR !== "true",
+  consumeAppCheckToken: false,
+}, async (request) => {
+  const userId = request.auth?.uid;
+  const groupId = typeof request.data?.groupId === "string" ?
+    request.data.groupId.trim() : "";
+  const entryId = typeof request.data?.entryId === "string" ?
+    request.data.entryId.trim() : "";
+  if (!userId) {
+    throw new functions.https.HttpsError("unauthenticated", "Usuário precisa estar autenticado");
+  }
+  if (!groupId || !entryId) {
+    throw new functions.https.HttpsError("invalid-argument", "groupId e entryId são obrigatórios");
+  }
+
+  const groupRef = db().collection("groups").doc(groupId);
+  const memberRef = groupRef.collection("members").doc(userId);
+  const entryRef = groupRef.collection("cashbox").doc(entryId);
+  const summaryRef = groupRef.collection("cashbox_summary").doc("current");
+  const operationRef = groupRef.collection("cashbox_summary_ops")
+    .doc(`void_${entryId}`);
+
+  try {
+    return await db().runTransaction(async (tx) => {
+      const [groupDoc, memberDoc, entryDoc, summaryDoc, operationDoc] =
+        await Promise.all([
+          tx.get(groupRef),
+          tx.get(memberRef),
+          tx.get(entryRef),
+          tx.get(summaryRef),
+          tx.get(operationRef),
+        ]);
+      if (!groupDoc.exists || isGroupUnavailable(groupDoc.data())) {
+        throw new functions.https.HttpsError("failed-precondition", "Grupo indisponível");
+      }
+      if (!isActiveGroupManager(
+        memberDoc.exists ? memberDoc.data() : undefined,
+        groupDoc.data(),
+        userId
+      )) {
+        throw new functions.https.HttpsError(
+          "permission-denied",
+          "Apenas administradores do grupo podem estornar transações"
+        );
+      }
+      if (!entryDoc.exists) {
+        throw new functions.https.HttpsError("not-found", "Transação não encontrada");
+      }
+
+      const summaryState = cashboxSummaryState(summaryDoc);
+      if (operationDoc.exists || entryDoc.data()?.status === "VOIDED") {
+        return {
+          entryId,
+          balance: centsToCashboxAmount(summaryState?.balanceCents ?? 0),
+          balanceCents: summaryState?.balanceCents ?? 0,
+          duplicate: true,
+        };
+      }
+      if (!summaryState) {
+        throw new functions.https.HttpsError(
+          "failed-precondition",
+          "Resumo do caixa precisa ser reconciliado"
+        );
+      }
+
+      const contribution = cashboxContribution(entryDoc.data());
+      const nextState: CashboxSummaryState = {
+        incomeCents: summaryState.incomeCents - contribution.incomeCents,
+        expenseCents: summaryState.expenseCents - contribution.expenseCents,
+        balanceCents: summaryState.balanceCents -
+          contribution.incomeCents + contribution.expenseCents,
+        entryCount: Math.max(0, summaryState.entryCount - contribution.entryCount),
+        ledgerVersion: summaryState.ledgerVersion + 1,
+        lastEntryAt: summaryState.lastEntryAt,
+      };
+
+      tx.update(entryRef, {
+        status: "VOIDED",
+        voided_by: userId,
+        voided_at: FieldValue.serverTimestamp(),
+        updated_at: FieldValue.serverTimestamp(),
+      });
+      tx.set(
+        summaryRef,
+        cashboxSummaryPayload(nextState, "void_callable"),
+        {merge: true}
+      );
+      tx.set(operationRef, {
+        operation: "VOID",
+        entry_id: entryId,
+        ledger_version: nextState.ledgerVersion,
+        applied_at: FieldValue.serverTimestamp(),
+        expires_at: cashboxOperationExpiresAt(),
+      });
+      return {
+        entryId,
+        balance: centsToCashboxAmount(nextState.balanceCents),
+        balanceCents: nextState.balanceCents,
+        duplicate: false,
+      };
+    });
+  } catch (error) {
+    if (error instanceof functions.https.HttpsError) throw error;
+    logger.error(`[CASHBOX] erro ao estornar entry ${entryId}:`, error);
+    throw new functions.https.HttpsError("internal", "Erro ao estornar transação");
+  }
+});
+
+export const reconcileCashboxSummary =
+  functions.https.onCall<ReconcileCashboxSummaryData>({
+    region: "southamerica-east1",
+    enforceAppCheck: process.env.FUNCTIONS_EMULATOR !== "true",
+    consumeAppCheckToken: false,
+  }, async (request) => {
+    const userId = request.auth?.uid;
+    const groupId = typeof request.data?.groupId === "string" ?
+      request.data.groupId.trim() : "";
+    if (!userId) {
+      throw new functions.https.HttpsError("unauthenticated", "Usuário precisa estar autenticado");
+    }
+    if (!groupId) {
+      throw new functions.https.HttpsError("invalid-argument", "groupId é obrigatório");
+    }
+
+    const groupRef = db().collection("groups").doc(groupId);
+    const [groupDoc, memberDoc] = await Promise.all([
+      groupRef.get(),
+      groupRef.collection("members").doc(userId).get(),
+    ]);
+    if (!groupDoc.exists || isGroupUnavailable(groupDoc.data())) {
+      throw new functions.https.HttpsError("failed-precondition", "Grupo indisponível");
+    }
+    if (!isActiveGroupManager(
+      memberDoc.exists ? memberDoc.data() : undefined,
+      groupDoc.data(),
+      userId
+    )) {
+      throw new functions.https.HttpsError(
+        "permission-denied",
+        "Apenas administradores do grupo podem reconciliar o caixa"
+      );
+    }
+
+    try {
+      const summary = await reconcileCashboxSummaryForGroup(groupId, {
+        source: "reconcile_callable",
+      });
+      return {
+        balance: centsToCashboxAmount(summary.balanceCents),
+        balanceCents: summary.balanceCents,
+        totalIncome: centsToCashboxAmount(summary.incomeCents),
+        totalExpense: centsToCashboxAmount(summary.expenseCents),
+        entryCount: summary.entryCount,
+        ledgerVersion: summary.ledgerVersion,
+      };
+    } catch (error) {
+      logger.error(`[CASHBOX] reconciliação falhou para grupo ${groupId}:`, error);
+      throw new functions.https.HttpsError(
+        error instanceof Error && error.message === "CASHBOX_RECONCILIATION_CONFLICT" ?
+          "aborted" : "internal",
+        "Não foi possível reconciliar o caixa"
+      );
+    }
+  });

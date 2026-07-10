@@ -45,7 +45,7 @@ jobs:
         run: cd firestore-rules-tests && npm ci
 
       - name: Liberar portas dos emuladores
-        run: lsof -ti:8085,4400,4500 | xargs kill -9 2>/dev/null || true
+        run: lsof -ti:8085,9199,4400,4500 | xargs kill -9 2>/dev/null || true
 
       - name: Executar testes das Security Rules
         # O emulators:exec sobe o emulador, roda os testes e derruba automaticamente
@@ -54,9 +54,9 @@ jobs:
         run: |
           cd firestore-rules-tests
           npx firebase-tools emulators:exec \
-            --only firestore \
+            --only firestore,storage \
             --project futebadosparcas \
-            'FIRESTORE_EMULATOR_HOST=127.0.0.1:8085 npx vitest run --reporter=verbose --no-file-parallelism --maxWorkers=1'
+            'FIRESTORE_EMULATOR_HOST=127.0.0.1:8085 FIREBASE_STORAGE_EMULATOR_HOST=127.0.0.1:9199 npx vitest run --reporter=verbose --no-file-parallelism --maxWorkers=1'
         env:
           # CI=true faz o Vitest sair com código de erro se algum teste falhar
           CI: "true"

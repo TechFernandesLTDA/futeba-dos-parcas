@@ -50,6 +50,7 @@ describe('createWallPostDocument', () => {
 
   it('envia foto sem legenda com retry e path de draft pertencente ao autor', async () => {
     const image = new File(['image'], 'foto.png', { type: 'image/png' });
+    const refreshCredentials = vi.fn().mockResolvedValue(undefined);
 
     await createWallPostDocument({
       groupId: 'group-1',
@@ -58,11 +59,16 @@ describe('createWallPostDocument', () => {
       authorPhotoUrl: null,
       text: '',
       options: { imageFile: image },
+      refreshCredentials,
     });
 
     const mediaPath = mockStorageRef.mock.calls[0]?.[1] as string;
     expect(mediaPath).toMatch(/^groups\/group-1\/wall_media\/__draft__\/user-1\/.*\.png$/);
-    expect(mockUploadWithRetry).toHaveBeenCalledWith(`storage:${mediaPath}`, image);
+    expect(mockUploadWithRetry).toHaveBeenCalledWith(
+      `storage:${mediaPath}`,
+      image,
+      { refreshCredentials },
+    );
     expect(mockAddDoc).toHaveBeenCalledWith(
       'wall-posts-collection',
       expect.objectContaining({

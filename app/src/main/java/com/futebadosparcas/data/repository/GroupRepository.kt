@@ -27,6 +27,36 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 
+internal fun buildPendingOwnerGroup(
+    groupId: String,
+    name: String,
+    description: String,
+    ownerId: String,
+    ownerName: String,
+    defaultGender: String?
+) = Group(
+    id = groupId,
+    name = name,
+    description = description,
+    ownerId = ownerId,
+    ownerName = ownerName,
+    membersCount = 0,
+    defaultGender = defaultGender
+)
+
+internal fun buildOwnerGroupMirror(
+    groupId: String,
+    groupName: String
+) = UserGroup(
+    id = groupId,
+    groupId = groupId,
+    groupName = groupName,
+    groupPhoto = null,
+    role = GroupMemberRole.OWNER.name,
+    memberCount = 1,
+    groupStatus = GroupStatus.ACTIVE.name
+)
+
 class GroupRepository constructor(
     private val firestore: FirebaseFirestore,
     private val auth: FirebaseAuth,
@@ -106,14 +136,12 @@ class GroupRepository constructor(
             val groupRef = groupsCollection.document()
             val groupId = groupRef.id
 
-            val group = Group(
-                id = groupId,
+            val group = buildPendingOwnerGroup(
+                groupId = groupId,
                 name = name,
                 description = description,
                 ownerId = userId,
                 ownerName = userName,
-                photoUrl = null,
-                membersCount = 1,
                 // Padrao opcional de genero para jogos do grupo (FASE 2). null = sem padrao.
                 defaultGender = defaultGender
             )
@@ -138,14 +166,9 @@ class GroupRepository constructor(
                 // Adicionar referência no usuário
                 val userGroupRef = usersCollection.document(userId)
                     .collection("groups").document(groupRef.id)
-                val userGroup = UserGroup(
-                    id = groupRef.id,
+                val userGroup = buildOwnerGroupMirror(
                     groupId = groupRef.id,
-                    groupName = name,
-                    groupPhoto = null,
-                    role = GroupMemberRole.OWNER.name,
-                    memberCount = 1,
-                    groupStatus = GroupStatus.ACTIVE.name
+                    groupName = name
                 )
                 transaction.set(userGroupRef, userGroup)
             }.await()

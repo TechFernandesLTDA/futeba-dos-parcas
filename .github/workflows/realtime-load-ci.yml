@@ -1,0 +1,108 @@
+name: Realtime Multiuser Load
+
+on:
+  pull_request:
+    branches: [master]
+    paths:
+      - "scripts/load/**"
+      - "functions/**"
+      - "firestore.rules"
+      - "firestore.indexes.json"
+      - ".github/workflows/realtime-load-ci.yml"
+  push:
+    branches: [master]
+    paths:
+      - "scripts/load/**"
+      - "functions/**"
+      - "firestore.rules"
+      - "firestore.indexes.json"
+      - ".github/workflows/realtime-load-ci.yml"
+  schedule:
+    - cron: "30 9 * * 2"
+  workflow_dispatch:
+    inputs:
+      vus:
+        description: "Usuários virtuais (10, 100 ou 1000)"
+        required: true
+        default: "100"
+        type: choice
+        options:
+          - "10"
+          - "100"
+          - "1000"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  realtime-load:
+    name: Firestore realtime — 10/100/1000 VUs
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    timeout-minutes: 30
+    env:
+      # Dedicated port: rules/web/function jobs share self-hosted runners.
+      FIRESTORE_EMULATOR_HOST: 127.0.0.1:8086
+      GCLOUD_PROJECT: demo-realtime-load
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Setup Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          npm install --global firebase-tools
+
+      - name: Resolve profile
+        id: profile
+        shell: bash
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "vus=${{ inputs.vus }}" >> "$GITHUB_OUTPUT"
+          elif [[ "${{ github.event_name }}" == "schedule" ]]; then
+            echo "vus=100" >> "$GITHUB_OUTPUT"
+          else
+            echo "vus=10" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Configure isolated Firestore emulator port
+        run: |
+          cp firebase.json "$RUNNER_TEMP/firebase-realtime.json"
+          node -e 'const fs=require("fs"); const p=process.env.RUNNER_TEMP+"/firebase-realtime.json"; const c=JSON.parse(fs.readFileSync(p,"utf8")); c.emulators ??= {}; c.emulators.firestore ??= {}; c.emulators.firestore.port=8086; fs.writeFileSync(p, JSON.stringify(c));'
+          lsof -ti:8086 | xargs kill -9 2>/dev/null || true
+
+      - name: Run isolated realtime load gate
+        run: |
+          firebase emulators:exec \
+            --config "$RUNNER_TEMP/firebase-realtime.json" \
+            --only firestore \
+            --project demo-realtime-load \
+            "npm run test:load:realtime -- --vus ${{ steps.profile.outputs.vus }} --output test-results/realtime-load"
+
+      - name: Upload report
+        if: always()
+        # O gate é o comando acima. Cota de artifacts não pode mascarar um
+        # resultado de carga aprovado nem bloquear o PR.
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: realtime-load-${{ steps.profile.outputs.vus }}-vus
+          path: test-results/realtime-load.*
+          if-no-files-found: error
+          retention-days: 7

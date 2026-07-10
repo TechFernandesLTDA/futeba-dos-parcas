@@ -1,7 +1,43 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-10T08:20:10.237Z",
+  "generatedAt": "2026-07-10T13:02:23.563Z",
   "notes": [
+    {
+      "version": "1.51.36",
+      "buildNumber": null,
+      "releaseDate": "2026-07-10",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "Jogos, enquetes, mensagens e caixa agora se atualizam com mais rapidez e consistência entre pessoas conectadas ao mesmo tempo.",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "Listas de jogos e enquetes compartilham conexões em tempo real, evitando carregamentos duplicados.",
+        "Históricos de eventos, mensagens e caixa ganharam paginação sem perder atualizações novas.",
+        "Falhas de conexão exibem retry e preservam os dados já carregados."
+      ],
+      "fixed": [
+        "Retry de gol ou evento usa o mesmo identificador e não duplica placar ou estatísticas.",
+        "Mensagens antigas deixam de desaparecer quando chega uma atualização nova.",
+        "Trocar rapidamente de perfil não mostra mais dados da pessoa anterior.",
+        "Membros de grupos antigos voltam a anexar fotos no mural; avatar e onboarding renovam credenciais de Auth/App Check ao repetir uploads transitórios.",
+        "Listeners compartilhados por query, merge por ID e cursores determinísticos para históricos realtime.",
+        "Confirmação e caixa usam callables idempotentes e server-authoritative.",
+        "Upload de imagem compartilha retry para falhas transitórias e informa separadamente permissão, cancelamento e rede."
+      ],
+      "issueRefs": [
+        3267,
+        3499,
+        3500,
+        3501,
+        3503,
+        3505,
+        3506,
+        3507,
+        3510
+      ]
+    },
     {
       "version": "1.51.35",
       "buildNumber": null,

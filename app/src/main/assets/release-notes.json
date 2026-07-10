@@ -1,7 +1,39 @@
 {
   "platform": "android",
-  "generatedAt": "2026-07-10T08:20:10.232Z",
+  "generatedAt": "2026-07-10T13:02:23.559Z",
   "notes": [
+    {
+      "version": "1.36.7",
+      "buildNumber": 70,
+      "releaseDate": "2026-07-10",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "Placar ao vivo, feed e mapas passam a acompanhar mudanças remotas sem recarregamentos desnecessários.",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "Feed mantém a primeira página em tempo real e carrega o histórico com cursor.",
+        "Mapas de jogos e locais carregam novas páginas sem um teto silencioso.",
+        "Live game combina placar, times e confirmações em um único estado reativo."
+      ],
+      "fixed": [
+        "Aceitar convite ou convocação usa a confirmação transacional do servidor.",
+        "Caixa usa operações idempotentes e não altera mais saldo diretamente no Firestore.",
+        "Grupo novo converge para um membro, sem contagem duplicada do owner.",
+        "Fotos de câmera de até 10 MiB são comprimidas antes do limite final do Storage; uma falha no envio não é mais ignorada ao salvar o perfil.",
+        "Paginação com dedupe para feed, jogos públicos e locais; zero refetch por emissão no live game.",
+        "Upload de perfil valida o payload comprimido abaixo de 2 MiB e preserva o formulário quando o envio falha."
+      ],
+      "issueRefs": [
+        3267,
+        3499,
+        3501,
+        3504,
+        3508,
+        3510
+      ]
+    },
     {
       "version": "1.36.6",
       "buildNumber": 69,

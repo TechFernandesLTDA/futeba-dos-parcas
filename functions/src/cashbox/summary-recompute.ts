@@ -1,125 +1,139 @@
-import {FieldValue, Timestamp} from "firebase-admin/firestore";
+import {FieldValue} from "firebase-admin/firestore";
 import {logger} from "firebase-functions/v2";
 import {onDocumentWritten} from "firebase-functions/v2/firestore";
 import {db} from "../_db";
-import {cashboxAmountToCents, centsToCashboxAmount} from "./money";
+import {
+  CashboxSummaryState,
+  cashboxContribution,
+  cashboxOperationExpiresAt,
+  cashboxSummaryPayload,
+  cashboxSummaryState,
+  reconcileCashboxSummaryForGroup,
+} from "./summary";
+
+type EntryData = Record<string, unknown> | undefined;
 
 /**
- * Auditoria 2026-05-30 #2352 — recompute server-side de cashbox_summary.
- *
- * Antes: o cliente (group admin) gravava `cashbox_summary/current` com
- * `balance` arbitrario; a rule so validava tipos (`balance is number`), nao
- * a consistencia `balance == total_income - total_expense`. Um admin podia
- * exibir um saldo divergente do ledger real.
- *
- * Validar a igualdade na rule (float) travaria writes legitimos por
- * arredondamento. Em vez disso, esta CF recomputa o summary a partir do
- * ledger imutavel (`cashbox`) a CADA escrita de entry — tornando o
- * summary self-healing: o valor exibido converge sempre para os lancamentos
- * reais, independente do que o cliente gravou.
- *
- * Espelha a logica de `recalculateCashboxBalance` (FirebaseDataSource.kt):
- * soma INCOME/EXPENSE de entries nao-VOIDED. Inclui legacy entries sem
- * campo `status` (#2363) e normaliza valores antigos para centavos antes
- * de voltar para BRL no summary.
+ * Identifica a transição relevante do documento.
+ * @param {EntryData} before Estado anterior.
+ * @param {EntryData} after Estado posterior.
+ * @return {string} Nome estável da operação.
  */
-const PAGE_SIZE = 500;
+function operationName(before: EntryData, after: EntryData): string {
+  if (!before && after) return "create";
+  if (before && !after) return "delete";
+  if (before?.status !== "VOIDED" && after?.status === "VOIDED") return "void";
+  return "update";
+}
 
+/**
+ * Reconhece writes KMP legados que já atualizaram o summary atomicamente.
+ * @param {EntryData} before Estado anterior.
+ * @param {EntryData} after Estado posterior.
+ * @return {boolean} True quando o delta já foi aplicado pelo cliente legado.
+ */
+function legacyClientAlreadyApplied(before: EntryData, after: EntryData): boolean {
+  const data = after || before;
+  if (typeof data?.created_by_id !== "string" || data.created_by !== undefined) return false;
+  if (!before && after) return true;
+  return before?.status !== "VOIDED" &&
+    after?.status === "VOIDED" &&
+    after.updated_at === undefined;
+}
+
+/**
+ * Fallback para escritas antigas que não passaram pelos callables do caixa.
+ * O caminho normal já grava entry, summary e marcador na mesma transação; por
+ * isso o trigger apenas confirma o marcador. Escritas legadas recebem delta
+ * idempotente, sem varrer o ledger inteiro.
+ */
 export const onCashboxEntryWritten = onDocumentWritten(
   {
-    // region herdada de setGlobalOptions (southamerica-east1)
     document: "groups/{groupId}/cashbox/{entryId}",
     memory: "256MiB",
     timeoutSeconds: 120,
   },
   async (event) => {
     const groupId = event.params.groupId;
+    const entryId = event.params.entryId;
+    const before = event.data?.before.exists ? event.data.before.data() : undefined;
+    const after = event.data?.after.exists ? event.data.after.data() : undefined;
+    const operation = operationName(before, after);
+    const groupRef = db().collection("groups").doc(groupId);
+    const summaryRef = groupRef.collection("cashbox_summary").doc("current");
+    const operationRef = groupRef.collection("cashbox_summary_ops")
+      .doc(`${operation}_${entryId}`);
+    const beforeContribution = cashboxContribution(before);
+    const afterContribution = cashboxContribution(after);
+    const legacyApplied = legacyClientAlreadyApplied(before, after);
+
     try {
-      const groupRef = db().collection("groups").doc(groupId);
-      const cashboxRef = groupRef.collection("cashbox");
+      const result = await db().runTransaction(async (tx) => {
+        const [summaryDoc, operationDoc] = await Promise.all([
+          tx.get(summaryRef),
+          tx.get(operationRef),
+        ]);
+        if (operationDoc.exists) return "already-applied";
 
-      let totalIncomeCents = 0;
-      let totalExpenseCents = 0;
-      let entryCount = 0;
-      let lastEntryMillis = 0;
-      let lastDoc: FirebaseFirestore.QueryDocumentSnapshot | null = null;
-
-      while (true) {
-        let pageQuery: FirebaseFirestore.Query = cashboxRef.limit(PAGE_SIZE);
-        if (lastDoc) {
-          pageQuery = pageQuery.startAfter(lastDoc);
+        if (legacyApplied) {
+          tx.set(operationRef, {
+            operation: operation.toUpperCase(),
+            entry_id: entryId,
+            legacy_summary_applied: true,
+            applied_at: FieldValue.serverTimestamp(),
+            expires_at: cashboxOperationExpiresAt(),
+          });
+          return "legacy-applied";
         }
 
-        const page = await pageQuery.get();
-        if (page.empty) break;
+        const summary = cashboxSummaryState(summaryDoc);
+        if (!summary) return "reconcile";
 
-        for (const snapshot of page.docs) {
-          const data = snapshot.data();
-          if (data.status === "VOIDED") continue;
-
-          const amountCents = cashboxAmountToCents(data.amount);
-          if (data.type === "INCOME") {
-            totalIncomeCents += amountCents;
-            entryCount += 1;
-          } else if (data.type === "EXPENSE") {
-            totalExpenseCents += amountCents;
-            entryCount += 1;
-          }
-
-          const createdAt = data.created_at;
-          let createdMillis = 0;
-          if (createdAt instanceof Timestamp) {
-            createdMillis = createdAt.toMillis();
-          } else if (typeof createdAt === "number") {
-            createdMillis = createdAt;
-          }
-
-          if (createdMillis > lastEntryMillis) {
-            lastEntryMillis = createdMillis;
-          }
-        }
-
-        if (page.size < PAGE_SIZE) break;
-        lastDoc = page.docs[page.docs.length - 1] || null;
-      }
-
-      const balanceCents = totalIncomeCents - totalExpenseCents;
-
-      const summaryRef = groupRef.collection("cashbox_summary").doc("current");
-      const eventVersion = event.time || "";
-      const updated = await db().runTransaction(async (tx) => {
-        const currentSummary = await tx.get(summaryRef);
-        const currentVersion = currentSummary.exists &&
-          typeof currentSummary.data()?.source_event_version === "string" ?
-          currentSummary.data()?.source_event_version as string : "";
-        if (eventVersion && currentVersion > eventVersion) return false;
-
-        tx.set(summaryRef, {
-          balance: centsToCashboxAmount(balanceCents),
-          total_income: centsToCashboxAmount(totalIncomeCents),
-          total_expense: centsToCashboxAmount(totalExpenseCents),
-          entry_count: entryCount,
-          last_entry_at: lastEntryMillis > 0 ?
-            Timestamp.fromMillis(lastEntryMillis) :
-            null,
-          truncated: false,
-          recomputed_by_server: true,
-          recomputed_at: FieldValue.serverTimestamp(),
-          source_event_version: eventVersion,
-        }, {merge: true});
-        return true;
+        const incomeDelta = afterContribution.incomeCents -
+          beforeContribution.incomeCents;
+        const expenseDelta = afterContribution.expenseCents -
+          beforeContribution.expenseCents;
+        const countDelta = afterContribution.entryCount -
+          beforeContribution.entryCount;
+        const nextState: CashboxSummaryState = {
+          incomeCents: summary.incomeCents + incomeDelta,
+          expenseCents: summary.expenseCents + expenseDelta,
+          balanceCents: summary.balanceCents + incomeDelta - expenseDelta,
+          entryCount: Math.max(0, summary.entryCount + countDelta),
+          ledgerVersion: summary.ledgerVersion + 1,
+          lastEntryAt: !before && after ?
+            after.created_at ?? FieldValue.serverTimestamp() :
+            summary.lastEntryAt,
+        };
+        tx.set(
+          summaryRef,
+          {
+            ...cashboxSummaryPayload(nextState, "legacy_trigger"),
+            source_event_version: event.time || "",
+          },
+          {merge: true}
+        );
+        tx.set(operationRef, {
+          operation: operation.toUpperCase(),
+          entry_id: entryId,
+          ledger_version: nextState.ledgerVersion,
+          source_event_id: event.id || "",
+          applied_at: FieldValue.serverTimestamp(),
+          expires_at: cashboxOperationExpiresAt(),
+        });
+        return "incremental";
       });
 
-      logger.info(updated ?
-        `[CASHBOX] summary recomputado grupo ${groupId}` :
-        `[CASHBOX] recompute obsoleto ignorado grupo ${groupId}`
-      );
-    } catch (err) {
-      logger.error(
-        `[CASHBOX] recompute falhou para grupo ${groupId}:`,
-        err
-      );
-      throw err;
+      if (result === "reconcile") {
+        await reconcileCashboxSummaryForGroup(groupId, {
+          source: "legacy_trigger_reconciliation",
+          coveredOperationRef: operationRef,
+        });
+      }
+      logger.info(`[CASHBOX] ${operation} ${result} grupo ${groupId}`);
+    } catch (error) {
+      logger.error(`[CASHBOX] atualização incremental falhou grupo ${groupId}:`, error);
+      throw error;
     }
   }
 );

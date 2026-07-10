@@ -140,7 +140,7 @@ actual class FirebaseDataSource {
     actual suspend fun addGameEvent(gameId: String, event: GameEvent): Result<GameEvent> = stubResult()
     actual suspend fun getGameEvents(gameId: String): Result<List<GameEvent>> = stubResult()
     actual fun getGameEventsFlow(gameId: String): Flow<Result<List<GameEvent>>> = stubFlow()
-    actual fun getLiveScoreFlow(gameId: String): Flow<Result<LiveScore>> = stubFlow()
+    actual fun getLiveScoreFlow(gameId: String): Flow<Result<LiveScore?>> = stubFlow()
 
     // ========== GROUPS MANAGEMENT ==========
 

@@ -44,6 +44,7 @@ import com.futebadosparcas.ui.components.rememberDiscardChangesGuard
 import com.futebadosparcas.ui.components.team.TeamPickerDialog
 import com.futebadosparcas.ui.components.team.TeamBadge
 import com.futebadosparcas.domain.model.FavoriteTeam
+import com.futebadosparcas.data.datasource.ProfilePhotoValidation
 
 /**
  * EditProfileScreen - Tela de edição de perfil em Compose
@@ -77,6 +78,15 @@ fun EditProfileScreen(
     var devModeClickCount by remember { mutableIntStateOf(0) }
     var firstPhotoClickTime by remember { mutableLongStateOf(0L) }
     var isSaving by remember { mutableStateOf(false) }
+
+    LaunchedEffect(viewModel) {
+        viewModel.uiEvents.collect { event ->
+            if (event is ProfileUiEvent.ProfileUpdateFailed) {
+                isSaving = false
+                Toast.makeText(context, event.message, Toast.LENGTH_LONG).show()
+            }
+        }
+    }
 
     // Cache do usuário para manter o formulário visível durante Loading
     var cachedUser by remember { mutableStateOf<com.futebadosparcas.domain.model.User?>(null) }
@@ -1108,11 +1118,12 @@ private fun isImageSizeValid(context: android.content.Context, uri: Uri): Boolea
         val cursor = context.contentResolver.query(uri, null, null, null, null)
         cursor?.use {
             val sizeIndex = it.getColumnIndex(android.provider.OpenableColumns.SIZE)
-            it.moveToFirst()
-            val sizeInBytes = it.getLong(sizeIndex)
-            val sizeInMB = sizeInBytes / (1024 * 1024)
-            sizeInMB <= 10 // Max 10 MB
-        } ?: false
+            if (sizeIndex < 0 || !it.moveToFirst()) {
+                true
+            } else {
+                ProfilePhotoValidation.isSourceSizeAllowed(it.getLong(sizeIndex))
+            }
+        } ?: true
     } catch (e: Exception) {
         true // If can't get size, allow upload
     }

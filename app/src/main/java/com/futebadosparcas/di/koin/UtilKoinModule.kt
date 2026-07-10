@@ -6,6 +6,7 @@ import com.futebadosparcas.util.LocationSeeder
 import com.futebadosparcas.util.PerformanceTracker
 import com.futebadosparcas.util.PreferencesManager
 import com.futebadosparcas.util.ResourceManager
+import com.futebadosparcas.util.RealtimeTelemetry
 import com.futebadosparcas.data.cache.MemoryCache
 import com.futebadosparcas.ui.games.teamformation.SavedFormationRepository
 import com.futebadosparcas.data.datasource.GroupPhotoDataSource
@@ -37,6 +38,10 @@ val utilKoinModule = module {
 
     single<LocationAnalytics> {
         LocationAnalytics()
+    }
+
+    single<RealtimeTelemetry> {
+        RealtimeTelemetry.production(get())
     }
 
     single<LocationSeeder> {

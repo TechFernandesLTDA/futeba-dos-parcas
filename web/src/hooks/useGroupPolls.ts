@@ -1,10 +1,12 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { addDoc, collection, doc, getDocs, limit, orderBy, query, serverTimestamp, setDoc, where } from 'firebase/firestore';
+import { addDoc, collection, doc, limit, onSnapshot, orderBy, query, serverTimestamp, setDoc, where, type Timestamp } from 'firebase/firestore';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { db } from '../services/firebase';
 import { getFirestoreErrorMessage } from '../utils/firebaseErrors';
 import { snakeToCamel, toDate } from '../utils/firestoreHelpers';
+import { realtimeTelemetry } from '../utils/realtimeTelemetry';
 
 export interface GroupPollOption { id: string; text: string }
 
@@ -29,62 +31,157 @@ function isEligiblePollMemberStatus(status: unknown): boolean {
 export function useGroupPolls(groupId?: string) {
   const { currentUser } = useAuth();
   const uid = currentUser?.uid;
-  const { data = [], isLoading, error, refetch } = useQuery({
-    queryKey: ['group-polls', groupId, uid],
-    queryFn: async () => {
-      if (!groupId || !uid) return [];
-      const membersSnap = await getDocs(collection(db, 'groups', groupId, 'members'));
-      const activeMemberIds = new Set(
-        membersSnap.docs
-          .filter((memberDoc) => isEligiblePollMemberStatus(memberDoc.data().status))
-          .map((memberDoc) => memberDoc.id),
-      );
-      const pollsSnap = await getDocs(query(
-        collection(db, 'group_polls'),
-        where('group_id', '==', groupId),
-        orderBy('created_at', 'desc'),
-        limit(5),
-      ));
-
-      return Promise.all(pollsSnap.docs.map(async (pollDoc) => {
-        const raw = pollDoc.data();
-        const data = snakeToCamel(raw) as {
-          groupId: string;
-          question: string;
-          options: GroupPollOption[];
-          createdBy: string;
-          createdByName?: string;
-          status: 'ACTIVE' | 'CLOSED';
-        };
-        const voteSnap = await getDocs(query(collection(db, 'group_poll_votes'), where('poll_id', '==', pollDoc.id)));
-        const eligibleVotes = voteSnap.docs.filter((vote) => activeMemberIds.has(String(vote.data().user_id || '')));
-        const myVoteDoc = eligibleVotes.find((vote) => vote.data().user_id === uid);
-        const voteCounts = eligibleVotes.reduce<Record<string, number>>((acc, vote) => {
-          const optionId = vote.data().option_id;
-          if (typeof optionId === 'string') acc[optionId] = (acc[optionId] ?? 0) + 1;
-          return acc;
-        }, {});
-
-        return {
-          id: pollDoc.id,
-          groupId: data.groupId,
-          question: data.question,
-          options: data.options ?? [],
-          createdBy: data.createdBy,
-          createdByName: data.createdByName || 'Jogador',
-          status: data.status,
-          createdAt: toDate(raw.created_at),
-          voteCounts,
-          myVote: myVoteDoc?.data().option_id ?? null,
-          totalVotes: Object.values(voteCounts).reduce((sum, count) => sum + Number(count || 0), 0),
-        } as GroupPoll;
-      }));
-    },
-    enabled: !!groupId && !!uid,
-    staleTime: 30 * 1000,
+  const queryClient = useQueryClient();
+  const queryKey = useMemo(() => ['group-polls', groupId, uid] as const, [groupId, uid]);
+  const [listenerLoading, setListenerLoading] = useState(!!groupId && !!uid);
+  const [listenerError, setListenerError] = useState<string | null>(null);
+  const [retryKey, setRetryKey] = useState(0);
+  const attemptedSubscriptionRef = useRef<string | null>(null);
+  const { data = [] } = useQuery({
+    queryKey,
+    queryFn: async (): Promise<GroupPoll[]> => [],
+    enabled: false,
+    staleTime: Infinity,
   });
 
-  return { polls: data, loading: isLoading, error: error ? (error as Error).message : null, refetch };
+  useEffect(() => {
+    if (!groupId || !uid) {
+      queryClient.setQueryData<GroupPoll[]>(queryKey, []);
+      setListenerLoading(false);
+      setListenerError(null);
+      return undefined;
+    }
+
+    setListenerLoading(true);
+    setListenerError(null);
+    const subscriptionKey = `${groupId}:${uid}`;
+    const lifecycle = realtimeTelemetry.start(
+      'group_polls',
+      attemptedSubscriptionRef.current === subscriptionKey ? 'reconnect' : 'bootstrap',
+    );
+    attemptedSubscriptionRef.current = subscriptionKey;
+    let lifecyclePending = true;
+    let polls: Array<{ id: string; raw: Record<string, unknown> }> = [];
+    let votes: Array<Record<string, unknown>> = [];
+    let activeMemberIds = new Set<string>();
+    const ready = { polls: false, votes: false, members: false };
+
+    const publish = () => {
+      if (!ready.polls || !ready.votes || !ready.members) return;
+      const applyMeasurement = realtimeTelemetry.start('group_polls', 'apply');
+      try {
+        const aggregates = new Map<string, {
+          counts: Record<string, number>;
+          myVote: string | null;
+        }>();
+        polls.forEach((poll) => aggregates.set(poll.id, { counts: {}, myVote: null }));
+
+        // One pass for all visible polls: no per-poll vote query (N+1).
+        votes.forEach((vote) => {
+          const pollId = String(vote.poll_id ?? '');
+          const userId = String(vote.user_id ?? '');
+          const optionId = vote.option_id;
+          const aggregate = aggregates.get(pollId);
+          if (!aggregate || !activeMemberIds.has(userId) || typeof optionId !== 'string') return;
+          aggregate.counts[optionId] = (aggregate.counts[optionId] ?? 0) + 1;
+          if (userId === uid) aggregate.myVote = optionId;
+        });
+
+        const next = polls.map((poll) => {
+          const raw = poll.raw;
+          const parsed = snakeToCamel(raw) as {
+            groupId: string;
+            question: string;
+            options: GroupPollOption[];
+            createdBy: string;
+            createdByName?: string;
+            status: 'ACTIVE' | 'CLOSED';
+          };
+          const aggregate = aggregates.get(poll.id) ?? { counts: {}, myVote: null };
+          return {
+            id: poll.id,
+            groupId: parsed.groupId,
+            question: parsed.question,
+            options: parsed.options ?? [],
+            createdBy: parsed.createdBy,
+            createdByName: parsed.createdByName || 'Jogador',
+            status: parsed.status,
+            createdAt: toDate(raw.created_at as Date | Timestamp | undefined),
+            voteCounts: aggregate.counts,
+            myVote: aggregate.myVote,
+            totalVotes: Object.values(aggregate.counts).reduce((sum, count) => sum + count, 0),
+          } as GroupPoll;
+        });
+        queryClient.setQueryData<GroupPoll[]>(queryKey, next);
+        applyMeasurement.finish();
+        if (lifecyclePending) {
+          lifecycle.finish();
+          lifecyclePending = false;
+        }
+        setListenerLoading(false);
+        setListenerError(null);
+      } catch (error) {
+        applyMeasurement.error();
+        lifecycle.cancel();
+        lifecyclePending = false;
+        setListenerError(getFirestoreErrorMessage(error));
+        setListenerLoading(false);
+      }
+    };
+
+    const onError = (error: unknown) => {
+      if (lifecyclePending) {
+        lifecycle.error();
+        lifecyclePending = false;
+      } else {
+        realtimeTelemetry.record('group_polls', 'error');
+      }
+      setListenerError(getFirestoreErrorMessage(error));
+      setListenerLoading(false);
+    };
+    const unsubscribePolls = onSnapshot(query(
+      collection(db, 'group_polls'),
+      where('group_id', '==', groupId),
+      orderBy('created_at', 'desc'),
+      limit(5),
+    ), (snapshot) => {
+      polls = snapshot.docs.map((pollDoc) => ({ id: pollDoc.id, raw: pollDoc.data() }));
+      ready.polls = true;
+      publish();
+    }, onError);
+    const unsubscribeVotes = onSnapshot(query(
+      collection(db, 'group_poll_votes'),
+      where('group_id', '==', groupId),
+    ), (snapshot) => {
+      votes = snapshot.docs.map((voteDoc) => voteDoc.data());
+      ready.votes = true;
+      publish();
+    }, onError);
+    const unsubscribeMembers = onSnapshot(
+      collection(db, 'groups', groupId, 'members'),
+      (snapshot) => {
+        activeMemberIds = new Set(snapshot.docs
+          .filter((memberDoc) => isEligiblePollMemberStatus(memberDoc.data().status))
+          .map((memberDoc) => memberDoc.id));
+        ready.members = true;
+        publish();
+      },
+      onError,
+    );
+
+    return () => {
+      lifecycle.cancel();
+      unsubscribePolls();
+      unsubscribeVotes();
+      unsubscribeMembers();
+    };
+  }, [groupId, queryClient, queryKey, retryKey, uid]);
+
+  const refetch = useCallback(async () => {
+    setRetryKey((current) => current + 1);
+  }, []);
+
+  return { polls: data, loading: listenerLoading, error: listenerError, refetch };
 }
 
 export function useCreateGroupPoll(groupId?: string) {

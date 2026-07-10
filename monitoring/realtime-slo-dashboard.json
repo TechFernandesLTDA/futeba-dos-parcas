@@ -1,0 +1,37 @@
+{
+  "name": "Futeba Realtime SLO",
+  "version": 1,
+  "source": {
+    "rollupCollection": "realtime_slo_rollups",
+    "sampleCollection": "realtime_slo_samples",
+    "windowMinutes": 15,
+    "dimensions": ["flow", "release", "platform"]
+  },
+  "panels": [
+    {"id": "latency", "metrics": ["p50Ms", "p95Ms", "p99Ms"], "groupBy": ["flow", "release"]},
+    {"id": "phases", "metrics": ["phases.bootstrap.p95Ms", "phases.apply.p95Ms", "phases.reconnect.p95Ms"], "groupBy": ["flow", "release"]},
+    {"id": "errors", "metrics": ["errorRate", "abortedCount", "resourceExhaustedCount"], "groupBy": ["flow", "release"]},
+    {"id": "trigger-lag", "metrics": ["triggerLag.p50Ms", "triggerLag.p95Ms", "triggerLag.p99Ms"], "groupBy": ["flow", "release"]},
+    {"id": "violations", "metrics": ["violations"], "groupBy": ["flow", "release"]}
+  ],
+  "thresholds": {
+    "bootstrapP95Ms": 2500,
+    "applyP95Ms": 300,
+    "reconnectP95Ms": 5000,
+    "errorRate": 0.02,
+    "triggerLagP95Ms": 2000,
+    "abortedPerWindow": 10,
+    "resourceExhaustedPerWindow": 5
+  },
+  "hourlyBudgets": [
+    {"concurrentClients": 10, "applicationReads": 990, "monitoringReads": 13, "monitoringWritesUpperBound": 30},
+    {"concurrentClients": 100, "applicationReads": 27900, "monitoringReads": 130, "monitoringWritesUpperBound": 264},
+    {"concurrentClients": 1000, "applicationReads": 2079000, "monitoringReads": 1300, "monitoringWritesUpperBound": 2604}
+  ],
+  "rolloutGate": {
+    "concurrentClients": 500,
+    "groups": 50,
+    "sampleRate": 0.05,
+    "observationHours": 24
+  }
+}

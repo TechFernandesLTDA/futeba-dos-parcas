@@ -31,6 +31,7 @@ import androidx.compose.material.icons.filled.SportsSoccer
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
@@ -50,6 +51,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.savedstate.read
 import com.futebadosparcas.compose.resources.Res
 import com.futebadosparcas.compose.di.composeAppKoinModules
 import com.futebadosparcas.compose.navigation.AppRoutes
@@ -79,7 +81,10 @@ import com.futebadosparcas.compose.resources.profile_hub_action_stats_body
 import com.futebadosparcas.compose.resources.profile_hub_body
 import com.futebadosparcas.compose.resources.profile_hub_title
 import com.futebadosparcas.domain.model.Game
+import com.futebadosparcas.domain.model.GameConfirmation
+import com.futebadosparcas.domain.model.Team
 import com.futebadosparcas.domain.repository.AuthRepository
+import com.futebadosparcas.platform.firebase.FirebaseDataSource
 import com.futebadosparcas.platform.PlatformShareFactory
 import com.futebadosparcas.platform.storage.PreferencesService
 import com.futebadosparcas.ui.HomeScreen
@@ -95,8 +100,6 @@ import com.futebadosparcas.ui.core.LoginScreen
 import com.futebadosparcas.ui.core.LoginState
 import com.futebadosparcas.ui.core.LoginViewModel
 import com.futebadosparcas.ui.core.LocationsRouteScreen
-import com.futebadosparcas.ui.core.OwnerStats
-import com.futebadosparcas.ui.core.OwnerStatsScreen
 import com.futebadosparcas.ui.core.PermissionOnboardingScreen
 import com.futebadosparcas.ui.core.PostGameReport
 import com.futebadosparcas.ui.core.PostGameReportScreen
@@ -161,7 +164,6 @@ fun AppNavigation(
     val reduceMotion = rememberReduceMotion()
     val shareScope = rememberCoroutineScope()
     var selectedGameId by remember { mutableStateOf<String?>(null) }
-    var selectedInviteGroupId by remember { mutableStateOf<String?>(null) }
     var selectedGroupId by remember { mutableStateOf<String?>(null) }
     var blockedPlayers by remember { mutableStateOf(emptyList<BlockedPlayerData>()) }
 
@@ -305,86 +307,120 @@ fun AppNavigation(
             )
         }
 
-        // Game detail — hub do organizador (#2671)
-        // Enquanto a GameDetailScreen completa não é portada (épico #2670), esta rota
-        // serve de ponto de entrada navegável para as telas reais já existentes em
-        // ui/core/ (relatório pós-jogo, estatísticas, convite, bloqueados), eliminando
-        // telas órfãs. Acessível via GamesScreen.onGameClick -> AppRoutes.gameDetail(id).
-        composable(AppRoutes.GAME_DETAIL) {
-            val gameId = selectedGameId
-            GameDetailHub(
+        composable(AppRoutes.GAME_DETAIL) { entry ->
+            val gameId = entry.arguments?.read { getStringOrNull("gameId") }
+            val dataSource = runCatching { koinInject<FirebaseDataSource>() }.getOrNull()
+            LaunchedEffect(gameId) { selectedGameId = gameId }
+            GameDetailRoute(
+                gameId = gameId,
+                dataSource = dataSource,
                 onNavigateBack = { navController.popBackStack() },
-                onOpenPostGameReport = { navController.navigate(AppRoutes.POST_GAME_REPORT) },
-                onOpenOwnerStats = { navController.navigate(AppRoutes.OWNER_STATS) },
-                onOpenInvitePlayers = {
-                    if (gameId != null) {
-                        // groupId real virá do jogo quando GameDetailScreen for portada;
-                        // por ora usa o gameId selecionado como contexto de navegação.
-                        selectedInviteGroupId = gameId
-                        navController.navigate(AppRoutes.invitePlayers(gameId))
+                onOpenPostGameReport = { game ->
+                    navController.navigate(AppRoutes.postGameReport(game.id))
+                },
+                onOpenOwnerStats = { game ->
+                    navController.navigate(AppRoutes.ownerStats(game.ownerId))
+                },
+                onOpenTeamFormation = { game ->
+                    navController.navigate(AppRoutes.teamFormation(game.id))
+                },
+                onOpenVoting = { game ->
+                    navController.navigate(AppRoutes.mvpVoting(game.id))
+                },
+                onOpenInvitePlayers = { game ->
+                    val groupId = game.groupId
+                    if (!groupId.isNullOrBlank()) {
+                        navController.navigate(AppRoutes.invitePlayers(groupId))
                     }
                 },
                 onOpenBlockedPlayers = { navController.navigate(AppRoutes.BLOCKED_PLAYERS) }
             )
         }
 
-        // Relatório pós-jogo (tela real ui/core/PostGameReportScreen)
-        composable(AppRoutes.POST_GAME_REPORT) {
-            PostGameReportScreen(
-                report = PostGameReport(
-                    game = Game(),
-                    confirmations = emptyList(),
-                    teams = emptyList()
-                ),
+        composable(AppRoutes.POST_GAME_REPORT) { entry ->
+            val gameId = entry.arguments?.read { getStringOrNull("gameId") }
+            val dataSource = runCatching { koinInject<FirebaseDataSource>() }.getOrNull()
+            PostGameReportRoute(
+                gameId = gameId,
+                dataSource = dataSource,
                 onNavigateBack = { navController.popBackStack() },
                 onShare = {
                     shareScope.launch {
                         platformShare?.share(
-                            text = buildPostGameShareText(selectedGameId),
+                            text = buildPostGameShareText(gameId),
                             title = "Relatório pós-jogo"
                         )
                     }
-                },
-                onShareWhatsApp = {
-                    shareScope.launch {
-                        platformShare?.share(
-                            text = buildPostGameShareText(selectedGameId),
-                            title = "Compartilhar resultado"
-                        )
-                    }
                 }
             )
         }
 
-        // Estatísticas do organizador (tela real ui/core/OwnerStatsScreen)
-        composable(AppRoutes.OWNER_STATS) {
-            OwnerStatsScreen(
-                stats = OwnerStats(),
-                isLoading = false,
-                onNavigateBack = { navController.popBackStack() },
-                onGameClick = { gameId ->
-                    selectedGameId = gameId
-                    navController.navigate(AppRoutes.gameDetail(gameId))
-                }
-            )
-        }
-
-        // Convidar jogadores (tela real ui/core/InvitePlayersScreen)
-        composable(AppRoutes.INVITE_PLAYERS) {
-            val groupId = selectedInviteGroupId
-            // InviteViewModel ainda não está registrado no Koin do composeApp
-            // (depende de repositórios providos por plataforma). Renderiza a tela
-            // apenas quando o VM estiver disponível; caso contrário, volta atrás
-            // de forma graciosa (sem crash).
-            val inviteVm: InviteViewModel? = runCatching { koinViewModel<InviteViewModel>() }.getOrNull()
-            if (inviteVm != null && groupId != null) {
-                InvitePlayersScreen(
-                    viewModel = inviteVm,
-                    groupId = groupId,
+        composable(AppRoutes.OWNER_STATS) { entry ->
+            val ownerId = entry.arguments?.read { getStringOrNull("ownerId") }
+            var retryKey by remember { mutableIntStateOf(0) }
+            key(retryKey) {
+                UnavailableRouteScreen(
+                    title = "Estatísticas do organizador",
+                    message = if (ownerId.isNullOrBlank()) {
+                        "Não foi possível identificar o organizador."
+                    } else {
+                        "As estatísticas consolidadas do organizador ainda não estão disponíveis no iOS."
+                    },
+                    contextId = ownerId,
+                    onRetry = { retryKey += 1 },
                     onNavigateBack = { navController.popBackStack() }
                 )
-            } else {
-                LaunchedEffect(Unit) { navController.popBackStack() }
+            }
+        }
+
+        composable(AppRoutes.TEAM_FORMATION) { entry ->
+            val gameId = entry.arguments?.read { getStringOrNull("gameId") }
+            val dataSource = runCatching { koinInject<FirebaseDataSource>() }.getOrNull()
+            TeamFormationRoute(
+                gameId = gameId,
+                dataSource = dataSource,
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(AppRoutes.MVP_VOTING) { entry ->
+            val gameId = entry.arguments?.read { getStringOrNull("gameId") }
+            var retryKey by remember { mutableIntStateOf(0) }
+            key(retryKey) {
+                UnavailableRouteScreen(
+                    title = "Votação pós-jogo",
+                    message = "A votação em tempo real ainda não está disponível no iOS.",
+                    contextId = gameId,
+                    onRetry = { retryKey += 1 },
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+        }
+
+        composable(AppRoutes.INVITE_PLAYERS) { entry ->
+            val groupId = entry.arguments?.read { getStringOrNull("groupId") }
+            var retryKey by remember { mutableIntStateOf(0) }
+            key(retryKey) {
+                val inviteVm = runCatching { koinViewModel<InviteViewModel>() }.getOrNull()
+                if (inviteVm != null && !groupId.isNullOrBlank()) {
+                    InvitePlayersScreen(
+                        viewModel = inviteVm,
+                        groupId = groupId,
+                        onNavigateBack = { navController.popBackStack() }
+                    )
+                } else {
+                    UnavailableRouteScreen(
+                        title = "Convidar jogadores",
+                        message = if (groupId.isNullOrBlank()) {
+                            "Não foi possível identificar o grupo deste jogo."
+                        } else {
+                            "Convites ainda não estão disponíveis neste ambiente."
+                        },
+                        contextId = groupId,
+                        onRetry = { retryKey += 1 },
+                        onNavigateBack = { navController.popBackStack() }
+                    )
+                }
             }
         }
 
@@ -496,7 +532,11 @@ fun AppNavigation(
                         label = stringResource(Res.string.profile_hub_action_stats),
                         description = stringResource(Res.string.profile_hub_action_stats_body),
                         icon = Icons.Filled.QueryStats,
-                        onClick = { navController.navigate(AppRoutes.OWNER_STATS) }
+                        onClick = {
+                            authRepository?.getCurrentUserId()?.let { ownerId ->
+                                navController.navigate(AppRoutes.ownerStats(ownerId))
+                            }
+                        }
                     ),
                     FeatureHubAction(
                         label = stringResource(Res.string.profile_hub_action_blocked),
@@ -538,6 +578,287 @@ fun AppNavigation(
     }
 }
 
+private sealed interface RealtimeRouteState<out T> {
+    data object Loading : RealtimeRouteState<Nothing>
+    data class Success<T>(val data: T) : RealtimeRouteState<T>
+    data class Error(val message: String) : RealtimeRouteState<Nothing>
+}
+
+@Composable
+private fun GameDetailRoute(
+    gameId: String?,
+    dataSource: FirebaseDataSource?,
+    onNavigateBack: () -> Unit,
+    onOpenPostGameReport: (Game) -> Unit,
+    onOpenOwnerStats: (Game) -> Unit,
+    onOpenTeamFormation: (Game) -> Unit,
+    onOpenVoting: (Game) -> Unit,
+    onOpenInvitePlayers: (Game) -> Unit,
+    onOpenBlockedPlayers: () -> Unit
+) {
+    var retryKey by remember { mutableIntStateOf(0) }
+    var state by remember(gameId, dataSource, retryKey) {
+        mutableStateOf<RealtimeRouteState<Game>>(RealtimeRouteState.Loading)
+    }
+
+    LaunchedEffect(gameId, dataSource, retryKey) {
+        if (gameId.isNullOrBlank()) {
+            state = RealtimeRouteState.Error("ID do jogo ausente.")
+            return@LaunchedEffect
+        }
+        if (dataSource == null) {
+            state = RealtimeRouteState.Error("Detalhes do jogo indisponíveis neste ambiente.")
+            return@LaunchedEffect
+        }
+        dataSource.getGameByIdFlow(gameId).collect { result ->
+            state = result.fold(
+                onSuccess = { RealtimeRouteState.Success(it) },
+                onFailure = {
+                    RealtimeRouteState.Error(it.message ?: "Não foi possível carregar o jogo.")
+                }
+            )
+        }
+    }
+
+    when (val current = state) {
+        RealtimeRouteState.Loading -> RouteLoadingScreen(
+            title = "Detalhes do jogo",
+            onNavigateBack = onNavigateBack
+        )
+        is RealtimeRouteState.Error -> UnavailableRouteScreen(
+            title = "Detalhes do jogo",
+            message = current.message,
+            contextId = gameId,
+            onRetry = { retryKey += 1 },
+            onNavigateBack = onNavigateBack
+        )
+        is RealtimeRouteState.Success -> GameDetailHub(
+            game = current.data,
+            onNavigateBack = onNavigateBack,
+            onOpenPostGameReport = { onOpenPostGameReport(current.data) },
+            onOpenOwnerStats = if (current.data.ownerId.isBlank()) null else {
+                { onOpenOwnerStats(current.data) }
+            },
+            onOpenTeamFormation = { onOpenTeamFormation(current.data) },
+            onOpenVoting = { onOpenVoting(current.data) },
+            onOpenInvitePlayers = if (current.data.groupId.isNullOrBlank()) null else {
+                { onOpenInvitePlayers(current.data) }
+            },
+            onOpenBlockedPlayers = onOpenBlockedPlayers
+        )
+    }
+}
+
+@Composable
+private fun PostGameReportRoute(
+    gameId: String?,
+    dataSource: FirebaseDataSource?,
+    onNavigateBack: () -> Unit,
+    onShare: () -> Unit
+) {
+    var retryKey by remember { mutableIntStateOf(0) }
+    var state by remember(gameId, dataSource, retryKey) {
+        mutableStateOf<RealtimeRouteState<PostGameReport>>(RealtimeRouteState.Loading)
+    }
+
+    LaunchedEffect(gameId, dataSource, retryKey) {
+        if (gameId.isNullOrBlank()) {
+            state = RealtimeRouteState.Error("ID do jogo ausente.")
+            return@LaunchedEffect
+        }
+        if (dataSource == null) {
+            state = RealtimeRouteState.Error("Relatório indisponível neste ambiente.")
+            return@LaunchedEffect
+        }
+        val game = dataSource.getGameById(gameId).getOrElse {
+            state = RealtimeRouteState.Error(it.message ?: "Não foi possível carregar o jogo.")
+            return@LaunchedEffect
+        }
+        val confirmations = dataSource.getGameConfirmations(gameId).getOrElse {
+            state = RealtimeRouteState.Error(it.message ?: "Não foi possível carregar as confirmações.")
+            return@LaunchedEffect
+        }
+        val teams = dataSource.getGameTeams(gameId).getOrElse {
+            state = RealtimeRouteState.Error(it.message ?: "Não foi possível carregar os times.")
+            return@LaunchedEffect
+        }
+        state = RealtimeRouteState.Success(
+            buildPostGameReport(game, confirmations, teams)
+        )
+    }
+
+    when (val current = state) {
+        RealtimeRouteState.Loading -> RouteLoadingScreen(
+            title = "Relatório pós-jogo",
+            onNavigateBack = onNavigateBack
+        )
+        is RealtimeRouteState.Error -> UnavailableRouteScreen(
+            title = "Relatório pós-jogo",
+            message = current.message,
+            contextId = gameId,
+            onRetry = { retryKey += 1 },
+            onNavigateBack = onNavigateBack
+        )
+        is RealtimeRouteState.Success -> PostGameReportScreen(
+            report = current.data,
+            onNavigateBack = onNavigateBack,
+            onShare = onShare,
+            onShareWhatsApp = onShare
+        )
+    }
+}
+
+private fun buildPostGameReport(
+    game: Game,
+    confirmations: List<GameConfirmation>,
+    teams: List<Team>
+): PostGameReport {
+    val topScorers = confirmations
+        .filter { it.goals > 0 }
+        .sortedByDescending { it.goals }
+        .map { it to it.goals }
+    val topAssists = confirmations
+        .filter { it.assists > 0 }
+        .sortedByDescending { it.assists }
+        .map { it to it.assists }
+    return PostGameReport(
+        game = game,
+        confirmations = confirmations,
+        teams = teams,
+        mvpPlayer = confirmations.firstOrNull { it.userId == game.mvpId },
+        totalGoals = confirmations.sumOf { it.goals },
+        topScorers = topScorers,
+        topAssists = topAssists,
+        yellowCards = confirmations.sumOf { it.yellowCards },
+        redCards = confirmations.sumOf { it.redCards }
+    )
+}
+
+@Composable
+private fun TeamFormationRoute(
+    gameId: String?,
+    dataSource: FirebaseDataSource?,
+    onNavigateBack: () -> Unit
+) {
+    var retryKey by remember { mutableIntStateOf(0) }
+    var state by remember(gameId, dataSource, retryKey) {
+        mutableStateOf<RealtimeRouteState<List<Team>>>(RealtimeRouteState.Loading)
+    }
+    LaunchedEffect(gameId, dataSource, retryKey) {
+        if (gameId.isNullOrBlank()) {
+            state = RealtimeRouteState.Error("ID do jogo ausente.")
+            return@LaunchedEffect
+        }
+        if (dataSource == null) {
+            state = RealtimeRouteState.Error("Formação de times indisponível neste ambiente.")
+            return@LaunchedEffect
+        }
+        dataSource.getGameTeamsFlow(gameId).collect { result ->
+            state = result.fold(
+                onSuccess = { RealtimeRouteState.Success(it) },
+                onFailure = {
+                    RealtimeRouteState.Error(it.message ?: "Não foi possível carregar os times.")
+                }
+            )
+        }
+    }
+
+    when (val current = state) {
+        RealtimeRouteState.Loading -> RouteLoadingScreen(
+            title = "Formação dos times",
+            onNavigateBack = onNavigateBack
+        )
+        is RealtimeRouteState.Error -> UnavailableRouteScreen(
+            title = "Formação dos times",
+            message = current.message,
+            contextId = gameId,
+            onRetry = { retryKey += 1 },
+            onNavigateBack = onNavigateBack
+        )
+        is RealtimeRouteState.Success -> UnavailableRouteScreen(
+            title = "Formação dos times",
+            message = "${current.data.size} time(s) carregado(s). A edição da formação ainda não está disponível no iOS.",
+            contextId = gameId,
+            onRetry = { retryKey += 1 },
+            onNavigateBack = onNavigateBack
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun RouteLoadingScreen(title: String, onNavigateBack: () -> Unit) {
+    Scaffold(
+        topBar = {
+            AdaptiveTopBar(
+                title = title,
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar")
+                    }
+                }
+            )
+        }
+    ) { paddingValues ->
+        Box(
+            modifier = Modifier.fillMaxSize().padding(paddingValues),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator()
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun UnavailableRouteScreen(
+    title: String,
+    message: String,
+    contextId: String?,
+    onRetry: () -> Unit,
+    onNavigateBack: () -> Unit
+) {
+    Scaffold(
+        topBar = {
+            AdaptiveTopBar(
+                title = title,
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar")
+                    }
+                }
+            )
+        }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(24.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = message,
+                style = MaterialTheme.typography.bodyLarge
+            )
+            if (!contextId.isNullOrBlank()) {
+                Spacer(modifier = Modifier.padding(top = 8.dp))
+                Text(
+                    text = "Contexto: $contextId",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Spacer(modifier = Modifier.padding(top = 16.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedButton(onClick = onRetry) { Text("Tentar novamente") }
+                OutlinedButton(onClick = onNavigateBack) { Text("Voltar") }
+            }
+        }
+    }
+}
+
 /**
  * Hub de detalhe do jogo / ferramentas do organizador (#2671).
  *
@@ -551,10 +872,13 @@ fun AppNavigation(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun GameDetailHub(
+    game: Game,
     onNavigateBack: () -> Unit,
     onOpenPostGameReport: () -> Unit,
-    onOpenOwnerStats: () -> Unit,
-    onOpenInvitePlayers: () -> Unit,
+    onOpenOwnerStats: (() -> Unit)?,
+    onOpenTeamFormation: () -> Unit,
+    onOpenVoting: () -> Unit,
+    onOpenInvitePlayers: (() -> Unit)?,
     onOpenBlockedPlayers: () -> Unit
 ) {
     Scaffold(
@@ -581,16 +905,39 @@ private fun GameDetailHub(
         ) {
             val expandedLayout = maxWidth >= 840.dp
             val organizerActions = listOf(
-                stringResource(Res.string.game_detail_post_game_report) to onOpenPostGameReport,
-                stringResource(Res.string.game_detail_owner_stats) to onOpenOwnerStats,
-                stringResource(Res.string.game_detail_invite_players) to onOpenInvitePlayers,
-                stringResource(Res.string.game_detail_blocked_players) to onOpenBlockedPlayers
+                Triple(stringResource(Res.string.game_detail_post_game_report), onOpenPostGameReport, true),
+                Triple(
+                    stringResource(Res.string.game_detail_owner_stats),
+                    onOpenOwnerStats ?: {},
+                    onOpenOwnerStats != null
+                ),
+                Triple("Formação dos times", onOpenTeamFormation, true),
+                Triple("Votação pós-jogo", onOpenVoting, true),
+                Triple(
+                    stringResource(Res.string.game_detail_invite_players),
+                    onOpenInvitePlayers ?: {},
+                    onOpenInvitePlayers != null
+                ),
+                Triple(stringResource(Res.string.game_detail_blocked_players), onOpenBlockedPlayers, true)
             )
 
             Column(
                 modifier = Modifier.widthIn(max = 960.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
+            Text(
+                text = game.locationName.ifBlank { "Jogo ${game.id}" },
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.semantics { heading() }
+            )
+            Text(
+                text = listOf(game.date, game.time, game.status)
+                    .filter { it.isNotBlank() }
+                    .joinToString(" • "),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
             Text(
                 text = stringResource(Res.string.game_detail_organizer_tools),
                 style = MaterialTheme.typography.titleMedium,
@@ -604,9 +951,10 @@ private fun GameDetailHub(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            rowActions.forEach { (label, onClick) ->
+                            rowActions.forEach { (label, onClick, enabled) ->
                                 OutlinedButton(
                                     onClick = onClick,
+                                    enabled = enabled,
                                     modifier = Modifier.weight(1f)
                                 ) {
                                     Text(label)
@@ -618,9 +966,10 @@ private fun GameDetailHub(
                         }
                     }
                 } else {
-                    organizerActions.forEach { (label, onClick) ->
+                    organizerActions.forEach { (label, onClick, enabled) ->
                         OutlinedButton(
                             onClick = onClick,
+                            enabled = enabled,
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Text(label)

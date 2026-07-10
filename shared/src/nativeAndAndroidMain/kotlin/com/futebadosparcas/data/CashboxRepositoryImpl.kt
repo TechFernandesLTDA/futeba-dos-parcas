@@ -2,20 +2,47 @@ package com.futebadosparcas.data
 
 import com.futebadosparcas.domain.model.*
 import com.futebadosparcas.domain.repository.CashboxRepository
+import com.futebadosparcas.platform.UuidGenerator
 import com.futebadosparcas.platform.firebase.FirebaseDataSource
 import com.futebadosparcas.platform.logging.PlatformLogger
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+
+internal class CashboxRequestIdTracker(
+    private val requestIdFactory: () -> String
+) {
+    private val mutex = Mutex()
+    private val pending = mutableMapOf<String, String>()
+
+    suspend fun requestId(operationKey: String, preferredId: String): String = mutex.withLock {
+        pending.getOrPut(operationKey) {
+            preferredId.takeIf { it.matches(Regex("^[A-Za-z0-9_-]{16,128}$")) }
+                ?: requestIdFactory()
+        }
+    }
+
+    suspend fun complete(operationKey: String, requestId: String) = mutex.withLock {
+        if (pending[operationKey] == requestId) pending.remove(operationKey)
+    }
+}
 
 /**
  * Implementação Android do CashboxRepository.
  *
  * Usa FirebaseDataSource para operações de Firebase.
  */
-class CashboxRepositoryImpl(
-    private val firebaseDataSource: FirebaseDataSource
+class CashboxRepositoryImpl internal constructor(
+    private val firebaseDataSource: FirebaseDataSource,
+    private val requestIds: CashboxRequestIdTracker
 ) : CashboxRepository {
+
+    constructor(firebaseDataSource: FirebaseDataSource) : this(
+        firebaseDataSource,
+        CashboxRequestIdTracker(UuidGenerator::generate)
+    )
 
     companion object {
         private const val TAG = "CashboxRepository"
@@ -38,7 +65,26 @@ class CashboxRepositoryImpl(
     ): Result<String> {
         return try {
             PlatformLogger.d(TAG, "Adicionando entrada no caixa do grupo: $groupId")
-            firebaseDataSource.addCashboxEntry(groupId, entry, receiptFilePath)
+            val operationKey = listOf(
+                groupId,
+                entry.type,
+                entry.amount.toString(),
+                entry.description,
+                entry.category,
+                entry.customCategory.orEmpty(),
+                entry.referenceDate.toString(),
+                entry.playerId.orEmpty(),
+                entry.gameId.orEmpty(),
+                receiptFilePath.orEmpty()
+            ).joinToString("|")
+            val requestId = requestIds.requestId(operationKey, entry.id)
+            val result = firebaseDataSource.addCashboxEntry(
+                groupId,
+                entry.copy(id = requestId),
+                receiptFilePath
+            )
+            if (result.isSuccess) requestIds.complete(operationKey, requestId)
+            result
         } catch (e: Exception) {
             PlatformLogger.e(TAG, "Erro ao adicionar entrada no caixa", e)
             Result.failure(e)

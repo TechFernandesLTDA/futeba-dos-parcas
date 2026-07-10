@@ -105,9 +105,9 @@ afterAll(async () => {
 });
 
 describe("confirmations — create (auto-confirmacao)", () => {
-  it("Player pode se auto-confirmar em jogo ativo", async () => {
+  it("Player NAO pode contornar callable com auto-confirmacao direta", async () => {
     const db = asPlayerB(testEnv);
-    await assertSucceeds(
+    await assertFails(
       db.doc(`confirmations/${GAME_ACTIVE}_${UID_PLAYER_B}`).set({
         game_id: GAME_ACTIVE,
         user_id: UID_PLAYER_B,
@@ -215,13 +215,25 @@ describe("confirmations — create (summon pelo game owner)", () => {
     );
   });
 
-  it("Admin pode criar confirmacao para qualquer usuario", async () => {
+  it("Admin client NAO pode criar CONFIRMED sem reservar capacidade", async () => {
     const db = asAdmin(testEnv);
-    await assertSucceeds(
+    await assertFails(
       db.doc(`confirmations/${GAME_ACTIVE}_admin-create`).set({
         game_id: GAME_ACTIVE,
         user_id: UID_PLAYER_B,
         status: "CONFIRMED",
+        created_at: new Date(),
+      })
+    );
+  });
+
+  it("Admin client pode criar summon PENDING", async () => {
+    const db = asAdmin(testEnv);
+    await assertSucceeds(
+      db.doc(`confirmations/${GAME_ACTIVE}_admin-pending`).set({
+        game_id: GAME_ACTIVE,
+        user_id: UID_PLAYER_B,
+        status: "PENDING",
         created_at: new Date(),
       })
     );
@@ -302,6 +314,16 @@ describe("confirmations — update (ETA pelo proprio jogador)", () => {
       })
     );
   });
+
+  it("Jogador pode cancelar a propria confirmacao sem bypass de capacidade", async () => {
+    const db = asPlayerA(testEnv);
+    await assertSucceeds(
+      db.doc(`confirmations/${GAME_ACTIVE}_${UID_PLAYER_A}`).update({
+        status: "CANCELLED",
+        updated_at: new Date(),
+      })
+    );
+  });
 });
 
 describe("confirmations — update (game owner stats)", () => {
@@ -321,6 +343,16 @@ describe("confirmations — update (game owner stats)", () => {
     const db = asPlayerA(testEnv);
     await assertSucceeds(
       db.doc(`confirmations/${GAME_FINISHED}_${UID_PLAYER_B}`).update({
+        status: "CONFIRMED",
+        updated_at: new Date(),
+      })
+    );
+  });
+
+  it("Game owner NAO pode promover PENDING para CONFIRMED direto", async () => {
+    const db = asPlayerA(testEnv);
+    await assertFails(
+      db.doc(`confirmations/${GAME_ACTIVE}_${UID_PLAYER_C}`).update({
         status: "CONFIRMED",
         updated_at: new Date(),
       })

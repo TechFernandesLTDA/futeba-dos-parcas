@@ -20,10 +20,11 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.coVerify
+import kotlinx.coroutines.async
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -194,6 +195,68 @@ class ProfileViewModelTest {
 
             coVerify { userRepository.updateUser(match { it.name == "Joao Atualizado" }) }
         }
+
+        @Test
+        @DisplayName("updateProfile persiste URL quando upload da foto conclui")
+        fun `updateProfile persists uploaded photo URL`() = runTest(testDispatcher) {
+            val userFlow = MutableStateFlow<User?>(testUser)
+            val imageUri = mockk<android.net.Uri>()
+            every { userRepository.observeCurrentUser() } returns userFlow
+            coEvery { gamificationRepository.getUserBadges(testUser.id) } returns Result.success(emptyList())
+            coEvery { statisticsRepository.getUserStatistics(testUser.id) } returns Result.success(testStats)
+            every { preferencesManager.isDevModeEnabled() } returns false
+            coEvery { userRepository.getCurrentUser() } returns Result.success(testUser)
+            coEvery {
+                profilePhotoDataSource.uploadProfilePhoto(testUser.id, imageUri)
+            } returns ProfilePhotoDataSource.UploadResult.Success("https://cdn.example/profile.jpg")
+            coEvery { userRepository.updateUser(any()) } returns Result.success(Unit)
+
+            viewModel = createViewModel()
+            viewModel.loadProfile()
+            advanceUntilIdle()
+
+            viewModel.updateProfile(createFormData(), imageUri)
+            advanceUntilIdle()
+
+            coVerify {
+                userRepository.updateUser(
+                    match { it.photoUrl == "https://cdn.example/profile.jpg" }
+                )
+            }
+        }
+
+        @Test
+        @DisplayName("falha no upload preserva formulário e não salva perfil sem a foto")
+        fun `photo upload failure keeps form and does not persist stale photo`() =
+            runTest(testDispatcher) {
+                val userFlow = MutableStateFlow<User?>(testUser)
+                val imageUri = mockk<android.net.Uri>()
+                every { userRepository.observeCurrentUser() } returns userFlow
+                coEvery { gamificationRepository.getUserBadges(testUser.id) } returns Result.success(emptyList())
+                coEvery { statisticsRepository.getUserStatistics(testUser.id) } returns Result.success(testStats)
+                every { preferencesManager.isDevModeEnabled() } returns false
+                coEvery { userRepository.getCurrentUser() } returns Result.success(testUser)
+                coEvery {
+                    profilePhotoDataSource.uploadProfilePhoto(testUser.id, imageUri)
+                } returns ProfilePhotoDataSource.UploadResult.Error("network unavailable")
+
+                viewModel = createViewModel()
+                viewModel.loadProfile()
+                advanceUntilIdle()
+
+                val failureEvent = async {
+                    viewModel.uiEvents.first { it is ProfileUiEvent.ProfileUpdateFailed }
+                }
+                viewModel.updateProfile(createFormData(), imageUri)
+                advanceUntilIdle()
+
+                assertInstanceOf(ProfileUiState.Success::class.java, viewModel.uiState.value)
+                assertEquals(
+                    "Não foi possível enviar sua foto. Verifique sua conexão e tente novamente.",
+                    (failureEvent.await() as ProfileUiEvent.ProfileUpdateFailed).message
+                )
+                coVerify(exactly = 0) { userRepository.updateUser(any()) }
+            }
 
         @Test
         @DisplayName("updateProfile com erro retorna Error")
