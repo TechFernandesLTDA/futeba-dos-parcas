@@ -31,7 +31,7 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 - O cliente não lista votos brutos; lê somente os documentos determinísticos do próprio eleitor e conclui via callable.
 - Resultado da votação consome exclusivamente os agregados autoritativos e reações do documento do jogo.
 
-_Issues: #3495_
+_Issues: #3495 · PRs: #3496_
 
 ### [1.36.4][android-1.36.4] - 2026-07-09
 
@@ -196,7 +196,7 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 - Votação em lote respeita a exigência read-before-write do Firestore e resultados consomem apenas agregados autoritativos do jogo.
 - Regras limitam votos brutos ao próprio eleitor/admin e autorizam observação determinística do documento próprio ainda inexistente.
 
-_Issues: #3495_
+_Issues: #3495 · PRs: #3496_
 
 ### [1.51.33][web-1.51.33] - 2026-07-10
 
@@ -1386,7 +1386,7 @@ _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 - `finishGameLifecycle` usa lock transacional recuperável para serializar eventos e agregação sem expor status transitório aos clientes.
 - `submitMvpVotes` executa todas as leituras antes das escritas e `concludeMvpVoting` persiste vencedores, totais e time vencedor canônicos.
 
-_Issues: #3495_
+_Issues: #3495 · PRs: #3496_
 
 ### [1.7.14][functions-1.7.14] - 2026-07-09
 
