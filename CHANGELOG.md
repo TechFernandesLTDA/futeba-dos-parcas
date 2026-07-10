@@ -209,6 +209,18 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.51.37][web-1.51.37] - 2026-07-10
+
+#### Adicionado
+- Suporte a vídeos `video/mp4` até 25 MB no Storage do Mural.
+- Testes de timeline, vídeo MP4, limites de tamanho e bloqueio de WebM.
+
+#### Corrigido
+- Feed do Mural ordenado cronologicamente com paginação deduplicada e atualização realtime.
+- Reprodução de mídia com fallback e retry acessível.
+
+_Issues: #3514 · PRs: #3514_
+
 ### [1.51.36][web-1.51.36] - 2026-07-10
 
 #### Adicionado
@@ -2000,6 +2012,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.51.37]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.37.md
 [web-1.51.36]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.36.md
 [web-1.51.35]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.35.md
 [web-1.51.34]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.34.md
