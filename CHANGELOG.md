@@ -24,6 +24,13 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ## Android
 
+### [1.36.4][android-1.36.4] - 2026-07-09
+
+#### Mudado
+- Alinha `versionName` em 1.36.4 e `versionCode` em 67 no Android e em `versions.json`.
+
+_PRs: #3378_
+
 ### [1.36.3][android-1.36.3] - 2026-07-09
 
 #### Corrigido
@@ -1880,6 +1887,7 @@ _Issues: #2981_
 _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 
 
+[android-1.36.4]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.36.4.md
 [android-1.36.3]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.36.3.md
 [android-1.36.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.36.2.md
 [android-1.36.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.36.1.md
