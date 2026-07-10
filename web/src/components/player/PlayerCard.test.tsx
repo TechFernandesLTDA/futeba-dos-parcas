@@ -70,5 +70,8 @@ describe('PlayerCard', () => {
     expect(screen.getByRole('group', { name: 'Detalhamento da nota' })).toBeInTheDocument();
     expect(screen.getByRole('list', { name: 'Resumo de desempenho' })).toBeInTheDocument();
     expect(screen.getByRole('progressbar', { name: 'ATA' })).toHaveAttribute('aria-valuenow', '4.5');
+    expect(screen.getByRole('dialog')).toHaveStyle({ borderRadius: '6px' });
+    expect(screen.getByRole('article')).toHaveStyle({ borderRadius: '6px' });
+    expect(screen.getByTestId('player-card-inner-outline')).toHaveStyle({ borderRadius: '4px' });
   });
 });

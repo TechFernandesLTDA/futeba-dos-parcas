@@ -31,6 +31,8 @@ import {createLogger} from '../../utils/logger';
 import {getAuthErrorMessage} from '../../utils/firebaseErrors';
 
 const logger = createLogger('ConnectedAccounts');
+const GOOGLE_PROVIDER_ID = 'google.com';
+const PASSWORD_PROVIDER_ID = 'password';
 
 // #3189: provedores de login que sabemos exibir (senha, Google, telefone).
 const PROVIDER_META: Record<string, {labelKey: string; Icon: React.ElementType}> = {
@@ -53,9 +55,10 @@ export const ConnectedAccounts: React.FC = () => {
   const [confirmUnlinkOpen, setConfirmUnlinkOpen] = useState(false);
 
   const providers = firebaseUser?.providerData ?? [];
-  const providerIds = providers.map((p) => p.providerId);
-  const hasGoogle = providerIds.includes('google.com');
-  const hasPassword = providerIds.includes('password');
+  // Igualdade exata de identificador de provedor. Estes valores não são URLs;
+  // evitar busca por substring também impede provedores com nomes parecidos.
+  const hasGoogle = providers.some(({providerId}) => providerId === GOOGLE_PROVIDER_ID);
+  const hasPassword = providers.some(({providerId}) => providerId === PASSWORD_PROVIDER_ID);
   // Guard: só permite desvincular Google se sobrar senha (método primário).
   const canUnlinkGoogle = hasGoogle && hasPassword;
 

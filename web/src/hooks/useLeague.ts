@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import {
   collection,
   query,
@@ -157,15 +157,26 @@ export const useLeague = (
     getNextPageParam: (lastPage) => lastPage.hasMore ? lastPage.nextPageToken : undefined,
     staleTime: 3 * 60 * 1000, // 3 minutos
     gcTime: 10 * 60 * 1000,
+    // O listener em tempo real já invalida o ranking quando os dados mudam.
+    // Evita uma segunda chamada apenas por retornar à janela do navegador.
+    refetchOnWindowFocus: false,
     enabled,
   });
 
-  const players = data?.pages.flatMap((page) => page.players) ?? [];
+  // Mantém a referência estável entre renders sem mudança de dados. A tela da
+  // Liga deriva filtros, posições e contadores desta lista.
+  const players = useMemo(
+    () => data?.pages.flatMap((page) => page.players) ?? [],
+    [data?.pages],
+  );
 
   // Listener real-time: único por seasonId/groupId (sem division)
   // Usa showErrorRef para não recriar listener quando showError muda
   useEffect(() => {
-    if (!enabled) return;
+    if (!enabled) {
+      setListenerError(null);
+      return;
+    }
 
     let isFirstSeasonSnapshot = true;
     let isFirstMemberSnapshot = true;
@@ -195,11 +206,18 @@ export const useLeague = (
         listenerConstraints.push(where('group_id', '==', filters.groupId));
       }
       const q = query(seasonRef, ...listenerConstraints);
-      unsubscribers.push(onSnapshot(q, () => invalidateLeague(), (err) => {
-        logger.error('Error in league listener:', err);
-        setListenerError(err.message);
-        showErrorRef.current('Erro ao carregar ranking em tempo real');
-      }));
+      unsubscribers.push(onSnapshot(
+        q,
+        () => {
+          setListenerError(null);
+          invalidateLeague();
+        },
+        (err) => {
+          logger.error('Error in league listener:', err);
+          setListenerError(err.message);
+          showErrorRef.current('Erro ao carregar ranking em tempo real');
+        },
+      ));
     }
 
     const handleBaseSnapshotError = (err: Error) => {
@@ -211,6 +229,7 @@ export const useLeague = (
       unsubscribers.push(onSnapshot(
         collection(db, 'groups', filters.groupId, 'members'),
         () => {
+          setListenerError(null);
           if (isFirstMemberSnapshot) {
             isFirstMemberSnapshot = false;
             return;

@@ -84,18 +84,69 @@ function canManageGame(game: Game | null, uid?: string): boolean {
   return false;
 }
 
-function getStreamEmbedUrl(streamUrl: string): string | null {
+const STREAM_SOURCE_PROTOCOLS = new Set(['http:', 'https:']);
+const YOUTUBE_HOSTS = new Set([
+  'youtube.com',
+  'www.youtube.com',
+  'm.youtube.com',
+  'music.youtube.com',
+]);
+const YOUTUBE_SHORT_HOSTS = new Set(['youtu.be', 'www.youtu.be']);
+const TWITCH_HOSTS = new Set(['twitch.tv', 'www.twitch.tv', 'm.twitch.tv']);
+const YOUTUBE_PATH_PREFIXES = new Set(['embed', 'live', 'shorts']);
+const YOUTUBE_VIDEO_ID = /^[A-Za-z0-9_-]{6,20}$/;
+const TWITCH_CHANNEL = /^[A-Za-z0-9_]{3,25}$/;
+
+function getYouTubeVideoId(url: URL): string | null {
+  const segments = url.pathname.split('/').filter(Boolean);
+  let candidate: string | null | undefined;
+
+  if (YOUTUBE_SHORT_HOSTS.has(url.hostname)) {
+    candidate = segments[0];
+  } else {
+    candidate = url.searchParams.get('v');
+    if (!candidate && YOUTUBE_PATH_PREFIXES.has(segments[0])) {
+      candidate = segments[1];
+    }
+  }
+
+  return candidate && YOUTUBE_VIDEO_ID.test(candidate) ? candidate : null;
+}
+
+// Exportado apenas para os testes de segurança do parser.
+// eslint-disable-next-line react-refresh/only-export-components
+export function getStreamEmbedUrl(
+  streamUrl: string,
+  parentHostname = window.location.hostname,
+): string | null {
   try {
     const url = new URL(streamUrl);
-    if (url.hostname.includes('youtube.com') || url.hostname.includes('youtu.be')) {
-      const videoId = url.hostname.includes('youtu.be')
-        ? url.pathname.slice(1)
-        : url.searchParams.get('v');
-      if (videoId) return `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+    if (
+      !STREAM_SOURCE_PROTOCOLS.has(url.protocol)
+      || url.username
+      || url.password
+      || url.port
+    ) {
+      return null;
     }
-    if (url.hostname.includes('twitch.tv')) {
+
+    if (YOUTUBE_HOSTS.has(url.hostname) || YOUTUBE_SHORT_HOSTS.has(url.hostname)) {
+      const videoId = getYouTubeVideoId(url);
+      if (!videoId) return null;
+
+      const embedUrl = new URL(`https://www.youtube.com/embed/${videoId}`);
+      embedUrl.searchParams.set('autoplay', '1');
+      return embedUrl.toString();
+    }
+
+    if (TWITCH_HOSTS.has(url.hostname)) {
       const channel = url.pathname.split('/').filter(Boolean)[0];
-      if (channel) return `https://player.twitch.tv/?channel=${channel}&parent=${window.location.hostname}`;
+      if (!channel || !TWITCH_CHANNEL.test(channel) || !parentHostname.trim()) return null;
+
+      const embedUrl = new URL('https://player.twitch.tv/');
+      embedUrl.searchParams.set('channel', channel);
+      embedUrl.searchParams.set('parent', parentHostname.trim().toLowerCase());
+      return embedUrl.toString();
     }
   } catch {
     return null;

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { createTestWrapper } from '../test/renderWithProviders';
 
@@ -11,6 +11,7 @@ const mockOrderBy = vi.fn();
 const mockLimit = vi.fn();
 const mockWhere = vi.fn();
 const mockGetLeaguePlayers = vi.fn();
+const mockUnsubscribe = vi.fn();
 
 vi.mock('firebase/firestore', () => ({
   collection: (...args: any[]) => mockCollection(...args),
@@ -53,7 +54,7 @@ const callableResponse = (
 describe('useLeague', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockOnSnapshot.mockReturnValue(vi.fn());
+    mockOnSnapshot.mockReturnValue(mockUnsubscribe);
     mockQuery.mockReturnValue('mock-query');
     mockCollection.mockReturnValue('mock-collection');
     mockOrderBy.mockReturnValue('mock-order');
@@ -65,6 +66,58 @@ describe('useLeague', () => {
   it('retorna loading=true inicialmente', () => {
     const { result } = renderHook(() => useLeague('user-1'), { wrapper: createTestWrapper() });
     expect(result.current.loading).toBe(true);
+  });
+
+  it('não consulta nem abre listeners enquanto estiver desativado', async () => {
+    const { result } = renderHook(
+      () => useLeague('user-1', { seasonId: 'season-1' }, { enabled: false }),
+      { wrapper: createTestWrapper() },
+    );
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(mockGetLeaguePlayers).not.toHaveBeenCalled();
+    expect(mockOnSnapshot).not.toHaveBeenCalled();
+  });
+
+  it('encerra listeners ao pausar e abre apenas um novo listener ao reativar', async () => {
+    const { result, rerender } = renderHook(
+      ({ enabled }) => useLeague('user-1', { seasonId: 'season-1' }, { enabled }),
+      { wrapper: createTestWrapper(), initialProps: { enabled: true } },
+    );
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(mockGetLeaguePlayers).toHaveBeenCalledTimes(1);
+    expect(mockOnSnapshot).toHaveBeenCalledTimes(1);
+
+    rerender({ enabled: false });
+    await waitFor(() => expect(mockUnsubscribe).toHaveBeenCalledTimes(1));
+
+    rerender({ enabled: true });
+    await waitFor(() => expect(mockOnSnapshot).toHaveBeenCalledTimes(2));
+    expect(mockGetLeaguePlayers).toHaveBeenCalledTimes(1);
+  });
+
+  it('limpa erro transitório quando o listener volta a receber dados', async () => {
+    let onNext: (() => void) | undefined;
+    let onError: ((error: Error) => void) | undefined;
+    mockOnSnapshot.mockImplementation((_query, next, error) => {
+      onNext = next;
+      onError = error;
+      return mockUnsubscribe;
+    });
+
+    const { result } = renderHook(
+      () => useLeague('user-1', { seasonId: 'season-1' }),
+      { wrapper: createTestWrapper() },
+    );
+
+    await waitFor(() => expect(onError).toBeDefined());
+    act(() => onError?.(new Error('Falha temporária')));
+    await waitFor(() => expect(result.current.error).toBe('Falha temporária'));
+
+    act(() => onNext?.());
+    await waitFor(() => expect(result.current.error).toBeNull());
   });
 
   it('carrega jogadores pesquisáveis mesmo sem temporada ativa', async () => {
@@ -155,6 +208,19 @@ describe('useLeague', () => {
     expect(result.current.players).toHaveLength(2);
     const currentPlayer = result.current.players.find((p) => p.isCurrentUser);
     expect(currentPlayer?.userId).toBe('current-user');
+  });
+
+  it('mantém a referência da lista quando os dados não mudam', async () => {
+    const { result, rerender } = renderHook(() => useLeague('user-1'), {
+      wrapper: createTestWrapper(),
+    });
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    const firstPlayers = result.current.players;
+
+    rerender();
+
+    expect(result.current.players).toBe(firstPlayers);
   });
 
   it('envia filtros de temporada, grupo e gênero para a callable', async () => {

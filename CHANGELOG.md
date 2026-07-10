@@ -173,6 +173,18 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.51.33][web-1.51.33] - 2026-07-10
+
+#### Mudado
+- Consultas de temporada, grupos, convites e ranking passam a respeitar o estado ativo da aba Liga.
+- A lista paginada de jogadores mantém referência estável para evitar novos filtros, ordenações e contagens sem mudança de dados.
+- Refetches ao recuperar o foco foram desativados onde listeners ou caches já mantêm a Liga atualizada.
+- O PlayerCard usa raio externo de 6 px e contorno interno de 4 px em todos os breakpoints.
+- Testes cobrem pausa da aba preservada, ausência de consultas desativadas, estabilidade da lista e raio visual do card.
+- URLs usadas pelo service worker e por integrações externas passam por parsing e validação explícita de origem, host e protocolo.
+
+_Issues: #3486, #3487_
+
 ### [1.51.32][web-1.51.32] - 2026-07-10
 
 #### Corrigido
@@ -1880,6 +1892,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.51.33]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.33.md
 [web-1.51.32]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.32.md
 [web-1.51.31]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.31.md
 [web-1.51.30]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.30.md

@@ -76,6 +76,17 @@ describe('ConnectedAccounts', () => {
     expect(screen.queryByRole('button', { name: /unlinkGoogle/i })).not.toBeInTheDocument();
   });
 
+  it('não confunde um providerId parecido com o provedor Google oficial', () => {
+    authState.providers = [
+      { providerId: 'password', email: 'u@t.com' },
+      { providerId: 'google.com.attacker.example', email: 'u@t.com' },
+    ];
+    renderWithProviders();
+
+    expect(screen.getByRole('button', { name: 'settings.connectedAccounts.linkGoogle' })).toBeEnabled();
+    expect(screen.queryByRole('button', { name: /unlinkGoogle/i })).not.toBeInTheDocument();
+  });
+
   it('chama linkGoogleAccount ao clicar em vincular e mostra toast de sucesso', async () => {
     const user = userEvent.setup();
     authState.providers = [{ providerId: 'password', email: 'u@t.com' }];
