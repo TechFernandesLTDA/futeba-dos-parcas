@@ -224,4 +224,40 @@ describe("game lifecycle callables", () => {
     });
     expect(txUpdate).not.toHaveBeenCalled();
   });
+
+  test("finishGameLifecycle libera o lock quando o limite de eventos é excedido", async () => {
+    const txUpdate = jest.fn();
+    const gameState: Record<string, unknown> = {
+      owner_id: "owner1",
+      status: "LIVE",
+    };
+    mockEventsGet.mockResolvedValue({size: 501, docs: []});
+    mockLiveScoreGet.mockResolvedValue({
+      exists: true,
+      data: () => ({team1_score: 0, team2_score: 0}),
+    });
+    mockRunTransaction.mockImplementation(async (callback: any) => callback({
+      get: jest.fn().mockResolvedValue({
+        exists: true,
+        data: () => ({...gameState}),
+      }),
+      update: jest.fn((ref: {path: string}, updates: Record<string, unknown>) => {
+        txUpdate(ref, updates);
+        if (ref.path === "games/game1") Object.assign(gameState, updates);
+      }),
+      set: jest.fn(),
+    }));
+
+    const {finishGameLifecycle} = require("../src/games/lifecycle");
+    await expect(finishGameLifecycle(makeRequest())).rejects.toMatchObject({
+      code: "resource-exhausted",
+    });
+    expect(txUpdate).toHaveBeenLastCalledWith(
+      expect.objectContaining({path: "games/game1"}),
+      expect.objectContaining({
+        finalization_id: expect.anything(),
+        finalization_started_at: expect.anything(),
+      })
+    );
+  });
 });
