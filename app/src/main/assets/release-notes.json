@@ -1,7 +1,23 @@
 {
   "platform": "android",
-  "generatedAt": "2026-07-10T03:27:18.948Z",
+  "generatedAt": "2026-07-10T05:10:55.735Z",
   "notes": [
+    {
+      "version": "1.36.4",
+      "buildNumber": 67,
+      "releaseDate": "2026-07-09",
+      "type": "patch",
+      "showPopup": false,
+      "published": true,
+      "headline": "Atualização de manutenção para manter a versão Android alinhada aos registros de release.",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "Consolida o identificador da versão instalada sem alterar fluxos ou recursos do aplicativo."
+      ],
+      "fixed": [],
+      "issueRefs": []
+    },
     {
       "version": "1.36.3",
       "buildNumber": 66,
