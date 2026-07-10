@@ -1,288 +1,192 @@
-# ⚽ Futeba dos Parças
+# Futeba dos Parças
 
-[![Android CI](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/android-ci.yml/badge.svg)](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/android-ci.yml)
-[![iOS Build](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/ios-build.yml/badge.svg)](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/ios-build.yml)
-[![Functions CI](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/functions-ci.yml/badge.svg)](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/functions-ci.yml)
-[![Version](https://img.shields.io/badge/web-1.43.16-green.svg)](https://github.com/TechFernandesLTDA/futeba-dos-parcas/releases)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Platform](https://img.shields.io/badge/platform-Android%20%7C%20iOS%20%7C%20Web-lightgrey.svg)](https://github.com/TechFernandesLTDA/futeba-dos-parcas)
+<!-- markdownlint-disable MD013 -->
 
-> Organize suas peladas com gamificação, estatísticas e diversão! 🎮
+[![Web CI](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/web-ci.yml/badge.svg?branch=master)](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/web-ci.yml)
+[![Android CI](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/android-ci.yml/badge.svg?branch=master)](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/android-ci.yml)
+[![iOS Build](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/ios-build.yml/badge.svg?branch=master)](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/ios-build.yml)
+[![Functions CI](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/functions-ci.yml/badge.svg?branch=master)](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/functions-ci.yml)
+[![Firestore Rules](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/firestore-rules-ci.yml/badge.svg?branch=master)](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/firestore-rules-ci.yml)
+[![CodeQL](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/codeql.yml/badge.svg?branch=master)](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/codeql.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-[📱 Play Store](https://play.google.com/store/apps/details?id=com.futebadosparcas) | [🌐 Web App](https://futebadosparcas.web.app) | [🐛 Reportar Bug](https://github.com/TechFernandesLTDA/futeba-dos-parcas/issues/new?template=bug_report.yml)
+Plataforma para organizar peladas, grupos e temporadas com confirmação de presença, formação de times, estatísticas, ranking e gamificação.
 
----
+[Web em produção](https://futebadosparcas.web.app) · [Releases](https://github.com/TechFernandesLTDA/futeba-dos-parcas/releases) · [Reportar bug](https://github.com/TechFernandesLTDA/futeba-dos-parcas/issues/new?template=bug_report.yml)
 
-## 🌟 Features
+> Este é um repositório privado. Clonar, executar ambientes conectados e acessar projetos Firebase exige autorização explícita da Tech Fernandes Ltda.
 
-### ⚽ Gestão de Jogos
-- ✅ Criar e gerenciar partidas
-- ✅ Sistema de confirmação de presença
-- ✅ Check-in com validação GPS
-- ✅ Formação automática de times equilibrados
-- ✅ Registro de eventos ao vivo (gols, assistências, cartões)
+## Produto
 
-### 🎮 Gamificação
-- 🏆 Sistema de XP e níveis
-- 🥇 Rankings por temporada (mensal)
-- 🎖️ Badges e conquistas desbloqueáveis
-- 🔥 Streaks de participação
-- 👑 Votação de MVP e Bola Murcha
+- Gestão de jogos, confirmações, check-in, escalações e eventos ao vivo.
+- Grupos com mural, convites, caixa, enquetes, desafios e comunicação direta.
+- XP, níveis, badges, divisões, rankings sazonais, MVP e histórico estatístico.
+- Aplicações Web/PWA, Android e iOS/CMP apoiadas por Firebase e Cloud Functions.
 
-### 📊 Estatísticas
-- 📈 Histórico completo de jogos
-- ⚽ Gols, assistências, defesas
-- 📉 Win rate e performance
-- 🏅 Divisões (Bronze, Prata, Ouro, Diamante)
-- 📱 Widgets Android para próximos jogos
+As versões vigentes são independentes por plataforma. Consulte [`versions.json`](versions.json) e as fontes em [`release-notes/`](release-notes/) em vez de copiar números de versão para documentação secundária.
 
-### 🌐 Web App
-- ✅ 55+ telas com paridade total de funcionalidades com o Android
-- ✅ Sincronização em tempo real via React Query + Firestore
-- ✅ PWA-ready com suporte offline
-- ✅ Design responsivo mobile-first (max-width 480dp)
-- ✅ Firebase Hosting com cache CDN
+## Arquitetura
 
-### 🚀 Moderno & Multiplataforma
-- 🎨 Material Design 3 (Android) / MUI 5 (Web)
-- 🌓 Dark Mode (Android + Web)
-- 📱 Jetpack Compose (Android)
-- 🔄 Kotlin Multiplatform — lógica de negócio compartilhada (~95%)
-- ⚡ Performance otimizada com Baseline Profiles
+| Camada | Tecnologia | Código principal |
+| --- | --- | --- |
+| Web | React 18, TypeScript, Vite 8, MUI 5, TanStack Query | [`web/`](web/) |
+| Android | Kotlin, Jetpack Compose, Koin, Coroutines/Flow | [`app/`](app/) |
+| Compartilhado | Kotlin Multiplatform para domínio, modelos e validadores | [`shared/`](shared/) |
+| iOS/CMP | Host iOS + Compose Multiplatform | [`iosApp/`](iosApp/), [`composeApp/`](composeApp/) |
+| Backend | Firebase Auth, Firestore, Storage, FCM, App Check e Cloud Functions v2 | [`functions/`](functions/) |
+| Segurança de dados | Firestore/Storage Rules e testes de regras | [`firestore.rules`](firestore.rules), [`storage.rules`](storage.rules), [`firestore-rules-tests/`](firestore-rules-tests/) |
 
----
+Fronteiras importantes:
 
-> **📘 Novo no código?** Comece pelo **[CLAUDE.md](CLAUDE.md)** — guia completo de arquitetura, build commands, padrões de código e workflow Spec-Driven Development.
+- A Web não consome o módulo KMP `shared`; usa hooks, contexts e serviços Firebase próprios.
+- `functions/` é o backend serverless em produção.
+- `archive/backend/` é um backend Express/TypeORM arquivado e sem consumidores. Não desenvolva nele sem nova spec e decisão arquitetural explícita.
+- Alterações de CPF precisam manter Functions, Web e KMP sincronizados.
 
----
+O mapa completo está em [`docs/PROJECT_MAP.md`](docs/PROJECT_MAP.md).
 
-## 📌 Status Atual
+## Pré-requisitos
 
-| Área | Estado |
-|------|--------|
-| Issues abertas | 27 |
-| PRs abertos | 0 |
-| Branch padrão | `master` |
-| Proteção da `master` | 1 review obrigatório, CODEOWNERS obrigatório, stale reviews ligados |
-| Web produção | [`https://futebadosparcas.web.app`](https://futebadosparcas.web.app) |
+| Ferramenta | Uso |
+| --- | --- |
+| Git + acesso ao repositório | Clone, branches e PRs |
+| Node.js 22 | Web, Functions e scripts; versão definida em [`.nvmrc`](.nvmrc) |
+| JDK 17 | Build Android/Gradle |
+| Android Studio + SDK 36 | Desenvolvimento Android (`minSdk 24`, `targetSdk 35`) |
+| Firebase CLI | Emuladores e deploy autorizado |
+| Xcode | Desenvolvimento e validação do host iOS |
 
-Versões atuais por plataforma:
+Use instalações LTS e os lockfiles do repositório. Para JavaScript, prefira `npm ci`; não atualize dependências implicitamente durante o setup.
 
-| Plataforma | Versão |
-|------------|--------|
-| Web | `1.43.16` |
-| Android | `1.32.1` (`buildNumber` 58) |
-| iOS | `1.6.0` (`buildNumber` 17) |
-| Functions | `1.2.8` |
-
-Fonte de verdade: [`versions.json`](versions.json). Status de governança: [`docs/GITHUB_STATUS.md`](docs/GITHUB_STATUS.md).
-
----
-
-## 🛠️ Tech Stack
-
-### Android
-- **Linguagem:** Kotlin 2.2.10
-- **UI:** Jetpack Compose + Compose BOM 2024.09.00
-- **Arquitetura:** MVVM + Clean Architecture
-- **Injeção de Dependência:** Koin 4.1.1
-- **Async:** Coroutines + Flow
-- **Database:** Room + DataStore
-- **Image Loading:** Coil
-- **Build:** AGP 9.0.1, SDK 36, JDK 17
-
-### Web
-- **Framework:** React 18 + TypeScript
-- **UI:** Material UI 5
-- **Build:** Vite 8
-- **Server State:** TanStack React Query 5
-- **Routing:** React Router DOM 6
-- **Database:** Firestore (com cache/retry via React Query)
-
-### iOS (Em Desenvolvimento)
-- **Linguagem:** Kotlin (shared) + Swift
-- **UI:** Compose Multiplatform 1.10.0
-- **Arquitetura:** KMP (~95% código compartilhado)
-
-### Backend (Firebase)
-- **Auth:** Firebase Authentication
-- **Database:** Cloud Firestore
-- **Storage:** Cloud Storage
-- **Serverless:** Cloud Functions v2 (Node 22, TypeScript)
-- **Push:** Firebase Cloud Messaging
-- **Monitoring:** Crashlytics + App Check
-
----
-
-## 🚀 Quick Start
-
-### Pré-requisitos
-
-- JDK 17
-- Android Studio Ladybug (2024.2.1+) ou Hedgehog (2024.1.1+)
-- Android SDK 36 (compileSdk) / minSdk 24 / targetSdk 35
-- Firebase CLI (para Functions)
-- Node.js 22 (para Functions e Web)
-
-### Clone & Build
+## Início rápido
 
 ```bash
 git clone https://github.com/TechFernandesLTDA/futeba-dos-parcas.git
 cd futeba-dos-parcas
+nvm use
+```
 
-# Android
-./gradlew :app:assembleDebug
-./gradlew :app:installDebug
+### Web
 
-# Web
+```bash
 cd web
-npm install
-npm run dev          # http://localhost:5173
-
-# Testes
-./gradlew :app:testDebugUnitTest
-cd functions && npx jest --no-coverage
+cp .env.example .env.local
+# Substitua a configuração pelo ambiente autorizado; não reutilize produção por padrão.
+npm ci
+npm run dev
 ```
 
-### Configuração Firebase
+A aplicação abre em `http://localhost:5173`. O build valida variáveis obrigatórias antes de compilar:
 
-1. Criar projeto no [Firebase Console](https://console.firebase.google.com)
-2. Baixar `google-services.json` → `app/`
-3. Configurar `local.properties`:
-
-```properties
-MAPS_API_KEY=sua_chave_google_maps
+```bash
+npm run lint
+npm test
+npm run build
 ```
 
-4. Emuladores locais:
+### Android
+
+```bash
+cp app/google-services.json.example app/google-services.json
+# Configure MAPS_API_KEY em local.properties sem commitar o arquivo.
+./gradlew :app:compileDebugKotlin
+./gradlew :app:assembleDebug
+```
+
+Use um `google-services.json` autorizado para fluxos Firebase reais. O arquivo de exemplo serve apenas como modelo local.
+
+### Cloud Functions
 
 ```bash
 cd functions
-npm install
-firebase emulators:start
+npm ci
+npm run build
+npm run lint
+npx jest --no-coverage
+npm run serve
 ```
 
----
+O comando `serve` inicia o emulador de Functions. Consulte [`docs/SETUP_GUIDE.md`](docs/SETUP_GUIDE.md) para configurar o conjunto completo de emuladores e credenciais.
 
-## 📂 Estrutura do Projeto
+## Validação por escopo
 
+Execute primeiro o menor gate que cobre a mudança; antes de um PR, rode o gate completo das plataformas afetadas.
+
+| Escopo | Comandos mínimos |
+| --- | --- |
+| Web | `cd web && npm run lint && npm test && npm run build` |
+| Functions | `cd functions && npm run build && npm run lint && npx jest --no-coverage` |
+| Android | `./gradlew :app:compileDebugKotlin && ./gradlew :app:testDebugUnitTest` |
+| Android completo | `./gradlew :app:assembleDebug && ./gradlew lint && ./gradlew detekt` |
+| Firestore Rules | `cd firestore-rules-tests && npm ci && npm test` |
+| Scripts do repositório | `npm run test:scripts` |
+
+Testes E2E e de performance possuem requisitos adicionais. Use [`docs/QA_SMOKE_MATRIX.md`](docs/QA_SMOKE_MATRIX.md) como fonte do gate de release.
+
+## Estrutura do repositório
+
+```text
+app/                    Android nativo
+shared/                 domínio e modelos KMP
+composeApp/             UI Compose Multiplatform
+iosApp/                 host iOS
+web/                    aplicação React/PWA
+functions/              Cloud Functions em produção
+firestore-rules-tests/  testes de autorização e integridade
+docs/                   documentação operacional
+specs/                  specs e decisões técnicas
+scripts/                automações, migrações e validadores
+release-notes/          fontes das notas por plataforma
+.github/workflows/      CI, segurança, release e automações
+archive/backend/        backend legado arquivado
 ```
-futeba-dos-parcas/
-├── app/                    # Android app (Jetpack Compose)
-├── shared/                 # Kotlin Multiplatform (business logic)
-├── composeApp/             # Compose Multiplatform UI (Android + iOS)
-├── iosApp/                 # iOS app (Swift + KMP)
-├── functions/              # Cloud Functions (TypeScript, Node 22)
-├── web/                    # Web app (React + TypeScript + MUI)
-│   ├── src/pages/          # 55+ telas
-│   ├── src/hooks/          # React hooks (useGames, useGroups, etc.)
-│   ├── src/components/     # Componentes UI reutilizáveis
-│   └── src/contexts/       # Auth, Theme, Toast
-├── firestore.rules         # Firestore security rules
-├── specs/                  # Specs técnicas (SDD)
-├── scripts/                # Scripts utilitários (~70 scripts)
-└── .github/workflows/      # CI/CD pipelines (23 workflows)
-```
 
----
+## Fluxo de desenvolvimento
 
-## 📖 Documentação
+1. Sincronize `master` e crie uma branch curta; não trabalhe diretamente na branch protegida.
+2. Verifique se já existe issue ou PR para o mesmo problema.
+3. Use uma spec em [`specs/`](specs/) quando o trabalho exigir decisão de produto, regra ou arquitetura.
+4. Implemente com testes e valide todas as plataformas afetadas.
+5. Use [Conventional Commits](https://www.conventionalcommits.org/) e abra um PR com impacto, causa, validação e riscos.
+6. Faça squash merge somente com CI verde e os requisitos de revisão atendidos.
 
-### 🤖 Para Desenvolvimento Assistido por IA
-- **[CLAUDE.md](CLAUDE.md)** — Guia completo com build commands, arquitetura, padrões, gotchas e workflow SDD
-- **[LLM Workspace Guide](docs/LLM_WORKSPACE_GUIDE.md)** — Ordem de leitura e fontes da verdade para LMs/agentes sem desperdiçar contexto
-- **[.claude/rules/](.claude/rules)** — Padrões detalhados: Compose, Material 3, ViewModels, Firestore, testes, segurança
-- **[.claude/PROJECT_CONTEXT.md](.claude/PROJECT_CONTEXT.md)** — Contexto consolidado para LLMs
+Detalhes: [`CONTRIBUTING.md`](CONTRIBUTING.md), [`AGENTS.md`](AGENTS.md) e [`docs/AGENT_OPERATING_MODEL.md`](docs/AGENT_OPERATING_MODEL.md).
 
-### 📚 Para Desenvolvedores
-- **[Project Map](docs/PROJECT_MAP.md)** — mapa operacional de pastas, fronteiras e comandos
-- **[Agent Operating Model](docs/AGENT_OPERATING_MODEL.md)** — papéis e uso dos agentes Rawls, James, Hypatia e Plato
-- **[QA Smoke Matrix](docs/QA_SMOKE_MATRIX.md)** — matriz prática de regressão web/mobile/Android/Functions
-- **[Tech Stack & Context](docs/TECH_STACK_AND_CONTEXT.md)** — Arquitetura, bibliotecas e navegação
-- **[Business Rules](docs/BUSINESS_RULES.md)** — Sistema de XP, ciclo de vida de partidas e ranking
-- **[Setup Guide](docs/SETUP_GUIDE.md)** — Configuração completa do ambiente
-- **[Specs](specs/)** — Especificações técnicas de todas as features (SDD)
+## Releases e deploy
 
----
+Mudanças visíveis aos usuários exigem versionamento e rastreabilidade completos:
 
-## 🤝 Contribuindo
+1. Atualize a plataforma por `node scripts/bump-version.js <platform> <patch|minor|major>`.
+2. Crie `release-notes/<platform>/<version>.md`.
+3. Rode `node scripts/release-notes.js validate`, `changelog` e `bundle`.
+4. Valide, abra PR, aguarde CI e faça squash merge.
+5. Implante somente a plataforma afetada a partir do commit integrado em `master`.
+6. Publique tag e GitHub Release e verifique a superfície ao vivo.
 
-Contribuições são **muito bem-vindas**!
+Não faça deploy silencioso nem publique a partir de checkout destacado, árvore suja ou branch não integrada. Processo completo: [`docs/RELEASE_PROCESS.md`](docs/RELEASE_PROCESS.md).
 
-1. Veja o guia em [CONTRIBUTING.md](CONTRIBUTING.md)
-2. Leia as [specs](specs/) antes de implementar features
-3. Siga [Conventional Commits](https://www.conventionalcommits.org/)
-4. Abra um PR com descrição clara
+## Segurança e configuração
 
-### Spec-Driven Development (SDD)
+- Nunca commite `.env`, `local.properties`, credenciais, keystores ou configurações Firebase privadas.
+- Não publique vulnerabilidades em issues públicas. Siga [`SECURITY.md`](SECURITY.md).
+- Prefira emuladores e dados de teste; ações em produção exigem autorização explícita.
+- Escritas Firestore devem validar entrada, tratar erro e usar timestamps do servidor; operações multi-documento devem ser atômicas.
+- CodeQL, Semgrep, regras Firebase e CI complementam a revisão humana, mas não substituem testes do fluxo real.
 
-Este projeto segue **Spec-Driven Development** rigorosamente:
+## Documentação
 
-- ✅ Toda feature ou bugfix DEVE ter uma spec aprovada em `/specs/` antes da implementação
-- ✅ Fases obrigatórias: `REQUIREMENTS → UX/UI → TECHNICAL DESIGN → TASKS → IMPLEMENTATION → VERIFY`
-- ✅ Templates disponíveis: `_TEMPLATE_FEATURE_MOBILE.md` e `_TEMPLATE_BUGFIX_MOBILE.md`
-- ✅ Decisões técnicas documentadas em `/specs/DECISIONS.md`
+| Documento | Finalidade |
+| --- | --- |
+| [`docs/PROJECT_MAP.md`](docs/PROJECT_MAP.md) | Pastas, fronteiras e comandos principais |
+| [`docs/LLM_WORKSPACE_GUIDE.md`](docs/LLM_WORKSPACE_GUIDE.md) | Ordem de leitura e fontes de verdade para agentes |
+| [`docs/BUSINESS_RULES.md`](docs/BUSINESS_RULES.md) | Jogos, XP, ranking e regras de domínio |
+| [`docs/QA_SMOKE_MATRIX.md`](docs/QA_SMOKE_MATRIX.md) | Gates de regressão e release |
+| [`docs/RELEASE_PROCESS.md`](docs/RELEASE_PROCESS.md) | Versionamento, notas, tags e deploy |
+| [`docs/SETUP_GUIDE.md`](docs/SETUP_GUIDE.md) | Setup detalhado por plataforma |
+| [`specs/DECISIONS.md`](specs/DECISIONS.md) | Decisões arquiteturais vigentes |
 
-**Consulte [CLAUDE.md](CLAUDE.md) para o workflow completo e regras obrigatórias.**
+## Contribuição e licença
 
----
+O acesso ao código é restrito. Colaboradores autorizados devem seguir [`CONTRIBUTING.md`](CONTRIBUTING.md), a proteção de `master`, CODEOWNERS e os checks obrigatórios.
 
-## 🔐 Environment & Access
-
-Este repositório é configurado com variáveis de ambiente e chaves de acesso para desenvolvimento:
-- **Firebase Access**: Autentique via `firebase login` ou credenciais locais seguras
-- **Scripts**: Scripts Node.js em `/scripts` para tarefas de manutenção
-- **Secrets**: Nunca commitar `google-services.json`, `.env` ou arquivos `*.keystore`
-
----
-
-## 🔗 Links
-
-- 🌐 [Web App](https://futebadosparcas.web.app)
-- 📱 [Google Play Store](https://play.google.com/store/apps/details?id=com.futebadosparcas)
-- 🛡️ [Política de Segurança](SECURITY.md)
-- 🐛 [Reportar Bug](https://github.com/TechFernandesLTDA/futeba-dos-parcas/issues/new?template=bug_report.yml)
-- 💡 [Solicitar Feature](https://github.com/TechFernandesLTDA/futeba-dos-parcas/issues/new?template=feature_request.yml)
-- 📧 [Contato](mailto:techfernandesltda@gmail.com)
-
----
-
-## 📊 Status do Projeto
-
-- ✅ **Android:** Produção (`1.32.1`, build 58)
-- ✅ **Web:** Produção (`1.43.16` em https://futebadosparcas.web.app)
-- ✅ **Backend:** Firebase Cloud Functions v2 (`1.2.8`)
-- ✅ **CI/CD:** GitHub Actions (23 workflows)
-- 🚧 **iOS:** Em desenvolvimento (`1.6.0`, KMP/CMP em evolução)
-
-Governança e fila atual: [`docs/GITHUB_STATUS.md`](docs/GITHUB_STATUS.md).
-
----
-
-## 🎮 Sistema de XP
-
-| Ação | XP |
-|------|-----|
-| Participação | +10 |
-| Gol | +10 |
-| Assistência | +7 |
-| Defesa (Goleiro) | +8 |
-| Clean Sheet (Goleiro) | +15 |
-| Vitória | +20 |
-| Empate | +10 |
-| MVP | +30 |
-| Bola Murcha (pior jogador) | -10 |
-| Streak 3 | +20 |
-| Streak 5 | +35 |
-| Streak 7 | +50 |
-| Streak 10 | +100 |
-
-> Valores padrão — grupos podem customizar via `GamificationSettings`. Fonte da verdade: `shared/xp-constants.json`.
-
-**Reset de Temporada**: Mensal no dia 1. XP global nunca reseta.
-
----
-
-**Feito com ❤️ pela Tech Fernandes Ltda**
-
-*Built for broken ankles and spectacular goals.*
+Distribuído sob a [licença MIT](LICENSE). © Tech Fernandes Ltda.
