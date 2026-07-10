@@ -85,8 +85,11 @@ class FcmService : FirebaseMessagingService(), KoinComponent {
     }
 
     private fun showNotification(title: String, body: String, type: String, gameId: String?, level: Int? = null) {
-        val intent = Intent(this, MainActivityCompose::class.java)
-        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        val intent = Intent().apply {
+            setClass(this@FcmService, MainActivityCompose::class.java)
+            setPackage(this@FcmService.packageName)
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        }
         gameId?.let { intent.putExtra("gameId", it) }
         intent.putExtra("notificationType", type)
 

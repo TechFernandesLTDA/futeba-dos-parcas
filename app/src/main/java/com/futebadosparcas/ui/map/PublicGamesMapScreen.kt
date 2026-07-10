@@ -21,7 +21,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Map
-import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.SportsScore
@@ -32,7 +31,6 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -204,14 +202,6 @@ fun PublicGamesMapScreen(
                             Modifier.align(Alignment.TopCenter).padding(16.dp))
                     }
 
-                    FloatingActionButton(
-                        onClick = { },
-                        modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp).padding(bottom = 200.dp),
-                        containerColor = MaterialTheme.colorScheme.primaryContainer
-                    ) {
-                        Icon(Icons.Default.MyLocation, contentDescription = stringResource(R.string.my_location),
-                            tint = MaterialTheme.colorScheme.onPrimaryContainer)
-                    }
                 }
             }
         }
@@ -261,7 +251,11 @@ private fun PublicGamesMapContent(
                 Marker(
                     state = MarkerState(position = LatLng(game.latitude, game.longitude)),
                     title = game.title,
-                    snippet = "${game.dateTime} - ${game.confirmedPlayers}/${game.maxPlayers}"
+                    snippet = "${game.dateTime} - ${game.confirmedPlayers}/${game.maxPlayers}",
+                    onClick = {
+                        onMarkerClick(game)
+                        true
+                    }
                 )
             }
         }

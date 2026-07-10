@@ -1,7 +1,31 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-10T06:21:19.694Z",
+  "generatedAt": "2026-07-10T08:20:10.237Z",
   "notes": [
+    {
+      "version": "1.51.35",
+      "buildNumber": null,
+      "releaseDate": "2026-07-10",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "A tela de detalhes do jogo voltou a abrir com estabilidade em todos os estados da partida.",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "Falhas temporárias ao sincronizar o perfil de proprietário deixam registro para diagnóstico sem interromper o cadastro do local."
+      ],
+      "fixed": [
+        "Corrigido o erro React #130 que podia derrubar `/game/:id` ao carregar componentes do Material UI.",
+        "O Web passa a usar a chave Firebase própria da plataforma, restrita aos domínios autorizados.",
+        "Componentes de runtime do detalhe do jogo normalizam módulos ESM/CJS e falham cedo quando uma exportação não é um elemento React válido.",
+        "Testes renderizam `Unstable_Grid2` e todos os ícones usados pela tela, cobrindo defaults aninhados.",
+        "A sincronização best-effort de claims registra falhas e a configuração pública usa o SDK config Web oficial."
+      ],
+      "issueRefs": [
+        3497
+      ]
+    },
     {
       "version": "1.51.34",
       "buildNumber": null,

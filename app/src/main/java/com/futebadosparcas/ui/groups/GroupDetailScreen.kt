@@ -103,8 +103,12 @@ fun GroupDetailScreen(
     // Join requests (issue #517 Phase 2)
     val myJoinRequestState by joinRequestViewModel.myRequestState.collectAsStateWithLifecycle()
     val pendingJoinRequests by joinRequestViewModel.pendingRequests.collectAsStateWithLifecycle()
+    val pendingJoinRequestsError by
+        joinRequestViewModel.pendingRequestsError.collectAsStateWithLifecycle()
     val joinSubmitting by joinRequestViewModel.isSubmitting.collectAsStateWithLifecycle()
     val joinActioningId by joinRequestViewModel.actioningRequesterId.collectAsStateWithLifecycle()
+    val retryLabel = stringResource(R.string.retry)
+    val genericErrorMessage = stringResource(R.string.error_generic)
 
     // Dialog states
     var showLeaveDialog by remember { mutableStateOf(false) }
@@ -126,6 +130,18 @@ fun GroupDetailScreen(
         joinRequestViewModel.observeMyRequest(groupId)
         if (successState?.myRole == GroupMemberRole.OWNER ||
             successState?.myRole == GroupMemberRole.ADMIN) {
+            joinRequestViewModel.observePendingRequests(groupId)
+        }
+    }
+
+    LaunchedEffect(groupId, pendingJoinRequestsError) {
+        pendingJoinRequestsError ?: return@LaunchedEffect
+        val result = snackbarHostState.showSnackbar(
+            message = genericErrorMessage,
+            actionLabel = retryLabel,
+            duration = SnackbarDuration.Long
+        )
+        if (result == SnackbarResult.ActionPerformed) {
             joinRequestViewModel.observePendingRequests(groupId)
         }
     }

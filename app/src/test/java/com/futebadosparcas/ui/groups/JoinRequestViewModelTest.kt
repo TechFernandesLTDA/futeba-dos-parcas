@@ -12,6 +12,7 @@ import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -131,6 +132,21 @@ class JoinRequestViewModelTest {
         advanceUntilIdle()
 
         assertEquals(2, vm.pendingRequests.value.size)
+    }
+
+    @Test
+    @DisplayName("observePendingJoinRequests preserva erro para retry")
+    fun observePendingRequests_error_exposesError() = runTest(testDispatcher) {
+        every { groupRepo.observePendingJoinRequests("g1") } returns flow {
+            throw IllegalStateException("Sem permissão")
+        }
+
+        val vm = JoinRequestViewModel(groupRepo)
+        vm.observePendingRequests("g1")
+        advanceUntilIdle()
+
+        assertEquals("Sem permissão", vm.pendingRequestsError.value?.message)
+        assertTrue(vm.pendingRequests.value.isEmpty())
     }
 
     @Test

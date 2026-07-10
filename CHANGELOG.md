@@ -24,6 +24,15 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ## Android
 
+### [1.36.6][android-1.36.6] - 2026-07-10
+
+#### Corrigido
+- Biometria exige `CryptoObject` AES/GCM com chave auth-per-use no Android Keystore e invalidação por novo cadastro biométrico.
+- Intents de FCM, notificações e alarmes são explicitamente limitadas ao pacote do aplicativo.
+- Ranking usa `collectLatest` e aguarda o preenchimento paralelo do cache antes de emitir o estado de sucesso.
+
+_Issues: #3497 · PRs: #3498_
+
 ### [1.36.5][android-1.36.5] - 2026-07-10
 
 #### Corrigido
@@ -188,6 +197,15 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 - Bump de versão de manutenção após a mega audit wave de 2026-05-11, sem mudanças funcionais no Android nesta tag.
 
 ## Web
+
+### [1.51.35][web-1.51.35] - 2026-07-10
+
+#### Corrigido
+- Componentes de runtime do detalhe do jogo normalizam módulos ESM/CJS e falham cedo quando uma exportação não é um elemento React válido.
+- Testes renderizam `Unstable_Grid2` e todos os ícones usados pela tela, cobrindo defaults aninhados.
+- A sincronização best-effort de claims registra falhas e a configuração pública usa o SDK config Web oficial.
+
+_Issues: #3497 · PRs: #3498_
 
 ### [1.51.34][web-1.51.34] - 2026-07-10
 
@@ -1379,6 +1397,14 @@ _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
 
+### [1.7.16][functions-1.7.16] - 2026-07-10
+
+#### Corrigido
+- `sanitizeText` usa normalização NFKC e parsing estrutural em vez de substituições regex incompletas, corrigindo o alerta CodeQL de severidade alta.
+- Contrato automatizado mantém a query `dateTime == null` alinhada ao índice composto `dateTime/date/__name__`.
+
+_Issues: #3497 · PRs: #3498_
+
 ### [1.7.15][functions-1.7.15] - 2026-07-10
 
 #### Corrigido
@@ -1914,6 +1940,7 @@ _Issues: #2981_
 _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 
 
+[android-1.36.6]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.36.6.md
 [android-1.36.5]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.36.5.md
 [android-1.36.4]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.36.4.md
 [android-1.36.3]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.36.3.md
@@ -1928,6 +1955,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.51.35]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.35.md
 [web-1.51.34]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.34.md
 [web-1.51.33]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.33.md
 [web-1.51.32]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.32.md
@@ -2043,6 +2071,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [web-1.26.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.26.1.md
 [web-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.26.0.md
 [ios-1.6.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.0.md
+[functions-1.7.16]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.7.16.md
 [functions-1.7.15]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.7.15.md
 [functions-1.7.14]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.7.14.md
 [functions-1.7.13]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.7.13.md

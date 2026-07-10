@@ -28,23 +28,25 @@ import {
   Chip,
 } from '@mui/material';
 import { getContrastRatio } from '@mui/material/styles';
-import Grid from '@mui/material/Unstable_Grid2';
-import SoccerIcon from '@mui/icons-material/SportsSoccer';
-import CheckIcon from '@mui/icons-material/Check';
-import PlayIcon from '@mui/icons-material/PlayArrow';
-import CheckInIcon from '@mui/icons-material/HowToReg';
-import VoteIcon from '@mui/icons-material/HowToVote';
-import ShareIcon from '@mui/icons-material/Share';
-import DeleteIcon from '@mui/icons-material/Delete';
-import EditIcon from '@mui/icons-material/Edit';
-import QrCodeIcon from '@mui/icons-material/QrCode2';
-import BackIcon from '@mui/icons-material/ArrowBack';
-import DuplicateIcon from '@mui/icons-material/ContentCopy';
-import CalendarIcon from '@mui/icons-material/CalendarMonth';
-import MoreVertIcon from '@mui/icons-material/MoreVert';
-import MessageIcon from '@mui/icons-material/ChatBubbleOutline';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import PlaceIcon from '@mui/icons-material/Place';
+import {
+  Grid,
+  SoccerIcon,
+  CheckIcon,
+  PlayIcon,
+  CheckInIcon,
+  VoteIcon,
+  ShareIcon,
+  DeleteIcon,
+  EditIcon,
+  QrCodeIcon,
+  BackIcon,
+  DuplicateIcon,
+  CalendarIcon,
+  MoreVertIcon,
+  MessageIcon,
+  CheckCircleIcon,
+  PlaceIcon,
+} from './gameDetailRuntimeComponents';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
 import { PageContainer } from '../../components/common/PageContainer';
 import { doc, runTransaction, serverTimestamp, Timestamp } from 'firebase/firestore';

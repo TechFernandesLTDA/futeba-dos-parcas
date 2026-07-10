@@ -103,7 +103,9 @@ class NotificationHelper constructor(
         val requestCode = gameId?.hashCode() ?: NOTIFICATION_ID_GAME
         val notificationId = gameId?.hashCode() ?: NOTIFICATION_ID_GAME
 
-        val intent = Intent(context, MainActivityCompose::class.java).apply {
+        val intent = Intent().apply {
+            setClass(context, MainActivityCompose::class.java)
+            setPackage(context.packageName)
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
             gameId?.let { putExtra("gameId", it) }
         }
@@ -135,7 +137,9 @@ class NotificationHelper constructor(
         message: String
     ) {
         // Social sem ID de entidade — preserva back stack via SINGLE_TOP
-        val intent = Intent(context, MainActivityCompose::class.java).apply {
+        val intent = Intent().apply {
+            setClass(context, MainActivityCompose::class.java)
+            setPackage(context.packageName)
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
         }
 
@@ -166,7 +170,9 @@ class NotificationHelper constructor(
         message: String
     ) {
         // Preserva back stack via SINGLE_TOP; openBadges=true para deep link em conquistas
-        val intent = Intent(context, MainActivityCompose::class.java).apply {
+        val intent = Intent().apply {
+            setClass(context, MainActivityCompose::class.java)
+            setPackage(context.packageName)
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
             putExtra("openBadges", true)
         }
@@ -203,7 +209,9 @@ class NotificationHelper constructor(
         val requestCode = gameId?.hashCode() ?: NOTIFICATION_ID_REMINDER
         val notificationId = gameId?.hashCode() ?: NOTIFICATION_ID_REMINDER
 
-        val intent = Intent(context, MainActivityCompose::class.java).apply {
+        val intent = Intent().apply {
+            setClass(context, MainActivityCompose::class.java)
+            setPackage(context.packageName)
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
             gameId?.let { putExtra("gameId", it) }
         }

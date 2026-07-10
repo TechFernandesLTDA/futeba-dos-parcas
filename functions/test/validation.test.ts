@@ -140,6 +140,38 @@ describe("Validation Module", () => {
     test("keeps normal text unchanged", () => {
       expect(sanitizeText("Normal text here")).toBe("Normal text here");
     });
+
+    test("blocks nested and repeated tag delimiter bypasses", () => {
+      const payloads = [
+        "<scr<script>ipt>alert(1)</scr</script>ipt>",
+        "<<script>script>alert(1)<</script>/script>",
+        "<script><script>alert(1)</script></script>",
+        "<script",
+      ];
+
+      for (const payload of payloads) {
+        expect(sanitizeText(payload)).not.toContain("<");
+      }
+    });
+
+    test("canonicalizes full-width markup before parsing", () => {
+      expect(sanitizeText("＜script＞alert(1)＜/script＞")).toBe("alert(1)");
+    });
+
+    test("blocks schemes obfuscated with case, whitespace and zero-width chars", () => {
+      expect(sanitizeText("JaVaScRiPt:alert(1)")).toBe("alert(1)");
+      expect(sanitizeText("java\u200Bscript:alert(1)")).toBe("alert(1)");
+      expect(sanitizeText("data  :text/html,payload")).toBe("text/html,payload");
+      expect(sanitizeText("vbscript:\nmsgbox(1)")).toBe("msgbox(1)");
+    });
+
+    test("removes repeated numeric and named entities without decoding markup", () => {
+      const sanitized = sanitizeText(
+        "Hello&nbsp;&#x3C;script&#62;&amp;World"
+      );
+      expect(sanitized).toBe("Hello script World");
+      expect(sanitized).not.toContain("<");
+    });
   });
 
   // ==========================================
