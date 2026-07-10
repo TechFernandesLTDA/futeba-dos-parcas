@@ -209,6 +209,15 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.51.38][web-1.51.38] - 2026-07-10
+
+#### Corrigido
+- Object URLs de vídeos MP4 são criadas e revogadas no ciclo de vida do arquivo selecionado, com cobertura para React Strict Mode.
+- Falhas do elemento `<video>` agora exibem estado não bloqueante e preservam o envio do arquivo original.
+- Adicionado teste de regressão para publicar vídeo após falha da pré-visualização.
+
+_Issues: #3516 · PRs: #3516_
+
 ### [1.51.37][web-1.51.37] - 2026-07-10
 
 #### Adicionado
@@ -2012,6 +2021,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.51.38]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.38.md
 [web-1.51.37]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.37.md
 [web-1.51.36]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.36.md
 [web-1.51.35]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.35.md
