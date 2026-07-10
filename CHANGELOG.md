@@ -215,7 +215,7 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 - Mantém o elemento `video` com opacidade total e altura mínima enquanto o MP4 prepara a reprodução.
 - Adiciona cobertura regressiva para controles visíveis antes de `loadedmetadata` em navegadores móveis.
 
-_Issues: #3522_
+_Issues: #3522 · PRs: #3524_
 
 ### [1.51.40][web-1.51.40] - 2026-07-10
 
