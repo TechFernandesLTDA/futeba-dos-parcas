@@ -89,6 +89,9 @@ jobs:
 
       - name: Upload report
         if: always()
+        # O gate é o comando acima. Cota de artifacts não pode mascarar um
+        # resultado de carga aprovado nem bloquear o PR.
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: realtime-load-${{ steps.profile.outputs.vus }}-vus
