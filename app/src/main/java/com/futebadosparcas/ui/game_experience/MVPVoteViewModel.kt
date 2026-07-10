@@ -11,12 +11,13 @@ import com.futebadosparcas.domain.repository.GameExperienceRepository
 import com.futebadosparcas.data.repository.GameRepository
 import com.futebadosparcas.domain.repository.UserRepository
 import com.futebadosparcas.domain.ranking.MatchFinalizationService
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class MVPVoteViewModel(
     private val gameRepository: GameRepository,
@@ -33,67 +34,85 @@ class MVPVoteViewModel(
     private var finalizeJob: Job? = null
 
     private var allConfirmations: List<GameConfirmation> = emptyList()
+    private var currentUserId: String? = null
+    private var submittedCategories: Set<VoteCategory> = emptySet()
 
     fun loadCandidates(gameId: String) {
         loadJob?.cancel()
         loadJob = viewModelScope.launch {
-            // Envolvido em try/catch para evitar loading infinito em caso de
-            // exceção em getCurrentUserId() ou getGameDetails() — fix #2774
-            try {
-                // Keep loading but maybe we don't know owner yet. Default false.
-                _uiState.value = MVPVoteUiState.Loading(isOwner = false)
-
-                // 1. Check Owner
-                val currentUser = userRepository.getCurrentUserId()
-                var isOwner = false
-                var isFinished = false
-                if (currentUser != null) {
-                    val gameResult = gameRepository.getGameDetails(gameId)
-                    gameResult.onSuccess { game ->
-                        isOwner = (game.ownerId == currentUser)
-                        isFinished = (game.status == com.futebadosparcas.data.model.GameStatus.FINISHED.name)
-                    }
-                }
-
-                if (isFinished) {
-                    _uiState.value = MVPVoteUiState.Finished(isOwner)
-                    return@launch
-                }
-
-                // 2. Check if voted
-                if (currentUser != null) {
-                    val hasVotedResult = gameExperienceRepository.hasUserVoted(gameId, currentUser)
-                    if (hasVotedResult.getOrNull() == true) {
-                        _uiState.value = MVPVoteUiState.AlreadyVoted(isOwner)
-                        return@launch
-                    }
-                }
-
-                gameRepository.getGameConfirmations(gameId).fold(
-                    onSuccess = { confirmations ->
-                        allConfirmations = confirmations.filter { it.status == "CONFIRMED" }
-
-                        if (allConfirmations.isEmpty()) {
-                            _uiState.value = MVPVoteUiState.Error("Nenhum jogador confirmado para votar.", isOwner, R.string.mvp_vote_error_no_players)
-                        } else {
-                            // Initial Category: MVP
-                            val category = VoteCategory.MVP
-                            val filteredCandidates = getCandidatesForCategory(category)
-
-                            _uiState.value = MVPVoteUiState.Voting(
-                                candidates = filteredCandidates,
-                                currentCategory = category,
-                                isOwner = isOwner
-                            )
-                        }
-                    },
-                    onFailure = {
-                        _uiState.value = MVPVoteUiState.Error(it.message ?: "Erro ao carregar candidatos", isOwner)
-                    }
+            _uiState.value = MVPVoteUiState.Loading(isOwner = false)
+            currentUserId = userRepository.getCurrentUserId()
+            val uid = currentUserId
+            if (uid == null) {
+                _uiState.value = MVPVoteUiState.Error(
+                    errorResId = R.string.mvp_vote_error_not_auth
                 )
-            } catch (e: Exception) {
-                _uiState.value = MVPVoteUiState.Error(e.message ?: "Erro ao carregar candidatos", isOwner = false)
+                return@launch
             }
+
+            combine(
+                gameRepository.getGameDetailsFlow(gameId),
+                gameRepository.getGameConfirmationsFlow(gameId)
+            ) { gameResult, confirmationsResult ->
+                gameResult.getOrThrow() to confirmationsResult.getOrThrow()
+            }
+                .catch {
+                    _uiState.value = MVPVoteUiState.Error(
+                        errorResId = R.string.mvp_vote_error_load_candidates
+                    )
+                }
+                .collectLatest { (game, confirmations) ->
+                    val isOwner = game.ownerId == uid ||
+                        uid in game.coOrganizers
+                    if (game.status != com.futebadosparcas.domain.model.GameStatus.FINISHED.name) {
+                        _uiState.value = MVPVoteUiState.Error(
+                            isOwner = isOwner,
+                            errorResId = R.string.mvp_vote_error_game_not_finished
+                        )
+                        return@collectLatest
+                    }
+                    if (game.votingStatus == "CONCLUDED" || game.votingConcluded) {
+                        _uiState.value = MVPVoteUiState.Finished(isOwner)
+                        return@collectLatest
+                    }
+
+                    allConfirmations = confirmations.filter {
+                        it.status == "CONFIRMED" && it.userId != uid
+                    }
+                    if (allConfirmations.isEmpty()) {
+                        _uiState.value = MVPVoteUiState.Error(
+                            isOwner = isOwner,
+                            errorResId = R.string.mvp_vote_error_no_players
+                        )
+                        return@collectLatest
+                    }
+
+                    val categoriesResult = gameExperienceRepository
+                        .getUserVoteCategories(gameId, uid)
+                    if (categoriesResult.isFailure) {
+                        _uiState.value = MVPVoteUiState.Error(
+                            isOwner = isOwner,
+                            errorResId = R.string.mvp_vote_error_load_votes
+                        )
+                        return@collectLatest
+                    }
+                    submittedCategories = categoriesResult.getOrDefault(emptySet())
+                    if (hasCompletedRequiredBallot()) {
+                        _uiState.value = MVPVoteUiState.AlreadyVoted(isOwner)
+                        return@collectLatest
+                    }
+
+                    val currentCategory = firstPendingCategory()
+                    if (currentCategory == null) {
+                        _uiState.value = MVPVoteUiState.AlreadyVoted(isOwner)
+                        return@collectLatest
+                    }
+                    _uiState.value = MVPVoteUiState.Voting(
+                        candidates = getCandidatesForCategory(currentCategory),
+                        currentCategory = currentCategory,
+                        isOwner = isOwner
+                    )
+                }
         }
     }
 
@@ -106,37 +125,38 @@ class MVPVoteViewModel(
         }
     }
     
-    // Helper to determine next category skipping empty ones
-    private fun getNextCategory(current: VoteCategory): VoteCategory? {
-        var next: VoteCategory? = when(current) {
-            VoteCategory.MVP -> VoteCategory.BEST_GOALKEEPER
-            VoteCategory.BEST_GOALKEEPER -> VoteCategory.WORST
-            VoteCategory.WORST -> null
-            VoteCategory.CUSTOM -> null
+    private fun hasCompletedRequiredBallot(): Boolean {
+        return VoteCategory.MVP in submittedCategories &&
+            VoteCategory.WORST in submittedCategories
+    }
+
+    private fun firstPendingCategory(): VoteCategory? {
+        return listOf(
+            VoteCategory.MVP,
+            VoteCategory.BEST_GOALKEEPER,
+            VoteCategory.WORST
+        ).firstOrNull { category ->
+            category !in submittedCategories &&
+                getCandidatesForCategory(category).isNotEmpty()
         }
-        
-        // Skip BEST_GOALKEEPER if no candidates
-        if (next == VoteCategory.BEST_GOALKEEPER) {
-             val candidates = getCandidatesForCategory(next)
-             if (candidates.isEmpty()) {
-                 return getNextCategory(next) // Skip recursively
-             }
-        }
-        return next
     }
 
     fun submitVote(gameId: String, votedPlayerId: String, category: VoteCategory) {
-        // We need to preserve isOwner. It's on current state.
         val currentState = _uiState.value
-        val isOwner = currentState.isOwner
-        
         if (currentState !is MVPVoteUiState.Voting) return
+        if (currentState.isSubmitting || voteJob?.isActive == true) return
+        if (category != currentState.currentCategory) return
+        if (currentState.candidates.none { it.userId == votedPlayerId }) return
+        val isOwner = currentState.isOwner
 
-        voteJob?.cancel()
         voteJob = viewModelScope.launch {
+             _uiState.value = currentState.copy(isSubmitting = true)
              val currentUser = userRepository.getCurrentUserId()
              if (currentUser == null) {
-                 _uiState.value = MVPVoteUiState.Error("Usuario nao autenticado", isOwner)
+                 _uiState.value = MVPVoteUiState.Error(
+                     isOwner = isOwner,
+                     errorResId = R.string.mvp_vote_error_not_auth
+                 )
                  return@launch
              }
              
@@ -149,21 +169,23 @@ class MVPVoteViewModel(
 
              gameExperienceRepository.submitVote(vote)
                  .onSuccess {
-                     // Move to next category or finish
-                     val nextCategory = getNextCategory(category)
+                     submittedCategories = submittedCategories + category
+                     val nextCategory = firstPendingCategory()
 
-                     if (nextCategory != null) {
+                     if (!hasCompletedRequiredBallot() && nextCategory != null) {
                          val nextCandidates = getCandidatesForCategory(nextCategory)
                          _uiState.value = currentState.copy(
                              currentCategory = nextCategory,
                              candidates = nextCandidates,
-                             isOwner = isOwner
+                             isOwner = isOwner,
+                             isSubmitting = false
                          )
                      } else {
-                         _uiState.value = MVPVoteUiState.Finished(isOwner)
+                         _uiState.value = MVPVoteUiState.AlreadyVoted(isOwner)
 
-                         // Verifica se todos votaram para finalizar automaticamente
-                         gameExperienceRepository.checkAllVoted(gameId)
+                         // Só gestores podem chamar concludeMvpVoting. O contador
+                         // autoritativo atualiza em tempo real para o CTA do gestor.
+                         if (isOwner) gameExperienceRepository.checkAllVoted(gameId)
                             .onSuccess { allVoted ->
                                 if (allVoted) {
                                      finalizeVoting(gameId)
@@ -171,10 +193,10 @@ class MVPVoteViewModel(
                             }
                      }
                  }
-                 .onFailure { error ->
+                 .onFailure {
                      _uiState.value = MVPVoteUiState.Error(
-                         error.message ?: "Erro ao enviar voto",
-                         isOwner
+                         isOwner = isOwner,
+                         errorResId = R.string.mvp_vote_error_submit
                      )
                  }
         }
@@ -194,7 +216,10 @@ class MVPVoteViewModel(
                     _uiState.value = MVPVoteUiState.Finished(currentState.isOwner)
                 }
                 .onFailure {
-                    _uiState.value = MVPVoteUiState.Error("Erro ao concluir votação: ${it.message}", currentState.isOwner)
+                    _uiState.value = MVPVoteUiState.Error(
+                        isOwner = currentState.isOwner,
+                        errorResId = R.string.mvp_vote_error_finalize_generic
+                    )
                 }
         }
     }
@@ -214,8 +239,13 @@ sealed class MVPVoteUiState {
     data class Voting(
         val candidates: List<GameConfirmation>,
         val currentCategory: VoteCategory,
-        override val isOwner: Boolean
+        override val isOwner: Boolean,
+        val isSubmitting: Boolean = false
     ) : MVPVoteUiState()
     data class Finished(override val isOwner: Boolean) : MVPVoteUiState()
-    data class Error(val message: String, override val isOwner: Boolean = false, @StringRes val errorResId: Int? = null) : MVPVoteUiState()
+    data class Error(
+        val message: String = "",
+        override val isOwner: Boolean = false,
+        @StringRes val errorResId: Int? = null
+    ) : MVPVoteUiState()
 }

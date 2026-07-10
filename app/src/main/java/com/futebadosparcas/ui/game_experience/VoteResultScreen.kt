@@ -156,9 +156,11 @@ fun VoteResultScreen(
 
             is VoteResultUiState.Error -> {
                 EmptyState(
-                    type = EmptyStateType.NoData(
+                    type = EmptyStateType.Error(
                         title = stringResource(R.string.error_title),
-                        description = state.message
+                        description = state.message,
+                        actionLabel = stringResource(R.string.retry),
+                        onRetry = { viewModel.loadResults(gameId) }
                     ),
                     modifier = Modifier.padding(padding)
                 )

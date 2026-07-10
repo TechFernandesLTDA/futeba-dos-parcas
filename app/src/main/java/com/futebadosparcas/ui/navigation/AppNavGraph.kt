@@ -634,6 +634,9 @@ fun AppNavHost(
                 onNavigateToMvpVote = {
                     navController.navigate(Screen.MVPVote.createRoute(gameId))
                 },
+                onNavigateToLiveGame = {
+                    navController.navigate(Screen.LiveGame.createRoute(gameId))
+                },
                 onNavigateToTacticalBoard = {
                     navController.navigate(Screen.TacticalBoard.route)
                 }

@@ -4,6 +4,7 @@ import {
   onCall,
 } from "firebase-functions/v2/https";
 import {FieldValue} from "firebase-admin/firestore";
+import {randomUUID} from "node:crypto";
 import {FUNCTION_REGION} from "../constants";
 import {ERROR_MSGS} from "../error-messages";
 import {db} from "../_db";
@@ -263,30 +264,15 @@ export const finishGameLifecycle = onCall<GameLifecycleRequest>(
     const gameId = validateGameId(request.data?.gameId);
     const isAdmin = request.auth.token?.role === "ADMIN";
 
-    const [eventsSnap, liveScoreSnap] = await Promise.all([
-      db().collection("game_events")
-        .where("game_id", "==", gameId)
-        .limit(500)
-        .get(),
-      db().collection("live_scores").doc(gameId).get(),
-    ]);
-    const aggregated = aggregateEvents(eventsSnap.docs);
-    const liveScore = liveScoreSnap.exists ?
-      liveScoreSnap.data() :
-      undefined;
-    const team1Score =
-      typeof liveScore?.team1_score === "number" ?
-        liveScore.team1_score :
-        0;
-    const team2Score =
-      typeof liveScore?.team2_score === "number" ?
-        liveScore.team2_score :
-        0;
+    const gameRef = db().collection("games").doc(gameId);
+    const liveScoreRef = db().collection("live_scores").doc(gameId);
+    const finalizationId = randomUUID();
 
-    const result = await db().runTransaction(async (tx) => {
-      const gameRef = db().collection("games").doc(gameId);
+    // Barreira serializável: qualquer transação de evento que já leu o jogo
+    // precisa terminar antes deste update ou será repetida e verá o lock.
+    // O status continua LIVE para não expor um enum transitório aos clientes.
+    await db().runTransaction(async (tx) => {
       const gameSnap = await tx.get(gameRef);
-
       if (!gameSnap.exists) {
         throw new HttpsError("not-found", ERROR_MSGS.GAME_NOT_FOUND);
       }
@@ -298,46 +284,147 @@ export const finishGameLifecycle = onCall<GameLifecycleRequest>(
           ERROR_MSGS.OWNER_OR_ADMIN_ONLY
         );
       }
-
-      if (game.status !== "LIVE") {
+      const lockStartedAt = game.finalization_started_at;
+      const lockStartedAtMs =
+        lockStartedAt && typeof lockStartedAt.toMillis === "function" ?
+          lockStartedAt.toMillis() :
+          null;
+      const hasActiveFinalization =
+        typeof game.finalization_id === "string" &&
+        (
+          lockStartedAtMs === null ||
+          Date.now() - lockStartedAtMs < 5 * 60 * 1000
+        );
+      if (
+        game.status !== "LIVE" ||
+        hasActiveFinalization
+      ) {
         throw new HttpsError(
           "failed-precondition",
-          "Jogo precisa estar LIVE para finalizar."
-        );
-      }
-
-      for (const [playerId, stats] of aggregated.entries()) {
-        tx.set(
-          db().collection("confirmations").doc(`${gameId}_${playerId}`),
-          stats,
-          {merge: true}
+          "Jogo precisa estar LIVE e sem finalização em andamento."
         );
       }
 
       tx.update(gameRef, {
-        status: "FINISHED",
-        team1_score: team1Score,
-        team2_score: team2Score,
+        finalization_id: finalizationId,
+        finalization_started_at: FieldValue.serverTimestamp(),
         updated_at: FieldValue.serverTimestamp(),
-        finished_at: FieldValue.serverTimestamp(),
         lifecycle_updated_by: uid,
         lifecycle_update_source: "callable",
       });
+    });
 
-      if (liveScoreSnap.exists) {
-        tx.update(db().collection("live_scores").doc(gameId), {
-          finished_at: FieldValue.serverTimestamp(),
-          updated_at: FieldValue.serverTimestamp(),
-        });
+    let result: {
+      status: string;
+      team1Score: number;
+      team2Score: number;
+      aggregatedPlayers: number;
+    };
+
+    try {
+      const [eventsSnap, liveScoreSnap] = await Promise.all([
+        db().collection("game_events")
+          .where("game_id", "==", gameId)
+          .limit(501)
+          .get(),
+        liveScoreRef.get(),
+      ]);
+      if (eventsSnap.size > 500) {
+        throw new HttpsError(
+          "resource-exhausted",
+          "Jogo excedeu o limite seguro de 500 eventos."
+        );
       }
 
-      return {
-        status: "FINISHED",
-        team1Score,
-        team2Score,
-        aggregatedPlayers: aggregated.size,
-      };
-    });
+      const aggregated = aggregateEvents(eventsSnap.docs);
+      const liveScore = liveScoreSnap.exists ?
+        liveScoreSnap.data() :
+        undefined;
+      const team1Score =
+        typeof liveScore?.team1_score === "number" ?
+          liveScore.team1_score :
+          0;
+      const team2Score =
+        typeof liveScore?.team2_score === "number" ?
+          liveScore.team2_score :
+          0;
+
+      result = await db().runTransaction(async (tx) => {
+        const gameSnap = await tx.get(gameRef);
+        const game = gameSnap.data();
+        if (
+          !gameSnap.exists ||
+          game?.status !== "LIVE" ||
+          game?.finalization_id !== finalizationId
+        ) {
+          throw new HttpsError(
+            "aborted",
+            "A finalização perdeu o lock do jogo. Tente novamente."
+          );
+        }
+
+        for (const [playerId, stats] of aggregated.entries()) {
+          tx.set(
+            db().collection("confirmations").doc(`${gameId}_${playerId}`),
+            stats,
+            {merge: true}
+          );
+        }
+
+        tx.update(gameRef, {
+          status: "FINISHED",
+          voting_status: "OPEN",
+          voting_concluded: false,
+          voting_submitted_count: 0,
+          team1_score: team1Score,
+          team2_score: team2Score,
+          updated_at: FieldValue.serverTimestamp(),
+          finished_at: FieldValue.serverTimestamp(),
+          finalization_id: FieldValue.delete(),
+          finalization_started_at: FieldValue.delete(),
+          lifecycle_updated_by: uid,
+          lifecycle_update_source: "callable",
+        });
+
+        if (liveScoreSnap.exists) {
+          tx.update(liveScoreRef, {
+            finished_at: FieldValue.serverTimestamp(),
+            updated_at: FieldValue.serverTimestamp(),
+          });
+        }
+
+        return {
+          status: "FINISHED",
+          team1Score,
+          team2Score,
+          aggregatedPlayers: aggregated.size,
+        };
+      });
+    } catch (error) {
+      // Não deixa o jogo preso com lock se a agregação/finalização falhar.
+      await db().runTransaction(async (tx) => {
+        const gameSnap = await tx.get(gameRef);
+        const game = gameSnap.data();
+        if (
+          gameSnap.exists &&
+          game?.status === "LIVE" &&
+          game?.finalization_id === finalizationId
+        ) {
+          tx.update(gameRef, {
+            finalization_id: FieldValue.delete(),
+            finalization_started_at: FieldValue.delete(),
+            updated_at: FieldValue.serverTimestamp(),
+          });
+        }
+      }).catch((rollbackError) => {
+        logger.error("[GAME_LIFECYCLE_FINISH_ROLLBACK_FAILED]", {
+          gameId,
+          uid,
+          rollbackError,
+        });
+      });
+      throw error;
+    }
 
     logger.info("[GAME_LIFECYCLE_FINISH]", {
       gameId,

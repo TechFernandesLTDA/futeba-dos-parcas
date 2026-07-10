@@ -32,6 +32,7 @@ import {
   deleteLiveGameEvent,
   reviewHeldGameRewards,
   submitMvpVotes,
+  concludeMvpVoting,
   submitDirectMessage,
   submitContentReport,
   updateUserPii,
@@ -99,7 +100,7 @@ describe('cloudFunctions', () => {
   });
 
   it('submitMvpVotes chama callable batch com votos por categoria', async () => {
-    mockCallable.mockResolvedValue({ data: { success: true, voteIds: ['game-1_u1_MVP'] } });
+    mockCallable.mockResolvedValue({ data: { success: true, voteIds: ['game-1_u1_MVP'], ballotComplete: true } });
 
     await submitMvpVotes({
       gameId: 'game-1',
@@ -116,6 +117,14 @@ describe('cloudFunctions', () => {
         { category: 'WORST', votedPlayerId: 'u3' },
       ],
     });
+  });
+
+  it('concludeMvpVoting chama callable autoritativa com gameId', async () => {
+    mockCallable.mockResolvedValue({ data: { success: true, alreadyConcluded: false } });
+
+    await concludeMvpVoting({ gameId: 'game-1' });
+
+    expect(mockCallable).toHaveBeenCalledWith('concludeMvpVoting', { gameId: 'game-1' });
   });
 
   it('submitDirectMessage chama callable com payload de mensagem direta', async () => {
@@ -171,20 +180,26 @@ describe('cloudFunctions', () => {
 
     await submitLiveGameEvent({
       gameId: 'game-1',
+      requestId: 'request-12345678',
       eventType: 'GOAL',
       playerId: 'user-2',
       playerName: 'Renan',
       teamId: 'team-1',
       minute: 12,
+      assistedById: 'user-3',
+      assistedByName: 'Jordi',
     });
 
     expect(mockCallable).toHaveBeenCalledWith('submitLiveGameEvent', {
       gameId: 'game-1',
+      requestId: 'request-12345678',
       eventType: 'GOAL',
       playerId: 'user-2',
       playerName: 'Renan',
       teamId: 'team-1',
       minute: 12,
+      assistedById: 'user-3',
+      assistedByName: 'Jordi',
     });
   });
 

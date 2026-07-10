@@ -5,10 +5,12 @@ import com.futebadosparcas.domain.model.GameEventType
 import com.futebadosparcas.domain.model.LivePlayerStats
 import com.futebadosparcas.domain.model.LiveScore
 import com.futebadosparcas.domain.repository.LiveGameRepository
+import com.futebadosparcas.platform.UuidGenerator
 import com.futebadosparcas.platform.firebase.FirebaseDataSource
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 /**
  * Implementação Android do LiveGameRepository.
@@ -23,6 +25,9 @@ class LiveGameRepositoryImpl(
     private val dataSource: FirebaseDataSource
 ) : LiveGameRepository {
 
+    private val requestIdMutex = Mutex()
+    private val pendingRequestIds = mutableMapOf<String, String>()
+
     override suspend fun startLiveGame(
         gameId: String,
         team1Id: String,
@@ -34,10 +39,7 @@ class LiveGameRepositoryImpl(
     override fun observeLiveScore(gameId: String): Flow<LiveScore?> {
         return dataSource.getLiveScoreFlow(gameId)
             .map { result ->
-                result.getOrNull()
-            }
-            .catch { e ->
-                emit(null)
+                result.getOrThrow()
             }
     }
 
@@ -51,7 +53,19 @@ class LiveGameRepositoryImpl(
         assistedByName: String?,
         minute: Int
     ): Result<GameEvent> {
+        val eventKey = listOf(
+            gameId,
+            eventType.name,
+            playerId,
+            teamId,
+            assistedById.orEmpty(),
+            minute.toString()
+        ).joinToString("|")
+        val requestId = requestIdMutex.withLock {
+            pendingRequestIds.getOrPut(eventKey) { UuidGenerator.generate() }
+        }
         val event = GameEvent(
+            id = requestId,
             gameId = gameId,
             eventType = eventType.name,
             playerId = playerId,
@@ -62,7 +76,15 @@ class LiveGameRepositoryImpl(
             minute = minute,
             createdBy = dataSource.getCurrentAuthUserId() ?: ""
         )
-        return dataSource.addGameEvent(gameId, event)
+        val result = dataSource.addGameEvent(gameId, event)
+        if (result.isSuccess) {
+            requestIdMutex.withLock {
+                if (pendingRequestIds[eventKey] == requestId) {
+                    pendingRequestIds.remove(eventKey)
+                }
+            }
+        }
+        return result
     }
 
     override suspend fun deleteGameEvent(gameId: String, eventId: String): Result<Unit> {
@@ -72,20 +94,14 @@ class LiveGameRepositoryImpl(
     override fun observeGameEvents(gameId: String): Flow<List<GameEvent>> {
         return dataSource.getGameEventsFlow(gameId)
             .map { result ->
-                result.getOrNull() ?: emptyList()
-            }
-            .catch { e ->
-                emit(emptyList())
+                result.getOrThrow()
             }
     }
 
     override fun observeLivePlayerStats(gameId: String): Flow<List<LivePlayerStats>> {
         return dataSource.getLivePlayerStatsFlow(gameId)
             .map { result ->
-                result.getOrNull() ?: emptyList()
-            }
-            .catch { e ->
-                emit(emptyList())
+                result.getOrThrow()
             }
     }
 

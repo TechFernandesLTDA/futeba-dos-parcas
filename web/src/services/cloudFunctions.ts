@@ -658,8 +658,23 @@ export const submitMvpVote = httpsCallable<
 
 export const submitMvpVotes = httpsCallable<
   { gameId: string; votes: Array<{ votedPlayerId: string; category: MvpVoteCategory }> },
-  { success: boolean; voteIds: string[]; message: string }
+  { success: boolean; voteIds: string[]; ballotComplete: boolean; message: string }
 >(functions, 'submitMvpVotes');
+
+export const concludeMvpVoting = httpsCallable<
+  { gameId: string },
+  {
+    success: boolean;
+    alreadyConcluded: boolean;
+    results: {
+      mvpId: string | null;
+      bestGkId: string | null;
+      worstPlayerId: string | null;
+    };
+    xpApplied: { mvp: boolean; worst: boolean; allOk: boolean };
+    message: string;
+  }
+>(functions, 'concludeMvpVoting');
 
 export const generateCheckinToken = httpsCallable<
   { gameId: string },
@@ -679,6 +694,7 @@ export const finishGameLifecycle = httpsCallable<
 export const submitLiveGameEvent = httpsCallable<
   {
     gameId: string;
+    requestId?: string | null;
     eventType: 'GOAL' | 'SAVE' | 'YELLOW_CARD' | 'RED_CARD';
     playerId: string;
     playerName: string;
@@ -690,8 +706,9 @@ export const submitLiveGameEvent = httpsCallable<
   {
     success: boolean;
     eventId: string;
-    eventType: 'GOAL' | 'SAVE' | 'YELLOW_CARD' | 'RED_CARD';
-    minute: number;
+    team1Score: number;
+    team2Score: number;
+    duplicate: boolean;
   }
 >(functions, 'submitLiveGameEvent');
 
@@ -703,7 +720,8 @@ export const deleteLiveGameEvent = httpsCallable<
   {
     success: boolean;
     eventId: string;
-    reverted: boolean;
+    team1Score: number;
+    team2Score: number;
   }
 >(functions, 'deleteLiveGameEvent');
 

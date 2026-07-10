@@ -43,13 +43,18 @@ import {
   VolumeOff as SoundOffIcon,
   History as HistoryIcon,
   ArrowBack as BackIcon,
+  DeleteOutline as DeleteIcon,
 } from '@mui/icons-material';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
 import { PageContainer } from '../../components/common/PageContainer';
 import { doc, collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '../../services/firebase';
-import { finishGameLifecycle, startGameLifecycle, submitLiveGameEvent } from '../../services/cloudFunctions';
-import { useQueryClient } from '@tanstack/react-query';
+import {
+  deleteLiveGameEvent,
+  finishGameLifecycle,
+  startGameLifecycle,
+  submitLiveGameEvent,
+} from '../../services/cloudFunctions';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { getFirestoreErrorMessage } from '../../utils/firebaseErrors';
@@ -77,11 +82,19 @@ interface ConfirmedPlayer {
   teamId?: string;
 }
 
-function canManageGame(game: Game | null, uid?: string): boolean {
+function canManageGame(game: Game | null, uid?: string, isAdmin = false): boolean {
   if (!game || !uid) return false;
+  if (isAdmin) return true;
   if (game.ownerId === uid) return true;
   if (game.coOrganizers?.includes(uid)) return true;
   return false;
+}
+
+function createEventRequestId(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return `${Date.now()}_${Math.random().toString(36).slice(2, 14)}`;
 }
 
 const STREAM_SOURCE_PROTOCOLS = new Set(['http:', 'https:']);
@@ -166,9 +179,8 @@ export const LiveGameScreen: React.FC = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const navigateBack = useNavigateBack('/?tab=1');
-  const { currentUser } = useAuth();
+  const { currentUser, user } = useAuth();
   const { showError } = useToast();
-  const queryClient = useQueryClient();
   const showErrorRef = useRef(showError);
   showErrorRef.current = showError;
 
@@ -185,14 +197,22 @@ export const LiveGameScreen: React.FC = () => {
   const [addEventDialog, setAddEventDialog] = useState(false);
   const [selectedEventType, setSelectedEventType] = useState<GameEventType>('GOAL');
   const [selectedPlayer, setSelectedPlayer] = useState('');
+  const [selectedAssist, setSelectedAssist] = useState('');
   const [showStream, setShowStream] = useState(true);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const canManage = canManageGame(game, uid);
+  const isAdmin = user?.role === 'ADMIN';
+  const canManage = canManageGame(game, uid, isAdmin);
+  const isConfirmedPlayer = Boolean(uid && confirmedPlayers.some((player) => player.id === uid));
+  const canSubmitEvents = canManage || isConfirmedPlayer;
 
   const [actionLoading, setActionLoading] = useState(false);
   const [finishing, setFinishing] = useState(false);
   const [confirmFinishOpen, setConfirmFinishOpen] = useState(false);
+  const [eventToDelete, setEventToDelete] = useState<GameEvent | null>(null);
+  const [deletingEventId, setDeletingEventId] = useState<string | null>(null);
+  const [listenerRetryKey, setListenerRetryKey] = useState(0);
+  const [listenerErrors, setListenerErrors] = useState<Record<string, string>>({});
   const [soundEnabled, setSoundEnabled] = useState(() => {
     try {
       const stored = localStorage.getItem('live_sound_enabled');
@@ -203,7 +223,21 @@ export const LiveGameScreen: React.FC = () => {
     }
   });
   const audioCtxRef = useRef<AudioContext | null>(null);
-  const prevEventCountRef = useRef(0);
+  const eventRequestIdRef = useRef<string | null>(null);
+  const seenEventIdsRef = useRef<Set<string>>(new Set());
+  const hydratedEventsGameIdRef = useRef<string | null>(null);
+
+  const setListenerError = useCallback((stream: string, message?: string) => {
+    setListenerErrors((current) => {
+      if (!message) {
+        if (!(stream in current)) return current;
+        const next = { ...current };
+        delete next[stream];
+        return next;
+      }
+      return { ...current, [stream]: message };
+    });
+  }, []);
 
   useEffect(() => {
     // #2229: sem gameId não há o que carregar — encerra o loading e sinaliza
@@ -225,6 +259,10 @@ export const LiveGameScreen: React.FC = () => {
           const parsedGame = { id: docSnap.id, ...data } as Game;
           setGame(parsedGame);
           setIsRunning(raw.status === 'LIVE');
+          setError(null);
+        } else {
+          setGame(null);
+          setError(t('games.notFound'));
         }
         setLoading(false);
       },
@@ -245,10 +283,15 @@ export const LiveGameScreen: React.FC = () => {
           team2Score: raw.team2_score ?? 0,
           startedAt: (raw.started_at as { toDate?: () => Date })?.toDate?.() || new Date(),
         });
+      } else {
+        setScore(null);
       }
+      setListenerError('score');
     }, (err) => {
       logger.error('Error in score listener:', err);
-      showErrorRef.current(t('games.live.errorLoadScore'));
+      const message = t('games.live.errorLoadScore');
+      setListenerError('score', message);
+      showErrorRef.current(message);
     });
 
     const eventsQuery = query(collection(db, 'game_events'), where('game_id', '==', gameId));
@@ -262,10 +305,18 @@ export const LiveGameScreen: React.FC = () => {
           createdAt: (raw.created_at || raw.createdAt)?.toDate?.(),
         };
       }) as GameEvent[];
-      setEvents([...eventsData].sort((a, b) => (b.minute ?? 0) - (a.minute ?? 0)));
+      setEvents([...eventsData].sort((a, b) => {
+        const minuteDiff = (b.minute ?? 0) - (a.minute ?? 0);
+        if (minuteDiff !== 0) return minuteDiff;
+        const createdAtDiff = (b.createdAt?.getTime?.() ?? 0) - (a.createdAt?.getTime?.() ?? 0);
+        return createdAtDiff !== 0 ? createdAtDiff : a.id.localeCompare(b.id);
+      }));
+      setListenerError('events');
     }, (err) => {
       logger.error('Error in events listener:', err);
-      showErrorRef.current(t('games.live.errorLoadEvents'));
+      const message = t('games.live.errorLoadEvents');
+      setListenerError('events', message);
+      showErrorRef.current(message);
     });
 
     const confirmationsQuery = query(
@@ -285,9 +336,12 @@ export const LiveGameScreen: React.FC = () => {
           };
         });
       setConfirmedPlayers(players);
+      setListenerError('confirmations');
     }, (err) => {
       logger.error('Error in confirmations listener:', err);
-      showErrorRef.current(t('games.live.errorLoadPresence'));
+      const message = t('games.live.errorLoadPresence');
+      setListenerError('confirmations', message);
+      showErrorRef.current(message);
     });
 
     return () => {
@@ -296,7 +350,7 @@ export const LiveGameScreen: React.FC = () => {
       unsubscribeEvents();
       unsubscribeConfirmations();
     };
-  }, [gameId, t]);
+  }, [gameId, listenerRetryKey, setListenerError, t]);
 
   // Extrai o timestamp (number) para estabilizar a dep array do effect:
   // `score?.startedAt` é uma instância de Date nova a cada snapshot, recriando
@@ -354,12 +408,18 @@ export const LiveGameScreen: React.FC = () => {
   }, [playTone]);
 
   useEffect(() => {
-    if (events.length > prevEventCountRef.current && prevEventCountRef.current > 0) {
-      const newEvents = events.slice(0, events.length - prevEventCountRef.current);
-      newEvents.forEach((event) => triggerFeedback(event.eventType));
+    const currentIds = new Set(events.map((event) => event.id));
+    if (hydratedEventsGameIdRef.current !== gameId) {
+      hydratedEventsGameIdRef.current = gameId ?? null;
+      seenEventIdsRef.current = currentIds;
+      return;
     }
-    prevEventCountRef.current = events.length;
-  }, [events, triggerFeedback]);
+
+    events
+      .filter((event) => !seenEventIdsRef.current.has(event.id))
+      .forEach((event) => triggerFeedback(event.eventType));
+    seenEventIdsRef.current = currentIds;
+  }, [events, gameId, triggerFeedback]);
 
   const toggleSound = useCallback(() => {
     setSoundEnabled((prev) => {
@@ -373,9 +433,29 @@ export const LiveGameScreen: React.FC = () => {
     });
   }, []);
 
+  const openAddEventDialog = () => {
+    eventRequestIdRef.current = createEventRequestId();
+    setSelectedAssist('');
+    setAddEventDialog(true);
+  };
+
+  const closeAddEventDialog = () => {
+    if (actionLoading) return;
+    eventRequestIdRef.current = null;
+    setSelectedAssist('');
+    setAddEventDialog(false);
+  };
+
+  const retryLiveListeners = () => {
+    setError(null);
+    setListenerErrors({});
+    setLoading(true);
+    setListenerRetryKey((current) => current + 1);
+  };
+
   const handleAddEvent = async () => {
     if (!selectedPlayer || !gameId) return;
-    if (!canManage) {
+    if (!canSubmitEvents) {
       showError(t('games.live.onlyOrganizerAddEvents'));
       return;
     }
@@ -388,21 +468,54 @@ export const LiveGameScreen: React.FC = () => {
         return;
       }
 
+      const assistant = selectedEventType === 'GOAL' && selectedAssist
+        ? confirmedPlayers.find((candidate) => candidate.id === selectedAssist)
+        : undefined;
+      if (assistant && (assistant.id === player.id || assistant.teamId !== player.teamId)) {
+        showError(t('games.live.invalidAssist', { defaultValue: 'A assistência deve ser de outro jogador do mesmo time.' }));
+        return;
+      }
+
       await submitLiveGameEvent({
         gameId,
+        requestId: eventRequestIdRef.current ?? createEventRequestId(),
         eventType: selectedEventType as 'GOAL' | 'SAVE' | 'YELLOW_CARD' | 'RED_CARD',
         playerId: selectedPlayer,
         playerName: player.name || t('profile.defaultPlayerName'),
         teamId: player.teamId,
         minute: Math.floor(elapsedTime / 60),
+        assistedById: assistant?.id ?? null,
+        assistedByName: assistant?.name ?? null,
       });
+      eventRequestIdRef.current = null;
       setAddEventDialog(false);
       setSelectedPlayer('');
+      setSelectedAssist('');
     } catch (err) {
       logger.error('Error adding event:', err);
       showError(getFirestoreErrorMessage(err, t('games.live.errorAddEvent')));
     } finally {
       setActionLoading(false);
+    }
+  };
+
+  const canDeleteEvent = (event: GameEvent) => (
+    canManage || Boolean(uid && isConfirmedPlayer && event.createdBy === uid)
+  );
+
+  const handleDeleteEvent = async () => {
+    if (!gameId || !eventToDelete || !canDeleteEvent(eventToDelete)) return;
+    setDeletingEventId(eventToDelete.id);
+    try {
+      await deleteLiveGameEvent({ gameId, eventId: eventToDelete.id });
+      setEventToDelete(null);
+    } catch (err) {
+      logger.error('Error deleting live event:', err);
+      showError(getFirestoreErrorMessage(err, t('games.live.errorDeleteEvent', {
+        defaultValue: 'Não foi possível remover o evento.',
+      })));
+    } finally {
+      setDeletingEventId(null);
     }
   };
 
@@ -465,7 +578,7 @@ export const LiveGameScreen: React.FC = () => {
             {t('common.back')}
           </Button>
           {error && (
-            <Button variant="contained" onClick={() => queryClient.invalidateQueries()}>
+            <Button variant="contained" onClick={retryLiveListeners}>
               {t('common.retry')}
             </Button>
           )}
@@ -500,6 +613,19 @@ export const LiveGameScreen: React.FC = () => {
       />
 
       <PageContainer maxWidth="detail">
+        {Object.keys(listenerErrors).length > 0 && (
+          <Alert
+            severity="error"
+            sx={{ mb: 2 }}
+            action={(
+              <Button color="inherit" size="small" onClick={retryLiveListeners}>
+                {t('common.retry')}
+              </Button>
+            )}
+          >
+            {Object.values(listenerErrors)[0]}
+          </Alert>
+        )}
         <Card
           sx={{
             mb: 2,
@@ -597,7 +723,20 @@ export const LiveGameScreen: React.FC = () => {
               <List disablePadding aria-label={t('games.live.gameEvents')}>
                 {events.map((event, index) => (
                   <React.Fragment key={event.id}>
-                    <ListItem>
+                    <ListItem
+                      secondaryAction={canDeleteEvent(event) ? (
+                        <IconButton
+                          edge="end"
+                          aria-label={t('games.live.deleteEvent', { defaultValue: 'Remover evento' })}
+                          onClick={() => setEventToDelete(event)}
+                          disabled={deletingEventId === event.id}
+                        >
+                          {deletingEventId === event.id
+                            ? <CircularProgress size={20} />
+                            : <DeleteIcon />}
+                        </IconButton>
+                      ) : undefined}
+                    >
                       <ListItemAvatar>
                         <Avatar
                           sx={{
@@ -623,7 +762,9 @@ export const LiveGameScreen: React.FC = () => {
                       </ListItemAvatar>
                       <ListItemText
                         primary={event.playerName}
-                        secondary={`${getEventTypeLabel(t, event.eventType)} - ${event.minute}'`}
+                        secondary={event.assistedByName
+                          ? `${getEventTypeLabel(t, event.eventType)} · ${t('games.events.assist')}: ${event.assistedByName} · ${event.minute}'`
+                          : `${getEventTypeLabel(t, event.eventType)} · ${event.minute}'`}
                       />
                     </ListItem>
                     {index < events.length - 1 && <Divider />}
@@ -674,25 +815,29 @@ export const LiveGameScreen: React.FC = () => {
 
       {/* #2178: FixedBottomBar. #2164: tela full-screen (fora do AppLayout),
           centraliza no viewport — sem offset de sidebar. */}
-      {canManage && (
+      {((isRunning && (canSubmitEvents || canManage)) || (game.status === 'CONFIRMED' && canManage)) && (
         <FixedBottomBar inLayout={false}>
           <Box sx={{ width: '100%' }}>
             <Box sx={{ display: 'flex', gap: 1 }}>
               {isRunning ? (
                 <>
-                  <Button variant="outlined" startIcon={<AddIcon />} onClick={() => setAddEventDialog(true)} fullWidth>
-                    {t('games.live.addEvent')}
-                  </Button>
-                  <Button
-                    variant="contained"
-                    color="error"
-                    startIcon={finishing ? <CircularProgress size={20} color="inherit" /> : <StopIcon />}
-                    onClick={handleFinishGameClick}
-                    disabled={finishing}
-                    fullWidth
-                  >
-                    {finishing ? t('games.live.finishing') : t('games.live.finishGame')}
-                  </Button>
+                  {canSubmitEvents && (
+                    <Button variant="outlined" startIcon={<AddIcon />} onClick={openAddEventDialog} fullWidth>
+                      {t('games.live.addEvent')}
+                    </Button>
+                  )}
+                  {canManage && (
+                    <Button
+                      variant="contained"
+                      color="error"
+                      startIcon={finishing ? <CircularProgress size={20} color="inherit" /> : <StopIcon />}
+                      onClick={handleFinishGameClick}
+                      disabled={finishing}
+                      fullWidth
+                    >
+                      {finishing ? t('games.live.finishing') : t('games.live.finishGame')}
+                    </Button>
+                  )}
                 </>
               ) : (
                 <Button
@@ -727,7 +872,7 @@ export const LiveGameScreen: React.FC = () => {
         </DialogActions>
       </Dialog>
 
-      <Dialog open={addEventDialog} onClose={() => setAddEventDialog(false)} fullScreen={isMobile} fullWidth maxWidth="sm" aria-labelledby="add-event-dialog-title">
+      <Dialog open={addEventDialog} onClose={closeAddEventDialog} fullScreen={isMobile} fullWidth maxWidth="sm" aria-labelledby="add-event-dialog-title">
         <DialogTitle id="add-event-dialog-title">{t('games.live.addEvent')}</DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -735,7 +880,10 @@ export const LiveGameScreen: React.FC = () => {
               select
               label={t('games.live.eventType')}
               value={selectedEventType}
-              onChange={(e) => setSelectedEventType(e.target.value as GameEventType)}
+              onChange={(e) => {
+                setSelectedEventType(e.target.value as GameEventType);
+                setSelectedAssist('');
+              }}
               fullWidth
             >
               {[
@@ -751,7 +899,10 @@ export const LiveGameScreen: React.FC = () => {
               select
               label={t('games.players')}
               value={selectedPlayer}
-              onChange={(e) => setSelectedPlayer(e.target.value)}
+              onChange={(e) => {
+                setSelectedPlayer(e.target.value);
+                setSelectedAssist('');
+              }}
               fullWidth
               required
               error={!selectedPlayer && actionLoading}
@@ -761,11 +912,66 @@ export const LiveGameScreen: React.FC = () => {
                 <MenuItem key={p.id} value={p.id}>{p.name}</MenuItem>
               ))}
             </TextField>
+            {selectedEventType === 'GOAL' && selectedPlayer && (
+              <TextField
+                select
+                label={t('games.live.assistedBy', { defaultValue: 'Assistência (opcional)' })}
+                value={selectedAssist}
+                onChange={(event) => setSelectedAssist(event.target.value)}
+                fullWidth
+                helperText={t('games.live.assistedByHint', {
+                  defaultValue: 'Selecione outro jogador do mesmo time.',
+                })}
+              >
+                <MenuItem value="">{t('games.live.noAssist', { defaultValue: 'Sem assistência' })}</MenuItem>
+                {confirmedPlayers
+                  .filter((candidate) => {
+                    const scorer = confirmedPlayers.find((player) => player.id === selectedPlayer);
+                    return candidate.id !== selectedPlayer && Boolean(scorer?.teamId) && candidate.teamId === scorer?.teamId;
+                  })
+                  .map((candidate) => (
+                    <MenuItem key={candidate.id} value={candidate.id}>{candidate.name}</MenuItem>
+                  ))}
+              </TextField>
+            )}
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setAddEventDialog(false)}>{t('common.cancel')}</Button>
+          <Button onClick={closeAddEventDialog} disabled={actionLoading}>{t('common.cancel')}</Button>
           <Button variant="contained" onClick={handleAddEvent} disabled={actionLoading || !selectedPlayer} startIcon={actionLoading ? <CircularProgress size={16} /> : undefined}>{t('games.live.add')}</Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={Boolean(eventToDelete)}
+        onClose={() => !deletingEventId && setEventToDelete(null)}
+        maxWidth="xs"
+        fullWidth
+        aria-labelledby="delete-live-event-dialog-title"
+      >
+        <DialogTitle id="delete-live-event-dialog-title">
+          {t('games.live.deleteEvent', { defaultValue: 'Remover evento' })}
+        </DialogTitle>
+        <DialogContent>
+          <Typography>
+            {t('games.live.deleteEventConfirm', {
+              defaultValue: 'Deseja remover este evento? Placar e estatísticas serão recalculados.',
+            })}
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setEventToDelete(null)} disabled={Boolean(deletingEventId)}>
+            {t('common.cancel')}
+          </Button>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={handleDeleteEvent}
+            disabled={Boolean(deletingEventId)}
+            startIcon={deletingEventId ? <CircularProgress size={16} color="inherit" /> : <DeleteIcon />}
+          >
+            {t('common.delete')}
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>

@@ -114,6 +114,7 @@ fun MVPVoteScreen(
                     VotingContent(
                         category = state.currentCategory,
                         candidates = state.candidates,
+                        isSubmitting = state.isSubmitting,
                         onCandidateClick = { candidate ->
                             viewModel.submitVote(gameId, candidate.userId, state.currentCategory)
                         }
@@ -171,6 +172,7 @@ fun MVPVoteScreen(
 private fun VotingContent(
     category: VoteCategory,
     candidates: List<GameConfirmation>,
+    isSubmitting: Boolean,
     onCandidateClick: (GameConfirmation) -> Unit
 ) {
     Column(
@@ -221,10 +223,15 @@ private fun VotingContent(
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        if (isSubmitting) {
+            LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+            Spacer(modifier = Modifier.height(8.dp))
+        }
+
         // Candidates Grid
         LazyVerticalGrid(
             columns = GridCells.Adaptive(minSize = 140.dp),
-            modifier = Modifier.fillMaxSize().adaptiveContentWidth(),
+            modifier = Modifier.weight(1f).fillMaxWidth().adaptiveContentWidth(),
             contentPadding = PaddingValues(bottom = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -235,10 +242,12 @@ private fun VotingContent(
             ) { candidate ->
                 CandidateCard(
                     candidate = candidate,
+                    enabled = !isSubmitting,
                     onClick = { onCandidateClick(candidate) }
                 )
             }
         }
+
     }
 }
 
@@ -248,10 +257,12 @@ private fun VotingContent(
 @Composable
 private fun CandidateCard(
     candidate: GameConfirmation,
+    enabled: Boolean,
     onClick: () -> Unit
 ) {
     Card(
         onClick = onClick,
+        enabled = enabled,
         modifier = Modifier
             .fillMaxWidth()
             .aspectRatio(0.85f),

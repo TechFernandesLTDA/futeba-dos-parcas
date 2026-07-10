@@ -23,6 +23,7 @@ type SupportedEventType =
 
 interface SubmitLiveGameEventRequest {
   gameId: string;
+  requestId?: string | null;
   eventType: SupportedEventType;
   playerId: string;
   playerName: string;
@@ -30,6 +31,20 @@ interface SubmitLiveGameEventRequest {
   minute?: number;
   assistedById?: string | null;
   assistedByName?: string | null;
+}
+
+function validateOptionalRequestId(value: unknown): string | null {
+  if (value == null) return null;
+  if (
+    typeof value !== "string" ||
+    !/^[A-Za-z0-9_-]{8,128}$/.test(value)
+  ) {
+    throw new HttpsError(
+      "invalid-argument",
+      ERROR_MSGS.INVALID_VALUE("requestId"),
+    );
+  }
+  return value;
 }
 
 interface DeleteLiveGameEventRequest {
@@ -303,6 +318,7 @@ function validateSubmitPayload(
 
   return {
     gameId: validateId(payload.gameId, "gameId"),
+    requestId: validateOptionalRequestId(payload.requestId),
     eventType,
     playerId: validateId(payload.playerId, "playerId"),
     playerName: validatePlayerName(payload.playerName),
@@ -343,6 +359,7 @@ function buildEventPayload(
       request.assistedByName ?? null,
     minute: request.minute ?? 0,
     created_by: createdBy,
+    request_id: request.requestId ?? null,
     created_at: FieldValue.serverTimestamp(),
     updated_at: FieldValue.serverTimestamp(),
   };
@@ -456,6 +473,10 @@ export const submitLiveGameEvent = onCall<
     const callerConfirmationRef = db()
       .collection("confirmations")
       .doc(`${payload.gameId}_${uid}`);
+    const eventRef = payload.requestId ?
+      db().collection("game_events")
+        .doc(`${payload.gameId}_${payload.requestId}`) :
+      db().collection("game_events").doc();
 
     const result = await db().runTransaction(
       async (tx) => {
@@ -467,6 +488,7 @@ export const submitLiveGameEvent = onCall<
           callerConfirmationSnap,
           assistedConfirmationSnap,
           assistedStatsSnap,
+          existingEventSnap,
         ] = await Promise.all([
           tx.get(gameRef),
           tx.get(liveScoreRef),
@@ -479,6 +501,9 @@ export const submitLiveGameEvent = onCall<
           assistedStatsRef ?
             tx.get(assistedStatsRef) :
             Promise.resolve(null),
+          payload.requestId ?
+            tx.get(eventRef) :
+            Promise.resolve(null),
         ]);
 
         if (!gameSnap.exists) {
@@ -489,7 +514,10 @@ export const submitLiveGameEvent = onCall<
         }
 
         const game = gameSnap.data()!;
-        if (game.status !== "LIVE") {
+        if (
+          game.status !== "LIVE" ||
+          typeof game.finalization_id === "string"
+        ) {
           throw new HttpsError(
             "failed-precondition",
             "Eventos críticos só podem ser registrados em jogos LIVE.",
@@ -508,6 +536,33 @@ export const submitLiveGameEvent = onCall<
             "permission-denied",
             "Apenas gestor do jogo ou jogador confirmado pode registrar eventos.",
           );
+        }
+
+        if (existingEventSnap?.exists) {
+          const existing = existingEventSnap.data() ?? {};
+          if (
+            existing.game_id !== payload.gameId ||
+            existing.request_id !== payload.requestId ||
+            existing.created_by !== uid
+          ) {
+            throw new HttpsError(
+              "already-exists",
+              "requestId já utilizado por outro evento.",
+            );
+          }
+
+          return {
+            eventId: eventRef.id,
+            team1Score: readCounter(
+              liveScoreSnap.data(),
+              "team1_score",
+            ),
+            team2Score: readCounter(
+              liveScoreSnap.data(),
+              "team2_score",
+            ),
+            duplicate: true,
+          };
         }
 
         confirmedPayload(playerConfirmationSnap);
@@ -542,10 +597,6 @@ export const submitLiveGameEvent = onCall<
             );
           }
         }
-
-        const eventRef = db()
-          .collection("game_events")
-          .doc();
 
         tx.set(
           eventRef,
@@ -645,6 +696,7 @@ export const submitLiveGameEvent = onCall<
           eventId: eventRef.id,
           team1Score: nextTeam1Score,
           team2Score: nextTeam2Score,
+          duplicate: false,
         };
       },
     );
@@ -665,6 +717,7 @@ export const submitLiveGameEvent = onCall<
       eventId: result.eventId,
       team1Score: result.team1Score,
       team2Score: result.team2Score,
+      duplicate: result.duplicate,
     };
   },
 );
@@ -734,7 +787,10 @@ export const deleteLiveGameEvent = onCall<
         }
 
         const game = gameSnap.data()!;
-        if (game.status !== "LIVE") {
+        if (
+          game.status !== "LIVE" ||
+          typeof game.finalization_id === "string"
+        ) {
           throw new HttpsError(
             "failed-precondition",
             "Só é permitido remover eventos enquanto o jogo está LIVE.",
@@ -746,6 +802,15 @@ export const deleteLiveGameEvent = onCall<
           callerConfirmationSnap.data()?.status ===
             "CONFIRMED";
         const eventData = eventSnap.data() ?? {};
+        if (
+          (eventData.game_id ?? eventData.gameId) !==
+          payload.gameId
+        ) {
+          throw new HttpsError(
+            "not-found",
+            ERROR_MSGS.NOT_FOUND("Evento"),
+          );
+        }
         const createdBy =
           typeof eventData.created_by === "string" ?
             eventData.created_by :

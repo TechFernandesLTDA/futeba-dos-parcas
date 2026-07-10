@@ -42,6 +42,12 @@ Fronteiras importantes:
 - `functions/` é o backend serverless em produção.
 - `archive/backend/` é um backend Express/TypeORM arquivado e sem consumidores. Não desenvolva nele sem nova spec e decisão arquitetural explícita.
 - Alterações de CPF precisam manter Functions, Web e KMP sincronizados.
+- O Live Game usa Cloud Functions transacionais para registrar/reverter eventos e
+  listeners Firestore para distribuir placar, timeline, estatísticas e votação;
+  clientes não escrevem diretamente nas coleções derivadas.
+- Mudanças no Live Game devem preservar idempotência por `requestId`, bloquear
+  eventos durante a finalização e passar o teste multi-cliente em
+  `firestore-rules-tests/src/live-realtime.test.ts`.
 
 O mapa completo está em [`docs/PROJECT_MAP.md`](docs/PROJECT_MAP.md).
 

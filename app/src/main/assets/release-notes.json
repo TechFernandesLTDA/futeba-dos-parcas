@@ -1,7 +1,32 @@
 {
   "platform": "android",
-  "generatedAt": "2026-07-10T05:10:55.735Z",
+  "generatedAt": "2026-07-10T06:21:19.690Z",
   "notes": [
+    {
+      "version": "1.36.5",
+      "buildNumber": 68,
+      "releaseDate": "2026-07-10",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "A partida ao vivo agora atualiza placar, eventos, estatísticas e votação automaticamente no aplicativo.",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "A tela correta de Live Game pode ser aberta a partir do jogo e exibe gols, defesas, cartões, assistências e minuto do evento.",
+        "A votação retoma de onde parou, bloqueia toque duplo e mostra resultados agregados em tempo real.",
+        "Erros de conexão em eventos e estatísticas ficam visíveis com opção de tentar novamente."
+      ],
+      "fixed": [
+        "Retries reutilizam o mesmo identificador do evento para evitar gol duplicado quando a resposta da rede se perde.",
+        "Flows de placar, eventos e estatísticas propagam falhas para a UI em vez de substituí-las por valores vazios.",
+        "O cliente não lista votos brutos; lê somente os documentos determinísticos do próprio eleitor e conclui via callable.",
+        "Resultado da votação consome exclusivamente os agregados autoritativos e reações do documento do jogo."
+      ],
+      "issueRefs": [
+        3495
+      ]
+    },
     {
       "version": "1.36.4",
       "buildNumber": 67,

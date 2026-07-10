@@ -146,6 +146,50 @@ describe("live game event callables", () => {
     });
   });
 
+  test("submitLiveGameEvent rejeita evento durante finalização", async () => {
+    const txSet = jest.fn();
+    mockTeamsGet.mockResolvedValue({
+      docs: [
+        {id: "teamA", data: () => ({player_ids: ["player1"]})},
+        {id: "teamB", data: () => ({player_ids: ["player2"]})},
+      ],
+    });
+    mockRunTransaction.mockImplementation(async (callback: any) => callback({
+      get: jest.fn((ref: {path: string}) => {
+        if (ref.path === "games/game1") {
+          return Promise.resolve(makeSnapshot({
+            owner_id: "owner1",
+            status: "LIVE",
+            finalization_id: "finish-lock",
+            co_organizers: [],
+          }));
+        }
+        if (ref.path === "live_scores/game1") {
+          return Promise.resolve(makeSnapshot({
+            team1_id: "teamA",
+            team2_id: "teamB",
+            team1_score: 0,
+            team2_score: 0,
+          }));
+        }
+        return Promise.resolve(makeSnapshot({status: "CONFIRMED"}));
+      }),
+      set: txSet,
+      update: jest.fn(),
+    }));
+
+    const {submitLiveGameEvent} = require("../src/games/live-events");
+    await expect(submitLiveGameEvent(makeRequest({
+      gameId: "game1",
+      eventType: "GOAL",
+      playerId: "player1",
+      playerName: "Player 1",
+      teamId: "teamA",
+      minute: 90,
+    }))).rejects.toMatchObject({code: "failed-precondition"});
+    expect(txSet).not.toHaveBeenCalled();
+  });
+
   test("submitLiveGameEvent rejeita jogador fora do time informado", async () => {
     mockTeamsGet.mockResolvedValue({
       docs: [
@@ -231,6 +275,7 @@ describe("live game event callables", () => {
       eventId: "generated-event-1",
       team1Score: 1,
       team2Score: 0,
+      duplicate: false,
     });
     expect(txSet).toHaveBeenCalledWith(
       expect.objectContaining({path: "game_events/generated-event-1"}),
@@ -258,6 +303,70 @@ describe("live game event callables", () => {
     );
   });
 
+  test("submitLiveGameEvent é idempotente para o mesmo requestId", async () => {
+    const txSet = jest.fn();
+    const txUpdate = jest.fn();
+    mockTeamsGet.mockResolvedValue({
+      docs: [
+        {id: "teamA", data: () => ({player_ids: ["player1"]})},
+        {id: "teamB", data: () => ({player_ids: ["player2"]})},
+      ],
+    });
+    mockRunTransaction.mockImplementation(async (callback: any) => callback({
+      get: jest.fn((ref: {path: string}) => {
+        if (ref.path === "games/game1") {
+          return Promise.resolve(makeSnapshot({
+            owner_id: "owner1",
+            status: "LIVE",
+            co_organizers: [],
+          }));
+        }
+        if (ref.path === "live_scores/game1") {
+          return Promise.resolve(makeSnapshot({
+            team1_id: "teamA",
+            team2_id: "teamB",
+            team1_score: 2,
+            team2_score: 1,
+          }));
+        }
+        if (ref.path === "confirmations/game1_owner1") {
+          return Promise.resolve(makeSnapshot({status: "CONFIRMED"}));
+        }
+        if (ref.path === "game_events/game1_abcdefgh") {
+          return Promise.resolve(makeSnapshot({
+            game_id: "game1",
+            request_id: "abcdefgh",
+            created_by: "owner1",
+          }));
+        }
+        return Promise.resolve(makeSnapshot(undefined));
+      }),
+      set: txSet,
+      update: txUpdate,
+    }));
+
+    const {submitLiveGameEvent} = require("../src/games/live-events");
+    const result = await submitLiveGameEvent(makeRequest({
+      gameId: "game1",
+      requestId: "abcdefgh",
+      eventType: "GOAL",
+      playerId: "player1",
+      playerName: "Player 1",
+      teamId: "teamA",
+      minute: 20,
+    }));
+
+    expect(result).toEqual({
+      success: true,
+      eventId: "game1_abcdefgh",
+      team1Score: 2,
+      team2Score: 1,
+      duplicate: true,
+    });
+    expect(txSet).not.toHaveBeenCalled();
+    expect(txUpdate).not.toHaveBeenCalled();
+  });
+
   test("deleteLiveGameEvent reverte GOAL e remove o evento", async () => {
     const txSet = jest.fn();
     const txUpdate = jest.fn();
@@ -281,6 +390,7 @@ describe("live game event callables", () => {
             }));
           case "game_events/event1":
             return Promise.resolve(makeSnapshot({
+              game_id: "game1",
               event_type: "GOAL",
               player_id: "player1",
               team_id: "teamA",
@@ -348,6 +458,50 @@ describe("live game event callables", () => {
     expect(txDelete).toHaveBeenCalledWith(
       expect.objectContaining({path: "game_events/event1"}),
     );
+  });
+
+  test("deleteLiveGameEvent rejeita evento pertencente a outro jogo", async () => {
+    mockTeamsGet.mockResolvedValue({docs: []});
+    const txDelete = jest.fn();
+    mockRunTransaction.mockImplementation(async (callback: any) => callback({
+      get: jest.fn((ref: {path: string}) => {
+        if (ref.path === "games/game1") {
+          return Promise.resolve(makeSnapshot({
+            owner_id: "owner1",
+            status: "LIVE",
+            co_organizers: [],
+          }));
+        }
+        if (ref.path === "game_events/event-from-game2") {
+          return Promise.resolve(makeSnapshot({
+            game_id: "game2",
+            event_type: "GOAL",
+            player_id: "player1",
+            team_id: "teamA",
+            created_by: "owner1",
+          }));
+        }
+        if (ref.path === "live_scores/game1") {
+          return Promise.resolve(makeSnapshot({
+            team1_id: "teamA",
+            team2_id: "teamB",
+            team1_score: 0,
+            team2_score: 0,
+          }));
+        }
+        return Promise.resolve(makeSnapshot({status: "CONFIRMED"}));
+      }),
+      set: jest.fn(),
+      update: jest.fn(),
+      delete: txDelete,
+    }));
+
+    const {deleteLiveGameEvent} = require("../src/games/live-events");
+    await expect(deleteLiveGameEvent(makeRequest({
+      gameId: "game1",
+      eventId: "event-from-game2",
+    }))).rejects.toMatchObject({code: "not-found"});
+    expect(txDelete).not.toHaveBeenCalled();
   });
 
   test("isScoreConsistentFromEventStream detecta mismatch", () => {

@@ -2,7 +2,6 @@ package com.futebadosparcas.domain.repository
 
 import com.futebadosparcas.domain.model.MVPVote
 import com.futebadosparcas.domain.model.VoteCategory
-import kotlinx.coroutines.flow.Flow
 
 /**
  * Repository para gerenciar a experiencia de jogo (votacao MVP, etc).
@@ -26,14 +25,13 @@ interface GameExperienceRepository {
     suspend fun hasUserVoted(gameId: String, userId: String): Result<Boolean>
 
     /**
-     * Busca todos os votos de um jogo.
+     * Retorna apenas as categorias votadas pelo próprio usuário, usando os
+     * IDs determinísticos autorizados pelas rules. Nunca lista votos brutos.
      */
-    suspend fun getGameVotes(gameId: String): Result<List<MVPVote>>
-
-    /**
-     * Flow de votos de um jogo em tempo real.
-     */
-    fun getGameVotesFlow(gameId: String): Flow<List<MVPVote>>
+    suspend fun getUserVoteCategories(
+        gameId: String,
+        userId: String
+    ): Result<Set<VoteCategory>>
 
     /**
      * Conclui a votacao calculando os resultados.

@@ -16,6 +16,7 @@ jest.mock("firebase-admin", () => {
 
   mockAdmin.firestore.FieldValue = {
     serverTimestamp: jest.fn(() => ({_type: "ServerTimestamp"})),
+    delete: jest.fn(() => ({_type: "Delete"})),
   };
 
   return mockAdmin;
@@ -139,6 +140,10 @@ describe("game lifecycle callables", () => {
   test("finishGameLifecycle agrega eventos e finaliza jogo", async () => {
     const txUpdate = jest.fn();
     const txSet = jest.fn();
+    const gameState: Record<string, unknown> = {
+      owner_id: "owner1",
+      status: "LIVE",
+    };
 
     mockEventsGet.mockResolvedValue({
       docs: [
@@ -157,12 +162,12 @@ describe("game lifecycle callables", () => {
     mockRunTransaction.mockImplementation(async (callback: any) => callback({
       get: jest.fn().mockResolvedValue({
         exists: true,
-        data: () => ({
-          owner_id: "owner1",
-          status: "LIVE",
-        }),
+        data: () => ({...gameState}),
       }),
-      update: txUpdate,
+      update: jest.fn((ref: {path: string}, updates: Record<string, unknown>) => {
+        txUpdate(ref, updates);
+        if (ref.path === "games/game1") Object.assign(gameState, updates);
+      }),
       set: txSet,
     }));
 
@@ -193,6 +198,65 @@ describe("game lifecycle callables", () => {
         team1_score: 2,
         team2_score: 1,
         lifecycle_update_source: "callable",
+      })
+    );
+  });
+
+  test("finishGameLifecycle não sobrescreve finalização concorrente ativa", async () => {
+    const txUpdate = jest.fn();
+    mockRunTransaction.mockImplementation(async (callback: any) => callback({
+      get: jest.fn().mockResolvedValue({
+        exists: true,
+        data: () => ({
+          owner_id: "owner1",
+          status: "LIVE",
+          finalization_id: "active-lock",
+          finalization_started_at: {toMillis: () => Date.now()},
+        }),
+      }),
+      update: txUpdate,
+      set: jest.fn(),
+    }));
+
+    const {finishGameLifecycle} = require("../src/games/lifecycle");
+    await expect(finishGameLifecycle(makeRequest())).rejects.toMatchObject({
+      code: "failed-precondition",
+    });
+    expect(txUpdate).not.toHaveBeenCalled();
+  });
+
+  test("finishGameLifecycle libera o lock quando o limite de eventos é excedido", async () => {
+    const txUpdate = jest.fn();
+    const gameState: Record<string, unknown> = {
+      owner_id: "owner1",
+      status: "LIVE",
+    };
+    mockEventsGet.mockResolvedValue({size: 501, docs: []});
+    mockLiveScoreGet.mockResolvedValue({
+      exists: true,
+      data: () => ({team1_score: 0, team2_score: 0}),
+    });
+    mockRunTransaction.mockImplementation(async (callback: any) => callback({
+      get: jest.fn().mockResolvedValue({
+        exists: true,
+        data: () => ({...gameState}),
+      }),
+      update: jest.fn((ref: {path: string}, updates: Record<string, unknown>) => {
+        txUpdate(ref, updates);
+        if (ref.path === "games/game1") Object.assign(gameState, updates);
+      }),
+      set: jest.fn(),
+    }));
+
+    const {finishGameLifecycle} = require("../src/games/lifecycle");
+    await expect(finishGameLifecycle(makeRequest())).rejects.toMatchObject({
+      code: "resource-exhausted",
+    });
+    expect(txUpdate).toHaveBeenLastCalledWith(
+      expect.objectContaining({path: "games/game1"}),
+      expect.objectContaining({
+        finalization_id: expect.anything(),
+        finalization_started_at: expect.anything(),
       })
     );
   });

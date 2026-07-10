@@ -20,7 +20,7 @@ import {
   Star as StarIcon,
   PictureAsPdf as PdfIcon,
 } from '@mui/icons-material';
-import { doc, getDoc, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useToast } from '../../contexts/ToastContext';
 import { useAuth } from '../../contexts/AuthContext';
@@ -48,6 +48,12 @@ interface VoteResult {
     votes: number;
   } | null;
   bolaMurcha: {
+    userId: string;
+    userName: string;
+    userPhoto?: string;
+    votes: number;
+  } | null;
+  bestGoalkeeper: {
     userId: string;
     userName: string;
     userPhoto?: string;
@@ -82,8 +88,12 @@ interface RawVoteGameDoc {
   winnerTeam?: GameResult['winner'];
   mvpId?: string;
   bolaMurchaId?: string;
+  worstPlayerId?: string;
+  bestGkId?: string;
   mvpVotes?: number;
   bolaMurchaVotes?: number;
+  worstPlayerVotes?: number;
+  bestGkVotes?: number;
   voteResultReactions?: ReactionsMap;
   votingConcludedAt?: Date;
 }
@@ -148,83 +158,81 @@ export const VoteResultScreen: React.FC = () => {
   };
 
   useEffect(() => {
-    if (!gameId) return;
-    let cancelled = false; // #2278: evita setState após unmount
-
-    const fetchData = async () => {
-      try {
-        const gameDoc = await getDoc(doc(db, 'games', gameId));
-        if (gameDoc.exists() && !cancelled) {
-          const raw = gameDoc.data();
-          const data = snakeToCamel<RawVoteGameDoc>(raw);
-          setGameResult({
-            teamAScore: data.teamAScore || data.team1Score || 0,
-            teamBScore: data.teamBScore || data.team2Score || 0,
-            winner: data.winnerTeam || 'DRAW',
-          });
-
-          const awardUsersById = await getUsersByIds(
-            [data.mvpId, data.bolaMurchaId].filter(Boolean) as string[]
-          );
-          if (cancelled) return;
-
-          const mvpId = data.mvpId;
-          const bolaMurchaId = data.bolaMurchaId;
-          const mvpUser = mvpId ? (awardUsersById.get(mvpId) as RawVoteUserDoc | undefined) : undefined;
-          const bolaMurchaUser = bolaMurchaId
-            ? (awardUsersById.get(bolaMurchaId) as RawVoteUserDoc | undefined)
-            : undefined;
-
-          setVoteResult({
-            mvp: mvpId && mvpUser ? {
-              userId: mvpId,
-              userName: mvpUser.name || t('players.defaultName'),
-              userPhoto: mvpUser.photoUrl,
-              votes: data.mvpVotes || 0,
-            } : null,
-            bolaMurcha: bolaMurchaId && bolaMurchaUser ? {
-              userId: bolaMurchaId,
-              userName: bolaMurchaUser.name || t('players.defaultName'),
-              userPhoto: bolaMurchaUser.photoUrl,
-              votes: data.bolaMurchaVotes || 0,
-            } : null,
-            topScorer: null,
-            topAssistant: null,
-          });
-        }
-      } catch (error) {
-        logger.error('Error fetching vote results:', error);
-        if (!cancelled) {
-          setError(t('feedback.games.voteResultError'));
-          showErrorRef.current(t('mvp.voteResultError'));
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    };
-
-    fetchData();
-    return () => {
-      cancelled = true;
-    };
-  }, [gameId, retryCount, t]);
-
-  useEffect(() => {
     if (!gameId) return undefined;
+    let cancelled = false;
+    let snapshotVersion = 0;
+
     const unsubscribe = onSnapshot(
       doc(db, 'games', gameId),
       (snapshot) => {
+        if (!snapshot.exists()) {
+          setError(t('games.notFound'));
+          setLoading(false);
+          return;
+        }
+
+        const version = ++snapshotVersion;
         const raw = snapshot.data();
-        if (!raw) return;
+        const data = snakeToCamel<RawVoteGameDoc>(raw);
+        const teamAScore = data.teamAScore ?? data.team1Score ?? 0;
+        const teamBScore = data.teamBScore ?? data.team2Score ?? 0;
+        setGameResult({
+          teamAScore,
+          teamBScore,
+          winner: data.winnerTeam
+            ?? (teamAScore > teamBScore ? 'A' : teamBScore > teamAScore ? 'B' : 'DRAW'),
+        });
         setVoteResultReactions((raw.vote_result_reactions as ReactionsMap | undefined) ?? {});
         setVotingConcludedAt(raw.voting_concluded_at?.toDate?.() ?? null);
+
+        const mvpId = data.mvpId;
+        const worstPlayerId = data.worstPlayerId ?? data.bolaMurchaId;
+        const bestGkId = data.bestGkId;
+        void getUsersByIds([mvpId, worstPlayerId, bestGkId].filter(Boolean) as string[])
+          .then((awardUsersById) => {
+            if (cancelled || version !== snapshotVersion) return;
+            const buildAward = (userId: string | undefined, votes: number) => {
+              if (!userId) return null;
+              const profile = awardUsersById.get(userId) as RawVoteUserDoc | undefined;
+              return {
+                userId,
+                userName: profile?.name || t('players.defaultName'),
+                userPhoto: profile?.photoUrl,
+                votes,
+              };
+            };
+            setVoteResult({
+              mvp: buildAward(mvpId, data.mvpVotes ?? 0),
+              bolaMurcha: buildAward(
+                worstPlayerId,
+                data.worstPlayerVotes ?? data.bolaMurchaVotes ?? 0,
+              ),
+              bestGoalkeeper: buildAward(bestGkId, data.bestGkVotes ?? 0),
+              topScorer: null,
+              topAssistant: null,
+            });
+            setError(null);
+            setLoading(false);
+          })
+          .catch((err) => {
+            if (cancelled || version !== snapshotVersion) return;
+            logger.error('Error resolving vote result users:', err);
+            setError(t('feedback.games.voteResultError'));
+            setLoading(false);
+          });
       },
       (err) => {
-        logger.error('Error listening vote result social data:', err);
+        logger.error('Error listening authoritative vote result:', err);
+        setError(t('feedback.games.voteResultError'));
+        setLoading(false);
+        showErrorRef.current(t('mvp.voteResultError'));
       },
     );
-    return () => unsubscribe();
-  }, [gameId]);
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
+  }, [gameId, retryCount, t]);
 
   if (error) {
     return <ErrorState message={error} onRetry={handleRetry} />;
@@ -296,6 +304,32 @@ export const VoteResultScreen: React.FC = () => {
           </Card>
         )}
 
+        {voteResult?.bestGoalkeeper && (
+          <Card sx={{ mb: 2, bgcolor: alpha(theme.palette.info.main, 0.05) }}>
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Avatar sx={{ bgcolor: theme.palette.info.main, width: 56, height: 56 }}>
+                  <StarIcon />
+                </Avatar>
+                <Box sx={{ flex: 1 }}>
+                  <Typography variant="caption" color="info.main" fontWeight={600}>
+                    {t('mvp.bestGoalkeeper')}
+                  </Typography>
+                  <Typography variant="h6">{voteResult.bestGoalkeeper.userName}</Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {t('mvp.votesCount', { count: voteResult.bestGoalkeeper.votes })}
+                  </Typography>
+                </Box>
+                <PlayerAvatar
+                  name={voteResult.bestGoalkeeper.userName}
+                  photoUrl={voteResult.bestGoalkeeper.userPhoto}
+                  size={48}
+                />
+              </Box>
+            </CardContent>
+          </Card>
+        )}
+
         {voteResult?.bolaMurcha && (
           <Card sx={{ mb: 2, bgcolor: alpha(theme.palette.error.main, 0.05) }}>
             <CardContent>
@@ -322,7 +356,7 @@ export const VoteResultScreen: React.FC = () => {
           </Card>
         )}
 
-        {!voteResult?.mvp && !voteResult?.bolaMurcha && (
+        {!voteResult?.mvp && !voteResult?.bestGoalkeeper && !voteResult?.bolaMurcha && (
           <EmptyState
             icon={<StarIcon />}
             title={t('mvp.notHeldYet')}
@@ -330,7 +364,7 @@ export const VoteResultScreen: React.FC = () => {
         )}
         </div>
 
-        {gameId && (voteResult?.mvp || voteResult?.bolaMurcha) && (
+        {gameId && (voteResult?.mvp || voteResult?.bestGoalkeeper || voteResult?.bolaMurcha) && (
           <Card sx={{ mt: 2 }}>
             <CardContent>
               <Typography variant="subtitle1" fontWeight={700}>

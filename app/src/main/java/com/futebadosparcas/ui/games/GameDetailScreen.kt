@@ -77,7 +77,8 @@ fun GameDetailScreen(
     onNavigateBack: () -> Unit,
     onNavigateToCreateGame: (String) -> Unit,
     onNavigateToMvpVote: (String) -> Unit,
-    onNavigateToTacticalBoard: () -> Unit
+    onNavigateToTacticalBoard: () -> Unit,
+    onNavigateToLiveGame: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
@@ -179,7 +180,8 @@ fun GameDetailScreen(
                             locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
                         },
                         onEditGame = { onNavigateToCreateGame(gameId) },
-                        onEditTeams = { }
+                        onEditTeams = { },
+                        onNavigateToLiveGame = onNavigateToLiveGame
                     )
                 }
                 is GameDetailUiState.GameDeleted -> {
@@ -260,7 +262,8 @@ fun GameDetailContent(
     gameId: String,
     onStartGame: () -> Unit,
     onEditGame: () -> Unit,
-    onEditTeams: () -> Unit
+    onEditTeams: () -> Unit,
+    onNavigateToLiveGame: () -> Unit
 ) {
     var showCancelDialog by remember { mutableStateOf(false) }
     var showGenerateTeamsDialog by remember { mutableStateOf(false) }
@@ -370,7 +373,8 @@ fun GameDetailContent(
                 item {
                     LiveMatchSection(
                         state = state,
-                        onAddEvent = { },
+                        onAddEvent = { onNavigateToLiveGame() },
+                        onOpenLiveGame = onNavigateToLiveGame,
                         onDeleteEvent = { viewModel.deleteGameEvent(it) }
                     )
                 }
@@ -715,7 +719,9 @@ fun GameHeaderSection(
                         Spacer(Modifier.width(4.dp))
                         Text(stringResource(R.string.edit), maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
-                    if (game.status == "OPEN" || game.status == "SCHEDULED") {
+                    // startGameLifecycle aceita somente CONFIRMED: a lista deve
+                    // ser fechada antes de a partida entrar em LIVE.
+                    if (game.status == "CONFIRMED") {
                         FilledTonalButton(
                             onClick = onStart,
                             colors = ButtonDefaults.filledTonalButtonColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
@@ -1107,11 +1113,21 @@ fun FinishGameDialog(
 fun LiveMatchSection(
     state: GameDetailUiState.Success,
     onAddEvent: (GameEventType) -> Unit,
+    onOpenLiveGame: () -> Unit,
     onDeleteEvent: (String) -> Unit
 ) {
     Card(Modifier.padding(16.dp).fillMaxWidth()) {
         Column(Modifier.padding(16.dp)) {
             Text(stringResource(R.string.real_time), style = MaterialTheme.typography.titleMedium)
+
+            if (state.game.status == "LIVE") {
+                Button(
+                    onClick = onOpenLiveGame,
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
+                ) {
+                    Text(stringResource(R.string.real_time))
+                }
+            }
 
             Column(Modifier.fillMaxWidth()) {
                 val sortedEvents = state.events.sortedByDescending { it.createdAt }
@@ -1132,7 +1148,10 @@ fun LiveMatchSection(
                             style = MaterialTheme.typography.bodyMedium
                         )
                         Spacer(modifier = Modifier.weight(1f))
-                        if (state.canLogEvents) {
+                        if (
+                            state.canManageGame ||
+                            (state.canLogEvents && event.createdBy == state.currentUserId)
+                        ) {
                             IconButton(onClick = { onDeleteEvent(event.id) }) {
                                 Icon(Icons.Outlined.Delete, contentDescription = stringResource(R.string.delete), tint = MaterialTheme.colorScheme.error)
                             }

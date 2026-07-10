@@ -860,4 +860,34 @@ ffprobe-static adicionaria ~351MB. O pacote ffmpeg Linux x64 fica na ordem de
 
 ---
 
+## 2026-07-10 — Live Game usa lifecycle servidor, limite de 500 eventos e encerramento de voto por gestor (#3495)
+
+**Contexto:** Placar, eventos e votação precisam permanecer consistentes entre
+clientes simultâneos, inclusive durante retries e na transição para o resultado
+final. Agregar uma timeline ilimitada dentro da finalização aumentaria tempo,
+memória e quantidade de writes de uma única chamada.
+
+**Decisão:** `startGameLifecycle` aceita somente jogos `CONFIRMED`; jogos
+`SCHEDULED` precisam ter a lista fechada antes de entrar em `LIVE`.
+`finishGameLifecycle` adquire um lock transacional, bloqueia eventos concorrentes
+e agrega no máximo 500 eventos oficiais. Acima disso, libera o lock e retorna
+erro operacional sem finalizar parcialmente. O encerramento da votação continua
+explícito e restrito a owner, coorganizador ou admin; qualquer eleitor pode votar,
+mas não pode publicar o resultado.
+
+**Justificativa:** A transição explícita preserva o estado da lista e a formação
+dos times. O teto cobre com ampla margem uma partida comum e evita uma transação
+de finalização sem limite. Restringir a conclusão mantém a publicação do resultado
+sob autoridade do gestor, enquanto `voting_submitted_count` e listeners oferecem
+feedback em tempo real.
+
+**Consequências:** Formatos futuros com mais de 500 eventos devem adotar
+compactação/paginação antes de elevar o teto. A UI deve explicar a transição
+`CONFIRMED → LIVE`, manter CTA de encerramento para gestores e nunca escrever
+placar, eventos oficiais ou agregados de votação diretamente pelo cliente.
+
+**Relacionado:** #3495, PR #3496.
+
+---
+
 <!-- Adicione novas decisões acima desta linha -->
