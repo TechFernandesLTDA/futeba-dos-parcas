@@ -715,6 +715,8 @@
       "inviteCodeError": "Erro ao gerar código de convite.",
       "inviteAlreadyPending": "Este jogador já tem um convite pendente para este grupo.",
       "inviteError": "Erro ao enviar convite. Tente novamente.",
+      "onlyOwnerInvite": "Apenas o dono do grupo pode convidar jogadores.",
+      "memberAlreadyLinked": "Este jogador já possui vínculo ativo ou bloqueado neste grupo.",
       "joinError": "Erro ao entrar no grupo.",
       "joinSuccess": "Você entrou no grupo!",
       "leaveError": "Erro ao sair do grupo. Tente novamente.",
@@ -1238,6 +1240,7 @@
       "statsDelayWarning": "Algumas estatísticas podem demorar a aparecer.",
       "checkPermissionError": "Erro ao verificar permissões. Tente novamente.",
       "loadEventsError": "Erro ao carregar eventos do jogo.",
+      "unknownTeam": "Time não identificado",
       "playerName": "Nome do Jogador",
       "minute": "Minuto",
       "team": "Time {{team}}"

@@ -715,6 +715,8 @@
       "inviteCodeError": "Error generating invite code.",
       "inviteAlreadyPending": "This player already has a pending invite for this group.",
       "inviteError": "Error sending invite. Please try again.",
+      "onlyOwnerInvite": "Only the group owner can invite players.",
+      "memberAlreadyLinked": "This player already has an active or blocked membership in this group.",
       "joinError": "Error joining group.",
       "joinSuccess": "You joined the group!",
       "leaveError": "Error leaving the group. Please try again.",
@@ -1238,6 +1240,7 @@
       "statsDelayWarning": "Some stats may take a while to appear.",
       "checkPermissionError": "Error checking permissions. Please try again.",
       "loadEventsError": "Error loading game events.",
+      "unknownTeam": "Team not identified",
       "playerName": "Player Name",
       "minute": "Minute",
       "team": "Team {{team}}"

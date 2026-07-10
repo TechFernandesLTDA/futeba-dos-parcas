@@ -259,7 +259,10 @@ export const LiveEventsScreen: React.FC = () => {
       (err) => {
         if (cancelled) return;
         logger.error('Error in live game events listener:', err);
-        const message = getFirestoreErrorMessage(err, 'Erro ao carregar eventos do jogo.');
+        const message = getFirestoreErrorMessage(
+          err,
+          t('games.live.loadEventsError', { defaultValue: 'Erro ao carregar eventos do jogo.' }),
+        );
         setEventsError(message);
         showErrorRef.current(message);
         setLoading(false);
@@ -573,7 +576,9 @@ export const LiveEventsScreen: React.FC = () => {
                           />
                         </Box>
                       }
-                      secondary={event.teamId ? (teamsById[event.teamId]?.name ?? event.teamId) : 'Time não identificado'}
+                      secondary={event.teamId
+                        ? (teamsById[event.teamId]?.name ?? event.teamId)
+                        : t('games.live.unknownTeam', { defaultValue: 'Time não identificado' })}
                     />
                     <Chip label={`${event.minute}'`} variant="outlined" />
                   </ListItem>
