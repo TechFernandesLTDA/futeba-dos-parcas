@@ -45,13 +45,17 @@ export const WallPostComposer: React.FC<WallPostComposerProps> = ({
   const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [mediaPreview, setMediaPreview] = useState<string | null>(null);
   const [mediaDuration, setMediaDuration] = useState<number | null>(null);
+  const [mediaPreviewFailed, setMediaPreviewFailed] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cleanText = text.trim();
   const textRequired = cleanText.length === 0;
 
-  React.useEffect(() => () => {
-    if (mediaPreview?.startsWith('blob:')) URL.revokeObjectURL(mediaPreview);
-  }, [mediaPreview]);
+  React.useEffect(() => {
+    if (mediaFile?.type !== 'video/mp4') return undefined;
+    const objectUrl = URL.createObjectURL(mediaFile);
+    setMediaPreview(objectUrl);
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [mediaFile]);
 
   const handleMediaSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -69,8 +73,8 @@ export const WallPostComposer: React.FC<WallPostComposerProps> = ({
     }
     setMediaFile(file);
     setMediaDuration(null);
+    setMediaPreviewFailed(false);
     if (isVideo) {
-      setMediaPreview(URL.createObjectURL(file));
       return;
     }
     const reader = new FileReader();
@@ -82,6 +86,7 @@ export const WallPostComposer: React.FC<WallPostComposerProps> = ({
     setMediaFile(null);
     setMediaPreview(null);
     setMediaDuration(null);
+    setMediaPreviewFailed(false);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -181,7 +186,7 @@ export const WallPostComposer: React.FC<WallPostComposerProps> = ({
               const duration = event.currentTarget.duration;
               setMediaDuration(Number.isFinite(duration) ? duration : null);
             }}
-            onError={() => showError(t('groupWall.videoPreviewError'))}
+            onError={() => setMediaPreviewFailed(true)}
             aria-label={t('groupWall.videoPreview')}
             sx={{
               display: 'block',
@@ -191,6 +196,11 @@ export const WallPostComposer: React.FC<WallPostComposerProps> = ({
               bgcolor: theme.palette.common.black,
             }}
           />
+          {mediaPreviewFailed && (
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+              {t('groupWall.videoPreviewUnavailable')}
+            </Typography>
+          )}
           {mediaDuration !== null && mediaDuration > MAX_VIDEO_DURATION_SECONDS && (
             <Typography variant="caption" color="error" sx={{ display: 'block', mt: 0.5 }}>
               {t('groupWall.videoTooLong', { max: MAX_VIDEO_DURATION_SECONDS })}

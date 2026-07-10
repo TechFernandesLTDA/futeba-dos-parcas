@@ -80,4 +80,23 @@ describe('WallPostComposer', () => {
 
     createObjectURL.mockRestore();
   });
+
+  it('não bloqueia a publicação quando o navegador não consegue pré-visualizar o vídeo', async () => {
+    const onSubmit = vi.fn().mockResolvedValue(undefined);
+    const createObjectURL = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:wall-video');
+    const { container } = renderWithProviders(
+      <WallPostComposer sending={false} onSubmit={onSubmit} />,
+    );
+    const video = new File(['video'], 'partida.mp4', { type: 'video/mp4' });
+
+    selectImage(container, video);
+    const preview = await screen.findByLabelText('Pré-visualização do vídeo');
+    fireEvent.error(preview);
+
+    expect(screen.getByText('Não foi possível pré-visualizar este vídeo, mas você ainda pode publicá-lo.')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Publicar' }));
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledWith('', video));
+
+    createObjectURL.mockRestore();
+  });
 });
