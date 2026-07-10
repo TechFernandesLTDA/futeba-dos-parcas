@@ -1,7 +1,29 @@
 {
   "platform": "ios",
-  "generatedAt": "2026-07-10T08:20:10.238Z",
+  "generatedAt": "2026-07-10T10:22:38.666Z",
   "notes": [
+    {
+      "version": "1.6.1",
+      "buildNumber": 18,
+      "releaseDate": "2026-07-10",
+      "type": "patch",
+      "showPopup": false,
+      "published": false,
+      "headline": "Versão de pré-lançamento: o iOS deixa de simular dados nas principais superfícies de jogo.",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "Detalhe e relatório pós-jogo recebem IDs e dados reais do Firebase.",
+        "Placar, eventos e estatísticas usam o mesmo repositório realtime do Android.",
+        "Recursos ainda não portados mostram indisponibilidade explícita com retry e voltar."
+      ],
+      "fixed": [],
+      "issueRefs": [
+        3499,
+        3504,
+        3509
+      ]
+    },
     {
       "version": "1.6.0",
       "buildNumber": 17,
