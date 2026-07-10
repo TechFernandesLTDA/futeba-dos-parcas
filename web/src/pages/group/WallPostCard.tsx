@@ -182,10 +182,10 @@ export const WallPostCard: React.FC<WallPostCardProps> = ({
                   overflow: 'hidden',
                   borderRadius: 2,
                   bgcolor: theme.palette.action.hover,
-                  minHeight: mediaLoading ? 180 : 0,
+                  minHeight: isVideo ? 180 : mediaLoading ? 180 : 0,
                 }}
               >
-                {mediaLoading && !mediaFailed && (
+                {mediaLoading && !mediaFailed && !isVideo && (
                   <Skeleton
                     variant="rectangular"
                     height={280}
@@ -223,6 +223,8 @@ export const WallPostCard: React.FC<WallPostCardProps> = ({
                         preload="metadata"
                         aria-label={t('groupWall.openVideo', { name: post.authorName })}
                         onLoadedMetadata={() => setMediaLoading(false)}
+                        onLoadedData={() => setMediaLoading(false)}
+                        onCanPlay={() => setMediaLoading(false)}
                         onError={() => {
                           setMediaLoading(false);
                           setMediaFailed(true);
@@ -231,9 +233,10 @@ export const WallPostCard: React.FC<WallPostCardProps> = ({
                           display: 'block',
                           width: '100%',
                           maxHeight: 420,
+                          minHeight: 180,
                           objectFit: 'contain',
                           bgcolor: theme.palette.common.black,
-                          opacity: mediaLoading ? 0 : 1,
+                          opacity: 1,
                         }}
                       />
                     ) : (
