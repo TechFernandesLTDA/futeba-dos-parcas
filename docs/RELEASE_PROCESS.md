@@ -121,10 +121,18 @@ publique a tag a partir da branch da PR. O push da tag dispara
 `release.yml`, que:
 
 1. constrói o AAB/APK assinados;
-2. cria o GitHub Release;
+2. anexa AAB/APK diretamente do workspace de build e cria o GitHub Release,
+   sem usar o armazenamento intermediário de artifacts do Actions;
 3. no job `publish-release-notes`, roda `release-notes.js validate` e
    `publish --platform android --version <v>`, publicando a nota no Firestore
    via Admin SDK com a service account do secret `PLAY_STORE_SERVICE_ACCOUNT_JSON`.
+
+O mesmo push dispara `deploy-production.yml`, cuja única responsabilidade é
+construir o AAB e publicá-lo no Play Internal. A separação evita que uma falha
+de metadados do GitHub republique o mesmo `versionCode` na Play Store. Se apenas
+o GitHub Release ou as notas precisarem de recuperação, execute manualmente o
+workflow `Release` com o input `release_tag=android-vX.Y.Z`; a tag é validada e
+deve apontar exatamente para o checkout usado no build.
 
 O job de publish deriva a versão do nome da tag (`android-vX.Y.Z` → `X.Y.Z`) e assume
 plataforma `android` — `release.yml` dispara apenas em tags de release Android.

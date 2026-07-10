@@ -171,11 +171,21 @@ Mudanças visíveis aos usuários exigem versionamento e rastreabilidade complet
 
 Não faça deploy silencioso nem publique a partir de checkout destacado, árvore suja ou branch não integrada. Processo completo: [`docs/RELEASE_PROCESS.md`](docs/RELEASE_PROCESS.md).
 
+No Android, `release.yml` cria o GitHub Release anexando AAB/APK diretamente do
+workspace, enquanto `deploy-production.yml` cuida exclusivamente do Play
+Internal. Artefatos de CI têm retenção padrão curta; releases publicadas são a
+fonte durável para binários de distribuição.
+
 ## Segurança e configuração
 
 - Nunca commite `.env`, `local.properties`, credenciais, keystores ou configurações Firebase privadas.
 - Não publique vulnerabilidades em issues públicas. Siga [`SECURITY.md`](SECURITY.md).
 - Prefira emuladores e dados de teste; ações em produção exigem autorização explícita.
+- Mantenha Secret Scanning, validação de segredos e Push Protection habilitados
+  no GitHub; um push bloqueado deve ser corrigido, não contornado com credencial real.
+- Use chaves Firebase de cliente separadas por plataforma: Browser restrita aos
+  domínios autorizados e Android restrita ao package name e certificados SHA-1.
+  Embora essas chaves apareçam no cliente, nunca deixe suas restrições abertas.
 - Escritas Firestore devem validar entrada, tratar erro e usar timestamps do servidor; operações multi-documento devem ser atômicas.
 - CodeQL, Semgrep, regras Firebase e CI complementam a revisão humana, mas não substituem testes do fluxo real.
 

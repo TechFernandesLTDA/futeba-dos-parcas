@@ -465,7 +465,7 @@ fun AppNavHost(
                 onDivisionSelected = { viewModel.filterByDivision(it) },
                 onSeasonSelected = { viewModel.selectSeason(it) },
                 onGenderSelected = { viewModel.selectGender(it) },
-                onRefresh = { selectedSeason?.let { viewModel.selectSeason(it) } },
+                onRefresh = viewModel::refresh,
                 onNavigateNotifications = { navController.navigate(Screen.Notifications.route) },
                 onNavigateGroups = { navController.navigate(Screen.Groups.route) },
                 onNavigateMap = { navController.navigate(Screen.LocationsMap.route) },

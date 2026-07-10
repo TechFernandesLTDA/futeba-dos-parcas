@@ -48,6 +48,9 @@ class JoinRequestViewModel(
     private val _pendingRequests = MutableStateFlow<List<GroupJoinRequest>>(emptyList())
     val pendingRequests: StateFlow<List<GroupJoinRequest>> = _pendingRequests.asStateFlow()
 
+    private val _pendingRequestsError = MutableStateFlow<Throwable?>(null)
+    val pendingRequestsError: StateFlow<Throwable?> = _pendingRequestsError.asStateFlow()
+
     private val _isSubmitting = MutableStateFlow(false)
     val isSubmitting: StateFlow<Boolean> = _isSubmitting.asStateFlow()
 
@@ -85,8 +88,14 @@ class JoinRequestViewModel(
     fun observePendingRequests(groupId: String) {
         pendingJob?.cancel()
         pendingJob = groupRepository.observePendingJoinRequests(groupId)
-            .onEach { items -> _pendingRequests.value = items }
-            .catch { _pendingRequests.value = emptyList() }
+            .onEach { items ->
+                _pendingRequestsError.value = null
+                _pendingRequests.value = items
+            }
+            .catch { error ->
+                AppLogger.e(TAG, "Erro ao observar pedidos pendentes", error)
+                _pendingRequestsError.value = error
+            }
             .launchIn(viewModelScope)
     }
 
@@ -158,5 +167,9 @@ class JoinRequestViewModel(
         myRequestJob?.cancel()
         pendingJob?.cancel()
         super.onCleared()
+    }
+
+    companion object {
+        private const val TAG = "JoinRequestViewModel"
     }
 }

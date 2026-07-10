@@ -171,6 +171,146 @@ export function validateEmail(
   return null;
 }
 
+const BLOCKED_TEXT_SCHEMES = new Set([
+  "javascript",
+  "data",
+  "vbscript",
+]);
+
+/**
+ * Identifica entidades HTML que devem virar separador de texto.
+ * @param {string} body Conteudo entre & e ;.
+ * @return {boolean} True para entidade nomeada ou numerica.
+ */
+function isHtmlEntityBody(body: string): boolean {
+  return /^[a-zA-Z]+$/.test(body) ||
+    /^#[0-9]+$/.test(body) ||
+    /^#[xX][0-9a-fA-F]+$/.test(body);
+}
+
+/**
+ * Identifica controles invisiveis usados para ofuscar payloads.
+ * @param {number} codePoint Code point Unicode.
+ * @return {boolean} True quando o caractere deve ser descartado.
+ */
+function isUnsafeTextControl(codePoint: number): boolean {
+  return codePoint <= 0x0008 ||
+    codePoint === 0x000B ||
+    codePoint === 0x000C ||
+    (codePoint >= 0x000E && codePoint <= 0x001F) ||
+    (codePoint >= 0x007F && codePoint <= 0x009F) ||
+    (codePoint >= 0x200B && codePoint <= 0x200F) ||
+    (codePoint >= 0x2028 && codePoint <= 0x202F) ||
+    (codePoint >= 0x2066 && codePoint <= 0x2069) ||
+    codePoint === 0xFEFF ||
+    (codePoint >= 0xFFF9 && codePoint <= 0xFFFF);
+}
+
+/**
+ * Converte markup em texto plano por parsing de delimitadores. Nao remove
+ * sequencias via replace, portanto uma remocao nunca reintroduz outra tag.
+ * @param {string} input Texto normalizado.
+ * @return {string} Texto sem tags, entidades e controles invisiveis.
+ */
+function stripMarkupAndControls(input: string): string {
+  let output = "";
+  let insideTag = false;
+
+  for (let index = 0; index < input.length;) {
+    const codePoint = input.codePointAt(index);
+    if (codePoint === undefined) break;
+    const character = String.fromCodePoint(codePoint);
+
+    if (character === "<") {
+      insideTag = true;
+      index += character.length;
+      continue;
+    }
+    if (character === ">" && insideTag) {
+      insideTag = false;
+      index += character.length;
+      continue;
+    }
+    if (insideTag) {
+      index += character.length;
+      continue;
+    }
+
+    if (character === "&") {
+      const semicolon = input.indexOf(";", index + 1);
+      const entityLength = semicolon - index;
+      if (semicolon > index && entityLength <= 34) {
+        const entityBody = input.slice(index + 1, semicolon);
+        if (isHtmlEntityBody(entityBody)) {
+          output += " ";
+          index = semicolon + 1;
+          continue;
+        }
+      }
+    }
+
+    if (!isUnsafeTextControl(codePoint)) output += character;
+    index += character.length;
+  }
+
+  return output;
+}
+
+/**
+ * Remove schemes executaveis usando tokens ASCII completos.
+ * @param {string} input Texto plano.
+ * @return {string} Texto sem prefixos de schemes perigosos.
+ */
+function stripBlockedTextSchemes(input: string): string {
+  let output = "";
+
+  for (let index = 0; index < input.length;) {
+    const isAsciiLetter = /[A-Za-z]/.test(input[index]);
+    if (isAsciiLetter) {
+      let wordEnd = index;
+      while (wordEnd < input.length && /[A-Za-z]/.test(input[wordEnd])) {
+        wordEnd++;
+      }
+      let colonIndex = wordEnd;
+      while (colonIndex < input.length && /\s/u.test(input[colonIndex])) {
+        colonIndex++;
+      }
+      const scheme = input.slice(index, wordEnd).toLowerCase();
+      if (input[colonIndex] === ":" && BLOCKED_TEXT_SCHEMES.has(scheme)) {
+        index = colonIndex + 1;
+        continue;
+      }
+    }
+
+    output += input[index];
+    index++;
+  }
+
+  return output;
+}
+
+/**
+ * Colapsa whitespace sem substituicao de sequencias.
+ * @param {string} input Texto plano.
+ * @return {string} Texto com um espaco entre tokens.
+ */
+function collapseTextWhitespace(input: string): string {
+  let output = "";
+  let pendingSpace = false;
+
+  for (const character of input) {
+    if (/\s/u.test(character)) {
+      pendingSpace = output.length > 0;
+      continue;
+    }
+    if (pendingSpace) output += " ";
+    output += character;
+    pendingSpace = false;
+  }
+
+  return output;
+}
+
 /**
  * Sanitiza texto removendo tags HTML e vetores
  * comuns de XSS.
@@ -190,47 +330,11 @@ export function sanitizeText(
 ): string {
   if (!text) return "";
 
-  let sanitized = text;
-
-  // Aplica sanitização em loop para prevenir
-  // bypass via payloads aninhados (ex: <scr<script>ipt>)
-  let previous = "";
-  while (previous !== sanitized) {
-    previous = sanitized;
-
-    // 1. Remover todas as tags HTML
-    sanitized = sanitized.replace(
-      /<[^>]*>/gi,
-      ""
-    );
-
-    // 2. Remover entidades HTML numéricas/nomeadas
-    sanitized = sanitized.replace(
-      /&(?:#x?[0-9a-fA-F]+|[a-zA-Z]+);/gi,
-      " "
-    );
-
-    // 3. Remover caracteres de controle Unicode
-    // Zero-width chars, RTL/LTR override, BOM
-    // Regex de caracteres de controle Unicode
-    /* eslint-disable no-control-regex, max-len */
-    sanitized = sanitized.replace(
-      /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u200B-\u200F\u2028-\u202F\uFEFF\uFFF9-\uFFFF]/g,
-      ""
-    );
-    /* eslint-enable no-control-regex, max-len */
-
-    // 4. Remover protocolos perigosos
-    sanitized = sanitized.replace(
-      /(?:javascript|data|vbscript)\s*:/gi,
-      ""
-    );
-  }
-
-  // 5. Normalizar whitespace excessivo
-  sanitized = sanitized.replace(/\s+/g, " ");
-
-  return sanitized.trim();
+  // NFKC canonicaliza formas full-width antes do parser (ex: ＜script＞).
+  const canonical = text.normalize("NFKC");
+  const plainText = stripMarkupAndControls(canonical);
+  const withoutSchemes = stripBlockedTextSchemes(plainText);
+  return collapseTextWhitespace(withoutSchemes);
 }
 
 /**

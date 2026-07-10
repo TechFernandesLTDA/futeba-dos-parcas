@@ -1,7 +1,9 @@
 name: Deploy to Google Play Store
 
 # #065 - Production Deployment
-# Deploys to Play Store when a release tag is created
+# Deploys somente no Play Store quando uma tag Android e criada.
+# GitHub Release e assets sao responsabilidade exclusiva de release.yml,
+# permitindo recuperar metadados sem republicar o mesmo versionCode no Play.
 
 on:
   push:
@@ -19,8 +21,7 @@ on:
   workflow_dispatch:  # Allow manual trigger
 
 permissions:
-  contents: write   # Para criar GitHub Release
-  id-token: write   # Para OIDC token (se necessário no futuro)
+  contents: read
 
 jobs:
   deploy-production:
@@ -71,7 +72,11 @@ jobs:
           KEYSTORE_PASSWORD_B64: ${{ secrets.KEYSTORE_PASSWORD_B64 }}
         run: |
           printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/release.jks"
-          test -s "$RUNNER_TEMP/release.jks" && echo "✓ keystore written ($(wc -c < "$RUNNER_TEMP/release.jks") bytes)" || (echo "✗ empty keystore"; exit 1)
+          if [ ! -s "$RUNNER_TEMP/release.jks" ]; then
+            echo "✗ empty keystore"
+            exit 1
+          fi
+          echo "✓ keystore written ($(wc -c < "$RUNNER_TEMP/release.jks") bytes)"
           # Debug: SHA do keystore + tentar abrir com keytool
           KS_SHA=$(shasum -a 256 "$RUNNER_TEMP/release.jks" | awk '{print $1}' | head -c 16)
           echo "::notice::keystore sha8=$KS_SHA"
@@ -118,31 +123,3 @@ jobs:
           status: completed
           inAppUpdatePriority: 2
           changesNotSentForReview: true
-
-      # AAB ja foi enviado ao Play Store no passo anterior; este upload e so backup.
-      # continue-on-error evita que falha de quota de artifact marque o deploy como vermelho
-      # depois que o Play Store ja recebeu o release com sucesso.
-      - name: Upload AAB artifact
-        continue-on-error: true
-        uses: actions/upload-artifact@v4
-        with:
-          name: app-release-aab
-          path: app/build/outputs/bundle/release/app-release.aab
-          retention-days: 14
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65  # v2
-        with:
-          tag_name: ${{ github.ref_name }}
-          name: Release ${{ github.ref_name }}
-          body: |
-            ## Production Release
-
-            This release has been deployed to Google Play Store (Internal Testing).
-
-            **What's Changed:**
-            See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/master/CHANGELOG.md) for details.
-          draft: false
-          prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

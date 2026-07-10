@@ -1,11 +1,19 @@
 package com.futebadosparcas.util
 
 import android.content.Context
+import android.os.Build
+import android.security.keystore.KeyGenParameterSpec
+import android.security.keystore.KeyPermanentlyInvalidatedException
+import android.security.keystore.KeyProperties
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 import kotlinx.coroutines.suspendCancellableCoroutine
+import java.security.KeyStore
+import javax.crypto.Cipher
+import javax.crypto.KeyGenerator
+import javax.crypto.SecretKey
 import kotlin.coroutines.resume
 
 class BiometricHelper constructor(
@@ -60,7 +68,8 @@ class BiometricHelper constructor(
             object : BiometricPrompt.AuthenticationCallback() {
                 override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
                     super.onAuthenticationSucceeded(result)
-                    onSuccess()
+                    if (result.cryptoObject?.cipher != null) onSuccess()
+                    else onError("Autenticação biométrica sem vínculo criptográfico")
                 }
 
                 override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
@@ -85,7 +94,13 @@ class BiometricHelper constructor(
             )
             .build()
 
-        biometricPrompt.authenticate(promptInfo)
+        val cryptoObject = runCatching {
+            BiometricPrompt.CryptoObject(createAuthenticationCipher())
+        }.getOrElse { error ->
+            onError(error.message ?: "Não foi possível proteger a autenticação biométrica")
+            return
+        }
+        biometricPrompt.authenticate(promptInfo, cryptoObject)
     }
 
     // New suspend API
@@ -105,7 +120,14 @@ class BiometricHelper constructor(
                 override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
                     super.onAuthenticationSucceeded(result)
                     if (continuation.isActive) {
-                        continuation.resume(BiometricResult.Success)
+                        if (result.cryptoObject?.cipher != null) {
+                            continuation.resume(BiometricResult.Success)
+                        } else {
+                            continuation.resume(BiometricResult.Error(
+                                "Autenticação biométrica sem vínculo criptográfico",
+                                CRYPTO_AUTH_ERROR
+                            ))
+                        }
                     }
                 }
 
@@ -137,7 +159,16 @@ class BiometricHelper constructor(
             )
             .build()
 
-        biometricPrompt.authenticate(promptInfo)
+        val cryptoObject = runCatching {
+            BiometricPrompt.CryptoObject(createAuthenticationCipher())
+        }.getOrElse { error ->
+            continuation.resume(BiometricResult.Error(
+                error.message ?: "Não foi possível proteger a autenticação biométrica",
+                CRYPTO_AUTH_ERROR
+            ))
+            return@suspendCancellableCoroutine
+        }
+        biometricPrompt.authenticate(promptInfo, cryptoObject)
 
         continuation.invokeOnCancellation {
             biometricPrompt.cancelAuthentication()
@@ -153,8 +184,47 @@ class BiometricHelper constructor(
         return timeSinceAuth > sessionTimeoutMillis
     }
 
+    private fun createAuthenticationCipher(): Cipher {
+        val keyStore = KeyStore.getInstance(ANDROID_KEYSTORE).apply { load(null) }
+        var key = keyStore.getKey(KEY_ALIAS, null) as? SecretKey
+        if (key == null) key = generateAuthenticationKey()
+        return try {
+            newCipher().apply { init(Cipher.ENCRYPT_MODE, key) }
+        } catch (_: KeyPermanentlyInvalidatedException) {
+            keyStore.deleteEntry(KEY_ALIAS)
+            newCipher().apply { init(Cipher.ENCRYPT_MODE, generateAuthenticationKey()) }
+        }
+    }
+
+    private fun generateAuthenticationKey(): SecretKey {
+        val builder = KeyGenParameterSpec.Builder(
+            KEY_ALIAS,
+            KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT
+        ).setBlockModes(KeyProperties.BLOCK_MODE_GCM)
+            .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
+            .setUserAuthenticationRequired(true)
+            .setInvalidatedByBiometricEnrollment(true)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            builder.setUserAuthenticationParameters(0, KeyProperties.AUTH_BIOMETRIC_STRONG)
+        } else {
+            @Suppress("DEPRECATION")
+            builder.setUserAuthenticationValidityDurationSeconds(-1)
+        }
+        return KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, ANDROID_KEYSTORE).run {
+            init(builder.build())
+            generateKey()
+        }
+    }
+
+    private fun newCipher(): Cipher = Cipher.getInstance(
+        "${KeyProperties.KEY_ALGORITHM_AES}/${KeyProperties.BLOCK_MODE_GCM}/${KeyProperties.ENCRYPTION_PADDING_NONE}"
+    )
+
     companion object {
         private const val FOUR_HOURS_MS = 4 * 60 * 60 * 1000L
+        private const val ANDROID_KEYSTORE = "AndroidKeyStore"
+        private const val KEY_ALIAS = "futeba_local_auth_key"
+        private const val CRYPTO_AUTH_ERROR = -1000
     }
 }
 

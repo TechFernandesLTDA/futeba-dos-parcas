@@ -20,6 +20,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
@@ -74,10 +75,11 @@ class LeagueViewModel(
      * Carrega todas as seasons disponíveis
      */
     private fun loadAvailableSeasons() {
-        viewModelScope.launch {
+        seasonJob?.cancel()
+        seasonJob = viewModelScope.launch {
             try {
                 val seasonsResult = gamificationRepository.getAllSeasons()
-                val seasons = seasonsResult.getOrNull() ?: emptyList()
+                val seasons = seasonsResult.getOrElse { throw it }
 
                 // Converter para Android Season models
                 _availableSeasons.value = seasons.map { it.toAndroidSeason() }
@@ -102,16 +104,23 @@ class LeagueViewModel(
      * Seleciona uma season diferente e recarrega os dados
      */
     fun selectSeason(season: AndroidSeason) {
-        // Debounce de 500ms para evitar múltiplos refreshes rápidos durante pull-to-refresh
-        val currentTime = System.currentTimeMillis()
-        if (currentTime - lastRefreshTime < REFRESH_DEBOUNCE_MS) {
-            // Refresh ainda em cooldown, ignora chamada
-            return
-        }
-
-        lastRefreshTime = currentTime
+        if (_selectedSeason.value?.id == season.id) return
         _selectedSeason.value = season
         loadLeagueData()
+    }
+
+    /** Recarrega a etapa correta, inclusive quando a carga inicial de seasons falhou. */
+    fun refresh() {
+        val now = System.currentTimeMillis()
+        if (now - lastRefreshTime < REFRESH_DEBOUNCE_MS) return
+        lastRefreshTime = now
+
+        if (_selectedSeason.value == null) {
+            _uiState.value = LeagueUiState.Loading
+            loadAvailableSeasons()
+        } else {
+            loadLeagueData()
+        }
     }
 
     /**
@@ -139,7 +148,7 @@ class LeagueViewModel(
      * - Previne memory leaks e leituras desnecessárias do Firestore
      */
     private var leagueDataJob: Job? = null
-    private var userFetchJob: Job? = null
+    private var seasonJob: Job? = null
     private var unreadCountJob: Job? = null
 
     companion object {
@@ -158,7 +167,6 @@ class LeagueViewModel(
         // ✅ OTIMIZAÇÃO #5: Cancelar queries anteriores antes de iniciar nova
         // Previne race conditions, memory leaks e leituras desnecessárias do Firestore
         leagueDataJob?.cancel()
-        userFetchJob?.cancel()
 
         AppLogger.d(TAG) { "🔄 Carregando league data para nova temporada (queries stale canceladas)" }
 
@@ -179,7 +187,7 @@ class LeagueViewModel(
                     AppLogger.e(TAG, "Erro no Flow de ranking", e)
                     _uiState.value = LeagueUiState.Error("Erro ao carregar ranking: ${e.message}")
                 }
-                .collect { participations ->
+                .collectLatest { participations ->
                     // 1. Identificar usuários faltantes no cache
                     val missingUserIds = participations.map { it.userId }
                         .filter { !_userCache.containsKey(it) }
@@ -187,15 +195,7 @@ class LeagueViewModel(
 
                     // 2. Buscar dados dos faltantes (em job separado para cancelamento independente)
                     if (missingUserIds.isNotEmpty()) {
-                        // ✅ OTIMIZAÇÃO #5: Rastrear job de fetch para cancelamento
-                        userFetchJob?.cancel()
-                        userFetchJob = viewModelScope.launch {
-                            try {
-                                fetchMissingUsers(missingUserIds)
-                            } catch (e: Exception) {
-                                AppLogger.d(TAG) { "🔄 User fetch job cancelado ou falhou: ${e.message}" }
-                            }
-                        }
+                        fetchMissingUsers(missingUserIds)
                     }
 
                     // 3. Montar RankingItems
@@ -330,7 +330,7 @@ class LeagueViewModel(
         // ✅ OTIMIZAÇÃO #5: Cancelar todas as queries pendentes ao destruir ViewModel
         // Previne memory leaks, conexões abertas e leituras desnecessárias do Firestore
         leagueDataJob?.cancel()
-        userFetchJob?.cancel()
+        seasonJob?.cancel()
         unreadCountJob?.cancel()
         AppLogger.d(TAG) { "LeagueViewModel destruido - todas as queries canceladas" }
     }

@@ -54,6 +54,9 @@ import com.futebadosparcas.domain.repository.GamificationRepository
 import com.futebadosparcas.domain.repository.LocationRepository
 import com.futebadosparcas.domain.repository.RankingRepository
 import com.futebadosparcas.ui.adaptive.AdaptiveTopBar
+import com.futebadosparcas.compose.resources.Res
+import com.futebadosparcas.compose.resources.back
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 
 private sealed interface RouteLoadState<out T> {
@@ -391,7 +394,7 @@ private fun OverviewScaffold(
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Voltar"
+                            contentDescription = stringResource(Res.string.back)
                         )
                     }
                 }

@@ -368,7 +368,9 @@ class SmartReminderHelper constructor(
             return // Jogo já passou ou muito próximo
         }
 
-        val intent = Intent(context, ReminderBroadcastReceiver::class.java).apply {
+        val intent = Intent().apply {
+            setClass(context, ReminderBroadcastReceiver::class.java)
+            setPackage(context.packageName)
             action = "GAME_REMINDER"
             putExtra("game_id", gameId)
             putExtra("game_name", gameName)
@@ -417,15 +419,18 @@ class SmartReminderHelper constructor(
      * Cancela lembrete de jogo.
      */
     fun cancelGameReminder(gameId: String) {
-        val intent = Intent(context, ReminderBroadcastReceiver::class.java)
+        val intent = Intent().apply {
+            setClass(context, ReminderBroadcastReceiver::class.java)
+            setPackage(context.packageName)
+            action = "GAME_REMINDER"
+        }
         val pendingIntent = PendingIntent.getBroadcast(
             context,
             gameId.hashCode(),
             intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE
         )
-
-        alarmManager.cancel(pendingIntent)
+        pendingIntent?.let { alarmManager.cancel(it); it.cancel() }
         AppLogger.d(TAG) { "Lembrete cancelado para jogo $gameId" }
     }
 
@@ -443,7 +448,9 @@ class SmartReminderHelper constructor(
             }
         }
 
-        val intent = Intent(context, ReminderBroadcastReceiver::class.java).apply {
+        val intent = Intent().apply {
+            setClass(context, ReminderBroadcastReceiver::class.java)
+            setPackage(context.packageName)
             action = "STREAK_CHECK"
         }
 
@@ -479,7 +486,9 @@ class SmartReminderHelper constructor(
             }
         }
 
-        val intent = Intent(context, ReminderBroadcastReceiver::class.java).apply {
+        val intent = Intent().apply {
+            setClass(context, ReminderBroadcastReceiver::class.java)
+            setPackage(context.packageName)
             action = "WEEKLY_RECAP"
         }
 

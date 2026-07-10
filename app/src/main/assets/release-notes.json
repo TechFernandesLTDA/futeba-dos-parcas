@@ -1,7 +1,33 @@
 {
   "platform": "android",
-  "generatedAt": "2026-07-10T06:21:19.690Z",
+  "generatedAt": "2026-07-10T08:07:35.339Z",
   "notes": [
+    {
+      "version": "1.36.6",
+      "buildNumber": 69,
+      "releaseDate": "2026-07-10",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "Login biométrico, notificações, Liga, grupos e mapa ficaram mais seguros e confiáveis.",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "A Liga aguarda os jogadores antes de publicar o ranking, troca de temporada sem atraso indevido e recupera a carga inicial pelo gesto de atualizar.",
+        "Pedidos de entrada no grupo mostram erro com ação para tentar novamente.",
+        "Tocar em um marcador do mapa público seleciona o jogo correspondente."
+      ],
+      "fixed": [
+        "Removido o botão de localização do mapa que não executava nenhuma ação.",
+        "Cancelamento de lembretes usa a mesma ação do agendamento e remove o `PendingIntent` correto.",
+        "Biometria exige `CryptoObject` AES/GCM com chave auth-per-use no Android Keystore e invalidação por novo cadastro biométrico.",
+        "Intents de FCM, notificações e alarmes são explicitamente limitadas ao pacote do aplicativo.",
+        "Ranking usa `collectLatest` e aguarda o preenchimento paralelo do cache antes de emitir o estado de sucesso."
+      ],
+      "issueRefs": [
+        3497
+      ]
+    },
     {
       "version": "1.36.5",
       "buildNumber": 68,
