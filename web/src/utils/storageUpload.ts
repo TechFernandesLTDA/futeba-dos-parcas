@@ -81,8 +81,10 @@ export async function uploadImageWithStorageAuthRetry(
     if (delayMs > 0) await wait(delayMs);
 
     try {
-      if (options.onProgress) return await uploadWithProgress();
-      return await uploadBytes(storageReference, file, { contentType: file.type });
+      if (options.onProgress && attempt === 0) return await uploadWithProgress();
+      const snapshot = await uploadBytes(storageReference, file, { contentType: file.type });
+      reportProgress(100);
+      return snapshot;
     } catch (err) {
       lastErr = err;
       if (!isRetryableStorageUploadError(err) || attempt === STORAGE_UPLOAD_RETRY_DELAYS_MS.length - 1) {

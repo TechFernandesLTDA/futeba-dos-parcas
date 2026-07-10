@@ -85,7 +85,7 @@ describe('storageUpload', () => {
     expect(mockUploadBytesResumable).not.toHaveBeenCalled();
   });
 
-  it('usa upload resumable e reporta progresso monotônico entre retries', async () => {
+  it('faz fallback para upload simples se o resumable falhar', async () => {
     const onProgress = vi.fn();
     const refreshCredentials = vi.fn().mockResolvedValue(undefined);
     const firstTask = {
@@ -99,22 +99,8 @@ describe('storageUpload', () => {
         error({ code: 'storage/network-request-failed' });
       }),
     };
-    const secondTask = {
-      snapshot: { ref: 'uploaded' },
-      on: vi.fn((
-        _event: string,
-        next: (snapshot: {bytesTransferred: number; totalBytes: number}) => void,
-        _error: (err: unknown) => void,
-        complete: () => void,
-      ) => {
-        next({ bytesTransferred: 10, totalBytes: 100 });
-        next({ bytesTransferred: 100, totalBytes: 100 });
-        complete();
-      }),
-    };
-    mockUploadBytesResumable
-      .mockReturnValueOnce(firstTask)
-      .mockReturnValueOnce(secondTask);
+    mockUploadBytesResumable.mockReturnValueOnce(firstTask);
+    mockUploadBytes.mockResolvedValueOnce({ ref: 'uploaded' });
     const file = new File(['video'], 'partida.mp4', { type: 'video/mp4' });
 
     const promise = uploadImageWithStorageAuthRetry('wall-ref' as never, file, {
@@ -125,8 +111,8 @@ describe('storageUpload', () => {
 
     await expect(promise).resolves.toEqual({ ref: 'uploaded' });
     expect(onProgress.mock.calls.map(([percentage]) => percentage)).toEqual([0, 40, 100]);
-    expect(mockUploadBytesResumable).toHaveBeenCalledTimes(2);
-    expect(mockUploadBytes).not.toHaveBeenCalled();
+    expect(mockUploadBytesResumable).toHaveBeenCalledTimes(1);
+    expect(mockUploadBytes).toHaveBeenCalledTimes(1);
     expect(refreshCredentials).not.toHaveBeenCalled();
   });
 });
