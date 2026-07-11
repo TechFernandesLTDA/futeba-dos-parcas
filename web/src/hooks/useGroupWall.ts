@@ -7,6 +7,7 @@ import {
   orderBy,
   limit,
   startAfter,
+  getDoc,
   getDocs,
   addDoc,
   updateDoc,
@@ -15,12 +16,12 @@ import {
   QueryDocumentSnapshot,
   writeBatch,
 } from 'firebase/firestore';
-import { deleteObject, ref as storageRef, getDownloadURL } from 'firebase/storage';
+import { deleteObject, ref as storageRef } from 'firebase/storage';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { db } from '../services/firebase';
 import { storage } from '../services/firebaseStorage';
-import { getFirestoreErrorMessage } from '../utils/firebaseErrors';
+import { getFirestoreErrorMessage, getFunctionErrorMessage } from '../utils/firebaseErrors';
 import { snakeToCamel, toDate } from '../utils/firestoreHelpers';
 import { createLogger } from '../utils/logger';
 import {
@@ -30,6 +31,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { mergeRealtimePageById } from './realtimePageMerge';
 import { getWallMediaType } from '../utils/wallMedia';
+import { createGroupWallMediaDraft } from '../services/groupWallMediaService';
 
 const logger = createLogger('useGroupWall');
 
@@ -37,17 +39,30 @@ const POST_PAGE_SIZE = 20;
 const MAX_TEXT_LENGTH = 500;
 const MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024;
 const MAX_VIDEO_SIZE_BYTES = 25 * 1024 * 1024;
+const MEDIA_PROCESSING_TIMEOUT_MS = 180_000;
+
+type WallMediaDraftStatus = 'AWAITING_UPLOAD' | 'PROCESSING' | 'READY' | 'REJECTED' | 'EXPIRED';
+
+function createWallMediaRequestId() {
+  if (typeof globalThis.crypto?.randomUUID === 'function') return globalThis.crypto.randomUUID();
+  const bytes = new Uint8Array(16);
+  if (typeof globalThis.crypto?.getRandomValues === 'function') {
+    globalThis.crypto.getRandomValues(bytes);
+  } else {
+    for (let index = 0; index < bytes.length; index += 1) {
+      bytes[index] = Math.floor(Math.random() * 256);
+    }
+  }
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  const hex = [...bytes].map((value) => value.toString(16).padStart(2, '0')).join('');
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+}
 
 interface CreateWallPostOptions {
   imageFile?: File;
   mediaFile?: File;
   highlightRef?: { gameId: string; highlightId: string };
-}
-
-interface UploadedWallMedia {
-  mediaUrl: string;
-  mediaPath: string;
-  mediaType: string;
 }
 
 export interface WallPost {
@@ -61,6 +76,7 @@ export interface WallPost {
   mediaPath: string | null;
   mediaType: string | null;
   thumbnailPath: string | null;
+  thumbnailUrl?: string | null;
   highlightRef: { gameId: string; highlightId: string } | null;
   pinned: boolean;
   pinnedBy: string | null;
@@ -87,6 +103,7 @@ export function mapPost(docSnap: QueryDocumentSnapshot<DocumentData>): WallPost 
     mediaPath: (converted.mediaPath as string | null) ?? (raw.media_path as string | null) ?? null,
     mediaType: (converted.mediaType as string | null) ?? (raw.media_type as string | null) ?? null,
     thumbnailPath: (converted.thumbnailPath as string | null) ?? (raw.thumbnail_path as string | null) ?? null,
+    thumbnailUrl: (converted.thumbnailUrl as string | null) ?? (raw.thumbnail_url as string | null) ?? null,
     highlightRef: (converted.highlightRef as { gameId: string; highlightId: string } | null) ??
       ((raw.highlight_ref as { game_id?: unknown; highlight_id?: unknown } | undefined)
         ? {
@@ -107,54 +124,60 @@ export function mapPost(docSnap: QueryDocumentSnapshot<DocumentData>): WallPost 
   };
 }
 
-async function uploadWallMedia(
+function wallMediaDraftErrorMessage(status: WallMediaDraftStatus, data: Record<string, unknown>) {
+  if (typeof data.error_message === 'string' && data.error_message.trim()) return data.error_message;
+  return status === 'EXPIRED'
+    ? 'O envio expirou. Tente novamente.'
+    : 'A mídia não é compatível. Use MP4 com vídeo H.264 e áudio AAC.';
+}
+
+function wallMediaDraftTerminalError(status: 'REJECTED' | 'EXPIRED', data: Record<string, unknown>) {
+  const error = new Error(wallMediaDraftErrorMessage(status, data)) as Error & { code: string };
+  error.code = `wall-media/${status.toLowerCase()}`;
+  return error;
+}
+
+function wallMediaDraftStatus(data: Record<string, unknown>): WallMediaDraftStatus | null {
+  const status = typeof data.status === 'string' ? data.status : '';
+  return ['AWAITING_UPLOAD', 'PROCESSING', 'READY', 'REJECTED', 'EXPIRED'].includes(status)
+    ? status as WallMediaDraftStatus
+    : null;
+}
+
+async function waitForWallMediaDraft(
   groupId: string,
-  currentUserUid: string,
-  mediaFile: File,
-  refreshCredentials?: () => Promise<void>,
-  onUploadProgress?: (percentage: number) => void,
-): Promise<UploadedWallMedia> {
-  const mediaType = getWallMediaType(mediaFile);
-  const isVideo = mediaType === 'video/mp4';
-  if (!mediaType) {
-    throw new Error('Formato inválido. Use JPG, PNG, WebP ou vídeo MP4.');
-  }
-  const maxSize = isVideo ? MAX_VIDEO_SIZE_BYTES : MAX_IMAGE_SIZE_BYTES;
-  if (mediaFile.size >= maxSize) {
-    throw new Error(isVideo ? 'Vídeo muito grande. O limite é 25MB.' : 'Imagem muito grande. O limite é 10MB.');
-  }
+  postId: string,
+  onProcessing?: () => void,
+): Promise<void> {
+  await new Promise<void>((resolve, reject) => {
+    let unsubscribe: () => void = () => undefined;
+    let settled = false;
+    const finish = (callback: () => void) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeoutId);
+      unsubscribe();
+      callback();
+    };
+    const timeoutId = setTimeout(() => {
+      finish(() => reject(new Error('A mídia continua em processamento. Ela aparecerá no mural assim que estiver pronta.')));
+    }, MEDIA_PROCESSING_TIMEOUT_MS);
 
-  const ext = isVideo ? 'mp4' : mediaType.split('/')[1]?.replace('jpeg', 'jpg') || 'jpg';
-  // Keep the owner in the draft path so Storage Rules let the author clean up
-  // an upload when the subsequent Firestore write fails.
-  const mediaPath = `groups/${groupId}/wall_media/__draft__/${currentUserUid}/${Date.now()}-${crypto.randomUUID()}.${ext}`;
-  const fileRef = storageRef(storage, mediaPath);
-
-  if (refreshCredentials || onUploadProgress) {
-    await uploadImageWithStorageAuthRetry(fileRef, mediaFile, {
-      ...(refreshCredentials ? { refreshCredentials } : {}),
-      ...(onUploadProgress ? { onProgress: onUploadProgress } : {}),
-      contentType: mediaType,
-    });
-  } else {
-    await uploadImageWithStorageAuthRetry(fileRef, mediaFile, { contentType: mediaType });
-  }
-
-  let mediaUrl: string;
-  try {
-    mediaUrl = await getDownloadURL(fileRef);
-  } catch (err) {
-    // O upload já existe, mas ainda não foi associado a um post. Cleanup é
-    // best-effort e não pode mascarar o erro original de obtenção da URL.
-    await deleteWallMediaPaths([mediaPath]);
-    throw err;
-  }
-
-  return {
-    mediaUrl,
-    mediaPath,
-    mediaType,
-  };
+    unsubscribe = onSnapshot(
+      doc(db, 'groups', groupId, 'wall_post_drafts', postId),
+      (snapshot) => {
+        if (!snapshot.exists()) return;
+        const data = snapshot.data() as Record<string, unknown>;
+        const status = wallMediaDraftStatus(data);
+        if (status === 'PROCESSING') onProcessing?.();
+        if (status === 'READY') finish(resolve);
+        if (status === 'REJECTED' || status === 'EXPIRED') {
+          finish(() => reject(wallMediaDraftTerminalError(status, data)));
+        }
+      },
+      (error) => finish(() => reject(error)),
+    );
+  });
 }
 
 async function deleteWallMediaPaths(paths: Array<string | null | undefined>) {
@@ -183,6 +206,8 @@ export async function createWallPostDocument(params: {
   options?: CreateWallPostOptions;
   refreshCredentials?: () => Promise<void>;
   onUploadProgress?: (percentage: number) => void;
+  onProcessing?: () => void;
+  clientRequestId?: string;
 }) {
   const {
     groupId,
@@ -193,6 +218,8 @@ export async function createWallPostDocument(params: {
     options,
     refreshCredentials,
     onUploadProgress,
+    onProcessing,
+    clientRequestId,
   } = params;
   const cleanText = text.trim();
   const mediaFile = options?.mediaFile ?? options?.imageFile;
@@ -204,28 +231,72 @@ export async function createWallPostDocument(params: {
     throw new Error(`Máximo ${MAX_TEXT_LENGTH} caracteres.`);
   }
 
-  let uploadedMedia: UploadedWallMedia | null = null;
-
-  try {
-    if (mediaFile) {
-      uploadedMedia = await uploadWallMedia(
-        groupId,
-        currentUserUid,
-        mediaFile,
-        refreshCredentials,
-        onUploadProgress,
-      );
+  if (mediaFile) {
+    const mediaType = getWallMediaType(mediaFile);
+    const isVideo = mediaType === 'video/mp4';
+    if (!mediaType) throw new Error('Formato inválido. Use JPG, PNG, WebP ou vídeo MP4.');
+    const maxSize = isVideo ? MAX_VIDEO_SIZE_BYTES : MAX_IMAGE_SIZE_BYTES;
+    if (mediaFile.size >= maxSize) {
+      throw new Error(isVideo ? 'Vídeo muito grande. O limite é 25MB.' : 'Imagem muito grande. O limite é 10MB.');
     }
+    if (!clientRequestId) throw new Error('Não foi possível identificar este envio. Tente novamente.');
 
-    await addDoc(collection(db, 'groups', groupId, 'wall_posts'), {
+    const draft = await createGroupWallMediaDraft({
+      groupId,
+      text: cleanText,
+      declaredContentType: mediaType,
+      sizeBytes: mediaFile.size,
+      fileName: mediaFile.name,
+      clientRequestId,
+      highlightRef: options?.highlightRef ?? null,
+    });
+    if (mediaFile.size >= draft.maxBytes) {
+      throw new Error('A mídia excede o limite permitido pelo servidor.');
+    }
+    if (draft.uploadPath.split('/')[4] !== currentUserUid) {
+      throw new Error('O servidor retornou um caminho de mídia inválido.');
+    }
+    if (draft.duplicate) {
+      const existingDraft = await getDoc(doc(db, 'groups', groupId, 'wall_post_drafts', draft.postId));
+      if (!existingDraft.exists()) {
+        throw new Error('Não foi possível recuperar este envio. Tente novamente.');
+      }
+      const data = existingDraft.data() as Record<string, unknown>;
+      const status = wallMediaDraftStatus(data);
+      if (status === 'READY') {
+        return { postId: draft.postId, pipelineVersion: draft.pipelineVersion };
+      }
+      if (status === 'PROCESSING') {
+        onProcessing?.();
+        await waitForWallMediaDraft(groupId, draft.postId, onProcessing);
+        return { postId: draft.postId, pipelineVersion: draft.pipelineVersion };
+      }
+      if (status === 'REJECTED' || status === 'EXPIRED') {
+        throw wallMediaDraftTerminalError(status, data);
+      }
+      if (status !== 'AWAITING_UPLOAD') {
+        throw new Error('O estado deste envio é inválido. Tente novamente.');
+      }
+    }
+    await uploadImageWithStorageAuthRetry(storageRef(storage, draft.uploadPath), mediaFile, {
+      ...(refreshCredentials ? { refreshCredentials } : {}),
+      ...(onUploadProgress ? { onProgress: onUploadProgress } : {}),
+      contentType: mediaType,
+    });
+    onProcessing?.();
+    await waitForWallMediaDraft(groupId, draft.postId, onProcessing);
+    return { postId: draft.postId, pipelineVersion: draft.pipelineVersion };
+  }
+
+  const created = await addDoc(collection(db, 'groups', groupId, 'wall_posts'), {
       group_id: groupId,
       author_id: currentUserUid,
       author_name: authorName,
       author_photo_url: authorPhotoUrl,
       text: cleanText,
-      media_url: uploadedMedia?.mediaUrl ?? null,
-      media_path: uploadedMedia?.mediaPath ?? null,
-      media_type: uploadedMedia?.mediaType ?? null,
+      media_url: null,
+      media_path: null,
+      media_type: null,
       thumbnail_path: null,
       highlight_ref: options?.highlightRef ?? null,
       pinned: false,
@@ -239,12 +310,7 @@ export async function createWallPostDocument(params: {
       deleted_by: null,
       deleted_at: null,
     });
-  } catch (err) {
-    if (uploadedMedia?.mediaPath) {
-      await deleteWallMediaPaths([uploadedMedia.mediaPath]);
-    }
-    throw err;
-  }
+  return { postId: created.id, pipelineVersion: 0 };
 }
 
 async function softDeleteWallPost(groupId: string, currentUserUid: string, post: WallPost) {
@@ -427,7 +493,9 @@ export function useCreateWallPost(groupId?: string) {
   const { t } = useTranslation();
   const [sending, setSending] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+  const [mediaPhase, setMediaPhase] = useState<'uploading' | 'processing' | null>(null);
   const createOperationRef = useRef(0);
+  const pendingMediaIntentRef = useRef<{ fingerprint: string; requestId: string } | null>(null);
 
   const create = useCallback(
     async (text: string, options?: CreateWallPostOptions) => {
@@ -444,10 +512,25 @@ export function useCreateWallPost(groupId?: string) {
       }
 
       const mediaFile = options?.mediaFile ?? options?.imageFile;
+      const mediaFingerprint = mediaFile
+        ? JSON.stringify({
+            groupId,
+            text: cleanText,
+            name: mediaFile.name,
+            type: getWallMediaType(mediaFile),
+            size: mediaFile.size,
+            lastModified: mediaFile.lastModified,
+            highlightRef: options?.highlightRef ?? null,
+          })
+        : null;
+      if (mediaFingerprint && pendingMediaIntentRef.current?.fingerprint !== mediaFingerprint) {
+        pendingMediaIntentRef.current = { fingerprint: mediaFingerprint, requestId: createWallMediaRequestId() };
+      }
       const operationId = createOperationRef.current + 1;
       createOperationRef.current = operationId;
       setSending(true);
       setUploadProgress(mediaFile ? 0 : null);
+      setMediaPhase(mediaFile ? 'uploading' : null);
       try {
         await createWallPostDocument({
           groupId,
@@ -464,14 +547,24 @@ export function useCreateWallPost(groupId?: string) {
                 }
               }
             : undefined,
+          onProcessing: mediaFile ? () => {
+            if (createOperationRef.current === operationId) setMediaPhase('processing');
+          } : undefined,
+          clientRequestId: mediaFile ? pendingMediaIntentRef.current?.requestId : undefined,
         });
+        pendingMediaIntentRef.current = null;
         showSuccess('Publicado no mural.');
       } catch (err) {
         const code = typeof err === 'object' && err !== null && 'code' in err
           ? String((err as { code?: unknown }).code)
           : '';
+        if (code.startsWith('wall-media/')) pendingMediaIntentRef.current = null;
         const message = code.startsWith('storage/')
           ? t('groupWall.mediaUploadError')
+          : code.startsWith('functions/')
+            ? getFunctionErrorMessage(err, 'createGroupWallMediaDraft', t('groupWall.publishError'))
+            : code.startsWith('wall-media/') && err instanceof Error
+              ? err.message
           : err instanceof Error && !code
             ? err.message
             : getFirestoreErrorMessage(err, t('groupWall.publishError'));
@@ -481,13 +574,14 @@ export function useCreateWallPost(groupId?: string) {
         if (createOperationRef.current === operationId) {
           setSending(false);
           setUploadProgress(null);
+          setMediaPhase(null);
         }
       }
     },
     [groupId, currentUser, user, showError, showSuccess, t],
   );
 
-  return { create, sending, uploadProgress };
+  return { create, sending, uploadProgress, mediaPhase };
 }
 
 export function useDeleteWallPost(groupId?: string) {

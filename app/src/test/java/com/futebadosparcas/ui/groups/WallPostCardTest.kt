@@ -32,4 +32,16 @@ class WallPostCardTest {
             resolveWallMediaKind("application/pdf", "https://cdn.example/mural/anexo.pdf")
         )
     }
+
+    @Test
+    fun `player nao e criado antes do toque e inicia apos gesto explicito`() {
+        assertEquals(
+            WallVideoPlaybackPolicy(createPlayer = false, playWhenReady = false),
+            resolveWallVideoPlaybackPolicy(playbackRequested = false)
+        )
+        assertEquals(
+            WallVideoPlaybackPolicy(createPlayer = true, playWhenReady = true),
+            resolveWallVideoPlaybackPolicy(playbackRequested = true)
+        )
+    }
 }

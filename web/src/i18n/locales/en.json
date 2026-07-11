@@ -1532,6 +1532,7 @@
     "sending": "Posting...",
     "draftPreserved": "We couldn't post it. Your text and attachment were kept so you can try again.",
     "uploadProgress": "Uploading media: {{percent}}%",
+    "processingMedia": "Processing media...",
     "videoPreview": "Video preview",
     "imageAlt": "Photo by {{name}}",
     "invalidImageType": "Invalid format. Use JPG, PNG, or WebP.",

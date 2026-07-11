@@ -1532,6 +1532,7 @@
     "sending": "Publicando...",
     "draftPreserved": "No se pudo publicar. Conservamos tu texto y archivo para que puedas intentarlo de nuevo.",
     "uploadProgress": "Subiendo contenido: {{percent}}%",
+    "processingMedia": "Procesando contenido...",
     "videoPreview": "Vista previa del video",
     "imageAlt": "Foto de {{name}}",
     "invalidImageType": "Formato inválido. Usa JPG, PNG o WebP.",

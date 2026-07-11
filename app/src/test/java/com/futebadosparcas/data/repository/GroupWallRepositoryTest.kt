@@ -71,18 +71,72 @@ class GroupWallRepositoryTest {
         ).inOrder()
     }
 
+    @Test
+    fun mergeWallPostTimeline_ordersNewestFirstAndPrefersRealtimeDuplicate() {
+        val oldVersion = post(
+            id = "duplicate",
+            pinned = false,
+            createdAt = Date(2_000),
+            text = "antigo"
+        )
+        val realtimeVersion = oldVersion.copy(text = "atualizado")
+        val newest = post(
+            id = "newest",
+            pinned = false,
+            createdAt = Date(3_000)
+        )
+        val oldest = post(
+            id = "oldest",
+            pinned = false,
+            createdAt = Date(1_000)
+        )
+
+        val merged = mergeWallPostTimeline(
+            recentPosts = listOf(realtimeVersion, newest),
+            olderPosts = listOf(oldest, oldVersion)
+        )
+
+        assertThat(merged.map { it.id }).containsExactly(
+            "newest",
+            "duplicate",
+            "oldest"
+        ).inOrder()
+        assertThat(merged.first { it.id == "duplicate" }.text).isEqualTo("atualizado")
+    }
+
+    @Test
+    fun mergeWallPostTimeline_keepsPendingServerTimestampAtTop() {
+        val pending = post(
+            id = "pending",
+            pinned = false,
+            createdAt = null
+        )
+        val acknowledged = post(
+            id = "acknowledged",
+            pinned = false,
+            createdAt = Date(3_000)
+        )
+
+        val merged = mergeWallPostTimeline(
+            recentPosts = listOf(pending, acknowledged)
+        )
+
+        assertThat(merged.map { it.id }).containsExactly("pending", "acknowledged").inOrder()
+    }
+
     private fun post(
         id: String,
         pinned: Boolean,
-        createdAt: Date,
+        createdAt: Date?,
         pinnedAt: Date? = null,
-        deletedAt: Date? = null
+        deletedAt: Date? = null,
+        text: String = "texto"
     ) = GroupWallPost(
         id = id,
         groupId = "group-1",
         authorId = "user-1",
         authorName = "Jogador",
-        text = "texto",
+        text = text,
         pinned = pinned,
         pinnedAt = pinnedAt,
         createdAt = createdAt,

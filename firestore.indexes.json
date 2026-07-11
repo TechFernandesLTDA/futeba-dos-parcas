@@ -163,6 +163,20 @@
       ]
     },
     {
+      "collectionGroup": "wall_post_drafts",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "expires_at",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
       "collectionGroup": "user_locations",
       "queryScope": "COLLECTION",
       "fields": [

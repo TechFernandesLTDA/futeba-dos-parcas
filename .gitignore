@@ -131,6 +131,9 @@ web/playwright-report/
 
 # Cloud Functions build output
 functions/lib/
+functions/vendor/ffmpeg/ffmpeg
+functions/vendor/ffmpeg/ffmpeg.tmp
+functions/vendor/ffmpeg/install-manifest.json
 
 # Claude worktrees agent cache
 .claude/worktrees/

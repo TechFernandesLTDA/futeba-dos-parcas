@@ -25,6 +25,7 @@ import {
   Groups as GroupsIcon,
   Flag as ReportIcon,
   VisibilityOff as HideIcon,
+  PlayArrow as PlayIcon,
 } from '@mui/icons-material';
 import { PlayerAvatar } from '../../components/common/GameCard';
 import { ReactionBar } from '../../components/reactions/ReactionBar';
@@ -59,13 +60,14 @@ export const WallPostCard: React.FC<WallPostCardProps> = ({
 }) => {
   const { t, i18n } = useTranslation();
   const theme = useTheme();
+  const isVideo = isWallPostVideo(post.mediaType, post.mediaUrl, post.mediaPath);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [mediaLoading, setMediaLoading] = useState(Boolean(post.mediaUrl));
   const [mediaFailed, setMediaFailed] = useState(false);
+  const [posterFailed, setPosterFailed] = useState(false);
   const [mediaRetry, setMediaRetry] = useState(0);
   const menuOpen = Boolean(anchorEl);
-  const isVideo = isWallPostVideo(post.mediaType, post.mediaUrl, post.mediaPath);
   const exactDateTime = post.createdAt
     ? new Intl.DateTimeFormat(i18n.resolvedLanguage || i18n.language || 'pt-BR', {
       dateStyle: 'short',
@@ -76,13 +78,16 @@ export const WallPostCard: React.FC<WallPostCardProps> = ({
   useEffect(() => {
     setMediaLoading(Boolean(post.mediaUrl));
     setMediaFailed(false);
+    setPosterFailed(false);
+    setLightboxOpen(false);
     setMediaRetry(0);
-  }, [post.mediaUrl]);
+  }, [post.mediaUrl, post.thumbnailUrl]);
 
   const handleRetryMedia = () => {
     setMediaFailed(false);
     setMediaLoading(true);
     setMediaRetry((current) => current + 1);
+    if (isVideo) setLightboxOpen(true);
   };
 
   const handleOpenMenu = (event: React.MouseEvent<HTMLElement>) => {
@@ -198,16 +203,18 @@ export const WallPostCard: React.FC<WallPostCardProps> = ({
                 {!mediaFailed && (
                   <Box
                     key={mediaRetry}
-                    component={isVideo ? 'div' : 'button'}
-                    type={isVideo ? undefined : 'button'}
-                    onClick={isVideo ? undefined : () => setLightboxOpen(true)}
-                    aria-label={isVideo ? undefined : t('groupWall.openPhoto', { name: post.authorName })}
+                    component="button"
+                    type="button"
+                    onClick={() => setLightboxOpen(true)}
+                    aria-label={t(isVideo ? 'groupWall.openVideo' : 'groupWall.openPhoto', { name: post.authorName })}
                     sx={{
-                        display: 'block',
-                        width: '100%',
-                        p: 0,
-                        border: isVideo ? 0 : undefined,
-                        cursor: isVideo ? 'default' : 'pointer',
+                      position: 'relative',
+                      display: 'block',
+                      width: '100%',
+                      minHeight: isVideo ? 180 : undefined,
+                      p: 0,
+                      border: 0,
+                      cursor: 'pointer',
                       bgcolor: 'transparent',
                       '&:focus-visible': {
                         outline: `3px solid ${theme.palette.primary.main}`,
@@ -216,30 +223,55 @@ export const WallPostCard: React.FC<WallPostCardProps> = ({
                     }}
                   >
                     {isVideo ? (
-                      <Box
-                        component="video"
-                        src={post.mediaUrl}
-                        controls
-                        playsInline
-                        preload="metadata"
-                        aria-label={t('groupWall.openVideo', { name: post.authorName })}
-                        onLoadedMetadata={() => setMediaLoading(false)}
-                        onLoadedData={() => setMediaLoading(false)}
-                        onCanPlay={() => setMediaLoading(false)}
-                        onError={() => {
-                          setMediaLoading(false);
-                          setMediaFailed(true);
-                        }}
-                        sx={{
-                          display: 'block',
-                          width: '100%',
-                          maxHeight: 420,
-                          minHeight: 180,
-                          objectFit: 'contain',
-                          bgcolor: theme.palette.common.black,
-                          opacity: 1,
-                        }}
-                      />
+                      <>
+                        {post.thumbnailUrl && !posterFailed ? (
+                          <Box
+                            component="img"
+                            src={post.thumbnailUrl}
+                            alt=""
+                            loading="lazy"
+                            onLoad={() => setMediaLoading(false)}
+                            onError={() => {
+                              setMediaLoading(false);
+                              setPosterFailed(true);
+                            }}
+                            sx={{
+                              display: 'block',
+                              width: '100%',
+                              maxHeight: 420,
+                              minHeight: 180,
+                              objectFit: 'cover',
+                              bgcolor: theme.palette.common.black,
+                            }}
+                          />
+                        ) : (
+                          <Box sx={{ minHeight: 220, bgcolor: theme.palette.common.black }} />
+                        )}
+                        <Box
+                          aria-hidden
+                          sx={{
+                            position: 'absolute',
+                            inset: 0,
+                            display: 'grid',
+                            placeItems: 'center',
+                            bgcolor: alpha(theme.palette.common.black, 0.18),
+                          }}
+                        >
+                          <Box
+                            sx={{
+                              display: 'grid',
+                              placeItems: 'center',
+                              width: 58,
+                              height: 58,
+                              borderRadius: '50%',
+                              color: 'common.white',
+                              bgcolor: alpha(theme.palette.common.black, 0.68),
+                            }}
+                          >
+                            <PlayIcon sx={{ fontSize: 38 }} />
+                          </Box>
+                        </Box>
+                      </>
                     ) : (
                       <Box
                         component="img"
@@ -359,11 +391,17 @@ export const WallPostCard: React.FC<WallPostCardProps> = ({
           isVideo ? (
             <Box
               component="video"
+              key={mediaRetry}
               src={post.mediaUrl}
               controls
               autoPlay
               playsInline
+              preload="metadata"
               aria-label={t('groupWall.openVideo', { name: post.authorName })}
+              onError={() => {
+                setLightboxOpen(false);
+                setMediaFailed(true);
+              }}
               sx={{ width: '100%', maxHeight: '90vh', bgcolor: theme.palette.common.black }}
             />
           ) : (

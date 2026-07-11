@@ -2,21 +2,37 @@ package com.futebadosparcas.data.repository
 
 import android.content.Context
 import android.net.Uri
-import android.provider.OpenableColumns
 import com.futebadosparcas.data.model.GroupWallPost
 import com.futebadosparcas.ui.components.reactions.SocialReactionEmojis
 import com.futebadosparcas.util.AppLogger
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.DocumentReference
+import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
+import com.google.firebase.functions.FirebaseFunctions
 import com.google.firebase.storage.FirebaseStorage
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
-import java.util.UUID
 import java.util.Date
+import java.util.UUID
+
+data class GroupWallRealtimeSnapshot(
+    val recentPosts: List<GroupWallPost>,
+    val pinnedPosts: List<GroupWallPost>,
+    val nextCursor: DocumentSnapshot?,
+    val hasMore: Boolean
+)
+
+data class GroupWallPage(
+    val posts: List<GroupWallPost>,
+    val nextCursor: DocumentSnapshot?,
+    val hasMore: Boolean
+)
 
 /**
  * Repository do mural de resenha/provocações do grupo (issue #3232, épico #3240).
@@ -31,7 +47,15 @@ class GroupWallRepository constructor(
     private val firestore: FirebaseFirestore,
     private val auth: FirebaseAuth,
     private val storage: FirebaseStorage,
-    private val context: Context
+    private val context: Context,
+    private val functions: FirebaseFunctions,
+    private val mediaPipeline: GroupWallMediaPipeline = FirebaseGroupWallMediaPipeline(
+        context = context,
+        auth = auth,
+        functions = functions,
+        storage = storage,
+        firestore = firestore
+    )
 ) {
     private fun wallCollection(groupId: String) =
         firestore.collection("groups").document(groupId).collection("wall_posts")
@@ -39,17 +63,18 @@ class GroupWallRepository constructor(
     companion object {
         private const val TAG = "GroupWallRepository"
         private const val MAX_TEXT_LENGTH = 500
-        private const val PAGE_SIZE = 20L
-        private const val MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024L
+        private const val PAGE_SIZE = 20
     }
 
     /**
      * Observa posts do mural em tempo real (desc por created_at).
      * Erros propagados via close(error) → consumer usa .catch {}.
      */
-    fun observePosts(groupId: String): Flow<List<GroupWallPost>> = callbackFlow {
+    fun observePosts(groupId: String): Flow<GroupWallRealtimeSnapshot> = callbackFlow {
         var recentPosts = emptyList<GroupWallPost>()
         var pinnedPosts = emptyList<GroupWallPost>()
+        var recentCursor: DocumentSnapshot? = null
+        var recentHasMore = false
         var hasInitialRecentSnapshot = false
         var hasInitialPinnedSnapshot = false
 
@@ -57,12 +82,19 @@ class GroupWallRepository constructor(
             if (!hasInitialRecentSnapshot || !hasInitialPinnedSnapshot) {
                 return
             }
-            trySend(mergeRecentAndPinnedPosts(recentPosts, pinnedPosts))
+            trySend(
+                GroupWallRealtimeSnapshot(
+                    recentPosts = recentPosts,
+                    pinnedPosts = pinnedPosts,
+                    nextCursor = recentCursor,
+                    hasMore = recentHasMore
+                )
+            )
         }
 
         val recentListener = wallCollection(groupId)
             .orderBy("created_at", Query.Direction.DESCENDING)
-            .limit(PAGE_SIZE)
+            .limit((PAGE_SIZE + 1).toLong())
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     AppLogger.e(TAG, "Erro ao observar mural do grupo $groupId", error)
@@ -70,9 +102,11 @@ class GroupWallRepository constructor(
                     return@addSnapshotListener
                 }
 
-                recentPosts = snapshot?.documents?.mapNotNull { doc ->
-                    doc.toObject(GroupWallPost::class.java)?.copy(id = doc.id)
-                } ?: emptyList()
+                val documents = snapshot?.documents.orEmpty()
+                val pageDocuments = documents.take(PAGE_SIZE)
+                recentPosts = pageDocuments.toWallPosts()
+                recentCursor = pageDocuments.lastOrNull()
+                recentHasMore = documents.size > PAGE_SIZE
                 hasInitialRecentSnapshot = true
 
                 emitMergedPosts()
@@ -87,9 +121,7 @@ class GroupWallRepository constructor(
                     return@addSnapshotListener
                 }
 
-                pinnedPosts = snapshot?.documents?.mapNotNull { doc ->
-                    doc.toObject(GroupWallPost::class.java)?.copy(id = doc.id)
-                } ?: emptyList()
+                pinnedPosts = snapshot?.documents.orEmpty().toWallPosts()
                 hasInitialPinnedSnapshot = true
 
                 emitMergedPosts()
@@ -102,68 +134,179 @@ class GroupWallRepository constructor(
     }
 
     /**
-     * Cria post no mural. Valida texto 1..500 e autoria (author_id == uid).
-     * created_at via FieldValue.serverTimestamp() (rules validam == request.time).
+     * Carrega a próxima página histórica sem ampliar o listener em tempo real.
+     * O cursor é o último documento bruto da página anterior para não perder
+     * itens com o mesmo `created_at` e para avançar mesmo sobre soft-deletes.
      */
-    suspend fun createPost(groupId: String, text: String, imageUri: Uri? = null): Result<Unit> {
+    suspend fun loadOlderPosts(
+        groupId: String,
+        after: DocumentSnapshot
+    ): Result<GroupWallPage> {
+        return try {
+            val snapshot = wallCollection(groupId)
+                .orderBy("created_at", Query.Direction.DESCENDING)
+                .startAfter(after)
+                .limit((PAGE_SIZE + 1).toLong())
+                .get()
+                .await()
+            val pageDocuments = snapshot.documents.take(PAGE_SIZE)
+            Result.success(
+                GroupWallPage(
+                    posts = pageDocuments.toWallPosts(),
+                    nextCursor = pageDocuments.lastOrNull(),
+                    hasMore = snapshot.documents.size > PAGE_SIZE
+                )
+            )
+        } catch (error: CancellationException) {
+            throw error
+        } catch (error: Exception) {
+            AppLogger.e(TAG, "Erro ao carregar posts antigos do grupo $groupId", error)
+            Result.failure(error)
+        }
+    }
+
+    /**
+     * Cria post de texto diretamente ou envia foto/vídeo pelo pipeline assíncrono.
+     *
+     * [clientRequestId] é estável entre retries: texto usa esse valor como id do
+     * documento e mídia o envia ao callable de reserva. Assim uma resposta perdida
+     * não cria duas publicações. O callback só chega a 100 quando o upload terminou;
+     * a função retorna sucesso apenas depois que o draft do servidor fica READY.
+     */
+    suspend fun createPost(
+        groupId: String,
+        text: String,
+        mediaUri: Uri? = null,
+        clientRequestId: String = UUID.randomUUID().toString(),
+        onProgress: (Int) -> Unit = {}
+    ): Result<Unit> {
         return try {
             val currentUser = auth.currentUser
-                ?: throw IllegalStateException("Usuário não autenticado")
+                ?: error("Usuário não autenticado")
             val cleanText = text.trim()
-            require(cleanText.isNotEmpty()) {
-                "O texto nao pode estar vazio."
-            }
             require(cleanText.length <= MAX_TEXT_LENGTH) {
                 "Texto deve ter no máximo $MAX_TEXT_LENGTH caracteres"
             }
-
-            var mediaUrl: String? = null
-            var mediaPath: String? = null
-            var mediaType: String? = null
-
-            if (imageUri != null) {
-                val uploadResult = uploadWallMedia(groupId, imageUri)
-                mediaUrl = uploadResult.first
-                mediaPath = uploadResult.second
-                mediaType = "image/jpeg"
+            require(CLIENT_REQUEST_ID_REGEX.matches(clientRequestId)) {
+                "Identificador de envio inválido"
             }
 
-            try {
-                val post = mapOf(
-                    "group_id" to groupId,
-                    "author_id" to currentUser.uid,
-                    "author_name" to (currentUser.displayName ?: "Jogador"),
-                    "author_photo_url" to (currentUser.photoUrl?.toString() ?: null),
-                    "text" to cleanText,
-                    "media_url" to mediaUrl,
-                    "media_path" to mediaPath,
-                    "media_type" to mediaType,
-                    "thumbnail_path" to null,
-                    "highlight_ref" to null,
-                    "pinned" to false,
-                    "pinned_by" to null,
-                    "pinned_at" to null,
-                    "reactions" to emptyMap<String, List<String>>(),
-                    "comments_count" to 0,
-                    "created_at" to FieldValue.serverTimestamp(),
-                    "updated_at" to FieldValue.serverTimestamp(),
-                    "edited_at" to null,
-                    "deleted_by" to null,
-                    "deleted_at" to null
-                )
+            val media = mediaUri?.let { mediaPipeline.inspect(it) }
+            require(cleanText.isNotEmpty() || media != null) {
+                "Escreva uma mensagem ou escolha uma foto ou vídeo."
+            }
 
-                wallCollection(groupId).add(post).await()
-            } catch (e: Exception) {
-                deleteStoragePaths(storage, TAG, mediaPath)
-                throw e
+            if (media == null) {
+                createTextPostIdempotently(
+                    groupId = groupId,
+                    clientRequestId = clientRequestId,
+                    authorId = currentUser.uid,
+                    authorName = currentUser.displayName ?: "Jogador",
+                    authorPhotoUrl = currentUser.photoUrl?.toString(),
+                    text = cleanText
+                )
+            } else {
+                createMediaPost(
+                    groupId = groupId,
+                    text = cleanText,
+                    media = media,
+                    clientRequestId = clientRequestId,
+                    onProgress = onProgress
+                )
             }
 
             AppLogger.d(TAG) { "Post criado no mural do grupo $groupId" }
             Result.success(Unit)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             AppLogger.e(TAG, "Erro ao criar post no mural do grupo $groupId", e)
             Result.failure(e)
         }
+    }
+
+    private suspend fun createTextPostIdempotently(
+        groupId: String,
+        clientRequestId: String,
+        authorId: String,
+        authorName: String,
+        authorPhotoUrl: String?,
+        text: String
+    ) {
+        val postRef = wallCollection(groupId).document(clientRequestId)
+        val alreadyExists = postRef.existsOrFalse()
+        if (alreadyExists) return
+
+        val post = mapOf(
+            "group_id" to groupId,
+            "author_id" to authorId,
+            "author_name" to authorName,
+            "author_photo_url" to authorPhotoUrl,
+            "text" to text,
+            "media_url" to null,
+            "media_path" to null,
+            "media_type" to null,
+            "thumbnail_path" to null,
+            "highlight_ref" to null,
+            "pinned" to false,
+            "pinned_by" to null,
+            "pinned_at" to null,
+            "reactions" to emptyMap<String, List<String>>(),
+            "comments_count" to 0,
+            "created_at" to FieldValue.serverTimestamp(),
+            "updated_at" to FieldValue.serverTimestamp(),
+            "edited_at" to null,
+            "deleted_by" to null,
+            "deleted_at" to null
+        )
+
+        try {
+            postRef.set(post).await()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (writeError: Exception) {
+            // Resposta de rede perdida depois do commit: confirma pelo id estável.
+            val committed = postRef.existsOrFalse()
+            if (!committed) throw writeError
+        }
+    }
+
+    private suspend fun createMediaPost(
+        groupId: String,
+        text: String,
+        media: GroupWallMediaFile,
+        clientRequestId: String,
+        onProgress: (Int) -> Unit
+    ) {
+        val draft = mediaPipeline.createDraft(
+            groupId = groupId,
+            text = text,
+            media = media,
+            clientRequestId = clientRequestId
+        )
+        require(media.sizeBytes < draft.maxBytes) {
+            "A mídia excede o limite aceito pelo servidor."
+        }
+
+        val initialStatus = mediaPipeline.getDraftStatus(groupId, draft.postId)
+        when (initialStatus.state) {
+            GroupWallMediaDraftState.AWAITING_UPLOAD -> {
+                mediaPipeline.upload(draft, media, onProgress)
+            }
+            GroupWallMediaDraftState.PROCESSING -> onProgress(100)
+            GroupWallMediaDraftState.READY,
+            GroupWallMediaDraftState.REJECTED,
+            GroupWallMediaDraftState.EXPIRED -> {
+                initialStatus.requireReady()
+                return
+            }
+            GroupWallMediaDraftState.UNKNOWN -> error(
+                "O servidor retornou um estado de mídia desconhecido."
+            )
+        }
+
+        onProgress(100)
+        mediaPipeline.awaitTerminalStatus(groupId, draft.postId).requireReady()
     }
 
     /**
@@ -172,7 +315,7 @@ class GroupWallRepository constructor(
     suspend fun editPost(groupId: String, postId: String, text: String): Result<Unit> {
         return try {
             val currentUser = auth.currentUser
-                ?: throw IllegalStateException("Usuário não autenticado")
+                ?: error("Usuário não autenticado")
             val cleanText = text.trim()
             require(cleanText.isNotEmpty() && cleanText.length <= MAX_TEXT_LENGTH) {
                 "Texto deve ter entre 1 e $MAX_TEXT_LENGTH caracteres"
@@ -199,7 +342,7 @@ class GroupWallRepository constructor(
     suspend fun togglePin(groupId: String, postId: String, pinned: Boolean): Result<Unit> {
         return try {
             val currentUser = auth.currentUser
-                ?: throw IllegalStateException("Usuário não autenticado")
+                ?: error("Usuário não autenticado")
 
             val updates = if (pinned) {
                 mapOf(
@@ -237,7 +380,7 @@ class GroupWallRepository constructor(
     ): Result<Unit> {
         return try {
             val currentUser = auth.currentUser
-                ?: throw IllegalStateException("Usuário não autenticado")
+                ?: error("Usuário não autenticado")
             require(SocialReactionEmojis.contains(emoji)) {
                 "Reação inválida"
             }
@@ -272,7 +415,7 @@ class GroupWallRepository constructor(
     suspend fun deletePost(groupId: String, post: GroupWallPost): Result<Unit> {
         return try {
             val currentUser = auth.currentUser
-                ?: throw IllegalStateException("Usuário não autenticado")
+                ?: error("Usuário não autenticado")
 
             val batch = firestore.batch()
             val postRef = wallCollection(groupId).document(post.id)
@@ -296,69 +439,60 @@ class GroupWallRepository constructor(
         }
     }
 
-    private suspend fun uploadWallMedia(groupId: String, uri: Uri): Pair<String, String> {
-        val currentUser = auth.currentUser ?: throw IllegalStateException("Usuário não autenticado")
-        val fileSize = getFileSize(uri)
-        if (fileSize > MAX_IMAGE_SIZE_BYTES) {
-            throw IllegalArgumentException("Imagem muito grande. O limite é 10MB.")
-        }
-        val extension = "jpg"
-        val fileName = "${System.currentTimeMillis()}-${UUID.randomUUID()}.$extension"
-        val path = "groups/$groupId/wall_media/__draft__/${currentUser.uid}/$fileName"
-        val ref = storage.getReference(path)
-
-        val metadata = com.google.firebase.storage.StorageMetadata.Builder()
-            .setContentType("image/jpeg")
-            .build()
-
-        ref.putFile(uri, metadata).await()
-        val downloadUrl = ref.downloadUrl.await().toString()
-        return downloadUrl to path
-    }
-
-    private fun getFileSize(uri: Uri): Long {
-        return try {
-            val descriptorSize = context.contentResolver
-                .openFileDescriptor(uri, "r")
-                ?.use { it.statSize } ?: -1L
-            if (descriptorSize >= 0L) {
-                return descriptorSize
-            }
-
-            context.contentResolver
-                .query(uri, arrayOf(OpenableColumns.SIZE), null, null, null)
-                ?.use { cursor ->
-                    val sizeIndex = cursor.getColumnIndex(OpenableColumns.SIZE)
-                    if (sizeIndex >= 0 && cursor.moveToFirst() && !cursor.isNull(sizeIndex)) {
-                        cursor.getLong(sizeIndex)
-                    } else {
-                        Long.MAX_VALUE
-                    }
-                } ?: Long.MAX_VALUE
-        } catch (e: Exception) {
-            AppLogger.w(TAG) { "Erro ao obter tamanho da imagem: ${e.message}" }
-            Long.MAX_VALUE
-        }
-    }
 }
+
+private val CLIENT_REQUEST_ID_REGEX = Regex(
+    "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+    RegexOption.IGNORE_CASE
+)
 
 internal fun mergeRecentAndPinnedPosts(
     recentPosts: List<GroupWallPost>,
     pinnedPosts: List<GroupWallPost>
+): List<GroupWallPost> = mergeWallPostTimeline(
+    recentPosts = recentPosts,
+    pinnedPosts = pinnedPosts
+)
+
+internal fun mergeWallPostTimeline(
+    recentPosts: List<GroupWallPost>,
+    olderPosts: List<GroupWallPost> = emptyList(),
+    pinnedPosts: List<GroupWallPost> = emptyList()
 ): List<GroupWallPost> {
-    val pinned = (recentPosts + pinnedPosts)
-        .filter { it.pinned && !it.isDeleted() }
+    val visiblePosts = (recentPosts + pinnedPosts + olderPosts)
         .distinctBy { it.id }
+        .filterNot { it.isDeleted() }
+
+    val pinned = visiblePosts
+        .filter { it.pinned && !it.isDeleted() }
         .sortedWith(
             compareByDescending<GroupWallPost> { it.pinnedAt ?: it.createdAt ?: Date(0) }
                 .thenByDescending { it.createdAt ?: Date(0) }
+                .thenByDescending { it.id }
         )
 
-    val regular = recentPosts
+    val regular = visiblePosts
         .filter { !it.pinned && !it.isDeleted() }
-        .distinctBy { it.id }
+        .sortedWith(
+            // Um serverTimestamp local ainda pendente chega como null; por ser a
+            // publicação recém-enviada, ela deve permanecer no topo até o ACK.
+            compareByDescending<GroupWallPost> { it.createdAt ?: Date(Long.MAX_VALUE) }
+                .thenByDescending { it.id }
+        )
 
     return pinned + regular
+}
+
+private fun List<DocumentSnapshot>.toWallPosts(): List<GroupWallPost> = mapNotNull { document ->
+    document.toObject(GroupWallPost::class.java)?.copy(id = document.id)
+}
+
+private suspend fun DocumentReference.existsOrFalse(): Boolean = try {
+    get().await().exists()
+} catch (error: CancellationException) {
+    throw error
+} catch (_: Exception) {
+    false
 }
 
 private suspend fun deleteStoragePaths(storage: FirebaseStorage, tag: String, vararg paths: String?) {

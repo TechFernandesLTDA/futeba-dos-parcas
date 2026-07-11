@@ -1,7 +1,52 @@
 {
   "platform": "android",
-  "generatedAt": "2026-07-11T14:23:07.456Z",
+  "generatedAt": "2026-07-11T20:45:49.279Z",
   "notes": [
+    {
+      "version": "1.37.0",
+      "buildNumber": 72,
+      "releaseDate": "2026-07-11",
+      "type": "minor",
+      "showPopup": true,
+      "published": true,
+      "headline": "O Mural no Android agora envia, acompanha e reproduz fotos e vídeos com a mesma segurança da Web.",
+      "highlights": [
+        {
+          "icon": "photo_library",
+          "title": "Seletor moderno",
+          "description": "Escolha imagem ou vídeo diretamente pelo seletor seguro do Android."
+        },
+        {
+          "icon": "upload",
+          "title": "Progresso e recuperação",
+          "description": "A tela mostra envio e processamento, permite cancelar e recupera retries sem duplicar a mensagem."
+        },
+        {
+          "icon": "play_circle",
+          "title": "Reprodução rápida",
+          "description": "Vídeos mostram a capa primeiro e abrem o player somente após o toque."
+        }
+      ],
+      "added": [
+        "Upload resumível de JPEG, PNG, WebP e MP4 compatível, com limites claros de tamanho e duração.",
+        "Atualização em tempo real do rascunho até a mídia estar pronta para o grupo.",
+        "Capa de vídeo e reprodução sob demanda no Mural e no feed social.",
+        "Timeline newest-first com páginas históricas de 20 itens e carregamento infinito conforme a pessoa navega."
+      ],
+      "improved": [],
+      "fixed": [
+        "Arquivos com extensão enganosa ou formato inválido são recusados antes do envio.",
+        "Erros terminais liberam uma nova tentativa; falhas de rede preservam a mesma operação idempotente.",
+        "Texto e anexo permanecem no compositor quando a publicação não consegue concluir.",
+        "Modelo Android passa a mapear `thumbnail_url` publicado pelo backend.",
+        "ViewModel mantém UUID estável durante retries recuperáveis e o reinicia apenas em estados terminais.",
+        "Estados de progresso, cancelamento, processamento e erro ficam alinhados ao contrato compartilhado do Mural."
+      ],
+      "issueRefs": [
+        3518,
+        3519
+      ]
+    },
     {
       "version": "1.36.8",
       "buildNumber": 71,

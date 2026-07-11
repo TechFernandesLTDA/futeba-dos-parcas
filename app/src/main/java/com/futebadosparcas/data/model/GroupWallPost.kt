@@ -49,6 +49,50 @@ data class GroupWallPost(
     @set:PropertyName("thumbnail_path")
     var thumbnailPath: String? = null,
 
+    @get:PropertyName("thumbnail_url")
+    @set:PropertyName("thumbnail_url")
+    var thumbnailUrl: String? = null,
+
+    @get:PropertyName("media_status")
+    @set:PropertyName("media_status")
+    var mediaStatus: String? = null,
+
+    @get:PropertyName("media_pipeline_version")
+    @set:PropertyName("media_pipeline_version")
+    var mediaPipelineVersion: Int? = null,
+
+    @get:PropertyName("media_sha256")
+    @set:PropertyName("media_sha256")
+    var mediaSha256: String? = null,
+
+    @get:PropertyName("media_source_type")
+    @set:PropertyName("media_source_type")
+    var mediaSourceType: String? = null,
+
+    @get:PropertyName("media_duration_sec")
+    @set:PropertyName("media_duration_sec")
+    var mediaDurationSec: Double? = null,
+
+    @get:PropertyName("media_video_codec")
+    @set:PropertyName("media_video_codec")
+    var mediaVideoCodec: String? = null,
+
+    @get:PropertyName("media_audio_codec")
+    @set:PropertyName("media_audio_codec")
+    var mediaAudioCodec: String? = null,
+
+    @get:PropertyName("media_container")
+    @set:PropertyName("media_container")
+    var mediaContainer: String? = null,
+
+    @get:PropertyName("media_width")
+    @set:PropertyName("media_width")
+    var mediaWidth: Int? = null,
+
+    @get:PropertyName("media_height")
+    @set:PropertyName("media_height")
+    var mediaHeight: Int? = null,
+
     @get:PropertyName("highlight_ref")
     @set:PropertyName("highlight_ref")
     var highlightRef: HighlightRef? = null,

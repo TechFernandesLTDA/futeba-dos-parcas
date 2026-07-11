@@ -310,6 +310,14 @@ service cloud.firestore {
       return groupDoc != null && (groupDoc.data.status == 'ACTIVE' || !('status' in groupDoc.data));
     }
 
+    function isLegacyWallMediaCompatEnabled() {
+      let config = get(/databases/$(database)/documents/system_config/group_wall_media_compat);
+      return config != null &&
+             config.data.enabled == true &&
+             config.data.disable_after is timestamp &&
+             request.time < config.data.disable_after;
+    }
+
     // Criar jogo exige um grupo base qualificado: dono atual + >= 5 membros.
     function canCreateGameForQualifiedOwnedGroup(data) {
       return data.get('group_id', null) is string &&
@@ -2517,6 +2525,23 @@ service cloud.firestore {
       }
 
       // ============================================
+      // SUB-COLECAO: wall_post_drafts (pipeline assíncrono de mídia)
+      // Escrita somente via Cloud Functions/Admin SDK. Separar drafts de
+      // wall_posts preserva as queries legadas do feed: só READY é publicado.
+      // ============================================
+      match /wall_post_drafts/{postId} {
+        allow get, list: if isAuthenticated() && (
+          isAdmin() ||
+          canModerateGroupWall(groupId) ||
+          (
+            canUseGroupWall(groupId) &&
+            resource.data.author_id == userId()
+          )
+        );
+        allow create, update, delete: if false;
+      }
+
+      // ============================================
       // SUB-COLECAO: wall_posts (mural de resenha/provocacoes do grupo)
       // Issue #3232: feed social UGC por grupo.
       // ============================================
@@ -2550,19 +2575,51 @@ service cloud.firestore {
         }
 
         function isValidWallMedia() {
+          // Clientes novos publicam mídia somente via Admin SDK/pipeline. Esta
+          // segunda cláusula mantém a versão Web/Android já distribuída durante
+          // a janela de migração, restrita ao __draft__ do próprio autor.
           return (
             request.resource.data.media_url == null &&
             request.resource.data.media_path == null &&
             request.resource.data.media_type == null &&
             request.resource.data.thumbnail_path == null
           ) || (
+            isLegacyWallMediaCompatEnabled() &&
             request.resource.data.media_url is string &&
             request.resource.data.media_url.size() > 0 &&
             request.resource.data.media_url.size() <= 2048 &&
-            request.resource.data.media_url.matches('https://firebasestorage.googleapis.com/.*') &&
+            request.resource.data.media_url.matches(
+              'https://firebasestorage\\.googleapis\\.com/v0/b/' +
+              'futebadosparcas\\.firebasestorage\\.app/o/groups%2F' + groupId +
+              '%2Fwall_media%2F__draft__%2F' + userId() + '%2F.*'
+            ) &&
             request.resource.data.media_path is string &&
-            request.resource.data.media_path.matches('groups/' + groupId + '/wall_media/[A-Za-z0-9._/-]+\\.(jpg|jpeg|png|webp|mp4)') &&
-            request.resource.data.media_type in ['image/jpeg', 'image/png', 'image/webp', 'video/mp4'] &&
+            request.resource.data.media_path.matches(
+              'groups/' + groupId + '/wall_media/__draft__/' + userId() +
+              '/[A-Za-z0-9._-]+\\.(jpg|jpeg|png|webp|mp4)'
+            ) &&
+            (
+              (request.resource.data.media_type == 'image/jpeg' &&
+               request.resource.data.media_path.matches(
+                 'groups/' + groupId + '/wall_media/__draft__/' + userId() +
+                 '/[A-Za-z0-9._-]+\\.(jpg|jpeg)'
+               )) ||
+              (request.resource.data.media_type == 'image/png' &&
+               request.resource.data.media_path.matches(
+                 'groups/' + groupId + '/wall_media/__draft__/' + userId() +
+                 '/[A-Za-z0-9._-]+\\.png'
+               )) ||
+              (request.resource.data.media_type == 'image/webp' &&
+               request.resource.data.media_path.matches(
+                 'groups/' + groupId + '/wall_media/__draft__/' + userId() +
+                 '/[A-Za-z0-9._-]+\\.webp'
+               )) ||
+              (request.resource.data.media_type == 'video/mp4' &&
+               request.resource.data.media_path.matches(
+                 'groups/' + groupId + '/wall_media/__draft__/' + userId() +
+                 '/[A-Za-z0-9._-]+\\.mp4'
+               ))
+            ) &&
             request.resource.data.thumbnail_path == null
           );
         }
@@ -2605,6 +2662,7 @@ service cloud.firestore {
         allow create: if isAuthenticated() &&
           canUseGroupWall(groupId) &&
           isGroupActive(groupId) &&
+          !exists(/databases/$(database)/documents/groups/$(groupId)/wall_post_drafts/$(postId)) &&
           request.resource.data.author_id == userId() &&
           request.resource.data.group_id == groupId &&
           isValidWallAuthorName() &&
