@@ -58,9 +58,10 @@ O mapa completo está em [`docs/PROJECT_MAP.md`](docs/PROJECT_MAP.md).
 | --- | --- |
 | Git + acesso ao repositório | Clone, branches e PRs |
 | Node.js 22 | Web, Functions e scripts; versão definida em [`.nvmrc`](.nvmrc) |
-| JDK 17 | Build Android/Gradle |
+| JDK 21 | Build Android/Gradle e emuladores Firebase atuais |
 | Android Studio + SDK 36 | Desenvolvimento Android (`minSdk 24`, `targetSdk 35`) |
 | Firebase CLI | Emuladores e deploy autorizado |
+| FFmpeg 8.1.2+ | Smoke local dos processadores de vídeo; produção usa artefato pinado |
 | Xcode | Desenvolvimento e validação do host iOS |
 
 Use instalações LTS e os lockfiles do repositório. Para JavaScript, prefira `npm ci`; não atualize dependências implicitamente durante o setup.
@@ -107,6 +108,8 @@ Use um `google-services.json` autorizado para fluxos Firebase reais. O arquivo d
 ```bash
 cd functions
 npm ci
+# macOS: `brew install ffmpeg`; Linux/Cloud Build: artefato pinado pelo script abaixo.
+npm run install:ffmpeg
 npm run build
 npm run lint
 npx jest --no-coverage
@@ -205,6 +208,7 @@ fonte durável para binários de distribuição.
 | [`docs/LLM_WORKSPACE_GUIDE.md`](docs/LLM_WORKSPACE_GUIDE.md) | Ordem de leitura e fontes de verdade para agentes |
 | [`docs/BUSINESS_RULES.md`](docs/BUSINESS_RULES.md) | Jogos, XP, ranking e regras de domínio |
 | [`docs/MONTHLY_FINANCE.md`](docs/MONTHLY_FINANCE.md) | Mensalistas, recorrência, feriados, baixa e estorno |
+| [`docs/operations/GROUP_WALL_MEDIA_PIPELINE.md`](docs/operations/GROUP_WALL_MEDIA_PIPELINE.md) | Mural, mídia, FFmpeg, retries, escala, IAM e rollback |
 | [`docs/QA_SMOKE_MATRIX.md`](docs/QA_SMOKE_MATRIX.md) | Gates de regressão e release |
 | [`docs/RELEASE_PROCESS.md`](docs/RELEASE_PROCESS.md) | Versionamento, notas, tags e deploy |
 | [`docs/SETUP_GUIDE.md`](docs/SETUP_GUIDE.md) | Setup detalhado por plataforma |

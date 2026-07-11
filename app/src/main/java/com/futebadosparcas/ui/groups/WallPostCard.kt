@@ -1,6 +1,8 @@
 package com.futebadosparcas.ui.groups
 
 import android.view.ViewGroup
+import androidx.annotation.OptIn
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -8,17 +10,20 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.AssistChip
@@ -44,6 +49,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -243,7 +251,10 @@ fun WallPostCard(
             val mediaUrl = post.mediaUrl
             if (!mediaUrl.isNullOrBlank()) {
                 when (resolveWallMediaKind(post.mediaType, mediaUrl)) {
-                    WallMediaKind.VIDEO -> WallPostVideoPlayer(mediaUrl)
+                    WallMediaKind.VIDEO -> WallPostVideoPlayer(
+                        url = mediaUrl,
+                        posterUrl = post.thumbnailUrl
+                    )
                     WallMediaKind.IMAGE -> AsyncImage(
                         model = mediaUrl,
                         contentDescription = stringResource(R.string.group_wall_image_alt, post.authorName),
@@ -291,14 +302,61 @@ internal fun resolveWallMediaKind(mediaType: String?, mediaUrl: String): WallMed
 
 @OptIn(UnstableApi::class)
 @Composable
-private fun WallPostVideoPlayer(url: String) {
+private fun WallPostVideoPlayer(url: String, posterUrl: String?) {
+    var playbackRequested by remember(url) { mutableStateOf(false) }
+    val playbackPolicy = resolveWallVideoPlaybackPolicy(playbackRequested)
+    val playVideoLabel = stringResource(R.string.group_wall_play_video)
+
+    if (!playbackPolicy.createPlayer) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(220.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+                .semantics { contentDescription = playVideoLabel }
+                .clickable(role = Role.Button) { playbackRequested = true },
+            contentAlignment = Alignment.Center
+        ) {
+            if (!posterUrl.isNullOrBlank()) {
+                AsyncImage(
+                    model = posterUrl,
+                    contentDescription = stringResource(R.string.group_wall_video_poster),
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.28f))
+                )
+            }
+            Icon(
+                imageVector = Icons.Default.PlayArrow,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                modifier = Modifier
+                    .size(64.dp)
+                    .background(MaterialTheme.colorScheme.primaryContainer, CircleShape)
+                    .padding(16.dp)
+            )
+        }
+        return
+    }
+
+    ActiveWallPostVideoPlayer(url = url)
+}
+
+@OptIn(UnstableApi::class)
+@Composable
+private fun ActiveWallPostVideoPlayer(url: String) {
     val context = LocalContext.current
     var retryKey by remember(url) { mutableIntStateOf(0) }
     var playbackFailed by remember(url, retryKey) { mutableStateOf(false) }
     val player = remember(url, retryKey) {
         ExoPlayer.Builder(context).build().apply {
             setMediaItem(MediaItem.fromUri(url))
-            playWhenReady = false
+            playWhenReady = true
         }
     }
 
@@ -356,6 +414,16 @@ private fun WallPostVideoPlayer(url: String) {
         )
     }
 }
+
+internal data class WallVideoPlaybackPolicy(
+    val createPlayer: Boolean
+)
+
+internal fun resolveWallVideoPlaybackPolicy(
+    playbackRequested: Boolean
+): WallVideoPlaybackPolicy = WallVideoPlaybackPolicy(
+    createPlayer = playbackRequested
+)
 
 @Composable
 private fun UnsupportedWallMedia() {

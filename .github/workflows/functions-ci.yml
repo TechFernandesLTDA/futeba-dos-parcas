@@ -71,6 +71,42 @@ jobs:
       - name: Run ESLint
         run: npm run lint
 
+  media-runtime-linux:
+    name: FFmpeg 8.1.2 Linux Security Gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: functions/package-lock.json
+
+      - name: Restore verified FFmpeg binary
+        uses: actions/cache@v4
+        with:
+          path: |
+            functions/vendor/ffmpeg/ffmpeg
+            functions/vendor/ffmpeg/install-manifest.json
+          key: ffmpeg-linux-x64-13c2088bdbf4f1baa529d537c37872c810872b8ffab4fa74d39aea4d0332a9b7
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install and verify pinned Linux FFmpeg
+        run: npm run install:ffmpeg
+
+      - name: Execute real H264 poster security smoke
+        run: >-
+          npx jest --no-coverage --runInBand
+          test/group-wall-media-ffmpeg.test.ts
+          test/group-wall-media-contract.test.ts
+
   test:
     name: Unit Tests
     runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}

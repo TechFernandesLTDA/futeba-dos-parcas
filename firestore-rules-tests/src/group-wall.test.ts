@@ -20,6 +20,12 @@ const UID_WALL_MEMBER = "uid-wall-member-001";
 const UID_WALL_LEGACY_MEMBER = "uid-wall-legacy-member-001";
 const UID_WALL_INACTIVE = "uid-wall-inactive-001";
 const UID_WALL_ADMIN = "uid-wall-admin-001";
+const ANDROID_TEXT_REQUEST_ID = "0190c2d4-90c2-7b1d-a43d-4f7e05bdb999";
+
+function webAutoPostId(label: string): string {
+  return `${label.replace(/[^A-Za-z0-9]/g, "")}00000000000000000000`
+    .slice(0, 20);
+}
 
 function asWallOwner() {
   return asUser(testEnv, UID_WALL_OWNER);
@@ -98,6 +104,10 @@ beforeAll(async () => {
     status: "ACTIVE",
     member_count: 3,
   });
+  await seedDoc(testEnv, "system_config/group_wall_media_compat", {
+    enabled: true,
+    disable_after: new Date(Date.now() + 24 * 60 * 60 * 1000),
+  });
 
   await seedDoc(testEnv, `groups/${GROUP_ID}/members/${UID_WALL_OWNER}`, {
     user_id: UID_WALL_OWNER,
@@ -146,6 +156,51 @@ afterAll(async () => {
   await testEnv.cleanup();
 });
 
+describe("groups/{groupId}/wall_post_drafts", () => {
+  const postId = "a".repeat(40);
+  const draftPath = `groups/${GROUP_ID}/wall_post_drafts/${postId}`;
+
+  beforeAll(async () => {
+    await seedDoc(testEnv, draftPath, {
+      pipeline_version: 1,
+      post_id: postId,
+      group_id: GROUP_ID,
+      author_id: UID_WALL_MEMBER,
+      status: "AWAITING_UPLOAD",
+      error_code: null,
+      error_message: null,
+      expires_at: new Date(Date.now() + 60_000),
+    });
+  });
+
+  it("autor pode observar o próprio draft e admin pode moderar", async () => {
+    await assertSucceeds(asWallMember().doc(draftPath).get());
+    await assertSucceeds(asWallAdmin().doc(draftPath).get());
+    await assertSucceeds(asWallMember()
+      .collection(`groups/${GROUP_ID}/wall_post_drafts`)
+      .where("author_id", "==", UID_WALL_MEMBER)
+      .get());
+  });
+
+  it("outro membro, outsider e anônimo não leem o draft", async () => {
+    await assertFails(asWallLegacyMember().doc(draftPath).get());
+    await assertFails(asUser(testEnv, UID_OUTSIDER).doc(draftPath).get());
+    await assertFails(asAnon(testEnv).doc(draftPath).get());
+  });
+
+  it("clientes não criam, alteram nem removem estado do pipeline", async () => {
+    const forged = `groups/${GROUP_ID}/wall_post_drafts/${"b".repeat(40)}`;
+    await assertFails(asWallMember().doc(forged).set({
+      post_id: "b".repeat(40),
+      group_id: GROUP_ID,
+      author_id: UID_WALL_MEMBER,
+      status: "READY",
+    }));
+    await assertFails(asWallMember().doc(draftPath).update({status: "READY"}));
+    await assertFails(asWallMember().doc(draftPath).delete());
+  });
+});
+
 describe("groups/{groupId}/wall_posts", () => {
   it("membro pode ler posts do mural", async () => {
     await assertSucceeds(
@@ -158,7 +213,9 @@ describe("groups/{groupId}/wall_posts", () => {
       asWallLegacyMember().collection(`groups/${GROUP_ID}/wall_posts`).get()
     );
     await assertSucceeds(
-      asWallLegacyMember().doc(`groups/${GROUP_ID}/wall_posts/post-legacy-member`).set({
+      asWallLegacyMember().doc(
+        `groups/${GROUP_ID}/wall_posts/${webAutoPostId("post-legacy-member")}`
+      ).set({
         ...validPost,
         author_id: UID_WALL_LEGACY_MEMBER,
         author_name: "Legacy Member",
@@ -173,7 +230,9 @@ describe("groups/{groupId}/wall_posts", () => {
       asWallInactiveMember().collection(`groups/${GROUP_ID}/wall_posts`).get()
     );
     await assertFails(
-      asWallInactiveMember().doc(`groups/${GROUP_ID}/wall_posts/post-inactive`).set({
+      asWallInactiveMember().doc(
+        `groups/${GROUP_ID}/wall_posts/${webAutoPostId("post-inactive")}`
+      ).set({
         ...validPost,
         author_id: UID_WALL_INACTIVE,
         author_name: "Inactive Member",
@@ -203,7 +262,9 @@ describe("groups/{groupId}/wall_posts", () => {
 
   it("membro pode criar post", async () => {
     await assertSucceeds(
-      asWallMember().doc(`groups/${GROUP_ID}/wall_posts/post-1`).set({
+      asWallMember().doc(
+        `groups/${GROUP_ID}/wall_posts/${webAutoPostId("post-1")}`
+      ).set({
         ...validPost,
         author_id: UID_WALL_MEMBER,
         created_at: serverTimestamp(),
@@ -211,9 +272,71 @@ describe("groups/{groupId}/wall_posts", () => {
     );
   });
 
+  it("aceita UUID Android idempotente e bloqueia IDs arbitrários", async () => {
+    await assertSucceeds(
+      asWallMember().doc(
+        `groups/${GROUP_ID}/wall_posts/${ANDROID_TEXT_REQUEST_ID}`
+      ).set({
+        ...validPost,
+        author_id: UID_WALL_MEMBER,
+        created_at: serverTimestamp(),
+      })
+    );
+    await assertFails(
+      asWallMember().doc(`groups/${GROUP_ID}/wall_posts/request-arbitrario`).set({
+        ...validPost,
+        author_id: UID_WALL_MEMBER,
+        created_at: serverTimestamp(),
+      })
+    );
+    await assertFails(
+      asWallMember().doc(
+        `groups/${GROUP_ID}/wall_posts/0190c2d4-90c2-9b1d-a43d-4f7e05bdb999`
+      ).set({
+        ...validPost,
+        author_id: UID_WALL_MEMBER,
+        created_at: serverTimestamp(),
+      })
+    );
+  });
+
+  it("post READY do pipeline mantém leitura e edição social legadas", async () => {
+    const postPath = `groups/${GROUP_ID}/wall_posts/post-pipeline-ready`;
+    await seedDoc(testEnv, postPath, {
+      ...validPost,
+      author_id: UID_WALL_MEMBER,
+      text: "",
+      media_url: "https://firebasestorage.googleapis.com/media.mp4",
+      media_path: `groups/${GROUP_ID}/wall_media/post-pipeline-ready/original/hash.mp4`,
+      media_type: "video/mp4",
+      thumbnail_path: `groups/${GROUP_ID}/wall_media/post-pipeline-ready/poster/hash.webp`,
+      thumbnail_url: "https://firebasestorage.googleapis.com/poster.webp",
+      media_status: "READY",
+      media_pipeline_version: 1,
+      media_pipeline_draft_id: "post-pipeline-ready",
+      media_sha256: "a".repeat(64),
+      media_source_type: "video/mp4",
+      media_duration_sec: 12.3,
+      media_video_codec: "h264",
+      media_audio_codec: "aac",
+      media_container: "mp4",
+      media_width: 1280,
+      media_height: 720,
+      created_at: new Date(),
+    });
+    await assertSucceeds(asWallMember().doc(postPath).get());
+    await assertSucceeds(asWallMember().doc(postPath).update({
+      text: "Legenda depois do processamento",
+      edited_at: serverTimestamp(),
+      updated_at: serverTimestamp(),
+    }));
+  });
+
   it("admin do grupo pode criar post", async () => {
     await assertSucceeds(
-      asWallAdmin().doc(`groups/${GROUP_ID}/wall_posts/post-admin`).set({
+      asWallAdmin().doc(
+        `groups/${GROUP_ID}/wall_posts/${webAutoPostId("post-admin")}`
+      ).set({
         ...validPost,
         author_id: UID_WALL_ADMIN,
         author_name: "Player C",
@@ -225,7 +348,9 @@ describe("groups/{groupId}/wall_posts", () => {
 
   it("owner legado sem status ACTIVE no member doc pode criar post", async () => {
     await assertSucceeds(
-      asWallOwner().doc(`groups/${LEGACY_OWNER_GROUP_ID}/wall_posts/post-legacy-owner`).set({
+      asWallOwner().doc(
+        `groups/${LEGACY_OWNER_GROUP_ID}/wall_posts/${webAutoPostId("post-legacy-owner")}`
+      ).set({
         ...validPost,
         group_id: LEGACY_OWNER_GROUP_ID,
         author_id: UID_WALL_OWNER,
@@ -238,7 +363,9 @@ describe("groups/{groupId}/wall_posts", () => {
 
   it("bloqueia forjar autoria", async () => {
     await assertFails(
-      asWallMember().doc(`groups/${GROUP_ID}/wall_posts/post-forge`).set({
+      asWallMember().doc(
+        `groups/${GROUP_ID}/wall_posts/${webAutoPostId("post-forge")}`
+      ).set({
         ...validPost,
         author_id: UID_WALL_OWNER,
         created_at: serverTimestamp(),
@@ -248,7 +375,9 @@ describe("groups/{groupId}/wall_posts", () => {
 
   it("bloqueia texto vazio ou muito longo", async () => {
     await assertFails(
-      asWallMember().doc(`groups/${GROUP_ID}/wall_posts/post-empty`).set({
+      asWallMember().doc(
+        `groups/${GROUP_ID}/wall_posts/${webAutoPostId("post-empty")}`
+      ).set({
         ...validPost,
         author_id: UID_WALL_MEMBER,
         text: "",
@@ -256,7 +385,9 @@ describe("groups/{groupId}/wall_posts", () => {
       })
     );
     await assertFails(
-      asWallMember().doc(`groups/${GROUP_ID}/wall_posts/post-long`).set({
+      asWallMember().doc(
+        `groups/${GROUP_ID}/wall_posts/${webAutoPostId("post-long")}`
+      ).set({
         ...validPost,
         author_id: UID_WALL_MEMBER,
         text: "x".repeat(501),
@@ -265,27 +396,44 @@ describe("groups/{groupId}/wall_posts", () => {
     );
   });
 
-  it("permite create com mídia válida mesmo sem legenda", async () => {
+  it("mantém mídia client-side somente na janela legada e path do autor", async () => {
     await assertSucceeds(
-      asWallMember().doc(`groups/${GROUP_ID}/wall_posts/post-media-empty`).set({
+      asWallMember().doc(
+        `groups/${GROUP_ID}/wall_posts/${webAutoPostId("post-media-empty")}`
+      ).set({
         ...validPost,
         author_id: UID_WALL_MEMBER,
         text: "",
-        media_url: "https://firebasestorage.googleapis.com/v0/b/demo/o/groups%2Fgroup-wall-test%2Fwall_media%2F__draft__%2Fuid-wall-member-001%2Fmedia.jpg?alt=media",
+        media_url: "https://firebasestorage.googleapis.com/v0/b/futebadosparcas.firebasestorage.app/o/groups%2Fgroup-wall-test%2Fwall_media%2F__draft__%2Fuid-wall-member-001%2Fmedia.jpg?alt=media",
         media_path: "groups/group-wall-test/wall_media/__draft__/uid-wall-member-001/media.jpg",
+        media_type: "image/jpeg",
+        created_at: serverTimestamp(),
+      })
+    );
+    await assertFails(
+      asWallMember().doc(
+        `groups/${GROUP_ID}/wall_posts/${webAutoPostId("post-media-copied")}`
+      ).set({
+        ...validPost,
+        author_id: UID_WALL_MEMBER,
+        text: "",
+        media_url: "https://firebasestorage.googleapis.com/v0/b/futebadosparcas.firebasestorage.app/o/groups%2Fgroup-wall-test%2Fwall_media%2F__draft__%2Fuid-wall-owner-001%2Fmedia.jpg?alt=media",
+        media_path: "groups/group-wall-test/wall_media/__draft__/uid-wall-owner-001/media.jpg",
         media_type: "image/jpeg",
         created_at: serverTimestamp(),
       })
     );
   });
 
-  it("permite create com vídeo MP4 mesmo sem legenda", async () => {
+  it("mantém vídeo MP4 legado até o gate ser desligado", async () => {
     await assertSucceeds(
-      asWallMember().doc(`groups/${GROUP_ID}/wall_posts/post-video`).set({
+      asWallMember().doc(
+        `groups/${GROUP_ID}/wall_posts/${webAutoPostId("post-video")}`
+      ).set({
         ...validPost,
         author_id: UID_WALL_MEMBER,
         text: "",
-        media_url: "https://firebasestorage.googleapis.com/v0/b/demo/o/groups%2Fgroup-wall-test%2Fwall_media%2F__draft__%2Fuid-wall-member-001%2Fclip.mp4?alt=media",
+        media_url: "https://firebasestorage.googleapis.com/v0/b/futebadosparcas.firebasestorage.app/o/groups%2Fgroup-wall-test%2Fwall_media%2F__draft__%2Fuid-wall-member-001%2Fclip.mp4?alt=media",
         media_path: "groups/group-wall-test/wall_media/__draft__/uid-wall-member-001/clip.mp4",
         media_type: "video/mp4",
         created_at: serverTimestamp(),
@@ -293,9 +441,52 @@ describe("groups/{groupId}/wall_posts", () => {
     );
   });
 
+  it("bloqueia mídia legada quando o gate operacional é desligado", async () => {
+    await seedDoc(testEnv, "system_config/group_wall_media_compat", {
+      enabled: false,
+      disable_after: new Date(Date.now() + 24 * 60 * 60 * 1000),
+    });
+    await assertFails(
+      asWallMember().doc(
+        `groups/${GROUP_ID}/wall_posts/${webAutoPostId("post-media-disabled")}`
+      ).set({
+        ...validPost,
+        author_id: UID_WALL_MEMBER,
+        text: "",
+        media_url: "https://firebasestorage.googleapis.com/v0/b/futebadosparcas.firebasestorage.app/o/groups%2Fgroup-wall-test%2Fwall_media%2F__draft__%2Fuid-wall-member-001%2Fdisabled.jpg?alt=media",
+        media_path: "groups/group-wall-test/wall_media/__draft__/uid-wall-member-001/disabled.jpg",
+        media_type: "image/jpeg",
+        created_at: serverTimestamp(),
+      })
+    );
+    await seedDoc(testEnv, "system_config/group_wall_media_compat", {
+      enabled: true,
+      disable_after: new Date(Date.now() + 24 * 60 * 60 * 1000),
+    });
+  });
+
+  it("não permite que post client-side ocupe id reservado pelo pipeline", async () => {
+    const postId = "a".repeat(40);
+    await seedDoc(testEnv, `groups/${GROUP_ID}/wall_post_drafts/${postId}`, {
+      group_id: GROUP_ID,
+      post_id: postId,
+      author_id: UID_WALL_MEMBER,
+      status: "AWAITING_UPLOAD",
+    });
+    await assertFails(
+      asWallMember().doc(`groups/${GROUP_ID}/wall_posts/${postId}`).set({
+        ...validPost,
+        author_id: UID_WALL_MEMBER,
+        created_at: serverTimestamp(),
+      })
+    );
+  });
+
   it("bloqueia backdate", async () => {
     await assertFails(
-      asWallMember().doc(`groups/${GROUP_ID}/wall_posts/post-backdate`).set({
+      asWallMember().doc(
+        `groups/${GROUP_ID}/wall_posts/${webAutoPostId("post-backdate")}`
+      ).set({
         ...validPost,
         author_id: UID_WALL_MEMBER,
         created_at: new Date(Date.now() - 24 * 60 * 60 * 1000),
@@ -305,7 +496,9 @@ describe("groups/{groupId}/wall_posts", () => {
 
   it("bloqueia pinned=true no create", async () => {
     await assertFails(
-      asWallMember().doc(`groups/${GROUP_ID}/wall_posts/post-pinned`).set({
+      asWallMember().doc(
+        `groups/${GROUP_ID}/wall_posts/${webAutoPostId("post-pinned")}`
+      ).set({
         ...validPost,
         author_id: UID_WALL_MEMBER,
         pinned: true,

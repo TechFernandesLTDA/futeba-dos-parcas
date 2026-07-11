@@ -10,7 +10,11 @@ import * as os from "os";
 import * as fs from "fs/promises";
 import {execFile} from "child_process";
 import {promisify} from "util";
-import ffmpeg from "@ffmpeg-installer/ffmpeg";
+import {
+  MEDIA_PROCESSOR_SERVICE_ACCOUNT,
+  currentFfmpegPath,
+  safeFfmpegMovInputArgs,
+} from "../media/ffmpeg-runtime";
 
 const execFileAsync = promisify(execFile);
 const MAX_VIDEO_SIZE_BYTES = 25 * 1024 * 1024;
@@ -18,6 +22,8 @@ const MAX_VIDEO_DURATION_SEC = 30;
 const MAX_VIDEOS_PER_GAME = 10;
 const MAX_VIDEOS_PER_USER_PER_GAME = 3;
 const ACCEPTED_VIDEO_CONTENT_TYPE = "video/mp4";
+const LEGACY_GAME_VIDEO_CODEC_WHITELIST =
+  "h264,hevc,mpeg4,aac,mp3,opus";
 const DOC_LOOKUP_ATTEMPTS = 5;
 const DOC_LOOKUP_DELAY_MS = 1500;
 
@@ -75,14 +81,29 @@ export function parseFfmpegDuration(stderr: string): number | null {
  * Executa ffmpeg apenas para obter metadata e duracao.
  *
  * @param {string} inputPath Arquivo local.
+ * @param {string} ffmpegPath Runtime validado.
  * @return {Promise<number>} Duracao em segundos.
  */
-async function readVideoDuration(inputPath: string): Promise<number> {
+async function readVideoDuration(
+  inputPath: string,
+  ffmpegPath: string
+): Promise<number> {
   try {
-    await execFileAsync(ffmpeg.path, ["-hide_banner", "-i", inputPath], {
-      timeout: 30_000,
-      maxBuffer: 1024 * 1024,
-    });
+    await execFileAsync(
+      ffmpegPath,
+      [
+        "-hide_banner",
+        ...safeFfmpegMovInputArgs(
+          inputPath,
+          null,
+          LEGACY_GAME_VIDEO_CODEC_WHITELIST
+        ),
+      ],
+      {
+        timeout: 30_000,
+        maxBuffer: 1024 * 1024,
+      }
+    );
   } catch (error) {
     const stderr = (error as {stderr?: string}).stderr || "";
     const duration = parseFfmpegDuration(stderr);
@@ -96,19 +117,33 @@ async function readVideoDuration(inputPath: string): Promise<number> {
  *
  * @param {string} inputPath Arquivo de video local.
  * @param {string} outputPath Arquivo JPEG de saida.
+ * @param {string} ffmpegPath Runtime validado.
  * @return {Promise<void>} Promise quando finalizar.
  */
-async function generateThumbnail(inputPath: string, outputPath: string) {
+async function generateThumbnail(
+  inputPath: string,
+  outputPath: string,
+  ffmpegPath: string
+) {
   await execFileAsync(
-    ffmpeg.path,
+    ffmpegPath,
     [
       "-hide_banner",
+      "-nostats",
       "-y",
-      "-ss",
-      "00:00:01",
-      "-i",
-      inputPath,
+      ...safeFfmpegMovInputArgs(
+        inputPath,
+        1,
+        LEGACY_GAME_VIDEO_CODEC_WHITELIST
+      ),
+      "-map",
+      "0:v:0",
+      "-an",
+      "-sn",
+      "-dn",
       "-frames:v",
+      "1",
+      "-filter_threads",
       "1",
       "-vf",
       "scale=480:-1",
@@ -213,6 +248,7 @@ export const generateGameVideoThumbnail =
   functions.storage.onObjectFinalized(
     {
       region: FUNCTION_REGION,
+      serviceAccount: MEDIA_PROCESSOR_SERVICE_ACCOUNT,
       memory: "1GiB",
       timeoutSeconds: 180,
     },
@@ -224,6 +260,7 @@ export const generateGameVideoThumbnail =
       if (!filePath) return;
       const parsedPath = parseGameVideoPath(filePath);
       if (!parsedPath) return;
+      const ffmpegPath = await currentFfmpegPath();
 
       const bucket = getStorage().bucket(object.bucket);
       const file = bucket.file(filePath);
@@ -261,13 +298,13 @@ export const generateGameVideoThumbnail =
 
       try {
         await file.download({destination: localVideoPath});
-        const durationSec = await readVideoDuration(localVideoPath);
+        const durationSec = await readVideoDuration(localVideoPath, ffmpegPath);
         if (durationSec > MAX_VIDEO_DURATION_SEC) {
           await rejectVideo(videoDoc, "DURATION_TOO_LONG", file);
           return;
         }
 
-        await generateThumbnail(localVideoPath, localThumbPath);
+        await generateThumbnail(localVideoPath, localThumbPath, ffmpegPath);
         await bucket.upload(localThumbPath, {
           destination: thumbPath,
           metadata: {

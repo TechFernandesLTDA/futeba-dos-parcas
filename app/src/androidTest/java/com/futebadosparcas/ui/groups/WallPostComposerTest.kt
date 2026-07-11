@@ -9,6 +9,8 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.futebadosparcas.ui.theme.FutebaTheme
+import androidx.test.platform.app.InstrumentationRegistry
+import com.futebadosparcas.R
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -40,5 +42,19 @@ class WallPostComposerTest {
 
         composeTestRule.runOnIdle { clearDraftSignal.intValue++ }
         composeTestRule.onNodeWithText("Escreva algo para o grupo…").assertIsDisplayed()
+    }
+
+    @Test
+    fun compositorOfereceSeletorUnicoDeFotoOuVideo() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        composeTestRule.setContent {
+            FutebaTheme {
+                WallPostComposer(sending = false, onSubmit = { _, _ -> })
+            }
+        }
+
+        composeTestRule.onNodeWithContentDescription(
+            context.getString(R.string.group_wall_add_media)
+        ).assertIsDisplayed()
     }
 }

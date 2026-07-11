@@ -61,25 +61,28 @@ describe('WallPostCard', () => {
     expect(screen.getByAltText('Foto de Jordi')).toBeInTheDocument();
   });
 
-  it('mantém o player de vídeo e os controles visíveis antes dos metadados', () => {
+  it('carrega apenas o poster e cria o player depois da interação', () => {
     const videoPost: WallPost = {
       ...post,
       mediaUrl: 'https://firebasestorage.googleapis.com/clip.mp4',
       mediaPath: 'groups/group-1/wall_media/__draft__/user-1/clip.mp4',
       mediaType: 'video/mp4',
+      thumbnailUrl: 'https://firebasestorage.googleapis.com/poster.webp',
     };
     const { container } = renderWithProviders(
       <WallPostCard post={videoPost} isOwn={false} canManage={false} />,
     );
 
-    const video = screen.getByLabelText('Abrir vídeo de Jordi');
-    expect(video).toBeVisible();
-    expect(video).toHaveAttribute('controls');
-    expect(video).toHaveStyle({ opacity: '1', minHeight: '180px' });
-    expect(container.querySelector('.MuiSkeleton-root')).not.toBeInTheDocument();
+    expect(document.querySelector('video')).not.toBeInTheDocument();
+    expect(container.querySelector('img[src="https://firebasestorage.googleapis.com/poster.webp"]')).toBeInTheDocument();
+    const openButton = screen.getByRole('button', { name: 'Abrir vídeo de Jordi' });
+    fireEvent.click(openButton);
 
-    fireEvent.loadedMetadata(video);
-    expect(video).toBeVisible();
+    const video = document.querySelector('video');
+    expect(video).toBeInTheDocument();
+    expect(video).toHaveAttribute('controls');
+    expect(video).toHaveAttribute('autoplay');
+    expect(container.querySelector('.MuiSkeleton-root')).not.toBeInTheDocument();
   });
 
   it('reconhece MP4 legado pela URL quando media_type está ausente', () => {
@@ -93,8 +96,8 @@ describe('WallPostCard', () => {
       <WallPostCard post={legacyVideoPost} isOwn={false} canManage={false} />,
     );
 
-    const video = screen.getByLabelText('Abrir vídeo de Jordi');
-    expect(video.tagName).toBe('VIDEO');
-    expect(video).toHaveAttribute('controls');
+    expect(document.querySelector('video')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Abrir vídeo de Jordi' }));
+    expect(document.querySelector('video')).toHaveAttribute('controls');
   });
 });

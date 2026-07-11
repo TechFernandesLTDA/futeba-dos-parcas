@@ -1,7 +1,51 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-11T14:23:07.459Z",
+  "generatedAt": "2026-07-11T20:45:49.282Z",
   "notes": [
+    {
+      "version": "1.53.0",
+      "buildNumber": null,
+      "releaseDate": "2026-07-11",
+      "type": "minor",
+      "showPopup": true,
+      "published": true,
+      "headline": "O Mural do grupo agora funciona como uma conversa moderna: mensagens recentes no topo, histórico infinito, reações e mídia pronta para visualizar.",
+      "highlights": [
+        {
+          "icon": "video_library",
+          "title": "Fotos e vídeos confiáveis",
+          "description": "O envio mostra progresso, processa a mídia com segurança e mantém a tentativa pronta para repetir quando a conexão oscila."
+        },
+        {
+          "icon": "history",
+          "title": "Histórico contínuo",
+          "description": "As publicações mais recentes aparecem primeiro e as anteriores são carregadas conforme a pessoa navega."
+        },
+        {
+          "icon": "play_circle",
+          "title": "Vídeo sob demanda",
+          "description": "A capa aparece rapidamente e o vídeo só é carregado quando a pessoa decide assistir."
+        }
+      ],
+      "added": [
+        "Envio direto de texto, foto ou vídeo pelo compositor do Mural, sem uma etapa separada de “criar post”.",
+        "Progresso de upload e estado de processamento em tempo real para todos que estão com o grupo aberto.",
+        "Reações, autor, data e horário preservados na linha do tempo do grupo."
+      ],
+      "improved": [],
+      "fixed": [
+        "Retentativas de mídia não criam publicações duplicadas nem perdem o texto digitado.",
+        "Vídeos MP4 compatíveis ganham capa e reprodução explícita no navegador, inclusive em conexões móveis.",
+        "Falhas de rede, rejeição de formato e expiração apresentam mensagens específicas e permitem recuperar o envio.",
+        "Escritas diretas de posts com mídia foram substituídas pelo pipeline autoritativo, mantendo posts de texto leves.",
+        "Paginação reversa e ordenação determinística do Mural preservam a mensagem mais recente no topo.",
+        "Tokens App Check de uso limitado são solicitados nas operações protegidas contra replay."
+      ],
+      "issueRefs": [
+        3518,
+        3519
+      ]
+    },
     {
       "version": "1.52.0",
       "buildNumber": null,

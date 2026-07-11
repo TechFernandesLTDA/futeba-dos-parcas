@@ -2785,3 +2785,8 @@ export {discoverNearbyPlayers} from "./social/nearby-players";
 export {createDirectChat, submitDirectMessage} from "./social/direct-messages";
 export {submitContentReport} from "./social/reports";
 export {onGroupWallPostSoftDeletedCleanupMedia} from "./groups/wall-media-cleanup";
+export {
+  createGroupWallMediaDraft,
+  onGroupWallMediaStaged,
+  cleanupExpiredGroupWallMediaDrafts,
+} from "./groups/wall-media-pipeline";

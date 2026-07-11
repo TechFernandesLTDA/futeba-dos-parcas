@@ -5,21 +5,26 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 const mockAddDoc = vi.fn();
 const mockCollection = vi.fn((..._args: unknown[]) => 'wall-posts-collection');
 const mockDeleteObject = vi.fn();
-const mockGetDownloadURL = vi.fn();
+const mockDoc = vi.fn((...args: unknown[]) => `doc:${args.slice(1).join('/')}`);
+const mockGetDoc = vi.fn();
+const mockOnSnapshot = vi.fn();
 const mockStorageRef = vi.fn((...args: unknown[]) => `storage:${String(args[1])}`);
 const mockUploadWithRetry = vi.fn();
+const mockCreateDraft = vi.fn();
 const mockUseAuth = vi.fn();
 const mockUseToast = vi.fn();
+const CLIENT_REQUEST_ID = '11111111-1111-4111-8111-111111111111';
 
 vi.mock('firebase/firestore', () => ({
   collection: (...args: unknown[]) => mockCollection(...args),
-  doc: vi.fn(),
-  onSnapshot: vi.fn(),
+  doc: (...args: unknown[]) => mockDoc(...args),
+  onSnapshot: (...args: unknown[]) => mockOnSnapshot(...args),
   query: vi.fn(),
   orderBy: vi.fn(),
   limit: vi.fn(),
   startAfter: vi.fn(),
   getDocs: vi.fn(),
+  getDoc: (...args: unknown[]) => mockGetDoc(...args),
   addDoc: (...args: unknown[]) => mockAddDoc(...args),
   updateDoc: vi.fn(),
   serverTimestamp: vi.fn(() => 'server-timestamp'),
@@ -28,7 +33,6 @@ vi.mock('firebase/firestore', () => ({
 
 vi.mock('firebase/storage', () => ({
   ref: (...args: unknown[]) => mockStorageRef(...args),
-  getDownloadURL: (...args: unknown[]) => mockGetDownloadURL(...args),
   deleteObject: (...args: unknown[]) => mockDeleteObject(...args),
 }));
 
@@ -36,6 +40,9 @@ vi.mock('../services/firebase', () => ({ db: 'db' }));
 vi.mock('../services/firebaseStorage', () => ({ storage: 'storage' }));
 vi.mock('../utils/storageUpload', () => ({
   uploadImageWithStorageAuthRetry: (...args: unknown[]) => mockUploadWithRetry(...args),
+}));
+vi.mock('../services/groupWallMediaService', () => ({
+  createGroupWallMediaDraft: (...args: unknown[]) => mockCreateDraft(...args),
 }));
 vi.mock('../contexts/AuthContext', () => ({ useAuth: () => mockUseAuth() }));
 vi.mock('../contexts/ToastContext', () => ({ useToast: () => mockUseToast() }));
@@ -49,9 +56,31 @@ describe('createWallPostDocument', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockUploadWithRetry.mockResolvedValue({});
-    mockGetDownloadURL.mockResolvedValue('https://firebasestorage.googleapis.com/photo.png');
     mockAddDoc.mockResolvedValue({ id: 'post-1' });
     mockDeleteObject.mockResolvedValue(undefined);
+    mockGetDoc.mockResolvedValue({ exists: () => false });
+    mockCreateDraft.mockImplementation(async (request: { declaredContentType: string }) => {
+      const extension = request.declaredContentType === 'video/mp4'
+        ? 'mp4'
+        : request.declaredContentType === 'image/jpeg'
+          ? 'jpg'
+          : request.declaredContentType.split('/')[1];
+      return {
+        postId: 'post-1',
+        uploadPath: `groups/group-1/wall_media_staging/post-1/user-1/source.${extension}`,
+        expiresAt: '2026-07-11T16:00:00.000Z',
+        maxBytes: 25 * 1024 * 1024,
+        pipelineVersion: 1,
+        duplicate: false,
+      };
+    });
+    mockOnSnapshot.mockImplementation((_reference, onNext) => {
+      queueMicrotask(() => onNext({
+        exists: () => true,
+        data: () => ({ status: 'READY' }),
+      }));
+      return vi.fn();
+    });
     mockUseAuth.mockReturnValue({
       currentUser: {
         uid: 'user-1',
@@ -67,7 +96,7 @@ describe('createWallPostDocument', () => {
     });
   });
 
-  it('envia foto sem legenda com retry e path de draft pertencente ao autor', async () => {
+  it('prepara e envia foto sem legenda pelo caminho de staging autorizado', async () => {
     const image = new File(['image'], 'foto.png', { type: 'image/png' });
     const refreshCredentials = vi.fn().mockResolvedValue(undefined);
 
@@ -79,29 +108,40 @@ describe('createWallPostDocument', () => {
       text: '',
       options: { imageFile: image },
       refreshCredentials,
+      clientRequestId: CLIENT_REQUEST_ID,
     });
 
-    const mediaPath = mockStorageRef.mock.calls[0]?.[1] as string;
-    expect(mediaPath).toMatch(/^groups\/group-1\/wall_media\/__draft__\/user-1\/.*\.png$/);
+    expect(mockCreateDraft).toHaveBeenCalledWith({
+      groupId: 'group-1',
+      text: '',
+      declaredContentType: 'image/png',
+      sizeBytes: image.size,
+      fileName: 'foto.png',
+      clientRequestId: CLIENT_REQUEST_ID,
+      highlightRef: null,
+    });
     expect(mockUploadWithRetry).toHaveBeenCalledWith(
-      `storage:${mediaPath}`,
+      'storage:groups/group-1/wall_media_staging/post-1/user-1/source.png',
       image,
       { refreshCredentials, contentType: 'image/png' },
     );
-    expect(mockAddDoc).toHaveBeenCalledWith(
-      'wall-posts-collection',
-      expect.objectContaining({
-        text: '',
-        media_url: 'https://firebasestorage.googleapis.com/photo.png',
-        media_path: mediaPath,
-        media_type: 'image/png',
-      }),
+    expect(mockAddDoc).not.toHaveBeenCalled();
+    expect(mockOnSnapshot).toHaveBeenCalledWith(
+      'doc:groups/group-1/wall_post_drafts/post-1',
+      expect.any(Function),
+      expect.any(Function),
     );
   });
 
-  it('remove o draft do próprio autor quando a gravação do post falha', async () => {
+  it('preserva o rascunho e mostra a rejeição acionável do processamento', async () => {
     const image = new File(['image'], 'foto.jpg', { type: 'image/jpeg' });
-    mockAddDoc.mockRejectedValueOnce(new Error('firestore indisponível'));
+    mockOnSnapshot.mockImplementationOnce((_reference, onNext) => {
+      queueMicrotask(() => onNext({
+        exists: () => true,
+        data: () => ({ status: 'REJECTED', error_message: 'Arquivo corrompido.' }),
+      }));
+      return vi.fn();
+    });
 
     await expect(createWallPostDocument({
       groupId: 'group-1',
@@ -110,32 +150,9 @@ describe('createWallPostDocument', () => {
       authorPhotoUrl: null,
       text: 'Resenha',
       options: { imageFile: image },
-    })).rejects.toThrow('firestore indisponível');
+      clientRequestId: CLIENT_REQUEST_ID,
+    })).rejects.toThrow('Arquivo corrompido.');
 
-    const mediaPath = mockStorageRef.mock.calls[0]?.[1] as string;
-    expect(mediaPath).toContain('/__draft__/user-1/');
-    expect(mockDeleteObject).toHaveBeenCalledWith(`storage:${mediaPath}`);
-    expect(mockDeleteObject).toHaveBeenCalledTimes(1);
-  });
-
-  it('remove o draft quando getDownloadURL falha sem mascarar o erro original', async () => {
-    const image = new File(['image'], 'foto.jpg', { type: 'image/jpeg' });
-    const downloadError = new Error('URL indisponível');
-    mockGetDownloadURL.mockRejectedValueOnce(downloadError);
-    mockDeleteObject.mockRejectedValueOnce(new Error('cleanup indisponível'));
-
-    await expect(createWallPostDocument({
-      groupId: 'group-1',
-      currentUserUid: 'user-1',
-      authorName: 'Jordi',
-      authorPhotoUrl: null,
-      text: 'Resenha',
-      options: { imageFile: image },
-    })).rejects.toBe(downloadError);
-
-    const mediaPath = mockStorageRef.mock.calls[0]?.[1] as string;
-    expect(mockDeleteObject).toHaveBeenCalledWith(`storage:${mediaPath}`);
-    expect(mockDeleteObject).toHaveBeenCalledTimes(1);
     expect(mockAddDoc).not.toHaveBeenCalled();
   });
 
@@ -149,21 +166,17 @@ describe('createWallPostDocument', () => {
       authorPhotoUrl: null,
       text: '',
       options: { mediaFile: video },
+      clientRequestId: CLIENT_REQUEST_ID,
     });
 
-    const mediaPath = mockStorageRef.mock.calls[0]?.[1] as string;
-    expect(mediaPath).toMatch(/^groups\/group-1\/wall_media\/__draft__\/user-1\/.*\.mp4$/);
+    expect(mockCreateDraft).toHaveBeenCalledWith(expect.objectContaining({
+      declaredContentType: 'video/mp4',
+      fileName: 'partida.mp4',
+    }));
     expect(mockUploadWithRetry).toHaveBeenCalledWith(
-      `storage:${mediaPath}`,
+      'storage:groups/group-1/wall_media_staging/post-1/user-1/source.mp4',
       video,
       { contentType: 'video/mp4' },
-    );
-    expect(mockAddDoc).toHaveBeenCalledWith(
-      'wall-posts-collection',
-      expect.objectContaining({
-        media_path: mediaPath,
-        media_type: 'video/mp4',
-      }),
     );
   });
 
@@ -177,18 +190,16 @@ describe('createWallPostDocument', () => {
       authorPhotoUrl: null,
       text: '',
       options: { mediaFile: video },
+      clientRequestId: CLIENT_REQUEST_ID,
     });
 
-    const mediaPath = mockStorageRef.mock.calls[0]?.[1] as string;
-    expect(mediaPath).toMatch(/\.mp4$/);
+    expect(mockCreateDraft).toHaveBeenCalledWith(expect.objectContaining({
+      declaredContentType: 'video/mp4',
+    }));
     expect(mockUploadWithRetry).toHaveBeenCalledWith(
-      `storage:${mediaPath}`,
+      'storage:groups/group-1/wall_media_staging/post-1/user-1/source.mp4',
       video,
       { contentType: 'video/mp4' },
-    );
-    expect(mockAddDoc).toHaveBeenCalledWith(
-      'wall-posts-collection',
-      expect.objectContaining({ media_type: 'video/mp4' }),
     );
   });
 
@@ -206,6 +217,7 @@ describe('createWallPostDocument', () => {
       options: { mediaFile: image },
       refreshCredentials,
       onUploadProgress,
+      clientRequestId: CLIENT_REQUEST_ID,
     });
 
     expect(mockUploadWithRetry).toHaveBeenCalledWith(
@@ -214,12 +226,158 @@ describe('createWallPostDocument', () => {
       { refreshCredentials, onProgress: onUploadProgress, contentType: 'image/png' },
     );
   });
+
+  it('conclui retry idempotente já READY sem reenviar bytes', async () => {
+    const video = new File(['video'], 'partida.mp4', { type: 'video/mp4' });
+    mockCreateDraft.mockResolvedValueOnce({
+      postId: 'post-1',
+      uploadPath: 'groups/group-1/wall_media_staging/post-1/user-1/source.mp4',
+      expiresAt: '2026-07-11T16:00:00.000Z',
+      maxBytes: 25 * 1024 * 1024,
+      pipelineVersion: 1,
+      duplicate: true,
+    });
+    mockGetDoc.mockResolvedValueOnce({
+      exists: () => true,
+      data: () => ({ status: 'READY' }),
+    });
+
+    await expect(createWallPostDocument({
+      groupId: 'group-1',
+      currentUserUid: 'user-1',
+      authorName: 'Jordi',
+      authorPhotoUrl: null,
+      text: '',
+      options: { mediaFile: video },
+      clientRequestId: CLIENT_REQUEST_ID,
+    })).resolves.toEqual({ postId: 'post-1', pipelineVersion: 1 });
+
+    expect(mockUploadWithRetry).not.toHaveBeenCalled();
+    expect(mockOnSnapshot).not.toHaveBeenCalled();
+  });
+
+  it('recusa staging reservado para outro autor antes do upload', async () => {
+    const image = new File(['image'], 'foto.png', { type: 'image/png' });
+    mockCreateDraft.mockResolvedValueOnce({
+      postId: 'post-1',
+      uploadPath: 'groups/group-1/wall_media_staging/post-1/outro-user/source.png',
+      expiresAt: '2026-07-11T16:00:00.000Z',
+      maxBytes: 10 * 1024 * 1024,
+      pipelineVersion: 1,
+      duplicate: false,
+    });
+
+    await expect(createWallPostDocument({
+      groupId: 'group-1',
+      currentUserUid: 'user-1',
+      authorName: 'Jordi',
+      authorPhotoUrl: null,
+      text: '',
+      options: { mediaFile: image },
+      clientRequestId: CLIENT_REQUEST_ID,
+    })).rejects.toThrow('caminho de mídia inválido');
+    expect(mockUploadWithRetry).not.toHaveBeenCalled();
+  });
+
+  it('apenas observa retry idempotente que já está PROCESSING', async () => {
+    const image = new File(['image'], 'foto.png', { type: 'image/png' });
+    const onProcessing = vi.fn();
+    mockCreateDraft.mockResolvedValueOnce({
+      postId: 'post-1',
+      uploadPath: 'groups/group-1/wall_media_staging/post-1/user-1/source.png',
+      expiresAt: '2026-07-11T16:00:00.000Z',
+      maxBytes: 10 * 1024 * 1024,
+      pipelineVersion: 1,
+      duplicate: true,
+    });
+    mockGetDoc.mockResolvedValueOnce({
+      exists: () => true,
+      data: () => ({ status: 'PROCESSING' }),
+    });
+
+    await createWallPostDocument({
+      groupId: 'group-1',
+      currentUserUid: 'user-1',
+      authorName: 'Jordi',
+      authorPhotoUrl: null,
+      text: 'Resenha',
+      options: { mediaFile: image },
+      onProcessing,
+      clientRequestId: CLIENT_REQUEST_ID,
+    });
+
+    expect(onProcessing).toHaveBeenCalled();
+    expect(mockUploadWithRetry).not.toHaveBeenCalled();
+    expect(mockOnSnapshot).toHaveBeenCalled();
+  });
+
+  it('falha imediatamente quando o draft de mídia não existe', async () => {
+    const image = new File(['image'], 'foto.png', { type: 'image/png' });
+    const unsubscribe = vi.fn();
+    mockOnSnapshot.mockImplementationOnce((_reference, onNext) => {
+      queueMicrotask(() => onNext({
+        exists: () => false,
+        metadata: { fromCache: false },
+      }));
+      return unsubscribe;
+    });
+
+    await expect(createWallPostDocument({
+      groupId: 'group-1',
+      currentUserUid: 'user-1',
+      authorName: 'Jordi',
+      authorPhotoUrl: null,
+      text: '',
+      options: { mediaFile: image },
+      clientRequestId: CLIENT_REQUEST_ID,
+    })).rejects.toMatchObject({
+      code: 'wall-media/draft-not-found',
+      message: 'O envio de mídia não foi encontrado. Tente novamente.',
+    });
+
+    expect(unsubscribe).toHaveBeenCalledOnce();
+  });
+
+  it('aguarda o servidor quando apenas o cache local ainda não conhece o draft', async () => {
+    const image = new File(['image'], 'foto.png', { type: 'image/png' });
+    const unsubscribe = vi.fn();
+    mockOnSnapshot.mockImplementationOnce((_reference, onNext) => {
+      queueMicrotask(() => {
+        onNext({
+          exists: () => false,
+          metadata: { fromCache: true },
+        });
+        onNext({
+          exists: () => true,
+          data: () => ({ status: 'READY' }),
+        });
+      });
+      return unsubscribe;
+    });
+
+    await expect(createWallPostDocument({
+      groupId: 'group-1',
+      currentUserUid: 'user-1',
+      authorName: 'Jordi',
+      authorPhotoUrl: null,
+      text: '',
+      options: { mediaFile: image },
+      clientRequestId: CLIENT_REQUEST_ID,
+    })).resolves.toEqual({ postId: 'post-1', pipelineVersion: 1 });
+
+    expect(unsubscribe).toHaveBeenCalledOnce();
+  });
 });
 
 describe('useCreateWallPost', () => {
-  it('expõe progresso durante upload e reseta com segurança ao concluir', async () => {
+  it('expõe upload e processamento até o draft ficar pronto', async () => {
     let resolveUpload: ((value: unknown) => void) | undefined;
     let progressCallback: ((percentage: number) => void) | undefined;
+    let draftListener: ((snapshot: { exists: () => boolean; data: () => { status: string } }) => void) | undefined;
+    mockOnSnapshot.mockImplementation((_reference, onNext) => {
+      draftListener = onNext;
+      return vi.fn();
+    });
     mockUploadWithRetry.mockImplementation((
       _ref: unknown,
       _file: File,
@@ -241,18 +399,29 @@ describe('useCreateWallPost', () => {
     await waitFor(() => {
       expect(result.current.sending).toBe(true);
       expect(result.current.uploadProgress).toBe(0);
+      expect(result.current.mediaPhase).toBe('uploading');
     });
 
     act(() => progressCallback?.(37));
     expect(result.current.uploadProgress).toBe(37);
 
-    await act(async () => {
+    act(() => {
       resolveUpload?.({});
+    });
+
+    await waitFor(() => {
+      expect(result.current.mediaPhase).toBe('processing');
+      expect(draftListener).toBeDefined();
+    });
+
+    await act(async () => {
+      draftListener?.({ exists: () => true, data: () => ({ status: 'READY' }) });
       await createPromise;
     });
 
     expect(result.current.sending).toBe(false);
     expect(result.current.uploadProgress).toBeNull();
+    expect(result.current.mediaPhase).toBeNull();
   });
 
   it('mantém uploadProgress null em post sem mídia', async () => {

@@ -201,7 +201,7 @@ val repositoryKoinModule = module {
     }
 
     single<GroupWallRepository> {
-        GroupWallRepository(get(), get(), get(), androidContext())
+        GroupWallRepository(get(), get(), get(), androidContext(), get())
     }
 
     single<com.futebadosparcas.data.repository.SocialFeedRepository> {

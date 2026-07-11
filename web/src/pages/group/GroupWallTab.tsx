@@ -51,7 +51,7 @@ export const GroupWallTab: React.FC<GroupWallTabProps> = ({
     togglePin,
     currentUserId,
   } = useGroupWall(groupId);
-  const { create, sending, uploadProgress } = useCreateWallPost(groupId);
+  const { create, sending, uploadProgress, mediaPhase } = useCreateWallPost(groupId);
   const { remove, deleting } = useDeleteWallPost(groupId);
   const [editingPost, setEditingPost] = useState<WallPost | null>(null);
   const [showNewPosts, setShowNewPosts] = useState(false);
@@ -146,6 +146,7 @@ export const GroupWallTab: React.FC<GroupWallTabProps> = ({
             <WallPostComposer
               sending={sending}
               uploadProgress={uploadProgress}
+              mediaPhase={mediaPhase}
               onSubmit={handleCreate}
             />
           </Box>

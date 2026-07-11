@@ -24,6 +24,20 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ## Android
 
+### [1.37.0][android-1.37.0] - 2026-07-11
+
+#### Adicionado
+- `GroupWallMediaPipeline` com callable protegido por App Check de uso limitado, upload resumível e listener de estado.
+- Validação por magic bytes, MIME real, limite de 10 MiB para imagens, 25 MiB para vídeos e 30 segundos de duração.
+- ExoPlayer criado somente após interação, com poster acessível e sem download antecipado do vídeo.
+
+#### Corrigido
+- Modelo Android passa a mapear `thumbnail_url` publicado pelo backend.
+- ViewModel mantém UUID estável durante retries recuperáveis e o reinicia apenas em estados terminais.
+- Estados de progresso, cancelamento, processamento e erro ficam alinhados ao contrato compartilhado do Mural.
+
+_Issues: #3518, #3519_
+
 ### [1.36.8][android-1.36.8] - 2026-07-11
 
 #### Corrigido
@@ -215,6 +229,20 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 - Bump de versão de manutenção após a mega audit wave de 2026-05-11, sem mudanças funcionais no Android nesta tag.
 
 ## Web
+
+### [1.53.0][web-1.53.0] - 2026-07-11
+
+#### Adicionado
+- Reserva autenticada de rascunho, upload para staging exato, observação realtime e publicação somente após estado `READY`.
+- Serviço Web tipado com idempotência por UUID, validação estrita do contrato e separação das fases de upload e processamento.
+- Poster preguiçoso e criação do player somente após interação do usuário.
+
+#### Corrigido
+- Escritas diretas de posts com mídia foram substituídas pelo pipeline autoritativo, mantendo posts de texto leves.
+- Paginação reversa e ordenação determinística do Mural preservam a mensagem mais recente no topo.
+- Tokens App Check de uso limitado são solicitados nas operações protegidas contra replay.
+
+_Issues: #3518, #3519_
 
 ### [1.52.0][web-1.52.0] - 2026-07-11
 
@@ -1512,6 +1540,24 @@ _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
 
+### [1.9.0][functions-1.9.0] - 2026-07-11
+
+#### Adicionado
+- Callable `createGroupWallMediaDraft`, trigger `onGroupWallMediaStaged` e limpeza programada `cleanupExpiredGroupWallMediaDrafts`.
+- Contrato de mídia com limites por tipo, inspeção de magic bytes, validação de codec/duração e precondições de geração do Storage.
+- Conversão de imagens e posters com Sharp, extração segura de quadro com FFmpeg e objetos finais imutáveis por conteúdo.
+- Rate limit por usuário, lease de processamento, métricas sem PII e harness real de carga para 10, 100 e 1.000 usuários.
+- FFmpeg 8.1.2 pinado por dois hashes, mirror imutável, gate Linux real e runtime sem papel Editor para mídia do Mural e vídeos de jogos.
+
+#### Corrigido
+- Publicação atômica do post e do estado `READY`, inclusive após confirmação ambígua do Firestore.
+- Regras bloqueiam sobrescrita do staging, upload legado e criação client-side de post com mídia.
+- Cleanup usa geração específica e não remove um objeto válido criado por uma tentativa posterior.
+- Expiração síncrona, teto de retries, revalidação de grupo/membership e janitor paginado impedem filas abusivas e publicação após arquivamento.
+- Compatibilidade de clientes antigos fica limitada por kill switch com data, bucket/path do próprio autor e MIME/extensão exatos.
+
+_Issues: #3518, #3519_
+
 ### [1.8.0][functions-1.8.0] - 2026-07-11
 
 #### Adicionado
@@ -2104,6 +2150,7 @@ _Issues: #2981_
 _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 
 
+[android-1.37.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.37.0.md
 [android-1.36.8]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.36.8.md
 [android-1.36.7]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.36.7.md
 [android-1.36.6]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.36.6.md
@@ -2121,6 +2168,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.53.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.53.0.md
 [web-1.52.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.52.0.md
 [web-1.51.43]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.43.md
 [web-1.51.42]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.42.md
@@ -2247,6 +2295,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [web-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.26.0.md
 [ios-1.6.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.1.md
 [ios-1.6.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.0.md
+[functions-1.9.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.9.0.md
 [functions-1.8.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.8.0.md
 [functions-1.7.19]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.7.19.md
 [functions-1.7.18]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.7.18.md

@@ -1,7 +1,9 @@
 {
   "name": "functions",
-  "version": "1.8.0",
+  "version": "1.9.0",
   "scripts": {
+    "install:ffmpeg": "node scripts/install-wall-media-ffmpeg.cjs",
+    "gcp-build": "npm run install:ffmpeg && npm run build",
     "lint": "eslint --ext .js,.ts .",
     "build": "tsc",
     "build:watch": "tsc --watch",
@@ -24,7 +26,6 @@
   },
   "main": "lib/index.js",
   "dependencies": {
-    "@ffmpeg-installer/ffmpeg": "^1.1.0",
     "@google-cloud/logging": "^11.2.1",
     "date-fns": "^4.1.0",
     "firebase-admin": "^13.8.0",

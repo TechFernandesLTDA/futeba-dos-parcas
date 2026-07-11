@@ -13,6 +13,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -30,7 +31,9 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -43,6 +46,7 @@ import com.futebadosparcas.ui.components.EmptyStateType
 import com.futebadosparcas.ui.components.states.LoadingItemType
 import com.futebadosparcas.ui.components.states.LoadingState
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.distinctUntilChanged
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -63,9 +67,31 @@ fun GroupWallScreen(
     var editingPost by remember { mutableStateOf<GroupWallPost?>(null) }
     var deletingPost by remember { mutableStateOf<GroupWallPost?>(null) }
     var lightboxUrl by remember { mutableStateOf<String?>(null) }
+    val sendingState = actionState as? GroupWallActionState.Sending
 
     LaunchedEffect(groupId) {
         viewModel.observePosts(groupId)
+    }
+
+    val paginationState = uiState as? GroupWallUiState.Success
+    val latestPaginationState by rememberUpdatedState(paginationState)
+    LaunchedEffect(groupId, listState) {
+        snapshotFlow {
+            val state = latestPaginationState ?: return@snapshotFlow false
+            val layoutInfo = listState.layoutInfo
+            shouldRequestMoreWallPosts(
+                hasMore = state.hasMore,
+                loadingMore = state.loadingMore,
+                hasLoadMoreError = state.loadMoreError != null,
+                postsEmpty = state.posts.isEmpty(),
+                lastVisibleItemIndex = layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1,
+                totalItems = layoutInfo.totalItemsCount
+            )
+        }
+            .distinctUntilChanged()
+            .collect { nearEnd ->
+                if (nearEnd) viewModel.loadMore(groupId)
+            }
     }
 
     LaunchedEffect(actionState) {
@@ -184,6 +210,37 @@ fun GroupWallScreen(
                                     onImageClick = { lightboxUrl = it }
                                 )
                             }
+
+                            if (state.loadingMore) {
+                                item(key = "wall-loading-more") {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(16.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        CircularProgressIndicator()
+                                    }
+                                }
+                            } else if (state.loadMoreError != null) {
+                                item(key = "wall-load-more-error") {
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(vertical = 12.dp),
+                                        horizontalAlignment = Alignment.CenterHorizontally
+                                    ) {
+                                        Text(
+                                            text = state.loadMoreError,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.error
+                                        )
+                                        TextButton(onClick = { viewModel.loadMore(groupId) }) {
+                                            Text(stringResource(R.string.retry))
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -196,16 +253,19 @@ fun GroupWallScreen(
                         .padding(horizontal = 16.dp, vertical = 8.dp)
                 ) {
                     WallPostComposer(
-                        sending = actionState is GroupWallActionState.Sending,
+                        sending = sendingState != null,
                         clearDraftSignal = clearDraftSignal,
-                        onSubmit = { text, imageUri ->
-                            viewModel.createPost(groupId, text, imageUri)
+                        uploadProgress = sendingState?.progress ?: 0,
+                        processing = sendingState?.processing == true,
+                        onSubmit = { text, mediaUri ->
+                            viewModel.createPost(groupId, text, mediaUri)
                         },
                         onImageError = { message ->
                             scope.launch {
                                 snackbarHostState.showSnackbar(message)
                             }
-                        }
+                        },
+                        onCancelUpload = viewModel::cancelPostUpload
                     )
                 }
             } else if (uiState is GroupWallUiState.Success) {
@@ -229,6 +289,7 @@ fun GroupWallScreen(
                 WallPostComposer(
                     sending = actionState is GroupWallActionState.Editing,
                     initialText = editingPost!!.text,
+                    mediaEnabled = false,
                     onSubmit = { text, _ ->
                         viewModel.editPost(groupId, editingPost!!.id, text)
                         editingPost = null
@@ -299,3 +360,30 @@ private fun AsyncImage(model: String?, contentDescription: String?, modifier: Mo
         modifier = modifier
     )
 }
+
+internal fun shouldLoadMoreWallPosts(
+    lastVisibleItemIndex: Int,
+    totalItems: Int,
+    prefetchDistance: Int = 4
+): Boolean {
+    if (lastVisibleItemIndex < 0 || totalItems <= 0) return false
+    val triggerIndex = (totalItems - 1 - prefetchDistance.coerceAtLeast(0)).coerceAtLeast(0)
+    return lastVisibleItemIndex >= triggerIndex
+}
+
+internal fun shouldRequestMoreWallPosts(
+    hasMore: Boolean,
+    loadingMore: Boolean,
+    hasLoadMoreError: Boolean,
+    postsEmpty: Boolean,
+    lastVisibleItemIndex: Int,
+    totalItems: Int
+): Boolean = hasMore &&
+    !loadingMore &&
+    !hasLoadMoreError &&
+    (
+        postsEmpty || shouldLoadMoreWallPosts(
+            lastVisibleItemIndex = lastVisibleItemIndex,
+            totalItems = totalItems
+        )
+    )

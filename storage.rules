@@ -70,6 +70,45 @@ service firebase.storage {
       return isGroupMember(groupId) || isGroupOwnerById(groupId);
     }
 
+    function isLegacyWallMediaCompatEnabled() {
+      let config = firestore.get(/databases/(default)/documents/system_config/group_wall_media_compat);
+      return config != null &&
+             config.data.enabled == true &&
+             config.data.disable_after is timestamp &&
+             request.time < config.data.disable_after;
+    }
+
+    function isGroupActiveForWallWrite(groupId) {
+      let groupDoc = firestore.get(/databases/(default)/documents/groups/$(groupId));
+      return groupDoc != null &&
+             (!('status' in groupDoc.data) || groupDoc.data.status == 'ACTIVE') &&
+             (!('is_active' in groupDoc.data) || groupDoc.data.is_active != false) &&
+             (!('deleted_at' in groupDoc.data) || groupDoc.data.deleted_at == null);
+    }
+
+    function getWallMediaDraft(groupId, postId) {
+      return firestore.get(/databases/(default)/documents/groups/$(groupId)/wall_post_drafts/$(postId));
+    }
+
+    function canUploadWallMediaDraft(groupId, postId, ownerId, fileName) {
+      let draft = getWallMediaDraft(groupId, postId);
+      return isAuthenticated() &&
+             ownerId == request.auth.uid &&
+             canUseGroupWall(groupId) &&
+             isGroupActiveForWallWrite(groupId) &&
+             draft != null &&
+             draft.data.pipeline_version == 1 &&
+             draft.data.group_id == groupId &&
+             draft.data.post_id == postId &&
+             draft.data.author_id == request.auth.uid &&
+             draft.data.status == 'AWAITING_UPLOAD' &&
+             draft.data.expires_at is timestamp &&
+             draft.data.expires_at > request.time &&
+             draft.data.declared_content_type == request.resource.contentType &&
+             draft.data.declared_size_bytes == request.resource.size &&
+             draft.data.temp_path == 'groups/' + groupId + '/wall_media_staging/' + postId + '/' + ownerId + '/' + fileName;
+    }
+
     // Verifica se o usuário é admin do sistema via Custom Claims (zero Firestore reads).
     // Requer token JWT atualizado — usuário precisa re-logar após promoção para obter claim.
     function isAdmin() {
@@ -78,6 +117,17 @@ service firebase.storage {
 
     function isWallMediaFile(fileName) {
       return fileName.matches('[A-Za-z0-9._-]+\\.(jpg|jpeg|png|webp|mp4)');
+    }
+
+    function isExactWallMediaFile(fileName) {
+      return (request.resource.contentType == 'image/jpeg' &&
+              fileName.matches('[A-Za-z0-9._-]+\\.(jpg|jpeg)')) ||
+             (request.resource.contentType == 'image/png' &&
+              fileName.matches('[A-Za-z0-9._-]+\\.png')) ||
+             (request.resource.contentType == 'image/webp' &&
+              fileName.matches('[A-Za-z0-9._-]+\\.webp')) ||
+             (request.resource.contentType == 'video/mp4' &&
+              fileName.matches('[A-Za-z0-9._-]+\\.mp4'));
     }
 
     function isWallMedia() {
@@ -291,19 +341,14 @@ service firebase.storage {
     // ============================================
     // MIDIAS DO MURAL DO GRUPO
     // Path: groups/{groupId}/wall_media/{postId}/{fileName}
-    // Membros ativos podem fazer upload de imagens e vídeos MP4 no mural.
-    // Clientes atuais incluem ownerId em __draft__, permitindo rollback seguro pelo autor.
-    // O path flat permanece legível/gravável por compatibilidade com clientes legados.
-    // Midia publicada e limpa via Cloud Function no soft-delete do post.
+    // Objetos legados permanecem legíveis, mas novos uploads só entram pelo
+    // wall_media_staging validado. Isso fecha o bypass de MIME/codec/duração.
+    // Midia publicada e limpa via Cloud Function/Admin SDK.
     // ============================================
     match /groups/{groupId}/wall_media/{postId}/{fileName} {
       allow read: if isAuthenticated() && canUseGroupWall(groupId);
 
-      allow create: if isAuthenticated() &&
-        canUseGroupWall(groupId) &&
-        isWallMedia() &&
-        isUnderWallMediaSize() &&
-        isWallMediaFile(fileName);
+      allow create, update: if false;
 
       allow delete: if isAuthenticated() && (
         isAdmin() ||
@@ -314,13 +359,21 @@ service firebase.storage {
     match /groups/{groupId}/wall_media/{postId}/{ownerId}/{fileName} {
       allow read: if isAuthenticated() && canUseGroupWall(groupId);
 
-      allow create: if isAuthenticated() &&
+      // Janela de compatibilidade para Web/Android já publicados antes do
+      // pipeline v1. Restrita ao path __draft__ do próprio autor, grupo ativo,
+      // MIME/extensão/tamanho legados e objeto imutável. Clientes novos usam
+      // wall_media_staging; remover somente após adoção mínima comprovada.
+      allow create: if resource == null &&
+        isAuthenticated() &&
+        isLegacyWallMediaCompatEnabled() &&
         canUseGroupWall(groupId) &&
+        isGroupActiveForWallWrite(groupId) &&
         postId == '__draft__' &&
         ownerId == request.auth.uid &&
-        isWallMedia() &&
         isUnderWallMediaSize() &&
-        isWallMediaFile(fileName);
+        isExactWallMediaFile(fileName);
+
+      allow update: if false;
 
       allow delete: if isAuthenticated() &&
         postId == '__draft__' && (
@@ -328,6 +381,34 @@ service firebase.storage {
         isGroupAdmin(groupId) ||
         ownerId == request.auth.uid
       );
+    }
+
+    // Pipeline v1: o callable cria wall_post_drafts/{postId} antes do upload.
+    // O cliente só pode finalizar exatamente um objeto no path/owner do draft;
+    // os objetos READY em wall_media são escritos apenas pelo Admin SDK.
+    match /groups/{groupId}/wall_media_staging/{postId}/{ownerId}/{fileName} {
+      allow read: if isAuthenticated() && (
+        ownerId == request.auth.uid ||
+        isAdmin() ||
+        isGroupAdmin(groupId)
+      );
+
+      allow create: if resource == null &&
+        canUploadWallMediaDraft(groupId, postId, ownerId, fileName) &&
+        isWallMedia() &&
+        isUnderWallMediaSize() &&
+        (
+          (request.resource.contentType == 'image/jpeg' && fileName == 'source.jpg') ||
+          (request.resource.contentType == 'image/png' && fileName == 'source.png') ||
+          (request.resource.contentType == 'image/webp' && fileName == 'source.webp') ||
+          (request.resource.contentType == 'video/mp4' && fileName == 'source.mp4')
+        );
+
+      allow update: if false;
+
+      // Cancelamento antes do finalize usa UploadTask.cancel(). Depois que o
+      // objeto existe, apenas Admin SDK/processor o remove para evitar retry storm.
+      allow delete: if false;
     }
 
     // ============================================

@@ -1532,6 +1532,7 @@
     "sending": "Publicando...",
     "draftPreserved": "Não foi possível publicar. Seu texto e anexo foram mantidos para tentar novamente.",
     "uploadProgress": "Enviando mídia: {{percent}}%",
+    "processingMedia": "Processando mídia...",
     "videoPreview": "Pré-visualização do vídeo",
     "imageAlt": "Foto de {{name}}",
     "invalidImageType": "Formato inválido. Use JPG, PNG ou WebP.",

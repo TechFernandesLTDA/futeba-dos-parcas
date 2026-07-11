@@ -162,6 +162,28 @@ describe('WallPostComposer', () => {
     expect(screen.getByText('42%')).toBeInTheDocument();
   });
 
+  it('troca o progresso por feedback indeterminado durante o processamento', async () => {
+    const onSubmit = vi.fn().mockResolvedValue(undefined);
+    const { container, rerender } = renderWithProviders(
+      <WallPostComposer sending={false} onSubmit={onSubmit} />,
+    );
+    const video = new File(['video'], 'jogada.mp4', { type: 'video/mp4' });
+    selectImage(container, video);
+    await screen.findByLabelText('Pré-visualização do vídeo');
+
+    rerender(
+      <WallPostComposer
+        sending
+        uploadProgress={100}
+        mediaPhase="processing"
+        onSubmit={onSubmit}
+      />,
+    );
+
+    expect(screen.getByRole('status', { name: 'Processando mídia...' })).toBeInTheDocument();
+    expect(screen.getByText('Processando mídia...')).toBeInTheDocument();
+  });
+
   it('publica com Ctrl+Enter sem remover suporte a quebra de linha normal', async () => {
     const onSubmit = vi.fn().mockResolvedValue(undefined);
     renderWithProviders(<WallPostComposer sending={false} onSubmit={onSubmit} />);
