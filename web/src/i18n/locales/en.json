@@ -1556,6 +1556,7 @@
     "timelineTitle": "Timeline",
     "timelineLatest": "Latest",
     "timelineOlder": "Load older posts",
+    "timelineLoadingOlder": "Loading older messages",
     "timelineNewPosts": "New posts",
     "timelinePinned": "Pinned to the top",
     "loadMore": "Load more",

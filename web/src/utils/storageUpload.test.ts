@@ -85,6 +85,21 @@ describe('storageUpload', () => {
     expect(mockUploadBytesResumable).not.toHaveBeenCalled();
   });
 
+  it('permite normalizar o content type de MP4 informado pelo navegador', async () => {
+    mockUploadBytes.mockResolvedValueOnce({ ref: 'uploaded' });
+    const file = new File(['video'], 'partida.mp4', { type: '' });
+
+    await uploadImageWithStorageAuthRetry('wall-ref' as never, file, {
+      contentType: 'video/mp4',
+    });
+
+    expect(mockUploadBytes).toHaveBeenCalledWith(
+      'wall-ref',
+      file,
+      { contentType: 'video/mp4' },
+    );
+  });
+
   it('faz fallback para upload simples se o resumable falhar', async () => {
     const onProgress = vi.fn();
     const refreshCredentials = vi.fn().mockResolvedValue(undefined);

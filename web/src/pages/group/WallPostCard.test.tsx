@@ -81,4 +81,20 @@ describe('WallPostCard', () => {
     fireEvent.loadedMetadata(video);
     expect(video).toBeVisible();
   });
+
+  it('reconhece MP4 legado pela URL quando media_type está ausente', () => {
+    const legacyVideoPost: WallPost = {
+      ...post,
+      mediaUrl: 'https://firebasestorage.googleapis.com/clip.mp4?alt=media',
+      mediaPath: null,
+      mediaType: null,
+    };
+    renderWithProviders(
+      <WallPostCard post={legacyVideoPost} isOwn={false} canManage={false} />,
+    );
+
+    const video = screen.getByLabelText('Abrir vídeo de Jordi');
+    expect(video.tagName).toBe('VIDEO');
+    expect(video).toHaveAttribute('controls');
+  });
 });

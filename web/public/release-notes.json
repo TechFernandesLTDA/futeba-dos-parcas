@@ -1,7 +1,32 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-11T00:15:47.851Z",
+  "generatedAt": "2026-07-11T00:50:48.840Z",
   "notes": [
+    {
+      "version": "1.51.43",
+      "buildNumber": null,
+      "releaseDate": "2026-07-10",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "O Mural dos grupos agora funciona como uma conversa moderna, com as mensagens mais recentes no topo e histórico carregado automaticamente.",
+      "highlights": [],
+      "added": [
+        "A timeline mantém a última mensagem no topo, inclusive quando existem publicações fixadas.",
+        "Mensagens antigas são carregadas por scroll infinito conforme o usuário avança pelo histórico.",
+        "Um atalho avisa sobre novas mensagens quando o usuário está lendo publicações antigas."
+      ],
+      "improved": [],
+      "fixed": [
+        "Vídeos MP4 selecionados por celulares passam a ser reconhecidos mesmo quando o navegador informa MIME vazio, genérico ou QuickTime.",
+        "Uploads MP4 usam `video/mp4` de forma consistente, compatível com as regras de Storage.",
+        "Publicações antigas com MP4 sem tipo de mídia salvo voltam a exibir o player de vídeo."
+      ],
+      "issueRefs": [
+        3522,
+        3527
+      ]
+    },
     {
       "version": "1.51.42",
       "buildNumber": null,

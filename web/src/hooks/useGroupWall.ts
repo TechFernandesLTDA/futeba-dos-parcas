@@ -29,6 +29,7 @@ import {
 } from '../utils/storageUpload';
 import { useTranslation } from 'react-i18next';
 import { mergeRealtimePageById } from './realtimePageMerge';
+import { getWallMediaType } from '../utils/wallMedia';
 
 const logger = createLogger('useGroupWall');
 
@@ -36,8 +37,6 @@ const POST_PAGE_SIZE = 20;
 const MAX_TEXT_LENGTH = 500;
 const MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024;
 const MAX_VIDEO_SIZE_BYTES = 25 * 1024 * 1024;
-const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-const ACCEPTED_VIDEO_TYPES = ['video/mp4'];
 
 interface CreateWallPostOptions {
   imageFile?: File;
@@ -98,7 +97,7 @@ export function mapPost(docSnap: QueryDocumentSnapshot<DocumentData>): WallPost 
       null,
     pinned: (converted.pinned as boolean) ?? (raw.pinned as boolean) ?? false,
     pinnedBy: (converted.pinnedBy as string | null) ?? (raw.pinned_by as string | null) ?? null,
-    createdAt: toDate(raw.created_at as never),
+    createdAt: toDate(raw.created_at as never) ?? (docSnap.metadata?.hasPendingWrites ? new Date() : undefined),
     updatedAt: toDate(raw.updated_at as never),
     editedAt: toDate(raw.edited_at as never),
     deletedBy: (converted.deletedBy as string | null) ?? (raw.deleted_by as string | null) ?? null,
@@ -115,9 +114,9 @@ async function uploadWallMedia(
   refreshCredentials?: () => Promise<void>,
   onUploadProgress?: (percentage: number) => void,
 ): Promise<UploadedWallMedia> {
-  const isImage = ACCEPTED_IMAGE_TYPES.includes(mediaFile.type);
-  const isVideo = ACCEPTED_VIDEO_TYPES.includes(mediaFile.type);
-  if (!isImage && !isVideo) {
+  const mediaType = getWallMediaType(mediaFile);
+  const isVideo = mediaType === 'video/mp4';
+  if (!mediaType) {
     throw new Error('Formato inválido. Use JPG, PNG, WebP ou vídeo MP4.');
   }
   const maxSize = isVideo ? MAX_VIDEO_SIZE_BYTES : MAX_IMAGE_SIZE_BYTES;
@@ -125,7 +124,7 @@ async function uploadWallMedia(
     throw new Error(isVideo ? 'Vídeo muito grande. O limite é 25MB.' : 'Imagem muito grande. O limite é 10MB.');
   }
 
-  const ext = isVideo ? 'mp4' : mediaFile.type.split('/')[1]?.replace('jpeg', 'jpg') || 'jpg';
+  const ext = isVideo ? 'mp4' : mediaType.split('/')[1]?.replace('jpeg', 'jpg') || 'jpg';
   // Keep the owner in the draft path so Storage Rules let the author clean up
   // an upload when the subsequent Firestore write fails.
   const mediaPath = `groups/${groupId}/wall_media/__draft__/${currentUserUid}/${Date.now()}-${crypto.randomUUID()}.${ext}`;
@@ -135,9 +134,10 @@ async function uploadWallMedia(
     await uploadImageWithStorageAuthRetry(fileRef, mediaFile, {
       ...(refreshCredentials ? { refreshCredentials } : {}),
       ...(onUploadProgress ? { onProgress: onUploadProgress } : {}),
+      contentType: mediaType,
     });
   } else {
-    await uploadImageWithStorageAuthRetry(fileRef, mediaFile);
+    await uploadImageWithStorageAuthRetry(fileRef, mediaFile, { contentType: mediaType });
   }
 
   let mediaUrl: string;
@@ -153,7 +153,7 @@ async function uploadWallMedia(
   return {
     mediaUrl,
     mediaPath,
-    mediaType: mediaFile.type,
+    mediaType,
   };
 }
 

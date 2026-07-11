@@ -209,6 +209,14 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.51.43][web-1.51.43] - 2026-07-10
+
+#### Mudado
+- Paginação do Mural por cursor em `created_at desc`, acionada por `IntersectionObserver` e com fallback manual.
+- Detecção de mídia centralizada e cobertura para envio, armazenamento e renderização de vídeos legados.
+
+_Issues: #3522, #3527 · PRs: #3528_
+
 ### [1.51.42][web-1.51.42] - 2026-07-10
 
 #### Adicionado
@@ -2077,6 +2085,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.51.43]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.43.md
 [web-1.51.42]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.42.md
 [web-1.51.41]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.41.md
 [web-1.51.40]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.40.md

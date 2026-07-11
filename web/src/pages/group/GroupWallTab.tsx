@@ -10,6 +10,7 @@ import {
   DialogContent,
   Divider,
   Chip,
+  CircularProgress,
   Typography,
   useTheme,
   useMediaQuery,
@@ -54,42 +55,37 @@ export const GroupWallTab: React.FC<GroupWallTabProps> = ({
   const { remove, deleting } = useDeleteWallPost(groupId);
   const [editingPost, setEditingPost] = useState<WallPost | null>(null);
   const [showNewPosts, setShowNewPosts] = useState(false);
-  const timelineEndRef = useRef<HTMLDivElement | null>(null);
-  const nearBottomRef = useRef(true);
-  const initialScrollDoneRef = useRef(false);
+  const timelineStartRef = useRef<HTMLDivElement | null>(null);
+  const loadMoreSentinelRef = useRef<HTMLDivElement | null>(null);
+  const latestVisibleRef = useRef(true);
+  const supportsIntersectionObserver = typeof window !== 'undefined' && 'IntersectionObserver' in window;
 
   const canPost = isMember || isAdmin;
-  const pinnedPosts = posts.filter((p) => p.pinned);
-  const regularPosts = posts.filter((p) => !p.pinned);
   const timelinePosts = useMemo(
-    () => [...regularPosts].sort((a, b) => (a.createdAt?.getTime() ?? 0) - (b.createdAt?.getTime() ?? 0)),
-    [regularPosts],
+    () => [...posts].sort((a, b) => (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0)),
+    [posts],
   );
 
-  const latestPostId = timelinePosts[timelinePosts.length - 1]?.id ?? null;
+  const latestPostId = timelinePosts[0]?.id ?? null;
   const previousLatestPostRef = useRef<string | null>(null);
 
-  const scrollToTimelineEnd = (behavior: ScrollBehavior) => {
-    const end = timelineEndRef.current;
-    if (end && typeof end.scrollIntoView === 'function') {
-      end.scrollIntoView({ behavior, block: 'end' });
-    }
-  };
-
   useEffect(() => {
-    const updateNearBottom = () => {
-      nearBottomRef.current = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 240;
-    };
-    updateNearBottom();
-    window.addEventListener('scroll', updateNearBottom, { passive: true });
-    return () => window.removeEventListener('scroll', updateNearBottom);
-  }, []);
+    const marker = timelineStartRef.current;
+    if (!marker || !supportsIntersectionObserver) return undefined;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        latestVisibleRef.current = entry.isIntersecting;
+        if (entry.isIntersecting) setShowNewPosts(false);
+      },
+      { rootMargin: '160px 0px 0px 0px' },
+    );
+    observer.observe(marker);
+    return () => observer.disconnect();
+  }, [supportsIntersectionObserver, timelinePosts.length]);
 
   useEffect(() => {
     if (previousLatestPostRef.current && latestPostId && previousLatestPostRef.current !== latestPostId) {
-      if (nearBottomRef.current) {
-        requestAnimationFrame(() => scrollToTimelineEnd('smooth'));
-      } else {
+      if (!latestVisibleRef.current) {
         setShowNewPosts(true);
       }
     }
@@ -97,10 +93,20 @@ export const GroupWallTab: React.FC<GroupWallTabProps> = ({
   }, [latestPostId]);
 
   useEffect(() => {
-    if (loading || timelinePosts.length === 0 || initialScrollDoneRef.current) return;
-    initialScrollDoneRef.current = true;
-    requestAnimationFrame(() => scrollToTimelineEnd('auto'));
-  }, [loading, timelinePosts.length]);
+    const sentinel = loadMoreSentinelRef.current;
+    if (!sentinel || !hasMore || loadingMore || deleting || !supportsIntersectionObserver) return undefined;
+    let requested = false;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting || requested) return;
+        requested = true;
+        void loadMore();
+      },
+      { rootMargin: '600px 0px' },
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [deleting, hasMore, loadMore, loadingMore, supportsIntersectionObserver, timelinePosts.length]);
 
   const formatDay = (date: Date | undefined) => {
     if (!date) return t('groupWall.timelineLatest');
@@ -116,9 +122,9 @@ export const GroupWallTab: React.FC<GroupWallTabProps> = ({
 
   const scrollToLatest = () => {
     setShowNewPosts(false);
-    const end = timelineEndRef.current;
-    if (end && typeof end.scrollIntoView === 'function') {
-      end.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    const start = timelineStartRef.current;
+    if (start && typeof start.scrollIntoView === 'function') {
+      start.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   };
 
@@ -165,27 +171,8 @@ export const GroupWallTab: React.FC<GroupWallTabProps> = ({
           />
         )}
 
-        {pinnedPosts.length > 0 && (
-          <Stack spacing={1.5}>
-            <Typography variant="overline" color="text.secondary" sx={{ px: 0.5 }}>
-              {t('groupWall.timelinePinned')}
-            </Typography>
-            {pinnedPosts.map((post) => (
-              <WallPostCard
-                key={post.id}
-                post={post}
-                isOwn={post.authorId === currentUserId}
-                canManage={isAdmin || post.authorId === currentUserId}
-                onEdit={post.authorId === currentUserId ? setEditingPost : undefined}
-                onDelete={post.authorId === currentUserId || isAdmin ? remove : undefined}
-                onTogglePin={isAdmin ? togglePin : undefined}
-              />
-            ))}
-          </Stack>
-        )}
-
-        {regularPosts.length > 0 && (
-          <Box id={`group-wall-timeline-${groupId}`}>
+        {timelinePosts.length > 0 && (
+          <Box id={`group-wall-timeline-${groupId}`} ref={timelineStartRef}>
             <Stack direction="row" alignItems="center" spacing={1} sx={{ px: 0.5, mb: 1 }}>
               <Typography variant="overline" color="text.secondary">
                 {t('groupWall.timelineTitle')}
@@ -193,19 +180,6 @@ export const GroupWallTab: React.FC<GroupWallTabProps> = ({
               <Divider sx={{ flex: 1 }} />
               <Chip size="small" label={t('groupWall.timelineLatest')} variant="outlined" />
             </Stack>
-
-            {hasMore && (
-              <Box sx={{ textAlign: 'center', mb: 2 }}>
-                <Button
-                  onClick={loadMore}
-                  disabled={loadingMore || deleting}
-                  variant="text"
-                  size="small"
-                >
-                  {loadingMore ? t('common.loading') : t('groupWall.timelineOlder')}
-                </Button>
-              </Box>
-            )}
 
             {showNewPosts && (
               <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1.5 }}>
@@ -242,20 +216,33 @@ export const GroupWallTab: React.FC<GroupWallTabProps> = ({
                 );
               })}
             </Stack>
-            <Box ref={timelineEndRef} sx={{ height: 1 }} />
           </Box>
         )}
 
-        {regularPosts.length === 0 && hasMore && (
-          <Box sx={{ textAlign: 'center', mt: 2 }}>
-            <Button
-              onClick={loadMore}
-              disabled={loadingMore || deleting}
-              variant="outlined"
-              size="small"
-            >
-              {loadingMore ? t('common.loading') : t('groupWall.timelineOlder')}
-            </Button>
+        {hasMore && (
+          <Box
+            ref={loadMoreSentinelRef}
+            role={loadingMore ? 'status' : undefined}
+            aria-label={loadingMore ? t('groupWall.timelineLoadingOlder') : undefined}
+            sx={{
+              minHeight: 64,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              mt: 1,
+            }}
+          >
+            {loadingMore && <CircularProgress size={24} />}
+            {!supportsIntersectionObserver && (
+              <Button
+                onClick={loadMore}
+                disabled={loadingMore || deleting}
+                variant="outlined"
+                size="small"
+              >
+                {loadingMore ? t('common.loading') : t('groupWall.timelineOlder')}
+              </Button>
+            )}
           </Box>
         )}
       </Stack>

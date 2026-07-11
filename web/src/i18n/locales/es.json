@@ -1556,6 +1556,7 @@
     "timelineTitle": "Línea de tiempo",
     "timelineLatest": "Más recientes",
     "timelineOlder": "Cargar publicaciones anteriores",
+    "timelineLoadingOlder": "Cargando mensajes anteriores",
     "timelineNewPosts": "Nuevas publicaciones",
     "timelinePinned": "Fijado arriba",
     "loadMore": "Cargar más",
