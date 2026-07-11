@@ -2574,7 +2574,7 @@ export {
   bulkSetVerifiedForExistingUsers,
 } from "./auth/verification";
 export {canSendSmsOtp, logVerificationFailure} from "./auth/anti-abuse";
-export {requestAccountMerge} from "./auth/account-merge";
+export {requestAccountMerge, completeAccountMerge} from "./auth/account-merge";
 
 // FIX #619: cleanup cpf_index + users_private ao deletar conta
 // (LGPD Art. 18 VI — direito ao apagamento)

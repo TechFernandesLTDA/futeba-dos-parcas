@@ -15,6 +15,10 @@ jest.mock("../../src/validation/cpf", () => ({
   maskCpf: jest.fn((cpf: string) => "***.247.25"),
 }));
 
+jest.mock("../../src/validation/phone-identity", () => ({
+  hashPhoneIdentity: jest.fn(() => "phone_hash"),
+}));
+
 class MockHttpsError extends Error {
   code: string;
   constructor(code: string, message: string) {
@@ -72,6 +76,10 @@ describe("Auth — Verification", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockRunTransaction.mockReset();
+    mockRunTransaction.mockImplementation(async (cb: any) => cb({
+      get: jest.fn().mockResolvedValue({exists: false, data: () => null}),
+      set: jest.fn(),
+    }));
     process.env.CPF_SALT = "abcdef1234567890abcdef1234567890";
   });
 
@@ -169,14 +177,7 @@ describe("Auth — Verification", () => {
         expect.objectContaining({ verified: true, profileComplete: true }),
       );
       expect(mockRevokeRefreshTokens).not.toHaveBeenCalled();
-      expect(mockDocSet).toHaveBeenCalledWith(
-        expect.objectContaining({
-          phone: "+5511999999999",
-          phone_verified: true,
-          verifiedAt: expect.anything(),
-        }),
-        { merge: true },
-      );
+      expect(mockRunTransaction).toHaveBeenCalledTimes(1);
     });
 
     it("retorna alreadyVerified quando usuario ja verificado", async () => {
@@ -213,6 +214,30 @@ describe("Auth — Verification", () => {
       await expect(
         setUserVerified(makeRequest()),
       ).rejects.toThrow();
+    });
+
+    it("bloqueia telefone indexado para outra identidade", async () => {
+      mockDocGet.mockResolvedValueOnce({
+        exists: true,
+        data: () => ({cpfVerifiedAt: {_type: "ServerTimestamp"}}),
+      });
+      mockGetUser.mockResolvedValueOnce({
+        uid: "user1",
+        phoneNumber: "+5511999999999",
+        customClaims: {},
+      });
+      mockRunTransaction.mockImplementationOnce(async (cb: any) => cb({
+        get: jest.fn().mockResolvedValue({
+          exists: true,
+          data: () => ({uid: "other-user"}),
+        }),
+        set: jest.fn(),
+      }));
+
+      await expect(setUserVerified(makeRequest())).rejects.toThrow(
+        "Este telefone já pertence a outra identidade.",
+      );
+      expect(mockSetCustomUserClaims).not.toHaveBeenCalled();
     });
 
     it("rejeita sem cpfVerifiedAt", async () => {

@@ -22,7 +22,13 @@ import {
   ShieldOutlined as ShieldIcon,
 } from '@mui/icons-material';
 import { isValidCpf, formatCpf, stripCpf } from '../../utils/cpfValidator';
-import { verifyCpf, setUserVerified, recomputeMyProfileClaim, logVerificationFailure } from '../../services/cloudFunctions';
+import {
+  completeAccountMerge,
+  verifyCpf,
+  setUserVerified,
+  recomputeMyProfileClaim,
+  logVerificationFailure,
+} from '../../services/cloudFunctions';
 import { mapCpfVerificationFailureReason } from '../../utils/onboardingSecurity';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -30,6 +36,10 @@ import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { createLogger } from '../../utils/logger';
 import { iconSizes } from '../../theme/iconSizes';
 import { useTranslation } from 'react-i18next';
+import {
+  clearPendingAccountMerge,
+  readPendingAccountMerge,
+} from '../../utils/accountMergeSession';
 
 const logger = createLogger('CpfVerification');
 
@@ -41,8 +51,8 @@ export const CpfVerificationScreen: React.FC = () => {
   const { t } = useTranslation();
   useDocumentTitle(t('page.title.cpfVerification'));
   const navigate = useNavigate();
-  const { firebaseUser } = useAuth();
-  const { showSuccess } = useToast();
+  const { firebaseUser, linkGoogleAccount } = useAuth();
+  const { showSuccess, showError } = useToast();
 
   // FIX 2026-05-20: iOS Safari Private Mode/ITP frequentemente bloqueia
   // reCAPTCHA Enterprise → App Check token vazio → functions/unauthenticated.
@@ -59,6 +69,8 @@ export const CpfVerificationScreen: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [successNextPath, setSuccessNextPath] = useState('/profile/setup');
+  const [providersToRelink, setProvidersToRelink] = useState<string[]>([]);
+  const [relinkingGoogle, setRelinkingGoogle] = useState(false);
 
   useEffect(() => {
     if (firebaseUser && !firebaseUser.phoneNumber) {
@@ -194,6 +206,18 @@ export const CpfVerificationScreen: React.FC = () => {
       }
       await setUserVerified({});
 
+      const pendingMerge = readPendingAccountMerge();
+      let mergeNeedsUserAction = false;
+      if (pendingMerge) {
+        const mergeResult = await completeAccountMerge({
+          requestId: pendingMerge.requestId,
+        });
+        clearPendingAccountMerge();
+        setProvidersToRelink(mergeResult.data.providersToRelink);
+        mergeNeedsUserAction = mergeResult.data.providersToRelink.length > 0;
+        showSuccess(t('feedback.phoneVerification.mergeCompleted'));
+      }
+
       // #1485: recompute profileComplete claim para ProfileGate
       let profileCompleteAfterRecompute: boolean | null = null;
       try {
@@ -233,7 +257,7 @@ export const CpfVerificationScreen: React.FC = () => {
 
       showSuccess(t('onboarding.accountVerifiedToast'));
 
-      if (claimOk) {
+      if (claimOk && !mergeNeedsUserAction) {
         navigate(nextPath, { replace: true });
       } else {
         setSuccess(true);
@@ -286,6 +310,20 @@ export const CpfVerificationScreen: React.FC = () => {
     }
   };
 
+  const handleRelinkGoogle = async () => {
+    setRelinkingGoogle(true);
+    try {
+      await linkGoogleAccount();
+      setProvidersToRelink((current) => current.filter((id) => id !== 'google.com'));
+      showSuccess(t('feedback.phoneVerification.googleRelinked'));
+    } catch (err) {
+      logger.error('Google relink after account merge failed:', err);
+      showError(t('feedback.phoneVerification.googleRelinkError'));
+    } finally {
+      setRelinkingGoogle(false);
+    }
+  };
+
   const ProgressHeader = () => (
     <Box sx={{ mb: 3 }}>
       <Stepper activeStep={1} alternativeLabel sx={{ mb: 1 }}>
@@ -312,11 +350,26 @@ export const CpfVerificationScreen: React.FC = () => {
         <Typography variant="caption" color="text.secondary">
           {t('onboarding.letsPlay')}
         </Typography>
+        {providersToRelink.includes('google.com') && (
+          <Button
+            variant="outlined"
+            size="large"
+            fullWidth
+            sx={{ mt: 3, borderRadius: 2 }}
+            onClick={handleRelinkGoogle}
+            disabled={relinkingGoogle}
+            startIcon={relinkingGoogle ? <CircularProgress size={20} /> : undefined}
+          >
+            {relinkingGoogle
+              ? t('feedback.phoneVerification.googleRelinking')
+              : t('feedback.phoneVerification.googleRelink')}
+          </Button>
+        )}
         <Button
           variant="contained"
           size="large"
           fullWidth
-          sx={{ mt: 3, borderRadius: 2 }}
+          sx={{ mt: providersToRelink.length > 0 ? 1.5 : 3, borderRadius: 2 }}
           onClick={() => navigate(successNextPath, { replace: true })}
         >
           Continuar

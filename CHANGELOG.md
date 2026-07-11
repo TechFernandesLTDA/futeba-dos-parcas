@@ -209,6 +209,14 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.51.42][web-1.51.42] - 2026-07-10
+
+#### Adicionado
+- Sessão curta de união com requestId opaco e etapa explícita para religar Google.
+- Estados `pending_cpf`, `ready`, `processing` e `completed` no fluxo de onboarding.
+
+_Issues: #3525 · PRs: #3526_
+
 ### [1.51.41][web-1.51.41] - 2026-07-10
 
 #### Corrigido
@@ -1476,6 +1484,19 @@ _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
 
+### [1.7.19][functions-1.7.19] - 2026-07-10
+
+#### Adicionado
+- `phone_index` com HMAC-SHA-256, `account_aliases` e executor `completeAccountMerge`.
+- Lease contra processamento concorrente, manifesto, auditoria e expiração das provas.
+- Backfill idempotente de índices de telefone sem registrar PII em logs.
+
+#### Corrigido
+- Cleanup de conta só remove índices de CPF/telefone que ainda pertencem ao UID apagado.
+- Requests de união não retornam mais UIDs no identificador público.
+
+_Issues: #3525 · PRs: #3526_
+
 ### [1.7.18][functions-1.7.18] - 2026-07-10
 
 #### Corrigido
@@ -2056,6 +2077,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.51.42]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.42.md
 [web-1.51.41]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.41.md
 [web-1.51.40]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.40.md
 [web-1.51.39]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.39.md
@@ -2179,6 +2201,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [web-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.26.0.md
 [ios-1.6.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.1.md
 [ios-1.6.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.0.md
+[functions-1.7.19]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.7.19.md
 [functions-1.7.18]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.7.18.md
 [functions-1.7.17]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.7.17.md
 [functions-1.7.16]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.7.16.md

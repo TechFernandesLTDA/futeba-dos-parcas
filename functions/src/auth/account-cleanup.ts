@@ -120,6 +120,7 @@ export const onUserDeleted = auth
         const userPrivateRef = db.doc(`users_private/${uid}`);
         const userPrivateSnap = await userPrivateRef.get();
         const cpfHash = userPrivateSnap.data()?.cpfHash as string | undefined;
+        const phoneHash = userPrivateSnap.data()?.phoneHash as string | undefined;
 
         if (userPrivateSnap.exists) {
           await queueDelete(userPrivateRef);
@@ -128,11 +129,30 @@ export const onUserDeleted = auth
 
         // 3. Remove cpf_index/{cpfHash} → libera dedup para re-registro
         if (cpfHash) {
-          await queueDelete(db.doc(`cpf_index/${cpfHash}`));
-          logger.info(
-            `[ACCOUNT_CLEANUP] Deletando cpf_index/${cpfHash} ` +
-            `do usuário ${uid}`
-          );
+          const cpfIndexRef = db.doc(`cpf_index/${cpfHash}`);
+          const cpfIndexSnap = await cpfIndexRef.get();
+          if (cpfIndexSnap.data()?.uid === uid) {
+            await queueDelete(cpfIndexRef);
+            logger.info(
+              `[ACCOUNT_CLEANUP] Deletando cpf_index/${cpfHash} ` +
+              `do usuário ${uid}`
+            );
+          }
+        }
+
+        // 3b. Libera telefone somente se o índice ainda pertencer ao UID
+        // removido. A guarda evita apagar o índice da identidade canônica
+        // depois de uma união/reconciliação.
+        if (phoneHash) {
+          const phoneIndexRef = db.doc(`phone_index/${phoneHash}`);
+          const phoneIndexSnap = await phoneIndexRef.get();
+          if (phoneIndexSnap.data()?.uid === uid) {
+            await queueDelete(phoneIndexRef);
+            logger.info(
+              `[ACCOUNT_CLEANUP] Deletando phone_index/${phoneHash} ` +
+              `do usuário ${uid}`
+            );
+          }
         }
 
         // 4. FIX #652-B3 + #994: Cleanup audit_logs (target_user_id == uid)

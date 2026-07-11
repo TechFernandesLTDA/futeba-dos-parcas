@@ -85,3 +85,17 @@ describe("account_merge_requests — escrita", () => {
     );
   });
 });
+
+describe("índices privados de identidade", () => {
+  for (const collection of ["cpf_index", "phone_index", "account_aliases"]) {
+    it(`${collection}: nem admin lê diretamente`, async () => {
+      await seedDoc(testEnv, `${collection}/opaque-id`, {uid: "target-uid"});
+      await assertFails(asAdmin(testEnv).doc(`${collection}/opaque-id`).get());
+    });
+
+    it(`${collection}: player não cria nem altera`, async () => {
+      const ref = asPlayerA(testEnv).doc(`${collection}/client-write`);
+      await assertFails(ref.set({uid: "player-a"}));
+    });
+  }
+});

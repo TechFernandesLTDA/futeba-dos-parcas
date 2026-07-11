@@ -624,8 +624,18 @@ export const logVerificationFailure = httpsCallable<
 
 export const requestAccountMerge = httpsCallable<
   { sourceIdToken: string },
-  { success: boolean; requestId: string; status: 'pending_review' }
+  { success: boolean; requestId: string; status: 'pending_cpf' | 'ready' }
 >(functions, 'requestAccountMerge', { timeout: 30000 });
+
+export const completeAccountMerge = httpsCallable<
+  { requestId: string },
+  {
+    success: boolean;
+    status: 'completed';
+    alreadyCompleted: boolean;
+    providersToRelink: string[];
+  }
+>(functions, 'completeAccountMerge', { timeout: 120000 });
 
 export const joinPublicGame = httpsCallable<
   { gameId: string; position?: 'GOALKEEPER' | 'FIELD'; isCasualPlayer?: boolean },

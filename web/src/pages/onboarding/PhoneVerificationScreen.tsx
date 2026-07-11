@@ -47,6 +47,7 @@ import {
   requestAccountMerge,
 } from '../../services/cloudFunctions';
 import type { VerificationFailureReason } from '../../utils/onboardingSecurity';
+import { savePendingAccountMerge } from '../../utils/accountMergeSession';
 
 const logger = createLogger('PhoneVerification');
 const PHONE_VERIFICATION_SESSION_KEY = 'futeba.phoneVerification';
@@ -545,8 +546,13 @@ export const PhoneVerificationScreen: React.FC = () => {
 
       if (requestMerge && sourceIdToken) {
         try {
-          await requestAccountMerge({ sourceIdToken });
-          showSuccess(t('feedback.phoneVerification.mergeRequestCreated'));
+          const mergeResult = await requestAccountMerge({ sourceIdToken });
+          savePendingAccountMerge(mergeResult.data);
+          showSuccess(
+            mergeResult.data.status === 'pending_cpf'
+              ? t('feedback.phoneVerification.mergePendingCpf')
+              : t('feedback.phoneVerification.mergeReady'),
+          );
         } catch (mergeErr) {
           logger.error('Account merge request failed:', mergeErr);
           showError(t('feedback.phoneVerification.mergeRequestError'));
