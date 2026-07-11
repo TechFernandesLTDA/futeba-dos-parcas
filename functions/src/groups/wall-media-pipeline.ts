@@ -390,6 +390,9 @@ export const onGroupWallMediaStaged = functions.storage.onObjectFinalized({
   memory: "1GiB",
   timeoutSeconds: 300,
   cpu: 1,
+  // Capacidade para bursts sem pré-alocação: o autoscaler só cobra instâncias
+  // efetivamente ativas. Concurrency 2 limita FFmpeg por processo; backlog e
+  // custo são observados pelas métricas do pipeline antes de ajustar este teto.
   concurrency: 2,
   maxInstances: 100,
   retry: true,
@@ -419,6 +422,9 @@ export const onGroupWallMediaStaged = functions.storage.onObjectFinalized({
     generation
   );
   if (claim.result === "BUSY") {
+    // Não confirme a entrega duplicada: se o holder atual cair depois do claim,
+    // o retry com backoff é o único caminho que retoma o draft após o lease.
+    // Retornar aqui poderia deixar a mídia presa até o janitor expirar o draft.
     throw new Error("WALL_MEDIA_GENERATION_ALREADY_PROCESSING");
   }
   if (claim.result === "TERMINAL") {

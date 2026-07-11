@@ -313,7 +313,8 @@ class FirebaseGroupWallMediaPipeline(
 
     private companion object {
         const val CREATE_DRAFT_CALLABLE = "createGroupWallMediaDraft"
-        const val PROCESSING_TIMEOUT_MS = 90_000L
+        // Mantido em paridade com o Web; o worker possui timeout server-side de 300 s.
+        const val PROCESSING_TIMEOUT_MS = 180_000L
     }
 }
 
@@ -609,6 +610,15 @@ private fun Byte.toUnsignedInt(): Int = toInt() and 0xFF
 private fun ByteArray.asAscii(start: Int, end: Int): String =
     copyOfRange(start, end).toString(Charsets.US_ASCII)
 
+/**
+ * Contrato de recovery do pipeline v1.
+ *
+ * IMPORTANTE: a fórmula precisa permanecer byte a byte compatível com
+ * `deterministicWallMediaPostId` em `functions/src/groups/wall-media-contract.ts`.
+ * O fallback é usado quando uma resposta da callable se perde ou um App Check
+ * limited-use impede a repetição. Uma futura versão do pipeline deve manter o
+ * contrato v1 durante a migração ou atualizar cliente, servidor e teste de paridade juntos.
+ */
 internal fun deterministicWallMediaPostId(
     groupId: String,
     ownerId: String,
