@@ -620,6 +620,171 @@ describe("Presence Notifications", () => {
   // TESTES DE IDEMPOTÊNCIA: reentrega at-least-once não duplica
   // ============================================================
   describe("idempotência de reentrega (claimOnce)", () => {
+    it("ignora confirmação recriada pela união de contas antes do claim", async () => {
+      await onGameConfirmed({
+        id: "evt-merged-confirmation",
+        data: {data: () => ({
+          game_id: "game1",
+          user_id: "player1",
+          status: "CONFIRMED",
+          merged_from_alias: true,
+        })},
+        params: {confirmationId: "conf-merged"},
+      });
+
+      expect(mockRunTransaction).not.toHaveBeenCalled();
+      expect(mockSendAndSaveNotification).not.toHaveBeenCalled();
+    });
+
+    it("não materializa aceite sem identidade canônica do convite", async () => {
+      await onGroupInviteResponse({
+        id: "evt-invalid-accepted-invite",
+        data: {
+          before: {data: () => ({status: "PENDING"})},
+          after: {data: () => ({
+            status: "ACCEPTED",
+            invited_by_id: "inviter1",
+            invited_user_id: "user1",
+          })},
+        },
+        params: {inviteId: "inv-invalid"},
+      });
+
+      expect(mockRunTransaction).not.toHaveBeenCalled();
+      expect(mockSendAndSaveNotification).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      {
+        label: "grupo inexistente",
+        reads: [
+          {exists: false, data: () => undefined},
+          {exists: true, data: () => ({status: "ACTIVE"})},
+          {exists: false, data: () => undefined},
+          {exists: false, data: () => undefined},
+        ],
+      },
+      {
+        label: "grupo inativo",
+        reads: [
+          {exists: true, data: () => ({status: "ARCHIVED"})},
+          {exists: true, data: () => ({status: "ACTIVE"})},
+          {exists: false, data: () => undefined},
+          {exists: false, data: () => undefined},
+        ],
+      },
+      {
+        label: "usuário removido",
+        reads: [
+          {exists: true, data: () => ({status: "ACTIVE"})},
+          {exists: false, data: () => undefined},
+          {exists: false, data: () => undefined},
+          {exists: false, data: () => undefined},
+        ],
+      },
+      {
+        label: "membership banida",
+        reads: [
+          {exists: true, data: () => ({status: "ACTIVE"})},
+          {exists: true, data: () => ({status: "ACTIVE"})},
+          {exists: true, data: () => ({status: "BANNED"})},
+          {exists: false, data: () => undefined},
+        ],
+      },
+    ])("recusa aceite para $label", async ({reads}) => {
+      mockRunTransaction.mockImplementationOnce(async (callback: any) => {
+        let readIndex = 0;
+        return callback({
+          get: jest.fn(async () => reads[readIndex++]),
+          set: jest.fn(),
+        });
+      });
+
+      await onGroupInviteResponse({
+        id: `evt-${reads.length}`,
+        data: {
+          before: {data: () => ({status: "PENDING"})},
+          after: {data: () => ({
+            status: "ACCEPTED",
+            invited_by_id: "inviter1",
+            invited_user_id: "user1",
+            group_id: "group1",
+          })},
+        },
+        params: {inviteId: "inv-ineligible"},
+      });
+
+      expect(mockSendAndSaveNotification).not.toHaveBeenCalled();
+    });
+
+    it("libera o lease como FAILED quando o envio falha e permite retry", async () => {
+      const deliveryError = new Error("FCM unavailable");
+      mockSendAndSaveNotification.mockRejectedValueOnce(deliveryError);
+      const event = {
+        id: "evt-delivery-failed",
+        data: {data: () => ({
+          invited_user_id: "user1",
+          group_id: "group1",
+          group_name: "Pelada FC",
+          invited_by_name: "João",
+        })},
+        params: {inviteId: "inv-failed"},
+      };
+
+      await expect(onGroupInviteCreated(event)).rejects.toBe(deliveryError);
+      expect(dedupDocuments.get(event.id)).toMatchObject({status: "FAILED"});
+
+      mockSendAndSaveNotification.mockResolvedValueOnce(true);
+      await expect(onGroupInviteCreated(event)).resolves.toBeUndefined();
+      expect(dedupDocuments.get(event.id)).toMatchObject({status: "COMPLETED"});
+    });
+
+    it("não conclui nem libera lease assumido por outro worker", async () => {
+      const eventId = "evt-lease-lost";
+      mockSendAndSaveNotification.mockImplementationOnce(async () => {
+        dedupDocuments.set(eventId, {
+          status: "PROCESSING",
+          lease_owner: "new-worker",
+        });
+        return true;
+      });
+
+      await expect(onGroupInviteCreated({
+        id: eventId,
+        data: {data: () => ({
+          invited_user_id: "user1",
+          group_id: "group1",
+          group_name: "Pelada FC",
+          invited_by_name: "João",
+        })},
+        params: {inviteId: "inv-lost"},
+      })).rejects.toThrow("Lease perdido");
+
+      expect(dedupDocuments.get(eventId)).toMatchObject({
+        status: "PROCESSING",
+        lease_owner: "new-worker",
+      });
+    });
+
+    it("reconhece lease ativo persistido com toDate", async () => {
+      dedupDocuments.set("evt-date-lease", {
+        status: "PROCESSING",
+        lease_owner: "worker-ativo",
+        lease_expires_at: {toDate: () => new Date(Date.now() + 60_000)},
+      });
+
+      await expect(onGroupInviteCreated({
+        id: "evt-date-lease",
+        data: {data: () => ({
+          invited_user_id: "user1",
+          group_id: "group1",
+          group_name: "Pelada FC",
+          invited_by_name: "João",
+        })},
+        params: {inviteId: "inv-date-lease"},
+      })).rejects.toThrow("ainda em processamento");
+    });
+
     it("onGameConfirmed: reentrega com mesmo event.id nao duplica push FCM", async () => {
       mockDocGet
         .mockResolvedValue({

@@ -1,5 +1,10 @@
 const mockServerTimestamp = {_type: "ServerTimestamp"};
 const mockRunTransaction = jest.fn();
+const secureCallableOptions: unknown[] = [];
+const mockSecureCallable = jest.fn((options: unknown, handler: unknown) => {
+  secureCallableOptions.push(options);
+  return handler;
+});
 const mockDb = {
   collection: jest.fn(),
   runTransaction: mockRunTransaction,
@@ -41,6 +46,9 @@ jest.mock("firebase-admin/firestore", () => ({
 jest.mock("../src/_db", () => ({db: jest.fn(() => mockDb)}));
 jest.mock("../src/cashbox/callable", () => ({
   isActiveGroupManager: mockIsActiveGroupManager,
+}));
+jest.mock("../src/middleware/secure-callable-wrapper", () => ({
+  secureCallable: mockSecureCallable,
 }));
 
 const {
@@ -110,6 +118,45 @@ const gamesForMonth = (count: number, cost = 30000) =>
     status: "SCHEDULED",
     courtCostCents: cost,
   }));
+
+describe("segurança dos callables financeiros mensais", () => {
+  it("usa secureCallable, App Check anti-replay, rate limit e audit context", async () => {
+    expect(secureCallableOptions).toHaveLength(5);
+    const options = secureCallableOptions.map((config) =>
+      config as {
+        consumeAppCheckToken?: boolean;
+        rateLimit?: {keyPrefix?: string};
+        auditLogContext?: (request: unknown) => Promise<Record<string, unknown>>;
+      }
+    );
+
+    expect(options.every((config) =>
+      config.consumeAppCheckToken === true &&
+      typeof config.auditLogContext === "function"
+    )).toBe(true);
+    expect(options.map((config) => config.rateLimit?.keyPrefix)).toEqual([
+      "finance_manage",
+      "finance_manage",
+      "finance_rebuild",
+      "finance_manage",
+      "finance_settle",
+    ]);
+    await expect(options[4].auditLogContext?.({
+      data: {
+        groupId: "group-1",
+        periodKey: "2026-07",
+        targetUserId: "payer-1",
+        requestId: "request-12345678",
+      },
+    })).resolves.toMatchObject({
+      action: "settle_monthly_charge",
+      group_id: "group-1",
+      period_key: "2026-07",
+      target_user_id: "payer-1",
+      client_request_id: "request-12345678",
+    });
+  });
+});
 
 describe("calculadora financeira mensal", () => {
   test.each([3, 4, 5])(
@@ -907,6 +954,10 @@ describe("callables financeiros mensais", () => {
       }),
     ]));
     state.set(periodPath, {...(state.get(periodPath) || {}), status: "FINALIZED"});
+    await expect(rebuildMonthlyCycle({
+      auth: {uid: "owner", token: {}},
+      data: {groupId: "group-1", periodKey: "2026-07"},
+    })).rejects.toMatchObject({code: "failed-precondition"});
     await expect(setMonthlyGameOverride({
       auth: {uid: "owner", token: {}},
       data: {
@@ -1079,6 +1130,10 @@ describe("callables financeiros mensais", () => {
     const replay = await settleMonthlyCharge(requestBase);
     expect(replay).toMatchObject({duplicate: true, amountCents: 400});
     expect(writeCount).toBe(writesAfterPartial);
+    await expect(settleMonthlyCharge({
+      ...requestBase,
+      data: {...requestBase.data, amountCents: 399},
+    })).rejects.toMatchObject({code: "already-exists"});
 
     const full = await settleMonthlyCharge({
       auth: requestBase.auth,

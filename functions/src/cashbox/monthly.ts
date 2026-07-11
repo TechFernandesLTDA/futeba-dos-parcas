@@ -15,6 +15,8 @@ import {
   cashboxSummaryPayload,
   cashboxSummaryState,
 } from "./summary";
+import {RATE_LIMITS} from "../middleware/rate-limiter";
+import {secureCallable} from "../middleware/secure-callable-wrapper";
 
 export type MonthlyPricingMode = "FIXED_MONTHLY" | "PER_GAME";
 export type MonthlyPeriodStatus = "DRAFT" | "FINALIZED" | "CLOSED";
@@ -37,6 +39,31 @@ const INCLUDED_GAME_STATUSES = new Set([
   "FINISHED",
 ]);
 const MONTHLY_TIMEZONE = "America/Sao_Paulo";
+
+/**
+ * Enriquece o audit log do secureCallable sem confiar nos dados para autorizar
+ * a operação. A validação autoritativa continua dentro de cada handler.
+ *
+ * @param {string} action Operação financeira executada.
+ * @return {Function} Extrator seguro de contexto de auditoria.
+ */
+function monthlyAuditContext(action: string) {
+  return async (request: functions.https.CallableRequest) => {
+    const data = request.data && typeof request.data === "object" ?
+      request.data as Record<string, unknown> : {};
+    return {
+      action,
+      group_id: typeof data.groupId === "string" ? data.groupId : null,
+      period_key: typeof data.periodKey === "string" ? data.periodKey : null,
+      target_user_id: typeof data.targetUserId === "string" ?
+        data.targetUserId : null,
+      occurrence_id: typeof data.occurrenceId === "string" ?
+        data.occurrenceId : null,
+      client_request_id: typeof data.requestId === "string" ?
+        data.requestId : null,
+    };
+  };
+}
 
 interface ConfigureMonthlyFinanceData {
   groupId: string;
@@ -757,10 +784,10 @@ export function isMonthlyRosterEligible(
 }
 
 export const configureMonthlyFinance =
-  functions.https.onCall<ConfigureMonthlyFinanceData>({
-    region: "southamerica-east1",
-    enforceAppCheck: process.env.FUNCTIONS_EMULATOR !== "true",
-    consumeAppCheckToken: false,
+  secureCallable<ConfigureMonthlyFinanceData>({
+    consumeAppCheckToken: true,
+    rateLimit: RATE_LIMITS.FINANCE_MANAGE,
+    auditLogContext: monthlyAuditContext("configure_monthly_finance"),
   }, async (request) => {
     const userId = requireAuthenticatedUser(request.auth?.uid);
     const groupId = requireSafeId(request.data?.groupId, "groupId");
@@ -851,10 +878,10 @@ export const configureMonthlyFinance =
     }
   });
 
-export const setMonthlyMember = functions.https.onCall<SetMonthlyMemberData>({
-  region: "southamerica-east1",
-  enforceAppCheck: process.env.FUNCTIONS_EMULATOR !== "true",
-  consumeAppCheckToken: false,
+export const setMonthlyMember = secureCallable<SetMonthlyMemberData>({
+  consumeAppCheckToken: true,
+  rateLimit: RATE_LIMITS.FINANCE_MANAGE,
+  auditLogContext: monthlyAuditContext("set_monthly_member"),
 }, async (request) => {
   const userId = requireAuthenticatedUser(request.auth?.uid);
   const groupId = requireSafeId(request.data?.groupId, "groupId");
@@ -982,10 +1009,10 @@ export const setMonthlyMember = functions.https.onCall<SetMonthlyMemberData>({
 });
 
 export const rebuildMonthlyCycle =
-  functions.https.onCall<RebuildMonthlyCycleData>({
-    region: "southamerica-east1",
-    enforceAppCheck: process.env.FUNCTIONS_EMULATOR !== "true",
-    consumeAppCheckToken: false,
+  secureCallable<RebuildMonthlyCycleData>({
+    consumeAppCheckToken: true,
+    rateLimit: RATE_LIMITS.FINANCE_REBUILD,
+    auditLogContext: monthlyAuditContext("rebuild_monthly_cycle"),
   }, async (request) => {
     const userId = requireAuthenticatedUser(request.auth?.uid);
     const groupId = requireSafeId(request.data?.groupId, "groupId");
@@ -1280,10 +1307,10 @@ export const rebuildMonthlyCycle =
   });
 
 export const setMonthlyGameOverride =
-  functions.https.onCall<SetMonthlyGameOverrideData>({
-    region: "southamerica-east1",
-    enforceAppCheck: process.env.FUNCTIONS_EMULATOR !== "true",
-    consumeAppCheckToken: false,
+  secureCallable<SetMonthlyGameOverrideData>({
+    consumeAppCheckToken: true,
+    rateLimit: RATE_LIMITS.FINANCE_MANAGE,
+    auditLogContext: monthlyAuditContext("set_monthly_game_override"),
   }, async (request) => {
     const userId = requireAuthenticatedUser(request.auth?.uid);
     const groupId = requireSafeId(request.data?.groupId, "groupId");
@@ -1501,10 +1528,10 @@ export const setMonthlyGameOverride =
   });
 
 export const settleMonthlyCharge =
-  functions.https.onCall<SettleMonthlyChargeData>({
-    region: "southamerica-east1",
-    enforceAppCheck: process.env.FUNCTIONS_EMULATOR !== "true",
-    consumeAppCheckToken: false,
+  secureCallable<SettleMonthlyChargeData>({
+    consumeAppCheckToken: true,
+    rateLimit: RATE_LIMITS.FINANCE_SETTLE,
+    auditLogContext: monthlyAuditContext("settle_monthly_charge"),
   }, async (request) => {
     const userId = requireAuthenticatedUser(request.auth?.uid);
     const groupId = requireSafeId(request.data?.groupId, "groupId");

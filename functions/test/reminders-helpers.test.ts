@@ -271,6 +271,54 @@ describe("Reminders - formatGameDateTime", () => {
 });
 
 describe("Reminders - fetchGamesInReminderWindow", () => {
+  test("inclui jogos modernos elegíveis e ignora status encerrado", async () => {
+    const target = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    mockCollectionGet
+      .mockResolvedValueOnce({
+        docs: [
+          {
+            id: "modern-game",
+            data: () => ({
+              dateTime: {toDate: () => target},
+              status: "SCHEDULED",
+              group_id: "group-1",
+              locationName: "Arena Central",
+            }),
+          },
+          {
+            id: "cancelled-game",
+            data: () => ({dateTime: {toDate: () => target}, status: "CANCELLED"}),
+          },
+        ],
+      })
+      .mockResolvedValueOnce({docs: [], size: 0});
+
+    await expect(fetchGamesInReminderWindow(24)).resolves.toEqual([
+      expect.objectContaining({
+        id: "modern-game",
+        status: "SCHEDULED",
+        group_id: "group-1",
+        location_name: "Arena Central",
+      }),
+    ]);
+  });
+
+  test("mantém jogos modernos quando a consulta legada falha", async () => {
+    const target = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    mockCollectionGet
+      .mockResolvedValueOnce({
+        docs: [{
+          id: "modern-game",
+          data: () => ({dateTime: {toDate: () => target}, status: "CONFIRMED"}),
+        }],
+      })
+      .mockRejectedValueOnce(new Error("legacy index unavailable"));
+
+    const games = await fetchGamesInReminderWindow(24);
+
+    expect(games.map(({id}) => id)).toEqual(["modern-game"]);
+  });
+
   test("ancora jogos legados sem dateTime na data real do jogo, nao em created_at", async () => {
     const realGameDate = new Date(Date.now() + 24 * 60 * 60 * 1000);
     const realDateKey = realGameDate.toLocaleDateString("en-CA", {

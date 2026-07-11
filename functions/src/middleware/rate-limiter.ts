@@ -81,6 +81,24 @@ export const RATE_LIMITS = {
     windowMs: 60 * 1000,
   }, // 20/min
 
+  // Financeiro mensal: buckets separados evitam que a seleção de mensalistas
+  // consuma a cota de baixa e limitam rebuilds caros de forma independente.
+  FINANCE_MANAGE: {
+    maxRequests: 120,
+    windowMs: 60 * 1000,
+    keyPrefix: "finance_manage",
+  }, // 120/min
+  FINANCE_REBUILD: {
+    maxRequests: 10,
+    windowMs: 60 * 1000,
+    keyPrefix: "finance_rebuild",
+  }, // 10/min
+  FINANCE_SETTLE: {
+    maxRequests: 60,
+    windowMs: 60 * 1000,
+    keyPrefix: "finance_settle",
+  }, // 60/min
+
   // Default fallback
   DEFAULT: {
     maxRequests: 10,
@@ -148,7 +166,10 @@ export async function checkRateLimit(
           config.maxRequests - currentCount - 1
         );
         const resetAt = requests.length > 0 ?
-          new Date(Math.min(...requests) + config.windowMs) :
+          new Date(requests.reduce(
+            (minimum, value) => Math.min(minimum, value),
+            Number.POSITIVE_INFINITY
+          ) + config.windowMs) :
           new Date(now + config.windowMs);
 
         // Only record the timestamp if the request is allowed
@@ -160,7 +181,10 @@ export async function checkRateLimit(
         // apagava o bucket enquanto outros eventos ainda estavam na janela.
         const expiresAt = new Date(
           (updatedRequests.length > 0 ?
-            Math.max(...updatedRequests) :
+            updatedRequests.reduce(
+              (maximum, value) => Math.max(maximum, value),
+              Number.NEGATIVE_INFINITY
+            ) :
             now) + config.windowMs
         );
 
@@ -415,7 +439,10 @@ export async function checkRateLimitByIp(
           config.maxRequests - currentCount - 1
         );
         const resetAt = requests.length > 0 ?
-          new Date(Math.min(...requests) + config.windowMs) :
+          new Date(requests.reduce(
+            (minimum, value) => Math.min(minimum, value),
+            Number.POSITIVE_INFINITY
+          ) + config.windowMs) :
           new Date(now + config.windowMs);
 
         const updatedRequests = allowed ?
@@ -423,7 +450,10 @@ export async function checkRateLimitByIp(
           requests;
         const expiresAt = new Date(
           (updatedRequests.length > 0 ?
-            Math.max(...updatedRequests) :
+            updatedRequests.reduce(
+              (maximum, value) => Math.max(maximum, value),
+              Number.NEGATIVE_INFINITY
+            ) :
             now) + config.windowMs
         );
 
@@ -538,7 +568,10 @@ export async function getUserRateLimitStats(
       currentRequests: requests.length,
       oldestRequest:
         requests.length > 0 ?
-          new Date(Math.min(...requests)) :
+          new Date(requests.reduce(
+            (minimum, value) => Math.min(minimum, value),
+            Number.POSITIVE_INFINITY
+          )) :
           null,
     };
   } catch (error) {

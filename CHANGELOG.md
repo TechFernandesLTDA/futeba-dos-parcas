@@ -225,6 +225,7 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 #### Corrigido
 - Fluxos de onboarding não tentam recadastrar um CPF já reconciliado durante a união de contas.
 - Escritas de agenda, avatar e localização usam contratos validados, erro acionável e timestamps autoritativos.
+- Operações mensais solicitam tokens App Check de uso limitado compatíveis com a proteção anti-replay do backend.
 
 _Issues: #3529, #3530_
 
@@ -1522,6 +1523,7 @@ _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 - Operações financeiras com centavos, settlement permanente, replay por intenção completa e estorno fora de ordem.
 - Locks com lease, paginação de reminders e retomada durável da criação de recorrências.
 - Regras de identidade, autorização e migração de referências ativas na união de contas.
+- Callables mensais com audit log, rate limits dedicados e App Check anti-replay.
 
 _Issues: #3529, #3530_
 

@@ -105,9 +105,10 @@ Issue de rastreio: [#3529](https://github.com/TechFernandesLTDA/futeba-dos-parca
 
 - Firestore/Storage Rules: 54 arquivos e 892 testes aprovados, além de
   `firebase deploy --dry-run` para Rules, Storage e índices.
-- Functions: TypeScript build, ESLint, 89 suítes e 1.364 testes aprovados
-  (13 ignorados), além do empacotamento integral em dry-run.
-- Web: TypeScript/Vite build, ESLint, 174 arquivos aprovados e 1.072 testes
+- Functions: TypeScript build, ESLint, 92 suítes e 1.401 testes aprovados
+  (13 ignorados), 81% de cobertura das linhas alteradas e empacotamento
+  integral em dry-run.
+- Web: TypeScript/Vite build, ESLint, 175 arquivos aprovados e 1.073 testes
   aprovados (15 ignorados em um arquivo).
 - Android: `:app:compileDebugKotlin` aprovado e 993 testes unitários sem falhas.
 - Contratos adicionais: índices sem duplicatas, TTL, MIME/limites de arquivo,

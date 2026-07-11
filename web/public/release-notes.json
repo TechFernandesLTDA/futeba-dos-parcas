@@ -1,6 +1,6 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-11T13:49:29.490Z",
+  "generatedAt": "2026-07-11T14:23:07.459Z",
   "notes": [
     {
       "version": "1.52.0",
@@ -38,7 +38,8 @@
         "Agenda de grupos respeita owner/admin e mantém o contrato Firestore usado no Android.",
         "Upload de avatar e campos de localização preservam o formulário quando a rede ou o Storage falham.",
         "Fluxos de onboarding não tentam recadastrar um CPF já reconciliado durante a união de contas.",
-        "Escritas de agenda, avatar e localização usam contratos validados, erro acionável e timestamps autoritativos."
+        "Escritas de agenda, avatar e localização usam contratos validados, erro acionável e timestamps autoritativos.",
+        "Operações mensais solicitam tokens App Check de uso limitado compatíveis com a proteção anti-replay do backend."
       ],
       "issueRefs": [
         3529,

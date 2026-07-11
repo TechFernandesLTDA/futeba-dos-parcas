@@ -41,28 +41,29 @@ export interface SetMonthlyGameOverrideRequest {
 }
 
 type MonthlyFinanceCallableResponse = Record<string, unknown>;
+const replayProtectedCallable = { limitedUseAppCheckTokens: true } as const;
 
 export const configureMonthlyFinance = httpsCallable<
   ConfigureMonthlyFinanceRequest,
   MonthlyFinanceCallableResponse
->(functions, 'configureMonthlyFinance');
+>(functions, 'configureMonthlyFinance', replayProtectedCallable);
 
 export const setMonthlyMember = httpsCallable<
   SetMonthlyMemberRequest,
   MonthlyFinanceCallableResponse
->(functions, 'setMonthlyMember');
+>(functions, 'setMonthlyMember', replayProtectedCallable);
 
 export const rebuildMonthlyCycle = httpsCallable<
   RebuildMonthlyCycleRequest,
   MonthlyFinanceCallableResponse
->(functions, 'rebuildMonthlyCycle');
+>(functions, 'rebuildMonthlyCycle', replayProtectedCallable);
 
 export const settleMonthlyCharge = httpsCallable<
   SettleMonthlyChargeRequest,
   MonthlyFinanceCallableResponse
->(functions, 'settleMonthlyCharge');
+>(functions, 'settleMonthlyCharge', replayProtectedCallable);
 
 export const setMonthlyGameOverride = httpsCallable<
   SetMonthlyGameOverrideRequest,
   MonthlyFinanceCallableResponse
->(functions, 'setMonthlyGameOverride');
+>(functions, 'setMonthlyGameOverride', replayProtectedCallable);

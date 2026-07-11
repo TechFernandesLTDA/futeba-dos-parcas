@@ -78,6 +78,11 @@ gestores conectados ao mesmo tempo.
 O caixa é o ledger realizado. O período mensal é o plano/snapshot de cobrança;
 nenhum cliente grava diretamente em qualquer um dos dois domínios.
 
+Os cinco callables mensais passam por `secureCallable`: App Check com token de
+uso limitado e proteção contra replay, rate limits separados para gestão,
+rebuild e baixa, além de audit log enriquecido com grupo, competência, pagador,
+ocorrência e `requestId` quando aplicáveis.
+
 ## Contrato Firestore
 
 ```text
