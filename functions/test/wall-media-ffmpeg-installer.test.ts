@@ -16,8 +16,12 @@ describe("wall media ffmpeg packaging", () => {
     const firebaseConfig = JSON.parse(fs.readFileSync(
       path.resolve(__dirname, "../../firebase.json"),
       "utf8"
-    )) as {functions: Array<{predeploy: string[]}>};
-    const predeploy = firebaseConfig.functions[0].predeploy;
+    )) as {functions: Array<{source: string; predeploy: string[]}>};
+    const functionConfig = firebaseConfig.functions.find((config) =>
+      config.source === "functions"
+    );
+    expect(functionConfig).toBeDefined();
+    const predeploy = functionConfig?.predeploy ?? [];
     const installIndex = predeploy.findIndex((command) =>
       command.includes("run install:ffmpeg")
     );

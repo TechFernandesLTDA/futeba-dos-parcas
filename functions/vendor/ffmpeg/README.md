@@ -9,4 +9,7 @@ FFmpeg 8.1.2 antes de instalar `ffmpeg` nesta pasta.
 
 Em macOS, o binário Linux é validado pelos hashes durante o empacotamento; testes
 e Emulator usam `/opt/homebrew/bin/ffmpeg`, também validado com piso mínimo
-8.1.2. Produção não possui fallback para `PATH`.
+8.1.2. O diretório `vendor/ffmpeg` deve permanecer fora da lista `ignore` do
+bloco Functions em `firebase.json`, para que o empacotador inclua o artefato
+gerado mesmo ele estando no `.gitignore`. Produção não possui fallback para
+`PATH`.
