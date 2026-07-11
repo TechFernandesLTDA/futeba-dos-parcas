@@ -215,7 +215,7 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 - Paginação do Mural por cursor em `created_at desc`, acionada por `IntersectionObserver` e com fallback manual.
 - Detecção de mídia centralizada e cobertura para envio, armazenamento e renderização de vídeos legados.
 
-_Issues: #3522, #3527_
+_Issues: #3522, #3527 · PRs: #3528_
 
 ### [1.51.42][web-1.51.42] - 2026-07-10
 
