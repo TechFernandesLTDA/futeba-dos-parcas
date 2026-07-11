@@ -1,6 +1,6 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-11T00:12:17.088Z",
+  "generatedAt": "2026-07-11T00:15:47.851Z",
   "notes": [
     {
       "version": "1.51.42",
@@ -8,7 +8,7 @@
       "releaseDate": "2026-07-10",
       "type": "patch",
       "showPopup": true,
-      "published": false,
+      "published": true,
       "headline": "Contas criadas com Gmail, e-mail ou telefone agora podem ser unificadas com segurança durante o onboarding.",
       "highlights": [],
       "added": [

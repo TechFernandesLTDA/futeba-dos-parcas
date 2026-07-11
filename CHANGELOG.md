@@ -215,7 +215,7 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 - Sessão curta de união com requestId opaco e etapa explícita para religar Google.
 - Estados `pending_cpf`, `ready`, `processing` e `completed` no fluxo de onboarding.
 
-_Issues: #3525_
+_Issues: #3525 · PRs: #3526_
 
 ### [1.51.41][web-1.51.41] - 2026-07-10
 
@@ -1495,7 +1495,7 @@ _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 - Cleanup de conta só remove índices de CPF/telefone que ainda pertencem ao UID apagado.
 - Requests de união não retornam mais UIDs no identificador público.
 
-_Issues: #3525_
+_Issues: #3525 · PRs: #3526_
 
 ### [1.7.18][functions-1.7.18] - 2026-07-10
 
