@@ -8,6 +8,27 @@ import org.junit.jupiter.api.Test
 class GroupWallRepositoryTest {
 
     @Test
+    fun isSameTextPostIntent_acceptsExactRetryAndRejectsCollision() {
+        val original = mapOf<String, Any?>(
+            "author_id" to "user-1",
+            "text" to "Gol do Jordi",
+            "media_url" to null,
+            "media_path" to null
+        )
+
+        assertThat(isSameTextPostIntent(original, "user-1", "Gol do Jordi")).isTrue()
+        assertThat(isSameTextPostIntent(original, "user-1", "Texto alterado")).isFalse()
+        assertThat(isSameTextPostIntent(original, "user-2", "Gol do Jordi")).isFalse()
+        assertThat(
+            isSameTextPostIntent(
+                original + ("media_path" to "groups/group-1/wall_media/file.webp"),
+                "user-1",
+                "Gol do Jordi"
+            )
+        ).isFalse()
+    }
+
+    @Test
     fun mergeRecentAndPinnedPosts_includesOldPinnedPostsWithoutDuplicates() {
         val oldPinned = post(
             id = "old-pinned",

@@ -234,9 +234,6 @@ class GroupWallRepository constructor(
         text: String
     ) {
         val postRef = wallCollection(groupId).document(clientRequestId)
-        val alreadyExists = postRef.existsOrFalse()
-        if (alreadyExists) return
-
         val post = mapOf(
             "group_id" to groupId,
             "author_id" to authorId,
@@ -261,12 +258,21 @@ class GroupWallRepository constructor(
         )
 
         try {
-            postRef.set(post).await()
+            firestore.runTransaction { transaction ->
+                val existing = transaction.get(postRef)
+                if (existing.exists()) {
+                    require(isSameTextPostIntent(existing.data.orEmpty(), authorId, text)) {
+                        "Identificador de envio já utilizado por outra publicação"
+                    }
+                } else {
+                    transaction.set(postRef, post)
+                }
+            }.await()
         } catch (e: CancellationException) {
             throw e
         } catch (writeError: Exception) {
             // Resposta de rede perdida depois do commit: confirma pelo id estável.
-            val committed = postRef.existsOrFalse()
+            val committed = postRef.matchesTextPostIntentOrFalse(authorId, text)
             if (!committed) throw writeError
         }
     }
@@ -495,8 +501,21 @@ private fun List<DocumentSnapshot>.toWallPosts(): List<GroupWallPost> = mapNotNu
     document.toObject(GroupWallPost::class.java)?.copy(id = document.id)
 }
 
-private suspend fun DocumentReference.existsOrFalse(): Boolean = try {
-    get().await().exists()
+internal fun isSameTextPostIntent(
+    existing: Map<String, Any?>,
+    authorId: String,
+    text: String
+): Boolean = existing["author_id"] == authorId &&
+    existing["text"] == text &&
+    existing["media_url"] == null &&
+    existing["media_path"] == null
+
+private suspend fun DocumentReference.matchesTextPostIntentOrFalse(
+    authorId: String,
+    text: String
+): Boolean = try {
+    val snapshot = get().await()
+    snapshot.exists() && isSameTextPostIntent(snapshot.data.orEmpty(), authorId, text)
 } catch (error: CancellationException) {
     throw error
 } catch (_: Exception) {
