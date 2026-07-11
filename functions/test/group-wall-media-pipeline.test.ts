@@ -30,6 +30,7 @@ jest.mock("../src/middleware/rate-limiter", () => ({
 jest.mock("firebase-admin/storage", () => ({getStorage: mockGetStorage}));
 
 import {Timestamp} from "firebase-admin/firestore";
+import {writeFile} from "fs/promises";
 import {
   createGroupWallMediaDraft,
   claimDraftForProcessing,
@@ -633,6 +634,97 @@ describe("group wall media pipeline", () => {
     ) => Promise<void>)(event)).rejects.toThrow("transient storage failure");
     expect(state.get(draftPath)).toMatchObject({attempt: 2});
     expect(download).toHaveBeenCalledTimes(2);
+  });
+
+  it("processa imagem válida até READY com objetos imutáveis", async () => {
+    const postId = "d".repeat(40);
+    const tempPath =
+      `groups/${groupId}/wall_media_staging/${postId}/${ownerId}/source.png`;
+    const draftPath = `groups/${groupId}/wall_post_drafts/${postId}`;
+    const postPath = `groups/${groupId}/wall_posts/${postId}`;
+    const image = Buffer.from(
+      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk" +
+      "+A8AAQUBAScY42YAAAAASUVORK5CYII=",
+      "base64"
+    );
+    const {database, state} = fakeDatabase({
+      [`groups/${groupId}`]: {owner_id: "owner", status: "ACTIVE"},
+      [`groups/${groupId}/members/${ownerId}`]: {
+        user_id: ownerId,
+        status: "ACTIVE",
+      },
+      [draftPath]: {
+        group_id: groupId,
+        post_id: postId,
+        author_id: ownerId,
+        author_name: "Jogador",
+        author_photo_url: null,
+        text: "Foto do jogo",
+        client_request_id: clientRequestId,
+        intent_hash: "intent-image",
+        temp_path: tempPath,
+        status: "AWAITING_UPLOAD",
+        attempt: 0,
+        declared_content_type: "image/png",
+        declared_size_bytes: image.length,
+        media_kind: "IMAGE",
+        expires_at: Timestamp.fromMillis(Date.now() + 60_000),
+      },
+    });
+    mockDb.mockReturnValue(database);
+    const deleteFile = jest.fn(async () => undefined);
+    const download = jest.fn(async ({destination}: {destination: string}) => {
+      await writeFile(destination, image);
+    });
+    let generation = 10;
+    const upload = jest.fn(async () => [{
+      getMetadata: jest.fn(async () => [{generation: String(generation++)}]),
+    }]);
+    const file = jest.fn(() => ({delete: deleteFile, download}));
+    mockGetStorage.mockReturnValue({
+      bucket: jest.fn(() => ({name: "bucket.test", file, upload})),
+    });
+
+    await (onGroupWallMediaStaged as unknown as (
+      event: Data
+    ) => Promise<void>)({
+      data: {
+        name: tempPath,
+        bucket: "bucket.test",
+        contentType: "image/png",
+        size: String(image.length),
+        generation: "4",
+      },
+    });
+
+    expect(upload).toHaveBeenCalledTimes(2);
+    expect(upload).toHaveBeenNthCalledWith(1, expect.any(String),
+      expect.objectContaining({
+        destination: expect.stringMatching(/\/original\/[a-f0-9]{64}\.webp$/),
+        preconditionOpts: {ifGenerationMatch: 0},
+      }));
+    expect(upload).toHaveBeenNthCalledWith(2, expect.any(String),
+      expect.objectContaining({
+        destination: expect.stringMatching(/\/poster\/[a-f0-9]{64}\.webp$/),
+        preconditionOpts: {ifGenerationMatch: 0},
+      }));
+    expect(state.get(postPath)).toMatchObject({
+      media_status: "READY",
+      media_type: "image/webp",
+      media_source_type: "image/png",
+      media_width: 1,
+      media_height: 1,
+      media_url: expect.stringContaining("firebasestorage.googleapis.com"),
+      thumbnail_url: expect.stringContaining("firebasestorage.googleapis.com"),
+    });
+    expect(state.get(draftPath)).toMatchObject({
+      status: "READY",
+      media_path: expect.stringMatching(/\/original\/[a-f0-9]{64}\.webp$/),
+      poster_path: expect.stringMatching(/\/poster\/[a-f0-9]{64}\.webp$/),
+      egress_bytes: expect.any(Number),
+      attempt: 1,
+    });
+    expect(deleteFile).toHaveBeenCalledWith({ignoreNotFound: true});
   });
 
   it("finalize idempotente preserva reações, pin e soft-delete existentes", async () => {
