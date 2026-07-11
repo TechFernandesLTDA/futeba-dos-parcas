@@ -286,6 +286,68 @@ class GroupWallViewModelTest {
     }
 
     @Test
+    fun `reconnect sem sobreposicao rebasa cursor depois de carregar historico`() = runTest(dispatcher) {
+        val snapshots = MutableSharedFlow<GroupWallRealtimeSnapshot>()
+        val initialCursor = mockk<DocumentSnapshot>()
+        val staleHistoricalCursor = mockk<DocumentSnapshot>()
+        val reconnectCursor = mockk<DocumentSnapshot>()
+        every { repository.observePosts("group-1") } returns snapshots
+        coEvery { repository.loadOlderPosts("group-1", initialCursor) } returns Result.success(
+            GroupWallPage(
+                posts = listOf(post("post-38", 38_000), post("post-37", 37_000)),
+                nextCursor = staleHistoricalCursor,
+                hasMore = true
+            )
+        )
+        coEvery { repository.loadOlderPosts("group-1", staleHistoricalCursor) } returns Result.success(
+            GroupWallPage(
+                posts = listOf(post("wrong-cursor", 1)),
+                nextCursor = null,
+                hasMore = false
+            )
+        )
+        coEvery { repository.loadOlderPosts("group-1", reconnectCursor) } returns Result.success(
+            GroupWallPage(
+                posts = listOf(post("post-98", 98_000), post("post-40", 40_000)),
+                nextCursor = null,
+                hasMore = false
+            )
+        )
+
+        viewModel.observePosts("group-1")
+        runCurrent()
+        snapshots.emit(
+            realtimeSnapshot(
+                posts = listOf(post("post-40", 40_000), post("post-39", 39_000)),
+                cursor = initialCursor,
+                hasMore = true
+            )
+        )
+        runCurrent()
+        viewModel.loadMore("group-1")
+        advanceUntilIdle()
+
+        snapshots.emit(
+            realtimeSnapshot(
+                posts = listOf(post("post-100", 100_000), post("post-99", 99_000)),
+                cursor = reconnectCursor,
+                hasMore = true
+            )
+        )
+        runCurrent()
+        viewModel.loadMore("group-1")
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { repository.loadOlderPosts("group-1", reconnectCursor) }
+        coVerify(exactly = 0) { repository.loadOlderPosts("group-1", staleHistoricalCursor) }
+        val state = viewModel.uiState.value as GroupWallUiState.Success
+        assertEquals(
+            listOf("post-100", "post-99", "post-98", "post-40", "post-39", "post-38", "post-37"),
+            state.posts.map { it.id }
+        )
+    }
+
+    @Test
     fun `erro de pagina antiga e recuperavel sem perder timeline`() = runTest(dispatcher) {
         val cursor = mockk<DocumentSnapshot>()
         every { repository.observePosts("group-1") } returns flowOf(

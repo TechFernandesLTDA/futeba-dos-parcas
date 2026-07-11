@@ -31,6 +31,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -73,25 +74,16 @@ fun GroupWallScreen(
     }
 
     val paginationState = uiState as? GroupWallUiState.Success
-    LaunchedEffect(
-        groupId,
-        paginationState?.posts?.size,
-        paginationState?.hasMore,
-        paginationState?.loadingMore,
-        paginationState?.loadMoreError
-    ) {
-        val state = paginationState ?: return@LaunchedEffect
-        if (!state.hasMore || state.loadingMore || state.loadMoreError != null) {
-            return@LaunchedEffect
-        }
-        if (state.posts.isEmpty()) {
-            viewModel.loadMore(groupId)
-            return@LaunchedEffect
-        }
-
+    val latestPaginationState by rememberUpdatedState(paginationState)
+    LaunchedEffect(groupId, listState) {
         snapshotFlow {
+            val state = latestPaginationState ?: return@snapshotFlow false
             val layoutInfo = listState.layoutInfo
-            shouldLoadMoreWallPosts(
+            shouldRequestMoreWallPosts(
+                hasMore = state.hasMore,
+                loadingMore = state.loadingMore,
+                hasLoadMoreError = state.loadMoreError != null,
+                postsEmpty = state.posts.isEmpty(),
                 lastVisibleItemIndex = layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1,
                 totalItems = layoutInfo.totalItemsCount
             )
@@ -378,3 +370,20 @@ internal fun shouldLoadMoreWallPosts(
     val triggerIndex = (totalItems - 1 - prefetchDistance.coerceAtLeast(0)).coerceAtLeast(0)
     return lastVisibleItemIndex >= triggerIndex
 }
+
+internal fun shouldRequestMoreWallPosts(
+    hasMore: Boolean,
+    loadingMore: Boolean,
+    hasLoadMoreError: Boolean,
+    postsEmpty: Boolean,
+    lastVisibleItemIndex: Int,
+    totalItems: Int
+): Boolean = hasMore &&
+    !loadingMore &&
+    !hasLoadMoreError &&
+    (
+        postsEmpty || shouldLoadMoreWallPosts(
+            lastVisibleItemIndex = lastVisibleItemIndex,
+            totalItems = totalItems
+        )
+    )

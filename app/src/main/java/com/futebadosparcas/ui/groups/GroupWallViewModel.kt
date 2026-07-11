@@ -60,7 +60,7 @@ class GroupWallViewModel(
     private val _actionState = MutableStateFlow<GroupWallActionState>(GroupWallActionState.Idle)
     val actionState: StateFlow<GroupWallActionState> = _actionState.asStateFlow()
 
-    private var observeJob: kotlinx.coroutines.Job? = null
+    private var observeJob: Job? = null
     private var loadMoreJob: Job? = null
     private var createPostJob: Job? = null
     private var pendingPostRequest: PendingPostRequest? = null
@@ -124,6 +124,9 @@ class GroupWallViewModel(
 
     private fun applyRealtimeSnapshot(snapshot: GroupWallRealtimeSnapshot) {
         val currentRecentIds = snapshot.recentPosts.mapTo(mutableSetOf()) { it.id }
+        val realtimeWindowDiscontinuous = realtimeRecentPosts.isNotEmpty() &&
+            snapshot.recentPosts.isNotEmpty() &&
+            realtimeRecentPosts.none { it.id in currentRecentIds }
         val postsLeavingRealtimeWindow = realtimeRecentPosts.filterNot { it.id in currentRecentIds }
         val currentPinnedIds = snapshot.pinnedPosts.mapTo(mutableSetOf()) { it.id }
         val removedPinnedIds = realtimePinnedPosts
@@ -139,7 +142,9 @@ class GroupWallViewModel(
         realtimeRecentPosts = snapshot.recentPosts
         realtimePinnedPosts = snapshot.pinnedPosts
 
-        if (!hasLoadedOlderPosts) {
+        if (!hasLoadedOlderPosts || realtimeWindowDiscontinuous) {
+            // Sem sobreposição após um reconnect, podem existir mensagens no intervalo
+            // entre as duas janelas. Recomeça da nova borda e deixa o merge deduplicar.
             nextCursor = snapshot.nextCursor
             hasMorePosts = snapshot.hasMore && snapshot.nextCursor != null
         }

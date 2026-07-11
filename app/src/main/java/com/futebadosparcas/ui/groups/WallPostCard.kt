@@ -344,22 +344,19 @@ private fun WallPostVideoPlayer(url: String, posterUrl: String?) {
         return
     }
 
-    ActiveWallPostVideoPlayer(
-        url = url,
-        playWhenReady = playbackPolicy.playWhenReady
-    )
+    ActiveWallPostVideoPlayer(url = url)
 }
 
 @OptIn(UnstableApi::class)
 @Composable
-private fun ActiveWallPostVideoPlayer(url: String, playWhenReady: Boolean) {
+private fun ActiveWallPostVideoPlayer(url: String) {
     val context = LocalContext.current
     var retryKey by remember(url) { mutableIntStateOf(0) }
     var playbackFailed by remember(url, retryKey) { mutableStateOf(false) }
-    val player = remember(url, retryKey, playWhenReady) {
+    val player = remember(url, retryKey) {
         ExoPlayer.Builder(context).build().apply {
             setMediaItem(MediaItem.fromUri(url))
-            this.playWhenReady = playWhenReady
+            playWhenReady = true
         }
     }
 
@@ -419,15 +416,13 @@ private fun ActiveWallPostVideoPlayer(url: String, playWhenReady: Boolean) {
 }
 
 internal data class WallVideoPlaybackPolicy(
-    val createPlayer: Boolean,
-    val playWhenReady: Boolean
+    val createPlayer: Boolean
 )
 
 internal fun resolveWallVideoPlaybackPolicy(
     playbackRequested: Boolean
 ): WallVideoPlaybackPolicy = WallVideoPlaybackPolicy(
-    createPlayer = playbackRequested,
-    playWhenReady = playbackRequested
+    createPlayer = playbackRequested
 )
 
 @Composable

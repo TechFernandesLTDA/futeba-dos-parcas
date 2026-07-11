@@ -189,7 +189,7 @@ class GroupWallMediaPipelineTest {
         assertTrue(result.isSuccess)
         assertTrue(pipeline.uploadCalled)
         assertTrue(pipeline.awaitCalled)
-        assertEquals(listOf(25, 100, 100), progress)
+        assertEquals(listOf(25, 100), progress)
     }
 
     @Test
@@ -289,6 +289,7 @@ class GroupWallMediaPipelineTest {
         ) {
             uploadCalled = true
             onProgress(25)
+            onProgress(100)
             onProgress(100)
         }
 

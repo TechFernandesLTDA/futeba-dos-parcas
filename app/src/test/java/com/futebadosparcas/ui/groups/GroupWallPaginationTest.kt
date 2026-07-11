@@ -17,4 +17,38 @@ class GroupWallPaginationTest {
     fun `nao pagina lista sem itens visiveis`() {
         assertFalse(shouldLoadMoreWallPosts(lastVisibleItemIndex = -1, totalItems = 0))
     }
+
+    @Test
+    fun `estado atualizado controla paginacao sem reiniciar observador`() {
+        assertTrue(
+            shouldRequestMoreWallPosts(
+                hasMore = true,
+                loadingMore = false,
+                hasLoadMoreError = false,
+                postsEmpty = true,
+                lastVisibleItemIndex = -1,
+                totalItems = 0
+            )
+        )
+        assertFalse(
+            shouldRequestMoreWallPosts(
+                hasMore = true,
+                loadingMore = true,
+                hasLoadMoreError = false,
+                postsEmpty = false,
+                lastVisibleItemIndex = 19,
+                totalItems = 20
+            )
+        )
+        assertFalse(
+            shouldRequestMoreWallPosts(
+                hasMore = true,
+                loadingMore = false,
+                hasLoadMoreError = true,
+                postsEmpty = false,
+                lastVisibleItemIndex = 19,
+                totalItems = 20
+            )
+        )
+    }
 }

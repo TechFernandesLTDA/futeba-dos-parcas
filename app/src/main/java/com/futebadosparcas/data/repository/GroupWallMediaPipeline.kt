@@ -5,13 +5,17 @@ import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.provider.OpenableColumns
 import com.futebadosparcas.util.AppLogger
+import com.google.android.gms.tasks.OnFailureListener
+import com.google.android.gms.tasks.OnSuccessListener
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.functions.FirebaseFunctions
 import com.google.firebase.functions.FirebaseFunctionsException
 import com.google.firebase.functions.HttpsCallableOptions
 import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.storage.OnProgressListener
 import com.google.firebase.storage.StorageMetadata
+import com.google.firebase.storage.UploadTask
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.TimeoutCancellationException
@@ -241,7 +245,7 @@ class FirebaseGroupWallMediaPipeline(
         onProgress(0)
 
         suspendCancellableCoroutine { continuation ->
-            val progressListener = com.google.firebase.storage.OnProgressListener<com.google.firebase.storage.UploadTask.TaskSnapshot> { snapshot ->
+            val progressListener = OnProgressListener<UploadTask.TaskSnapshot> { snapshot ->
                 val total = snapshot.totalByteCount
                 if (total > 0L) {
                     val progress = ((snapshot.bytesTransferred * 100L) / total)
@@ -250,13 +254,13 @@ class FirebaseGroupWallMediaPipeline(
                     onProgress(progress)
                 }
             }
-            val successListener = com.google.android.gms.tasks.OnSuccessListener<com.google.firebase.storage.UploadTask.TaskSnapshot> {
+            val successListener = OnSuccessListener<UploadTask.TaskSnapshot> {
                 if (continuation.isActive) {
                     onProgress(100)
                     continuation.resume(Unit)
                 }
             }
-            val failureListener = com.google.android.gms.tasks.OnFailureListener { error ->
+            val failureListener = OnFailureListener { error ->
                 if (continuation.isActive) continuation.resumeWithException(error)
             }
 

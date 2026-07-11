@@ -52,8 +52,10 @@ import com.futebadosparcas.data.repository.GroupWallMediaFile
 import com.futebadosparcas.data.repository.GroupWallMediaValidationException
 import com.futebadosparcas.data.repository.GroupWallMediaValidationReason
 import com.futebadosparcas.data.repository.inspectGroupWallMedia
+import com.futebadosparcas.util.AppLogger
 import java.util.Locale
 
+private const val TAG = "WallPostComposer"
 private const val MAX_TEXT_LENGTH = 500
 
 @Composable
@@ -108,6 +110,11 @@ fun WallPostComposer(
                 uri,
                 Intent.FLAG_GRANT_READ_URI_PERMISSION
             )
+        }.onFailure { error ->
+            AppLogger.w(TAG) {
+                "Provedor ${uri.authority ?: "desconhecido"} não concedeu acesso persistente; " +
+                    "o envio continuará com a permissão temporária (${error.javaClass.simpleName})."
+            }
         }
         preparingMedia = true
         selectedMediaUri = uri.toString()

@@ -278,6 +278,14 @@ class GroupWallRepository constructor(
         clientRequestId: String,
         onProgress: (Int) -> Unit
     ) {
+        var lastReportedProgress: Int? = null
+        val reportProgress: (Int) -> Unit = { progress ->
+            val normalizedProgress = progress.coerceIn(0, 100)
+            if (normalizedProgress != lastReportedProgress) {
+                lastReportedProgress = normalizedProgress
+                onProgress(normalizedProgress)
+            }
+        }
         val draft = mediaPipeline.createDraft(
             groupId = groupId,
             text = text,
@@ -291,9 +299,9 @@ class GroupWallRepository constructor(
         val initialStatus = mediaPipeline.getDraftStatus(groupId, draft.postId)
         when (initialStatus.state) {
             GroupWallMediaDraftState.AWAITING_UPLOAD -> {
-                mediaPipeline.upload(draft, media, onProgress)
+                mediaPipeline.upload(draft, media, reportProgress)
             }
-            GroupWallMediaDraftState.PROCESSING -> onProgress(100)
+            GroupWallMediaDraftState.PROCESSING -> reportProgress(100)
             GroupWallMediaDraftState.READY,
             GroupWallMediaDraftState.REJECTED,
             GroupWallMediaDraftState.EXPIRED -> {
@@ -305,7 +313,7 @@ class GroupWallRepository constructor(
             )
         }
 
-        onProgress(100)
+        reportProgress(100)
         mediaPipeline.awaitTerminalStatus(groupId, draft.postId).requireReady()
     }
 

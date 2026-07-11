@@ -2652,6 +2652,23 @@ service cloud.firestore {
             );
         }
 
+        function isValidWallClientPostId() {
+          // Android idempotente usa o UUID do request como document ID. Web e
+          // clientes já publicados usam add()/addDoc(), cujo auto-ID possui 20
+          // caracteres alfanuméricos. Não duplicamos client_request_id no payload:
+          // no Android ele é, por construção, exatamente o próprio postId.
+          return (
+            postId.size() == 36 &&
+            postId.matches(
+              '^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[1-8][0-9A-Fa-f]{3}-' +
+              '[89AaBb][0-9A-Fa-f]{3}-[0-9A-Fa-f]{12}$'
+            )
+          ) || (
+            postId.size() == 20 &&
+            postId.matches('^[A-Za-z0-9]{20}$')
+          );
+        }
+
         // Leitura: membros ativos do grupo (inclui owner/admin) ou owner legado
         allow read: if isAuthenticated() && (
           isAdmin() ||
@@ -2662,6 +2679,7 @@ service cloud.firestore {
         allow create: if isAuthenticated() &&
           canUseGroupWall(groupId) &&
           isGroupActive(groupId) &&
+          isValidWallClientPostId() &&
           !exists(/databases/$(database)/documents/groups/$(groupId)/wall_post_drafts/$(postId)) &&
           request.resource.data.author_id == userId() &&
           request.resource.data.group_id == groupId &&

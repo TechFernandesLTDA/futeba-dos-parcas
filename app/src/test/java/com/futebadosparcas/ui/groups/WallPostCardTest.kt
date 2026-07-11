@@ -36,11 +36,11 @@ class WallPostCardTest {
     @Test
     fun `player nao e criado antes do toque e inicia apos gesto explicito`() {
         assertEquals(
-            WallVideoPlaybackPolicy(createPlayer = false, playWhenReady = false),
+            WallVideoPlaybackPolicy(createPlayer = false),
             resolveWallVideoPlaybackPolicy(playbackRequested = false)
         )
         assertEquals(
-            WallVideoPlaybackPolicy(createPlayer = true, playWhenReady = true),
+            WallVideoPlaybackPolicy(createPlayer = true),
             resolveWallVideoPlaybackPolicy(playbackRequested = true)
         )
     }
