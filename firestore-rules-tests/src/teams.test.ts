@@ -18,6 +18,7 @@ import {
 let testEnv: RulesTestEnvironment;
 
 const GAME_ID = "teams-game-001";
+const LIVE_GAME_ID = "teams-live-game-001";
 const FUTURE_DATE = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
 beforeAll(async () => {
@@ -36,6 +37,17 @@ beforeAll(async () => {
     team2_score: null,
     group_id: null,
     co_organizers: [],
+  });
+  await seedDoc(testEnv, `games/${LIVE_GAME_ID}`, {
+    title: "Jogo Teams Live",
+    owner_id: UID_PLAYER_A,
+    status: "LIVE",
+    date_time: FUTURE_DATE,
+  });
+  await seedDoc(testEnv, "teams/team-live-locked", {
+    name: "Time Travado",
+    game_id: LIVE_GAME_ID,
+    players: [UID_PLAYER_A],
   });
 });
 
@@ -88,6 +100,17 @@ describe("teams — create", () => {
         game_id: GAME_ID,
         players: [],
         created_at: new Date(),
+      })
+    );
+  });
+
+  it("Game owner NÃO pode criar time depois que o jogo está LIVE", async () => {
+    const db = asPlayerA(testEnv);
+    await assertFails(
+      db.doc("teams/team-live-injected").set({
+        name: "Time Injetado",
+        game_id: LIVE_GAME_ID,
+        players: [],
       })
     );
   });
@@ -159,6 +182,20 @@ describe("teams — update", () => {
       })
     );
   });
+
+  it("Game owner NÃO pode alterar escalação durante jogo LIVE", async () => {
+    const db = asPlayerA(testEnv);
+    await assertFails(
+      db.doc("teams/team-live-locked").update({players: [UID_PLAYER_B]})
+    );
+  });
+
+  it("Admin pode reconciliar escalação durante jogo LIVE", async () => {
+    const db = asAdmin(testEnv);
+    await assertSucceeds(
+      db.doc("teams/team-live-locked").update({name: "Reconciliação admin"})
+    );
+  });
 });
 
 describe("teams — delete", () => {
@@ -190,5 +227,10 @@ describe("teams — delete", () => {
   it("Nao-autenticado NAO pode deletar time", async () => {
     const db = asAnon(testEnv);
     await assertFails(db.doc(`teams/team-del-admin`).delete());
+  });
+
+  it("Game owner NÃO pode deletar time durante jogo LIVE", async () => {
+    const db = asPlayerA(testEnv);
+    await assertFails(db.doc("teams/team-live-locked").delete());
   });
 });

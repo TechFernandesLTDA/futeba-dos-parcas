@@ -547,6 +547,20 @@
           "order": "ASCENDING"
         },
         {
+          "fieldPath": "date",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "games",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "group_id",
+          "order": "ASCENDING"
+        },
+        {
           "fieldPath": "status",
           "order": "ASCENDING"
         },
@@ -1463,6 +1477,42 @@
         {
           "fieldPath": "day_of_week",
           "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "games",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "group_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "recurrence",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "date",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "settlements",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "payer_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "payment_sequence",
+          "order": "DESCENDING"
         }
       ]
     },
@@ -2440,6 +2490,12 @@
     },
     {
       "collectionGroup": "realtime_slo_samples",
+      "fieldPath": "expires_at",
+      "ttl": true,
+      "indexes": []
+    },
+    {
+      "collectionGroup": "notif_dedup",
       "fieldPath": "expires_at",
       "ttl": true,
       "indexes": []

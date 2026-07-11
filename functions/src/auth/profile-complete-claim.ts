@@ -21,6 +21,8 @@ interface ProfileClaimResult {
   updated: boolean;
 }
 
+type AuthLookupError = {code?: string};
+
 /**
  * Computa se o perfil tem CPF verificado e telefone valido no Firebase Auth.
  * Apenas o campo server-side cpfVerifiedAt (gravado por verifyCpf)
@@ -56,11 +58,16 @@ async function setProfileCompleteClaim(
   profileData: UserProfileData | undefined
 ): Promise<ProfileClaimResult> {
   const userRecord = await admin.auth().getUser(uid).catch((error) => {
-    logger.warn(
-      "[PROFILE_COMPLETE] Auth user not found; skipping claim update",
-      {uid, error}
-    );
-    return null;
+    if ((error as AuthLookupError)?.code === "auth/user-not-found") {
+      logger.warn(
+        "[PROFILE_COMPLETE] Auth user not found; skipping claim update",
+        {uid}
+      );
+      return null;
+    }
+    // Falhas transitórias precisam chegar ao runtime para que o trigger com
+    // retry não deixe a claim permanentemente desatualizada.
+    throw error;
   });
 
   if (!userRecord) {
@@ -96,7 +103,7 @@ async function setProfileCompleteClaim(
  * Recalcula profileComplete quando users/{uid} muda.
  */
 export const onUserProfileWritten = onDocumentWritten(
-  {document: "users/{uid}", region: FUNCTION_REGION},
+  {document: "users/{uid}", region: FUNCTION_REGION, retry: true},
   async (event) => {
     // FIX #2284: valida que é um objeto antes do cast (early-return implícito
     // via undefined caso o doc esteja malformado).

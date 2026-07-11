@@ -45,12 +45,19 @@ jest.mock("firebase-admin/firestore", () => ({
 
 import {
   decideFollowMutation,
+  nonNegativeCounterAfterDelta,
   toggleFollowUser,
   TOGGLE_FOLLOW_RATE_LIMIT,
 } from "../src/social/follow";
 import {checkRateLimit} from "../src/middleware/rate-limiter";
 
 describe("follow mutation decision", () => {
+  test("contador de unfollow nunca fica negativo", () => {
+    expect(nonNegativeCounterAfterDelta(undefined, -1)).toBe(0);
+    expect(nonNegativeCounterAfterDelta(0, -1)).toBe(0);
+    expect(nonNegativeCounterAfterDelta(3, -1)).toBe(2);
+  });
+
   test("follow novo incrementa os dois contadores", () => {
     expect(decideFollowMutation(false, true)).toEqual({
       changed: true,
@@ -123,5 +130,63 @@ describe("toggleFollowUser rate limit", () => {
 
     expect(checkRateLimit).not.toHaveBeenCalled();
     expect(mockRunTransaction).not.toHaveBeenCalled();
+  });
+
+  test("rejeita path injection e coerção implícita de follow", async () => {
+    await expect(toggleFollowUser({
+      auth: {uid: "user1"},
+      data: {targetUserId: "target/nested/doc", follow: true},
+    })).rejects.toMatchObject({code: "invalid-argument"});
+
+    await expect(toggleFollowUser({
+      auth: {uid: "user1"},
+      data: {targetUserId: "target1", follow: "false"},
+    })).rejects.toMatchObject({code: "invalid-argument"});
+    expect(mockRunTransaction).not.toHaveBeenCalled();
+  });
+
+  test("bloqueia novo follow em qualquer direção, mas permite unfollow", async () => {
+    mockDoc.mockImplementation((path: string) => ({
+      path,
+      collection: (name: string) => ({
+        doc: (id: string) => ({path: `${path}/${name}/${id}`}),
+      }),
+    }));
+    const run = async (follow: boolean) => {
+      const tx = {
+        get: jest.fn((ref: {path: string}) => {
+          if (ref.path === "users/target1/blocked/user1") {
+            return Promise.resolve({exists: true, data: () => ({})});
+          }
+          if (ref.path === "users/user1/following/target1") {
+            return Promise.resolve({exists: true, data: () => ({})});
+          }
+          return Promise.resolve({
+            exists: true,
+            data: () => ({following_count: 1, followers_count: 1}),
+          });
+        }),
+        set: jest.fn(),
+        delete: jest.fn(),
+        update: jest.fn(),
+      };
+      mockRunTransaction.mockImplementationOnce(async (callback: any) => callback(tx));
+      const promise = toggleFollowUser({
+        auth: {uid: "user1"},
+        data: {targetUserId: "target1", follow},
+      });
+      return {promise, tx};
+    };
+
+    const blocked = await run(true);
+    await expect(blocked.promise).rejects.toMatchObject({code: "permission-denied"});
+    expect(blocked.tx.set).not.toHaveBeenCalled();
+
+    const unfollow = await run(false);
+    await expect(unfollow.promise).resolves.toMatchObject({
+      success: true,
+      following: false,
+    });
+    expect(unfollow.tx.delete).toHaveBeenCalledTimes(2);
   });
 });

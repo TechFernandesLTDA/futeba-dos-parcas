@@ -19,7 +19,8 @@ Plataforma para organizar peladas, grupos e temporadas com confirmação de pres
 ## Produto
 
 - Gestão de jogos, confirmações, check-in, escalações e eventos ao vivo.
-- Grupos com mural, convites, caixa, enquetes, desafios e comunicação direta.
+- Grupos com mural, convites, caixa, mensalistas com rateio exato, enquetes,
+  desafios e comunicação direta.
 - XP, níveis, badges, divisões, rankings sazonais, MVP e histórico estatístico.
 - Aplicações Web/PWA, Android e iOS/CMP apoiadas por Firebase e Cloud Functions.
 
@@ -203,6 +204,7 @@ fonte durável para binários de distribuição.
 | [`docs/PROJECT_MAP.md`](docs/PROJECT_MAP.md) | Pastas, fronteiras e comandos principais |
 | [`docs/LLM_WORKSPACE_GUIDE.md`](docs/LLM_WORKSPACE_GUIDE.md) | Ordem de leitura e fontes de verdade para agentes |
 | [`docs/BUSINESS_RULES.md`](docs/BUSINESS_RULES.md) | Jogos, XP, ranking e regras de domínio |
+| [`docs/MONTHLY_FINANCE.md`](docs/MONTHLY_FINANCE.md) | Mensalistas, recorrência, feriados, baixa e estorno |
 | [`docs/QA_SMOKE_MATRIX.md`](docs/QA_SMOKE_MATRIX.md) | Gates de regressão e release |
 | [`docs/RELEASE_PROCESS.md`](docs/RELEASE_PROCESS.md) | Versionamento, notas, tags e deploy |
 | [`docs/SETUP_GUIDE.md`](docs/SETUP_GUIDE.md) | Setup detalhado por plataforma |

@@ -283,6 +283,14 @@ describe("setUserVerified - role gating (ADMIN ou self)", () => {
   });
 
   test("aceita ADMIN verificando OUTRO usuario", async () => {
+    mockGetUser
+      .mockResolvedValueOnce({
+        customClaims: {role: "ADMIN"},
+      })
+      .mockResolvedValue({
+        customClaims: {},
+        phoneNumber: "+5511999999999",
+      });
     const result = await setUserVerifiedHandler({
       auth: ADMIN_AUTH,
       data: {uid: "target-uid"},
@@ -311,7 +319,7 @@ describe("setUserVerified - role gating (ADMIN ou self)", () => {
   });
 
   test("rejeita quando phoneNumber ausente no UserRecord", async () => {
-    mockGetUser.mockResolvedValueOnce({
+    mockGetUser.mockResolvedValue({
       customClaims: {},
       phoneNumber: undefined,
     });
@@ -325,7 +333,7 @@ describe("setUserVerified - role gating (ADMIN ou self)", () => {
   });
 
   test("preserva claims existentes ao setar verified=true", async () => {
-    mockGetUser.mockResolvedValueOnce({
+    mockGetUser.mockResolvedValue({
       customClaims: {role: "FIELD_OWNER"},
       phoneNumber: "+5511999999999",
     });
@@ -352,8 +360,14 @@ describe("verifyCpf - sem role gate (apenas auth)", () => {
 
     // Mock transaction passa direto (sem duplicate, sem CPF previo)
     mockRunTransaction.mockImplementation(async (fn: any) => {
+      let read = 0;
       const tx = {
-        get: jest.fn().mockResolvedValue({exists: false, data: () => null}),
+        get: jest.fn().mockImplementation(() => {
+          read++;
+          return Promise.resolve(read === 3 ?
+            {docs: []} :
+            {exists: false, data: () => null});
+        }),
         set: jest.fn(),
       };
       return await fn(tx);
@@ -459,10 +473,11 @@ describe("verifyCpf - branches de seguranca (#1305)", () => {
           if (call === 1) {
             return Promise.resolve({exists: false, data: () => null});
           }
-          return Promise.resolve({
+          if (call === 2) return Promise.resolve({
             exists: true,
             data: () => ({cpfHash: "hash-antigo-diferente"}),
           });
+          return Promise.resolve({docs: []});
         }),
         set: jest.fn(),
       };
@@ -528,8 +543,14 @@ describe("verifyCpf - branches de seguranca (#1305)", () => {
     });
     rateLimiterMock.checkRateLimit = spy;
     mockRunTransaction.mockImplementation(async (fn: any) => {
+      let read = 0;
       const tx = {
-        get: jest.fn().mockResolvedValue({exists: false, data: () => null}),
+        get: jest.fn().mockImplementation(() => {
+          read++;
+          return Promise.resolve(read === 3 ?
+            {docs: []} :
+            {exists: false, data: () => null});
+        }),
         set: jest.fn(),
       };
       return await fn(tx);
@@ -560,6 +581,20 @@ describe("setUserVerified - idempotencia (#1308)", () => {
         data: () => ({cpfVerifiedAt: "2026-01-01T00:00:00Z"}),
       })
     );
+    mockRunTransaction.mockImplementation(async (fn: any) => {
+      let read = 0;
+      const tx = {
+        get: jest.fn().mockImplementation(() => {
+          read++;
+          return Promise.resolve(read === 2 ?
+            {docs: []} :
+            {exists: false, data: () => null});
+        }),
+        set: jest.fn(),
+        delete: jest.fn(),
+      };
+      return await fn(tx);
+    });
   });
 
   test("repara profileComplete quando usuario JA verified sem claim completa", async () => {

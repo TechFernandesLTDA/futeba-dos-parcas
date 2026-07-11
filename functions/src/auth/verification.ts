@@ -15,6 +15,14 @@ import {hashCpf, isValidCpf, maskCpf} from "../validation/cpf";
 import {hashPhoneIdentity} from "../validation/phone-identity";
 import {checkRateLimit} from "../middleware/rate-limiter";
 import {FUNCTION_REGION} from "../constants";
+import {computeProfileComplete} from "./profile-complete-claim";
+import {
+  acquireOperationLease,
+  completeOperationLease,
+  failOperationLease,
+  OperationLease,
+} from "../middleware/operation-lock";
+import {resolveLegacyIdentityHash} from "./identity-index";
 
 /**
  * CPF salt vem de Firebase Functions secrets.
@@ -33,6 +41,88 @@ function getCpfSalt(): string {
     );
   }
   return salt;
+}
+
+/**
+ * Reconcilia phone_index legado e materializa a identidade verificada.
+ *
+ * @param {admin.firestore.Firestore} database Firestore.
+ * @param {string} uid Identidade canônica.
+ * @param {string} phoneNumber Telefone atual do Firebase Auth.
+ * @param {admin.firestore.DocumentData} privateData Dados privados atuais.
+ * @return {Promise<void>} Conclusão da reconciliação atômica.
+ */
+async function reconcilePhoneIdentity(
+  database: admin.firestore.Firestore,
+  uid: string,
+  phoneNumber: string,
+  privateData: admin.firestore.DocumentData,
+): Promise<void> {
+  const phoneHash = hashPhoneIdentity(phoneNumber, getCpfSalt());
+  const phoneIndexRef = database.doc(`phone_index/${phoneHash}`);
+  const privateRef = database.doc(`users_private/${uid}`);
+  const userRef = database.doc(`users/${uid}`);
+  const ownedPhoneQuery = database.collection("phone_index")
+    .where("uid", "==", uid)
+    .limit(2);
+
+  await database.runTransaction(async (tx) => {
+    const [phoneIndexSnap, ownedPhoneIndexes] = await Promise.all([
+      tx.get(phoneIndexRef),
+      tx.get(ownedPhoneQuery),
+    ]);
+    const previousPhoneHash = resolveLegacyIdentityHash(
+      privateData.phoneHash,
+      ownedPhoneIndexes.docs.map((doc) => doc.id),
+      "telefone",
+    );
+    const previousPhoneIndexRef = previousPhoneHash &&
+      previousPhoneHash !== phoneHash ?
+      database.doc(`phone_index/${previousPhoneHash}`) :
+      null;
+    const previousPhoneIndexSnap = previousPhoneIndexRef ?
+      await tx.get(previousPhoneIndexRef) :
+      null;
+
+    const indexedUid = phoneIndexSnap.data()?.uid;
+    if (phoneIndexSnap.exists && indexedUid !== uid) {
+      logger.warn("[SET_VERIFIED] Phone identity collision blocked", {uid});
+      throw new HttpsError(
+        "already-exists",
+        "Este telefone já pertence a outra identidade.",
+      );
+    }
+    if (
+      previousPhoneIndexSnap?.exists &&
+      previousPhoneIndexSnap.data()?.uid !== uid
+    ) {
+      throw new HttpsError(
+        "failed-precondition",
+        "O índice anterior de telefone está inconsistente.",
+      );
+    }
+
+    const now = FieldValue.serverTimestamp();
+    tx.set(phoneIndexRef, {
+      uid,
+      createdAt: phoneIndexSnap.data()?.createdAt ?? now,
+      updatedAt: now,
+    }, {merge: true});
+    tx.set(privateRef, {
+      phoneVerifiedAt: now,
+      phoneNumber,
+      phoneHash,
+      updatedAt: now,
+    }, {merge: true});
+    tx.set(userRef, {
+      phone: phoneNumber,
+      phone_verified: true,
+      verifiedAt: now,
+    }, {merge: true});
+    if (previousPhoneIndexRef && previousPhoneIndexSnap?.data()?.uid === uid) {
+      tx.delete(previousPhoneIndexRef);
+    }
+  });
 }
 
 /**
@@ -127,10 +217,17 @@ export const verifyCpf = onCall(
       const indexRef = db.doc(`cpf_index/${cpfHash}`);
       const privateRef = db.doc(`users_private/${uid}`);
       const userRef = db.doc(`users/${uid}`);
+      const ownedCpfQuery = db.collection("cpf_index")
+        .where("uid", "==", uid)
+        .limit(2);
 
       // Transaction: detecta duplicate + cria index + private + atualiza user
       await db.runTransaction(async (tx) => {
-        const indexSnap = await tx.get(indexRef);
+        const [indexSnap, privateSnap, ownedCpfIndexes] = await Promise.all([
+          tx.get(indexRef),
+          tx.get(privateRef),
+          tx.get(ownedCpfQuery),
+        ]);
         if (indexSnap.exists && indexSnap.data()?.uid !== uid) {
         // FIX #652-B2: não revelar se CPF existe para prevenir enumeration.
         // Internamente registramos o attempt, mas retornamos mensagem genérica.
@@ -144,14 +241,18 @@ export const verifyCpf = onCall(
           );
         }
 
-        const privateSnap = await tx.get(privateRef);
         const privateData = privateSnap.data() ?? {};
+        const registeredCpfHash = resolveLegacyIdentityHash(
+          privateData.cpfHash,
+          ownedCpfIndexes.docs.map((doc) => doc.id),
+          "CPF",
+        );
 
         // Se user já tem outro CPF registrado, bloqueia mudança via callable
         // (mudança de CPF é caso edge — exige fluxo separado de revisão).
         if (
-          privateData.cpfHash &&
-        privateData.cpfHash !== cpfHash
+          registeredCpfHash &&
+          registeredCpfHash !== cpfHash
         ) {
         // FIX #652-B2: mensagem genérica para prevenir enumeration
           logger.warn(
@@ -250,6 +351,17 @@ export const setUserVerified = onCall(
           "Apenas o próprio usuário ou ADMIN podem chamar setUserVerified",
         );
       }
+      if (!isSelf) {
+        // O ID token pode conservar ADMIN até o próximo refresh. Autorizações
+        // privilegiadas consultam a claim atual para não aceitar downgrade stale.
+        const freshCaller = await admin.auth().getUser(auth.uid);
+        if (freshCaller.customClaims?.role !== "ADMIN") {
+          throw new HttpsError(
+            "permission-denied",
+            "Apenas ADMIN pode verificar outro usuário.",
+          );
+        }
+      }
 
       // FIX #2650: rate limit per target uid — impede abuso via chamadas repetidas
       const rl = await checkRateLimit(auth.uid, {
@@ -290,56 +402,37 @@ export const setUserVerified = onCall(
         );
       }
 
-      const phoneHash = hashPhoneIdentity(userRecord.phoneNumber, getCpfSalt());
-      const phoneIndexRef = db.doc(`phone_index/${phoneHash}`);
-      const privateRef = db.doc(`users_private/${targetUid}`);
-      const userRef = db.doc(`users/${targetUid}`);
-      const now = FieldValue.serverTimestamp();
-
       // A unicidade do Firebase Auth é reforçada por um índice privado e
       // transacional que também permite reconciliar contas legadas.
-      await db.runTransaction(async (tx) => {
-        const phoneIndexSnap = await tx.get(phoneIndexRef);
-        const indexedUid = phoneIndexSnap.data()?.uid;
-        if (phoneIndexSnap.exists && indexedUid !== targetUid) {
-          logger.warn("[SET_VERIFIED] Phone identity collision blocked", {
-            targetUid,
-          });
-          throw new HttpsError(
-            "already-exists",
-            "Este telefone já pertence a outra identidade.",
-          );
-        }
+      await reconcilePhoneIdentity(
+        db,
+        targetUid,
+        userRecord.phoneNumber,
+        privateData,
+      );
 
-        tx.set(phoneIndexRef, {
-          uid: targetUid,
-          createdAt: phoneIndexSnap.exists ?
-            phoneIndexSnap.data()?.createdAt ?? now :
-            now,
-          updatedAt: now,
-        }, {merge: true});
-        tx.set(privateRef, {
-          phoneVerifiedAt: now,
-          phoneNumber: userRecord.phoneNumber,
-          phoneHash,
-          updatedAt: now,
-        }, {merge: true});
-        tx.set(userRef, {
-          phone: userRecord.phoneNumber,
-          phone_verified: true,
-          verifiedAt: now,
-        }, {merge: true});
-      });
-
-      const currentClaims = userRecord.customClaims ?? {};
+      // Releitura tardia evita lost update de role/claims alteradas durante a
+      // reconciliação Firestore. Também detecta troca concorrente de telefone.
+      const freshUserRecord = await admin.auth().getUser(targetUid);
+      if (freshUserRecord.phoneNumber !== userRecord.phoneNumber) {
+        throw new HttpsError(
+          "aborted",
+          "O telefone mudou durante a verificação. Tente novamente.",
+        );
+      }
+      const currentClaims = freshUserRecord.customClaims ?? {};
+      const profileComplete = computeProfileComplete(
+        {cpfVerifiedAt: privateData.cpfVerifiedAt},
+        freshUserRecord.phoneNumber,
+      );
       const nextClaims = {
         ...currentClaims,
         verified: true,
-        profileComplete: true,
+        profileComplete,
       };
       const claimsAlreadyCurrent =
         currentClaims.verified === true &&
-        currentClaims.profileComplete === true;
+        currentClaims.profileComplete === profileComplete;
 
       // Idempotência: o índice acima é sempre validado, inclusive para claims
       // antigos. Assim um legado não contorna a unicidade pelo early return.
@@ -396,8 +489,10 @@ export const bulkSetVerifiedForExistingUsers = onCall(
     consumeAppCheckToken: process.env.FUNCTIONS_EMULATOR !== "true",
     // Timeout maior para processar muitos usuários em lote
     timeoutSeconds: 540,
+    secrets: ["CPF_SALT"],
   },
   async (request) => {
+    let operationLease: OperationLease | undefined;
     try {
     // Apenas ADMIN pode disparar o backfill
       if (
@@ -411,43 +506,22 @@ export const bulkSetVerifiedForExistingUsers = onCall(
       }
 
       const db = admin.firestore();
+      const freshCaller = await admin.auth().getUser(request.auth.uid);
+      if (freshCaller.customClaims?.role !== "ADMIN") {
+        throw new HttpsError(
+          "permission-denied",
+          "Apenas admin pode executar backfill de verificação.",
+        );
+      }
 
       // FIX #2641: system_lock + rate limit — impede execuções concorrentes
       // e reexecução em intervalo curto (padrão de custom-claims.ts:464-507).
-      const RATE_LIMIT_MS = 60 * 60 * 1000;
-      const lockRef = db
-        .collection("system_locks")
-        .doc("bulk_verify_migration");
-      const lockDoc = await lockRef.get();
-
-      if (lockDoc.exists) {
-        const lastRun =
-          lockDoc.data()?.last_run_at?.toDate?.();
-        if (
-          lastRun &&
-          (Date.now() - lastRun.getTime()) < RATE_LIMIT_MS
-        ) {
-          const minutesRemaining = Math.ceil(
-            (RATE_LIMIT_MS - (Date.now() - lastRun.getTime())) / 60000
-          );
-          logger.warn(
-            "[BULK_VERIFY] Rate limited: " +
-            `migration already ran at ${lastRun.toISOString()}. ` +
-            `Try again in ${minutesRemaining} minutes.`
-          );
-          throw new HttpsError(
-            "resource-exhausted",
-            "Backfill already ran recently. " +
-            `Try again in ${minutesRemaining} minutes.`
-          );
-        }
-      }
-
-      await lockRef.set({
-        last_run_at: FieldValue.serverTimestamp(),
-        started_by: request.auth.uid,
-        status: "running",
-      });
+      operationLease = await acquireOperationLease(
+        db,
+        "bulk_verify_migration",
+        request.auth.uid,
+        {cooldownMs: 60 * 60 * 1000, leaseMs: 10 * 60 * 1000},
+      );
 
       const auth = admin.auth();
 
@@ -475,11 +549,6 @@ export const bulkSetVerifiedForExistingUsers = onCall(
           await Promise.all(
             batch.map(async (userRecord) => {
               totalProcessed++;
-
-              // Pular se já tem claim verified=true
-              if (userRecord.customClaims?.verified === true) {
-                return;
-              }
 
               // Pular se não tem telefone no Firebase Auth
               if (!userRecord.phoneNumber) {
@@ -511,10 +580,36 @@ export const bulkSetVerifiedForExistingUsers = onCall(
 
               // Elegivel — setar claim verified=true
               try {
-                const currentClaims = userRecord.customClaims ?? {};
+                const userRef = db.doc(`users/${userRecord.uid}`);
+                await reconcilePhoneIdentity(
+                  db,
+                  userRecord.uid,
+                  userRecord.phoneNumber,
+                  privateData,
+                );
+
+                const freshUser = await auth.getUser(userRecord.uid);
+                if (freshUser.phoneNumber !== userRecord.phoneNumber) {
+                  throw new HttpsError(
+                    "aborted",
+                    "Telefone alterado durante o backfill.",
+                  );
+                }
+                const currentClaims = freshUser.customClaims ?? {};
+                const profileComplete = computeProfileComplete(
+                  {cpfVerifiedAt: privateData.cpfVerifiedAt},
+                  freshUser.phoneNumber,
+                );
+                if (
+                  currentClaims.verified === true &&
+                  currentClaims.profileComplete === profileComplete
+                ) {
+                  return;
+                }
                 await auth.setCustomUserClaims(userRecord.uid, {
                   ...currentClaims,
                   verified: true,
+                  profileComplete,
                 });
 
                 // FIX #2641: only revoke when claim actually changed
@@ -524,7 +619,7 @@ export const bulkSetVerifiedForExistingUsers = onCall(
                 }
 
                 // Mirror em users/{uid} para listeners cliente
-                await db.doc(`users/${userRecord.uid}`).set(
+                await userRef.set(
                   {
                     verifiedAt: FieldValue.serverTimestamp(),
                   },
@@ -561,9 +656,7 @@ export const bulkSetVerifiedForExistingUsers = onCall(
       `errors=${errors.length}`
       );
 
-      await lockRef.update({
-        status: "completed",
-        completed_at: FieldValue.serverTimestamp(),
+      await completeOperationLease(db, operationLease, {
         total_processed: totalProcessed,
         total_set_verified: totalSetVerified,
         errors_count: errors.length,
@@ -575,16 +668,12 @@ export const bulkSetVerifiedForExistingUsers = onCall(
         errors,
       };
     } catch (error) {
-      try {
-        await admin.firestore().collection("system_locks")
-          .doc("bulk_verify_migration")
-          .update({
-            status: "failed",
-            failed_at: FieldValue.serverTimestamp(),
-            error: String(error),
-          });
-      } catch {
-        // ignore lock update failure
+      if (operationLease) {
+        try {
+          await failOperationLease(admin.firestore(), operationLease, error);
+        } catch {
+          // O erro original tem prioridade; falha de telemetria não o mascara.
+        }
       }
 
       if (error instanceof HttpsError) throw error;

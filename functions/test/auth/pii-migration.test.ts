@@ -47,13 +47,19 @@ jest.mock("firebase-admin", () => ({
 jest.mock("firebase-admin/firestore", () => ({
   FieldValue: {
     serverTimestamp: jest.fn(() => ({_type: "ServerTimestamp"})),
+    delete: jest.fn(() => ({_type: "FieldDelete"})),
   },
   FieldPath: {
     documentId: jest.fn(() => "__name__"),
   },
 }));
 
-import {updateUserPii} from "../../src/auth/pii-migration";
+import {
+  migratePiiDocumentAtomically,
+  piiValuesEqual,
+  removePiiDocumentAtomically,
+  updateUserPii,
+} from "../../src/auth/pii-migration";
 import {checkRateLimit} from "../../src/middleware/rate-limiter";
 
 const makeRequest = (overrides: Record<string, unknown> = {}) => ({
@@ -112,5 +118,116 @@ describe("Auth — PII migration callables", () => {
       ).rejects.toThrow("Login obrigatório");
       expect(mockDocSet).not.toHaveBeenCalled();
     });
+  });
+});
+
+describe("piiValuesEqual", () => {
+  it("compara Timestamp por millis e não por referência", () => {
+    expect(piiValuesEqual(
+      {toMillis: () => 1_234},
+      {toMillis: () => 1_234},
+    )).toBe(true);
+    expect(piiValuesEqual(
+      {toMillis: () => 1_234},
+      {toMillis: () => 9_999},
+    )).toBe(false);
+  });
+
+  it("usa isEqual de tipos Firestore como GeoPoint", () => {
+    const point = {
+      latitude: -23.5,
+      longitude: -46.6,
+      isEqual: (other: unknown) => {
+        const candidate = other as {latitude?: number; longitude?: number};
+        return candidate.latitude === -23.5 && candidate.longitude === -46.6;
+      },
+    };
+    expect(piiValuesEqual(point, {
+      latitude: -23.5,
+      longitude: -46.6,
+    })).toBe(true);
+  });
+
+  it("compara mapas e arrays aninhados semanticamente", () => {
+    expect(piiValuesEqual(
+      {date: {seconds: 10, nanoseconds: 20}, values: [1, "a"]},
+      {values: [1, "a"], date: {nanoseconds: 20, seconds: 10}},
+    )).toBe(true);
+    expect(piiValuesEqual({seconds: 10}, {seconds: 11})).toBe(false);
+  });
+});
+
+describe("PII migration atomic helpers", () => {
+  const userRef = {id: "user-1", path: "users/user-1"};
+
+  function databaseWith(
+    publicData: Record<string, unknown>,
+    privateData: Record<string, unknown>,
+  ) {
+    const txSet = jest.fn();
+    const txUpdate = jest.fn();
+    const privateRef = {id: "user-1", path: "users_private/user-1"};
+    const database = {
+      doc: jest.fn(() => privateRef),
+      runTransaction: jest.fn(async (callback: (tx: unknown) => unknown) =>
+        callback({
+          get: jest.fn(async (ref: {path: string}) => ({
+            exists: true,
+            data: () => ref.path.startsWith("users_private/") ?
+              privateData :
+              publicData,
+          })),
+          set: txSet,
+          update: txUpdate,
+        })),
+    };
+    return {database, txSet, txUpdate};
+  }
+
+  it("não sobrescreve PII privada mais nova com snapshot público antigo", async () => {
+    const {database, txSet} = databaseWith(
+      {email: "old@example.com"},
+      {email: "new@example.com"},
+    );
+    const result = await migratePiiDocumentAtomically(
+      database as never,
+      userRef as never,
+    );
+    expect(result).toEqual({
+      hadPii: true,
+      changed: false,
+      conflicts: ["email"],
+    });
+    expect(txSet).not.toHaveBeenCalled();
+  });
+
+  it("não apaga PII alterada depois da paginação do cleanup", async () => {
+    const {database, txUpdate} = databaseWith(
+      {email: "new@example.com"},
+      {email: "old@example.com"},
+    );
+    const result = await removePiiDocumentAtomically(
+      database as never,
+      userRef as never,
+    );
+    expect(result.conflicts).toEqual(["email"]);
+    expect(result.changed).toBe(false);
+    expect(txUpdate).not.toHaveBeenCalled();
+  });
+
+  it("remove somente PII confirmada pela releitura transacional", async () => {
+    const {database, txUpdate} = databaseWith(
+      {email: "same@example.com"},
+      {email: "same@example.com"},
+    );
+    const result = await removePiiDocumentAtomically(
+      database as never,
+      userRef as never,
+    );
+    expect(result).toMatchObject({changed: true, conflicts: []});
+    expect(txUpdate).toHaveBeenCalledWith(
+      userRef,
+      {email: {_type: "FieldDelete"}},
+    );
   });
 });

@@ -186,7 +186,7 @@ function isFreshLocation(updatedAt: Timestamp | undefined, nowMs: number) {
 async function assertCallerSharingEnabled(
   uid: string,
   nowMs: number
-): Promise<void> {
+): Promise<[number, number]> {
   const callerLocationSnap = await db()
     .doc(`user_locations/${uid}`)
     .get();
@@ -197,13 +197,25 @@ async function assertCallerSharingEnabled(
     callerData.location_updated_at instanceof Timestamp ?
       callerData.location_updated_at :
       undefined;
+  const lat = callerData.lat;
+  const lng = callerData.lng;
 
-  if (!sharingEnabled || !isFreshLocation(updatedAt, nowMs)) {
+  if (
+    !sharingEnabled ||
+    !isFreshLocation(updatedAt, nowMs) ||
+    !isFiniteNumber(lat) ||
+    lat < -90 ||
+    lat > 90 ||
+    !isFiniteNumber(lng) ||
+    lng < -180 ||
+    lng > 180
+  ) {
     throw new HttpsError(
       "failed-precondition",
       "Ative e atualize seu compartilhamento de localizacao para descobrir jogadores proximos."
     );
   }
+  return [lat, lng];
 }
 
 /**
@@ -241,15 +253,16 @@ function mapLocationDoc(
   snap: FirebaseFirestore.QueryDocumentSnapshot
 ): CandidateLocation | null {
   const data = snap.data();
-  const userId = typeof data.user_id === "string" ? data.user_id : snap.id;
+  const storedUserId = data.user_id;
+  const userId = snap.id;
   const lat = data.lat;
   const lng = data.lng;
   const geohash = data.geohash;
   const locationUpdatedAt = data.location_updated_at;
 
   if (
-    typeof userId !== "string" ||
     userId.length === 0 ||
+    (typeof storedUserId === "string" && storedUserId !== userId) ||
     !isFiniteNumber(lat) ||
     !isFiniteNumber(lng) ||
     typeof geohash !== "string" ||
@@ -296,6 +309,33 @@ async function loadFollowingSet(
 }
 
 /**
+ * Carrega bloqueios nos dois sentidos para remover candidatos da descoberta.
+ * @param {string} uid Usuario atual.
+ * @param {string[]} candidateIds Candidatos encontrados.
+ * @return {Promise<Set<string>>} IDs com qualquer bloqueio social.
+ */
+async function loadBlockedSet(
+  uid: string,
+  candidateIds: string[]
+): Promise<Set<string>> {
+  const uniqueIds = [...new Set(candidateIds)];
+  if (uniqueIds.length === 0) return new Set();
+  const firestore = db();
+  const refs = uniqueIds.flatMap((candidateId) => [
+    firestore.doc(`users/${uid}/blocked/${candidateId}`),
+    firestore.doc(`users/${candidateId}/blocked/${uid}`),
+  ]);
+  const snaps = await getAllInChunks(refs);
+  const blocked = new Set<string>();
+  uniqueIds.forEach((candidateId, index) => {
+    if (snaps[index * 2]?.exists || snaps[index * 2 + 1]?.exists) {
+      blocked.add(candidateId);
+    }
+  });
+  return blocked;
+}
+
+/**
  * Carrega apenas perfis publicos pesquisaveis dos candidatos.
  *
  * @param {string[]} candidateIds Candidatos filtrados por distancia.
@@ -319,7 +359,13 @@ async function loadPublicProfiles(
     if (!snap.exists) return null;
 
     const data = snap.data() ?? {};
-    if (data.is_searchable !== true || data.deleted_at != null) {
+    if (
+      data.is_searchable !== true ||
+      data.deleted_at != null ||
+      data.deletedAt != null ||
+      data.status === "DELETED" ||
+      data.is_active === false
+    ) {
       return null;
     }
 
@@ -382,14 +428,16 @@ export const discoverNearbyPlayers = secureCallable<
 
     const payload = parseDiscoverNearbyPlayersRequest(request.data);
     const uid = request.auth.uid;
-    const center: [number, number] = [payload.lat, payload.lng];
     const radiusMeters = payload.radiusKm * 1000;
-    const bounds = geohashQueryBounds(center, radiusMeters);
     const candidatesById = new Map<string, CandidateLocation>();
     const nowMs = Date.now();
 
     try {
-      await assertCallerSharingEnabled(uid, nowMs);
+      // Nunca aceitamos o centro arbitrario enviado pelo cliente. Caso
+      // contrario, um caller poderia mover o centro repetidamente e
+      // triangular a localizacao de outros usuarios.
+      const center = await assertCallerSharingEnabled(uid, nowMs);
+      const bounds = geohashQueryBounds(center, radiusMeters);
 
       const snapshots = await Promise.all(
         bounds.map(([start, end]) =>
@@ -423,10 +471,16 @@ export const discoverNearbyPlayers = secureCallable<
       }
 
       const candidateIds = [...candidatesById.keys()];
-      const followingIds = await loadFollowingSet(uid, candidateIds);
+      const [followingIds, blockedIds] = await Promise.all([
+        loadFollowingSet(uid, candidateIds),
+        loadBlockedSet(uid, candidateIds),
+      ]);
+      const visibleCandidateIds = candidateIds.filter(
+        (candidateId) => !blockedIds.has(candidateId)
+      );
       const filteredCandidateIds = payload.socialFilter === "following" ?
-        candidateIds.filter((candidateId) => followingIds.has(candidateId)) :
-        candidateIds;
+        visibleCandidateIds.filter((candidateId) => followingIds.has(candidateId)) :
+        visibleCandidateIds;
       const profiles = await loadPublicProfiles(
         filteredCandidateIds,
         followingIds
@@ -474,6 +528,8 @@ export const discoverNearbyPlayers = secureCallable<
 export const __testing = {
   assertCallerSharingEnabled,
   getAllInChunks,
+  mapLocationDoc,
   loadFollowingSet,
+  loadBlockedSet,
   loadPublicProfiles,
 };

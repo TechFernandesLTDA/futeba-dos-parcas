@@ -6,7 +6,7 @@ module.exports = {
   // Exclui testes de performance e integração — requerem emulador Firestore.
   // Rodar via: npm run test:perf (jest.perf.config.js) ou
   // npm run test:integration (jest.integration.config.js)
-  testPathIgnorePatterns: ["/node_modules/", "/test/performance/", "/test/integration/", ".integration.test.ts", "presence-notifications.test.ts"],
+  testPathIgnorePatterns: ["/node_modules/", "/test/performance/", "/test/integration/", ".integration.test.ts"],
   moduleFileExtensions: ["ts", "js", "json"],
   transform: {
     "^.+\\.tsx?$": ["ts-jest", {

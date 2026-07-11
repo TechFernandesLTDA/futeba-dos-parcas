@@ -13,7 +13,10 @@ import {logger} from "firebase-functions/v2";
 import {FieldValue, Timestamp} from "firebase-admin/firestore";
 import {createHash} from "crypto";
 import {db} from "../_db";
-import {checkRateLimit} from "../middleware/rate-limiter";
+import {
+  checkRateLimit,
+  checkRateLimitByIp,
+} from "../middleware/rate-limiter";
 import {FUNCTION_REGION} from "../constants";
 import {getAuth} from "../utils/firebase-lazy";
 
@@ -213,11 +216,16 @@ export const canSendSmsOtp = onCall(
         };
       }
 
-      const ipCheck = await checkRateLimit(ip, {
+      const ipLimit = {
         maxRequests: SMS_RATE_LIMIT_PER_IP_HOUR,
         windowMs: 60 * 60 * 1000,
         keyPrefix: "sms_ip",
-      });
+      };
+      // Sem IP confiável, isola o fallback por UID. Um bucket global
+      // "unknown" permitia que poucos usuários bloqueassem todos os demais.
+      const ipCheck = ip === "unknown" ?
+        await checkRateLimit(`unknown_${request.auth.uid}`, ipLimit) :
+        await checkRateLimitByIp(ip, ipLimit);
       if (!ipCheck.allowed) {
         return {
           allowed: false,

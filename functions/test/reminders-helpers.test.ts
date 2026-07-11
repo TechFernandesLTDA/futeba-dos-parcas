@@ -303,9 +303,57 @@ describe("Reminders - fetchGamesInReminderWindow", () => {
 
     await fetchGamesInReminderWindow(24);
 
-    expect(mockWhere).toHaveBeenCalledWith("dateTime", "==", null);
+    expect(mockWhere).not.toHaveBeenCalledWith("dateTime", "==", null);
     expect(mockWhere).toHaveBeenCalledWith("date", ">=", expect.any(String));
     expect(mockWhere).toHaveBeenCalledWith("date", "<=", expect.any(String));
+  });
+
+  test("filtra jogos modernos no fallback por date sem exigir indice composto", async () => {
+    jest.useFakeTimers().setSystemTime(new Date("2026-07-10T12:00:00.000Z"));
+    try {
+      const target = new Date("2026-07-11T12:00:00.000Z");
+      const localSource = new Date(target.getTime() - 3 * 60 * 60 * 1000);
+      const dateKey = [
+        localSource.getFullYear(),
+        String(localSource.getMonth() + 1).padStart(2, "0"),
+        String(localSource.getDate()).padStart(2, "0"),
+      ].join("-");
+      const timeKey = [
+        String(localSource.getHours()).padStart(2, "0"),
+        String(localSource.getMinutes()).padStart(2, "0"),
+      ].join(":");
+      mockCollectionGet
+        .mockResolvedValueOnce({docs: []})
+        .mockResolvedValueOnce({
+          size: 2,
+          docs: [
+            {
+              id: "modern-game",
+              data: () => ({
+                status: "SCHEDULED",
+                dateTime: {toDate: () => target},
+                date: dateKey,
+                time: timeKey,
+              }),
+            },
+            {
+              id: "legacy-game",
+              data: () => ({
+                status: "SCHEDULED",
+                dateTime: null,
+                date: dateKey,
+                time: timeKey,
+              }),
+            },
+          ],
+        });
+
+      const games = await fetchGamesInReminderWindow(24);
+
+      expect(games.map(({id}) => id)).toEqual(["legacy-game"]);
+    } finally {
+      jest.useRealTimers();
+    }
   });
 });
 

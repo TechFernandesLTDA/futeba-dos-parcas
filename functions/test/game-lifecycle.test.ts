@@ -95,13 +95,13 @@ describe("game lifecycle callables", () => {
       ],
     });
     mockRunTransaction.mockImplementation(async (callback: any) => callback({
-      get: jest.fn().mockResolvedValue({
+      get: jest.fn(async (ref: {path?: string}) => ref.path === "games/game1" ? {
         exists: true,
         data: () => ({
           owner_id: "owner1",
           status: "CONFIRMED",
         }),
-      }),
+      } : mockTeamsGet()),
       update: txUpdate,
       set: txSet,
     }));
@@ -135,6 +135,28 @@ describe("game lifecycle callables", () => {
         team2_id: "teamB",
       })
     );
+    expect(mockTeamsGet).toHaveBeenCalledTimes(1);
+  });
+
+  test("start revalida os times na mesma transação do status LIVE", async () => {
+    const txUpdate = jest.fn();
+    mockTeamsGet.mockResolvedValue({
+      docs: [{id: "teamA", data: () => ({name: "Time A"})}],
+    });
+    mockRunTransaction.mockImplementation(async (callback: any) => callback({
+      get: jest.fn(async (ref: {path?: string}) => ref.path === "games/game1" ? {
+        exists: true,
+        data: () => ({owner_id: "owner1", status: "CONFIRMED"}),
+      } : mockTeamsGet()),
+      update: txUpdate,
+      set: jest.fn(),
+    }));
+
+    const {startGameLifecycle} = require("../src/games/lifecycle");
+    await expect(startGameLifecycle(makeRequest())).rejects.toMatchObject({
+      code: "failed-precondition",
+    });
+    expect(txUpdate).not.toHaveBeenCalled();
   });
 
   test("finishGameLifecycle agrega eventos e finaliza jogo", async () => {
@@ -147,8 +169,11 @@ describe("game lifecycle callables", () => {
 
     mockEventsGet.mockResolvedValue({
       docs: [
-        {data: () => ({player_id: "p1", type: "GOAL"})},
-        {data: () => ({player_id: "p1", type: "ASSIST"})},
+        {data: () => ({
+          player_id: "p1",
+          type: "GOAL",
+          assisted_by_id: "p2",
+        })},
         {data: () => ({player_id: "p2", type: "SAVE"})},
       ],
     });
@@ -160,10 +185,9 @@ describe("game lifecycle callables", () => {
       }),
     });
     mockRunTransaction.mockImplementation(async (callback: any) => callback({
-      get: jest.fn().mockResolvedValue({
-        exists: true,
-        data: () => ({...gameState}),
-      }),
+      get: jest.fn(async (ref: {path: string}) => ref.path.startsWith("confirmations/") ?
+        {exists: true, data: () => ({status: "CONFIRMED"})} :
+        {exists: true, data: () => ({...gameState})}),
       update: jest.fn((ref: {path: string}, updates: Record<string, unknown>) => {
         txUpdate(ref, updates);
         if (ref.path === "games/game1") Object.assign(gameState, updates);
@@ -183,12 +207,12 @@ describe("game lifecycle callables", () => {
     });
     expect(txSet).toHaveBeenCalledWith(
       expect.objectContaining({path: "confirmations/game1_p1"}),
-      {goals: 1, assists: 1, saves: 0},
+      {goals: 1, assists: 0, saves: 0},
       {merge: true}
     );
     expect(txSet).toHaveBeenCalledWith(
       expect.objectContaining({path: "confirmations/game1_p2"}),
-      {goals: 0, assists: 0, saves: 1},
+      {goals: 0, assists: 1, saves: 1},
       {merge: true}
     );
     expect(txUpdate).toHaveBeenCalledWith(
@@ -200,6 +224,47 @@ describe("game lifecycle callables", () => {
         lifecycle_update_source: "callable",
       })
     );
+  });
+
+  test("finish não recria confirmação ausente nem atualiza cancelada", async () => {
+    const txSet = jest.fn();
+    const gameState: Record<string, unknown> = {
+      owner_id: "owner1",
+      status: "LIVE",
+    };
+    mockEventsGet.mockResolvedValue({
+      size: 2,
+      docs: [
+        {data: () => ({player_id: "missing", type: "GOAL"})},
+        {data: () => ({player_id: "cancelled", type: "SAVE"})},
+      ],
+    });
+    mockLiveScoreGet.mockResolvedValue({
+      exists: true,
+      data: () => ({team1_score: 1, team2_score: 0}),
+    });
+    mockRunTransaction.mockImplementation(async (callback: any) => callback({
+      get: jest.fn(async (ref: {path: string}) => {
+        if (ref.path === "confirmations/game1_missing") {
+          return {exists: false, data: () => undefined};
+        }
+        if (ref.path === "confirmations/game1_cancelled") {
+          return {exists: true, data: () => ({status: "CANCELLED"})};
+        }
+        return {exists: true, data: () => ({...gameState})};
+      }),
+      update: jest.fn((ref: {path: string}, updates: Record<string, unknown>) => {
+        if (ref.path === "games/game1") Object.assign(gameState, updates);
+      }),
+      set: txSet,
+    }));
+
+    const {finishGameLifecycle} = require("../src/games/lifecycle");
+    await expect(finishGameLifecycle(makeRequest())).resolves.toMatchObject({
+      success: true,
+      status: "FINISHED",
+    });
+    expect(txSet).not.toHaveBeenCalled();
   });
 
   test("finishGameLifecycle não sobrescreve finalização concorrente ativa", async () => {

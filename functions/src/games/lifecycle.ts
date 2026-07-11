@@ -66,19 +66,14 @@ function isGameManager(
 }
 
 /**
- * Busca os times do jogo para inicializar o placar ao vivo.
+ * Normaliza os times lidos dentro da transaction de início.
  *
- * @param {string} gameId ID do jogo.
- * @return {Promise<TeamSnapshot[]>} Times encontrados.
+ * @param {FirebaseFirestore.QuerySnapshot} teamsSnap Snapshot atual dos times.
+ * @return {TeamSnapshot[]} Times encontrados.
  */
-async function fetchTeams(
-  gameId: string
-): Promise<TeamSnapshot[]> {
-  const teamsSnap = await db()
-    .collection("teams")
-    .where("game_id", "==", gameId)
-    .get();
-
+function normalizeTeams(
+  teamsSnap: FirebaseFirestore.QuerySnapshot
+): TeamSnapshot[] {
   return teamsSnap.docs.map((doc) => {
     const data = doc.data();
     return {
@@ -120,6 +115,22 @@ function aggregateEvents(
     else if (type === "SAVE") current.saves += 1;
 
     aggregated.set(playerId, current);
+
+    // O writer canônico registra a assistência no próprio evento GOAL.
+    // Sem esta projeção, finalizar o jogo podia zerar a assistência de um
+    // jogador que também tivesse qualquer outro evento na partida.
+    const assistedById =
+      typeof raw.assisted_by_id === "string" ?
+        raw.assisted_by_id :
+        typeof raw.assistedById === "string" ?
+          raw.assistedById :
+          "";
+    if (type === "GOAL" && assistedById && assistedById !== playerId) {
+      const assisted = aggregated.get(assistedById) ??
+        {goals: 0, assists: 0, saves: 0};
+      assisted.assists += 1;
+      aggregated.set(assistedById, assisted);
+    }
   }
 
   return aggregated;
@@ -177,11 +188,15 @@ export const startGameLifecycle = onCall<GameLifecycleRequest>(
 
     const gameId = validateGameId(request.data?.gameId);
     const isAdmin = request.auth.token?.role === "ADMIN";
-    const teams = await fetchTeams(gameId);
+    const teamsQuery = db().collection("teams")
+      .where("game_id", "==", gameId);
 
     const result = await db().runTransaction(async (tx) => {
       const gameRef = db().collection("games").doc(gameId);
-      const gameSnap = await tx.get(gameRef);
+      const [gameSnap, teamsSnap] = await Promise.all([
+        tx.get(gameRef),
+        tx.get(teamsQuery),
+      ]);
 
       if (!gameSnap.exists) {
         throw new HttpsError("not-found", ERROR_MSGS.GAME_NOT_FOUND);
@@ -199,6 +214,14 @@ export const startGameLifecycle = onCall<GameLifecycleRequest>(
         throw new HttpsError(
           "failed-precondition",
           "Jogo precisa estar CONFIRMED para iniciar."
+        );
+      }
+
+      const teams = normalizeTeams(teamsSnap);
+      if (teams.length < 2) {
+        throw new HttpsError(
+          "failed-precondition",
+          "O jogo precisa ter pelo menos dois times para iniciar."
         );
       }
 
@@ -348,9 +371,19 @@ export const finishGameLifecycle = onCall<GameLifecycleRequest>(
         typeof liveScore?.team2_score === "number" ?
           liveScore.team2_score :
           0;
+      const aggregatedEntries = [...aggregated.entries()].map(
+        ([playerId, stats]) => ({
+          stats,
+          ref: db().collection("confirmations")
+            .doc(`${gameId}_${playerId}`),
+        })
+      );
 
       result = await db().runTransaction(async (tx) => {
-        const gameSnap = await tx.get(gameRef);
+        const [gameSnap, ...confirmationSnaps] = await Promise.all([
+          tx.get(gameRef),
+          ...aggregatedEntries.map(({ref}) => tx.get(ref)),
+        ]);
         const game = gameSnap.data();
         if (
           !gameSnap.exists ||
@@ -363,12 +396,15 @@ export const finishGameLifecycle = onCall<GameLifecycleRequest>(
           );
         }
 
-        for (const [playerId, stats] of aggregated.entries()) {
-          tx.set(
-            db().collection("confirmations").doc(`${gameId}_${playerId}`),
-            stats,
-            {merge: true}
-          );
+        for (let index = 0; index < aggregatedEntries.length; index += 1) {
+          const confirmationSnap = confirmationSnaps[index];
+          if (
+            confirmationSnap?.exists &&
+            confirmationSnap.data()?.status === "CONFIRMED"
+          ) {
+            const {ref, stats} = aggregatedEntries[index];
+            tx.set(ref, stats, {merge: true});
+          }
         }
 
         tx.update(gameRef, {

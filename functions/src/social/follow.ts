@@ -42,14 +42,50 @@ function isNonEmptyString(value: unknown): value is string {
  * @return {ToggleFollowRequest} Payload validado.
  */
 function parseToggleFollowRequest(data: unknown): ToggleFollowRequest {
-  if (!isRecord(data) || !isNonEmptyString(data.targetUserId)) {
+  if (
+    !isRecord(data) ||
+    !isNonEmptyString(data.targetUserId) ||
+    data.targetUserId.trim().length > 128 ||
+    data.targetUserId.includes("/")
+  ) {
     throw new HttpsError("invalid-argument", "targetUserId obrigatório.");
+  }
+  if (typeof data.follow !== "boolean") {
+    throw new HttpsError("invalid-argument", "follow deve ser booleano.");
   }
 
   return {
     targetUserId: data.targetUserId.trim(),
-    follow: data.follow !== false,
+    follow: data.follow,
   };
+}
+
+/**
+ * Aplica um delta preservando o invariante de contador não negativo.
+ * @param {unknown} value Contador armazenado.
+ * @param {number} delta Variacao desejada.
+ * @return {number} Novo contador nao negativo.
+ */
+export function nonNegativeCounterAfterDelta(
+  value: unknown,
+  delta: number
+): number {
+  const current = typeof value === "number" && Number.isFinite(value) ?
+    Math.max(0, Math.floor(value)) :
+    0;
+  return Math.max(0, current + delta);
+}
+
+/**
+ * Detecta perfis indisponíveis que não podem participar da relação social.
+ * @param {Record<string, unknown>} data Perfil armazenado.
+ * @return {boolean} Se o perfil esta indisponivel.
+ */
+function isDeletedUser(data: Record<string, unknown>): boolean {
+  return data.deleted_at != null ||
+    data.deletedAt != null ||
+    data.status === "DELETED" ||
+    data.is_active === false;
 }
 
 /**
@@ -127,14 +163,26 @@ export const toggleFollowUser = onCall(
     const targetUserRef = db().doc(`users/${targetUserId}`);
     const followingRef = currentUserRef.collection("following").doc(targetUserId);
     const followerRef = targetUserRef.collection("followers").doc(uid);
+    const currentBlocksTargetRef = currentUserRef
+      .collection("blocked").doc(targetUserId);
+    const targetBlocksCurrentRef = targetUserRef
+      .collection("blocked").doc(uid);
 
     try {
       const result = await db().runTransaction(async (tx) => {
-        const [currentUserSnap, targetUserSnap, followingSnap] =
+        const [
+          currentUserSnap,
+          targetUserSnap,
+          followingSnap,
+          currentBlocksTargetSnap,
+          targetBlocksCurrentSnap,
+        ] =
           await Promise.all([
             tx.get(currentUserRef),
             tx.get(targetUserRef),
             tx.get(followingRef),
+            tx.get(currentBlocksTargetRef),
+            tx.get(targetBlocksCurrentRef),
           ]);
 
         if (!currentUserSnap.exists) {
@@ -142,6 +190,20 @@ export const toggleFollowUser = onCall(
         }
         if (!targetUserSnap.exists) {
           throw new HttpsError("not-found", "Perfil não encontrado.");
+        }
+        const currentUser = currentUserSnap.data() ?? {};
+        const targetUser = targetUserSnap.data() ?? {};
+        if (isDeletedUser(currentUser) || isDeletedUser(targetUser)) {
+          throw new HttpsError("not-found", "Perfil não encontrado.");
+        }
+        if (
+          payload.follow &&
+          (currentBlocksTargetSnap.exists || targetBlocksCurrentSnap.exists)
+        ) {
+          throw new HttpsError(
+            "permission-denied",
+            "Follow indisponível por bloqueio social."
+          );
         }
 
         const decision = decideFollowMutation(
@@ -172,10 +234,16 @@ export const toggleFollowUser = onCall(
         }
 
         tx.update(currentUserRef, {
-          following_count: FieldValue.increment(decision.followingDelta),
+          following_count: nonNegativeCounterAfterDelta(
+            currentUser.following_count,
+            decision.followingDelta
+          ),
         });
         tx.update(targetUserRef, {
-          followers_count: FieldValue.increment(decision.followersDelta),
+          followers_count: nonNegativeCounterAfterDelta(
+            targetUser.followers_count,
+            decision.followersDelta
+          ),
         });
 
         return {

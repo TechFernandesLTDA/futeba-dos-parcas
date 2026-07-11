@@ -309,15 +309,22 @@ export async function fetchGamesInReminderWindow(
   try {
     const minDate = toBrtDateKey(windowStart);
     const maxDate = toBrtDateKey(windowEnd);
-    const noDateTimeSnap = await db()
+    // A igualdade em `dateTime` combinada com o range em `date` depende de
+    // um indice composto e fazia o scheduler registrar FAILED_PRECONDITION
+    // quando o indice ainda estava em provisionamento. A janela por `date`
+    // ja e pequena (no maximo dois dias); filtramos o legado em memoria para
+    // manter o fallback disponivel mesmo durante rollout de indices.
+    const legacyDateWindowSnap = await db()
       .collection("games")
-      .where("dateTime", "==", null)
       .where("date", ">=", minDate)
       .where("date", "<=", maxDate)
       .get();
 
-    for (const doc of noDateTimeSnap.docs) {
+    let legacyWithoutDateTimeCount = 0;
+    for (const doc of legacyDateWindowSnap.docs) {
       const data = doc.data();
+      if (data.dateTime != null) continue;
+      legacyWithoutDateTimeCount += 1;
       const status = data.status || "SCHEDULED";
 
       if (
@@ -358,10 +365,10 @@ export async function fetchGamesInReminderWindow(
       }
     }
 
-    if (noDateTimeSnap.size > 0) {
+    if (legacyWithoutDateTimeCount > 0) {
       logger.info(
         "[REMINDERS] " +
-        `${noDateTimeSnap.size} jogos sem` +
+        `${legacyWithoutDateTimeCount} jogos sem` +
         " dateTime processados via date/time"
       );
     }
@@ -525,9 +532,24 @@ export async function fetchGroupMembersWithoutConfirmation(
       break;
     }
 
-    memberIds.push(
-      ...membersSnap.docs.map((doc) => doc.id)
-    );
+    for (const doc of membersSnap.docs) {
+      const membership = doc.data();
+      // Compatibilidade legada deliberadamente fail-closed: membership sem
+      // user_id canônico não recebe push até ser migrada. Isso evita que um
+      // documento corrompido/herdado por outro UID vire canal de notificação.
+      if (
+        membership.user_id === doc.id &&
+        membership.status === "ACTIVE"
+      ) {
+        memberIds.push(doc.id);
+      } else {
+        logger.warn("[REMINDERS] Membership inelegível ignorada", {
+          groupId,
+          memberId: doc.id,
+          status: membership.status ?? null,
+        });
+      }
+    }
     lastMemberDoc =
       membersSnap.docs[membersSnap.docs.length - 1];
 
@@ -656,7 +678,7 @@ export async function fetchGroupMembersWithoutConfirmation(
  * @param {string | null} groupId - ID do grupo (para mute_groups)
  * @return {Promise<boolean>} true se pode enviar
  */
-async function canSendReminderToUser(
+export async function canSendReminderToUser(
   userId: string,
   groupId: string | null
 ): Promise<boolean> {
@@ -690,11 +712,12 @@ async function canSendReminderToUser(
   } catch (e) {
     logger.error(
       "[REMINDERS] Erro ao verificar prefs" +
-      ` de ${userId}, fail-open:`,
+      ` de ${userId}, fail-closed:`,
       e
     );
-    // Fail-open: em caso de erro, enviar
-    return true;
+    // Ausência de documento é tratada pelo helper como defaults habilitados.
+    // Erro real de leitura deve respeitar consentimento e falhar fechado.
+    return false;
   }
 }
 
@@ -704,19 +727,19 @@ async function canSendReminderToUser(
  *
  * @param {string} userId - destinatário
  * @param {GameForReminder} game - dados do jogo
- * @param {"24h" | "2h"} reminderType - janela do lembrete
+ * @param {"24h" | "2h" | "1h"} reminderType - janela do lembrete
+ * @param {boolean} preferencesAlreadyChecked - evita releitura após claim
  * @return {Promise<boolean>} true se push enviado com sucesso
  */
 async function sendReminder(
   userId: string,
   game: GameForReminder,
-  reminderType: "24h" | "2h" | "1h"
+  reminderType: "24h" | "2h" | "1h",
+  preferencesAlreadyChecked = false
 ): Promise<boolean> {
   // Verificar preferencias do usuario antes de enviar
-  const canSend = await canSendReminderToUser(
-    userId,
-    game.group_id
-  );
+  const canSend = preferencesAlreadyChecked ||
+    await canSendReminderToUser(userId, game.group_id);
   if (!canSend) {
     logger.info(
       "[REMINDERS] Pulando lembrete para" +
@@ -798,13 +821,13 @@ async function sendReminder(
  * @param {string} gameId - ID do jogo.
  * @param {string} userId - ID do usuario.
  * @param {string} reminderType - Tipo (24h/2h).
- * @return {Promise<void>} Void.
+ * @return {Promise<boolean>} True somente para o vencedor do claim.
  */
-async function markReminderSent(
+export async function markReminderSent(
   gameId: string,
   userId: string,
   reminderType: "24h" | "2h" | "1h"
-): Promise<void> {
+): Promise<boolean> {
   const confirmationId =
     `${gameId}_${userId}`;
   const REMINDER_FIELDS: Record<"24h" | "2h" | "1h", string> = {
@@ -818,35 +841,44 @@ async function markReminderSent(
     const confirmationRef = db()
       .collection("confirmations")
       .doc(confirmationId);
-    const confirmationDoc =
-      await confirmationRef.get();
+    const trackingId = `${gameId}_${userId}_${reminderType}`;
+    const trackingRef = db()
+      .collection("reminder_tracking")
+      .doc(trackingId);
 
-    if (confirmationDoc.exists) {
-      const tsField =
-        `${reminderField}_at`;
-      await confirmationRef.update({
-        [reminderField]: true,
-        [tsField]:
-          FieldValue
-            .serverTimestamp(),
-      });
-    } else {
-      // B2: Rastrear em collection separada
-      // em vez de criar doc PENDING falso
-      const trackingId =
-        `${gameId}_${userId}_${reminderType}`;
-      await db()
-        .collection("reminder_tracking")
-        .doc(trackingId)
-        .set({
+    return await db().runTransaction(async (tx) => {
+      const [confirmationDoc, trackingDoc] = await Promise.all([
+        tx.get(confirmationRef),
+        tx.get(trackingRef),
+      ]);
+      if (
+        confirmationDoc.data()?.[reminderField] === true ||
+        trackingDoc.exists
+      ) {
+        return false;
+      }
+
+      const claimedAt = FieldValue.serverTimestamp();
+      if (confirmationDoc.exists) {
+        tx.update(confirmationRef, {
+          [reminderField]: true,
+          [`${reminderField}_at`]: claimedAt,
+        });
+      } else {
+        // Tracking separado evita criar confirmação PENDING falsa. A leitura
+        // e criação na mesma transaction transformam o ID determinístico em
+        // compare-and-set seguro entre schedulers sobrepostos.
+        tx.set(trackingRef, {
           game_id: gameId,
           user_id: userId,
           reminder_type: reminderType,
-          sent_at:
-            FieldValue
-              .serverTimestamp(),
+          status: "CLAIMED",
+          claimed_at: claimedAt,
+          sent_at: claimedAt,
         });
-    }
+      }
+      return true;
+    });
   } catch (e) {
     logger.error(
       "[REMINDERS] Erro ao marcar " +
@@ -872,7 +904,7 @@ async function markReminderSent(
  * @param {string} reminderType - Tipo (24h/2h).
  * @return {Promise<number>} Quantos lembretes foram enviados.
  */
-async function dispatchReminders(
+export async function dispatchReminders(
   userIds: string[],
   game: GameForReminder,
   reminderType: "24h" | "2h" | "1h",
@@ -883,9 +915,16 @@ async function dispatchReminders(
     const slice = userIds.slice(i, i + BATCH);
     const results = await Promise.all(
       slice.map(async (userId) => {
+        const canSend = await canSendReminderToUser(userId, game.group_id);
+        if (!canSend) return false;
         try {
           // Claim idempotente ANTES do envio.
-          await markReminderSent(game.id, userId, reminderType);
+          const claimed = await markReminderSent(
+            game.id,
+            userId,
+            reminderType
+          );
+          if (!claimed) return false;
         } catch (e) {
           logger.error(
             `[REMINDERS] Falha ao marcar ${userId}, pulando envio:`,
@@ -893,7 +932,7 @@ async function dispatchReminders(
           );
           return false;
         }
-        return sendReminder(userId, game, reminderType);
+        return sendReminder(userId, game, reminderType, true);
       })
     );
     sent += results.filter(Boolean).length;

@@ -6,6 +6,7 @@ const updateCalls: Array<{path: string; data: Record<string, unknown>}> = [];
 const mockRandomInt = jest.fn(() => 0);
 const mockCheckRateLimit = jest.fn().mockResolvedValue({allowed: true});
 const mockCheckRateLimitByIp = jest.fn().mockResolvedValue({allowed: true});
+let failNextTransactionCommit = false;
 
 function snap(path: string) {
   const data = store.get(path);
@@ -71,15 +72,29 @@ function collectionRef(name: string) {
   };
 }
 
+async function runStagedTransaction(callback: (tx: unknown) => Promise<unknown>) {
+    const staged: Array<() => void> = [];
+    const result = await callback({
+      get: async (ref: {path: string}) => snap(ref.path),
+      set: (
+        ref: {path: string},
+        data: Record<string, unknown>,
+        options?: {merge?: boolean},
+      ) => staged.push(() => applySet(ref.path, data, options?.merge)),
+      update: (ref: {path: string}, data: Record<string, unknown>) =>
+        staged.push(() => applyUpdate(ref.path, data)),
+    });
+    if (failNextTransactionCommit) {
+      failNextTransactionCommit = false;
+      throw new Error("transaction commit unavailable");
+    }
+    staged.forEach((apply) => apply());
+    return result;
+}
+
 const firestore = {
   collection: jest.fn(collectionRef),
-  runTransaction: jest.fn(async (callback) => callback({
-    get: async (ref: {path: string}) => snap(ref.path),
-    set: (ref: {path: string}, data: Record<string, unknown>) =>
-      applySet(ref.path, data),
-    update: (ref: {path: string}, data: Record<string, unknown>) =>
-      applyUpdate(ref.path, data),
-  })),
+  runTransaction: jest.fn(runStagedTransaction),
 };
 
 jest.mock("firebase-admin", () => ({
@@ -142,6 +157,7 @@ describe("auth/invite-code apadrinhamento", () => {
     mockRandomInt.mockReturnValue(0);
     mockCheckRateLimit.mockResolvedValue({allowed: true});
     mockCheckRateLimitByIp.mockResolvedValue({allowed: true});
+    failNextTransactionCommit = false;
     store.clear();
     setCalls.length = 0;
     updateCalls.length = 0;
@@ -170,6 +186,30 @@ describe("auth/invite-code apadrinhamento", () => {
       user_id: "member-1",
       inviter_name: "Nome Token",
       active: true,
+    });
+  });
+
+  it("claim legado sem owner é atômico e colisão de owner é bloqueada", async () => {
+    store.set("users/legacy-owner", {
+      invite_code: "LEGACY",
+      name: "Owner Legado",
+    });
+    store.set("invite_codes/LEGACY", {active: true});
+    await callableHandlers.generateMyInviteCode({
+      auth: {uid: "legacy-owner", token: {}},
+      data: {},
+    });
+    expect(store.get("invite_codes/LEGACY")).toMatchObject({
+      user_id: "legacy-owner",
+    });
+
+    store.set("users/collision-owner", {invite_code: "LEGACY"});
+    await expect(callableHandlers.generateMyInviteCode({
+      auth: {uid: "collision-owner", token: {}},
+      data: {},
+    })).rejects.toThrow("outra identidade");
+    expect(store.get("invite_codes/LEGACY")).toMatchObject({
+      user_id: "legacy-owner",
     });
   });
 
@@ -614,7 +654,9 @@ describe("auth/invite-code apadrinhamento", () => {
       email: "race-missing@test.com",
       invited_by_code: "RACE01",
     });
-    firestore.runTransaction.mockImplementationOnce(async (callback) =>
+    firestore.runTransaction
+      .mockImplementationOnce(runStagedTransaction)
+      .mockImplementationOnce(async (callback) =>
       callback({
         get: async (ref: {path: string}) => {
           if (ref.path === "users/race-missing-inviter") {
@@ -626,8 +668,7 @@ describe("auth/invite-code apadrinhamento", () => {
           applySet(ref.path, data),
         update: (ref: {path: string}, data: Record<string, unknown>) =>
           applyUpdate(ref.path, data),
-      })
-    );
+      }));
 
     await firestoreHandlers["users/{userId}"][1]({
       params: {userId: "race-missing-user"},
@@ -651,7 +692,9 @@ describe("auth/invite-code apadrinhamento", () => {
       email: "race-mismatch@test.com",
       invited_by_code: "RACE02",
     });
-    firestore.runTransaction.mockImplementationOnce(async (callback) =>
+    firestore.runTransaction
+      .mockImplementationOnce(runStagedTransaction)
+      .mockImplementationOnce(async (callback) =>
       callback({
         get: async (ref: {path: string}) => {
           if (ref.path === "users/race-mismatch-inviter") {
@@ -671,8 +714,7 @@ describe("auth/invite-code apadrinhamento", () => {
           applySet(ref.path, data),
         update: (ref: {path: string}, data: Record<string, unknown>) =>
           applyUpdate(ref.path, data),
-      })
-    );
+      }));
 
     await firestoreHandlers["users/{userId}"][1]({
       params: {userId: "race-mismatch-user"},
@@ -707,6 +749,62 @@ describe("auth/invite-code apadrinhamento", () => {
       user_id: "member-3",
       inviter_name: "Carla Criadora",
       active: true,
+    });
+  });
+
+  it("trigger substitui invite_code injetado sem lock ou pertencente a outro uid", async () => {
+    store.set("users/injected-free", {
+      name: "Injetado Livre",
+      invite_code: "HACKED",
+    });
+    await firestoreHandlers["users/{userId}"][0]({
+      params: {userId: "injected-free"},
+      data: {data: () => store.get("users/injected-free")},
+    });
+    expect(store.get("users/injected-free")).toMatchObject({
+      invite_code: "AAAAAA",
+    });
+    expect(store.has("invite_codes/HACKED")).toBe(false);
+
+    store.clear();
+    store.set("invite_codes/TAKEN1", {user_id: "real-owner", active: true});
+    store.set("users/injected-taken", {
+      name: "Injetado Tomado",
+      invite_code: "TAKEN1",
+    });
+    await firestoreHandlers["users/{userId}"][0]({
+      params: {userId: "injected-taken"},
+      data: {data: () => store.get("users/injected-taken")},
+    });
+    expect(store.get("users/injected-taken")).toMatchObject({
+      invite_code: "AAAAAA",
+    });
+    expect(store.get("invite_codes/TAKEN1")).toMatchObject({
+      user_id: "real-owner",
+    });
+  });
+
+  it("não deixa código órfão quando a transação falha e o trigger retenta", async () => {
+    store.set("users/member-retry", {name: "Retry"});
+    failNextTransactionCommit = true;
+
+    await expect(firestoreHandlers["users/{userId}"][0]({
+      params: {userId: "member-retry"},
+      data: {data: () => store.get("users/member-retry")},
+    })).rejects.toThrow("transaction commit unavailable");
+    expect(store.has("invite_codes/AAAAAA")).toBe(false);
+    expect(store.get("users/member-retry")?.invite_code).toBeUndefined();
+
+    await firestoreHandlers["users/{userId}"][0]({
+      params: {userId: "member-retry"},
+      data: {data: () => store.get("users/member-retry")},
+    });
+
+    expect(store.get("invite_codes/AAAAAA")).toMatchObject({
+      user_id: "member-retry",
+    });
+    expect(store.get("users/member-retry")).toMatchObject({
+      invite_code: "AAAAAA",
     });
   });
 
@@ -767,10 +865,7 @@ describe("auth/invite-code apadrinhamento", () => {
     ).toBe(false);
   });
 
-  it("onUserCreatedProcessInvite nao propaga erro se o set de INVALID_CODE falhar (#3187)", async () => {
-    // Cobertura do catch (markErr): se o set que marca invite_status falha,
-    // o handler loga e segue — nao deixa a conta invisivel nem quebra o
-    // trigger de criacao de usuario.
+  it("onUserCreatedProcessInvite propaga falha transitória para retry", async () => {
     store.set("users/ghost-fail", {
       email: "ghost-fail@test.com",
       invited_by_code: "NOPE99",
@@ -790,10 +885,10 @@ describe("auth/invite-code apadrinhamento", () => {
         params: {userId: "ghost-fail"},
         data: {data: () => ({email: "ghost-fail@test.com", invited_by_code: "NOPE99"})},
       })
-    ).resolves.toBeUndefined();
+    ).rejects.toThrow("firestore unavailable");
 
     setSpy.mockRestore();
-    // set falhou: doc permanece sem invite_status, mas handler nao propagou
+    // set falhou: doc permanece sem invite_status e o runtime pode retentar.
     expect(store.get("users/ghost-fail")?.invite_status).toBeUndefined();
     expect(store.has("app_invite_redemptions/ghost-fail")).toBe(false);
   });

@@ -13,11 +13,7 @@ import * as admin from "firebase-admin";
 import {Timestamp, FieldValue} from "firebase-admin/firestore";
 import {logger} from "firebase-functions/v2";
 import {FUNCTION_REGION} from "../constants";
-import {
-  sendNotificationToUsers,
-  NotificationType,
-  FcmNotification,
-} from "../notifications/helpers";
+import {NotificationType} from "../notifications/helpers";
 import {
   RecurrenceType,
   getNextDate,
@@ -134,323 +130,589 @@ export async function fetchActiveRecurringMemberInvites(
   return invites;
 }
 
-/**
- * Conta quantos jogos já foram criados nesta série recorrente.
- * @param {admin.firestore.Firestore} db - Instância do Firestore
- * @param {string} originalGameId - ID do jogo original da série
- * @return {Promise<number>} Quantidade de jogos filhos
- */
-async function countRecurringGames(
-  db: admin.firestore.Firestore,
-  originalGameId: string
-): Promise<number> {
-  const snapshot = await db
-    .collection("games")
-    .where("recurrence_parent_id", "==", originalGameId)
-    .count()
-    .get();
+interface RecurrenceWork {
+  action: "provision";
+  sourceGameId: string;
+  parentId: string;
+  nextGameId: string;
+  nextIndex: number;
+  nextDate: string;
+  recurrence: RecurrenceType;
+  ownerId: string;
+  ownerName: string;
+  groupId: string | null;
+  sourceDate: string;
+  time: string;
+  locationName: string;
+  createdNewGame: boolean;
+  confirmationsCreated: boolean;
+  notificationEnqueued: boolean;
+}
 
-  return snapshot.data().count;
+interface RecurringChildExpectation {
+  parentId: string;
+  ownerId: string;
+  nextIndex: number;
+  groupId: string | null;
+}
+
+type RecurrenceTransactionResult =
+  RecurrenceWork |
+  {action: "skip" | "stopped"};
+
+/**
+ * Normaliza string opcional vinda do Firestore.
+ * @param {unknown} value - Valor persistido.
+ * @return {string | null} String válida ou null.
+ */
+function optionalString(value: unknown): string | null {
+  return typeof value === "string" && value.length > 0 ? value : null;
+}
+
+/**
+ * Normaliza o índice 1-based da ocorrência atual.
+ * @param {unknown} value - Valor persistido.
+ * @return {number} Índice positivo ou 1 para documentos legados.
+ */
+function currentRecurrenceIndex(value: unknown): number {
+  return typeof value === "number" &&
+    Number.isInteger(value) &&
+    value > 0 ? value : 1;
+}
+
+/**
+ * Converte apenas recorrências suportadas pelo motor.
+ * @param {unknown} value - Recorrência persistida.
+ * @return {RecurrenceType | null} Recorrência válida ou null.
+ */
+function recurrenceType(value: unknown): RecurrenceType | null {
+  if (value === "weekly" || value === "biweekly" || value === "monthly") {
+    return value;
+  }
+  return null;
+}
+
+/**
+ * Indica se ainda há etapa durável pendente para um filho já marcado.
+ * @param {admin.firestore.DocumentData} game - Jogo atual.
+ * @return {boolean} True quando confirmações/outbox ainda não terminaram.
+ */
+function hasIncompleteFollowUp(
+  game: admin.firestore.DocumentData
+): boolean {
+  return game.next_game_created === true && (
+    typeof game.next_game_id !== "string" ||
+    game.next_game_confirmations_created !== true ||
+    game.next_game_notification_enqueued !== true
+  );
+}
+
+/**
+ * Gera o payload do filho usando somente o snapshot autoritativo atual.
+ * @param {admin.firestore.DocumentData} current - Jogo atual.
+ * @param {string} parentId - ID raiz da série.
+ * @param {number} nextIndex - Índice do filho.
+ * @param {string} nextDate - Data do filho.
+ * @param {RecurrenceType} recurrence - Tipo de recorrência.
+ * @return {Record<string, unknown>} Payload do novo jogo.
+ */
+function buildRecurringGame(
+  current: admin.firestore.DocumentData,
+  parentId: string,
+  nextIndex: number,
+  nextDate: string,
+  recurrence: RecurrenceType
+): Record<string, unknown> {
+  const time = optionalString(current.time) || "00:00";
+  const [hours, minutes] = time.split(":").map(Number);
+  const pad2 = (n: number) => String(n).padStart(2, "0");
+  const dateTime = Timestamp.fromDate(
+    new Date(`${nextDate}T${pad2(hours)}:${pad2(minutes)}:00-03:00`)
+  );
+  const recurrenceCount =
+    typeof current.recurrence_count === "number" ?
+      current.recurrence_count : null;
+  const recurrenceEndDate = optionalString(current.recurrence_end_date);
+
+  const child: Record<string, unknown> = {
+    dateTime,
+    owner_id: current.owner_id,
+    owner_name: current.owner_name,
+    status: "SCHEDULED",
+    date: nextDate,
+    time,
+    end_time: current.end_time || null,
+    duration_minutes: current.duration_minutes || null,
+    field_type: current.field_type,
+    game_type: current.game_type,
+    max_players: current.max_players,
+    max_goalkeepers: current.max_goalkeepers,
+    number_of_teams: current.number_of_teams,
+    daily_price: current.daily_price,
+    total_cost: current.total_cost,
+    price_manual_override: current.price_manual_override === true,
+    pix_payment_enabled: current.pix_payment_enabled || false,
+    pix_key: current.pix_key || null,
+    pix_key_type: current.pix_key_type || null,
+    pix_beneficiary_name: current.pix_beneficiary_name || null,
+    location_id: current.location_id || null,
+    location_name: current.location_name,
+    location_address: current.location_address,
+    location_lat: current.location_lat ?? null,
+    location_lng: current.location_lng ?? null,
+    location_lat_approx: current.location_lat_approx ?? null,
+    location_lng_approx: current.location_lng_approx ?? null,
+    field_id: current.field_id || null,
+    field_name: current.field_name || null,
+    visibility: current.visibility,
+    rules: current.rules || "",
+    recurrence,
+    recurrence_parent_id: parentId,
+    recurrence_index: nextIndex,
+    recurrence_count: recurrenceCount,
+    recurrence_end_date: recurrenceEndDate,
+    recurrence_cancelled: false,
+    team1_name: "Time 1",
+    team2_name: "Time 2",
+    players_count: 0,
+    goalkeepers_count: 0,
+    players: [],
+    team1_score: 0,
+    team2_score: 0,
+    xp_processed: false,
+    voting_concluded: false,
+    post_game_report_generated: false,
+    auto_closed: false,
+    co_organizers: [],
+    created_at: FieldValue.serverTimestamp(),
+    updated_at: FieldValue.serverTimestamp(),
+  };
+
+  const groupId = optionalString(current.group_id);
+  if (groupId) {
+    child.group_id = groupId;
+    child.group_name = current.group_name || null;
+  }
+  if (optionalString(current.stream_url)) {
+    child.stream_url = current.stream_url;
+  }
+  return child;
+}
+
+/**
+ * Impede que um documento pré-criado com ID determinístico seja adotado.
+ * @param {admin.firestore.DocumentSnapshot} childSnap - Filho encontrado.
+ * @param {RecurringChildExpectation} expected - Identidade esperada.
+ * @return {void}
+ */
+function assertCompatibleChild(
+  childSnap: admin.firestore.DocumentSnapshot,
+  expected: RecurringChildExpectation
+): void {
+  if (!childSnap.exists) return;
+  const child = childSnap.data() || {};
+  const actualGroupId = optionalString(child.group_id);
+  if (
+    child.recurrence_parent_id !== expected.parentId ||
+    child.owner_id !== expected.ownerId ||
+    child.recurrence_index !== expected.nextIndex ||
+    child.status !== "SCHEDULED" ||
+    actualGroupId !== expected.groupId
+  ) {
+    throw new Error(
+      `[RECURRENCE] Filho determinístico incompatível: ${childSnap.id}`
+    );
+  }
+}
+
+/**
+ * Revalida que o jogo atual ainda representa o trabalho calculado.
+ * @param {admin.firestore.DocumentSnapshot} currentSnap - Snapshot atual.
+ * @param {RecurrenceWork} work - Trabalho derivado anteriormente.
+ * @return {void}
+ */
+function assertCurrentWork(
+  currentSnap: admin.firestore.DocumentSnapshot,
+  work: RecurrenceWork
+): void {
+  const current = currentSnap.data();
+  if (!current) {
+    throw new Error(`[RECURRENCE] Jogo ${work.sourceGameId} removido`);
+  }
+  const parentId =
+    optionalString(current.recurrence_parent_id) || work.sourceGameId;
+  if (
+    current.status !== "FINISHED" ||
+    recurrenceType(current.recurrence) !== work.recurrence ||
+    parentId !== work.parentId ||
+    currentRecurrenceIndex(current.recurrence_index) + 1 !== work.nextIndex ||
+    optionalString(current.owner_id) !== work.ownerId ||
+    optionalString(current.group_id) !== work.groupId ||
+    optionalString(current.date) !== work.sourceDate ||
+    current.next_game_created !== true ||
+    current.next_game_id !== work.nextGameId
+  ) {
+    throw new Error(
+      `[RECURRENCE] Estado de ${work.sourceGameId} mudou durante o processamento`
+    );
+  }
+}
+
+/**
+ * Marca confirmações concluídas somente após revalidar pai e filho.
+ * @param {admin.firestore.Firestore} db - Instância do Firestore.
+ * @param {admin.firestore.DocumentReference} currentRef - Jogo atual.
+ * @param {RecurrenceWork} work - Trabalho autoritativo.
+ * @return {Promise<void>}
+ */
+async function markConfirmationsCreated(
+  db: admin.firestore.Firestore,
+  currentRef: admin.firestore.DocumentReference,
+  work: RecurrenceWork
+): Promise<void> {
+  const childRef = db.collection("games").doc(work.nextGameId);
+  await db.runTransaction(async (tx) => {
+    const currentSnap = await tx.get(currentRef);
+    const childSnap = await tx.get(childRef);
+    assertCurrentWork(currentSnap, work);
+    if (!childSnap.exists) {
+      throw new Error(
+        `[RECURRENCE] Filho ${work.nextGameId} removido antes das confirmações`
+      );
+    }
+    assertCompatibleChild(childSnap, {
+      parentId: work.parentId,
+      ownerId: work.ownerId,
+      nextIndex: work.nextIndex,
+      groupId: work.groupId,
+    });
+    if (currentSnap.get("next_game_confirmations_created") === true) return;
+    tx.update(currentRef, {
+      next_game_confirmations_created: true,
+      updated_at: FieldValue.serverTimestamp(),
+    });
+  });
+}
+
+/**
+ * Persiste uma notificação determinística e seu marker na mesma transação.
+ * @param {admin.firestore.Firestore} db - Instância do Firestore.
+ * @param {admin.firestore.DocumentReference} currentRef - Jogo atual.
+ * @param {RecurrenceWork} work - Trabalho autoritativo.
+ * @param {string[]} memberIds - Destinatários ativos.
+ * @return {Promise<void>}
+ */
+async function enqueueRecurringNotification(
+  db: admin.firestore.Firestore,
+  currentRef: admin.firestore.DocumentReference,
+  work: RecurrenceWork,
+  memberIds: string[]
+): Promise<void> {
+  const childRef = db.collection("games").doc(work.nextGameId);
+  const outboxRef = db.collection("notification_queue")
+    .doc(`recurrence_${work.nextGameId}`);
+  const uniqueMemberIds = [...new Set(memberIds)].sort();
+
+  await db.runTransaction(async (tx) => {
+    const currentSnap = await tx.get(currentRef);
+    const childSnap = await tx.get(childRef);
+    const outboxSnap = await tx.get(outboxRef);
+    assertCurrentWork(currentSnap, work);
+    if (!childSnap.exists) {
+      throw new Error(
+        `[RECURRENCE] Filho ${work.nextGameId} removido antes da notificação`
+      );
+    }
+    assertCompatibleChild(childSnap, {
+      parentId: work.parentId,
+      ownerId: work.ownerId,
+      nextIndex: work.nextIndex,
+      groupId: work.groupId,
+    });
+    if (currentSnap.get("next_game_notification_enqueued") === true) return;
+
+    if (uniqueMemberIds.length > 0) {
+      if (outboxSnap.exists) {
+        const queued = outboxSnap.data() || {};
+        const queuedData = queued.data || {};
+        if (
+          queued.source !== "RECURRENCE_ENGINE" ||
+          queued.sourceGameId !== work.sourceGameId ||
+          queuedData.gameId !== work.nextGameId
+        ) {
+          throw new Error(
+            `[RECURRENCE] Outbox determinístico incompatível: ${outboxRef.id}`
+          );
+        }
+      } else {
+        const [year, month, day] = work.nextDate.split("-");
+        const dateLabel = `${day}/${month}/${year} às ${work.time}`;
+        const recurrenceLabel = work.recurrence === "weekly" ?
+          "semanal" : work.recurrence === "biweekly" ?
+            "quinzenal" : "mensal";
+        const data: Record<string, string> = {gameId: work.nextGameId};
+        if (work.groupId) data.groupId = work.groupId;
+        tx.set(outboxRef, {
+          userIds: uniqueMemberIds,
+          title:
+            `🔄 Jogo recorrente (${recurrenceLabel}): ${work.locationName}`,
+          body:
+            `Novo jogo ${recurrenceLabel} marcado! ${dateLabel}. ` +
+            "Confirme presença.",
+          type: NotificationType.GAME_INVITE,
+          data,
+          status: "PENDING",
+          priority: "HIGH",
+          source: "RECURRENCE_ENGINE",
+          sourceGameId: work.sourceGameId,
+          createdAt: FieldValue.serverTimestamp(),
+        });
+      }
+    }
+
+    tx.update(currentRef, {
+      next_game_notification_enqueued: true,
+      next_game_notification_outbox_id:
+        uniqueMemberIds.length > 0 ? outboxRef.id : null,
+      updated_at: FieldValue.serverTimestamp(),
+    });
+  });
 }
 
 export const onGameFinishedCreateRecurrence = onDocumentUpdated(
-  {document: "games/{gameId}", region: FUNCTION_REGION},
+  {document: "games/{gameId}", region: FUNCTION_REGION, retry: true},
   async (event) => {
     const before = event.data?.before.data();
     const after = event.data?.after.data();
-    if (!after) return;
+    if (!after || after.status !== "FINISHED") return;
 
     const gameId = event.params.gameId;
-
-    const wasAlreadyFinished = before?.status === "FINISHED";
-    const isNowFinished = after.status === "FINISHED";
-    if (!isNowFinished || wasAlreadyFinished) return;
-
-    const recurrence = after.recurrence as string | undefined;
-    if (!recurrence || recurrence === "none") return;
-    const hasPendingFollowUp =
-      after.next_game_created === true &&
-      after.next_game_confirmations_created !== true &&
-      typeof after.next_game_id === "string";
-    if (after.next_game_created === true && !hasPendingFollowUp) {
-      logger.info(`[RECURRENCE] ${gameId} já possui próximo jogo, skip.`);
+    if (
+      before?.status === "FINISHED" &&
+      !hasIncompleteFollowUp(after)
+    ) {
       return;
     }
 
     const db = admin.firestore();
-    const parentId = (after.recurrence_parent_id as string) || gameId;
-    const childCount = await countRecurringGames(db, parentId);
-
-    // Limite efetivo da série (spec #2398, decisão "ambos"):
-    // count XOR end_date, sempre respeitando o hard cap de 52.
-    // Índice 1-based: a 1ª ocorrência (criada por web/android) não tem
-    // recurrence_index → tratamos como 1.
-    const currentIndex = (after.recurrence_index as number) || 1;
-    const nextIndex = currentIndex + 1;
-    const recurrenceCount =
-      typeof after.recurrence_count === "number" ?
-        (after.recurrence_count as number) :
-        null;
-    const recurrenceEndDate =
-      typeof after.recurrence_end_date === "string" ?
-        (after.recurrence_end_date as string) :
-        null;
+    const currentRef = event.data!.after.ref;
 
     try {
-      const nextDate = getNextDate(after.date as string, recurrence as RecurrenceType);
+      const transactionResult: RecurrenceTransactionResult =
+        await db.runTransaction(async (tx) => {
+          const currentSnap = await tx.get(currentRef);
+          const current = currentSnap.data();
+          if (!current || current.status !== "FINISHED") {
+            return {action: "skip" as const};
+          }
 
-      // Decisão de parada centralizada (count XOR end_date, sob hard cap 52).
-      const stop = recurrenceStopReason({
-        currentIndex,
-        childCount,
-        recurrenceCount,
-        recurrenceEndDate,
-        nextDate,
-      });
-      if (stop) {
-        logger.info(
-          `[RECURRENCE] Série ${parentId} encerrada (motivo=${stop}) no índice ` +
-          `${currentIndex}; próxima data seria ${nextDate}.`
-        );
-        await event.data?.after.ref.update({
-          next_game_created: true,
-          recurrence_stop_reason: stop,
-          updated_at: FieldValue.serverTimestamp(),
-        });
-        return;
-      }
+          const recurrence = recurrenceType(current.recurrence);
+          if (!recurrence) return {action: "skip" as const};
+          const currentNextGameCreated = current.next_game_created === true;
+          if (
+            currentNextGameCreated &&
+            !hasIncompleteFollowUp(current)
+          ) {
+            return {action: "skip" as const};
+          }
 
-      const [hours, minutes] = (after.time || "00:00").split(":").map(Number);
-      const pad2 = (n: number) => String(n).padStart(2, "0");
-      const dateTime = Timestamp.fromDate(
-        new Date(`${nextDate}T${pad2(hours)}:${pad2(minutes)}:00-03:00`)
-      );
-
-      const newGame: Record<string, unknown> = {
-        dateTime: dateTime,
-        owner_id: after.owner_id,
-        owner_name: after.owner_name,
-        status: "SCHEDULED",
-        date: nextDate,
-        time: after.time,
-        end_time: after.end_time || null,
-        duration_minutes: after.duration_minutes || null,
-        field_type: after.field_type,
-        game_type: after.game_type,
-        max_players: after.max_players,
-        max_goalkeepers: after.max_goalkeepers,
-        number_of_teams: after.number_of_teams,
-        daily_price: after.daily_price,
-        total_cost: after.total_cost,
-        price_manual_override: after.price_manual_override === true,
-        pix_payment_enabled: after.pix_payment_enabled || false,
-        pix_key: after.pix_key || null,
-        pix_key_type: after.pix_key_type || null,
-        pix_beneficiary_name: after.pix_beneficiary_name || null,
-        location_id: after.location_id || null,
-        location_name: after.location_name,
-        location_address: after.location_address,
-        location_lat: after.location_lat ?? null,
-        location_lng: after.location_lng ?? null,
-        location_lat_approx: after.location_lat_approx ?? null,
-        location_lng_approx: after.location_lng_approx ?? null,
-        field_id: after.field_id || null,
-        field_name: after.field_name || null,
-        visibility: after.visibility,
-        rules: after.rules || "",
-        recurrence: recurrence,
-        recurrence_parent_id: parentId,
-        // Propaga config de limite da série para a próxima ocorrência (spec #2398).
-        recurrence_index: nextIndex,
-        recurrence_count: recurrenceCount,
-        recurrence_end_date: recurrenceEndDate,
-        recurrence_cancelled: false,
-        team1_name: "Time 1",
-        team2_name: "Time 2",
-        players_count: 0,
-        goalkeepers_count: 0,
-        players: [],
-        team1_score: 0,
-        team2_score: 0,
-        xp_processed: false,
-        voting_concluded: false,
-        post_game_report_generated: false,
-        auto_closed: false,
-        co_organizers: [],
-        created_at: FieldValue.serverTimestamp(),
-        updated_at: FieldValue.serverTimestamp(),
-      };
-
-      if (after.group_id) {
-        newGame.group_id = after.group_id;
-        newGame.group_name = after.group_name || null;
-      }
-
-      if (after.stream_url) {
-        newGame.stream_url = after.stream_url;
-      }
-
-      const targetNextGameId =
-        hasPendingFollowUp ?
-          after.next_game_id as string :
-          `recurring_${parentId}_${nextIndex}`;
-      const newGameRef = db
-        .collection("games")
-        .doc(targetNextGameId);
-
-      const transactionResult = await db.runTransaction(async (tx) => {
-        const currentSnap = await tx.get(event.data!.after.ref);
-        const currentNextGameCreated =
-          currentSnap.get("next_game_created") === true;
-        const currentNextGameId =
-          currentSnap.get("next_game_id") as string | undefined;
-        const currentConfirmationsCreated =
-          currentSnap.get("next_game_confirmations_created") === true;
-
-        if (currentNextGameCreated) {
-          return {
-            createdNewGame: false,
-            shouldProvisionParticipants: !currentConfirmationsCreated,
-            nextGameId: currentNextGameId || newGameRef.id,
-          };
-        }
-
-        const existingChildSnap = await tx.get(newGameRef);
-        if (!existingChildSnap.exists) {
-          tx.set(newGameRef, newGame);
-        }
-
-        tx.update(event.data!.after.ref, {
-          next_game_created: true,
-          next_game_id: newGameRef.id,
-          next_game_confirmations_created: false,
-          updated_at: FieldValue.serverTimestamp(),
-        });
-
-        return {
-          createdNewGame: !existingChildSnap.exists,
-          shouldProvisionParticipants: true,
-          nextGameId: newGameRef.id,
-        };
-      });
-
-      if (!transactionResult.shouldProvisionParticipants) {
-        logger.info(
-          `[RECURRENCE] ${gameId} já criou próximo jogo ${newGameRef.id}, skip.`
-        );
-        return;
-      }
-
-      if (transactionResult.createdNewGame) {
-        logger.info(
-          `[RECURRENCE] Created recurring game ${newGameRef.id} from ${gameId}` +
-          ` (${recurrence}, date ${nextDate}, child ${childCount + 1}/52)`
-        );
-      } else {
-        logger.info(
-          `[RECURRENCE] Retrying participant provisioning for ${newGameRef.id}`
-        );
-      }
-
-      if (after.group_id) {
-        try {
-          const ownerId = after.owner_id as string;
-          const invites =
-            await fetchActiveRecurringMemberInvites(
-              db,
-              after.group_id as string,
-              ownerId
+          const ownerId = optionalString(current.owner_id);
+          const sourceDate = optionalString(current.date);
+          if (!ownerId || !sourceDate) {
+            throw new Error(
+              `[RECURRENCE] Jogo ${gameId} sem owner_id/date válidos`
             );
+          }
+          const parentId =
+            optionalString(current.recurrence_parent_id) || gameId;
+          const currentIndex = currentRecurrenceIndex(
+            current.recurrence_index
+          );
+          const nextIndex = currentIndex + 1;
+          const deterministicChildId = `recurring_${parentId}_${nextIndex}`;
+          const currentNextGameId = optionalString(current.next_game_id);
+          if (
+            currentNextGameCreated &&
+            currentNextGameId !== deterministicChildId
+          ) {
+            throw new Error(
+              `[RECURRENCE] next_game_id incompatível em ${gameId}`
+            );
+          }
 
-          let batch = db.batch();
-          let batchOps = 0;
-          const commitBatch = async () => {
-            if (batchOps === 0) return;
-            await batch.commit();
-            batch = db.batch();
-            batchOps = 0;
+          const nextDate = getNextDate(sourceDate, recurrence);
+          let childCount = Math.max(0, currentIndex - 1);
+          if (!currentNextGameCreated) {
+            const childQuery = db.collection("games")
+              .where("recurrence_parent_id", "==", parentId);
+            const childrenSnap = await tx.get(childQuery);
+            childCount = childrenSnap.size;
+            const recurrenceCount =
+              typeof current.recurrence_count === "number" ?
+                current.recurrence_count : null;
+            const stop = recurrenceStopReason({
+              currentIndex,
+              childCount,
+              recurrenceCount,
+              recurrenceEndDate:
+                optionalString(current.recurrence_end_date),
+              nextDate,
+            });
+            if (stop) {
+              tx.update(currentRef, {
+                next_game_created: true,
+                recurrence_stop_reason: stop,
+                updated_at: FieldValue.serverTimestamp(),
+              });
+              logger.info(
+                `[RECURRENCE] Série ${parentId} encerrada (motivo=${stop}) ` +
+                `no índice ${currentIndex}; próxima data seria ${nextDate}.`
+              );
+              return {action: "stopped" as const};
+            }
+          }
+
+          const childRef = db.collection("games").doc(deterministicChildId);
+          const childSnap = await tx.get(childRef);
+          const groupId = optionalString(current.group_id);
+          assertCompatibleChild(childSnap, {
+            parentId,
+            ownerId,
+            nextIndex,
+            groupId,
+          });
+          if (!childSnap.exists) {
+            tx.set(childRef, buildRecurringGame(
+              current,
+              parentId,
+              nextIndex,
+              nextDate,
+              recurrence
+            ));
+          }
+
+          if (!currentNextGameCreated) {
+            tx.update(currentRef, {
+              next_game_created: true,
+              next_game_id: deterministicChildId,
+              next_game_confirmations_created: false,
+              next_game_notification_enqueued: false,
+              updated_at: FieldValue.serverTimestamp(),
+            });
+          } else if (!childSnap.exists) {
+            tx.update(currentRef, {
+              next_game_confirmations_created: false,
+              next_game_notification_enqueued: false,
+              updated_at: FieldValue.serverTimestamp(),
+            });
+          }
+
+          return {
+            action: "provision" as const,
+            sourceGameId: gameId,
+            parentId,
+            nextGameId: deterministicChildId,
+            nextIndex,
+            nextDate,
+            recurrence,
+            ownerId,
+            ownerName: optionalString(current.owner_name) || "Organizador",
+            groupId,
+            sourceDate,
+            time: optionalString(current.time) || "00:00",
+            locationName: optionalString(current.location_name) || "Local",
+            createdNewGame: !childSnap.exists,
+            confirmationsCreated:
+              childSnap.exists &&
+              current.next_game_confirmations_created === true,
+            notificationEnqueued:
+              childSnap.exists &&
+              current.next_game_notification_enqueued === true,
           };
-          const queueConfirmation = async (
-            userId: string,
-            userName: string,
-            status: "CONFIRMED" | "PENDING"
-          ) => {
-            batch.set(
-              db.collection("confirmations").doc(`${newGameRef.id}_${userId}`),
-              {
-                game_id: newGameRef.id,
-                user_id: userId,
-                user_name: userName,
-                status,
+        });
+
+      if (transactionResult.action !== "provision") return;
+      const work = transactionResult;
+      if (work.createdNewGame) {
+        logger.info(
+          `[RECURRENCE] Created recurring game ${work.nextGameId} ` +
+          `from ${gameId} (${work.recurrence}, date ${work.nextDate})`
+        );
+      }
+
+      let invites: RecurringMemberInvite[] = [];
+      if (work.groupId) {
+        invites = await fetchActiveRecurringMemberInvites(
+          db,
+          work.groupId,
+          work.ownerId
+        );
+      }
+
+      if (!work.confirmationsCreated && work.groupId) {
+        const participants = [
+          {
+            userId: work.ownerId,
+            userName: work.ownerName,
+            status: "CONFIRMED" as const,
+          },
+          ...invites.map((invite) => ({
+            userId: invite.memberId,
+            userName: invite.userName,
+            status: "PENDING" as const,
+          })),
+        ];
+
+        for (const participantChunk of chunkArray(
+          participants,
+          MAX_CONFIRMATION_WRITES_PER_BATCH
+        )) {
+          await db.runTransaction(async (tx) => {
+            const refs = participantChunk.map(({userId}) =>
+              db.collection("confirmations")
+                .doc(`${work.nextGameId}_${userId}`)
+            );
+            const snapshots = await Promise.all(
+              refs.map((ref) => tx.get(ref))
+            );
+            snapshots.forEach((snapshot, index) => {
+              if (snapshot.exists) return;
+              const participant = participantChunk[index];
+              tx.set(refs[index], {
+                game_id: work.nextGameId,
+                user_id: participant.userId,
+                user_name: participant.userName,
+                status: participant.status,
                 position: "FIELD",
                 is_casual_player: false,
                 created_at: FieldValue.serverTimestamp(),
-              }
-            );
-            batchOps++;
-            if (batchOps >= MAX_CONFIRMATION_WRITES_PER_BATCH) {
-              await commitBatch();
-            }
-          };
-
-          await queueConfirmation(
-            ownerId,
-            (after.owner_name as string) || "Organizador",
-            "CONFIRMED"
-          );
-
-          for (const invite of invites) {
-            await queueConfirmation(invite.memberId, invite.userName, "PENDING");
-          }
-
-          await commitBatch();
-          await event.data!.after.ref.update({
-            next_game_confirmations_created: true,
-            updated_at: FieldValue.serverTimestamp(),
+              });
+            });
           });
-          logger.info(
-            `[RECURRENCE] Auto-invited ${invites.length + 1} active members ` +
-            `for recurring game ${newGameRef.id}`
-          );
-
-          const memberIds = invites.map((invite) => invite.memberId);
-          if (memberIds.length > 0) {
-            const locationName = after.location_name || "Local";
-            const [y, m, d] = nextDate.split("-");
-            const timeStr = `${d}/${m}/${y} às ${after.time}`;
-            const recurrenceLabel =
-              recurrence === "weekly" ?
-                "semanal" :
-                recurrence === "biweekly" ?
-                  "quinzenal" :
-                  "mensal";
-
-            const notification: FcmNotification = {
-              title: `🔄 Jogo recorrente (${recurrenceLabel}): ${locationName}`,
-              body: `Novo jogo ${recurrenceLabel} marcado! ${timeStr}. Confirme presença.`,
-              type: NotificationType.GAME_INVITE,
-              data: {gameId: newGameRef.id},
-            };
-
-            await sendNotificationToUsers(
-              memberIds,
-              notification,
-              after.group_id as string
-            );
-            logger.info(
-              `[RECURRENCE] Sent ${memberIds.length} notifications for ${newGameRef.id}`
-            );
-          }
-        } catch (err) {
-          logger.error(
-            `[RECURRENCE] Failed to auto-invite/notify for ${newGameRef.id}:`,
-            err
-          );
-          throw err;
         }
       }
+
+      await markConfirmationsCreated(db, currentRef, work);
+      if (work.groupId && !work.confirmationsCreated) {
+        logger.info(
+          `[RECURRENCE] Auto-invited ${invites.length + 1} active members ` +
+          `for recurring game ${work.nextGameId}`
+        );
+      }
+
+      if (!work.notificationEnqueued) {
+        await enqueueRecurringNotification(
+          db,
+          currentRef,
+          work,
+          invites.map((invite) => invite.memberId)
+        );
+      }
     } catch (err) {
-      logger.error(`[RECURRENCE] Failed to create recurrence for ${gameId}:`, err);
+      logger.error(
+        `[RECURRENCE] Failed to create/provision recurrence for ${gameId}:`,
+        err
+      );
       throw err;
     }
   }

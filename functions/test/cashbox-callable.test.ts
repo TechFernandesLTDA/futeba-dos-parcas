@@ -6,6 +6,33 @@ const mockSummaryRef = {path: "groups/group-1/cashbox_summary/current"};
 const mockMemberRef = {path: "groups/group-1/members/user-1"};
 const mockUserRef = {path: "users/user-1"};
 const operationRefs = new Map<string, {path: string}>();
+const mockMonthlyPayerRef = {
+  path: "groups/group-1/monthly_finance_periods/2026-07/payers/player-1",
+};
+const mockMonthlySettlementRef = {
+  path: "groups/group-1/monthly_finance_periods/2026-07/settlements/monthly-payment-0001",
+};
+const mockActiveSettlementsQuery = {
+  path: "groups/group-1/monthly_finance_periods/2026-07/settlements?active",
+  where: jest.fn(() => mockActiveSettlementsQuery),
+  orderBy: jest.fn(() => mockActiveSettlementsQuery),
+  limit: jest.fn(() => mockActiveSettlementsQuery),
+};
+const mockMonthlyPeriodRef = {
+  path: "groups/group-1/monthly_finance_periods/2026-07",
+  collection: jest.fn((name: string) => {
+    if (name === "payers") {
+      return {doc: jest.fn(() => mockMonthlyPayerRef)};
+    }
+    if (name === "settlements") {
+      return {
+        doc: jest.fn(() => mockMonthlySettlementRef),
+        where: mockActiveSettlementsQuery.where,
+      };
+    }
+    throw new Error(`Unexpected monthly subcollection: ${name}`);
+  }),
+};
 const mockCashboxRef = {doc: jest.fn(() => mockEntryRef)};
 const mockGroupRef = {
   path: "groups/group-1",
@@ -13,6 +40,9 @@ const mockGroupRef = {
     if (name === "members") return {doc: jest.fn(() => mockMemberRef)};
     if (name === "cashbox_summary") return {doc: jest.fn(() => mockSummaryRef)};
     if (name === "cashbox") return mockCashboxRef;
+    if (name === "monthly_finance_periods") {
+      return {doc: jest.fn(() => mockMonthlyPeriodRef)};
+    }
     if (name === "cashbox_summary_ops") {
       return {doc: jest.fn((id: string) => {
         const ref = {path: `groups/group-1/cashbox_summary_ops/${id}`};
@@ -49,7 +79,10 @@ jest.mock("firebase-functions/v2", () => ({
   },
 }));
 jest.mock("firebase-admin/firestore", () => ({
-  FieldValue: {serverTimestamp: jest.fn(() => mockServerTimestamp)},
+  FieldValue: {
+    serverTimestamp: jest.fn(() => mockServerTimestamp),
+    delete: jest.fn(() => ({_type: "DeleteField"})),
+  },
   FieldPath: {documentId: jest.fn(() => "__name__")},
   Timestamp: class MockTimestamp {},
 }));
@@ -57,6 +90,7 @@ jest.mock("../src/_db", () => ({db: jest.fn(() => mockDb)}));
 
 const {
   createCashboxEntry,
+  isActiveGroupManager,
   voidCashboxEntry,
 } = require("../src/cashbox/callable");
 
@@ -66,7 +100,7 @@ const groupSnapshot = {
 };
 const memberSnapshot = {
   exists: true,
-  data: () => ({role: "ADMIN", status: "ACTIVE"}),
+  data: () => ({user_id: "user-1", role: "ADMIN", status: "ACTIVE"}),
 };
 const userSnapshot = {exists: true, data: () => ({name: "Renan"})};
 let summaryData = {
@@ -192,6 +226,394 @@ describe("cashbox callables incrementais", () => {
     }), {merge: true});
   });
 
+  it("estorna mensalidade no caixa, pagador, período e settlement juntos", async () => {
+    summaryData = {
+      ...summaryData,
+      balance: 10.01,
+      total_income: 10.01,
+      balance_cents: 1001,
+      total_income_cents: 1001,
+      entry_count: 2,
+    };
+    const entrySnapshot = {
+      exists: true,
+      data: () => ({
+        type: "INCOME",
+        amount: 4,
+        amount_cents: 400,
+        status: "ACTIVE",
+        category: "MONTHLY_FEE",
+        request_id: "monthly-payment-0001",
+        monthly_period_key: "2026-07",
+        monthly_payer_id: "player-1",
+        monthly_settlement_path: mockMonthlySettlementRef.path,
+        monthly_payment_sequence: 2,
+      }),
+    };
+    const periodSnapshot = {
+      exists: true,
+      data: () => ({
+        status: "CLOSED",
+        total_court_cost_cents: 1001,
+        received_cents: 1001,
+        open_cents: 0,
+      }),
+    };
+    const payerSnapshot = {
+      exists: true,
+      data: () => ({
+        user_id: "player-1",
+        period_key: "2026-07",
+        expected_cents: 1001,
+        paid_cents: 1001,
+        outstanding_cents: 0,
+        payment_count: 2,
+        payment_sequence: 2,
+        last_payment_entry_id: mockEntryRef.id,
+        last_payment_sequence: 2,
+      }),
+    };
+    const settlementSnapshot = {
+      exists: true,
+      data: () => ({
+        status: "ACTIVE",
+        request_id: "monthly-payment-0001",
+        payer_id: "player-1",
+        period_key: "2026-07",
+        cashbox_entry_id: mockEntryRef.id,
+        amount_cents: 400,
+        payment_sequence: 2,
+      }),
+    };
+    const previousPaymentAt = {_type: "Timestamp", millis: 1000};
+    const activeSettlementsSnapshot = {
+      docs: [
+        {
+          id: "monthly-payment-0001",
+          data: () => settlementSnapshot.data(),
+        },
+        {
+          id: "monthly-payment-previous",
+          data: () => ({
+            status: "ACTIVE",
+            payer_id: "player-1",
+            payment_sequence: 1,
+            cashbox_entry_id: "monthly_previous-entry",
+            created_at: previousPaymentAt,
+          }),
+        },
+      ],
+    };
+    mockRunTransaction.mockImplementation(async (
+      callback: (tx: unknown) => Promise<unknown>
+    ) => {
+      const tx = {
+        get: jest.fn(async (ref: {path: string}) => {
+          if (ref === mockGroupRef) return groupSnapshot;
+          if (ref === mockMemberRef) return memberSnapshot;
+          if (ref === mockEntryRef) return entrySnapshot;
+          if (ref === mockSummaryRef) return summarySnapshot;
+          if (ref === mockMonthlyPeriodRef) return periodSnapshot;
+          if (ref === mockMonthlyPayerRef) return payerSnapshot;
+          if (ref === mockMonthlySettlementRef) return settlementSnapshot;
+          if (ref === mockActiveSettlementsQuery) {
+            return activeSettlementsSnapshot;
+          }
+          if (ref.path.includes("cashbox_summary_ops")) return {exists: false};
+          throw new Error(`Unexpected read: ${ref.path}`);
+        }),
+        set: mockTxSet,
+        update: mockTxUpdate,
+      };
+      return callback(tx);
+    });
+
+    const result = await voidCashboxEntry({
+      auth: {uid: "user-1", token: {verified: true}},
+      data: {groupId: "group-1", entryId: mockEntryRef.id},
+    });
+
+    expect(result).toMatchObject({
+      balanceCents: 601,
+      monthlyReversed: true,
+      duplicate: false,
+    });
+    expect(mockTxUpdate).toHaveBeenCalledWith(
+      mockMonthlyPayerRef,
+      expect.objectContaining({
+        paid_cents: 601,
+        outstanding_cents: 400,
+        status: "PARTIAL",
+        payment_count: 1,
+        last_payment_entry_id: "monthly_previous-entry",
+        last_payment_sequence: 1,
+        last_payment_at: previousPaymentAt,
+      })
+    );
+    const payerUpdate = mockTxUpdate.mock.calls.find(
+      ([ref]) => ref === mockMonthlyPayerRef
+    )?.[1];
+    expect(payerUpdate).not.toHaveProperty("payment_sequence");
+    expect(mockTxUpdate).toHaveBeenCalledWith(
+      mockMonthlyPeriodRef,
+      expect.objectContaining({
+        status: "FINALIZED",
+        received_cents: 601,
+        open_cents: 400,
+      })
+    );
+    expect(mockTxUpdate).toHaveBeenCalledWith(
+      mockMonthlySettlementRef,
+      expect.objectContaining({status: "VOIDED", voided_by: "user-1"})
+    );
+    expect(mockTxSet).toHaveBeenCalledWith(
+      mockSummaryRef,
+      expect.objectContaining({
+        total_income_cents: 601,
+        balance_cents: 601,
+        entry_count: 1,
+      }),
+      {merge: true}
+    );
+  });
+
+  it("estorna baixa mensal antiga sem perder o ponteiro da baixa mais nova", async () => {
+    summaryData = {
+      ...summaryData,
+      balance: 10.01,
+      total_income: 10.01,
+      balance_cents: 1001,
+      total_income_cents: 1001,
+      entry_count: 2,
+    };
+    const entrySnapshot = {
+      exists: true,
+      data: () => ({
+        type: "INCOME",
+        amount_cents: 400,
+        status: "ACTIVE",
+        category: "MONTHLY_FEE",
+        request_id: "monthly-payment-0001",
+        monthly_period_key: "2026-07",
+        monthly_payer_id: "player-1",
+        monthly_settlement_path: mockMonthlySettlementRef.path,
+        monthly_payment_sequence: 1,
+      }),
+    };
+    const periodSnapshot = {
+      exists: true,
+      data: () => ({
+        total_court_cost_cents: 1001,
+        received_cents: 1001,
+        open_cents: 0,
+      }),
+    };
+    const payerSnapshot = {
+      exists: true,
+      data: () => ({
+        user_id: "player-1",
+        period_key: "2026-07",
+        expected_cents: 1001,
+        paid_cents: 1001,
+        outstanding_cents: 0,
+        payment_count: 2,
+        payment_sequence: 2,
+        last_payment_entry_id: "monthly_later-entry",
+        last_payment_sequence: 2,
+      }),
+    };
+    const settlementSnapshot = {
+      exists: true,
+      data: () => ({
+        status: "ACTIVE",
+        request_id: "monthly-payment-0001",
+        payer_id: "player-1",
+        period_key: "2026-07",
+        cashbox_entry_id: mockEntryRef.id,
+        amount_cents: 400,
+        payment_sequence: 1,
+      }),
+    };
+    mockRunTransaction.mockImplementation(async (
+      callback: (tx: unknown) => Promise<unknown>
+    ) => callback({
+      get: jest.fn(async (ref: {path: string}) => {
+        if (ref === mockGroupRef) return groupSnapshot;
+        if (ref === mockMemberRef) return memberSnapshot;
+        if (ref === mockEntryRef) return entrySnapshot;
+        if (ref === mockSummaryRef) return summarySnapshot;
+        if (ref === mockMonthlyPeriodRef) return periodSnapshot;
+        if (ref === mockMonthlyPayerRef) return payerSnapshot;
+        if (ref === mockMonthlySettlementRef) return settlementSnapshot;
+        if (ref.path.includes("cashbox_summary_ops")) return {exists: false};
+        throw new Error(`Unexpected read: ${ref.path}`);
+      }),
+      set: mockTxSet,
+      update: mockTxUpdate,
+    }));
+
+    await expect(voidCashboxEntry({
+      auth: {uid: "user-1", token: {verified: true}},
+      data: {groupId: "group-1", entryId: mockEntryRef.id},
+    })).resolves.toMatchObject({monthlyReversed: true, balanceCents: 601});
+
+    const payerUpdate = mockTxUpdate.mock.calls.find(
+      ([ref]) => ref === mockMonthlyPayerRef
+    )?.[1] as Record<string, unknown>;
+    expect(payerUpdate).toMatchObject({
+      paid_cents: 601,
+      outstanding_cents: 400,
+      payment_count: 1,
+    });
+    expect(payerUpdate).not.toHaveProperty("last_payment_entry_id");
+    expect(payerUpdate).not.toHaveProperty("last_payment_sequence");
+    expect(payerUpdate).not.toHaveProperty("payment_sequence");
+  });
+
+  it("recusa estorno mensal se o settlement auditável estiver ausente", async () => {
+    const entrySnapshot = {
+      exists: true,
+      data: () => ({
+        type: "INCOME",
+        amount_cents: 400,
+        status: "ACTIVE",
+        category: "MONTHLY_FEE",
+        request_id: "monthly-payment-0001",
+        monthly_period_key: "2026-07",
+        monthly_payer_id: "player-1",
+        monthly_settlement_path: mockMonthlySettlementRef.path,
+      }),
+    };
+    mockRunTransaction.mockImplementation(async (
+      callback: (tx: unknown) => Promise<unknown>
+    ) => callback({
+      get: jest.fn(async (ref: {path: string}) => {
+        if (ref === mockGroupRef) return groupSnapshot;
+        if (ref === mockMemberRef) return memberSnapshot;
+        if (ref === mockEntryRef) return entrySnapshot;
+        if (ref === mockSummaryRef) return summarySnapshot;
+        if (ref.path.includes("cashbox_summary_ops")) return {exists: false};
+        return {exists: false};
+      }),
+      set: mockTxSet,
+      update: mockTxUpdate,
+    }));
+
+    await expect(voidCashboxEntry({
+      auth: {uid: "user-1", token: {verified: true}},
+      data: {groupId: "group-1", entryId: mockEntryRef.id},
+    })).rejects.toMatchObject({code: "failed-precondition"});
+    expect(mockTxSet).not.toHaveBeenCalled();
+    expect(mockTxUpdate).not.toHaveBeenCalled();
+  });
+
+  it("rejeita reutilizar requestId com outra intenção financeira", async () => {
+    mockRunTransaction.mockImplementation(async (callback: (tx: unknown) => Promise<unknown>) => callback({
+      get: jest.fn(async (ref: {path: string}) => {
+        if (ref === mockGroupRef) return groupSnapshot;
+        if (ref === mockMemberRef) return memberSnapshot;
+        if (ref === mockUserRef) return userSnapshot;
+        if (ref === mockEntryRef) {
+          return {
+            exists: true,
+            data: () => ({
+              created_by: "user-1",
+              type: "INCOME",
+              amount: 10,
+              description: "Mensalidade",
+              category: "OTHER",
+            }),
+          };
+        }
+        if (ref === mockSummaryRef) return summarySnapshot;
+        return {exists: false};
+      }),
+      set: mockTxSet,
+    }));
+
+    await expect(createCashboxEntry({
+      auth: {uid: "user-1", token: {verified: true}},
+      data: {
+        requestId: "cashbox-request-0001",
+        groupId: "group-1",
+        type: "EXPENSE",
+        amount: 10,
+        description: "Mensalidade",
+      },
+    })).rejects.toMatchObject({code: "already-exists"});
+    expect(mockTxSet).not.toHaveBeenCalled();
+  });
+
+  it("não aceita replay que troca jogador ou competência mantendo o mesmo valor", async () => {
+    mockRunTransaction.mockImplementation(async (callback: (tx: unknown) => Promise<unknown>) => callback({
+      get: jest.fn(async (ref: {path: string}) => {
+        if (ref === mockGroupRef) return groupSnapshot;
+        if (ref === mockMemberRef) return memberSnapshot;
+        if (ref === mockUserRef) return userSnapshot;
+        if (ref === mockEntryRef) {
+          return {
+            exists: true,
+            data: () => ({
+              created_by: "user-1",
+              type: "INCOME",
+              amount: 10,
+              description: "Mensalidade",
+              category: "MONTHLY_FEE",
+              player_id: "player-old",
+              player_name: "Jogador",
+              reference_date: 1_788_153_600_000,
+            }),
+          };
+        }
+        if (ref === mockSummaryRef) return summarySnapshot;
+        return {exists: false};
+      }),
+      set: mockTxSet,
+    }));
+
+    await expect(createCashboxEntry({
+      auth: {uid: "user-1", token: {verified: true}},
+      data: {
+        requestId: "cashbox-request-0001",
+        groupId: "group-1",
+        type: "INCOME",
+        amount: 10,
+        description: "Mensalidade",
+        category: "MONTHLY_FEE",
+        playerId: "player-new",
+        playerName: "Jogador",
+        referenceDate: 1_788_153_600_000,
+      },
+    })).rejects.toMatchObject({code: "already-exists"});
+    expect(mockTxSet).not.toHaveBeenCalled();
+  });
+
+  it("rejeita paths e metadados opcionais malformados antes da transação", async () => {
+    await expect(createCashboxEntry({
+      auth: {uid: "user-1", token: {verified: true}},
+      data: {
+        requestId: "cashbox-request-0001",
+        groupId: "group/nested/doc",
+        type: "INCOME",
+        amount: 10,
+        description: "Mensalidade",
+      },
+    })).rejects.toMatchObject({code: "invalid-argument"});
+
+    await expect(createCashboxEntry({
+      auth: {uid: "user-1", token: {verified: true}},
+      data: {
+        requestId: "cashbox-request-0001",
+        groupId: "group-1",
+        type: "INCOME",
+        amount: 10,
+        description: "Mensalidade",
+        receiptUrl: "javascript:alert(1)",
+      },
+    })).rejects.toMatchObject({code: "invalid-argument"});
+    expect(mockRunTransaction).not.toHaveBeenCalled();
+  });
+
   it("bloqueia create quando summary não é autoritativo", async () => {
     mockRunTransaction.mockImplementation(async (callback: (tx: unknown) => Promise<unknown>) => callback({
       get: jest.fn(async (ref: {path: string}) => {
@@ -215,5 +637,25 @@ describe("cashbox callables incrementais", () => {
         description: "Mensalidade",
       },
     })).rejects.toMatchObject({code: "failed-precondition"});
+  });
+});
+
+describe("isActiveGroupManager", () => {
+  test("aceita owner canônico mesmo sem membership íntegra", () => {
+    expect(isActiveGroupManager(undefined, {owner_id: "user-1"}, "user-1"))
+      .toBe(true);
+  });
+
+  test("aceita admin ativo somente quando user_id está vinculado ao caller", () => {
+    expect(isActiveGroupManager(
+      {user_id: "user-1", role: "ADMIN", status: "ACTIVE"},
+      {owner_id: "other"},
+      "user-1"
+    )).toBe(true);
+    expect(isActiveGroupManager(
+      {user_id: "attacker", role: "ADMIN", status: "ACTIVE"},
+      {owner_id: "other"},
+      "user-1"
+    )).toBe(false);
   });
 });

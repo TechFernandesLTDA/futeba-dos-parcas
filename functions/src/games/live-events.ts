@@ -52,11 +52,6 @@ interface DeleteLiveGameEventRequest {
   eventId: string;
 }
 
-interface TeamSnapshot {
-  id: string;
-  playerIds: string[];
-}
-
 interface EventDelta {
   goals?: number;
   assists?: number;
@@ -194,49 +189,6 @@ async function enforceRateLimit(
   }
 }
 
-async function fetchTeams(
-  gameId: string,
-): Promise<TeamSnapshot[]> {
-  const teamsSnap = await db()
-    .collection("teams")
-    .where("game_id", "==", gameId)
-    .get();
-
-  return teamsSnap.docs.map((doc) => {
-    const data = doc.data();
-    const rawPlayerIds =
-      Array.isArray(data.player_ids) ?
-        data.player_ids :
-        Array.isArray(data.playerIds) ?
-          data.playerIds :
-          [];
-
-    return {
-      id: doc.id,
-      playerIds:
-        rawPlayerIds.filter(
-          (value): value is string =>
-            typeof value === "string" &&
-            value.trim().length > 0,
-        ),
-    };
-  });
-}
-
-function resolveTeam(
-  teams: TeamSnapshot[],
-  teamId: string,
-): TeamSnapshot {
-  const team = teams.find((item) => item.id === teamId);
-  if (!team) {
-    throw new HttpsError(
-      "failed-precondition",
-      "Time inválido para este jogo.",
-    );
-  }
-  return team;
-}
-
 function confirmedPayload(
   snap: FirebaseFirestore.DocumentSnapshot,
 ): FirebaseFirestore.DocumentData {
@@ -272,6 +224,9 @@ function applyDelta(
 
   for (const [field, change] of Object.entries(delta)) {
     if (!change) continue;
+    // Reversoes nunca devem recriar confirmations/live_player_stats
+    // parciais quando o documento relacionado ja foi removido.
+    if (!currentData && change < 0) continue;
     next[field] = Math.max(
       0,
       readCounter(currentData, field) + change,
@@ -293,12 +248,35 @@ function applyDelta(
   }, {merge: true});
 }
 
+function isSameIdempotentEvent(
+  existing: FirebaseFirestore.DocumentData,
+  payload: SubmitLiveGameEventRequest,
+  uid: string,
+): boolean {
+  const existingType = existing.event_type ?? existing.type;
+  const existingMinute = Number(existing.minute ?? 0);
+  const existingAssistedById =
+    typeof existing.assisted_by_id === "string" ?
+      existing.assisted_by_id :
+      null;
+
+  return existing.game_id === payload.gameId &&
+    existing.request_id === payload.requestId &&
+    existing.created_by === uid &&
+    existingType === payload.eventType &&
+    existing.player_id === payload.playerId &&
+    existing.team_id === payload.teamId &&
+    existingMinute === (payload.minute ?? 0) &&
+    existingAssistedById === (payload.assistedById ?? null);
+}
+
 function validateSubmitPayload(
   data: unknown,
 ): SubmitLiveGameEventRequest {
   const payload =
     (data ?? {}) as Partial<SubmitLiveGameEventRequest>;
   const eventType = validateEventType(payload.eventType);
+  const playerId = validateId(payload.playerId, "playerId");
   const assistedById =
     payload.assistedById == null ?
       null :
@@ -315,12 +293,18 @@ function validateSubmitPayload(
       "Assistência só pode ser informada em eventos GOAL.",
     );
   }
+  if (assistedById && assistedById === playerId) {
+    throw new HttpsError(
+      "invalid-argument",
+      "O autor do gol não pode assistir a si próprio.",
+    );
+  }
 
   return {
     gameId: validateId(payload.gameId, "gameId"),
     requestId: validateOptionalRequestId(payload.requestId),
     eventType,
-    playerId: validateId(payload.playerId, "playerId"),
+    playerId,
     playerName: validatePlayerName(payload.playerName),
     teamId: validateId(payload.teamId, "teamId"),
     minute: validateMinute(payload.minute),
@@ -439,28 +423,10 @@ export const submitLiveGameEvent = onCall<
     await enforceRateLimit(uid, "live_game_event_submit");
 
     const payload = validateSubmitPayload(request.data);
-    const teams = await fetchTeams(payload.gameId);
-    const team = resolveTeam(teams, payload.teamId);
-
-    if (!team.playerIds.includes(payload.playerId)) {
-      throw new HttpsError(
-        "failed-precondition",
-        "Jogador não pertence ao time informado.",
-      );
-    }
-
-    if (
-      payload.assistedById &&
-      !team.playerIds.includes(payload.assistedById)
-    ) {
-      throw new HttpsError(
-        "failed-precondition",
-        "Assistente não pertence ao mesmo time.",
-      );
-    }
-
     const gameRef = db().collection("games")
       .doc(payload.gameId);
+    const selectedTeamRef = db().collection("teams")
+      .doc(payload.teamId);
     const playerConfirmationRef = db()
       .collection("confirmations")
       .doc(`${payload.gameId}_${payload.playerId}`);
@@ -493,20 +459,6 @@ export const submitLiveGameEvent = onCall<
       db().collection("game_events")
         .doc(`${payload.gameId}_${payload.requestId}`) :
       db().collection("game_events").doc();
-    const liveScoreSnap = await liveScoreRef.get();
-    const liveScoreData = liveScoreSnap.data() ?? {};
-    const team1Id =
-      typeof liveScoreData.team1_id === "string" ?
-        liveScoreData.team1_id :
-        teams[0]?.id ?? "";
-    const team2Id =
-      typeof liveScoreData.team2_id === "string" ?
-        liveScoreData.team2_id :
-        teams[1]?.id ?? "";
-    const scoreField = payload.eventType === "GOAL" ?
-      resolveScoreField(payload.teamId, team1Id, team2Id) :
-      null;
-
     const result = await db().runTransaction(
       async (tx) => {
         const [
@@ -517,6 +469,8 @@ export const submitLiveGameEvent = onCall<
           assistedConfirmationSnap,
           assistedStatsSnap,
           existingEventSnap,
+          liveScoreSnap,
+          selectedTeamSnap,
         ] = await Promise.all([
           tx.get(gameRef),
           tx.get(playerConfirmationRef),
@@ -531,6 +485,8 @@ export const submitLiveGameEvent = onCall<
           payload.requestId ?
             tx.get(eventRef) :
             Promise.resolve(null),
+          tx.get(liveScoreRef),
+          tx.get(selectedTeamRef),
         ]);
 
         if (!gameSnap.exists) {
@@ -565,22 +521,61 @@ export const submitLiveGameEvent = onCall<
           );
         }
 
+        const liveScoreData = liveScoreSnap.data() ?? {};
+        const selectedTeamData = selectedTeamSnap.data() ?? {};
+        const selectedTeamGameId =
+          selectedTeamData.game_id ?? selectedTeamData.gameId;
+        const rawPlayerIds = Array.isArray(selectedTeamData.player_ids) ?
+          selectedTeamData.player_ids :
+          Array.isArray(selectedTeamData.playerIds) ?
+            selectedTeamData.playerIds : [];
+        if (
+          !selectedTeamSnap.exists ||
+          selectedTeamGameId !== payload.gameId
+        ) {
+          throw new HttpsError(
+            "failed-precondition",
+            "Time inválido para este jogo.",
+          );
+        }
+        if (!rawPlayerIds.includes(payload.playerId)) {
+          throw new HttpsError(
+            "failed-precondition",
+            "Jogador não pertence ao time informado.",
+          );
+        }
+        if (
+          payload.assistedById &&
+          !rawPlayerIds.includes(payload.assistedById)
+        ) {
+          throw new HttpsError(
+            "failed-precondition",
+            "Assistente não pertence ao mesmo time.",
+          );
+        }
+        const team1Id =
+          typeof liveScoreData.team1_id === "string" ?
+            liveScoreData.team1_id : "";
+        const team2Id =
+          typeof liveScoreData.team2_id === "string" ?
+            liveScoreData.team2_id : "";
+        let team1Score = readCounter(liveScoreData, "team1_score");
+        let team2Score = readCounter(liveScoreData, "team2_score");
+
         if (existingEventSnap?.exists) {
           const existing = existingEventSnap.data() ?? {};
-          if (
-            existing.game_id !== payload.gameId ||
-            existing.request_id !== payload.requestId ||
-            existing.created_by !== uid
-          ) {
+          if (!isSameIdempotentEvent(existing, payload, uid)) {
             throw new HttpsError(
               "already-exists",
-              "requestId já utilizado por outro evento.",
+              "requestId já utilizado com outro conteúdo.",
             );
           }
 
           return {
             eventId: eventRef.id,
             duplicate: true,
+            team1Score,
+            team2Score,
           };
         }
 
@@ -588,6 +583,10 @@ export const submitLiveGameEvent = onCall<
         if (assistedConfirmationSnap) {
           confirmedPayload(assistedConfirmationSnap);
         }
+
+        const scoreField = payload.eventType === "GOAL" ?
+          resolveScoreField(payload.teamId, team1Id, team2Id) :
+          null;
 
         tx.set(
           eventRef,
@@ -600,12 +599,15 @@ export const submitLiveGameEvent = onCall<
         );
 
         if (scoreField) {
+          if (scoreField === "team1_score") team1Score += 1;
+          else team2Score += 1;
           tx.set(liveScoreRef, {
             game_id: payload.gameId,
             owner_id: game.owner_id,
             team1_id: team1Id,
             team2_id: team2Id,
-            [scoreField]: FieldValue.increment(1),
+            [scoreField]: scoreField === "team1_score" ?
+              team1Score : team2Score,
             updated_at:
               FieldValue.serverTimestamp(),
           }, {merge: true});
@@ -683,12 +685,11 @@ export const submitLiveGameEvent = onCall<
         return {
           eventId: eventRef.id,
           duplicate: false,
+          team1Score,
+          team2Score,
         };
       },
     );
-
-    const projectedScoreSnap = await liveScoreRef.get();
-    const projectedScore = projectedScoreSnap.data();
 
     logger.info(
       "[LIVE_GAME_EVENT_SUBMIT]",
@@ -704,8 +705,8 @@ export const submitLiveGameEvent = onCall<
     return {
       success: true,
       eventId: result.eventId,
-      team1Score: readCounter(projectedScore, "team1_score"),
-      team2Score: readCounter(projectedScore, "team2_score"),
+      team1Score: result.team1Score,
+      team2Score: result.team2Score,
       duplicate: result.duplicate,
     };
   },
@@ -735,7 +736,6 @@ export const deleteLiveGameEvent = onCall<
     await enforceRateLimit(uid, "live_game_event_delete");
 
     const payload = validateDeletePayload(request.data);
-    const teams = await fetchTeams(payload.gameId);
     const gameRef = db().collection("games")
       .doc(payload.gameId);
     const eventRef = db()
@@ -747,27 +747,18 @@ export const deleteLiveGameEvent = onCall<
     const callerConfirmationRef = db()
       .collection("confirmations")
       .doc(`${payload.gameId}_${uid}`);
-    const liveScoreSnap = await liveScoreRef.get();
-    const liveScoreData = liveScoreSnap.data() ?? {};
-    const team1Id =
-      typeof liveScoreData.team1_id === "string" ?
-        liveScoreData.team1_id :
-        teams[0]?.id ?? "";
-    const team2Id =
-      typeof liveScoreData.team2_id === "string" ?
-        liveScoreData.team2_id :
-        teams[1]?.id ?? "";
-
-    await db().runTransaction(
+    const result = await db().runTransaction(
       async (tx) => {
         const [
           gameSnap,
           eventSnap,
           callerConfirmationSnap,
+          liveScoreSnap,
         ] = await Promise.all([
           tx.get(gameRef),
           tx.get(eventRef),
           tx.get(callerConfirmationRef),
+          tx.get(liveScoreRef),
         ]);
 
         if (!gameSnap.exists) {
@@ -839,6 +830,14 @@ export const deleteLiveGameEvent = onCall<
             eventData.assisted_by_id.trim().length > 0 ?
             eventData.assisted_by_id.trim() :
             null;
+
+        const liveScoreData = liveScoreSnap.data() ?? {};
+        const team1Id =
+          typeof liveScoreData.team1_id === "string" ?
+            liveScoreData.team1_id : "";
+        const team2Id =
+          typeof liveScoreData.team2_id === "string" ?
+            liveScoreData.team2_id : "";
 
         const storedScoreField = eventData.score_field;
         const scoreField = eventType === "GOAL" ?
@@ -935,12 +934,16 @@ export const deleteLiveGameEvent = onCall<
         }
 
         if (scoreField) {
+          const nextScore = Math.max(
+            0,
+            readCounter(liveScoreData, scoreField) - 1,
+          );
           tx.set(liveScoreRef, {
             game_id: payload.gameId,
             owner_id: game.owner_id,
             team1_id: team1Id,
             team2_id: team2Id,
-            [scoreField]: FieldValue.increment(-1),
+            [scoreField]: nextScore,
             updated_at:
               FieldValue.serverTimestamp(),
           }, {merge: true});
@@ -948,12 +951,16 @@ export const deleteLiveGameEvent = onCall<
 
         tx.delete(eventRef);
 
-        return {deleted: true};
+        return {
+          team1Score: scoreField === "team1_score" ?
+            Math.max(0, readCounter(liveScoreData, "team1_score") - 1) :
+            readCounter(liveScoreData, "team1_score"),
+          team2Score: scoreField === "team2_score" ?
+            Math.max(0, readCounter(liveScoreData, "team2_score") - 1) :
+            readCounter(liveScoreData, "team2_score"),
+        };
       },
     );
-
-    const projectedScoreSnap = await liveScoreRef.get();
-    const projectedScore = projectedScoreSnap.data();
 
     logger.info(
       "[LIVE_GAME_EVENT_DELETE]",
@@ -967,8 +974,8 @@ export const deleteLiveGameEvent = onCall<
     return {
       success: true,
       eventId: payload.eventId,
-      team1Score: readCounter(projectedScore, "team1_score"),
-      team2Score: readCounter(projectedScore, "team2_score"),
+      team1Score: result.team1Score,
+      team2Score: result.team2Score,
     };
   },
 );

@@ -19,6 +19,7 @@ import {
 } from "firebase-functions/v2/https";
 import {db} from "../_db";
 import {ERROR_MSGS} from "../error-messages";
+import {createHash} from "crypto";
 
 
 // ==========================================
@@ -125,10 +126,13 @@ export async function checkRateLimit(
         if (bucketDoc.exists) {
           const data = bucketDoc.data();
           // Filtrar requests dentro da janela
-          requests = (
-            data?.requests || []
-          ).filter(
-            (timestamp: number) =>
+          const storedRequests = Array.isArray(data?.requests) ?
+            data.requests :
+            [];
+          requests = storedRequests.filter(
+            (timestamp: unknown): timestamp is number =>
+              typeof timestamp === "number" &&
+              Number.isFinite(timestamp) &&
               timestamp > windowStart
           );
         }
@@ -143,13 +147,22 @@ export async function checkRateLimit(
           0,
           config.maxRequests - currentCount - 1
         );
-        const resetAt =
+        const resetAt = requests.length > 0 ?
+          new Date(Math.min(...requests) + config.windowMs) :
           new Date(now + config.windowMs);
 
         // Only record the timestamp if the request is allowed
         const updatedRequests = allowed ?
           [...requests, now] :
           requests;
+        // resetAt informa quando a próxima vaga abre (request mais antigo).
+        // O TTL precisa acompanhar o request mais recente; usar resetAt aqui
+        // apagava o bucket enquanto outros eventos ainda estavam na janela.
+        const expiresAt = new Date(
+          (updatedRequests.length > 0 ?
+            Math.max(...updatedRequests) :
+            now) + config.windowMs
+        );
 
         // Atualizar bucket
         transaction.set(
@@ -163,7 +176,7 @@ export async function checkRateLimit(
                 .serverTimestamp(),
             expires_at:
               Timestamp
-                .fromDate(resetAt),
+                .fromDate(expiresAt),
           },
           {merge: true}
         );
@@ -356,13 +369,15 @@ export async function checkRateLimitByIp(
   ipAddress: string,
   config: RateLimitConfig
 ): Promise<RateLimitResult> {
-  // Sanitizar IP para usar como document ID
-  const sanitizedIp =
-    ipAddress.replace(/[^a-zA-Z0-9]/g, "_");
+  // IP é dado pessoal. O bucket usa hash integral e não materializa o valor
+  // bruto nem no ID nem no payload do Firestore.
+  const ipHash = createHash("sha256")
+    .update(ipAddress)
+    .digest("hex");
   const keyPrefix =
     config.keyPrefix || "default";
   const bucketKey =
-    `ip_${keyPrefix}_${sanitizedIp}`;
+    `ip_${keyPrefix}_${ipHash}`;
 
   const now = Date.now();
   const windowStart = now - config.windowMs;
@@ -380,10 +395,13 @@ export async function checkRateLimitByIp(
 
         if (bucketDoc.exists) {
           const data = bucketDoc.data();
-          requests = (
-            data?.requests || []
-          ).filter(
-            (timestamp: number) =>
+          const storedRequests = Array.isArray(data?.requests) ?
+            data.requests :
+            [];
+          requests = storedRequests.filter(
+            (timestamp: unknown): timestamp is number =>
+              typeof timestamp === "number" &&
+              Number.isFinite(timestamp) &&
               timestamp > windowStart
           );
         }
@@ -396,24 +414,30 @@ export async function checkRateLimitByIp(
           0,
           config.maxRequests - currentCount - 1
         );
-        const resetAt =
+        const resetAt = requests.length > 0 ?
+          new Date(Math.min(...requests) + config.windowMs) :
           new Date(now + config.windowMs);
 
         const updatedRequests = allowed ?
           [...requests, now] :
           requests;
+        const expiresAt = new Date(
+          (updatedRequests.length > 0 ?
+            Math.max(...updatedRequests) :
+            now) + config.windowMs
+        );
 
         transaction.set(
           bucketRef,
           {
             requests: updatedRequests,
-            ip_address: ipAddress,
+            ip_hash: ipHash,
             last_updated:
               FieldValue
                 .serverTimestamp(),
             expires_at:
               Timestamp
-                .fromDate(resetAt),
+                .fromDate(expiresAt),
           },
           {merge: true}
         );
@@ -427,7 +451,7 @@ export async function checkRateLimitByIp(
     // FIX #931: fail-closed para rate limit por IP também.
     logger.error(
       "[ALERT][RATE_LIMIT_IP] Erro ao verificar " +
-      `rate limit para IP ${ipAddress} — bloqueando por segurança:`,
+      `rate limit para IP hash ${ipHash} — bloqueando por segurança:`,
       error
     );
     return {

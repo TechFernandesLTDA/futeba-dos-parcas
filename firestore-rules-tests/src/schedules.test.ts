@@ -3,9 +3,8 @@
  *
  * Regras:
  * - read: owner_id == uid OU isAdmin() OU (group_id != null && isGroupMember(group_id))
- * - create: isAuthenticated() && (owner_id == userId() || isAdmin()) && (group_id == null || isGroupMember(group_id))
- * - update: isAdmin() OU (owner_id == userId() && fieldUnchanged(owner_id, group_id, created_at))
- * - delete: owner_id == userId() || isAdmin()
+ * - create: pessoal pelo próprio owner; agenda de grupo somente owner/admin
+ * - update/delete: pessoal pelo owner; grupo por owner/admin; global admin sempre
  *
  * Nota: Não há bypass especial de FIELD_OWNER — acesso baseado em ownership.
  */
@@ -139,14 +138,27 @@ describe("schedules — create", () => {
     );
   });
 
-  it("Player pode criar schedule vinculado a grupo do qual é membro", async () => {
-    // player B é membro do GROUP_ID
+  it("Membro comum não pode criar schedule financeiro/recorrente do grupo", async () => {
     const db = asPlayerB(testEnv);
-    await assertSucceeds(
+    await assertFails(
       db.doc(`schedules/schedule-b-with-group`).set({
         owner_id: UID_PLAYER_B,
         group_id: GROUP_ID,
         title: "Jogo do grupo player B",
+        recurrence: "WEEKLY",
+        created_at: new Date(),
+        updated_at: new Date(),
+      })
+    );
+  });
+
+  it("Owner do grupo pode criar schedule vinculado ao grupo", async () => {
+    const db = asPlayerA(testEnv);
+    await assertSucceeds(
+      db.doc(`schedules/schedule-owner-with-group`).set({
+        owner_id: UID_PLAYER_A,
+        group_id: GROUP_ID,
+        title: "Agenda autoritativa do grupo",
         recurrence: "WEEKLY",
         created_at: new Date(),
         updated_at: new Date(),

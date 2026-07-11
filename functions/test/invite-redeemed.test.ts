@@ -18,6 +18,7 @@ const mockTxGet = jest.fn(
 );
 
 const mockMemberGet = jest.fn().mockResolvedValue({exists: false});
+const mockBlockedGet = jest.fn().mockResolvedValue({exists: false});
 const mockGroupGet = jest.fn().mockResolvedValue({
   exists: true,
   data: () => ({
@@ -47,6 +48,9 @@ const mockRunTransaction = jest.fn(
 );
 
 const mockDoc = jest.fn((path: string) => {
+  if (path?.includes("/blocked_players/")) {
+    return {path, get: mockBlockedGet};
+  }
   if (path?.includes("/members/")) {
     return {path, get: mockMemberGet};
   }
@@ -119,6 +123,7 @@ describe("onInviteRedeemed", () => {
       (ref: {get: () => Promise<unknown>}) => ref.get()
     );
     mockMemberGet.mockResolvedValue({exists: false});
+    mockBlockedGet.mockResolvedValue({exists: false});
     mockGroupGet.mockResolvedValue({
       exists: true,
       data: () => ({
@@ -234,6 +239,20 @@ describe("onInviteRedeemed", () => {
     await (onInviteRedeemed as unknown as
       (e: MockEvent) => Promise<void>)(event);
     expect(mockRunTransaction).not.toHaveBeenCalled();
+    expect(mockTxSet).not.toHaveBeenCalled();
+  });
+
+  it("usuário bloqueado não reentra pelo convite", async () => {
+    mockBlockedGet.mockResolvedValue({exists: true});
+    const event = makeEvent(
+      {used: false, group_id: "g1", used_by: "joiner-uid"},
+      {used: true, group_id: "g1", used_by: "joiner-uid", expires_at: futureExpiry}
+    );
+
+    await (onInviteRedeemed as unknown as
+      (e: MockEvent) => Promise<void>)(event);
+
+    expect(mockRunTransaction).toHaveBeenCalled();
     expect(mockTxSet).not.toHaveBeenCalled();
   });
 

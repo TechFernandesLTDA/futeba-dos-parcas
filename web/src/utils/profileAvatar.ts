@@ -6,6 +6,7 @@ import {
   refreshFirebaseUploadCredentials,
   uploadImageWithStorageAuthRetry,
 } from './storageUpload';
+import { isSupportedStorageImage } from './storageImage';
 
 // A regra usa comparação estrita (< 2 MB), portanto 2 MB exatos também devem
 // ser recusados no cliente para não terminar como um falso erro de conexão.
@@ -14,11 +15,7 @@ export const PROFILE_AVATAR_MAX_BYTES = 2 * 1024 * 1024;
 export type ProfileAvatarValidationError = 'invalid-type' | 'too-large';
 
 export function validateProfileAvatar(file: File): ProfileAvatarValidationError | null {
-  const contentType = file.type.toLowerCase();
-  if (!contentType.startsWith('image/') ||
-      ['image/svg+xml', 'image/svg', 'image/xml'].includes(contentType)) {
-    return 'invalid-type';
-  }
+  if (!isSupportedStorageImage(file)) return 'invalid-type';
   if (file.size >= PROFILE_AVATAR_MAX_BYTES) return 'too-large';
   return null;
 }

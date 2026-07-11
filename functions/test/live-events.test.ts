@@ -129,6 +129,11 @@ describe("live game event callables", () => {
               team1_score: 0,
               team2_score: 0,
             }));
+          case "teams/teamA":
+            return Promise.resolve(makeSnapshot({
+              game_id: "game1",
+              player_ids: ["player1"],
+            }));
           case "confirmations/game1_player1":
           case "confirmations/game1_owner1":
             return Promise.resolve(makeSnapshot({
@@ -186,6 +191,12 @@ describe("live game event callables", () => {
             team2_score: 0,
           }));
         }
+        if (ref.path === "teams/teamA") {
+          return Promise.resolve(makeSnapshot({
+            game_id: "game1",
+            player_ids: ["player1"],
+          }));
+        }
         return Promise.resolve(makeSnapshot({status: "CONFIRMED"}));
       }),
       set: txSet,
@@ -204,13 +215,42 @@ describe("live game event callables", () => {
     expect(txSet).not.toHaveBeenCalled();
   });
 
-  test("submitLiveGameEvent rejeita jogador fora do time informado", async () => {
+  test("submit rejeita roster removido dentro da transação mesmo com snapshot antigo", async () => {
     mockTeamsGet.mockResolvedValue({
       docs: [
-        {id: "teamA", data: () => ({player_ids: ["player9"]})},
+        {id: "teamA", data: () => ({player_ids: ["player1"]})},
         {id: "teamB", data: () => ({player_ids: ["player2"]})},
       ],
     });
+
+    mockRunTransaction.mockImplementation(async (callback: any) => callback({
+      get: jest.fn((ref: {path: string}) => {
+        if (ref.path === "games/game1") {
+          return Promise.resolve(makeSnapshot({
+            owner_id: "owner1",
+            status: "LIVE",
+            co_organizers: [],
+          }));
+        }
+        if (ref.path === "live_scores/game1") {
+          return Promise.resolve(makeSnapshot({
+            team1_id: "teamA",
+            team2_id: "teamB",
+            team1_score: 0,
+            team2_score: 0,
+          }));
+        }
+        if (ref.path === "teams/teamA") {
+          return Promise.resolve(makeSnapshot({
+            game_id: "game1",
+            player_ids: ["player9"],
+          }));
+        }
+        return Promise.resolve(makeSnapshot({status: "CONFIRMED"}));
+      }),
+      set: jest.fn(),
+      update: jest.fn(),
+    }));
 
     const {submitLiveGameEvent} = require("../src/games/live-events");
 
@@ -226,6 +266,22 @@ describe("live game event callables", () => {
     ).rejects.toMatchObject({
       code: "failed-precondition",
     });
+    expect(mockTeamsGet).not.toHaveBeenCalled();
+  });
+
+  test("submitLiveGameEvent rejeita autoassistência", async () => {
+    const {submitLiveGameEvent} = require("../src/games/live-events");
+
+    await expect(submitLiveGameEvent(makeRequest({
+      gameId: "game1",
+      eventType: "GOAL",
+      playerId: "player1",
+      playerName: "Player 1",
+      teamId: "teamA",
+      assistedById: "player1",
+      assistedByName: "Player 1",
+    }))).rejects.toMatchObject({code: "invalid-argument"});
+    expect(mockTeamsGet).not.toHaveBeenCalled();
   });
 
   test("submitLiveGameEvent registra GOAL com projeção atômica sem atualizar games", async () => {
@@ -267,6 +323,11 @@ describe("live game event callables", () => {
               team2_id: "teamB",
               team1_score: 0,
               team2_score: 0,
+            }));
+          case "teams/teamA":
+            return Promise.resolve(makeSnapshot({
+              game_id: "game1",
+              player_ids: ["player1", "assist1"],
             }));
           case "confirmations/game1_player1":
           case "confirmations/game1_owner1":
@@ -359,6 +420,12 @@ describe("live game event callables", () => {
             team2_score: 1,
           }));
         }
+        if (ref.path === "teams/teamA") {
+          return Promise.resolve(makeSnapshot({
+            game_id: "game1",
+            player_ids: ["player1"],
+          }));
+        }
         if (ref.path === "confirmations/game1_owner1") {
           return Promise.resolve(makeSnapshot({status: "CONFIRMED"}));
         }
@@ -367,6 +434,17 @@ describe("live game event callables", () => {
             game_id: "game1",
             request_id: "abcdefgh",
             created_by: "owner1",
+            event_type: "GOAL",
+            player_id: "player1",
+            team_id: "teamA",
+            minute: 20,
+            assisted_by_id: null,
+          }));
+        }
+        if (ref.path === "teams/teamA") {
+          return Promise.resolve(makeSnapshot({
+            game_id: "game1",
+            player_ids: ["player1"],
           }));
         }
         return Promise.resolve(makeSnapshot(undefined));
@@ -395,6 +473,68 @@ describe("live game event callables", () => {
     });
     expect(txSet).not.toHaveBeenCalled();
     expect(txUpdate).not.toHaveBeenCalled();
+  });
+
+  test("submitLiveGameEvent rejeita requestId reutilizado com outro conteúdo", async () => {
+    const txSet = jest.fn();
+    mockTeamsGet.mockResolvedValue({
+      docs: [
+        {id: "teamA", data: () => ({player_ids: ["player1"]})},
+        {id: "teamB", data: () => ({player_ids: ["player2"]})},
+      ],
+    });
+    mockRunTransaction.mockImplementation(async (callback: any) => callback({
+      get: jest.fn((ref: {path: string}) => {
+        if (ref.path === "games/game1") {
+          return Promise.resolve(makeSnapshot({
+            owner_id: "owner1",
+            status: "LIVE",
+            co_organizers: [],
+          }));
+        }
+        if (ref.path === "live_scores/game1") {
+          return Promise.resolve(makeSnapshot({
+            team1_id: "teamA",
+            team2_id: "teamB",
+            team1_score: 1,
+            team2_score: 0,
+          }));
+        }
+        if (ref.path === "teams/teamA") {
+          return Promise.resolve(makeSnapshot({
+            game_id: "game1",
+            player_ids: ["player1"],
+          }));
+        }
+        if (ref.path === "game_events/game1_abcdefgh") {
+          return Promise.resolve(makeSnapshot({
+            game_id: "game1",
+            request_id: "abcdefgh",
+            created_by: "owner1",
+            event_type: "GOAL",
+            player_id: "player1",
+            team_id: "teamA",
+            minute: 10,
+            assisted_by_id: null,
+          }));
+        }
+        return Promise.resolve(makeSnapshot({status: "CONFIRMED"}));
+      }),
+      set: txSet,
+      update: jest.fn(),
+    }));
+
+    const {submitLiveGameEvent} = require("../src/games/live-events");
+    await expect(submitLiveGameEvent(makeRequest({
+      gameId: "game1",
+      requestId: "abcdefgh",
+      eventType: "GOAL",
+      playerId: "player1",
+      playerName: "Player 1",
+      teamId: "teamA",
+      minute: 11,
+    }))).rejects.toMatchObject({code: "already-exists"});
+    expect(txSet).not.toHaveBeenCalled();
   });
 
   test("deleteLiveGameEvent reverte GOAL e remove o evento", async () => {
@@ -547,6 +687,78 @@ describe("live game event callables", () => {
     expect(txDelete).not.toHaveBeenCalled();
   });
 
+  test("deleteLiveGameEvent não deixa placar negativo nem recria stats ausentes", async () => {
+    const txSet = jest.fn();
+    const txDelete = jest.fn();
+    mockTeamsGet.mockResolvedValue({
+      docs: [
+        {id: "teamA", data: () => ({player_ids: ["player1"]})},
+        {id: "teamB", data: () => ({player_ids: ["player2"]})},
+      ],
+    });
+    mockDirectGet.mockResolvedValue(makeSnapshot({
+      team1_id: "teamA",
+      team2_id: "teamB",
+      team1_score: 0,
+      team2_score: 0,
+    }));
+    mockRunTransaction.mockImplementation(async (callback: any) => callback({
+      get: jest.fn((ref: {path: string}) => {
+        if (ref.path === "games/game1") {
+          return Promise.resolve(makeSnapshot({
+            owner_id: "owner1",
+            status: "LIVE",
+            co_organizers: [],
+          }));
+        }
+        if (ref.path === "game_events/event1") {
+          return Promise.resolve(makeSnapshot({
+            game_id: "game1",
+            event_type: "GOAL",
+            player_id: "player1",
+            team_id: "teamA",
+            score_field: "team1_score",
+            created_by: "owner1",
+          }));
+        }
+        if (ref.path === "live_scores/game1") {
+          return Promise.resolve(makeSnapshot({
+            team1_id: "teamA",
+            team2_id: "teamB",
+            team1_score: 0,
+            team2_score: 0,
+          }));
+        }
+        if (ref.path === "confirmations/game1_owner1") {
+          return Promise.resolve(makeSnapshot({status: "CONFIRMED"}));
+        }
+        return Promise.resolve(makeSnapshot(undefined));
+      }),
+      set: txSet,
+      update: jest.fn(),
+      delete: txDelete,
+    }));
+
+    const {deleteLiveGameEvent} = require("../src/games/live-events");
+    await deleteLiveGameEvent(makeRequest({gameId: "game1", eventId: "event1"}));
+
+    expect(txSet).toHaveBeenCalledWith(
+      expect.objectContaining({path: "live_scores/game1"}),
+      expect.objectContaining({team1_score: 0}),
+      {merge: true},
+    );
+    expect(txSet).not.toHaveBeenCalledWith(
+      expect.objectContaining({path: "live_player_stats/game1_player1"}),
+      expect.anything(),
+      expect.anything(),
+    );
+    expect(txSet).not.toHaveBeenCalledWith(
+      expect.objectContaining({path: "confirmations/game1_player1"}),
+      expect.anything(),
+      expect.anything(),
+    );
+  });
+
   test("isScoreConsistentFromEventStream detecta mismatch", () => {
     const {isScoreConsistentFromEventStream} = require("../src/games/live-events");
 
@@ -611,6 +823,23 @@ describe("live game event callables", () => {
           if (ref.path.startsWith("confirmations/")) {
             return Promise.resolve(makeSnapshot({status: "CONFIRMED"}));
           }
+          if (ref.path.startsWith("live_scores/")) {
+            const gameId = ref.path.split("/")[1];
+            return Promise.resolve(makeSnapshot({
+              team1_id: `${gameId}-teamA`,
+              team2_id: `${gameId}-teamB`,
+              team1_score: scores.get(gameId) ?? 0,
+              team2_score: 0,
+            }));
+          }
+          if (ref.path.startsWith("teams/") && ref.path.endsWith("-teamA")) {
+            const teamId = ref.path.split("/")[1];
+            const gameId = teamId.slice(0, -"-teamA".length);
+            return Promise.resolve(makeSnapshot({
+              game_id: gameId,
+              player_ids: ["player1"],
+            }));
+          }
           return Promise.resolve(makeSnapshot(undefined));
         }),
         set: jest.fn((ref: {path: string}, data: Record<string, unknown>) => {
@@ -638,7 +867,7 @@ describe("live game event callables", () => {
         eventType: "GOAL",
         playerId: "player1",
         playerName: "Player 1",
-        teamId: "teamA",
+        teamId: `${gameId}-teamA`,
       }));
 
     const sameGameIds = Array.from(

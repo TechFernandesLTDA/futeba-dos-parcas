@@ -31,12 +31,14 @@ import {
 } from "firebase-functions/v2/https";
 import * as admin from "firebase-admin";
 import {FieldValue} from "firebase-admin/firestore";
+import {randomUUID} from "crypto";
 import {
   checkRateLimit,
   checkRateLimitByIp,
   RateLimitConfig,
 } from "./rate-limiter";
 import {clientIp} from "../auth/anti-abuse";
+import {FUNCTION_REGION} from "../constants";
 
 /**
  * Obtém instância do Firestore com lazy init.
@@ -116,6 +118,9 @@ export interface SecureCallableOptions {
    * Ex: ["CPF_SALT"]
    */
   secrets?: string[];
+
+  /** Timeout customizado para jobs administrativos longos. */
+  timeoutSeconds?: number;
 }
 
 // ==========================================
@@ -141,7 +146,7 @@ export function secureCallable<
   // Aplicar defaults
   const config = {
     appCheck: options.appCheck ??
-      (!process.env.FUNCTIONS_EMULATOR),
+      (process.env.FUNCTIONS_EMULATOR !== "true"),
     rateLimit: options.rateLimit,
     requireAuth: options.requireAuth ?? true,
     requiredRole: options.requiredRole,
@@ -149,13 +154,15 @@ export function secureCallable<
       options.enableAuditLog ?? true,
     auditLogContext: options.auditLogContext,
     consumeAppCheckToken: options.consumeAppCheckToken ??
-      (options.appCheck ?? (!process.env.FUNCTIONS_EMULATOR)),
+      (options.appCheck ?? (process.env.FUNCTIONS_EMULATOR !== "true")),
   };
 
   return onCall(
     {
       enforceAppCheck: config.appCheck,
       consumeAppCheckToken: config.consumeAppCheckToken,
+      region: FUNCTION_REGION,
+      ...(options.timeoutSeconds ? {timeoutSeconds: options.timeoutSeconds} : {}),
       // Secrets declaradas aqui ficam acessiveis via process.env em runtime
       ...(options.secrets ? {secrets: options.secrets} : {}),
     },
@@ -379,14 +386,24 @@ export function secureCallable<
           const duration =
             Date.now() - startTime;
 
-          const auditCtx =
-            config.auditLogContext ?
-              await config.auditLogContext(
+          let auditCtx: Record<string, unknown> = {};
+          if (config.auditLogContext) {
+            try {
+              auditCtx = await config.auditLogContext(
                 request as CallableRequest
-              ) :
-              {};
+              );
+            } catch (auditContextError) {
+              // A mutação principal já terminou. Falha de enriquecimento de
+              // auditoria não pode transformar sucesso em erro/retry duplicado.
+              logger.error(
+                "[SECURE_CALLABLE] Failed to build audit context:",
+                auditContextError
+              );
+            }
+          }
 
           await logAudit({
+            ...auditCtx,
             requestId,
             type: "FUNCTION_EXECUTED",
             userId,
@@ -394,7 +411,6 @@ export function secureCallable<
             duration,
             ip: (request.rawRequest?.ip as
               string) || "unknown",
-            ...auditCtx,
           });
         }
 
@@ -484,6 +500,9 @@ async function getUserRole(
       "[SECURE_CALLABLE] Error getting " +
       `custom claims for ${userId}:`, error
     );
+    // Falha na fonte autoritativa não deve cair para um espelho Firestore
+    // potencialmente obsoleto e conceder privilégio por acidente.
+    return null;
   }
 
   try {
@@ -511,9 +530,7 @@ async function getUserRole(
  * @return {string} ID único do request
  */
 function generateRequestId(): string {
-  return `req_${Date.now()}_${
-    Math.random().toString(36).substr(2, 9)
-  }`;
+  return `req_${randomUUID()}`;
 }
 
 /**

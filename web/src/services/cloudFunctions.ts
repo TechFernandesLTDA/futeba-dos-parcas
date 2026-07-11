@@ -638,7 +638,7 @@ export const completeAccountMerge = httpsCallable<
 >(functions, 'completeAccountMerge', { timeout: 120000 });
 
 export const joinPublicGame = httpsCallable<
-  { gameId: string; position?: 'GOALKEEPER' | 'FIELD'; isCasualPlayer?: boolean },
+  { gameId: string; position: 'GOALKEEPER' | 'FIELD'; isCasualPlayer?: boolean },
   {
     success: boolean;
     alreadyConfirmed: boolean;
@@ -650,7 +650,7 @@ export const joinPublicGame = httpsCallable<
 >(functions, 'joinPublicGame');
 
 export const confirmGamePresence = httpsCallable<
-  { gameId: string; position?: 'GOALKEEPER' | 'FIELD'; isCasualPlayer?: boolean },
+  { gameId: string; position: 'GOALKEEPER' | 'FIELD'; isCasualPlayer?: boolean },
   {
     success: boolean;
     alreadyConfirmed: boolean;
@@ -662,7 +662,7 @@ export const confirmGamePresence = httpsCallable<
 >(functions, 'confirmGamePresence');
 
 export const toggleFollowUser = httpsCallable<
-  { targetUserId: string; follow?: boolean },
+  { targetUserId: string; follow: boolean },
   { success: boolean; following: boolean; changed: boolean }
 >(functions, 'toggleFollowUser');
 

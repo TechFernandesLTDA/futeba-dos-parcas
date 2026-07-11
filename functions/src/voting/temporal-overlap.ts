@@ -74,6 +74,9 @@ export const onConfirmationCreated = onDocumentCreated(
   async (event) => {
     const conf = event.data?.data();
     if (!conf) return;
+    // União de contas recria a confirmação sob o UID canônico e remove a
+    // antiga. Isso não representa uma nova reserva e não deve gerar overlap.
+    if (conf.merged_from_alias === true) return;
 
     const userId = conf.user_id as string | undefined;
     const gameId = conf.game_id as string | undefined;

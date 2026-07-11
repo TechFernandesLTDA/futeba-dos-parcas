@@ -226,6 +226,26 @@ describe("activities — atualização", () => {
     );
   });
 
+  it("Atualização falha se tenta atribuir atividade a outro user_id", async () => {
+    const db = asPlayerA(testEnv);
+    await assertFails(
+      db.doc(`activities/${ACTIVITY_TO_UPDATE}`).update({
+        user_id: UID_PLAYER_B,
+        updated_at: new Date(),
+      })
+    );
+  });
+
+  it("Atualização falha com visibilidade fora da whitelist", async () => {
+    const db = asPlayerA(testEnv);
+    await assertFails(
+      db.doc(`activities/${ACTIVITY_TO_UPDATE}`).update({
+        visibility: "ADMIN_ONLY",
+        updated_at: new Date(),
+      })
+    );
+  });
+
   it("Terceiro NÃO pode atualizar atividade alheia", async () => {
     const db = asPlayerB(testEnv);
     await assertFails(

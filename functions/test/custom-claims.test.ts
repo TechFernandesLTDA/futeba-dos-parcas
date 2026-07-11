@@ -19,6 +19,13 @@ const mockDocGet = jest.fn();
 const mockDocUpdate = jest.fn().mockResolvedValue(undefined);
 const mockDocSet = jest.fn().mockResolvedValue(undefined);
 const mockCollectionAdd = jest.fn().mockResolvedValue({ id: "audit_log_1" });
+let mockLockState: Record<string, unknown> = {};
+const mockRunTransaction = jest.fn(async (handler) => handler({
+  get: jest.fn(async () => ({data: () => mockLockState})),
+  set: jest.fn((_ref, data) => {
+    mockLockState = {...mockLockState, ...data};
+  }),
+}));
 const mockOrderBy = jest.fn().mockReturnThis();
 const mockDoc = jest.fn().mockReturnValue({
   get: mockDocGet,
@@ -39,6 +46,7 @@ jest.mock("firebase-admin", () => {
     apps: [{ name: "test" }],
     firestore: jest.fn(() => ({
       collection: mockCollection,
+      runTransaction: mockRunTransaction,
     })),
     auth: jest.fn(() => ({
       setCustomUserClaims: mockSetCustomUserClaims,
@@ -62,6 +70,13 @@ jest.mock("firebase-admin", () => {
 jest.mock("firebase-admin/firestore", () => ({
   FieldValue: {
     serverTimestamp: jest.fn(() => ({ _type: "ServerTimestamp" })),
+    delete: jest.fn(() => ({ _type: "FieldDelete" })),
+  },
+  Timestamp: {
+    fromMillis: jest.fn((millis: number) => ({
+      toMillis: () => millis,
+      toDate: () => new Date(millis),
+    })),
   },
   FieldPath: {
     documentId: jest.fn(() => "__name__"),
@@ -127,6 +142,7 @@ jest.mock("../src/auth/anti-abuse", () => ({
 describe("Custom Claims - setUserRole", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockLockState = {};
     setUserRoleHandler = null;
     onNewUserCreatedHandler = null;
     migrateHandler = null;
@@ -317,6 +333,7 @@ describe("Custom Claims - setUserRole", () => {
 describe("Custom Claims - onNewUserCreated", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockLockState = {};
     setUserRoleHandler = null;
     onNewUserCreatedHandler = null;
     migrateHandler = null;
@@ -400,6 +417,7 @@ describe("Custom Claims - onNewUserCreated", () => {
 describe("Custom Claims - migrateAllUsersToCustomClaims", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockLockState = {};
     setUserRoleHandler = null;
     onNewUserCreatedHandler = null;
     migrateHandler = null;

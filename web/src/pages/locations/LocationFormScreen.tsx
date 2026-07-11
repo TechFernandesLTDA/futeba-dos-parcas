@@ -53,6 +53,10 @@ import { FormScaffold, AdaptiveFormSheet } from '../../components/layout';
 import { createLogger } from '../../utils/logger';
 import { syncFieldOwnerClaimBestEffort } from './syncFieldOwnerClaimBestEffort';
 import { useTranslation } from 'react-i18next';
+import {
+  isSupportedLocationImage,
+  LOCATION_IMAGE_ACCEPT,
+} from '../../utils/storageImage';
 
 const logger = createLogger('LocationFormScreen');
 
@@ -410,11 +414,11 @@ export const LocationFormScreen: React.FC = () => {
   const handleLocationPhotos = (files: FileList | null) => {
     if (!files?.length) return;
     const accepted = Array.from(files).filter((file) => {
-      if (!file.type.startsWith('image/')) {
+      if (!isSupportedLocationImage(file)) {
         showError(t('feedback.location.onlyImages'));
         return false;
       }
-      if (file.size > 5 * 1024 * 1024) {
+      if (file.size >= 5 * 1024 * 1024) {
         showError(t('feedback.location.imageTooLarge'));
         return false;
       }
@@ -866,7 +870,7 @@ export const LocationFormScreen: React.FC = () => {
                   <Box ref={photosRef} id="location-form-photos">
                     <input
                       type="file"
-                      accept="image/*"
+                      accept={LOCATION_IMAGE_ACCEPT}
                       multiple
                       hidden
                       id="location-photo-input"

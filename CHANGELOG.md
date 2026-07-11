@@ -24,6 +24,13 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ## Android
 
+### [1.36.8][android-1.36.8] - 2026-07-11
+
+#### Corrigido
+- `ScheduleRepositoryImpl` converte explicitamente entre o modelo KMP e o modelo Android anotado com `@PropertyName`.
+
+_Issues: #3529_
+
 ### [1.36.7][android-1.36.7] - 2026-07-10
 
 #### Adicionado
@@ -208,6 +215,18 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 - Bump de versão de manutenção após a mega audit wave de 2026-05-11, sem mudanças funcionais no Android nesta tag.
 
 ## Web
+
+### [1.52.0][web-1.52.0] - 2026-07-11
+
+#### Adicionado
+- Painel mensal realtime, editor de ocorrência, roster de mensalistas e callables tipadas para configuração, rebuild, override e baixa.
+- Cobertura de snapshot histórico, 3/4/5 ocorrências, feriados, custo por jogo, estados vazios/erro/loading e privacidade por usuário.
+
+#### Corrigido
+- Fluxos de onboarding não tentam recadastrar um CPF já reconciliado durante a união de contas.
+- Escritas de agenda, avatar e localização usam contratos validados, erro acionável e timestamps autoritativos.
+
+_Issues: #3529, #3530_
 
 ### [1.51.43][web-1.51.43] - 2026-07-10
 
@@ -1492,6 +1511,20 @@ _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
 
+### [1.8.0][functions-1.8.0] - 2026-07-11
+
+#### Adicionado
+- `configureMonthlyFinance`, `setMonthlyMember`, `rebuildMonthlyCycle`, `setMonthlyGameOverride` e `settleMonthlyCharge`.
+- Snapshots por competência ligados a revisões de configuração/roster, expansão de séries não materializadas e `payment_sequence` monotônico.
+- Índices do calendário mensal/recorrência/settlements e TTL de deduplicação de notificações.
+
+#### Corrigido
+- Operações financeiras com centavos, settlement permanente, replay por intenção completa e estorno fora de ordem.
+- Locks com lease, paginação de reminders e retomada durável da criação de recorrências.
+- Regras de identidade, autorização e migração de referências ativas na união de contas.
+
+_Issues: #3529, #3530_
+
 ### [1.7.19][functions-1.7.19] - 2026-07-10
 
 #### Adicionado
@@ -2069,6 +2102,7 @@ _Issues: #2981_
 _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 
 
+[android-1.36.8]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.36.8.md
 [android-1.36.7]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.36.7.md
 [android-1.36.6]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.36.6.md
 [android-1.36.5]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.36.5.md
@@ -2085,6 +2119,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.52.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.52.0.md
 [web-1.51.43]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.43.md
 [web-1.51.42]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.42.md
 [web-1.51.41]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.41.md
@@ -2210,6 +2245,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [web-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.26.0.md
 [ios-1.6.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.1.md
 [ios-1.6.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.0.md
+[functions-1.8.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.8.0.md
 [functions-1.7.19]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.7.19.md
 [functions-1.7.18]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.7.18.md
 [functions-1.7.17]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.7.17.md

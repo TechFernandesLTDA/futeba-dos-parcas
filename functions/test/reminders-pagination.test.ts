@@ -76,12 +76,25 @@ describe("reminders pagination", () => {
           size: 100,
           docs: Array.from({length: 100}, (_, index) => ({
             id: `member-${index}`,
+            data: () => ({
+              user_id: `member-${index}`,
+              status: "ACTIVE",
+            }),
           })),
         })
         .mockResolvedValueOnce({
           empty: false,
           size: 2,
-          docs: [{id: "member-100"}, {id: "member-101"}],
+          docs: [
+            {
+              id: "member-100",
+              data: () => ({user_id: "member-100", status: "ACTIVE"}),
+            },
+            {
+              id: "member-101",
+              data: () => ({user_id: "member-101", status: "ACTIVE"}),
+            },
+          ],
         }),
     };
 

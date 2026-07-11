@@ -1,4 +1,4 @@
-import {afterEach, describe, expect, it} from 'vitest';
+import {afterEach, describe, expect, it, vi} from 'vitest';
 import {
   clearPendingAccountMerge,
   readPendingAccountMerge,
@@ -6,7 +6,11 @@ import {
 } from './accountMergeSession';
 
 describe('accountMergeSession', () => {
-  afterEach(() => sessionStorage.clear());
+  afterEach(() => {
+    clearPendingAccountMerge();
+    sessionStorage.clear();
+    vi.restoreAllMocks();
+  });
 
   it('preserva somente pedido opaco válido durante o onboarding', () => {
     const value = {requestId: 'a'.repeat(64), status: 'pending_cpf' as const};
@@ -27,5 +31,15 @@ describe('accountMergeSession', () => {
     clearPendingAccountMerge();
     expect(readPendingAccountMerge()).toBeNull();
   });
-});
 
+  it('mantém o pedido em memória quando o Safari bloqueia sessionStorage', () => {
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new DOMException('Blocked', 'SecurityError');
+    });
+    const value = {requestId: 'c'.repeat(64), status: 'ready' as const};
+
+    savePendingAccountMerge(value);
+
+    expect(readPendingAccountMerge()).toEqual(value);
+  });
+});
