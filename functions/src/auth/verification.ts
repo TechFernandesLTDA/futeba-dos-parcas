@@ -12,6 +12,7 @@ import {logger} from "firebase-functions/v2";
 import * as admin from "firebase-admin";
 import {FieldValue} from "firebase-admin/firestore";
 import {hashCpf, isValidCpf, maskCpf} from "../validation/cpf";
+import {hashPhoneIdentity} from "../validation/phone-identity";
 import {checkRateLimit} from "../middleware/rate-limiter";
 import {FUNCTION_REGION} from "../constants";
 
@@ -227,6 +228,7 @@ export const setUserVerified = onCall(
     // FIX #1307: usar FUNCTIONS_EMULATOR (NODE_ENV não confiável em GCF v2).
     enforceAppCheck: process.env.FUNCTIONS_EMULATOR !== "true",
     consumeAppCheckToken: true,
+    secrets: ["CPF_SALT"],
   },
   async (request) => {
     try {
@@ -281,6 +283,54 @@ export const setUserVerified = onCall(
       // Phone verificado via Firebase Auth linkWithCredential
       // (Firebase popula phone_number no UserRecord automaticamente).
       const userRecord = await admin.auth().getUser(targetUid);
+      if (!userRecord.phoneNumber) {
+        throw new HttpsError(
+          "failed-precondition",
+          "Verifique seu telefone antes de concluir o cadastro.",
+        );
+      }
+
+      const phoneHash = hashPhoneIdentity(userRecord.phoneNumber, getCpfSalt());
+      const phoneIndexRef = db.doc(`phone_index/${phoneHash}`);
+      const privateRef = db.doc(`users_private/${targetUid}`);
+      const userRef = db.doc(`users/${targetUid}`);
+      const now = FieldValue.serverTimestamp();
+
+      // A unicidade do Firebase Auth é reforçada por um índice privado e
+      // transacional que também permite reconciliar contas legadas.
+      await db.runTransaction(async (tx) => {
+        const phoneIndexSnap = await tx.get(phoneIndexRef);
+        const indexedUid = phoneIndexSnap.data()?.uid;
+        if (phoneIndexSnap.exists && indexedUid !== targetUid) {
+          logger.warn("[SET_VERIFIED] Phone identity collision blocked", {
+            targetUid,
+          });
+          throw new HttpsError(
+            "already-exists",
+            "Este telefone já pertence a outra identidade.",
+          );
+        }
+
+        tx.set(phoneIndexRef, {
+          uid: targetUid,
+          createdAt: phoneIndexSnap.exists ?
+            phoneIndexSnap.data()?.createdAt ?? now :
+            now,
+          updatedAt: now,
+        }, {merge: true});
+        tx.set(privateRef, {
+          phoneVerifiedAt: now,
+          phoneNumber: userRecord.phoneNumber,
+          phoneHash,
+          updatedAt: now,
+        }, {merge: true});
+        tx.set(userRef, {
+          phone: userRecord.phoneNumber,
+          phone_verified: true,
+          verifiedAt: now,
+        }, {merge: true});
+      });
+
       const currentClaims = userRecord.customClaims ?? {};
       const nextClaims = {
         ...currentClaims,
@@ -291,7 +341,8 @@ export const setUserVerified = onCall(
         currentClaims.verified === true &&
         currentClaims.profileComplete === true;
 
-      // Idempotencia: se os claims ja estao atuais, nao reescreve claims/mirrors.
+      // Idempotência: o índice acima é sempre validado, inclusive para claims
+      // antigos. Assim um legado não contorna a unicidade pelo early return.
       if (claimsAlreadyCurrent) {
         logger.info("[SET_VERIFIED] No-op: usuário já verificado", {
           uid: targetUid,
@@ -303,37 +354,11 @@ export const setUserVerified = onCall(
         };
       }
 
-      if (!userRecord.phoneNumber) {
-        throw new HttpsError(
-          "failed-precondition",
-          "Verifique seu telefone antes de concluir o cadastro.",
-        );
-      }
-
-      // Persiste phoneVerifiedAt em users_private (para audit/historico)
-      await db.doc(`users_private/${targetUid}`).set(
-        {
-          phoneVerifiedAt: FieldValue.serverTimestamp(),
-          phoneNumber: userRecord.phoneNumber,
-        },
-        {merge: true},
-      );
-
       await admin.auth().setCustomUserClaims(targetUid, nextClaims);
 
       // Não revogar refresh tokens aqui. O cliente força getIdTokenResult(true)
       // após a callable para buscar o claim novo; revogar no mesmo fluxo invalida
       // a sessão recém-verificada e, em web mobile, pode derrubar para /login.
-
-      // Mirror em users/{uid} para listeners cliente (refletir verifiedAt)
-      await db.doc(`users/${targetUid}`).set(
-        {
-          phone: userRecord.phoneNumber,
-          phone_verified: true,
-          verifiedAt: FieldValue.serverTimestamp(),
-        },
-        {merge: true},
-      );
 
       return {
         success: true,

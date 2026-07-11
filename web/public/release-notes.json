@@ -1,7 +1,31 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-10T23:32:09.082Z",
+  "generatedAt": "2026-07-11T00:12:17.088Z",
   "notes": [
+    {
+      "version": "1.51.42",
+      "buildNumber": null,
+      "releaseDate": "2026-07-10",
+      "type": "patch",
+      "showPopup": true,
+      "published": false,
+      "headline": "Contas criadas com Gmail, e-mail ou telefone agora podem ser unificadas com segurança durante o onboarding.",
+      "highlights": [],
+      "added": [
+        "O fluxo reconhece quando o número já pertence a outra conta e orienta a entrada, validação do CPF e união.",
+        "O Gmail da conta anterior pode ser vinculado à identidade principal após a consolidação.",
+        "A união preserva perfil e participações em grupos sem expor dados da outra conta."
+      ],
+      "improved": [],
+      "fixed": [
+        "CPFs ou telefones duplicados deixam de gerar cadastros independentes.",
+        "Contas legadas sem registro privado de CPF são direcionadas para reverificação.",
+        "Solicitações expiradas, concorrentes ou com CPFs divergentes são bloqueadas."
+      ],
+      "issueRefs": [
+        3525
+      ]
+    },
     {
       "version": "1.51.41",
       "buildNumber": null,

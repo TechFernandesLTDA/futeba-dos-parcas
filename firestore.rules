@@ -3734,6 +3734,16 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // Hash HMAC de telefone E.164 -> identidade canônica. Apenas Functions.
+    match /phone_index/{phoneHash} {
+      allow read, write: if false;
+    }
+
+    // UID legado -> UID canônico após união. Clientes nunca consultam o mapa.
+    match /account_aliases/{sourceUid} {
+      allow read, write: if false;
+    }
+
     // ============================================
     // COLECAO: cnpj_index (lookup de duplicatas CNPJ — #3188)
     // ============================================
