@@ -30,6 +30,7 @@ import { PlayerAvatar } from '../../components/common/GameCard';
 import { ReactionBar } from '../../components/reactions/ReactionBar';
 import { WallPost } from '../../hooks/useGroupWall';
 import { formatRelativeTime } from '../../utils/dateUtils';
+import { isWallPostVideo } from '../../utils/wallMedia';
 
 interface WallPostCardProps {
   post: WallPost;
@@ -64,7 +65,7 @@ export const WallPostCard: React.FC<WallPostCardProps> = ({
   const [mediaFailed, setMediaFailed] = useState(false);
   const [mediaRetry, setMediaRetry] = useState(0);
   const menuOpen = Boolean(anchorEl);
-  const isVideo = post.mediaType?.startsWith('video/') ?? false;
+  const isVideo = isWallPostVideo(post.mediaType, post.mediaUrl, post.mediaPath);
   const exactDateTime = post.createdAt
     ? new Intl.DateTimeFormat(i18n.resolvedLanguage || i18n.language || 'pt-BR', {
       dateStyle: 'short',

@@ -23,11 +23,12 @@ O "Futeba dos Parças" vive de zoeira. Falta um espaço social no grupo pra prov
 | ID | Ator | Ação | Resultado esperado |
 |----|------|------|-------------------|
 | UC1 | Membro do grupo | Posta provocação no mural | Post aparece no feed do grupo, visível a todos os membros |
-| UC2 | Membro do grupo | Vê mural do grupo | Feed paginado por `createdAt` desc, posts + autor + reações |
+| UC2 | Membro do grupo | Vê mural do grupo | Timeline em tempo real, com a mensagem mais recente no topo e paginação infinita das antigas |
 | UC3 | Autor do post | Edita próprio post | Texto atualizado, `editedAt` setado |
 | UC4 | Autor do post | Deleta próprio post | Post removido (soft-delete), mídia em Storage limpa |
 | UC5 | Owner / admin do grupo | Deleta qualquer post (moderação) | Post removido, ação registrada |
-| UC6 | Owner do grupo | Fixa (pin) um post no topo | Post fixado aparece primeiro, acima do feed cronológico |
+| UC6 | Owner do grupo | Fixa (pin) um post | Post recebe indicação de fixado, sem romper a ordem cronológica da conversa |
+| UC9 | Membro do grupo | Envia foto ou vídeo MP4 | A mídia é validada, enviada com MIME canônico e reproduzida no card |
 | UC7 | Membro do grupo | Recebe notif "novo post no grupo X" | Notificação respeita toggle em NotificationSettings |
 | UC8 | Membro | Clica "postar no mural" a partir de um highlight pós-jogo | Composer pré-preenchido com link ao highlight |
 
@@ -37,9 +38,9 @@ O "Futeba dos Parças" vive de zoeira. Falta um espaço social no grupo pra prov
 - [ ] CA2: Owner/admins podem deletar qualquer post + fixar (pin); autor deleta o próprio.
 - [ ] CA3: Compose valida input não-vazio, não-whitespace, máx 500 chars (regra AGENTS.md).
 - [ ] CA4: `serverTimestamp()` em todas as escritas (nunca `Timestamp.now()` / `new Date()`).
-- [ ] CA5: Upload de mídia (até 1 foto opcional) em `writeBatch` com cleanup de Storage no delete.
+- [ ] CA5: Upload de mídia (até 1 foto ou vídeo MP4 opcional), com MIME canônico e cleanup de Storage no delete.
 - [ ] CA6: Feed paginado por cursor (`limit(20)` + `startAfter`), `orderBy('created_at','desc')`.
-- [ ] CA7: Posts fixados (pin) aparecem no topo, separados do feed cronológico.
+- [ ] CA7: Todos os posts, inclusive fixados, respeitam `created_at desc`; o pin é indicado no card.
 - [ ] CA8: Toggle `groupWall` em `useNotificationSettings` (default ON).
 - [ ] CA9: Estados Loading (ShimmerLoading) / Empty ("seja o primeiro a provocar") / Error (Alert + retry) / Success.
 - [ ] CA10: Dark mode + `theme.palette.*` / `MaterialTheme.colorScheme.*` (sem hardcoded).
@@ -53,7 +54,7 @@ O "Futeba dos Parças" vive de zoeira. Falta um espaço social no grupo pra prov
 - Comentários aninhados no post — a issue #3234 trata comentários em jogos; comentários em mural sai para versão futura se houver demanda.
 - Feed global cross-grupo — issue #3236 (feed UGC); o mural é escopo de grupo.
 - Moderação automatizada por IA — começar com denúncia + remoção manual.
-- Posts com vídeo — futuro (vídeos curtos na issue #3238).
+- Transcodificação de vídeo para outros formatos/codecs — esta entrega aceita e reproduz MP4 compatível com o navegador.
 - iOS (CMP) — Fase 3.
 
 ---
@@ -68,10 +69,9 @@ O "Futeba dos Parças" vive de zoeira. Falta um espaço social no grupo pra prov
          ├── Loading  → Shimmer de 5 cards
          ├── Empty    → "Seja o primeiro a provocar 🎤" + CTA composer
          ├── Error    → Alert com retry
-         └── Success  → [Pinned post(s) no topo] + [Feed cronológico] + FAB compose
-                          └── [WallPostComposer] (dialog/bottomsheet)
-                                ├── texto (500 chars) + attach foto (opcional)
-                                └── submit → success → fecha + scroll top
+         └── Success  → [Composer tipo chat] + [Timeline mais recente primeiro]
+                          ├── scroll avança para baixo → carrega páginas antigas automaticamente
+                          └── texto (500 chars) + foto/vídeo MP4 opcional → envia e mantém no topo
 ```
 
 Integração highlight:
@@ -86,9 +86,9 @@ Integração highlight:
 | GroupWallScreen | Loading | Skeleton de 5 cards (ShimmerLoading) |
 | GroupWallScreen | Empty | Ícone 🎤 + "Seja o primeiro a provocar" + botão "Criar post" |
 | GroupWallScreen | Error | `<Alert severity="error">` + "Tentar novamente" |
-| GroupWallScreen | Success | Pinned posts (chip "Fixado") + feed cronológico + FAB |
-| WallPostCard | Success | Avatar + nome + tempo + texto + (foto) + (ReactionBar se #3233) + menu (editar/deletar/pin se owner) |
-| WallPostComposer | Open | Bottomsheet: TextField 500 chars + attach foto + botão "Postar" (disabled loading) |
+| GroupWallScreen | Success | Timeline cronológica decrescente com scroll infinito e indicador de carregamento |
+| WallPostCard | Success | Avatar + nome + tempo + texto + foto/player de vídeo + reações + menu |
+| WallPostComposer | Open | Campo direto tipo chat, 500 chars + foto/vídeo + envio (disabled loading) |
 | WallPostComposer | Error | Toast `showError()` + mantém texto digitado |
 | NotificationSettings | Success | Novo toggle "Posts do grupo" |
 
@@ -114,8 +114,8 @@ Integração highlight:
 
 ### 2.5 Animações e Micro-interações
 
-- Novo post entra no topo com fade-in + slide-down (≤ 200ms).
-- Pin com transição suave para a seção fixada.
+- Novo post entra no topo; se o usuário estiver lendo mensagens antigas, surge um atalho para as novas.
+- Pin preserva a posição cronológica e atualiza o indicador do card.
 - Delete com swipe-to-dismiss (Android) ou botão com confirmação (web).
 - Composer attach foto com ripple + preview thumbnail.
 

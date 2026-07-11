@@ -86,7 +86,7 @@ describe('createWallPostDocument', () => {
     expect(mockUploadWithRetry).toHaveBeenCalledWith(
       `storage:${mediaPath}`,
       image,
-      { refreshCredentials },
+      { refreshCredentials, contentType: 'image/png' },
     );
     expect(mockAddDoc).toHaveBeenCalledWith(
       'wall-posts-collection',
@@ -153,13 +153,42 @@ describe('createWallPostDocument', () => {
 
     const mediaPath = mockStorageRef.mock.calls[0]?.[1] as string;
     expect(mediaPath).toMatch(/^groups\/group-1\/wall_media\/__draft__\/user-1\/.*\.mp4$/);
-    expect(mockUploadWithRetry).toHaveBeenCalledWith(`storage:${mediaPath}`, video);
+    expect(mockUploadWithRetry).toHaveBeenCalledWith(
+      `storage:${mediaPath}`,
+      video,
+      { contentType: 'video/mp4' },
+    );
     expect(mockAddDoc).toHaveBeenCalledWith(
       'wall-posts-collection',
       expect.objectContaining({
         media_path: mediaPath,
         media_type: 'video/mp4',
       }),
+    );
+  });
+
+  it('normaliza MP4 selecionado no Android sem MIME confiável', async () => {
+    const video = new File(['video'], 'partida.MP4', { type: '' });
+
+    await createWallPostDocument({
+      groupId: 'group-1',
+      currentUserUid: 'user-1',
+      authorName: 'Jordi',
+      authorPhotoUrl: null,
+      text: '',
+      options: { mediaFile: video },
+    });
+
+    const mediaPath = mockStorageRef.mock.calls[0]?.[1] as string;
+    expect(mediaPath).toMatch(/\.mp4$/);
+    expect(mockUploadWithRetry).toHaveBeenCalledWith(
+      `storage:${mediaPath}`,
+      video,
+      { contentType: 'video/mp4' },
+    );
+    expect(mockAddDoc).toHaveBeenCalledWith(
+      'wall-posts-collection',
+      expect.objectContaining({ media_type: 'video/mp4' }),
     );
   });
 
@@ -182,7 +211,7 @@ describe('createWallPostDocument', () => {
     expect(mockUploadWithRetry).toHaveBeenCalledWith(
       expect.anything(),
       image,
-      { refreshCredentials, onProgress: onUploadProgress },
+      { refreshCredentials, onProgress: onUploadProgress, contentType: 'image/png' },
     );
   });
 });

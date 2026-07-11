@@ -17,14 +17,13 @@ import {
   Close as CloseIcon,
 } from '@mui/icons-material';
 import { useToast } from '../../contexts/ToastContext';
+import { getWallMediaType, isWallVideoFile } from '../../utils/wallMedia';
 
 const MAX_TEXT_LENGTH = 500;
 const MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024;
 const MAX_VIDEO_SIZE_BYTES = 25 * 1024 * 1024;
 const MAX_VIDEO_DURATION_SECONDS = 30;
-const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-const ACCEPTED_VIDEO_TYPES = ['video/mp4'];
-const ACCEPTED_TYPES = [...ACCEPTED_IMAGE_TYPES, ...ACCEPTED_VIDEO_TYPES];
+const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'video/mp4'];
 
 interface WallPostComposerProps {
   initialText?: string;
@@ -66,12 +65,13 @@ export const WallPostComposer: React.FC<WallPostComposerProps> = ({
     const file = event.target.files?.[0];
     if (!file) return;
     setSubmitFailed(false);
-    if (!ACCEPTED_TYPES.includes(file.type)) {
+    const mediaType = getWallMediaType(file);
+    if (!mediaType) {
       showError(t('groupWall.invalidMediaType'));
       event.target.value = '';
       return;
     }
-    const isVideo = ACCEPTED_VIDEO_TYPES.includes(file.type);
+    const isVideo = mediaType === 'video/mp4';
     if (file.size >= (isVideo ? MAX_VIDEO_SIZE_BYTES : MAX_IMAGE_SIZE_BYTES)) {
       showError(t(isVideo ? 'groupWall.videoTooLarge' : 'groupWall.imageTooLarge'));
       event.target.value = '';
@@ -101,7 +101,7 @@ export const WallPostComposer: React.FC<WallPostComposerProps> = ({
       showError(t('groupWall.textRequired'));
       return;
     }
-    if (mediaFile?.type === 'video/mp4' && mediaDuration !== null && mediaDuration > MAX_VIDEO_DURATION_SECONDS) {
+    if (mediaFile && isWallVideoFile(mediaFile) && mediaDuration !== null && mediaDuration > MAX_VIDEO_DURATION_SECONDS) {
       showError(t('groupWall.videoTooLong', { max: MAX_VIDEO_DURATION_SECONDS }));
       return;
     }
@@ -121,7 +121,7 @@ export const WallPostComposer: React.FC<WallPostComposerProps> = ({
 
   const isValid = cleanText.length <= MAX_TEXT_LENGTH &&
     (cleanText.length > 0 || Boolean(mediaFile)) &&
-    !(mediaFile?.type === 'video/mp4' && mediaDuration !== null && mediaDuration > MAX_VIDEO_DURATION_SECONDS);
+    !(mediaFile && isWallVideoFile(mediaFile) && mediaDuration !== null && mediaDuration > MAX_VIDEO_DURATION_SECONDS);
   const normalizedUploadProgress = typeof uploadProgress === 'number' && Number.isFinite(uploadProgress)
     ? Math.min(100, Math.max(0, Math.round(uploadProgress)))
     : null;
@@ -155,7 +155,7 @@ export const WallPostComposer: React.FC<WallPostComposerProps> = ({
           }}
         >
           <Box sx={{ position: 'relative', width: 72, height: 72, flexShrink: 0 }}>
-            {mediaFile.type === 'video/mp4' ? (
+            {isWallVideoFile(mediaFile) ? (
               <Box
                 component="video"
                 src={mediaPreview}

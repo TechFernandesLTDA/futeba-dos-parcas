@@ -103,6 +103,20 @@ describe('WallPostComposer', () => {
     await waitFor(() => expect(onSubmit).toHaveBeenCalledWith('', video));
   });
 
+  it('aceita MP4 sem MIME confiável quando a extensão é válida', async () => {
+    const onSubmit = vi.fn().mockResolvedValue(undefined);
+    const { container } = renderWithProviders(
+      <WallPostComposer sending={false} onSubmit={onSubmit} />,
+    );
+    const video = new File(['video'], 'jogada.MP4', { type: '' });
+
+    selectImage(container, video);
+
+    expect(screen.getByLabelText('Pré-visualização do vídeo')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Publicar' }));
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledWith('', video));
+  });
+
   it('não bloqueia a publicação quando o navegador não consegue pré-visualizar o vídeo', async () => {
     const onSubmit = vi.fn().mockResolvedValue(undefined);
     const { container } = renderWithProviders(

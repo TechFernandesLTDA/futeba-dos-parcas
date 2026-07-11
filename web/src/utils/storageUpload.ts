@@ -31,6 +31,7 @@ function isRetryableStorageUploadError(err: unknown) {
 export interface StorageUploadOptions {
   refreshCredentials?: () => Promise<void>;
   onProgress?: (percentage: number) => void;
+  contentType?: string;
 }
 
 export async function refreshFirebaseUploadCredentials(user: FirebaseUser) {
@@ -56,7 +57,7 @@ export async function uploadImageWithStorageAuthRetry(
 
   const uploadWithProgress = () => new Promise((resolve, reject) => {
     const uploadTask = uploadBytesResumable(storageReference, file, {
-      contentType: file.type,
+      contentType: options.contentType ?? file.type,
     });
     uploadTask.on(
       'state_changed',
@@ -82,7 +83,9 @@ export async function uploadImageWithStorageAuthRetry(
 
     try {
       if (options.onProgress && attempt === 0) return await uploadWithProgress();
-      const snapshot = await uploadBytes(storageReference, file, { contentType: file.type });
+      const snapshot = await uploadBytes(storageReference, file, {
+        contentType: options.contentType ?? file.type,
+      });
       reportProgress(100);
       return snapshot;
     } catch (err) {
