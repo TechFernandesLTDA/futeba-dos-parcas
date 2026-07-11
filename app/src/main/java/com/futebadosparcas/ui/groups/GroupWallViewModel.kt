@@ -228,10 +228,11 @@ class GroupWallViewModel(
                         GroupWallActionState.Error(error.message ?: "Erro ao publicar")
                     }
                 )
-            } catch (_: CancellationException) {
+            } catch (cancellation: CancellationException) {
                 _actionState.value = GroupWallActionState.Error(
                     "Envio cancelado. Seu rascunho foi mantido."
                 )
+                throw cancellation
             }
         }
     }

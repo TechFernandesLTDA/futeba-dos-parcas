@@ -140,6 +140,50 @@ class WallMediaRejectedError extends Error {
   }
 }
 
+export type WallMediaProbeFailureClassification =
+  | {disposition: "PARSE"; stderr: string}
+  | {disposition: "REJECT"; stderr: null}
+  | {disposition: "RETRY"; stderr: null};
+
+/**
+ * Separa saída normal de inspeção inválida de falhas do processo/runtime.
+ * O FFmpeg encerra com código numérico não-zero ao inspecionar sem output;
+ * timeouts, sinais e erros do SO não podem virar rejeição permanente do usuário.
+ * @param {unknown} error Falha retornada por child_process.execFile.
+ * @return {WallMediaProbeFailureClassification} Tratamento seguro da falha.
+ */
+export function classifyWallMediaProbeFailure(
+  error: unknown
+): WallMediaProbeFailureClassification {
+  if (!error || typeof error !== "object") {
+    return {disposition: "RETRY", stderr: null};
+  }
+  const failure = error as {
+    code?: number | string | null;
+    killed?: boolean;
+    signal?: string | null;
+    stderr?: string | Buffer;
+  };
+  const stderr = typeof failure.stderr === "string" ? failure.stderr :
+    Buffer.isBuffer(failure.stderr) ? failure.stderr.toString("utf8") : "";
+  if (failure.killed === true ||
+      (typeof failure.signal === "string" && failure.signal.length > 0)) {
+    return {disposition: "RETRY", stderr: null};
+  }
+  if (failure.code === "ERR_CHILD_PROCESS_STDIO_MAXBUFFER") {
+    return {disposition: "REJECT", stderr: null};
+  }
+  if (typeof failure.code === "string") {
+    return {disposition: "RETRY", stderr: null};
+  }
+  if (typeof failure.code !== "number" ||
+      !Number.isSafeInteger(failure.code) || failure.code === 0 ||
+      stderr.trim().length === 0) {
+    return {disposition: "RETRY", stderr: null};
+  }
+  return {disposition: "PARSE", stderr};
+}
+
 /**
  * Cria draft idempotente antes de qualquer upload do cliente.
  * @return {Promise<object>} Contrato de upload para Web/Android.
@@ -403,6 +447,9 @@ export const onGroupWallMediaStaged = functions.storage.onObjectFinalized({
     const draft = claim.data;
     const declaredType = draft.declared_content_type as WallMediaContentType;
     const objectSize = storedObjectSize(object.size);
+    // O SDK envia os bytes brutos e a Storage Rule já vincula exatamente
+    // request.resource.size ao draft. Preserve a igualdade como defesa em
+    // profundidade contra objetos gravados por caminhos privilegiados.
     if (objectSize <= 0 || objectSize !== draft.declared_size_bytes ||
         objectSize >= maxBytesForContentType(declaredType)) {
       throw new WallMediaRejectedError("INVALID_SIZE");
@@ -1036,7 +1083,12 @@ async function readWallVideoProbe(inputPath: string): Promise<WallVideoProbe> {
     );
     stderr = result.stderr;
   } catch (error) {
-    stderr = (error as {stderr?: string}).stderr ?? "";
+    const failure = classifyWallMediaProbeFailure(error);
+    if (failure.disposition === "RETRY") throw error;
+    if (failure.disposition === "REJECT") {
+      throw new WallMediaRejectedError("INVALID_VIDEO");
+    }
+    stderr = failure.stderr;
   }
   return parseWallVideoProbe(stderr);
 }

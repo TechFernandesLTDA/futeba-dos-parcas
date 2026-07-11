@@ -137,6 +137,12 @@ Input #0, mov,mp4,m4a,3gp,3g2,mj2, from 'clip.mp4':
       .toBe("VIDEO_TOO_LARGE");
     expect(validateWallVideoProbe({...valid, width: null}))
       .toBe("VIDEO_TOO_LARGE");
+    expect(validateWallVideoProbe({
+      ...valid,
+      videoCodec: null,
+      width: null,
+      height: null,
+    })).toBe("UNSUPPORTED_VIDEO_CODEC");
     expect(validateWallVideoProbe({...valid, container: "matroska"}))
       .toBe("UNSUPPORTED_CONTAINER");
     expect(wallMediaErrorMessage("UNSUPPORTED_VIDEO_CODEC")).toMatch(/H\.264/);

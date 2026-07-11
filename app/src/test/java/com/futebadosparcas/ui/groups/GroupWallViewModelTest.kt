@@ -1,6 +1,7 @@
 package com.futebadosparcas.ui.groups
 
 import android.net.Uri
+import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.data.model.GroupWallPost
 import com.futebadosparcas.data.repository.GroupWallMediaDraftState
 import com.futebadosparcas.data.repository.GroupWallMediaTerminalException
@@ -14,8 +15,10 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.flowOf
@@ -29,6 +32,7 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Assertions.assertNotEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.util.Date
@@ -188,6 +192,33 @@ class GroupWallViewModelTest {
         assertEquals(
             "Envio cancelado. Seu rascunho foi mantido.",
             (state as GroupWallActionState.Error).message
+        )
+    }
+
+    @Test
+    fun `cancelamento do repositorio permanece cancelamento da coroutine`() = runTest(dispatcher) {
+        val cancellationGate = CompletableDeferred<Unit>()
+        coEvery {
+            repository.createPost("group-1", "Gol", null, any(), any())
+        } coAnswers {
+            cancellationGate.await()
+            throw CancellationException("Escopo cancelado")
+        }
+
+        viewModel.createPost("group-1", "Gol")
+        runCurrent()
+        val uploadJob = viewModel.viewModelScope.coroutineContext[Job]
+            ?.children
+            ?.single()
+            ?: error("Coroutine de envio não iniciada")
+
+        cancellationGate.complete(Unit)
+        advanceUntilIdle()
+
+        assertTrue(uploadJob.isCancelled)
+        assertEquals(
+            "Envio cancelado. Seu rascunho foi mantido.",
+            (viewModel.actionState.value as GroupWallActionState.Error).message
         )
     }
 

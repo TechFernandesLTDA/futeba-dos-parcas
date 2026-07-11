@@ -137,6 +137,12 @@ function wallMediaDraftTerminalError(status: 'REJECTED' | 'EXPIRED', data: Recor
   return error;
 }
 
+function wallMediaDraftMissingError() {
+  const error = new Error('O envio de mídia não foi encontrado. Tente novamente.') as Error & { code: string };
+  error.code = 'wall-media/draft-not-found';
+  return error;
+}
+
 function wallMediaDraftStatus(data: Record<string, unknown>): WallMediaDraftStatus | null {
   const status = typeof data.status === 'string' ? data.status : '';
   return ['AWAITING_UPLOAD', 'PROCESSING', 'READY', 'REJECTED', 'EXPIRED'].includes(status)
@@ -166,7 +172,13 @@ async function waitForWallMediaDraft(
     unsubscribe = onSnapshot(
       doc(db, 'groups', groupId, 'wall_post_drafts', postId),
       (snapshot) => {
-        if (!snapshot.exists()) return;
+        if (!snapshot.exists()) {
+          // A primeira emissão pode vir apenas do cache local, que ainda não conhece
+          // o draft criado pela callable. Só trate como ausente após confirmação do servidor.
+          if (snapshot.metadata.fromCache) return;
+          finish(() => reject(wallMediaDraftMissingError()));
+          return;
+        }
         const data = snapshot.data() as Record<string, unknown>;
         const status = wallMediaDraftStatus(data);
         if (status === 'PROCESSING') onProcessing?.();

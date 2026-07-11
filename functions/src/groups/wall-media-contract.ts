@@ -294,6 +294,7 @@ export function validateWallVideoProbe(
   if (probe.durationSec > WALL_MEDIA_MAX_VIDEO_DURATION_SEC) {
     return "DURATION_TOO_LONG";
   }
+  if (probe.videoCodec !== "h264") return "UNSUPPORTED_VIDEO_CODEC";
   if (probe.width == null || probe.height == null ||
       !Number.isSafeInteger(probe.width) ||
       !Number.isSafeInteger(probe.height) ||
@@ -303,7 +304,6 @@ export function validateWallVideoProbe(
       probe.width * probe.height > WALL_MEDIA_MAX_IMAGE_PIXELS) {
     return "VIDEO_TOO_LARGE";
   }
-  if (probe.videoCodec !== "h264") return "UNSUPPORTED_VIDEO_CODEC";
   if (probe.audioCodec != null && probe.audioCodec !== "aac") {
     return "UNSUPPORTED_AUDIO_CODEC";
   }

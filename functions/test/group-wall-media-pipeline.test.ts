@@ -36,6 +36,7 @@ import {
   claimDraftForProcessing,
   cleanupExpiredWallMediaDraft,
   cleanupExpiredGroupWallMediaDrafts,
+  classifyWallMediaProbeFailure,
   finalizeReadyPost,
   onGroupWallMediaStaged,
   uploadImmutableWallMediaObject,
@@ -211,6 +212,34 @@ describe("group wall media pipeline", () => {
       remaining: 19,
       resetAt: new Date(Date.now() + 60_000),
     });
+  });
+
+  it("separa probe inválido de timeout/ENOMEM transitórios", () => {
+    expect(classifyWallMediaProbeFailure({
+      code: 1,
+      stderr: "Invalid data found when processing input",
+    })).toEqual({
+      disposition: "PARSE",
+      stderr: "Invalid data found when processing input",
+    });
+    expect(classifyWallMediaProbeFailure({
+      code: null,
+      killed: true,
+      signal: "SIGTERM",
+      stderr: "",
+    })).toEqual({disposition: "RETRY", stderr: null});
+    expect(classifyWallMediaProbeFailure({
+      code: "ENOMEM",
+      stderr: "",
+    })).toEqual({disposition: "RETRY", stderr: null});
+    expect(classifyWallMediaProbeFailure({
+      code: 1,
+      stderr: "",
+    })).toEqual({disposition: "RETRY", stderr: null});
+    expect(classifyWallMediaProbeFailure({
+      code: "ERR_CHILD_PROCESS_STDIO_MAXBUFFER",
+      stderr: "output excessivo",
+    })).toEqual({disposition: "REJECT", stderr: null});
   });
 
   it("pré-aloca draft e responde retry idêntico sem duplicar", async () => {

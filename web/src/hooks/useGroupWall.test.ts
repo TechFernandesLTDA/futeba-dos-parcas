@@ -310,6 +310,63 @@ describe('createWallPostDocument', () => {
     expect(mockUploadWithRetry).not.toHaveBeenCalled();
     expect(mockOnSnapshot).toHaveBeenCalled();
   });
+
+  it('falha imediatamente quando o draft de mídia não existe', async () => {
+    const image = new File(['image'], 'foto.png', { type: 'image/png' });
+    const unsubscribe = vi.fn();
+    mockOnSnapshot.mockImplementationOnce((_reference, onNext) => {
+      queueMicrotask(() => onNext({
+        exists: () => false,
+        metadata: { fromCache: false },
+      }));
+      return unsubscribe;
+    });
+
+    await expect(createWallPostDocument({
+      groupId: 'group-1',
+      currentUserUid: 'user-1',
+      authorName: 'Jordi',
+      authorPhotoUrl: null,
+      text: '',
+      options: { mediaFile: image },
+      clientRequestId: CLIENT_REQUEST_ID,
+    })).rejects.toMatchObject({
+      code: 'wall-media/draft-not-found',
+      message: 'O envio de mídia não foi encontrado. Tente novamente.',
+    });
+
+    expect(unsubscribe).toHaveBeenCalledOnce();
+  });
+
+  it('aguarda o servidor quando apenas o cache local ainda não conhece o draft', async () => {
+    const image = new File(['image'], 'foto.png', { type: 'image/png' });
+    const unsubscribe = vi.fn();
+    mockOnSnapshot.mockImplementationOnce((_reference, onNext) => {
+      queueMicrotask(() => {
+        onNext({
+          exists: () => false,
+          metadata: { fromCache: true },
+        });
+        onNext({
+          exists: () => true,
+          data: () => ({ status: 'READY' }),
+        });
+      });
+      return unsubscribe;
+    });
+
+    await expect(createWallPostDocument({
+      groupId: 'group-1',
+      currentUserUid: 'user-1',
+      authorName: 'Jordi',
+      authorPhotoUrl: null,
+      text: '',
+      options: { mediaFile: image },
+      clientRequestId: CLIENT_REQUEST_ID,
+    })).resolves.toEqual({ postId: 'post-1', pipelineVersion: 1 });
+
+    expect(unsubscribe).toHaveBeenCalledOnce();
+  });
 });
 
 describe('useCreateWallPost', () => {
