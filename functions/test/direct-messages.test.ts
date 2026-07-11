@@ -73,7 +73,7 @@ describe("direct messages metadata refresh", () => {
     const tx = {
       get: jest.fn((ref: {path: string}) => {
         switch (ref.path) {
-        case "chats/chat-1":
+        case "chats/user-1_user-2":
           return Promise.resolve({
             exists: true,
             data: () => ({participants: ["user-1", "user-2"]}),
@@ -99,11 +99,11 @@ describe("direct messages metadata refresh", () => {
 
     await submitDirectMessage({
       auth: {uid: "user-1"},
-      data: {chatId: "chat-1", text: "Oi"},
+      data: {chatId: "user-1_user-2", text: "Oi"},
     } as any);
 
     expect(tx.update).toHaveBeenCalledWith(
-      expect.objectContaining({path: "chats/chat-1"}),
+      expect.objectContaining({path: "chats/user-1_user-2"}),
       expect.objectContaining({
         participant_names: {
           "user-1": "Novo Nome",
@@ -115,5 +115,46 @@ describe("direct messages metadata refresh", () => {
         },
       })
     );
+  });
+
+  it("rejeita chatId com path injection antes de acessar Firestore", async () => {
+    await expect(submitDirectMessage({
+      auth: {uid: "user-1"},
+      data: {chatId: "chat/nested/doc", text: "Oi"},
+    } as any)).rejects.toMatchObject({code: "invalid-argument"});
+    expect(mockDoc).not.toHaveBeenCalled();
+    expect(mockRunTransaction).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    {exists: false, data: () => ({})},
+    {exists: true, data: () => ({deletedAt: {_seconds: 1}})},
+    {exists: true, data: () => ({status: "DELETED"})},
+    {exists: true, data: () => ({is_active: false})},
+  ])("bloqueia envio quando participante está ausente/inativo", async (recipient) => {
+    const tx = {
+      get: jest.fn((ref: {path: string}) => {
+        if (ref.path === "chats/user-1_user-2") {
+          return Promise.resolve({
+            exists: true,
+            data: () => ({participants: ["user-1", "user-2"]}),
+          });
+        }
+        if (ref.path === "users/user-1") {
+          return Promise.resolve({exists: true, data: () => ({name: "Um"})});
+        }
+        if (ref.path === "users/user-2") return Promise.resolve(recipient);
+        return Promise.resolve({exists: false, data: () => ({})});
+      }),
+      set: jest.fn(),
+      update: jest.fn(),
+    };
+    mockRunTransaction.mockImplementation(async (callback: any) => callback(tx));
+
+    await expect(submitDirectMessage({
+      auth: {uid: "user-1"},
+      data: {chatId: "user-1_user-2", text: "Oi"},
+    } as any)).rejects.toMatchObject({code: "not-found"});
+    expect(tx.set).not.toHaveBeenCalled();
   });
 });

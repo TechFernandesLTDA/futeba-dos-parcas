@@ -1,6 +1,7 @@
 import { describe, it, beforeAll, afterAll } from "vitest";
 import { assertFails, assertSucceeds } from "@firebase/rules-unit-testing";
 import type { RulesTestEnvironment } from "@firebase/rules-unit-testing";
+import { serverTimestamp } from "firebase/firestore";
 import {
   initTestEnv,
   asPlayerA,
@@ -63,13 +64,27 @@ describe("post_game_messages", () => {
   });
 
   it("participante confirmado pode criar recado em jogo finalizado", async () => {
-    await assertSucceeds(asPlayerB(testEnv).doc(`post_game_messages/${FINISHED_GAME}_${UID_PLAYER_B}`).set({
+    await assertSucceeds(asPlayerA(testEnv).doc(`post_game_messages/${FINISHED_GAME}_${UID_PLAYER_A}`).set({
       game_id: FINISHED_GAME,
-      user_id: UID_PLAYER_B,
-      user_name: "Player B",
+      user_id: UID_PLAYER_A,
+      user_name: "Player A",
       message: "Defesa encaixou bem.",
-      created_at: new Date(),
-      updated_at: new Date(),
+      created_at: serverTimestamp(),
+      updated_at: serverTimestamp(),
+    }));
+  });
+
+  it("participante pode editar mensagem sem alterar a data original", async () => {
+    await assertSucceeds(asPlayerB(testEnv).doc(`post_game_messages/${FINISHED_GAME}_${UID_PLAYER_B}`).update({
+      message: "Jogo bom e bem organizado.",
+      updated_at: serverTimestamp(),
+    }));
+  });
+
+  it("participante nao pode reescrever created_at para manipular a ordem", async () => {
+    await assertFails(asPlayerB(testEnv).doc(`post_game_messages/${FINISHED_GAME}_${UID_PLAYER_B}`).update({
+      created_at: serverTimestamp(),
+      updated_at: serverTimestamp(),
     }));
   });
 
@@ -79,8 +94,8 @@ describe("post_game_messages", () => {
       user_id: UID_PLAYER_C,
       user_name: "Player C",
       message: "Entrei sem jogar.",
-      created_at: new Date(),
-      updated_at: new Date(),
+      created_at: serverTimestamp(),
+      updated_at: serverTimestamp(),
     }));
   });
 
@@ -95,8 +110,8 @@ describe("post_game_messages", () => {
       user_id: UID_PLAYER_B,
       user_name: "Player B",
       message: "Cedo demais.",
-      created_at: new Date(),
-      updated_at: new Date(),
+      created_at: serverTimestamp(),
+      updated_at: serverTimestamp(),
     }));
   });
 

@@ -4,6 +4,8 @@ const mockRevokeRefreshTokens = jest.fn();
 const mockDocGet = jest.fn();
 const mockDocSet = jest.fn();
 const mockRunTransaction = jest.fn();
+const mockWhere = jest.fn().mockReturnThis();
+const mockLimit = jest.fn().mockReturnThis();
 
 jest.mock("../../src/middleware/rate-limiter", () => ({
   checkRateLimit: jest.fn().mockResolvedValue({ allowed: true, remaining: 4, resetAt: new Date(Date.now() + 3600000) }),
@@ -45,6 +47,8 @@ const mockFieldValue = {
 const mockFirestore = jest.fn(() => ({
   collection: jest.fn(() => ({
     doc: jest.fn((id: string) => ({ id, get: mockDocGet, set: mockDocSet, update: jest.fn() })),
+    where: mockWhere,
+    limit: mockLimit,
   })),
   doc: jest.fn((path: string) => ({ id: path.split("/").pop(), get: mockDocGet, set: mockDocSet, update: jest.fn() })),
   get runTransaction() { return mockRunTransaction; },
@@ -77,9 +81,13 @@ describe("Auth — Verification", () => {
     jest.clearAllMocks();
     mockRunTransaction.mockReset();
     mockRunTransaction.mockImplementation(async (cb: any) => cb({
-      get: jest.fn().mockResolvedValue({exists: false, data: () => null}),
+      get: jest.fn()
+        .mockResolvedValueOnce({exists: false, data: () => null})
+        .mockResolvedValueOnce({docs: []}),
       set: jest.fn(),
     }));
+    mockWhere.mockReturnThis();
+    mockLimit.mockReturnThis();
     process.env.CPF_SALT = "abcdef1234567890abcdef1234567890";
   });
 
@@ -93,7 +101,8 @@ describe("Auth — Verification", () => {
         const tx = {
           get: jest.fn()
             .mockResolvedValueOnce({ exists: false, data: () => null })
-            .mockResolvedValueOnce({ exists: false, data: () => null }),
+            .mockResolvedValueOnce({ exists: false, data: () => null })
+            .mockResolvedValueOnce({docs: []}),
           set: jest.fn(),
         };
         return cb(tx);
@@ -121,7 +130,9 @@ describe("Auth — Verification", () => {
       mockRunTransaction.mockImplementationOnce(async (cb: any) => {
         const tx = {
           get: jest.fn()
-            .mockResolvedValueOnce({ exists: true, data: () => ({ uid: "outro_user" }) }),
+            .mockResolvedValueOnce({ exists: true, data: () => ({ uid: "outro_user" }) })
+            .mockResolvedValueOnce({exists: false, data: () => null})
+            .mockResolvedValueOnce({docs: []}),
           set: jest.fn(),
         };
         return cb(tx);
@@ -137,7 +148,8 @@ describe("Auth — Verification", () => {
         const tx = {
           get: jest.fn()
             .mockResolvedValueOnce({ exists: true, data: () => ({ uid: "user1" }) })
-            .mockResolvedValueOnce({ exists: true, data: () => ({ cpfHash: "hash_11144477735" }) }),
+            .mockResolvedValueOnce({ exists: true, data: () => ({ cpfHash: "hash_11144477735" }) })
+            .mockResolvedValueOnce({docs: [{id: "hash_11144477735"}]}),
           set: jest.fn(),
         };
         return cb(tx);
@@ -146,6 +158,18 @@ describe("Auth — Verification", () => {
       await expect(
         verifyCpf(makeRequest()),
       ).rejects.toThrow();
+    });
+
+    it("bloqueia segundo CPF quando legado existe apenas em cpf_index", async () => {
+      mockRunTransaction.mockImplementationOnce(async (cb: any) => cb({
+        get: jest.fn()
+          .mockResolvedValueOnce({exists: false, data: () => null})
+          .mockResolvedValueOnce({exists: true, data: () => ({})})
+          .mockResolvedValueOnce({docs: [{id: "legacy_cpf_hash"}]}),
+        set: jest.fn(),
+      }));
+
+      await expect(verifyCpf(makeRequest())).rejects.toThrow();
     });
 
     it("rejeita sem CPF_SALT configurado", async () => {
@@ -162,7 +186,7 @@ describe("Auth — Verification", () => {
         exists: true,
         data: () => ({ cpfVerifiedAt: { _type: "ServerTimestamp" } }),
       });
-      mockGetUser.mockResolvedValueOnce({
+      mockGetUser.mockResolvedValue({
         uid: "user1",
         phoneNumber: "+5511999999999",
         customClaims: {},
@@ -185,7 +209,7 @@ describe("Auth — Verification", () => {
         exists: true,
         data: () => ({ cpfVerifiedAt: { _type: "ServerTimestamp" } }),
       });
-      mockGetUser.mockResolvedValueOnce({
+      mockGetUser.mockResolvedValue({
         uid: "user1",
         phoneNumber: "+5511999999999",
         customClaims: { verified: true },
@@ -205,7 +229,7 @@ describe("Auth — Verification", () => {
         exists: true,
         data: () => ({ cpfVerifiedAt: { _type: "ServerTimestamp" } }),
       });
-      mockGetUser.mockResolvedValueOnce({
+      mockGetUser.mockResolvedValue({
         uid: "user1",
         phoneNumber: null,
         customClaims: {},
@@ -221,22 +245,145 @@ describe("Auth — Verification", () => {
         exists: true,
         data: () => ({cpfVerifiedAt: {_type: "ServerTimestamp"}}),
       });
-      mockGetUser.mockResolvedValueOnce({
+      mockGetUser.mockResolvedValue({
         uid: "user1",
         phoneNumber: "+5511999999999",
         customClaims: {},
       });
       mockRunTransaction.mockImplementationOnce(async (cb: any) => cb({
-        get: jest.fn().mockResolvedValue({
-          exists: true,
-          data: () => ({uid: "other-user"}),
-        }),
+        get: jest.fn()
+          .mockResolvedValueOnce({
+            exists: true,
+            data: () => ({uid: "other-user"}),
+          })
+          .mockResolvedValueOnce({docs: []}),
         set: jest.fn(),
       }));
 
       await expect(setUserVerified(makeRequest())).rejects.toThrow(
         "Este telefone já pertence a outra identidade.",
       );
+      expect(mockSetCustomUserClaims).not.toHaveBeenCalled();
+    });
+
+    it("remove índice antigo do mesmo usuário ao trocar de telefone", async () => {
+      mockDocGet.mockResolvedValueOnce({
+        exists: true,
+        data: () => ({
+          cpfVerifiedAt: {_type: "ServerTimestamp"},
+          phoneHash: "old_phone_hash",
+        }),
+      });
+      mockGetUser.mockResolvedValue({
+        uid: "user1",
+        phoneNumber: "+5511999999999",
+        customClaims: {},
+      });
+      const txDelete = jest.fn();
+      mockRunTransaction.mockImplementationOnce(async (cb: any) => cb({
+        get: jest.fn()
+          .mockResolvedValueOnce({exists: false, data: () => null})
+          .mockResolvedValueOnce({docs: [{id: "old_phone_hash"}]})
+          .mockResolvedValueOnce({exists: true, data: () => ({uid: "user1"})}),
+        set: jest.fn(),
+        delete: txDelete,
+      }));
+
+      await setUserVerified(makeRequest());
+
+      expect(txDelete).toHaveBeenCalledTimes(1);
+    });
+
+    it("reconcilia índice legado mesmo sem phoneHash em users_private", async () => {
+      mockDocGet.mockResolvedValueOnce({
+        exists: true,
+        data: () => ({cpfVerifiedAt: {_type: "ServerTimestamp"}}),
+      });
+      mockGetUser.mockResolvedValue({
+        uid: "user1",
+        phoneNumber: "+5511999999999",
+        customClaims: {},
+      });
+      const txDelete = jest.fn();
+      mockRunTransaction.mockImplementationOnce(async (cb: any) => cb({
+        get: jest.fn()
+          .mockResolvedValueOnce({exists: false, data: () => null})
+          .mockResolvedValueOnce({docs: [{id: "legacy_phone_hash"}]})
+          .mockResolvedValueOnce({exists: true, data: () => ({uid: "user1"})}),
+        set: jest.fn(),
+        delete: txDelete,
+      }));
+
+      await setUserVerified(makeRequest());
+
+      expect(txDelete).toHaveBeenCalledTimes(1);
+    });
+
+    it("não concede profileComplete para telefone fora do formato BR", async () => {
+      mockDocGet.mockResolvedValueOnce({
+        exists: true,
+        data: () => ({cpfVerifiedAt: {_type: "ServerTimestamp"}}),
+      });
+      mockGetUser.mockResolvedValue({
+        uid: "user1",
+        phoneNumber: "+12025550123",
+        customClaims: {},
+      });
+
+      await setUserVerified(makeRequest());
+
+      expect(mockSetCustomUserClaims).toHaveBeenCalledWith(
+        "user1",
+        expect.objectContaining({verified: true, profileComplete: false}),
+      );
+    });
+
+    it("preserva claims relidas após reconciliação concorrente", async () => {
+      mockDocGet.mockResolvedValueOnce({
+        exists: true,
+        data: () => ({cpfVerifiedAt: {_type: "ServerTimestamp"}}),
+      });
+      mockGetUser
+        .mockResolvedValueOnce({
+          uid: "user1",
+          phoneNumber: "+5511999999999",
+          customClaims: {role: "PLAYER"},
+        })
+        .mockResolvedValueOnce({
+          uid: "user1",
+          phoneNumber: "+5511999999999",
+          customClaims: {role: "ADMIN", concurrent: true},
+        });
+
+      await setUserVerified(makeRequest());
+
+      expect(mockSetCustomUserClaims).toHaveBeenCalledWith("user1", {
+        role: "ADMIN",
+        concurrent: true,
+        verified: true,
+        profileComplete: true,
+      });
+    });
+
+    it("aborta quando telefone muda durante a reconciliação", async () => {
+      mockDocGet.mockResolvedValueOnce({
+        exists: true,
+        data: () => ({cpfVerifiedAt: {_type: "ServerTimestamp"}}),
+      });
+      mockGetUser
+        .mockResolvedValueOnce({
+          uid: "user1",
+          phoneNumber: "+5511999999999",
+          customClaims: {},
+        })
+        .mockResolvedValueOnce({
+          uid: "user1",
+          phoneNumber: "+5511888888888",
+          customClaims: {},
+        });
+
+      await expect(setUserVerified(makeRequest()))
+        .rejects.toThrow("telefone mudou");
       expect(mockSetCustomUserClaims).not.toHaveBeenCalled();
     });
 
@@ -262,7 +409,12 @@ describe("Auth — Verification", () => {
         exists: true,
         data: () => ({ cpfVerifiedAt: { _type: "ServerTimestamp" } }),
       });
-      mockGetUser.mockResolvedValueOnce({
+      mockGetUser
+        .mockResolvedValueOnce({
+          uid: "admin1",
+          customClaims: {role: "ADMIN"},
+        })
+        .mockResolvedValue({
         uid: "user2",
         phoneNumber: "+5511999999999",
         customClaims: {},

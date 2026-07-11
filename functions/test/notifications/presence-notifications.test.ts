@@ -30,25 +30,16 @@ const mockDoc = jest.fn((id: string) => ({
   })),
 }));
 
-// Set de eventos já processados — simula dedup no Firestore
-const dedupClaimedIds = new Set<string>();
+// Estado persistido dos leases de dedup simulados no Firestore.
+const dedupDocuments = new Map<string, Record<string, unknown>>();
 
 /**
- * Cria um mock de doc para notif_dedup.
- * create() é atômico: falha com code 6 se o id já foi reivindicado.
+ * Cria uma referência estável para notif_dedup.
  */
 function makeDedupDocMock(id: string) {
   return {
     id,
-    create: jest.fn().mockImplementation(() => {
-      if (dedupClaimedIds.has(id)) {
-        const err = new Error("ALREADY_EXISTS") as any;
-        err.code = 6;
-        return Promise.reject(err);
-      }
-      dedupClaimedIds.add(id);
-      return Promise.resolve();
-    }),
+    path: `notif_dedup/${id}`,
   };
 }
 
@@ -134,9 +125,35 @@ import {
 describe("Presence Notifications", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    // Limpa o set de dedup entre testes para isolamento
-    dedupClaimedIds.clear();
+    dedupDocuments.clear();
     mockBatch.mockImplementation(() => ({ update: mockBatchUpdate, set: jest.fn(), delete: jest.fn(), commit: mockBatchCommit }));
+    mockRunTransaction.mockImplementation(async (callback: any) => {
+      const reads = [
+        {exists: true, data: () => ({name: "Pelada FC", status: "ACTIVE"})},
+        {exists: true, data: () => ({name: "Maria", status: "ACTIVE"})},
+        {exists: false, data: () => undefined},
+        {exists: false, data: () => undefined},
+      ];
+      let readIndex = 0;
+      return callback({
+        get: jest.fn().mockImplementation((ref: {path?: string}) => {
+          if (ref.path?.startsWith("notif_dedup/")) {
+            const id = ref.path.slice("notif_dedup/".length);
+            const data = dedupDocuments.get(id);
+            return Promise.resolve({exists: Boolean(data), data: () => data});
+          }
+          return Promise.resolve(reads[readIndex++]);
+        }),
+        set: jest.fn((ref: {path?: string}, payload: Record<string, unknown>) => {
+          if (!ref.path?.startsWith("notif_dedup/")) return;
+          const id = ref.path.slice("notif_dedup/".length);
+          dedupDocuments.set(id, {
+            ...(dedupDocuments.get(id) ?? {}),
+            ...payload,
+          });
+        }),
+      });
+    });
   });
 
   describe("onGameConfirmed", () => {
@@ -156,9 +173,10 @@ describe("Presence Notifications", () => {
         params: { confirmationId: "conf1" },
       });
 
-      expect(mockSendNotificationToUser).toHaveBeenCalledWith(
+      expect(mockSendAndSaveNotification).toHaveBeenCalledWith(
         "owner1",
         expect.objectContaining({ title: "Nova confirmação!" }),
+        "game_cnfmd_conf1",
       );
     });
 
@@ -218,6 +236,7 @@ describe("Presence Notifications", () => {
           title: "Convite para grupo",
           body: expect.stringContaining("Joao"),
         }),
+        "group_inv_inv1",
       );
     });
 
@@ -270,6 +289,7 @@ describe("Presence Notifications", () => {
             data: () => ({
               status: "ACCEPTED",
               invited_by_id: "inviter1",
+              invited_user_id: "user1",
               invited_user_name: "Maria",
               group_name: "Pelada FC",
               group_id: "group1",
@@ -282,6 +302,7 @@ describe("Presence Notifications", () => {
       expect(mockSendAndSaveNotification).toHaveBeenCalledWith(
         "inviter1",
         expect.objectContaining({ title: "Convite aceito!" }),
+        "inv_resp_inv1_ACCEPTED",
       );
     });
 
@@ -304,7 +325,40 @@ describe("Presence Notifications", () => {
       expect(mockSendAndSaveNotification).toHaveBeenCalledWith(
         "inviter1",
         expect.objectContaining({ title: "Convite recusado" }),
+        "inv_resp_inv1_DECLINED",
       );
+    });
+
+    it("não cria vínculo nem notifica aceite para usuário bloqueado", async () => {
+      mockRunTransaction.mockImplementationOnce(async (callback: any) => {
+        const reads = [
+          {exists: true, data: () => ({name: "Pelada FC", status: "ACTIVE"})},
+          {exists: true, data: () => ({name: "Maria", status: "ACTIVE"})},
+          {exists: false, data: () => undefined},
+          {exists: true, data: () => ({reason: "BANNED"})},
+        ];
+        let readIndex = 0;
+        return callback({
+          get: jest.fn().mockImplementation(() => Promise.resolve(reads[readIndex++])),
+          set: jest.fn(),
+        });
+      });
+
+      await onGroupInviteResponse({
+        id: "evt-blocked-invite",
+        data: {
+          before: {data: () => ({status: "PENDING"})},
+          after: {data: () => ({
+            status: "ACCEPTED",
+            invited_by_id: "inviter1",
+            invited_user_id: "blocked-user",
+            group_id: "group1",
+          })},
+        },
+        params: {inviteId: "inv-blocked"},
+      });
+
+      expect(mockSendAndSaveNotification).not.toHaveBeenCalled();
     });
 
     it("ignora quando status nao mudou de PENDING", async () => {
@@ -366,6 +420,16 @@ describe("Presence Notifications", () => {
       await onMemberJoined({
         data: { data: () => ({ role: "OWNER" }) },
         params: { groupId: "group1", memberId: "owner1" },
+      });
+
+      expect(mockSendNotificationToUsers).not.toHaveBeenCalled();
+    });
+
+    it("não notifica migração de membership durante união de contas", async () => {
+      await onMemberJoined({
+        id: "evt-member-merge",
+        data: {data: () => ({role: "MEMBER", merged_from_alias: true})},
+        params: {groupId: "group1", memberId: "canonical-user"},
       });
 
       expect(mockSendNotificationToUsers).not.toHaveBeenCalled();
@@ -556,6 +620,171 @@ describe("Presence Notifications", () => {
   // TESTES DE IDEMPOTÊNCIA: reentrega at-least-once não duplica
   // ============================================================
   describe("idempotência de reentrega (claimOnce)", () => {
+    it("ignora confirmação recriada pela união de contas antes do claim", async () => {
+      await onGameConfirmed({
+        id: "evt-merged-confirmation",
+        data: {data: () => ({
+          game_id: "game1",
+          user_id: "player1",
+          status: "CONFIRMED",
+          merged_from_alias: true,
+        })},
+        params: {confirmationId: "conf-merged"},
+      });
+
+      expect(mockRunTransaction).not.toHaveBeenCalled();
+      expect(mockSendAndSaveNotification).not.toHaveBeenCalled();
+    });
+
+    it("não materializa aceite sem identidade canônica do convite", async () => {
+      await onGroupInviteResponse({
+        id: "evt-invalid-accepted-invite",
+        data: {
+          before: {data: () => ({status: "PENDING"})},
+          after: {data: () => ({
+            status: "ACCEPTED",
+            invited_by_id: "inviter1",
+            invited_user_id: "user1",
+          })},
+        },
+        params: {inviteId: "inv-invalid"},
+      });
+
+      expect(mockRunTransaction).not.toHaveBeenCalled();
+      expect(mockSendAndSaveNotification).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      {
+        label: "grupo inexistente",
+        reads: [
+          {exists: false, data: () => undefined},
+          {exists: true, data: () => ({status: "ACTIVE"})},
+          {exists: false, data: () => undefined},
+          {exists: false, data: () => undefined},
+        ],
+      },
+      {
+        label: "grupo inativo",
+        reads: [
+          {exists: true, data: () => ({status: "ARCHIVED"})},
+          {exists: true, data: () => ({status: "ACTIVE"})},
+          {exists: false, data: () => undefined},
+          {exists: false, data: () => undefined},
+        ],
+      },
+      {
+        label: "usuário removido",
+        reads: [
+          {exists: true, data: () => ({status: "ACTIVE"})},
+          {exists: false, data: () => undefined},
+          {exists: false, data: () => undefined},
+          {exists: false, data: () => undefined},
+        ],
+      },
+      {
+        label: "membership banida",
+        reads: [
+          {exists: true, data: () => ({status: "ACTIVE"})},
+          {exists: true, data: () => ({status: "ACTIVE"})},
+          {exists: true, data: () => ({status: "BANNED"})},
+          {exists: false, data: () => undefined},
+        ],
+      },
+    ])("recusa aceite para $label", async ({reads}) => {
+      mockRunTransaction.mockImplementationOnce(async (callback: any) => {
+        let readIndex = 0;
+        return callback({
+          get: jest.fn(async () => reads[readIndex++]),
+          set: jest.fn(),
+        });
+      });
+
+      await onGroupInviteResponse({
+        id: `evt-${reads.length}`,
+        data: {
+          before: {data: () => ({status: "PENDING"})},
+          after: {data: () => ({
+            status: "ACCEPTED",
+            invited_by_id: "inviter1",
+            invited_user_id: "user1",
+            group_id: "group1",
+          })},
+        },
+        params: {inviteId: "inv-ineligible"},
+      });
+
+      expect(mockSendAndSaveNotification).not.toHaveBeenCalled();
+    });
+
+    it("libera o lease como FAILED quando o envio falha e permite retry", async () => {
+      const deliveryError = new Error("FCM unavailable");
+      mockSendAndSaveNotification.mockRejectedValueOnce(deliveryError);
+      const event = {
+        id: "evt-delivery-failed",
+        data: {data: () => ({
+          invited_user_id: "user1",
+          group_id: "group1",
+          group_name: "Pelada FC",
+          invited_by_name: "João",
+        })},
+        params: {inviteId: "inv-failed"},
+      };
+
+      await expect(onGroupInviteCreated(event)).rejects.toBe(deliveryError);
+      expect(dedupDocuments.get(event.id)).toMatchObject({status: "FAILED"});
+
+      mockSendAndSaveNotification.mockResolvedValueOnce(true);
+      await expect(onGroupInviteCreated(event)).resolves.toBeUndefined();
+      expect(dedupDocuments.get(event.id)).toMatchObject({status: "COMPLETED"});
+    });
+
+    it("não conclui nem libera lease assumido por outro worker", async () => {
+      const eventId = "evt-lease-lost";
+      mockSendAndSaveNotification.mockImplementationOnce(async () => {
+        dedupDocuments.set(eventId, {
+          status: "PROCESSING",
+          lease_owner: "new-worker",
+        });
+        return true;
+      });
+
+      await expect(onGroupInviteCreated({
+        id: eventId,
+        data: {data: () => ({
+          invited_user_id: "user1",
+          group_id: "group1",
+          group_name: "Pelada FC",
+          invited_by_name: "João",
+        })},
+        params: {inviteId: "inv-lost"},
+      })).rejects.toThrow("Lease perdido");
+
+      expect(dedupDocuments.get(eventId)).toMatchObject({
+        status: "PROCESSING",
+        lease_owner: "new-worker",
+      });
+    });
+
+    it("reconhece lease ativo persistido com toDate", async () => {
+      dedupDocuments.set("evt-date-lease", {
+        status: "PROCESSING",
+        lease_owner: "worker-ativo",
+        lease_expires_at: {toDate: () => new Date(Date.now() + 60_000)},
+      });
+
+      await expect(onGroupInviteCreated({
+        id: "evt-date-lease",
+        data: {data: () => ({
+          invited_user_id: "user1",
+          group_id: "group1",
+          group_name: "Pelada FC",
+          invited_by_name: "João",
+        })},
+        params: {inviteId: "inv-date-lease"},
+      })).rejects.toThrow("ainda em processamento");
+    });
+
     it("onGameConfirmed: reentrega com mesmo event.id nao duplica push FCM", async () => {
       mockDocGet
         .mockResolvedValue({
@@ -578,8 +807,52 @@ describe("Presence Notifications", () => {
       // 2ª entrega (reentrega) com mesmo event.id — deve pular
       await onGameConfirmed(event);
 
-      // sendNotificationToUser deve ter sido chamado exatamente 1 vez
-      expect(mockSendNotificationToUser).toHaveBeenCalledTimes(1);
+      expect(mockSendAndSaveNotification).toHaveBeenCalledTimes(1);
+    });
+
+    it("retoma claim PROCESSING vencida após crash e conclui o evento", async () => {
+      dedupDocuments.set("evt-stale-claim", {
+        status: "PROCESSING",
+        lease_owner: "worker-morto",
+        lease_expires_at: {toMillis: () => Date.now() - 1},
+      });
+      mockDocGet
+        .mockResolvedValueOnce({exists: true, data: () => ({owner_id: "owner1"})})
+        .mockResolvedValueOnce({exists: true, data: () => ({name: "Jogador"})});
+
+      await onGameConfirmed({
+        id: "evt-stale-claim",
+        data: {data: () => ({
+          game_id: "game1",
+          user_id: "player1",
+          status: "CONFIRMED",
+        })},
+        params: {confirmationId: "conf-stale"},
+      });
+
+      expect(mockSendAndSaveNotification).toHaveBeenCalledTimes(1);
+      expect(dedupDocuments.get("evt-stale-claim"))
+        .toMatchObject({status: "COMPLETED"});
+    });
+
+    it("não confirma reentrega enquanto outro worker mantém lease ativo", async () => {
+      dedupDocuments.set("evt-active-claim", {
+        status: "PROCESSING",
+        lease_owner: "worker-ativo",
+        lease_expires_at: {toMillis: () => Date.now() + 60_000},
+      });
+
+      await expect(onGroupInviteCreated({
+        id: "evt-active-claim",
+        data: {data: () => ({
+          invited_user_id: "user1",
+          group_id: "group1",
+          group_name: "Pelada FC",
+          invited_by_name: "João",
+        })},
+        params: {inviteId: "inv-active"},
+      })).rejects.toThrow("ainda em processamento");
+      expect(mockSendAndSaveNotification).not.toHaveBeenCalled();
     });
 
     it("onGroupInviteCreated: reentrega com mesmo event.id nao duplica sendAndSaveNotification", async () => {
@@ -615,6 +888,7 @@ describe("Presence Notifications", () => {
             data: () => ({
               status: "ACCEPTED",
               invited_by_id: "inviter1",
+              invited_user_id: "user1",
               invited_user_name: "Maria",
               group_name: "Pelada FC",
               group_id: "group1",

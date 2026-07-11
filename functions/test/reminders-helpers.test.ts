@@ -271,6 +271,54 @@ describe("Reminders - formatGameDateTime", () => {
 });
 
 describe("Reminders - fetchGamesInReminderWindow", () => {
+  test("inclui jogos modernos elegíveis e ignora status encerrado", async () => {
+    const target = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    mockCollectionGet
+      .mockResolvedValueOnce({
+        docs: [
+          {
+            id: "modern-game",
+            data: () => ({
+              dateTime: {toDate: () => target},
+              status: "SCHEDULED",
+              group_id: "group-1",
+              locationName: "Arena Central",
+            }),
+          },
+          {
+            id: "cancelled-game",
+            data: () => ({dateTime: {toDate: () => target}, status: "CANCELLED"}),
+          },
+        ],
+      })
+      .mockResolvedValueOnce({docs: [], size: 0});
+
+    await expect(fetchGamesInReminderWindow(24)).resolves.toEqual([
+      expect.objectContaining({
+        id: "modern-game",
+        status: "SCHEDULED",
+        group_id: "group-1",
+        location_name: "Arena Central",
+      }),
+    ]);
+  });
+
+  test("mantém jogos modernos quando a consulta legada falha", async () => {
+    const target = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    mockCollectionGet
+      .mockResolvedValueOnce({
+        docs: [{
+          id: "modern-game",
+          data: () => ({dateTime: {toDate: () => target}, status: "CONFIRMED"}),
+        }],
+      })
+      .mockRejectedValueOnce(new Error("legacy index unavailable"));
+
+    const games = await fetchGamesInReminderWindow(24);
+
+    expect(games.map(({id}) => id)).toEqual(["modern-game"]);
+  });
+
   test("ancora jogos legados sem dateTime na data real do jogo, nao em created_at", async () => {
     const realGameDate = new Date(Date.now() + 24 * 60 * 60 * 1000);
     const realDateKey = realGameDate.toLocaleDateString("en-CA", {
@@ -303,9 +351,57 @@ describe("Reminders - fetchGamesInReminderWindow", () => {
 
     await fetchGamesInReminderWindow(24);
 
-    expect(mockWhere).toHaveBeenCalledWith("dateTime", "==", null);
+    expect(mockWhere).not.toHaveBeenCalledWith("dateTime", "==", null);
     expect(mockWhere).toHaveBeenCalledWith("date", ">=", expect.any(String));
     expect(mockWhere).toHaveBeenCalledWith("date", "<=", expect.any(String));
+  });
+
+  test("filtra jogos modernos no fallback por date sem exigir indice composto", async () => {
+    jest.useFakeTimers().setSystemTime(new Date("2026-07-10T12:00:00.000Z"));
+    try {
+      const target = new Date("2026-07-11T12:00:00.000Z");
+      const localSource = new Date(target.getTime() - 3 * 60 * 60 * 1000);
+      const dateKey = [
+        localSource.getFullYear(),
+        String(localSource.getMonth() + 1).padStart(2, "0"),
+        String(localSource.getDate()).padStart(2, "0"),
+      ].join("-");
+      const timeKey = [
+        String(localSource.getHours()).padStart(2, "0"),
+        String(localSource.getMinutes()).padStart(2, "0"),
+      ].join(":");
+      mockCollectionGet
+        .mockResolvedValueOnce({docs: []})
+        .mockResolvedValueOnce({
+          size: 2,
+          docs: [
+            {
+              id: "modern-game",
+              data: () => ({
+                status: "SCHEDULED",
+                dateTime: {toDate: () => target},
+                date: dateKey,
+                time: timeKey,
+              }),
+            },
+            {
+              id: "legacy-game",
+              data: () => ({
+                status: "SCHEDULED",
+                dateTime: null,
+                date: dateKey,
+                time: timeKey,
+              }),
+            },
+          ],
+        });
+
+      const games = await fetchGamesInReminderWindow(24);
+
+      expect(games.map(({id}) => id)).toEqual(["legacy-game"]);
+    } finally {
+      jest.useRealTimers();
+    }
   });
 });
 

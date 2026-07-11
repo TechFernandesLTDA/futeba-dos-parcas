@@ -19,6 +19,7 @@ mockOrderBy.mockReturnValue(queryChain);
 
 jest.mock("../../src/middleware/rate-limiter", () => ({
   checkRateLimit: jest.fn(),
+  checkRateLimitByIp: jest.fn(),
 }));
 
 class MockHttpsError extends Error {
@@ -100,7 +101,10 @@ beforeEach(() => {
 });
 
 import { canSendSmsOtp, logVerificationFailure } from "../../src/auth/anti-abuse";
-import { checkRateLimit } from "../../src/middleware/rate-limiter";
+import {
+  checkRateLimit,
+  checkRateLimitByIp,
+} from "../../src/middleware/rate-limiter";
 
 const makeRequest = (overrides: any = {}) => ({
   auth: overrides.auth === undefined ? { uid: "user1", token: {} } : overrides.auth,
@@ -115,6 +119,16 @@ describe("Auth — Anti Abuse", () => {
     mockCollectionAdd.mockResolvedValue({ id: "log1" });
     mockCountGet.mockResolvedValue({ data: () => ({ count: 1 }) });
     mockGetUserByPhoneNumber.mockRejectedValue({ code: "auth/user-not-found" });
+    (checkRateLimit as jest.Mock).mockReset().mockResolvedValue({
+      allowed: true,
+      remaining: 10,
+      resetAt: new Date(Date.now() + 3600000),
+    });
+    (checkRateLimitByIp as jest.Mock).mockReset().mockResolvedValue({
+      allowed: true,
+      remaining: 10,
+      resetAt: new Date(Date.now() + 3600000),
+    });
   });
 
   describe("canSendSmsOtp", () => {
@@ -139,7 +153,8 @@ describe("Auth — Anti Abuse", () => {
       const result = await canSendSmsOtp(makeRequest());
 
       expect(result).toEqual({ allowed: true });
-      expect(checkRateLimit).toHaveBeenCalledTimes(3);
+      expect(checkRateLimit).toHaveBeenCalledTimes(2);
+      expect(checkRateLimitByIp).toHaveBeenCalledTimes(1);
     });
 
     it("permite telefone ja vinculado ao mesmo usuario sem reenviar SMS", async () => {
@@ -180,8 +195,7 @@ describe("Auth — Anti Abuse", () => {
           windowMs: 60 * 60 * 1000,
         }),
       );
-      expect(checkRateLimit).toHaveBeenNthCalledWith(
-        3,
+      expect(checkRateLimitByIp).toHaveBeenCalledWith(
         "192.168.1.1",
         expect.objectContaining({
           keyPrefix: "sms_ip",
@@ -205,8 +219,12 @@ describe("Auth — Anti Abuse", () => {
     it("bloqueia quando rate limit por IP excedido", async () => {
       (checkRateLimit as jest.Mock)
         .mockResolvedValueOnce({ allowed: true, remaining: 2, resetAt: new Date(Date.now() + 3600000) })
-        .mockResolvedValueOnce({ allowed: true, remaining: 2, resetAt: new Date(Date.now() + 3600000) })
-        .mockResolvedValueOnce({ allowed: false, remaining: 0, resetAt: new Date(Date.now() + 3600000) });
+        .mockResolvedValueOnce({ allowed: true, remaining: 2, resetAt: new Date(Date.now() + 3600000) });
+      (checkRateLimitByIp as jest.Mock).mockResolvedValueOnce({
+        allowed: false,
+        remaining: 0,
+        resetAt: new Date(Date.now() + 3600000),
+      });
 
       const result = await canSendSmsOtp(makeRequest());
 
@@ -236,7 +254,7 @@ describe("Auth — Anti Abuse", () => {
         rawRequest: { ip: "10.0.0.1", headers: { "x-forwarded-for": "203.0.113.5, 10.0.0.1" } },
       }));
 
-      expect(checkRateLimit).toHaveBeenCalledWith(
+      expect(checkRateLimitByIp).toHaveBeenCalledWith(
         "203.0.113.5",
         expect.objectContaining({ keyPrefix: "sms_ip" }),
       );
@@ -257,13 +275,13 @@ describe("Auth — Anti Abuse", () => {
         },
       }));
 
-      expect(checkRateLimit).toHaveBeenCalledWith(
+      expect(checkRateLimitByIp).toHaveBeenCalledWith(
         "203.0.113.5",
         expect.objectContaining({ keyPrefix: "sms_ip" }),
       );
 
       // Garante que o IP forjado "1.2.3.4" NÃO foi usado para o bucket sms_ip
-      const ipBucketCall = (checkRateLimit as jest.Mock).mock.calls.find(
+      const ipBucketCall = (checkRateLimitByIp as jest.Mock).mock.calls.find(
         (call) => call[1]?.keyPrefix === "sms_ip",
       );
       expect(ipBucketCall?.[0]).not.toBe("1.2.3.4");
@@ -284,7 +302,7 @@ describe("Auth — Anti Abuse", () => {
         },
       }));
 
-      expect(checkRateLimit).toHaveBeenCalledWith(
+      expect(checkRateLimitByIp).toHaveBeenCalledWith(
         "203.0.113.5",
         expect.objectContaining({ keyPrefix: "sms_ip" }),
       );

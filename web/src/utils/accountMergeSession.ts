@@ -5,18 +5,13 @@ export type PendingAccountMerge = {
   status: 'pending_cpf' | 'ready';
 };
 
-export function savePendingAccountMerge(value: PendingAccountMerge): void {
-  try {
-    sessionStorage.setItem(ACCOUNT_MERGE_SESSION_KEY, JSON.stringify(value));
-  } catch {
-    // Safari privado pode bloquear storage; o pedido continua no servidor.
-  }
-}
+// Safari privado/ITP pode bloquear sessionStorage. O fallback mantém o fluxo
+// vivo durante a navegação atual sem expor os UIDs que formam o requestId.
+let inMemoryPendingMerge: PendingAccountMerge | null = null;
 
-export function readPendingAccountMerge(): PendingAccountMerge | null {
+function parsePendingAccountMerge(raw: string | null): PendingAccountMerge | null {
+  if (!raw) return null;
   try {
-    const raw = sessionStorage.getItem(ACCOUNT_MERGE_SESSION_KEY);
-    if (!raw) return null;
     const value = JSON.parse(raw) as Partial<PendingAccountMerge>;
     if (
       typeof value.requestId !== 'string' ||
@@ -29,11 +24,29 @@ export function readPendingAccountMerge(): PendingAccountMerge | null {
   }
 }
 
+export function savePendingAccountMerge(value: PendingAccountMerge): void {
+  inMemoryPendingMerge = value;
+  try {
+    sessionStorage.setItem(ACCOUNT_MERGE_SESSION_KEY, JSON.stringify(value));
+  } catch {
+    // Safari privado pode bloquear storage; o pedido continua no servidor.
+  }
+}
+
+export function readPendingAccountMerge(): PendingAccountMerge | null {
+  try {
+    return parsePendingAccountMerge(sessionStorage.getItem(ACCOUNT_MERGE_SESSION_KEY)) ??
+      inMemoryPendingMerge;
+  } catch {
+    return inMemoryPendingMerge;
+  }
+}
+
 export function clearPendingAccountMerge(): void {
+  inMemoryPendingMerge = null;
   try {
     sessionStorage.removeItem(ACCOUNT_MERGE_SESSION_KEY);
   } catch {
     // No-op: pedido concluído no servidor é idempotente.
   }
 }
-

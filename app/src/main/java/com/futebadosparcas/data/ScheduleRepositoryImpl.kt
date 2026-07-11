@@ -3,6 +3,9 @@ package com.futebadosparcas.data
 import com.futebadosparcas.domain.model.Schedule
 import com.futebadosparcas.domain.repository.ScheduleRepository
 import com.futebadosparcas.util.AppLogger
+import com.futebadosparcas.data.model.Schedule as FirebaseSchedule
+import com.futebadosparcas.util.toAndroidSchedule
+import com.futebadosparcas.util.toKmpSchedule
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import kotlinx.coroutines.channels.awaitClose
@@ -40,7 +43,11 @@ class ScheduleRepositoryImpl constructor(
                 }
 
                 if (snapshot != null) {
-                    val kmpSchedules = snapshot.toObjects(Schedule::class.java)
+                    val kmpSchedules = snapshot.documents.mapNotNull { document ->
+                        document.toObject(FirebaseSchedule::class.java)
+                            ?.copy(id = document.id)
+                            ?.toKmpSchedule()
+                    }
                     val fromCache = snapshot.metadata.isFromCache
                     AppLogger.d("ScheduleRepo") { "Loaded ${kmpSchedules.size} schedules for owner: $ownerId (fromCache: $fromCache)" }
                     trySend(Result.success(kmpSchedules))
@@ -51,7 +58,9 @@ class ScheduleRepositoryImpl constructor(
 
     override suspend fun createSchedule(schedule: Schedule): Result<String> {
         return try {
-            val docRef = schedulesCollection.add(schedule).await()
+            // O modelo Android possui @PropertyName para o contrato snake_case
+            // exigido pelas rules e pelas queries (owner_id, group_id, etc.).
+            val docRef = schedulesCollection.add(schedule.toAndroidSchedule()).await()
             Result.success(docRef.id)
         } catch (e: Exception) {
             AppLogger.e("ScheduleRepo", "Error creating schedule", e)
@@ -61,7 +70,8 @@ class ScheduleRepositoryImpl constructor(
 
     override suspend fun updateSchedule(schedule: Schedule): Result<Unit> {
         return try {
-            schedulesCollection.document(schedule.id).set(schedule).await()
+            schedulesCollection.document(schedule.id)
+                .set(schedule.toAndroidSchedule().copy(id = schedule.id)).await()
             Result.success(Unit)
         } catch (e: Exception) {
             AppLogger.e("ScheduleRepo", "Error updating schedule", e)
@@ -82,7 +92,9 @@ class ScheduleRepositoryImpl constructor(
     override suspend fun getScheduleById(scheduleId: String): Result<Schedule> {
         return try {
             val snapshot = schedulesCollection.document(scheduleId).get().await()
-            val schedule = snapshot.toObject(Schedule::class.java)
+            val schedule = snapshot.toObject(FirebaseSchedule::class.java)
+                ?.copy(id = snapshot.id)
+                ?.toKmpSchedule()
             if (schedule != null) {
                 Result.success(schedule)
             } else {

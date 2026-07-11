@@ -33,6 +33,9 @@ export interface CashboxSummaryState extends CashboxContribution {
 interface ReconcileOptions {
   source: string;
   coveredOperationRef?: FirebaseFirestore.DocumentReference;
+  authorizeTransaction?: (
+    tx: FirebaseFirestore.Transaction
+  ) => Promise<void>;
 }
 
 /**
@@ -56,7 +59,9 @@ export function cashboxContribution(
     return {incomeCents: 0, expenseCents: 0, entryCount: 0};
   }
 
-  const amountCents = cashboxAmountToCents(data.amount);
+  const amountCents = Number.isSafeInteger(data.amount_cents) ?
+    data.amount_cents as number :
+    cashboxAmountToCents(data.amount);
   if (amountCents <= 0) {
     return {incomeCents: 0, expenseCents: 0, entryCount: 0};
   }
@@ -211,6 +216,9 @@ export async function reconcileCashboxSummaryForGroup(
     };
 
     const committed = await db().runTransaction(async (tx) => {
+      if (options.authorizeTransaction) {
+        await options.authorizeTransaction(tx);
+      }
       const refs: FirebaseFirestore.DocumentReference[] = [summaryRef];
       if (options.coveredOperationRef) refs.push(options.coveredOperationRef);
       const snapshots = await Promise.all(refs.map((ref) => tx.get(ref)));

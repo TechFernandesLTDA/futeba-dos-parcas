@@ -145,6 +145,27 @@ async function findInviterByCode(code: string): Promise<{
     return null;
   }
 
+  const indexedOwner = inviteCodeDoc.data()?.user_id;
+  if (inviteCodeDoc.exists && typeof indexedOwner === "string") {
+    const ownerDoc = await db().collection("users").doc(indexedOwner).get();
+    const ownerData = ownerDoc.data();
+    if (
+      !ownerDoc.exists ||
+      !ownerData ||
+      ownerData?.deleted_at ||
+      normalizeInviteCode(ownerData?.invite_code) !== code
+    ) {
+      return null;
+    }
+    return {
+      uid: ownerDoc.id,
+      name: typeof ownerData.name === "string" && ownerData.name.trim() ?
+        ownerData.name.trim() :
+        "Membro Futeba",
+      data: ownerData,
+    };
+  }
+
   const snap = await db()
     .collection("users")
     .where("invite_code", "==", code)
@@ -176,23 +197,32 @@ async function syncInviteCodeOwner(
   code: string,
   inviter: {uid: string; name: string}
 ): Promise<void> {
-  const inviteCodeRef = db()
+  const database = db();
+  const inviteCodeRef = database
     .collection("invite_codes")
     .doc(code);
-  const inviteCodeDoc = await inviteCodeRef.get();
-
-  const payload: Record<string, unknown> = {
-    user_id: inviter.uid,
-    inviter_name: inviter.name,
-    updated_at: FieldValue.serverTimestamp(),
-  };
-
-  if (!inviteCodeDoc.exists) {
-    payload.active = true;
-    payload.created_at = FieldValue.serverTimestamp();
-  }
-
-  await inviteCodeRef.set(payload, {merge: true});
+  await database.runTransaction(async (tx) => {
+    const inviteCodeDoc = await tx.get(inviteCodeRef);
+    const existingOwner = inviteCodeDoc.data()?.user_id;
+    if (
+      inviteCodeDoc.exists &&
+      typeof existingOwner === "string" &&
+      existingOwner !== inviter.uid
+    ) {
+      throw new HttpsError(
+        "failed-precondition",
+        "Código de convite associado a outra identidade.",
+      );
+    }
+    const now = FieldValue.serverTimestamp();
+    tx.set(inviteCodeRef, {
+      user_id: inviter.uid,
+      inviter_name: inviter.name,
+      active: inviteCodeDoc.data()?.active ?? true,
+      created_at: inviteCodeDoc.data()?.created_at ?? now,
+      updated_at: now,
+    }, {merge: true});
+  });
 }
 
 /**
@@ -211,57 +241,78 @@ function generateInviteCode(length = 6): string {
 }
 
 /**
- * Reserva um invite_code atomicamente via colecao invite_codes.
- * FIX #2650: o padrao anterior (check-then-write em users) tinha
- * race condition entre usuarios criados simultaneamente — ambos
- * podiam receber o mesmo codigo. Agora usamos invite_codes/{code}
- * como lock atomico: Firestore garante que dois docs com o mesmo ID
- * nunca sao criados concorrentemente.
- * @param {{uid: string, name: string}|undefined} owner Dono opcional.
+ * Reserva invite_codes/{code} e atualiza users/{uid} na mesma transação.
+ * Assim não existe o gap create→update que deixava locks órfãos em retry.
+ *
+ * @param {FirebaseFirestore.DocumentReference} userRef Perfil do dono.
+ * @param {object} owner Dono do código.
+ * @param {string} owner.uid UID do dono.
+ * @param {string} [owner.name] Nome público do dono.
  * @return {Promise<string>} Codigo unico reservado.
  */
-async function generateUniqueCode(owner?: {
-  uid: string;
-  name?: string;
-}): Promise<string> {
+async function assignUniqueInviteCode(
+  userRef: FirebaseFirestore.DocumentReference,
+  owner: {
+    uid: string;
+    name?: string;
+  },
+): Promise<string> {
   const inviteCodesRef = db().collection("invite_codes");
-  for (const length of [6, 8]) {
-    for (let attempt = 0; attempt < 5; attempt++) {
+  for (const [length, attempts] of [[6, 5], [8, 5], [10, 20]] as const) {
+    for (let attempt = 0; attempt < attempts; attempt++) {
       const code = generateInviteCode(length);
-      try {
-        await inviteCodesRef.doc(code).create({
-          ...(owner ? {
-            user_id: owner.uid,
+      const codeRef = inviteCodesRef.doc(code);
+      const assigned = await db().runTransaction(async (tx) => {
+        const userSnap = await tx.get(userRef);
+        if (!userSnap.exists) {
+          throw new HttpsError("not-found", "Usuário não encontrado.");
+        }
+        const existingCode = normalizeInviteCode(userSnap.data()?.invite_code);
+        const existingCodeRef = existingCode ? inviteCodesRef.doc(existingCode) : null;
+        const existingCodeSnap = existingCodeRef ?
+          await tx.get(existingCodeRef) :
+          null;
+        if (
+          existingCode &&
+          existingCodeSnap?.exists &&
+          existingCodeSnap.data()?.user_id === owner.uid
+        ) {
+          tx.set(existingCodeRef!, {
             inviter_name: owner.name || "Membro Futeba",
             active: true,
-          } : {}),
-          created_at: FieldValue.serverTimestamp(),
-        });
-        return code;
-      } catch (e: unknown) {
-        if ((e as {code?: number}).code === 6) continue; // ALREADY_EXISTS
-        throw e;
-      }
-    }
-  }
+            updated_at: FieldValue.serverTimestamp(),
+          }, {merge: true});
+          return existingCode;
+        }
 
-  while (true) {
-    const code = generateInviteCode(10);
-    try {
-      await inviteCodesRef.doc(code).create({
-        ...(owner ? {
+        const codeSnap = existingCode === code ?
+          existingCodeSnap! :
+          await tx.get(codeRef);
+        if (codeSnap.exists) return null;
+
+        tx.set(codeRef, {
           user_id: owner.uid,
           inviter_name: owner.name || "Membro Futeba",
           active: true,
-        } : {}),
-        created_at: FieldValue.serverTimestamp(),
+          created_at: FieldValue.serverTimestamp(),
+        });
+        tx.update(userRef, {
+          invite_code: code,
+          invite_count: typeof userSnap.data()?.invite_count === "number" ?
+            userSnap.data()?.invite_count :
+            0,
+        });
+        return code;
       });
-      return code;
-    } catch (e: unknown) {
-      if ((e as {code?: number}).code === 6) continue; // ALREADY_EXISTS
-      throw e;
+
+      if (assigned) return assigned;
     }
   }
+
+  throw new HttpsError(
+    "resource-exhausted",
+    "Não foi possível gerar um código único agora.",
+  );
 }
 
 /**
@@ -272,6 +323,7 @@ export const onUserCreatedGenerateInviteCode = onDocumentCreated(
   {
     document: "users/{userId}",
     region: FUNCTION_REGION,
+    retry: true,
   },
   async (event) => {
     const userId = event.params.userId;
@@ -281,40 +333,20 @@ export const onUserCreatedGenerateInviteCode = onDocumentCreated(
       return;
     }
 
-    // Se já tem invite_code, não sobrescreve
-    if (data.invite_code) {
-      logger.info("User already has invite_code, skipping", userId);
-      return;
-    }
-
     const displayName = typeof data.name === "string" ?
       data.name :
       "Membro Futeba";
-    const inviteCode = await generateUniqueCode({
-      uid: userId,
-      name: displayName,
-    });
     const userRef = db().collection("users").doc(userId);
 
     try {
-      await userRef.update({
-        invite_code: inviteCode,
-        invite_count: 0,
+      await assignUniqueInviteCode(userRef, {
+        uid: userId,
+        name: displayName,
       });
     } catch (e: unknown) {
-      // #2782: o doc users/{uid} pode ter sido deletado entre o evento
-      // CREATE e a execução (assíncrona) deste trigger — comum no test
-      // harness do emulador, onde o cleanup deleta os users de teste antes
-      // dos triggers drenarem. update() lança 5 NOT_FOUND → função morta →
-      // "socket hang up". No emulador tratamos como no-op (retry é inútil:
-      // o doc não vai voltar). Produção mantém o re-throw original.
-      if (
-        process.env.FUNCTIONS_EMULATOR === "true" &&
-        (e as {code?: number} | null)?.code === 5
-      ) {
+      if (e instanceof HttpsError && e.code === "not-found") {
         logger.warn(
-          "onUserCreatedGenerateInviteCode: user doc removido antes do " +
-          "update no emulador; ignorando",
+          "onUserCreatedGenerateInviteCode: user doc removido; ignorando",
           {userId}
         );
         return;
@@ -334,6 +366,7 @@ export const onUserCreatedProcessInvite = onDocumentCreated(
   {
     document: "users/{userId}",
     region: FUNCTION_REGION,
+    retry: true,
   },
   async (event) => {
     const userId = event.params.userId;
@@ -377,6 +410,7 @@ export const onUserCreatedProcessInvite = onDocumentCreated(
           userId,
           markErr,
         });
+        throw markErr;
       }
       return;
     }
@@ -471,8 +505,6 @@ export const onUserCreatedProcessInvite = onDocumentCreated(
           inviter_id: invitedByUid,
           inviter_name: inviter.name,
           invited_user_id: userId,
-          invited_user_email:
-            typeof data.email === "string" ? data.email : null,
           accepted_at: now,
           xp_awarded: APP_INVITE_ACCEPTED_XP,
           xp_log_id: xpLogRef.id,
@@ -527,6 +559,14 @@ export const onUserCreatedProcessInvite = onDocumentCreated(
       }
     } catch (err) {
       logger.error("Failed to process invite for user", {userId, err});
+      if (
+        err instanceof HttpsError &&
+        ["failed-precondition", "invalid-argument"].includes(err.code)
+      ) {
+        // Conflitos permanentes não melhoram em retry e virariam poison event.
+        return;
+      }
+      throw err;
     }
   }
 );
@@ -577,16 +617,11 @@ export const generateMyInviteCode = onCall(
         return {inviteCode: existingCode};
       }
 
-      const inviteCode = await generateUniqueCode({
+      const inviteCode = await assignUniqueInviteCode(userRef, {
         uid,
         name: (userDoc.data()?.name as string | undefined) ||
           request.auth?.token?.name as string | undefined ||
           "Membro Futeba",
-      });
-
-      await userRef.update({
-        invite_code: inviteCode,
-        invite_count: userDoc.data()?.invite_count || 0,
       });
 
       logger.info("Generated invite code on demand", {uid});

@@ -215,6 +215,17 @@ service cloud.firestore {
       return gameDoc != null && gameDoc.data.owner_id == userId();
     }
 
+    // Escalação vira parte do estado autoritativo assim que o jogo entra ao
+    // vivo. Owners só podem alterar teams antes de LIVE; Admin SDK/admin global
+    // continua disponível para reconciliação operacional.
+    function canOwnerMutateGameRoster(gameId) {
+      let gameDoc = get(/databases/$(database)/documents/games/$(gameId));
+      return gameDoc != null &&
+        gameDoc.data.owner_id == userId() &&
+        gameDoc.data.status != 'LIVE' &&
+        gameDoc.data.status != 'FINISHED';
+    }
+
     // #2151: Helper global para verificar se usuario e owner de um grupo
     // Elimina duplicacao isGroupOwnerById/isGroupOwnerById2 em members e join_requests
     function isGroupOwnerById(groupId) {
@@ -262,6 +273,7 @@ service cloud.firestore {
     function isGroupMember(groupId) {
       let memberDoc = get(/databases/$(database)/documents/groups/$(groupId)/members/$(userId()));
       return memberDoc != null &&
+        memberDoc.data.user_id == userId() &&
         (!('status' in memberDoc.data) || memberDoc.data.status == 'ACTIVE');
     }
 
@@ -270,6 +282,7 @@ service cloud.firestore {
     function isGroupAdmin(groupId) {
       let memberDoc = get(/databases/$(database)/documents/groups/$(groupId)/members/$(userId()));
       return memberDoc != null
+        && memberDoc.data.user_id == userId()
         && (memberDoc.data.role == 'OWNER' || memberDoc.data.role == 'ADMIN')
         && (!('status' in memberDoc.data) || memberDoc.data.status == 'ACTIVE');
     }
@@ -649,6 +662,20 @@ service cloud.firestore {
                        !('cpfVerifiedAt' in request.resource.data) &&
                        !('phone' in request.resource.data) &&
                        !('phone_verified' in request.resource.data) &&
+                       // Códigos, vínculo aceito e contadores são materializados
+                       // pelos triggers server-side. Bloquear no create evita
+                       // code squatting e fraude de recompensa por indicação.
+                       !('invite_code' in request.resource.data) &&
+                       !('invite_count' in request.resource.data) &&
+                       !('invited_by' in request.resource.data) &&
+                       !('invite_accepted_at' in request.resource.data) &&
+                       !('invite_source' in request.resource.data) &&
+                       !('status' in request.resource.data) &&
+                       !('account_status' in request.resource.data) &&
+                       !('deleted_at' in request.resource.data) &&
+                       !('deletedAt' in request.resource.data) &&
+                       !('followers_count' in request.resource.data) &&
+                       !('following_count' in request.resource.data) &&
                        // Auditoria 2026-05-30 #5: ratings automaticos sao
                        // server-only (Cloud Functions). O update ja bloqueia
                        // via fieldUnchanged; o create esquecia, permitindo
@@ -699,10 +726,14 @@ service cloud.firestore {
       allow update: if
           isAdmin() ||
           (isOwner(userId) &&
+           resource.data.get('account_status', 'active') != 'merged' &&
            // Campos imutaveis (identidade)
            fieldUnchanged('id') &&
            fieldUnchanged('created_at') &&
            fieldUnchanged('role') &&
+           fieldUnchanged('account_status') &&
+           fieldUnchanged('deleted_at') &&
+           fieldUnchanged('deletedAt') &&
            fieldUnchanged('invite_code') &&
            fieldUnchanged('invite_count') &&
            fieldUnchanged('invited_by') &&
@@ -944,6 +975,8 @@ service cloud.firestore {
       // PERF_001 P0 #30: Validação estrita de scores (max 100 gols por time)
       allow create: if isProfileComplete() &&
                        (isAdmin() || request.resource.data.owner_id == userId()) &&
+                       !('deleted_at' in request.resource.data) &&
+                       !('deletedAt' in request.resource.data) &&
                        hasNoGameValidationClientFields(request.resource.data) &&
                        // SECFIX #866: status inicial deve ser SCHEDULED para prevenir criação em estado inválido
                        request.resource.data.status == 'SCHEDULED' &&
@@ -1350,22 +1383,28 @@ service cloud.firestore {
       allow read: if isAuthenticated() &&
         (resource.data.owner_id == request.auth.uid ||
          isAdmin() ||
-         (resource.data.group_id != null && isGroupMember(resource.data.group_id)));
+         (resource.data.get('group_id', null) != null &&
+          isGroupMember(resource.data.group_id)));
 
       // Usuario pode criar recorrencias para si mesmo
       // Admins podem criar para qualquer um
-      // Se tiver group_id, o usuario deve ser membro do grupo
+      // Em grupo, somente owner/admin pode gerir a agenda financeira/recorrente.
       allow create: if isAuthenticated() &&
-        (request.resource.data.owner_id == userId() || isAdmin()) &&
-        (request.resource.data.group_id == null ||
-         isGroupMember(request.resource.data.group_id));
+        (isAdmin() ||
+         (request.resource.data.owner_id == userId() &&
+          (request.resource.data.get('group_id', null) == null ||
+           isGroupAdmin(request.resource.data.group_id) ||
+           isGroupOwnerById(request.resource.data.group_id))));
 
       // Usuario pode atualizar suas proprias recorrencias
       // Admins podem atualizar qualquer uma
       // SECFIX #863: whitelist de campos editáveis — owner não pode alterar owner_id/group_id
       allow update: if isAuthenticated() && (
         isAdmin() ||
-        (resource.data.owner_id == userId() &&
+        ((resource.data.get('group_id', null) == null ?
+           resource.data.owner_id == userId() :
+           (isGroupAdmin(resource.data.group_id) ||
+            isGroupOwnerById(resource.data.group_id))) &&
          fieldUnchanged('owner_id') &&
          fieldUnchanged('group_id') &&
          fieldUnchanged('created_at'))
@@ -1374,7 +1413,11 @@ service cloud.firestore {
       // Usuario pode deletar suas proprias recorrencias
       // Admins podem deletar qualquer uma
       allow delete: if isAuthenticated() &&
-        (resource.data.owner_id == userId() || isAdmin());
+        (isAdmin() ||
+         (resource.data.get('group_id', null) == null ?
+           resource.data.owner_id == userId() :
+           (isGroupAdmin(resource.data.group_id) ||
+            isGroupOwnerById(resource.data.group_id))));
     }
 
     // ============================================
@@ -1483,16 +1526,17 @@ service cloud.firestore {
       // Apenas dono do jogo ou admin pode criar times
       // SECFIX #860 (create): usa request.resource.data para verificar game_id do novo time
       allow create: if isAuthenticated() &&
-                       (isAdmin() || isGameOwner(request.resource.data.game_id));
+                       request.resource.data.game_id is string &&
+                       (isAdmin() || canOwnerMutateGameRoster(request.resource.data.game_id));
 
       // SECFIX #860 (update): usa resource.data (doc existente) para prevenir ownership pivot attack
       // Imutabilidade de game_id garante que o time não pode ser transferido para outro jogo
       allow update: if isAuthenticated() &&
-                       (isAdmin() || isGameOwner(resource.data.game_id)) &&
+                       (isAdmin() || canOwnerMutateGameRoster(resource.data.game_id)) &&
                        fieldUnchanged('game_id');
 
       allow delete: if isAuthenticated() &&
-                       (isAdmin() || isGameOwner(resource.data.game_id));
+                       (isAdmin() || canOwnerMutateGameRoster(resource.data.game_id));
     }
 
     // ============================================
@@ -1502,17 +1546,28 @@ service cloud.firestore {
       // Qualquer usuario autenticado pode ler
       allow read: if isAuthenticated();
 
-      // Dono do jogo ou admin pode criar/atualizar estatisticas de jogadores
+      // Dono do jogo ou admin pode criar/atualizar estatisticas de jogadores.
+      // Create autoriza pelo game_id novo; update autoriza pelo documento
+      // existente e mantém as identidades imutáveis para impedir ownership pivot.
       // PERF_001 P0 #30: Validacao estrita de scores (goals, assists, saves - max 100)
       // SECFIX #2649: saves tambem validado — era permitido valor arbitrario.
-      allow create, update: if isAuthenticated() &&
-                               (isAdmin() || isGameOwner(request.resource.data.game_id)) &&
-                               // Valida goals (se presente) <= 100
-                               isValidScore(request.resource.data.get('goals', null)) &&
-                               // Valida assists (se presente) - mesmo limite para consistencia
-                               isValidScore(request.resource.data.get('assists', null)) &&
-                               // Valida saves (se presente) - mesmo limite para consistencia
-                               isValidScore(request.resource.data.get('saves', null));
+      allow create: if isAuthenticated() &&
+                       request.resource.data.game_id is string &&
+                       request.resource.data.player_id is string &&
+                       (isAdmin() || isGameOwner(request.resource.data.game_id)) &&
+                       isValidScore(request.resource.data.get('goals', null)) &&
+                       isValidScore(request.resource.data.get('assists', null)) &&
+                       isValidScore(request.resource.data.get('saves', null));
+
+      allow update: if isAuthenticated() &&
+                       resource.data.game_id is string &&
+                       (isAdmin() || isGameOwner(resource.data.game_id)) &&
+                       fieldUnchanged('game_id') &&
+                       fieldUnchanged('player_id') &&
+                       fieldUnchanged('created_at') &&
+                       isValidScore(request.resource.data.get('goals', null)) &&
+                       isValidScore(request.resource.data.get('assists', null)) &&
+                       isValidScore(request.resource.data.get('saves', null));
 
       allow delete: if isAuthenticated() &&
                        (isAdmin() || isGameOwner(resource.data.game_id));
@@ -2152,6 +2207,11 @@ service cloud.firestore {
       // Admin nao tem bypass do gate, mas pode criar para qualquer owner se completo.
       allow create: if isProfileComplete() &&
                        (isAdmin() || request.resource.data.owner_id == userId()) &&
+                       // Contador é server-authoritative. Clientes legados podem
+                       // omitir o campo, mas nunca iniciar um grupo já qualificado.
+                       request.resource.data.get('member_count', 0) == 0 &&
+                       !('deleted_at' in request.resource.data) &&
+                       !('deletedAt' in request.resource.data) &&
                        // Nome do grupo: 3-50 caracteres
                        isValidStringLength(request.resource.data.name, 3, 50) &&
                        // H2 FIX: status inicial deve ser ACTIVE (consistente com games que forcam SCHEDULED)
@@ -2179,6 +2239,7 @@ service cloud.firestore {
             (
               resource.data.owner_id == userId() &&
               exists(/databases/$(database)/documents/groups/$(groupId)/members/$(request.resource.data.owner_id)) &&
+              get(/databases/$(database)/documents/groups/$(groupId)/members/$(request.resource.data.owner_id)).data.user_id == request.resource.data.owner_id &&
               get(/databases/$(database)/documents/groups/$(groupId)/members/$(request.resource.data.owner_id)).data.status == 'ACTIVE'
             )
           ) &&
@@ -2238,7 +2299,8 @@ service cloud.firestore {
         // sendo criado no MESMO batch tenha owner_id == userId.
         // Isto impede atacante de pre-criar member OWNER em groupId
         // previsivel/arbitrario sem owner do group ser o atacante.
-        allow create: if isAuthenticated() && (
+        allow create: if isAuthenticated() &&
+          memberId == request.resource.data.user_id && (
            // Admin can create member docs but NOT with elevated roles (OWNER/ADMIN) — only owner can
            (isGroupAdmin(groupId) && request.resource.data.role == 'MEMBER') ||
            (request.resource.data.role == 'OWNER' &&
@@ -2263,7 +2325,8 @@ service cloud.firestore {
             memberId == userId() &&
             request.resource.data.status == 'ACTIVE' &&
             isGroupActive(groupId) &&
-            get(/databases/$(database)/documents/groups/$(groupId)).data.is_public == true)
+            get(/databases/$(database)/documents/groups/$(groupId)).data.is_public == true &&
+            !exists(/databases/$(database)/documents/groups/$(groupId)/blocked_players/$(userId())))
         );
 
         // #1491: OWNER nao pode alterar o proprio status (sair do grupo).
@@ -2273,15 +2336,27 @@ service cloud.firestore {
         // SECFIX #2609: Admin nao pode editar o doc do OWNER (previne admin
         // banir/desativar o dono do grupo — golpe de privilegio).
         allow update: if isAuthenticated() && (
-           (isGroupAdmin(groupId) && fieldUnchanged('role') && resource.data.role != 'OWNER' && fieldUnchanged('user_id') && fieldUnchanged('joined_at') && request.resource.data.status in ['ACTIVE','INACTIVE','BANNED']) ||
+          (isGroupAdmin(groupId) && fieldUnchanged('role') && resource.data.role != 'OWNER' && request.resource.data.status in ['ACTIVE','INACTIVE','BANNED']) ||
            (isGroupAdmin(groupId) && isGroupOwnerById(groupId) && (fieldUnchanged('role') || resource.data.role == 'OWNER') && (memberId != userId() || resource.data.role != 'OWNER' || fieldUnchanged('status'))) ||
            (memberId == userId() && isGroupOwnerById(groupId) && (resource.data.role != 'OWNER' || fieldUnchanged('status')))
-        );
+        ) &&
+          resource.data.user_id == memberId &&
+          fieldUnchanged('user_id') &&
+          fieldUnchanged('id') &&
+          fieldUnchanged('joined_at');
 
-        allow delete: if isAuthenticated() && (
-          memberId == userId() ||
-          isGroupAdmin(groupId)
-        );
+        // O owner atual precisa transferir a propriedade antes de sair e um
+        // usuário banido não pode apagar o próprio vínculo para reentrar.
+        allow delete: if isAuthenticated() &&
+          get(/databases/$(database)/documents/groups/$(groupId)) != null &&
+          get(/databases/$(database)/documents/groups/$(groupId)).data.owner_id != memberId && (
+            (
+              memberId == userId() &&
+              resource.data.user_id == userId() &&
+              (!('status' in resource.data) || resource.data.status in ['ACTIVE', 'INACTIVE'])
+            ) ||
+            isGroupAdmin(groupId)
+          );
       }
 
       // ============================================
@@ -2306,6 +2381,7 @@ service cloud.firestore {
           // Grupo precisa ser publico e existir (#540)
           exists(/databases/$(database)/documents/groups/$(groupId)) &&
           get(/databases/$(database)/documents/groups/$(groupId)).data.is_public == true &&
+          !exists(/databases/$(database)/documents/groups/$(groupId)/blocked_players/$(userId())) &&
           // Nao pode ja ser membro ativo, removido ou bloqueado
           // #1488: checka status alem de existence — previne rejoin apos kick
           (!exists(/databases/$(database)/documents/groups/$(groupId)/members/$(userId())) ||
@@ -2344,6 +2420,69 @@ service cloud.firestore {
 
         // Resumo e derivado exclusivamente pelo backend canonico.
         allow create, update, delete: if false;
+      }
+
+      // ============================================
+      // MENSALISTAS E COMPETÊNCIAS FINANCEIRAS (#3530)
+      // Todos os writes passam pelas callables transacionais. Configuração e
+      // resumo são visíveis ao grupo; roster, valores individuais e settlements
+      // ficam restritos ao próprio pagador e aos gestores.
+      // ============================================
+      match /monthly_finance_config/{docId} {
+        allow read: if isAuthenticated() &&
+          (isAdmin() || isGroupMember(groupId) || isGroupOwnerById(groupId));
+        allow create, update, delete: if false;
+      }
+
+      match /monthly_member_roster/{memberId} {
+        allow read: if isAuthenticated() && (
+          memberId == userId() ||
+          isAdmin() ||
+          isGroupOwnerById(groupId) ||
+          isGroupAdmin(groupId)
+        );
+        allow create, update, delete: if false;
+      }
+
+      match /monthly_finance_periods/{periodKey} {
+        allow read: if isAuthenticated() &&
+          (isAdmin() || isGroupMember(groupId) || isGroupOwnerById(groupId));
+        allow create, update, delete: if false;
+
+        match /payers/{payerId} {
+          allow read: if isAuthenticated() && (
+            payerId == userId() ||
+            isGroupOwnerById(groupId) ||
+            isGroupAdmin(groupId) ||
+            isAdmin()
+          );
+          allow create, update, delete: if false;
+        }
+
+        match /games/{gameId} {
+          allow read: if isAuthenticated() &&
+            (isAdmin() || isGroupMember(groupId) || isGroupOwnerById(groupId));
+          allow create, update, delete: if false;
+        }
+
+        match /settlements/{settlementId} {
+          allow read: if isAuthenticated() && (
+            resource.data.payer_id == userId() ||
+            isGroupOwnerById(groupId) ||
+            isGroupAdmin(groupId) ||
+            isAdmin()
+          );
+          allow create, update, delete: if false;
+        }
+
+        match /events/{eventId} {
+          allow read: if isAuthenticated() && (
+            isGroupOwnerById(groupId) ||
+            isGroupAdmin(groupId) ||
+            isAdmin()
+          );
+          allow create, update, delete: if false;
+        }
       }
 
       // ============================================
@@ -2570,6 +2709,7 @@ service cloud.firestore {
       function isGroupAdminFor(gId) {
         let member = get(/databases/$(database)/documents/groups/$(gId)/members/$(request.auth.uid));
         return member != null
+          && member.data.user_id == userId()
           && (member.data.role == 'OWNER' || member.data.role == 'ADMIN')
           && member.data.status == 'ACTIVE';
       }
@@ -2624,6 +2764,7 @@ service cloud.firestore {
         let groupDoc = get(/databases/$(database)/documents/groups/$(gId));
         return (
           member != null
+          && member.data.user_id == userId()
           && (member.data.role == 'OWNER' || member.data.role == 'ADMIN')
           && member.data.status == 'ACTIVE'
         ) || (
@@ -2993,6 +3134,8 @@ service cloud.firestore {
         && request.resource.data.message is string
         && request.resource.data.message.size() >= 2
         && request.resource.data.message.size() <= 240
+        && request.resource.data.created_at == request.time
+        && request.resource.data.updated_at == request.time
         && request.resource.data.keys().hasOnly(['game_id', 'user_id', 'user_name', 'message', 'created_at', 'updated_at']);
       allow update: if isAuthenticated()
         && resource.data.user_id == userId()
@@ -3003,7 +3146,8 @@ service cloud.firestore {
         && request.resource.data.message is string
         && request.resource.data.message.size() >= 2
         && request.resource.data.message.size() <= 240
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['user_name', 'message', 'created_at', 'updated_at']);
+        && request.resource.data.updated_at == request.time
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['user_name', 'message', 'updated_at']);
       allow delete: if false;
     }
 
@@ -3336,7 +3480,13 @@ service cloud.firestore {
       // referencia request.resource.data que é null em DELETE → null value error.
       allow update: if isAuthenticated() &&
                        resource.data.created_by == userId() &&
-                       fieldUnchanged('created_by');
+                       request.resource.data.visibility in ['PUBLIC', 'PRIVATE'] &&
+                       request.resource.data.diff(resource.data).affectedKeys()
+                         .hasOnly(['visibility', 'updated_at']) &&
+                       fieldUnchanged('created_by') &&
+                       fieldUnchanged('user_id') &&
+                       fieldUnchanged('type') &&
+                       fieldUnchanged('created_at');
 
       allow delete: if isAuthenticated() &&
                        resource.data.created_by == userId();

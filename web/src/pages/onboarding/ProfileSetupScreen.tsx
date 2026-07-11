@@ -40,6 +40,7 @@ import {
   uploadProfileAvatar,
   validateProfileAvatar,
 } from '../../utils/profileAvatar';
+import { STORAGE_IMAGE_ACCEPT } from '../../utils/storageImage';
 
 const logger = createLogger('ProfileSetupScreen');
 
@@ -209,7 +210,7 @@ export const ProfileSetupScreen: React.FC = () => {
           <Box sx={{ position: 'relative', display: 'inline-block' }}>
             <input
               type="file"
-              accept="image/*"
+              accept={STORAGE_IMAGE_ACCEPT}
               ref={fileInputRef}
               hidden
               aria-label={t('profile.selectPhotoAria')}

@@ -193,6 +193,28 @@ describe("Rate Limiter - checkRateLimit", () => {
     expect(result.remaining).toBe(8);
   });
 
+  test("mantém TTL até o request mais recente sem alterar o reset do mais antigo", async () => {
+    const now = 1_000_000;
+    jest.spyOn(Date, "now").mockReturnValue(now);
+    const transactionSet = jest.fn();
+    mockRunTransaction.mockImplementation(async (callback: any) => callback({
+      get: jest.fn().mockResolvedValue({
+        exists: true,
+        data: () => ({requests: [now - 50_000, now - 10_000]}),
+      }),
+      set: transactionSet,
+    }));
+
+    const result = await checkRateLimit("user1", {
+      maxRequests: 10,
+      windowMs: 60_000,
+    });
+
+    expect(result.resetAt.getTime()).toBe(now + 10_000);
+    const persisted = transactionSet.mock.calls[0][1];
+    expect(persisted.expires_at.toDate().getTime()).toBe(now + 60_000);
+  });
+
   test("deve bloquear request (fail-closed) quando transação falha", async () => {
     mockRunTransaction.mockRejectedValue(new Error("Firestore error"));
 
@@ -438,6 +460,28 @@ describe("Rate Limiter - checkRateLimitByIp", () => {
     const result = await checkRateLimitByIp("192.168.1.1", config);
 
     expect(result.allowed).toBe(true);
+  });
+
+  test("mantém TTL do IP até o request mais recente", async () => {
+    const now = 2_000_000;
+    jest.spyOn(Date, "now").mockReturnValue(now);
+    const transactionSet = jest.fn();
+    mockRunTransaction.mockImplementation(async (callback: any) => callback({
+      get: jest.fn().mockResolvedValue({
+        exists: true,
+        data: () => ({requests: [now - 50_000, now - 5_000]}),
+      }),
+      set: transactionSet,
+    }));
+
+    const result = await checkRateLimitByIp("192.168.1.1", {
+      maxRequests: 10,
+      windowMs: 60_000,
+    });
+
+    expect(result.resetAt.getTime()).toBe(now + 10_000);
+    const persisted = transactionSet.mock.calls[0][1];
+    expect(persisted.expires_at.toDate().getTime()).toBe(now + 60_000);
   });
 
   test("deve bloquear request (fail-closed) quando transação falha", async () => {

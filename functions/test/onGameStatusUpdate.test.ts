@@ -183,7 +183,13 @@ jest.mock("../src/maintenance/soft-delete", () => ({}));
 jest.mock("../src/monitoring/collect-metrics", () => ({}));
 jest.mock("../src/storage/generate-thumbnails", () => ({}));
 jest.mock("../src/auth/custom-claims", () => ({}));
-jest.mock("../src/middleware/rate-limiter", () => ({}));
+jest.mock("../src/middleware/rate-limiter", () => ({
+  RATE_LIMITS: {
+    FINANCE_MANAGE: {maxRequests: 120, windowMs: 60_000},
+    FINANCE_REBUILD: {maxRequests: 10, windowMs: 60_000},
+    FINANCE_SETTLE: {maxRequests: 60, windowMs: 60_000},
+  },
+}));
 jest.mock("firebase-admin/firestore", () => ({
   FieldValue: {
     serverTimestamp: jest.fn(() => ({ _type: "ServerTimestamp" })),

@@ -126,6 +126,8 @@ Real SMS should be a controlled manual smoke or staging-only run. Do not consume
 | Realized games | 6-month history renders without layout overflow or slow blank states | Playwright + seeded emulator |
 | League standings | 40+ players render, sort rules stable, season filters correct | Functions Jest + Web smoke |
 | XP/ranking | suspicious overlap, dedup and season isolation enforced | Functions Jest |
+| Financeiro mensal | 3/4/5 ocorrências, valor fixo/por jogo, subconjunto de mensalistas, feriado, custo por ocorrência e soma exata em centavos | Functions + Web + Rules |
+| Baixa/estorno mensal concorrente | duas sessões não finalizam snapshot obsoleto; retry é idempotente; caixa, pagador e período convergem em tempo real | Functions Jest + Emulator + smoke multi-sessão |
 | Realtime 10/100/1000 | listeners convergem entre sessões; p95/p99, erro, invariantes e orçamento read/write ficam dentro do perfil; hot-document é diagnóstico explícito | `npm run test:load:realtime -- --profile <10|100|1000>` + Firestore Emulator |
 
 ## Firebase And Security

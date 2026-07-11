@@ -1,7 +1,51 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-11T00:50:48.840Z",
+  "generatedAt": "2026-07-11T14:23:07.459Z",
   "notes": [
+    {
+      "version": "1.52.0",
+      "buildNumber": null,
+      "releaseDate": "2026-07-11",
+      "type": "minor",
+      "showPopup": true,
+      "published": true,
+      "headline": "O Caixa do grupo agora calcula mensalistas com agenda completa, feriados, valores exatos e baixa individual em tempo real.",
+      "highlights": [
+        {
+          "icon": "payments",
+          "title": "Mensalistas sob controle",
+          "description": "O responsável escolhe quem participa do mensal sem remover os jogadores avulsos do grupo."
+        },
+        {
+          "icon": "calendar_month",
+          "title": "Três, quatro ou cinco semanas",
+          "description": "Jogos reais, agendas e recorrências futuras formam um único calendário antes da primeira baixa."
+        },
+        {
+          "icon": "event_busy",
+          "title": "Feriados e custos reais",
+          "description": "Cada ocorrência pode sair do rateio ou receber um custo próprio antes do fechamento do mês."
+        }
+      ],
+      "added": [
+        "Valor mensal fixo ou cobrança por jogo, com divisão determinística de todos os centavos.",
+        "Visão histórica por competência e valores individuais privados para cada mensalista.",
+        "Baixas parciais ou integrais atualizam caixa, pagador e período sem recarregar a tela."
+      ],
+      "improved": [],
+      "fixed": [
+        "Cadastro e união de contas ficam mais resistentes a CPF/telefone duplicados e retries concorrentes.",
+        "Agenda de grupos respeita owner/admin e mantém o contrato Firestore usado no Android.",
+        "Upload de avatar e campos de localização preservam o formulário quando a rede ou o Storage falham.",
+        "Fluxos de onboarding não tentam recadastrar um CPF já reconciliado durante a união de contas.",
+        "Escritas de agenda, avatar e localização usam contratos validados, erro acionável e timestamps autoritativos.",
+        "Operações mensais solicitam tokens App Check de uso limitado compatíveis com a proteção anti-replay do backend."
+      ],
+      "issueRefs": [
+        3529,
+        3530
+      ]
+    },
     {
       "version": "1.51.43",
       "buildNumber": null,

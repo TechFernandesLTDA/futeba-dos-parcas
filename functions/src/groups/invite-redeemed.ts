@@ -62,6 +62,18 @@ function isInviteShape(data: unknown): data is InviteData {
   return isRecord(data) && typeof data.used === "boolean";
 }
 
+/**
+ * Valida um único segmento de documento antes de usar o Admin SDK.
+ * @param {unknown} value ID recebido.
+ * @return {boolean} Se o valor e um segmento seguro.
+ */
+function isSafeDocumentId(value: unknown): value is string {
+  return typeof value === "string" &&
+    value.trim().length > 0 &&
+    value.trim().length <= 128 &&
+    !value.includes("/");
+}
+
 export const onInviteRedeemed = onDocumentUpdated(
   {
     document: "invites/{code}",
@@ -94,12 +106,19 @@ export const onInviteRedeemed = onDocumentUpdated(
     // A rule de update de invites já garante used_by == auth.uid e que o
     // convite não estava usado nem expirado, mas re-validamos por defesa em
     // profundidade (triggers rodam fora do contexto de auth do cliente).
-    if (!userId || typeof userId !== "string") {
+    if (!isSafeDocumentId(userId)) {
       logger.warn("invite redeemed sem used_by válido", {code});
       return;
     }
-    if (!groupId || typeof groupId !== "string") {
+    if (!isSafeDocumentId(groupId)) {
       logger.warn("invite redeemed sem group_id", {code, userId});
+      return;
+    }
+    if (before.group_id !== groupId) {
+      logger.error("invite redeemed alterou group_id durante a redenção", {
+        code,
+        userId,
+      });
       return;
     }
 
@@ -119,6 +138,7 @@ export const onInviteRedeemed = onDocumentUpdated(
 
     // Idempotência barata fora da transação.
     const memberRef = db().doc(`groups/${groupId}/members/${userId}`);
+    const blockedRef = db().doc(`groups/${groupId}/blocked_players/${userId}`);
     const memberSnap = await memberRef.get();
     if (memberSnap.exists) {
       logger.info("invite redeemed mas já é membro — skip", {groupId, userId});
@@ -172,7 +192,7 @@ export const onInviteRedeemed = onDocumentUpdated(
       });
     }
 
-    await db().runTransaction(async (tx) => {
+    const membershipCreated = await db().runTransaction(async (tx) => {
       // A leitura precisa estar na transação: se a cascata mudar o grupo para
       // DELETING/DELETED em paralelo, o Firestore repete a transação e esta
       // tentativa não cria uma membership ACTIVE após a varredura de membros.
@@ -182,7 +202,7 @@ export const onInviteRedeemed = onDocumentUpdated(
           groupId,
           userId,
         });
-        return;
+        return false;
       }
       const txGroupMeta = txGroupSnap.data() as Record<string, unknown>;
       const txGroupStatus =
@@ -196,18 +216,28 @@ export const onInviteRedeemed = onDocumentUpdated(
           groupStatus: txGroupStatus,
           groupDeleted: txGroupDeleted,
         });
-        return;
+        return false;
       }
 
       // FIX #2517: idempotência sob entrega duplicada (triggers são
       // at-least-once). Checagem DENTRO da transação garante atomicidade.
-      const txMemberSnap = await tx.get(memberRef);
+      const [txMemberSnap, txBlockedSnap] = await Promise.all([
+        tx.get(memberRef),
+        tx.get(blockedRef),
+      ]);
       if (txMemberSnap.exists) {
         logger.info("invite redeemed: member já existe (retry idempotente)", {
           groupId,
           userId,
         });
-        return;
+        return false;
+      }
+      if (txBlockedSnap.exists) {
+        logger.warn("invite redeemed: usuário bloqueado no grupo", {
+          groupId,
+          userId,
+        });
+        return false;
       }
 
       // Criamos o member SEM `_counted_by_join_request` e SEM incrementar
@@ -234,12 +264,14 @@ export const onInviteRedeemed = onDocumentUpdated(
         role: "MEMBER",
         joined_at: FieldValue.serverTimestamp(),
       });
+      return true;
     });
 
-    logger.info("invite redeemed e member criado", {
-      code,
-      groupId,
-      userId,
-    });
+    logger.info(
+      membershipCreated ?
+        "invite redeemed e member criado" :
+        "invite redeemed sem criar membership",
+      {code, groupId, userId},
+    );
   }
 );

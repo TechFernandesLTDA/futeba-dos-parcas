@@ -37,6 +37,8 @@ describe('profileAvatar', () => {
     expect(validateProfileAvatar(new File(['ok'], 'avatar.png', { type: 'image/png' }))).toBeNull();
     expect(validateProfileAvatar(new File(['svg'], 'avatar.svg', { type: 'image/svg+xml' })))
       .toBe('invalid-type');
+    expect(validateProfileAvatar(new File(['heic'], 'avatar.heic', { type: 'image/heic' })))
+      .toBe('invalid-type');
     expect(validateProfileAvatar(new File(
       [new Uint8Array(PROFILE_AVATAR_MAX_BYTES)],
       'avatar.jpg',

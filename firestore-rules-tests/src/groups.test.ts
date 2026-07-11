@@ -18,6 +18,7 @@ import {
   asPlayerA,
   asPlayerB,
   asPlayerC,
+  asUser,
   asAnon,
   seedDoc,
   UID_ADMIN,
@@ -32,6 +33,10 @@ let testEnv: RulesTestEnvironment;
 const GROUP_PUBLIC = "group-public-001";
 const GROUP_PRIVATE = "group-private-001";
 const GROUP_FOR_CASHBOX = "group-cashbox-001";
+const GROUP_MEMBER_SECURITY = "group-member-security";
+const GROUP_BLOCKED_REJOIN = "group-blocked-rejoin";
+const GROUP_CORRUPT_MEMBER = "group-corrupt-member";
+const UID_MEMBERSHIP_OUTSIDER = "uid-membership-outsider";
 
 beforeAll(async () => {
   testEnv = await initTestEnv();
@@ -92,6 +97,63 @@ beforeAll(async () => {
     role: "MEMBER",
     status: "ACTIVE",
   });
+
+  await seedDoc(testEnv, `groups/${GROUP_MEMBER_SECURITY}`, {
+    name: "Segurança de membros",
+    owner_id: UID_PLAYER_A,
+    is_public: true,
+    status: "ACTIVE",
+  });
+  await seedDoc(testEnv, `groups/${GROUP_MEMBER_SECURITY}/members/${UID_PLAYER_A}`, {
+    user_id: UID_PLAYER_A,
+    role: "OWNER",
+    status: "ACTIVE",
+  });
+  await seedDoc(testEnv, `groups/${GROUP_MEMBER_SECURITY}/members/${UID_PLAYER_B}`, {
+    user_id: UID_PLAYER_B,
+    role: "ADMIN",
+    status: "ACTIVE",
+  });
+  await seedDoc(testEnv, `groups/${GROUP_MEMBER_SECURITY}/members/${UID_MEMBERSHIP_OUTSIDER}`, {
+    user_id: UID_MEMBERSHIP_OUTSIDER,
+    role: "MEMBER",
+    status: "BANNED",
+  });
+
+  await seedDoc(testEnv, `groups/${GROUP_BLOCKED_REJOIN}`, {
+    name: "Bloqueio persistente",
+    owner_id: UID_PLAYER_A,
+    is_public: true,
+    status: "ACTIVE",
+  });
+  await seedDoc(testEnv, `groups/${GROUP_BLOCKED_REJOIN}/members/${UID_PLAYER_A}`, {
+    user_id: UID_PLAYER_A,
+    role: "OWNER",
+    status: "ACTIVE",
+  });
+  await seedDoc(testEnv, `groups/${GROUP_BLOCKED_REJOIN}/blocked_players/${UID_MEMBERSHIP_OUTSIDER}`, {
+    user_id: UID_MEMBERSHIP_OUTSIDER,
+    blocked_by: UID_PLAYER_A,
+    user_name: "Outsider",
+    reason: "Banimento de teste",
+  });
+
+  await seedDoc(testEnv, `groups/${GROUP_CORRUPT_MEMBER}`, {
+    name: "Vínculo corrompido",
+    owner_id: UID_PLAYER_A,
+    is_public: false,
+    status: "ACTIVE",
+  });
+  await seedDoc(testEnv, `groups/${GROUP_CORRUPT_MEMBER}/members/${UID_PLAYER_A}`, {
+    user_id: UID_PLAYER_A,
+    role: "OWNER",
+    status: "ACTIVE",
+  });
+  await seedDoc(testEnv, `groups/${GROUP_CORRUPT_MEMBER}/members/${UID_MEMBERSHIP_OUTSIDER}`, {
+    user_id: UID_PLAYER_B,
+    role: "ADMIN",
+    status: "ACTIVE",
+  });
 });
 
 afterAll(async () => {
@@ -131,6 +193,43 @@ describe("groups — leitura", () => {
   });
 });
 
+describe("groups — criação e contador server-authoritative", () => {
+  const validGroup = (overrides: Record<string, unknown> = {}) => ({
+    name: "Novo Grupo Seguro",
+    owner_id: UID_PLAYER_A,
+    is_public: true,
+    status: "ACTIVE",
+    description: "Grupo criado nos testes de segurança",
+    ...overrides,
+  });
+
+  it("permite criar com contador zero ou omitido", async () => {
+    const db = asPlayerA(testEnv);
+    await assertSucceeds(
+      db.doc("groups/group-create-counter-zero").set(
+        validGroup({member_count: 0})
+      )
+    );
+    await assertSucceeds(
+      db.doc("groups/group-create-counter-omitted").set(validGroup())
+    );
+  });
+
+  it("rejeita contador positivo ou negativo controlado pelo cliente", async () => {
+    const db = asPlayerA(testEnv);
+    await assertFails(
+      db.doc("groups/group-create-counter-five").set(
+        validGroup({member_count: 5})
+      )
+    );
+    await assertFails(
+      db.doc("groups/group-create-counter-negative").set(
+        validGroup({member_count: -1})
+      )
+    );
+  });
+});
+
 // ============================================================
 // LEITURA — members (subcoleção) — #1035
 // ============================================================
@@ -156,6 +255,71 @@ describe("groups/members — leitura", () => {
   it("Não-autenticado NÃO pode ler membros", async () => {
     const db = asAnon(testEnv);
     await assertFails(db.doc(`groups/${GROUP_PUBLIC}/members/${UID_PLAYER_A}`).get());
+  });
+});
+
+describe("groups/members — invariantes de identidade e saída", () => {
+  it("vínculo com user_id divergente NÃO concede membership nem administração", async () => {
+    const db = asUser(testEnv, UID_MEMBERSHIP_OUTSIDER);
+    await assertFails(db.doc(`groups/${GROUP_CORRUPT_MEMBER}`).get());
+    await assertFails(
+      db.doc(`groups/${GROUP_CORRUPT_MEMBER}`).update({name: "Tomada de grupo"})
+    );
+  });
+
+  it("admin do grupo NÃO pode criar membro com memberId divergente do user_id", async () => {
+    const db = asPlayerA(testEnv);
+    await assertFails(
+      db.doc(`groups/${GROUP_MEMBER_SECURITY}/members/uid-path-target`).set({
+        user_id: UID_MEMBERSHIP_OUTSIDER,
+        role: "MEMBER",
+        status: "ACTIVE",
+      })
+    );
+  });
+
+  it("admin do grupo NÃO pode remover o vínculo do owner atual", async () => {
+    const db = asPlayerB(testEnv);
+    await assertFails(
+      db.doc(`groups/${GROUP_MEMBER_SECURITY}/members/${UID_PLAYER_A}`).delete()
+    );
+  });
+
+  it("owner atual NÃO pode apagar o próprio vínculo antes de transferir", async () => {
+    const db = asPlayerA(testEnv);
+    await assertFails(
+      db.doc(`groups/${GROUP_MEMBER_SECURITY}/members/${UID_PLAYER_A}`).delete()
+    );
+  });
+
+  it("usuário BANNED NÃO pode apagar o vínculo e contornar o ban", async () => {
+    const db = asUser(testEnv, UID_MEMBERSHIP_OUTSIDER);
+    await assertFails(
+      db.doc(`groups/${GROUP_MEMBER_SECURITY}/members/${UID_MEMBERSHIP_OUTSIDER}`).delete()
+    );
+  });
+
+  it("usuário em blocked_players NÃO pode recriar membership em grupo público", async () => {
+    const db = asUser(testEnv, UID_MEMBERSHIP_OUTSIDER);
+    await assertFails(
+      db.doc(`groups/${GROUP_BLOCKED_REJOIN}/members/${UID_MEMBERSHIP_OUTSIDER}`).set({
+        user_id: UID_MEMBERSHIP_OUTSIDER,
+        role: "MEMBER",
+        status: "ACTIVE",
+      })
+    );
+  });
+
+  it("membro ativo comum ainda pode sair do grupo", async () => {
+    const uid = "uid-member-can-leave";
+    await seedDoc(testEnv, `groups/${GROUP_MEMBER_SECURITY}/members/${uid}`, {
+      user_id: uid,
+      role: "MEMBER",
+      status: "ACTIVE",
+    });
+    await assertSucceeds(
+      asUser(testEnv, uid).doc(`groups/${GROUP_MEMBER_SECURITY}/members/${uid}`).delete()
+    );
   });
 });
 

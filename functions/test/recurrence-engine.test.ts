@@ -246,6 +246,10 @@ describe("onGameFinishedCreateRecurrence", () => {
       id,
       path: `confirmations/${id}`,
     }))
+    const notificationQueueDoc = jest.fn((id: string) => ({
+      id,
+      path: `notification_queue/${id}`,
+    }))
 
     const fakeDb: any = {
       collection: jest.fn((name: string) => {
@@ -270,6 +274,12 @@ describe("onGameFinishedCreateRecurrence", () => {
           }
         }
 
+        if (name === "notification_queue") {
+          return {
+            doc: notificationQueueDoc,
+          }
+        }
+
         throw new Error(`Unexpected collection ${name}`)
       }),
       runTransaction: mockRunTransaction,
@@ -282,16 +292,56 @@ describe("onGameFinishedCreateRecurrence", () => {
       path: "games/game-1",
       update: jest.fn().mockResolvedValue(undefined),
     }
+    const currentGame = {
+      status: "FINISHED",
+      recurrence: "weekly",
+      owner_id: "owner-1",
+      owner_name: "Owner",
+      group_id: "group-1",
+      date: "2026-06-20",
+      time: "20:00",
+      field_type: "SOCIETY",
+      game_type: "CASUAL",
+      max_players: 14,
+      max_goalkeepers: 2,
+      number_of_teams: 2,
+      daily_price: 0,
+      total_cost: 0,
+      location_name: "Arena Central",
+      location_address: "Rua A",
+      location_lat: -23.5505,
+      location_lng: -46.6333,
+      location_lat_approx: -23.551,
+      location_lng_approx: -46.633,
+      visibility: "GROUP",
+      next_game_created: true,
+      next_game_id: "recurring_game-1_2",
+      next_game_confirmations_created: false,
+      next_game_notification_enqueued: false,
+    }
+    let childReads = 0
     const txGet = jest.fn((ref: any) => {
       if (ref === afterRef) {
         return Promise.resolve({
-          get: (field: string) => field === "next_game_created" ? false : undefined,
+          exists: true,
+          data: () => currentGame,
+          get: (field: string) => (currentGame as any)[field],
         })
       }
 
       if (ref?.id === "recurring_game-1_2") {
+        childReads += 1
+        if (childReads === 1) return Promise.resolve({exists: false})
         return Promise.resolve({
-          exists: false,
+          exists: true,
+          id: "recurring_game-1_2",
+          data: () => ({
+            recurrence_parent_id: "game-1",
+            recurrence_index: 2,
+            owner_id: "owner-1",
+            group_id: "group-1",
+            status: "SCHEDULED",
+          }),
         })
       }
 
@@ -315,36 +365,14 @@ describe("onGameFinishedCreateRecurrence", () => {
           }),
         },
         after: {
-          data: () => ({
-            status: "FINISHED",
-            recurrence: "weekly",
-            owner_id: "owner-1",
-            owner_name: "Owner",
-            group_id: "group-1",
-            date: "2026-06-20",
-            time: "20:00",
-            field_type: "SOCIETY",
-            game_type: "CASUAL",
-            max_players: 14,
-            max_goalkeepers: 2,
-            number_of_teams: 2,
-            daily_price: 0,
-            total_cost: 0,
-            location_name: "Arena Central",
-            location_address: "Rua A",
-            location_lat: -23.5505,
-            location_lng: -46.6333,
-            location_lat_approx: -23.551,
-            location_lng_approx: -46.633,
-            visibility: "GROUP",
-          }),
+          data: () => currentGame,
           ref: afterRef,
         },
       },
       params: {gameId: "game-1"},
     })
 
-    expect(txSet).toHaveBeenCalledTimes(1)
+    expect(txSet).toHaveBeenCalledTimes(5)
     expect(txSet).toHaveBeenCalledWith(
       expect.objectContaining({id: "recurring_game-1_2"}),
       expect.objectContaining({
@@ -355,23 +383,31 @@ describe("onGameFinishedCreateRecurrence", () => {
       })
     )
     expect(txUpdate).toHaveBeenCalledWith(afterRef, expect.objectContaining({
-      next_game_created: true,
-      next_game_id: "recurring_game-1_2",
       next_game_confirmations_created: false,
+      next_game_notification_enqueued: false,
     }))
-    expect(mockBatchSet).toHaveBeenCalledTimes(3)
-    expect(mockBatchCommit).toHaveBeenCalledTimes(1)
-    expect(afterRef.update).toHaveBeenCalledWith(expect.objectContaining({
+    expect(txSet).toHaveBeenCalledWith(
+      expect.objectContaining({path: "confirmations/recurring_game-1_2_owner-1"}),
+      expect.objectContaining({status: "CONFIRMED"})
+    )
+    expect(txSet).toHaveBeenCalledWith(
+      expect.objectContaining({path: "confirmations/recurring_game-1_2_member-1"}),
+      expect.objectContaining({status: "PENDING"})
+    )
+    expect(txUpdate).toHaveBeenCalledWith(afterRef, expect.objectContaining({
       next_game_confirmations_created: true,
     }))
-    expect(mockSendNotificationToUsers).toHaveBeenCalledWith(
-      ["member-1", "member-2"],
+    expect(txSet).toHaveBeenCalledWith(
       expect.objectContaining({
-        type: "GAME_INVITE",
-        data: {gameId: "recurring_game-1_2"},
+        path: "notification_queue/recurrence_recurring_game-1_2",
       }),
-      "group-1"
+      expect.objectContaining({
+        userIds: ["member-1", "member-2"],
+        type: "GAME_INVITE",
+        data: expect.objectContaining({gameId: "recurring_game-1_2"}),
+      })
     )
+    expect(mockSendNotificationToUsers).not.toHaveBeenCalled()
   })
 
   it("retoma confirmações pendentes quando o próximo jogo já existe", async () => {
@@ -410,6 +446,10 @@ describe("onGameFinishedCreateRecurrence", () => {
       id,
       path: `confirmations/${id}`,
     }))
+    const notificationQueueDoc = jest.fn((id: string) => ({
+      id,
+      path: `notification_queue/${id}`,
+    }))
 
     const fakeDb: any = {
       collection: jest.fn((name: string) => {
@@ -434,6 +474,12 @@ describe("onGameFinishedCreateRecurrence", () => {
           }
         }
 
+        if (name === "notification_queue") {
+          return {
+            doc: notificationQueueDoc,
+          }
+        }
+
         throw new Error(`Unexpected collection ${name}`)
       }),
       runTransaction: mockRunTransaction,
@@ -446,24 +492,49 @@ describe("onGameFinishedCreateRecurrence", () => {
       path: "games/game-1",
       update: jest.fn().mockResolvedValue(undefined),
     }
-
+    const currentGame = {
+      status: "FINISHED",
+      recurrence: "weekly",
+      owner_id: "owner-1",
+      owner_name: "Owner",
+      group_id: "group-1",
+      next_game_created: true,
+      next_game_id: "recurring_game-1_2",
+      next_game_confirmations_created: false,
+      next_game_notification_enqueued: false,
+      date: "2026-06-20",
+      time: "20:00",
+      location_name: "Arena Central",
+      visibility: "GROUP",
+    }
+    const txSet = jest.fn()
+    const txUpdate = jest.fn()
     mockRunTransaction.mockImplementation(async (callback: any) => callback({
       get: jest.fn((ref: any) => {
         if (ref === afterRef) {
           return Promise.resolve({
-            get: (field: string) => {
-              if (field === "next_game_created") return true
-              if (field === "next_game_id") return "recurring_game-1_2"
-              if (field === "next_game_confirmations_created") return false
-              return undefined
-            },
+            exists: true,
+            data: () => currentGame,
+            get: (field: string) => (currentGame as any)[field],
           })
         }
-
-        return Promise.resolve({exists: true})
+        if (ref?.id === "recurring_game-1_2") {
+          return Promise.resolve({
+            exists: true,
+            id: "recurring_game-1_2",
+            data: () => ({
+              recurrence_parent_id: "game-1",
+              recurrence_index: 2,
+              owner_id: "owner-1",
+              group_id: "group-1",
+              status: "SCHEDULED",
+            }),
+          })
+        }
+        return Promise.resolve({exists: false})
       }),
-      set: jest.fn(),
-      update: jest.fn(),
+      set: txSet,
+      update: txUpdate,
     }))
 
     await onGameFinishedCreateRecurrence({
@@ -474,37 +545,27 @@ describe("onGameFinishedCreateRecurrence", () => {
           }),
         },
         after: {
-          data: () => ({
-            status: "FINISHED",
-            recurrence: "weekly",
-            owner_id: "owner-1",
-            owner_name: "Owner",
-            group_id: "group-1",
-            next_game_created: true,
-            next_game_id: "recurring_game-1_2",
-            next_game_confirmations_created: false,
-            date: "2026-06-20",
-            time: "20:00",
-            location_name: "Arena Central",
-            visibility: "GROUP",
-          }),
+          data: () => currentGame,
           ref: afterRef,
         },
       },
       params: {gameId: "game-1"},
     })
 
-    expect(mockBatchSet).toHaveBeenCalledTimes(2)
-    expect(mockBatchCommit).toHaveBeenCalledTimes(1)
-    expect(afterRef.update).toHaveBeenCalledWith(expect.objectContaining({
+    expect(mockBatchSet).not.toHaveBeenCalled()
+    expect(mockBatchCommit).not.toHaveBeenCalled()
+    expect(txUpdate).toHaveBeenCalledWith(afterRef, expect.objectContaining({
       next_game_confirmations_created: true,
     }))
-    expect(mockSendNotificationToUsers).toHaveBeenCalledWith(
-      ["member-1"],
+    expect(txSet).toHaveBeenCalledWith(
       expect.objectContaining({
-        data: {gameId: "recurring_game-1_2"},
+        path: "notification_queue/recurrence_recurring_game-1_2",
       }),
-      "group-1"
+      expect.objectContaining({
+        userIds: ["member-1"],
+        data: expect.objectContaining({gameId: "recurring_game-1_2"}),
+      })
     )
+    expect(mockSendNotificationToUsers).not.toHaveBeenCalled()
   })
 })

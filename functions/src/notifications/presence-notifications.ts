@@ -6,7 +6,8 @@
 
 import {logger} from "firebase-functions";
 import * as admin from "firebase-admin";
-import {FieldValue} from "firebase-admin/firestore";
+import {FieldValue, Timestamp} from "firebase-admin/firestore";
+import {randomUUID} from "crypto";
 import {
   onDocumentCreated,
   onDocumentUpdated,
@@ -28,6 +29,28 @@ const getDb = () => admin.firestore();
 
 // Tempo de expiração de convites de grupo (48h em ms)
 const INVITE_EXPIRATION_MS = 48 * 60 * 60 * 1000;
+const NOTIFICATION_DEDUP_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+const NOTIFICATION_CLAIM_LEASE_MS = 5 * 60 * 1000;
+
+interface NotificationClaim {
+  eventId: string;
+  ownerId: string;
+}
+
+/**
+ * Converte Timestamp/Date de lease em epoch millis.
+ * @param {unknown} value Data persistida no documento de dedup.
+ * @return {number} Epoch millis ou zero quando inválida.
+ */
+function claimExpiryMillis(value: unknown): number {
+  if (value instanceof Date) return value.getTime();
+  if (value && typeof value === "object") {
+    const timestamp = value as {toMillis?: () => number; toDate?: () => Date};
+    if (typeof timestamp.toMillis === "function") return timestamp.toMillis();
+    if (typeof timestamp.toDate === "function") return timestamp.toDate().getTime();
+  }
+  return 0;
+}
 
 /**
  * Lê um campo string aceitando schema snake_case ou camelCase.
@@ -53,12 +76,12 @@ function getStringField(
  *
  * @param {string} inviteId ID do convite.
  * @param {Record<string, unknown>} invite Dados do convite.
- * @return {Promise<void>} Promise resolvida após a escrita.
+ * @return {Promise<boolean>} true quando o vínculo existe ou foi criado.
  */
 async function createMembershipForAcceptedGroupInvite(
   inviteId: string,
   invite: Record<string, unknown>
-): Promise<void> {
+): Promise<boolean> {
   const groupId = getStringField(invite, "group_id", "groupId");
   const invitedUserId = getStringField(
     invite,
@@ -71,28 +94,63 @@ async function createMembershipForAcceptedGroupInvite(
       "[GROUP_INVITE_RESPONSE] Convite aceito sem group_id/invited_user_id",
       {inviteId}
     );
-    return;
+    return false;
   }
 
   const db = getDb();
   const groupRef = db.collection("groups").doc(groupId);
   const memberRef = groupRef.collection("members").doc(invitedUserId);
+  const blockedRef = groupRef.collection("blocked_players").doc(invitedUserId);
   const userRef = db.collection("users").doc(invitedUserId);
   const userGroupRef = userRef.collection("groups").doc(groupId);
 
-  await db.runTransaction(async (tx) => {
-    const [groupSnap, userSnap, memberSnap] = await Promise.all([
+  return db.runTransaction(async (tx) => {
+    const [groupSnap, userSnap, memberSnap, blockedSnap] = await Promise.all([
       tx.get(groupRef),
       tx.get(userRef),
       tx.get(memberRef),
+      tx.get(blockedRef),
     ]);
 
     if (!groupSnap.exists) {
-      throw new Error(`Grupo ${groupId} nao encontrado para convite ${inviteId}`);
+      logger.warn("[GROUP_INVITE_RESPONSE] Grupo inexistente", {inviteId, groupId});
+      return false;
     }
 
     const group = groupSnap.data() ?? {};
     const user = userSnap.data() ?? {};
+    const groupStatus = typeof group.status === "string" ?
+      group.status :
+      "ACTIVE";
+    const groupUnavailable =
+      group.deleted_at != null ||
+      group.deletedAt != null ||
+      groupStatus !== "ACTIVE" ||
+      group.is_active === false;
+    if (groupUnavailable) {
+      logger.warn("[GROUP_INVITE_RESPONSE] Grupo indisponivel", {inviteId, groupId});
+      return false;
+    }
+    if (
+      !userSnap.exists ||
+      user.deleted_at != null ||
+      user.deletedAt != null ||
+      user.status === "DELETED"
+    ) {
+      logger.warn("[GROUP_INVITE_RESPONSE] Usuario indisponivel", {
+        inviteId,
+        invitedUserId,
+      });
+      return false;
+    }
+    if (blockedSnap.exists) {
+      logger.warn("[GROUP_INVITE_RESPONSE] Usuario bloqueado no grupo", {
+        inviteId,
+        groupId,
+        invitedUserId,
+      });
+      return false;
+    }
     const userName =
       getStringField(invite, "invited_user_name", "invitedUserName") ||
       getStringField(user, "name", "name", "Jogador");
@@ -119,7 +177,7 @@ async function createMembershipForAcceptedGroupInvite(
         "membership preservada",
         {inviteId, groupId, invitedUserId, existingStatus}
       );
-      return;
+      return existingStatus !== "BANNED" && existingStatus !== "SUSPENDED";
     }
 
     tx.set(memberRef, {
@@ -144,6 +202,7 @@ async function createMembershipForAcceptedGroupInvite(
       role: "MEMBER",
       joined_at: FieldValue.serverTimestamp(),
     }, {merge: true});
+    return true;
   });
 }
 
@@ -152,40 +211,81 @@ async function createMembershipForAcceptedGroupInvite(
 // ==========================================
 
 /**
- * Tenta criar um documento de dedup com ID = eventId.
- * Retorna true se o claim foi bem-sucedido (primeira entrega).
- * Retorna false se o doc já existe (reentrega — pular envio).
- *
- * Usa create() que falha atomicamente com código 6 (ALREADY_EXISTS)
- * se o doc já existir, garantindo que só uma entrega vença a corrida.
+ * Adquire lease transacional. Claims PROCESSING vencidos podem ser retomados;
+ * COMPLETED nunca é reenviado. Uma concorrência ainda ativa lança erro para o
+ * runtime tentar novamente, em vez de confirmar silenciosamente o CloudEvent.
  *
  * @param {string} eventId - ID único do CloudEvent (estável em reentregas).
- * @return {Promise<boolean>} true = primeira entrega, false = reentrega.
+ * @return {Promise<NotificationClaim|null>} Lease ou null se concluído.
  */
-async function claimOnce(eventId: string): Promise<boolean> {
-  try {
-    await getDb()
-      .collection("notif_dedup")
-      .doc(eventId)
-      .create({
-        claimed_at:
-          FieldValue.serverTimestamp(),
-      });
-    return true;
-  } catch (e: unknown) {
-    const err = e as { code?: number };
-    if (err.code === 6) {
-      // ALREADY_EXISTS → reentrega, pular
-      logger.info(
-        "[NOTIF_DEDUP] Evento já processado," +
-        ` ignorando reentrega: ${eventId}`
-      );
-      return false;
+async function claimOnce(eventId: string): Promise<NotificationClaim | null> {
+  const ownerId = randomUUID();
+  const nowMs = Date.now();
+  const ref = getDb().collection("notif_dedup").doc(eventId);
+  return getDb().runTransaction(async (tx) => {
+    const snapshot = await tx.get(ref);
+    const existing = snapshot.data() ?? {};
+    if (existing.status === "COMPLETED") {
+      logger.info(`[NOTIF_DEDUP] Evento concluído, ignorando: ${eventId}`);
+      return null;
     }
-    // Outro erro (ex: permissão, rede) → relançar para
-    // deixar o trigger ser entregue novamente pelo Cloud Functions
-    throw e;
-  }
+    if (
+      existing.status === "PROCESSING" &&
+      claimExpiryMillis(existing.lease_expires_at) > nowMs
+    ) {
+      throw new Error(`[NOTIF_DEDUP] Evento ainda em processamento: ${eventId}`);
+    }
+    tx.set(ref, {
+      status: "PROCESSING",
+      lease_owner: ownerId,
+      claimed_at: existing.claimed_at ?? FieldValue.serverTimestamp(),
+      lease_expires_at: Timestamp.fromMillis(
+        nowMs + NOTIFICATION_CLAIM_LEASE_MS
+      ),
+      expires_at: new Date(nowMs + NOTIFICATION_DEDUP_TTL_MS),
+      completed_at: FieldValue.delete(),
+      failed_at: FieldValue.delete(),
+    }, {merge: true});
+    return {eventId, ownerId};
+  });
+}
+
+/**
+ * Marca a claim concluída somente se a execução ainda possui o lease.
+ * @param {NotificationClaim} claim Lease atual.
+ */
+async function completeClaim(claim: NotificationClaim): Promise<void> {
+  const ref = getDb().collection("notif_dedup").doc(claim.eventId);
+  await getDb().runTransaction(async (tx) => {
+    const snapshot = await tx.get(ref);
+    if (snapshot.data()?.lease_owner !== claim.ownerId) {
+      throw new Error(`[NOTIF_DEDUP] Lease perdido: ${claim.eventId}`);
+    }
+    tx.set(ref, {
+      status: "COMPLETED",
+      completed_at: FieldValue.serverTimestamp(),
+      lease_owner: FieldValue.delete(),
+      lease_expires_at: FieldValue.delete(),
+    }, {merge: true});
+  });
+}
+
+/**
+ * Libera somente o lease da execução que falhou, preservando uma retomada nova.
+ * @param {NotificationClaim} claim Lease atual.
+ */
+async function releaseClaim(claim: NotificationClaim): Promise<void> {
+  const ref = getDb().collection("notif_dedup").doc(claim.eventId);
+  await getDb().runTransaction(async (tx) => {
+    const snapshot = await tx.get(ref);
+    if (snapshot.data()?.lease_owner !== claim.ownerId) return;
+    tx.set(ref, {
+      status: "FAILED",
+      failed_at: FieldValue.serverTimestamp(),
+      lease_owner: FieldValue.delete(),
+      lease_expires_at: FieldValue.delete(),
+    }, {merge: true});
+  });
 }
 
 // ==========================================
@@ -197,19 +297,25 @@ async function claimOnce(eventId: string): Promise<boolean> {
  * Notifica o dono do jogo sobre nova confirmação.
  */
 export const onGameConfirmed = onDocumentCreated(
-  {document: "confirmations/{confirmationId}", region: FUNCTION_REGION},
+  {
+    document: "confirmations/{confirmationId}",
+    region: FUNCTION_REGION,
+    retry: true,
+  },
   async (event) => {
     const confirmation = event.data?.data();
     const confirmationId = event.params.confirmationId;
     if (
       !confirmation ||
-      confirmation.status !== "CONFIRMED"
+      confirmation.status !== "CONFIRMED" ||
+      confirmation.merged_from_alias === true
     ) {
       return;
     }
 
     // Guard de idempotência: pula reentregas at-least-once
-    if (!await claimOnce(event.id)) return;
+    const claim = await claimOnce(event.id);
+    if (!claim) return;
 
     const gameId =
       confirmation.game_id || confirmation.gameId;
@@ -221,10 +327,16 @@ export const onGameConfirmed = onDocumentCreated(
         .collection("games")
         .doc(gameId)
         .get();
-      if (!gameDoc.exists) return;
+      if (!gameDoc.exists) {
+        await completeClaim(claim);
+        return;
+      }
 
       const game = gameDoc.data();
-      if (!game) return;
+      if (!game) {
+        await completeClaim(claim);
+        return;
+      }
 
       if (game.owner_id !== userId) {
         const userDoc = await getDb()
@@ -255,11 +367,14 @@ export const onGameConfirmed = onDocumentCreated(
           `game_cnfmd_${confirmationId}`
         );
       }
+      await completeClaim(claim);
     } catch (e) {
       logger.error(
         "Erro ao notificar confirmacao:",
         e
       );
+      await releaseClaim(claim);
+      throw e;
     }
   }
 );
@@ -274,7 +389,11 @@ export const onGameConfirmed = onDocumentCreated(
  */
 export const onGroupInviteCreated =
   onDocumentCreated(
-    {document: "group_invites/{inviteId}", region: FUNCTION_REGION},
+    {
+      document: "group_invites/{inviteId}",
+      region: FUNCTION_REGION,
+      retry: true,
+    },
     async (event) => {
       const invite = event.data?.data();
       if (!invite) return;
@@ -312,7 +431,8 @@ export const onGroupInviteCreated =
       }
 
       // Guard de idempotência: pula reentregas at-least-once
-      if (!await claimOnce(event.id)) return;
+      const claim = await claimOnce(event.id);
+      if (!claim) return;
 
       logger.info(
         "[GROUP_INVITE] Enviando notificacao" +
@@ -352,12 +472,15 @@ export const onGroupInviteCreated =
           "[GROUP_INVITE] Notificacao enviada" +
           ` com sucesso para ${invitedUserId}`
         );
+        await completeClaim(claim);
       } catch (e) {
         logger.error(
           "[GROUP_INVITE] Erro ao enviar" +
           ` notificacao para ${invitedUserId}:`,
           e
         );
+        await releaseClaim(claim);
+        throw e;
       }
     }
   );
@@ -467,7 +590,11 @@ export const cleanupExpiredInvites = onSchedule(
  */
 export const onGroupInviteResponse =
   onDocumentUpdated(
-    {document: "group_invites/{inviteId}", region: FUNCTION_REGION},
+    {
+      document: "group_invites/{inviteId}",
+      region: FUNCTION_REGION,
+      retry: true,
+    },
     async (event) => {
       const before = event.data?.before.data();
       const after = event.data?.after.data();
@@ -512,11 +639,16 @@ export const onGroupInviteResponse =
       );
 
       if (afterStatus === "ACCEPTED") {
-        await createMembershipForAcceptedGroupInvite(inviteId, after);
+        const membershipReady = await createMembershipForAcceptedGroupInvite(
+          inviteId,
+          after
+        );
+        if (!membershipReady) return;
       }
 
       // Guard de idempotência: só marca processado depois da membership crítica.
-      if (!await claimOnce(event.id)) return;
+      const claim = await claimOnce(event.id);
+      if (!claim) return;
 
       try {
         if (afterStatus === "ACCEPTED") {
@@ -566,12 +698,15 @@ export const onGroupInviteResponse =
           " Notificacao enviada" +
           ` para ${invitedById}`
         );
+        await completeClaim(claim);
       } catch (e) {
         logger.error(
           "[GROUP_INVITE_RESPONSE] Erro ao" +
           ` notificar ${invitedById}:`,
           e
         );
+        await releaseClaim(claim);
+        throw e;
       }
     }
   );
@@ -585,10 +720,17 @@ export const onGroupInviteResponse =
  * Notifica admins/owners do grupo.
  */
 export const onMemberJoined = onDocumentCreated(
-  {document: "groups/{groupId}/members/{memberId}", region: FUNCTION_REGION},
+  {
+    document: "groups/{groupId}/members/{memberId}",
+    region: FUNCTION_REGION,
+    retry: true,
+  },
   async (event) => {
     const member = event.data?.data();
     if (!member) return;
+    // Account merge move o vínculo para o UID canônico; não é uma entrada
+    // real no grupo e não deve notificar admins como "novo membro".
+    if (member.merged_from_alias === true) return;
 
     const groupId = event.params.groupId;
     const memberId = event.params.memberId;
@@ -598,7 +740,8 @@ export const onMemberJoined = onDocumentCreated(
     if (role === "OWNER") return;
 
     // Guard de idempotência: pula reentregas at-least-once
-    if (!await claimOnce(event.id)) return;
+    const claim = await claimOnce(event.id);
+    if (!claim) return;
 
     logger.info(
       `[MEMBER_JOINED] Member ${memberId}` +
@@ -619,7 +762,10 @@ export const onMemberJoined = onDocumentCreated(
             .get(),
         ]);
 
-      if (!groupDoc.exists) return;
+      if (!groupDoc.exists) {
+        await completeClaim(claim);
+        return;
+      }
 
       const group = groupDoc.data();
       const memberUser = memberUserDoc.exists ?
@@ -678,11 +824,14 @@ export const onMemberJoined = onDocumentCreated(
           `${adminIds.length} admins`
         );
       }
+      await completeClaim(claim);
     } catch (e) {
       logger.error(
         "[MEMBER_JOINED] Erro ao processar:",
         e
       );
+      await releaseClaim(claim);
+      throw e;
     }
   }
 );
@@ -692,13 +841,18 @@ export const onMemberJoined = onDocumentCreated(
  * Notifica admins/owners do grupo.
  */
 export const onMemberLeft = onDocumentDeleted(
-  {document: "groups/{groupId}/members/{memberId}", region: FUNCTION_REGION},
+  {
+    document: "groups/{groupId}/members/{memberId}",
+    region: FUNCTION_REGION,
+    retry: true,
+  },
   async (event) => {
     const groupId = event.params.groupId;
     const memberId = event.params.memberId;
 
     // Guard de idempotência: pula reentregas at-least-once
-    if (!await claimOnce(event.id)) return;
+    const claim = await claimOnce(event.id);
+    if (!claim) return;
 
     logger.info(
       `[MEMBER_LEFT] Member ${memberId}` +
@@ -719,7 +873,10 @@ export const onMemberLeft = onDocumentDeleted(
             .get(),
         ]);
 
-      if (!groupDoc.exists) return;
+      if (!groupDoc.exists) {
+        await completeClaim(claim);
+        return;
+      }
 
       const group = groupDoc.data();
       const memberUser = memberUserDoc.exists ?
@@ -776,11 +933,14 @@ export const onMemberLeft = onDocumentDeleted(
           `${adminIds.length} admins`
         );
       }
+      await completeClaim(claim);
     } catch (e) {
       logger.error(
         "[MEMBER_LEFT] Erro ao processar:",
         e
       );
+      await releaseClaim(claim);
+      throw e;
     }
   }
 );
@@ -795,7 +955,11 @@ export const onMemberLeft = onDocumentDeleted(
  */
 export const onCashboxTransaction =
   onDocumentCreated(
-    {document: "groups/{groupId}/cashbox/{transactionId}", region: FUNCTION_REGION},
+    {
+      document: "groups/{groupId}/cashbox/{transactionId}",
+      region: FUNCTION_REGION,
+      retry: true,
+    },
     async (event) => {
       const transaction = event.data?.data();
       if (!transaction) return;
@@ -815,7 +979,8 @@ export const onCashboxTransaction =
         transaction.createdById;
 
       // Guard de idempotência: pula reentregas at-least-once
-      if (!await claimOnce(event.id)) return;
+      const claim = await claimOnce(event.id);
+      if (!claim) return;
 
       logger.info(
         `[CASHBOX] Transaction ${transactionId}` +
@@ -829,7 +994,10 @@ export const onCashboxTransaction =
           .collection("groups")
           .doc(groupId)
           .get();
-        if (!groupDoc.exists) return;
+        if (!groupDoc.exists) {
+          await completeClaim(claim);
+          return;
+        }
 
         // Buscar admins e owners
         const adminsSnap = await getDb()
@@ -851,7 +1019,10 @@ export const onCashboxTransaction =
             (id: string) => id !== createdById
           );
 
-        if (adminIds.length === 0) return;
+        if (adminIds.length === 0) {
+          await completeClaim(claim);
+          return;
+        }
 
         const isEntry =
           txType === "ENTRY" ||
@@ -893,12 +1064,15 @@ export const onCashboxTransaction =
           "[CASHBOX] Notificacao enviada" +
           ` para ${adminIds.length} admins`
         );
+        await completeClaim(claim);
       } catch (e) {
         logger.error(
           "[CASHBOX] Erro ao processar" +
           " transacao:",
           e
         );
+        await releaseClaim(claim);
+        throw e;
       }
     }
   );

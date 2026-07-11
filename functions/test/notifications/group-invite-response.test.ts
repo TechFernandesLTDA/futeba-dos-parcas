@@ -1,6 +1,7 @@
 const mockSendAndSaveNotification = jest.fn().mockResolvedValue(true);
 const mockRunTransaction = jest.fn();
 const dedupClaimedIds = new Set<string>();
+const dedupDocuments = new Map<string, Record<string, unknown>>();
 
 function makeDedupDocMock(id: string) {
   return {
@@ -50,6 +51,12 @@ jest.mock("firebase-admin", () => ({
 jest.mock("firebase-admin/firestore", () => ({
   FieldValue: {
     serverTimestamp: jest.fn(() => ({_type: "ServerTimestamp"})),
+    delete: jest.fn(() => ({_type: "DeleteField"})),
+  },
+  Timestamp: {
+    fromMillis: jest.fn((millis: number) => ({
+      toMillis: () => millis,
+    })),
   },
 }));
 
@@ -80,6 +87,24 @@ describe("onGroupInviteResponse", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     dedupClaimedIds.clear();
+    dedupDocuments.clear();
+    mockRunTransaction.mockImplementation(async (
+      callback: (tx: unknown) => Promise<unknown>
+    ) => callback({
+      get: jest.fn(async (ref: {id: string}) => ({
+        exists: dedupDocuments.has(ref.id),
+        data: () => dedupDocuments.get(ref.id),
+      })),
+      set: jest.fn((
+        ref: {id: string},
+        data: Record<string, unknown>
+      ) => {
+        dedupDocuments.set(ref.id, {
+          ...(dedupDocuments.get(ref.id) || {}),
+          ...data,
+        });
+      }),
+    }));
   });
 
   it("preserva membership ativa existente antes de notificar aceite", async () => {
@@ -98,6 +123,10 @@ describe("onGroupInviteResponse", () => {
           .mockResolvedValueOnce({
             exists: true,
             data: () => ({status: "ACTIVE", total_games: 3}),
+          })
+          .mockResolvedValueOnce({
+            exists: false,
+            data: () => undefined,
           }),
         set: txSet,
       })
@@ -145,6 +174,10 @@ describe("onGroupInviteResponse", () => {
           .mockResolvedValueOnce({
             exists: true,
             data: () => ({status: "INACTIVE", total_games: 5}),
+          })
+          .mockResolvedValueOnce({
+            exists: false,
+            data: () => undefined,
           }),
         set: txSet,
       })

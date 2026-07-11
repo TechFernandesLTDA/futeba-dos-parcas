@@ -31,8 +31,13 @@ jest.mock("firebase-functions/v2/https", () => ({
 }));
 
 jest.mock("firebase-admin/firestore", () => ({
-  Timestamp: class Timestamp {},
+  Timestamp: class Timestamp {
+    constructor(private readonly millis = Date.now()) {}
+    toMillis() { return this.millis; }
+  },
 }));
+
+import {Timestamp} from "firebase-admin/firestore";
 
 import {__testing} from "../src/social/nearby-players";
 
@@ -96,15 +101,33 @@ describe("nearby players batched reads", () => {
           name: "Carla",
         }),
       },
-      {exists: false},
+      {
+        exists: true,
+        data: () => ({is_searchable: true, deletedAt: {_seconds: 1}}),
+      },
+      {
+        exists: true,
+        data: () => ({is_searchable: true, status: "DELETED"}),
+      },
+      {
+        exists: true,
+        data: () => ({is_searchable: true, is_active: false}),
+      },
     ]);
 
     const profiles = await __testing.loadPublicProfiles(
-      ["candidate-1", "candidate-2", "candidate-3", "candidate-4"],
+      [
+        "candidate-1",
+        "candidate-2",
+        "candidate-3",
+        "candidate-4",
+        "candidate-5",
+        "candidate-6",
+      ],
       new Set(["candidate-1"])
     );
 
-    expect(mockDoc).toHaveBeenCalledTimes(4);
+    expect(mockDoc).toHaveBeenCalledTimes(6);
     expect(mockGetAll).toHaveBeenCalledTimes(1);
     expect([...profiles.keys()]).toEqual(["candidate-1"]);
     expect(profiles.get("candidate-1")).toMatchObject({
@@ -116,9 +139,31 @@ describe("nearby players batched reads", () => {
     });
   });
 
+  it("loadBlockedSet remove bloqueios nos dois sentidos em uma leitura", async () => {
+    mockGetAll.mockResolvedValueOnce([
+      {exists: false},
+      {exists: true},
+      {exists: false},
+      {exists: false},
+    ]);
+    await expect(__testing.loadBlockedSet(
+      "user-1",
+      ["candidate-1", "candidate-2"]
+    )).resolves.toEqual(new Set(["candidate-1"]));
+    expect(mockGetAll).toHaveBeenCalledWith(
+      {path: "users/user-1/blocked/candidate-1"},
+      {path: "users/candidate-1/blocked/user-1"},
+      {path: "users/user-1/blocked/candidate-2"},
+      {path: "users/candidate-2/blocked/user-1"}
+    );
+  });
+
   it("helpers retornam vazio sem chamar getAll quando nao ha candidatos", async () => {
     await expect(
       __testing.loadFollowingSet("user-1", [])
+    ).resolves.toEqual(new Set());
+    await expect(
+      __testing.loadBlockedSet("user-1", [])
     ).resolves.toEqual(new Set());
     await expect(
       __testing.loadPublicProfiles([], new Set())
@@ -142,5 +187,39 @@ describe("nearby players batched reads", () => {
     await expect(
       __testing.assertCallerSharingEnabled("user-1", Date.now())
     ).rejects.toMatchObject({code: "failed-precondition"});
+  });
+
+  it("usa a localizacao autoritativa salva para o caller", async () => {
+    mockDoc.mockImplementation((path: string) => ({
+      path,
+      get: jest.fn().mockResolvedValue({
+        exists: true,
+        data: () => ({
+          location_sharing_enabled: true,
+          location_updated_at: new Timestamp(Date.now()),
+          lat: -23.5505,
+          lng: -46.6333,
+        }),
+      }),
+    }));
+
+    await expect(
+      __testing.assertCallerSharingEnabled("user-1", Date.now())
+    ).resolves.toEqual([-23.5505, -46.6333]);
+  });
+
+  it("descarta localizacao cujo user_id diverge do document id", () => {
+    const candidate = __testing.mapLocationDoc({
+      id: "candidate-1",
+      data: () => ({
+        user_id: "victim-user",
+        lat: -23.55,
+        lng: -46.63,
+        geohash: "6gyf",
+        location_updated_at: new Timestamp(Date.now()),
+      }),
+    } as any);
+
+    expect(candidate).toBeNull();
   });
 });

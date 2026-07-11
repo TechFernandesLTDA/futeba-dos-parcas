@@ -24,6 +24,10 @@ import {
   FieldType,
 } from '../../types/location';
 import { LocationFieldDraft, createLocationFieldDraft } from '../../utils/locationFields';
+import {
+  isSupportedLocationImage,
+  LOCATION_IMAGE_ACCEPT,
+} from '../../utils/storageImage';
 
 interface LocationFieldsEditorProps {
   fields: LocationFieldDraft[];
@@ -75,7 +79,7 @@ export function LocationFieldsEditor({
   const handlePhotoFiles = (field: LocationFieldDraft, files: FileList | null) => {
     if (!files?.length) return;
     const accepted = Array.from(files).filter((file) =>
-      file.type.startsWith('image/') && file.size <= 5 * 1024 * 1024,
+      isSupportedLocationImage(file) && file.size < 5 * 1024 * 1024,
     );
     if (accepted.length === 0) return;
     onChange(fields.map((item) => item.id === field.id ? {
@@ -290,7 +294,7 @@ export function LocationFieldsEditor({
                     hidden
                     multiple
                     type="file"
-                    accept="image/*"
+                    accept={LOCATION_IMAGE_ACCEPT}
                     onChange={(event) => handlePhotoFiles(field, event.target.files)}
                   />
                 </Button>

@@ -27,6 +27,7 @@ import {
   DialogContent,
   DialogActions,
   Chip,
+  Alert,
 } from '@mui/material';
 import {
   Payments as PaymentsIcon,
@@ -36,6 +37,8 @@ import {
   Visibility as VisibilityIcon,
   ReceiptLong as ReceiptIcon,
   Block as VoidIcon,
+  Settings as SettingsIcon,
+  Refresh as RefreshIcon,
 } from '@mui/icons-material';
 import { doc, getDoc } from 'firebase/firestore';
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
@@ -61,6 +64,22 @@ import {
   voidCashboxEntry,
 } from '../../services/cloudFunctions';
 import { useCashboxData } from '../../hooks/useCashboxData';
+import { useMonthlyFinance } from '../../hooks/useMonthlyFinance';
+import {
+  MonthlyFinancePanel,
+  type MonthlyGameOverrideChange,
+  type MonthlyPaymentSettlement,
+} from '../../components/cashbox/MonthlyFinancePanel';
+import { MonthlyFinanceConfigDialog } from '../../components/cashbox/MonthlyFinanceConfigDialog';
+import { MonthlyFinanceMemberSummary } from '../../components/cashbox/MonthlyFinanceMemberSummary';
+import {
+  configureMonthlyFinance,
+  rebuildMonthlyCycle,
+  setMonthlyGameOverride,
+  setMonthlyMember,
+  settleMonthlyCharge,
+  type ConfigureMonthlyFinanceRequest,
+} from '../../services/monthlyFinanceService';
 
 const logger = createLogger('CashboxScreen');
 
@@ -74,6 +93,17 @@ const RECEIPT_EXTENSION_BY_TYPE: Record<string, string> = {
   'image/webp': 'webp',
 };
 
+function getCurrentPeriodKey() {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    year: 'numeric',
+    month: '2-digit',
+    timeZone: 'America/Sao_Paulo',
+  }).formatToParts(new Date());
+  const year = parts.find((part) => part.type === 'year')?.value;
+  const month = parts.find((part) => part.type === 'month')?.value;
+  return `${year}-${month}`;
+}
+
 export const CashboxScreen: React.FC = () => {
   const { t } = useTranslation();
   useDocumentTitle(t('cashbox.title'));
@@ -82,6 +112,7 @@ export const CashboxScreen: React.FC = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { groupId } = useParams<{ groupId: string }>();
   const { firebaseUser } = useAuth();
+  const currentUserId = firebaseUser?.uid;
 
   const [isAdminOrOwner, setIsAdminOrOwner] = useState(false);
   const [isConfirmedMember, setIsConfirmedMember] = useState(false);
@@ -97,8 +128,16 @@ export const CashboxScreen: React.FC = () => {
   const [voidingId, setVoidingId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
+  const [monthlyPeriodKey, setMonthlyPeriodKey] = useState(getCurrentPeriodKey);
+  const [monthlyConfigOpen, setMonthlyConfigOpen] = useState(false);
+  const [monthlyConfigSaving, setMonthlyConfigSaving] = useState(false);
+  const [monthlyRebuilding, setMonthlyRebuilding] = useState(false);
+  const [busyMonthlyMemberIds, setBusyMonthlyMemberIds] = useState<Set<string>>(new Set());
+  const [busyMonthlyGameIds, setBusyMonthlyGameIds] = useState<Set<string>>(new Set());
+  const [monthlyGameOverrideErrors, setMonthlyGameOverrideErrors] = useState<Record<string, string>>({});
   const createRequestIdRef = useRef<string | null>(null);
   const reconciliationAttemptRef = useRef<string | null>(null);
+  const monthlySettlementRequestIdsRef = useRef<Map<string, string>>(new Map());
   const { showSuccess, showError } = useToast();
   const {
     transactions,
@@ -110,6 +149,13 @@ export const CashboxScreen: React.FC = () => {
     loadingMore,
     loadMore,
   } = useCashboxData(groupId, retryCount);
+  const monthlyFinance = useMonthlyFinance({
+    groupId,
+    periodKey: monthlyPeriodKey,
+    currentUserId,
+    canManage: isAdminOrOwner,
+    retryToken: retryCount,
+  });
 
   const closeTransactionDialog = useCallback(() => {
     createRequestIdRef.current = null;
@@ -124,12 +170,22 @@ export const CashboxScreen: React.FC = () => {
     parsedAmountCents !== null &&
     parsedAmountCents > balanceCents;
   const formValid = amountValid && descriptionValid && !insufficientBalance;
-  const currentUserId = firebaseUser?.uid;
   const balance = centsToCashboxAmount(balanceCents);
   const canManageCashbox = isAdminOrOwner &&
     !loading &&
     !dataError &&
     !summaryNeedsReconciliation;
+  const canManageMonthly = isAdminOrOwner &&
+    !monthlyFinance.loading &&
+    !monthlyFinance.error;
+  const viewingCurrentMonthlyPeriod = monthlyPeriodKey === getCurrentPeriodKey();
+  const canEditMonthlyRoster = canManageMonthly &&
+    viewingCurrentMonthlyPeriod &&
+    (!monthlyFinance.period || monthlyFinance.period.status === 'DRAFT');
+  const canEditMonthlyGames = canManageMonthly && monthlyFinance.period?.status === 'DRAFT';
+  const canSettleMonthly = canManageMonthly &&
+    Boolean(monthlyFinance.period) &&
+    monthlyFinance.period?.status !== 'CLOSED';
 
   const handleRetry = () => {
     setRetryCount((n) => n + 1);
@@ -255,6 +311,128 @@ export const CashboxScreen: React.FC = () => {
     }
   }, [groupId, currentUserId, showError, showSuccess, t]);
 
+  const handleMonthlyRebuild = useCallback(async () => {
+    if (!groupId || !canEditMonthlyRoster) return;
+    setMonthlyRebuilding(true);
+    try {
+      await rebuildMonthlyCycle({ groupId, periodKey: monthlyPeriodKey });
+      showSuccess('Mensalidade recalculada com os jogos e mensalistas deste mês.');
+    } catch (cause: unknown) {
+      showError(getFirestoreErrorMessage(cause, 'Não foi possível recalcular a mensalidade.'));
+    } finally {
+      setMonthlyRebuilding(false);
+    }
+  }, [canEditMonthlyRoster, groupId, monthlyPeriodKey, showError, showSuccess]);
+
+  const handleMonthlyConfigSubmit = useCallback(async (
+    request: ConfigureMonthlyFinanceRequest,
+  ) => {
+    if (!groupId || !canEditMonthlyRoster || request.groupId !== groupId) return;
+    setMonthlyConfigSaving(true);
+    try {
+      await configureMonthlyFinance(request);
+      await rebuildMonthlyCycle({ groupId, periodKey: monthlyPeriodKey });
+      setMonthlyConfigOpen(false);
+      showSuccess('Configuração salva e mês recalculado.');
+    } catch (cause: unknown) {
+      showError(getFirestoreErrorMessage(cause, 'Não foi possível salvar a configuração mensal.'));
+    } finally {
+      setMonthlyConfigSaving(false);
+    }
+  }, [canEditMonthlyRoster, groupId, monthlyPeriodKey, showError, showSuccess]);
+
+  const handleToggleMonthlyMember = useCallback(async (
+    targetUserId: string,
+    isMonthly: boolean,
+  ) => {
+    if (!groupId || !canEditMonthlyRoster) return;
+    setBusyMonthlyMemberIds((current) => new Set(current).add(targetUserId));
+    try {
+      await setMonthlyMember({ groupId, targetUserId, isMonthly });
+      await rebuildMonthlyCycle({ groupId, periodKey: monthlyPeriodKey });
+      showSuccess(isMonthly ? 'Jogador incluído nos mensalistas.' : 'Jogador removido dos mensalistas.');
+    } catch (cause: unknown) {
+      showError(getFirestoreErrorMessage(cause, 'Não foi possível atualizar a lista de mensalistas.'));
+    } finally {
+      setBusyMonthlyMemberIds((current) => {
+        const next = new Set(current);
+        next.delete(targetUserId);
+        return next;
+      });
+    }
+  }, [canEditMonthlyRoster, groupId, monthlyPeriodKey, showError, showSuccess]);
+
+  const handleSettleMonthlyMember = useCallback(async (
+    settlement: MonthlyPaymentSettlement,
+  ) => {
+    if (!groupId || !canSettleMonthly || settlement.amountToSettleCents <= 0) return;
+    const actionKey = [
+      settlement.periodKey,
+      settlement.userId,
+      settlement.amountToSettleCents,
+    ].join(':');
+    const requestId = monthlySettlementRequestIdsRef.current.get(actionKey) ?? crypto.randomUUID();
+    monthlySettlementRequestIdsRef.current.set(actionKey, requestId);
+    setBusyMonthlyMemberIds((current) => new Set(current).add(settlement.userId));
+    try {
+      await settleMonthlyCharge({
+        groupId,
+        periodKey: settlement.periodKey,
+        targetUserId: settlement.userId,
+        requestId,
+        amountCents: settlement.amountToSettleCents,
+      });
+      monthlySettlementRequestIdsRef.current.delete(actionKey);
+      showSuccess(`Baixa registrada para ${settlement.userName}.`);
+    } catch (cause: unknown) {
+      showError(getFirestoreErrorMessage(cause, 'Não foi possível registrar a baixa. Tente novamente.'));
+    } finally {
+      setBusyMonthlyMemberIds((current) => {
+        const next = new Set(current);
+        next.delete(settlement.userId);
+        return next;
+      });
+    }
+  }, [canSettleMonthly, groupId, showError, showSuccess]);
+
+  const handleMonthlyGameOverride = useCallback(async (
+    change: MonthlyGameOverrideChange,
+  ) => {
+    if (!groupId || !canEditMonthlyGames) return;
+    const occurrenceId = change.occurrenceId;
+    setBusyMonthlyGameIds((current) => new Set(current).add(occurrenceId));
+    setMonthlyGameOverrideErrors((current) => {
+      const next = { ...current };
+      delete next[occurrenceId];
+      return next;
+    });
+    try {
+      await setMonthlyGameOverride({
+        groupId,
+        periodKey: monthlyPeriodKey,
+        ...change,
+      });
+      showSuccess(change.costCents !== undefined
+        ? 'Custo do jogo atualizado no rateio.'
+        : change.excluded
+          ? 'Ocorrência marcada como feriado e retirada do rateio.'
+          : 'Ocorrência incluída novamente no rateio.');
+    } catch (cause: unknown) {
+      const message = getFirestoreErrorMessage(
+        cause,
+        'Não foi possível atualizar esta ocorrência.',
+      );
+      setMonthlyGameOverrideErrors((current) => ({ ...current, [occurrenceId]: message }));
+      showError(message);
+    } finally {
+      setBusyMonthlyGameIds((current) => {
+        const next = new Set(current);
+        next.delete(occurrenceId);
+        return next;
+      });
+    }
+  }, [canEditMonthlyGames, groupId, monthlyPeriodKey, showError, showSuccess]);
+
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat(navigator.language || 'pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
   };
@@ -304,6 +482,118 @@ export const CashboxScreen: React.FC = () => {
             </Box>
           </CardContent>
         </Card>
+
+        <Box sx={{ mb: 2 }}>
+          <Stack
+            direction={{ xs: 'column', sm: 'row' }}
+            alignItems={{ xs: 'stretch', sm: 'center' }}
+            justifyContent="space-between"
+            spacing={1}
+            sx={{ mb: 1 }}
+          >
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <Typography variant="subtitle1" fontWeight={800}>Mensal do grupo</Typography>
+              {monthlyFinance.period && (
+                <Chip
+                  size="small"
+                  label={monthlyFinance.period.status === 'DRAFT'
+                    ? 'Em cálculo'
+                    : monthlyFinance.period.status === 'FINALIZED'
+                      ? 'Lista fechada'
+                      : 'Mês encerrado'}
+                  color={monthlyFinance.period.status === 'CLOSED' ? 'default' : 'primary'}
+                  variant="outlined"
+                />
+              )}
+            </Stack>
+            {isAdminOrOwner && (
+              <Stack direction="row" spacing={1}>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  startIcon={<SettingsIcon />}
+                  disabled={!canEditMonthlyRoster || monthlyConfigSaving}
+                  onClick={() => setMonthlyConfigOpen(true)}
+                >
+                  Configurar
+                </Button>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  startIcon={monthlyRebuilding ? <CircularProgress size={16} /> : <RefreshIcon />}
+                  disabled={!monthlyFinance.config || !canEditMonthlyRoster || monthlyRebuilding}
+                  onClick={() => void handleMonthlyRebuild()}
+                >
+                  Recalcular
+                </Button>
+              </Stack>
+            )}
+          </Stack>
+
+          {isAdminOrOwner && !viewingCurrentMonthlyPeriod && (
+            <Alert severity="info" sx={{ mb: 1 }}>
+              Meses anteriores preservam a lista de pagantes. Em um rascunho, a agenda ainda pode ser corrigida;
+              mensalistas e configuração só mudam no mês atual.
+            </Alert>
+          )}
+
+          {monthlyFinance.error ? (
+            <ErrorState
+              message="Não foi possível carregar a mensalidade do grupo."
+              onRetry={handleRetry}
+            />
+          ) : monthlyFinance.loading ? (
+            <LoadingState shimmerCount={3} itemType="LIST" />
+          ) : !monthlyFinance.period ? (
+            <EmptyState
+              icon={<PaymentsIcon />}
+              title="Mensalidade ainda não calculada"
+              description={isAdminOrOwner
+                ? monthlyFinance.config
+                  ? 'Recalcule o mês para considerar os jogos reais e a lista atual de mensalistas.'
+                  : 'Configure o valor da quadra para criar o primeiro rateio mensal.'
+                : 'O responsável pelo grupo ainda não publicou o rateio deste mês.'}
+              actionLabel={canEditMonthlyRoster
+                ? monthlyFinance.config ? 'Calcular este mês' : 'Configurar mensalidade'
+                : undefined}
+              actionIcon={canEditMonthlyRoster
+                ? monthlyFinance.config ? <RefreshIcon /> : <SettingsIcon />
+                : undefined}
+              onAction={canEditMonthlyRoster
+                ? monthlyFinance.config
+                  ? () => void handleMonthlyRebuild()
+                  : () => setMonthlyConfigOpen(true)
+                : undefined}
+            />
+          ) : isAdminOrOwner && monthlyFinance.input ? (
+            <MonthlyFinancePanel
+              input={monthlyFinance.input}
+              canManage={canEditMonthlyRoster}
+              canManageGames={canEditMonthlyGames}
+              canSettle={canSettleMonthly}
+              busyMemberIds={busyMonthlyMemberIds}
+              busyGameIds={busyMonthlyGameIds}
+              gameOverrideErrors={monthlyGameOverrideErrors}
+              onPeriodChange={setMonthlyPeriodKey}
+              onToggleMonthlyMember={handleToggleMonthlyMember}
+              onSettleMember={handleSettleMonthlyMember}
+              onSetGameOverride={handleMonthlyGameOverride}
+            />
+          ) : !isAdminOrOwner ? (
+            <MonthlyFinanceMemberSummary
+              period={monthlyFinance.period}
+              payer={monthlyFinance.ownPayer}
+              isMonthlyMember={monthlyFinance.isMonthlyMember}
+              accessLimited={monthlyFinance.accessLimited}
+              onPeriodChange={setMonthlyPeriodKey}
+            />
+          ) : (
+            <ErrorState
+              message="Os dados deste rateio estão incompletos. Recalcule o mês."
+              onRetry={() => void handleMonthlyRebuild()}
+            />
+          )}
+        </Box>
 
         {canManageCashbox && (
           <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
@@ -460,6 +750,17 @@ export const CashboxScreen: React.FC = () => {
           </>
         )}
       </PageContainer>
+
+      {groupId && (
+        <MonthlyFinanceConfigDialog
+          open={monthlyConfigOpen}
+          groupId={groupId}
+          config={monthlyFinance.config}
+          saving={monthlyConfigSaving}
+          onClose={() => setMonthlyConfigOpen(false)}
+          onSubmit={(request) => void handleMonthlyConfigSubmit(request)}
+        />
+      )}
 
       <Dialog open={dialogOpen} onClose={closeTransactionDialog} fullScreen={isMobile} fullWidth maxWidth="sm" aria-labelledby="cashbox-dialog-title">
         <DialogTitle id="cashbox-dialog-title">

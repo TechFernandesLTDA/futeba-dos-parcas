@@ -41,6 +41,7 @@ service firebase.storage {
     function isGroupMember(groupId) {
       let memberDoc = firestore.get(/databases/(default)/documents/groups/$(groupId)/members/$(request.auth.uid));
       return memberDoc != null &&
+             memberDoc.data.user_id == request.auth.uid &&
              (!('status' in memberDoc.data) || memberDoc.data.status == 'ACTIVE');
     }
 
@@ -52,6 +53,7 @@ service firebase.storage {
       let memberDoc = firestore.get(/databases/(default)/documents/groups/$(groupId)/members/$(request.auth.uid));
       return isAuthenticated() &&
              memberDoc != null &&
+             memberDoc.data.user_id == request.auth.uid &&
              memberDoc.data.role in ['OWNER', 'ADMIN'] &&
              (!('status' in memberDoc.data) || memberDoc.data.status == 'ACTIVE');
     }
@@ -133,11 +135,15 @@ service firebase.storage {
              (isPublishedLocation(locationId) || canReadLocationPrivate(locationId));
     }
 
-    // Verifica se o arquivo é uma imagem válida.
-    // Blacklist explícito de SVG/XML para prevenir XSS via imagem com script embutido.
+    // Whitelist explícita de formatos raster suportados. Evita servir tipos
+    // image/* pouco conhecidos, SVG/XML ou conteúdo ativo com extensão falsa.
     function isImage() {
-      return request.resource.contentType.matches('image/.*') &&
-             !(request.resource.contentType in ['image/svg+xml', 'image/svg', 'image/xml']);
+      return request.resource.contentType in [
+        'image/jpeg',
+        'image/png',
+        'image/webp',
+        'image/gif'
+      ];
     }
 
     function isPublicLocationImageFile(fileName) {
@@ -272,7 +278,11 @@ service firebase.storage {
 
       // Apenas admins podem fazer upload de comprovantes
       // Máximo 5MB, apenas imagem
-      allow write: if isAuthenticated() && (isGroupAdmin(groupId) || isGroupOwnerById(groupId)) && isImage() && isUnderSize(5);
+      allow write: if resource == null &&
+                     isAuthenticated() &&
+                     (isGroupAdmin(groupId) || isGroupOwnerById(groupId)) &&
+                     isImage() &&
+                     isUnderSize(5);
 
       // Apenas admins podem deletar
       allow delete: if isAuthenticated() && (isGroupAdmin(groupId) || isGroupOwnerById(groupId));
@@ -414,7 +424,8 @@ service firebase.storage {
     // ============================================
     match /locations/{locationId}/subscription_receipts/{ownerId}/{fileName} {
       allow read: if isAdmin() || isLocationOwner(locationId);
-      allow write: if canWriteLocationCommercialReceipt(locationId, ownerId) &&
+      allow write: if resource == null &&
+                     canWriteLocationCommercialReceipt(locationId, ownerId) &&
                      isCommercialReceiptFile(fileName) &&
                      isUnderSize(10);
       allow delete: if isAdmin();
@@ -467,7 +478,8 @@ service firebase.storage {
                      firestore.exists(/databases/(default)/documents/games/$(gameId));
 
       // #2160: confirmacao exige status == CONFIRMED (nao apenas existencia do doc)
-      allow write: if isAuthenticated() &&
+      allow write: if resource == null &&
+                     isAuthenticated() &&
                      firestore.exists(/databases/(default)/documents/games/$(gameId)) &&
                      firestore.get(/databases/(default)/documents/games/$(gameId)).data.status in ['CONFIRMED', 'LIVE', 'FINISHED'] &&
                      ((
@@ -496,7 +508,8 @@ service firebase.storage {
       allow read: if isAuthenticated() &&
                      firestore.exists(/databases/(default)/documents/games/$(gameId));
 
-      allow write: if isOwner(userId) &&
+      allow write: if resource == null &&
+                     isOwner(userId) &&
                      firestore.exists(/databases/(default)/documents/games/$(gameId)) &&
                      firestore.get(/databases/(default)/documents/games/$(gameId)).data.status == 'FINISHED' &&
                      ((
@@ -526,7 +539,8 @@ service firebase.storage {
       allow read: if isAuthenticated() &&
                      firestore.exists(/databases/(default)/documents/games/$(gameId));
 
-      allow write: if isOwner(userId) &&
+      allow write: if resource == null &&
+                     isOwner(userId) &&
                      firestore.exists(/databases/(default)/documents/games/$(gameId)) &&
                      firestore.get(/databases/(default)/documents/games/$(gameId)).data.status == 'FINISHED' &&
                      ((

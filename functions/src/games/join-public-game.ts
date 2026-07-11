@@ -56,18 +56,45 @@ function isNonEmptyString(value: unknown): value is string {
 function parseConfirmGamePresenceRequest(
   data: unknown
 ): ConfirmGamePresenceRequest {
-  if (!isRecord(data) || !isNonEmptyString(data.gameId)) {
+  if (
+    !isRecord(data) ||
+    !isNonEmptyString(data.gameId) ||
+    data.gameId.trim().length > 128 ||
+    data.gameId.includes("/")
+  ) {
     throw new HttpsError("invalid-argument", "gameId obrigatório.");
   }
 
-  const position =
-    data.position === "GOALKEEPER" ? "GOALKEEPER" : "FIELD";
+  if (data.position !== "GOALKEEPER" && data.position !== "FIELD") {
+    throw new HttpsError("invalid-argument", "Posição inválida.");
+  }
+  if (
+    data.isCasualPlayer !== undefined &&
+    typeof data.isCasualPlayer !== "boolean"
+  ) {
+    throw new HttpsError("invalid-argument", "isCasualPlayer inválido.");
+  }
 
   return {
     gameId: data.gameId.trim(),
-    position,
+    position: data.position,
     isCasualPlayer: data.isCasualPlayer === true,
   };
+}
+
+/**
+ * Exige a claim de verificação depois da janela de compatibilidade.
+ * @param {Record<string, unknown>} token Custom claims do caller.
+ */
+function assertVerifiedForConfirmation(
+  token: Record<string, unknown>
+): void {
+  if (token.verified !== true && Date.now() >= VERIFICATION_GRACE_END_MS) {
+    throw new HttpsError(
+      "permission-denied",
+      "Verificação necessária para confirmar presença."
+    );
+  }
 }
 
 /**
@@ -216,6 +243,26 @@ export function getPublicCapacityStatuses(
 }
 
 /**
+ * Reconhece somente os contratos públicos suportados pelo produto.
+ * @param {Record<string, unknown>} game Documento atual do jogo.
+ * @return {boolean} Se o jogo aceita participantes externos ao grupo.
+ */
+function isGenuinelyPublic(game: Record<string, unknown>): boolean {
+  return game.visibility === "PUBLIC_OPEN" ||
+    (game.is_public === true && !game.visibility);
+}
+
+/**
+ * Garante que um valor pode ser usado como segmento de documento.
+ * @param {unknown} value Valor bruto.
+ * @return {boolean} Se e um ID simples.
+ */
+function isSafeId(value: unknown): value is string {
+  return typeof value === "string" && value.length > 0 &&
+    value.length <= 128 && !value.includes("/");
+}
+
+/**
  * Reserva capacidade e confirma presenca na mesma transaction. A escrita em
  * games serializa tentativas concorrentes no mesmo jogo; a query e reexecutada
  * depois de conflitos, evitando phantom overbooking entre confirmation IDs.
@@ -254,10 +301,9 @@ async function confirmGamePresenceTransactional(input: {
       );
     }
 
+    const isPublicGame = isGenuinelyPublic(game);
     if (requirePublicGame) {
-      const visibility = game.visibility;
-      const isLegacyPublic = game.is_public === true && !visibility;
-      if (visibility !== "PUBLIC_OPEN" && !isLegacyPublic) {
+      if (!isPublicGame) {
         throw new HttpsError(
           "permission-denied",
           "Este jogo não está aberto ao público."
@@ -277,25 +323,40 @@ async function confirmGamePresenceTransactional(input: {
     const existingStatus = existing.status;
     const existingPosition = normalizePosition(existing.position);
 
-    if (!requirePublicGame) {
-      const hasInvitation = existingSnap.exists &&
-        ["PENDING", "WAITLIST", "CONFIRMED"].includes(String(existingStatus));
-      const isOwner = game.owner_id === uid || game.ownerId === uid;
-      if (!hasInvitation && !isOwner) {
-        const groupId = typeof game.group_id === "string" ? game.group_id :
-          typeof game.groupId === "string" ? game.groupId : "";
-        const memberSnap = groupId ?
-          await tx.get(db().doc(`groups/${groupId}/members/${uid}`)) : null;
-        const memberStatus = memberSnap?.exists ? memberSnap.data()?.status : null;
-        const isActiveMember = memberSnap?.exists === true &&
-          (memberStatus === undefined || memberStatus === "ACTIVE");
-        if (!isActiveMember) {
+    const rawGroupId = game.group_id ?? game.groupId;
+    const groupId = isSafeId(rawGroupId) ? rawGroupId : "";
+    let isActiveMember = false;
+    if (groupId) {
+      const [memberSnap, blockedSnap] = await Promise.all([
+        tx.get(db().doc(`groups/${groupId}/members/${uid}`)),
+        tx.get(db().doc(`groups/${groupId}/blocked_players/${uid}`)),
+      ]);
+      if (blockedSnap.exists) {
+        throw new HttpsError(
+          "permission-denied",
+          "Você está bloqueado neste grupo."
+        );
+      }
+      if (memberSnap.exists) {
+        const membership = memberSnap.data() ?? {};
+        if (membership.user_id !== uid || membership.status !== "ACTIVE") {
           throw new HttpsError(
             "permission-denied",
-            "Você precisa pertencer ao grupo ou possuir um convite para confirmar presença."
+            "Seu vínculo com este grupo não permite confirmar presença."
           );
         }
+        isActiveMember = true;
       }
+    }
+
+    const hasInvitation = existingSnap.exists &&
+      ["PENDING", "WAITLIST", "CONFIRMED"].includes(String(existingStatus));
+    const isOwner = game.owner_id === uid || game.ownerId === uid;
+    if (!isActiveMember && !hasInvitation && !isOwner && !isPublicGame) {
+      throw new HttpsError(
+        "permission-denied",
+        "Você precisa pertencer ao grupo ou possuir um convite para confirmar presença."
+      );
     }
 
     const payment = resolveConfirmationPayment(game);
@@ -426,13 +487,7 @@ export const confirmGamePresence = onCall<ConfirmGamePresenceRequest>(
     if (!request.auth) {
       throw new HttpsError("unauthenticated", "Login obrigatório.");
     }
-    if (request.auth.token.verified !== true &&
-        Date.now() >= VERIFICATION_GRACE_END_MS) {
-      throw new HttpsError(
-        "permission-denied",
-        "Verificação necessária para confirmar presença."
-      );
-    }
+    assertVerifiedForConfirmation(request.auth.token);
 
     const payload = parseConfirmGamePresenceRequest(request.data);
     const uid = request.auth.uid;
@@ -479,6 +534,7 @@ export const joinPublicGame = onCall(
     if (!request.auth) {
       throw new HttpsError("unauthenticated", "Login obrigatório.");
     }
+    assertVerifiedForConfirmation(request.auth.token);
 
     const payload = parseConfirmGamePresenceRequest(request.data);
     const uid = request.auth.uid;

@@ -2,6 +2,11 @@ const mockSetCustomUserClaims = jest.fn().mockResolvedValue(undefined);
 const mockRevokeRefreshTokens = jest.fn().mockResolvedValue(undefined);
 const mockGetUser = jest.fn();
 const mockDocGet = jest.fn();
+const mockCheckRateLimit = jest.fn().mockResolvedValue({
+  allowed: true,
+  remaining: 10,
+  resetAt: new Date(Date.now() + 60000),
+});
 const mockDoc = jest.fn().mockReturnValue({
   get: mockDocGet,
 });
@@ -31,11 +36,7 @@ jest.mock("firebase-functions/v2", () => ({
 }));
 
 jest.mock("../../src/middleware/rate-limiter", () => ({
-  checkRateLimit: jest.fn().mockResolvedValue({
-    allowed: true,
-    remaining: 10,
-    resetAt: new Date(Date.now() + 60000),
-  }),
+  checkRateLimit: mockCheckRateLimit,
   RATE_LIMITS: {
     DEFAULT: { maxRequests: 10, windowMs: 60000 },
     BATCH_OPERATION: { maxRequests: 5, windowMs: 60000, keyPrefix: "batch" },
@@ -106,6 +107,11 @@ describe("Profile Complete Claim", () => {
     onUserProfileWrittenHandler = null;
     recomputeMyProfileClaimHandler = null;
     mockGetUser.mockResolvedValue({customClaims: {}, phoneNumber: validPhone});
+    mockCheckRateLimit.mockResolvedValue({
+      allowed: true,
+      remaining: 10,
+      resetAt: new Date(Date.now() + 60000),
+    });
     mockDocGet.mockResolvedValue({
       exists: true,
       data: () => ({cpfVerifiedAt: {seconds: 1}, phone: validPhone}),
@@ -189,6 +195,32 @@ describe("Profile Complete Claim", () => {
     expect(mockSetCustomUserClaims).not.toHaveBeenCalled();
   });
 
+  test("trigger encerra com seguranca quando usuario do Auth foi removido", async () => {
+    mockGetUser.mockRejectedValue(Object.assign(
+      new Error("User not found"),
+      {code: "auth/user-not-found"}
+    ));
+
+    await expect(onUserProfileWrittenHandler!(userWriteEvent(
+      {cpfVerifiedAt: {seconds: 1}},
+      {}
+    ))).resolves.toBeUndefined();
+
+    expect(mockSetCustomUserClaims).not.toHaveBeenCalled();
+  });
+
+  test("trigger propaga falha transitoria para o retry do Cloud Functions", async () => {
+    const transientError = Object.assign(new Error("Auth unavailable"), {
+      code: "auth/internal-error",
+    });
+    mockGetUser.mockRejectedValue(transientError);
+
+    await expect(onUserProfileWrittenHandler!(userWriteEvent(
+      {cpfVerifiedAt: {seconds: 1}},
+      {}
+    ))).rejects.toBe(transientError);
+  });
+
   test("trigger pula quando campos relevantes nao mudam", async () => {
     await onUserProfileWrittenHandler!(userWriteEvent(
       {cpfVerifiedAt: {seconds: 1}, phone: validPhone, displayName: "New"},
@@ -232,5 +264,28 @@ describe("Profile Complete Claim", () => {
     await expect(
       recomputeMyProfileClaimHandler!({auth: null})
     ).rejects.toMatchObject({code: "unauthenticated"});
+  });
+
+  test("callable respeita rate limit antes de ler o perfil", async () => {
+    mockCheckRateLimit.mockResolvedValue({
+      allowed: false,
+      remaining: 0,
+      resetAt: new Date(Date.now() + 60000),
+    });
+
+    await expect(recomputeMyProfileClaimHandler!({
+      auth: {uid: "user1", token: {}},
+    })).rejects.toMatchObject({code: "resource-exhausted"});
+    expect(mockDocGet).not.toHaveBeenCalled();
+  });
+
+  test("callable encapsula falha transitoria inesperada como internal", async () => {
+    mockGetUser.mockRejectedValue(Object.assign(new Error("Auth unavailable"), {
+      code: "auth/internal-error",
+    }));
+
+    await expect(recomputeMyProfileClaimHandler!({
+      auth: {uid: "user1", token: {}},
+    })).rejects.toMatchObject({code: "internal"});
   });
 });

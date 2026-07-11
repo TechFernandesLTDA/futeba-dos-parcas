@@ -71,6 +71,8 @@ export const CpfVerificationScreen: React.FC = () => {
   const [successNextPath, setSuccessNextPath] = useState('/profile/setup');
   const [providersToRelink, setProvidersToRelink] = useState<string[]>([]);
   const [relinkingGoogle, setRelinkingGoogle] = useState(false);
+  const [pendingMerge] = useState(() => readPendingAccountMerge());
+  const mergeReady = pendingMerge?.status === 'ready';
 
   useEffect(() => {
     if (firebaseUser && !firebaseUser.phoneNumber) {
@@ -85,7 +87,11 @@ export const CpfVerificationScreen: React.FC = () => {
     firebaseUser
       .getIdTokenResult()
       .then((tokenResult) => {
-        if (cancelled || tokenResult.claims.verified !== true) return;
+        if (
+          cancelled ||
+          tokenResult.claims.verified !== true ||
+          pendingMerge
+        ) return;
         const nextPath = tokenResult.claims.profileComplete === false ? '/profile/setup' : '/';
         navigate(nextPath, { replace: true });
       })
@@ -96,7 +102,7 @@ export const CpfVerificationScreen: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [firebaseUser, navigate]);
+  }, [firebaseUser, navigate, pendingMerge]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const digits = stripCpf(e.target.value).slice(0, 11);
@@ -127,7 +133,7 @@ export const CpfVerificationScreen: React.FC = () => {
   const handleSubmit = async () => {
     setError(null);
 
-    if (!isValidCpf(cpf)) {
+    if (!mergeReady && !isValidCpf(cpf)) {
       setError(t('onboarding.errorInvalidCpf'));
       return;
     }
@@ -195,28 +201,47 @@ export const CpfVerificationScreen: React.FC = () => {
         return;
       }
 
-      logger.info('Calling verifyCpf', { uid: firebaseUser.uid, cpfMasked: '***.' + stripCpf(cpf).slice(-4) });
-      const verifyResult = await verifyCpf({ cpf: stripCpf(cpf) });
-      if (!verifyResult.data.success) {
-        // #3187: erro com código próprio — antes era message-only (code undefined),
-        // caía no errorGeneric e era auditado como invalid_format (razão errada).
-        const verifyFailure = new Error(t('onboarding.verifyFailed')) as Error & { code?: string };
-        verifyFailure.code = 'app/cpf-verification-failed';
-        throw verifyFailure;
-      }
-      await setUserVerified({});
-
-      const pendingMerge = readPendingAccountMerge();
       let mergeNeedsUserAction = false;
-      if (pendingMerge) {
+      let mergeProviders: string[] = [];
+
+      // Quando o servidor já reconciliou um CPF válido em uma das contas,
+      // concluir primeiro transfere o índice para o UID canônico. Chamar
+      // verifyCpf antes disso colide com o próprio CPF da conta de origem.
+      if (mergeReady && pendingMerge) {
         const mergeResult = await completeAccountMerge({
           requestId: pendingMerge.requestId,
         });
+        mergeProviders = mergeResult.data.providersToRelink;
         clearPendingAccountMerge();
-        setProvidersToRelink(mergeResult.data.providersToRelink);
-        mergeNeedsUserAction = mergeResult.data.providersToRelink.length > 0;
         showSuccess(t('feedback.phoneVerification.mergeCompleted'));
+      } else {
+        logger.info('Calling verifyCpf', {
+          uid: firebaseUser.uid,
+          cpfMasked: '***.' + stripCpf(cpf).slice(-4),
+        });
+        const verifyResult = await verifyCpf({ cpf: stripCpf(cpf) });
+        if (!verifyResult.data.success) {
+          // #3187: erro com código próprio — antes era message-only (code undefined),
+          // caía no errorGeneric e era auditado como invalid_format (razão errada).
+          const verifyFailure = new Error(t('onboarding.verifyFailed')) as Error & {
+            code?: string;
+          };
+          verifyFailure.code = 'app/cpf-verification-failed';
+          throw verifyFailure;
+        }
+        await setUserVerified({});
+
+        if (pendingMerge) {
+          const mergeResult = await completeAccountMerge({
+            requestId: pendingMerge.requestId,
+          });
+          mergeProviders = mergeResult.data.providersToRelink;
+          clearPendingAccountMerge();
+          showSuccess(t('feedback.phoneVerification.mergeCompleted'));
+        }
       }
+      setProvidersToRelink(mergeProviders);
+      mergeNeedsUserAction = mergeProviders.length > 0;
 
       // #1485: recompute profileComplete claim para ProfileGate
       let profileCompleteAfterRecompute: boolean | null = null;
@@ -266,7 +291,7 @@ export const CpfVerificationScreen: React.FC = () => {
       const code = (err as { code?: string }).code;
       const message = (err as { message?: string }).message || '';
       // Log detalhado pra debug: code + message + appCheckRejected flag se houver
-      logger.error('verifyCpf failed', {
+      logger.error(mergeReady ? 'account merge failed' : 'verifyCpf failed', {
         code,
         message,
         details: (err as { details?: unknown }).details,
@@ -302,7 +327,10 @@ export const CpfVerificationScreen: React.FC = () => {
 
       // Anti-abuse: log failure for audit (fire-and-forget)
       // #2290: registra falha do log de auditoria em vez de engolir silenciosamente.
-      logVerificationFailure({ reason: mapCpfVerificationFailureReason(code), stage: 'cpf' }).catch((e) => {
+      logVerificationFailure({
+        reason: mapCpfVerificationFailureReason(code),
+        stage: 'cpf',
+      }).catch((e) => {
         logger.error('Falha ao registrar tentativa de verificação:', e);
       });
     } finally {
@@ -423,7 +451,9 @@ export const CpfVerificationScreen: React.FC = () => {
                 </Box>
 
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                  {t('onboarding.cpfReason')}
+                  {mergeReady
+                    ? t('feedback.phoneVerification.mergeReady')
+                    : t('onboarding.cpfReason')}
                 </Typography>
 
                 <Fade in={!!error} timeout={250} unmountOnExit>
@@ -432,41 +462,47 @@ export const CpfVerificationScreen: React.FC = () => {
                   </Alert>
                 </Fade>
 
-                <TextField
-                  fullWidth
-                  label={t('onboarding.cpfFieldLabel')}
-                  placeholder="999.999.999-99"
-                  value={cpf}
-                  onChange={handleChange}
-                  disabled={loading}
-                  autoFocus
-                  sx={{
-                    mb: 2,
-                    '& input': {
-                      fontSize: '1.2rem',
-                      letterSpacing: '0.05em',
-                      textAlign: 'center',
-                      fontWeight: 600,
-                    },
-                  }}
-                  helperText={t('onboarding.cpfHelper')}
-                  inputProps={{
-                    inputMode: 'numeric',
-                    maxLength: 14,
-                    'aria-label': t('onboarding.cpfAria'),
-                  }}
-                />
+                {!mergeReady && (
+                  <TextField
+                    fullWidth
+                    label={t('onboarding.cpfFieldLabel')}
+                    placeholder="999.999.999-99"
+                    value={cpf}
+                    onChange={handleChange}
+                    disabled={loading}
+                    autoFocus
+                    sx={{
+                      mb: 2,
+                      '& input': {
+                        fontSize: '1.2rem',
+                        letterSpacing: '0.05em',
+                        textAlign: 'center',
+                        fontWeight: 600,
+                      },
+                    }}
+                    helperText={t('onboarding.cpfHelper')}
+                    inputProps={{
+                      inputMode: 'numeric',
+                      maxLength: 14,
+                      'aria-label': t('onboarding.cpfAria'),
+                    }}
+                  />
+                )}
 
                 <Button
                   fullWidth
                   variant="contained"
                   size="large"
                   onClick={handleSubmit}
-                  disabled={loading || !isValidCpf(cpf)}
+                  disabled={loading || (!mergeReady && !isValidCpf(cpf))}
                   sx={{ py: 1.5, borderRadius: 2 }}
                   startIcon={loading ? <CircularProgress size={20} color="inherit" /> : null}
                 >
-                  {loading ? t('onboarding.verifying') : t('onboarding.finishVerification')}
+                  {loading
+                    ? t('onboarding.verifying')
+                    : mergeReady
+                      ? t('onboarding.finishAccountMerge')
+                      : t('onboarding.finishVerification')}
                 </Button>
 
                 <Box

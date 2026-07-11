@@ -47,6 +47,7 @@ jest.mock("firebase-admin/firestore", () => ({
 import {
   CONFIRM_GAME_PRESENCE_RATE_LIMIT,
   confirmGamePresence,
+  joinPublicGame,
   resolveConfirmationPayment,
 } from "../src/games/join-public-game";
 import {checkRateLimit} from "../src/middleware/rate-limiter";
@@ -91,6 +92,7 @@ function arrangeTransaction(input: {
   existing?: FakeDoc;
   capacity?: Array<{data: () => Record<string, unknown>}>;
   member?: FakeDoc;
+  blocked?: FakeDoc;
 }) {
   const capacityQuery = {
     where: jest.fn().mockReturnThis(),
@@ -103,6 +105,9 @@ function arrangeTransaction(input: {
       }
       if (ref?.path === "groups/group1/members/user1") {
         return input.member ?? confirmationDoc();
+      }
+      if (ref?.path === "groups/group1/blocked_players/user1") {
+        return input.blocked ?? confirmationDoc();
       }
       return {
         size: input.capacity?.length ?? 0,
@@ -241,7 +246,7 @@ describe("confirmGamePresence", () => {
   test("permite membro ativo do grupo sem convite preexistente", async () => {
     const tx = arrangeTransaction({
       game: gameDoc({owner_id: "owner", group_id: "group1"}),
-      member: confirmationDoc({status: "ACTIVE"}),
+      member: confirmationDoc({user_id: "user1", status: "ACTIVE"}),
     });
 
     await expect(confirmGamePresence({
@@ -249,6 +254,71 @@ describe("confirmGamePresence", () => {
       data: {gameId: "game1", position: "FIELD"},
     })).resolves.toMatchObject({success: true, alreadyConfirmed: false});
     expect(tx.set).toHaveBeenCalled();
+  });
+
+  test("permite ingresso público sem membership quando não está bloqueado", async () => {
+    const tx = arrangeTransaction({
+      game: gameDoc({
+        owner_id: "owner",
+        group_id: "group1",
+        visibility: "PUBLIC_OPEN",
+      }),
+    });
+
+    await expect(joinPublicGame({
+      auth: {uid: "user1", token: {verified: true}},
+      data: {gameId: "game1", position: "FIELD"},
+    })).resolves.toMatchObject({success: true});
+    expect(tx.set).toHaveBeenCalled();
+  });
+
+  test("permite convite preexistente válido mesmo sem membership", async () => {
+    const tx = arrangeTransaction({
+      game: gameDoc({owner_id: "owner", group_id: "group1"}),
+      existing: confirmationDoc({status: "PENDING", position: "FIELD"}),
+    });
+
+    await expect(confirmGamePresence({
+      auth: {uid: "user1", token: {verified: true}},
+      data: {gameId: "game1", position: "FIELD"},
+    })).resolves.toMatchObject({success: true});
+    expect(tx.set).toHaveBeenCalled();
+  });
+
+  test("bloqueia participante em jogo público mesmo sem membership", async () => {
+    const tx = arrangeTransaction({
+      game: gameDoc({
+        owner_id: "owner",
+        group_id: "group1",
+        visibility: "PUBLIC_OPEN",
+      }),
+      blocked: confirmationDoc({user_id: "user1"}),
+    });
+
+    await expect(joinPublicGame({
+      auth: {uid: "user1", token: {verified: true}},
+      data: {gameId: "game1", position: "FIELD"},
+    })).rejects.toMatchObject({code: "permission-denied"});
+    expect(tx.set).not.toHaveBeenCalled();
+  });
+
+  test.each([
+    {user_id: "user1", status: "BANNED"},
+    {user_id: "user1", status: "SUSPENDED"},
+    {user_id: "user1", status: "INACTIVE"},
+    {user_id: "other", status: "ACTIVE"},
+    {status: "ACTIVE"},
+  ])("rejeita membership inativa ou sem vínculo de identidade: %p", async (membership) => {
+    const tx = arrangeTransaction({
+      game: gameDoc({owner_id: "owner", group_id: "group1"}),
+      member: confirmationDoc(membership),
+    });
+
+    await expect(confirmGamePresence({
+      auth: {uid: "user1", token: {verified: true}},
+      data: {gameId: "game1", position: "FIELD"},
+    })).rejects.toMatchObject({code: "permission-denied"});
+    expect(tx.set).not.toHaveBeenCalled();
   });
 });
 

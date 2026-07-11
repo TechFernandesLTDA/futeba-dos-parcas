@@ -28,7 +28,7 @@ import {
   Delete as DeleteIcon,
   Schedule as ScheduleIcon,
 } from '@mui/icons-material';
-import { collection, query, where, orderBy, onSnapshot, addDoc, updateDoc, deleteDoc, doc, getDocs, serverTimestamp } from 'firebase/firestore';
+import { collection, query, where, orderBy, onSnapshot, addDoc, updateDoc, deleteDoc, doc, getDoc, getDocs, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useToast } from '../../contexts/ToastContext';
 import { LoadingState } from '../../components/common/GameCard';
@@ -40,6 +40,7 @@ import { useTranslation } from 'react-i18next';
 import { createLogger } from '../../utils/logger';
 import { getFirestoreErrorMessage } from '../../utils/firebaseErrors';
 import { hasDuplicateScheduleSlot } from '../../utils/gameScheduleValidation';
+import { useAuth } from '../../contexts/AuthContext';
 
 const logger = createLogger('SchedulesScreen');
 
@@ -56,10 +57,12 @@ interface Schedule {
 
 export const SchedulesScreen: React.FC = () => {
   const navigate = useNavigate();
-    const theme = useTheme();
+  const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { groupId } = useParams<{ groupId: string }>();
   const { showError, showSuccess } = useToast();
+  const { firebaseUser } = useAuth();
+  const currentUserId = firebaseUser?.uid;
   const showErrorRef = useRef(showError);
   showErrorRef.current = showError;
   const { t } = useTranslation();
@@ -80,6 +83,7 @@ export const SchedulesScreen: React.FC = () => {
   const [scheduleTimeTouched, setScheduleTimeTouched] = useState(false); // #2231
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
+  const [canManage, setCanManage] = useState(false);
 
   const handleRetry = () => {
     setError(null);
@@ -114,7 +118,38 @@ export const SchedulesScreen: React.FC = () => {
     return () => unsubscribe();
   }, [groupId, retryCount, t]);
 
+  useEffect(() => {
+    if (!groupId || !currentUserId) {
+      setCanManage(false);
+      return;
+    }
+    let cancelled = false;
+    void Promise.all([
+      getDoc(doc(db, 'groups', groupId)),
+      getDoc(doc(db, 'groups', groupId, 'members', currentUserId)),
+    ]).then(([groupSnapshot, memberSnapshot]) => {
+      if (cancelled) return;
+      const group = groupSnapshot.data();
+      const member = memberSnapshot.data();
+      const identityMatches = member?.user_id === currentUserId;
+      setCanManage(
+        group?.owner_id === currentUserId ||
+        (identityMatches && member?.status === 'ACTIVE' &&
+          (member?.role === 'OWNER' || member?.role === 'ADMIN'))
+      );
+    }).catch((cause) => {
+      if (cancelled) return;
+      logger.error('Error checking schedule permissions:', cause);
+      setCanManage(false);
+      showErrorRef.current(t('feedback.schedules.loadError'));
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [currentUserId, groupId, retryCount, t]);
+
   const handleToggleActive = async (schedule: Schedule) => {
+    if (!canManage) return;
     // Evita spam-toggle enquanto o write está em andamento (#2300)
     if (togglingId === schedule.id) return;
     setTogglingId(schedule.id);
@@ -135,7 +170,7 @@ export const SchedulesScreen: React.FC = () => {
   };
 
   const handleDelete = async () => {
-    if (!deletingSchedule) return;
+    if (!deletingSchedule || !canManage) return;
     setActionLoading(true);
     try {
       await deleteDoc(doc(db, 'schedules', deletingSchedule.id));
@@ -150,7 +185,7 @@ export const SchedulesScreen: React.FC = () => {
   };
 
   const handleCreateSchedule = async () => {
-    if (!groupId || !newScheduleName.trim() || !newScheduleTime) return;
+    if (!groupId || !currentUserId || !canManage || !newScheduleName.trim() || !newScheduleTime) return;
     setActionLoading(true);
     try {
       const existingSnapshot = await getDocs(
@@ -171,6 +206,7 @@ export const SchedulesScreen: React.FC = () => {
       }
 
       await addDoc(collection(db, 'schedules'), {
+        owner_id: currentUserId,
         group_id: groupId,
         name: newScheduleName.trim(),
         day_of_week: newScheduleDay,
@@ -198,11 +234,11 @@ export const SchedulesScreen: React.FC = () => {
         title={t('schedule.title')}
         onBack={() => navigate(groupId ? `/group/${groupId}` : '/?tab=2')}
         backAriaLabel={t('common.back')}
-        actions={
+        actions={canManage ? (
           <IconButton onClick={() => setDialogOpen(true)} aria-label={t('a11y.createSchedule')}>
             <AddIcon />
           </IconButton>
-        }
+        ) : undefined}
       />
 
       <PageContainer maxWidth="list">
@@ -225,14 +261,16 @@ export const SchedulesScreen: React.FC = () => {
             <Typography variant="body2" color="text.disabled">
               {t('schedule.emptyDesc')}
             </Typography>
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={() => setDialogOpen(true)}
-              sx={{ mt: 2 }}
-            >
-              {t('schedule.createFirst')}
-            </Button>
+            {canManage && (
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={() => setDialogOpen(true)}
+                sx={{ mt: 2 }}
+              >
+                {t('schedule.createFirst')}
+              </Button>
+            )}
           </Box>
         ) : (
           <Card>
@@ -241,7 +279,7 @@ export const SchedulesScreen: React.FC = () => {
                 <Box key={schedule.id}>
                   {index > 0 && <Divider />}
                   <ListItem
-                    secondaryAction={
+                    secondaryAction={canManage ? (
                       <Box sx={{ display: 'flex', alignItems: 'center' }}>
                         <Switch
                           checked={schedule.isActive}
@@ -254,7 +292,7 @@ export const SchedulesScreen: React.FC = () => {
                           <DeleteIcon color="error" />
                         </IconButton>
                       </Box>
-                    }
+                    ) : undefined}
                   >
                     <ListItemText
                       primary={
@@ -275,7 +313,7 @@ export const SchedulesScreen: React.FC = () => {
         )}
       </PageContainer>
 
-      <Dialog open={dialogOpen} onClose={() => { setDialogOpen(false); setScheduleNameTouched(false); setScheduleTimeTouched(false); }} fullScreen={isMobile} fullWidth maxWidth="sm" aria-labelledby="new-schedule-dialog-title">
+      <Dialog open={canManage && dialogOpen} onClose={() => { setDialogOpen(false); setScheduleNameTouched(false); setScheduleTimeTouched(false); }} fullScreen={isMobile} fullWidth maxWidth="sm" aria-labelledby="new-schedule-dialog-title">
         <DialogTitle id="new-schedule-dialog-title">{t('schedule.newTitle')}</DialogTitle>
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
@@ -334,7 +372,7 @@ export const SchedulesScreen: React.FC = () => {
       </Dialog>
 
       <ConfirmDialog
-        open={deleteDialogOpen}
+        open={canManage && deleteDialogOpen}
         title={t('schedule.deleteTitle')}
         message={t('schedule.deleteConfirm', { name: deletingSchedule?.name })}
         confirmLabel={t('common.delete')}

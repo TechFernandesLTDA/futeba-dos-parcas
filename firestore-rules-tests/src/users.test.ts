@@ -245,6 +245,29 @@ describe("users — criação", () => {
     );
   });
 
+  it("Player NÃO pode reservar código/contadores de convite no create", async () => {
+    const newUid = "uid-invite-squat-create-test";
+    const userCtx = testEnv
+      .authenticatedContext(newUid, {role: "PLAYER", verified: true})
+      .firestore();
+    await assertFails(
+      userCtx.doc(`users/${newUid}`).set({
+        name: "Squatter",
+        email: "squatter@test.com",
+        role: "PLAYER",
+        striker_rating: 0,
+        mid_rating: 0,
+        defender_rating: 0,
+        gk_rating: 0,
+        invited_by_code: "ABC123",
+        invite_code: "TAKEN1",
+        invite_count: 99,
+        invited_by: "fake-owner",
+        status: "ADMIN",
+      })
+    );
+  });
+
   it("Player NÃO pode criar doc de outro usuário", async () => {
     const db = asUsersA();
     await assertFails(

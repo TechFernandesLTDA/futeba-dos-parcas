@@ -123,4 +123,25 @@ describe("secureCallable App Check token consumption", () => {
     })).resolves.toEqual({ok: true});
     expect(handler).toHaveBeenCalledTimes(1);
   });
+
+  it("não falha após mutação se o contexto de auditoria lançar", async () => {
+    const callable = secureCallable(
+      {
+        appCheck: false,
+        requireAuth: false,
+        enableAuditLog: true,
+        auditLogContext: async () => {
+          throw new Error("audit enrichment unavailable");
+        },
+      },
+      async () => ({committed: true})
+    ) as unknown as CallableUnderTest;
+
+    await expect(callable.handler({rawRequest: {ip: "127.0.0.1"}}))
+      .resolves.toEqual({committed: true});
+    expect(mockAuditAdd).toHaveBeenCalledWith(expect.objectContaining({
+      type: "FUNCTION_EXECUTED",
+      status: "SUCCESS",
+    }));
+  });
 });

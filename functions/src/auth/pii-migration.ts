@@ -25,6 +25,12 @@ import {FieldValue, FieldPath} from "firebase-admin/firestore";
 import {logger} from "firebase-functions/v2";
 import {FUNCTION_REGION} from "../constants";
 import {checkRateLimit} from "../middleware/rate-limiter";
+import {
+  acquireOperationLease,
+  completeOperationLease,
+  failOperationLease,
+  OperationLease,
+} from "../middleware/operation-lock";
 
 const PII_FIELDS = [
   "email",
@@ -78,6 +84,180 @@ function piiChanged(
 }
 
 /**
+ * Compara PII Firestore por valor, incluindo Timestamp/GeoPoint e mapas, sem
+ * depender de identidade de referência JavaScript.
+ *
+ * @param {unknown} left Valor público.
+ * @param {unknown} right Valor privado.
+ * @param {number} depth Profundidade interna de mapas/arrays.
+ * @return {boolean} true quando semanticamente equivalentes.
+ */
+export function piiValuesEqual(
+  left: unknown,
+  right: unknown,
+  depth = 0,
+): boolean {
+  if (Object.is(left, right)) return true;
+  if (depth > 8 || left == null || right == null) return false;
+
+  if (left instanceof Date || right instanceof Date) {
+    return left instanceof Date &&
+      right instanceof Date &&
+      left.getTime() === right.getTime();
+  }
+
+  if (Array.isArray(left) || Array.isArray(right)) {
+    return Array.isArray(left) &&
+      Array.isArray(right) &&
+      left.length === right.length &&
+      left.every((value, index) =>
+        piiValuesEqual(value, right[index], depth + 1)
+      );
+  }
+
+  if (typeof left !== "object" || typeof right !== "object") return false;
+  const leftComparable = left as {
+    isEqual?: (other: unknown) => boolean;
+    toMillis?: () => number;
+  };
+  const rightComparable = right as {
+    isEqual?: (other: unknown) => boolean;
+    toMillis?: () => number;
+  };
+
+  if (typeof leftComparable.isEqual === "function") {
+    try {
+      return leftComparable.isEqual(right);
+    } catch {
+      return false;
+    }
+  }
+  if (typeof rightComparable.isEqual === "function") {
+    try {
+      return rightComparable.isEqual(left);
+    } catch {
+      return false;
+    }
+  }
+  if (
+    typeof leftComparable.toMillis === "function" ||
+    typeof rightComparable.toMillis === "function"
+  ) {
+    return typeof leftComparable.toMillis === "function" &&
+      typeof rightComparable.toMillis === "function" &&
+      leftComparable.toMillis() === rightComparable.toMillis();
+  }
+
+  const leftPrototype = Object.getPrototypeOf(left);
+  const rightPrototype = Object.getPrototypeOf(right);
+  const leftIsPlain = leftPrototype === Object.prototype || leftPrototype === null;
+  const rightIsPlain = rightPrototype === Object.prototype || rightPrototype === null;
+  if (!leftIsPlain || !rightIsPlain) return false;
+
+  const leftRecord = left as Record<string, unknown>;
+  const rightRecord = right as Record<string, unknown>;
+  const leftKeys = Object.keys(leftRecord).sort();
+  const rightKeys = Object.keys(rightRecord).sort();
+  return leftKeys.length === rightKeys.length &&
+    leftKeys.every((key, index) =>
+      key === rightKeys[index] &&
+      piiValuesEqual(leftRecord[key], rightRecord[key], depth + 1)
+    );
+}
+
+type AtomicPiiResult = {
+  hadPii: boolean;
+  changed: boolean;
+  conflicts: string[];
+};
+
+/**
+ * Copia PII pública para o documento privado sob controle de concorrência.
+ * Valores privados divergentes nunca são sobrescritos pelo backfill.
+ *
+ * @param {FirebaseFirestore.Firestore} db Firestore.
+ * @param {FirebaseFirestore.DocumentReference} userRef Perfil público.
+ * @return {Promise<AtomicPiiResult>} Resultado da reconciliação.
+ */
+export async function migratePiiDocumentAtomically(
+  db: FirebaseFirestore.Firestore,
+  userRef: FirebaseFirestore.DocumentReference,
+): Promise<AtomicPiiResult> {
+  const privateRef = db.doc(`users_private/${userRef.id}`);
+  return db.runTransaction(async (tx) => {
+    const [freshUser, freshPrivate] = await Promise.all([
+      tx.get(userRef),
+      tx.get(privateRef),
+    ]);
+    const pii = freshUser.exists ? extractPii(freshUser.data() ?? {}) : {};
+    const privateData = freshPrivate.data() ?? {};
+    const update: Record<string, unknown> = {};
+    const conflicts: string[] = [];
+    for (const [field, value] of Object.entries(pii)) {
+      const privateValue = privateData[field];
+      if (
+        privateValue === undefined ||
+        privateValue === null ||
+        piiValuesEqual(privateValue, value)
+      ) {
+        update[field] = value;
+      } else {
+        conflicts.push(field);
+      }
+    }
+    const changed = Object.keys(update).length > 0;
+    if (changed) {
+      const now = FieldValue.serverTimestamp();
+      tx.set(privateRef, {
+        ...update,
+        piiSyncedAt: now,
+        migratedAt: now,
+      }, {merge: true});
+    }
+    return {hadPii: Object.keys(pii).length > 0, changed, conflicts};
+  });
+}
+
+/**
+ * Remove PII pública somente se o valor privado ainda for semanticamente
+ * idêntico no instante do commit. A transação repete a leitura se houver write
+ * concorrente e impede apagar um valor novo com base em snapshot antigo.
+ *
+ * @param {FirebaseFirestore.Firestore} db Firestore.
+ * @param {FirebaseFirestore.DocumentReference} userRef Perfil público.
+ * @return {Promise<AtomicPiiResult>} Resultado da limpeza.
+ */
+export async function removePiiDocumentAtomically(
+  db: FirebaseFirestore.Firestore,
+  userRef: FirebaseFirestore.DocumentReference,
+): Promise<AtomicPiiResult> {
+  const privateRef = db.doc(`users_private/${userRef.id}`);
+  return db.runTransaction(async (tx) => {
+    const [freshUser, freshPrivate] = await Promise.all([
+      tx.get(userRef),
+      tx.get(privateRef),
+    ]);
+    const data = freshUser.data() ?? {};
+    const privateData = freshPrivate.data() ?? {};
+    const fieldsToDelete: Record<string, FirebaseFirestore.FieldValue> = {};
+    const conflicts: string[] = [];
+    let hadPii = false;
+    for (const field of PII_FIELDS) {
+      if (data[field] === undefined || data[field] === null) continue;
+      hadPii = true;
+      if (piiValuesEqual(privateData[field], data[field])) {
+        fieldsToDelete[field] = FieldValue.delete();
+      } else {
+        conflicts.push(field);
+      }
+    }
+    const changed = Object.keys(fieldsToDelete).length > 0;
+    if (changed) tx.update(userRef, fieldsToDelete);
+    return {hadPii, changed, conflicts};
+  });
+}
+
+/**
  * Trigger: copia PII pra users_private na criação inicial.
  * Idempotente — usa merge: true.
  */
@@ -85,6 +265,7 @@ export const onUserDocCreated = onDocumentCreated(
   {
     region: FUNCTION_REGION,
     document: "users/{userId}",
+    retry: true,
   },
   async (event) => {
     const userId = event.params.userId;
@@ -111,8 +292,7 @@ export const onUserDocCreated = onDocumentCreated(
         `[PII_SYNC] Failed to sync initial PII for ${userId}:`,
         err
       );
-      // Non-blocking — onUserCreate em user-management.ts ainda
-      // cria o doc users com sucesso.
+      throw err;
     }
   }
 );
@@ -184,6 +364,7 @@ export const migratePiiToUsersPrivate = onCall(
     memory: "512MiB",
   },
   async (request) => {
+    let operationLease: OperationLease | undefined;
     try {
       const {auth} = request;
       if (!auth) {
@@ -204,40 +385,12 @@ export const migratePiiToUsersPrivate = onCall(
 
       // FIX #2641: system_lock + rate limit — impede execuções concorrentes
       // e reexecução em intervalo curto (padrão de custom-claims.ts:464-507).
-      const RATE_LIMIT_MS = 60 * 60 * 1000;
-      const lockRef = db
-        .collection("system_locks")
-        .doc("pii_migration");
-      const lockDoc = await lockRef.get();
-
-      if (lockDoc.exists) {
-        const lastRun =
-          lockDoc.data()?.last_run_at?.toDate?.();
-        if (
-          lastRun &&
-          (Date.now() - lastRun.getTime()) < RATE_LIMIT_MS
-        ) {
-          const minutesRemaining = Math.ceil(
-            (RATE_LIMIT_MS - (Date.now() - lastRun.getTime())) / 60000
-          );
-          logger.warn(
-            "[PII_MIGRATION] Rate limited: " +
-            `migration already ran at ${lastRun.toISOString()}. ` +
-            `Try again in ${minutesRemaining} minutes.`
-          );
-          throw new HttpsError(
-            "resource-exhausted",
-            "PII migration already ran recently. " +
-            `Try again in ${minutesRemaining} minutes.`
-          );
-        }
-      }
-
-      await lockRef.set({
-        last_run_at: FieldValue.serverTimestamp(),
-        started_by: auth.uid,
-        status: "running",
-      });
+      operationLease = await acquireOperationLease(
+        db,
+        "pii_migration",
+        auth.uid,
+        {cooldownMs: 60 * 60 * 1000, leaseMs: 10 * 60 * 1000},
+      );
 
       let migrated = 0;
       let skipped = 0;
@@ -265,55 +418,36 @@ export const migratePiiToUsersPrivate = onCall(
         if (usersSnap.empty) break;
 
         total += usersSnap.size;
-        const batch = db.batch();
-        let batchHasOps = false;
-
-        for (const doc of usersSnap.docs) {
-          const userData = doc.data();
-          const pii = extractPii(userData);
-
-          // Pula se nenhum campo PII presente
-          if (Object.keys(pii).length === 0) {
-            skipped++;
-            continue;
-          }
-
-          try {
-            const privateRef = db.doc(`users_private/${doc.id}`);
-            batch.set(
-              privateRef,
-              {
-                ...pii,
-                piiSyncedAt:
-                FieldValue.serverTimestamp(),
-                migratedAt:
-                FieldValue.serverTimestamp(),
-              },
-              {merge: true}
-            );
-            migrated++;
-            batchHasOps = true;
-          } catch (err) {
-            errors.push({
-              uid: doc.id,
-              error: (err as Error).message,
-            });
-          }
-        }
-
-        if (batchHasOps) {
-          try {
-            await batch.commit();
-          } catch (err) {
-            logger.error(
-              "[PII_MIGRATION] Batch commit failed:",
-              err
-            );
-            // Marca todos do chunk como erro
-            for (const doc of usersSnap.docs) {
-              errors.push({
+        // Mini-batches limitam burst sem abrir mão de uma transação por usuário.
+        for (let index = 0; index < usersSnap.docs.length; index += 10) {
+          const chunk = usersSnap.docs.slice(index, index + 10);
+          const results = await Promise.all(chunk.map(async (doc) => {
+            try {
+              return {
                 uid: doc.id,
-                error: (err as Error).message,
+                result: await migratePiiDocumentAtomically(db, doc.ref),
+              };
+            } catch (error) {
+              return {uid: doc.id, error};
+            }
+          }));
+          for (const item of results) {
+            if ("error" in item) {
+              errors.push({
+                uid: item.uid,
+                error: item.error instanceof Error ?
+                  item.error.message :
+                  String(item.error),
+              });
+              continue;
+            }
+            if (!item.result.hadPii) skipped++;
+            if (item.result.changed) migrated++;
+            if (item.result.conflicts.length > 0) {
+              errors.push({
+                uid: item.uid,
+                error: "PII privada divergente: " +
+                  item.result.conflicts.join(", "),
               });
             }
           }
@@ -331,9 +465,7 @@ export const migratePiiToUsersPrivate = onCall(
         `${skipped} skipped, ${errors.length} errors`
       );
 
-      await lockRef.update({
-        status: "completed",
-        completed_at: FieldValue.serverTimestamp(),
+      await completeOperationLease(db, operationLease, {
         migrated,
         skipped,
         errors_count: errors.length,
@@ -347,16 +479,12 @@ export const migratePiiToUsersPrivate = onCall(
         total,
       };
     } catch (error) {
-      try {
-        await admin.firestore().collection("system_locks")
-          .doc("pii_migration")
-          .update({
-            status: "failed",
-            failed_at: FieldValue.serverTimestamp(),
-            error: String(error),
-          });
-      } catch {
-        // ignore lock update failure
+      if (operationLease) {
+        try {
+          await failOperationLease(admin.firestore(), operationLease, error);
+        } catch {
+          // O erro original tem prioridade.
+        }
       }
 
       if (error instanceof HttpsError) throw error;
@@ -533,6 +661,7 @@ export const removePiiFromUsers = onCall(
     memory: "512MiB",
   },
   async (request) => {
+    let operationLease: OperationLease | undefined;
     try {
       const {auth} = request;
       if (!auth) {
@@ -548,40 +677,12 @@ export const removePiiFromUsers = onCall(
       const db = admin.firestore();
 
       // FIX #2641: system_lock + rate limit — impede execuções concorrentes
-      const RATE_LIMIT_MS = 60 * 60 * 1000;
-      const lockRef = db
-        .collection("system_locks")
-        .doc("pii_remove_cleanup");
-      const lockDoc = await lockRef.get();
-
-      if (lockDoc.exists) {
-        const lastRun =
-          lockDoc.data()?.last_run_at?.toDate?.();
-        if (
-          lastRun &&
-          (Date.now() - lastRun.getTime()) < RATE_LIMIT_MS
-        ) {
-          const minutesRemaining = Math.ceil(
-            (RATE_LIMIT_MS - (Date.now() - lastRun.getTime())) / 60000
-          );
-          logger.warn(
-            "[PII_CLEANUP] Rate limited: " +
-            `cleanup already ran at ${lastRun.toISOString()}. ` +
-            `Try again in ${minutesRemaining} minutes.`
-          );
-          throw new HttpsError(
-            "resource-exhausted",
-            "PII cleanup already ran recently. " +
-            `Try again in ${minutesRemaining} minutes.`
-          );
-        }
-      }
-
-      await lockRef.set({
-        last_run_at: FieldValue.serverTimestamp(),
-        started_by: auth.uid,
-        status: "running",
-      });
+      operationLease = await acquireOperationLease(
+        db,
+        "pii_remove_cleanup",
+        auth.uid,
+        {cooldownMs: 60 * 60 * 1000, leaseMs: 10 * 60 * 1000},
+      );
 
       let cleaned = 0;
       let skipped = 0;
@@ -607,54 +708,36 @@ export const removePiiFromUsers = onCall(
         if (usersSnap.empty) break;
 
         total += usersSnap.size;
-        const batch = db.batch();
-        let chunkCleans = 0;
-
-        for (const doc of usersSnap.docs) {
-          const data = doc.data();
-
-          // Verifica quais PII fields ainda estão em users
-          const fieldsToDelete: Record<string, FirebaseFirestore.FieldValue> = {};
-          let hasAny = false;
-          for (const field of PII_FIELDS) {
-            if (data[field] !== undefined && data[field] !== null) {
-              fieldsToDelete[field] = FieldValue.delete();
-              hasAny = true;
+        for (let index = 0; index < usersSnap.docs.length; index += 10) {
+          const chunk = usersSnap.docs.slice(index, index + 10);
+          const results = await Promise.all(chunk.map(async (doc) => {
+            try {
+              return {
+                uid: doc.id,
+                result: await removePiiDocumentAtomically(db, doc.ref),
+              };
+            } catch (error) {
+              return {uid: doc.id, error};
             }
-          }
-
-          if (!hasAny) {
-            skipped++;
-            continue;
-          }
-
-          try {
-            batch.update(doc.ref, fieldsToDelete);
-            chunkCleans++;
-          } catch (err) {
-            errors.push({uid: doc.id, error: (err as Error).message});
-          }
-        }
-
-        if (chunkCleans === 0) {
-          if (usersSnap.size < PAGE_SIZE) {
-            hasMore = false;
-          } else {
-            lastDoc = usersSnap.docs[usersSnap.docs.length - 1];
-          }
-          continue;
-        }
-
-        try {
-          await batch.commit();
-          cleaned += chunkCleans;
-        } catch (err) {
-          logger.error(
-            "[PII_CLEANUP] Batch commit failed:",
-            err
-          );
-          for (const doc of usersSnap.docs) {
-            errors.push({uid: doc.id, error: (err as Error).message});
+          }));
+          for (const item of results) {
+            if ("error" in item) {
+              errors.push({
+                uid: item.uid,
+                error: item.error instanceof Error ?
+                  item.error.message :
+                  String(item.error),
+              });
+              continue;
+            }
+            if (!item.result.hadPii) skipped++;
+            if (item.result.changed) cleaned++;
+            for (const field of item.result.conflicts) {
+              errors.push({
+                uid: item.uid,
+                error: `PII privada ausente ou divergente: ${field}`,
+              });
+            }
           }
         }
 
@@ -670,9 +753,7 @@ export const removePiiFromUsers = onCall(
         `${skipped} skipped, ${errors.length} errors`
       );
 
-      await lockRef.update({
-        status: "completed",
-        completed_at: FieldValue.serverTimestamp(),
+      await completeOperationLease(db, operationLease, {
         cleaned,
         skipped,
         errors_count: errors.length,
@@ -686,16 +767,12 @@ export const removePiiFromUsers = onCall(
         total,
       };
     } catch (error) {
-      try {
-        await admin.firestore().collection("system_locks")
-          .doc("pii_remove_cleanup")
-          .update({
-            status: "failed",
-            failed_at: FieldValue.serverTimestamp(),
-            error: String(error),
-          });
-      } catch {
-        // ignore lock update failure
+      if (operationLease) {
+        try {
+          await failOperationLease(admin.firestore(), operationLease, error);
+        } catch {
+          // O erro original tem prioridade.
+        }
       }
 
       if (error instanceof HttpsError) throw error;

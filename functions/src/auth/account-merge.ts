@@ -16,9 +16,21 @@ import {db} from "../_db";
 import {FUNCTION_REGION} from "../constants";
 import {checkRateLimit} from "../middleware/rate-limiter";
 import {getAuth} from "../utils/firebase-lazy";
+import {hashPhoneIdentity} from "../validation/phone-identity";
+import {
+  loadIdentityIndexHashes,
+  resolveLegacyIdentityHash,
+} from "./identity-index";
+import {isValidPhoneBR} from "../validation/phone-br";
+
+export {resolveLegacyIdentityHash} from "./identity-index";
 
 type UserPrivateData = {
   cpfHash?: unknown;
+  cpfMasked?: unknown;
+  cpfVerifiedAt?: unknown;
+  phoneHash?: unknown;
+  phoneIndexHashes?: string[];
 };
 
 type CpfRelation =
@@ -41,12 +53,385 @@ type MergeStatus = "pending_cpf" | "ready";
  * @return {MergeStatus} Estado do pedido.
  */
 export function mergeStatus(relation: CpfRelation): MergeStatus {
-  // O destino é a conta que já possui o telefone. Ela precisa ter CPF privado
-  // antes de qualquer reconciliação. O CPF da origem pode estar ausente em
-  // contas incompletas, desde que a posse das duas sessões tenha sido provada.
-  return relation === "matched" || relation === "missing_source" ?
+  // A posse das duas sessões e do telefone do destino já foi provada. Portanto,
+  // um CPF server-side presente em qualquer uma das contas pode ser transferido
+  // para a identidade canônica; somente a ausência em ambas exige verificação.
+  return relation !== "missing_both" ?
     "ready" :
     "pending_cpf";
+}
+
+/**
+ * Impede uma nova solicitação de apagar o estado de um merge ainda em curso.
+ *
+ * @param {FirebaseFirestore.DocumentData|undefined} data Pedido existente.
+ * @param {number} nowMs Momento atual.
+ */
+export function assertMergeRequestRefreshable(
+  data: FirebaseFirestore.DocumentData | undefined,
+  nowMs = Date.now(),
+): void {
+  const lease = data?.processingLeaseExpiresAt;
+  if (
+    data?.status === "processing" &&
+    lease instanceof Timestamp &&
+    lease.toMillis() > nowMs
+  ) {
+    throw new HttpsError(
+      "aborted",
+      "A união já está sendo processada.",
+    );
+  }
+}
+
+/**
+ * Combina confirmações duplicadas de modo determinístico; timestamps mais
+ * recentes vencem e o ID desempata replays com o mesmo timestamp.
+ *
+ * @param {{id: string, data: FirebaseFirestore.DocumentData}[]} records Registros.
+ * @return {FirebaseFirestore.DocumentData} Payload consolidado.
+ */
+export function mergeConfirmationRecords(
+  records: Array<{id: string; data: FirebaseFirestore.DocumentData}>,
+): FirebaseFirestore.DocumentData {
+  const ordered = [...records].sort((left, right) => {
+    const leftTimestamp = left.data.updated_at ?? left.data.created_at;
+    const rightTimestamp = right.data.updated_at ?? right.data.created_at;
+    const leftMillis = typeof leftTimestamp?.toMillis === "function" ?
+      leftTimestamp.toMillis() :
+      0;
+    const rightMillis = typeof rightTimestamp?.toMillis === "function" ?
+      rightTimestamp.toMillis() :
+      0;
+    return leftMillis - rightMillis || left.id.localeCompare(right.id);
+  });
+  return Object.assign({}, ...ordered.map(({data}) => data));
+}
+
+const PROFILE_FALLBACK_FIELDS = [
+  "display_name",
+  "name",
+  "username",
+  "photo_url",
+  "position",
+  "bio",
+] as const;
+
+/**
+ * Copia da origem apenas campos ainda vazios no perfil canônico. Esta função é
+ * aplicada sobre snapshots relidos dentro da transação para que uma edição
+ * concorrente do usuário no destino sempre vença.
+ *
+ * @param {FirebaseFirestore.DocumentData} source Perfil da conta de origem.
+ * @param {FirebaseFirestore.DocumentData} target Perfil canônico atual.
+ * @return {Record<string, unknown>} Somente os campos ausentes no destino.
+ */
+export function missingCanonicalProfileFields(
+  source: FirebaseFirestore.DocumentData,
+  target: FirebaseFirestore.DocumentData,
+): Record<string, unknown> {
+  const fallback: Record<string, unknown> = {};
+  for (const field of PROFILE_FALLBACK_FIELDS) {
+    if (!target[field] && source[field]) {
+      fallback[field] = source[field];
+    }
+  }
+  return fallback;
+}
+
+/**
+ * Escolhe o maior privilégio de grupo sem permitir que um mirror MEMBER
+ * rebaixe um OWNER/ADMIN durante a consolidação.
+ *
+ * @param {unknown[]} roles Roles encontrados nos mirrors e membership.
+ * @return {string|undefined} Role consolidado.
+ */
+export function strongestGroupRole(...roles: unknown[]): string | undefined {
+  const normalized = roles.filter(
+    (role): role is string => typeof role === "string" && role.length > 0,
+  );
+  return ["OWNER", "ADMIN", "MEMBER"]
+    .find((role) => normalized.includes(role)) ?? normalized[0];
+}
+
+/**
+ * Consolida o estado da membership sem permitir que uma conta canônica
+ * explicitamente inativa/banida seja reativada por um alias antigo.
+ *
+ * @param {boolean} sourceExists Membership do alias existe.
+ * @param {unknown} sourceStatus Estado da membership do alias.
+ * @param {boolean} targetExists Membership canônica existe.
+ * @param {unknown} targetStatus Estado da membership canônica.
+ * @param {boolean} sourceOwnsGroup Alias ainda é owner do grupo.
+ * @return {string} Estado canônico persistido.
+ */
+export function canonicalMembershipStatus(
+  sourceExists: boolean,
+  sourceStatus: unknown,
+  targetExists: boolean,
+  targetStatus: unknown,
+  sourceOwnsGroup: boolean,
+): string {
+  const normalize = (status: unknown): string | undefined =>
+    typeof status === "string" && status.trim() ?
+      status.trim().toUpperCase() :
+      undefined;
+  const canonicalStatus = normalize(targetStatus);
+  if (
+    sourceOwnsGroup &&
+    targetExists &&
+    canonicalStatus &&
+    canonicalStatus !== "ACTIVE"
+  ) {
+    throw new HttpsError(
+      "failed-precondition",
+      "A conta canônica está inativa em um grupo administrado pela origem.",
+    );
+  }
+  if (sourceOwnsGroup) return "ACTIVE";
+  if (targetExists) return canonicalStatus ?? "ACTIVE";
+  if (sourceExists) return normalize(sourceStatus) ?? "ACTIVE";
+  return "INACTIVE";
+}
+
+/**
+ * Garante que o telefone canônico não mudou entre a criação dos índices e o
+ * commit final. Auth e Firestore não compartilham transação; divergência deve
+ * abortar e ser reconciliada por uma nova tentativa idempotente.
+ *
+ * @param {string|undefined} phoneNumber Telefone relido do Firebase Auth.
+ * @param {string} expectedHash Hash materializado no início do processamento.
+ * @param {string} salt Salt secreto da identidade.
+ */
+export function assertCanonicalPhoneUnchanged(
+  phoneNumber: string | undefined,
+  expectedHash: string,
+  salt: string,
+): asserts phoneNumber is string {
+  if (
+    !phoneNumber ||
+    !isValidPhoneBR(phoneNumber) ||
+    hashPhoneIdentity(phoneNumber, salt) !== expectedHash
+  ) {
+    throw new HttpsError(
+      "aborted",
+      "O telefone da conta mudou durante a união. Tente novamente.",
+    );
+  }
+}
+
+/**
+ * Lista hashes antigos únicos que devem ser reconciliados com o canônico.
+ *
+ * @param {string} canonicalHash Hash do telefone atual no Firebase Auth.
+ * @param {unknown[]} candidates Hashes privados das contas envolvidas.
+ * @return {string[]} Hashes antigos distintos.
+ */
+export function staleIdentityHashes(
+  canonicalHash: string,
+  ...candidates: unknown[]
+): string[] {
+  return [...new Set(candidates.filter(
+    (hash): hash is string =>
+      typeof hash === "string" && hash.length > 0 && hash !== canonicalHash,
+  ))];
+}
+
+/**
+ * Preserva todos os hashes conhecidos de telefone; mudanças legítimas podem
+ * deixar temporariamente private/index com valores diferentes.
+ *
+ * @param {unknown} privateHash Hash materializado em users_private.
+ * @param {string[]} indexedHashes Hashes atualmente indexados pelo UID.
+ * @return {string[]} Conjunto único de hashes conhecidos.
+ */
+export function knownPhoneIdentityHashes(
+  privateHash: unknown,
+  indexedHashes: string[],
+): string[] {
+  return [...new Set([
+    ...(typeof privateHash === "string" && privateHash ? [privateHash] : []),
+    ...indexedHashes.filter(Boolean),
+  ])];
+}
+
+/**
+ * Substitui UID em listas de delegação, removendo duplicatas.
+ *
+ * @param {unknown} value Lista persistida.
+ * @param {string} sourceUid Alias antigo.
+ * @param {string} targetUid Identidade canônica.
+ * @return {string[]} Lista reconciliada.
+ */
+export function replaceIdentityInList(
+  value: unknown,
+  sourceUid: string,
+  targetUid: string,
+): string[] {
+  if (!Array.isArray(value)) return [];
+  return [...new Set(value
+    .filter((uid): uid is string => typeof uid === "string" && uid.length > 0)
+    .map((uid) => uid === sourceUid ? targetUid : uid))];
+}
+
+/**
+ * Migra ownership/delegações relendo o documento dentro de transação. A query
+ * inicial serve apenas para descobrir candidatos; ela nunca autoriza restaurar
+ * um owner ou uma lista que mudou concorrentemente.
+ *
+ * @param {FirebaseFirestore.Firestore} database Firestore.
+ * @param {FirebaseFirestore.DocumentReference} ref Documento candidato.
+ * @param {string} sourceUid Alias antigo.
+ * @param {string} targetUid Identidade canônica.
+ * @param {string[]} ownerFields Campos escalares de ownership.
+ * @param {string[]} delegateFields Campos-array de delegação.
+ * @return {Promise<boolean>} Se alguma referência foi efetivamente migrada.
+ */
+async function migrateFreshOwnership(
+  database: FirebaseFirestore.Firestore,
+  ref: FirebaseFirestore.DocumentReference,
+  sourceUid: string,
+  targetUid: string,
+  ownerFields: string[],
+  delegateFields: string[] = [],
+): Promise<boolean> {
+  return database.runTransaction(async (tx) => {
+    const fresh = await tx.get(ref);
+    if (!fresh.exists) return false;
+    const data = fresh.data() ?? {};
+    const update: Record<string, unknown> = {};
+    for (const field of ownerFields) {
+      if (data[field] === sourceUid) update[field] = targetUid;
+    }
+    const ownerTransferred = ownerFields.some((field) => update[field] === targetUid);
+    for (const field of delegateFields) {
+      if (Array.isArray(data[field]) && data[field].includes(sourceUid)) {
+        update[field] = replaceIdentityInList(
+          data[field],
+          sourceUid,
+          targetUid,
+        ).filter((uid) => !ownerTransferred || uid !== targetUid);
+      }
+    }
+    if (Object.keys(update).length === 0) return false;
+    tx.set(ref, {
+      ...update,
+      merged_from_alias: true,
+      updated_at: FieldValue.serverTimestamp(),
+    }, {merge: true});
+    return true;
+  });
+}
+
+/**
+ * Exige autenticação recente feita pelo provedor Phone Auth no destino.
+ * Renovar um token Google antigo não constitui prova de posse do telefone.
+ *
+ * @param {Record<string, unknown>} token Claims do ID token do destino.
+ * @param {number} nowSeconds Epoch atual em segundos.
+ */
+export function assertRecentTargetPhoneProof(
+  token: Record<string, unknown>,
+  nowSeconds = Math.floor(Date.now() / 1000),
+): void {
+  const authTime = Number(token.auth_time ?? 0);
+  const firebase = token.firebase as {sign_in_provider?: unknown} | undefined;
+  const provider = firebase?.sign_in_provider;
+  if (
+    authTime <= 0 ||
+    nowSeconds - authTime > PROOF_TTL_MS / 1000 ||
+    provider !== "phone"
+  ) {
+    throw new HttpsError(
+      "permission-denied",
+      "Confirme novamente o telefone antes de unir as contas.",
+    );
+  }
+}
+
+/**
+ * Valida expiração da prova, permitindo recovery idempotente de execução que
+ * já entrou no estágio processing e pode ter desabilitado a origem.
+ *
+ * @param {unknown} proofExpiresAt Timestamp persistido.
+ * @param {unknown} status Estado do merge.
+ * @param {number} nowMs Epoch atual em millis.
+ */
+export function assertMergeProofUsable(
+  proofExpiresAt: unknown,
+  status: unknown,
+  nowMs = Date.now(),
+): void {
+  const expired = !(proofExpiresAt instanceof Timestamp) ||
+    proofExpiresAt.toMillis() < nowMs;
+  if (expired && status !== "processing") {
+    throw new HttpsError(
+      "permission-denied",
+      "A confirmação das contas expirou. Reinicie a união.",
+    );
+  }
+}
+
+/**
+ * Preserva claims atuais ao aplicar estado verificado do destino.
+ *
+ * @param {Record<string, unknown>} currentClaims Claims lidos imediatamente antes.
+ * @param {boolean} profileComplete Resultado server-side do perfil.
+ * @return {Record<string, unknown>} Claims reconciliados.
+ */
+export function buildVerifiedClaims(
+  currentClaims: Record<string, unknown>,
+  profileComplete: boolean,
+): Record<string, unknown> {
+  return {...currentClaims, verified: true, profileComplete};
+}
+
+/**
+ * Enriquece users_private sem expor os hashes ao cliente.
+ *
+ * @param {FirebaseFirestore.Firestore} database Firestore.
+ * @param {string} uid Identidade pesquisada.
+ * @param {UserPrivateData} privateData Dados privados existentes.
+ * @return {Promise<UserPrivateData>} Identidade reconciliada.
+ */
+async function resolveLegacyPrivateIdentity(
+  database: FirebaseFirestore.Firestore,
+  uid: string,
+  privateData: UserPrivateData,
+): Promise<UserPrivateData> {
+  const [cpfIndexes, phoneIndexes] = await Promise.all([
+    loadIdentityIndexHashes(database, "cpf_index", uid),
+    loadIdentityIndexHashes(database, "phone_index", uid),
+  ]);
+  return {
+    ...privateData,
+    cpfHash: resolveLegacyIdentityHash(privateData.cpfHash, cpfIndexes, "CPF"),
+    // Telefone pode mudar legitimamente no Firebase Auth. Mantemos todos os
+    // hashes legados para o complete reconciliar sob guarda de ownership.
+    phoneHash: typeof privateData.phoneHash === "string" ?
+      privateData.phoneHash :
+      phoneIndexes[0],
+    phoneIndexHashes: knownPhoneIdentityHashes(
+      privateData.phoneHash,
+      phoneIndexes,
+    ),
+  };
+}
+
+/**
+ * Carrega salt server-only usado pelo índice de telefone.
+ *
+ * @return {string} Salt configurado.
+ */
+function getIdentitySalt(): string {
+  const salt = process.env.CPF_SALT;
+  if (!salt || salt.length < 16) {
+    throw new HttpsError(
+      "failed-precondition",
+      "Não foi possível validar a identidade neste momento.",
+    );
+  }
+  return salt;
 }
 
 /**
@@ -164,6 +549,10 @@ export const requestAccountMerge = onCall(
 
       const nowSeconds = Math.floor(Date.now() / 1000);
       const targetTokenIssuedAt = Number(request.auth.token.iat ?? 0);
+      assertRecentTargetPhoneProof(
+        request.auth.token as Record<string, unknown>,
+        nowSeconds,
+      );
       if (
         sourceTokenIssuedAt <= 0 ||
         targetTokenIssuedAt <= 0 ||
@@ -207,10 +596,19 @@ export const requestAccountMerge = onCall(
         database.doc(`users_private/${targetUid}`).get(),
       ]);
 
-      const relation = cpfRelation(
-        sourcePrivateSnap.data() ?? {},
-        targetPrivateSnap.data() ?? {},
-      );
+      const [sourceIdentity, targetIdentity] = await Promise.all([
+        resolveLegacyPrivateIdentity(
+          database,
+          sourceUid,
+          sourcePrivateSnap.data() ?? {},
+        ),
+        resolveLegacyPrivateIdentity(
+          database,
+          targetUid,
+          targetPrivateSnap.data() ?? {},
+        ),
+      ]);
+      const relation = cpfRelation(sourceIdentity, targetIdentity);
       const requestId = opaqueRequestId(sourceUid, targetUid);
       const requestRef = database.doc(`account_merge_requests/${requestId}`);
       const auditRef = database.collection("audit_logs").doc();
@@ -224,6 +622,7 @@ export const requestAccountMerge = onCall(
             "Essa unificação já foi concluída.",
           );
         }
+        assertMergeRequestRefreshable(existing.data());
 
         tx.set(
           requestRef,
@@ -250,6 +649,8 @@ export const requestAccountMerge = onCall(
               existing.data()?.createdAt ?? now :
               now,
             updatedAt: now,
+            processingLeaseId: FieldValue.delete(),
+            processingLeaseExpiresAt: FieldValue.delete(),
           },
           {merge: true},
         );
@@ -302,6 +703,7 @@ export const completeAccountMerge = onCall(
     enforceAppCheck: process.env.FUNCTIONS_EMULATOR !== "true",
     consumeAppCheckToken: true,
     timeoutSeconds: 120,
+    secrets: ["CPF_SALT"],
   },
   async (request) => {
     try {
@@ -352,18 +754,11 @@ export const completeAccountMerge = onCall(
           status: "completed",
           alreadyCompleted: true,
           providersToRelink: mergeData.providersToRelink ?? [],
+          tokenRefreshRequired: true,
         };
       }
       const proofExpiresAt = mergeData.proofExpiresAt;
-      if (
-        !(proofExpiresAt instanceof Timestamp) ||
-        proofExpiresAt.toMillis() < Date.now()
-      ) {
-        throw new HttpsError(
-          "permission-denied",
-          "A confirmação das contas expirou. Reinicie a união.",
-        );
-      }
+      assertMergeProofUsable(proofExpiresAt, mergeData.status);
 
       const auth = getAuth();
       const [sourceAuth, targetAuth, sourcePrivate, targetPrivate] =
@@ -385,10 +780,19 @@ export const completeAccountMerge = onCall(
         );
       }
 
-      const relation = cpfRelation(
-        sourcePrivate.data() ?? {},
-        targetPrivate.data() ?? {},
-      );
+      const [sourceIdentity, targetIdentity] = await Promise.all([
+        resolveLegacyPrivateIdentity(
+          database,
+          sourceUid,
+          sourcePrivate.data() ?? {},
+        ),
+        resolveLegacyPrivateIdentity(
+          database,
+          targetUid,
+          targetPrivate.data() ?? {},
+        ),
+      ]);
+      const relation = cpfRelation(sourceIdentity, targetIdentity);
       if (mergeStatus(relation) !== "ready") {
         await requestRef.set({
           status: "pending_cpf",
@@ -418,22 +822,45 @@ export const completeAccountMerge = onCall(
       const sourceUserRef = database.doc(`users/${sourceUid}`);
       const targetUserRef = database.doc(`users/${targetUid}`);
       const aliasRef = database.doc(`account_aliases/${sourceUid}`);
-      const [sourceUser, targetUser, sourceGroupLinks] = await Promise.all([
+      const [
+        sourceUser,
+        sourceGroupLinks,
+        sourceConfirmationsSnake,
+        sourceConfirmationsCamel,
+        sourceSummons,
+        sourceGroupInvitesSnake,
+        sourceGroupInvitesCamel,
+        sourceNotifications,
+        sourceOwnedGames,
+        sourceCoorganizedGames,
+        sourceOwnedLocations,
+        sourceManagedLocations,
+        sourceOwnedSchedules,
+        sourceOwnedLiveGames,
+        sourceOwnedLiveScores,
+        sourceGameTemplates,
+      ] = await Promise.all([
         sourceUserRef.get(),
-        targetUserRef.get(),
         sourceUserRef.collection("groups").get(),
+        database.collection("confirmations").where("user_id", "==", sourceUid).get(),
+        database.collection("confirmations").where("userId", "==", sourceUid).get(),
+        database.collection("game_summons").where("user_id", "==", sourceUid).get(),
+        database.collection("group_invites")
+          .where("invited_user_id", "==", sourceUid).get(),
+        database.collection("group_invites")
+          .where("invitedUserId", "==", sourceUid).get(),
+        database.collection("notifications").where("user_id", "==", sourceUid).get(),
+        database.collection("games").where("owner_id", "==", sourceUid).get(),
+        database.collection("games")
+          .where("co_organizers", "array-contains", sourceUid).get(),
+        database.collection("locations").where("owner_id", "==", sourceUid).get(),
+        database.collection("locations")
+          .where("managers", "array-contains", sourceUid).get(),
+        database.collection("schedules").where("owner_id", "==", sourceUid).get(),
+        database.collection("live_games").where("owner_id", "==", sourceUid).get(),
+        database.collection("live_scores").where("owner_id", "==", sourceUid).get(),
+        sourceUserRef.collection("game_templates").get(),
       ]);
-
-      const sourceProfile = sourceUser.data() ?? {};
-      const targetProfile = targetUser.data() ?? {};
-      const fallbackProfile: Record<string, unknown> = {};
-      for (const field of [
-        "display_name", "name", "username", "photo_url", "position", "bio",
-      ]) {
-        if (!targetProfile[field] && sourceProfile[field]) {
-          fallbackProfile[field] = sourceProfile[field];
-        }
-      }
 
       // Lease transacional evita duas conclusões concorrentes. Repetições após
       // expiração continuam seguras porque os destinos têm IDs determinísticos.
@@ -475,57 +902,478 @@ export const completeAccountMerge = onCall(
           status: "completed",
           alreadyCompleted: true,
           providersToRelink: completed?.providersToRelink ?? [],
+          tokenRefreshRequired: true,
         };
       }
 
-      const writer = database.bulkWriter();
-      writer.set(targetUserRef, {
-        ...fallbackProfile,
-        updated_at: FieldValue.serverTimestamp(),
-      }, {merge: true});
-      writer.set(database.doc(`users_private/${targetUid}`), {
-        ...(sourceAuth.email ? {
-          alternateEmails: FieldValue.arrayUnion(sourceAuth.email),
-        } : {}),
-        updatedAt: FieldValue.serverTimestamp(),
-      }, {merge: true});
-      writer.set(aliasRef, {
-        canonicalUid: targetUid,
-        mergeRequestId: requestId,
-        status: "active",
-        createdAt: FieldValue.serverTimestamp(),
-        updatedAt: FieldValue.serverTimestamp(),
-      }, {merge: true});
-      writer.set(sourceUserRef, {
-        account_status: "merged",
-        updated_at: FieldValue.serverTimestamp(),
-      }, {merge: true});
+      const sourceCpfHash = typeof sourceIdentity.cpfHash === "string" ?
+        sourceIdentity.cpfHash :
+        undefined;
+      const targetCpfHash = typeof targetIdentity.cpfHash === "string" ?
+        targetIdentity.cpfHash :
+        undefined;
+      const canonicalCpfHash = targetCpfHash ?? sourceCpfHash;
+      if (!canonicalCpfHash) {
+        throw new HttpsError(
+          "failed-precondition",
+          "Verifique o CPF antes de concluir a união.",
+        );
+      }
 
-      let membershipsCopied = 0;
-      for (const link of sourceGroupLinks.docs) {
-        const targetLink = targetUserRef.collection("groups").doc(link.id);
-        writer.set(targetLink, {
-          ...link.data(),
-          user_id: targetUid,
-          merged_from_alias: true,
-          updated_at: FieldValue.serverTimestamp(),
+      const identitySalt = getIdentitySalt();
+      const canonicalPhoneHash = hashPhoneIdentity(
+        targetAuth.phoneNumber,
+        identitySalt,
+      );
+      const cpfIndexRef = database.doc(`cpf_index/${canonicalCpfHash}`);
+      const phoneIndexRef = database.doc(`phone_index/${canonicalPhoneHash}`);
+      const sourcePhoneHash = typeof sourceIdentity.phoneHash === "string" ?
+        sourceIdentity.phoneHash :
+        undefined;
+      const targetPhoneHash = typeof targetIdentity.phoneHash === "string" ?
+        targetIdentity.phoneHash :
+        undefined;
+      const stalePhoneRefs = staleIdentityHashes(
+        canonicalPhoneHash,
+        sourcePhoneHash,
+        targetPhoneHash,
+        ...(sourceIdentity.phoneIndexHashes ?? []),
+        ...(targetIdentity.phoneIndexHashes ?? []),
+      ).map((hash) => database.doc(`phone_index/${hash}`));
+
+      // Reatribui índices e materializa users_private de forma atômica. Isso
+      // cobre contas legadas cujo cpfHash/phoneHash existia apenas nos índices.
+      await database.runTransaction(async (tx) => {
+        const [cpfIndex, phoneIndex, ...stalePhoneIndexes] = await Promise.all([
+          tx.get(cpfIndexRef),
+          tx.get(phoneIndexRef),
+          ...stalePhoneRefs.map((ref) => tx.get(ref)),
+        ]);
+
+        for (const [label, owner] of [
+          ["CPF", cpfIndex.data()?.uid],
+          ["telefone", phoneIndex.data()?.uid],
+        ] as const) {
+          if (owner && owner !== sourceUid && owner !== targetUid) {
+            throw new HttpsError(
+              "already-exists",
+              `O índice de ${label} pertence a outra identidade.`,
+            );
+          }
+        }
+        for (const stalePhoneIndex of stalePhoneIndexes) {
+          const owner = stalePhoneIndex.data()?.uid;
+          if (owner && owner !== sourceUid && owner !== targetUid) {
+            throw new HttpsError(
+              "already-exists",
+              "Um índice antigo de telefone pertence a outra identidade.",
+            );
+          }
+        }
+
+        const now = FieldValue.serverTimestamp();
+        tx.set(cpfIndexRef, {
+          uid: targetUid,
+          createdAt: cpfIndex.data()?.createdAt ?? now,
+          updatedAt: now,
+        }, {merge: true});
+        tx.set(phoneIndexRef, {
+          uid: targetUid,
+          createdAt: phoneIndex.data()?.createdAt ?? now,
+          updatedAt: now,
+        }, {merge: true});
+        tx.set(database.doc(`users_private/${targetUid}`), {
+          cpfHash: canonicalCpfHash,
+          ...(typeof targetIdentity.cpfMasked === "string" ? {
+            cpfMasked: targetIdentity.cpfMasked,
+          } : typeof sourceIdentity.cpfMasked === "string" ? {
+            cpfMasked: sourceIdentity.cpfMasked,
+          } : {}),
+          cpfVerifiedAt: targetIdentity.cpfVerifiedAt ??
+            sourceIdentity.cpfVerifiedAt ?? now,
+          phoneHash: canonicalPhoneHash,
+          phoneNumber: targetAuth.phoneNumber,
+          phoneVerifiedAt: now,
+          updatedAt: now,
+        }, {merge: true});
+        tx.set(database.doc(`users_private/${sourceUid}`), {
+          mergedToUid: targetUid,
+          mergedAt: now,
+          updatedAt: now,
         }, {merge: true});
 
-        const sourceMember = await database
-          .doc(`groups/${link.id}/members/${sourceUid}`)
-          .get();
-        if (sourceMember.exists) {
-          writer.set(database.doc(`groups/${link.id}/members/${targetUid}`), {
-            ...sourceMember.data(),
+        for (let index = 0; index < stalePhoneRefs.length; index++) {
+          const owner = stalePhoneIndexes[index].data()?.uid;
+          if (owner === sourceUid || owner === targetUid) {
+            tx.delete(stalePhoneRefs[index]);
+          }
+        }
+      });
+
+      // Releitura transacional do perfil: se o usuário preencher nome/foto no
+      // destino enquanto o merge está em curso, o valor canônico nunca é
+      // substituído por um fallback capturado antes da lease.
+      await database.runTransaction(async (tx) => {
+        const [freshSourceUser, freshTargetUser] = await Promise.all([
+          tx.get(sourceUserRef),
+          tx.get(targetUserRef),
+        ]);
+        const fallbackProfile = missingCanonicalProfileFields(
+          freshSourceUser.data() ?? {},
+          freshTargetUser.data() ?? {},
+        );
+        const verifiedAt = FieldValue.serverTimestamp();
+        tx.set(targetUserRef, {
+          ...fallbackProfile,
+          cpfVerifiedAt: verifiedAt,
+          phone: targetAuth.phoneNumber,
+          phone_verified: true,
+          verifiedAt,
+          updated_at: verifiedAt,
+        }, {merge: true});
+        tx.set(database.doc(`users_private/${targetUid}`), {
+          ...(sourceAuth.email ? {
+            alternateEmails: FieldValue.arrayUnion(sourceAuth.email),
+          } : {}),
+          updatedAt: verifiedAt,
+        }, {merge: true});
+        tx.set(aliasRef, {
+          canonicalUid: targetUid,
+          mergeRequestId: requestId,
+          status: "active",
+          createdAt: verifiedAt,
+          updatedAt: verifiedAt,
+        }, {merge: true});
+        tx.set(sourceUserRef, {
+          account_status: "merged",
+          updated_at: verifiedAt,
+        }, {merge: true});
+      });
+
+      const writer = database.bulkWriter();
+
+      let membershipsCopied = 0;
+      let groupOwnershipsTransferred = 0;
+      let sourceMembershipsDeactivated = 0;
+      for (const link of sourceGroupLinks.docs) {
+        const targetLink = targetUserRef.collection("groups").doc(link.id);
+        const sourceLinkRef = sourceUserRef.collection("groups").doc(link.id);
+        const groupRef = database.doc(`groups/${link.id}`);
+        const sourceMemberRef = database
+          .doc(`groups/${link.id}/members/${sourceUid}`);
+        const targetMemberRef = database
+          .doc(`groups/${link.id}/members/${targetUid}`);
+        const migration = await database.runTransaction(async (tx) => {
+          // Releitura transacional: não restaura owner/role/membership removidos
+          // por uma ação concorrente depois da query inicial.
+          const [
+            groupSnap,
+            sourceLinkSnap,
+            targetLinkSnap,
+            sourceMember,
+            targetMember,
+          ] = await Promise.all([
+            tx.get(groupRef),
+            tx.get(sourceLinkRef),
+            tx.get(targetLink),
+            tx.get(sourceMemberRef),
+            tx.get(targetMemberRef),
+          ]);
+          const groupData = groupSnap.data() ?? {};
+          const sourceOwnsGroup = groupData.owner_id === sourceUid ||
+            groupData.ownerId === sourceUid;
+          if (!sourceLinkSnap.exists && !sourceOwnsGroup) {
+            return {member: false, owner: false, sourceDeactivated: false};
+          }
+
+          const sourceMemberData = sourceMember.data() ?? {};
+          const targetMemberData = targetMember.data() ?? {};
+          const sourceLinkData = sourceLinkSnap.data() ?? {};
+          const targetLinkData = targetLinkSnap.data() ?? {};
+          const mergedRole = strongestGroupRole(
+            sourceOwnsGroup ? "OWNER" : undefined,
+            sourceMemberData.role,
+            targetMemberData.role,
+            sourceLinkData.role,
+            targetLinkData.role,
+          );
+          const membershipStatus = canonicalMembershipStatus(
+            sourceMember.exists,
+            sourceMemberData.status,
+            targetMember.exists,
+            targetMemberData.status,
+            sourceOwnsGroup,
+          );
+          const now = FieldValue.serverTimestamp();
+
+          tx.set(targetLink, {
+            ...sourceLinkData,
+            ...targetLinkData,
+            ...(mergedRole ? {role: mergedRole} : {}),
+            user_id: targetUid,
+            merged_from_alias: true,
+            updated_at: now,
+          }, {merge: true});
+          if (sourceLinkSnap.exists) tx.delete(sourceLinkRef);
+
+          if (sourceOwnsGroup) {
+            tx.set(groupRef, {
+              ...(groupData.owner_id === sourceUid ? {owner_id: targetUid} : {}),
+              ...(groupData.ownerId === sourceUid ? {ownerId: targetUid} : {}),
+              updated_at: now,
+            }, {merge: true});
+          }
+
+          const memberUpserted = sourceMember.exists || sourceOwnsGroup;
+          if (memberUpserted) {
+            tx.set(targetMemberRef, {
+              ...sourceMemberData,
+              ...targetMemberData,
+              ...(mergedRole ? {role: mergedRole} : {}),
+              status: membershipStatus,
+              user_id: targetUid,
+              userId: targetUid,
+              merged_from_alias: true,
+              updated_at: now,
+            }, {merge: true});
+          }
+          if (sourceMember.exists) {
+            // Soft-deactivate instead of DELETE. onMemberWritten applies the
+            // ACTIVE→INACTIVE delta while onMemberLeft is not fired. Together
+            // with the canonical upsert, member_count remains correct.
+            tx.set(sourceMemberRef, {
+              status: "INACTIVE",
+              merged_to_uid: targetUid,
+              merged_at: now,
+              updated_at: now,
+            }, {merge: true});
+          }
+          return {
+            member: memberUpserted,
+            owner: sourceOwnsGroup,
+            sourceDeactivated: sourceMember.exists,
+          };
+        });
+        if (migration.member) membershipsCopied++;
+        if (migration.owner) groupOwnershipsTransferred++;
+        if (migration.sourceDeactivated) sourceMembershipsDeactivated++;
+      }
+
+      const sourceConfirmationDocs = new Map<string, FirebaseFirestore.QueryDocumentSnapshot>();
+      for (const doc of [
+        ...sourceConfirmationsSnake.docs,
+        ...sourceConfirmationsCamel.docs,
+      ]) {
+        sourceConfirmationDocs.set(doc.ref.path, doc);
+      }
+      const confirmationGroups = new Map<string, {
+        targetRef: FirebaseFirestore.DocumentReference;
+        sources: FirebaseFirestore.QueryDocumentSnapshot[];
+      }>();
+      for (const doc of sourceConfirmationDocs.values()) {
+        const gameId = doc.data().game_id ?? doc.data().gameId;
+        const targetRef = typeof gameId === "string" && gameId ?
+          database.doc(`confirmations/${gameId}_${targetUid}`) :
+          doc.ref;
+        const group = confirmationGroups.get(targetRef.path) ?? {
+          targetRef,
+          sources: [],
+        };
+        group.sources.push(doc);
+        confirmationGroups.set(targetRef.path, group);
+      }
+      let confirmationsCopied = 0;
+      for (const {targetRef, sources} of confirmationGroups.values()) {
+        confirmationsCopied += await database.runTransaction(async (tx) => {
+          // O destino e todas as origens são relidos na mesma transação. Assim,
+          // check-in/status simultâneo não é sobrescrito e nenhum source é
+          // apagado sem que a cópia canônica seja confirmada atomicamente.
+          const refsByPath = new Map<string, FirebaseFirestore.DocumentReference>();
+          refsByPath.set(targetRef.path, targetRef);
+          for (const source of sources) refsByPath.set(source.ref.path, source.ref);
+          const freshSnapshots = await tx.getAll(...refsByPath.values());
+          const freshByPath = new Map(
+            freshSnapshots.map((snap) => [snap.ref.path, snap]),
+          );
+          const freshSources = sources
+            .map((source) => freshByPath.get(source.ref.path))
+            .filter((snap): snap is FirebaseFirestore.DocumentSnapshot =>
+              Boolean(snap?.exists) && (
+                snap?.data()?.user_id === sourceUid ||
+                snap?.data()?.userId === sourceUid
+              ));
+          if (freshSources.length === 0) return 0;
+
+          const sourceData = mergeConfirmationRecords(
+            freshSources.map((source) => ({
+              id: source.id,
+              data: source.data() ?? {},
+            })),
+          );
+          const targetExisting = freshByPath.get(targetRef.path);
+          tx.set(targetRef, {
+            ...sourceData,
+            ...(targetExisting?.exists ? targetExisting.data() : {}),
             user_id: targetUid,
             userId: targetUid,
             merged_from_alias: true,
             updated_at: FieldValue.serverTimestamp(),
           }, {merge: true});
-          membershipsCopied++;
-        }
+          for (const source of freshSources) {
+            if (targetRef.path !== source.ref.path) tx.delete(source.ref);
+          }
+          return freshSources.length;
+        });
+      }
+
+      for (const summon of sourceSummons.docs) {
+        writer.set(summon.ref, {
+          user_id: targetUid,
+          merged_from_alias: true,
+          updated_at: FieldValue.serverTimestamp(),
+        }, {merge: true});
+      }
+
+      const groupInviteDocs = new Map<string, FirebaseFirestore.QueryDocumentSnapshot>();
+      for (const invite of [
+        ...sourceGroupInvitesSnake.docs,
+        ...sourceGroupInvitesCamel.docs,
+      ]) {
+        groupInviteDocs.set(invite.ref.path, invite);
+      }
+      for (const invite of groupInviteDocs.values()) {
+        writer.set(invite.ref, {
+          invited_user_id: targetUid,
+          invitedUserId: targetUid,
+          merged_from_alias: true,
+          updated_at: FieldValue.serverTimestamp(),
+        }, {merge: true});
+      }
+
+      for (const notification of sourceNotifications.docs) {
+        writer.set(notification.ref, {
+          user_id: targetUid,
+          merged_from_alias: true,
+          updated_at: FieldValue.serverTimestamp(),
+        }, {merge: true});
+      }
+
+      const gameOwnershipDocs = new Map<string, FirebaseFirestore.QueryDocumentSnapshot>();
+      for (const game of [
+        ...sourceOwnedGames.docs,
+        ...sourceCoorganizedGames.docs,
+      ]) {
+        gameOwnershipDocs.set(game.ref.path, game);
+      }
+      let gamesOwnershipMigrated = 0;
+      for (const game of gameOwnershipDocs.values()) {
+        if (await migrateFreshOwnership(
+          database,
+          game.ref,
+          sourceUid,
+          targetUid,
+          ["owner_id", "ownerId"],
+          ["co_organizers"],
+        )) gamesOwnershipMigrated++;
+      }
+
+      const locationOwnershipDocs = new Map<string, FirebaseFirestore.QueryDocumentSnapshot>();
+      for (const location of [
+        ...sourceOwnedLocations.docs,
+        ...sourceManagedLocations.docs,
+      ]) {
+        locationOwnershipDocs.set(location.ref.path, location);
+      }
+      let locationsOwnershipMigrated = 0;
+      for (const location of locationOwnershipDocs.values()) {
+        if (await migrateFreshOwnership(
+          database,
+          location.ref,
+          sourceUid,
+          targetUid,
+          ["owner_id", "ownerId"],
+          ["managers"],
+        )) locationsOwnershipMigrated++;
+      }
+
+      let schedulesOwnershipMigrated = 0;
+      for (const schedule of sourceOwnedSchedules.docs) {
+        if (await migrateFreshOwnership(
+          database,
+          schedule.ref,
+          sourceUid,
+          targetUid,
+          ["owner_id"],
+        )) schedulesOwnershipMigrated++;
+      }
+      let liveGamesOwnershipMigrated = 0;
+      for (const liveGame of sourceOwnedLiveGames.docs) {
+        if (await migrateFreshOwnership(
+          database,
+          liveGame.ref,
+          sourceUid,
+          targetUid,
+          ["owner_id"],
+        )) liveGamesOwnershipMigrated++;
+      }
+      let liveScoresOwnershipMigrated = 0;
+      for (const liveScore of sourceOwnedLiveScores.docs) {
+        if (await migrateFreshOwnership(
+          database,
+          liveScore.ref,
+          sourceUid,
+          targetUid,
+          ["owner_id"],
+        )) liveScoresOwnershipMigrated++;
+      }
+      let gameTemplatesMigrated = 0;
+      for (const template of sourceGameTemplates.docs) {
+        const targetTemplate = targetUserRef
+          .collection("game_templates")
+          .doc(template.id);
+        gameTemplatesMigrated += await database.runTransaction(async (tx) => {
+          const [freshSource, freshTarget] = await Promise.all([
+            tx.get(template.ref),
+            tx.get(targetTemplate),
+          ]);
+          if (!freshSource.exists) return 0;
+          // Em colisões de ID, o modelo que já pertence à conta canônica vence;
+          // campos ausentes podem ser completados pela origem.
+          tx.set(targetTemplate, {
+            ...freshSource.data(),
+            ...(freshTarget.exists ? freshTarget.data() : {}),
+            owner_id: targetUid,
+            user_id: targetUid,
+            merged_from_alias: true,
+            updated_at: FieldValue.serverTimestamp(),
+          }, {merge: true});
+          tx.delete(template.ref);
+          return 1;
+        });
       }
       await writer.close();
+
+      // Auth e Firestore não têm transação conjunta. Revalida imediatamente
+      // antes do estágio irreversível para não congelar a origem com índice de
+      // telefone já obsoleto.
+      const targetAuthBeforeFreeze = await auth.getUser(targetUid);
+      assertCanonicalPhoneUnchanged(
+        targetAuthBeforeFreeze.phoneNumber,
+        canonicalPhoneHash,
+        identitySalt,
+      );
+
+      await database.runTransaction(async (tx) => {
+        const fresh = await tx.get(requestRef);
+        if (fresh.data()?.processingLeaseId !== leaseId) {
+          throw new HttpsError("aborted", "A união foi retomada por outro processo.");
+        }
+        tx.set(requestRef, {
+          status: "processing",
+          irreversibleStage: "references_migrated",
+          updatedAt: FieldValue.serverTimestamp(),
+        }, {merge: true});
+      });
 
       // Libera somente provedores OAuth que podem ser vinculados novamente
       // pelo próprio usuário no cliente. Senhas nunca são manipuladas aqui.
@@ -533,6 +1381,27 @@ export const completeAccountMerge = onCall(
         disabled: true,
         ...(providersToRelink.length > 0 ? {providersToUnlink: providersToRelink} : {}),
       });
+      await auth.revokeRefreshTokens(sourceUid);
+
+      // Releitura tardia evita restaurar role/claims obsoletos capturados antes
+      // das migrações e de uma promoção/revogação concorrente.
+      const freshTargetAuth = await auth.getUser(targetUid);
+      assertCanonicalPhoneUnchanged(
+        freshTargetAuth.phoneNumber,
+        canonicalPhoneHash,
+        identitySalt,
+      );
+      const targetClaims = freshTargetAuth.customClaims ?? {};
+      const targetProfileComplete = isValidPhoneBR(freshTargetAuth.phoneNumber);
+      if (
+        targetClaims.verified !== true ||
+        targetClaims.profileComplete !== targetProfileComplete
+      ) {
+        await auth.setCustomUserClaims(
+          targetUid,
+          buildVerifiedClaims(targetClaims, targetProfileComplete),
+        );
+      }
 
       const completedAt = FieldValue.serverTimestamp();
       await database.runTransaction(async (tx) => {
@@ -550,6 +1419,18 @@ export const completeAccountMerge = onCall(
           manifest: {
             groupLinksCopied: sourceGroupLinks.size,
             membershipsCopied,
+            sourceMembershipsDeactivated,
+            groupOwnershipsTransferred,
+            confirmationsCopied,
+            summonsMigrated: sourceSummons.size,
+            groupInvitesMigrated: groupInviteDocs.size,
+            notificationsMigrated: sourceNotifications.size,
+            gamesOwnershipMigrated,
+            locationsOwnershipMigrated,
+            schedulesOwnershipMigrated,
+            liveGamesOwnershipMigrated,
+            liveScoresOwnershipMigrated,
+            gameTemplatesMigrated,
             sourceProfilePreserved: sourceUser.exists,
           },
           completedAt,
@@ -581,6 +1462,7 @@ export const completeAccountMerge = onCall(
         status: "completed",
         alreadyCompleted: false,
         providersToRelink,
+        tokenRefreshRequired: true,
       };
     } catch (error) {
       if (error instanceof HttpsError) throw error;

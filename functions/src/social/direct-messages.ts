@@ -20,6 +20,18 @@ interface PublicUser {
   photo: string | null;
 }
 
+/**
+ * Retorna true para perfil ausente logicamente/inativo.
+ * @param {Record<string, unknown>} data Perfil público persistido.
+ * @return {boolean} Se o perfil não pode participar de conversas.
+ */
+function isUnavailableUser(data: Record<string, unknown>): boolean {
+  return data.deleted_at != null ||
+    data.deletedAt != null ||
+    data.status === "DELETED" ||
+    data.is_active === false;
+}
+
 const DIRECT_MESSAGE_MAX_LENGTH = 1000;
 const DIRECT_MESSAGE_RATE_LIMIT = {
   maxRequests: 20,
@@ -43,6 +55,18 @@ function isNonEmptyString(value: unknown): value is string {
 }
 
 /**
+ * Valida um ID simples antes de interpolá-lo em um caminho Firestore.
+ * @param {unknown} value ID recebido.
+ * @param {number} maxLength Limite de caracteres.
+ * @return {boolean} Se o valor e um segmento seguro.
+ */
+function isSafeDocumentId(value: unknown, maxLength = 128): value is string {
+  return isNonEmptyString(value) &&
+    value.trim().length <= maxLength &&
+    !value.includes("/");
+}
+
+/**
  * Parseia payload do callable.
  *
  * @param {unknown} data Payload cru.
@@ -51,7 +75,7 @@ function isNonEmptyString(value: unknown): value is string {
 function parseCreateDirectChatRequest(
   data: unknown
 ): CreateDirectChatRequest {
-  if (!isRecord(data) || !isNonEmptyString(data.targetUid)) {
+  if (!isRecord(data) || !isSafeDocumentId(data.targetUid)) {
     throw new HttpsError("invalid-argument", "targetUid obrigatório.");
   }
   return {targetUid: data.targetUid.trim()};
@@ -68,7 +92,7 @@ function parseSubmitDirectMessageRequest(
 ): SubmitDirectMessageRequest {
   if (
     !isRecord(data) ||
-    !isNonEmptyString(data.chatId) ||
+    !isSafeDocumentId(data.chatId, 300) ||
     !isNonEmptyString(data.text)
   ) {
     throw new HttpsError(
@@ -110,7 +134,14 @@ export function buildDirectChatId(uidA: string, uidB: string): string {
  */
 async function getPublicUser(uid: string): Promise<PublicUser> {
   const snap = await db().doc(`users/${uid}`).get();
-  return resolvePublicUser(snap.data() ?? {});
+  const data = snap.data() ?? {};
+  if (
+    !snap.exists ||
+    isUnavailableUser(data)
+  ) {
+    throw new HttpsError("not-found", "Perfil não encontrado.");
+  }
+  return resolvePublicUser(data);
 }
 
 /**
@@ -266,7 +297,24 @@ export const createDirectChat = onCall(
 
     await db().runTransaction(async (tx) => {
       const chatSnap = await tx.get(chatRef);
-      if (chatSnap.exists) return;
+      if (chatSnap.exists) {
+        const existingParticipants = chatSnap.data()?.participants;
+        const expectedParticipants = [uid, targetUid].sort();
+        if (
+          !Array.isArray(existingParticipants) ||
+          existingParticipants.length !== 2 ||
+          !expectedParticipants.every(
+            (participant, index) =>
+              existingParticipants[index] === participant
+          )
+        ) {
+          throw new HttpsError(
+            "already-exists",
+            "Identificador de conversa em conflito."
+          );
+        }
+        return;
+      }
 
       tx.set(chatRef, {
         participants: [uid, targetUid].sort(),
@@ -341,6 +389,17 @@ export const submitDirectMessage = onCall(
         chat.participants.filter((item): item is string =>
           typeof item === "string") :
         [];
+      if (
+        participants.length !== 2 ||
+        new Set(participants).size !== 2 ||
+        participants.some((participant) => !isSafeDocumentId(participant)) ||
+        buildDirectChatId(participants[0], participants[1]) !== chatId
+      ) {
+        throw new HttpsError(
+          "failed-precondition",
+          "Conversa possui participantes inválidos."
+        );
+      }
       if (!participants.includes(uid)) {
         throw new HttpsError(
           "permission-denied",
@@ -379,8 +438,15 @@ export const submitDirectMessage = onCall(
       const participantPhotos: Record<string, string | null> = {};
       participantUserSnaps.forEach((participantSnap, index) => {
         const participantId = participants[index];
+        const participantData = participantSnap.data() ?? {};
+        if (
+          !participantSnap.exists ||
+          isUnavailableUser(participantData)
+        ) {
+          throw new HttpsError("not-found", "Perfil não encontrado.");
+        }
         const publicUser = resolvePublicUser(
-          (participantSnap.data() ?? {}) as Record<string, unknown>
+          participantData as Record<string, unknown>
         );
         participantNames[participantId] = publicUser.name;
         participantPhotos[participantId] = publicUser.photo;

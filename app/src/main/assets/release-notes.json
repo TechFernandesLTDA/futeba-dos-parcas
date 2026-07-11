@@ -1,7 +1,27 @@
 {
   "platform": "android",
-  "generatedAt": "2026-07-11T00:15:47.848Z",
+  "generatedAt": "2026-07-11T14:23:07.456Z",
   "notes": [
+    {
+      "version": "1.36.8",
+      "buildNumber": 71,
+      "releaseDate": "2026-07-11",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "A agenda recorrente do grupo volta a carregar e salvar os mesmos horários usados na Web e no Firebase.",
+      "highlights": [],
+      "added": [],
+      "improved": [],
+      "fixed": [
+        "Horários preservam owner, grupo, recorrência, dia da semana e demais campos no formato esperado pelo Firestore.",
+        "Leituras e atualizações deixam de depender da serialização incompatível do modelo compartilhado.",
+        "`ScheduleRepositoryImpl` converte explicitamente entre o modelo KMP e o modelo Android anotado com `@PropertyName`."
+      ],
+      "issueRefs": [
+        3529
+      ]
+    },
     {
       "version": "1.36.7",
       "buildNumber": 70,

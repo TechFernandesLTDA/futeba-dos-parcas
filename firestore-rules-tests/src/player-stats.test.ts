@@ -18,7 +18,10 @@ import {
 let testEnv: RulesTestEnvironment;
 
 const GAME_ID = "ps-game-001";
+const OWNED_PIVOT_GAME = "ps-game-owned-pivot";
+const FOREIGN_GAME = "ps-game-foreign";
 const STAT_PLAYER_B = "ps-player-b-stats";
+const FOREIGN_STAT = "ps-foreign-stats";
 
 beforeAll(async () => {
   testEnv = await initTestEnv();
@@ -46,6 +49,22 @@ beforeAll(async () => {
     saves: 0,
     yellow_cards: 0,
     red_cards: 0,
+  });
+
+  await seedDoc(testEnv, `games/${OWNED_PIVOT_GAME}`, {
+    owner_id: UID_PLAYER_A,
+    status: "FINISHED",
+  });
+  await seedDoc(testEnv, `games/${FOREIGN_GAME}`, {
+    owner_id: UID_PLAYER_B,
+    status: "FINISHED",
+  });
+  await seedDoc(testEnv, `player_stats/${FOREIGN_STAT}`, {
+    game_id: FOREIGN_GAME,
+    player_id: UID_PLAYER_C,
+    goals: 0,
+    assists: 0,
+    saves: 0,
   });
 });
 
@@ -161,6 +180,25 @@ describe("player_stats — update", () => {
     await assertFails(
       db.doc(`player_stats/${STAT_PLAYER_B}`).update({
         game_id: "other-game",
+      })
+    );
+  });
+
+  it("Owner de outro jogo NAO pode pivotar game_id para assumir stat alheio", async () => {
+    const db = asPlayerA(testEnv);
+    await assertFails(
+      db.doc(`player_stats/${FOREIGN_STAT}`).update({
+        game_id: OWNED_PIVOT_GAME,
+        goals: 10,
+      })
+    );
+  });
+
+  it("Game owner NAO pode trocar player_id da estatistica", async () => {
+    const db = asPlayerA(testEnv);
+    await assertFails(
+      db.doc(`player_stats/${STAT_PLAYER_B}`).update({
+        player_id: UID_PLAYER_C,
       })
     );
   });

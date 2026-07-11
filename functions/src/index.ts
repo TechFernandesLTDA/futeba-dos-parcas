@@ -2744,6 +2744,13 @@ export {
   voidCashboxEntry,
   reconcileCashboxSummary,
 } from "./cashbox/callable";
+export {
+  configureMonthlyFinance,
+  setMonthlyMember,
+  rebuildMonthlyCycle,
+  setMonthlyGameOverride,
+  settleMonthlyCharge,
+} from "./cashbox/monthly";
 export {onCashboxEntryWritten} from "./cashbox/summary-recompute";
 
 // ==========================================

@@ -91,7 +91,7 @@ describe("joinPublicGame rate limit", () => {
     });
 
     await expect(joinPublicGame({
-      auth: {uid: "user1", token: {}},
+      auth: {uid: "user1", token: {verified: true}},
       data: {gameId: "game1", position: "FIELD"},
     }))
       .rejects.toMatchObject({code: "resource-exhausted"});
@@ -112,5 +112,31 @@ describe("joinPublicGame rate limit", () => {
 
     expect(checkRateLimit).not.toHaveBeenCalled();
     expect(mockRunTransaction).not.toHaveBeenCalled();
+  });
+
+  test("rejeita gameId com path injection e posição desconhecida", async () => {
+    await expect(joinPublicGame({
+      auth: {uid: "user1", token: {verified: true}},
+      data: {gameId: "game1/nested/doc", position: "FIELD"},
+    })).rejects.toMatchObject({code: "invalid-argument"});
+
+    await expect(joinPublicGame({
+      auth: {uid: "user1", token: {verified: true}},
+      data: {gameId: "game1", position: "RESERVE"},
+    })).rejects.toMatchObject({code: "invalid-argument"});
+    expect(mockRunTransaction).not.toHaveBeenCalled();
+  });
+
+  test("aplica a mesma verificação ao ingresso público após o grace period", async () => {
+    jest.useFakeTimers().setSystemTime(new Date("2026-08-04T00:00:00.000Z"));
+    try {
+      await expect(joinPublicGame({
+        auth: {uid: "user1", token: {}},
+        data: {gameId: "game1", position: "FIELD"},
+      })).rejects.toMatchObject({code: "permission-denied"});
+      expect(mockRunTransaction).not.toHaveBeenCalled();
+    } finally {
+      jest.useRealTimers();
+    }
   });
 });

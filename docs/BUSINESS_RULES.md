@@ -476,7 +476,7 @@ Um **Grupo** é um conjunto de jogadores que se organizam para jogar junto regul
 2. ACTIVE
    ├─ Owner organiza jogos
    ├─ Membros confirmam/desconfirmam
-   ├─ Caixa do grupo gerencia receita (R$ 15/jogo)
+   ├─ Owner/admin gerencia caixa, mensalistas e baixas
    └─ Rankings específicos do grupo
 
 3. INACTIVE (ou ARCHIVED)
@@ -501,24 +501,24 @@ Um **Grupo** é um conjunto de jogadores que se organizam para jogar junto regul
 
 ### Caixa do Grupo (Cashbox)
 
-Cada jogo organizado pelo grupo gera uma receita que é distribuída:
+O caixa é um ledger realizado de receitas e despesas. Somente owner/admin ativo
+movimenta ou estorna; o cliente usa Cloud Functions e nunca escreve diretamente
+em `cashbox` ou `cashbox_summary`. Cada operação valida a intenção completa,
+usa valor inteiro em centavos e atualiza entrada, resumo e marcador idempotente
+na mesma transação.
 
-```
-Jogo: R$ 60 (15 reais × 4 players)
-   ├─ Locação quadra (para Parque Mooca): R$ 30
-   ├─ Responsável pela quadra: R$ 10
-   └─ Caixa do Grupo: R$ 20
+O financeiro mensal é um domínio complementar:
 
-Exemplo: Após 10 jogos = R$ 200 no caixa
-```
+- o owner/admin escolhe um subconjunto dos membros ativos como mensalistas;
+- o custo pode ser um contrato mensal fixo ou a soma das ocorrências;
+- meses com três, quatro ou cinco jogos e exceções de feriado usam um snapshot
+  explícito da agenda;
+- o rateio distribui todos os centavos sem perda e não inclui jogadores avulsos;
+- uma baixa cria a receita correspondente no caixa e fecha o snapshot contra
+  alterações retroativas;
+- o estorno reabre pagador e período junto com o ledger.
 
-**Uso do Caixa:**
-- Amostra para novos jogadores
-- Cobrir custos de quadra em dias ruins
-- Prêmios para competições dentro do grupo
-- Doações/eventos
-
-**Referência:** `backend/SERVICES.md` - não há lógica de caixa implementada ainda (future feature)
+Contrato, estados e fluxo operacional: [`MONTHLY_FINANCE.md`](MONTHLY_FINANCE.md).
 
 ---
 

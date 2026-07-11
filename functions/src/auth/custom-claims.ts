@@ -36,6 +36,11 @@ import {
 } from "../constants";
 import {ERROR_MSGS} from "../error-messages";
 import {db} from "../_db";
+import {
+  acquireOperationLease,
+  completeOperationLease,
+  failOperationLease,
+} from "../middleware/operation-lock";
 
 
 // ==========================================
@@ -86,7 +91,7 @@ export const setUserRole = secureCallable<SetUserRoleRequest>(
     // SECFIX #429: appCheck enforce em production.
     // Token admin roubado/leaked nao serve fora do app oficial.
     // FIX #1577: FUNCTIONS_EMULATOR em vez de NODE_ENV
-    appCheck: !process.env.FUNCTIONS_EMULATOR,
+    appCheck: process.env.FUNCTIONS_EMULATOR !== "true",
     requireAuth: true,
     requiredRole: "ADMIN",
     rateLimit: {
@@ -260,7 +265,9 @@ export const onNewUserCreated = onDocumentCreated(
 
     try {
       // Pegar role do documento (ou default PLAYER)
-      const role = userData.role || "PLAYER";
+      const role = (VALID_ROLES as readonly unknown[]).includes(userData.role) ?
+        userData.role :
+        "PLAYER";
 
       const existingUserClaims =
         (await admin.auth().getUser(userId))
@@ -468,7 +475,7 @@ export const migrateAllUsersToCustomClaims = secureCallable(
   {
     // SECFIX #429: appCheck enforce em production
     // FIX #1577: FUNCTIONS_EMULATOR em vez de NODE_ENV
-    appCheck: !process.env.FUNCTIONS_EMULATOR,
+    appCheck: process.env.FUNCTIONS_EMULATOR !== "true",
     requireAuth: true,
     requiredRole: "ADMIN",
     rateLimit: {
@@ -477,6 +484,7 @@ export const migrateAllUsersToCustomClaims = secureCallable(
       keyPrefix: "migrate",
     },
     enableAuditLog: true,
+    timeoutSeconds: 540,
     auditLogContext: async (request) => ({
       function: "migrateAllUsersToCustomClaims",
       callerUid: request.auth?.uid,
@@ -488,48 +496,13 @@ export const migrateAllUsersToCustomClaims = secureCallable(
     }
     // Rate limiting: Apenas uma migração por hora
     // para evitar abuso
-    const RATE_LIMIT_MS = 60 * 60 * 1000; // 1 hora
-    const lockRef = db()
-      .collection("system_locks")
-      .doc("claims_migration");
-    const lockDoc = await lockRef.get();
-
-    if (lockDoc.exists) {
-      const lastRun =
-        lockDoc.data()?.last_run_at?.toDate?.();
-      if (
-        lastRun &&
-        (Date.now() - lastRun.getTime()) <
-          RATE_LIMIT_MS
-      ) {
-        const minutesRemaining = Math.ceil(
-          (
-            RATE_LIMIT_MS -
-            (Date.now() - lastRun.getTime())
-          ) / 60000
-        );
-        logger.warn(
-          "[MIGRATION] Rate limited: " +
-          "migration already ran at " +
-          `${lastRun.toISOString()}. ` +
-          "Try again in " +
-          `${minutesRemaining} minutes.`
-        );
-        throw new HttpsError(
-          "resource-exhausted",
-          "Migration already ran recently. " +
-          "Try again in " +
-          `${minutesRemaining} minutes.`
-        );
-      }
-    }
-
-    // Registrar lock antes de iniciar
-    await lockRef.set({
-      last_run_at: FieldValue.serverTimestamp(),
-      started_by: request.auth.uid,
-      status: "running",
-    });
+    const database = db();
+    const operationLease = await acquireOperationLease(
+      database,
+      "claims_migration",
+      request.auth.uid,
+      {cooldownMs: 60 * 60 * 1000, leaseMs: 10 * 60 * 1000},
+    );
 
     logger.info(
       "[MIGRATION] Starting Custom Claims " +
@@ -579,8 +552,10 @@ export const migrateAllUsersToCustomClaims = secureCallable(
           await Promise.all(
             batch.map(async (doc) => {
               const uData = doc.data();
-              const docRole =
-                uData.role || "PLAYER";
+              const docRole = (VALID_ROLES as readonly unknown[])
+                .includes(uData.role) ?
+                uData.role :
+                "PLAYER";
 
               try {
                 const existingClaims =
@@ -625,10 +600,7 @@ export const migrateAllUsersToCustomClaims = secureCallable(
       }
 
       // Atualizar lock com status final
-      await lockRef.update({
-        status: "completed",
-        completed_at:
-          FieldValue.serverTimestamp(),
+      await completeOperationLease(database, operationLease, {
         processed_count: processed,
         error_count: errors,
       });
@@ -650,12 +622,7 @@ export const migrateAllUsersToCustomClaims = secureCallable(
     } catch (error) {
       // Atualizar lock com status de erro
       try {
-        await lockRef.update({
-          status: "failed",
-          failed_at:
-            FieldValue.serverTimestamp(),
-          error: String(error),
-        });
+        await failOperationLease(database, operationLease, error);
       } catch {
         // ignore lock update failure
       }
