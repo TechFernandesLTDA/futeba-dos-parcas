@@ -31,8 +31,15 @@ permissions:
   contents: read
 
 jobs:
-  audit-patterns:
-    name: Audit Patterns
+  changes:
+    name: Classify changes
+    uses: ./.github/workflows/change-scope.yml
+
+  # Os 4 checks curtos (audit / secrets / rules catch-all / headers) são todos
+  # bash/grep/ripgrep que levam segundos. Rodam sempre (safety-net repo-wide) e
+  # em paralelo com o classificador para reduzir fan-out e tempo de fila.
+  validate-conventions:
+    name: Conventions (audit, secrets, rules, headers)
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -48,39 +55,8 @@ jobs:
       - name: Run audit patterns
         run: bash scripts/audit-patterns.sh
 
-      - name: Upload audit report
-        if: always()
-        continue-on-error: true
-        uses: actions/upload-artifact@v4
-        with:
-          name: audit-patterns-report
-          path: audit-report.txt
-          retention-days: 7
-
-  secrets-check:
-    name: Secrets Check
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Install ripgrep
-        run: |
-          if ! command -v rg &>/dev/null; then
-            sudo apt-get update && sudo apt-get install -y ripgrep
-          fi
-
       - name: Check secrets
         run: bash scripts/check-secrets.sh
-
-  rules-catchall:
-    name: Rules Catch-All Deny
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
 
       - name: Verify firestore.rules has catch-all deny
         run: |
@@ -99,14 +75,6 @@ jobs:
             echo "❌ storage.rules: catch-all deny NÃO encontrado no final do arquivo!"
             exit 1
           fi
-
-  security-headers:
-    name: Firebase Security Headers
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
 
       - name: Check X-Content-Type-Options header
         run: |
@@ -135,8 +103,18 @@ jobs:
             exit 1
           fi
 
+      - name: Upload audit report
+        if: always()
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: audit-patterns-report
+          path: audit-report.txt
+          retention-days: 7
+
   validate-pre-push:
     name: Pre-Push Validation
+    needs: [changes]
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -149,16 +127,21 @@ jobs:
           node-version: '22'
 
       - name: Install web dependencies
+        if: needs.changes.outputs.web == 'true'
         run: cd web && npm ci
 
       - name: Install functions dependencies
+        if: needs.changes.outputs.functions == 'true'
         run: cd functions && npm ci
 
       - name: Web ESLint
+        if: needs.changes.outputs.web == 'true'
         run: cd web && npm run lint
 
       - name: Functions build
+        if: needs.changes.outputs.functions == 'true'
         run: cd functions && npm run build
 
       - name: Functions lint
+        if: needs.changes.outputs.functions == 'true'
         run: cd functions && npm run lint
