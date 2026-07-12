@@ -14,6 +14,7 @@
 /.github/ @TechFernandesLTDA/dev-team
 /.github/workflows/ @TechFernandesLTDA/dev-team
 /.claude/ @TechFernandesLTDA/dev-team
+/scripts/web-ci-workflow-contract.test.js @TechFernandesLTDA/dev-team
 
 # Docs
 /README.md @TechFernandesLTDA/dev-team

@@ -14,6 +14,10 @@ const lighthouseWorkflow = fs.readFileSync(
   path.join(repoRoot, '.github/workflows/web-lighthouse-ci.yml'),
   'utf8'
 );
+const codeowners = fs.readFileSync(
+  path.join(repoRoot, '.github/CODEOWNERS'),
+  'utf8'
+);
 const webPackage = require(path.join(repoRoot, 'web/package.json'));
 
 function extractJob(jobId, source = workflow) {
@@ -157,10 +161,17 @@ test('Lighthouse reads PR metadata on an ephemeral runner with hardened checkout
   assert.match(lighthouseWorkflow, /github\.rest\.pulls\.listFiles/);
   assert.match(
     lighthouseWorkflow,
-    /file\.filename === 'scripts\/web-ci-workflow-contract\.test\.js'/
+    /isWebRelevantPath\(file\.filename\) \|\|\n\s+isWebRelevantPath\(file\.previous_filename\)/
   );
   assert.match(
     lighthouseWorkflow,
     /run: node --test \.\.\/scripts\/web-ci-workflow-contract\.test\.js/
+  );
+});
+
+test('the executable CI contract requires code owner review', () => {
+  assert.match(
+    codeowners,
+    /^\/scripts\/web-ci-workflow-contract\.test\.js\s+@TechFernandesLTDA\/dev-team$/m
   );
 });

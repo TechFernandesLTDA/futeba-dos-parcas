@@ -54,10 +54,15 @@ jobs:
               per_page: 100,
             });
 
+            const isWebRelevantPath = (filename) =>
+              typeof filename === 'string' && (
+                filename.startsWith('web/') ||
+                filename === '.github/workflows/web-lighthouse-ci.yml' ||
+                filename === 'scripts/web-ci-workflow-contract.test.js'
+              );
             const shouldRun = files.some((file) =>
-              file.filename.startsWith('web/') ||
-              file.filename === '.github/workflows/web-lighthouse-ci.yml' ||
-              file.filename === 'scripts/web-ci-workflow-contract.test.js'
+              isWebRelevantPath(file.filename) ||
+              isWebRelevantPath(file.previous_filename)
             );
             core.setOutput('should_run', shouldRun ? 'true' : 'false');
 
