@@ -8,22 +8,28 @@ const path = require('node:path');
 
 const {
   EXPECTED,
+  SHARD_EXPECTATIONS,
+  loadShardReport,
   loadShardReports,
+  validateSingleShard,
   validateShardReports,
 } = require('./verify-vitest-shards');
 
 function buildCompleteReports() {
-  const passedFiles = Array.from({ length: EXPECTED.passedFiles }, (_, index) => ({
-    name: `/workspace/web/src/example/test-${index + 1}.test.ts`,
-    status: 'passed',
-    assertionResults: [{ status: 'passed' }],
-  }));
-  passedFiles[0].assertionResults.push(
-    ...Array.from(
-      { length: EXPECTED.passedTests - EXPECTED.passedFiles },
-      () => ({ status: 'passed' })
-    )
-  );
+  const passedFiles = (prefix, fileCount, passedTests) => {
+    const files = Array.from({ length: fileCount }, (_, index) => ({
+      name: `/workspace/web/src/example/${prefix}-${index + 1}.test.ts`,
+      status: 'passed',
+      assertionResults: [{ status: 'passed' }],
+    }));
+    files[0].assertionResults.push(
+      ...Array.from(
+        { length: passedTests - fileCount },
+        () => ({ status: 'passed' })
+      )
+    );
+    return files;
+  };
   const skippedFile = {
     name: '/workspace/web/src/example/skipped.test.ts',
     status: 'passed',
@@ -32,10 +38,12 @@ function buildCompleteReports() {
       () => ({ status: 'skipped' })
     ),
   };
-  const files = [...passedFiles, skippedFile];
-  const midpoint = Math.ceil(files.length / EXPECTED.shards);
+  const shardFiles = [
+    passedFiles('shard-1', 90, 540),
+    [...passedFiles('shard-2', 88, 584), skippedFile],
+  ];
 
-  return [files.slice(0, midpoint), files.slice(midpoint)].map((testResults, index) => {
+  return shardFiles.map((testResults, index) => {
     const assertions = testResults.flatMap((file) => file.assertionResults);
     const numPassedTests = assertions.filter(({ status }) => status === 'passed').length;
     const numPendingTests = assertions.filter(({ status }) => status === 'skipped').length;
@@ -69,6 +77,16 @@ test('accepts two disjoint successful shards with the complete baseline', () => 
   });
 });
 
+test('each shard independently enforces its measured coverage baseline', () => {
+  const reports = buildCompleteReports();
+
+  assert.deepEqual(validateSingleShard(reports[0], 1), SHARD_EXPECTATIONS[1]);
+  assert.deepEqual(validateSingleShard(reports[1], 2), SHARD_EXPECTATIONS[2]);
+
+  reports[1].report.numPassedTests -= 1;
+  assert.throws(() => validateSingleShard(reports[1], 2), /Vitest shard 2 drift/);
+});
+
 test('rejects a failed matrix result before accepting reports', () => {
   assert.throws(
     () => validateShardReports(buildCompleteReports(), 'failure'),
@@ -95,6 +113,10 @@ test('loads exactly the two named shard reports from disk', (context) => {
   for (const { name, report } of buildCompleteReports()) {
     fs.writeFileSync(path.join(directory, name), JSON.stringify(report));
   }
+  assert.equal(
+    loadShardReport(path.join(directory, 'shard-1-of-2.json')).name,
+    'shard-1-of-2.json'
+  );
   assert.equal(loadShardReports(directory).length, EXPECTED.shards);
 
   fs.rmSync(path.join(directory, 'shard-2-of-2.json'));

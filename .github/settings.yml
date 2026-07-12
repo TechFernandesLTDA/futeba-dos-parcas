@@ -85,5 +85,6 @@ branches:
           - Lighthouse CI
           - Validate PR
           - Android CI Gate
+          - Web CI Gate
       enforce_admins: false
       restrictions: null

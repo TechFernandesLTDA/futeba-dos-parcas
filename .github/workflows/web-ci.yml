@@ -94,14 +94,11 @@ jobs:
           --reporter=json
           --outputFile.json=reports/vitest/shard-${{ matrix.shard_index }}-of-${{ matrix.shard_total }}.json
 
-      - name: Upload Vitest shard report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: web-vitest-shard-${{ matrix.shard_index }}-of-${{ matrix.shard_total }}
-          path: web/reports/vitest/shard-${{ matrix.shard_index }}-of-${{ matrix.shard_total }}.json
-          if-no-files-found: warn
-          retention-days: 7
+      - name: Verify Vitest shard coverage
+        run: >-
+          node ../scripts/ci/verify-vitest-shards.js
+          reports/vitest/shard-${{ matrix.shard_index }}-of-${{ matrix.shard_total }}.json
+          ${{ matrix.shard_index }}
 
   web_gate:
     name: Web CI Gate
@@ -111,31 +108,30 @@ jobs:
     runs-on: ${{ fromJSON(github.event_name == 'pull_request' && '["ubuntu-latest"]' || (vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]')) }}
     timeout-minutes: 5
     steps:
-      - name: Checkout code
-        if: needs.changes.outputs.web == 'true'
-        uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-
-      - name: Download Vitest shard reports
-        if: needs.changes.outputs.web == 'true'
-        uses: actions/download-artifact@v4
-        with:
-          pattern: web-vitest-shard-*-of-2
-          path: reports/vitest
-          merge-multiple: true
-
-      - name: Verify complete Vitest suite
-        if: needs.changes.outputs.web == 'true'
+      - name: Enforce classified Web result
         working-directory: .
         env:
+          CHANGE_SCOPE_RESULT: ${{ needs.changes.result }}
+          WEB_CHANGED: ${{ needs.changes.outputs.web }}
           WEB_SHARDS_RESULT: ${{ needs.web_shards.result }}
-        run: node scripts/ci/verify-vitest-shards.js reports/vitest
-
-      - name: Accept non-Web change
-        if: needs.changes.outputs.web != 'true'
-        working-directory: .
-        run: echo "No Web impact; Web CI Gate passed without running npm code."
+        run: |
+          if [ "$CHANGE_SCOPE_RESULT" != "success" ]; then
+            echo "Web change classifier finished with result: $CHANGE_SCOPE_RESULT" >&2
+            exit 1
+          fi
+          if [ "$WEB_CHANGED" = "true" ]; then
+            if [ "$WEB_SHARDS_RESULT" != "success" ]; then
+              echo "Web shards finished with result: $WEB_SHARDS_RESULT" >&2
+              exit 1
+            fi
+            echo "Both Web shards passed their exact local coverage contracts."
+          else
+            if [ "$WEB_SHARDS_RESULT" != "skipped" ]; then
+              echo "Non-Web change unexpectedly ran shards: $WEB_SHARDS_RESULT" >&2
+              exit 1
+            fi
+            echo "No Web impact; Web CI Gate passed without running npm code."
+          fi
 
   # Mutation testing (Stryker) — mede o SINAL dos testes (mutation score) no
   # core de utils/services. Roda apenas no cron noturno e via workflow_dispatch,

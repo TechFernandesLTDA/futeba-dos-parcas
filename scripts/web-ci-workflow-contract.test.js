@@ -18,6 +18,10 @@ const codeowners = fs.readFileSync(
   path.join(repoRoot, '.github/CODEOWNERS'),
   'utf8'
 );
+const settings = fs.readFileSync(
+  path.join(repoRoot, '.github/settings.yml'),
+  'utf8'
+);
 const webPackage = require(path.join(repoRoot, 'web/package.json'));
 
 function extractJob(jobId, source = workflow) {
@@ -134,8 +138,11 @@ test('Web CI uses two sharded PR lanes with exactly two installs and a stable ga
     shards,
     /--(?:retry|exclude|passWithNoTests|changed|related|project|testNamePattern)(?:[=\s]|$)/
   );
-  assert.match(shards, /name: Upload Vitest shard report\n\s+if: always\(\)/);
-  assert.match(shards, /uses: actions\/upload-artifact@v4/);
+  assert.match(
+    shards,
+    /name: Verify Vitest shard coverage[\s\S]*?node \.\.\/scripts\/ci\/verify-vitest-shards\.js[\s\S]*?reports\/vitest\/shard-\$\{\{ matrix\.shard_index \}\}-of-\$\{\{ matrix\.shard_total \}\}\.json[\s\S]*?\$\{\{ matrix\.shard_index \}\}/
+  );
+  assert.doesNotMatch(shards, /actions\/(?:upload|download)-artifact/);
 
   assert.equal(
     countMatches(shards, /npm ci --legacy-peer-deps/g),
@@ -148,13 +155,17 @@ test('Web CI uses two sharded PR lanes with exactly two installs and a stable ga
   assert.match(gate, /name: Web CI Gate/);
   assert.match(gate, /if: \$\{\{ always\(\) && github\.event_name != 'schedule' \}\}/);
   assert.match(gate, /needs: \[changes, web_shards\]/);
-  assert.match(gate, /uses: actions\/download-artifact@v4/);
-  assert.match(gate, /pattern: web-vitest-shard-\*-of-2/);
+  assert.match(gate, /CHANGE_SCOPE_RESULT: \$\{\{ needs\.changes\.result \}\}/);
+  assert.match(gate, /WEB_CHANGED: \$\{\{ needs\.changes\.outputs\.web \}\}/);
   assert.match(gate, /WEB_SHARDS_RESULT: \$\{\{ needs\.web_shards\.result \}\}/);
-  assert.match(gate, /node scripts\/ci\/verify-vitest-shards\.js reports\/vitest/);
-  assert.match(gate, /name: Accept non-Web change\n\s+if: needs\.changes\.outputs\.web != 'true'/);
-  assert.doesNotMatch(gate, /npm ci|actions\/setup-node/);
-  assertHardenedCheckout('web_gate', gate);
+  assert.match(gate, /\[ "\$CHANGE_SCOPE_RESULT" != "success" \]/);
+  assert.match(gate, /\[ "\$WEB_CHANGED" = "true" \]/);
+  assert.match(gate, /\[ "\$WEB_SHARDS_RESULT" != "success" \]/);
+  assert.match(gate, /\[ "\$WEB_SHARDS_RESULT" != "skipped" \]/);
+  assert.doesNotMatch(
+    gate,
+    /npm ci|actions\/(?:setup-node|checkout|upload-artifact|download-artifact)/
+  );
   assertEphemeralPrRunner('web_gate', gate);
 
   assert.doesNotMatch(workflow, /\n  (?:lint|typecheck|test|build):\n/);
@@ -211,5 +222,9 @@ test('the executable CI contract requires code owner review', () => {
   assert.match(
     codeowners,
     /^\/scripts\/web-ci-workflow-contract\.test\.js\s+@TechFernandesLTDA\/dev-team$/m
+  );
+  assert.match(
+    settings,
+    /required_status_checks:[\s\S]*?contexts:[\s\S]*?\n\s+- Web CI Gate(?:\n|$)/
   );
 });
