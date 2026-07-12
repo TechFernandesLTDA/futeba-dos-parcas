@@ -874,8 +874,9 @@ export const GroupDetailScreen: React.FC = () => {
 
       <Box
         ref={createGameTopSentinelRef}
+        data-testid="create-game-top-sentinel"
         aria-hidden
-        sx={{ width: 1, height: 1, pointerEvents: 'none' }}
+        sx={{ width: '1px', height: '1px', pointerEvents: 'none' }}
       />
 
       <AppBreadcrumbs
