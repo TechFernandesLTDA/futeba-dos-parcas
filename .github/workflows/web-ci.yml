@@ -88,7 +88,9 @@ jobs:
         run: npm ci --legacy-peer-deps
 
       - name: Run Vitest suite
-        run: npm test
+        # GitHub-hosted privado expõe 2 CPUs; o default do Vitest usa CPUs - 1.
+        # Dois workers usam a capacidade inteira sem retry, shard ou corte de suíte.
+        run: npm test -- --maxWorkers=2
 
   # Mutation testing (Stryker) — mede o SINAL dos testes (mutation score) no
   # core de utils/services. Roda apenas no cron noturno e via workflow_dispatch,

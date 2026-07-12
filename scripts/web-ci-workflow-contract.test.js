@@ -107,7 +107,8 @@ test('Web CI uses two attributable PR jobs with one install each', () => {
   assert.match(quality, /npm run build/);
   assert.match(tests, /name: Web Tests/);
   assert.match(tests, /if: github\.event_name != 'schedule'/);
-  assert.match(tests, /npm test/);
+  assert.match(tests, /run: npm test -- --maxWorkers=2/);
+  assert.doesNotMatch(tests, /--(?:retry|shard|exclude|passWithNoTests)/);
 
   assert.equal(
     countMatches(quality, /npm ci --legacy-peer-deps/g),
