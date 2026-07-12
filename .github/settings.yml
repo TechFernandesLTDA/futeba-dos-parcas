@@ -83,5 +83,7 @@ branches:
         strict: false
         contexts:
           - Lighthouse CI
+          - Validate PR
+          - Android CI Gate
       enforce_admins: false
       restrictions: null
