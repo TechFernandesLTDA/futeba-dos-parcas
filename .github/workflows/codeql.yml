@@ -4,7 +4,7 @@ on:
   # Affected-only (Efficiency Hardening F6): este workflow só analisa
   # javascript-typescript (extrator Java/Kotlin desabilitado neste runner —
   # ver matrix abaixo). Rodar em PRs que não tocam JS/TS analisa ZERO arquivos
-  # relevantes e só queima runner self-hosted (recurso escasso, OOM-prone).
+  # relevantes e só consome minutos de CI no GitHub-hosted Linux.
   # Seguro: branch protection de master NÃO exige status checks
   # (required_status_checks=null) — pular o check num PR não-JS/TS não trava o
   # merge. O cron semanal abaixo mantém a varredura COMPLETA como safety net.
@@ -45,10 +45,11 @@ concurrency:
 jobs:
   analyze:
     name: Analyze (${{ matrix.language }})
-    # Self-hosted Mac ARM64: requer Rosetta 2 (CodeQL CLI e x86_64 binario).
-    # JDK 17 (Temurin) ja disponivel via JAVA_HOME no runner.env.
-    # setup-java@v4 removido (causava erro -86 spawn em arm64).
-    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    # GitHub-hosted ubuntu-latest: o extrator javascript-typescript com
+    # build-mode: none nao precisa de Mac/Rosetta. Runner Linux efemero nao
+    # acumula _work/_temp entre runs (sem step de cleanup). O upload SARIF para
+    # a aba Security continua funcionando normalmente em Linux.
+    runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
       security-events: write
@@ -72,15 +73,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      # Self-hosted runner nao limpa _work/_temp entre runs.
-      # CodeQL falha com "Error while recursively deleting codeql_databases/<lang>/src"
-      # se diretorios de runs anteriores ainda existem.
-      - name: Cleanup CodeQL temp dirs (self-hosted)
-        run: |
-          rm -rf "$RUNNER_TEMP/codeql_databases" 2>/dev/null || true
-          rm -rf "$RUNNER_TEMP/codeql-runner" 2>/dev/null || true
-          echo "CodeQL temp dirs cleaned"
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@03e4368ac7daa2bd82b3e85262f3bf87ee112f57  # v3

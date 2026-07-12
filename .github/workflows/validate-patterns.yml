@@ -33,7 +33,7 @@ permissions:
 jobs:
   audit-patterns:
     name: Audit Patterns
-    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - name: Checkout code
@@ -42,7 +42,7 @@ jobs:
       - name: Install ripgrep
         run: |
           if ! command -v rg &>/dev/null; then
-            brew install ripgrep
+            sudo apt-get update && sudo apt-get install -y ripgrep
           fi
 
       - name: Run audit patterns
@@ -59,7 +59,7 @@ jobs:
 
   secrets-check:
     name: Secrets Check
-    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - name: Checkout code
@@ -68,7 +68,7 @@ jobs:
       - name: Install ripgrep
         run: |
           if ! command -v rg &>/dev/null; then
-            brew install ripgrep
+            sudo apt-get update && sudo apt-get install -y ripgrep
           fi
 
       - name: Check secrets
@@ -76,7 +76,7 @@ jobs:
 
   rules-catchall:
     name: Rules Catch-All Deny
-    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - name: Checkout code
@@ -102,7 +102,7 @@ jobs:
 
   security-headers:
     name: Firebase Security Headers
-    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - name: Checkout code
@@ -137,7 +137,7 @@ jobs:
 
   validate-pre-push:
     name: Pre-Push Validation
-    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - name: Checkout code
