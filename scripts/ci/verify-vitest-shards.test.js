@@ -8,10 +8,12 @@ const path = require('node:path');
 
 const {
   EXPECTED,
+  SHARD_MANIFEST,
   SHARD_EXPECTATIONS,
   loadShardReport,
   loadShardReports,
   validateSingleShard,
+  validateShardManifest,
   validateShardReports,
 } = require('./verify-vitest-shards');
 
@@ -62,6 +64,17 @@ function buildCompleteReports() {
   });
 }
 
+function manifestForReports(reports) {
+  return {
+    version: 1,
+    shardTotal: EXPECTED.shards,
+    shards: Object.fromEntries(reports.map(({ report }, index) => [
+      index + 1,
+      report.testResults.map(({ name }) => name.slice(name.lastIndexOf('/src/') + 1)),
+    ])),
+  };
+}
+
 test('accepts two disjoint successful shards with the complete baseline', () => {
   const totals = validateShardReports(buildCompleteReports());
 
@@ -79,12 +92,39 @@ test('accepts two disjoint successful shards with the complete baseline', () => 
 
 test('each shard independently enforces its measured coverage baseline', () => {
   const reports = buildCompleteReports();
+  const manifest = manifestForReports(reports);
 
-  assert.deepEqual(validateSingleShard(reports[0], 1), SHARD_EXPECTATIONS[1]);
-  assert.deepEqual(validateSingleShard(reports[1], 2), SHARD_EXPECTATIONS[2]);
+  assert.deepEqual(validateSingleShard(reports[0], 1, manifest), SHARD_EXPECTATIONS[1]);
+  assert.deepEqual(validateSingleShard(reports[1], 2, manifest), SHARD_EXPECTATIONS[2]);
 
   reports[1].report.numPassedTests -= 1;
-  assert.throws(() => validateSingleShard(reports[1], 2), /Vitest shard 2 drift/);
+  assert.throws(
+    () => validateSingleShard(reports[1], 2, manifest),
+    /Vitest shard 2 drift/
+  );
+});
+
+test('rejects same-cardinality path replacement inside a shard', () => {
+  const reports = buildCompleteReports();
+  const manifest = manifestForReports(reports);
+  reports[0].report.testResults[0].name = '/workspace/web/src/example/replacement.test.ts';
+
+  assert.throws(
+    () => validateSingleShard(reports[0], 1, manifest),
+    /Vitest shard 1 path drift/
+  );
+});
+
+test('checked-in manifest covers 179 existing disjoint test files', () => {
+  assert.equal(validateShardManifest(SHARD_MANIFEST), SHARD_MANIFEST);
+
+  for (const testPath of Object.values(SHARD_MANIFEST.shards).flat()) {
+    assert.equal(
+      fs.existsSync(path.resolve(__dirname, '../../web', testPath)),
+      true,
+      `manifest path does not exist: ${testPath}`
+    );
+  }
 });
 
 test('rejects a failed matrix result before accepting reports', () => {

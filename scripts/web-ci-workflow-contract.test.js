@@ -100,6 +100,7 @@ test('Web CI triggers and permissions include its executable contract', () => {
     'scripts/web-ci-workflow-contract.test.js',
     'scripts/ci/verify-vitest-shards.js',
     'scripts/ci/verify-vitest-shards.test.js',
+    'scripts/ci/web-vitest-shards-v1.json',
   ]) {
     assert.equal(
       countMatches(workflow, new RegExp(`^\\s+- '${script.replaceAll('/', '\\/').replaceAll('.', '\\.')}'$`, 'gm')),

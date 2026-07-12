@@ -2,6 +2,7 @@
 
 const fs = require('node:fs');
 const path = require('node:path');
+const SHARD_MANIFEST = require('./web-vitest-shards-v1.json');
 
 const EXPECTED = Object.freeze({
   shards: 2,
@@ -46,6 +47,26 @@ function canonicalTestPath(testPath) {
   const normalized = testPath.replaceAll('\\', '/');
   const sourceIndex = normalized.lastIndexOf('/src/');
   return sourceIndex === -1 ? normalized : normalized.slice(sourceIndex + 1);
+}
+
+function validateShardManifest(manifest = SHARD_MANIFEST) {
+  invariant(manifest.version === 1, `unsupported shard manifest version: ${manifest.version}`);
+  invariant(manifest.shardTotal === EXPECTED.shards, 'shard manifest total does not match contract');
+
+  const allPaths = [];
+  for (let shardIndex = 1; shardIndex <= EXPECTED.shards; shardIndex += 1) {
+    const paths = manifest.shards?.[shardIndex];
+    invariant(Array.isArray(paths), `manifest shard ${shardIndex} is missing`);
+    invariant(
+      paths.length === SHARD_EXPECTATIONS[shardIndex].testFiles,
+      `manifest shard ${shardIndex} expected ${SHARD_EXPECTATIONS[shardIndex].testFiles} paths, found ${paths.length}`
+    );
+    allPaths.push(...paths);
+  }
+
+  invariant(allPaths.length === EXPECTED.testFiles, 'manifest does not cover every test file');
+  invariant(new Set(allPaths).size === allPaths.length, 'manifest contains duplicate test paths');
+  return manifest;
 }
 
 function loadShardReport(reportPath) {
@@ -116,7 +137,7 @@ function summarizeShardReport({ name, report }) {
   return { totals, filePaths };
 }
 
-function validateSingleShard(shard, shardIndex) {
+function validateSingleShard(shard, shardIndex, manifest = SHARD_MANIFEST) {
   const expected = SHARD_EXPECTATIONS[shardIndex];
   invariant(expected, `unsupported shard index: ${shardIndex}`);
   invariant(
@@ -124,7 +145,14 @@ function validateSingleShard(shard, shardIndex) {
     `unexpected report name for shard ${shardIndex}: ${shard.name}`
   );
 
-  const { totals } = summarizeShardReport(shard);
+  validateShardManifest(manifest);
+  const { totals, filePaths } = summarizeShardReport(shard);
+  const expectedPaths = [...manifest.shards[shardIndex]].sort();
+  const actualPaths = [...filePaths].sort();
+  invariant(
+    JSON.stringify(actualPaths) === JSON.stringify(expectedPaths),
+    `Vitest shard ${shardIndex} path drift: expected ${JSON.stringify(expectedPaths)}, received ${JSON.stringify(actualPaths)}`
+  );
   invariant(
     JSON.stringify(totals) === JSON.stringify(expected),
     `Vitest shard ${shardIndex} drift: expected ${JSON.stringify(expected)}, received ${JSON.stringify(totals)}`
@@ -205,9 +233,11 @@ if (require.main === module) {
 
 module.exports = {
   EXPECTED,
+  SHARD_MANIFEST,
   SHARD_EXPECTATIONS,
   loadShardReport,
   loadShardReports,
+  validateShardManifest,
   validateSingleShard,
   validateShardReports,
 };
