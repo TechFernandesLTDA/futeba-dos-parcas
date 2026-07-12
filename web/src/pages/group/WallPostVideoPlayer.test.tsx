@@ -25,13 +25,26 @@ describe('WallPostVideoPlayer', () => {
     const video = container.querySelector('video');
     const source = container.querySelector('video source');
     expect(video).toHaveAttribute('controls');
-    expect(video).toHaveAttribute('autoplay');
     expect(video).toHaveAttribute('playsinline');
     expect(video).toHaveAttribute('crossorigin', 'anonymous');
     expect(video).toHaveAttribute('preload', 'metadata');
+    expect(video).toHaveAttribute('controlslist', 'nodownload');
+    expect(video).not.toHaveAttribute('autoplay');
     expect(video).toHaveAttribute('poster', poster);
     expect(source).toHaveAttribute('src', `${src}&fp_play=0`);
     expect(source).toHaveAttribute('type', 'video/mp4');
+  });
+
+  it('inicia a reproducao programaticamente no onCanPlay mantendo o audio', () => {
+    const playMock = vi.fn().mockResolvedValue(undefined);
+    HTMLMediaElement.prototype.play = playMock;
+    const { container } = renderPlayer();
+    fireEvent.click(screen.getByRole('button', { name: 'Abrir vídeo de Jordi' }));
+    const video = container.querySelector('video')!;
+
+    fireEvent.canPlay(video);
+    expect(playMock).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
   });
 
   it('informa carregamento, espera e retomada sem bloquear os controles', () => {

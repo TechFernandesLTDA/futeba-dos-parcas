@@ -1557,6 +1557,7 @@
     "retryVideo": "Tentar carregar novamente",
     "openPhoto": "Abrir foto de {{name}}",
     "openVideo": "Abrir vídeo de {{name}}",
+    "openVideoFullscreen": "Ampliar vídeo de {{name}}",
     "timelineTitle": "Linha do tempo",
     "timelineLatest": "Mais recentes",
     "timelineOlder": "Carregar publicações anteriores",
