@@ -7,6 +7,7 @@ const os = require('node:os');
 const path = require('node:path');
 
 const {
+  TEST_FILE_PATTERN,
   discoverTestFiles,
   planVitestShards,
   plannedFilesForShard,
@@ -136,4 +137,99 @@ test('loader reads a shard JSON report from disk', (context) => {
 
   assert.equal(loadShardReport(reportPath).numPassedTests, 1);
   assert.throws(() => loadShardReport(path.join(directory, 'missing.json')), /not found/);
+});
+
+// --- Contrato: include do Vitest (web/vite.config.ts) vs. TEST_FILE_PATTERN
+// (scripts/ci/vitest-shard-plan.js) -------------------------------------
+// Os dois padrões vivem em arquivos distintos e formatos diferentes (glob x
+// regex). Hoje coincidem; se um for ampliado sem o outro, testes passam a rodar
+// local mas ficam de fora dos shards silenciosamente. Este contrato detecta o
+// drift em CI. Comparamos por conjuntos de tokens (ordem-independente) para
+// ser imune a reordenação cosmética das chaves.
+
+function readVitestIncludeGlob() {
+  const viteConfigPath = path.resolve(__dirname, '../../web/vite.config.ts');
+  const source = fs.readFileSync(viteConfigPath, 'utf8');
+  const match = source.match(/include:\s*\[\s*'([^']+)'\s*\]/);
+  assert.ok(match, `test.include glob não encontrado em ${viteConfigPath}`);
+  return match[1];
+}
+
+function extractBraceTokens(glob) {
+  // 'src/**/*.{test,spec}.{ts,tsx}' -> { suffixes: ['test','spec'], extensions: ['ts','tsx'] }
+  const braceGroups = [...glob.matchAll(/\{([^}]+)\}/g)].map((m) => m[1].split(','));
+  assert.equal(
+    braceGroups.length,
+    2,
+    `glob fora do formato esperado (2 grupos entre chaves): ${glob}`
+  );
+  const [suffixes, extensions] = braceGroups;
+  return { suffixes, extensions };
+}
+
+function extractRegexTokens(regexSource) {
+  // '\\.(?:test|spec)\\.(?:ts|tsx)$' -> { suffixes: ['test','spec'], extensions: ['ts','tsx'] }
+  const groups = [...regexSource.matchAll(/\(\?:([^)]+)\)/g)].map((m) => m[1].split('|'));
+  assert.equal(
+    groups.length,
+    2,
+    `regex fora do formato esperado (2 grupos não-capturantes): ${regexSource}`
+  );
+  const [suffixes, extensions] = groups;
+  return { suffixes, extensions };
+}
+
+function assertIncludeMatchesPlanner(viteIncludeGlob, plannerRegexSource) {
+  const fromVite = extractBraceTokens(viteIncludeGlob);
+  const fromPlanner = extractRegexTokens(plannerRegexSource);
+  assert.deepEqual(
+    [...fromVite.suffixes].sort(),
+    [...fromPlanner.suffixes].sort(),
+    'TEST_FILE_PATTERN suffixes divergem do test.include do Vitest'
+  );
+  assert.deepEqual(
+    [...fromVite.extensions].sort(),
+    [...fromPlanner.extensions].sort(),
+    'TEST_FILE_PATTERN extensions divergem do test.include do Vitest'
+  );
+}
+
+test('contract: TEST_FILE_PATTERN matches test.include from web/vite.config.ts', () => {
+  const viteGlob = readVitestIncludeGlob();
+  const plannerSource = TEST_FILE_PATTERN.source;
+
+  assertIncludeMatchesPlanner(viteGlob, plannerSource);
+});
+
+test('contract: planner covers all 4 variants test/spec x ts/tsx declared in include', () => {
+  const viteGlob = readVitestIncludeGlob();
+  const { suffixes, extensions } = extractBraceTokens(viteGlob);
+
+  assert.deepEqual([...suffixes].sort(), ['spec', 'test']);
+  assert.deepEqual([...extensions].sort(), ['ts', 'tsx']);
+
+  for (const suffix of suffixes) {
+    for (const ext of extensions) {
+      const filename = `example.${suffix}.${ext}`;
+      assert.ok(TEST_FILE_PATTERN.test(filename), `planner deveria casar ${filename}`);
+    }
+  }
+});
+
+test('contract: simulated widening of test.include (adds .js) is detected as drift', () => {
+  // Se o include do Vitest for ampliado para .js sem atualizar TEST_FILE_PATTERN,
+  // testes .js rodariam local mas ficariam de fora dos shards. O contrato deve
+  // falhar explicitamente.
+  const widenedGlob = 'src/**/*.{test,spec}.{ts,tsx,js}';
+  assert.throws(
+    () => assertIncludeMatchesPlanner(widenedGlob, TEST_FILE_PATTERN.source),
+    /extensions divergem/
+  );
+});
+
+test('contract: cosmetic brace reorder (e.g. {tsx,ts}) does not cause a false negative', () => {
+  assertIncludeMatchesPlanner(
+    'src/**/*.{spec,test}.{tsx,ts}',
+    TEST_FILE_PATTERN.source
+  );
 });
