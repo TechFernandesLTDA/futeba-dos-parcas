@@ -22,6 +22,14 @@ const settings = fs.readFileSync(
   path.join(repoRoot, '.github/settings.yml'),
   'utf8'
 );
+const shardPlanner = fs.readFileSync(
+  path.join(repoRoot, 'scripts/ci/vitest-shard-plan.js'),
+  'utf8'
+);
+const shardRunner = fs.readFileSync(
+  path.join(repoRoot, 'scripts/ci/run-vitest-shard.js'),
+  'utf8'
+);
 const webPackage = require(path.join(repoRoot, 'web/package.json'));
 
 function extractJob(jobId, source = workflow) {
@@ -100,7 +108,8 @@ test('Web CI triggers and permissions include its executable contract', () => {
     'scripts/web-ci-workflow-contract.test.js',
     'scripts/ci/verify-vitest-shards.js',
     'scripts/ci/verify-vitest-shards.test.js',
-    'scripts/ci/web-vitest-shards-v1.json',
+    'scripts/ci/vitest-shard-plan.js',
+    'scripts/ci/run-vitest-shard.js',
   ]) {
     assert.equal(
       countMatches(workflow, new RegExp(`^\\s+- '${script.replaceAll('/', '\\/').replaceAll('.', '\\.')}'$`, 'gm')),
@@ -133,15 +142,15 @@ test('Web CI uses two sharded PR lanes with exactly two installs and a stable ga
   assert.match(shards, /name: TypeScript and production build\n\s+if: matrix\.run_quality\n\s+run: npm run build/);
   assert.match(
     shards,
-    /npm test --\s+--pool=threads\s+--maxWorkers=2\s+--shard=\$\{\{ matrix\.shard_index \}\}\/\$\{\{ matrix\.shard_total \}\}\s+--reporter=default\s+--reporter=json\s+--outputFile\.json=reports\/vitest\/shard-\$\{\{ matrix\.shard_index \}\}-of-\$\{\{ matrix\.shard_total \}\}\.json/
+    /node \.\.\/scripts\/ci\/run-vitest-shard\.js\s+\$\{\{ matrix\.shard_index \}\}\s+\$\{\{ matrix\.shard_total \}\}\s+reports\/vitest\/shard-\$\{\{ matrix\.shard_index \}\}-of-\$\{\{ matrix\.shard_total \}\}\.json/
   );
   assert.doesNotMatch(
     shards,
-    /--(?:retry|exclude|passWithNoTests|changed|related|project|testNamePattern)(?:[=\s]|$)/
+    /--(?:shard|retry|exclude|passWithNoTests|changed|related|project|testNamePattern)(?:[=\s]|$)/
   );
   assert.match(
     shards,
-    /name: Verify Vitest shard coverage[\s\S]*?node \.\.\/scripts\/ci\/verify-vitest-shards\.js[\s\S]*?reports\/vitest\/shard-\$\{\{ matrix\.shard_index \}\}-of-\$\{\{ matrix\.shard_total \}\}\.json[\s\S]*?\$\{\{ matrix\.shard_index \}\}/
+    /name: Verify Vitest shard coverage[\s\S]*?node \.\.\/scripts\/ci\/verify-vitest-shards\.js[\s\S]*?reports\/vitest\/shard-\$\{\{ matrix\.shard_index \}\}-of-\$\{\{ matrix\.shard_total \}\}\.json[\s\S]*?\$\{\{ matrix\.shard_index \}\}[\s\S]*?\$\{\{ matrix\.shard_total \}\}/
   );
   assert.doesNotMatch(shards, /actions\/(?:upload|download)-artifact/);
 
@@ -177,6 +186,16 @@ test('production build remains the TypeScript gate and tests remain Vitest', () 
   assert.match(webPackage.scripts.build, /typescript\/bin\/tsc/);
   assert.match(webPackage.scripts.build, /vite(?:\.js)? build/);
   assert.match(webPackage.scripts.test, /^vitest run$/);
+  assert.match(shardPlanner, /uniqueFiles\.forEach\(\(testFile, index\)/);
+  assert.match(shardPlanner, /shards\[index % shardTotal\]\.push\(testFile\)/);
+  assert.match(shardRunner, /'--pool=threads'/);
+  assert.match(shardRunner, /'--maxWorkers=2'/);
+  assert.match(shardRunner, /'--reporter=default'/);
+  assert.match(shardRunner, /'--reporter=json'/);
+  assert.doesNotMatch(
+    shardRunner,
+    /--(?:shard|retry|exclude|passWithNoTests|changed|related|project|testNamePattern)/
+  );
 });
 
 test('mutation testing stays outside PR and preserves its report artifact', () => {

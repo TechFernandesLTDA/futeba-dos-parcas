@@ -12,7 +12,8 @@ on:
       - 'scripts/web-ci-workflow-contract.test.js'
       - 'scripts/ci/verify-vitest-shards.js'
       - 'scripts/ci/verify-vitest-shards.test.js'
-      - 'scripts/ci/web-vitest-shards-v1.json'
+      - 'scripts/ci/vitest-shard-plan.js'
+      - 'scripts/ci/run-vitest-shard.js'
   workflow_dispatch:
   # Cron noturno (03:00 UTC) — dispara apenas o job de mutation testing.
   # Os jobs de PR/push (quality/tests) são desativados no schedule
@@ -87,19 +88,17 @@ jobs:
 
       - name: Run Vitest shard
         run: >-
-          npm test --
-          --pool=threads
-          --maxWorkers=2
-          --shard=${{ matrix.shard_index }}/${{ matrix.shard_total }}
-          --reporter=default
-          --reporter=json
-          --outputFile.json=reports/vitest/shard-${{ matrix.shard_index }}-of-${{ matrix.shard_total }}.json
+          node ../scripts/ci/run-vitest-shard.js
+          ${{ matrix.shard_index }}
+          ${{ matrix.shard_total }}
+          reports/vitest/shard-${{ matrix.shard_index }}-of-${{ matrix.shard_total }}.json
 
       - name: Verify Vitest shard coverage
         run: >-
           node ../scripts/ci/verify-vitest-shards.js
           reports/vitest/shard-${{ matrix.shard_index }}-of-${{ matrix.shard_total }}.json
           ${{ matrix.shard_index }}
+          ${{ matrix.shard_total }}
 
   web_gate:
     name: Web CI Gate

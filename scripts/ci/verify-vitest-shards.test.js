@@ -7,158 +7,133 @@ const os = require('node:os');
 const path = require('node:path');
 
 const {
-  EXPECTED,
-  SHARD_MANIFEST,
-  SHARD_EXPECTATIONS,
-  loadShardReport,
-  loadShardReports,
-  validateSingleShard,
-  validateShardManifest,
-  validateShardReports,
-} = require('./verify-vitest-shards');
+  discoverTestFiles,
+  planVitestShards,
+  plannedFilesForShard,
+} = require('./vitest-shard-plan');
+const { buildVitestArgs } = require('./run-vitest-shard');
+const { loadShardReport, validateShardReport } = require('./verify-vitest-shards');
 
-function buildCompleteReports() {
-  const passedFiles = (prefix, fileCount, passedTests) => {
-    const files = Array.from({ length: fileCount }, (_, index) => ({
-      name: `/workspace/web/src/example/${prefix}-${index + 1}.test.ts`,
+function createFixtureWebRoot(context) {
+  const webRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'vitest-plan-'));
+  context.after(() => fs.rmSync(webRoot, { recursive: true, force: true }));
+  const testFiles = [
+    'src/a/alpha.test.ts',
+    'src/a/bravo.test.tsx',
+    'src/b/charlie.spec.ts',
+    'src/b/delta.spec.tsx',
+    'src/c/echo.test.ts',
+    'src/c/foxtrot.test.tsx',
+    'src/golf.test.ts',
+  ];
+  for (const testFile of [...testFiles, 'src/not-a-test.ts']) {
+    const absolutePath = path.join(webRoot, testFile);
+    fs.mkdirSync(path.dirname(absolutePath), { recursive: true });
+    fs.writeFileSync(absolutePath, 'export {};\n');
+  }
+  return { webRoot, testFiles: testFiles.sort() };
+}
+
+function reportForPaths(testFiles) {
+  return {
+    success: true,
+    numTotalTests: testFiles.length,
+    numPassedTests: testFiles.length,
+    numFailedTests: 0,
+    numPendingTests: 0,
+    numTodoTests: 0,
+    testResults: testFiles.map((testFile) => ({
+      name: `/workspace/web/${testFile}`,
       status: 'passed',
       assertionResults: [{ status: 'passed' }],
-    }));
-    files[0].assertionResults.push(
-      ...Array.from(
-        { length: passedTests - fileCount },
-        () => ({ status: 'passed' })
-      )
-    );
-    return files;
-  };
-  const skippedFile = {
-    name: '/workspace/web/src/example/skipped.test.ts',
-    status: 'passed',
-    assertionResults: Array.from(
-      { length: EXPECTED.skippedTests },
-      () => ({ status: 'skipped' })
-    ),
-  };
-  const shardFiles = [
-    passedFiles('shard-1', 90, 540),
-    [...passedFiles('shard-2', 88, 584), skippedFile],
-  ];
-
-  return shardFiles.map((testResults, index) => {
-    const assertions = testResults.flatMap((file) => file.assertionResults);
-    const numPassedTests = assertions.filter(({ status }) => status === 'passed').length;
-    const numPendingTests = assertions.filter(({ status }) => status === 'skipped').length;
-    return {
-      name: `shard-${index + 1}-of-${EXPECTED.shards}.json`,
-      report: {
-        success: true,
-        numTotalTests: assertions.length,
-        numPassedTests,
-        numFailedTests: 0,
-        numPendingTests,
-        numTodoTests: 0,
-        testResults,
-      },
-    };
-  });
-}
-
-function manifestForReports(reports) {
-  return {
-    version: 1,
-    shardTotal: EXPECTED.shards,
-    shards: Object.fromEntries(reports.map(({ report }, index) => [
-      index + 1,
-      report.testResults.map(({ name }) => name.slice(name.lastIndexOf('/src/') + 1)),
-    ])),
+    })),
   };
 }
 
-test('accepts two disjoint successful shards with the complete baseline', () => {
-  const totals = validateShardReports(buildCompleteReports());
+test('planner discovers every test once and partitions deterministically', (context) => {
+  const { webRoot, testFiles } = createFixtureWebRoot(context);
+  const discovered = discoverTestFiles(webRoot);
+  const firstPlan = planVitestShards(discovered, 2);
+  const secondPlan = planVitestShards([...discovered].reverse(), 2);
 
-  assert.deepEqual(totals, {
-    testFiles: 179,
-    passedFiles: 178,
-    skippedFiles: 1,
-    totalTests: 1139,
-    passedTests: 1124,
-    failedTests: 0,
-    skippedTests: 15,
-    todoTests: 0,
-  });
+  assert.deepEqual(discovered, testFiles);
+  assert.deepEqual(firstPlan, secondPlan);
+  assert.deepEqual([...firstPlan[0], ...firstPlan[1]].sort(), testFiles);
+  assert.equal(firstPlan[0].filter((file) => firstPlan[1].includes(file)).length, 0);
+  assert.deepEqual(plannedFilesForShard(webRoot, 1, 2), firstPlan[0]);
+  assert.deepEqual(plannedFilesForShard(webRoot, 2, 2), firstPlan[1]);
 });
 
-test('each shard independently enforces its measured coverage baseline', () => {
-  const reports = buildCompleteReports();
-  const manifest = manifestForReports(reports);
+test('validator accepts exactly the dynamically planned subset', (context) => {
+  const { webRoot } = createFixtureWebRoot(context);
+  const expectedPaths = plannedFilesForShard(webRoot, 1, 2);
 
-  assert.deepEqual(validateSingleShard(reports[0], 1, manifest), SHARD_EXPECTATIONS[1]);
-  assert.deepEqual(validateSingleShard(reports[1], 2, manifest), SHARD_EXPECTATIONS[2]);
-
-  reports[1].report.numPassedTests -= 1;
-  assert.throws(
-    () => validateSingleShard(reports[1], 2, manifest),
-    /Vitest shard 2 drift/
+  assert.deepEqual(
+    validateShardReport(reportForPaths(expectedPaths), expectedPaths, 1, 2),
+    { testFiles: expectedPaths.length, passedTests: expectedPaths.length, skippedTests: 0 }
   );
 });
 
-test('rejects same-cardinality path replacement inside a shard', () => {
-  const reports = buildCompleteReports();
-  const manifest = manifestForReports(reports);
-  reports[0].report.testResults[0].name = '/workspace/web/src/example/replacement.test.ts';
-
+test('validator rejects same-cardinality replacement and duplicate paths', (context) => {
+  const { webRoot } = createFixtureWebRoot(context);
+  const expectedPaths = plannedFilesForShard(webRoot, 1, 2);
+  const replaced = reportForPaths(expectedPaths);
+  replaced.testResults[0].name = '/workspace/web/src/replacement.test.ts';
   assert.throws(
-    () => validateSingleShard(reports[0], 1, manifest),
-    /Vitest shard 1 path drift/
+    () => validateShardReport(replaced, expectedPaths, 1, 2),
+    /path drift/
+  );
+
+  const duplicated = reportForPaths(expectedPaths);
+  duplicated.testResults[0].name = duplicated.testResults[1].name;
+  assert.throws(
+    () => validateShardReport(duplicated, expectedPaths, 1, 2),
+    /duplicate test paths/
   );
 });
 
-test('checked-in manifest covers 179 existing disjoint test files', () => {
-  assert.equal(validateShardManifest(SHARD_MANIFEST), SHARD_MANIFEST);
+test('validator rejects failed Vitest results', (context) => {
+  const { webRoot } = createFixtureWebRoot(context);
+  const expectedPaths = plannedFilesForShard(webRoot, 2, 2);
+  const report = reportForPaths(expectedPaths);
+  report.success = false;
+  report.numFailedTests = 1;
 
-  for (const testPath of Object.values(SHARD_MANIFEST.shards).flat()) {
-    assert.equal(
-      fs.existsSync(path.resolve(__dirname, '../../web', testPath)),
-      true,
-      `manifest path does not exist: ${testPath}`
-    );
-  }
-});
-
-test('rejects a failed matrix result before accepting reports', () => {
   assert.throws(
-    () => validateShardReports(buildCompleteReports(), 'failure'),
-    /web shard jobs finished with result: failure/
+    () => validateShardReport(report, expectedPaths, 2, 2),
+    /did not succeed/
   );
 });
 
-test('rejects duplicate files and silent count drift', () => {
-  const duplicate = buildCompleteReports();
-  duplicate[1].report.testResults[0].name = duplicate[0].report.testResults[0].name;
-  assert.throws(() => validateShardReports(duplicate), /duplicate test file/);
-
-  const drifted = buildCompleteReports();
-  drifted[0].report.testResults[0].assertionResults.pop();
-  drifted[0].report.numTotalTests -= 1;
-  drifted[0].report.numPassedTests -= 1;
-  assert.throws(() => validateShardReports(drifted), /Vitest coverage drift/);
+test('runner passes only explicit planned files and safe Vitest flags', () => {
+  const files = ['src/a.test.ts', 'src/b.test.tsx'];
+  const args = buildVitestArgs(files, 'reports/vitest/shard-1-of-2.json');
+  assert.deepEqual(args.slice(0, 3), ['run', ...files]);
+  assert.match(args.join(' '), /--pool=threads/);
+  assert.match(args.join(' '), /--maxWorkers=2/);
+  assert.match(args.join(' '), /--reporter=default --reporter=json/);
+  assert.doesNotMatch(
+    args.join(' '),
+    /--(?:shard|retry|exclude|passWithNoTests|changed|related|project|testNamePattern)/
+  );
 });
 
-test('loads exactly the two named shard reports from disk', (context) => {
-  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'vitest-shards-'));
+test('checked-in Web suite has a complete disjoint dynamic plan', () => {
+  const webRoot = path.resolve(__dirname, '../../web');
+  const discovered = discoverTestFiles(webRoot);
+  const shards = planVitestShards(discovered, 2);
+
+  assert.ok(discovered.length > 0);
+  assert.deepEqual([...shards[0], ...shards[1]].sort(), discovered);
+  assert.equal(shards[0].filter((file) => shards[1].includes(file)).length, 0);
+});
+
+test('loader reads a shard JSON report from disk', (context) => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'vitest-report-'));
   context.after(() => fs.rmSync(directory, { recursive: true, force: true }));
+  const reportPath = path.join(directory, 'shard.json');
+  fs.writeFileSync(reportPath, JSON.stringify(reportForPaths(['src/a.test.ts'])));
 
-  for (const { name, report } of buildCompleteReports()) {
-    fs.writeFileSync(path.join(directory, name), JSON.stringify(report));
-  }
-  assert.equal(
-    loadShardReport(path.join(directory, 'shard-1-of-2.json')).name,
-    'shard-1-of-2.json'
-  );
-  assert.equal(loadShardReports(directory).length, EXPECTED.shards);
-
-  fs.rmSync(path.join(directory, 'shard-2-of-2.json'));
-  assert.throws(() => loadShardReports(directory), /expected shard reports/);
+  assert.equal(loadShardReport(reportPath).numPassedTests, 1);
+  assert.throws(() => loadShardReport(path.join(directory, 'missing.json')), /not found/);
 });
