@@ -36,10 +36,33 @@ const draftPath = (uid: string, fileName = "photo.jpg") =>
 const pipelinePath = (postId: string, uid: string, fileName = "source.jpg") =>
   `groups/${GROUP_ID}/wall_media_staging/${postId}/${uid}/${fileName}`;
 
-function storageRuleFunctionBody(functionName: string) {
-  return STORAGE_RULES.match(
-    new RegExp(`function ${functionName}\\([^)]*\\) \\{([\\s\\S]*?)\\n    \\}`),
-  )?.[1];
+function parseStorageRuleFunctions() {
+  const functions = new Map<string, string>();
+  const pattern = /^    function ([A-Za-z][A-Za-z0-9]*)\([^)]*\) \{([\s\S]*?)^    \}/gm;
+  for (const match of STORAGE_RULES.matchAll(pattern)) {
+    functions.set(match[1], match[2]);
+  }
+  return functions;
+}
+
+function reachableStorageRuleReads(entrypoint: string) {
+  const functions = parseStorageRuleFunctions();
+  const visited = new Set<string>();
+  let firestoreReads = 0;
+
+  const visit = (functionName: string) => {
+    if (visited.has(functionName)) return;
+    const body = functions.get(functionName);
+    if (body === undefined) throw new Error(`Função de Rules ausente: ${functionName}`);
+    visited.add(functionName);
+    firestoreReads += body.match(/firestore\.get\s*\(/g)?.length ?? 0;
+    for (const call of body.matchAll(/\b([A-Za-z][A-Za-z0-9]*)\s*\(/g)) {
+      if (functions.has(call[1])) visit(call[1]);
+    }
+  };
+
+  visit(entrypoint);
+  return { firestoreReads, visited: [...visited].sort() };
 }
 
 let testEnv: RulesTestEnvironment;
@@ -217,24 +240,15 @@ describe("Storage Rules — groups/{groupId}/wall_media", () => {
 
 describe("Storage Rules — wall_media_staging pipeline v1", () => {
   it("mantém a autorização do staging dentro do limite de 2 documentos", () => {
-    const body = storageRuleFunctionBody("canUploadWallMediaDraft");
-    const draftLookup = storageRuleFunctionBody("getWallMediaDraft");
-    const groupLookup = storageRuleFunctionBody("isGroupActiveForWallWrite");
-    const helperCalls = [...(body?.matchAll(/\b([A-Za-z][A-Za-z0-9]*)\s*\(/g) ?? [])]
-      .map((match) => match[1])
-      .sort();
-    const transitiveLookups = `${draftLookup ?? ""}\n${groupLookup ?? ""}`
-      .match(/firestore\.get\s*\(/g) ?? [];
+    const graph = reachableStorageRuleReads("canUploadWallMediaDraft");
 
-    expect(body).toBeDefined();
-    expect(helperCalls).toEqual([
+    expect(graph.visited).toEqual([
+      "canUploadWallMediaDraft",
       "getWallMediaDraft",
       "isAuthenticated",
       "isGroupActiveForWallWrite",
     ]);
-    expect(draftLookup?.match(/firestore\.get\s*\(/g)).toHaveLength(1);
-    expect(groupLookup?.match(/firestore\.get\s*\(/g)).toHaveLength(1);
-    expect(transitiveLookups).toHaveLength(2);
+    expect(graph.firestoreReads).toBe(2);
   });
 
   it("permite exatamente o objeto declarado no draft AWAITING_UPLOAD", async () => {
