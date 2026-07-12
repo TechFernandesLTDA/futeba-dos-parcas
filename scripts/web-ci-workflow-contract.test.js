@@ -16,34 +16,65 @@ const lighthouseWorkflow = fs.readFileSync(
 );
 const webPackage = require(path.join(repoRoot, 'web/package.json'));
 
-function extractJob(jobId) {
+function extractJob(jobId, source = workflow) {
   const marker = `\n  ${jobId}:\n`;
-  const markerIndex = workflow.indexOf(marker);
+  const markerIndex = source.indexOf(marker);
   assert.notEqual(markerIndex, -1, `job ${jobId} must exist`);
 
   const start = markerIndex + 1;
-  const remaining = workflow.slice(start + marker.length - 1);
+  const remaining = source.slice(start + marker.length - 1);
   const nextJob = remaining.search(/\n  [a-zA-Z0-9_-]+:\n/);
   return nextJob === -1
-    ? workflow.slice(start)
-    : workflow.slice(start, start + marker.length - 1 + nextJob);
+    ? source.slice(start)
+    : source.slice(start, start + marker.length - 1 + nextJob);
 }
 
 function countMatches(value, pattern) {
   return (value.match(pattern) ?? []).length;
 }
 
+function extractActionStep(jobId, job, action) {
+  const actionIndex = job.indexOf(`uses: ${action}`);
+  assert.notEqual(actionIndex, -1, `${jobId} must use ${action}`);
+  const nextStepIndex = job.indexOf('\n      - name:', actionIndex);
+  return nextStepIndex === -1
+    ? job.slice(actionIndex)
+    : job.slice(actionIndex, nextStepIndex);
+}
+
+function assertEphemeralPrRunner(jobId, job) {
+  const runnerLine = job
+    .split('\n')
+    .find((line) => line.trimStart().startsWith('runs-on:'));
+
+  assert.equal(
+    runnerLine?.trim(),
+    "runs-on: ${{ fromJSON(github.event_name == 'pull_request' && '[\"ubuntu-latest\"]' || (vars.RUNNER_LABELS || '[\"self-hosted\",\"macOS\",\"ARM64\"]')) }}",
+    `${jobId} must isolate PR code from persistent self-hosted runners`
+  );
+}
+
 function assertNodeJobContract(jobId, job) {
-  assert.match(
+  const checkoutStep = extractActionStep(
+    jobId,
     job,
-    /uses: actions\/checkout@v4\n\s+with:\n\s+persist-credentials: false/,
+    'actions/checkout@v4'
+  );
+  const setupNodeStep = extractActionStep(
+    jobId,
+    job,
+    'actions/setup-node@v4'
+  );
+
+  assert.match(checkoutStep, /\n\s+with:/);
+  assert.match(
+    checkoutStep,
+    /\n\s+persist-credentials: false/,
     `${jobId} checkout must not persist Git credentials`
   );
-  assert.match(
-    job,
-    /uses: actions\/setup-node@v4\n\s+with:\n\s+node-version: '22'\n\s+cache: 'npm'\n\s+cache-dependency-path: web\/package-lock\.json/,
-    `${jobId} must preserve Node 22 and the npm lockfile cache`
-  );
+  assert.match(setupNodeStep, /\n\s+node-version: '22'/);
+  assert.match(setupNodeStep, /\n\s+cache: 'npm'/);
+  assert.match(setupNodeStep, /\n\s+cache-dependency-path: web\/package-lock\.json/);
 }
 
 test('Web CI triggers and permissions include its executable contract', () => {
@@ -86,6 +117,8 @@ test('Web CI uses two attributable PR jobs with one install each', () => {
   );
   assertNodeJobContract('web-quality', quality);
   assertNodeJobContract('web-tests', tests);
+  assertEphemeralPrRunner('web-quality', quality);
+  assertEphemeralPrRunner('web-tests', tests);
   assert.doesNotMatch(workflow, /\n  (?:lint|typecheck|test|build):\n/);
   assert.doesNotMatch(workflow, /npx tsc --noEmit/);
 });
@@ -113,22 +146,14 @@ test('mutation testing stays outside PR and preserves its report artifact', () =
 });
 
 test('Lighthouse reads PR metadata on an ephemeral runner with hardened checkout', () => {
-  const runnerLine = lighthouseWorkflow
-    .split('\n')
-    .find((line) => line.trimStart().startsWith('runs-on:'));
+  const lighthouse = extractJob('lighthouse', lighthouseWorkflow);
 
   assert.match(
     lighthouseWorkflow,
     /^permissions:\n\s+contents: read\n\s+pull-requests: read$/m
   );
-  assert.match(
-    lighthouseWorkflow,
-    /uses: actions\/checkout@v4\n\s+with:\n\s+persist-credentials: false/
-  );
-  assert.equal(
-    runnerLine?.trim(),
-    "runs-on: ${{ fromJSON(github.event_name == 'pull_request' && '[\"ubuntu-latest\"]' || (vars.RUNNER_LABELS || '[\"self-hosted\",\"macOS\",\"ARM64\"]')) }}"
-  );
+  assertNodeJobContract('lighthouse', lighthouse);
+  assertEphemeralPrRunner('lighthouse', lighthouse);
   assert.match(lighthouseWorkflow, /github\.rest\.pulls\.listFiles/);
   assert.match(
     lighthouseWorkflow,
@@ -137,9 +162,5 @@ test('Lighthouse reads PR metadata on an ephemeral runner with hardened checkout
   assert.match(
     lighthouseWorkflow,
     /run: node --test \.\.\/scripts\/web-ci-workflow-contract\.test\.js/
-  );
-  assert.match(
-    lighthouseWorkflow,
-    /uses: actions\/setup-node@v4\n\s+with:\n\s+node-version: '22'\n\s+cache: 'npm'\n\s+cache-dependency-path: web\/package-lock\.json/
   );
 });

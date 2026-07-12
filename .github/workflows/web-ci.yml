@@ -37,7 +37,8 @@ jobs:
   web-quality:
     name: Web Quality
     if: github.event_name != 'schedule'
-    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    # PRs executam código npm não confiável em runner efêmero.
+    runs-on: ${{ fromJSON(github.event_name == 'pull_request' && '["ubuntu-latest"]' || (vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]')) }}
     timeout-minutes: 20
     steps:
       - name: Checkout code
@@ -67,7 +68,8 @@ jobs:
   web-tests:
     name: Web Tests
     if: github.event_name != 'schedule'
-    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    # Push/manual podem reutilizar o Mac; PR nunca recebe o runner persistente.
+    runs-on: ${{ fromJSON(github.event_name == 'pull_request' && '["ubuntu-latest"]' || (vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]')) }}
     timeout-minutes: 15
     steps:
       - name: Checkout code
