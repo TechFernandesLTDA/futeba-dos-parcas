@@ -1,0 +1,57 @@
+name: Change Scope Classifier
+
+on:
+  workflow_call:
+    outputs:
+      scope_version:
+        description: Version of the checked-in scope matrix
+        value: ${{ jobs.classify.outputs.scope_version }}
+      web:
+        description: Web files changed
+        value: ${{ jobs.classify.outputs.web }}
+      functions:
+        description: Cloud Functions files changed
+        value: ${{ jobs.classify.outputs.functions }}
+      android:
+        description: Android or KMP files changed
+        value: ${{ jobs.classify.outputs.android }}
+      ios:
+        description: iOS files changed
+        value: ${{ jobs.classify.outputs.ios }}
+      rules:
+        description: Firebase Rules files changed
+        value: ${{ jobs.classify.outputs.rules }}
+      shared_config:
+        description: Shared configuration files changed
+        value: ${{ jobs.classify.outputs.shared_config }}
+
+permissions:
+  contents: read
+
+jobs:
+  classify:
+    name: Classify changed files
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      scope_version: ${{ steps.scope.outputs.scope_version }}
+      web: ${{ steps.scope.outputs.web }}
+      functions: ${{ steps.scope.outputs.functions }}
+      android: ${{ steps.scope.outputs.android }}
+      ios: ${{ steps.scope.outputs.ios }}
+      rules: ${{ steps.scope.outputs.rules }}
+      shared_config: ${{ steps.scope.outputs.shared_config }}
+    steps:
+      - name: Checkout code and comparison commits
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up repository Node.js version
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - name: Classify change scopes
+        id: scope
+        run: node scripts/ci/classify-changes.js --github-output "$GITHUB_OUTPUT"

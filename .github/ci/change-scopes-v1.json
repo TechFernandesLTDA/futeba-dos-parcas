@@ -1,0 +1,138 @@
+{
+  "version": 1,
+  "scopes": ["web", "functions", "android", "ios", "rules", "shared_config"],
+  "ignore": [
+    "*.md",
+    "**/*.md",
+    "docs/**",
+    "specs/**",
+    "archive/**",
+    "imagens/**",
+    ".agent/**",
+    ".claude/**",
+    ".opencode/**",
+    ".github/ISSUE_TEMPLATE/**"
+  ],
+  "rules": [
+    {
+      "patterns": [
+        ".github/ci/change-scopes-v1.json",
+        ".github/workflows/change-scope.yml",
+        "scripts/ci/classify-changes.js",
+        "scripts/ci/classify-changes.test.js",
+        "scripts/ci/ci-scope-workflow-contract.test.js"
+      ],
+      "scopes": ["web", "functions", "android", "ios", "rules", "shared_config"]
+    },
+    {
+      "patterns": ["web/**", "release-notes/web/**"],
+      "scopes": ["web"]
+    },
+    {
+      "patterns": ["functions/**", "release-notes/functions/**", "monitoring/**"],
+      "scopes": ["functions"]
+    },
+    {
+      "patterns": [
+        "app/**",
+        "baselineprofile/**",
+        "macrobenchmark/**",
+        "fastlane/**",
+        "kotlin-js-store/**",
+        "gradle/**",
+        "build.gradle.kts",
+        "settings.gradle.kts",
+        "gradle.properties",
+        "gradlew",
+        "gradlew.bat",
+        "detekt.yml",
+        "release-notes/android/**"
+      ],
+      "scopes": ["android"]
+    },
+    {
+      "patterns": ["composeApp/**"],
+      "scopes": ["android", "ios", "shared_config"]
+    },
+    {
+      "patterns": ["iosApp/**", "release-notes/ios/**"],
+      "scopes": ["ios"]
+    },
+    {
+      "patterns": [
+        "firestore.rules",
+        "storage.rules",
+        "firestore.indexes.json",
+        "firestore-rules-tests/**"
+      ],
+      "scopes": ["rules"]
+    },
+    {
+      "patterns": ["shared/design-tokens.json"],
+      "scopes": ["web", "android", "ios", "shared_config"]
+    },
+    {
+      "patterns": ["shared/**"],
+      "scopes": ["android", "ios", "shared_config"]
+    },
+    {
+      "patterns": ["firebase.json", ".firebaserc"],
+      "scopes": ["web", "functions", "rules", "shared_config"]
+    },
+    {
+      "patterns": [
+        "versions.json",
+        "package.json",
+        "package-lock.json",
+        ".npmrc",
+        ".nvmrc",
+        ".gitignore",
+        ".gitattributes",
+        "commitlint.config.js",
+        "remote_config.json"
+      ],
+      "scopes": ["shared_config"]
+    },
+    {
+      "patterns": ["scripts/**"],
+      "scopes": ["web", "functions", "android", "ios", "rules", "shared_config"]
+    },
+    {
+      "patterns": [
+        ".github/workflows/android-ci.yml",
+        ".github/workflows/android-macrobenchmark.yml",
+        ".github/workflows/pr-check.yml"
+      ],
+      "scopes": ["android", "shared_config"]
+    },
+    {
+      "patterns": [".github/workflows/web-*.yml"],
+      "scopes": ["web", "shared_config"]
+    },
+    {
+      "patterns": [".github/workflows/functions-*.yml", ".github/workflows/realtime-load-ci.yml"],
+      "scopes": ["functions", "shared_config"]
+    },
+    {
+      "patterns": [".github/workflows/firestore-rules-ci.yml"],
+      "scopes": ["rules", "shared_config"]
+    },
+    {
+      "patterns": [".github/workflows/ios-build.yml"],
+      "scopes": ["ios", "shared_config"]
+    },
+    {
+      "patterns": [
+        ".github/workflows/release.yml",
+        ".github/workflows/deploy-*.yml",
+        ".github/workflows/version-bump.yml",
+        ".github/workflows/validate-patterns.yml"
+      ],
+      "scopes": ["web", "functions", "android", "ios", "rules", "shared_config"]
+    },
+    {
+      "patterns": [".github/**"],
+      "scopes": ["shared_config"]
+    }
+  ]
+}

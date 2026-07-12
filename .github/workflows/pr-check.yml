@@ -3,11 +3,6 @@ name: PR Check
 on:
   pull_request:
     types: [opened, synchronize, reopened]
-    paths-ignore:
-      - '**.md'
-      - 'docs/**'
-      - 'specs/**'
-      - '.github/ISSUE_TEMPLATE/**'
 
 # Cancela execucoes anteriores do mesmo PR
 concurrency:
@@ -15,8 +10,13 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  validate:
-    name: Validate PR
+  changes:
+    uses: ./.github/workflows/change-scope.yml
+
+  android:
+    name: Android Gradle Validation
+    needs: changes
+    if: needs.changes.outputs.android == 'true'
     # Self-hosted Mac (Apple Silicon) por padrao para custo zero.
     # Para forcar github-hosted defina vars.RUNNER_LABELS = ["ubuntu-latest"]
     # em Settings -> Secrets and variables -> Actions -> Variables.
@@ -97,3 +97,28 @@ jobs:
           if [ -n "$HARDCODED_COLORS" ]; then
             echo "::warning::Possible hardcoded colors found in: $HARDCODED_COLORS"
           fi
+
+  validate:
+    name: Validate PR
+    if: always()
+    needs: [ changes, android ]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Verify scoped PR checks
+        env:
+          ANDROID_CHANGED: ${{ needs.changes.outputs.android }}
+          CHANGES_RESULT: ${{ needs.changes.result }}
+          ANDROID_RESULT: ${{ needs.android.result }}
+        run: |
+          if [ "$CHANGES_RESULT" != "success" ]; then
+            echo "Change classification failed."
+            exit 1
+          fi
+
+          if [ "$ANDROID_CHANGED" = "true" ] && [ "$ANDROID_RESULT" != "success" ]; then
+            echo "Android Gradle validation did not complete successfully."
+            exit 1
+          fi
+
+          echo "PR scope validation completed successfully."

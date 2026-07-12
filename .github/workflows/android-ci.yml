@@ -3,27 +3,9 @@ name: Android CI
 on:
   push:
     branches: [ master, develop ]
-    paths-ignore:
-      - '**.md'
-      - 'docs/**'
-      - 'specs/**'
-      - '.github/ISSUE_TEMPLATE/**'
-      - '.github/BRANCH_STRATEGY.md'
-      - 'functions/**'
-      - 'web/**'
-      - 'iosApp/**'
-      - 'archive/**'
   pull_request:
     branches: [ master, develop ]
-    paths-ignore:
-      - '**.md'
-      - 'docs/**'
-      - 'specs/**'
-      - '.github/ISSUE_TEMPLATE/**'
-      - 'functions/**'
-      - 'web/**'
-      - 'iosApp/**'
-      - 'archive/**'
+    types: [opened, synchronize, reopened]
   workflow_dispatch:
 
 # Cancela execucoes anteriores do mesmo branch/PR
@@ -36,6 +18,9 @@ env:
   JAVA_DISTRIBUTION: 'temurin'
 
 jobs:
+  changes:
+    uses: ./.github/workflows/change-scope.yml
+
   # ============================================================
   # Job de setup reutilizavel - prepara o ambiente Android
   # ============================================================
@@ -46,6 +31,8 @@ jobs:
   # para paralelismo, ou aceite o tempo serializado.
   lint:
     name: Lint Check
+    needs: changes
+    if: needs.changes.outputs.android == 'true'
     runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
     timeout-minutes: 25
 
@@ -103,7 +90,8 @@ jobs:
   detekt:
     name: Detekt Static Analysis
     # Pulado em PRs: pr-check.yml ja roda detekt como fast feedback
-    if: github.event_name != 'pull_request'
+    needs: changes
+    if: needs.changes.outputs.android == 'true' && github.event_name != 'pull_request'
     runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
     timeout-minutes: 20
 
@@ -169,7 +157,8 @@ jobs:
   test:
     name: Unit Tests
     # Pulado em PRs: pr-check.yml ja roda unit tests como fast feedback
-    if: github.event_name != 'pull_request'
+    needs: changes
+    if: needs.changes.outputs.android == 'true' && github.event_name != 'pull_request'
     runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
     timeout-minutes: 30
 
@@ -238,8 +227,8 @@ jobs:
     runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
     timeout-minutes: 40
     # detekt e test sao skipped em PRs (cobertos por pr-check.yml); build aguarda apenas lint em PRs
-    needs: [ lint, detekt, test ]
-    if: always() && needs.lint.result == 'success' && (needs.detekt.result == 'success' || needs.detekt.result == 'skipped') && (needs.test.result == 'success' || needs.test.result == 'skipped')
+    needs: [ changes, lint, detekt, test ]
+    if: always() && needs.changes.result == 'success' && needs.changes.outputs.android == 'true' && needs.lint.result == 'success' && (needs.detekt.result == 'success' || needs.detekt.result == 'skipped') && (needs.test.result == 'success' || needs.test.result == 'skipped')
 
     steps:
       - name: Checkout code
@@ -297,3 +286,42 @@ jobs:
         run: |
           APK_SIZE=$(du -h app/build/outputs/apk/debug/app-debug.apk | cut -f1)
           echo "### APK Size: $APK_SIZE" >> "$GITHUB_STEP_SUMMARY"
+
+  gate:
+    name: Android CI Gate
+    if: always()
+    needs: [ changes, lint, detekt, test, build ]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Verify scoped Android checks
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          ANDROID_CHANGED: ${{ needs.changes.outputs.android }}
+          CHANGES_RESULT: ${{ needs.changes.result }}
+          LINT_RESULT: ${{ needs.lint.result }}
+          DETEKT_RESULT: ${{ needs.detekt.result }}
+          TEST_RESULT: ${{ needs.test.result }}
+          BUILD_RESULT: ${{ needs.build.result }}
+        run: |
+          if [ "$CHANGES_RESULT" != "success" ]; then
+            echo "Change classification failed."
+            exit 1
+          fi
+
+          if [ "$ANDROID_CHANGED" != "true" ]; then
+            echo "No Android/KMP impact; Gradle jobs were intentionally skipped."
+            exit 0
+          fi
+
+          if [ "$LINT_RESULT" != "success" ] || [ "$BUILD_RESULT" != "success" ]; then
+            echo "Android lint/build did not complete successfully."
+            exit 1
+          fi
+
+          if [ "$EVENT_NAME" != "pull_request" ] && { [ "$DETEKT_RESULT" != "success" ] || [ "$TEST_RESULT" != "success" ]; }; then
+            echo "Android detekt/unit tests did not complete successfully."
+            exit 1
+          fi
+
+          echo "Required Android checks completed successfully."
