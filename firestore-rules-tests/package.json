@@ -8,7 +8,7 @@
     "test": "export JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home; export PATH=\"$JAVA_HOME/bin:$PATH\"; firebase emulators:exec --only firestore,storage --project futebadosparcas 'FIRESTORE_EMULATOR_HOST=127.0.0.1:8085 FIREBASE_STORAGE_EMULATOR_HOST=127.0.0.1:9199 npx vitest run --reporter=verbose --no-file-parallelism --maxWorkers=1'",
     "test:watch": "FIRESTORE_EMULATOR_HOST=127.0.0.1:8085 vitest watch",
     "test:storage": "export JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home; export PATH=\"$JAVA_HOME/bin:$PATH\"; firebase emulators:exec --only firestore,storage --project futebadosparcas 'FIRESTORE_EMULATOR_HOST=127.0.0.1:8085 FIREBASE_STORAGE_EMULATOR_HOST=127.0.0.1:9199 npx vitest run src/group-wall-storage.test.ts --reporter=verbose --no-file-parallelism --maxWorkers=1'",
-    "test:ci": "export JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home; export PATH=\"$JAVA_HOME/bin:$PATH\"; firebase emulators:exec --only firestore,storage --project futebadosparcas 'FIRESTORE_EMULATOR_HOST=127.0.0.1:8085 FIREBASE_STORAGE_EMULATOR_HOST=127.0.0.1:9199 npx vitest run --reporter=verbose --no-file-parallelism --maxWorkers=1'"
+    "test:ci": "firebase emulators:exec --only firestore,storage --project futebadosparcas 'FIRESTORE_EMULATOR_HOST=127.0.0.1:8085 FIREBASE_STORAGE_EMULATOR_HOST=127.0.0.1:9199 npx vitest run --reporter=verbose --no-file-parallelism --maxWorkers=1'"
   },
   "devDependencies": {
     "@firebase/rules-unit-testing": "^5.0.1",

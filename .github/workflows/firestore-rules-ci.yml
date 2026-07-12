@@ -7,21 +7,27 @@ on:
     branches: [master, develop]
     paths:
       - "firestore.rules"
+      - "storage.rules"
       - "firestore-rules-tests/**"
       - ".github/workflows/firestore-rules-ci.yml"
   pull_request:
     branches: [master, develop]
     paths:
       - "firestore.rules"
+      - "storage.rules"
       - "firestore-rules-tests/**"
       - ".github/workflows/firestore-rules-ci.yml"
+
+# Cancela runs obsoletas do mesmo branch/PR (#3542) — unico workflow sem isso.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   rules-tests:
     name: Testar Firestore Security Rules
-    # Self-hosted macOS ARM64 (mesmo padrao de android-ci.yml e ios-build.yml).
-    # Evita custos de GitHub-hosted; user pool de 8 runners locais.
-    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    # Emuladores Firestore+Storage rodam em Linux via setup-java@v4 (#3542).
+    runs-on: ubuntu-latest
     timeout-minutes: 15
 
     steps:
