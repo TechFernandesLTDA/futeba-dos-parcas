@@ -1,7 +1,25 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-12T12:58:27.962Z",
+  "generatedAt": "2026-07-12T20:38:27.482Z",
   "notes": [
+    {
+      "version": "1.53.4",
+      "buildNumber": null,
+      "releaseDate": "2026-07-12",
+      "type": "patch",
+      "showPopup": false,
+      "published": true,
+      "headline": "A página do grupo agora começa no conteúdo correto também no computador.",
+      "highlights": [],
+      "added": [],
+      "improved": [],
+      "fixed": [
+        "Removido o grande espaço invisível que empurrava as informações do grupo para baixo no Web desktop.",
+        "O indicador usado pelo botão Criar Jogo passa a ocupar somente um pixel, sem interferir no layout.",
+        "O sentinela de `IntersectionObserver` usa dimensões CSS explícitas em pixels; valores numéricos de sizing do MUI eram convertidos para `100%`."
+      ],
+      "issueRefs": []
+    },
     {
       "version": "1.53.3",
       "buildNumber": null,
