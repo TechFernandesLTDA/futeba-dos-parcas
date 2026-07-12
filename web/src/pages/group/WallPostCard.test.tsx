@@ -109,7 +109,6 @@ describe('WallPostCard', () => {
     const video = document.querySelector('video');
     expect(video).toBeInTheDocument();
     expect(video).toHaveAttribute('controls');
-    expect(video).toHaveAttribute('autoplay');
     expect(container.querySelector('.MuiSkeleton-root')).not.toBeInTheDocument();
   });
 

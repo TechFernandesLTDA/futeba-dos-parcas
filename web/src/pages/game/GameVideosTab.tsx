@@ -46,9 +46,11 @@ import { EmptyState } from '../../components/common/EmptyState';
 import { ReactionBar } from '../../components/reactions/ReactionBar';
 import { getFirestoreErrorMessage } from '../../utils/firebaseErrors';
 import { createLogger } from '../../utils/logger';
+import { readVideoDuration } from '../../utils/videoDuration';
 
 const logger = createLogger('GameVideosTab');
 const MAX_VIDEO_SIZE_BYTES = 25 * 1024 * 1024;
+const MAX_VIDEO_DURATION_SECONDS = 30;
 const CAPTION_MAX_LENGTH = 200;
 const MAX_VIDEOS_PER_GAME = 10;
 const MAX_VIDEOS_PER_USER_PER_GAME = 3;
@@ -106,6 +108,9 @@ export const GameVideosTab: React.FC<GameVideosTabProps> = ({
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [caption, setCaption] = useState('');
   const [thumbnailUrls, setThumbnailUrls] = useState<Record<string, string>>({});
+  const [videoUrlOverrides, setVideoUrlOverrides] = useState<Record<string, string>>({});
+  const [videoRetryKeys, setVideoRetryKeys] = useState<Record<string, number>>({});
+  const recoveredVideoIdsRef = useRef<Set<string>>(new Set());
 
   showErrorRef.current = showError;
   const activeVideoCount = videos.filter((video) => video.status !== 'REJECTED').length;
@@ -200,6 +205,10 @@ export const GameVideosTab: React.FC<GameVideosTabProps> = ({
     if (file.size > MAX_VIDEO_SIZE_BYTES) {
       throw new Error(t('gameVideos.sizeLimit'));
     }
+    const duration = await readVideoDuration(file);
+    if (duration !== null && duration > MAX_VIDEO_DURATION_SECONDS) {
+      throw new Error(t('gameVideos.durationLimit'));
+    }
     const cleanCaption = caption.trim();
     if (cleanCaption.length > CAPTION_MAX_LENGTH) {
       throw new Error(t('gameVideos.captionTooLong', { max: CAPTION_MAX_LENGTH }));
@@ -286,6 +295,19 @@ export const GameVideosTab: React.FC<GameVideosTabProps> = ({
         setUploadProgress(0);
         if (fileInputRef.current) fileInputRef.current.value = '';
       }
+    }
+  };
+
+  const handleVideoError = async (video: GameVideo) => {
+    if (!video.storagePath || recoveredVideoIdsRef.current.has(video.id)) return;
+    recoveredVideoIdsRef.current.add(video.id);
+    try {
+      const freshUrl = await getDownloadURL(storageRef(storage, video.storagePath));
+      if (!mountedRef.current) return;
+      setVideoUrlOverrides((prev) => ({ ...prev, [video.id]: freshUrl }));
+      setVideoRetryKeys((prev) => ({ ...prev, [video.id]: (prev[video.id] ?? 0) + 1 }));
+    } catch (err) {
+      logger.warn('Failed to recover game video URL:', err);
     }
   };
 
@@ -417,13 +439,24 @@ export const GameVideosTab: React.FC<GameVideosTabProps> = ({
                       ) : (
                         <Box
                           component="video"
-                          src={video.url}
+                          key={videoRetryKeys[video.id] ?? 0}
+                          src={videoUrlOverrides[video.id] ?? video.url}
                           poster={thumbnailUrls[video.id]}
-                          muted
                           controls
                           playsInline
                           preload="metadata"
-                          sx={{ width: '100%', maxHeight: 420, bgcolor: 'common.black', borderRadius: 1 }}
+                          controlsList="nodownload"
+                          onError={() => void handleVideoError(video)}
+                          sx={{
+                            display: 'block',
+                            width: '100%',
+                            minHeight: { xs: 200, sm: 240 },
+                            maxHeight: 420,
+                            aspectRatio: '16 / 9',
+                            objectFit: 'contain',
+                            bgcolor: 'common.black',
+                            borderRadius: 1,
+                          }}
                         />
                       )}
                       {video.status !== 'REJECTED' && (

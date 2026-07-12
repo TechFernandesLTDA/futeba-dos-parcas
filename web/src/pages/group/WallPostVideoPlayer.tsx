@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Alert,
@@ -19,6 +19,7 @@ interface WallPostVideoPlayerProps {
   posterPath?: string | null;
   authorName: string;
   resolveStorageUrl?: (path: string) => Promise<string>;
+  maxHeight?: number | string;
 }
 type PlaybackStatus = 'idle' | 'loading' | 'ready' | 'error';
 
@@ -43,6 +44,7 @@ export function WallPostVideoPlayer({
   posterPath,
   authorName,
   resolveStorageUrl = resolveWallPostStorageUrl,
+  maxHeight = 420,
 }: WallPostVideoPlayerProps) {
   const { t } = useTranslation();
   const theme = useTheme();
@@ -54,6 +56,17 @@ export function WallPostVideoPlayer({
   const recoveryGeneration = useRef(0);
   const sourceRecoveryAttempted = useRef(false);
   const posterRecoveryAttempted = useRef(false);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+
+  const setVideoNode = useCallback((node: HTMLVideoElement | null) => {
+    const previous = videoRef.current;
+    if (previous && previous !== node) {
+      previous.pause();
+      previous.removeAttribute('src');
+      previous.load();
+    }
+    videoRef.current = node;
+  }, []);
 
   useEffect(() => {
     recoveryGeneration.current += 1;
@@ -249,16 +262,20 @@ export function WallPostVideoPlayer({
       <Box
         component="video"
         key={retryKey}
+        ref={setVideoNode}
         controls
-        autoPlay
         playsInline
         crossOrigin="anonymous"
         preload="metadata"
+        controlsList="nodownload"
         poster={hasPoster ? activePoster! : undefined}
         aria-label={openLabel}
         onLoadStart={() => setStatus('loading')}
         onLoadedMetadata={() => setStatus('ready')}
-        onCanPlay={() => setStatus('ready')}
+        onCanPlay={() => {
+          setStatus('ready');
+          void videoRef.current?.play()?.catch(() => {});
+        }}
         onPlaying={() => setStatus('ready')}
         onWaiting={() => setStatus('loading')}
         onSeeking={() => setStatus('loading')}
@@ -268,7 +285,7 @@ export function WallPostVideoPlayer({
           display: 'block',
           width: '100%',
           minHeight: { xs: 200, sm: 240 },
-          maxHeight: 420,
+          maxHeight,
           aspectRatio: '16 / 9',
           objectFit: 'contain',
           bgcolor: theme.palette.common.black,

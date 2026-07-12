@@ -98,7 +98,10 @@ describe('WallPostComposer', () => {
 
     selectImage(container, video);
 
-    expect(screen.getByLabelText('Pré-visualização do vídeo')).toBeInTheDocument();
+    const preview = screen.getByLabelText('Pré-visualização do vídeo');
+    expect(preview).toBeInTheDocument();
+    Object.defineProperty(preview, 'duration', { value: 12, configurable: true });
+    fireEvent.loadedMetadata(preview);
     fireEvent.click(screen.getByRole('button', { name: 'Publicar' }));
     await waitFor(() => expect(onSubmit).toHaveBeenCalledWith('', video));
   });
@@ -112,7 +115,10 @@ describe('WallPostComposer', () => {
 
     selectImage(container, video);
 
-    expect(screen.getByLabelText('Pré-visualização do vídeo')).toBeInTheDocument();
+    const preview = screen.getByLabelText('Pré-visualização do vídeo');
+    expect(preview).toBeInTheDocument();
+    Object.defineProperty(preview, 'duration', { value: 8, configurable: true });
+    fireEvent.loadedMetadata(preview);
     fireEvent.click(screen.getByRole('button', { name: 'Publicar' }));
     await waitFor(() => expect(onSubmit).toHaveBeenCalledWith('', video));
   });
@@ -131,6 +137,42 @@ describe('WallPostComposer', () => {
     expect(screen.getByText('Não foi possível pré-visualizar este vídeo, mas você ainda pode publicá-lo.')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Publicar' }));
     await waitFor(() => expect(onSubmit).toHaveBeenCalledWith('', video));
+  });
+
+  it('bloqueia o envio ate a duracao do video ser lida pelo navegador', () => {
+    const onSubmit = vi.fn().mockResolvedValue(undefined);
+    const { container } = renderWithProviders(
+      <WallPostComposer sending={false} onSubmit={onSubmit} />,
+    );
+    const video = new File(['video'], 'partida.mp4', { type: 'video/mp4' });
+
+    selectImage(container, video);
+    expect(screen.getByLabelText('Pré-visualização do vídeo')).toBeInTheDocument();
+
+    expect(screen.getByRole('button', { name: 'Publicar' })).toBeDisabled();
+
+    const preview = screen.getByLabelText('Pré-visualização do vídeo');
+    Object.defineProperty(preview, 'duration', { value: 15, configurable: true });
+    fireEvent.loadedMetadata(preview);
+
+    expect(screen.getByRole('button', { name: 'Publicar' })).toBeEnabled();
+  });
+
+  it('rejeita video com duracao acima do limite antes de publicar', async () => {
+    const onSubmit = vi.fn().mockResolvedValue(undefined);
+    const { container } = renderWithProviders(
+      <WallPostComposer sending={false} onSubmit={onSubmit} />,
+    );
+    const video = new File(['video'], 'partida.mp4', { type: 'video/mp4' });
+
+    selectImage(container, video);
+    const preview = screen.getByLabelText('Pré-visualização do vídeo');
+    Object.defineProperty(preview, 'duration', { value: 120, configurable: true });
+    fireEvent.loadedMetadata(preview);
+
+    expect(screen.getByRole('button', { name: 'Publicar' })).toBeDisabled();
+    expect(screen.getByText('O vídeo deve ter no máximo 30 segundos.')).toBeInTheDocument();
+    expect(onSubmit).not.toHaveBeenCalled();
   });
 
   it('rehidrata texto e vídeo da outbox após reload sem pedir o arquivo novamente', async () => {

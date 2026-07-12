@@ -25,6 +25,7 @@ import {
   Groups as GroupsIcon,
   Flag as ReportIcon,
   VisibilityOff as HideIcon,
+  OpenInFull as OpenInFullIcon,
 } from '@mui/icons-material';
 import { PlayerAvatar } from '../../components/common/GameCard';
 import { ReactionBar } from '../../components/reactions/ReactionBar';
@@ -210,14 +211,32 @@ export const WallPostCard: React.FC<WallPostCardProps> = ({
             )}
 
             {post.mediaUrl && isVideo && (
-              <WallPostVideoPlayer
-                src={post.mediaUrl}
-                poster={post.thumbnailUrl}
-                mediaPath={post.mediaPath}
-                posterPath={post.thumbnailPath}
-                authorName={post.authorName}
-                resolveStorageUrl={resolveStorageUrl}
-              />
+              <Box sx={{ position: 'relative' }}>
+                <WallPostVideoPlayer
+                  src={post.mediaUrl}
+                  poster={post.thumbnailUrl}
+                  mediaPath={post.mediaPath}
+                  posterPath={post.thumbnailPath}
+                  authorName={post.authorName}
+                  resolveStorageUrl={resolveStorageUrl}
+                />
+                <IconButton
+                  size="small"
+                  onClick={() => setLightboxOpen(true)}
+                  aria-label={t('groupWall.openVideoFullscreen', { name: post.authorName })}
+                  disabled={Boolean(post.deletedAt)}
+                  sx={{
+                    position: 'absolute',
+                    top: 8,
+                    right: 8,
+                    color: theme.palette.common.white,
+                    bgcolor: alpha(theme.palette.common.black, 0.55),
+                    '&:hover': { bgcolor: alpha(theme.palette.common.black, 0.72) },
+                  }}
+                >
+                  <OpenInFullIcon fontSize="small" />
+                </IconButton>
+              </Box>
             )}
 
             {post.mediaUrl && !isVideo && (
@@ -369,7 +388,20 @@ export const WallPostCard: React.FC<WallPostCardProps> = ({
         )}
       </Menu>
 
-      <Dialog open={!isVideo && lightboxOpen} onClose={() => setLightboxOpen(false)} maxWidth="lg">
+      <Dialog open={lightboxOpen} onClose={() => setLightboxOpen(false)} maxWidth="lg" fullWidth>
+        {post.mediaUrl && isVideo && (
+          <Box sx={{ display: 'flex', justifyContent: 'center', bgcolor: theme.palette.common.black }}>
+            <WallPostVideoPlayer
+              src={post.mediaUrl}
+              poster={post.thumbnailUrl}
+              mediaPath={post.mediaPath}
+              posterPath={post.thumbnailPath}
+              authorName={post.authorName}
+              resolveStorageUrl={resolveStorageUrl}
+              maxHeight="80vh"
+            />
+          </Box>
+        )}
         {post.mediaUrl && !isVideo && (
           <Box
             component="img"

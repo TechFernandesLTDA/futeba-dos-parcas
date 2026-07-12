@@ -135,6 +135,9 @@ export const WallPostComposer: React.FC<WallPostComposerProps> = ({
       showError(t('groupWall.videoTooLong', { max: MAX_VIDEO_DURATION_SECONDS }));
       return;
     }
+    if (mediaFile && isWallVideoFile(mediaFile) && mediaDuration === null && !mediaPreviewFailed) {
+      return;
+    }
     submitInFlightRef.current = true;
     try {
       setSubmitFailed(false);
@@ -151,7 +154,8 @@ export const WallPostComposer: React.FC<WallPostComposerProps> = ({
 
   const isValid = cleanText.length <= MAX_TEXT_LENGTH &&
     (cleanText.length > 0 || Boolean(mediaFile)) &&
-    !(mediaFile && isWallVideoFile(mediaFile) && mediaDuration !== null && mediaDuration > MAX_VIDEO_DURATION_SECONDS);
+    !(mediaFile && isWallVideoFile(mediaFile) && mediaDuration !== null && mediaDuration > MAX_VIDEO_DURATION_SECONDS) &&
+    !(mediaFile && isWallVideoFile(mediaFile) && mediaDuration === null && !mediaPreviewFailed);
   const normalizedUploadProgress = typeof uploadProgress === 'number' && Number.isFinite(uploadProgress)
     ? Math.min(100, Math.max(0, Math.round(uploadProgress)))
     : null;
