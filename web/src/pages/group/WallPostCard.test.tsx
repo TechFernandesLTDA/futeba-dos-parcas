@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, expect, it, vi } from 'vitest';
-import { fireEvent, screen } from '@testing-library/react';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { renderWithProviders } from '../../test/renderWithProviders';
 import type { WallPost } from '../../hooks/useGroupWall';
 import { WallPostCard } from './WallPostCard';
@@ -49,16 +49,44 @@ describe('WallPostCard', () => {
     expect(screen.getAllByAltText('Foto de Jordi')).toHaveLength(2);
   });
 
-  it('mostra falha de carregamento e permite tentar novamente', () => {
+  it('mostra falha de carregamento e permite tentar novamente', async () => {
+    const resolveStorageUrl = vi.fn().mockRejectedValue(new Error('missing'));
     renderWithProviders(
-      <WallPostCard post={post} isOwn={false} canManage={false} />,
+      <WallPostCard
+        post={post}
+        isOwn={false}
+        canManage={false}
+        resolveStorageUrl={resolveStorageUrl}
+      />,
     );
 
     fireEvent.error(screen.getByAltText('Foto de Jordi'));
-    expect(screen.getByText('Não foi possível carregar esta foto.')).toBeInTheDocument();
+    expect(await screen.findByText('Não foi possível carregar esta foto.')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Tentar carregar novamente' }));
     expect(screen.queryByText('Não foi possível carregar esta foto.')).not.toBeInTheDocument();
     expect(screen.getByAltText('Foto de Jordi')).toBeInTheDocument();
+  });
+
+  it('renova uma URL de foto protegida pelo mediaPath', async () => {
+    const freshUrl = 'https://firebasestorage.googleapis.com/fresh-photo.jpg?alt=media';
+    const resolveStorageUrl = vi.fn().mockResolvedValue(freshUrl);
+    renderWithProviders(
+      <WallPostCard
+        post={post}
+        isOwn={false}
+        canManage={false}
+        resolveStorageUrl={resolveStorageUrl}
+      />,
+    );
+
+    fireEvent.error(screen.getByAltText('Foto de Jordi'));
+
+    await waitFor(() => {
+      expect(screen.getByAltText('Foto de Jordi')).toHaveAttribute('src', freshUrl);
+    });
+    expect(resolveStorageUrl).toHaveBeenCalledOnce();
+    expect(resolveStorageUrl).toHaveBeenCalledWith(post.mediaPath);
+    expect(screen.queryByText('Não foi possível carregar esta foto.')).not.toBeInTheDocument();
   });
 
   it('carrega apenas o poster e cria o player depois da interação', () => {

@@ -133,6 +133,38 @@ describe('WallPostComposer', () => {
     await waitFor(() => expect(onSubmit).toHaveBeenCalledWith('', video));
   });
 
+  it('rehidrata texto e vídeo da outbox após reload sem pedir o arquivo novamente', async () => {
+    const video = new File(['video'], 'recuperado.mp4', {
+      type: 'video/mp4',
+      lastModified: 1234,
+    });
+    const onDiscardRestoredDraft = vi.fn().mockResolvedValue(undefined);
+    renderWithProviders(
+      <WallPostComposer
+        sending={false}
+        restoredDraft={{
+          text: 'Gol recuperado',
+          mediaFile: video,
+          highlightRef: null,
+          fingerprint: 'fingerprint-1',
+          expiresAt: Date.now() + 60_000,
+        }}
+        onDiscardRestoredDraft={onDiscardRestoredDraft}
+        onSubmit={vi.fn().mockResolvedValue(undefined)}
+      />,
+    );
+
+    expect(await screen.findByLabelText('Pré-visualização do vídeo')).toBeInTheDocument();
+    expect(screen.getByRole('textbox')).toHaveValue('Gol recuperado');
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'Envio recuperado. Toque em publicar para continuar sem escolher o arquivo novamente.',
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Remover mídia' }));
+    await waitFor(() => expect(onDiscardRestoredDraft).toHaveBeenCalledTimes(1));
+    expect(screen.queryByLabelText('Pré-visualização do vídeo')).not.toBeInTheDocument();
+  });
+
   it('expõe estado de envio e bloqueia novas interações', () => {
     renderWithProviders(
       <WallPostComposer sending uploadProgress={42} onSubmit={vi.fn().mockResolvedValue(undefined)} />,

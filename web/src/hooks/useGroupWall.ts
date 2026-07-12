@@ -8,6 +8,7 @@ import {
   limit,
   startAfter,
   getDoc,
+  getDocFromServer,
   getDocs,
   addDoc,
   updateDoc,
@@ -16,7 +17,7 @@ import {
   QueryDocumentSnapshot,
   writeBatch,
 } from 'firebase/firestore';
-import { deleteObject, ref as storageRef } from 'firebase/storage';
+import { deleteObject, getMetadata, ref as storageRef } from 'firebase/storage';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { db } from '../services/firebase';
@@ -32,6 +33,11 @@ import { useTranslation } from 'react-i18next';
 import { mergeRealtimePageById } from './realtimePageMerge';
 import { getWallMediaType } from '../utils/wallMedia';
 import { createGroupWallMediaDraft } from '../services/groupWallMediaService';
+import {
+  createGroupWallMediaOutboxFingerprint,
+  GroupWallMediaOutbox,
+  type GroupWallMediaOutboxEntry,
+} from '../utils/groupWallMediaOutbox';
 
 const logger = createLogger('useGroupWall');
 
@@ -40,6 +46,24 @@ const MAX_TEXT_LENGTH = 500;
 const MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024;
 const MAX_VIDEO_SIZE_BYTES = 25 * 1024 * 1024;
 const MEDIA_PROCESSING_TIMEOUT_MS = 180_000;
+const MEDIA_UPLOAD_RECONCILE_DELAYS_MS = [0, 500, 1500] as const;
+
+let wallMediaOutbox: GroupWallMediaOutbox | null = null;
+
+function getWallMediaOutbox() {
+  wallMediaOutbox ??= new GroupWallMediaOutbox();
+  return wallMediaOutbox;
+}
+
+async function removeWallMediaOutboxEntry(ownerUid: string, groupId: string) {
+  try {
+    await getWallMediaOutbox().remove(ownerUid, groupId);
+  } catch (error) {
+    // IndexedDB is a resilience layer. Quota/private-mode failures must never
+    // turn a successful server publication into a visible error.
+    logger.warn('Não foi possível remover a intenção local do Mural', error);
+  }
+}
 
 type WallMediaDraftStatus = 'AWAITING_UPLOAD' | 'PROCESSING' | 'READY' | 'REJECTED' | 'EXPIRED';
 
@@ -63,6 +87,14 @@ interface CreateWallPostOptions {
   imageFile?: File;
   mediaFile?: File;
   highlightRef?: { gameId: string; highlightId: string };
+}
+
+export interface RestoredWallMediaDraft {
+  text: string;
+  mediaFile: File;
+  highlightRef: { gameId: string; highlightId: string } | null;
+  fingerprint: string;
+  expiresAt: number;
 }
 
 export interface WallPost {
@@ -148,6 +180,69 @@ function wallMediaDraftStatus(data: Record<string, unknown>): WallMediaDraftStat
   return ['AWAITING_UPLOAD', 'PROCESSING', 'READY', 'REJECTED', 'EXPIRED'].includes(status)
     ? status as WallMediaDraftStatus
     : null;
+}
+
+export type WallMediaUploadReconciliation =
+  | { kind: 'accepted'; status: 'READY' | 'PROCESSING' | 'OBJECT_PRESENT' }
+  | { kind: 'retry' }
+  | { kind: 'terminal'; error: Error }
+  | { kind: 'inconclusive' };
+
+function storageErrorCode(error: unknown) {
+  return typeof error === 'object' && error !== null && 'code' in error
+    ? String((error as { code?: unknown }).code)
+    : '';
+}
+
+/**
+ * Confirms the server-side draft and Storage object before a failed resumable
+ * upload is allowed to fall back. Retry is returned only after stable,
+ * repeated AWAITING_UPLOAD + object-not-found observations.
+ */
+export async function reconcileWallMediaUpload(
+  groupId: string,
+  postId: string,
+  uploadPath: string,
+): Promise<WallMediaUploadReconciliation> {
+  for (const delayMs of MEDIA_UPLOAD_RECONCILE_DELAYS_MS) {
+    if (delayMs > 0) await new Promise((resolve) => setTimeout(resolve, delayMs));
+
+    let draftSnapshot;
+    try {
+      draftSnapshot = await getDocFromServer(doc(db, 'groups', groupId, 'wall_post_drafts', postId));
+    } catch (error) {
+      logger.warn('Não foi possível consultar o draft no servidor durante a reconciliação', error);
+      return { kind: 'inconclusive' };
+    }
+
+    if (!draftSnapshot.exists()) {
+      return { kind: 'terminal', error: wallMediaDraftMissingError() };
+    }
+
+    const draftData = draftSnapshot.data() as Record<string, unknown>;
+    const status = wallMediaDraftStatus(draftData);
+    if (status === 'READY' || status === 'PROCESSING') {
+      return { kind: 'accepted', status };
+    }
+    if (status === 'REJECTED' || status === 'EXPIRED') {
+      return { kind: 'terminal', error: wallMediaDraftTerminalError(status, draftData) };
+    }
+    if (status !== 'AWAITING_UPLOAD') {
+      return { kind: 'inconclusive' };
+    }
+
+    try {
+      await getMetadata(storageRef(storage, uploadPath));
+      return { kind: 'accepted', status: 'OBJECT_PRESENT' };
+    } catch (error) {
+      if (storageErrorCode(error) !== 'storage/object-not-found') {
+        logger.warn('Não foi possível consultar os metadados do upload durante a reconciliação', error);
+        return { kind: 'inconclusive' };
+      }
+    }
+  }
+
+  return { kind: 'retry' };
 }
 
 async function waitForWallMediaDraft(
@@ -295,39 +390,34 @@ export async function createWallPostDocument(params: {
       }
     }
     onUploading?.();
+    const reconciliationState: { last: WallMediaUploadReconciliation | null } = { last: null };
     try {
       await uploadImageWithStorageAuthRetry(storageRef(storage, draft.uploadPath), mediaFile, {
         ...(refreshCredentials ? { refreshCredentials } : {}),
         ...(onUploadProgress ? { onProgress: onUploadProgress } : {}),
         ...(onUploadRetrying ? { onRetrying: onUploadRetrying } : {}),
         contentType: mediaType,
+        shouldRetryAfterError: async () => {
+          reconciliationState.last = await reconcileWallMediaUpload(groupId, draft.postId, draft.uploadPath);
+          if (reconciliationState.last.kind === 'terminal') throw reconciliationState.last.error;
+          return reconciliationState.last.kind === 'retry';
+        },
       });
     } catch (uploadError) {
-      // Uma resposta de rede pode se perder depois de o Storage finalizar o
-      // objeto. Antes de reportar falha, consulta o draft autoritativo para não
-      // pedir reupload de um path imutável que já entrou no processor.
-      let recoveredStatus: string | null = null;
-      let recoveredData: Record<string, unknown> | null = null;
-      try {
-        const recoveredDraft = await getDoc(doc(db, 'groups', groupId, 'wall_post_drafts', draft.postId));
-        if (recoveredDraft.exists()) {
-          recoveredData = recoveredDraft.data() as Record<string, unknown>;
-          recoveredStatus = wallMediaDraftStatus(recoveredData);
-        }
-      } catch (recoveryError) {
-        logger.warn('Não foi possível confirmar o estado do draft após falha de upload', recoveryError);
-      }
-      if (recoveredStatus === 'READY') {
+      // A perda de uma resposta não prova que o upload falhou. Reutiliza uma
+      // decisão autoritativa feita pelo gate ou consulta draft + metadata agora.
+      const recovered = reconciliationState.last && reconciliationState.last.kind !== 'retry'
+        ? reconciliationState.last
+        : await reconcileWallMediaUpload(groupId, draft.postId, draft.uploadPath);
+      if (recovered?.kind === 'accepted' && recovered.status === 'READY') {
         return { postId: draft.postId, pipelineVersion: draft.pipelineVersion };
       }
-      if (recoveredStatus === 'PROCESSING') {
+      if (recovered?.kind === 'accepted') {
         onProcessing?.();
         await waitForWallMediaDraft(groupId, draft.postId, onProcessing);
         return { postId: draft.postId, pipelineVersion: draft.pipelineVersion };
       }
-      if ((recoveredStatus === 'REJECTED' || recoveredStatus === 'EXPIRED') && recoveredData) {
-        throw wallMediaDraftTerminalError(recoveredStatus, recoveredData);
-      }
+      if (recovered?.kind === 'terminal') throw recovered.error;
       throw uploadError;
     }
     onProcessing?.();
@@ -541,8 +631,64 @@ export function useCreateWallPost(groupId?: string) {
   const [sending, setSending] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [mediaPhase, setMediaPhase] = useState<'preparing' | 'uploading' | 'processing' | null>(null);
+  const [restoredMediaDraft, setRestoredMediaDraft] = useState<RestoredWallMediaDraft | null>(null);
   const createOperationRef = useRef(0);
   const pendingMediaIntentRef = useRef<{ fingerprint: string; requestId: string } | null>(null);
+
+  const applyRestoredOutboxEntry = useCallback((entry: GroupWallMediaOutboxEntry) => {
+    pendingMediaIntentRef.current = {
+      fingerprint: entry.fingerprint,
+      requestId: entry.clientRequestId,
+    };
+    setRestoredMediaDraft({
+      text: entry.text,
+      mediaFile: entry.file,
+      highlightRef: entry.highlightRef,
+      fingerprint: entry.fingerprint,
+      expiresAt: entry.expiresAt,
+    });
+  }, []);
+
+  useEffect(() => {
+    const ownerUid = currentUser?.uid;
+    if (!groupId || !ownerUid) {
+      createOperationRef.current += 1;
+      pendingMediaIntentRef.current = null;
+      setRestoredMediaDraft(null);
+      setSending(false);
+      setUploadProgress(null);
+      setMediaPhase(null);
+      return undefined;
+    }
+
+    // Invalida callbacks do grupo/usuário anterior antes de restaurar a nova
+    // chave da outbox. A operação antiga pode terminar no servidor, mas não
+    // pode limpar nem notificar o composer atual.
+    createOperationRef.current += 1;
+    pendingMediaIntentRef.current = null;
+    setRestoredMediaDraft(null);
+    setSending(false);
+    setUploadProgress(null);
+    setMediaPhase(null);
+    let cancelled = false;
+    const operationAtRestoreStart = createOperationRef.current;
+    void getWallMediaOutbox().restore(ownerUid, groupId).then((entry) => {
+      if (cancelled || !entry || createOperationRef.current !== operationAtRestoreStart) return;
+      applyRestoredOutboxEntry(entry);
+    }).catch((error) => {
+      logger.warn('A outbox local do Mural não pôde ser restaurada', error);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [applyRestoredOutboxEntry, currentUser?.uid, groupId]);
+
+  const discardRestoredMediaDraft = useCallback(async () => {
+    const ownerUid = currentUser?.uid;
+    pendingMediaIntentRef.current = null;
+    setRestoredMediaDraft(null);
+    if (ownerUid && groupId) await removeWallMediaOutboxEntry(ownerUid, groupId);
+  }, [currentUser?.uid, groupId]);
 
   const create = useCallback(
     async (text: string, options?: CreateWallPostOptions) => {
@@ -560,25 +706,45 @@ export function useCreateWallPost(groupId?: string) {
 
       const mediaFile = options?.mediaFile ?? options?.imageFile;
       const mediaFingerprint = mediaFile
-        ? JSON.stringify({
+        ? createGroupWallMediaOutboxFingerprint({
             groupId,
             text: cleanText,
-            name: mediaFile.name,
-            type: getWallMediaType(mediaFile),
-            size: mediaFile.size,
-            lastModified: mediaFile.lastModified,
+            file: mediaFile,
+            mediaType: getWallMediaType(mediaFile),
             highlightRef: options?.highlightRef ?? null,
           })
         : null;
       if (mediaFingerprint && pendingMediaIntentRef.current?.fingerprint !== mediaFingerprint) {
         pendingMediaIntentRef.current = { fingerprint: mediaFingerprint, requestId: createWallMediaRequestId() };
       }
+      const mediaRequestId = mediaFile ? pendingMediaIntentRef.current?.requestId : undefined;
       const operationId = createOperationRef.current + 1;
       createOperationRef.current = operationId;
       setSending(true);
       setUploadProgress(mediaFile ? 0 : null);
       setMediaPhase(mediaFile ? 'preparing' : null);
       try {
+        if (mediaFile && mediaFingerprint && mediaRequestId) {
+          try {
+            const persisted = await getWallMediaOutbox().put({
+              ownerUid: currentUser.uid,
+              groupId,
+              text: cleanText,
+              file: mediaFile,
+              fingerprint: mediaFingerprint,
+              clientRequestId: mediaRequestId,
+              highlightRef: options?.highlightRef ?? null,
+              ...(restoredMediaDraft?.fingerprint === mediaFingerprint
+                ? { expiresAt: restoredMediaDraft.expiresAt }
+                : {}),
+            });
+            if (createOperationRef.current === operationId) {
+              applyRestoredOutboxEntry(persisted);
+            }
+          } catch (outboxError) {
+            logger.warn('Não foi possível persistir a intenção de mídia do Mural', outboxError);
+          }
+        }
         await createWallPostDocument({
           groupId,
           currentUserUid: currentUser.uid,
@@ -606,15 +772,25 @@ export function useCreateWallPost(groupId?: string) {
           onProcessing: mediaFile ? () => {
             if (createOperationRef.current === operationId) setMediaPhase('processing');
           } : undefined,
-          clientRequestId: mediaFile ? pendingMediaIntentRef.current?.requestId : undefined,
+          clientRequestId: mediaRequestId,
         });
-        pendingMediaIntentRef.current = null;
-        showSuccess('Publicado no mural.');
+        if (mediaFile) await removeWallMediaOutboxEntry(currentUser.uid, groupId);
+        if (createOperationRef.current === operationId) {
+          pendingMediaIntentRef.current = null;
+          setRestoredMediaDraft(null);
+          showSuccess('Publicado no mural.');
+        }
       } catch (err) {
         const code = typeof err === 'object' && err !== null && 'code' in err
           ? String((err as { code?: unknown }).code)
           : '';
-        if (code.startsWith('wall-media/')) pendingMediaIntentRef.current = null;
+        if (code.startsWith('wall-media/')) {
+          if (mediaFile) await removeWallMediaOutboxEntry(currentUser.uid, groupId);
+          if (createOperationRef.current === operationId) {
+            pendingMediaIntentRef.current = null;
+            setRestoredMediaDraft(null);
+          }
+        }
         const message = code.startsWith('storage/')
           ? t('groupWall.mediaUploadError')
           : code.startsWith('functions/')
@@ -624,7 +800,7 @@ export function useCreateWallPost(groupId?: string) {
           : err instanceof Error && !code
             ? err.message
             : getFirestoreErrorMessage(err, t('groupWall.publishError'));
-        showError(message);
+        if (createOperationRef.current === operationId) showError(message);
         throw err;
       } finally {
         if (createOperationRef.current === operationId) {
@@ -634,10 +810,26 @@ export function useCreateWallPost(groupId?: string) {
         }
       }
     },
-    [groupId, currentUser, user, showError, showSuccess, t],
+    [
+      applyRestoredOutboxEntry,
+      groupId,
+      currentUser,
+      user,
+      showError,
+      showSuccess,
+      t,
+      restoredMediaDraft,
+    ],
   );
 
-  return { create, sending, uploadProgress, mediaPhase };
+  return {
+    create,
+    sending,
+    uploadProgress,
+    mediaPhase,
+    restoredMediaDraft,
+    discardRestoredMediaDraft,
+  };
 }
 
 export function useDeleteWallPost(groupId?: string) {

@@ -230,6 +230,21 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.53.2][web-1.53.2] - 2026-07-12
+
+#### Adicionado
+- Outbox IndexedDB por usuário e grupo, com `File`, fingerprint, `clientRequestId`, TTL e recuperação após reload.
+- `WallPostVideoPlayer` poster-first com reprodução inline, HTTP Range nativo e refresh limitado de URL por `mediaPath`/`thumbnailPath`.
+- Política `storage.cors.json` restrita a `GET`/`HEAD` dos hosts oficiais, com headers de Range versionados.
+
+#### Corrigido
+- Reconciliação autoritativa usa `getDocFromServer` e `getMetadata`; fallback só ocorre após três observações estáveis de `AWAITING_UPLOAD` e `object-not-found`.
+- Watchdog do resumable respeita o budget do SDK e pausa em `offline` ou `visibilityState=hidden`.
+- Matriz de erros separa Auth, App Check, Rules, rede e integridade; o retry de `storage/unauthorized` fica restrito ao caso conhecido de propagação do logo recém-criado.
+- Os dois MP4s reportados foram validados em produção como H.264/AAC, `READY`, poster WebP e respostas parciais HTTP 206.
+
+_Issues: #3545, #3546_
+
 ### [1.53.1][web-1.53.1] - 2026-07-11
 
 #### Corrigido
@@ -2187,6 +2202,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.53.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.53.2.md
 [web-1.53.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.53.1.md
 [web-1.53.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.53.0.md
 [web-1.52.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.52.0.md

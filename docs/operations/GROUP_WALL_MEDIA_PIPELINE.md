@@ -12,11 +12,23 @@ O pipeline v1 publica fotos e vídeos apenas depois de validação server-side. 
 - Originais e posters usam paths content-addressed imutáveis. Clientes anteriores à 1.53.0/Android build 72 usam uma compatibilidade temporária, limitada ao path `__draft__` do próprio autor, MIME/extensão/tamanho exatos e grupo ativo.
 - O post social só é criado em `wall_posts` na transação que muda o draft para `READY`; Mural e Feed nunca consultam drafts.
 
+## Transporte e reprodução Web
+
+A partir da Web 1.53.2, uma falha do transporte não autoriza outro envio por si só. O cliente consulta o draft diretamente no servidor e o objeto de staging com `getMetadata`; somente três observações estáveis de `AWAITING_UPLOAD` com `storage/object-not-found` liberam um retry. `PROCESSING`, `READY` ou objeto existente convergem para a observação do draft, sem fallback concorrente. `storage/unauthenticated` e `storage/unauthorized-app` renovam Auth/App Check no máximo uma vez; `storage/unauthorized` é terminal para o Mural.
+
+O watchdog do resumable roda depois do budget de 30 segundos do SDK e fica suspenso enquanto `navigator.onLine === false` ou `visibilityState === hidden`. Antes da primeira chamada de rede, o Web persiste em IndexedDB um item por usuário/grupo com `File`, texto, fingerprint, `clientRequestId`, destaque e TTL máximo de uma hora. Após reload, o composer recupera o mesmo arquivo e UUID; IndexedDB é best-effort e falhas de quota/modo privado não bloqueiam o upload normal.
+
+O player é poster-first e só solicita o MP4 após interação. Ele usa controles nativos, `playsInline`, `preload="metadata"` e source `video/mp4`, preservando HTTP Range e fullscreen do navegador. Um 403 de URL antiga permite uma única renovação via `mediaPath`/`thumbnailPath`; um objeto realmente ausente termina em erro acionável, sem loop.
+
+O CORS do bucket é versionado em `storage.cors.json` e permite apenas `GET`/`HEAD` dos hosts oficiais `web.app` e `firebaseapp.com`, expondo os headers necessários a byte-range. Aplique com `gcloud storage buckets update gs://futebadosparcas.firebasestorage.app --cors-file=storage.cors.json` e confirme uma resposta com `Origin` antes de concluir o deploy. CORS não substitui token, Auth, App Check ou Storage Rules.
+
 ## Estados, retry e limpeza
 
 `AWAITING_UPLOAD → PROCESSING → READY|REJECTED`. `EXPIRED` é terminal durante a limpeza. O `clientRequestId` permanece estável em falhas de rede/timeout e muda depois de rejeição terminal. Reentregas do mesmo evento usam geração do Storage, lease transacional e paths imutáveis; falhas transitórias liberam o lease e são reprocessadas até cinco tentativas.
 
 Drafts `READY` viram tombstones mínimos permanentes: retêm apenas identidade/hash/paths necessários à idempotência, sem texto, perfil ou URL-capability. Assim, repetir o UUID nunca sobrescreve reações, comentários, pin ou soft-delete. O janitor roda a cada dez minutos, percorre até 2.000 drafts por execução em páginas de 200 e concorrência 10, remove apenas paths exatos registrados antes do upload e publica backlog/idade do mais antigo nas métricas.
+
+Posts legados podem existir mesmo quando o upload direto nunca finalizou. Antes de reparar um card, confirme simultaneamente que o objeto está ausente no bucket e que a URL responde 403/404. Preserve o texto e registre `media_status: LEGACY_OBJECT_MISSING` mais `legacy_media_repair`; nunca substitua o arquivo por outro sem confirmação explícita do autor. O reparo do grupo VIP de 12/07/2026 está auditado na issue #3545.
 
 ## Compatibilidade de clientes anteriores
 

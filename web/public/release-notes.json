@@ -1,7 +1,39 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-12T02:21:45.656Z",
+  "generatedAt": "2026-07-12T04:06:11.850Z",
   "notes": [
+    {
+      "version": "1.53.2",
+      "buildNumber": null,
+      "releaseDate": "2026-07-12",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "Fotos e vídeos do Mural agora retomam com segurança e o MP4 toca direto na conversa.",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "O vídeo ganhou player inline com poster, controles nativos, carregamento visível e tentativa novamente sem abrir um modal.",
+        "Se a página recarregar durante uma falha, o texto e o anexo ficam guardados por até uma hora para continuar sem escolher o arquivo outra vez.",
+        "O envio diferencia rede offline ou aplicativo em segundo plano de uma conexão realmente travada.",
+        "No celular, o botão fixo Criar Jogo aparece somente no topo e deixa de cobrir a timeline durante o scroll."
+      ],
+      "fixed": [
+        "Uma confirmação de rede perdida não inicia outro upload antes de consultar o draft e o objeto existentes no Firebase.",
+        "Auth e App Check são renovados uma única vez; uma negação real das regras deixa de entrar em repetição inútil.",
+        "URLs antigas do player podem ser renovadas pelo caminho protegido do arquivo antes de apresentar erro.",
+        "O bucket agora responde CORS e byte-range para os domínios oficiais do aplicativo, permitindo reprodução móvel do MP4.",
+        "Três cards legados do grupo VIP que apontavam para MP4s inexistentes foram reparados sem apagar suas mensagens.",
+        "Reconciliação autoritativa usa `getDocFromServer` e `getMetadata`; fallback só ocorre após três observações estáveis de `AWAITING_UPLOAD` e `object-not-found`.",
+        "Watchdog do resumable respeita o budget do SDK e pausa em `offline` ou `visibilityState=hidden`.",
+        "Matriz de erros separa Auth, App Check, Rules, rede e integridade; o retry de `storage/unauthorized` fica restrito ao caso conhecido de propagação do logo recém-criado.",
+        "Os dois MP4s reportados foram validados em produção como H.264/AAC, `READY`, poster WebP e respostas parciais HTTP 206."
+      ],
+      "issueRefs": [
+        3545,
+        3546
+      ]
+    },
     {
       "version": "1.53.1",
       "buildNumber": null,

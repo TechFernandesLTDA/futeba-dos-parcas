@@ -1531,6 +1531,7 @@
     "mediaReady": "Listo para publicar",
     "sending": "Publicando...",
     "draftPreserved": "No se pudo publicar. Conservamos tu texto y archivo para que puedas intentarlo de nuevo.",
+    "draftRecovered": "Envío recuperado. Pulsa publicar para continuar sin elegir el archivo de nuevo.",
     "preparingMedia": "Preparando envío...",
     "connectingUpload": "Conectando envío...",
     "uploadProgress": "Subiendo contenido: {{percent}}%",

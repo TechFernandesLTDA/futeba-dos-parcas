@@ -10,6 +10,8 @@ const mockSignInWithPopup = vi.fn();
 const mockSignOut = vi.fn();
 const mockSendPasswordResetEmail = vi.fn();
 const mockUpdateProfile = vi.fn();
+const mockClearWallMediaOutboxOwner = vi.fn();
+const mockUnregisterBrowserFcmToken = vi.fn();
 
 vi.mock('firebase/auth', () => ({
   getAuth: vi.fn(),
@@ -74,6 +76,14 @@ vi.mock('../services/firebase', () => ({
   functions: {},
 }));
 
+vi.mock('../utils/groupWallMediaOutbox', () => ({
+  clearGroupWallMediaOutboxOwner: (...args: unknown[]) => mockClearWallMediaOutboxOwner(...args),
+}));
+
+vi.mock('../services/firebaseMessaging', () => ({
+  unregisterBrowserFcmToken: (...args: unknown[]) => mockUnregisterBrowserFcmToken(...args),
+}));
+
 // Mock de cloudFunctions para isolar o teste do Cloud Functions real
 vi.mock('../services/cloudFunctions', () => ({
   syncFieldOwnerClaim: vi.fn().mockResolvedValue({ data: { synced: false, role: '', success: true, message: '' } }),
@@ -110,6 +120,8 @@ function AuthConsumer() {
 describe('AuthContext', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockClearWallMediaOutboxOwner.mockResolvedValue(undefined);
+    mockUnregisterBrowserFcmToken.mockResolvedValue(undefined);
     mockDoc.mockImplementation((...args) => ({ type: 'doc', args }));
     mockCollection.mockImplementation((...args) => ({ type: 'collection', args }));
     mockQuery.mockImplementation((...args) => ({ type: 'query', args }));
@@ -267,6 +279,17 @@ describe('AuthContext', () => {
 
   it('signOut chama Firebase signOut', async () => {
     mockSignOut.mockResolvedValue(undefined);
+    const mockFirebaseUser = { uid: 'logout-uid', email: 'logout@test.com', displayName: 'Logout User' };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    mockOnAuthStateChanged.mockImplementation((_auth: any, callback: any) => {
+      setTimeout(() => callback(mockFirebaseUser), 0);
+      return vi.fn();
+    });
+    mockGetDoc.mockResolvedValue({
+      exists: () => true,
+      id: 'logout-uid',
+      data: () => ({ name: 'Logout User', email: 'logout@test.com' }),
+    });
 
     let logoutFn: (() => Promise<void>) | undefined;
     function Extractor() {
@@ -281,13 +304,17 @@ describe('AuthContext', () => {
       </AuthProvider>
     );
 
-    await waitFor(() => expect(logoutFn).toBeDefined());
+    await waitFor(() => expect(mockGetDoc).toHaveBeenCalled());
 
     await act(async () => {
       await logoutFn!();
     });
 
     expect(mockSignOut).toHaveBeenCalled();
+    expect(mockClearWallMediaOutboxOwner).toHaveBeenCalledWith('logout-uid');
+    expect(mockClearWallMediaOutboxOwner.mock.invocationCallOrder[0]).toBeLessThan(
+      mockSignOut.mock.invocationCallOrder[0],
+    );
   });
 
   it('signUp cria conta e documento do usuário', async () => {

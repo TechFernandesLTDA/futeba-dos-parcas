@@ -25,7 +25,9 @@ export async function uploadGroupLogo(
   previousPhotoUrl?: string | null,
 ) {
   const groupPhotoRef = storageRef(storage, getGroupLogoStoragePath(userId, groupId, file));
-  await uploadImageWithStorageAuthRetry(groupPhotoRef, file);
+  // O owner e o vínculo em users/{uid}/groups são escritos no mesmo fluxo;
+  // Storage Rules pode observar essa propagação alguns milissegundos depois.
+  await uploadImageWithStorageAuthRetry(groupPhotoRef, file, { retryUnauthorized: true });
   const photoUrl = await getDownloadURL(groupPhotoRef);
 
   if (previousPhotoUrl && previousPhotoUrl !== photoUrl) {

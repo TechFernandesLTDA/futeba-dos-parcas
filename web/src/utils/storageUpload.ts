@@ -11,7 +11,9 @@ import { createLogger } from './logger';
 const logger = createLogger('storageUpload');
 
 const STORAGE_UPLOAD_RETRY_DELAYS_MS = [0, 750, 2000, 4000];
-const RESUMABLE_UPLOAD_STALL_TIMEOUT_MS = 20_000;
+// Firebase Storage already has a 30 s retry/status budget configured. The
+// watchdog must run after that budget, otherwise it cancels valid SDK recovery.
+const RESUMABLE_UPLOAD_STALL_TIMEOUT_MS = 35_000;
 const CREDENTIAL_REFRESH_TIMEOUT_MS = 15_000;
 const RESUMABLE_UPLOAD_STALLED_CODE = 'storage/resumable-upload-stalled';
 const CREDENTIAL_REFRESH_TIMEOUT_CODE = 'storage/credential-refresh-timeout';
@@ -24,13 +26,22 @@ export function getStorageUploadErrorCode(err: unknown) {
     : '';
 }
 
-function isRetryableStorageUploadError(err: unknown) {
+function isRetryableStorageUploadError(err: unknown, retryUnauthorized: boolean) {
   const code = getStorageUploadErrorCode(err);
-  return code === 'storage/unauthorized' ||
+  return (retryUnauthorized && code === 'storage/unauthorized') ||
+    code === 'storage/unauthenticated' ||
+    code === 'storage/unauthorized-app' ||
     code === 'storage/unknown' ||
     code === 'storage/retry-limit-exceeded' ||
     code === 'storage/network-request-failed' ||
+    code === 'storage/invalid-checksum' ||
+    code === 'storage/server-file-wrong-size' ||
     code === RESUMABLE_UPLOAD_STALLED_CODE;
+}
+
+function isRefreshableStorageAuthError(err: unknown) {
+  const code = getStorageUploadErrorCode(err);
+  return code === 'storage/unauthenticated' || code === 'storage/unauthorized-app';
 }
 
 export interface StorageUploadOptions {
@@ -38,6 +49,13 @@ export interface StorageUploadOptions {
   onProgress?: (percentage: number) => void;
   onRetrying?: () => void;
   contentType?: string;
+  /**
+   * Authoritative gate used before retrying an upload that may already have
+   * reached Storage. Resumable uploads never fall back without this gate.
+   */
+  shouldRetryAfterError?: (error: unknown) => Promise<boolean>;
+  /** Narrow opt-in for known Rules propagation windows such as a new group logo. */
+  retryUnauthorized?: boolean;
 }
 
 async function refreshCredentialsWithTimeout(refreshCredentials?: () => Promise<void>) {
@@ -79,6 +97,8 @@ export async function uploadImageWithStorageAuthRetry(
 ) {
   let lastErr: unknown;
   let highestProgress = -1;
+  let credentialsRefreshed = false;
+  let integrityRetryUsed = false;
 
   const reportProgress = (percentage: number) => {
     if (!options.onProgress) return;
@@ -97,6 +117,12 @@ export async function uploadImageWithStorageAuthRetry(
     let stallTimer: ReturnType<typeof setTimeout> | null = null;
     let unsubscribe: (() => void) | undefined;
 
+    const canRunStallWatchdog = () => {
+      const offline = typeof navigator !== 'undefined' && navigator.onLine === false;
+      const hidden = typeof document !== 'undefined' && document.visibilityState === 'hidden';
+      return !offline && !hidden;
+    };
+
     const clearStallTimer = () => {
       if (stallTimer !== null) clearTimeout(stallTimer);
       stallTimer = null;
@@ -105,6 +131,13 @@ export async function uploadImageWithStorageAuthRetry(
       clearStallTimer();
       unsubscribe?.();
       unsubscribe = undefined;
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('online', handleConnectivityChange);
+        window.removeEventListener('offline', handleConnectivityChange);
+      }
+      if (typeof document !== 'undefined') {
+        document.removeEventListener('visibilitychange', handleConnectivityChange);
+      }
     };
     const rejectOnce = (err: unknown) => {
       if (settled) return;
@@ -122,6 +155,7 @@ export async function uploadImageWithStorageAuthRetry(
     const uploadSucceeded = () => uploadTask.snapshot.state === 'success';
     const armStallTimer = () => {
       clearStallTimer();
+      if (!canRunStallWatchdog()) return;
       stallTimer = setTimeout(() => {
         if (settled) return;
         if (uploadSucceeded()) {
@@ -150,6 +184,19 @@ export async function uploadImageWithStorageAuthRetry(
       }, RESUMABLE_UPLOAD_STALL_TIMEOUT_MS);
     };
 
+    function handleConnectivityChange() {
+      if (settled) return;
+      if (canRunStallWatchdog()) armStallTimer();
+      else clearStallTimer();
+    }
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('online', handleConnectivityChange);
+      window.addEventListener('offline', handleConnectivityChange);
+    }
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', handleConnectivityChange);
+    }
     armStallTimer();
     unsubscribe = uploadTask.on(
       'state_changed',
@@ -186,29 +233,52 @@ export async function uploadImageWithStorageAuthRetry(
       return snapshot;
     } catch (err) {
       lastErr = err;
-      if (!isRetryableStorageUploadError(err) || attempt === STORAGE_UPLOAD_RETRY_DELAYS_MS.length - 1) {
+      if (!isRetryableStorageUploadError(err, options.retryUnauthorized === true) ||
+        attempt === STORAGE_UPLOAD_RETRY_DELAYS_MS.length - 1) {
         throw err;
       }
       const errorCode = getStorageUploadErrorCode(err);
-      if (errorCode === RESUMABLE_UPLOAD_STALLED_CODE) {
-        options.onRetrying?.();
+
+      if (errorCode === 'storage/invalid-checksum' || errorCode === 'storage/server-file-wrong-size') {
+        if (integrityRetryUsed) throw err;
+        integrityRetryUsed = true;
+      }
+
+      if (isRefreshableStorageAuthError(err)) {
+        // Auth/App Check is refreshed at most once. A second 401 is terminal
+        // for this upload attempt; retrying would only repeat the same failure.
+        if (credentialsRefreshed) throw err;
         try {
-          // Preflight limitado: impede que o fallback simples fique preso na
-          // mesma aquisição de Auth/App Check que travou o resumable.
           await refreshCredentialsWithTimeout(options.refreshCredentials);
+          credentialsRefreshed = true;
         } catch (refreshErr) {
-          logger.warn('Credential refresh timed out before compatible upload fallback', refreshErr);
+          logger.warn('Failed to refresh Firebase upload credentials', refreshErr);
           throw refreshErr;
         }
-      } else if (errorCode === 'storage/unauthorized' || errorCode === 'storage/unknown') {
+      }
+
+      // A rejected resumable task may have been finalized by Storage even
+      // after cancel() returned. Never start uploadBytes() until the caller
+      // proves that both the draft and object are still absent/stable.
+      const retryApproved = options.shouldRetryAfterError
+        ? await options.shouldRetryAfterError(err)
+        : !options.onProgress;
+      if (!retryApproved) throw err;
+
+      if (errorCode === RESUMABLE_UPLOAD_STALLED_CODE && !credentialsRefreshed) {
         try {
+          // Limited preflight: avoid a simple upload being blocked by the same
+          // Auth/App Check acquisition that stalled the resumable request.
           await refreshCredentialsWithTimeout(options.refreshCredentials);
+          credentialsRefreshed = true;
         } catch (refreshErr) {
-          // A nova tentativa ainda pode funcionar com o refresh automático do SDK.
-          logger.warn('Failed to refresh credentials before retrying image upload', refreshErr);
+          logger.warn('Credential refresh failed before compatible upload fallback', refreshErr);
+          throw refreshErr;
         }
       }
-      logger.warn('Retrying image upload after Storage auth propagation delay', {
+
+      options.onRetrying?.();
+      logger.warn('Retrying Storage upload after an approved transient failure', {
         attempt: attempt + 1,
         err,
       });

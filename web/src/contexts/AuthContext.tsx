@@ -29,6 +29,7 @@ import type { validateInviteCode as validateInviteCodeType, syncFieldOwnerClaim 
 import { normalizePlayerStats } from '../utils/playerStats';
 import { getEffectiveLevel, getExperiencePoints } from '../utils/xpAccounting';
 import { unregisterBrowserFcmToken } from '../services/firebaseMessaging';
+import { clearGroupWallMediaOutboxOwner } from '../utils/groupWallMediaOutbox';
 
 const logger = createLogger('AuthContext');
 const USER_ROLES: UserRole[] = ['PLAYER', 'FIELD_OWNER', 'ADMIN'];
@@ -323,7 +324,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const handleAuthStateChange = async (firebaseUser: FirebaseUser | null) => {
       const currentUid = firebaseUser?.uid ?? null;
+      const previousUid = prevUserRef.current?.uid ?? null;
       lastFetchUid = currentUid;
+
+      if (previousUid && previousUid !== currentUid) {
+        // Escopar por UID impede exposição à nova conta; a limpeza assíncrona
+        // remove também o Blob privado deixado pela identidade anterior.
+        void clearGroupWallMediaOutboxOwner(previousUid).catch((outboxError) => {
+          logger.warn('Falha ao limpar anexos pendentes na troca de conta', outboxError);
+        });
+      }
 
       try {
         if (firebaseUser?.uid !== prevUserRef.current?.uid) {
@@ -593,9 +603,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(async () => {
     setError(null);
     try {
-      const currentUid = auth.currentUser?.uid ?? null;
+      const currentUid = auth.currentUser?.uid ?? firebaseUserRef.current?.uid ?? null;
       addBreadcrumb('auth', 'Logout iniciado', { uid: currentUid });
       if (currentUid) {
+        try {
+          await clearGroupWallMediaOutboxOwner(currentUid);
+        } catch (outboxError) {
+          // Falha de IndexedDB não pode impedir o encerramento da sessão.
+          logger.warn('Falha ao limpar anexos pendentes durante logout', outboxError);
+        }
         await unregisterBrowserFcmToken(currentUid);
       }
       await signOut(auth);

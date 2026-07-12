@@ -130,6 +130,7 @@ Real SMS should be a controlled manual smoke or staging-only run. Do not consume
 | Baixa/estorno mensal concorrente | duas sessões não finalizam snapshot obsoleto; retry é idempotente; caixa, pagador e período convergem em tempo real | Functions Jest + Emulator + smoke multi-sessão |
 | Realtime 10/100/1000 | listeners convergem entre sessões; p95/p99, erro, invariantes e orçamento read/write ficam dentro do perfil; hot-document é diagnóstico explícito | `npm run test:load:realtime -- --profile <10|100|1000>` + Firestore Emulator |
 | Mural mídia 10/100/1000 | reserva, retry idempotente e corrida do mesmo request mantêm post/path únicos, zero erro e p95 do perfil | `npm run test:load:wall-media -- --vus <10|100|1000>` + Firestore Emulator |
+| Mural mídia móvel/reload | stall não cria fallback concorrente; offline/aba oculta pausa watchdog; IndexedDB restaura arquivo+UUID; MP4 e poster respondem 206 e o player renova uma URL 403 no máximo uma vez | Vitest (`storageUpload`, `groupWallMediaOutbox`, `useGroupWall`, `WallPostVideoPlayer`) + Storage Emulator + smoke com MP4 real |
 
 ## Firebase And Security
 

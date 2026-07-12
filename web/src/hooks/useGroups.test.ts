@@ -321,6 +321,9 @@ describe('useCreateGroup', () => {
     mockCollection.mockReturnValue('mock-collection');
     mockDoc.mockReturnValue({ id: 'new-group-id' });
     setupBatchMock();
+    vi.mocked(storageRef).mockReturnValue('mock-storage-ref' as never);
+    vi.mocked(uploadBytes).mockResolvedValue({} as never);
+    vi.mocked(getDownloadURL).mockResolvedValue('https://storage.example/group-logo.jpg');
     mockAuthReturn = {
       user: { id: 'test-user-id', name: 'Test User', photoUrl: null, level: 5 },
       firebaseUser: { uid: 'test-user-id', displayName: 'Test User', photoURL: null },
