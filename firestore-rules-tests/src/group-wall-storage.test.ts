@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
   assertFails,
   assertSucceeds,
@@ -35,6 +35,38 @@ const draftPath = (uid: string, fileName = "photo.jpg") =>
   `groups/${GROUP_ID}/wall_media/__draft__/${uid}/${fileName}`;
 const pipelinePath = (postId: string, uid: string, fileName = "source.jpg") =>
   `groups/${GROUP_ID}/wall_media_staging/${postId}/${uid}/${fileName}`;
+
+function parseStorageRuleFunctions() {
+  const functions = new Map<string, string>();
+  // As helpers top-level de storage.rules usam 4 espaços; blocos internos são
+  // mais profundos. Este parser é um guard de orçamento de reads, não um parser
+  // geral da linguagem, e o teste falha se o entrypoint/helper deixar de existir.
+  const pattern = /^    function ([A-Za-z][A-Za-z0-9]*)\([^)]*\) \{([\s\S]*?)^    \}/gm;
+  for (const match of STORAGE_RULES.matchAll(pattern)) {
+    functions.set(match[1], match[2]);
+  }
+  return functions;
+}
+
+function reachableStorageRuleReads(entrypoint: string) {
+  const functions = parseStorageRuleFunctions();
+  const visited = new Set<string>();
+  let firestoreReads = 0;
+
+  const visit = (functionName: string) => {
+    if (visited.has(functionName)) return;
+    const body = functions.get(functionName);
+    if (body === undefined) throw new Error(`Função de Rules ausente: ${functionName}`);
+    visited.add(functionName);
+    firestoreReads += body.match(/firestore\.get\s*\(/g)?.length ?? 0;
+    for (const call of body.matchAll(/\b([A-Za-z][A-Za-z0-9]*)\s*\(/g)) {
+      if (functions.has(call[1])) visit(call[1]);
+    }
+  };
+
+  visit(entrypoint);
+  return { firestoreReads, visited: [...visited].sort() };
+}
 
 let testEnv: RulesTestEnvironment;
 
@@ -210,6 +242,18 @@ describe("Storage Rules — groups/{groupId}/wall_media", () => {
 });
 
 describe("Storage Rules — wall_media_staging pipeline v1", () => {
+  it("mantém a autorização do staging dentro do limite de 2 documentos", () => {
+    const graph = reachableStorageRuleReads("canUploadWallMediaDraft");
+
+    expect(graph.visited).toEqual([
+      "canUploadWallMediaDraft",
+      "getWallMediaDraft",
+      "isAuthenticated",
+      "isGroupActiveForWallWrite",
+    ]);
+    expect(graph.firestoreReads).toBe(2);
+  });
+
   it("permite exatamente o objeto declarado no draft AWAITING_UPLOAD", async () => {
     const postId = "a".repeat(40);
     await seedPipelineDraft(postId, UID_ACTIVE, "AWAITING_UPLOAD");

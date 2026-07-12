@@ -1531,6 +1531,8 @@
     "mediaReady": "Ready to post",
     "sending": "Posting...",
     "draftPreserved": "We couldn't post it. Your text and attachment were kept so you can try again.",
+    "preparingMedia": "Preparing upload...",
+    "connectingUpload": "Connecting upload...",
     "uploadProgress": "Uploading media: {{percent}}%",
     "processingMedia": "Processing media...",
     "videoPreview": "Video preview",

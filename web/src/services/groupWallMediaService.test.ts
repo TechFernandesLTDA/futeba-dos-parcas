@@ -45,7 +45,7 @@ describe('groupWallMediaService', () => {
     expect(httpsCallableMock).toHaveBeenCalledWith(
       functionsMock,
       'createGroupWallMediaDraft',
-      { limitedUseAppCheckTokens: true },
+      { limitedUseAppCheckTokens: true, timeout: 20_000 },
     );
   });
 

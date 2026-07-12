@@ -218,6 +218,8 @@ export async function createWallPostDocument(params: {
   options?: CreateWallPostOptions;
   refreshCredentials?: () => Promise<void>;
   onUploadProgress?: (percentage: number) => void;
+  onUploadRetrying?: () => void;
+  onUploading?: () => void;
   onProcessing?: () => void;
   clientRequestId?: string;
 }) {
@@ -230,6 +232,8 @@ export async function createWallPostDocument(params: {
     options,
     refreshCredentials,
     onUploadProgress,
+    onUploadRetrying,
+    onUploading,
     onProcessing,
     clientRequestId,
   } = params;
@@ -290,11 +294,42 @@ export async function createWallPostDocument(params: {
         throw new Error('O estado deste envio é inválido. Tente novamente.');
       }
     }
-    await uploadImageWithStorageAuthRetry(storageRef(storage, draft.uploadPath), mediaFile, {
-      ...(refreshCredentials ? { refreshCredentials } : {}),
-      ...(onUploadProgress ? { onProgress: onUploadProgress } : {}),
-      contentType: mediaType,
-    });
+    onUploading?.();
+    try {
+      await uploadImageWithStorageAuthRetry(storageRef(storage, draft.uploadPath), mediaFile, {
+        ...(refreshCredentials ? { refreshCredentials } : {}),
+        ...(onUploadProgress ? { onProgress: onUploadProgress } : {}),
+        ...(onUploadRetrying ? { onRetrying: onUploadRetrying } : {}),
+        contentType: mediaType,
+      });
+    } catch (uploadError) {
+      // Uma resposta de rede pode se perder depois de o Storage finalizar o
+      // objeto. Antes de reportar falha, consulta o draft autoritativo para não
+      // pedir reupload de um path imutável que já entrou no processor.
+      let recoveredStatus: string | null = null;
+      let recoveredData: Record<string, unknown> | null = null;
+      try {
+        const recoveredDraft = await getDoc(doc(db, 'groups', groupId, 'wall_post_drafts', draft.postId));
+        if (recoveredDraft.exists()) {
+          recoveredData = recoveredDraft.data() as Record<string, unknown>;
+          recoveredStatus = wallMediaDraftStatus(recoveredData);
+        }
+      } catch (recoveryError) {
+        logger.warn('Não foi possível confirmar o estado do draft após falha de upload', recoveryError);
+      }
+      if (recoveredStatus === 'READY') {
+        return { postId: draft.postId, pipelineVersion: draft.pipelineVersion };
+      }
+      if (recoveredStatus === 'PROCESSING') {
+        onProcessing?.();
+        await waitForWallMediaDraft(groupId, draft.postId, onProcessing);
+        return { postId: draft.postId, pipelineVersion: draft.pipelineVersion };
+      }
+      if ((recoveredStatus === 'REJECTED' || recoveredStatus === 'EXPIRED') && recoveredData) {
+        throw wallMediaDraftTerminalError(recoveredStatus, recoveredData);
+      }
+      throw uploadError;
+    }
     onProcessing?.();
     await waitForWallMediaDraft(groupId, draft.postId, onProcessing);
     return { postId: draft.postId, pipelineVersion: draft.pipelineVersion };
@@ -505,7 +540,7 @@ export function useCreateWallPost(groupId?: string) {
   const { t } = useTranslation();
   const [sending, setSending] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
-  const [mediaPhase, setMediaPhase] = useState<'uploading' | 'processing' | null>(null);
+  const [mediaPhase, setMediaPhase] = useState<'preparing' | 'uploading' | 'processing' | null>(null);
   const createOperationRef = useRef(0);
   const pendingMediaIntentRef = useRef<{ fingerprint: string; requestId: string } | null>(null);
 
@@ -542,7 +577,7 @@ export function useCreateWallPost(groupId?: string) {
       createOperationRef.current = operationId;
       setSending(true);
       setUploadProgress(mediaFile ? 0 : null);
-      setMediaPhase(mediaFile ? 'uploading' : null);
+      setMediaPhase(mediaFile ? 'preparing' : null);
       try {
         await createWallPostDocument({
           groupId,
@@ -559,6 +594,15 @@ export function useCreateWallPost(groupId?: string) {
                 }
               }
             : undefined,
+          onUploadRetrying: mediaFile ? () => {
+            if (createOperationRef.current === operationId) {
+              setUploadProgress(0);
+              setMediaPhase('uploading');
+            }
+          } : undefined,
+          onUploading: mediaFile ? () => {
+            if (createOperationRef.current === operationId) setMediaPhase('uploading');
+          } : undefined,
           onProcessing: mediaFile ? () => {
             if (createOperationRef.current === operationId) setMediaPhase('processing');
           } : undefined,

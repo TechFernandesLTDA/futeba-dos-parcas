@@ -155,11 +155,34 @@ describe('WallPostComposer', () => {
     await screen.findByAltText('Pré-visualização da imagem');
 
     rerender(
-      <WallPostComposer sending uploadProgress={42.4} onSubmit={onSubmit} />,
+      <WallPostComposer sending uploadProgress={0} mediaPhase="uploading" onSubmit={onSubmit} />,
+    );
+
+    expect(screen.getByRole('status', { name: 'Conectando envio...' })).toBeInTheDocument();
+    expect(screen.getByText('Conectando envio...')).toBeInTheDocument();
+
+    rerender(
+      <WallPostComposer sending uploadProgress={42.4} mediaPhase="uploading" onSubmit={onSubmit} />,
     );
 
     expect(screen.getByRole('status', { name: 'Enviando mídia: 42%' })).toBeInTheDocument();
     expect(screen.getByText('42%')).toBeInTheDocument();
+  });
+
+  it('informa a preparação do draft antes de iniciar o transporte', async () => {
+    const onSubmit = vi.fn().mockResolvedValue(undefined);
+    const { container, rerender } = renderWithProviders(
+      <WallPostComposer sending={false} uploadProgress={null} onSubmit={onSubmit} />,
+    );
+    selectImage(container, new File(['video'], 'jogada.mp4', { type: 'video/mp4' }));
+    await screen.findByLabelText('Pré-visualização do vídeo');
+
+    rerender(
+      <WallPostComposer sending uploadProgress={null} mediaPhase="preparing" onSubmit={onSubmit} />,
+    );
+
+    expect(screen.getByRole('status', { name: 'Preparando envio...' })).toBeInTheDocument();
+    expect(screen.getByText('Preparando envio...')).toBeInTheDocument();
   });
 
   it('troca o progresso por feedback indeterminado durante o processamento', async () => {
