@@ -3278,7 +3278,40 @@ actual class FirebaseDataSource actual constructor() {
 
     actual suspend fun updateLocation(location: Location): Result<Unit> {
         return try {
-            firestore.collection("locations").document(location.id).set(location)
+            val updates = buildMap<String, Any> {
+                put("name", location.name)
+                put("address", location.address)
+                put("owner_id", location.ownerId)
+                put("cep", location.cep)
+                put("street", location.street)
+                put("number", location.number)
+                put("complement", location.complement)
+                put("district", location.district)
+                put("city", location.city)
+                put("state", location.state)
+                put("country", location.country)
+                put("neighborhood", location.neighborhood)
+                put("region", location.region)
+                location.latitude?.let { put("latitude", it) }
+                location.longitude?.let { put("longitude", it) }
+                location.placeId?.let { put("place_id", it) }
+                put("description", location.description)
+                location.photoUrl?.let { put("photo_url", it) }
+                put("amenities", location.amenities)
+                location.phone?.let { put("phone", it) }
+                location.website?.let { put("website", it) }
+                location.instagram?.let { put("instagram", it) }
+                put("opening_time", location.openingTime)
+                put("closing_time", location.closingTime)
+                put("operating_days", location.operatingDays)
+                put("min_game_duration_minutes", location.minGameDurationMinutes)
+                put("is_active", location.isActive)
+                put("managers", location.managers)
+                // Preserva/aplica fuso: nunca envia null; fallback legado se vazio.
+                put("time_zone", location.effectiveTimeZone())
+                put("updated_at", FieldValue.serverTimestamp)
+            }
+            firestore.collection("locations").document(location.id).update(updates)
             Result.success(Unit)
         } catch (e: Exception) { logLocationUpdateError(location.id, "update", e); Result.failure(e) }
     }

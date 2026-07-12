@@ -86,6 +86,10 @@ data class Location(
     val operatingDays: List<Int> = listOf(1, 2, 3, 4, 5, 6, 7),
     val minGameDurationMinutes: Int = 60,
 
+    // Fuso IANA do local (ex.: "America/Sao_Paulo"). Documentos legados sem o
+    // campo ficam nulos e recebem DEFAULT_LOCATION_TIME_ZONE no ponto de consumo.
+    @SerialName("time_zone") val timeZone: String? = null,
+
     // Dados Denormalizados de Fields (para reduzir queries)
     val fieldCount: Int = 0,
     @SerialName("active_field_count") val activeFieldCount: Int = 0,
@@ -140,6 +144,17 @@ data class Location(
             publicationStatus == "PUBLISHED" &&
             subscriptionStatus in setOf("TRIAL", "ACTIVE") &&
             hasActiveFields
+
+    /**
+     * Retorna o fuso IANA efetivo do local, aplicando o fallback legado
+     * (DEFAULT_LOCATION_TIME_ZONE) quando ausente ou em branco. Espelha a Web.
+     */
+    fun effectiveTimeZone(): String =
+        timeZone?.takeIf { it.isNotBlank() } ?: DEFAULT_LOCATION_TIME_ZONE
+
+    companion object {
+        const val DEFAULT_LOCATION_TIME_ZONE = "America/Sao_Paulo"
+    }
 }
 
 /**
