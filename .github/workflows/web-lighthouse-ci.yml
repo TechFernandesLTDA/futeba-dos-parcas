@@ -6,6 +6,7 @@ on:
     paths:
       - 'web/**'
       - '.github/workflows/web-lighthouse-ci.yml'
+      - 'scripts/web-ci-workflow-contract.test.js'
   pull_request:
     branches: [ master ]
   workflow_dispatch:
@@ -15,6 +16,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+  pull-requests: read
+
 defaults:
   run:
     working-directory: web
@@ -22,12 +27,15 @@ defaults:
 jobs:
   lighthouse:
     name: Lighthouse CI
-    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    # PRs usam runner efêmero; push/manual podem reutilizar o Mac self-hosted.
+    runs-on: ${{ fromJSON(github.event_name == 'pull_request' && '["ubuntu-latest"]' || (vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]')) }}
     timeout-minutes: 20
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Detect web-relevant changes
         id: changes
@@ -48,7 +56,8 @@ jobs:
 
             const shouldRun = files.some((file) =>
               file.filename.startsWith('web/') ||
-              file.filename === '.github/workflows/web-lighthouse-ci.yml'
+              file.filename === '.github/workflows/web-lighthouse-ci.yml' ||
+              file.filename === 'scripts/web-ci-workflow-contract.test.js'
             );
             core.setOutput('should_run', shouldRun ? 'true' : 'false');
 
@@ -59,6 +68,10 @@ jobs:
           node-version: '22'
           cache: 'npm'
           cache-dependency-path: web/package-lock.json
+
+      - name: Verify Web CI contracts
+        if: steps.changes.outputs.should_run == 'true'
+        run: node --test ../scripts/web-ci-workflow-contract.test.js
 
       - name: Install dependencies
         if: steps.changes.outputs.should_run == 'true'

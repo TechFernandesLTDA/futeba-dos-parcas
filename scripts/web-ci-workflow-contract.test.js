@@ -10,6 +10,10 @@ const workflow = fs.readFileSync(
   path.join(repoRoot, '.github/workflows/web-ci.yml'),
   'utf8'
 );
+const lighthouseWorkflow = fs.readFileSync(
+  path.join(repoRoot, '.github/workflows/web-lighthouse-ci.yml'),
+  'utf8'
+);
 const webPackage = require(path.join(repoRoot, 'web/package.json'));
 
 function extractJob(jobId) {
@@ -106,4 +110,36 @@ test('mutation testing stays outside PR and preserves its report artifact', () =
   assert.match(mutation, /uses: actions\/upload-artifact@v4/);
   assert.match(mutation, /name: mutation-report/);
   assert.match(mutation, /path: web\/reports\/mutation\//);
+});
+
+test('Lighthouse reads PR metadata on an ephemeral runner with hardened checkout', () => {
+  const runnerLine = lighthouseWorkflow
+    .split('\n')
+    .find((line) => line.trimStart().startsWith('runs-on:'));
+
+  assert.match(
+    lighthouseWorkflow,
+    /^permissions:\n\s+contents: read\n\s+pull-requests: read$/m
+  );
+  assert.match(
+    lighthouseWorkflow,
+    /uses: actions\/checkout@v4\n\s+with:\n\s+persist-credentials: false/
+  );
+  assert.equal(
+    runnerLine?.trim(),
+    "runs-on: ${{ fromJSON(github.event_name == 'pull_request' && '[\"ubuntu-latest\"]' || (vars.RUNNER_LABELS || '[\"self-hosted\",\"macOS\",\"ARM64\"]')) }}"
+  );
+  assert.match(lighthouseWorkflow, /github\.rest\.pulls\.listFiles/);
+  assert.match(
+    lighthouseWorkflow,
+    /file\.filename === 'scripts\/web-ci-workflow-contract\.test\.js'/
+  );
+  assert.match(
+    lighthouseWorkflow,
+    /run: node --test \.\.\/scripts\/web-ci-workflow-contract\.test\.js/
+  );
+  assert.match(
+    lighthouseWorkflow,
+    /uses: actions\/setup-node@v4\n\s+with:\n\s+node-version: '22'\n\s+cache: 'npm'\n\s+cache-dependency-path: web\/package-lock\.json/
+  );
 });
