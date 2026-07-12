@@ -13,6 +13,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 env:
   JAVA_VERSION: '17'
   JAVA_DISTRIBUTION: 'temurin'
@@ -22,23 +25,25 @@ jobs:
     uses: ./.github/workflows/change-scope.yml
 
   # ============================================================
-  # Job de setup reutilizavel - prepara o ambiente Android
+  # Jobs Android completos rodam apenas em eventos confiaveis (push/manual).
+  # Em pull_request, o PR Check executa compile, Detekt e unit tests em Ubuntu;
+  # este workflow publica somente o classificador e o Android CI Gate estavel.
   # ============================================================
-  # Self-hosted Mac (Apple Silicon) por padrao para custo zero.
-  # Para forcar github-hosted defina vars.RUNNER_LABELS = ["ubuntu-latest"]
-  # em Settings -> Secrets and variables -> Actions -> Variables.
+  # Push/manual usam o Mac self-hosted por padrao para custo zero.
   # Nota: 1 runner serializa os 4 jobs (~30min). Registre 2-3 instancias
   # para paralelismo, ou aceite o tempo serializado.
   lint:
     name: Lint Check
     needs: changes
-    if: needs.changes.outputs.android == 'true'
+    if: github.event_name != 'pull_request' && needs.changes.outputs.android == 'true'
     runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
     timeout-minutes: 25
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Setup JDK 17
         uses: actions/setup-java@v4
@@ -89,7 +94,7 @@ jobs:
 
   detekt:
     name: Detekt Static Analysis
-    # Pulado em PRs: pr-check.yml ja roda detekt como fast feedback
+    # Pulado em PRs: pr-check.yml ja roda Detekt no gate pesado do PR.
     needs: changes
     if: needs.changes.outputs.android == 'true' && github.event_name != 'pull_request'
     runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
@@ -98,6 +103,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Setup JDK 17
         uses: actions/setup-java@v4
@@ -156,15 +163,21 @@ jobs:
 
   test:
     name: Unit Tests
-    # Pulado em PRs: pr-check.yml ja roda unit tests como fast feedback
+    # Pulado em PRs: pr-check.yml ja roda unit tests no gate pesado do PR.
     needs: changes
     if: needs.changes.outputs.android == 'true' && github.event_name != 'pull_request'
+    # The result publisher runs only on trusted push/manual events.
+    permissions:
+      contents: read
+      checks: write
     runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
     timeout-minutes: 30
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Setup JDK 17
         uses: actions/setup-java@v4
@@ -226,13 +239,15 @@ jobs:
     name: Build Debug APK
     runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
     timeout-minutes: 40
-    # detekt e test sao skipped em PRs (cobertos por pr-check.yml); build aguarda apenas lint em PRs
+    # Todos os gates completos permanecem obrigatorios em push/manual com impacto Android.
     needs: [ changes, lint, detekt, test ]
-    if: always() && needs.changes.result == 'success' && needs.changes.outputs.android == 'true' && needs.lint.result == 'success' && (needs.detekt.result == 'success' || needs.detekt.result == 'skipped') && (needs.test.result == 'success' || needs.test.result == 'skipped')
+    if: always() && github.event_name != 'pull_request' && needs.changes.result == 'success' && needs.changes.outputs.android == 'true' && needs.lint.result == 'success' && needs.detekt.result == 'success' && needs.test.result == 'success'
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Setup JDK 17
         uses: actions/setup-java@v4
@@ -270,9 +285,9 @@ jobs:
       - name: Build Debug APK
         run: ./gradlew --max-workers=6 --no-daemon assembleDebug
 
-      # APK so e util para review em PR; em master apenas valida o build (sem upload — evitava ~24GB de quota)
+      # Em push apenas valida o build; execucao manual tambem entrega o APK para diagnostico.
       - name: Upload Debug APK
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'workflow_dispatch'
         continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
@@ -280,9 +295,9 @@ jobs:
           path: app/build/outputs/apk/debug/app-debug.apk
           retention-days: 3
 
-      # Tamanho do APK como comentario no PR
+      # Tamanho do APK no resumo da execucao manual.
       - name: Report APK Size
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'workflow_dispatch'
         run: |
           APK_SIZE=$(du -h app/build/outputs/apk/debug/app-debug.apk | cut -f1)
           echo "### APK Size: $APK_SIZE" >> "$GITHUB_STEP_SUMMARY"
@@ -309,18 +324,28 @@ jobs:
             exit 1
           fi
 
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            if [ "$LINT_RESULT" != "skipped" ] || [ "$DETEKT_RESULT" != "skipped" ] || [ "$TEST_RESULT" != "skipped" ] || [ "$BUILD_RESULT" != "skipped" ]; then
+              echo "Android CI Gradle jobs must be skipped in pull requests."
+              exit 1
+            fi
+
+            echo "PR Gradle validation is delegated to the required Validate PR check."
+            exit 0
+          fi
+
           if [ "$ANDROID_CHANGED" != "true" ]; then
+            if [ "$LINT_RESULT" != "skipped" ] || [ "$DETEKT_RESULT" != "skipped" ] || [ "$TEST_RESULT" != "skipped" ] || [ "$BUILD_RESULT" != "skipped" ]; then
+              echo "Android jobs ran without Android/KMP impact."
+              exit 1
+            fi
+
             echo "No Android/KMP impact; Gradle jobs were intentionally skipped."
             exit 0
           fi
 
-          if [ "$LINT_RESULT" != "success" ] || [ "$BUILD_RESULT" != "success" ]; then
-            echo "Android lint/build did not complete successfully."
-            exit 1
-          fi
-
-          if [ "$EVENT_NAME" != "pull_request" ] && { [ "$DETEKT_RESULT" != "success" ] || [ "$TEST_RESULT" != "success" ]; }; then
-            echo "Android detekt/unit tests did not complete successfully."
+          if [ "$LINT_RESULT" != "success" ] || [ "$DETEKT_RESULT" != "success" ] || [ "$TEST_RESULT" != "success" ] || [ "$BUILD_RESULT" != "success" ]; then
+            echo "Trusted Android lint, Detekt, unit tests, or build did not complete successfully."
             exit 1
           fi
 

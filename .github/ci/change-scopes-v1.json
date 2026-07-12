@@ -129,10 +129,6 @@
         ".github/workflows/validate-patterns.yml"
       ],
       "scopes": ["web", "functions", "android", "ios", "rules", "shared_config"]
-    },
-    {
-      "patterns": [".github/**"],
-      "scopes": ["shared_config"]
     }
   ]
 }

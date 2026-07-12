@@ -13,6 +13,8 @@ const {
   diffRangeFromEvent,
   globToRegExp,
   loadConfig,
+  main,
+  parseArgs,
   writeGithubOutputs,
 } = require('./classify-changes');
 
@@ -106,6 +108,12 @@ test('unknown runtime paths fail safe by activating every scope', () => {
   assert.deepEqual(result.unknown, ['futurePlatform/src/main.future']);
 });
 
+test('unknown GitHub infrastructure paths also activate every scope', () => {
+  const result = classifyChangedFiles(['.github/actions/future-ci/action.yml'], config);
+  assert.equal(Object.values(result.scopes).every(Boolean), true);
+  assert.deepEqual(result.unknown, ['.github/actions/future-ci/action.yml']);
+});
+
 test('documentation-only changes are recognized without runtime scopes', () => {
   const result = classifyChangedFiles(['README.md', 'docs/CI.md', 'specs/example.md'], config);
   assert.equal(Object.values(result.scopes).some(Boolean), false);
@@ -121,6 +129,33 @@ test('GitHub event ranges cover PR, push and manual full runs', () => {
     head: 'after',
   });
   assert.deepEqual(diffRangeFromEvent('workflow_dispatch', {}), { forceAll: true });
+});
+
+test('paired CLI flags reject missing values', () => {
+  for (const flag of ['--files-from', '--github-output', '--config']) {
+    assert.throws(() => parseArgs([flag]), /requires a value/);
+    assert.throws(() => parseArgs([flag, '--all']), /requires a value/);
+  }
+});
+
+test('missing or malformed GitHub event payload conservatively enables every scope', () => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'futeba-ci-event-'));
+  const malformedEvent = path.join(directory, 'malformed-event.json');
+  fs.writeFileSync(malformedEvent, '{not-json');
+
+  for (const [name, eventPath] of [
+    ['missing', path.join(directory, 'missing-event.json')],
+    ['malformed', malformedEvent],
+  ]) {
+    const outputPath = path.join(directory, `${name}-output`);
+    const classification = main([], {
+      GITHUB_EVENT_NAME: 'pull_request',
+      GITHUB_EVENT_PATH: eventPath,
+      GITHUB_OUTPUT: outputPath,
+    });
+    assert.equal(Object.values(classification.scopes).every(Boolean), true);
+    assert.match(fs.readFileSync(outputPath, 'utf8'), /^android=true$/m);
+  }
 });
 
 test('git diff keeps both sides of cross-scope renames and deleted Android files', () => {

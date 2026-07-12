@@ -9,6 +9,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   changes:
     uses: ./.github/workflows/change-scope.yml
@@ -17,10 +20,8 @@ jobs:
     name: Android Gradle Validation
     needs: changes
     if: needs.changes.outputs.android == 'true'
-    # Self-hosted Mac (Apple Silicon) por padrao para custo zero.
-    # Para forcar github-hosted defina vars.RUNNER_LABELS = ["ubuntu-latest"]
-    # em Settings -> Secrets and variables -> Actions -> Variables.
-    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    # PR code runs on an ephemeral GitHub-hosted runner, never on the persistent Mac.
+    runs-on: ubuntu-latest
     timeout-minutes: 25
 
     steps:
@@ -28,6 +29,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4

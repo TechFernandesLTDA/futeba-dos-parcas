@@ -13,6 +13,7 @@
 # Config & CI
 /.github/ @TechFernandesLTDA/dev-team
 /.github/workflows/ @TechFernandesLTDA/dev-team
+/scripts/ci/ @TechFernandesLTDA/dev-team
 /.claude/ @TechFernandesLTDA/dev-team
 /scripts/web-ci-workflow-contract.test.js @TechFernandesLTDA/dev-team
 

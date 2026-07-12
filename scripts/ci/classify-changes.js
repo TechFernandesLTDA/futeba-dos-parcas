@@ -144,14 +144,23 @@ function parseArgs(argv) {
   const result = {};
   for (let index = 0; index < argv.length; index += 1) {
     const argument = argv[index];
+    const readValue = () => {
+      const value = argv[index + 1];
+      if (!value || value.startsWith('--')) {
+        throw new Error(`Argument '${argument}' requires a value`);
+      }
+      index += 1;
+      return value;
+    };
+
     if (argument === '--all') {
       result.forceAll = true;
     } else if (argument === '--files-from') {
-      result.filesFrom = argv[++index];
+      result.filesFrom = readValue();
     } else if (argument === '--github-output') {
-      result.githubOutput = argv[++index];
+      result.githubOutput = readValue();
     } else if (argument === '--config') {
-      result.configPath = argv[++index];
+      result.configPath = readValue();
     } else {
       throw new Error(`Unknown argument '${argument}'`);
     }
@@ -168,16 +177,19 @@ function main(argv = process.argv.slice(2), env = process.env) {
   if (args.filesFrom) {
     files = fs.readFileSync(args.filesFrom, 'utf8').split(/\r?\n/);
   } else if (!forceAll) {
-    const event = JSON.parse(fs.readFileSync(env.GITHUB_EVENT_PATH, 'utf8'));
-    const range = diffRangeFromEvent(env.GITHUB_EVENT_NAME, event);
-    forceAll = range.forceAll === true;
-    if (!forceAll) {
-      try {
-        files = changedFilesFromGit(range.base, range.head, repoRoot, range.mergeBase);
-      } catch (error) {
-        console.warn(`::warning::Could not determine changed files; enabling every scope: ${error.message}`);
-        forceAll = true;
+    try {
+      if (!env.GITHUB_EVENT_PATH) {
+        throw new Error('GITHUB_EVENT_PATH is not set');
       }
+      const event = JSON.parse(fs.readFileSync(env.GITHUB_EVENT_PATH, 'utf8'));
+      const range = diffRangeFromEvent(env.GITHUB_EVENT_NAME, event);
+      forceAll = range.forceAll === true;
+      if (!forceAll) {
+        files = changedFilesFromGit(range.base, range.head, repoRoot, range.mergeBase);
+      }
+    } catch (error) {
+      console.warn(`::warning::Could not determine changed files; enabling every scope: ${error.message}`);
+      forceAll = true;
     }
   }
 
