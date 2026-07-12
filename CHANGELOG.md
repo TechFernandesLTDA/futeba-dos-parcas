@@ -1540,6 +1540,15 @@ _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
 
+### [1.9.1][functions-1.9.1] - 2026-07-11
+
+#### Corrigido
+- O predeploy executa `install:ffmpeg` antes de lint e build e inclui `vendor/ffmpeg/ffmpeg` com modo executável no source bundle.
+- Hosts macOS validam SHA-256 do archive e do ELF Linux; o runtime Linux mantém a validação executável da versão 8.1.2.
+- Testes protegem o contrato cross-platform e a ordem obrigatória do predeploy.
+
+_Issues: #3533_
+
 ### [1.9.0][functions-1.9.0] - 2026-07-11
 
 #### Adicionado
@@ -2295,6 +2304,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [web-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.26.0.md
 [ios-1.6.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.1.md
 [ios-1.6.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.0.md
+[functions-1.9.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.9.1.md
 [functions-1.9.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.9.0.md
 [functions-1.8.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.8.0.md
 [functions-1.7.19]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.7.19.md

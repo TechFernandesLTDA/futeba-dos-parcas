@@ -23,13 +23,15 @@ const DOWNLOAD_URL =
   "system-artifacts/ffmpeg/8.1.2/" + ARCHIVE_NAME;
 const TARGET_DIR = path.resolve(__dirname, "../vendor/ffmpeg");
 const TARGET_PATH = path.join(TARGET_DIR, "ffmpeg");
+const TARGET_PLATFORM = "linux";
+const TARGET_ARCH = "x64";
 
 async function main() {
-  if (process.platform !== "linux" || process.arch !== "x64") {
-    console.log("FFmpeg vendor: download ignorado fora de linux-x64.");
-    return;
-  }
-  if (await hasCurrentBinary(TARGET_PATH)) {
+  const canExecuteTarget = canExecuteTargetBinary(
+    process.platform,
+    process.arch
+  );
+  if (await hasCurrentBinary(TARGET_PATH, canExecuteTarget)) {
     console.log("FFmpeg vendor: artefato 8.1.2 já validado.");
     return;
   }
@@ -64,7 +66,14 @@ async function main() {
     if (binaryDigest !== BINARY_SHA256) {
       throw new Error("FFMPEG_BINARY_HASH_MISMATCH");
     }
-    verifyVersion(`${TARGET_PATH}.tmp`);
+    if (canExecuteTarget) {
+      verifyVersion(`${TARGET_PATH}.tmp`);
+    } else {
+      console.log(
+        "FFmpeg vendor: execução será validada no runtime linux-x64; " +
+        "hash do binário validado no host de empacotamento."
+      );
+    }
     await fsp.rename(`${TARGET_PATH}.tmp`, TARGET_PATH);
     await fsp.writeFile(
       path.join(TARGET_DIR, "install-manifest.json"),
@@ -82,18 +91,31 @@ async function main() {
   }
 }
 
-async function hasCurrentBinary(binaryPath) {
+async function hasCurrentBinary(binaryPath, verifyExecutable) {
   try {
     const digest = await sha256File(binaryPath);
     if (digest !== BINARY_SHA256) {
       await fsp.rm(binaryPath, {force: true});
       return false;
     }
-    verifyVersion(binaryPath);
+    await fsp.chmod(binaryPath, 0o755);
+    if (verifyExecutable) verifyVersion(binaryPath);
     return true;
   } catch {
     return false;
   }
+}
+
+/**
+ * O artefato empacotado sempre é linux-x64, ainda que o deploy parta do
+ * macOS. Somente o host compatível pode executá-lo; os demais validam os dois
+ * SHA-256 antes de incluí-lo no source bundle.
+ * @param {string} platform Plataforma Node do host atual.
+ * @param {string} arch Arquitetura Node do host atual.
+ * @return {boolean} Se o binário alvo pode ser executado neste host.
+ */
+function canExecuteTargetBinary(platform, arch) {
+  return platform === TARGET_PLATFORM && arch === TARGET_ARCH;
 }
 
 function verifyVersion(binaryPath) {
@@ -127,7 +149,11 @@ async function findFile(directory, predicate) {
   return null;
 }
 
-main().catch((error) => {
-  console.error(error instanceof Error ? error.message : error);
-  process.exitCode = 1;
-});
+if (require.main === module) {
+  main().catch((error) => {
+    console.error(error instanceof Error ? error.message : error);
+    process.exitCode = 1;
+  });
+}
+
+module.exports = {canExecuteTargetBinary};
