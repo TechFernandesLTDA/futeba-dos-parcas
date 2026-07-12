@@ -8,6 +8,8 @@
   "scripts": {
     "prepare": "husky",
     "test:scripts": "node --test scripts/*.test.js scripts/**/*.test.js",
+    "backfill:location-timezones": "node scripts/migrations/backfill-location-time-zones.js",
+    "backfill:location-timezones:execute": "node scripts/migrations/backfill-location-time-zones.js --execute",
     "test:load:realtime": "node scripts/load/realtime-multiuser.js",
     "test:load:wall-media": "node scripts/load/group-wall-media.js",
     "check:tokens": "node scripts/check-design-tokens-parity.js"

@@ -13,6 +13,7 @@ import {
   Stack,
   FormControlLabel,
   Checkbox,
+  MenuItem,
 } from '@mui/material';
 import PageContainer from '../../components/common/PageContainer';
 import { MyLocation as GeoIcon } from '@mui/icons-material';
@@ -39,6 +40,9 @@ import {
   Field,
   COMMERCIAL_AMENITIES,
   AMENITY_LABELS,
+  DEFAULT_LOCATION_TIME_ZONE,
+  LOCATION_TIME_ZONE_OPTIONS,
+  isValidLocationTimeZone,
 } from '../../types/location';
 import { LocationFieldsEditor } from '../../components/locations/LocationFieldsEditor';
 import {
@@ -82,6 +86,7 @@ interface FormState {
   amenities: string[];
   latitude: number | null;
   longitude: number | null;
+  timeZone: string;
   openingTime: string;
   closingTime: string;
   operatingDays: number[];
@@ -113,6 +118,7 @@ const defaultForm: FormState = {
   amenities: [],
   latitude: null,
   longitude: null,
+  timeZone: DEFAULT_LOCATION_TIME_ZONE,
   openingTime: '06:00',
   closingTime: '23:00',
   operatingDays: [1, 2, 3, 4, 5, 6, 7],
@@ -225,6 +231,7 @@ export const LocationFormScreen: React.FC = () => {
             amenities: data.amenities || [],
             latitude: data.latitude ?? null,
             longitude: data.longitude ?? null,
+            timeZone: data.timeZone?.trim() || DEFAULT_LOCATION_TIME_ZONE,
             openingTime: data.openingTime || '06:00',
             closingTime: data.closingTime || '23:00',
             operatingDays: data.operatingDays?.length ? data.operatingDays : [1, 2, 3, 4, 5, 6, 7],
@@ -330,6 +337,9 @@ export const LocationFormScreen: React.FC = () => {
     }
     if (form.longitude !== null && (form.longitude < -180 || form.longitude > 180)) {
       e.longitude = t('locations.form.validation.longitudeRange');
+    }
+    if (!isValidLocationTimeZone(form.timeZone)) {
+      e.timeZone = t('locations.form.validation.timeZoneInvalid');
     }
     if (!/^\d{2}:\d{2}$/.test(form.openingTime)) {
       e.openingTime = 'Informe um horário de abertura válido.';
@@ -499,6 +509,7 @@ export const LocationFormScreen: React.FC = () => {
         photo_url: locationPhotos[0] || null,
         latitude: form.latitude,
         longitude: form.longitude,
+        time_zone: form.timeZone.trim(),
         operating_days: form.operatingDays,
         opening_time: form.openingTime,
         closing_time: form.closingTime,
@@ -833,6 +844,25 @@ export const LocationFormScreen: React.FC = () => {
                           fullWidth
                         />
                       </Stack>
+                      <TextField
+                        select
+                        label={t('locations.form.timeZoneLabel')}
+                        value={form.timeZone}
+                        onChange={(e) => handleChange('timeZone', e.target.value)}
+                        error={!!errors.timeZone}
+                        helperText={errors.timeZone || t('locations.form.timeZoneHelper')}
+                        fullWidth
+                        required
+                      >
+                        {!LOCATION_TIME_ZONE_OPTIONS.some((option) => option.value === form.timeZone) && (
+                          <MenuItem value={form.timeZone}>{form.timeZone}</MenuItem>
+                        )}
+                        {LOCATION_TIME_ZONE_OPTIONS.map((option) => (
+                          <MenuItem key={option.value} value={option.value}>
+                            {option.label}
+                          </MenuItem>
+                        ))}
+                      </TextField>
                       <Box>
                         <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 0.75 }}>
                           Dias disponíveis para reserva

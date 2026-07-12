@@ -16,6 +16,11 @@ import { Add as AddIcon } from '@mui/icons-material';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { FieldType, FIELD_TYPE_LABELS } from '../../types/game';
+import {
+  DEFAULT_LOCATION_TIME_ZONE,
+  LOCATION_TIME_ZONE_OPTIONS,
+  isValidLocationTimeZone,
+} from '../../types/location';
 import { useToast } from '../../contexts/ToastContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { createLogger } from '../../utils/logger';
@@ -46,6 +51,7 @@ export const QuickLocationDialog: React.FC<QuickLocationDialogProps> = ({
   const [type, setType] = useState<FieldType>('SOCIETY');
   const [capacity, setCapacity] = useState<number>(14);
   const [defaultPrice, setDefaultPrice] = useState<number>(0);
+  const [timeZone, setTimeZone] = useState(DEFAULT_LOCATION_TIME_ZONE);
   const [cepLoading, setCepLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const cepAbortRef = useRef<AbortController | null>(null);
@@ -57,6 +63,7 @@ export const QuickLocationDialog: React.FC<QuickLocationDialogProps> = ({
     setType('SOCIETY');
     setCapacity(14);
     setDefaultPrice(0);
+    setTimeZone(DEFAULT_LOCATION_TIME_ZONE);
     setErrors({});
     setCepLoading(false);
   };
@@ -110,6 +117,9 @@ export const QuickLocationDialog: React.FC<QuickLocationDialogProps> = ({
     if (capacity < GAME_VALIDATION.MIN_PLAYERS) newErrors.capacity = `Capacidade mínima: ${GAME_VALIDATION.MIN_PLAYERS}`;
     if (capacity > GAME_VALIDATION.MAX_PLAYERS) newErrors.capacity = `Capacidade máxima: ${GAME_VALIDATION.MAX_PLAYERS}`;
     if (defaultPrice < 0) newErrors.defaultPrice = 'Preço não pode ser negativo';
+    if (!isValidLocationTimeZone(timeZone)) {
+      newErrors.timeZone = t('locations.form.validation.timeZoneInvalid');
+    }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -162,6 +172,7 @@ export const QuickLocationDialog: React.FC<QuickLocationDialogProps> = ({
         closing_time: '23:00',
         operating_days: [1, 2, 3, 4, 5, 6, 7],
         min_game_duration_minutes: 60,
+        time_zone: timeZone,
         description: '',
         street: '',
         number: '',
@@ -251,6 +262,25 @@ export const QuickLocationDialog: React.FC<QuickLocationDialogProps> = ({
             {Object.entries(FIELD_TYPE_LABELS).map(([value, label]) => (
               <MenuItem key={value} value={value}>
                 {label}
+              </MenuItem>
+            ))}
+          </TextField>
+          <TextField
+            select
+            label={t('locations.form.timeZoneLabel')}
+            value={timeZone}
+            onChange={(e) => {
+              setTimeZone(e.target.value);
+              setErrors((prev) => ({ ...prev, timeZone: '' }));
+            }}
+            error={!!errors.timeZone}
+            helperText={errors.timeZone || t('locations.form.timeZoneHelper')}
+            fullWidth
+            required
+          >
+            {LOCATION_TIME_ZONE_OPTIONS.map((option) => (
+              <MenuItem key={option.value} value={option.value}>
+                {option.label}
               </MenuItem>
             ))}
           </TextField>

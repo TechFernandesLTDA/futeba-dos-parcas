@@ -2,6 +2,7 @@ import {
   FieldType,
   Location,
   getLocationAmenitySet,
+  isLocationOpenAt,
   locationHasAmenities,
 } from '../../types/location';
 
@@ -81,32 +82,7 @@ export const getPublicLocationAreaOptions = (locations: Location[]) =>
 export const getPublicLocationAmenities = (location: Location) =>
   Array.from(getLocationAmenitySet(location));
 
-export const isPublicLocationOpenAt = (location: Location, now = new Date()) => {
-  const operatingDays = Array.isArray(location.operatingDays) ? location.operatingDays : [];
-  const openingTime = location.openingTime || '';
-  const closingTime = location.closingTime || '';
-
-  if (!location.isActive || operatingDays.length === 0 || !openingTime || !closingTime) {
-    return false;
-  }
-
-  const dayOfWeek = now.getDay() === 0 ? 7 : now.getDay();
-  if (!operatingDays.includes(dayOfWeek)) return false;
-
-  const [openHour, openMin] = openingTime.split(':').map(Number);
-  const [closeHour, closeMin] = closingTime.split(':').map(Number);
-  if (![openHour, openMin, closeHour, closeMin].every(Number.isFinite)) return false;
-
-  const currentTime = now.getHours() * 60 + now.getMinutes();
-  const openMinutes = openHour * 60 + openMin;
-  const closeMinutes = closeHour * 60 + closeMin;
-
-  if (closeMinutes < openMinutes) {
-    return currentTime >= openMinutes || currentTime <= closeMinutes;
-  }
-
-  return currentTime >= openMinutes && currentTime <= closeMinutes;
-};
+export const isPublicLocationOpenAt = isLocationOpenAt;
 
 const getLocationFieldTypes = (
   location: Location,

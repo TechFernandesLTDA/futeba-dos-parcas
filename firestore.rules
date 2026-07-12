@@ -1666,6 +1666,7 @@ service cloud.firestore {
       // ------------------------------------------
       function hasValidLocationData() {
         let data = request.resource.data;
+        let timeZone = data.get('time_zone', 'America/Sao_Paulo');
         return
           // Nome obrigatorio: 2-100 caracteres
           isValidName(data.name) &&
@@ -1677,6 +1678,12 @@ service cloud.firestore {
           // Validacao de coordenadas (#29)
           isValidLatitude(data.get('latitude', null)) &&
           isValidLongitude(data.get('longitude', null)) &&
+          // Legado sem time_zone permanece valido ate o backfill. Novos
+          // clientes persistem um identificador IANA; Rules valida o formato
+          // estrutural e o cliente valida se o identificador existe.
+          timeZone is string &&
+          timeZone.size() > 0 &&
+          timeZone.size() <= 64 &&
           data.get('publication_status', 'DRAFT') in [
             'DRAFT',
             'PENDING_REVIEW',

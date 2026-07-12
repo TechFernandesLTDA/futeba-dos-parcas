@@ -208,6 +208,7 @@ fonte durável para binários de distribuição.
 | [`docs/LLM_WORKSPACE_GUIDE.md`](docs/LLM_WORKSPACE_GUIDE.md) | Ordem de leitura e fontes de verdade para agentes |
 | [`docs/BUSINESS_RULES.md`](docs/BUSINESS_RULES.md) | Jogos, XP, ranking e regras de domínio |
 | [`docs/MONTHLY_FINANCE.md`](docs/MONTHLY_FINANCE.md) | Mensalistas, recorrência, feriados, baixa e estorno |
+| [`docs/LOCATION_TIMEZONES.md`](docs/LOCATION_TIMEZONES.md) | Fusos IANA, horários overnight e backfill de locais |
 | [`docs/operations/GROUP_WALL_MEDIA_PIPELINE.md`](docs/operations/GROUP_WALL_MEDIA_PIPELINE.md) | Mural, mídia, FFmpeg, retries, escala, IAM e rollback |
 | [`docs/QA_SMOKE_MATRIX.md`](docs/QA_SMOKE_MATRIX.md) | Gates de regressão e release |
 | [`docs/RELEASE_PROCESS.md`](docs/RELEASE_PROCESS.md) | Versionamento, notas, tags e deploy |

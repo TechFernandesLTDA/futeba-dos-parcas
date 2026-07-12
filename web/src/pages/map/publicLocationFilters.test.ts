@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { FieldType, Location } from '../../types/location';
+import { FieldType, Location, isLocationOpenAt } from '../../types/location';
 import {
   PublicLocationFilterState,
   countActivePublicLocationFilters,
@@ -136,16 +136,21 @@ describe('publicLocationFilters', () => {
     }))).toBe(4);
   });
 
-  it('trata horario overnight e cadastros legados sem depender do TZ do host', () => {
+  it('delega o status aberto para a regra canônica de Location', () => {
+    expect(isPublicLocationOpenAt).toBe(isLocationOpenAt);
     expect(isPublicLocationOpenAt(
-      baseLocation({ openingTime: '22:00', closingTime: '02:00', operatingDays: [1] }),
-      // Componentes locais preservam segunda-feira 23:30 em qualquer TZ do processo.
-      new Date(2026, 5, 29, 23, 30),
+      baseLocation({
+        timeZone: 'America/Sao_Paulo',
+        openingTime: '22:00',
+        closingTime: '02:00',
+        operatingDays: [1],
+      }),
+      new Date('2026-06-30T01:30:00-03:00'),
     )).toBe(true);
 
     expect(isPublicLocationOpenAt(
       baseLocation({ openingTime: '', closingTime: '', operatingDays: [] }),
-      new Date(2026, 5, 29, 12, 0),
+      new Date('2026-06-29T12:00:00-03:00'),
     )).toBe(false);
   });
 });
