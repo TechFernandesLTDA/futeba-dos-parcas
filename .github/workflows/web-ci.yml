@@ -3,16 +3,17 @@ name: Web CI
 on:
   pull_request:
     branches: [master, develop]
-    paths:
-      - 'web/**'
-      - '.github/workflows/web-ci.yml'
-      - 'scripts/web-ci-workflow-contract.test.js'
+    types: [opened, synchronize, reopened]
   push:
     branches: [master, develop]
     paths:
       - 'web/**'
       - '.github/workflows/web-ci.yml'
       - 'scripts/web-ci-workflow-contract.test.js'
+      - 'scripts/ci/verify-vitest-shards.js'
+      - 'scripts/ci/verify-vitest-shards.test.js'
+      - 'scripts/ci/vitest-shard-plan.js'
+      - 'scripts/ci/run-vitest-shard.js'
   workflow_dispatch:
   # Cron noturno (03:00 UTC) — dispara apenas o job de mutation testing.
   # Os jobs de PR/push (quality/tests) são desativados no schedule
@@ -32,12 +33,29 @@ defaults:
     working-directory: web
 
 jobs:
-  # Uma única instalação cobre lint, TypeScript e o build de produção. O script
-  # `npm run build` já executa o compilador TypeScript antes do Vite.
-  web-quality:
-    name: Web Quality
+  changes:
     if: github.event_name != 'schedule'
-    # PRs executam código npm não confiável em runner efêmero.
+    uses: ./.github/workflows/change-scope.yml
+
+  # Dois shards usam duas VMs efêmeras no PR e exatamente dois npm ci. O shard 1
+  # também cobre lint/TypeScript/build para manter o caminho Web em duas lanes.
+  web_shards:
+    name: Web ${{ matrix.lane }}
+    needs: [changes]
+    if: github.event_name != 'schedule' && needs.changes.outputs.web == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - shard_index: 1
+            shard_total: 2
+            lane: Quality + Tests (1/2)
+            run_quality: true
+          - shard_index: 2
+            shard_total: 2
+            lane: Tests (2/2)
+            run_quality: false
+    # PRs executam código npm não confiável em runners efêmeros.
     runs-on: ${{ fromJSON(github.event_name == 'pull_request' && '["ubuntu-latest"]' || (vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]')) }}
     timeout-minutes: 20
     steps:
@@ -54,43 +72,66 @@ jobs:
           cache-dependency-path: web/package-lock.json
 
       - name: Verify Web CI contract
-        run: node --test ../scripts/web-ci-workflow-contract.test.js
+        if: matrix.run_quality
+        run: node --test ../scripts/web-ci-workflow-contract.test.js ../scripts/ci/verify-vitest-shards.test.js
 
       - name: Install dependencies
         run: npm ci --legacy-peer-deps
 
       - name: Run ESLint
+        if: matrix.run_quality
         run: npm run lint
 
       - name: TypeScript and production build
+        if: matrix.run_quality
         run: npm run build
 
-  web-tests:
-    name: Web Tests
-    if: github.event_name != 'schedule'
-    # Push/manual podem reutilizar o Mac; PR nunca recebe o runner persistente.
+      - name: Run Vitest shard
+        run: >-
+          node ../scripts/ci/run-vitest-shard.js
+          ${{ matrix.shard_index }}
+          ${{ matrix.shard_total }}
+          reports/vitest/shard-${{ matrix.shard_index }}-of-${{ matrix.shard_total }}.json
+
+      - name: Verify Vitest shard coverage
+        run: >-
+          node ../scripts/ci/verify-vitest-shards.js
+          reports/vitest/shard-${{ matrix.shard_index }}-of-${{ matrix.shard_total }}.json
+          ${{ matrix.shard_index }}
+          ${{ matrix.shard_total }}
+
+  web_gate:
+    name: Web CI Gate
+    if: ${{ always() && github.event_name != 'schedule' }}
+    needs: [changes, web_shards]
+    # O gate executa o verificador vindo do PR, portanto também deve ser efêmero.
     runs-on: ${{ fromJSON(github.event_name == 'pull_request' && '["ubuntu-latest"]' || (vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]')) }}
-    timeout-minutes: 15
+    timeout-minutes: 5
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: 'npm'
-          cache-dependency-path: web/package-lock.json
-
-      - name: Install dependencies
-        run: npm ci --legacy-peer-deps
-
-      - name: Run Vitest suite
-        # GitHub-hosted privado expõe 2 CPUs; o default do Vitest usa CPUs - 1.
-        # Dois workers usam a capacidade inteira sem retry, shard ou corte de suíte.
-        run: npm test -- --maxWorkers=2
+      - name: Enforce classified Web result
+        working-directory: .
+        env:
+          CHANGE_SCOPE_RESULT: ${{ needs.changes.result }}
+          WEB_CHANGED: ${{ needs.changes.outputs.web }}
+          WEB_SHARDS_RESULT: ${{ needs.web_shards.result }}
+        run: |
+          if [ "$CHANGE_SCOPE_RESULT" != "success" ]; then
+            echo "Web change classifier finished with result: $CHANGE_SCOPE_RESULT" >&2
+            exit 1
+          fi
+          if [ "$WEB_CHANGED" = "true" ]; then
+            if [ "$WEB_SHARDS_RESULT" != "success" ]; then
+              echo "Web shards finished with result: $WEB_SHARDS_RESULT" >&2
+              exit 1
+            fi
+            echo "Both Web shards passed their exact local coverage contracts."
+          else
+            if [ "$WEB_SHARDS_RESULT" != "skipped" ]; then
+              echo "Non-Web change unexpectedly ran shards: $WEB_SHARDS_RESULT" >&2
+              exit 1
+            fi
+            echo "No Web impact; Web CI Gate passed without running npm code."
+          fi
 
   # Mutation testing (Stryker) — mede o SINAL dos testes (mutation score) no
   # core de utils/services. Roda apenas no cron noturno e via workflow_dispatch,

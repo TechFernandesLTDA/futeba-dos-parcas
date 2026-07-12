@@ -119,7 +119,7 @@ test('declarative branch protection names only stable aggregate checks', () => {
   assert.ok(requiredChecks, 'required status checks must be declared');
   assert.deepEqual(
     requiredChecks[1].trim().split('\n').map((line) => line.replace(/^\s*-\s+/, '')),
-    ['Lighthouse CI', 'Validate PR', 'Android CI Gate']
+    ['Lighthouse CI', 'Validate PR', 'Android CI Gate', 'Web CI Gate']
   );
   assert.match(settings, /required_approving_review_count: 1/);
   assert.match(settings, /require_code_owner_reviews: true/);
