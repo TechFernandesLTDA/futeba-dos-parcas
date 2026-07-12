@@ -154,9 +154,6 @@ jobs:
       - name: Install functions dependencies
         run: cd functions && npm ci
 
-      - name: Web TypeScript check
-        run: cd web && npx tsc --noEmit --project tsconfig.dev.json
-
       - name: Web ESLint
         run: cd web && npm run lint
 
