@@ -338,6 +338,30 @@ describe('createWallPostDocument', () => {
     expect(mockOnSnapshot).toHaveBeenCalled();
   });
 
+  it('conclui sem reupload quando a confirmação perdida já está READY', async () => {
+    const video = new File(['video'], 'partida.mp4', { type: 'video/mp4' });
+    mockUploadWithRetry.mockRejectedValueOnce({ code: 'storage/network-request-failed' });
+    mockGetDoc.mockResolvedValueOnce({
+      exists: () => true,
+      data: () => ({ status: 'READY' }),
+    });
+
+    await expect(createWallPostDocument({
+      groupId: 'group-1',
+      currentUserUid: 'user-1',
+      authorName: 'Jordi',
+      authorPhotoUrl: null,
+      text: 'Gol confirmado',
+      options: { mediaFile: video },
+      clientRequestId: CLIENT_REQUEST_ID,
+    })).resolves.toEqual({ postId: 'post-1', pipelineVersion: 1 });
+
+    expect(mockGetDoc).toHaveBeenCalledWith(
+      'doc:groups/group-1/wall_post_drafts/post-1',
+    );
+    expect(mockOnSnapshot).not.toHaveBeenCalled();
+  });
+
   it('falha imediatamente quando o draft de mídia não existe', async () => {
     const image = new File(['image'], 'foto.png', { type: 'image/png' });
     const unsubscribe = vi.fn();

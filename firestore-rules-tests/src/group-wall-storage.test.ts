@@ -38,6 +38,9 @@ const pipelinePath = (postId: string, uid: string, fileName = "source.jpg") =>
 
 function parseStorageRuleFunctions() {
   const functions = new Map<string, string>();
+  // As helpers top-level de storage.rules usam 4 espaços; blocos internos são
+  // mais profundos. Este parser é um guard de orçamento de reads, não um parser
+  // geral da linguagem, e o teste falha se o entrypoint/helper deixar de existir.
   const pattern = /^    function ([A-Za-z][A-Za-z0-9]*)\([^)]*\) \{([\s\S]*?)^    \}/gm;
   for (const match of STORAGE_RULES.matchAll(pattern)) {
     functions.set(match[1], match[2]);

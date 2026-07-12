@@ -98,6 +98,9 @@ service firebase.storage {
              // avaliação. A callable já validou grupo+membro ao criar este
              // draft curto e o processor revalida ambos antes de publicar.
              // Aqui lemos apenas grupo+draft para manter o limite oficial.
+             // Se o vínculo for revogado durante o TTL, apenas o staging pode
+             // receber bytes: o processor rejeita WALL_ACCESS_REVOKED e apaga
+             // a geração antes que qualquer wall_post seja publicado.
              isGroupActiveForWallWrite(groupId) &&
              draft != null &&
              draft.data.pipeline_version == 1 &&
