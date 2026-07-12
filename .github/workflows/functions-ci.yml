@@ -5,12 +5,18 @@ on:
     branches: [ master ]
     paths:
       - 'functions/**'
+      - 'shared/xp-constants.json'
+      - 'firebase.json'
+      - '.firebaserc'
+      - 'monitoring/**'
       - '.github/workflows/functions-ci.yml'
+  # Sem `paths` no pull_request: o classificador `changes` (abaixo) decide se o
+  # escopo functions foi tocado. Assim um PR que altera shared/xp-constants.json
+  # ou scripts/ci (ambos mapeados ao escopo functions) tambem aciona este CI,
+  # enquanto um PR web-only nao instala nada de Functions.
   pull_request:
     branches: [ master ]
-    paths:
-      - 'functions/**'
-      - '.github/workflows/functions-ci.yml'
+    types: [opened, synchronize, reopened]
   # Mutation testing roda apenas no schedule noturno (caro demais por PR).
   # O job `mutation` abaixo e gated por `if:` para nao rodar em push/PR.
   schedule:
@@ -22,14 +28,32 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 defaults:
   run:
     working-directory: functions
 
+# Estrategia de instalacao (issue #3543): o job `build` instala do lockfile e
+# roda `npm run build` UMA vez em ubuntu-latest e publica lib/ + node_modules/
+# como artifact versionado por SO + Node + hash(functions/package-lock.json). Os
+# jobs de qualidade (lint/test/firestore-query-perf/media-runtime) baixam o
+# artifact em vez de re-instalar. Resultado: 6 -> 2 instalacoes no arquivo
+# (build + mutation cron), e apenas 1 instalacao no caminho critico de um PR.
+# Compartilhar node_modules/ entre jobs Linux e confiavel porque todos rodam em
+# ubuntu-latest (mesmo SO/arquitetura); o mutation (Mac, darwin-arm64) mantem
+# sua propria instalacao pois nao pode consumir o artifact Linux.
 jobs:
+  changes:
+    if: github.event_name != 'schedule'
+    uses: ./.github/workflows/change-scope.yml
+
   build:
     name: Build TypeScript
-    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    needs: [ changes ]
+    if: github.event_name != 'schedule' && needs.changes.outputs.functions == 'true'
+    runs-on: ubuntu-latest
     timeout-minutes: 15
 
     steps:
@@ -49,9 +73,25 @@ jobs:
       - name: Build TypeScript
         run: npm run build
 
+      # Artifact consumido por lint/test/firestore-query-perf/media-runtime
+      # (este workflow) e pelo functions-integration-ci.yml (cross-workflow).
+      # Chave = SO + Node + hash(package-lock) garante cache invalidado a cada
+      # mudanca de lockfile (aceite #3543). retention baixa: lib/node_modules
+      # sao reprodutiveis e grandes.
+      - name: Upload build artifact (lib + node_modules)
+        uses: actions/upload-artifact@v4
+        with:
+          name: functions-build-linux-node22-${{ hashFiles('functions/package-lock.json') }}
+          path: |
+            functions/lib
+            functions/node_modules
+          retention-days: 1
+          compression-level: 6
+
   lint:
     name: ESLint Check
-    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    needs: [ build ]
+    runs-on: ubuntu-latest
     timeout-minutes: 15
 
     steps:
@@ -62,17 +102,19 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: 'npm'
-          cache-dependency-path: functions/package-lock.json
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Download build artifact (lib + node_modules)
+        uses: actions/download-artifact@v4
+        with:
+          name: functions-build-linux-node22-${{ hashFiles('functions/package-lock.json') }}
+          path: functions
 
       - name: Run ESLint
         run: npm run lint
 
   media-runtime-linux:
     name: FFmpeg 8.1.2 Linux Security Gate
+    needs: [ build ]
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -84,8 +126,14 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: 'npm'
-          cache-dependency-path: functions/package-lock.json
+
+      # node_modules/ vem do artifact do build (mesmo linux-x64). O binario
+      # FFmpeg e restaurado do cache dedicado (SHA-pinned).
+      - name: Download build artifact (lib + node_modules)
+        uses: actions/download-artifact@v4
+        with:
+          name: functions-build-linux-node22-${{ hashFiles('functions/package-lock.json') }}
+          path: functions
 
       - name: Restore verified FFmpeg binary
         uses: actions/cache@v4
@@ -94,9 +142,6 @@ jobs:
             functions/vendor/ffmpeg/ffmpeg
             functions/vendor/ffmpeg/install-manifest.json
           key: ffmpeg-linux-x64-13c2088bdbf4f1baa529d537c37872c810872b8ffab4fa74d39aea4d0332a9b7
-
-      - name: Install dependencies
-        run: npm ci
 
       - name: Install and verify pinned Linux FFmpeg
         run: npm run install:ffmpeg
@@ -109,9 +154,9 @@ jobs:
 
   test:
     name: Unit Tests
-    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
-    timeout-minutes: 15
     needs: [ build ]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
       # fetch-depth: 0 traz o historico completo. O diff-cover precisa do
@@ -125,11 +170,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: 'npm'
-          cache-dependency-path: functions/package-lock.json
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Download build artifact (lib + node_modules)
+        uses: actions/download-artifact@v4
+        with:
+          name: functions-build-linux-node22-${{ hashFiles('functions/package-lock.json') }}
+          path: functions
 
       # test:coverage = "jest --coverage" → gera coverage/lcov.info (reporter
       # lcov configurado em jest.config.js), consumido pelo gate de diff-coverage.
@@ -156,11 +202,9 @@ jobs:
         run: git fetch --no-tags origin master
         working-directory: .
 
-      # diff-cover e uma ferramenta Python (le lcov + git diff). O Python do
-      # Homebrew no runner self-hosted e "externally-managed" (PEP 668), entao
-      # `pip install` direto e recusado. Instalamos em venv isolado em
-      # $RUNNER_TEMP (mesmo padrao do semgrep.yml, PR #2507) — sem poluir o
-      # site-packages do sistema nem usar --break-system-packages.
+      # diff-cover e uma ferramenta Python (le lcov + git diff). Instalado em
+      # venv isolado em $RUNNER_TEMP — mesmo padrao usado no semgrep.yml (PR
+      # #2507), sem poluir o site-packages do sistema.
       - name: Install diff-cover (venv isolado)
         if: github.event_name == 'pull_request'
         run: |
@@ -176,8 +220,8 @@ jobs:
       # imprime "No lines with coverage information" e sai 0 (passa em falso).
       # Normalizamos prefixando `functions/` nos paths relativos sob src/.
       # Paths absolutos (outra forma possivel do istanbul) sao no-op aqui — o
-      # diff-cover ja os relativiza sozinho. sed -i e' BSD no macOS, entao
-      # escrevemos num arquivo temporario em vez de in-place.
+      # diff-cover ja os relativiza sozinho. Redireciona saida para arquivo
+      # temporario (compativel Linux/macOS, sem sed -i in-place).
       - name: Normaliza paths do lcov (repo-root-relative)
         if: github.event_name == 'pull_request'
         run: sed -E 's#^SF:(\./)?src/#SF:functions/src/#' coverage/lcov.info > "$RUNNER_TEMP/lcov.norm"
@@ -196,9 +240,9 @@ jobs:
 
   firestore-query-perf:
     name: Firestore Query Performance
-    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
-    timeout-minutes: 20
     needs: [ build ]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
     # Tests perf são experimentais — ESM modules de @google-cloud/firestore
     # quebram com ts-jest default. Marcar non-blocking até ajustar transform.
     continue-on-error: true
@@ -206,6 +250,12 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Download build artifact (lib + node_modules)
+        uses: actions/download-artifact@v4
+        with:
+          name: functions-build-linux-node22-${{ hashFiles('functions/package-lock.json') }}
+          path: functions
 
       # firebase-tools >= 13.x requer JDK 21+ pro Firestore emulator.
       # Runner default tem JDK 17 → emulator fail. Setup explícito.
@@ -219,12 +269,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: 'npm'
-          cache-dependency-path: functions/package-lock.json
-
-      - name: Install dependencies
-        run: npm ci
-        working-directory: functions
 
       - name: Install Firebase CLI (se ausente)
         run: |
@@ -233,12 +277,11 @@ jobs:
           fi
           firebase --version
 
-      # FIX #1282-CI: runners macOS self-hosted reutilizam o mesmo processo
-      # entre runs. Emuladores de um run anterior podem manter as portas
-      # ocupadas → "Could not start Firestore Emulator, port taken".
-      # Matar qualquer processo nas portas dos emuladores antes de iniciar
-      # (lsof -ti retorna PIDs; || true garante que o step nunca falha
-      # mesmo que a porta já esteja livre).
+      # "Liberar portas" mantido (aceite #3543): runners reutilizam processos
+      # entre runs e emuladores podem deixar portas ocupadas
+      # ("Could not start Firestore Emulator, port taken"). lsof -ti retorna
+      # PIDs; || true garante que o step nunca falha mesmo se a porta ja
+      # estiver livre. Funciona em Linux (ubuntu-latest) e macOS.
       - name: Liberar portas dos emuladores (cleanup stale processes)
         run: lsof -ti:8085,9099,9199,4000,5001 | xargs kill -9 2>/dev/null || true
         working-directory: .
@@ -257,6 +300,9 @@ jobs:
     name: Mutation Testing (Stryker)
     runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
     # Caro: roda apenas no schedule noturno ou disparo manual — NUNCA em push/PR.
+    # NAO consome o artifact do `build` (linux-x64): roda em macOS ARM64 e
+    # precisa da sua propria instalacao de dependencias. Fora do caminho
+    # critico de PR.
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     timeout-minutes: 45
 
