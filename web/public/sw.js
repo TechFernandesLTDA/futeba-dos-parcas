@@ -15,7 +15,11 @@
 // v10 → v11: restringe o cache a requests HTTP(S) da mesma origem. Evita que
 // assets de terceiros sejam administrados pelo app e substitui allowlists por
 // substring que aceitavam hosts parecidos com dominios do Firebase/Google.
-const CACHE_NAME = 'futeba-v11';
+// v11 → v12: invalida index.html e bundles antigos presos no cache apos
+// remover crossOrigin=anonymous do player de video (CORS blockava TODOS os
+// videos do mural). Sem este bump o SW servia o bundle antigo mesmo apos
+// hard refresh do usuario.
+const CACHE_NAME = 'futeba-v12';
 const OFFLINE_URL = '/offline.html';
 const STATIC_ASSETS = [
   '/',
