@@ -104,7 +104,8 @@ jobs:
     name: Web CI Gate
     if: ${{ always() && github.event_name != 'schedule' }}
     needs: [changes, web_shards]
-    # O gate executa o verificador vindo do PR, portanto também deve ser efêmero.
+    # O gate apenas agrega needs.*.result (sem checkout/npm). Mesmo assim roda em
+    # runner efêmero porque é acionado por PRs e nunca deve tocar runners persistentes.
     runs-on: ${{ fromJSON(github.event_name == 'pull_request' && '["ubuntu-latest"]' || (vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]')) }}
     timeout-minutes: 5
     steps:
