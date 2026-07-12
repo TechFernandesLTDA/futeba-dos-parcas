@@ -265,7 +265,6 @@ export function WallPostVideoPlayer({
         ref={setVideoNode}
         controls
         playsInline
-        crossOrigin="anonymous"
         preload="metadata"
         controlsList="nodownload"
         poster={hasPoster ? activePoster! : undefined}

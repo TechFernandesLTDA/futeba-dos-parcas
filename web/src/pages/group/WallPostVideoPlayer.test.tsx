@@ -26,7 +26,7 @@ describe('WallPostVideoPlayer', () => {
     const source = container.querySelector('video source');
     expect(video).toHaveAttribute('controls');
     expect(video).toHaveAttribute('playsinline');
-    expect(video).toHaveAttribute('crossorigin', 'anonymous');
+    expect(video).not.toHaveAttribute('crossorigin');
     expect(video).toHaveAttribute('preload', 'metadata');
     expect(video).toHaveAttribute('controlslist', 'nodownload');
     expect(video).not.toHaveAttribute('autoplay');
