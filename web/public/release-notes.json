@@ -1,7 +1,31 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-12T04:06:11.850Z",
+  "generatedAt": "2026-07-12T12:58:27.962Z",
   "notes": [
+    {
+      "version": "1.53.3",
+      "buildNumber": null,
+      "releaseDate": "2026-07-12",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "O mapa agora mostra se cada local está aberto usando o fuso e o horário reais da arena.",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "O cadastro e a edição do local permitem escolher explicitamente o fuso horário brasileiro correto.",
+        "Locais antigos continuam usando o horário de Brasília até a atualização segura dos dados."
+      ],
+      "fixed": [
+        "Horários que terminam depois da meia-noite agora pertencem ao dia em que o local abriu, inclusive de domingo para segunda-feira.",
+        "O indicador de aberto ou fechado deixa de mudar conforme o fuso do celular, navegador ou servidor.",
+        "`isLocationOpenAt` centraliza a conversão civil por fuso, limites inclusivos, virada semanal e fallback temporário para `America/Sao_Paulo`.",
+        "`isOpenNow`, filtro e cards do mapa compartilham a mesma regra pura e fecham com segurança diante de dados explicitamente inválidos."
+      ],
+      "issueRefs": [
+        3550
+      ]
+    },
     {
       "version": "1.53.2",
       "buildNumber": null,

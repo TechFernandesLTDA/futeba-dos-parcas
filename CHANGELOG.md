@@ -230,6 +230,17 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.53.3][web-1.53.3] - 2026-07-12
+
+#### Adicionado
+- Campo canônico `time_zone` IANA, validação nos formulários e backfill idempotente com dry-run para documentos legados.
+
+#### Corrigido
+- `isLocationOpenAt` centraliza a conversão civil por fuso, limites inclusivos, virada semanal e fallback temporário para `America/Sao_Paulo`.
+- `isOpenNow`, filtro e cards do mapa compartilham a mesma regra pura e fecham com segurança diante de dados explicitamente inválidos.
+
+_Issues: #3550_
+
 ### [1.53.2][web-1.53.2] - 2026-07-12
 
 #### Adicionado
@@ -2202,6 +2213,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.53.3]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.53.3.md
 [web-1.53.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.53.2.md
 [web-1.53.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.53.1.md
 [web-1.53.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.53.0.md

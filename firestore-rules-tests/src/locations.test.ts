@@ -167,6 +167,38 @@ describe("locations — criação", () => {
     );
   });
 
+  it("FIELD_OWNER pode criar local com fuso IANA explícito", async () => {
+    const db = asFieldOwner(testEnv);
+    await assertSucceeds(
+      db.doc("locations/loc-new-with-time-zone").set({
+        name: "Arena com Fuso",
+        owner_id: UID_FIELD_OWNER,
+        is_active: true,
+        is_verified: false,
+        rating: null,
+        latitude: -23.5,
+        longitude: -46.6,
+        time_zone: "America/Sao_Paulo",
+      })
+    );
+  });
+
+  it("FIELD_OWNER NÃO pode gravar fuso com tipo inválido", async () => {
+    const db = asFieldOwner(testEnv);
+    await assertFails(
+      db.doc("locations/loc-new-invalid-time-zone").set({
+        name: "Arena sem Fuso Válido",
+        owner_id: UID_FIELD_OWNER,
+        is_active: true,
+        is_verified: false,
+        rating: null,
+        latitude: -23.5,
+        longitude: -46.6,
+        time_zone: 123,
+      })
+    );
+  });
+
   it("Player NÃO pode criar local com is_verified=true (apenas admin altera)", async () => {
     const db = asPlayerA(testEnv);
     await assertFails(
@@ -215,6 +247,15 @@ describe("locations — criação", () => {
 // ============================================================
 
 describe("locations — atualização", () => {
+  it("Owner pode adicionar fuso explícito a local legado", async () => {
+    const db = asPlayerA(testEnv);
+    await assertSucceeds(
+      db.doc(`locations/${LOC_PLAYER_A_OWNED}`).update({
+        time_zone: "America/Manaus",
+      })
+    );
+  });
+
   it("Owner pode atualizar campos básicos do próprio local", async () => {
     const db = asPlayerA(testEnv);
     await assertSucceeds(

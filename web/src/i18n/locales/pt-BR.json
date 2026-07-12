@@ -2151,10 +2151,13 @@
         "nameRequired": "Nome é obrigatório",
         "phoneInvalid": "Telefone inválido (use DDD + número)",
         "playersPerTeamRange": "Entre 3 e 11",
-        "stateRequired": "Estado é obrigatório.",
+      "stateRequired": "Estado é obrigatório.",
+      "timeZoneInvalid": "Selecione um fuso horário válido.",
         "websiteInvalid": "URL inválida. Deve começar com http:// ou https://"
       },
-      "websiteLabel": "Site"
+    "timeZoneHelper": "Usado para calcular corretamente os horários, inclusive após a meia-noite.",
+    "timeZoneLabel": "Fuso horário do local",
+    "websiteLabel": "Site"
     },
     "quickCreate": {
       "title": "Criar Local",

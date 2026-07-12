@@ -31,6 +31,16 @@ describe('snakeToCamel', () => {
     expect(result).toEqual({ userName: 'João', totalGames: 10 });
   });
 
+  it('aceita timeZone camelCase e prioriza time_zone canônico quando ambos existem', () => {
+    expect(snakeToCamel({ timeZone: 'America/Manaus' })).toEqual({
+      timeZone: 'America/Manaus',
+    });
+    expect(snakeToCamel({
+      timeZone: 'America/Manaus',
+      time_zone: 'America/Sao_Paulo',
+    })).toEqual({ timeZone: 'America/Sao_Paulo' });
+  });
+
   it('preserva timestamps do Firestore (objetos com toDate)', () => {
     const mockTimestamp = { toDate: () => new Date(2026, 0, 1) };
     const input = { created_at: mockTimestamp, name: 'test' };

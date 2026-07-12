@@ -8,6 +8,16 @@ export type VenueAccountBillingScope = 'OWNER' | 'LOCATION' | 'FIELD_COUNT' | 'M
 export type LocationCommercialRequestType = 'PUBLICATION' | 'COMMERCIAL_UPDATE';
 export type LocationCommercialRequestStatus = 'PENDING_REVIEW' | 'NEEDS_CHANGES' | 'APPROVED' | 'REJECTED';
 
+export const DEFAULT_LOCATION_TIME_ZONE = 'America/Sao_Paulo';
+
+export const LOCATION_TIME_ZONE_OPTIONS = [
+  { value: 'America/Noronha', label: 'Fernando de Noronha (UTC-02)' },
+  { value: DEFAULT_LOCATION_TIME_ZONE, label: 'Brasília / São Paulo (UTC-03)' },
+  { value: 'America/Cuiaba', label: 'Cuiabá (UTC-04)' },
+  { value: 'America/Manaus', label: 'Manaus (UTC-04)' },
+  { value: 'America/Rio_Branco', label: 'Rio Branco (UTC-05)' },
+] as const;
+
 export interface LocationHourlyPriceAggregate {
   minHourlyPriceCents: number;
   averageHourlyPriceCents: number;
@@ -108,6 +118,8 @@ export interface Location {
   instagram?: string;
   
   // Operating Hours
+  /** IANA timezone. Legacy records without it use DEFAULT_LOCATION_TIME_ZONE. */
+  timeZone?: string;
   openingTime: string;
   closingTime: string;
   operatingDays: number[];
@@ -291,20 +303,116 @@ export function getFullAddress(location: Location): string {
   return location.address;
 }
 
-export function isOpenNow(location: Location): boolean {
+const WEEKDAY_TO_OPERATING_DAY: Record<string, number> = {
+  Mon: 1,
+  Tue: 2,
+  Wed: 3,
+  Thu: 4,
+  Fri: 5,
+  Sat: 6,
+  Sun: 7,
+};
+
+const locationTimeFormatters = new Map<string, Intl.DateTimeFormat | null>();
+
+function getLocationTimeFormatter(timeZone: string): Intl.DateTimeFormat | null {
+  if (locationTimeFormatters.has(timeZone)) {
+    return locationTimeFormatters.get(timeZone) ?? null;
+  }
+
+  try {
+    const formatter = new Intl.DateTimeFormat('en-US-u-ca-gregory-nu-latn', {
+      timeZone,
+      weekday: 'short',
+      hour: '2-digit',
+      minute: '2-digit',
+      hourCycle: 'h23',
+    });
+    // Construction may be lazy in some engines, so force timezone resolution.
+    formatter.format(new Date(0));
+    locationTimeFormatters.set(timeZone, formatter);
+    return formatter;
+  } catch {
+    locationTimeFormatters.set(timeZone, null);
+    return null;
+  }
+}
+
+export function isValidLocationTimeZone(value: unknown): value is string {
+  return typeof value === 'string' && value.trim().length > 0 &&
+    getLocationTimeFormatter(value.trim()) !== null;
+}
+
+function parseOperatingTime(value: unknown): number | null {
+  if (typeof value !== 'string') return null;
+  const match = /^(?:([01]\d|2[0-3])):([0-5]\d)$/.exec(value);
+  if (!match) return null;
+  return Number(match[1]) * 60 + Number(match[2]);
+}
+
+function getCivilTime(
+  instant: Date,
+  timeZone: string,
+): { operatingDay: number; minutes: number } | null {
+  if (!(instant instanceof Date) || !Number.isFinite(instant.getTime())) return null;
+  const formatter = getLocationTimeFormatter(timeZone);
+  if (!formatter) return null;
+
+  const parts = formatter.formatToParts(instant);
+  const weekday = parts.find((part) => part.type === 'weekday')?.value;
+  const hour = Number(parts.find((part) => part.type === 'hour')?.value);
+  const minute = Number(parts.find((part) => part.type === 'minute')?.value);
+  const operatingDay = weekday ? WEEKDAY_TO_OPERATING_DAY[weekday] : undefined;
+
+  if (!operatingDay || !Number.isInteger(hour) || !Number.isInteger(minute)) return null;
+  return { operatingDay, minutes: hour * 60 + minute };
+}
+
+/**
+ * Evaluates one absolute instant in the venue's civil timezone.
+ * Overnight ranges belong to the day on which they open.
+ */
+export function isLocationOpenAt(location: Location, instant = new Date()): boolean {
   if (!location.isActive) return false;
-  
-  const now = new Date();
-  const dayOfWeek = now.getDay() === 0 ? 7 : now.getDay();
-  
-  if (!location.operatingDays.includes(dayOfWeek)) return false;
-  
-  const currentTime = now.getHours() * 60 + now.getMinutes();
-  const [openHour, openMin] = location.openingTime.split(':').map(Number);
-  const [closeHour, closeMin] = location.closingTime.split(':').map(Number);
-  
-  const openMinutes = openHour * 60 + openMin;
-  const closeMinutes = closeHour * 60 + closeMin;
-  
-  return currentTime >= openMinutes && currentTime <= closeMinutes;
+
+  const operatingDays = Array.isArray(location.operatingDays) ? location.operatingDays : [];
+  if (operatingDays.length === 0 ||
+    !operatingDays.every((day) => Number.isInteger(day) && day >= 1 && day <= 7)) {
+    return false;
+  }
+
+  const openingMinutes = parseOperatingTime(location.openingTime);
+  const closingMinutes = parseOperatingTime(location.closingTime);
+  if (openingMinutes === null || closingMinutes === null || openingMinutes === closingMinutes) {
+    return false;
+  }
+
+  const rawTimeZone: unknown = location.timeZone;
+  if (rawTimeZone !== undefined && rawTimeZone !== null && typeof rawTimeZone !== 'string') {
+    return false;
+  }
+  const timeZone = typeof rawTimeZone !== 'string' || rawTimeZone.trim() === ''
+    ? DEFAULT_LOCATION_TIME_ZONE
+    : rawTimeZone.trim();
+  const civilTime = getCivilTime(instant, timeZone);
+  if (!civilTime) return false;
+
+  if (closingMinutes > openingMinutes) {
+    return operatingDays.includes(civilTime.operatingDay) &&
+      civilTime.minutes >= openingMinutes &&
+      civilTime.minutes <= closingMinutes;
+  }
+
+  if (civilTime.minutes >= openingMinutes) {
+    return operatingDays.includes(civilTime.operatingDay);
+  }
+  if (civilTime.minutes <= closingMinutes) {
+    const openingDay = civilTime.operatingDay === 1 ? 7 : civilTime.operatingDay - 1;
+    return operatingDays.includes(openingDay);
+  }
+  return false;
+}
+
+export function isOpenNow(location: Location): boolean {
+  return isLocationOpenAt(location);
 }
