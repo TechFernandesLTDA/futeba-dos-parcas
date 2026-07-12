@@ -19,7 +19,10 @@
 // remover crossOrigin=anonymous do player de video (CORS blockava TODOS os
 // videos do mural). Sem este bump o SW servia o bundle antigo mesmo apos
 // hard refresh do usuario.
-const CACHE_NAME = 'futeba-v12';
+// v12 → v13: invalida HTML cacheado com CSP antigo (sem media-src) que
+// blockava <video> de carregar do Firebase Storage. CSP novo adiciona
+// media-src permitindo firebasestorage.googleapis.com.
+const CACHE_NAME = 'futeba-v13';
 const OFFLINE_URL = '/offline.html';
 const STATIC_ASSETS = [
   '/',
