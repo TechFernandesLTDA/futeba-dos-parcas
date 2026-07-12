@@ -136,15 +136,16 @@ describe('publicLocationFilters', () => {
     }))).toBe(4);
   });
 
-  it('trata horario overnight e cadastros legados sem quebrar', () => {
+  it('trata horario overnight e cadastros legados sem depender do TZ do host', () => {
     expect(isPublicLocationOpenAt(
       baseLocation({ openingTime: '22:00', closingTime: '02:00', operatingDays: [1] }),
-      new Date('2026-06-29T23:30:00-03:00'),
+      // Componentes locais preservam segunda-feira 23:30 em qualquer TZ do processo.
+      new Date(2026, 5, 29, 23, 30),
     )).toBe(true);
 
     expect(isPublicLocationOpenAt(
       baseLocation({ openingTime: '', closingTime: '', operatingDays: [] }),
-      new Date('2026-06-29T12:00:00-03:00'),
+      new Date(2026, 5, 29, 12, 0),
     )).toBe(false);
   });
 });

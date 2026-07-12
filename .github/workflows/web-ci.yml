@@ -6,14 +6,16 @@ on:
     paths:
       - 'web/**'
       - '.github/workflows/web-ci.yml'
+      - 'scripts/web-ci-workflow-contract.test.js'
   push:
     branches: [master, develop]
     paths:
       - 'web/**'
       - '.github/workflows/web-ci.yml'
+      - 'scripts/web-ci-workflow-contract.test.js'
   workflow_dispatch:
   # Cron noturno (03:00 UTC) — dispara apenas o job de mutation testing.
-  # Os jobs de PR/push (lint/typecheck/test/build) são desativados no schedule
+  # Os jobs de PR/push (quality/tests) são desativados no schedule
   # via `if` para não rodar à toa nos runners self-hosted.
   schedule:
     - cron: '0 3 * * *'
@@ -22,19 +24,27 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 defaults:
   run:
     working-directory: web
 
 jobs:
-  lint:
-    name: ESLint
+  # Uma única instalação cobre lint, TypeScript e o build de produção. O script
+  # `npm run build` já executa o compilador TypeScript antes do Vite.
+  web-quality:
+    name: Web Quality
     if: github.event_name != 'schedule'
-    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
-    timeout-minutes: 15
+    # PRs executam código npm não confiável em runner efêmero.
+    runs-on: ${{ fromJSON(github.event_name == 'pull_request' && '["ubuntu-latest"]' || (vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]')) }}
+    timeout-minutes: 20
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -42,6 +52,9 @@ jobs:
           node-version: '22'
           cache: 'npm'
           cache-dependency-path: web/package-lock.json
+
+      - name: Verify Web CI contract
+        run: node --test ../scripts/web-ci-workflow-contract.test.js
 
       - name: Install dependencies
         run: npm ci --legacy-peer-deps
@@ -49,71 +62,35 @@ jobs:
       - name: Run ESLint
         run: npm run lint
 
-  typecheck:
-    name: TypeScript Check
-    if: github.event_name != 'schedule'
-    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
-    timeout-minutes: 10
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: 'npm'
-          cache-dependency-path: web/package-lock.json
-
-      - name: Install dependencies
-        run: npm ci --legacy-peer-deps
-
-      - name: TypeScript check
-        run: npx tsc --noEmit
-
-  test:
-    name: Unit Tests
-    if: github.event_name != 'schedule'
-    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
-    timeout-minutes: 15
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: 'npm'
-          cache-dependency-path: web/package-lock.json
-
-      - name: Install dependencies
-        run: npm ci --legacy-peer-deps
-
-      - name: Run unit tests
-        run: npm test
-
-  build:
-    name: Build Check
-    if: github.event_name != 'schedule'
-    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
-    timeout-minutes: 15
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: 'npm'
-          cache-dependency-path: web/package-lock.json
-
-      - name: Install dependencies
-        run: npm ci --legacy-peer-deps
-
-      - name: Build
+      - name: TypeScript and production build
         run: npm run build
+
+  web-tests:
+    name: Web Tests
+    if: github.event_name != 'schedule'
+    # Push/manual podem reutilizar o Mac; PR nunca recebe o runner persistente.
+    runs-on: ${{ fromJSON(github.event_name == 'pull_request' && '["ubuntu-latest"]' || (vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]')) }}
+    timeout-minutes: 15
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Run Vitest suite
+        # GitHub-hosted privado expõe 2 CPUs; o default do Vitest usa CPUs - 1.
+        # Dois workers usam a capacidade inteira sem retry, shard ou corte de suíte.
+        run: npm test -- --maxWorkers=2
 
   # Mutation testing (Stryker) — mede o SINAL dos testes (mutation score) no
   # core de utils/services. Roda apenas no cron noturno e via workflow_dispatch,
@@ -126,6 +103,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
