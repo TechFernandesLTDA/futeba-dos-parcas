@@ -26,8 +26,10 @@ concurrency:
 jobs:
   semgrep:
     name: Semgrep (TypeScript)
-    # Convencao do repo: self-hosted macOS ARM64 com override via vars.RUNNER_LABELS.
-    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    # GitHub-hosted ubuntu-latest: separa a capacidade Linux (gates JS/security)
+    # da capacidade Mac (reservada a iOS/Apple). O venv abaixo funciona em Linux
+    # (o Python do ubuntu-latest tambem e "externally-managed" — PEP 668).
+    runs-on: ubuntu-latest
     timeout-minutes: 25
     permissions:
       # Necessario para o upload-sarif publicar na aba Security.
@@ -40,11 +42,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # A Docker action returntocorp/semgrep nao roda de forma confiavel em
-      # self-hosted macOS ARM64. O Python do Homebrew no runner e "externally-
-      # managed" (PEP 668), entao `pip install` direto e recusado. Instalamos o
-      # Semgrep num venv isolado em $RUNNER_TEMP: sem poluir o site-packages do
-      # sistema e sem --break-system-packages (que pode quebrar o Homebrew).
+      # O Python do ubuntu-latest tambem e "externally-managed" (PEP 668), entao
+      # `pip install` direto e recusado. Instalamos o Semgrep num venv isolado em
+      # $RUNNER_TEMP: sem poluir o site-packages do sistema e sem
+      # --break-system-packages. (A action Docker returntocorp/semgrep e estavel
+      # em Linux, mas o venv mantem o controle de versao explicito.)
       - name: Install Semgrep CLI
         run: |
           python3 -m venv "$RUNNER_TEMP/semgrep-venv"
