@@ -1,0 +1,18 @@
+[
+  {
+    "origin": [
+      "https://futebadosparcas.web.app",
+      "https://futebadosparcas.firebaseapp.com"
+    ],
+    "method": ["GET", "HEAD"],
+    "responseHeader": [
+      "Accept-Ranges",
+      "Cache-Control",
+      "Content-Length",
+      "Content-Range",
+      "Content-Type",
+      "Range"
+    ],
+    "maxAgeSeconds": 3600
+  }
+]

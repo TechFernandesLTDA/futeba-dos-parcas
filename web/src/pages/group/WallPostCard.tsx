@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Card,
@@ -25,13 +25,14 @@ import {
   Groups as GroupsIcon,
   Flag as ReportIcon,
   VisibilityOff as HideIcon,
-  PlayArrow as PlayIcon,
 } from '@mui/icons-material';
 import { PlayerAvatar } from '../../components/common/GameCard';
 import { ReactionBar } from '../../components/reactions/ReactionBar';
 import { WallPost } from '../../hooks/useGroupWall';
 import { formatRelativeTime } from '../../utils/dateUtils';
 import { isWallPostVideo } from '../../utils/wallMedia';
+import { WallPostVideoPlayer } from './WallPostVideoPlayer';
+import { resolveWallPostStorageUrl } from '../../utils/wallMediaStorage';
 
 interface WallPostCardProps {
   post: WallPost;
@@ -44,6 +45,7 @@ interface WallPostCardProps {
   onOpenOrigin?: () => void;
   onHide?: (post: WallPost) => void;
   onReport?: (post: WallPost) => void;
+  resolveStorageUrl?: (path: string) => Promise<string>;
 }
 
 export const WallPostCard: React.FC<WallPostCardProps> = ({
@@ -57,6 +59,7 @@ export const WallPostCard: React.FC<WallPostCardProps> = ({
   onOpenOrigin,
   onHide,
   onReport,
+  resolveStorageUrl,
 }) => {
   const { t, i18n } = useTranslation();
   const theme = useTheme();
@@ -65,8 +68,10 @@ export const WallPostCard: React.FC<WallPostCardProps> = ({
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [mediaLoading, setMediaLoading] = useState(Boolean(post.mediaUrl));
   const [mediaFailed, setMediaFailed] = useState(false);
-  const [posterFailed, setPosterFailed] = useState(false);
   const [mediaRetry, setMediaRetry] = useState(0);
+  const [activeImageUrl, setActiveImageUrl] = useState(post.mediaUrl ?? '');
+  const imageRecoveryAttemptedRef = useRef(false);
+  const imageRecoveryGenerationRef = useRef(0);
   const menuOpen = Boolean(anchorEl);
   const exactDateTime = post.createdAt
     ? new Intl.DateTimeFormat(i18n.resolvedLanguage || i18n.language || 'pt-BR', {
@@ -76,18 +81,41 @@ export const WallPostCard: React.FC<WallPostCardProps> = ({
     : '';
 
   useEffect(() => {
+    imageRecoveryGenerationRef.current += 1;
+    imageRecoveryAttemptedRef.current = false;
+    setActiveImageUrl(post.mediaUrl ?? '');
     setMediaLoading(Boolean(post.mediaUrl));
     setMediaFailed(false);
-    setPosterFailed(false);
     setLightboxOpen(false);
     setMediaRetry(0);
-  }, [post.mediaUrl, post.thumbnailUrl]);
+  }, [post.mediaPath, post.mediaUrl, post.thumbnailUrl]);
 
   const handleRetryMedia = () => {
+    imageRecoveryAttemptedRef.current = false;
+    setActiveImageUrl(post.mediaUrl ?? '');
     setMediaFailed(false);
     setMediaLoading(true);
     setMediaRetry((current) => current + 1);
-    if (isVideo) setLightboxOpen(true);
+  };
+
+  const handleImageError = async () => {
+    if (!post.mediaPath || imageRecoveryAttemptedRef.current) {
+      setMediaLoading(false);
+      setMediaFailed(true);
+      return;
+    }
+    imageRecoveryAttemptedRef.current = true;
+    const generation = imageRecoveryGenerationRef.current;
+    try {
+      const freshUrl = await (resolveStorageUrl ?? resolveWallPostStorageUrl)(post.mediaPath);
+      if (generation !== imageRecoveryGenerationRef.current) return;
+      setActiveImageUrl(freshUrl);
+      setMediaRetry((current) => current + 1);
+    } catch {
+      if (generation !== imageRecoveryGenerationRef.current) return;
+      setMediaLoading(false);
+      setMediaFailed(true);
+    }
   };
 
   const handleOpenMenu = (event: React.MouseEvent<HTMLElement>) => {
@@ -181,17 +209,28 @@ export const WallPostCard: React.FC<WallPostCardProps> = ({
               </Typography>
             )}
 
-            {post.mediaUrl && (
+            {post.mediaUrl && isVideo && (
+              <WallPostVideoPlayer
+                src={post.mediaUrl}
+                poster={post.thumbnailUrl}
+                mediaPath={post.mediaPath}
+                posterPath={post.thumbnailPath}
+                authorName={post.authorName}
+                resolveStorageUrl={resolveStorageUrl}
+              />
+            )}
+
+            {post.mediaUrl && !isVideo && (
               <Box
                 sx={{
                   position: 'relative',
                   overflow: 'hidden',
                   borderRadius: 2,
                   bgcolor: theme.palette.action.hover,
-                  minHeight: isVideo ? 180 : mediaLoading ? 180 : 0,
+                  minHeight: mediaLoading ? 180 : 0,
                 }}
               >
-                {mediaLoading && !mediaFailed && !isVideo && (
+                {mediaLoading && !mediaFailed && (
                   <Skeleton
                     variant="rectangular"
                     height={280}
@@ -206,12 +245,11 @@ export const WallPostCard: React.FC<WallPostCardProps> = ({
                     component="button"
                     type="button"
                     onClick={() => setLightboxOpen(true)}
-                    aria-label={t(isVideo ? 'groupWall.openVideo' : 'groupWall.openPhoto', { name: post.authorName })}
+                    aria-label={t('groupWall.openPhoto', { name: post.authorName })}
                     sx={{
                       position: 'relative',
                       display: 'block',
                       width: '100%',
-                      minHeight: isVideo ? 180 : undefined,
                       p: 0,
                       border: 0,
                       cursor: 'pointer',
@@ -222,76 +260,21 @@ export const WallPostCard: React.FC<WallPostCardProps> = ({
                       },
                     }}
                   >
-                    {isVideo ? (
-                      <>
-                        {post.thumbnailUrl && !posterFailed ? (
-                          <Box
-                            component="img"
-                            src={post.thumbnailUrl}
-                            alt=""
-                            loading="lazy"
-                            onLoad={() => setMediaLoading(false)}
-                            onError={() => {
-                              setMediaLoading(false);
-                              setPosterFailed(true);
-                            }}
-                            sx={{
-                              display: 'block',
-                              width: '100%',
-                              maxHeight: 420,
-                              minHeight: 180,
-                              objectFit: 'cover',
-                              bgcolor: theme.palette.common.black,
-                            }}
-                          />
-                        ) : (
-                          <Box sx={{ minHeight: 220, bgcolor: theme.palette.common.black }} />
-                        )}
-                        <Box
-                          aria-hidden
-                          sx={{
-                            position: 'absolute',
-                            inset: 0,
-                            display: 'grid',
-                            placeItems: 'center',
-                            bgcolor: alpha(theme.palette.common.black, 0.18),
-                          }}
-                        >
-                          <Box
-                            sx={{
-                              display: 'grid',
-                              placeItems: 'center',
-                              width: 58,
-                              height: 58,
-                              borderRadius: '50%',
-                              color: 'common.white',
-                              bgcolor: alpha(theme.palette.common.black, 0.68),
-                            }}
-                          >
-                            <PlayIcon sx={{ fontSize: 38 }} />
-                          </Box>
-                        </Box>
-                      </>
-                    ) : (
-                      <Box
-                        component="img"
-                        src={post.mediaUrl}
-                        alt={t('groupWall.imageAlt', { name: post.authorName })}
-                        loading="lazy"
-                        onLoad={() => setMediaLoading(false)}
-                        onError={() => {
-                          setMediaLoading(false);
-                          setMediaFailed(true);
-                        }}
-                        sx={{
-                          display: 'block',
-                          width: '100%',
-                          maxHeight: 420,
-                          objectFit: 'cover',
-                          opacity: mediaLoading ? 0 : 1,
-                        }}
-                      />
-                    )}
+                    <Box
+                      component="img"
+                      src={activeImageUrl}
+                      alt={t('groupWall.imageAlt', { name: post.authorName })}
+                      loading="lazy"
+                      onLoad={() => setMediaLoading(false)}
+                      onError={() => void handleImageError()}
+                      sx={{
+                        display: 'block',
+                        width: '100%',
+                        maxHeight: 420,
+                        objectFit: 'cover',
+                        opacity: mediaLoading ? 0 : 1,
+                      }}
+                    />
                   </Box>
                 )}
                 {mediaFailed && (
@@ -299,12 +282,12 @@ export const WallPostCard: React.FC<WallPostCardProps> = ({
                     severity="warning"
                     action={(
                       <Button color="inherit" size="small" onClick={handleRetryMedia}>
-                        {t(isVideo ? 'groupWall.retryVideo' : 'groupWall.retryImage')}
+                        {t('groupWall.retryImage')}
                       </Button>
                     )}
                     sx={{ borderRadius: 0 }}
                   >
-                    {t(isVideo ? 'groupWall.videoLoadError' : 'groupWall.imageLoadError')}
+                    {t('groupWall.imageLoadError')}
                   </Alert>
                 )}
               </Box>
@@ -386,36 +369,18 @@ export const WallPostCard: React.FC<WallPostCardProps> = ({
         )}
       </Menu>
 
-      <Dialog open={lightboxOpen} onClose={() => setLightboxOpen(false)} maxWidth="lg">
-        {post.mediaUrl && (
-          isVideo ? (
-            <Box
-              component="video"
-              key={mediaRetry}
-              src={post.mediaUrl}
-              controls
-              autoPlay
-              playsInline
-              preload="metadata"
-              aria-label={t('groupWall.openVideo', { name: post.authorName })}
-              onError={() => {
-                setLightboxOpen(false);
-                setMediaFailed(true);
-              }}
-              sx={{ width: '100%', maxHeight: '90vh', bgcolor: theme.palette.common.black }}
-            />
-          ) : (
-            <Box
-              component="img"
-              src={post.mediaUrl}
-              alt={t('groupWall.imageAlt', { name: post.authorName })}
-              sx={{
-                width: '100%',
-                maxHeight: '90vh',
-                objectFit: 'contain',
-              }}
-            />
-          )
+      <Dialog open={!isVideo && lightboxOpen} onClose={() => setLightboxOpen(false)} maxWidth="lg">
+        {post.mediaUrl && !isVideo && (
+          <Box
+            component="img"
+            src={activeImageUrl}
+            alt={t('groupWall.imageAlt', { name: post.authorName })}
+            sx={{
+              width: '100%',
+              maxHeight: '90vh',
+              objectFit: 'contain',
+            }}
+          />
         )}
       </Dialog>
     </>

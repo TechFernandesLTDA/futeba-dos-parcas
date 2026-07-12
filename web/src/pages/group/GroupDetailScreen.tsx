@@ -1,6 +1,6 @@
 import Grid from '@mui/material/Unstable_Grid2';
 import { PageContainer } from '../../components/common/PageContainer';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
@@ -574,6 +574,8 @@ export const GroupDetailScreen: React.FC = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [ownerChecklistDismissed, setOwnerChecklistDismissed] = useState(false);
+  const [isCreateGameTopVisible, setIsCreateGameTopVisible] = useState(true);
+  const createGameTopSentinelRef = useRef<HTMLDivElement | null>(null);
 
   const myMember = members.find((m) => m.userId === currentUser?.uid);
   const isGroupOwner = group?.ownerId === currentUser?.uid;
@@ -583,6 +585,38 @@ export const GroupDetailScreen: React.FC = () => {
   const isAdmin = isOwner || (myMember?.role === 'ADMIN' && hasActiveMember);
   const isMember = isGroupOwner || hasActiveMember || isLegacyOwnerMember;
   const canCreateGroupGame = isMember;
+
+  useEffect(() => {
+    if (!isMobile || !canCreateGroupGame || loading) {
+      setIsCreateGameTopVisible(true);
+      return undefined;
+    }
+    const sentinel = createGameTopSentinelRef.current;
+    if (!sentinel) return undefined;
+
+    if (typeof IntersectionObserver !== 'undefined') {
+      const observer = new IntersectionObserver(
+        ([entry]) => setIsCreateGameTopVisible(entry.isIntersecting),
+        { threshold: 0.01 },
+      );
+      observer.observe(sentinel);
+      return () => observer.disconnect();
+    }
+
+    const main = document.getElementById('main-content');
+    const scrollContainer = main instanceof HTMLElement &&
+      ['auto', 'scroll'].includes(window.getComputedStyle(main).overflowY)
+      ? main
+      : null;
+    const update = () => {
+      const scrollTop = scrollContainer ? scrollContainer.scrollTop : window.scrollY;
+      setIsCreateGameTopVisible(scrollTop <= 8);
+    };
+    update();
+    const target: EventTarget = scrollContainer ?? window;
+    target.addEventListener('scroll', update, { passive: true });
+    return () => target.removeEventListener('scroll', update);
+  }, [canCreateGroupGame, groupId, isMobile, loading]);
   // Habilita listener de join request apenas se nao-membro em grupo publico.
   const shouldTrackJoinRequest = !isMember && group?.isPublic === true;
   const {
@@ -836,6 +870,12 @@ export const GroupDetailScreen: React.FC = () => {
             )}
           </>
         }
+      />
+
+      <Box
+        ref={createGameTopSentinelRef}
+        aria-hidden
+        sx={{ width: 1, height: 1, pointerEvents: 'none' }}
       />
 
       <AppBreadcrumbs
@@ -1200,7 +1240,7 @@ export const GroupDetailScreen: React.FC = () => {
 
       {/* #2164/#2270: barra fixa via FixedBottomBar (centralizada no conteúdo
           + safe-area), substituindo a versão hand-rolled centrada no viewport. */}
-      {canCreateGroupGame && isMobile && (
+      {canCreateGroupGame && isMobile && isCreateGameTopVisible && (
         <FixedBottomBar>
           <PageContainer maxWidth="detail" disablePadding>
             <Button

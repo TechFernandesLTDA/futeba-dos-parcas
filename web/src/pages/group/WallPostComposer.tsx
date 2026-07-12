@@ -18,6 +18,7 @@ import {
 } from '@mui/icons-material';
 import { useToast } from '../../contexts/ToastContext';
 import { getWallMediaType, isWallVideoFile } from '../../utils/wallMedia';
+import type { RestoredWallMediaDraft } from '../../hooks/useGroupWall';
 
 const MAX_TEXT_LENGTH = 500;
 const MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024;
@@ -30,6 +31,8 @@ interface WallPostComposerProps {
   sending: boolean;
   uploadProgress?: number | null;
   mediaPhase?: 'preparing' | 'uploading' | 'processing' | null;
+  restoredDraft?: RestoredWallMediaDraft | null;
+  onDiscardRestoredDraft?: () => Promise<void> | void;
   onSubmit: (text: string, mediaFile?: File) => Promise<void>;
   onCancel?: () => void;
 }
@@ -39,6 +42,8 @@ export const WallPostComposer: React.FC<WallPostComposerProps> = ({
   sending,
   uploadProgress = null,
   mediaPhase = null,
+  restoredDraft = null,
+  onDiscardRestoredDraft,
   onSubmit,
   onCancel,
 }) => {
@@ -51,8 +56,10 @@ export const WallPostComposer: React.FC<WallPostComposerProps> = ({
   const [mediaDuration, setMediaDuration] = useState<number | null>(null);
   const [mediaPreviewFailed, setMediaPreviewFailed] = useState(false);
   const [submitFailed, setSubmitFailed] = useState(false);
+  const [draftRecovered, setDraftRecovered] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const submitInFlightRef = useRef(false);
+  const restoredFingerprintRef = useRef<string | null>(null);
   const cleanText = text.trim();
   const textRequired = cleanText.length === 0;
 
@@ -63,9 +70,27 @@ export const WallPostComposer: React.FC<WallPostComposerProps> = ({
     return () => URL.revokeObjectURL(objectUrl);
   }, [mediaFile]);
 
+  React.useEffect(() => {
+    if (!restoredDraft) {
+      restoredFingerprintRef.current = null;
+      return;
+    }
+    if (restoredFingerprintRef.current === restoredDraft.fingerprint) return;
+    restoredFingerprintRef.current = restoredDraft.fingerprint;
+    setText(restoredDraft.text);
+    setMediaFile(restoredDraft.mediaFile);
+    setMediaDuration(null);
+    setMediaPreviewFailed(false);
+    setSubmitFailed(false);
+    setDraftRecovered(true);
+  }, [restoredDraft]);
+
   const handleMediaSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
+    if (restoredFingerprintRef.current) void onDiscardRestoredDraft?.();
+    restoredFingerprintRef.current = null;
+    setDraftRecovered(false);
     setSubmitFailed(false);
     const mediaType = getWallMediaType(file);
     if (!mediaType) {
@@ -84,7 +109,10 @@ export const WallPostComposer: React.FC<WallPostComposerProps> = ({
     setMediaPreviewFailed(false);
   };
 
-  const handleRemoveMedia = () => {
+  const handleRemoveMedia = (discardRestored = true) => {
+    if (discardRestored && restoredFingerprintRef.current) void onDiscardRestoredDraft?.();
+    restoredFingerprintRef.current = null;
+    setDraftRecovered(false);
     setSubmitFailed(false);
     setMediaFile(null);
     setMediaPreview(null);
@@ -112,7 +140,7 @@ export const WallPostComposer: React.FC<WallPostComposerProps> = ({
       setSubmitFailed(false);
       await onSubmit(cleanText, mediaFile ?? undefined);
       setText('');
-      handleRemoveMedia();
+      handleRemoveMedia(false);
     } catch {
       // The mutation owns the error toast. Keep the draft so the user can retry.
       setSubmitFailed(true);
@@ -205,7 +233,7 @@ export const WallPostComposer: React.FC<WallPostComposerProps> = ({
             )}
             <IconButton
               size="small"
-              onClick={handleRemoveMedia}
+              onClick={() => handleRemoveMedia()}
               disabled={sending}
               sx={{
                 position: 'absolute',
@@ -271,6 +299,7 @@ export const WallPostComposer: React.FC<WallPostComposerProps> = ({
             value={text}
             onChange={(event) => {
               setText(event.target.value);
+              setDraftRecovered(false);
               setSubmitFailed(false);
             }}
             onKeyDown={(event) => {
@@ -378,6 +407,17 @@ export const WallPostComposer: React.FC<WallPostComposerProps> = ({
           sx={{ display: 'block', mt: 0.25, px: 0.5 }}
         >
           {t('groupWall.draftPreserved')}
+        </Typography>
+      )}
+
+      {draftRecovered && !submitFailed && (
+        <Typography
+          role="status"
+          variant="caption"
+          color="success.main"
+          sx={{ display: 'block', mt: 0.25, px: 0.5 }}
+        >
+          {t('groupWall.draftRecovered')}
         </Typography>
       )}
 

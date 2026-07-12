@@ -27,7 +27,10 @@ describe('storageUpload', () => {
     vi.useFakeTimers();
   });
 
-  afterEach(() => vi.useRealTimers());
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+  });
 
   it('renova Auth e App Check juntos', async () => {
     const getIdToken = vi.fn().mockResolvedValue('id-token');
@@ -50,10 +53,10 @@ describe('storageUpload', () => {
     await expectation;
   });
 
-  it('renova credenciais e repete upload após falha transitória', async () => {
+  it('renova credenciais e repete upload após storage/unauthenticated', async () => {
     const refreshCredentials = vi.fn().mockResolvedValue(undefined);
     mockUploadBytes
-      .mockRejectedValueOnce({ code: 'storage/unauthorized' })
+      .mockRejectedValueOnce({ code: 'storage/unauthenticated' })
       .mockResolvedValueOnce({ ref: 'uploaded' });
     const file = new File(['avatar'], 'avatar.png', { type: 'image/png' });
 
@@ -63,6 +66,54 @@ describe('storageUpload', () => {
     await vi.runAllTimersAsync();
 
     await expect(promise).resolves.toEqual({ ref: 'uploaded' });
+    expect(refreshCredentials).toHaveBeenCalledTimes(1);
+    expect(mockUploadBytes).toHaveBeenCalledTimes(2);
+  });
+
+  it('renova credenciais e repete upload após storage/unauthorized-app', async () => {
+    const refreshCredentials = vi.fn().mockResolvedValue(undefined);
+    mockUploadBytes
+      .mockRejectedValueOnce({ code: 'storage/unauthorized-app' })
+      .mockResolvedValueOnce({ ref: 'uploaded' });
+    const file = new File(['avatar'], 'avatar.png', { type: 'image/png' });
+
+    const promise = uploadImageWithStorageAuthRetry('profile-ref' as never, file, {
+      refreshCredentials,
+    });
+    await vi.runAllTimersAsync();
+
+    await expect(promise).resolves.toEqual({ ref: 'uploaded' });
+    expect(refreshCredentials).toHaveBeenCalledTimes(1);
+    expect(mockUploadBytes).toHaveBeenCalledTimes(2);
+  });
+
+  it('trata storage/unauthorized como falha terminal de Rules', async () => {
+    const refreshCredentials = vi.fn().mockResolvedValue(undefined);
+    const error = { code: 'storage/unauthorized' };
+    mockUploadBytes.mockRejectedValueOnce(error);
+    const file = new File(['avatar'], 'avatar.png', { type: 'image/png' });
+
+    await expect(uploadImageWithStorageAuthRetry('profile-ref' as never, file, {
+      refreshCredentials,
+    })).rejects.toBe(error);
+
+    expect(refreshCredentials).not.toHaveBeenCalled();
+    expect(mockUploadBytes).toHaveBeenCalledTimes(1);
+  });
+
+  it('renova credenciais somente uma vez se o 401 persistir', async () => {
+    const refreshCredentials = vi.fn().mockResolvedValue(undefined);
+    const error = { code: 'storage/unauthenticated' };
+    mockUploadBytes.mockRejectedValue(error);
+    const file = new File(['avatar'], 'avatar.png', { type: 'image/png' });
+
+    const promise = uploadImageWithStorageAuthRetry('profile-ref' as never, file, {
+      refreshCredentials,
+    });
+    const expectation = expect(promise).rejects.toBe(error);
+    await vi.runAllTimersAsync();
+
+    await expectation;
     expect(refreshCredentials).toHaveBeenCalledTimes(1);
     expect(mockUploadBytes).toHaveBeenCalledTimes(2);
   });
@@ -81,6 +132,19 @@ describe('storageUpload', () => {
 
     await expect(promise).resolves.toEqual({ ref: 'uploaded' });
     expect(refreshCredentials).not.toHaveBeenCalled();
+  });
+
+  it('repete uma única vez quando o servidor confirma checksum/tamanho divergente', async () => {
+    mockUploadBytes
+      .mockRejectedValueOnce({ code: 'storage/invalid-checksum' })
+      .mockResolvedValueOnce({ ref: 'uploaded' });
+    const file = new File(['avatar'], 'avatar.png', { type: 'image/png' });
+
+    const promise = uploadImageWithStorageAuthRetry('profile-ref' as never, file);
+    await vi.runAllTimersAsync();
+
+    await expect(promise).resolves.toEqual({ ref: 'uploaded' });
+    expect(mockUploadBytes).toHaveBeenCalledTimes(2);
   });
 
   it('preserva uploadBytes para callers sem callback de progresso', async () => {
@@ -132,6 +196,7 @@ describe('storageUpload', () => {
     const promise = uploadImageWithStorageAuthRetry('wall-ref' as never, file, {
       refreshCredentials,
       onProgress,
+      shouldRetryAfterError: vi.fn().mockResolvedValue(true),
     });
     await vi.runAllTimersAsync();
 
@@ -158,6 +223,7 @@ describe('storageUpload', () => {
     const promise = uploadImageWithStorageAuthRetry('wall-ref' as never, file, {
       onProgress,
       onRetrying,
+      shouldRetryAfterError: vi.fn().mockResolvedValue(true),
     });
     await vi.runAllTimersAsync();
 
@@ -168,6 +234,63 @@ describe('storageUpload', () => {
     expect(mockUploadBytes).toHaveBeenCalledTimes(1);
     expect(onRetrying).toHaveBeenCalledTimes(1);
     expect(onProgress.mock.calls.map(([percentage]) => percentage)).toEqual([0, 100]);
+  });
+
+  it('não inicia fallback do resumable quando a reconciliação não autoriza', async () => {
+    const shouldRetryAfterError = vi.fn().mockResolvedValue(false);
+    const cancel = vi.fn(() => true);
+    mockUploadBytesResumable.mockReturnValueOnce({
+      snapshot: { ref: 'stalled-attempt', state: 'running' },
+      cancel,
+      on: vi.fn(() => vi.fn()),
+    });
+    const file = new File(['video'], 'partida.mp4', { type: 'video/mp4' });
+
+    const promise = uploadImageWithStorageAuthRetry('wall-ref' as never, file, {
+      onProgress: vi.fn(),
+      shouldRetryAfterError,
+    });
+    const expectation = expect(promise).rejects.toMatchObject({
+      code: 'storage/resumable-upload-stalled',
+    });
+    await vi.advanceTimersByTimeAsync(35_000);
+
+    await expectation;
+    expect(cancel).toHaveBeenCalledTimes(1);
+    expect(shouldRetryAfterError).toHaveBeenCalledTimes(1);
+    expect(mockUploadBytes).not.toHaveBeenCalled();
+  });
+
+  it('suspende o watchdog enquanto o aparelho está offline e retoma ao reconectar', async () => {
+    const online = vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
+    const shouldRetryAfterError = vi.fn().mockResolvedValue(false);
+    const cancel = vi.fn(() => true);
+    mockUploadBytesResumable.mockReturnValueOnce({
+      snapshot: { ref: 'paused-attempt', state: 'running' },
+      cancel,
+      on: vi.fn(() => vi.fn()),
+    });
+    const file = new File(['video'], 'partida.mp4', { type: 'video/mp4' });
+
+    const promise = uploadImageWithStorageAuthRetry('wall-ref' as never, file, {
+      onProgress: vi.fn(),
+      shouldRetryAfterError,
+    });
+    const expectation = expect(promise).rejects.toMatchObject({
+      code: 'storage/resumable-upload-stalled',
+    });
+    window.dispatchEvent(new Event('offline'));
+    await vi.advanceTimersByTimeAsync(70_000);
+
+    expect(cancel).not.toHaveBeenCalled();
+    online.mockReturnValue(true);
+    window.dispatchEvent(new Event('online'));
+    await vi.advanceTimersByTimeAsync(35_000);
+
+    await expectation;
+    expect(cancel).toHaveBeenCalledTimes(1);
+    expect(shouldRetryAfterError).toHaveBeenCalledTimes(1);
+    expect(mockUploadBytes).not.toHaveBeenCalled();
   });
 
   it('não inicia fallback se o resumable concluir durante o watchdog', async () => {
@@ -186,7 +309,7 @@ describe('storageUpload', () => {
     const promise = uploadImageWithStorageAuthRetry('wall-ref' as never, file, {
       onProgress: vi.fn(),
     });
-    await vi.advanceTimersByTimeAsync(20_000);
+    await vi.advanceTimersByTimeAsync(35_000);
 
     await expect(promise).resolves.toEqual(snapshot);
     expect(cancel).toHaveBeenCalledTimes(1);
@@ -205,6 +328,7 @@ describe('storageUpload', () => {
     const promise = uploadImageWithStorageAuthRetry('wall-ref' as never, file, {
       refreshCredentials,
       onProgress: vi.fn(),
+      shouldRetryAfterError: vi.fn().mockResolvedValue(true),
     });
     const expectation = expect(promise).rejects.toMatchObject({
       code: 'storage/credential-refresh-timeout',
