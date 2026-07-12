@@ -163,6 +163,10 @@ data class Location(
     @set:PropertyName("min_game_duration_minutes")
     var minGameDurationMinutes: Int = 60,
 
+    @get:PropertyName("time_zone")
+    @set:PropertyName("time_zone")
+    var timeZone: String? = null,
+
     // Dados Denormalizados de Fields (para reduzir queries)
     @get:PropertyName("field_count")
     @set:PropertyName("field_count")

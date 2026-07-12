@@ -113,6 +113,32 @@ class LocationTest {
         assertEquals(-49.2733, location.longitude)
     }
 
+    // ---- TimeZone / effectiveTimeZone ----
+
+    @Test
+    fun location_timeZone_nulo_por_default_retornaNull() {
+        val location = makeLocation()
+        assertEquals(null, location.timeZone)
+    }
+
+    @Test
+    fun location_effectiveTimeZone_aplicaFallback_quandoAusente() {
+        val location = makeLocation()
+        assertEquals(Location.DEFAULT_LOCATION_TIME_ZONE, location.effectiveTimeZone())
+    }
+
+    @Test
+    fun location_effectiveTimeZone_aplicaFallback_quandoVazio() {
+        val location = makeLocation().copy(timeZone = "   ")
+        assertEquals(Location.DEFAULT_LOCATION_TIME_ZONE, location.effectiveTimeZone())
+    }
+
+    @Test
+    fun location_effectiveTimeZone_preservaValor_quandoPreenchido() {
+        val location = makeLocation().copy(timeZone = "America/Manaus")
+        assertEquals("America/Manaus", location.effectiveTimeZone())
+    }
+
     // ---- Commercial availability / venue monetization ----
 
     @Test

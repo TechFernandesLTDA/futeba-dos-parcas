@@ -96,6 +96,8 @@ internal fun DocumentSnapshot.toLocationOrNull(): Location? {
             minGameDurationMinutes = get<Long?>("min_game_duration_minutes")?.toInt()
                 ?: get<Long?>("minGameDurationMinutes")?.toInt() ?: 60,
 
+            timeZone = get<String?>("time_zone") ?: get<String?>("timeZone"),
+
             // Dados denormalizados de Fields
             fieldCount = get<Long?>("field_count")?.toInt() ?: get<Long?>("fieldCount")?.toInt() ?: 0,
             activeFieldCount = get<Long?>("active_field_count")?.toInt() ?: get<Long?>("activeFieldCount")?.toInt() ?: 0,
