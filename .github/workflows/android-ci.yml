@@ -97,6 +97,9 @@ jobs:
     # Pulado em PRs: pr-check.yml ja roda Detekt no gate pesado do PR.
     needs: changes
     if: needs.changes.outputs.android == 'true' && github.event_name != 'pull_request'
+    permissions:
+      contents: read
+      security-events: write
     runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
     timeout-minutes: 20
 

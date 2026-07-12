@@ -55,6 +55,7 @@ test('Android heavy jobs run only for trusted scoped events', () => {
 test('PR code runs on ephemeral Ubuntu with read-only checkout credentials', () => {
   assert.match(androidWorkflow, /permissions:\s*\n\s*contents: read/);
   assert.match(prWorkflow, /permissions:\s*\n\s*contents: read/);
+  assert.doesNotMatch(prWorkflow, /\b(?:checks|security-events|contents): write\b/);
 
   for (const [name, workflow] of [
     ['Android CI', androidWorkflow],
@@ -69,6 +70,26 @@ test('PR code runs on ephemeral Ubuntu with read-only checkout credentials', () 
   assert.match(jobBody(prWorkflow, 'android'), /runs-on: ubuntu-latest/);
   assert.match(codeowners, /^\/scripts\/ci\/ @TechFernandesLTDA\/dev-team$/m);
   assert.match(codeowners, /^\/scripts\/web-ci-workflow-contract\.test\.js @TechFernandesLTDA\/dev-team$/m);
+});
+
+test('trusted Detekt alone can publish SARIF without weakening PR permissions', () => {
+  const detekt = jobBody(androidWorkflow, 'detekt');
+  assert.match(detekt, /github\.event_name != 'pull_request'/);
+  assert.match(detekt, /permissions:\s*\n\s*contents: read\s*\n\s*security-events: write/);
+  assert.equal(
+    (androidWorkflow.match(/security-events: write/g) ?? []).length,
+    1,
+    'security-events write must remain exclusive to the trusted Detekt job'
+  );
+  assert.match(
+    detekt,
+    /name: Upload Detekt SARIF to GitHub Security[\s\S]*?uses: github\/codeql-action\/upload-sarif@[\s\S]*?continue-on-error: true/
+  );
+  assert.match(
+    detekt,
+    /name: Upload Detekt Report[\s\S]*?continue-on-error: true[\s\S]*?name: detekt-report[\s\S]*?retention-days: 7/
+  );
+  assert.doesNotMatch(jobBody(androidWorkflow, 'gate'), /\b(?:checks|security-events|contents): write\b/);
 });
 
 test('Android CI Gate requires explicit PR skips and complete trusted jobs', () => {
