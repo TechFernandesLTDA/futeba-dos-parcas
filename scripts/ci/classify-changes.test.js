@@ -72,6 +72,26 @@ test('design tokens activate every consumer without activating Functions or Rule
   });
 });
 
+test('XP constants activate every runtime consumer before the broad shared rule', () => {
+  const xpRuleIndex = config.rules.findIndex((rule) =>
+    rule.patterns.includes('shared/xp-constants.json')
+  );
+  const sharedRuleIndex = config.rules.findIndex((rule) => rule.patterns.includes('shared/**'));
+  assert.ok(xpRuleIndex >= 0, 'XP constants need an explicit classifier rule');
+  assert.ok(xpRuleIndex < sharedRuleIndex, 'the exact XP rule must precede shared/**');
+
+  const result = classifyChangedFiles(['shared/xp-constants.json'], config);
+  assert.deepEqual(result.scopes, {
+    web: true,
+    functions: true,
+    android: true,
+    ios: true,
+    rules: false,
+    shared_config: true,
+  });
+  assert.deepEqual(result.unknown, []);
+});
+
 test('Rules-only paths never activate Android compilation', () => {
   const result = classifyChangedFiles([
     'firestore.rules',

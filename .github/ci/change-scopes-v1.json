@@ -72,6 +72,10 @@
       "scopes": ["web", "android", "ios", "shared_config"]
     },
     {
+      "patterns": ["shared/xp-constants.json"],
+      "scopes": ["web", "functions", "android", "ios", "shared_config"]
+    },
+    {
       "patterns": ["shared/**"],
       "scopes": ["android", "ios", "shared_config"]
     },
