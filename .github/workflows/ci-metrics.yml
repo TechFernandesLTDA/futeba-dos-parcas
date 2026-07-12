@@ -1,0 +1,78 @@
+name: CI Metrics
+
+# Observabilidade off-critical-path: dispara APÓS os workflows de CI concluírem
+# (workflow_run roda no branch default e nunca bloqueia um PR). Não herda as
+# permissões do evento original — declara apenas `actions: read`.
+on:
+  workflow_run:
+    # Lista dos workflows observados (nomes exatos do campo `name:`).
+    workflows:
+      - Web CI
+      - Android CI
+      - Cloud Functions CI
+      - Firestore Rules Tests
+      - Validate Patterns
+      - Functions Integration CI (#2533)
+      - Web E2E CI (#2533)
+      - Web Lighthouse CI
+    types: [completed]
+  # Rodada manual para validar baseline ou inspecionar um run específico.
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: 'ID do workflow run para coletar métricas (vazio = mais recente)'
+        required: false
+        default: ''
+
+# Cada evento gera um resumo independente — agrupa por run observado.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.workflow_run.id || github.run_id }}
+  cancel-in-progress: false
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  collect:
+    name: Coletar métricas de CI
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Resolve target run id
+        id: target
+        run: |
+          run_id="${{ github.event.workflow_run.id || github.event.inputs.run_id }}"
+          echo "run_id=${run_id}" >> "$GITHUB_OUTPUT"
+          if [ -z "$run_id" ]; then
+            echo "Nenhum run_id fornecido; coletando o run concluído mais recente."
+          else
+            echo "Coletando métricas para o run $run_id"
+          fi
+
+      - name: Coletar métricas via GitHub API
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CI_METRICS_RUN_ID: ${{ steps.target.outputs.run_id }}
+        run: node scripts/ci/collect-metrics.js "${{ steps.target.outputs.run_id }}"
+
+      - name: Upload JSON artifact (histórico)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-metrics-${{ github.event.workflow_run.id || github.run_id }}
+          path: |
+            ci-metrics.json
+            ci-metrics-summary.md
+          retention-days: 30
+          if-no-files-found: warn
