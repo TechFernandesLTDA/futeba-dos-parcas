@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
   assertFails,
   assertSucceeds,
@@ -35,6 +35,12 @@ const draftPath = (uid: string, fileName = "photo.jpg") =>
   `groups/${GROUP_ID}/wall_media/__draft__/${uid}/${fileName}`;
 const pipelinePath = (postId: string, uid: string, fileName = "source.jpg") =>
   `groups/${GROUP_ID}/wall_media_staging/${postId}/${uid}/${fileName}`;
+
+function storageRuleFunctionBody(functionName: string) {
+  return STORAGE_RULES.match(
+    new RegExp(`function ${functionName}\\([^)]*\\) \\{([\\s\\S]*?)\\n    \\}`),
+  )?.[1];
+}
 
 let testEnv: RulesTestEnvironment;
 
@@ -210,6 +216,27 @@ describe("Storage Rules — groups/{groupId}/wall_media", () => {
 });
 
 describe("Storage Rules — wall_media_staging pipeline v1", () => {
+  it("mantém a autorização do staging dentro do limite de 2 documentos", () => {
+    const body = storageRuleFunctionBody("canUploadWallMediaDraft");
+    const draftLookup = storageRuleFunctionBody("getWallMediaDraft");
+    const groupLookup = storageRuleFunctionBody("isGroupActiveForWallWrite");
+    const helperCalls = [...(body?.matchAll(/\b([A-Za-z][A-Za-z0-9]*)\s*\(/g) ?? [])]
+      .map((match) => match[1])
+      .sort();
+    const transitiveLookups = `${draftLookup ?? ""}\n${groupLookup ?? ""}`
+      .match(/firestore\.get\s*\(/g) ?? [];
+
+    expect(body).toBeDefined();
+    expect(helperCalls).toEqual([
+      "getWallMediaDraft",
+      "isAuthenticated",
+      "isGroupActiveForWallWrite",
+    ]);
+    expect(draftLookup?.match(/firestore\.get\s*\(/g)).toHaveLength(1);
+    expect(groupLookup?.match(/firestore\.get\s*\(/g)).toHaveLength(1);
+    expect(transitiveLookups).toHaveLength(2);
+  });
+
   it("permite exatamente o objeto declarado no draft AWAITING_UPLOAD", async () => {
     const postId = "a".repeat(40);
     await seedPipelineDraft(postId, UID_ACTIVE, "AWAITING_UPLOAD");

@@ -230,6 +230,16 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.53.1][web-1.53.1] - 2026-07-11
+
+#### Corrigido
+- Storage Rules do staging usam somente grupo e draft, mantendo autor, path, MIME, tamanho, expiração e imutabilidade validados.
+- Upload resumível ganhou watchdog de inatividade, cancelamento seguro, proteção contra resolução duplicada e fallback para upload simples.
+- Confirmações de rede perdidas consultam o draft autoritativo antes de solicitar um novo envio para o mesmo path imutável.
+- Callable de reserva e renovação de credenciais agora têm timeout explícito; o backoff global de upload foi reduzido.
+
+_Issues: #3535_
+
 ### [1.53.0][web-1.53.0] - 2026-07-11
 
 #### Adicionado
@@ -2177,6 +2187,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.53.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.53.1.md
 [web-1.53.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.53.0.md
 [web-1.52.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.52.0.md
 [web-1.51.43]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.51.43.md

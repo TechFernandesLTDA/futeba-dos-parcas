@@ -29,7 +29,7 @@ interface WallPostComposerProps {
   initialText?: string;
   sending: boolean;
   uploadProgress?: number | null;
-  mediaPhase?: 'uploading' | 'processing' | null;
+  mediaPhase?: 'preparing' | 'uploading' | 'processing' | null;
   onSubmit: (text: string, mediaFile?: File) => Promise<void>;
   onCancel?: () => void;
 }
@@ -128,10 +128,16 @@ export const WallPostComposer: React.FC<WallPostComposerProps> = ({
     ? Math.min(100, Math.max(0, Math.round(uploadProgress)))
     : null;
   const showUploadProgress = sending && Boolean(mediaFile) &&
-    (mediaPhase === 'processing' || normalizedUploadProgress !== null);
-  const mediaStatusLabel = mediaPhase === 'processing'
-    ? t('groupWall.processingMedia')
-    : t('groupWall.uploadProgress', { percent: normalizedUploadProgress ?? 0 });
+    (mediaPhase !== null || normalizedUploadProgress !== null);
+  const isConnecting = mediaPhase === 'uploading' && (normalizedUploadProgress ?? 0) === 0;
+  const mediaStatusLabel = mediaPhase === 'preparing'
+    ? t('groupWall.preparingMedia')
+    : mediaPhase === 'processing'
+      ? t('groupWall.processingMedia')
+      : isConnecting
+        ? t('groupWall.connectingUpload')
+        : t('groupWall.uploadProgress', { percent: normalizedUploadProgress ?? 0 });
+  const showIndeterminateProgress = mediaPhase === 'preparing' || mediaPhase === 'processing' || isConnecting;
 
   return (
     <Box
@@ -323,17 +329,17 @@ export const WallPostComposer: React.FC<WallPostComposerProps> = ({
           }}
         >
           <LinearProgress
-            variant={mediaPhase === 'processing' ? 'indeterminate' : 'determinate'}
-            value={mediaPhase === 'processing' ? undefined : normalizedUploadProgress ?? 0}
+            variant={showIndeterminateProgress ? 'indeterminate' : 'determinate'}
+            value={showIndeterminateProgress ? undefined : normalizedUploadProgress ?? 0}
             aria-hidden
             sx={{ flex: 1, height: 4, borderRadius: 999 }}
           />
           <Typography
             variant="caption"
             color="text.secondary"
-            sx={{ minWidth: mediaPhase === 'processing' ? 118 : 34, textAlign: 'right' }}
+            sx={{ minWidth: showIndeterminateProgress ? 118 : 34, textAlign: 'right' }}
           >
-            {mediaPhase === 'processing' ? t('groupWall.processingMedia') : `${normalizedUploadProgress ?? 0}%`}
+            {showIndeterminateProgress ? mediaStatusLabel : `${normalizedUploadProgress ?? 0}%`}
           </Typography>
         </Box>
       )}

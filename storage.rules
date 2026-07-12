@@ -2,7 +2,7 @@ rules_version = '2';
 
 // ============================================
 // FIREBASE STORAGE SECURITY RULES
-// Futeba dos Parças - v1.4.3
+// Futeba dos Parças - v1.4.4
 //
 // Estrutura de Caminhos Padronizada:
 // - users/{userId}/profile.jpg
@@ -94,7 +94,10 @@ service firebase.storage {
       let draft = getWallMediaDraft(groupId, postId);
       return isAuthenticated() &&
              ownerId == request.auth.uid &&
-             canUseGroupWall(groupId) &&
+             // Storage Rules aceita no máximo 2 documentos Firestore por
+             // avaliação. A callable já validou grupo+membro ao criar este
+             // draft curto e o processor revalida ambos antes de publicar.
+             // Aqui lemos apenas grupo+draft para manter o limite oficial.
              isGroupActiveForWallWrite(groupId) &&
              draft != null &&
              draft.data.pipeline_version == 1 &&

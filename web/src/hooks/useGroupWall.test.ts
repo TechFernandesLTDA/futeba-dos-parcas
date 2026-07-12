@@ -311,6 +311,33 @@ describe('createWallPostDocument', () => {
     expect(mockOnSnapshot).toHaveBeenCalled();
   });
 
+  it('recupera confirmação perdida quando o objeto já entrou em PROCESSING', async () => {
+    const video = new File(['video'], 'partida.mp4', { type: 'video/mp4' });
+    const onProcessing = vi.fn();
+    mockUploadWithRetry.mockRejectedValueOnce({ code: 'storage/network-request-failed' });
+    mockGetDoc.mockResolvedValueOnce({
+      exists: () => true,
+      data: () => ({ status: 'PROCESSING' }),
+    });
+
+    await expect(createWallPostDocument({
+      groupId: 'group-1',
+      currentUserUid: 'user-1',
+      authorName: 'Jordi',
+      authorPhotoUrl: null,
+      text: 'Gol',
+      options: { mediaFile: video },
+      onProcessing,
+      clientRequestId: CLIENT_REQUEST_ID,
+    })).resolves.toEqual({ postId: 'post-1', pipelineVersion: 1 });
+
+    expect(onProcessing).toHaveBeenCalled();
+    expect(mockGetDoc).toHaveBeenCalledWith(
+      'doc:groups/group-1/wall_post_drafts/post-1',
+    );
+    expect(mockOnSnapshot).toHaveBeenCalled();
+  });
+
   it('falha imediatamente quando o draft de mídia não existe', async () => {
     const image = new File(['image'], 'foto.png', { type: 'image/png' });
     const unsubscribe = vi.fn();
@@ -373,6 +400,7 @@ describe('useCreateWallPost', () => {
   it('expõe upload e processamento até o draft ficar pronto', async () => {
     let resolveUpload: ((value: unknown) => void) | undefined;
     let progressCallback: ((percentage: number) => void) | undefined;
+    let retryCallback: (() => void) | undefined;
     let draftListener: ((snapshot: { exists: () => boolean; data: () => { status: string } }) => void) | undefined;
     mockOnSnapshot.mockImplementation((_reference, onNext) => {
       draftListener = onNext;
@@ -381,9 +409,10 @@ describe('useCreateWallPost', () => {
     mockUploadWithRetry.mockImplementation((
       _ref: unknown,
       _file: File,
-      options: {onProgress?: (percentage: number) => void},
+      options: {onProgress?: (percentage: number) => void; onRetrying?: () => void},
     ) => {
       progressCallback = options.onProgress;
+      retryCallback = options.onRetrying;
       return new Promise((resolve) => {
         resolveUpload = resolve;
       });
@@ -404,6 +433,10 @@ describe('useCreateWallPost', () => {
 
     act(() => progressCallback?.(37));
     expect(result.current.uploadProgress).toBe(37);
+
+    act(() => retryCallback?.());
+    expect(result.current.uploadProgress).toBe(0);
+    expect(result.current.mediaPhase).toBe('uploading');
 
     act(() => {
       resolveUpload?.({});
