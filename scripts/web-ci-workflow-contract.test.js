@@ -58,16 +58,11 @@ function assertEphemeralPrRunner(jobId, job) {
   );
 }
 
-function assertNodeJobContract(jobId, job) {
+function assertHardenedCheckout(jobId, job) {
   const checkoutStep = extractActionStep(
     jobId,
     job,
     'actions/checkout@v4'
-  );
-  const setupNodeStep = extractActionStep(
-    jobId,
-    job,
-    'actions/setup-node@v4'
   );
 
   assert.match(checkoutStep, /\n\s+with:/);
@@ -76,54 +71,92 @@ function assertNodeJobContract(jobId, job) {
     /\n\s+persist-credentials: false/,
     `${jobId} checkout must not persist Git credentials`
   );
+}
+
+function assertNodeJobContract(jobId, job) {
+  assertHardenedCheckout(jobId, job);
+  const setupNodeStep = extractActionStep(
+    jobId,
+    job,
+    'actions/setup-node@v4'
+  );
+
   assert.match(setupNodeStep, /\n\s+node-version: '22'/);
   assert.match(setupNodeStep, /\n\s+cache: 'npm'/);
   assert.match(setupNodeStep, /\n\s+cache-dependency-path: web\/package-lock\.json/);
 }
 
 test('Web CI triggers and permissions include its executable contract', () => {
-  assert.equal(
-    countMatches(
-      workflow,
-      /^\s+- 'scripts\/web-ci-workflow-contract\.test\.js'$/gm
-    ),
-    2,
-    'pull_request and push must both run when the contract changes'
+  assert.match(
+    workflow,
+    /^  pull_request:\n\s+branches: \[master, develop\]\n\s+types: \[opened, synchronize, reopened\]\n  push:/m,
+    'pull requests must always emit the stable Web CI Gate without path filtering'
   );
+  for (const script of [
+    'scripts/web-ci-workflow-contract.test.js',
+    'scripts/ci/verify-vitest-shards.js',
+    'scripts/ci/verify-vitest-shards.test.js',
+  ]) {
+    assert.equal(
+      countMatches(workflow, new RegExp(`^\\s+- '${script.replaceAll('/', '\\/').replaceAll('.', '\\.')}'$`, 'gm')),
+      1,
+      `${script} must trigger push validation; pull requests are intentionally unfiltered`
+    );
+  }
   assert.match(workflow, /^permissions:\n\s+contents: read$/m);
 });
 
-test('Web CI uses two attributable PR jobs with one install each', () => {
-  const quality = extractJob('web-quality');
-  const tests = extractJob('web-tests');
+test('Web CI uses two sharded PR lanes with exactly two installs and a stable gate', () => {
+  const shards = extractJob('web_shards');
+  const gate = extractJob('web_gate');
+  const changes = extractJob('changes');
   const jobsSection = workflow.slice(workflow.indexOf('\njobs:\n'));
   const jobIds = [...jobsSection.matchAll(/^  ([a-zA-Z0-9_-]+):$/gm)]
     .map((match) => match[1]);
 
-  assert.deepEqual(jobIds, ['web-quality', 'web-tests', 'mutation']);
-  assert.match(quality, /name: Web Quality/);
-  assert.match(quality, /if: github\.event_name != 'schedule'/);
-  assert.match(quality, /npm run lint/);
-  assert.match(quality, /npm run build/);
-  assert.match(tests, /name: Web Tests/);
-  assert.match(tests, /if: github\.event_name != 'schedule'/);
-  assert.match(tests, /run: npm test -- --maxWorkers=2/);
-  assert.doesNotMatch(tests, /--(?:retry|shard|exclude|passWithNoTests)/);
+  assert.deepEqual(jobIds, ['changes', 'web_shards', 'web_gate', 'mutation']);
+  assert.match(changes, /if: github\.event_name != 'schedule'/);
+  assert.match(changes, /uses: \.\/\.github\/workflows\/change-scope\.yml/);
+  assert.match(shards, /name: Web \$\{\{ matrix\.lane \}\}/);
+  assert.match(shards, /needs: \[changes\]/);
+  assert.match(shards, /if: github\.event_name != 'schedule' && needs\.changes\.outputs\.web == 'true'/);
+  assert.match(shards, /fail-fast: false/);
+  assert.equal(countMatches(shards, /^\s+- shard_index: [12]$/gm), 2);
+  assert.equal(countMatches(shards, /^\s+shard_total: 2$/gm), 2);
+  assert.equal(countMatches(shards, /^\s+run_quality: (?:true|false)$/gm), 2);
+  assert.match(shards, /name: Run ESLint\n\s+if: matrix\.run_quality\n\s+run: npm run lint/);
+  assert.match(shards, /name: TypeScript and production build\n\s+if: matrix\.run_quality\n\s+run: npm run build/);
+  assert.match(
+    shards,
+    /npm test --\s+--pool=threads\s+--maxWorkers=2\s+--shard=\$\{\{ matrix\.shard_index \}\}\/\$\{\{ matrix\.shard_total \}\}\s+--reporter=default\s+--reporter=json\s+--outputFile\.json=reports\/vitest\/shard-\$\{\{ matrix\.shard_index \}\}-of-\$\{\{ matrix\.shard_total \}\}\.json/
+  );
+  assert.doesNotMatch(
+    shards,
+    /--(?:retry|exclude|passWithNoTests|changed|related|project|testNamePattern)(?:[=\s]|$)/
+  );
+  assert.match(shards, /name: Upload Vitest shard report\n\s+if: always\(\)/);
+  assert.match(shards, /uses: actions\/upload-artifact@v4/);
 
   assert.equal(
-    countMatches(quality, /npm ci --legacy-peer-deps/g),
+    countMatches(shards, /npm ci --legacy-peer-deps/g),
     1,
-    'web-quality must have exactly one npm ci install'
+    'one matrix install command across two shards must yield exactly two npm ci executions'
   );
-  assert.equal(
-    countMatches(tests, /npm ci --legacy-peer-deps/g),
-    1,
-    'web-tests must have exactly one npm ci install'
-  );
-  assertNodeJobContract('web-quality', quality);
-  assertNodeJobContract('web-tests', tests);
-  assertEphemeralPrRunner('web-quality', quality);
-  assertEphemeralPrRunner('web-tests', tests);
+  assertNodeJobContract('web_shards', shards);
+  assertEphemeralPrRunner('web_shards', shards);
+
+  assert.match(gate, /name: Web CI Gate/);
+  assert.match(gate, /if: \$\{\{ always\(\) && github\.event_name != 'schedule' \}\}/);
+  assert.match(gate, /needs: \[changes, web_shards\]/);
+  assert.match(gate, /uses: actions\/download-artifact@v4/);
+  assert.match(gate, /pattern: web-vitest-shard-\*-of-2/);
+  assert.match(gate, /WEB_SHARDS_RESULT: \$\{\{ needs\.web_shards\.result \}\}/);
+  assert.match(gate, /node scripts\/ci\/verify-vitest-shards\.js reports\/vitest/);
+  assert.match(gate, /name: Accept non-Web change\n\s+if: needs\.changes\.outputs\.web != 'true'/);
+  assert.doesNotMatch(gate, /npm ci|actions\/setup-node/);
+  assertHardenedCheckout('web_gate', gate);
+  assertEphemeralPrRunner('web_gate', gate);
+
   assert.doesNotMatch(workflow, /\n  (?:lint|typecheck|test|build):\n/);
   assert.doesNotMatch(workflow, /npx tsc --noEmit/);
 });
@@ -171,6 +204,10 @@ test('Lighthouse reads PR metadata on an ephemeral runner with hardened checkout
 });
 
 test('the executable CI contract requires code owner review', () => {
+  assert.match(
+    codeowners,
+    /^\/scripts\/ci\/\s+@TechFernandesLTDA\/dev-team$/m
+  );
   assert.match(
     codeowners,
     /^\/scripts\/web-ci-workflow-contract\.test\.js\s+@TechFernandesLTDA\/dev-team$/m
