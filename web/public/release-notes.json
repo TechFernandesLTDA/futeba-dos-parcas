@@ -1,7 +1,25 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-12T23:28:00.345Z",
+  "generatedAt": "2026-07-13T01:07:59.546Z",
   "notes": [
+    {
+      "version": "1.53.7",
+      "buildNumber": null,
+      "releaseDate": "2026-07-12",
+      "type": "patch",
+      "showPopup": false,
+      "published": true,
+      "headline": "**Vídeos do mural agora abrem em tela cheia no celular.** Toque no vídeo para abrir o player expandido e use o botão de tela cheia para assistir em modo paisagem.",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "O lightbox de vídeo agora ocupa a tela inteira no mobile (Dialog fullScreen), com botão de fechar dedicado.",
+        "Adicionado botão de tela cheia nativo no player de vídeo (Fullscreen API) — funciona em desktop e mobile, inclusive em modo paisagem.",
+        "O botão de expandir do card foi reposicionado para o canto inferior esquerdo para não sobrepor os controles nativos do vídeo."
+      ],
+      "fixed": [],
+      "issueRefs": []
+    },
     {
       "version": "1.53.6",
       "buildNumber": null,

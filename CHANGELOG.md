@@ -230,6 +230,39 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.53.7][web-1.53.7] - 2026-07-12
+
+#### Adicionado
+- `WallPostVideoPlayer`: prop `autoActivate` que pula o poster e inicia o carregamento do vídeo automaticamente (usado no lightbox).
+- `WallPostVideoPlayer`: `requestNativeFullscreen()` via Fullscreen API com fallback `webkitEnterFullscreen` para iOS Safari.
+- `WallPostVideoPlayer`: botão IconButton com `FullscreenIcon` visível quando o vídeo está pronto (`status === 'ready'`).
+- `WallPostCard`: `useMediaQuery` para detectar mobile e aplicar `fullScreen` no Dialog do lightbox.
+- i18n: chave `groupWall.fullscreen` adicionada em pt-BR, en, es.
+
+#### Mudado
+- `WallPostCard`: expand button reposicionado de `top:8, right:8` para `bottom:8, left:8` (evita sobrepor controles nativos do `<video>`).
+- `WallPostCard`: lightbox `maxHeight` agora `100dvh` no mobile / `90vh` no desktop.
+- Service worker `CACHE_NAME` bump v13 → v14 (invalida bundle antigo sem fullscreen).
+
+### [1.53.6][web-1.53.6] - 2026-07-12
+
+#### Corrigido
+- `WallPostVideoPlayer`: removido `crossOrigin="anonymous"`. Teste Playwright com Chromium real provou: sem o atributo o vídeo carrega (readyState=4, duration=22.67s); com o atributo fica bloqueado por CORS (readyState=0). O atributo só seria necessário para canvas frame capture, que o player não faz.
+- Data fix em produção: post `e4ee9b9c...` (grupo Clube das quintas) marcado como `LEGACY_OBJECT_MISSING` (storage objeto deletado mas doc dizia READY).
+
+_Issues: #3569_
+
+### [1.53.5][web-1.53.5] - 2026-07-12
+
+#### Corrigido
+- `WallPostVideoPlayer`: removido `autoPlay` (bloqueado pelo iOS sem `muted`); play programático via `onCanPlay` mantém o gesture chain e o áudio. Cleanup no unmount via ref callback (`pause()` + clear `src`); prop `maxHeight` para o lightbox; `controlsList="nodownload"`.
+- `WallPostCard`: lightbox de vídeo (Dialog com `WallPostVideoPlayer` em `maxHeight: 80vh` + botão expand), paridade com o lightbox de imagem.
+- `GameVideosTab`: validação de duração pré-upload (`readVideoDuration`); `onError` com recovery de URL via `getDownloadURL` + remount por `key`; removido `muted` sem autoPlay; adicionado `aspectRatio`/`objectFit`/`minHeight`; `controlsList="nodownload"`.
+- `WallPostComposer`: submit bloqueado até a duração do vídeo ser lida (`mediaDuration === null`), exceto quando a prévia falha.
+- Testes: `videoDuration.test.ts` (novo), `WallPostVideoPlayer`/`WallPostComposer`/`WallPostCard` atualizados; i18n `openVideoFullscreen` (pt-BR/en/es).
+
+_Issues: #3559_
+
 ### [1.53.4][web-1.53.4] - 2026-07-12
 
 #### Corrigido
@@ -2218,6 +2251,9 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.53.7]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.53.7.md
+[web-1.53.6]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.53.6.md
+[web-1.53.5]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.53.5.md
 [web-1.53.4]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.53.4.md
 [web-1.53.3]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.53.3.md
 [web-1.53.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.53.2.md

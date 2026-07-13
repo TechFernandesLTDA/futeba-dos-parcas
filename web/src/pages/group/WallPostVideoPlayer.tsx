@@ -5,11 +5,12 @@ import {
   Box,
   Button,
   CircularProgress,
+  IconButton,
   Typography,
   alpha,
   useTheme,
 } from '@mui/material';
-import { PlayArrow as PlayIcon } from '@mui/icons-material';
+import { PlayArrow as PlayIcon, Fullscreen as FullscreenIcon } from '@mui/icons-material';
 import { resolveWallPostStorageUrl } from '../../utils/wallMediaStorage';
 
 interface WallPostVideoPlayerProps {
@@ -20,6 +21,7 @@ interface WallPostVideoPlayerProps {
   authorName: string;
   resolveStorageUrl?: (path: string) => Promise<string>;
   maxHeight?: number | string;
+  autoActivate?: boolean;
 }
 type PlaybackStatus = 'idle' | 'loading' | 'ready' | 'error';
 
@@ -45,10 +47,11 @@ export function WallPostVideoPlayer({
   authorName,
   resolveStorageUrl = resolveWallPostStorageUrl,
   maxHeight = 420,
+  autoActivate = false,
 }: WallPostVideoPlayerProps) {
   const { t } = useTranslation();
   const theme = useTheme();
-  const [status, setStatus] = useState<PlaybackStatus>('idle');
+  const [status, setStatus] = useState<PlaybackStatus>(autoActivate ? 'loading' : 'idle');
   const [activeSrc, setActiveSrc] = useState(src);
   const [activePoster, setActivePoster] = useState(poster);
   const [posterFailed, setPosterFailed] = useState(false);
@@ -72,12 +75,12 @@ export function WallPostVideoPlayer({
     recoveryGeneration.current += 1;
     sourceRecoveryAttempted.current = false;
     posterRecoveryAttempted.current = false;
-    setStatus('idle');
+    setStatus(autoActivate ? 'loading' : 'idle');
     setActiveSrc(src);
     setActivePoster(poster);
     setPosterFailed(false);
     setRetryKey(0);
-  }, [mediaPath, poster, posterPath, src]);
+  }, [mediaPath, poster, posterPath, src, autoActivate]);
 
   const openLabel = t('groupWall.openVideo', { name: authorName });
   const hasPoster = Boolean(activePoster) && !posterFailed;
@@ -85,6 +88,20 @@ export function WallPostVideoPlayer({
   const activate = () => {
     setStatus('loading');
   };
+
+  const requestNativeFullscreen = useCallback(async () => {
+    const el = videoRef.current;
+    if (!el) return;
+    try {
+      if (el.requestFullscreen) {
+        await el.requestFullscreen();
+      } else if ((el as HTMLVideoElement & { webkitEnterFullscreen?: () => void }).webkitEnterFullscreen) {
+        (el as HTMLVideoElement & { webkitEnterFullscreen?: () => void }).webkitEnterFullscreen?.();
+      }
+    } catch {
+      /* fullscreen pode ser bloqueado sem gesture do usuario */
+    }
+  }, []);
 
   const retry = () => {
     // Ação explícita do usuário abre um novo budget de uma única renovação.
@@ -315,6 +332,24 @@ export function WallPostVideoPlayer({
             {t('common.loading')}
           </Typography>
         </Box>
+      )}
+
+      {status === 'ready' && (
+        <IconButton
+          size="small"
+          onClick={() => void requestNativeFullscreen()}
+          aria-label={t('groupWall.fullscreen')}
+          sx={{
+            position: 'absolute',
+            bottom: { xs: 52, sm: 56 },
+            right: 8,
+            color: theme.palette.common.white,
+            bgcolor: alpha(theme.palette.common.black, 0.55),
+            '&:hover': { bgcolor: alpha(theme.palette.common.black, 0.72) },
+          }}
+        >
+          <FullscreenIcon fontSize="small" />
+        </IconButton>
       )}
     </Box>
   );

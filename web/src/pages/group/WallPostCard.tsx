@@ -11,6 +11,7 @@ import {
   Stack,
   Chip,
   useTheme,
+  useMediaQuery,
   alpha,
   Dialog,
   Alert,
@@ -26,6 +27,7 @@ import {
   Flag as ReportIcon,
   VisibilityOff as HideIcon,
   OpenInFull as OpenInFullIcon,
+  Close as CloseIcon,
 } from '@mui/icons-material';
 import { PlayerAvatar } from '../../components/common/GameCard';
 import { ReactionBar } from '../../components/reactions/ReactionBar';
@@ -64,6 +66,7 @@ export const WallPostCard: React.FC<WallPostCardProps> = ({
 }) => {
   const { t, i18n } = useTranslation();
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const isVideo = isWallPostVideo(post.mediaType, post.mediaUrl, post.mediaPath);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -227,8 +230,8 @@ export const WallPostCard: React.FC<WallPostCardProps> = ({
                   disabled={Boolean(post.deletedAt)}
                   sx={{
                     position: 'absolute',
-                    top: 8,
-                    right: 8,
+                    bottom: 8,
+                    left: 8,
                     color: theme.palette.common.white,
                     bgcolor: alpha(theme.palette.common.black, 0.55),
                     '&:hover': { bgcolor: alpha(theme.palette.common.black, 0.72) },
@@ -388,9 +391,42 @@ export const WallPostCard: React.FC<WallPostCardProps> = ({
         )}
       </Menu>
 
-      <Dialog open={lightboxOpen} onClose={() => setLightboxOpen(false)} maxWidth="lg" fullWidth>
+      <Dialog
+        open={lightboxOpen}
+        onClose={() => setLightboxOpen(false)}
+        fullScreen={isMobile}
+        maxWidth={isMobile ? false : 'lg'}
+        fullWidth={!isMobile}
+        PaperProps={{
+          sx: { bgcolor: theme.palette.common.black, backgroundImage: 'none' },
+        }}
+      >
         {post.mediaUrl && isVideo && (
-          <Box sx={{ display: 'flex', justifyContent: 'center', bgcolor: theme.palette.common.black }}>
+          <Box sx={{
+            position: isMobile ? 'fixed' : 'relative',
+            inset: isMobile ? 0 : 'auto',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: isMobile ? '100dvh' : 'auto',
+            bgcolor: theme.palette.common.black,
+          }}>
+            {isMobile && (
+              <IconButton
+                onClick={() => setLightboxOpen(false)}
+                aria-label={t('common.close')}
+                sx={{
+                  position: 'absolute',
+                  top: 8,
+                  left: 8,
+                  zIndex: 2,
+                  color: theme.palette.common.white,
+                  bgcolor: alpha(theme.palette.common.black, 0.6),
+                }}
+              >
+                <CloseIcon />
+              </IconButton>
+            )}
             <WallPostVideoPlayer
               src={post.mediaUrl}
               poster={post.thumbnailUrl}
@@ -398,7 +434,8 @@ export const WallPostCard: React.FC<WallPostCardProps> = ({
               posterPath={post.thumbnailPath}
               authorName={post.authorName}
               resolveStorageUrl={resolveStorageUrl}
-              maxHeight="80vh"
+              maxHeight={isMobile ? '100dvh' : '90vh'}
+              autoActivate
             />
           </Box>
         )}
