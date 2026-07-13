@@ -11,6 +11,7 @@ const mockGetDoc = vi.fn();
 const mockWriteBatch = vi.fn();
 const mockBatchSet = vi.fn();
 const mockBatchCommit = vi.fn();
+const mockConfirmGamePresence = vi.fn();
 
 vi.mock('firebase/firestore', () => ({
   collection: (...args: any[]) => mockCollection(...args),
@@ -27,6 +28,10 @@ vi.mock('firebase/firestore', () => ({
 
 vi.mock('../services/firebase', () => ({
   db: {},
+}));
+
+vi.mock('../services/cloudFunctions', () => ({
+  confirmGamePresence: (...args: any[]) => mockConfirmGamePresence(...args),
 }));
 
 vi.mock('../contexts/AuthContext', () => ({
@@ -63,6 +68,7 @@ describe('useAutoInviteMembers', () => {
       set: mockBatchSet,
       commit: mockBatchCommit,
     });
+    mockConfirmGamePresence.mockResolvedValue({ success: true });
   });
 
   it('preserva confirmações existentes ao auto-convidar membros', async () => {
@@ -74,9 +80,6 @@ describe('useAutoInviteMembers', () => {
       ],
     });
     mockGetDoc.mockImplementation(async (ref: { path: string }) => {
-      if (ref.path === 'confirmations/game-1_owner-1') {
-        return { exists: () => true };
-      }
       if (ref.path === 'confirmations/game-1_member-1') {
         return { exists: () => true };
       }
@@ -94,5 +97,80 @@ describe('useAutoInviteMembers', () => {
       expect.objectContaining({ path: 'confirmations/game-1_member-2' }),
       expect.objectContaining({ user_id: 'member-2', status: 'PENDING' }),
     );
+    expect(mockConfirmGamePresence).toHaveBeenCalledWith({
+      gameId: 'game-1',
+      position: 'FIELD',
+      isCasualPlayer: false,
+    });
+  });
+
+  it('convida todos os membros e confirma owner via callable', async () => {
+    mockGetDocs.mockResolvedValue({
+      docs: [
+        { id: 'owner-1', data: () => ({ status: 'ACTIVE' }) },
+        { id: 'member-1', data: () => ({ status: 'ACTIVE', name: 'Ana' }) },
+        { id: 'member-2', data: () => ({ status: 'ACTIVE', name: 'Bia' }) },
+      ],
+    });
+    mockGetDoc.mockResolvedValue({ exists: () => false });
+
+    const { result } = renderHook(() => useAutoInviteMembers(), { wrapper: createTestWrapper() });
+
+    await act(async () => {
+      expect(await result.current.autoInvite('game-1', 'group-1')).toBe(2);
+    });
+
+    expect(mockBatchSet).toHaveBeenCalledTimes(2);
+    expect(mockBatchSet).toHaveBeenCalledWith(
+      expect.objectContaining({ path: 'confirmations/game-1_member-1' }),
+      expect.objectContaining({ user_id: 'member-1', status: 'PENDING' }),
+    );
+    expect(mockBatchSet).toHaveBeenCalledWith(
+      expect.objectContaining({ path: 'confirmations/game-1_member-2' }),
+      expect.objectContaining({ user_id: 'member-2', status: 'PENDING' }),
+    );
+    expect(mockConfirmGamePresence).toHaveBeenCalledWith({
+      gameId: 'game-1',
+      position: 'FIELD',
+      isCasualPlayer: false,
+    });
+  });
+
+  it('nao chama callable nem batch quando nao ha membros para convidar', async () => {
+    mockGetDocs.mockResolvedValue({
+      docs: [
+        { id: 'owner-1', data: () => ({ status: 'ACTIVE' }) },
+      ],
+    });
+
+    const { result } = renderHook(() => useAutoInviteMembers(), { wrapper: createTestWrapper() });
+
+    await act(async () => {
+      expect(await result.current.autoInvite('game-1', 'group-1')).toBe(0);
+    });
+
+    expect(mockBatchSet).not.toHaveBeenCalled();
+    expect(mockBatchCommit).not.toHaveBeenCalled();
+    expect(mockConfirmGamePresence).not.toHaveBeenCalled();
+  });
+
+  it('retorna inviteCount mesmo se callable do owner falhar', async () => {
+    mockGetDocs.mockResolvedValue({
+      docs: [
+        { id: 'owner-1', data: () => ({ status: 'ACTIVE' }) },
+        { id: 'member-1', data: () => ({ status: 'ACTIVE', name: 'Ana' }) },
+      ],
+    });
+    mockGetDoc.mockResolvedValue({ exists: () => false });
+    mockConfirmGamePresence.mockRejectedValue(new Error('callable failed'));
+
+    const { result } = renderHook(() => useAutoInviteMembers(), { wrapper: createTestWrapper() });
+
+    await act(async () => {
+      expect(await result.current.autoInvite('game-1', 'group-1')).toBe(1);
+    });
+
+    expect(mockBatchCommit).toHaveBeenCalled();
+    expect(mockConfirmGamePresence).toHaveBeenCalled();
   });
 });

@@ -24,10 +24,11 @@
 // media-src permitindo firebasestorage.googleapis.com.
 // v13 → v14: invalida bundle antigo apos adicionar fullscreen lightbox de
 // video no mobile (Dialog fullScreen) e botao de tela cheia nativo no player.
-// v14 → v15: corrige duplicacao de botao ampliar/tela cheia no card inline.
 // v15 → v16: corrige criacao de jogo bloqueada (xp_processed removido do
 // payload client) + CSP connect-src adiciona *.firebasestorage.app.
-const CACHE_NAME = 'futeba-v16';
+// v16 → v17: corrige auto-invite membros (owner CONFIRMED removido do batch)
+// e caixa pendente no checklist (ler cashbox_summary em vez de total_balance).
+const CACHE_NAME = 'futeba-v17';
 const OFFLINE_URL = '/offline.html';
 const STATIC_ASSETS = [
   '/',

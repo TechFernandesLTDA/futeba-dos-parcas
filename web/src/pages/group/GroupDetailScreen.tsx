@@ -65,6 +65,7 @@ import { collection, getDocs, limit, query, where } from 'firebase/firestore';
 import { AppBreadcrumbs, FixedBottomBar } from '../../components/layout';
 import { useQueryClient } from '@tanstack/react-query';
 import { useGroupDetail, useInvitePlayers } from '../../hooks/useGroups';
+import { useCashboxSummary } from '../../hooks/useCashboxSummary';
 import { GroupPoll, useCreateGroupPoll, useGroupPolls, useVoteGroupPoll } from '../../hooks/useGroupPolls';
 import { useMyJoinRequest } from '../../hooks/useJoinRequests';
 import { useGames } from '../../hooks/useGames';
@@ -567,6 +568,7 @@ export const GroupDetailScreen: React.FC = () => {
   const { group, groupDeleted, members, loading, error } = useGroupDetail(groupId || null);
   const { games, loading: gamesLoading } = useGames({ groupId: groupId || undefined, limitCount: 50, orderDirection: 'desc' });
   const { generateInviteCode, loading: inviteLoading } = useInvitePlayers();
+  const { entryCount, balanceCents } = useCashboxSummary(groupId || undefined);
 
   const [tabValue, setTabValue] = useState(0);
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
@@ -755,7 +757,7 @@ export const GroupDetailScreen: React.FC = () => {
   const lastGame = sortedGamesDesc.find((game) => game.status === 'FINISHED' || (game.dateTime && game.dateTime < now));
   const activeMembersCount = members.filter((member) => member.status === undefined || member.status === 'ACTIVE').length || group.memberCount || 0;
   const totalGamesCount = group.totalGamesPlayed || games.length;
-  const balanceValue = group.totalBalance || 0;
+  const balanceValue = balanceCents / 100;
   const balanceLabel = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(balanceValue);
   const nextGame = upcomingGames[0];
   const ownerChecklistSteps: ChecklistStep[] = [
@@ -805,7 +807,7 @@ export const GroupDetailScreen: React.FC = () => {
       subtitle: t('onboarding.ownerChecklistCashboxDesc'),
       actionLabel: t('group.tabCashbox'),
       navigateTo: `/group/${groupId}/cashbox`,
-      completed: balanceValue !== 0,
+      completed: entryCount > 0,
     },
   ];
   const ownerChecklistVisible = !ownerChecklistDismissed && (isOwner || isAdmin) && ownerChecklistSteps.some((step) => !step.completed);

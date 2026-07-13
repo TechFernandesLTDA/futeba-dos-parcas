@@ -1,6 +1,5 @@
 import { useCallback } from 'react';
 import {
-
   collection,
   doc,
   getDoc,
@@ -9,6 +8,7 @@ import {
   serverTimestamp,
 } from 'firebase/firestore';
 import { db } from '../services/firebase';
+import { confirmGamePresence } from '../services/cloudFunctions';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { createLogger } from '../utils/logger';
@@ -34,23 +34,7 @@ export function useAutoInviteMembers() {
         const membersToInvite = getActiveMembersToInvite(snapshot.docs, uid);
         if (membersToInvite.length === 0) return 0;
 
-        const ownerName = firebaseUser?.displayName || user?.name || 'Organizador';
-
-        // Criar confirmação do owner como CONFIRMED
-        const ownerConfirmationRef = doc(db, 'confirmations', `${gameId}_${uid}`);
         const batch = writeBatch(db);
-        const ownerConfirmationSnap = await getDoc(ownerConfirmationRef);
-        if (!ownerConfirmationSnap.exists()) {
-          batch.set(ownerConfirmationRef, {
-            game_id: gameId,
-            user_id: uid,
-            user_name: ownerName,
-            status: 'CONFIRMED',
-            position: 'FIELD',
-            is_casual_player: false,
-            created_at: serverTimestamp(),
-          });
-        }
 
         // Criar PENDING para os membros do grupo
         let inviteCount = 0;
@@ -75,7 +59,23 @@ export function useAutoInviteMembers() {
           inviteCount++;
         }
 
+        if (inviteCount === 0) return 0;
+
         await batch.commit();
+
+        // Confirmar presenca do owner via callable transacional (#3501):
+        // regras Firestore bloqueiam client writes com status CONFIRMED.
+        try {
+          await confirmGamePresence({
+            gameId,
+            position: 'FIELD',
+            isCasualPlayer: false,
+          });
+          // eslint-disable-next-line no-restricted-syntax
+        } catch (confirmErr) {
+          logger.error('Owner auto-confirm failed (members still invited):', confirmErr);
+        }
+
         return inviteCount;
       } catch (err) {
         logger.error('Error auto-inviting members:', err);
