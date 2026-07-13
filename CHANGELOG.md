@@ -230,6 +230,11 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.53.12][web-1.53.12] - 2026-07-13
+
+#### Corrigido
+- `web/src/pages/league/LeagueScreen.tsx`: o `IntersectionObserver` da sticky bar agora é desativado quando a Liga está embutida (`embedded`) ou em breakpoint abaixo de `md`, evitando overlay fixa no fluxo mobile da Home.
+
 ### [1.53.11][web-1.53.11] - 2026-07-13
 
 #### Corrigido
@@ -2301,6 +2306,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.53.12]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.53.12.md
 [web-1.53.11]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.53.11.md
 [web-1.53.10]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.53.10.md
 [web-1.53.9]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.53.9.md

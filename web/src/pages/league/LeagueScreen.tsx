@@ -359,6 +359,11 @@ export const LeagueScreen: React.FC<LeagueScreenProps> = ({ embedded = false, ac
   // IntersectionObserver depende do ID, não do objeto inteiro
   const currentUserId = currentUserPlayer?.id ?? null;
   useEffect(() => {
+    if (!isMdUp || embedded) {
+      setShowSticky(false);
+      return;
+    }
+
     const el = userCardRef.current;
     if (!el) {
       setShowSticky(false);
@@ -373,7 +378,7 @@ export const LeagueScreen: React.FC<LeagueScreenProps> = ({ embedded = false, ac
       observer.disconnect();
       setShowSticky(false);
     };
-  }, [currentUserId]);
+  }, [currentUserId, embedded, isMdUp]);
 
   // getPositionStyle memoizado com Map cache por position
   const positionStyleCache = useRef(new Map<number, { bgcolor: string; color: string }>());
@@ -724,7 +729,7 @@ export const LeagueScreen: React.FC<LeagueScreenProps> = ({ embedded = false, ac
 
       </Box>
 
-      {showSticky && currentUserPlayer && currentUserPosition && (
+      {!embedded && isMdUp && showSticky && currentUserPlayer && currentUserPosition && (
         <Box
           sx={{
             position: 'fixed',
