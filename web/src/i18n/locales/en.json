@@ -1558,6 +1558,7 @@
     "openPhoto": "Open photo by {{name}}",
     "openVideo": "Open video by {{name}}",
     "openVideoFullscreen": "Expand video by {{name}}",
+    "fullscreen": "Fullscreen",
     "timelineTitle": "Timeline",
     "timelineLatest": "Latest",
     "timelineOlder": "Load older posts",

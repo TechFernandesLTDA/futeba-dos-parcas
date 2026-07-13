@@ -22,7 +22,9 @@
 // v12 → v13: invalida HTML cacheado com CSP antigo (sem media-src) que
 // blockava <video> de carregar do Firebase Storage. CSP novo adiciona
 // media-src permitindo firebasestorage.googleapis.com.
-const CACHE_NAME = 'futeba-v13';
+// v13 → v14: invalida bundle antigo apos adicionar fullscreen lightbox de
+// video no mobile (Dialog fullScreen) e botao de tela cheia nativo no player.
+const CACHE_NAME = 'futeba-v14';
 const OFFLINE_URL = '/offline.html';
 const STATIC_ASSETS = [
   '/',

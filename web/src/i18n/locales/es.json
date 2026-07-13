@@ -1558,6 +1558,7 @@
     "openPhoto": "Abrir foto de {{name}}",
     "openVideo": "Abrir video de {{name}}",
     "openVideoFullscreen": "Ampliar video de {{name}}",
+    "fullscreen": "Pantalla completa",
     "timelineTitle": "Línea de tiempo",
     "timelineLatest": "Más recientes",
     "timelineOlder": "Cargar publicaciones anteriores",
