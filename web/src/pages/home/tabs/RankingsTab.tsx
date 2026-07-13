@@ -49,6 +49,7 @@ import { useLeague, LeaguePlayer, LeagueFilters } from '../../../hooks/useLeague
 import { useActiveSeason } from '../../../hooks/useActiveSeason';
 import { DIVISION_CONFIG, LeagueDivision, getXpProgress, getDivisionColor } from '../../../types/gamification';
 import { getLevelBadgeImage, handleBadgeImageError } from '../../../utils/levelBadge';
+import { getEffectiveLevel, getExperiencePoints } from '../../../utils/xpAccounting';
 import {
   XP_PARTICIPATION, XP_GOAL, XP_ASSIST, XP_SAVE,
   XP_MVP, XP_WIN, XP_DRAW, XP_STREAK_3, XP_STREAK_5, XP_STREAK_7, XP_STREAK_10,
@@ -81,6 +82,15 @@ const XP_TABLE = [
   { labelKey: 'ranking.xpTable.streak10', xp: XP_STREAK_10, Icon: SportsMartialArts, color: 'error' as const },
 ];
 
+function getPlayerXp(player: LeaguePlayer): number {
+  return getExperiencePoints(player as unknown as Record<string, unknown>);
+}
+
+function getPlayerLevel(player: LeaguePlayer): number {
+  const xp = getPlayerXp(player);
+  return getEffectiveLevel(player as unknown as Record<string, unknown>, xp);
+}
+
 // #1217 - Podium section for top 3 players with distinct visual hierarchy
 // Helper to render a single podium card
 const PodiumCard: React.FC<{
@@ -99,7 +109,9 @@ const PodiumCard: React.FC<{
     ...(DIVISION_CONFIG[player.division] || DIVISION_CONFIG.BRONZE),
     color: getDivisionColor(player.division, theme),
   };
-  const levelColor = getLevelColor(player.level, theme);
+  const playerXp = getPlayerXp(player);
+  const playerLevel = getPlayerLevel(player);
+  const levelColor = getLevelColor(playerLevel, theme);
 
   return (
     <Card
@@ -143,17 +155,17 @@ const PodiumCard: React.FC<{
               name={player.userName}
               photoUrl={player.userPhoto}
               size={config.size}
-              level={player.level}
+              level={playerLevel}
               borderColor={levelColor}
             />
-            {player.level > 0 && (
+            {playerLevel > 0 && (
               <Box
                 component="img"
-                src={getLevelBadgeImage(player.level)}
+                src={getLevelBadgeImage(playerLevel)}
                 onError={handleBadgeImageError}
                 loading="lazy"
                 decoding="async"
-                alt={`Nível ${player.level}`}
+                alt={`Nível ${playerLevel}`}
                 sx={{
                   position: 'absolute',
                   bottom: -4,
@@ -182,10 +194,10 @@ const PodiumCard: React.FC<{
           )}
         </Box>
         <Typography variant="subtitle2" fontWeight={700} color={showXP ? 'primary.main' : divisionConfig.color} sx={{ mt: 0.5 }}>
-          {(showXP ? (player.experiencePoints || 0) : player.points).toLocaleString(locale)}
+          {(showXP ? playerXp : player.points).toLocaleString(locale)}
         </Typography>
         <Typography variant="caption" color="text.secondary">
-          {showXP ? 'XP' : divisionConfig.label} · Nv. {player.level}
+          {showXP ? 'XP' : divisionConfig.label} · Nv. {playerLevel}
         </Typography>
         {positionChange !== null && positionChange !== 0 && (
           <Typography variant="caption" fontWeight={700} color={positionChange > 0 ? 'success.main' : 'error.main'} sx={{ display: 'block', mt: 0.25 }}>
@@ -368,7 +380,7 @@ export function RankingsTab() {
     }
     const currentLiga: Record<string, number> = {};
     players.forEach((p, i) => { currentLiga[p.userId] = i + 1; });
-    const xpSorted = [...players].sort((a, b) => (b.experiencePoints || 0) - (a.experiencePoints || 0));
+    const xpSorted = [...players].sort((a, b) => getPlayerXp(b) - getPlayerXp(a));
     const currentXp: Record<string, number> = {};
     xpSorted.forEach((p, i) => { currentXp[p.userId] = i + 1; });
     const ligaChanges: Record<string, number | null> = {};
@@ -401,7 +413,9 @@ export function RankingsTab() {
     () => players.findIndex(p => p.isCurrentUser) + 1,
     [players],
   );
-  const currentPlayerLevelColor = currentPlayer ? getLevelColor(currentPlayer.level, theme) : theme.palette.primary.main;
+  const currentPlayerXp = currentPlayer ? getPlayerXp(currentPlayer) : 0;
+  const currentPlayerLevel = currentPlayer ? getPlayerLevel(currentPlayer) : 0;
+  const currentPlayerLevelColor = currentPlayer ? getLevelColor(currentPlayerLevel, theme) : theme.palette.primary.main;
 
   const positionChanges = tabValue === 1 ? xpPositionChanges : ligaPositionChanges;
 
@@ -411,7 +425,7 @@ export function RankingsTab() {
   const sortedPlayers = useMemo(() => {
     if (tabValue === 1) {
       // Ranking por XP global
-      return [...players].sort((a, b) => (b.experiencePoints || 0) - (a.experiencePoints || 0));
+      return [...players].sort((a, b) => getPlayerXp(b) - getPlayerXp(a));
     }
     // Liga por pontos da temporada
     return players;
@@ -500,17 +514,17 @@ export function RankingsTab() {
                       name={currentPlayer.userName}
                       photoUrl={currentPlayer.userPhoto}
                       size={56}
-                      level={currentPlayer.level}
+                      level={currentPlayerLevel}
                       borderColor={currentPlayerLevelColor}
                     />
-                    {currentPlayer.level > 0 && (
+                    {currentPlayerLevel > 0 && (
                       <Box
                         component="img"
-                        src={getLevelBadgeImage(currentPlayer.level)}
+                        src={getLevelBadgeImage(currentPlayerLevel)}
                         onError={handleBadgeImageError}
                         loading="lazy"
                         decoding="async"
-                        alt={`Nível ${currentPlayer.level}`}
+                        alt={`Nível ${currentPlayerLevel}`}
                         sx={{
                           position: 'absolute',
                           bottom: -4,
@@ -534,7 +548,7 @@ export function RankingsTab() {
                   </Box>
                   <Box sx={{ textAlign: 'right' }}>
                     <Typography variant="h5" fontWeight={700}>
-                      {formatNumber((tabValue === 1 ? currentPlayer.experiencePoints : currentPlayer.points) || 0)}
+                      {formatNumber(tabValue === 1 ? currentPlayerXp : (currentPlayer.points || 0))}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
                       {tabValue === 1 ? t('ranking.totalXp') : t('ranking.points')}
@@ -558,15 +572,15 @@ export function RankingsTab() {
                   <Box sx={{ mt: 1.5 }}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
                       <Typography variant="caption" color="text.secondary">
-                        {t('profile.level')} {currentPlayer.level}
+                        {t('profile.level')} {currentPlayerLevel}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
-                        {formatNumber(currentPlayer.experiencePoints || 0)} XP
+                        {formatNumber(currentPlayerXp)} XP
                       </Typography>
                     </Box>
                     <LinearProgress
                       variant="determinate"
-                      value={getXpProgress(currentPlayer.experiencePoints || 0) * 100}
+                      value={getXpProgress(currentPlayerXp) * 100}
                       sx={{
                         height: 6,
                         borderRadius: 3,
@@ -769,7 +783,9 @@ const RankingCard = React.memo(function RankingCard({
     ...(DIVISION_CONFIG[player.division as LeagueDivision] || DIVISION_CONFIG.BRONZE),
     color: getDivisionColor(player.division as LeagueDivision, theme),
   };
-  const levelColor = getLevelColor(player.level, theme);
+  const playerXp = getPlayerXp(player);
+  const playerLevel = getPlayerLevel(player);
+  const levelColor = getLevelColor(playerLevel, theme);
 
   return (
     <Card
@@ -821,7 +837,7 @@ const RankingCard = React.memo(function RankingCard({
               name={player.userName}
               photoUrl={player.userPhoto}
               size={44}
-              level={player.level}
+              level={playerLevel}
               borderColor={levelColor}
             />
           </Box>
@@ -863,7 +879,7 @@ const RankingCard = React.memo(function RankingCard({
           {/* Pontuação */}
           <Box sx={{ textAlign: 'right', flexShrink: 0 }}>
             <Typography variant="subtitle1" fontWeight={700} color={showXP ? 'primary.main' : divisionConfig.color}>
-              {(showXP ? (player.experiencePoints || 0) : player.points).toLocaleString(locale)}
+              {(showXP ? playerXp : player.points).toLocaleString(locale)}
             </Typography>
             <Typography variant="caption" color="text.secondary">
               {showXP ? 'XP' : divisionConfig.label}

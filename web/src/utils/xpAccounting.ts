@@ -16,11 +16,11 @@ function pickFiniteNumber(data: XpLike, keys: string[]): number | undefined {
 
 export function getExperiencePoints(data: XpLike, fallback = 0): number {
   return pickFiniteNumber(data, [
-    'experiencePoints',
     'experience_points',
+    'experiencePoints',
     'xp',
-    'totalXp',
     'total_xp',
+    'totalXp',
   ]) ?? fallback;
 }
 
@@ -35,12 +35,7 @@ export function getXpEarned(data: XpLike, fallback = 0): number {
 }
 
 export function getEffectiveLevel(data: XpLike, xp = getExperiencePoints(data)): number {
-  const explicitLevel = pickFiniteNumber(data, [
-    'level',
-    'currentLevel',
-    'current_level',
-  ]);
-  return explicitLevel ?? getLevelForXp(xp);
+  return getLevelForXp(xp);
 }
 
 export function getLogLevelAfter(data: XpLike, xpAfter?: number): number {

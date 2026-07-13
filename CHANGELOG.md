@@ -230,6 +230,17 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.53.11][web-1.53.11] - 2026-07-13
+
+#### Corrigido
+- `web/src/utils/xpAccounting.ts`: `experience_points` agora tem prioridade sobre `experiencePoints`, e o nível efetivo passa a ser derivado do XP reconciliado.
+- `web/src/hooks/usePlayerCard.ts`: player card passa a reutilizar os helpers canônicos de XP/nível.
+- `web/src/pages/home/tabs/ProfileTab.tsx`: perfil deriva o nível do XP autoritativo e renderiza estado terminal correto no nível máximo.
+- `web/src/pages/home/tabs/RankingsTab.tsx`: rankings, pódio, badge, cor, barra de progresso e ordenação de XP passam a usar o mesmo XP/nível reconciliado.
+- `web/src/utils/xpAccounting.test.ts` e `web/src/pages/home/tabs/ProfileTab.test.tsx`: adicionadas regressões para conflito snake/camel, nível persistido obsoleto e nível máximo.
+
+_Issues: #3581, #3582_
+
 ### [1.53.10][web-1.53.10] - 2026-07-13
 
 #### Corrigido
@@ -1643,6 +1654,16 @@ _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
 
+### [1.9.2][functions-1.9.2] - 2026-07-13
+
+#### Corrigido
+- `functions/src/xp/processing.ts`: `processXpIdempotent` passa a sinalizar corretamente `alreadyProcessed` quando perde a corrida do marker dentro da transaction.
+- `functions/src/xp/processing.ts`: `processXpBatch` mantém estado progressivo em memória por usuário dentro do chunk, preservando cadeia de XP, nível final e consumo único de milestones.
+- `firestore.rules`: `xp_logs` agora aceita somente leitura autenticada/autorizada; create/update/delete ficam bloqueados para clientes.
+- `functions/test/xp-dedup-retry.test.ts`, `functions/test/processing.test.ts` e `firestore-rules-tests/src/xp-logs.test.ts`: adicionadas regressões para corrida de marker, usuário repetido no mesmo batch e bloqueio client-side de `xp_logs`.
+
+_Issues: #3578, #3579, #3580_
+
 ### [1.9.1][functions-1.9.1] - 2026-07-11
 
 #### Corrigido
@@ -2280,6 +2301,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.53.11]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.53.11.md
 [web-1.53.10]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.53.10.md
 [web-1.53.9]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.53.9.md
 [web-1.53.8]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.53.8.md
@@ -2417,6 +2439,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [web-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.26.0.md
 [ios-1.6.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.1.md
 [ios-1.6.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.0.md
+[functions-1.9.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.9.2.md
 [functions-1.9.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.9.1.md
 [functions-1.9.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.9.0.md
 [functions-1.8.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.8.0.md

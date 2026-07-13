@@ -693,8 +693,8 @@ export async function processXpIdempotent(
 
   // FASE 2: Processamento atômico via Transaction
   try {
-    await db().runTransaction(
-      async (transaction) => {
+    const lostIdempotencyRace = await db().runTransaction(
+      async (transaction): Promise<boolean> => {
         // 2.1: Re-verificar idempotência com doc ID determinístico
         //      (SECFIX #1453: doc read é lockado na transaction,
         //       query read com zero docs não cria range-lock)
@@ -711,7 +711,7 @@ export async function processXpIdempotent(
             "(race condition detectada). " +
             "Abortando."
           );
-          return;
+          return true;
         }
 
         // 2.2: Atualizar XP do usuário
@@ -783,13 +783,15 @@ export async function processXpIdempotent(
           `${transactionId} processada com ` +
           `sucesso: +${data.xpEarned} XP`
         );
+
+        return false;
       }
     );
 
     return {
       success: true,
       transactionId,
-      alreadyProcessed: false,
+      alreadyProcessed: lostIdempotencyRace,
     };
   } catch (error: unknown) {
     const typedError =
@@ -983,9 +985,25 @@ export async function processXpBatch(
           const logSnaps = await Promise.all(
             refs.map((r) => tx.get(r.logRef))
           );
-          const userSnaps = await Promise.all(
-            refs.map((r) => tx.get(r.userRef))
+          const userRefsById = new Map(
+            refs.map((r) => [r.data.userId, r.userRef])
           );
+          const userIds = [...userRefsById.keys()];
+          const userSnaps = await Promise.all(
+            userIds.map((userId) =>
+              tx.get(userRefsById.get(userId)!)
+            )
+          );
+          const userSnapsById = new Map(
+            userIds.map((userId, index) => [
+              userId,
+              userSnaps[index],
+            ])
+          );
+          const inBatchUserData = new Map<
+            string,
+            FirebaseFirestore.DocumentData
+          >();
 
           // FASE B: escrever apenas os não-processados
           for (let j = 0; j < refs.length; j++) {
@@ -994,7 +1012,9 @@ export async function processXpBatch(
             const {transactionId, logRef, userRef} =
               refs[j];
             const snap = logSnaps[j];
-            const userSnap = userSnaps[j];
+            const userSnap = userSnapsById.get(
+              data.userId
+            );
 
             if (snap.exists) {
               partial.push({
@@ -1005,17 +1025,37 @@ export async function processXpBatch(
               continue;
             }
 
-            if (!userSnap.exists) {
+            if (!userSnap?.exists) {
               throw new Error(
                 "Usuário " +
                 `${data.userId} não encontrado`
               );
             }
 
+            const currentUserData =
+              inBatchUserData.get(data.userId) ||
+              userSnap.data() || {};
             data = withFreshUserProgress(
               data,
-              userSnap.data()
+              currentUserData
             );
+
+            const achievedMilestones = Array.isArray(
+              currentUserData.milestones_achieved
+            ) ?
+              currentUserData.milestones_achieved as string[] :
+              [];
+            inBatchUserData.set(data.userId, {
+              ...currentUserData,
+              experience_points: data.xpAfter,
+              level: data.levelAfter,
+              milestones_achieved: [
+                ...new Set([
+                  ...achievedMilestones,
+                  ...data.metadata.milestonesUnlocked,
+                ]),
+              ],
+            });
 
             tx.update(userRef, {
               experience_points:

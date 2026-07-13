@@ -281,6 +281,8 @@ describe("XP Dedup on Retry (#2548)", () => {
         }),
       }));
 
+      const txUpdate = jest.fn();
+      const txSet = jest.fn();
       mockDb.runTransaction.mockImplementation(
         async (callback: (tx: any) => Promise<any>) => {
           const tx = {
@@ -300,8 +302,8 @@ describe("XP Dedup on Retry (#2548)", () => {
                 data: () => ({ experience_points: 500, level: 5 }),
               };
             }),
-            update: jest.fn(),
-            set: jest.fn(),
+            update: txUpdate,
+            set: txSet,
           };
           return callback(tx);
         }
@@ -311,17 +313,88 @@ describe("XP Dedup on Retry (#2548)", () => {
         sampleTxn(gameId, userId)
       );
 
-      // Should still return success (not an error). The in-transaction race
-      // detection prevents double-processing but alreadyProcessed reflects
-      // the pre-check only (false here). The key: no double XP was written.
       expect(result.success).toBe(true);
+      expect(result.alreadyProcessed).toBe(true);
       // runTransaction was called, indicating the pre-check passed, but
       // the in-transaction check detected the race and aborted the write
       expect(mockDb.runTransaction).toHaveBeenCalledTimes(1);
 
-      // Verify that tx.set was NOT called (no double-write)
-      // We can't easily verify this because the function returns early
-      // when tx.get finds the doc exists
+      expect(txUpdate).not.toHaveBeenCalled();
+      expect(txSet).not.toHaveBeenCalled();
+    });
+
+    test("chains repeated-user state and awards a milestone once per batch", async () => {
+      const userId = "sameUser";
+      const writes: Array<{ ref: any; data: any }> = [];
+      const updates: Array<{ ref: any; data: any }> = [];
+
+      mockDb.collection.mockImplementation((coll: string) => ({
+        doc: jest.fn((docId?: string) => ({
+          _collection: coll,
+          _id: docId,
+          id: docId,
+        })),
+      }));
+
+      mockDb.runTransaction.mockImplementation(
+        async (callback: (tx: any) => Promise<any>) => {
+          const tx = {
+            get: jest.fn(async (ref: any) => {
+              if (ref._collection === "xp_logs") {
+                return { exists: false, data: () => ({}) };
+              }
+              return {
+                exists: true,
+                id: ref._id,
+                data: () => ({
+                  experience_points: 700,
+                  level: 2,
+                  milestones_achieved: [],
+                }),
+              };
+            }),
+            update: jest.fn((ref: any, data: any) => {
+              updates.push({ ref, data });
+            }),
+            set: jest.fn((ref: any, data: any) => {
+              writes.push({ ref, data });
+            }),
+          };
+          return callback(tx);
+        }
+      );
+
+      const gameA = sampleTxn("gameA", userId, 150, ["GOALS_10"]);
+      gameA.breakdown.milestones = 50;
+      const gameB = sampleTxn("gameB", userId, 150, ["GOALS_10"]);
+      gameB.breakdown.milestones = 50;
+
+      const results = await processXpBatch([gameA, gameB]);
+
+      expect(results).toHaveLength(2);
+      const xpLogs = writes
+        .filter(({ ref }) => ref._collection === "xp_logs")
+        .map(({ data }) => data);
+      expect(xpLogs).toHaveLength(2);
+      expect(xpLogs[0].xp_before).toBe(700);
+      expect(xpLogs[0].xp_after).toBe(850);
+      expect(xpLogs[0].xp_milestones).toBe(50);
+      expect(xpLogs[1].xp_before).toBe(850);
+      expect(xpLogs[1].xp_after).toBe(950);
+      expect(xpLogs[1].xp_milestones).toBe(0);
+      expect(xpLogs[0].level_after).toBe(3);
+      expect(xpLogs[1].level_after).toBe(3);
+
+      const milestoneUpdates = updates.filter(
+        ({ data }) => data.milestones_achieved
+      );
+      expect(milestoneUpdates).toHaveLength(1);
+      const progressUpdates = updates.filter(
+        ({ data }) => data.experience_points
+      );
+      expect(progressUpdates).toHaveLength(2);
+      expect(progressUpdates[1].data.level)
+        .toBe(xpLogs[1].level_after);
     });
   });
 

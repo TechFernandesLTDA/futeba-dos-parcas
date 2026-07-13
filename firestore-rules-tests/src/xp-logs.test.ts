@@ -3,13 +3,13 @@
  *
  * Regras (firestore.rules linhas 1694-1698):
  *   allow read:          if isAuthenticated() && resource.data.user_id == userId();
- *   allow create:        if isAdmin();
+ *   allow create:        if false;
  *   allow update, delete: if false;
  *
  * Destaques críticos (anti-fraude):
- * - NÃO há bypass de admin na leitura — admin também não lê log de outro user pelas rules
+ * - Admin pode ler logs para investigação, mas não pode escrevê-los pelo cliente
  * - update e delete são completamente bloqueados (false) — imutabilidade total
- * - create exige role ADMIN (em produção a Cloud Function usa Admin SDK, bypassa rules)
+ * - create é bloqueado para todos (Cloud Functions usam Admin SDK e bypassam rules)
  */
 
 import { describe, it, beforeAll, afterAll } from "vitest";
@@ -108,10 +108,9 @@ describe("xp_logs — leitura", () => {
 // ============================================================
 
 describe("xp_logs — create", () => {
-  it("Admin pode criar log de XP (simula Cloud Function em testes de cliente)", async () => {
-    // Rule: allow create: if isAdmin();
+  it("Admin NÃO pode criar log de XP diretamente pelo cliente", async () => {
     const db = asAdmin(testEnv);
-    await assertSucceeds(
+    await assertFails(
       db.doc(`xp_logs/xp-log-admin-create`).set({
         user_id: UID_PLAYER_A,
         amount: 20,
