@@ -47,6 +47,95 @@ class GameRepositoryImpl constructor(
     companion object {
         private const val TAG = "GameRepository"
         private const val FUNCTIONS_REGION = "southamerica-east1"
+
+        // Campos server-managed que o cliente NUNCA deve escrever (Firestore rules
+        // hasNoGameValidationClientFields bloqueia writes que os contêm).
+        private val SERVER_MANAGED_KEYS = setOf(
+            "xp_processed", "xp_processing", "xp_processed_at",
+            "xp_reward_status", "xp_reward_held_at", "xp_reward_hold_reasons",
+            "xp_reward_review_decision", "xp_reward_reviewed_at", "xp_reward_reviewed_by",
+            "xp_reward_review_reason", "xp_reward_review_previous_status", "xp_reward_review_new_status",
+            "validation_status", "validation_score", "validation_version",
+            "validation_updated_at", "validation_mode", "validation_reasons",
+            "started_at", "started_by", "start_validation_score",
+            "finished_at", "finished_by", "finish_validation_score",
+            "reviewed_at", "reviewed_by", "review_reason"
+        )
+    }
+
+    /**
+     * Converte Game para um Map contendo apenas campos client-writable.
+     * Remove todos os campos server-managed (xp_*, validation_*, finished_at, etc.)
+     * que o Firestore rules bloqueia em creates/updates de games.
+     * Usa snake_case para compatibilidade com as rules e CF triggers.
+     */
+    private fun gameToClientWriteMap(game: Game, includeTimestamps: Boolean = true): MutableMap<String, Any?> {
+        val map = mutableMapOf<String, Any?>()
+
+        // Mapeamento manual snake_case — NAO serializa o data class completo
+        // (o Android SDK ignora @SerialName do KMP e produz camelCase)
+        map["schedule_id"] = game.scheduleId
+        map["date"] = game.date
+        map["time"] = game.time
+        map["end_time"] = game.endTime
+        map["status"] = game.status
+        map["max_players"] = game.maxPlayers
+        map["max_goalkeepers"] = game.maxGoalkeepers
+        map["players_count"] = game.playersCount
+        map["goalkeepers_count"] = game.goalkeepersCount
+        map["daily_price"] = game.dailyPrice
+        map["total_cost"] = game.totalCost
+        map["pix_key"] = game.pixKey
+        map["number_of_teams"] = game.numberOfTeams
+        map["owner_id"] = game.ownerId
+        map["owner_name"] = game.ownerName
+        map["location_id"] = game.locationId
+        map["field_id"] = game.fieldId
+        map["location_name"] = game.locationName
+        map["location_address"] = game.locationAddress
+        game.locationLat?.let { map["location_lat"] = it }
+        game.locationLng?.let { map["location_lng"] = it }
+        map["field_name"] = game.fieldName
+        map["game_type"] = game.gameType
+        map["gender"] = game.gender
+        map["recurrence"] = game.recurrence
+        game.recurrenceIndex?.let { map["recurrence_index"] = it }
+        game.recurrenceCount?.let { map["recurrence_count"] = it }
+        game.recurrenceEndDate?.let { map["recurrence_end_date"] = it }
+        map["visibility"] = game.visibility
+        map["players"] = emptyList<String>()
+        map["team1_score"] = game.team1Score
+        map["team2_score"] = game.team2Score
+        map["team1_name"] = game.team1Name
+        map["team2_name"] = game.team2Name
+        game.groupId?.let { map["group_id"] = it }
+        game.groupName?.let { map["group_name"] = it }
+        map["co_organizers"] = game.coOrganizers
+        map["auto_close_hours"] = game.autoCloseHours
+        map["require_checkin"] = game.requireCheckin
+        map["checkin_radius_meters"] = game.checkinRadiusMeters
+        map["rules"] = game.rules
+        map["is_soft_deleted"] = game.isSoftDeleted
+        map["is_public"] = game.isPublic
+        map["voting_concluded"] = game.votingConcluded
+        map["post_game_report_generated"] = false
+        map["auto_closed"] = false
+
+        // Server-managed fields explicitamente EXCLUIDOS:
+        // xp_processed, xp_processing, xp_processed_at, xp_reward_*, validation_*,
+        // started_at, finished_at, reviewed_at, etc.
+
+        if (includeTimestamps) {
+            map["created_at"] = com.google.firebase.firestore.FieldValue.serverTimestamp()
+            map["updated_at"] = com.google.firebase.firestore.FieldValue.serverTimestamp()
+        }
+
+        // Sanity: garante que nenhum campo server-managed entrou no map
+        SERVER_MANAGED_KEYS.forEach { key ->
+            require(!map.containsKey(key)) { "BUG: server-managed field '$key' leaked into client write map" }
+        }
+
+        return map
     }
 
     // ========== Helper Methods para Conversao KMP -> Android ==========
@@ -290,12 +379,10 @@ class GameRepositoryImpl constructor(
 
             val docRef = gamesCollection.document()
 
-            // Safety check: ensure dateTime is set
-            var finalGame = game.copy(id = docRef.id, ownerId = uid)
-            // dateTime e dateTimeRaw sao computed properties no model KMP
-            // Validacao de bounds feita via init {} no model
+            val finalGame = game.copy(id = docRef.id, ownerId = uid)
+            val writeData = gameToClientWriteMap(finalGame)
 
-            docRef.set(finalGame).await()
+            docRef.set(writeData).await()
             Result.success(finalGame)
         } catch (e: Exception) {
             Result.failure(e)
@@ -341,12 +428,10 @@ class GameRepositoryImpl constructor(
 
     override suspend fun updateGame(game: Game): Result<Unit> {
         return try {
-            // Validacao de bounds feita via init {} no model KMP
+            val writeData = gameToClientWriteMap(game, includeTimestamps = false)
+            writeData["updated_at"] = com.google.firebase.firestore.FieldValue.serverTimestamp()
 
-            // Atualizar o timestamp de atualização (#1 - Campo updatedAt)
-            val updatedGame = game.copy(updatedAt = System.currentTimeMillis())
-
-            gamesCollection.document(game.id).set(updatedGame).await()
+            gamesCollection.document(game.id).set(writeData, com.google.firebase.firestore.SetOptions.merge()).await()
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)

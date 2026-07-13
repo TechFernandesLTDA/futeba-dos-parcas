@@ -1,7 +1,38 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-13T03:26:33.303Z",
+  "generatedAt": "2026-07-13T04:36:38.271Z",
   "notes": [
+    {
+      "version": "1.53.9",
+      "buildNumber": null,
+      "releaseDate": "2026-07-13",
+      "type": "patch",
+      "showPopup": false,
+      "published": true,
+      "headline": "**Criar jogo funcionando novamente!** O erro ao criar jogo a partir do grupo foi corrigido — o campo `xp_processed` estava sendo rejeitado pelas regras de segurança do Firestore.",
+      "highlights": [],
+      "added": [],
+      "improved": [],
+      "fixed": [
+        "Removido `xp_processed` do payload de criação de jogo (web) que era bloqueado pelas Firestore rules (PR #3218 endureceu as regras mas os hooks não foram atualizados).",
+        "CSP `connect-src` agora inclui `https://*.firebasestorage.app` — futuro-prova para uploads do Firebase Storage.",
+        "Recurrence engine (Cloud Functions) agora propaga `gender`, `name` e `co_organizers` do jogo pai para os jogos recorrentes filhos.",
+        "Android: `GameRepositoryImpl.createGame` e `updateGame` não enviam mais campos server-managed (`xp_processed`, `validation_*`, `xp_reward_*`, etc.) via client SDK.",
+        "Android: `updateGame` agora usa `SetOptions.merge()` em vez de overwrite completo, evitando deletar campos server-managed.",
+        "Android: `GameDetailViewModel.buildNextGame` reseta todos os campos server-managed ao criar próximo jogo recorrente.",
+        "`web/src/hooks/useGames.ts:528`: removido `xp_processed: false` do payload `useCreateGame` (bloqueado por `hasNoGameValidationClientFields` nas Firestore rules).",
+        "`web/src/hooks/useDuplicateGameCopy.ts:111`: removido `xp_processed: false` do payload de duplicação de jogo.",
+        "`web/src/hooks/useGames.test.ts:554`: removida assertion `xp_processed: false`.",
+        "`firebase.json:65`: CSP `connect-src` adiciona `https://*.firebasestorage.app`.",
+        "`functions/src/games/recurrence-engine.ts:267-268`: adiciona `gender` e `name` do pai ao child payload.",
+        "`functions/src/games/recurrence-engine.ts:286`: `co_organizers` agora copia do pai em vez de sempre `[]`.",
+        "`app/.../GameRepositoryImpl.kt`: `createGame` agora usa `gameToClientWriteMap()` que mapeia manualmente apenas campos client-writable em snake_case, excluindo todos os 27 campos server-managed.",
+        "`app/.../GameRepositoryImpl.kt`: `updateGame` agora usa `SetOptions.merge()` em vez de `.set()` overwrite completo, preservando campos server-managed.",
+        "`app/.../GameDetailViewModel.kt:543-573`: `buildNextGame` reseta todos os campos server-managed (xp_*, validation_*, voting_*, mvp_*, etc.) ao criar jogo recorrente.",
+        "Service worker `CACHE_NAME` bump v15 → v16."
+      ],
+      "issueRefs": []
+    },
     {
       "version": "1.53.8",
       "buildNumber": null,

@@ -265,6 +265,8 @@ function buildRecurringGame(
     field_id: current.field_id || null,
     field_name: current.field_name || null,
     visibility: current.visibility,
+    gender: current.gender ?? null,
+    name: current.name || null,
     rules: current.rules || "",
     recurrence,
     recurrence_parent_id: parentId,
@@ -283,7 +285,7 @@ function buildRecurringGame(
     voting_concluded: false,
     post_game_report_generated: false,
     auto_closed: false,
-    co_organizers: [],
+    co_organizers: Array.isArray(current.co_organizers) ? current.co_organizers : [],
     created_at: FieldValue.serverTimestamp(),
     updated_at: FieldValue.serverTimestamp(),
   };

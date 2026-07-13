@@ -230,6 +230,20 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.53.9][web-1.53.9] - 2026-07-13
+
+#### Corrigido
+- `web/src/hooks/useGames.ts:528`: removido `xp_processed: false` do payload `useCreateGame` (bloqueado por `hasNoGameValidationClientFields` nas Firestore rules).
+- `web/src/hooks/useDuplicateGameCopy.ts:111`: removido `xp_processed: false` do payload de duplicação de jogo.
+- `web/src/hooks/useGames.test.ts:554`: removida assertion `xp_processed: false`.
+- `firebase.json:65`: CSP `connect-src` adiciona `https://*.firebasestorage.app`.
+- `functions/src/games/recurrence-engine.ts:267-268`: adiciona `gender` e `name` do pai ao child payload.
+- `functions/src/games/recurrence-engine.ts:286`: `co_organizers` agora copia do pai em vez de sempre `[]`.
+- `app/.../GameRepositoryImpl.kt`: `createGame` agora usa `gameToClientWriteMap()` que mapeia manualmente apenas campos client-writable em snake_case, excluindo todos os 27 campos server-managed.
+- `app/.../GameRepositoryImpl.kt`: `updateGame` agora usa `SetOptions.merge()` em vez de `.set()` overwrite completo, preservando campos server-managed.
+- `app/.../GameDetailViewModel.kt:543-573`: `buildNextGame` reseta todos os campos server-managed (xp_*, validation_*, voting_*, mvp_*, etc.) ao criar jogo recorrente.
+- Service worker `CACHE_NAME` bump v15 → v16.
+
 ### [1.53.8][web-1.53.8] - 2026-07-13
 
 #### Corrigido
@@ -2257,6 +2271,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.53.9]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.53.9.md
 [web-1.53.8]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.53.8.md
 [web-1.53.7]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.53.7.md
 [web-1.53.6]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.53.6.md

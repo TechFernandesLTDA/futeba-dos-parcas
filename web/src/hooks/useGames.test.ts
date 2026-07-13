@@ -551,7 +551,6 @@ describe('useCreateGame', () => {
         status: 'SCHEDULED',
         group_id: 'group-qualified',
         players_count: 0,
-        xp_processed: false,
       })
     );
   });

@@ -108,7 +108,6 @@ export function useDuplicateGameCopy() {
           players: [],
           team1_score: 0,
           team2_score: 0,
-          xp_processed: false,
           voting_concluded: false,
           post_game_report_generated: false,
           auto_closed: false,
