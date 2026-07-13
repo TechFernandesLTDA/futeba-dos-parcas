@@ -1,7 +1,25 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-13T20:42:41.954Z",
+  "generatedAt": "2026-07-13T21:31:06.072Z",
   "notes": [
+    {
+      "version": "1.53.12",
+      "buildNumber": null,
+      "releaseDate": "2026-07-13",
+      "type": "patch",
+      "showPopup": false,
+      "published": true,
+      "headline": "**A lista da Liga no mobile ficou mais limpa ao rolar a tela.** A barra fixa com o seu jogador deixa de aparecer no modo embutido da Home.",
+      "highlights": [],
+      "added": [],
+      "improved": [],
+      "fixed": [
+        "A barra fixa com a sua posição e XP não aparece mais no meio da tela ao navegar a Liga embutida no mobile.",
+        "O comportamento agora respeita o contexto da tela: no modo embutido e em telas menores, a lista segue o scroll normal sem sobreposição visual.",
+        "`web/src/pages/league/LeagueScreen.tsx`: o `IntersectionObserver` da sticky bar agora é desativado quando a Liga está embutida (`embedded`) ou em breakpoint abaixo de `md`, evitando overlay fixa no fluxo mobile da Home."
+      ],
+      "issueRefs": []
+    },
     {
       "version": "1.53.11",
       "buildNumber": null,
