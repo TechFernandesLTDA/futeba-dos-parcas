@@ -1,7 +1,31 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-13T04:36:38.271Z",
+  "generatedAt": "2026-07-13T15:32:25.136Z",
   "notes": [
+    {
+      "version": "1.53.10",
+      "buildNumber": null,
+      "releaseDate": "2026-07-13",
+      "type": "patch",
+      "showPopup": false,
+      "published": true,
+      "headline": "**Convite automático de membros e checklist do caixa corrigidos!** Criar jogo com \"Convidar todos os membros do grupo\" agora funciona, e o passo \"Inicie o caixa\" do checklist marca como concluído ao adicionar a primeira entrada.",
+      "highlights": [],
+      "added": [],
+      "improved": [],
+      "fixed": [
+        "Removido o write do owner como `CONFIRMED` do batch de auto-invite — isso violava as Firestore rules (PR #3501 exige que CONFIRMED seja escrito apenas pelo callable `confirmGamePresence`). O batch inteiro falhava atomicamente, então NENHUM membro era convidado.",
+        "Owner agora é confirmado via callable `confirmGamePresence` (transacional) após o batch de PENDING commits.",
+        "Checklist de onboarding \"Inicie o caixa\" agora lê `cashbox_summary/current.entry_count` (server-authoritative) em vez de `group.total_balance` (campo morto que nunca é escrito pelo fluxo de caixa).",
+        "Critério de conclusão mudou de `balance !== 0` para `entryCount > 0` — um caixa com receita e despesa iguais tem saldo 0 mas está iniciado.",
+        "`web/src/hooks/useAutoInviteMembers.ts`: removido bloco que escrevia owner CONFIRMED no `writeBatch` (violava `firestore.rules:1468` `status == 'PENDING'` e `:1472` `user_id != userId()`). Agora chama `confirmGamePresence` callable após `batch.commit()`.",
+        "`web/src/hooks/useAutoInviteMembers.test.ts`: adicionado mock de `confirmGamePresence`, 3 novos testes (todos convidados, sem membros, callable falha mas membros convidados).",
+        "`web/src/hooks/useCashboxSummary.ts`: novo hook leve que lê apenas `cashbox_summary/current` via `onSnapshot` (retorna `entryCount`, `balanceCents`, `loading`).",
+        "`web/src/pages/group/GroupDetailScreen.tsx`: substituído `group.totalBalance` (campo morto) por `useCashboxSummary(groupId)` para o card de saldo e checklist de onboarding. Critério do checklist mudou de `balanceValue !== 0` para `entryCount > 0`.",
+        "Service worker `CACHE_NAME` bump v16 → v17."
+      ],
+      "issueRefs": []
+    },
     {
       "version": "1.53.9",
       "buildNumber": null,

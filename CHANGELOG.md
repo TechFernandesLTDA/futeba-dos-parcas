@@ -230,6 +230,15 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.53.10][web-1.53.10] - 2026-07-13
+
+#### Corrigido
+- `web/src/hooks/useAutoInviteMembers.ts`: removido bloco que escrevia owner CONFIRMED no `writeBatch` (violava `firestore.rules:1468` `status == 'PENDING'` e `:1472` `user_id != userId()`). Agora chama `confirmGamePresence` callable após `batch.commit()`.
+- `web/src/hooks/useAutoInviteMembers.test.ts`: adicionado mock de `confirmGamePresence`, 3 novos testes (todos convidados, sem membros, callable falha mas membros convidados).
+- `web/src/hooks/useCashboxSummary.ts`: novo hook leve que lê apenas `cashbox_summary/current` via `onSnapshot` (retorna `entryCount`, `balanceCents`, `loading`).
+- `web/src/pages/group/GroupDetailScreen.tsx`: substituído `group.totalBalance` (campo morto) por `useCashboxSummary(groupId)` para o card de saldo e checklist de onboarding. Critério do checklist mudou de `balanceValue !== 0` para `entryCount > 0`.
+- Service worker `CACHE_NAME` bump v16 → v17.
+
 ### [1.53.9][web-1.53.9] - 2026-07-13
 
 #### Corrigido
@@ -2271,6 +2280,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.53.10]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.53.10.md
 [web-1.53.9]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.53.9.md
 [web-1.53.8]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.53.8.md
 [web-1.53.7]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.53.7.md
