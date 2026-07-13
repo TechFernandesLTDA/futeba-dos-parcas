@@ -156,6 +156,7 @@ describe("XP Processing - Idempotência", () => {
             where: jest.fn().mockReturnValue(mockWhereQuery),
             doc: jest.fn().mockReturnValue({
               id: "doc_id",
+              _collection: "xp_logs",
               get: jest.fn().mockResolvedValue({ exists: false }),
             }),
           };
@@ -164,6 +165,7 @@ describe("XP Processing - Idempotência", () => {
         return {
           doc: jest.fn().mockReturnValue({
             id: "user456",
+            _collection: "users",
             get: jest.fn().mockResolvedValue({
               exists: true,
               data: () => ({ experience_points: 500, level: 5 }),
@@ -176,8 +178,10 @@ describe("XP Processing - Idempotência", () => {
       // Mock transaction com suporte a .get(query) e .get(docRef)
       const mockTransaction = {
         get: jest.fn().mockImplementation((refOrQuery) => {
-          // Se for um document reference (tem field `.id`), retorna documento
-          if (refOrQuery && typeof refOrQuery === "object" && refOrQuery.id) {
+          if (refOrQuery?._collection === "xp_logs") {
+            return Promise.resolve({ exists: false });
+          }
+          if (refOrQuery?._collection === "users") {
             return Promise.resolve({
               exists: true,
               id: refOrQuery.id,

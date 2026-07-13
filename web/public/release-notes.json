@@ -1,7 +1,33 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-13T15:32:25.136Z",
+  "generatedAt": "2026-07-13T20:42:41.954Z",
   "notes": [
+    {
+      "version": "1.53.11",
+      "buildNumber": null,
+      "releaseDate": "2026-07-13",
+      "type": "patch",
+      "showPopup": false,
+      "published": true,
+      "headline": "**XP e nível agora aparecem de forma consistente no app Web.** Perfil, rankings e figurinha do jogador passaram a usar a mesma fonte canônica de XP.",
+      "highlights": [],
+      "added": [],
+      "improved": [],
+      "fixed": [
+        "O Web agora prioriza o XP canônico salvo em `experience_points`, evitando que campos legados mostrem progresso ou nível incorretos.",
+        "Perfil, rankings e figurinha do jogador passaram a derivar o nível a partir do XP real do usuário, evitando divergência entre telas.",
+        "Jogadores no nível máximo deixam de ver progresso quebrado como `N / 0 XP` no perfil.",
+        "`web/src/utils/xpAccounting.ts`: `experience_points` agora tem prioridade sobre `experiencePoints`, e o nível efetivo passa a ser derivado do XP reconciliado.",
+        "`web/src/hooks/usePlayerCard.ts`: player card passa a reutilizar os helpers canônicos de XP/nível.",
+        "`web/src/pages/home/tabs/ProfileTab.tsx`: perfil deriva o nível do XP autoritativo e renderiza estado terminal correto no nível máximo.",
+        "`web/src/pages/home/tabs/RankingsTab.tsx`: rankings, pódio, badge, cor, barra de progresso e ordenação de XP passam a usar o mesmo XP/nível reconciliado.",
+        "`web/src/utils/xpAccounting.test.ts` e `web/src/pages/home/tabs/ProfileTab.test.tsx`: adicionadas regressões para conflito snake/camel, nível persistido obsoleto e nível máximo."
+      ],
+      "issueRefs": [
+        3581,
+        3582
+      ]
+    },
     {
       "version": "1.53.10",
       "buildNumber": null,

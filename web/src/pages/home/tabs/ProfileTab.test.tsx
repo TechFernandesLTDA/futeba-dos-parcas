@@ -6,6 +6,10 @@ import { MemoryRouter } from 'react-router-dom';
 
 const mockNavigate = vi.fn();
 let mockUserRole: 'PLAYER' | 'FIELD_OWNER' | 'ADMIN' | undefined;
+let mockExperiencePoints = 850;
+let mockPersistedLevel = 5;
+let mockDerivedLevel = 5;
+let mockXpProgress = 0.65;
 vi.mock('../../services/firebase', () => ({
   db: {}, auth: { currentUser: null }, storage: {}, functions: {}, app: {}, appCheck: null,
   messagingPromise: Promise.resolve(null),
@@ -27,8 +31,8 @@ vi.mock('../../../contexts/AuthContext', () => ({
       nickname: 'Carlão',
       email: 'carlos@test.com',
       role: mockUserRole,
-      level: 5,
-      experiencePoints: 850,
+      level: mockPersistedLevel,
+      experiencePoints: mockExperiencePoints,
       totalGames: 42,
       totalGoals: 15,
       mvpCount: 3,
@@ -61,8 +65,8 @@ vi.mock('../../../utils/levelBadge', () => ({
 }));
 
 vi.mock('../../../types/gamification', () => ({
-  getLevelForXp: () => 5,
-  getXpProgress: () => 0.65,
+  getLevelForXp: () => mockDerivedLevel,
+  getXpProgress: () => mockXpProgress,
   getXpRemaining: () => 150,
   getLevelEntry: (level: number) => ({
     level,
@@ -132,6 +136,10 @@ describe('ProfileTab', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockUserRole = undefined;
+    mockExperiencePoints = 850;
+    mockPersistedLevel = 5;
+    mockDerivedLevel = 5;
+    mockXpProgress = 0.65;
   });
 
   it('renderiza o nome do usuário', () => {
@@ -155,6 +163,28 @@ describe('ProfileTab', () => {
     // LinearProgress renderiza com role="progressbar"
     const progressBars = screen.getAllByRole('progressbar');
     expect(progressBars.length).toBeGreaterThan(0);
+  });
+
+  it('deriva o nível exibido do XP em vez do nível persistido', () => {
+    mockPersistedLevel = 2;
+    mockDerivedLevel = 3;
+
+    renderProfileTab();
+
+    expect(screen.getByAltText(/nível 3/i)).toBeInTheDocument();
+    expect(screen.getByText('Nível 3')).toBeInTheDocument();
+  });
+
+  it('exibe estado terminal sem denominador zero no nível máximo', () => {
+    mockExperiencePoints = 100_000;
+    mockPersistedLevel = 19;
+    mockDerivedLevel = 20;
+    mockXpProgress = 1;
+
+    renderProfileTab();
+
+    expect(screen.getByText('Nível máximo!')).toBeInTheDocument();
+    expect(screen.queryByText(/\/\s*0 XP/)).not.toBeInTheDocument();
   });
 
   it('renderiza resumo de estatísticas (jogos, gols, MVPs)', () => {

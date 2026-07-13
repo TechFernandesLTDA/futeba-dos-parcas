@@ -3444,8 +3444,9 @@ service cloud.firestore {
     match /xp_logs/{logId} {
       // #1613: admin pode investigar logs de qualquer usuário (ownership check bloqueava investigação)
       allow read: if isAuthenticated() && (resource.data.user_id == userId() || isAdmin());
-      allow create: if isAdmin();
-      allow update, delete: if false;
+      // #3580: somente Admin SDK/Cloud Functions grava a trilha canônica.
+      // Custom Claims de admin não autorizam escrita direta do cliente.
+      allow create, update, delete: if false;
     }
 
     // ============================================

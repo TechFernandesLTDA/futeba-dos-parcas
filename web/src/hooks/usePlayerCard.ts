@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { collection, doc, getDoc, getDocs, limit, query, where } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { snakeToCamel } from '../utils/firestoreHelpers';
-import { getLevelForXp } from '../types/gamification';
+import { getEffectiveLevel, getExperiencePoints } from '../utils/xpAccounting';
 import { PreferredPosition } from '../types/user';
 import { normalizePlayerStats } from '../utils/playerStats';
 
@@ -40,7 +40,6 @@ export interface PlayerCardData {
 // #2276: interface tipada do doc users (camelCase pós-snakeToCamel).
 interface RawUserDoc {
   experiencePoints?: number;
-  level?: number;
   strikerRating?: number;
   midRating?: number;
   defenderRating?: number;
@@ -88,8 +87,9 @@ async function fetchPlayerCardData(userId: string): Promise<PlayerCardData> {
     userId,
   );
 
-  const totalXp = data.experiencePoints ?? raw.experience_points ?? 0;
-  const level = data.level ?? getLevelForXp(totalXp);
+  const xpData = { ...raw, ...data };
+  const totalXp = getExperiencePoints(xpData);
+  const level = getEffectiveLevel(xpData, totalXp);
 
   const strikerRating = data.strikerRating ?? raw.striker_rating ?? 0;
   const midRating = data.midRating ?? raw.mid_rating ?? 0;

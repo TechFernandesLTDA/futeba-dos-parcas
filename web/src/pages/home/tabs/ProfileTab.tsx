@@ -49,7 +49,8 @@ import {
 } from '@mui/icons-material';
 import { getLevelColor } from '../../../types/user';
 import { getLevelBadgeImage, getLevelBadgeDescription, handleBadgeImageError } from '../../../utils/levelBadge';
-import { getLevelForXp, getXpProgress, getLevelEntry } from '../../../types/gamification';
+import { getXpProgress, getLevelEntry } from '../../../types/gamification';
+import { getEffectiveLevel, getExperiencePoints } from '../../../utils/xpAccounting';
 import { useGamificationColors } from '../../../hooks/useGamificationColors';
 import { iconSizes } from '../../../theme/iconSizes';
 import { pageSpacing } from '../../../theme/pageTokens';
@@ -88,8 +89,9 @@ export function ProfileTab() {
   const lookingForGameToday = isLookingForGameToday(user);
 
   // Calcular progresso usando LevelTable (fonte única de verdade)
-  const currentXp = user?.experiencePoints || 0;
-  const currentLevel = getLevelForXp(currentXp);
+  const xpData = (user ?? {}) as unknown as Record<string, unknown>;
+  const currentXp = getExperiencePoints(xpData);
+  const currentLevel = getEffectiveLevel(xpData, currentXp);
   const levelProgress = getXpProgress(currentXp) * 100;
   const currentEntry = getLevelEntry(currentLevel);
   const nextEntry = currentLevel < 20 ? getLevelEntry(currentLevel + 1) : null;
@@ -394,7 +396,9 @@ export function ProfileTab() {
               variant="caption"
               sx={{ display: 'block', mt: 1, color: profileHeaderMutedColor }}
             >
-              {Math.max(0, xpInLevel)} / {xpNeededForNext} XP
+              {currentLevel >= 20
+                ? t('player.card.maxLevel')
+                : `${Math.max(0, xpInLevel)} / ${xpNeededForNext} XP`}
             </Typography>
           </CardContent>
         </Card>

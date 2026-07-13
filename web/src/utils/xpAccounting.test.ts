@@ -13,6 +13,20 @@ describe('xpAccounting', () => {
     expect(getEffectiveLevel({ experience_points: 0 })).toBe(0);
   });
 
+  it('prioriza experience_points canônico sobre experiencePoints legado', () => {
+    expect(getExperiencePoints({
+      experiencePoints: 350,
+      experience_points: 850,
+    })).toBe(850);
+  });
+
+  it('deriva o nível do XP mesmo quando o nível persistido está obsoleto', () => {
+    expect(getEffectiveLevel({
+      level: 2,
+      experience_points: 850,
+    })).toBe(3);
+  });
+
   it('lê logs atuais de produção com aliases snake/camel', () => {
     expect(getXpEarned({ xp_earned: 50 })).toBe(50);
     expect(getXpEarned({ xpEarned: 30 })).toBe(30);
