@@ -77,7 +77,14 @@ vi.mock('../../utils/firestoreHelpers', () => ({
 }));
 
 vi.mock('../../services/firebase', () => ({
+  app: {},
   db: {},
+}));
+
+vi.mock('firebase/functions', () => ({
+  connectFunctionsEmulator: vi.fn(),
+  getFunctions: vi.fn(() => ({})),
+  httpsCallable: vi.fn(() => vi.fn()),
 }));
 
 vi.mock('firebase/firestore', () => ({
