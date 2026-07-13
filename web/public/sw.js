@@ -24,7 +24,8 @@
 // media-src permitindo firebasestorage.googleapis.com.
 // v13 → v14: invalida bundle antigo apos adicionar fullscreen lightbox de
 // video no mobile (Dialog fullScreen) e botao de tela cheia nativo no player.
-const CACHE_NAME = 'futeba-v14';
+// v14 → v15: corrige duplicacao de botao ampliar/tela cheia no card inline.
+const CACHE_NAME = 'futeba-v15';
 const OFFLINE_URL = '/offline.html';
 const STATIC_ASSETS = [
   '/',
