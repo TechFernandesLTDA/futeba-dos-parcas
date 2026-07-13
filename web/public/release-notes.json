@@ -1,7 +1,25 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-13T01:07:59.546Z",
+  "generatedAt": "2026-07-13T03:26:33.303Z",
   "notes": [
+    {
+      "version": "1.53.8",
+      "buildNumber": null,
+      "releaseDate": "2026-07-13",
+      "type": "patch",
+      "showPopup": false,
+      "published": true,
+      "headline": "**Corrigido o ícone duplicado no player de vídeo do mural.** Agora só aparece um botão de ampliar no card, e a tela cheia nativa fica disponível apenas dentro do player expandido.",
+      "highlights": [],
+      "added": [],
+      "improved": [],
+      "fixed": [
+        "Removido o botão de tela cheia nativo que aparecia duplicado no card do mural (já existe o botão \"ampliar\" que abre o player expandido). O botão de tela cheia nativo agora aparece apenas dentro do player expandido (lightbox).",
+        "`WallPostVideoPlayer`: botão de fullscreen nativo (`FullscreenIcon`) agora só renderiza quando `autoActivate` é true (modo lightbox). No card inline, o botão `OpenInFullIcon` do `WallPostCard` já cumpre o papel de abrir o lightbox onde o fullscreen nativo está disponível.",
+        "Service worker `CACHE_NAME` bump v14 → v15."
+      ],
+      "issueRefs": []
+    },
     {
       "version": "1.53.7",
       "buildNumber": null,

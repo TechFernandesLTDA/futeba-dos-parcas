@@ -334,7 +334,7 @@ export function WallPostVideoPlayer({
         </Box>
       )}
 
-      {status === 'ready' && (
+      {autoActivate && status === 'ready' && (
         <IconButton
           size="small"
           onClick={() => void requestNativeFullscreen()}
