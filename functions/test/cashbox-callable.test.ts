@@ -257,6 +257,7 @@ describe("cashbox callables incrementais", () => {
         total_court_cost_cents: 1001,
         received_cents: 1001,
         open_cents: 0,
+        settlement_count: 2,
       }),
     };
     const payerSnapshot = {
@@ -360,11 +361,16 @@ describe("cashbox callables incrementais", () => {
         status: "FINALIZED",
         received_cents: 601,
         open_cents: 400,
+        settlement_count: 1,
       })
     );
     expect(mockTxUpdate).toHaveBeenCalledWith(
       mockMonthlySettlementRef,
-      expect.objectContaining({status: "VOIDED", voided_by: "user-1"})
+      expect.objectContaining({
+        status: "VOIDED",
+        period_status_after_void: "FINALIZED",
+        voided_by: "user-1",
+      })
     );
     expect(mockTxSet).toHaveBeenCalledWith(
       mockSummaryRef,
@@ -374,6 +380,117 @@ describe("cashbox callables incrementais", () => {
         entry_count: 1,
       }),
       {merge: true}
+    );
+  });
+
+  it("devolve o período a DRAFT ao estornar a última baixa ativa", async () => {
+    summaryData = {
+      ...summaryData,
+      balance: 4,
+      total_income: 4,
+      balance_cents: 400,
+      total_income_cents: 400,
+      entry_count: 1,
+    };
+    const entrySnapshot = {
+      exists: true,
+      data: () => ({
+        type: "INCOME",
+        amount_cents: 400,
+        status: "ACTIVE",
+        category: "MONTHLY_FEE",
+        request_id: "monthly-payment-0001",
+        monthly_period_key: "2026-07",
+        monthly_payer_id: "player-1",
+        monthly_settlement_path: mockMonthlySettlementRef.path,
+        monthly_payment_sequence: 1,
+      }),
+    };
+    const periodSnapshot = {
+      exists: true,
+      data: () => ({
+        status: "FINALIZED",
+        total_court_cost_cents: 400,
+        received_cents: 400,
+        open_cents: 0,
+        settlement_count: 1,
+      }),
+    };
+    const payerSnapshot = {
+      exists: true,
+      data: () => ({
+        user_id: "player-1",
+        period_key: "2026-07",
+        expected_cents: 400,
+        paid_cents: 400,
+        outstanding_cents: 0,
+        payment_count: 1,
+        payment_sequence: 1,
+        last_payment_entry_id: mockEntryRef.id,
+        last_payment_sequence: 1,
+      }),
+    };
+    const settlementSnapshot = {
+      exists: true,
+      data: () => ({
+        status: "ACTIVE",
+        request_id: "monthly-payment-0001",
+        payer_id: "player-1",
+        period_key: "2026-07",
+        cashbox_entry_id: mockEntryRef.id,
+        amount_cents: 400,
+        payment_sequence: 1,
+      }),
+    };
+    const activeSettlementsSnapshot = {
+      docs: [{
+        id: "monthly-payment-0001",
+        data: () => settlementSnapshot.data(),
+      }],
+    };
+    mockRunTransaction.mockImplementation(async (
+      callback: (tx: unknown) => Promise<unknown>
+    ) => callback({
+      get: jest.fn(async (ref: {path: string}) => {
+        if (ref === mockGroupRef) return groupSnapshot;
+        if (ref === mockMemberRef) return memberSnapshot;
+        if (ref === mockEntryRef) return entrySnapshot;
+        if (ref === mockSummaryRef) return summarySnapshot;
+        if (ref === mockMonthlyPeriodRef) return periodSnapshot;
+        if (ref === mockMonthlyPayerRef) return payerSnapshot;
+        if (ref === mockMonthlySettlementRef) return settlementSnapshot;
+        if (ref === mockActiveSettlementsQuery) {
+          return activeSettlementsSnapshot;
+        }
+        if (ref.path.includes("cashbox_summary_ops")) return {exists: false};
+        throw new Error(`Unexpected read: ${ref.path}`);
+      }),
+      set: mockTxSet,
+      update: mockTxUpdate,
+    }));
+
+    await expect(voidCashboxEntry({
+      auth: {uid: "user-1", token: {verified: true}},
+      data: {groupId: "group-1", entryId: mockEntryRef.id},
+    })).resolves.toMatchObject({monthlyReversed: true, balanceCents: 0});
+
+    expect(mockTxUpdate).toHaveBeenCalledWith(
+      mockMonthlyPeriodRef,
+      expect.objectContaining({
+        status: "DRAFT",
+        received_cents: 0,
+        open_cents: 400,
+        settlement_count: 0,
+        finalized_by: {_type: "DeleteField"},
+        finalized_at: {_type: "DeleteField"},
+      })
+    );
+    expect(mockTxUpdate).toHaveBeenCalledWith(
+      mockMonthlySettlementRef,
+      expect.objectContaining({
+        status: "VOIDED",
+        period_status_after_void: "DRAFT",
+      })
     );
   });
 
@@ -406,6 +523,7 @@ describe("cashbox callables incrementais", () => {
         total_court_cost_cents: 1001,
         received_cents: 1001,
         open_cents: 0,
+        settlement_count: 2,
       }),
     };
     const payerSnapshot = {
@@ -434,6 +552,18 @@ describe("cashbox callables incrementais", () => {
         payment_sequence: 1,
       }),
     };
+    const activeSettlementsSnapshot = {
+      docs: [
+        {
+          id: "monthly-payment-0001",
+          data: () => settlementSnapshot.data(),
+        },
+        {
+          id: "monthly-payment-later",
+          data: () => ({status: "ACTIVE"}),
+        },
+      ],
+    };
     mockRunTransaction.mockImplementation(async (
       callback: (tx: unknown) => Promise<unknown>
     ) => callback({
@@ -445,6 +575,9 @@ describe("cashbox callables incrementais", () => {
         if (ref === mockMonthlyPeriodRef) return periodSnapshot;
         if (ref === mockMonthlyPayerRef) return payerSnapshot;
         if (ref === mockMonthlySettlementRef) return settlementSnapshot;
+        if (ref === mockActiveSettlementsQuery) {
+          return activeSettlementsSnapshot;
+        }
         if (ref.path.includes("cashbox_summary_ops")) return {exists: false};
         throw new Error(`Unexpected read: ${ref.path}`);
       }),
@@ -468,6 +601,10 @@ describe("cashbox callables incrementais", () => {
     expect(payerUpdate).not.toHaveProperty("last_payment_entry_id");
     expect(payerUpdate).not.toHaveProperty("last_payment_sequence");
     expect(payerUpdate).not.toHaveProperty("payment_sequence");
+    expect(mockTxUpdate).toHaveBeenCalledWith(
+      mockMonthlyPeriodRef,
+      expect.objectContaining({status: "FINALIZED", settlement_count: 1})
+    );
   });
 
   it("recusa estorno mensal se o settlement auditável estiver ausente", async () => {
