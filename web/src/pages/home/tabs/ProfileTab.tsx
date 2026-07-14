@@ -5,6 +5,7 @@ import {
   Box,
   Typography,
   Card,
+  CardActionArea,
   CardContent,
   Avatar,
   LinearProgress,
@@ -357,7 +358,6 @@ export function ProfileTab() {
             mx: 'auto',
             maxWidth: 300,
             borderRadius: 3,
-            cursor: 'pointer',
             bgcolor: profileLevelCardBg,
             border: '1px solid',
             borderColor: profileLevelCardBorder,
@@ -365,42 +365,47 @@ export function ProfileTab() {
             boxShadow: 'none',
             color: profileHeaderTextColor,
           }}
-          onClick={() => navigate('/level-journey')}
         >
-          <CardContent>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-              <Typography variant="subtitle2" sx={{ color: profileHeaderTextColor }}>
-                Nível {currentLevel}
-              </Typography>
-              <Typography variant="caption" fontWeight={600} sx={{ color: profileHeaderMutedColor }}>
-                {currentEntry.name}
-              </Typography>
-            </Box>
+          <CardActionArea
+            onClick={() => navigate('/level-journey')}
+            aria-label={t('profile.viewLevelJourneyAria', { level: currentLevel })}
+            sx={{ borderRadius: 'inherit', color: 'inherit' }}
+          >
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+                <Typography variant="subtitle2" sx={{ color: profileHeaderTextColor }}>
+                  {t('profile.level')} {currentLevel}
+                </Typography>
+                <Typography variant="caption" fontWeight={600} sx={{ color: profileHeaderMutedColor }}>
+                  {currentEntry.name}
+                </Typography>
+              </Box>
 
-            <LinearProgress
-              variant="determinate"
-              value={animatedProgress}
-              sx={{
-                height: 8,
-                borderRadius: 4,
-                bgcolor: alpha(profileHeaderTextColor, 0.14),
-                '& .MuiLinearProgress-bar': {
+              <LinearProgress
+                variant="determinate"
+                value={animatedProgress}
+                sx={{
+                  height: 8,
                   borderRadius: 4,
-                  background: `linear-gradient(90deg, ${levelColor}, ${alpha(levelColor, 0.7)})`,
-                  transition: 'transform 1s ease-in-out',
-                },
-              }}
-            />
+                  bgcolor: alpha(profileHeaderTextColor, 0.14),
+                  '& .MuiLinearProgress-bar': {
+                    borderRadius: 4,
+                    background: `linear-gradient(90deg, ${levelColor}, ${alpha(levelColor, 0.7)})`,
+                    transition: 'transform 1s ease-in-out',
+                  },
+                }}
+              />
 
-            <Typography
-              variant="caption"
-              sx={{ display: 'block', mt: 1, color: profileHeaderMutedColor }}
-            >
-              {currentLevel >= 20
-                ? t('player.card.maxLevel')
-                : `${Math.max(0, xpInLevel)} / ${xpNeededForNext} XP`}
-            </Typography>
-          </CardContent>
+              <Typography
+                variant="caption"
+                sx={{ display: 'block', mt: 1, color: profileHeaderMutedColor }}
+              >
+                {currentLevel >= 20
+                  ? t('player.card.maxLevel')
+                  : `${Math.max(0, xpInLevel)} / ${xpNeededForNext} XP`}
+              </Typography>
+            </CardContent>
+          </CardActionArea>
         </Card>
       </Box>
 

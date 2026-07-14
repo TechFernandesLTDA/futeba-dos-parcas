@@ -1090,4 +1090,27 @@ repetíveis, e o organizador não perde a ordem de chegada por toque acidental.
 
 ---
 
+## 2026-07-13 — Ações visuais Web usam controles semânticos canônicos (#3625/#3626/#3628)
+
+**Contexto:** Miniaturas de fotos e o cartão de nível dependiam de `onClick` em
+containers sem semântica, enquanto o favorito de local não expunha nome/estado
+acessível reativo. Na galeria de jogo, transformar o container inteiro em botão
+criaria um botão de exclusão aninhado inválido.
+
+**Decisão:** Miniaturas usam `ButtonBase`, o cartão de nível usa
+`CardActionArea` e a exclusão permanece uma ação irmã da miniatura. O favorito
+expõe rótulo traduzido e `aria-pressed`, com o estado local sincronizado após a
+persistência no `localStorage`. O `Dialog` do MUI preserva trap e restauração de
+foco ao acionador.
+
+**Consequências:** Clique, toque, Enter e Espaço disparam a mesma ação uma única
+vez; Escape fecha o lightbox e devolve o foco; tecnologias assistivas recebem
+nomes em PT-BR, inglês e espanhol. Payloads, limites e chaves persistidas não
+mudam.
+
+**Relacionado:** `specs/BUGFIX_2026-07-13_web-keyboard-accessibility.md`, #3625,
+#3626, #3628.
+
+---
+
 <!-- Adicione novas decisões acima desta linha -->

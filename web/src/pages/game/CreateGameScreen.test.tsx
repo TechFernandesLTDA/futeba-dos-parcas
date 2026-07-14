@@ -1,10 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { ThemeProvider, createTheme } from '@mui/material';
 import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import i18n from 'i18next';
 
 const mockNavigate = vi.fn();
+let mockLocations: Array<Record<string, unknown>> = [];
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom');
   return {
@@ -52,7 +55,7 @@ vi.mock('../../hooks/useGames', () => ({
 
 vi.mock('../../hooks/useLocations', () => ({
   useLocations: () => ({
-    locations: [],
+    locations: mockLocations,
     loading: false,
     error: null,
   }),
@@ -134,8 +137,11 @@ function renderCreateGameScreen() {
 }
 
 describe('CreateGameScreen', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
+    localStorage.clear();
+    mockLocations = [];
+    await i18n.changeLanguage('pt-BR');
   });
 
   it('renderiza o título "Criar Jogo" no header', () => {
@@ -181,6 +187,50 @@ describe('CreateGameScreen', () => {
     expect(
       screen.getByText(/nenhuma quadra publicada e com mensalidade válida/i),
     ).toBeInTheDocument();
+  });
+
+  it('expõe nome e estado acessíveis reativos ao favoritar um local', async () => {
+    mockLocations = [{
+      id: 'loc-1',
+      name: 'Arena Teste',
+      city: 'São Paulo',
+      state: 'SP',
+      address: 'Rua A, 123',
+      status: 'ACTIVE',
+      fields: [],
+    }];
+    const user = userEvent.setup();
+    renderCreateGameScreen();
+
+    await user.click(screen.getByRole('combobox', { name: /quadra \/ local/i }));
+    await user.click(screen.getByRole('option', { name: /arena teste/i }));
+    const addFavorite = screen.getByRole('button', {
+      name: 'Adicionar local aos favoritos',
+    });
+    expect(addFavorite).toHaveAttribute('aria-pressed', 'false');
+
+    await user.click(addFavorite);
+
+    const removeFavorite = screen.getByRole('button', {
+      name: 'Remover local dos favoritos',
+    });
+    expect(removeFavorite).toHaveAttribute('aria-pressed', 'true');
+    expect(localStorage.getItem('favorite_locations')).toContain('loc-1');
+  });
+
+  it('traduz o nome acessível do favorito para inglês', async () => {
+    mockLocations = [{
+      id: 'loc-1', name: 'Test Arena', city: 'London', status: 'ACTIVE', fields: [],
+    }];
+    await i18n.changeLanguage('en');
+    const user = userEvent.setup();
+    renderCreateGameScreen();
+
+    await user.click(screen.getByRole('combobox', { name: /field \/ location/i }));
+    await user.click(screen.getByRole('option', { name: /test arena/i }));
+    expect(screen.getByRole('button', {
+      name: 'Add location to favorites',
+    })).toBeInTheDocument();
   });
 });
 

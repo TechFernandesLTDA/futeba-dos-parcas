@@ -6,6 +6,7 @@ import {
   Avatar,
   Box,
   Button,
+  ButtonBase,
   Card,
   CardContent,
   CircularProgress,
@@ -327,19 +328,33 @@ export const GamePhotosTab: React.FC<GamePhotosTabProps> = ({
                       pt: '100%',
                       borderRadius: 2,
                       overflow: 'hidden',
-                      cursor: 'pointer',
                       bgcolor: 'action.hover',
                       '&:hover .photo-delete': { opacity: 1 },
+                      '&:focus-within .photo-delete': { opacity: 1 },
                     }}
-                    onClick={() => setSelectedPhoto(photo)}
                   >
-                    <Box
-                      component="img"
-                      src={photo.url}
-                      alt={t('gamePhotos.photoAlt', { name: photo.uploadedByName })}
-                      loading="lazy"
-                      sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
-                    />
+                    <ButtonBase
+                      onClick={() => setSelectedPhoto(photo)}
+                      aria-label={t('gamePhotos.photoAlt', { name: photo.uploadedByName })}
+                      sx={{
+                        position: 'absolute',
+                        inset: 0,
+                        width: '100%',
+                        height: '100%',
+                        borderRadius: 2,
+                        '&.Mui-focusVisible': {
+                          boxShadow: `0 0 0 3px ${theme.palette.primary.main} inset`,
+                        },
+                      }}
+                    >
+                      <Box
+                        component="img"
+                        src={photo.url}
+                        alt={t('gamePhotos.photoAlt', { name: photo.uploadedByName })}
+                        loading="lazy"
+                        sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                    </ButtonBase>
                     {canDelete(photo) && (
                       <IconButton
                         className="photo-delete"
@@ -353,13 +368,11 @@ export const GamePhotosTab: React.FC<GamePhotosTabProps> = ({
                           bgcolor: alpha(theme.palette.common.black, 0.58),
                           color: theme.palette.common.white,
                           opacity: { xs: 1, sm: 0 },
+                          zIndex: 1,
                           transition: (transitionTheme) => transitionTheme.transitions.create('opacity', { duration: transitionTheme.transitions.duration.shorter }),
                           '&:hover': { bgcolor: theme.palette.error.main },
                         }}
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          handleDelete(photo);
-                        }}
+                        onClick={() => handleDelete(photo)}
                       >
                         {deletingId === photo.id ? <CircularProgress size={16} color="inherit" /> : <DeleteIcon fontSize="small" />}
                       </IconButton>
@@ -376,7 +389,17 @@ export const GamePhotosTab: React.FC<GamePhotosTabProps> = ({
         )}
       </CardContent>
 
-      <Dialog open={!!selectedPhotoLive} onClose={() => setSelectedPhoto(null)} maxWidth="md" fullWidth>
+      <Dialog
+        open={!!selectedPhotoLive}
+        onClose={() => setSelectedPhoto(null)}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{
+          'aria-label': selectedPhotoLive
+            ? t('gamePhotos.photoAlt', { name: selectedPhotoLive.uploadedByName })
+            : undefined,
+        }}
+      >
         {selectedPhotoLive && (
           <>
             <Box sx={{ position: 'relative', bgcolor: theme.palette.common.black, display: 'flex', justifyContent: 'center' }}>

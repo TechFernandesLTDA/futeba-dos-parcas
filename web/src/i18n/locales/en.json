@@ -976,6 +976,10 @@
     "confirmed_chip": "Confirmed",
     "confirming": "Confirming...",
     "create": {
+      "addFavorite": "Add location to favorites",
+      "favoriteAdded": "Location added to favorites!",
+      "favoriteRemoved": "Location removed from favorites.",
+      "removeFavorite": "Remove location from favorites",
       "acceptPix": "Accept payment via Pix",
       "autoInviteMembers": "Invite all group members",
       "conflictCheckFailed": "Could not check for time conflicts at this field. Manually verify whether another game already exists at the same time.",
