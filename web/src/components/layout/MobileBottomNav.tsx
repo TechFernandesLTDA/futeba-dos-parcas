@@ -56,7 +56,7 @@ export const MobileBottomNav = React.memo(function MobileBottomNav({ children }:
             backgroundColor: (theme) => alpha(theme.palette.background.paper, 0.72),
             borderTop: '1px solid',
             borderColor: 'divider',
-            boxShadow: (theme) => theme.shadowsCustom?.nav ?? '0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)',
+            boxShadow: (theme) => theme.shadowsCustom?.navBottom ?? theme.shadowsCustom?.nav,
             '@supports not (backdrop-filter: blur(12px))': {
               backgroundColor: 'background.paper',
             },
