@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.data.repository.DirectChat
 import com.futebadosparcas.data.repository.DirectMessage
 import com.futebadosparcas.data.repository.DirectMessagesRepository
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -29,45 +31,59 @@ class ConversationViewModel(
         get() = repository.currentUserId()
 
     private var observedChatId: String? = null
+    private var observationJob: Job? = null
 
     fun observe(chatId: String) {
-        if (observedChatId == chatId) return
+        if (observedChatId == chatId && observationJob?.isActive == true) return
+        startObservation(chatId)
+    }
+
+    fun retry(chatId: String) {
+        startObservation(chatId)
+    }
+
+    private fun startObservation(chatId: String) {
+        val previousObservation = observationJob
         observedChatId = chatId
-        viewModelScope.launch {
-            repository.observeChat(chatId)
-                .catch { error ->
-                    _uiState.value = _uiState.value.copy(
-                        loading = false,
-                        error = error.message ?: "Erro ao carregar conversa"
-                    )
-                }
-                .collect { chat ->
-                    _uiState.value = _uiState.value.copy(
-                        loading = false,
-                        chat = chat,
-                        error = null
-                    )
-                    val uid = currentUserId
-                    if (uid != null && (chat?.unreadCount?.get(uid) ?: 0) > 0) {
-                        repository.markRead(chatId)
+        _uiState.value = _uiState.value.copy(loading = true, error = null)
+        observationJob = viewModelScope.launch {
+            previousObservation?.cancelAndJoin()
+            launch {
+                repository.observeChat(chatId)
+                    .catch { error ->
+                        _uiState.value = _uiState.value.copy(
+                            loading = false,
+                            error = error.message ?: "Erro ao carregar conversa"
+                        )
                     }
-                }
-        }
-        viewModelScope.launch {
-            repository.observeMessages(chatId)
-                .catch { error ->
-                    _uiState.value = _uiState.value.copy(
-                        loading = false,
-                        error = error.message ?: "Erro ao carregar mensagens"
-                    )
-                }
-                .collect { messages ->
-                    _uiState.value = _uiState.value.copy(
-                        loading = false,
-                        messages = messages,
-                        error = null
-                    )
-                }
+                    .collect { chat ->
+                        _uiState.value = _uiState.value.copy(
+                            loading = false,
+                            chat = chat,
+                            error = null
+                        )
+                        val uid = currentUserId
+                        if (uid != null && (chat?.unreadCount?.get(uid) ?: 0) > 0) {
+                            repository.markRead(chatId)
+                        }
+                    }
+            }
+            launch {
+                repository.observeMessages(chatId)
+                    .catch { error ->
+                        _uiState.value = _uiState.value.copy(
+                            loading = false,
+                            error = error.message ?: "Erro ao carregar mensagens"
+                        )
+                    }
+                    .collect { messages ->
+                        _uiState.value = _uiState.value.copy(
+                            loading = false,
+                            messages = messages,
+                            error = null
+                        )
+                    }
+            }
         }
     }
 
