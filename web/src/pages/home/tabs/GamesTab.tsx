@@ -45,6 +45,7 @@ import { formatGameDate } from '../../../utils/dateFormatters';
 import { useTranslation } from 'react-i18next';
 import { ErrorState } from '../../../components/common/ErrorState';
 import { EmptyState } from '../../../components/common/EmptyState';
+import { PageContainer } from '../../../components/common/PageContainer';
 import { useDocumentTitle } from '../../../hooks/useDocumentTitle';
 import { ScreenFab } from '../../../components/layout';
 import { getGameStartTime, sortGamesForDisplay } from '../../../utils/gameSorting';
@@ -152,7 +153,7 @@ export function GamesTab() {
   }, [navigate]);
 
   return (
-    <Box sx={{ pb: { xs: 10, md: 3 }, maxWidth: { xs: '100%', md: 1100, lg: 1320, xl: 1560 }, mx: 'auto', width: '100%' }}>
+    <PageContainer maxWidth="dashboard">
       {/* Sticky search + filters bar */}
       <Box
         sx={{
@@ -160,7 +161,6 @@ export function GamesTab() {
           top: 0,
           zIndex: 5,
           bgcolor: 'background.paper', // #2273: token canônico de sticky header
-          px: pageSpacing.pagePadding,
           pt: { xs: 1.5, md: 1 },
           pb: 0,
           borderBottom: `1px solid ${theme.palette.divider}`,
@@ -287,7 +287,7 @@ export function GamesTab() {
         </Box>
       </Box>
 
-      <Box sx={{ px: pageSpacing.pagePadding, pt: { xs: 2, md: 1.25 } }}>
+      <Box sx={{ pt: { xs: 2, md: 1.25 } }}>
         {error ? (
           <ErrorState
             message={error}
@@ -353,7 +353,7 @@ export function GamesTab() {
             const expectedPayment = resolveExpectedPayment(game);
 
             return (
-              <Grid xs={12} md={6} xl={4} key={game.id}>
+              <Grid xs={12} md={6} lg={4} xl={3} key={game.id}>
               <Card sx={{ mb: { xs: 2, md: 0 }, ...(isLive ? { borderLeft: `3px solid ${theme.palette.error.main}` } : {}) }}>
                 <CardActionArea onClick={() => handleCardClick(game.id)}>
                   <CardContent sx={{ p: { xs: 2, md: 1.5 }, '&:last-child': { pb: { xs: 2, md: 1.5 } } }}>
@@ -511,6 +511,6 @@ export function GamesTab() {
           right: { xs: 16, md: 24 },
         }}
       />
-    </Box>
+    </PageContainer>
   );
 }
