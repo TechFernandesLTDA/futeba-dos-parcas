@@ -101,10 +101,11 @@ fun GameDetailScreen(
     val successState = uiState as? GameDetailUiState.Success
     val schedulingEvent = successState?.schedulingEvent
     val userMessage = successState?.userMessageResId?.let { context.getString(it) } ?: successState?.userMessage
+    val canRetryLastMutation = successState?.canRetryLastMutation == true
     val isGameDeleted = uiState is GameDetailUiState.GameDeleted
 
     // Effect for automated scheduling event feedback
-    LaunchedEffect(schedulingEvent, userMessage, isGameDeleted) {
+    LaunchedEffect(schedulingEvent, userMessage, canRetryLastMutation, isGameDeleted) {
         if (successState != null) {
             schedulingEvent?.let { event ->
                 val message = when (event) {
@@ -116,8 +117,15 @@ fun GameDetailScreen(
                 viewModel.clearSchedulingEvent()
             }
             userMessage?.let { message ->
-                snackbarHostState.showSnackbar(message)
+                val result = snackbarHostState.showSnackbar(
+                    message = message,
+                    actionLabel = if (canRetryLastMutation) context.getString(R.string.retry) else null,
+                    duration = if (canRetryLastMutation) SnackbarDuration.Long else SnackbarDuration.Short
+                )
                 viewModel.clearUserMessage()
+                if (result == SnackbarResult.ActionPerformed) {
+                    viewModel.retryLastMutation()
+                }
             }
         }
         if (isGameDeleted) {
@@ -270,6 +278,7 @@ fun GameDetailContent(
     var showFinishGameDialog by remember { mutableStateOf(false) }
     var showPositionDialog by remember { mutableStateOf(false) }
     var showMovePlayerDialog by remember { mutableStateOf<Pair<String,String>?>(null) }
+    var playerPendingRemoval by remember { mutableStateOf<GameConfirmation?>(null) }
 
     val waitlistState = state.waitlistState
 
@@ -300,6 +309,57 @@ fun GameDetailContent(
                 showPositionDialog = false
             }
         )
+    }
+
+    playerPendingRemoval?.let { confirmation ->
+        val isRemoving = confirmation.userId in state.removingPlayerIds
+        AlertDialog(
+            onDismissRequest = {
+                if (!isRemoving) playerPendingRemoval = null
+            },
+            title = { Text(stringResource(R.string.game_detail_remove_player_title)) },
+            text = {
+                Text(stringResource(R.string.game_detail_remove_player_message, confirmation.userName))
+            },
+            confirmButton = {
+                TextButton(
+                    enabled = !isRemoving,
+                    onClick = { viewModel.removePlayer(gameId, confirmation.userId) }
+                ) {
+                    if (isRemoving) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            strokeWidth = 2.dp
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(stringResource(R.string.game_detail_removing_player))
+                    } else {
+                        Text(stringResource(R.string.remove_player))
+                    }
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    enabled = !isRemoving,
+                    onClick = { playerPendingRemoval = null }
+                ) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        )
+    }
+
+    LaunchedEffect(
+        playerPendingRemoval?.userId,
+        state.confirmations,
+        state.removingPlayerIds
+    ) {
+        val target = playerPendingRemoval ?: return@LaunchedEffect
+        val removalFinished = target.userId !in state.removingPlayerIds
+        val playerWasRemoved = state.confirmations.none { it.userId == target.userId }
+        if (removalFinished && playerWasRemoved) {
+            playerPendingRemoval = null
+        }
     }
 
     if (showGenerateTeamsDialog) {
@@ -443,11 +503,13 @@ fun GameDetailContent(
                             viewModel.togglePaymentStatus(gameId, confirmation.userId, confirmation.paymentStatus)
                         }
                     },
-                    onRemoveClick = { viewModel.removePlayer(gameId, confirmation.userId) },
+                    onRemoveClick = { playerPendingRemoval = confirmation },
+                    isRemoving = confirmation.userId in state.removingPlayerIds,
+                    isPresenceSubmitting = state.isPresenceSubmitting,
                     onAcceptClick = {
                         showPositionDialog = true
                     },
-                    onDeclineClick = { viewModel.toggleConfirmation(gameId) }
+                    onDeclineClick = { viewModel.declineInvitation(gameId) }
                 )
             }
 
@@ -496,11 +558,21 @@ fun GameDetailContent(
                 colors = ButtonDefaults.buttonColors(
                     containerColor = if (state.isUserConfirmed) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
                 ),
+                enabled = !state.isPresenceSubmitting,
                 modifier = Modifier.padding(16.dp).fillMaxWidth().height(56.dp),
                 shape = RoundedCornerShape(16.dp)
             ) {
+                if (state.isPresenceSubmitting) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(22.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                }
                 Text(
                     text = when {
+                        state.isPresenceSubmitting -> stringResource(R.string.game_detail_updating_presence)
                         state.isUserConfirmed -> stringResource(R.string.cancel_presence)
                         state.isUserPending -> stringResource(R.string.accept_invite)
                         else -> stringResource(R.string.confirm_presence)
@@ -769,6 +841,8 @@ fun ConfirmationCard(
     currentUserId: String?,
     onPaymentClick: () -> Unit,
     onRemoveClick: () -> Unit,
+    isRemoving: Boolean,
+    isPresenceSubmitting: Boolean,
     onAcceptClick: () -> Unit,
     onDeclineClick: () -> Unit
 ) {
@@ -799,10 +873,10 @@ fun ConfirmationCard(
             }
 
             if (currentUserId == confirmation.userId && confirmation.status == "PENDING") {
-                IconButton(onClick = onAcceptClick) {
+                IconButton(onClick = onAcceptClick, enabled = !isPresenceSubmitting) {
                     Icon(Icons.Default.Check, contentDescription = stringResource(R.string.accept), tint = MaterialTheme.colorScheme.primary)
                 }
-                IconButton(onClick = onDeclineClick) {
+                IconButton(onClick = onDeclineClick, enabled = !isPresenceSubmitting) {
                     Icon(Icons.Default.Close, contentDescription = stringResource(R.string.decline), tint = MaterialTheme.colorScheme.error)
                 }
             } else {
@@ -814,8 +888,12 @@ fun ConfirmationCard(
                     }
                 }
                 if (isOwner) {
-                    IconButton(onClick = onRemoveClick) {
-                        Icon(Icons.Outlined.Delete, contentDescription = stringResource(R.string.action_remove), tint = MaterialTheme.colorScheme.error)
+                    IconButton(onClick = onRemoveClick, enabled = !isRemoving) {
+                        if (isRemoving) {
+                            CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                        } else {
+                            Icon(Icons.Outlined.Delete, contentDescription = stringResource(R.string.action_remove), tint = MaterialTheme.colorScheme.error)
+                        }
                     }
                 }
             }

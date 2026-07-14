@@ -4368,6 +4368,12 @@ subir no ranking!</string>
     <string name="game_detail_error_gps_required">Ative o GPS para confirmar que está no local do jogo.</string>
     <string name="game_detail_error_too_far">Você está muito longe da quadra (%1$dm). Aproxime-se para iniciar.</string>
     <string name="game_detail_error_update_presence">Erro ao atualizar presença: %1$s</string>
+    <string name="game_detail_error_update_presence_generic">Não foi possível atualizar sua presença. Tente novamente.</string>
+    <string name="game_detail_updating_presence">Atualizando presença…</string>
+    <string name="game_detail_remove_player_title">Remover jogador?</string>
+    <string name="game_detail_remove_player_message">Tem certeza que deseja remover %1$s? A pessoa perderá sua posição na ordem de confirmação.</string>
+    <string name="game_detail_removing_player">Removendo…</string>
+    <string name="game_detail_error_remove_player">Não foi possível remover o jogador. Tente novamente.</string>
     <string name="game_detail_error_save_score">Erro ao salvar placar: %1$s</string>
     <string name="game_detail_error_internal">Falha interna</string>
 

@@ -9,6 +9,7 @@ import com.futebadosparcas.data.repository.AuthRepository
 import com.futebadosparcas.domain.repository.GameRepository
 import com.futebadosparcas.util.AppLogger
 import com.futebadosparcas.util.toKmpAppNotifications
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -49,6 +50,11 @@ class GameDetailViewModel(
 
     private var gameId: String? = null
     private var gameDetailsJob: Job? = null
+    private val mutationCoordinator = GameDetailMutationCoordinator(
+        scope = viewModelScope,
+        gameRepository = gameRepository,
+        uiState = _uiState
+    )
 
     @OptIn(kotlinx.coroutines.FlowPreview::class)
     fun loadGameDetails(id: String) {
@@ -114,11 +120,7 @@ class GameDetailViewModel(
                     val events = eventsResult.getOrNull() ?: emptyList()
                     val teams = teamsResult.getOrNull()?.sortedBy { it.name } ?: emptyList()
                     val waitlistEntries = waitlistResult.getOrNull() ?: emptyList()
-                    val waitlistState = if (waitlistEntries.isEmpty()) {
-                        WaitlistState.Empty
-                    } else {
-                        WaitlistState.Loaded(waitlistEntries)
-                    }
+                    val waitlistState = waitlistEntries.toWaitlistState()
 
                     // Permissões centralizadas via PermissionManager
                     val canManageGame = permissionManager.canEditGame(game.ownerId, game.coOrganizers)
@@ -130,7 +132,7 @@ class GameDetailViewModel(
                     val isOwner = game.ownerId == currentUserId
                     val canLogEvents = canManageGame || isUserConfirmed
 
-                    val currentMessage = (_uiState.value as? GameDetailUiState.Success)?.userMessage
+                    val previousState = _uiState.value as? GameDetailUiState.Success
 
                     val eventsByPlayerId = events.groupBy { it.playerId }
                     val assistsByPlayerId = events.groupingBy { it.assistedById }.eachCount()
@@ -173,11 +175,15 @@ class GameDetailViewModel(
                         isAdmin = isAdmin,
                         canManageGame = canManageGame,
                         canLogEvents = canLogEvents,
-                        userMessage = currentMessage,
+                        userMessage = previousState?.userMessage,
                         currentUserId = currentUserId,
                         hasVoted = hasVoted,
                         isSoftDeleted = gameWithLiveScore.isSoftDeleted,
-                        waitlistState = waitlistState
+                        waitlistState = waitlistState,
+                        isPresenceSubmitting = previousState?.isPresenceSubmitting ?: false,
+                        removingPlayerIds = previousState?.removingPlayerIds.orEmpty(),
+                        canRetryLastMutation = previousState?.canRetryLastMutation ?: false,
+                        userMessageResId = previousState?.userMessageResId
                     )
                 }
             } catch (e: Exception) {
@@ -195,21 +201,12 @@ class GameDetailViewModel(
             return
         }
 
-        val originalIsConfirmed = currentState.isUserConfirmed
-        
-        viewModelScope.launch {
-            val result = if (originalIsConfirmed) {
-                gameRepository.cancelConfirmation(gameId)
-            } else {
-                gameRepository.confirmPresence(gameId, PlayerPosition.LINE.name, false)
-            }
-
-            if (result.isFailure) {
-                _uiState.value = currentState.copy(
-                    userMessage = "Erro ao atualizar presença: ${result.exceptionOrNull()?.message}"
-                )
-            }
+        val mutation = if (currentState.isUserConfirmed || currentState.isUserPending) {
+            GameDetailMutation.CancelPresence(gameId)
+        } else {
+            GameDetailMutation.ConfirmPresence(gameId, PlayerPosition.LINE)
         }
+        mutationCoordinator.executePresence(mutation)
     }
 
     fun confirmPresenceWithPosition(gameId: String, position: PlayerPosition) {
@@ -220,21 +217,18 @@ class GameDetailViewModel(
             return
         }
 
-        viewModelScope.launch {
-            // Se usuario ja tem convite (PENDING), aceitar o convite
-            // Caso contrario, criar nova confirmacao
-            val result = if (currentState.isUserPending) {
-                gameRepository.acceptInvitation(gameId, position.name)
-            } else {
-                gameRepository.confirmPresence(gameId, position.name, false)
-            }
-
-            if (result.isFailure) {
-                _uiState.value = currentState.copy(
-                    userMessage = "Erro ao atualizar presença: ${result.exceptionOrNull()?.message}"
-                )
-            }
+        val mutation = if (currentState.isUserPending) {
+            GameDetailMutation.AcceptInvitation(gameId, position)
+        } else {
+            GameDetailMutation.ConfirmPresence(gameId, position)
         }
+        mutationCoordinator.executePresence(mutation)
+    }
+
+    fun declineInvitation(gameId: String) {
+        val currentState = _uiState.value as? GameDetailUiState.Success ?: return
+        if (!currentState.isUserPending) return
+        mutationCoordinator.executePresence(GameDetailMutation.CancelPresence(gameId))
     }
 
     fun toggleGameStatus(gameId: String, isChecked: Boolean) {
@@ -775,9 +769,11 @@ class GameDetailViewModel(
     }
 
     fun removePlayer(gameId: String, userId: String) {
-        viewModelScope.launch {
-            gameRepository.removePlayerFromGame(gameId, userId)
-        }
+        mutationCoordinator.removePlayer(gameId, userId)
+    }
+
+    fun retryLastMutation() {
+        mutationCoordinator.retryLastMutation()
     }
 
     /**
@@ -845,7 +841,11 @@ class GameDetailViewModel(
 
     fun clearUserMessage() {
         val currentState = _uiState.value as? GameDetailUiState.Success ?: return
-        _uiState.value = currentState.copy(userMessage = null, userMessageResId = null)
+        _uiState.value = currentState.copy(
+            userMessage = null,
+            userMessageResId = null,
+            canRetryLastMutation = false
+        )
     }
 
     // === PRESENCE & CONFIRMATION FEATURES (Issues #31-40) ===
@@ -1216,6 +1216,7 @@ class GameDetailViewModel(
     override fun onCleared() {
         super.onCleared()
         gameDetailsJob?.cancel()
+        mutationCoordinator.cancel()
     }
 }
 
@@ -1227,6 +1228,9 @@ sealed class WaitlistState {
     data class Loaded(val entries: List<GameWaitlist>) : WaitlistState()
     data class Error(val message: String) : WaitlistState()
 }
+
+private fun List<GameWaitlist>.toWaitlistState(): WaitlistState =
+    if (isEmpty()) WaitlistState.Empty else WaitlistState.Loaded(this)
 
 sealed class GameDetailUiState {
     object Loading : GameDetailUiState()
@@ -1249,10 +1253,140 @@ sealed class GameDetailUiState {
         val schedulingEvent: SchedulingEvent? = null,
         val isSoftDeleted: Boolean = false,
         val waitlistState: WaitlistState = WaitlistState.Empty,
+        val isPresenceSubmitting: Boolean = false,
+        val removingPlayerIds: Set<String> = emptySet(),
+        val canRetryLastMutation: Boolean = false,
         // resId opcional para mensagens internacionalizáveis (resolvido na tela)
         @StringRes val userMessageResId: Int? = null
     ) : GameDetailUiState()
     data class Error(val message: String, @StringRes val errorResId: Int? = null) : GameDetailUiState()
+}
+
+private sealed class GameDetailMutation {
+    data class ConfirmPresence(val gameId: String, val position: PlayerPosition) : GameDetailMutation()
+    data class AcceptInvitation(val gameId: String, val position: PlayerPosition) : GameDetailMutation()
+    data class CancelPresence(val gameId: String) : GameDetailMutation()
+    data class RemovePlayer(val gameId: String, val userId: String) : GameDetailMutation()
+}
+
+private class GameDetailMutationCoordinator(
+    private val scope: CoroutineScope,
+    private val gameRepository: GameRepository,
+    private val uiState: MutableStateFlow<GameDetailUiState>
+) {
+    private var presenceJob: Job? = null
+    private val removalJobs = mutableMapOf<String, Job>()
+    private var lastFailedMutation: GameDetailMutation? = null
+
+    fun executePresence(mutation: GameDetailMutation) {
+        if (presenceJob?.isActive == true) return
+        presenceJob = scope.launch {
+            updateSuccessState {
+                it.copy(
+                    isPresenceSubmitting = true,
+                    userMessage = null,
+                    userMessageResId = null,
+                    canRetryLastMutation = false
+                )
+            }
+
+            val result = when (mutation) {
+                is GameDetailMutation.ConfirmPresence -> gameRepository.confirmPresence(
+                    mutation.gameId,
+                    mutation.position.name,
+                    false
+                )
+                is GameDetailMutation.AcceptInvitation -> gameRepository.acceptInvitation(
+                    mutation.gameId,
+                    mutation.position.name
+                )
+                is GameDetailMutation.CancelPresence -> gameRepository.cancelConfirmation(mutation.gameId)
+                is GameDetailMutation.RemovePlayer -> error("Remoção usa job dedicado")
+            }
+
+            if (result.isSuccess) {
+                lastFailedMutation = null
+                updateSuccessState {
+                    it.copy(isPresenceSubmitting = false, canRetryLastMutation = false)
+                }
+            } else {
+                AppLogger.e(TAG, "Falha na mutação de presença", result.exceptionOrNull())
+                lastFailedMutation = mutation
+                updateSuccessState {
+                    it.copy(
+                        isPresenceSubmitting = false,
+                        userMessage = null,
+                        userMessageResId = R.string.game_detail_error_update_presence_generic,
+                        canRetryLastMutation = true
+                    )
+                }
+            }
+        }
+    }
+
+    fun removePlayer(gameId: String, userId: String) {
+        if (removalJobs[userId]?.isActive == true) return
+        val mutation = GameDetailMutation.RemovePlayer(gameId, userId)
+        removalJobs[userId] = scope.launch {
+            updateSuccessState {
+                it.copy(
+                    removingPlayerIds = it.removingPlayerIds + userId,
+                    userMessage = null,
+                    userMessageResId = null,
+                    canRetryLastMutation = false
+                )
+            }
+
+            val result = gameRepository.removePlayerFromGame(gameId, userId)
+            if (result.isSuccess) {
+                lastFailedMutation = null
+                updateSuccessState {
+                    it.copy(
+                        confirmations = it.confirmations.filterNot { confirmation ->
+                            confirmation.userId == userId
+                        },
+                        removingPlayerIds = it.removingPlayerIds - userId,
+                        canRetryLastMutation = false
+                    )
+                }
+            } else {
+                AppLogger.e(TAG, "Falha ao remover jogador", result.exceptionOrNull())
+                lastFailedMutation = mutation
+                updateSuccessState {
+                    it.copy(
+                        removingPlayerIds = it.removingPlayerIds - userId,
+                        userMessage = null,
+                        userMessageResId = R.string.game_detail_error_remove_player,
+                        canRetryLastMutation = true
+                    )
+                }
+            }
+        }
+    }
+
+    fun retryLastMutation() {
+        when (val mutation = lastFailedMutation ?: return) {
+            is GameDetailMutation.RemovePlayer -> removePlayer(mutation.gameId, mutation.userId)
+            else -> executePresence(mutation)
+        }
+    }
+
+    fun cancel() {
+        presenceJob?.cancel()
+        removalJobs.values.forEach { it.cancel() }
+        removalJobs.clear()
+    }
+
+    private inline fun updateSuccessState(
+        transform: (GameDetailUiState.Success) -> GameDetailUiState.Success
+    ) {
+        val currentState = uiState.value as? GameDetailUiState.Success ?: return
+        uiState.value = transform(currentState)
+    }
+
+    companion object {
+        private const val TAG = "GameDetailMutationCoordinator"
+    }
 }
 
 sealed class SchedulingEvent {
