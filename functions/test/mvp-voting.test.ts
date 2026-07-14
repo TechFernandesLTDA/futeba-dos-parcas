@@ -441,6 +441,82 @@ describe("submitMvpVotes - submissão em lote", () => {
     );
     expect(mockRunTransaction).not.toHaveBeenCalled();
   });
+
+  test("rejeita jogador igual em categoria positiva e WORST", async () => {
+    const request = {
+      auth: {uid: "voter1", token: {profileComplete: true}},
+      data: {
+        gameId: "game1",
+        votes: [
+          {votedPlayerId: "player2", category: "MVP"},
+          {votedPlayerId: "player2", category: "WORST"},
+        ],
+      },
+    };
+
+    await expect(submitMvpVotesHandler!(request)).rejects.toThrow(
+      "não pode ser escolhido como destaque e Bola Murcha"
+    );
+    expect(mockRunTransaction).not.toHaveBeenCalled();
+  });
+
+  test("permite o mesmo goleiro como MVP e melhor goleiro", async () => {
+    mockRunTransaction.mockImplementation(async (callback: any) => {
+      const transaction = makeReadBeforeWriteTransaction([
+        {exists: true, data: () => makeFinishedGame()},
+        {exists: true, data: () => ({status: "CONFIRMED", user_id: "voter1"})},
+        {exists: true, data: () => ({status: "CONFIRMED", user_id: "goalkeeper1"})},
+        {exists: true, data: () => ({status: "CONFIRMED", user_id: "goalkeeper1"})},
+        {exists: false, data: () => null},
+        {exists: false, data: () => null},
+        {exists: false, data: () => null},
+      ]);
+      return callback(transaction);
+    });
+
+    const result = await submitMvpVotesHandler!({
+      auth: {uid: "voter1", token: {profileComplete: true}},
+      data: {
+        gameId: "game1",
+        votes: [
+          {votedPlayerId: "goalkeeper1", category: "MVP"},
+          {votedPlayerId: "goalkeeper1", category: "BEST_GOALKEEPER"},
+        ],
+      },
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  test("rejeita conflito com categoria positiva já persistida", async () => {
+    mockRunTransaction.mockImplementation(async (callback: any) => {
+      const transaction = makeReadBeforeWriteTransaction([
+        {exists: true, data: () => makeFinishedGame()},
+        {exists: true, data: () => ({status: "CONFIRMED", user_id: "voter1"})},
+        {exists: true, data: () => ({status: "CONFIRMED", user_id: "player2"})},
+        {
+          exists: true,
+          data: () => ({
+            category: "MVP",
+            voted_player_id: "player2",
+          }),
+        },
+        {exists: false, data: () => null},
+        {exists: false, data: () => null},
+      ]);
+      return callback(transaction);
+    });
+
+    await expect(submitMvpVotesHandler!({
+      auth: {uid: "voter1", token: {profileComplete: true}},
+      data: {
+        gameId: "game1",
+        votes: [{votedPlayerId: "player2", category: "WORST"}],
+      },
+    })).rejects.toThrow(
+      "não pode ser escolhido como destaque e Bola Murcha"
+    );
+  });
 });
 
 describe("submitMvpVote - rejeições via transaction", () => {
@@ -485,6 +561,37 @@ describe("submitMvpVote - rejeições via transaction", () => {
     };
 
     await expect(submitMvpVoteHandler!(request)).rejects.toThrow("já votou");
+  });
+
+  test("rejeita voto individual contraditório com WORST persistido", async () => {
+    mockRunTransaction.mockImplementation(async (callback: any) => {
+      const transaction = makeReadBeforeWriteTransaction([
+        {exists: true, data: () => makeFinishedGame()},
+        {exists: true, data: () => ({status: "CONFIRMED", user_id: "voter1"})},
+        {exists: true, data: () => ({status: "CONFIRMED", user_id: "player2"})},
+        {exists: false, data: () => null},
+        {exists: false, data: () => null},
+        {
+          exists: true,
+          data: () => ({
+            category: "WORST",
+            voted_player_id: "player2",
+          }),
+        },
+      ]);
+      return callback(transaction);
+    });
+
+    await expect(submitMvpVoteHandler!({
+      auth: {uid: "voter1", token: {profileComplete: true}},
+      data: {
+        gameId: "game1",
+        votedPlayerId: "player2",
+        category: "MVP",
+      },
+    })).rejects.toThrow(
+      "não pode ser escolhido como destaque e Bola Murcha"
+    );
   });
 
   test("deve rejeitar quando janela de votação expirou (>24h)", async () => {
@@ -1251,6 +1358,72 @@ describe("concludeMvpVoting - contagem de votos e vencedor", () => {
     expect(result.success).toBe(true);
     // "alpha" vence o desempate alfabético vs "zebra"
     expect(result.results.mvpId).toBe("alpha");
+  });
+
+  test("empate em WORST conclui sem vencedor, flag ou penalidade", async () => {
+    const votes = [
+      {category: "WORST", voter_id: "voter1", voted_player_id: "zebra"},
+      {category: "WORST", voter_id: "voter2", voted_player_id: "alpha"},
+    ];
+    const votingTx = {
+      get: jest.fn(),
+      update: jest.fn(),
+      set: jest.fn(),
+    };
+    let callIndex = 0;
+    const responses = [
+      {
+        docs: votes.map((vote) => ({data: () => vote})),
+        empty: false,
+      },
+      {
+        exists: true,
+        data: () => ({
+          status: "FINISHED",
+          voting_status: "OPEN",
+          owner_id: "owner1",
+        }),
+      },
+      {
+        docs: [
+          eligibleConfirmationDoc("voter1"),
+          eligibleConfirmationDoc("voter2"),
+          eligibleConfirmationDoc("zebra"),
+          eligibleConfirmationDoc("alpha"),
+        ],
+        empty: false,
+      },
+    ];
+    votingTx.get.mockImplementation(() => Promise.resolve(
+      responses[callIndex++] || {exists: false, data: () => ({})}
+    ));
+    mockRunTransaction.mockImplementationOnce(
+      async (callback: any) => callback(votingTx)
+    );
+
+    const result = await concludeMvpVotingHandler!({
+      auth: {uid: "owner1", token: {profileComplete: true}},
+      data: {gameId: "game1"},
+    });
+
+    expect(result.results.worstPlayerId).toBeNull();
+    expect(result.xpApplied).toEqual({mvp: false, worst: false, allOk: true});
+    expect(mockRunTransaction).toHaveBeenCalledTimes(1);
+    const gameUpdate = votingTx.update.mock.calls.find(
+      ([, data]) => data?.voting_status === "CONCLUDED"
+    );
+    expect(gameUpdate?.[1]).toEqual(expect.objectContaining({
+      worst_player_id: null,
+      worst_player_votes: 0,
+      worst_player_total_votes: 2,
+    }));
+    const confirmationUpdates = votingTx.update.mock.calls.filter(
+      ([, data]) => Object.hasOwn(data, "is_worst_player")
+    );
+    expect(confirmationUpdates).toHaveLength(4);
+    confirmationUpdates.forEach(([, data]) => {
+      expect(data.is_worst_player).toBe(false);
+    });
   });
 
   test("ignora votos de jogadores sem presença real", async () => {
