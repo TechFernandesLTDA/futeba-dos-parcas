@@ -141,7 +141,9 @@ functions/vendor/ffmpeg/install-manifest.json
 # AI tooling scaffolding e runtime (não versionar)
 .claude/scheduled_tasks.lock
 .agents/
-.codex/
+.codex/*
+!.codex/agents/
+!.codex/agents/**
 web/.claude/
 
 # iOS — gerados via XcodeGen + CocoaPods
