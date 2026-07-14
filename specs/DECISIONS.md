@@ -1173,6 +1173,26 @@ também usam IDs de recursos para que um uso futuro já nasça localizável.
 
 **Relacionado:** `specs/BUGFIX_2026-07-14_android_enum_labels_i18n.md`, #3617,
 #3618, #3620, #3624.
+---
+
+## 2026-07-14 — GameDetail Android apresenta votação pós-jogo sem alterar autoridade (#3644)
+
+**Contexto:** O ViewModel já consultava `hasVoted`, mas o único acesso à
+votação ficava no overflow e o resultado da consulta era descartado pela UI.
+
+**Decisão:** Jogos `FINISHED` exibem um card primário quando o voto está
+pendente e uma confirmação persistente quando já foi registrado. O overflow
+continua como atalho secundário e reflete o mesmo estado. `null` é apresentado
+como pendente para manter uma saída recuperável; elegibilidade e submissão
+continuam sob autoridade do fluxo de votação existente.
+
+**Consequências:** A descoberta do pós-jogo deixa de depender do overflow sem
+criar uma segunda escrita ou contrato de votação. Falhas/expiração permanecem
+tratadas pela tela de votação. A exclusão reversível também passa a ser descrita
+como exclusão, alinhada ao Web, sem modificar `softDeleteGame`.
+
+**Relacionado:** `specs/BUGFIX_2026-07-14_ANDROID_GAME_DETAIL_UX.md`, #3632,
+#3635, #3639, #3644.
 
 ---
 

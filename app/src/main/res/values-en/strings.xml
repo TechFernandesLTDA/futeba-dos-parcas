@@ -36,6 +36,14 @@
     <string name="time">Time</string>
     <string name="location">Location</string>
     <string name="price">Price</string>
+    <string name="game_detail_delete_game">Delete Game</string>
+    <string name="game_detail_delete_confirmation">Are you sure you want to delete this game? An administrator can restore it.</string>
+    <string name="game_detail_deleted_success">Game deleted successfully</string>
+    <string name="game_detail_vote_pending_title">Post-game voting pending</string>
+    <string name="game_detail_vote_pending_description">Vote for the match MVP, best goalkeeper, and worst player.</string>
+    <string name="game_detail_vote_now">Vote now</string>
+    <string name="game_detail_vote_completed_title">You already voted</string>
+    <string name="game_detail_vote_completed_description">Your post-game vote has been recorded.</string>
 
     <!-- Statistics -->
     <string name="goals">Goals</string>

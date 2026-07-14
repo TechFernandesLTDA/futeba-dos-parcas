@@ -36,6 +36,14 @@
     <string name="time">Hora</string>
     <string name="location">Ubicación</string>
     <string name="price">Precio</string>
+    <string name="game_detail_delete_game">Eliminar partido</string>
+    <string name="game_detail_delete_confirmation">¿Seguro que quieres eliminar este partido? Un administrador puede restaurarlo.</string>
+    <string name="game_detail_deleted_success">Partido eliminado correctamente</string>
+    <string name="game_detail_vote_pending_title">Votación pospartido pendiente</string>
+    <string name="game_detail_vote_pending_description">Vota al mejor jugador, al mejor portero y al peor jugador del partido.</string>
+    <string name="game_detail_vote_now">Votar ahora</string>
+    <string name="game_detail_vote_completed_title">Ya votaste</string>
+    <string name="game_detail_vote_completed_description">Tu voto pospartido ha sido registrado.</string>
 
     <!-- Statistics -->
     <string name="goals">Goles</string>

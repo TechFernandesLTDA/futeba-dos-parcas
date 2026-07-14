@@ -1552,6 +1552,14 @@ subir no ranking!</string>
     <string name="tactical_error_save">Erro ao salvar imagem</string>
     <string name="invite_whatsapp">Convidar WhatsApp</string>
     <string name="cancel_game_confirmation">Tem certeza que deseja cancelar este jogo?</string>
+    <string name="game_detail_delete_game">Excluir Jogo</string>
+    <string name="game_detail_delete_confirmation">Tem certeza que deseja excluir este jogo? Esta ação pode ser revertida por um administrador.</string>
+    <string name="game_detail_deleted_success">Jogo excluído com sucesso</string>
+    <string name="game_detail_vote_pending_title">Votação pós-jogo pendente</string>
+    <string name="game_detail_vote_pending_description">Vote no craque, no melhor goleiro e no Bola Murcha da partida.</string>
+    <string name="game_detail_vote_now">Votar agora</string>
+    <string name="game_detail_vote_completed_title">Você já votou</string>
+    <string name="game_detail_vote_completed_description">Seu voto pós-jogo foi registrado.</string>
 
     <!-- MVP Vote Screen Strings -->
     <string name="mvp_vote_title">Votação</string>
