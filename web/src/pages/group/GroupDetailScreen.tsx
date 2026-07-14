@@ -10,6 +10,7 @@ import {
   CardContent,
   Avatar,
   Button,
+  ButtonBase,
   Chip,
   IconButton,
   List,
@@ -199,7 +200,7 @@ interface GroupPhotoPreview {
   createdAt?: Date;
 }
 
-const GroupPhotosPanel: React.FC<{
+export const GroupPhotosPanel: React.FC<{
   games: Array<{ id: string; title?: string; dateTime?: Date }>;
   loadingGames: boolean;
 }> = ({ games, loadingGames }) => {
@@ -313,9 +314,12 @@ const GroupPhotosPanel: React.FC<{
         <Grid container spacing={1.5}>
           {photos.map((photo) => (
             <Grid xs={6} sm={4} md={3} key={photo.id}>
-              <Box
+              <ButtonBase
                 onClick={() => setSelectedPhoto(photo)}
+                aria-label={t('groupPhotos.photoAlt', { name: photo.uploadedByName })}
                 sx={{
+                  display: 'block',
+                  width: '100%',
                   position: 'relative',
                   pt: '100%',
                   borderRadius: 2,
@@ -323,19 +327,32 @@ const GroupPhotosPanel: React.FC<{
                   cursor: 'pointer',
                   bgcolor: 'action.hover',
                   boxShadow: `0 0 0 1px ${alpha(theme.palette.common.white, 0.08)} inset`,
+                  '&.Mui-focusVisible': {
+                    boxShadow: `0 0 0 3px ${theme.palette.primary.main} inset`,
+                  },
                 }}
               >
                 <Box component="img" src={photo.url} alt={t('groupPhotos.photoAlt', { name: photo.uploadedByName })} loading="lazy" sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
                 <Box sx={{ position: 'absolute', insetInline: 0, bottom: 0, p: 1, background: `linear-gradient(180deg, transparent, ${alpha(theme.palette.common.black, 0.74)})`, color: theme.palette.common.white }}>
                   <Typography variant="caption" fontWeight={700} noWrap>{photo.gameTitle}</Typography>
                 </Box>
-              </Box>
+              </ButtonBase>
             </Grid>
           ))}
         </Grid>
       </CardContent>
 
-      <Dialog open={!!selectedPhoto} onClose={() => setSelectedPhoto(null)} maxWidth="md" fullWidth>
+      <Dialog
+        open={!!selectedPhoto}
+        onClose={() => setSelectedPhoto(null)}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{
+          'aria-label': selectedPhoto
+            ? t('groupPhotos.photoAlt', { name: selectedPhoto.uploadedByName })
+            : undefined,
+        }}
+      >
         {selectedPhoto && (
           <>
             <Box sx={{ bgcolor: theme.palette.common.black, display: 'flex', justifyContent: 'center' }}>

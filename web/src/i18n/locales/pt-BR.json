@@ -976,6 +976,10 @@
     "confirmed_chip": "Confirmado",
     "confirming": "Confirmando...",
     "create": {
+      "addFavorite": "Adicionar local aos favoritos",
+      "favoriteAdded": "Local adicionado aos favoritos!",
+      "favoriteRemoved": "Local removido dos favoritos.",
+      "removeFavorite": "Remover local dos favoritos",
       "acceptPix": "Aceitar pagamento via Pix",
       "autoInviteMembers": "Convidar todos os membros do grupo",
       "conflictCheckFailed": "Não foi possível verificar conflitos de horário nesta quadra. Confira manualmente se já existe outro jogo no mesmo horário.",

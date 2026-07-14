@@ -976,6 +976,10 @@
     "confirmed_chip": "Confirmado",
     "confirming": "Confirmando...",
     "create": {
+      "addFavorite": "Agregar lugar a favoritos",
+      "favoriteAdded": "¡Lugar agregado a favoritos!",
+      "favoriteRemoved": "Lugar eliminado de favoritos.",
+      "removeFavorite": "Eliminar lugar de favoritos",
       "acceptPix": "Aceptar pago por Pix",
       "autoInviteMembers": "Invitar a todos los miembros del grupo",
       "conflictCheckFailed": "No se pudo verificar conflictos de horario en esta cancha. Verifica manualmente si ya existe otro partido en el mismo horario.",

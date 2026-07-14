@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ThemeProvider, createTheme } from '@mui/material';
 import { MemoryRouter } from 'react-router-dom';
+import i18n from 'i18next';
 
 const mockNavigate = vi.fn();
 let mockUserRole: 'PLAYER' | 'FIELD_OWNER' | 'ADMIN' | undefined;
@@ -133,8 +134,9 @@ function renderProfileTab() {
 }
 
 describe('ProfileTab', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
+    await i18n.changeLanguage('pt-BR');
     mockUserRole = undefined;
     mockExperiencePoints = 850;
     mockPersistedLevel = 5;
@@ -208,6 +210,32 @@ describe('ProfileTab', () => {
 
     await user.click(screen.getByText('Editar Perfil'));
     expect(mockNavigate).toHaveBeenCalledWith('/profile/edit');
+  });
+
+  it('abre a jornada de nível por Enter e Espaço com nome acessível', async () => {
+    const user = userEvent.setup();
+    renderProfileTab();
+    const levelAction = screen.getByRole('button', {
+      name: 'Ver jornada de nível - Nível 5',
+    });
+
+    levelAction.focus();
+    await user.keyboard('{Enter}');
+    expect(mockNavigate).toHaveBeenLastCalledWith('/level-journey');
+
+    mockNavigate.mockClear();
+    levelAction.focus();
+    await user.keyboard(' ');
+    expect(mockNavigate).toHaveBeenLastCalledWith('/level-journey');
+  });
+
+  it('traduz o nome acessível da jornada de nível para inglês', async () => {
+    await i18n.changeLanguage('en');
+    renderProfileTab();
+
+    expect(screen.getByRole('button', {
+      name: 'View level journey - Level 5',
+    })).toBeInTheDocument();
   });
 
   it('possui menu com aria-label acessível', () => {

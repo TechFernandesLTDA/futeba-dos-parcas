@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useCallback, useState } from 'react';
 import { collection, query, where, limit, getDocs, orderBy } from 'firebase/firestore';
 import { useQuery } from '@tanstack/react-query';
 import { db } from '../services/firebase';
@@ -77,13 +77,23 @@ export function useRecentLocations() {
     refetchOnWindowFocus: false,
   });
 
-  const favoriteIds = useMemo(() => getFavoriteIds(), []);
+  const [favoriteIds, setFavoriteIds] = useState<string[]>(getFavoriteIds);
+  const isFavorite = useCallback(
+    (locationId: string) => favoriteIds.includes(locationId),
+    [favoriteIds],
+  );
+  const toggleFavorite = useCallback((locationId: string) => {
+    const added = toggleFavoriteLocation(locationId);
+    setFavoriteIds(getFavoriteIds());
+    return added;
+  }, []);
 
   return {
     recentIds,
     favoriteIds,
     loading: isLoading,
     error: error ? (error as Error).message : null,
-    isFavorite: (locationId: string) => favoriteIds.includes(locationId),
+    isFavorite,
+    toggleFavorite,
   };
 }

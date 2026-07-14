@@ -81,7 +81,7 @@ import { useHabitualTime } from '../../hooks/useHabitualTime';
 import { useDuplicateGame } from '../../hooks/useDuplicateGame';
 import { useAutoInviteMembers } from '../../hooks/useAutoInviteMembers';
 import { useGameDraft } from '../../hooks/useGameDraft';
-import { useRecentLocations, toggleFavoriteLocation } from '../../hooks/useRecentLocations';
+import { useRecentLocations } from '../../hooks/useRecentLocations';
 import { FieldType, PixKeyType, GameVisibility, GameTemplate, Game, GameGender, GAME_GENDER_LABELS } from '../../types/game';
 import { FIELD_TYPE_LABELS, PIX_KEY_TYPE_LABELS } from '../../types/game';
 import { Field, Location as FutebaLocation } from '../../types/location';
@@ -359,7 +359,7 @@ export const CreateGameScreen: React.FC = () => {
   const { templates, loading: templatesLoading, saveTemplate, removeTemplate } = useGameTemplates();
   const { autoInvite } = useAutoInviteMembers();
   const { recentGames, loading: duplicateGamesLoading } = useDuplicateGame();
-  const { recentIds, favoriteIds, isFavorite } = useRecentLocations();
+  const { recentIds, favoriteIds, isFavorite, toggleFavorite } = useRecentLocations();
   const { showSuccess, showError } = useToast();
   const { user, firebaseUser } = useAuth();
   const currentUserId = firebaseUser?.uid || user?.id;
@@ -1468,24 +1468,32 @@ export const CreateGameScreen: React.FC = () => {
           <AddLocationIcon />
         </IconButton>
         {formData.locationId && !useCustomLocation && (
-          <IconButton
-            onClick={() => {
-              toggleFavoriteLocation(formData.locationId);
-              showSuccess(
-                isFavorite(formData.locationId)
-                  ? 'Removido dos favoritos'
-                  : 'Adicionado aos favoritos!'
-              );
-            }}
-            sx={{ mt: 0.5 }}
-            size="small"
+          <Tooltip
+            title={isFavorite(formData.locationId)
+              ? t('games.create.removeFavorite')
+              : t('games.create.addFavorite')}
           >
-            {isFavorite(formData.locationId) ? (
-              <StarIcon color="warning" />
-            ) : (
-              <StarBorderIcon />
-            )}
-          </IconButton>
+            <IconButton
+              onClick={() => {
+                const added = toggleFavorite(formData.locationId);
+                showSuccess(t(added
+                  ? 'games.create.favoriteAdded'
+                  : 'games.create.favoriteRemoved'));
+              }}
+              sx={{ mt: 0.5 }}
+              size="small"
+              aria-label={isFavorite(formData.locationId)
+                ? t('games.create.removeFavorite')
+                : t('games.create.addFavorite')}
+              aria-pressed={isFavorite(formData.locationId)}
+            >
+              {isFavorite(formData.locationId) ? (
+                <StarIcon color="warning" />
+              ) : (
+                <StarBorderIcon />
+              )}
+            </IconButton>
+          </Tooltip>
         )}
       </Box>
 
