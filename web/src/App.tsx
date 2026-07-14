@@ -438,14 +438,15 @@ function AppRoutes() {
         <Route path="/" element={<Suspense fallback={<RouteFallback />}><HomeScreen /></Suspense>} />
         <Route path="/feed" element={<Suspense fallback={<RouteFallback />}><SocialFeedScreen /></Suspense>} />
         {/* Games */}
-        <Route path="/game/:gameId" element={<Suspense fallback={<RouteFallback />}><GameDetailScreen /></Suspense>} />
         {/* GAP #7 (#1080): VerifiedRoute redireciona unverified pra onboarding em vez de deixar submit falhar silencioso no rules */}
         <Route path="/game/create" element={<VerifiedRoute><Suspense fallback={<RouteFallback />}><CreateGameScreen /></Suspense></VerifiedRoute>} />
+        <Route path="/game/:gameId" element={<Suspense fallback={<RouteFallback />}><GameDetailScreen /></Suspense>} />
         {/* Groups */}
-        <Route path="/group/:groupId" element={<Suspense fallback={<RouteFallback />}><GroupDetailScreen /></Suspense>} />
-        <Route path="/group/:groupId/post/:postId" element={<Suspense fallback={<RouteFallback />}><GroupDetailScreen /></Suspense>} />
+        {/* Rotas estáticas precedem parâmetros para deixar a resolução inequívoca. */}
         {/* FIX #1033: apenas FIELD_OWNER ou ADMIN podem criar grupos via URL direta */}
         <Route path="/group/create" element={<FieldOwnerOrAdminRoute><Suspense fallback={<RouteFallback />}><CreateGroupScreen /></Suspense></FieldOwnerOrAdminRoute>} />
+        <Route path="/group/:groupId" element={<Suspense fallback={<RouteFallback />}><GroupDetailScreen /></Suspense>} />
+        <Route path="/group/:groupId/post/:postId" element={<Suspense fallback={<RouteFallback />}><GroupDetailScreen /></Suspense>} />
         {/* GAP-3: rotas privadas do grupo exigem membership (ou ADMIN). */}
         <Route path="/group/:groupId/edit" element={<GroupMemberRoute><Suspense fallback={<RouteFallback />}><GroupEditScreen /></Suspense></GroupMemberRoute>} />
         <Route path="/group/:groupId/settings" element={<GroupMemberRoute><Suspense fallback={<RouteFallback />}><GroupSettingsScreen /></Suspense></GroupMemberRoute>} />
@@ -462,8 +463,8 @@ function AppRoutes() {
         <Route path="/players/nearby" element={<Suspense fallback={<RouteFallback />}><NearbyPlayersScreen /></Suspense>} />
         {/* Profile + perfis públicos */}
         <Route path="/profile" element={<Navigate to="/?tab=4" replace />} />
-        <Route path="/profile/:userId" element={<Suspense fallback={<RouteFallback />}><ProfileScreen /></Suspense>} />
         <Route path="/profile/edit" element={<Suspense fallback={<RouteFallback />}><EditProfileScreen /></Suspense>} />
+        <Route path="/profile/:userId" element={<Suspense fallback={<RouteFallback />}><ProfileScreen /></Suspense>} />
         <Route path="/level-journey" element={<Suspense fallback={<RouteFallback />}><LevelJourneyScreen /></Suspense>} />
         <Route path="/level-journey/:userId" element={<Suspense fallback={<RouteFallback />}><LevelJourneyScreen /></Suspense>} />
         {/* Statistics */}
@@ -479,8 +480,8 @@ function AppRoutes() {
         <Route path="/badges" element={<Suspense fallback={<RouteFallback />}><BadgesScreen /></Suspense>} />
         {/* Locations */}
         <Route path="/locations" element={<FieldOwnerOrAdminRoute><Suspense fallback={<RouteFallback />}><ManageLocationsScreen /></Suspense></FieldOwnerOrAdminRoute>} />
-        <Route path="/location/:locationId" element={<Suspense fallback={<RouteFallback />}><LocationDetailScreen /></Suspense>} />
         <Route path="/location/create" element={<FieldOwnerOrAdminRoute><Suspense fallback={<RouteFallback />}><LocationFormScreen /></Suspense></FieldOwnerOrAdminRoute>} />
+        <Route path="/location/:locationId" element={<Suspense fallback={<RouteFallback />}><LocationDetailScreen /></Suspense>} />
         <Route path="/location/:locationId/edit" element={<FieldOwnerOrAdminRoute><Suspense fallback={<RouteFallback />}><LocationFormScreen /></Suspense></FieldOwnerOrAdminRoute>} />
         <Route path="/owner/dashboard" element={<FieldOwnerOrAdminRoute><Suspense fallback={<RouteFallback />}><FieldOwnerDashboardScreen /></Suspense></FieldOwnerOrAdminRoute>} />
         <Route path="/owner/onboarding" element={<VerifiedRoute><Suspense fallback={<RouteFallback />}><OwnerOnboardingScreen /></Suspense></VerifiedRoute>} />

@@ -88,16 +88,13 @@ export function useAutoBreadcrumbs(): BreadcrumbItem[] {
       const segment = segments[i];
       accumulatedPath += `/${segment}`;
 
-      // Check if this segment looks like an ID (Firebase IDs are long alphanumeric)
+      // Known paths/slugs must win over the length heuristic: static segments such
+      // as "challenges" and "notifications" also look like Firebase IDs.
       const isId = /^[a-zA-Z0-9_-]{10,}$/.test(segment);
 
-      if (isId && i > 0) {
-        // Use the previous segment's label + the ID as a shortened display
-        const parentSegment = segments[i - 1];
-        const parentLabelKey = DYNAMIC_LABEL_KEYS[parentSegment];
-        const parentLabel = parentLabelKey ? t(parentLabelKey) : parentSegment;
+      if (ROUTE_LABEL_KEYS[accumulatedPath]) {
         pushItem({
-          label: `${parentLabel}`,
+          label: t(ROUTE_LABEL_KEYS[accumulatedPath]),
           to: accumulatedPath,
         });
       } else if (SUB_ROUTE_LABEL_KEYS[segment]) {
@@ -105,11 +102,17 @@ export function useAutoBreadcrumbs(): BreadcrumbItem[] {
           label: t(SUB_ROUTE_LABEL_KEYS[segment]),
           to: accumulatedPath,
         });
-      } else if (ROUTE_LABEL_KEYS[accumulatedPath]) {
-        pushItem({
-          label: t(ROUTE_LABEL_KEYS[accumulatedPath]),
-          to: accumulatedPath,
-        });
+      } else if (isId && i > 0) {
+        // Dynamic values are never used as labels. Unknown parents are omitted
+        // instead of leaking an internal ID or untranslated route slug.
+        const parentSegment = segments[i - 1];
+        const parentLabelKey = DYNAMIC_LABEL_KEYS[parentSegment];
+        if (parentLabelKey) {
+          pushItem({
+            label: t(parentLabelKey),
+            to: accumulatedPath,
+          });
+        }
       } else if (DYNAMIC_LABEL_KEYS[segment]) {
         pushItem({
           label: t(DYNAMIC_LABEL_KEYS[segment]),
