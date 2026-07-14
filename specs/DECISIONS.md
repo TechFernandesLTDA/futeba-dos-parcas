@@ -952,4 +952,28 @@ notes consolidadas para Web/Android.
 
 ---
 
+## 2026-07-13 — Bola Murcha não desempata e ballot proíbe conflito positivo/negativo (#3590/#3598)
+
+**Contexto:** O desempate alfabético usado nas categorias positivas também
+escolhia um Bola Murcha em empate exato e aplicava penalidade. Além disso, votos
+por categoria podiam apontar o mesmo jogador como destaque e Bola Murcha.
+
+**Decisão:** `WORST` não terá vencedor em empate exato. `MVP` e
+`BEST_GOALKEEPER` preservam o desempate determinístico e podem eleger o mesmo
+goleiro. A autoridade server-side rejeita ballots onde `WORST` e qualquer
+categoria positiva apontem para o mesmo jogador, inclusive entre chamadas
+separadas; a Web apenas antecipa essa validação com feedback acessível.
+
+**Justificativa:** Uma penalidade exige vantagem real de votos, enquanto o
+desempate de uma recompensa mantém o resultado publicável. Validar o ballot no
+servidor impede bypass e manter MVP/Goalkeeper compatíveis preserva a regra atual.
+
+**Consequências:** Empates em Bola Murcha concluem com `worst_player_id` ausente,
+flags negativas falsas e sem delta de XP. Não há migração retroativa de ballots
+contraditórios já armazenados.
+
+**Relacionado:** specs/BUGFIX_2026-07-13_voting_semantics.md, #3590, #3598.
+
+---
+
 <!-- Adicione novas decisões acima desta linha -->

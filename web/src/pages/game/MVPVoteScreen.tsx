@@ -53,6 +53,7 @@ import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { createLogger } from '../../utils/logger';
 import { useTranslation } from 'react-i18next';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
+import { hasContradictoryVoteSelection } from './mvpVoteSemantics';
 
 const logger = createLogger('MVPVoteScreen');
 
@@ -205,9 +206,33 @@ export const MVPVoteScreen: React.FC = () => {
     )
   );
   const votingConcluded = Boolean(game?.votingConcluded || game?.votingStatus === 'CONCLUDED');
+  const hasVoteConflict = hasContradictoryVoteSelection(
+    mvpVote,
+    bestGkVote,
+    worstPlayerVote,
+  );
+
+  const selectMvp = (playerId: string) => {
+    if (playerId !== worstPlayerVote) setMvpVote(playerId);
+  };
+
+  const selectBestGoalkeeper = (playerId: string) => {
+    if (playerId !== worstPlayerVote) setBestGkVote(playerId);
+  };
+
+  const selectWorstPlayer = (playerId: string) => {
+    if (playerId !== mvpVote && playerId !== bestGkVote) {
+      setWorstPlayerVote(playerId);
+    }
+  };
 
   const handleVote = async () => {
     if (!mvpVote || !worstPlayerVote || !gameId || !currentUser || !ballotReady) return;
+
+    if (hasVoteConflict) {
+      showError(t('mvp.conflictingVotesError'));
+      return;
+    }
 
     if (!myConfirmation) {
       showError(t('feedback.games.onlyConfirmedCanVote'));
@@ -400,6 +425,9 @@ export const MVPVoteScreen: React.FC = () => {
             {t('feedback.games.onlyConfirmedCanVote')}
           </Alert>
         )}
+        <Alert severity="info" id="vote-conflict-help" role="note" sx={{ mb: 2 }}>
+          {t('mvp.conflictingVotesHelp')}
+        </Alert>
         <Card sx={{ mb: 2, bgcolor: alpha(theme.palette.warning.main, 0.1) }}>
           <CardContent>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -427,27 +455,35 @@ export const MVPVoteScreen: React.FC = () => {
               </FormLabel>
               <RadioGroup
                 value={mvpVote}
-                onChange={(e) => setMvpVote(e.target.value)}
+                onChange={(e) => selectMvp(e.target.value)}
                 sx={{ mt: 2 }}
               >
                 <List disablePadding aria-label={t('a11y.mvpCandidates')}>
                   {confirmations
                     .filter((p) => p.userId !== currentUser?.uid)
-                    .map((player) => (
+                    .map((player) => {
+                      const conflictsWithWorst = player.userId === worstPlayerVote;
+                      return (
                     <ListItem
                       key={player.userId}
                       dense
-                      onClick={() => !ballotVotes.MVP && setMvpVote(player.userId)}
+                      aria-disabled={conflictsWithWorst}
+                      onClick={() => !ballotVotes.MVP && !conflictsWithWorst && selectMvp(player.userId)}
                       secondaryAction={
                         <Radio
                           checked={mvpVote === player.userId}
                           value={player.userId}
+                          disabled={conflictsWithWorst}
+                          inputProps={{
+                            'aria-label': player.userName,
+                            'aria-describedby': conflictsWithWorst ? 'vote-conflict-help' : undefined,
+                          }}
                         />
                       }
                       sx={{
                         borderRadius: 2,
                         mb: 1,
-                        cursor: 'pointer',
+                        cursor: conflictsWithWorst ? 'not-allowed' : 'pointer',
                         transition: (t) => t.transitions.create('all', { duration: t.transitions.duration.shorter }),
                         transform: mvpVote === player.userId ? 'scale(1.02)' : 'scale(1)',
                         bgcolor: mvpVote === player.userId ? alpha(theme.palette.primary.main, 0.1) : 'transparent',
@@ -468,10 +504,15 @@ export const MVPVoteScreen: React.FC = () => {
                             <TeamBadge teamId={player.favoriteTeam} size={18} />
                           </Box>
                         }
-                        secondary={player.position === 'GOALKEEPER' ? t('a11y.goalkeeper') : t('games.detail.fieldPlayer')}
+                        secondary={conflictsWithWorst
+                          ? t('mvp.conflictingCandidate')
+                          : player.position === 'GOALKEEPER'
+                            ? t('a11y.goalkeeper')
+                            : t('games.detail.fieldPlayer')}
                       />
                     </ListItem>
-                  ))}
+                      );
+                    })}
                 </List>
               </RadioGroup>
             </FormControl>
@@ -488,27 +529,35 @@ export const MVPVoteScreen: React.FC = () => {
                 </FormLabel>
                 <RadioGroup
                   value={bestGkVote}
-                  onChange={(e) => setBestGkVote(e.target.value)}
+                  onChange={(e) => selectBestGoalkeeper(e.target.value)}
                   sx={{ mt: 2 }}
                 >
                   <List disablePadding aria-label={t('a11y.bestGoalkeeperCandidates')}>
                     {confirmations
                       .filter((p) => p.position === 'GOALKEEPER' && p.userId !== currentUser?.uid)
-                      .map((player) => (
+                      .map((player) => {
+                        const conflictsWithWorst = player.userId === worstPlayerVote;
+                        return (
                         <ListItem
                           key={player.userId}
                           dense
-                          onClick={() => !ballotVotes.BEST_GOALKEEPER && setBestGkVote(player.userId)}
+                          aria-disabled={conflictsWithWorst}
+                          onClick={() => !ballotVotes.BEST_GOALKEEPER && !conflictsWithWorst && selectBestGoalkeeper(player.userId)}
                           secondaryAction={
                             <Radio
                               checked={bestGkVote === player.userId}
                               value={player.userId}
+                              disabled={conflictsWithWorst}
+                              inputProps={{
+                                'aria-label': player.userName,
+                                'aria-describedby': conflictsWithWorst ? 'vote-conflict-help' : undefined,
+                              }}
                             />
                           }
                         sx={{
                           borderRadius: 2,
                           mb: 1,
-                          cursor: 'pointer',
+                          cursor: conflictsWithWorst ? 'not-allowed' : 'pointer',
                           transition: (t) => t.transitions.create('all', { duration: t.transitions.duration.shorter }),
                           transform: bestGkVote === player.userId ? 'scale(1.02)' : 'scale(1)',
                           bgcolor: bestGkVote === player.userId ? alpha(theme.palette.primary.main, 0.1) : 'transparent',
@@ -529,9 +578,11 @@ export const MVPVoteScreen: React.FC = () => {
                                 <TeamBadge teamId={player.favoriteTeam} size={18} />
                               </Box>
                             }
+                            secondary={conflictsWithWorst ? t('mvp.conflictingCandidate') : undefined}
                           />
                         </ListItem>
-                      ))}
+                        );
+                      })}
                     {confirmations.filter((p) => p.position === 'GOALKEEPER' && p.userId !== currentUser?.uid).length === 0 && (
                       <EmptyState icon={<PersonOffIcon />} title={t('empty.noGoalkeeper')} description={t('empty.noGoalkeeperDesc')} animate={false} />
                     )}
@@ -568,27 +619,37 @@ export const MVPVoteScreen: React.FC = () => {
                 </FormLabel>
                 <RadioGroup
                   value={worstPlayerVote}
-                  onChange={(e) => setWorstPlayerVote(e.target.value)}
+                  onChange={(e) => selectWorstPlayer(e.target.value)}
                   sx={{ mt: 2 }}
                 >
                   <List disablePadding aria-label={t('a11y.worstPlayerCandidates')}>
                     {confirmations
                       .filter((p) => p.userId !== currentUser?.uid)
-                      .map((player) => (
+                      .map((player) => {
+                        const conflictsWithPositive = (
+                          player.userId === mvpVote || player.userId === bestGkVote
+                        );
+                        return (
                         <ListItem
                           key={player.userId}
                           dense
-                          onClick={() => !ballotVotes.WORST && setWorstPlayerVote(player.userId)}
+                          aria-disabled={conflictsWithPositive}
+                          onClick={() => !ballotVotes.WORST && !conflictsWithPositive && selectWorstPlayer(player.userId)}
                           secondaryAction={
                             <Radio
                               checked={worstPlayerVote === player.userId}
                               value={player.userId}
+                              disabled={conflictsWithPositive}
+                              inputProps={{
+                                'aria-label': player.userName,
+                                'aria-describedby': conflictsWithPositive ? 'vote-conflict-help' : undefined,
+                              }}
                             />
                           }
                         sx={{
                           borderRadius: 2,
                           mb: 1,
-                          cursor: 'pointer',
+                          cursor: conflictsWithPositive ? 'not-allowed' : 'pointer',
                           transition: (t) => t.transitions.create('all', { duration: t.transitions.duration.shorter }),
                           transform: worstPlayerVote === player.userId ? 'scale(1.02)' : 'scale(1)',
                           bgcolor: worstPlayerVote === player.userId ? alpha(theme.palette.error.main, 0.1) : 'transparent',
@@ -609,10 +670,15 @@ export const MVPVoteScreen: React.FC = () => {
                                 <TeamBadge teamId={player.favoriteTeam} size={18} />
                               </Box>
                             }
-                            secondary={player.position === 'GOALKEEPER' ? t('a11y.goalkeeper') : t('games.detail.fieldPlayer')}
+                            secondary={conflictsWithPositive
+                              ? t('mvp.conflictingCandidate')
+                              : player.position === 'GOALKEEPER'
+                                ? t('a11y.goalkeeper')
+                                : t('games.detail.fieldPlayer')}
                           />
                         </ListItem>
-                      ))}
+                        );
+                      })}
                   </List>
                 </RadioGroup>
               </FormControl>
@@ -639,7 +705,7 @@ export const MVPVoteScreen: React.FC = () => {
             variant="contained"
             fullWidth
             size="large"
-            disabled={!canVote || !ballotReady || !mvpVote || !worstPlayerVote || submitting}
+            disabled={!canVote || !ballotReady || !mvpVote || !worstPlayerVote || hasVoteConflict || submitting}
             onClick={handleVote}
             startIcon={submitting ? <CircularProgress size={20} /> : <VoteIcon />}
           >

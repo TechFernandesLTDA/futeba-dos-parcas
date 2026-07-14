@@ -114,6 +114,14 @@ const REQUIRED_VOTE_CATEGORIES = [
   "WORST",
 ] as const;
 
+const POSITIVE_VOTE_CATEGORIES = [
+  "MVP",
+  "BEST_GOALKEEPER",
+] as const;
+
+const CONTRADICTORY_BALLOT_MESSAGE =
+  "O mesmo jogador não pode ser escolhido como destaque e Bola Murcha.";
+
 /**
  * Retorna se o eleitor completou as categorias obrigatórias.
  *
@@ -160,6 +168,53 @@ interface ConcludeVotingRequest {
 interface VoteTally {
   playerId: string;
   count: number;
+}
+
+type BallotSelections = Partial<Record<VoteCategory, string>>;
+
+/**
+ * Detecta se a seleção negativa aponta para algum destaque positivo.
+ * MVP e melhor goleiro podem apontar para o mesmo goleiro.
+ *
+ * @param {BallotSelections} selections Seleções efetivas do ballot.
+ * @return {boolean} Verdadeiro quando há combinação contraditória.
+ */
+function hasContradictoryBallot(
+  selections: BallotSelections
+): boolean {
+  const worstPlayerId = selections.WORST;
+  return Boolean(
+    worstPlayerId &&
+    POSITIVE_VOTE_CATEGORIES.some(
+      (category) => selections[category] === worstPlayerId
+    )
+  );
+}
+
+/**
+ * Converte itens de voto em seleções por categoria.
+ *
+ * @param {SubmitVoteBatchItem[]} votes Itens do ballot.
+ * @return {BallotSelections} Seleções indexadas por categoria.
+ */
+function selectionsFromVotes(
+  votes: readonly SubmitVoteBatchItem[]
+): BallotSelections {
+  return votes.reduce<BallotSelections>(
+    (selections, vote) => {
+      selections[vote.category] = vote.votedPlayerId;
+      return selections;
+    },
+    {}
+  );
+}
+
+/** Lança erro público consistente para um ballot contraditório. */
+function throwContradictoryBallot(): never {
+  throw new HttpsError(
+    "invalid-argument",
+    CONTRADICTORY_BALLOT_MESSAGE
+  );
 }
 
 // ==========================================
@@ -435,26 +490,24 @@ export const submitMvpVote =
             const voteRef = db
               .collection("mvp_votes")
               .doc(voteId);
-            const requiredVoteRefs =
-              REQUIRED_VOTE_CATEGORIES.map(
-                (requiredCategory) => db
+            const ballotVoteRefs =
+              VALID_VOTE_CATEGORIES.map(
+                (ballotCategory) => db
                   .collection("mvp_votes")
                   .doc(
                     `${gameId}_${voterId}` +
-                    `_${requiredCategory}`
+                    `_${ballotCategory}`
                   )
               );
-            const [
-              existingVote,
-              requiredVoteSnaps,
-            ] = await Promise.all([
-              transaction.get(voteRef),
-              Promise.all(
-                requiredVoteRefs.map(
-                  (ref) => transaction.get(ref)
-                )
-              ),
-            ]);
+            const ballotVoteSnaps = await Promise.all(
+              ballotVoteRefs.map(
+                (ref) => transaction.get(ref)
+              )
+            );
+            const categoryIndex =
+              VALID_VOTE_CATEGORIES.indexOf(category);
+            const existingVote =
+              ballotVoteSnaps[categoryIndex];
 
             if (existingVote.exists) {
               throw new HttpsError(
@@ -465,13 +518,26 @@ export const submitMvpVote =
             }
 
             const categoriesBefore = new Set<string>();
-            requiredVoteSnaps.forEach((snap, index) => {
+            const ballotSelections: BallotSelections = {};
+            ballotVoteSnaps.forEach((snap, index) => {
               if (snap.exists) {
-                categoriesBefore.add(
-                  REQUIRED_VOTE_CATEGORIES[index]
-                );
+                const existingCategory =
+                  VALID_VOTE_CATEGORIES[index];
+                categoriesBefore.add(existingCategory);
+                const existingData = snap.data();
+                const existingPlayerId =
+                  existingData?.voted_player_id ||
+                  existingData?.votedPlayerId;
+                if (existingPlayerId) {
+                  ballotSelections[existingCategory] =
+                    existingPlayerId;
+                }
               }
             });
+            ballotSelections[category] = votedPlayerId;
+            if (hasContradictoryBallot(ballotSelections)) {
+              throwContradictoryBallot();
+            }
             const categoriesAfter =
               new Set(categoriesBefore);
             categoriesAfter.add(category);
@@ -691,6 +757,10 @@ export const submitMvpVotes =
         }
       }
 
+      if (hasContradictoryBallot(selectionsFromVotes(votes))) {
+        throwContradictoryBallot();
+      }
+
       const db = getFirestore();
 
       try {
@@ -814,21 +884,20 @@ export const submitMvpVotes =
                   .doc(voteId),
               };
             });
-            const requiredVoteRefs =
-              REQUIRED_VOTE_CATEGORIES.map(
-                (requiredCategory) => db
+            const ballotVoteRefs =
+              VALID_VOTE_CATEGORIES.map(
+                (ballotCategory) => db
                   .collection("mvp_votes")
                   .doc(
                     `${gameId}_${voterId}` +
-                    `_${requiredCategory}`
+                    `_${ballotCategory}`
                   )
               );
 
             // Firestore exige todas as leituras antes da primeira escrita.
             const [
               votedConfSnaps,
-              existingVoteSnaps,
-              requiredVoteSnaps,
+              ballotVoteSnaps,
             ] = await Promise.all([
               Promise.all(
                 voteContexts.map(
@@ -837,13 +906,7 @@ export const submitMvpVotes =
                 )
               ),
               Promise.all(
-                voteContexts.map(
-                  ({voteRef}) =>
-                    transaction.get(voteRef)
-                )
-              ),
-              Promise.all(
-                requiredVoteRefs.map(
+                ballotVoteRefs.map(
                   (ref) => transaction.get(ref)
                 )
               ),
@@ -862,7 +925,9 @@ export const submitMvpVotes =
                   ERROR_MSGS.PLAYER_NOT_IN_GAME
                 );
               }
-              if (existingVoteSnaps[index].exists) {
+              const categoryIndex =
+                VALID_VOTE_CATEGORIES.indexOf(vote.category);
+              if (ballotVoteSnaps[categoryIndex].exists) {
                 throw new HttpsError(
                   "already-exists",
                   // eslint-disable-next-line new-cap
@@ -872,13 +937,29 @@ export const submitMvpVotes =
             });
 
             const categoriesBefore = new Set<string>();
-            requiredVoteSnaps.forEach((snap, index) => {
+            const ballotSelections: BallotSelections = {};
+            ballotVoteSnaps.forEach((snap, index) => {
               if (snap.exists) {
-                categoriesBefore.add(
-                  REQUIRED_VOTE_CATEGORIES[index]
-                );
+                const existingCategory =
+                  VALID_VOTE_CATEGORIES[index];
+                categoriesBefore.add(existingCategory);
+                const existingData = snap.data();
+                const existingPlayerId =
+                  existingData?.voted_player_id ||
+                  existingData?.votedPlayerId;
+                if (existingPlayerId) {
+                  ballotSelections[existingCategory] =
+                    existingPlayerId;
+                }
               }
             });
+            votes.forEach((vote) => {
+              ballotSelections[vote.category] =
+                vote.votedPlayerId;
+            });
+            if (hasContradictoryBallot(ballotSelections)) {
+              throwContradictoryBallot();
+            }
             const categoriesAfter =
               new Set(categoriesBefore);
             votes.forEach((vote) =>
@@ -1200,7 +1281,7 @@ export const concludeMvpVoting =
               const bestGkId =
                 resolveWinner(bestGkCounts);
               const worstPlayerId =
-                resolveWinner(worstCounts);
+                resolveWinnerWithoutTie(worstCounts);
               const mvpWinnerVotes = mvpId ?
                 mvpCounts.find(
                   (item) => item.playerId === mvpId
@@ -1334,6 +1415,8 @@ export const concludeMvpVoting =
                     worstWinnerVotes,
                   worst_player_total_votes:
                     countTalliedVotes(worstCounts),
+                  worst_player_id:
+                    worstPlayerId,
                   winner_team:
                     team1Score > team2Score ?
                       "A" :
@@ -1349,12 +1432,6 @@ export const concludeMvpVoting =
                 gameUpdates.best_gk_id =
                   bestGkId;
               }
-              if (worstPlayerId) {
-                gameUpdates
-                  .worst_player_id =
-                  worstPlayerId;
-              }
-
               transaction.update(
                 gameRef,
                 gameUpdates
@@ -1596,6 +1673,33 @@ function resolveWinner(
   );
 
   return tied[0].playerId;
+}
+
+/**
+ * Resolve uma categoria que exige vencedor único. Empates exatos retornam
+ * `null`, evitando transformar um critério técnico em penalidade de XP.
+ *
+ * @param {VoteTally[]} tallies Contagem por jogador.
+ * @return {string|null} Jogador com vantagem real ou null em vazio/empate.
+ */
+function resolveWinnerWithoutTie(
+  tallies: VoteTally[]
+): string | null {
+  if (tallies.length === 0) return null;
+
+  const maxCount = tallies[0].count;
+  const leaders = tallies.filter(
+    (item) => item.count === maxCount
+  );
+  if (leaders.length !== 1) {
+    logger.info(
+      "[MVP_TIEBREAK] Empate em WORST: " +
+      "nenhuma penalidade aplicada"
+    );
+    return null;
+  }
+
+  return leaders[0].playerId;
 }
 
 /**
