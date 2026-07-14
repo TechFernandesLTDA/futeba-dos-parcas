@@ -80,7 +80,7 @@ const SEARCHABLE_USERS_BATCH_SIZE = 500;
 const LEAGUE_PLAYERS_CACHE_KIND = "league_players_directory";
 
 /** Versao do schema do cache de diretorio da Liga. */
-const LEAGUE_PLAYERS_CACHE_SCHEMA_VERSION = 1;
+const LEAGUE_PLAYERS_CACHE_SCHEMA_VERSION = 2;
 
 /** Quantidade de jogadores por chunk para evitar o limite de 1 MiB/doc. */
 const LEAGUE_PLAYERS_CACHE_CHUNK_SIZE = 250;
@@ -167,6 +167,7 @@ interface LeagueParticipationStats {
   assists: number;
   mvpCount: number;
   division: string;
+  leagueRating: number;
   isMock?: boolean;
   demoData?: boolean;
   dataOrigin?: string;
@@ -188,6 +189,7 @@ interface PublicLeaguePlayer {
   assists: number;
   mvpCount: number;
   division: string;
+  leagueRating: number;
   experiencePoints: number;
   canReceiveInvites: boolean;
   isMock?: boolean;
@@ -630,6 +632,7 @@ async function buildLeaguePlayersDirectory(
       assists: participation?.assists ?? 0,
       mvpCount: participation?.mvpCount ?? 0,
       division: participation?.division ?? "BRONZE",
+      leagueRating: participation?.leagueRating ?? 0,
       experiencePoints: userData.xp,
       canReceiveInvites: true,
       isMock:
@@ -1140,6 +1143,7 @@ async function fetchLeagueParticipations(
       assists: readNumber(src.assists),
       mvpCount: readNumber(src.mvp_count ?? src.mvpCount),
       division: readString(data.division, "BRONZE") || "BRONZE",
+      leagueRating: readNumber(data.league_rating ?? data.leagueRating),
       isMock: data.is_mock === true || data.isMock === true,
       demoData: data.demo_data === true || data.demoData === true,
       dataOrigin:

@@ -11,7 +11,7 @@ import {
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import { db } from '../services/firebase';
 import { getLeaguePlayers } from '../services/cloudFunctions';
-import { LeagueDivision } from '../types/gamification';
+import { LeagueDivision, normalizeLeagueDivision } from '../types/gamification';
 import type { GameGender } from '../types/game';
 import { createLogger } from '../utils/logger';
 import { useToast } from '../contexts/ToastContext';
@@ -58,6 +58,7 @@ export interface LeaguePlayer {
   assists: number;
   mvpCount: number;
   division: LeagueDivision;
+  leagueRating?: number;
   isCurrentUser?: boolean;
   experiencePoints?: number;
   canReceiveInvites?: boolean;
@@ -106,7 +107,7 @@ async function fetchLeagueData(
   return {
     players: response.data.players.map((player) => ({
       ...player,
-      division: player.division as LeagueDivision,
+      division: normalizeLeagueDivision(player.division),
       isCurrentUser: player.userId === currentUserId,
     })),
     hasMore: response.data.hasMore === true,

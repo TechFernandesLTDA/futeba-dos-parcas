@@ -47,7 +47,7 @@ import { PlayerCard } from '../../../components/player/PlayerCard';
 import { TeamBadge } from '../../../components/team/TeamBadge';
 import { useLeague, LeaguePlayer, LeagueFilters } from '../../../hooks/useLeague';
 import { useActiveSeason } from '../../../hooks/useActiveSeason';
-import { DIVISION_CONFIG, LeagueDivision, getXpProgress, getDivisionColor } from '../../../types/gamification';
+import { DIVISION_CONFIG, LeagueDivision, getXpProgress, getDivisionColor, getDivisionLabel } from '../../../types/gamification';
 import { getLevelBadgeImage, handleBadgeImageError } from '../../../utils/levelBadge';
 import { getEffectiveLevel, getExperiencePoints } from '../../../utils/xpAccounting';
 import {
@@ -104,7 +104,7 @@ const PodiumCard: React.FC<{
   const theme = useTheme();
   const { t, i18n } = useTranslation();
   const locale = i18n.resolvedLanguage || i18n.language || navigator.language;
-  // #2163: color theme-aware (dark/OLED); label/minPoints vêm do config estático
+  // #2163: color theme-aware (dark/OLED); rating/label vêm do contrato canônico
   const divisionConfig = {
     ...(DIVISION_CONFIG[player.division] || DIVISION_CONFIG.BRONZE),
     color: getDivisionColor(player.division, theme),
@@ -197,7 +197,7 @@ const PodiumCard: React.FC<{
           {(showXP ? playerXp : player.points).toLocaleString(locale)}
         </Typography>
         <Typography variant="caption" color="text.secondary">
-          {showXP ? 'XP' : divisionConfig.label} · Nv. {playerLevel}
+          {showXP ? 'XP' : getDivisionLabel(player.division, t)} · Nv. {playerLevel}
         </Typography>
         {positionChange !== null && positionChange !== 0 && (
           <Typography variant="caption" fontWeight={700} color={positionChange > 0 ? 'success.main' : 'error.main'} sx={{ display: 'block', mt: 0.25 }}>
@@ -555,7 +555,7 @@ export function RankingsTab() {
                     </Typography>
                     {tabValue === 0 && (
                       <Chip
-                        label={DIVISION_CONFIG[currentPlayer.division]?.label || 'Bronze'}
+                        label={getDivisionLabel(currentPlayer.division, t)}
                         size="small"
                         sx={{
                           mt: 0.5,
@@ -650,10 +650,10 @@ export function RankingsTab() {
                         <MilitaryTechIcon sx={{ color: divColor, fontSize: iconSizes.lg }} />
                         <Box sx={{ flex: 1 }}>
                           <Typography variant="subtitle2" fontWeight={700} sx={{ color: divColor }}>
-                            {config.label}
+                            {getDivisionLabel(key, t)}
                           </Typography>
                           <Typography variant="caption" color="text.secondary">
-                            {config.minPoints ? t('ranking.minPoints', { points: config.minPoints }) : t('ranking.startingDivision')}
+                            {config.minRating ? t('ranking.minRating', { rating: config.minRating }) : t('ranking.startingDivision')}
                           </Typography>
                         </Box>
                       </Box>
@@ -882,7 +882,7 @@ const RankingCard = React.memo(function RankingCard({
               {(showXP ? playerXp : player.points).toLocaleString(locale)}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              {showXP ? 'XP' : divisionConfig.label}
+              {showXP ? 'XP' : getDivisionLabel(player.division, t)}
             </Typography>
           </Box>
         </Box>

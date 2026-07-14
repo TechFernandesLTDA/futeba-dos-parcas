@@ -326,6 +326,7 @@ export interface LeaguePlayerSummary {
   assists: number;
   mvpCount: number;
   division: string;
+  leagueRating?: number;
   experiencePoints: number;
   canReceiveInvites: boolean;
   isMock?: boolean;

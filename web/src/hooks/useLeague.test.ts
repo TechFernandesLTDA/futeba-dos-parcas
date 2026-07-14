@@ -208,6 +208,36 @@ describe('useLeague', () => {
     expect(result.current.players).toHaveLength(2);
     const currentPlayer = result.current.players.find((p) => p.isCurrentUser);
     expect(currentPlayer?.userId).toBe('current-user');
+    expect(currentPlayer?.division).toBe('OURO');
+    expect(result.current.players.find((p) => p.userId === 'other-user')?.division).toBe('PRATA');
+  });
+
+  it('preserva as quatro divisões canônicas retornadas pela callable', async () => {
+    mockGetLeaguePlayers.mockResolvedValueOnce(callableResponse(
+      ['BRONZE', 'PRATA', 'OURO', 'DIAMANTE'].map((division, index) => ({
+        id: `p-${index}`,
+        userId: `u-${index}`,
+        userName: `Jogador ${index}`,
+        level: 1,
+        points: 0,
+        gamesPlayed: 0,
+        wins: 0,
+        goals: 0,
+        assists: 0,
+        mvpCount: 0,
+        division,
+        leagueRating: index * 30,
+        experiencePoints: 0,
+        canReceiveInvites: true,
+      })),
+    ));
+
+    const { result } = renderHook(() => useLeague('u-0'), { wrapper: createTestWrapper() });
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(result.current.players.map((player) => player.division))
+      .toEqual(['BRONZE', 'PRATA', 'OURO', 'DIAMANTE']);
+    expect(result.current.players[3].leagueRating).toBe(90);
   });
 
   it('mantém a referência da lista quando os dados não mudam', async () => {

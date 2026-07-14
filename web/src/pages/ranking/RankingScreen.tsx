@@ -35,7 +35,7 @@ import { DemoDataChip } from '../../components/common/DemoDataChip';
 import { useLeague, LeaguePlayer, LeagueFilters } from '../../hooks/useLeague';
 import type { GameGender } from '../../types/game';
 import { useActiveSeason } from '../../hooks/useActiveSeason';
-import { DIVISION_CONFIG, getDivisionColor } from '../../types/gamification';
+import { getDivisionColor, getDivisionLabel } from '../../types/gamification';
 import { pluralizeCount } from '../../utils/pluralize';
 import { getGamificationColors } from '../../utils/gamificationColors';
 import { useTranslation } from 'react-i18next';
@@ -404,7 +404,7 @@ const RankingItem = React.memo(function RankingItem({
               {tabValue === 1 ? player.mvpCount : tabValue === 2 ? player.goals : player.points}
             </Typography>
             <Chip
-              label={DIVISION_CONFIG[player.division]?.label || 'Bronze'}
+              label={getDivisionLabel(player.division, t)}
               size="small"
               sx={{
                 bgcolor: alpha(getDivisionColor(player.division, theme), 0.1),
