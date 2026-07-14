@@ -3097,24 +3097,85 @@ service cloud.firestore {
     // COLECAO: notifications
     // ============================================
     match /notifications/{notificationId} {
+      function isTargetActiveGroupMember(groupId, targetUserId) {
+        let memberDoc = get(/databases/$(database)/documents/groups/$(groupId)/members/$(targetUserId));
+        return memberDoc != null &&
+          memberDoc.data.user_id == targetUserId &&
+          (!('status' in memberDoc.data) || memberDoc.data.status == 'ACTIVE');
+      }
+
+      function hasValidGameSummonReference() {
+        let data = request.resource.data;
+        let gameDoc = get(/databases/$(database)/documents/games/$(data.game_id));
+        let confirmationDoc = getAfter(/databases/$(database)/documents/confirmations/$(data.game_id + '_' + data.user_id));
+        return data.type == 'GAME_SUMMON' &&
+          ('game_id' in data) &&
+          isGameOwner(data.game_id) &&
+          (
+            (confirmationDoc != null &&
+             confirmationDoc.data.game_id == data.game_id &&
+             confirmationDoc.data.user_id == data.user_id &&
+             confirmationDoc.data.status == 'PENDING') ||
+            (('group_id' in data) &&
+             gameDoc != null &&
+             gameDoc.data.group_id == data.group_id &&
+             isTargetActiveGroupMember(data.group_id, data.user_id))
+          );
+      }
+
+      function hasValidGameRideReference() {
+        let data = request.resource.data;
+        let senderRide = getAfter(/databases/$(database)/documents/game_rides/$(data.game_id + '_' + userId()));
+        let targetRide = get(/databases/$(database)/documents/game_rides/$(data.game_id + '_' + data.user_id));
+        return data.type == 'GAME_RIDE' &&
+          ('game_id' in data) &&
+          senderRide != null &&
+          targetRide != null &&
+          senderRide.data.game_id == data.game_id &&
+          senderRide.data.user_id == userId() &&
+          senderRide.data.status == 'ACTIVE' &&
+          targetRide.data.game_id == data.game_id &&
+          targetRide.data.user_id == data.user_id &&
+          targetRide.data.status == 'ACTIVE' &&
+          senderRide.data.type in ['OFFER', 'REQUEST'] &&
+          targetRide.data.type in ['OFFER', 'REQUEST'] &&
+          senderRide.data.type != targetRide.data.type;
+      }
+
+      function hasValidChallengeSystemReference() {
+        let data = request.resource.data;
+        let challengeDoc = getAfter(/databases/$(database)/documents/group-challenges/$(data.reference_id));
+        return data.type == 'SYSTEM' &&
+          data.reference_type == 'group_challenge' &&
+          ('reference_id' in data) &&
+          challengeDoc != null &&
+          challengeDoc.data.status == 'FINISHED' &&
+          challengeDoc.data.completed_by == userId() &&
+          (
+            (challengeDoc.data.created_by == userId() &&
+             challengeDoc.data.responded_by == data.user_id) ||
+            (challengeDoc.data.responded_by == userId() &&
+             challengeDoc.data.created_by == data.user_id)
+          );
+      }
+
       function hasValidActionableInviteReference() {
         let t = request.resource.data.type;
-        return !(t in [
-          'GROUP_INVITE', 'GROUP_INVITE_ACCEPTED', 'GROUP_INVITE_DECLINED',
-          'group_invite', 'GAME_INVITE', 'GAME_SUMMON', 'game_invite'
-        ]) ||
-        (
-          t in ['GROUP_INVITE', 'GROUP_INVITE_ACCEPTED', 'GROUP_INVITE_DECLINED', 'group_invite'] &&
+        return (
+          t in ['GROUP_INVITE', 'group_invite'] &&
           ('group_id' in request.resource.data) &&
           request.resource.data.sender_id == userId() &&
           (isGroupAdmin(request.resource.data.group_id) || isAdmin())
         ) ||
         (
-          t in ['GAME_INVITE', 'GAME_SUMMON', 'game_invite'] &&
+          t in ['GAME_INVITE', 'game_invite'] &&
           ('game_id' in request.resource.data) &&
           request.resource.data.sender_id == userId() &&
           (isGameOwner(request.resource.data.game_id) || isAdmin())
-        );
+        ) ||
+        (t == 'GAME_SUMMON' && hasValidGameSummonReference()) ||
+        (t == 'GAME_RIDE' && hasValidGameRideReference()) ||
+        (t == 'SYSTEM' && hasValidChallengeSystemReference());
       }
 
       allow read: if isAuthenticated() && resource.data.user_id == userId();
@@ -3129,13 +3190,8 @@ service cloud.firestore {
         (request.resource.data.created_by == userId() &&
          request.resource.data.user_id != userId() &&
          request.resource.data.type in [
-           'game_invite', 'group_invite', 'achievement', 'reminder',
-           'checkin', 'system', 'league', 'cashbox', 'admin',
-           'GAME_INVITE', 'GAME_SUMMON', 'GAME_CONFIRMED', 'GAME_REMINDER',
-           'GAME_CANCELLED', 'GAME_UPDATED', 'GAME_VACANCY', 'GAME_RIDE',
-           'GROUP_INVITE', 'GROUP_INVITE_ACCEPTED', 'GROUP_INVITE_DECLINED',
-           'MEMBER_JOINED', 'MEMBER_LEFT', 'ACHIEVEMENT', 'BADGE_UNLOCKED',
-           'LEVEL_UP', 'MVP_RECEIVED', 'MVP_VOTE', 'STREAK_BROKEN', 'SYSTEM'
+           'game_invite', 'group_invite', 'GAME_INVITE', 'GAME_SUMMON',
+           'GAME_RIDE', 'GROUP_INVITE', 'SYSTEM'
          ] &&
          request.resource.data.title is string &&
          request.resource.data.title.size() <= 100 &&
