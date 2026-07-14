@@ -9,6 +9,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 
 sealed class GameVideosUiState {
@@ -36,13 +37,19 @@ class GameVideosViewModel(
         observedGameId = gameId
         _uiState.value = GameVideosUiState.Loading
         observeJob = viewModelScope.launch {
-            repository.observeVideos(gameId).collect { videos ->
-                _uiState.value = if (videos.isEmpty()) {
-                    GameVideosUiState.Empty
-                } else {
-                    GameVideosUiState.Success(videos)
+            repository.observeVideos(gameId)
+                .catch { error ->
+                    _uiState.value = GameVideosUiState.Error(
+                        error.message ?: "Erro ao carregar vídeos"
+                    )
                 }
-            }
+                .collect { videos ->
+                    _uiState.value = if (videos.isEmpty()) {
+                        GameVideosUiState.Empty
+                    } else {
+                        GameVideosUiState.Success(videos)
+                    }
+                }
         }
     }
 

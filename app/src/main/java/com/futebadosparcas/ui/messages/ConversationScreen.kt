@@ -139,7 +139,7 @@ fun ConversationScreen(
                         title = stringResource(R.string.error),
                         description = state.error.orEmpty(),
                         actionLabel = stringResource(R.string.retry),
-                        onRetry = { viewModel.observe(chatId) }
+                        onRetry = { viewModel.retry(chatId) }
                     ),
                     modifier = Modifier.padding(paddingValues)
                 )
