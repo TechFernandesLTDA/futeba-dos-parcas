@@ -109,11 +109,23 @@
 
         <activity
             android:name=".ui.main.MainActivityCompose"
-            android:exported="false"
+            android:exported="true"
+            android:launchMode="singleTop"
             android:windowSoftInputMode="adjustResize"
             android:theme="@style/Theme.FutebaDosParcas"
             android:configChanges="screenSize|smallestScreenSize|screenLayout"
-            android:supportsPictureInPicture="true" />
+            android:supportsPictureInPicture="true">
+            <!-- #3640: verified Android App Links compartilhados pelo Web/PWA. -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="futebadosparcas.web.app" android:pathPrefix="/join/" />
+                <data android:scheme="https" android:host="futebadosparcas.web.app" android:pathPrefix="/invite/" />
+                <data android:scheme="https" android:host="futebadosparcas.web.app" android:pathPrefix="/checkin/" />
+                <data android:scheme="https" android:host="futebadosparcas.web.app" android:pathPrefix="/game/" />
+            </intent-filter>
+        </activity>
 
         <service
             android:name=".service.FcmService"

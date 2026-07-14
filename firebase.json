@@ -17,6 +17,8 @@
     "ignore": [
       "firebase.json",
       "**/.*",
+      "!/.well-known",
+      "!/.well-known/**",
       "**/node_modules/**"
     ],
     "rewrites": [
@@ -30,6 +32,19 @@
       }
     ],
     "headers": [
+      {
+        "source": "/.well-known/assetlinks.json",
+        "headers": [
+          {
+            "key": "Content-Type",
+            "value": "application/json; charset=utf-8"
+          },
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=300"
+          }
+        ]
+      },
       {
         "source": "**/*.html",
         "headers": [

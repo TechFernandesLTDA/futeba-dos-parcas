@@ -3,162 +3,117 @@ package com.futebadosparcas.util
 import android.content.Intent
 import android.net.Uri
 import androidx.core.net.toUri
+import com.futebadosparcas.ui.navigation.Screen
+import java.net.URI
+import java.net.URLDecoder
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
-/**
- * Deep Link Helper
- *
- * Handles deep link parsing and validation for the app.
- * Supports various deep link formats for navigation.
- *
- * Supported formats:
- * - futebadosparcas://game/{gameId}
- * - futebadosparcas://group/{groupId}
- * - futebadosparcas://profile/{userId}
- * - futebadosparcas://invite/{inviteCode}
- * - https://futebadosparcas.com/game/{gameId}
- *
- * Usage:
- * ```kotlin
- * lateinit var deepLinkHelper: DeepLinkHelper
- *
- * val deepLink = deepLinkHelper.parse(intent)
- * when (deepLink) {
- *     is DeepLink.Game -> navigateToGame(deepLink.gameId)
- *     is DeepLink.Group -> navigateToGroup(deepLink.groupId)
- *     else -> { /* Handle unknown */ }
- * }
- * ```
- */
-class DeepLinkHelper constructor() {
-
+/** Parses both verified web links and the legacy custom scheme. */
+class DeepLinkHelper {
     companion object {
         const val SCHEME = "futebadosparcas"
-        const val HOST = "futebadosparcas.com"
+        const val VERIFIED_HOST = "futebadosparcas.web.app"
+        const val LEGACY_HOST = "futebadosparcas.com"
 
-        // Path patterns
-        const val PATH_GAME = "game"
-        const val PATH_GROUP = "group"
-        const val PATH_PROFILE = "profile"
-        const val PATH_INVITE = "invite"
-        const val PATH_BADGES = "badges"
-        const val PATH_RANKINGS = "rankings"
+        private val HTTPS_HOSTS = setOf(VERIFIED_HOST, LEGACY_HOST)
     }
 
-    /**
-     * Parse deep link from Intent
-     */
-    fun parse(intent: Intent?): DeepLink {
-        val uri = intent?.data ?: return DeepLink.None
+    fun parse(intent: Intent?): DeepLink = parse(intent?.dataString)
 
-        return parse(uri)
-    }
+    fun parse(uri: Uri): DeepLink = parse(uri.toString())
 
-    /**
-     * Parse deep link from Uri
-     */
-    fun parse(uri: Uri): DeepLink {
-        // Validate scheme
-        if (uri.scheme != SCHEME && uri.scheme != "https") {
+    /** String entry point keeps parsing deterministic and locally unit-testable. */
+    fun parse(rawUrl: String?): DeepLink {
+        if (rawUrl.isNullOrBlank()) return DeepLink.None
+
+        val uri = runCatching { URI(rawUrl) }
+            .getOrElse { return DeepLink.Invalid("Malformed URL") }
+        val scheme = uri.scheme?.lowercase()
+        if (scheme != SCHEME && scheme != "https") {
             return DeepLink.Invalid("Invalid scheme: ${uri.scheme}")
         }
 
-        // Validate host for https URLs
-        if (uri.scheme == "https" && uri.host != HOST) {
+        val isCustomScheme = scheme == SCHEME
+        if (!isCustomScheme && uri.host?.lowercase() !in HTTPS_HOSTS) {
             return DeepLink.Invalid("Invalid host: ${uri.host}")
         }
 
-        // Parse path segments
-        val pathSegments = uri.pathSegments
-        if (pathSegments.isEmpty()) {
-            return DeepLink.None
+        val segments = uri.rawPath.orEmpty()
+            .split('/')
+            .filter { it.isNotBlank() }
+            .map(::decodeSegment)
+        val type = if (isCustomScheme) uri.host?.lowercase() else segments.firstOrNull()?.lowercase()
+        val values = if (isCustomScheme) segments else segments.drop(1)
+
+        fun required(index: Int): String? {
+            return values.getOrNull(index)?.takeIf { it.isNotBlank() }
         }
 
-        val type = pathSegments[0]
-        val id = pathSegments.getOrNull(1)
-
         return when (type) {
-            PATH_GAME -> {
-                if (id.isNullOrBlank()) {
-                    DeepLink.Invalid("Missing game ID")
-                } else {
-                    DeepLink.Game(id)
-                }
+            "game" -> required(0)?.let(DeepLink::Game)
+                ?: DeepLink.Invalid("Missing game ID")
+            "group" -> required(0)?.let(DeepLink::Group)
+                ?: DeepLink.Invalid("Missing group ID")
+            "profile" -> required(0)?.let(DeepLink::Profile)
+                ?: DeepLink.Invalid("Missing user ID")
+            "join" -> required(0)?.let(DeepLink::GroupInvite)
+                ?: DeepLink.Invalid("Missing invite code")
+            "invite" -> required(0)?.let(DeepLink::FriendInvite)
+                ?: DeepLink.Invalid("Missing invite code")
+            "checkin" -> {
+                val gameId = required(0)
+                val token = required(1)
+                if (gameId != null && token != null) DeepLink.CheckIn(gameId, token)
+                else DeepLink.Invalid("Missing check-in data")
             }
-            PATH_GROUP -> {
-                if (id.isNullOrBlank()) {
-                    DeepLink.Invalid("Missing group ID")
-                } else {
-                    DeepLink.Group(id)
-                }
-            }
-            PATH_PROFILE -> {
-                if (id.isNullOrBlank()) {
-                    DeepLink.Invalid("Missing user ID")
-                } else {
-                    DeepLink.Profile(id)
-                }
-            }
-            PATH_INVITE -> {
-                if (id.isNullOrBlank()) {
-                    DeepLink.Invalid("Missing invite code")
-                } else {
-                    DeepLink.Invite(id)
-                }
-            }
-            PATH_BADGES -> DeepLink.Badges
-            PATH_RANKINGS -> DeepLink.Rankings
+            "badges" -> DeepLink.Badges
+            "rankings", "ranking" -> DeepLink.Rankings
+            null -> DeepLink.None
             else -> DeepLink.Invalid("Unknown path: $type")
         }
     }
 
-    /**
-     * Create deep link Uri
-     */
-    fun createGameLink(gameId: String): Uri {
-        return "$SCHEME://$PATH_GAME/$gameId".toUri()
-    }
+    fun createGameLink(gameId: String): Uri = "$SCHEME://game/${Uri.encode(gameId)}".toUri()
+    fun createGroupLink(groupId: String): Uri = "$SCHEME://group/${Uri.encode(groupId)}".toUri()
+    fun createProfileLink(userId: String): Uri = "$SCHEME://profile/${Uri.encode(userId)}".toUri()
+    fun createInviteLink(inviteCode: String): Uri = "$SCHEME://invite/${Uri.encode(inviteCode)}".toUri()
+    fun createShareableGameLink(gameId: String): String =
+        "https://$VERIFIED_HOST/game/${Uri.encode(gameId)}"
+    fun createShareableGroupLink(groupId: String): String =
+        "https://$VERIFIED_HOST/group/${Uri.encode(groupId)}"
 
-    fun createGroupLink(groupId: String): Uri {
-        return "$SCHEME://$PATH_GROUP/$groupId".toUri()
-    }
+    fun isValid(uri: Uri): Boolean = parse(uri).let { it !is DeepLink.Invalid && it !is DeepLink.None }
 
-    fun createProfileLink(userId: String): Uri {
-        return "$SCHEME://$PATH_PROFILE/$userId".toUri()
-    }
-
-    fun createInviteLink(inviteCode: String): Uri {
-        return "$SCHEME://$PATH_INVITE/$inviteCode".toUri()
-    }
-
-    /**
-     * Create shareable HTTPS link
-     */
-    fun createShareableGameLink(gameId: String): String {
-        return "https://$HOST/$PATH_GAME/$gameId"
-    }
-
-    fun createShareableGroupLink(groupId: String): String {
-        return "https://$HOST/$PATH_GROUP/$groupId"
-    }
-
-    /**
-     * Validate deep link
-     */
-    fun isValid(uri: Uri): Boolean {
-        return parse(uri) !is DeepLink.Invalid && parse(uri) !is DeepLink.None
-    }
+    private fun decodeSegment(value: String): String =
+        runCatching { URLDecoder.decode(value, StandardCharsets.UTF_8.name()) }.getOrDefault(value)
 }
 
-/**
- * Deep Link types
- */
 sealed class DeepLink {
     data class Game(val gameId: String) : DeepLink()
     data class Group(val groupId: String) : DeepLink()
     data class Profile(val userId: String) : DeepLink()
-    data class Invite(val inviteCode: String) : DeepLink()
-    object Badges : DeepLink()
-    object Rankings : DeepLink()
-    object None : DeepLink()
+    data class GroupInvite(val inviteCode: String) : DeepLink()
+    data class FriendInvite(val inviteCode: String) : DeepLink()
+    data class CheckIn(val gameId: String, val token: String) : DeepLink()
+    data object Badges : DeepLink()
+    data object Rankings : DeepLink()
+    data object None : DeepLink()
     data class Invalid(val reason: String) : DeepLink()
 }
+
+/** Maps external contracts to existing native destinations without exposing URL data as routes. */
+fun DeepLink.toNavigationRoute(): String? = when (this) {
+    is DeepLink.Game -> Screen.GameDetail.createRoute(encodeRouteSegment(gameId))
+    is DeepLink.CheckIn -> Screen.GameDetail.createRoute(encodeRouteSegment(gameId))
+    is DeepLink.Group -> Screen.GroupDetail.createRoute(encodeRouteSegment(groupId))
+    is DeepLink.Profile -> Screen.Profile.route
+    is DeepLink.GroupInvite -> Screen.Groups.route
+    is DeepLink.FriendInvite -> Screen.Home.route
+    DeepLink.Badges -> Screen.Badges.route
+    DeepLink.Rankings -> Screen.Ranking.route
+    is DeepLink.Invalid, DeepLink.None -> null
+}
+
+private fun encodeRouteSegment(value: String): String =
+    URLEncoder.encode(value, StandardCharsets.UTF_8.name()).replace("+", "%20")

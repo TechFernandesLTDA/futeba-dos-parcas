@@ -1176,4 +1176,25 @@ também usam IDs de recursos para que um uso futuro já nasça localizável.
 
 ---
 
+## 2026-07-14 — App Links convertem URLs externas em rotas internas seguras (#3640)
+
+**Contexto:** O Web compartilhava links HTTPS de jogo, check-in e convites, mas
+o Android não declarava associação com o domínio e a Activity Compose não podia
+ser iniciada pelo sistema.
+
+**Decisão:** Associar `futebadosparcas.web.app` ao pacote Android por
+`assetlinks.json` e `autoVerify`, processar cold/warm start na Activity
+`singleTop` e centralizar validação no `DeepLinkHelper`. Dados externos nunca
+viram rotas diretamente: IDs são codificados, token de check-in é descartado da
+rota e códigos de convite abrem apenas destinos nativos seguros já existentes.
+
+**Consequências:** Links verificados abrem o app instalado e jogos/check-ins
+chegam ao detalhe correto. Convites chegam a Grupos/Home sem confundir código
+com ID; aceitar convite por código continua sendo capacidade exclusiva do Web
+até existir uma tela nativa autoritativa dedicada.
+
+**Relacionado:** `specs/BUGFIX_2026-07-14_android_verified_app_links.md`, #3640.
+
+---
+
 <!-- Adicione novas decisões acima desta linha -->
