@@ -374,6 +374,84 @@ class NotificationsViewModelTest {
         assertEquals("game123", (actionState as NotificationActionState.NavigateToGame).gameId)
     }
 
+    @Test
+    @DisplayName("openNotification com game deve emitir destino de jogo")
+    fun openNotification_game_navigatesToGame() = runTest {
+        setupDefaultFlows()
+        val notification = createAndroidNotification(
+            "n1",
+            NotificationType.GAME_SUMMON,
+            "game123",
+            referenceType = "game"
+        )
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.openNotification(notification)
+
+        assertEquals(
+            NotificationActionState.NavigateToGame("game123"),
+            viewModel.actionState.value
+        )
+    }
+
+    @Test
+    @DisplayName("openNotification com group deve emitir destino de grupo")
+    fun openNotification_group_navigatesToGroup() = runTest {
+        setupDefaultFlows()
+        val notification = createAndroidNotification(
+            "n1",
+            NotificationType.MEMBER_JOINED,
+            "group123",
+            referenceType = "group"
+        )
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.openNotification(notification)
+
+        assertEquals(
+            NotificationActionState.NavigateToGroup("group123"),
+            viewModel.actionState.value
+        )
+    }
+
+    @Test
+    @DisplayName("openNotification de convite orienta usar acoes autoritativas")
+    fun openNotification_invite_showsActionHint() = runTest {
+        setupDefaultFlows()
+        val notification = createAndroidNotification(
+            "n1",
+            NotificationType.GROUP_INVITE,
+            "invite1",
+            referenceType = "invite"
+        )
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.openNotification(notification)
+
+        assertTrue(viewModel.actionState.value is NotificationActionState.InfoResource)
+    }
+
+    @Test
+    @DisplayName("openNotification sem referencia nao fica em no-op silencioso")
+    fun openNotification_missingReference_showsError() = runTest {
+        setupDefaultFlows()
+        val notification = createAndroidNotification(
+            "n1",
+            NotificationType.GROUP_INVITE,
+            null,
+            referenceType = "invite"
+        )
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.openNotification(notification)
+
+        assertTrue(viewModel.actionState.value is NotificationActionState.ErrorResource)
+    }
+
     // ========== Helpers ==========
 
     private fun createKmpNotification(
@@ -392,7 +470,8 @@ class NotificationsViewModelTest {
     private fun createAndroidNotification(
         id: String,
         type: NotificationType,
-        referenceId: String?
+        referenceId: String?,
+        referenceType: String? = null
     ) = AppNotification(
         id = id,
         userId = "user1",
@@ -401,6 +480,7 @@ class NotificationsViewModelTest {
         message = "Test message",
         read = false,
         createdAt = System.currentTimeMillis(),
-        referenceId = referenceId
+        referenceId = referenceId,
+        referenceType = referenceType
     )
 }

@@ -415,4 +415,7 @@
     <string name="game_detail_remove_player_message">¿Seguro que quieres eliminar a %1$s? Perderá su posición en el orden de confirmación.</string>
     <string name="game_detail_removing_player">Eliminando…</string>
     <string name="game_detail_error_remove_player">No pudimos eliminar al jugador. Inténtalo de nuevo.</string>
+    <string name="notifications_open_notification_error">No pudimos abrir esta notificación.</string>
+    <string name="notifications_open_invite_error">No pudimos abrir la invitación. Inténtalo de nuevo.</string>
+    <string name="notifications_invite_action_hint">Usa Aceptar o Rechazar para responder a la invitación.</string>
 </resources>

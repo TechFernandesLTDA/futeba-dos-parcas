@@ -96,7 +96,8 @@ enum class NotificationFilter(val labelRes: Int, val icon: ImageVector) {
 @Composable
 fun NotificationsScreen(
     viewModel: NotificationsViewModel,
-    onNotificationClick: (AppNotification) -> Unit,
+    onNavigateToGame: (String) -> Unit,
+    onNavigateToGroup: (String) -> Unit,
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -145,6 +146,26 @@ fun NotificationsScreen(
             }
             is NotificationActionState.Error -> {
                 snackbarHostState.showSnackbar((actionState as NotificationActionState.Error).message)
+                viewModel.resetActionState()
+            }
+            is NotificationActionState.ErrorResource -> {
+                snackbarHostState.showSnackbar(
+                    context.getString((actionState as NotificationActionState.ErrorResource).messageResId)
+                )
+                viewModel.resetActionState()
+            }
+            is NotificationActionState.InfoResource -> {
+                snackbarHostState.showSnackbar(
+                    context.getString((actionState as NotificationActionState.InfoResource).messageResId)
+                )
+                viewModel.resetActionState()
+            }
+            is NotificationActionState.NavigateToGame -> {
+                onNavigateToGame((actionState as NotificationActionState.NavigateToGame).gameId)
+                viewModel.resetActionState()
+            }
+            is NotificationActionState.NavigateToGroup -> {
+                onNavigateToGroup((actionState as NotificationActionState.NavigateToGroup).groupId)
                 viewModel.resetActionState()
             }
             else -> {}
@@ -282,7 +303,7 @@ fun NotificationsScreen(
                                     notifications = filteredNotifications,
                                     onNotificationClick = { notification ->
                                         viewModel.markAsRead(notification.id)
-                                        onNotificationClick(notification)
+                                        viewModel.openNotification(notification)
                                     },
                                     onAccept = { notification ->
                                         viewModel.handleNotificationAction(notification, accept = true)
