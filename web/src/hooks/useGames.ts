@@ -64,6 +64,17 @@ function parseGameDoc(docId: string, raw: Record<string, unknown>): Game {
   } as Game;
 }
 
+function parseConfirmationDoc(docId: string, raw: Record<string, unknown>): GameConfirmation {
+  const converted = snakeToCamel(raw);
+  return {
+    id: docId,
+    ...converted,
+    confirmedAt: ((raw.confirmed_at || raw.confirmedAt) as { toDate?: () => Date })?.toDate?.(),
+    createdAt: ((raw.created_at || raw.createdAt) as { toDate?: () => Date })?.toDate?.(),
+    checkedInAt: ((raw.checked_in_at || raw.checkedInAt) as { toDate?: () => Date })?.toDate?.(),
+  } as GameConfirmation;
+}
+
 // Default limit para evitar full-collection scans (#1121)
 const DEFAULT_GAMES_LIMIT = 50;
 
@@ -290,10 +301,15 @@ export function useGames(filters?: GamesFilters) {
 }
 
 export function useGameDetail(gameId: string | null) {
+  const { user, firebaseUser } = useAuth();
+  const currentUserId = firebaseUser?.uid || user?.id || null;
+  const isAdmin = user?.role === 'ADMIN';
   const [game, setGame] = useState<Game | null>(null);
+  const [ownConfirmation, setOwnConfirmation] = useState<GameConfirmation | null>(null);
   const [confirmations, setConfirmations] = useState<GameConfirmation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [confirmationsError, setConfirmationsError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!gameId) {
@@ -302,8 +318,6 @@ export function useGameDetail(gameId: string | null) {
     }
 
     const gameRef = doc(db, 'games', gameId);
-    // Usar coleção raiz 'confirmations' (igual ao Android)
-    const confirmationsRef = collection(db, 'confirmations');
 
     const unsubscribeGame = onSnapshot(
       gameRef,
@@ -323,40 +337,77 @@ export function useGameDetail(gameId: string | null) {
       }
     );
 
-    // Consultar confirmações da coleção raiz filtradas por game_id (igual ao Android)
-    const unsubscribeConfirmations = onSnapshot(
-      query(confirmationsRef, where('game_id', '==', gameId)),
-      (snapshot) => {
-        const confirmationsData = snapshot.docs.map((d) => {
-          const raw = d.data();
-          const converted = snakeToCamel(raw);
-          return {
-            id: d.id,
-            ...converted,
-            confirmedAt: ((raw.confirmed_at || raw.confirmedAt) as { toDate?: () => Date })?.toDate?.(),
-            createdAt: ((raw.created_at || raw.createdAt) as { toDate?: () => Date })?.toDate?.(),
-            checkedInAt: ((raw.checked_in_at || raw.checkedInAt) as { toDate?: () => Date })?.toDate?.(),
-          } as GameConfirmation;
-        });
-        // Ordenar por confirmation_order client-side
-        confirmationsData.sort((a, b) => (a.confirmationOrder || 0) - (b.confirmationOrder || 0));
-        setConfirmations(confirmationsData);
-      },
-      (err) => {
-        logger.error('Error in confirmations listener:', err);
-        setConfirmations([]);
-        setError(getFirestoreErrorMessage(err));
-        setLoading(false);
-      }
-    );
-
-    return () => {
-      unsubscribeGame();
-      unsubscribeConfirmations();
-    };
+    return unsubscribeGame;
   }, [gameId]);
 
-  return { game, confirmations, loading, error };
+  // A query restrita ao próprio usuário é autorizável pelas rules mesmo antes
+  // de ele confirmar presença. Isso evita tentar listar dados de terceiros para
+  // convidados PENDING e visitantes de jogos públicos (#3684).
+  useEffect(() => {
+    if (!gameId || !currentUserId) {
+      setOwnConfirmation(null);
+      return;
+    }
+
+    const ownConfirmationQuery = query(
+      collection(db, 'confirmations'),
+      where('game_id', '==', gameId),
+      where('user_id', '==', currentUserId),
+    );
+
+    return onSnapshot(
+      ownConfirmationQuery,
+      (snapshot) => {
+        const ownDoc = snapshot.docs[0];
+        setOwnConfirmation(ownDoc ? parseConfirmationDoc(ownDoc.id, ownDoc.data()) : null);
+        setConfirmationsError(null);
+      },
+      (err) => {
+        logger.warn('Error fetching own game confirmation:', err);
+        setOwnConfirmation(null);
+        setConfirmationsError(getFirestoreErrorMessage(err));
+      },
+    );
+  }, [currentUserId, gameId]);
+
+  const canReadAllConfirmations = Boolean(
+    game && currentUserId && (
+      isAdmin ||
+      game.ownerId === currentUserId ||
+      ownConfirmation?.status === 'CONFIRMED'
+    ),
+  );
+
+  useEffect(() => {
+    if (!canReadAllConfirmations || !gameId) {
+      setConfirmations(ownConfirmation ? [ownConfirmation] : []);
+      return;
+    }
+
+    const confirmationsQuery = query(
+      collection(db, 'confirmations'),
+      where('game_id', '==', gameId),
+    );
+
+    return onSnapshot(
+      confirmationsQuery,
+      (snapshot) => {
+        const confirmationsData = snapshot.docs.map((d) => parseConfirmationDoc(d.id, d.data()));
+        confirmationsData.sort((a, b) => (a.confirmationOrder || 0) - (b.confirmationOrder || 0));
+        setConfirmations(confirmationsData);
+        setConfirmationsError(null);
+      },
+      (err) => {
+        // O documento do jogo continua utilizável mesmo quando o elenco não
+        // pode ser carregado. Não promover erro auxiliar a falha fatal da tela.
+        logger.warn('Error in confirmations roster listener:', err);
+        setConfirmations(ownConfirmation ? [ownConfirmation] : []);
+        setConfirmationsError(getFirestoreErrorMessage(err));
+      },
+    );
+  }, [canReadAllConfirmations, gameId, ownConfirmation]);
+
+  return { game, confirmations, loading, error, confirmationsError };
 }
 
 export function useConfirmPresence() {

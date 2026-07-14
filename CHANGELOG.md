@@ -245,6 +245,14 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.54.1][web-1.54.1] - 2026-07-14
+
+#### Corrigido
+- `useGameDetail` separa o listener do próprio convite da consulta protegida do elenco e não promove falhas auxiliares de confirmações a erro fatal do jogo.
+- A consulta inicial restringe `confirmations` por `game_id` e `user_id`, preservando as regras que bloqueiam dados de outros jogadores antes da confirmação.
+
+_Issues: #3684_
+
 ### [1.54.0][web-1.54.0] - 2026-07-14
 
 #### Adicionado
@@ -2359,6 +2367,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.54.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.1.md
 [web-1.54.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.0.md
 [web-1.53.12]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.53.12.md
 [web-1.53.11]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.53.11.md

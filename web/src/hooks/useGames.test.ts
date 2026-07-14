@@ -259,11 +259,177 @@ describe('useGameDetail', () => {
     expect(result.current.game).toBeNull();
   });
 
-  it('configura listeners para jogo e confirmações', () => {
+  it('configura listeners para jogo e confirmação do próprio usuário', () => {
     renderHook(() => useGameDetail('game-1'), { wrapper: createTestWrapper() });
 
-    // Deve chamar onSnapshot duas vezes (jogo + confirmações)
+    // Jogo + query segura, filtrada por game_id e user_id.
     expect(mockOnSnapshot).toHaveBeenCalledTimes(2);
+    expect(mockWhere).toHaveBeenCalledWith('game_id', '==', 'game-1');
+    expect(mockWhere).toHaveBeenCalledWith('user_id', '==', 'test-user-id');
+  });
+
+  it('mantém o detalhe disponível para convidado PENDING sem consultar o elenco completo', async () => {
+    const listeners: Array<{
+      next: (snapshot: any) => void;
+      error: (error: Error) => void;
+    }> = [];
+    mockOnSnapshot.mockImplementation((_ref: any, next: any, error: any) => {
+      listeners.push({ next, error });
+      return vi.fn();
+    });
+
+    const { result } = renderHook(() => useGameDetail('game-1'), { wrapper: createTestWrapper() });
+
+    act(() => {
+      listeners[0].next({
+        exists: () => true,
+        id: 'game-1',
+        data: () => ({ status: 'SCHEDULED', owner_id: 'owner-1' }),
+      });
+      listeners[1].next({
+        docs: [{
+          id: 'game-1_test-user-id',
+          data: () => ({ game_id: 'game-1', user_id: 'test-user-id', status: 'PENDING' }),
+        }],
+      });
+    });
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+      expect(result.current.confirmations).toHaveLength(1);
+    });
+
+    expect(result.current.game?.id).toBe('game-1');
+    expect(result.current.confirmations[0].status).toBe('PENDING');
+    expect(result.current.error).toBeNull();
+    expect(mockOnSnapshot).toHaveBeenCalledTimes(2);
+  });
+
+  it('passa a carregar o elenco completo quando a própria confirmação vira CONFIRMED', async () => {
+    const listeners: Array<{ next: (snapshot: any) => void }> = [];
+    mockOnSnapshot.mockImplementation((_ref: any, next: any) => {
+      listeners.push({ next });
+      return vi.fn();
+    });
+
+    const { result } = renderHook(() => useGameDetail('game-1'), { wrapper: createTestWrapper() });
+
+    act(() => {
+      listeners[0].next({
+        exists: () => true,
+        id: 'game-1',
+        data: () => ({ status: 'SCHEDULED', owner_id: 'owner-1' }),
+      });
+      listeners[1].next({
+        docs: [{
+          id: 'game-1_test-user-id',
+          data: () => ({ game_id: 'game-1', user_id: 'test-user-id', status: 'CONFIRMED' }),
+        }],
+      });
+    });
+
+    await waitFor(() => expect(listeners).toHaveLength(3));
+
+    act(() => listeners[2].next({
+      docs: [
+        {
+          id: 'game-1_test-user-id',
+          data: () => ({ game_id: 'game-1', user_id: 'test-user-id', status: 'CONFIRMED', confirmation_order: 1 }),
+        },
+        {
+          id: 'game-1_player-2',
+          data: () => ({ game_id: 'game-1', user_id: 'player-2', status: 'CONFIRMED', confirmation_order: 2 }),
+        },
+      ],
+    }));
+
+    await waitFor(() => expect(result.current.confirmations).toHaveLength(2));
+    expect(result.current.confirmations.map((confirmation) => confirmation.userId)).toEqual([
+      'test-user-id',
+      'player-2',
+    ]);
+  });
+
+  it('remove o elenco alheio quando a própria confirmação deixa de ser CONFIRMED', async () => {
+    const listeners: Array<{ next: (snapshot: any) => void }> = [];
+    const unsubscribes = [vi.fn(), vi.fn(), vi.fn()];
+    mockOnSnapshot.mockImplementation((_ref: any, next: any) => {
+      const listenerIndex = listeners.length;
+      listeners.push({ next });
+      return unsubscribes[listenerIndex];
+    });
+
+    const { result } = renderHook(() => useGameDetail('game-1'), { wrapper: createTestWrapper() });
+
+    act(() => {
+      listeners[0].next({
+        exists: () => true,
+        id: 'game-1',
+        data: () => ({ status: 'SCHEDULED', owner_id: 'owner-1' }),
+      });
+      listeners[1].next({
+        docs: [{
+          id: 'game-1_test-user-id',
+          data: () => ({ game_id: 'game-1', user_id: 'test-user-id', status: 'CONFIRMED' }),
+        }],
+      });
+    });
+
+    await waitFor(() => expect(listeners).toHaveLength(3));
+    act(() => listeners[2].next({
+      docs: [
+        {
+          id: 'game-1_test-user-id',
+          data: () => ({ game_id: 'game-1', user_id: 'test-user-id', status: 'CONFIRMED' }),
+        },
+        {
+          id: 'game-1_player-2',
+          data: () => ({ game_id: 'game-1', user_id: 'player-2', status: 'CONFIRMED' }),
+        },
+      ],
+    }));
+    await waitFor(() => expect(result.current.confirmations).toHaveLength(2));
+
+    act(() => listeners[1].next({
+      docs: [{
+        id: 'game-1_test-user-id',
+        data: () => ({ game_id: 'game-1', user_id: 'test-user-id', status: 'CANCELLED' }),
+      }],
+    }));
+
+    await waitFor(() => {
+      expect(unsubscribes[2]).toHaveBeenCalledOnce();
+      expect(result.current.confirmations).toHaveLength(1);
+    });
+    expect(result.current.confirmations[0].userId).toBe('test-user-id');
+    expect(result.current.confirmations[0].status).toBe('CANCELLED');
+  });
+
+  it('não transforma erro auxiliar de confirmações em erro fatal do jogo', async () => {
+    const listeners: Array<{
+      next: (snapshot: any) => void;
+      error: (error: Error) => void;
+    }> = [];
+    mockOnSnapshot.mockImplementation((_ref: any, next: any, error: any) => {
+      listeners.push({ next, error });
+      return vi.fn();
+    });
+
+    const { result } = renderHook(() => useGameDetail('game-1'), { wrapper: createTestWrapper() });
+
+    act(() => {
+      listeners[0].next({
+        exists: () => true,
+        id: 'game-1',
+        data: () => ({ status: 'SCHEDULED', owner_id: 'owner-1' }),
+      });
+      listeners[1].error(new Error('Missing or insufficient permissions'));
+    });
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.game?.id).toBe('game-1');
+    expect(result.current.error).toBeNull();
+    expect(result.current.confirmationsError).toBeTruthy();
   });
 
   it('retorna dados do jogo quando snapshot emite', async () => {
