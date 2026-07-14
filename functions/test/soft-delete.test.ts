@@ -261,6 +261,32 @@ describe("restoreSoftDeleted", () => {
     );
   });
 
+  test("deve restaurar grupo deletado para status ACTIVE", async () => {
+    mockDocGet.mockResolvedValue({
+      exists: true,
+      data: () => ({
+        deleted_at: { toDate: () => new Date() },
+        deleted_by: "user1",
+        status: "DELETED",
+      }),
+    });
+
+    const result = await restoreSoftDeleted(
+      "groups",
+      "group1",
+      "user1",
+      { restoreStatus: "ACTIVE" }
+    );
+
+    expect(result.success).toBe(true);
+    expect(mockDocUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: "ACTIVE",
+        restored_by: "user1",
+      })
+    );
+  });
+
   test("deve retornar success=false quando documento não existe", async () => {
     mockDocGet.mockResolvedValue({
       exists: false,

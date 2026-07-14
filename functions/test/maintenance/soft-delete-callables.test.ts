@@ -338,7 +338,43 @@ describe("Soft Delete — Callables", () => {
       const result = await restoreDeletedGroup(makeAuthRequest());
 
       expect(result.success).toBe(true);
-      expect(mockRestoreSoftDeleted).toHaveBeenCalledWith("groups", "group1", "user1");
+      expect(mockRestoreSoftDeleted).toHaveBeenCalledWith(
+        "groups",
+        "group1",
+        "user1",
+        { restoreStatus: "ACTIVE" },
+      );
+    });
+
+    it("rejeita quando grupo nao esta deletado", async () => {
+      mockDocGet.mockResolvedValueOnce({
+        exists: true,
+        data: () => ({ owner_id: "user1", status: "ACTIVE" }),
+      });
+
+      await expect(
+        restoreDeletedGroup(makeAuthRequest()),
+      ).rejects.toThrow("failed-precondition");
+
+      expect(mockRestoreSoftDeleted).not.toHaveBeenCalled();
+    });
+
+    it("rejeita usuario sem permissao para restaurar grupo", async () => {
+      mockDocGet.mockResolvedValueOnce({
+        exists: true,
+        data: () => ({
+          deleted_at: { toDate: () => new Date() },
+          deleted_by: "outro",
+          owner_id: "outro",
+          status: "DELETED",
+        }),
+      });
+
+      await expect(
+        restoreDeletedGroup(makeAuthRequest()),
+      ).rejects.toThrow("permission-denied");
+
+      expect(mockRestoreSoftDeleted).not.toHaveBeenCalled();
     });
 
     it("admin pode restaurar grupo de outro usuario", async () => {
