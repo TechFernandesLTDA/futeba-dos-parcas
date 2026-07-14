@@ -324,6 +324,195 @@ describe("groups/members — invariantes de identidade e saída", () => {
 });
 
 // ============================================================
+// PAPÉIS E OWNERSHIP — #3589, #3592, #3601
+// ============================================================
+
+describe("groups/members — papéis e ownership atômico", () => {
+  async function seedRoleGroup(
+    groupId: string,
+    playerBRole: "MEMBER" | "ADMIN" = "MEMBER",
+    playerCRole: "MEMBER" | "ADMIN" = "MEMBER"
+  ) {
+    await seedDoc(testEnv, `groups/${groupId}`, {
+      name: "Grupo de papéis",
+      owner_id: UID_PLAYER_A,
+      is_public: true,
+      status: "ACTIVE",
+      description: "Fixture isolada para gestão de papéis",
+      member_count: 3,
+    });
+    await seedDoc(testEnv, `groups/${groupId}/members/${UID_PLAYER_A}`, {
+      user_id: UID_PLAYER_A,
+      role: "OWNER",
+      status: "ACTIVE",
+    });
+    await seedDoc(testEnv, `groups/${groupId}/members/${UID_PLAYER_B}`, {
+      user_id: UID_PLAYER_B,
+      role: playerBRole,
+      status: "ACTIVE",
+    });
+    await seedDoc(testEnv, `groups/${groupId}/members/${UID_PLAYER_C}`, {
+      user_id: UID_PLAYER_C,
+      role: playerCRole,
+      status: "ACTIVE",
+    });
+  }
+
+  it("OWNER pode promover MEMBER para ADMIN", async () => {
+    const groupId = "group-role-promote-3589";
+    await seedRoleGroup(groupId);
+
+    await assertSucceeds(
+      asPlayerA(testEnv)
+        .doc(`groups/${groupId}/members/${UID_PLAYER_B}`)
+        .update({role: "ADMIN"})
+    );
+  });
+
+  it("OWNER pode rebaixar ADMIN para MEMBER", async () => {
+    const groupId = "group-role-demote-3589";
+    await seedRoleGroup(groupId, "ADMIN");
+
+    await assertSucceeds(
+      asPlayerA(testEnv)
+        .doc(`groups/${groupId}/members/${UID_PLAYER_B}`)
+        .update({role: "MEMBER"})
+    );
+  });
+
+  it("transfere ownership apenas com grupo, novo OWNER e antigo OWNER no mesmo batch", async () => {
+    const groupId = "group-role-transfer-3601";
+    await seedRoleGroup(groupId);
+    await seedDoc(testEnv, `users/${UID_PLAYER_A}/groups/${groupId}`, {
+      role: "OWNER",
+      group_name: "Grupo de papéis",
+    });
+    await seedDoc(testEnv, `users/${UID_PLAYER_B}/groups/${groupId}`, {
+      role: "MEMBER",
+      group_name: "Grupo de papéis",
+    });
+    const db = asPlayerA(testEnv);
+    const batch = db.batch();
+    batch.update(db.doc(`groups/${groupId}`), {
+      owner_id: UID_PLAYER_B,
+      owner_name: "Player B",
+    });
+    batch.update(db.doc(`groups/${groupId}/members/${UID_PLAYER_A}`), {role: "ADMIN"});
+    batch.update(db.doc(`users/${UID_PLAYER_A}/groups/${groupId}`), {role: "ADMIN"});
+    batch.update(db.doc(`groups/${groupId}/members/${UID_PLAYER_B}`), {role: "OWNER"});
+    batch.update(db.doc(`users/${UID_PLAYER_B}/groups/${groupId}`), {role: "OWNER"});
+
+    await assertSucceeds(batch.commit());
+  });
+
+  it("NÃO permite trocar owner_id sem atualizar os dois memberships", async () => {
+    const groupId = "group-role-owner-id-only-3601";
+    await seedRoleGroup(groupId);
+
+    await assertFails(
+      asPlayerA(testEnv).doc(`groups/${groupId}`).update({owner_id: UID_PLAYER_B})
+    );
+  });
+
+  it("ADMIN global NÃO pode pivotar owner_id isoladamente pelo cliente", async () => {
+    const groupId = "group-role-global-admin-owner-pivot-3601";
+    await seedRoleGroup(groupId);
+
+    await assertFails(
+      asAdmin(testEnv).doc(`groups/${groupId}`).update({owner_id: UID_PLAYER_B})
+    );
+  });
+
+  it("NÃO permite transferência parcial que mantém o antigo OWNER", async () => {
+    const groupId = "group-role-old-owner-stays-3601";
+    await seedRoleGroup(groupId);
+    const db = asPlayerA(testEnv);
+    const batch = db.batch();
+    batch.update(db.doc(`groups/${groupId}`), {owner_id: UID_PLAYER_B});
+    batch.update(db.doc(`groups/${groupId}/members/${UID_PLAYER_B}`), {role: "OWNER"});
+
+    await assertFails(batch.commit());
+  });
+
+  it("NÃO permite transferência parcial sem promover o novo OWNER", async () => {
+    const groupId = "group-role-new-owner-stays-member-3601";
+    await seedRoleGroup(groupId);
+    const db = asPlayerA(testEnv);
+    const batch = db.batch();
+    batch.update(db.doc(`groups/${groupId}`), {owner_id: UID_PLAYER_B});
+    batch.update(db.doc(`groups/${groupId}/members/${UID_PLAYER_A}`), {role: "ADMIN"});
+
+    await assertFails(batch.commit());
+  });
+
+  it("NÃO permite criar segundo OWNER sem transferir owner_id", async () => {
+    const groupId = "group-role-second-owner-3601";
+    await seedRoleGroup(groupId);
+
+    await assertFails(
+      asPlayerA(testEnv)
+        .doc(`groups/${groupId}/members/${UID_PLAYER_B}`)
+        .update({role: "OWNER"})
+    );
+  });
+
+  it("NÃO permite ao OWNER se rebaixar sem transferir owner_id", async () => {
+    const groupId = "group-role-owner-self-demote-3601";
+    await seedRoleGroup(groupId);
+
+    await assertFails(
+      asPlayerA(testEnv)
+        .doc(`groups/${groupId}/members/${UID_PLAYER_A}`)
+        .update({role: "ADMIN"})
+    );
+  });
+
+  it("MEMBER NÃO pode se autoelevar para ADMIN", async () => {
+    const groupId = "group-role-self-elevation-3589";
+    await seedRoleGroup(groupId);
+
+    await assertFails(
+      asPlayerB(testEnv)
+        .doc(`groups/${groupId}/members/${UID_PLAYER_B}`)
+        .update({role: "ADMIN"})
+    );
+  });
+
+  it("ADMIN não-owner pode remover MEMBER comum", async () => {
+    const groupId = "group-role-admin-removes-member-3592";
+    await seedRoleGroup(groupId, "ADMIN", "MEMBER");
+
+    await assertSucceeds(
+      asPlayerB(testEnv)
+        .doc(`groups/${groupId}/members/${UID_PLAYER_C}`)
+        .update({status: "REMOVED"})
+    );
+  });
+
+  it("ADMIN não-owner NÃO pode remover outro ADMIN", async () => {
+    const groupId = "group-role-admin-removes-admin-3592";
+    await seedRoleGroup(groupId, "ADMIN", "ADMIN");
+
+    await assertFails(
+      asPlayerB(testEnv)
+        .doc(`groups/${groupId}/members/${UID_PLAYER_C}`)
+        .update({status: "REMOVED"})
+    );
+  });
+
+  it("ADMIN não-owner NÃO pode remover o OWNER", async () => {
+    const groupId = "group-role-admin-removes-owner-3592";
+    await seedRoleGroup(groupId, "ADMIN");
+
+    await assertFails(
+      asPlayerB(testEnv)
+        .doc(`groups/${groupId}/members/${UID_PLAYER_A}`)
+        .update({status: "REMOVED"})
+    );
+  });
+});
+
+// ============================================================
 // ATUALIZAÇÃO — grupos
 // ============================================================
 
