@@ -3,7 +3,13 @@ import { PageContainer } from '../../../components/common/PageContainer';
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { getLevelForXp, getXpProgress, getLevelEntry, getXpRemaining } from '../../../types/gamification';
+import {
+  getLevelForXp,
+  getXpProgress,
+  getLevelEntry,
+  getXpRemaining,
+  normalizeLeagueDivision,
+} from '../../../types/gamification';
 import { getEffectiveLevel } from '../../../utils/xpAccounting';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useOnboarding } from '../../../hooks/useOnboarding';
@@ -497,7 +503,12 @@ function MiniRankingWidget({ groups }: { groups: Group[] }) {
           goals: (data.goals as number) || 0,
           assists: (data.assists as number) || 0,
           mvpCount: (data.mvpCount as number) || 0,
-          division: (data.division as LeaguePlayer['division']) || 'BRONZE',
+          division: normalizeLeagueDivision(data.division),
+          leagueRating: typeof data.league_rating === 'number'
+            ? data.league_rating
+            : typeof data.leagueRating === 'number'
+              ? data.leagueRating
+              : undefined,
           isCurrentUser: uid === user?.id,
         };
       });

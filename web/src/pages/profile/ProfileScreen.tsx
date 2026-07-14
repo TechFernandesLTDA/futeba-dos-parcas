@@ -59,7 +59,7 @@ import { ScreenHeader } from '../../components/common/ScreenHeader';
 import { LoadingScreen } from '../../components/common/LoadingScreen';
 import { TeamBadge } from '../../components/team/TeamBadge';
 import { PageContainer } from '../../components/common/PageContainer';
-import { DIVISION_CONFIG } from '../../types/gamification';
+import { DIVISION_CONFIG, getDivisionLabel, normalizeLeagueDivision } from '../../types/gamification';
 import { useTranslation } from 'react-i18next';
 import { getEffectiveRating, type User } from '../../types/user';
 import { isLookingForGameToday } from '../../utils/lookingForGameToday';
@@ -147,7 +147,8 @@ export const ProfileScreen: React.FC = () => {
     );
   }
 
-  const divisionConfig = DIVISION_CONFIG[profile.division as keyof typeof DIVISION_CONFIG] || DIVISION_CONFIG.BRONZE;
+  const profileDivision = normalizeLeagueDivision(profile.division);
+  const divisionConfig = DIVISION_CONFIG[profileDivision];
 
   return (
     <Box>
@@ -197,7 +198,7 @@ export const ProfileScreen: React.FC = () => {
                         Antes usava color: divisionConfig.color como foreground, mas SILVER (#C0C0C0)
                         sobre paper escuro dava contraste ~1.4:1 (WCAG fail). */}
                     <Chip
-                      label={divisionConfig.label}
+                      label={getDivisionLabel(profileDivision, t)}
                       size="small"
                       variant="outlined"
                       sx={{

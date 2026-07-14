@@ -84,7 +84,12 @@ import type { GameGender } from '../../types/game';
 import { PullToRefresh } from '../../components/common/PullToRefresh';
 import { useActiveSeason } from '../../hooks/useActiveSeason';
 import { useSeasons } from '../../hooks/useSeasons';
-import { DIVISION_CONFIG, LeagueDivision, getDivisionColor } from '../../types/gamification';
+import {
+  DIVISION_CONFIG,
+  LEAGUE_DIVISIONS,
+  getDivisionColor,
+  getDivisionLabel,
+} from '../../types/gamification';
 import { useTranslation, Trans } from 'react-i18next';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { getLeagueDrawCount, getLeagueLossCount, getLeagueWinRate } from '../../utils/leagueRecord';
@@ -109,8 +114,6 @@ const SORT_OPTIONS: { value: SortField; labelKey: string }[] = [
 
 const PROMO_TOP = 3;
 const RELEG_BOTTOM = 3;
-const LEAGUE_DIVISIONS: LeagueDivision[] = ['BRONZE', 'SILVER', 'GOLD', 'PLATINUM', 'DIAMOND', 'CHAMPION'];
-
 // Normalização fora do componente (função pura, não recriada)
 const normalizeText = (text: string) => text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
@@ -296,23 +299,23 @@ export const LeagueScreen: React.FC<LeagueScreenProps> = ({ embedded = false, ac
   const divisionProgress = useMemo(() => {
     if (!currentUserPlayer) return null;
     const currentDiv = currentUserPlayer.division;
-    const divOrder: LeagueDivision[] = ['BRONZE', 'SILVER', 'GOLD', 'PLATINUM', 'DIAMOND', 'CHAMPION'];
-    const idx = divOrder.indexOf(currentDiv);
-    if (idx < 0 || idx >= divOrder.length - 1) return null;
-    const nextDiv = divOrder[idx + 1];
-    const currentMin = DIVISION_CONFIG[currentDiv]?.minPoints ?? 0;
-    const nextMin = DIVISION_CONFIG[nextDiv]?.minPoints ?? 0;
+    const idx = LEAGUE_DIVISIONS.indexOf(currentDiv);
+    if (idx < 0 || idx >= LEAGUE_DIVISIONS.length - 1) return null;
+    const nextDiv = LEAGUE_DIVISIONS[idx + 1];
+    const currentMin = DIVISION_CONFIG[currentDiv].minRating;
+    const nextMin = DIVISION_CONFIG[nextDiv].minRating;
     const range = nextMin - currentMin;
-    if (range <= 0) return null;
-    const progress = ((currentUserPlayer.points - currentMin) / range);
+    const currentRating = currentUserPlayer.leagueRating;
+    if (range <= 0 || currentRating === undefined) return null;
+    const progress = ((currentRating - currentMin) / range);
     return {
       progress: Math.max(0, Math.min(progress, 1)),
-      currentLabel: DIVISION_CONFIG[currentDiv]?.label ?? currentDiv,
-      nextLabel: DIVISION_CONFIG[nextDiv]?.label ?? nextDiv,
+      currentLabel: getDivisionLabel(currentDiv, t),
+      nextLabel: getDivisionLabel(nextDiv, t),
       nextThreshold: nextMin,
-      currentPoints: currentUserPlayer.points,
+      currentRating,
     };
-  }, [currentUserPlayer]);
+  }, [currentUserPlayer, t]);
 
   useEffect(() => {
     if (headerRef.current) {
@@ -338,7 +341,7 @@ export const LeagueScreen: React.FC<LeagueScreenProps> = ({ embedded = false, ac
     if (!currentUserPlayer || !currentUserPosition) return;
     const divParam = currentUserPlayer.division.toLowerCase();
     const url = `https://futebadosparcas.web.app/league?division=${divParam}`;
-    const text = `Estou em ${currentUserPosition}º lugar na Liga ${DIVISION_CONFIG[currentUserPlayer.division]?.label || currentUserPlayer.division} com ${currentUserPlayer.experiencePoints ?? 0} XP!`;
+    const text = `Estou em ${currentUserPosition}º lugar na Liga ${getDivisionLabel(currentUserPlayer.division, t)} com ${currentUserPlayer.experiencePoints ?? 0} XP!`;
     if (navigator.share) {
       try { await navigator.share({ text, url }); } catch { /* cancelled */ }
     } else if (navigator.clipboard) {
@@ -715,7 +718,7 @@ export const LeagueScreen: React.FC<LeagueScreenProps> = ({ embedded = false, ac
               }
               label={
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                  {DIVISION_CONFIG[div]?.label ?? div}
+                  {getDivisionLabel(div, t)}
                   <Chip label={divisionCounts[div] || 0} size="small" sx={{ height: 18, fontSize: '0.75rem', minWidth: 24 }} />
                 </Box>
               }
@@ -753,7 +756,7 @@ export const LeagueScreen: React.FC<LeagueScreenProps> = ({ embedded = false, ac
             {currentUserPlayer.userName}
           </Typography>
           <Chip
-            label={DIVISION_CONFIG[currentUserPlayer.division]?.label}
+            label={getDivisionLabel(currentUserPlayer.division, t)}
             size="small"
             sx={{
               bgcolor: alpha(getDivisionColor(currentUserPlayer.division, theme), 0.15),
@@ -881,7 +884,7 @@ export const LeagueScreen: React.FC<LeagueScreenProps> = ({ embedded = false, ac
                       {divisionProgress.currentLabel}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
-                      {divisionProgress.nextLabel} ({divisionProgress.nextThreshold} pts)
+                      {divisionProgress.nextLabel} ({t('ranking.minRating', { rating: divisionProgress.nextThreshold })})
                     </Typography>
                   </Box>
                   <LinearProgress
@@ -900,7 +903,10 @@ export const LeagueScreen: React.FC<LeagueScreenProps> = ({ embedded = false, ac
                     }}
                   />
                   <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5, textAlign: 'center' }}>
-                    {divisionProgress.currentPoints} / {divisionProgress.nextThreshold} pts
+                    {t('league.ratingProgress', {
+                      current: divisionProgress.currentRating.toFixed(1),
+                      target: divisionProgress.nextThreshold,
+                    })}
                   </Typography>
                 </CardContent>
               </Card>
@@ -1016,7 +1022,7 @@ export const LeagueScreen: React.FC<LeagueScreenProps> = ({ embedded = false, ac
                                   </Button>
                                   <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center', flexWrap: 'wrap' }}>
                                     <TeamBadge teamId={player.favoriteTeam} size={14} />
-                                    <Chip label={DIVISION_CONFIG[player.division]?.label ?? player.division} size="small" sx={{ height: 16, fontSize: '0.65rem' }} />
+                                    <Chip label={getDivisionLabel(player.division, t)} size="small" sx={{ height: 16, fontSize: '0.65rem' }} />
                                     {player.isCurrentUser && <Chip label={t('common.you')} size="small" color="primary" sx={{ height: 16, fontSize: '0.65rem' }} />}
                                   </Box>
                                 </Box>
@@ -1473,7 +1479,7 @@ const LeaguePlayerItem = React.memo(function LeaguePlayerItem({
             </Box>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, minWidth: 0, mt: 0.25 }}>
               <Chip
-                label={divisionConfig.label}
+                label={getDivisionLabel(player.division, t)}
                 size="small"
                 variant="outlined"
                 sx={{

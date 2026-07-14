@@ -4,7 +4,30 @@ import xpConstants from '../../../shared/xp-constants.json';
 import { gamificationColors, rarityColors } from '../theme';
 import { getGamificationColors } from '../utils/gamificationColors';
 
-export type LeagueDivision = 'BRONZE' | 'SILVER' | 'GOLD' | 'PLATINUM' | 'DIAMOND' | 'CHAMPION';
+export const LEAGUE_DIVISIONS = ['BRONZE', 'PRATA', 'OURO', 'DIAMANTE'] as const;
+
+export type LeagueDivision = typeof LEAGUE_DIVISIONS[number];
+
+const LEGACY_LEAGUE_DIVISION_ALIASES: Readonly<Record<string, LeagueDivision>> = {
+  BRONZE: 'BRONZE',
+  PRATA: 'PRATA',
+  SILVER: 'PRATA',
+  OURO: 'OURO',
+  GOLD: 'OURO',
+  DIAMANTE: 'DIAMANTE',
+  DIAMOND: 'DIAMANTE',
+  PLATINUM: 'DIAMANTE',
+  CHAMPION: 'DIAMANTE',
+};
+
+/**
+ * Normaliza o contrato recebido sem persistir mudanças em documentos legados.
+ * Valores desconhecidos são tratados como Bronze de forma fail-safe.
+ */
+export function normalizeLeagueDivision(value: unknown): LeagueDivision {
+  if (typeof value !== 'string') return 'BRONZE';
+  return LEGACY_LEAGUE_DIVISION_ALIASES[value.trim().toUpperCase()] ?? 'BRONZE';
+}
 
 export type BadgeType =
   | 'HAT_TRICK' | 'PAREDAO' | 'ARTILHEIRO_MES'
@@ -177,30 +200,39 @@ export interface RankingPlayer {
 // Cores alinhadas com gamificationColors em theme/index.ts (single source of truth)
 // NOTA (#2163): as cores aqui são light-mode. Para uso visual em telas, prefira
 // `getDivisionColor(division, theme)` que é theme-aware (dark/OLED).
-export const DIVISION_CONFIG: Record<LeagueDivision, { label: string; color: string; minPoints: number }> = {
-  BRONZE: { label: 'Bronze', color: gamificationColors.bronze, minPoints: 0 },
-  SILVER: { label: 'Prata', color: gamificationColors.silver, minPoints: 100 },
-  GOLD: { label: 'Ouro', color: gamificationColors.gold, minPoints: 300 },
-  PLATINUM: { label: 'Platina', color: gamificationColors.platinum, minPoints: 600 },
-  DIAMOND: { label: 'Diamante', color: gamificationColors.level, minPoints: 1000 },
-  CHAMPION: { label: 'Campeão', color: gamificationColors.champion, minPoints: 2000 },
+export const DIVISION_CONFIG: Record<LeagueDivision, {
+  label: string;
+  labelKey: string;
+  color: string;
+  minRating: number;
+}> = {
+  BRONZE: { label: 'Bronze', labelKey: 'league.bronze', color: gamificationColors.bronze, minRating: 0 },
+  PRATA: { label: 'Prata', labelKey: 'league.silver', color: gamificationColors.silver, minRating: 30 },
+  OURO: { label: 'Ouro', labelKey: 'league.gold', color: gamificationColors.gold, minRating: 50 },
+  DIAMANTE: { label: 'Diamante', labelKey: 'league.diamond', color: gamificationColors.level, minRating: 70 },
 };
+
+export function getDivisionLabel(
+  division: unknown,
+  translate?: (key: string) => string,
+): string {
+  const config = DIVISION_CONFIG[normalizeLeagueDivision(division)];
+  return translate ? translate(config.labelKey) : config.label;
+}
 
 /**
  * Cor da divisão, theme-aware (#2163). Em dark/OLED retorna a variante mais
  * brilhante de `gamificationColorsDark` para manter contraste WCAG.
  */
-export function getDivisionColor(division: LeagueDivision, theme: Theme): string {
+export function getDivisionColor(division: unknown, theme: Theme): string {
   const colors = getGamificationColors(theme);
   const map: Record<LeagueDivision, string> = {
     BRONZE: colors.bronze,
-    SILVER: colors.silver,
-    GOLD: colors.gold,
-    PLATINUM: colors.platinum,
-    DIAMOND: colors.level,
-    CHAMPION: colors.champion,
+    PRATA: colors.silver,
+    OURO: colors.gold,
+    DIAMANTE: colors.level,
   };
-  return map[division] ?? colors.bronze;
+  return map[normalizeLeagueDivision(division)];
 }
 
 export interface BadgeDefinition {
@@ -276,14 +308,15 @@ export const XP_VALUES = {
   BOLA_MURCHA: xpConstants.xpActions.WORST_PLAYER,
 };
 
-export function getDivisionFromPoints(points: number): LeagueDivision {
-  if (points >= 2000) return 'CHAMPION';
-  if (points >= 1000) return 'DIAMOND';
-  if (points >= 600) return 'PLATINUM';
-  if (points >= 300) return 'GOLD';
-  if (points >= 100) return 'SILVER';
+export function getDivisionFromRating(rating: number): LeagueDivision {
+  if (rating >= 70) return 'DIAMANTE';
+  if (rating >= 50) return 'OURO';
+  if (rating >= 30) return 'PRATA';
   return 'BRONZE';
 }
+
+/** @deprecated A divisão usa rating 0–100, não pontos sazonais. */
+export const getDivisionFromPoints = getDivisionFromRating;
 
 // ============================================================
 // LevelTable - Fonte de verdade para níveis (idêntico ao Android)

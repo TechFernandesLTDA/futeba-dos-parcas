@@ -1023,4 +1023,27 @@ do callable `checkInToGame`. A Web não cria uma segunda escrita de check-in.
 
 ---
 
+## 2026-07-13 — Divisões da Liga usam contrato canônico PT com aliases somente na leitura (#3611)
+
+**Contexto:** Functions e KMP persistem `BRONZE/PRATA/OURO/DIAMANTE` na escala
+de rating 0–100, enquanto o Web mantinha seis tiers em inglês e fazia cast sem
+validação. Valores canônicos acima de Bronze caíam no fallback visual Bronze.
+
+**Decisão:** O contrato do Web passa a conter somente as quatro chaves
+canônicas. A compatibilidade com dados antigos é feita por um normalizador na
+leitura: `SILVER→PRATA`, `GOLD→OURO` e `DIAMOND/PLATINUM/CHAMPION→DIAMANTE`.
+Valores desconhecidos fazem fallback para Bronze. A normalização não escreve
+de volta no Firestore; qualquer migração persistente futura exige operação
+administrativa separada e auditável.
+
+**Consequências:** Tipos, ordem, thresholds, cores e chaves i18n do Web ficam
+alinhados ao produtor servidor e ao KMP. O Web deixa de inferir divisão a partir
+de pontos sazonais; progresso entre divisões só pode usar o rating 0–100 quando
+esse campo estiver disponível. Testes de contrato protegem as quatro chaves e
+os aliases legados.
+
+**Relacionado:** `specs/BUGFIX_2026-07-13_league-division-contract.md`, #3611.
+
+---
+
 <!-- Adicione novas decisões acima desta linha -->
