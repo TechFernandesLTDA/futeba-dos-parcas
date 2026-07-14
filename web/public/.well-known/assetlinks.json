@@ -1,0 +1,13 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.futebadosparcas",
+      "sha256_cert_fingerprints": [
+        "E2:ED:3C:08:DB:48:B6:8E:FC:30:AD:AD:6A:32:71:11:09:88:3B:6A:10:D7:6A:8F:17:AE:6F:3E:43:37:4A:07",
+        "ED:4E:50:D6:FC:5F:E5:53:EC:9E:72:26:DB:60:F7:74:5F:71:53:0A:E4:4E:80:3D:43:34:67:FE:F2:61:01:5A"
+      ]
+    }
+  }
+]

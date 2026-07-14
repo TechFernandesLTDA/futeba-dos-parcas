@@ -53,6 +53,8 @@ import com.futebadosparcas.ui.onboarding.CpfVerificationScreen
 import com.futebadosparcas.ui.onboarding.VerificationGateViewModel
 import com.futebadosparcas.ui.onboarding.VerifiedState
 import com.futebadosparcas.util.PreferencesManager
+import com.futebadosparcas.util.DeepLinkHelper
+import com.futebadosparcas.util.toNavigationRoute
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
@@ -86,7 +88,7 @@ class MainActivityCompose : AppCompatActivity() {
     private val authRepository: com.futebadosparcas.data.repository.AuthRepository by inject()
     private val updateProfileUseCase: com.futebadosparcas.domain.usecase.user.UpdateProfileUseCase by inject()
 
-    // Estado de deep link extraído do Intent da notificação FCM.
+    // Estado de deep link extraído de App Links ou de notificações FCM.
     // Guardado no nível da Activity para sobreviver à recomposição e ao onNewIntent.
     private val deepLinkTarget = mutableStateOf<String?>(null)
 
@@ -101,17 +103,19 @@ class MainActivityCompose : AppCompatActivity() {
     }
 
     /**
-     * Extrai extras do Intent de notificação e define o alvo de deep link.
+     * Extrai Android App Links e extras de notificação e define a rota interna.
      * Produtores conhecidos:
      *   - NotificationHelper: "gameId" (String), "openBadges" (Boolean)
      *   - FcmService: "gameId" (String), "notificationType" (String)
      */
     private fun handleIntentExtras(intent: Intent?) {
+        val appLinkRoute = DeepLinkHelper().parse(intent).toNavigationRoute()
         val gameId = intent?.getStringExtra("gameId")
         val openBadges = intent?.getBooleanExtra("openBadges", false) ?: false
         val notificationType = intent?.getStringExtra("notificationType")
 
         deepLinkTarget.value = when {
+            appLinkRoute != null -> appLinkRoute
             gameId != null -> "game_detail/$gameId"
             openBadges -> "badges"
             notificationType == "level_up" -> "evolution"
@@ -435,8 +439,7 @@ fun MainScreen(
         whatsNewViewModel.checkForPopup()
     }
 
-    // Navega para o destino de deep link proveniente de notificação FCM.
-    // deepLinkTarget é não-nulo apenas quando o Intent contém extras de notificação.
+    // Navega para o destino de App Link ou notificação FCM.
     LaunchedEffect(deepLinkTarget) {
         deepLinkTarget?.let { route ->
             navController.navigate(route) {
