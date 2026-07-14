@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
@@ -49,13 +49,20 @@ export const QrCheckInScreen: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState('');
   const [gameName, setGameName] = useState('');
   const [checkingIn, setCheckingIn] = useState(false);
+  const [canRetry, setCanRetry] = useState(false);
+  const checkInFlightRef = useRef(false);
 
   useEffect(() => {
+    setCanRetry(false);
+    setErrorMessage('');
+
     if (!gameId || !token) {
       setState('error');
       setErrorMessage(t('checkin.invalidLink'));
       return;
     }
+
+    setState('loading');
 
     let cancelled = false; // #2278: evita setState após unmount
 
@@ -102,6 +109,8 @@ export const QrCheckInScreen: React.FC = () => {
   }, [gameId, token, t]);
 
   const handleCheckIn = async () => {
+    if (checkInFlightRef.current) return;
+
     if (!gameId || !token || !currentUser) {
       showError(t('feedback.games.checkInLoginRequired'));
       return;
@@ -112,6 +121,8 @@ export const QrCheckInScreen: React.FC = () => {
       return;
     }
 
+    checkInFlightRef.current = true;
+    setCanRetry(false);
     setCheckingIn(true);
     try {
       const position = await getCurrentPosition();
@@ -124,11 +135,22 @@ export const QrCheckInScreen: React.FC = () => {
       });
       setState('success');
     } catch (err) {
-      setErrorMessage((err as Error)?.message || t('checkin.submitError'));
+      const message = (err as Error)?.message || t('checkin.submitError');
+      setErrorMessage(message);
+      setCanRetry(true);
       setState('error');
+      showError(message);
     } finally {
+      checkInFlightRef.current = false;
       setCheckingIn(false);
     }
+  };
+
+  const handleRetry = () => {
+    if (checkingIn) return;
+    setErrorMessage('');
+    setCanRetry(false);
+    setState('confirming');
   };
 
   return (
@@ -217,13 +239,20 @@ export const QrCheckInScreen: React.FC = () => {
               <Alert severity="error" sx={{ mt: 2, textAlign: 'left' }}>
                 {errorMessage}
               </Alert>
-              <Button
-                variant="outlined"
-                sx={{ mt: 3 }}
-                onClick={() => navigate('/')}
-              >
-                {t('checkin.backToHome')}
-              </Button>
+              <Box sx={{ mt: 3, display: 'flex', gap: 1.5, flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'center' }}>
+                {canRetry && (
+                  <Button variant="contained" onClick={handleRetry} disabled={checkingIn}>
+                    {t('checkin.retry')}
+                  </Button>
+                )}
+                <Button
+                  variant="outlined"
+                  onClick={() => navigate('/')}
+                  disabled={checkingIn}
+                >
+                  {t('checkin.backToHome')}
+                </Button>
+              </Box>
             </>
           )}
         </CardContent>

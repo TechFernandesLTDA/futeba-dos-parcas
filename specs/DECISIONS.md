@@ -1002,4 +1002,25 @@ validacao em device assinado.
 
 ---
 
+## 2026-07-13 — Retry de check-in QR exige nova ação, mas preserva token validado (#3612)
+
+**Contexto:** Falhas transitórias de GPS ou do callable obrigavam o usuário a
+ler novamente o mesmo QR, embora o token já tivesse passado pela validação
+cliente. Reexecutar automaticamente, por outro lado, poderia duplicar chamadas
+durante recuperação de rede ou cliques concorrentes.
+
+**Decisão:** Após erro operacional, preservar `gameId`, token e nome do jogo,
+mas retornar à confirmação somente por `Tentar novamente`. O retry não chama
+GPS nem backend; uma nova confirmação executa o fluxo completo. Uma trava
+síncrona por referência complementa o loading visual. Erros da validação inicial
+continuam sem retry porque seus dados não foram aceitos.
+
+**Consequências:** O usuário recupera falhas transitórias sem novo scan, enquanto
+token, status, janela, localização, raio e idempotência continuam sob autoridade
+do callable `checkInToGame`. A Web não cria uma segunda escrita de check-in.
+
+**Relacionado:** `specs/BUGFIX_2026-07-13_web-checkin-recovery.md`, #3612.
+
+---
+
 <!-- Adicione novas decisões acima desta linha -->
