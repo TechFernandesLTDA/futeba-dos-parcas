@@ -247,10 +247,29 @@ export const shadowTokens = {
   card: '0 1px 2px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04)',
   cardHover: '0 2px 4px rgba(0,0,0,0.08), 0 8px 24px rgba(0,0,0,0.06)',
   nav: '0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)',
+  navTop: '0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)',
+  navBottom: '0 -1px 3px rgba(0,0,0,0.06), 0 -1px 2px rgba(0,0,0,0.04)',
   dropdown: '0 4px 6px rgba(0,0,0,0.06), 0 12px 32px rgba(0,0,0,0.08)',
   overlay: '0 8px 16px rgba(0,0,0,0.08), 0 24px 48px rgba(0,0,0,0.12)',
   modal: '0 16px 32px rgba(0,0,0,0.12), 0 48px 64px rgba(0,0,0,0.16)',
   cardPremium: '0 0 0 1px rgba(0,0,0,0.04), 0 2px 4px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.04)',
+};
+
+// #3621: black-only elevation disappears against dark surfaces. A subtle
+// light edge preserves the boundary while the directional black layer keeps
+// the expected elevation above/below the page content.
+export const darkShadowTokens = {
+  ...shadowTokens,
+  nav: '0 1px 0 rgba(255,255,255,0.08), 0 4px 16px rgba(0,0,0,0.35)',
+  navTop: '0 1px 0 rgba(255,255,255,0.08), 0 4px 16px rgba(0,0,0,0.35)',
+  navBottom: '0 -1px 0 rgba(255,255,255,0.08), 0 -4px 16px rgba(0,0,0,0.35)',
+};
+
+export const oledShadowTokens = {
+  ...darkShadowTokens,
+  nav: '0 1px 0 rgba(255,255,255,0.12), 0 4px 20px rgba(0,0,0,0.60)',
+  navTop: '0 1px 0 rgba(255,255,255,0.12), 0 4px 20px rgba(0,0,0,0.60)',
+  navBottom: '0 -1px 0 rgba(255,255,255,0.12), 0 -4px 20px rgba(0,0,0,0.60)',
 };
 
 export const radii = {
@@ -671,6 +690,7 @@ export const futebaTheme = createTheme({
 // Dark theme
 export const futebaDarkTheme = createTheme({
   ...futebaTheme,
+  shadowsCustom: darkShadowTokens,
   palette: {
     mode: 'dark',
     primary: {
@@ -816,6 +836,7 @@ export const futebaDarkTheme = createTheme({
 
 export const futebaDarkOledTheme = createTheme({
   ...futebaDarkTheme,
+  shadowsCustom: oledShadowTokens,
   palette: {
     ...futebaDarkTheme.palette,
     background: {
