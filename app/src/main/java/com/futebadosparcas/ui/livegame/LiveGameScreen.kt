@@ -34,6 +34,8 @@ import com.futebadosparcas.ui.components.EmptyState
 import com.futebadosparcas.ui.components.EmptyStateType
 import com.futebadosparcas.ui.components.ShimmerBox
 import com.futebadosparcas.ui.theme.GamificationColors
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
@@ -73,21 +75,19 @@ fun LiveGameScreen(
 ) {
     // Estado da UI principal
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val userMessage by viewModel.userMessage.collectAsStateWithLifecycle(initialValue = "")
-
     // Estado do Pager (2 tabs: Estatísticas e Eventos)
     val pagerState = rememberPagerState(pageCount = { 2 })
     val scope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
 
     // Estado do bottom sheet para adicionar eventos
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var showAddEventSheet by remember { mutableStateOf(false) }
 
-    // Observar mensagens do usuário
-    LaunchedEffect(userMessage) {
-        if (userMessage.isNotEmpty()) {
-            // SnackbarHost será exibido automaticamente
-        }
+    // Observar cada mensagem como evento. Coletar o SharedFlow diretamente
+    // preserva emissões consecutivas com o mesmo texto (#3600).
+    LaunchedEffect(viewModel, snackbarHostState) {
+        collectLiveGameUserMessages(viewModel.userMessage, snackbarHostState)
     }
 
     // Observar navegação para votação
@@ -133,7 +133,7 @@ fun LiveGameScreen(
             }
         },
         snackbarHost = {
-            SnackbarHost(hostState = remember { SnackbarHostState() }) { data ->
+            SnackbarHost(hostState = snackbarHostState) { data ->
                 Snackbar(
                     snackbarData = data,
                     containerColor = MaterialTheme.colorScheme.inverseSurface,
@@ -214,6 +214,17 @@ fun LiveGameScreen(
                     )
                 }
             }
+        }
+    }
+}
+
+internal suspend fun collectLiveGameUserMessages(
+    userMessages: Flow<String>,
+    snackbarHostState: SnackbarHostState
+) {
+    userMessages.collect { message ->
+        if (message.isNotBlank()) {
+            snackbarHostState.showSnackbar(message)
         }
     }
 }

@@ -148,6 +148,45 @@ class LiveGameViewModelTest {
     }
 
     @Test
+    fun `id de time ausente no placar produz erro em vez de fallback alfabetico`() = runTest(dispatcher) {
+        scoreFlow.value = LiveScore(
+            id = "game-1",
+            gameId = "game-1",
+            team1Id = "team-inexistente",
+            team2Id = "team-b",
+            team1Score = 4,
+            team2Score = 1
+        )
+
+        viewModel.loadGame("game-1")
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertInstanceOf(LiveGameUiState.Error::class.java, state)
+        assertEquals(
+            "Placar indisponível: times vinculados não foram encontrados.",
+            (state as LiveGameUiState.Error).message
+        )
+    }
+
+    @Test
+    fun `mesmo time nos dois lados do placar produz erro`() = runTest(dispatcher) {
+        scoreFlow.value = LiveScore(
+            id = "game-1",
+            gameId = "game-1",
+            team1Id = "team-a",
+            team2Id = "team-a",
+            team1Score = 2,
+            team2Score = 2
+        )
+
+        viewModel.loadGame("game-1")
+        advanceUntilIdle()
+
+        assertInstanceOf(LiveGameUiState.Error::class.java, viewModel.uiState.value)
+    }
+
+    @Test
     fun `rajada fora de ordem converge para o snapshot mais recente sem refetch`() = runTest(dispatcher) {
         viewModel.loadGame("game-1")
         advanceUntilIdle()
