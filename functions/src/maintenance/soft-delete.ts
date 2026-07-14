@@ -597,7 +597,9 @@ export const restoreDeletedGroup =
       }
 
       const result = await restoreSoftDeleted(
-        "groups", groupId, userId
+        "groups", groupId, userId, {
+          restoreStatus: "ACTIVE",
+        }
       );
 
       if (!result.success) {
