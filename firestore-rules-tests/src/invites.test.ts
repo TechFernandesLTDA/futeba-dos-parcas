@@ -36,6 +36,7 @@ import {
 let testEnv: RulesTestEnvironment;
 
 const GROUP_ID = "group-with-invites";
+const ADMIN_GROUP_ID = "group-with-admin-invites";
 const PRIVATE_GROUP_ID = "group-private-invites";
 const VALID_INVITE = "invite-valid";
 const USED_INVITE = "invite-used";
@@ -60,6 +61,31 @@ beforeAll(async () => {
     user_id: UID_PLAYER_B,
     role: "MEMBER",
     status: "ACTIVE",
+  });
+
+  // #3613: Player C administra este grupo; Player B tem o mesmo papel,
+  // mas inativo. A UI e as Rules devem distinguir os dois estados.
+  await seedDoc(testEnv, `groups/${ADMIN_GROUP_ID}`, {
+    name: "Grupo com Admin",
+    owner_id: UID_PLAYER_A,
+    is_public: true,
+    status: "ACTIVE",
+    description: "",
+  });
+  await seedDoc(testEnv, `groups/${ADMIN_GROUP_ID}/members/${UID_PLAYER_A}`, {
+    user_id: UID_PLAYER_A,
+    role: "OWNER",
+    status: "ACTIVE",
+  });
+  await seedDoc(testEnv, `groups/${ADMIN_GROUP_ID}/members/${UID_PLAYER_C}`, {
+    user_id: UID_PLAYER_C,
+    role: "ADMIN",
+    status: "ACTIVE",
+  });
+  await seedDoc(testEnv, `groups/${ADMIN_GROUP_ID}/members/${UID_PLAYER_B}`, {
+    user_id: UID_PLAYER_B,
+    role: "ADMIN",
+    status: "INACTIVE",
   });
 
   // Convite valido criado por Player A
@@ -148,6 +174,36 @@ describe("invites — criacao", () => {
         group_name: "Grupo Convites",
         inviter_id: UID_PLAYER_A,
         inviter_name: "Player A",
+        used: false,
+        expires_at: new Date(Date.now() + 86400000),
+      })
+    );
+  });
+
+  it("Group ADMIN ativo pode criar invite (#3613)", async () => {
+    const db = asPlayerC(testEnv);
+    await assertSucceeds(
+      db.doc("invites/ADM001").set({
+        code: "ADM001",
+        group_id: ADMIN_GROUP_ID,
+        group_name: "Grupo com Admin",
+        inviter_id: UID_PLAYER_C,
+        inviter_name: "Player C",
+        used: false,
+        expires_at: new Date(Date.now() + 86400000),
+      })
+    );
+  });
+
+  it("Group ADMIN inativo nao pode criar invite (#3613)", async () => {
+    const db = asPlayerB(testEnv);
+    await assertFails(
+      db.doc("invites/INA001").set({
+        code: "INA001",
+        group_id: ADMIN_GROUP_ID,
+        group_name: "Grupo com Admin",
+        inviter_id: UID_PLAYER_B,
+        inviter_name: "Player B",
         used: false,
         expires_at: new Date(Date.now() + 86400000),
       })
