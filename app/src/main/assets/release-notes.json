@@ -1,7 +1,75 @@
 {
   "platform": "android",
-  "generatedAt": "2026-07-13T21:31:06.069Z",
+  "generatedAt": "2026-07-14T03:34:57.652Z",
   "notes": [
+    {
+      "version": "1.38.0",
+      "buildNumber": 73,
+      "releaseDate": "2026-07-14",
+      "type": "minor",
+      "showPopup": true,
+      "published": true,
+      "headline": "O Android ficou mais direto, acessível e resistente a falhas nos jogos, na Home e na busca.",
+      "highlights": [
+        {
+          "icon": "link",
+          "title": "Links que abrem no app",
+          "description": "Convites, jogos e check-ins compartilhados agora reconhecem o app instalado."
+        },
+        {
+          "icon": "how_to_vote",
+          "title": "Pós-jogo mais claro",
+          "description": "A votação de MVP aparece no detalhe e confirma quando o voto já foi enviado."
+        },
+        {
+          "icon": "accessibility",
+          "title": "Toques e leitura melhores",
+          "description": "Alvos maiores, ações nomeadas e textos traduzidos melhoram uso com TalkBack e telas compactas."
+        }
+      ],
+      "added": [
+        "A Home pode ser atualizada por gesto e passa a mostrar progresso real durante o carregamento.",
+        "A busca preserva histórico e sugestões reais entre sessões."
+      ],
+      "improved": [
+        "Atalhos de jogos públicos, painel de quadras, locais e notificações chegam ao destino correto.",
+        "Rótulos de avatar, estatísticas, sequências, membros e criação de jogo acompanham o idioma do aparelho."
+      ],
+      "fixed": [
+        "Confirmação, recusa e remoção de jogadores impedem toques concorrentes e permitem tentar novamente após erro.",
+        "Exclusão de jogo, toque no local e escalações usam nomes e áreas de toque consistentes.",
+        "Touch targets, semantics, rotas mortas, callback de local e feedback de notificações foram corrigidos."
+      ],
+      "issueRefs": [
+        3600,
+        3602,
+        3603,
+        3604,
+        3617,
+        3618,
+        3619,
+        3620,
+        3622,
+        3624,
+        3627,
+        3630,
+        3631,
+        3632,
+        3633,
+        3634,
+        3635,
+        3636,
+        3637,
+        3638,
+        3639,
+        3640,
+        3641,
+        3642,
+        3643,
+        3644,
+        3645
+      ]
+    },
     {
       "version": "1.37.0",
       "buildNumber": 72,
