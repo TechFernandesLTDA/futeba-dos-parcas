@@ -913,4 +913,43 @@ distribuído entre os dois serviços.
 
 ---
 
+## 2026-07-13 — Ownership de grupo exige coerência atômica entre grupo e memberships (#3589/#3592/#3601)
+
+**Contexto:** Os clientes Web e Android transferem propriedade em um único
+batch/transação, mas as Rules não vinculavam `groups/{id}.owner_id` aos papéis
+dos dois memberships. Ao mesmo tempo, uma condição invertida bloqueava
+promoções/rebaixamentos comuns e o ADMIN não-owner não conseguia aplicar o
+soft-delete `REMOVED` esperado pelos clientes.
+
+**Alternativas consideradas:**
+1. Trocar apenas `resource.data.role` por `request.resource.data.role`. Corrige
+   parte das ações, mas permitiria promover um segundo OWNER sem garantir a
+   troca de `owner_id` e não evitaria transferência parcial.
+2. Mover toda gestão de papéis para uma nova Cloud Function. Centraliza o fluxo,
+   porém quebra os clientes atuais e amplia o escopo da correção.
+3. Modelar transições nas Rules e usar `getAfter()` para exigir, no mesmo commit,
+   novo `owner_id`, novo membership OWNER e rebaixamento do antigo OWNER.
+
+**Decisão:** Adotar a opção 3. Trocas comuns ficam limitadas a `MEMBER <-> ADMIN`
+e somente o OWNER atual pode fazê-las. Transições envolvendo `OWNER` exigem a
+transferência atômica completa. ADMIN não-owner pode alterar status apenas de
+MEMBER comum, inclusive para `REMOVED`; OWNER e ADMIN ficam protegidos contra
+moderação por autoridade equivalente.
+
+**Justificativa:** A solução preserva os fluxos já atômicos dos dois clientes,
+corrige o fail-closed sem reduzir a autorização e torna o documento do grupo e
+a membership canônica mutuamente coerentes.
+
+**Consequências:** Qualquer cliente futuro que transfira ownership precisa
+escrever grupo, novo OWNER e antigo OWNER no mesmo commit. Mudanças de role
+isoladas para `OWNER` são deliberadamente negadas. O ADMIN global continua
+podendo moderar metadados, mas não pivota `owner_id` pelo cliente; recovery
+excepcional usa Admin SDK. O deploy deve incluir Firestore Rules e release
+notes consolidadas para Web/Android.
+
+**Relacionado:** `specs/BUGFIX_2026-07-13_group-member-role-rules.md`, #3589,
+#3592, #3601.
+
+---
+
 <!-- Adicione novas decisões acima desta linha -->

@@ -2300,7 +2300,10 @@ service cloud.firestore {
       // grupos legados sem o campo description (e qualquer update sem
       // alterar name/description tambem falhava).
       allow update: if isAuthenticated() && (
-        isAdmin() ||
+        // Admin global continua podendo moderar/recuperar metadados, mas nao
+        // pode pivotar owner_id isoladamente pelo cliente. Recovery excepcional
+        // usa Admin SDK; a transferencia comum segue o fluxo atomico abaixo.
+        (isAdmin() && fieldUnchanged('owner_id')) ||
         (
           (resource.data.owner_id == userId() || isGroupAdmin(groupId)) &&
            // SECFIX #862: created_at é imutável — previne privilege escalation
@@ -2310,9 +2313,16 @@ service cloud.firestore {
             fieldUnchanged('owner_id') ||
             (
               resource.data.owner_id == userId() &&
-              exists(/databases/$(database)/documents/groups/$(groupId)/members/$(request.resource.data.owner_id)) &&
-              get(/databases/$(database)/documents/groups/$(groupId)/members/$(request.resource.data.owner_id)).data.user_id == request.resource.data.owner_id &&
-              get(/databases/$(database)/documents/groups/$(groupId)/members/$(request.resource.data.owner_id)).data.status == 'ACTIVE'
+              // #3589/#3601: ownership e papel OWNER mudam juntos. O novo
+              // dono deve terminar o commit como OWNER ACTIVE e o antigo dono
+              // deve deixar de ser OWNER no mesmo batch/transacao.
+              getAfter(/databases/$(database)/documents/groups/$(groupId)/members/$(request.resource.data.owner_id)) != null &&
+              getAfter(/databases/$(database)/documents/groups/$(groupId)/members/$(request.resource.data.owner_id)).data.user_id == request.resource.data.owner_id &&
+              getAfter(/databases/$(database)/documents/groups/$(groupId)/members/$(request.resource.data.owner_id)).data.status == 'ACTIVE' &&
+              getAfter(/databases/$(database)/documents/groups/$(groupId)/members/$(request.resource.data.owner_id)).data.role == 'OWNER' &&
+              getAfter(/databases/$(database)/documents/groups/$(groupId)/members/$(resource.data.owner_id)) != null &&
+              getAfter(/databases/$(database)/documents/groups/$(groupId)/members/$(resource.data.owner_id)).data.user_id == resource.data.owner_id &&
+              getAfter(/databases/$(database)/documents/groups/$(groupId)/members/$(resource.data.owner_id)).data.role != 'OWNER'
             )
           ) &&
           // H2 FIX: member_count é SERVER-AUTHORITATIVE (Cloud Function onMemberWritten)
@@ -2407,10 +2417,51 @@ service cloud.firestore {
         // #1496: Admin nao pode alterar o role de membros — somente o OWNER pode promover/rebaixar.
         // SECFIX #2609: Admin nao pode editar o doc do OWNER (previne admin
         // banir/desativar o dono do grupo — golpe de privilegio).
+        // #3589/#3601: transicoes comuns sao MEMBER <-> ADMIN. Uma transicao
+        // envolvendo OWNER exige que groups/{groupId}.owner_id tambem mude no
+        // mesmo commit; a rule do grupo valida os dois memberships via getAfter.
+        // #3592: ADMIN nao-owner pode moderar/remover MEMBER comum, nunca outro
+        // ADMIN nem o OWNER.
         allow update: if isAuthenticated() && (
-          (isGroupAdmin(groupId) && fieldUnchanged('role') && resource.data.role != 'OWNER' && request.resource.data.status in ['ACTIVE','INACTIVE','BANNED']) ||
-           (isGroupAdmin(groupId) && isGroupOwnerById(groupId) && (fieldUnchanged('role') || resource.data.role == 'OWNER') && (memberId != userId() || resource.data.role != 'OWNER' || fieldUnchanged('status'))) ||
-           (memberId == userId() && isGroupOwnerById(groupId) && (resource.data.role != 'OWNER' || fieldUnchanged('status')))
+          (
+            isGroupAdmin(groupId) &&
+            fieldUnchanged('role') &&
+            resource.data.role == 'MEMBER' &&
+            request.resource.data.status in ['ACTIVE','INACTIVE','BANNED','REMOVED']
+          ) ||
+          (
+            isGroupAdmin(groupId) &&
+            isGroupOwnerById(groupId) &&
+            request.resource.data.role in ['OWNER','ADMIN','MEMBER'] &&
+            (
+              fieldUnchanged('role') ||
+              (
+                resource.data.role in ['MEMBER','ADMIN'] &&
+                request.resource.data.role in ['MEMBER','ADMIN']
+              ) ||
+              (
+                resource.data.role in ['MEMBER','ADMIN'] &&
+                request.resource.data.role == 'OWNER' &&
+                get(/databases/$(database)/documents/groups/$(groupId)).data.owner_id != memberId &&
+                getAfter(/databases/$(database)/documents/groups/$(groupId)) != null &&
+                getAfter(/databases/$(database)/documents/groups/$(groupId)).data.owner_id == memberId
+              ) ||
+              (
+                resource.data.role == 'OWNER' &&
+                request.resource.data.role in ['MEMBER','ADMIN'] &&
+                get(/databases/$(database)/documents/groups/$(groupId)).data.owner_id == memberId &&
+                getAfter(/databases/$(database)/documents/groups/$(groupId)) != null &&
+                getAfter(/databases/$(database)/documents/groups/$(groupId)).data.owner_id != memberId
+              )
+            ) &&
+            (memberId != userId() || resource.data.role != 'OWNER' || fieldUnchanged('status'))
+          ) ||
+          (
+            memberId == userId() &&
+            isGroupOwnerById(groupId) &&
+            fieldUnchanged('role') &&
+            (resource.data.role != 'OWNER' || fieldUnchanged('status'))
+          )
         ) &&
           resource.data.user_id == memberId &&
           fieldUnchanged('user_id') &&
