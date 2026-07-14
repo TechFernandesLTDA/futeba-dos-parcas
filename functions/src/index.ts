@@ -1143,10 +1143,6 @@ export const onGameStatusUpdate = onDocumentUpdated(
                 ...(statsSnap.data() || {}),
               } as UserStatistics;
 
-              const newMvpStreak = isMvp ?
-                (stats.currentMvpStreak || 0) + 1 :
-                0;
-
               const newStats: UserStatistics = {
                 ...stats,
                 totalGames:
@@ -1175,17 +1171,13 @@ export const onGameStatusUpdate = onDocumentUpdated(
                 gamesDraw:
                   (stats.gamesDraw || 0) +
                   (result === "DRAW" ? 1 : 0),
-                bestPlayerCount:
-                  (stats.bestPlayerCount || 0) +
-                  (isMvp ? 1 : 0),
-                worstPlayerCount:
-                  (stats.worstPlayerCount || 0) +
-                  (isWorstPlayer ? 1 : 0),
-                currentMvpStreak: newMvpStreak,
-                bestMvpStreak: Math.max(
-                  stats.bestMvpStreak || 0,
-                  newMvpStreak
-                ),
+                // #3587/#3588/#3596: estes campos dependem do resultado da
+                // votação, que ainda não existe na transição para FINISHED.
+                // concludeMvpVoting é a única fonte de verdade.
+                bestPlayerCount: stats.bestPlayerCount || 0,
+                worstPlayerCount: stats.worstPlayerCount || 0,
+                currentMvpStreak: stats.currentMvpStreak || 0,
+                bestMvpStreak: stats.bestMvpStreak || 0,
               };
 
               const {
@@ -1278,15 +1270,6 @@ export const onGameStatusUpdate = onDocumentUpdated(
                     FieldValue.increment(
                       result === "DRAW" ? 1 : 0
                     ),
-                  bestPlayerCount:
-                    FieldValue.increment(isMvp ? 1 : 0),
-                  worstPlayerCount:
-                    FieldValue.increment(
-                      isWorstPlayer ? 1 : 0
-                    ),
-                  currentMvpStreak: newMvpStreak,
-                  bestMvpStreak:
-                    newStats.bestMvpStreak,
                   updated_at: now,
                 },
                 {merge: true}
@@ -1434,7 +1417,9 @@ export const onGameStatusUpdate = onDocumentUpdated(
                       newStats.currentMvpStreak,
                   },
                   streak: streakState.currentStreak,
-                  newMvpStreak,
+                  // Badges dependentes do resultado da votação são
+                  // concedidas por concludeMvpVoting, após a apuração.
+                  newMvpStreak: 0,
                   newLevel,
                   currentLevel,
                   result:

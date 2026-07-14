@@ -57,7 +57,7 @@ import {
   isRawParticipationEligible,
   normalizeGameGender,
 } from "../game/helpers";
-import {Game} from "../models";
+import {Game, UserStatistics} from "../models";
 import {isGameShape} from "../validation/guards";
 import {
   buildMilestoneBadgeDoc,
@@ -72,6 +72,33 @@ import {db as getFirestore} from "../_db";
 
 /** Janela de votação (importada de constants.ts) */
 const VOTE_WINDOW_HOURS = MVP_VOTE_WINDOW_HOURS;
+
+/**
+ * Monta a entrada de milestones a partir do documento canônico já persistido
+ * pela transação de conclusão da votação. Nenhum contador é recalculado aqui.
+ *
+ * @param {Record<string, unknown>} statsData Estatísticas persistidas.
+ * @return {UserStatistics} Snapshot exato usado pela avaliação de milestones.
+ */
+export function buildCanonicalVotingMilestoneStatistics(
+  statsData: Record<string, unknown>
+): UserStatistics {
+  return {
+    totalGames: (statsData.totalGames as number) || 0,
+    totalGoals: (statsData.totalGoals as number) || 0,
+    totalAssists: (statsData.totalAssists as number) || 0,
+    totalSaves: (statsData.totalSaves as number) || 0,
+    totalYellowCards: (statsData.totalYellowCards as number) || 0,
+    totalRedCards: (statsData.totalRedCards as number) || 0,
+    gamesWon: (statsData.gamesWon as number) || 0,
+    gamesLost: (statsData.gamesLost as number) || 0,
+    gamesDraw: (statsData.gamesDraw as number) || 0,
+    bestPlayerCount: (statsData.bestPlayerCount as number) || 0,
+    worstPlayerCount: (statsData.worstPlayerCount as number) || 0,
+    currentMvpStreak: (statsData.currentMvpStreak as number) || 0,
+    bestMvpStreak: (statsData.bestMvpStreak as number) || 0,
+  };
+}
 
 /** Categorias de votação permitidas */
 const VALID_VOTE_CATEGORIES = [
@@ -1108,49 +1135,9 @@ export const concludeMvpVoting =
                 };
               }
 
-              // 2.6: Sem votos, encerrar
-              // sem vencedor
-              if (votes.length === 0) {
-                const team1Score =
-                  Number(gameData.team1_score ?? 0);
-                const team2Score =
-                  Number(gameData.team2_score ?? 0);
-                transaction.update(
-                  gameRef,
-                  {
-                    voting_status:
-                      "CONCLUDED",
-                    voting_concluded: true,
-                    voting_concluded_at:
-                      FieldValue
-                        .serverTimestamp(),
-                    voting_concluded_by:
-                      userId,
-                    mvp_votes: 0,
-                    mvp_total_votes: 0,
-                    best_gk_votes: 0,
-                    best_gk_total_votes: 0,
-                    worst_player_votes: 0,
-                    worst_player_total_votes: 0,
-                    winner_team:
-                      team1Score > team2Score ?
-                        "A" :
-                        team2Score > team1Score ?
-                          "B" :
-                          "DRAW",
-                  }
-                );
-
-                return {
-                  alreadyConcluded: false,
-                  mvpId: null,
-                  bestGkId: null,
-                  worstPlayerId: null,
-                  totalVotes: 0,
-                };
-              }
-
-              // 2.7: Buscar confirmações elegíveis antes da apuração.
+              // 2.6: Buscar confirmações elegíveis antes da apuração.
+              // Mesmo sem votos, elas são necessárias para zerar o streak
+              // de MVP no instante canônico em que a votação é concluída.
               // FIX XP/accounting: votos antigos de jogadores que só
               // confirmaram, mas não compareceram, não podem gerar
               // MVP/Bola Murcha nem delta de XP.
@@ -1235,6 +1222,25 @@ export const concludeMvpVoting =
               const team2Score =
                 Number(gameData.team2_score ?? 0);
 
+              // #3588/#3596: o resultado da votação só existe aqui, não no
+              // trigger que move o jogo para FINISHED. Leia o streak do MVP
+              // antes de qualquer write para atualizar todas as estatísticas
+              // de forma atômica com a guarda voting_status=CONCLUDED.
+              let newMvpStreak = 0;
+              let bestMvpStreak = 0;
+              if (mvpId) {
+                const mvpStatsSnap = await transaction.get(
+                  db.collection("statistics").doc(mvpId)
+                );
+                const mvpStats = mvpStatsSnap.data() || {};
+                newMvpStreak =
+                  ((mvpStats.currentMvpStreak as number) || 0) + 1;
+                bestMvpStreak = Math.max(
+                  (mvpStats.bestMvpStreak as number) || 0,
+                  newMvpStreak
+                );
+              }
+
               // 2.10: Atualizar confirmações
               for (
                 const confDoc of
@@ -1264,6 +1270,43 @@ export const concludeMvpVoting =
                       FieldValue
                         .serverTimestamp(),
                   }
+                );
+              }
+
+              // #3587/#3588/#3596: única fonte de verdade dos contadores
+              // derivados da votação. Participantes que não venceram o MVP
+              // são zerados somente agora, nunca na transição para FINISHED.
+              const statsUpdatedAt = FieldValue.serverTimestamp();
+              for (const eligibleUserId of eligibleUserIds) {
+                const isMvpWinner = eligibleUserId === mvpId;
+                const statsUpdate: Record<string, unknown> = {
+                  currentMvpStreak: isMvpWinner ? newMvpStreak : 0,
+                  updated_at: statsUpdatedAt,
+                };
+                if (isMvpWinner) {
+                  statsUpdate.bestPlayerCount = FieldValue.increment(1);
+                  statsUpdate.bestMvpStreak = bestMvpStreak;
+                }
+                if (eligibleUserId === worstPlayerId) {
+                  statsUpdate.worstPlayerCount = FieldValue.increment(1);
+                }
+                transaction.set(
+                  db.collection("statistics").doc(eligibleUserId),
+                  statsUpdate,
+                  {merge: true}
+                );
+              }
+              if (mvpId && newMvpStreak >= 3) {
+                transaction.set(
+                  db.collection("user_badges")
+                    .doc(`${mvpId}_mvp_streak_3`),
+                  {
+                    user_id: mvpId,
+                    badge_id: "mvp_streak_3",
+                    last_earned_at: statsUpdatedAt,
+                    count: FieldValue.increment(1),
+                  },
+                  {merge: true}
                 );
               }
 
@@ -1749,47 +1792,19 @@ async function applyVotingXpDelta(
         const statsRef = db.collection("statistics").doc(userId);
         const statsDoc = await txn.get(statsRef);
         const statsData = statsDoc.data() || {};
-        const currentMvpStreak =
-          ((statsData.currentMvpStreak as number) || 0) + 1;
-        const bestMvpStreak = Math.max(
-          (statsData.bestMvpStreak as number) || 0,
-          currentMvpStreak
-        );
+        // #3588/#3596: concludeMvpVoting já persistiu contagem e streak na
+        // transação canônica. Aqui os valores são somente entrada de milestone.
         const achievedMilestones = Array.isArray(
           userDoc.data()?.milestones_achieved
         ) ?
           userDoc.data()?.milestones_achieved as string[] :
           [];
         const milestoneResult = checkMilestones(
-          {
-            totalGames: (statsData.totalGames as number) || 0,
-            totalGoals: (statsData.totalGoals as number) || 0,
-            totalAssists: (statsData.totalAssists as number) || 0,
-            totalSaves: (statsData.totalSaves as number) || 0,
-            totalYellowCards:
-              (statsData.totalYellowCards as number) || 0,
-            totalRedCards:
-              (statsData.totalRedCards as number) || 0,
-            gamesWon: (statsData.gamesWon as number) || 0,
-            gamesLost: (statsData.gamesLost as number) || 0,
-            gamesDraw: (statsData.gamesDraw as number) || 0,
-            bestPlayerCount:
-              ((statsData.bestPlayerCount as number) || 0) + 1,
-            worstPlayerCount:
-              (statsData.worstPlayerCount as number) || 0,
-            currentMvpStreak,
-            bestMvpStreak,
-          },
+          buildCanonicalVotingMilestoneStatistics(statsData),
           achievedMilestones
         );
         newMilestones = milestoneResult.newMilestones;
         milestoneXp = milestoneResult.xp;
-        txn.set(statsRef, {
-          bestPlayerCount: FieldValue.increment(1),
-          currentMvpStreak,
-          bestMvpStreak,
-          updated_at: now,
-        }, {merge: true});
       }
       const totalGrantedXp =
         clampedXpDelta + milestoneXp;

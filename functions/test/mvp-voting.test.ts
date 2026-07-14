@@ -20,13 +20,19 @@ jest.mock("firebase-admin", () => {
   const mockAdmin: any = {
     apps: [{ name: "test" }],
     firestore: jest.fn(() => ({
-      collection: jest.fn().mockReturnValue({
-        doc: jest.fn().mockReturnValue({
-          get: mockDocGet,
-        }),
-        where: jest.fn().mockReturnThis(),
-        limit: jest.fn().mockReturnThis(),
-        get: mockCollectionGet,
+      collection: jest.fn((collectionName: string) => {
+        const collectionRef: any = {
+          _mockCollection: collectionName,
+          doc: jest.fn((id: string) => ({
+            _mockCollection: collectionName,
+            _mockId: id,
+            get: mockDocGet,
+          })),
+          where: jest.fn().mockReturnThis(),
+          limit: jest.fn().mockReturnThis(),
+          get: mockCollectionGet,
+        };
+        return collectionRef;
       }),
       runTransaction: mockRunTransaction,
     })),
@@ -110,6 +116,8 @@ jest.mock("../src/constants", () => ({
 let submitMvpVoteHandler: ((request: any) => Promise<any>) | null = null;
 let submitMvpVotesHandler: ((request: any) => Promise<any>) | null = null;
 let concludeMvpVotingHandler: ((request: any) => Promise<any>) | null = null;
+let buildCanonicalVotingMilestoneStatistics:
+  ((stats: Record<string, unknown>) => Record<string, number>) | null = null;
 
 const { onCall } = require("firebase-functions/v2/https");
 
@@ -138,7 +146,9 @@ beforeAll(() => {
   });
 
   jest.isolateModules(() => {
-    require("../src/voting/mvp-voting");
+    const votingModule = require("../src/voting/mvp-voting");
+    buildCanonicalVotingMilestoneStatistics =
+      votingModule.buildCanonicalVotingMilestoneStatistics;
   });
 });
 
@@ -656,6 +666,209 @@ describe("concludeMvpVoting - contagem de votos e vencedor", () => {
     expect(result.alreadyConcluded).toBe(false);
   });
 
+  test("mantém 3 MVPs consecutivos e zera quem perde o jogo seguinte", async () => {
+    const statistics: Record<string, {
+      bestPlayerCount: number;
+      currentMvpStreak: number;
+      bestMvpStreak: number;
+    }> = {
+      playerA: {bestPlayerCount: 0, currentMvpStreak: 0, bestMvpStreak: 0},
+      playerB: {bestPlayerCount: 0, currentMvpStreak: 0, bestMvpStreak: 0},
+    };
+    const winners = ["playerA", "playerA", "playerA", "playerB"];
+    const votingTransactions: any[] = [];
+    let transactionCall = 0;
+
+    mockRunTransaction.mockImplementation(async (callback: any) => {
+      const isVotingTransaction = transactionCall % 2 === 0;
+      if (!isVotingTransaction) {
+        transactionCall += 1;
+        return callback({
+          get: jest.fn().mockResolvedValue({exists: true, data: () => ({})}),
+          set: jest.fn(),
+          update: jest.fn(),
+        });
+      }
+
+      const gameIndex = Math.floor(transactionCall / 2);
+      const winner = winners[gameIndex];
+      const voter = winner === "playerA" ? "playerB" : "playerA";
+      const responses = [
+        {
+          docs: [{data: () => ({
+            category: "MVP",
+            voter_id: voter,
+            voted_player_id: winner,
+          })}],
+          empty: false,
+        },
+        {
+          exists: true,
+          data: () => ({
+            status: "FINISHED",
+            voting_status: "OPEN",
+            owner_id: "owner1",
+          }),
+        },
+        {
+          docs: [
+            eligibleConfirmationDoc("playerA"),
+            eligibleConfirmationDoc("playerB"),
+          ],
+          empty: false,
+        },
+        {
+          exists: true,
+          data: () => ({...statistics[winner]}),
+        },
+      ];
+      let readIndex = 0;
+      const votingTx = {
+        get: jest.fn().mockImplementation(() =>
+          Promise.resolve(responses[readIndex++])),
+        set: jest.fn(),
+        update: jest.fn(),
+      };
+      transactionCall += 1;
+      const result = await callback(votingTx);
+      votingTransactions.push(votingTx);
+
+      for (const [ref, data] of votingTx.set.mock.calls) {
+        if (ref?._mockCollection !== "statistics") continue;
+        const userStats = statistics[ref._mockId];
+        userStats.currentMvpStreak = data.currentMvpStreak;
+        if (data.bestMvpStreak !== undefined) {
+          userStats.bestMvpStreak = data.bestMvpStreak;
+        }
+        if (data.bestPlayerCount !== undefined) {
+          userStats.bestPlayerCount += 1;
+        }
+      }
+      return result;
+    });
+
+    for (let index = 0; index < winners.length; index += 1) {
+      await concludeMvpVotingHandler!({
+        auth: {uid: "owner1", token: {profileComplete: true}},
+        data: {gameId: `game-${index + 1}`},
+      });
+      if (index === 2) {
+        expect(statistics.playerA).toEqual({
+          bestPlayerCount: 3,
+          currentMvpStreak: 3,
+          bestMvpStreak: 3,
+        });
+        const streakBadge = votingTransactions[index].set.mock.calls.find(
+          ([ref, data]: any[]) =>
+            ref?._mockCollection === "user_badges" &&
+            data?.badge_id === "mvp_streak_3"
+        );
+        expect(streakBadge).toBeDefined();
+      }
+    }
+
+    expect(statistics.playerA).toEqual({
+      bestPlayerCount: 3,
+      currentMvpStreak: 0,
+      bestMvpStreak: 3,
+    });
+    expect(statistics.playerB).toEqual({
+      bestPlayerCount: 1,
+      currentMvpStreak: 1,
+      bestMvpStreak: 1,
+    });
+  });
+
+  test("incrementa Bola Murcha no fechamento canônico", async () => {
+    const votes = [
+      {category: "MVP", voter_id: "playerB", voted_player_id: "playerA"},
+      {category: "WORST", voter_id: "playerA", voted_player_id: "playerZ"},
+    ];
+    const responses = [
+      {docs: votes.map((vote) => ({data: () => vote})), empty: false},
+      {
+        exists: true,
+        data: () => ({
+          status: "FINISHED",
+          voting_status: "OPEN",
+          owner_id: "owner1",
+        }),
+      },
+      {
+        docs: [
+          eligibleConfirmationDoc("playerA"),
+          eligibleConfirmationDoc("playerB"),
+          eligibleConfirmationDoc("playerZ"),
+        ],
+        empty: false,
+      },
+      {exists: true, data: () => ({currentMvpStreak: 1, bestMvpStreak: 1})},
+    ];
+    let readIndex = 0;
+    const votingTx = {
+      get: jest.fn().mockImplementation(() =>
+        Promise.resolve(responses[readIndex++])),
+      set: jest.fn(),
+      update: jest.fn(),
+    };
+    const alreadyAppliedXpTx = {
+      get: jest.fn().mockResolvedValue({exists: true, data: () => ({})}),
+      set: jest.fn(),
+      update: jest.fn(),
+    };
+    mockRunTransaction
+      .mockImplementationOnce(async (callback: any) => callback(votingTx))
+      .mockImplementation(async (callback: any) => callback(alreadyAppliedXpTx));
+
+    await concludeMvpVotingHandler!({
+      auth: {uid: "owner1", token: {profileComplete: true}},
+      data: {gameId: "game-worst"},
+    });
+
+    const worstStatsSet = votingTx.set.mock.calls.find(
+      ([ref]) => ref?._mockCollection === "statistics" &&
+        ref?._mockId === "playerZ"
+    );
+    expect(worstStatsSet?.[1]).toEqual(expect.objectContaining({
+      currentMvpStreak: 0,
+      worstPlayerCount: expect.anything(),
+    }));
+    expect(worstStatsSet?.[1].worstPlayerCount.operand).toBe(1);
+  });
+
+  test("replay de votação concluída não regrava estatísticas", async () => {
+    const responses = [
+      {docs: [], empty: true},
+      {
+        exists: true,
+        data: () => ({
+          status: "FINISHED",
+          voting_status: "CONCLUDED",
+          owner_id: "owner1",
+        }),
+      },
+    ];
+    let readIndex = 0;
+    const replayTx = {
+      get: jest.fn().mockImplementation(() =>
+        Promise.resolve(responses[readIndex++])),
+      set: jest.fn(),
+      update: jest.fn(),
+    };
+    mockRunTransaction.mockImplementationOnce(
+      async (callback: any) => callback(replayTx)
+    );
+
+    const result = await concludeMvpVotingHandler!({
+      auth: {uid: "owner1", token: {profileComplete: true}},
+      data: {gameId: "game-replay"},
+    });
+
+    expect(result.alreadyConcluded).toBe(true);
+    expect(replayTx.set).not.toHaveBeenCalled();
+    expect(replayTx.update).not.toHaveBeenCalled();
+  });
+
   test("grava log de XP do MVP com origem auditavel da votacao", async () => {
     const votes = [
       { category: "MVP", voter_id: "voter1", voted_player_id: "playerA" },
@@ -835,9 +1048,9 @@ describe("concludeMvpVoting - contagem de votos e vencedor", () => {
       {
         exists: true,
         data: () => ({
-          bestPlayerCount: 9,
-          currentMvpStreak: 2,
-          bestMvpStreak: 2,
+          bestPlayerCount: 10,
+          currentMvpStreak: 3,
+          bestMvpStreak: 3,
         }),
       },
     ];
@@ -865,6 +1078,20 @@ describe("concludeMvpVoting - contagem de votos e vencedor", () => {
     const mainXpLogSync = xpTx.set.mock.calls.find(
       ([, data]) => data?.was_mvp === true && data?.updated_at
     );
+    const duplicateStatisticsSet = xpTx.set.mock.calls.find(
+      ([ref]) => ref?._mockCollection === "statistics"
+    );
+    const milestoneInput = buildCanonicalVotingMilestoneStatistics!({
+      bestPlayerCount: 10,
+      currentMvpStreak: 3,
+      bestMvpStreak: 3,
+    });
+
+    expect(milestoneInput).toEqual(expect.objectContaining({
+      bestPlayerCount: 10,
+      currentMvpStreak: 3,
+      bestMvpStreak: 3,
+    }));
 
     expect(votingLogSet?.[1]).toEqual(expect.objectContaining({
       xp_earned: 430,
@@ -880,6 +1107,7 @@ describe("concludeMvpVoting - contagem de votos e vencedor", () => {
     expect(mainXpLogSync?.[1]).toEqual(expect.objectContaining({
       was_mvp: true,
     }));
+    expect(duplicateStatisticsSet).toBeUndefined();
   });
 
   test("lê tudo antes de escrever XP de MVP e Bola Murcha", async () => {
@@ -1089,6 +1317,7 @@ describe("concludeMvpVoting - contagem de votos e vencedor", () => {
 
   test("deve encerrar sem vencedor quando não há votos", async () => {
     // Nenhum voto registrado
+    let capturedTx: any;
     mockRunTransaction.mockImplementation(async (callback: any) => {
       let callIndex = 0;
       const responses = [
@@ -1103,6 +1332,8 @@ describe("concludeMvpVoting - contagem de votos e vencedor", () => {
             owner_id: "owner1",
           }),
         },
+        // 3º get: confirmações elegíveis
+        {docs: [eligibleConfirmationDoc("playerA")], empty: false},
       ];
 
       const mockTx = {
@@ -1113,6 +1344,7 @@ describe("concludeMvpVoting - contagem de votos e vencedor", () => {
         update: jest.fn(),
         set: jest.fn(),
       };
+      capturedTx = mockTx;
       return callback(mockTx);
     });
 
@@ -1126,6 +1358,13 @@ describe("concludeMvpVoting - contagem de votos e vencedor", () => {
     expect(result.success).toBe(true);
     expect(result.results.mvpId).toBeNull();
     expect(result.results.bestGkId).toBeNull();
+    const resetSet = capturedTx.set.mock.calls.find(
+      ([ref]: any[]) => ref?._mockCollection === "statistics" &&
+        ref?._mockId === "playerA"
+    );
+    expect(resetSet?.[1]).toEqual(expect.objectContaining({
+      currentMvpStreak: 0,
+    }));
   });
 
   test("deve retornar alreadyConcluded quando votação já foi encerrada", async () => {
