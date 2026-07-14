@@ -64,7 +64,7 @@ fun RankingList(
     isLoading: Boolean = false,
     isRefreshing: Boolean = false,
     onRefresh: (() -> Unit)? = null,
-    emptyMessage: String = "Nenhum dado de ranking disponível",
+    emptyMessage: String = stringResource(R.string.ranking_list_empty),
     contentPadding: PaddingValues = PaddingValues(vertical = 8.dp),
     showDivisions: Boolean = true
 ) {
@@ -422,7 +422,7 @@ fun SimpleRankingList(
     isLoading: Boolean = false,
     isRefreshing: Boolean = false,
     onRefresh: (() -> Unit)? = null,
-    emptyMessage: String = "Nenhum dado de ranking disponível",
+    emptyMessage: String = stringResource(R.string.ranking_list_empty),
     contentPadding: PaddingValues = PaddingValues(vertical = 8.dp)
 ) {
     // Agrupa todos em divisão Bronze para simplificar

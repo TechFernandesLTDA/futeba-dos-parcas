@@ -29,6 +29,9 @@ import com.futebadosparcas.ui.adaptive.rememberAdaptiveSpacing
 import com.futebadosparcas.R
 import com.futebadosparcas.ui.theme.AppDimensions
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 @Composable
 fun ExpressiveHubHeader(
     user: com.futebadosparcas.domain.model.User,
@@ -107,16 +110,22 @@ private fun CompactHeaderLayout(
     onLevelClick: () -> Unit,
     hapticManager: HapticManager?
 ) {
+    val openProfileLabel = stringResource(R.string.hub_open_profile, user.getDisplayName())
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier.fillMaxWidth()
     ) {
         // Foto do Usuário com Brasão
         Box(
-            modifier = Modifier.clickable {
-                hapticManager?.tick()
-                onProfileClick()
-            }
+            modifier = Modifier
+                .clickable(
+                    role = Role.Button,
+                    onClickLabel = openProfileLabel
+                ) {
+                    hapticManager?.tick()
+                    onProfileClick()
+                }
+                .semantics { contentDescription = openProfileLabel }
         ) {
             CachedProfileImage(
                 photoUrl = user.photoUrl,
@@ -219,6 +228,7 @@ private fun ExpandedHeaderLayout(
     onLevelClick: () -> Unit,
     hapticManager: HapticManager?
 ) {
+    val openProfileLabel = stringResource(R.string.hub_open_profile, user.getDisplayName())
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(spacing.lg)
@@ -229,10 +239,15 @@ private fun ExpandedHeaderLayout(
             modifier = Modifier.weight(1f)
         ) {
             Box(
-                modifier = Modifier.clickable {
-                    hapticManager?.tick()
-                    onProfileClick()
-                }
+                modifier = Modifier
+                    .clickable(
+                        role = Role.Button,
+                        onClickLabel = openProfileLabel
+                    ) {
+                        hapticManager?.tick()
+                        onProfileClick()
+                    }
+                    .semantics { contentDescription = openProfileLabel }
             ) {
                 CachedProfileImage(
                     photoUrl = user.photoUrl,
