@@ -79,13 +79,9 @@ import { GameChatPanel } from './GameChatPanel';
 import { GameCommentsPanel } from './GameCommentsPanel';
 import { PostGameReputationPanel } from './PostGameReputationPanel';
 import { PostGameHighlightsPanel } from './PostGameHighlightsPanel';
+import { PositionChoiceDialog } from './PositionChoiceDialog';
 import { PostGameMessage, usePostGameMessages, useSavePostGameMessage } from '../../hooks/usePostGameMessages';
 import type { Game, GameConfirmation, XpRewardStatus } from '../../types/game';
-
-const currencyFormatter = new Intl.NumberFormat('pt-BR', {
-  style: 'currency',
-  currency: 'BRL',
-});
 
 function isEditableGameStatus(status: Game['status']) {
   return status === 'SCHEDULED' || status === 'CONFIRMED';
@@ -1196,39 +1192,17 @@ export const GameDetailScreen: React.FC = () => {
       </FixedBottomBar>
 
       {/* ====== Dialogs ====== */}
-      <Dialog open={positionDialogOpen} onClose={() => setPositionDialogOpen(false)} fullScreen={isMobile} fullWidth maxWidth="sm" aria-labelledby="position-dialog-title">
-        <DialogTitle id="position-dialog-title">{t('games.detail.choosePosition')}</DialogTitle>
-        <DialogContent>
-          <Alert severity="info" sx={{ mb: 2 }}>
-            <Typography variant="body2" fontWeight={700}>
-              Valor para confirmar: {currencyFormatter.format(expectedPayment)}
-            </Typography>
-            {game.totalCost > 0 && (
-              <Typography variant="caption" color="text.secondary">
-                Custo total do jogo: {currencyFormatter.format(game.totalCost)}. O valor por jogador ja considera a duracao escolhida.
-              </Typography>
-            )}
-          </Alert>
-          <Box sx={{ display: 'flex', gap: 2, pt: 1, flexDirection: { xs: 'column', sm: 'row' } }}>
-            <Button
-              variant="outlined"
-              fullWidth
-              onClick={() => handleConfirmPresence('FIELD')}
-              disabled={confirmLoading || game.playersCount >= game.maxPlayers}
-            >
-              {t('games.detail.fieldPlayer')}
-            </Button>
-            <Button
-              variant="outlined"
-              fullWidth
-              onClick={() => handleConfirmPresence('GOALKEEPER')}
-              disabled={confirmLoading || game.playersCount >= game.maxPlayers || game.goalkeepersCount >= game.maxGoalkeepers}
-            >
-              {t('profile.goalkeeper')}
-            </Button>
-          </Box>
-        </DialogContent>
-      </Dialog>
+      <PositionChoiceDialog
+        open={positionDialogOpen}
+        fullScreen={isMobile}
+        loading={confirmLoading}
+        expectedPayment={expectedPayment}
+        totalCost={game.totalCost}
+        playersFull={game.playersCount >= game.maxPlayers}
+        goalkeepersFull={game.goalkeepersCount >= game.maxGoalkeepers}
+        onClose={() => setPositionDialogOpen(false)}
+        onConfirm={handleConfirmPresence}
+      />
 
       <Dialog open={cancelDialogOpen} onClose={() => setCancelDialogOpen(false)} fullScreen={isMobile} fullWidth maxWidth="sm" aria-labelledby="cancel-dialog-title">
         <DialogTitle id="cancel-dialog-title">{t('games.cancelPresence')}</DialogTitle>
