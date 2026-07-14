@@ -2780,7 +2780,8 @@
     "weekly": {
       "empty": "No games this week yet",
       "emptyDesc": "The ranking shows up when the week has finished games.",
-      "title": "Weekly Ranking"
+      "title": "Weekly Ranking",
+      "viewProfile": "View {{name}}'s profile"
     },
     "xpGlobal": "Global XP",
     "xpRanking": "XP Ranking",
