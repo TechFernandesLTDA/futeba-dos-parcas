@@ -28,6 +28,10 @@ on:
     # Executa diariamente às 5h BRT (8h UTC) para detectar regressões
     - cron: '0 8 * * *'
 
+concurrency:
+  group: firebase-emulator-integration-${{ github.repository }}
+  cancel-in-progress: false
+
 jobs:
   test-harness:
     name: Test Harness — Functions Integration (Emulador)
@@ -52,10 +56,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Configurar Node.js 20
+      - name: Configurar Node.js 22
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
           cache-dependency-path: functions/package-lock.json
 
@@ -65,8 +69,23 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
-      - name: Instalar Firebase CLI + tsx
-        run: npm install -g firebase-tools tsx
+      - name: Validar contratos dos workflows de emulador
+        run: node --test scripts/ci/emulator-tools-workflow-contract.test.js scripts/web-e2e-workflow-contract.test.js
+
+      - name: Instalar Firebase CLI + tsx (isolado por job)
+        run: |
+          tools_dir="$RUNNER_TEMP/futeba-ci-tools-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${GITHUB_JOB}"
+          npm install \
+            --prefix "$tools_dir" \
+            --no-save \
+            --package-lock=false \
+            --no-audit \
+            --no-fund \
+            firebase-tools@15.23.0 \
+            tsx@4.23.1
+          printf '%s\n' "$tools_dir/node_modules/.bin" >> "$GITHUB_PATH"
+          "$tools_dir/node_modules/.bin/firebase" --version
+          "$tools_dir/node_modules/.bin/tsx" --version
 
       - name: Instalar dependências — functions
         working-directory: functions
@@ -110,13 +129,3 @@ jobs:
           name: jest-integration-results
           path: functions/test-results/
           retention-days: 7
-
-      # ------------------------------------------
-      # CLEANUP
-      # ------------------------------------------
-
-      - name: Stop emulator (cleanup)
-        if: always()
-        run: |
-          # Mata qualquer processo residual do emulador
-          pkill -f "firebase.*emulator" 2>/dev/null || true
