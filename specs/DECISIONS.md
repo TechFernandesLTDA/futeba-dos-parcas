@@ -1113,4 +1113,25 @@ mudam.
 
 ---
 
+## 2026-07-14 — Slugs conhecidos precedem heurística de ID e medalhas são superfícies (#3629/#3646)
+
+**Contexto:** Slugs estáticos longos eram indistinguíveis de IDs pela heurística
+de comprimento dos breadcrumbs, e tokens claros de medalha eram usados como
+primeiro plano sobre cards claros.
+
+**Decisão:** Caminhos e sub-rotas registrados são resolvidos antes da heurística
+de ID; um ID sem pai dinâmico conhecido é omitido, nunca usado como label. As
+rotas estáticas irmãs ficam declaradas antes das parametrizadas. No ranking, o
+token gold/silver/bronze vira a superfície de um badge e o troféu recebe
+`palette.getContrastText()`.
+
+**Consequências:** Breadcrumbs preservam labels PT-BR/en/es sem expor IDs ou
+slugs internos. Os tokens canônicos de gamificação não mudam e o troféu mantém
+contraste mínimo em light, dark e dark OLED.
+
+**Relacionado:** `specs/BUGFIX_2026-07-14_ranking-contrast-breadcrumbs.md`,
+#3629, #3646.
+
+---
+
 <!-- Adicione novas decisões acima desta linha -->

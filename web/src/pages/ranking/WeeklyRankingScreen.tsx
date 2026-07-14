@@ -106,7 +106,23 @@ export const WeeklyRankingScreen: React.FC = () => {
                 >
                   <Box sx={{ width: 36, display: "flex", justifyContent: "center" }}>
                     {index < 3 ? (
-                      <TrophyIcon sx={{ color: MEDAL_COLORS[index] }} />
+                      <Box
+                        aria-hidden="true"
+                        data-ranking-medal={index + 1}
+                        sx={{
+                          width: 32,
+                          height: 32,
+                          borderRadius: '50%',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          bgcolor: MEDAL_COLORS[index],
+                          color: theme.palette.getContrastText(MEDAL_COLORS[index]),
+                          boxShadow: `0 0 0 1px ${alpha(theme.palette.getContrastText(MEDAL_COLORS[index]), 0.24)} inset`,
+                        }}
+                      >
+                        <TrophyIcon sx={{ fontSize: 20 }} />
+                      </Box>
                     ) : (
                       <Typography variant="h6" fontWeight="bold">
                         {index + 1}
