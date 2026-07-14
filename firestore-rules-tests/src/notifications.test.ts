@@ -18,6 +18,7 @@
 import { describe, it, beforeAll, afterAll } from "vitest";
 import { assertFails, assertSucceeds } from "@firebase/rules-unit-testing";
 import type { RulesTestEnvironment } from "@firebase/rules-unit-testing";
+import { serverTimestamp } from "firebase/firestore";
 import {
   initTestEnv,
   asAdmin,
@@ -37,6 +38,7 @@ const NOTIF_FOR_PLAYER_B = "notif-for-player-b-001";
 const NOTIF_FOR_ADMIN = "notif-for-admin-001";
 const GAME_FOR_INVITE = "game-notification-invite-001";
 const GROUP_FOR_INVITE = "group-notification-invite-001";
+const CHALLENGE_FOR_SYSTEM = "challenge-notification-system-001";
 
 beforeAll(async () => {
   testEnv = await initTestEnv();
@@ -73,6 +75,7 @@ beforeAll(async () => {
 
 	  await seedDoc(testEnv, `games/${GAME_FOR_INVITE}`, {
 	    owner_id: UID_PLAYER_A,
+	    group_id: GROUP_FOR_INVITE,
 	    status: "SCHEDULED",
 	  });
 	  await seedDoc(testEnv, `groups/${GROUP_FOR_INVITE}`, {
@@ -83,6 +86,23 @@ beforeAll(async () => {
 	    user_id: UID_PLAYER_A,
 	    role: "OWNER",
 	    status: "ACTIVE",
+	  });
+	  await seedDoc(testEnv, `groups/${GROUP_FOR_INVITE}/members/${UID_PLAYER_B}`, {
+	    user_id: UID_PLAYER_B,
+	    role: "MEMBER",
+	    status: "ACTIVE",
+	  });
+	  await seedDoc(testEnv, `game_rides/${GAME_FOR_INVITE}_${UID_PLAYER_B}`, {
+	    game_id: GAME_FOR_INVITE,
+	    user_id: UID_PLAYER_B,
+	    type: "REQUEST",
+	    status: "ACTIVE",
+	  });
+	  await seedDoc(testEnv, `group-challenges/${CHALLENGE_FOR_SYSTEM}`, {
+	    created_by: UID_PLAYER_A,
+	    responded_by: UID_PLAYER_B,
+	    completed_by: UID_PLAYER_A,
+	    status: "FINISHED",
 	  });
 
   // Notificação para player B (enviada por player A)
@@ -147,15 +167,43 @@ describe("notifications — leitura", () => {
 // ============================================================
 
 describe("notifications — criação", () => {
-	  it("Player pode criar notificação não acionável para outro usuário existente", async () => {
+	  it("NÃO permite SYSTEM arbitrário para outro usuário existente (#3595)", async () => {
 	    const db = asPlayerA(testEnv);
-	    await assertSucceeds(
+	    await assertFails(
 	      db.doc("notifications/notif-new-valid").set({
 	        created_by: UID_PLAYER_A,
 	        user_id: UID_PLAYER_B, // destinatário diferente
-	        type: "system",
+	        type: "SYSTEM",
 	        title: "Aviso",
-	        body: "Mensagem entre usuários com vínculo permitido pelo app.",
+	        body: "Clique aqui para reativar sua conta.",
+	      })
+	    );
+	  });
+
+	  it("NÃO permite tipo de sistema gerado por trigger no client (#3595)", async () => {
+	    const db = asPlayerA(testEnv);
+	    await assertFails(
+	      db.doc("notifications/notif-client-achievement").set({
+	        created_by: UID_PLAYER_A,
+	        user_id: UID_PLAYER_B,
+	        type: "ACHIEVEMENT",
+	        title: "Conquista falsa",
+	        body: "Conteúdo arbitrário.",
+	      })
+	    );
+	  });
+
+	  it("Permite SYSTEM somente entre participantes do desafio concluído", async () => {
+	    const db = asPlayerA(testEnv);
+	    await assertSucceeds(
+	      db.doc("notifications/notif-challenge-system-valid").set({
+	        created_by: UID_PLAYER_A,
+	        user_id: UID_PLAYER_B,
+	        type: "SYSTEM",
+	        title: "Desafio concluído",
+	        body: "O desafio entre os grupos foi concluído.",
+	        reference_id: CHALLENGE_FOR_SYSTEM,
+	        reference_type: "group_challenge",
 	      })
 	    );
 	  });
@@ -184,6 +232,66 @@ describe("notifications — criação", () => {
 	        type: "GAME_SUMMON",
 	        title: "Venha jogar!",
 	        body: "Convite para a proxima partida.",
+	        game_id: GAME_FOR_INVITE,
+	        group_id: GROUP_FOR_INVITE,
+	      })
+	    );
+	  });
+
+	  it("NÃO permite GAME_SUMMON para usuário sem vínculo com o jogo", async () => {
+	    const db = asPlayerA(testEnv);
+	    await assertFails(
+	      db.doc("notifications/notif-game-summon-unrelated-target").set({
+	        created_by: UID_PLAYER_A,
+	        user_id: UID_ADMIN,
+	        sender_id: UID_PLAYER_A,
+	        type: "GAME_SUMMON",
+	        title: "Venha jogar!",
+	        body: "Convite para a proxima partida.",
+	        game_id: GAME_FOR_INVITE,
+	        group_id: GROUP_FOR_INVITE,
+	      })
+	    );
+	  });
+
+	  it("Permite GAME_RIDE apenas entre caronas opostas e ativas do mesmo jogo", async () => {
+	    const db = asPlayerA(testEnv);
+	    const batch = db.batch();
+	    batch.set(db.doc(`game_rides/${GAME_FOR_INVITE}_${UID_PLAYER_A}`), {
+	      game_id: GAME_FOR_INVITE,
+	      group_id: GROUP_FOR_INVITE,
+	      user_id: UID_PLAYER_A,
+	      user_name: "Jogador A",
+	      user_photo: "",
+	      type: "OFFER",
+	      origin_label: "Centro",
+	      destination_label: "Campo",
+	      seats: 2,
+	      note: "",
+	      status: "ACTIVE",
+	      created_at: serverTimestamp(),
+	      updated_at: serverTimestamp(),
+	    });
+	    batch.set(db.doc("notifications/notif-game-ride-valid"), {
+	      created_by: UID_PLAYER_A,
+	      user_id: UID_PLAYER_B,
+	      type: "GAME_RIDE",
+	      title: "Carona oferecida",
+	      body: "Tenho duas vagas.",
+	      game_id: GAME_FOR_INVITE,
+	    });
+	    await assertSucceeds(batch.commit());
+	  });
+
+	  it("NÃO permite GAME_RIDE para destinatário sem carona oposta", async () => {
+	    const db = asPlayerA(testEnv);
+	    await assertFails(
+	      db.doc("notifications/notif-game-ride-unrelated-target").set({
+	        created_by: UID_PLAYER_A,
+	        user_id: UID_ADMIN,
+	        type: "GAME_RIDE",
+	        title: "Carona oferecida",
+	        body: "Conteúdo arbitrário.",
 	        game_id: GAME_FOR_INVITE,
 	      })
 	    );
