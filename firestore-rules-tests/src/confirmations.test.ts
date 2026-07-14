@@ -1,4 +1,4 @@
-import { describe, it, beforeAll, afterAll } from "vitest";
+import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { assertFails, assertSucceeds } from "@firebase/rules-unit-testing";
 import type { RulesTestEnvironment } from "@firebase/rules-unit-testing";
 import {
@@ -20,6 +20,7 @@ let testEnv: RulesTestEnvironment;
 const GAME_ACTIVE = "conf-game-active";
 const GAME_FINISHED = "conf-game-finished";
 const GAME_NONEXISTENT = "conf-game-nonexistent";
+const UID_SUMMONED = "summoned-player";
 
 beforeAll(async () => {
   testEnv = await initTestEnv();
@@ -66,6 +67,13 @@ beforeAll(async () => {
     was_present: false,
     goals: null,
     team: null,
+    created_at: new Date(),
+  });
+
+  await seedDoc(testEnv, `confirmations/${GAME_ACTIVE}_${UID_PLAYER_C}`, {
+    game_id: GAME_ACTIVE,
+    user_id: UID_PLAYER_C,
+    status: "PENDING",
     created_at: new Date(),
   });
 
@@ -178,9 +186,9 @@ describe("confirmations — create (summon pelo game owner)", () => {
   it("Game owner pode summon (criar confirmacao com user_id de outro)", async () => {
     const db = asPlayerA(testEnv);
     await assertSucceeds(
-      db.doc(`confirmations/${GAME_ACTIVE}_${UID_PLAYER_C}`).set({
+      db.doc(`confirmations/${GAME_ACTIVE}_${UID_SUMMONED}`).set({
         game_id: GAME_ACTIVE,
-        user_id: UID_PLAYER_C,
+        user_id: UID_SUMMONED,
         status: "PENDING",
         created_at: new Date(),
       })
@@ -247,13 +255,16 @@ describe("confirmations — read", () => {
   });
 
   it("Player pode consultar somente a propria confirmacao por game_id e user_id", async () => {
-    const db = asPlayerA(testEnv);
-    await assertSucceeds(
+    const db = asPlayerC(testEnv);
+    const snapshot = await assertSucceeds(
       db.collection("confirmations")
         .where("game_id", "==", GAME_ACTIVE)
-        .where("user_id", "==", UID_PLAYER_A)
+        .where("user_id", "==", UID_PLAYER_C)
         .get()
     );
+
+    expect(snapshot.docs).toHaveLength(1);
+    expect(snapshot.docs[0].data().status).toBe("PENDING");
   });
 
   it("Player nao confirmado nao pode listar confirmacoes alheias do jogo", async () => {

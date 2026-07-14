@@ -350,6 +350,61 @@ describe('useGameDetail', () => {
     ]);
   });
 
+  it('remove o elenco alheio quando a própria confirmação deixa de ser CONFIRMED', async () => {
+    const listeners: Array<{ next: (snapshot: any) => void }> = [];
+    const unsubscribes = [vi.fn(), vi.fn(), vi.fn()];
+    mockOnSnapshot.mockImplementation((_ref: any, next: any) => {
+      const listenerIndex = listeners.length;
+      listeners.push({ next });
+      return unsubscribes[listenerIndex];
+    });
+
+    const { result } = renderHook(() => useGameDetail('game-1'), { wrapper: createTestWrapper() });
+
+    act(() => {
+      listeners[0].next({
+        exists: () => true,
+        id: 'game-1',
+        data: () => ({ status: 'SCHEDULED', owner_id: 'owner-1' }),
+      });
+      listeners[1].next({
+        docs: [{
+          id: 'game-1_test-user-id',
+          data: () => ({ game_id: 'game-1', user_id: 'test-user-id', status: 'CONFIRMED' }),
+        }],
+      });
+    });
+
+    await waitFor(() => expect(listeners).toHaveLength(3));
+    act(() => listeners[2].next({
+      docs: [
+        {
+          id: 'game-1_test-user-id',
+          data: () => ({ game_id: 'game-1', user_id: 'test-user-id', status: 'CONFIRMED' }),
+        },
+        {
+          id: 'game-1_player-2',
+          data: () => ({ game_id: 'game-1', user_id: 'player-2', status: 'CONFIRMED' }),
+        },
+      ],
+    }));
+    await waitFor(() => expect(result.current.confirmations).toHaveLength(2));
+
+    act(() => listeners[1].next({
+      docs: [{
+        id: 'game-1_test-user-id',
+        data: () => ({ game_id: 'game-1', user_id: 'test-user-id', status: 'CANCELLED' }),
+      }],
+    }));
+
+    await waitFor(() => {
+      expect(unsubscribes[2]).toHaveBeenCalledOnce();
+      expect(result.current.confirmations).toHaveLength(1);
+    });
+    expect(result.current.confirmations[0].userId).toBe('test-user-id');
+    expect(result.current.confirmations[0].status).toBe('CANCELLED');
+  });
+
   it('não transforma erro auxiliar de confirmações em erro fatal do jogo', async () => {
     const listeners: Array<{
       next: (snapshot: any) => void;
