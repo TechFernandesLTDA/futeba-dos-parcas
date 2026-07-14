@@ -4099,6 +4099,71 @@ subir no ranking!</string>
     <string name="avatar_frame">Moldura</string>
     <string name="avatar_badge">Badge</string>
     <string name="avatar_none">Nenhum</string>
+    <string name="avatar_skin_light">Claro</string>
+    <string name="avatar_skin_medium_light">Médio Claro</string>
+    <string name="avatar_skin_medium">Médio</string>
+    <string name="avatar_skin_medium_dark">Médio Escuro</string>
+    <string name="avatar_skin_dark">Escuro</string>
+    <string name="avatar_hair_style_none">Careca</string>
+    <string name="avatar_hair_style_short">Curto</string>
+    <string name="avatar_hair_style_medium">Médio</string>
+    <string name="avatar_hair_style_long">Longo</string>
+    <string name="avatar_hair_style_curly">Cacheado</string>
+    <string name="avatar_hair_style_mohawk">Moicano</string>
+    <string name="avatar_hair_style_ponytail">Rabo de cavalo</string>
+    <string name="avatar_hair_style_bun">Coque</string>
+    <string name="avatar_hair_color_black">Preto</string>
+    <string name="avatar_hair_color_brown">Castanho</string>
+    <string name="avatar_hair_color_blonde">Loiro</string>
+    <string name="avatar_hair_color_red">Ruivo</string>
+    <string name="avatar_hair_color_gray">Grisalho</string>
+    <string name="avatar_hair_color_white">Branco</string>
+    <string name="avatar_hair_color_blue">Azul</string>
+    <string name="avatar_hair_color_green">Verde</string>
+    <string name="avatar_hair_color_pink">Rosa</string>
+    <string name="avatar_facial_hair_none">Nenhum</string>
+    <string name="avatar_facial_hair_stubble">Barba por fazer</string>
+    <string name="avatar_facial_hair_beard">Barba cheia</string>
+    <string name="avatar_facial_hair_goatee">Cavanhaque</string>
+    <string name="avatar_facial_hair_mustache">Bigode</string>
+    <string name="avatar_glasses_none">Nenhum</string>
+    <string name="avatar_glasses_regular">Normal</string>
+    <string name="avatar_glasses_sunglasses">Óculos de sol</string>
+    <string name="avatar_glasses_sport">Esportivo</string>
+    <string name="avatar_expression_happy">Feliz</string>
+    <string name="avatar_expression_serious">Sério</string>
+    <string name="avatar_expression_cool">Descolado</string>
+    <string name="avatar_expression_excited">Empolgado</string>
+    <string name="avatar_expression_focused">Focado</string>
+    <string name="avatar_badge_mvp">MVP</string>
+    <string name="avatar_badge_captain">Capitão</string>
+    <string name="avatar_badge_veteran">Veterano</string>
+    <string name="avatar_badge_champion">Campeão</string>
+    <string name="avatar_badge_scorer">Artilheiro</string>
+    <string name="avatar_badge_assist_king">Garçom</string>
+    <string name="avatar_badge_iron_man">Homem de Ferro</string>
+    <string name="avatar_badge_legendary">Lendário</string>
+    <string name="avatar_badge_requirement_mvp">Seja MVP 5x</string>
+    <string name="avatar_badge_requirement_captain">Seja capitão 10x</string>
+    <string name="avatar_badge_requirement_veteran">Jogue 50 partidas</string>
+    <string name="avatar_badge_requirement_champion">Vença 25 jogos</string>
+    <string name="avatar_badge_requirement_scorer">Marque 100 gols</string>
+    <string name="avatar_badge_requirement_assist_king">Dê 50 assistências</string>
+    <string name="avatar_badge_requirement_iron_man">10 jogos seguidos</string>
+    <string name="avatar_badge_requirement_legendary">Atinja nível 20</string>
+    <string name="avatar_frame_none">Nenhuma</string>
+    <string name="avatar_frame_bronze">Bronze</string>
+    <string name="avatar_frame_silver">Prata</string>
+    <string name="avatar_frame_gold">Ouro</string>
+    <string name="avatar_frame_diamond">Diamante</string>
+    <string name="avatar_frame_rainbow">Arco-íris</string>
+    <string name="avatar_frame_fire">Fogo</string>
+    <string name="avatar_frame_requirement_level_5">Nível 5</string>
+    <string name="avatar_frame_requirement_level_10">Nível 10</string>
+    <string name="avatar_frame_requirement_level_15">Nível 15</string>
+    <string name="avatar_frame_requirement_level_20">Nível 20</string>
+    <string name="avatar_frame_requirement_mvp">Seja MVP 10x</string>
+    <string name="avatar_frame_requirement_streak">Sequência de 15 jogos</string>
 
     <!-- PhotoGallery -->
     <string name="photo_gallery_no_photos">Sem fotos</string>
@@ -4131,6 +4196,12 @@ subir no ranking!</string>
     <string name="streak_next_level">Próximo: %1$s</string>
     <string name="streak_record">Recorde:</string>
     <string name="streak_unlocked">Sequência desbloqueada!</string>
+    <string name="streak_level_none">Iniciar sequência</string>
+    <string name="streak_level_warming">Esquentando</string>
+    <string name="streak_level_hot">Em chamas</string>
+    <string name="streak_level_burning">Pegando fogo</string>
+    <string name="streak_level_inferno">Inferno</string>
+    <string name="streak_level_legendary">Lendário</string>
 
     <!-- HeadToHeadSection -->
     <string name="head_to_head_last_matches">Últimos %1$d Jogos</string>
@@ -4149,6 +4220,31 @@ subir no ranking!</string>
 
     <!-- SocialComparison -->
     <string name="social_level">Nível %1$d</string>
+    <string name="comparison_category_games">Jogos</string>
+    <string name="comparison_category_games_short">Jogos</string>
+    <string name="comparison_category_wins">Vitórias</string>
+    <string name="comparison_category_wins_short">Vit.</string>
+    <string name="comparison_category_win_rate">Taxa de Vitória</string>
+    <string name="comparison_category_win_rate_short">Win%</string>
+    <string name="comparison_category_goals">Gols</string>
+    <string name="comparison_category_goals_short">Gols</string>
+    <string name="comparison_category_goals_per_game">Gols/Jogo</string>
+    <string name="comparison_category_goals_per_game_short">G/J</string>
+    <string name="comparison_category_assists">Assistências</string>
+    <string name="comparison_category_assists_short">Assist.</string>
+    <string name="comparison_category_assists_per_game">Assist./Jogo</string>
+    <string name="comparison_category_assists_per_game_short">A/J</string>
+    <string name="comparison_category_saves">Defesas</string>
+    <string name="comparison_category_saves_short">Def.</string>
+    <string name="comparison_category_mvp">MVPs</string>
+    <string name="comparison_category_mvp_short">MVP</string>
+    <string name="comparison_category_streak">Sequência</string>
+    <string name="comparison_category_streak_short">Streak</string>
+    <string name="social_comparison_versus">VS</string>
+    <string name="social_comparison_versus_player">vs %1$s</string>
+    <string name="user_card_menu_promote_admin">Promover a Admin</string>
+    <string name="user_card_menu_demote_member">Rebaixar para Membro</string>
+    <string name="user_card_menu_remove_group">Remover do Grupo</string>
 
     <!-- RankingList -->
     <string name="ranking_division">Divisão %1$s</string>

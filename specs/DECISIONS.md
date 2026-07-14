@@ -1152,6 +1152,27 @@ Após o aceite, o usuário já membro pode acessar o grupo pelos fluxos normais.
 
 **Relacionado:** `specs/BUGFIX_2026-07-14_android-navigation-dead-ends.md`,
 #3633, #3638, #3641.
+---
+
+## 2026-07-14 — Enums Android guardam IDs de recursos, não texto localizado (#3617/#3618/#3620/#3624)
+
+**Contexto:** Enums de estatística, avatar e streak misturavam identidade e
+dados canônicos com labels PT-BR. O menu de gestão de membros também construía
+ações reutilizáveis com literais Kotlin.
+
+**Decisão:** Enums de apresentação Android passam a guardar `@StringRes Int` e
+os Composables resolvem o texto no locale ativo. Identidade (`name`), cores,
+ícones, limites e callbacks permanecem canônicos. Modelos genéricos que aceitam
+texto dinâmico, como `UserCardMenuItem`, continuam com `String`; a fábrica
+Compose resolve o recurso antes de instanciá-los.
+
+**Consequências:** Labels podem variar por locale sem alterar payloads ou
+persistência. Toda nova chave desta frente precisa existir em PT-BR, inglês e
+espanhol, protegida por teste de paridade. Requisitos de desbloqueio de avatar
+também usam IDs de recursos para que um uso futuro já nasça localizável.
+
+**Relacionado:** `specs/BUGFIX_2026-07-14_android_enum_labels_i18n.md`, #3617,
+#3618, #3620, #3624.
 
 ---
 
