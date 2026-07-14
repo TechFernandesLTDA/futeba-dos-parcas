@@ -1,6 +1,6 @@
 # GitHub Status
 
-Last verified: 2026-06-29
+Last verified: 2026-07-14
 
 Operational status for `TechFernandesLTDA/futeba-dos-parcas`.
 
@@ -21,7 +21,7 @@ Operational status for `TechFernandesLTDA/futeba-dos-parcas`.
 
 | Queue | Count |
 |-------|-------|
-| Open issues | 27 |
+| Open issues | 0 |
 | Open pull requests | 0 |
 
 ## Branch Protection
@@ -39,10 +39,10 @@ Operational status for `TechFernandesLTDA/futeba-dos-parcas`.
 
 | Platform | Version | GitHub tag |
 |----------|---------|------------|
-| Web | `1.43.16` | `web-v1.43.16` |
-| Functions | `1.2.8` | `functions-v1.2.8` |
-| Android | `1.32.1` | see `versions.json` and `release-notes/android/` |
-| iOS | `1.6.0` | pre-store release note, `published: false` |
+| Web | `1.54.0` | `web-v1.54.0` |
+| Functions | `1.10.0` | `functions-v1.10.0` |
+| Android | `1.38.0` | `android-v1.38.0` |
+| iOS | `1.6.2` | `ios-v1.6.2` (pre-store, `published: false`) |
 
 `versions.json` is the source of truth for platform versions. `release-notes/`
 is the source of truth for changelog and release-note generation.
