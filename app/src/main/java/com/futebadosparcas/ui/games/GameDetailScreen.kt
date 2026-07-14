@@ -78,7 +78,8 @@ fun GameDetailScreen(
     onNavigateToCreateGame: (String) -> Unit,
     onNavigateToMvpVote: (String) -> Unit,
     onNavigateToTacticalBoard: () -> Unit,
-    onNavigateToLiveGame: () -> Unit = {}
+    onNavigateToLiveGame: () -> Unit = {},
+    onNavigateToLocation: (String) -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
@@ -103,9 +104,10 @@ fun GameDetailScreen(
     val userMessage = successState?.userMessageResId?.let { context.getString(it) } ?: successState?.userMessage
     val canRetryLastMutation = successState?.canRetryLastMutation == true
     val isGameDeleted = uiState is GameDetailUiState.GameDeleted
+    val gameDeletedMessage = stringResource(R.string.game_detail_deleted_success)
 
     // Effect for automated scheduling event feedback
-    LaunchedEffect(schedulingEvent, userMessage, canRetryLastMutation, isGameDeleted) {
+    LaunchedEffect(schedulingEvent, userMessage, canRetryLastMutation, isGameDeleted, gameDeletedMessage) {
         if (successState != null) {
             schedulingEvent?.let { event ->
                 val message = when (event) {
@@ -129,7 +131,7 @@ fun GameDetailScreen(
             }
         }
         if (isGameDeleted) {
-            snackbarHostState.showSnackbar(context.getString(R.string.game_cancelled_success))
+            snackbarHostState.showSnackbar(gameDeletedMessage)
             onNavigateBack()
         }
     }
@@ -142,6 +144,7 @@ fun GameDetailScreen(
                 GameDetailTopBar(
                     game = state.game,
                     hasTeams = state.teams.isNotEmpty(),
+                    hasVoted = state.hasVoted,
                     onBackClick = onNavigateBack,
                     onInviteWhatsApp = { inviteToWhatsApp(context, state, context.getString(R.string.whatsapp_invite_title)) },
                     onShare = { shareGameDetails(context, state, context.getString(R.string.game_at), context.getString(R.string.share)) },
@@ -189,6 +192,8 @@ fun GameDetailScreen(
                         },
                         onEditGame = { onNavigateToCreateGame(gameId) },
                         onEditTeams = { },
+                        onNavigateToMvpVote = { onNavigateToMvpVote(gameId) },
+                        onNavigateToLocation = onNavigateToLocation,
                         onNavigateToLiveGame = onNavigateToLiveGame
                     )
                 }
@@ -206,6 +211,7 @@ fun GameDetailScreen(
 fun GameDetailTopBar(
     game: Game,
     hasTeams: Boolean,
+    hasVoted: Boolean?,
     onBackClick: () -> Unit,
     onInviteWhatsApp: () -> Unit,
     onShare: () -> Unit,
@@ -214,6 +220,7 @@ fun GameDetailTopBar(
     onTacticalBoard: () -> Unit
 ) {
     var showMenu by remember { mutableStateOf(false) }
+    val votingPresentation = resolveGameDetailVotingPresentation(game.status, hasVoted)
 
     TopAppBar(
         title = { Text(stringResource(R.string.game_details)) },
@@ -237,11 +244,35 @@ fun GameDetailTopBar(
                         onClick = { onShare(); showMenu = false },
                         leadingIcon = { Icon(Icons.Outlined.Share, stringResource(R.string.share)) }
                     )
-                    if (game.status == "FINISHED") {
+                    if (votingPresentation != null) {
                         DropdownMenuItem(
-                            text = { Text(stringResource(R.string.vote_mvp)) },
+                            text = {
+                                Text(
+                                    stringResource(
+                                        if (votingPresentation == GameDetailVotingPresentation.COMPLETED) {
+                                            R.string.game_detail_vote_completed_title
+                                        } else {
+                                            R.string.vote_mvp
+                                        }
+                                    )
+                                )
+                            },
                             onClick = { onVoteMvp(); showMenu = false },
-                            leadingIcon = { Icon(Icons.Default.Star, stringResource(R.string.mvp)) }
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = if (votingPresentation == GameDetailVotingPresentation.COMPLETED) {
+                                        Icons.Default.CheckCircle
+                                    } else {
+                                        Icons.Default.Star
+                                    },
+                                    contentDescription = null,
+                                    tint = if (votingPresentation == GameDetailVotingPresentation.COMPLETED) {
+                                        MaterialTheme.colorScheme.primary
+                                    } else {
+                                        MaterialTheme.colorScheme.tertiary
+                                    }
+                                )
+                            }
                         )
                         if (hasTeams) {
                             DropdownMenuItem(
@@ -271,6 +302,8 @@ fun GameDetailContent(
     onStartGame: () -> Unit,
     onEditGame: () -> Unit,
     onEditTeams: () -> Unit,
+    onNavigateToMvpVote: () -> Unit,
+    onNavigateToLocation: (String) -> Unit,
     onNavigateToLiveGame: () -> Unit
 ) {
     var showCancelDialog by remember { mutableStateOf(false) }
@@ -285,16 +318,21 @@ fun GameDetailContent(
     if (showCancelDialog) {
         AlertDialog(
             onDismissRequest = { showCancelDialog = false },
-            title = { Text(stringResource(R.string.cancel_game)) },
-            text = { Text(stringResource(R.string.cancel_game_confirmation)) },
+            title = { Text(stringResource(R.string.game_detail_delete_game)) },
+            text = { Text(stringResource(R.string.game_detail_delete_confirmation)) },
             confirmButton = {
-                TextButton(onClick = { viewModel.deleteGame(gameId); showCancelDialog = false }) {
-                    Text(stringResource(R.string.yes))
+                TextButton(
+                    onClick = { viewModel.deleteGame(gameId); showCancelDialog = false },
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text(stringResource(R.string.delete))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showCancelDialog = false }) {
-                    Text(stringResource(R.string.no))
+                    Text(stringResource(R.string.cancel))
                 }
             }
         )
@@ -417,7 +455,7 @@ fun GameDetailContent(
                         onToggleStatus = { viewModel.toggleGameStatus(gameId, it) },
                         onStart = onStartGame,
                         onFinish = { showFinishGameDialog = true },
-                        onLocationClick = { },
+                        onLocationClick = { onNavigateToLocation(state.game.locationId) },
                         onGenerateTeams = { showGenerateTeamsDialog = true }
                     )
                     GameValidationStatusCard(
@@ -436,6 +474,15 @@ fun GameDetailContent(
                         onAddEvent = { onNavigateToLiveGame() },
                         onOpenLiveGame = onNavigateToLiveGame,
                         onDeleteEvent = { viewModel.deleteGameEvent(it) }
+                    )
+                }
+            }
+
+            resolveGameDetailVotingPresentation(state.game.status, state.hasVoted)?.let { presentation ->
+                item {
+                    PostGameVotingCard(
+                        presentation = presentation,
+                        onVoteClick = onNavigateToMvpVote
                     )
                 }
             }
@@ -777,7 +824,17 @@ fun GameHeaderSection(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Outlined.Place, contentDescription = stringResource(R.string.create_game_cd_location_icon), tint = MaterialTheme.colorScheme.primary)
                 Spacer(modifier = Modifier.width(4.dp))
-                Text(game.locationName, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.clickable { onLocationClick() })
+                Text(
+                    text = game.locationName,
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier
+                        .minimumInteractiveComponentSize()
+                        .clickable(
+                            enabled = game.locationId.isNotBlank(),
+                            onClick = onLocationClick
+                        )
+                        .padding(horizontal = 4.dp)
+                )
             }
             if (game.fieldName.isNotEmpty()) {
                 Text(stringResource(R.string.field_field, game.fieldName), style = MaterialTheme.typography.bodyMedium)
@@ -827,7 +884,96 @@ fun GameHeaderSection(
                     onClick = onCancel,
                     colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
                 ) {
-                    Text(stringResource(R.string.cancel_game), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(stringResource(R.string.game_detail_delete_game), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+            }
+        }
+    }
+}
+
+internal enum class GameDetailVotingPresentation {
+    PENDING,
+    COMPLETED
+}
+
+internal fun resolveGameDetailVotingPresentation(
+    gameStatus: String,
+    hasVoted: Boolean?
+): GameDetailVotingPresentation? {
+    if (gameStatus != GameStatus.FINISHED.name) return null
+    return if (hasVoted == true) {
+        GameDetailVotingPresentation.COMPLETED
+    } else {
+        GameDetailVotingPresentation.PENDING
+    }
+}
+
+@Composable
+internal fun PostGameVotingCard(
+    presentation: GameDetailVotingPresentation,
+    onVoteClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val isCompleted = presentation == GameDetailVotingPresentation.COMPLETED
+    val containerColor = if (isCompleted) {
+        MaterialTheme.colorScheme.secondaryContainer
+    } else {
+        MaterialTheme.colorScheme.primaryContainer
+    }
+    val contentColor = if (isCompleted) {
+        MaterialTheme.colorScheme.onSecondaryContainer
+    } else {
+        MaterialTheme.colorScheme.onPrimaryContainer
+    }
+
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = containerColor,
+            contentColor = contentColor
+        )
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = if (isCompleted) Icons.Default.CheckCircle else Icons.Default.Star,
+                contentDescription = null,
+                tint = contentColor
+            )
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = stringResource(
+                        if (isCompleted) {
+                            R.string.game_detail_vote_completed_title
+                        } else {
+                            R.string.game_detail_vote_pending_title
+                        }
+                    ),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    text = stringResource(
+                        if (isCompleted) {
+                            R.string.game_detail_vote_completed_description
+                        } else {
+                            R.string.game_detail_vote_pending_description
+                        }
+                    ),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+            if (!isCompleted) {
+                Button(onClick = onVoteClick) {
+                    Text(stringResource(R.string.game_detail_vote_now))
                 }
             }
         }
@@ -921,6 +1067,7 @@ fun TeamCard(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .heightIn(min = 48.dp)
                             .clickable(enabled = canManage) { onPlayerClick(player.userId) }
                             .padding(vertical = 4.dp),
                         verticalAlignment = Alignment.CenterVertically

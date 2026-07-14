@@ -643,6 +643,9 @@ fun AppNavHost(
                 onNavigateToLiveGame = {
                     navController.navigate(Screen.LiveGame.createRoute(gameId))
                 },
+                onNavigateToLocation = { locationId ->
+                    navController.navigate(Screen.LocationDetail.createRoute(locationId))
+                },
                 onNavigateToTacticalBoard = {
                     navController.navigate(Screen.TacticalBoard.route)
                 }
