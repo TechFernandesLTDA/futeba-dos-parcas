@@ -25,7 +25,6 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Groups
@@ -34,7 +33,6 @@ import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SportsScore
-import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Card
@@ -71,7 +69,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.futebadosparcas.ui.adaptive.adaptiveContentWidth
+import org.koin.compose.viewmodel.koinViewModel
 /**
  * Tela de Busca Global do Futeba dos Parças.
  * Permite buscar jogos, jogadores, grupos e locais em uma única interface.
@@ -132,27 +132,11 @@ sealed class SearchResult {
 }
 
 /**
- * Estado da UI de busca.
- */
-sealed class SearchUiState {
-    data object Initial : SearchUiState()
-    data object Loading : SearchUiState()
-    data class Success(
-        val results: List<SearchResult>,
-        val query: String,
-        val category: SearchCategory
-    ) : SearchUiState()
-    data class Empty(val query: String) : SearchUiState()
-    data class Error(val message: String) : SearchUiState()
-}
-
-/**
  * Item de histórico de busca.
  */
 data class SearchHistoryItem(
     val query: String,
-    val category: SearchCategory,
-    val timestamp: Long
+    val category: SearchCategory
 )
 
 // ==================== Main Screen ====================
@@ -163,29 +147,26 @@ fun GlobalSearchScreen(
     onNavigateBack: () -> Unit,
     onResultClick: (SearchResult) -> Unit,
     modifier: Modifier = Modifier,
+    viewModel: GlobalSearchViewModel = koinViewModel(),
     onFilterClick: () -> Unit = {}
 ) {
-    var query by remember { mutableStateOf("") }
-    var selectedCategory by remember { mutableStateOf(SearchCategory.ALL) }
-    var uiState by remember { mutableStateOf<SearchUiState>(SearchUiState.Initial) }
     var showFilters by remember { mutableStateOf(false) }
+    val query by viewModel.query.collectAsStateWithLifecycle()
+    val selectedFilter by viewModel.selectedCategory.collectAsStateWithLifecycle()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val storedSearches by viewModel.recentSearches.collectAsStateWithLifecycle()
+    val selectedCategory = selectedFilter.toSearchCategory()
+    val recentSearches = remember(storedSearches) {
+        storedSearches.map { search ->
+            SearchHistoryItem(
+                query = search,
+                category = SearchCategory.ALL
+            )
+        }
+    }
 
     val focusRequester = remember { FocusRequester() }
     val keyboardController = LocalSoftwareKeyboardController.current
-
-    // Histórico de buscas recentes (em produção, vem do Room)
-    val recentSearches = remember {
-        listOf(
-            SearchHistoryItem("pelada sexta", SearchCategory.GAMES, System.currentTimeMillis()),
-            SearchHistoryItem("João Silva", SearchCategory.PLAYERS, System.currentTimeMillis() - 86400000),
-            SearchHistoryItem("Arena Futeba", SearchCategory.LOCATIONS, System.currentTimeMillis() - 172800000)
-        )
-    }
-
-    // Sugestões populares
-    val popularSearches = remember {
-        listOf("Próximos jogos", "Jogadores disponíveis", "Quadras perto de mim")
-    }
 
     LaunchedEffect(Unit) {
         focusRequester.requestFocus()
@@ -195,19 +176,18 @@ fun GlobalSearchScreen(
         topBar = {
             SearchTopBar(
                 query = query,
-                onQueryChange = { query = it },
+                onQueryChange = viewModel::onQueryChange,
                 onSearch = {
                     if (query.isNotBlank()) {
-                        uiState = SearchUiState.Loading
-                        // Em produção, chamar ViewModel para buscar
+                        viewModel.search()
                     }
                 },
-                onClear = {
-                    query = ""
-                    uiState = SearchUiState.Initial
-                },
+                onClear = viewModel::clearQuery,
                 onNavigateBack = onNavigateBack,
-                onFilterClick = { showFilters = !showFilters },
+                onFilterClick = {
+                    showFilters = !showFilters
+                    onFilterClick()
+                },
                 focusRequester = focusRequester,
                 keyboardController = keyboardController
             )
@@ -222,7 +202,7 @@ fun GlobalSearchScreen(
             // Chips de categoria
             CategoryChips(
                 selectedCategory = selectedCategory,
-                onCategorySelected = { selectedCategory = it }
+                onCategorySelected = { viewModel.onFilterSelected(it.toSearchFilter()) }
             )
 
             // Filtros avançados (colapsável)
@@ -238,36 +218,33 @@ fun GlobalSearchScreen(
                 label = "search_content"
             ) { state ->
                 when (state) {
-                    is SearchUiState.Initial -> {
+                    is GlobalSearchUiState.Idle -> {
                         InitialSearchContent(
                             recentSearches = recentSearches,
-                            popularSearches = popularSearches,
                             onRecentSearchClick = { item ->
-                                query = item.query
-                                selectedCategory = item.category
+                                viewModel.onFilterSelected(item.category.toSearchFilter())
+                                viewModel.onQueryChange(item.query)
                             },
-                            onPopularSearchClick = { searchTerm ->
-                                query = searchTerm
-                            },
-                            onClearHistory = { }
+                            onClearHistory = viewModel::clearHistory
                         )
                     }
-                    is SearchUiState.Loading -> {
+                    is GlobalSearchUiState.Loading -> {
                         LoadingSearchContent()
                     }
-                    is SearchUiState.Success -> {
-                        SearchResultsList(
-                            results = state.results,
-                            onResultClick = onResultClick
-                        )
+                    is GlobalSearchUiState.Success -> {
+                        if (state.results.isEmpty()) {
+                            EmptySearchContent(query = query)
+                        } else {
+                            SearchResultsList(
+                                results = state.results.map(GlobalSearchResult::toSearchResult),
+                                onResultClick = onResultClick
+                            )
+                        }
                     }
-                    is SearchUiState.Empty -> {
-                        EmptySearchContent(query = state.query)
-                    }
-                    is SearchUiState.Error -> {
+                    is GlobalSearchUiState.Error -> {
                         ErrorSearchContent(
                             message = state.message,
-                            onRetry = { uiState = SearchUiState.Loading }
+                            onRetry = viewModel::search
                         )
                     }
                 }
@@ -424,9 +401,7 @@ private fun AdvancedFiltersSection(
 @Composable
 private fun InitialSearchContent(
     recentSearches: List<SearchHistoryItem>,
-    popularSearches: List<String>,
     onRecentSearchClick: (SearchHistoryItem) -> Unit,
-    onPopularSearchClick: (String) -> Unit,
     onClearHistory: () -> Unit
 ) {
     LazyColumn(
@@ -467,41 +442,64 @@ private fun InitialSearchContent(
             item { Spacer(modifier = Modifier.height(24.dp)) }
         }
 
-        item {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.TrendingUp,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(20.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
+        if (recentSearches.isEmpty()) {
+            item {
                 Text(
-                    text = stringResource(R.string.popular_searches),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface
+                    text = stringResource(R.string.no_recent_searches),
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(vertical = 24.dp)
                 )
             }
-            Spacer(modifier = Modifier.height(8.dp))
-        }
-
-        items(popularSearches, key = { it }) { searchTerm ->
-            ListItem(
-                headlineContent = {
-                    Text(text = searchTerm, style = MaterialTheme.typography.bodyLarge)
-                },
-                leadingContent = {
-                    Icon(
-                        imageVector = Icons.Default.Search,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                },
-                colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surface),
-                modifier = Modifier.clickable { onPopularSearchClick(searchTerm) }
-            )
         }
     }
+}
+
+private fun SearchCategory.toSearchFilter(): SearchFilter = when (this) {
+    SearchCategory.ALL -> SearchFilter.ALL
+    SearchCategory.GAMES -> SearchFilter.GAMES
+    SearchCategory.PLAYERS -> SearchFilter.PLAYERS
+    SearchCategory.GROUPS -> SearchFilter.GROUPS
+    SearchCategory.LOCATIONS -> SearchFilter.LOCATIONS
+}
+
+private fun SearchFilter.toSearchCategory(): SearchCategory = when (this) {
+    SearchFilter.ALL -> SearchCategory.ALL
+    SearchFilter.GAMES -> SearchCategory.GAMES
+    SearchFilter.PLAYERS -> SearchCategory.PLAYERS
+    SearchFilter.GROUPS -> SearchCategory.GROUPS
+    SearchFilter.LOCATIONS -> SearchCategory.LOCATIONS
+}
+
+private fun GlobalSearchResult.toSearchResult(): SearchResult = when (type) {
+    SearchResultType.GAME -> SearchResult.GameResult(
+        id = id,
+        title = title,
+        subtitle = subtitle,
+        date = "",
+        location = subtitle.orEmpty()
+    )
+    SearchResultType.PLAYER -> SearchResult.PlayerResult(
+        id = id,
+        title = title,
+        subtitle = subtitle,
+        photoUrl = imageUrl,
+        level = 0
+    )
+    SearchResultType.GROUP -> SearchResult.GroupResult(
+        id = id,
+        title = title,
+        subtitle = subtitle,
+        memberCount = 0,
+        photoUrl = imageUrl
+    )
+    SearchResultType.LOCATION -> SearchResult.LocationResult(
+        id = id,
+        title = title,
+        subtitle = subtitle,
+        address = subtitle.orEmpty(),
+        fieldCount = 0
+    )
 }
 
 @Composable

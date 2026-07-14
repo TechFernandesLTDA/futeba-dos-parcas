@@ -77,11 +77,9 @@ class GlobalSearchViewModel(
         private const val DEBOUNCE_MS = 300L
         private const val MAX_RECENT_SEARCHES = 10
         private const val MIN_QUERY_LENGTH = 2
-        // FIX #1406: persistência via DataStore (reusa DataStore "theme_settings"
-        // já registrado em DataStoreKoinModule). Sem migração necessária — key
-        // namespaced com prefixo evita colisão. Separador "\n" não pode aparecer
-        // em queries (input UI valida MIN_QUERY_LENGTH e bloqueia newlines).
-        private val RECENT_SEARCHES_KEY = stringPreferencesKey("search_history_recent")
+        // A persistência reutiliza o DataStore já registrado no app. A chave é
+        // namespaced por usuário para não compartilhar histórico entre contas.
+        private const val RECENT_SEARCHES_KEY_PREFIX = "search_history_recent_"
         private const val SEPARATOR = "\n"
     }
 
@@ -158,10 +156,10 @@ class GlobalSearchViewModel(
      */
     fun clearHistory() {
         _recentSearches.value = emptyList()
-        // FIX #1406: persiste limpeza no DataStore
         viewModelScope.launch {
+            val key = recentSearchesKey() ?: return@launch
             runCatching {
-                dataStore.edit { prefs -> prefs.remove(RECENT_SEARCHES_KEY) }
+                dataStore.edit { prefs -> prefs.remove(key) }
             }.onFailure { e ->
                 AppLogger.e(TAG, "Falha ao limpar histórico de buscas", e)
             }
@@ -333,11 +331,11 @@ class GlobalSearchViewModel(
         current.add(0, query)
         val updated = current.take(MAX_RECENT_SEARCHES)
         _recentSearches.value = updated
-        // FIX #1406: persistir no DataStore (serializado como string separada por \n)
         viewModelScope.launch {
+            val key = recentSearchesKey() ?: return@launch
             runCatching {
                 dataStore.edit { prefs ->
-                    prefs[RECENT_SEARCHES_KEY] = updated.joinToString(SEPARATOR)
+                    prefs[key] = updated.joinToString(SEPARATOR)
                 }
             }.onFailure { e ->
                 AppLogger.e(TAG, "Falha ao salvar histórico de buscas", e)
@@ -346,13 +344,15 @@ class GlobalSearchViewModel(
     }
 
     /**
-     * Carrega histórico de buscas do DataStore (#1406).
+     * Carrega o histórico do usuário atual. A chave global legada não é lida,
+     * pois pode conter termos de outra conta usada no mesmo dispositivo.
      */
     private fun loadRecentSearches() {
         viewModelScope.launch {
+            val key = recentSearchesKey() ?: return@launch
             runCatching {
                 val prefs = dataStore.data.first()
-                val raw = prefs[RECENT_SEARCHES_KEY].orEmpty()
+                val raw = prefs[key].orEmpty()
                 val list = if (raw.isEmpty()) emptyList()
                     else raw.split(SEPARATOR).filter { it.isNotBlank() }.take(MAX_RECENT_SEARCHES)
                 _recentSearches.value = list
@@ -362,6 +362,11 @@ class GlobalSearchViewModel(
             }
         }
     }
+
+    private fun recentSearchesKey(): Preferences.Key<String>? =
+        userRepository.getCurrentUserId()
+            ?.takeIf(String::isNotBlank)
+            ?.let { userId -> stringPreferencesKey("$RECENT_SEARCHES_KEY_PREFIX$userId") }
 
     override fun onCleared() {
         super.onCleared()
