@@ -50,6 +50,7 @@ interface GamePlayersSectionProps {
   }>;
   waitlistLoading: boolean;
   waitlistError: string | null;
+  waitlistAction?: React.ReactNode;
   confirmations: GameConfirmation[];
   tabValue: number;
   onTabChange: (value: number) => void;
@@ -62,6 +63,7 @@ export const GamePlayersSection: React.FC<GamePlayersSectionProps> = ({
   waitlist,
   waitlistLoading,
   waitlistError,
+  waitlistAction,
   confirmations,
   tabValue,
   onTabChange,
@@ -157,6 +159,9 @@ export const GamePlayersSection: React.FC<GamePlayersSectionProps> = ({
         </TabPanel>
 
         <TabPanel value={tabValue} index={2}>
+          {waitlistAction && !waitlistLoading && !waitlistError && (
+            <Box sx={{ px: 2, pb: 2 }}>{waitlistAction}</Box>
+          )}
           {waitlistLoading ? (
             <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
               <CircularProgress size={28} />
