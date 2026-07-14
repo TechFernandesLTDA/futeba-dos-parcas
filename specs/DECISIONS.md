@@ -890,4 +890,27 @@ placar, eventos oficiais ou agregados de votação diretamente pelo cliente.
 
 ---
 
+## 2026-07-13 — Checkpoint transacional por chunk no batch FCM (#3585/#3594)
+
+**Contexto:** O envio FCM é um efeito externo que não pode participar da mesma
+transação do documento da fila. Persistir progresso somente ao terminar todos
+os chunks fazia o cleanup reabrir um lote sem conhecer chunks já confirmados.
+
+**Decisão:** Registrar todos os tokens como pendentes antes do envio e, após
+cada resposta de até 500 tokens, fazer uma transação curta que une tokens
+entregues e substitui o conjunto pendente pelo restante mais falhas
+transientes. Falha no checkpoint interrompe o processamento antes do próximo
+chunk. A métrica de usuários alvo passa a ser derivada de um conjunto global
+dos usuários aprovados por preferência.
+
+**Consequências:** Cada chunk adiciona uma leitura e uma escrita Firestore. A
+retomada não duplica chunks já persistidos, mas permanece a janela inerente
+entre confirmação do FCM e commit Firestore, pois não existe exactly-once
+distribuído entre os dois serviços.
+
+**Relacionado:** specs/BUGFIX_2026-07-13_batch-notification-durability.md,
+#3585, #3594.
+
+---
+
 <!-- Adicione novas decisões acima desta linha -->

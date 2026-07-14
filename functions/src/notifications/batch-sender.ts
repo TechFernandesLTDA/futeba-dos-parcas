@@ -121,6 +121,17 @@ interface DispatchTokensResult {
   tokenToUser: Map<string, string>;
 }
 
+interface ChunkProgress {
+  chunkTokens: string[];
+  deliveredTokens: string[];
+  pendingTokens: string[];
+}
+
+interface QueueCheckpoint {
+  deliveredTokens: string[];
+  pendingTokens: string[];
+}
+
 // ==========================================
 // ENQUEUE: Adicionar notificação à fila
 // ==========================================
@@ -364,7 +375,7 @@ async function processNotificationQueue():
       }
     }
 
-    totalTargeted = allUserIds.size;
+    const targetedUserIds = new Set<string>();
 
     // 4. Buscar tokens FCM em batch para todos os usuários únicos.
     // O filtro de preferências é aplicado por doc (dentro do loop),
@@ -410,8 +421,8 @@ async function processNotificationQueue():
           `por preferencias (tipo: ${type}, doc: ${doc.id})`
         );
       }
-      totalTargeted =
-        totalTargeted - userIds.length + filteredDocUserIds.length;
+      addTargetedUserIds(targetedUserIds, filteredDocUserIds);
+      totalTargeted = targetedUserIds.size;
 
       const pendingTokens =
         ((data.pending_tokens as string[] | undefined) || [])
@@ -447,6 +458,13 @@ async function processNotificationQueue():
         continue;
       }
 
+      // FIX #3594: materializa o conjunto completo de pendentes antes do
+      // primeiro efeito externo. Assim uma interrupção antes (ou entre) os
+      // checkpoints nunca faz o retry reconstruir o dispatch do zero.
+      await doc.ref.update({
+        pending_tokens: tokens,
+      });
+
       // 6. Enviar via multicast em chunks
       const sendResult =
         await sendMulticastInChunks(
@@ -458,6 +476,9 @@ async function processNotificationQueue():
             type,
             data: notifData,
             imageUrl,
+          },
+          async (progress) => {
+            await persistChunkProgress(doc.ref, progress);
           }
         );
 
@@ -601,6 +622,11 @@ async function processNotificationQueue():
         await doc.ref.update(sentUpdate);
       }
     }
+
+    // FIX #3585: a métrica é derivada do conjunto final após preferências.
+    // Um usuário presente em vários docs conta uma única vez se for elegível
+    // em pelo menos um deles.
+    totalTargeted = targetedUserIds.size;
   } catch (error) {
     logger.error(
       "[BATCH_FCM] Erro ao processar fila:",
@@ -639,6 +665,7 @@ async function processNotificationQueue():
  * @param {Map<string, string>} tokenToUser -
  *   Mapa token -> userId (para limpeza)
  * @param {object} notification - Dados
+ * @param {Function} onChunkProcessed - Persiste o progresso após cada chunk.
  * @return {Promise<object>} Resultado do envio
  */
 async function sendMulticastInChunks(
@@ -650,7 +677,8 @@ async function sendMulticastInChunks(
     type: string;
     data: Record<string, string>;
     imageUrl?: string;
-  }
+  },
+  onChunkProcessed?: (progress: ChunkProgress) => Promise<void>
 ): Promise<{
   sent: number;
   failed: number;
@@ -686,6 +714,8 @@ async function sendMulticastInChunks(
     String(Math.floor(Date.now() / 1000) + FCM_TTL_SECONDS);
 
   for (const chunk of chunks) {
+    const chunkDeliveredTokens: string[] = [];
+    const chunkPendingTokens: string[] = [];
     try {
       const message:
         admin.messaging.MulticastMessage = {
@@ -742,6 +772,7 @@ async function sendMulticastInChunks(
           const succeededToken = chunk[index];
           deliveredTokens.add(succeededToken);
           pendingTokens.delete(succeededToken);
+          chunkDeliveredTokens.push(succeededToken);
         }
       );
 
@@ -781,6 +812,7 @@ async function sendMulticastInChunks(
                 );
                 transientFailed++;
                 pendingTokens.add(failedToken);
+                chunkPendingTokens.push(failedToken);
               }
             }
           }
@@ -800,7 +832,26 @@ async function sendMulticastInChunks(
         "[BATCH_FCM] Erro no envio multicast:",
         error
       );
+      // Sem BatchResponse não sabemos se o FCM aceitou algum destino.
+      // Classificar o chunk inteiro como transiente mantém todos os tokens no
+      // checkpoint e evita perdê-los caso chunks posteriores tenham sucesso.
       failed += chunk.length;
+      transientFailed += chunk.length;
+      chunk.forEach((token) => {
+        pendingTokens.add(token);
+        chunkPendingTokens.push(token);
+      });
+    }
+
+    // O callback fica fora do try/catch do FCM: falhar em persistir o
+    // checkpoint deve abortar imediatamente, nunca liberar o próximo chunk.
+    // O cleanup reabre o doc usando o último progresso durável.
+    if (onChunkProcessed) {
+      await onChunkProcessed({
+        chunkTokens: chunk,
+        deliveredTokens: chunkDeliveredTokens,
+        pendingTokens: chunkPendingTokens,
+      });
     }
   }
 
@@ -832,6 +883,87 @@ async function sendMulticastInChunks(
     deliveredUserIds,
     pendingUserIds,
   };
+}
+
+/**
+ * Une um resultado de chunk ao checkpoint persistido.
+ *
+ * Remove do pending todos os destinos terminados no chunk e reinsere somente
+ * falhas transientes. Sucessos são acumulados de forma deduplicada.
+ *
+ * @param {QueueCheckpoint} current Estado durável atual.
+ * @param {ChunkProgress} progress Resultado do chunk recém-processado.
+ * @return {QueueCheckpoint} Próximo estado durável.
+ */
+function mergeChunkCheckpoint(
+  current: QueueCheckpoint,
+  progress: ChunkProgress
+): QueueCheckpoint {
+  const delivered = new Set(current.deliveredTokens);
+  progress.deliveredTokens.forEach((token) => delivered.add(token));
+
+  const pending = new Set(current.pendingTokens);
+  progress.chunkTokens.forEach((token) => pending.delete(token));
+  progress.pendingTokens.forEach((token) => {
+    if (!delivered.has(token)) pending.add(token);
+  });
+
+  return {
+    deliveredTokens: Array.from(delivered),
+    pendingTokens: Array.from(pending),
+  };
+}
+
+/**
+ * Persiste progresso de um único chunk com compare/read/update curto.
+ *
+ * @param {admin.firestore.DocumentReference} queueRef Documento da fila.
+ * @param {ChunkProgress} progress Resultado do chunk.
+ * @return {Promise<void>}
+ */
+async function persistChunkProgress(
+  queueRef: admin.firestore.DocumentReference,
+  progress: ChunkProgress
+): Promise<void> {
+  const db = getFirestore();
+  await db.runTransaction(async (tx) => {
+    const fresh = await tx.get(queueRef);
+    if (!fresh.exists) {
+      throw new Error("Documento da fila removido durante envio FCM");
+    }
+
+    const data = fresh.data() || {};
+    const next = mergeChunkCheckpoint(
+      {
+        deliveredTokens:
+          ((data.delivered_tokens as string[] | undefined) || [])
+            .filter(Boolean),
+        pendingTokens:
+          ((data.pending_tokens as string[] | undefined) || [])
+            .filter(Boolean),
+      },
+      progress
+    );
+
+    tx.update(queueRef, {
+      delivered_tokens: next.deliveredTokens,
+      pending_tokens: next.pendingTokens,
+      progress_updated_at: FieldValue.serverTimestamp(),
+    });
+  });
+}
+
+/**
+ * Acumula usuários elegíveis sem duplicar IDs entre documentos.
+ *
+ * @param {Set<string>} target Conjunto global da execução.
+ * @param {string[]} userIds IDs aprovados por preferência no documento.
+ */
+function addTargetedUserIds(
+  target: Set<string>,
+  userIds: string[]
+): void {
+  userIds.forEach((userId) => target.add(userId));
 }
 
 /**
@@ -883,7 +1015,9 @@ function buildDispatchTokens(
  * Helpers expostos para testes focados da fila FCM.
  */
 export const __testing = {
+  addTargetedUserIds,
   buildDispatchTokens,
+  mergeChunkCheckpoint,
   sendMulticastInChunks,
 };
 

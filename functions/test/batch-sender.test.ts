@@ -446,4 +446,149 @@ describe("batch-sender retry por token", () => {
     expect(Array.from(result.deliveredUserIds)).toEqual(["user1"]);
     expect(Array.from(result.pendingUserIds)).toEqual(["user1"]);
   });
+
+  test("persiste chunk entregue antes de interromper e retry não o reenvia", async () => {
+    const tokens = Array.from(
+      {length: 501},
+      (_, index) => `token-${index}`
+    );
+    const tokenToUser = new Map(
+      tokens.map((token, index) => [token, `user-${index}`])
+    );
+    mockMessagingSendEach.mockResolvedValueOnce({
+      successCount: 500,
+      failureCount: 0,
+      responses: Array.from({length: 500}, () => ({success: true})),
+    });
+
+    let checkpoint = {
+      deliveredTokens: [] as string[],
+      pendingTokens: [...tokens],
+    };
+
+    await expect(
+      __testing.sendMulticastInChunks(
+        tokens,
+        tokenToUser,
+        {
+          title: "Teste",
+          body: "Mensagem",
+          type: "GAME_INVITE",
+          data: {},
+        },
+        async (progress) => {
+          checkpoint = __testing.mergeChunkCheckpoint(
+            checkpoint,
+            progress
+          );
+          throw new Error("interrupção simulada após checkpoint");
+        }
+      )
+    ).rejects.toThrow("interrupção simulada após checkpoint");
+
+    expect(mockMessagingSendEach).toHaveBeenCalledTimes(1);
+    expect(checkpoint.deliveredTokens).toHaveLength(500);
+    expect(checkpoint.pendingTokens).toEqual(["token-500"]);
+
+    const retryDispatch = __testing.buildDispatchTokens(
+      Array.from(tokenToUser.values()),
+      new Map(
+        tokens.map((token, index) => [`user-${index}`, [token]])
+      ),
+      checkpoint.pendingTokens,
+      checkpoint.deliveredTokens
+    );
+    expect(retryDispatch.tokens).toEqual(["token-500"]);
+  });
+
+  test("checkpoint mantém apenas falhas transientes e chunks futuros pendentes", () => {
+    const checkpoint = __testing.mergeChunkCheckpoint(
+      {
+        deliveredTokens: ["token-anterior"],
+        pendingTokens: ["token-a", "token-b", "token-c"],
+      },
+      {
+        chunkTokens: ["token-a", "token-b"],
+        deliveredTokens: ["token-a"],
+        pendingTokens: ["token-b"],
+      }
+    );
+
+    expect(checkpoint.deliveredTokens).toEqual([
+      "token-anterior",
+      "token-a",
+    ]);
+    expect(checkpoint.pendingTokens).toEqual(["token-c", "token-b"]);
+  });
+
+  test("exceção de transporte mantém chunk inteiro pendente mesmo se próximo chunk for entregue", async () => {
+    const tokens = Array.from(
+      {length: 501},
+      (_, index) => `token-${index}`
+    );
+    const tokenToUser = new Map(
+      tokens.map((token, index) => [token, `user-${index}`])
+    );
+    mockMessagingSendEach
+      .mockRejectedValueOnce(new Error("FCM indisponível"))
+      .mockResolvedValueOnce({
+        successCount: 1,
+        failureCount: 0,
+        responses: [{success: true}],
+      });
+
+    let checkpoint = {
+      deliveredTokens: [] as string[],
+      pendingTokens: [...tokens],
+    };
+    const result = await __testing.sendMulticastInChunks(
+      tokens,
+      tokenToUser,
+      {
+        title: "Teste",
+        body: "Mensagem",
+        type: "GAME_INVITE",
+        data: {},
+      },
+      async (progress) => {
+        checkpoint = __testing.mergeChunkCheckpoint(
+          checkpoint,
+          progress
+        );
+      }
+    );
+
+    expect(mockMessagingSendEach).toHaveBeenCalledTimes(2);
+    expect(result.sent).toBe(1);
+    expect(result.failed).toBe(0);
+    expect(result.transientFailed).toBe(500);
+    expect(Array.from(result.pendingTokens)).toEqual(tokens.slice(0, 500));
+    expect(Array.from(result.deliveredTokens)).toEqual(["token-500"]);
+    expect(checkpoint.pendingTokens).toEqual(tokens.slice(0, 500));
+    expect(checkpoint.deliveredTokens).toEqual(["token-500"]);
+  });
+
+  test("totalTargeted deduplica usuário elegível em docs com preferências distintas", () => {
+    const targetedUserIds = new Set<string>();
+
+    // doc GAME_INVITE: user-overlap e user-a permitidos.
+    __testing.addTargetedUserIds(
+      targetedUserIds,
+      ["user-overlap", "user-a"]
+    );
+    // doc ACHIEVEMENT: user-overlap foi bloqueado; user-b permitido.
+    __testing.addTargetedUserIds(targetedUserIds, ["user-b"]);
+    // terceiro doc permitido repete user-overlap.
+    __testing.addTargetedUserIds(
+      targetedUserIds,
+      ["user-overlap"]
+    );
+
+    expect(targetedUserIds.size).toBe(3);
+    expect(Array.from(targetedUserIds)).toEqual([
+      "user-overlap",
+      "user-a",
+      "user-b",
+    ]);
+  });
 });
