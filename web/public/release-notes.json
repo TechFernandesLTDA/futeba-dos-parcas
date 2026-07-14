@@ -1,7 +1,65 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-13T21:31:06.072Z",
+  "generatedAt": "2026-07-14T03:34:57.655Z",
   "notes": [
+    {
+      "version": "1.54.0",
+      "buildNumber": null,
+      "releaseDate": "2026-07-14",
+      "type": "minor",
+      "showPopup": true,
+      "published": true,
+      "headline": "A Web ganhou uma Home mais completa, navegação mais clara e fluxos acessíveis do teclado ao celular.",
+      "highlights": [
+        {
+          "icon": "home",
+          "title": "Home completa",
+          "description": "Jogos, grupos, liga e perfil exibem estados de carregamento, erro, vazio e sucesso sem becos sem saída."
+        },
+        {
+          "icon": "keyboard",
+          "title": "Teclado de verdade",
+          "description": "Rankings, fotos, perfil e favoritos agora funcionam com Enter, Espaço, Escape e foco restaurado."
+        },
+        {
+          "icon": "dark_mode",
+          "title": "Dark e OLED nítidos",
+          "description": "Barras mobile e medalhas mantêm separação e contraste nos três temas."
+        }
+      ],
+      "added": [
+        "Administradores podem convidar membros em grupos ativos com as mesmas regras do proprietário.",
+        "Breadcrumbs reconhecem rotas reais sem exibir IDs internos."
+      ],
+      "improved": [
+        "Descoberta de grupos e configuração de perfil acompanham PT-BR, inglês e espanhol.",
+        "Divisões da Liga usam o contrato canônico compartilhado entre Web, Functions e mobile."
+      ],
+      "fixed": [
+        "Check-in recupera posição e escolha após falhas sem duplicar ações.",
+        "Favoritos, galeria, cartão de nível, rankings e navegação mobile receberam contraste e semântica corretos.",
+        "Estados de Home, recuperação de check-in, acessibilidade por teclado e internacionalização foram corrigidos."
+      ],
+      "issueRefs": [
+        3605,
+        3606,
+        3607,
+        3610,
+        3611,
+        3612,
+        3613,
+        3614,
+        3615,
+        3616,
+        3621,
+        3623,
+        3625,
+        3626,
+        3628,
+        3629,
+        3646
+      ]
+    },
     {
       "version": "1.53.12",
       "buildNumber": null,

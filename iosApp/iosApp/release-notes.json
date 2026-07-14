@@ -1,7 +1,28 @@
 {
   "platform": "ios",
-  "generatedAt": "2026-07-13T21:31:06.073Z",
+  "generatedAt": "2026-07-14T03:34:57.656Z",
   "notes": [
+    {
+      "version": "1.6.2",
+      "buildNumber": 19,
+      "releaseDate": "2026-07-14",
+      "type": "patch",
+      "showPopup": false,
+      "published": false,
+      "headline": "A versão de pré-lançamento do iOS trata falhas do Keychain com segurança e mensagens recuperáveis.",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "Sessões e credenciais passam a distinguir item ausente de erro real do sistema."
+      ],
+      "fixed": [
+        "Erros de leitura, gravação e remoção do Keychain não são mais ignorados silenciosamente.",
+        "Leitura, atualização e remoção preservam a semântica de item inexistente e propagam as demais falhas."
+      ],
+      "issueRefs": [
+        3609
+      ]
+    },
     {
       "version": "1.6.1",
       "buildNumber": 18,

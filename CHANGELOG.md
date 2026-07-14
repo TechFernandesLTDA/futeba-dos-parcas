@@ -24,6 +24,21 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ## Android
 
+### [1.38.0][android-1.38.0] - 2026-07-14
+
+#### Adicionado
+- Android Verified App Links com Digital Asset Links, parser validado e suporte a cold e warm start.
+- Histórico de busca persistente e pull-to-refresh integrados à arquitetura Compose.
+
+#### Mudado
+- Estados de presença, votação, navegação e loading passam a ser explícitos e testáveis no ViewModel/UI.
+- Catálogos PT-BR, inglês e espanhol recebem os rótulos de enums e ações antes hardcoded.
+
+#### Corrigido
+- Touch targets, semantics, rotas mortas, callback de local e feedback de notificações foram corrigidos.
+
+_Issues: #3600, #3602, #3603, #3604, #3617, #3618, #3619, #3620, #3622, #3624, #3627, #3630, #3631, #3632, #3633, #3634, #3635, #3636, #3637, #3638, #3639, #3640, #3641, #3642, #3643, #3644, #3645 · PRs: #3649, #3666, #3667, #3671, #3672, #3673, #3674, #3675, #3676_
+
 ### [1.37.0][android-1.37.0] - 2026-07-11
 
 #### Adicionado
@@ -229,6 +244,19 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 - Bump de versão de manutenção após a mega audit wave de 2026-05-11, sem mudanças funcionais no Android nesta tag.
 
 ## Web
+
+### [1.54.0][web-1.54.0] - 2026-07-14
+
+#### Adicionado
+- Digital Asset Links é publicado pelo Hosting para verificar links Android compartilhados.
+
+#### Mudado
+- Breadcrumbs, rotas estáticas e tokens de sombra/medalha passam a usar contratos semânticos testados.
+
+#### Corrigido
+- Estados de Home, recuperação de check-in, acessibilidade por teclado e internacionalização foram corrigidos.
+
+_Issues: #3605, #3606, #3607, #3610, #3611, #3612, #3613, #3614, #3615, #3616, #3621, #3623, #3625, #3626, #3628, #3629, #3646 · PRs: #3660, #3661, #3662, #3663, #3664, #3665, #3668, #3669, #3670, #3673_
 
 ### [1.53.12][web-1.53.12] - 2026-07-13
 
@@ -1634,6 +1662,16 @@ _Issues: #1465, #1479, #1421, #1420 · PRs: #1465, #1479, #1421, #1420, #1417_
 
 ## iOS
 
+### [1.6.2][ios-1.6.2] - 2026-07-14
+
+#### Mudado
+- A camada Keychain converte `OSStatus` em resultados explícitos sem registrar tokens ou segredos.
+
+#### Corrigido
+- Leitura, atualização e remoção preservam a semântica de item inexistente e propagam as demais falhas.
+
+_Issues: #3609 · PRs: #3658_
+
 ### [1.6.1][ios-1.6.1] - 2026-07-10
 
 #### Mudado
@@ -1658,6 +1696,20 @@ _Issues: #3499, #3504, #3509 · PRs: #3511_
 _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
+
+### [1.10.0][functions-1.10.0] - 2026-07-14
+
+#### Mudado
+- Functions e Firestore Rules passam a compartilhar invariantes canônicos de status, autoria e membership.
+- Operações multi-documento usam transações, batches e checkpoints idempotentes.
+
+#### Corrigido
+- Corridas de votação, comentários órfãos, waitlist, reações e writers de notificações receberam regressões automatizadas.
+
+#### Segurança
+- Escritas de clientes em notificações, reações e relações protegidas foram restringidas às identidades e vínculos autorizados.
+
+_Issues: #3585, #3586, #3587, #3588, #3589, #3590, #3591, #3592, #3593, #3594, #3595, #3596, #3597, #3598, #3599, #3601, #3608 · PRs: #3648, #3650, #3651, #3652, #3653, #3654, #3655, #3656, #3657, #3659_
 
 ### [1.9.2][functions-1.9.2] - 2026-07-13
 
@@ -2288,6 +2340,7 @@ _Issues: #2981_
 _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 
 
+[android-1.38.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.38.0.md
 [android-1.37.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.37.0.md
 [android-1.36.8]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.36.8.md
 [android-1.36.7]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.36.7.md
@@ -2306,6 +2359,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.54.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.0.md
 [web-1.53.12]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.53.12.md
 [web-1.53.11]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.53.11.md
 [web-1.53.10]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.53.10.md
@@ -2443,8 +2497,10 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [web-1.26.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.26.2.md
 [web-1.26.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.26.1.md
 [web-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.26.0.md
+[ios-1.6.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.2.md
 [ios-1.6.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.1.md
 [ios-1.6.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.0.md
+[functions-1.10.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.10.0.md
 [functions-1.9.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.9.2.md
 [functions-1.9.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.9.1.md
 [functions-1.9.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.9.0.md
