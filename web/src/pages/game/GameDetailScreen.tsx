@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
@@ -69,6 +69,8 @@ import { resolveExpectedPayment } from '../../utils/gamePayment';
 import { generateGoogleCalendarUrl, downloadIcsFile, generateOutlookCalendarUrl } from '../../utils/calendarLinks';
 import { GameInfoPanel } from './GameInfoPanel';
 import { GamePlayersSection } from './GamePlayersSection';
+import { GameWaitlistAction } from './GameWaitlistAction';
+import { isGameWaitlistEligible } from './gameWaitlistEligibility';
 import { PositionReinforcementsPanel } from './PositionReinforcementsPanel';
 import { GameRidesPanel } from './GameRidesPanel';
 import { GamePhotosTab } from './GamePhotosTab';
@@ -303,8 +305,12 @@ export const GameDetailScreen: React.FC = () => {
   const { duplicateGame, loading: duplicateGameLoading } = useDuplicateGameCopy();
   const {
     waitlist: waitlistEntries,
+    myEntry: myWaitlistEntry,
     loading: waitlistLoading,
     error: waitlistError,
+    acting: waitlistActing,
+    joinWaitlist,
+    leaveWaitlist,
   } = useWaitlist(gameId || null);
 
   const [tabValue, setTabValue] = useState(0);
@@ -354,6 +360,7 @@ export const GameDetailScreen: React.FC = () => {
   const myCheckedIn = !!myConfirmation?.checkedIn;
   const showCheckInSocial = game?.status === 'LIVE' || game?.status === 'FINISHED';
   const canCheckInNow = game?.status === 'LIVE' && isConfirmed && !myCheckedIn;
+  const canUseWaitlist = isGameWaitlistEligible(game, isConfirmed);
 
   // #2272: arrays derivados memoizados — antes os 3 .filter() rodavam a cada render.
   const confirmedPlayers = useMemo(
@@ -399,6 +406,35 @@ export const GameDetailScreen: React.FC = () => {
       showError(getFirestoreErrorMessage(err));
     }
   };
+
+  const handleJoinWaitlist = useCallback(async () => {
+    try {
+      await joinWaitlist();
+    } catch {
+      // O hook trata os erros atuais; este fallback mantém feedback se uma
+      // implementação futura voltar a propagar a rejeição.
+      showError(t('feedback.waitlist.joinError'));
+    }
+  }, [joinWaitlist, showError, t]);
+
+  const handleLeaveWaitlist = useCallback(async () => {
+    try {
+      await leaveWaitlist();
+    } catch {
+      showError(t('feedback.waitlist.leaveError'));
+    }
+  }, [leaveWaitlist, showError, t]);
+
+  const waitlistAction = canUseWaitlist ? (
+    <GameWaitlistAction
+      queuePosition={myWaitlistEntry?.queuePosition ?? null}
+      loading={waitlistLoading}
+      acting={waitlistActing}
+      error={waitlistError}
+      onJoin={handleJoinWaitlist}
+      onLeave={handleLeaveWaitlist}
+    />
+  ) : null;
 
   const handleStartGame = async () => {
     if (!gameId || !game) return;
@@ -888,6 +924,7 @@ export const GameDetailScreen: React.FC = () => {
               waitlist={waitlist}
               waitlistLoading={waitlistLoading}
               waitlistError={waitlistError}
+              waitlistAction={waitlistAction}
               confirmations={confirmations}
               tabValue={tabValue}
               onTabChange={setTabValue}
@@ -991,6 +1028,7 @@ export const GameDetailScreen: React.FC = () => {
             waitlist={waitlist}
             waitlistLoading={waitlistLoading}
             waitlistError={waitlistError}
+            waitlistAction={waitlistAction}
             confirmations={confirmations}
             tabValue={tabValue}
             onTabChange={setTabValue}
@@ -1096,15 +1134,17 @@ export const GameDetailScreen: React.FC = () => {
                     </Button>
                   )}
                 </>
+              ) : canUseWaitlist ? (
+                waitlistAction
               ) : (
                 <Button
                   variant="contained"
                   fullWidth
                   startIcon={confirmLoading ? <CircularProgress size={16} color="inherit" /> : <CheckIcon />}
                   onClick={() => setPositionDialogOpen(true)}
-                  disabled={confirmLoading || game.playersCount >= game.maxPlayers}
+                  disabled={confirmLoading}
                 >
-                  {game.playersCount >= game.maxPlayers ? t('games.detail.listFull') : t('games.confirmPresence')}
+                  {t('games.confirmPresence')}
                 </Button>
               )}
             </Box>
