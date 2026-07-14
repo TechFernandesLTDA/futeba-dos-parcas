@@ -1,7 +1,28 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-14T03:34:57.655Z",
+  "generatedAt": "2026-07-14T21:24:34.746Z",
   "notes": [
+    {
+      "version": "1.54.1",
+      "buildNumber": null,
+      "releaseDate": "2026-07-14",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "Jogadores convidados voltam a abrir os detalhes do jogo antes de confirmar presença.",
+      "highlights": [],
+      "added": [],
+      "improved": [],
+      "fixed": [
+        "A tela de detalhes não exibe mais “sem permissão” para convidados com presença pendente.",
+        "A confirmação do próprio jogador é carregada com segurança e o elenco completo aparece automaticamente após a confirmação.",
+        "`useGameDetail` separa o listener do próprio convite da consulta protegida do elenco e não promove falhas auxiliares de confirmações a erro fatal do jogo.",
+        "A consulta inicial restringe `confirmations` por `game_id` e `user_id`, preservando as regras que bloqueiam dados de outros jogadores antes da confirmação."
+      ],
+      "issueRefs": [
+        3684
+      ]
+    },
     {
       "version": "1.54.0",
       "buildNumber": null,

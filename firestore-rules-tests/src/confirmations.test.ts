@@ -246,6 +246,25 @@ describe("confirmations — read", () => {
     await assertSucceeds(db.doc(`confirmations/${GAME_ACTIVE}_${UID_PLAYER_A}`).get());
   });
 
+  it("Player pode consultar somente a propria confirmacao por game_id e user_id", async () => {
+    const db = asPlayerA(testEnv);
+    await assertSucceeds(
+      db.collection("confirmations")
+        .where("game_id", "==", GAME_ACTIVE)
+        .where("user_id", "==", UID_PLAYER_A)
+        .get()
+    );
+  });
+
+  it("Player nao confirmado nao pode listar confirmacoes alheias do jogo", async () => {
+    const db = asPlayerC(testEnv);
+    await assertFails(
+      db.collection("confirmations")
+        .where("game_id", "==", GAME_ACTIVE)
+        .get()
+    );
+  });
+
   it("Game owner pode ler confirmacoes do seu jogo", async () => {
     const db = asPlayerA(testEnv);
     await assertSucceeds(db.doc(`confirmations/${GAME_FINISHED}_${UID_PLAYER_B}`).get());
