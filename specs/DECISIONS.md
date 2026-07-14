@@ -1235,4 +1235,24 @@ Android deixam de depender do fallback em português para essa tela.
 
 ---
 
+## 2026-07-14 — Histórico de busca Android é local, real e isolado por UID (#3627)
+
+**Contexto:** A busca global já possuía persistência DataStore no ViewModel, mas
+a tela ignorava essa fonte e apresentava histórico e buscas populares fictícios.
+A preferência existente também era global ao app, o que permitiria que uma conta
+visse termos pesquisados por outra conta no mesmo dispositivo.
+
+**Decisão:** O `GlobalSearchViewModel` é a única fonte da busca e persiste até dez
+termos em uma chave DataStore derivada do UID autenticado. Sem UID não há leitura
+nem escrita. A seção de buscas populares é removida até existir uma fonte real e
+confiável; nenhum dado curado será apresentado como comportamento do usuário.
+
+**Consequências:** Histórico continua disponível offline, não cruza contas e a
+tela vazia deixa explícito quando ainda não há buscas. A chave global legada não
+é lida, evitando transformar dados potencialmente cruzados em histórico válido.
+
+**Relacionado:** `specs/BUGFIX_2026-07-14_android-home-search-state.md`, #3627.
+
+---
+
 <!-- Adicione novas decisões acima desta linha -->

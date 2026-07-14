@@ -26,11 +26,13 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.jupiter.api.AfterEach
@@ -264,6 +266,56 @@ class HomeViewModelTest {
             advanceUntilIdle()
 
             assertEquals(5, viewModel.unreadCount.value)
+        }
+    }
+
+    @Nested
+    @DisplayName("Pull-to-refresh")
+    inner class RefreshTests {
+
+        @Test
+        @DisplayName("refresh preserva conteúdo e expõe indicador até concluir")
+        fun `refresh preserves content and exposes indicator until completion`() =
+            runTest(testDispatcher) {
+                setupMocksForSuccess()
+                viewModel = createViewModel()
+                advanceUntilIdle()
+                val previousState = viewModel.uiState.value
+
+                coEvery { userRepository.getCurrentUser() } coAnswers {
+                    delay(1_000)
+                    Result.success(testUser)
+                }
+
+                viewModel.refreshHomeData()
+                runCurrent()
+
+                assertTrue(viewModel.isRefreshing.value)
+                assertEquals(previousState, viewModel.uiState.value)
+
+                advanceUntilIdle()
+
+                assertFalse(viewModel.isRefreshing.value)
+                assertInstanceOf(HomeUiState.Success::class.java, viewModel.uiState.value)
+            }
+
+        @Test
+        @DisplayName("falha no refresh mantém último conteúdo e encerra indicador")
+        fun `refresh failure keeps last content and stops indicator`() = runTest(testDispatcher) {
+            setupMocksForSuccess()
+            viewModel = createViewModel()
+            advanceUntilIdle()
+            val previousState = viewModel.uiState.value
+
+            coEvery { userRepository.getCurrentUser() } returns
+                Result.failure(IllegalStateException("offline"))
+
+            viewModel.refreshHomeData()
+            advanceUntilIdle()
+
+            assertFalse(viewModel.isRefreshing.value)
+            assertEquals(previousState, viewModel.uiState.value)
+            assertInstanceOf(LoadingState.Error::class.java, viewModel.loadingState.value)
         }
     }
 }

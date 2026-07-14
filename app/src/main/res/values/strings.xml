@@ -3715,6 +3715,7 @@ subir no ranking!</string>
     <string name="search_hint">Buscar jogos, jogadores, grupos\u2026</string>
     <string name="clear">Limpar</string>
     <string name="recent_searches">Buscas recentes</string>
+    <string name="no_recent_searches">Suas buscas recentes aparecerão aqui.</string>
     <string name="clear_all">Limpar tudo</string>
     <string name="popular_searches">Buscas populares</string>
     <string name="no_results_for">Nenhum resultado para \u201C%1$s\u201D</string>

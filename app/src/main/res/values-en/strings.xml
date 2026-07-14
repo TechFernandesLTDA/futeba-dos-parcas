@@ -555,4 +555,5 @@
     <string name="create_game_step_description">Step %1$d: %2$s</string>
     <string name="create_game_step_action">Go to the %1$s step</string>
     <string name="hub_open_profile">Open %1$s’s profile</string>
+    <string name="no_recent_searches">Your recent searches will appear here.</string>
 </resources>

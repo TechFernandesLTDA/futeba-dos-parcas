@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -102,6 +103,7 @@ fun HomeScreen(
     val isOnline by viewModel.isOnline.collectAsStateWithLifecycle()
     val unreadCount by viewModel.unreadCount.collectAsStateWithLifecycle()
     val loadingState by viewModel.loadingState.collectAsStateWithLifecycle()
+    val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
 
     // Estado para controlar exibição do PlayerCard BottomSheet
     var showPlayerCard by remember { mutableStateOf(false) }
@@ -142,13 +144,17 @@ fun HomeScreen(
             ) { currentState ->
                 when (currentState) {
                     is HomeUiState.Loading -> {
-                        HomeLoadingState()
+                        HomeLoadingState(
+                            loadingState = loadingState,
+                            onRetry = { viewModel.loadHomeData(forceRetry = true) }
+                        )
                     }
                     is HomeUiState.Success -> {
                         HomeSuccessContent(
                             state = currentState,
                             isOnline = isOnline,
                             unreadCount = unreadCount,
+                            isRefreshing = isRefreshing,
                             viewModel = viewModel,
                             hapticManager = hapticManager,
                             onGameClick = onGameClick,
@@ -221,6 +227,7 @@ private fun HomeSuccessContent(
     state: HomeUiState.Success,
     isOnline: Boolean,
     unreadCount: Int,
+    isRefreshing: Boolean,
     viewModel: HomeViewModel,
     hapticManager: HapticManager?,
     onGameClick: (gameId: String) -> Unit,
@@ -240,8 +247,6 @@ private fun HomeSuccessContent(
     onDirectMessagesClick: () -> Unit,
     onboardingViewModel: com.futebadosparcas.ui.onboarding.OnboardingViewModel? = null
 ) {
-    var isRefreshing by remember { mutableStateOf(false) }
-
     // ✅ OTIMIZAÇÃO: Usar remember para estabilizar estados e evitar recomposições desnecessárias
     // Cada campo é memoizado com sua própria key para granularidade fina
     val games = remember(state.games) { state.games }
@@ -332,11 +337,16 @@ private fun HomeSuccessContent(
         }
     }
 
-    // Em tablets, centraliza o conteúdo com largura máxima para leitura confortável
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.TopCenter
+    PullToRefreshBox(
+        isRefreshing = isRefreshing,
+        onRefresh = viewModel::refreshHomeData,
+        modifier = Modifier.fillMaxSize()
     ) {
+        // Em tablets, centraliza o conteúdo com largura máxima para leitura confortável
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.TopCenter
+        ) {
 
     // CelebrationSheet fora do LazyColumn
     if (onboardingViewModel != null) {
@@ -517,7 +527,8 @@ private fun HomeSuccessContent(
         onDismiss = { rewardCelebrationKind = null },
         modifier = Modifier.fillMaxSize()
     )
-    } // fecha Box adaptativo
+        } // fecha Box adaptativo
+    } // fecha PullToRefreshBox
 }
 
 @Composable
@@ -660,7 +671,10 @@ private data class RewardCelebrationSpec(
  * Estado de loading
  */
 @Composable
-private fun HomeLoadingState() {
+private fun HomeLoadingState(
+    loadingState: LoadingState,
+    onRetry: () -> Unit
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -668,6 +682,12 @@ private fun HomeLoadingState() {
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        LoadingStateIndicator(
+            loadingState = loadingState,
+            onRetry = onRetry,
+            modifier = Modifier.padding(bottom = AppDimensions.spacing_large)
+        )
+
         // Shimmer para header
         ShimmerBox(
             modifier = Modifier

@@ -49,6 +49,9 @@ class HomeViewModel(
     private val _loadingState = MutableStateFlow<LoadingState>(LoadingState.Idle)
     val loadingState: StateFlow<LoadingState> = _loadingState
 
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing: StateFlow<Boolean> = _isRefreshing
+
     private val _isOnline = MutableStateFlow(true)
     val isOnline: StateFlow<Boolean> = _isOnline
 
@@ -109,7 +112,12 @@ class HomeViewModel(
      *
      * Impacto: Home cold load 2500ms → 800ms (68% mais rápido)
      */
-    fun loadHomeData(forceRetry: Boolean = false) {
+    fun loadHomeData(
+        forceRetry: Boolean = false,
+        preserveCurrentContent: Boolean = false
+    ) {
+        val contentBeforeRefresh = uiState.value as? HomeUiState.Success
+
         if (forceRetry) {
             retryCount = 0
             lastLoadTime = 0
@@ -127,7 +135,11 @@ class HomeViewModel(
 
         launch(key = JOB_LOAD) {
             _loadingState.value = LoadingState.Loading("Carregando dados...")
-            setState { HomeUiState.Loading }
+            val isPullToRefresh = preserveCurrentContent && contentBeforeRefresh != null
+            _isRefreshing.value = isPullToRefresh
+            if (!isPullToRefresh) {
+                setState { HomeUiState.Loading }
+            }
 
             try {
                 supervisorScope {
@@ -144,9 +156,25 @@ class HomeViewModel(
                     retryCount = 0
                 }
             } catch (e: Exception) {
-                handleLoadError(e)
+                if (isPullToRefresh && contentBeforeRefresh != null) {
+                    AppLogger.e(TAG, "Erro ao atualizar dados da home", e)
+                    _loadingState.value = LoadingState.Error(
+                        e.message ?: "Erro ao atualizar dados",
+                        retryable = true
+                    )
+                    setState { contentBeforeRefresh }
+                } else {
+                    handleLoadError(e)
+                }
+            } finally {
+                _isRefreshing.value = false
             }
         }
+    }
+
+    /** Atualiza a Home sem substituir o conteúdo atual por loading em tela cheia. */
+    fun refreshHomeData() {
+        loadHomeData(forceRetry = true, preserveCurrentContent = true)
     }
 
     /**
