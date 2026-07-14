@@ -41,6 +41,7 @@ import { useDebounce } from '../../../hooks/useDebounce';
 import { formatDateShort } from '../../../utils/dateFormatters';
 import { ErrorState } from '../../../components/common/ErrorState';
 import { EmptyState } from '../../../components/common/EmptyState';
+import { PageContainer } from '../../../components/common/PageContainer';
 import { ScreenFab } from '../../../components/layout';
 
 export function GroupsTab() {
@@ -69,9 +70,9 @@ export function GroupsTab() {
   const hasGroups = !loading && myGroupsCount > 0;
 
   return (
-    <Box sx={{ pb: 8, maxWidth: { xs: '100%', lg: 1200, xl: 1536 }, mx: 'auto' }}>
+    <PageContainer maxWidth="dashboard">
       {/* Barra de busca */}
-      <Box sx={{ p: 2, pb: 0 }}>
+      <Box sx={{ pt: 2 }}>
         {/* Header com título + Criar (md+) */}
         <Box
           sx={{
@@ -162,7 +163,7 @@ export function GroupsTab() {
 
       {/* Lista de grupos */}
       <PullToRefresh onRefresh={handleRefresh}>
-      <Box sx={{ px: pageSpacing.pagePadding }}>
+      <Box>
         {error ? (
           <ErrorState
             message={error}
@@ -379,6 +380,6 @@ export function GroupsTab() {
           right: { xs: 16, md: 24 },
         }}
       />
-    </Box>
+    </PageContainer>
   );
 }
