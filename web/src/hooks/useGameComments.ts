@@ -3,6 +3,7 @@ import {
   addDoc,
   collection,
   doc,
+  documentId,
   DocumentData,
   getDocs,
   limit,
@@ -13,6 +14,7 @@ import {
   serverTimestamp,
   startAfter,
   updateDoc,
+  where,
 } from 'firebase/firestore';
 import { useAuth } from '../contexts/AuthContext';
 import { db } from '../services/firebase';
@@ -25,6 +27,7 @@ import type { ReactionsMap } from '../constants/reactions';
 const logger = createLogger('useGameComments');
 
 const COMMENT_PAGE_SIZE = 30;
+export const COMMENT_PARENT_QUERY_CHUNK_SIZE = 10;
 export const GAME_COMMENT_MAX_LENGTH = 500;
 export const VOTE_RESULT_COMMENT_MAX_LENGTH = 200;
 export type GameCommentContext = 'game' | 'vote_result';
@@ -63,6 +66,31 @@ function mapComment(docSnap: QueryDocumentSnapshot<DocumentData>): GameComment {
   };
 }
 
+export function getMissingCommentParentIds(
+  comments: GameComment[],
+  knownCommentIds: Iterable<string> = [],
+): string[] {
+  const knownIds = new Set(knownCommentIds);
+  for (const comment of comments) knownIds.add(comment.id);
+
+  const missingIds: string[] = [];
+  const seen = new Set<string>();
+  for (const comment of comments) {
+    if (!comment.parentId || knownIds.has(comment.parentId) || seen.has(comment.parentId)) continue;
+    seen.add(comment.parentId);
+    missingIds.push(comment.parentId);
+  }
+  return missingIds;
+}
+
+export function mergeGameCommentsById(...groups: GameComment[][]): GameComment[] {
+  const merged = new Map<string, GameComment>();
+  for (const group of groups) {
+    for (const comment of group) merged.set(comment.id, comment);
+  }
+  return [...merged.values()];
+}
+
 export function useGameComments(gameId?: string, context: GameCommentContext = 'game') {
   const { currentUser, user } = useAuth();
   const [comments, setComments] = useState<GameComment[]>([]);
@@ -72,18 +100,55 @@ export function useGameComments(gameId?: string, context: GameCommentContext = '
   const [loadingMore, setLoadingMore] = useState(false);
   const [saving, setSaving] = useState(false);
   const oldestDocRef = useRef<QueryDocumentSnapshot<DocumentData> | null>(null);
+  const commentsRef = useRef<GameComment[]>([]);
+
+  const fetchMissingParents = useCallback(async (
+    sourceComments: GameComment[],
+    knownCommentIds: Iterable<string>,
+  ): Promise<GameComment[]> => {
+    if (!gameId) return [];
+    const missingIds = getMissingCommentParentIds(sourceComments, knownCommentIds);
+    if (missingIds.length === 0) return [];
+
+    const commentsCollection = collection(db, 'games', gameId, 'comments');
+    const chunks: string[][] = [];
+    for (let index = 0; index < missingIds.length; index += COMMENT_PARENT_QUERY_CHUNK_SIZE) {
+      chunks.push(missingIds.slice(index, index + COMMENT_PARENT_QUERY_CHUNK_SIZE));
+    }
+
+    const snapshots = await Promise.all(chunks.map((chunk) => getDocs(query(
+      commentsCollection,
+      where(documentId(), 'in', chunk),
+    ))));
+
+    const fetchedParents = mergeGameCommentsById(
+      ...snapshots.map((snapshot) => snapshot.docs.map(mapComment)),
+    );
+    const parentsById = new Map(fetchedParents.map((parent) => [parent.id, parent]));
+    return missingIds.flatMap((parentId) => {
+      const parent = parentsById.get(parentId);
+      return parent ? [parent] : [];
+    });
+  }, [gameId]);
 
   useEffect(() => {
     if (!gameId) {
       setLoading(false);
       setComments([]);
+      commentsRef.current = [];
       setHasMore(false);
+      setError(null);
       oldestDocRef.current = null;
       return undefined;
     }
 
     setLoading(true);
     setError(null);
+    setComments([]);
+    commentsRef.current = [];
+    oldestDocRef.current = null;
+    let cancelled = false;
+    let snapshotSequence = 0;
 
     const commentsQuery = query(
       collection(db, 'games', gameId, 'comments'),
@@ -93,25 +158,50 @@ export function useGameComments(gameId?: string, context: GameCommentContext = '
 
     const unsubscribe = onSnapshot(
       commentsQuery,
-      (snapshot) => {
+      async (snapshot) => {
+        const sequence = ++snapshotSequence;
         const snapshotIds = snapshot.docs.map((docSnap) => docSnap.id);
         const data = snapshot.docs.map(mapComment).reverse();
-        setComments((prev) => mergeRealtimePageById(prev, data, snapshotIds, 'append'));
-        setHasMore(snapshot.size === COMMENT_PAGE_SIZE);
-        if (snapshot.docs.length > 0) {
-          oldestDocRef.current = snapshot.docs[snapshot.docs.length - 1];
+        try {
+          const knownIds = commentsRef.current.map((comment) => comment.id);
+          const parents = await fetchMissingParents(data, knownIds);
+          if (cancelled || sequence !== snapshotSequence) return;
+
+          const liveData = mergeGameCommentsById(parents, data);
+          const liveIds = [...parents.map((parent) => parent.id), ...snapshotIds];
+          setComments((prev) => {
+            const next = mergeRealtimePageById(prev, liveData, liveIds, 'append');
+            commentsRef.current = next;
+            return next;
+          });
+          setHasMore(snapshot.size === COMMENT_PAGE_SIZE);
+          if (snapshot.docs.length > 0) {
+            oldestDocRef.current = snapshot.docs[snapshot.docs.length - 1];
+          }
+          setError(null);
+          setLoading(false);
+        } catch (err) {
+          if (cancelled || sequence !== snapshotSequence) return;
+          logger.error('Erro ao carregar comentarios-pai do jogo:', err);
+          setError(getFirestoreErrorMessage(err));
+          setLoading(false);
         }
-        setLoading(false);
       },
       (err) => {
+        snapshotSequence += 1;
+        if (cancelled) return;
         logger.error('Erro no listener de comentarios do jogo:', err);
         setError(getFirestoreErrorMessage(err));
         setLoading(false);
       },
     );
 
-    return () => unsubscribe();
-  }, [gameId]);
+    return () => {
+      cancelled = true;
+      snapshotSequence += 1;
+      unsubscribe();
+    };
+  }, [fetchMissingParents, gameId]);
 
   const loadMore = useCallback(async () => {
     if (!gameId || !oldestDocRef.current || loadingMore || !hasMore) return;
@@ -125,18 +215,24 @@ export function useGameComments(gameId?: string, context: GameCommentContext = '
       );
       const snapshot = await getDocs(commentsQuery);
       const older = snapshot.docs.map(mapComment).reverse();
+      const knownIds = mergeGameCommentsById(commentsRef.current, older).map((comment) => comment.id);
+      const parents = await fetchMissingParents(older, knownIds);
       oldestDocRef.current = snapshot.docs.length > 0
         ? snapshot.docs[snapshot.docs.length - 1]
         : oldestDocRef.current;
       setHasMore(snapshot.size === COMMENT_PAGE_SIZE);
-      setComments((prev) => [...older, ...prev]);
+      setComments((prev) => {
+        const next = mergeGameCommentsById(parents, older, prev);
+        commentsRef.current = next;
+        return next;
+      });
     } catch (err) {
       logger.error('Erro ao paginar comentarios antigos:', err);
       setError(getFirestoreErrorMessage(err));
     } finally {
       setLoadingMore(false);
     }
-  }, [gameId, hasMore, loadingMore]);
+  }, [fetchMissingParents, gameId, hasMore, loadingMore]);
 
   const maxLength = context === 'vote_result' ? VOTE_RESULT_COMMENT_MAX_LENGTH : GAME_COMMENT_MAX_LENGTH;
 

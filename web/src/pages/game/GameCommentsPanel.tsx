@@ -32,6 +32,7 @@ import {
   useGameComments,
 } from '../../hooks/useGameComments';
 import { getFirestoreErrorMessage } from '../../utils/firebaseErrors';
+import { buildGameCommentThreads } from './gameCommentThreads';
 
 interface GameCommentsPanelProps {
   gameId: string;
@@ -76,22 +77,10 @@ export const GameCommentsPanel: React.FC<GameCommentsPanelProps> = ({
   const [draft, setDraft] = useState('');
   const [replyTo, setReplyTo] = useState<GameComment | null>(null);
 
-  const visibleComments = useMemo(
-    () => comments.filter((comment) => comment.deletedAt === null && comment.context === context),
+  const commentThreads = useMemo(
+    () => buildGameCommentThreads(comments, context),
     [comments, context],
   );
-  const rootComments = useMemo(
-    () => visibleComments.filter((comment) => !comment.parentId),
-    [visibleComments],
-  );
-  const repliesByParent = useMemo(() => {
-    const grouped = new Map<string, GameComment[]>();
-    for (const comment of visibleComments) {
-      if (!comment.parentId) continue;
-      grouped.set(comment.parentId, [...(grouped.get(comment.parentId) ?? []), comment]);
-    }
-    return grouped;
-  }, [visibleComments]);
 
   const handleSubmit = async () => {
     if (draft.trim().length === 0) return;
@@ -131,7 +120,7 @@ export const GameCommentsPanel: React.FC<GameCommentsPanelProps> = ({
           </Alert>
         )}
 
-        {!loading && !error && rootComments.length === 0 && (
+        {!loading && !error && commentThreads.length === 0 && (
           <EmptyState
             icon={<CommentsIcon sx={{ fontSize: 48 }} />}
             title={emptyTitle ?? t('gameComments.emptyTitle')}
@@ -139,7 +128,7 @@ export const GameCommentsPanel: React.FC<GameCommentsPanelProps> = ({
           />
         )}
 
-        {!loading && !error && rootComments.length > 0 && (
+        {!loading && !error && commentThreads.length > 0 && (
           <Stack spacing={1.5} sx={{ mt: 2 }}>
             {hasMore && (
               <Box sx={{ display: 'flex', justifyContent: 'center' }}>
@@ -148,21 +137,36 @@ export const GameCommentsPanel: React.FC<GameCommentsPanelProps> = ({
                 </Button>
               </Box>
             )}
-            {rootComments.map((comment) => (
-              <CommentThread
-                key={comment.id}
-                gameId={gameId}
-                comment={comment}
-                replies={repliesByParent.get(comment.id) ?? []}
-                currentUserId={currentUserId}
-                canManage={canManage}
-                canWrite={canWrite}
-                saving={saving}
-                onReply={() => setReplyTo(comment)}
-                onEdit={editComment}
-                onDelete={deleteComment}
-              />
-            ))}
+            {commentThreads.map((thread) => {
+              const threadId = thread.parent?.id ?? thread.replies[0]?.parentId ?? thread.replies[0]?.id;
+              return thread.parent ? (
+                <CommentThread
+                  key={threadId}
+                  gameId={gameId}
+                  comment={thread.parent}
+                  replies={thread.replies}
+                  currentUserId={currentUserId}
+                  canManage={canManage}
+                  canWrite={canWrite}
+                  saving={saving}
+                  onReply={() => setReplyTo(thread.parent)}
+                  onEdit={editComment}
+                  onDelete={deleteComment}
+                />
+              ) : (
+                <UnavailableParentThread
+                  key={threadId}
+                  gameId={gameId}
+                  replies={thread.replies}
+                  reason={thread.parentUnavailable ?? 'missing'}
+                  currentUserId={currentUserId}
+                  canManage={canManage}
+                  saving={saving}
+                  onEdit={editComment}
+                  onDelete={deleteComment}
+                />
+              );
+            })}
           </Stack>
         )}
 
@@ -206,6 +210,53 @@ export const GameCommentsPanel: React.FC<GameCommentsPanelProps> = ({
         )}
       </CardContent>
     </Card>
+  );
+};
+
+interface UnavailableParentThreadProps {
+  gameId: string;
+  replies: GameComment[];
+  reason: 'deleted' | 'missing';
+  currentUserId: string | null;
+  canManage: boolean;
+  saving: boolean;
+  onEdit: (commentId: string, text: string) => Promise<void>;
+  onDelete: (commentId: string) => Promise<void>;
+}
+
+const UnavailableParentThread: React.FC<UnavailableParentThreadProps> = ({
+  gameId,
+  replies,
+  reason,
+  currentUserId,
+  canManage,
+  saving,
+  onEdit,
+  onDelete,
+}) => {
+  const { t } = useTranslation();
+  return (
+    <Stack spacing={1}>
+      <Alert severity="info" variant="outlined">
+        {t(reason === 'deleted' ? 'gameComments.parentDeleted' : 'gameComments.parentUnavailable')}
+      </Alert>
+      <Stack spacing={1} sx={{ pl: { xs: 2, sm: 6 } }}>
+        {replies.map((reply) => (
+          <CommentItem
+            key={reply.id}
+            gameId={gameId}
+            comment={reply}
+            currentUserId={currentUserId}
+            canManage={canManage}
+            canWrite={false}
+            saving={saving}
+            onReply={() => undefined}
+            onEdit={onEdit}
+            onDelete={onDelete}
+          />
+        ))}
+      </Stack>
+    </Stack>
   );
 };
 

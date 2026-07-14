@@ -1637,6 +1637,8 @@
     "emptyTitle": "No comments yet",
     "emptyDesc": "The game's open thread will appear here.",
     "edited": "edited",
+    "parentDeleted": "The original comment was removed. Preserved replies appear below.",
+    "parentUnavailable": "The original comment is unavailable. Replies appear below.",
     "mustConfirm": "Confirm attendance to comment on this game."
   },
   "postGameHighlights": {

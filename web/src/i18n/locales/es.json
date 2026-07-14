@@ -1637,6 +1637,8 @@
     "emptyTitle": "Aún no hay comentarios",
     "emptyDesc": "La conversación libre del partido aparecerá aquí.",
     "edited": "editado",
+    "parentDeleted": "El comentario original fue eliminado. Las respuestas conservadas aparecen abajo.",
+    "parentUnavailable": "El comentario original no está disponible. Las respuestas aparecen abajo.",
     "mustConfirm": "Confirma asistencia para comentar en este partido."
   },
   "postGameHighlights": {

@@ -114,7 +114,8 @@ describe('profile save payloads', () => {
   it('mantém comentários paginados ao receber snapshot realtime', () => {
     const comments = readRepoFile('web/src/hooks/useGameComments.ts');
     expect(comments).toContain("import { mergeRealtimePageById } from './realtimePageMerge';");
-    expect(comments).toContain("mergeRealtimePageById(prev, data, snapshotIds, 'append')");
+    expect(comments).toContain("mergeRealtimePageById(prev, liveData, liveIds, 'append')");
+    expect(comments).toContain('fetchMissingParents(data, knownIds)');
     expect(comments).toContain('startAfter(oldestDocRef.current)');
   });
 

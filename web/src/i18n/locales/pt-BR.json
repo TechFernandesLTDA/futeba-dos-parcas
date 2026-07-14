@@ -1637,6 +1637,8 @@
     "emptyTitle": "Nenhum comentário ainda",
     "emptyDesc": "A thread livre do jogo aparece aqui.",
     "edited": "editado",
+    "parentDeleted": "O comentário original foi removido. As respostas preservadas aparecem abaixo.",
+    "parentUnavailable": "O comentário original não está disponível. As respostas aparecem abaixo.",
     "mustConfirm": "Confirme presença para comentar nesse jogo."
   },
   "postGameHighlights": {
