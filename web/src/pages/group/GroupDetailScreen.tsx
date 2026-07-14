@@ -88,6 +88,7 @@ import { iconSizes } from '../../theme/iconSizes';
 import { formatDateShort } from '../../utils/dateFormatters';
 import { db } from '../../services/firebase';
 import { GroupWallTab } from './GroupWallTab';
+import { canInviteGroupMembers } from './groupInvitePermissions';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -585,6 +586,11 @@ export const GroupDetailScreen: React.FC = () => {
   const isLegacyOwnerMember = isGroupOwner && myMember?.status === undefined;
   const isOwner = isGroupOwner || (myMember?.role === 'OWNER' && hasActiveMember);
   const isAdmin = isOwner || (myMember?.role === 'ADMIN' && hasActiveMember);
+  const canInviteMembers = canInviteGroupMembers({
+    isGroupOwner,
+    memberRole: myMember?.role,
+    memberStatus: myMember?.status,
+  });
   const isMember = isGroupOwner || hasActiveMember || isLegacyOwnerMember;
   const canCreateGroupGame = isMember;
 
@@ -629,7 +635,7 @@ export const GroupDetailScreen: React.FC = () => {
   } = useMyJoinRequest(shouldTrackJoinRequest ? groupId : undefined);
 
   const handleGenerateInvite = async () => {
-    if (!groupId || !group) return;
+    if (!groupId || !group || !canInviteMembers) return;
 
     try {
       const code = await generateInviteCode(groupId, group.name);
@@ -810,7 +816,7 @@ export const GroupDetailScreen: React.FC = () => {
       completed: entryCount > 0,
     },
   ];
-  const ownerChecklistVisible = !ownerChecklistDismissed && (isOwner || isAdmin) && ownerChecklistSteps.some((step) => !step.completed);
+  const ownerChecklistVisible = !ownerChecklistDismissed && canInviteMembers && ownerChecklistSteps.some((step) => !step.completed);
 
   const quickActions: GroupQuickAction[] = [
     ...(!isMobile ? [{
@@ -1151,7 +1157,7 @@ export const GroupDetailScreen: React.FC = () => {
                     {t('groups.membersCount', { count: activeMembersCount })}
                   </Typography>
                 </Box>
-                {isOwner && (
+                {canInviteMembers && (
                   <Button
                     variant="contained"
                     startIcon={<InviteIcon />}
@@ -1168,8 +1174,8 @@ export const GroupDetailScreen: React.FC = () => {
                 icon={<PersonIcon sx={{ fontSize: iconSizes.xxl, color: 'text.disabled' }} />}
                 title={t('groupDetail.noMembers')}
                 description={t('groupDetail.noMembersDesc')}
-                actionLabel={isOwner ? t('groupDetail.invite') : undefined}
-                onAction={isOwner ? () => setInviteDialogOpen(true) : undefined}
+                actionLabel={canInviteMembers ? t('groupDetail.invite') : undefined}
+                onAction={canInviteMembers ? () => setInviteDialogOpen(true) : undefined}
               />
             ) : (
               <List disablePadding aria-label={t('group.membersAria')}>
@@ -1258,7 +1264,7 @@ export const GroupDetailScreen: React.FC = () => {
         </FixedBottomBar>
       )}
 
-      <Dialog open={inviteDialogOpen} onClose={() => { setInviteDialogOpen(false); setInviteCode(''); }} fullScreen={isMobile} fullWidth maxWidth="sm" aria-labelledby="invite-dialog-title">
+      <Dialog open={canInviteMembers && inviteDialogOpen} onClose={() => { setInviteDialogOpen(false); setInviteCode(''); }} fullScreen={isMobile} fullWidth maxWidth="sm" aria-labelledby="invite-dialog-title">
         <DialogTitle id="invite-dialog-title">{t('groups.invitePlayers')}</DialogTitle>
         <DialogContent>
           {inviteLoading ? (
