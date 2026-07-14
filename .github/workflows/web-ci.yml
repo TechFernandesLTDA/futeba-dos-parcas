@@ -163,8 +163,13 @@ jobs:
 
       - name: Upload mutation report
         if: always()
+        # O Stryker acima continua autoritativo. Cota de artifacts indisponível
+        # não deve transformar um mutation test bem-sucedido em falha do job.
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: mutation-report
           path: web/reports/mutation/
-          retention-days: 14
+          if-no-files-found: warn
+          retention-days: 1
+          compression-level: 9

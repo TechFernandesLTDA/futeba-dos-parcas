@@ -36,7 +36,7 @@ permissions:
 jobs:
   collect:
     name: Coletar métricas de CI
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
     timeout-minutes: 5
     steps:
       - name: Checkout code
@@ -68,11 +68,15 @@ jobs:
 
       - name: Upload JSON artifact (histórico)
         if: always()
+        # A coleta acima continua autoritativa. Falha isolada de armazenamento
+        # não deve ocultar métricas já publicadas no summary do próprio run.
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: ci-metrics-${{ github.event.workflow_run.id || github.run_id }}
           path: |
             ci-metrics.json
             ci-metrics-summary.md
-          retention-days: 30
+          retention-days: 1
+          compression-level: 9
           if-no-files-found: warn
