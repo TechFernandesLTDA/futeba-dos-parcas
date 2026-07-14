@@ -83,6 +83,57 @@ service cloud.firestore {
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly(allowedFields);
     }
 
+    // #3593: reactions usa o schema canonico { emoji: [uid, ...] }.
+    // Validar o shape e a autoria dentro do mapa evita que um membro autorizado
+    // substitua reacoes de terceiros ao atualizar o campo de topo.
+    function isValidReactionMapShape(reactions) {
+      return reactions is map &&
+        reactions.keys().hasOnly(['🔥', '😂', '👏', '😡', '💀', '🤡', '👑', '⚽']);
+    }
+
+    function reactionListChangeIsOwn(before, after, emoji) {
+      return after.get(emoji, []) is list &&
+        after.get(emoji, []).toSet().difference(before.get(emoji, []).toSet()).hasOnly([userId()]) &&
+        before.get(emoji, []).toSet().difference(after.get(emoji, []).toSet()).hasOnly([userId()]);
+    }
+
+    function hasUniqueReactionUsers(reactions) {
+      let users = reactions.get('🔥', [])
+        .concat(reactions.get('😂', []))
+        .concat(reactions.get('👏', []))
+        .concat(reactions.get('😡', []))
+        .concat(reactions.get('💀', []))
+        .concat(reactions.get('🤡', []))
+        .concat(reactions.get('👑', []))
+        .concat(reactions.get('⚽', []));
+      return users.size() == users.toSet().size();
+    }
+
+    function isValidInitialReactionMap(reactions) {
+      return reactions == {} ||
+        reactions == {'🔥': [userId()]} ||
+        reactions == {'😂': [userId()]} ||
+        reactions == {'👏': [userId()]} ||
+        reactions == {'😡': [userId()]} ||
+        reactions == {'💀': [userId()]} ||
+        reactions == {'🤡': [userId()]} ||
+        reactions == {'👑': [userId()]} ||
+        reactions == {'⚽': [userId()]};
+    }
+
+    function isOwnReactionOnlyChange(before, after) {
+      return isValidReactionMapShape(after) &&
+        reactionListChangeIsOwn(before, after, '🔥') &&
+        reactionListChangeIsOwn(before, after, '😂') &&
+        reactionListChangeIsOwn(before, after, '👏') &&
+        reactionListChangeIsOwn(before, after, '😡') &&
+        reactionListChangeIsOwn(before, after, '💀') &&
+        reactionListChangeIsOwn(before, after, '🤡') &&
+        reactionListChangeIsOwn(before, after, '👑') &&
+        reactionListChangeIsOwn(before, after, '⚽') &&
+        hasUniqueReactionUsers(after);
+    }
+
     // PERF_001 P0 #1: Verifica se usuario pode editar XP
     // Bloqueia FIELD_OWNER de editar experiencePoints (apenas Cloud Functions via Admin SDK)
     function canEditExperiencePoints() {
@@ -1064,7 +1115,10 @@ service cloud.firestore {
         // tocar no mapa dedicado; votos/contagens continuam server-only.
         (
           onlyAllowedFields(['vote_result_reactions']) &&
-          request.resource.data.vote_result_reactions is map &&
+          isOwnReactionOnlyChange(
+            resource.data.vote_result_reactions,
+            request.resource.data.vote_result_reactions
+          ) &&
           resource.data.voting_status == 'CONCLUDED' &&
           resource.data.voting_concluded_at != null &&
           timestamp.value(resource.data.voting_concluded_at.toMillis()) >
@@ -1306,7 +1360,7 @@ service cloud.firestore {
           request.resource.data.edited_at == null &&
           request.resource.data.deleted_at == null &&
           request.resource.data.deleted_by == null &&
-          request.resource.data.reactions is map &&
+          isValidInitialReactionMap(request.resource.data.reactions) &&
           (
             isAdmin() ||
             (
@@ -1323,7 +1377,10 @@ service cloud.firestore {
           // Participante/gestor reage/desreage ao comentario.
           (
             onlyAllowedFields(['reactions']) &&
-            request.resource.data.reactions is map &&
+            isOwnReactionOnlyChange(
+              resource.data.reactions,
+              request.resource.data.reactions
+            ) &&
             (
               isAdmin() ||
               isConfirmedPlayer(gameId) ||
@@ -2701,7 +2758,7 @@ service cloud.firestore {
           request.resource.data.pinned == false &&
           request.resource.data.pinned_by == null &&
           request.resource.data.pinned_at == null &&
-          request.resource.data.reactions is map &&
+          isValidInitialReactionMap(request.resource.data.reactions) &&
           request.resource.data.comments_count == 0 &&
           request.resource.data.deleted_at == null &&
           request.resource.data.deleted_by == null &&
@@ -2747,7 +2804,10 @@ service cloud.firestore {
             canUseGroupWall(groupId) &&
             resource.data.deleted_at == null &&
             onlyAllowedFields(['reactions']) &&
-            request.resource.data.reactions is map
+            isOwnReactionOnlyChange(
+              resource.data.reactions,
+              request.resource.data.reactions
+            )
           ) ||
           (
             (resource.data.author_id == userId() || canModerateGroupWall(groupId)) &&
@@ -4177,7 +4237,7 @@ service cloud.firestore {
         request.resource.data.size < 10 * 1024 * 1024 &&
         request.resource.data.caption is string &&
         request.resource.data.caption.size() <= 160 &&
-        request.resource.data.reactions is map &&
+        isValidInitialReactionMap(request.resource.data.reactions) &&
         request.resource.data.status == 'ACTIVE' &&
         exists(/databases/$(database)/documents/games/$(request.resource.data.game_id)) &&
         get(/databases/$(database)/documents/games/$(request.resource.data.game_id)).data.status == 'FINISHED' &&
@@ -4188,7 +4248,10 @@ service cloud.firestore {
 
       allow update: if isAuthenticated() &&
         onlyAllowedFields(['reactions']) &&
-        request.resource.data.reactions is map &&
+        isOwnReactionOnlyChange(
+          resource.data.reactions,
+          request.resource.data.reactions
+        ) &&
         resource.data.game_id is string &&
         exists(/databases/$(database)/documents/games/$(resource.data.game_id)) &&
         ((get(/databases/$(database)/documents/confirmations/$(resource.data.game_id + '_' + userId())) != null &&
@@ -4254,7 +4317,7 @@ service cloud.firestore {
         request.resource.data.duration_sec == null &&
         request.resource.data.caption is string &&
         request.resource.data.caption.size() <= 200 &&
-        request.resource.data.reactions is map &&
+        isValidInitialReactionMap(request.resource.data.reactions) &&
         request.resource.data.status == 'PROCESSING' &&
         request.resource.data.rejection_reason == null &&
         request.resource.data.created_at == request.time &&
@@ -4268,7 +4331,10 @@ service cloud.firestore {
 
       allow update: if isAuthenticated() &&
         onlyAllowedFields(['reactions']) &&
-        request.resource.data.reactions is map &&
+        isOwnReactionOnlyChange(
+          resource.data.reactions,
+          request.resource.data.reactions
+        ) &&
         resource.data.game_id is string &&
         exists(/databases/$(database)/documents/games/$(resource.data.game_id)) &&
         ((get(/databases/$(database)/documents/confirmations/$(resource.data.game_id + '_' + userId())) != null &&
@@ -4302,7 +4368,7 @@ service cloud.firestore {
           'updated_at'
         ]) &&
         request.resource.data.game_id == gameId &&
-        request.resource.data.reactions is map &&
+        isValidInitialReactionMap(request.resource.data.reactions) &&
         request.resource.data.updated_at == request.time &&
         exists(/databases/$(database)/documents/games/$(gameId)) &&
         get(/databases/$(database)/documents/games/$(gameId)).data.status == 'FINISHED' &&
@@ -4315,7 +4381,10 @@ service cloud.firestore {
         onlyAllowedFields(['reactions', 'updated_at']) &&
         request.resource.data.game_id == resource.data.game_id &&
         resource.data.game_id == gameId &&
-        request.resource.data.reactions is map &&
+        isOwnReactionOnlyChange(
+          resource.data.reactions,
+          request.resource.data.reactions
+        ) &&
         request.resource.data.updated_at == request.time &&
         exists(/databases/$(database)/documents/games/$(gameId)) &&
         ((get(/databases/$(database)/documents/confirmations/$(gameId + '_' + userId())) != null &&
