@@ -406,34 +406,45 @@ private fun CommentCard(
                         enabled = !reacting
                     )
 
+                    val replyCommentDescription = stringResource(R.string.game_comment_reply)
+                    val editCommentDescription = stringResource(R.string.game_comment_edit)
+                    val deleteCommentDescription = stringResource(R.string.game_comment_delete)
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         if (canWrite) {
                             IconButton(
                                 onClick = onReply,
-                                modifier = Modifier
-                                    .size(36.dp)
-                                    .semantics { contentDescription = "Responder comentário" }
+                                modifier = Modifier.semantics {
+                                    contentDescription = replyCommentDescription
+                                }
                             ) {
-                                Icon(Icons.AutoMirrored.Filled.Reply, contentDescription = null)
+                                Icon(
+                                    Icons.AutoMirrored.Filled.Reply,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(20.dp)
+                                )
                             }
                         }
                         if (isOwn) {
                             IconButton(
                                 onClick = { editing = true },
-                                modifier = Modifier
-                                    .size(36.dp)
-                                    .semantics { contentDescription = "Editar comentário" }
+                                modifier = Modifier.semantics {
+                                    contentDescription = editCommentDescription
+                                }
                             ) {
-                                Icon(Icons.Filled.Edit, contentDescription = null)
+                                Icon(
+                                    Icons.Filled.Edit,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(20.dp)
+                                )
                             }
                         }
                         if (isOwn || canManage) {
                             IconButton(
                                 onClick = onDelete,
                                 enabled = !deleting,
-                                modifier = Modifier
-                                    .size(36.dp)
-                                    .semantics { contentDescription = "Apagar comentário" }
+                                modifier = Modifier.semantics {
+                                    contentDescription = deleteCommentDescription
+                                }
                             ) {
                                 if (deleting) {
                                     CircularProgressIndicator(
@@ -441,7 +452,11 @@ private fun CommentCard(
                                         strokeWidth = 1.dp
                                     )
                                 } else {
-                                    Icon(Icons.Filled.DeleteOutline, contentDescription = null)
+                                    Icon(
+                                        Icons.Filled.DeleteOutline,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(20.dp)
+                                    )
                                 }
                             }
                         }

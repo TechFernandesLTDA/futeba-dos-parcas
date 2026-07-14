@@ -1217,4 +1217,22 @@ até existir uma tela nativa autoritativa dedicada.
 
 ---
 
+## 2026-07-14 — Caixa do Grupo é o título financeiro canônico (#3637)
+
+**Contexto:** A mesma superfície financeira era intitulada "Caixinha do Grupo"
+no Android e "Caixa do Grupo" no Web, enquanto outras strings Android também já
+usavam a segunda forma.
+
+**Decisão:** Usar "Caixa do Grupo" como título canônico PT-BR. Inglês e espanhol
+recebem equivalentes naturais (`Group Cashbox` e `Caja del grupo`). A decisão
+altera somente a copy apresentada; nomes de coleção, modelos, rotas e payloads
+permanecem inalterados.
+
+**Consequências:** Android e Web exibem o mesmo título em PT-BR e os três locales
+Android deixam de depender do fallback em português para essa tela.
+
+**Relacionado:** `specs/BUGFIX_2026-07-14_android-accessibility-copy.md`, #3637.
+
+---
+
 <!-- Adicione novas decisões acima desta linha -->

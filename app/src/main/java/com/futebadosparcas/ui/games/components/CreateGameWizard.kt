@@ -5,6 +5,7 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,6 +28,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.futebadosparcas.ui.games.CreateGameStep
@@ -54,10 +59,10 @@ fun WizardStepIndicator(
         steps.forEachIndexed { index, step ->
             val isCompleted = step.index < currentStep.index
             val isCurrent = step.index == currentStep.index
-            val isPending = step.index > currentStep.index
 
             StepCircle(
                 stepNumber = index + 1,
+                stepLabel = stringResource(step.titleResId),
                 isCompleted = isCompleted,
                 isCurrent = isCurrent,
                 onClick = { onStepClick(step) }
@@ -76,11 +81,21 @@ fun WizardStepIndicator(
 @Composable
 private fun StepCircle(
     stepNumber: Int,
+    stepLabel: String,
     isCompleted: Boolean,
     isCurrent: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val status = stringResource(
+        when {
+            isCompleted -> R.string.create_game_step_status_completed
+            isCurrent -> R.string.create_game_step_status_current
+            else -> R.string.create_game_step_status_pending
+        }
+    )
+    val description = stringResource(R.string.create_game_step_description, stepNumber, stepLabel)
+    val actionLabel = stringResource(R.string.create_game_step_action, stepLabel)
     val backgroundColor = when {
         isCompleted -> MaterialTheme.colorScheme.primary
         isCurrent -> MaterialTheme.colorScheme.primaryContainer
@@ -95,25 +110,41 @@ private fun StepCircle(
 
     Box(
         modifier = modifier
-            .size(36.dp)
+            .size(48.dp)
             .clip(CircleShape)
-            .background(backgroundColor),
+            .clickable(
+                role = Role.Button,
+                onClickLabel = actionLabel,
+                onClick = onClick
+            )
+            .semantics(mergeDescendants = true) {
+                contentDescription = description
+                stateDescription = status
+            },
         contentAlignment = Alignment.Center
     ) {
-        if (isCompleted) {
-            Icon(
-                imageVector = Icons.Default.Check,
-                contentDescription = null,
-                tint = contentColor,
-                modifier = Modifier.size(20.dp)
-            )
-        } else {
-            Text(
-                text = stepNumber.toString(),
-                style = MaterialTheme.typography.labelLarge,
-                color = contentColor,
-                fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Normal
-            )
+        Box(
+            modifier = Modifier
+                .size(36.dp)
+                .clip(CircleShape)
+                .background(backgroundColor),
+            contentAlignment = Alignment.Center
+        ) {
+            if (isCompleted) {
+                Icon(
+                    imageVector = Icons.Default.Check,
+                    contentDescription = null,
+                    tint = contentColor,
+                    modifier = Modifier.size(20.dp)
+                )
+            } else {
+                Text(
+                    text = stepNumber.toString(),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = contentColor,
+                    fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Normal
+                )
+            }
         }
     }
 }

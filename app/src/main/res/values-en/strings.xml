@@ -540,4 +540,19 @@
     <string name="user_card_menu_promote_admin">Promote to Admin</string>
     <string name="user_card_menu_demote_member">Demote to Member</string>
     <string name="user_card_menu_remove_group">Remove from Group</string>
+    <string name="cashbox_group_title">Group Cashbox</string>
+    <string name="ranking_list_empty">No ranking data available</string>
+    <string name="game_comment_reply">Reply to comment</string>
+    <string name="game_comment_edit">Edit comment</string>
+    <string name="game_comment_delete">Delete comment</string>
+    <string name="create_game_step_location">Location</string>
+    <string name="create_game_step_details">Details</string>
+    <string name="create_game_step_datetime">Date and time</string>
+    <string name="create_game_step_confirmation">Confirm</string>
+    <string name="create_game_step_status_completed">Completed</string>
+    <string name="create_game_step_status_current">Current</string>
+    <string name="create_game_step_status_pending">Pending</string>
+    <string name="create_game_step_description">Step %1$d: %2$s</string>
+    <string name="create_game_step_action">Go to the %1$s step</string>
+    <string name="hub_open_profile">Open %1$s’s profile</string>
 </resources>

@@ -2283,7 +2283,7 @@ subir no ranking!</string>
     <string name="cashbox_no_movement">Não há movimentações registradas no caixa</string>
     <string name="cashbox_add_first">Adicione sua primeira entrada ou saída para começar</string>
     <string name="cashbox_no_movements">Nenhuma movimentação ainda</string>
-    <string name="cashbox_group_title">Caixinha do Grupo</string>
+    <string name="cashbox_group_title">Caixa do Grupo</string>
     <string name="cashbox_income_short">Rec</string>
     <string name="cashbox_expense_short">Desp</string>
     <string name="cashbox_reports">Relatórios</string>
@@ -4724,5 +4724,17 @@ subir no ranking!</string>
     <string name="direct_messages_empty_conversation_title">Comece a conversa</string>
     <string name="direct_messages_empty_conversation_desc">Envie a primeira mensagem para combinar o próximo jogo.</string>
     <string name="direct_messages_deleted">Mensagem excluída</string>
+
+    <!-- #3630/#3631/#3634/#3636/#3637: acessibilidade e copy canônica -->
+    <string name="ranking_list_empty">Nenhum dado de ranking disponível</string>
+    <string name="game_comment_reply">Responder comentário</string>
+    <string name="game_comment_edit">Editar comentário</string>
+    <string name="game_comment_delete">Apagar comentário</string>
+    <string name="create_game_step_status_completed">Concluído</string>
+    <string name="create_game_step_status_current">Atual</string>
+    <string name="create_game_step_status_pending">Pendente</string>
+    <string name="create_game_step_description">Passo %1$d: %2$s</string>
+    <string name="create_game_step_action">Ir para o passo %1$s</string>
+    <string name="hub_open_profile">Abrir perfil de %1$s</string>
 
 </resources>

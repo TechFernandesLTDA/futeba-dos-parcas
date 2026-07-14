@@ -4,6 +4,7 @@ import android.content.Intent
 import android.provider.CalendarContract
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.futebadosparcas.R
 import com.futebadosparcas.domain.model.Field
 import com.futebadosparcas.domain.model.Game
 import com.futebadosparcas.data.model.GameDraft
@@ -52,10 +53,10 @@ import com.futebadosparcas.util.toKmpGameTemplate
  * Passos do wizard de criacao de jogo.
  */
 enum class CreateGameStep(val index: Int, val titleResId: Int) {
-    LOCATION(0, 0),    // Local e Quadra
-    DETAILS(1, 0),     // Informacoes Basicas
-    DATETIME(2, 0),    // Data e Horario
-    CONFIRMATION(3, 0) // Confirmacao
+    LOCATION(0, R.string.create_game_step_location),
+    DETAILS(1, R.string.create_game_step_details),
+    DATETIME(2, R.string.create_game_step_datetime),
+    CONFIRMATION(3, R.string.create_game_step_confirmation)
 }
 
 class CreateGameViewModel(

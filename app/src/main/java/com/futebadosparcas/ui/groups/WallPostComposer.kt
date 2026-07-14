@@ -301,12 +301,12 @@ private fun SelectedWallMediaPreview(
 
         IconButton(
             onClick = onRemove,
-            enabled = removeEnabled,
-            modifier = Modifier.size(36.dp)
+            enabled = removeEnabled
         ) {
             Icon(
                 imageVector = Icons.Default.Close,
-                contentDescription = stringResource(R.string.group_wall_remove_media)
+                contentDescription = stringResource(R.string.group_wall_remove_media),
+                modifier = Modifier.size(20.dp)
             )
         }
     }
