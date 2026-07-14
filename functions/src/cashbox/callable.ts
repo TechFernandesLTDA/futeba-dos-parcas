@@ -554,6 +554,8 @@ export const voidCashboxEntry = functions.https.onCall<VoidCashboxEntryData>({
         nextPayerStatus: "PENDING" | "PARTIAL" | "PAID";
         nextReceivedCents: number;
         nextOpenCents: number;
+        nextSettlementCount: number;
+        nextPeriodStatus: "DRAFT" | "FINALIZED";
         nextPaymentCount: number;
         clearLastPayment: boolean;
         previousPaymentEntryId: string | null;
@@ -648,10 +650,26 @@ export const voidCashboxEntry = functions.https.onCall<VoidCashboxEntryData>({
           );
         }
 
+        const activeSettlementsQuery = periodRef.collection("settlements")
+          .where("status", "==", "ACTIVE")
+          .limit(2);
+        const activeSettlements = await tx.get(activeSettlementsQuery);
+        const hasOtherActiveSettlement = activeSettlements.docs.some((doc) =>
+          doc.id !== requestId && doc.data()?.status === "ACTIVE"
+        );
+
         const nextPaidCents = paidCents - amountCents;
         const nextOutstandingCents = expectedCents - nextPaidCents;
         const nextPayerStatus = nextPaidCents === 0 ? "PENDING" :
           nextPaidCents < expectedCents ? "PARTIAL" : "PAID";
+        const nextReceivedCents = receivedCents - amountCents;
+        const nextSettlementCount = Math.max(
+          0,
+          Number.isSafeInteger(period.settlement_count) ?
+            (period.settlement_count as number) - 1 : 0
+        );
+        const nextPeriodStatus = nextReceivedCents === 0 &&
+          !hasOtherActiveSettlement ? "DRAFT" : "FINALIZED";
         const clearLastPayment = payer.last_payment_entry_id === entryId;
         let previousPaymentEntryId: string | null = null;
         let previousPaymentSequence: number | null = null;
@@ -690,8 +708,10 @@ export const voidCashboxEntry = functions.https.onCall<VoidCashboxEntryData>({
           nextPaidCents,
           nextOutstandingCents,
           nextPayerStatus,
-          nextReceivedCents: receivedCents - amountCents,
+          nextReceivedCents,
           nextOpenCents: openCents + amountCents,
+          nextSettlementCount,
+          nextPeriodStatus,
           nextPaymentCount: Math.max(
             0,
             Number.isSafeInteger(payer.payment_count) ?
@@ -734,11 +754,16 @@ export const voidCashboxEntry = functions.https.onCall<VoidCashboxEntryData>({
           updated_at: FieldValue.serverTimestamp(),
         });
         tx.update(monthlyReversal.periodRef, {
-          status: "FINALIZED",
+          status: monthlyReversal.nextPeriodStatus,
           received_cents: monthlyReversal.nextReceivedCents,
           open_cents: monthlyReversal.nextOpenCents,
+          settlement_count: monthlyReversal.nextSettlementCount,
           closed_by: FieldValue.delete(),
           closed_at: FieldValue.delete(),
+          ...(monthlyReversal.nextPeriodStatus === "DRAFT" ? {
+            finalized_by: FieldValue.delete(),
+            finalized_at: FieldValue.delete(),
+          } : {}),
           reopened_by: userId,
           reopened_at: FieldValue.serverTimestamp(),
           last_void_entry_id: entryId,
@@ -750,7 +775,7 @@ export const voidCashboxEntry = functions.https.onCall<VoidCashboxEntryData>({
           paid_cents_after_void: monthlyReversal.nextPaidCents,
           outstanding_cents_after_void:
             monthlyReversal.nextOutstandingCents,
-          period_status_after_void: "FINALIZED",
+          period_status_after_void: monthlyReversal.nextPeriodStatus,
           voided_by: userId,
           voided_at: FieldValue.serverTimestamp(),
         });
