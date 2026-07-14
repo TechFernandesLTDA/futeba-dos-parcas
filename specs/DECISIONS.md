@@ -1046,4 +1046,25 @@ os aliases legados.
 
 ---
 
+## 2026-07-13 — Labels traduzidos não alteram enums canônicos de perfil e grupo (#3614/#3616)
+
+**Contexto:** Categorias de grupos oficiais e preferências de campo/posição são
+persistidas como enums canônicos, mas algumas telas exibiam labels PT-BR vindas
+diretamente de constantes ou literais. Traduzir o valor persistido quebraria
+consultas e compatibilidade entre clientes.
+
+**Decisão:** Manter `OfficialGroupCategory`, `preferred_position` e
+`preferred_field_types` inalterados e resolver somente seus labels no limite da
+UI via i18next. A descoberta usa as chaves canônicas das categorias como sufixo
+de tradução; o onboarding traduz labels sem modificar os valores enviados.
+
+**Consequências:** Trocar o locale muda apenas apresentação e acessibilidade.
+Firestore, Functions, Rules e clientes mobile continuam recebendo os mesmos
+enums. Novas categorias precisam adicionar a mesma chave aos três catálogos.
+
+**Relacionado:** `specs/BUGFIX_2026-07-13_web-discovery-profile-i18n.md`,
+#3614, #3616.
+
+---
+
 <!-- Adicione novas decisões acima desta linha -->

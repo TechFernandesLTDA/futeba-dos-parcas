@@ -1849,6 +1849,17 @@
     "invitePlayers": "Invite Players",
     "matchmaking": {
       "activeCommunity": "Active community",
+      "allCategories": "All",
+      "categories": {
+        "DIA_SEMANA": "Day of the Week",
+        "FAIXA_ETARIA": "Age Range",
+        "GENERO": "Gender",
+        "REGIAO": "Region",
+        "TIPO_CAMPO": "Field Type"
+      },
+      "emptyOfficial": "No official groups available",
+      "emptySearch": "No groups found",
+      "errorLoading": "Could not load groups.",
       "hero": "Group matchmaking: find a compatible crew by region and schedule, review the group profile, and join through a guided entry.",
       "joinGuided": "Guided join",
       "member": "Member",
@@ -2394,6 +2405,17 @@
     "resendSmsCountdown": "Resend in {{seconds}}s",
     "sendSmsCode": "Send code by SMS",
     "sendingSms": "Sending...",
+    "profileSetup": {
+      "fieldTypes": {
+        "field": "Grass Field",
+        "futsal": "Futsal",
+        "society": "Society"
+      },
+      "nameLabel": "Your name",
+      "nameVisibilityHint": "Your name will be shown to other players in games and groups.",
+      "nicknameLabel": "Nickname",
+      "preferredFieldTypesLabel": "Preferred Field Types"
+    },
     "setupProfile": "Set Up Profile",
     "smsCodeAria": "SMS code",
     "smsCodeLabel": "SMS code",
