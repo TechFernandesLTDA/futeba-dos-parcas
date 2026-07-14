@@ -17,6 +17,10 @@ package com.futebadosparcas.platform.storage
  * val token = storage.get("auth_token")
  * storage.delete("auth_token")
  * ```
+ *
+ * Falhas da plataforma sao propagadas como [SecureStorageException]. Uma chave
+ * inexistente nao e uma falha: `get` retorna `null`, `contains` retorna `false`
+ * e `delete`/`clear` concluem normalmente.
  */
 expect class SecureStorage() {
     /**
@@ -56,3 +60,20 @@ expect class SecureStorage() {
      */
     fun contains(key: String): Boolean
 }
+
+/**
+ * Falha do mecanismo seguro da plataforma.
+ *
+ * A mensagem inclui somente a operacao e o codigo nativo, quando disponivel.
+ * Chaves e valores nunca sao anexados para evitar vazamento de dados sensiveis.
+ */
+class SecureStorageException(
+    val operation: String,
+    val errorCode: Long? = null,
+) : RuntimeException(
+    if (errorCode == null) {
+        "Secure storage operation failed: $operation"
+    } else {
+        "Secure storage operation failed: $operation (code $errorCode)"
+    },
+)

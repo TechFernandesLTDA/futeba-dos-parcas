@@ -33,20 +33,38 @@ actual class SecureStorage actual constructor() {
     }
 
     actual fun save(key: String, value: String) {
-        // Deletar item existente antes de salvar (Keychain nao faz update, precisa delete+add)
-        delete(key)
+        val valueData = (value as NSString).dataUsingEncoding(NSUTF8StringEncoding)
+            ?: throw SecureStorageException(operation = "encode")
 
-        val valueData = (value as NSString).dataUsingEncoding(NSUTF8StringEncoding) ?: return
-
-        val query = mapOf<Any?, Any?>(
+        val identityQuery = mapOf<Any?, Any?>(
             kSecClass to kSecClassGenericPassword,
             kSecAttrService to SERVICE_NAME,
-            kSecAttrAccount to key,
+            kSecAttrAccount to key
+        )
+        val addQuery = identityQuery + mapOf<Any?, Any?>(
+            kSecAttrAccessible to kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly,
             kSecValueData to valueData
         )
 
         @Suppress("UNCHECKED_CAST")
-        SecItemAdd(query as CFDictionaryRef, null)
+        val addStatus = SecItemAdd(addQuery as CFDictionaryRef, null)
+        when (addStatus) {
+            errSecSuccess -> return
+            errSecDuplicateItem -> {
+                val updateAttributes = mapOf<Any?, Any?>(
+                    kSecAttrAccessible to kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly,
+                    kSecValueData to valueData
+                )
+
+                @Suppress("UNCHECKED_CAST")
+                val updateStatus = SecItemUpdate(
+                    identityQuery as CFDictionaryRef,
+                    updateAttributes as CFDictionaryRef
+                )
+                requireKeychainSuccess(operation = "update", status = updateStatus)
+            }
+            else -> failKeychainOperation(operation = "add", status = addStatus)
+        }
     }
 
     actual fun get(key: String): String? {
@@ -66,11 +84,15 @@ actual class SecureStorage actual constructor() {
             @Suppress("UNCHECKED_CAST")
             val status = SecItemCopyMatching(query as CFDictionaryRef, result.ptr)
 
-            if (status == errSecSuccess) {
-                val data = result.value as? NSData ?: return@memScoped null
-                NSString.create(data = data, encoding = NSUTF8StringEncoding) as? String
-            } else {
-                null
+            when (status) {
+                errSecSuccess -> {
+                    val data = result.value as? NSData
+                        ?: throw SecureStorageException(operation = "read-result")
+                    NSString.create(data = data, encoding = NSUTF8StringEncoding) as? String
+                        ?: throw SecureStorageException(operation = "decode")
+                }
+                errSecItemNotFound -> null
+                else -> failKeychainOperation(operation = "read", status = status)
             }
         }
     }
@@ -83,7 +105,12 @@ actual class SecureStorage actual constructor() {
         )
 
         @Suppress("UNCHECKED_CAST")
-        SecItemDelete(query as CFDictionaryRef)
+        val status = SecItemDelete(query as CFDictionaryRef)
+        requireKeychainSuccess(
+            operation = "delete",
+            status = status,
+            itemNotFoundIsSuccess = true
+        )
     }
 
     actual fun clear() {
@@ -93,7 +120,12 @@ actual class SecureStorage actual constructor() {
         )
 
         @Suppress("UNCHECKED_CAST")
-        SecItemDelete(query as CFDictionaryRef)
+        val status = SecItemDelete(query as CFDictionaryRef)
+        requireKeychainSuccess(
+            operation = "clear",
+            status = status,
+            itemNotFoundIsSuccess = true
+        )
     }
 
     actual fun contains(key: String): Boolean {
@@ -106,6 +138,27 @@ actual class SecureStorage actual constructor() {
 
         @Suppress("UNCHECKED_CAST")
         val status = SecItemCopyMatching(query as CFDictionaryRef, null)
-        return status == errSecSuccess
+        return when (status) {
+            errSecSuccess -> true
+            errSecItemNotFound -> false
+            else -> failKeychainOperation(operation = "contains", status = status)
+        }
     }
+}
+
+internal fun requireKeychainSuccess(
+    operation: String,
+    status: Int,
+    itemNotFoundIsSuccess: Boolean = false,
+) {
+    if (status == errSecSuccess || (itemNotFoundIsSuccess && status == errSecItemNotFound)) {
+        return
+    }
+    failKeychainOperation(operation = operation, status = status)
+}
+
+internal fun failKeychainOperation(operation: String, status: Int): Nothing {
+    // Deliberadamente nao inclui key/value. O codigo e suficiente para diagnostico.
+    println("SecureStorage Keychain failure: operation=$operation status=$status")
+    throw SecureStorageException(operation = operation, errorCode = status.toLong())
 }

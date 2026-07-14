@@ -976,4 +976,30 @@ contraditórios já armazenados.
 
 ---
 
+## 2026-07-13 — SecureStorage iOS usa AfterFirstUnlockThisDeviceOnly sem access group (#3609)
+
+**Contexto:** O wrapper KMP do Keychain descartava `OSStatus`, usava
+delete+add e deixava a acessibilidade no default `WhenUnlocked`. O projeto nao
+possui arquivo `.entitlements`, `CODE_SIGN_ENTITLEMENTS` ou requisito de
+compartilhamento de credenciais entre apps.
+
+**Decisao:** Novos itens e updates usam
+`kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly`. Falhas diferentes de item
+ausente sao propagadas com operacao e codigo, sem chave/valor. O app continua
+no Keychain padrao do bundle, sem adicionar `keychain-access-groups`.
+
+**Justificativa:** O modo escolhido permite leitura em background depois do
+primeiro desbloqueio e impede que tokens/credenciais sejam restaurados em outro
+aparelho. Inventar um access group sem provisioning correspondente criaria o
+proprio `errSecMissingEntitlement` que a correcao precisa diagnosticar.
+
+**Consequencias:** Migracao para outro aparelho exige reautenticacao. Um access
+group futuro deve ser introduzido junto com entitlement, App ID/provisioning e
+validacao em device assinado.
+
+**Relacionado:** specs/BUGFIX_2026-07-13_IOS_SECURE_STORAGE_KEYCHAIN_3609.md,
+#3609.
+
+---
+
 <!-- Adicione novas decisões acima desta linha -->
