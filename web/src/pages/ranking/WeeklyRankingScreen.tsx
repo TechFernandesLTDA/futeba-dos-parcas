@@ -5,6 +5,7 @@ import {
   Avatar,
   Box,
   Card,
+  CardActionArea,
   CardContent,
   Chip,
   IconButton,
@@ -87,13 +88,21 @@ export const WeeklyRankingScreen: React.FC = () => {
                 borderLeft: index < 3 ? `3px solid ${theme.palette.warning.main}` : "none",
               }}
             >
+              <CardActionArea
+                onClick={() => navigate(`/profile/${player.userId}`)}
+                aria-label={t('ranking.weekly.viewProfile', { name: player.userName })}
+                sx={{
+                  '&.Mui-focusVisible': {
+                    outline: `2px solid ${theme.palette.primary.main}`,
+                    outlineOffset: 2,
+                  },
+                }}
+              >
               <CardContent sx={{ py: 1.5 }}>
                 <Stack
                   direction="row"
                   spacing={2}
                   alignItems="center"
-                  sx={{ cursor: "pointer" }}
-                  onClick={() => navigate(`/profile/${player.userId}`)}
                 >
                   <Box sx={{ width: 36, display: "flex", justifyContent: "center" }}>
                     {index < 3 ? (
@@ -162,6 +171,7 @@ export const WeeklyRankingScreen: React.FC = () => {
                   </Typography>
                 </Stack>
               </CardContent>
+              </CardActionArea>
             </Card>
           ))}
         </Stack>

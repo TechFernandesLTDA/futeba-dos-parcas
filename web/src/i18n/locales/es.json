@@ -2778,7 +2778,8 @@
     "weekly": {
       "empty": "No hay partidos esta semana aún",
       "emptyDesc": "El ranking aparece aquí cuando la semana tenga partidos finalizados.",
-      "title": "Ranking Semanal"
+      "title": "Ranking Semanal",
+      "viewProfile": "Ver el perfil de {{name}}"
     },
     "xpGlobal": "XP Global",
     "xpRanking": "Ranking por XP",
