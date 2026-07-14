@@ -249,15 +249,18 @@ fun GroupMemberCard(
     onDemote: (() -> Unit)? = null,
     onRemove: (() -> Unit)? = null
 ) {
+    val promoteLabel = stringResource(R.string.user_card_menu_promote_admin)
+    val demoteLabel = stringResource(R.string.user_card_menu_demote_member)
+    val removeLabel = stringResource(R.string.user_card_menu_remove_group)
     val menuItems = buildList {
         if (onPromote != null) {
-            add(UserCardMenuItem("Promover a Admin", Icons.Default.ArrowUpward, onClick = onPromote))
+            add(UserCardMenuItem(promoteLabel, Icons.Default.ArrowUpward, onClick = onPromote))
         }
         if (onDemote != null) {
-            add(UserCardMenuItem("Rebaixar para Membro", Icons.Default.ArrowDownward, onClick = onDemote))
+            add(UserCardMenuItem(demoteLabel, Icons.Default.ArrowDownward, onClick = onDemote))
         }
         if (onRemove != null) {
-            add(UserCardMenuItem("Remover do Grupo", Icons.Default.Delete, isDestructive = true, onClick = onRemove))
+            add(UserCardMenuItem(removeLabel, Icons.Default.Delete, isDestructive = true, onClick = onRemove))
         }
     }
 

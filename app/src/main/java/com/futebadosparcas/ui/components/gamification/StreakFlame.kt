@@ -1,5 +1,6 @@
 package com.futebadosparcas.ui.components.gamification
 
+import androidx.annotation.StringRes
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -52,17 +53,17 @@ import kotlin.math.sin
  */
 enum class FlameLevel(
     val minStreak: Int,
-    val displayName: String,
+    @StringRes val displayNameRes: Int,
     val colors: List<Color>,
     val particleCount: Int,
     val intensity: Float
 ) {
-    NONE(0, "Iniciar sequência", listOf(GamificationColors.FlameNone), 0, 0f),
-    WARMING(1, "Esquentando", GamificationColors.Level1, 3, 0.5f),
-    HOT(4, "Em chamas", GamificationColors.Level2, 5, 0.7f),
-    BURNING(7, "Pegando fogo", GamificationColors.Level3, 8, 0.85f),
-    INFERNO(10, "Inferno", GamificationColors.Level4, 12, 1.0f),
-    LEGENDARY(20, "Lendário", GamificationColors.Level5, 15, 1.2f);
+    NONE(0, R.string.streak_level_none, listOf(GamificationColors.FlameNone), 0, 0f),
+    WARMING(1, R.string.streak_level_warming, GamificationColors.Level1, 3, 0.5f),
+    HOT(4, R.string.streak_level_hot, GamificationColors.Level2, 5, 0.7f),
+    BURNING(7, R.string.streak_level_burning, GamificationColors.Level3, 8, 0.85f),
+    INFERNO(10, R.string.streak_level_inferno, GamificationColors.Level4, 12, 1.0f),
+    LEGENDARY(20, R.string.streak_level_legendary, GamificationColors.Level5, 15, 1.2f);
 
     companion object {
         fun fromStreak(streak: Int): FlameLevel {
@@ -155,7 +156,7 @@ fun StreakFlame(
         if (showLabel) {
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = level.displayName,
+                text = stringResource(level.displayNameRes),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -338,7 +339,7 @@ fun StreakBadge(
 
         Column {
             Text(
-                text = "$streak jogos",
+                text = stringResource(R.string.streak_games_count, streak),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
@@ -346,7 +347,7 @@ fun StreakBadge(
 
             if (showDaysLabel) {
                 Text(
-                    text = level.displayName,
+                    text = stringResource(level.displayNameRes),
                     style = MaterialTheme.typography.labelSmall,
                     color = if (level != FlameLevel.NONE) {
                         level.colors.first()
@@ -431,7 +432,10 @@ fun StreakCard(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = stringResource(R.string.streak_next_level, nextLevel.displayName),
+                    text = stringResource(
+                        R.string.streak_next_level,
+                        stringResource(nextLevel.displayNameRes)
+                    ),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -457,7 +461,10 @@ fun StreakCard(
                 }
 
                 Text(
-                    text = "${nextLevel.minStreak - currentStreak} jogos restantes",
+                    text = stringResource(
+                        R.string.streak_games_remaining,
+                        nextLevel.minStreak - currentStreak
+                    ),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -477,7 +484,7 @@ fun StreakCard(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
-                text = "$bestStreak jogos",
+                text = stringResource(R.string.streak_games_count, bestStreak),
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.Bold,
                 color = if (currentStreak >= bestStreak && currentStreak > 0) {
@@ -536,7 +543,7 @@ fun StreakLevelUpAnimation(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = newLevel.displayName,
+                text = stringResource(newLevel.displayNameRes),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 color = newLevel.colors.first()

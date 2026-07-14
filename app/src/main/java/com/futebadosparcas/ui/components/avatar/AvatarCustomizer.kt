@@ -1,5 +1,6 @@
 package com.futebadosparcas.ui.components.avatar
 
+import androidx.annotation.StringRes
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
@@ -95,114 +96,114 @@ data class AvatarConfig(
 /**
  * Tom de pele.
  */
-enum class SkinTone(val color: Color, val label: String) {
-    LIGHT(Color(0xFFFFDBB4), "Claro"),
-    MEDIUM_LIGHT(Color(0xFFEDB98A), "Médio Claro"),
-    MEDIUM(Color(0xFFD08B5B), "Médio"),
-    MEDIUM_DARK(Color(0xFFAE5D29), "Médio Escuro"),
-    DARK(Color(0xFF614335), "Escuro")
+enum class SkinTone(val color: Color, @StringRes val labelRes: Int) {
+    LIGHT(Color(0xFFFFDBB4), R.string.avatar_skin_light),
+    MEDIUM_LIGHT(Color(0xFFEDB98A), R.string.avatar_skin_medium_light),
+    MEDIUM(Color(0xFFD08B5B), R.string.avatar_skin_medium),
+    MEDIUM_DARK(Color(0xFFAE5D29), R.string.avatar_skin_medium_dark),
+    DARK(Color(0xFF614335), R.string.avatar_skin_dark)
 }
 
 /**
  * Estilo de cabelo.
  */
-enum class HairStyle(val label: String, val icon: String) {
-    NONE("Careca", "👨‍🦲"),
-    SHORT("Curto", "👨"),
-    MEDIUM("Médio", "🧑"),
-    LONG("Longo", "🧔"),
-    CURLY("Cacheado", "👨‍🦱"),
-    MOHAWK("Moicano", "🧑‍🎤"),
-    PONYTAIL("Rabo de cavalo", "👩"),
-    BUN("Coque", "👨‍🦰")
+enum class HairStyle(@StringRes val labelRes: Int, val icon: String) {
+    NONE(R.string.avatar_hair_style_none, "👨‍🦲"),
+    SHORT(R.string.avatar_hair_style_short, "👨"),
+    MEDIUM(R.string.avatar_hair_style_medium, "🧑"),
+    LONG(R.string.avatar_hair_style_long, "🧔"),
+    CURLY(R.string.avatar_hair_style_curly, "👨‍🦱"),
+    MOHAWK(R.string.avatar_hair_style_mohawk, "🧑‍🎤"),
+    PONYTAIL(R.string.avatar_hair_style_ponytail, "👩"),
+    BUN(R.string.avatar_hair_style_bun, "👨‍🦰")
 }
 
 /**
  * Cor do cabelo.
  */
-enum class HairColor(val color: Color, val label: String) {
-    BLACK(Color(0xFF1A1A1A), "Preto"),
-    BROWN(Color(0xFF4A3728), "Castanho"),
-    BLONDE(Color(0xFFD4A574), "Loiro"),
-    RED(Color(0xFF8B2500), "Ruivo"),
-    GRAY(Color(0xFF808080), "Grisalho"),
-    WHITE(Color(0xFFE8E8E8), "Branco"),
-    BLUE(Color(0xFF2196F3), "Azul"),
-    GREEN(Color(0xFF4CAF50), "Verde"),
-    PINK(Color(0xFFE91E63), "Rosa")
+enum class HairColor(val color: Color, @StringRes val labelRes: Int) {
+    BLACK(Color(0xFF1A1A1A), R.string.avatar_hair_color_black),
+    BROWN(Color(0xFF4A3728), R.string.avatar_hair_color_brown),
+    BLONDE(Color(0xFFD4A574), R.string.avatar_hair_color_blonde),
+    RED(Color(0xFF8B2500), R.string.avatar_hair_color_red),
+    GRAY(Color(0xFF808080), R.string.avatar_hair_color_gray),
+    WHITE(Color(0xFFE8E8E8), R.string.avatar_hair_color_white),
+    BLUE(Color(0xFF2196F3), R.string.avatar_hair_color_blue),
+    GREEN(Color(0xFF4CAF50), R.string.avatar_hair_color_green),
+    PINK(Color(0xFFE91E63), R.string.avatar_hair_color_pink)
 }
 
 /**
  * Barba/bigode.
  */
-enum class FacialHair(val label: String, val icon: String) {
-    NONE("Nenhum", "😊"),
-    STUBBLE("Barba por fazer", "🧔‍♂️"),
-    BEARD("Barba cheia", "🧔"),
-    GOATEE("Cavanhaque", "🧑"),
-    MUSTACHE("Bigode", "👨")
+enum class FacialHair(@StringRes val labelRes: Int, val icon: String) {
+    NONE(R.string.avatar_facial_hair_none, "😊"),
+    STUBBLE(R.string.avatar_facial_hair_stubble, "🧔‍♂️"),
+    BEARD(R.string.avatar_facial_hair_beard, "🧔"),
+    GOATEE(R.string.avatar_facial_hair_goatee, "🧑"),
+    MUSTACHE(R.string.avatar_facial_hair_mustache, "👨")
 }
 
 /**
  * Óculos/acessórios.
  */
-enum class Glasses(val label: String, val icon: String) {
-    NONE("Nenhum", "😊"),
-    REGULAR("Normal", "🤓"),
-    SUNGLASSES("Óculos de sol", "😎"),
-    SPORT("Esportivo", "🥽")
+enum class Glasses(@StringRes val labelRes: Int, val icon: String) {
+    NONE(R.string.avatar_glasses_none, "😊"),
+    REGULAR(R.string.avatar_glasses_regular, "🤓"),
+    SUNGLASSES(R.string.avatar_glasses_sunglasses, "😎"),
+    SPORT(R.string.avatar_glasses_sport, "🥽")
 }
 
 /**
  * Expressão facial.
  */
-enum class Expression(val label: String, val icon: String) {
-    HAPPY("Feliz", "😊"),
-    SERIOUS("Sério", "😐"),
-    COOL("Descolado", "😎"),
-    EXCITED("Empolgado", "😄"),
-    FOCUSED("Focado", "🧐")
+enum class Expression(@StringRes val labelRes: Int, val icon: String) {
+    HAPPY(R.string.avatar_expression_happy, "😊"),
+    SERIOUS(R.string.avatar_expression_serious, "😐"),
+    COOL(R.string.avatar_expression_cool, "😎"),
+    EXCITED(R.string.avatar_expression_excited, "😄"),
+    FOCUSED(R.string.avatar_expression_focused, "🧐")
 }
 
 /**
  * Badge especial do avatar.
  */
 enum class AvatarBadge(
-    val label: String,
+    @StringRes val labelRes: Int,
     val icon: String,
     val color: Color,
-    val requirement: String,
+    @StringRes val requirementRes: Int,
     val isLocked: Boolean = true
 ) {
-    MVP("MVP", "⭐", Color(0xFFFFD700), "Seja MVP 5x", false),
-    CAPTAIN("Capitão", "©️", Color(0xFFE91E63), "Seja capitão 10x"),
-    VETERAN("Veterano", "🎖️", Color(0xFF9C27B0), "Jogue 50 partidas", false),
-    CHAMPION("Campeão", "🏆", Color(0xFFFF9800), "Vença 25 jogos"),
-    SCORER("Artilheiro", "⚽", Color(0xFF4CAF50), "Marque 100 gols"),
-    ASSIST_KING("Garçom", "🎯", Color(0xFF2196F3), "Dê 50 assistências"),
-    IRON_MAN("Homem de Ferro", "💪", Color(0xFF607D8B), "10 jogos seguidos"),
-    LEGENDARY("Lendário", "👑", Color(0xFFAB47BC), "Atinja nível 20")
+    MVP(R.string.avatar_badge_mvp, "⭐", Color(0xFFFFD700), R.string.avatar_badge_requirement_mvp, false),
+    CAPTAIN(R.string.avatar_badge_captain, "©️", Color(0xFFE91E63), R.string.avatar_badge_requirement_captain),
+    VETERAN(R.string.avatar_badge_veteran, "🎖️", Color(0xFF9C27B0), R.string.avatar_badge_requirement_veteran, false),
+    CHAMPION(R.string.avatar_badge_champion, "🏆", Color(0xFFFF9800), R.string.avatar_badge_requirement_champion),
+    SCORER(R.string.avatar_badge_scorer, "⚽", Color(0xFF4CAF50), R.string.avatar_badge_requirement_scorer),
+    ASSIST_KING(R.string.avatar_badge_assist_king, "🎯", Color(0xFF2196F3), R.string.avatar_badge_requirement_assist_king),
+    IRON_MAN(R.string.avatar_badge_iron_man, "💪", Color(0xFF607D8B), R.string.avatar_badge_requirement_iron_man),
+    LEGENDARY(R.string.avatar_badge_legendary, "👑", Color(0xFFAB47BC), R.string.avatar_badge_requirement_legendary)
 }
 
 /**
  * Moldura do avatar.
  */
 enum class AvatarFrame(
-    val label: String,
+    @StringRes val labelRes: Int,
     val colors: List<Color>,
-    val requirement: String,
+    @StringRes val requirementRes: Int?,
     val isLocked: Boolean = true
 ) {
-    NONE("Nenhuma", listOf(Color.Transparent), "", false),
-    BRONZE("Bronze", listOf(Color(0xFFCD7F32)), "Nível 5", false),
-    SILVER("Prata", listOf(Color(0xFFC0C0C0)), "Nível 10", false),
-    GOLD("Ouro", listOf(Color(0xFFFFD700)), "Nível 15"),
-    DIAMOND("Diamante", listOf(Color(0xFFB9F2FF), Color(0xFF87CEEB)), "Nível 20"),
-    RAINBOW("Arco-íris", listOf(
+    NONE(R.string.avatar_frame_none, listOf(Color.Transparent), null, false),
+    BRONZE(R.string.avatar_frame_bronze, listOf(Color(0xFFCD7F32)), R.string.avatar_frame_requirement_level_5, false),
+    SILVER(R.string.avatar_frame_silver, listOf(Color(0xFFC0C0C0)), R.string.avatar_frame_requirement_level_10, false),
+    GOLD(R.string.avatar_frame_gold, listOf(Color(0xFFFFD700)), R.string.avatar_frame_requirement_level_15),
+    DIAMOND(R.string.avatar_frame_diamond, listOf(Color(0xFFB9F2FF), Color(0xFF87CEEB)), R.string.avatar_frame_requirement_level_20),
+    RAINBOW(R.string.avatar_frame_rainbow, listOf(
         Color(0xFFFF0000), Color(0xFFFF7F00), Color(0xFFFFFF00),
         Color(0xFF00FF00), Color(0xFF0000FF), Color(0xFF8B00FF)
-    ), "Seja MVP 10x"),
-    FIRE("Fogo", listOf(Color(0xFFFF6B35), Color(0xFFFF3D00)), "Streak de 15 jogos")
+    ), R.string.avatar_frame_requirement_mvp),
+    FIRE(R.string.avatar_frame_fire, listOf(Color(0xFFFF6B35), Color(0xFFFF3D00)), R.string.avatar_frame_requirement_streak)
 }
 
 // ==================== Avatar Display ====================
@@ -682,7 +683,7 @@ private fun FaceCustomizer(
             SkinTone.entries.forEach { skinTone ->
                 ColorOption(
                     color = skinTone.color,
-                    label = skinTone.label,
+                    label = stringResource(skinTone.labelRes),
                     isSelected = config.skinTone == skinTone,
                     onClick = { onConfigChange(config.copy(skinTone = skinTone)) }
                 )
@@ -703,7 +704,7 @@ private fun FaceCustomizer(
             items(Expression.entries, key = { it.name }) { expression ->
                 EmojiOption(
                     emoji = expression.icon,
-                    label = expression.label,
+                    label = stringResource(expression.labelRes),
                     isSelected = config.expression == expression,
                     onClick = { onConfigChange(config.copy(expression = expression)) }
                 )
@@ -737,7 +738,7 @@ private fun HairCustomizer(
             HairStyle.entries.forEach { style ->
                 EmojiOption(
                     emoji = style.icon,
-                    label = style.label,
+                    label = stringResource(style.labelRes),
                     isSelected = config.hairStyle == style,
                     onClick = { onConfigChange(config.copy(hairStyle = style)) }
                 )
@@ -761,7 +762,7 @@ private fun HairCustomizer(
             HairColor.entries.forEach { color ->
                 ColorOption(
                     color = color.color,
-                    label = color.label,
+                    label = stringResource(color.labelRes),
                     isSelected = config.hairColor == color,
                     onClick = { onConfigChange(config.copy(hairColor = color)) }
                 )
@@ -795,7 +796,7 @@ private fun AccessoriesCustomizer(
             Glasses.entries.forEach { glasses ->
                 EmojiOption(
                     emoji = glasses.icon,
-                    label = glasses.label,
+                    label = stringResource(glasses.labelRes),
                     isSelected = config.glasses == glasses,
                     onClick = { onConfigChange(config.copy(glasses = glasses)) }
                 )
@@ -819,7 +820,7 @@ private fun AccessoriesCustomizer(
             FacialHair.entries.forEach { facial ->
                 EmojiOption(
                     emoji = facial.icon,
-                    label = facial.label,
+                    label = stringResource(facial.labelRes),
                     isSelected = config.facialHair == facial,
                     onClick = { onConfigChange(config.copy(facialHair = facial)) }
                 )
@@ -1120,7 +1121,7 @@ private fun FrameOption(
             Spacer(modifier = Modifier.height(4.dp))
 
             Text(
-                text = frame.label,
+                text = stringResource(frame.labelRes),
                 style = MaterialTheme.typography.labelSmall,
                 color = if (!isUnlocked) {
                     MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
@@ -1168,7 +1169,7 @@ private fun BadgeOption(
             }
 
             Text(
-                text = badge.label,
+                text = stringResource(badge.labelRes),
                 style = MaterialTheme.typography.labelSmall,
                 color = if (!isUnlocked) {
                     MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)

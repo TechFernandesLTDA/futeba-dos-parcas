@@ -1,5 +1,6 @@
 package com.futebadosparcas.ui.statistics
 
+import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -94,72 +95,72 @@ data class PlayerStats(
  * Categoria de estatística para comparação.
  */
 enum class ComparisonCategory(
-    val displayName: String,
-    val shortName: String,
+    @StringRes val displayNameRes: Int,
+    @StringRes val shortNameRes: Int,
     val iconRes: Int,
     val getValue: (PlayerStats) -> Number,
     val formatValue: (Number) -> String = { it.toString() }
 ) {
     GAMES(
-        "Jogos",
-        "Jogos",
+        R.string.comparison_category_games,
+        R.string.comparison_category_games_short,
         R.drawable.ic_sports_soccer,
         { it.gamesPlayed }
     ),
     WINS(
-        "Vitórias",
-        "Vit.",
+        R.string.comparison_category_wins,
+        R.string.comparison_category_wins_short,
         R.drawable.ic_star,
         { it.wins }
     ),
     WIN_RATE(
-        "Taxa de Vitória",
-        "Win%",
+        R.string.comparison_category_win_rate,
+        R.string.comparison_category_win_rate_short,
         R.drawable.ic_bar_chart,
         { it.winRate },
         { "${(it.toFloat() * 100).toInt()}%" }
     ),
     GOALS(
-        "Gols",
-        "Gols",
+        R.string.comparison_category_goals,
+        R.string.comparison_category_goals_short,
         R.drawable.ic_football,
         { it.goals }
     ),
     GOALS_PER_GAME(
-        "Gols/Jogo",
-        "G/J",
+        R.string.comparison_category_goals_per_game,
+        R.string.comparison_category_goals_per_game_short,
         R.drawable.ic_football,
         { it.goalsPerGame },
         { String.format(Locale.getDefault(), "%.1f", it.toFloat()) }
     ),
     ASSISTS(
-        "Assistências",
-        "Assist.",
+        R.string.comparison_category_assists,
+        R.string.comparison_category_assists_short,
         R.drawable.ic_assist,
         { it.assists }
     ),
     ASSISTS_PER_GAME(
-        "Assist./Jogo",
-        "A/J",
+        R.string.comparison_category_assists_per_game,
+        R.string.comparison_category_assists_per_game_short,
         R.drawable.ic_assist,
         { it.assistsPerGame },
         { String.format(Locale.getDefault(), "%.1f", it.toFloat()) }
     ),
     SAVES(
-        "Defesas",
-        "Def.",
+        R.string.comparison_category_saves,
+        R.string.comparison_category_saves_short,
         R.drawable.ic_save_action,
         { it.saves }
     ),
     MVP(
-        "MVPs",
-        "MVP",
+        R.string.comparison_category_mvp,
+        R.string.comparison_category_mvp_short,
         R.drawable.ic_star,
         { it.mvpCount }
     ),
     STREAK(
-        "Sequência",
-        "Streak",
+        R.string.comparison_category_streak,
+        R.string.comparison_category_streak_short,
         R.drawable.ic_calendar,
         { it.currentStreak }
     )
@@ -232,7 +233,7 @@ fun PlayerVsPlayerCard(
                 )
 
                 Text(
-                    text = "VS",
+                    text = stringResource(R.string.social_comparison_versus),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
@@ -250,7 +251,7 @@ fun PlayerVsPlayerCard(
 
             // Categoria selecionada
             Text(
-                text = selectedCategory.displayName,
+                text = stringResource(selectedCategory.displayNameRes),
                 style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.fillMaxWidth(),
@@ -339,7 +340,7 @@ fun PlayerVsPlayerCard(
                     FilterChip(
                         selected = category == selectedCategory,
                         onClick = { onCategoryChange(category) },
-                        label = { Text(category.shortName) }
+                        label = { Text(stringResource(category.shortNameRes)) }
                     )
                 }
             }
@@ -439,7 +440,7 @@ fun ComparisonLeaderboard(
                 FilterChip(
                     selected = category == selectedCategory,
                     onClick = { onCategoryChange(category) },
-                    label = { Text(category.shortName) }
+                    label = { Text(stringResource(category.shortNameRes)) }
                 )
             }
         }
@@ -615,7 +616,7 @@ fun QuickComparisonSummary(
                     Spacer(modifier = Modifier.width(8.dp))
 
                     Text(
-                        text = "vs ${compareTo.name}",
+                        text = stringResource(R.string.social_comparison_versus_player, compareTo.name),
                         style = MaterialTheme.typography.bodyLarge
                     )
                 }
@@ -724,7 +725,7 @@ private fun ComparisonRow(
             )
             Spacer(modifier = Modifier.width(4.dp))
             Text(
-                text = category.shortName,
+                text = stringResource(category.shortNameRes),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -740,4 +741,3 @@ private fun ComparisonRow(
         )
     }
 }
-
