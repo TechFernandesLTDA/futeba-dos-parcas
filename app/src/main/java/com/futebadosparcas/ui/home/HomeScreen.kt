@@ -90,6 +90,7 @@ fun HomeScreen(
     onCreateGameClick: () -> Unit = {},    // Navegacao para criar novo jogo
     onJoinGroupClick: () -> Unit = {},     // Navegacao para entrar em grupo
     onSeeAllGamesClick: () -> Unit = {},   // Navegacao para ver todos os jogos
+    onSeeAllPublicGamesClick: () -> Unit = {}, // Navegacao para jogos publicos
     onSocialFeedClick: () -> Unit = {},    // Navegacao para feed social
     onNearbyPlayersClick: () -> Unit = {}, // Navegacao para jogadores proximos
     onDirectMessagesClick: () -> Unit = {}, // Navegacao para mensagens diretas
@@ -161,6 +162,7 @@ fun HomeScreen(
                             onCreateGameClick = onCreateGameClick,
                             onJoinGroupClick = onJoinGroupClick,
                             onSeeAllGamesClick = onSeeAllGamesClick,
+                            onSeeAllPublicGamesClick = onSeeAllPublicGamesClick,
                             onSocialFeedClick = onSocialFeedClick,
                             onNearbyPlayersClick = onNearbyPlayersClick,
                             onDirectMessagesClick = onDirectMessagesClick,
@@ -232,6 +234,7 @@ private fun HomeSuccessContent(
     onCreateGameClick: () -> Unit,
     onJoinGroupClick: () -> Unit,
     onSeeAllGamesClick: () -> Unit,
+    onSeeAllPublicGamesClick: () -> Unit,
     onSocialFeedClick: () -> Unit,
     onNearbyPlayersClick: () -> Unit,
     onDirectMessagesClick: () -> Unit,
@@ -472,6 +475,7 @@ private fun HomeSuccessContent(
                 PublicGamesSuggestions(
                     games = state.publicGames,
                     onGameClick = { game -> onGameClick(game.id) },
+                    onSeeAllClick = onSeeAllPublicGamesClick,
                     modifier = Modifier.padding(top = AppDimensions.spacing_large)
                 )
             }

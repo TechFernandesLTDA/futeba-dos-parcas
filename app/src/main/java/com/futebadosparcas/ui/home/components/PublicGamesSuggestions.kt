@@ -27,6 +27,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -51,6 +52,7 @@ import com.futebadosparcas.ui.theme.AppDimensions
 fun PublicGamesSuggestions(
     games: List<Game>,
     onGameClick: (Game) -> Unit,
+    onSeeAllClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     if (games.isEmpty()) return
@@ -73,12 +75,12 @@ fun PublicGamesSuggestions(
                 fontWeight = FontWeight.Bold
             )
 
-            Text(
-                text = stringResource(R.string.public_games_see_all),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.clickable { /* Navigate to search/filter */ }
-            )
+            TextButton(onClick = onSeeAllClick) {
+                Text(
+                    text = stringResource(R.string.public_games_see_all),
+                    style = MaterialTheme.typography.labelMedium
+                )
+            }
         }
 
         if (useGrid) {

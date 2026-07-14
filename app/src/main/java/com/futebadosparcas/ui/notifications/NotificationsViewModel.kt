@@ -2,6 +2,7 @@ package com.futebadosparcas.ui.notifications
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.futebadosparcas.R
 import com.futebadosparcas.domain.model.AppNotification
 import com.futebadosparcas.domain.model.NotificationType
 import com.futebadosparcas.domain.repository.InviteRepository
@@ -207,9 +208,7 @@ class NotificationsViewModel(
             }
             NotificationType.GAME_SUMMON -> {
                 if (accept) {
-                    _actionState.value = NotificationActionState.NavigateToGame(
-                        notification.referenceId ?: ""
-                    )
+                    navigateToGame(notification.referenceId)
                 } else {
                     handleGameSummonDecline(notification)
                 }
@@ -220,8 +219,53 @@ class NotificationsViewModel(
         }
     }
 
+    fun openNotification(notification: AppNotification) {
+        when (notification.referenceType) {
+            "game" -> navigateToGame(notification.referenceId)
+            "group" -> navigateToGroup(notification.referenceId)
+            "invite" -> showInviteActionHint(notification.referenceId)
+            else -> _actionState.value = NotificationActionState.ErrorResource(
+                R.string.notifications_open_notification_error
+            )
+        }
+    }
+
+    private fun navigateToGame(gameId: String?) {
+        _actionState.value = if (gameId.isNullOrBlank()) {
+            NotificationActionState.ErrorResource(R.string.notifications_open_notification_error)
+        } else {
+            NotificationActionState.NavigateToGame(gameId)
+        }
+    }
+
+    private fun navigateToGroup(groupId: String?) {
+        _actionState.value = if (groupId.isNullOrBlank()) {
+            NotificationActionState.ErrorResource(R.string.notifications_open_notification_error)
+        } else {
+            NotificationActionState.NavigateToGroup(groupId)
+        }
+    }
+
+    private fun showInviteActionHint(inviteId: String?) {
+        if (inviteId.isNullOrBlank()) {
+            _actionState.value = NotificationActionState.ErrorResource(
+                R.string.notifications_open_invite_error
+            )
+            return
+        }
+        _actionState.value = NotificationActionState.InfoResource(
+            R.string.notifications_invite_action_hint
+        )
+    }
+
     private fun handleGroupInvite(notification: AppNotification, accept: Boolean) {
-        val inviteId = notification.referenceId ?: return
+        val inviteId = notification.referenceId
+        if (inviteId.isNullOrBlank()) {
+            _actionState.value = NotificationActionState.ErrorResource(
+                R.string.notifications_open_invite_error
+            )
+            return
+        }
 
         viewModelScope.launch {
             _actionState.value = NotificationActionState.Loading
@@ -328,5 +372,8 @@ sealed class NotificationActionState {
     data class InviteAccepted(val message: String) : NotificationActionState()
     data class InviteDeclined(val message: String) : NotificationActionState()
     data class NavigateToGame(val gameId: String) : NotificationActionState()
+    data class NavigateToGroup(val groupId: String) : NotificationActionState()
+    data class InfoResource(val messageResId: Int) : NotificationActionState()
+    data class ErrorResource(val messageResId: Int) : NotificationActionState()
     data class Error(val message: String) : NotificationActionState()
 }

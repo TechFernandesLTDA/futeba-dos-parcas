@@ -1131,6 +1131,27 @@ contraste mínimo em light, dark e dark OLED.
 
 **Relacionado:** `specs/BUGFIX_2026-07-14_ranking-contrast-breadcrumbs.md`,
 #3629, #3646.
+---
+
+## 2026-07-14 — Convite pendente não abre grupo privado antes do aceite (#3641)
+
+**Contexto:** O corpo do card de convite caía em um `else` vazio. O
+`referenceId` dessa notificação contém `inviteId`, não `groupId`; além disso, o
+convidado ainda não é membro e as regras não permitem ler detalhes de grupo
+privado antes do aceite.
+
+**Decisão:** O ViewModel passa a tratar todo clique de notificação. Referências
+`game` e `group` com ID válido emitem suas rotas. Para `invite`, o corpo exibe
+orientação localizada para usar Aceitar/Recusar; esses botões continuam
+processando o convite pelo `InviteRepository`. Referências ausentes ou
+desconhecidas exibem erro, nunca no-op.
+
+**Consequências:** Nenhum `inviteId` é usado como `groupId`, convites privados
+não terminam em uma tela sem permissão e todo toque tem resultado observável.
+Após o aceite, o usuário já membro pode acessar o grupo pelos fluxos normais.
+
+**Relacionado:** `specs/BUGFIX_2026-07-14_android-navigation-dead-ends.md`,
+#3633, #3638, #3641.
 
 ---
 

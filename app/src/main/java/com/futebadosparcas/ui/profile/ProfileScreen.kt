@@ -84,6 +84,7 @@ fun ProfileScreen(
     onUserManagementClick: () -> Unit,
     onMyLocationsClick: () -> Unit,
     onManageLocationsClick: () -> Unit,
+    onFieldOwnerDashboardClick: () -> Unit,
     onGamificationSettingsClick: () -> Unit,
     onConnectedAccountsClick: () -> Unit,
     onDeveloperMenuClick: () -> Unit,
@@ -122,6 +123,7 @@ fun ProfileScreen(
                 onUserManagementClick = onUserManagementClick,
                 onMyLocationsClick = onMyLocationsClick,
                 onManageLocationsClick = onManageLocationsClick,
+                onFieldOwnerDashboardClick = onFieldOwnerDashboardClick,
                 onGamificationSettingsClick = onGamificationSettingsClick,
                 onConnectedAccountsClick = onConnectedAccountsClick,
                 onDeveloperMenuClick = onDeveloperMenuClick,
@@ -159,6 +161,7 @@ fun ProfileScreen(
                 onUserManagementClick = onUserManagementClick,
                 onMyLocationsClick = onMyLocationsClick,
                 onManageLocationsClick = onManageLocationsClick,
+                onFieldOwnerDashboardClick = onFieldOwnerDashboardClick,
                 onGamificationSettingsClick = onGamificationSettingsClick,
                 onConnectedAccountsClick = onConnectedAccountsClick,
                 onDeveloperMenuClick = onDeveloperMenuClick,
@@ -215,6 +218,7 @@ private fun ProfileContent(
     onUserManagementClick: () -> Unit,
     onMyLocationsClick: () -> Unit,
     onManageLocationsClick: () -> Unit,
+    onFieldOwnerDashboardClick: () -> Unit,
     onGamificationSettingsClick: () -> Unit,
     onConnectedAccountsClick: () -> Unit,
     onDeveloperMenuClick: () -> Unit,
@@ -362,6 +366,7 @@ private fun ProfileContent(
                     onUserManagementClick = onUserManagementClick,
                     onMyLocationsClick = onMyLocationsClick,
                     onManageLocationsClick = onManageLocationsClick,
+                    onFieldOwnerDashboardClick = onFieldOwnerDashboardClick,
                     onGamificationSettingsClick = onGamificationSettingsClick
                 )
             }
@@ -1176,6 +1181,7 @@ private fun AdminSection(
     onUserManagementClick: () -> Unit,
     onMyLocationsClick: () -> Unit,
     onManageLocationsClick: () -> Unit,
+    onFieldOwnerDashboardClick: () -> Unit,
     onGamificationSettingsClick: () -> Unit
 ) {
     Card(
@@ -1206,6 +1212,13 @@ private fun AdminSection(
             }
 
             if (isFieldOwner) {
+                AdminMenuItem(
+                    icon = Icons.Default.Dashboard,
+                    title = stringResource(R.string.field_owner_dashboard),
+                    onClick = onFieldOwnerDashboardClick
+                )
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+
                 AdminMenuItem(
                     icon = Icons.Default.Place,
                     title = stringResource(R.string.profile_section_my_locations),

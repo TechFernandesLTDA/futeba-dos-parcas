@@ -336,6 +336,9 @@ fun AppNavHost(
                 onSeeAllGamesClick = {
                     navController.navigate(Screen.Games.route)
                 },
+                onSeeAllPublicGamesClick = {
+                    navController.navigate(Screen.PublicGames.route)
+                },
                 onSocialFeedClick = {
                     navController.navigate(Screen.SocialFeed.route)
                 },
@@ -563,6 +566,9 @@ fun AppNavHost(
                 },
                 onManageLocationsClick = {
                     navController.navigate(Screen.ManageLocations.route)
+                },
+                onFieldOwnerDashboardClick = {
+                    navController.navigate(Screen.FieldOwnerDashboard.route)
                 },
                 onGamificationSettingsClick = {
                     navController.navigate(Screen.GamificationSettings.route)
@@ -1096,16 +1102,11 @@ fun AppNavHost(
             // NotificationsScreen tem TopBar customizada com badge e menu - não usa SecondaryScreenWrapper
             NotificationsScreen(
                 viewModel = viewModel,
-                onNotificationClick = { notification ->
-                    when (notification.referenceType) {
-                        "game" -> notification.referenceId?.let { gameId ->
-                            navController.navigate(Screen.GameDetail.createRoute(gameId))
-                        }
-                        "group" -> notification.referenceId?.let { groupId ->
-                            navController.navigate(Screen.GroupDetail.createRoute(groupId))
-                        }
-                        else -> {}
-                    }
+                onNavigateToGame = { gameId ->
+                    navController.navigate(Screen.GameDetail.createRoute(gameId))
+                },
+                onNavigateToGroup = { groupId ->
+                    navController.navigate(Screen.GroupDetail.createRoute(groupId))
                 },
                 onBackClick = { navController.popBackStack() }
             )

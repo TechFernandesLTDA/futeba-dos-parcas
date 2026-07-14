@@ -415,4 +415,7 @@
     <string name="game_detail_remove_player_message">Are you sure you want to remove %1$s? They will lose their place in the confirmation order.</string>
     <string name="game_detail_removing_player">Removing…</string>
     <string name="game_detail_error_remove_player">We couldn’t remove the player. Try again.</string>
+    <string name="notifications_open_notification_error">We couldn’t open this notification.</string>
+    <string name="notifications_open_invite_error">We couldn’t open the invitation. Try again.</string>
+    <string name="notifications_invite_action_hint">Use Accept or Decline to respond to the invitation.</string>
 </resources>
