@@ -98,7 +98,7 @@ jobs:
         # por OOM. O build roda ANTES dos emuladores (menor pico de memória) e
         # herda as VITE_* do job env (incluindo VITE_USE_EMULATOR=true). #2784
         working-directory: web
-        run: npm run build
+        run: npm run build -- --mode e2e
 
       - name: Instalar browsers Playwright
         working-directory: web

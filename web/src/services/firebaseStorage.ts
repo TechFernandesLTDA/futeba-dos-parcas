@@ -1,5 +1,6 @@
 import { getStorage, connectStorageEmulator } from 'firebase/storage';
 import { app } from './firebase';
+import { shouldUseFirebaseEmulators } from './firebaseEmulatorMode';
 
 export const storage = getStorage(app);
 // O SDK tenta uploads falhos por 10 minutos por padrão, sem necessariamente
@@ -7,11 +8,7 @@ export const storage = getStorage(app);
 // retry suficiente para oscilações curtas e deixamos o helper fazer fallback.
 storage.maxUploadRetryTime = 30_000;
 
-if (
-  import.meta.env.DEV &&
-  import.meta.env.VITE_USE_EMULATOR === 'true' &&
-  typeof window !== 'undefined'
-) {
+if (shouldUseFirebaseEmulators) {
   try {
     connectStorageEmulator(storage, '127.0.0.1', 9199);
   } catch (err) {

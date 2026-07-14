@@ -10,6 +10,12 @@ const read = (relativePath) => fs.readFileSync(path.join(repoRoot, relativePath)
 const e2eWorkflow = read('.github/workflows/web-e2e-ci.yml');
 const harnessWorkflow = read('.github/workflows/test-harness-ci.yml');
 const playwrightConfig = read('web/playwright.config.ts');
+const emulatorMode = read('web/src/services/firebaseEmulatorMode.ts');
+const firebaseServices = [
+  'web/src/services/firebase.ts',
+  'web/src/services/firebaseFunctions.ts',
+  'web/src/services/firebaseStorage.ts',
+].map(read);
 
 function extractJob(source, jobId) {
   const marker = `\n  ${jobId}:\n`;
@@ -68,4 +74,21 @@ test('Playwright has bounded execution and keeps the E2E exit code authoritative
   assert.match(uploadStep, /if-no-files-found: warn/);
   assert.match(uploadStep, /retention-days: 1/);
   assert.match(uploadStep, /compression-level: 9/);
+});
+
+test('optimized E2E preview opts into emulators without weakening production', () => {
+  const job = extractJob(e2eWorkflow, 'web-e2e');
+  const buildStep = extractStep(job, 'Build web (modo emulador)');
+
+  assert.match(buildStep, /run: npm run build -- --mode e2e/);
+  assert.match(emulatorMode, /env\.VITE_USE_EMULATOR === 'true'/);
+  assert.match(emulatorMode, /env\.DEV \|\| env\.MODE === 'e2e'/);
+
+  for (const service of firebaseServices) {
+    assert.match(
+      service,
+      /import \{ shouldUseFirebaseEmulators \} from '\.\/firebaseEmulatorMode';/,
+    );
+    assert.match(service, /if \(shouldUseFirebaseEmulators\)/);
+  }
 });
