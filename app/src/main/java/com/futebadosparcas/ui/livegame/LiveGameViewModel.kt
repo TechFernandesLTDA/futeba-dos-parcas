@@ -105,19 +105,18 @@ class LiveGameViewModel(
                 if (teams.size < 2) {
                     _uiState.value = LiveGameUiState.Error("Times não definidos.")
                 } else {
-                    val sortedTeams = teams.sortedBy { it.name }
-                    var team1 = sortedTeams[0]
-                    var team2 = sortedTeams[1]
+                    val team1 = teams.find { it.id == score.team1Id }
+                    val team2 = teams.find { it.id == score.team2Id }
 
-                    val savedTeam1 = teams.find { it.id == score.team1Id }
-                    val savedTeam2 = teams.find { it.id == score.team2Id }
-
-                    if (savedTeam1 != null && savedTeam2 != null) {
-                        team1 = savedTeam1
-                        team2 = savedTeam2
-                    } else {
-                        // Fallback apenas de ordenação de times; o placar nunca é fabricado.
-                        com.futebadosparcas.util.AppLogger.w("LiveGameViewModel") { "Times do placar salvo não encontrados. Usando padrão." }
+                    if (team1 == null || team2 == null || team1.id == team2.id) {
+                        com.futebadosparcas.util.AppLogger.w("LiveGameViewModel") {
+                            "Vínculo do placar com os times é inválido: " +
+                                "team1Id=${score.team1Id}, team2Id=${score.team2Id}"
+                        }
+                        _uiState.value = LiveGameUiState.Error(
+                            "Placar indisponível: times vinculados não foram encontrados."
+                        )
+                        return@collect
                     }
 
                     val team1Players = confirmations.filter { team1.playerIds.contains(it.userId) }
