@@ -1849,6 +1849,17 @@
     "invitePlayers": "Invitar Jugadores",
     "matchmaking": {
       "activeCommunity": "Comunidad activa",
+      "allCategories": "Todos",
+      "categories": {
+        "DIA_SEMANA": "Día de la Semana",
+        "FAIXA_ETARIA": "Rango de Edad",
+        "GENERO": "Género",
+        "REGIAO": "Región",
+        "TIPO_CAMPO": "Tipo de Campo"
+      },
+      "emptyOfficial": "No hay grupos oficiales disponibles",
+      "emptySearch": "No se encontraron grupos",
+      "errorLoading": "No se pudieron cargar los grupos.",
       "hero": "Matchmaking de grupos: encuentra una turma compatible por región y horario, revisa el perfil del grupo y entra con guía rápida.",
       "joinGuided": "Entrada guiada",
       "member": "Miembro",
@@ -2394,6 +2405,17 @@
     "resendSmsCountdown": "Reenviar en {{seconds}}s",
     "sendSmsCode": "Enviar código por SMS",
     "sendingSms": "Enviando...",
+    "profileSetup": {
+      "fieldTypes": {
+        "field": "Campo",
+        "futsal": "Futsal",
+        "society": "Society"
+      },
+      "nameLabel": "Tu nombre",
+      "nameVisibilityHint": "Tu nombre se mostrará a otros jugadores en los partidos y grupos.",
+      "nicknameLabel": "Apodo",
+      "preferredFieldTypesLabel": "Tipos de Campo Preferidos"
+    },
     "setupProfile": "Configurar Perfil",
     "smsCodeAria": "Código SMS",
     "smsCodeLabel": "Código SMS",

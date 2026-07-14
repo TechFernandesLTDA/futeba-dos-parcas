@@ -3,6 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ThemeProvider, createTheme } from '@mui/material';
 import { MemoryRouter } from 'react-router-dom';
+import i18n from 'i18next';
 
 import { ProfileSetupScreen } from './ProfileSetupScreen';
 
@@ -40,7 +41,7 @@ vi.mock('../../services/cloudFunctions', () => ({
 
 vi.mock('../../utils/profileAvatar', () => ({
   validateProfileAvatar: vi.fn(() => null),
-  uploadProfileAvatar: (...args: unknown[]) => mockUploadProfileAvatar(...args),
+  uploadProfileAvatar: mockUploadProfileAvatar,
   getProfileAvatarUploadErrorKey: vi.fn(() => 'profile.avatarUploadError'),
 }));
 
@@ -92,7 +93,8 @@ function renderWithProviders() {
 }
 
 describe('ProfileSetupScreen', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
+    await i18n.changeLanguage('pt-BR');
     vi.clearAllMocks();
     mockGetDoc.mockResolvedValue({ exists: () => true });
     mockSetDoc.mockResolvedValue(undefined);
@@ -177,5 +179,39 @@ describe('ProfileSetupScreen', () => {
       expect.anything(),
       expect.objectContaining({ photo_url: 'https://example.com/profile.jpg?v=1' }),
     );
+  });
+
+  it('traduz todos os campos visíveis do onboarding para inglês', async () => {
+    await i18n.changeLanguage('en');
+    renderWithProviders();
+
+    expect(screen.getByRole('heading', { name: 'Set Up Profile' })).toBeVisible();
+    expect(screen.getByLabelText('Your name')).toHaveValue('Caio');
+    expect(screen.getByLabelText('Email')).toHaveValue('caio@example.com');
+    expect(screen.getByLabelText('Nickname')).toBeVisible();
+    expect(screen.getByText('Preferred Position')).toBeVisible();
+    expect(screen.getByText('Preferred Field Types')).toBeVisible();
+    expect(screen.getByRole('checkbox', { name: 'Society' })).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: 'Futsal' })).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: 'Grass Field' })).toBeInTheDocument();
+    expect(screen.getByText('Grass Field')).toBeVisible();
+    expect(screen.getByText('Your name will be shown to other players in games and groups.')).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Continue' })).toBeEnabled();
+  });
+
+  it('traduz o estado de salvamento', async () => {
+    await i18n.changeLanguage('en');
+    let finishAuthUpdate: (() => void) | undefined;
+    mockUpdateProfile.mockImplementationOnce(() => new Promise<void>((resolve) => {
+      finishAuthUpdate = resolve;
+    }));
+    const user = userEvent.setup();
+    renderWithProviders();
+
+    await user.click(screen.getByRole('button', { name: 'Continue' }));
+    expect(screen.getByRole('button', { name: 'Saving...' })).toBeDisabled();
+
+    finishAuthUpdate?.();
+    await waitFor(() => expect(mockRefreshUser).toHaveBeenCalledOnce());
   });
 });

@@ -200,7 +200,7 @@ export const ProfileSetupScreen: React.FC = () => {
             <BackIcon />
           </IconButton>
           <Typography variant="h6" sx={{ ml: 1 }}>
-            Configurar Perfil
+            {t('onboarding.setupProfile')}
           </Typography>
         </Box>
       </Box>
@@ -248,7 +248,7 @@ export const ProfileSetupScreen: React.FC = () => {
 
         <TextField
           fullWidth
-          label="Seu nome"
+          label={t('onboarding.profileSetup.nameLabel')}
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder={t('placeholder.enterNickname')}
@@ -259,7 +259,7 @@ export const ProfileSetupScreen: React.FC = () => {
 
         <TextField
           fullWidth
-          label="Email"
+          label={t('auth.email')}
           value={firebaseUser?.email || ''}
           disabled
           sx={{ mb: 3 }}
@@ -275,7 +275,7 @@ export const ProfileSetupScreen: React.FC = () => {
 
         <TextField
           fullWidth
-          label="Apelido"
+          label={t('onboarding.profileSetup.nicknameLabel')}
           value={nickname}
           onChange={(e) => setNickname(e.target.value)}
           placeholder={t('placeholder.enterDisplayName')}
@@ -285,7 +285,7 @@ export const ProfileSetupScreen: React.FC = () => {
 
         <Box sx={{ mb: 3 }}>
           <FormLabel component="legend" sx={{ mb: 1, display: 'block', color: 'text.secondary', fontSize: '0.875rem' }}>
-            Posição Preferida
+            {t('profile.preferredPosition')}
           </FormLabel>
           <ToggleButtonGroup
             value={preferredPosition}
@@ -304,13 +304,13 @@ export const ProfileSetupScreen: React.FC = () => {
 
         <Box sx={{ mb: 3 }}>
           <FormLabel component="legend" sx={{ mb: 0.5, display: 'block', color: 'text.secondary', fontSize: '0.875rem' }}>
-            Tipos de Campo Preferidos
+            {t('onboarding.profileSetup.preferredFieldTypesLabel')}
           </FormLabel>
           <FormGroup row>
             {[
-              { value: 'SOCIETY', label: 'Society' },
-              { value: 'FUTSAL', label: 'Futsal' },
-              { value: 'CAMPO', label: 'Campo' },
+              { value: 'SOCIETY', label: t('onboarding.profileSetup.fieldTypes.society') },
+              { value: 'FUTSAL', label: t('onboarding.profileSetup.fieldTypes.futsal') },
+              { value: 'CAMPO', label: t('onboarding.profileSetup.fieldTypes.field') },
             ].map((ft) => (
               <FormControlLabel
                 key={ft.value}
@@ -333,7 +333,7 @@ export const ProfileSetupScreen: React.FC = () => {
         </Box>
 
         <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-          Seu nome será exibido para outros jogadores nos jogos e grupos.
+          {t('onboarding.profileSetup.nameVisibilityHint')}
         </Typography>
 
         <Button
@@ -344,7 +344,7 @@ export const ProfileSetupScreen: React.FC = () => {
           onClick={handleSave}
           endIcon={loading ? <CircularProgress size={20} /> : <ArrowForwardIcon />}
         >
-          {loading ? 'Salvando...' : 'Continuar'}
+          {loading ? t('common.saving') : t('common.continue')}
         </Button>
       </PageContainer>
     </Box>

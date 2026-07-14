@@ -36,7 +36,7 @@ import { useOfficialGroups, useJoinOfficialGroup, useIsInOfficialGroup } from '.
 import { ErrorState } from '../../components/common/ErrorState';
 import { EmptyState } from '../../components/common/EmptyState';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
-import { OfficialGroup, OfficialGroupCategory, OFFICIAL_GROUP_CATEGORY_LABELS } from '../../types/group';
+import { OfficialGroup, OfficialGroupCategory } from '../../types/group';
 import { useTranslation } from 'react-i18next';
 import {
   rankOfficialGroupsForMatchmaking,
@@ -123,7 +123,7 @@ export const DiscoverGroupsScreen: React.FC = () => {
           <BackIcon />
         </IconButton>
         <Typography variant="h5" fontWeight="bold" flex={1}>
-          Descobrir Grupos
+          {t('groups.discoverGroupsBtn')}
         </Typography>
         <IconButton onClick={() => refetchOfficial()} aria-label={t('a11y.refresh')}>
           <RefreshIcon />
@@ -192,9 +192,9 @@ export const DiscoverGroupsScreen: React.FC = () => {
         scrollButtons="auto"
         sx={{ mb: 3 }}
       >
-        <Tab label="Todos" />
+        <Tab label={t('groups.matchmaking.allCategories')} />
         {(['REGIAO', 'DIA_SEMANA', 'TIPO_CAMPO', 'FAIXA_ETARIA', 'GENERO'] as OfficialGroupCategory[]).map((cat) => (
-          <Tab key={cat} label={OFFICIAL_GROUP_CATEGORY_LABELS[cat]} />
+          <Tab key={cat} label={t(`groups.matchmaking.categories.${cat}`)} />
         ))}
       </Tabs>
 
@@ -222,7 +222,7 @@ export const DiscoverGroupsScreen: React.FC = () => {
 
       {!officialLoading && officialError && (
         <ErrorState
-          message={officialError instanceof Error ? officialError.message : 'Erro ao carregar grupos.'}
+          message={t('groups.matchmaking.errorLoading')}
           onRetry={() => refetchOfficial()}
         />
       )}
@@ -230,7 +230,9 @@ export const DiscoverGroupsScreen: React.FC = () => {
       {!officialLoading && !officialError && filteredByTab.length === 0 && (
         <EmptyState
           icon={<GroupIcon />}
-          title={searchQuery ? 'Nenhum grupo encontrado' : 'Nenhum grupo oficial disponível'}
+          title={searchQuery
+            ? t('groups.matchmaking.emptySearch')
+            : t('groups.matchmaking.emptyOfficial')}
         />
       )}
 
@@ -297,13 +299,13 @@ function OfficialGroupCard({
                 color={suggestion.score >= 75 ? 'success' : 'default'}
               />
               <Chip
-                label={OFFICIAL_GROUP_CATEGORY_LABELS[group.category]}
+                label={t(`groups.matchmaking.categories.${group.category}`)}
                 size="small"
                 color="primary"
                 variant="outlined"
               />
               <Chip
-                label={`${group.memberCount ?? 0} membro${group.memberCount === 1 ? '' : 's'}`}
+                label={t('groups.membersCount', { count: group.memberCount ?? 0 })}
                 size="small"
                 variant="outlined"
               />
