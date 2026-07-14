@@ -409,4 +409,10 @@
     <string name="direct_messages_empty_conversation_desc">Envía el primer mensaje para coordinar el próximo juego.</string>
     <string name="direct_messages_deleted">Mensaje eliminado</string>
 
+    <string name="game_detail_error_update_presence_generic">No pudimos actualizar tu asistencia. Inténtalo de nuevo.</string>
+    <string name="game_detail_updating_presence">Actualizando asistencia…</string>
+    <string name="game_detail_remove_player_title">¿Eliminar jugador?</string>
+    <string name="game_detail_remove_player_message">¿Seguro que quieres eliminar a %1$s? Perderá su posición en el orden de confirmación.</string>
+    <string name="game_detail_removing_player">Eliminando…</string>
+    <string name="game_detail_error_remove_player">No pudimos eliminar al jugador. Inténtalo de nuevo.</string>
 </resources>

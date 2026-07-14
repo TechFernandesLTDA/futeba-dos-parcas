@@ -1,5 +1,6 @@
 package com.futebadosparcas.ui.games
 
+import com.futebadosparcas.R
 import com.futebadosparcas.data.repository.AuthRepository
 import com.futebadosparcas.data.repository.GroupRepository
 import com.futebadosparcas.data.repository.WaitlistRepository
@@ -26,12 +27,14 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.coVerify
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.jupiter.api.AfterEach
@@ -229,6 +232,161 @@ class GameDetailViewModelTest {
             advanceUntilIdle()
 
             coVerify { gameRepository.cancelConfirmation("game-1") }
+        }
+
+        @Test
+        @DisplayName("convite pendente e recusado sem tentar confirmar")
+        fun `decline pending invitation cancels confirmation`() = runTest(testDispatcher) {
+            coEvery { gameRepository.cancelConfirmation(any()) } returns Result.success(Unit)
+            val pending = listOf(
+                GameConfirmation(
+                    gameId = "game-1",
+                    userId = "user-1",
+                    userName = "Maria",
+                    status = "PENDING"
+                )
+            )
+            setupGameFlows(confirmationsResult = Result.success(pending))
+            viewModel = createViewModel()
+            viewModel.loadGameDetails("game-1")
+            advanceUntilIdle()
+
+            viewModel.declineInvitation("game-1")
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) { gameRepository.cancelConfirmation("game-1") }
+            coVerify(exactly = 0) {
+                gameRepository.confirmPresence(any<String>(), any<String>(), any<Boolean>())
+            }
+        }
+
+        @Test
+        @DisplayName("toggle trata PENDING defensivamente como cancelamento")
+        fun `toggle pending invitation cancels confirmation`() = runTest(testDispatcher) {
+            coEvery { gameRepository.cancelConfirmation(any()) } returns Result.success(Unit)
+            val pending = listOf(
+                GameConfirmation(
+                    gameId = "game-1",
+                    userId = "user-1",
+                    userName = "Maria",
+                    status = "PENDING"
+                )
+            )
+            setupGameFlows(confirmationsResult = Result.success(pending))
+            viewModel = createViewModel()
+            viewModel.loadGameDetails("game-1")
+            advanceUntilIdle()
+
+            viewModel.toggleConfirmation("game-1")
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) { gameRepository.cancelConfirmation("game-1") }
+        }
+
+        @Test
+        @DisplayName("toques concorrentes iniciam somente uma confirmacao")
+        fun `concurrent confirmation taps start once`() = runTest(testDispatcher) {
+            val result = CompletableDeferred<Result<GameConfirmation>>()
+            coEvery {
+                gameRepository.confirmPresence(any<String>(), any<String>(), any<Boolean>())
+            } coAnswers { result.await() }
+            setupLoadedState()
+            advanceUntilIdle()
+
+            viewModel.toggleConfirmation("game-1")
+            runCurrent()
+            assertTrue((viewModel.uiState.value as GameDetailUiState.Success).isPresenceSubmitting)
+
+            viewModel.toggleConfirmation("game-1")
+            runCurrent()
+            coVerify(exactly = 1) {
+                gameRepository.confirmPresence("game-1", PlayerPosition.LINE.name, false)
+            }
+
+            result.complete(Result.success(mockk(relaxed = true)))
+            advanceUntilIdle()
+            assertFalse((viewModel.uiState.value as GameDetailUiState.Success).isPresenceSubmitting)
+        }
+
+        @Test
+        @DisplayName("falha de presenca oferece retry da mesma mutacao")
+        fun `presence failure can retry`() = runTest(testDispatcher) {
+            coEvery {
+                gameRepository.confirmPresence(any<String>(), any<String>(), any<Boolean>())
+            } returnsMany listOf(
+                Result.failure(IllegalStateException("offline")),
+                Result.success(mockk(relaxed = true))
+            )
+            setupLoadedState()
+            advanceUntilIdle()
+
+            viewModel.toggleConfirmation("game-1")
+            advanceUntilIdle()
+            val failed = viewModel.uiState.value as GameDetailUiState.Success
+            assertTrue(failed.canRetryLastMutation)
+            assertEquals(R.string.game_detail_error_update_presence_generic, failed.userMessageResId)
+
+            viewModel.retryLastMutation()
+            advanceUntilIdle()
+
+            coVerify(exactly = 2) {
+                gameRepository.confirmPresence("game-1", PlayerPosition.LINE.name, false)
+            }
+            assertFalse((viewModel.uiState.value as GameDetailUiState.Success).canRetryLastMutation)
+        }
+    }
+
+    @Nested
+    @DisplayName("removePlayer")
+    inner class RemovePlayerTests {
+
+        @Test
+        @DisplayName("falha preserva jogador e retry remove apos sucesso")
+        fun `remove failure preserves player and retry succeeds`() = runTest(testDispatcher) {
+            coEvery { gameRepository.removePlayerFromGame("game-1", "user-3") } returnsMany listOf(
+                Result.failure(IllegalStateException("sem rede")),
+                Result.success(Unit)
+            )
+            setupLoadedState()
+            advanceUntilIdle()
+
+            viewModel.removePlayer("game-1", "user-3")
+            advanceUntilIdle()
+            val failed = viewModel.uiState.value as GameDetailUiState.Success
+            assertTrue(failed.confirmations.any { it.userId == "user-3" })
+            assertTrue(failed.canRetryLastMutation)
+            assertEquals(R.string.game_detail_error_remove_player, failed.userMessageResId)
+
+            viewModel.retryLastMutation()
+            advanceUntilIdle()
+            val succeeded = viewModel.uiState.value as GameDetailUiState.Success
+
+            coVerify(exactly = 2) { gameRepository.removePlayerFromGame("game-1", "user-3") }
+            assertFalse(succeeded.confirmations.any { it.userId == "user-3" })
+            assertFalse(succeeded.canRetryLastMutation)
+        }
+
+        @Test
+        @DisplayName("toques repetidos removem o mesmo jogador uma unica vez")
+        fun `duplicate remove taps start once`() = runTest(testDispatcher) {
+            val result = CompletableDeferred<Result<Unit>>()
+            coEvery { gameRepository.removePlayerFromGame("game-1", "user-3") } coAnswers {
+                result.await()
+            }
+            setupLoadedState()
+            advanceUntilIdle()
+
+            viewModel.removePlayer("game-1", "user-3")
+            runCurrent()
+            assertTrue(
+                "user-3" in (viewModel.uiState.value as GameDetailUiState.Success).removingPlayerIds
+            )
+            viewModel.removePlayer("game-1", "user-3")
+            runCurrent()
+
+            coVerify(exactly = 1) { gameRepository.removePlayerFromGame("game-1", "user-3") }
+            result.complete(Result.success(Unit))
+            advanceUntilIdle()
         }
     }
 

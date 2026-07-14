@@ -409,4 +409,10 @@
     <string name="direct_messages_empty_conversation_desc">Send the first message to plan the next game.</string>
     <string name="direct_messages_deleted">Deleted message</string>
 
+    <string name="game_detail_error_update_presence_generic">We couldn’t update your attendance. Try again.</string>
+    <string name="game_detail_updating_presence">Updating attendance…</string>
+    <string name="game_detail_remove_player_title">Remove player?</string>
+    <string name="game_detail_remove_player_message">Are you sure you want to remove %1$s? They will lose their place in the confirmation order.</string>
+    <string name="game_detail_removing_player">Removing…</string>
+    <string name="game_detail_error_remove_player">We couldn’t remove the player. Try again.</string>
 </resources>

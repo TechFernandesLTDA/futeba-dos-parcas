@@ -1067,4 +1067,27 @@ enums. Novas categorias precisam adicionar a mesma chave aos três catálogos.
 
 ---
 
+## 2026-07-13 — GameDetail serializa intenção de presença e mantém servidor autoritativo (#3642/#3643/#3645)
+
+**Contexto:** O detalhe do jogo tratava convite pendente como ausência de
+confirmação, não bloqueava toques concorrentes e ignorava falhas ao remover
+jogadores. Snapshots em tempo real também podiam reconstruir a tela durante uma
+mutação e apagar flags transitórias.
+
+**Decisão:** Modelar confirmar, aceitar, cancelar/recusar e remover como mutações
+explícitas. O ViewModel mantém um job de presença e jobs de remoção por jogador,
+preserva flags entre snapshots e expõe loading/erro/retry. Remoção requer dialog
+e só altera a lista local após `Result.success`. A confirmação continua na
+callable `confirmGamePresence`, com documento determinístico e validação servidor;
+o lock cliente é proteção de interação, não fonte de autoridade.
+
+**Consequências:** Convite `PENDING` é recusado por cancelamento explícito,
+toques repetidos não criam coroutines concorrentes, falhas permanecem visíveis e
+repetíveis, e o organizador não perde a ordem de chegada por toque acidental.
+
+**Relacionado:** `specs/BUGFIX_2026-07-13_game-presence-mutations.md`, #3642,
+#3643, #3645.
+
+---
+
 <!-- Adicione novas decisões acima desta linha -->
