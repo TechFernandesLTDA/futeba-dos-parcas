@@ -7,6 +7,7 @@ import {
   asPlayerA,
   asPlayerB,
   asPlayerC,
+  asUser,
   asAnon,
   seedDoc,
   UID_PLAYER_A,
@@ -18,11 +19,13 @@ let testEnv: RulesTestEnvironment;
 
 const FINISHED_GAME = "post-game-finished-001";
 const SCHEDULED_GAME = "post-game-scheduled-001";
+const UID_COORGANIZER = "uid-post-game-coorganizer";
 
 beforeAll(async () => {
   testEnv = await initTestEnv();
   await seedDoc(testEnv, `games/${FINISHED_GAME}`, {
     owner_id: UID_PLAYER_A,
+    co_organizers: [UID_COORGANIZER],
     status: "FINISHED",
     date_time: new Date("2026-01-01T10:00:00Z"),
   });
@@ -35,6 +38,11 @@ beforeAll(async () => {
     game_id: FINISHED_GAME,
     user_id: UID_PLAYER_B,
     status: "CONFIRMED",
+  });
+  await seedDoc(testEnv, `confirmations/${FINISHED_GAME}_${UID_PLAYER_C}`, {
+    game_id: FINISHED_GAME,
+    user_id: UID_PLAYER_C,
+    status: "PENDING",
   });
   await seedDoc(testEnv, `post_game_messages/${FINISHED_GAME}_${UID_PLAYER_B}`, {
     game_id: FINISHED_GAME,
@@ -63,6 +71,24 @@ describe("post_game_messages", () => {
     await assertFails(asPlayerC(testEnv).doc(`post_game_messages/${FINISHED_GAME}_${UID_PLAYER_B}`).get());
   });
 
+  it("coorganizador não confirmado pode consultar recados do próprio jogo", async () => {
+    await assertSucceeds(
+      asUser(testEnv, UID_COORGANIZER)
+        .collection("post_game_messages")
+        .where("game_id", "==", FINISHED_GAME)
+        .get()
+    );
+  });
+
+  it("PENDING comum não pode consultar recados", async () => {
+    await assertFails(
+      asPlayerC(testEnv)
+        .collection("post_game_messages")
+        .where("game_id", "==", FINISHED_GAME)
+        .get()
+    );
+  });
+
   it("participante confirmado pode criar recado em jogo finalizado", async () => {
     await assertSucceeds(asPlayerA(testEnv).doc(`post_game_messages/${FINISHED_GAME}_${UID_PLAYER_A}`).set({
       game_id: FINISHED_GAME,
@@ -72,6 +98,38 @@ describe("post_game_messages", () => {
       created_at: serverTimestamp(),
       updated_at: serverTimestamp(),
     }));
+  });
+
+  it("coorganizador não confirmado pode criar o próprio recado", async () => {
+    await assertSucceeds(asUser(testEnv, UID_COORGANIZER).doc(`post_game_messages/${FINISHED_GAME}_${UID_COORGANIZER}`).set({
+      game_id: FINISHED_GAME,
+      user_id: UID_COORGANIZER,
+      user_name: "Coorganizador",
+      message: "Obrigado pela participação.",
+      created_at: serverTimestamp(),
+      updated_at: serverTimestamp(),
+    }));
+  });
+
+  it("coorganizador pode editar somente o próprio recado", async () => {
+    await assertSucceeds(asUser(testEnv, UID_COORGANIZER).doc(`post_game_messages/${FINISHED_GAME}_${UID_COORGANIZER}`).update({
+      message: "Obrigado pela participação, pessoal.",
+      updated_at: serverTimestamp(),
+    }));
+  });
+
+  it("coorganizador não pode pivotar autoria nem jogo", async () => {
+    await assertFails(asUser(testEnv, UID_COORGANIZER).doc(`post_game_messages/${FINISHED_GAME}_${UID_COORGANIZER}`).update({
+      game_id: SCHEDULED_GAME,
+      user_id: UID_PLAYER_C,
+      updated_at: serverTimestamp(),
+    }));
+  });
+
+  it("coorganizador não pode fazer hard delete do recado", async () => {
+    await assertFails(
+      asUser(testEnv, UID_COORGANIZER).doc(`post_game_messages/${FINISHED_GAME}_${UID_COORGANIZER}`).delete()
+    );
   });
 
   it("participante pode editar mensagem sem alterar a data original", async () => {

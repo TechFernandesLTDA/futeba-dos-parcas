@@ -21,6 +21,7 @@ const GAME_ID_ARCHIVED = "game-chat-archived";
 const GAME_ID_GROUP_ONLY = "game-chat-group-only";
 const UID_OUTSIDER = "uid-chat-outsider";
 const UID_GROUP_ADMIN = "uid-chat-group-admin";
+const UID_COORGANIZER = "uid-chat-coorganizer";
 const GROUP_ID = "group-chat-test";
 
 const recentDate = new Date(Date.now() - 1 * 60 * 60 * 1000); // 1h atrás
@@ -39,6 +40,7 @@ beforeAll(async () => {
 
   await seedDoc(testEnv, `games/${GAME_ID_CONFIRMED}`, {
     owner_id: UID_PLAYER_B,
+    co_organizers: [UID_COORGANIZER],
     status: "SCHEDULED",
     visibility: "PUBLIC",
     date_time: recentDate,
@@ -70,6 +72,7 @@ beforeAll(async () => {
 
   await seedDoc(testEnv, `games/${GAME_ID_GROUP_ONLY}`, {
     owner_id: UID_PLAYER_B,
+    co_organizers: [UID_COORGANIZER],
     status: "SCHEDULED",
     visibility: "GROUP_ONLY",
     group_id: GROUP_ID,
@@ -121,6 +124,12 @@ describe("games/{gameId}/chat", () => {
     );
   });
 
+  it("coorganizador pode ler chat GROUP_ONLY sem ser membro do grupo", async () => {
+    await assertSucceeds(
+      asUser(testEnv, UID_COORGANIZER).collection(`games/${GAME_ID_GROUP_ONLY}/chat`).get()
+    );
+  });
+
   it("jogador confirmado pode enviar mensagem", async () => {
     await assertSucceeds(
       asPlayerA(testEnv).doc(`games/${GAME_ID_CONFIRMED}/chat/msg-1`).set({
@@ -148,6 +157,28 @@ describe("games/{gameId}/chat", () => {
         ...baseMessage,
         sender_id: UID_PLAYER_B,
         sender_name: "Player B (Owner)",
+        created_at: serverTimestamp(),
+      })
+    );
+  });
+
+  it("coorganizador pode enviar mensagem mesmo sem confirmação", async () => {
+    await assertSucceeds(
+      asUser(testEnv, UID_COORGANIZER).doc(`games/${GAME_ID_CONFIRMED}/chat/msg-coorganizer`).set({
+        ...baseMessage,
+        sender_id: UID_COORGANIZER,
+        sender_name: "Coorganizador",
+        created_at: serverTimestamp(),
+      })
+    );
+  });
+
+  it("coorganizador não pode forjar autoria", async () => {
+    await assertFails(
+      asUser(testEnv, UID_COORGANIZER).doc(`games/${GAME_ID_CONFIRMED}/chat/msg-coorganizer-forged`).set({
+        ...baseMessage,
+        sender_id: UID_PLAYER_B,
+        sender_name: "Coorganizador",
         created_at: serverTimestamp(),
       })
     );
@@ -250,6 +281,35 @@ describe("games/{gameId}/chat", () => {
       asPlayerB(testEnv).doc(`games/${GAME_ID_CONFIRMED}/chat/msg-delete-owner`).update({
         deleted_by: UID_PLAYER_B,
         deleted_at: serverTimestamp(),
+      })
+    );
+  });
+
+  it("coorganizador pode soft-deletar mensagem de outro sem editar conteúdo", async () => {
+    await seedDoc(testEnv, `games/${GAME_ID_CONFIRMED}/chat/msg-delete-coorganizer`, {
+      ...baseMessage,
+      sender_id: UID_PLAYER_A,
+      created_at: recentDate,
+    });
+    await assertSucceeds(
+      asUser(testEnv, UID_COORGANIZER).doc(`games/${GAME_ID_CONFIRMED}/chat/msg-delete-coorganizer`).update({
+        deleted_by: UID_COORGANIZER,
+        deleted_at: serverTimestamp(),
+      })
+    );
+  });
+
+  it("coorganizador não pode alterar o texto durante soft-delete", async () => {
+    await seedDoc(testEnv, `games/${GAME_ID_CONFIRMED}/chat/msg-coorganizer-edit`, {
+      ...baseMessage,
+      sender_id: UID_PLAYER_A,
+      created_at: recentDate,
+    });
+    await assertFails(
+      asUser(testEnv, UID_COORGANIZER).doc(`games/${GAME_ID_CONFIRMED}/chat/msg-coorganizer-edit`).update({
+        deleted_by: UID_COORGANIZER,
+        deleted_at: serverTimestamp(),
+        text: "conteúdo adulterado",
       })
     );
   });

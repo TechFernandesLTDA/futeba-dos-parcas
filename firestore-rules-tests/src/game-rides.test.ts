@@ -22,6 +22,8 @@ const GAME_ID = "game-rides-basic";
 const RIDE_ID_B = `${GAME_ID}_${UID_PLAYER_B}`;
 const RIDE_ID_OWNER = `${GAME_ID}_${UID_PLAYER_A}`;
 const GROUP_ID = "game-rides-group";
+const UID_COORGANIZER = "uid-rides-coorganizer";
+const RIDE_ID_COORGANIZER = `${GAME_ID}_${UID_COORGANIZER}`;
 
 function createRide(userId: string) {
   return {
@@ -56,7 +58,7 @@ beforeAll(async () => {
   await seedDoc(testEnv, `games/${GAME_ID}`, {
     owner_id: UID_PLAYER_A,
     group_id: GROUP_ID,
-    co_organizers: [],
+    co_organizers: [UID_COORGANIZER],
     status: "SCHEDULED",
     players_count: 0,
     goalkeepers_count: 0,
@@ -102,6 +104,40 @@ describe("game_rides", () => {
     );
   });
 
+  it("coorganizador não confirmado pode consultar caronas do próprio jogo", async () => {
+    await assertSucceeds(
+      asUser(testEnv, UID_COORGANIZER)
+        .collection("game_rides")
+        .where("game_id", "==", GAME_ID)
+        .get()
+    );
+  });
+
+  it("PENDING comum não pode consultar caronas", async () => {
+    await assertFails(
+      asPlayerC(testEnv)
+        .collection("game_rides")
+        .where("game_id", "==", GAME_ID)
+        .get()
+    );
+  });
+
+  it("coorganizador não confirmado pode criar a própria carona", async () => {
+    await assertSucceeds(
+      asUser(testEnv, UID_COORGANIZER)
+        .doc(`game_rides/${RIDE_ID_COORGANIZER}`)
+        .set(createRide(UID_COORGANIZER))
+    );
+  });
+
+  it("coorganizador não pode criar carona em nome de terceiro", async () => {
+    await assertFails(
+      asUser(testEnv, UID_COORGANIZER)
+        .doc(`game_rides/${GAME_ID}_${UID_PLAYER_C}`)
+        .set(createRide(UID_PLAYER_C))
+    );
+  });
+
   it("documento de carona com id divergente nao pode ser criado", async () => {
     await assertFails(
       asPlayerB(testEnv).doc(`game_rides/divergente`).set({
@@ -135,6 +171,31 @@ describe("game_rides", () => {
         status: "CANCELLED",
         updated_at: serverTimestamp(),
       })
+    );
+  });
+
+  it("coorganizador pode atualizar apenas a própria carona", async () => {
+    await assertSucceeds(
+      asUser(testEnv, UID_COORGANIZER).doc(`game_rides/${RIDE_ID_COORGANIZER}`).update({
+        note: "Novo ponto de encontro",
+        updated_at: serverTimestamp(),
+      })
+    );
+  });
+
+  it("coorganizador não pode pivotar game_id nem user_id", async () => {
+    await assertFails(
+      asUser(testEnv, UID_COORGANIZER).doc(`game_rides/${RIDE_ID_COORGANIZER}`).update({
+        game_id: "outro-jogo",
+        user_id: UID_PLAYER_C,
+        updated_at: serverTimestamp(),
+      })
+    );
+  });
+
+  it("coorganizador não pode fazer hard delete da carona", async () => {
+    await assertFails(
+      asUser(testEnv, UID_COORGANIZER).doc(`game_rides/${RIDE_ID_COORGANIZER}`).delete()
     );
   });
 
