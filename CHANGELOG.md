@@ -251,7 +251,7 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 - `VITE_FIREBASE_AUTH_DOMAIN` agora usa `futebadosparcas.com.br`, mantendo o iframe e o handler de autenticação na mesma origem do aplicativo.
 - O cliente OAuth Web autoriza `https://futebadosparcas.com.br` e `https://futebadosparcas.com.br/__/auth/handler`.
 
-_Issues: #3700_
+_Issues: #3700 · PRs: #3701_
 
 ### [1.54.3][web-1.54.3] - 2026-07-14
 
