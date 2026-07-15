@@ -290,6 +290,19 @@ service cloud.firestore {
              ('co_organizers' in gameData && userId() in gameData.co_organizers);
     }
 
+    // Convites de reforco criam uma confirmacao PENDING deterministica antes de
+    // notificar o jogador. Esse acesso vale somente para GET do jogo indicado;
+    // nunca deve ser usado em LIST, para nao ampliar a descoberta de jogos
+    // GROUP_ONLY nem expor seus metadados a terceiros.
+    function hasOwnGameInvitation(gameId) {
+      let confirmationPath = /databases/$(database)/documents/confirmations/$(gameId + "_" + userId());
+      return isAuthenticated() &&
+        exists(confirmationPath) &&
+        get(confirmationPath).data.game_id == gameId &&
+        get(confirmationPath).data.user_id == userId() &&
+        get(confirmationPath).data.status in ['PENDING', 'CONFIRMED'];
+    }
+
     // Leitura do estado ao vivo: participantes/gestores do jogo e qualquer
     // usuário autenticado quando o próprio jogo é público.
     function canViewLiveGame(gameId) {
@@ -1020,7 +1033,14 @@ service cloud.firestore {
       //
       // Stage 3 (PR futuro): denormalizar games pra games_public (sem lat/lng
       // exato) e callable getGamePreciseLocation(gameId) gateway pra owner+confirmed.
-      allow read: if isVerifiedOrGrace() &&
+      allow get: if isVerifiedOrGrace() &&
+                    (!('deleted_at' in resource.data) || resource.data.deleted_at == null || isAdmin()) &&
+                    (resource.data.get('visibility', null) != 'GROUP_ONLY' ||
+                     (resource.data.group_id != null && isGroupMember(resource.data.group_id)) ||
+                     hasOwnGameInvitation(gameId) ||
+                     isAdmin());
+
+      allow list: if isVerifiedOrGrace() &&
                      (!('deleted_at' in resource.data) || resource.data.deleted_at == null || isAdmin()) &&
                      (resource.data.get('visibility', null) != 'GROUP_ONLY' ||
                       (resource.data.group_id != null && isGroupMember(resource.data.group_id)) ||
