@@ -245,6 +245,14 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.54.4][web-1.54.4] - 2026-07-15
+
+#### Corrigido
+- `VITE_FIREBASE_AUTH_DOMAIN` agora usa `futebadosparcas.com.br`, mantendo o iframe e o handler de autenticação na mesma origem do aplicativo.
+- O cliente OAuth Web autoriza `https://futebadosparcas.com.br` e `https://futebadosparcas.com.br/__/auth/handler`.
+
+_Issues: #3700_
+
 ### [1.54.3][web-1.54.3] - 2026-07-14
 
 #### Corrigido
@@ -2404,6 +2412,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.54.4]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.4.md
 [web-1.54.3]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.3.md
 [web-1.54.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.2.md
 [web-1.54.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.1.md
