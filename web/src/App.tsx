@@ -253,6 +253,25 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function RootRoute() {
+  const { firebaseUser, loading } = useAuth();
+  const activeUser = firebaseUser ?? auth.currentUser;
+
+  if (loading) {
+    return <SplashLoadingFallback />;
+  }
+
+  if (!activeUser) {
+    return <Suspense fallback={<RouteFallback />}><LaunchPage /></Suspense>;
+  }
+
+  return (
+    <ProtectedRoute>
+      <Suspense fallback={<RouteFallback />}><AppLayout /></Suspense>
+    </ProtectedRoute>
+  );
+}
+
 /**
  * Restringe a rota a usuários com `verified === true` (custom claim).
  * Redireciona para onboarding se não verificado.
@@ -429,14 +448,17 @@ function AppRoutes() {
       <Route path="/login" element={<PublicRoute><Suspense fallback={<RouteFallback />}><LoginScreen /></Suspense></PublicRoute>} />
       <Route path="/register" element={<PublicRoute><Suspense fallback={<RouteFallback />}><RegisterScreen /></Suspense></PublicRoute>} />
       <Route path="/forgot-password" element={<PublicRoute><Suspense fallback={<RouteFallback />}><ForgotPasswordScreen /></Suspense></PublicRoute>} />
-      <Route path="/launch" element={<Suspense fallback={<RouteFallback />}><LaunchPage /></Suspense>} />
+      <Route path="/launch" element={<Navigate to="/" replace />} />
+
+      {/* A raiz é pública para visitantes e preserva o painel para usuários autenticados. */}
+      <Route path="/" element={<RootRoute />}>
+        <Route index element={<Suspense fallback={<RouteFallback />}><HomeScreen /></Suspense>} />
+      </Route>
 
       {/* Games — redireciona para tab=1 (HomeScreen) para manter o menu de navegação */}
       <Route path="/games" element={<Navigate to="/?tab=1" replace />} />
       {/* Rotas detail/form com AppLayout (sidebar global desktop) */}
       <Route element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><AppLayout /></Suspense></ProtectedRoute>}>
-        {/* Home */}
-        <Route path="/" element={<Suspense fallback={<RouteFallback />}><HomeScreen /></Suspense>} />
         <Route path="/feed" element={<Suspense fallback={<RouteFallback />}><SocialFeedScreen /></Suspense>} />
         {/* Games */}
         {/* GAP #7 (#1080): VerifiedRoute redireciona unverified pra onboarding em vez de deixar submit falhar silencioso no rules */}

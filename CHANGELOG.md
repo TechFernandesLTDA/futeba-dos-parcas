@@ -245,6 +245,15 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.54.7][web-1.54.7] - 2026-07-15
+
+#### Mudado
+- Roteamento raiz condicionado ao estado de autenticação, preservando o `AppLayout` para usuários ativos.
+- Canonical e sitemap consolidados em `https://futebadosparcas.com.br/`.
+- Imagem social reutilizada como elemento visual responsivo no hero da landing.
+
+_Issues: #3713_
+
 ### [1.54.6][web-1.54.6] - 2026-07-15
 
 #### Adicionado
@@ -2442,6 +2451,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.54.7]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.7.md
 [web-1.54.6]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.6.md
 [web-1.54.5]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.5.md
 [web-1.54.4]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.4.md
