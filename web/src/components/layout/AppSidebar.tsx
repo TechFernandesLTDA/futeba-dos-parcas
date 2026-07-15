@@ -25,6 +25,7 @@ import {
   EmojiEvents as TrophyIcon,
   LocationOn as LocationIcon,
   Settings as SettingsIcon,
+  Edit as EditIcon,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -359,20 +360,30 @@ export function AppSidebar() {
             <Chip label="?" size="small" variant="outlined" sx={{ height: 20, fontSize: '0.7rem' }} />
           </ListItemButton>
         </Box>
-        <Box sx={{ p: 1.5, borderTop: 1, borderColor: 'divider' }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+        <Box sx={{ p: 1, borderTop: 1, borderColor: 'divider' }}>
+          <ListItemButton
+            onClick={() => navigate('/profile/edit')}
+            aria-label={`${user?.name || t('settings.defaultUserName')} — ${t('profile.editProfile')}`}
+            sx={{
+              minHeight: 64,
+              borderRadius: 2,
+              gap: 1.5,
+              px: 1,
+            }}
+          >
             <Avatar src={user?.photoUrl} sx={{ width: avatarSizes.sidebar, height: avatarSizes.sidebar, bgcolor: 'primary.main' }}>
               {userInitial}
             </Avatar>
             <Box sx={{ flex: 1, minWidth: 0 }}>
               <Typography variant="body2" fontWeight={600} noWrap>
-                {user?.name || 'Usuário'}
+                {user?.name || t('settings.defaultUserName')}
               </Typography>
               <Typography variant="caption" color="text.secondary" noWrap>
-                {user?.email || t('nav.profile')}
+                {user?.email || t('profile.editProfile')}
               </Typography>
             </Box>
-          </Box>
+            <EditIcon fontSize="small" sx={{ color: 'text.secondary', flexShrink: 0 }} />
+          </ListItemButton>
         </Box>
       </Drawer>
     </>
