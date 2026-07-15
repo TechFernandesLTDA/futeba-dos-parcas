@@ -2,9 +2,9 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { applySeoMetadata, getSeoMetadata, SEO_SITE_URL } from './metadata';
 
 describe('getSeoMetadata', () => {
-  it('returns indexable, canonical metadata for the launch page', () => {
+  it('canonicalizes the legacy launch URL to the public root', () => {
     expect(getSeoMetadata('/launch?utm_source=whatsapp')).toMatchObject({
-      canonicalPath: '/launch',
+      canonicalPath: '/',
       index: true,
     });
   });
@@ -29,17 +29,17 @@ describe('applySeoMetadata', () => {
   });
 
   it('updates canonical, social metadata and structured data for a public route', () => {
-    applySeoMetadata('/launch');
+    applySeoMetadata('/');
 
-    expect(document.title).toContain('Organize peladas');
+    expect(document.title).toContain('Organize sua pelada');
     expect(document.querySelector('link[rel="canonical"]')?.getAttribute('href')).toBe(
-      `${SEO_SITE_URL}/launch`,
+      `${SEO_SITE_URL}/`,
     );
     expect(document.querySelector('meta[name="robots"]')?.getAttribute('content')).toContain(
       'index',
     );
     expect(document.querySelector('meta[property="og:url"]')?.getAttribute('content')).toBe(
-      `${SEO_SITE_URL}/launch`,
+      `${SEO_SITE_URL}/`,
     );
     expect(document.querySelector('meta[property="og:image:width"]')?.getAttribute('content')).toBe(
       '1200',
@@ -53,7 +53,7 @@ describe('applySeoMetadata', () => {
     ) as { '@type'?: string; url?: string };
     expect(application).toMatchObject({
       '@type': 'SoftwareApplication',
-      url: `${SEO_SITE_URL}/launch`,
+      url: `${SEO_SITE_URL}/`,
     });
   });
 

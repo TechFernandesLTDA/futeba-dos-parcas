@@ -27,7 +27,7 @@ const PUBLIC_ROUTE_METADATA: Readonly<Record<string, SeoRouteMetadata>> = {
   '/launch': {
     title: `${SEO_SITE_NAME} | Organize peladas, times e campeonatos`,
     description: LAUNCH_DESCRIPTION,
-    canonicalPath: '/launch',
+    canonicalPath: '/',
     index: true,
   },
 };

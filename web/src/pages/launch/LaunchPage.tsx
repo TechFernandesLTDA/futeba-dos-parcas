@@ -223,20 +223,35 @@ export function LaunchPage() {
                 </Stack>
               </Stack>
 
-              <Box
-                aria-label="Exemplo de uma rodada organizada no Futeba dos Parças"
-                sx={{
-                  width: '100%',
-                  maxWidth: 410,
-                  borderRadius: 4,
-                  bgcolor: 'background.paper',
-                  color: 'text.primary',
-                  boxShadow: 12,
-                  p: { xs: 2.5, sm: 3.5 },
-                  transform: { md: 'rotate(1.5deg)' },
-                }}
-              >
-                <Stack spacing={2.5}>
+              <Stack spacing={3} alignItems="center" sx={{ width: '100%', maxWidth: 500 }}>
+                <Box
+                  component="img"
+                  src="/og-futeba-dos-parcas.png"
+                  alt="Amigos reunidos em um campo com a marca Futeba dos Parças"
+                  sx={{
+                    display: 'block',
+                    width: '100%',
+                    height: 'auto',
+                    aspectRatio: '1200 / 630',
+                    objectFit: 'cover',
+                    borderRadius: 4,
+                    boxShadow: 12,
+                  }}
+                />
+                <Box
+                  aria-label="Exemplo de uma rodada organizada no Futeba dos Parças"
+                  sx={{
+                    width: '100%',
+                    maxWidth: 410,
+                    borderRadius: 4,
+                    bgcolor: 'background.paper',
+                    color: 'text.primary',
+                    boxShadow: 12,
+                    p: { xs: 2.5, sm: 3.5 },
+                    transform: { md: 'rotate(1.5deg)' },
+                  }}
+                >
+                  <Stack spacing={2.5}>
                   <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={2}>
                     <Box>
                       <Typography variant="overline" color="text.secondary" fontWeight={800}>Próxima rodada</Typography>
@@ -275,8 +290,9 @@ export function LaunchPage() {
                       </Box>
                     </Stack>
                   </Box>
-                </Stack>
-              </Box>
+                  </Stack>
+                </Box>
+              </Stack>
             </Stack>
           </Container>
         </Box>

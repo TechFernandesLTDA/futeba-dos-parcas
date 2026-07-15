@@ -1,7 +1,30 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-15T14:37:47.948Z",
+  "generatedAt": "2026-07-15T15:40:29.001Z",
   "notes": [
+    {
+      "version": "1.54.7",
+      "buildNumber": null,
+      "releaseDate": "2026-07-15",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "A página principal agora apresenta o Futeba e sua identidade visual antes do login.",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "Visitantes deslogados encontram a landing pública diretamente em `futebadosparcas.com.br`.",
+        "A imagem “Futeba dos Parças — Sua pelada organizada. Seu futebol evoluindo.” aparece no destaque principal da página.",
+        "Usuários autenticados continuam acessando normalmente o painel pela mesma URL."
+      ],
+      "fixed": [
+        "A raiz do site deixa de redirecionar visitantes diretamente para a tela de login.",
+        "A antiga rota `/launch` passa a apontar para a página principal, evitando conteúdo público duplicado no Google."
+      ],
+      "issueRefs": [
+        3713
+      ]
+    },
     {
       "version": "1.54.6",
       "buildNumber": null,
