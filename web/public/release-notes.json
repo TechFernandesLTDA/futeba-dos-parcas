@@ -1,6 +1,6 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-15T21:24:39.847Z",
+  "generatedAt": "2026-07-15T21:36:53.719Z",
   "notes": [
     {
       "version": "1.54.12",
@@ -21,7 +21,7 @@
         "Corrigido o rodapé da barra lateral que parecia interativo, mas não aceitava clique nem teclado.",
         "A ação de salvar deixa de ficar separada dos controles que ela atualiza.",
         "Identidade da `AppSidebar` migrada para `ListItemButton` acessível com rota `/profile/edit`.",
-        "`SettingsScreen` limitada a 960–1040 px no desktop, com grid responsivo para notificações.",
+        "`SettingsScreen` usa o tier semântico `form` no desktop, com grid responsivo para notificações.",
         "Contratos e testes cobrem a navegação do rodapé, o atalho de perfil e a ordem da ação de salvar."
       ],
       "issueRefs": [

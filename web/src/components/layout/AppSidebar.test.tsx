@@ -26,6 +26,7 @@ vi.mock('react-i18next', () => ({
         'nav.notifications': 'Notificações',
         'nav.profile': 'Perfil',
         'profile.editProfile': 'Editar Perfil',
+        'settings.defaultUserName': 'Usuário',
         'common.appName': 'Futeba',
         'a11y.mainNav': 'Navegação principal',
       };
@@ -115,7 +116,7 @@ describe('AppSidebar', () => {
     const user = userEvent.setup();
     renderWithTheme(<AppSidebar />);
 
-    const editProfileButton = screen.getByRole('button', { name: 'Editar Perfil' });
+    const editProfileButton = screen.getByRole('button', { name: 'Jogador — Editar Perfil' });
     await user.click(editProfileButton);
 
     expect(mockNavigate).toHaveBeenCalledWith('/profile/edit');

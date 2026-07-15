@@ -363,13 +363,12 @@ export function AppSidebar() {
         <Box sx={{ p: 1, borderTop: 1, borderColor: 'divider' }}>
           <ListItemButton
             onClick={() => navigate('/profile/edit')}
-            aria-label={t('profile.editProfile')}
+            aria-label={`${user?.name || t('settings.defaultUserName')} — ${t('profile.editProfile')}`}
             sx={{
               minHeight: 64,
               borderRadius: 2,
               gap: 1.5,
               px: 1,
-              '&:hover': { bgcolor: 'action.hover' },
             }}
           >
             <Avatar src={user?.photoUrl} sx={{ width: avatarSizes.sidebar, height: avatarSizes.sidebar, bgcolor: 'primary.main' }}>
@@ -377,10 +376,10 @@ export function AppSidebar() {
             </Avatar>
             <Box sx={{ flex: 1, minWidth: 0 }}>
               <Typography variant="body2" fontWeight={600} noWrap>
-                {user?.name || 'Usuário'}
+                {user?.name || t('settings.defaultUserName')}
               </Typography>
               <Typography variant="caption" color="text.secondary" noWrap>
-                {t('profile.editProfile')}
+                {user?.email || t('profile.editProfile')}
               </Typography>
             </Box>
             <EditIcon fontSize="small" sx={{ color: 'text.secondary', flexShrink: 0 }} />

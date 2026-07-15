@@ -53,6 +53,7 @@ import { deleteAccount } from '../../services/cloudFunctions';
 import { getFunctionErrorMessage } from '../../utils/firebaseErrors';
 import { TeamBadge } from '../../components/team/TeamBadge';
 import { queryClient } from '../../services/queryClient';
+import { avatarSizes } from '../../theme/iconSizes';
 
 const logger = createLogger('SettingsScreen');
 
@@ -180,14 +181,7 @@ export const SettingsScreen: React.FC = () => {
         backAriaLabel={t('common.back')}
       />
 
-      <PageContainer
-        maxWidth="form"
-        sx={{
-          '& > .MuiContainer-root': {
-            maxWidth: { lg: 960, xl: 1040 },
-          },
-        }}
-      >
+      <PageContainer maxWidth="form">
         {error ? (
           <ErrorState
             message={error}
@@ -213,7 +207,7 @@ export const SettingsScreen: React.FC = () => {
                   <Avatar
                     src={user?.photoUrl}
                     alt={user?.name || t('settings.defaultUserName')}
-                    sx={{ width: 48, height: 48, bgcolor: 'primary.main' }}
+                    sx={{ width: avatarSizes.md, height: avatarSizes.md, bgcolor: 'primary.main' }}
                   >
                     {(user?.name || t('settings.defaultUserName')).charAt(0).toUpperCase()}
                   </Avatar>
