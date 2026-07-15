@@ -16,9 +16,9 @@ runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }
 
 - **Default:** `self-hosted, macOS, ARM64` (seu Mac).
 - **Fallback opcional:** Defina a variavel de repositorio `RUNNER_LABELS` em **Settings -> Secrets and variables -> Actions -> Variables** com valor `["ubuntu-latest"]` para reverter para github-hosted (vai reativar billing).
-- **Excecao Linux:** os jobs que validam artefatos executaveis `linux-x64` das
-  Cloud Functions permanecem em `ubuntu-latest` ate existir uma VM/container
-  Linux confiavel no Mac. Trocar apenas o label invalidaria o gate de runtime.
+- **Cloud Functions:** os jobs Node usam artefatos `darwin-arm64`. O gate de
+  midia executa o runtime real `linux/amd64` em um container Docker/Colima
+  neste Mac, preservando a compatibilidade com o Firebase.
 
 ---
 
@@ -275,8 +275,8 @@ no proprio workflow.
 |----------|-------|-------|
 | `pr-check.yml` | `ubuntu-latest` | self-hosted macOS ARM64 |
 | `android-ci.yml` | `ubuntu-latest` (4 jobs) | self-hosted macOS ARM64 |
-| `functions-ci.yml` | `ubuntu-latest` | Linux apenas nos gates de artefato/runtime; mutation no Mac |
-| `functions-integration-ci.yml` | `ubuntu-latest` | Linux enquanto reutilizar `node_modules`/artefatos `linux-x64` |
+| `functions-ci.yml` | `ubuntu-latest` | self-hosted macOS ARM64 com artefatos `darwin-arm64` |
+| `functions-integration-ci.yml` | `ubuntu-latest` | self-hosted macOS ARM64 |
 | `ios-build.yml` | `macos-14` (3 jobs) + `ubuntu-latest` (notify) | self-hosted macOS ARM64 |
 | `codeql.yml` | `ubuntu-latest` | self-hosted macOS ARM64 |
 | `deploy-beta.yml` | `ubuntu-latest` | self-hosted macOS ARM64 |

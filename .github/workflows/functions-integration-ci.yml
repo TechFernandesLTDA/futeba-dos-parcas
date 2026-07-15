@@ -10,7 +10,7 @@ name: Functions Integration CI (#2533)
 # O E2E web (discover/preview público, #2532) é wired em workflow próprio
 # quando aquela suite estiver validada — ver #2533/#2530.
 #
-# Issue #3543: roda em ubuntu-latest e REUSA o artifact lib/ + node_modules/
+# Issue #3543: roda em macOS ARM64 e REUSA o artifact lib/ + node_modules/
 # produzido pelo job `build` do functions-ci.yml (cross-workflow), evitando uma
 # segunda instalacao + `npm run build`. Se o artifact nao estiver disponivel a
 # tempo (ex.: PR rules-only onde functions-ci nao rodou), faz fallback para
@@ -50,8 +50,11 @@ jobs:
     # Roda quando functions OU rules mudam: rules (firestore.rules) afetam os
     # triggers/disparos testados aqui. Um PR web-only nao aciona este workflow.
     if: needs.changes.outputs.functions == 'true' || needs.changes.outputs.rules == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
     timeout-minutes: 25
+    concurrency:
+      group: futeba-functions-firebase-emulators
+      cancel-in-progress: false
 
     steps:
       - name: Checkout
@@ -61,6 +64,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "22"
+          cache: npm
+          cache-dependency-path: functions/package-lock.json
 
       - name: Configurar Java 21 (requerido pelo emulador Firestore)
         uses: actions/setup-java@v4
@@ -80,7 +85,7 @@ jobs:
         run: |
           set -euo pipefail
           HEAD_SHA="${{ github.event.pull_request.head.sha || github.sha }}"
-          ARTIFACT="functions-build-linux-node22-${{ hashFiles('functions/package-lock.json') }}"
+          ARTIFACT="functions-build-darwin-arm64-node22-${{ hashFiles('functions/package-lock.json') }}"
           for i in $(seq 1 24); do
             RUN_ID=$(gh api \
               "repos/${{ github.repository }}/actions/workflows/functions-ci.yml/runs?head_sha=${HEAD_SHA}&per_page=20" \

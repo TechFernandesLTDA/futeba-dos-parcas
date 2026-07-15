@@ -36,14 +36,13 @@ defaults:
     working-directory: functions
 
 # Estrategia de instalacao (issue #3543): o job `build` instala do lockfile e
-# roda `npm run build` UMA vez em ubuntu-latest e publica lib/ + node_modules/
+# roda `npm run build` UMA vez no macOS ARM64 e publica lib/ + node_modules/
 # como artifact versionado por SO + Node + hash(functions/package-lock.json). Os
 # jobs de qualidade (lint/test/firestore-query-perf/media-runtime) baixam o
 # artifact em vez de re-instalar. Resultado: 6 -> 2 instalacoes no arquivo
 # (build + mutation cron), e apenas 1 instalacao no caminho critico de um PR.
-# Compartilhar node_modules/ entre jobs Linux e confiavel porque todos rodam em
-# ubuntu-latest (mesmo SO/arquitetura); o mutation (Mac, darwin-arm64) mantem
-# sua propria instalacao pois nao pode consumir o artifact Linux.
+# Compartilhar node_modules/ entre jobs e confiavel porque todos rodam no mesmo
+# pool macOS ARM64; o mutation mantem sua propria instalacao por ser agendado.
 jobs:
   changes:
     if: github.event_name != 'schedule'
@@ -53,7 +52,7 @@ jobs:
     name: Build TypeScript
     needs: [ changes ]
     if: github.event_name != 'schedule' && needs.changes.outputs.functions == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
     timeout-minutes: 15
 
     steps:
@@ -81,7 +80,7 @@ jobs:
       - name: Upload build artifact (lib + node_modules)
         uses: actions/upload-artifact@v4
         with:
-          name: functions-build-linux-node22-${{ hashFiles('functions/package-lock.json') }}
+          name: functions-build-darwin-arm64-node22-${{ hashFiles('functions/package-lock.json') }}
           path: |
             functions/lib
             functions/node_modules
@@ -91,7 +90,7 @@ jobs:
   lint:
     name: ESLint Check
     needs: [ build ]
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
     timeout-minutes: 15
 
     steps:
@@ -106,36 +105,23 @@ jobs:
       - name: Download build artifact (lib + node_modules)
         uses: actions/download-artifact@v4
         with:
-          name: functions-build-linux-node22-${{ hashFiles('functions/package-lock.json') }}
+          name: functions-build-darwin-arm64-node22-${{ hashFiles('functions/package-lock.json') }}
           path: functions
 
       - name: Run ESLint
         run: npm run lint
 
   media-runtime-linux:
-    name: FFmpeg 8.1.2 Linux Security Gate
+    name: FFmpeg 8.1.2 Linux Security Gate on macOS
     needs: [ build ]
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
     timeout-minutes: 20
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js 22
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-
-      # node_modules/ vem do artifact do build (mesmo linux-x64). O binario
-      # FFmpeg e restaurado do cache dedicado (SHA-pinned).
-      - name: Download build artifact (lib + node_modules)
-        uses: actions/download-artifact@v4
-        with:
-          name: functions-build-linux-node22-${{ hashFiles('functions/package-lock.json') }}
-          path: functions
-
-      - name: Restore verified FFmpeg binary
+      - name: Restore verified Linux x64 FFmpeg binary
         uses: actions/cache@v4
         with:
           path: |
@@ -143,19 +129,33 @@ jobs:
             functions/vendor/ffmpeg/install-manifest.json
           key: ffmpeg-linux-x64-13c2088bdbf4f1baa529d537c37872c810872b8ffab4fa74d39aea4d0332a9b7
 
-      - name: Install and verify pinned Linux FFmpeg
-        run: npm run install:ffmpeg
-
-      - name: Execute real H264 poster security smoke
-        run: >-
-          npx jest --no-coverage --runInBand
-          test/group-wall-media-ffmpeg.test.ts
-          test/group-wall-media-contract.test.ts
+      - name: Execute production Linux x64 media security gate
+        working-directory: .
+        run: |
+          set -euo pipefail
+          docker info >/dev/null
+          docker run --rm --platform linux/amd64 \
+            --user "$(id -u):$(id -g)" \
+            -e CI=true \
+            -e HOME=/tmp \
+            -e npm_config_cache=/tmp/npm-cache \
+            -e npm_config_update_notifier=false \
+            -v "$GITHUB_WORKSPACE:/workspace" \
+            -w /workspace/functions \
+            node:22-bookworm@sha256:5647be709086c696ff32edaaf1c70cd26d1da6ab2b39c32f3c7b4c4a31957e37 \
+            bash -lc '
+              npm ci --no-audit --no-fund &&
+              npm run build &&
+              npm run install:ffmpeg &&
+              npx jest --no-coverage --runInBand \
+                test/group-wall-media-ffmpeg.test.ts \
+                test/group-wall-media-contract.test.ts
+            '
 
   test:
     name: Unit Tests
     needs: [ build ]
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
     timeout-minutes: 15
 
     steps:
@@ -174,7 +174,7 @@ jobs:
       - name: Download build artifact (lib + node_modules)
         uses: actions/download-artifact@v4
         with:
-          name: functions-build-linux-node22-${{ hashFiles('functions/package-lock.json') }}
+          name: functions-build-darwin-arm64-node22-${{ hashFiles('functions/package-lock.json') }}
           path: functions
 
       # test:coverage = "jest --coverage" → gera coverage/lcov.info (reporter
@@ -241,11 +241,14 @@ jobs:
   firestore-query-perf:
     name: Firestore Query Performance
     needs: [ build ]
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
     timeout-minutes: 20
     # Tests perf são experimentais — ESM modules de @google-cloud/firestore
     # quebram com ts-jest default. Marcar non-blocking até ajustar transform.
     continue-on-error: true
+    concurrency:
+      group: futeba-functions-firebase-emulators
+      cancel-in-progress: false
 
     steps:
       - name: Checkout code
@@ -254,7 +257,7 @@ jobs:
       - name: Download build artifact (lib + node_modules)
         uses: actions/download-artifact@v4
         with:
-          name: functions-build-linux-node22-${{ hashFiles('functions/package-lock.json') }}
+          name: functions-build-darwin-arm64-node22-${{ hashFiles('functions/package-lock.json') }}
           path: functions
 
       # firebase-tools >= 13.x requer JDK 21+ pro Firestore emulator.
@@ -281,7 +284,7 @@ jobs:
       # entre runs e emuladores podem deixar portas ocupadas
       # ("Could not start Firestore Emulator, port taken"). lsof -ti retorna
       # PIDs; || true garante que o step nunca falha mesmo se a porta ja
-      # estiver livre. Funciona em Linux (ubuntu-latest) e macOS.
+      # estiver livre no runner macOS.
       - name: Liberar portas dos emuladores (cleanup stale processes)
         run: lsof -ti:8085,9099,9199,4000,5001 | xargs kill -9 2>/dev/null || true
         working-directory: .
@@ -300,8 +303,7 @@ jobs:
     name: Mutation Testing (Stryker)
     runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
     # Caro: roda apenas no schedule noturno ou disparo manual — NUNCA em push/PR.
-    # NAO consome o artifact do `build` (linux-x64): roda em macOS ARM64 e
-    # precisa da sua propria instalacao de dependencias. Fora do caminho
+    # NAO consome o artifact do `build`: usa uma instalacao isolada. Fora do caminho
     # critico de PR.
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     timeout-minutes: 45
