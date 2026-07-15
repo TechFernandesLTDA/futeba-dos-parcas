@@ -11,6 +11,7 @@
 
 import { describe, it, beforeAll, afterAll } from "vitest";
 import { assertFails, assertSucceeds } from "@firebase/rules-unit-testing";
+import { serverTimestamp } from "firebase/firestore";
 import type { RulesTestEnvironment } from "@firebase/rules-unit-testing";
 import {
   initTestEnv,
@@ -330,6 +331,73 @@ describe("locations — atualização", () => {
     const db = asPlayerB(testEnv);
     await assertFails(
       db.doc(`locations/${LOC_PLAYER_A_OWNED}`).update({ name: "Invasão" })
+    );
+  });
+});
+
+// ============================================================
+// REVIEWS
+// ============================================================
+
+describe("locations — avaliações", () => {
+  const reviewsPath = `locations/${LOC_ACTIVE_VERIFIED}/reviews`;
+
+  it("autor cria a primeira avaliação com created_at do servidor", async () => {
+    const db = asPlayerA(testEnv);
+
+    await assertSucceeds(
+      db.doc(`${reviewsPath}/${UID_PLAYER_A}`).set({
+        user_id: UID_PLAYER_A,
+        user_name: "Player A",
+        user_photo: null,
+        rating: 5,
+        comment: "Quadra excelente",
+        created_at: serverTimestamp(),
+      })
+    );
+  });
+
+  it("autor atualiza avaliação preservando created_at e usando updated_at do servidor", async () => {
+    const reviewPath = `${reviewsPath}/${UID_PLAYER_B}`;
+    const createdAt = new Date(Date.now() - 5 * 60 * 1000);
+    await seedDoc(testEnv, reviewPath, {
+      user_id: UID_PLAYER_B,
+      user_name: "Player B",
+      user_photo: null,
+      rating: 3,
+      comment: "Avaliação original",
+      created_at: createdAt,
+    });
+
+    const db = asPlayerB(testEnv);
+    await assertSucceeds(
+      db.doc(reviewPath).update({
+        rating: 4,
+        comment: "Avaliação atualizada",
+        updated_at: serverTimestamp(),
+      })
+    );
+  });
+
+  it("nega nova atualização antes do cooldown de 60 segundos", async () => {
+    const reviewPath = `${reviewsPath}/${UID_PLAYER_C}`;
+    await seedDoc(testEnv, reviewPath, {
+      user_id: UID_PLAYER_C,
+      user_name: "Player C",
+      user_photo: null,
+      rating: 4,
+      comment: "Avaliação recente",
+      created_at: new Date(Date.now() - 5 * 60 * 1000),
+      updated_at: new Date(),
+    });
+
+    const db = asUser(testEnv, UID_PLAYER_C);
+    await assertFails(
+      db.doc(reviewPath).update({
+        rating: 5,
+        comment: "Tentativa precoce",
+        updated_at: serverTimestamp(),
+      })
     );
   });
 });
