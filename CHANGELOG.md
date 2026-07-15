@@ -249,7 +249,7 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 #### Corrigido
 - Identidade da `AppSidebar` migrada para `ListItemButton` acessível com rota `/profile/edit`.
-- `SettingsScreen` usa o tier semântico `form` no desktop, com grid responsivo para notificações.
+- `SettingsScreen` usa a foto real do jogador e um grid responsivo para notificações.
 - Contratos e testes cobrem a navegação do rodapé, o atalho de perfil e a ordem da ação de salvar.
 
 _Issues: #3724_

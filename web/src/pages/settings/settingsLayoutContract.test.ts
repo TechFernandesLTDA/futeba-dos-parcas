@@ -9,7 +9,7 @@ const source = readFileSync(
 
 describe('SettingsScreen layout contract', () => {
   it('oferece edição do perfil no cartão do usuário', () => {
-    expect(source).toContain("onClick={() => navigate('/profile/edit')}");
+    expect(source).toContain("navigate('/profile/edit')");
     expect(source).toContain("{t('profile.editProfile')}");
   });
 

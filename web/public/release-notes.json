@@ -1,6 +1,6 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-15T21:36:53.719Z",
+  "generatedAt": "2026-07-15T21:45:13.260Z",
   "notes": [
     {
       "version": "1.54.12",
@@ -14,14 +14,13 @@
       "added": [],
       "improved": [
         "O cartão da conta usa a foto real do jogador e mantém a edição sempre visível.",
-        "Configurações ganhou largura mais confortável em monitores grandes.",
         "Notificações ficam organizadas em blocos responsivos, com Salvar logo abaixo."
       ],
       "fixed": [
         "Corrigido o rodapé da barra lateral que parecia interativo, mas não aceitava clique nem teclado.",
         "A ação de salvar deixa de ficar separada dos controles que ela atualiza.",
         "Identidade da `AppSidebar` migrada para `ListItemButton` acessível com rota `/profile/edit`.",
-        "`SettingsScreen` usa o tier semântico `form` no desktop, com grid responsivo para notificações.",
+        "`SettingsScreen` usa a foto real do jogador e um grid responsivo para notificações.",
         "Contratos e testes cobrem a navegação do rodapé, o atalho de perfil e a ordem da ação de salvar."
       ],
       "issueRefs": [
