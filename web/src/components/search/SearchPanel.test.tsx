@@ -24,6 +24,9 @@ vi.mock('firebase/firestore', () => ({
 }));
 
 vi.mock('../../services/firebase', () => ({ db: {} }));
+vi.mock('../../services/cloudFunctions', () => ({
+  getLeaguePlayers: vi.fn().mockResolvedValue({ data: { players: [] } }),
+}));
 
 vi.mock('../../utils/firestoreHelpers', () => ({
   snakeToCamel: (obj: unknown) => obj,

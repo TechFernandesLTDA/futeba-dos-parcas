@@ -245,6 +245,21 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.54.6][web-1.54.6] - 2026-07-15
+
+#### Adicionado
+- Metadata por rota com title, description, canonical, Open Graph, Twitter Cards e controle `index`/`noindex`.
+- Dados estruturados `Organization` e `SoftwareApplication` em JSON-LD.
+- Eventos reais de aquisição e conversão no Firebase Analytics, enriquecidos com UTMs e hostname de referência sem PII.
+- Playbook de SEO e crescimento orgânico com clusters de busca, distribuição, mensuração e operação no Search Console.
+
+#### Corrigido
+- Rotas privadas e de autenticação recebem `noindex, nofollow`.
+- O helper compartilhado de testes inclui o `PwaInstallProvider`, eliminando falhas de Login e Home.
+- Mocks de busca e jogadores deixam de inicializar Cloud Functions fora do escopo dos testes.
+
+_Issues: #3705, #3706, #3707, #3708, #3709_
+
 ### [1.54.5][web-1.54.5] - 2026-07-15
 
 #### Mudado
@@ -2427,6 +2442,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.54.6]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.6.md
 [web-1.54.5]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.5.md
 [web-1.54.4]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.4.md
 [web-1.54.3]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.3.md
