@@ -89,10 +89,11 @@ import { snakeToCamel, normalizeField } from '../../utils/firestoreHelpers';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { createLogger } from '../../utils/logger';
+import { getFieldAvailability } from '../../services/cloudFunctions';
+import { findAvailabilityConflict } from '../../utils/fieldAvailability';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { getFunctionsErrorMessage } from '../../utils/firebaseErrors';
 import { useTranslation } from 'react-i18next';
-import { isSchedulingBlockingStatus } from '../../utils/gameLifecycle';
 import { GAME_VALIDATION } from '../../utils/validationConstants';
 import { getNextRecurrenceDates, formatRecurrencePreview } from '../../utils/recurrencePreview';
 import {
@@ -121,8 +122,9 @@ const parseTime = (t: string) => {
 };
 
 const formatTime = (minutes: number) => {
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
+  const normalizedMinutes = minutes % (24 * 60);
+  const h = Math.floor(normalizedMinutes / 60);
+  const m = normalizedMinutes % 60;
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
 };
 
@@ -1122,25 +1124,18 @@ export const CreateGameScreen: React.FC = () => {
       // Verificar sobreposição de horários
       if (formData.fieldId && formData.date) {
         try {
-          const gamesRef = collection(db, 'games');
-          const overlapQuery = query(
-            gamesRef,
-            where('field_id', '==', formData.fieldId),
-            where('date', '==', formData.date),
-          );
-          const existingGames = await getDocs(overlapQuery);
-          const newStart = parseTime(formData.time);
-          const newEnd = formData.endTime ? parseTime(formData.endTime) : newStart + DEFAULT_GAME_DURATION_MINUTES;
-          const conflicting = existingGames.docs.find((d) => {
-            const g = d.data();
-            if (!isSchedulingBlockingStatus(g.status)) return false;
-            const gStart = g.time ? parseTime(g.time) : 0;
-            const gEnd = g.end_time ? parseTime(g.end_time) : gStart + DEFAULT_GAME_DURATION_MINUTES;
-            return gStart < newEnd && gEnd > newStart;
+          const { data: availability } = await getFieldAvailability({
+            fieldId: formData.fieldId,
+            startDate: formData.date,
+            endDate: formData.date,
           });
+          const existingSlots = availability.slots;
+          const newStart = parseTime(formData.time);
+          const parsedNewEnd = formData.endTime ? parseTime(formData.endTime) : newStart + DEFAULT_GAME_DURATION_MINUTES;
+          const newEnd = parsedNewEnd <= newStart ? parsedNewEnd + 24 * 60 : parsedNewEnd;
+          const conflicting = findAvailabilityConflict(existingSlots, newStart, newEnd);
 
           if (conflicting) {
-            const g = conflicting.data();
             const DAY_LABELS_SHORT = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'];
             const suggestions: Array<{ date: string; time: string; label: string }> = [];
 
@@ -1152,13 +1147,7 @@ export const CreateGameScreen: React.FC = () => {
             for (let s = 0; s <= dayEnd - slotDuration; s += 30) {
               const e = s + slotDuration;
               if (e > dayEnd) break;
-              const conflicts = existingGames.docs.some((d) => {
-                const gd = d.data();
-                if (!isSchedulingBlockingStatus(gd.status)) return false;
-                const gs = gd.time ? parseTime(gd.time) : 0;
-                const ge = gd.end_time ? parseTime(gd.end_time) : gs + DEFAULT_GAME_DURATION_MINUTES;
-                return gs < e && ge > s;
-              });
+              const conflicts = findAvailabilityConflict(existingSlots, s, e) !== undefined;
               if (!conflicts) freeSlots.push(formatTime(s));
             }
 
@@ -1208,7 +1197,7 @@ export const CreateGameScreen: React.FC = () => {
               }
             }
 
-            const msg = `Horário indisponível: ${g.time}${g.end_time ? ` às ${g.end_time}` : ''} já ocupado.` +
+            const msg = `Horário indisponível: ${formatTime(conflicting.startMinutes)} às ${formatTime(conflicting.endMinutes)} já ocupado.` +
               (selectedEndStr ? ` (${formData.time} às ${selectedEndStr})` : '');
 
             setConflictMessage(msg);

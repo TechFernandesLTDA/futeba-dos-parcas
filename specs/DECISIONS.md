@@ -1255,4 +1255,26 @@ tela vazia deixa explícito quando ainda não há buscas. A chave global legada 
 
 ---
 
+## 2026-07-14 — Disponibilidade de quadra é uma projeção sanitizada (#3688)
+
+**Contexto:** A timeline consultava `games` diretamente. Como regras do
+Firestore autorizam a consulta inteira, e não filtram cada resultado, um jogo
+privado alheio ou soft-deleted causava `permission-denied` para toda a agenda.
+
+**Decisão:** A disponibilidade passa a ser lida pelo callable autenticado
+`getFieldAvailability`. O servidor consulta os jogos com Admin SDK, aplica os
+status bloqueantes e devolve exclusivamente data, minuto inicial e minuto final.
+App Check é exigido em produção e a janela máxima é de 60 dias.
+
+**Consequências:** Slots privados continuam ocupando a quadra sem revelar ID,
+grupo, dono, título ou visibilidade. A timeline deixa de depender de regras como
+filtro e perde atualização push em tempo real; ela refaz a leitura quando seus
+parâmetros mudam. O submit realiza nova leitura sanitizada do dia para não
+depender do estado anterior da timeline.
+
+**Relacionado:** `specs/BUGFIX_2026-07-14_FIELD_AVAILABILITY_PROJECTION.md`,
+#3688.
+
+---
+
 <!-- Adicione novas decisões acima desta linha -->

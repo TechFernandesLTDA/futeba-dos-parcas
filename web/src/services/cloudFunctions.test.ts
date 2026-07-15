@@ -36,6 +36,7 @@ import {
   submitDirectMessage,
   submitContentReport,
   updateUserPii,
+  getFieldAvailability,
 } from './cloudFunctions';
 
 describe('cloudFunctions', () => {
@@ -97,6 +98,22 @@ describe('cloudFunctions', () => {
     await updateUserPii({ gender: null });
 
     expect(mockCallable).toHaveBeenCalledWith('updateUserPii', { gender: null });
+  });
+
+  it('getFieldAvailability envia somente quadra e intervalo', async () => {
+    mockCallable.mockResolvedValue({ data: { slots: [] } });
+
+    await getFieldAvailability({
+      fieldId: 'field-1',
+      startDate: '2026-07-14',
+      endDate: '2026-07-21',
+    });
+
+    expect(mockCallable).toHaveBeenCalledWith('getFieldAvailability', {
+      fieldId: 'field-1',
+      startDate: '2026-07-14',
+      endDate: '2026-07-21',
+    });
   });
 
   it('submitMvpVotes chama callable batch com votos por categoria', async () => {

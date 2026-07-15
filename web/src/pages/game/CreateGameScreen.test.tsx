@@ -7,6 +7,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import i18n from 'i18next';
 
 const mockNavigate = vi.fn();
+const mockGetFieldAvailability = vi.fn();
 let mockLocations: Array<Record<string, unknown>> = [];
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom');
@@ -84,6 +85,10 @@ vi.mock('../../services/firebase', () => ({
   db: {},
 }));
 
+vi.mock('../../services/cloudFunctions', () => ({
+  getFieldAvailability: (...args: unknown[]) => mockGetFieldAvailability(...args),
+}));
+
 vi.mock('firebase/functions', () => ({
   connectFunctionsEmulator: vi.fn(),
   getFunctions: vi.fn(() => ({})),
@@ -105,6 +110,7 @@ vi.mock('firebase/firestore', () => ({
 }));
 
 import { CreateGameScreen } from './CreateGameScreen';
+import { findAvailabilityConflict } from '../../utils/fieldAvailability';
 import {
   calculateFieldRentalCost,
   formatGameDurationLabel,
@@ -141,6 +147,7 @@ describe('CreateGameScreen', () => {
     vi.clearAllMocks();
     localStorage.clear();
     mockLocations = [];
+    mockGetFieldAvailability.mockResolvedValue({ data: { slots: [] } });
     await i18n.changeLanguage('pt-BR');
   });
 
@@ -235,6 +242,16 @@ describe('CreateGameScreen', () => {
 });
 
 describe('CreateGameScreen pricing helpers', () => {
+  it('detecta overlap somente pela projeção sanitizada de slots', () => {
+    const slots = [
+      { date: '2026-07-15', startMinutes: 19 * 60, endMinutes: 20 * 60 },
+      { date: '2026-07-15', startMinutes: 21 * 60, endMinutes: 22 * 60 },
+    ];
+
+    expect(findAvailabilityConflict(slots, 19 * 60 + 30, 20 * 60 + 30)).toEqual(slots[0]);
+    expect(findAvailabilityConflict(slots, 20 * 60, 21 * 60)).toBeUndefined();
+  });
+
   it('calcula aluguel proporcional pela duração usando preço por hora em centavos', () => {
     expect(normalizeHourlyPriceForGame(35000)).toBe(350);
     expect(calculateFieldRentalCost(35000, '18:00', '20:00')).toBe(700);

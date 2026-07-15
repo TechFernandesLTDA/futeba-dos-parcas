@@ -662,6 +662,17 @@ export const confirmGamePresence = httpsCallable<
   }
 >(functions, 'confirmGamePresence');
 
+export interface FieldAvailabilitySlot {
+  date: string;
+  startMinutes: number;
+  endMinutes: number;
+}
+
+export const getFieldAvailability = httpsCallable<
+  { fieldId: string; startDate: string; endDate: string },
+  { slots: FieldAvailabilitySlot[] }
+>(functions, 'getFieldAvailability');
+
 export const toggleFollowUser = httpsCallable<
   { targetUserId: string; follow: boolean },
   { success: boolean; following: boolean; changed: boolean }
