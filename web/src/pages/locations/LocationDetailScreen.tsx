@@ -52,7 +52,7 @@ import {
   History as HistoryIcon,
   AssignmentTurnedIn as ChecklistIcon,
 } from '@mui/icons-material';
-import { doc, collection, query, orderBy, limit, serverTimestamp, onSnapshot, setDoc } from 'firebase/firestore';
+import { doc, collection, query, orderBy, limit, serverTimestamp, onSnapshot, setDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { LoadingState } from '../../components/common/GameCard';
@@ -348,6 +348,17 @@ export const LocationDetailScreen: React.FC = () => {
     }
   };
 
+  const currentUserReview = user
+    ? reviews.find((review) => review.userId === user.id)
+    : undefined;
+
+  const handleOpenReview = () => {
+    setNewReviewRating(currentUserReview?.rating ?? 5);
+    setNewReviewComment(currentUserReview?.comment ?? '');
+    setReviewCommentError(false);
+    setReviewOpen(true);
+  };
+
   const handleSubmitReview = async () => {
     if (!user || !locationId) return;
     if (!newReviewComment.trim()) {
@@ -358,14 +369,26 @@ export const LocationDetailScreen: React.FC = () => {
     setReviewCommentError(false);
     setSubmittingReview(true);
     try {
-      await setDoc(doc(db, 'locations', locationId, 'reviews', user.id), {
-        user_id: user.id,
+      const reviewRef = doc(db, 'locations', locationId, 'reviews', user.id);
+      const reviewData = {
         user_name: user.name || 'Anônimo',
         user_photo: user.photoUrl || null,
         rating: newReviewRating,
         comment: newReviewComment.trim(),
-        created_at: serverTimestamp(),
-      });
+      };
+
+      if (currentUserReview) {
+        await updateDoc(reviewRef, {
+          ...reviewData,
+          updated_at: serverTimestamp(),
+        });
+      } else {
+        await setDoc(reviewRef, {
+          user_id: user.id,
+          ...reviewData,
+          created_at: serverTimestamp(),
+        });
+      }
       showSuccess(t('feedback.location.reviewSuccess'));
       setReviewOpen(false);
       setNewReviewComment('');
@@ -899,7 +922,11 @@ export const LocationDetailScreen: React.FC = () => {
           <CardContent>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
               <Typography variant="subtitle1" fontWeight={600}>Avaliações ({reviews.length})</Typography>
-              {user && <Button size="small" startIcon={<ReviewIcon />} onClick={() => setReviewOpen(true)} sx={{ minHeight: 44 }}>Avaliar</Button>}
+              {user && (
+                <Button size="small" startIcon={<ReviewIcon />} onClick={handleOpenReview} sx={{ minHeight: 44 }}>
+                  {currentUserReview ? 'Editar avaliação' : 'Avaliar'}
+                </Button>
+              )}
             </Box>
             {reviews.length === 0 ? (
               <Box sx={{ textAlign: 'center', py: 3 }}>
