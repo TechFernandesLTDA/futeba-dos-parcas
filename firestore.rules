@@ -303,6 +303,13 @@ service cloud.firestore {
         get(confirmationPath).data.status in ['PENDING', 'CONFIRMED'];
     }
 
+    // Resolve o jogo pelo ID antes de aplicar o contrato owner/coorganizador.
+    // Usado por colecoes auxiliares cujos documentos guardam apenas game_id.
+    function canManageGameById(gameId) {
+      let gameDoc = get(/databases/$(database)/documents/games/$(gameId));
+      return gameDoc != null && canManageGame(gameDoc.data);
+    }
+
     // Leitura do estado ao vivo: participantes/gestores do jogo e qualquer
     // usuário autenticado quando o próprio jogo é público.
     function canViewLiveGame(gameId) {
@@ -1251,7 +1258,7 @@ service cloud.firestore {
       // SUB-COLECAO: chat (games/{gameId}/chat/{messageId})
       // #3230 / spec feat-2026-07-03-game-chat-realtime.md
       // Chat em tempo real por jogo. Escrita restrita a confirmados,
-      // dono do jogo ou admin do grupo dono. Arquivamento 7d apos
+      // gestores do jogo ou admin do grupo dono. Arquivamento 7d apos
       // game.date_time (só-leitura). Soft-delete p/ auditoria.
       // ============================================
       match /chat/{messageId} {
@@ -1259,11 +1266,12 @@ service cloud.firestore {
         // Reuses get() do pai para validar GROUP_ONLY + membership.
         allow read: if isVerifiedOrGrace() && (
           isAdmin() ||
+          canManageGameById(gameId) ||
           (get(/databases/$(database)/documents/games/$(gameId)).data.get('visibility', null) != 'GROUP_ONLY') ||
           isGroupMember(get(/databases/$(database)/documents/games/$(gameId)).data.get('group_id', null))
         );
 
-        // Create: só confirmados, dono do jogo, ou admin do grupo dono.
+        // Create: só confirmados, gestores do jogo, ou admin do grupo dono.
         // Valida sender_id == userId(), texto 1..500, created_at == request.time
         // (previne backdate). Arquivamento: nao permite escrever se
         // game.date_time + 7d < now. Admin tem bypass nas checagens de autor.
@@ -1288,7 +1296,7 @@ service cloud.firestore {
             (
               request.resource.data.sender_id == userId() &&
               (isConfirmedPlayer(gameId) ||
-               isGameOwner(gameId) ||
+               canManageGameById(gameId) ||
                (get(/databases/$(database)/documents/games/$(gameId)).data.get('group_id', null) != null &&
                 isGroupAdmin(get(/databases/$(database)/documents/games/$(gameId)).data.group_id)))
             )
@@ -1300,7 +1308,7 @@ service cloud.firestore {
             timestamp.value(request.time.toMillis() - 7 * 24 * 60 * 60 * 1000);
 
         // Update: apenas soft-delete (deleted_by + deleted_at).
-        // Autor, dono do jogo, ou admin do grupo podem soft-deletar.
+        // Autor, gestores do jogo, ou admin do grupo podem soft-deletar.
         // Admin global tem bypass no deleted_by == userId().
         allow update: if isAuthenticated() &&
           onlyAllowedFields(['deleted_by', 'deleted_at']) &&
@@ -1309,7 +1317,7 @@ service cloud.firestore {
             isAdmin() ||
             (request.resource.data.deleted_by == userId() &&
              (resource.data.sender_id == userId() ||
-              isGameOwner(gameId) ||
+              canManageGameById(gameId) ||
               (get(/databases/$(database)/documents/games/$(gameId)).data.get('group_id', null) != null &&
                isGroupAdmin(get(/databases/$(database)/documents/games/$(gameId)).data.group_id))))
           );
@@ -3103,14 +3111,14 @@ service cloud.firestore {
     // ============================================
     // COLECAO: game_rides (caronas para jogos)
     // ============================================
-    // Issue #2980: jogadores confirmados podem oferecer ou pedir carona
-    // para um jogo. Somente origem/destino aproximados sao permitidos
+    // Issue #2980/#3687: jogadores confirmados e gestores podem oferecer ou
+    // pedir carona para um jogo. Somente origem/destino aproximados sao permitidos
     // (sem coordenadas ou endereco sensivel) e cada usuario mantem um
     // documento por jogo: {gameId}_{userId}.
     match /game_rides/{rideId} {
       allow read: if isAuthenticated() && (
         isAdmin() ||
-        isGameOwner(resource.data.game_id) ||
+        canManageGameById(resource.data.game_id) ||
         isConfirmedPlayer(resource.data.game_id)
       );
 
@@ -3175,7 +3183,7 @@ service cloud.firestore {
         request.resource.data.created_at == request.time &&
         request.resource.data.updated_at == request.time &&
         exists(/databases/$(database)/documents/games/$(request.resource.data.game_id)) &&
-        (isAdmin() || isGameOwner(request.resource.data.game_id) || isConfirmedPlayer(request.resource.data.game_id));
+        (isAdmin() || canManageGameById(request.resource.data.game_id) || isConfirmedPlayer(request.resource.data.game_id));
 
       allow update: if isAuthenticated() &&
         resource.data.user_id == userId() &&
@@ -3219,7 +3227,7 @@ service cloud.firestore {
         request.resource.data.note.size() <= 180 &&
         request.resource.data.status in ['ACTIVE', 'CANCELLED'] &&
         request.resource.data.updated_at == request.time &&
-        (isAdmin() || isGameOwner(resource.data.game_id) || isConfirmedPlayer(resource.data.game_id));
+        (isAdmin() || canManageGameById(resource.data.game_id) || isConfirmedPlayer(resource.data.game_id));
 
       allow delete: if false;
     }
@@ -3395,11 +3403,11 @@ service cloud.firestore {
     }
 
     match /post_game_messages/{messageId} {
-      allow read: if isAuthenticated() && (isAdmin() || isGameOwner(resource.data.game_id) || isConfirmedPlayer(resource.data.game_id));
+      allow read: if isAuthenticated() && (isAdmin() || canManageGameById(resource.data.game_id) || isConfirmedPlayer(resource.data.game_id));
       allow create: if isAuthenticated()
         && messageId == (request.resource.data.game_id + '_' + userId())
         && request.resource.data.user_id == userId()
-        && (isAdmin() || isGameOwner(request.resource.data.game_id) || isConfirmedPlayer(request.resource.data.game_id))
+        && (isAdmin() || canManageGameById(request.resource.data.game_id) || isConfirmedPlayer(request.resource.data.game_id))
         && get(/databases/$(database)/documents/games/$(request.resource.data.game_id)).data.status == 'FINISHED'
         && request.resource.data.message is string
         && request.resource.data.message.size() >= 2
@@ -3411,7 +3419,7 @@ service cloud.firestore {
         && resource.data.user_id == userId()
         && fieldUnchanged('game_id')
         && fieldUnchanged('user_id')
-        && (isAdmin() || isGameOwner(resource.data.game_id) || isConfirmedPlayer(resource.data.game_id))
+        && (isAdmin() || canManageGameById(resource.data.game_id) || isConfirmedPlayer(resource.data.game_id))
         && get(/databases/$(database)/documents/games/$(resource.data.game_id)).data.status == 'FINISHED'
         && request.resource.data.message is string
         && request.resource.data.message.size() >= 2
