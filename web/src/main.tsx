@@ -2,12 +2,15 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App.tsx';
 import { createLogger } from './utils/logger';
+import { PwaInstallProvider } from './hooks/usePwaInstall';
 
 const swLogger = createLogger('ServiceWorker');
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <App />
+    <PwaInstallProvider>
+      <App />
+    </PwaInstallProvider>
   </React.StrictMode>
 );
 

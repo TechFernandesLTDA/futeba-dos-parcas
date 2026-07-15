@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNotificationPermission } from './useNotificationPermission';
 
-export type AppPermissionId = 'notifications' | 'location' | 'storage';
+export type AppPermissionId = 'notifications' | 'location';
 export type AppPermissionState = PermissionState | 'unsupported' | 'unknown';
 
 export interface AppPermissionItem {
@@ -9,12 +9,6 @@ export interface AppPermissionItem {
   state: AppPermissionState;
   supported: boolean;
   loading: boolean;
-}
-
-interface StorageEstimateState {
-  persisted: boolean | null;
-  quota: number | null;
-  usage: number | null;
 }
 
 function mapNotificationState(permission: NotificationPermission): AppPermissionState {
@@ -35,29 +29,6 @@ async function queryBrowserPermission(name: PermissionName): Promise<AppPermissi
   }
 }
 
-async function readStorageEstimate(): Promise<StorageEstimateState> {
-  if (typeof navigator === 'undefined' || !navigator.storage) {
-    return { persisted: null, quota: null, usage: null };
-  }
-
-  const [persisted, estimate] = await Promise.all([
-    typeof navigator.storage.persisted === 'function'
-      ? navigator.storage.persisted().catch(() => null)
-      : Promise.resolve(null),
-    typeof navigator.storage.estimate === 'function'
-      ? navigator.storage.estimate().catch(() => ({}))
-      : Promise.resolve({} as StorageEstimate),
-  ]);
-
-  const storageEstimate = estimate as StorageEstimate;
-
-  return {
-    persisted,
-    quota: typeof storageEstimate.quota === 'number' ? storageEstimate.quota : null,
-    usage: typeof storageEstimate.usage === 'number' ? storageEstimate.usage : null,
-  };
-}
-
 export function useAppPermissions() {
   const {
     permission: notificationPermission,
@@ -66,14 +37,6 @@ export function useAppPermissions() {
   } = useNotificationPermission();
   const [locationState, setLocationState] = useState<AppPermissionState>('unknown');
   const [locationLoading, setLocationLoading] = useState(false);
-  const [storageState, setStorageState] = useState<AppPermissionState>('unknown');
-  const [storageLoading, setStorageLoading] = useState(false);
-  const [storageEstimate, setStorageEstimate] = useState<StorageEstimateState>({
-    persisted: null,
-    quota: null,
-    usage: null,
-  });
-
   const refresh = useCallback(async () => {
     if (typeof navigator === 'undefined') return;
 
@@ -83,13 +46,6 @@ export function useAppPermissions() {
       setLocationState('unsupported');
     }
 
-    if (navigator.storage) {
-      const estimate = await readStorageEstimate();
-      setStorageEstimate(estimate);
-      setStorageState(estimate.persisted ? 'granted' : 'prompt');
-    } else {
-      setStorageState('unsupported');
-    }
   }, []);
 
   useEffect(() => {
@@ -151,25 +107,6 @@ export function useAppPermissions() {
     }
   }, []);
 
-  const requestStorage = useCallback(async (): Promise<AppPermissionState> => {
-    if (typeof navigator === 'undefined' || !navigator.storage?.persist) {
-      setStorageState('unsupported');
-      return 'unsupported';
-    }
-
-    setStorageLoading(true);
-    try {
-      const persisted = await navigator.storage.persist();
-      const estimate = await readStorageEstimate();
-      setStorageEstimate({ ...estimate, persisted });
-      const nextState: AppPermissionState = persisted ? 'granted' : 'denied';
-      setStorageState(nextState);
-      return nextState;
-    } finally {
-      setStorageLoading(false);
-    }
-  }, []);
-
   const permissions = useMemo<Record<AppPermissionId, AppPermissionItem>>(() => ({
     notifications: {
       id: 'notifications',
@@ -183,20 +120,12 @@ export function useAppPermissions() {
       supported: typeof navigator !== 'undefined' && Boolean(navigator.geolocation),
       loading: locationLoading,
     },
-    storage: {
-      id: 'storage',
-      state: storageState,
-      supported: typeof navigator !== 'undefined' && Boolean(navigator.storage?.persist),
-      loading: storageLoading,
-    },
-  }), [locationLoading, locationState, notificationLoading, notificationPermission, storageLoading, storageState]);
+  }), [locationLoading, locationState, notificationLoading, notificationPermission]);
 
   return {
     permissions,
     requestNotifications,
     requestLocation,
-    requestStorage,
     refresh,
-    storageEstimate,
   };
 }

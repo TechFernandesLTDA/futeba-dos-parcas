@@ -11,7 +11,6 @@ import {
 import {
   LocationOn,
   NotificationsActive,
-  Storage,
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { useAppPermissions } from '../../hooks/useAppPermissions';
@@ -38,8 +37,7 @@ function snoozePrompt() {
 
 function getPermissionIcon(id: AppPermissionId) {
   if (id === 'notifications') return <NotificationsActive fontSize="small" color="primary" />;
-  if (id === 'location') return <LocationOn fontSize="small" color="primary" />;
-  return <Storage fontSize="small" color="primary" />;
+  return <LocationOn fontSize="small" color="primary" />;
 }
 
 function isActionable(permission: AppPermissionItem) {
@@ -53,12 +51,11 @@ export function AppPermissionsPrompt() {
     permissions,
     requestNotifications,
     requestLocation,
-    requestStorage,
   } = useAppPermissions();
   const [snoozed, setSnoozed] = useState(readSnoozed);
 
   const visiblePermissions = useMemo(() => (
-    (['notifications', 'location', 'storage'] as const)
+    (['notifications', 'location'] as const)
       .map((id) => permissions[id])
       .filter((permission) => permission.supported && permission.state !== 'granted')
   ), [permissions]);
@@ -73,7 +70,6 @@ export function AppPermissionsPrompt() {
   const requestById: Record<AppPermissionId, () => Promise<unknown>> = {
     notifications: requestNotifications,
     location: requestLocation,
-    storage: requestStorage,
   };
 
   return (

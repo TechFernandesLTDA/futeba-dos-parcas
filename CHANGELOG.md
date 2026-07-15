@@ -245,6 +245,21 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.54.5][web-1.54.5] - 2026-07-15
+
+#### Mudado
+- Manifesto sem bloqueio de orientação e com ícones `any`, `maskable` e Apple opacos.
+- Cache PWA atualizado de `futeba-v17` para `futeba-v18`.
+
+#### Corrigido
+- O listener de `beforeinstallprompt` passou para um provider global e não perde mais o evento ao navegar entre telas.
+- A persistência de storage é solicitada silenciosamente após instalação ou abertura standalone, sem bloquear o uso quando o navegador retorna `false`.
+- Canonical, Open Graph, Twitter Cards e App Links agora apontam para `https://futebadosparcas.com.br`.
+- `firebase-messaging-sw.js` deixou de receber cache imutável de um ano.
+- O ciclo de atualização do service worker respeita a confirmação já apresentada pelo aplicativo.
+
+_Issues: #3703_
+
 ### [1.54.4][web-1.54.4] - 2026-07-15
 
 #### Corrigido
@@ -2412,6 +2427,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.54.5]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.5.md
 [web-1.54.4]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.4.md
 [web-1.54.3]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.3.md
 [web-1.54.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.2.md

@@ -28,7 +28,9 @@
 // payload client) + CSP connect-src adiciona *.firebasestorage.app.
 // v16 → v17: corrige auto-invite membros (owner CONFIRMED removido do batch)
 // e caixa pendente no checklist (ler cashbox_summary em vez de total_balance).
-const CACHE_NAME = 'futeba-v17';
+// v17 → v18: inclui os novos ícones PWA opacos/maskable e alinha a ativação
+// do worker ao prompt de atualização controlado pelo aplicativo.
+const CACHE_NAME = 'futeba-v18';
 const OFFLINE_URL = '/offline.html';
 const STATIC_ASSETS = [
   '/',
@@ -38,12 +40,14 @@ const STATIC_ASSETS = [
   '/icons/apple-touch-icon.png',
   '/icons/icon-192.png',
   '/icons/icon-512.png',
+  '/icons/icon-192-maskable.png',
+  '/icons/icon-512-maskable.png',
 ];
 
 // Instalar: cachear assets estáticos
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS)).then(() => self.skipWaiting())
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS))
   );
 });
 
