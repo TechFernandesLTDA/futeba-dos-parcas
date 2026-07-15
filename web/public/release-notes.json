@@ -1,7 +1,31 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-15T15:40:29.001Z",
+  "generatedAt": "2026-07-15T18:17:43.625Z",
   "notes": [
+    {
+      "version": "1.54.8",
+      "buildNumber": null,
+      "releaseDate": "2026-07-15",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "A página inicial ficou mais compacta e visual no celular.",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "A imagem oficial do Futeba agora aparece logo depois do título e dentro da primeira tela em celulares.",
+        "O cabeçalho ocupa menos espaço sem comprimir o logotipo ou quebrar os botões."
+      ],
+      "fixed": [
+        "O selo “CONFIRMADO” permanece em uma única linha no cartão da próxima rodada.",
+        "A landing preserva alinhamento, alvos de toque e ausência de rolagem horizontal em diferentes tamanhos de tela.",
+        "Composição responsiva do hero reorganizada com CSS Grid e ordem semântica consistente.",
+        "Restrições de flexbox ajustadas no cabeçalho e no selo de status."
+      ],
+      "issueRefs": [
+        3716
+      ]
+    },
     {
       "version": "1.54.7",
       "buildNumber": null,

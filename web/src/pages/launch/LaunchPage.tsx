@@ -115,22 +115,39 @@ export function LaunchPage() {
             direction="row"
             alignItems="center"
             justifyContent="space-between"
-            spacing={2}
-            sx={{ py: 1.5 }}
+            spacing={{ xs: 1, sm: 2 }}
+            sx={{ py: { xs: 1, sm: 1.5 }, minHeight: { xs: 64, sm: 72 } }}
           >
-            <Stack direction="row" alignItems="center" spacing={1.25}>
+            <Stack direction="row" alignItems="center" spacing={1.25} sx={{ minWidth: 0 }}>
               <Box
                 component="img"
                 src="/logo.png"
                 alt="Logotipo do Futeba dos Parças"
-                sx={{ width: 42, height: 42, borderRadius: '50%' }}
+                sx={{
+                  width: { xs: 36, sm: 42 },
+                  height: { xs: 36, sm: 42 },
+                  flexShrink: 0,
+                  objectFit: 'contain',
+                  borderRadius: '50%',
+                }}
               />
-              <Typography variant="subtitle1" fontWeight={900}>
+              <Typography
+                variant="subtitle1"
+                fontWeight={900}
+                noWrap
+                sx={{ display: { xs: 'none', sm: 'block' } }}
+              >
                 Futeba dos Parças
               </Typography>
             </Stack>
-            <Stack direction="row" spacing={1}>
-              <Button component={RouterLink} to="/login" variant="text" size="small">
+            <Stack direction="row" spacing={1} sx={{ flexShrink: 0 }}>
+              <Button
+                component={RouterLink}
+                to="/login"
+                variant="text"
+                size="small"
+                sx={{ minHeight: 44, whiteSpace: 'nowrap' }}
+              >
                 Entrar
               </Button>
               <Button
@@ -139,6 +156,7 @@ export function LaunchPage() {
                 variant="contained"
                 size="small"
                 onClick={() => trackSignup('header')}
+                sx={{ minHeight: 44, whiteSpace: 'nowrap' }}
               >
                 Criar conta
               </Button>
@@ -164,13 +182,21 @@ export function LaunchPage() {
           }}
         >
           <Container maxWidth="lg" sx={{ position: 'relative' }}>
-            <Stack
-              direction={{ xs: 'column', md: 'row' }}
-              spacing={{ xs: 5, md: 9 }}
-              alignItems="center"
-              sx={{ py: { xs: 7, md: 11 } }}
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: { xs: 'minmax(0, 1fr)', md: 'minmax(0, 1fr) minmax(360px, 500px)' },
+                gridTemplateAreas: {
+                  xs: '"intro" "heroImage" "details" "mock"',
+                  md: '"intro heroImage" "details mock"',
+                },
+                columnGap: { md: 9 },
+                rowGap: { xs: 3, md: 3 },
+                alignItems: 'center',
+                py: { xs: 4, md: 11 },
+              }}
             >
-              <Stack spacing={3} sx={{ flex: 1, maxWidth: 720 }}>
+              <Stack spacing={3} sx={{ gridArea: 'intro', maxWidth: 720 }}>
                 <Typography
                   variant="overline"
                   fontWeight={800}
@@ -181,6 +207,27 @@ export function LaunchPage() {
                 <Typography component="h1" variant="h2" fontWeight={900} sx={{ lineHeight: 1.02 }}>
                   Sua pelada sai do grupo e entra em campo.
                 </Typography>
+              </Stack>
+
+              <Box
+                component="img"
+                src="/og-futeba-dos-parcas.png"
+                alt="Amigos reunidos em um campo com a marca Futeba dos Parças"
+                sx={{
+                  gridArea: 'heroImage',
+                  display: 'block',
+                  width: '100%',
+                  maxWidth: 500,
+                  height: 'auto',
+                  aspectRatio: '1200 / 630',
+                  objectFit: 'cover',
+                  borderRadius: 4,
+                  boxShadow: 12,
+                  justifySelf: 'center',
+                }}
+              />
+
+              <Stack spacing={3} sx={{ gridArea: 'details', maxWidth: 720 }}>
                 <Typography variant="h6" sx={{ color: 'primary.contrastText', opacity: 0.9, maxWidth: 650 }}>
                   Confirmações, times, placar, estatísticas e ranking em um só lugar para quem organiza,
                   para quem joga e para quem oferece a quadra.
@@ -223,24 +270,10 @@ export function LaunchPage() {
                 </Stack>
               </Stack>
 
-              <Stack spacing={3} alignItems="center" sx={{ width: '100%', maxWidth: 500 }}>
-                <Box
-                  component="img"
-                  src="/og-futeba-dos-parcas.png"
-                  alt="Amigos reunidos em um campo com a marca Futeba dos Parças"
-                  sx={{
-                    display: 'block',
-                    width: '100%',
-                    height: 'auto',
-                    aspectRatio: '1200 / 630',
-                    objectFit: 'cover',
-                    borderRadius: 4,
-                    boxShadow: 12,
-                  }}
-                />
-                <Box
+              <Box
                   aria-label="Exemplo de uma rodada organizada no Futeba dos Parças"
                   sx={{
+                    gridArea: 'mock',
                     width: '100%',
                     maxWidth: 410,
                     borderRadius: 4,
@@ -249,6 +282,7 @@ export function LaunchPage() {
                     boxShadow: 12,
                     p: { xs: 2.5, sm: 3.5 },
                     transform: { md: 'rotate(1.5deg)' },
+                    justifySelf: 'center',
                   }}
                 >
                   <Stack spacing={2.5}>
@@ -258,8 +292,8 @@ export function LaunchPage() {
                       <Typography variant="h5" fontWeight={900}>Quarta dos Parças</Typography>
                       <Typography variant="body2" color="text.secondary">Hoje, 20h • Arena Central</Typography>
                     </Box>
-                    <Box sx={{ px: 1.25, py: 0.5, borderRadius: 8, bgcolor: 'success.light', color: 'success.contrastText' }}>
-                      <Typography variant="caption" fontWeight={900}>CONFIRMADO</Typography>
+                    <Box sx={{ px: 1.25, py: 0.5, flexShrink: 0, borderRadius: 8, bgcolor: 'success.light', color: 'success.contrastText' }}>
+                      <Typography variant="caption" fontWeight={900} noWrap>CONFIRMADO</Typography>
                     </Box>
                   </Stack>
                   <Divider />
@@ -292,8 +326,7 @@ export function LaunchPage() {
                   </Box>
                   </Stack>
                 </Box>
-              </Stack>
-            </Stack>
+            </Box>
           </Container>
         </Box>
 
