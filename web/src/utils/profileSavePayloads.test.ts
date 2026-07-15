@@ -17,7 +17,7 @@ function sliceBetween(source: string, start: string, end: string) {
 }
 
 describe('profile save payloads', () => {
-  it('mantém updated_at protegido fora do AuthContext e grava timestamp no edit profile', () => {
+  it('mantém updated_at protegido fora dos payloads client-side de perfil', () => {
     const authContext = readRepoFile('web/src/contexts/AuthContext.tsx');
     const authUpdateProfile = sliceBetween(
       authContext,
@@ -28,7 +28,11 @@ describe('profile save payloads', () => {
 
     const editProfile = readRepoFile('web/src/pages/profile/EditProfileScreen.tsx');
     const editProfileSave = sliceBetween(editProfile, 'const handleSave = async () => {', '  const handleCancel = () => {');
-    expect(editProfileSave).toContain('updated_at: serverTimestamp()');
+    expect(editProfileSave).not.toContain('updated_at: serverTimestamp()');
+
+    const editProfilePayload = readRepoFile('web/src/pages/profile/editProfilePayload.ts');
+    expect(editProfilePayload).not.toContain('updated_at');
+    expect(editProfilePayload).toContain('preferred_position: profile.preferredPosition || null');
 
     const phoneVerification = readRepoFile('web/src/pages/onboarding/PhoneVerificationScreen.tsx');
     expect(phoneVerification).not.toContain('updated_at: serverTimestamp()');
