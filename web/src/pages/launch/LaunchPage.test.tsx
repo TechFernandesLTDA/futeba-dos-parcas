@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
@@ -30,5 +30,26 @@ describe('LaunchPage', () => {
     expect(heading.compareDocumentPosition(campaignImage)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
     expect(campaignImage.compareDocumentPosition(description)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
     expect(screen.getByText('CONFIRMADO')).toHaveClass('MuiTypography-noWrap');
+  });
+
+  it('centers the FAQ questions and answers under one labelled section', async () => {
+    render(
+      <MemoryRouter>
+        <ThemeProvider theme={createTheme()}>
+          <LaunchPage />
+        </ThemeProvider>
+      </MemoryRouter>,
+    );
+
+    expect(
+      screen.getByRole('region', { name: 'Antes de entrar em campo' }),
+    ).toBeInTheDocument();
+    const installQuestion = screen.getByText('Preciso instalar um aplicativo?');
+    expect(installQuestion).toHaveClass('MuiTypography-alignCenter');
+
+    fireEvent.click(installQuestion);
+    expect(
+      await screen.findByText(/Não. O Futeba funciona no navegador do celular/),
+    ).toHaveClass('MuiTypography-alignCenter');
   });
 });

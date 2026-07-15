@@ -1,7 +1,30 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-15T18:17:43.625Z",
+  "generatedAt": "2026-07-15T18:45:25.597Z",
   "notes": [
+    {
+      "version": "1.54.9",
+      "buildNumber": null,
+      "releaseDate": "2026-07-15",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "As perguntas frequentes agora acompanham o eixo central da página inicial.",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "Título, perguntas e respostas do FAQ ficam centralizados no celular e no computador.",
+        "As setas de expansão permanecem alinhadas à direita sem deslocar os textos."
+      ],
+      "fixed": [
+        "O bloco de FAQ deixa de ficar ancorado à esquerda em telas largas.",
+        "Centralização do contêiner responsivo, do conteúdo dos acordeões e das respostas.",
+        "Identificação semântica da seção de FAQ para tecnologias assistivas."
+      ],
+      "issueRefs": [
+        3718
+      ]
+    },
     {
       "version": "1.54.8",
       "buildNumber": null,

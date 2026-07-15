@@ -423,19 +423,38 @@ export function LaunchPage() {
               </Stack>
             </Box>
 
-            <Stack spacing={3} sx={{ maxWidth: 840, mx: 'auto', width: '100%' }}>
+            <Stack
+              component="section"
+              aria-labelledby="landing-faq-heading"
+              spacing={3}
+              sx={{ maxWidth: 840, mx: 'auto', width: '100%', alignSelf: 'center' }}
+            >
               <Box sx={{ textAlign: 'center' }}>
                 <Typography variant="overline" color="primary" fontWeight={900}>Perguntas frequentes</Typography>
-                <Typography component="h2" variant="h4" fontWeight={900}>Antes de entrar em campo</Typography>
+                <Typography id="landing-faq-heading" component="h2" variant="h4" fontWeight={900}>Antes de entrar em campo</Typography>
               </Box>
               <Box>
                 {faqs.map((faq) => (
                   <Accordion key={faq.question} disableGutters elevation={0} sx={{ borderBottom: 1, borderColor: 'divider' }}>
-                    <AccordionSummary expandIcon={<ExpandMore />}>
-                      <Typography fontWeight={800}>{faq.question}</Typography>
+                    <AccordionSummary
+                      expandIcon={<ExpandMore />}
+                      sx={{
+                        position: 'relative',
+                        px: { xs: 5, sm: 6 },
+                        '& .MuiAccordionSummary-content': {
+                          justifyContent: 'center',
+                          textAlign: 'center',
+                        },
+                        '& .MuiAccordionSummary-expandIconWrapper': {
+                          position: 'absolute',
+                          right: { xs: 12, sm: 16 },
+                        },
+                      }}
+                    >
+                      <Typography align="center" fontWeight={800} sx={{ width: '100%' }}>{faq.question}</Typography>
                     </AccordionSummary>
-                    <AccordionDetails>
-                      <Typography color="text.secondary">{faq.answer}</Typography>
+                    <AccordionDetails sx={{ px: { xs: 3, sm: 6 }, pt: 0, pb: 3 }}>
+                      <Typography align="center" color="text.secondary">{faq.answer}</Typography>
                     </AccordionDetails>
                   </Accordion>
                 ))}
