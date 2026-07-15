@@ -195,7 +195,7 @@ describe("leaderboard-cache batching", () => {
         exists: true,
         data: () => ({
           kind: "league_players_directory",
-          schema_version: 2,
+          schema_version: 3,
           expires_at: Timestamp.fromMillis(Date.now() + 60_000),
           chunk_count: 2,
         }),
@@ -395,5 +395,57 @@ describe("leaderboard-cache batching", () => {
         canReceiveInvites: true,
       }),
     ]);
+  });
+
+  it("toPublicLeagueUser devolve somente a whitelist esportiva", () => {
+    const nowMs = Date.parse("2026-07-14T12:00:00.000Z");
+    const result = __testing.toPublicLeagueUser({
+      name: "Ana Segura",
+      photo_url: "https://img.test/ana.jpg",
+      is_searchable: true,
+      email: "ana@example.com",
+      phone: "+5511999999999",
+      birth_date: "1990-01-01",
+      fcm_token: "secret-token",
+      preferred_position: "MEIA",
+      striker_rating: 3.2,
+      auto_mid_rating: 4.1,
+      auto_rating_samples: 12,
+      looking_for_game_today: true,
+      looking_for_game_today_until: new Date(nowMs + 60_000),
+      last_game_date: new Date(nowMs - 7 * 24 * 60 * 60 * 1000),
+    }, nowMs);
+
+    expect(result).toEqual(expect.objectContaining({
+      name: "Ana Segura",
+      photoUrl: "https://img.test/ana.jpg",
+      preferredPosition: "MEIA",
+      strikerRating: 3.2,
+      autoMidRating: 4.1,
+      autoRatingSamples: 12,
+      lookingForGameToday: true,
+      hasRecentPresence: true,
+    }));
+    expect(result).not.toHaveProperty("email");
+    expect(result).not.toHaveProperty("phone");
+    expect(result).not.toHaveProperty("birthDate");
+    expect(result).not.toHaveProperty("fcmToken");
+    expect(result).not.toHaveProperty("lookingForGameTodayUntil");
+    expect(result).not.toHaveProperty("lastGameDate");
+  });
+
+  it.each([
+    {is_searchable: false},
+    {is_searchable: true, deleted_at: new Date()},
+    {is_searchable: true, status: "DELETED"},
+    {is_searchable: true, is_active: false},
+  ])("toPublicLeagueUser rejeita perfil privado ou removido %#", (data) => {
+    expect(__testing.toPublicLeagueUser({name: "Oculto", ...data})).toBeNull();
+  });
+
+  it("sanitizeUserIds deduplica IDs e rejeita payload não-array", () => {
+    expect(Array.from(__testing.sanitizeUserIds(["u1", "u1", "u2"]) ?? []))
+      .toEqual(["u1", "u2"]);
+    expect(() => __testing.sanitizeUserIds("u1")).toThrow();
   });
 });

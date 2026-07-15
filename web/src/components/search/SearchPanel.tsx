@@ -44,9 +44,9 @@ import { getLevelForXp } from '../../types/gamification';
 import { avatarSizes, iconSizes } from '../../theme/iconSizes';
 import { useToast } from '../../contexts';
 import { useTranslation } from 'react-i18next';
-import { isLookingForGameToday } from '../../utils/lookingForGameToday';
 import { getPrefixSearchUpperBound } from './searchPrefixes';
 import { buildPublicGroupSearchQuery } from './searchQueries';
+import { getLeaguePlayers } from '../../services/cloudFunctions';
 
 const logger = createLogger('SearchPanel');
 
@@ -187,24 +187,19 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
       };
 
       if (tab === 0 || tab === 1) {
-        // Privacidade: apenas jogadores com is_searchable=true aparecem na busca (#1027)
-        const snap = await getDocs(query(
-          collection(db, 'users'),
-          where('is_searchable', '==', true),
-          where('name', '>=', searchTerm),
-          where('name', '<=', prefixUpperBound),
-          orderBy('name'),
-          limit(10),
-        ));
-        snap.docs.forEach((d) => {
-          const raw = d.data() as Record<string, unknown>;
-          const data = snakeToCamel(raw) as Record<string, unknown>;
+        const response = await getLeaguePlayers({
+          search: searchTerm,
+          limit: 10,
+          sortField: 'name',
+          sortDirection: 'asc',
+        });
+        response.data.players.forEach((player) => {
           pushUniqueResult({
-            id: d.id, type: 'user',
-            name: (data.name as string) || 'Jogador',
-            subtitle: `Nível ${getLevelForXp((data.experiencePoints as number) ?? 0)}`,
-            photoUrl: data.photoUrl as string | undefined,
-            lookingForGameToday: isLookingForGameToday(data),
+            id: player.userId, type: 'user',
+            name: player.userName || 'Jogador',
+            subtitle: `Nível ${player.level ?? getLevelForXp(player.experiencePoints ?? 0)}`,
+            photoUrl: player.userPhoto,
+            lookingForGameToday: player.lookingForGameToday === true,
           });
         });
       }

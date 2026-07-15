@@ -3,11 +3,7 @@ import {
   collection,
   doc,
   getDoc,
-  getDocs,
-  limit,
-  query,
   serverTimestamp,
-  where,
   writeBatch,
 } from 'firebase/firestore';
 import { useQueryClient } from '@tanstack/react-query';
@@ -15,9 +11,13 @@ import { db } from '../services/firebase';
 import { useAuth } from '../contexts/AuthContext';
 import type { Game, GameConfirmation } from '../types/game';
 import type { User } from '../types/user';
-import { snakeToCamel, toDate } from '../utils/firestoreHelpers';
-import { getFirestoreErrorMessage } from '../utils/firebaseErrors';
+import { getFirestoreErrorMessage, getFunctionErrorMessage } from '../utils/firebaseErrors';
 import { createLogger } from '../utils/logger';
+import { getLeaguePlayers } from '../services/cloudFunctions';
+import {
+  toReinforcementSignals,
+  toReinforcementUser,
+} from '../utils/publicPlayerProjection';
 import {
   buildReinforcementCandidates,
   getConfirmationPositionForNeed,
@@ -35,17 +35,6 @@ const NEED_NOTIFICATION_LABELS: Record<ReinforcementNeed, string> = {
   ANY_FIELD: 'linha',
 };
 
-function parseUserDoc(id: string, raw: Record<string, unknown>): User {
-  const converted = snakeToCamel<Record<string, unknown>>(raw);
-  return {
-    ...converted,
-    id,
-    lastGameDate: toDate((raw.last_game_date ?? raw.lastGameDate) as Parameters<typeof toDate>[0]),
-    lookingForGameTodayUntil: toDate((raw.looking_for_game_today_until ?? raw.lookingForGameTodayUntil) as Parameters<typeof toDate>[0]),
-    lookingForGameTodayUpdatedAt: toDate((raw.looking_for_game_today_updated_at ?? raw.lookingForGameTodayUpdatedAt) as Parameters<typeof toDate>[0]),
-  } as User;
-}
-
 export function usePositionReinforcements(
   game: Game | null,
   confirmations: GameConfirmation[],
@@ -55,6 +44,9 @@ export function usePositionReinforcements(
   const { user, firebaseUser } = useAuth();
   const queryClient = useQueryClient();
   const [users, setUsers] = useState<User[]>([]);
+  const [signalsByUserId, setSignalsByUserId] = useState(
+    new Map<string, ReturnType<typeof toReinforcementSignals>>(),
+  );
   const [loading, setLoading] = useState(false);
   const [sendingUserId, setSendingUserId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -68,8 +60,11 @@ export function usePositionReinforcements(
   );
 
   const candidates = useMemo(
-    () => buildReinforcementCandidates(users, need, excludedUserIds, { recentPresenceOnly }),
-    [excludedUserIds, need, recentPresenceOnly, users],
+    () => buildReinforcementCandidates(users, need, excludedUserIds, {
+      recentPresenceOnly,
+      signalsByUserId,
+    }),
+    [excludedUserIds, need, recentPresenceOnly, signalsByUserId, users],
   );
 
   const refetch = useCallback(() => {
@@ -79,6 +74,7 @@ export function usePositionReinforcements(
   useEffect(() => {
     if (!game?.id) {
       setUsers([]);
+      setSignalsByUserId(new Map());
       setLoading(false);
       return;
     }
@@ -89,20 +85,28 @@ export function usePositionReinforcements(
       setLoading(true);
       setError(null);
       try {
-        const usersQuery = query(
-          collection(db, 'users'),
-          where('is_searchable', '==', true),
-          limit(CANDIDATES_LIMIT),
-        );
-        const snapshot = await getDocs(usersQuery);
+        const response = await getLeaguePlayers({
+          limit: CANDIDATES_LIMIT,
+          sortField: 'experiencePoints',
+          sortDirection: 'desc',
+        });
         if (cancelled) return;
 
-        setUsers(snapshot.docs.map((userDoc) => parseUserDoc(userDoc.id, userDoc.data())));
+        setUsers(response.data.players.map(toReinforcementUser));
+        setSignalsByUserId(new Map(response.data.players.map((player) => [
+          player.userId,
+          toReinforcementSignals(player),
+        ])));
       } catch (err) {
         logger.error('Error loading reinforcement candidates:', err);
         if (!cancelled) {
           setUsers([]);
-          setError(getFirestoreErrorMessage(err));
+          setSignalsByUserId(new Map());
+          setError(getFunctionErrorMessage(
+            err,
+            'getLeaguePlayers',
+            'Não foi possível carregar os reforços.',
+          ));
         }
       } finally {
         if (!cancelled) setLoading(false);

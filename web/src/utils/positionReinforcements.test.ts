@@ -98,6 +98,30 @@ describe('positionReinforcements', () => {
     expect(recentOnly.map((candidate) => candidate.user.id)).toEqual(['recent']);
   });
 
+  it('usa sinais sanitizados da projeção pública sem timestamps de atividade', () => {
+    const candidate = makeUser({
+      id: 'public-candidate',
+      preferredPosition: 'MEIA',
+      midRating: 3,
+    });
+    const signalsByUserId = new Map([
+      ['public-candidate', { isLookingToday: true, hasRecentPresence: true }],
+    ]);
+
+    const candidates = buildReinforcementCandidates(
+      [candidate],
+      'MIDFIELDER',
+      new Set(),
+      { recentPresenceOnly: true, signalsByUserId },
+    );
+
+    expect(candidates).toHaveLength(1);
+    expect(candidates[0]).toEqual(expect.objectContaining({
+      isLookingToday: true,
+      hasRecentPresence: true,
+    }));
+  });
+
   it('considera presenca recente apenas dentro da janela de 30 dias', () => {
     const now = new Date('2026-06-27T12:00:00Z');
     expect(hasRecentPresence(makeUser({ lastGameDate: new Date('2026-06-01T12:00:00Z') }), now)).toBe(true);

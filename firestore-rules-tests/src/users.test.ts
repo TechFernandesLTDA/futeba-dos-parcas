@@ -185,6 +185,40 @@ describe("users — leitura", () => {
     const db = asAnon(testEnv);
     await assertFails(db.doc(`users/${UID_USERS_A}`).get());
   });
+
+  it("LIST direto continua negado mesmo mirando perfil público limpo", async () => {
+    const db = asUsersB();
+    await assertFails(
+      db.collection("users")
+        .where("is_searchable", "==", true)
+        .where("name", "==", "Jogador A")
+        .get()
+    );
+  });
+
+  it("LIST direto não usa rules como filtro para perfil privado", async () => {
+    const db = asUsersA();
+    await assertFails(
+      db.collection("users")
+        .where("name", ">=", "Jogador")
+        .where("name", "<=", "Jogador\uf8ff")
+        .get()
+    );
+  });
+
+  it("LIST direto com is_searchable não contorna perfil legado com PII", async () => {
+    const db = asUsersA();
+    await assertFails(
+      db.collection("users")
+        .where("is_searchable", "==", true)
+        .get()
+    );
+  });
+
+  it("Admin ainda pode fazer LIST para operações administrativas", async () => {
+    const db = asAdmin(testEnv);
+    await assertSucceeds(db.collection("users").limit(2).get());
+  });
 });
 
 describe("users — criação", () => {

@@ -711,7 +711,7 @@ service cloud.firestore {
       // FIXME: STAGE 2 — clientes devem migrar leitura pública para um doc
       // denormalizado sem PII. Até lá, só liberamos leitura pública quando o
       // próprio doc pesquisável não expõe campos sensíveis.
-      allow read: if isOwner(userId) || isAdmin() || (
+      allow get: if isOwner(userId) || isAdmin() || (
         isAuthenticated() &&
         (resource.data.is_searchable == true || resource.data.isSearchable == true) &&
         (!('deleted_at' in resource.data) || resource.data.deleted_at == null) &&
@@ -724,6 +724,10 @@ service cloud.firestore {
         (!('phone' in resource.data) || resource.data.phone == null || resource.data.phone == '') &&
         (!('phone_verified' in resource.data) || resource.data.phone_verified == null)
       );
+
+      // #3691: consultas LIST nao conseguem garantir a ausencia de todos os
+      // campos de PII. Buscas publicas usam callable com projecao whitelist.
+      allow list: if isAdmin();
 
       // Usuario so pode criar seu proprio perfil (com role padrao PLAYER)
       // Validações de dados obrigatorias na criacao

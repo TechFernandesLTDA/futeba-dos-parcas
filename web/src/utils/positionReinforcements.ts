@@ -16,6 +16,12 @@ export interface ReinforcementCandidate {
 export interface ReinforcementCandidateOptions {
   recentPresenceOnly?: boolean;
   now?: Date;
+  signalsByUserId?: ReadonlyMap<string, ReinforcementCandidateSignals>;
+}
+
+export interface ReinforcementCandidateSignals {
+  isLookingToday: boolean;
+  hasRecentPresence: boolean;
 }
 
 const NEED_TO_POSITIONS: Record<ReinforcementNeed, PreferredPosition[]> = {
@@ -65,8 +71,9 @@ export function buildReinforcementCandidates(
       const isPreferredPositionMatch = candidate.preferredPosition
         ? NEED_TO_POSITIONS[need].includes(candidate.preferredPosition)
         : false;
-      const isLookingToday = isLookingForGameToday(candidate);
-      const recentPresence = hasRecentPresence(candidate, now);
+      const publicSignals = options.signalsByUserId?.get(candidate.id);
+      const isLookingToday = publicSignals?.isLookingToday ?? isLookingForGameToday(candidate);
+      const recentPresence = publicSignals?.hasRecentPresence ?? hasRecentPresence(candidate, now);
       const rating = getEffectiveRating(candidate, NEED_TO_RATING_ROLE[need]);
       const score = (isLookingToday ? 100 : 0) + (recentPresence ? 25 : 0) + (isPreferredPositionMatch ? 40 : 0) + rating;
 

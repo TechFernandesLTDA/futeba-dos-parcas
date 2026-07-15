@@ -80,7 +80,7 @@ const SEARCHABLE_USERS_BATCH_SIZE = 500;
 const LEAGUE_PLAYERS_CACHE_KIND = "league_players_directory";
 
 /** Versao do schema do cache de diretorio da Liga. */
-const LEAGUE_PLAYERS_CACHE_SCHEMA_VERSION = 2;
+const LEAGUE_PLAYERS_CACHE_SCHEMA_VERSION = 3;
 
 /** Quantidade de jogadores por chunk para evitar o limite de 1 MiB/doc. */
 const LEAGUE_PLAYERS_CACHE_CHUNK_SIZE = 250;
@@ -143,6 +143,7 @@ interface GetLeaguePlayersRequest {
   sortField?: string | null;
   sortDirection?: string | null;
   pageToken?: string | null;
+  userIds?: string[] | null;
 }
 
 interface PublicLeagueUser {
@@ -155,6 +156,22 @@ interface PublicLeagueUser {
   dataOrigin?: string;
   seedId?: string;
   demoDataReason?: string;
+  preferredPosition?: string;
+  strikerRating?: number;
+  midRating?: number;
+  defenderRating?: number;
+  gkRating?: number;
+  autoStrikerRating?: number;
+  autoMidRating?: number;
+  autoDefenderRating?: number;
+  autoGkRating?: number;
+  autoRatingSamples?: number;
+  strikerRatingSet?: boolean;
+  midRatingSet?: boolean;
+  defenderRatingSet?: boolean;
+  gkRatingSet?: boolean;
+  lookingForGameToday?: boolean;
+  hasRecentPresence?: boolean;
 }
 
 interface LeagueParticipationStats {
@@ -197,6 +214,22 @@ interface PublicLeaguePlayer {
   dataOrigin?: string;
   seedId?: string;
   demoDataReason?: string;
+  preferredPosition?: string;
+  strikerRating?: number;
+  midRating?: number;
+  defenderRating?: number;
+  gkRating?: number;
+  autoStrikerRating?: number;
+  autoMidRating?: number;
+  autoDefenderRating?: number;
+  autoGkRating?: number;
+  autoRatingSamples?: number;
+  strikerRatingSet?: boolean;
+  midRatingSet?: boolean;
+  defenderRatingSet?: boolean;
+  gkRatingSet?: boolean;
+  lookingForGameToday?: boolean;
+  hasRecentPresence?: boolean;
 }
 
 interface CachedLeaguePlayersDirectory {
@@ -366,6 +399,7 @@ export const getLeaguePlayers = onCall<GetLeaguePlayersRequest>(
     );
     const pageOffset = parsePageToken(request.data?.pageToken);
     const searchQuery = normalizeSearchQuery(request.data?.search);
+    const userIds = sanitizeUserIds(request.data?.userIds);
     const sortField = resolveLeagueSortField(request.data?.sortField);
     const sortDirection =
       resolveSortDirection(request.data?.sortDirection);
@@ -385,6 +419,7 @@ export const getLeaguePlayers = onCall<GetLeaguePlayersRequest>(
     );
 
     const allPlayers: PublicLeaguePlayer[] = directoryPlayers
+      .filter((player) => !userIds || userIds.has(player.userId))
       .filter((player) => matchesLeagueSearch(player, searchQuery))
       .sort((a, b) =>
         compareLeaguePlayers(a, b, sortField, sortDirection)
@@ -635,6 +670,22 @@ async function buildLeaguePlayersDirectory(
       leagueRating: participation?.leagueRating ?? 0,
       experiencePoints: userData.xp,
       canReceiveInvites: true,
+      preferredPosition: userData.preferredPosition,
+      strikerRating: userData.strikerRating,
+      midRating: userData.midRating,
+      defenderRating: userData.defenderRating,
+      gkRating: userData.gkRating,
+      autoStrikerRating: userData.autoStrikerRating,
+      autoMidRating: userData.autoMidRating,
+      autoDefenderRating: userData.autoDefenderRating,
+      autoGkRating: userData.autoGkRating,
+      autoRatingSamples: userData.autoRatingSamples,
+      strikerRatingSet: userData.strikerRatingSet,
+      midRatingSet: userData.midRatingSet,
+      defenderRatingSet: userData.defenderRatingSet,
+      gkRatingSet: userData.gkRatingSet,
+      lookingForGameToday: userData.lookingForGameToday,
+      hasRecentPresence: userData.hasRecentPresence,
       isMock:
         userData.isMock === true ||
         participation?.isMock === true,
@@ -684,6 +735,21 @@ function normalizeSearchQuery(raw: unknown): string {
     throw new HttpsError("invalid-argument", "Busca inválida");
   }
   return normalizeSearchText(sanitizeText(raw).slice(0, 120));
+}
+
+/**
+ * Sanitiza filtro opcional de UIDs usado por hidratacoes publicas.
+ *
+ * @param {unknown} raw Lista bruta.
+ * @return {Set<string> | null} UIDs unicos ou null.
+ */
+function sanitizeUserIds(raw: unknown): Set<string> | null {
+  if (raw == null) return null;
+  if (!Array.isArray(raw) || raw.length > ABSOLUTE_MAX_LIMIT) {
+    throw new HttpsError("invalid-argument", "userIds inválido");
+  }
+  const values = raw.map((value) => sanitizeOptionalId(value, "userId"));
+  return new Set(values.filter((value): value is string => value != null));
 }
 
 /**
@@ -888,10 +954,131 @@ function isPublicSearchableUser(
   data: FirebaseFirestore.DocumentData
 ): boolean {
   if (data.deleted_at != null || data.deletedAt != null) return false;
+  if (data.status === "DELETED" || data.is_active === false) return false;
+  if (data.account_status === "merged") return false;
   if (data.is_searchable === false || data.isSearchable === false) {
     return false;
   }
   return data.is_searchable === true || data.isSearchable === true;
+}
+
+const PUBLIC_PREFERRED_POSITIONS = new Set([
+  "GOLEIRO",
+  "ZAGUEIRO",
+  "LATERAL",
+  "VOLANTE",
+  "MEIA",
+  "ATACANTE",
+]);
+const RECENT_PRESENCE_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
+
+/**
+ * Converte valores de data conhecidos em epoch millis sem expor o valor.
+ *
+ * @param {unknown} value Timestamp, Date, string ou numero.
+ * @return {number | null} Epoch millis valido ou null.
+ */
+function readDateMillis(value: unknown): number | null {
+  if (value instanceof Timestamp) return value.toMillis();
+  if (value instanceof Date) return value.getTime();
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string") {
+    const parsed = Date.parse(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  if (
+    value &&
+    typeof value === "object" &&
+    typeof (value as {toMillis?: unknown}).toMillis === "function"
+  ) {
+    return (value as {toMillis: () => number}).toMillis();
+  }
+  return null;
+}
+
+/**
+ * Gera exclusivamente a whitelist publica usada pela callable.
+ *
+ * @param {FirebaseFirestore.DocumentData} data Documento users/{uid}.
+ * @param {number} nowMs Relogio usado nos sinais temporais.
+ * @return {PublicLeagueUser | null} Projecao publica ou null.
+ */
+function toPublicLeagueUser(
+  data: FirebaseFirestore.DocumentData,
+  nowMs = Date.now()
+): PublicLeagueUser | null {
+  if (!isPublicSearchableUser(data)) return null;
+
+  const preferredPosition = readString(
+    data.preferred_position ?? data.preferredPosition
+  );
+  const lookingUntil = readDateMillis(
+    data.looking_for_game_today_until ?? data.lookingForGameTodayUntil
+  );
+  const lastGameAt = readDateMillis(
+    data.last_game_date ?? data.lastGameDate
+  );
+  const hasRecentPresence = lastGameAt != null &&
+    lastGameAt <= nowMs &&
+    nowMs - lastGameAt <= RECENT_PRESENCE_WINDOW_MS;
+
+  return {
+    name:
+      readString(data.name) ||
+      readString(data.display_name) ||
+      readString(data.nickname) ||
+      "Jogador",
+    photoUrl:
+      readString(data.photo_url) ||
+      readString(data.photoUrl) ||
+      null,
+    xp: readNumber(data.experience_points ?? data.experiencePoints),
+    favoriteTeam:
+      readString(data.favorite_team) ||
+      readString(data.favoriteTeam),
+    preferredPosition:
+      preferredPosition && PUBLIC_PREFERRED_POSITIONS.has(preferredPosition) ?
+        preferredPosition :
+        undefined,
+    strikerRating: readNumber(data.striker_rating ?? data.strikerRating),
+    midRating: readNumber(data.mid_rating ?? data.midRating),
+    defenderRating: readNumber(data.defender_rating ?? data.defenderRating),
+    gkRating: readNumber(data.gk_rating ?? data.gkRating),
+    autoStrikerRating: readNumber(
+      data.auto_striker_rating ?? data.autoStrikerRating
+    ),
+    autoMidRating: readNumber(data.auto_mid_rating ?? data.autoMidRating),
+    autoDefenderRating: readNumber(
+      data.auto_defender_rating ?? data.autoDefenderRating
+    ),
+    autoGkRating: readNumber(data.auto_gk_rating ?? data.autoGkRating),
+    autoRatingSamples: readNumber(
+      data.auto_rating_samples ?? data.autoRatingSamples
+    ),
+    strikerRatingSet:
+      data.striker_rating_set === true || data.strikerRatingSet === true,
+    midRatingSet:
+      data.mid_rating_set === true || data.midRatingSet === true,
+    defenderRatingSet:
+      data.defender_rating_set === true || data.defenderRatingSet === true,
+    gkRatingSet: data.gk_rating_set === true || data.gkRatingSet === true,
+    lookingForGameToday:
+      (data.looking_for_game_today === true ||
+        data.lookingForGameToday === true) &&
+      lookingUntil != null && lookingUntil > nowMs,
+    hasRecentPresence,
+    isMock: data.is_mock === true || data.isMock === true,
+    demoData: data.demo_data === true || data.demoData === true,
+    dataOrigin:
+      readString(data.data_origin) ||
+      readString(data.dataOrigin),
+    seedId:
+      readString(data.seed_id) ||
+      readString(data.seedId),
+    demoDataReason:
+      readString(data.demo_data_reason) ||
+      readString(data.demoDataReason),
+  };
 }
 
 /**
@@ -906,37 +1093,8 @@ function addPublicLeagueUser(
   userId: string,
   data: FirebaseFirestore.DocumentData
 ) {
-  if (!isPublicSearchableUser(data)) return;
-
-  const xp = readNumber(
-    data.experience_points ?? data.experiencePoints
-  );
-  usersMap.set(userId, {
-    name:
-      readString(data.name) ||
-      readString(data.display_name) ||
-      readString(data.nickname) ||
-      "Jogador",
-    photoUrl:
-      readString(data.photo_url) ||
-      readString(data.photoUrl) ||
-      null,
-    xp,
-    favoriteTeam:
-      readString(data.favorite_team) ||
-      readString(data.favoriteTeam),
-    isMock: data.is_mock === true || data.isMock === true,
-    demoData: data.demo_data === true || data.demoData === true,
-    dataOrigin:
-      readString(data.data_origin) ||
-      readString(data.dataOrigin),
-    seedId:
-      readString(data.seed_id) ||
-      readString(data.seedId),
-    demoDataReason:
-      readString(data.demo_data_reason) ||
-      readString(data.demoDataReason),
-  });
+  const publicUser = toPublicLeagueUser(data);
+  if (publicUser) usersMap.set(userId, publicUser);
 }
 
 /**
@@ -1664,4 +1822,7 @@ export const __testing = {
   writeLeaguePlayersDirectoryCache,
   getCachedLeaguePlayersDirectory,
   buildLeaguePlayersDirectory,
+  isPublicSearchableUser,
+  toPublicLeagueUser,
+  sanitizeUserIds,
 };

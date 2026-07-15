@@ -5,6 +5,7 @@ import { snakeToCamel } from '../utils/firestoreHelpers';
 import { createLogger } from '../utils/logger';
 import { normalizePlayerStats } from '../utils/playerStats';
 import { getEffectiveLevel, getExperiencePoints } from '../utils/xpAccounting';
+import { getUsersByIds } from '../utils/userBatch';
 
 const logger = createLogger('usePlayers');
 
@@ -77,23 +78,8 @@ export const usePlayers = (groupId?: string) => {
             chunks.push(memberIds.slice(i, i + 10));
           }
 
-          // #1547: Promise.allSettled garante que 1 chunk com falha não derruba
-          // a lista inteira — os chunks bem-sucedidos ainda são exibidos.
-          const chunkResults = await Promise.allSettled(
-            chunks.map((chunk) =>
-              getDocs(query(collection(db, 'users'), where(documentId(), 'in', chunk)))
-            )
-          );
-
+          const publicUsers = await getUsersByIds(memberIds);
           if (cancelled) return;
-
-          const allUserDocs = chunkResults.flatMap((result) => {
-            if (result.status === 'rejected') {
-              logger.error('Falha ao ler chunk de jogadores:', result.reason);
-              return [];
-            }
-            return result.value.docs;
-          });
           const [statsResults, streakResults] = await Promise.all([
             Promise.allSettled(
               chunks.map((chunk) =>
@@ -131,20 +117,19 @@ export const usePlayers = (groupId?: string) => {
             });
           });
 
-          const playersData = allUserDocs.map((userDoc) => {
-            const raw = userDoc.data();
-            const data = snakeToCamel(raw) as Record<string, unknown>;
+          const playersData = Array.from(publicUsers.entries()).map(([userId, data]) => {
+            const raw = data;
             const xp = getExperiencePoints({ ...raw, ...data });
             const stats = normalizePlayerStats(
               {
-                ...(statsByUserId.get(userDoc.id) ?? {}),
-                ...(streakByUserId.get(userDoc.id) ?? {}),
+                ...(statsByUserId.get(userId) ?? {}),
+                ...(streakByUserId.get(userId) ?? {}),
               },
               raw,
-              userDoc.id,
+              userId,
             );
             return {
-              id: userDoc.id,
+              id: userId,
               name: (data.name as string) || 'Jogador',
               email: (data.email as string) || '',
               photoUrl: (data.photoUrl as string) || raw.photo_url || '',
@@ -176,7 +161,6 @@ export const usePlayers = (groupId?: string) => {
               followingCount: (data.followingCount as number) ?? (raw.following_count as number) ?? 0,
               lookingForGameToday: data.lookingForGameToday === true,
               lookingForGameTodayUntil: (data.lookingForGameTodayUntil as Date | { toDate: () => Date } | undefined),
-              createdAt: raw.created_at?.toDate?.() || (data.createdAt as { toDate?: () => Date })?.toDate?.(),
             } as Player;
           });
 
