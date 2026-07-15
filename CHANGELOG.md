@@ -245,6 +245,14 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.54.8][web-1.54.8] - 2026-07-15
+
+#### Corrigido
+- Composição responsiva do hero reorganizada com CSS Grid e ordem semântica consistente.
+- Restrições de flexbox ajustadas no cabeçalho e no selo de status.
+
+_Issues: #3716_
+
 ### [1.54.7][web-1.54.7] - 2026-07-15
 
 #### Mudado
@@ -2451,6 +2459,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.54.8]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.8.md
 [web-1.54.7]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.7.md
 [web-1.54.6]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.6.md
 [web-1.54.5]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.5.md
