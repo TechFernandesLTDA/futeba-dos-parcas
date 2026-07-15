@@ -360,11 +360,14 @@ export function ProfileTab() {
           sx={{
             mt: 2,
             minWidth: { xs: 200, sm: 240 },
+            minHeight: 48,
             borderRadius: 3,
             bgcolor: 'background.paper',
             color: 'primary.main',
             '&:hover': {
-              bgcolor: 'action.hover',
+              bgcolor: (buttonTheme) => buttonTheme.palette.mode === 'dark'
+                ? buttonTheme.palette.background.default
+                : buttonTheme.palette.grey[100],
             },
           }}
         >
