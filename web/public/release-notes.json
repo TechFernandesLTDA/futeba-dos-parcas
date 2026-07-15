@@ -1,7 +1,30 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-15T19:24:33.043Z",
+  "generatedAt": "2026-07-15T19:54:50.186Z",
   "notes": [
+    {
+      "version": "1.54.11",
+      "buildNumber": null,
+      "releaseDate": "2026-07-15",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "O botão Editar Perfil agora aparece logo no topo do perfil, inclusive no computador.",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "A edição fica junto ao nome e ao e-mail, sem exigir rolar por estatísticas, habilidades e menus.",
+        "A ação continua clara e acessível também em telas menores."
+      ],
+      "fixed": [
+        "Corrigida a descoberta da edição do perfil próprio na navegação desktop.",
+        "A ação foi movida do rodapé da `ProfileTab` para o cabeçalho, acima do cartão de nível.",
+        "Teste de regressão garante que o botão aparece antes do conteúdo longo e mantém a rota `/profile/edit`."
+      ],
+      "issueRefs": [
+        3722
+      ]
+    },
     {
       "version": "1.54.10",
       "buildNumber": null,
