@@ -32,6 +32,7 @@ let testEnv: RulesTestEnvironment;
 const GAME_ACTIVE = "game-active-001";
 const GAME_DELETED = "game-deleted-001";
 const GAME_PLAYER_A_OWNER = "game-player-a-owner-001";
+const GAME_GROUP_ONLY_INVITED = "game-group-only-invited-001";
 const LOCATION_PUBLISHED = "loc-published-game-001";
 const LOCATION_SUSPENDED = "loc-suspended-game-001";
 const LOCATION_OVERDUE = "loc-overdue-game-001";
@@ -130,6 +131,21 @@ beforeAll(async () => {
     group_id: GROUP_PLAYER_A_QUALIFIED,
   });
 
+  await seedDoc(testEnv, `games/${GAME_GROUP_ONLY_INVITED}`, {
+    title: "Jogo privado com reforco",
+    owner_id: UID_PLAYER_A,
+    status: "SCHEDULED",
+    visibility: "GROUP_ONLY",
+    date_time: futureDate,
+    group_id: GROUP_PLAYER_A_QUALIFIED,
+    co_organizers: [],
+  });
+  await seedDoc(testEnv, `confirmations/${GAME_GROUP_ONLY_INVITED}_${UID_PLAYER_B}`, {
+    game_id: GAME_GROUP_ONLY_INVITED,
+    user_id: UID_PLAYER_B,
+    status: "PENDING",
+  });
+
   const baseLocation = {
     name: "Arena Publicada",
     owner_id: UID_FIELD_OWNER,
@@ -211,6 +227,23 @@ describe("games — leitura", () => {
   it("Não-autenticado NÃO pode ler jogos", async () => {
     const db = asAnon(testEnv);
     await assertFails(db.doc(`games/${GAME_ACTIVE}`).get());
+  });
+
+  it("Convidado PENDING pode abrir por GET o jogo GROUP_ONLY indicado", async () => {
+    const db = asPlayerB(testEnv);
+    await assertSucceeds(db.doc(`games/${GAME_GROUP_ONLY_INVITED}`).get());
+  });
+
+  it("Outsider sem convite NÃO pode abrir jogo GROUP_ONLY", async () => {
+    const db = asFieldOwner(testEnv);
+    await assertFails(db.doc(`games/${GAME_GROUP_ONLY_INVITED}`).get());
+  });
+
+  it("Convite não amplia LIST de jogos GROUP_ONLY", async () => {
+    const db = asPlayerB(testEnv);
+    await assertFails(
+      db.collection("games").where("visibility", "==", "GROUP_ONLY").get()
+    );
   });
 });
 
