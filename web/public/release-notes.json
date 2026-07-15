@@ -1,7 +1,28 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-15T02:13:17.429Z",
+  "generatedAt": "2026-07-15T04:16:51.993Z",
   "notes": [
+    {
+      "version": "1.54.4",
+      "buildNumber": null,
+      "releaseDate": "2026-07-15",
+      "type": "patch",
+      "showPopup": true,
+      "published": false,
+      "headline": "O login com Google agora funciona no endereço oficial futebadosparcas.com.br.",
+      "highlights": [],
+      "added": [],
+      "improved": [],
+      "fixed": [
+        "O fluxo de autenticação deixa de depender do domínio técnico do Firebase ao abrir pelo novo endereço oficial.",
+        "O domínio oficial e o callback de autenticação foram autorizados no cliente OAuth do Google.",
+        "`VITE_FIREBASE_AUTH_DOMAIN` agora usa `futebadosparcas.com.br`, mantendo o iframe e o handler de autenticação na mesma origem do aplicativo.",
+        "O cliente OAuth Web autoriza `https://futebadosparcas.com.br` e `https://futebadosparcas.com.br/__/auth/handler`."
+      ],
+      "issueRefs": [
+        3700
+      ]
+    },
     {
       "version": "1.54.3",
       "buildNumber": null,
