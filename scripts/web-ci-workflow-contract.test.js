@@ -68,15 +68,15 @@ function extractNamedStep(jobId, job, stepName) {
     : job.slice(stepIndex, nextStepIndex);
 }
 
-function assertEphemeralPrRunner(jobId, job) {
+function assertSelfHostedRunner(jobId, job) {
   const runnerLine = job
     .split('\n')
     .find((line) => line.trimStart().startsWith('runs-on:'));
 
   assert.equal(
     runnerLine?.trim(),
-    "runs-on: ${{ fromJSON(github.event_name == 'pull_request' && '[\"ubuntu-latest\"]' || (vars.RUNNER_LABELS || '[\"self-hosted\",\"macOS\",\"ARM64\"]')) }}",
-    `${jobId} must isolate PR code from persistent self-hosted runners`
+    "runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '[\"self-hosted\",\"macOS\",\"ARM64\"]') }}",
+    `${jobId} must use the repository runner selector`
   );
 }
 
@@ -170,7 +170,7 @@ test('Web CI uses two sharded PR lanes with exactly two installs and a stable ga
     'one matrix install command across two shards must yield exactly two npm ci executions'
   );
   assertNodeJobContract('web_shards', shards);
-  assertEphemeralPrRunner('web_shards', shards);
+  assertSelfHostedRunner('web_shards', shards);
 
   assert.match(gate, /name: Web CI Gate/);
   assert.match(gate, /if: \$\{\{ always\(\) && github\.event_name != 'schedule' \}\}/);
@@ -186,7 +186,7 @@ test('Web CI uses two sharded PR lanes with exactly two installs and a stable ga
     gate,
     /npm ci|actions\/(?:setup-node|checkout|upload-artifact|download-artifact)/
   );
-  assertEphemeralPrRunner('web_gate', gate);
+  assertSelfHostedRunner('web_gate', gate);
 
   assert.doesNotMatch(workflow, /\n  (?:lint|typecheck|test|build):\n/);
   assert.doesNotMatch(workflow, /npx tsc --noEmit/);
@@ -244,7 +244,7 @@ test('mutation testing stays outside PR and preserves its report artifact', () =
   assert.match(uploadStep, /compression-level: 9/);
 });
 
-test('Lighthouse reads PR metadata on an ephemeral runner with hardened checkout', () => {
+test('Lighthouse reads PR metadata on a self-hosted runner with hardened checkout', () => {
   const lighthouse = extractJob('lighthouse', lighthouseWorkflow);
 
   assert.match(
@@ -252,7 +252,7 @@ test('Lighthouse reads PR metadata on an ephemeral runner with hardened checkout
     /^permissions:\n\s+contents: read\n\s+pull-requests: read$/m
   );
   assertNodeJobContract('lighthouse', lighthouse);
-  assertEphemeralPrRunner('lighthouse', lighthouse);
+  assertSelfHostedRunner('lighthouse', lighthouse);
   assert.match(lighthouseWorkflow, /github\.rest\.pulls\.listFiles/);
   assert.match(
     lighthouseWorkflow,

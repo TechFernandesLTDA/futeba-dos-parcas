@@ -1,9 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { ThemeProvider, createTheme } from '@mui/material';
-import { MemoryRouter } from 'react-router-dom';
-import type { ComponentProps } from 'react';
+import type { MemoryRouterProps } from 'react-router-dom';
+import { renderWithProviders } from '../../test/renderWithProviders';
 
 // Mock dependências antes de importar o componente
 const mockNavigate = vi.fn();
@@ -41,16 +40,8 @@ vi.mock('../../hooks/useDocumentTitle', () => ({
 
 import { LoginScreen } from './LoginScreen';
 
-const theme = createTheme();
-
-function renderLoginScreen(initialEntries: ComponentProps<typeof MemoryRouter>['initialEntries'] = ['/']) {
-  return render(
-    <ThemeProvider theme={theme}>
-      <MemoryRouter initialEntries={initialEntries}>
-        <LoginScreen />
-      </MemoryRouter>
-    </ThemeProvider>
-  );
+function renderLoginScreen(initialEntries: MemoryRouterProps['initialEntries'] = ['/']) {
+  return renderWithProviders(<LoginScreen />, { initialEntries });
 }
 
 describe('LoginScreen', () => {

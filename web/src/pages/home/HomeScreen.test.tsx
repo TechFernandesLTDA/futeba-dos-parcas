@@ -1,8 +1,8 @@
 import { describe, it, expect, vi } from 'vitest';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { ThemeProvider, createTheme } from '@mui/material';
-import { MemoryRouter, useNavigate } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
+import { useNavigate } from 'react-router-dom';
+import { QueryClient } from '@tanstack/react-query';
+import { renderWithProviders as renderWithRequiredProviders } from '../../test/renderWithProviders';
 
 vi.mock('../../services/firebase', () => ({
   db: {}, auth: { currentUser: null }, storage: {}, functions: {}, app: {}, appCheck: null,
@@ -65,17 +65,10 @@ vi.mock('../../components/common/AppPermissionsPrompt', () => ({
 
 import { HomeScreen } from './HomeScreen';
 
-const theme = createTheme();
 const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
 
 function renderWithProviders(ui: React.ReactElement, initialEntries = ['/']) {
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={initialEntries}>
-        <ThemeProvider theme={theme}>{ui}</ThemeProvider>
-      </MemoryRouter>
-    </QueryClientProvider>
-  );
+  return renderWithRequiredProviders(ui, { queryClient, initialEntries });
 }
 
 function GoToHomeButton() {

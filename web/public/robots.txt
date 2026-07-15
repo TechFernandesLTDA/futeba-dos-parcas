@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://futebadosparcas.web.app/sitemap.xml
+Sitemap: https://futebadosparcas.com.br/sitemap.xml

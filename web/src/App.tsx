@@ -2,6 +2,7 @@ import React, { Suspense, lazy, useEffect, useState, useCallback } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useParams, useNavigate } from 'react-router-dom';
 import { addBreadcrumb } from './utils/errorContext';
 import { QueryClientProvider } from '@tanstack/react-query';
+import { RouteSeoMetadata } from './components/seo/SeoMetadata';
 import { queryClient } from './services/queryClient';
 import { auth } from './services/firebase';
 import { AuthProvider, ThemeProvider, LanguageProvider, useAuth, TeamsProvider } from './contexts';
@@ -802,6 +803,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <BrowserRouter>
+          <RouteSeoMetadata />
           <AuthProvider>
             <ErrorBoundary fallback={<AppCrashFallback />}>
             <ToastProvider>

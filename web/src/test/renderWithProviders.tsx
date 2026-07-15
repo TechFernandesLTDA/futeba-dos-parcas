@@ -3,6 +3,7 @@
  *
  * Envolve o componente com todos os providers obrigatórios:
  *   - QueryClientProvider (QueryClient com retry:false — sem flakiness em tests)
+ *   - PwaInstallProvider
  *   - ToastProvider
  *   - MemoryRouter (opcional, habilitado por padrão)
  *   - ThemeProvider MUI (createTheme padrão)
@@ -23,6 +24,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter, MemoryRouterProps } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material';
 import { ToastProvider } from '../contexts/ToastContext';
+import { PwaInstallProvider } from '../hooks/usePwaInstall';
 
 // Tema MUI padrão para testes — sem customização (consistência)
 const defaultTheme = createTheme();
@@ -68,11 +70,13 @@ export function renderWithProviders(
   function Wrapper({ children }: { children: React.ReactNode }) {
     const content = (
       <QueryClientProvider client={client}>
-        <ToastProvider>
-          <ThemeProvider theme={defaultTheme}>
-            {children}
-          </ThemeProvider>
-        </ToastProvider>
+        <PwaInstallProvider>
+          <ToastProvider>
+            <ThemeProvider theme={defaultTheme}>
+              {children}
+            </ThemeProvider>
+          </ToastProvider>
+        </PwaInstallProvider>
       </QueryClientProvider>
     );
 

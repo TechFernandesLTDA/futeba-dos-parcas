@@ -26,10 +26,8 @@ concurrency:
 jobs:
   semgrep:
     name: Semgrep (TypeScript)
-    # GitHub-hosted ubuntu-latest: separa a capacidade Linux (gates JS/security)
-    # da capacidade Mac (reservada a iOS/Apple). O venv abaixo funciona em Linux
-    # (o Python do ubuntu-latest tambem e "externally-managed" — PEP 668).
-    runs-on: ubuntu-latest
+    # O venv mantém o Semgrep isolado no runner macOS persistente.
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
     timeout-minutes: 25
     permissions:
       # Necessario para o upload-sarif publicar na aba Security.
@@ -42,8 +40,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # O Python do ubuntu-latest tambem e "externally-managed" (PEP 668), entao
-      # `pip install` direto e recusado. Instalamos o Semgrep num venv isolado em
+      # Instalamos o Semgrep num venv isolado em
       # $RUNNER_TEMP: sem poluir o site-packages do sistema e sem
       # --break-system-packages. (A action Docker returntocorp/semgrep e estavel
       # em Linux, mas o venv mantem o controle de versao explicito.)
