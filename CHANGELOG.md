@@ -245,6 +245,15 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.54.10][web-1.54.10] - 2026-07-15
+
+#### Corrigido
+- Payload público do perfil isolado e coberto por testes determinísticos.
+- Cobertura de emulador adicionada para todos os campos editáveis e para `updated_at` protegido.
+- Permissões de avatar validadas para owner, terceiros, anônimo, MIME, tamanho, filename e exclusão.
+
+_Issues: #3720_
+
 ### [1.54.9][web-1.54.9] - 2026-07-15
 
 #### Corrigido
@@ -2467,6 +2476,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.54.10]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.10.md
 [web-1.54.9]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.9.md
 [web-1.54.8]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.8.md
 [web-1.54.7]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.7.md

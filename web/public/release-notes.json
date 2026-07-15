@@ -1,7 +1,32 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-15T18:45:25.597Z",
+  "generatedAt": "2026-07-15T19:24:33.043Z",
   "notes": [
+    {
+      "version": "1.54.10",
+      "buildNumber": null,
+      "releaseDate": "2026-07-15",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "Editar o perfil volta a salvar normalmente, sem a mensagem incorreta de falta de permissão.",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "Perfis novos ou antigos podem salvar mesmo quando nenhuma posição preferida foi escolhida.",
+        "Nome, apelido, posição, bio, time favorito e avaliações permanecem dentro das permissões seguras do perfil."
+      ],
+      "fixed": [
+        "Removida do navegador a tentativa de alterar um timestamp reservado ao servidor.",
+        "Campos opcionais deixam de enviar valores que o Firestore não aceita.",
+        "Payload público do perfil isolado e coberto por testes determinísticos.",
+        "Cobertura de emulador adicionada para todos os campos editáveis e para `updated_at` protegido.",
+        "Permissões de avatar validadas para owner, terceiros, anônimo, MIME, tamanho, filename e exclusão."
+      ],
+      "issueRefs": [
+        3720
+      ]
+    },
     {
       "version": "1.54.9",
       "buildNumber": null,
