@@ -32,21 +32,19 @@ import { LoadingState, PlayerAvatar, EmptyState } from '../../components/common/
 import { createLogger } from '../../utils/logger';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useTranslation } from 'react-i18next';
-import { getUsersByIds } from '../../utils/userBatch';
+import { getLeaguePlayers } from '../../services/cloudFunctions';
+import {
+  toPublicPlayerSearchResult,
+  type PublicPlayerSearchResult,
+} from '../../utils/publicPlayerProjection';
 
 const logger = createLogger('InvitePlayersScreen');
 
-interface SearchResult {
-  id: string;
-  name: string;
-  email: string;
-  photoUrl?: string;
-}
+type SearchResult = PublicPlayerSearchResult;
 
 interface GroupMember {
   id: string;
   name: string;
-  email: string;
   photoUrl?: string;
   role: string;
 }
@@ -107,26 +105,20 @@ export const InvitePlayersScreen: React.FC = () => {
           const membersSnap = await getDocs(collection(db, 'groups', groupId, 'members'));
           if (cancelled) return;
 
-          const memberDocs = membersSnap.docs;
-          const usersById = await getUsersByIds(memberDocs.map((memberDoc) => memberDoc.id));
-          if (cancelled) return;
-
-          const membersData = memberDocs
+          const membersData = membersSnap.docs
             .map((memberDoc) => {
-              const uid = memberDoc.id;
-              const memberRole = (memberDoc.data().role as string) || 'MEMBER';
-              const d = usersById.get(uid);
-              if (!d) return null;
+              const raw = memberDoc.data();
+              const converted = snakeToCamel(raw) as Record<string, unknown>;
 
               return {
-                id: uid,
-                name: (d.name as string) || 'Jogador',
-                email: (d.email as string) || '',
-                photoUrl: d.photoUrl as string | undefined,
-                role: memberRole,
+                id: memberDoc.id,
+                name: (converted.userName as string) || 'Jogador',
+                photoUrl: (converted.userPhoto as string | undefined) ||
+                  (converted.userPhotoUrl as string | undefined),
+                role: (raw.role as string) || 'MEMBER',
               };
             })
-            .filter(Boolean) as GroupMember[];
+            .filter((member) => member.name.trim().length > 0) as GroupMember[];
 
           if (!cancelled) setMembers(membersData);
         }
@@ -161,12 +153,15 @@ export const InvitePlayersScreen: React.FC = () => {
     setSearching(true);
     setHasSearched(true);
     try {
-      const usersRef = collection(db, 'users');
-      const q = query(usersRef, where('name', '>=', searchQuery), where('name', '<=', searchQuery + '\uf8ff'));
-      const snapshot = await getDocs(q);
+      const response = await getLeaguePlayers({
+        search: searchQuery.trim(),
+        limit: 20,
+        sortField: 'name',
+        sortDirection: 'asc',
+      });
 
-      const results = snapshot.docs
-        .map((d) => ({ ...snakeToCamel<SearchResult>(d.data()), id: d.id }))
+      const results = response.data.players
+        .map(toPublicPlayerSearchResult)
         .filter((u) => !members.some((m) => m.id === u.id));
 
       setSearchResults(results);
@@ -343,20 +338,6 @@ export const InvitePlayersScreen: React.FC = () => {
                           {result.name}
                         </Typography>
                       }
-                      secondary={
-                        <Typography
-                          variant="body2"
-                          color="text.secondary"
-                          component="span"
-                          sx={{
-                            display: 'block',
-                            overflowWrap: 'anywhere',
-                            wordBreak: 'break-word',
-                          }}
-                        >
-                          {result.email}
-                        </Typography>
-                      }
                     />
                   </ListItem>
                 </Box>
@@ -408,21 +389,6 @@ export const InvitePlayersScreen: React.FC = () => {
                             <Chip label="Dono" size="small" color="primary" />
                           )}
                         </Box>
-                      }
-                      secondary={
-                        <Typography
-                          variant="body2"
-                          color="text.secondary"
-                          component="span"
-                          sx={{
-                            display: 'block',
-                            mt: 0.25,
-                            overflowWrap: 'anywhere',
-                            wordBreak: 'break-word',
-                          }}
-                        >
-                          {member.email}
-                        </Typography>
                       }
                     />
                   </ListItem>

@@ -37,8 +37,6 @@ import {
   EmojiEvents as TrophyIcon,
   Share as ShareIcon,
 } from '@mui/icons-material';
-import { collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
-import { db } from '../../services/firebase';
 import { useQuery } from '@tanstack/react-query';
 import { useHeadToHead, HeadToHeadMatch } from '../../hooks/useHeadToHead';
 import type { HeadToHeadPeriod } from '../../utils/headToHeadPeriod';
@@ -46,12 +44,11 @@ import { PlayerAvatar, EmptyState } from '../../components/common/GameCard';
 import { ErrorState } from '../../components/common/ErrorState';
 import { TeamBadge } from '../../components/team/TeamBadge';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
-import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { createLogger } from '../../utils/logger';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '../../contexts/ToastContext';
 import { buildFriendlyComparisonSummary, type FriendlyComparisonLabels } from '../../utils/friendlyComparison';
-import { getEffectiveLevel } from '../../utils/xpAccounting';
+import { getLeaguePlayers } from '../../services/cloudFunctions';
 
 const logger = createLogger('HeadToHeadScreen');
 
@@ -65,27 +62,20 @@ interface PlayerSearchResult {
 
 async function searchPlayers(term: string): Promise<PlayerSearchResult[]> {
   if (term.trim().length < 2) return [];
-  const q = query(
-    collection(db, 'users'),
-    where('name_lower', '>=', term.toLowerCase()),
-    where('name_lower', '<=', term.toLowerCase() + '\uf8ff'),
-    where('is_searchable', '==', true),
-    orderBy('name_lower'),
-    limit(10)
-  );
   try {
-    const snap = await getDocs(q);
-    return snap.docs.map((doc) => {
-      const raw = doc.data();
-      const data = snakeToCamel(raw) as Record<string, unknown>;
-      return {
-        id: doc.id,
-        name: (data.name as string) || 'Jogador',
-        photoUrl: (data.photoUrl as string) || (raw.photo_url as string) || undefined,
-        favoriteTeam: (data.favoriteTeam as string) || (raw.favorite_team as string) || undefined,
-        level: getEffectiveLevel({ ...raw, ...data }),
-      };
+    const response = await getLeaguePlayers({
+      search: term.trim(),
+      limit: 10,
+      sortField: 'name',
+      sortDirection: 'asc',
     });
+    return response.data.players.map((player) => ({
+      id: player.userId,
+      name: player.userName || 'Jogador',
+      photoUrl: player.userPhoto,
+      favoriteTeam: player.favoriteTeam,
+      level: player.level ?? 0,
+    }));
   } catch (err) {
     logger.error('Error searching players:', err);
     throw err;

@@ -63,6 +63,7 @@ import { sxPresets } from '../../../theme/sxPresets';
 import { useGamificationColors } from '../../../hooks/useGamificationColors';
 import { useConfirmPresence } from '../../../hooks/useGames';
 import { useNextGame } from '../../../hooks/useNextGame';
+import { getUsersByIds } from '../../../utils/userBatch';
 import { useWaitlist } from '../../../hooks/useWaitlist';
 import { useGroups } from '../../../hooks/useGroups';
 import { snakeToCamel } from '../../../utils/firestoreHelpers';
@@ -464,26 +465,14 @@ function MiniRankingWidget({ groups }: { groups: Group[] }) {
       const uniqueIds = [...new Set(userIds)];
 
       const usersMap = new Map<string, { name: string; photoUrl: string | null; favoriteTeam?: string }>();
-      const chunks: string[][] = [];
-      for (let i = 0; i < uniqueIds.length; i += 10) {
-        chunks.push(uniqueIds.slice(i, i + 10));
-      }
-      const settled = await Promise.allSettled(
-        chunks.map((chunk) =>
-          getDocs(query(collection(db, 'users'), where('__name__', 'in', chunk)))
-        ),
-      );
-      for (const result of settled) {
-        if (result.status === 'rejected') continue;
-        for (const docSnap of result.value.docs) {
-          const d = docSnap.data();
-          usersMap.set(docSnap.id, {
+      const publicUsers = await getUsersByIds(uniqueIds);
+      publicUsers.forEach((d, userId) => {
+          usersMap.set(userId, {
             name: (d.name as string) || 'Jogador',
-            photoUrl: (d.photo_url as string) || (d.photoUrl as string) || null,
-            favoriteTeam: (d.favorite_team as string) || (d.favoriteTeam as string) || undefined,
+            photoUrl: (d.photoUrl as string) || null,
+            favoriteTeam: (d.favoriteTeam as string) || undefined,
           });
-        }
-      }
+      });
 
       return snapshot.docs.map((docSnapshot) => {
         const raw = docSnapshot.data();

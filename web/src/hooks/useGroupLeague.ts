@@ -7,7 +7,6 @@ import {
   limit,
   getDocs,
   onSnapshot,
-  documentId,
   startAfter,
   type DocumentData,
   type QueryDocumentSnapshot,
@@ -20,6 +19,7 @@ import { useToast } from '../contexts/ToastContext';
 import { useEffect, useState, useRef } from 'react';
 import { compareGroupLeagueStandings } from '../utils/groupLeagueStandings';
 import { getEffectiveLevel, getExperiencePoints } from '../utils/xpAccounting';
+import { getUsersByIds } from '../utils/userBatch';
 
 const logger = createLogger('useGroupLeague');
 
@@ -122,32 +122,15 @@ async function fetchGroupLeagueStandings(
   const userIds = [...new Set(standingData.map((s) => s.userId))];
   const usersMap = new Map<string, { name: string; photoUrl: string | null; favoriteTeam?: string; level: number }>();
 
-  const chunks: string[][] = [];
-  for (let i = 0; i < userIds.length; i += 10) {
-    chunks.push(userIds.slice(i, i + 10));
-  }
-
-  const settled = await Promise.allSettled(
-    chunks.map((chunk) =>
-      getDocs(query(collection(db, 'users'), where(documentId(), 'in', chunk)))
-    )
-  );
-
-  for (const result of settled) {
-    if (result.status === 'rejected') {
-      logger.error('Failed to fetch user chunk:', result.reason);
-      continue;
-    }
-    for (const docSnap of result.value.docs) {
-      const d = docSnap.data();
+  const publicUsers = await getUsersByIds(userIds);
+  for (const [userId, d] of publicUsers) {
       const xp = getExperiencePoints(d);
-      usersMap.set(docSnap.id, {
+      usersMap.set(userId, {
         name: (d.name as string) || 'Jogador',
-        photoUrl: (d.photo_url as string) || (d.photoUrl as string) || null,
-        favoriteTeam: (d.favorite_team as string) || (d.favoriteTeam as string) || undefined,
+        photoUrl: (d.photoUrl as string) || null,
+        favoriteTeam: (d.favoriteTeam as string) || undefined,
         level: getEffectiveLevel(d, xp),
       });
-    }
   }
 
   return standingData.map((s) => {

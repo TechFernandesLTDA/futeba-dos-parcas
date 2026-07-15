@@ -334,6 +334,22 @@ export interface LeaguePlayerSummary {
   dataOrigin?: string;
   seedId?: string;
   demoDataReason?: string;
+  preferredPosition?: 'GOLEIRO' | 'ZAGUEIRO' | 'LATERAL' | 'VOLANTE' | 'MEIA' | 'ATACANTE';
+  strikerRating?: number;
+  midRating?: number;
+  defenderRating?: number;
+  gkRating?: number;
+  autoStrikerRating?: number;
+  autoMidRating?: number;
+  autoDefenderRating?: number;
+  autoGkRating?: number;
+  autoRatingSamples?: number;
+  strikerRatingSet?: boolean;
+  midRatingSet?: boolean;
+  defenderRatingSet?: boolean;
+  gkRatingSet?: boolean;
+  lookingForGameToday?: boolean;
+  hasRecentPresence?: boolean;
 }
 
 export interface GetLeaguePlayersResponse {
@@ -355,6 +371,7 @@ export const getLeaguePlayers = httpsCallable<
     sortField?: string | null;
     sortDirection?: 'asc' | 'desc' | null;
     pageToken?: string | null;
+    userIds?: string[] | null;
   },
   GetLeaguePlayersResponse
 >(functions, 'getLeaguePlayers');

@@ -15,6 +15,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { useToast } from "../contexts/ToastContext";
 import { getFirestoreErrorMessage } from "../utils/firebaseErrors";
 import { useTranslation } from 'react-i18next';
+import { getUsersByIds } from '../utils/userBatch';
 
 export interface DreamTeamPlayer {
   userId: string;
@@ -96,21 +97,15 @@ export function usePlayedAgainst() {
       const userIds = Array.from(opponents).slice(0, 50);
       const result: Array<{ id: string; name: string; photoUrl?: string; autoStrikerRating: number }> = [];
 
-      for (let i = 0; i < userIds.length; i += 10) {
-        const chunk = userIds.slice(i, i + 10);
-        const usersSnap = await getDocs(
-          query(collection(db, "users"), where("__name__", "in", chunk))
-        );
-        usersSnap.forEach((d) => {
-          const data = d.data();
-          result.push({
-            id: d.id,
-            name: data.name || "Jogador",
-            photoUrl: data.photo_url,
-            autoStrikerRating: data.auto_striker_rating || 0,
-          });
+      const publicUsers = await getUsersByIds(userIds);
+      publicUsers.forEach((data, userId) => {
+        result.push({
+          id: userId,
+          name: (data.name as string) || "Jogador",
+          photoUrl: data.photoUrl as string | undefined,
+          autoStrikerRating: (data.autoStrikerRating as number) || 0,
         });
-      }
+      });
 
       return result;
     },
