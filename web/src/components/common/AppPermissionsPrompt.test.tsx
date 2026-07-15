@@ -6,11 +6,9 @@ import { ThemeProvider, createTheme } from '@mui/material';
 const permissionMock = vi.hoisted(() => ({
   requestNotifications: vi.fn(),
   requestLocation: vi.fn(),
-  requestStorage: vi.fn(),
   permissions: {
     notifications: { id: 'notifications', state: 'prompt', supported: true, loading: false },
-    location: { id: 'location', state: 'prompt', supported: true, loading: false },
-    storage: { id: 'storage', state: 'denied', supported: true, loading: false },
+    location: { id: 'location', state: 'denied', supported: true, loading: false },
   },
 }));
 
@@ -19,7 +17,6 @@ vi.mock('../../hooks/useAppPermissions', () => ({
     permissions: permissionMock.permissions,
     requestNotifications: permissionMock.requestNotifications,
     requestLocation: permissionMock.requestLocation,
-    requestStorage: permissionMock.requestStorage,
   }),
 }));
 
@@ -41,8 +38,7 @@ describe('AppPermissionsPrompt', () => {
     localStorage.clear();
     permissionMock.permissions = {
       notifications: { id: 'notifications', state: 'prompt', supported: true, loading: false },
-      location: { id: 'location', state: 'prompt', supported: true, loading: false },
-      storage: { id: 'storage', state: 'denied', supported: true, loading: false },
+      location: { id: 'location', state: 'denied', supported: true, loading: false },
     };
   });
 
@@ -52,7 +48,6 @@ describe('AppPermissionsPrompt', () => {
     expect(screen.getByText('Ativar recursos do app')).toBeInTheDocument();
     expect(screen.getByText('Notificações')).toBeInTheDocument();
     expect(screen.getByText('Localização')).toBeInTheDocument();
-    expect(screen.getByText('Espaço do app')).toBeInTheDocument();
     expect(screen.getByText('Bloqueado')).toBeInTheDocument();
   });
 
@@ -62,11 +57,9 @@ describe('AppPermissionsPrompt', () => {
 
     const allowButtons = screen.getAllByRole('button', { name: /permitir/i });
     await user.click(allowButtons[0]);
-    await user.click(allowButtons[1]);
 
     expect(permissionMock.requestNotifications).toHaveBeenCalledTimes(1);
-    expect(permissionMock.requestLocation).toHaveBeenCalledTimes(1);
-    expect(permissionMock.requestStorage).not.toHaveBeenCalled();
+    expect(permissionMock.requestLocation).not.toHaveBeenCalled();
   });
 
   it('silencia o prompt ao tocar em Depois', async () => {

@@ -15,12 +15,16 @@ export function InstallAppPrompt({ sx }: InstallAppPromptProps) {
 
   if (!shouldShow) return null;
 
-  const isIOS = platform === 'ios';
-  const hint = isIOS
+  const usesShareMenu = platform === 'ios' || platform === 'safari-desktop';
+  const hint = platform === 'ios'
     ? t('pwa.iosInstallHint')
-    : platform === 'desktop'
-      ? t('pwa.desktopInstallHint')
-      : t('pwa.androidInstallHint');
+    : platform === 'safari-desktop'
+      ? t('pwa.safariDesktopInstallHint')
+      : platform === 'chromium-desktop'
+        ? t('pwa.chromiumDesktopInstallHint')
+        : platform === 'android'
+          ? t('pwa.androidInstallHint')
+          : t('pwa.genericInstallHint');
 
   return (
     <Box
@@ -28,7 +32,7 @@ export function InstallAppPrompt({ sx }: InstallAppPromptProps) {
       sx={[
         {
           display: 'grid',
-          gridTemplateColumns: `${isIOS ? 'auto ' : ''}1fr auto${canPrompt ? ' auto' : ''}`,
+          gridTemplateColumns: `${!canPrompt ? 'auto ' : ''}1fr auto${canPrompt ? ' auto' : ''}`,
           alignItems: 'center',
           gap: 1.25,
           p: 1.25,
@@ -40,14 +44,9 @@ export function InstallAppPrompt({ sx }: InstallAppPromptProps) {
         ...(Array.isArray(sx) ? sx : sx ? [sx] : []),
       ]}
     >
-      {isIOS && (
-        <IosShare
-          color="primary"
-          fontSize="small"
-          aria-hidden="true"
-          sx={{ alignSelf: 'start', mt: 0.25 }}
-        />
-      )}
+      {!canPrompt && (usesShareMenu
+        ? <IosShare color="primary" fontSize="small" aria-hidden="true" sx={{ alignSelf: 'start', mt: 0.25 }} />
+        : <Download color="primary" fontSize="small" aria-hidden="true" sx={{ alignSelf: 'start', mt: 0.25 }} />)}
 
       <Box sx={{ minWidth: 0 }}>
         <Typography variant="subtitle2" sx={{ lineHeight: 1.25 }}>

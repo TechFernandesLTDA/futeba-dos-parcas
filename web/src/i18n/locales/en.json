@@ -2477,11 +2477,13 @@
     "updateAction": "Update request"
   },
   "pwa": {
-    "androidInstallHint": "Open full screen with quick access and fewer distractions.",
-    "desktopInstallHint": "Install on this computer for full-screen access and a faster launch.",
+    "androidInstallHint": "Open the browser menu and tap Install app or Add to Home screen.",
+    "chromiumDesktopInstallHint": "Use the install icon in the address bar or the browser menu > Install app.",
+    "genericInstallHint": "Use the browser menu to install this site as an app or create a shortcut.",
     "installAction": "Install",
     "installTitle": "Use as an app",
-    "iosInstallHint": "On iPhone: Safari > Share > Add to Home Screen."
+    "iosInstallHint": "On iPhone or iPad: Share > Add to Home Screen. If the option is missing, open the site in Safari.",
+    "safariDesktopInstallHint": "In Safari on macOS 14 or later: Share or File > Add to Dock."
   },
   "permissions": {
     "allowAction": "Allow",
@@ -2496,10 +2498,6 @@
       "notifications": {
         "description": "Game alerts, invites, and important messages.",
         "title": "Notifications"
-      },
-      "storage": {
-        "description": "Helps the installed app open fast and keep data offline.",
-        "title": "App storage"
       }
     },
     "title": "Enable app features"

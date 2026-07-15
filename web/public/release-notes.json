@@ -1,7 +1,35 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-15T04:22:27.617Z",
+  "generatedAt": "2026-07-15T05:32:47.639Z",
   "notes": [
+    {
+      "version": "1.54.5",
+      "buildNumber": null,
+      "releaseDate": "2026-07-15",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "Instalar o Futeba como aplicativo ficou mais claro e confiável no computador e no celular.",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "Chrome, Edge, Opera e Vivaldi recebem botão nativo quando disponível e orientação pelo menu como alternativa.",
+        "Safari no macOS orienta “Adicionar ao Dock”; iPhone e iPad orientam “Adicionar à Tela de Início”.",
+        "Os ícones instalados agora usam o logotipo do Futeba, com versões próprias para Apple e máscaras do sistema."
+      ],
+      "fixed": [
+        "A Home não mostra mais “Espaço do app — Bloqueado”, pois a persistência de cache é decidida automaticamente pelo navegador e não é uma permissão configurável.",
+        "Fechar a sugestão de instalação deixa de escondê-la para sempre; ela pode reaparecer após 30 dias.",
+        "O listener de `beforeinstallprompt` passou para um provider global e não perde mais o evento ao navegar entre telas.",
+        "A persistência de storage é solicitada silenciosamente após instalação ou abertura standalone, sem bloquear o uso quando o navegador retorna `false`.",
+        "Canonical, Open Graph, Twitter Cards e App Links agora apontam para `https://futebadosparcas.com.br`.",
+        "`firebase-messaging-sw.js` deixou de receber cache imutável de um ano.",
+        "O ciclo de atualização do service worker respeita a confirmação já apresentada pelo aplicativo."
+      ],
+      "issueRefs": [
+        3703
+      ]
+    },
     {
       "version": "1.54.4",
       "buildNumber": null,

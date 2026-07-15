@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 const repoRoot = resolve(process.cwd(), '..');
 const workerSource = readFileSync(resolve(repoRoot, 'web/public/sw.js'), 'utf8');
-const APP_ORIGIN = 'https://futebadosparcas.web.app';
+const APP_ORIGIN = 'https://futebadosparcas.com.br';
 
 interface TestFetchEvent {
   request: {

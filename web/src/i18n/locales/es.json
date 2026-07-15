@@ -2477,11 +2477,13 @@
     "updateAction": "Actualizar solicitud"
   },
   "pwa": {
-    "androidInstallHint": "Ábrelo en pantalla completa, con acceso rápido y menos distracciones.",
-    "desktopInstallHint": "Instálalo en esta computadora para abrirlo en pantalla completa y entrar más rápido.",
+    "androidInstallHint": "Abre el menú del navegador y toca Instalar app o Agregar a pantalla de inicio.",
+    "chromiumDesktopInstallHint": "Usa el ícono de instalación en la barra de direcciones o el menú del navegador > Instalar aplicación.",
+    "genericInstallHint": "Usa el menú del navegador para instalar el sitio como aplicación o crear un acceso directo.",
     "installAction": "Instalar",
     "installTitle": "Usar como app",
-    "iosInstallHint": "En iPhone: Safari > Compartir > Agregar a pantalla de inicio."
+    "iosInstallHint": "En iPhone o iPad: Compartir > Agregar a pantalla de inicio. Si no aparece, abre el sitio en Safari.",
+    "safariDesktopInstallHint": "En Safari para macOS 14 o posterior: Compartir o Archivo > Agregar al Dock."
   },
   "permissions": {
     "allowAction": "Permitir",
@@ -2496,10 +2498,6 @@
       "notifications": {
         "description": "Alertas de partidos, invitaciones y mensajes importantes.",
         "title": "Notificaciones"
-      },
-      "storage": {
-        "description": "Ayuda al app instalado a abrir rápido y guardar datos offline.",
-        "title": "Espacio del app"
       }
     },
     "title": "Activar recursos del app"

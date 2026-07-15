@@ -1,6 +1,15 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { usePwaInstall } from './usePwaInstall';
+import { createElement, type ReactNode } from 'react';
+import { PwaInstallProvider, usePwaInstall } from './usePwaInstall';
+
+function wrapper({ children }: { children: ReactNode }) {
+  return createElement(PwaInstallProvider, null, children);
+}
+
+function renderPwaHook() {
+  return renderHook(() => usePwaInstall(), { wrapper });
+}
 
 function setNavigatorValue(key: keyof Navigator, value: unknown) {
   Object.defineProperty(window.navigator, key, {
@@ -26,6 +35,8 @@ function createBeforeInstallPromptEvent(outcome: 'accepted' | 'dismissed' = 'acc
 }
 
 describe('usePwaInstall', () => {
+  const persist = vi.fn().mockResolvedValue(false);
+
   beforeEach(() => {
     localStorage.clear();
     setNavigatorValue('userAgent', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)');
@@ -35,6 +46,8 @@ describe('usePwaInstall', () => {
       configurable: true,
       value: undefined,
     });
+    setNavigatorValue('storage', { persist });
+    persist.mockClear();
   });
 
   it('mostra instrução manual no iPhone quando não está instalado', () => {
@@ -45,15 +58,36 @@ describe('usePwaInstall', () => {
     setNavigatorValue('platform', 'iPhone');
     setNavigatorValue('maxTouchPoints', 5);
 
-    const { result } = renderHook(() => usePwaInstall());
+    const { result } = renderPwaHook();
 
     expect(result.current.platform).toBe('ios');
     expect(result.current.canPrompt).toBe(false);
     expect(result.current.shouldShow).toBe(true);
   });
 
+  it('mostra instrução de Adicionar ao Dock no Safari do macOS', () => {
+    setNavigatorValue(
+      'userAgent',
+      'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_5) AppleWebKit/605.1.15 Version/17.5 Safari/605.1.15',
+    );
+    const { result } = renderPwaHook();
+    expect(result.current.platform).toBe('safari-desktop');
+    expect(result.current.canPrompt).toBe(false);
+    expect(result.current.shouldShow).toBe(true);
+  });
+
+  it('mostra ajuda manual em navegadores Chromium mesmo antes do prompt nativo', () => {
+    setNavigatorValue(
+      'userAgent',
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/126.0 Safari/537.36',
+    );
+    const { result } = renderPwaHook();
+    expect(result.current.platform).toBe('chromium-desktop');
+    expect(result.current.shouldShow).toBe(true);
+  });
+
   it('captura beforeinstallprompt e executa o prompt nativo', async () => {
-    const { result } = renderHook(() => usePwaInstall());
+    const { result } = renderPwaHook();
     const { event, prompt } = createBeforeInstallPromptEvent();
     const preventDefault = vi.spyOn(event, 'preventDefault');
 
@@ -81,14 +115,14 @@ describe('usePwaInstall', () => {
       value: true,
     });
 
-    const { result } = renderHook(() => usePwaInstall());
+    const { result } = renderPwaHook();
 
     expect(result.current.isStandalone).toBe(true);
     expect(result.current.shouldShow).toBe(false);
   });
 
   it('permite dispensar o prompt e não reapresenta após remontar', () => {
-    const firstRender = renderHook(() => usePwaInstall());
+    const firstRender = renderPwaHook();
     const { event } = createBeforeInstallPromptEvent();
 
     act(() => {
@@ -105,7 +139,15 @@ describe('usePwaInstall', () => {
 
     firstRender.unmount();
 
-    const secondRender = renderHook(() => usePwaInstall());
+    const secondRender = renderPwaHook();
     expect(secondRender.result.current.shouldShow).toBe(false);
+  });
+
+  it('pede persistência oportunisticamente após a instalação sem bloquear o fluxo', async () => {
+    renderPwaHook();
+    act(() => {
+      window.dispatchEvent(new Event('appinstalled'));
+    });
+    await waitFor(() => expect(persist).toHaveBeenCalledTimes(1));
   });
 });
