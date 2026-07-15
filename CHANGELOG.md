@@ -245,6 +245,15 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.54.12][web-1.54.12] - 2026-07-15
+
+#### Corrigido
+- Identidade da `AppSidebar` migrada para `ListItemButton` acessível com rota `/profile/edit`.
+- `SettingsScreen` limitada a 960–1040 px no desktop, com grid responsivo para notificações.
+- Contratos e testes cobrem a navegação do rodapé, o atalho de perfil e a ordem da ação de salvar.
+
+_Issues: #3724_
+
 ### [1.54.11][web-1.54.11] - 2026-07-15
 
 #### Corrigido
@@ -2484,6 +2493,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.54.12]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.12.md
 [web-1.54.11]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.11.md
 [web-1.54.10]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.10.md
 [web-1.54.9]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.9.md

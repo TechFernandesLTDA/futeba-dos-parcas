@@ -25,6 +25,7 @@ vi.mock('react-i18next', () => ({
         'nav.league': 'Liga',
         'nav.notifications': 'Notificações',
         'nav.profile': 'Perfil',
+        'profile.editProfile': 'Editar Perfil',
         'common.appName': 'Futeba',
         'a11y.mainNav': 'Navegação principal',
       };
@@ -108,6 +109,16 @@ describe('AppSidebar', () => {
     await user.click(logos[0]);
 
     expect(mockNavigate).toHaveBeenCalledWith('/');
+  });
+
+  it('abre a edição do perfil ao clicar no usuário do rodapé', async () => {
+    const user = userEvent.setup();
+    renderWithTheme(<AppSidebar />);
+
+    const editProfileButton = screen.getByRole('button', { name: 'Editar Perfil' });
+    await user.click(editProfileButton);
+
+    expect(mockNavigate).toHaveBeenCalledWith('/profile/edit');
   });
 
   it('renderiza drawer expanded em desktop (lg+)', () => {

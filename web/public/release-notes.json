@@ -1,7 +1,33 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-15T19:54:50.186Z",
+  "generatedAt": "2026-07-15T21:24:39.847Z",
   "notes": [
+    {
+      "version": "1.54.12",
+      "buildNumber": null,
+      "releaseDate": "2026-07-15",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "Agora você pode editar o perfil pela foto e pelo nome na barra lateral ou pelo botão em Configurações.",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "O cartão da conta usa a foto real do jogador e mantém a edição sempre visível.",
+        "Configurações ganhou largura mais confortável em monitores grandes.",
+        "Notificações ficam organizadas em blocos responsivos, com Salvar logo abaixo."
+      ],
+      "fixed": [
+        "Corrigido o rodapé da barra lateral que parecia interativo, mas não aceitava clique nem teclado.",
+        "A ação de salvar deixa de ficar separada dos controles que ela atualiza.",
+        "Identidade da `AppSidebar` migrada para `ListItemButton` acessível com rota `/profile/edit`.",
+        "`SettingsScreen` limitada a 960–1040 px no desktop, com grid responsivo para notificações.",
+        "Contratos e testes cobrem a navegação do rodapé, o atalho de perfil e a ordem da ação de salvar."
+      ],
+      "issueRefs": [
+        3724
+      ]
+    },
     {
       "version": "1.54.11",
       "buildNumber": null,

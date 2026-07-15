@@ -23,10 +23,11 @@ import {
   DialogContentText,
   DialogActions,
   TextField,
+  Avatar,
 } from '@mui/material';
 import {
   Business as BusinessIcon,
-  Person as PersonIcon,
+  Edit as EditIcon,
   Palette as PaletteIcon,
   Info as InfoIcon,
   EmojiEvents as TrophyIcon,
@@ -179,7 +180,14 @@ export const SettingsScreen: React.FC = () => {
         backAriaLabel={t('common.back')}
       />
 
-      <PageContainer maxWidth="form">
+      <PageContainer
+        maxWidth="form"
+        sx={{
+          '& > .MuiContainer-root': {
+            maxWidth: { lg: 960, xl: 1040 },
+          },
+        }}
+      >
         {error ? (
           <ErrorState
             message={error}
@@ -193,12 +201,25 @@ export const SettingsScreen: React.FC = () => {
         ) : (
           <>
             <Card sx={{ mb: 2 }}>
-              <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                  <PersonIcon color="primary" sx={{ fontSize: 40 }} />
-                  <Box>
+              <CardContent
+                sx={{
+                  display: 'flex',
+                  alignItems: { xs: 'stretch', sm: 'center' },
+                  flexDirection: { xs: 'column', sm: 'row' },
+                  gap: 2,
+                }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1, minWidth: 0 }}>
+                  <Avatar
+                    src={user?.photoUrl}
+                    alt={user?.name || t('settings.defaultUserName')}
+                    sx={{ width: 48, height: 48, bgcolor: 'primary.main' }}
+                  >
+                    {(user?.name || t('settings.defaultUserName')).charAt(0).toUpperCase()}
+                  </Avatar>
+                  <Box sx={{ minWidth: 0 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Typography variant="subtitle1" fontWeight={600}>
+                      <Typography variant="subtitle1" fontWeight={600} noWrap>
                         {user?.name || t('settings.defaultUserName')}
                       </Typography>
                       <TeamBadge teamId={user?.favoriteTeam} size={24} />
@@ -208,6 +229,14 @@ export const SettingsScreen: React.FC = () => {
                     </Typography>
                   </Box>
                 </Box>
+                <Button
+                  variant="outlined"
+                  startIcon={<EditIcon />}
+                  onClick={() => navigate('/profile/edit')}
+                  sx={{ minHeight: 48, width: { xs: '100%', sm: 'auto' }, flexShrink: 0 }}
+                >
+                  {t('profile.editProfile')}
+                </Button>
               </CardContent>
             </Card>
 
@@ -219,33 +248,55 @@ export const SettingsScreen: React.FC = () => {
                 <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
                   {t('nav.notifications')}
                 </Typography>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={settings.notifications}
-                      onChange={(e) => setSettings({ ...settings, notifications: e.target.checked })}
-                    />
-                  }
-                  label={t('settings.pushNotifications')}
-                />
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={settings.emailNotifications}
-                      onChange={(e) => setSettings({ ...settings, emailNotifications: e.target.checked })}
-                    />
-                  }
-                  label={t('settings.emailNotifications')}
-                />
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={settings.gameReminders}
-                      onChange={(e) => setSettings({ ...settings, gameReminders: e.target.checked })}
-                    />
-                  }
-                  label={t('settings.gameReminders')}
-                />
+                <Box
+                  sx={{
+                    display: 'grid',
+                    gridTemplateColumns: { xs: '1fr', md: 'repeat(3, minmax(0, 1fr))' },
+                    gap: 1,
+                  }}
+                >
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={settings.notifications}
+                        onChange={(e) => setSettings({ ...settings, notifications: e.target.checked })}
+                      />
+                    }
+                    label={t('settings.pushNotifications')}
+                    sx={{ m: 0, px: 1, minHeight: 48, border: 1, borderColor: 'divider', borderRadius: 2 }}
+                  />
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={settings.emailNotifications}
+                        onChange={(e) => setSettings({ ...settings, emailNotifications: e.target.checked })}
+                      />
+                    }
+                    label={t('settings.emailNotifications')}
+                    sx={{ m: 0, px: 1, minHeight: 48, border: 1, borderColor: 'divider', borderRadius: 2 }}
+                  />
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={settings.gameReminders}
+                        onChange={(e) => setSettings({ ...settings, gameReminders: e.target.checked })}
+                      />
+                    }
+                    label={t('settings.gameReminders')}
+                    sx={{ m: 0, px: 1, minHeight: 48, border: 1, borderColor: 'divider', borderRadius: 2 }}
+                  />
+                </Box>
+                <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
+                  <Button
+                    variant="contained"
+                    onClick={handleSaveSettings}
+                    disabled={saving}
+                    startIcon={saving ? <CircularProgress size={20} /> : undefined}
+                    sx={{ minHeight: 48, width: { xs: '100%', sm: 'auto' } }}
+                  >
+                    {saving ? t('common.saving') : t('settings.saveSettings')}
+                  </Button>
+                </Box>
               </CardContent>
             </Card>
 
@@ -322,18 +373,6 @@ export const SettingsScreen: React.FC = () => {
                 </ListItemButton>
               </List>
             </Card>
-
-            <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
-              <Button
-                variant="contained"
-                fullWidth
-                onClick={handleSaveSettings}
-                disabled={saving}
-                startIcon={saving ? <CircularProgress size={20} /> : undefined}
-              >
-                {saving ? t('common.saving') : t('settings.saveSettings')}
-              </Button>
-            </Box>
 
             {/* Seção de exclusão de conta — LGPD art. 18 */}
             <Box sx={{ mt: 2 }}>
