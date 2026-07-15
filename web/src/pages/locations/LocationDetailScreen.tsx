@@ -139,6 +139,7 @@ export const LocationDetailScreen: React.FC = () => {
   const showErrorRef = useRef(showError);
   showErrorRef.current = showError;
   const { locationId } = useParams<{ locationId: string }>();
+  const userId = user?.id;
 
   const [location, setLocation] = useState<Location | null>(null);
   const [fields, setFields] = useState<Field[]>([]);
@@ -190,7 +191,10 @@ export const LocationDetailScreen: React.FC = () => {
   }, [locationId, reloadKey, t]);
 
   useEffect(() => {
-    if (!locationId) return;
+    if (!locationId || !userId) {
+      setReviews([]);
+      return undefined;
+    }
     const reviewsRef = collection(db, 'locations', locationId, 'reviews');
     const q = query(reviewsRef, orderBy('created_at', 'desc'), limit(50));
     const unsubscribe = onSnapshot(
@@ -212,10 +216,13 @@ export const LocationDetailScreen: React.FC = () => {
       }
     );
     return () => unsubscribe();
-  }, [locationId]);
+  }, [locationId, userId]);
 
   useEffect(() => {
-    if (!locationId) return;
+    if (!locationId || !userId) {
+      setFields([]);
+      return undefined;
+    }
     const fieldsRef = collection(db, 'locations', locationId, 'fields');
     const q = query(fieldsRef, orderBy('name', 'asc'), limit(50));
     const unsubscribe = onSnapshot(
@@ -232,7 +239,7 @@ export const LocationDetailScreen: React.FC = () => {
       }
     );
     return () => unsubscribe();
-  }, [locationId]);
+  }, [locationId, userId]);
 
   const userCanEdit = !!user && !!location && (user.role === 'ADMIN' || canManageLocation(location, user.id));
   const userCanDelete = !!user && user.role === 'ADMIN';
@@ -811,6 +818,27 @@ export const LocationDetailScreen: React.FC = () => {
           </CardContent>
         </Card>
 
+        {!user ? (
+          <Card sx={{ mb: 2 }}>
+            <CardContent>
+              <Stack alignItems="center" spacing={1.5} sx={{ py: 2, textAlign: 'center' }}>
+                <SoccerIcon color="primary" sx={{ fontSize: 40 }} aria-hidden="true" />
+                <Typography variant="h6">Entre para ver quadras e avaliações</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Faça login para consultar campos, preços e avaliações deste local.
+                </Typography>
+                <Button
+                  variant="contained"
+                  onClick={() => navigate(`/login?redirect=${encodeURIComponent(`/location/${location.id}`)}`)}
+                >
+                  Entrar
+                </Button>
+              </Stack>
+            </CardContent>
+          </Card>
+        ) : (
+          <>
+
         <Card sx={{ mb: 2 }}>
           <CardContent>
             <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1.5 }}>Quadras e preços</Typography>
@@ -907,6 +935,8 @@ export const LocationDetailScreen: React.FC = () => {
             )}
           </CardContent>
         </Card>
+          </>
+        )}
 
         {location.latitude && location.longitude && (
           <Button variant="contained" fullWidth startIcon={<DirectionsIcon />} onClick={() => window.open(`https://www.google.com/maps/dir/?api=1&destination=${location.latitude},${location.longitude}`, '_blank', 'noopener,noreferrer')}>
