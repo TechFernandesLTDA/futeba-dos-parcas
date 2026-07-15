@@ -245,6 +245,16 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.54.2][web-1.54.2] - 2026-07-14
+
+#### Corrigido
+- As regras de `games` separam `get` de `list` e reconhecem somente a confirmação determinística do próprio convidado.
+- Chat, `game_rides` e `post_game_messages` reutilizam o contrato restrito de owner/coorganizador, preservando autoria e campos imutáveis.
+- `LocationDetailScreen` condiciona listeners privados à autenticação e mantém o documento publicado disponível anonimamente.
+- Reviews existentes usam `updateDoc` com `updated_at: serverTimestamp()`, sem regravar `created_at` ou `user_id`.
+
+_Issues: #3686, #3687, #3689, #3690_
+
 ### [1.54.1][web-1.54.1] - 2026-07-14
 
 #### Corrigido
@@ -2367,6 +2377,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.54.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.2.md
 [web-1.54.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.1.md
 [web-1.54.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.0.md
 [web-1.53.12]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.53.12.md
