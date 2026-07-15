@@ -52,7 +52,7 @@ test('Android heavy jobs run only for trusted scoped events', () => {
   assert.match(jobBody(prWorkflow, 'android'), /\.\/gradlew .* :app:testDebugUnitTest/);
 });
 
-test('PR code runs on ephemeral Ubuntu with read-only checkout credentials', () => {
+test('PR code runs on the self-hosted Mac with read-only checkout credentials', () => {
   assert.match(androidWorkflow, /permissions:\s*\n\s*contents: read/);
   assert.match(prWorkflow, /permissions:\s*\n\s*contents: read/);
   assert.doesNotMatch(prWorkflow, /\b(?:checks|security-events|contents): write\b/);
@@ -67,7 +67,7 @@ test('PR code runs on ephemeral Ubuntu with read-only checkout credentials', () 
     assert.equal(nonPersistent, checkouts, `${name} must not persist checkout credentials`);
   }
 
-  assert.match(jobBody(prWorkflow, 'android'), /runs-on: ubuntu-latest/);
+  assert.match(jobBody(prWorkflow, 'android'), /fromJSON\(vars\.RUNNER_LABELS/);
   assert.match(codeowners, /^\/scripts\/ci\/ @TechFernandesLTDA\/dev-team$/m);
   assert.match(codeowners, /^\/scripts\/web-ci-workflow-contract\.test\.js @TechFernandesLTDA\/dev-team$/m);
 });

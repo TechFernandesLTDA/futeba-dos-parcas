@@ -4,7 +4,7 @@ on:
   # Affected-only (Efficiency Hardening F6): este workflow só analisa
   # javascript-typescript (extrator Java/Kotlin desabilitado neste runner —
   # ver matrix abaixo). Rodar em PRs que não tocam JS/TS analisa ZERO arquivos
-  # relevantes e só consome minutos de CI no GitHub-hosted Linux.
+  # relevantes e só ocupa o runner self-hosted sem produzir sinal útil.
   # Seguro: branch protection de master NÃO exige status checks
   # (required_status_checks=null) — pular o check num PR não-JS/TS não trava o
   # merge. O cron semanal abaixo mantém a varredura COMPLETA como safety net.
@@ -45,11 +45,9 @@ concurrency:
 jobs:
   analyze:
     name: Analyze (${{ matrix.language }})
-    # GitHub-hosted ubuntu-latest: o extrator javascript-typescript com
-    # build-mode: none nao precisa de Mac/Rosetta. Runner Linux efemero nao
-    # acumula _work/_temp entre runs (sem step de cleanup). O upload SARIF para
-    # a aba Security continua funcionando normalmente em Linux.
-    runs-on: ubuntu-latest
+    # JavaScript/TypeScript usa build-mode none e roda no pool Apple Silicon.
+    # Java/Kotlin continua desabilitado pelas limitações documentadas abaixo.
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
     timeout-minutes: 30
     permissions:
       security-events: write

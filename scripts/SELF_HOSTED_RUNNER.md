@@ -8,7 +8,7 @@ Guia para rodar CI do **Futeba dos Parcas** em runner self-hosted no Mac M-serie
 
 ## Visao geral
 
-Todos os 14 workflows em `.github/workflows/` foram migrados para usar:
+Os workflows compatíveis em `.github/workflows/` usam:
 
 ```yaml
 runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
@@ -16,6 +16,9 @@ runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }
 
 - **Default:** `self-hosted, macOS, ARM64` (seu Mac).
 - **Fallback opcional:** Defina a variavel de repositorio `RUNNER_LABELS` em **Settings -> Secrets and variables -> Actions -> Variables** com valor `["ubuntu-latest"]` para reverter para github-hosted (vai reativar billing).
+- **Excecao Linux:** os jobs que validam artefatos executaveis `linux-x64` das
+  Cloud Functions permanecem em `ubuntu-latest` ate existir uma VM/container
+  Linux confiavel no Mac. Trocar apenas o label invalidaria o gate de runtime.
 
 ---
 
@@ -253,7 +256,9 @@ echo 'org.gradle.jvmargs=-Xmx6g -XX:MaxMetaspaceSize=1g' >> ~/.gradle/gradle.pro
 
 ### CodeQL lento
 
-Roda em Apple Silicon mas e ~30% mais lento que Linux. `timeout-minutes: 360` ja esta configurado.
+Roda em Apple Silicon com `build-mode: none` para JavaScript/TypeScript.
+Java/Kotlin continua desabilitado no Mac ARM64, conforme a decisao registrada
+no proprio workflow.
 
 ### Reverter para github-hosted (emergencia)
 
@@ -270,7 +275,8 @@ Roda em Apple Silicon mas e ~30% mais lento que Linux. `timeout-minutes: 360` ja
 |----------|-------|-------|
 | `pr-check.yml` | `ubuntu-latest` | self-hosted macOS ARM64 |
 | `android-ci.yml` | `ubuntu-latest` (4 jobs) | self-hosted macOS ARM64 |
-| `functions-ci.yml` | `ubuntu-latest` (3 jobs) | self-hosted macOS ARM64 |
+| `functions-ci.yml` | `ubuntu-latest` | Linux apenas nos gates de artefato/runtime; mutation no Mac |
+| `functions-integration-ci.yml` | `ubuntu-latest` | Linux enquanto reutilizar `node_modules`/artefatos `linux-x64` |
 | `ios-build.yml` | `macos-14` (3 jobs) + `ubuntu-latest` (notify) | self-hosted macOS ARM64 |
 | `codeql.yml` | `ubuntu-latest` | self-hosted macOS ARM64 |
 | `deploy-beta.yml` | `ubuntu-latest` | self-hosted macOS ARM64 |
@@ -282,12 +288,20 @@ Roda em Apple Silicon mas e ~30% mais lento que Linux. `timeout-minutes: 360` ja
 | `pr-review-to-issues.yml` | `ubuntu-latest` | self-hosted macOS ARM64 |
 | `issue-automation.yml` | `ubuntu-latest` (3 jobs) | self-hosted macOS ARM64 |
 | `sync-labels.yml` | `ubuntu-latest` | self-hosted macOS ARM64 |
+| `web-ci.yml` | PRs em `ubuntu-latest` | self-hosted macOS ARM64 |
+| `web-lighthouse-ci.yml` | PRs em `ubuntu-latest` | self-hosted macOS ARM64 |
+| `change-scope.yml` | `ubuntu-latest` | self-hosted macOS ARM64 |
+| `validate-patterns.yml` | `ubuntu-latest` | self-hosted macOS ARM64 |
+| `semgrep.yml` | `ubuntu-latest` | self-hosted macOS ARM64 |
+| `firestore-rules-ci.yml` | `ubuntu-latest` | self-hosted macOS ARM64 |
 
 ---
 
 ## Seguranca
 
 - **Nunca commite tokens.** O token de registro expira em 1h, mas trate como secreto.
+- O runner e persistente. Mantenha `persist-credentials: false`, permissoes
+  minimas e nao execute PRs de forks ou autores nao confiaveis sem revisao.
 - **Rede:** Runner faz long-polling para GitHub - precisa de saida HTTPS para `api.github.com` e `*.actions.githubusercontent.com`.
 - **PRs de fork nao executam em self-hosted por padrao** (politica de seguranca padrao do GitHub). Para times pequenos isso e OK; para projetos open-source considere isolacao adicional.
 - **Quem tem acesso ao Mac tem acesso aos secrets.** Se outras pessoas usam o Mac, considere user separado e SSH-only.

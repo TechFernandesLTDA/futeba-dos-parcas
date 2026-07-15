@@ -23,9 +23,8 @@ jobs:
     #   github.event.pull_request.user.login == 'new-developer' ||
     #   github.event.pull_request.author_association == 'FIRST_TIME_CONTRIBUTOR'
 
-    # Review does not need Android SDK, Xcode, or Apple Silicon. Keep the scarce
-    # self-hosted Macs available for Android/iOS builds and emulator jobs.
-    runs-on: ubuntu-latest
+    # Review shares the repository's dedicated Apple Silicon runner pool.
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
     timeout-minutes: 30
     permissions:
       contents: read

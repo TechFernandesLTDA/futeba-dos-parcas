@@ -20,8 +20,8 @@ jobs:
     name: Android Gradle Validation
     needs: changes
     if: needs.changes.outputs.android == 'true'
-    # PR code runs on an ephemeral GitHub-hosted runner, never on the persistent Mac.
-    runs-on: ubuntu-latest
+    # CI runs on the repository's dedicated Apple Silicon runners.
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
     timeout-minutes: 25
 
     steps:
@@ -104,7 +104,7 @@ jobs:
     name: Validate PR
     if: always()
     needs: [ changes, android ]
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
     timeout-minutes: 5
     steps:
       - name: Verify scoped PR checks

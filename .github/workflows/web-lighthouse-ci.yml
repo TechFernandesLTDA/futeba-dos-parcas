@@ -27,8 +27,8 @@ defaults:
 jobs:
   lighthouse:
     name: Lighthouse CI
-    # PRs usam runner efêmero; push/manual podem reutilizar o Mac self-hosted.
-    runs-on: ${{ fromJSON(github.event_name == 'pull_request' && '["ubuntu-latest"]' || (vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]')) }}
+    # PRs, pushes e execuções manuais usam os runners Apple Silicon dedicados.
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
     timeout-minutes: 20
 
     steps:
