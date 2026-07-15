@@ -1,7 +1,31 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-15T01:47:14.804Z",
+  "generatedAt": "2026-07-15T02:13:17.429Z",
   "notes": [
+    {
+      "version": "1.54.3",
+      "buildNumber": null,
+      "releaseDate": "2026-07-14",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "Disponibilidade de quadras e busca de jogadores agora funcionam sem expor jogos privados ou dados pessoais.",
+      "highlights": [],
+      "added": [],
+      "improved": [],
+      "fixed": [
+        "A agenda e a criação de jogos deixam de falhar quando a quadra possui um jogo privado de outro grupo.",
+        "Convites, reforços, busca global, confronto e elencos deixam de consultar perfis completos diretamente.",
+        "Resultados de jogadores continuam exibindo somente nome, foto e informações esportivas autorizadas.",
+        "`useFieldGames` e a validação final de conflito usam `getFieldAvailability`, que retorna apenas intervalos ocupados.",
+        "Todas as listagens Web na coleção raiz `users` foram migradas para a projeção whitelist de `getLeaguePlayers`.",
+        "Hidratações com mais de 500 IDs são divididas em lotes sem descarte silencioso."
+      ],
+      "issueRefs": [
+        3688,
+        3691
+      ]
+    },
     {
       "version": "1.54.2",
       "buildNumber": null,

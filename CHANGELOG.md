@@ -245,6 +245,19 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.54.3][web-1.54.3] - 2026-07-14
+
+#### Corrigido
+- `useFieldGames` e a validação final de conflito usam `getFieldAvailability`, que retorna apenas intervalos ocupados.
+- Todas as listagens Web na coleção raiz `users` foram migradas para a projeção whitelist de `getLeaguePlayers`.
+- Hidratações com mais de 500 IDs são divididas em lotes sem descarte silencioso.
+
+#### Segurança
+- Firestore mantém `get` público somente para perfis sanitizados e restringe `list` de `users` a administradores.
+- Nenhum metadado de jogo privado ou campo de PII é retornado pelas novas consultas.
+
+_Issues: #3688, #3691_
+
 ### [1.54.2][web-1.54.2] - 2026-07-14
 
 #### Corrigido
@@ -1715,6 +1728,20 @@ _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
 
+### [1.10.1][functions-1.10.1] - 2026-07-14
+
+#### Adicionado
+- Callable `getFieldAvailability` autenticada e protegida por App Check, limitada a 60 dias e a uma allowlist de intervalos.
+- Filtro opcional `userIds` em `getLeaguePlayers` para hidratações públicas em lotes.
+
+#### Mudado
+- O schema do cache público da Liga foi versionado para incluir somente sinais esportivos sanitizados necessários aos clientes.
+
+#### Segurança
+- Projeções via Admin SDK filtram soft-delete, perfis não pesquisáveis e PII antes de responder ao cliente.
+
+_Issues: #3688, #3691_
+
 ### [1.10.0][functions-1.10.0] - 2026-07-14
 
 #### Mudado
@@ -2377,6 +2404,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.54.3]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.3.md
 [web-1.54.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.2.md
 [web-1.54.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.1.md
 [web-1.54.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.0.md
@@ -2520,6 +2548,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [ios-1.6.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.2.md
 [ios-1.6.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.1.md
 [ios-1.6.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.0.md
+[functions-1.10.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.10.1.md
 [functions-1.10.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.10.0.md
 [functions-1.9.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.9.2.md
 [functions-1.9.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.9.1.md
