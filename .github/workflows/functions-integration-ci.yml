@@ -10,11 +10,8 @@ name: Functions Integration CI (#2533)
 # O E2E web (discover/preview público, #2532) é wired em workflow próprio
 # quando aquela suite estiver validada — ver #2533/#2530.
 #
-# Issue #3543: roda em macOS ARM64 e REUSA o artifact lib/ + node_modules/
-# produzido pelo job `build` do functions-ci.yml (cross-workflow), evitando uma
-# segunda instalacao + `npm run build`. Se o artifact nao estiver disponivel a
-# tempo (ex.: PR rules-only onde functions-ci nao rodou), faz fallback para
-# instalacao + `npm run build` locais — a suite de integracao sempre executa.
+# Roda em macOS ARM64 e usa o cache npm local do runner. A instalação e o build
+# são feitos no próprio job para não depender da cota de Actions artifacts.
 
 on:
   push:
@@ -38,7 +35,6 @@ concurrency:
 
 permissions:
   contents: read
-  actions: read  # necessario p/ baixar artifact cross-workflow via `gh`
 
 jobs:
   changes:
@@ -73,41 +69,11 @@ jobs:
           distribution: "temurin"
           java-version: "21"
 
-      # Reuso cross-workflow do artifact do functions-ci build (issue #3543).
-      # functions-ci dispara em paralelo; o artifact so fica disponivel depois
-      # que o job `build` termina. Polling de ate ~6min (24 x 15s). Se encontrar,
-      # baixa lib/ + node_modules/ e pula a instalacao + `npm run build`. Se nao
-      # (ex.: functions-ci nao rodou num PR rules-only, ou build falhou/ainda
-      # rodando), cai no fallback abaixo — a suite sempre executa.
-      - name: Reusar build artifact do functions-ci (lib + node_modules)
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          set -euo pipefail
-          HEAD_SHA="${{ github.event.pull_request.head.sha || github.sha }}"
-          ARTIFACT="functions-build-darwin-arm64-node22-${{ hashFiles('functions/package-lock.json') }}"
-          for i in $(seq 1 24); do
-            RUN_ID=$(gh api \
-              "repos/${{ github.repository }}/actions/workflows/functions-ci.yml/runs?head_sha=${HEAD_SHA}&per_page=20" \
-              --jq '[.workflow_runs[]] | .[0].id // ""' 2>/dev/null || true)
-            if [ -n "${RUN_ID}" ] && gh run download "${RUN_ID}" -n "${ARTIFACT}" -D functions; then
-              echo "Artifact '${ARTIFACT}' reutilizado do functions-ci run ${RUN_ID}."
-              echo "REUSED_ARTIFACT=true" >> "$GITHUB_ENV"
-              exit 0
-            fi
-            echo "Tentativa $i/24: artifact ainda nao disponivel. Nova tentativa em 15s."
-            sleep 15
-          done
-          echo "::warning::Artifact do functions-ci indisponivel apos ~6min. Usando fallback (install + build)."
-          echo "REUSED_ARTIFACT=false" >> "$GITHUB_ENV"
-
-      - name: Instalar dependências (fallback — artifact indisponível)
-        if: env.REUSED_ARTIFACT != 'true'
+      - name: Instalar dependências
         working-directory: functions
         run: npm ci
 
-      - name: Compilar functions (fallback — artifact indisponível)
-        if: env.REUSED_ARTIFACT != 'true'
+      - name: Compilar functions
         working-directory: functions
         run: npm run build
 

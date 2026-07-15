@@ -35,14 +35,8 @@ defaults:
   run:
     working-directory: functions
 
-# Estrategia de instalacao (issue #3543): o job `build` instala do lockfile e
-# roda `npm run build` UMA vez no macOS ARM64 e publica lib/ + node_modules/
-# como artifact versionado por SO + Node + hash(functions/package-lock.json). Os
-# jobs de qualidade (lint/test/firestore-query-perf/media-runtime) baixam o
-# artifact em vez de re-instalar. Resultado: 6 -> 2 instalacoes no arquivo
-# (build + mutation cron), e apenas 1 instalacao no caminho critico de um PR.
-# Compartilhar node_modules/ entre jobs e confiavel porque todos rodam no mesmo
-# pool macOS ARM64; o mutation mantem sua propria instalacao por ser agendado.
+# Cada job instala do lockfile usando o cache npm local do runner. Isso evita
+# depender da cota de Actions artifacts e mantém os jobs reproduzíveis.
 jobs:
   changes:
     if: github.event_name != 'schedule'
@@ -72,21 +66,6 @@ jobs:
       - name: Build TypeScript
         run: npm run build
 
-      # Artifact consumido por lint/test/firestore-query-perf/media-runtime
-      # (este workflow) e pelo functions-integration-ci.yml (cross-workflow).
-      # Chave = SO + Node + hash(package-lock) garante cache invalidado a cada
-      # mudanca de lockfile (aceite #3543). retention baixa: lib/node_modules
-      # sao reprodutiveis e grandes.
-      - name: Upload build artifact (lib + node_modules)
-        uses: actions/upload-artifact@v4
-        with:
-          name: functions-build-darwin-arm64-node22-${{ hashFiles('functions/package-lock.json') }}
-          path: |
-            functions/lib
-            functions/node_modules
-          retention-days: 1
-          compression-level: 6
-
   lint:
     name: ESLint Check
     needs: [ build ]
@@ -101,12 +80,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
+          cache: npm
+          cache-dependency-path: functions/package-lock.json
 
-      - name: Download build artifact (lib + node_modules)
-        uses: actions/download-artifact@v4
-        with:
-          name: functions-build-darwin-arm64-node22-${{ hashFiles('functions/package-lock.json') }}
-          path: functions
+      - name: Install dependencies
+        run: npm ci
 
       - name: Run ESLint
         run: npm run lint
@@ -170,12 +148,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
+          cache: npm
+          cache-dependency-path: functions/package-lock.json
 
-      - name: Download build artifact (lib + node_modules)
-        uses: actions/download-artifact@v4
-        with:
-          name: functions-build-darwin-arm64-node22-${{ hashFiles('functions/package-lock.json') }}
-          path: functions
+      - name: Install dependencies
+        run: npm ci
 
       # test:coverage = "jest --coverage" → gera coverage/lcov.info (reporter
       # lcov configurado em jest.config.js), consumido pelo gate de diff-coverage.
@@ -254,11 +231,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Download build artifact (lib + node_modules)
-        uses: actions/download-artifact@v4
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
         with:
-          name: functions-build-darwin-arm64-node22-${{ hashFiles('functions/package-lock.json') }}
-          path: functions
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: functions/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
 
       # firebase-tools >= 13.x requer JDK 21+ pro Firestore emulator.
       # Runner default tem JDK 17 → emulator fail. Setup explícito.
@@ -267,11 +248,6 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
-
-      - name: Setup Node.js 22
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
 
       - name: Install Firebase CLI (se ausente)
         run: |
@@ -303,7 +279,7 @@ jobs:
     name: Mutation Testing (Stryker)
     runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
     # Caro: roda apenas no schedule noturno ou disparo manual — NUNCA em push/PR.
-    # NAO consome o artifact do `build`: usa uma instalacao isolada. Fora do caminho
+    # Usa uma instalacao isolada. Fora do caminho
     # critico de PR.
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     timeout-minutes: 45

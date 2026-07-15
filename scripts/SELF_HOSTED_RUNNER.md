@@ -16,9 +16,11 @@ runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }
 
 - **Default:** `self-hosted, macOS, ARM64` (seu Mac).
 - **Fallback opcional:** Defina a variavel de repositorio `RUNNER_LABELS` em **Settings -> Secrets and variables -> Actions -> Variables** com valor `["ubuntu-latest"]` para reverter para github-hosted (vai reativar billing).
-- **Cloud Functions:** os jobs Node usam artefatos `darwin-arm64`. O gate de
-  midia executa o runtime real `linux/amd64` em um container Docker/Colima
+- **Cloud Functions:** os jobs Node executam nativamente no macOS ARM64. O gate
+  de midia executa o runtime real `linux/amd64` em um container Docker/Colima
   neste Mac, preservando a compatibilidade com o Firebase.
+- O caminho crítico não depende de `upload-artifact`; cada job usa o cache npm
+  local para continuar funcionando quando a cota de artifacts estiver cheia.
 
 ---
 
@@ -275,7 +277,7 @@ no proprio workflow.
 |----------|-------|-------|
 | `pr-check.yml` | `ubuntu-latest` | self-hosted macOS ARM64 |
 | `android-ci.yml` | `ubuntu-latest` (4 jobs) | self-hosted macOS ARM64 |
-| `functions-ci.yml` | `ubuntu-latest` | self-hosted macOS ARM64 com artefatos `darwin-arm64` |
+| `functions-ci.yml` | `ubuntu-latest` | self-hosted macOS ARM64, sem Actions artifacts |
 | `functions-integration-ci.yml` | `ubuntu-latest` | self-hosted macOS ARM64 |
 | `ios-build.yml` | `macos-14` (3 jobs) + `ubuntu-latest` (notify) | self-hosted macOS ARM64 |
 | `codeql.yml` | `ubuntu-latest` | self-hosted macOS ARM64 |
