@@ -1,6 +1,6 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-15T04:16:51.993Z",
+  "generatedAt": "2026-07-15T04:22:27.617Z",
   "notes": [
     {
       "version": "1.54.4",
@@ -8,7 +8,7 @@
       "releaseDate": "2026-07-15",
       "type": "patch",
       "showPopup": true,
-      "published": false,
+      "published": true,
       "headline": "O login com Google agora funciona no endereço oficial futebadosparcas.com.br.",
       "highlights": [],
       "added": [],
