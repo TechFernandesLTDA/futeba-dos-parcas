@@ -1,14 +1,11 @@
 import { useState, useEffect } from 'react';
-import { collection, query, where, onSnapshot, Unsubscribe } from 'firebase/firestore';
 import { format, addDays } from 'date-fns';
-import { db } from '../services/firebase';
+import { getFieldAvailability, type FieldAvailabilitySlot } from '../services/cloudFunctions';
 import { createLogger } from '../utils/logger';
 import { useTranslation } from 'react-i18next';
-import { isSchedulingBlockingStatus } from '../utils/gameLifecycle';
 
 const logger = createLogger('useFieldGames');
 
-const DEFAULT_GAME_DURATION_MINUTES = 60;
 const MINUTES_PER_DAY = 24 * 60;
 
 const parseTime = (t: string) => {
@@ -47,20 +44,17 @@ function getAvailabilityWindowMinutes(window?: AvailabilityWindow) {
   return { dayStart, dayEnd };
 }
 
-const processSnapshot = (
-  docs: Array<{ data: () => Record<string, unknown> }>,
+const processSlots = (
+  slots: FieldAvailabilitySlot[],
   availabilityWindow?: AvailabilityWindow,
 ): FieldGameSet => {
   const byDate = new Map<string, FieldGame[]>();
   const { dayStart, dayEnd } = getAvailabilityWindowMinutes(availabilityWindow);
 
-  docs.forEach((d) => {
-    const g = d.data();
-    if (!isSchedulingBlockingStatus(g.status)) return;
-    const gDate = g.date as string;
-    const gStart = g.time ? parseTime(g.time as string) : 0;
-    const rawEnd = g.end_time ? parseTime(g.end_time as string) : gStart + DEFAULT_GAME_DURATION_MINUTES;
-    const gEnd = rawEnd <= gStart ? rawEnd + MINUTES_PER_DAY : rawEnd;
+  slots.forEach((slot) => {
+    const gDate = slot.date;
+    const gStart = slot.startMinutes;
+    const gEnd = slot.endMinutes;
 
     if (!byDate.has(gDate)) byDate.set(gDate, []);
     byDate.get(gDate)!.push({ date: gDate, startMinutes: gStart, endMinutes: gEnd });
@@ -127,39 +121,24 @@ export function useFieldGames(
     const startDate = format(today, 'yyyy-MM-dd');
     const endDate = format(addDays(today, daysAhead), 'yyyy-MM-dd');
 
-    const gamesRef = collection(db, 'games');
-    const q = query(
-      gamesRef,
-      where('field_id', '==', fieldId),
-      where('date', '>=', startDate),
-      where('date', '<=', endDate),
-    );
+    let cancelled = false;
 
-    let unsubscribe: Unsubscribe | null = null;
-
-    try {
-      unsubscribe = onSnapshot(
-        q,
-        (snapshot) => {
-          const result = processSnapshot(snapshot.docs, { openingTime, closingTime });
-          setData(result);
-          setLoading(false);
-          setError(null);
-        },
-        (err) => {
-          logger.error('Error in field games snapshot:', err);
-          setError(t('feedback.fieldGames.loadError'));
-          setLoading(false);
-        }
-      );
-    } catch (err) {
-      logger.error('Error setting up field games listener:', err);
-      setError(t('feedback.fieldGames.loadError'));
-      setLoading(false);
-    }
+    void getFieldAvailability({ fieldId, startDate, endDate })
+      .then(({ data: response }) => {
+        if (cancelled) return;
+        setData(processSlots(response.slots, { openingTime, closingTime }));
+        setLoading(false);
+        setError(null);
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        logger.error('Error loading field availability:', err);
+        setError(t('feedback.fieldGames.loadError'));
+        setLoading(false);
+      });
 
     return () => {
-      if (unsubscribe) unsubscribe();
+      cancelled = true;
     };
   }, [closingTime, daysAhead, fieldId, openingTime, t]);
 

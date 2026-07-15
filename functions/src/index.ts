@@ -2747,6 +2747,7 @@ export {
   confirmGamePresence,
   joinPublicGame,
 } from "./games/join-public-game";
+export {getFieldAvailability} from "./games/field-availability";
 
 // ==========================================
 // ADMIN CRM
