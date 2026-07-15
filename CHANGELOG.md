@@ -245,6 +245,14 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.54.9][web-1.54.9] - 2026-07-15
+
+#### Corrigido
+- Centralização do contêiner responsivo, do conteúdo dos acordeões e das respostas.
+- Identificação semântica da seção de FAQ para tecnologias assistivas.
+
+_Issues: #3718_
+
 ### [1.54.8][web-1.54.8] - 2026-07-15
 
 #### Corrigido
@@ -2459,6 +2467,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.54.9]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.9.md
 [web-1.54.8]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.8.md
 [web-1.54.7]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.7.md
 [web-1.54.6]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.6.md
