@@ -1343,4 +1343,25 @@ não depende da ordem de efeitos e a navegação assistiva não espera a animaç
 
 ---
 
+### [2026-07-16] Breadcrumbs usam metadados publicados pelas telas
+
+**Contexto:** Nomes de entidades estavam disponíveis nas telas, mas o breadcrumb
+global conhecia apenas a URL. Consultar Firestore novamente duplicaria custo;
+ler caches por chaves privadas acoplaria a navegação à implementação dos hooks.
+
+**Alternativas consideradas:**
+1. Novas leituras Firestore no hook — maior custo e listeners duplicados.
+2. `queryClient.getQueryData` com listas de chaves — frágil e incompleto para hooks sem TanStack Query.
+3. Provider de metadados alimentado pelas telas — sem I/O e independente da camada de dados.
+
+**Decisão:** Telas publicam `tipo + id + nome` em um cache de navegação em memória;
+o auto-breadcrumb consome esse cache e mantém fallback traduzido quando vazio.
+
+**Justificativa:** Reaproveita dados já autorizados e carregados, funciona com
+qualquer fonte e permite compartilhar o nome entre rotas durante a sessão.
+
+**Relacionado:** `specs/BUGFIX_2026-07-16_web-route-context.md`, #3777, #3781.
+
+---
+
 <!-- Adicione novas decisões acima desta linha -->

@@ -35,6 +35,7 @@ import { ShimmerLoading } from '../../components/common/GameCard';
 import { validateGroupForm } from '../../utils/groupValidation';
 import { useTranslation } from 'react-i18next';
 import { uploadGroupLogo } from '../../utils/groupLogoStorage';
+import { useBreadcrumbEntityLabel } from '../../contexts/BreadcrumbEntityContext';
 
 const logger = createLogger('GroupEditScreen');
 
@@ -49,6 +50,7 @@ export const GroupEditScreen: React.FC = () => {
   const closeDestination = groupId ? `/group/${groupId}` : '/?tab=2';
 
   const { group, members, loading, error } = useGroupDetail(groupId || null);
+  useBreadcrumbEntityLabel('group', groupId, group?.name);
   const { showSuccess, showError } = useToast();
 
   const [formData, setFormData] = useState<{

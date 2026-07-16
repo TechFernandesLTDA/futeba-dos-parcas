@@ -2,6 +2,10 @@ import { createContext, useContext, useLayoutEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
 import type { BreadcrumbItem } from '../components/layout/AppBreadcrumbs';
+import {
+  useBreadcrumbEntityLabels,
+  type BreadcrumbEntityKind,
+} from '../contexts/BreadcrumbEntityContext';
 
 export type RegisterBreadcrumbOverride = () => () => void;
 
@@ -106,6 +110,22 @@ const DYNAMIC_DETAIL_LABEL_KEYS: Record<string, string> = {
   messages: 'breadcrumbs.conversation',
 };
 
+const DYNAMIC_PARENT_DESTINATIONS: Record<string, string> = {
+  game: '/?tab=1',
+  group: '/?tab=2',
+  location: '/map/locations',
+};
+
+const ENTITY_KIND_BY_PARENT_SEGMENT: Record<string, BreadcrumbEntityKind> = {
+  game: 'game',
+  group: 'group',
+  location: 'location',
+  profile: 'user',
+  'level-journey': 'user',
+  'weekly-recap': 'user',
+  evolution: 'user',
+};
+
 // A publicação já é representada pelo item estático. Seu ID não acrescenta
 // informação útil e não deve gerar outro item genérico de detalhes.
 const OMIT_DYNAMIC_DETAIL_FOR = new Set(['post']);
@@ -117,6 +137,7 @@ const NON_LINKABLE_SEGMENTS = new Set(['post']);
 export function useAutoBreadcrumbs(): BreadcrumbItem[] {
   const { t } = useTranslation();
   const location = useLocation();
+  const entityLabels = useBreadcrumbEntityLabels();
 
   return useMemo(() => {
     const pathname = location.pathname;
@@ -160,20 +181,24 @@ export function useAutoBreadcrumbs(): BreadcrumbItem[] {
         // instead of leaking an internal ID or untranslated route slug.
         const parentSegment = segments[i - 1];
         const parentLabelKey = DYNAMIC_LABEL_KEYS[parentSegment];
-        if (parentLabelKey && !OMIT_DYNAMIC_DETAIL_FOR.has(parentSegment)) {
+        const entityKind = ENTITY_KIND_BY_PARENT_SEGMENT[parentSegment];
+        if ((parentLabelKey || entityKind) && !OMIT_DYNAMIC_DETAIL_FOR.has(parentSegment)) {
+          const entityLabel = entityKind
+            ? entityLabels[`${entityKind}:${segment}`]
+            : undefined;
           pushItem({
-            label: t(DYNAMIC_DETAIL_LABEL_KEYS[parentSegment] ?? 'breadcrumbs.details'),
+            label: entityLabel ?? t(DYNAMIC_DETAIL_LABEL_KEYS[parentSegment] ?? 'breadcrumbs.details'),
             to: accumulatedPath,
           });
         }
       } else if (DYNAMIC_LABEL_KEYS[segment]) {
         pushItem({
           label: t(DYNAMIC_LABEL_KEYS[segment]),
-          to: accumulatedPath,
+          to: DYNAMIC_PARENT_DESTINATIONS[segment] ?? accumulatedPath,
         });
       }
     }
 
     return items;
-  }, [location.pathname, t]);
+  }, [entityLabels, location.pathname, t]);
 }

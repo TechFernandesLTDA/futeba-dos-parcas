@@ -33,6 +33,7 @@ import { EmptyState } from '../../components/common/EmptyState';
 import { createLogger } from '../../utils/logger';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useTranslation } from 'react-i18next';
+import { useBreadcrumbEntityLabel } from '../../contexts/BreadcrumbEntityContext';
 
 const logger = createLogger('EvolutionScreen');
 
@@ -57,6 +58,9 @@ interface StatsSummary {
 
 // #2276: interfaces tipadas para os docs lidos (substituem Record<string, any>).
 interface RawUserStats {
+  name?: string;
+  displayName?: string;
+  nickname?: string;
   gamesPlayed?: number;
   wins?: number;
   goals?: number;
@@ -90,8 +94,14 @@ export const EvolutionScreen: React.FC = () => {
   // SECFIX #493: estado de erro pra distinguir falha de rede vs sem dados
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  const [breadcrumbUserName, setBreadcrumbUserName] = useState<string | null>(null);
 
   const targetUserId = userId || currentUser?.id;
+  useBreadcrumbEntityLabel(
+    'user',
+    targetUserId,
+    breadcrumbUserName ?? (targetUserId === currentUser?.id ? currentUser?.name : null),
+  );
 
   useEffect(() => {
     if (!targetUserId) {
@@ -109,6 +119,9 @@ export const EvolutionScreen: React.FC = () => {
         const userDoc = await getDoc(doc(db, 'users', targetUserId));
         if (userDoc.exists() && !cancelled) {
           const data = snakeToCamel<RawUserStats>(userDoc.data());
+          const loadedName = [data.name, data.displayName, data.nickname]
+            .find((value): value is string => typeof value === 'string' && value.trim().length > 0);
+          setBreadcrumbUserName(loadedName ?? null);
           const totalGames = data.gamesPlayed || 0;
           const totalWins = data.wins || 0;
           const totalGoals = data.goals || 0;

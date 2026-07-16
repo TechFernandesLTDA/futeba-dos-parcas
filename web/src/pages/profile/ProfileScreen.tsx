@@ -65,6 +65,7 @@ import { getEffectiveRating, type User } from '../../types/user';
 import { isLookingForGameToday } from '../../utils/lookingForGameToday';
 import { useFavoriteSquads } from '../../hooks/useFavoriteSquads';
 import { useFollowUser } from '../../hooks/useFollowUser';
+import { useBreadcrumbEntityLabel } from '../../contexts/BreadcrumbEntityContext';
 
 function useCountUp(target: number, duration = 800) {
   const [value, setValue] = useState(0);
@@ -99,6 +100,7 @@ export const ProfileScreen: React.FC = () => {
   const targetUserId = userId || currentUser?.id;
 
   const { player: profile, loading, error, refetch } = usePlayerDetail(targetUserId);
+  useBreadcrumbEntityLabel('user', targetUserId, profile?.name);
   const {
     squads: favoriteSquads,
     loading: favoriteSquadsLoading,

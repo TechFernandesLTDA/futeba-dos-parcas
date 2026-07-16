@@ -40,6 +40,7 @@ import { useTranslation } from 'react-i18next';
 import { ErrorState } from '../../components/common/ErrorState';
 import { EmptyState } from '../../components/common/EmptyState';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
+import { useBreadcrumbEntityLabel } from '../../contexts/BreadcrumbEntityContext';
 
 const logger = createLogger('WeeklyRecapScreen');
 
@@ -100,6 +101,11 @@ export const WeeklyRecapScreen: React.FC = () => {
   };
 
   const targetUserId = userId || currentUser?.id;
+  useBreadcrumbEntityLabel(
+    'user',
+    targetUserId,
+    targetUserId === currentUser?.id ? currentUser?.name : null,
+  );
 
   useEffect(() => {
     if (!targetUserId) {

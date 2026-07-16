@@ -50,6 +50,7 @@ import { createLogger } from '../../utils/logger';
 import { TeamBadge } from '../../components/team/TeamBadge';
 import { useTranslation } from 'react-i18next';
 import { getExperiencePoints, getLogLevelAfter, getXpEarned } from '../../utils/xpAccounting';
+import { useBreadcrumbEntityLabel } from '../../contexts/BreadcrumbEntityContext';
 
 const logger = createLogger('LevelJourneyScreen');
 
@@ -82,8 +83,14 @@ export const LevelJourneyScreen: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [xpGuideOpen, setXpGuideOpen] = useState(false);
+  const [breadcrumbUserName, setBreadcrumbUserName] = useState<string | null>(null);
 
   const targetUserId = userId || currentUser?.id;
+  useBreadcrumbEntityLabel(
+    'user',
+    targetUserId,
+    breadcrumbUserName ?? (targetUserId === currentUser?.id ? currentUser?.name : null),
+  );
 
   // #2215: estado de erro dedicado (antes só havia toast) + retry.
   const cancelledRef = useRef(false);
@@ -100,6 +107,9 @@ export const LevelJourneyScreen: React.FC = () => {
       if (userDoc.exists()) {
         const raw = userDoc.data();
         const data = snakeToCamel(raw) as Record<string, unknown>;
+        const loadedName = [data.name, data.displayName, data.nickname]
+          .find((value): value is string => typeof value === 'string' && value.trim().length > 0);
+        setBreadcrumbUserName(loadedName ?? null);
         const xp = getExperiencePoints({ ...raw, ...data });
         setCurrentXp(xp);
         setCurrentLevel(getLevelForXp(xp));

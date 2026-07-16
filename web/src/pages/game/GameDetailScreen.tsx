@@ -53,6 +53,7 @@ import { doc, runTransaction, serverTimestamp, Timestamp } from 'firebase/firest
 import { db } from '../../services/firebase';
 import { useQueryClient } from '@tanstack/react-query';
 import { AppBreadcrumbs, FixedBottomBar } from '../../components/layout';
+import { useBreadcrumbEntityLabel } from '../../contexts/BreadcrumbEntityContext';
 import { useAppBreadcrumbOverride } from '../../hooks/useAutoBreadcrumbs';
 import { useGameDetail, useConfirmPresence, useUpdateGameStatus } from '../../hooks/useGames';
 import { useDuplicateGameCopy } from '../../hooks/useDuplicateGameCopy';
@@ -297,6 +298,12 @@ export const GameDetailScreen: React.FC = () => {
   const navigateBack = useNavigateBack('/?tab=1');
 
   const { game, confirmations, loading, error } = useGameDetail(gameId || null);
+  useBreadcrumbEntityLabel(
+    'game',
+    gameId,
+    game?.locationName || (game ? t('games.detail.gameOn', { date: game.date }) : null),
+  );
+  useBreadcrumbEntityLabel('group', game?.groupId, game?.groupName);
   useAppBreadcrumbOverride(Boolean(game));
   const { confirmPresence, cancelPresence, loading: confirmLoading } = useConfirmPresence();
   const { updateStatus, loading: statusLoading } = useUpdateGameStatus();
