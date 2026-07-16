@@ -3,7 +3,9 @@ import { ThemeProvider as MuiThemeProvider, CssBaseline } from '@mui/material';
 import { futebaTheme, futebaDarkTheme, futebaDarkOledTheme } from '../theme';
 
 export type ThemeMode = 'light' | 'dark' | 'oled' | 'system';
-const DEFAULT_THEME_MODE: ThemeMode = 'system';
+// Novas instalações começam no tema claro. Preferências já salvas continuam
+// sendo respeitadas, inclusive `system`, dark e OLED.
+const DEFAULT_THEME_MODE: ThemeMode = 'light';
 const THEME_MODES: ThemeMode[] = ['light', 'dark', 'oled', 'system'];
 
 function parseThemeMode(value: string | null): ThemeMode {

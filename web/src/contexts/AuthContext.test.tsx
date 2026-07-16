@@ -195,6 +195,48 @@ describe('AuthContext', () => {
     expect(screen.getByTestId('user').textContent).toBe('null');
   });
 
+  it('renova silenciosamente o ID token a cada 55 minutos sem tocar no FCM', async () => {
+    vi.useFakeTimers();
+    const getIdToken = vi.fn().mockResolvedValue('fresh-token');
+    const mockFirebaseUser = {
+      uid: 'session-uid',
+      email: 'session@test.com',
+      displayName: 'Sessão Ativa',
+      getIdToken,
+      getIdTokenResult: vi.fn().mockResolvedValue({ claims: {} }),
+    };
+    mockGetDoc.mockResolvedValue({
+      exists: () => true,
+      id: 'session-uid',
+      data: () => ({ name: 'Sessão Ativa', email: 'session@test.com' }),
+    });
+    mockOnAuthStateChanged.mockImplementation((_auth, callback) => {
+      void callback(mockFirebaseUser);
+      return vi.fn();
+    });
+
+    const { unmount } = render(
+      <AuthProvider>
+        <AuthConsumer />
+      </AuthProvider>
+    );
+
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+      vi.advanceTimersByTime(55 * 60 * 1_000);
+      await Promise.resolve();
+    });
+
+    expect(getIdToken).toHaveBeenCalledWith(false);
+    expect(mockUnregisterBrowserFcmToken).not.toHaveBeenCalled();
+
+    unmount();
+    getIdToken.mockClear();
+    vi.advanceTimersByTime(55 * 60 * 1_000);
+    expect(getIdToken).not.toHaveBeenCalled();
+  });
+
   it('define usuário quando Firebase auth state muda', async () => {
     const mockFirebaseUser = { uid: 'test-uid', email: 'test@test.com', displayName: 'Test User' };
 

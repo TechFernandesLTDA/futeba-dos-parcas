@@ -49,16 +49,16 @@ describe('ThemeContext', () => {
     }));
   });
 
-  it('fornece modo padrão "system" quando nada está salvo (respeita prefers-color-scheme)', () => {
+  it('fornece modo padrão "light" quando nada está salvo', () => {
     render(
       <ThemeProvider>
         <ThemeConsumer />
       </ThemeProvider>
     );
-    expect(screen.getByTestId('mode').textContent).toBe('system');
+    expect(screen.getByTestId('mode').textContent).toBe('light');
   });
 
-  it('toggleTheme alterna de system para light', async () => {
+  it('toggleTheme alterna de light para dark', async () => {
     const user = userEvent.setup();
     render(
       <ThemeProvider>
@@ -66,22 +66,18 @@ describe('ThemeContext', () => {
       </ThemeProvider>
     );
 
-    // system -> light (system é o padrão)
+    // light -> dark (light é o padrão)
     await user.click(screen.getByText('toggle'));
-    expect(screen.getByTestId('mode').textContent).toBe('light');
+    expect(screen.getByTestId('mode').textContent).toBe('dark');
   });
 
-  it('toggleTheme cicla entre system -> light -> dark -> oled', async () => {
+  it('toggleTheme cicla entre light -> dark -> oled -> system', async () => {
     const user = userEvent.setup();
     render(
       <ThemeProvider>
         <ThemeConsumer />
       </ThemeProvider>
     );
-
-    // system -> light
-    await user.click(screen.getByText('toggle'));
-    expect(screen.getByTestId('mode').textContent).toBe('light');
 
     // light -> dark
     await user.click(screen.getByText('toggle'));
@@ -90,6 +86,10 @@ describe('ThemeContext', () => {
     // dark -> oled
     await user.click(screen.getByText('toggle'));
     expect(screen.getByTestId('mode').textContent).toBe('oled');
+
+    // oled -> system
+    await user.click(screen.getByText('toggle'));
+    expect(screen.getByTestId('mode').textContent).toBe('system');
   });
 
   it('persiste preferência de tema no localStorage', async () => {
@@ -114,6 +114,29 @@ describe('ThemeContext', () => {
     );
 
     expect(screen.getByTestId('mode').textContent).toBe('light');
+  });
+
+  it('preserva a preferência explícita pelo tema do sistema', () => {
+    localStorage.setItem('themeMode', 'system');
+    matchMediaMock.mockImplementation((query: string) => ({
+      matches: true,
+      media: query,
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    }));
+
+    render(
+      <ThemeProvider>
+        <ThemeConsumer />
+      </ThemeProvider>
+    );
+
+    expect(screen.getByTestId('mode').textContent).toBe('system');
+    expect(document.documentElement.dataset.resolvedTheme).toBe('dark');
   });
 
   it('setMode define o modo corretamente', async () => {
@@ -143,7 +166,7 @@ describe('ThemeContext', () => {
     expect(screen.getByText('toggle')).toBeInTheDocument();
   });
 
-  it('trata valores inválidos do localStorage como system (default)', () => {
+  it('trata valores inválidos do localStorage como light (default)', () => {
     localStorage.setItem('themeMode', 'invalid-value');
 
     render(
@@ -152,7 +175,7 @@ describe('ThemeContext', () => {
       </ThemeProvider>
     );
 
-    expect(screen.getByTestId('mode').textContent).toBe('system');
+    expect(screen.getByTestId('mode').textContent).toBe('light');
   });
 
   it('useTheme lança erro quando usado fora do ThemeProvider', () => {

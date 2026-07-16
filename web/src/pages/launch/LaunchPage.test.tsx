@@ -1,8 +1,9 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { ThemeProvider, createTheme } from '@mui/material/styles';
+import { ThemeProvider } from '@mui/material/styles';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 import { LaunchPage } from './LaunchPage';
+import { futebaDarkTheme } from '../../theme';
 
 vi.mock('../../utils/analytics', () => ({
   trackEvent: vi.fn(),
@@ -12,7 +13,7 @@ describe('LaunchPage', () => {
   it('shows the campaign image early in the hero and keeps the status on one line', () => {
     render(
       <MemoryRouter>
-        <ThemeProvider theme={createTheme()}>
+        <ThemeProvider theme={futebaDarkTheme}>
           <LaunchPage />
         </ThemeProvider>
       </MemoryRouter>,
@@ -30,12 +31,14 @@ describe('LaunchPage', () => {
     expect(heading.compareDocumentPosition(campaignImage)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
     expect(campaignImage.compareDocumentPosition(description)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
     expect(screen.getByText('CONFIRMADO')).toHaveClass('MuiTypography-noWrap');
+    expect(screen.getByTestId('public-landing')).toHaveAttribute('data-resolved-theme', 'light');
+    expect(document.documentElement).toHaveStyle({ colorScheme: 'light' });
   });
 
   it('centers the FAQ questions and answers under one labelled section', async () => {
     render(
       <MemoryRouter>
-        <ThemeProvider theme={createTheme()}>
+        <ThemeProvider theme={futebaDarkTheme}>
           <LaunchPage />
         </ThemeProvider>
       </MemoryRouter>,

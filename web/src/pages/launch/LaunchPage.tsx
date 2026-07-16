@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useLayoutEffect } from 'react';
 import {
   Accordion,
   AccordionDetails,
@@ -13,6 +13,7 @@ import {
   Typography,
   useTheme,
 } from '@mui/material';
+import { ThemeProvider as MuiThemeProvider } from '@mui/material/styles';
 import {
   CheckCircle,
   EmojiEvents,
@@ -25,6 +26,7 @@ import {
 } from '@mui/icons-material';
 import { Link as RouterLink } from 'react-router-dom';
 import { trackEvent } from '../../utils/analytics';
+import { futebaTheme } from '../../theme';
 
 const benefits = [
   {
@@ -81,8 +83,44 @@ const faqs = [
   },
 ];
 
-export function LaunchPage() {
+function LaunchPageContent() {
   const theme = useTheme();
+
+  useLayoutEffect(() => {
+    const root = document.documentElement;
+    const previousTheme = root.dataset.theme;
+    const previousResolvedTheme = root.dataset.resolvedTheme;
+    const previousColorScheme = root.style.colorScheme;
+    const themeColorElements = Array.from(
+      document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]'),
+    );
+    const previousThemeColors = themeColorElements.map((element) => ({
+      content: element.content,
+      media: element.getAttribute('media'),
+    }));
+
+    root.dataset.theme = 'light';
+    root.dataset.resolvedTheme = 'light';
+    root.style.colorScheme = 'light';
+    themeColorElements.forEach((element) => {
+      element.content = futebaTheme.palette.primary.main;
+      element.removeAttribute('media');
+    });
+
+    return () => {
+      if (previousTheme === undefined) delete root.dataset.theme;
+      else root.dataset.theme = previousTheme;
+      if (previousResolvedTheme === undefined) delete root.dataset.resolvedTheme;
+      else root.dataset.resolvedTheme = previousResolvedTheme;
+      root.style.colorScheme = previousColorScheme;
+      themeColorElements.forEach((element, index) => {
+        element.content = previousThemeColors[index].content;
+        const previousMedia = previousThemeColors[index].media;
+        if (previousMedia === null) element.removeAttribute('media');
+        else element.setAttribute('media', previousMedia);
+      });
+    };
+  }, []);
 
   useEffect(() => {
     trackEvent('landing_viewed', { page: 'launch' });
@@ -97,7 +135,11 @@ export function LaunchPage() {
   };
 
   return (
-    <Box sx={{ minHeight: '100dvh', bgcolor: 'background.default' }}>
+    <Box
+      data-testid="public-landing"
+      data-resolved-theme={theme.palette.mode}
+      sx={{ minHeight: '100dvh', bgcolor: 'background.default', color: 'text.primary', colorScheme: 'light' }}
+    >
       <Box
         component="header"
         sx={{
@@ -487,5 +529,13 @@ export function LaunchPage() {
         </Container>
       </Box>
     </Box>
+  );
+}
+
+export function LaunchPage() {
+  return (
+    <MuiThemeProvider theme={futebaTheme}>
+      <LaunchPageContent />
+    </MuiThemeProvider>
   );
 }

@@ -1,7 +1,30 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-16T03:37:19.240Z",
+  "generatedAt": "2026-07-16T04:29:15.386Z",
   "notes": [
+    {
+      "version": "1.54.15",
+      "buildNumber": null,
+      "releaseDate": "2026-07-16",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "A entrada do Futeba agora é sempre clara, e sua sessão continua ativa sem interromper notificações.",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "A página pública usa sempre o tema claro, inclusive em aparelhos configurados no modo escuro.",
+        "Novos usuários começam no tema claro; escolhas de tema já salvas continuam respeitadas.",
+        "A sessão autenticada é verificada silenciosamente a cada 55 minutos e também ao retornar para uma aba que ficou em segundo plano."
+      ],
+      "fixed": [
+        "A landing deixa de herdar tema escuro ou OLED salvo anteriormente no navegador.",
+        "A renovação da autenticação permanece independente do registro de notificações push."
+      ],
+      "issueRefs": [
+        3740
+      ]
+    },
     {
       "version": "1.54.14",
       "buildNumber": null,
