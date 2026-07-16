@@ -3013,6 +3013,8 @@
     "createGroup": "Create group",
     "globalSearch": "Global search / quick actions",
     "openLabel": "Open keyboard shortcuts",
+    "searchKeyApple": "⌘K",
+    "searchKeyDefault": "Ctrl+K",
     "settings": "Settings",
     "showShortcuts": "Show this shortcuts dialog",
     "tip": "Tip: press ? at any time to open this dialog.",
