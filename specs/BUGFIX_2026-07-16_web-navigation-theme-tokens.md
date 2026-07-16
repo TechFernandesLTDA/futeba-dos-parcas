@@ -15,7 +15,7 @@ o desktop desativa o blur em dark/OLED, divergindo da navegação mobile.
 ## 2. Resultado esperado
 
 - Captions do rail usam `caption`/`labelSmall`, sem tamanho abaixo da escala.
-- Chips usam `md3TypeScale.labelMedium`; overrides redundantes da bottom nav são removidos.
+- Chips e labels da bottom nav usam `md3TypeScale.labelMedium`, inclusive no estado selecionado.
 - Avatar compacto tem token semântico próprio em `avatarSizes`.
 - Blur, opacidade, fallback e preferência de transparência são definidos uma vez.
 - Light, dark e OLED preservam o mesmo comportamento de vidro.
@@ -44,7 +44,11 @@ o desktop desativa o blur em dark/OLED, divergindo da navegação mobile.
 - [x] Lint passa
 - [x] Build passa
 - [x] Diff permanece limitado às cinco issues
+- [x] O filho `BottomNavigation` permanece transparente e não encobre a superfície de vidro
+- [x] Label selecionada mantém o mesmo tamanho tokenizado das demais labels
 
 A suíte web completa não encerrou no ambiente local e deixou workers Vitest
 órfãos, que foram finalizados somente neste clone. Os testes direcionados incluem
 os três temas, fallbacks e os componentes alterados; nenhum teste do lote falhou.
+Na integração final, a suíte completa passou com 1.350 testes aprovados e 15
+ignorados.

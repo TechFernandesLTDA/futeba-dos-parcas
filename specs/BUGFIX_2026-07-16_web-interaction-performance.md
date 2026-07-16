@@ -37,13 +37,13 @@ navegação PUSH/POP, cancelamento, troca de rota e fechamento da aba.
   gesto, antes de manter qualquer transformação no shell.
 - Transformar `ShortcutsDialog` em import dinâmico protegido por `Suspense`.
 - Debounce de 150 ms no scroll; o valor mais recente é persistido no timeout,
-  no cleanup da rota e em `pagehide`.
+  no cleanup da rota, em `pagehide` e quando a aba fica oculta.
 
 ## 4. Riscos e mitigação
 
 | Risco | Mitigação |
 |---|---|
-| Perder a última posição antes do debounce | Flush síncrono no cleanup e `pagehide` |
+| Perder a última posição antes do debounce | Flush síncrono no cleanup, `pagehide` e `visibilitychange:hidden` |
 | Atalho ler estado antigo | Ref atualizada em todo render |
 | Chunk do diálogo causar flash | Montagem condicional com `Suspense fallback={null}` |
 | Camada de composição ficar alocada | `willChange: auto` fora do arraste |
@@ -51,7 +51,7 @@ navegação PUSH/POP, cancelamento, troca de rota e fechamento da aba.
 
 ## 5. Verificação
 
-- `useScrollRestoration.test.ts`: debounce, última posição, cleanup e `pagehide`.
+- `useScrollRestoration.test.ts`: debounce, última posição, cleanup, `pagehide` e background mobile.
 - `useSwipeBack.test.ts`: promoção no toque e preferência alterada em runtime.
 - `useGlobalShortcuts.test.ts`: listeners estáveis e leitura do estado atual.
 - Testes direcionados: 16/16.

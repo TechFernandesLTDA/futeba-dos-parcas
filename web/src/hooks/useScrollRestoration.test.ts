@@ -139,4 +139,26 @@ describe('useScrollRestoration', () => {
     unmount();
     main.remove();
   });
+
+  it('faz flush ao entrar em background antes que a aba mobile seja descartada', () => {
+    const main = document.createElement('main');
+    main.id = 'main-content';
+    main.style.overflowY = 'auto';
+    document.body.appendChild(main);
+    const setItemSpy = vi.spyOn(Storage.prototype, 'setItem');
+    vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden');
+
+    const { unmount } = renderHook(() => useScrollRestoration());
+    main.scrollTop = 135;
+    main.dispatchEvent(new Event('scroll'));
+    document.dispatchEvent(new Event('visibilitychange'));
+
+    expect(setItemSpy).toHaveBeenCalledTimes(1);
+    expect(JSON.parse(sessionStorage.getItem('scroll-positions') ?? '{}')).toEqual({ '/home': 135 });
+    vi.advanceTimersByTime(150);
+    expect(setItemSpy).toHaveBeenCalledTimes(1);
+
+    unmount();
+    main.remove();
+  });
 });

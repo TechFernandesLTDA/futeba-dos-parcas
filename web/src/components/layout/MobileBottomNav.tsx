@@ -9,6 +9,7 @@ import {
   Slide,
   Box,
 } from '@mui/material';
+import { md3TypeScale } from '../../theme';
 import { pageSpacing } from '../../theme/pageTokens';
 import { iconSizes } from '../../theme/iconSizes';
 import { getNavigationGlassStyles } from '../../theme/navigationGlass';
@@ -59,6 +60,7 @@ export const MobileBottomNav = React.memo(function MobileBottomNav({ children }:
           elevation={0}
         >
           <BottomNavigation
+            data-testid="mobile-bottom-navigation"
             value={activeValue}
             onChange={(_e, newValue: number) => {
               // #2175 (bug 2): navegação com error handling — feedback ao
@@ -72,6 +74,9 @@ export const MobileBottomNav = React.memo(function MobileBottomNav({ children }:
             showLabels
             sx={{
               width: '100%',
+              // O Paper externo é a superfície de vidro. O filho precisa ser
+              // transparente para não encobrir blur/opacidade, inclusive em xs.
+              backgroundColor: 'transparent',
               // #2203: em tablets (sm, até 900px) 480px centraliza os ícones e
               // desperdiça as laterais. Distribui melhor com 600px no sm.
               maxWidth: { xs: 480, sm: 600 },
@@ -80,6 +85,10 @@ export const MobileBottomNav = React.memo(function MobileBottomNav({ children }:
                 minWidth: 44,
                 minHeight: 44,
                 padding: '6px 0',
+              },
+              '& .MuiBottomNavigationAction-label': {
+                ...md3TypeScale.labelMedium,
+                '&.Mui-selected': md3TypeScale.labelMedium,
               },
             }}
           >

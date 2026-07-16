@@ -115,12 +115,18 @@ export function useScrollRestoration(scrollContainerId?: string) {
       saveTimer = window.setTimeout(flushPendingPosition, SAVE_DELAY_MS);
     };
 
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') flushPendingPosition();
+    };
+
     const target: EventTarget = isWindow(container) ? window : container;
     target.addEventListener('scroll', handleScroll, { passive: true });
     window.addEventListener('pagehide', flushPendingPosition);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => {
       target.removeEventListener('scroll', handleScroll);
       window.removeEventListener('pagehide', flushPendingPosition);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
       flushPendingPosition();
     };
   }, [location.pathname, location.search, navigationType, scrollContainerId]);
