@@ -101,20 +101,6 @@ jobs:
       - name: Build ComposeApp framework for iOS Simulator
         run: ./gradlew :composeApp:linkDebugFrameworkIosSimulatorArm64
 
-      - name: Upload Shared framework artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: shared-frameworks
-          path: shared/build/bin
-          retention-days: 7
-
-      - name: Upload Compose framework artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: compose-frameworks
-          path: composeApp/build/bin
-          retention-days: 7
-
   build-ios-app:
     name: Build iOS App
     runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
@@ -143,17 +129,13 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Download Shared frameworks
-        uses: actions/download-artifact@v4
-        with:
-          name: shared-frameworks
-          path: shared/build/bin
-
-      - name: Download Compose frameworks
-        uses: actions/download-artifact@v4
-        with:
-          name: compose-frameworks
-          path: composeApp/build/bin
+      # Cada job pode cair em um runner diferente. Recompilar os frameworks
+      # necessários aqui mantém o gate determinístico e independente da cota
+      # de armazenamento de artifacts do GitHub Actions.
+      - name: Build simulator frameworks for app job
+        run: |
+          ./gradlew :shared:linkDebugFrameworkIosSimulatorArm64
+          ./gradlew :composeApp:linkDebugFrameworkIosSimulatorArm64
 
       - name: Generate Xcode project and install CocoaPods
         run: |
