@@ -61,14 +61,21 @@ tokens canônicos já confiáveis continuam.
 - [x] A→B com apenas A como destino: sem entrega batch.
 - [x] Registro A/B fora de ordem mantém B.
 - [x] Registro seguido de logout fora de ordem mantém tombstone.
+- [x] Em empate de sequência, logout vence somente para a mesma conta; uma
+  conta anterior não revoga a instalação já reassociada.
 - [x] Logout Swift e KMP conclui por timeout offline.
+- [x] Logout preserva o token no Keychain e o próximo login registra novamente
+  com sequência maior.
 - [x] Limite de instalações e TTL/cleanup cobertos.
 - [x] onUserDeleted consulta/remove as duas coleções privadas.
 - [x] Rules negam leitura/escrita a jogador e admin.
 - [x] Functions lint, build e testes passam.
 - [x] Shared Android testa e Shared iOS compila.
 - [x] CI gera projeto com XcodeGen e exige build simulator sem assinatura.
-- [ ] Build iOS local completo (CoreSimulator local precisa ser atualizado).
+- [x] Build iOS local completo sem assinatura (o aviso de CoreSimulator não
+  impede o build genérico).
+- [x] Política Cloud Monitoring ativa para falha da consulta canônica em modo
+  fail-closed (`projects/futebadosparcas/alertPolicies/17769238537787845968`).
 - [ ] Teste físico confirma APNs/App Attest com chave de produção.
 
 ## 6. Riscos
@@ -87,3 +94,4 @@ tokens canônicos já confiáveis continuam.
 | 2026-07-16 | análise adversarial e implementação iniciadas |
 | 2026-07-16 | P0/P1 resolvidos; 68 testes focados e 976 testes de Rules aprovados; revisão final APPROVE |
 | 2026-07-16 | revisão do PR removeu cast inseguro de Keychain no KMP, ampliou timeout de cold start e adicionou observabilidade fail-closed |
+| 2026-07-16 | build iOS aprovado; desempate multi-runtime, re-login com Keychain e política de alerta operacional validados |
