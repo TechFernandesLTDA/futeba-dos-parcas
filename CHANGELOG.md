@@ -24,6 +24,15 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ## Android
 
+### [1.38.1][android-1.38.1] - 2026-07-16
+
+#### Adicionado
+- Drawables `nodpi` RGBA para `ic_level_badge_11` a `ic_level_badge_20`.
+- Teste de mapeamento dos dez recursos de níveis lendários.
+
+#### Mudado
+- `LevelBadgeHelper` usa referências compiladas diretamente, sem reflexão ou fallback indevido.
+
 ### [1.38.0][android-1.38.0] - 2026-07-14
 
 #### Adicionado
@@ -244,6 +253,17 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 - Bump de versão de manutenção após a mega audit wave de 2026-05-11, sem mudanças funcionais no Android nesta tag.
 
 ## Web
+
+### [1.54.14][web-1.54.14] - 2026-07-16
+
+#### Adicionado
+- Coleção PNG RGBA transparente dos níveis 11–20, com direção “Brasões da Eternidade”.
+- Resolução declarativa do destino de navegação por papel e testes para PLAYER, FIELD_OWNER e ADMIN.
+
+#### Corrigido
+- `/locations` usa `/map/locations` como fallback seguro para usuários sem papel de gestão.
+
+_Issues: #3737_
 
 ### [1.54.13][web-1.54.13] - 2026-07-15
 
@@ -2485,6 +2505,7 @@ _Issues: #2981_
 _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 
 
+[android-1.38.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.38.1.md
 [android-1.38.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.38.0.md
 [android-1.37.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.37.0.md
 [android-1.36.8]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.36.8.md
@@ -2504,6 +2525,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.54.14]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.14.md
 [web-1.54.13]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.13.md
 [web-1.54.12]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.12.md
 [web-1.54.11]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.11.md

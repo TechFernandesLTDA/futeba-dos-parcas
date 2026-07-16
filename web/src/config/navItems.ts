@@ -12,6 +12,7 @@ import {
   LocationOn,
   Settings as SettingsIcon,
 } from '@mui/icons-material';
+import type { UserRole } from '../types/user';
 
 export type NavSection = 'primary' | 'more';
 
@@ -22,6 +23,8 @@ export interface NavItem {
   matchPaths: string[];
   showInBottomNav: boolean;
   section: NavSection;
+  /** Destinos privilegiados; `path` permanece o fallback de menor privilégio. */
+  pathByRole?: Partial<Record<UserRole, string>>;
   /**
    * Índice do item "primary" que serve de umbrella quando este item "more"
    * não é visível na superfície de navegação atual (ex.: bottom nav mobile
@@ -114,7 +117,13 @@ export const NAV_ITEMS: NavItem[] = [
   {
     icon: React.createElement(LocationOn),
     labelKey: 'nav.locations',
-    path: '/locations',
+    // #3737: jogador abre a busca pública; gestão continua exclusiva de
+    // FIELD_OWNER/ADMIN. O fallback público também cobre role ainda indefinida.
+    path: '/map/locations',
+    pathByRole: {
+      FIELD_OWNER: '/locations',
+      ADMIN: '/locations',
+    },
     // #3735: unifica /locations, /location/*, /map/locations sob um matcher.
     matchPaths: ['/locations', '/location', '/map/locations'],
     showInBottomNav: false,
@@ -147,6 +156,17 @@ export const NAV_ITEMS: NavItem[] = [
     section: 'more',
   },
 ];
+
+/** Resolve um destino seguro para o papel atual sem duplicar regras na UI. */
+export function resolveNavItemPath(item: NavItem, role?: UserRole): string {
+  return (role && item.pathByRole?.[role]) || item.path;
+}
+
+/** Destino canônico de Quadras usado também pelo menu mobile do perfil. */
+export function getLocationsPath(role?: UserRole): string {
+  const locationsItem = NAV_ITEMS.find((item) => item.labelKey === 'nav.locations');
+  return locationsItem ? resolveNavItemPath(locationsItem, role) : '/map/locations';
+}
 
 export const PRIMARY_NAV_ITEMS = NAV_ITEMS.filter((i) => i.section === 'primary');
 export const MORE_NAV_ITEMS = NAV_ITEMS.filter((i) => i.section === 'more');

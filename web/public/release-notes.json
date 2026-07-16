@@ -1,7 +1,32 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-16T01:48:59.096Z",
+  "generatedAt": "2026-07-16T03:37:19.240Z",
   "notes": [
+    {
+      "version": "1.54.14",
+      "buildNumber": null,
+      "releaseDate": "2026-07-16",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "Quadras agora levam cada jogador ao destino permitido, e os níveis lendários ganharam artes exclusivas.",
+      "highlights": [],
+      "added": [
+        "Os níveis 11 a 20 de Rumo ao Estrelato agora exibem dez brasões criativos, com símbolos próprios para cada lenda."
+      ],
+      "improved": [
+        "Os novos brasões mantêm boa leitura em Perfil, Rankings e Rumo ao Estrelato, inclusive em tamanhos pequenos e nos temas claro e escuro.",
+        "Jogadores comuns encontram a busca pública de quadras no menu do perfil também no celular."
+      ],
+      "fixed": [
+        "O atalho Quadras deixa de redirecionar jogadores silenciosamente para o início.",
+        "Donos de quadra e administradores continuam chegando diretamente à gestão de quadras.",
+        "`/locations` usa `/map/locations` como fallback seguro para usuários sem papel de gestão."
+      ],
+      "issueRefs": [
+        3737
+      ]
+    },
     {
       "version": "1.54.13",
       "buildNumber": null,

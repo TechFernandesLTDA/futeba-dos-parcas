@@ -50,6 +50,7 @@ import {
 } from '@mui/icons-material';
 import { getLevelColor } from '../../../types/user';
 import { getLevelBadgeImage, getLevelBadgeDescription, handleBadgeImageError } from '../../../utils/levelBadge';
+import { getLocationsPath } from '../../../config/navItems';
 import { getXpProgress, getLevelEntry } from '../../../types/gamification';
 import { getEffectiveLevel, getExperiencePoints } from '../../../utils/xpAccounting';
 import { useGamificationColors } from '../../../hooks/useGamificationColors';
@@ -146,28 +147,26 @@ export function ProfileTab() {
     }
   };
 
-  // Memoizado: recriado apenas quando navigate muda (estável por sessão)
+  const isAdmin = user?.role === 'ADMIN';
+  const isFieldOwner = user?.role === 'FIELD_OWNER';
+
+  // Inclui a descoberta pública de quadras para PLAYER no mobile; donos e
+  // admins recebem a mesma entrada, apontando para a gestão (#3737).
   const menuItems = useMemo(() => [
     { icon: <Timeline />, label: t('profile.starRoad'), onClick: () => navigate('/level-journey') },
     { icon: <MilitaryTech />, label: t('profile.badges'), onClick: () => navigate('/badges') },
     { icon: <TrendingUp />, label: t('profile.statistics'), onClick: () => navigate('/statistics') },
+    {
+      icon: <Stadium />,
+      label: isAdmin || isFieldOwner ? t('profile.adminMenu.manageFields') : t('nav.locations'),
+      onClick: () => navigate(getLocationsPath(user?.role)),
+    },
     { icon: <Settings />, label: t('profile.settings'), onClick: () => navigate('/settings') },
-  ], [navigate, t]);
-
-  // Itens condicionais por role
-  const isAdmin = user?.role === 'ADMIN';
-  const isFieldOwner = user?.role === 'FIELD_OWNER';
+  ], [isAdmin, isFieldOwner, navigate, t, user?.role]);
 
   // Memoizado: recriado apenas quando role do usuário muda
   const adminMenuItems = useMemo<Array<{ icon: React.ReactNode; label: string; onClick: () => void }>>(() => {
     const items: Array<{ icon: React.ReactNode; label: string; onClick: () => void }> = [];
-    if (isAdmin || isFieldOwner) {
-      items.push({
-        icon: <Stadium />,
-        label: t('profile.adminMenu.manageFields'),
-        onClick: () => navigate('/locations'),
-      });
-    }
     if (isFieldOwner) {
       items.push({
         icon: <Dashboard />,

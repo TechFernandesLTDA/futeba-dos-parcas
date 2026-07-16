@@ -249,6 +249,22 @@ describe('ProfileTab', () => {
     expect(screen.getByRole('list', { name: /menu do perfil/i })).toBeInTheDocument();
   });
 
+  it.each([
+    ['PLAYER', 'Quadras', '/map/locations'],
+    ['FIELD_OWNER', 'Gerenciar Quadras', '/locations'],
+    ['ADMIN', 'Gerenciar Quadras', '/locations'],
+  ] as const)('oferece uma única ação de Quadras para %s', async (role, label, expected) => {
+    mockUserRole = role;
+    const user = userEvent.setup();
+    renderProfileTab();
+
+    const action = screen.getByRole('button', { name: label });
+    await user.click(action);
+
+    expect(mockNavigate).toHaveBeenCalledWith(expected);
+    expect(screen.getAllByRole('button', { name: label })).toHaveLength(1);
+  });
+
   it('mostra Gerenciar Usuários para administradores', async () => {
     const user = userEvent.setup();
     mockUserRole = 'ADMIN';

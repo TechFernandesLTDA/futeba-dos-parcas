@@ -39,6 +39,7 @@ import {
   RAIL_WIDTH_RESPONSIVE,
   DRAWER_WIDTH_RESPONSIVE,
   getActiveNavIndex,
+  resolveNavItemPath,
 } from '../../config/navItems';
 
 const pulse = keyframes`
@@ -149,7 +150,7 @@ export function AppSidebar() {
                 <ListItemButton
                   selected={active}
                   aria-current={active ? 'page' : undefined}
-                  onClick={() => navigate(item.path)}
+                  onClick={() => navigate(resolveNavItemPath(item, user?.role))}
                   sx={{
                     flexDirection: 'column',
                     py: 1.25,
@@ -255,7 +256,7 @@ export function AppSidebar() {
                   ? t('nav.notificationsAria', { count: unreadCount })
                   : undefined}
                 onClick={() => {
-                  navigate(item.path);
+                  navigate(resolveNavItemPath(item, user?.role));
                   setMoreAnchor(null);
                 }}
                 sx={{
@@ -365,7 +366,7 @@ export function AppSidebar() {
                 <ListItemButton
                   selected={active}
                   aria-current={active ? 'page' : undefined}
-                  onClick={() => navigate(item.path)}
+                  onClick={() => navigate(resolveNavItemPath(item, user?.role))}
                   sx={{
                     borderRadius: 2,
                     mx: 0.75,
@@ -411,7 +412,7 @@ export function AppSidebar() {
                   aria-label={isNotifItem && unreadCount > 0
                     ? t('nav.notificationsAria', { count: unreadCount })
                     : undefined}
-                  onClick={() => navigate(item.path)}
+                  onClick={() => navigate(resolveNavItemPath(item, user?.role))}
                   sx={{
                     borderRadius: 2,
                     mx: 0.75,

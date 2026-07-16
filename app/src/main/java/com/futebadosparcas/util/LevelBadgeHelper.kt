@@ -8,8 +8,7 @@ import com.futebadosparcas.R
  *
  * Brasões disponíveis (0-20):
  * - Níveis 0-10: Brasões únicos built-in (Progressão Base)
- * - Níveis 11-20: Brasões cartoon das Lendas do Futebol (resolvidos dinamicamente,
- *   com fallback automático para o badge 10 enquanto os drawables não existirem)
+ * - Níveis 11-20: Brasões simbólicos premium das Lendas do Futebol
  *
  * Jogadores lendas (11-20):
  * - 11: Garrincha          - "Alegria do Povo! Dribla até o vento!"
@@ -31,8 +30,7 @@ object LevelBadgeHelper {
      * Retorna o drawable resource ID do brasão para o nível especificado.
      *
      * Níveis 0-10: retorna o drawable built-in diretamente.
-     * Níveis 11-20: tenta resolver `ic_level_badge_{N}` via reflection;
-     *               se o recurso não existir, faz fallback para badge 10.
+     * Níveis 11-20: retorna o drawable exclusivo da respectiva lenda.
      *
      * @param level O nível do jogador (0-20)
      * @return Resource ID do drawable do brasão
@@ -51,26 +49,16 @@ object LevelBadgeHelper {
             8 -> R.drawable.ic_level_badge_8
             9 -> R.drawable.ic_level_badge_9
             10 -> R.drawable.ic_level_badge_10
-            else -> resolveBadgeOrFallback(level)
-        }
-    }
-
-    /**
-     * Tenta resolver o drawable `ic_level_badge_{level}` via reflection.
-     * Se o campo não existir no R.drawable, retorna o badge 10 como fallback.
-     *
-     * Isso permite que o código compile sem os drawables cartoon (11-20) e
-     * funcione automaticamente quando eles forem adicionados ao projeto.
-     */
-    @DrawableRes
-    private fun resolveBadgeOrFallback(level: Int): Int {
-        return try {
-            val field = R.drawable::class.java.getField("ic_level_badge_$level")
-            field.getInt(null)
-        } catch (_: NoSuchFieldException) {
-            R.drawable.ic_level_badge_10
-        } catch (_: Exception) {
-            R.drawable.ic_level_badge_10
+            11 -> R.drawable.ic_level_badge_11
+            12 -> R.drawable.ic_level_badge_12
+            13 -> R.drawable.ic_level_badge_13
+            14 -> R.drawable.ic_level_badge_14
+            15 -> R.drawable.ic_level_badge_15
+            16 -> R.drawable.ic_level_badge_16
+            17 -> R.drawable.ic_level_badge_17
+            18 -> R.drawable.ic_level_badge_18
+            19 -> R.drawable.ic_level_badge_19
+            else -> R.drawable.ic_level_badge_20
         }
     }
 
@@ -115,9 +103,8 @@ object LevelBadgeHelper {
     }
 
     /**
-     * Retorna o resource ID do brasão do Imortal (nível 10).
-     * Usado como fallback para níveis 11-20 quando os drawables
-     * cartoon ainda não foram adicionados.
+     * Retorna o resource ID do brasão do Imortal (nível 10) para consumidores
+     * que precisem de um fallback genérico de carregamento.
      */
     @DrawableRes
     fun getFallbackBadge(): Int {
