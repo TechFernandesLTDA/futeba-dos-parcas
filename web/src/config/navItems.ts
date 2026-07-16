@@ -15,8 +15,21 @@ import {
 import type { UserRole } from '../types/user';
 
 export type NavSection = 'primary' | 'more';
+export type NavItemId =
+  | 'home'
+  | 'games'
+  | 'groups'
+  | 'league'
+  | 'profile'
+  | 'statistics'
+  | 'badges'
+  | 'locations'
+  | 'settings'
+  | 'notifications'
+  | 'messages';
 
 export interface NavItem {
+  id: NavItemId;
   icon: React.ReactElement;
   labelKey: string;
   path: string;
@@ -25,26 +38,24 @@ export interface NavItem {
   section: NavSection;
   /** Destinos privilegiados; `path` permanece o fallback de menor privilégio. */
   pathByRole?: Partial<Record<UserRole, string>>;
-  /**
-   * Índice do item "primary" que serve de umbrella quando este item "more"
-   * não é visível na superfície de navegação atual (ex.: bottom nav mobile
-   * tem 5 slots). Usado por MobileBottomNav e getSectionFallback para manter
-   * contexto de seção sem destacar o item próprio (que não existe na surface).
-   */
-  parentTab?: number;
+  /** Item primary que serve de umbrella em superfícies onde este item não existe. */
+  parentItemId?: NavItemId;
 }
 
 export const NAV_ITEMS: NavItem[] = [
   // ── Primary (tabs) ──────────────────────────────────────────────
   {
+    id: 'home',
     icon: React.createElement(HomeIcon),
     labelKey: 'nav.home',
     path: '/?tab=0',
-    matchPaths: [],
+    // O feed é uma extensão da experiência inicial, acessada pelos atalhos da Home.
+    matchPaths: ['/feed'],
     showInBottomNav: true,
     section: 'primary',
   },
   {
+    id: 'games',
     icon: React.createElement(SportsSoccer),
     labelKey: 'nav.games',
     path: '/?tab=1',
@@ -54,14 +65,17 @@ export const NAV_ITEMS: NavItem[] = [
     section: 'primary',
   },
   {
+    id: 'groups',
     icon: React.createElement(Groups),
     labelKey: 'nav.groups',
     path: '/?tab=2',
-    matchPaths: ['/groups', '/group'],
+    // Descoberta de jogadores é uma experiência social, agrupada com Grupos.
+    matchPaths: ['/groups', '/group', '/players/nearby'],
     showInBottomNav: true,
     section: 'primary',
   },
   {
+    id: 'league',
     icon: React.createElement(EmojiEvents),
     labelKey: 'nav.league',
     path: '/?tab=3',
@@ -71,6 +85,7 @@ export const NAV_ITEMS: NavItem[] = [
     section: 'primary',
   },
   {
+    id: 'profile',
     icon: React.createElement(Person),
     labelKey: 'nav.profile',
     path: '/?tab=4',
@@ -97,24 +112,27 @@ export const NAV_ITEMS: NavItem[] = [
   // via seção "Mais") derivam desta fonte única. Notifications/Messages também
   // ganharam visibilidade no desktop lg (antes só no rail md).
   {
+    id: 'statistics',
     icon: React.createElement(BarChart),
     labelKey: 'nav.statistics',
     path: '/statistics',
     matchPaths: ['/statistics'],
     showInBottomNav: false,
     section: 'more',
-    parentTab: 4,
+    parentItemId: 'profile',
   },
   {
+    id: 'badges',
     icon: React.createElement(MilitaryTech),
     labelKey: 'nav.badges',
     path: '/badges',
     matchPaths: ['/badges'],
     showInBottomNav: false,
     section: 'more',
-    parentTab: 4,
+    parentItemId: 'profile',
   },
   {
+    id: 'locations',
     icon: React.createElement(LocationOn),
     labelKey: 'nav.locations',
     // #3737: jogador abre a busca pública; gestão continua exclusiva de
@@ -125,35 +143,40 @@ export const NAV_ITEMS: NavItem[] = [
       ADMIN: '/locations',
     },
     // #3735: unifica /locations, /location/*, /map/locations sob um matcher.
-    matchPaths: ['/locations', '/location', '/map/locations'],
+    matchPaths: ['/locations', '/location', '/map/locations', '/owner'],
     showInBottomNav: false,
     section: 'more',
-    parentTab: 4,
+    parentItemId: 'profile',
   },
   {
+    id: 'settings',
     icon: React.createElement(SettingsIcon),
     labelKey: 'nav.settings',
     path: '/settings',
     matchPaths: ['/settings'],
     showInBottomNav: false,
     section: 'more',
-    parentTab: 4,
+    parentItemId: 'profile',
   },
   {
+    id: 'notifications',
     icon: React.createElement(NotificationsIcon),
     labelKey: 'nav.notifications',
     path: '/notifications',
     matchPaths: ['/notifications'],
     showInBottomNav: false,
     section: 'more',
+    parentItemId: 'profile',
   },
   {
+    id: 'messages',
     icon: React.createElement(MessagesIcon),
     labelKey: 'nav.messages',
     path: '/messages',
     matchPaths: ['/messages'],
     showInBottomNav: false,
     section: 'more',
+    parentItemId: 'profile',
   },
 ];
 
@@ -164,15 +187,21 @@ export function resolveNavItemPath(item: NavItem, role?: UserRole): string {
 
 /** Destino canônico de Quadras usado também pelo menu mobile do perfil. */
 export function getLocationsPath(role?: UserRole): string {
-  const locationsItem = NAV_ITEMS.find((item) => item.labelKey === 'nav.locations');
-  return locationsItem ? resolveNavItemPath(locationsItem, role) : '/map/locations';
+  const locationsItem = NAV_ITEMS.find(
+    (item) => item.labelKey === 'nav.locations',
+  );
+  return locationsItem
+    ? resolveNavItemPath(locationsItem, role)
+    : '/map/locations';
 }
 
-export const PRIMARY_NAV_ITEMS = NAV_ITEMS.filter((i) => i.section === 'primary');
+export const PRIMARY_NAV_ITEMS = NAV_ITEMS.filter(
+  (i) => i.section === 'primary',
+);
 export const MORE_NAV_ITEMS = NAV_ITEMS.filter((i) => i.section === 'more');
 
 /**
- * #2226: resolve o índice da seção ativa em NAV_ITEMS para um path/search.
+ * Resolve o item ativo canônico para um path/search.
  *
  * Fonte única de verdade do active-state — consumida por MobileBottomNav e
  * AppSidebar (antes a lógica era duplicada e divergia).
@@ -185,55 +214,85 @@ export const MORE_NAV_ITEMS = NAV_ITEMS.filter((i) => i.section === 'more');
  * - Rotas sem seção natural (ex.: /admin, /dev, /search) → -1 (nenhum item
  *   destacado), em vez de cair em Home/Perfil (#2184).
  *
- * @returns índice em NAV_ITEMS, ou -1 se nenhuma seção casar.
+ * @returns item canônico, ou undefined se nenhuma seção casar.
  */
-export function getActiveNavIndex(pathname: string, search: string): number {
-  if ((pathname === '/' || pathname === '') && !search.includes('tab=')) return 0;
+export function getActiveNavItem(
+  pathname: string,
+  search: string,
+): NavItem | undefined {
+  const params = new URLSearchParams(search);
+  if ((pathname === '/' || pathname === '') && !params.has('tab')) {
+    return NAV_ITEMS.find((item) => item.id === 'home');
+  }
 
-  if (pathname === '/' && search.includes('tab=')) {
-    const tab = new URLSearchParams(search).get('tab');
-    const idx = NAV_ITEMS.findIndex((item) => item.path === `/?tab=${tab}`);
-    return idx >= 0 ? idx : -1;
+  if ((pathname === '/' || pathname === '') && params.has('tab')) {
+    const tab = params.get('tab');
+    return NAV_ITEMS.find((item) => item.path === `/?tab=${tab}`);
   }
 
   // Longest-match: a rota mais específica vence (ex.: /map/games antes de /map).
-  let bestIdx = -1;
+  let bestItem: NavItem | undefined;
   let bestLen = 0;
-  for (let i = 0; i < NAV_ITEMS.length; i++) {
-    for (const mp of NAV_ITEMS[i].matchPaths) {
+  for (const item of NAV_ITEMS) {
+    for (const mp of item.matchPaths) {
       if (pathname === mp || pathname.startsWith(`${mp}/`)) {
         if (mp.length > bestLen) {
           bestLen = mp.length;
-          bestIdx = i;
+          bestItem = item;
         }
       }
     }
   }
-  return bestIdx;
+  return bestItem;
+}
+
+/** Compatibilidade para consumidores desktop que ainda usam o índice global. */
+export function getActiveNavIndex(pathname: string, search: string): number {
+  const activeItem = getActiveNavItem(pathname, search);
+  return activeItem ? NAV_ITEMS.indexOf(activeItem) : -1;
 }
 
 /**
- * Resolve o índice ativo considerando fallback de parentTab.
+ * Resolve o índice ativo considerando o item pai por identidade.
  *
  * Em superfícies com slots limitados (ex.: bottom nav mobile com 5 items),
- * items "more" que não estão visíveis devem destacar o parentTab (umbrella).
+ * items "more" que não estão visíveis devem destacar o parentItemId (umbrella).
  * Em superfícies completas (sidebar desktop), o item próprio é destacado.
  *
- * @param includeParentFallback quando true, items "more" resolvem para seu
- *   parentTab (uso em bottom nav mobile). Quando false, retorna o índice real.
+ * `surfaceSize` limita a mesma coleção filtrada que a bottom nav renderiza.
  */
 export function getActiveNavIndexForSurface(
   pathname: string,
   search: string,
   surfaceSize: number,
 ): number | false {
-  const idx = getActiveNavIndex(pathname, search);
-  if (idx < 0) return false;
-  if (idx < surfaceSize) return idx;
-  // Item "more" não visível nesta surface → resolve para parentTab se houver
-  const parentTab = NAV_ITEMS[idx]?.parentTab;
-  if (parentTab !== undefined && parentTab < surfaceSize) return parentTab;
-  return false;
+  const surfaceItems = NAV_ITEMS.filter((item) => item.showInBottomNav).slice(
+    0,
+    surfaceSize,
+  );
+  return getActiveNavIndexForItems(pathname, search, surfaceItems);
+}
+
+/** Resolve a posição ativa pela identidade dos itens realmente renderizados. */
+export function getActiveNavIndexForItems(
+  pathname: string,
+  search: string,
+  surfaceItems: readonly NavItem[],
+): number | false {
+  const activeItem = getActiveNavItem(pathname, search);
+  if (!activeItem) return false;
+
+  const visibleIndex = surfaceItems.findIndex(
+    (item) => item.id === activeItem.id,
+  );
+  if (visibleIndex >= 0) return visibleIndex;
+
+  const parentItemId = activeItem.parentItemId;
+  if (!parentItemId) return false;
+  const parentIndex = surfaceItems.findIndex(
+    (item) => item.id === parentItemId,
+  );
+  return parentIndex >= 0 ? parentIndex : false;
 }
 
 /**
@@ -245,17 +304,18 @@ export function getActiveNavIndexForSurface(
  * @returns path de fallback (ex.: '/?tab=1'), default '/' (Home).
  */
 export function getSectionFallback(pathname: string): string {
-  const idx = getActiveNavIndex(pathname, '');
-  if (idx >= 0 && idx <= 4) return NAV_ITEMS[idx].path;
+  const activeItem = getActiveNavItem(pathname, '');
+  if (activeItem?.section === 'primary') return activeItem.path;
 
-  // Items "more" com parentTab → voltam para o tab pai
-  if (idx >= 5) {
-    const parentTab = NAV_ITEMS[idx]?.parentTab;
-    if (parentTab !== undefined) return NAV_ITEMS[parentTab].path;
+  if (activeItem?.parentItemId) {
+    const parentItem = NAV_ITEMS.find(
+      (item) => item.id === activeItem.parentItemId,
+    );
+    if (parentItem) return parentItem.path;
   }
 
   // Rotas órfãs sem seção natural → agrupadas em Perfil (acesso via tab=4).
-  const profileOrphans = ['/admin', '/dev', '/owner', '/search'];
+  const profileOrphans = ['/admin', '/dev', '/search'];
   if (profileOrphans.some((p) => pathname.startsWith(p))) return '/?tab=4';
 
   return '/';
@@ -267,9 +327,8 @@ export const RAIL_WIDTH = 88;
 export const DRAWER_WIDTH = 240;
 
 /**
- * #2219: larguras responsivas da sidebar. md/lg mantêm o valor base (não
- * quebra o offset das barras fixas); xl aumenta para aproveitar telas 2K/4K
- * sem desperdiçar espaço nem encolher ícones/labels.
+ * Larguras responsivas da sidebar. O rail só existe no breakpoint md; em lg+
+ * o drawer completo assume a navegação.
  */
-export const RAIL_WIDTH_RESPONSIVE = { md: RAIL_WIDTH, xl: 104 } as const;
+export const RAIL_WIDTH_RESPONSIVE = { md: RAIL_WIDTH } as const;
 export const DRAWER_WIDTH_RESPONSIVE = { lg: DRAWER_WIDTH, xl: 288 } as const;

@@ -5,6 +5,10 @@ import {
   getSectionFallback,
   NAV_ITEMS,
   getActiveNavIndexForSurface,
+  getActiveNavIndexForItems,
+  getActiveNavItem,
+  RAIL_WIDTH,
+  RAIL_WIDTH_RESPONSIVE,
   resolveNavItemPath,
 } from './navItems';
 
@@ -21,6 +25,14 @@ describe('getActiveNavIndex (#2226/#3726)', () => {
     expect(getActiveNavIndex('/', '?tab=1')).toBe(1);
     expect(getActiveNavIndex('/', '?tab=2')).toBe(2);
     expect(getActiveNavIndex('/', '?tab=4')).toBe(4);
+    expect(getActiveNavIndex('/', '?source=shortcut&tab=2')).toBe(2);
+    expect(getActiveNavIndex('/', '?tab=3&source=notification')).toBe(3);
+    expect(getActiveNavIndex('', '?tab=4')).toBe(4);
+  });
+
+  it('não confunde outros parâmetros com tab', () => {
+    expect(getActiveNavIndex('/', '?notab=2')).toBe(0);
+    expect(getActiveNavIndex('/', '?tab=')).toBe(-1);
   });
 
   it('destaca Jogos para /game/:id, /games, /map/games e /public-games', () => {
@@ -33,6 +45,11 @@ describe('getActiveNavIndex (#2226/#3726)', () => {
   it('destaca Grupos para /group/:id', () => {
     expect(getActiveNavIndex('/group/xyz', '')).toBe(2);
     expect(getActiveNavIndex('/groups/discover', '')).toBe(2);
+    expect(getActiveNavIndex('/players/nearby', '')).toBe(2);
+  });
+
+  it('destaca Home para o feed social', () => {
+    expect(getActiveNavIndex('/feed', '')).toBe(0);
   });
 
   it('destaca Liga para /league, /ranking e /weekly-ranking', () => {
@@ -54,6 +71,8 @@ describe('getActiveNavIndex (#2226/#3726)', () => {
     expect(getActiveNavIndex('/locations', '')).toBe(7);
     expect(getActiveNavIndex('/location/abc123def456', '')).toBe(7);
     expect(getActiveNavIndex('/map/locations', '')).toBe(7);
+    expect(getActiveNavIndex('/owner/dashboard', '')).toBe(7);
+    expect(getActiveNavIndex('/owner/onboarding', '')).toBe(7);
   });
 
   it('destaca Settings para /settings/*', () => {
@@ -84,7 +103,6 @@ describe('getActiveNavIndex (#2226/#3726)', () => {
     expect(getActiveNavIndex('/admin/users', '')).toBe(-1);
     expect(getActiveNavIndex('/dev', '')).toBe(-1);
     expect(getActiveNavIndex('/search', '')).toBe(-1);
-    expect(getActiveNavIndex('/owner/dashboard', '')).toBe(-1);
   });
 
   it('retorna -1 para tab inexistente', () => {
@@ -98,7 +116,7 @@ describe('getActiveNavIndexForSurface (#3726)', () => {
     expect(getActiveNavIndexForSurface('/game/abc', '', 5)).toBe(1);
   });
 
-  it('items "more" com parentTab resolvem para o tab pai na surface limitada', () => {
+  it('items "more" com parentItemId resolvem para o tab pai na surface limitada', () => {
     // Bottom nav tem 5 slots (primary 0-4). Settings (idx 8) → Perfil (idx 4).
     expect(getActiveNavIndexForSurface('/settings', '', 5)).toBe(4);
     expect(getActiveNavIndexForSurface('/statistics', '', 5)).toBe(4);
@@ -106,9 +124,9 @@ describe('getActiveNavIndexForSurface (#3726)', () => {
     expect(getActiveNavIndexForSurface('/locations', '', 5)).toBe(4);
   });
 
-  it('items "more" sem parentTab (notifications/messages) → false', () => {
-    expect(getActiveNavIndexForSurface('/notifications', '', 5)).toBe(false);
-    expect(getActiveNavIndexForSurface('/messages', '', 5)).toBe(false);
+  it('notifications/messages usam Perfil como umbrella na surface limitada', () => {
+    expect(getActiveNavIndexForSurface('/notifications', '', 5)).toBe(4);
+    expect(getActiveNavIndexForSurface('/messages', '', 5)).toBe(4);
   });
 
   it('rotas órfãs → false', () => {
@@ -116,8 +134,51 @@ describe('getActiveNavIndexForSurface (#3726)', () => {
   });
 });
 
+describe('resolução por identidade (#3760)', () => {
+  it('retorna a posição do item na surface, independentemente da ordem de NAV_ITEMS', () => {
+    const shuffledSurface = [
+      NAV_ITEMS[4],
+      NAV_ITEMS[2],
+      NAV_ITEMS[0],
+      NAV_ITEMS[3],
+      NAV_ITEMS[1],
+    ];
+
+    expect(getActiveNavIndexForItems('/game/abc', '', shuffledSurface)).toBe(4);
+    expect(
+      getActiveNavIndexForItems('/players/nearby', '', shuffledSurface),
+    ).toBe(1);
+    expect(getActiveNavIndexForItems('/feed', '', shuffledSurface)).toBe(2);
+  });
+
+  it('resolve o parent pela identidade na ordem concreta da surface', () => {
+    const shuffledSurface = [
+      NAV_ITEMS[4],
+      NAV_ITEMS[1],
+      NAV_ITEMS[0],
+      NAV_ITEMS[2],
+      NAV_ITEMS[3],
+    ];
+
+    expect(
+      getActiveNavIndexForItems('/notifications', '', shuffledSurface),
+    ).toBe(0);
+    expect(
+      getActiveNavIndexForItems('/owner/dashboard', '', shuffledSurface),
+    ).toBe(0);
+  });
+
+  it('expõe a identidade canônica da rota sem depender do índice global', () => {
+    expect(getActiveNavItem('/feed', '')?.id).toBe('home');
+    expect(getActiveNavItem('/players/nearby', '')?.id).toBe('groups');
+    expect(getActiveNavItem('/owner/dashboard', '')?.id).toBe('locations');
+  });
+});
+
 describe('destino de Quadras por permissão (#3737)', () => {
-  const locationsItem = NAV_ITEMS.find((item) => item.labelKey === 'nav.locations')!;
+  const locationsItem = NAV_ITEMS.find(
+    (item) => item.labelKey === 'nav.locations',
+  )!;
 
   it.each([
     ['PLAYER', '/map/locations'],
@@ -134,6 +195,12 @@ describe('destino de Quadras por permissão (#3737)', () => {
   });
 });
 
+describe('breakpoints do rail (#3751)', () => {
+  it('declara largura somente em md, onde o rail realmente existe', () => {
+    expect(RAIL_WIDTH_RESPONSIVE).toEqual({ md: RAIL_WIDTH });
+  });
+});
+
 describe('getSectionFallback (#2233/#2224)', () => {
   it('mapeia telas de jogos para a seção Jogos', () => {
     expect(getSectionFallback('/map/games')).toBe('/?tab=1');
@@ -142,6 +209,11 @@ describe('getSectionFallback (#2233/#2224)', () => {
 
   it('mapeia telas de grupos para Grupos', () => {
     expect(getSectionFallback('/group/abc')).toBe('/?tab=2');
+    expect(getSectionFallback('/players/nearby')).toBe('/?tab=2');
+  });
+
+  it('mapeia Feed para Home', () => {
+    expect(getSectionFallback('/feed')).toBe('/?tab=0');
   });
 
   it('mapeia weekly-ranking/league para Liga', () => {
@@ -149,18 +221,21 @@ describe('getSectionFallback (#2233/#2224)', () => {
     expect(getSectionFallback('/league')).toBe('/?tab=3');
   });
 
-  it('mapeia badges/estatísticas/settings/locations para Perfil via parentTab', () => {
+  it('mapeia items secundários para Perfil via parentItemId', () => {
     expect(getSectionFallback('/badges')).toBe('/?tab=4');
     expect(getSectionFallback('/statistics')).toBe('/?tab=4');
     expect(getSectionFallback('/settings')).toBe('/?tab=4');
     expect(getSectionFallback('/map/locations')).toBe('/?tab=4');
     expect(getSectionFallback('/location/abc123def456')).toBe('/?tab=4');
+    expect(getSectionFallback('/owner/dashboard')).toBe('/?tab=4');
+    expect(getSectionFallback('/owner/onboarding')).toBe('/?tab=4');
+    expect(getSectionFallback('/notifications')).toBe('/?tab=4');
+    expect(getSectionFallback('/messages/thread-id')).toBe('/?tab=4');
   });
 
-  it('mapeia rotas órfãs (admin/dev/owner/search) para Perfil como destino seguro', () => {
+  it('mapeia rotas órfãs (admin/dev/search) para Perfil como destino seguro', () => {
     expect(getSectionFallback('/admin/users')).toBe('/?tab=4');
     expect(getSectionFallback('/dev')).toBe('/?tab=4');
-    expect(getSectionFallback('/owner/dashboard')).toBe('/?tab=4');
     expect(getSectionFallback('/search')).toBe('/?tab=4');
   });
 
