@@ -64,6 +64,7 @@ import {
 } from '@mui/icons-material';
 import { collection, getDocs, limit, query, where } from 'firebase/firestore';
 import { AppBreadcrumbs, FixedBottomBar } from '../../components/layout';
+import { useAppBreadcrumbOverride } from '../../hooks/useAutoBreadcrumbs';
 import { useQueryClient } from '@tanstack/react-query';
 import { useGroupDetail, useInvitePlayers } from '../../hooks/useGroups';
 import { useCashboxSummary } from '../../hooks/useCashboxSummary';
@@ -584,6 +585,7 @@ export const GroupDetailScreen: React.FC = () => {
   const containerMaxWidth: 'sm' | 'md' | 'xl' = isLg ? 'xl' : isMd ? 'md' : 'sm';
 
   const { group, groupDeleted, members, loading, error } = useGroupDetail(groupId || null);
+  useAppBreadcrumbOverride(Boolean(group));
   const { games, loading: gamesLoading } = useGames({ groupId: groupId || undefined, limitCount: 50, orderDirection: 'desc' });
   const { generateInviteCode, loading: inviteLoading } = useInvitePlayers();
   const { entryCount, balanceCents } = useCashboxSummary(groupId || undefined);
