@@ -46,3 +46,29 @@ for (const relativePath of workflows) {
     assert.match(install, /"\$tools_dir\/node_modules\/\.bin\/tsx" --version/);
   });
 }
+
+test('realtime load isolates the pinned Firebase CLI per job', () => {
+  const workflow = fs.readFileSync(
+    path.join(repoRoot, '.github/workflows/realtime-load-ci.yml'),
+    'utf8'
+  );
+  const install = extractNamedStep(
+    workflow,
+    'Install Firebase CLI (isolated per job)'
+  );
+
+  assert.doesNotMatch(workflow, /npm\s+install\s+(?:-g|--global)\b/);
+  assert.match(
+    install,
+    /tools_dir="\$RUNNER_TEMP\/futeba-ci-tools-\$\{GITHUB_RUN_ID\}-\$\{GITHUB_RUN_ATTEMPT\}-\$\{GITHUB_JOB\}"/
+  );
+  assert.match(install, /npm install \\\n\s+--prefix "\$tools_dir"/);
+  assert.match(install, /firebase-tools@15\.23\.0/);
+  assert.match(install, /--no-save/);
+  assert.match(install, /--package-lock=false/);
+  assert.match(
+    install,
+    /printf '%s\\n' "\$tools_dir\/node_modules\/\.bin" >> "\$GITHUB_PATH"/
+  );
+  assert.match(install, /"\$tools_dir\/node_modules\/\.bin\/firebase" --version/);
+});
