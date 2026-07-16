@@ -25,6 +25,9 @@ const ROUTE_LABEL_KEYS: Record<string, string> = {
   '/weekly-recap': 'breadcrumbs.weeklyRecap',
   '/evolution': 'breadcrumbs.evolution',
   '/head-to-head': 'breadcrumbs.headToHead',
+  '/messages': 'nav.messages',
+  '/level-journey': 'breadcrumbs.levelJourney',
+  '/feed': 'nav.feed',
 };
 
 const DYNAMIC_LABEL_KEYS: Record<string, string> = {
@@ -62,6 +65,8 @@ const SUB_ROUTE_LABEL_KEYS: Record<string, string> = {
   'owner': 'breadcrumbs.owner',
   'discover': 'breadcrumbs.discover',
   'map': 'nav.map',
+  'games': 'nav.games',
+  'locations': 'nav.locations',
 };
 
 export function useAutoBreadcrumbs(): BreadcrumbItem[] {

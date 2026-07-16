@@ -2,6 +2,8 @@ import React from 'react';
 import { Badge, IconButton, keyframes } from '@mui/material';
 import { Notifications as NotificationsIcon } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { useReducedMotion } from '../../hooks/useReducedMotion';
 
 interface NotificationBellProps {
   unreadCount: number;
@@ -15,13 +17,19 @@ const pulse = keyframes`
 
 export const NotificationBell: React.FC<NotificationBellProps> = ({ unreadCount }) => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
+  const reducedMotion = useReducedMotion();
+
+  const ariaLabel = unreadCount > 0
+    ? t('nav.notificationsAria', { count: unreadCount })
+    : t('nav.notifications');
 
   return (
     <IconButton
       onClick={() => navigate('/notifications')}
-      aria-label={`Notificações${unreadCount > 0 ? ` (${unreadCount} não lidas)` : ''}`}
+      aria-label={ariaLabel}
       sx={{
-        animation: unreadCount > 0 ? `${pulse} 2s ease-in-out infinite` : undefined,
+        animation: unreadCount > 0 && !reducedMotion ? `${pulse} 2s ease-in-out infinite` : undefined,
       }}
     >
       <Badge

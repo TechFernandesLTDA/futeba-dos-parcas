@@ -7,7 +7,13 @@ import {
   Person,
   Notifications as NotificationsIcon,
   ChatBubble as MessagesIcon,
+  BarChart,
+  MilitaryTech,
+  LocationOn,
+  Settings as SettingsIcon,
 } from '@mui/icons-material';
+
+export type NavSection = 'primary' | 'more';
 
 export interface NavItem {
   icon: React.ReactElement;
@@ -15,24 +21,34 @@ export interface NavItem {
   path: string;
   matchPaths: string[];
   showInBottomNav: boolean;
+  section: NavSection;
+  /**
+   * Índice do item "primary" que serve de umbrella quando este item "more"
+   * não é visível na superfície de navegação atual (ex.: bottom nav mobile
+   * tem 5 slots). Usado por MobileBottomNav e getSectionFallback para manter
+   * contexto de seção sem destacar o item próprio (que não existe na surface).
+   */
+  parentTab?: number;
 }
 
 export const NAV_ITEMS: NavItem[] = [
+  // ── Primary (tabs) ──────────────────────────────────────────────
   {
     icon: React.createElement(HomeIcon),
     labelKey: 'nav.home',
     path: '/?tab=0',
     matchPaths: [],
     showInBottomNav: true,
+    section: 'primary',
   },
   {
     icon: React.createElement(SportsSoccer),
     labelKey: 'nav.games',
     path: '/?tab=1',
-    // #2226: /map/games e /public-games são conceitualmente Jogos (antes caíam
-    // em Perfil pelo matcher genérico /map, ou no fallback Home).
+    // #2226: /map/games e /public-games são conceitualmente Jogos.
     matchPaths: ['/games', '/game', '/map/games', '/public-games'],
     showInBottomNav: true,
+    section: 'primary',
   },
   {
     icon: React.createElement(Groups),
@@ -40,6 +56,7 @@ export const NAV_ITEMS: NavItem[] = [
     path: '/?tab=2',
     matchPaths: ['/groups', '/group'],
     showInBottomNav: true,
+    section: 'primary',
   },
   {
     icon: React.createElement(EmojiEvents),
@@ -48,33 +65,70 @@ export const NAV_ITEMS: NavItem[] = [
     // #2226/#2233: ranking semanal pertence à Liga, não a Perfil.
     matchPaths: ['/ranking', '/league', '/weekly-ranking'],
     showInBottomNav: true,
+    section: 'primary',
   },
   {
     icon: React.createElement(Person),
     labelKey: 'nav.profile',
     path: '/?tab=4',
-    // #2184: Perfil deixa de ser catch-all genérico. Mantém apenas as rotas
-    // que conceitualmente pertencem ao usuário/perfil. Rotas órfãs (admin, dev,
-    // /search) NÃO destacam Perfil — vide getActiveNavIndex (retorna -1 para
-    // rotas sem seção natural) e getSectionFallback.
+    // #2184/#3726: Perfil deixou de ser catch-all para rotas que agora têm
+    // items próprios na seção "Mais" (settings, statistics, badges, locations).
+    // Mantém apenas rotas que conceitualmente pertencem ao perfil.
     matchPaths: [
       '/profile',
       '/level-journey',
-      '/settings',
       '/about',
       '/whats-new',
-      '/badges',
-      '/statistics',
       '/evolution',
       '/weekly-recap',
       '/head-to-head',
       '/dream-team',
       '/invite-friend',
-      '/map/locations',
-      '/locations',
-      '/location',
     ],
     showInBottomNav: true,
+    section: 'primary',
+  },
+  // ── More (secondary) ────────────────────────────────────────────
+  // #3726/#3727/#3728: rotas que antes eram hardcoded no drawer lg agora são
+  // first-class em NAV_ITEMS. Ambos os drawers (md rail via Popover, lg drawer
+  // via seção "Mais") derivam desta fonte única. Notifications/Messages também
+  // ganharam visibilidade no desktop lg (antes só no rail md).
+  {
+    icon: React.createElement(BarChart),
+    labelKey: 'nav.statistics',
+    path: '/statistics',
+    matchPaths: ['/statistics'],
+    showInBottomNav: false,
+    section: 'more',
+    parentTab: 4,
+  },
+  {
+    icon: React.createElement(MilitaryTech),
+    labelKey: 'nav.badges',
+    path: '/badges',
+    matchPaths: ['/badges'],
+    showInBottomNav: false,
+    section: 'more',
+    parentTab: 4,
+  },
+  {
+    icon: React.createElement(LocationOn),
+    labelKey: 'nav.locations',
+    path: '/locations',
+    // #3735: unifica /locations, /location/*, /map/locations sob um matcher.
+    matchPaths: ['/locations', '/location', '/map/locations'],
+    showInBottomNav: false,
+    section: 'more',
+    parentTab: 4,
+  },
+  {
+    icon: React.createElement(SettingsIcon),
+    labelKey: 'nav.settings',
+    path: '/settings',
+    matchPaths: ['/settings'],
+    showInBottomNav: false,
+    section: 'more',
+    parentTab: 4,
   },
   {
     icon: React.createElement(NotificationsIcon),
@@ -82,6 +136,7 @@ export const NAV_ITEMS: NavItem[] = [
     path: '/notifications',
     matchPaths: ['/notifications'],
     showInBottomNav: false,
+    section: 'more',
   },
   {
     icon: React.createElement(MessagesIcon),
@@ -89,8 +144,12 @@ export const NAV_ITEMS: NavItem[] = [
     path: '/messages',
     matchPaths: ['/messages'],
     showInBottomNav: false,
+    section: 'more',
   },
 ];
+
+export const PRIMARY_NAV_ITEMS = NAV_ITEMS.filter((i) => i.section === 'primary');
+export const MORE_NAV_ITEMS = NAV_ITEMS.filter((i) => i.section === 'more');
 
 /**
  * #2226: resolve o índice da seção ativa em NAV_ITEMS para um path/search.
@@ -134,21 +193,46 @@ export function getActiveNavIndex(pathname: string, search: string): number {
 }
 
 /**
+ * Resolve o índice ativo considerando fallback de parentTab.
+ *
+ * Em superfícies com slots limitados (ex.: bottom nav mobile com 5 items),
+ * items "more" que não estão visíveis devem destacar o parentTab (umbrella).
+ * Em superfícies completas (sidebar desktop), o item próprio é destacado.
+ *
+ * @param includeParentFallback quando true, items "more" resolvem para seu
+ *   parentTab (uso em bottom nav mobile). Quando false, retorna o índice real.
+ */
+export function getActiveNavIndexForSurface(
+  pathname: string,
+  search: string,
+  surfaceSize: number,
+): number | false {
+  const idx = getActiveNavIndex(pathname, search);
+  if (idx < 0) return false;
+  if (idx < surfaceSize) return idx;
+  // Item "more" não visível nesta surface → resolve para parentTab se houver
+  const parentTab = NAV_ITEMS[idx]?.parentTab;
+  if (parentTab !== undefined && parentTab < surfaceSize) return parentTab;
+  return false;
+}
+
+/**
  * #2233/#2224: destino de fallback para o botão "Voltar" quando não há history
  * (deep link, refresh, abertura direta). Mapeia o path atual para a seção raiz
  * coerente, de modo que `NAV_ITEMS.matchPaths` e o fallback contem a mesma
  * história.
- *
- * Diferença para getActiveNavIndex: aqui rotas órfãs (admin, dev, search,
- * owner) recebem um destino seguro (Perfil), enquanto no highlight elas ficam
- * sem seção. O objetivo é nunca jogar o usuário numa rota protegida ou em Home
- * quando há uma seção pai mais natural.
  *
  * @returns path de fallback (ex.: '/?tab=1'), default '/' (Home).
  */
 export function getSectionFallback(pathname: string): string {
   const idx = getActiveNavIndex(pathname, '');
   if (idx >= 0 && idx <= 4) return NAV_ITEMS[idx].path;
+
+  // Items "more" com parentTab → voltam para o tab pai
+  if (idx >= 5) {
+    const parentTab = NAV_ITEMS[idx]?.parentTab;
+    if (parentTab !== undefined) return NAV_ITEMS[parentTab].path;
+  }
 
   // Rotas órfãs sem seção natural → agrupadas em Perfil (acesso via tab=4).
   const profileOrphans = ['/admin', '/dev', '/owner', '/search'];

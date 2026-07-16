@@ -25,6 +25,14 @@ vi.mock('react-i18next', () => ({
         'nav.league': 'Liga',
         'nav.notifications': 'Notificações',
         'nav.profile': 'Perfil',
+        'nav.statistics': 'Estatísticas',
+        'nav.badges': 'Conquistas',
+        'nav.locations': 'Quadras',
+        'nav.settings': 'Configurações',
+        'nav.messages': 'Mensagens',
+        'nav.sectionMore': 'Mais',
+        'nav.sectionPrimary': 'Principal',
+        'nav.search': 'Buscar',
         'common.appName': 'Futeba',
         'a11y.mainNav': 'Navegação principal',
       };
@@ -99,15 +107,13 @@ describe('AppSidebar', () => {
     expect(mockNavigate).toHaveBeenCalledWith('/?tab=1');
   });
 
-  it('navega ao clicar no logo', async () => {
-    const user = userEvent.setup();
+  it('logo é um link para a home', () => {
     renderWithTheme(<AppSidebar />);
 
-    // AppSidebar usa aria-label={t('nav.home')} = 'Início' (não 'Ir para Início'). #2330
+    // #3733: logo agora é um <Link to="/"> real (não Box com onClick).
     const logos = screen.getAllByRole('link', { name: 'Início' });
-    await user.click(logos[0]);
-
-    expect(mockNavigate).toHaveBeenCalledWith('/');
+    expect(logos.length).toBeGreaterThanOrEqual(1);
+    expect(logos[0]).toHaveAttribute('href', '/');
   });
 
   it('renderiza drawer expanded em desktop (lg+)', () => {

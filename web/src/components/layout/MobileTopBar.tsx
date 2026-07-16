@@ -103,9 +103,7 @@ export function MobileTopBar({ unreadCount, title, showBack, onBack, breadcrumbs
           <>
             <IconButton
               aria-label={t('nav.search')}
-              onClick={() => {
-                window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true, ctrlKey: true }));
-              }}
+              onClick={() => window.dispatchEvent(new Event('open-command-palette'))}
               sx={{ color: 'text.primary' }}
             >
               <SearchIcon />

@@ -634,16 +634,13 @@ export const futebaTheme = createTheme({
           maxWidth: '68ch',
         },
         // #2240: foco visível consistente para usuários de teclado (WCAG 2.4.7).
-        // Outline de 3px com offset; a cor vem de --futeba-focus-ring, definida
-        // por tema (light abaixo; dark/OLED sobrescreve em seu MuiCssBaseline)
-        // para garantir contraste >= 3:1 contra o fundo. Aplica a qualquer
-        // elemento focável via :focus-visible (botões, links, Boxes com
-        // role/tabIndex, inputs).
+        // #3734: focus-ring referencia o token de palette (primary.dark) em vez
+        // de hex hardcoded — garante consistência se a palette mudar.
         body: {
-          '--futeba-focus-ring': '#1B5E20',
+          '--futeba-focus-ring': primary.dark,
         },
         ':focus-visible': {
-          outline: '3px solid var(--futeba-focus-ring, #1B5E20)',
+          outline: `3px solid var(--futeba-focus-ring, ${primary.dark})`,
           outlineOffset: '2px',
           borderRadius: `${radii.xs}px`,
         },
@@ -736,7 +733,7 @@ export const futebaDarkTheme = createTheme({
       styleOverrides: {
         ...(futebaTheme.components?.MuiCssBaseline?.styleOverrides as Record<string, unknown>),
         body: {
-          '--futeba-focus-ring': '#86EFAC',
+          '--futeba-focus-ring': '#86EFAC', // = dark theme primary.light
         },
       },
     },
@@ -771,9 +768,10 @@ export const futebaDarkTheme = createTheme({
     MuiButton: {
       styleOverrides: {
         contained: ({ theme }: { theme: import('@mui/material/styles').Theme }) => ({
-          boxShadow: `0 2px 4px ${theme.palette.primary.main}33`,
+          // #3734: alpha() em vez de hex-alpha suffix hack (cross-browser safe).
+          boxShadow: `0 2px 4px ${alpha(theme.palette.primary.main, 0.2)}`,
           '&:hover': {
-            boxShadow: `0 4px 8px ${theme.palette.primary.main}4D`,
+            boxShadow: `0 4px 8px ${alpha(theme.palette.primary.main, 0.3)}`,
           },
         }),
       },

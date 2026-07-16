@@ -293,6 +293,7 @@
     "headToHead": "Head to Head",
     "invite": "Invite",
     "inviteFriend": "Invite Friend",
+    "levelJourney": "Level Journey",
     "live": "Live",
     "location": "Location",
     "owner": "Owner",
@@ -2248,6 +2249,7 @@
     "map": "Map",
     "messages": "Messages",
     "notifications": "Notifications",
+    "notificationsAria": "Notifications ({{count}} unread)",
     "players": "Players",
     "profile": "Profile",
     "ranking": "Ranking",
@@ -2256,7 +2258,8 @@
     "sectionMore": "More",
     "sectionPrimary": "Main",
     "settings": "Settings",
-    "statistics": "Statistics"
+    "statistics": "Statistics",
+    "feed": "Feed"
   },
   "directMessages": {
     "title": "Messages",
