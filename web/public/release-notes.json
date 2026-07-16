@@ -1,7 +1,40 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-16T05:27:17.067Z",
+  "generatedAt": "2026-07-16T06:01:05.561Z",
   "notes": [
+    {
+      "version": "1.54.17",
+      "buildNumber": null,
+      "releaseDate": "2026-07-16",
+      "type": "patch",
+      "showPopup": false,
+      "published": true,
+      "headline": "Deixamos a navegação mais previsível em todas as telas da versão web.",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "Corrigimos o destaque do item ativo nos menus lateral, inferior e compacto.",
+        "Organizamos breadcrumbs de jogos, grupos, estatísticas, configurações e áreas administrativas.",
+        "Eliminamos links intermediários que poderiam levar a páginas inexistentes.",
+        "Padronizamos os textos de navegação em português, inglês e espanhol."
+      ],
+      "fixed": [],
+      "issueRefs": [
+        3751,
+        3758,
+        3759,
+        3760,
+        3761,
+        3763,
+        3770,
+        3771,
+        3772,
+        3773,
+        3775,
+        3776,
+        3778
+      ]
+    },
     {
       "version": "1.54.16",
       "buildNumber": null,

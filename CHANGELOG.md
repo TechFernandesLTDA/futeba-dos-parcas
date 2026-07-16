@@ -254,6 +254,16 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.54.17][web-1.54.17] - 2026-07-16
+
+#### Mudado
+- A resolução da navegação ativa agora usa identificadores canônicos e relações explícitas entre itens pais e filhos.
+- Breadcrumbs automáticos deixam de competir com breadcrumbs mantidos pelas próprias telas.
+- Rotas agrupadoras inexistentes são exibidas sem link, prevenindo navegação para o fallback 404.
+- Foram adicionados contratos automatizados para desktop, mobile e internacionalização.
+
+_Issues: #3751, #3758, #3759, #3760, #3761, #3763, #3770, #3771, #3772, #3773, #3775, #3776, #3778_
+
 ### [1.54.16][web-1.54.16] - 2026-07-16
 
 #### Segurança
@@ -2543,6 +2553,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.54.17]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.17.md
 [web-1.54.16]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.16.md
 [web-1.54.15]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.15.md
 [web-1.54.14]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.14.md
