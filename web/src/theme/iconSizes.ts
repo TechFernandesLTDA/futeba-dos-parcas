@@ -34,6 +34,7 @@ export const avatarSizes = {
   xl: 96,
   xxl: 120,
   sidebar: 36,
+  sidebarCompact: 28,
 } as const;
 
 export type AvatarSize = keyof typeof avatarSizes;

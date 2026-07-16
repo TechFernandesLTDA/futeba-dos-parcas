@@ -9,9 +9,9 @@ import {
   Slide,
   Box,
 } from '@mui/material';
-import { alpha } from '@mui/material/styles';
 import { pageSpacing } from '../../theme/pageTokens';
 import { iconSizes } from '../../theme/iconSizes';
+import { getNavigationGlassStyles } from '../../theme/navigationGlass';
 import { NAV_ITEMS, getActiveNavIndexForItems } from '../../config/navItems';
 import { useToast } from '../../contexts/ToastContext';
 
@@ -40,7 +40,7 @@ export const MobileBottomNav = React.memo(function MobileBottomNav({ children }:
       {children}
       <Slide appear={false} direction="up" in={!trigger}>
         <Paper
-          sx={{
+          sx={(theme) => ({
             position: 'fixed',
             bottom: 0,
             left: 0,
@@ -51,19 +51,11 @@ export const MobileBottomNav = React.memo(function MobileBottomNav({ children }:
             zIndex: 1100,
             display: { xs: 'flex', md: 'none' },
             justifyContent: 'center',
-            backdropFilter: 'blur(12px)',
-            backgroundColor: (theme) => alpha(theme.palette.background.paper, 0.72),
+            ...getNavigationGlassStyles(theme, 'mobile'),
             borderTop: '1px solid',
             borderColor: 'divider',
-            boxShadow: (theme) => theme.shadowsCustom?.navBottom ?? theme.shadowsCustom?.nav,
-            '@supports not (backdrop-filter: blur(12px))': {
-              backgroundColor: 'background.paper',
-            },
-            '@media (prefers-reduced-transparency: reduce)': {
-              backdropFilter: 'none',
-              backgroundColor: 'background.paper',
-            },
-          }}
+            boxShadow: theme.shadowsCustom?.navBottom ?? theme.shadowsCustom?.nav,
+          })}
           elevation={0}
         >
           <BottomNavigation
@@ -88,12 +80,6 @@ export const MobileBottomNav = React.memo(function MobileBottomNav({ children }:
                 minWidth: 44,
                 minHeight: 44,
                 padding: '6px 0',
-              },
-              '& .MuiBottomNavigationAction-label': {
-                fontSize: '0.75rem',
-                '&.Mui-selected': {
-                  fontSize: '0.75rem',
-                },
               },
             }}
           >

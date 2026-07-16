@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { alpha } from '@mui/material/styles';
 import {
   Box,
   Drawer,
@@ -33,6 +32,9 @@ import { useReducedMotion } from '../../hooks/useReducedMotion';
 import { AppLogo } from '../common/AppLogo';
 import { avatarSizes, iconSizes } from '../../theme/iconSizes';
 import { appSidebarLayoutTokens, appSidebarStyles } from './AppSidebar.styles';
+import { md3TypeScale } from '../../theme';
+import { getNavigationGlassStyles } from '../../theme/navigationGlass';
+import { navigationControlTokens } from '../../theme/navigationControls';
 import {
   NAV_ITEMS,
   PRIMARY_NAV_ITEMS,
@@ -76,7 +78,7 @@ export function AppSidebar() {
           ════════════════════════════════════════════════════════════ */}
       <Drawer
         variant="permanent"
-        sx={{
+        sx={(theme) => ({
           display: { xs: 'none', md: 'block', lg: 'none' },
           width: RAIL_WIDTH_RESPONSIVE,
           flexShrink: 0,
@@ -87,16 +89,11 @@ export function AppSidebar() {
             position: 'relative',
             borderRight: 1,
             borderColor: 'divider',
-            backdropFilter: (theme) => theme.palette.mode === 'dark' ? 'none' : 'blur(16px)',
-            backgroundColor: (theme) => theme.palette.mode === 'dark'
-              ? theme.palette.background.paper
-              : alpha(theme.palette.background.paper, 0.8),
-            '@supports not (backdrop-filter: blur(16px))': { backgroundColor: 'background.paper' },
-            '@media (prefers-reduced-transparency: reduce)': { backdropFilter: 'none', backgroundColor: 'background.paper' },
+            ...getNavigationGlassStyles(theme, 'desktop'),
             display: 'flex',
             flexDirection: 'column',
           },
-        }}
+        })}
         aria-label={t('a11y.mainNav')}
       >
         <Box
@@ -121,7 +118,7 @@ export function AppSidebar() {
               <ListItemIcon sx={{ minWidth: 0, justifyContent: 'center', mb: 0.5 }}>
                 <SearchIcon aria-hidden="true" sx={{ fontSize: iconSizes.lg }} />
               </ListItemIcon>
-              <Typography variant="caption" color="text.secondary" fontSize="0.65rem" noWrap>
+              <Typography variant="caption" color="text.secondary" noWrap>
                 {t('nav.search')}
               </Typography>
             </ListItemButton>
@@ -141,7 +138,7 @@ export function AppSidebar() {
               <ListItemIcon sx={{ minWidth: 0, justifyContent: 'center', mb: 0.5, color: 'inherit' }}>
                 <AddIcon aria-hidden="true" sx={{ fontSize: iconSizes.lg }} />
               </ListItemIcon>
-              <Typography variant="caption" color="inherit" fontSize="0.65rem" noWrap>
+              <Typography variant="caption" color="inherit" noWrap>
                 {t('games.createGame')}
               </Typography>
             </ListItemButton>
@@ -175,7 +172,6 @@ export function AppSidebar() {
                       maxWidth: '100%',
                       fontWeight: active ? 600 : 400,
                       color: active ? 'primary.main' : 'text.secondary',
-                      fontSize: '0.65rem',
                     }}
                   >
                     {t(item.labelKey)}
@@ -203,7 +199,7 @@ export function AppSidebar() {
                   <MoreHoriz sx={{ fontSize: iconSizes.lg }} aria-hidden />
                 </Badge>
               </ListItemIcon>
-              <Typography variant="caption" color="text.secondary" fontSize="0.65rem" noWrap>
+              <Typography variant="caption" color="text.secondary" noWrap>
                 {t('nav.sectionMore')}
               </Typography>
             </ListItemButton>
@@ -217,7 +213,7 @@ export function AppSidebar() {
           >
             <Avatar
               src={user?.photoUrl}
-              sx={{ width: 28, height: 28, bgcolor: 'primary.main', color: 'primary.contrastText' }}
+              sx={{ width: avatarSizes.sidebarCompact, height: avatarSizes.sidebarCompact, bgcolor: 'primary.main', color: 'primary.contrastText' }}
             >
               {userInitial}
             </Avatar>
@@ -280,7 +276,7 @@ export function AppSidebar() {
           ════════════════════════════════════════════════════════════ */}
       <Drawer
         variant="permanent"
-        sx={{
+        sx={(theme) => ({
           display: { xs: 'none', lg: 'block' },
           width: DRAWER_WIDTH_RESPONSIVE,
           flexShrink: 0,
@@ -291,16 +287,11 @@ export function AppSidebar() {
             position: 'relative',
             borderRight: 1,
             borderColor: 'divider',
-            backdropFilter: (theme) => theme.palette.mode === 'dark' ? 'none' : 'blur(16px)',
-            backgroundColor: (theme) => theme.palette.mode === 'dark'
-              ? theme.palette.background.paper
-              : alpha(theme.palette.background.paper, 0.8),
-            '@supports not (backdrop-filter: blur(16px))': { backgroundColor: 'background.paper' },
-            '@media (prefers-reduced-transparency: reduce)': { backdropFilter: 'none', backgroundColor: 'background.paper' },
+            ...getNavigationGlassStyles(theme, 'desktop'),
             display: 'flex',
             flexDirection: 'column',
           },
-        }}
+        })}
         aria-label={t('a11y.mainNav')}
       >
         <Box
@@ -360,7 +351,12 @@ export function AppSidebar() {
             >
               {t('nav.search')}...
             </Typography>
-            <Chip label="Ctrl+K" size="small" variant="outlined" sx={{ height: 24, fontSize: '0.75rem', ml: 1 }} />
+            <Chip
+              label="Ctrl+K"
+              size="small"
+              variant="outlined"
+              sx={{ height: navigationControlTokens.shortcutChipHeight, ...md3TypeScale.labelMedium, ml: 1 }}
+            />
           </Button>
         </Box>
         <List sx={{ py: 0.5, flex: 1, minHeight: 0, overflowY: 'auto' }}>
@@ -466,7 +462,12 @@ export function AppSidebar() {
             primary={t('shortcuts.title')}
             primaryTypographyProps={{ variant: 'body2', color: 'text.secondary' }}
           />
-          <Chip label="?" size="small" variant="outlined" sx={{ height: 24, fontSize: '0.75rem' }} />
+          <Chip
+            label="?"
+            size="small"
+            variant="outlined"
+            sx={{ height: navigationControlTokens.shortcutChipHeight, ...md3TypeScale.labelMedium }}
+          />
         </ListItemButton>
         {/* #3733: rodapé permanece visível e leva diretamente à edição do perfil. */}
         <Box sx={{ p: 1, borderTop: 1, borderColor: 'divider' }}>
