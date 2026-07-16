@@ -40,6 +40,13 @@ const primary = {
   contrastText: '#FFFFFF',
 };
 
+const darkPrimary = {
+  main: '#4ADE80',
+  light: '#86EFAC',
+  dark: '#2E7D32',
+  contrastText: '#000000',
+};
+
 const secondary = {
   // Escurecido para AA quando usado como texto/ícone pequeno sobre fundo claro.
   main: '#005FCC',
@@ -634,16 +641,13 @@ export const futebaTheme = createTheme({
           maxWidth: '68ch',
         },
         // #2240: foco visível consistente para usuários de teclado (WCAG 2.4.7).
-        // Outline de 3px com offset; a cor vem de --futeba-focus-ring, definida
-        // por tema (light abaixo; dark/OLED sobrescreve em seu MuiCssBaseline)
-        // para garantir contraste >= 3:1 contra o fundo. Aplica a qualquer
-        // elemento focável via :focus-visible (botões, links, Boxes com
-        // role/tabIndex, inputs).
+        // #3734: focus-ring referencia o token de palette (primary.dark) em vez
+        // de hex hardcoded — garante consistência se a palette mudar.
         body: {
-          '--futeba-focus-ring': '#1B5E20',
+          '--futeba-focus-ring': primary.dark,
         },
         ':focus-visible': {
-          outline: '3px solid var(--futeba-focus-ring, #1B5E20)',
+          outline: `3px solid var(--futeba-focus-ring, ${primary.dark})`,
           outlineOffset: '2px',
           borderRadius: `${radii.xs}px`,
         },
@@ -693,12 +697,7 @@ export const futebaDarkTheme = createTheme({
   shadowsCustom: darkShadowTokens,
   palette: {
     mode: 'dark',
-    primary: {
-      main: '#4ADE80',
-      light: '#86EFAC',
-      dark: '#2E7D32',
-      contrastText: '#000000',
-    },
+    primary: darkPrimary,
     secondary: {
       main: '#5CC8FF',
       light: '#90CAF9',
@@ -717,6 +716,9 @@ export const futebaDarkTheme = createTheme({
     warning: { main: '#FF9E40', light: '#FFCC80', dark: '#8A3A00' },
     success: { main: '#66BB6A', light: '#81C784', dark: '#2E7D32' },
     info: { main: '#5CC8FF', light: '#90CAF9', dark: '#004399' },
+    action: {
+      selected: alpha(darkPrimary.main, 0.18),
+    },
     divider: '#334155',
     // #2754: 7 níveis de surface container dark — valores canônicos de shared/design-tokens.json
     surfaceDim: '#0F1114',
@@ -736,7 +738,7 @@ export const futebaDarkTheme = createTheme({
       styleOverrides: {
         ...(futebaTheme.components?.MuiCssBaseline?.styleOverrides as Record<string, unknown>),
         body: {
-          '--futeba-focus-ring': '#86EFAC',
+          '--futeba-focus-ring': darkPrimary.light,
         },
       },
     },
@@ -771,9 +773,10 @@ export const futebaDarkTheme = createTheme({
     MuiButton: {
       styleOverrides: {
         contained: ({ theme }: { theme: import('@mui/material/styles').Theme }) => ({
-          boxShadow: `0 2px 4px ${theme.palette.primary.main}33`,
+          // #3734: alpha() em vez de hex-alpha suffix hack (cross-browser safe).
+          boxShadow: `0 2px 4px ${alpha(theme.palette.primary.main, 0.2)}`,
           '&:hover': {
-            boxShadow: `0 4px 8px ${theme.palette.primary.main}4D`,
+            boxShadow: `0 4px 8px ${alpha(theme.palette.primary.main, 0.3)}`,
           },
         }),
       },

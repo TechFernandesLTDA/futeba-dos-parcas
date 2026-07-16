@@ -282,6 +282,7 @@
     "cashbox": "Caja",
     "challenges": "Desafíos",
     "create": "Crear",
+    "details": "Detalles",
     "discover": "Descubrir",
     "dreamTeam": "Equipo ideal",
     "events": "Eventos",
@@ -293,6 +294,7 @@
     "headToHead": "Cara a cara",
     "invite": "Invitar",
     "inviteFriend": "Invitar amigo",
+    "levelJourney": "Trayecto de Nivel",
     "live": "En vivo",
     "location": "Lugar",
     "owner": "Propietario",
@@ -2248,6 +2250,8 @@
     "map": "Mapa",
     "messages": "Mensajes",
     "notifications": "Notificaciones",
+    "notificationsAria_one": "Notificaciones (1 sin leer)",
+    "notificationsAria_other": "Notificaciones ({{count}} sin leer)",
     "players": "Jugadores",
     "profile": "Perfil",
     "ranking": "Ranking",
@@ -2256,7 +2260,8 @@
     "sectionMore": "Más",
     "sectionPrimary": "Principal",
     "settings": "Configuración",
-    "statistics": "Estadísticas"
+    "statistics": "Estadísticas",
+    "feed": "Feed"
   },
   "directMessages": {
     "title": "Mensajes",

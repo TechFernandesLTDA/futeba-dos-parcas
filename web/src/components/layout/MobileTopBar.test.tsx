@@ -4,7 +4,15 @@ import { ThemeProvider, createTheme } from '@mui/material';
 import { MobileTopBar } from './MobileTopBar';
 
 vi.mock('react-i18next', () => ({
-  useTranslation: () => ({ t: (key: string) => key === 'common.appName' ? 'Futeba dos Parças' : key }),
+  useTranslation: () => ({
+    t: (key: string, opts?: { count?: number }) => {
+      if (key === 'common.appName') return 'Futeba dos Parças';
+      if (key === 'nav.notificationsAria' && opts?.count !== undefined)
+        return `Notificações (${opts.count} não lidas)`;
+      if (key === 'nav.notifications') return 'Notificações';
+      return key;
+    },
+  }),
 }));
 
 vi.mock('react-router-dom', () => ({

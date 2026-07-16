@@ -11,7 +11,7 @@ function AppBreadcrumbsWrapper() {
   return <AppBreadcrumbs items={items} />;
 }
 
-export function AppLayout() {
+export function AppLayout({ children }: { children?: React.ReactNode }) {
   const isOnline = useOnlineStatus();
   const { t } = useTranslation();
 
@@ -49,7 +49,7 @@ export function AppLayout() {
       >
         <ConnectionStatus isOnline={isOnline} />
         <AppBreadcrumbsWrapper />
-        <Outlet />
+        {children ?? <Outlet />}
       </Box>
     </Box>
   );

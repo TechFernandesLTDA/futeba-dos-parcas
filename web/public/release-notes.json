@@ -1,7 +1,49 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-15T21:45:13.260Z",
+  "generatedAt": "2026-07-16T01:48:59.096Z",
   "notes": [
+    {
+      "version": "1.54.13",
+      "buildNumber": null,
+      "releaseDate": "2026-07-15",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "A navegação ficou mais clara no celular, tablet e desktop, com atalhos consistentes e destaque correto da página atual.",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "Notificações, mensagens, estatísticas, conquistas, quadras e configurações agora aparecem nas superfícies adequadas de navegação.",
+        "O menu “Mais” do tablet indica a seção ativa e informa corretamente quando está aberto.",
+        "Breadcrumbs voltaram a aparecer nas telas de detalhes sem exibir identificadores técnicos.",
+        "Páginas inexistentes mantêm a barra lateral para usuários conectados e exibem um 404 público para visitantes.",
+        "O sino de notificações respeita idioma, singular/plural e a preferência de movimento reduzido.",
+        "Contraste, foco por teclado, ícones e estados selecionados foram refinados nos temas claro e escuro."
+      ],
+      "fixed": [
+        "Corrigido o destaque simultâneo de Perfil com outras seções.",
+        "Corrigidos atalhos ausentes e links de breadcrumb que levavam a rotas inexistentes.",
+        "Corrigidos overflow da sidebar em telas baixas, skeletons de rotas e correspondência frágil de URLs de quadras.",
+        "Preservado o acesso direto à edição do perfil pela foto e pelo nome.",
+        "Navegação consolidada em `NAV_ITEMS`, com matching por rota, fallback por superfície e `aria-current`.",
+        "Rail `md` com popover acessível e drawer `lg` derivados da mesma fonte de dados.",
+        "404 sensível à autenticação e foco pós-navegação compatível com movimento reduzido.",
+        "Breadcrumbs dinâmicos hierárquicos com redirects de pais válidos.",
+        "Tokens de tema, contraste dark-mode e pluralização i18n alinhados."
+      ],
+      "issueRefs": [
+        3726,
+        3727,
+        3728,
+        3729,
+        3730,
+        3731,
+        3732,
+        3733,
+        3734,
+        3735
+      ]
+    },
     {
       "version": "1.54.12",
       "buildNumber": null,

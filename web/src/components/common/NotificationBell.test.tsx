@@ -53,6 +53,11 @@ describe('NotificationBell', () => {
     expect(screen.getByLabelText('Notificações (3 não lidas)')).toBeInTheDocument();
   });
 
+  it('aria-label usa singular correto para uma notificação', () => {
+    renderWithTheme(<NotificationBell unreadCount={1} />);
+    expect(screen.getByLabelText('Notificações (1 não lida)')).toBeInTheDocument();
+  });
+
   it('aria-label não inclui contagem quando zero', () => {
     renderWithTheme(<NotificationBell unreadCount={0} />);
     expect(screen.getByLabelText('Notificações')).toBeInTheDocument();

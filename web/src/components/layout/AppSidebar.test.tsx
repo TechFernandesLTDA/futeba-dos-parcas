@@ -1,23 +1,25 @@
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { beforeEach, describe, it, expect, vi } from 'vitest';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ThemeProvider, createTheme } from '@mui/material';
 import { MemoryRouter } from 'react-router-dom';
 
 const mockNavigate = vi.fn();
+const mockLocation = vi.hoisted(() => ({ pathname: '/', search: '?tab=0' }));
+const mockNotifications = vi.hoisted(() => ({ unreadCount: 0 }));
 
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom');
   return {
     ...actual,
     useNavigate: () => mockNavigate,
-    useLocation: () => ({ pathname: '/', search: '?tab=0' }),
+    useLocation: () => mockLocation,
   };
 });
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (key: string) => {
+    t: (key: string, options?: { count?: number }) => {
       const map: Record<string, string> = {
         'nav.home': 'Início',
         'nav.games': 'Jogos',
@@ -25,11 +27,22 @@ vi.mock('react-i18next', () => ({
         'nav.league': 'Liga',
         'nav.notifications': 'Notificações',
         'nav.profile': 'Perfil',
+        'nav.statistics': 'Estatísticas',
+        'nav.badges': 'Conquistas',
+        'nav.locations': 'Quadras',
+        'nav.settings': 'Configurações',
+        'nav.messages': 'Mensagens',
+        'nav.sectionMore': 'Mais',
+        'nav.sectionPrimary': 'Principal',
+        'nav.search': 'Buscar',
         'profile.editProfile': 'Editar Perfil',
         'settings.defaultUserName': 'Usuário',
         'common.appName': 'Futeba',
         'a11y.mainNav': 'Navegação principal',
       };
+      if (key === 'nav.notificationsAria') {
+        return `Notificações (${options?.count ?? 0} não lidas)`;
+      }
       return map[key] || key;
     },
   }),
@@ -43,7 +56,7 @@ vi.mock('../../contexts/AuthContext', () => ({
 
 vi.mock('../../hooks/useNotifications', () => ({
   useNotifications: () => ({ unreadCount: 0 }),
-  useUnreadNotificationCount: () => ({ unreadCount: 0, loading: false, error: null }),
+  useUnreadNotificationCount: () => ({ unreadCount: mockNotifications.unreadCount, loading: false, error: null }),
 }));
 
 vi.mock('../common/AppLogo', () => ({
@@ -63,6 +76,13 @@ function renderWithTheme(ui: React.ReactElement) {
 }
 
 describe('AppSidebar', () => {
+  beforeEach(() => {
+    mockNavigate.mockClear();
+    mockLocation.pathname = '/';
+    mockLocation.search = '?tab=0';
+    mockNotifications.unreadCount = 0;
+  });
+
   it('renderiza links de navegação', () => {
     renderWithTheme(<AppSidebar />);
 
@@ -101,25 +121,67 @@ describe('AppSidebar', () => {
     expect(mockNavigate).toHaveBeenCalledWith('/?tab=1');
   });
 
-  it('navega ao clicar no logo', async () => {
-    const user = userEvent.setup();
+  it('logo é um link para a home', () => {
     renderWithTheme(<AppSidebar />);
 
-    // AppSidebar usa aria-label={t('nav.home')} = 'Início' (não 'Ir para Início'). #2330
+    // #3733: logo agora é um <Link to="/"> real (não Box com onClick).
     const logos = screen.getAllByRole('link', { name: 'Início' });
-    await user.click(logos[0]);
-
-    expect(mockNavigate).toHaveBeenCalledWith('/');
+    expect(logos.length).toBeGreaterThanOrEqual(1);
+    expect(logos[0]).toHaveAttribute('href', '/');
   });
 
   it('abre a edição do perfil ao clicar no usuário do rodapé', async () => {
     const user = userEvent.setup();
     renderWithTheme(<AppSidebar />);
 
-    const editProfileButton = screen.getByRole('button', { name: 'Jogador — Editar Perfil' });
-    await user.click(editProfileButton);
+    const editProfileButtons = screen.getAllByRole('button', { name: 'Jogador — Editar Perfil' });
+    expect(editProfileButtons).toHaveLength(2);
+    for (const button of editProfileButtons) await user.click(button);
 
-    expect(mockNavigate).toHaveBeenCalledWith('/profile/edit');
+    expect(mockNavigate).toHaveBeenCalledTimes(2);
+    expect(mockNavigate).toHaveBeenNthCalledWith(1, '/profile/edit');
+    expect(mockNavigate).toHaveBeenNthCalledWith(2, '/profile/edit');
+  });
+
+  it('mantém Mais ativo para rotas secundárias no rail', () => {
+    mockLocation.pathname = '/settings';
+    mockLocation.search = '';
+    renderWithTheme(<AppSidebar />);
+
+    expect(screen.getByRole('button', { name: 'Mais' })).toHaveAttribute('aria-current', 'page');
+  });
+
+  it('expõe e fecha o menu Mais com semântica acessível', async () => {
+    const user = userEvent.setup();
+    renderWithTheme(<AppSidebar />);
+
+    const moreButton = screen.getByRole('button', { name: 'Mais' });
+    expect(moreButton).toHaveAttribute('aria-haspopup', 'menu');
+    expect(moreButton).toHaveAttribute('aria-expanded', 'false');
+
+    await user.click(moreButton);
+
+    expect(moreButton).toHaveAttribute('aria-expanded', 'true');
+    expect(moreButton).toHaveAttribute('aria-controls', 'app-sidebar-more-menu');
+    expect(screen.getByRole('menu')).toBeInTheDocument();
+    expect(screen.getAllByRole('menuitem')).toHaveLength(6);
+
+    await user.click(screen.getByRole('menuitem', { name: 'Configurações' }));
+    expect(mockNavigate).toHaveBeenCalledWith('/settings');
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+  });
+
+  it('mantém não lidas visíveis e anunciadas no tablet e desktop', async () => {
+    mockNotifications.unreadCount = 3;
+    const user = userEvent.setup();
+    renderWithTheme(<AppSidebar />);
+
+    const moreButton = screen.getByRole('button', { name: 'Mais' });
+    expect(within(moreButton).getByText('3')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Notificações (3 não lidas)' })).toBeInTheDocument();
+
+    await user.click(moreButton);
+    expect(screen.getByRole('menuitem', { name: 'Notificações (3 não lidas)' })).toBeInTheDocument();
   });
 
   it('renderiza drawer expanded em desktop (lg+)', () => {

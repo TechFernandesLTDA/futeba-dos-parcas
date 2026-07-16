@@ -25,6 +25,9 @@ const ROUTE_LABEL_KEYS: Record<string, string> = {
   '/weekly-recap': 'breadcrumbs.weeklyRecap',
   '/evolution': 'breadcrumbs.evolution',
   '/head-to-head': 'breadcrumbs.headToHead',
+  '/messages': 'nav.messages',
+  '/level-journey': 'breadcrumbs.levelJourney',
+  '/feed': 'nav.feed',
 };
 
 const DYNAMIC_LABEL_KEYS: Record<string, string> = {
@@ -62,6 +65,8 @@ const SUB_ROUTE_LABEL_KEYS: Record<string, string> = {
   'owner': 'breadcrumbs.owner',
   'discover': 'breadcrumbs.discover',
   'map': 'nav.map',
+  'games': 'nav.games',
+  'locations': 'nav.locations',
 };
 
 export function useAutoBreadcrumbs(): BreadcrumbItem[] {
@@ -77,10 +82,7 @@ export function useAutoBreadcrumbs(): BreadcrumbItem[] {
     let accumulatedPath = '';
     const pushItem = (item: BreadcrumbItem) => {
       const lastItem = items[items.length - 1];
-      if (lastItem?.label === item.label) {
-        items[items.length - 1] = item;
-        return;
-      }
+      if (lastItem?.label === item.label && lastItem.to === item.to) return;
       items.push(item);
     };
 
@@ -109,7 +111,7 @@ export function useAutoBreadcrumbs(): BreadcrumbItem[] {
         const parentLabelKey = DYNAMIC_LABEL_KEYS[parentSegment];
         if (parentLabelKey) {
           pushItem({
-            label: t(parentLabelKey),
+            label: t('breadcrumbs.details'),
             to: accumulatedPath,
           });
         }

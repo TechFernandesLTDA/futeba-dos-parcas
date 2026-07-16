@@ -11,7 +11,8 @@ import {
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import { pageSpacing } from '../../theme/pageTokens';
-import { NAV_ITEMS, getActiveNavIndex } from '../../config/navItems';
+import { iconSizes } from '../../theme/iconSizes';
+import { NAV_ITEMS, getActiveNavIndexForSurface } from '../../config/navItems';
 import { useToast } from '../../contexts/ToastContext';
 
 const BOTTOM_NAV_ITEMS = NAV_ITEMS.filter((item) => item.showInBottomNav);
@@ -29,11 +30,9 @@ export const MobileBottomNav = React.memo(function MobileBottomNav({ children }:
   });
 
   const activeValue = React.useMemo(() => {
-    // #2226: fonte única de active-state (getActiveNavIndex). Índices 0-4
-    // coincidem com BOTTOM_NAV_ITEMS; -1 ou notificações (5) → false (nenhum
-    // item destacado), evitando highlight incorreto em rotas órfãs (#2184).
-    const idx = getActiveNavIndex(location.pathname, location.search);
-    return idx >= 0 && idx < BOTTOM_NAV_ITEMS.length ? idx : false;
+    // #3726: items "more" resolvem para parentTab na bottom nav (umbrella).
+    // Ex.: /settings → Perfil (idx 4) no mobile, mas Settings próprio no desktop.
+    return getActiveNavIndexForSurface(location.pathname, location.search, BOTTOM_NAV_ITEMS.length);
   }, [location.pathname, location.search]);
 
   return (
@@ -98,15 +97,18 @@ export const MobileBottomNav = React.memo(function MobileBottomNav({ children }:
               },
             }}
           >
-            {BOTTOM_NAV_ITEMS.map((item) => (
+            {BOTTOM_NAV_ITEMS.map((item, idx) => (
               <BottomNavigationAction
                 key={item.labelKey}
                 label={t(item.labelKey)}
-                icon={item.icon}
+                icon={React.cloneElement(item.icon, { sx: { fontSize: iconSizes.lg } })}
                 aria-label={t(item.labelKey)}
+                aria-current={activeValue === idx ? 'page' : undefined}
                 sx={{
                   '&.Mui-selected': {
                     color: 'primary.main',
+                    bgcolor: 'action.selected',
+                    borderRadius: 2,
                     '& .MuiBottomNavigationAction-label': {
                       fontWeight: 600,
                     },

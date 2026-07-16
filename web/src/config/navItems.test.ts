@@ -1,9 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { getActiveNavIndex, getSectionFallback, NAV_ITEMS } from './navItems';
+import { getActiveNavIndex, getSectionFallback, NAV_ITEMS, getActiveNavIndexForSurface } from './navItems';
 
-// Índices em NAV_ITEMS: 0=Home, 1=Jogos, 2=Grupos, 3=Liga, 4=Perfil, 5=Notif, 6=DMs.
+// Índices em NAV_ITEMS:
+// 0=Home, 1=Jogos, 2=Grupos, 3=Liga, 4=Perfil (primary)
+// 5=Statistics, 6=Badges, 7=Locations, 8=Settings, 9=Notifications, 10=Messages (more)
 
-describe('getActiveNavIndex (#2226)', () => {
+describe('getActiveNavIndex (#2226/#3726)', () => {
   it('destaca Home na raiz sem tab', () => {
     expect(getActiveNavIndex('/', '')).toBe(0);
   });
@@ -32,19 +34,43 @@ describe('getActiveNavIndex (#2226)', () => {
     expect(getActiveNavIndex('/weekly-ranking', '')).toBe(3);
   });
 
-  it('destaca Perfil para badges/estatísticas/settings/locations', () => {
-    expect(getActiveNavIndex('/badges', '')).toBe(4);
-    expect(getActiveNavIndex('/statistics', '')).toBe(4);
-    expect(getActiveNavIndex('/settings/theme', '')).toBe(4);
-    expect(getActiveNavIndex('/map/locations', '')).toBe(4);
-    expect(getActiveNavIndex('/locations', '')).toBe(4);
-    expect(getActiveNavIndex('/location/abc123def456', '')).toBe(4);
+  // #3726: settings/statistics/badges/locations agora têm items próprios (não Perfil)
+  it('destaca Statistics para /statistics', () => {
+    expect(getActiveNavIndex('/statistics', '')).toBe(5);
   });
 
-  it('longest-match: /map/games vence o genérico (não cai em Perfil)', () => {
-    // /map/locations → Perfil; /map/games → Jogos. Nenhum matcher genérico /map.
+  it('destaca Badges para /badges', () => {
+    expect(getActiveNavIndex('/badges', '')).toBe(6);
+  });
+
+  it('destaca Locations para /locations, /location/:id, /map/locations', () => {
+    expect(getActiveNavIndex('/locations', '')).toBe(7);
+    expect(getActiveNavIndex('/location/abc123def456', '')).toBe(7);
+    expect(getActiveNavIndex('/map/locations', '')).toBe(7);
+  });
+
+  it('destaca Settings para /settings/*', () => {
+    expect(getActiveNavIndex('/settings', '')).toBe(8);
+    expect(getActiveNavIndex('/settings/theme', '')).toBe(8);
+  });
+
+  it('destaca Notifications e Messages', () => {
+    expect(getActiveNavIndex('/notifications', '')).toBe(9);
+    expect(getActiveNavIndex('/messages', '')).toBe(10);
+    expect(getActiveNavIndex('/messages/abc123def456', '')).toBe(10);
+  });
+
+  it('destaca Perfil para rotas conceitualmente de perfil', () => {
+    expect(getActiveNavIndex('/profile/abc123def456', '')).toBe(4);
+    expect(getActiveNavIndex('/level-journey', '')).toBe(4);
+    expect(getActiveNavIndex('/about', '')).toBe(4);
+    expect(getActiveNavIndex('/evolution', '')).toBe(4);
+    expect(getActiveNavIndex('/dream-team', '')).toBe(4);
+  });
+
+  it('longest-match: /map/games → Jogos, /map/locations → Locations', () => {
     expect(getActiveNavIndex('/map/games', '')).toBe(1);
-    expect(getActiveNavIndex('/map/locations', '')).toBe(4);
+    expect(getActiveNavIndex('/map/locations', '')).toBe(7);
   });
 
   it('retorna -1 para rotas órfãs sem seção natural (#2184)', () => {
@@ -56,6 +82,30 @@ describe('getActiveNavIndex (#2226)', () => {
 
   it('retorna -1 para tab inexistente', () => {
     expect(getActiveNavIndex('/', '?tab=99')).toBe(-1);
+  });
+});
+
+describe('getActiveNavIndexForSurface (#3726)', () => {
+  it('retorna o índice real para items primary na surface', () => {
+    expect(getActiveNavIndexForSurface('/', '?tab=0', 5)).toBe(0);
+    expect(getActiveNavIndexForSurface('/game/abc', '', 5)).toBe(1);
+  });
+
+  it('items "more" com parentTab resolvem para o tab pai na surface limitada', () => {
+    // Bottom nav tem 5 slots (primary 0-4). Settings (idx 8) → Perfil (idx 4).
+    expect(getActiveNavIndexForSurface('/settings', '', 5)).toBe(4);
+    expect(getActiveNavIndexForSurface('/statistics', '', 5)).toBe(4);
+    expect(getActiveNavIndexForSurface('/badges', '', 5)).toBe(4);
+    expect(getActiveNavIndexForSurface('/locations', '', 5)).toBe(4);
+  });
+
+  it('items "more" sem parentTab (notifications/messages) → false', () => {
+    expect(getActiveNavIndexForSurface('/notifications', '', 5)).toBe(false);
+    expect(getActiveNavIndexForSurface('/messages', '', 5)).toBe(false);
+  });
+
+  it('rotas órfãs → false', () => {
+    expect(getActiveNavIndexForSurface('/admin/users', '', 5)).toBe(false);
   });
 });
 
@@ -74,7 +124,7 @@ describe('getSectionFallback (#2233/#2224)', () => {
     expect(getSectionFallback('/league')).toBe('/?tab=3');
   });
 
-  it('mapeia perfil/badges/estatísticas/settings/locations para Perfil', () => {
+  it('mapeia badges/estatísticas/settings/locations para Perfil via parentTab', () => {
     expect(getSectionFallback('/badges')).toBe('/?tab=4');
     expect(getSectionFallback('/statistics')).toBe('/?tab=4');
     expect(getSectionFallback('/settings')).toBe('/?tab=4');
@@ -93,13 +143,17 @@ describe('getSectionFallback (#2233/#2224)', () => {
     expect(getSectionFallback('/totally-unknown')).toBe('/');
   });
 
-  it('NAV_ITEMS expõe os 7 itens esperados na ordem canônica', () => {
+  it('NAV_ITEMS expõe os 11 itens esperados na ordem canônica', () => {
     expect(NAV_ITEMS.map((i) => i.path)).toEqual([
       '/?tab=0',
       '/?tab=1',
       '/?tab=2',
       '/?tab=3',
       '/?tab=4',
+      '/statistics',
+      '/badges',
+      '/locations',
+      '/settings',
       '/notifications',
       '/messages',
     ]);

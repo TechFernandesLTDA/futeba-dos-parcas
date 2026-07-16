@@ -173,6 +173,7 @@ function RouteFallback() {
   if (path.startsWith('/game/') && path.endsWith('/live')) return <LiveGameSkeleton />;
   if (path.startsWith('/game/')) return <GameDetailSkeleton />;
   if (path.startsWith('/group/') && (path.endsWith('/edit') || path.endsWith('/settings'))) return <FormSkeleton />;
+  if (path.startsWith('/group/') && path.endsWith('/cashbox')) return <ListSkeleton />;
   if (path.startsWith('/group/') && !path.includes('/cashbox')) return <GroupDetailSkeleton />;
   if (path.startsWith('/profile/edit')) return <EditProfileSkeleton />;
   if (path.startsWith('/profile')) return <ProfileScreenSkeleton />;
@@ -180,10 +181,11 @@ function RouteFallback() {
   if (path === '/badges') return <BadgesSkeleton />;
   if (path === '/search') return <GlobalSearchSkeleton />;
   if (path.startsWith('/level-journey')) return <LevelJourneySkeleton />;
-  if (path === '/statistics') return <StatisticSkeleton />;
+  if (path.startsWith('/statistics') || path.startsWith('/evolution') || path.startsWith('/head-to-head')) return <StatisticSkeleton />;
   if (path.startsWith('/weekly-recap')) return <WeeklyRecapSkeleton />;
   if (path === '/about') return <AboutSkeleton />;
-  if (path.startsWith('/locations')) return <CardGridSkeleton />;
+  if (path.startsWith('/location') && (path.endsWith('/create') || path.endsWith('/edit'))) return <FormSkeleton />;
+  if (path.startsWith('/location')) return <CardGridSkeleton />;
   if (path.startsWith('/admin')) return <ListSkeleton />;
   if (path.startsWith('/settings')) return <FormSkeleton />;
   if (path.startsWith('/messages')) return <ListSkeleton />;
@@ -268,6 +270,25 @@ function RootRoute() {
   return (
     <ProtectedRoute>
       <Suspense fallback={<RouteFallback />}><AppLayout /></Suspense>
+    </ProtectedRoute>
+  );
+}
+
+function NotFoundRoute() {
+  const { firebaseUser, loading } = useAuth();
+  const activeUser = firebaseUser ?? auth.currentUser;
+
+  if (loading) return <AppLoadingFallback />;
+
+  if (!activeUser) {
+    return <Suspense fallback={<RouteFallback />}><NotFoundScreen /></Suspense>;
+  }
+
+  return (
+    <ProtectedRoute>
+      <Suspense fallback={<RouteFallback />}>
+        <AppLayout><NotFoundScreen /></AppLayout>
+      </Suspense>
     </ProtectedRoute>
   );
 }
@@ -405,19 +426,27 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 
 function useFocusOnNavigate() {
   const location = useLocation();
+  const reducedMotion = useReducedMotion();
 
   useEffect(() => {
-    const el = document.querySelector('#main-content') as HTMLElement;
-    if (el) {
-      el.setAttribute('tabIndex', '-1');
-      el.focus({ preventScroll: true });
-    }
-    // Registra breadcrumb de navegação para contexto em erros futuros
+    // #3733: defer focus até após a animação do PageTransition (300ms medium).
+    // Antes, o foco era movido imediatamente para conteúdo com opacity:0 +
+    // translateY, deixando leitores de tela focando em conteúdo invisível.
+    const timer = window.setTimeout(() => {
+      const el = document.querySelector('#main-content') as HTMLElement;
+      if (el) {
+        el.setAttribute('tabIndex', '-1');
+        el.focus({ preventScroll: true });
+      }
+    }, reducedMotion ? 0 : 320);
+
     addBreadcrumb('navigation', `Navegou para ${location.pathname}`, {
       pathname: location.pathname,
       search: location.search,
     });
-  }, [location.pathname, location.search]);
+
+    return () => window.clearTimeout(timer);
+  }, [location.pathname, location.search, reducedMotion]);
 }
 
 function AppRoutes() {
@@ -459,6 +488,12 @@ function AppRoutes() {
       <Route path="/games" element={<Navigate to="/?tab=1" replace />} />
       {/* Rotas detail/form com AppLayout (sidebar global desktop) */}
       <Route element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><AppLayout /></Suspense></ProtectedRoute>}>
+        {/* #3730: redirects de parents de rotas dinâmicas — breadcrumbs e links
+            não devem apontar para paths inexistentes (/game, /group, etc.). */}
+        <Route path="/game" element={<Navigate to="/?tab=1" replace />} />
+        <Route path="/group" element={<Navigate to="/?tab=2" replace />} />
+        <Route path="/location" element={<Navigate to="/locations" replace />} />
+        <Route path="/owner" element={<Navigate to="/owner/dashboard" replace />} />
         <Route path="/feed" element={<Suspense fallback={<RouteFallback />}><SocialFeedScreen /></Suspense>} />
         {/* Games */}
         {/* GAP #7 (#1080): VerifiedRoute redireciona unverified pra onboarding em vez de deixar submit falhar silencioso no rules */}
@@ -562,8 +597,8 @@ function AppRoutes() {
       {/* Tactical (full-screen, sem sidebar) */}
       <Route path="/tactical/:gameId" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><TacticalBoardScreen /></Suspense></ProtectedRoute>} />
 
-      {/* Fallback */}
-      <Route path="*" element={<Suspense fallback={<RouteFallback />}><NotFoundScreen /></Suspense>} />
+      {/* #3731: autenticados mantêm AppLayout; visitantes veem 404 público. */}
+      <Route path="*" element={<NotFoundRoute />} />
     </Routes>
     </PageTransition>
     </ProfileGate>
@@ -792,11 +827,14 @@ function GlobalShortcuts({
     };
 
     const handleOpenShortcuts = () => onOpenShortcuts();
+    const handleOpenPalette = () => onOpenPalette();
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('open-shortcuts', handleOpenShortcuts);
+    window.addEventListener('open-command-palette', handleOpenPalette);
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('open-shortcuts', handleOpenShortcuts);
+      window.removeEventListener('open-command-palette', handleOpenPalette);
     };
   }, [
     navigate,

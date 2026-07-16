@@ -282,6 +282,7 @@
     "cashbox": "Cashbox",
     "challenges": "Challenges",
     "create": "Create",
+    "details": "Details",
     "discover": "Discover",
     "dreamTeam": "Dream Team",
     "events": "Events",
@@ -293,6 +294,7 @@
     "headToHead": "Head to Head",
     "invite": "Invite",
     "inviteFriend": "Invite Friend",
+    "levelJourney": "Level Journey",
     "live": "Live",
     "location": "Location",
     "owner": "Owner",
@@ -2248,6 +2250,8 @@
     "map": "Map",
     "messages": "Messages",
     "notifications": "Notifications",
+    "notificationsAria_one": "Notifications (1 unread)",
+    "notificationsAria_other": "Notifications ({{count}} unread)",
     "players": "Players",
     "profile": "Profile",
     "ranking": "Ranking",
@@ -2256,7 +2260,8 @@
     "sectionMore": "More",
     "sectionPrimary": "Main",
     "settings": "Settings",
-    "statistics": "Statistics"
+    "statistics": "Statistics",
+    "feed": "Feed"
   },
   "directMessages": {
     "title": "Messages",

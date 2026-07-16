@@ -35,6 +35,12 @@ describe('AppLayout', () => {
     expect(screen.getByTestId('outlet')).toBeInTheDocument();
   });
 
+  it('renderiza children explícitos no lugar do Outlet', () => {
+    renderWithTheme(<AppLayout><div data-testid="explicit-child">404</div></AppLayout>);
+    expect(screen.getByTestId('explicit-child')).toBeInTheDocument();
+    expect(screen.queryByTestId('outlet')).not.toBeInTheDocument();
+  });
+
   it('renderiza main content com role main', () => {
     renderWithTheme(<AppLayout />);
     expect(screen.getByRole('main')).toBeInTheDocument();
