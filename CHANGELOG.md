@@ -1873,6 +1873,18 @@ _Issues: #1465, #1479, #1421, #1420 · PRs: #1465, #1479, #1421, #1420, #1417_
 
 ## iOS
 
+### [1.6.3][ios-1.6.3] - 2026-07-16
+
+#### Adicionado
+- `PushTokenManager` com armazenamento no Keychain, sequência persistente, retry limitado e timeout.
+- Entitlements de Push Notifications e App Attest separados por configuração de build.
+
+#### Segurança
+- Registro identifica a instalação sem expor o token FCM em coleções públicas ou logs.
+- Tombstones e barreiras transacionais protegem logout, troca de conta e exclusão LGPD contra corridas.
+
+_Issues: #3741_
+
 ### [1.6.2][ios-1.6.2] - 2026-07-14
 
 #### Mudado
@@ -1907,6 +1919,20 @@ _Issues: #3499, #3504, #3509 · PRs: #3511_
 _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
+
+### [1.10.2][functions-1.10.2] - 2026-07-16
+
+#### Adicionado
+- Callables autenticadas e protegidas por App Check para registrar e remover tokens por instalação.
+- Limite de instalações, expiração de 90 dias e limpeza programada de registros antigos.
+- Índice canônico global por hash para deduplicação e resolução de proprietário.
+
+#### Segurança
+- Regras negam acesso direto do cliente às coleções raiz privadas.
+- Sequências, tombstones, preconditions e barreira LGPD tornam as mutações resistentes a concorrência.
+- Senders diretos, em lote e multicast usam resolução canônica fail-closed antes do fallback legado.
+
+_Issues: #3741_
 
 ### [1.10.1][functions-1.10.1] - 2026-07-14
 
@@ -2743,9 +2769,11 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [web-1.26.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.26.2.md
 [web-1.26.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.26.1.md
 [web-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.26.0.md
+[ios-1.6.3]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.3.md
 [ios-1.6.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.2.md
 [ios-1.6.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.1.md
 [ios-1.6.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.0.md
+[functions-1.10.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.10.2.md
 [functions-1.10.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.10.1.md
 [functions-1.10.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.10.0.md
 [functions-1.9.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.9.2.md

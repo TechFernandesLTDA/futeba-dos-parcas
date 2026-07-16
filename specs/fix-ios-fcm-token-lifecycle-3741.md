@@ -1,6 +1,6 @@
 # BUGFIX: ciclo seguro do token FCM no iOS (#3741)
 
-> **Status:** `FIXED`
+> **Status:** `VERIFIED` (escopo automatizado; smoke físico listado como gate operacional)
 > **Severidade:** `CRITICAL`
 > **Data:** 2026-07-16
 > **Issue:** #3741
@@ -85,3 +85,4 @@ tokens canônicos já confiáveis continuam.
 | Data | Alteração |
 |---|---|
 | 2026-07-16 | análise adversarial e implementação iniciadas |
+| 2026-07-16 | P0/P1 resolvidos; 68 testes focados e 976 testes de Rules aprovados; revisão final APPROVE |

@@ -9,10 +9,10 @@
     "version": "1.54.20"
   },
   "ios": {
-    "version": "1.6.2",
-    "buildNumber": 19
+    "version": "1.6.3",
+    "buildNumber": 20
   },
   "functions": {
-    "version": "1.10.1"
+    "version": "1.10.2"
   }
 }
