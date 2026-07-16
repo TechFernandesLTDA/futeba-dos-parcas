@@ -1,9 +1,34 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { renderHook } from '@testing-library/react';
+import { act, renderHook } from '@testing-library/react';
 import { useScrollRestoration } from './useScrollRestoration';
 
 const mockLocation = { pathname: '/home', search: '' };
 let mockNavigationType: 'POP' | 'PUSH' | 'REPLACE' = 'PUSH';
+const originalMatchMedia = window.matchMedia;
+let viewportChangeListener: ((event: MediaQueryListEvent) => void) | undefined;
+let desktopViewport = false;
+
+function setDesktopViewport(matches: boolean) {
+  desktopViewport = matches;
+  window.matchMedia = vi.fn((query: string): MediaQueryList => ({
+    get matches() {
+      return query === '(min-width:900px)' ? desktopViewport : false;
+    },
+    media: query,
+    onchange: null,
+    addEventListener: (_type: string, listener: EventListenerOrEventListenerObject) => {
+      if (query === '(min-width:900px)') {
+        viewportChangeListener = listener as (event: MediaQueryListEvent) => void;
+      }
+    },
+    removeEventListener: vi.fn(),
+    addListener: (listener: (event: MediaQueryListEvent) => void) => {
+      if (query === '(min-width:900px)') viewportChangeListener = listener;
+    },
+    removeListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  }));
+}
 
 vi.mock('react-router-dom', () => ({
   useLocation: () => mockLocation,
@@ -17,12 +42,16 @@ describe('useScrollRestoration', () => {
     mockLocation.pathname = '/home';
     mockLocation.search = '';
     mockNavigationType = 'PUSH';
+    setDesktopViewport(false);
     vi.useFakeTimers();
   });
 
   afterEach(() => {
     vi.useRealTimers();
     vi.clearAllMocks();
+    window.matchMedia = originalMatchMedia;
+    viewportChangeListener = undefined;
+    document.getElementById('main-content')?.remove();
   });
 
   it('rola para o topo quando não há posição salva', () => {
@@ -71,5 +100,57 @@ describe('useScrollRestoration', () => {
     rerender();
     vi.advanceTimersByTime(20);
     expect(window.scrollTo).toHaveBeenCalledTimes(initialScrollCalls);
+  });
+
+  it('observa window no mobile mesmo quando main declara overflow auto', () => {
+    const main = document.createElement('main');
+    main.id = 'main-content';
+    main.style.overflowY = 'auto';
+    document.body.appendChild(main);
+    Object.defineProperty(window, 'scrollY', { value: 64, configurable: true });
+    renderHook(() => useScrollRestoration());
+
+    main.scrollTop = 20;
+    main.dispatchEvent(new Event('scroll'));
+    expect(sessionStorage.getItem('scroll-positions')).toBeNull();
+
+    window.dispatchEvent(new Event('scroll'));
+    expect(JSON.parse(sessionStorage.getItem('scroll-positions') ?? '{}')).toEqual({ '/home': 64 });
+  });
+
+  it('observa main no desktop onde sua altura é limitada pelo layout', () => {
+    setDesktopViewport(true);
+    const main = document.createElement('main');
+    main.id = 'main-content';
+    main.style.overflowY = 'auto';
+    document.body.appendChild(main);
+    renderHook(() => useScrollRestoration());
+
+    main.scrollTop = 88;
+    main.dispatchEvent(new Event('scroll'));
+
+    expect(JSON.parse(sessionStorage.getItem('scroll-positions') ?? '{}')).toEqual({ '/home': 88 });
+  });
+
+  it('rebinda o listener sem saltar ao cruzar o breakpoint', () => {
+    const main = document.createElement('main');
+    main.id = 'main-content';
+    main.style.overflowY = 'auto';
+    document.body.appendChild(main);
+    renderHook(() => useScrollRestoration());
+    // Drena os dois requestAnimationFrame usados para estabilizar o layout.
+    vi.advanceTimersByTime(40);
+    const restorationCalls = vi.mocked(window.scrollTo).mock.calls.length;
+
+    act(() => {
+      desktopViewport = true;
+      viewportChangeListener?.({ matches: true } as MediaQueryListEvent);
+    });
+    vi.advanceTimersByTime(20);
+    expect(window.scrollTo).toHaveBeenCalledTimes(restorationCalls);
+
+    main.scrollTop = 52;
+    main.dispatchEvent(new Event('scroll'));
+    expect(JSON.parse(sessionStorage.getItem('scroll-positions') ?? '{}')).toEqual({ '/home': 52 });
   });
 });

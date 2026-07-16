@@ -557,6 +557,15 @@ export const futebaTheme = createTheme({
           minHeight: '100%',
           overflowX: 'clip',
           colorScheme: 'light',
+          WebkitTapHighlightColor: 'transparent',
+        },
+        // O ripple do MuiButtonBase continua sendo o feedback primário. Links e
+        // controles HTML puros recebem um estado pressionado sem o flash cinza
+        // proprietário do Safari (#3765).
+        '@media (hover: none) and (pointer: coarse)': {
+          'a[href]:not(.MuiButtonBase-root):active, button:not(.MuiButtonBase-root):active, [role="button"]:not(.MuiButtonBase-root):active': {
+            opacity: 0.72,
+          },
         },
         'html[data-resolved-theme="light"]': {
           colorScheme: 'light',

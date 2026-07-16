@@ -30,6 +30,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUnreadNotificationCount } from '../../hooks/useNotifications';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
+import { useHapticFeedback } from '../../hooks/useHapticFeedback';
 import { AppLogo } from '../common/AppLogo';
 import { avatarSizes, iconSizes } from '../../theme/iconSizes';
 import { appSidebarLayoutTokens, appSidebarStyles } from './AppSidebar.styles';
@@ -57,7 +58,13 @@ export function AppSidebar() {
   const { unreadCount } = useUnreadNotificationCount(user?.id);
   const userInitial = user?.name?.charAt(0).toUpperCase() || 'U';
   const reducedMotion = useReducedMotion();
+  const { trigger: triggerHaptic } = useHapticFeedback();
   const [moreAnchor, setMoreAnchor] = useState<HTMLElement | null>(null);
+
+  const navigateWithHaptic = React.useCallback((path: string) => {
+    triggerHaptic('light');
+    navigate(path);
+  }, [navigate, triggerHaptic]);
 
   const activeIndex = React.useMemo(
     () => getActiveNavIndex(location.pathname, location.search),
@@ -102,6 +109,7 @@ export function AppSidebar() {
         <Box
           component={RouterLink}
           to="/"
+          onClick={() => triggerHaptic('light')}
           sx={{ px: appSidebarLayoutTokens.railPaddingX, py: 1.5, display: 'flex', justifyContent: 'center', textDecoration: 'none', color: 'inherit' }}
           aria-label={t('nav.home')}
         >
@@ -128,7 +136,7 @@ export function AppSidebar() {
           </Tooltip>
           <Tooltip title={t('games.createGame')} placement="right">
             <ListItemButton
-              onClick={() => navigate('/game/create')}
+              onClick={() => navigateWithHaptic('/game/create')}
               sx={{
                 flexDirection: 'column',
                 py: 1.25,
@@ -156,7 +164,7 @@ export function AppSidebar() {
                 <ListItemButton
                   selected={active}
                   aria-current={active ? 'page' : undefined}
-                  onClick={() => navigate(resolveNavItemPath(item, user?.role))}
+                  onClick={() => navigateWithHaptic(resolveNavItemPath(item, user?.role))}
                   sx={appSidebarStyles.railNavigationButton}
                 >
                   <ListItemIcon
@@ -187,7 +195,10 @@ export function AppSidebar() {
           {/* #3728: "Mais" no rail md — abre Popover com items secundários */}
           <Tooltip title={t('nav.sectionMore')} placement="right">
             <ListItemButton
-              onClick={(e) => setMoreAnchor(e.currentTarget)}
+              onClick={(e) => {
+                triggerHaptic('light');
+                setMoreAnchor(e.currentTarget);
+              }}
               selected={moreOpen || moreActive}
               aria-current={moreActive ? 'page' : undefined}
               aria-haspopup="menu"
@@ -211,7 +222,7 @@ export function AppSidebar() {
         </List>
         <Box sx={{ px: appSidebarLayoutTokens.railPaddingX, py: 1, borderTop: 1, borderColor: 'divider' }}>
           <ListItemButton
-            onClick={() => navigate('/profile/edit')}
+            onClick={() => navigateWithHaptic('/profile/edit')}
             sx={{ borderRadius: 2, justifyContent: 'center' }}
             aria-label={`${user?.name || t('settings.defaultUserName')} — ${t('profile.editProfile')}`}
           >
@@ -254,7 +265,7 @@ export function AppSidebar() {
                   ? t('nav.notificationsAria', { count: unreadCount })
                   : undefined}
                 onClick={() => {
-                  navigate(resolveNavItemPath(item, user?.role));
+                  navigateWithHaptic(resolveNavItemPath(item, user?.role));
                   setMoreAnchor(null);
                 }}
                 sx={{
@@ -306,6 +317,7 @@ export function AppSidebar() {
         <Box
           component={RouterLink}
           to="/"
+          onClick={() => triggerHaptic('light')}
           sx={{
             p: 1.5,
             display: 'flex',
@@ -331,7 +343,7 @@ export function AppSidebar() {
             variant="contained"
             fullWidth
             startIcon={<AddIcon />}
-            onClick={() => navigate('/game/create')}
+            onClick={() => navigateWithHaptic('/game/create')}
             sx={{ borderRadius: 6 }}
           >
             {t('games.createGame')}
@@ -375,7 +387,7 @@ export function AppSidebar() {
                 <ListItemButton
                   selected={active}
                   aria-current={active ? 'page' : undefined}
-                  onClick={() => navigate(resolveNavItemPath(item, user?.role))}
+                  onClick={() => navigateWithHaptic(resolveNavItemPath(item, user?.role))}
                   sx={{
                     borderRadius: 2,
                     mx: 0.75,
@@ -421,7 +433,7 @@ export function AppSidebar() {
                   aria-label={isNotifItem && unreadCount > 0
                     ? t('nav.notificationsAria', { count: unreadCount })
                     : undefined}
-                  onClick={() => navigate(resolveNavItemPath(item, user?.role))}
+                  onClick={() => navigateWithHaptic(resolveNavItemPath(item, user?.role))}
                   sx={{
                     borderRadius: 2,
                     mx: 0.75,
@@ -471,7 +483,7 @@ export function AppSidebar() {
         {/* #3733: rodapé permanece visível e leva diretamente à edição do perfil. */}
         <Box sx={{ p: 1, borderTop: 1, borderColor: 'divider' }}>
           <ListItemButton
-            onClick={() => navigate('/profile/edit')}
+            onClick={() => navigateWithHaptic('/profile/edit')}
             aria-label={`${user?.name || t('settings.defaultUserName')} — ${t('profile.editProfile')}`}
             sx={{
               minHeight: 64,

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { getSectionFallback } from '../config/navItems';
+import { useReducedMotion } from './useReducedMotion';
 
 interface UseSwipeBackOptions {
   /** Desabilita o gesto (ex.: em telas raiz onde não há para onde voltar). */
@@ -9,6 +10,38 @@ interface UseSwipeBackOptions {
   edgeThreshold?: number;
   /** Distância horizontal mínima para confirmar o "voltar" (px). Default 80. */
   distanceThreshold?: number;
+}
+
+function asElement(target: EventTarget | null): Element | null {
+  if (target instanceof Element) return target;
+  return target instanceof Node ? target.parentElement : null;
+}
+
+/**
+ * Evita que o gesto global roube interações horizontais locais. O atributo de
+ * opt-out cobre componentes cujo overflow não é mensurável no touchstart
+ * (carrosséis virtualizados, por exemplo).
+ */
+export function shouldIgnoreSwipeBackTarget(target: EventTarget | null): boolean {
+  let element = asElement(target);
+
+  while (element && element !== document.documentElement) {
+    if (element.hasAttribute('data-swipe-back-ignore')) return true;
+
+    const styles = window.getComputedStyle(element);
+    const touchAction = styles.getPropertyValue('touch-action') || styles.touchAction;
+    if (touchAction.split(/\s+/).includes('pan-x')) return true;
+
+    const overflowX = styles.overflowX;
+    const canScrollHorizontally =
+      (overflowX === 'auto' || overflowX === 'scroll') &&
+      element.scrollWidth > element.clientWidth;
+    if (canScrollHorizontally) return true;
+
+    element = element.parentElement;
+  }
+
+  return false;
 }
 
 /**
@@ -42,12 +75,12 @@ export function useSwipeBack({
   const [isSwiping, setIsSwiping] = useState(false);
   const [dragProgress, setDragProgress] = useState(0);
 
-  const [reducedMotion] = useState(() =>
-    typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  );
+  const reducedMotion = useReducedMotion();
 
   useEffect(() => {
-    if (disabled) return;
+    // Sem listeners: evita um swipe invisível que navega de surpresa para quem
+    // pediu redução de movimento (#3768).
+    if (disabled || reducedMotion) return;
 
     const cleanup = () => {
       trackingRef.current = false;
@@ -58,7 +91,7 @@ export function useSwipeBack({
     };
 
     const onTouchStart = (e: TouchEvent) => {
-      if (e.touches.length !== 1) {
+      if (e.touches.length !== 1 || shouldIgnoreSwipeBackTarget(e.target)) {
         trackingRef.current = false;
         return;
       }
@@ -74,7 +107,6 @@ export function useSwipeBack({
 
     const onTouchMove = (e: TouchEvent) => {
       if (!trackingRef.current || startXRef.current === null || startYRef.current === null) return;
-      if (reducedMotion) return;
 
       const touch = e.touches[0];
       const dx = touch.clientX - startXRef.current;
@@ -87,6 +119,10 @@ export function useSwipeBack({
     };
 
     const onTouchEnd = (e: TouchEvent) => {
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        cleanup();
+        return;
+      }
       if (!trackingRef.current || startXRef.current === null || startYRef.current === null) {
         cleanup();
         return;
@@ -119,6 +155,7 @@ export function useSwipeBack({
       window.removeEventListener('touchmove', onTouchMove);
       window.removeEventListener('touchend', onTouchEnd);
       window.removeEventListener('touchcancel', onTouchCancel);
+      cleanup();
     };
   }, [disabled, edgeThreshold, distanceThreshold, navigate, location.key, location.pathname, reducedMotion]);
 

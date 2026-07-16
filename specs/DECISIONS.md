@@ -28,6 +28,32 @@ Registro de decisões técnicas e de produto. Cada entrada deve ter contexto, al
 
 ## Decisões Registradas
 
+### [2026-07-16] Separar o contêiner de scroll Web por breakpoint do layout
+
+**Contexto:** `#main-content` tem `overflow: auto` em todos os tamanhos, mas só
+possui altura limitada em md+. Em xs/sm ele cresce com o conteúdo e quem rola é
+a janela. Inferir o contêiner apenas pelo `overflow` conectava o listener ao
+elemento errado no mobile.
+
+**Alternativas consideradas:**
+1. Testar `scrollHeight > clientHeight` ao montar. Pode falhar antes do conteúdo
+   assíncrono terminar de carregar e muda o contêiner conforme o tamanho da tela.
+2. Limitar também o main no mobile. Alteraria a arquitetura de scroll, safe area
+   e comportamento do chrome móvel.
+3. Usar a mesma fronteira md (900 px) do layout: janela em xs/sm e main em md+.
+
+**Decisão:** Adotar a opção 3 com media query reativa. Um id explícito continua
+tendo prioridade para consumidores especializados.
+
+**Justificativa:** O contrato acompanha diretamente o CSS existente, não depende
+do momento em que conteúdo assíncrono chega e não cria um segundo scroller no
+mobile.
+
+**Consequências:** A troca de orientação/breakpoint rebinda o listener. Mudanças
+futuras na fronteira md precisam manter hook e layout alinhados.
+
+**Relacionado:** spec `BUGFIX_2026-07-16_web-mobile-gesture-feedback.md`, issue #3762.
+
 ### [2026-06-25] iOS Liquid Glass: manter chrome translúcida no ComposeApp e adiar bridge SwiftUI nativa
 
 **Contexto:** A auditoria do épico iOS (#2670) mostrou que a chrome atual do
