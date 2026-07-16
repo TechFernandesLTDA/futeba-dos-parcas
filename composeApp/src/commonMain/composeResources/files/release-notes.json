@@ -1,7 +1,27 @@
 {
   "platform": "ios",
-  "generatedAt": "2026-07-16T08:34:34.992Z",
+  "generatedAt": "2026-07-16T09:00:12.470Z",
   "notes": [
+    {
+      "version": "1.6.3",
+      "buildNumber": 20,
+      "releaseDate": "2026-07-16",
+      "type": "patch",
+      "showPopup": false,
+      "published": false,
+      "headline": "O iPhone mantém o endereço de notificações atualizado com mais segurança, inclusive após renovação, troca de conta e logout.",
+      "highlights": [],
+      "added": [],
+      "improved": [],
+      "fixed": [
+        "Tokens renovados passam a ser registrados automaticamente para o usuário e o aparelho corretos.",
+        "Logout offline deixa de bloquear a interface e impede que uma resposta atrasada restaure um registro antigo.",
+        "Trocas de conta no mesmo aparelho não reutilizam o destino de notificação da conta anterior."
+      ],
+      "issueRefs": [
+        3741
+      ]
+    },
     {
       "version": "1.6.2",
       "buildNumber": 19,
