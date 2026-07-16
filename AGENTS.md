@@ -8,7 +8,7 @@
 
 - **Private** repo (`TechFernandesLTDA/futeba-dos-parcas`). External collaborators need explicit access.
 - **Squash-merge only** on `master`. `delete_branch_on_merge: true`.
-- **Branch protection**: 1 approving review required, code owner review required, no force-push, no deletions.
+- **Branch protection**: PR + 4 CI gates required; human/CODEOWNERS review is advisory (0 approvals required); no force-push or deletions.
 - **Dependabot**: monthly schedule, limit 2 PRs, label `dependencies`. Auto-bump PRs get closed — deps handled in batch via `npm audit fix`.
 - **Node 22** required (see `.nvmrc`). Use `nvm use` before working in `web/` or `functions/`.
 - **Firebase Hosting URL**: `https://futebadosparcas.web.app` (SPA, all routes → `/index.html`).

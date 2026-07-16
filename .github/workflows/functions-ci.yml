@@ -204,8 +204,8 @@ jobs:
         run: sed -E 's#^SF:(\./)?src/#SF:functions/src/#' coverage/lcov.info > "$RUNNER_TEMP/lcov.norm"
 
       # --fail-under=80: sai != 0 quando a cobertura do diff < 80% (fica vermelho
-      # no PR). A branch protection nao exige status checks hoje
-      # (required_status_checks=null), entao o gate e educativo/informativo, mas
+      # no PR). Cloud Functions CI nao integra os quatro contextos obrigatorios
+      # da protecao de master, entao este gate e educativo/informativo, mas
       # precisa falhar o job para o sinal aparecer.
       - name: Diff-coverage gate (>= 80% nas linhas do PR)
         if: github.event_name == 'pull_request'

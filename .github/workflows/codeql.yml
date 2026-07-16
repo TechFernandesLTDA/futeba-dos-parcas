@@ -5,9 +5,9 @@ on:
   # javascript-typescript (extrator Java/Kotlin desabilitado neste runner —
   # ver matrix abaixo). Rodar em PRs que não tocam JS/TS analisa ZERO arquivos
   # relevantes e só ocupa o runner self-hosted sem produzir sinal útil.
-  # Seguro: branch protection de master NÃO exige status checks
-  # (required_status_checks=null) — pular o check num PR não-JS/TS não trava o
-  # merge. O cron semanal abaixo mantém a varredura COMPLETA como safety net.
+  # Seguro: CodeQL não integra os quatro contextos obrigatórios da proteção de
+  # master — pular este check num PR não-JS/TS não trava o merge. O cron semanal
+  # abaixo mantém a varredura COMPLETA como safety net.
   push:
     branches: [ "master", "develop" ]
     paths:

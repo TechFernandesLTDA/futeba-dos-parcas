@@ -1,6 +1,6 @@
 # Project Map
 
-Last updated: 2026-06-28
+Last updated: 2026-07-16
 
 This is the operational map for the Futeba dos Parcas repository. Use it when you need to decide where a change belongs, which commands validate it, and which boundaries must not be crossed.
 
@@ -8,7 +8,7 @@ This is the operational map for the Futeba dos Parcas repository. Use it when yo
 
 - Repository: `TechFernandesLTDA/futeba-dos-parcas`
 - Default branch: `master`
-- Merge policy: squash merge only, one approving review and code owner review required.
+- Merge policy: squash merge only; PR and 4 CI gates required; human/CODEOWNERS review advisory (0 approvals required).
 - Current GitHub status: see `docs/GITHUB_STATUS.md`.
 - Production web URL: `https://futebadosparcas.web.app`
 - Runtime for `web/` and `functions/`: Node 22 from `.nvmrc`.

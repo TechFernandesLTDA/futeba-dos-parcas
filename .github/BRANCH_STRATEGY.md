@@ -1,11 +1,13 @@
 # Branch Strategy — Futeba dos Parças
 
-Last updated: 2026-06-28
+Last updated: 2026-07-16
 
 ## Current Model
 
 `master` is the production/default branch. Work is done through short-lived
-branches and merged by squash PR after review and CI.
+branches and merged by squash PR after the required CI gates. Human and
+CODEOWNERS reviews remain available, but are advisory while the organization
+has a single eligible repository member.
 
 ```text
 master
@@ -25,17 +27,23 @@ explicitly reintroduces it.
 
 | Branch | Purpose | Protection |
 |--------|---------|------------|
-| `master` | Production/default branch | PR required, 1 approval, CODEOWNERS review, stale review dismissal |
+| `master` | Production/default branch | PR required, 4 CI gates, 0 mandatory approvals, advisory CODEOWNERS |
 
 `master` protection:
 
-- Required approving reviews: 1
-- CODEOWNERS review: enabled
-- Dismiss stale reviews: enabled
+- Required approving reviews: 0
+- CODEOWNERS file: valid and advisory; review enforcement disabled
+- Dismiss stale reviews: disabled (there are no required approvals)
+- Required CI gates: `Lighthouse CI`, `Validate PR`, `Android CI Gate`, `Web CI Gate`
 - Force pushes: disabled
 - Branch deletion: disabled
 - Squash merge only
 - Delete branch on merge: enabled
+
+This single-owner policy avoids paid-seat coupling while preserving the actual
+quality boundary: every change still goes through a PR and the four mandatory
+CI gates. Automated and voluntary human reviews may add findings, but do not
+block a green PR. Admin bypass must not be used to skip required CI.
 
 ## Branch Prefixes
 
