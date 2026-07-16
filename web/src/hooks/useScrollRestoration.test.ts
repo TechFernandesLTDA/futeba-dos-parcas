@@ -207,16 +207,12 @@ describe('useScrollRestoration', () => {
   });
 
   it('faz flush ao entrar em background antes que a aba mobile seja descartada', () => {
-    const main = document.createElement('main');
-    main.id = 'main-content';
-    main.style.overflowY = 'auto';
-    document.body.appendChild(main);
     const setItemSpy = vi.spyOn(Storage.prototype, 'setItem');
     vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden');
+    Object.defineProperty(window, 'scrollY', { value: 135, configurable: true });
 
     const { unmount } = renderHook(() => useScrollRestoration());
-    main.scrollTop = 135;
-    main.dispatchEvent(new Event('scroll'));
+    window.dispatchEvent(new Event('scroll'));
     document.dispatchEvent(new Event('visibilitychange'));
 
     expect(setItemSpy).toHaveBeenCalledTimes(1);
@@ -225,6 +221,5 @@ describe('useScrollRestoration', () => {
     expect(setItemSpy).toHaveBeenCalledTimes(1);
 
     unmount();
-    main.remove();
   });
 });
