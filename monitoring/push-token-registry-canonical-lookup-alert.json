@@ -1,0 +1,23 @@
+{
+  "displayName": "Push token registry: consulta canônica indisponível",
+  "documentation": {
+    "content": "A consulta do registro canônico de tokens falhou e o envio entrou em modo fail-closed. Verifique Firestore, permissões e erros das Functions antes de reativar entregas legadas.",
+    "mimeType": "text/markdown"
+  },
+  "combiner": "OR",
+  "conditions": [
+    {
+      "displayName": "Falha na consulta canônica de push tokens",
+      "conditionMatchedLog": {
+        "filter": "resource.type=\"cloud_run_revision\" AND severity>=ERROR AND jsonPayload.metric_type=\"push_token_registry_canonical_lookup_unavailable\""
+      }
+    }
+  ],
+  "alertStrategy": {
+    "notificationRateLimit": {
+      "period": "300s"
+    },
+    "autoClose": "1800s"
+  },
+  "enabled": true
+}

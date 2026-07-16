@@ -111,10 +111,38 @@ export const onUserDeleted = auth
         // lançaria auth/user-not-found. Os refresh tokens já foram invalidados
         // pelo próprio Firebase ao deletar a conta.
 
-        // 1. Remove users/{uid} (user profile + fcm_token implícito)
+        // 1. Remove users/{uid} imediatamente. O registro push lê esse doc na
+        // mesma transação de escrita; portanto uma chamada em voo conflita,
+        // repete e passa a falhar antes de recriar dados após o cleanup LGPD.
         const userRef = db.doc(`users/${uid}`);
-        await queueDelete(userRef);
+        await userRef.delete();
+        queuedDeletePaths.add(userRef.path);
         logger.info(`[ACCOUNT_CLEANUP] Deletando users/${uid} (inclui fcm_token)`);
+
+        // Tokens push privados também são dados pessoais e ficam fora de
+        // users/{uid}. Paginar evita deixar instalações residuais após o
+        // direito de exclusão LGPD.
+        for (const collectionName of ["push_tokens", "push_token_devices"]) {
+          let deletedPushRecords = 0;
+          while (true) {
+            const pushSnapshot = await db.collection(collectionName)
+              .where("userId", "==", uid)
+              .limit(500)
+              .get();
+            if (pushSnapshot.empty) break;
+            for (const document of pushSnapshot.docs) {
+              await queueDelete(document.ref);
+            }
+            deletedPushRecords += pushSnapshot.size;
+            if (pushSnapshot.size < 500) break;
+          }
+          if (deletedPushRecords > 0) {
+            logger.info(
+              `[ACCOUNT_CLEANUP] Deletando ${deletedPushRecords} ` +
+              `${collectionName} do usuário ${uid}`
+            );
+          }
+        }
 
         // 2. Remove users_private/{uid} (PII data + cpfHash lookup)
         const userPrivateRef = db.doc(`users_private/${uid}`);

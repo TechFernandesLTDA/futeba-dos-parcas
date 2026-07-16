@@ -41,6 +41,7 @@ targets:
       - path: iosApp
         excludes:
           - "**/*.md"
+          - "**/*.entitlements"
     resources:
       - path: iosApp/Info.plist
         type: file
@@ -54,11 +55,16 @@ targets:
       - framework: ../composeApp/build/bin/iosSimulatorArm64/debugFramework/ComposeApp.framework
         embed: true
         codeSign: true
+    attributes:
+      SystemCapabilities:
+        com.apple.Push:
+          enabled: 1
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.futebadosparcas
         PRODUCT_NAME: iosApp
         INFOPLIST_FILE: iosApp/Info.plist
+        CODE_SIGN_ENTITLEMENTS: iosApp/iosApp.entitlements
         SUPPORTED_PLATFORMS: "iphonesimulator iphoneos"
         FRAMEWORK_SEARCH_PATHS:
           - "$(inherited)"
@@ -74,12 +80,23 @@ targets:
           - "ComposeApp"
         SWIFT_OBJC_BRIDGING_HEADER: ""
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+      configs:
+        Debug:
+          APS_ENVIRONMENT: development
+          APP_ATTEST_ENVIRONMENT: development
+        Release:
+          APS_ENVIRONMENT: production
+          APP_ATTEST_ENVIRONMENT: production
     # Sem `info:` block — Info.plist mantido manualmente (privacy descriptions,
     # CFBundleURLTypes pra OAuth, UISupportedInterfaceOrientations, etc).
     # `info:` faz xcodegen REGENERAR o plist, sobrescrevendo essas keys.
     preBuildScripts:
       - script: |
           # Build dos frameworks KMP antes de compilar iOS
+          if [ "$SKIP_KMP_BUILD" = "YES" ]; then
+            echo "Using KMP frameworks prepared by CI"
+            exit 0
+          fi
           cd "$SRCROOT/.."
           ./gradlew :shared:linkDebugFrameworkIosSimulatorArm64
           ./gradlew :composeApp:linkDebugFrameworkIosSimulatorArm64
@@ -87,6 +104,27 @@ targets:
         outputFiles:
           - "$(SRCROOT)/../shared/build/bin/iosSimulatorArm64/debugFramework/shared.framework"
           - "$(SRCROOT)/../composeApp/build/bin/iosSimulatorArm64/debugFramework/ComposeApp.framework"
+
+  iosAppTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      # Os testes iOS legados ainda não pertenciam a um target e alguns não
+      # compilam no Xcode atual. Este target focado cobre o ciclo push sem
+      # ampliar a manutenção para suites fora do escopo da #3741.
+      - path: iosAppTests/Services/PushTokenManagerTests.swift
+    dependencies:
+      - target: iosApp
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.futebadosparcas.tests
+        INFOPLIST_FILE: iosAppTests/Info.plist
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/iosApp.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/iosApp"
+        BUNDLE_LOADER: "$(TEST_HOST)"
+        FRAMEWORK_SEARCH_PATHS:
+          - "$(inherited)"
+          - "$(SRCROOT)/../shared/build/bin/iosSimulatorArm64/debugFramework"
+          - "$(SRCROOT)/../composeApp/build/bin/iosSimulatorArm64/debugFramework"
 
 # Esquema explícito para garantir que xcodegen crie .xcscheme compartilhado.
 # Sem isto, Xcode 26.x usa esquema "auto" que falha no xcodebuild CLI.
@@ -99,6 +137,8 @@ schemes:
       config: Debug
     test:
       config: Debug
+      targets:
+        - iosAppTests
     profile:
       config: Release
     analyze:

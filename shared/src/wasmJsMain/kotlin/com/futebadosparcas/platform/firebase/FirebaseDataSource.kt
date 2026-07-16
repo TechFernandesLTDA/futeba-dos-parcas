@@ -84,6 +84,12 @@ actual class FirebaseDataSource {
     actual fun getCurrentUserId(): String? = null
     actual suspend fun updateUser(userId: String, updates: Map<String, Any>): Result<Unit> = stubResult()
     actual suspend fun updateUserPiiViaCallable(updates: Map<String, Any>): Result<Unit> = stubResult()
+    actual suspend fun registerPushToken(registration: PushTokenRegistration): Result<Unit> = stubResult()
+    actual suspend fun unregisterPushToken(
+        deviceId: String,
+        sequence: Long,
+        token: String?
+    ): Result<Unit> = stubResult()
     actual suspend fun submitMvpVoteViaCallable(vote: MVPVote): Result<Unit> = stubResult()
     actual suspend fun concludeMvpVotingViaCallable(gameId: String): Result<Unit> = stubResult()
     actual suspend fun searchUsers(query: String, limit: Int): Result<List<User>> = stubResult()

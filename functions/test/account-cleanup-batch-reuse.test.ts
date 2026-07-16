@@ -47,7 +47,12 @@ const mockBatch = jest.fn().mockImplementation(() => {
 });
 
 const mockDocGet = jest.fn();
-const mockDocRef = jest.fn().mockReturnValue({get: mockDocGet});
+const mockDocDelete = jest.fn().mockResolvedValue(undefined);
+const mockDocRef = jest.fn().mockImplementation((path: string) => ({
+  path,
+  get: mockDocGet,
+  delete: mockDocDelete,
+}));
 
 // Factory de query mock: retorna docs simulados em páginas
 function makePaginatedQuery(totalDocs: number, pageSize = 500) {
@@ -172,6 +177,8 @@ describe("onUserDeleted — regressão #1280 batch reuse", () => {
     await expect(
       onUserDeleted(makeUserRecord())
     ).resolves.not.toThrow();
+    expect(mockCollection).toHaveBeenCalledWith("push_tokens");
+    expect(mockCollection).toHaveBeenCalledWith("push_token_devices");
   });
 
   test("não lança para usuário com exatamente 450 docs (1 commit, sem recriação)", async () => {
@@ -367,7 +374,8 @@ describe("onUserDeleted — regressão #2323 loop infinito anonimização", () =
       let collectionGetCalls = 0;
       mockCollectionGet.mockImplementation(() => {
         collectionGetCalls++;
-        if (collectionGetCalls <= 12) {
+        // Duas consultas adicionais cobrem push_tokens/push_token_devices.
+        if (collectionGetCalls <= 14) {
           return Promise.resolve({
             docs: [],
             empty: true,

@@ -109,7 +109,44 @@ import {
 } from "../src/notifications";
 import { resetDb } from "../src/_db";
 import { shouldNotifyUser } from "../src/notifications/helpers";
+import { __testing as helperTokenTesting } from "../src/notifications/helpers";
+import { __testing as batchTokenTesting } from "../src/notifications/batch-sender";
 import { getNotificationSettings } from "../src/notifications/preferences";
+
+function crossAccountTokenDb() {
+  const canonicalSnapshot = {
+    exists: true,
+    get: (field: string) => field === "userId" ? "user-b" : undefined,
+    data: () => ({userId: "user-b"}),
+  };
+  return {
+    collection: jest.fn((name: string) => ({
+      doc: jest.fn(() => ({
+        id: "doc-id",
+        get: jest.fn().mockResolvedValue({
+          exists: name === "users",
+          data: () => ({fcm_token: "shared-token"}),
+        }),
+        update: mockDocUpdate,
+      })),
+      where: jest.fn().mockReturnValue({
+        get: jest.fn().mockResolvedValue(name === "users" ? {
+          empty: false,
+          docs: [{
+            id: "user-a",
+            data: () => ({fcm_token: "shared-token"}),
+          }],
+        } : {empty: true, docs: []}),
+      }),
+      add: mockDocAdd,
+    })),
+    getAll: jest.fn().mockResolvedValue([canonicalSnapshot]),
+    batch: jest.fn(() => ({
+      set: jest.fn(), update: jest.fn(), delete: jest.fn(),
+      commit: jest.fn().mockResolvedValue(undefined),
+    })),
+  };
+}
 
 // ==========================================
 // NOTIFICATION TYPE ENUM
@@ -673,5 +710,29 @@ describe("getNotificationSettings normalização (#2477)", () => {
     expect(s.pushEnabled).toBe(true);
     expect(s.gameReminders).toBe(true);
     expect(s.muteUntil).toBeNull();
+  });
+});
+
+describe("proteção contra token legado reatribuído A → B", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    const admin = require("firebase-admin");
+    admin.firestore.mockReturnValue(crossAccountTokenDb());
+    resetDb();
+  });
+
+  test("fluxo direto não resolve o token de B para destino A", async () => {
+    await expect(helperTokenTesting.getUserFcmTokens("user-a"))
+      .resolves.toEqual([]);
+  });
+
+  test("fluxo multicast não mapeia o token de B para destino A", async () => {
+    await expect(helperTokenTesting.getUserFcmTokensWithMapping(["user-a"]))
+      .resolves.toEqual([]);
+  });
+
+  test("fluxo batch não inclui o token de B para destino A", async () => {
+    await expect(batchTokenTesting.fetchTokensInBatch(["user-a"]))
+      .resolves.toEqual(new Map());
   });
 });

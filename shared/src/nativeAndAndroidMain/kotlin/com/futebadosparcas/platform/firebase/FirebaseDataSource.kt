@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDateTime
@@ -737,6 +738,38 @@ actual class FirebaseDataSource actual constructor() {
         }
     }
 
+    actual suspend fun registerPushToken(registration: PushTokenRegistration): Result<Unit> {
+        return try {
+            Firebase.functions(FUNCTIONS_REGION)
+                .httpsCallable("registerPushToken")
+                .invoke(registration.toPayload())
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    actual suspend fun unregisterPushToken(
+        deviceId: String,
+        sequence: Long,
+        token: String?
+    ): Result<Unit> {
+        return try {
+            require(sequence > 0) { "Sequência da instalação inválida" }
+            val payload = mutableMapOf<String, Any>(
+                "deviceId" to deviceId.trim(),
+                "sequence" to sequence
+            )
+            token?.trim()?.takeIf { it.isNotEmpty() }?.let { payload["token"] = it }
+            Firebase.functions(FUNCTIONS_REGION)
+                .httpsCallable("unregisterPushToken")
+                .invoke(payload)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     actual suspend fun submitMvpVoteViaCallable(vote: MVPVote): Result<Unit> {
         return try {
             if (vote.category == VoteCategory.CUSTOM) {
@@ -1128,7 +1161,19 @@ actual class FirebaseDataSource actual constructor() {
     }
 
     actual suspend fun logout() {
-        auth.signOut()
+        // No iOS, o AppDelegate persiste os identificadores nas mesmas chaves
+        // nativas. Assim o fluxo KMP real remove esta instalação enquanto a
+        // sessão ainda está autenticada. Falha de rede não bloqueia logout.
+        try {
+            PushTokenLifecycleStore.nextForUnregister()?.let { stored ->
+                withTimeoutOrNull(2_000) {
+                    unregisterPushToken(stored.deviceId, stored.sequence)
+                        .onSuccess { PushTokenLifecycleStore.clearToken() }
+                }
+            }
+        } finally {
+            auth.signOut()
+        }
     }
 
     // ========== GROUPS ==========

@@ -58,6 +58,13 @@ export {
   createFakeGameNotifications,
 } from "./callable";
 
+// Registro privado de tokens por instalação
+export {
+  cleanupExpiredPushTokens,
+  registerPushToken,
+  unregisterPushToken,
+} from "./push-token-registry";
+
 // Batch sender (já existia como módulo separado)
 export {
   enqueueNotification,

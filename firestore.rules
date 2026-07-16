@@ -4053,6 +4053,16 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // Tokens FCM e sequências de instalação são credenciais privadas,
+    // acessíveis exclusivamente pelas Cloud Functions via Admin SDK.
+    match /push_tokens/{tokenHash} {
+      allow read, write: if false;
+    }
+
+    match /push_token_devices/{deviceHash} {
+      allow read, write: if false;
+    }
+
     // ============================================
     // COLECAO: metrics (metricas de performance e monitoramento)
     // ============================================
