@@ -254,6 +254,16 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.54.15][web-1.54.15] - 2026-07-16
+
+#### Mudado
+- `ThemeContext` passa a usar `light` como fallback para instalações novas e valores inválidos.
+- `LaunchPage` recebe um boundary MUI claro e sincroniza `color-scheme` e `theme-color` durante sua montagem.
+- `AuthProvider` faz heartbeat de `getIdToken(false)` aos 55 minutos, com retomada por `visibilitychange`, sem reads adicionais de perfil.
+- Cobertura do padrão claro, preservação explícita de `system`, landing sob tema pai escuro e renovação sem chamadas FCM.
+
+_Issues: #3740_
+
 ### [1.54.14][web-1.54.14] - 2026-07-16
 
 #### Adicionado
@@ -2525,6 +2535,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.54.15]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.15.md
 [web-1.54.14]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.14.md
 [web-1.54.13]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.13.md
 [web-1.54.12]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.12.md

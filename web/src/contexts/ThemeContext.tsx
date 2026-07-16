@@ -3,7 +3,9 @@ import { ThemeProvider as MuiThemeProvider, CssBaseline } from '@mui/material';
 import { futebaTheme, futebaDarkTheme, futebaDarkOledTheme } from '../theme';
 
 export type ThemeMode = 'light' | 'dark' | 'oled' | 'system';
-const DEFAULT_THEME_MODE: ThemeMode = 'system';
+// Novas instalações começam no tema claro. Preferências já salvas continuam
+// sendo respeitadas, inclusive `system`, dark e OLED.
+const DEFAULT_THEME_MODE: ThemeMode = 'light';
 const THEME_MODES: ThemeMode[] = ['light', 'dark', 'oled', 'system'];
 
 function parseThemeMode(value: string | null): ThemeMode {
@@ -14,11 +16,13 @@ interface ThemeContextType {
   mode: ThemeMode;
   toggleTheme: () => void;
   setMode: (mode: ThemeMode) => void;
+  setDocumentThemeOverride: (mode: 'light' | null) => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
+  const [documentThemeOverride, setDocumentThemeOverride] = useState<'light' | null>(null);
   const [mode, setMode] = useState<ThemeMode>(() => {
     try {
       return parseThemeMode(localStorage.getItem('themeMode'));
@@ -70,17 +74,25 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   }, [mode]);
 
   useEffect(() => {
-    const resolvedMode = mode === 'oled' ? 'dark' : isDark ? 'dark' : 'light';
+    const resolvedMode = documentThemeOverride ?? (mode === 'oled' ? 'dark' : isDark ? 'dark' : 'light');
+    const resolvedTheme = resolvedMode === 'dark' ? futebaDarkTheme : futebaTheme;
+    const themeColorElements = Array.from(
+      document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]'),
+    );
     document.documentElement.dataset.theme = mode;
     document.documentElement.dataset.resolvedTheme = resolvedMode;
     document.documentElement.style.colorScheme = resolvedMode;
+    themeColorElements.forEach((element) => {
+      element.content = resolvedTheme.palette.primary.main;
+      element.removeAttribute('media');
+    });
 
     return () => {
       delete document.documentElement.dataset.theme;
       delete document.documentElement.dataset.resolvedTheme;
       document.documentElement.style.removeProperty('color-scheme');
     };
-  }, [isDark, mode]);
+  }, [documentThemeOverride, isDark, mode]);
 
   const toggleTheme = useCallback(() => {
     setMode(current => {
@@ -92,7 +104,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo<ThemeContextType>(() => ({
-    mode, toggleTheme, setMode,
+    mode, toggleTheme, setMode, setDocumentThemeOverride,
   }), [mode, toggleTheme]);
 
   // A typography MD3 já usa clamp() responsivo (#2751), tornando

@@ -36,6 +36,9 @@ const USER_ROLES: UserRole[] = ['PLAYER', 'FIELD_OWNER', 'ADMIN'];
 const INVITE_REQUIRED_MESSAGE = 'Para criar sua conta, abra um convite de outro membro do Futeba dos Parças.';
 const INVITE_INVALID_MESSAGE = 'Convite inválido ou expirado. Peça um novo convite para quem te chamou.';
 const AUTH_STARTUP_WATCHDOG_MS = 8_000;
+// ID tokens do Firebase duram uma hora. Aos 55 minutos, getIdToken(false)
+// renova apenas quando o token está vencido ou a até cinco minutos de vencer.
+const AUTH_TOKEN_REFRESH_INTERVAL_MS = 55 * 60 * 1_000;
 
 const loadValidateInviteCode = async (): Promise<typeof validateInviteCodeType> => {
   const module = await import('../services/cloudFunctions');
@@ -186,6 +189,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const prevUserRef = useRef<FirebaseUser | null>(null);
   const firebaseUserRef = useRef(firebaseUser);
   firebaseUserRef.current = firebaseUser;
+  const sessionUid = firebaseUser?.uid ?? null;
+  const lastTokenRefreshAtRef = useRef(Date.now());
   const lastClaimSyncUidRef = useRef<string | null>(null);
   const pendingInviteRef = useRef<{ code: string; source: string } | null>(null);
 
@@ -315,7 +320,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Listen for auth state changes
   useEffect(() => {
     // FIX #584/H4: era onAuthStateChanged async sem cancellation guard.
-    // Token refresh / sign-out+sign-in rápido disparava 2 fetchUserData
+    // Trocas rápidas de conta disparavam 2 fetchUserData
     // concorrentes, last-resolve-wins → user object stale.
     // Agora: rastreia uid em closure local; descarta resultados se uid
     // mudou enquanto o fetch estava pendente.
@@ -448,6 +453,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       unsubscribe();
     };
   }, [t]);
+
+  // Mantém a sessão Firebase ativa sem reautenticar, recarregar o perfil ou
+  // tocar no registro do Firebase Cloud Messaging. O token FCM identifica a
+  // instalação do navegador e tem ciclo de vida independente do ID token Auth.
+  useEffect(() => {
+    lastTokenRefreshAtRef.current = Date.now();
+
+    const refreshSessionToken = async () => {
+      const currentUser = auth.currentUser ?? firebaseUserRef.current;
+      if (!currentUser || !navigator.onLine) return;
+
+      try {
+        await currentUser.getIdToken(false);
+        lastTokenRefreshAtRef.current = Date.now();
+        logger.debug('ID token da sessão verificado e renovado quando necessário.');
+      } catch (refreshError) {
+        // Falha transitória não encerra a sessão: o SDK tenta novamente na
+        // próxima chamada autenticada ou no próximo intervalo.
+        logger.warn('Não foi possível renovar o ID token da sessão.', refreshError);
+      }
+    };
+
+    const intervalId = window.setInterval(
+      () => void refreshSessionToken(),
+      AUTH_TOKEN_REFRESH_INTERVAL_MS,
+    );
+    const handleVisibilityChange = () => {
+      if (
+        document.visibilityState === 'visible' &&
+        Date.now() - lastTokenRefreshAtRef.current >= AUTH_TOKEN_REFRESH_INTERVAL_MS
+      ) {
+        void refreshSessionToken();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [sessionUid]);
 
   // Sign in with email/password
   const signIn = useCallback(async (email: string, password: string) => {

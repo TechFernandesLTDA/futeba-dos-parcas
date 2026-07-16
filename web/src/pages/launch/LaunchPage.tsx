@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useLayoutEffect } from 'react';
 import {
   Accordion,
   AccordionDetails,
@@ -11,8 +11,9 @@ import {
   Link,
   Stack,
   Typography,
-  useTheme,
+  useTheme as useMuiTheme,
 } from '@mui/material';
+import { ThemeProvider as MuiThemeProvider } from '@mui/material/styles';
 import {
   CheckCircle,
   EmojiEvents,
@@ -25,6 +26,8 @@ import {
 } from '@mui/icons-material';
 import { Link as RouterLink } from 'react-router-dom';
 import { trackEvent } from '../../utils/analytics';
+import { futebaTheme } from '../../theme';
+import { useTheme as useAppTheme } from '../../contexts/ThemeContext';
 
 const benefits = [
   {
@@ -81,8 +84,8 @@ const faqs = [
   },
 ];
 
-export function LaunchPage() {
-  const theme = useTheme();
+function LaunchPageContent() {
+  const theme = useMuiTheme();
 
   useEffect(() => {
     trackEvent('landing_viewed', { page: 'launch' });
@@ -97,7 +100,11 @@ export function LaunchPage() {
   };
 
   return (
-    <Box sx={{ minHeight: '100dvh', bgcolor: 'background.default' }}>
+    <Box
+      data-testid="public-landing"
+      data-resolved-theme={theme.palette.mode}
+      sx={{ minHeight: '100dvh', bgcolor: 'background.default', color: 'text.primary', colorScheme: 'light' }}
+    >
       <Box
         component="header"
         sx={{
@@ -487,5 +494,20 @@ export function LaunchPage() {
         </Container>
       </Box>
     </Box>
+  );
+}
+
+export function LaunchPage() {
+  const { setDocumentThemeOverride } = useAppTheme();
+
+  useLayoutEffect(() => {
+    setDocumentThemeOverride('light');
+    return () => setDocumentThemeOverride(null);
+  }, [setDocumentThemeOverride]);
+
+  return (
+    <MuiThemeProvider theme={futebaTheme}>
+      <LaunchPageContent />
+    </MuiThemeProvider>
   );
 }
