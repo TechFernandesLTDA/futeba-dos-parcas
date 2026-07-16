@@ -12,6 +12,38 @@ interface UseSwipeBackOptions {
   distanceThreshold?: number;
 }
 
+function asElement(target: EventTarget | null): Element | null {
+  if (target instanceof Element) return target;
+  return target instanceof Node ? target.parentElement : null;
+}
+
+/**
+ * Evita que o gesto global roube interações horizontais locais. O atributo de
+ * opt-out cobre componentes cujo overflow não é mensurável no touchstart
+ * (carrosséis virtualizados, por exemplo).
+ */
+export function shouldIgnoreSwipeBackTarget(target: EventTarget | null): boolean {
+  let element = asElement(target);
+
+  while (element && element !== document.documentElement) {
+    if (element.hasAttribute('data-swipe-back-ignore')) return true;
+
+    const styles = window.getComputedStyle(element);
+    const touchAction = styles.getPropertyValue('touch-action') || styles.touchAction;
+    if (touchAction.split(/\s+/).includes('pan-x')) return true;
+
+    const overflowX = styles.overflowX;
+    const canScrollHorizontally =
+      (overflowX === 'auto' || overflowX === 'scroll') &&
+      element.scrollWidth > element.clientWidth;
+    if (canScrollHorizontally) return true;
+
+    element = element.parentElement;
+  }
+
+  return false;
+}
+
 /**
  * #2194: gesto de swipe-back (arrastar da borda esquerda → direita) para
  * paridade com a navegação nativa iOS/Android no mobile web.
@@ -46,7 +78,9 @@ export function useSwipeBack({
   const reducedMotion = useReducedMotion();
 
   useEffect(() => {
-    if (disabled) return;
+    // Sem listeners: evita um swipe invisível que navega de surpresa para quem
+    // pediu redução de movimento (#3768).
+    if (disabled || reducedMotion) return;
 
     const cleanup = () => {
       trackingRef.current = false;
@@ -57,7 +91,7 @@ export function useSwipeBack({
     };
 
     const onTouchStart = (e: TouchEvent) => {
-      if (e.touches.length !== 1) {
+      if (e.touches.length !== 1 || shouldIgnoreSwipeBackTarget(e.target)) {
         trackingRef.current = false;
         return;
       }
@@ -74,7 +108,6 @@ export function useSwipeBack({
 
     const onTouchMove = (e: TouchEvent) => {
       if (!trackingRef.current || startXRef.current === null || startYRef.current === null) return;
-      if (reducedMotion) return;
 
       const touch = e.touches[0];
       const dx = touch.clientX - startXRef.current;
@@ -86,6 +119,10 @@ export function useSwipeBack({
     };
 
     const onTouchEnd = (e: TouchEvent) => {
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        cleanup();
+        return;
+      }
       if (!trackingRef.current || startXRef.current === null || startYRef.current === null) {
         cleanup();
         return;
