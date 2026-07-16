@@ -32,12 +32,19 @@ final class KeychainPushTokenStore: PushTokenSecureStoring {
         guard let data = token.data(using: .utf8) else { return }
         let attributes = [kSecValueData as String: data]
         let status = SecItemUpdate(baseQuery as CFDictionary, attributes as CFDictionary)
-        guard status == errSecItemNotFound else { return }
+        if status == errSecSuccess { return }
+        guard status == errSecItemNotFound else {
+            NSLog("Push token Keychain update failed with status %d", status)
+            return
+        }
 
         var item = baseQuery
         item[kSecValueData as String] = data
         item[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
-        SecItemAdd(item as CFDictionary, nil)
+        let addStatus = SecItemAdd(item as CFDictionary, nil)
+        if addStatus != errSecSuccess {
+            NSLog("Push token Keychain insert failed with status %d", addStatus)
+        }
     }
 
     func clearToken() {

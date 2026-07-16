@@ -86,3 +86,4 @@ tokens canônicos já confiáveis continuam.
 |---|---|
 | 2026-07-16 | análise adversarial e implementação iniciadas |
 | 2026-07-16 | P0/P1 resolvidos; 68 testes focados e 976 testes de Rules aprovados; revisão final APPROVE |
+| 2026-07-16 | revisão do PR removeu cast inseguro de Keychain no KMP, ampliou timeout de cold start e adicionou observabilidade fail-closed |

@@ -66,7 +66,7 @@ final class PushTokenManager {
         currentUserId: @escaping () -> String? = { Auth.auth().currentUser?.uid },
         scheduleRetry: @escaping (TimeInterval, @escaping () -> Void) -> Void = Self.schedule,
         scheduleTimeout: @escaping (TimeInterval, @escaping () -> Void) -> Void = Self.schedule,
-        requestTimeout: TimeInterval = 1.5,
+        requestTimeout: TimeInterval = 10.0,
         logoutTimeout: TimeInterval = 2.0
     ) {
         self.caller = caller

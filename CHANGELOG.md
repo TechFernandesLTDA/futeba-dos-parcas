@@ -1877,6 +1877,8 @@ _Issues: #1465, #1479, #1421, #1420 · PRs: #1465, #1479, #1421, #1420, #1417_
 
 #### Adicionado
 - `PushTokenManager` com armazenamento no Keychain, sequência persistente, retry limitado e timeout.
+- Timeout de registro tolera cold starts do backend; falhas do Keychain são registradas sem expor o token.
+- O KMP remove o registro no servidor, mas preserva no Keychain o identificador da instalação para reassociação segura no próximo login.
 - Entitlements de Push Notifications e App Attest separados por configuração de build.
 
 #### Segurança
@@ -1931,6 +1933,7 @@ _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 - Regras negam acesso direto do cliente às coleções raiz privadas.
 - Sequências, tombstones, preconditions e barreira LGPD tornam as mutações resistentes a concorrência.
 - Senders diretos, em lote e multicast usam resolução canônica fail-closed antes do fallback legado.
+- Falhas da consulta canônica geram alerta operacional sem registrar tokens ou IDs sensíveis.
 
 _Issues: #3741_
 

@@ -394,7 +394,11 @@ export async function filterPushTokensByCanonicalOwner(
       const canonicalOwner = canonical.get(token);
       return canonicalOwner == null || canonicalOwner === expectedOwner;
     }));
-  } catch {
+  } catch (error) {
+    logger.warn(
+      "[PUSH_TOKEN] Canonical lookup unavailable; applying fail-closed.",
+      error
+    );
     return new Map([...tokenOwners].filter(([token]) =>
       trustedCanonicalTokens.has(token)
     ));
@@ -412,8 +416,9 @@ export async function removeRegisteredPushToken(
   token: string
 ): Promise<void> {
   const firestore = db();
+  const tokenHash = hashPushToken(token);
   const tokenRef = firestore.collection(TOKENS_COLLECTION)
-    .doc(hashPushToken(token));
+    .doc(tokenHash);
   await firestore.runTransaction(async (transaction) => {
     const snapshot = await transaction.get(tokenRef);
     if (!snapshot.exists || snapshot.get("userId") !== userId) return;
@@ -422,7 +427,7 @@ export async function removeRegisteredPushToken(
       const deviceRef = firestore.collection(DEVICES_COLLECTION)
         .doc(deviceIdHash);
       const deviceSnapshot = await transaction.get(deviceRef);
-      if (deviceSnapshot.get("tokenHash") === hashPushToken(token)) {
+      if (deviceSnapshot.get("tokenHash") === tokenHash) {
         transaction.set(deviceRef, {
           userId,
           deviceIdHash,
