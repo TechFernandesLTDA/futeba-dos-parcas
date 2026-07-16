@@ -1,7 +1,25 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-16T04:29:15.386Z",
+  "generatedAt": "2026-07-16T05:27:17.067Z",
   "notes": [
+    {
+      "version": "1.54.16",
+      "buildNumber": null,
+      "releaseDate": "2026-07-16",
+      "type": "patch",
+      "showPopup": false,
+      "published": true,
+      "headline": "Reforçamos a segurança das conexões em tempo real do Futeba dos Parças.",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "Atualizamos um componente interno de comunicação usado pelos serviços Firebase para sua versão segura mais recente."
+      ],
+      "fixed": [],
+      "issueRefs": [
+        3739
+      ]
+    },
     {
       "version": "1.54.15",
       "buildNumber": null,
