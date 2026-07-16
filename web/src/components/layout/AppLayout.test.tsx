@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { ThemeProvider, createTheme } from '@mui/material';
 import { MemoryRouter } from 'react-router-dom';
 
@@ -13,14 +13,28 @@ vi.mock('react-router-dom', async () => {
 });
 
 import { AppLayout } from './AppLayout';
+import { AppBreadcrumbs } from './AppBreadcrumbs';
+import { useAppBreadcrumbOverride } from '../../hooks/useAutoBreadcrumbs';
 
 const theme = createTheme();
 
-function renderWithTheme(ui: React.ReactElement) {
+function renderWithTheme(ui: React.ReactElement, initialEntries = ['/']) {
   return render(
     <ThemeProvider theme={theme}>
-      <MemoryRouter>{ui}</MemoryRouter>
+      <MemoryRouter initialEntries={initialEntries}>{ui}</MemoryRouter>
     </ThemeProvider>
+  );
+}
+
+function DetailBreadcrumb() {
+  useAppBreadcrumbOverride();
+  return (
+    <AppBreadcrumbs
+      items={[
+        { label: 'Grupos', to: '/?tab=2' },
+        { label: 'Parças da Vila' },
+      ]}
+    />
   );
 }
 
@@ -68,5 +82,18 @@ describe('AppLayout', () => {
 
     expect(container.firstChild).toContainElement(sidebar);
     expect(container.firstChild).toContainElement(main);
+  });
+
+  it('mantém somente o breadcrumb da tela quando há override com nome real', async () => {
+    renderWithTheme(
+      <AppLayout><DetailBreadcrumb /></AppLayout>,
+      ['/group/abcdefghijk'],
+    );
+
+    await waitFor(() => {
+      expect(screen.getAllByLabelText('Breadcrumb')).toHaveLength(1);
+    });
+    expect(screen.getByText('Parças da Vila')).toBeInTheDocument();
+    expect(screen.queryByText('Detalhes')).not.toBeInTheDocument();
   });
 });

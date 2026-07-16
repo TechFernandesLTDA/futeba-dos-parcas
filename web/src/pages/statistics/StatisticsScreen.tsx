@@ -35,11 +35,13 @@ import { ErrorState } from '../../components/common/ErrorState';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import { AppBreadcrumbs } from '../../components/layout/AppBreadcrumbs';
+import { useAppBreadcrumbOverride } from '../../hooks/useAutoBreadcrumbs';
 import { TeamBadge } from '../../components/team/TeamBadge';
 import { DonutChart } from '../../components/charts/DonutChart';
 
 export const StatisticsScreen: React.FC = () => {
   const { t } = useTranslation();
+  useAppBreadcrumbOverride();
   useDocumentTitle(t('page.title.statistics'));
   const navigate = useNavigate();
   const theme = useTheme();

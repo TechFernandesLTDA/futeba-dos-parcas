@@ -1,7 +1,24 @@
-import { useMemo } from 'react';
+import { createContext, useContext, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
 import type { BreadcrumbItem } from '../components/layout/AppBreadcrumbs';
+
+export type RegisterBreadcrumbOverride = () => () => void;
+
+export const BreadcrumbOverrideContext = createContext<RegisterBreadcrumbOverride | null>(null);
+
+/**
+ * Registers a screen-owned breadcrumb trail. While registered, AppLayout hides
+ * its path-derived trail so the document exposes exactly one breadcrumb nav.
+ */
+export function useAppBreadcrumbOverride(enabled = true) {
+  const registerOverride = useContext(BreadcrumbOverrideContext);
+
+  useEffect(() => {
+    if (!enabled || !registerOverride) return;
+    return registerOverride();
+  }, [enabled, registerOverride]);
+}
 
 const ROUTE_LABEL_KEYS: Record<string, string> = {
   '/': 'nav.home',
@@ -28,7 +45,14 @@ const ROUTE_LABEL_KEYS: Record<string, string> = {
   '/messages': 'nav.messages',
   '/level-journey': 'breadcrumbs.levelJourney',
   '/feed': 'nav.feed',
+  '/admin': 'breadcrumbs.admin',
+  '/dev': 'breadcrumbs.devTools',
+  '/players': 'breadcrumbs.players',
 };
+
+// Parent groupings without a route of their own must never become links. In
+// particular, `/map` and `/admin` currently fall through to the 404 route.
+const NON_LINKABLE_PATHS = new Set(['/map', '/admin', '/players']);
 
 const DYNAMIC_LABEL_KEYS: Record<string, string> = {
   'game': 'breadcrumbs.game',
@@ -37,6 +61,7 @@ const DYNAMIC_LABEL_KEYS: Record<string, string> = {
   'player': 'breadcrumbs.player',
   'user': 'breadcrumbs.user',
   'profile': 'nav.profile',
+  'messages': 'nav.messages',
 };
 
 const SUB_ROUTE_LABEL_KEYS: Record<string, string> = {
@@ -67,7 +92,23 @@ const SUB_ROUTE_LABEL_KEYS: Record<string, string> = {
   'map': 'nav.map',
   'games': 'nav.games',
   'locations': 'nav.locations',
+  'dashboard': 'breadcrumbs.dashboard',
+  'onboarding': 'breadcrumbs.onboarding',
+  'post': 'breadcrumbs.post',
+  'users': 'breadcrumbs.users',
+  'feedback': 'breadcrumbs.feedback',
+  'game-reviews': 'breadcrumbs.gameReviews',
+  'performance': 'breadcrumbs.performance',
+  'nearby': 'breadcrumbs.nearby',
 };
+
+const DYNAMIC_DETAIL_LABEL_KEYS: Record<string, string> = {
+  messages: 'breadcrumbs.conversation',
+};
+
+// The post itself is already represented by the static "Post" crumb. Its ID
+// adds no useful information and must not produce a second generic detail item.
+const OMIT_DYNAMIC_DETAIL_FOR = new Set(['post']);
 
 export function useAutoBreadcrumbs(): BreadcrumbItem[] {
   const { t } = useTranslation();
@@ -86,6 +127,12 @@ export function useAutoBreadcrumbs(): BreadcrumbItem[] {
       items.push(item);
     };
 
+    // `/dev` is a standalone route. Add a valid parent so the breadcrumb is
+    // useful and survives AppBreadcrumbs' intentional single-item suppression.
+    if (pathname === '/dev') {
+      pushItem({ label: t('nav.home'), to: '/' });
+    }
+
     for (let i = 0; i < segments.length; i++) {
       const segment = segments[i];
       accumulatedPath += `/${segment}`;
@@ -97,7 +144,7 @@ export function useAutoBreadcrumbs(): BreadcrumbItem[] {
       if (ROUTE_LABEL_KEYS[accumulatedPath]) {
         pushItem({
           label: t(ROUTE_LABEL_KEYS[accumulatedPath]),
-          to: accumulatedPath,
+          to: NON_LINKABLE_PATHS.has(accumulatedPath) ? undefined : accumulatedPath,
         });
       } else if (SUB_ROUTE_LABEL_KEYS[segment]) {
         pushItem({
@@ -109,9 +156,9 @@ export function useAutoBreadcrumbs(): BreadcrumbItem[] {
         // instead of leaking an internal ID or untranslated route slug.
         const parentSegment = segments[i - 1];
         const parentLabelKey = DYNAMIC_LABEL_KEYS[parentSegment];
-        if (parentLabelKey) {
+        if (parentLabelKey && !OMIT_DYNAMIC_DETAIL_FOR.has(parentSegment)) {
           pushItem({
-            label: t('breadcrumbs.details'),
+            label: t(DYNAMIC_DETAIL_LABEL_KEYS[parentSegment] ?? 'breadcrumbs.details'),
             to: accumulatedPath,
           });
         }
