@@ -28,6 +28,32 @@ Registro de decisões técnicas e de produto. Cada entrada deve ter contexto, al
 
 ## Decisões Registradas
 
+### [2026-07-16] Separar o contêiner de scroll Web por breakpoint do layout
+
+**Contexto:** `#main-content` tem `overflow: auto` em todos os tamanhos, mas só
+possui altura limitada em md+. Em xs/sm ele cresce com o conteúdo e quem rola é
+a janela. Inferir o contêiner apenas pelo `overflow` conectava o listener ao
+elemento errado no mobile.
+
+**Alternativas consideradas:**
+1. Testar `scrollHeight > clientHeight` ao montar. Pode falhar antes do conteúdo
+   assíncrono terminar de carregar e muda o contêiner conforme o tamanho da tela.
+2. Limitar também o main no mobile. Alteraria a arquitetura de scroll, safe area
+   e comportamento do chrome móvel.
+3. Usar a mesma fronteira md (900 px) do layout: janela em xs/sm e main em md+.
+
+**Decisão:** Adotar a opção 3 com media query reativa. Um id explícito continua
+tendo prioridade para consumidores especializados.
+
+**Justificativa:** O contrato acompanha diretamente o CSS existente, não depende
+do momento em que conteúdo assíncrono chega e não cria um segundo scroller no
+mobile.
+
+**Consequências:** A troca de orientação/breakpoint rebinda o listener. Mudanças
+futuras na fronteira md precisam manter hook e layout alinhados.
+
+**Relacionado:** spec `BUGFIX_2026-07-16_web-mobile-gesture-feedback.md`, issue #3762.
+
 ### [2026-06-25] iOS Liquid Glass: manter chrome translúcida no ComposeApp e adiar bridge SwiftUI nativa
 
 **Contexto:** A auditoria do épico iOS (#2670) mostrou que a chrome atual do
@@ -1292,6 +1318,49 @@ de rota e fechamento não perdem a última posição conhecida. O formato e a ch
 do armazenamento permanecem compatíveis.
 
 **Relacionado:** `specs/BUGFIX_2026-07-16_web-interaction-performance.md`, #3792.
+
+---
+
+### [2026-07-16] Identidade estável e anúncio derivado na navegação web
+
+**Contexto:** O Command Palette vinculava rotas a rótulos em PT-BR, enquanto o
+anúncio acessível dependia de `document.title` atualizado por outro efeito. O
+foco também aguardava um atraso visual fixo de 320 ms.
+
+**Alternativas consideradas:**
+1. Manter rótulos como chave e duplicar mapas por idioma — frágil e sujeito a divergência.
+2. Aguardar o efeito de SEO com outro temporizador — mantém a corrida e acopla acessibilidade a animações.
+3. Usar IDs estáveis, título derivado da rota e foco no próximo frame — comportamento determinístico.
+
+**Decisão:** Comandos rápidos usam IDs estáveis; o anúncio vem de
+breadcrumbs/itens de navegação; o foco é aplicado com `requestAnimationFrame`.
+
+**Justificativa:** Texto traduzido deixa de controlar comportamento, o anúncio
+não depende da ordem de efeitos e a navegação assistiva não espera a animação.
+
+**Relacionado:** `specs/BUGFIX_2026-07-16_web-a11y-i18n-navigation.md`, #3766,
+#3784 e #3788.
+
+---
+
+### [2026-07-16] Breadcrumbs usam metadados publicados pelas telas
+
+**Contexto:** Nomes de entidades estavam disponíveis nas telas, mas o breadcrumb
+global conhecia apenas a URL. Consultar Firestore novamente duplicaria custo;
+ler caches por chaves privadas acoplaria a navegação à implementação dos hooks.
+
+**Alternativas consideradas:**
+1. Novas leituras Firestore no hook — maior custo e listeners duplicados.
+2. `queryClient.getQueryData` com listas de chaves — frágil e incompleto para hooks sem TanStack Query.
+3. Provider de metadados alimentado pelas telas — sem I/O e independente da camada de dados.
+
+**Decisão:** Telas publicam `tipo + id + nome` em um cache de navegação em memória;
+o auto-breadcrumb consome esse cache e mantém fallback traduzido quando vazio.
+
+**Justificativa:** Reaproveita dados já autorizados e carregados, funciona com
+qualquer fonte e permite compartilhar o nome entre rotas durante a sessão.
+
+**Relacionado:** `specs/BUGFIX_2026-07-16_web-route-context.md`, #3777, #3781.
 
 ---
 

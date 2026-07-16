@@ -15,7 +15,9 @@ import {
   Divider,
   Avatar,
   Chip,
-  Popover,
+  Menu,
+  MenuItem,
+  useTheme,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -27,14 +29,25 @@ import {
 import { useNavigate, useLocation, Link as RouterLink } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
-import { useUnreadNotificationCount } from '../../hooks/useNotifications';
+import { useUnreadNotificationSummary } from '../../contexts/UnreadNotificationContext';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
+import { useHapticFeedback } from '../../hooks/useHapticFeedback';
 import { AppLogo } from '../common/AppLogo';
 import { avatarSizes, iconSizes } from '../../theme/iconSizes';
-import { appSidebarLayoutTokens, appSidebarStyles } from './AppSidebar.styles';
+import { getSearchShortcutTranslationKey } from '../../utils/platformShortcut';
+import {
+  appSidebarLayoutTokens,
+  appSidebarStyles,
+  getAppSidebarOverlayPlacement,
+} from './AppSidebar.styles';
 import { md3TypeScale } from '../../theme';
 import { getNavigationGlassStyles } from '../../theme/navigationGlass';
 import { navigationControlTokens } from '../../theme/navigationControls';
+import { usePrefetchOnHover } from '../../hooks/useResourcePreloading';
+import {
+  NOTIFICATION_PULSE_CYCLES,
+  shouldAnimateNotificationBell,
+} from '../common/notificationBellMotion';
 import {
   NAV_ITEMS,
   PRIMARY_NAV_ITEMS,
@@ -51,30 +64,48 @@ const pulse = keyframes`
   100% { transform: scale(1); }
 `;
 
+const NOTIFICATIONS_LABEL_KEY = 'nav.notifications';
+const notificationNavItem = MORE_NAV_ITEMS.find((item) => item.labelKey === NOTIFICATIONS_LABEL_KEY);
+const railMoreNavItems = MORE_NAV_ITEMS.filter((item) => item.labelKey !== NOTIFICATIONS_LABEL_KEY);
+
 export function AppSidebar() {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useTranslation();
+  const theme = useTheme();
   const { user } = useAuth();
-  const { unreadCount } = useUnreadNotificationCount(user?.id);
+  const { unreadCount } = useUnreadNotificationSummary();
   const userInitial = user?.name?.charAt(0).toUpperCase() || 'U';
   const reducedMotion = useReducedMotion();
+  const { trigger: triggerHaptic } = useHapticFeedback();
+  const prefetchHandlers = usePrefetchOnHover();
   const [moreAnchor, setMoreAnchor] = useState<HTMLElement | null>(null);
+
+  const navigateWithHaptic = React.useCallback((path: string) => {
+    triggerHaptic('light');
+    navigate(path);
+  }, [navigate, triggerHaptic]);
 
   const activeIndex = React.useMemo(
     () => getActiveNavIndex(location.pathname, location.search),
     [location.pathname, location.search],
   );
-  const moreActive = MORE_NAV_ITEMS.some((item) => NAV_ITEMS.indexOf(item) === activeIndex);
+  const moreActive = railMoreNavItems.some((item) => NAV_ITEMS.indexOf(item) === activeIndex);
+  const notificationsActive = notificationNavItem
+    ? activeIndex === NAV_ITEMS.indexOf(notificationNavItem)
+    : false;
+  const searchShortcut = t(getSearchShortcutTranslationKey());
+  const moreButtonId = 'app-sidebar-more-button';
   const morePopoverId = 'app-sidebar-more-menu';
   const moreOpen = moreAnchor !== null;
+  const overlayPlacement = getAppSidebarOverlayPlacement(theme.direction);
 
   const openSearch = () => window.dispatchEvent(new Event('open-command-palette'));
 
   return (
     <>
       {/* ════════════════════════════════════════════════════════════
-          MD RAIL (900–1199px) — ícones + captions, "Mais" em Popover
+          MD RAIL (900–1199px) — ícones + captions, "Mais" em Menu
           ════════════════════════════════════════════════════════════ */}
       <Drawer
         variant="permanent"
@@ -87,7 +118,7 @@ export function AppSidebar() {
             width: RAIL_WIDTH_RESPONSIVE,
             height: '100%',
             position: 'relative',
-            borderRight: 1,
+            borderInlineEnd: 1,
             borderColor: 'divider',
             ...getNavigationGlassStyles(theme, 'desktop'),
             display: 'flex',
@@ -99,6 +130,7 @@ export function AppSidebar() {
         <Box
           component={RouterLink}
           to="/"
+          onClick={() => triggerHaptic('light')}
           sx={{ px: appSidebarLayoutTokens.railPaddingX, py: 1.5, display: 'flex', justifyContent: 'center', textDecoration: 'none', color: 'inherit' }}
           aria-label={t('nav.home')}
         >
@@ -110,7 +142,7 @@ export function AppSidebar() {
           />
         </Box>
         <Box sx={{ px: appSidebarLayoutTokens.railPaddingX, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-          <Tooltip title={t('nav.search')} placement="right">
+          <Tooltip title={t('nav.search')} placement={overlayPlacement.tooltipPlacement}>
             <ListItemButton
               onClick={openSearch}
               sx={{ flexDirection: 'column', py: 1.25, borderRadius: 2 }}
@@ -123,9 +155,11 @@ export function AppSidebar() {
               </Typography>
             </ListItemButton>
           </Tooltip>
-          <Tooltip title={t('games.createGame')} placement="right">
+          <Tooltip title={t('games.createGame')} placement={overlayPlacement.tooltipPlacement}>
             <ListItemButton
-              onClick={() => navigate('/game/create')}
+              data-prefetch-route="/game/create"
+              {...prefetchHandlers}
+              onClick={() => navigateWithHaptic('/game/create')}
               sx={{
                 flexDirection: 'column',
                 py: 1.25,
@@ -148,12 +182,15 @@ export function AppSidebar() {
           {PRIMARY_NAV_ITEMS.map((item) => {
             const realIdx = NAV_ITEMS.indexOf(item);
             const active = activeIndex === realIdx;
+            const destination = resolveNavItemPath(item, user?.role);
             return (
-              <Tooltip key={item.labelKey} title={t(item.labelKey)} placement="right">
+              <Tooltip key={item.labelKey} title={t(item.labelKey)} placement={overlayPlacement.tooltipPlacement}>
                 <ListItemButton
                   selected={active}
                   aria-current={active ? 'page' : undefined}
-                  onClick={() => navigate(resolveNavItemPath(item, user?.role))}
+                  data-prefetch-route={destination}
+                  {...prefetchHandlers}
+                  onClick={() => navigateWithHaptic(destination)}
                   sx={appSidebarStyles.railNavigationButton}
                 >
                   <ListItemIcon
@@ -180,24 +217,73 @@ export function AppSidebar() {
               </Tooltip>
             );
           })}
-          {/* #3728: "Mais" no rail md — abre Popover com items secundários */}
-          <Tooltip title={t('nav.sectionMore')} placement="right">
+          {notificationNavItem && (
+            <Tooltip
+              title={unreadCount > 0
+                ? t('nav.notificationsAria', { count: unreadCount })
+                : t(notificationNavItem.labelKey)}
+              placement={overlayPlacement.tooltipPlacement}
+            >
+              <ListItemButton
+                selected={notificationsActive}
+                aria-current={notificationsActive ? 'page' : undefined}
+                data-prefetch-route={resolveNavItemPath(notificationNavItem, user?.role)}
+                {...prefetchHandlers}
+                aria-label={unreadCount > 0
+                  ? t('nav.notificationsAria', { count: unreadCount })
+                  : t(notificationNavItem.labelKey)}
+                onClick={() => navigateWithHaptic(resolveNavItemPath(notificationNavItem, user?.role))}
+                sx={appSidebarStyles.railNavigationButton}
+              >
+                <ListItemIcon
+                  sx={{
+                    minWidth: 0,
+                    justifyContent: 'center',
+                    mb: 0.5,
+                    animation: shouldAnimateNotificationBell(unreadCount, reducedMotion)
+                      ? `${pulse} 2s ease-in-out ${NOTIFICATION_PULSE_CYCLES}`
+                      : undefined,
+                  }}
+                >
+                  <Badge badgeContent={unreadCount} color="error" max={99} invisible={unreadCount === 0}>
+                    {React.cloneElement(notificationNavItem.icon, {
+                      'aria-hidden': true,
+                      sx: { fontSize: iconSizes.lg },
+                    })}
+                  </Badge>
+                </ListItemIcon>
+                <Typography
+                  variant="caption"
+                  noWrap
+                  sx={{
+                    maxWidth: '100%',
+                    fontWeight: notificationsActive ? 600 : 400,
+                    color: notificationsActive ? 'primary.main' : 'text.secondary',
+                  }}
+                >
+                  {t(notificationNavItem.labelKey)}
+                </Typography>
+              </ListItemButton>
+            </Tooltip>
+          )}
+          {/* #3728: "Mais" no rail md — abre Menu com itens secundários. */}
+          <Tooltip title={t('nav.sectionMore')} placement={overlayPlacement.tooltipPlacement}>
             <ListItemButton
-              onClick={(e) => setMoreAnchor(e.currentTarget)}
+              id={moreButtonId}
+              onClick={(e) => {
+                triggerHaptic('light');
+                setMoreAnchor(e.currentTarget);
+              }}
               selected={moreOpen || moreActive}
               aria-current={moreActive ? 'page' : undefined}
               aria-haspopup="menu"
               aria-expanded={moreOpen}
               aria-controls={moreOpen ? morePopoverId : undefined}
-              aria-label={unreadCount > 0
-                ? `${t('nav.sectionMore')} — ${t('nav.notificationsAria', { count: unreadCount })}`
-                : t('nav.sectionMore')}
+              aria-label={t('nav.sectionMore')}
               sx={appSidebarStyles.railNavigationButton}
             >
               <ListItemIcon sx={{ minWidth: 0, justifyContent: 'center', mb: 0.5 }}>
-                <Badge badgeContent={unreadCount} color="error" max={99} invisible={unreadCount === 0}>
-                  <MoreHoriz sx={{ fontSize: iconSizes.lg }} aria-hidden />
-                </Badge>
+                <MoreHoriz sx={{ fontSize: iconSizes.lg }} aria-hidden />
               </ListItemIcon>
               <Typography variant="caption" color="text.secondary" noWrap>
                 {t('nav.sectionMore')}
@@ -207,7 +293,9 @@ export function AppSidebar() {
         </List>
         <Box sx={{ px: appSidebarLayoutTokens.railPaddingX, py: 1, borderTop: 1, borderColor: 'divider' }}>
           <ListItemButton
-            onClick={() => navigate('/profile/edit')}
+            data-prefetch-route="/profile/edit"
+            {...prefetchHandlers}
+            onClick={() => navigateWithHaptic('/profile/edit')}
             sx={{ borderRadius: 2, justifyContent: 'center' }}
             aria-label={`${user?.name || t('settings.defaultUserName')} — ${t('profile.editProfile')}`}
           >
@@ -221,55 +309,77 @@ export function AppSidebar() {
         </Box>
       </Drawer>
 
-      {/* Popover "Mais" do rail md */}
-      <Popover
-        id={morePopoverId}
+      {/* Menu "Mais" do rail md — o Menu MUI fornece o contrato de teclado ARIA. */}
+      <Menu
         open={moreOpen}
         anchorEl={moreAnchor}
         onClose={() => setMoreAnchor(null)}
-        anchorOrigin={{ vertical: 'center', horizontal: 'right' }}
-        transformOrigin={{ vertical: 'center', horizontal: 'left' }}
+        anchorOrigin={{ vertical: 'center', horizontal: overlayPlacement.menuAnchorHorizontal }}
+        transformOrigin={{ vertical: 'center', horizontal: overlayPlacement.menuTransformHorizontal }}
+        MenuListProps={{
+          id: morePopoverId,
+          'aria-labelledby': moreButtonId,
+          sx: { py: 0.5 },
+        }}
+        PaperProps={{
+          sx: {
+            minWidth: 200,
+            maxHeight: 'min(70vh, 480px)',
+            overflowY: 'auto',
+          },
+        }}
       >
-        <List role="menu" sx={{ minWidth: 200, py: 0.5 }}>
-          {MORE_NAV_ITEMS.map((item) => {
-            const realIdx = NAV_ITEMS.indexOf(item);
-            const active = activeIndex === realIdx;
-            const isNotifItem = item.labelKey === 'nav.notifications';
-            const icon = isNotifItem ? (
-              <Badge badgeContent={unreadCount} color="error" max={99} invisible={unreadCount === 0}>
-                {item.icon}
-              </Badge>
-            ) : item.icon;
-            return (
-              <ListItemButton
-                key={item.labelKey}
-                role="menuitem"
-                selected={active}
-                aria-current={active ? 'page' : undefined}
-                aria-label={isNotifItem && unreadCount > 0
-                  ? t('nav.notificationsAria', { count: unreadCount })
-                  : undefined}
-                onClick={() => {
-                  navigate(resolveNavItemPath(item, user?.role));
-                  setMoreAnchor(null);
-                }}
-                sx={{
-                  '&.Mui-selected': {
-                    bgcolor: 'action.selected',
-                    '& .MuiListItemIcon-root': { color: 'primary.main' },
-                    '& .MuiListItemText-primary': { color: 'primary.main', fontWeight: 600 },
-                  },
-                }}
-              >
-                <ListItemIcon sx={{ color: 'text.secondary', minWidth: 36 }}>
-                  {isNotifItem ? icon : React.cloneElement(icon, { 'aria-hidden': true })}
-                </ListItemIcon>
-                <ListItemText primary={t(item.labelKey)} />
-              </ListItemButton>
-            );
-          })}
-        </List>
-      </Popover>
+        {railMoreNavItems.map((item) => {
+          const realIdx = NAV_ITEMS.indexOf(item);
+          const active = activeIndex === realIdx;
+          const destination = resolveNavItemPath(item, user?.role);
+          return (
+            <MenuItem
+              key={item.labelKey}
+              selected={active}
+              aria-current={active ? 'page' : undefined}
+              data-prefetch-route={destination}
+              {...prefetchHandlers}
+              onClick={() => {
+                navigateWithHaptic(destination);
+                setMoreAnchor(null);
+              }}
+              sx={{
+                '&.Mui-selected': {
+                  bgcolor: 'action.selected',
+                  '& .MuiListItemIcon-root': { color: 'primary.main' },
+                  '& .MuiListItemText-primary': { color: 'primary.main', fontWeight: 600 },
+                },
+              }}
+            >
+              <ListItemIcon sx={{ color: 'text.secondary', minWidth: 36 }}>
+                {React.cloneElement(item.icon, { 'aria-hidden': true })}
+              </ListItemIcon>
+              <ListItemText primary={t(item.labelKey)} />
+            </MenuItem>
+          );
+        })}
+        <Divider />
+        <MenuItem
+          aria-label={t('shortcuts.openLabel')}
+          onClick={() => {
+            setMoreAnchor(null);
+            window.dispatchEvent(new Event('open-shortcuts'));
+          }}
+        >
+          <ListItemIcon sx={{ color: 'text.secondary', minWidth: 36 }}>
+            <KeyboardIcon aria-hidden />
+          </ListItemIcon>
+          <ListItemText primary={t('shortcuts.title')} />
+          <Chip
+            label="?"
+            size="small"
+            variant="outlined"
+            aria-hidden="true"
+            sx={{ marginInlineStart: 1 }}
+          />
+        </MenuItem>
+      </Menu>
 
       {/* ════════════════════════════════════════════════════════════
           LG DRAWER (1200px+) — expandido com labels, seções Primária/Mais
@@ -285,7 +395,7 @@ export function AppSidebar() {
             width: DRAWER_WIDTH_RESPONSIVE,
             height: '100%',
             position: 'relative',
-            borderRight: 1,
+            borderInlineEnd: 1,
             borderColor: 'divider',
             ...getNavigationGlassStyles(theme, 'desktop'),
             display: 'flex',
@@ -297,6 +407,7 @@ export function AppSidebar() {
         <Box
           component={RouterLink}
           to="/"
+          onClick={() => triggerHaptic('light')}
           sx={{
             p: 1.5,
             display: 'flex',
@@ -322,7 +433,9 @@ export function AppSidebar() {
             variant="contained"
             fullWidth
             startIcon={<AddIcon />}
-            onClick={() => navigate('/game/create')}
+            data-prefetch-route="/game/create"
+            {...prefetchHandlers}
+            onClick={() => navigateWithHaptic('/game/create')}
             sx={{ borderRadius: 6 }}
           >
             {t('games.createGame')}
@@ -352,10 +465,10 @@ export function AppSidebar() {
               {t('nav.search')}...
             </Typography>
             <Chip
-              label="Ctrl+K"
+              label={searchShortcut}
               size="small"
               variant="outlined"
-              sx={{ height: navigationControlTokens.shortcutChipHeight, ...md3TypeScale.labelMedium, ml: 1 }}
+              sx={{ height: navigationControlTokens.shortcutChipHeight, ...md3TypeScale.labelMedium, marginInlineStart: 1 }}
             />
           </Button>
         </Box>
@@ -366,12 +479,15 @@ export function AppSidebar() {
           {PRIMARY_NAV_ITEMS.map((item) => {
             const realIdx = NAV_ITEMS.indexOf(item);
             const active = activeIndex === realIdx;
+            const destination = resolveNavItemPath(item, user?.role);
             return (
-              <Tooltip key={item.labelKey} title={t(item.labelKey)} placement="right">
+              <Tooltip key={item.labelKey} title={t(item.labelKey)} placement={overlayPlacement.tooltipPlacement}>
                 <ListItemButton
                   selected={active}
                   aria-current={active ? 'page' : undefined}
-                  onClick={() => navigate(resolveNavItemPath(item, user?.role))}
+                  data-prefetch-route={destination}
+                  {...prefetchHandlers}
+                  onClick={() => navigateWithHaptic(destination)}
                   sx={{
                     borderRadius: 2,
                     mx: 0.75,
@@ -403,6 +519,7 @@ export function AppSidebar() {
           {MORE_NAV_ITEMS.map((item) => {
             const realIdx = NAV_ITEMS.indexOf(item);
             const active = activeIndex === realIdx;
+            const destination = resolveNavItemPath(item, user?.role);
             const isNotifItem = item.labelKey === 'nav.notifications';
             const icon = isNotifItem ? (
               <Badge badgeContent={unreadCount} color="error" max={99} invisible={unreadCount === 0}>
@@ -410,14 +527,16 @@ export function AppSidebar() {
               </Badge>
             ) : item.icon;
             return (
-              <Tooltip key={item.labelKey} title={t(item.labelKey)} placement="right">
+              <Tooltip key={item.labelKey} title={t(item.labelKey)} placement={overlayPlacement.tooltipPlacement}>
                 <ListItemButton
                   selected={active}
                   aria-current={active ? 'page' : undefined}
                   aria-label={isNotifItem && unreadCount > 0
                     ? t('nav.notificationsAria', { count: unreadCount })
                     : undefined}
-                  onClick={() => navigate(resolveNavItemPath(item, user?.role))}
+                  data-prefetch-route={destination}
+                  {...prefetchHandlers}
+                  onClick={() => navigateWithHaptic(destination)}
                   sx={{
                     borderRadius: 2,
                     mx: 0.75,
@@ -436,7 +555,9 @@ export function AppSidebar() {
                   <ListItemIcon
                     sx={{
                       color: 'text.secondary',
-                      animation: isNotifItem && unreadCount > 0 && !reducedMotion ? `${pulse} 2s ease-in-out infinite` : undefined,
+                      animation: isNotifItem && shouldAnimateNotificationBell(unreadCount, reducedMotion)
+                        ? `${pulse} 2s ease-in-out ${NOTIFICATION_PULSE_CYCLES}`
+                        : undefined,
                     }}
                   >
                     {isNotifItem
@@ -472,7 +593,9 @@ export function AppSidebar() {
         {/* #3733: rodapé permanece visível e leva diretamente à edição do perfil. */}
         <Box sx={{ p: 1, borderTop: 1, borderColor: 'divider' }}>
           <ListItemButton
-            onClick={() => navigate('/profile/edit')}
+            data-prefetch-route="/profile/edit"
+            {...prefetchHandlers}
+            onClick={() => navigateWithHaptic('/profile/edit')}
             aria-label={`${user?.name || t('settings.defaultUserName')} — ${t('profile.editProfile')}`}
             sx={{
               minHeight: 64,

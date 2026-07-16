@@ -110,6 +110,7 @@
     "profileMenu": "Menú del perfil",
     "quickActions": "Acciones rápidas",
     "quickCommands": "Comandos rápidos",
+    "routeAnnouncement": "Pantalla actual: {{title}}",
     "recentGames": "Partidos recientes",
     "recentXpHistory": "Historial reciente de XP",
     "refresh": "Actualizar",
@@ -3013,6 +3014,8 @@
     "createGroup": "Crear grupo",
     "globalSearch": "Búsqueda global / acciones rápidas",
     "openLabel": "Abrir atajos de teclado",
+    "searchKeyApple": "⌘K",
+    "searchKeyDefault": "Ctrl+K",
     "settings": "Configuración",
     "showShortcuts": "Mostrar este diálogo de atajos",
     "tip": "Consejo: presiona ? en cualquier momento para abrir este diálogo.",
@@ -3421,6 +3424,14 @@
   },
   "commandPalette": {
     "globalSearch": "Búsqueda global",
+    "quickActions": "Acciones rápidas",
+    "quickCommandSubtitles": {
+      "createGame": "Organizar un nuevo partido",
+      "createGroup": "Crear un nuevo grupo de fútbol",
+      "settings": "Ajustes de tu cuenta",
+      "profile": "Ver mi perfil",
+      "notifications": "Centro de notificaciones"
+    },
     "esc": "Esc",
     "navigate": "navegar",
     "select": "seleccionar",

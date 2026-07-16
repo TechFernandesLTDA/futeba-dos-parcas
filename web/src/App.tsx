@@ -6,30 +6,27 @@ import { RouteSeoMetadata } from './components/seo/SeoMetadata';
 import { queryClient } from './services/queryClient';
 import { auth } from './services/firebase';
 import { AuthProvider, ThemeProvider, LanguageProvider, useAuth, TeamsProvider } from './contexts';
+import { UnreadNotificationProvider } from './contexts/UnreadNotificationContext';
 import { Box, Typography, Button, useTheme, useMediaQuery } from '@mui/material';
-import { alpha } from '@mui/material/styles';
 import { ErrorBoundary, withErrorBoundary } from './components/common/ErrorBoundary';
 import { ErrorOutline } from '@mui/icons-material';
 import { ToastProvider } from './contexts/ToastContext';
 import { ConnectionStatus, useOnlineStatus } from './components/common/ConnectionStatus';
 import { SkipNav } from './components/common/SkipNav';
 import { LoadingScreen } from './components/common/LoadingScreen';
-import { MobileTopBar } from './components/layout/MobileTopBar';
-import { MobileBottomNav } from './components/layout/MobileBottomNav';
+import { MobileShell } from './components/layout/MobileShell';
 import { useScrollRestoration } from './hooks/useScrollRestoration';
-import { useAutoBreadcrumbs } from './hooks/useAutoBreadcrumbs';
-import { useNavigateBack } from './hooks/useNavigateBack';
-import { useSwipeBack } from './hooks/useSwipeBack';
-import { useUnreadNotificationCount } from './hooks/useNotifications';
-import { useReducedMotion } from './hooks/useReducedMotion';
 import { useVerifiedClaim } from './hooks/useVerifiedClaim';
 import { useGlobalShortcuts } from './hooks/useGlobalShortcuts';
 import { useIsGroupMember } from './hooks/useGroups';
 import { useToast } from './contexts/ToastContext';
 import { ProfileGate } from './components/gate/ProfileGate';
 import { useResourcePreloading } from './hooks/useResourcePreloading';
+import { useAutoBreadcrumbs } from './hooks/useAutoBreadcrumbs';
 import { PageTransition } from './components/common/PageTransition';
-import { motion } from './theme/motion';
+import { getActiveNavItem } from './config/navItems';
+import { BreadcrumbEntityProvider } from './contexts/BreadcrumbEntityContext';
+import { getSpecificRouteFallback } from './utils/routeFallback';
 import {
 
   HomeScreenSkeleton,
@@ -169,6 +166,12 @@ const NotFoundScreen = lazy(() => import('./pages/error/NotFoundScreen').then(m 
 function RouteFallback() {
   const location = useLocation();
   const path = location.pathname;
+  const specificFallback = getSpecificRouteFallback(path);
+
+  if (specificFallback === 'list') return <ListSkeleton />;
+  if (specificFallback === 'about') return <AboutSkeleton />;
+  if (specificFallback === 'form') return <FormSkeleton />;
+  if (specificFallback === 'statistics') return <StatisticSkeleton />;
 
   if (path === '/' || path === '') return <HomeScreenSkeleton />;
   if (path.startsWith('/game/') && path.endsWith('/live')) return <LiveGameSkeleton />;
@@ -433,32 +436,25 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 
 function useFocusOnNavigate() {
   const location = useLocation();
-  const reducedMotion = useReducedMotion();
 
   useEffect(() => {
-    // #3733: defer focus até após a animação do PageTransition (300ms medium).
-    // Antes, o foco era movido imediatamente para conteúdo com opacity:0 +
-    // translateY, deixando leitores de tela focando em conteúdo invisível.
-    const timer = window.setTimeout(() => {
-      const el = document.querySelector('#main-content') as HTMLElement;
-      if (el) {
-        el.setAttribute('tabIndex', '-1');
-        el.focus({ preventScroll: true });
-      }
-    }, reducedMotion ? 0 : 320);
-
     addBreadcrumb('navigation', `Navegou para ${location.pathname}`, {
       pathname: location.pathname,
       search: location.search,
     });
+  }, [location.pathname, location.search]);
 
-    return () => window.clearTimeout(timer);
-  }, [location.pathname, location.search, reducedMotion]);
+  return useCallback(() => {
+    const el = document.querySelector('#main-content') as HTMLElement | null;
+    if (!el) return;
+    el.setAttribute('tabIndex', '-1');
+    el.focus({ preventScroll: true });
+  }, []);
 }
 
 function AppRoutes() {
   const location = useLocation();
-  useFocusOnNavigate();
+  const focusMainContent = useFocusOnNavigate();
   useScrollRestoration();
   useResourcePreloading();
   const routeTransitionKey = `${location.pathname}${location.search}`;
@@ -466,8 +462,12 @@ function AppRoutes() {
 
   return (
     <ProfileGate>
-    <PageTransition key={routeTransitionKey} variant={routeTransitionVariant}>
-    <Routes location={location}>
+      <PageTransition
+        transitionKey={routeTransitionKey}
+        variant={routeTransitionVariant}
+        onTransitionComplete={focusMainContent}
+      >
+        <Routes location={location}>
       {/* Splash & Onboarding */}
       {/* FIX #1024: /splash restrito a não-logados; usuário logado é redirecionado pelo PublicRoute */}
       <Route path="/splash" element={<PublicRoute><Suspense fallback={<RouteFallback />}><SplashScreen /></Suspense></PublicRoute>} />
@@ -606,73 +606,13 @@ function AppRoutes() {
 
       {/* #3731: autenticados mantêm AppLayout; visitantes veem 404 público. */}
       <Route path="*" element={<NotFoundRoute />} />
-    </Routes>
-    </PageTransition>
+        </Routes>
+      </PageTransition>
     </ProfileGate>
   );
 }
 
 const SafeScreen = withErrorBoundary(AppRoutes);
-
-function MobileShell({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth();
-  const { unreadCount } = useUnreadNotificationCount(user?.id);
-  const location = useLocation();
-  const breadcrumbs = useAutoBreadcrumbs();
-  // #2193: rotas secundárias = qualquer path que não seja a raiz (tabs vivem
-  // todas em "/"). Detail/form/settings ganham botão de voltar no mobile.
-  const isSecondary = location.pathname !== '/' && location.pathname !== '';
-  const goBack = useNavigateBack();
-  // #2194: swipe-back só em rotas secundárias (na raiz não há para onde voltar).
-  // #2722: expõe dragProgress para visual feedback durante o arraste.
-  const { dragProgress, isSwiping } = useSwipeBack({ disabled: !isSecondary });
-  const reducedMotion = useReducedMotion();
-  const shellSettleTransition = reducedMotion
-    ? 'none'
-    : `${motion('transform', 'short', 'standard')}, ${motion('opacity', 'short', 'standard')}`;
-
-  return (
-    <Box
-      sx={{
-        display: 'flex',
-        justifyContent: 'center',
-        minHeight: '100dvh',
-        bgcolor: { xs: 'background.default', sm: 'divider' },
-      }}
-    >
-      <Box
-        id="mobile-shell"
-        sx={{
-          width: '100%',
-          // #2173: maxWidth compensa a sidebar (88px md / 240px lg) para não
-          // comprimir a área de conteúdo em monitores grandes. xl expandido
-          // para 1920px para melhor aproveitamento em 2K/4K.
-          maxWidth: { xs: '100%', sm: 600, md: 900, lg: 1440, xl: 1920 },
-          minHeight: '100dvh',
-          bgcolor: 'background.default',
-          boxShadow: (theme) => ({ xs: 'none', sm: `0 0 40px ${alpha(theme.palette.common.black, theme.palette.mode === 'dark' ? 0.4 : 0.12)}` }),
-          position: 'relative',
-          transform: dragProgress > 0
-            ? `translateX(${dragProgress * 80}px)`
-            : { xs: 'none', sm: 'translateZ(0)' },
-          opacity: dragProgress > 0 ? 1 - dragProgress * 0.15 : 1,
-          transition: dragProgress === 0 ? shellSettleTransition : 'none',
-          willChange: isSwiping ? 'transform, opacity' : 'auto',
-        }}
-      >
-        {user && !isSecondary && (
-          <MobileTopBar
-            unreadCount={unreadCount}
-            showBack={isSecondary}
-            onBack={goBack}
-            breadcrumbs={breadcrumbs}
-          />
-        )}
-        {user ? <MobileBottomNav>{children}</MobileBottomNav> : children}
-      </Box>
-    </Box>
-  );
-}
 
 function AppCrashFallback() {
   const { t } = useTranslation();
@@ -716,16 +656,18 @@ function CommandPaletteBoundary({ children }: { children: React.ReactNode }) {
 
 function RouteAnnouncer() {
   const location = useLocation();
-  const [title, setTitle] = useState(document.title);
-
-  useEffect(() => {
-    setTitle(document.title);
-  }, [location.pathname]);
+  const { t } = useTranslation();
+  const breadcrumbs = useAutoBreadcrumbs();
+  const activeItem = getActiveNavItem(location.pathname, location.search);
+  const routeTitle = breadcrumbs.at(-1)?.label
+    ?? (activeItem ? t(activeItem.labelKey) : t('errors.notFound'));
+  const announcement = t('a11y.routeAnnouncement', { title: routeTitle });
 
   return (
     <Box
       component="span"
       aria-live="polite"
+      aria-atomic="true"
       sx={{
         position: 'absolute',
         width: 1,
@@ -735,7 +677,7 @@ function RouteAnnouncer() {
         whiteSpace: 'nowrap',
       }}
     >
-      {title}
+      {announcement}
     </Box>
   );
 }
@@ -809,10 +751,12 @@ function App() {
         <BrowserRouter>
           <RouteSeoMetadata />
           <AuthProvider>
-            <ErrorBoundary fallback={<AppCrashFallback />}>
-            <ToastProvider>
-            <TeamsProvider>
-            <LanguageProvider>
+            <UnreadNotificationProvider>
+              <ErrorBoundary fallback={<AppCrashFallback />}>
+              <ToastProvider>
+              <TeamsProvider>
+              <LanguageProvider>
+              <BreadcrumbEntityProvider>
               <GlobalShortcuts
                 paletteOpen={paletteOpen}
                 onOpenPalette={openPalette}
@@ -862,10 +806,12 @@ function App() {
                   <ConnectionStatusWrapper />
                 </MobileShell>
               )}
-            </LanguageProvider>
-            </TeamsProvider>
-            </ToastProvider>
-            </ErrorBoundary>
+              </BreadcrumbEntityProvider>
+              </LanguageProvider>
+              </TeamsProvider>
+              </ToastProvider>
+              </ErrorBoundary>
+            </UnreadNotificationProvider>
           </AuthProvider>
         </BrowserRouter>
       </ThemeProvider>

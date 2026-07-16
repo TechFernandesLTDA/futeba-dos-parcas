@@ -110,6 +110,7 @@
     "profileMenu": "Menu do perfil",
     "quickActions": "Ações rápidas",
     "quickCommands": "Comandos rápidos",
+    "routeAnnouncement": "Tela atual: {{title}}",
     "recentGames": "Jogos recentes",
     "recentXpHistory": "Histórico de XP recente",
     "refresh": "Atualizar",
@@ -3013,6 +3014,8 @@
     "createGroup": "Criar grupo",
     "globalSearch": "Busca global / ações rápidas",
     "openLabel": "Abrir atalhos de teclado",
+    "searchKeyApple": "⌘K",
+    "searchKeyDefault": "Ctrl+K",
     "settings": "Configurações",
     "showShortcuts": "Mostrar este diálogo de atalhos",
     "tip": "Dica: pressione ? a qualquer momento para abrir este diálogo.",
@@ -3421,6 +3424,14 @@
   },
   "commandPalette": {
     "globalSearch": "Busca global",
+    "quickActions": "Ações rápidas",
+    "quickCommandSubtitles": {
+      "createGame": "Organizar nova pelada",
+      "createGroup": "Novo grupo de pelada",
+      "settings": "Ajustes da sua conta",
+      "profile": "Ver meu perfil",
+      "notifications": "Central de notificações"
+    },
     "esc": "Esc",
     "navigate": "navegar",
     "select": "selecionar",

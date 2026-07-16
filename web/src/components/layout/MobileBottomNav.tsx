@@ -15,14 +15,23 @@ import { iconSizes } from '../../theme/iconSizes';
 import { getNavigationGlassStyles } from '../../theme/navigationGlass';
 import { NAV_ITEMS, getActiveNavIndexForItems } from '../../config/navItems';
 import { useToast } from '../../contexts/ToastContext';
+import { useHapticFeedback } from '../../hooks/useHapticFeedback';
+import { useReducedMotion } from '../../hooks/useReducedMotion';
+import { usePrefetchOnHover } from '../../hooks/useResourcePreloading';
 
 const BOTTOM_NAV_ITEMS = NAV_ITEMS.filter((item) => item.showInBottomNav);
+const BOTTOM_NAV_ICONS = BOTTOM_NAV_ITEMS.map((item) => (
+  React.cloneElement(item.icon, { 'aria-hidden': true, sx: { fontSize: iconSizes.lg } })
+));
 
-export const MobileBottomNav = React.memo(function MobileBottomNav({ children }: { children?: React.ReactNode }) {
+export function MobileBottomNav({ children }: { children?: React.ReactNode }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useTranslation();
   const { showError } = useToast();
+  const { trigger: triggerHaptic } = useHapticFeedback();
+  const reducedMotion = useReducedMotion();
+  const { onFocus: prefetchOnFocus } = usePrefetchOnHover();
 
   // #2175 (bug 1): threshold 50 + histerese padrão evita flicker (esconder a
   // cada 1px de scroll). Antes: disableHysteresis + threshold 0.
@@ -39,19 +48,32 @@ export const MobileBottomNav = React.memo(function MobileBottomNav({ children }:
   return (
     <>
       {children}
-      <Slide appear={false} direction="up" in={!trigger}>
+      <Slide
+        appear={false}
+        direction="up"
+        in={!trigger}
+        timeout={reducedMotion ? 0 : undefined}
+        mountOnEnter
+        unmountOnExit
+      >
         <Paper
+          aria-hidden={trigger ? true : undefined}
           sx={(theme) => ({
             position: 'fixed',
             bottom: 0,
-            left: 0,
-            right: 0,
+            insetInlineStart: 0,
+            insetInlineEnd: 0,
             pb: 'env(safe-area-inset-bottom, 0px)',
-            pl: 'env(safe-area-inset-left, 0px)',
-            pr: 'env(safe-area-inset-right, 0px)',
+            paddingInlineStart: (theme) => theme.direction === 'rtl'
+              ? 'env(safe-area-inset-right, 0px)'
+              : 'env(safe-area-inset-left, 0px)',
+            paddingInlineEnd: (theme) => theme.direction === 'rtl'
+              ? 'env(safe-area-inset-left, 0px)'
+              : 'env(safe-area-inset-right, 0px)',
             zIndex: 1100,
             display: { xs: 'flex', md: 'none' },
             justifyContent: 'center',
+            pointerEvents: trigger ? 'none' : 'auto',
             ...getNavigationGlassStyles(theme, 'mobile'),
             borderTop: '1px solid',
             borderColor: 'divider',
@@ -63,6 +85,7 @@ export const MobileBottomNav = React.memo(function MobileBottomNav({ children }:
             data-testid="mobile-bottom-navigation"
             value={activeValue}
             onChange={(_e, newValue: number) => {
+              triggerHaptic('light');
               // #2175 (bug 2): navegação com error handling — feedback ao
               // usuário se navigate lançar (ex.: rota inválida).
               try {
@@ -96,9 +119,12 @@ export const MobileBottomNav = React.memo(function MobileBottomNav({ children }:
               <BottomNavigationAction
                 key={item.labelKey}
                 label={t(item.labelKey)}
-                icon={React.cloneElement(item.icon, { sx: { fontSize: iconSizes.lg } })}
+                icon={BOTTOM_NAV_ICONS[idx]}
+                data-prefetch-route={item.path}
+                onFocus={prefetchOnFocus}
                 aria-label={t(item.labelKey)}
                 aria-current={activeValue === idx ? 'page' : undefined}
+                tabIndex={trigger ? -1 : undefined}
                 sx={{
                   '&.Mui-selected': {
                     color: 'primary.main',
@@ -117,6 +143,6 @@ export const MobileBottomNav = React.memo(function MobileBottomNav({ children }:
       <Box sx={{ display: { xs: 'block', md: 'none' }, height: `calc(${pageSpacing.bottomBarHeight}px + env(safe-area-inset-bottom, 0px))` }} />
     </>
   );
-});
+}
 
 export default MobileBottomNav;

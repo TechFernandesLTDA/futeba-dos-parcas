@@ -79,6 +79,7 @@ import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { getCallable } from '../../services/cloudFunctions';
+import { useBreadcrumbEntityLabel } from '../../contexts/BreadcrumbEntityContext';
 
 const logger = createLogger('LocationDetailScreen');
 const REVIEWS_PER_PAGE = 10;
@@ -159,6 +160,7 @@ export const LocationDetailScreen: React.FC = () => {
   const [subscriptionLedger, setSubscriptionLedger] = useState<SubscriptionLedgerEntry[]>([]);
   const [commercialHistoryLoading, setCommercialHistoryLoading] = useState(false);
   const [commercialHistoryError, setCommercialHistoryError] = useState<string | null>(null);
+  useBreadcrumbEntityLabel('location', locationId, location?.name);
 
   useEffect(() => {
     if (!locationId) return;
