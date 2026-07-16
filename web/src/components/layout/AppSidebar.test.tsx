@@ -178,6 +178,11 @@ describe('AppSidebar', () => {
     expect(jogos).toHaveAttribute('data-prefetch-route', '/?tab=1');
     jogos.focus();
     expect(mockPrefetchFocus).toHaveBeenCalledTimes(1);
+
+    const notifications = screen.getAllByRole('button', { name: 'Notificações' })[0];
+    expect(notifications).toHaveAttribute('data-prefetch-route', '/notifications');
+    notifications.focus();
+    expect(mockPrefetchFocus).toHaveBeenCalledTimes(2);
   });
 
   it.each([

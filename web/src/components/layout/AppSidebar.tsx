@@ -227,6 +227,8 @@ export function AppSidebar() {
               <ListItemButton
                 selected={notificationsActive}
                 aria-current={notificationsActive ? 'page' : undefined}
+                data-prefetch-route={resolveNavItemPath(notificationNavItem, user?.role)}
+                {...prefetchHandlers}
                 aria-label={unreadCount > 0
                   ? t('nav.notificationsAria', { count: unreadCount })
                   : t(notificationNavItem.labelKey)}

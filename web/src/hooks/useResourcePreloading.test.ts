@@ -1,6 +1,6 @@
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { usePrefetchOnHover } from './useResourcePreloading';
+import { normalizePrefetchRoute, usePrefetchOnHover } from './useResourcePreloading';
 
 function eventFor(element: HTMLElement) {
   return { currentTarget: element };
@@ -15,6 +15,12 @@ describe('usePrefetchOnHover', () => {
     prefetch.mockClear();
     element = document.createElement('button');
     element.dataset.prefetchRoute = '/statistics';
+  });
+
+  it('normaliza tabs da Home para o chunk da rota raiz', () => {
+    expect(normalizePrefetchRoute('/?tab=1')).toBe('/');
+    expect(normalizePrefetchRoute('/?tab=4#profile')).toBe('/');
+    expect(normalizePrefetchRoute('/statistics?period=month')).toBe('/statistics');
   });
 
   afterEach(() => {

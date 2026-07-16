@@ -11,6 +11,7 @@ import { useLocation } from 'react-router-dom';
 const routeModuleCache = new Map<string, boolean>();
 
 const routePrefetchers: Record<string, () => Promise<unknown>> = {
+  '/': () => import('../pages/home/HomeScreen'),
   '/game/create': () => import('../pages/game/CreateGameScreen'),
   '/group/create': () => import('../pages/group/CreateGroupScreen'),
   '/profile/edit': () => import('../pages/profile/EditProfileScreen'),
@@ -24,6 +25,14 @@ const routePrefetchers: Record<string, () => Promise<unknown>> = {
   '/notifications': () => import('../pages/ranking/NotificationsScreen'),
   '/messages': () => import('../pages/messages/DirectMessagesScreen'),
 };
+
+export function normalizePrefetchRoute(route: string): string {
+  try {
+    return new URL(route, window.location.origin).pathname;
+  } catch {
+    return route.split('?')[0].split('#')[0];
+  }
+}
 
 function canPrefetchOnCurrentNetwork(): boolean {
   const connection = (navigator as Navigator & {
@@ -46,18 +55,19 @@ function scheduleIdle(callback: () => void): () => void {
 }
 
 function preloadRouteModule(route: string): Promise<void> {
-  if (routeModuleCache.has(route)) {
+  const normalizedRoute = normalizePrefetchRoute(route);
+  if (routeModuleCache.has(normalizedRoute)) {
     return Promise.resolve();
   }
 
-  const prefetcher = routePrefetchers[route];
+  const prefetcher = routePrefetchers[normalizedRoute];
   if (!prefetcher) {
     return Promise.resolve();
   }
 
   return prefetcher()
     .then(() => {
-      routeModuleCache.set(route, true);
+      routeModuleCache.set(normalizedRoute, true);
     })
     .catch(() => {
       // Ignore prefetch errors. Navigation lazy-load remains authoritative.
