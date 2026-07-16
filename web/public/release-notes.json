@@ -1,7 +1,23 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-16T09:13:51.128Z",
+  "generatedAt": "2026-07-16T10:05:28.934Z",
   "notes": [
+    {
+      "version": "1.54.21",
+      "buildNumber": null,
+      "releaseDate": "2026-07-16",
+      "type": "patch",
+      "showPopup": false,
+      "published": true,
+      "headline": "As etapas principais da chegada ao primeiro jogo agora podem ser medidas com mais precisão.",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "O cadastro, a criação de grupo, a criação de jogo e a confirmação de presença passaram a alimentar o funil de ativação sem incluir dados pessoais."
+      ],
+      "fixed": [],
+      "issueRefs": []
+    },
     {
       "version": "1.54.20",
       "buildNumber": null,

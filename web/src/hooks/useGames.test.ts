@@ -21,6 +21,7 @@ const mockBatchUpdate = vi.fn();
 const mockBatchCommit = vi.fn().mockResolvedValue(undefined);
 const mockConfirmGamePresence = vi.fn();
 const mockGetDocs = vi.fn().mockResolvedValue({ docs: [] });
+const mockTrackEvent = vi.fn();
 let mockGamesSnapshotNext: ((snapshot: { docs: any[] }) => void) | undefined;
 let mockGamesSnapshotError: ((error: Error) => void) | undefined;
 
@@ -66,6 +67,10 @@ vi.mock('../services/firebase', () => ({
 
 vi.mock('../services/cloudFunctions', () => ({
   confirmGamePresence: (...args: unknown[]) => mockConfirmGamePresence(...args),
+}));
+
+vi.mock('../utils/analytics', () => ({
+  trackEvent: (...args: unknown[]) => mockTrackEvent(...args),
 }));
 
 const mockUseAuth = vi.fn(() => ({
@@ -530,6 +535,10 @@ describe('useConfirmPresence', () => {
       isCasualPlayer: false,
     });
     expect(mockSetDoc).not.toHaveBeenCalled();
+    expect(mockTrackEvent).toHaveBeenCalledWith('game_confirmed', {
+      gameId: 'game-1',
+      position: 'GOALKEEPER',
+    });
   });
 
   it('trata retry idempotente do callable como sucesso', async () => {
@@ -552,6 +561,7 @@ describe('useConfirmPresence', () => {
 
     expect(succeeded).toBe(true);
     expect(mockConfirmGamePresence).toHaveBeenCalledTimes(1);
+    expect(mockTrackEvent).not.toHaveBeenCalled();
   });
 
   it('propaga rejeição de capacidade retornada pelo servidor', async () => {
@@ -565,6 +575,7 @@ describe('useConfirmPresence', () => {
     ).rejects.toThrow('Este jogo já está lotado.');
 
     expect(mockSetDoc).not.toHaveBeenCalled();
+    expect(mockTrackEvent).not.toHaveBeenCalled();
   });
 
   it('exige autenticação para confirmar presença', async () => {
@@ -719,6 +730,10 @@ describe('useCreateGame', () => {
         players_count: 0,
       })
     );
+    expect(mockTrackEvent).toHaveBeenCalledWith('game_created', {
+      fieldType: 'UNKNOWN',
+      groupId: 'group-qualified',
+    });
   });
 
   it('bloqueia criação sem grupo qualificado', async () => {

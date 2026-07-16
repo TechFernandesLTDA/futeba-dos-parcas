@@ -21,6 +21,11 @@ const mockBatchCommit = vi.fn();
 const mockWriteBatch = vi.fn();
 const mockUpdateDoc = vi.fn();
 const mockRunTransaction = vi.fn();
+const mockTrackEvent = vi.fn();
+
+vi.mock('../utils/analytics', () => ({
+  trackEvent: (...args: unknown[]) => mockTrackEvent(...args),
+}));
 
 vi.mock('firebase/firestore', () => ({
   collection: (...args: any[]) => mockCollection(...args),
@@ -343,6 +348,20 @@ describe('useCreateGroup', () => {
     expect(mockWriteBatch).toHaveBeenCalled();
     expect(mockBatchSet).toHaveBeenCalled();
     expect(mockBatchCommit).toHaveBeenCalled();
+    expect(mockTrackEvent).toHaveBeenCalledWith('group_created', { type: 'PRIVATE' });
+  });
+
+  it('registra grupo público somente após persistir o batch', async () => {
+    const { result } = renderHook(() => useCreateGroup(), { wrapper: createTestWrapper() });
+
+    await act(async () => {
+      await result.current.createGroup({ name: 'Grupo Público', isPublic: true });
+    });
+
+    expect(mockTrackEvent).toHaveBeenCalledWith('group_created', { type: 'PUBLIC' });
+    expect(mockBatchCommit.mock.invocationCallOrder[0]).toBeLessThan(
+      mockTrackEvent.mock.invocationCallOrder[0]
+    );
   });
 
   it('converge para 1 owner sem pré-contar o trigger no grupo principal', async () => {

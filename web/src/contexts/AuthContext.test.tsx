@@ -7,11 +7,17 @@ const mockOnAuthStateChanged = vi.fn();
 const mockSignInWithEmailAndPassword = vi.fn();
 const mockCreateUserWithEmailAndPassword = vi.fn();
 const mockSignInWithPopup = vi.fn();
+const mockGetAdditionalUserInfo = vi.fn(() => ({ isNewUser: false }));
 const mockSignOut = vi.fn();
 const mockSendPasswordResetEmail = vi.fn();
 const mockUpdateProfile = vi.fn();
 const mockClearWallMediaOutboxOwner = vi.fn();
 const mockUnregisterBrowserFcmToken = vi.fn();
+const mockTrackEvent = vi.fn();
+
+vi.mock('../utils/analytics', () => ({
+  trackEvent: (...args: unknown[]) => mockTrackEvent(...args),
+}));
 
 vi.mock('firebase/auth', () => ({
   getAuth: vi.fn(),
@@ -30,7 +36,7 @@ vi.mock('firebase/auth', () => ({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   updateProfile: (...args: any[]) => mockUpdateProfile(...args),
   // #3186: fluxo Google usa isNewUser pra decidir se deleta conta Auth rejeitada
-  getAdditionalUserInfo: vi.fn(() => ({ isNewUser: false })),
+  getAdditionalUserInfo: (...args: unknown[]) => mockGetAdditionalUserInfo(...args),
   GoogleAuthProvider: vi.fn(),
 }));
 
@@ -122,6 +128,7 @@ describe('AuthContext', () => {
     vi.clearAllMocks();
     mockClearWallMediaOutboxOwner.mockResolvedValue(undefined);
     mockUnregisterBrowserFcmToken.mockResolvedValue(undefined);
+    mockGetAdditionalUserInfo.mockReturnValue({ isNewUser: false });
     mockDoc.mockImplementation((...args) => ({ type: 'doc', args }));
     mockCollection.mockImplementation((...args) => ({ type: 'collection', args }));
     mockQuery.mockImplementation((...args) => ({ type: 'query', args }));
@@ -406,6 +413,7 @@ describe('AuthContext', () => {
         invite_source: 'email_password',
       })
     );
+    expect(mockTrackEvent).toHaveBeenCalledWith('registration_completed', { method: 'email' });
   });
 
   it('usa convite pendente se o observer criar o perfil durante o signUp', async () => {
@@ -597,6 +605,39 @@ describe('AuthContext', () => {
     });
 
     expect(mockSignInWithPopup).toHaveBeenCalled();
+    expect(mockTrackEvent).not.toHaveBeenCalledWith('registration_completed', { method: 'google' });
+  });
+
+  it('registra conversão quando o Google cria um perfil novo', async () => {
+    const googleUser = {
+      uid: 'new-google-uid',
+      email: 'new-google@test.com',
+      displayName: 'Novo Google',
+      photoURL: null,
+      delete: vi.fn(),
+    };
+    mockSignInWithPopup.mockResolvedValue({ user: googleUser });
+    mockGetAdditionalUserInfo.mockReturnValue({ isNewUser: true });
+    mockGetDoc.mockResolvedValue({ exists: () => false });
+
+    let signInWithGoogleFn: ((inviteCode?: string) => Promise<void>) | undefined;
+    function Extractor() {
+      signInWithGoogleFn = useAuth().signInWithGoogle;
+      return null;
+    }
+
+    render(
+      <AuthProvider>
+        <Extractor />
+      </AuthProvider>
+    );
+
+    await waitFor(() => expect(signInWithGoogleFn).toBeDefined());
+    await act(async () => {
+      await signInWithGoogleFn!('ABC123');
+    });
+
+    expect(mockTrackEvent).toHaveBeenCalledWith('registration_completed', { method: 'google' });
   });
 
   it('useAuth lança erro quando usado fora do AuthProvider', () => {

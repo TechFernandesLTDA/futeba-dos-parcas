@@ -29,6 +29,7 @@ import type { validateInviteCode as validateInviteCodeType, syncFieldOwnerClaim 
 import { normalizePlayerStats } from '../utils/playerStats';
 import { getEffectiveLevel, getExperiencePoints } from '../utils/xpAccounting';
 import { unregisterBrowserFcmToken } from '../services/firebaseMessaging';
+import { trackEvent } from '../utils/analytics';
 import { clearGroupWallMediaOutboxOwner } from '../utils/groupWallMediaOutbox';
 
 const logger = createLogger('AuthContext');
@@ -523,13 +524,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         ? { code: normalizedInviteCode, source: 'google_auth_observer' }
         : null;
       const result = await signInWithPopup(auth, googleProvider);
+      const isNewAuthUser = getAdditionalUserInfo(result)?.isNewUser === true;
 
       // Uma única leitura distingue usuário novo (sem doc) de existente.
       // Existente NÃO passa por checagem de convite; onAuthStateChanged carrega o perfil.
       const userSnap = await getDoc(doc(db, 'users', result.user.uid));
       if (!userSnap.exists()) {
-        const isNewAuthUser = getAdditionalUserInfo(result)?.isNewUser === true;
-
         // Convite ausente/ inválido: remove a conta Auth recém-criada (não deixa
         // órfã) e encerra a sessão. Se o delete falhar (ex.: requires-recent-login),
         // ainda assim faz signOut.
@@ -573,6 +573,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           await cleanupRejectedNewUser();
           throw new AppAuthError(APP_AUTH_ERROR_CODES.inviteRequired, INVITE_REQUIRED_MESSAGE);
         }
+      }
+      if (isNewAuthUser) {
+        trackEvent('registration_completed', { method: 'google' });
       }
       pendingInviteRef.current = null;
     } catch (err: unknown) {
@@ -625,6 +628,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!created) {
         throw new AppAuthError(APP_AUTH_ERROR_CODES.inviteRequired, INVITE_REQUIRED_MESSAGE);
       }
+      trackEvent('registration_completed', { method: 'email' });
       pendingInviteRef.current = null;
     } catch (err) {
       if (createdAuthUser) {
