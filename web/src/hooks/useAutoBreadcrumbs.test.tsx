@@ -1,9 +1,13 @@
 import React from 'react';
-import { renderHook } from '@testing-library/react';
+import { renderHook, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import i18n from 'i18next';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { useAutoBreadcrumbs } from './useAutoBreadcrumbs';
+import {
+  BreadcrumbEntityProvider,
+  useBreadcrumbEntityLabel,
+} from '../contexts/BreadcrumbEntityContext';
 
 describe('useAutoBreadcrumbs', () => {
   beforeEach(async () => {
@@ -27,17 +31,57 @@ describe('useAutoBreadcrumbs', () => {
     const { result } = renderHook(() => useAutoBreadcrumbs(), { wrapper });
 
     expect(result.current).toEqual([
-      { label: 'Grupo', to: '/group' },
+      { label: 'Grupo', to: '/?tab=2' },
       { label: 'Detalhes', to: '/group/abcdefghijk' },
       { label: 'Configurações', to: '/group/abcdefghijk/settings' },
     ]);
+  });
+
+  it('substitui o fallback pelo nome de grupo já carregado pela tela', async () => {
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <MemoryRouter initialEntries={['/group/abcdefghijk/settings']}>
+        <BreadcrumbEntityProvider>{children}</BreadcrumbEntityProvider>
+      </MemoryRouter>
+    );
+
+    const { result } = renderHook(() => {
+      useBreadcrumbEntityLabel('group', 'abcdefghijk', 'Parças da Vila');
+      return useAutoBreadcrumbs();
+    }, { wrapper });
+
+    await waitFor(() => expect(result.current[1]?.label).toBe('Parças da Vila'));
+    expect(result.current).toEqual([
+      { label: 'Grupo', to: '/?tab=2' },
+      { label: 'Parças da Vila', to: '/group/abcdefghijk' },
+      { label: 'Configurações', to: '/group/abcdefghijk/settings' },
+    ]);
+  });
+
+  it('usa fallback acessível em rota profunda de usuário e aceita o nome já carregado', async () => {
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <MemoryRouter initialEntries={['/weekly-recap/abcdefghijk']}>
+        <BreadcrumbEntityProvider>{children}</BreadcrumbEntityProvider>
+      </MemoryRouter>
+    );
+
+    const { result } = renderHook(() => {
+      useBreadcrumbEntityLabel('user', 'abcdefghijk', 'Rubens Craque');
+      return useAutoBreadcrumbs();
+    }, { wrapper });
+
+    await waitFor(() => expect(result.current[1]?.label).toBe('Rubens Craque'));
+    expect(result.current).toEqual([
+      { label: 'Resumo Semanal', to: '/weekly-recap' },
+      { label: 'Rubens Craque', to: '/weekly-recap/abcdefghijk' },
+    ]);
+    expect(result.current.some((item) => item.label === 'abcdefghijk')).toBe(false);
   });
 
   it('resolve sub-rota estática longa antes da heurística de ID', () => {
     const result = renderBreadcrumbs('/group/abcdefghijk/challenges');
 
     expect(result.current).toEqual([
-      { label: 'Grupo', to: '/group' },
+      { label: 'Grupo', to: '/?tab=2' },
       { label: 'Detalhes', to: '/group/abcdefghijk' },
       { label: 'Desafios', to: '/group/abcdefghijk/challenges' },
     ]);
@@ -60,7 +104,7 @@ describe('useAutoBreadcrumbs', () => {
     const result = renderBreadcrumbs('/group/abcdefghijk/post/zyxwvutsrqp');
 
     expect(result.current).toEqual([
-      { label: 'Grupo', to: '/group' },
+      { label: 'Grupo', to: '/?tab=2' },
       { label: 'Detalhes', to: '/group/abcdefghijk' },
       { label: 'Publicação', to: undefined },
     ]);
@@ -73,6 +117,15 @@ describe('useAutoBreadcrumbs', () => {
       const result = renderBreadcrumbs(pathname);
       expect(result.current).toHaveLength(2);
       expect(result.current[1]).toEqual({ label: 'Detalhes', to: pathname });
+    },
+  );
+
+  it.each(['/level-journey/abcdefghijk', '/weekly-recap/abcdefghijk', '/evolution/abcdefghijk'])(
+    'mantém fallback traduzido sem expor ID no deep link %s',
+    (pathname) => {
+      const result = renderBreadcrumbs(pathname);
+      expect(result.current.at(-1)).toEqual({ label: 'Detalhes', to: pathname });
+      expect(result.current.some((item) => item.label === 'abcdefghijk')).toBe(false);
     },
   );
 

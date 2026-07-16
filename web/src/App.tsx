@@ -30,6 +30,8 @@ import { ProfileGate } from './components/gate/ProfileGate';
 import { useResourcePreloading } from './hooks/useResourcePreloading';
 import { PageTransition } from './components/common/PageTransition';
 import { motion } from './theme/motion';
+import { BreadcrumbEntityProvider } from './contexts/BreadcrumbEntityContext';
+import { getSpecificRouteFallback } from './utils/routeFallback';
 import {
 
   HomeScreenSkeleton,
@@ -169,6 +171,12 @@ const NotFoundScreen = lazy(() => import('./pages/error/NotFoundScreen').then(m 
 function RouteFallback() {
   const location = useLocation();
   const path = location.pathname;
+  const specificFallback = getSpecificRouteFallback(path);
+
+  if (specificFallback === 'list') return <ListSkeleton />;
+  if (specificFallback === 'about') return <AboutSkeleton />;
+  if (specificFallback === 'form') return <FormSkeleton />;
+  if (specificFallback === 'statistics') return <StatisticSkeleton />;
 
   if (path === '/' || path === '') return <HomeScreenSkeleton />;
   if (path.startsWith('/game/') && path.endsWith('/live')) return <LiveGameSkeleton />;
@@ -813,6 +821,7 @@ function App() {
             <ToastProvider>
             <TeamsProvider>
             <LanguageProvider>
+              <BreadcrumbEntityProvider>
               <GlobalShortcuts
                 paletteOpen={paletteOpen}
                 onOpenPalette={openPalette}
@@ -862,6 +871,7 @@ function App() {
                   <ConnectionStatusWrapper />
                 </MobileShell>
               )}
+              </BreadcrumbEntityProvider>
             </LanguageProvider>
             </TeamsProvider>
             </ToastProvider>
