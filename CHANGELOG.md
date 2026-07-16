@@ -261,7 +261,8 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 - Testes garantem que os eventos são emitidos somente após operações bem-sucedidas e diferenciam novo cadastro Google de login existente.
 
 #### Mudado
-- O playbook de SEO passa a tratar `/` como landing canônica e explicita a evidência operacional ainda necessária no Search Console (#3705, #3706).
+- O playbook de SEO passa a tratar `/` como landing canônica e registra a propriedade verificada, o sitemap processado e a indexação solicitada no Search Console (#3705, #3706).
+- O acompanhamento dos indicadores de busca passa a ser uma rotina mensal automatizada; o primeiro baseline será capturado assim que o Google concluir o processamento inicial.
 
 ### [1.54.20][web-1.54.20] - 2026-07-16
 

@@ -87,12 +87,16 @@ KPIs mensais:
 5. Revisar semanalmente Page indexing, Core Web Vitals e Enhancements.
 6. Comparar consultas reais com os clusters deste documento e priorizar conteúdo pela combinação de intenção, impressões e conversão.
 
-### Evidência operacional e baseline
+### Evidência operacional — 2026-07-16
 
-- O código e o deploy não substituem a verificação da propriedade de domínio no Search Console.
-- A propriedade `futebadosparcas.com.br`, o envio do sitemap e a solicitação de indexação da raiz precisam ser comprovados na conta Google responsável.
-- O baseline inicial deve registrar o período consultado, impressões, cliques, CTR, posição média, páginas indexadas e erros de cobertura.
-- Enquanto essa evidência não estiver anexada às issues #3705 e #3706, a operação do Search Console permanece pendente, mesmo com sitemap, robots e eventos técnicos validados.
+- Propriedade de domínio `sc-domain:futebadosparcas.com.br` verificada no Google Search Console por DNS na Hostinger.
+- Registro TXT `google-site-verification` publicado com TTL de 300 segundos e resolução pública confirmada.
+- `https://futebadosparcas.com.br/sitemap.xml` enviado ao Search Console e processado sem erro, com 1 página descoberta.
+- A inspeção de `https://futebadosparcas.com.br/` inicialmente informou URL desconhecida/não indexada; a solicitação manual foi aceita com o estado “Indexação solicitada” e inclusão na fila prioritária.
+- Os relatórios de desempenho e indexação ainda estavam em processamento, com orientação do Google para nova consulta em aproximadamente 1 dia. Isso não bloqueia a configuração; apenas adia o primeiro baseline numérico.
+- A automação Codex `seo-mensal-futeba-dos-par-as` acompanha mensalmente impressões, cliques, CTR, posição média, páginas indexadas, erros de cobertura e oportunidades editoriais.
+
+O baseline inicial deve registrar o período consultado, impressões, cliques, CTR, posição média, páginas indexadas e erros de cobertura assim que os dados forem liberados. A evidência acima conclui a configuração operacional de #3706; o acompanhamento mensal passa a ser rotina contínua, não uma pendência de implantação.
 
 Referências oficiais:
 
