@@ -10,6 +10,10 @@ vi.mock('react-router-dom', () => ({
 }));
 
 import { NotificationBell } from './NotificationBell';
+import {
+  NOTIFICATION_PULSE_CYCLES,
+  shouldAnimateNotificationBell,
+} from './notificationBellMotion';
 
 const theme = createTheme();
 
@@ -61,5 +65,12 @@ describe('NotificationBell', () => {
   it('aria-label não inclui contagem quando zero', () => {
     renderWithTheme(<NotificationBell unreadCount={0} />);
     expect(screen.getByLabelText('Notificações')).toBeInTheDocument();
+  });
+
+  it('limita o destaque visual a três ciclos', () => {
+    expect(NOTIFICATION_PULSE_CYCLES).toBe(3);
+    expect(shouldAnimateNotificationBell(2, false)).toBe(true);
+    expect(shouldAnimateNotificationBell(2, true)).toBe(false);
+    expect(shouldAnimateNotificationBell(0, false)).toBe(false);
   });
 });

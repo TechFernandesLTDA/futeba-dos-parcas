@@ -110,6 +110,7 @@
     "profileMenu": "Menú del perfil",
     "quickActions": "Acciones rápidas",
     "quickCommands": "Comandos rápidos",
+    "routeAnnouncement": "Pantalla actual: {{title}}",
     "recentGames": "Partidos recientes",
     "recentXpHistory": "Historial reciente de XP",
     "refresh": "Actualizar",
@@ -3421,6 +3422,14 @@
   },
   "commandPalette": {
     "globalSearch": "Búsqueda global",
+    "quickActions": "Acciones rápidas",
+    "quickCommandSubtitles": {
+      "createGame": "Organizar un nuevo partido",
+      "createGroup": "Crear un nuevo grupo de fútbol",
+      "settings": "Ajustes de tu cuenta",
+      "profile": "Ver mi perfil",
+      "notifications": "Centro de notificaciones"
+    },
     "esc": "Esc",
     "navigate": "navegar",
     "select": "seleccionar",

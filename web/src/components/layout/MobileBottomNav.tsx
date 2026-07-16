@@ -14,6 +14,7 @@ import { pageSpacing } from '../../theme/pageTokens';
 import { iconSizes } from '../../theme/iconSizes';
 import { NAV_ITEMS, getActiveNavIndexForItems } from '../../config/navItems';
 import { useToast } from '../../contexts/ToastContext';
+import { useReducedMotion } from '../../hooks/useReducedMotion';
 
 const BOTTOM_NAV_ITEMS = NAV_ITEMS.filter((item) => item.showInBottomNav);
 
@@ -22,6 +23,7 @@ export const MobileBottomNav = React.memo(function MobileBottomNav({ children }:
   const location = useLocation();
   const { t } = useTranslation();
   const { showError } = useToast();
+  const reducedMotion = useReducedMotion();
 
   // #2175 (bug 1): threshold 50 + histerese padrão evita flicker (esconder a
   // cada 1px de scroll). Antes: disableHysteresis + threshold 0.
@@ -38,19 +40,32 @@ export const MobileBottomNav = React.memo(function MobileBottomNav({ children }:
   return (
     <>
       {children}
-      <Slide appear={false} direction="up" in={!trigger}>
+      <Slide
+        appear={false}
+        direction="up"
+        in={!trigger}
+        timeout={reducedMotion ? 0 : undefined}
+        mountOnEnter
+        unmountOnExit
+      >
         <Paper
+          aria-hidden={trigger ? true : undefined}
           sx={{
             position: 'fixed',
             bottom: 0,
-            left: 0,
-            right: 0,
+            insetInlineStart: 0,
+            insetInlineEnd: 0,
             pb: 'env(safe-area-inset-bottom, 0px)',
-            pl: 'env(safe-area-inset-left, 0px)',
-            pr: 'env(safe-area-inset-right, 0px)',
+            paddingInlineStart: (theme) => theme.direction === 'rtl'
+              ? 'env(safe-area-inset-right, 0px)'
+              : 'env(safe-area-inset-left, 0px)',
+            paddingInlineEnd: (theme) => theme.direction === 'rtl'
+              ? 'env(safe-area-inset-left, 0px)'
+              : 'env(safe-area-inset-right, 0px)',
             zIndex: 1100,
             display: { xs: 'flex', md: 'none' },
             justifyContent: 'center',
+            pointerEvents: trigger ? 'none' : 'auto',
             backdropFilter: 'blur(12px)',
             backgroundColor: (theme) => alpha(theme.palette.background.paper, 0.72),
             borderTop: '1px solid',
@@ -104,6 +119,7 @@ export const MobileBottomNav = React.memo(function MobileBottomNav({ children }:
                 icon={React.cloneElement(item.icon, { sx: { fontSize: iconSizes.lg } })}
                 aria-label={t(item.labelKey)}
                 aria-current={activeValue === idx ? 'page' : undefined}
+                tabIndex={trigger ? -1 : undefined}
                 sx={{
                   '&.Mui-selected': {
                     color: 'primary.main',

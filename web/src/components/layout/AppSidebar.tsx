@@ -34,6 +34,10 @@ import { AppLogo } from '../common/AppLogo';
 import { avatarSizes, iconSizes } from '../../theme/iconSizes';
 import { appSidebarLayoutTokens, appSidebarStyles } from './AppSidebar.styles';
 import {
+  NOTIFICATION_PULSE_CYCLES,
+  shouldAnimateNotificationBell,
+} from '../common/notificationBellMotion';
+import {
   NAV_ITEMS,
   PRIMARY_NAV_ITEMS,
   MORE_NAV_ITEMS,
@@ -85,7 +89,7 @@ export function AppSidebar() {
             width: RAIL_WIDTH_RESPONSIVE,
             height: '100%',
             position: 'relative',
-            borderRight: 1,
+            borderInlineEnd: 1,
             borderColor: 'divider',
             backdropFilter: (theme) => theme.palette.mode === 'dark' ? 'none' : 'blur(16px)',
             backgroundColor: (theme) => theme.palette.mode === 'dark'
@@ -289,7 +293,7 @@ export function AppSidebar() {
             width: DRAWER_WIDTH_RESPONSIVE,
             height: '100%',
             position: 'relative',
-            borderRight: 1,
+            borderInlineEnd: 1,
             borderColor: 'divider',
             backdropFilter: (theme) => theme.palette.mode === 'dark' ? 'none' : 'blur(16px)',
             backgroundColor: (theme) => theme.palette.mode === 'dark'
@@ -360,7 +364,7 @@ export function AppSidebar() {
             >
               {t('nav.search')}...
             </Typography>
-            <Chip label="Ctrl+K" size="small" variant="outlined" sx={{ height: 24, fontSize: '0.75rem', ml: 1 }} />
+            <Chip label="Ctrl+K" size="small" variant="outlined" sx={{ height: 24, fontSize: '0.75rem', marginInlineStart: 1 }} />
           </Button>
         </Box>
         <List sx={{ py: 0.5, flex: 1, minHeight: 0, overflowY: 'auto' }}>
@@ -440,7 +444,9 @@ export function AppSidebar() {
                   <ListItemIcon
                     sx={{
                       color: 'text.secondary',
-                      animation: isNotifItem && unreadCount > 0 && !reducedMotion ? `${pulse} 2s ease-in-out infinite` : undefined,
+                      animation: isNotifItem && shouldAnimateNotificationBell(unreadCount, reducedMotion)
+                        ? `${pulse} 2s ease-in-out ${NOTIFICATION_PULSE_CYCLES}`
+                        : undefined,
                     }}
                   >
                     {isNotifItem

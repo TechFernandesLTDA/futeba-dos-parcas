@@ -47,6 +47,7 @@ import { useTranslation } from 'react-i18next';
 import { getPrefixSearchUpperBound } from './searchPrefixes';
 import { buildPublicGroupSearchQuery } from './searchQueries';
 import { getLeaguePlayers } from '../../services/cloudFunctions';
+import { getQuickCommand, QUICK_COMMANDS, type QuickCommandId } from './quickCommands';
 
 const logger = createLogger('SearchPanel');
 
@@ -96,30 +97,6 @@ export interface SearchResult {
   lookingForGameToday?: boolean;
 }
 
-const QUICK_COMMANDS: (Omit<SearchResult, 'id'> & { labelKey: string })[] = [
-  { type: 'quick', name: 'Criar jogo', subtitle: 'Organizar nova pelada', labelKey: 'games.createGame' },
-  { type: 'quick', name: 'Criar grupo', subtitle: 'Novo grupo de pelada', labelKey: 'groups.createGroup' },
-  { type: 'quick', name: 'Configurações', subtitle: 'Ajustes da sua conta', labelKey: 'nav.settings' },
-  { type: 'quick', name: 'Perfil', subtitle: 'Ver meu perfil', labelKey: 'nav.profile' },
-  { type: 'quick', name: 'Notificações', subtitle: 'Central de notificações', labelKey: 'nav.notifications' },
-];
-
-const QUICK_ROUTES: Record<string, string> = {
-  'Criar jogo': '/game/create',
-  'Criar grupo': '/group/create',
-  'Configurações': '/settings',
-  'Perfil': '/profile',
-  'Notificações': '/notifications',
-};
-
-const QUICK_SHORTCUTS: Record<string, string> = {
-  'Criar jogo': '⌘N',
-  'Criar grupo': '⌘⇧N',
-  'Configurações': '⌘,',
-  'Perfil': '',
-  'Notificações': '',
-};
-
 interface SearchPanelProps {
   onClose?: () => void;
   placeholder?: string;
@@ -154,7 +131,12 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
   const showQuickCommands = !searchQuery.trim();
 
   const navigableItems: SearchResult[] = showQuickCommands
-    ? QUICK_COMMANDS.map((c, i) => ({ ...c, id: `quick-${i}` }))
+    ? QUICK_COMMANDS.map((command) => ({
+        id: command.id,
+        type: 'quick',
+        name: t(command.labelKey),
+        subtitle: t(command.subtitleKey),
+      }))
     : results;
 
   useEffect(() => { setSelectedIndex(-1); }, [navigableItems.length, searchQuery]);
@@ -276,8 +258,8 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
 
   const navToResult = (result: SearchResult) => {
     if (result.type === 'quick') {
-      const r = QUICK_ROUTES[result.name];
-      if (r) { onClose?.(); navigate(r); }
+      const command = getQuickCommand(result.id);
+      if (command) { onClose?.(); navigate(command.route); }
       return;
     }
     if (result.type === 'history') {
@@ -428,7 +410,7 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
               color="text.secondary"
               sx={{ px: 2, pt: 1.5, pb: 0.5, display: 'block' }}
             >
-              Ações rápidas
+              {t('commandPalette.quickActions')}
             </Typography>
             <List
               ref={listRef}
@@ -440,34 +422,39 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
               {QUICK_COMMANDS.map((cmd, idx) => {
                 const displayName = t(cmd.labelKey);
                 return (
-                <Box key={cmd.name}>
+                <Box key={cmd.id}>
                   {idx > 0 && <Divider component="li" />}
                   <ListItemButton
                     id={`quick-cmd-${idx}`}
                     data-index={idx}
                     selected={selectedIndex === idx}
-                    onClick={() => navToResult({ ...cmd, id: `quick-${idx}` })}
+                    onClick={() => navToResult({
+                      id: cmd.id,
+                      type: 'quick',
+                      name: displayName,
+                      subtitle: t(cmd.subtitleKey),
+                    })}
                     role="option"
                     aria-selected={selectedIndex === idx}
                     sx={{ py: 1, '&.Mui-selected': { bgcolor: alpha(theme.palette.primary.main, 0.12) } }}
                   >
                     <ListItemAvatar sx={{ minWidth: 40 }}>
                       <Avatar sx={{ width: avatarSizes.sm, height: avatarSizes.sm, bgcolor: alpha(theme.palette.info.main, 0.15), color: theme.palette.info.main }}>
-                        {quickIcon(cmd.name)}
+                        {quickIcon(cmd.id)}
                       </Avatar>
                     </ListItemAvatar>
                     <ListItemText
                       primary={displayName}
-                      secondary={cmd.subtitle}
+                      secondary={t(cmd.subtitleKey)}
                       primaryTypographyProps={{ variant: 'body2', fontWeight: 500 }}
                       secondaryTypographyProps={{ variant: 'caption' }}
                     />
-                    {QUICK_SHORTCUTS[cmd.name] ? (
+                    {cmd.shortcut ? (
                       <Box
                         component="kbd"
                         aria-hidden="true"
                         sx={{
-                          ml: 1,
+                          marginInlineStart: 1,
                           px: 0.75,
                           py: 0.25,
                           borderRadius: 0.5,
@@ -480,7 +467,7 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
                           flexShrink: 0,
                         }}
                       >
-                        {QUICK_SHORTCUTS[cmd.name]}
+                        {cmd.shortcut}
                       </Box>
                     ) : null}
                   </ListItemButton>
@@ -572,13 +559,13 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
   );
 };
 
-function quickIcon(name: string): React.ReactElement {
-  const map: Record<string, React.ReactElement> = {
-    'Criar jogo': <AddGameIcon fontSize="small" />,
-    'Criar grupo': <AddGroupIcon fontSize="small" />,
-    'Configurações': <SettingsIcon fontSize="small" />,
-    'Perfil': <ProfileIcon fontSize="small" />,
-    'Notificações': <NotificationsIcon fontSize="small" />,
+function quickIcon(id: QuickCommandId): React.ReactElement {
+  const map: Record<QuickCommandId, React.ReactElement> = {
+    'create-game': <AddGameIcon fontSize="small" />,
+    'create-group': <AddGroupIcon fontSize="small" />,
+    'settings': <SettingsIcon fontSize="small" />,
+    'profile': <ProfileIcon fontSize="small" />,
+    'notifications': <NotificationsIcon fontSize="small" />,
   };
-  return map[name] ?? <QuickIcon fontSize="small" />;
+  return map[id] ?? <QuickIcon fontSize="small" />;
 }
