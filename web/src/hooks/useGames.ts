@@ -32,6 +32,7 @@ import { useTranslation } from 'react-i18next';
 import { getIsPublicFromVisibility } from '../utils/gameLifecycle';
 import { confirmGamePresence as confirmGamePresenceCallable } from '../services/cloudFunctions';
 import { realtimeTelemetry, type RealtimeMeasurement } from '../utils/realtimeTelemetry';
+import { trackEvent } from '../utils/analytics';
 
 const logger = createLogger('useGames');
 
@@ -426,11 +427,14 @@ export function useConfirmPresence() {
       setError(null);
 
       try {
-        await confirmGamePresenceCallable({
+        const confirmationResult = await confirmGamePresenceCallable({
           gameId,
           position,
           isCasualPlayer: false,
         });
+        if (!confirmationResult.data.alreadyConfirmed) {
+          trackEvent('game_confirmed', { gameId, position });
+        }
         queryClient.invalidateQueries({ queryKey: ['games'], exact: false });
         showSuccess(t('feedback.games.confirmSuccess'));
         setLoading(false);
@@ -585,6 +589,10 @@ export function useCreateGame() {
         };
 
         const docRef = await addDoc(gamesRef, newGame);
+        trackEvent('game_created', {
+          fieldType: gameData.fieldType ?? 'UNKNOWN',
+          groupId: gameData.groupId,
+        });
         // Invalidar cache de jogos após criar
         queryClient.invalidateQueries({ queryKey: ['games'], exact: false });
         queryClient.invalidateQueries({ queryKey: ['nextGame'] });

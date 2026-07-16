@@ -7,7 +7,8 @@ Transformar `https://futebadosparcas.com.br` na origem canônica da marca e atra
 ## Fonte canônica e páginas públicas
 
 - Domínio canônico: `https://futebadosparcas.com.br`.
-- Landing pública principal: `/launch`.
+- Landing pública principal e URL canônica: `/`.
+- A rota legada `/launch` deve redirecionar para `/` e não deve competir pela indexação.
 - `robots.txt`, sitemap, canonical, Open Graph e Twitter Cards devem usar sempre o domínio canônico.
 - Páginas privadas, pessoais ou dependentes de autenticação não entram no sitemap.
 - Toda página indexável precisa entregar título, descrição, canonical, `h1`, conteúdo útil e links internos coerentes.
@@ -81,10 +82,17 @@ KPIs mensais:
 
 1. Criar e verificar uma propriedade de domínio para `futebadosparcas.com.br` via DNS.
 2. Enviar `https://futebadosparcas.com.br/sitemap.xml`.
-3. Inspecionar `/launch` e solicitar indexação depois do deploy.
+3. Inspecionar `/` e solicitar indexação depois do deploy.
 4. Conferir HTML renderizado, canonical escolhido pelo Google e recursos bloqueados.
 5. Revisar semanalmente Page indexing, Core Web Vitals e Enhancements.
 6. Comparar consultas reais com os clusters deste documento e priorizar conteúdo pela combinação de intenção, impressões e conversão.
+
+### Evidência operacional e baseline
+
+- O código e o deploy não substituem a verificação da propriedade de domínio no Search Console.
+- A propriedade `futebadosparcas.com.br`, o envio do sitemap e a solicitação de indexação da raiz precisam ser comprovados na conta Google responsável.
+- O baseline inicial deve registrar o período consultado, impressões, cliques, CTR, posição média, páginas indexadas e erros de cobertura.
+- Enquanto essa evidência não estiver anexada às issues #3705 e #3706, a operação do Search Console permanece pendente, mesmo com sitemap, robots e eventos técnicos validados.
 
 Referências oficiais:
 

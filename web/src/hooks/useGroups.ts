@@ -30,6 +30,7 @@ import { getFirestoreErrorMessage } from '../utils/firebaseErrors';
 import { useTranslation } from 'react-i18next';
 import { uploadGroupLogo } from '../utils/groupLogoStorage';
 import { cashboxAmountToCents, centsToCashboxAmount, normalizeCashboxAmount } from '../utils/cashboxAmount';
+import { trackEvent } from '../utils/analytics';
 
 const logger = createLogger('useGroups');
 const MAX_INVITE_CODE_GENERATION_ATTEMPTS = 5;
@@ -440,6 +441,9 @@ export function useCreateGroup() {
         });
 
         await batch.commit();
+        trackEvent('group_created', {
+          type: groupData.isPublic ? 'PUBLIC' : 'PRIVATE',
+        });
 
         if (photoFile) {
           try {

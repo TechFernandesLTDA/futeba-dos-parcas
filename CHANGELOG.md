@@ -254,6 +254,15 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.54.21][web-1.54.21] - 2026-07-16
+
+#### Adicionado
+- Eventos reais de conversão para cadastro concluído, grupo criado, jogo criado e presença confirmada.
+- Testes garantem que os eventos são emitidos somente após operações bem-sucedidas e diferenciam novo cadastro Google de login existente.
+
+#### Mudado
+- O playbook de SEO passa a tratar `/` como landing canônica e explicita a evidência operacional ainda necessária no Search Console (#3705, #3706).
+
 ### [1.54.20][web-1.54.20] - 2026-07-16
 
 #### Mudado
@@ -2615,6 +2624,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.54.21]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.21.md
 [web-1.54.20]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.20.md
 [web-1.54.19]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.19.md
 [web-1.54.18]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.18.md
