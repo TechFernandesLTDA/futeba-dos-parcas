@@ -491,9 +491,9 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
           </Box>
         ) : results.length === 0 ? (
           <Box sx={{ textAlign: 'center', py: 6 }}>
-            <SearchIcon sx={{ fontSize: iconSizes.xxl, color: 'text.disabled', mb: 1.5 }} />
+            <SearchIcon aria-hidden="true" sx={{ fontSize: iconSizes.xxl, color: 'text.secondary', mb: 1.5 }} />
             <Typography variant="body2" color="text.secondary">{t('commandPalette.noResults')}</Typography>
-            <Typography variant="caption" color="text.disabled" display="block">{t('commandPalette.tryOtherTerms')}</Typography>
+            <Typography variant="caption" color="text.secondary" display="block">{t('commandPalette.tryOtherTerms')}</Typography>
           </Box>
         ) : (
           <List
@@ -564,7 +564,7 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
             >
               {k}
             </Box>
-            <Typography variant="caption" color="text.disabled">{label}</Typography>
+            <Typography variant="caption" color="text.secondary">{label}</Typography>
           </Box>
         ))}
       </Box>

@@ -87,7 +87,12 @@ export function MobileTopBar({ unreadCount, title, showBack, onBack, breadcrumbs
           </IconButton>
         ) : (
           // Logo padronizada — brand asset (não ícone Material genérico)
-          <AppLogo size="small" shape="circle" sx={{ width: iconSizes.sidebar, height: iconSizes.sidebar, mr: 1 }} />
+          <AppLogo
+            size="small"
+            shape="circle"
+            alt=""
+            sx={{ width: iconSizes.sidebar, height: iconSizes.sidebar, mr: 1 }}
+          />
         )}
         <Typography
           variant="h6"
@@ -134,7 +139,11 @@ export function MobileTopBar({ unreadCount, title, showBack, onBack, breadcrumbs
             return (
               <Box key={`${item.label}-${idx}`} sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5, minWidth: 0 }}>
                 {idx > 0 && (
-                  <NavigateNext fontSize="small" sx={{ color: 'text.disabled', flexShrink: 0 }} />
+                  <NavigateNext
+                    aria-hidden="true"
+                    fontSize="small"
+                    sx={{ color: 'text.secondary', flexShrink: 0 }}
+                  />
                 )}
                 {isLast || !item.to ? (
                   <Typography

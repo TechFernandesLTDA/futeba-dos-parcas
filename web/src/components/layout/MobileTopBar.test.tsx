@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { ThemeProvider, createTheme } from '@mui/material';
+import { MemoryRouter } from 'react-router-dom';
 import { MobileTopBar } from './MobileTopBar';
 
 vi.mock('react-i18next', () => ({
@@ -15,14 +16,10 @@ vi.mock('react-i18next', () => ({
   }),
 }));
 
-vi.mock('react-router-dom', () => ({
-  useNavigate: () => vi.fn(),
-}));
-
 const theme = createTheme();
 
 function renderWithTheme(ui: React.ReactElement) {
-  return render(<ThemeProvider theme={theme}>{ui}</ThemeProvider>);
+  return render(<ThemeProvider theme={theme}><MemoryRouter>{ui}</MemoryRouter></ThemeProvider>);
 }
 
 describe('MobileTopBar', () => {
@@ -55,6 +52,22 @@ describe('MobileTopBar', () => {
     const { container } = renderWithTheme(<MobileTopBar unreadCount={0} />);
     const img = container.querySelector('img');
     expect(img).toBeInTheDocument();
+    expect(img).toHaveAttribute('alt', '');
+  });
+
+  it('oculta o separador decorativo e usa contraste informativo no breadcrumb', () => {
+    const { container } = renderWithTheme(
+      <MobileTopBar
+        unreadCount={0}
+        showBack
+        onBack={vi.fn()}
+        breadcrumbs={[{ label: 'Início', to: '/' }, { label: 'Grupo' }]}
+      />,
+    );
+
+    const separator = container.querySelector('[data-testid="NavigateNextIcon"]');
+    expect(separator).toHaveAttribute('aria-hidden', 'true');
+    expect(separator).toHaveStyle({ color: theme.palette.text.secondary });
   });
 
   it('tem display responsivo xs flex e md none', () => {
