@@ -110,6 +110,7 @@
     "profileMenu": "Profile menu",
     "quickActions": "Quick actions",
     "quickCommands": "Quick commands",
+    "routeAnnouncement": "Current screen: {{title}}",
     "recentGames": "Recent games",
     "recentXpHistory": "Recent XP history",
     "refresh": "Refresh",
@@ -3423,6 +3424,14 @@
   },
   "commandPalette": {
     "globalSearch": "Global search",
+    "quickActions": "Quick actions",
+    "quickCommandSubtitles": {
+      "createGame": "Organize a new pickup game",
+      "createGroup": "Create a new soccer group",
+      "settings": "Adjust your account",
+      "profile": "View my profile",
+      "notifications": "Notification center"
+    },
     "esc": "Esc",
     "navigate": "navigate",
     "select": "select",

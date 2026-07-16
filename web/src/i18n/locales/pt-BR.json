@@ -110,6 +110,7 @@
     "profileMenu": "Menu do perfil",
     "quickActions": "Ações rápidas",
     "quickCommands": "Comandos rápidos",
+    "routeAnnouncement": "Tela atual: {{title}}",
     "recentGames": "Jogos recentes",
     "recentXpHistory": "Histórico de XP recente",
     "refresh": "Atualizar",
@@ -3423,6 +3424,14 @@
   },
   "commandPalette": {
     "globalSearch": "Busca global",
+    "quickActions": "Ações rápidas",
+    "quickCommandSubtitles": {
+      "createGame": "Organizar nova pelada",
+      "createGroup": "Novo grupo de pelada",
+      "settings": "Ajustes da sua conta",
+      "profile": "Ver meu perfil",
+      "notifications": "Central de notificações"
+    },
     "esc": "Esc",
     "navigate": "navegar",
     "select": "selecionar",

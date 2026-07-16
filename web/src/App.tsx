@@ -30,6 +30,7 @@ import { ProfileGate } from './components/gate/ProfileGate';
 import { useResourcePreloading } from './hooks/useResourcePreloading';
 import { PageTransition } from './components/common/PageTransition';
 import { motion } from './theme/motion';
+import { getActiveNavItem } from './config/navItems';
 import {
 
   HomeScreenSkeleton,
@@ -433,27 +434,26 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 
 function useFocusOnNavigate() {
   const location = useLocation();
-  const reducedMotion = useReducedMotion();
 
   useEffect(() => {
-    // #3733: defer focus até após a animação do PageTransition (300ms medium).
-    // Antes, o foco era movido imediatamente para conteúdo com opacity:0 +
-    // translateY, deixando leitores de tela focando em conteúdo invisível.
-    const timer = window.setTimeout(() => {
+    // #3766: espera somente o próximo frame para garantir que a nova árvore já
+    // foi montada. A rota anterior não permanece no DOM, portanto não há motivo
+    // para acoplar o foco aos 300 ms da animação visual.
+    const frame = window.requestAnimationFrame(() => {
       const el = document.querySelector('#main-content') as HTMLElement;
       if (el) {
         el.setAttribute('tabIndex', '-1');
         el.focus({ preventScroll: true });
       }
-    }, reducedMotion ? 0 : 320);
+    });
 
     addBreadcrumb('navigation', `Navegou para ${location.pathname}`, {
       pathname: location.pathname,
       search: location.search,
     });
 
-    return () => window.clearTimeout(timer);
-  }, [location.pathname, location.search, reducedMotion]);
+    return () => window.cancelAnimationFrame(frame);
+  }, [location.pathname, location.search]);
 }
 
 function AppRoutes() {
@@ -716,16 +716,18 @@ function CommandPaletteBoundary({ children }: { children: React.ReactNode }) {
 
 function RouteAnnouncer() {
   const location = useLocation();
-  const [title, setTitle] = useState(document.title);
-
-  useEffect(() => {
-    setTitle(document.title);
-  }, [location.pathname]);
+  const { t } = useTranslation();
+  const breadcrumbs = useAutoBreadcrumbs();
+  const activeItem = getActiveNavItem(location.pathname, location.search);
+  const routeTitle = breadcrumbs.at(-1)?.label
+    ?? (activeItem ? t(activeItem.labelKey) : t('errors.notFound'));
+  const announcement = t('a11y.routeAnnouncement', { title: routeTitle });
 
   return (
     <Box
       component="span"
       aria-live="polite"
+      aria-atomic="true"
       sx={{
         position: 'absolute',
         width: 1,
@@ -735,7 +737,7 @@ function RouteAnnouncer() {
         whiteSpace: 'nowrap',
       }}
     >
-      {title}
+      {announcement}
     </Box>
   );
 }

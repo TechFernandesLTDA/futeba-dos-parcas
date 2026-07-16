@@ -39,6 +39,10 @@ import { md3TypeScale } from '../../theme';
 import { getNavigationGlassStyles } from '../../theme/navigationGlass';
 import { navigationControlTokens } from '../../theme/navigationControls';
 import {
+  NOTIFICATION_PULSE_CYCLES,
+  shouldAnimateNotificationBell,
+} from '../common/notificationBellMotion';
+import {
   NAV_ITEMS,
   PRIMARY_NAV_ITEMS,
   MORE_NAV_ITEMS,
@@ -105,7 +109,7 @@ export function AppSidebar() {
             width: RAIL_WIDTH_RESPONSIVE,
             height: '100%',
             position: 'relative',
-            borderRight: 1,
+            borderInlineEnd: 1,
             borderColor: 'divider',
             ...getNavigationGlassStyles(theme, 'desktop'),
             display: 'flex',
@@ -212,7 +216,7 @@ export function AppSidebar() {
                 aria-label={unreadCount > 0
                   ? t('nav.notificationsAria', { count: unreadCount })
                   : t(notificationNavItem.labelKey)}
-                onClick={() => navigate(resolveNavItemPath(notificationNavItem, user?.role))}
+                onClick={() => navigateWithHaptic(resolveNavItemPath(notificationNavItem, user?.role))}
                 sx={appSidebarStyles.railNavigationButton}
               >
                 <ListItemIcon
@@ -220,8 +224,8 @@ export function AppSidebar() {
                     minWidth: 0,
                     justifyContent: 'center',
                     mb: 0.5,
-                    animation: unreadCount > 0 && !reducedMotion
-                      ? `${pulse} 2s ease-in-out infinite`
+                    animation: shouldAnimateNotificationBell(unreadCount, reducedMotion)
+                      ? `${pulse} 2s ease-in-out ${NOTIFICATION_PULSE_CYCLES}`
                       : undefined,
                   }}
                 >
@@ -370,7 +374,7 @@ export function AppSidebar() {
             width: DRAWER_WIDTH_RESPONSIVE,
             height: '100%',
             position: 'relative',
-            borderRight: 1,
+            borderInlineEnd: 1,
             borderColor: 'divider',
             ...getNavigationGlassStyles(theme, 'desktop'),
             display: 'flex',
@@ -441,7 +445,7 @@ export function AppSidebar() {
               label={searchShortcut}
               size="small"
               variant="outlined"
-              sx={{ height: navigationControlTokens.shortcutChipHeight, ...md3TypeScale.labelMedium, ml: 1 }}
+              sx={{ height: navigationControlTokens.shortcutChipHeight, ...md3TypeScale.labelMedium, marginInlineStart: 1 }}
             />
           </Button>
         </Box>
@@ -522,7 +526,9 @@ export function AppSidebar() {
                   <ListItemIcon
                     sx={{
                       color: 'text.secondary',
-                      animation: isNotifItem && unreadCount > 0 && !reducedMotion ? `${pulse} 2s ease-in-out infinite` : undefined,
+                      animation: isNotifItem && shouldAnimateNotificationBell(unreadCount, reducedMotion)
+                        ? `${pulse} 2s ease-in-out ${NOTIFICATION_PULSE_CYCLES}`
+                        : undefined,
                     }}
                   >
                     {isNotifItem

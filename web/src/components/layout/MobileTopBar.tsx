@@ -63,8 +63,12 @@ export function MobileTopBar({ unreadCount, title, showBack, onBack, breadcrumbs
         borderColor: 'divider',
         boxShadow: theme.shadowsCustom?.navTop ?? theme.shadowsCustom?.nav,
         pt: 'env(safe-area-inset-top, 0px)',
-        pl: 'env(safe-area-inset-left, 0px)',
-        pr: 'env(safe-area-inset-right, 0px)',
+        paddingInlineStart: (theme) => theme.direction === 'rtl'
+          ? 'env(safe-area-inset-right, 0px)'
+          : 'env(safe-area-inset-left, 0px)',
+        paddingInlineEnd: (theme) => theme.direction === 'rtl'
+          ? 'env(safe-area-inset-left, 0px)'
+          : 'env(safe-area-inset-right, 0px)',
       })}
     >
       <Toolbar variant="dense" sx={{ minWidth: 0 }}>
@@ -73,7 +77,7 @@ export function MobileTopBar({ unreadCount, title, showBack, onBack, breadcrumbs
             edge="start"
             onClick={onBack}
             aria-label={t('common.back')}
-            sx={{ mr: 1, color: 'text.primary' }}
+            sx={{ marginInlineEnd: 1, color: 'text.primary' }}
           >
             <ArrowBackIcon />
           </IconButton>
@@ -83,7 +87,7 @@ export function MobileTopBar({ unreadCount, title, showBack, onBack, breadcrumbs
             size="small"
             shape="circle"
             alt=""
-            sx={{ width: iconSizes.sidebar, height: iconSizes.sidebar, mr: 1 }}
+            sx={{ width: iconSizes.sidebar, height: iconSizes.sidebar, marginInlineEnd: 1 }}
           />
         )}
         <Typography

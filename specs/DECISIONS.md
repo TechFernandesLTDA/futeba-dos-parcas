@@ -1321,4 +1321,26 @@ do armazenamento permanecem compatíveis.
 
 ---
 
+### [2026-07-16] Identidade estável e anúncio derivado na navegação web
+
+**Contexto:** O Command Palette vinculava rotas a rótulos em PT-BR, enquanto o
+anúncio acessível dependia de `document.title` atualizado por outro efeito. O
+foco também aguardava um atraso visual fixo de 320 ms.
+
+**Alternativas consideradas:**
+1. Manter rótulos como chave e duplicar mapas por idioma — frágil e sujeito a divergência.
+2. Aguardar o efeito de SEO com outro temporizador — mantém a corrida e acopla acessibilidade a animações.
+3. Usar IDs estáveis, título derivado da rota e foco no próximo frame — comportamento determinístico.
+
+**Decisão:** Comandos rápidos usam IDs estáveis; o anúncio vem de
+breadcrumbs/itens de navegação; o foco é aplicado com `requestAnimationFrame`.
+
+**Justificativa:** Texto traduzido deixa de controlar comportamento, o anúncio
+não depende da ordem de efeitos e a navegação assistiva não espera a animação.
+
+**Relacionado:** `specs/BUGFIX_2026-07-16_web-a11y-i18n-navigation.md`, #3766,
+#3784 e #3788.
+
+---
+
 <!-- Adicione novas decisões acima desta linha -->
