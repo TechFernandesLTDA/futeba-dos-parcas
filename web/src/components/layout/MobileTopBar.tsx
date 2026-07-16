@@ -1,9 +1,9 @@
 import { AppBar, Toolbar, Typography, IconButton, Box } from '@mui/material';
-import { alpha } from '@mui/material/styles';
 import { ArrowBack as ArrowBackIcon, NavigateNext, Search as SearchIcon } from '@mui/icons-material';
 import { Link as RouterLink } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { iconSizes } from '../../theme/iconSizes';
+import { getNavigationGlassStyles } from '../../theme/navigationGlass';
 import { NotificationBell } from '../common/NotificationBell';
 import { AppLogo } from '../common/AppLogo';
 import type { BreadcrumbItem } from './AppBreadcrumbs';
@@ -55,25 +55,17 @@ export function MobileTopBar({ unreadCount, title, showBack, onBack, breadcrumbs
     <AppBar
       position="sticky"
       elevation={0}
-      sx={{
+      sx={(theme) => ({
         display: { xs: 'flex', md: 'none' },
-        backgroundColor: (theme) => alpha(theme.palette.background.paper, 0.72),
+        ...getNavigationGlassStyles(theme, 'mobile'),
         color: 'text.primary',
         borderBottom: 1,
         borderColor: 'divider',
-        boxShadow: (theme) => theme.shadowsCustom?.navTop ?? theme.shadowsCustom?.nav,
+        boxShadow: theme.shadowsCustom?.navTop ?? theme.shadowsCustom?.nav,
         pt: 'env(safe-area-inset-top, 0px)',
         pl: 'env(safe-area-inset-left, 0px)',
         pr: 'env(safe-area-inset-right, 0px)',
-        backdropFilter: 'blur(12px)',
-        '@supports not (backdrop-filter: blur(12px))': {
-          backgroundColor: 'background.paper',
-        },
-        '@media (prefers-reduced-transparency: reduce)': {
-          backdropFilter: 'none',
-          backgroundColor: 'background.paper',
-        },
-      }}
+      })}
     >
       <Toolbar variant="dense" sx={{ minWidth: 0 }}>
         {showBack ? (
