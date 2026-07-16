@@ -9,9 +9,10 @@ import {
   Slide,
   Box,
 } from '@mui/material';
-import { alpha } from '@mui/material/styles';
+import { md3TypeScale } from '../../theme';
 import { pageSpacing } from '../../theme/pageTokens';
 import { iconSizes } from '../../theme/iconSizes';
+import { getNavigationGlassStyles } from '../../theme/navigationGlass';
 import { NAV_ITEMS, getActiveNavIndexForItems } from '../../config/navItems';
 import { useToast } from '../../contexts/ToastContext';
 
@@ -40,7 +41,7 @@ export const MobileBottomNav = React.memo(function MobileBottomNav({ children }:
       {children}
       <Slide appear={false} direction="up" in={!trigger}>
         <Paper
-          sx={{
+          sx={(theme) => ({
             position: 'fixed',
             bottom: 0,
             left: 0,
@@ -51,22 +52,15 @@ export const MobileBottomNav = React.memo(function MobileBottomNav({ children }:
             zIndex: 1100,
             display: { xs: 'flex', md: 'none' },
             justifyContent: 'center',
-            backdropFilter: 'blur(12px)',
-            backgroundColor: (theme) => alpha(theme.palette.background.paper, 0.72),
+            ...getNavigationGlassStyles(theme, 'mobile'),
             borderTop: '1px solid',
             borderColor: 'divider',
-            boxShadow: (theme) => theme.shadowsCustom?.navBottom ?? theme.shadowsCustom?.nav,
-            '@supports not (backdrop-filter: blur(12px))': {
-              backgroundColor: 'background.paper',
-            },
-            '@media (prefers-reduced-transparency: reduce)': {
-              backdropFilter: 'none',
-              backgroundColor: 'background.paper',
-            },
-          }}
+            boxShadow: theme.shadowsCustom?.navBottom ?? theme.shadowsCustom?.nav,
+          })}
           elevation={0}
         >
           <BottomNavigation
+            data-testid="mobile-bottom-navigation"
             value={activeValue}
             onChange={(_e, newValue: number) => {
               // #2175 (bug 2): navegação com error handling — feedback ao
@@ -80,6 +74,9 @@ export const MobileBottomNav = React.memo(function MobileBottomNav({ children }:
             showLabels
             sx={{
               width: '100%',
+              // O Paper externo é a superfície de vidro. O filho precisa ser
+              // transparente para não encobrir blur/opacidade, inclusive em xs.
+              backgroundColor: 'transparent',
               // #2203: em tablets (sm, até 900px) 480px centraliza os ícones e
               // desperdiça as laterais. Distribui melhor com 600px no sm.
               maxWidth: { xs: 480, sm: 600 },
@@ -90,10 +87,8 @@ export const MobileBottomNav = React.memo(function MobileBottomNav({ children }:
                 padding: '6px 0',
               },
               '& .MuiBottomNavigationAction-label': {
-                fontSize: '0.75rem',
-                '&.Mui-selected': {
-                  fontSize: '0.75rem',
-                },
+                ...md3TypeScale.labelMedium,
+                '&.Mui-selected': md3TypeScale.labelMedium,
               },
             }}
           >
