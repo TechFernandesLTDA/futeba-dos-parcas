@@ -114,15 +114,16 @@ test('PR Check keeps Validate PR stable while moving Gradle to a scoped job', ()
   assert.doesNotMatch(validate, /gradlew|setup-gradle/i);
 });
 
-test('declarative branch protection names only stable aggregate checks', () => {
+test('declarative branch protection keeps stable gates and the single-owner review policy', () => {
   const requiredChecks = settings.match(/required_status_checks:[\s\S]*?contexts:\n((?:\s+- .+\n)+)/);
   assert.ok(requiredChecks, 'required status checks must be declared');
   assert.deepEqual(
     requiredChecks[1].trim().split('\n').map((line) => line.replace(/^\s*-\s+/, '')),
     ['Lighthouse CI', 'Validate PR', 'Android CI Gate', 'Web CI Gate']
   );
-  assert.match(settings, /required_approving_review_count: 1/);
-  assert.match(settings, /require_code_owner_reviews: true/);
+  assert.match(settings, /required_approving_review_count: 0/);
+  assert.match(settings, /dismiss_stale_reviews: false/);
+  assert.match(settings, /require_code_owner_reviews: false/);
 });
 
 test('reusable classifier exports every versioned domain and manual runs remain full', () => {

@@ -144,7 +144,7 @@ fastlane beta                              # Deploy to Firebase App Distribution
 
 - **Private repo** (`TechFernandesLTDA/futeba-dos-parcas`) — external collaborators need explicit access
 - **Squash-merge only** on `master`. `delete_branch_on_merge: true`. **NEVER push direto a master**
-- **Branch protection**: 1 approving review + code owner review required, no force-push, no deletions
+- **Branch protection**: PR + 4 CI gates required; human/CODEOWNERS review is advisory (0 approvals required); no force-push or deletions
 - **Conventional Commits enforced** via `commitlint.config.js` + Husky pre-commit hook
 - **Node 22** required (see `.nvmrc`) — run `nvm use` before working in `web/` or `functions/`
 - **Dependabot**: monthly schedule, limit 2 PRs, label `dependencies`. Auto-bumps closed — deps handled in batch via `npm audit fix`

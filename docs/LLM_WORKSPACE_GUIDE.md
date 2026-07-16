@@ -59,7 +59,7 @@ git switch -C master origin/master
 
 - Production web URL: `https://futebadosparcas.web.app`
 - Default branch: `master`
-- Merge policy: squash merge only, protected branch, code owner review required.
+- Merge policy: squash merge only; PR and 4 CI gates required; human/CODEOWNERS review advisory (0 approvals required).
 - Node runtime for `web/` and `functions/`: use `.nvmrc` (`Node 22` currently).
 - Main backend: Firebase Auth, Firestore, Cloud Functions v2 and App Check.
 - Archived backend: `archive/backend/` is dormant and has no production consumers.

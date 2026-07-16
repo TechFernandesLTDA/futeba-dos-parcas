@@ -128,6 +128,6 @@ Ask before:
 
 - deleting branches that do not map to a merged/closed PR;
 - changing branch protection, secrets, environments or Firebase billing;
-- merging protected PRs without required review;
+- changing branch protection or merging before required CI gates pass;
 - running destructive data scripts outside emulator/staging;
 - sending real SMS tests in production with real phone numbers.
