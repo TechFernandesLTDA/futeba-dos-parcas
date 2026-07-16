@@ -4,7 +4,6 @@ import {
   getLocationsPath,
   getSectionFallback,
   NAV_ITEMS,
-  getActiveNavIndexForSurface,
   getActiveNavIndexForItems,
   getActiveNavItem,
   RAIL_WIDTH,
@@ -110,27 +109,29 @@ describe('getActiveNavIndex (#2226/#3726)', () => {
   });
 });
 
-describe('getActiveNavIndexForSurface (#3726)', () => {
+describe('getActiveNavIndexForItems na bottom nav (#3726)', () => {
+  const bottomItems = NAV_ITEMS.filter((item) => item.showInBottomNav);
+
   it('retorna o índice real para items primary na surface', () => {
-    expect(getActiveNavIndexForSurface('/', '?tab=0', 5)).toBe(0);
-    expect(getActiveNavIndexForSurface('/game/abc', '', 5)).toBe(1);
+    expect(getActiveNavIndexForItems('/', '?tab=0', bottomItems)).toBe(0);
+    expect(getActiveNavIndexForItems('/game/abc', '', bottomItems)).toBe(1);
   });
 
   it('items "more" com parentItemId resolvem para o tab pai na surface limitada', () => {
     // Bottom nav tem 5 slots (primary 0-4). Settings (idx 8) → Perfil (idx 4).
-    expect(getActiveNavIndexForSurface('/settings', '', 5)).toBe(4);
-    expect(getActiveNavIndexForSurface('/statistics', '', 5)).toBe(4);
-    expect(getActiveNavIndexForSurface('/badges', '', 5)).toBe(4);
-    expect(getActiveNavIndexForSurface('/locations', '', 5)).toBe(4);
+    expect(getActiveNavIndexForItems('/settings', '', bottomItems)).toBe(4);
+    expect(getActiveNavIndexForItems('/statistics', '', bottomItems)).toBe(4);
+    expect(getActiveNavIndexForItems('/badges', '', bottomItems)).toBe(4);
+    expect(getActiveNavIndexForItems('/locations', '', bottomItems)).toBe(4);
   });
 
   it('notifications/messages usam Perfil como umbrella na surface limitada', () => {
-    expect(getActiveNavIndexForSurface('/notifications', '', 5)).toBe(4);
-    expect(getActiveNavIndexForSurface('/messages', '', 5)).toBe(4);
+    expect(getActiveNavIndexForItems('/notifications', '', bottomItems)).toBe(4);
+    expect(getActiveNavIndexForItems('/messages', '', bottomItems)).toBe(4);
   });
 
   it('rotas órfãs → false', () => {
-    expect(getActiveNavIndexForSurface('/admin/users', '', 5)).toBe(false);
+    expect(getActiveNavIndexForItems('/admin/users', '', bottomItems)).toBe(false);
   });
 });
 

@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo } from 'react';
+import { createContext, useContext, useLayoutEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
 import type { BreadcrumbItem } from '../components/layout/AppBreadcrumbs';
@@ -8,13 +8,13 @@ export type RegisterBreadcrumbOverride = () => () => void;
 export const BreadcrumbOverrideContext = createContext<RegisterBreadcrumbOverride | null>(null);
 
 /**
- * Registers a screen-owned breadcrumb trail. While registered, AppLayout hides
- * its path-derived trail so the document exposes exactly one breadcrumb nav.
+ * Registra uma trilha controlada pela tela. Enquanto estiver registrada, o
+ * AppLayout oculta a trilha derivada da rota para expor apenas um breadcrumb.
  */
 export function useAppBreadcrumbOverride(enabled = true) {
   const registerOverride = useContext(BreadcrumbOverrideContext);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!enabled || !registerOverride) return;
     return registerOverride();
   }, [enabled, registerOverride]);
@@ -50,8 +50,8 @@ const ROUTE_LABEL_KEYS: Record<string, string> = {
   '/players': 'breadcrumbs.players',
 };
 
-// Parent groupings without a route of their own must never become links. In
-// particular, `/map` and `/admin` currently fall through to the 404 route.
+// Agrupadores sem rota própria nunca devem virar links. Hoje, por exemplo,
+// `/map` e `/admin` caem na rota 404.
 const NON_LINKABLE_PATHS = new Set(['/map', '/admin', '/players']);
 
 const DYNAMIC_LABEL_KEYS: Record<string, string> = {
@@ -106,12 +106,12 @@ const DYNAMIC_DETAIL_LABEL_KEYS: Record<string, string> = {
   messages: 'breadcrumbs.conversation',
 };
 
-// The post itself is already represented by the static "Post" crumb. Its ID
-// adds no useful information and must not produce a second generic detail item.
+// A publicação já é representada pelo item estático. Seu ID não acrescenta
+// informação útil e não deve gerar outro item genérico de detalhes.
 const OMIT_DYNAMIC_DETAIL_FOR = new Set(['post']);
 
-// These segments only exist as parents of a deeper detail route. Linking the
-// intermediate path would send users to the catch-all 404 page.
+// Estes segmentos só existem como pais de uma rota de detalhe mais profunda.
+// Vincular o caminho intermediário enviaria o usuário para a página 404.
 const NON_LINKABLE_SEGMENTS = new Set(['post']);
 
 export function useAutoBreadcrumbs(): BreadcrumbItem[] {

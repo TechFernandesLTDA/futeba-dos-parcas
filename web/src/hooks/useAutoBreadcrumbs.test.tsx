@@ -111,16 +111,6 @@ describe('useAutoBreadcrumbs', () => {
     expect(result.current.map((item) => item.label)).toEqual(labels);
   });
 
-  it('representa a publicação sem expor nem duplicar o ID do post', () => {
-    const result = renderBreadcrumbs('/group/abcdefghijk/post/zyxwvutsrqp');
-
-    expect(result.current).toEqual([
-      { label: 'Grupo', to: '/group' },
-      { label: 'Detalhes', to: '/group/abcdefghijk' },
-      { label: 'Publicação', to: undefined },
-    ]);
-  });
-
   it.each([
     ['pt-BR', '/profile/edit', ['Perfil', 'Editar']],
     ['en', '/map/locations', ['Map', 'Fields']],

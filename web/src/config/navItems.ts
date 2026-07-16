@@ -252,27 +252,6 @@ export function getActiveNavIndex(pathname: string, search: string): number {
   return activeItem ? NAV_ITEMS.indexOf(activeItem) : -1;
 }
 
-/**
- * Resolve o índice ativo considerando o item pai por identidade.
- *
- * Em superfícies com slots limitados (ex.: bottom nav mobile com 5 items),
- * items "more" que não estão visíveis devem destacar o parentItemId (umbrella).
- * Em superfícies completas (sidebar desktop), o item próprio é destacado.
- *
- * `surfaceSize` limita a mesma coleção filtrada que a bottom nav renderiza.
- */
-export function getActiveNavIndexForSurface(
-  pathname: string,
-  search: string,
-  surfaceSize: number,
-): number | false {
-  const surfaceItems = NAV_ITEMS.filter((item) => item.showInBottomNav).slice(
-    0,
-    surfaceSize,
-  );
-  return getActiveNavIndexForItems(pathname, search, surfaceItems);
-}
-
 /** Resolve a posição ativa pela identidade dos itens realmente renderizados. */
 export function getActiveNavIndexForItems(
   pathname: string,
