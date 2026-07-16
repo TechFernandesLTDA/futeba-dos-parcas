@@ -1,7 +1,38 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-16T06:23:36.358Z",
+  "generatedAt": "2026-07-16T07:18:34.486Z",
   "notes": [
+    {
+      "version": "1.54.19",
+      "buildNumber": null,
+      "releaseDate": "2026-07-16",
+      "type": "patch",
+      "showPopup": false,
+      "published": true,
+      "headline": "Deixamos a navegação mais consistente entre os temas e mais fluida durante gestos, rolagem e atalhos.",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "Padronizamos transparência, desfoque e legibilidade dos menus nos temas claro, escuro e OLED.",
+        "Corrigimos tamanhos de textos, chips e avatar compacto para seguir a escala visual do aplicativo.",
+        "As preferências de movimento reduzido agora são respeitadas imediatamente, sem precisar recarregar a página.",
+        "A restauração de rolagem e os atalhos globais passaram a trabalhar com menos processamento repetido.",
+        "O diálogo de atalhos agora é carregado somente quando necessário, reduzindo o pacote inicial."
+      ],
+      "fixed": [],
+      "issueRefs": [
+        3789,
+        3790,
+        3792,
+        3794,
+        3795,
+        3797,
+        3800,
+        3802,
+        3804,
+        3806
+      ]
+    },
     {
       "version": "1.54.18",
       "buildNumber": null,

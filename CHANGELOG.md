@@ -254,6 +254,17 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.54.19][web-1.54.19] - 2026-07-16
+
+#### Mudado
+- Superfícies de navegação compartilham tokens de vidro, opacidade, fallback e dimensões semânticas.
+- O gesto de voltar reage a alterações em `prefers-reduced-motion` e promove a camada somente durante o arraste.
+- A persistência da rolagem usa debounce com flush no descarte, evitando escrita por pixel sem perder a última posição.
+- Listeners de teclado são estáveis e delegam estado mutável por refs, evitando reanexação a cada abertura.
+- `ShortcutsDialog` foi isolado em chunk lazy dedicado.
+
+_Issues: #3789, #3790, #3792, #3794, #3795, #3797, #3800, #3802, #3804, #3806_
+
 ### [1.54.18][web-1.54.18] - 2026-07-16
 
 #### Mudado
@@ -2563,6 +2574,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.54.19]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.19.md
 [web-1.54.18]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.18.md
 [web-1.54.17]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.17.md
 [web-1.54.16]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.16.md
