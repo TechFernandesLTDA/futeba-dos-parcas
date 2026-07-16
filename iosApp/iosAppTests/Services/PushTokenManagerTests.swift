@@ -83,7 +83,7 @@ final class PushTokenManagerTests: XCTestCase {
         XCTAssertEqual(caller.calls.count, 2)
     }
 
-    func testLogoutUsesNextSequenceAndClearsSuccessfulToken() {
+    func testLogoutUsesNextSequenceAndPreservesInstallationTokenForNextLogin() {
         let sut = makeSut()
         sut.didReceiveRegistrationToken("logout-token")
         caller.complete(index: 0, error: nil)
@@ -97,7 +97,21 @@ final class PushTokenManagerTests: XCTestCase {
         XCTAssertEqual(caller.calls[1].data["sequence"] as? Int64, 2)
         caller.complete(index: 1, error: nil)
         XCTAssertTrue(completed)
-        XCTAssertNil(secureStore.token)
+        XCTAssertEqual(secureStore.token, "logout-token")
+    }
+
+    func testReloginRegistersPreservedTokenWithANewerSequence() {
+        let sut = makeSut()
+        sut.didReceiveRegistrationToken("persisted-token")
+        caller.complete(index: 0, error: nil)
+        sut.unregisterBeforeLogout {}
+        caller.complete(index: 1, error: nil)
+
+        sut.handleAuthStateChanged(isAuthenticated: true)
+
+        XCTAssertEqual(caller.calls[2].name, "registerPushToken")
+        XCTAssertEqual(caller.calls[2].data["token"] as? String, "persisted-token")
+        XCTAssertEqual(caller.calls[2].data["sequence"] as? Int64, 3)
     }
 
     func testLogoutTimeoutCompletesWhenCallableNeverReturns() {

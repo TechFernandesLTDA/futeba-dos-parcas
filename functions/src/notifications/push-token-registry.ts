@@ -284,7 +284,18 @@ export async function unregisterPushTokenForUser(
     const deviceSnapshot = await transaction.get(deviceRef);
     const storedSequence = deviceSnapshot.get("sequence") as
       number | undefined;
-    if (storedSequence != null && sequence <= storedSequence) {
+    // Em empate entre runtimes do mesmo app, logout vence registration. Isso
+    // vale somente para a mesma conta; um logout antigo nunca pode revogar a
+    // instalação que já foi reassociada a outro usuário.
+    const sameSequenceOwnedRegistration =
+      sequence === storedSequence &&
+      deviceSnapshot.get("state") === "active" &&
+      deviceSnapshot.get("userId") === userId;
+    if (
+      storedSequence != null &&
+      (sequence < storedSequence ||
+        (sequence === storedSequence && !sameSequenceOwnedRegistration))
+    ) {
       return {applied: false};
     }
 
@@ -303,7 +314,7 @@ export async function unregisterPushTokenForUser(
       if (
         snapshot.exists &&
         snapshot.get("deviceIdHash") === deviceIdHash &&
-        ((snapshot.get("sequence") as number | undefined) ?? 0) < sequence
+        ((snapshot.get("sequence") as number | undefined) ?? 0) <= sequence
       ) {
         transaction.delete(tokenRefs[index]);
       }
@@ -395,9 +406,13 @@ export async function filterPushTokensByCanonicalOwner(
       return canonicalOwner == null || canonicalOwner === expectedOwner;
     }));
   } catch (error) {
-    logger.warn(
+    logger.error(
       "[PUSH_TOKEN] Canonical lookup unavailable; applying fail-closed.",
-      error
+      {
+        metric_type: "push_token_registry_canonical_lookup_unavailable",
+        fail_closed: true,
+        error: error instanceof Error ? error.message : String(error),
+      }
     );
     return new Map([...tokenOwners].filter(([token]) =>
       trustedCanonicalTokens.has(token)

@@ -202,6 +202,55 @@ describe("private push token registry", () => {
     expect(await getRegisteredPushTokens(["user-1"])).toEqual(new Map());
   });
 
+  it("lets logout win when Swift and KMP use the same sequence", async () => {
+    await registerPushTokenForUser("user-1", {
+      token: "token-a",
+      deviceId: "device-a",
+      platform: "ios",
+      sequence: 2,
+    });
+
+    const logout = await unregisterPushTokenForUser("user-1", {
+      token: "token-a",
+      deviceId: "device-a",
+      sequence: 2,
+    });
+    const delayedRegister = await registerPushTokenForUser("user-1", {
+      token: "token-a",
+      deviceId: "device-a",
+      platform: "ios",
+      sequence: 2,
+    });
+
+    expect(logout.applied).toBe(true);
+    await expect(unregisterPushTokenForUser("user-1", {
+      token: "token-a",
+      deviceId: "device-a",
+      sequence: 2,
+    })).resolves.toEqual({applied: false});
+    expect(delayedRegister.applied).toBe(false);
+    expect(await getRegisteredPushTokens(["user-1"])).toEqual(new Map());
+  });
+
+  it("does not let an equal-sequence logout revoke a reassigned account", async () => {
+    await registerPushTokenForUser("user-b", {
+      token: "token-b",
+      deviceId: "shared-device",
+      platform: "ios",
+      sequence: 2,
+    });
+
+    const staleLogout = await unregisterPushTokenForUser("user-a", {
+      token: "token-b",
+      deviceId: "shared-device",
+      sequence: 2,
+    });
+
+    expect(staleLogout.applied).toBe(false);
+    expect((await getRegisteredPushTokens(["user-b"])).get("user-b"))
+      .toEqual(["token-b"]);
+  });
+
   it("rejects malformed platform before writing", async () => {
     await expect(registerPushTokenForUser("user-1", {
       token: "token-a",

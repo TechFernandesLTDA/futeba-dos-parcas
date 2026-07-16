@@ -64,8 +64,8 @@ final class PushTokenManager {
         defaults: UserDefaults = .standard,
         secureStore: PushTokenSecureStoring = KeychainPushTokenStore(),
         currentUserId: @escaping () -> String? = { Auth.auth().currentUser?.uid },
-        scheduleRetry: @escaping (TimeInterval, @escaping () -> Void) -> Void = Self.schedule,
-        scheduleTimeout: @escaping (TimeInterval, @escaping () -> Void) -> Void = Self.schedule,
+        scheduleRetry: @escaping (TimeInterval, @escaping () -> Void) -> Void = PushTokenManager.schedule,
+        scheduleTimeout: @escaping (TimeInterval, @escaping () -> Void) -> Void = PushTokenManager.schedule,
         requestTimeout: TimeInterval = 10.0,
         logoutTimeout: TimeInterval = 2.0
     ) {
@@ -83,9 +83,13 @@ final class PushTokenManager {
     func start() {
         guard authListener == nil else { return }
         authListener = Auth.auth().addStateDidChangeListener { [weak self] _, user in
-            guard user != nil, let self, let token = self.secureStore.token else { return }
-            self.enqueueRegistration(token: token, sequence: self.nextSequence())
+            self?.handleAuthStateChanged(isAuthenticated: user != nil)
         }
+    }
+
+    func handleAuthStateChanged(isAuthenticated: Bool) {
+        guard isAuthenticated, let token = secureStore.token else { return }
+        enqueueRegistration(token: token, sequence: nextSequence())
     }
 
     func didReceiveRegistrationToken(_ token: String?) {
@@ -119,8 +123,7 @@ final class PushTokenManager {
         pending.append(
             Operation(
                 sequence: sequence,
-                kind: .unregister(token: token) { [weak self] succeeded in
-                    if succeeded { self?.secureStore.clearToken() }
+                kind: .unregister(token: token) { _ in
                     finishLogout()
                 }
             )
