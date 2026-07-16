@@ -129,8 +129,17 @@ function extractTsObject(content, objectName) {
   return null;
 }
 
-function checkTsObjectHexes(content, objectName, expected, label, sourceFile, errors) {
-  const object = extractTsObject(content, objectName);
+function checkTsObjectHexes(content, objectName, expected, label, sourceFile, errors, lookupContent = content) {
+  let object = extractTsObject(content, objectName);
+  if (!object) {
+    const propertyReference = new RegExp(
+      `\\b${escapeRegExp(objectName)}\\s*:\\s*([A-Za-z_$][\\w$]*)\\s*[,}]`,
+      'm'
+    ).exec(content);
+    if (propertyReference) {
+      object = extractTsObject(lookupContent, propertyReference[1]);
+    }
+  }
   if (!object) {
     errors.push(`[${label}] objeto ausente: ${objectName} em ${relative(sourceFile)}`);
     return;
@@ -532,7 +541,7 @@ function checkWebSemanticPalette(tokens, errors) {
     errors.push(`[web semantic palette] futebaDarkTheme ausente em ${relative(file)}`);
   } else {
     for (const [role, expected] of Object.entries(tokens.darkPalette)) {
-      checkTsObjectHexes(darkTheme, role, expected, `web dark ${role} token`, file, errors);
+      checkTsObjectHexes(darkTheme, role, expected, `web dark ${role} token`, file, errors, content);
     }
   }
 }
