@@ -10,11 +10,15 @@ target 'iosApp' do
   pod 'FirebaseStorage'
   pod 'FirebaseAnalytics'
   pod 'FirebaseMessaging'
+  pod 'FirebaseAppCheck'
   pod 'FirebaseCrashlytics'
   pod 'FirebaseFunctions'
 
   # Google Sign-In (opcional)
   pod 'GoogleSignIn'
+  target 'iosAppTests' do
+    inherit! :search_paths
+  end
 end
 
 post_install do |installer|

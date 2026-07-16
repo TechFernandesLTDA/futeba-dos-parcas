@@ -52,6 +52,11 @@ import {
   // FIX #2199: reusa a versão canônica em helpers.ts (removida a duplicata local).
   isInvalidTokenError,
 } from "./helpers";
+import {
+  filterPushTokensByCanonicalOwner,
+  getRegisteredPushTokens,
+  removeRegisteredPushToken,
+} from "./push-token-registry";
 
 import {db as getFirestore} from "../_db";
 const getFcm = () => admin.messaging();
@@ -1017,6 +1022,7 @@ function buildDispatchTokens(
 export const __testing = {
   addTargetedUserIds,
   buildDispatchTokens,
+  fetchTokensInBatch,
   mergeChunkCheckpoint,
   sendMulticastInChunks,
 };
@@ -1040,7 +1046,18 @@ async function fetchTokensInBatch(
   userIds: string[]
 ): Promise<Map<string, string[]>> {
   const db = getFirestore();
-  const tokenMap = new Map<string, string[]>();
+  let tokenMap = new Map<string, string[]>();
+  const canonicalOwners = new Map<string, string>();
+
+  try {
+    tokenMap = await getRegisteredPushTokens(userIds);
+    tokenMap.forEach((tokens, userId) => {
+      tokens.forEach((token) => canonicalOwners.set(token, userId));
+    });
+  } catch (error) {
+    // Migração gradual: falha na coleção nova não interrompe fallback legado.
+    logger.error("[BATCH_FCM] Erro ao buscar registro privado:", error);
+  }
 
   // Chunks de 10 (limite do whereIn)
   const chunks: string[][] = [];
@@ -1099,11 +1116,31 @@ async function fetchTokensInBatch(
   // Consolidar resultados
   for (const result of results) {
     for (const [userId, tokens] of result) {
-      tokenMap.set(userId, tokens);
+      const merged = new Set(tokenMap.get(userId) ?? []);
+      tokens.forEach((token) => {
+        // Atribuição canônica vence um campo legado obsoleto de outro usuário.
+        const canonicalOwner = canonicalOwners.get(token);
+        if (!canonicalOwner || canonicalOwner === userId) merged.add(token);
+      });
+      if (merged.size > 0) tokenMap.set(userId, Array.from(merged));
     }
   }
 
-  return tokenMap;
+  const allOwners = new Map<string, string>();
+  tokenMap.forEach((tokens, userId) => {
+    tokens.forEach((token) => allOwners.set(token, userId));
+  });
+  const filtered = await filterPushTokensByCanonicalOwner(
+    allOwners,
+    new Set(canonicalOwners.keys())
+  );
+  const safeMap = new Map<string, string[]>();
+  filtered.forEach((userId, token) => {
+    const tokens = safeMap.get(userId) ?? [];
+    tokens.push(token);
+    safeMap.set(userId, tokens);
+  });
+  return safeMap;
 }
 
 /**
@@ -1123,6 +1160,14 @@ async function cleanupInvalidTokens(
   }[]
 ): Promise<void> {
   const db = getFirestore();
+
+  // Limpa primeiro a fonte canônica. allSettled mantém o cleanup legado mesmo
+  // se um registro privado estiver concorrendo com rotação/relogin.
+  await Promise.allSettled(
+    tokensToRemove.map(({token, userId}) =>
+      removeRegisteredPushToken(userId, token)
+    )
+  );
 
   // Buscar docs para saber quais campos deletar
   const userIds = [

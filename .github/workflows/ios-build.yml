@@ -100,16 +100,19 @@ jobs:
 
       - name: Build ComposeApp framework for iOS Simulator
         run: ./gradlew :composeApp:linkDebugFrameworkIosSimulatorArm64
-        continue-on-error: true
 
-      - name: Upload framework artifacts
-        continue-on-error: true
+      - name: Upload Shared framework artifacts
         uses: actions/upload-artifact@v4
         with:
           name: shared-frameworks
-          path: |
-            shared/build/bin/iosSimulatorArm64/debugFramework/shared.framework
-            shared/build/bin/iosArm64/debugFramework/shared.framework
+          path: shared/build/bin
+          retention-days: 7
+
+      - name: Upload Compose framework artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: compose-frameworks
+          path: composeApp/build/bin
           retention-days: 7
 
   build-ios-app:
@@ -117,9 +120,6 @@ jobs:
     runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
     timeout-minutes: 60
     needs: build-shared-framework
-    # Skip ate Phase 4 (xcodeproj real). Habilitar via Repo Settings > Vars:
-    # IOS_PHASE_4_ENABLED=true. Default skipa pq iosApp/ so tem template.
-    if: vars.IOS_PHASE_4_ENABLED == 'true'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -143,27 +143,40 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Download shared frameworks
+      - name: Download Shared frameworks
         uses: actions/download-artifact@v4
         with:
           name: shared-frameworks
-          path: shared/build/bin/
+          path: shared/build/bin
 
-      - name: Install CocoaPods
+      - name: Download Compose frameworks
+        uses: actions/download-artifact@v4
+        with:
+          name: compose-frameworks
+          path: composeApp/build/bin
+
+      - name: Generate Xcode project and install CocoaPods
         run: |
+          if ! command -v xcodegen >/dev/null 2>&1; then
+            brew install xcodegen
+          fi
           cd iosApp
+          xcodegen generate
           pod install
 
       - name: Build iOS App (Simulator)
         run: |
           xcodebuild -workspace iosApp/iosApp.xcworkspace \
                      -scheme iosApp \
-                     -destination 'platform=iOS Simulator,name=iPhone 15 Pro' \
+                     -destination 'generic/platform=iOS Simulator' \
                      -configuration Debug \
                      clean build \
                      CODE_SIGN_IDENTITY="" \
                      CODE_SIGNING_REQUIRED=NO \
-                     CODE_SIGNING_ALLOWED=NO
+                     CODE_SIGNING_ALLOWED=NO \
+                     ARCHS=arm64 \
+                     ONLY_ACTIVE_ARCH=YES \
+                     SKIP_KMP_BUILD=YES
 
       - name: Upload build logs
         if: failure()
@@ -188,11 +201,9 @@ jobs:
           echo "Framework Build: ${{ needs.build-shared-framework.result }}"
           echo "iOS App Build: ${{ needs.build-ios-app.result }}"
 
-          # build-ios-app pode ser 'skipped' (CMP Phase 4 não pronto) — aceita.
           if [ "${{ needs.kmp-shared-tests.result }}" == "success" ] && \
              [ "${{ needs.build-shared-framework.result }}" == "success" ] && \
-             { [ "${{ needs.build-ios-app.result }}" == "success" ] || \
-               [ "${{ needs.build-ios-app.result }}" == "skipped" ]; }; then
+             [ "${{ needs.build-ios-app.result }}" == "success" ]; then
             echo "iOS pipeline succeeded!"
           else
             echo "iOS pipeline had failures"

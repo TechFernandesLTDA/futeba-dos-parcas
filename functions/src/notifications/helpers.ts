@@ -19,6 +19,11 @@ import {
 } from "./preferences";
 
 import {db} from "../_db";
+import {
+  filterPushTokensByCanonicalOwner,
+  getRegisteredPushTokens,
+  removeRegisteredPushToken,
+} from "./push-token-registry";
 const getFcm = () => admin.messaging();
 
 // ==========================================
@@ -272,6 +277,10 @@ async function removeInvalidToken(
   invalidToken: string
 ): Promise<void> {
   try {
+    // O registro privado é a fonte canônica. A remoção verifica ownership
+    // dentro da transação para não apagar um token já reatribuído.
+    await removeRegisteredPushToken(userId, invalidToken);
+
     const userDoc = await db()
       .collection("users")
       .doc(userId)
@@ -342,24 +351,40 @@ async function removeInvalidToken(
 async function getUserFcmTokens(
   userId: string
 ): Promise<string[]> {
+  const tokenOwners = new Map<string, string>();
+  const canonicalTokens = new Set<string>();
+  try {
+    const registered = await getRegisteredPushTokens([userId]);
+    (registered.get(userId) ?? []).forEach((token) => {
+      tokenOwners.set(token, userId);
+      canonicalTokens.add(token);
+    });
+  } catch (e) {
+    logger.error("Erro ao buscar registro privado de push:", e);
+  }
   try {
     const userDoc = await db()
       .collection("users")
       .doc(userId)
       .get();
-    if (!userDoc.exists) return [];
-
-    const data =
-      userDoc.data() as Record<string, unknown>;
-    return extractTokensFromUserData(data);
+    if (userDoc.exists) {
+      const data = userDoc.data() as Record<string, unknown>;
+      extractTokensFromUserData(data).forEach((token) =>
+        tokenOwners.set(token, userId)
+      );
+    }
   } catch (e) {
     logger.error(
       "Erro ao buscar tokens FCM do usuario " +
       userId + ":",
       e
     );
-    return [];
   }
+  const filtered = await filterPushTokensByCanonicalOwner(
+    tokenOwners,
+    canonicalTokens
+  );
+  return [...filtered.keys()];
 }
 
 /**
@@ -408,7 +433,22 @@ async function getUserFcmTokensWithMapping(
   userIds: string[]
 ): Promise<TokenUserMapping[]> {
   const mappings: TokenUserMapping[] = [];
+  const tokenOwners = new Map<string, string>();
+  const canonicalTokens = new Set<string>();
   const chunks: string[][] = [];
+
+  try {
+    const registered = await getRegisteredPushTokens(userIds);
+    registered.forEach((tokens, userId) => {
+      tokens.forEach((token) => {
+        tokenOwners.set(token, userId);
+        canonicalTokens.add(token);
+        mappings.push({token, userId});
+      });
+    });
+  } catch (e) {
+    logger.error("Erro ao buscar registro privado em lote:", e);
+  }
 
   for (let i = 0; i < userIds.length; i += FIRESTORE_WHERE_IN_LIMIT) { // eslint-disable-line max-len
     chunks.push(userIds.slice(i, i + FIRESTORE_WHERE_IN_LIMIT));
@@ -432,7 +472,12 @@ async function getUserFcmTokensWithMapping(
           const tokens =
             extractTokensFromUserData(data);
           tokens.forEach((token) => {
-            mappings.push({token, userId: doc.id});
+            // Registro canônico vence campos legados possivelmente obsoletos.
+            const canonicalOwner = tokenOwners.get(token);
+            if (!canonicalOwner) {
+              tokenOwners.set(token, doc.id);
+              mappings.push({token, userId: doc.id});
+            }
           });
         }
       );
@@ -444,7 +489,11 @@ async function getUserFcmTokensWithMapping(
     }
   }
 
-  return mappings;
+  const filtered = await filterPushTokensByCanonicalOwner(
+    tokenOwners,
+    canonicalTokens
+  );
+  return mappings.filter(({token, userId}) => filtered.get(token) === userId);
 }
 
 /**
@@ -961,3 +1010,9 @@ export async function sendAndSaveNotification(
     },
   });
 }
+
+/** Internal token resolution exposed only for focused regression tests. */
+export const __testing = {
+  getUserFcmTokens,
+  getUserFcmTokensWithMapping,
+};

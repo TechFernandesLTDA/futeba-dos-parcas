@@ -47,11 +47,13 @@ import FirebaseFirestore
     }
 
     @objc public func signOut(completion: @escaping (String?) -> Void) {
-        do {
-            try auth.signOut()
-            completion(nil)
-        } catch let error {
-            completion(error.localizedDescription)
+        PushTokenManager.shared.unregisterBeforeLogout { [weak self] in
+            do {
+                try self?.auth.signOut()
+                completion(nil)
+            } catch let error {
+                completion(error.localizedDescription)
+            }
         }
     }
 

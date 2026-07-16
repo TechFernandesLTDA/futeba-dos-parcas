@@ -99,7 +99,7 @@ Chaves principais:
 
 ✅ KMP frameworks (`:shared` + `:composeApp`) linkam OK
 ✅ xcodebuild Simulator iPhone 17 Pro Debug build SUCCESS
-✅ Pods integrados (9 deps, 36 total: Firebase Auth/Firestore/Storage/Analytics/Messaging/Crashlytics/Functions + GoogleSignIn)
+✅ Pods integrados (10 deps, 37 total: Firebase Auth/Firestore/Storage/Analytics/Messaging/AppCheck/Crashlytics/Functions + GoogleSignIn)
 ✅ HomeScreen Compose Multiplatform renderiza (Material 3, bottom nav)
 ✅ Firebase real ativo:
   - `GoogleService-Info.plist` baixado via `firebase apps:sdkconfig IOS`
@@ -108,6 +108,21 @@ Chaves principais:
   - Dialog de permissão de notificação aparece (APNs swizzle funcional)
 
 ⚠️ Keychain error -34018 no Simulator (FirebaseAuth saved-user) — normal em sim sem entitlements, não bloqueia.
+
+## Privacidade e ciclo do token push
+
+- O token FCM não é exibido em logs nem gravado no perfil público `users/{uid}`.
+- O backend mantém registros privados em `push_tokens` e `push_token_devices`,
+  acessíveis somente pelo Admin SDK; as regras Firestore negam acesso de clientes.
+- `registerPushToken` e `unregisterPushToken` exigem usuário autenticado e App
+  Check válido em produção. Repetições, rotação do FCM e troca de conta são
+  idempotentes por instalação.
+- O iOS tenta remover o registro antes do logout. Se estiver offline, o logout
+  continua para não prender a sessão; o backend também remove tokens rejeitados
+  pelo FCM durante os envios.
+- Em Debug usa-se App Check Debug Provider (cadastre no Firebase Console o
+  token de debug emitido pelo SDK); Release usa App Attest com fallback para
+  DeviceCheck em hardware sem suporte.
 
 ### 2026-05-07 — Smoke test inicial
 

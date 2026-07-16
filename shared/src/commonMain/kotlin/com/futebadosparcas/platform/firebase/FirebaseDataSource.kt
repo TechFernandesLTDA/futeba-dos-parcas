@@ -93,6 +93,16 @@ expect class FirebaseDataSource() {
      */
     suspend fun updateUserPiiViaCallable(updates: Map<String, Any>): Result<Unit>
 
+    /** Registra o token FCM em armazenamento privado por instalação. */
+    suspend fun registerPushToken(registration: PushTokenRegistration): Result<Unit>
+
+    /** Remove o token desta instalação antes do logout, quando disponível. */
+    suspend fun unregisterPushToken(
+        deviceId: String,
+        sequence: Long,
+        token: String? = null
+    ): Result<Unit>
+
     // ========== MVP VOTING ==========
 
     suspend fun submitMvpVoteViaCallable(vote: MVPVote): Result<Unit>
