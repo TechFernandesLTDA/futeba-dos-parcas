@@ -25,7 +25,7 @@ import { PageContainer } from '../../components/common/PageContainer';
 import { TeamSelector } from '../../components/team/TeamSelector';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
-import { doc, updateDoc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, updateDoc, getDoc } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { updateUserPii } from '../../services/cloudFunctions';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
@@ -40,6 +40,7 @@ import {
   validateProfileAvatar,
 } from '../../utils/profileAvatar';
 import { STORAGE_IMAGE_ACCEPT } from '../../utils/storageImage';
+import { buildPublicProfileUpdate } from './editProfilePayload';
 
 const logger = createLogger('EditProfileScreen');
 
@@ -359,22 +360,10 @@ export const EditProfileScreen: React.FC = () => {
 
       // 3) Persiste demais campos do perfil (somente Firestore) — só executa se
       // o passo de Auth acima teve sucesso, mantendo a consistência.
-      await updateDoc(doc(db, 'users', currentUser.uid), {
-        name: trimmedName,
-        nickname: formData.nickname,
-        preferred_position: formData.preferredPosition,
-        bio: formData.bio,
-        favorite_team: formData.favoriteTeam,
-        striker_rating: formData.strikerRating,
-        mid_rating: formData.midRating,
-        defender_rating: formData.defenderRating,
-        gk_rating: formData.gkRating,
-        striker_rating_set: true,
-        mid_rating_set: true,
-        defender_rating_set: true,
-        gk_rating_set: true,
-        updated_at: serverTimestamp(),
-      });
+      await updateDoc(
+        doc(db, 'users', currentUser.uid),
+        buildPublicProfileUpdate(formData, trimmedName),
+      );
 
       // O perfil público já foi persistido. Se a gravação de PII falhar abaixo,
       // mantemos o dirty guard alinhado com o que realmente ficou salvo.

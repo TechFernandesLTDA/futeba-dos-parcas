@@ -23,6 +23,7 @@ import {
   KeyboardCommandKey as KeyboardIcon,
   Search as SearchIcon,
   MoreHoriz,
+  Edit as EditIcon,
 } from '@mui/icons-material';
 import { useNavigate, useLocation, Link as RouterLink } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -60,6 +61,9 @@ export function AppSidebar() {
     () => getActiveNavIndex(location.pathname, location.search),
     [location.pathname, location.search],
   );
+  const moreActive = MORE_NAV_ITEMS.some((item) => NAV_ITEMS.indexOf(item) === activeIndex);
+  const morePopoverId = 'app-sidebar-more-menu';
+  const moreOpen = moreAnchor !== null;
 
   const openSearch = () => window.dispatchEvent(new Event('open-command-palette'));
 
@@ -81,8 +85,10 @@ export function AppSidebar() {
             position: 'relative',
             borderRight: 1,
             borderColor: 'divider',
-            backdropFilter: 'blur(16px)',
-            backgroundColor: (theme) => alpha(theme.palette.background.paper, 0.8),
+            backdropFilter: (theme) => theme.palette.mode === 'dark' ? 'none' : 'blur(16px)',
+            backgroundColor: (theme) => theme.palette.mode === 'dark'
+              ? theme.palette.background.paper
+              : alpha(theme.palette.background.paper, 0.8),
             '@supports not (backdrop-filter: blur(16px))': { backgroundColor: 'background.paper' },
             '@media (prefers-reduced-transparency: reduce)': { backdropFilter: 'none', backgroundColor: 'background.paper' },
             display: 'flex',
@@ -103,7 +109,7 @@ export function AppSidebar() {
           <Tooltip title={t('nav.search')} placement="right">
             <ListItemButton
               onClick={openSearch}
-              sx={{ flexDirection: 'column', py: 1, borderRadius: 2 }}
+              sx={{ flexDirection: 'column', py: 1.25, borderRadius: 2 }}
             >
               <ListItemIcon sx={{ minWidth: 0, justifyContent: 'center', mb: 0.5 }}>
                 <SearchIcon sx={{ fontSize: iconSizes.lg }} />
@@ -118,7 +124,7 @@ export function AppSidebar() {
               onClick={() => navigate('/game/create')}
               sx={{
                 flexDirection: 'column',
-                py: 1,
+                py: 1.25,
                 borderRadius: 2,
                 bgcolor: 'primary.main',
                 color: 'primary.contrastText',
@@ -152,7 +158,7 @@ export function AppSidebar() {
                   onClick={() => navigate(item.path)}
                   sx={{
                     flexDirection: 'column',
-                    py: 1.5,
+                    py: 1.25,
                     '&.Mui-selected': {
                       bgcolor: 'action.selected',
                       '& .MuiListItemIcon-root': { color: 'primary.main' },
@@ -189,10 +195,14 @@ export function AppSidebar() {
           <Tooltip title={t('nav.sectionMore')} placement="right">
             <ListItemButton
               onClick={(e) => setMoreAnchor(e.currentTarget)}
-              selected={Boolean(moreAnchor)}
+              selected={moreOpen || moreActive}
+              aria-current={moreActive ? 'page' : undefined}
+              aria-haspopup="menu"
+              aria-expanded={moreOpen}
+              aria-controls={moreOpen ? morePopoverId : undefined}
               sx={{
                 flexDirection: 'column',
-                py: 1.5,
+                py: 1.25,
                 '&.Mui-selected': { bgcolor: 'action.selected' },
               }}
             >
@@ -207,9 +217,9 @@ export function AppSidebar() {
         </List>
         <Box sx={{ p: 1, borderTop: 1, borderColor: 'divider' }}>
           <ListItemButton
-            onClick={() => navigate('/?tab=4')}
+            onClick={() => navigate('/profile/edit')}
             sx={{ borderRadius: 2, justifyContent: 'center' }}
-            aria-label={t('nav.profile')}
+            aria-label={`${user?.name || t('settings.defaultUserName')} — ${t('profile.editProfile')}`}
           >
             <Avatar
               src={user?.photoUrl}
@@ -223,13 +233,14 @@ export function AppSidebar() {
 
       {/* Popover "Mais" do rail md */}
       <Popover
-        open={Boolean(moreAnchor)}
+        id={morePopoverId}
+        open={moreOpen}
         anchorEl={moreAnchor}
         onClose={() => setMoreAnchor(null)}
         anchorOrigin={{ vertical: 'center', horizontal: 'right' }}
         transformOrigin={{ vertical: 'center', horizontal: 'left' }}
       >
-        <List sx={{ minWidth: 200, py: 0.5 }}>
+        <List role="menu" sx={{ minWidth: 200, py: 0.5 }}>
           {MORE_NAV_ITEMS.map((item) => {
             const realIdx = NAV_ITEMS.indexOf(item);
             const active = activeIndex === realIdx;
@@ -282,8 +293,10 @@ export function AppSidebar() {
             position: 'relative',
             borderRight: 1,
             borderColor: 'divider',
-            backdropFilter: 'blur(16px)',
-            backgroundColor: (theme) => alpha(theme.palette.background.paper, 0.8),
+            backdropFilter: (theme) => theme.palette.mode === 'dark' ? 'none' : 'blur(16px)',
+            backgroundColor: (theme) => theme.palette.mode === 'dark'
+              ? theme.palette.background.paper
+              : alpha(theme.palette.background.paper, 0.8),
             '@supports not (backdrop-filter: blur(16px))': { backgroundColor: 'background.paper' },
             '@media (prefers-reduced-transparency: reduce)': { backdropFilter: 'none', backgroundColor: 'background.paper' },
             display: 'flex',
@@ -342,7 +355,7 @@ export function AppSidebar() {
           </Button>
         </Box>
         <List sx={{ py: 0.5, flex: 1, minHeight: 0, overflowY: 'auto' }}>
-          <ListSubheader sx={{ fontSize: '0.7rem', fontWeight: 600, lineHeight: 1.75 }}>
+          <ListSubheader sx={{ typography: 'labelSmall', fontWeight: 600, lineHeight: 1.75 }}>
             {t('nav.sectionPrimary')}
           </ListSubheader>
           {PRIMARY_NAV_ITEMS.map((item) => {
@@ -377,7 +390,7 @@ export function AppSidebar() {
               </Tooltip>
             );
           })}
-          <ListSubheader sx={{ fontSize: '0.7rem', fontWeight: 600, lineHeight: 1.75 }}>
+          <ListSubheader sx={{ typography: 'labelSmall', fontWeight: 600, lineHeight: 1.75 }}>
             {t('nav.sectionMore')}
           </ListSubheader>
           {/* #3726/#3727: seção "Mais" agora deriva de NAV_ITEMS (fonte única).
@@ -441,27 +454,32 @@ export function AppSidebar() {
           />
           <Chip label="?" size="small" variant="outlined" sx={{ height: 24, fontSize: '0.75rem' }} />
         </ListItemButton>
-        {/* #3733: footer clicável → Perfil */}
-        <ListItemButton
-          onClick={() => navigate('/?tab=4')}
-          sx={{ px: 1.5, py: 1.25, borderTop: 1, borderColor: 'divider', borderRadius: 0, flexShrink: 0 }}
-          aria-label={user?.name ? user.name : t('nav.profile')}
-        >
-          <Avatar
-            src={user?.photoUrl}
-            sx={{ width: avatarSizes.sidebar, height: avatarSizes.sidebar, bgcolor: 'primary.main', color: 'primary.contrastText' }}
+        {/* #3733: rodapé permanece visível e leva diretamente à edição do perfil. */}
+        <Box sx={{ p: 1, borderTop: 1, borderColor: 'divider' }}>
+          <ListItemButton
+            onClick={() => navigate('/profile/edit')}
+            aria-label={`${user?.name || t('settings.defaultUserName')} — ${t('profile.editProfile')}`}
+            sx={{
+              minHeight: 64,
+              borderRadius: 2,
+              gap: 1.5,
+              px: 1,
+            }}
           >
-            {userInitial}
-          </Avatar>
-          <Box sx={{ flex: 1, minWidth: 0, ml: 1.5 }}>
-            <Typography variant="body2" fontWeight={600} noWrap>
-              {user?.name || t('nav.profile')}
-            </Typography>
-            <Typography variant="caption" color="text.secondary" noWrap component="div">
-              {user?.email || t('nav.profile')}
-            </Typography>
-          </Box>
-        </ListItemButton>
+            <Avatar src={user?.photoUrl} sx={{ width: avatarSizes.sidebar, height: avatarSizes.sidebar, bgcolor: 'primary.main' }}>
+              {userInitial}
+            </Avatar>
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              <Typography variant="body2" fontWeight={600} noWrap>
+                {user?.name || t('settings.defaultUserName')}
+              </Typography>
+              <Typography variant="caption" color="text.secondary" noWrap>
+                {user?.email || t('profile.editProfile')}
+              </Typography>
+            </Box>
+            <EditIcon fontSize="small" sx={{ color: 'text.secondary', flexShrink: 0 }} />
+          </ListItemButton>
+        </Box>
       </Drawer>
     </>
   );

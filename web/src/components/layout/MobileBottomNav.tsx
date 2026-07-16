@@ -11,6 +11,7 @@ import {
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import { pageSpacing } from '../../theme/pageTokens';
+import { iconSizes } from '../../theme/iconSizes';
 import { NAV_ITEMS, getActiveNavIndexForSurface } from '../../config/navItems';
 import { useToast } from '../../contexts/ToastContext';
 
@@ -100,12 +101,14 @@ export const MobileBottomNav = React.memo(function MobileBottomNav({ children }:
               <BottomNavigationAction
                 key={item.labelKey}
                 label={t(item.labelKey)}
-                icon={item.icon}
+                icon={React.cloneElement(item.icon, { sx: { fontSize: iconSizes.lg } })}
                 aria-label={t(item.labelKey)}
                 aria-current={activeValue === idx ? 'page' : undefined}
                 sx={{
                   '&.Mui-selected': {
                     color: 'primary.main',
+                    bgcolor: 'action.selected',
+                    borderRadius: 2,
                     '& .MuiBottomNavigationAction-label': {
                       fontWeight: 600,
                     },

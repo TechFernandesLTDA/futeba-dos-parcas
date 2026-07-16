@@ -201,7 +201,13 @@ describe('ProfileTab', () => {
 
   it('exibe botão Editar Perfil', () => {
     renderProfileTab();
-    expect(screen.getByText('Editar Perfil')).toBeInTheDocument();
+    const editButton = screen.getByRole('button', { name: 'Editar Perfil' });
+    const levelAction = screen.getByRole('button', {
+      name: 'Ver jornada de nível - Nível 5',
+    });
+
+    expect(editButton).toBeInTheDocument();
+    expect(editButton.compareDocumentPosition(levelAction) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it('navega para editar perfil ao clicar no botão', async () => {

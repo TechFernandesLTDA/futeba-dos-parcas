@@ -245,6 +245,59 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.54.13][web-1.54.13] - 2026-07-15
+
+#### Corrigido
+- Navegação consolidada em `NAV_ITEMS`, com matching por rota, fallback por superfície e `aria-current`.
+- Rail `md` com popover acessível e drawer `lg` derivados da mesma fonte de dados.
+- 404 sensível à autenticação e foco pós-navegação compatível com movimento reduzido.
+- Breadcrumbs dinâmicos hierárquicos com redirects de pais válidos.
+- Tokens de tema, contraste dark-mode e pluralização i18n alinhados.
+
+_Issues: #3726, #3727, #3728, #3729, #3730, #3731, #3732, #3733, #3734, #3735_
+
+### [1.54.12][web-1.54.12] - 2026-07-15
+
+#### Corrigido
+- Identidade da `AppSidebar` migrada para `ListItemButton` acessível com rota `/profile/edit`.
+- `SettingsScreen` usa a foto real do jogador e um grid responsivo para notificações.
+- Contratos e testes cobrem a navegação do rodapé, o atalho de perfil e a ordem da ação de salvar.
+
+_Issues: #3724_
+
+### [1.54.11][web-1.54.11] - 2026-07-15
+
+#### Corrigido
+- A ação foi movida do rodapé da `ProfileTab` para o cabeçalho, acima do cartão de nível.
+- Teste de regressão garante que o botão aparece antes do conteúdo longo e mantém a rota `/profile/edit`.
+
+_Issues: #3722_
+
+### [1.54.10][web-1.54.10] - 2026-07-15
+
+#### Corrigido
+- Payload público do perfil isolado e coberto por testes determinísticos.
+- Cobertura de emulador adicionada para todos os campos editáveis e para `updated_at` protegido.
+- Permissões de avatar validadas para owner, terceiros, anônimo, MIME, tamanho, filename e exclusão.
+
+_Issues: #3720_
+
+### [1.54.9][web-1.54.9] - 2026-07-15
+
+#### Corrigido
+- Centralização do contêiner responsivo, do conteúdo dos acordeões e das respostas.
+- Identificação semântica da seção de FAQ para tecnologias assistivas.
+
+_Issues: #3718_
+
+### [1.54.8][web-1.54.8] - 2026-07-15
+
+#### Corrigido
+- Composição responsiva do hero reorganizada com CSS Grid e ordem semântica consistente.
+- Restrições de flexbox ajustadas no cabeçalho e no selo de status.
+
+_Issues: #3716_
+
 ### [1.54.7][web-1.54.7] - 2026-07-15
 
 #### Mudado
@@ -2451,6 +2504,12 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.54.13]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.13.md
+[web-1.54.12]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.12.md
+[web-1.54.11]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.11.md
+[web-1.54.10]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.10.md
+[web-1.54.9]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.9.md
+[web-1.54.8]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.8.md
 [web-1.54.7]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.7.md
 [web-1.54.6]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.6.md
 [web-1.54.5]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.5.md

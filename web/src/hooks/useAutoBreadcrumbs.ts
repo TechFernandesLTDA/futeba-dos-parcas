@@ -82,10 +82,7 @@ export function useAutoBreadcrumbs(): BreadcrumbItem[] {
     let accumulatedPath = '';
     const pushItem = (item: BreadcrumbItem) => {
       const lastItem = items[items.length - 1];
-      if (lastItem?.label === item.label) {
-        items[items.length - 1] = item;
-        return;
-      }
+      if (lastItem?.label === item.label && lastItem.to === item.to) return;
       items.push(item);
     };
 
@@ -114,7 +111,7 @@ export function useAutoBreadcrumbs(): BreadcrumbItem[] {
         const parentLabelKey = DYNAMIC_LABEL_KEYS[parentSegment];
         if (parentLabelKey) {
           pushItem({
-            label: t(parentLabelKey),
+            label: t('breadcrumbs.details'),
             to: accumulatedPath,
           });
         }

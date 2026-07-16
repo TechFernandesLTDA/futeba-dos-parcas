@@ -274,6 +274,25 @@ function RootRoute() {
   );
 }
 
+function NotFoundRoute() {
+  const { firebaseUser, loading } = useAuth();
+  const activeUser = firebaseUser ?? auth.currentUser;
+
+  if (loading) return <AppLoadingFallback />;
+
+  if (!activeUser) {
+    return <Suspense fallback={<RouteFallback />}><NotFoundScreen /></Suspense>;
+  }
+
+  return (
+    <ProtectedRoute>
+      <Suspense fallback={<RouteFallback />}>
+        <AppLayout><NotFoundScreen /></AppLayout>
+      </Suspense>
+    </ProtectedRoute>
+  );
+}
+
 /**
  * Restringe a rota a usuários com `verified === true` (custom claim).
  * Redireciona para onboarding se não verificado.
@@ -407,6 +426,7 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 
 function useFocusOnNavigate() {
   const location = useLocation();
+  const reducedMotion = useReducedMotion();
 
   useEffect(() => {
     // #3733: defer focus até após a animação do PageTransition (300ms medium).
@@ -418,7 +438,7 @@ function useFocusOnNavigate() {
         el.setAttribute('tabIndex', '-1');
         el.focus({ preventScroll: true });
       }
-    }, 320);
+    }, reducedMotion ? 0 : 320);
 
     addBreadcrumb('navigation', `Navegou para ${location.pathname}`, {
       pathname: location.pathname,
@@ -426,7 +446,7 @@ function useFocusOnNavigate() {
     });
 
     return () => window.clearTimeout(timer);
-  }, [location.pathname, location.search]);
+  }, [location.pathname, location.search, reducedMotion]);
 }
 
 function AppRoutes() {
@@ -555,9 +575,6 @@ function AppRoutes() {
         <Route path="/admin/game-reviews" element={<AdminRoute><Suspense fallback={<RouteFallback />}><GameReviewQueueScreen /></Suspense></AdminRoute>} />
         <Route path="/dev" element={<AdminRoute><Suspense fallback={<RouteFallback />}><DevToolsScreen /></Suspense></AdminRoute>} />
         <Route path="/admin/performance" element={<AdminRoute><Suspense fallback={<RouteFallback />}><PerformanceDashboard /></Suspense></AdminRoute>} />
-        {/* #3731: catch-all dentro do AppLayout — authed desktop users mantêm
-            a sidebar ao acertar uma URL inválida. */}
-        <Route path="*" element={<Suspense fallback={<RouteFallback />}><NotFoundScreen /></Suspense>} />
       </Route>
       <Route path="/game/:gameId/live" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><LiveGameScreen /></Suspense></ProtectedRoute>} />
       <Route path="/game/:gameId/vote" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><MVPVoteScreen /></Suspense></ProtectedRoute>} />
@@ -579,6 +596,9 @@ function AppRoutes() {
 
       {/* Tactical (full-screen, sem sidebar) */}
       <Route path="/tactical/:gameId" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><TacticalBoardScreen /></Suspense></ProtectedRoute>} />
+
+      {/* #3731: autenticados mantêm AppLayout; visitantes veem 404 público. */}
+      <Route path="*" element={<NotFoundRoute />} />
     </Routes>
     </PageTransition>
     </ProfileGate>

@@ -1,7 +1,169 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-15T15:40:29.001Z",
+  "generatedAt": "2026-07-16T01:48:59.096Z",
   "notes": [
+    {
+      "version": "1.54.13",
+      "buildNumber": null,
+      "releaseDate": "2026-07-15",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "A navegação ficou mais clara no celular, tablet e desktop, com atalhos consistentes e destaque correto da página atual.",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "Notificações, mensagens, estatísticas, conquistas, quadras e configurações agora aparecem nas superfícies adequadas de navegação.",
+        "O menu “Mais” do tablet indica a seção ativa e informa corretamente quando está aberto.",
+        "Breadcrumbs voltaram a aparecer nas telas de detalhes sem exibir identificadores técnicos.",
+        "Páginas inexistentes mantêm a barra lateral para usuários conectados e exibem um 404 público para visitantes.",
+        "O sino de notificações respeita idioma, singular/plural e a preferência de movimento reduzido.",
+        "Contraste, foco por teclado, ícones e estados selecionados foram refinados nos temas claro e escuro."
+      ],
+      "fixed": [
+        "Corrigido o destaque simultâneo de Perfil com outras seções.",
+        "Corrigidos atalhos ausentes e links de breadcrumb que levavam a rotas inexistentes.",
+        "Corrigidos overflow da sidebar em telas baixas, skeletons de rotas e correspondência frágil de URLs de quadras.",
+        "Preservado o acesso direto à edição do perfil pela foto e pelo nome.",
+        "Navegação consolidada em `NAV_ITEMS`, com matching por rota, fallback por superfície e `aria-current`.",
+        "Rail `md` com popover acessível e drawer `lg` derivados da mesma fonte de dados.",
+        "404 sensível à autenticação e foco pós-navegação compatível com movimento reduzido.",
+        "Breadcrumbs dinâmicos hierárquicos com redirects de pais válidos.",
+        "Tokens de tema, contraste dark-mode e pluralização i18n alinhados."
+      ],
+      "issueRefs": [
+        3726,
+        3727,
+        3728,
+        3729,
+        3730,
+        3731,
+        3732,
+        3733,
+        3734,
+        3735
+      ]
+    },
+    {
+      "version": "1.54.12",
+      "buildNumber": null,
+      "releaseDate": "2026-07-15",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "Agora você pode editar o perfil pela foto e pelo nome na barra lateral ou pelo botão em Configurações.",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "O cartão da conta usa a foto real do jogador e mantém a edição sempre visível.",
+        "Notificações ficam organizadas em blocos responsivos, com Salvar logo abaixo."
+      ],
+      "fixed": [
+        "Corrigido o rodapé da barra lateral que parecia interativo, mas não aceitava clique nem teclado.",
+        "A ação de salvar deixa de ficar separada dos controles que ela atualiza.",
+        "Identidade da `AppSidebar` migrada para `ListItemButton` acessível com rota `/profile/edit`.",
+        "`SettingsScreen` usa a foto real do jogador e um grid responsivo para notificações.",
+        "Contratos e testes cobrem a navegação do rodapé, o atalho de perfil e a ordem da ação de salvar."
+      ],
+      "issueRefs": [
+        3724
+      ]
+    },
+    {
+      "version": "1.54.11",
+      "buildNumber": null,
+      "releaseDate": "2026-07-15",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "O botão Editar Perfil agora aparece logo no topo do perfil, inclusive no computador.",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "A edição fica junto ao nome e ao e-mail, sem exigir rolar por estatísticas, habilidades e menus.",
+        "A ação continua clara e acessível também em telas menores."
+      ],
+      "fixed": [
+        "Corrigida a descoberta da edição do perfil próprio na navegação desktop.",
+        "A ação foi movida do rodapé da `ProfileTab` para o cabeçalho, acima do cartão de nível.",
+        "Teste de regressão garante que o botão aparece antes do conteúdo longo e mantém a rota `/profile/edit`."
+      ],
+      "issueRefs": [
+        3722
+      ]
+    },
+    {
+      "version": "1.54.10",
+      "buildNumber": null,
+      "releaseDate": "2026-07-15",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "Editar o perfil volta a salvar normalmente, sem a mensagem incorreta de falta de permissão.",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "Perfis novos ou antigos podem salvar mesmo quando nenhuma posição preferida foi escolhida.",
+        "Nome, apelido, posição, bio, time favorito e avaliações permanecem dentro das permissões seguras do perfil."
+      ],
+      "fixed": [
+        "Removida do navegador a tentativa de alterar um timestamp reservado ao servidor.",
+        "Campos opcionais deixam de enviar valores que o Firestore não aceita.",
+        "Payload público do perfil isolado e coberto por testes determinísticos.",
+        "Cobertura de emulador adicionada para todos os campos editáveis e para `updated_at` protegido.",
+        "Permissões de avatar validadas para owner, terceiros, anônimo, MIME, tamanho, filename e exclusão."
+      ],
+      "issueRefs": [
+        3720
+      ]
+    },
+    {
+      "version": "1.54.9",
+      "buildNumber": null,
+      "releaseDate": "2026-07-15",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "As perguntas frequentes agora acompanham o eixo central da página inicial.",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "Título, perguntas e respostas do FAQ ficam centralizados no celular e no computador.",
+        "As setas de expansão permanecem alinhadas à direita sem deslocar os textos."
+      ],
+      "fixed": [
+        "O bloco de FAQ deixa de ficar ancorado à esquerda em telas largas.",
+        "Centralização do contêiner responsivo, do conteúdo dos acordeões e das respostas.",
+        "Identificação semântica da seção de FAQ para tecnologias assistivas."
+      ],
+      "issueRefs": [
+        3718
+      ]
+    },
+    {
+      "version": "1.54.8",
+      "buildNumber": null,
+      "releaseDate": "2026-07-15",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "A página inicial ficou mais compacta e visual no celular.",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "A imagem oficial do Futeba agora aparece logo depois do título e dentro da primeira tela em celulares.",
+        "O cabeçalho ocupa menos espaço sem comprimir o logotipo ou quebrar os botões."
+      ],
+      "fixed": [
+        "O selo “CONFIRMADO” permanece em uma única linha no cartão da próxima rodada.",
+        "A landing preserva alinhamento, alvos de toque e ausência de rolagem horizontal em diferentes tamanhos de tela.",
+        "Composição responsiva do hero reorganizada com CSS Grid e ordem semântica consistente.",
+        "Restrições de flexbox ajustadas no cabeçalho e no selo de status."
+      ],
+      "issueRefs": [
+        3716
+      ]
+    },
     {
       "version": "1.54.7",
       "buildNumber": null,

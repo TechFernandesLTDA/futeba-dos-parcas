@@ -17,7 +17,7 @@ describe('useAutoBreadcrumbs', () => {
     return renderHook(() => useAutoBreadcrumbs(), { wrapper }).result;
   }
 
-  it('evita label duplicada quando um segmento de ID repete o pai dinâmico', () => {
+  it('preserva pai e detalhe sem expor o ID técnico', () => {
     const wrapper = ({ children }: { children: React.ReactNode }) => (
       <MemoryRouter initialEntries={['/group/abcdefghijk/settings']}>
         {children}
@@ -27,7 +27,8 @@ describe('useAutoBreadcrumbs', () => {
     const { result } = renderHook(() => useAutoBreadcrumbs(), { wrapper });
 
     expect(result.current).toEqual([
-      { label: 'Grupo', to: '/group/abcdefghijk' },
+      { label: 'Grupo', to: '/group' },
+      { label: 'Detalhes', to: '/group/abcdefghijk' },
       { label: 'Configurações', to: '/group/abcdefghijk/settings' },
     ]);
   });
@@ -36,7 +37,8 @@ describe('useAutoBreadcrumbs', () => {
     const result = renderBreadcrumbs('/group/abcdefghijk/challenges');
 
     expect(result.current).toEqual([
-      { label: 'Grupo', to: '/group/abcdefghijk' },
+      { label: 'Grupo', to: '/group' },
+      { label: 'Detalhes', to: '/group/abcdefghijk' },
       { label: 'Desafios', to: '/group/abcdefghijk/challenges' },
     ]);
     expect(result.current.map((item) => item.label)).not.toContain('abcdefghijk');
@@ -58,10 +60,20 @@ describe('useAutoBreadcrumbs', () => {
     const result = renderBreadcrumbs('/group/abcdefghijk/post/zyxwvutsrqp');
 
     expect(result.current).toEqual([
-      { label: 'Grupo', to: '/group/abcdefghijk' },
+      { label: 'Grupo', to: '/group' },
+      { label: 'Detalhes', to: '/group/abcdefghijk' },
     ]);
     expect(result.current.some((item) => /abcdefghijk|zyxwvutsrqp|post/.test(item.label))).toBe(false);
   });
+
+  it.each(['/game/abcdefghijk', '/group/abcdefghijk', '/profile/abcdefghijk', '/location/abcdefghijk'])(
+    'mantém breadcrumb hierárquico em %s',
+    (pathname) => {
+      const result = renderBreadcrumbs(pathname);
+      expect(result.current).toHaveLength(2);
+      expect(result.current[1]).toEqual({ label: 'Detalhes', to: pathname });
+    },
+  );
 
   it.each([
     ['en', 'Settings', 'Notifications'],

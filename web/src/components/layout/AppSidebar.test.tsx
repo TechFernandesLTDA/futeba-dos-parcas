@@ -1,17 +1,18 @@
-import { describe, it, expect, vi } from 'vitest';
+import { beforeEach, describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ThemeProvider, createTheme } from '@mui/material';
 import { MemoryRouter } from 'react-router-dom';
 
 const mockNavigate = vi.fn();
+const mockLocation = vi.hoisted(() => ({ pathname: '/', search: '?tab=0' }));
 
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom');
   return {
     ...actual,
     useNavigate: () => mockNavigate,
-    useLocation: () => ({ pathname: '/', search: '?tab=0' }),
+    useLocation: () => mockLocation,
   };
 });
 
@@ -33,6 +34,8 @@ vi.mock('react-i18next', () => ({
         'nav.sectionMore': 'Mais',
         'nav.sectionPrimary': 'Principal',
         'nav.search': 'Buscar',
+        'profile.editProfile': 'Editar Perfil',
+        'settings.defaultUserName': 'Usuário',
         'common.appName': 'Futeba',
         'a11y.mainNav': 'Navegação principal',
       };
@@ -69,6 +72,12 @@ function renderWithTheme(ui: React.ReactElement) {
 }
 
 describe('AppSidebar', () => {
+  beforeEach(() => {
+    mockNavigate.mockClear();
+    mockLocation.pathname = '/';
+    mockLocation.search = '?tab=0';
+  });
+
   it('renderiza links de navegação', () => {
     renderWithTheme(<AppSidebar />);
 
@@ -114,6 +123,42 @@ describe('AppSidebar', () => {
     const logos = screen.getAllByRole('link', { name: 'Início' });
     expect(logos.length).toBeGreaterThanOrEqual(1);
     expect(logos[0]).toHaveAttribute('href', '/');
+  });
+
+  it('abre a edição do perfil ao clicar no usuário do rodapé', async () => {
+    const user = userEvent.setup();
+    renderWithTheme(<AppSidebar />);
+
+    const editProfileButtons = screen.getAllByRole('button', { name: 'Jogador — Editar Perfil' });
+    expect(editProfileButtons).toHaveLength(2);
+    for (const button of editProfileButtons) await user.click(button);
+
+    expect(mockNavigate).toHaveBeenCalledTimes(2);
+    expect(mockNavigate).toHaveBeenNthCalledWith(1, '/profile/edit');
+    expect(mockNavigate).toHaveBeenNthCalledWith(2, '/profile/edit');
+  });
+
+  it('mantém Mais ativo para rotas secundárias no rail', () => {
+    mockLocation.pathname = '/settings';
+    mockLocation.search = '';
+    renderWithTheme(<AppSidebar />);
+
+    expect(screen.getByRole('button', { name: 'Mais' })).toHaveAttribute('aria-current', 'page');
+  });
+
+  it('expõe e fecha o menu Mais com semântica acessível', async () => {
+    const user = userEvent.setup();
+    renderWithTheme(<AppSidebar />);
+
+    const moreButton = screen.getByRole('button', { name: 'Mais' });
+    expect(moreButton).toHaveAttribute('aria-haspopup', 'menu');
+    expect(moreButton).toHaveAttribute('aria-expanded', 'false');
+
+    await user.click(moreButton);
+
+    expect(moreButton).toHaveAttribute('aria-expanded', 'true');
+    expect(moreButton).toHaveAttribute('aria-controls', 'app-sidebar-more-menu');
+    expect(screen.getByRole('menu')).toBeInTheDocument();
   });
 
   it('renderiza drawer expanded em desktop (lg+)', () => {

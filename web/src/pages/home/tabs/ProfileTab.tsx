@@ -351,6 +351,29 @@ export function ProfileTab() {
           {user?.email}
         </Typography>
 
+        {/* A ação principal precisa ficar acima da dobra também no desktop.
+            Antes ela aparecia somente após todo o conteúdo do perfil. */}
+        <Button
+          variant="contained"
+          startIcon={<Edit />}
+          onClick={() => navigate('/profile/edit')}
+          sx={{
+            mt: 2,
+            minWidth: { xs: 200, sm: 240 },
+            minHeight: 48,
+            borderRadius: 3,
+            bgcolor: 'background.paper',
+            color: 'primary.main',
+            '&:hover': {
+              bgcolor: (buttonTheme) => buttonTheme.palette.mode === 'dark'
+                ? buttonTheme.palette.background.default
+                : buttonTheme.palette.grey[100],
+            },
+          }}
+        >
+          {t('profile.editProfile')}
+        </Button>
+
         {/* Level Card — glassmorphism para integrar com gradiente do header (#1370) */}
         <Card
           sx={{
@@ -604,17 +627,8 @@ export function ProfileTab() {
         </Box>
       )}
 
-      {/* Action Buttons */}
-      <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
-        <Button
-          variant="outlined"
-          startIcon={<Edit />}
-          fullWidth
-          onClick={() => navigate('/profile/edit')}
-          sx={{ borderRadius: 3 }}
-        >
-          {t('profile.editProfile')}
-        </Button>
+      {/* Account action */}
+      <Box sx={{ mt: 2 }}>
         <Button
           variant="outlined"
           color="error"

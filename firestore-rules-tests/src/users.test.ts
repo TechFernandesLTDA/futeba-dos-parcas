@@ -381,6 +381,38 @@ describe("users — campos imutáveis (atualização)", () => {
     );
   });
 
+  it("Player pode salvar todos os campos públicos enviados por Editar Perfil", async () => {
+    const db = asUsersA();
+    await assertSucceeds(
+      db.doc(`users/${UID_USERS_A}`).update({
+        name: "Jogador A Completo",
+        nickname: "craque",
+        preferred_position: "MEIA",
+        bio: "Jogo às quartas e aos sábados.",
+        favorite_team: "corinthians",
+        photo_url: "https://example.com/profile.jpg",
+        striker_rating: 4.0,
+        mid_rating: 4.5,
+        defender_rating: 3.0,
+        gk_rating: 1.5,
+        striker_rating_set: true,
+        mid_rating_set: true,
+        defender_rating_set: true,
+        gk_rating_set: true,
+      })
+    );
+  });
+
+  it("Player NÃO pode alterar updated_at diretamente ao salvar o perfil", async () => {
+    const db = asUsersA();
+    await assertFails(
+      db.doc(`users/${UID_USERS_A}`).update({
+        nickname: "craque-sem-timestamp",
+        updated_at: serverTimestamp(),
+      })
+    );
+  });
+
   it("Player pode atualizar status publico de procurando jogo hoje", async () => {
     const db = asUsersA();
     await assertSucceeds(
