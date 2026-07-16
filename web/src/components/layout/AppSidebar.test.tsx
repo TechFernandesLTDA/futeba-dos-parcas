@@ -61,9 +61,19 @@ vi.mock('../../hooks/useNotifications', () => ({
 }));
 
 vi.mock('../common/AppLogo', () => ({
-  AppLogo: ({ alt }: { alt: string }) => <div data-testid="app-logo">{alt}</div>,
+  AppLogo: ({ alt, size, sx }: { alt: string; size: string; sx?: { width?: number; height?: number } }) => (
+    <div
+      data-testid="app-logo"
+      data-size={size}
+      data-width={sx?.width}
+      data-height={sx?.height}
+    >
+      {alt}
+    </div>
+  ),
 }));
 
+import { appSidebarLayoutTokens, appSidebarStyles } from './AppSidebar.styles';
 import { AppSidebar } from './AppSidebar';
 
 const theme = createTheme();
@@ -217,5 +227,65 @@ describe('AppSidebar', () => {
 
     const logoElements = screen.getAllByTestId('app-logo');
     expect(logoElements.length).toBe(2);
+  });
+
+  it('mantém os logos do rail e drawer no mesmo token de tamanho', () => {
+    renderWithTheme(<AppSidebar />);
+
+    for (const logo of screen.getAllByTestId('app-logo')) {
+      expect(logo).toHaveAttribute('data-size', 'small');
+      expect(logo).toHaveAttribute('data-width', '28');
+      expect(logo).toHaveAttribute('data-height', '28');
+    }
+  });
+
+  it('aplica cantos arredondados e cor ativa também ao botão Mais do rail', () => {
+    mockLocation.pathname = '/settings';
+    mockLocation.search = '';
+    renderWithTheme(<AppSidebar />);
+
+    const moreButton = screen.getByRole('button', { name: 'Mais' });
+    expect(moreButton).toHaveClass('Mui-selected');
+    expect(appSidebarStyles.railNavigationButton).toMatchObject({
+      borderRadius: 2,
+      '&.Mui-selected': {
+        '& .MuiListItemIcon-root': { color: 'primary.main' },
+      },
+    });
+  });
+
+  it('aplica cantos arredondados aos itens primários do rail', () => {
+    renderWithTheme(<AppSidebar />);
+
+    const railHomeButton = screen.getAllByText('Início')[0].closest('[role="button"]');
+    expect(railHomeButton).toHaveClass('MuiListItemButton-root');
+    expect(appSidebarStyles.railNavigationButton.borderRadius).toBe(2);
+  });
+
+  it('mantém o texto da busca desktop em uma linha com truncamento', () => {
+    renderWithTheme(<AppSidebar />);
+
+    expect(screen.getByText('Buscar...')).toBeInTheDocument();
+    expect(appSidebarStyles.desktopSearchLabel).toMatchObject({
+      minWidth: 0,
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+    });
+  });
+
+  it('usa tipografia válida e fundo opaco nos cabeçalhos sticky', () => {
+    renderWithTheme(<AppSidebar />);
+
+    const primaryHeader = screen.getByText('Principal');
+    expect(appSidebarStyles.drawerSubheader).toMatchObject({
+      typography: 'caption',
+      backgroundColor: 'background.paper',
+      fontWeight: 600,
+    });
+    expect(primaryHeader).toHaveClass('MuiListSubheader-sticky');
+  });
+
+  it('padroniza o espaçamento horizontal de todas as áreas do rail', () => {
+    expect(appSidebarLayoutTokens.railPaddingX).toBe(1);
   });
 });
