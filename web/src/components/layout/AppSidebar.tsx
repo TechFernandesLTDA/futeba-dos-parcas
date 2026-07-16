@@ -32,6 +32,7 @@ import { useUnreadNotificationCount } from '../../hooks/useNotifications';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
 import { AppLogo } from '../common/AppLogo';
 import { avatarSizes, iconSizes } from '../../theme/iconSizes';
+import { appSidebarLayoutTokens, appSidebarStyles } from './AppSidebar.styles';
 import {
   NAV_ITEMS,
   PRIMARY_NAV_ITEMS,
@@ -101,19 +102,24 @@ export function AppSidebar() {
         <Box
           component={RouterLink}
           to="/"
-          sx={{ p: 1.5, display: 'flex', justifyContent: 'center', textDecoration: 'none', color: 'inherit' }}
+          sx={{ px: appSidebarLayoutTokens.railPaddingX, py: 1.5, display: 'flex', justifyContent: 'center', textDecoration: 'none', color: 'inherit' }}
           aria-label={t('nav.home')}
         >
-          <AppLogo size="small" shape="circle" alt={t('alt.logo')} />
+          <AppLogo
+            size="small"
+            shape="circle"
+            alt={t('alt.logo')}
+            sx={{ width: appSidebarLayoutTokens.logoSize, height: appSidebarLayoutTokens.logoSize }}
+          />
         </Box>
-        <Box sx={{ px: 0.5, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+        <Box sx={{ px: appSidebarLayoutTokens.railPaddingX, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
           <Tooltip title={t('nav.search')} placement="right">
             <ListItemButton
               onClick={openSearch}
               sx={{ flexDirection: 'column', py: 1.25, borderRadius: 2 }}
             >
               <ListItemIcon sx={{ minWidth: 0, justifyContent: 'center', mb: 0.5 }}>
-                <SearchIcon sx={{ fontSize: iconSizes.lg }} />
+                <SearchIcon aria-hidden="true" sx={{ fontSize: iconSizes.lg }} />
               </ListItemIcon>
               <Typography variant="caption" color="text.secondary" fontSize="0.65rem" noWrap>
                 {t('nav.search')}
@@ -133,7 +139,7 @@ export function AppSidebar() {
               }}
             >
               <ListItemIcon sx={{ minWidth: 0, justifyContent: 'center', mb: 0.5, color: 'inherit' }}>
-                <AddIcon sx={{ fontSize: iconSizes.lg }} />
+                <AddIcon aria-hidden="true" sx={{ fontSize: iconSizes.lg }} />
               </ListItemIcon>
               <Typography variant="caption" color="inherit" fontSize="0.65rem" noWrap>
                 {t('games.createGame')}
@@ -141,7 +147,7 @@ export function AppSidebar() {
             </ListItemButton>
           </Tooltip>
         </Box>
-        <List sx={{ pt: 1, flex: 1, minHeight: 0, overflowY: 'auto' }}>
+        <List sx={{ pt: 1, px: appSidebarLayoutTokens.railPaddingX, flex: 1, minHeight: 0, overflowY: 'auto' }}>
           {PRIMARY_NAV_ITEMS.map((item) => {
             const realIdx = NAV_ITEMS.indexOf(item);
             const active = activeIndex === realIdx;
@@ -151,14 +157,7 @@ export function AppSidebar() {
                   selected={active}
                   aria-current={active ? 'page' : undefined}
                   onClick={() => navigate(resolveNavItemPath(item, user?.role))}
-                  sx={{
-                    flexDirection: 'column',
-                    py: 1.25,
-                    '&.Mui-selected': {
-                      bgcolor: 'action.selected',
-                      '& .MuiListItemIcon-root': { color: 'primary.main' },
-                    },
-                  }}
+                  sx={appSidebarStyles.railNavigationButton}
                 >
                   <ListItemIcon
                     sx={{
@@ -194,11 +193,10 @@ export function AppSidebar() {
               aria-haspopup="menu"
               aria-expanded={moreOpen}
               aria-controls={moreOpen ? morePopoverId : undefined}
-              sx={{
-                flexDirection: 'column',
-                py: 1.25,
-                '&.Mui-selected': { bgcolor: 'action.selected' },
-              }}
+              aria-label={unreadCount > 0
+                ? `${t('nav.sectionMore')} — ${t('nav.notificationsAria', { count: unreadCount })}`
+                : t('nav.sectionMore')}
+              sx={appSidebarStyles.railNavigationButton}
             >
               <ListItemIcon sx={{ minWidth: 0, justifyContent: 'center', mb: 0.5 }}>
                 <Badge badgeContent={unreadCount} color="error" max={99} invisible={unreadCount === 0}>
@@ -211,7 +209,7 @@ export function AppSidebar() {
             </ListItemButton>
           </Tooltip>
         </List>
-        <Box sx={{ p: 1, borderTop: 1, borderColor: 'divider' }}>
+        <Box sx={{ px: appSidebarLayoutTokens.railPaddingX, py: 1, borderTop: 1, borderColor: 'divider' }}>
           <ListItemButton
             onClick={() => navigate('/profile/edit')}
             sx={{ borderRadius: 2, justifyContent: 'center' }}
@@ -318,7 +316,12 @@ export function AppSidebar() {
           }}
           aria-label={t('nav.home')}
         >
-          <AppLogo size="small" shape="circle" alt={t('alt.logo')} sx={{ width: iconSizes.sidebar, height: iconSizes.sidebar }} />
+          <AppLogo
+            size="small"
+            shape="circle"
+            alt={t('alt.logo')}
+            sx={{ width: appSidebarLayoutTokens.logoSize, height: appSidebarLayoutTokens.logoSize }}
+          />
           <Typography variant="h6" fontWeight={700} color="primary.main">
             {t('common.appName')}
           </Typography>
@@ -350,12 +353,18 @@ export function AppSidebar() {
               '&:hover': { borderColor: 'primary.main', color: 'primary.main' },
             }}
           >
-            <Box sx={{ flex: 1, textAlign: 'left' }}>{t('nav.search')}...</Box>
+            <Typography
+              component="span"
+              noWrap
+              sx={appSidebarStyles.desktopSearchLabel}
+            >
+              {t('nav.search')}...
+            </Typography>
             <Chip label="Ctrl+K" size="small" variant="outlined" sx={{ height: 24, fontSize: '0.75rem', ml: 1 }} />
           </Button>
         </Box>
         <List sx={{ py: 0.5, flex: 1, minHeight: 0, overflowY: 'auto' }}>
-          <ListSubheader sx={{ typography: 'labelSmall', fontWeight: 600, lineHeight: 1.75 }}>
+          <ListSubheader sx={appSidebarStyles.drawerSubheader}>
             {t('nav.sectionPrimary')}
           </ListSubheader>
           {PRIMARY_NAV_ITEMS.map((item) => {
@@ -383,14 +392,14 @@ export function AppSidebar() {
                   }}
                 >
                   <ListItemIcon sx={{ color: 'text.secondary' }}>
-                    {React.cloneElement(item.icon, { sx: { fontSize: iconSizes.lg } })}
+                    {React.cloneElement(item.icon, { 'aria-hidden': true, sx: { fontSize: iconSizes.lg } })}
                   </ListItemIcon>
                   <ListItemText primary={t(item.labelKey)} />
                 </ListItemButton>
               </Tooltip>
             );
           })}
-          <ListSubheader sx={{ typography: 'labelSmall', fontWeight: 600, lineHeight: 1.75 }}>
+          <ListSubheader sx={appSidebarStyles.drawerSubheader}>
             {t('nav.sectionMore')}
           </ListSubheader>
           {/* #3726/#3727: seção "Mais" agora deriva de NAV_ITEMS (fonte única).

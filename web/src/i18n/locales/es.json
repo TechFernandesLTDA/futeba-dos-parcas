@@ -3007,6 +3007,8 @@
   },
   "shortcuts": {
     "closeOrBack": "Cerrar modal o volver al foco anterior",
+    "colAction": "Acción",
+    "colShortcut": "Atajo",
     "createGame": "Crear juego",
     "createGroup": "Crear grupo",
     "globalSearch": "Búsqueda global / acciones rápidas",

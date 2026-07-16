@@ -6,6 +6,7 @@ import {
   Button,
   Table,
   TableBody,
+  TableHead,
   TableRow,
   TableCell,
   Typography,
@@ -64,6 +65,14 @@ export const ShortcutsDialog = React.memo(function ShortcutsDialog({
           {t('shortcuts.tip')}
         </Typography>
         <Table size="small">
+          <TableHead>
+            <TableRow>
+              <TableCell scope="col" sx={{ width: '40%' }}>
+                {t('shortcuts.colShortcut')}
+              </TableCell>
+              <TableCell scope="col">{t('shortcuts.colAction')}</TableCell>
+            </TableRow>
+          </TableHead>
           <TableBody>
             {shortcuts.map((shortcut) => (
               <TableRow key={shortcut.descriptionKey} hover>

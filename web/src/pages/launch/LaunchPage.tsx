@@ -299,7 +299,7 @@ function LaunchPageContent() {
                       <Typography variant="h5" fontWeight={900}>Quarta dos Parças</Typography>
                       <Typography variant="body2" color="text.secondary">Hoje, 20h • Arena Central</Typography>
                     </Box>
-                    <Box sx={{ px: 1.25, py: 0.5, flexShrink: 0, borderRadius: 8, bgcolor: 'success.light', color: 'success.contrastText' }}>
+                    <Box sx={{ px: 1.25, py: 0.5, flexShrink: 0, borderRadius: 8, bgcolor: 'success.main', color: 'success.contrastText' }}>
                       <Typography variant="caption" fontWeight={900} noWrap>CONFIRMADO</Typography>
                     </Box>
                   </Stack>

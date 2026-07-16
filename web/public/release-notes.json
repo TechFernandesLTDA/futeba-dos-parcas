@@ -1,7 +1,41 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-16T06:01:05.561Z",
+  "generatedAt": "2026-07-16T06:23:36.358Z",
   "notes": [
+    {
+      "version": "1.54.18",
+      "buildNumber": null,
+      "releaseDate": "2026-07-16",
+      "type": "patch",
+      "showPopup": false,
+      "published": true,
+      "headline": "Melhoramos a leitura, a acessibilidade e o acabamento dos menus do Futeba dos Parças.",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "Padronizamos espaçamentos, logos, cantos e estados ativos da navegação em tablets e computadores.",
+        "Melhoramos o contraste de breadcrumbs, mensagens de busca e indicadores visuais.",
+        "A contagem de notificações agora faz parte do nome acessível do menu “Mais”.",
+        "A tabela de atalhos ganhou cabeçalhos claros para leitores de tela.",
+        "Corrigimos o contraste do selo “CONFIRMADO” da landing e de indicadores equivalentes na gestão de quadras."
+      ],
+      "fixed": [],
+      "issueRefs": [
+        3715,
+        3742,
+        3743,
+        3744,
+        3745,
+        3746,
+        3747,
+        3756,
+        3779,
+        3780,
+        3783,
+        3786,
+        3799
+      ]
+    },
     {
       "version": "1.54.17",
       "buildNumber": null,

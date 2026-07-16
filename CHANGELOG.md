@@ -254,6 +254,16 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.54.18][web-1.54.18] - 2026-07-16
+
+#### Mudado
+- A sidebar responsiva passou a compartilhar tokens de layout e estilos entre os seus elementos.
+- Ícones decorativos foram ocultados da árvore de acessibilidade quando já existe rótulo textual equivalente.
+- Separadores e textos auxiliares deixaram de usar a cor de conteúdo desabilitado.
+- Os status sobre superfícies claras agora combinam a cor principal de severidade com seu `contrastText` correspondente.
+
+_Issues: #3715, #3742, #3743, #3744, #3745, #3746, #3747, #3756, #3779, #3780, #3783, #3786, #3799_
+
 ### [1.54.17][web-1.54.17] - 2026-07-16
 
 #### Mudado
@@ -2553,6 +2563,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.54.18]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.18.md
 [web-1.54.17]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.17.md
 [web-1.54.16]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.16.md
 [web-1.54.15]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.15.md
