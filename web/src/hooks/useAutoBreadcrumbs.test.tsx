@@ -56,14 +56,15 @@ describe('useAutoBreadcrumbs', () => {
     ]);
   });
 
-  it('omite IDs de pais desconhecidos em vez de exibir valor técnico', () => {
+  it('omite IDs técnicos e mantém o rótulo conhecido da publicação', () => {
     const result = renderBreadcrumbs('/group/abcdefghijk/post/zyxwvutsrqp');
 
     expect(result.current).toEqual([
       { label: 'Grupo', to: '/group' },
       { label: 'Detalhes', to: '/group/abcdefghijk' },
+      { label: 'Publicação', to: undefined },
     ]);
-    expect(result.current.some((item) => /abcdefghijk|zyxwvutsrqp|post/.test(item.label))).toBe(false);
+    expect(result.current.some((item) => /abcdefghijk|zyxwvutsrqp/.test(item.label))).toBe(false);
   });
 
   it.each(['/game/abcdefghijk', '/group/abcdefghijk', '/profile/abcdefghijk', '/location/abcdefghijk'])(
@@ -83,5 +84,46 @@ describe('useAutoBreadcrumbs', () => {
     const result = renderBreadcrumbs('/settings/notifications');
 
     expect(result.current.map((item) => item.label)).toEqual([settings, notifications]);
+  });
+
+  it('não cria link para o agrupador /map inexistente', () => {
+    const result = renderBreadcrumbs('/map/locations');
+
+    expect(result.current).toEqual([
+      { label: 'Mapa', to: undefined },
+      { label: 'Quadras', to: '/map/locations' },
+    ]);
+  });
+
+  it.each([
+    ['/admin/users', ['Administração', 'Usuários']],
+    ['/admin/feedback', ['Administração', 'Feedback']],
+    ['/admin/game-reviews', ['Administração', 'Revisões de jogos']],
+    ['/admin/performance', ['Administração', 'Desempenho']],
+    ['/dev', ['Início', 'Ferramentas de desenvolvimento']],
+    ['/owner/dashboard', ['Proprietário', 'Painel']],
+    ['/owner/onboarding', ['Proprietário', 'Cadastro']],
+    ['/messages/abcdefghijk', ['Mensagens', 'Conversa']],
+    ['/players/nearby', ['Jogadores', 'Por perto']],
+  ])('gera uma trilha completa para %s', (pathname, labels) => {
+    const result = renderBreadcrumbs(pathname);
+
+    expect(result.current.map((item) => item.label)).toEqual(labels);
+  });
+
+  it.each([
+    ['pt-BR', '/profile/edit', ['Perfil', 'Editar']],
+    ['en', '/map/locations', ['Map', 'Fields']],
+    ['es', '/admin/users', ['Administración', 'Usuarios']],
+  ])('traduz toda a trilha de %s em %s', async (locale, pathname, labels) => {
+    await i18n.changeLanguage(locale);
+    const result = renderBreadcrumbs(pathname);
+
+    expect(result.current.map((item) => item.label)).toEqual(labels);
+  });
+
+  it('usa Conquistas de forma consistente no breadcrumb em pt-BR', () => {
+    const result = renderBreadcrumbs('/badges');
+    expect(result.current).toEqual([{ label: 'Conquistas', to: '/badges' }]);
   });
 });

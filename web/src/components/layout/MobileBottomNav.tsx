@@ -12,7 +12,7 @@ import {
 import { alpha } from '@mui/material/styles';
 import { pageSpacing } from '../../theme/pageTokens';
 import { iconSizes } from '../../theme/iconSizes';
-import { NAV_ITEMS, getActiveNavIndexForSurface } from '../../config/navItems';
+import { NAV_ITEMS, getActiveNavIndexForItems } from '../../config/navItems';
 import { useToast } from '../../contexts/ToastContext';
 
 const BOTTOM_NAV_ITEMS = NAV_ITEMS.filter((item) => item.showInBottomNav);
@@ -30,9 +30,9 @@ export const MobileBottomNav = React.memo(function MobileBottomNav({ children }:
   });
 
   const activeValue = React.useMemo(() => {
-    // #3726: items "more" resolvem para parentTab na bottom nav (umbrella).
+    // #3726: itens "more" resolvem para parentItemId na bottom nav (umbrella).
     // Ex.: /settings → Perfil (idx 4) no mobile, mas Settings próprio no desktop.
-    return getActiveNavIndexForSurface(location.pathname, location.search, BOTTOM_NAV_ITEMS.length);
+    return getActiveNavIndexForItems(location.pathname, location.search, BOTTOM_NAV_ITEMS);
   }, [location.pathname, location.search]);
 
   return (
