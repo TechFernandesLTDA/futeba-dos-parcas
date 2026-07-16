@@ -113,7 +113,7 @@ export function AppSidebar() {
               sx={{ flexDirection: 'column', py: 1.25, borderRadius: 2 }}
             >
               <ListItemIcon sx={{ minWidth: 0, justifyContent: 'center', mb: 0.5 }}>
-                <SearchIcon sx={{ fontSize: iconSizes.lg }} />
+                <SearchIcon aria-hidden="true" sx={{ fontSize: iconSizes.lg }} />
               </ListItemIcon>
               <Typography variant="caption" color="text.secondary" fontSize="0.65rem" noWrap>
                 {t('nav.search')}
@@ -133,7 +133,7 @@ export function AppSidebar() {
               }}
             >
               <ListItemIcon sx={{ minWidth: 0, justifyContent: 'center', mb: 0.5, color: 'inherit' }}>
-                <AddIcon sx={{ fontSize: iconSizes.lg }} />
+                <AddIcon aria-hidden="true" sx={{ fontSize: iconSizes.lg }} />
               </ListItemIcon>
               <Typography variant="caption" color="inherit" fontSize="0.65rem" noWrap>
                 {t('games.createGame')}
@@ -194,6 +194,9 @@ export function AppSidebar() {
               aria-haspopup="menu"
               aria-expanded={moreOpen}
               aria-controls={moreOpen ? morePopoverId : undefined}
+              aria-label={unreadCount > 0
+                ? `${t('nav.sectionMore')} — ${t('nav.notificationsAria', { count: unreadCount })}`
+                : t('nav.sectionMore')}
               sx={{
                 flexDirection: 'column',
                 py: 1.25,
@@ -383,7 +386,7 @@ export function AppSidebar() {
                   }}
                 >
                   <ListItemIcon sx={{ color: 'text.secondary' }}>
-                    {React.cloneElement(item.icon, { sx: { fontSize: iconSizes.lg } })}
+                    {React.cloneElement(item.icon, { 'aria-hidden': true, sx: { fontSize: iconSizes.lg } })}
                   </ListItemIcon>
                   <ListItemText primary={t(item.labelKey)} />
                 </ListItemButton>

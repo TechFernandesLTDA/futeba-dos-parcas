@@ -204,7 +204,7 @@ describe('AppSidebar', () => {
     const user = userEvent.setup();
     renderWithTheme(<AppSidebar />);
 
-    const moreButton = screen.getByRole('button', { name: 'Mais' });
+    const moreButton = screen.getByRole('button', { name: 'Mais — Notificações (3 não lidas)' });
     expect(within(moreButton).getByText('3')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Notificações (3 não lidas)' })).toBeInTheDocument();
 

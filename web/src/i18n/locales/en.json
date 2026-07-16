@@ -2996,6 +2996,8 @@
   },
   "shortcuts": {
     "closeOrBack": "Close modal or return to previous focus",
+    "colAction": "Action",
+    "colShortcut": "Shortcut",
     "createGame": "Create game",
     "createGroup": "Create group",
     "globalSearch": "Global search / quick actions",
