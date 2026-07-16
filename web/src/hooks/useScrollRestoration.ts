@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useLocation, useNavigationType } from 'react-router-dom';
 
 const STORAGE_KEY = 'scroll-positions';
+const SAVE_DELAY_MS = 150;
 
 function getScrollPositions(): Record<string, number> {
   try {
@@ -94,13 +95,34 @@ export function useScrollRestoration(scrollContainerId?: string) {
       restored.current = true;
     }
 
+    let saveTimer: number | undefined;
+    let pendingTop: number | null = null;
+
+    const flushPendingPosition = () => {
+      if (saveTimer !== undefined) {
+        window.clearTimeout(saveTimer);
+        saveTimer = undefined;
+      }
+      if (pendingTop === null) return;
+
+      saveScrollPosition(scrollKey, pendingTop);
+      pendingTop = null;
+    };
+
     const handleScroll = () => {
-      saveScrollPosition(scrollKey, readScrollTop(container));
+      pendingTop = readScrollTop(container);
+      if (saveTimer !== undefined) window.clearTimeout(saveTimer);
+      saveTimer = window.setTimeout(flushPendingPosition, SAVE_DELAY_MS);
     };
 
     const target: EventTarget = isWindow(container) ? window : container;
     target.addEventListener('scroll', handleScroll, { passive: true });
-    return () => target.removeEventListener('scroll', handleScroll);
+    window.addEventListener('pagehide', flushPendingPosition);
+    return () => {
+      target.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('pagehide', flushPendingPosition);
+      flushPendingPosition();
+    };
   }, [location.pathname, location.search, navigationType, scrollContainerId]);
 
   useEffect(() => {

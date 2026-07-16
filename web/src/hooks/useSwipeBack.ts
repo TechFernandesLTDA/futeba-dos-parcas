@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { getSectionFallback } from '../config/navItems';
+import { useReducedMotion } from './useReducedMotion';
 
 interface UseSwipeBackOptions {
   /** Desabilita o gesto (ex.: em telas raiz onde não há para onde voltar). */
@@ -42,9 +43,7 @@ export function useSwipeBack({
   const [isSwiping, setIsSwiping] = useState(false);
   const [dragProgress, setDragProgress] = useState(0);
 
-  const [reducedMotion] = useState(() =>
-    typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  );
+  const reducedMotion = useReducedMotion();
 
   useEffect(() => {
     if (disabled) return;
@@ -67,6 +66,7 @@ export function useSwipeBack({
         startXRef.current = touch.clientX;
         startYRef.current = touch.clientY;
         trackingRef.current = true;
+        if (!reducedMotion) setIsSwiping(true);
       } else {
         trackingRef.current = false;
       }
@@ -81,7 +81,6 @@ export function useSwipeBack({
       const dy = Math.abs(touch.clientY - startYRef.current);
 
       if (dx > 0 && dx > dy * 1.5) {
-        setIsSwiping(true);
         setDragProgress(Math.min(1, dx / distanceThreshold));
       }
     };
@@ -119,6 +118,7 @@ export function useSwipeBack({
       window.removeEventListener('touchmove', onTouchMove);
       window.removeEventListener('touchend', onTouchEnd);
       window.removeEventListener('touchcancel', onTouchCancel);
+      cleanup();
     };
   }, [disabled, edgeThreshold, distanceThreshold, navigate, location.key, location.pathname, reducedMotion]);
 
