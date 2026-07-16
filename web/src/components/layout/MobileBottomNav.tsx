@@ -14,6 +14,7 @@ import { iconSizes } from '../../theme/iconSizes';
 import { getNavigationGlassStyles } from '../../theme/navigationGlass';
 import { NAV_ITEMS, getActiveNavIndexForItems } from '../../config/navItems';
 import { useToast } from '../../contexts/ToastContext';
+import { useHapticFeedback } from '../../hooks/useHapticFeedback';
 
 const BOTTOM_NAV_ITEMS = NAV_ITEMS.filter((item) => item.showInBottomNav);
 
@@ -22,6 +23,7 @@ export const MobileBottomNav = React.memo(function MobileBottomNav({ children }:
   const location = useLocation();
   const { t } = useTranslation();
   const { showError } = useToast();
+  const { trigger: triggerHaptic } = useHapticFeedback();
 
   // #2175 (bug 1): threshold 50 + histerese padrão evita flicker (esconder a
   // cada 1px de scroll). Antes: disableHysteresis + threshold 0.
@@ -61,6 +63,7 @@ export const MobileBottomNav = React.memo(function MobileBottomNav({ children }:
           <BottomNavigation
             value={activeValue}
             onChange={(_e, newValue: number) => {
+              triggerHaptic('light');
               // #2175 (bug 2): navegação com error handling — feedback ao
               // usuário se navigate lançar (ex.: rota inválida).
               try {

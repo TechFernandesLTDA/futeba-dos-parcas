@@ -8,6 +8,7 @@ const mockNavigate = vi.fn();
 const mockLocation = vi.hoisted(() => ({ pathname: '/', search: '?tab=0' }));
 const mockNotifications = vi.hoisted(() => ({ unreadCount: 0 }));
 const mockAuth = vi.hoisted(() => ({ role: 'PLAYER' as 'PLAYER' | 'FIELD_OWNER' | 'ADMIN' }));
+const mockTriggerHaptic = vi.hoisted(() => vi.fn());
 
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom');
@@ -60,6 +61,10 @@ vi.mock('../../hooks/useNotifications', () => ({
   useUnreadNotificationCount: () => ({ unreadCount: mockNotifications.unreadCount, loading: false, error: null }),
 }));
 
+vi.mock('../../hooks/useHapticFeedback', () => ({
+  useHapticFeedback: () => ({ trigger: mockTriggerHaptic }),
+}));
+
 vi.mock('../common/AppLogo', () => ({
   AppLogo: ({ alt, size, sx }: { alt: string; size: string; sx?: { width?: number; height?: number } }) => (
     <div
@@ -93,6 +98,7 @@ describe('AppSidebar', () => {
     mockLocation.search = '?tab=0';
     mockNotifications.unreadCount = 0;
     mockAuth.role = 'PLAYER';
+    mockTriggerHaptic.mockClear();
   });
 
   it('renderiza links de navegação', () => {
@@ -131,6 +137,7 @@ describe('AppSidebar', () => {
     await user.click(jogosLinks[0]);
 
     expect(mockNavigate).toHaveBeenCalledWith('/?tab=1');
+    expect(mockTriggerHaptic).toHaveBeenCalledWith('light');
   });
 
   it.each([

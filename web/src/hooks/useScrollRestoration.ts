@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useLocation, useNavigationType } from 'react-router-dom';
+import useMediaQuery from '@mui/material/useMediaQuery';
 
 const STORAGE_KEY = 'scroll-positions';
 const SAVE_DELAY_MS = 150;
@@ -39,10 +40,14 @@ function isWindow(container: ScrollContainer): container is Window {
   return container === window;
 }
 
-function getScrollContainer(scrollContainerId?: string): ScrollContainer {
+function getScrollContainer(scrollContainerId: string | undefined, useMainContent: boolean): ScrollContainer {
   if (scrollContainerId) {
     return document.getElementById(scrollContainerId) ?? window;
   }
+
+  // O layout só limita a altura de #main-content em md+; em xs/sm ele cresce
+  // com o conteúdo e o scroller real é window (#3762).
+  if (!useMainContent) return window;
 
   const main = document.getElementById('main-content');
   if (main instanceof HTMLElement) {
@@ -70,7 +75,8 @@ function writeScrollTop(container: ScrollContainer, top: number) {
 export function useScrollRestoration(scrollContainerId?: string) {
   const location = useLocation();
   const navigationType = useNavigationType();
-  const restored = useRef(false);
+  const useMainContent = useMediaQuery('(min-width:900px)', { noSsr: true });
+  const restoredKey = useRef<string | null>(null);
 
   useEffect(() => {
     if (!('scrollRestoration' in window.history)) return undefined;
@@ -83,16 +89,16 @@ export function useScrollRestoration(scrollContainerId?: string) {
 
   useEffect(() => {
     const scrollKey = getScrollKey(location.pathname, location.search);
-    const container = getScrollContainer(scrollContainerId);
+    const container = getScrollContainer(scrollContainerId, useMainContent);
 
-    if (!restored.current) {
+    if (restoredKey.current !== scrollKey) {
       const saved = navigationType === 'POP' ? getScrollPosition(scrollKey) : null;
       const top = saved ?? 0;
       requestAnimationFrame(() => {
         writeScrollTop(container, top);
         requestAnimationFrame(() => writeScrollTop(container, top));
       });
-      restored.current = true;
+      restoredKey.current = scrollKey;
     }
 
     let saveTimer: number | undefined;
@@ -123,9 +129,6 @@ export function useScrollRestoration(scrollContainerId?: string) {
       window.removeEventListener('pagehide', flushPendingPosition);
       flushPendingPosition();
     };
-  }, [location.pathname, location.search, navigationType, scrollContainerId]);
+  }, [location.pathname, location.search, navigationType, scrollContainerId, useMainContent]);
 
-  useEffect(() => {
-    restored.current = false;
-  }, [location.pathname, location.search]);
 }
