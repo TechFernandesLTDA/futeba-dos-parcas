@@ -1,11 +1,12 @@
 import { beforeEach, describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ThemeProvider, createTheme } from '@mui/material';
 import { MemoryRouter } from 'react-router-dom';
 
 const mockNavigate = vi.fn();
 const mockLocation = vi.hoisted(() => ({ pathname: '/', search: '?tab=0' }));
+const mockNotifications = vi.hoisted(() => ({ unreadCount: 0 }));
 
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom');
@@ -18,7 +19,7 @@ vi.mock('react-router-dom', async () => {
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (key: string) => {
+    t: (key: string, options?: { count?: number }) => {
       const map: Record<string, string> = {
         'nav.home': 'Início',
         'nav.games': 'Jogos',
@@ -39,6 +40,9 @@ vi.mock('react-i18next', () => ({
         'common.appName': 'Futeba',
         'a11y.mainNav': 'Navegação principal',
       };
+      if (key === 'nav.notificationsAria') {
+        return `Notificações (${options?.count ?? 0} não lidas)`;
+      }
       return map[key] || key;
     },
   }),
@@ -52,7 +56,7 @@ vi.mock('../../contexts/AuthContext', () => ({
 
 vi.mock('../../hooks/useNotifications', () => ({
   useNotifications: () => ({ unreadCount: 0 }),
-  useUnreadNotificationCount: () => ({ unreadCount: 0, loading: false, error: null }),
+  useUnreadNotificationCount: () => ({ unreadCount: mockNotifications.unreadCount, loading: false, error: null }),
 }));
 
 vi.mock('../common/AppLogo', () => ({
@@ -76,6 +80,7 @@ describe('AppSidebar', () => {
     mockNavigate.mockClear();
     mockLocation.pathname = '/';
     mockLocation.search = '?tab=0';
+    mockNotifications.unreadCount = 0;
   });
 
   it('renderiza links de navegação', () => {
@@ -159,6 +164,24 @@ describe('AppSidebar', () => {
     expect(moreButton).toHaveAttribute('aria-expanded', 'true');
     expect(moreButton).toHaveAttribute('aria-controls', 'app-sidebar-more-menu');
     expect(screen.getByRole('menu')).toBeInTheDocument();
+    expect(screen.getAllByRole('menuitem')).toHaveLength(6);
+
+    await user.click(screen.getByRole('menuitem', { name: 'Configurações' }));
+    expect(mockNavigate).toHaveBeenCalledWith('/settings');
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+  });
+
+  it('mantém não lidas visíveis e anunciadas no tablet e desktop', async () => {
+    mockNotifications.unreadCount = 3;
+    const user = userEvent.setup();
+    renderWithTheme(<AppSidebar />);
+
+    const moreButton = screen.getByRole('button', { name: 'Mais' });
+    expect(within(moreButton).getByText('3')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Notificações (3 não lidas)' })).toBeInTheDocument();
+
+    await user.click(moreButton);
+    expect(screen.getByRole('menuitem', { name: 'Notificações (3 não lidas)' })).toBeInTheDocument();
   });
 
   it('renderiza drawer expanded em desktop (lg+)', () => {

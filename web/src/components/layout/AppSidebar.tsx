@@ -144,12 +144,6 @@ export function AppSidebar() {
           {PRIMARY_NAV_ITEMS.map((item) => {
             const realIdx = NAV_ITEMS.indexOf(item);
             const active = activeIndex === realIdx;
-            const isNotifItem = item.labelKey === 'nav.notifications';
-            const icon = isNotifItem ? (
-              <Badge badgeContent={unreadCount} color="error" max={99} invisible={unreadCount === 0}>
-                {item.icon}
-              </Badge>
-            ) : item.icon;
             return (
               <Tooltip key={item.labelKey} title={t(item.labelKey)} placement="right">
                 <ListItemButton
@@ -170,10 +164,9 @@ export function AppSidebar() {
                       minWidth: 0,
                       justifyContent: 'center',
                       mb: 0.5,
-                      animation: isNotifItem && unreadCount > 0 && !reducedMotion ? `${pulse} 2s ease-in-out infinite` : undefined,
                     }}
                   >
-                    {React.cloneElement(icon, { 'aria-hidden': true, sx: { fontSize: iconSizes.lg } })}
+                    {React.cloneElement(item.icon, { 'aria-hidden': true, sx: { fontSize: iconSizes.lg } })}
                   </ListItemIcon>
                   <Typography
                     variant="caption"
@@ -207,7 +200,9 @@ export function AppSidebar() {
               }}
             >
               <ListItemIcon sx={{ minWidth: 0, justifyContent: 'center', mb: 0.5 }}>
-                <MoreHoriz sx={{ fontSize: iconSizes.lg }} aria-hidden />
+                <Badge badgeContent={unreadCount} color="error" max={99} invisible={unreadCount === 0}>
+                  <MoreHoriz sx={{ fontSize: iconSizes.lg }} aria-hidden />
+                </Badge>
               </ListItemIcon>
               <Typography variant="caption" color="text.secondary" fontSize="0.65rem" noWrap>
                 {t('nav.sectionMore')}
@@ -253,8 +248,12 @@ export function AppSidebar() {
             return (
               <ListItemButton
                 key={item.labelKey}
+                role="menuitem"
                 selected={active}
                 aria-current={active ? 'page' : undefined}
+                aria-label={isNotifItem && unreadCount > 0
+                  ? t('nav.notificationsAria', { count: unreadCount })
+                  : undefined}
                 onClick={() => {
                   navigate(item.path);
                   setMoreAnchor(null);
@@ -268,7 +267,7 @@ export function AppSidebar() {
                 }}
               >
                 <ListItemIcon sx={{ color: 'text.secondary', minWidth: 36 }}>
-                  {React.cloneElement(icon, { 'aria-hidden': true })}
+                  {isNotifItem ? icon : React.cloneElement(icon, { 'aria-hidden': true })}
                 </ListItemIcon>
                 <ListItemText primary={t(item.labelKey)} />
               </ListItemButton>
@@ -409,6 +408,9 @@ export function AppSidebar() {
                 <ListItemButton
                   selected={active}
                   aria-current={active ? 'page' : undefined}
+                  aria-label={isNotifItem && unreadCount > 0
+                    ? t('nav.notificationsAria', { count: unreadCount })
+                    : undefined}
                   onClick={() => navigate(item.path)}
                   sx={{
                     borderRadius: 2,
@@ -431,7 +433,9 @@ export function AppSidebar() {
                       animation: isNotifItem && unreadCount > 0 && !reducedMotion ? `${pulse} 2s ease-in-out infinite` : undefined,
                     }}
                   >
-                    {React.cloneElement(icon, { 'aria-hidden': true, sx: { fontSize: iconSizes.lg } })}
+                    {isNotifItem
+                      ? icon
+                      : React.cloneElement(icon, { 'aria-hidden': true, sx: { fontSize: iconSizes.lg } })}
                   </ListItemIcon>
                   <ListItemText primary={t(item.labelKey)} />
                 </ListItemButton>
