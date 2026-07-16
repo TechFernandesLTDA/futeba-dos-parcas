@@ -7,6 +7,7 @@ import { MemoryRouter } from 'react-router-dom';
 const mockNavigate = vi.fn();
 const mockLocation = vi.hoisted(() => ({ pathname: '/', search: '?tab=0' }));
 const mockNotifications = vi.hoisted(() => ({ unreadCount: 0 }));
+const mockAuth = vi.hoisted(() => ({ role: 'PLAYER' as 'PLAYER' | 'FIELD_OWNER' | 'ADMIN' }));
 
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom');
@@ -50,7 +51,7 @@ vi.mock('react-i18next', () => ({
 
 vi.mock('../../contexts/AuthContext', () => ({
   useAuth: () => ({
-    user: { id: 'user-1', name: 'Jogador', photoUrl: null },
+    user: { id: 'user-1', name: 'Jogador', photoUrl: null, role: mockAuth.role },
   }),
 }));
 
@@ -81,6 +82,7 @@ describe('AppSidebar', () => {
     mockLocation.pathname = '/';
     mockLocation.search = '?tab=0';
     mockNotifications.unreadCount = 0;
+    mockAuth.role = 'PLAYER';
   });
 
   it('renderiza links de navegação', () => {
@@ -119,6 +121,32 @@ describe('AppSidebar', () => {
     await user.click(jogosLinks[0]);
 
     expect(mockNavigate).toHaveBeenCalledWith('/?tab=1');
+  });
+
+  it.each([
+    ['PLAYER', '/map/locations'],
+    ['FIELD_OWNER', '/locations'],
+    ['ADMIN', '/locations'],
+  ] as const)('envia %s ao destino permitido de Quadras', async (role, expected) => {
+    mockAuth.role = role;
+    const user = userEvent.setup();
+    renderWithTheme(<AppSidebar />);
+
+    const locationsButtons = screen.getAllByRole('button', { name: 'Quadras' });
+    await user.click(locationsButtons.at(-1)!);
+
+    expect(mockNavigate).toHaveBeenCalledWith(expected);
+  });
+
+  it('usa o destino permitido no menu Mais do rail e fecha o menu', async () => {
+    const user = userEvent.setup();
+    renderWithTheme(<AppSidebar />);
+
+    await user.click(screen.getByRole('button', { name: 'Mais' }));
+    await user.click(screen.getByRole('menuitem', { name: 'Quadras' }));
+
+    expect(mockNavigate).toHaveBeenCalledWith('/map/locations');
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
   });
 
   it('logo é um link para a home', () => {

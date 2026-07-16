@@ -1,7 +1,27 @@
 {
   "platform": "android",
-  "generatedAt": "2026-07-16T01:48:59.094Z",
+  "generatedAt": "2026-07-16T03:37:19.237Z",
   "notes": [
+    {
+      "version": "1.38.1",
+      "buildNumber": 74,
+      "releaseDate": "2026-07-16",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "Os níveis lendários de Rumo ao Estrelato agora têm dez brasões exclusivos também no Android.",
+      "highlights": [],
+      "added": [
+        "Cada nível entre 11 e 20 ganhou uma arte simbólica própria, da dança do drible à coroa do futebol."
+      ],
+      "improved": [
+        "Os brasões foram preparados para leitura clara em cartões, listas, perfil e visualizações ampliadas."
+      ],
+      "fixed": [
+        "Níveis acima de 10 deixam de reutilizar silenciosamente o brasão do nível Imortal."
+      ],
+      "issueRefs": []
+    },
     {
       "version": "1.38.0",
       "buildNumber": 73,

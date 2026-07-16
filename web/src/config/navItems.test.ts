@@ -1,5 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { getActiveNavIndex, getSectionFallback, NAV_ITEMS, getActiveNavIndexForSurface } from './navItems';
+import {
+  getActiveNavIndex,
+  getLocationsPath,
+  getSectionFallback,
+  NAV_ITEMS,
+  getActiveNavIndexForSurface,
+  resolveNavItemPath,
+} from './navItems';
 
 // Índices em NAV_ITEMS:
 // 0=Home, 1=Jogos, 2=Grupos, 3=Liga, 4=Perfil (primary)
@@ -109,6 +116,24 @@ describe('getActiveNavIndexForSurface (#3726)', () => {
   });
 });
 
+describe('destino de Quadras por permissão (#3737)', () => {
+  const locationsItem = NAV_ITEMS.find((item) => item.labelKey === 'nav.locations')!;
+
+  it.each([
+    ['PLAYER', '/map/locations'],
+    ['FIELD_OWNER', '/locations'],
+    ['ADMIN', '/locations'],
+  ] as const)('%s recebe o destino correto', (role, expected) => {
+    expect(resolveNavItemPath(locationsItem, role)).toBe(expected);
+    expect(getLocationsPath(role)).toBe(expected);
+  });
+
+  it('usa a superfície pública enquanto o papel não foi resolvido', () => {
+    expect(resolveNavItemPath(locationsItem)).toBe('/map/locations');
+    expect(getLocationsPath()).toBe('/map/locations');
+  });
+});
+
 describe('getSectionFallback (#2233/#2224)', () => {
   it('mapeia telas de jogos para a seção Jogos', () => {
     expect(getSectionFallback('/map/games')).toBe('/?tab=1');
@@ -152,7 +177,7 @@ describe('getSectionFallback (#2233/#2224)', () => {
       '/?tab=4',
       '/statistics',
       '/badges',
-      '/locations',
+      '/map/locations',
       '/settings',
       '/notifications',
       '/messages',

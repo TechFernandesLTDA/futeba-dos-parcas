@@ -1,7 +1,7 @@
 {
   "name": "futeba-web",
   "private": true,
-  "version": "1.54.13",
+  "version": "1.54.14",
   "type": "module",
   "scripts": {
     "dev": "vite",

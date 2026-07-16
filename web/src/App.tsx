@@ -343,7 +343,13 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
  * Usado pra telas de gerenciamento de quadras (donos podem editar suas quadras,
  * admin pode editar todas).
  */
-function FieldOwnerOrAdminRoute({ children }: { children: React.ReactNode }) {
+function FieldOwnerOrAdminRoute({
+  children,
+  fallbackTo = '/',
+}: {
+  children: React.ReactNode;
+  fallbackTo?: string;
+}) {
   const { user, firebaseUser, loading } = useAuth();
   const location = useLocation();
   if (loading) return <SplashLoadingFallback />;
@@ -351,7 +357,7 @@ function FieldOwnerOrAdminRoute({ children }: { children: React.ReactNode }) {
   // FIX #574 (C3): preserva from-location pra restaurar deep link pós-login.
   if (!firebaseUser) return <Navigate to="/login" state={{ from: location }} replace />;
   if (user?.role !== 'ADMIN' && user?.role !== 'FIELD_OWNER') {
-    return <Navigate to="/" replace />;
+    return <Navigate to={fallbackTo} replace />;
   }
   return <>{children}</>;
 }
@@ -537,7 +543,7 @@ function AppRoutes() {
         <Route path="/league" element={<Suspense fallback={<RouteFallback />}><LeagueScreen /></Suspense>} />
         <Route path="/badges" element={<Suspense fallback={<RouteFallback />}><BadgesScreen /></Suspense>} />
         {/* Locations */}
-        <Route path="/locations" element={<FieldOwnerOrAdminRoute><Suspense fallback={<RouteFallback />}><ManageLocationsScreen /></Suspense></FieldOwnerOrAdminRoute>} />
+        <Route path="/locations" element={<FieldOwnerOrAdminRoute fallbackTo="/map/locations"><Suspense fallback={<RouteFallback />}><ManageLocationsScreen /></Suspense></FieldOwnerOrAdminRoute>} />
         <Route path="/location/create" element={<FieldOwnerOrAdminRoute><Suspense fallback={<RouteFallback />}><LocationFormScreen /></Suspense></FieldOwnerOrAdminRoute>} />
         <Route path="/location/:locationId" element={<Suspense fallback={<RouteFallback />}><LocationDetailScreen /></Suspense>} />
         <Route path="/location/:locationId/edit" element={<FieldOwnerOrAdminRoute><Suspense fallback={<RouteFallback />}><LocationFormScreen /></Suspense></FieldOwnerOrAdminRoute>} />
