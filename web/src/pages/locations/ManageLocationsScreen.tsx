@@ -1238,7 +1238,7 @@ const getVenueAccountStatusColor = (status?: string | null): 'success' | 'warnin
                             sx={{
                               width: 32,
                               height: 32,
-                              bgcolor: 'warning.light',
+                              bgcolor: 'warning.main',
                               color: 'warning.contrastText',
                             }}
                           >
@@ -1296,7 +1296,7 @@ const getVenueAccountStatusColor = (status?: string | null): 'success' | 'warnin
                             sx={{
                               width: 32,
                               height: 32,
-                              bgcolor: 'success.light',
+                              bgcolor: 'success.main',
                               color: 'success.contrastText',
                             }}
                           >
