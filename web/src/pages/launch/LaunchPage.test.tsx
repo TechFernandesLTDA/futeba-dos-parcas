@@ -1,23 +1,27 @@
-import { fireEvent, render, screen } from '@testing-library/react';
-import { ThemeProvider } from '@mui/material/styles';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { LaunchPage } from './LaunchPage';
-import { futebaDarkTheme } from '../../theme';
+import { ThemeProvider } from '../../contexts/ThemeContext';
 
 vi.mock('../../utils/analytics', () => ({
   trackEvent: vi.fn(),
 }));
 
 describe('LaunchPage', () => {
+  beforeEach(() => localStorage.clear());
+
+  const renderLanding = () => render(
+    <MemoryRouter>
+      <ThemeProvider>
+        <LaunchPage />
+      </ThemeProvider>
+    </MemoryRouter>,
+  );
+
   it('shows the campaign image early in the hero and keeps the status on one line', () => {
-    render(
-      <MemoryRouter>
-        <ThemeProvider theme={futebaDarkTheme}>
-          <LaunchPage />
-        </ThemeProvider>
-      </MemoryRouter>,
-    );
+    localStorage.setItem('themeMode', 'dark');
+    renderLanding();
 
     const heading = screen.getByRole('heading', {
       name: 'Sua pelada sai do grupo e entra em campo.',
@@ -32,17 +36,13 @@ describe('LaunchPage', () => {
     expect(campaignImage.compareDocumentPosition(description)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
     expect(screen.getByText('CONFIRMADO')).toHaveClass('MuiTypography-noWrap');
     expect(screen.getByTestId('public-landing')).toHaveAttribute('data-resolved-theme', 'light');
+    expect(document.documentElement.dataset.theme).toBe('dark');
+    expect(document.documentElement.dataset.resolvedTheme).toBe('light');
     expect(document.documentElement).toHaveStyle({ colorScheme: 'light' });
   });
 
   it('centers the FAQ questions and answers under one labelled section', async () => {
-    render(
-      <MemoryRouter>
-        <ThemeProvider theme={futebaDarkTheme}>
-          <LaunchPage />
-        </ThemeProvider>
-      </MemoryRouter>,
-    );
+    renderLanding();
 
     expect(
       screen.getByRole('region', { name: 'Antes de entrar em campo' }),
@@ -54,5 +54,25 @@ describe('LaunchPage', () => {
     expect(
       await screen.findByText(/Não. O Futeba funciona no navegador do celular/),
     ).toHaveClass('MuiTypography-alignCenter');
+  });
+
+  it('restores the saved app theme after leaving the public landing', async () => {
+    localStorage.setItem('themeMode', 'dark');
+    const { rerender } = renderLanding();
+
+    expect(document.documentElement.dataset.resolvedTheme).toBe('light');
+
+    rerender(
+      <MemoryRouter>
+        <ThemeProvider>
+          <div>Área autenticada</div>
+        </ThemeProvider>
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(document.documentElement.dataset.resolvedTheme).toBe('dark');
+      expect(document.documentElement).toHaveStyle({ colorScheme: 'dark' });
+    });
   });
 });

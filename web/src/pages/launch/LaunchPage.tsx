@@ -11,7 +11,7 @@ import {
   Link,
   Stack,
   Typography,
-  useTheme,
+  useTheme as useMuiTheme,
 } from '@mui/material';
 import { ThemeProvider as MuiThemeProvider } from '@mui/material/styles';
 import {
@@ -27,6 +27,7 @@ import {
 import { Link as RouterLink } from 'react-router-dom';
 import { trackEvent } from '../../utils/analytics';
 import { futebaTheme } from '../../theme';
+import { useTheme as useAppTheme } from '../../contexts/ThemeContext';
 
 const benefits = [
   {
@@ -84,43 +85,7 @@ const faqs = [
 ];
 
 function LaunchPageContent() {
-  const theme = useTheme();
-
-  useLayoutEffect(() => {
-    const root = document.documentElement;
-    const previousTheme = root.dataset.theme;
-    const previousResolvedTheme = root.dataset.resolvedTheme;
-    const previousColorScheme = root.style.colorScheme;
-    const themeColorElements = Array.from(
-      document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]'),
-    );
-    const previousThemeColors = themeColorElements.map((element) => ({
-      content: element.content,
-      media: element.getAttribute('media'),
-    }));
-
-    root.dataset.theme = 'light';
-    root.dataset.resolvedTheme = 'light';
-    root.style.colorScheme = 'light';
-    themeColorElements.forEach((element) => {
-      element.content = futebaTheme.palette.primary.main;
-      element.removeAttribute('media');
-    });
-
-    return () => {
-      if (previousTheme === undefined) delete root.dataset.theme;
-      else root.dataset.theme = previousTheme;
-      if (previousResolvedTheme === undefined) delete root.dataset.resolvedTheme;
-      else root.dataset.resolvedTheme = previousResolvedTheme;
-      root.style.colorScheme = previousColorScheme;
-      themeColorElements.forEach((element, index) => {
-        element.content = previousThemeColors[index].content;
-        const previousMedia = previousThemeColors[index].media;
-        if (previousMedia === null) element.removeAttribute('media');
-        else element.setAttribute('media', previousMedia);
-      });
-    };
-  }, []);
+  const theme = useMuiTheme();
 
   useEffect(() => {
     trackEvent('landing_viewed', { page: 'launch' });
@@ -533,6 +498,13 @@ function LaunchPageContent() {
 }
 
 export function LaunchPage() {
+  const { setDocumentThemeOverride } = useAppTheme();
+
+  useLayoutEffect(() => {
+    setDocumentThemeOverride('light');
+    return () => setDocumentThemeOverride(null);
+  }, [setDocumentThemeOverride]);
+
   return (
     <MuiThemeProvider theme={futebaTheme}>
       <LaunchPageContent />
