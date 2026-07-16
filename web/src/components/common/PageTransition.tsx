@@ -9,6 +9,7 @@ interface PageTransitionProps {
   transitionKey: string;
   variant?: PageTransitionVariant;
   sx?: SxProps<Theme>;
+  onTransitionComplete?: () => void;
 }
 
 const fadeInKeyframes = {
@@ -30,6 +31,7 @@ export const PageTransition = React.memo(function PageTransition({
   transitionKey,
   variant = 'fade',
   sx,
+  onTransitionComplete,
 }: PageTransitionProps) {
   const reducedMotion = useReducedMotion();
   const keyframes = variant === 'slideUp' ? slideUpKeyframes : fadeInKeyframes;
@@ -40,16 +42,25 @@ export const PageTransition = React.memo(function PageTransition({
     if (!container) return;
 
     container.style.animation = 'none';
-    if (reducedMotion) return;
+    if (reducedMotion) {
+      onTransitionComplete?.();
+      return;
+    }
+
+    const handleAnimationEnd = (event: AnimationEvent) => {
+      if (event.target === container) onTransitionComplete?.();
+    };
+    container.addEventListener('animationend', handleAnimationEnd);
 
     // Reinicia a animação CSS sem usar uma key React que remonte toda a rota.
     void container.offsetWidth;
     container.style.animation = getPageTransitionAnimation(variant, false);
 
     return () => {
+      container.removeEventListener('animationend', handleAnimationEnd);
       container.style.animation = 'none';
     };
-  }, [reducedMotion, transitionKey, variant]);
+  }, [onTransitionComplete, reducedMotion, transitionKey, variant]);
 
   return (
     <Box

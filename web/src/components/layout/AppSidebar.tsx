@@ -17,6 +17,7 @@ import {
   Chip,
   Menu,
   MenuItem,
+  useTheme,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -34,7 +35,11 @@ import { useHapticFeedback } from '../../hooks/useHapticFeedback';
 import { AppLogo } from '../common/AppLogo';
 import { avatarSizes, iconSizes } from '../../theme/iconSizes';
 import { getSearchShortcutTranslationKey } from '../../utils/platformShortcut';
-import { appSidebarLayoutTokens, appSidebarStyles } from './AppSidebar.styles';
+import {
+  appSidebarLayoutTokens,
+  appSidebarStyles,
+  getAppSidebarOverlayPlacement,
+} from './AppSidebar.styles';
 import { md3TypeScale } from '../../theme';
 import { getNavigationGlassStyles } from '../../theme/navigationGlass';
 import { navigationControlTokens } from '../../theme/navigationControls';
@@ -67,6 +72,7 @@ export function AppSidebar() {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useTranslation();
+  const theme = useTheme();
   const { user } = useAuth();
   const { unreadCount } = useUnreadNotificationSummary();
   const userInitial = user?.name?.charAt(0).toUpperCase() || 'U';
@@ -92,6 +98,7 @@ export function AppSidebar() {
   const moreButtonId = 'app-sidebar-more-button';
   const morePopoverId = 'app-sidebar-more-menu';
   const moreOpen = moreAnchor !== null;
+  const overlayPlacement = getAppSidebarOverlayPlacement(theme.direction);
 
   const openSearch = () => window.dispatchEvent(new Event('open-command-palette'));
 
@@ -135,7 +142,7 @@ export function AppSidebar() {
           />
         </Box>
         <Box sx={{ px: appSidebarLayoutTokens.railPaddingX, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-          <Tooltip title={t('nav.search')} placement="right">
+          <Tooltip title={t('nav.search')} placement={overlayPlacement.tooltipPlacement}>
             <ListItemButton
               onClick={openSearch}
               sx={{ flexDirection: 'column', py: 1.25, borderRadius: 2 }}
@@ -148,7 +155,7 @@ export function AppSidebar() {
               </Typography>
             </ListItemButton>
           </Tooltip>
-          <Tooltip title={t('games.createGame')} placement="right">
+          <Tooltip title={t('games.createGame')} placement={overlayPlacement.tooltipPlacement}>
             <ListItemButton
               data-prefetch-route="/game/create"
               {...prefetchHandlers}
@@ -177,7 +184,7 @@ export function AppSidebar() {
             const active = activeIndex === realIdx;
             const destination = resolveNavItemPath(item, user?.role);
             return (
-              <Tooltip key={item.labelKey} title={t(item.labelKey)} placement="right">
+              <Tooltip key={item.labelKey} title={t(item.labelKey)} placement={overlayPlacement.tooltipPlacement}>
                 <ListItemButton
                   selected={active}
                   aria-current={active ? 'page' : undefined}
@@ -215,7 +222,7 @@ export function AppSidebar() {
               title={unreadCount > 0
                 ? t('nav.notificationsAria', { count: unreadCount })
                 : t(notificationNavItem.labelKey)}
-              placement="right"
+              placement={overlayPlacement.tooltipPlacement}
             >
               <ListItemButton
                 selected={notificationsActive}
@@ -258,7 +265,7 @@ export function AppSidebar() {
             </Tooltip>
           )}
           {/* #3728: "Mais" no rail md — abre Menu com itens secundários. */}
-          <Tooltip title={t('nav.sectionMore')} placement="right">
+          <Tooltip title={t('nav.sectionMore')} placement={overlayPlacement.tooltipPlacement}>
             <ListItemButton
               id={moreButtonId}
               onClick={(e) => {
@@ -305,8 +312,8 @@ export function AppSidebar() {
         open={moreOpen}
         anchorEl={moreAnchor}
         onClose={() => setMoreAnchor(null)}
-        anchorOrigin={{ vertical: 'center', horizontal: 'right' }}
-        transformOrigin={{ vertical: 'center', horizontal: 'left' }}
+        anchorOrigin={{ vertical: 'center', horizontal: overlayPlacement.menuAnchorHorizontal }}
+        transformOrigin={{ vertical: 'center', horizontal: overlayPlacement.menuTransformHorizontal }}
         MenuListProps={{
           id: morePopoverId,
           'aria-labelledby': moreButtonId,
@@ -472,7 +479,7 @@ export function AppSidebar() {
             const active = activeIndex === realIdx;
             const destination = resolveNavItemPath(item, user?.role);
             return (
-              <Tooltip key={item.labelKey} title={t(item.labelKey)} placement="right">
+              <Tooltip key={item.labelKey} title={t(item.labelKey)} placement={overlayPlacement.tooltipPlacement}>
                 <ListItemButton
                   selected={active}
                   aria-current={active ? 'page' : undefined}
@@ -518,7 +525,7 @@ export function AppSidebar() {
               </Badge>
             ) : item.icon;
             return (
-              <Tooltip key={item.labelKey} title={t(item.labelKey)} placement="right">
+              <Tooltip key={item.labelKey} title={t(item.labelKey)} placement={overlayPlacement.tooltipPlacement}>
                 <ListItemButton
                   selected={active}
                   aria-current={active ? 'page' : undefined}

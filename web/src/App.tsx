@@ -16,13 +16,13 @@ import { SkipNav } from './components/common/SkipNav';
 import { LoadingScreen } from './components/common/LoadingScreen';
 import { MobileShell } from './components/layout/MobileShell';
 import { useScrollRestoration } from './hooks/useScrollRestoration';
-import { useReducedMotion } from './hooks/useReducedMotion';
 import { useVerifiedClaim } from './hooks/useVerifiedClaim';
 import { useGlobalShortcuts } from './hooks/useGlobalShortcuts';
 import { useIsGroupMember } from './hooks/useGroups';
 import { useToast } from './contexts/ToastContext';
 import { ProfileGate } from './components/gate/ProfileGate';
 import { useResourcePreloading } from './hooks/useResourcePreloading';
+import { useAutoBreadcrumbs } from './hooks/useAutoBreadcrumbs';
 import { PageTransition } from './components/common/PageTransition';
 import { getActiveNavItem } from './config/navItems';
 import { BreadcrumbEntityProvider } from './contexts/BreadcrumbEntityContext';
@@ -438,29 +438,23 @@ function useFocusOnNavigate() {
   const location = useLocation();
 
   useEffect(() => {
-    // #3766: espera somente o próximo frame para garantir que a nova árvore já
-    // foi montada. A rota anterior não permanece no DOM, portanto não há motivo
-    // para acoplar o foco aos 300 ms da animação visual.
-    const frame = window.requestAnimationFrame(() => {
-      const el = document.querySelector('#main-content') as HTMLElement;
-      if (el) {
-        el.setAttribute('tabIndex', '-1');
-        el.focus({ preventScroll: true });
-      }
-    });
-
     addBreadcrumb('navigation', `Navegou para ${location.pathname}`, {
       pathname: location.pathname,
       search: location.search,
     });
-
-    return () => window.cancelAnimationFrame(frame);
   }, [location.pathname, location.search]);
+
+  return useCallback(() => {
+    const el = document.querySelector('#main-content') as HTMLElement | null;
+    if (!el) return;
+    el.setAttribute('tabIndex', '-1');
+    el.focus({ preventScroll: true });
+  }, []);
 }
 
 function AppRoutes() {
   const location = useLocation();
-  useFocusOnNavigate();
+  const focusMainContent = useFocusOnNavigate();
   useScrollRestoration();
   useResourcePreloading();
   const routeTransitionKey = `${location.pathname}${location.search}`;
@@ -468,7 +462,11 @@ function AppRoutes() {
 
   return (
     <ProfileGate>
-      <PageTransition transitionKey={routeTransitionKey} variant={routeTransitionVariant}>
+      <PageTransition
+        transitionKey={routeTransitionKey}
+        variant={routeTransitionVariant}
+        onTransitionComplete={focusMainContent}
+      >
         <Routes location={location}>
       {/* Splash & Onboarding */}
       {/* FIX #1024: /splash restrito a não-logados; usuário logado é redirecionado pelo PublicRoute */}

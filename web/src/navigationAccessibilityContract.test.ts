@@ -5,15 +5,15 @@ import { resolve } from 'node:path';
 const source = (path: string) => readFileSync(resolve(process.cwd(), path), 'utf8');
 
 describe('contrato de acessibilidade da navegação', () => {
-  it('move o foco no próximo frame e anuncia pathname + search sem document.title', () => {
+  it('move o foco após a transição e anuncia pathname + search sem document.title', () => {
     const app = source('src/App.tsx');
     const focusBlock = app.slice(app.indexOf('function useFocusOnNavigate'), app.indexOf('function AppRoutes'));
     const announcerBlock = app.slice(app.indexOf('function RouteAnnouncer'), app.indexOf('function SWUpdateListener'));
 
-    expect(focusBlock).toContain('window.requestAnimationFrame');
-    expect(focusBlock).toContain('window.cancelAnimationFrame');
+    expect(focusBlock).toContain('return useCallback');
     expect(focusBlock).not.toContain('setTimeout');
     expect(focusBlock).toContain('[location.pathname, location.search]');
+    expect(app).toContain('onTransitionComplete={focusMainContent}');
 
     expect(announcerBlock).toContain('getActiveNavItem(location.pathname, location.search)');
     expect(announcerBlock).toContain("t('a11y.routeAnnouncement'");

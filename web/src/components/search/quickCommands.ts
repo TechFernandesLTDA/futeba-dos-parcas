@@ -10,7 +10,7 @@ export interface QuickCommand {
   labelKey: string;
   subtitleKey: string;
   route: string;
-  shortcut?: string;
+  shortcut?: { key: string; shift?: boolean };
 }
 
 /**
@@ -23,21 +23,21 @@ export const QUICK_COMMANDS: readonly QuickCommand[] = [
     labelKey: 'games.createGame',
     subtitleKey: 'commandPalette.quickCommandSubtitles.createGame',
     route: '/game/create',
-    shortcut: '⌘N',
+    shortcut: { key: 'N' },
   },
   {
     id: 'create-group',
     labelKey: 'groups.createGroup',
     subtitleKey: 'commandPalette.quickCommandSubtitles.createGroup',
     route: '/group/create',
-    shortcut: '⌘⇧N',
+    shortcut: { key: 'N', shift: true },
   },
   {
     id: 'settings',
     labelKey: 'nav.settings',
     subtitleKey: 'commandPalette.quickCommandSubtitles.settings',
     route: '/settings',
-    shortcut: '⌘,',
+    shortcut: { key: ',' },
   },
   {
     id: 'profile',
@@ -56,3 +56,14 @@ export const QUICK_COMMANDS: readonly QuickCommand[] = [
 export function getQuickCommand(id: string): QuickCommand | undefined {
   return QUICK_COMMANDS.find((command) => command.id === id);
 }
+
+export function formatQuickCommandShortcut(
+  command: QuickCommand,
+  platform?: string,
+): string | undefined {
+  if (!command.shortcut) return undefined;
+  const { key, shift } = command.shortcut;
+  if (isApplePlatform(platform)) return `⌘${shift ? '⇧' : ''}${key}`;
+  return `Ctrl+${shift ? 'Shift+' : ''}${key}`;
+}
+import { isApplePlatform } from '../../utils/platformShortcut';

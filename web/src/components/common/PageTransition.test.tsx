@@ -1,9 +1,15 @@
 import { useEffect } from 'react';
-import { render } from '@testing-library/react';
+import { fireEvent, render } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { getPageTransitionAnimation } from './PageTransition.utils';
 import { motionDuration, motionEasing } from '../../theme/motion';
 import { PageTransition } from './PageTransition';
+
+const reducedMotionState = vi.hoisted(() => ({ active: false }));
+
+vi.mock('../../hooks/useReducedMotion', () => ({
+  useReducedMotion: () => reducedMotionState.active,
+}));
 
 describe('PageTransition', () => {
   it('usa fade curto como transição padrão', () => {
@@ -56,5 +62,34 @@ describe('PageTransition', () => {
 
     unmount();
     expect(unmounted).toHaveBeenCalledTimes(1);
+  });
+
+  it('sinaliza conclusão somente quando a animação do contêiner termina', () => {
+    const onTransitionComplete = vi.fn();
+    const { container, getByText } = render(
+      <PageTransition transitionKey="/game/1" onTransitionComplete={onTransitionComplete}>
+        <span>Filho animado</span>
+      </PageTransition>,
+    );
+
+    expect(onTransitionComplete).not.toHaveBeenCalled();
+    fireEvent.animationEnd(getByText('Filho animado'), { bubbles: true });
+    expect(onTransitionComplete).not.toHaveBeenCalled();
+    fireEvent.animationEnd(container.querySelector('[data-transition-key]') as HTMLElement, { bubbles: true });
+    expect(onTransitionComplete).toHaveBeenCalledTimes(1);
+  });
+
+  it('sinaliza conclusão imediatamente quando movimento reduzido está ativo', () => {
+    reducedMotionState.active = true;
+    const onTransitionComplete = vi.fn();
+
+    render(
+      <PageTransition transitionKey="/game/1" onTransitionComplete={onTransitionComplete}>
+        Conteúdo
+      </PageTransition>,
+    );
+
+    expect(onTransitionComplete).toHaveBeenCalledTimes(1);
+    reducedMotionState.active = false;
   });
 });

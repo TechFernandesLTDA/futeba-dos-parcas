@@ -47,7 +47,12 @@ import { useTranslation } from 'react-i18next';
 import { getPrefixSearchUpperBound } from './searchPrefixes';
 import { buildPublicGroupSearchQuery } from './searchQueries';
 import { getLeaguePlayers } from '../../services/cloudFunctions';
-import { getQuickCommand, QUICK_COMMANDS, type QuickCommandId } from './quickCommands';
+import {
+  formatQuickCommandShortcut,
+  getQuickCommand,
+  QUICK_COMMANDS,
+  type QuickCommandId,
+} from './quickCommands';
 
 const logger = createLogger('SearchPanel');
 
@@ -421,6 +426,7 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
             >
               {QUICK_COMMANDS.map((cmd, idx) => {
                 const displayName = t(cmd.labelKey);
+                const shortcut = formatQuickCommandShortcut(cmd);
                 return (
                 <Box key={cmd.id}>
                   {idx > 0 && <Divider component="li" />}
@@ -449,7 +455,7 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
                       primaryTypographyProps={{ variant: 'body2', fontWeight: 500 }}
                       secondaryTypographyProps={{ variant: 'caption' }}
                     />
-                    {cmd.shortcut ? (
+                    {shortcut ? (
                       <Box
                         component="kbd"
                         aria-hidden="true"
@@ -467,7 +473,7 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
                           flexShrink: 0,
                         }}
                       >
-                        {cmd.shortcut}
+                        {shortcut}
                       </Box>
                     ) : null}
                   </ListItemButton>

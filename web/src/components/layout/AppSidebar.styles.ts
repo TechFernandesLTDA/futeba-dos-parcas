@@ -5,6 +5,15 @@ export const appSidebarLayoutTokens = {
   logoSize: iconSizes.sidebar,
 } as const;
 
+export function getAppSidebarOverlayPlacement(direction: 'ltr' | 'rtl') {
+  const tooltipPlacement = direction === 'rtl' ? 'left' : 'right';
+  return {
+    tooltipPlacement,
+    menuAnchorHorizontal: tooltipPlacement,
+    menuTransformHorizontal: direction === 'rtl' ? 'right' : 'left',
+  } as const;
+}
+
 export const appSidebarStyles = {
   railNavigationButton: {
     flexDirection: 'column',

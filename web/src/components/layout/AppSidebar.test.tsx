@@ -90,7 +90,11 @@ vi.mock('../common/AppLogo', () => ({
   ),
 }));
 
-import { appSidebarLayoutTokens, appSidebarStyles } from './AppSidebar.styles';
+import {
+  appSidebarLayoutTokens,
+  appSidebarStyles,
+  getAppSidebarOverlayPlacement,
+} from './AppSidebar.styles';
 import { getSearchShortcutTranslationKey } from '../../utils/platformShortcut';
 import { AppSidebar } from './AppSidebar';
 
@@ -113,6 +117,19 @@ describe('AppSidebar', () => {
     mockAuth.role = 'PLAYER';
     mockTriggerHaptic.mockClear();
     mockPrefetchFocus.mockClear();
+  });
+
+  it('posiciona overlays no lado lógico correto em LTR e RTL', () => {
+    expect(getAppSidebarOverlayPlacement('ltr')).toEqual({
+      tooltipPlacement: 'right',
+      menuAnchorHorizontal: 'right',
+      menuTransformHorizontal: 'left',
+    });
+    expect(getAppSidebarOverlayPlacement('rtl')).toEqual({
+      tooltipPlacement: 'left',
+      menuAnchorHorizontal: 'left',
+      menuTransformHorizontal: 'right',
+    });
   });
 
   it('renderiza links de navegação', () => {
