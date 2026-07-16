@@ -1,5 +1,5 @@
 import React, { Suspense, lazy, useEffect, useState, useCallback } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useLocation, useParams, useNavigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useParams } from 'react-router-dom';
 import { addBreadcrumb } from './utils/errorContext';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { RouteSeoMetadata } from './components/seo/SeoMetadata';
@@ -23,7 +23,7 @@ import { useSwipeBack } from './hooks/useSwipeBack';
 import { useUnreadNotificationCount } from './hooks/useNotifications';
 import { useReducedMotion } from './hooks/useReducedMotion';
 import { useVerifiedClaim } from './hooks/useVerifiedClaim';
-import { ShortcutsDialog } from './components/common/ShortcutsDialog';
+import { useGlobalShortcuts } from './hooks/useGlobalShortcuts';
 import { useIsGroupMember } from './hooks/useGroups';
 import { useToast } from './contexts/ToastContext';
 import { ProfileGate } from './components/gate/ProfileGate';
@@ -61,6 +61,7 @@ const CpfVerificationScreen = lazy(() => import('./pages/onboarding/CpfVerificat
 const ProfileSetupScreen = lazy(() => import('./pages/onboarding/ProfileSetupScreen').then(m => ({ default: m.ProfileSetupScreen })));
 const AppGuideScreen = lazy(() => import('./pages/onboarding/AppGuideScreen').then(m => ({ default: m.AppGuideScreen })));
 const CommandPalette = lazy(() => import('./components/search/CommandPalette').then(m => ({ default: m.CommandPalette })));
+const ShortcutsDialog = lazy(() => import('./components/common/ShortcutsDialog').then(m => ({ default: m.ShortcutsDialog })));
 const AppLayout = lazy(() => import('./components/layout/AppLayout').then(m => ({ default: m.AppLayout })));
 
 // Auth
@@ -624,7 +625,7 @@ function MobileShell({ children }: { children: React.ReactNode }) {
   const goBack = useNavigateBack();
   // #2194: swipe-back só em rotas secundárias (na raiz não há para onde voltar).
   // #2722: expõe dragProgress para visual feedback durante o arraste.
-  const { dragProgress } = useSwipeBack({ disabled: !isSecondary });
+  const { dragProgress, isSwiping } = useSwipeBack({ disabled: !isSecondary });
   const reducedMotion = useReducedMotion();
   const shellSettleTransition = reducedMotion
     ? 'none'
@@ -656,6 +657,7 @@ function MobileShell({ children }: { children: React.ReactNode }) {
             : { xs: 'none', sm: 'translateZ(0)' },
           opacity: dragProgress > 0 ? 1 - dragProgress * 0.15 : 1,
           transition: dragProgress === 0 ? shellSettleTransition : 'none',
+          willChange: isSwiping ? 'transform, opacity' : 'auto',
         }}
       >
         {user && !isSecondary && (
@@ -764,14 +766,6 @@ function SWUpdateListener() {
   return null;
 }
 
-function isEditableTarget(target: EventTarget | null) {
-  const element = target as HTMLElement | null;
-  if (!element) return false;
-  return element.tagName === 'INPUT' ||
-    element.tagName === 'TEXTAREA' ||
-    element.isContentEditable;
-}
-
 function GlobalShortcuts({
   paletteOpen,
   onOpenPalette,
@@ -787,70 +781,14 @@ function GlobalShortcuts({
   onOpenShortcuts: () => void;
   onCloseShortcuts: () => void;
 }) {
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (isEditableTarget(e.target)) return;
-
-      const commandKey = e.metaKey || e.ctrlKey;
-      const key = e.key.toLowerCase();
-
-      if (commandKey && key === 'k') {
-        e.preventDefault();
-        if (paletteOpen) onClosePalette();
-        else onOpenPalette();
-        return;
-      }
-
-      if (commandKey && e.shiftKey && key === 'n') {
-        e.preventDefault();
-        navigate('/group/create');
-        return;
-      }
-
-      if (commandKey && key === 'n') {
-        e.preventDefault();
-        navigate('/game/create');
-        return;
-      }
-
-      if (commandKey && key === ',') {
-        e.preventDefault();
-        navigate('/settings');
-        return;
-      }
-
-      if (e.key === '?' && !e.altKey && !commandKey) {
-        e.preventDefault();
-        onOpenShortcuts();
-        return;
-      }
-
-      if (e.key === 'Escape' && shortcutsOpen) {
-        onCloseShortcuts();
-      }
-    };
-
-    const handleOpenShortcuts = () => onOpenShortcuts();
-    const handleOpenPalette = () => onOpenPalette();
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('open-shortcuts', handleOpenShortcuts);
-    window.addEventListener('open-command-palette', handleOpenPalette);
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('open-shortcuts', handleOpenShortcuts);
-      window.removeEventListener('open-command-palette', handleOpenPalette);
-    };
-  }, [
-    navigate,
-    onClosePalette,
-    onCloseShortcuts,
-    onOpenPalette,
-    onOpenShortcuts,
+  useGlobalShortcuts({
     paletteOpen,
+    onOpenPalette,
+    onClosePalette,
     shortcutsOpen,
-  ]);
+    onOpenShortcuts,
+    onCloseShortcuts,
+  });
 
   return null;
 }
@@ -901,7 +839,11 @@ function App() {
                   </Suspense>
                 </CommandPaletteBoundary>
               )}
-              <ShortcutsDialog open={shortcutsOpen} onClose={closeShortcuts} />
+              {shortcutsOpen && (
+                <Suspense fallback={null}>
+                  <ShortcutsDialog open={shortcutsOpen} onClose={closeShortcuts} />
+                </Suspense>
+              )}
               {/* #3187: VerificationBanner (grace period) removido — código morto:
                   ProtectedRoute redireciona users !verified pro onboarding
                   incondicionalmente, então o banner nunca era exibido. */}

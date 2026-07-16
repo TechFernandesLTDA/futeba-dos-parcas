@@ -1277,4 +1277,22 @@ depender do estado anterior da timeline.
 
 ---
 
+## 2026-07-16 — Persistência de scroll é adiada, mas nunca descartada (#3792)
+
+**Contexto:** O listener de scroll serializava e escrevia todo o mapa de posições
+no `sessionStorage` em cada evento, introduzindo I/O síncrono no caminho de
+renderização.
+
+**Decisão:** Manter somente a posição mais recente em memória durante o gesto e
+persisti-la após 150 ms sem novos eventos. O cleanup da rota e `pagehide` fazem
+flush imediato, preservando restauração em navegação e encerramento da página.
+
+**Consequências:** Um gesto contínuo produz uma única gravação ao terminar; troca
+de rota e fechamento não perdem a última posição conhecida. O formato e a chave
+do armazenamento permanecem compatíveis.
+
+**Relacionado:** `specs/BUGFIX_2026-07-16_web-interaction-performance.md`, #3792.
+
+---
+
 <!-- Adicione novas decisões acima desta linha -->
