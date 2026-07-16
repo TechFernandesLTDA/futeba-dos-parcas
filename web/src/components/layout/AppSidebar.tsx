@@ -28,7 +28,7 @@ import {
 import { useNavigate, useLocation, Link as RouterLink } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
-import { useUnreadNotificationCount } from '../../hooks/useNotifications';
+import { useUnreadNotificationSummary } from '../../contexts/UnreadNotificationContext';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
 import { useHapticFeedback } from '../../hooks/useHapticFeedback';
 import { AppLogo } from '../common/AppLogo';
@@ -38,6 +38,7 @@ import { appSidebarLayoutTokens, appSidebarStyles } from './AppSidebar.styles';
 import { md3TypeScale } from '../../theme';
 import { getNavigationGlassStyles } from '../../theme/navigationGlass';
 import { navigationControlTokens } from '../../theme/navigationControls';
+import { usePrefetchOnHover } from '../../hooks/useResourcePreloading';
 import {
   NOTIFICATION_PULSE_CYCLES,
   shouldAnimateNotificationBell,
@@ -67,10 +68,11 @@ export function AppSidebar() {
   const location = useLocation();
   const { t } = useTranslation();
   const { user } = useAuth();
-  const { unreadCount } = useUnreadNotificationCount(user?.id);
+  const { unreadCount } = useUnreadNotificationSummary();
   const userInitial = user?.name?.charAt(0).toUpperCase() || 'U';
   const reducedMotion = useReducedMotion();
   const { trigger: triggerHaptic } = useHapticFeedback();
+  const prefetchHandlers = usePrefetchOnHover();
   const [moreAnchor, setMoreAnchor] = useState<HTMLElement | null>(null);
 
   const navigateWithHaptic = React.useCallback((path: string) => {
@@ -148,6 +150,8 @@ export function AppSidebar() {
           </Tooltip>
           <Tooltip title={t('games.createGame')} placement="right">
             <ListItemButton
+              data-prefetch-route="/game/create"
+              {...prefetchHandlers}
               onClick={() => navigateWithHaptic('/game/create')}
               sx={{
                 flexDirection: 'column',
@@ -171,12 +175,15 @@ export function AppSidebar() {
           {PRIMARY_NAV_ITEMS.map((item) => {
             const realIdx = NAV_ITEMS.indexOf(item);
             const active = activeIndex === realIdx;
+            const destination = resolveNavItemPath(item, user?.role);
             return (
               <Tooltip key={item.labelKey} title={t(item.labelKey)} placement="right">
                 <ListItemButton
                   selected={active}
                   aria-current={active ? 'page' : undefined}
-                  onClick={() => navigateWithHaptic(resolveNavItemPath(item, user?.role))}
+                  data-prefetch-route={destination}
+                  {...prefetchHandlers}
+                  onClick={() => navigateWithHaptic(destination)}
                   sx={appSidebarStyles.railNavigationButton}
                 >
                   <ListItemIcon
@@ -277,6 +284,8 @@ export function AppSidebar() {
         </List>
         <Box sx={{ px: appSidebarLayoutTokens.railPaddingX, py: 1, borderTop: 1, borderColor: 'divider' }}>
           <ListItemButton
+            data-prefetch-route="/profile/edit"
+            {...prefetchHandlers}
             onClick={() => navigateWithHaptic('/profile/edit')}
             sx={{ borderRadius: 2, justifyContent: 'center' }}
             aria-label={`${user?.name || t('settings.defaultUserName')} — ${t('profile.editProfile')}`}
@@ -314,13 +323,16 @@ export function AppSidebar() {
         {railMoreNavItems.map((item) => {
           const realIdx = NAV_ITEMS.indexOf(item);
           const active = activeIndex === realIdx;
+          const destination = resolveNavItemPath(item, user?.role);
           return (
             <MenuItem
               key={item.labelKey}
               selected={active}
               aria-current={active ? 'page' : undefined}
+              data-prefetch-route={destination}
+              {...prefetchHandlers}
               onClick={() => {
-                navigateWithHaptic(resolveNavItemPath(item, user?.role));
+                navigateWithHaptic(destination);
                 setMoreAnchor(null);
               }}
               sx={{
@@ -355,7 +367,7 @@ export function AppSidebar() {
             size="small"
             variant="outlined"
             aria-hidden="true"
-            sx={{ ml: 1 }}
+            sx={{ marginInlineStart: 1 }}
           />
         </MenuItem>
       </Menu>
@@ -412,6 +424,8 @@ export function AppSidebar() {
             variant="contained"
             fullWidth
             startIcon={<AddIcon />}
+            data-prefetch-route="/game/create"
+            {...prefetchHandlers}
             onClick={() => navigateWithHaptic('/game/create')}
             sx={{ borderRadius: 6 }}
           >
@@ -456,12 +470,15 @@ export function AppSidebar() {
           {PRIMARY_NAV_ITEMS.map((item) => {
             const realIdx = NAV_ITEMS.indexOf(item);
             const active = activeIndex === realIdx;
+            const destination = resolveNavItemPath(item, user?.role);
             return (
               <Tooltip key={item.labelKey} title={t(item.labelKey)} placement="right">
                 <ListItemButton
                   selected={active}
                   aria-current={active ? 'page' : undefined}
-                  onClick={() => navigateWithHaptic(resolveNavItemPath(item, user?.role))}
+                  data-prefetch-route={destination}
+                  {...prefetchHandlers}
+                  onClick={() => navigateWithHaptic(destination)}
                   sx={{
                     borderRadius: 2,
                     mx: 0.75,
@@ -493,6 +510,7 @@ export function AppSidebar() {
           {MORE_NAV_ITEMS.map((item) => {
             const realIdx = NAV_ITEMS.indexOf(item);
             const active = activeIndex === realIdx;
+            const destination = resolveNavItemPath(item, user?.role);
             const isNotifItem = item.labelKey === 'nav.notifications';
             const icon = isNotifItem ? (
               <Badge badgeContent={unreadCount} color="error" max={99} invisible={unreadCount === 0}>
@@ -507,7 +525,9 @@ export function AppSidebar() {
                   aria-label={isNotifItem && unreadCount > 0
                     ? t('nav.notificationsAria', { count: unreadCount })
                     : undefined}
-                  onClick={() => navigateWithHaptic(resolveNavItemPath(item, user?.role))}
+                  data-prefetch-route={destination}
+                  {...prefetchHandlers}
+                  onClick={() => navigateWithHaptic(destination)}
                   sx={{
                     borderRadius: 2,
                     mx: 0.75,
@@ -564,6 +584,8 @@ export function AppSidebar() {
         {/* #3733: rodapé permanece visível e leva diretamente à edição do perfil. */}
         <Box sx={{ p: 1, borderTop: 1, borderColor: 'divider' }}>
           <ListItemButton
+            data-prefetch-route="/profile/edit"
+            {...prefetchHandlers}
             onClick={() => navigateWithHaptic('/profile/edit')}
             aria-label={`${user?.name || t('settings.defaultUserName')} — ${t('profile.editProfile')}`}
             sx={{

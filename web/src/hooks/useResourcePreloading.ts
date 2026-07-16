@@ -1,4 +1,10 @@
-import { useEffect, useRef, useCallback } from 'react';
+import {
+  useEffect,
+  useRef,
+  useCallback,
+  type FocusEvent as ReactFocusEvent,
+  type MouseEvent as ReactMouseEvent,
+} from 'react';
 import { useLocation } from 'react-router-dom';
 
 // Route module cache to avoid re-importing
@@ -11,6 +17,12 @@ const routePrefetchers: Record<string, () => Promise<unknown>> = {
   '/level-journey': () => import('../pages/profile/LevelJourneyScreen'),
   '/league': () => import('../pages/league/LeagueScreen'),
   '/statistics': () => import('../pages/statistics/StatisticsScreen'),
+  '/badges': () => import('../pages/badges/BadgesScreen'),
+  '/locations': () => import('../pages/locations/ManageLocationsScreen'),
+  '/map/locations': () => import('../pages/map/LocationsMapScreen'),
+  '/settings': () => import('../pages/settings/SettingsScreen'),
+  '/notifications': () => import('../pages/ranking/NotificationsScreen'),
+  '/messages': () => import('../pages/messages/DirectMessagesScreen'),
 };
 
 function canPrefetchOnCurrentNetwork(): boolean {
@@ -113,41 +125,47 @@ export function useResourcePreloading() {
  * Call this on onMouseEnter/onFocus of navigation links
  */
 export function prefetchRoute(route: string): Promise<void> {
+  if (!canPrefetchOnCurrentNetwork()) return Promise.resolve();
   return preloadRouteModule(route);
 }
 
 /**
- * Hook to add prefetch behavior to navigation links
- * Returns event handlers for onMouseEnter and onFocus
+ * Retorna handlers reutilizáveis que leem a rota de `data-prefetch-route`.
+ * Deve ser chamado uma única vez por componente, nunca dentro de maps.
  */
-export function usePrefetchOnHover(route: string) {
-  const prefetchTimeout = useRef<NodeJS.Timeout | null>(null);
+export function usePrefetchOnHover(
+  prefetch: (route: string) => Promise<void> = prefetchRoute,
+) {
+  const prefetchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const handleMouseEnter = useCallback(() => {
-    // Delay prefetch by 100ms to avoid unnecessary prefetches on quick hovers
-    prefetchTimeout.current = setTimeout(() => {
-      prefetchRoute(route);
-    }, 100);
-  }, [route]);
-
-  const handleMouseLeave = useCallback(() => {
-    if (prefetchTimeout.current) {
+  const clearPendingPrefetch = useCallback(() => {
+    if (prefetchTimeout.current !== null) {
       clearTimeout(prefetchTimeout.current);
       prefetchTimeout.current = null;
     }
   }, []);
 
-  const handleFocus = useCallback(() => {
-    prefetchRoute(route);
-  }, [route]);
+  const handleMouseEnter = useCallback((event: ReactMouseEvent<HTMLElement>) => {
+    const route = event.currentTarget.dataset.prefetchRoute;
+    if (!route) return;
+    clearPendingPrefetch();
+    // Delay prefetch by 100ms to avoid unnecessary prefetches on quick hovers
+    prefetchTimeout.current = setTimeout(() => {
+      prefetchTimeout.current = null;
+      void prefetch(route);
+    }, 100);
+  }, [clearPendingPrefetch, prefetch]);
 
-  useEffect(() => {
-    return () => {
-      if (prefetchTimeout.current) {
-        clearTimeout(prefetchTimeout.current);
-      }
-    };
-  }, []);
+  const handleMouseLeave = clearPendingPrefetch;
+
+  const handleFocus = useCallback((event: ReactFocusEvent<HTMLElement>) => {
+    const route = event.currentTarget.dataset.prefetchRoute;
+    if (!route) return;
+    clearPendingPrefetch();
+    void prefetch(route);
+  }, [clearPendingPrefetch, prefetch]);
+
+  useEffect(() => clearPendingPrefetch, [clearPendingPrefetch]);
 
   return {
     onMouseEnter: handleMouseEnter,

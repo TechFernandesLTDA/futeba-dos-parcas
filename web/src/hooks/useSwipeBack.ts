@@ -1,9 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, type RefObject } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { getSectionFallback } from '../config/navItems';
 import { useReducedMotion } from './useReducedMotion';
 
 interface UseSwipeBackOptions {
+  /** Elemento visual que recebe o feedback do gesto sem provocar re-render. */
+  targetRef: RefObject<HTMLElement | null>;
   /** Desabilita o gesto (ex.: em telas raiz onde não há para onde voltar). */
   disabled?: boolean;
   /** Distância máxima da borda esquerda para iniciar o gesto (px). Default 30. */
@@ -45,92 +47,130 @@ export function shouldIgnoreSwipeBackTarget(target: EventTarget | null): boolean
 }
 
 /**
- * #2194: gesto de swipe-back (arrastar da borda esquerda → direita) para
- * paridade com a navegação nativa iOS/Android no mobile web.
+ * Gesto de swipe-back com feedback escrito diretamente no compositor.
  *
- * #2722: visual feedback durante o arraste — expõe `dragProgress` (0–1) e
- * `isSwiping` para que o shell aplique transform/opacity live. Gateado por
- * prefers-reduced-motion (retorna 0 se reduzido).
- *
- * Regras:
- * - Só inicia se o toque começar perto da borda esquerda (edgeThreshold).
- * - Confirma o voltar apenas se o movimento horizontal exceder
- *   distanceThreshold E for predominantemente horizontal (evita conflito com
- *   scroll vertical).
- * - Ignora multitouch e gestos quando `disabled` (ex.: telas raiz).
- * - Se não houver history (deep link direto), navega para o fallback da seção.
- *
- * Integra com react-router via navigate(-1) com proteção anti-no-history.
+ * `touchmove` não altera estado React. O progresso mais recente é aplicado no
+ * máximo uma vez por frame e todo estilo inline é removido em end, cancel,
+ * unmount, mudança de rota ou ativação de movimento reduzido.
  */
 export function useSwipeBack({
+  targetRef,
   disabled = false,
   edgeThreshold = 30,
   distanceThreshold = 80,
-}: UseSwipeBackOptions = {}) {
+}: UseSwipeBackOptions) {
   const navigate = useNavigate();
   const location = useLocation();
   const startXRef = useRef<number | null>(null);
   const startYRef = useRef<number | null>(null);
   const trackingRef = useRef(false);
-  const [isSwiping, setIsSwiping] = useState(false);
-  const [dragProgress, setDragProgress] = useState(0);
-
+  const animationFrameRef = useRef<number | null>(null);
+  const pendingProgressRef = useRef(0);
   const reducedMotion = useReducedMotion();
+  const reducedMotionRef = useRef(reducedMotion);
+
+  const clearVisualFeedback = useCallback(() => {
+    if (animationFrameRef.current !== null) {
+      window.cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+    }
+    pendingProgressRef.current = 0;
+
+    const target = targetRef.current;
+    if (!target) return;
+    target.style.removeProperty('transform');
+    target.style.removeProperty('opacity');
+    target.style.removeProperty('transition');
+    target.style.removeProperty('will-change');
+  }, [targetRef]);
+
+  const clearGesture = useCallback(() => {
+    trackingRef.current = false;
+    startXRef.current = null;
+    startYRef.current = null;
+    clearVisualFeedback();
+  }, [clearVisualFeedback]);
+
+  useEffect(() => {
+    reducedMotionRef.current = reducedMotion;
+    if (reducedMotion) clearGesture();
+  }, [clearGesture, reducedMotion]);
 
   useEffect(() => {
     // Sem listeners: evita um swipe invisível que navega de surpresa para quem
     // pediu redução de movimento (#3768).
-    if (disabled || reducedMotion) return;
+    if (disabled || reducedMotion) {
+      clearGesture();
+      return;
+    }
 
-    const cleanup = () => {
-      trackingRef.current = false;
-      startXRef.current = null;
-      startYRef.current = null;
-      setIsSwiping(false);
-      setDragProgress(0);
-    };
-
-    const onTouchStart = (e: TouchEvent) => {
-      if (e.touches.length !== 1 || shouldIgnoreSwipeBackTarget(e.target)) {
-        trackingRef.current = false;
+    const onTouchStart = (event: TouchEvent) => {
+      if (event.touches.length !== 1 || shouldIgnoreSwipeBackTarget(event.target)) {
+        clearGesture();
         return;
       }
-      const touch = e.touches[0];
-      if (touch.clientX <= edgeThreshold) {
-        startXRef.current = touch.clientX;
-        startYRef.current = touch.clientY;
-        trackingRef.current = true;
-        if (!reducedMotion) setIsSwiping(true);
-      } else {
-        trackingRef.current = false;
+
+      const touch = event.touches[0];
+      if (touch.clientX > edgeThreshold) {
+        clearGesture();
+        return;
+      }
+
+      startXRef.current = touch.clientX;
+      startYRef.current = touch.clientY;
+      trackingRef.current = true;
+
+      if (!reducedMotionRef.current && targetRef.current) {
+        targetRef.current.style.willChange = 'transform, opacity';
+        targetRef.current.style.transition = 'none';
       }
     };
 
-    const onTouchMove = (e: TouchEvent) => {
-      if (!trackingRef.current || startXRef.current === null || startYRef.current === null) return;
+    const onTouchMove = (event: TouchEvent) => {
+      if (
+        !trackingRef.current
+        || startXRef.current === null
+        || startYRef.current === null
+        || reducedMotionRef.current
+      ) return;
 
-      const touch = e.touches[0];
+      const touch = event.touches[0];
       const dx = touch.clientX - startXRef.current;
       const dy = Math.abs(touch.clientY - startYRef.current);
+      if (dx <= 0 || dx <= dy * 1.5) return;
 
-      if (dx > 0 && dx > dy * 1.5) {
-        setDragProgress(Math.min(1, dx / distanceThreshold));
-      }
+      pendingProgressRef.current = Math.min(1, dx / distanceThreshold);
+      if (animationFrameRef.current !== null) return;
+
+      animationFrameRef.current = window.requestAnimationFrame(() => {
+        animationFrameRef.current = null;
+        if (reducedMotionRef.current) {
+          clearVisualFeedback();
+          return;
+        }
+
+        const target = targetRef.current;
+        if (!target) return;
+        const progress = pendingProgressRef.current;
+        target.style.transform = `translateX(${progress * 80}px)`;
+        target.style.opacity = String(1 - progress * 0.15);
+      });
     };
 
-    const onTouchEnd = (e: TouchEvent) => {
-      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-        cleanup();
+    const onTouchEnd = (event: TouchEvent) => {
+      if (reducedMotionRef.current) {
+        clearGesture();
         return;
       }
       if (!trackingRef.current || startXRef.current === null || startYRef.current === null) {
-        cleanup();
+        clearGesture();
         return;
       }
-      const touch = e.changedTouches[0];
+
+      const touch = event.changedTouches[0];
       const dx = touch.clientX - startXRef.current;
       const dy = touch.clientY - startYRef.current;
-      cleanup();
+      clearGesture();
 
       if (dx > distanceThreshold && Math.abs(dx) > Math.abs(dy) * 1.5) {
         if (location.key === 'default' || window.history.length <= 1) {
@@ -141,23 +181,28 @@ export function useSwipeBack({
       }
     };
 
-    const onTouchCancel = () => {
-      cleanup();
-    };
-
     window.addEventListener('touchstart', onTouchStart, { passive: true });
     window.addEventListener('touchmove', onTouchMove, { passive: true });
     window.addEventListener('touchend', onTouchEnd, { passive: true });
-    window.addEventListener('touchcancel', onTouchCancel, { passive: true });
+    window.addEventListener('touchcancel', clearGesture, { passive: true });
 
     return () => {
       window.removeEventListener('touchstart', onTouchStart);
       window.removeEventListener('touchmove', onTouchMove);
       window.removeEventListener('touchend', onTouchEnd);
-      window.removeEventListener('touchcancel', onTouchCancel);
-      cleanup();
+      window.removeEventListener('touchcancel', clearGesture);
+      clearGesture();
     };
-  }, [disabled, edgeThreshold, distanceThreshold, navigate, location.key, location.pathname, reducedMotion]);
-
-  return { isSwiping, dragProgress: reducedMotion ? 0 : dragProgress };
+  }, [
+    clearGesture,
+    clearVisualFeedback,
+    disabled,
+    distanceThreshold,
+    edgeThreshold,
+    location.key,
+    location.pathname,
+    navigate,
+    reducedMotion,
+    targetRef,
+  ]);
 }

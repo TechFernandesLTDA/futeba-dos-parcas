@@ -9,6 +9,7 @@ const mockLocation = vi.hoisted(() => ({ pathname: '/', search: '?tab=0' }));
 const mockNotifications = vi.hoisted(() => ({ unreadCount: 0 }));
 const mockAuth = vi.hoisted(() => ({ role: 'PLAYER' as 'PLAYER' | 'FIELD_OWNER' | 'ADMIN' }));
 const mockTriggerHaptic = vi.hoisted(() => vi.fn());
+const mockPrefetchFocus = vi.hoisted(() => vi.fn());
 
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom');
@@ -60,9 +61,16 @@ vi.mock('../../contexts/AuthContext', () => ({
   }),
 }));
 
-vi.mock('../../hooks/useNotifications', () => ({
-  useNotifications: () => ({ unreadCount: 0 }),
-  useUnreadNotificationCount: () => ({ unreadCount: mockNotifications.unreadCount, loading: false, error: null }),
+vi.mock('../../contexts/UnreadNotificationContext', () => ({
+  useUnreadNotificationSummary: () => ({ unreadCount: mockNotifications.unreadCount, loading: false, error: null }),
+}));
+
+vi.mock('../../hooks/useResourcePreloading', () => ({
+  usePrefetchOnHover: () => ({
+    onMouseEnter: vi.fn(),
+    onMouseLeave: vi.fn(),
+    onFocus: mockPrefetchFocus,
+  }),
 }));
 
 vi.mock('../../hooks/useHapticFeedback', () => ({
@@ -104,6 +112,7 @@ describe('AppSidebar', () => {
     mockNotifications.unreadCount = 0;
     mockAuth.role = 'PLAYER';
     mockTriggerHaptic.mockClear();
+    mockPrefetchFocus.mockClear();
   });
 
   it('renderiza links de navegação', () => {
@@ -143,6 +152,15 @@ describe('AppSidebar', () => {
 
     expect(mockNavigate).toHaveBeenCalledWith('/?tab=1');
     expect(mockTriggerHaptic).toHaveBeenCalledWith('light');
+  });
+
+  it('expõe destinos de prefetch nas ações de navegação', () => {
+    renderWithTheme(<AppSidebar />);
+
+    const jogos = screen.getAllByRole('button', { name: 'Jogos' })[0];
+    expect(jogos).toHaveAttribute('data-prefetch-route', '/?tab=1');
+    jogos.focus();
+    expect(mockPrefetchFocus).toHaveBeenCalledTimes(1);
   });
 
   it.each([
