@@ -254,6 +254,17 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.54.20][web-1.54.20] - 2026-07-16
+
+#### Mudado
+- O shell móvel escreve o progresso do swipe diretamente no compositor, no máximo uma vez por frame, sem renderizar novamente toda a rota.
+- A troca de rota preserva o estado dos filhos e move o foco somente depois do fim real da animação, com conclusão imediata para movimento reduzido.
+- A contagem de notificações usa um único provider e evita listeners Firestore duplicados.
+- A navegação antecipa chunks por foco ou hover e aplica fallbacks específicos às rotas mais pesadas.
+- Propriedades CSS lógicas, posicionamento RTL e atalhos por plataforma completam os contratos de internacionalização.
+
+_Issues: #3748, #3750, #3752, #3753, #3754, #3755, #3762, #3764, #3765, #3766, #3767, #3768, #3774, #3777, #3781, #3784, #3785, #3788, #3791, #3793, #3796, #3798, #3801, #3803, #3807_
+
 ### [1.54.19][web-1.54.19] - 2026-07-16
 
 #### Mudado
@@ -2574,6 +2585,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.54.20]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.20.md
 [web-1.54.19]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.19.md
 [web-1.54.18]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.18.md
 [web-1.54.17]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.17.md
