@@ -40,6 +40,10 @@ vi.mock('react-i18next', () => ({
         'settings.defaultUserName': 'Usuário',
         'common.appName': 'Futeba',
         'a11y.mainNav': 'Navegação principal',
+        'shortcuts.openLabel': 'Abrir atalhos de teclado',
+        'shortcuts.searchKeyApple': '⌘K',
+        'shortcuts.searchKeyDefault': 'Ctrl+K',
+        'shortcuts.title': 'Atalhos de teclado',
       };
       if (key === 'nav.notificationsAria') {
         return `Notificações (${options?.count ?? 0} não lidas)`;
@@ -74,6 +78,7 @@ vi.mock('../common/AppLogo', () => ({
 }));
 
 import { appSidebarLayoutTokens, appSidebarStyles } from './AppSidebar.styles';
+import { getSearchShortcutTranslationKey } from '../../utils/platformShortcut';
 import { AppSidebar } from './AppSidebar';
 
 const theme = createTheme();
@@ -159,6 +164,13 @@ describe('AppSidebar', () => {
     expect(screen.queryByRole('menu')).not.toBeInTheDocument();
   });
 
+  it('seleciona a dica de busca adequada à plataforma', () => {
+    expect(getSearchShortcutTranslationKey('MacIntel')).toBe('shortcuts.searchKeyApple');
+    expect(getSearchShortcutTranslationKey('iPhone')).toBe('shortcuts.searchKeyApple');
+    expect(getSearchShortcutTranslationKey('Win32')).toBe('shortcuts.searchKeyDefault');
+    expect(getSearchShortcutTranslationKey('Linux x86_64')).toBe('shortcuts.searchKeyDefault');
+  });
+
   it('logo é um link para a home', () => {
     renderWithTheme(<AppSidebar />);
 
@@ -209,17 +221,78 @@ describe('AppSidebar', () => {
     expect(screen.queryByRole('menu')).not.toBeInTheDocument();
   });
 
-  it('mantém não lidas visíveis e anunciadas no tablet e desktop', async () => {
+  it('opera o menu Mais com setas, Home, End e Escape', async () => {
+    const user = userEvent.setup();
+    renderWithTheme(<AppSidebar />);
+
+    const moreButton = screen.getByRole('button', { name: 'Mais' });
+    await user.click(moreButton);
+
+    const menuItems = screen.getAllByRole('menuitem');
+    expect(menuItems[0]).toHaveFocus();
+    await user.keyboard('{ArrowDown}');
+    expect(menuItems[1]).toHaveFocus();
+    await user.keyboard('{End}');
+    expect(menuItems.at(-1)).toHaveFocus();
+    await user.keyboard('{Home}');
+    expect(menuItems[0]).toHaveFocus();
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+    expect(moreButton).toHaveFocus();
+  });
+
+  it('mantém não lidas visíveis e anunciadas em item próprio no tablet e desktop', async () => {
     mockNotifications.unreadCount = 3;
     const user = userEvent.setup();
     renderWithTheme(<AppSidebar />);
 
-    const moreButton = screen.getByRole('button', { name: 'Mais — Notificações (3 não lidas)' });
-    expect(within(moreButton).getByText('3')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Notificações (3 não lidas)' })).toBeInTheDocument();
+    const notificationButtons = screen.getAllByRole('button', { name: 'Notificações (3 não lidas)' });
+    expect(notificationButtons).toHaveLength(2);
+    expect(within(notificationButtons[0]).getByText('3')).toBeInTheDocument();
 
+    const moreButton = screen.getByRole('button', { name: 'Mais' });
+    expect(within(moreButton).queryByText('3')).not.toBeInTheDocument();
     await user.click(moreButton);
-    expect(screen.getByRole('menuitem', { name: 'Notificações (3 não lidas)' })).toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: /Notificações/ })).not.toBeInTheDocument();
+  });
+
+  it('navega diretamente pelas Notificações do rail e expõe o estado ativo', async () => {
+    mockLocation.pathname = '/notifications';
+    mockLocation.search = '';
+    const user = userEvent.setup();
+    renderWithTheme(<AppSidebar />);
+
+    const notificationButtons = screen.getAllByRole('button', { name: 'Notificações' });
+    expect(notificationButtons[0]).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole('button', { name: 'Mais' })).not.toHaveAttribute('aria-current');
+
+    await user.click(notificationButtons[0]);
+    expect(mockNavigate).toHaveBeenCalledWith('/notifications');
+  });
+
+  it('abre os atalhos pelo menu Mais e fecha o menu', async () => {
+    const user = userEvent.setup();
+    const shortcutsListener = vi.fn();
+    window.addEventListener('open-shortcuts', shortcutsListener);
+    renderWithTheme(<AppSidebar />);
+
+    await user.click(screen.getByRole('button', { name: 'Mais' }));
+    await user.click(screen.getByRole('menuitem', { name: 'Abrir atalhos de teclado' }));
+
+    expect(shortcutsListener).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+    window.removeEventListener('open-shortcuts', shortcutsListener);
+  });
+
+  it('expõe o menu com limite de altura e rolagem para viewports baixos', async () => {
+    const user = userEvent.setup();
+    renderWithTheme(<AppSidebar />);
+
+    await user.click(screen.getByRole('button', { name: 'Mais' }));
+
+    const menu = screen.getByRole('menu');
+    const paper = menu.parentElement;
+    expect(paper).toHaveStyle({ maxHeight: 'min(70vh, 480px)', overflowY: 'auto' });
   });
 
   it('renderiza drawer expanded em desktop (lg+)', () => {

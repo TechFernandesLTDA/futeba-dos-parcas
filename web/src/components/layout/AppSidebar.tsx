@@ -16,7 +16,8 @@ import {
   Divider,
   Avatar,
   Chip,
-  Popover,
+  Menu,
+  MenuItem,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -32,6 +33,7 @@ import { useUnreadNotificationCount } from '../../hooks/useNotifications';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
 import { AppLogo } from '../common/AppLogo';
 import { avatarSizes, iconSizes } from '../../theme/iconSizes';
+import { getSearchShortcutTranslationKey } from '../../utils/platformShortcut';
 import { appSidebarLayoutTokens, appSidebarStyles } from './AppSidebar.styles';
 import {
   NAV_ITEMS,
@@ -49,6 +51,10 @@ const pulse = keyframes`
   100% { transform: scale(1); }
 `;
 
+const NOTIFICATIONS_LABEL_KEY = 'nav.notifications';
+const notificationNavItem = MORE_NAV_ITEMS.find((item) => item.labelKey === NOTIFICATIONS_LABEL_KEY);
+const railMoreNavItems = MORE_NAV_ITEMS.filter((item) => item.labelKey !== NOTIFICATIONS_LABEL_KEY);
+
 export function AppSidebar() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -63,7 +69,12 @@ export function AppSidebar() {
     () => getActiveNavIndex(location.pathname, location.search),
     [location.pathname, location.search],
   );
-  const moreActive = MORE_NAV_ITEMS.some((item) => NAV_ITEMS.indexOf(item) === activeIndex);
+  const moreActive = railMoreNavItems.some((item) => NAV_ITEMS.indexOf(item) === activeIndex);
+  const notificationsActive = notificationNavItem
+    ? activeIndex === NAV_ITEMS.indexOf(notificationNavItem)
+    : false;
+  const searchShortcut = t(getSearchShortcutTranslationKey());
+  const moreButtonId = 'app-sidebar-more-button';
   const morePopoverId = 'app-sidebar-more-menu';
   const moreOpen = moreAnchor !== null;
 
@@ -72,7 +83,7 @@ export function AppSidebar() {
   return (
     <>
       {/* ════════════════════════════════════════════════════════════
-          MD RAIL (900–1199px) — ícones + captions, "Mais" em Popover
+          MD RAIL (900–1199px) — ícones + captions, "Mais" em Menu
           ════════════════════════════════════════════════════════════ */}
       <Drawer
         variant="permanent"
@@ -184,24 +195,68 @@ export function AppSidebar() {
               </Tooltip>
             );
           })}
-          {/* #3728: "Mais" no rail md — abre Popover com items secundários */}
+          {notificationNavItem && (
+            <Tooltip
+              title={unreadCount > 0
+                ? t('nav.notificationsAria', { count: unreadCount })
+                : t(notificationNavItem.labelKey)}
+              placement="right"
+            >
+              <ListItemButton
+                selected={notificationsActive}
+                aria-current={notificationsActive ? 'page' : undefined}
+                aria-label={unreadCount > 0
+                  ? t('nav.notificationsAria', { count: unreadCount })
+                  : t(notificationNavItem.labelKey)}
+                onClick={() => navigate(resolveNavItemPath(notificationNavItem, user?.role))}
+                sx={appSidebarStyles.railNavigationButton}
+              >
+                <ListItemIcon
+                  sx={{
+                    minWidth: 0,
+                    justifyContent: 'center',
+                    mb: 0.5,
+                    animation: unreadCount > 0 && !reducedMotion
+                      ? `${pulse} 2s ease-in-out infinite`
+                      : undefined,
+                  }}
+                >
+                  <Badge badgeContent={unreadCount} color="error" max={99} invisible={unreadCount === 0}>
+                    {React.cloneElement(notificationNavItem.icon, {
+                      'aria-hidden': true,
+                      sx: { fontSize: iconSizes.lg },
+                    })}
+                  </Badge>
+                </ListItemIcon>
+                <Typography
+                  variant="caption"
+                  noWrap
+                  sx={{
+                    maxWidth: '100%',
+                    fontWeight: notificationsActive ? 600 : 400,
+                    color: notificationsActive ? 'primary.main' : 'text.secondary',
+                  }}
+                >
+                  {t(notificationNavItem.labelKey)}
+                </Typography>
+              </ListItemButton>
+            </Tooltip>
+          )}
+          {/* #3728: "Mais" no rail md — abre Menu com itens secundários. */}
           <Tooltip title={t('nav.sectionMore')} placement="right">
             <ListItemButton
+              id={moreButtonId}
               onClick={(e) => setMoreAnchor(e.currentTarget)}
               selected={moreOpen || moreActive}
               aria-current={moreActive ? 'page' : undefined}
               aria-haspopup="menu"
               aria-expanded={moreOpen}
               aria-controls={moreOpen ? morePopoverId : undefined}
-              aria-label={unreadCount > 0
-                ? `${t('nav.sectionMore')} — ${t('nav.notificationsAria', { count: unreadCount })}`
-                : t('nav.sectionMore')}
+              aria-label={t('nav.sectionMore')}
               sx={appSidebarStyles.railNavigationButton}
             >
               <ListItemIcon sx={{ minWidth: 0, justifyContent: 'center', mb: 0.5 }}>
-                <Badge badgeContent={unreadCount} color="error" max={99} invisible={unreadCount === 0}>
-                  <MoreHoriz sx={{ fontSize: iconSizes.lg }} aria-hidden />
-                </Badge>
+                <MoreHoriz sx={{ fontSize: iconSizes.lg }} aria-hidden />
               </ListItemIcon>
               <Typography variant="caption" color="text.secondary" fontSize="0.65rem" noWrap>
                 {t('nav.sectionMore')}
@@ -225,55 +280,74 @@ export function AppSidebar() {
         </Box>
       </Drawer>
 
-      {/* Popover "Mais" do rail md */}
-      <Popover
-        id={morePopoverId}
+      {/* Menu "Mais" do rail md — o Menu MUI fornece o contrato de teclado ARIA. */}
+      <Menu
         open={moreOpen}
         anchorEl={moreAnchor}
         onClose={() => setMoreAnchor(null)}
         anchorOrigin={{ vertical: 'center', horizontal: 'right' }}
         transformOrigin={{ vertical: 'center', horizontal: 'left' }}
+        MenuListProps={{
+          id: morePopoverId,
+          'aria-labelledby': moreButtonId,
+          sx: { py: 0.5 },
+        }}
+        PaperProps={{
+          sx: {
+            minWidth: 200,
+            maxHeight: 'min(70vh, 480px)',
+            overflowY: 'auto',
+          },
+        }}
       >
-        <List role="menu" sx={{ minWidth: 200, py: 0.5 }}>
-          {MORE_NAV_ITEMS.map((item) => {
-            const realIdx = NAV_ITEMS.indexOf(item);
-            const active = activeIndex === realIdx;
-            const isNotifItem = item.labelKey === 'nav.notifications';
-            const icon = isNotifItem ? (
-              <Badge badgeContent={unreadCount} color="error" max={99} invisible={unreadCount === 0}>
-                {item.icon}
-              </Badge>
-            ) : item.icon;
-            return (
-              <ListItemButton
-                key={item.labelKey}
-                role="menuitem"
-                selected={active}
-                aria-current={active ? 'page' : undefined}
-                aria-label={isNotifItem && unreadCount > 0
-                  ? t('nav.notificationsAria', { count: unreadCount })
-                  : undefined}
-                onClick={() => {
-                  navigate(resolveNavItemPath(item, user?.role));
-                  setMoreAnchor(null);
-                }}
-                sx={{
-                  '&.Mui-selected': {
-                    bgcolor: 'action.selected',
-                    '& .MuiListItemIcon-root': { color: 'primary.main' },
-                    '& .MuiListItemText-primary': { color: 'primary.main', fontWeight: 600 },
-                  },
-                }}
-              >
-                <ListItemIcon sx={{ color: 'text.secondary', minWidth: 36 }}>
-                  {isNotifItem ? icon : React.cloneElement(icon, { 'aria-hidden': true })}
-                </ListItemIcon>
-                <ListItemText primary={t(item.labelKey)} />
-              </ListItemButton>
-            );
-          })}
-        </List>
-      </Popover>
+        {railMoreNavItems.map((item) => {
+          const realIdx = NAV_ITEMS.indexOf(item);
+          const active = activeIndex === realIdx;
+          return (
+            <MenuItem
+              key={item.labelKey}
+              selected={active}
+              aria-current={active ? 'page' : undefined}
+              onClick={() => {
+                navigate(resolveNavItemPath(item, user?.role));
+                setMoreAnchor(null);
+              }}
+              sx={{
+                '&.Mui-selected': {
+                  bgcolor: 'action.selected',
+                  '& .MuiListItemIcon-root': { color: 'primary.main' },
+                  '& .MuiListItemText-primary': { color: 'primary.main', fontWeight: 600 },
+                },
+              }}
+            >
+              <ListItemIcon sx={{ color: 'text.secondary', minWidth: 36 }}>
+                {React.cloneElement(item.icon, { 'aria-hidden': true })}
+              </ListItemIcon>
+              <ListItemText primary={t(item.labelKey)} />
+            </MenuItem>
+          );
+        })}
+        <Divider />
+        <MenuItem
+          aria-label={t('shortcuts.openLabel')}
+          onClick={() => {
+            setMoreAnchor(null);
+            window.dispatchEvent(new Event('open-shortcuts'));
+          }}
+        >
+          <ListItemIcon sx={{ color: 'text.secondary', minWidth: 36 }}>
+            <KeyboardIcon aria-hidden />
+          </ListItemIcon>
+          <ListItemText primary={t('shortcuts.title')} />
+          <Chip
+            label="?"
+            size="small"
+            variant="outlined"
+            aria-hidden="true"
+            sx={{ ml: 1 }}
+          />
+        </MenuItem>
+      </Menu>
 
       {/* ════════════════════════════════════════════════════════════
           LG DRAWER (1200px+) — expandido com labels, seções Primária/Mais
@@ -360,7 +434,7 @@ export function AppSidebar() {
             >
               {t('nav.search')}...
             </Typography>
-            <Chip label="Ctrl+K" size="small" variant="outlined" sx={{ height: 24, fontSize: '0.75rem', ml: 1 }} />
+            <Chip label={searchShortcut} size="small" variant="outlined" sx={{ height: 24, fontSize: '0.75rem', ml: 1 }} />
           </Button>
         </Box>
         <List sx={{ py: 0.5, flex: 1, minHeight: 0, overflowY: 'auto' }}>

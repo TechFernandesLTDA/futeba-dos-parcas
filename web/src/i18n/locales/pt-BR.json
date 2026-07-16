@@ -3013,6 +3013,8 @@
     "createGroup": "Criar grupo",
     "globalSearch": "Busca global / ações rápidas",
     "openLabel": "Abrir atalhos de teclado",
+    "searchKeyApple": "⌘K",
+    "searchKeyDefault": "Ctrl+K",
     "settings": "Configurações",
     "showShortcuts": "Mostrar este diálogo de atalhos",
     "tip": "Dica: pressione ? a qualquer momento para abrir este diálogo.",
