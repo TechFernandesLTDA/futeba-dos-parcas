@@ -1933,6 +1933,7 @@ _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 - Regras negam acesso direto do cliente às coleções raiz privadas.
 - Sequências, tombstones, preconditions e barreira LGPD tornam as mutações resistentes a concorrência.
 - Senders diretos, em lote e multicast usam resolução canônica fail-closed antes do fallback legado.
+- Tokens removidos, rotacionados ou expirados mantêm apenas um hash de revogação sem credencial nem usuário, impedindo reativação por campos legados.
 - Falhas da consulta canônica geram alerta operacional sem registrar tokens ou IDs sensíveis.
 
 _Issues: #3741_

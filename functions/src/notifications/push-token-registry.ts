@@ -36,8 +36,11 @@ interface PushTokenRecord {
   userId: string;
   token: string;
   deviceIdHash: string;
+  state?: "active" | "rotated" | "unregistered" | "invalid" | "expired";
   expiresAt?: Timestamp;
 }
+
+type PushTokenOwner = string | null;
 
 export interface PushTokenMutationResult {
   applied: boolean;
@@ -216,7 +219,13 @@ export async function registerPushTokenForUser(
         ((previousSnapshot.get("sequence") as number | undefined) ?? 0) <
           sequence
       ) {
-        transaction.delete(previousRef);
+        transaction.set(previousRef, {
+          tokenHash: previousTokenHash,
+          deviceIdHash,
+          sequence,
+          state: "rotated",
+          updatedAt: FieldValue.serverTimestamp(),
+        });
       }
     }
 
@@ -241,6 +250,7 @@ export async function registerPushTokenForUser(
       deviceIdHash,
       platform,
       sequence,
+      state: "active",
       expiresAt: activeExpiry,
       updatedAt: FieldValue.serverTimestamp(),
     });
@@ -316,7 +326,13 @@ export async function unregisterPushTokenForUser(
         snapshot.get("deviceIdHash") === deviceIdHash &&
         ((snapshot.get("sequence") as number | undefined) ?? 0) <= sequence
       ) {
-        transaction.delete(tokenRefs[index]);
+        transaction.set(tokenRefs[index], {
+          tokenHash: tokenRefs[index].id,
+          deviceIdHash,
+          sequence,
+          state: "unregistered",
+          updatedAt: FieldValue.serverTimestamp(),
+        });
       }
     });
 
@@ -363,8 +379,8 @@ export async function getRegisteredPushTokens(
  */
 export async function resolveRegisteredPushTokenOwners(
   tokens: string[]
-): Promise<Map<string, string>> {
-  const result = new Map<string, string>();
+): Promise<Map<string, PushTokenOwner>> {
+  const result = new Map<string, PushTokenOwner>();
   const uniqueTokens = [...new Set(tokens.filter(Boolean))];
   const firestore = db();
   for (const tokenChunk of chunked(uniqueTokens, 100)) {
@@ -376,7 +392,15 @@ export async function resolveRegisteredPushTokenOwners(
       await Promise.all(references.map((reference) => reference.get()));
     snapshots.forEach((snapshot, index) => {
       const data = snapshot.data() as Partial<PushTokenRecord> | undefined;
-      if (!snapshot.exists || isExpired(data?.expiresAt)) return;
+      if (!snapshot.exists) return;
+      if (data?.state && data.state !== "active") {
+        result.set(tokenChunk[index], null);
+        return;
+      }
+      if (isExpired(data?.expiresAt)) {
+        result.set(tokenChunk[index], null);
+        return;
+      }
       const owner = data?.userId;
       if (owner) result.set(tokenChunk[index], owner);
     });
@@ -402,8 +426,8 @@ export async function filterPushTokensByCanonicalOwner(
       [...tokenOwners.keys()]
     );
     return new Map([...tokenOwners].filter(([token, expectedOwner]) => {
-      const canonicalOwner = canonical.get(token);
-      return canonicalOwner == null || canonicalOwner === expectedOwner;
+      if (!canonical.has(token)) return true;
+      return canonical.get(token) === expectedOwner;
     }));
   } catch (error) {
     logger.error(
@@ -453,7 +477,13 @@ export async function removeRegisteredPushToken(
         });
       }
     }
-    transaction.delete(tokenRef);
+    transaction.set(tokenRef, {
+      tokenHash,
+      deviceIdHash: deviceIdHash ?? null,
+      sequence: 0,
+      state: "invalid",
+      updatedAt: FieldValue.serverTimestamp(),
+    });
   });
 }
 
@@ -472,9 +502,21 @@ export async function cleanupExpiredPushTokenRecords(): Promise<number> {
         .get();
       if (snapshot.empty) break;
       const batch = firestore.batch();
-      snapshot.docs.forEach((document) => batch.delete(document.ref, {
-        lastUpdateTime: document.updateTime,
-      }));
+      snapshot.docs.forEach((document) => {
+        const precondition = {lastUpdateTime: document.updateTime};
+        if (collection === TOKENS_COLLECTION) {
+          batch.update(document.ref, {
+            userId: FieldValue.delete(),
+            token: FieldValue.delete(),
+            platform: FieldValue.delete(),
+            expiresAt: FieldValue.delete(),
+            state: "expired",
+            updatedAt: FieldValue.serverTimestamp(),
+          }, precondition);
+        } else {
+          batch.delete(document.ref, precondition);
+        }
+      });
       try {
         await batch.commit();
       } catch (error) {

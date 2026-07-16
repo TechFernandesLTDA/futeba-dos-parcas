@@ -97,10 +97,30 @@ const firestore = {
     new Snapshot(ref, records.get(ref.path))
   ),
   batch: () => {
-    const deletions: Array<{ref: DocumentRef; precondition: {lastUpdateTime: unknown}}> = [];
+    const writes: Array<{
+      ref: DocumentRef;
+      precondition: {lastUpdateTime: unknown};
+      update?: Record<string, unknown>;
+    }> = [];
     return {
       delete: (ref: DocumentRef, precondition: {lastUpdateTime: unknown}) => {
-        deletions.push({ref, precondition});
+        writes.push({ref, precondition});
+        if (refreshOnNextDeletePath === ref.path) {
+          const current = records.get(ref.path) ?? {};
+          records.set(ref.path, {
+            ...current,
+            expiresAt: {toMillis: () => Date.now() + 60_000},
+            updateTime: {version: "new"},
+          });
+          refreshOnNextDeletePath = undefined;
+        }
+      },
+      update: (
+        ref: DocumentRef,
+        update: Record<string, unknown>,
+        precondition: {lastUpdateTime: unknown}
+      ) => {
+        writes.push({ref, update, precondition});
         if (refreshOnNextDeletePath === ref.path) {
           const current = records.get(ref.path) ?? {};
           records.set(ref.path, {
@@ -112,13 +132,19 @@ const firestore = {
         }
       },
       commit: async () => {
-        for (const deletion of deletions) {
-          if (records.get(deletion.ref.path)?.updateTime !==
-            deletion.precondition.lastUpdateTime) {
+        for (const write of writes) {
+          if (records.get(write.ref.path)?.updateTime !==
+            write.precondition.lastUpdateTime) {
             throw Object.assign(new Error("refreshed"), {code: 9});
           }
         }
-        deletions.forEach(({ref}) => records.delete(ref.path));
+        writes.forEach(({ref, update}) => {
+          if (!update) {
+            records.delete(ref.path);
+            return;
+          }
+          records.set(ref.path, {...records.get(ref.path), ...update});
+        });
       },
     };
   },
@@ -160,7 +186,8 @@ describe("private push token registry", () => {
       sequence: 2,
     });
 
-    expect(records.has(`push_tokens/${hashPushToken("token-old")}`)).toBe(false);
+    expect(records.get(`push_tokens/${hashPushToken("token-old")}`))
+      .toMatchObject({state: "rotated"});
     const grouped = await getRegisteredPushTokens(["user-1"]);
     expect(grouped.get("user-1")).toEqual(["token-new"]);
   });
@@ -200,6 +227,9 @@ describe("private push token registry", () => {
     });
 
     expect(await getRegisteredPushTokens(["user-1"])).toEqual(new Map());
+    await expect(filterPushTokensByCanonicalOwner(new Map([
+      ["token-a", "user-1"],
+    ]))).resolves.toEqual(new Map());
   });
 
   it("lets logout win when Swift and KMP use the same sequence", async () => {
@@ -370,5 +400,23 @@ describe("private push token registry", () => {
 
     await expect(cleanupExpiredPushTokenRecords()).resolves.toBe(0);
     expect(records.has(path)).toBe(true);
+  });
+
+  it("keeps an expired canonical token revoked from legacy fallback", async () => {
+    const token = "expired-token";
+    const path = `push_tokens/${hashPushToken(token)}`;
+    records.set(path, {
+      userId: "user-a",
+      token,
+      state: "active",
+      expiresAt: {toMillis: () => Date.now() - 60_000},
+      updateTime: {version: "old"},
+    });
+
+    await expect(cleanupExpiredPushTokenRecords()).resolves.toBe(1);
+    await expect(filterPushTokensByCanonicalOwner(new Map([
+      [token, "user-a"],
+    ]))).resolves.toEqual(new Map());
+    expect(records.get(path)?.state).toBe("expired");
   });
 });
