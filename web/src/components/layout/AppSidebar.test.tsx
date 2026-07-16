@@ -265,7 +265,10 @@ describe('AppSidebar', () => {
   it('mantém o texto da busca desktop em uma linha com truncamento', () => {
     renderWithTheme(<AppSidebar />);
 
-    expect(screen.getByText('Buscar...')).toBeInTheDocument();
+    const searchLabel = screen.getByText('Buscar...');
+    expect(searchLabel).toBeInTheDocument();
+    expect(searchLabel.tagName).toBe('SPAN');
+    expect(searchLabel.closest('button')).toBeInTheDocument();
     expect(appSidebarStyles.desktopSearchLabel).toMatchObject({
       minWidth: 0,
       overflow: 'hidden',

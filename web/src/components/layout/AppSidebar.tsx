@@ -354,6 +354,7 @@ export function AppSidebar() {
             }}
           >
             <Typography
+              component="span"
               noWrap
               sx={appSidebarStyles.desktopSearchLabel}
             >
