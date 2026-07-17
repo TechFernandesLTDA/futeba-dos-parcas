@@ -93,6 +93,7 @@ export const onJoinRequestApproved = onDocumentUpdated(
     // Verificar se ja eh membro fora da transação
     // (idempotencia: early exit barato)
     const memberRef = db().doc(`groups/${groupId}/members/${userId}`);
+    const blockedRef = db().doc(`groups/${groupId}/blocked_players/${userId}`);
     const memberSnap = await memberRef.get();
     if (memberSnap.exists) {
       logger.info("join_request already member, skipping member creation", {
@@ -120,32 +121,10 @@ export const onJoinRequestApproved = onDocumentUpdated(
     const groupMeta = groupSnap.data() as Record<string, unknown>;
     const groupName = (groupMeta.name as string) ?? "";
     const groupPhoto = (groupMeta.photo_url as string | null) ?? null;
-
-    // FIX #2798: defesa em profundidade — re-valida que o aprovador é
-    // owner ou admin do grupo. As rules já bloqueiam no cliente, mas esta
-    // verificação server-side impede que race conditions ou bypass de rules
-    // resultem em membros criados por não-autorizados.
     const approverId = after.responded_by;
-    const isOwner = groupMeta.owner_id === approverId;
-    if (!isOwner) {
-      const approverMemberSnap = await db()
-        .doc(`groups/${groupId}/members/${approverId}`)
-        .get();
-      const approverRole = approverMemberSnap.exists ?
-        (approverMemberSnap.data() as Record<string, unknown>).role :
-        null;
-      const isAdmin =
-        approverRole === "ADMIN" || approverRole === "OWNER";
-      if (!isAdmin) {
-        logger.error(
-          "join_request aprovado por não-owner/admin — bloqueado",
-          {groupId, userId, approverId, approverRole}
-        );
-        return;
-      }
-    }
+    const approverMemberRef = db().doc(`groups/${groupId}/members/${approverId}`);
 
-    await db().runTransaction(async (tx) => {
+    const membershipCreated = await db().runTransaction(async (tx) => {
       // FIX #1399: checar existência do member DENTRO da transação para
       // garantir idempotência sob entrega duplicada (Firestore triggers são
       // at-least-once). O early-exit fora da transação é otimização barata,
@@ -157,17 +136,50 @@ export const onJoinRequestApproved = onDocumentUpdated(
           groupId,
           userId,
         });
-        return;
+        return false;
       }
 
       // Re-ler group DENTRO da transação — garante member_count consistente
       // mesmo com aprovações concorrentes de admins diferentes
       const freshGroupSnap = await tx.get(groupRef);
-      const freshGroup = freshGroupSnap.data() as
-        Record<string, unknown> | undefined;
+      if (!freshGroupSnap.exists) {
+        logger.warn("join_request group missing inside transaction", {
+          groupId,
+          userId,
+        });
+        return false;
+      }
+      const freshGroup = freshGroupSnap.data() as Record<string, unknown>;
+
+      const txBlockedSnap = await tx.get(blockedRef);
+      if (txBlockedSnap.exists) {
+        logger.warn("join_request approved for blocked user — aborting", {
+          groupId,
+          userId,
+          approverId,
+        });
+        return false;
+      }
+
+      const isOwner = freshGroup.owner_id === approverId;
+      if (!isOwner) {
+        const approverMemberSnap = await tx.get(approverMemberRef);
+        const approverRole = approverMemberSnap.exists ?
+          (approverMemberSnap.data() as Record<string, unknown>).role :
+          null;
+        const isAdmin =
+          approverRole === "ADMIN" || approverRole === "OWNER";
+        if (!isAdmin) {
+          logger.error(
+            "join_request aprovado por não-owner/admin — bloqueado",
+            {groupId, userId, approverId, approverRole}
+          );
+          return false;
+        }
+      }
 
       const currentMemberCount =
-        typeof freshGroup?.member_count === "number" ?
+        typeof freshGroup.member_count === "number" ?
           freshGroup.member_count : 0;
 
       tx.set(memberRef, {
@@ -197,7 +209,13 @@ export const onJoinRequestApproved = onDocumentUpdated(
         member_count: currentMemberCount + 1,
         joined_at: FieldValue.serverTimestamp(),
       });
+
+      return true;
     });
+
+    if (!membershipCreated) {
+      return;
+    }
 
     logger.info("join_request approved and member created", {
       groupId,

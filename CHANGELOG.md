@@ -254,6 +254,16 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.54.23][web-1.54.23] - 2026-07-17
+
+#### Mudado
+- O shell mobile ganhou um mecanismo explícito para telas que já possuem cabeçalho próprio.
+- O anúncio de rotas cobre `/guide` e deep links `/checkin/:gameId/:token`.
+- `EvolutionScreen` usa a API Grid2 compatível com a versão atual do MUI.
+- Build, lint, testes focados e a suíte completa web foram validados.
+
+_Issues: #3818, #3819, #3820_
+
 ### [1.54.22][web-1.54.22] - 2026-07-17
 
 #### Adicionado
@@ -1944,6 +1954,27 @@ _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
 
+### [1.10.3][functions-1.10.3] - 2026-07-17
+
+#### Mudado
+- Build, lint, testes unitários de Functions e suítes completas de regras foram validados.
+
+#### Corrigido
+- Recorrência tolera campos ausentes sem retries infinitos.
+- Liga usa snapshots transacionais e clamp anti-cheat.
+- Auto-close cobre `dateTime`, `date_time` e `date`.
+- Datas legadas combinam dia e horário em São Paulo antes de aplicar a tolerância de 48 horas.
+- Deduplicação de notificações concluídas mantém evidência por sete dias.
+- Processamento XP tolera usuários ausentes e respeita o orçamento de writes.
+- Carrasco usa placar canônico e histórico limitado, ordenado e testado.
+- Liga revalida o estado atual do jogo dentro da transação antes de aplicar standings.
+
+#### Segurança
+- Regras limitam estatísticas de confirmações, tornam flags de MVP exclusivas do servidor e restringem grupos oficiais a administradores.
+- Mirrors de memberships só aceitam dados coerentes com a fonte autoritativa; uploads legados continuam bloqueados para grupos inativos.
+
+_Issues: #3816, #3817, #3823, #3824, #3825, #3826, #3827, #3828, #3829, #3830, #3831, #3832, #3833, #3834, #3835, #3836_
+
 ### [1.10.2][functions-1.10.2] - 2026-07-16
 
 #### Adicionado
@@ -2637,6 +2668,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.54.23]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.23.md
 [web-1.54.22]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.22.md
 [web-1.54.21]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.21.md
 [web-1.54.20]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.20.md
@@ -2801,6 +2833,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [ios-1.6.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.2.md
 [ios-1.6.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.1.md
 [ios-1.6.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.0.md
+[functions-1.10.3]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.10.3.md
 [functions-1.10.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.10.2.md
 [functions-1.10.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.10.1.md
 [functions-1.10.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.10.0.md

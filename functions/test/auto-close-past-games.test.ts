@@ -345,4 +345,262 @@ describe("auto-close past games helpers", () => {
       .not.toHaveProperty("score_event_consistent");
     expect(hasUndefined(updatePayload)).toBe(false);
   });
+
+  it("fecha jogo legado encontrado apenas pelo campo date", async () => {
+    const legacyGameRef = {
+      path: "games/game-legacy-date",
+    } as FirebaseFirestore.DocumentReference;
+    const legacyGameDoc = {
+      id: "game-legacy-date",
+      ref: legacyGameRef,
+      data: () => ({
+        status: "SCHEDULED",
+        min_players: 6,
+        date: "2026-06-18",
+      }),
+    };
+    const gamesQuery = makeQueryMock({
+      size: 0,
+      docs: [],
+    });
+    gamesQuery.get
+      .mockResolvedValueOnce({
+        size: 0,
+        docs: [],
+      })
+      .mockResolvedValueOnce({
+        size: 1,
+        docs: [legacyGameDoc],
+      });
+    const confirmationsSnaps = [
+      {size: 0, docs: []},
+      {size: 0, docs: []},
+    ];
+    const eventsQuery = makeQueryMock({size: 0, docs: []});
+    const liveScoresCollection = {
+      doc: jest.fn().mockReturnValue({
+        get: jest.fn().mockResolvedValue({
+          exists: false,
+          data: () => undefined,
+        }),
+      }),
+    };
+    const tx = {
+      get: jest.fn().mockResolvedValue({
+        exists: true,
+        data: () => ({status: "SCHEDULED"}),
+      }),
+      update: jest.fn(),
+    };
+
+    mockDb.collection.mockImplementation((collectionName: string) => {
+      if (collectionName === "games") return gamesQuery;
+      if (collectionName === "confirmations") {
+        return makeQueryMock(confirmationsSnaps.shift() ?? {
+          size: 0,
+          docs: [],
+        });
+      }
+      if (collectionName === "game_events") return eventsQuery;
+      if (collectionName === "live_scores") return liveScoresCollection;
+      throw new Error(`Unexpected collection: ${collectionName}`);
+    });
+    mockDb.runTransaction.mockImplementationOnce(
+      async (fn: (txArg: typeof tx) => Promise<boolean>) => fn(tx)
+    );
+
+    await expect(closePastGames(new Date("2026-06-21T12:00:00.000Z")))
+      .resolves.toEqual({
+        inspected: 1,
+        finished: 0,
+        cancelled: 1,
+      });
+
+    expect(gamesQuery.orderBy).toHaveBeenCalledWith("date", "asc");
+    expect(tx.update).toHaveBeenCalledWith(
+      legacyGameRef,
+      expect.objectContaining({
+        status: "CANCELLED",
+        auto_cancelled: true,
+      })
+    );
+  });
+
+  it("respeita hora BRT em jogo legado date+time dentro da tolerancia", async () => {
+    const legacyGameRef = {
+      path: "games/game-legacy-date-time-brt",
+    } as FirebaseFirestore.DocumentReference;
+    const legacyGameDoc = {
+      id: "game-legacy-date-time-brt",
+      ref: legacyGameRef,
+      data: () => ({
+        status: "SCHEDULED",
+        min_players: 6,
+        date: "2026-06-18",
+        time: "23:30",
+      }),
+    };
+    const gamesQuery = makeQueryMock({size: 0, docs: []});
+    gamesQuery.get
+      .mockResolvedValueOnce({size: 0, docs: []})
+      .mockResolvedValueOnce({size: 0, docs: []})
+      .mockResolvedValueOnce({size: 1, docs: [legacyGameDoc]});
+
+    mockDb.collection.mockImplementation((collectionName: string) => {
+      if (collectionName === "games") return gamesQuery;
+      throw new Error(`Unexpected collection: ${collectionName}`);
+    });
+
+    await expect(closePastGames(new Date("2026-06-21T01:00:00.000Z")))
+      .resolves.toEqual({
+        inspected: 0,
+        finished: 0,
+        cancelled: 0,
+      });
+
+    expect(mockDb.runTransaction).not.toHaveBeenCalled();
+  });
+
+  it("fecha jogo legado encontrado apenas pelo campo date_time", async () => {
+    const legacyGameRef = {
+      path: "games/game-legacy-date-time",
+    } as FirebaseFirestore.DocumentReference;
+    const legacyGameDoc = {
+      id: "game-legacy-date-time",
+      ref: legacyGameRef,
+      data: () => ({
+        status: "SCHEDULED",
+        min_players: 6,
+        date_time: new Date("2026-06-18T20:00:00.000Z"),
+      }),
+    };
+    const gamesQuery = makeQueryMock({size: 0, docs: []});
+    gamesQuery.get
+      .mockResolvedValueOnce({size: 0, docs: []})
+      .mockResolvedValueOnce({size: 1, docs: [legacyGameDoc]})
+      .mockResolvedValueOnce({size: 0, docs: []});
+    const confirmationsSnaps = [
+      {size: 0, docs: []},
+      {size: 0, docs: []},
+    ];
+    const eventsQuery = makeQueryMock({size: 0, docs: []});
+    const liveScoresCollection = {
+      doc: jest.fn().mockReturnValue({
+        get: jest.fn().mockResolvedValue({
+          exists: false,
+          data: () => undefined,
+        }),
+      }),
+    };
+    const tx = {
+      get: jest.fn().mockResolvedValue({
+        exists: true,
+        data: () => ({status: "SCHEDULED"}),
+      }),
+      update: jest.fn(),
+    };
+
+    mockDb.collection.mockImplementation((collectionName: string) => {
+      if (collectionName === "games") return gamesQuery;
+      if (collectionName === "confirmations") {
+        return makeQueryMock(confirmationsSnaps.shift() ?? {
+          size: 0,
+          docs: [],
+        });
+      }
+      if (collectionName === "game_events") return eventsQuery;
+      if (collectionName === "live_scores") return liveScoresCollection;
+      throw new Error(`Unexpected collection: ${collectionName}`);
+    });
+    mockDb.runTransaction.mockImplementationOnce(
+      async (fn: (txArg: typeof tx) => Promise<boolean>) => fn(tx)
+    );
+
+    await expect(closePastGames(new Date("2026-06-21T12:00:00.000Z")))
+      .resolves.toEqual({
+        inspected: 1,
+        finished: 0,
+        cancelled: 1,
+      });
+
+    expect(gamesQuery.orderBy).toHaveBeenCalledWith("date_time", "asc");
+    expect(tx.update).toHaveBeenCalledWith(
+      legacyGameRef,
+      expect.objectContaining({
+        status: "CANCELLED",
+        auto_cancelled: true,
+      })
+    );
+  });
+
+  it("interpreta ISO legado em date sem antecipar como date-only", async () => {
+    const legacyGameRef = {
+      path: "games/game-legacy-date-iso",
+    } as FirebaseFirestore.DocumentReference;
+    const legacyGameDoc = {
+      id: "game-legacy-date-iso",
+      ref: legacyGameRef,
+      data: () => ({
+        status: "SCHEDULED",
+        min_players: 6,
+        date: "2026-06-18T20:00:00.000Z",
+      }),
+    };
+    const gamesQuery = makeQueryMock({size: 0, docs: []});
+    gamesQuery.get
+      .mockResolvedValueOnce({size: 0, docs: []})
+      .mockResolvedValueOnce({size: 0, docs: []})
+      .mockResolvedValueOnce({size: 1, docs: [legacyGameDoc]});
+    const confirmationsSnaps = [
+      {size: 0, docs: []},
+      {size: 0, docs: []},
+    ];
+    const eventsQuery = makeQueryMock({size: 0, docs: []});
+    const liveScoresCollection = {
+      doc: jest.fn().mockReturnValue({
+        get: jest.fn().mockResolvedValue({
+          exists: false,
+          data: () => undefined,
+        }),
+      }),
+    };
+    const tx = {
+      get: jest.fn().mockResolvedValue({
+        exists: true,
+        data: () => ({status: "SCHEDULED"}),
+      }),
+      update: jest.fn(),
+    };
+
+    mockDb.collection.mockImplementation((collectionName: string) => {
+      if (collectionName === "games") return gamesQuery;
+      if (collectionName === "confirmations") {
+        return makeQueryMock(confirmationsSnaps.shift() ?? {
+          size: 0,
+          docs: [],
+        });
+      }
+      if (collectionName === "game_events") return eventsQuery;
+      if (collectionName === "live_scores") return liveScoresCollection;
+      throw new Error(`Unexpected collection: ${collectionName}`);
+    });
+    mockDb.runTransaction.mockImplementationOnce(
+      async (fn: (txArg: typeof tx) => Promise<boolean>) => fn(tx)
+    );
+
+    await expect(closePastGames(new Date("2026-06-21T12:00:00.000Z")))
+      .resolves.toEqual({
+        inspected: 1,
+        finished: 0,
+        cancelled: 1,
+      });
+
+    expect(tx.update).toHaveBeenCalledWith(
+      legacyGameRef,
+      expect.objectContaining({
+        status: "CANCELLED",
+        auto_cancelled: true,
+      })
+    );
+  });
 });

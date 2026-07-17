@@ -654,13 +654,32 @@ function CommandPaletteBoundary({ children }: { children: React.ReactNode }) {
   );
 }
 
+function getRouteAnnouncementTitle(
+  pathname: string,
+  search: string,
+  breadcrumbs: ReturnType<typeof useAutoBreadcrumbs>,
+  t: ReturnType<typeof useTranslation>['t'],
+) {
+  const breadcrumbTitle = breadcrumbs.at(-1)?.label;
+  if (breadcrumbTitle) return breadcrumbTitle;
+
+  if (pathname === '/guide') return t('page.title.appGuide');
+  if (pathname.startsWith('/checkin/')) return t('page.title.qrCheckIn');
+
+  const activeItem = getActiveNavItem(pathname, search);
+  return activeItem ? t(activeItem.labelKey) : t('errors.notFound');
+}
+
 function RouteAnnouncer() {
   const location = useLocation();
   const { t } = useTranslation();
   const breadcrumbs = useAutoBreadcrumbs();
-  const activeItem = getActiveNavItem(location.pathname, location.search);
-  const routeTitle = breadcrumbs.at(-1)?.label
-    ?? (activeItem ? t(activeItem.labelKey) : t('errors.notFound'));
+  const routeTitle = getRouteAnnouncementTitle(
+    location.pathname,
+    location.search,
+    breadcrumbs,
+    t,
+  );
   const announcement = t('a11y.routeAnnouncement', { title: routeTitle });
 
   return (

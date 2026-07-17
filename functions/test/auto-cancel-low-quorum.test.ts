@@ -6,6 +6,7 @@ const mockDocSet = jest.fn().mockResolvedValue(undefined);
 const mockRunTransaction = jest.fn();
 const mockTransactionGet = jest.fn();
 const mockTransactionSet = jest.fn();
+const mockTransactionUpdate = jest.fn();
 const mockCollectionGet = jest.fn();
 const mockWhere = jest.fn().mockReturnThis();
 
@@ -73,6 +74,7 @@ describe("autoCancelLowQuorum", () => {
       callback({
         get: mockTransactionGet,
         set: mockTransactionSet,
+        update: mockTransactionUpdate,
       })
     );
     mockTransactionGet.mockResolvedValue({
@@ -83,21 +85,31 @@ describe("autoCancelLowQuorum", () => {
 
   it("cancela jogo CONFIRMED com poucos jogadores dentro de 2h", async () => {
     const futureDate = new Date(Date.now() + 60 * 60 * 1000);
-    mockCollectionGet
+    const gameData = {
+      status: "CONFIRMED",
+      dateTime: { toDate: () => futureDate },
+      location_name: "Campo 1",
+      date: "2026-05-25",
+    };
+    const gameRef = { id: "game1" };
+    mockCollectionGet.mockResolvedValueOnce({
+      docs: [
+        {
+          id: "game1",
+          ref: gameRef,
+          data: () => gameData,
+        },
+      ],
+      size: 1,
+    });
+    mockTransactionGet
       .mockResolvedValueOnce({
-        docs: [
-          {
-            id: "game1",
-            ref: { update: mockDocUpdate },
-            data: () => ({
-              status: "CONFIRMED",
-              dateTime: { toDate: () => futureDate },
-              location_name: "Campo 1",
-              date: "2026-05-25",
-            }),
-          },
-        ],
-        size: 1,
+        exists: false,
+        data: () => null,
+      })
+      .mockResolvedValueOnce({
+        exists: true,
+        data: () => gameData,
       })
       .mockResolvedValueOnce({
         docs: [
@@ -109,7 +121,8 @@ describe("autoCancelLowQuorum", () => {
 
     await autoCancelLowQuorum();
 
-    expect(mockDocUpdate).toHaveBeenCalledWith(
+    expect(mockTransactionUpdate).toHaveBeenCalledWith(
+      gameRef,
       expect.objectContaining({
         status: "CANCELLED",
         auto_cancelled: true,
@@ -124,19 +137,28 @@ describe("autoCancelLowQuorum", () => {
 
   it("nao cancela jogo com jogadores suficientes", async () => {
     const futureDate = new Date(Date.now() + 60 * 60 * 1000);
-    mockCollectionGet
+    const gameData = {
+      status: "CONFIRMED",
+      dateTime: { toDate: () => futureDate },
+    };
+    mockCollectionGet.mockResolvedValueOnce({
+      docs: [
+        {
+          id: "game1",
+          ref: { id: "game1" },
+          data: () => gameData,
+        },
+      ],
+      size: 1,
+    });
+    mockTransactionGet
       .mockResolvedValueOnce({
-        docs: [
-          {
-            id: "game1",
-            ref: { update: mockDocUpdate },
-            data: () => ({
-              status: "CONFIRMED",
-              dateTime: { toDate: () => futureDate },
-            }),
-          },
-        ],
-        size: 1,
+        exists: false,
+        data: () => null,
+      })
+      .mockResolvedValueOnce({
+        exists: true,
+        data: () => gameData,
       })
       .mockResolvedValueOnce({
         docs: Array.from({ length: 8 }, (_, i) => ({
@@ -147,49 +169,69 @@ describe("autoCancelLowQuorum", () => {
 
     await autoCancelLowQuorum();
 
-    expect(mockDocUpdate).not.toHaveBeenCalled();
+    expect(mockTransactionUpdate).not.toHaveBeenCalled();
   });
 
   it("pula jogos ja auto-cancelados", async () => {
     const futureDate = new Date(Date.now() + 60 * 60 * 1000);
+    const gameData = {
+      status: "CONFIRMED",
+      dateTime: { toDate: () => futureDate },
+      auto_cancelled: true,
+    };
     mockCollectionGet.mockResolvedValueOnce({
       docs: [
         {
           id: "game1",
-          ref: { update: mockDocUpdate },
-          data: () => ({
-            status: "CONFIRMED",
-            dateTime: { toDate: () => futureDate },
-            auto_cancelled: true,
-          }),
+          ref: { id: "game1" },
+          data: () => gameData,
         },
       ],
       size: 1,
     });
+    mockTransactionGet
+      .mockResolvedValueOnce({
+        exists: false,
+        data: () => null,
+      })
+      .mockResolvedValueOnce({
+        exists: true,
+        data: () => gameData,
+      });
 
     await autoCancelLowQuorum();
 
-    expect(mockDocUpdate).not.toHaveBeenCalled();
+    expect(mockTransactionUpdate).not.toHaveBeenCalled();
   });
 
   it("usa min_players customizado do jogo", async () => {
     const futureDate = new Date(Date.now() + 60 * 60 * 1000);
-    mockCollectionGet
+    const gameData = {
+      status: "CONFIRMED",
+      dateTime: { toDate: () => futureDate },
+      min_players: 4,
+      location_name: "Campo",
+      date: "2026-05-25",
+    };
+    const gameRef = { id: "game1" };
+    mockCollectionGet.mockResolvedValueOnce({
+      docs: [
+        {
+          id: "game1",
+          ref: gameRef,
+          data: () => gameData,
+        },
+      ],
+      size: 1,
+    });
+    mockTransactionGet
       .mockResolvedValueOnce({
-        docs: [
-          {
-            id: "game1",
-            ref: { update: mockDocUpdate },
-            data: () => ({
-              status: "CONFIRMED",
-              dateTime: { toDate: () => futureDate },
-              min_players: 4,
-              location_name: "Campo",
-              date: "2026-05-25",
-            }),
-          },
-        ],
-        size: 1,
+        exists: false,
+        data: () => null,
+      })
+      .mockResolvedValueOnce({
+        exists: true,
+        data: () => gameData,
       })
       .mockResolvedValueOnce({
         docs: [
@@ -202,7 +244,8 @@ describe("autoCancelLowQuorum", () => {
 
     await autoCancelLowQuorum();
 
-    expect(mockDocUpdate).toHaveBeenCalledWith(
+    expect(mockTransactionUpdate).toHaveBeenCalledWith(
+      gameRef,
       expect.objectContaining({ status: "CANCELLED" })
     );
   });
@@ -215,7 +258,7 @@ describe("autoCancelLowQuorum", () => {
 
     await autoCancelLowQuorum();
 
-    expect(mockDocUpdate).not.toHaveBeenCalled();
+    expect(mockTransactionUpdate).not.toHaveBeenCalled();
   });
 
   it("pula execucao quando lock agendado ja esta em andamento", async () => {
@@ -224,5 +267,78 @@ describe("autoCancelLowQuorum", () => {
     await autoCancelLowQuorum();
 
     expect(mockCollectionGet).not.toHaveBeenCalled();
+  });
+
+  it.each(["LIVE", "FINISHED", "CANCELLED"])(
+    "nao regride jogo que mudou para %s durante a execucao",
+    async (status) => {
+      const futureDate = new Date(Date.now() + 60 * 60 * 1000);
+      const initialGameData = {
+        status: "CONFIRMED",
+        dateTime: { toDate: () => futureDate },
+      };
+      mockCollectionGet.mockResolvedValueOnce({
+        docs: [
+          {
+            id: "game1",
+            ref: { id: "game1" },
+            data: () => initialGameData,
+          },
+        ],
+        size: 1,
+      });
+      mockTransactionGet
+        .mockResolvedValueOnce({
+          exists: false,
+          data: () => null,
+        })
+        .mockResolvedValueOnce({
+          exists: true,
+          data: () => ({ ...initialGameData, status }),
+        });
+
+      await autoCancelLowQuorum();
+
+      expect(mockTransactionUpdate).not.toHaveBeenCalled();
+      expect(mockSendNotificationToUsers).not.toHaveBeenCalled();
+    }
+  );
+
+  it("reconta confirmacoes dentro da transacao antes de cancelar", async () => {
+    const futureDate = new Date(Date.now() + 60 * 60 * 1000);
+    const gameData = {
+      status: "CONFIRMED",
+      dateTime: { toDate: () => futureDate },
+    };
+    mockCollectionGet.mockResolvedValueOnce({
+      docs: [
+        {
+          id: "game1",
+          ref: { id: "game1" },
+          data: () => gameData,
+        },
+      ],
+      size: 1,
+    });
+    mockTransactionGet
+      .mockResolvedValueOnce({
+        exists: false,
+        data: () => null,
+      })
+      .mockResolvedValueOnce({
+        exists: true,
+        data: () => gameData,
+      })
+      .mockResolvedValueOnce({
+        docs: Array.from({ length: 6 }, (_, i) => ({
+          data: () => ({ user_id: `user${i}` }),
+        })),
+        size: 6,
+      });
+
+    await autoCancelLowQuorum();
+
+    expect(mockTransactionUpdate).not.toHaveBeenCalled();
+    expect(mockSendNotificationToUsers).not.toHaveBeenCalled();
   });
 });

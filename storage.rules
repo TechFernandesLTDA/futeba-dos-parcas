@@ -63,7 +63,7 @@ service firebase.storage {
       return isAuthenticated() &&
              groupDoc != null &&
              groupDoc.data.owner_id == request.auth.uid &&
-             groupDoc.data.status == 'ACTIVE';
+             (!('status' in groupDoc.data) || groupDoc.data.status == 'ACTIVE');
     }
 
     function canUseGroupWall(groupId) {

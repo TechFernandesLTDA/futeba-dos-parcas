@@ -19,6 +19,7 @@ let testEnv: RulesTestEnvironment;
 
 const GAME_ACTIVE = "conf-game-active";
 const GAME_FINISHED = "conf-game-finished";
+const GAME_SCHEDULED = "conf-game-scheduled";
 const GAME_NONEXISTENT = "conf-game-nonexistent";
 const UID_SUMMONED = "summoned-player";
 
@@ -51,6 +52,21 @@ beforeAll(async () => {
     goalkeepers_count: 0,
     team1_score: 3,
     team2_score: 1,
+    group_id: null,
+    co_organizers: [],
+  });
+
+  await seedDoc(testEnv, `games/${GAME_SCHEDULED}`, {
+    title: "Jogo Scheduled",
+    owner_id: UID_PLAYER_A,
+    status: "SCHEDULED",
+    date_time: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+    max_players: 10,
+    max_goalkeepers: 2,
+    players_count: 1,
+    goalkeepers_count: 0,
+    team1_score: null,
+    team2_score: null,
     group_id: null,
     co_organizers: [],
   });
@@ -104,6 +120,23 @@ beforeAll(async () => {
     was_present: true,
     goals: 1,
     team: "team2",
+    created_at: new Date(),
+  });
+
+  await seedDoc(testEnv, `confirmations/${GAME_SCHEDULED}_${UID_PLAYER_B}`, {
+    game_id: GAME_SCHEDULED,
+    user_id: UID_PLAYER_B,
+    status: "CONFIRMED",
+    is_on_the_way: false,
+    eta_minutes: null,
+    is_mvp: false,
+    is_best_gk: false,
+    is_worst_player: false,
+    was_present: false,
+    goals: null,
+    assists: null,
+    saves: null,
+    team: null,
     created_at: new Date(),
   });
 });
@@ -369,6 +402,25 @@ describe("confirmations — update (game owner stats)", () => {
     );
   });
 
+  it("Game owner NAO pode inflar stats acima do limite permitido", async () => {
+    const db = asPlayerA(testEnv);
+    await assertFails(
+      db.doc(`confirmations/${GAME_FINISHED}_${UID_PLAYER_B}`).update({
+        goals: 101,
+      })
+    );
+  });
+
+  it("Game owner NAO pode editar stats enquanto jogo estiver SCHEDULED", async () => {
+    const db = asPlayerA(testEnv);
+    await assertFails(
+      db.doc(`confirmations/${GAME_SCHEDULED}_${UID_PLAYER_B}`).update({
+        goals: 1,
+        updated_at: new Date(),
+      })
+    );
+  });
+
   it("Game owner pode atualizar status da confirmacao", async () => {
     const db = asPlayerA(testEnv);
     await assertSucceeds(
@@ -411,6 +463,19 @@ describe("confirmations — update (game owner stats)", () => {
 });
 
 describe("confirmations — update (MVP flags bloqueadas)", () => {
+  it.each(["is_mvp", "is_best_gk", "is_worst_player"])(
+    "Game owner NAO pode gravar a flag server-only %s",
+    async (field) => {
+      const db = asPlayerA(testEnv);
+      await assertFails(
+        db.doc(`confirmations/${GAME_FINISHED}_${UID_PLAYER_B}`).update({
+          [field]: true,
+          updated_at: new Date(),
+        })
+      );
+    }
+  );
+
   it("Confirmed player NAO pode votar MVP via confirmations (usar mvp_votes)", async () => {
     const db = asPlayerB(testEnv);
     await assertFails(

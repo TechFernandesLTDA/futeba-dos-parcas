@@ -11,11 +11,19 @@ const mockCollectionGet = jest.fn();
 const mockWhere = jest.fn().mockReturnThis();
 const mockOrderBy = jest.fn().mockReturnThis();
 const mockLimit = jest.fn().mockReturnThis();
+const mockStartAfter = jest.fn().mockReturnThis();
 
-const queryChain: any = { where: mockWhere, orderBy: mockOrderBy, limit: mockLimit, get: mockCollectionGet };
+const queryChain: any = {
+  where: mockWhere,
+  orderBy: mockOrderBy,
+  limit: mockLimit,
+  startAfter: mockStartAfter,
+  get: mockCollectionGet,
+};
 mockWhere.mockReturnValue(queryChain);
 mockLimit.mockReturnValue(queryChain);
 mockOrderBy.mockReturnValue(queryChain);
+mockStartAfter.mockReturnValue(queryChain);
 
 const mockDoc = jest.fn((id: string) => ({
   id,
@@ -26,6 +34,7 @@ const mockDoc = jest.fn((id: string) => ({
     where: mockWhere,
     orderBy: mockOrderBy,
     limit: mockLimit,
+    startAfter: mockStartAfter,
     get: mockCollectionGet,
   })),
 }));
@@ -399,8 +408,14 @@ describe("Presence Notifications", () => {
         .mockResolvedValueOnce({ exists: true, data: () => ({ name: "Novato" }) });
       mockCollectionGet.mockResolvedValue({
         docs: [
-          { id: "admin1", data: () => ({ role: "ADMIN" }) },
-          { id: "admin2", data: () => ({ role: "ADMIN" }) },
+          {
+            id: "admin1",
+            data: () => ({ role: "ADMIN", status: "ACTIVE", user_id: "admin1" }),
+          },
+          {
+            id: "admin2",
+            data: () => ({ role: "ADMIN", status: "ACTIVE", user_id: "admin2" }),
+          },
         ],
         size: 2,
       });
@@ -441,8 +456,14 @@ describe("Presence Notifications", () => {
         .mockResolvedValueOnce({ exists: true, data: () => ({ name: "Admin" }) });
       mockCollectionGet.mockResolvedValue({
         docs: [
-          { id: "admin1", data: () => ({ role: "ADMIN" }) },
-          { id: "member1", data: () => ({ role: "MEMBER" }) },
+          {
+            id: "admin1",
+            data: () => ({ role: "ADMIN", status: "ACTIVE", user_id: "admin1" }),
+          },
+          {
+            id: "member1",
+            data: () => ({ role: "MEMBER", status: "ACTIVE", user_id: "member1" }),
+          },
         ],
         size: 2,
       });
@@ -457,6 +478,39 @@ describe("Presence Notifications", () => {
         expect.any(Object),
       );
     });
+
+    it("ignora ex-admins e memberships orfas ao notificar entrada", async () => {
+      mockDocGet
+        .mockResolvedValueOnce({ exists: true, data: () => ({ name: "Grupo" }) })
+        .mockResolvedValueOnce({ exists: true, data: () => ({ name: "Novato" }) });
+      mockCollectionGet.mockResolvedValue({
+        docs: [
+          {
+            id: "admin1",
+            data: () => ({ role: "ADMIN", status: "ACTIVE", user_id: "admin1" }),
+          },
+          {
+            id: "removed-admin",
+            data: () => ({ role: "ADMIN", status: "REMOVED", user_id: "removed-admin" }),
+          },
+          {
+            id: "orphan-admin",
+            data: () => ({ role: "OWNER", status: "ACTIVE", user_id: "another-user" }),
+          },
+        ],
+        size: 3,
+      });
+
+      await onMemberJoined({
+        data: { data: () => ({ role: "MEMBER" }) },
+        params: { groupId: "group1", memberId: "novato1" },
+      });
+
+      expect(mockSendNotificationToUsers).toHaveBeenCalledWith(
+        ["admin1"],
+        expect.any(Object),
+      );
+    });
   });
 
   describe("onMemberLeft", () => {
@@ -466,7 +520,10 @@ describe("Presence Notifications", () => {
         .mockResolvedValueOnce({ exists: true, data: () => ({ name: "Desistente" }) });
       mockCollectionGet.mockResolvedValue({
         docs: [
-          { id: "admin1", data: () => ({ role: "ADMIN" }) },
+          {
+            id: "admin1",
+            data: () => ({ role: "ADMIN", status: "ACTIVE", user_id: "admin1" }),
+          },
         ],
         size: 1,
       });
@@ -498,7 +555,12 @@ describe("Presence Notifications", () => {
         .mockResolvedValueOnce({ exists: true, data: () => ({ name: "Grupo" }) })
         .mockResolvedValueOnce({ exists: false, data: () => null });
       mockCollectionGet.mockResolvedValue({
-        docs: [{ id: "admin1", data: () => ({ role: "ADMIN" }) }],
+        docs: [
+          {
+            id: "admin1",
+            data: () => ({ role: "ADMIN", status: "ACTIVE", user_id: "admin1" }),
+          },
+        ],
         size: 1,
       });
 
@@ -514,6 +576,39 @@ describe("Presence Notifications", () => {
         }),
       );
     });
+
+    it("ignora admins inativos ou orfaos ao notificar saida", async () => {
+      mockDocGet
+        .mockResolvedValueOnce({ exists: true, data: () => ({ name: "Grupo" }) })
+        .mockResolvedValueOnce({ exists: true, data: () => ({ name: "Desistente" }) });
+      mockCollectionGet.mockResolvedValue({
+        docs: [
+          {
+            id: "admin1",
+            data: () => ({ role: "ADMIN", status: "ACTIVE", user_id: "admin1" }),
+          },
+          {
+            id: "inactive-admin",
+            data: () => ({ role: "ADMIN", status: "INACTIVE", user_id: "inactive-admin" }),
+          },
+          {
+            id: "orphan-owner",
+            data: () => ({ role: "OWNER", status: "ACTIVE", user_id: "different-user" }),
+          },
+        ],
+        size: 3,
+      });
+
+      await onMemberLeft({
+        data: { data: () => null },
+        params: { groupId: "group1", memberId: "leaver1" },
+      });
+
+      expect(mockSendNotificationToUsers).toHaveBeenCalledWith(
+        ["admin1"],
+        expect.any(Object),
+      );
+    });
   });
 
   describe("onCashboxTransaction", () => {
@@ -521,7 +616,10 @@ describe("Presence Notifications", () => {
       mockDocGet.mockResolvedValueOnce({ exists: true, data: () => ({ name: "Grupo" }) });
       mockCollectionGet.mockResolvedValue({
         docs: [
-          { id: "admin1", data: () => ({ role: "ADMIN" }) },
+          {
+            id: "admin1",
+            data: () => ({ role: "ADMIN", status: "ACTIVE", user_id: "admin1" }),
+          },
         ],
         size: 1,
       });
@@ -543,8 +641,14 @@ describe("Presence Notifications", () => {
       mockDocGet.mockResolvedValueOnce({ exists: true, data: () => ({ name: "Grupo" }) });
       mockCollectionGet.mockResolvedValue({
         docs: [
-          { id: "admin1", data: () => ({ role: "ADMIN" }) },
-          { id: "admin2", data: () => ({ role: "ADMIN" }) },
+          {
+            id: "admin1",
+            data: () => ({ role: "ADMIN", status: "ACTIVE", user_id: "admin1" }),
+          },
+          {
+            id: "admin2",
+            data: () => ({ role: "ADMIN", status: "ACTIVE", user_id: "admin2" }),
+          },
         ],
         size: 2,
       });
@@ -566,8 +670,14 @@ describe("Presence Notifications", () => {
       mockDocGet.mockResolvedValueOnce({ exists: true, data: () => ({ name: "Grupo" }) });
       mockCollectionGet.mockResolvedValue({
         docs: [
-          { id: "admin1", data: () => ({ role: "ADMIN" }) },
-          { id: "creator1", data: () => ({ role: "ADMIN" }) },
+          {
+            id: "admin1",
+            data: () => ({ role: "ADMIN", status: "ACTIVE", user_id: "admin1" }),
+          },
+          {
+            id: "creator1",
+            data: () => ({ role: "ADMIN", status: "ACTIVE", user_id: "creator1" }),
+          },
         ],
         size: 2,
       });
@@ -577,6 +687,43 @@ describe("Presence Notifications", () => {
           data: () => ({ type: "ENTRY", amount: 50, created_by_id: "creator1" }),
         },
         params: { groupId: "group1", transactionId: "tx3" },
+      });
+
+      expect(mockSendNotificationToUsers).toHaveBeenCalledWith(
+        ["admin1"],
+        expect.any(Object),
+      );
+    });
+
+    it("ignora ex-admins e memberships orfas no aviso de caixa", async () => {
+      mockDocGet.mockResolvedValueOnce({ exists: true, data: () => ({ name: "Grupo" }) });
+      mockCollectionGet.mockResolvedValue({
+        docs: [
+          {
+            id: "admin1",
+            data: () => ({ role: "ADMIN", status: "ACTIVE", user_id: "admin1" }),
+          },
+          {
+            id: "banned-admin",
+            data: () => ({ role: "ADMIN", status: "BANNED", user_id: "banned-admin" }),
+          },
+          {
+            id: "orphan-owner",
+            data: () => ({ role: "OWNER", status: "ACTIVE", user_id: "another-user" }),
+          },
+          {
+            id: "creator1",
+            data: () => ({ role: "OWNER", status: "ACTIVE", user_id: "creator1" }),
+          },
+        ],
+        size: 4,
+      });
+
+      await onCashboxTransaction({
+        data: {
+          data: () => ({ type: "ENTRY", amount: 50, created_by_id: "creator1" }),
+        },
+        params: { groupId: "group1", transactionId: "tx4" },
       });
 
       expect(mockSendNotificationToUsers).toHaveBeenCalledWith(
@@ -601,6 +748,8 @@ describe("Presence Notifications", () => {
 
       expect(mockBatch).toHaveBeenCalled();
       expect(mockBatchUpdate).toHaveBeenCalledTimes(2);
+      expect(mockOrderBy).toHaveBeenCalledWith("created_at", "asc");
+      expect(mockLimit).toHaveBeenCalledWith(250);
     });
 
     it("retorna cedo quando nao ha convites expirados", async () => {
@@ -613,6 +762,35 @@ describe("Presence Notifications", () => {
       await cleanupExpiredInvites();
 
       expect(mockBatch).not.toHaveBeenCalled();
+    });
+
+    it("pagina backlog grande sem reler o lote inteiro", async () => {
+      const firstPageDocs = Array.from({length: 250}, (_, index) => ({
+        ref: {id: `inv-${index + 1}`},
+      }));
+      const secondPageDocs = [
+        {ref: {id: "inv-251"}},
+        {ref: {id: "inv-252"}},
+      ];
+      mockCollectionGet
+        .mockResolvedValueOnce({
+          empty: false,
+          size: firstPageDocs.length,
+          docs: firstPageDocs,
+        })
+        .mockResolvedValueOnce({
+          empty: false,
+          size: secondPageDocs.length,
+          docs: secondPageDocs,
+        });
+
+      await cleanupExpiredInvites();
+
+      expect(mockBatch).toHaveBeenCalledTimes(2);
+      expect(mockBatchCommit).toHaveBeenCalledTimes(2);
+      expect(mockBatchUpdate).toHaveBeenCalledTimes(252);
+      expect(mockStartAfter).toHaveBeenCalledWith(firstPageDocs[firstPageDocs.length - 1]);
+      expect(mockLimit).toHaveBeenCalledWith(250);
     });
   });
 
@@ -909,7 +1087,12 @@ describe("Presence Notifications", () => {
         .mockResolvedValueOnce({ exists: true, data: () => ({ name: "Pelada FC" }) })
         .mockResolvedValueOnce({ exists: true, data: () => ({ name: "Novato" }) });
       mockCollectionGet.mockResolvedValue({
-        docs: [{ id: "admin1", data: () => ({ role: "ADMIN" }) }],
+        docs: [
+          {
+            id: "admin1",
+            data: () => ({ role: "ADMIN", status: "ACTIVE", user_id: "admin1" }),
+          },
+        ],
         size: 1,
       });
 
@@ -930,7 +1113,12 @@ describe("Presence Notifications", () => {
         .mockResolvedValueOnce({ exists: true, data: () => ({ name: "Pelada FC" }) })
         .mockResolvedValueOnce({ exists: true, data: () => ({ name: "Ex-membro" }) });
       mockCollectionGet.mockResolvedValue({
-        docs: [{ id: "admin1", data: () => ({ role: "ADMIN" }) }],
+        docs: [
+          {
+            id: "admin1",
+            data: () => ({ role: "ADMIN", status: "ACTIVE", user_id: "admin1" }),
+          },
+        ],
         size: 1,
       });
 
@@ -949,7 +1137,12 @@ describe("Presence Notifications", () => {
     it("onCashboxTransaction: reentrega com mesmo event.id nao duplica notificacao", async () => {
       mockDocGet.mockResolvedValue({ exists: true, data: () => ({ name: "Grupo" }) });
       mockCollectionGet.mockResolvedValue({
-        docs: [{ id: "admin1", data: () => ({ role: "ADMIN" }) }],
+        docs: [
+          {
+            id: "admin1",
+            data: () => ({ role: "ADMIN", status: "ACTIVE", user_id: "admin1" }),
+          },
+        ],
         size: 1,
       });
 

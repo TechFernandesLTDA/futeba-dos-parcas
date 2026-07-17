@@ -16,6 +16,7 @@ const mockTxSet = jest.fn();
 const mockTxUpdate = jest.fn();
 
 const mockMemberGet = jest.fn().mockResolvedValue({exists: false});
+const mockBlockedGet = jest.fn().mockResolvedValue({exists: false});
 const mockGroupGet = jest.fn().mockResolvedValue({
   exists: true,
   data: () => ({
@@ -32,15 +33,18 @@ const mockRunTransaction = jest.fn(
       set: mockTxSet,
       update: mockTxUpdate,
     };
-    await callback(tx);
+    return callback(tx);
   }
 );
 
 const mockDoc = jest.fn((path: string) => {
-  if (path?.includes("/members/")) {
-    return {get: mockMemberGet};
+  if (path?.includes("/blocked_players/")) {
+    return {path, get: mockBlockedGet};
   }
-  return {get: mockGroupGet};
+  if (path?.includes("/members/")) {
+    return {path, get: mockMemberGet};
+  }
+  return {path, get: mockGroupGet};
 });
 
 jest.mock("firebase-admin", () => {
@@ -108,6 +112,7 @@ describe("onJoinRequestApproved", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockMemberGet.mockResolvedValue({exists: false});
+    mockBlockedGet.mockResolvedValue({exists: false});
     mockGroupGet.mockResolvedValue({
       exists: true,
       data: () => ({
@@ -127,7 +132,7 @@ describe("onJoinRequestApproved", () => {
           set: mockTxSet,
           update: mockTxUpdate,
         };
-        await callback(tx);
+        return callback(tx);
       }
     );
   });
@@ -318,9 +323,11 @@ describe("onJoinRequestApproved", () => {
     });
 
     // Primeiro memberGet = early-exit check (user nao eh membro ainda)
-    // Segundo memberGet = approver member check → retorna role ADMIN
+    // Segundo memberGet = txMember check
+    // Terceiro memberGet = approver member check → retorna role ADMIN
     mockMemberGet
       .mockResolvedValueOnce({exists: false}) // target user nao eh membro
+      .mockResolvedValueOnce({exists: false}) // txMember ainda nao existe
       .mockResolvedValueOnce({
         exists: true,
         data: () => ({role: "ADMIN"}),
@@ -342,7 +349,7 @@ describe("onJoinRequestApproved", () => {
     expect(mockRunTransaction).toHaveBeenCalled();
   });
 
-  it("FIX #2798: aprovador sem role owner/admin e bloqueado — nao cria membro", async () => {
+  it("FIX #2798: aprovador sem role owner/admin aborta dentro da transação", async () => {
     const {logger} = require("firebase-functions/v2");
 
     // Group meta: owner_id diferente do aprovador
@@ -357,8 +364,10 @@ describe("onJoinRequestApproved", () => {
     });
 
     // Primeiro memberGet = target user nao eh membro
-    // Segundo memberGet = approver role = MEMBER (nao autorizado)
+    // Segundo memberGet = txMember ainda nao existe
+    // Terceiro memberGet = approver role = MEMBER (nao autorizado)
     mockMemberGet
+      .mockResolvedValueOnce({exists: false})
       .mockResolvedValueOnce({exists: false})
       .mockResolvedValueOnce({
         exists: true,
@@ -377,8 +386,9 @@ describe("onJoinRequestApproved", () => {
 
     await (onJoinRequestApproved as unknown as (e: MockEvent) => Promise<void>)(event);
 
-    // NÃO deve criar membro
-    expect(mockRunTransaction).not.toHaveBeenCalled();
+    expect(mockRunTransaction).toHaveBeenCalled();
+    expect(mockTxSet).not.toHaveBeenCalled();
+    expect(mockTxUpdate).not.toHaveBeenCalled();
     // Deve logar o erro de segurança
     expect(logger.error).toHaveBeenCalledWith(
       "join_request aprovado por não-owner/admin — bloqueado",
@@ -400,8 +410,10 @@ describe("onJoinRequestApproved", () => {
     });
 
     // Primeiro memberGet = target user não eh membro
-    // Segundo memberGet = aprovador não encontrado em /members/
+    // Segundo memberGet = txMember ainda nao existe
+    // Terceiro memberGet = aprovador não encontrado em /members/
     mockMemberGet
+      .mockResolvedValueOnce({exists: false})
       .mockResolvedValueOnce({exists: false})
       .mockResolvedValueOnce({exists: false}); // aprovador não existe como membro
 
@@ -417,10 +429,42 @@ describe("onJoinRequestApproved", () => {
 
     await (onJoinRequestApproved as unknown as (e: MockEvent) => Promise<void>)(event);
 
-    expect(mockRunTransaction).not.toHaveBeenCalled();
+    expect(mockRunTransaction).toHaveBeenCalled();
+    expect(mockTxSet).not.toHaveBeenCalled();
+    expect(mockTxUpdate).not.toHaveBeenCalled();
     expect(logger.error).toHaveBeenCalledWith(
       "join_request aprovado por não-owner/admin — bloqueado",
       expect.objectContaining({approverId: "outsider-uid"})
+    );
+  });
+
+  it("FIX #3829: usuário bloqueado não vira membro via join_request aprovado", async () => {
+    const {logger} = require("firebase-functions/v2");
+
+    mockMemberGet
+      .mockResolvedValueOnce({exists: false})
+      .mockResolvedValueOnce({exists: false});
+    mockBlockedGet.mockResolvedValueOnce({exists: true});
+
+    const event = makeEvent(
+      {user_id: "u1", status: "PENDING"},
+      {
+        user_id: "u1",
+        user_name: "User One",
+        status: "APPROVED",
+        responded_by: "owner-uid",
+      }
+    );
+
+    await (onJoinRequestApproved as unknown as (e: MockEvent) => Promise<void>)(event);
+
+    expect(mockRunTransaction).toHaveBeenCalled();
+    expect(mockTxSet).not.toHaveBeenCalled();
+    expect(mockTxUpdate).not.toHaveBeenCalled();
+    expect(mockSendNotification).not.toHaveBeenCalled();
+    expect(logger.warn).toHaveBeenCalledWith(
+      "join_request approved for blocked user — aborting",
+      expect.objectContaining({groupId: "g1", userId: "u1", approverId: "owner-uid"})
     );
   });
 });

@@ -1583,20 +1583,25 @@ service cloud.firestore {
            request.resource.data.status == 'CANCELLED' &&
            get(/databases/$(database)/documents/games/$(resource.data.game_id)).data.status in ['SCHEDULED', 'CONFIRMED'] &&
            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updated_at'])))) ||
-        // SECFIX #434: dono do jogo restrito a campos de stats/MVP/status.
+        // SECFIX #434/#3826: dono do jogo restrito a campos de stats/status.
         // Antes podia escrever em QUALQUER campo — permitia injetar
         // own_stats (goals=15, assists=10) antes de FINISHED -> XP fraud.
-        // O dono do JOGO pode atualizar campos de stats/MVP/status only.
+        // Flags MVP-family sao server-only: a votacao escreve mvp_votes e
+        // Cloud Functions materializam o resultado de forma unica.
+        // O dono do JOGO pode atualizar campos de stats/status only.
         (isGameOwner(resource.data.game_id) &&
          // Elevar PENDING/CANCELLED para CONFIRMED tambem deve reservar vaga
          // no callable. Owner ainda pode cancelar/moderar e editar stats.
          (request.resource.data.get('status', resource.data.status) != 'CONFIRMED' ||
           resource.data.status == 'CONFIRMED') &&
+         get(/databases/$(database)/documents/games/$(resource.data.game_id)).data.status in ['CONFIRMED', 'LIVE', 'FINISHED'] &&
+         isValidScore(request.resource.data.get('goals', resource.data.get('goals', null))) &&
+         isValidScore(request.resource.data.get('assists', resource.data.get('assists', null))) &&
+         isValidScore(request.resource.data.get('saves', resource.data.get('saves', null))) &&
          request.resource.data.diff(resource.data).affectedKeys().hasOnly([
            'status', 'goals', 'assists', 'saves', 'goalkeeper',
-           'is_mvp', 'is_best_gk', 'is_worst_player', 'was_present',
-            'team', 'updated_at',
-          ]))
+           'was_present', 'team', 'updated_at',
+         ]))
         // SECFIX #2608: branch de isConfirmedPlayer para flags is_mvp/
         // is_best_gk/is_worst_player removido — group-league.ts e
         // weekly-ranking.ts consumiam essas flags sem revalidacao contra
@@ -3472,7 +3477,42 @@ service cloud.firestore {
       allow create: if isAuthenticated() && (
         request.auth.uid == userId || isAdmin()
       );
-      allow update, delete: if isAuthenticated() && (
+      allow update: if isAuthenticated() && (
+        request.auth.uid == userId ||
+        (
+          isGroupAdmin(groupId) &&
+          onlyAllowedFields(['role', 'group_name', 'group_photo']) &&
+          (
+            !('role' in request.resource.data.diff(resource.data).affectedKeys()) ||
+            (
+              getAfter(/databases/$(database)/documents/groups/$(groupId)/members/$(userId)) != null &&
+              getAfter(/databases/$(database)/documents/groups/$(groupId)/members/$(userId)).data.user_id == userId &&
+              getAfter(/databases/$(database)/documents/groups/$(groupId)/members/$(userId)).data.role == request.resource.data.role
+            )
+          ) &&
+          (
+            !('group_name' in request.resource.data.diff(resource.data).affectedKeys()) ||
+            (
+              getAfter(/databases/$(database)/documents/groups/$(groupId)) != null &&
+              getAfter(/databases/$(database)/documents/groups/$(groupId)).data.name == request.resource.data.group_name
+            )
+          ) &&
+          (
+            !('group_photo' in request.resource.data.diff(resource.data).affectedKeys()) ||
+            (
+              getAfter(/databases/$(database)/documents/groups/$(groupId)) != null &&
+              (
+                getAfter(/databases/$(database)/documents/groups/$(groupId)).data.photo_url == request.resource.data.group_photo ||
+                (
+                  !('photo_url' in getAfter(/databases/$(database)/documents/groups/$(groupId)).data) &&
+                  request.resource.data.group_photo == null
+                )
+              )
+            )
+          )
+        )
+      );
+      allow delete: if isAuthenticated() && (
         request.auth.uid == userId ||
         isGroupAdmin(groupId)
       );
@@ -3929,8 +3969,8 @@ service cloud.firestore {
     // Write restrito a Cloud Functions (Admin SDK) e Admin users.
     match /official-groups/{groupId} {
       allow read: if isAuthenticated();
-      allow create: if isAdmin() || isFieldOwner();
-      allow update: if isAdmin() || isFieldOwner();
+      allow create: if isAdmin();
+      allow update: if isAdmin();
       allow delete: if isAdmin();
     }
 

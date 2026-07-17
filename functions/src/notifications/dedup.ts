@@ -2,6 +2,18 @@ import {FieldValue} from "firebase-admin/firestore";
 import {logger} from "firebase-functions";
 import {db} from "../_db";
 
+const NOTIFICATION_PENDING_LEASE_MS = 10 * 60 * 1000;
+const NOTIFICATION_COMPLETED_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+
+/**
+ * Retorna uma data futura para TTL/lease relativa ao relógio local.
+ * @param {number} ms
+ * @return {Date}
+ */
+function expiresIn(ms: number): Date {
+  return new Date(Date.now() + ms);
+}
+
 /**
  * Reivindica um evento de notificação uma única vez.
  *
@@ -19,7 +31,7 @@ export async function claimNotificationEventOnce(
     await ref.create({
       status: "pending",
       claimed_at: FieldValue.serverTimestamp(),
-      expires_at: new Date(Date.now() + 10 * 60 * 1000),
+      expires_at: expiresIn(NOTIFICATION_PENDING_LEASE_MS),
     });
     return true;
   } catch (error: unknown) {
@@ -54,7 +66,7 @@ export async function claimNotificationEventOnce(
           }
           transaction.update(ref, {
             claimed_at: FieldValue.serverTimestamp(),
-            expires_at: new Date(Date.now() + 10 * 60 * 1000),
+            expires_at: expiresIn(NOTIFICATION_PENDING_LEASE_MS),
           });
           return true;
         });
@@ -80,6 +92,7 @@ export async function completeNotificationEvent(
   await db().collection("notif_dedup").doc(claimId).update({
     status: "completed",
     completed_at: FieldValue.serverTimestamp(),
+    expires_at: expiresIn(NOTIFICATION_COMPLETED_TTL_MS),
   });
 }
 
