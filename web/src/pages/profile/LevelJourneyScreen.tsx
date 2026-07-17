@@ -5,6 +5,7 @@ import {
   Box,
   Typography,
   Card,
+  CardActionArea,
   CardContent,
   IconButton,
   Divider,
@@ -26,6 +27,7 @@ import {
   Star as StarIcon,
   ExpandMore as ExpandMoreIcon,
   ExpandLess as ExpandLessIcon,
+  ZoomIn as ZoomInIcon,
 } from '@mui/icons-material';
 import { doc, getDoc, collection, query, where, orderBy, limit, getDocs, onSnapshot } from 'firebase/firestore';
 import { db } from '../../services/firebase';
@@ -51,6 +53,7 @@ import { TeamBadge } from '../../components/team/TeamBadge';
 import { useTranslation } from 'react-i18next';
 import { getExperiencePoints, getLogLevelAfter, getXpEarned } from '../../utils/xpAccounting';
 import { useBreadcrumbEntityLabel } from '../../contexts/BreadcrumbEntityContext';
+import { LevelDetailsDialog } from './LevelDetailsDialog';
 
 const logger = createLogger('LevelJourneyScreen');
 
@@ -83,6 +86,7 @@ export const LevelJourneyScreen: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [xpGuideOpen, setXpGuideOpen] = useState(false);
+  const [selectedLevel, setSelectedLevel] = useState<LevelEntry | null>(null);
   const [breadcrumbUserName, setBreadcrumbUserName] = useState<string | null>(null);
 
   const targetUserId = userId || currentUser?.id;
@@ -449,6 +453,15 @@ export const LevelJourneyScreen: React.FC = () => {
               </Collapse>
             </Card>
 
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              align="center"
+              sx={{ mt: 2.5, mb: 1, px: 2 }}
+            >
+              {t('level.exploreHint')}
+            </Typography>
+
             {/* Progressão Base (0-10) */}
             <Box sx={{ mb: 1, mt: 3 }}>
               <Divider sx={{ mb: 1.5 }}>
@@ -464,6 +477,7 @@ export const LevelJourneyScreen: React.FC = () => {
                 entry={entry}
                 isUnlocked={currentLevel >= entry.level}
                 isCurrent={currentLevel === entry.level}
+                onSelect={setSelectedLevel}
               />
             ))}
 
@@ -482,6 +496,7 @@ export const LevelJourneyScreen: React.FC = () => {
                 entry={entry}
                 isUnlocked={currentLevel >= entry.level}
                 isCurrent={currentLevel === entry.level}
+                onSelect={setSelectedLevel}
               />
             ))}
 
@@ -528,19 +543,28 @@ export const LevelJourneyScreen: React.FC = () => {
           </>
         )}
       </PageContainer>
+      <LevelDetailsDialog
+        entry={selectedLevel}
+        currentXp={currentXp}
+        isUnlocked={selectedLevel ? currentLevel >= selectedLevel.level : false}
+        isCurrent={selectedLevel?.level === currentLevel}
+        onClose={() => setSelectedLevel(null)}
+      />
     </Box>
   );
 };
 
 /** Componente de linha de nível individual - estilo card como Android */
-function LevelRow({
+export function LevelRow({
   entry,
   isUnlocked,
   isCurrent,
+  onSelect,
 }: {
   entry: LevelEntry;
   isUnlocked: boolean;
   isCurrent: boolean;
+  onSelect: (entry: LevelEntry) => void;
 }) {
   const theme = useTheme();
   const { t } = useTranslation();
@@ -553,20 +577,46 @@ function LevelRow({
         borderRadius: 3,
         border: isCurrent ? `2px solid ${color}` : `1px solid ${theme.palette.divider}`,
         boxShadow: isCurrent ? `0 2px 12px ${alpha(color, 0.2)}` : 'none',
-        opacity: isUnlocked ? 1 : 0.5,
+        opacity: isUnlocked ? 1 : 0.82,
         bgcolor: isCurrent ? alpha(color, 0.04) : 'background.paper',
+        transition: theme.transitions.create(['transform', 'box-shadow', 'border-color']),
+        '&:hover': {
+          transform: 'translateY(-1px)',
+          borderColor: alpha(color, 0.55),
+          boxShadow: `0 6px 18px ${alpha(color, 0.14)}`,
+        },
+        '&:focus-within': {
+          outline: `3px solid ${alpha(theme.palette.primary.main, 0.32)}`,
+          outlineOffset: 2,
+        },
       }}
     >
-      <CardContent
+      <CardActionArea
+        onClick={() => onSelect(entry)}
+        aria-label={t('level.viewDetailsAria', {
+          level: entry.level,
+          name: entry.name,
+          status: isCurrent
+            ? t('level.statusCurrent')
+            : isUnlocked
+              ? t('level.statusUnlocked')
+              : t('level.statusLocked'),
+        })}
         sx={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 1.5,
-          py: 1.5,
-          px: 2,
-          '&:last-child': { pb: 1.5 },
+          borderRadius: 'inherit',
         }}
       >
+        <CardContent
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1.5,
+            py: 1.5,
+            px: 2,
+            width: '100%',
+            '&:last-child': { pb: 1.5 },
+          }}
+        >
         {/* Badge do nível */}
         <Box
           sx={{
@@ -575,7 +625,7 @@ function LevelRow({
             flexShrink: 0,
             filter: isUnlocked
               ? isCurrent ? `drop-shadow(0 2px 8px ${alpha(color, 0.4)})` : 'none'
-              : 'grayscale(1) opacity(0.4)',
+              : 'saturate(0.7) opacity(0.84)',
           }}
         >
           <Box
@@ -633,11 +683,14 @@ function LevelRow({
 
         {/* Status + XP */}
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', flexShrink: 0 }}>
-          {isUnlocked ? (
-            <CheckIcon sx={{ color, fontSize: 20, mb: 0.25 }} />
-          ) : (
-            <LockIcon sx={{ color: theme.palette.grey[400], fontSize: 18, mb: 0.25 }} />
-          )}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.25 }}>
+            {isUnlocked ? (
+              <CheckIcon sx={{ color, fontSize: 20 }} />
+            ) : (
+              <LockIcon sx={{ color: 'text.secondary', fontSize: 18 }} />
+            )}
+            <ZoomInIcon sx={{ color: 'text.secondary', fontSize: 18 }} />
+          </Box>
           <Typography
             variant="caption"
             fontWeight={600}
@@ -646,7 +699,8 @@ function LevelRow({
             {entry.xpRequired.toLocaleString('pt-BR')}
           </Typography>
         </Box>
-      </CardContent>
+        </CardContent>
+      </CardActionArea>
     </Card>
   );
 }

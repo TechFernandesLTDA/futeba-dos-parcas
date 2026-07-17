@@ -2078,6 +2078,17 @@
     "xpGuideTip": "💡 Dica: Jogue regularmente e mantenha sua sequência para ganhar bônus de XP!",
     "xpSourceGame": "Jogo",
     "xpTotal": "{{xp}} XP total",
+    "exploreHint": "Toque em qualquer nível para ampliar a arte e ver todos os detalhes.",
+    "viewDetailsAria": "Ver detalhes do nível {{level}}, {{name}}. Status: {{status}}",
+    "closeDetailsAria": "Fechar detalhes do nível",
+    "detailEyebrow": "NÍVEL {{level}}",
+    "statusCurrent": "Nível atual",
+    "statusUnlocked": "Desbloqueado",
+    "statusLocked": "Bloqueado",
+    "requiredXp": "XP necessário",
+    "yourXp": "Seu XP",
+    "xpRemaining": "XP restante",
+    "lockedExplanation": "Você pode explorar este nível agora. Ele será desbloqueado automaticamente quando alcançar o XP necessário.",
     "xpGuide": {
       "participation": {
         "label": "Participação",

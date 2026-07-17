@@ -2078,6 +2078,17 @@
     "xpGuideTip": "💡 Consejo: ¡Juega regularmente y mantén tu racha para ganar bonos de XP!",
     "xpSourceGame": "Partido",
     "xpTotal": "{{xp}} XP total",
+    "exploreHint": "Toca cualquier nivel para ampliar la ilustración y ver todos los detalles.",
+    "viewDetailsAria": "Ver detalles del nivel {{level}}, {{name}}. Estado: {{status}}",
+    "closeDetailsAria": "Cerrar detalles del nivel",
+    "detailEyebrow": "NIVEL {{level}}",
+    "statusCurrent": "Nivel actual",
+    "statusUnlocked": "Desbloqueado",
+    "statusLocked": "Bloqueado",
+    "requiredXp": "XP necesario",
+    "yourXp": "Tu XP",
+    "xpRemaining": "XP restante",
+    "lockedExplanation": "Puedes explorar este nivel ahora. Se desbloqueará automáticamente cuando alcances el XP necesario.",
     "xpGuide": {
       "participation": {
         "label": "Participación",

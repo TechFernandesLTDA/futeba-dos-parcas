@@ -254,6 +254,18 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.54.22][web-1.54.22] - 2026-07-17
+
+#### Adicionado
+- Modal responsivo e acessível para detalhes de nível, com estados atual, conquistado e bloqueado.
+- Testes de interação, fechamento e cálculo de XP restante.
+
+#### Mudado
+- Cartões bloqueados deixaram de ser controles desabilitados e agora preservam contraste e foco sem perder a indicação de bloqueio.
+- Textos da jornada foram atualizados em português, inglês e espanhol.
+
+_Issues: #3821_
+
 ### [1.54.21][web-1.54.21] - 2026-07-16
 
 #### Adicionado
@@ -2625,6 +2637,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.54.22]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.22.md
 [web-1.54.21]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.21.md
 [web-1.54.20]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.20.md
 [web-1.54.19]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.19.md

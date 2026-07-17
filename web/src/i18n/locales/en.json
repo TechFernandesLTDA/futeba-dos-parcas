@@ -2078,6 +2078,17 @@
     "xpGuideTip": "💡 Tip: Play regularly and keep your streak to earn XP bonuses!",
     "xpSourceGame": "Game",
     "xpTotal": "{{xp}} XP total",
+    "exploreHint": "Tap any level to enlarge its artwork and see all details.",
+    "viewDetailsAria": "View details for level {{level}}, {{name}}. Status: {{status}}",
+    "closeDetailsAria": "Close level details",
+    "detailEyebrow": "LEVEL {{level}}",
+    "statusCurrent": "Current level",
+    "statusUnlocked": "Unlocked",
+    "statusLocked": "Locked",
+    "requiredXp": "Required XP",
+    "yourXp": "Your XP",
+    "xpRemaining": "XP remaining",
+    "lockedExplanation": "You can explore this level now. It will unlock automatically when you reach the required XP.",
     "xpGuide": {
       "participation": {
         "label": "Participation",

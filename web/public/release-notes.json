@@ -1,7 +1,27 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-16T10:05:28.934Z",
+  "generatedAt": "2026-07-17T14:10:53.644Z",
   "notes": [
+    {
+      "version": "1.54.22",
+      "buildNumber": null,
+      "releaseDate": "2026-07-17",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "Explore de perto cada etapa do seu caminho rumo ao estrelato.",
+      "highlights": [],
+      "added": [
+        "Todos os níveis da jornada agora podem ser abertos para ver a imagem, o nome, a frase e o requisito de XP em detalhes.",
+        "Níveis futuros continuam identificados como bloqueados, mas podem ser explorados antes da conquista.",
+        "A visualização ampliada se adapta ao celular e ao desktop e funciona com toque, mouse ou teclado."
+      ],
+      "improved": [],
+      "fixed": [],
+      "issueRefs": [
+        3821
+      ]
+    },
     {
       "version": "1.54.21",
       "buildNumber": null,
