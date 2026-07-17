@@ -427,7 +427,8 @@ describe("XP Processing - Batch Operations", () => {
      */
     const mockTxnExistsMap = (
       existsMap: Record<string, boolean>,
-      userDataMap: Record<string, Record<string, unknown>> = {}
+      userDataMap: Record<string, Record<string, unknown>> = {},
+      userExistsMap: Record<string, boolean> = {}
     ) => {
       mockDb.collection.mockImplementation((coll: string) => ({
         doc: jest.fn((id?: string) => ({
@@ -448,7 +449,7 @@ describe("XP Processing - Batch Operations", () => {
               const txId = ref._id;
               if (ref._collection === "users") {
                 return {
-                  exists: true,
+                  exists: userExistsMap[txId] !== false,
                   data: () => userDataMap[txId] || {
                     experience_points: 500,
                     level: 5,
@@ -811,6 +812,108 @@ describe("XP Processing - Batch Operations", () => {
       expect(results).toHaveLength(1);
       expect(results[0].success).toBe(false);
       expect(results[0].error).toBe("Transaction commit failed");
+    });
+
+    test("falha apenas o usuário inexistente sem abortar o chunk inteiro", async () => {
+      const xpLogWrites: string[] = [];
+      mockDb.collection.mockImplementation((coll: string) => ({
+        doc: jest.fn((id?: string) => ({
+          _path: `${coll}/${id ?? "auto"}`,
+          _id: id,
+          _collection: coll,
+        })),
+        where: jest.fn().mockReturnValue({
+          get: jest.fn().mockResolvedValue({empty: true, docs: []}),
+        }),
+      }));
+
+      mockDb.runTransaction.mockImplementation(
+        async (callback: (tx: any) => Promise<any>) => {
+          const tx = {
+            get: jest.fn(async (ref: any) => {
+              if (ref._collection === "xp_logs") {
+                return {exists: false, data: () => ({})};
+              }
+
+              if (ref._id === "ghost-user") {
+                return {exists: false, data: () => ({})};
+              }
+
+              return {
+                exists: true,
+                data: () => ({
+                  experience_points: 500,
+                  level: 5,
+                  milestones_achieved: [],
+                }),
+              };
+            }),
+            update: jest.fn(),
+            set: jest.fn((ref: any) => {
+              if (ref._collection === "xp_logs") {
+                xpLogWrites.push(ref._id);
+              }
+            }),
+          };
+          return callback(tx);
+        }
+      );
+
+      const results = await processXpBatch([
+        sampleTxn("game1", "user1"),
+        sampleTxn("game1", "ghost-user"),
+        sampleTxn("game1", "user2", 80),
+      ]);
+
+      expect(results).toHaveLength(3);
+      expect(results.find((result) =>
+        result.transactionId === "game_game1_user_user1"
+      )).toMatchObject({
+        success: true,
+        alreadyProcessed: false,
+      });
+      expect(results.find((result) =>
+        result.transactionId === "game_game1_user_ghost-user"
+      )).toMatchObject({
+        success: false,
+        alreadyProcessed: false,
+        error: "Usuário ghost-user não encontrado",
+      });
+      expect(results.find((result) =>
+        result.transactionId === "game_game1_user_user2"
+      )).toMatchObject({
+        success: true,
+        alreadyProcessed: false,
+      });
+      expect(xpLogWrites).toEqual([
+        "game_game1_user_user1",
+        "game_game1_user_user2",
+      ]);
+    });
+
+    test("divide batches grandes pelo teto de writes quando milestones geram badge writes", async () => {
+      const badgeHeavyMilestones = Array.from(
+        {length: 10},
+        (_value, index) => `MILESTONE_${index}`
+      );
+
+      mockTxnExistsMap({});
+      const results = await processXpBatch(
+        Array.from({length: 42}, (_value, index) =>
+          sampleTxn(
+            `game${index}`,
+            `user${index}`,
+            100,
+            badgeHeavyMilestones
+          )
+        )
+      );
+
+      expect(results).toHaveLength(42);
+      results.forEach((result) => {
+        expect(result.success).toBe(true);
+      });
+      expect(mockDb.runTransaction).toHaveBeenCalledTimes(2);
     });
 
     /**

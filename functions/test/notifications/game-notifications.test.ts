@@ -193,7 +193,10 @@ describe("Game Notifications", () => {
     it("pagina membros do grupo e para quando nao encontra elegiveis", async () => {
       const page1Docs = Array.from({ length: 50 }, (_, index) => ({
         id: `member-${index}`,
-        data: () => ({ status: "ACTIVE" }),
+        data: () => ({
+          status: "ACTIVE",
+          user_id: `member-${index}`,
+        }),
       }));
 
       mockCollectionGet
@@ -222,10 +225,22 @@ describe("Game Notifications", () => {
 
     it("exclui confirmados/waitlist e respeita o limite de membros a notificar", async () => {
       const docs = [
-        { id: "confirmed-user", data: () => ({ status: "ACTIVE" }) },
-        { id: "member-1", data: () => ({ status: "ACTIVE" }) },
-        { id: "member-2", data: () => ({ status: "ACTIVE" }) },
-        { id: "member-3", data: () => ({ status: "ACTIVE" }) },
+        {
+          id: "confirmed-user",
+          data: () => ({ status: "ACTIVE", user_id: "confirmed-user" }),
+        },
+        {
+          id: "member-1",
+          data: () => ({ status: "ACTIVE", user_id: "member-1" }),
+        },
+        {
+          id: "member-2",
+          data: () => ({ status: "ACTIVE", user_id: "member-2" }),
+        },
+        {
+          id: "member-3",
+          data: () => ({ status: "ACTIVE", user_id: "member-3" }),
+        },
       ];
 
       mockCollectionGet.mockResolvedValueOnce({
@@ -242,6 +257,39 @@ describe("Game Notifications", () => {
         ),
       ).resolves.toEqual(["member-1", "member-2"]);
     });
+
+    it("ignora memberships inactive/orfas mesmo quando a query retorna os docs", async () => {
+      mockCollectionGet.mockResolvedValueOnce({
+        empty: false,
+        size: 4,
+        docs: [
+          {
+            id: "member-active",
+            data: () => ({ status: "ACTIVE", user_id: "member-active" }),
+          },
+          {
+            id: "member-removed",
+            data: () => ({ status: "REMOVED", user_id: "member-removed" }),
+          },
+          {
+            id: "member-orphan",
+            data: () => ({ status: "ACTIVE", user_id: "another-user" }),
+          },
+          {
+            id: "member-camel",
+            data: () => ({ status: "ACTIVE", userId: "member-camel" }),
+          },
+        ],
+      });
+
+      await expect(
+        fetchEligibleGroupMemberIdsForVacancy(
+          "group-3",
+          new Set<string>(),
+          5,
+        ),
+      ).resolves.toEqual(["member-active", "member-camel"]);
+    });
   });
 
   describe("onGameCreated", () => {
@@ -253,8 +301,14 @@ describe("Game Notifications", () => {
         });
       mockCollectionGet.mockResolvedValue({
         docs: [
-          { id: "member1", data: () => ({ role: "MEMBER" }) },
-          { id: "member2", data: () => ({ role: "ADMIN" }) },
+          {
+            id: "member1",
+            data: () => ({ role: "MEMBER", status: "ACTIVE", user_id: "member1" }),
+          },
+          {
+            id: "member2",
+            data: () => ({ role: "ADMIN", status: "ACTIVE", user_id: "member2" }),
+          },
         ],
         size: 2,
       });
@@ -320,8 +374,14 @@ describe("Game Notifications", () => {
       });
       mockCollectionGet.mockResolvedValue({
         docs: [
-          { id: "owner1", data: () => ({ role: "OWNER" }) },
-          { id: "member1", data: () => ({ role: "MEMBER" }) },
+          {
+            id: "owner1",
+            data: () => ({ role: "OWNER", status: "ACTIVE", user_id: "owner1" }),
+          },
+          {
+            id: "member1",
+            data: () => ({ role: "MEMBER", status: "ACTIVE", user_id: "member1" }),
+          },
         ],
         size: 2,
       });
@@ -337,10 +397,53 @@ describe("Game Notifications", () => {
       );
     });
 
+    it("ignora ex-membros e docs orfaos ao montar destinatarios do grupo", async () => {
+      mockDocGet.mockResolvedValue({
+        exists: true,
+        data: () => ({ name: "Joao" }),
+      });
+      mockCollectionGet.mockResolvedValue({
+        docs: [
+          {
+            id: "member-active",
+            data: () => ({ role: "MEMBER", status: "ACTIVE", user_id: "member-active" }),
+          },
+          {
+            id: "member-removed",
+            data: () => ({ role: "MEMBER", status: "REMOVED", user_id: "member-removed" }),
+          },
+          {
+            id: "member-orphan",
+            data: () => ({ role: "ADMIN", status: "ACTIVE", user_id: "another-user" }),
+          },
+          {
+            id: "owner1",
+            data: () => ({ role: "OWNER", status: "ACTIVE", user_id: "owner1" }),
+          },
+        ],
+        size: 4,
+      });
+
+      await onGameCreated({
+        data: { data: () => ({ owner_id: "owner1", group_id: "group1" }) },
+        params: { gameId: "game1" },
+      });
+
+      expect(mockSendNotificationToUsers).toHaveBeenCalledWith(
+        ["member-active"],
+        expect.any(Object),
+      );
+    });
+
     it("usa 'Alguem' quando owner nao encontrado no Firestore", async () => {
       mockDocGet.mockResolvedValueOnce({ exists: false, data: () => null });
       mockCollectionGet.mockResolvedValue({
-        docs: [{ id: "member1", data: () => ({ role: "MEMBER" }) }],
+        docs: [
+          {
+            id: "member1",
+            data: () => ({ role: "MEMBER", status: "ACTIVE", user_id: "member1" }),
+          },
+        ],
         size: 1,
       });
 
@@ -359,7 +462,12 @@ describe("Game Notifications", () => {
 
     it("nao envia quando so tem o owner no grupo", async () => {
       mockCollectionGet.mockResolvedValue({
-        docs: [{ id: "owner1", data: () => ({ role: "OWNER" }) }],
+        docs: [
+          {
+            id: "owner1",
+            data: () => ({ role: "OWNER", status: "ACTIVE", user_id: "owner1" }),
+          },
+        ],
         size: 1,
       });
 
@@ -373,7 +481,12 @@ describe("Game Notifications", () => {
 
     it("propaga erro ao buscar membros para permitir retry", async () => {
       mockCollectionGet.mockResolvedValue({
-        docs: [{ id: "member1", data: () => ({ role: "MEMBER" }) }],
+        docs: [
+          {
+            id: "member1",
+            data: () => ({ role: "MEMBER", status: "ACTIVE", user_id: "member1" }),
+          },
+        ],
         size: 1,
       });
       mockDocGet.mockRejectedValueOnce(new Error("Firestore error"));
@@ -392,7 +505,12 @@ describe("Game Notifications", () => {
         data: () => ({ name: "Joao" }),
       });
       mockCollectionGet.mockResolvedValue({
-        docs: [{ id: "member1", data: () => ({ role: "MEMBER" }) }],
+        docs: [
+          {
+            id: "member1",
+            data: () => ({ role: "MEMBER", status: "ACTIVE", user_id: "member1" }),
+          },
+        ],
         size: 1,
       });
       mockSendNotificationToUsers.mockRejectedValueOnce(
@@ -660,6 +778,59 @@ describe("Game Notifications", () => {
       });
 
       expect(mockSendNotificationToUsers).not.toHaveBeenCalled();
+      expect(mockTransactionUpdate).not.toHaveBeenCalled();
+    });
+
+    it("nao consome cooldown quando o cancelamento apenas reduz overbooking para lotado", async () => {
+      const gameData = {
+        status: "SCHEDULED",
+        max_players: 14,
+        location_name: "Campo",
+      };
+      mockTransactionGet
+        .mockResolvedValueOnce({
+          exists: true,
+          data: () => gameData,
+        })
+        .mockResolvedValueOnce({
+          exists: true,
+          data: () => gameData,
+        })
+        .mockResolvedValueOnce({
+          exists: true,
+          data: () => gameData,
+        });
+      mockCountGet
+        .mockResolvedValueOnce({
+          data: () => ({ count: 14 }),
+        })
+        .mockResolvedValueOnce({
+          data: () => ({ count: 13 }),
+        });
+      mockCollectionGet.mockResolvedValue({
+        empty: true,
+        size: 0,
+        docs: [],
+      });
+
+      const event = {
+        data: {
+          before: { data: () => ({ status: "CONFIRMED", game_id: "game1" }) },
+          after: { data: () => ({ status: "CANCELLED", game_id: "game1" }) },
+        },
+        params: { confirmationId: "conf1" },
+      };
+
+      await onGameVacancy({
+        id: "evt-vacancy-overbooked",
+        ...event,
+      });
+      await onGameVacancy({
+        id: "evt-vacancy-real",
+        ...event,
+      });
+
+      expect(mockTransactionUpdate).toHaveBeenCalledTimes(1);
     });
 
     it("notifica membros elegiveis do grupo quando a waitlist e pequena", async () => {
@@ -693,8 +864,14 @@ describe("Game Notifications", () => {
           empty: false,
           size: 2,
           docs: [
-            { id: "member-1", data: () => ({ status: "ACTIVE" }) },
-            { id: "member-2", data: () => ({ status: "ACTIVE" }) },
+            {
+              id: "member-1",
+              data: () => ({ status: "ACTIVE", user_id: "member-1" }),
+            },
+            {
+              id: "member-2",
+              data: () => ({ status: "ACTIVE", user_id: "member-2" }),
+            },
           ],
         });
 

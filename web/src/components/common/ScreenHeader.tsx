@@ -7,6 +7,7 @@ import {
   type Theme,
 } from '@mui/material';
 import { ArrowBack as BackIcon } from '@mui/icons-material';
+import { useHideMobileTopBar } from '../../hooks/useMobileTopBarVisibility';
 import { pageSpacing } from '../../theme/pageTokens';
 
 export interface ScreenHeaderProps {
@@ -36,6 +37,8 @@ export const ScreenHeader = React.memo(function ScreenHeader({
   sx,
   headerSx,
 }: ScreenHeaderProps) {
+  useHideMobileTopBar();
+
   const header = (
     <Box
       sx={{

@@ -2,6 +2,9 @@ let mockDbDocGet = jest.fn();
 let mockDbRunTransaction = jest.fn();
 let mockDbCollection = jest.fn();
 let mockSaveNotificationToFirestore = jest.fn();
+let mockDbBatchUpdate = jest.fn();
+let mockDbBatchSet = jest.fn();
+let mockDbBatchCommit = jest.fn();
 
 jest.mock("../../src/middleware/rate-limiter", () => ({
   checkRateLimit: jest.fn().mockResolvedValue({ allowed: true, remaining: 9, resetAt: new Date(Date.now() + 60000) }),
@@ -12,12 +15,16 @@ jest.mock("../../src/middleware/require-profile-complete", () => ({
 }));
 
 jest.mock("../../src/_db", () => {
-  const docFn = jest.fn((path: string) => ({ get: mockDbDocGet }));
+  const docFn = jest.fn((path: string) => ({ path, get: mockDbDocGet }));
   const dbFn = jest.fn(() => ({
     collection: mockDbCollection,
     doc: docFn,
     runTransaction: mockDbRunTransaction,
-    batch: jest.fn(() => ({ update: jest.fn(), set: jest.fn(), commit: jest.fn().mockResolvedValue([]) })),
+    batch: jest.fn(() => ({
+      update: mockDbBatchUpdate,
+      set: mockDbBatchSet,
+      commit: mockDbBatchCommit,
+    })),
   }));
   return { db: dbFn };
 });
@@ -71,9 +78,31 @@ jest.mock("firebase-admin", () => ({
 import {
   checkInToGame,
   classifyCheckInTravelSignal,
+  generateCheckinToken,
 } from "../../src/voting/check-in";
 import { checkRateLimit } from "../../src/middleware/rate-limiter";
 import { logger } from "firebase-functions/v2";
+
+function makeQuerySnapshot(docs: any[]) {
+  return {
+    docs,
+    size: docs.length,
+    empty: docs.length === 0,
+  };
+}
+
+function makePagedQuery(pages: any[][]) {
+  let pageIndex = 0;
+  return {
+    where: jest.fn().mockReturnThis(),
+    orderBy: jest.fn().mockReturnThis(),
+    limit: jest.fn().mockReturnThis(),
+    startAfter: jest.fn().mockReturnThis(),
+    get: jest.fn().mockImplementation(() =>
+      Promise.resolve(makeQuerySnapshot(pages[pageIndex++] ?? []))
+    ),
+  };
+}
 
 describe("checkInToGame", () => {
   const makeRequest = (overrides: any = {}) => ({
@@ -107,11 +136,11 @@ describe("checkInToGame", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockDbCollection.mockReturnValue({
-      where: jest.fn().mockReturnThis(),
-      limit: jest.fn().mockReturnThis(),
-      get: jest.fn().mockResolvedValue({ docs: [] }),
-    });
+    mockDbBatchUpdate.mockReset();
+    mockDbBatchSet.mockReset();
+    mockDbBatchCommit.mockReset();
+    mockDbBatchCommit.mockResolvedValue([]);
+    mockDbCollection.mockReturnValue(makePagedQuery([[]]));
     mockSaveNotificationToFirestore.mockResolvedValue(undefined);
   });
 
@@ -235,6 +264,74 @@ describe("checkInToGame", () => {
       }),
       { merge: true },
     );
+  });
+
+  it("ordena check-ins por recência para detectar viagem impossível", async () => {
+    const nowMs = new Date("2026-07-17T22:00:00.000Z").getTime();
+    const oldDocs = Array.from({length: 100}, (_, index) => ({
+      id: `old-${index}`,
+      data: () => ({
+        game_id: `old-game-${index}`,
+        checked_in: true,
+        checked_in_at: {
+          toDate: () => new Date(nowMs - (10 + index) * 24 * 60 * 60 * 1000),
+        },
+        game_date_time: {
+          toDate: () => new Date(nowMs - (10 + index) * 24 * 60 * 60 * 1000),
+        },
+        check_in_lat_approx: -23.5505,
+        check_in_lng_approx: -46.6333,
+      }),
+    }));
+    const recentDoc = {
+      id: "recent-conf",
+      data: () => ({
+        game_id: "recent-game",
+        checked_in: true,
+        checked_in_at: {
+          toDate: () => new Date(nowMs - 30 * 60 * 1000),
+        },
+        game_date_time: {
+          toDate: () => new Date(nowMs - 45 * 60 * 1000),
+        },
+        check_in_lat_approx: -22.9068,
+        check_in_lng_approx: -43.1729,
+      }),
+    };
+    const signalRecentQuery = makePagedQuery([[recentDoc, ...oldDocs]]);
+    const notificationQuery = makePagedQuery([[]]);
+    const setMock = jest.fn();
+    const nowSpy = jest.spyOn(Date, "now").mockReturnValue(nowMs);
+
+    mockDbCollection
+      .mockImplementationOnce(() => signalRecentQuery)
+      .mockImplementationOnce(() => notificationQuery);
+    mockDbDocGet.mockResolvedValueOnce(makeGameSnap());
+    mockDbRunTransaction.mockImplementationOnce(async (cb: any) => {
+      const tx = { get: jest.fn().mockResolvedValue(makeConfSnap()), set: setMock };
+      return cb(tx);
+    });
+
+    const result = await checkInToGame(makeRequest({
+      data: {gameId: "game1", lat: -23.5505, lng: -46.6333, accuracy: 10},
+    }));
+
+    expect(result.success).toBe(true);
+    expect(signalRecentQuery.orderBy).toHaveBeenCalledWith(
+      "checked_in_at",
+      "desc",
+    );
+    expect(signalRecentQuery.limit).toHaveBeenCalledWith(50);
+    expect(mockDbBatchSet).toHaveBeenCalledWith(
+      expect.objectContaining({path: "confirmations/game1_user1"}),
+      expect.objectContaining({
+        suspicious_impossible_travel: true,
+        suspicious_impossible_travel_minutes_gap: 30,
+      }),
+      {merge: true},
+    );
+
+    nowSpy.mockRestore();
   });
 
   it("aceita payload legado do web com latitude/longitude", async () => {
@@ -370,6 +467,91 @@ describe("checkInToGame", () => {
     await expect(
       checkInToGame(makeRequest({ data: { gameId: "g1", lat: 0.001, lng: 0.001 } })),
     ).rejects.toThrow();
+  });
+});
+
+describe("generateCheckinToken", () => {
+  const makeRequest = (overrides: any = {}) => ({
+    auth: {uid: "owner-1", token: {}},
+    data: {gameId: "game1"},
+    ...overrides,
+  });
+
+  const makeGameSnap = (overrides: any = {}) => ({
+    exists: true,
+    data: () => ({
+      owner_id: "owner-1",
+      co_organizers: [],
+      status: "CONFIRMED",
+      ...overrides,
+    }),
+  });
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it("aplica rate limit antes de abrir transação", async () => {
+    (checkRateLimit as jest.Mock).mockResolvedValueOnce({
+      allowed: false,
+      remaining: 0,
+      resetAt: new Date(Date.now() + 60000),
+    });
+
+    await expect(
+      generateCheckinToken(makeRequest()),
+    ).rejects.toMatchObject({code: "resource-exhausted"});
+    expect(mockDbRunTransaction).not.toHaveBeenCalled();
+  });
+
+  it("gera token dentro de transação para fechar a corrida de dupla geração", async () => {
+    const updateMock = jest.fn();
+
+    mockDbRunTransaction.mockImplementationOnce(async (cb: any) => {
+      const tx = {
+        get: jest.fn().mockResolvedValue(makeGameSnap()),
+        update: updateMock,
+      };
+      return cb(tx);
+    });
+
+    const result = await generateCheckinToken(makeRequest());
+
+    expect(result.success).toBe(true);
+    expect(result.token).toHaveLength(24);
+    expect(mockDbRunTransaction).toHaveBeenCalledTimes(1);
+    expect(updateMock).toHaveBeenCalledWith(
+      expect.objectContaining({path: "games/game1"}),
+      expect.objectContaining({
+        checkin_qr_token: expect.any(String),
+        checkin_qr_token_expires_at: expect.anything(),
+      }),
+    );
+  });
+
+  it("reusa token válido já persistido sem sobrescrever o documento", async () => {
+    const updateMock = jest.fn();
+
+    mockDbRunTransaction.mockImplementationOnce(async (cb: any) => {
+      const tx = {
+        get: jest.fn().mockResolvedValue(makeGameSnap({
+          checkin_qr_token: "existing-token-1234567890",
+          checkin_qr_token_expires_at: {
+            toDate: () => new Date(Date.now() + 60 * 60 * 1000),
+          },
+        })),
+        update: updateMock,
+      };
+      return cb(tx);
+    });
+
+    const result = await generateCheckinToken(makeRequest());
+
+    expect(result).toEqual({
+      success: true,
+      token: "existing-token-1234567890",
+    });
+    expect(updateMock).not.toHaveBeenCalled();
   });
 });
 

@@ -60,6 +60,106 @@ interface AutoCloseEvidenceDecision {
 }
 
 /**
+ * Converte formatos heterogêneos de data do Firestore para Date.
+ *
+ * @param {unknown} value Valor bruto persistido.
+ * @return {Date | null} Date válida ou null.
+ */
+function coerceGameDate(value: unknown): Date | null {
+  if (value instanceof Date) {
+    return isNaN(value.getTime()) ? null : value;
+  }
+
+  if (
+    value &&
+    typeof value === "object" &&
+    "toDate" in value &&
+    typeof (value as {toDate: () => Date}).toDate === "function"
+  ) {
+    const date = (value as {toDate: () => Date}).toDate();
+    return isNaN(date.getTime()) ? null : date;
+  }
+
+  if (typeof value === "string") {
+    const date = new Date(value);
+    return isNaN(date.getTime()) ? null : date;
+  }
+
+  return null;
+}
+
+/**
+ * Resolve a data efetiva do jogo suportando schemas legados.
+ *
+ * @param {FirebaseFirestore.DocumentData} gameData Dados do jogo.
+ * @return {Date | null} Início do jogo ou null quando inválido.
+ */
+function resolveGameStartDate(
+  gameData: FirebaseFirestore.DocumentData
+): Date | null {
+  return coerceGameDate(gameData.dateTime) ??
+    coerceGameDate(gameData.date_time) ??
+    coerceGameDate(gameData.date);
+}
+
+/**
+ * Busca candidatos vencidos usando campos modernos e legados.
+ *
+ * @param {Date} cutoff Data limite.
+ * @return {Promise<FirebaseFirestore.QueryDocumentSnapshot[]>} Docs candidatos.
+ */
+async function fetchPastGameCandidates(
+  cutoff: Date
+): Promise<FirebaseFirestore.QueryDocumentSnapshot[]> {
+  const cutoffTs = Timestamp.fromDate(cutoff);
+  const cutoffDateKey = cutoff.toLocaleDateString("en-CA", {
+    timeZone: "America/Sao_Paulo",
+  });
+
+  const baseQuery = db()
+    .collection("games")
+    .where("status", "in", [...ACTIVE_GAME_STATUSES]);
+
+  const [datedSnap, legacyDateTimeSnap, legacyDateSnap] = await Promise.all([
+    baseQuery
+      .where("dateTime", "<=", cutoffTs)
+      .orderBy("dateTime", "asc")
+      .limit(PAST_GAME_PAGE_LIMIT)
+      .get(),
+    baseQuery
+      .where("date_time", "<=", cutoffTs)
+      .orderBy("date_time", "asc")
+      .limit(PAST_GAME_PAGE_LIMIT)
+      .get(),
+    baseQuery
+      .where("date", "<=", cutoffDateKey)
+      .orderBy("date", "asc")
+      .limit(PAST_GAME_PAGE_LIMIT)
+      .get(),
+  ]);
+
+  const deduped = new Map<string, FirebaseFirestore.QueryDocumentSnapshot>();
+  for (const snap of [datedSnap, legacyDateTimeSnap, legacyDateSnap]) {
+    for (const doc of snap.docs) {
+      deduped.set(doc.id, doc);
+    }
+  }
+
+  return [...deduped.values()]
+    .filter((doc) => {
+      const startsAt = resolveGameStartDate(doc.data());
+      return startsAt !== null && startsAt.getTime() <= cutoff.getTime();
+    })
+    .sort((left, right) => {
+      const leftMs =
+        resolveGameStartDate(left.data())?.getTime() ?? Number.MAX_SAFE_INTEGER;
+      const rightMs =
+        resolveGameStartDate(right.data())?.getTime() ?? Number.MAX_SAFE_INTEGER;
+      return leftMs - rightMs;
+    });
+}
+
+/**
  * Remove valores undefined de payloads antes de gravar no Firestore.
  *
  * @param {T} value - Valor original.
@@ -280,24 +380,17 @@ export async function closePastGames(
   now = new Date()
 ): Promise<ClosePastGamesResult> {
   const cutoff = getPastGameCutoff(now);
-  const cutoffTs = Timestamp.fromDate(cutoff);
-  const gamesSnap = await db()
-    .collection("games")
-    .where("status", "in", [...ACTIVE_GAME_STATUSES])
-    .where("dateTime", "<=", cutoffTs)
-    .orderBy("dateTime", "asc")
-    .limit(PAST_GAME_PAGE_LIMIT)
-    .get();
+  const candidateDocs = await fetchPastGameCandidates(cutoff);
 
   logger.info(
     "[AUTO_CLOSE_PAST_GAMES] " +
-    `${gamesSnap.size} jogo(s) ativo(s) até ${cutoff.toISOString()}`
+    `${candidateDocs.length} jogo(s) ativo(s) até ${cutoff.toISOString()}`
   );
 
   const finished = 0;
   let cancelled = 0;
 
-  for (const gameDoc of gamesSnap.docs) {
+  for (const gameDoc of candidateDocs) {
     const gameData = gameDoc.data();
     const status =
       (gameData.status || "SCHEDULED") as ActiveGameStatus;
@@ -370,7 +463,7 @@ export async function closePastGames(
   );
 
   return {
-    inspected: gamesSnap.size,
+    inspected: candidateDocs.length,
     finished,
     cancelled,
   };

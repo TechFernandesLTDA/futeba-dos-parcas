@@ -24,6 +24,7 @@ import { useToast } from '../../contexts/ToastContext';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { PageContainer } from '../../components/common/PageContainer';
 import { useTranslation } from 'react-i18next';
+import { useHideMobileTopBar } from '../../hooks/useMobileTopBarVisibility';
 
 type CheckInState = 'loading' | 'confirming' | 'success' | 'error';
 
@@ -39,6 +40,7 @@ function getCurrentPosition(): Promise<GeolocationPosition> {
 export const QrCheckInScreen: React.FC = () => {
   const { t } = useTranslation();
   useDocumentTitle(t('page.title.qrCheckIn'));
+  useHideMobileTopBar();
   const { gameId, token } = useParams<{ gameId: string; token: string }>();
   const navigate = useNavigate();
   const goBack = useNavigateBack();

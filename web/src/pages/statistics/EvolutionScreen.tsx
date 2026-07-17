@@ -2,6 +2,8 @@ import { PageContainer } from '../../components/common/PageContainer';
 import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
+import { useHideMobileTopBar } from '../../hooks/useMobileTopBarVisibility';
+import Grid from '@mui/material/Unstable_Grid2';
 import {
   Box,
   Typography,
@@ -12,7 +14,6 @@ import {
   Tab,
   useTheme,
   alpha,
-  Grid,
   Paper,
 } from '@mui/material';
 import {
@@ -79,6 +80,7 @@ interface RawMonthlyStats {
 export const EvolutionScreen: React.FC = () => {
   const { t } = useTranslation();
   useDocumentTitle(t('page.title.evolution'));
+  useHideMobileTopBar();
   const goBack = useNavigateBack();
   const theme = useTheme();
   const { userId } = useParams<{ userId: string }>();

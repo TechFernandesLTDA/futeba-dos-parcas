@@ -30,6 +30,39 @@ const CONFIRMATION_PAGE_SIZE = 100;
 const GROUP_MEMBER_PAGE_SIZE = 50;
 const MAX_GROUP_VACANCY_NOTIFICATIONS = 20;
 const VACANCY_NOTIFICATION_COOLDOWN_MS = 5 * 60 * 1000;
+const ACTIVE_GROUP_MEMBER_STATUS = "ACTIVE";
+
+/**
+ * Lê o user_id/userId persistido no documento de membership.
+ * @param {Record<string, unknown>} membership
+ * @return {string}
+ */
+function getMembershipUserId(
+  membership: Record<string, unknown>
+): string {
+  if (typeof membership.user_id === "string") {
+    return membership.user_id;
+  }
+  if (typeof membership.userId === "string") {
+    return membership.userId;
+  }
+  return "";
+}
+
+/**
+ * Aceita apenas memberships ACTIVE cuja identidade bate com o doc id.
+ * @param {admin.firestore.QueryDocumentSnapshot} doc
+ * @return {boolean}
+ */
+function isActiveMembershipDoc(
+  doc: admin.firestore.QueryDocumentSnapshot
+): boolean {
+  const membership = doc.data() as Record<string, unknown>;
+  return (
+    membership.status === ACTIVE_GROUP_MEMBER_STATUS &&
+    getMembershipUserId(membership) === doc.id
+  );
+}
 
 /**
  * Decide se a atualização alterou a data ou local do jogo.
@@ -176,6 +209,7 @@ export async function fetchEligibleGroupMemberIdsForVacancy(
       .collection("groups")
       .doc(groupId)
       .collection("members")
+      .where("status", "==", ACTIVE_GROUP_MEMBER_STATUS)
       .limit(GROUP_MEMBER_PAGE_SIZE);
 
     if (lastDoc) {
@@ -190,6 +224,10 @@ export async function fetchEligibleGroupMemberIdsForVacancy(
     type DocSnap =
       admin.firestore.QueryDocumentSnapshot;
     for (const doc of membersSnap.docs as DocSnap[]) {
+      if (!isActiveMembershipDoc(doc)) {
+        continue;
+      }
+
       if (excludedUserIds.has(doc.id)) {
         continue;
       }
@@ -254,6 +292,7 @@ export const onGameCreated = onDocumentCreated(
           .collection("groups")
           .doc(game.group_id)
           .collection("members")
+          .where("status", "==", ACTIVE_GROUP_MEMBER_STATUS)
           .where(
             "role",
             "in",
@@ -264,6 +303,7 @@ export const onGameCreated = onDocumentCreated(
         type DocSnap =
           admin.firestore.QueryDocumentSnapshot;
         const memberIds = membersSnap.docs
+          .filter((doc: DocSnap) => isActiveMembershipDoc(doc))
           .map((doc: DocSnap) => doc.id)
           .filter(
             (id: string) => id !== ownerId
@@ -506,7 +546,7 @@ export const onGameVacancy = onDocumentUpdated(
       const gameRef = db()
         .collection("games")
         .doc(gameId);
-      const vacancyClaim =
+      const vacancyCheck =
         await db().runTransaction(async (tx) => {
           const gameDoc = await tx.get(gameRef);
           if (!gameDoc.exists) {
@@ -559,20 +599,15 @@ export const onGameVacancy = onDocumentUpdated(
             };
           }
 
-          tx.update(gameRef, {
-            vacancy_notified_at:
-              FieldValue.serverTimestamp(),
-          });
-
           return {
             shouldNotify: true,
-            reason: "claimed",
+            reason: "eligible",
             game,
           };
         });
 
-      if (!vacancyClaim.shouldNotify || !vacancyClaim.game) {
-        if (vacancyClaim.reason === "throttled") {
+      if (!vacancyCheck.shouldNotify || !vacancyCheck.game) {
+        if (vacancyCheck.reason === "throttled") {
           logger.info(
             "[GAME_VACANCY] Vaga ja notificada recentemente" +
             ` para jogo ${gameId}, ignorando.`
@@ -582,7 +617,7 @@ export const onGameVacancy = onDocumentUpdated(
         return;
       }
 
-      const game = vacancyClaim.game;
+      const game = vacancyCheck.game;
 
       const maxPlayers =
         typeof game.max_players === "number" ?
@@ -618,6 +653,59 @@ export const onGameVacancy = onDocumentUpdated(
       // que disparava mesmo quando o jogo continuava cheio
       // (ex: 15 confirmados, 1 cancela → 14 = maxPlayers, sem vaga).
       if (currentPlayers < maxPlayers) {
+        const vacancyClaim =
+          await db().runTransaction(async (tx) => {
+            const gameDoc = await tx.get(gameRef);
+            if (!gameDoc.exists) {
+              return false;
+            }
+
+            const freshGame = gameDoc.data() as
+              Record<string, unknown> |
+              undefined;
+            if (!freshGame) {
+              return false;
+            }
+
+            if (
+              freshGame.status !== "SCHEDULED" &&
+              freshGame.status !== "CONFIRMED"
+            ) {
+              return false;
+            }
+
+            const freshNotifiedAt =
+              freshGame.vacancy_notified_at &&
+              typeof freshGame.vacancy_notified_at === "object" &&
+              "toDate" in freshGame.vacancy_notified_at &&
+              typeof freshGame.vacancy_notified_at.toDate === "function" ?
+                freshGame.vacancy_notified_at.toDate() as Date :
+                null;
+
+            if (
+              freshNotifiedAt &&
+              (Date.now() - freshNotifiedAt.getTime()) <
+                VACANCY_NOTIFICATION_COOLDOWN_MS
+            ) {
+              return false;
+            }
+
+            tx.update(gameRef, {
+              vacancy_notified_at:
+                FieldValue.serverTimestamp(),
+            });
+            return true;
+          });
+
+        if (!vacancyClaim) {
+          logger.info(
+            "[GAME_VACANCY] Vaga real detectada, mas outro handler" +
+            ` ja reivindicou o cooldown para ${gameId}.`
+          );
+          await completeNotificationEvent(`game_vacancy:${event.id}`);
+          return;
+        }
+
         // 1. Notificar a waitlist
         // FIX #753: era .collection("waitlist") raiz inexistente.
         // Android escreve em games/{gameId}/waitlist/ (subcollection).

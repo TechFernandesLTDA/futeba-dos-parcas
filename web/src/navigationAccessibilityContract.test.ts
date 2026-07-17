@@ -15,7 +15,10 @@ describe('contrato de acessibilidade da navegação', () => {
     expect(focusBlock).toContain('[location.pathname, location.search]');
     expect(app).toContain('onTransitionComplete={focusMainContent}');
 
-    expect(announcerBlock).toContain('getActiveNavItem(location.pathname, location.search)');
+    expect(app).toContain('function getRouteAnnouncementTitle(');
+    expect(app).toContain("if (pathname === '/guide') return t('page.title.appGuide');");
+    expect(app).toContain("if (pathname.startsWith('/checkin/')) return t('page.title.qrCheckIn');");
+    expect(announcerBlock).toContain('getRouteAnnouncementTitle(');
     expect(announcerBlock).toContain("t('a11y.routeAnnouncement'");
     expect(announcerBlock).not.toContain('document.title');
   });

@@ -3,8 +3,13 @@ import {FieldValue} from "firebase-admin/firestore";
 import {
   onDocumentWritten,
 } from "firebase-functions/v2/firestore";
-import {FUNCTION_REGION} from "./constants";
 import {db} from "./_db";
+import {
+  clampStat,
+  FUNCTION_REGION,
+  MAX_ASSISTS_PER_GAME,
+  MAX_GOALS_PER_GAME,
+} from "./constants";
 
 const POINTS_WIN = 3;
 const POINTS_DRAW = 1;
@@ -94,6 +99,20 @@ type StoredGroupLeagueMatch = {
   team2_score?: number;
   date?: string;
   player_results?: GroupLeaguePlayerResult[];
+};
+
+type GroupLeagueMatchPayload = {
+  groupId: string;
+  matchRef: FirebaseFirestore.DocumentReference;
+  teamSummaries: GroupLeagueTeamSummary[];
+  playerResults: GroupLeaguePlayerResult[];
+  date: string;
+};
+
+type GroupLeaguePayloadBuildResult = {
+  payload: GroupLeagueMatchPayload | null;
+  teamCount: number;
+  confirmationCount: number;
 };
 
 /**
@@ -260,6 +279,105 @@ export function resolveFinishedTeamScore(
 }
 
 /**
+ * Build the next persisted league-match payload using reads owned by a tx.
+ *
+ * @param {FirebaseFirestore.Transaction} tx Firestore transaction.
+ * @param {string} gameId Finished game id.
+ * @param {Record<string, unknown>} gameData Canonical game payload from trigger.
+ * @return {Promise<GroupLeaguePayloadBuildResult>} Built payload + read stats.
+ */
+async function buildNextMatchPayload(
+  tx: FirebaseFirestore.Transaction,
+  gameId: string,
+  gameData: Record<string, unknown>,
+): Promise<GroupLeaguePayloadBuildResult> {
+  const groupId = typeof gameData.group_id === "string" ? gameData.group_id : "";
+  if (!groupId || gameData.status !== "FINISHED") {
+    return {
+      payload: null,
+      teamCount: 0,
+      confirmationCount: 0,
+    };
+  }
+
+  const confirmationsQuery = db()
+    .collection("confirmations")
+    .where("game_id", "==", gameId)
+    .where("status", "==", "CONFIRMED");
+  const teamsQuery = db()
+    .collection("teams")
+    .where("game_id", "==", gameId);
+
+  const [confirmationsSnap, teamsSnap] = await Promise.all([
+    tx.get(confirmationsQuery),
+    tx.get(teamsQuery),
+  ]);
+
+  const confirmations: ProcessedConfirmation[] =
+    confirmationsSnap.docs.map((doc) => ({
+      userId: (doc.data().user_id as string) || "",
+      goals: clampStat(doc.data().goals, MAX_GOALS_PER_GAME),
+      assists: clampStat(doc.data().assists, MAX_ASSISTS_PER_GAME),
+      isMvp: (doc.data().is_mvp as boolean) || false,
+    }));
+  const teams: ProcessedTeam[] = teamsSnap.docs.map((doc, index) => {
+    const teamData = doc.data();
+    const storedScore = typeof teamData.score === "number" ?
+      teamData.score : 0;
+    return {
+      id: doc.id,
+      name: (teamData.name as string) || "Time",
+      playerIds: (teamData.player_ids as string[]) || [],
+      score: resolveFinishedTeamScore(
+        doc.id,
+        index,
+        teamsSnap.docs.length,
+        storedScore,
+        gameData,
+      ),
+    };
+  });
+
+  if (teams.length < 2 || confirmations.length === 0) {
+    return {
+      payload: null,
+      teamCount: teams.length,
+      confirmationCount: confirmations.length,
+    };
+  }
+
+  const teamSummaries = buildGroupLeagueTeamSummaries(teams);
+  const playerResults = buildGroupLeaguePlayerResults(
+    confirmations,
+    teams,
+  );
+
+  if (playerResults.length === 0) {
+    return {
+      payload: null,
+      teamCount: teams.length,
+      confirmationCount: confirmations.length,
+    };
+  }
+
+  return {
+    payload: {
+      groupId,
+      matchRef: db()
+        .collection("groups")
+        .doc(groupId)
+        .collection("league_matches")
+        .doc(gameId),
+      teamSummaries,
+      playerResults,
+      date: (gameData.date as string) || "",
+    },
+    teamCount: teams.length,
+    confirmationCount: confirmations.length,
+  };
+}
+
+/**
  * Apply or revert a single player's contribution to league standings.
  *
  * @param {FirebaseFirestore.Transaction} tx Firestore transaction.
@@ -395,88 +513,28 @@ export const onGameFinishedGroupLeague = onDocumentWritten(
     }
 
     try {
-      let nextMatchPayload: {
-        groupId: string;
-        matchRef: FirebaseFirestore.DocumentReference;
-        teamSummaries: GroupLeagueTeamSummary[];
-        playerResults: GroupLeaguePlayerResult[];
-        date: string;
-      } | null = null;
+      let skippedTeamCount: number | null = null;
+      let skippedConfirmationCount: number | null = null;
 
       if (shouldApplyAfter && afterGroupId) {
         logger.info(
           `[GROUP_LEAGUE] Rebuilding standings for game ${gameId} in group ${afterGroupId}`,
         );
-
-        const [confirmationsSnap, teamsSnap] =
-        await Promise.all([
-          db()
-            .collection("confirmations")
-            .where("game_id", "==", gameId)
-            .where("status", "==", "CONFIRMED")
-            .get(),
-          db()
-            .collection("teams")
-            .where("game_id", "==", gameId)
-            .get(),
-        ]);
-
-        const confirmations: ProcessedConfirmation[] =
-          confirmationsSnap.docs.map((doc) => ({
-            userId: (doc.data().user_id as string) || "",
-            goals: (doc.data().goals as number) || 0,
-            assists: (doc.data().assists as number) || 0,
-            isMvp: (doc.data().is_mvp as boolean) || false,
-          }));
-        const teams: ProcessedTeam[] = teamsSnap.docs.map((doc, index) => {
-          const teamData = doc.data();
-          const storedScore = typeof teamData.score === "number" ?
-            teamData.score : 0;
-          return {
-            id: doc.id,
-            name: (teamData.name as string) || "Time",
-            playerIds: (teamData.player_ids as string[]) || [],
-            score: resolveFinishedTeamScore(
-              doc.id,
-              index,
-              teamsSnap.docs.length,
-              storedScore,
-              after,
-            ),
-          };
-        });
-
-        if (teams.length >= 2 && confirmations.length > 0) {
-          const teamSummaries = buildGroupLeagueTeamSummaries(teams);
-          const playerResults = buildGroupLeaguePlayerResults(
-            confirmations,
-            teams,
-          );
-
-          if (playerResults.length > 0) {
-            nextMatchPayload = {
-              groupId: afterGroupId,
-              matchRef: db()
-                .collection("groups")
-                .doc(afterGroupId)
-                .collection("league_matches")
-                .doc(gameId),
-              teamSummaries,
-              playerResults,
-              date: (after.date as string) || "",
-            };
-          }
-        } else {
-          logger.info(
-            `[GROUP_LEAGUE] Skipping apply for ${gameId}: ` +
-              `${teams.length} teams, ${confirmations.length} confirmations`,
-          );
-        }
       }
 
-      const matchPayload = nextMatchPayload;
       let revertedMatchCount = 0;
       await db().runTransaction(async (tx) => {
+        const matchPayloadResult = shouldApplyAfter && after ?
+          await buildNextMatchPayload(tx, gameId, after) :
+          {payload: null, teamCount: 0, confirmationCount: 0};
+        const matchPayload = matchPayloadResult.payload;
+        skippedTeamCount = matchPayload ?
+          null :
+          matchPayloadResult.teamCount;
+        skippedConfirmationCount = matchPayload ?
+          null :
+          matchPayloadResult.confirmationCount;
+
         const matchSnapshots = candidateMatches.length > 0 ?
           await tx.getAll(
             ...candidateMatches.map(({matchRef}) => matchRef),
@@ -566,6 +624,18 @@ export const onGameFinishedGroupLeague = onDocumentWritten(
           created_at: FieldValue.serverTimestamp(),
         });
       });
+
+      if (
+        shouldApplyAfter &&
+        skippedTeamCount !== null &&
+        skippedConfirmationCount !== null
+      ) {
+        logger.info(
+          `[GROUP_LEAGUE] Skipping apply for ${gameId}: ` +
+            `${skippedTeamCount} teams, ` +
+            `${skippedConfirmationCount} confirmations`,
+        );
+      }
 
       logger.info(
         `[GROUP_LEAGUE] Game ${gameId} rebuilt with ` +

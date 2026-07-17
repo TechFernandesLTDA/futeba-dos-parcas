@@ -35,6 +35,12 @@ const DEFAULT_RADIUS_METERS = 200;
 const MAX_RADIUS_METERS = 2000;
 const MAX_GPS_ACCURACY_METERS = 100;
 const QR_RADIUS_METERS = 500;
+const CHECKIN_SIGNAL_RECENT_LIMIT = 50;
+const GENERATE_CHECKIN_TOKEN_RATE_LIMIT = {
+  maxRequests: 5,
+  windowMs: 60 * 1000,
+  keyPrefix: "checkin_qr_generate",
+};
 
 interface CheckInRequest {
   gameId: string;
@@ -123,6 +129,66 @@ function toTimestampMs(value: unknown): number | null {
     return Number.isNaN(parsed) ? null : parsed;
   }
   return null;
+}
+
+/**
+ * Timestamp de referência usado para ordenar histórico de check-ins.
+ *
+ * @param {RecentCheckInCandidate} candidate Item do histórico.
+ * @return {number | null} Epoch ms do check-in ou do horário do jogo.
+ */
+function getCheckInReferenceMs(
+  candidate: RecentCheckInCandidate
+): number | null {
+  return candidate.checkedInAtMs ?? candidate.gameDateTimeMs;
+}
+
+/**
+ * Carrega somente os check-ins mais recentes relevantes para o anti-cheat.
+ *
+ * @param {string} uid Usuário do check-in atual.
+ * @param {string} currentGameId Jogo atual para evitar auto-conflito.
+ * @return {Promise<RecentCheckInCandidate[]>} Janela recente ordenada.
+ */
+async function loadRecentCheckInCandidates(
+  uid: string,
+  currentGameId: string
+): Promise<RecentCheckInCandidate[]> {
+  const recentSnap = await db()
+    .collection("confirmations")
+    .where("user_id", "==", uid)
+    .where("checked_in", "==", true)
+    .orderBy("checked_in_at", "desc")
+    .limit(CHECKIN_SIGNAL_RECENT_LIMIT)
+    .get();
+
+  return recentSnap.docs
+    .map((doc) => {
+      const data = doc.data();
+      const gameId = String(data.game_id ?? "");
+      return {
+        confId: doc.id,
+        gameId,
+        checkedInAtMs: toTimestampMs(data.checked_in_at),
+        gameDateTimeMs: toTimestampMs(data.game_date_time),
+        lat:
+          typeof data.check_in_lat_approx === "number" ?
+            data.check_in_lat_approx :
+            null,
+        lng:
+          typeof data.check_in_lng_approx === "number" ?
+            data.check_in_lng_approx :
+            null,
+      };
+    })
+    .filter((candidate) =>
+      candidate.gameId.length > 0 &&
+      candidate.gameId !== currentGameId &&
+      getCheckInReferenceMs(candidate) !== null
+    )
+    .sort(
+      (a, b) => (getCheckInReferenceMs(b) ?? 0) - (getCheckInReferenceMs(a) ?? 0)
+    );
 }
 
 /**
@@ -249,12 +315,10 @@ async function recordCheckInSignals(input: {
   checkedInAtMs: number;
   confId: string;
 }): Promise<void> {
-  const previousCheckInsSnap = await db()
-    .collection("confirmations")
-    .where("user_id", "==", input.uid)
-    .where("checked_in", "==", true)
-    .limit(50)
-    .get();
+  const recentCheckIns = await loadRecentCheckInCandidates(
+    input.uid,
+    input.gameId,
+  );
 
   const signal = classifyCheckInTravelSignal({
     gameStatus: input.gameStatus,
@@ -262,28 +326,7 @@ async function recordCheckInSignals(input: {
     checkedInAtMs: input.checkedInAtMs,
     lat: input.lat,
     lng: input.lng,
-    recentCheckIns: previousCheckInsSnap.docs
-      .map((doc) => {
-        const data = doc.data();
-        return {
-          confId: doc.id,
-          gameId: String(data.game_id ?? ""),
-          checkedInAtMs: toTimestampMs(data.checked_in_at),
-          gameDateTimeMs: toTimestampMs(data.game_date_time),
-          lat:
-            typeof data.check_in_lat_approx === "number" ?
-              data.check_in_lat_approx :
-              null,
-          lng:
-            typeof data.check_in_lng_approx === "number" ?
-              data.check_in_lng_approx :
-              null,
-        };
-      })
-      .filter((item) =>
-        item.gameId.length > 0 &&
-        item.gameId !== input.gameId,
-      ),
+    recentCheckIns,
   });
 
   if (
@@ -749,6 +792,18 @@ export const generateCheckinToken = onCall(
     }
     const {auth, data} = request;
     const uid = auth.uid;
+    const rateLimit = await checkRateLimit(uid, GENERATE_CHECKIN_TOKEN_RATE_LIMIT);
+    if (!rateLimit.allowed) {
+      const resetInSec = Math.max(
+        1,
+        Math.ceil((rateLimit.resetAt.getTime() - Date.now()) / 1000)
+      );
+      throw new HttpsError(
+        "resource-exhausted",
+        `Muitas gerações de QR. Tente novamente em ${resetInSec} segundos.`,
+        {retryAfter: resetInSec}
+      );
+    }
 
     const {gameId} = (data ?? {}) as {gameId?: string};
     if (typeof gameId !== "string" || gameId.length === 0 || gameId.length > 128) {
@@ -758,57 +813,69 @@ export const generateCheckinToken = onCall(
       );
     }
 
-    const gameSnap = await db().doc(`games/${gameId}`).get();
-    if (!gameSnap.exists) {
-      throw new HttpsError("not-found", "Jogo não encontrado");
-    }
-    const game = gameSnap.data() as Record<string, unknown>;
+    const gameRef = db().doc(`games/${gameId}`);
+    const tokenResult = await db().runTransaction(async (tx) => {
+      const gameSnap = await tx.get(gameRef);
+      if (!gameSnap.exists) {
+        throw new HttpsError("not-found", "Jogo não encontrado");
+      }
+      const game = gameSnap.data() as Record<string, unknown>;
 
-    const ownerId = game.owner_id as string;
-    const coOrganizers = (game.co_organizers as string[]) ?? [];
-    const isAdmin = request.auth?.token?.role === "ADMIN";
+      const ownerId = game.owner_id as string;
+      const coOrganizers = Array.isArray(game.co_organizers) ?
+        game.co_organizers.filter(
+          (item): item is string => typeof item === "string"
+        ) :
+        [];
+      const isAdmin = request.auth?.token?.role === "ADMIN";
 
-    if (ownerId !== uid && !coOrganizers.includes(uid) && !isAdmin) {
-      throw new HttpsError(
-        "permission-denied",
-        "Apenas o dono ou admin pode gerar QR code",
-      );
-    }
+      if (ownerId !== uid && !coOrganizers.includes(uid) && !isAdmin) {
+        throw new HttpsError(
+          "permission-denied",
+          "Apenas o dono ou admin pode gerar QR code",
+        );
+      }
 
-    const status = game.status as string;
-    if (status !== "CONFIRMED" && status !== "LIVE") {
-      throw new HttpsError(
-        "failed-precondition",
-        "QR code apenas em jogos CONFIRMED ou LIVE",
-      );
-    }
+      const status = game.status as string;
+      if (status !== "CONFIRMED" && status !== "LIVE") {
+        throw new HttpsError(
+          "failed-precondition",
+          "QR code apenas em jogos CONFIRMED ou LIVE",
+        );
+      }
 
-    // FIX #2051: Reuse existing valid token to prevent spamming
-    const existingToken = game.checkin_qr_token as string | undefined;
-    const existingExpiresAt = game.checkin_qr_token_expires_at as
-      Timestamp | undefined;
-    if (
-      typeof existingToken === "string" &&
-      existingExpiresAt &&
-      typeof existingExpiresAt.toDate === "function" &&
-      existingExpiresAt.toDate().getTime() > Date.now()
-    ) {
-      logger.info("[CHECKIN_QR_TOKEN_REUSE]", {gameId, uid});
-      return {success: true, token: existingToken};
-    }
+      const existingToken = game.checkin_qr_token as string | undefined;
+      const existingExpiresAt = game.checkin_qr_token_expires_at as
+        Timestamp | undefined;
+      if (
+        typeof existingToken === "string" &&
+        existingExpiresAt &&
+        typeof existingExpiresAt.toDate === "function" &&
+        existingExpiresAt.toDate().getTime() > Date.now()
+      ) {
+        return {token: existingToken, reused: true};
+      }
 
-    const token = crypto.randomUUID().replace(/-/g, "").slice(0, 24);
+      const token = crypto.randomUUID().replace(/-/g, "").slice(0, 24);
 
-    await db().doc(`games/${gameId}`).update({
-      checkin_qr_token: token,
-      checkin_qr_token_expires_at: Timestamp.fromMillis(
-        Date.now() + 24 * 60 * 60 * 1000
-      ),
-      checkin_qr_token_created_at: FieldValue.serverTimestamp(),
+      tx.update(gameRef, {
+        checkin_qr_token: token,
+        checkin_qr_token_expires_at: Timestamp.fromMillis(
+          Date.now() + 24 * 60 * 60 * 1000
+        ),
+        checkin_qr_token_created_at: FieldValue.serverTimestamp(),
+      });
+
+      return {token, reused: false};
     });
 
-    logger.info("[CHECKIN_QR_TOKEN_GENERATED]", {gameId, uid});
+    logger.info(
+      tokenResult.reused ?
+        "[CHECKIN_QR_TOKEN_REUSE]" :
+        "[CHECKIN_QR_TOKEN_GENERATED]",
+      {gameId, uid},
+    );
 
-    return {success: true, token};
+    return {success: true, token: tokenResult.token};
   },
 );

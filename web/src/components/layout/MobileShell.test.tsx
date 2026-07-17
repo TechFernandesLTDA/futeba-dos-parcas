@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { useHideMobileTopBar } from '../../hooks/useMobileTopBarVisibility';
 
 const mockRoute = vi.hoisted(() => ({ pathname: '/' }));
 const mockAuth = vi.hoisted(() => ({ user: { id: 'user-1' } as { id: string } | null }));
@@ -32,6 +33,11 @@ vi.mock('./MobileTopBar', () => ({
 
 import { MobileShell } from './MobileShell';
 
+function HeaderOverrideProbe() {
+  useHideMobileTopBar();
+  return <main>Conteúdo</main>;
+}
+
 function renderShell() {
   return render(
     <ThemeProvider theme={createTheme()}>
@@ -62,6 +68,19 @@ describe('MobileShell', () => {
     expect(screen.getByTestId('top-bar')).toHaveAttribute('data-show-back', 'true');
     expect(mockSwipeBack.mock.calls[0][0].disabled).toBe(false);
     expect(mockSwipeBack.mock.calls[0][0].targetRef.current).toHaveAttribute('id', 'mobile-shell');
+  });
+
+  it('oculta a top bar global quando a tela registra header próprio', () => {
+    mockRoute.pathname = '/game/game-1';
+
+    render(
+      <ThemeProvider theme={createTheme()}>
+        <MobileShell><HeaderOverrideProbe /></MobileShell>
+      </ThemeProvider>,
+    );
+
+    expect(screen.queryByTestId('top-bar')).not.toBeInTheDocument();
+    expect(screen.getByTestId('bottom-nav')).toBeInTheDocument();
   });
 
   it('não exibe navegação autenticada para visitante', () => {

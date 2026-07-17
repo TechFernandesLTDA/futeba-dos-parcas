@@ -48,6 +48,12 @@ import {
   toActiveRecurringMemberInvite,
 } from "../src/games/recurrence-engine"
 
+function hasUndefined(value: unknown): boolean {
+  if (value === undefined) return true
+  if (!value || typeof value !== "object") return false
+  return Object.values(value as Record<string, unknown>).some(hasUndefined)
+}
+
 describe("toActiveRecurringMemberInvite", () => {
   beforeEach(() => {
     jest.clearAllMocks()
@@ -567,5 +573,188 @@ describe("onGameFinishedCreateRecurrence", () => {
       })
     )
     expect(mockSendNotificationToUsers).not.toHaveBeenCalled()
+  })
+
+  it("remove campos undefined ao criar filho de jogo legado", async () => {
+    const gamesDoc = jest.fn((id: string) => ({
+      id,
+      path: `games/${id}`,
+    }))
+    const notificationQueueDoc = jest.fn((id: string) => ({
+      id,
+      path: `notification_queue/${id}`,
+    }))
+    const fakeDb: any = {
+      collection: jest.fn((name: string) => {
+        if (name === "games") {
+          return {
+            where: jest.fn(() => ({
+              count: jest.fn(() => ({
+                get: jest.fn().mockResolvedValue({data: () => ({count: 0})}),
+              })),
+            })),
+            doc: gamesDoc,
+          }
+        }
+
+        if (name === "confirmations") {
+          return {
+            doc: jest.fn((id: string) => ({
+              id,
+              path: `confirmations/${id}`,
+            })),
+          }
+        }
+
+        if (name === "notification_queue") {
+          return {
+            doc: notificationQueueDoc,
+          }
+        }
+
+        throw new Error(`Unexpected collection ${name}`)
+      }),
+      runTransaction: mockRunTransaction,
+      batch: mockBatch,
+    }
+
+    mockFirestore.mockReturnValue(fakeDb)
+
+    const afterRef = {path: "games/game-legacy"}
+    const currentGame = {
+      status: "FINISHED",
+      recurrence: "weekly",
+      owner_id: "owner-legacy",
+      owner_name: "Owner",
+      date: "2026-06-20",
+      time: "20:00",
+      next_game_created: true,
+      next_game_id: "recurring_game-legacy_2",
+      next_game_confirmations_created: false,
+      next_game_notification_enqueued: false,
+    }
+    let childReads = 0
+    const txSet = jest.fn()
+    const txUpdate = jest.fn()
+    mockRunTransaction.mockImplementation(async (callback: any) => callback({
+      get: jest.fn((ref: any) => {
+        if (ref === afterRef) {
+          return Promise.resolve({
+            exists: true,
+            data: () => currentGame,
+            get: (field: string) => (currentGame as any)[field],
+          })
+        }
+
+        if (ref?.id === "recurring_game-legacy_2") {
+          childReads += 1
+          if (childReads === 1) return Promise.resolve({exists: false})
+          return Promise.resolve({
+            exists: true,
+            data: () => ({
+              recurrence_parent_id: "game-legacy",
+              recurrence_index: 2,
+              owner_id: "owner-legacy",
+              status: "SCHEDULED",
+            }),
+          })
+        }
+
+        return Promise.resolve({exists: false})
+      }),
+      set: txSet,
+      update: txUpdate,
+    }))
+
+    await expect(onGameFinishedCreateRecurrence({
+      data: {
+        before: {data: () => ({status: "SCHEDULED"})},
+        after: {
+          data: () => currentGame,
+          ref: afterRef,
+        },
+      },
+      params: {gameId: "game-legacy"},
+    })).resolves.toBeUndefined()
+
+    const childWrite = txSet.mock.calls.find(
+      ([ref]: [{id?: string}]) => ref.id === "recurring_game-legacy_2"
+    )
+    expect(childWrite).toBeDefined()
+    const childPayload = childWrite?.[1]
+    expect(childPayload).not.toHaveProperty("visibility")
+    expect(childPayload).not.toHaveProperty("location_name")
+    expect(childPayload).not.toHaveProperty("location_address")
+    expect(childPayload).not.toHaveProperty("field_type")
+    expect(hasUndefined(childPayload)).toBe(false)
+    expect(txUpdate).toHaveBeenCalledWith(afterRef, expect.objectContaining({
+      next_game_confirmations_created: true,
+    }))
+    expect(txUpdate).toHaveBeenCalledWith(afterRef, expect.objectContaining({
+      next_game_notification_enqueued: true,
+    }))
+  })
+
+  it("não relança erro permanente de invariante para evitar retry infinito", async () => {
+    const fakeDb: any = {
+      collection: jest.fn((name: string) => {
+        if (name === "games") {
+          return {
+            where: jest.fn(() => ({
+              count: jest.fn(() => ({
+                get: jest.fn().mockResolvedValue({data: () => ({count: 0})}),
+              })),
+            })),
+            doc: jest.fn((id: string) => ({id, path: `games/${id}`})),
+          }
+        }
+        throw new Error(`Unexpected collection ${name}`)
+      }),
+      runTransaction: mockRunTransaction,
+      batch: mockBatch,
+    }
+    mockFirestore.mockReturnValue(fakeDb)
+
+    const afterRef = {path: "games/game-bad"}
+    const invalidCurrentGame = {
+      status: "FINISHED",
+      recurrence: "weekly",
+      date: "2026-06-20",
+    }
+
+    mockRunTransaction.mockImplementation(async (callback: any) => callback({
+      get: jest.fn((ref: any) => {
+        if (ref === afterRef) {
+          return Promise.resolve({
+            exists: true,
+            data: () => invalidCurrentGame,
+            get: (field: string) => (invalidCurrentGame as any)[field],
+          })
+        }
+        return Promise.resolve({exists: false})
+      }),
+      set: jest.fn(),
+      update: jest.fn(),
+    }))
+
+    await expect(onGameFinishedCreateRecurrence({
+      data: {
+        before: {data: () => ({status: "SCHEDULED"})},
+        after: {
+          data: () => invalidCurrentGame,
+          ref: afterRef,
+        },
+      },
+      params: {gameId: "game-bad"},
+    })).resolves.toBeUndefined()
+
+    expect(
+      jest.mocked(require("firebase-functions/v2").logger.error)
+    ).toHaveBeenCalled()
+    expect(
+      jest.mocked(require("firebase-functions/v2").logger.info)
+    ).toHaveBeenCalledWith(
+      expect.stringContaining("Suppressing retry for non-retryable recurrence error on game-bad")
+    )
   })
 })

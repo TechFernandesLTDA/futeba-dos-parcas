@@ -29,6 +29,8 @@ const getDb = () => admin.firestore();
 
 // Tempo de expiração de convites de grupo (48h em ms)
 const INVITE_EXPIRATION_MS = 48 * 60 * 60 * 1000;
+const EXPIRED_INVITES_PAGE_SIZE = 250;
+const EXPIRED_INVITES_TIME_BUDGET_MS = 45 * 1000;
 const NOTIFICATION_DEDUP_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const NOTIFICATION_CLAIM_LEASE_MS = 5 * 60 * 1000;
 
@@ -69,6 +71,27 @@ function getStringField(
 ): string {
   const value = data[snakeKey] ?? data[camelKey];
   return typeof value === "string" ? value : fallback;
+}
+
+/**
+ * Aceita apenas memberships ACTIVE cuja identidade bate com o doc id.
+ *
+ * @param {admin.firestore.QueryDocumentSnapshot} doc Snapshot do member.
+ * @return {boolean}
+ */
+function isActiveMembershipDoc(
+  doc: admin.firestore.QueryDocumentSnapshot
+): boolean {
+  const membership = doc.data() as Record<string, unknown>;
+  const userId = getStringField(
+    membership,
+    "user_id",
+    "userId"
+  );
+  return (
+    membership.status === "ACTIVE" &&
+    userId === doc.id
+  );
 }
 
 /**
@@ -495,7 +518,11 @@ export const onGroupInviteCreated =
  * marcar convites pendentes antigos como EXPIRED.
  */
 export const cleanupExpiredInvites = onSchedule(
-  {schedule: "every 24 hours", region: FUNCTION_REGION},
+  {
+    schedule: "every 24 hours",
+    region: FUNCTION_REGION,
+    timeoutSeconds: 300,
+  },
   async () => {
     logger.info(
       "[CLEANUP] Iniciando limpeza de" +
@@ -508,51 +535,47 @@ export const cleanupExpiredInvites = onSchedule(
         Date.now() - INVITE_EXPIRATION_MS
       );
 
-      // Buscar convites pendentes antigos
-      const expiredInvitesSnap = await getDb()
-        .collection("group_invites")
-        .where("status", "==", "PENDING")
-        .where(
-          "created_at",
-          "<",
-          expirationTime
-        )
-        .get();
-
-      if (expiredInvitesSnap.empty) {
-        logger.info(
-          "[CLEANUP] Nenhum convite" +
-          " expirado encontrado"
-        );
-        return;
-      }
-
-      logger.info(
-        "[CLEANUP] Encontrados " +
-        `${expiredInvitesSnap.size}` +
-        " convites expirados"
-      );
-
-      // Atualizar em batch (máximo de 500)
-      type QDocSnap =
-        admin.firestore.QueryDocumentSnapshot;
-      const chunks: QDocSnap[][] = [];
-      const docs = expiredInvitesSnap.docs;
-
-      for (
-        let i = 0;
-        i < docs.length;
-        i += 500
-      ) {
-        chunks.push(docs.slice(i, i + 500));
-      }
-
+      const startedAt = Date.now();
+      let lastDoc:
+        admin.firestore.QueryDocumentSnapshot |
+        undefined;
       let totalUpdated = 0;
+      let pageCount = 0;
 
-      for (const chunk of chunks) {
+      while (
+        Date.now() - startedAt <
+        EXPIRED_INVITES_TIME_BUDGET_MS
+      ) {
+        let query = getDb()
+          .collection("group_invites")
+          .where("status", "==", "PENDING")
+          .where(
+            "created_at",
+            "<",
+            expirationTime
+          )
+          .orderBy("created_at", "asc")
+          .limit(EXPIRED_INVITES_PAGE_SIZE);
+
+        if (lastDoc) {
+          query = query.startAfter(lastDoc);
+        }
+
+        const expiredInvitesSnap = await query.get();
+        if (expiredInvitesSnap.empty) {
+          if (totalUpdated === 0) {
+            logger.info(
+              "[CLEANUP] Nenhum convite" +
+              " expirado encontrado"
+            );
+          }
+          break;
+        }
+
+        pageCount++;
         const batch = getDb().batch();
 
-        for (const doc of chunk) {
+        for (const doc of expiredInvitesSnap.docs) {
           batch.update(doc.ref, {
             status: "EXPIRED",
             expired_at:
@@ -562,12 +585,25 @@ export const cleanupExpiredInvites = onSchedule(
         }
 
         await batch.commit();
-        totalUpdated += chunk.length;
+        totalUpdated += expiredInvitesSnap.docs.length;
+
+        if (
+          expiredInvitesSnap.size <
+          EXPIRED_INVITES_PAGE_SIZE
+        ) {
+          break;
+        }
+
+        lastDoc =
+          expiredInvitesSnap.docs[
+            expiredInvitesSnap.docs.length - 1
+          ];
       }
 
       logger.info(
         `[CLEANUP] ${totalUpdated}` +
-        " convites marcados como EXPIRED"
+        " convites marcados como EXPIRED" +
+        ` em ${pageCount} página(s)`
       );
     } catch (e) {
       logger.error(
@@ -783,6 +819,7 @@ export const onMemberJoined = onDocumentCreated(
         .collection("groups")
         .doc(groupId)
         .collection("members")
+        .where("status", "==", "ACTIVE")
         .where(
           "role",
           "in",
@@ -793,6 +830,7 @@ export const onMemberJoined = onDocumentCreated(
       type DocSnap =
         admin.firestore.QueryDocumentSnapshot;
       const adminIds = adminsSnap.docs
+        .filter((doc: DocSnap) => isActiveMembershipDoc(doc))
         .map((doc: DocSnap) => doc.id)
         .filter(
           (id: string) => id !== memberId
@@ -894,6 +932,7 @@ export const onMemberLeft = onDocumentDeleted(
         .collection("groups")
         .doc(groupId)
         .collection("members")
+        .where("status", "==", "ACTIVE")
         .where(
           "role",
           "in",
@@ -903,9 +942,9 @@ export const onMemberLeft = onDocumentDeleted(
 
       type DocSnap =
         admin.firestore.QueryDocumentSnapshot;
-      const adminIds = adminsSnap.docs.map(
-        (doc: DocSnap) => doc.id
-      );
+      const adminIds = adminsSnap.docs
+        .filter((doc: DocSnap) => isActiveMembershipDoc(doc))
+        .map((doc: DocSnap) => doc.id);
 
       if (adminIds.length > 0) {
         await sendNotificationToUsers(
@@ -1004,6 +1043,7 @@ export const onCashboxTransaction =
           .collection("groups")
           .doc(groupId)
           .collection("members")
+          .where("status", "==", "ACTIVE")
           .where(
             "role",
             "in",
@@ -1014,6 +1054,7 @@ export const onCashboxTransaction =
         type DocSnap =
           admin.firestore.QueryDocumentSnapshot;
         const adminIds = adminsSnap.docs
+          .filter((doc: DocSnap) => isActiveMembershipDoc(doc))
           .map((doc: DocSnap) => doc.id)
           .filter(
             (id: string) => id !== createdById

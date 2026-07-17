@@ -16,6 +16,23 @@ interface AutoRatings {
   sampleSize: number;
 }
 
+interface AutoRatingsWritePayload {
+  auto_striker_rating: number;
+  auto_mid_rating: number;
+  auto_defender_rating: number;
+  auto_gk_rating: number;
+  auto_rating_samples: number;
+  auto_rating_updated_at: FirebaseFirestore.FieldValue;
+}
+
+interface AutoRatingsWriteResult {
+  mode: "user" | "fallback";
+  path: string;
+}
+
+const AUTO_RATING_FALLBACK_COLLECTION =
+  "auto_rating_fallbacks";
+
 /**
  * Reads a numeric stat from camelCase or snake_case fields.
  *
@@ -43,6 +60,115 @@ function num(
 function scale(value: number, max: number): number {
   if (max <= 0) return 0;
   return Math.min(Math.max((value / max) * 5.0, 0), 5.0);
+}
+
+/**
+ * Normaliza os campos persistidos junto do user doc/fallback doc.
+ *
+ * @param {AutoRatings} ratings Ratings calculados.
+ * @return {AutoRatingsWritePayload} Payload de escrita.
+ */
+function buildAutoRatingsWritePayload(
+  ratings: AutoRatings
+): AutoRatingsWritePayload {
+  return {
+    auto_striker_rating: ratings.striker,
+    auto_mid_rating: ratings.mid,
+    auto_defender_rating: ratings.defender,
+    auto_gk_rating: ratings.gk,
+    auto_rating_samples: ratings.sampleSize,
+    auto_rating_updated_at: FieldValue.serverTimestamp(),
+  };
+}
+
+/**
+ * Detecta falhas de update por documento inexistente.
+ *
+ * @param {unknown} error Erro retornado pelo Admin SDK.
+ * @return {boolean} true quando o user doc nao existe.
+ */
+function isMissingDocumentError(
+  error: unknown
+): boolean {
+  const typedError =
+    error as Record<string, unknown>;
+  const message =
+    typeof typedError.message === "string" ?
+      typedError.message :
+      "";
+
+  return typedError.code === 5 ||
+    typedError.status === "NOT_FOUND" ||
+    message.includes("No document to update") ||
+    message.includes("NOT_FOUND") ||
+    message.includes("not-found");
+}
+
+/**
+ * Persiste auto-ratings no user doc e, se o user estiver ausente,
+ * grava um fallback operacional para nao perder o calculo.
+ *
+ * @param {string} userId UID do usuario.
+ * @param {AutoRatings} ratings Ratings calculados.
+ * @return {Promise<AutoRatingsWriteResult>} Destino usado.
+ */
+async function persistAutoRatings(
+  userId: string,
+  ratings: AutoRatings
+): Promise<AutoRatingsWriteResult> {
+  const payload =
+    buildAutoRatingsWritePayload(ratings);
+  const userRef = db()
+    .collection("users")
+    .doc(userId);
+
+  try {
+    await userRef.update(
+      payload as unknown as
+        FirebaseFirestore.UpdateData<FirebaseFirestore.DocumentData>
+    );
+    return {
+      mode: "user",
+      path: `users/${userId}`,
+    };
+  } catch (error: unknown) {
+    if (!isMissingDocumentError(error)) {
+      throw error;
+    }
+
+    const fallbackPath =
+      `${AUTO_RATING_FALLBACK_COLLECTION}/${userId}`;
+    await db()
+      .collection(
+        AUTO_RATING_FALLBACK_COLLECTION
+      )
+      .doc(userId)
+      .set({
+        user_id: userId,
+        source_document:
+          `statistics/${userId}`,
+        status: "PENDING_USER_RECONCILIATION",
+        fallback_reason:
+          "missing_user_document",
+        ...payload,
+        fallback_written_at:
+          FieldValue.serverTimestamp(),
+      }, {merge: true});
+
+    logger.warn(
+      "Auto-ratings fallback persisted for orphan statistics",
+      {
+        userId,
+        sampleSize: ratings.sampleSize,
+        fallbackPath,
+      }
+    );
+
+    return {
+      mode: "fallback",
+      path: fallbackPath,
+    };
+  }
 }
 
 /**
@@ -97,18 +223,17 @@ export const onStatisticsWrittenForAutoRatings = onDocumentWritten(
     const ratings = calculateAutoRatingsFromStats(data);
     if (ratings.sampleSize < 1) return;
 
-    await db().collection("users").doc(userId).update({
-      auto_striker_rating: ratings.striker,
-      auto_mid_rating: ratings.mid,
-      auto_defender_rating: ratings.defender,
-      auto_gk_rating: ratings.gk,
-      auto_rating_samples: ratings.sampleSize,
-      auto_rating_updated_at: FieldValue.serverTimestamp(),
-    });
+    const writeResult =
+      await persistAutoRatings(
+        userId,
+        ratings
+      );
 
     logger.info("Auto-ratings updated from statistics", {
       userId,
       sampleSize: ratings.sampleSize,
+      writeMode: writeResult.mode,
+      writePath: writeResult.path,
     });
   }
 );

@@ -193,6 +193,42 @@ function recurrenceType(value: unknown): RecurrenceType | null {
 }
 
 /**
+ * Remove campos undefined antes de gravar no Firestore.
+ *
+ * @template T
+ * @param {T} value Valor original.
+ * @return {T} Valor sem campos undefined.
+ */
+function stripUndefinedValues<T>(value: T): T {
+  if (Array.isArray(value)) {
+    return value
+      .filter((item) => item !== undefined)
+      .map((item) => stripUndefinedValues(item)) as T;
+  }
+
+  if (!value || typeof value !== "object") {
+    return value;
+  }
+
+  return Object.fromEntries(
+    Object.entries(value as Record<string, unknown>)
+      .filter(([, entryValue]) => entryValue !== undefined)
+      .map(([key, entryValue]) => [key, stripUndefinedValues(entryValue)])
+  ) as T;
+}
+
+/**
+ * Classifica erros permanentes de invariantes/dados para evitar retry infinito.
+ *
+ * @param {unknown} error Erro capturado.
+ * @return {boolean} true quando o erro não deve ser reprocessado.
+ */
+function isNonRetryableRecurrenceError(error: unknown): boolean {
+  return error instanceof Error &&
+    error.message.startsWith("[RECURRENCE]");
+}
+
+/**
  * Indica se ainda há etapa durável pendente para um filho já marcado.
  * @param {admin.firestore.DocumentData} game - Jogo atual.
  * @return {boolean} True quando confirmações/outbox ainda não terminaram.
@@ -298,7 +334,7 @@ function buildRecurringGame(
   if (optionalString(current.stream_url)) {
     child.stream_url = current.stream_url;
   }
-  return child;
+  return stripUndefinedValues(child);
 }
 
 /**
@@ -715,6 +751,13 @@ export const onGameFinishedCreateRecurrence = onDocumentUpdated(
         `[RECURRENCE] Failed to create/provision recurrence for ${gameId}:`,
         err
       );
+      if (isNonRetryableRecurrenceError(err)) {
+        logger.info(
+          "[RECURRENCE] Suppressing retry for non-retryable recurrence " +
+          `error on ${gameId}`
+        );
+        return;
+      }
       throw err;
     }
   }

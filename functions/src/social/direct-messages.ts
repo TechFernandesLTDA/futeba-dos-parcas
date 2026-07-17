@@ -43,6 +43,9 @@ const DIRECT_CHAT_CREATE_RATE_LIMIT = {
   windowMs: 60 * 1000,
   keyPrefix: "direct_chat_create",
 };
+const DIRECT_CHAT_MEMBERSHIP_PAGE_SIZE = 20;
+const DIRECT_CHAT_CONFIRMATION_PAGE_SIZE = 100;
+const FIRESTORE_WHERE_IN_MAX = 10;
 
 /**
  * Valida string nao vazia.
@@ -64,6 +67,21 @@ function isSafeDocumentId(value: unknown, maxLength = 128): value is string {
   return isNonEmptyString(value) &&
     value.trim().length <= maxLength &&
     !value.includes("/");
+}
+
+/**
+ * Divide IDs em lotes compatíveis com whereIn do Firestore.
+ *
+ * @param {string[]} values IDs a consultar.
+ * @param {number} size Tamanho máximo por lote.
+ * @return {Array<string[]>} Lotes preservando a ordem de entrada.
+ */
+function chunkStrings(values: string[], size: number): string[][] {
+  const chunks: string[][] = [];
+  for (let index = 0; index < values.length; index += size) {
+    chunks.push(values.slice(index, index + size));
+  }
+  return chunks;
 }
 
 /**
@@ -184,20 +202,38 @@ async function hasSocialBlock(uidA: string, uidB: string): Promise<boolean> {
  * @return {Promise<boolean>} true se compartilham grupo.
  */
 async function shareActiveGroup(uidA: string, uidB: string): Promise<boolean> {
-  const memberships = await db()
-    .collectionGroup("members")
-    .where("user_id", "==", uidA)
-    .where("status", "==", "ACTIVE")
-    .limit(20)
-    .get();
+  let lastDoc: FirebaseFirestore.QueryDocumentSnapshot | null = null;
 
-  const checks = memberships.docs.map(async (member) => {
-    const groupRef = member.ref.parent.parent;
-    if (!groupRef) return false;
-    const peer = await groupRef.collection("members").doc(uidB).get();
-    return peer.exists && peer.data()?.status === "ACTIVE";
-  });
-  return (await Promise.all(checks)).some(Boolean);
+  while (true) {
+    let membershipsQuery = db()
+      .collectionGroup("members")
+      .where("user_id", "==", uidA)
+      .where("status", "==", "ACTIVE")
+      .limit(DIRECT_CHAT_MEMBERSHIP_PAGE_SIZE);
+    if (lastDoc) {
+      membershipsQuery = membershipsQuery.startAfter(lastDoc);
+    }
+
+    const memberships = await membershipsQuery.get();
+    if (memberships.empty) {
+      return false;
+    }
+
+    const checks = await Promise.all(memberships.docs.map(async (member) => {
+      const groupRef = member.ref.parent.parent;
+      if (!groupRef) return false;
+      const peer = await groupRef.collection("members").doc(uidB).get();
+      return peer.exists && peer.data()?.status === "ACTIVE";
+    }));
+    if (checks.some(Boolean)) {
+      return true;
+    }
+
+    lastDoc = memberships.docs[memberships.docs.length - 1];
+    if (memberships.size < DIRECT_CHAT_MEMBERSHIP_PAGE_SIZE) {
+      return false;
+    }
+  }
 }
 
 /**
@@ -208,30 +244,48 @@ async function shareActiveGroup(uidA: string, uidB: string): Promise<boolean> {
  * @return {Promise<boolean>} true se compartilham jogo.
  */
 async function shareConfirmedGame(uidA: string, uidB: string): Promise<boolean> {
-  const [aConfirmations, bConfirmations] = await Promise.all([
-    db()
+  let lastDoc: FirebaseFirestore.QueryDocumentSnapshot | null = null;
+
+  while (true) {
+    let confirmationsQuery = db()
       .collection("confirmations")
       .where("user_id", "==", uidA)
       .where("status", "==", "CONFIRMED")
-      .limit(100)
-      .get(),
-    db()
-      .collection("confirmations")
-      .where("user_id", "==", uidB)
-      .where("status", "==", "CONFIRMED")
-      .limit(100)
-      .get(),
-  ]);
+      .limit(DIRECT_CHAT_CONFIRMATION_PAGE_SIZE);
+    if (lastDoc) {
+      confirmationsQuery = confirmationsQuery.startAfter(lastDoc);
+    }
 
-  const aGameIds = new Set(
-    aConfirmations.docs
-      .map((confirmation) => confirmation.data().game_id)
-      .filter(isNonEmptyString)
-  );
-  return bConfirmations.docs.some((confirmation) => {
-    const gameId = confirmation.data().game_id;
-    return isNonEmptyString(gameId) && aGameIds.has(gameId);
-  });
+    const aConfirmations = await confirmationsQuery.get();
+    if (aConfirmations.empty) {
+      return false;
+    }
+
+    const aGameIds = Array.from(new Set(
+      aConfirmations.docs
+        .map((confirmation) => confirmation.data().game_id)
+        .filter(isNonEmptyString)
+    ));
+
+    for (const gameIdChunk of chunkStrings(aGameIds, FIRESTORE_WHERE_IN_MAX)) {
+      const bConfirmations = await db()
+        .collection("confirmations")
+        .where("user_id", "==", uidB)
+        .where("game_id", "in", gameIdChunk)
+        .get();
+
+      if (bConfirmations.docs.some((confirmation) =>
+        confirmation.data().status === "CONFIRMED"
+      )) {
+        return true;
+      }
+    }
+
+    lastDoc = aConfirmations.docs[aConfirmations.docs.length - 1];
+    if (aConfirmations.size < DIRECT_CHAT_CONFIRMATION_PAGE_SIZE) {
+      return false;
+    }
+  }
 }
 
 /**
@@ -277,10 +331,10 @@ export const createDirectChat = onCall(
       );
     }
 
-    const [sharedGroup, sharedGame] = await Promise.all([
-      shareActiveGroup(uid, targetUid),
-      shareConfirmedGame(uid, targetUid),
-    ]);
+    const sharedGroup = await shareActiveGroup(uid, targetUid);
+    const sharedGame = sharedGroup ?
+      false :
+      await shareConfirmedGame(uid, targetUid);
     if (!sharedGroup && !sharedGame) {
       throw new HttpsError(
         "permission-denied",

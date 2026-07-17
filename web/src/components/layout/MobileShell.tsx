@@ -1,4 +1,4 @@
-import { useRef, type ReactNode } from 'react';
+import { useCallback, useRef, useState, type ReactNode } from 'react';
 import { Box } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import { useLocation } from 'react-router-dom';
@@ -8,6 +8,7 @@ import { useAutoBreadcrumbs } from '../../hooks/useAutoBreadcrumbs';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
 import { useSwipeBack } from '../../hooks/useSwipeBack';
+import { MobileTopBarOverrideContext } from '../../hooks/useMobileTopBarVisibility';
 import { motion } from '../../theme/motion';
 import { MobileBottomNav } from './MobileBottomNav';
 import { MobileTopBar } from './MobileTopBar';
@@ -21,6 +22,18 @@ export function MobileShell({ children }: { children: ReactNode }) {
   const goBack = useNavigateBack();
   const shellRef = useRef<HTMLDivElement | null>(null);
   const reducedMotion = useReducedMotion();
+  const [topBarOverrideCount, setTopBarOverrideCount] = useState(0);
+
+  const registerTopBarOverride = useCallback(() => {
+    setTopBarOverrideCount((count) => count + 1);
+    let registered = true;
+
+    return () => {
+      if (!registered) return;
+      registered = false;
+      setTopBarOverrideCount((count) => Math.max(0, count - 1));
+    };
+  }, []);
 
   useSwipeBack({ targetRef: shellRef, disabled: !isSecondary });
 
@@ -29,46 +42,48 @@ export function MobileShell({ children }: { children: ReactNode }) {
     : `${motion('transform', 'short', 'standard')}, ${motion('opacity', 'short', 'standard')}`;
 
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        justifyContent: 'center',
-        minHeight: '100dvh',
-        bgcolor: { xs: 'background.default', sm: 'divider' },
-      }}
-    >
+    <MobileTopBarOverrideContext.Provider value={registerTopBarOverride}>
       <Box
-        ref={shellRef}
-        id="mobile-shell"
         sx={{
-          width: '100%',
-          maxWidth: { xs: '100%', sm: 600, md: 900, lg: 1440, xl: 1920 },
+          display: 'flex',
+          justifyContent: 'center',
           minHeight: '100dvh',
-          bgcolor: 'background.default',
-          boxShadow: (theme) => ({
-            xs: 'none',
-            sm: `0 0 40px ${alpha(
-              theme.palette.common.black,
-              theme.palette.mode === 'dark' ? 0.4 : 0.12,
-            )}`,
-          }),
-          position: 'relative',
-          transform: { xs: 'none', sm: 'translateZ(0)' },
-          opacity: 1,
-          transition: shellSettleTransition,
-          willChange: 'auto',
+          bgcolor: { xs: 'background.default', sm: 'divider' },
         }}
       >
-        {user && (
-          <MobileTopBar
-            unreadCount={unreadCount}
-            showBack={isSecondary}
-            onBack={goBack}
-            breadcrumbs={breadcrumbs}
-          />
-        )}
-        {user ? <MobileBottomNav>{children}</MobileBottomNav> : children}
+        <Box
+          ref={shellRef}
+          id="mobile-shell"
+          sx={{
+            width: '100%',
+            maxWidth: { xs: '100%', sm: 600, md: 900, lg: 1440, xl: 1920 },
+            minHeight: '100dvh',
+            bgcolor: 'background.default',
+            boxShadow: (theme) => ({
+              xs: 'none',
+              sm: `0 0 40px ${alpha(
+                theme.palette.common.black,
+                theme.palette.mode === 'dark' ? 0.4 : 0.12,
+              )}`,
+            }),
+            position: 'relative',
+            transform: { xs: 'none', sm: 'translateZ(0)' },
+            opacity: 1,
+            transition: shellSettleTransition,
+            willChange: 'auto',
+          }}
+        >
+          {user && topBarOverrideCount === 0 && (
+            <MobileTopBar
+              unreadCount={unreadCount}
+              showBack={isSecondary}
+              onBack={goBack}
+              breadcrumbs={breadcrumbs}
+            />
+          )}
+          {user ? <MobileBottomNav>{children}</MobileBottomNav> : children}
+        </Box>
       </Box>
-    </Box>
+    </MobileTopBarOverrideContext.Provider>
   );
 }

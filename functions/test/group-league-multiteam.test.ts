@@ -58,7 +58,13 @@ function storedHistoricalMatch(): LeagueTestDocument {
   };
 }
 
-function createLeagueFirestore(initialMatch?: LeagueTestDocument) {
+function createLeagueFirestore(
+  initialMatch?: LeagueTestDocument,
+  options?: {
+    confirmations?: Array<Record<string, unknown>>;
+    teams?: Array<Record<string, unknown> & {id: string}>;
+  },
+) {
   const matchPath = "groups/group-1/league_matches/game-1";
   const matches = new Map<string, LeagueTestDocument>();
   if (initialMatch) matches.set(matchPath, initialMatch);
@@ -66,8 +72,24 @@ function createLeagueFirestore(initialMatch?: LeagueTestDocument) {
   const writes: Array<{kind: "set" | "delete"; path: string; data?: any}> = [];
   const transactionEvents: string[][] = [];
   let externalMatchReads = 0;
+  let externalConfirmationReads = 0;
+  let externalTeamReads = 0;
   let activeSeasonReads = 0;
   let transactionQueue = Promise.resolve();
+  const confirmationDocs = options?.confirmations ?? [
+    {
+      user_id: "u1", status: "CONFIRMED", goals: 2, assists: 0,
+      is_mvp: true,
+    },
+    {
+      user_id: "u2", status: "CONFIRMED", goals: 0, assists: 1,
+      is_mvp: false,
+    },
+  ];
+  const teamDocs = options?.teams ?? [
+    {id: "team-a", name: "A", player_ids: ["u1"], score: 3},
+    {id: "team-b", name: "B", player_ids: ["u2"], score: 0},
+  ];
 
   const snapshot = (data?: LeagueTestDocument) => ({
     exists: Boolean(data),
@@ -88,26 +110,22 @@ function createLeagueFirestore(initialMatch?: LeagueTestDocument) {
     }),
     get: jest.fn(async () => {
       if (path === "confirmations") {
-        return querySnapshot([
-          {id: "confirmation-u1", data: () => ({
-            user_id: "u1", status: "CONFIRMED", goals: 2, assists: 0,
-            is_mvp: true,
-          })},
-          {id: "confirmation-u2", data: () => ({
-            user_id: "u2", status: "CONFIRMED", goals: 0, assists: 1,
-            is_mvp: false,
-          })},
-        ]);
+        externalConfirmationReads++;
+        return querySnapshot(
+          confirmationDocs.map((doc, index) => ({
+            id: `confirmation-${index}`,
+            data: () => doc,
+          })),
+        );
       }
       if (path === "teams") {
-        return querySnapshot([
-          {id: "team-a", data: () => ({
-            name: "A", player_ids: ["u1"], score: 3,
-          })},
-          {id: "team-b", data: () => ({
-            name: "B", player_ids: ["u2"], score: 0,
-          })},
-        ]);
+        externalTeamReads++;
+        return querySnapshot(
+          teamDocs.map((doc) => ({
+            id: doc.id,
+            data: () => doc,
+          })),
+        );
       }
       return querySnapshot([]);
     }),
@@ -146,6 +164,24 @@ function createLeagueFirestore(initialMatch?: LeagueTestDocument) {
           }),
           get: jest.fn(async (query: any) => {
             assertCanRead();
+            if (query.path === "confirmations") {
+              events.push("read:confirmations");
+              return querySnapshot(
+                confirmationDocs.map((doc, index) => ({
+                  id: `confirmation-${index}`,
+                  data: () => doc,
+                })),
+              );
+            }
+            if (query.path === "teams") {
+              events.push("read:teams");
+              return querySnapshot(
+                teamDocs.map((doc) => ({
+                  id: doc.id,
+                  data: () => doc,
+                })),
+              );
+            }
             events.push("read:active-season");
             activeSeasonReads++;
             return querySnapshot([
@@ -182,6 +218,12 @@ function createLeagueFirestore(initialMatch?: LeagueTestDocument) {
     transactionEvents,
     get externalMatchReads() {
       return externalMatchReads;
+    },
+    get externalConfirmationReads() {
+      return externalConfirmationReads;
+    },
+    get externalTeamReads() {
+      return externalTeamReads;
     },
     get activeSeasonReads() {
       return activeSeasonReads;
@@ -327,6 +369,8 @@ describe("group-league historical match transactions (#3438)", () => {
     ));
 
     expect(fake.externalMatchReads).toBe(0);
+    expect(fake.externalConfirmationReads).toBe(0);
+    expect(fake.externalTeamReads).toBe(0);
     expect(fake.activeSeasonReads).toBe(0);
     expect(fake.matches.get(fake.matchPath)?.season_id).toBe("season-old");
 
@@ -340,9 +384,57 @@ describe("group-league historical match transactions (#3438)", () => {
       .toBe(false);
 
     const events = fake.transactionEvents[0];
-    expect(events[0]).toBe("read:matches");
-    expect(events.slice(1).every((event) => event.startsWith("write:")))
+    expect(events.slice(0, 3))
+      .toEqual(["read:confirmations", "read:teams", "read:matches"]);
+    expect(events.slice(3).every((event) => event.startsWith("write:")))
       .toBe(true);
+  });
+
+  it("clamps inflated goals and assists before persisting standings deltas", async () => {
+    const fake = createLeagueFirestore(undefined, {
+      confirmations: [
+        {
+          user_id: "u1",
+          status: "CONFIRMED",
+          goals: 999,
+          assists: 999,
+          is_mvp: true,
+        },
+        {
+          user_id: "u2",
+          status: "CONFIRMED",
+          goals: -4,
+          assists: -7,
+          is_mvp: false,
+        },
+      ],
+    });
+    mockDb.mockReturnValue(fake.firestore);
+
+    await mockOnGameWrittenHandler!(gameWriteEvent(
+      {status: "LIVE", group_id: "group-1"},
+      {status: "FINISHED", group_id: "group-1", date: "2026-07-17"},
+    ));
+
+    const persistedMatch = fake.matches.get(fake.matchPath);
+    expect(persistedMatch?.player_results).toEqual([
+      {
+        user_id: "u1",
+        team_id: "team-a",
+        goals: 15,
+        assists: 10,
+        is_mvp: true,
+        result: "WIN",
+      },
+      {
+        user_id: "u2",
+        team_id: "team-b",
+        goals: 0,
+        assists: 0,
+        is_mvp: false,
+        result: "LOSS",
+      },
+    ]);
   });
 
   it("claims a historical delete atomically across concurrent redelivery", async () => {

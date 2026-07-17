@@ -42,6 +42,10 @@ const MAX_STATS_PER_GAME = 50;
 /** Máximo de milestones desbloqueadas por jogo */
 const MAX_MILESTONES_PER_GAME = 10;
 
+/** Limites operacionais por Firestore transaction. */
+const FIRESTORE_TRANSACTION_READ_LIMIT = 500;
+const FIRESTORE_TRANSACTION_WRITE_LIMIT = 500;
+
 // ==========================================
 // INTERFACES
 // ==========================================
@@ -476,6 +480,48 @@ function buildXpLogData(
   };
 }
 
+const splitTransactionsByFirestoreBudget = (
+  transactions: XpTransactionData[]
+): XpTransactionData[][] => {
+  const chunks: XpTransactionData[][] = [];
+  let currentChunk: XpTransactionData[] = [];
+  let currentReads = 0;
+  let currentWrites = 0;
+
+  for (const transaction of transactions) {
+    const milestoneWrites =
+      transaction.metadata.milestonesUnlocked.length;
+    const estimatedReads = 2;
+    const estimatedWrites = 2 + milestoneWrites;
+    const wouldOverflowReads =
+      currentReads + estimatedReads >
+      FIRESTORE_TRANSACTION_READ_LIMIT;
+    const wouldOverflowWrites =
+      currentWrites + estimatedWrites >
+      FIRESTORE_TRANSACTION_WRITE_LIMIT;
+
+    if (
+      currentChunk.length > 0 &&
+      (wouldOverflowReads || wouldOverflowWrites)
+    ) {
+      chunks.push(currentChunk);
+      currentChunk = [];
+      currentReads = 0;
+      currentWrites = 0;
+    }
+
+    currentChunk.push(transaction);
+    currentReads += estimatedReads;
+    currentWrites += estimatedWrites;
+  }
+
+  if (currentChunk.length > 0) {
+    chunks.push(currentChunk);
+  }
+
+  return chunks;
+};
+
 /**
  * Recalcula XP/level/log contra o snapshot fresco do usuário.
  * @param {XpTransactionData} data Transação validada pelo chamador.
@@ -733,27 +779,29 @@ export async function processXpIdempotent(
           userDoc.data()
         );
 
-        transaction.update(userRef, {
-          experience_points: FieldValue.increment(data.xpEarned),
-          level: data.levelAfter,
-          updated_at:
-            FieldValue
-              .serverTimestamp(),
-        });
+        const userUpdatePayload:
+          FirebaseFirestore.UpdateData<FirebaseFirestore.DocumentData> = {
+            experience_points:
+              FieldValue.increment(
+                data.xpEarned
+              ),
+            level: data.levelAfter,
+            updated_at:
+              FieldValue
+                .serverTimestamp(),
+          };
 
         // 2.3: Atualizar milestones
         if (
           data.metadata.milestonesUnlocked
             .length > 0
         ) {
-          transaction.update(userRef, {
-            milestones_achieved:
-              FieldValue
-                .arrayUnion(
-                  ...data.metadata
-                    .milestonesUnlocked
-                ),
-          });
+          userUpdatePayload.milestones_achieved =
+            FieldValue
+              .arrayUnion(
+                ...data.metadata
+                  .milestonesUnlocked
+              );
           for (const milestoneName of data.metadata.milestonesUnlocked) {
             const badgeRef = db()
               .collection("user_badges")
@@ -771,6 +819,7 @@ export async function processXpIdempotent(
             );
           }
         }
+        transaction.update(userRef, userUpdatePayload);
 
         // 2.4: Criar XP log com doc ID determinístico (transaction_id)
         transaction.set(
@@ -939,21 +988,18 @@ export async function processXpBatch(
   // Firestore garante: 2 transactions concorrentes no mesmo
   // logRef → 1 vence, outra retry, detecta exists, skip.
   //
-  // Limites: 500 reads + 500 writes por transaction. Cada
-  // transação aqui = 1 read (logRef) + 2-3 writes (user,
-  // milestone opt, log). Chunk de 50 → 50 reads + ~150 writes.
-  const TXN_CHUNK_SIZE = 50;
   const results: XpProcessingResult[] = [];
+  const transactionChunks =
+    splitTransactionsByFirestoreBudget(
+      transactions
+    );
 
   for (
     let i = 0;
-    i < transactions.length;
-    i += TXN_CHUNK_SIZE
+    i < transactionChunks.length;
+    i++
   ) {
-    const chunk = transactions.slice(
-      i,
-      i + TXN_CHUNK_SIZE
-    );
+    const chunk = transactionChunks[i];
 
     try {
       const chunkResults = await db().runTransaction(
@@ -1026,10 +1072,25 @@ export async function processXpBatch(
             }
 
             if (!userSnap?.exists) {
-              throw new Error(
-                "Usuário " +
-                `${data.userId} não encontrado`
+              logger.warn(
+                "[XP_BATCH] Ignorando transação para " +
+                "usuário inexistente",
+                {
+                  transactionId,
+                  userId: data.userId,
+                  gameId: data.gameId,
+                  chunkIndex: i,
+                }
               );
+              partial.push({
+                success: false,
+                transactionId,
+                alreadyProcessed: false,
+                error:
+                  "Usuário " +
+                  `${data.userId} não encontrado`,
+              });
+              continue;
             }
 
             const currentUserData =
@@ -1057,29 +1118,28 @@ export async function processXpBatch(
               ],
             });
 
-            tx.update(userRef, {
-              experience_points:
-                FieldValue.increment(
-                  data.xpEarned
-                ),
-              level: data.levelAfter,
-              updated_at:
-                FieldValue
-                  .serverTimestamp(),
-            });
+            const userUpdatePayload:
+              FirebaseFirestore.UpdateData<FirebaseFirestore.DocumentData> = {
+                experience_points:
+                  FieldValue.increment(
+                    data.xpEarned
+                  ),
+                level: data.levelAfter,
+                updated_at:
+                  FieldValue
+                    .serverTimestamp(),
+              };
 
             if (
               data.metadata.milestonesUnlocked
                 .length > 0
             ) {
-              tx.update(userRef, {
-                milestones_achieved:
-                  FieldValue
-                    .arrayUnion(
-                      ...data.metadata
-                        .milestonesUnlocked
-                    ),
-              });
+              userUpdatePayload.milestones_achieved =
+                FieldValue
+                  .arrayUnion(
+                    ...data.metadata
+                      .milestonesUnlocked
+                  );
               for (const milestoneName of data.metadata.milestonesUnlocked) {
                 const badgeRef = db()
                   .collection("user_badges")
@@ -1097,6 +1157,8 @@ export async function processXpBatch(
                 );
               }
             }
+
+            tx.update(userRef, userUpdatePayload);
 
             tx.set(
               logRef,
@@ -1132,7 +1194,7 @@ export async function processXpBatch(
         error as Record<string, unknown>;
       logger.error(
         "[XP_BATCH] Erro ao commitar chunk " +
-        `${i / TXN_CHUNK_SIZE}:`,
+        `${i}:`,
         error
       );
       // Marcar todas do chunk como falhadas

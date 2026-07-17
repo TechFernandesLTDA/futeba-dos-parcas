@@ -18,9 +18,23 @@ interface BadgeTrigger {
   check: (
     userId: string,
     userDoc?: admin.firestore.DocumentSnapshot,
-    confirmationsSnap?: admin.firestore.QuerySnapshot
+    confirmationsSnap?: admin.firestore.QuerySnapshot,
+    context?: BadgeCheckContext,
   ) => Promise<boolean>;
 }
+
+type BadgeCheckContext = {
+  currentGameId?: string;
+  currentTeams?: BadgeGameTeam[];
+};
+
+type BadgeGameTeam = {
+  id: string;
+  playerIds: string[];
+  score: number;
+};
+
+const CARRASCO_MAX_HISTORY_GAMES = 60;
 
 /**
  * Concede um badge com XP e cria xp_log idempotente por badge.
@@ -305,64 +319,197 @@ async function checkBadgeReiDasQuartas(
 }
 
 /**
+ * Normaliza o placar lido do team atual/histórico.
+ * @param {BadgeGameTeam} team - Time avaliado.
+ * @return {number} Placar numérico seguro.
+ */
+function getTeamScore(team: BadgeGameTeam): number {
+  return Number.isFinite(team.score) ? team.score : 0;
+}
+
+/**
+ * Extrai apenas os adversários derrotados no jogo atual.
+ * @param {string} userId - Usuário avaliado.
+ * @param {BadgeGameTeam[]} [currentTeams] - Times do jogo atual.
+ * @return {Set<string>} Opponent IDs derrotados no jogo atual.
+ */
+function getCurrentCarrascoOpponentIds(
+  userId: string,
+  currentTeams?: BadgeGameTeam[],
+): Set<string> {
+  if (!currentTeams || currentTeams.length < 2) {
+    return new Set();
+  }
+
+  const userTeam = currentTeams.find((team) => team.playerIds.includes(userId));
+  if (!userTeam) {
+    return new Set();
+  }
+
+  const userScore = getTeamScore(userTeam);
+  const defeatedOpponents = currentTeams
+    .filter((team) => team.id !== userTeam.id && userScore > getTeamScore(team))
+    .flatMap((team) => team.playerIds);
+
+  return new Set(defeatedOpponents.filter(Boolean));
+}
+
+/**
+ * Converte campos de data heterogêneos em epoch ms.
+ * @param {unknown} raw - Valor cru de data/timestamp.
+ * @return {number} Epoch ms ou 0 quando inválido.
+ */
+function getRecencyMs(raw: unknown): number {
+  if (!raw) return 0;
+  if (typeof raw === "string" || typeof raw === "number") {
+    const parsed = new Date(raw).getTime();
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+  if (typeof raw === "object" && raw && "toDate" in raw) {
+    try {
+      const date = (raw as {toDate: () => Date}).toDate();
+      const parsed = date.getTime();
+      return Number.isFinite(parsed) ? parsed : 0;
+    } catch {
+      return 0;
+    }
+  }
+  return 0;
+}
+
+/**
+ * Seleciona um histórico recente e deduplicado de jogos para Carrasco.
+ * @param {admin.firestore.QuerySnapshot} confirmationsSnap - Histórico do usuário.
+ * @param {string} [currentGameId] - Jogo atual, removido da janela histórica.
+ * @return {string[]} IDs de jogos recentes a inspecionar.
+ */
+function buildCarrascoHistoryGameIds(
+  confirmationsSnap: admin.firestore.QuerySnapshot,
+  currentGameId?: string,
+): string[] {
+  return [...new Set(
+    confirmationsSnap.docs
+      .map((doc) => doc.data())
+      .sort((a, b) =>
+        getRecencyMs(
+          b.created_at ?? b.game_date ?? b.date
+        ) - getRecencyMs(
+          a.created_at ?? a.game_date ?? a.date
+        )
+      )
+      .map((data) => data.game_id as string)
+      .filter((gameId): gameId is string =>
+        Boolean(gameId) &&
+        gameId !== currentGameId,
+      ),
+  )].slice(0, CARRASCO_MAX_HISTORY_GAMES);
+}
+
+/**
+ * Mapeia team docs em uma estrutura mínima para checks de badge.
+ * @param {admin.firestore.QuerySnapshot} teamsSnap - Snapshot dos times.
+ * @return {BadgeGameTeam[]} Times normalizados.
+ */
+function buildBadgeGameTeams(
+  teamsSnap: admin.firestore.QuerySnapshot,
+): BadgeGameTeam[] {
+  return teamsSnap.docs.map((teamDoc) => {
+    const teamData = teamDoc.data();
+    return {
+      id: teamDoc.id,
+      playerIds: Array.isArray(teamData.player_ids) ?
+        teamData.player_ids as string[] :
+        [],
+      score: typeof teamData.score === "number" ?
+        teamData.score :
+        0,
+    };
+  });
+}
+
+/**
  * Verifica se usuario venceu o mesmo adversario 5x
  * (verifica se ha algum adversario com 5+ derrotas contra o usuario)
  * @param {string} userId - UID do usuario
  * @param {admin.firestore.DocumentSnapshot} [_userDoc] - Documento do usuario pre-carregado (nao utilizado)
- * @param {admin.firestore.QuerySnapshot} [confirmationsSnap] - Confirmations pre-carregadas (opcional)
+ * @param {admin.firestore.QuerySnapshot} [_confirmationsSnap] - Snapshot compartilhado ignorado por este check.
+ * @param {BadgeCheckContext} [context] - Contexto do jogo que disparou o trigger.
  * @return {Promise<boolean>} true se carrasco de alguem
  */
 async function checkBadgeCarrasco(
   userId: string,
   _userDoc?: admin.firestore.DocumentSnapshot,
-  confirmationsSnap?: admin.firestore.QuerySnapshot
+  _confirmationsSnap?: admin.firestore.QuerySnapshot,
+  context?: BadgeCheckContext,
 ): Promise<boolean> {
-  const confSnap = confirmationsSnap || await db()
+  // Carrasco deliberately owns a bounded query. The shared preloaded snapshot
+  // is full-history because other badges need lifetime totals; reusing it here
+  // would restore the unbounded fan-out this check is meant to prevent.
+  const confSnap = await db()
     .collection("confirmations")
     .where("user_id", "==", userId)
     .where("was_present", "==", true)
+    .orderBy("created_at", "desc")
+    .limit(CARRASCO_MAX_HISTORY_GAMES + 1)
     .get();
 
-  const gameIds = confSnap.docs.map((d) => d.data().game_id as string).filter(Boolean);
-  const lossesByOpponent: Record<string, number> = {};
+  const targetOpponentIds = getCurrentCarrascoOpponentIds(
+    userId,
+    context?.currentTeams,
+  );
+  if (targetOpponentIds.size === 0) {
+    return false;
+  }
 
-  // FIX #2196: lê jogo + teams (coleção RAIZ filtrada por game_id) de todos os
-  // jogos em paralelo, eliminando o N+1 sequencial doc-a-doc.
+  const historyGameIds = buildCarrascoHistoryGameIds(
+    confSnap,
+    context?.currentGameId,
+  );
+  if (historyGameIds.length === 0) {
+    return false;
+  }
+
+  const lossesByOpponent: Record<string, number> = {};
   const gamesData = await Promise.all(
-    gameIds.map(async (gameId) => {
+    historyGameIds.map(async (gameId) => {
       const [gameDoc, teamsSnap] = await Promise.all([
         db().collection("games").doc(gameId).get(),
         db().collection("teams").where("game_id", "==", gameId).get(),
       ]);
-      return {gameDoc, teamsSnap};
+      return {gameDoc, teams: buildBadgeGameTeams(teamsSnap)};
     })
   );
 
-  for (const {gameDoc, teamsSnap} of gamesData) {
+  for (const {gameDoc, teams} of gamesData) {
     if (!gameDoc.exists) continue;
     const game = gameDoc.data();
     if (!game || game.status !== "FINISHED") continue;
 
-    const userTeam = teamsSnap.docs.find((t) =>
-      (t.data().player_ids as string[])?.includes(userId)
-    );
-    const opponentTeam = teamsSnap.docs.find((t) =>
-      !(t.data().player_ids as string[])?.includes(userId)
-    );
+    const userTeam = teams.find((team) => team.playerIds.includes(userId));
+    if (!userTeam) continue;
 
-    if (!userTeam || !opponentTeam) continue;
-    const userScore = userTeam.data().score as number;
-    const opponentScore = opponentTeam.data().score as number;
+    const userScore = getTeamScore(userTeam);
+    for (const opponentTeam of teams) {
+      if (opponentTeam.id === userTeam.id) {
+        continue;
+      }
+      if (userScore <= getTeamScore(opponentTeam)) {
+        continue;
+      }
 
-    if (userScore <= opponentScore) continue;
-
-    const opponentIds = (opponentTeam.data().player_ids as string[]) || [];
-    for (const oppId of opponentIds) {
-      lossesByOpponent[oppId] = (lossesByOpponent[oppId] || 0) + 1;
+      for (const oppId of opponentTeam.playerIds) {
+        if (!targetOpponentIds.has(oppId)) {
+          continue;
+        }
+        lossesByOpponent[oppId] = (lossesByOpponent[oppId] || 0) + 1;
+        if (lossesByOpponent[oppId] >= 4) {
+          return true;
+        }
+      }
     }
   }
 
-  return Object.values(lossesByOpponent).some((count) => count >= 5);
+  return false;
 }
 
 const BADGE_TRIGGERS: BadgeTrigger[] = [
@@ -409,6 +556,11 @@ export const onGameFinishedCheckBadges = onDocumentUpdated(
         .where("game_id", "==", gameId)
         .where("was_present", "==", true)
         .get();
+      const currentTeamsSnap = await db()
+        .collection("teams")
+        .where("game_id", "==", gameId)
+        .get();
+      const currentTeams = buildBadgeGameTeams(currentTeamsSnap);
 
       const userIds = confSnap.docs.map((d) => d.data().user_id as string);
       const uniqueUserIds = [...new Set(userIds)];
@@ -445,7 +597,10 @@ export const onGameFinishedCheckBadges = onDocumentUpdated(
             try {
               if (earnedIds.has(trigger.badgeId)) continue;
 
-              const earned = await trigger.check(userId, userDoc, allUserConfirmationsSnap);
+              const earned = await trigger.check(userId, userDoc, allUserConfirmationsSnap, {
+                currentGameId: gameId,
+                currentTeams,
+              });
               if (earned) {
                 const awarded = await awardBadgeWithXp(
                   userId,

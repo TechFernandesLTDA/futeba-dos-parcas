@@ -1264,59 +1264,83 @@ export const autoCancelLowQuorum = onSchedule(
       let cancelledCount = 0;
 
       for (const gameDoc of gamesSnap.docs) {
-        const gameData = gameDoc.data();
         const gameId = gameDoc.id;
+        const cancellation = await db()
+          .runTransaction(async (tx) => {
+            const currentGameSnap =
+              await tx.get(gameDoc.ref);
 
-        if (gameData.auto_cancelled === true) {
-          continue;
-        }
+            if (!currentGameSnap.exists) {
+              return null;
+            }
 
-        const minPlayers =
-          gameData.min_players ||
-          AUTO_CANCEL_MIN_PLAYERS;
+            const currentGameData =
+              currentGameSnap.data();
+            if (!currentGameData) {
+              return null;
+            }
+            if (
+              currentGameData.status !== "CONFIRMED" ||
+              currentGameData.auto_cancelled === true
+            ) {
+              return null;
+            }
 
-        const confirmationsSnap = await db()
-          .collection("confirmations")
-          .where("game_id", "==", gameId)
-          .where("status", "==", "CONFIRMED")
-          .get();
+            const minPlayers =
+              currentGameData.min_players ||
+              AUTO_CANCEL_MIN_PLAYERS;
+            const confirmationsQuery = db()
+              .collection("confirmations")
+              .where("game_id", "==", gameId)
+              .where("status", "==", "CONFIRMED");
+            const confirmationsSnap =
+              await tx.get(confirmationsQuery);
+            const confirmedCount =
+              confirmationsSnap.size;
 
-        const confirmedCount =
-          confirmationsSnap.size;
+            logger.info(
+              `[AUTO_CANCEL] Jogo ${gameId}: ` +
+              `${confirmedCount}/${minPlayers} ` +
+              "jogadores confirmados"
+            );
 
-        logger.info(
-          `[AUTO_CANCEL] Jogo ${gameId}: ` +
-          `${confirmedCount}/${minPlayers} ` +
-          "jogadores confirmados"
-        );
+            if (confirmedCount >= minPlayers) {
+              return null;
+            }
 
-        if (confirmedCount < minPlayers) {
-          await gameDoc.ref.update({
-            status: "CANCELLED",
-            auto_cancelled: true,
-            cancel_reason: "Baixo quórum",
-            cancelled_by: "system",
-            updated_at:
-              FieldValue
-                .serverTimestamp(),
-          });
-
-          const confirmedUserIds =
-            confirmationsSnap.docs.map((d) => {
-              const data = d.data();
-              return data.user_id || data.userId;
+            tx.update(gameDoc.ref, {
+              status: "CANCELLED",
+              auto_cancelled: true,
+              cancel_reason: "Baixo quórum",
+              cancelled_by: "system",
+              updated_at:
+                FieldValue
+                  .serverTimestamp(),
             });
 
-          if (confirmedUserIds.length > 0) {
+            return {
+              gameData: currentGameData,
+              confirmedCount,
+              minPlayers,
+              confirmedUserIds:
+                confirmationsSnap.docs.map((d) => {
+                  const data = d.data();
+                  return data.user_id || data.userId;
+                }).filter(Boolean) as string[],
+            };
+          });
+
+        if (cancellation) {
+          if (cancellation.confirmedUserIds.length > 0) {
             const gameName =
-              gameData.location_name ||
-              gameData.field_name ||
+              cancellation.gameData.location_name ||
+              cancellation.gameData.field_name ||
               "o jogo";
             const gameDate =
-              gameData.date || "";
+              cancellation.gameData.date || "";
 
             await sendNotificationToUsers(
-              confirmedUserIds,
+              cancellation.confirmedUserIds,
               {
                 title: GAME_NOTIFICATIONS.GAME_CANCELLED.title["pt-BR"](),
                 body:
@@ -1324,8 +1348,8 @@ export const autoCancelLowQuorum = onSchedule(
                   "foi cancelado " +
                   "automaticamente por " +
                   "baixo quórum " +
-                  `(${confirmedCount}/` +
-                  `${minPlayers} jogadores).`,
+                  `(${cancellation.confirmedCount}/` +
+                  `${cancellation.minPlayers} jogadores).`,
                 type:
                   NotificationType.GAME_CANCELLED,
                 data: {
@@ -1335,7 +1359,7 @@ export const autoCancelLowQuorum = onSchedule(
               }
             );
 
-            for (const uid of confirmedUserIds) {
+            for (const uid of cancellation.confirmedUserIds) {
               await saveNotificationToFirestore(
                 uid,
                 {

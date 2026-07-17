@@ -1,7 +1,29 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-17T14:10:53.644Z",
+  "generatedAt": "2026-07-17T21:41:48.541Z",
   "notes": [
+    {
+      "version": "1.54.23",
+      "buildNumber": null,
+      "releaseDate": "2026-07-17",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "As telas no celular agora exibem um único cabeçalho, com mais espaço e navegação mais clara.",
+      "highlights": [],
+      "added": [],
+      "improved": [],
+      "fixed": [
+        "Rotas secundárias não repetem mais o título nem o botão de voltar.",
+        "Leitores de tela anunciam corretamente o Guia do Jogador e o check-in por QR code.",
+        "A tela de evolução mantém sua grade responsiva sem avisos de compatibilidade."
+      ],
+      "issueRefs": [
+        3818,
+        3819,
+        3820
+      ]
+    },
     {
       "version": "1.54.22",
       "buildNumber": null,
