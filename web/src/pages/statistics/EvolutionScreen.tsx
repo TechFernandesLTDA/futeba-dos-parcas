@@ -2,14 +2,12 @@ import { PageContainer } from '../../components/common/PageContainer';
 import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
-import { useHideMobileTopBar } from '../../hooks/useMobileTopBarVisibility';
 import Grid from '@mui/material/Unstable_Grid2';
 import {
   Box,
   Typography,
   Card,
   CardContent,
-  IconButton,
   Tabs,
   Tab,
   useTheme,
@@ -17,7 +15,6 @@ import {
   Paper,
 } from '@mui/material';
 import {
-  ArrowBack as BackIcon,
   TrendingUp as TrendingUpIcon,
   SportsSoccer as SoccerIcon,
   EmojiEvents as TrophyIcon,
@@ -35,6 +32,7 @@ import { createLogger } from '../../utils/logger';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useTranslation } from 'react-i18next';
 import { useBreadcrumbEntityLabel } from '../../contexts/BreadcrumbEntityContext';
+import { ScreenHeader } from '../../components/common/ScreenHeader';
 
 const logger = createLogger('EvolutionScreen');
 
@@ -80,7 +78,6 @@ interface RawMonthlyStats {
 export const EvolutionScreen: React.FC = () => {
   const { t } = useTranslation();
   useDocumentTitle(t('page.title.evolution'));
-  useHideMobileTopBar();
   const goBack = useNavigateBack();
   const theme = useTheme();
   const { userId } = useParams<{ userId: string }>();
@@ -175,24 +172,6 @@ export const EvolutionScreen: React.FC = () => {
     };
   }, [targetUserId, reloadKey, t]);
 
-  if (loading) {
-    return <LoadingState shimmerCount={6} itemType="CARD" />;
-  }
-
-  // SECFIX #493: estado de erro com retry distinto do empty state
-  if (error) {
-    return <ErrorState message={error} onRetry={() => setReloadKey((k) => k + 1)} />;
-  }
-
-  if (!summary) {
-    return (
-      <EmptyState
-        icon={<TimelineIcon />}
-        title={t('empty.noDataAvailable')}
-      />
-    );
-  }
-
   const maxValue = Math.max(...evolutionData.map((d) => d.gamesPlayed), 1);
 
   return (
@@ -206,179 +185,195 @@ export const EvolutionScreen: React.FC = () => {
           borderBottom: `1px solid ${theme.palette.divider}`,
         }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={goBack} aria-label={t('a11y.back')}>
-            <BackIcon />
-          </IconButton>
-          <Typography variant="h6" sx={{ ml: 1 }}>
-            Evolução
-          </Typography>
-        </Box>
-        <Tabs value={tabValue} onChange={(_, v) => setTabValue(v)} variant="fullWidth" aria-label={t('a11y.evolutionPeriod')}>
+        <ScreenHeader
+          title={t('page.title.evolution')}
+          onBack={goBack}
+          backAriaLabel={t('a11y.back')}
+          sticky={false}
+        />
+        <Tabs
+          value={tabValue}
+          onChange={(_, v) => setTabValue(v)}
+          variant="fullWidth"
+          aria-label={t('a11y.evolutionPeriod')}
+        >
           <Tab label="Visão Geral" />
           <Tab label="Mensal" />
         </Tabs>
       </Box>
 
       <PageContainer maxWidth="dashboard">
-        {tabValue === 0 && (
+        {loading ? (
+          <LoadingState shimmerCount={6} itemType="CARD" />
+        ) : error ? (
+          <ErrorState message={error} onRetry={() => setReloadKey((k) => k + 1)} />
+        ) : !summary ? (
+          <EmptyState
+            icon={<TimelineIcon />}
+            title={t('empty.noDataAvailable')}
+          />
+        ) : (
           <>
-            <Card sx={{ mb: 2 }}>
-              <CardContent>
-                <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2 }}>
-                  Resumo Geral
-                </Typography>
-                <Grid container spacing={2}>
-                  <Grid xs={12} sm={6}>
-                    <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}>
-                      <SoccerIcon color="primary" sx={{ mb: 0.5 }} />
-                      <Typography variant="h5" fontWeight={600}>
-                        {summary.totalGames}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        Jogos
-                      </Typography>
-                    </Paper>
-                  </Grid>
-                  <Grid xs={12} sm={6}>
-                    <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}>
-                      <TrophyIcon color="warning" sx={{ mb: 0.5 }} />
-                      <Typography variant="h5" fontWeight={600}>
-                        {summary.totalWins}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        Vitórias
-                      </Typography>
-                    </Paper>
-                  </Grid>
-                  <Grid xs={12} sm={6}>
-                    <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}>
-                      <Typography variant="h5" fontWeight={600} color="success.main">
-                        {summary.totalGoals}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        Gols
-                      </Typography>
-                    </Paper>
-                  </Grid>
-                  <Grid xs={12} sm={6}>
-                    <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}>
-                      <Typography variant="h5" fontWeight={600} color="info.main">
-                        {summary.totalAssists}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        Assistências
-                      </Typography>
-                    </Paper>
-                  </Grid>
-                </Grid>
-              </CardContent>
-            </Card>
-
-            <Card sx={{ mb: 2 }}>
-              <CardContent>
-                <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2 }}>
-                  Métricas
-                </Typography>
-                <Box sx={{ mb: 2 }}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                    <Typography variant="body2">Taxa de Vitória</Typography>
-                    <Typography variant="body2" fontWeight={600}>
-                      {summary.winRate.toFixed(1)}%
+            {tabValue === 0 && (
+              <>
+                <Card sx={{ mb: 2 }}>
+                  <CardContent>
+                    <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2 }}>
+                      Resumo Geral
                     </Typography>
-                  </Box>
-                  <Box
-                    sx={{
-                      height: 8,
-                      bgcolor: alpha(theme.palette.primary.main, 0.1),
-                      borderRadius: 4,
-                      overflow: 'hidden',
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        height: '100%',
-                        width: `${summary.winRate}%`,
-                        bgcolor: theme.palette.primary.main,
-                        borderRadius: 4,
-                      }}
-                    />
-                  </Box>
-                </Box>
-                <Box>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                    <Typography variant="body2">Média de Gols/Jogo</Typography>
-                    <Typography variant="body2" fontWeight={600}>
-                      {summary.avgGoalsPerGame.toFixed(2)}
-                    </Typography>
-                  </Box>
-                  <Box
-                    sx={{
-                      height: 8,
-                      bgcolor: alpha(theme.palette.success.main, 0.1),
-                      borderRadius: 4,
-                      overflow: 'hidden',
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        height: '100%',
-                        width: `${Math.min(summary.avgGoalsPerGame * 20, 100)}%`,
-                        bgcolor: theme.palette.success.main,
-                        borderRadius: 4,
-                      }}
-                    />
-                  </Box>
-                </Box>
-              </CardContent>
-            </Card>
-          </>
-        )}
+                    <Grid container spacing={2}>
+                      <Grid xs={12} sm={6}>
+                        <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}>
+                          <SoccerIcon color="primary" sx={{ mb: 0.5 }} />
+                          <Typography variant="h5" fontWeight={600}>
+                            {summary.totalGames}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            Jogos
+                          </Typography>
+                        </Paper>
+                      </Grid>
+                      <Grid xs={12} sm={6}>
+                        <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}>
+                          <TrophyIcon color="warning" sx={{ mb: 0.5 }} />
+                          <Typography variant="h5" fontWeight={600}>
+                            {summary.totalWins}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            Vitórias
+                          </Typography>
+                        </Paper>
+                      </Grid>
+                      <Grid xs={12} sm={6}>
+                        <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}>
+                          <Typography variant="h5" fontWeight={600} color="success.main">
+                            {summary.totalGoals}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            Gols
+                          </Typography>
+                        </Paper>
+                      </Grid>
+                      <Grid xs={12} sm={6}>
+                        <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}>
+                          <Typography variant="h5" fontWeight={600} color="info.main">
+                            {summary.totalAssists}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            Assistências
+                          </Typography>
+                        </Paper>
+                      </Grid>
+                    </Grid>
+                  </CardContent>
+                </Card>
 
-        {tabValue === 1 && (
-          <Card>
-            <CardContent>
-              <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2 }}>
-                Últimos 12 Meses
-              </Typography>
-              {evolutionData.length === 0 ? (
-                <Box sx={{ textAlign: 'center', py: 4 }}>
-                  <TrendingUpIcon sx={{ fontSize: 40, color: 'text.disabled', mb: 1 }} />
-                  <Typography variant="body2" color="text.secondary">
-                    Sem dados suficientes
-                  </Typography>
-                </Box>
-              ) : (
-                <Box sx={{ display: 'flex', alignItems: 'flex-end', gap: 1, height: 150 }}>
-                  {evolutionData.slice(0, 12).reverse().map((data, _index) => (
-                    <Box
-                      key={data.month}
-                      sx={{
-                        flex: 1,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                      }}
-                    >
+                <Card sx={{ mb: 2 }}>
+                  <CardContent>
+                    <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2 }}>
+                      Métricas
+                    </Typography>
+                    <Box sx={{ mb: 2 }}>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                        <Typography variant="body2">Taxa de Vitória</Typography>
+                        <Typography variant="body2" fontWeight={600}>
+                          {summary.winRate.toFixed(1)}%
+                        </Typography>
+                      </Box>
                       <Box
                         sx={{
-                          width: '100%',
-                          bgcolor: theme.palette.primary.main,
-                          borderRadius: '4px 4px 0 0',
-                          height: `${(data.gamesPlayed / maxValue) * 100}px`,
-                          minHeight: 4,
-                          transition: (t) => t.transitions.create('height', { duration: t.transitions.duration.standard }),
+                          height: 8,
+                          bgcolor: alpha(theme.palette.primary.main, 0.1),
+                          borderRadius: 4,
+                          overflow: 'hidden',
                         }}
-                      />
-                      <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
-                        {data.month.slice(5)}
+                      >
+                        <Box
+                          sx={{
+                            height: '100%',
+                            width: `${summary.winRate}%`,
+                            bgcolor: theme.palette.primary.main,
+                            borderRadius: 4,
+                          }}
+                        />
+                      </Box>
+                    </Box>
+                    <Box>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                        <Typography variant="body2">Média de Gols/Jogo</Typography>
+                        <Typography variant="body2" fontWeight={600}>
+                          {summary.avgGoalsPerGame.toFixed(2)}
+                        </Typography>
+                      </Box>
+                      <Box
+                        sx={{
+                          height: 8,
+                          bgcolor: alpha(theme.palette.success.main, 0.1),
+                          borderRadius: 4,
+                          overflow: 'hidden',
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            height: '100%',
+                            width: `${Math.min(summary.avgGoalsPerGame * 20, 100)}%`,
+                            bgcolor: theme.palette.success.main,
+                            borderRadius: 4,
+                          }}
+                        />
+                      </Box>
+                    </Box>
+                  </CardContent>
+                </Card>
+              </>
+            )}
+
+            {tabValue === 1 && (
+              <Card>
+                <CardContent>
+                  <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2 }}>
+                    Últimos 12 Meses
+                  </Typography>
+                  {evolutionData.length === 0 ? (
+                    <Box sx={{ textAlign: 'center', py: 4 }}>
+                      <TrendingUpIcon sx={{ fontSize: 40, color: 'text.disabled', mb: 1 }} />
+                      <Typography variant="body2" color="text.secondary">
+                        Sem dados suficientes
                       </Typography>
                     </Box>
-                  ))}
-                </Box>
-              )}
-            </CardContent>
-          </Card>
+                  ) : (
+                    <Box sx={{ display: 'flex', alignItems: 'flex-end', gap: 1, height: 150 }}>
+                      {evolutionData.slice(0, 12).reverse().map((data, _index) => (
+                        <Box
+                          key={data.month}
+                          sx={{
+                            flex: 1,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                          }}
+                        >
+                          <Box
+                            sx={{
+                              width: '100%',
+                              bgcolor: theme.palette.primary.main,
+                              borderRadius: '4px 4px 0 0',
+                              height: `${(data.gamesPlayed / maxValue) * 100}px`,
+                              minHeight: 4,
+                              transition: (t) => t.transitions.create('height', { duration: t.transitions.duration.standard }),
+                            }}
+                          />
+                          <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
+                            {data.month.slice(5)}
+                          </Typography>
+                        </Box>
+                      ))}
+                    </Box>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+          </>
         )}
       </PageContainer>
     </Box>

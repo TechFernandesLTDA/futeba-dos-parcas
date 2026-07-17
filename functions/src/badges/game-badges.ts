@@ -7,6 +7,8 @@ import {sendNotificationToUser, NotificationType} from "../notifications/helpers
 import {db} from "../_db";
 import {getLevelForXp} from "../xp/pipeline";
 import type {XpLog} from "../models";
+import {toLiveScore} from "../game/helpers";
+import {resolveFinishedTeamScore} from "../group-league";
 import {buildUserBadgeAggregateDoc} from "./user-badge-docs";
 
 interface BadgeTrigger {
@@ -328,6 +330,52 @@ function getTeamScore(team: BadgeGameTeam): number {
 }
 
 /**
+ * Resolve o placar canônico do time finalizado.
+ * Prioriza live_scores e cai para team1_score/team2_score do game doc
+ * antes do score armazenado no team doc.
+ * @param {BadgeGameTeam} team - Time avaliado.
+ * @param {number} index - Posição do time no array.
+ * @param {number} teamCount - Quantidade de times no jogo.
+ * @param {admin.firestore.DocumentData} [gameData] - Documento do jogo.
+ * @param {admin.firestore.DocumentData} [liveScoreData] - Documento live_scores.
+ * @return {number} Placar resolvido.
+ */
+function resolveCanonicalFinishedTeamScore(
+  team: BadgeGameTeam,
+  index: number,
+  teamCount: number,
+  gameData?: admin.firestore.DocumentData,
+  liveScoreData?: admin.firestore.DocumentData,
+): number {
+  const storedScore = getTeamScore(team);
+  if (teamCount !== 2) {
+    return storedScore;
+  }
+
+  const liveScore = toLiveScore(liveScoreData);
+  if (liveScore) {
+    if (team.id === liveScore.team1Id || (!liveScore.team1Id && index === 0)) {
+      return liveScore.team1Score;
+    }
+    if (team.id === liveScore.team2Id || (!liveScore.team2Id && index === 1)) {
+      return liveScore.team2Score;
+    }
+  }
+
+  if (!gameData) {
+    return storedScore;
+  }
+
+  return resolveFinishedTeamScore(
+    team.id,
+    index,
+    teamCount,
+    storedScore,
+    gameData,
+  );
+}
+
+/**
  * Extrai apenas os adversários derrotados no jogo atual.
  * @param {string} userId - Usuário avaliado.
  * @param {BadgeGameTeam[]} [currentTeams] - Times do jogo atual.
@@ -408,12 +456,16 @@ function buildCarrascoHistoryGameIds(
 /**
  * Mapeia team docs em uma estrutura mínima para checks de badge.
  * @param {admin.firestore.QuerySnapshot} teamsSnap - Snapshot dos times.
+ * @param {admin.firestore.DocumentData} [gameData] - Documento do jogo finalizado.
+ * @param {admin.firestore.DocumentData} [liveScoreData] - Documento live_scores do jogo.
  * @return {BadgeGameTeam[]} Times normalizados.
  */
 function buildBadgeGameTeams(
   teamsSnap: admin.firestore.QuerySnapshot,
+  gameData?: admin.firestore.DocumentData,
+  liveScoreData?: admin.firestore.DocumentData,
 ): BadgeGameTeam[] {
-  return teamsSnap.docs.map((teamDoc) => {
+  const rawTeams = teamsSnap.docs.map((teamDoc) => {
     const teamData = teamDoc.data();
     return {
       id: teamDoc.id,
@@ -425,6 +477,17 @@ function buildBadgeGameTeams(
         0,
     };
   });
+
+  return rawTeams.map((team, index) => ({
+    ...team,
+    score: resolveCanonicalFinishedTeamScore(
+      team,
+      index,
+      rawTeams.length,
+      gameData,
+      liveScoreData,
+    ),
+  }));
 }
 
 /**
@@ -442,6 +505,14 @@ async function checkBadgeCarrasco(
   _confirmationsSnap?: admin.firestore.QuerySnapshot,
   context?: BadgeCheckContext,
 ): Promise<boolean> {
+  const targetOpponentIds = getCurrentCarrascoOpponentIds(
+    userId,
+    context?.currentTeams,
+  );
+  if (targetOpponentIds.size === 0) {
+    return false;
+  }
+
   // Carrasco deliberately owns a bounded query. The shared preloaded snapshot
   // is full-history because other badges need lifetime totals; reusing it here
   // would restore the unbounded fan-out this check is meant to prevent.
@@ -452,14 +523,6 @@ async function checkBadgeCarrasco(
     .orderBy("created_at", "desc")
     .limit(CARRASCO_MAX_HISTORY_GAMES + 1)
     .get();
-
-  const targetOpponentIds = getCurrentCarrascoOpponentIds(
-    userId,
-    context?.currentTeams,
-  );
-  if (targetOpponentIds.size === 0) {
-    return false;
-  }
 
   const historyGameIds = buildCarrascoHistoryGameIds(
     confSnap,
@@ -472,11 +535,19 @@ async function checkBadgeCarrasco(
   const lossesByOpponent: Record<string, number> = {};
   const gamesData = await Promise.all(
     historyGameIds.map(async (gameId) => {
-      const [gameDoc, teamsSnap] = await Promise.all([
+      const [gameDoc, teamsSnap, liveScoreDoc] = await Promise.all([
         db().collection("games").doc(gameId).get(),
         db().collection("teams").where("game_id", "==", gameId).get(),
+        db().collection("live_scores").doc(gameId).get(),
       ]);
-      return {gameDoc, teams: buildBadgeGameTeams(teamsSnap)};
+      return {
+        gameDoc,
+        teams: buildBadgeGameTeams(
+          teamsSnap,
+          gameDoc.exists ? gameDoc.data() : undefined,
+          liveScoreDoc.exists ? liveScoreDoc.data() : undefined,
+        ),
+      };
     })
   );
 
@@ -556,11 +627,21 @@ export const onGameFinishedCheckBadges = onDocumentUpdated(
         .where("game_id", "==", gameId)
         .where("was_present", "==", true)
         .get();
-      const currentTeamsSnap = await db()
-        .collection("teams")
-        .where("game_id", "==", gameId)
-        .get();
-      const currentTeams = buildBadgeGameTeams(currentTeamsSnap);
+      const [currentTeamsSnap, currentLiveScoreDoc] = await Promise.all([
+        db()
+          .collection("teams")
+          .where("game_id", "==", gameId)
+          .get(),
+        db()
+          .collection("live_scores")
+          .doc(gameId)
+          .get(),
+      ]);
+      const currentTeams = buildBadgeGameTeams(
+        currentTeamsSnap,
+        after,
+        currentLiveScoreDoc.exists ? currentLiveScoreDoc.data() : undefined,
+      );
 
       const userIds = confSnap.docs.map((d) => d.data().user_id as string);
       const uniqueUserIds = [...new Set(userIds)];

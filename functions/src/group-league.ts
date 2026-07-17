@@ -515,6 +515,7 @@ export const onGameFinishedGroupLeague = onDocumentWritten(
     try {
       let skippedTeamCount: number | null = null;
       let skippedConfirmationCount: number | null = null;
+      const gameRef = db().collection("games").doc(gameId);
 
       if (shouldApplyAfter && afterGroupId) {
         logger.info(
@@ -524,8 +525,20 @@ export const onGameFinishedGroupLeague = onDocumentWritten(
 
       let revertedMatchCount = 0;
       await db().runTransaction(async (tx) => {
-        const matchPayloadResult = shouldApplyAfter && after ?
-          await buildNextMatchPayload(tx, gameId, after) :
+        const currentGameSnap = shouldApplyAfter ?
+          await tx.get(gameRef) :
+          null;
+        const currentGameData = currentGameSnap?.exists ?
+          currentGameSnap.data() as Record<string, unknown> :
+          null;
+        const shouldApplyCurrentGame =
+          shouldApplyAfter &&
+          currentGameData?.status === "FINISHED" &&
+          typeof currentGameData.group_id === "string" &&
+          currentGameData.group_id.length > 0;
+
+        const matchPayloadResult = shouldApplyCurrentGame && currentGameData ?
+          await buildNextMatchPayload(tx, gameId, currentGameData) :
           {payload: null, teamCount: 0, confirmationCount: 0};
         const matchPayload = matchPayloadResult.payload;
         skippedTeamCount = matchPayload ?

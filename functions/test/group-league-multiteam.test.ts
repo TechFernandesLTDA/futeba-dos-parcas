@@ -63,6 +63,7 @@ function createLeagueFirestore(
   options?: {
     confirmations?: Array<Record<string, unknown>>;
     teams?: Array<Record<string, unknown> & {id: string}>;
+    currentGame?: LeagueTestDocument;
   },
 ) {
   const matchPath = "groups/group-1/league_matches/game-1";
@@ -90,6 +91,11 @@ function createLeagueFirestore(
     {id: "team-a", name: "A", player_ids: ["u1"], score: 3},
     {id: "team-b", name: "B", player_ids: ["u2"], score: 0},
   ];
+  const currentGame = options?.currentGame ?? {
+    status: "FINISHED",
+    group_id: "group-1",
+    date: "2026-07-17",
+  };
 
   const snapshot = (data?: LeagueTestDocument) => ({
     exists: Boolean(data),
@@ -164,6 +170,10 @@ function createLeagueFirestore(
           }),
           get: jest.fn(async (query: any) => {
             assertCanRead();
+            if (query.path === "games/game-1") {
+              events.push("read:game");
+              return snapshot(currentGame);
+            }
             if (query.path === "confirmations") {
               events.push("read:confirmations");
               return querySnapshot(
@@ -384,9 +394,9 @@ describe("group-league historical match transactions (#3438)", () => {
       .toBe(false);
 
     const events = fake.transactionEvents[0];
-    expect(events.slice(0, 3))
-      .toEqual(["read:confirmations", "read:teams", "read:matches"]);
-    expect(events.slice(3).every((event) => event.startsWith("write:")))
+    expect(events.slice(0, 4))
+      .toEqual(["read:game", "read:confirmations", "read:teams", "read:matches"]);
+    expect(events.slice(4).every((event) => event.startsWith("write:")))
       .toBe(true);
   });
 
@@ -463,5 +473,34 @@ describe("group-league historical match transactions (#3438)", () => {
     expect(fake.writes.filter(({kind}) => kind === "delete"))
       .toHaveLength(1);
     expect(fake.transactionEvents[1]).toEqual(["read:matches"]);
+  });
+
+  it("nao reaplica standings quando o jogo atual ja nao esta mais FINISHED", async () => {
+    const fake = createLeagueFirestore(storedHistoricalMatch(), {
+      currentGame: {
+        status: "LIVE",
+        group_id: "group-1",
+        date: "2026-07-17",
+      },
+    });
+    mockDb.mockReturnValue(fake.firestore);
+
+    await mockOnGameWrittenHandler!(gameWriteEvent(
+      {status: "LIVE", group_id: "group-1"},
+      {status: "FINISHED", group_id: "group-1", date: "2026-07-17"},
+    ));
+
+    expect(fake.matches.has(fake.matchPath)).toBe(false);
+    expect(fake.activeSeasonReads).toBe(0);
+    expect(fake.transactionEvents[0])
+      .toEqual(["read:game", "read:matches", "write:set:groups/group-1/league_standings/season-old_u1", "write:set:groups/group-1/league_standings/season-old_u2", "write:delete:groups/group-1/league_matches/game-1"]);
+
+    const applyWrites = fake.writes.filter(
+      ({kind, path, data}) =>
+        kind === "set" &&
+        path === fake.matchPath &&
+        data?.season_id === "season-old",
+    );
+    expect(applyWrites).toHaveLength(0);
   });
 });

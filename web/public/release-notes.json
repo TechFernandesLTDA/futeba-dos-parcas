@@ -1,6 +1,6 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-17T21:41:48.541Z",
+  "generatedAt": "2026-07-17T22:13:09.868Z",
   "notes": [
     {
       "version": "1.54.23",
@@ -16,7 +16,8 @@
       "fixed": [
         "Rotas secundárias não repetem mais o título nem o botão de voltar.",
         "Leitores de tela anunciam corretamente o Guia do Jogador e o check-in por QR code.",
-        "A tela de evolução mantém sua grade responsiva sem avisos de compatibilidade."
+        "A tela de evolução mantém sua grade responsiva sem avisos de compatibilidade.",
+        "O cabeçalho da evolução permanece disponível durante carregamento, erro ou ausência de dados."
       ],
       "issueRefs": [
         3818,

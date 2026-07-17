@@ -88,6 +88,127 @@ function coerceGameDate(value: unknown): Date | null {
   return null;
 }
 
+const BRT_TIMEZONE = "America/Sao_Paulo";
+const LEGACY_DEFAULT_HOUR = 20;
+
+/**
+ * Converte um horário-parede BRT para UTC sem depender do timezone do runtime.
+ *
+ * @param {number} year Ano.
+ * @param {number} month Mês 1-12.
+ * @param {number} day Dia 1-31.
+ * @param {number} hour Hora 0-23.
+ * @param {number} minute Minuto 0-59.
+ * @return {Date | null} Instante UTC equivalente.
+ */
+function buildDateFromBrtWallClock(
+  year: number,
+  month: number,
+  day: number,
+  hour: number,
+  minute: number
+): Date | null {
+  if (
+    !Number.isInteger(year) ||
+    !Number.isInteger(month) ||
+    !Number.isInteger(day) ||
+    !Number.isInteger(hour) ||
+    !Number.isInteger(minute) ||
+    month < 1 ||
+    month > 12 ||
+    day < 1 ||
+    day > 31 ||
+    hour < 0 ||
+    hour > 23 ||
+    minute < 0 ||
+    minute > 59
+  ) {
+    return null;
+  }
+
+  const desiredUtcMs = Date.UTC(year, month - 1, day, hour, minute, 0, 0);
+  let instantMs = desiredUtcMs;
+  const formatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone: BRT_TIMEZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  });
+
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const parts = formatter.formatToParts(new Date(instantMs));
+    const getPart = (type: string) =>
+      Number(parts.find((part) => part.type === type)?.value);
+    const resolvedUtcMs = Date.UTC(
+      getPart("year"),
+      getPart("month") - 1,
+      getPart("day"),
+      getPart("hour") % 24,
+      getPart("minute"),
+      getPart("second"),
+      0
+    );
+    const driftMs = desiredUtcMs - resolvedUtcMs;
+    if (driftMs === 0) {
+      break;
+    }
+    instantMs += driftMs;
+  }
+
+  const resolved = new Date(instantMs);
+  return Number.isFinite(resolved.getTime()) ? resolved : null;
+}
+
+/**
+ * Resolve datas legadas baseadas em date + time em America/Sao_Paulo.
+ *
+ * @param {unknown} rawDate Campo date legado.
+ * @param {unknown} rawTime Campo time legado.
+ * @return {Date | null} Instante UTC equivalente.
+ */
+function resolveLegacyDateAndTime(
+  rawDate: unknown,
+  rawTime: unknown
+): Date | null {
+  if (typeof rawDate !== "string") {
+    return null;
+  }
+
+  if (/^\d{4}-\d{2}-\d{2}T/.test(rawDate) || /[zZ]$/.test(rawDate)) {
+    return coerceGameDate(rawDate);
+  }
+
+  const dateMatch = rawDate.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!dateMatch) {
+    return coerceGameDate(rawDate);
+  }
+
+  const [, yearStr, monthStr, dayStr] = dateMatch;
+  let hour = LEGACY_DEFAULT_HOUR;
+  let minute = 0;
+
+  if (typeof rawTime === "string" && rawTime.trim().length > 0) {
+    const timeMatch = rawTime.trim().match(/^(\d{1,2}):(\d{2})$/);
+    if (!timeMatch) {
+      return null;
+    }
+    hour = Number(timeMatch[1]);
+    minute = Number(timeMatch[2]);
+  }
+
+  return buildDateFromBrtWallClock(
+    Number(yearStr),
+    Number(monthStr),
+    Number(dayStr),
+    hour,
+    minute
+  );
+}
+
 /**
  * Resolve a data efetiva do jogo suportando schemas legados.
  *
@@ -99,6 +220,7 @@ function resolveGameStartDate(
 ): Date | null {
   return coerceGameDate(gameData.dateTime) ??
     coerceGameDate(gameData.date_time) ??
+    resolveLegacyDateAndTime(gameData.date, gameData.time) ??
     coerceGameDate(gameData.date);
 }
 
@@ -113,7 +235,7 @@ async function fetchPastGameCandidates(
 ): Promise<FirebaseFirestore.QueryDocumentSnapshot[]> {
   const cutoffTs = Timestamp.fromDate(cutoff);
   const cutoffDateKey = cutoff.toLocaleDateString("en-CA", {
-    timeZone: "America/Sao_Paulo",
+    timeZone: BRT_TIMEZONE,
   });
 
   const baseQuery = db()

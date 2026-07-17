@@ -186,6 +186,7 @@ jest.mock("firebase-functions/v2/firestore", () => ({
     registeredHandlers.push(handler);
     return handler;
   }),
+  onDocumentWritten: jest.fn((_config: unknown, handler: (event: any) => Promise<void>) => handler),
 }));
 
 jest.mock("firebase-functions/v2", () => ({
@@ -227,22 +228,36 @@ describe("badges/game-badges", () => {
     userTeamScore: number,
     opponentTeamScore: number,
     opponentId: string,
-    createdAt: string
+    createdAt: string,
+    options?: {useLiveScore?: boolean},
   ) {
     store.set(`games/${gameId}`, {
       status: "FINISHED",
       created_at: createdAt,
+      team1_id: `${gameId}_user`,
+      team2_id: `${gameId}_opponent`,
+      team1_score: userTeamScore,
+      team2_score: opponentTeamScore,
     });
     store.set(`teams/${gameId}_user`, {
       game_id: gameId,
       player_ids: ["user1"],
-      score: userTeamScore,
+      score: options?.useLiveScore ? 0 : userTeamScore,
     });
     store.set(`teams/${gameId}_opponent`, {
       game_id: gameId,
       player_ids: [opponentId],
-      score: opponentTeamScore,
+      score: options?.useLiveScore ? 0 : opponentTeamScore,
     });
+    if (options?.useLiveScore) {
+      store.set(`live_scores/${gameId}`, {
+        game_id: gameId,
+        team1_id: `${gameId}_user`,
+        team2_id: `${gameId}_opponent`,
+        team1_score: userTeamScore,
+        team2_score: opponentTeamScore,
+      });
+    }
     store.set(`confirmations/${gameId}_user1`, {
       game_id: gameId,
       user_id: "user1",
@@ -346,11 +361,11 @@ describe("badges/game-badges", () => {
       level: 0,
     });
 
-    seedCarrascoGame("game-old-4", 3, 1, "opponent-a", "2026-07-10T10:00:00.000Z");
-    seedCarrascoGame("game-old-3", 2, 1, "opponent-a", "2026-07-11T10:00:00.000Z");
-    seedCarrascoGame("game-old-2", 4, 2, "opponent-a", "2026-07-12T10:00:00.000Z");
-    seedCarrascoGame("game-old-1", 1, 0, "opponent-a", "2026-07-13T10:00:00.000Z");
-    seedCarrascoGame("game-current", 2, 0, "opponent-a", "2026-07-14T10:00:00.000Z");
+    seedCarrascoGame("game-old-4", 3, 1, "opponent-a", "2026-07-10T10:00:00.000Z", {useLiveScore: true});
+    seedCarrascoGame("game-old-3", 2, 1, "opponent-a", "2026-07-11T10:00:00.000Z", {useLiveScore: true});
+    seedCarrascoGame("game-old-2", 4, 2, "opponent-a", "2026-07-12T10:00:00.000Z", {useLiveScore: true});
+    seedCarrascoGame("game-old-1", 1, 0, "opponent-a", "2026-07-13T10:00:00.000Z", {useLiveScore: true});
+    seedCarrascoGame("game-current", 2, 0, "opponent-a", "2026-07-14T10:00:00.000Z", {useLiveScore: true});
 
     await runGameFinishedEvent("game-current");
 
@@ -386,11 +401,11 @@ describe("badges/game-badges", () => {
       level: 0,
     });
 
-    seedCarrascoGame("game-old-4", 3, 1, "opponent-a", "2026-07-10T10:00:00.000Z");
-    seedCarrascoGame("game-old-3", 2, 1, "opponent-a", "2026-07-11T10:00:00.000Z");
-    seedCarrascoGame("game-old-2", 4, 2, "opponent-a", "2026-07-12T10:00:00.000Z");
-    seedCarrascoGame("game-old-1", 1, 0, "opponent-a", "2026-07-13T10:00:00.000Z");
-    seedCarrascoGame("game-current", 0, 2, "opponent-a", "2026-07-14T10:00:00.000Z");
+    seedCarrascoGame("game-old-4", 3, 1, "opponent-a", "2026-07-10T10:00:00.000Z", {useLiveScore: true});
+    seedCarrascoGame("game-old-3", 2, 1, "opponent-a", "2026-07-11T10:00:00.000Z", {useLiveScore: true});
+    seedCarrascoGame("game-old-2", 4, 2, "opponent-a", "2026-07-12T10:00:00.000Z", {useLiveScore: true});
+    seedCarrascoGame("game-old-1", 1, 0, "opponent-a", "2026-07-13T10:00:00.000Z", {useLiveScore: true});
+    seedCarrascoGame("game-current", 0, 2, "opponent-a", "2026-07-14T10:00:00.000Z", {useLiveScore: true});
 
     await runGameFinishedEvent("game-current");
 
@@ -406,11 +421,11 @@ describe("badges/game-badges", () => {
       level: 0,
     });
 
-    seedCarrascoGame("game-old-4", 3, 1, "opponent-a", "2026-07-10T10:00:00.000Z");
-    seedCarrascoGame("game-old-3", 2, 1, "opponent-a", "2026-07-11T10:00:00.000Z");
-    seedCarrascoGame("game-old-2", 4, 2, "opponent-a", "2026-07-12T10:00:00.000Z");
-    seedCarrascoGame("game-old-1", 1, 0, "opponent-a", "2026-07-13T10:00:00.000Z");
-    seedCarrascoGame("game-current", 2, 0, "opponent-b", "2026-07-14T10:00:00.000Z");
+    seedCarrascoGame("game-old-4", 3, 1, "opponent-a", "2026-07-10T10:00:00.000Z", {useLiveScore: true});
+    seedCarrascoGame("game-old-3", 2, 1, "opponent-a", "2026-07-11T10:00:00.000Z", {useLiveScore: true});
+    seedCarrascoGame("game-old-2", 4, 2, "opponent-a", "2026-07-12T10:00:00.000Z", {useLiveScore: true});
+    seedCarrascoGame("game-old-1", 1, 0, "opponent-a", "2026-07-13T10:00:00.000Z", {useLiveScore: true});
+    seedCarrascoGame("game-current", 2, 0, "opponent-b", "2026-07-14T10:00:00.000Z", {useLiveScore: true});
 
     await runGameFinishedEvent("game-current");
 
