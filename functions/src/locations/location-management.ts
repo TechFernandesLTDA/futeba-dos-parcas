@@ -202,6 +202,7 @@ interface RunLocationBillingAutomationRequest {
 interface RecomputeLocationAggregatesRequest {
   locationId?: string | null;
   limit?: number | null;
+  startAfterId?: string | null;
 }
 
 interface LocationBillingAutomationResult {
@@ -1708,6 +1709,7 @@ secureCallable<RecomputeLocationAggregatesRequest>(
       function: "recomputeLocationCommercialStats",
       locationId: req.data?.locationId ?? null,
       limit: req.data?.limit ?? null,
+      startAfterId: req.data?.startAfterId ?? null,
     }),
   },
   async (request) => {
@@ -1728,11 +1730,17 @@ secureCallable<RecomputeLocationAggregatesRequest>(
       Number(requestedLimit) > 0 ?
       Math.min(Number(requestedLimit), LOCATION_AGGREGATE_REBUILD_LIMIT) :
       LOCATION_AGGREGATE_REBUILD_LIMIT;
-    const snapshot = await db()
+    // #3838: cursor opcional permite cobrir bases com mais de uma página
+    // encadeando chamadas (startAfterId = nextCursor da resposta anterior).
+    const startAfterId = optionalTrimmed(request.data?.startAfterId, 160);
+    let query: FirebaseFirestore.Query = db()
       .collection("locations")
       .orderBy(FieldPath.documentId())
-      .limit(limit)
-      .get();
+      .limit(limit);
+    if (startAfterId) {
+      query = query.startAfter(startAfterId);
+    }
+    const snapshot = await query.get();
 
     let processedLocations = 0;
     for (const chunk of chunkArray(snapshot.docs, 20)) {
@@ -1742,11 +1750,14 @@ secureCallable<RecomputeLocationAggregatesRequest>(
       }));
     }
 
+    const scanComplete = snapshot.size < limit;
+    const lastDoc = snapshot.docs[snapshot.docs.length - 1];
     return {
       success: true,
       processedLocations,
-      scanComplete: snapshot.size < limit,
+      scanComplete,
       limit,
+      nextCursor: scanComplete || !lastDoc ? null : lastDoc.id,
     };
   }
 );
@@ -1759,21 +1770,38 @@ export const rebuildLocationCommercialStats = onSchedule(
     timeoutSeconds: 540,
   },
   async () => {
-    const snapshot = await db()
-      .collection("locations")
-      .orderBy(FieldPath.documentId())
-      .limit(LOCATION_AGGREGATE_REBUILD_LIMIT)
-      .get();
+    // #3838: pagina TODA a coleção (padrão #3200) — sem cap silencioso.
+    // Processa página a página para não acumular todos os docs em memória.
     let processedLocations = 0;
-    for (const chunk of chunkArray(snapshot.docs, 20)) {
-      await Promise.all(chunk.map(async (doc) => {
-        await recomputeLocationAggregates(doc.id);
-        processedLocations += 1;
-      }));
+    let pages = 0;
+    let lastDoc: FirebaseFirestore.QueryDocumentSnapshot | null = null;
+    while (true) {
+      let query: FirebaseFirestore.Query = db()
+        .collection("locations")
+        .orderBy(FieldPath.documentId())
+        .limit(LOCATION_AGGREGATE_REBUILD_LIMIT);
+      if (lastDoc) {
+        query = query.startAfter(lastDoc);
+      }
+      const snapshot = await query.get();
+      pages += 1;
+      for (const chunk of chunkArray(snapshot.docs, 20)) {
+        await Promise.all(chunk.map(async (doc) => {
+          await recomputeLocationAggregates(doc.id);
+          processedLocations += 1;
+        }));
+      }
+      if (snapshot.size < LOCATION_AGGREGATE_REBUILD_LIMIT) {
+        break;
+      }
+      lastDoc = snapshot.docs[snapshot.docs.length - 1] || null;
+      if (!lastDoc) {
+        break;
+      }
     }
     logger.info("Rebuilt commercial stats for locations", {
       processedLocations,
-      scanComplete: snapshot.size < LOCATION_AGGREGATE_REBUILD_LIMIT,
+      pages,
     });
   }
 );

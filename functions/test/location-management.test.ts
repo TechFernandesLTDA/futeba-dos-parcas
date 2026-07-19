@@ -544,6 +544,64 @@ describe("location commercial aggregates", () => {
     })).rejects.toMatchObject({code: "not-found"});
   });
 
+  it("pagina o recompute via cursor startAfterId ate cobrir a base (#3838)", async () => {
+    resetFirestore();
+    firestoreStore.set("locations/loc-a", {name: "Arena A"});
+    firestoreStore.set("locations/loc-b", {name: "Arena B"});
+    firestoreStore.set("locations/loc-c", {name: "Arena C"});
+    firestoreStore.set("locations/loc-c/fields/field-1", {
+      type: "FUTSAL",
+      is_active: true,
+      hourly_price: 7000,
+    });
+
+    const firstPage = await recomputeLocationCommercialStats({
+      auth: {uid: "admin-1", token: {role: "ADMIN"}},
+      data: {limit: 2},
+    });
+    expect(firstPage).toMatchObject({
+      success: true,
+      processedLocations: 2,
+      scanComplete: false,
+      nextCursor: "loc-b",
+    });
+
+    const secondPage = await recomputeLocationCommercialStats({
+      auth: {uid: "admin-1", token: {role: "ADMIN"}},
+      data: {limit: 2, startAfterId: firstPage.nextCursor},
+    });
+    expect(secondPage).toMatchObject({
+      success: true,
+      processedLocations: 1,
+      scanComplete: true,
+      nextCursor: null,
+    });
+
+    expect(firestoreStore.get("locations/loc-c")).toMatchObject({
+      min_hourly_price_cents: 7000,
+    });
+  });
+
+  it("rebuild do cron pagina alem do limite de 500 quadras (#3838)", async () => {
+    resetFirestore();
+    for (let i = 1; i <= 501; i++) {
+      const id = `loc-${String(i).padStart(4, "0")}`;
+      firestoreStore.set(`locations/${id}`, {name: `Arena ${i}`});
+    }
+    // A 501a quadra so e alcancada se o cron paginar alem da 1a pagina
+    firestoreStore.set("locations/loc-0501/fields/field-1", {
+      type: "FUTSAL",
+      is_active: true,
+      hourly_price: 4200,
+    });
+
+    await rebuildLocationCommercialStats();
+
+    expect(firestoreStore.get("locations/loc-0501")).toMatchObject({
+      min_hourly_price_cents: 4200,
+    });
+  });
+
   it("recalcula agregados por schedule e triggers de escrita", async () => {
     resetFirestore();
     firestoreStore.set("locations/location-1", {name: "Arena 1"});
@@ -766,6 +824,7 @@ describe("location commercial admin callables", () => {
           function: "recomputeLocationCommercialStats",
           locationId: "location-1",
           limit: 10,
+          startAfterId: null,
         },
       },
       {
