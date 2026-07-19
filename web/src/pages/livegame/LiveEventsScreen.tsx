@@ -66,6 +66,7 @@ import { PageContainer } from '../../components/common/PageContainer';
 import { pageSpacing } from '../../theme/pageTokens';
 import type { Team } from '../../types/game';
 import { mergeRealtimePageById } from '../../hooks/realtimePageMerge';
+import { useHideMobileTopBar } from '../../hooks/useMobileTopBarVisibility';
 
 const logger = createLogger('LiveEventsScreen');
 const EVENT_PAGE_SIZE = 50;
@@ -118,6 +119,7 @@ function mapGameEvent(eventDoc: QueryDocumentSnapshot<DocumentData>): GameEvent 
 }
 
 export const LiveEventsScreen: React.FC = () => {
+  useHideMobileTopBar();
   const { t } = useTranslation();
   useDocumentTitle(t('page.title.liveEvents'));
   const navigateBack = useNavigateBack('/?tab=1');

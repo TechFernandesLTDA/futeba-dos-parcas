@@ -41,10 +41,12 @@ import {
   validateProfileAvatar,
 } from '../../utils/profileAvatar';
 import { STORAGE_IMAGE_ACCEPT } from '../../utils/storageImage';
+import { useHideMobileTopBar } from '../../hooks/useMobileTopBarVisibility';
 
 const logger = createLogger('ProfileSetupScreen');
 
 export const ProfileSetupScreen: React.FC = () => {
+  useHideMobileTopBar();
   const { t } = useTranslation();
   useDocumentTitle(t('page.title.profileSetup'));
   const navigate = useNavigate();

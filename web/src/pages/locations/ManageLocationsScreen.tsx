@@ -95,6 +95,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { createLogger } from '../../utils/logger';
 import { useTranslation } from 'react-i18next';
+import { useHideMobileTopBar } from '../../hooks/useMobileTopBarVisibility';
 
 const logger = createLogger('ManageLocationsScreen');
 const RECEIPT_ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
@@ -207,6 +208,7 @@ const csvCell = (value: unknown) => {
 };
 
 export const ManageLocationsScreen: React.FC = () => {
+  useHideMobileTopBar();
   const { t } = useTranslation();
   useDocumentTitle(t('page.title.manageLocations'));
   const navigate = useNavigate();

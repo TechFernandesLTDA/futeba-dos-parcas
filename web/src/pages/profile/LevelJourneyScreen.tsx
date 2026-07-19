@@ -54,6 +54,7 @@ import { useTranslation } from 'react-i18next';
 import { getExperiencePoints, getLogLevelAfter, getXpEarned } from '../../utils/xpAccounting';
 import { useBreadcrumbEntityLabel } from '../../contexts/BreadcrumbEntityContext';
 import { LevelDetailsDialog } from './LevelDetailsDialog';
+import { useHideMobileTopBar } from '../../hooks/useMobileTopBarVisibility';
 
 const logger = createLogger('LevelJourneyScreen');
 
@@ -70,6 +71,7 @@ const BASE_LEVELS = LEVEL_TABLE.filter((e) => e.level <= 10);
 const LEGEND_LEVELS = LEVEL_TABLE.filter((e) => e.level >= 11);
 
 export const LevelJourneyScreen: React.FC = () => {
+  useHideMobileTopBar();
   const { t } = useTranslation();
   useDocumentTitle(t('page.title.levelJourney'));
   const navigateBack = useNavigateBack();

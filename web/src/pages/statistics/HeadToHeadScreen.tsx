@@ -49,6 +49,7 @@ import { useTranslation } from 'react-i18next';
 import { useToast } from '../../contexts/ToastContext';
 import { buildFriendlyComparisonSummary, type FriendlyComparisonLabels } from '../../utils/friendlyComparison';
 import { getLeaguePlayers } from '../../services/cloudFunctions';
+import { useHideMobileTopBar } from '../../hooks/useMobileTopBarVisibility';
 
 const logger = createLogger('HeadToHeadScreen');
 
@@ -83,6 +84,7 @@ async function searchPlayers(term: string): Promise<PlayerSearchResult[]> {
 }
 
 export const HeadToHeadScreen: React.FC = () => {
+  useHideMobileTopBar();
   const { t } = useTranslation();
   const { showSuccess, showError } = useToast();
   useDocumentTitle(t('page.title.headToHead'));

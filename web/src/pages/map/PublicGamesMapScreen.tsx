@@ -30,6 +30,7 @@ import { Game } from '../../types/game';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { pageSpacing } from '../../theme/pageTokens';
 import { useTranslation } from 'react-i18next';
+import { useHideMobileTopBar } from '../../hooks/useMobileTopBarVisibility';
 
 function getPublicGamesMapCenter(
   games: Game[],
@@ -147,6 +148,7 @@ function PublicGamesMapView({
 }
 
 export const PublicGamesMapScreen: React.FC = () => {
+  useHideMobileTopBar();
   const { t } = useTranslation();
   useDocumentTitle(t('page.title.publicGames'));
   const navigate = useNavigate();

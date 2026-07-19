@@ -42,6 +42,7 @@ import { getExperiencePoints, getXpEarned } from '../../utils/xpAccounting';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
 import { getUsersByIds } from '../../utils/userBatch';
 import { resolveExpectedPayment } from '../../utils/gamePayment';
+import { useHideMobileTopBar } from '../../hooks/useMobileTopBarVisibility';
 
 const logger = createLogger('PostGameReportScreen');
 
@@ -118,6 +119,7 @@ interface RawNamedUserDoc {
 }
 
 export const PostGameReportScreen: React.FC = () => {
+  useHideMobileTopBar();
   const { t } = useTranslation();
   useDocumentTitle(t('page.title.postGameReport'));
   const navigateBack = useNavigateBack('/?tab=1');

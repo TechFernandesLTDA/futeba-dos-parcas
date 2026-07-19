@@ -41,6 +41,7 @@ import { ErrorState } from '../../components/common/ErrorState';
 import { EmptyState } from '../../components/common/EmptyState';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import { useBreadcrumbEntityLabel } from '../../contexts/BreadcrumbEntityContext';
+import { useHideMobileTopBar } from '../../hooks/useMobileTopBarVisibility';
 
 const logger = createLogger('WeeklyRecapScreen');
 
@@ -77,6 +78,7 @@ interface RawWeeklyGameDoc {
 }
 
 export const WeeklyRecapScreen: React.FC = () => {
+  useHideMobileTopBar();
   const { t } = useTranslation();
   useDocumentTitle(t('weeklyRecap.title'));
   const navigate = useNavigate();
