@@ -24,6 +24,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useTranslation } from 'react-i18next';
 import { buildScreenPerformanceStats } from '../../utils/performanceDashboard';
+import { useHideMobileTopBar } from '../../hooks/useMobileTopBarVisibility';
 
 interface PerformanceRecord {
   id: string;
@@ -54,6 +55,7 @@ function getScoreColor(value: number, good: number, poor: number): string {
 }
 
 export const PerformanceDashboard: React.FC = () => {
+  useHideMobileTopBar();
   const { t } = useTranslation();
   useDocumentTitle(t('page.title.performance'));
   const goBack = useNavigateBack();

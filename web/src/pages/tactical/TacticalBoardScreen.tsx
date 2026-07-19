@@ -33,6 +33,7 @@ import { createLogger } from '../../utils/logger';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useTranslation } from 'react-i18next';
 import { getUsersByIds } from '../../utils/userBatch';
+import { useHideMobileTopBar } from '../../hooks/useMobileTopBarVisibility';
 
 
 
@@ -75,6 +76,7 @@ const FORMATIONS = [
 ];
 
 export const TacticalBoardScreen: React.FC = () => {
+  useHideMobileTopBar();
   const { t } = useTranslation();
   useDocumentTitle(t('page.title.tacticalBoard'));
   const navigateBack = useNavigateBack('/?tab=1');

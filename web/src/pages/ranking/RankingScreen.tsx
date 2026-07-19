@@ -40,8 +40,10 @@ import { pluralizeCount } from '../../utils/pluralize';
 import { getGamificationColors } from '../../utils/gamificationColors';
 import { useTranslation } from 'react-i18next';
 import { iconSizes } from '../../theme/iconSizes';
+import { useHideMobileTopBar } from '../../hooks/useMobileTopBarVisibility';
 
 export const RankingScreen: React.FC = () => {
+  useHideMobileTopBar();
   const navigate = useNavigate();
   const goBack = useNavigateBack('/?tab=3');
   const theme = useTheme();

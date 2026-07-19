@@ -30,6 +30,7 @@ import { useNavigateBack } from '../../hooks/useNavigateBack';
 import { createLogger } from '../../utils/logger';
 import { getFunctionsErrorMessage } from '../../utils/firebaseErrors';
 import { formatCnpj, isValidCnpj, stripCnpj } from '../../utils/cnpjValidator';
+import { useHideMobileTopBar } from '../../hooks/useMobileTopBarVisibility';
 
 const logger = createLogger('OwnerOnboardingScreen');
 
@@ -65,6 +66,7 @@ const statusColor = (status?: VenueOwnerOnboardingStatus): 'default' | 'info' | 
 };
 
 export const OwnerOnboardingScreen: React.FC = () => {
+  useHideMobileTopBar();
   const { t, i18n } = useTranslation();
   useDocumentTitle(t('ownerOnboarding.pageTitle'));
   const { user } = useAuth();

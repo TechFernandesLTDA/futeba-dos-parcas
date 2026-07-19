@@ -68,6 +68,7 @@ import { DemoDataChip } from '../../components/common/DemoDataChip';
 import { createLogger } from '../../utils/logger';
 import { getFunctionsErrorMessage } from '../../utils/firebaseErrors';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import { useHideMobileTopBar } from '../../hooks/useMobileTopBarVisibility';
 
 const logger = createLogger('UserManagementScreen');
 const ADMIN_USER_PAGE_SIZE = 50;
@@ -165,6 +166,7 @@ const formatAdminDateTime = (date?: Date): string => {
 };
 
 export const UserManagementScreen: React.FC = () => {
+  useHideMobileTopBar();
   const { t } = useTranslation();
   useDocumentTitle(t('page.title.userManagement'));
   const navigate = useNavigate();

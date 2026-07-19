@@ -33,8 +33,10 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useTranslation } from 'react-i18next';
 import { clearDeveloperCache } from './devToolsCache';
+import { useHideMobileTopBar } from '../../hooks/useMobileTopBarVisibility';
 
 export const DevToolsScreen: React.FC = () => {
+  useHideMobileTopBar();
   const { t } = useTranslation();
   useDocumentTitle(t('page.title.devTools'));
   const goBack = useNavigateBack();

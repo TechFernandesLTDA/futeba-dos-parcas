@@ -46,6 +46,7 @@ import { getUsersByIds } from '../../utils/userBatch';
 import { useFavoriteSquads } from '../../hooks/useFavoriteSquads';
 import { applyFavoriteSquadToTeams, getApplicableFavoriteSquads } from '../../utils/favoriteSquads';
 import type { FavoriteSquad } from '../../types/favoriteSquad';
+import { useHideMobileTopBar } from '../../hooks/useMobileTopBarVisibility';
 
 const logger = createLogger('TeamFormationScreen');
 
@@ -95,6 +96,7 @@ function resolveSavedTeams(players: TeamPlayer[], team1PlayerIds: string[], team
 }
 
 export const TeamFormationScreen: React.FC = () => {
+  useHideMobileTopBar();
   const { t } = useTranslation();
   useDocumentTitle(t('page.title.teamFormation'));
   const navigateBack = useNavigateBack('/?tab=1');

@@ -80,6 +80,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { getCallable } from '../../services/cloudFunctions';
 import { useBreadcrumbEntityLabel } from '../../contexts/BreadcrumbEntityContext';
+import { useHideMobileTopBar } from '../../hooks/useMobileTopBarVisibility';
 
 const logger = createLogger('LocationDetailScreen');
 const REVIEWS_PER_PAGE = 10;
@@ -131,6 +132,7 @@ const toDate = (value: unknown): Date | null => {
 };
 
 export const LocationDetailScreen: React.FC = () => {
+  useHideMobileTopBar();
   const { t } = useTranslation();
   useDocumentTitle(t('page.title.locationDetail'));
   const navigate = useNavigate();

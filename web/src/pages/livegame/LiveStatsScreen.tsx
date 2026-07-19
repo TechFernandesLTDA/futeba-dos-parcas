@@ -39,6 +39,7 @@ import { createLogger } from '../../utils/logger';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { PageContainer } from '../../components/common/PageContainer';
 import { useTranslation } from 'react-i18next';
+import { useHideMobileTopBar } from '../../hooks/useMobileTopBarVisibility';
 
 const logger = createLogger('LiveStatsScreen');
 
@@ -70,6 +71,7 @@ interface RawGameStats {
 }
 
 export const LiveStatsScreen: React.FC = () => {
+  useHideMobileTopBar();
   const { t } = useTranslation();
   useDocumentTitle(t('games.liveStats.title'));
   const navigateBack = useNavigateBack('/?tab=1');

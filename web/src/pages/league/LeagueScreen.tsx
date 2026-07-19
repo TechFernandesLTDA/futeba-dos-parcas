@@ -93,6 +93,7 @@ import {
 import { useTranslation, Trans } from 'react-i18next';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { getLeagueDrawCount, getLeagueLossCount, getLeagueWinRate } from '../../utils/leagueRecord';
+import { useHideMobileTopBar } from '../../hooks/useMobileTopBarVisibility';
 
 type SortField = LeagueSortField;
 
@@ -118,6 +119,8 @@ const RELEG_BOTTOM = 3;
 const normalizeText = (text: string) => text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
 export const LeagueScreen: React.FC<LeagueScreenProps> = ({ embedded = false, active = true }) => {
+  // Embutida na home (aba 3) a MobileTopBar global permanece; standalone faz opt-out (#3839)
+  useHideMobileTopBar(!embedded);
   const navigate = useNavigate();
   const goBack = useNavigateBack('/?tab=3');
   const theme = useTheme();

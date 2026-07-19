@@ -92,6 +92,7 @@ import {
   OwnerDashboardLocationLike,
   summarizeOwnerLocationStatus,
 } from './ownerDashboard';
+import { useHideMobileTopBar } from '../../hooks/useMobileTopBarVisibility';
 
 const logger = createLogger('FieldOwnerDashboardScreen');
 
@@ -375,6 +376,7 @@ const SummaryCard = ({ icon, label, value, helper }: SummaryCardProps) => (
 );
 
 export const FieldOwnerDashboardScreen: React.FC = () => {
+  useHideMobileTopBar();
   const { t, i18n } = useTranslation();
   useDocumentTitle(t('page.title.fieldOwnerDashboard'));
   const navigate = useNavigate();

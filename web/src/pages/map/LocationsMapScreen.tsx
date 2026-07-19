@@ -72,6 +72,7 @@ import { useToast } from '../../contexts/ToastContext';
 import { useTranslation } from 'react-i18next';
 import { createLogger } from '../../utils/logger';
 import { pageSpacing } from '../../theme/pageTokens';
+import { useHideMobileTopBar } from '../../hooks/useMobileTopBarVisibility';
 
 const logger = createLogger('LocationsMapScreen');
 
@@ -154,6 +155,7 @@ function LocationsMapView({ locations, selectedLocation, onLocationSelect, mapCe
 }
 
 export const LocationsMapScreen: React.FC = () => {
+  useHideMobileTopBar();
   const { t } = useTranslation();
   useDocumentTitle(t('locations.mapTitle'));
   const navigate = useNavigate();
