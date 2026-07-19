@@ -64,6 +64,8 @@ import { useDocumentTitle } from '../../../hooks/useDocumentTitle';
 import { TeamBadge } from '../../../components/team/TeamBadge';
 import { useLookingForGameToday } from '../../../hooks/useLookingForGameToday';
 import { isLookingForGameToday } from '../../../utils/lookingForGameToday';
+import { useBadges } from '../../../hooks/useBadges';
+import { getNearBadgeInsights, getNearLevelInsight } from '../../../utils/gamificationInsights';
 
 const logger = createLogger('ProfileTab');
 
@@ -89,6 +91,7 @@ export function ProfileTab() {
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
   const { setLookingForGameToday, loading: lookingForGameLoading } = useLookingForGameToday(firebaseUser?.uid);
   const lookingForGameToday = isLookingForGameToday(user);
+  const { unlockedIds } = useBadges(user?.id);
 
   // Calcular progresso usando LevelTable (fonte única de verdade)
   const xpData = (user ?? {}) as unknown as Record<string, unknown>;
@@ -116,6 +119,8 @@ export function ProfileTab() {
   const profileLevelCardBorder = isDarkTheme
     ? alpha(theme.palette.common.white, 0.25)
     : alpha(theme.palette.primary.main, 0.16);
+  const nearLevelInsight = getNearLevelInsight(currentXp);
+  const nearBadgeInsights = getNearBadgeInsights(user as unknown as Record<string, unknown>, unlockedIds);
 
   const [animatedProgress, setAnimatedProgress] = useState(0);
   useEffect(() => {
@@ -524,6 +529,37 @@ export function ProfileTab() {
                   {t('profile.streakRecord', { count: user?.bestStreak || 0 })}
                 </Typography>
               </Box>
+            </CardContent>
+          </Card>
+        </Box>
+      )}
+
+      {(nearLevelInsight || nearBadgeInsights.length > 0) && (
+        <Box sx={{ mt: 2 }}>
+          <Card>
+            <CardContent>
+              <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1.5 }}>
+                {t('profile.gamificationFocus')}
+              </Typography>
+              {nearLevelInsight && (
+                <Alert severity="warning" sx={{ mb: nearBadgeInsights.length > 0 ? 1.5 : 0 }}>
+                  {t('profile.nearLevelHint', {
+                    xp: nearLevelInsight.remainingXp.toLocaleString('pt-BR'),
+                    level: nearLevelInsight.level,
+                    levelName: nearLevelInsight.levelName,
+                  })}
+                </Alert>
+              )}
+              {nearBadgeInsights.map((insight) => (
+                <Alert key={insight.badgeId} severity="info" sx={{ mb: 1 }}>
+                  {t('profile.nearBadgeHint', {
+                    count: insight.remaining,
+                    badge: insight.badge.name,
+                    current: insight.currentValue,
+                    target: insight.threshold,
+                  })}
+                </Alert>
+              ))}
             </CardContent>
           </Card>
         </Box>

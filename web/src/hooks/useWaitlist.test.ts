@@ -5,7 +5,8 @@ import { createTestWrapper } from '../test/renderWithProviders';
 
 // Mocks antes dos imports do módulo testado
 const mockOnSnapshot = vi.fn();
-const mockAddDoc = vi.fn();
+const mockDoc = vi.fn();
+const mockSetDoc = vi.fn();
 const mockDeleteDoc = vi.fn();
 const mockGetDocs = vi.fn();
 const mockCollection = vi.fn();
@@ -29,7 +30,8 @@ vi.mock('firebase/firestore', () => ({
   orderBy: (...a: any[]) => mockOrderBy(...a),
   limit: (...a: any[]) => mockLimit(...a),
   onSnapshot: (...a: any[]) => mockOnSnapshot(...a),
-  addDoc: (...a: any[]) => mockAddDoc(...a),
+  doc: (...a: any[]) => mockDoc(...a),
+  setDoc: (...a: any[]) => mockSetDoc(...a),
   deleteDoc: (...a: any[]) => mockDeleteDoc(...a),
   getDocs: (...a: any[]) => mockGetDocs(...a),
   writeBatch: (...a: any[]) => mockWriteBatch(...a),
@@ -75,6 +77,7 @@ describe('useWaitlist', () => {
     mockOrderBy.mockReturnValue('o');
     mockLimit.mockReturnValue('l');
     mockWhere.mockReturnValue('w');
+    mockDoc.mockReturnValue('entry-ref');
   });
 
   it('gameId nulo: não cria listener, não fica loading', () => {
@@ -112,19 +115,20 @@ describe('useWaitlist', () => {
       ok = await result.current.joinWaitlist();
     });
     expect(ok).toBe(false);
-    expect(mockAddDoc).not.toHaveBeenCalled();
+    expect(mockSetDoc).not.toHaveBeenCalled();
     expect(mockShowError).toHaveBeenCalled();
   });
 
   it('joinWaitlist grava schema snake_case com status WAITING e added_at numérico', async () => {
     mockGetDocs.mockResolvedValueOnce({ empty: true, docs: [] });
-    mockAddDoc.mockResolvedValueOnce({ id: 'new' });
+    mockSetDoc.mockResolvedValueOnce(undefined);
     const { result } = renderHook(() => useWaitlist('g1'), { wrapper: createTestWrapper() });
     await act(async () => {
       await result.current.joinWaitlist('GOALKEEPER');
     });
-    expect(mockAddDoc).toHaveBeenCalledTimes(1);
-    const payload = mockAddDoc.mock.calls[0][1];
+    expect(mockDoc).toHaveBeenCalledWith({}, 'games', 'g1', 'waitlist', 'u1');
+    expect(mockSetDoc).toHaveBeenCalledTimes(1);
+    const payload = mockSetDoc.mock.calls[0][1];
     expect(payload.game_id).toBe('g1');
     expect(payload.user_id).toBe('u1');
     expect(payload.status).toBe('WAITING');

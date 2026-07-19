@@ -165,6 +165,7 @@ import {
   getFiniteNumber,
   calculateNextParticipationStreak,
   calculateStreakXp,
+  hasNewerParticipationStreakMarker,
   LEVELS,
   MILESTONES,
   UserStatistics,
@@ -347,6 +348,32 @@ describe("Index - XP streak helpers", () => {
         longestStreak: 1,
         streakStartedAt: "2026-07-08",
       });
+  });
+
+  test("calculateNextParticipationStreak preserva estado quando jogo antigo finaliza depois", () => {
+    expect(calculateNextParticipationStreak(
+      {
+        current_streak: 6,
+        longest_streak: 9,
+        last_game_date: "2026-07-19",
+        streak_started_at: "2026-07-14",
+      },
+      "2026-07-08"
+    )).toEqual({
+      previousStreak: 6,
+      currentStreak: 6,
+      longestStreak: 9,
+      streakStartedAt: "2026-07-14",
+    });
+  });
+
+  test("hasNewerParticipationStreakMarker detecta marcador mais recente", () => {
+    expect(hasNewerParticipationStreakMarker({
+      last_game_date: "2026-07-19",
+    }, "2026-07-08")).toBe(true);
+    expect(hasNewerParticipationStreakMarker({
+      last_game_date: "2026-07-08",
+    }, "2026-07-08")).toBe(false);
   });
 
   test("calculateStreakXp aplica marcos progressivos", () => {
@@ -548,6 +575,8 @@ describe("Index - toGameConfirmation", () => {
   });
 
   test("deve converter dados com formato camelCase", () => {
+    const confirmedAt = {toDate: () => new Date("2026-07-19T12:00:00.000Z")};
+    const checkedInAt = {toDate: () => new Date("2026-07-19T12:10:00.000Z")};
     const raw = {
       userId: "user2",
       status: "CONFIRMED",
@@ -559,6 +588,11 @@ describe("Index - toGameConfirmation", () => {
       redCards: 0,
       gameId: "game2",
       isWorstPlayer: true,
+      confirmedAt,
+      checkedInAt,
+      lastMinuteSaverEligible: true,
+      wasWaitlistPromoted: true,
+      waitlistPromotedAt: confirmedAt,
     };
 
     const result = toGameConfirmation(raw);
@@ -566,6 +600,11 @@ describe("Index - toGameConfirmation", () => {
     expect(result.saves).toBe(5);
     expect(result.game_id).toBe("game2");
     expect(result.is_worst_player).toBe(true);
+    expect(result.confirmedAt).toBe(confirmedAt);
+    expect(result.checkedInAt).toBe(checkedInAt);
+    expect(result.lastMinuteSaverEligible).toBe(true);
+    expect(result.wasWaitlistPromoted).toBe(true);
+    expect(result.waitlistPromotedAt).toBe(confirmedAt);
   });
 
   test("deve usar valores padrão para campos ausentes", () => {
@@ -580,8 +619,23 @@ describe("Index - toGameConfirmation", () => {
     expect(result.saves).toBe(0);
     expect(result.yellowCards).toBe(0);
     expect(result.redCards).toBe(0);
+    expect(result.hasExplicitYellowCards).toBe(false);
+    expect(result.hasExplicitRedCards).toBe(false);
     expect(result.game_id).toBe("");
     expect(result.is_worst_player).toBe(false);
+  });
+
+  test("preserva evidência explícita de cartões zerados para Fair Play", () => {
+    const result = toGameConfirmation({
+      user_id: "user-cards",
+      yellow_cards: 0,
+      red_cards: 0,
+    });
+
+    expect(result.yellowCards).toBe(0);
+    expect(result.redCards).toBe(0);
+    expect(result.hasExplicitYellowCards).toBe(true);
+    expect(result.hasExplicitRedCards).toBe(true);
   });
 
   test("deve converter strings numéricas para Number", () => {

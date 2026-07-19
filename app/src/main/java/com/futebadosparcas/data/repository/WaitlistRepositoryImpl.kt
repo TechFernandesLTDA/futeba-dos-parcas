@@ -16,7 +16,7 @@ import java.util.Date
  * Implementacao do WaitlistRepository usando Firebase Firestore.
  *
  * Estrutura:
- * - games/{gameId}/waitlist/{waitlistId}
+ * - games/{gameId}/waitlist/{userId}
  */
 class WaitlistRepositoryImpl constructor(
     private val firestore: FirebaseFirestore
@@ -80,8 +80,9 @@ class WaitlistRepositoryImpl constructor(
                 addedAt = Date().time
             )
 
-            val docRef = waitlistCollection(gameId).add(entry).await()
-            val entryWithId = entry.copy(id = docRef.id)
+            val docRef = waitlistCollection(gameId).document(userId)
+            docRef.set(entry).await()
+            val entryWithId = entry.copy(id = userId)
 
             AppLogger.i(TAG) { "Usuario $userId adicionado a lista de espera do jogo $gameId na posicao ${entryWithId.queuePosition}" }
 

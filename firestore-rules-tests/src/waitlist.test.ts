@@ -161,7 +161,7 @@ describe("waitlist — read", () => {
   });
 });
 
-describe("waitlist — update (bloqueado)", () => {
+describe("waitlist — update", () => {
   it("Player NAO pode atualizar propria entrada (apenas server)", async () => {
     const db = asPlayerB(testEnv);
     await assertFails(
@@ -176,6 +176,49 @@ describe("waitlist — update (bloqueado)", () => {
     await assertFails(
       db.doc(`games/${GAME_ID}/waitlist/${UID_PLAYER_B}`).update({
         status: "PROMOTED",
+      })
+    );
+  });
+
+  it("Player pode reentrar pelo doc canonico apos estado terminal", async () => {
+    await seedDoc(testEnv, `games/${GAME_ID}/waitlist/${UID_PLAYER_C}`, {
+      user_id: UID_PLAYER_C,
+      game_id: GAME_ID,
+      status: "EXPIRED",
+      user_name: "Player C",
+      queue_position: 2,
+      added_at: Date.now() - 60_000,
+    });
+    const db = asPlayerC(testEnv);
+    await assertSucceeds(
+      db.doc(`games/${GAME_ID}/waitlist/${UID_PLAYER_C}`).set({
+        user_id: UID_PLAYER_C,
+        game_id: GAME_ID,
+        status: "WAITING",
+        user_name: "Player C",
+        queue_position: 2,
+        added_at: Date.now(),
+        notified_at: null,
+        response_deadline: null,
+      })
+    );
+  });
+
+  it("Player NAO pode reabrir entrada terminal com id nao canonico", async () => {
+    const legacyId = "legacy-terminal";
+    await seedDoc(testEnv, `games/${GAME_ID}/waitlist/${legacyId}`, {
+      user_id: UID_PLAYER_C,
+      game_id: GAME_ID,
+      status: "CANCELLED",
+      user_name: "Player C",
+      queue_position: 2,
+      added_at: Date.now() - 60_000,
+    });
+    const db = asPlayerC(testEnv);
+    await assertFails(
+      db.doc(`games/${GAME_ID}/waitlist/${legacyId}`).update({
+        status: "WAITING",
+        added_at: Date.now(),
       })
     );
   });

@@ -302,6 +302,54 @@ describe("users — criação", () => {
     );
   });
 
+  it("Player NÃO pode criar perfil com marcadores server-only snake_case de retenção/gamificação", async () => {
+    const newUid = "uid-retention-snake-create-test";
+    const userCtx = testEnv
+      .authenticatedContext(newUid, {role: "PLAYER", verified: true})
+      .firestore();
+    await assertFails(
+      userCtx.doc(`users/${newUid}`).set({
+        name: "Marcador Snake",
+        email: "marker-snake@test.com",
+        role: "PLAYER",
+        striker_rating: 0,
+        mid_rating: 0,
+        defender_rating: 0,
+        gk_rating: 0,
+        invited_by_code: "ABC123",
+        last_played_game_date: "2026-07-18",
+        last_played_month_key: "2026-07",
+        monthly_streak: 4,
+        last_comeback_month_key: "2026-07",
+      })
+    );
+  });
+
+  it("Player NÃO pode criar perfil com aliases camelCase server-only de retenção/gamificação", async () => {
+    const newUid = "uid-retention-camel-create-test";
+    const userCtx = testEnv
+      .authenticatedContext(newUid, {role: "PLAYER", verified: true})
+      .firestore();
+    await assertFails(
+      userCtx.doc(`users/${newUid}`).set({
+        name: "Marcador Camel",
+        email: "marker-camel@test.com",
+        role: "PLAYER",
+        striker_rating: 0,
+        mid_rating: 0,
+        defender_rating: 0,
+        gk_rating: 0,
+        invited_by_code: "ABC123",
+        experiencePoints: 9000,
+        milestonesAchieved: ["legend"],
+        lastPlayedGameDate: "2026-07-18",
+        lastPlayedMonthKey: "2026-07",
+        monthlyStreak: 4,
+        lastComebackMonthKey: "2026-07",
+      })
+    );
+  });
+
   it("Player NÃO pode criar doc de outro usuário", async () => {
     const db = asUsersA();
     await assertFails(
@@ -348,6 +396,32 @@ describe("users — campos imutáveis (atualização)", () => {
     const db = asUsersA();
     await assertFails(
       db.doc(`users/${UID_USERS_A}`).update({ level: 10 })
+    );
+  });
+
+  it("Player NÃO pode alterar marcadores server-only snake_case de retenção/gamificação", async () => {
+    const db = asUsersA();
+    await assertFails(
+      db.doc(`users/${UID_USERS_A}`).update({
+        last_played_game_date: "2026-07-18",
+        last_played_month_key: "2026-07",
+        monthly_streak: 6,
+        last_comeback_month_key: "2026-07",
+      })
+    );
+  });
+
+  it("Player NÃO pode alterar aliases camelCase server-only de retenção/gamificação", async () => {
+    const db = asUsersA();
+    await assertFails(
+      db.doc(`users/${UID_USERS_A}`).update({
+        experiencePoints: 99999,
+        milestonesAchieved: ["badge-hack"],
+        lastPlayedGameDate: "2026-07-18",
+        lastPlayedMonthKey: "2026-07",
+        monthlyStreak: 6,
+        lastComebackMonthKey: "2026-07",
+      })
     );
   });
 

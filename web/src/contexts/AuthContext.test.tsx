@@ -45,6 +45,7 @@ const mockGetDocs = vi.fn();
 const mockSetDoc = vi.fn();
 const mockUpdateDoc = vi.fn();
 const mockRunTransaction = vi.fn();
+const mockOnSnapshot = vi.fn();
 const mockDoc = vi.fn();
 const mockCollection = vi.fn();
 const mockQuery = vi.fn();
@@ -69,6 +70,8 @@ vi.mock('firebase/firestore', () => ({
   updateDoc: (...args: any[]) => mockUpdateDoc(...args),
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   runTransaction: (...args: any[]) => mockRunTransaction(...args),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  onSnapshot: (...args: any[]) => mockOnSnapshot(...args),
   serverTimestamp: vi.fn(() => 'server-timestamp'),
   limit: vi.fn((...args) => args[0]),
 }));
@@ -117,6 +120,8 @@ function AuthConsumer() {
     <div>
       <span data-testid="loading">{String(loading)}</span>
       <span data-testid="user">{user?.name || 'null'}</span>
+      <span data-testid="total-games">{String(user?.totalGames ?? 'null')}</span>
+      <span data-testid="total-goals">{String(user?.totalGoals ?? 'null')}</span>
       <span data-testid="firebase-user">{firebaseUser?.uid || 'null'}</span>
       <span data-testid="error">{error || 'null'}</span>
     </div>
@@ -134,6 +139,7 @@ describe('AuthContext', () => {
     mockQuery.mockImplementation((...args) => ({ type: 'query', args }));
     mockWhere.mockImplementation((...args) => ({ type: 'where', args }));
     mockGetDocs.mockResolvedValue({ docs: [], empty: true });
+    mockOnSnapshot.mockImplementation(() => vi.fn());
     mockRunTransaction.mockImplementation(async (_db, callback) => {
       return callback({
         get: mockGetDoc,
@@ -293,6 +299,63 @@ describe('AuthContext', () => {
 
     await waitFor(() => {
       expect(mockGetDoc).toHaveBeenCalled();
+    });
+  });
+
+  it('mescla statistics e user_streaks já no carregamento inicial da sessão', async () => {
+    const mockFirebaseUser = {
+      uid: 'stats-user',
+      email: 'stats@test.com',
+      displayName: 'Jogador Stats',
+      getIdTokenResult: vi.fn().mockResolvedValue({ claims: {} }),
+    };
+
+    mockOnAuthStateChanged.mockImplementation((_auth, callback) => {
+      setTimeout(() => callback(mockFirebaseUser), 0);
+      return vi.fn();
+    });
+
+    mockGetDoc
+      .mockResolvedValueOnce({
+        exists: () => true,
+        id: 'stats-user',
+        data: () => ({
+          name: 'Jogador Stats',
+          email: 'stats@test.com',
+          totalGames: 0,
+          totalGoals: 0,
+        }),
+      })
+      .mockResolvedValueOnce({
+        exists: () => true,
+        id: 'stats-user',
+        data: () => ({
+          totalGames: 12,
+          totalGoals: 8,
+        }),
+      });
+    mockGetDocs.mockResolvedValueOnce({
+      docs: [
+        {
+          data: () => ({
+            currentStreak: 3,
+            longestStreak: 7,
+          }),
+        },
+      ],
+      empty: false,
+    });
+
+    render(
+      <AuthProvider>
+        <AuthConsumer />
+      </AuthProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('user').textContent).toBe('Jogador Stats');
+      expect(screen.getByTestId('total-games').textContent).toBe('12');
+      expect(screen.getByTestId('total-goals').textContent).toBe('8');
     });
   });
 

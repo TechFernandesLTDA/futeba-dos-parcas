@@ -66,6 +66,45 @@ data class XpLog(
     @get:PropertyName("xp_streak")
     @set:PropertyName("xp_streak")
     var xpStreak: Int = 0,
+    @get:PropertyName("xp_top_scorer")
+    @set:PropertyName("xp_top_scorer")
+    var xpTopScorer: Int = 0,
+    @get:PropertyName("xp_hat_trick")
+    @set:PropertyName("xp_hat_trick")
+    var xpHatTrick: Int = 0,
+    @get:PropertyName("xp_first_goal")
+    @set:PropertyName("xp_first_goal")
+    var xpFirstGoal: Int = 0,
+    @get:PropertyName("xp_goalkeeper_goal")
+    @set:PropertyName("xp_goalkeeper_goal")
+    var xpGoalkeeperGoal: Int = 0,
+    @get:PropertyName("xp_fair_play")
+    @set:PropertyName("xp_fair_play")
+    var xpFairPlay: Int = 0,
+    @get:PropertyName("xp_comeback")
+    @set:PropertyName("xp_comeback")
+    var xpComeback: Int = 0,
+    @get:PropertyName("xp_first_game_month")
+    @set:PropertyName("xp_first_game_month")
+    var xpFirstGameMonth: Int = 0,
+    @get:PropertyName("xp_monthly_streak")
+    @set:PropertyName("xp_monthly_streak")
+    var xpMonthlyStreak: Int = 0,
+    @get:PropertyName("xp_recorder")
+    @set:PropertyName("xp_recorder")
+    var xpRecorder: Int = 0,
+    @get:PropertyName("xp_early_confirmation")
+    @set:PropertyName("xp_early_confirmation")
+    var xpEarlyConfirmation: Int = 0,
+    @get:PropertyName("xp_on_time_checkin")
+    @set:PropertyName("xp_on_time_checkin")
+    var xpOnTimeCheckin: Int = 0,
+    @get:PropertyName("xp_last_minute_saver")
+    @set:PropertyName("xp_last_minute_saver")
+    var xpLastMinuteSaver: Int = 0,
+    @get:PropertyName("xp_waitlist_promoted")
+    @set:PropertyName("xp_waitlist_promoted")
+    var xpWaitlistPromoted: Int = 0,
     // Dados do jogo para contexto
     val goals: Int = 0,
     val assists: Int = 0,
@@ -120,6 +159,19 @@ data class XpLog(
             if (xpAssists > 0) parts.add("$assists assist(s)")
             if (xpSaves > 0) parts.add("$saves defesa(s)")
             if (xpMvp > 0) parts.add("MVP")
+            if (xpTopScorer > 0) parts.add("Artilheiro do Jogo 🎯")
+            if (xpHatTrick > 0) parts.add("Hat-trick ⚽⚽⚽")
+            if (xpFirstGoal > 0) parts.add("Primeiro Gol do Jogo 🥇")
+            if (xpGoalkeeperGoal > 0) parts.add("Gol do Goleiro 🧤")
+            if (xpFairPlay > 0) parts.add("Fair Play 🤝")
+            if (xpComeback > 0) parts.add("Tá de volta! 🔙")
+            if (xpFirstGameMonth > 0) parts.add("Primeira do Mês 📅")
+            if (xpMonthlyStreak > 0) parts.add("Sequência Mensal 🔥")
+            if (xpRecorder > 0) parts.add("Mesa Oficial 📝")
+            if (xpEarlyConfirmation > 0) parts.add("Confirmação Antecipada ⏰")
+            if (xpOnTimeCheckin > 0) parts.add("Pontualidade ⏱️")
+            if (xpLastMinuteSaver > 0) parts.add("Salvou a Pelada 🦸")
+            if (xpWaitlistPromoted > 0) parts.add("Veio da Waitlist 🎟️")
             if (xpResult > 0) {
                 when (gameResult) {
                     "WIN" -> parts.add("Vitoria")

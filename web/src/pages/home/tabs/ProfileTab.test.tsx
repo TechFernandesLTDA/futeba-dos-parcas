@@ -11,6 +11,7 @@ let mockExperiencePoints = 850;
 let mockPersistedLevel = 5;
 let mockDerivedLevel = 5;
 let mockXpProgress = 0.65;
+let mockTotalGoals = 15;
 vi.mock('../../services/firebase', () => ({
   db: {}, auth: { currentUser: null }, storage: {}, functions: {}, app: {}, appCheck: null,
   messagingPromise: Promise.resolve(null),
@@ -35,7 +36,7 @@ vi.mock('../../../contexts/AuthContext', () => ({
       level: mockPersistedLevel,
       experiencePoints: mockExperiencePoints,
       totalGames: 42,
-      totalGoals: 15,
+      totalGoals: mockTotalGoals,
       mvpCount: 3,
       currentStreak: 5,
       bestStreak: 10,
@@ -66,6 +67,24 @@ vi.mock('../../../utils/levelBadge', () => ({
 }));
 
 vi.mock('../../../types/gamification', () => ({
+  BADGE_DEFINITIONS: [
+    {
+      id: 'goals_10',
+      name: 'Goleador',
+      description: 'Marque 10 gols',
+      icon: '🥅',
+      category: 'goals',
+      rarity: 'COMUM',
+      requirement: '10 gols',
+      xpReward: 50,
+      progressStat: 'totalGoals',
+      progressThreshold: 10,
+    },
+  ],
+  LEVEL_TABLE: [
+    { level: 5, name: 'Craque', xpRequired: 500 },
+    { level: 6, name: 'Mestre', xpRequired: 1000 },
+  ],
   getLevelForXp: () => mockDerivedLevel,
   getXpProgress: () => mockXpProgress,
   getXpRemaining: () => 150,
@@ -91,6 +110,15 @@ vi.mock('../../../hooks/useGamificationColors', () => ({
 vi.mock('../../../hooks/useLookingForGameToday', () => ({
   useLookingForGameToday: () => ({
     setLookingForGameToday: vi.fn().mockResolvedValue(undefined),
+    loading: false,
+    error: null,
+  }),
+}));
+
+vi.mock('../../../hooks/useBadges', () => ({
+  useBadges: () => ({
+    badges: [],
+    unlockedIds: new Set<string>(),
     loading: false,
     error: null,
   }),
@@ -142,6 +170,7 @@ describe('ProfileTab', () => {
     mockPersistedLevel = 5;
     mockDerivedLevel = 5;
     mockXpProgress = 0.65;
+    mockTotalGoals = 15;
   });
 
   it('renderiza o nome do usuário', () => {
@@ -197,6 +226,15 @@ describe('ProfileTab', () => {
     expect(screen.getByText('Jogos')).toBeInTheDocument();
     expect(screen.getByText('Gols')).toBeInTheDocument();
     expect(screen.getByText('MVPs')).toBeInTheDocument();
+  });
+
+  it('exibe hint de near-badge quando os totais já chegam perto da meta no carregamento inicial', () => {
+    mockTotalGoals = 8;
+
+    renderProfileTab();
+
+    expect(screen.getByText('Foco da semana')).toBeInTheDocument();
+    expect(screen.getByText('Faltam 2 para desbloquear a conquista Goleador (8/10).')).toBeInTheDocument();
   });
 
   it('exibe botão Editar Perfil', () => {

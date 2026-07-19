@@ -273,6 +273,28 @@ export const REMINDER_NOTIFICATIONS = {
   ),
 } as const satisfies Record<string, NotificationMessage>;
 
+export const GAMIFICATION_NUDGES = {
+  STREAK_AT_RISK: ptTitleBody(
+    "Sua sequência está em risco 🔥",
+    (p) =>
+      `Sua sequência de ${p?.streak ?? "0"} jogos pode acabar ` +
+      "se você não confirmar a próxima pelada a tempo.",
+  ),
+
+  ALMOST_LEVEL: ptTitleBody(
+    "Quase no próximo nível ⚡",
+    (p) =>
+      `Faltam ${p?.xpLeft ?? "0"} XP para alcançar ${p?.levelName ?? "o próximo nível"}.`,
+  ),
+
+  ALMOST_BADGE: ptTitleBody(
+    "Quase uma badge 🏅",
+    (p) =>
+      `Faltam ${p?.remaining ?? "0"} ${p?.unit ?? "ações"} ` +
+      `para desbloquear ${p?.badgeName ?? "sua próxima badge"}.`,
+  ),
+} as const satisfies Record<string, NotificationMessage>;
+
 // ==========================================
 // HELPER: Obter mensagem por locale (default pt-BR)
 // ==========================================

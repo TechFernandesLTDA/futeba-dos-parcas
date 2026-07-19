@@ -53,31 +53,31 @@ class XPCalculatorTest {
     fun golsContribuemXp() {
         val data = createDefaultPlayerData(goals = 2)
         val result = XPCalculator.calculate(data)
-        // 2 gols * 10 XP = 20 XP
-        assertEquals(20L, result.breakdown.goals)
+        // 2 gols * 25 XP = 50 XP
+        assertEquals(50L, result.breakdown.goals)
     }
 
     @Test
     fun assistenciasContribuemXp() {
         val data = createDefaultPlayerData(assists = 3)
         val result = XPCalculator.calculate(data)
-        // 3 assistencias * 7 XP = 21 XP
-        assertEquals(21L, result.breakdown.assists)
+        // 3 assistencias * 20 XP = 60 XP
+        assertEquals(60L, result.breakdown.assists)
     }
 
     @Test
     fun defesasContribuemXp() {
         val data = createDefaultPlayerData(saves = 5, position = PlayerPosition.GOALKEEPER)
         val result = XPCalculator.calculate(data)
-        // 5 defesas * 8 XP = 40 XP
-        assertEquals(40L, result.breakdown.saves)
+        // 5 defesas * 15 XP = 75 XP
+        assertEquals(75L, result.breakdown.saves)
     }
 
     @Test
     fun vitoriaGera20Xp() {
         val data = createDefaultPlayerData(teamWon = true)
         val result = XPCalculator.calculate(data)
-        assertEquals(20L, result.breakdown.result)
+        assertEquals(30L, result.breakdown.result)
     }
 
     @Test
@@ -98,7 +98,7 @@ class XPCalculatorTest {
     fun mvpGera30XpBonus() {
         val data = createDefaultPlayerData(isMvp = true)
         val result = XPCalculator.calculate(data)
-        assertEquals(30L, result.breakdown.mvp)
+        assertEquals(50L, result.breakdown.mvp)
     }
 
     @Test
@@ -149,8 +149,8 @@ class XPCalculatorTest {
         // Teto = 15 gols por jogo
         val data = createDefaultPlayerData(goals = 20)
         val result = XPCalculator.calculate(data)
-        // 15 gols * 10 XP = 150 (nao 20 * 10 = 200)
-        assertEquals(150L, result.breakdown.goals)
+        // 15 gols * 25 XP = 375 (nao 20 * 25 = 500)
+        assertEquals(375L, result.breakdown.goals)
     }
 
     @Test
@@ -158,8 +158,8 @@ class XPCalculatorTest {
         // Teto = 10 assistencias por jogo
         val data = createDefaultPlayerData(assists = 15)
         val result = XPCalculator.calculate(data)
-        // 10 assistencias * 7 XP = 70 (nao 15 * 7 = 105)
-        assertEquals(70L, result.breakdown.assists)
+        // 10 assistencias * 20 XP = 200 (nao 15 * 20 = 300)
+        assertEquals(200L, result.breakdown.assists)
     }
 
     @Test
@@ -167,8 +167,8 @@ class XPCalculatorTest {
         // Teto = 30 defesas por jogo
         val data = createDefaultPlayerData(saves = 35)
         val result = XPCalculator.calculate(data)
-        // 30 defesas * 8 XP = 240 (nao 35 * 8 = 280)
-        assertEquals(240L, result.breakdown.saves)
+        // 30 defesas * 15 XP = 450 (nao 35 * 15 = 525)
+        assertEquals(450L, result.breakdown.saves)
     }
 
     @Test
@@ -197,7 +197,7 @@ class XPCalculatorTest {
             isMvp = false,
             currentStreak = 0
         )
-        // Participacao(10) + Gol(10) + Assistencia(7) + Vitoria(20) = 47
-        assertEquals(47L, result.totalXp)
+        // Participacao(10) + Gol(25) + Assistencia(20) + Vitoria(30) = 85
+        assertEquals(85L, result.totalXp)
     }
 }

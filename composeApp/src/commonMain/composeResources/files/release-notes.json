@@ -1,7 +1,40 @@
 {
   "platform": "ios",
-  "generatedAt": "2026-07-17T14:10:53.645Z",
+  "generatedAt": "2026-07-19T23:42:04.106Z",
   "notes": [
+    {
+      "version": "1.7.0",
+      "buildNumber": 21,
+      "releaseDate": "2026-07-19",
+      "type": "minor",
+      "showPopup": false,
+      "published": false,
+      "headline": "A base compartilhada do iOS acompanha a nova economia e o novo breakdown de XP.",
+      "highlights": [],
+      "added": [
+        "Modelos compartilhados reconhecem bônus por performance, frequência e contribuição."
+      ],
+      "improved": [
+        "Valores de XP e progresso permanecem alinhados com Android, Web e Functions."
+      ],
+      "fixed": [
+        "Recursos PT-BR de nível e próximo nível usam acentuação correta.",
+        "As duas árvores de recursos PT-BR mantêm conteúdo e placeholders sincronizados."
+      ],
+      "issueRefs": [
+        3844,
+        3847,
+        3848,
+        3849,
+        3850,
+        3851,
+        3852,
+        3853,
+        3854,
+        3855,
+        3856
+      ]
+    },
     {
       "version": "1.6.3",
       "buildNumber": 20,

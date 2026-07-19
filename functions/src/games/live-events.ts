@@ -28,7 +28,7 @@ interface SubmitLiveGameEventRequest {
   playerId: string;
   playerName: string;
   teamId: string;
-  minute?: number;
+  minute?: number | null;
   assistedById?: string | null;
   assistedByName?: string | null;
 }
@@ -110,8 +110,10 @@ function validateOptionalPlayerName(
   return value.trim();
 }
 
-function validateMinute(value: unknown): number {
-  if (value == null) return 0;
+function validateMinute(
+  value: unknown,
+): number | null {
+  if (value == null) return null;
   const minute = Number(value);
   if (
     !Number.isInteger(minute) ||
@@ -254,11 +256,20 @@ function isSameIdempotentEvent(
   uid: string,
 ): boolean {
   const existingType = existing.event_type ?? existing.type;
-  const existingMinute = Number(existing.minute ?? 0);
+  const existingMinute =
+    typeof existing.minute === "number" &&
+    Number.isFinite(existing.minute) ?
+      existing.minute :
+      null;
   const existingAssistedById =
     typeof existing.assisted_by_id === "string" ?
       existing.assisted_by_id :
       null;
+  const payloadMinute = payload.minute ?? null;
+  const minutesMatch =
+    payloadMinute == null ?
+      (existingMinute == null || existingMinute === 0) :
+      existingMinute === payloadMinute;
 
   return existing.game_id === payload.gameId &&
     existing.request_id === payload.requestId &&
@@ -266,7 +277,7 @@ function isSameIdempotentEvent(
     existingType === payload.eventType &&
     existing.player_id === payload.playerId &&
     existing.team_id === payload.teamId &&
-    existingMinute === (payload.minute ?? 0) &&
+    minutesMatch &&
     existingAssistedById === (payload.assistedById ?? null);
 }
 
@@ -328,6 +339,7 @@ function buildEventPayload(
   eventId: string,
   request: SubmitLiveGameEventRequest,
   createdBy: string,
+  playerPosition: string | null,
   scoreField: "team1_score" | "team2_score" | null,
 ): Record<string, unknown> {
   return {
@@ -342,8 +354,10 @@ function buildEventPayload(
       request.assistedById ?? null,
     assisted_by_name:
       request.assistedByName ?? null,
-    minute: request.minute ?? 0,
+    ...(request.minute == null ? {} : {minute: request.minute}),
     created_by: createdBy,
+    recorded_by: createdBy,
+    player_position: playerPosition,
     request_id: request.requestId ?? null,
     score_field: scoreField,
     created_at: FieldValue.serverTimestamp(),
@@ -594,6 +608,9 @@ export const submitLiveGameEvent = onCall<
             eventRef.id,
             payload,
             uid,
+            typeof playerConfirmationSnap.data()?.position === "string" ?
+              playerConfirmationSnap.data()?.position :
+              null,
             scoreField,
           ),
         );

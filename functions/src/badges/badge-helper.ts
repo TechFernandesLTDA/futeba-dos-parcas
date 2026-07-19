@@ -22,6 +22,7 @@ export interface ConfirmationData {
 export interface PlayerStats {
   totalGames: number;
   gamesWon: number;
+  recordedEventsGames?: number;
   currentMvpStreak: number;
 }
 
@@ -34,6 +35,22 @@ export interface BadgeContext {
   currentLevel?: number;
   result: "WIN" | "DRAW" | "LOSS";
   opponentScore?: number;
+}
+
+/**
+ * Determina os marcos Mesa Oficial usando o contador já calculado pelo
+ * pipeline de XP. Assim a concessão ocorre na mesma transação que incrementa
+ * `recordedEventsGames`, sem corrida com o trigger paralelo de fim de jogo.
+ *
+ * @param {number} recordedEventsGames total de jogos com eventos registrados
+ * @return {string[]} badges Mesa Oficial atingidas
+ */
+export function getRecorderBadges(recordedEventsGames: number): string[] {
+  const badges: string[] = [];
+  if (recordedEventsGames >= 10) badges.push("mesa_oficial_10");
+  if (recordedEventsGames >= 25) badges.push("mesa_oficial_25");
+  if (recordedEventsGames >= 50) badges.push("mesa_oficial_50");
+  return badges;
 }
 
 /**
@@ -308,6 +325,9 @@ export function getAllBadgesToAward(
   );
   badges.push(
     ...getWinnerBadges(result, newStats.gamesWon)
+  );
+  badges.push(
+    ...getRecorderBadges(newStats.recordedEventsGames || 0)
   );
 
   return badges;

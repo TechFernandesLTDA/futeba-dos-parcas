@@ -1364,4 +1364,27 @@ qualquer fonte e permite compartilhar o nome entre rotas durante a sessão.
 
 ---
 
+## 2026-07-19 — XP pós-jogo permanece agregado e usa calendário BRT (#3846)
+
+**Contexto:** O épico de Gamificação 2.0 propõe novos bônus por performance,
+retorno, frequência e contribuição. O pipeline atual garante idempotência com
+um único `xp_log` determinístico por jogo e jogador, enquanto streaks e seasons
+já usam `America/Sao_Paulo`.
+
+**Decisão:** Manter um único breakdown agregado por jogo+jogador e acrescentar
+campos opcionais para cada bônus. Todos os marcadores mensais usam
+`America/Sao_Paulo`; o bônus de primeira partida do mês incrementa XP global e
+não redefine a competição sazonal. O processamento continua exclusivo do
+backend na primeira transição válida para `FINISHED`, sem backfill.
+
+**Consequências:** Retries compartilham o guard idempotente existente, clientes
+antigos ignoram campos desconhecidos e a virada de mês segue uma única regra.
+Qualquer evolução para ledger por ação ou season XP real exigirá spec e
+migração próprias.
+
+**Relacionado:** `specs/feat-2026-07-19-xp-performance-aderencia.md`,
+#3846–#3856.
+
+---
+
 <!-- Adicione novas decisões acima desta linha -->

@@ -2,6 +2,26 @@
 
 Sistema de processamento de XP com garantias de **idempotência**, **atomicidade** e **performance**.
 
+## 2026-07 Settings Migration
+
+- `app_settings/gamification` continua aceitando o contrato legado com campos flat (`xp_per_goal`, `xp_win`, etc.).
+- O backend agora também lê blocos opcionais compatíveis sem migração destrutiva:
+  - `xpActions`
+  - `performanceBonuses`
+  - `behaviorBonuses`
+  - `retentionBonuses`
+- Deploy seguro:
+  - publicar Functions primeiro;
+  - depois seedar/editar `app_settings/gamification` com os novos blocos ou novos campos flat;
+  - nenhum backfill retroativo de `xp_logs` é executado.
+- Novos campos operacionais gravados a partir do deploy:
+  - `users.last_played_game_date`
+  - `users.last_played_month_key`
+  - `users.last_comeback_month_key`
+  - `users.monthly_streak`
+  - `statistics.recordedEventsGames`
+  - breakdown expandido em `xp_logs`
+
 ---
 
 ## 🎯 Problema Resolvido

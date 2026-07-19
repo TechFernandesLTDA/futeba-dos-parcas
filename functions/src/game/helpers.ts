@@ -48,6 +48,12 @@ export function toGameConfirmation(
     "checkedIn" in raw ||
     "was_present" in raw ||
     "wasPresent" in raw;
+  const hasExplicitYellowCards =
+    "yellow_cards" in raw ||
+    "yellowCards" in raw;
+  const hasExplicitRedCards =
+    "red_cards" in raw ||
+    "redCards" in raw;
   return {
     userId: raw.user_id ?? raw.userId ?? "",
     status: raw.status ?? "CONFIRMED",
@@ -61,6 +67,8 @@ export function toGameConfirmation(
     redCards: Number(
       raw.red_cards ?? raw.redCards ?? 0
     ),
+    hasExplicitYellowCards,
+    hasExplicitRedCards,
     game_id:
       raw.game_id ?? raw.gameId ?? "",
     is_worst_player:
@@ -72,6 +80,18 @@ export function toGameConfirmation(
     checkedIn: raw.checked_in === true || raw.checkedIn === true,
     wasPresent: raw.was_present === true || raw.wasPresent === true,
     hasPresenceSignal,
+    confirmedAt: raw.confirmed_at ?? raw.confirmedAt ?? null,
+    checkedInAt: raw.checked_in_at ?? raw.checkedInAt ?? null,
+    lastMinuteSaverEligible:
+      raw.last_minute_saver_eligible === true ||
+      raw.lastMinuteSaverEligible === true,
+    wasWaitlistPromoted:
+      raw.was_waitlist_promoted === true ||
+      raw.wasWaitlistPromoted === true,
+    waitlistPromotedAt:
+      raw.waitlist_promoted_at ??
+      raw.waitlistPromotedAt ??
+      null,
   };
 }
 

@@ -26,10 +26,25 @@ data class XpBreakdown(
     val mvp: Long = 0,
     val milestones: Long = 0,
     val streak: Long = 0,
+    val topScorer: Long = 0,
+    val hatTrick: Long = 0,
+    val firstGoal: Long = 0,
+    val goalkeeperGoal: Long = 0,
+    val fairPlay: Long = 0,
+    val comeback: Long = 0,
+    val firstGameMonth: Long = 0,
+    val monthlyStreak: Long = 0,
+    val recorder: Long = 0,
+    val earlyConfirmation: Long = 0,
+    val onTimeCheckin: Long = 0,
+    val lastMinuteSaver: Long = 0,
+    val waitlistPromoted: Long = 0,
     val penalty: Long = 0
 ) {
     val total: Long
-        get() = participation + goals + assists + saves + cleanSheet + result + mvp + milestones + streak + penalty
+        get() = participation + goals + assists + saves + cleanSheet + result + mvp + milestones + streak +
+            topScorer + hatTrick + firstGoal + goalkeeperGoal + fairPlay + comeback + firstGameMonth +
+            monthlyStreak + recorder + earlyConfirmation + onTimeCheckin + lastMinuteSaver + waitlistPromoted + penalty
 
     fun toDisplayMap(): Map<String, Long> {
         val map = mutableMapOf<String, Long>()
@@ -42,9 +57,26 @@ data class XpBreakdown(
         if (mvp > 0) map["MVP"] = mvp
         if (milestones > 0) map["Milestones"] = milestones
         if (streak > 0) map["Sequencia"] = streak
+        addPostGameBonuses(map, this)
         if (penalty < 0) map["Bola Murcha"] = penalty
         return map
     }
+}
+
+private fun addPostGameBonuses(map: MutableMap<String, Long>, breakdown: XpBreakdown) {
+    if (breakdown.topScorer > 0) map["Artilheiro do Jogo 🎯"] = breakdown.topScorer
+    if (breakdown.hatTrick > 0) map["Hat-trick ⚽⚽⚽"] = breakdown.hatTrick
+    if (breakdown.firstGoal > 0) map["Primeiro Gol do Jogo 🥇"] = breakdown.firstGoal
+    if (breakdown.goalkeeperGoal > 0) map["Gol do Goleiro 🧤"] = breakdown.goalkeeperGoal
+    if (breakdown.fairPlay > 0) map["Fair Play 🤝"] = breakdown.fairPlay
+    if (breakdown.comeback > 0) map["Tá de volta! 🔙"] = breakdown.comeback
+    if (breakdown.firstGameMonth > 0) map["Primeira do Mês 📅"] = breakdown.firstGameMonth
+    if (breakdown.monthlyStreak > 0) map["Sequência Mensal 🔥"] = breakdown.monthlyStreak
+    if (breakdown.recorder > 0) map["Mesa Oficial 📝"] = breakdown.recorder
+    if (breakdown.earlyConfirmation > 0) map["Confirmação Antecipada ⏰"] = breakdown.earlyConfirmation
+    if (breakdown.onTimeCheckin > 0) map["Pontualidade ⏱️"] = breakdown.onTimeCheckin
+    if (breakdown.lastMinuteSaver > 0) map["Salvou a Pelada 🦸"] = breakdown.lastMinuteSaver
+    if (breakdown.waitlistPromoted > 0) map["Veio da Waitlist 🎟️"] = breakdown.waitlistPromoted
 }
 
 /**
@@ -74,13 +106,13 @@ data class PlayerGameData(
  *
  * Regras padrao:
  * - Participacao: 10 XP por jogo
- * - Gols: 10 XP cada
- * - Assistencias: 7 XP cada
- * - Defesas (goleiro): 8 XP cada (aumentado para balance)
+ * - Gols: 25 XP cada
+ * - Assistencias: 20 XP cada
+ * - Defesas (goleiro): 15 XP cada
  * - Clean Sheet (goleiro): 15 XP bonus
- * - Vitoria: 20 XP
+ * - Vitoria: 30 XP
  * - Empate: 10 XP
- * - MVP: 30 XP
+ * - MVP: 50 XP
  * - Streak 3: 20 XP
  * - Streak 5: 35 XP (NOVO)
  * - Streak 7: 50 XP
@@ -91,13 +123,13 @@ object XPCalculator {
 
     // Constantes de XP padrao
     private const val DEFAULT_XP_PRESENCE = 10
-    private const val DEFAULT_XP_PER_GOAL = 10
-    private const val DEFAULT_XP_PER_ASSIST = 7
-    private const val DEFAULT_XP_PER_SAVE = 8         // Aumentado de 5 para 8 (balance goleiros)
+    private const val DEFAULT_XP_PER_GOAL = 25
+    private const val DEFAULT_XP_PER_ASSIST = 20
+    private const val DEFAULT_XP_PER_SAVE = 15
     private const val DEFAULT_XP_CLEAN_SHEET = 15    // NOVO: Bonus goleiro clean sheet
-    private const val DEFAULT_XP_WIN = 20
+    private const val DEFAULT_XP_WIN = 30
     private const val DEFAULT_XP_DRAW = 10
-    private const val DEFAULT_XP_MVP = 30
+    private const val DEFAULT_XP_MVP = 50
     private const val DEFAULT_XP_WORST_PLAYER_PENALTY = -10
 
     // Bonus de Sequencia (Streak)

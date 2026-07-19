@@ -244,6 +244,8 @@ export interface BadgeDefinition {
   rarity: BadgeRarity;
   requirement: string;
   xpReward: number;
+  progressStat?: 'totalGoals' | 'totalAssists' | 'totalWins' | 'totalSaves';
+  progressThreshold?: number;
 }
 
 export const BADGE_DEFINITIONS: BadgeDefinition[] = [
@@ -254,13 +256,15 @@ export const BADGE_DEFINITIONS: BadgeDefinition[] = [
   { id: 'mvp_1', name: 'Estreante MVP', description: 'Seja eleito MVP pela primeira vez', icon: '⭐', category: 'mvp', rarity: 'COMUM', requirement: '1 MVP', xpReward: 100 },
   { id: 'mvp_10', name: 'Estrela em Ascensão', description: 'Seja eleito MVP 10 vezes', icon: '🌟', category: 'mvp', rarity: 'RARO', requirement: '10 MVPs', xpReward: 300 },
   { id: 'mvp_50', name: 'Lenda do MVP', description: 'Seja eleito MVP 50 vezes', icon: '👑', category: 'mvp', rarity: 'LENDARIO', requirement: '50 MVPs', xpReward: 1000 },
-  { id: 'goals_10', name: 'Goleador', description: 'Marque 10 gols', icon: '🥅', category: 'goals', rarity: 'COMUM', requirement: '10 gols', xpReward: 50 },
-  { id: 'goals_100', name: 'Artilheiro', description: 'Marque 100 gols', icon: '⚽', category: 'goals', rarity: 'RARO', requirement: '100 gols', xpReward: 200 },
-  { id: 'goals_500', name: 'Máquina de Gols', description: 'Marque 500 gols', icon: '🎯', category: 'goals', rarity: 'LENDARIO', requirement: '500 gols', xpReward: 1000 },
-  { id: 'assists_50', name: 'Garçom', description: 'Dê 50 assistências', icon: '👟', category: 'assists', rarity: 'COMUM', requirement: '50 assists', xpReward: 50 },
-  { id: 'assists_200', name: 'Mestre das Assistências', description: 'Dê 200 assistências', icon: '🎭', category: 'assists', rarity: 'RARO', requirement: '200 assists', xpReward: 300 },
-  { id: 'wins_10', name: 'Vencedor', description: 'Vença 10 jogos', icon: '🏅', category: 'wins', rarity: 'COMUM', requirement: '10 vitórias', xpReward: 100 },
-  { id: 'wins_50', name: 'Campeão', description: 'Vença 50 jogos', icon: '🏆', category: 'wins', rarity: 'RARO', requirement: '50 vitórias', xpReward: 400 },
+  { id: 'goals_10', name: 'Goleador', description: 'Marque 10 gols', icon: '🥅', category: 'goals', rarity: 'COMUM', requirement: '10 gols', xpReward: 50, progressStat: 'totalGoals', progressThreshold: 10 },
+  { id: 'goals_100', name: 'Artilheiro', description: 'Marque 100 gols', icon: '⚽', category: 'goals', rarity: 'RARO', requirement: '100 gols', xpReward: 200, progressStat: 'totalGoals', progressThreshold: 100 },
+  { id: 'goals_500', name: 'Máquina de Gols', description: 'Marque 500 gols', icon: '🎯', category: 'goals', rarity: 'LENDARIO', requirement: '500 gols', xpReward: 1000, progressStat: 'totalGoals', progressThreshold: 500 },
+  { id: 'assists_50', name: 'Garçom', description: 'Dê 50 assistências', icon: '👟', category: 'assists', rarity: 'COMUM', requirement: '50 assists', xpReward: 50, progressStat: 'totalAssists', progressThreshold: 50 },
+  { id: 'assists_200', name: 'Mestre das Assistências', description: 'Dê 200 assistências', icon: '🎭', category: 'assists', rarity: 'RARO', requirement: '200 assists', xpReward: 300, progressStat: 'totalAssists', progressThreshold: 200 },
+  { id: 'wins_10', name: 'Vencedor', description: 'Vença 10 jogos', icon: '🏅', category: 'wins', rarity: 'COMUM', requirement: '10 vitórias', xpReward: 100, progressStat: 'totalWins', progressThreshold: 10 },
+  { id: 'wins_50', name: 'Campeão', description: 'Vença 50 jogos', icon: '🏆', category: 'wins', rarity: 'RARO', requirement: '50 vitórias', xpReward: 400, progressStat: 'totalWins', progressThreshold: 50 },
+  { id: 'saves_10', name: 'Muralha', description: 'Faça 10 defesas', icon: '🧤', category: 'saves', rarity: 'COMUM', requirement: '10 defesas', xpReward: 100, progressStat: 'totalSaves', progressThreshold: 10 },
+  { id: 'saves_50', name: 'Paredão', description: 'Faça 50 defesas', icon: '🛡️', category: 'saves', rarity: 'RARO', requirement: '50 defesas', xpReward: 300, progressStat: 'totalSaves', progressThreshold: 50 },
   { id: 'games_100', name: 'Veterano', description: 'Participe de 100 jogos', icon: '🎖️', category: 'participation', rarity: 'EPICO', requirement: '100 jogos', xpReward: 500 },
   { id: 'games_500', name: 'Lenda Viva', description: 'Participe de 500 jogos', icon: '🏟️', category: 'participation', rarity: 'LENDARIO', requirement: '500 jogos', xpReward: 2000 },
   { id: 'HAT_TRICK', name: 'Hat-Trick', description: 'Marque 3+ gols em uma única partida', icon: '⚽', category: 'performance', rarity: 'RARO', requirement: '3+ gols em uma partida', xpReward: 150 },
@@ -303,6 +307,20 @@ export const XP_VALUES = {
   STREAK_7: xpConstants.streakBonuses.STREAK_7,
   STREAK_10: xpConstants.streakBonuses.STREAK_10,
   WORST_PLAYER: xpConstants.xpActions.WORST_PLAYER,
+  TOP_SCORER: xpConstants.performanceBonuses.TOP_SCORER,
+  COMEBACK_14D: xpConstants.retentionBonuses.COMEBACK_14D,
+  COMEBACK_30D: xpConstants.retentionBonuses.COMEBACK_30D,
+  FIRST_GAME_OF_MONTH: xpConstants.retentionBonuses.FIRST_GAME_OF_MONTH,
+  HAT_TRICK: xpConstants.performanceBonuses.HAT_TRICK,
+  FIRST_GOAL: xpConstants.performanceBonuses.FIRST_GOAL,
+  EVENT_RECORDER: xpConstants.performanceBonuses.EVENT_RECORDER_PER_EVENT,
+  EARLY_CONFIRMATION: xpConstants.behaviorBonuses.EARLY_CONFIRMATION,
+  ON_TIME_CHECKIN: xpConstants.behaviorBonuses.ON_TIME_CHECKIN,
+  LAST_MINUTE_SAVER: xpConstants.behaviorBonuses.LAST_MINUTE_SAVER,
+  WAITLIST_PROMOTED: xpConstants.behaviorBonuses.WAITLIST_PROMOTED,
+  MONTHLY_STREAK_3: xpConstants.retentionBonuses.MONTHLY_STREAK_3,
+  GOALKEEPER_GOAL: xpConstants.performanceBonuses.GOALKEEPER_GOAL,
+  FAIR_PLAY: xpConstants.performanceBonuses.FAIR_PLAY,
   // Legacy aliases for backward compatibility (web-only concepts)
   BEST_GK: 25,
   BOLA_MURCHA: xpConstants.xpActions.WORST_PLAYER,

@@ -91,11 +91,20 @@ function arrangeTransaction(input: {
   game?: FakeDoc;
   existing?: FakeDoc;
   capacity?: Array<{data: () => Record<string, unknown>}>;
+  waitlist?: Array<{
+    data: () => Record<string, unknown>;
+    ref: {path: string};
+  }>;
   member?: FakeDoc;
   blocked?: FakeDoc;
 }) {
   const capacityQuery = {
     where: jest.fn().mockReturnThis(),
+  };
+  const waitlistQuery = {
+    path: "games/game1/waitlist",
+    where: jest.fn().mockReturnThis(),
+    limit: jest.fn().mockReturnThis(),
   };
   const tx = {
     get: jest.fn(async (ref: {path?: string}) => {
@@ -109,6 +118,13 @@ function arrangeTransaction(input: {
       if (ref?.path === "groups/group1/blocked_players/user1") {
         return input.blocked ?? confirmationDoc();
       }
+      if (ref?.path === "games/game1/waitlist") {
+        return {
+          empty: !input.waitlist?.length,
+          size: input.waitlist?.length ?? 0,
+          docs: input.waitlist ?? [],
+        };
+      }
       return {
         size: input.capacity?.length ?? 0,
         docs: input.capacity ?? [],
@@ -119,7 +135,9 @@ function arrangeTransaction(input: {
   };
 
   mockDoc.mockImplementation((path: string) => ({path}));
-  mockCollection.mockReturnValue(capacityQuery);
+  mockCollection.mockImplementation((path: string) =>
+    path === "games/game1/waitlist" ? waitlistQuery : capacityQuery
+  );
   mockRunTransaction.mockImplementation(
     async (handler: (transaction: typeof tx) => Promise<unknown>) => handler(tx)
   );
@@ -172,6 +190,41 @@ describe("confirmGamePresence", () => {
     expect(checkRateLimit).toHaveBeenCalledWith(
       "user1",
       CONFIRM_GAME_PRESENCE_RATE_LIMIT
+    );
+  });
+
+  test("reconhece entrada legada de waitlist por user_id e materializa promocao", async () => {
+    const notifiedAt = {toMillis: () => Date.now() - 60_000};
+    const legacyRef = {path: "games/game1/waitlist/random-legacy-id"};
+    const tx = arrangeTransaction({
+      waitlist: [{
+        ref: legacyRef,
+        data: () => ({
+          user_id: "user1",
+          status: "NOTIFIED",
+          notified_at: notifiedAt,
+        }),
+      }],
+    });
+
+    await expect(confirmGamePresence({
+      auth: {uid: "user1", token: {verified: true}},
+      data: {gameId: "game1", position: "FIELD"},
+    })).resolves.toMatchObject({success: true});
+
+    expect(tx.update).toHaveBeenCalledWith(
+      legacyRef,
+      expect.objectContaining({status: "PROMOTED"})
+    );
+    expect(tx.set).toHaveBeenCalledWith(
+      expect.objectContaining({path: "confirmations/game1_user1"}),
+      expect.objectContaining({
+        was_waitlist_promoted: true,
+        waitlist_promoted_at: notifiedAt,
+        yellow_cards: 0,
+        red_cards: 0,
+      }),
+      {merge: true}
     );
   });
 

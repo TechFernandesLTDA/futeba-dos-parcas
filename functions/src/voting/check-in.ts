@@ -600,7 +600,7 @@ export const checkInToGame = onCall(
         );
         throw new HttpsError(
           "permission-denied",
-          `Voce esta a ${Math.round(dist)}m do campo ` +
+          `Você está a ${Math.round(dist)}m do campo ` +
             `(limite ${radius}m)`,
         );
       }

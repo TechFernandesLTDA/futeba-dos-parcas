@@ -41,7 +41,7 @@ describe('AppBreadcrumbs', () => {
       />
     );
 
-    expect(screen.getByLabelText('Breadcrumb')).toBeInTheDocument();
+    expect(screen.getByLabelText('Navegação estrutural')).toBeInTheDocument();
   });
 
   it('último item não é clicável', () => {

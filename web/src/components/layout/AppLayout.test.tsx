@@ -91,7 +91,7 @@ describe('AppLayout', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getAllByLabelText('Breadcrumb')).toHaveLength(1);
+      expect(screen.getAllByLabelText('Navegação estrutural')).toHaveLength(1);
     });
     expect(screen.getByText('Parças da Vila')).toBeInTheDocument();
     expect(screen.queryByText('Detalhes')).not.toBeInTheDocument();

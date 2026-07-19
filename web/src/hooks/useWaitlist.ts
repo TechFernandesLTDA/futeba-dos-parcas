@@ -7,7 +7,8 @@ import {
   limit,
   where,
   onSnapshot,
-  addDoc,
+  doc,
+  setDoc,
   getDocs,
   writeBatch,
 } from 'firebase/firestore';
@@ -33,7 +34,7 @@ export type WaitlistStatus =
 /**
  * Entrada na lista de espera de um jogo.
  *
- * Coleção Firestore: `games/{gameId}/waitlist/{waitlistId}` — mesma
+ * Coleção Firestore: `games/{gameId}/waitlist/{userId}` — mesma
  * subcoleção que o Android (`WaitlistRepositoryImpl`) e que a Cloud
  * Function `processExpiredWaitlistEntries` (paridade cross-platform).
  */
@@ -148,7 +149,8 @@ export function useWaitlist(gameId: string | null) {
           showError(t('feedback.waitlist.alreadyIn'));
           return false;
         }
-        await addDoc(collection(db, 'games', gameId, 'waitlist'), {
+        const entryRef = doc(db, 'games', gameId, 'waitlist', currentUser.uid);
+        await setDoc(entryRef, {
           game_id: gameId,
           user_id: currentUser.uid,
           user_name: currentUser.displayName || 'Jogador',

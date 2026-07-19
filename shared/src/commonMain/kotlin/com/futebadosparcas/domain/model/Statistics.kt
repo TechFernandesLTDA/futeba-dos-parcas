@@ -168,6 +168,19 @@ data class XpLog(
     @SerialName("xp_mvp") val xpMvp: Int = 0,
     @SerialName("xp_milestones") val xpMilestones: Int = 0,
     @SerialName("xp_streak") val xpStreak: Int = 0,
+    @SerialName("xp_top_scorer") val xpTopScorer: Int = 0,
+    @SerialName("xp_hat_trick") val xpHatTrick: Int = 0,
+    @SerialName("xp_first_goal") val xpFirstGoal: Int = 0,
+    @SerialName("xp_goalkeeper_goal") val xpGoalkeeperGoal: Int = 0,
+    @SerialName("xp_fair_play") val xpFairPlay: Int = 0,
+    @SerialName("xp_comeback") val xpComeback: Int = 0,
+    @SerialName("xp_first_game_month") val xpFirstGameMonth: Int = 0,
+    @SerialName("xp_monthly_streak") val xpMonthlyStreak: Int = 0,
+    @SerialName("xp_recorder") val xpRecorder: Int = 0,
+    @SerialName("xp_early_confirmation") val xpEarlyConfirmation: Int = 0,
+    @SerialName("xp_on_time_checkin") val xpOnTimeCheckin: Int = 0,
+    @SerialName("xp_last_minute_saver") val xpLastMinuteSaver: Int = 0,
+    @SerialName("xp_waitlist_promoted") val xpWaitlistPromoted: Int = 0,
 
     // Dados do jogo
     val goals: Int = 0,
@@ -187,6 +200,36 @@ data class XpLog(
     }
 
     fun didLevelUp(): Boolean = levelAfter > levelBefore
+
+    /**
+     * Bônus pós-jogo já calculados e persistidos pelo servidor.
+     *
+     * O cliente apenas os apresenta; elegibilidade, limites e idempotência pertencem
+     * ao pipeline server-authoritative de finalização da partida.
+     */
+    fun bonusBreakdown(): Map<XpAction, Int> = linkedMapOf(
+        XpAction.TOP_SCORER to xpTopScorer,
+        XpAction.HAT_TRICK to xpHatTrick,
+        XpAction.FIRST_GOAL to xpFirstGoal,
+        XpAction.GOALKEEPER_GOAL to xpGoalkeeperGoal,
+        XpAction.FAIR_PLAY to xpFairPlay,
+        (if (xpComeback >= XpAction.COMEBACK_30D.defaultXp) {
+            XpAction.COMEBACK_30D
+        } else {
+            XpAction.COMEBACK_14D
+        }) to xpComeback,
+        XpAction.FIRST_GAME_OF_MONTH to xpFirstGameMonth,
+        when {
+            xpMonthlyStreak >= XpAction.MONTHLY_STREAK_12.defaultXp -> XpAction.MONTHLY_STREAK_12
+            xpMonthlyStreak >= XpAction.MONTHLY_STREAK_6.defaultXp -> XpAction.MONTHLY_STREAK_6
+            else -> XpAction.MONTHLY_STREAK_3
+        } to xpMonthlyStreak,
+        XpAction.EVENT_RECORDER to xpRecorder,
+        XpAction.EARLY_CONFIRMATION to xpEarlyConfirmation,
+        XpAction.ON_TIME_CHECKIN to xpOnTimeCheckin,
+        XpAction.LAST_MINUTE_SAVER to xpLastMinuteSaver,
+        XpAction.WAITLIST_PROMOTED to xpWaitlistPromoted
+    ).filterValues { it != 0 }
 
     /**
      * Retorna o GameResult correspondente ao campo gameResult string.
