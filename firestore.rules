@@ -78,6 +78,11 @@ service cloud.firestore {
              request.resource.data[field] == resource.data[field];
     }
 
+    // Verifica se um campo nao foi tocado no diff (inclui add/update/delete)
+    function fieldUntouched(field) {
+      return !(field in request.resource.data.diff(resource.data).affectedKeys());
+    }
+
     // Valida que apenas campos permitidos foram modificados
     function onlyAllowedFields(allowedFields) {
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly(allowedFields);
@@ -738,8 +743,21 @@ service cloud.firestore {
                        isValidAppInviteCodeForUser(request.resource.data.invited_by_code, userId) &&
                        // #1979: previne self-injection de campos gamificados/sensiveis no create
                        !('experience_points' in request.resource.data) &&
+                       !('experiencePoints' in request.resource.data) &&
                        !('level' in request.resource.data) &&
                        !('milestones_achieved' in request.resource.data) &&
+                       !('milestonesAchieved' in request.resource.data) &&
+                       // Marcadores de retenção/gamificação são calculados
+                       // exclusivamente pelo backend. Bloquear ambos os nomes
+                       // evita bypass por aliases camelCase em clientes legados.
+                       !('last_played_game_date' in request.resource.data) &&
+                       !('lastPlayedGameDate' in request.resource.data) &&
+                       !('last_played_month_key' in request.resource.data) &&
+                       !('lastPlayedMonthKey' in request.resource.data) &&
+                       !('monthly_streak' in request.resource.data) &&
+                       !('monthlyStreak' in request.resource.data) &&
+                       !('last_comeback_month_key' in request.resource.data) &&
+                       !('lastComebackMonthKey' in request.resource.data) &&
                        !('verified' in request.resource.data) &&
                        !('verifiedAt' in request.resource.data) &&
                        !('cpfVerifiedAt' in request.resource.data) &&
@@ -825,9 +843,21 @@ service cloud.firestore {
            fieldUnchanged('invite_source') &&
            // PERF_001 P0 #29: Campos de gamificacao NUNCA podem ser editados por users
            // Garante que XP so é alterado por Cloud Functions (Admin SDK)
-           fieldUnchanged('experience_points') &&
-           fieldUnchanged('level') &&
-           fieldUnchanged('milestones_achieved') &&
+           fieldUntouched('experience_points') &&
+           fieldUntouched('experiencePoints') &&
+           fieldUntouched('level') &&
+           fieldUntouched('milestones_achieved') &&
+           fieldUntouched('milestonesAchieved') &&
+           // Marcadores de retenção são mantidos apenas pelo pipeline
+           // server-authoritative de XP/check-in/finalização.
+           fieldUntouched('last_played_game_date') &&
+           fieldUntouched('lastPlayedGameDate') &&
+           fieldUntouched('last_played_month_key') &&
+           fieldUntouched('lastPlayedMonthKey') &&
+           fieldUntouched('monthly_streak') &&
+           fieldUntouched('monthlyStreak') &&
+           fieldUntouched('last_comeback_month_key') &&
+           fieldUntouched('lastComebackMonthKey') &&
            // Campos de rating automatico (apenas cloud functions)
            fieldUnchanged('auto_striker_rating') &&
            fieldUnchanged('auto_mid_rating') &&
@@ -1203,8 +1233,19 @@ service cloud.firestore {
         allow delete: if isAuthenticated() &&
           (resource.data.user_id == userId() || isGameOwner(gameId) || isAdmin());
 
-        // Promocao/expiracao NUNCA no cliente (server-only, anti-race).
-        allow update: if false;
+        // Promoção/expiração continuam server-only. A única atualização de
+        // cliente aceita é reabrir o documento canônico `{userId}` depois de
+        // um estado terminal, com o mesmo contrato estrito de um novo join.
+        allow update: if isAuthenticated() &&
+          waitlistId == userId() &&
+          resource.data.user_id == userId() &&
+          resource.data.status in ['PROMOTED', 'EXPIRED', 'CANCELLED'] &&
+          request.resource.data.user_id == userId() &&
+          request.resource.data.game_id == gameId &&
+          request.resource.data.status == 'WAITING' &&
+          request.resource.data.user_name is string &&
+          request.resource.data.queue_position is number &&
+          request.resource.data.added_at is number;
       }
 
       // ============================================

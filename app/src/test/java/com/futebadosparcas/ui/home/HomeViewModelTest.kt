@@ -208,6 +208,35 @@ class HomeViewModelTest {
             assertFalse(state.activities.isEmpty())
             assertNotNull(state.statistics)
         }
+
+        @Test
+        @DisplayName("Fase 2 calcula progresso quase-nível e quase-badge")
+        fun `phase2 calculates near progress insights`() = runTest(testDispatcher) {
+            val nearLevelUser = testUser.copy(
+                level = 1,
+                experiencePoints = 251L,
+                milestonesAchieved = listOf("GOALS_10")
+            )
+            val stats = Statistics(
+                id = "stats-1",
+                userId = "user-1",
+                totalGoals = 22,
+                totalAssists = 20,
+                totalSaves = 20,
+                totalWins = 9
+            )
+
+            setupMocksForSuccess()
+            coEvery { userRepository.getCurrentUser() } returns Result.success(nearLevelUser)
+            coEvery { statisticsRepository.getUserStatistics(testUser.id) } returns Result.success(stats)
+
+            viewModel = createViewModel()
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value as HomeUiState.Success
+            assertEquals(99L, state.progressInsights.nearLevel?.xpRemaining)
+            assertEquals("WINS_10", state.progressInsights.nearMilestones.firstOrNull()?.milestone?.name)
+        }
     }
 
     @Nested

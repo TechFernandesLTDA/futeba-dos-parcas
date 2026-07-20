@@ -281,12 +281,19 @@ async function confirmGamePresenceTransactional(input: {
   const gameRef = db().doc(`games/${payload.gameId}`);
   const confirmationId = `${payload.gameId}_${uid}`;
   const confirmationRef = db().doc(`confirmations/${confirmationId}`);
+  // Query by user_id to support both the canonical `{uid}` document and
+  // legacy entries created with random IDs by older Web/Android clients.
+  const waitlistQuery = db()
+    .collection(`games/${payload.gameId}/waitlist`)
+    .where("user_id", "==", uid)
+    .limit(10);
   const capacitySyncToken = randomUUID();
 
   return db().runTransaction(async (tx) => {
-    const [gameSnap, existingSnap] = await Promise.all([
+    const [gameSnap, existingSnap, waitlistSnap] = await Promise.all([
       tx.get(gameRef),
       tx.get(confirmationRef),
+      tx.get(waitlistQuery),
     ]);
     if (!gameSnap.exists) {
       throw new HttpsError("not-found", "Jogo não encontrado.");
@@ -422,6 +429,30 @@ async function confirmGamePresenceTransactional(input: {
     }
 
     const serverTs = FieldValue.serverTimestamp();
+    const isLastMinuteWindow =
+      startsAt - Date.now() < 24 * 60 * 60 * 1000;
+    const gameHasVacancy =
+      maxPlayers === null ||
+      confirmedDocs.length < maxPlayers;
+    const promotedWaitlistDoc = waitlistSnap.docs.find((doc) => {
+      const entry = doc.data();
+      const status = String(entry.status ?? "");
+      const promotionTimestamp =
+        entry.promoted_at ?? entry.notified_at;
+      return (
+        status === "PROMOTED" ||
+        status === "NOTIFIED"
+      ) && Boolean(promotionTimestamp);
+    });
+    const promotedWaitlistData =
+      promotedWaitlistDoc?.data() ?? {};
+    const wasWaitlistPromoted =
+      promotedWaitlistDoc !== undefined ||
+      existingStatus === "WAITLIST";
+    const waitlistPromotedAt =
+      promotedWaitlistData.promoted_at ??
+      promotedWaitlistData.notified_at ??
+      (existingStatus === "WAITLIST" ? serverTs : null);
     const confirmationData: Record<string, unknown> = {
       id: confirmationId,
       game_id: payload.gameId,
@@ -430,13 +461,29 @@ async function confirmGamePresenceTransactional(input: {
       user_photo: publicPhotoFromToken(authToken),
       position: payload.position,
       status: "CONFIRMED",
+      // Contrato explícito de cartões: o pipeline de Fair Play é fail-closed
+      // e só concede o bônus quando ambos os campos server-owned existem.
+      yellow_cards: 0,
+      red_cards: 0,
       is_casual_player: payload.isCasualPlayer,
       is_guest: false,
       confirmed_at: serverTs,
       updated_at: serverTs,
       source,
       capacity_sync_token: capacitySyncToken,
+      was_waitlist_promoted: wasWaitlistPromoted,
+      waitlist_promoted_at:
+        wasWaitlistPromoted ? waitlistPromotedAt : null,
+      last_minute_saver_eligible:
+        isLastMinuteWindow && gameHasVacancy,
     };
+    if (promotedWaitlistDoc &&
+        promotedWaitlistData.status !== "PROMOTED") {
+      tx.update(promotedWaitlistDoc.ref, {
+        status: "PROMOTED",
+        promoted_at: serverTs,
+      });
+    }
     if (!existingSnap.exists) {
       confirmationData.payment_status = "PENDING";
       confirmationData.partial_payment = 0;

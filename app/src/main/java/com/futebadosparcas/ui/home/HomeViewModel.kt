@@ -212,6 +212,7 @@ class HomeViewModel(
             user = user,
             games = games,
             gamificationSummary = summary,
+            progressInsights = HomeProgressInsightsBuilder.build(user, statistics = null),
             statistics = null,
             activities = emptyList(),
             publicGames = emptyList(),
@@ -260,7 +261,11 @@ class HomeViewModel(
 
         val currentState = previousState.copy(
             activities = activitiesResult.first,
-            statistics = activitiesResult.second
+            statistics = activitiesResult.second,
+            progressInsights = HomeProgressInsightsBuilder.build(
+                user = user,
+                statistics = activitiesResult.second
+            )
         )
         setState { currentState }
         cachedSuccessState = currentState
@@ -456,6 +461,7 @@ sealed class HomeUiState : UiState {
         val user: com.futebadosparcas.domain.model.User,
         val games: List<GameWithConfirmations>,
         val gamificationSummary: GamificationSummary,
+        val progressInsights: HomeProgressInsights = HomeProgressInsights(),
         val statistics: com.futebadosparcas.domain.model.Statistics? = null,
         val activities: List<Activity> = emptyList(),
         val publicGames: List<Game> = emptyList(),

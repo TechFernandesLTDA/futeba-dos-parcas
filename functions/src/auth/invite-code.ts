@@ -586,7 +586,7 @@ export const generateMyInviteCode = onCall(
     try {
       const uid = request.auth?.uid;
       if (!uid) {
-        throw new HttpsError("unauthenticated", "Voce precisa estar logado.");
+        throw new HttpsError("unauthenticated", "Você precisa estar logado.");
       }
 
       // #2283: rate limiting — 3 geracoes por hora

@@ -1,7 +1,58 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-17T22:13:09.868Z",
+  "generatedAt": "2026-07-19T23:42:04.104Z",
   "notes": [
+    {
+      "version": "1.55.0",
+      "buildNumber": null,
+      "releaseDate": "2026-07-19",
+      "type": "minor",
+      "showPopup": true,
+      "published": true,
+      "headline": "Seu desempenho e sua presença agora rendem recompensas mais claras e equilibradas.",
+      "highlights": [
+        {
+          "icon": "celebration",
+          "title": "Gamificação 2.0",
+          "description": "Novos bônus reconhecem artilharia, retorno, frequência, colaboração e fair play."
+        },
+        {
+          "icon": "trending_up",
+          "title": "Progresso mais visível",
+          "description": "O guia e o histórico explicam os novos valores e mostram quando você está perto do próximo objetivo."
+        },
+        {
+          "icon": "notifications",
+          "title": "Alertas úteis",
+          "description": "Avisos ajudam a proteger sequências e acompanhar níveis e conquistas próximas."
+        }
+      ],
+      "added": [
+        "Breakdown de XP ampliado com bônus por performance, aderência e contribuição.",
+        "Progresso de nível e conquistas próximas nas superfícies de gamificação."
+      ],
+      "improved": [
+        "Valores de gol, assistência, defesa, vitória e MVP foram rebalanceados.",
+        "Vocabulário PT-BR foi padronizado em navegação, perfil, ranking e notificações."
+      ],
+      "fixed": [
+        "Textos residuais em inglês deixaram de aparecer quando o idioma selecionado é PT-BR.",
+        "Traduções e terminologia de gamificação foram corrigidas sem alterar placeholders."
+      ],
+      "issueRefs": [
+        3843,
+        3847,
+        3848,
+        3849,
+        3850,
+        3851,
+        3852,
+        3853,
+        3854,
+        3855,
+        3856
+      ]
+    },
     {
       "version": "1.54.23",
       "buildNumber": null,

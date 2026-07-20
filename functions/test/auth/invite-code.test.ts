@@ -189,6 +189,16 @@ describe("auth/invite-code apadrinhamento", () => {
     });
   });
 
+  it("generateMyInviteCode exige autenticação", async () => {
+    await expect(callableHandlers.generateMyInviteCode({
+      auth: null,
+      data: {},
+    })).rejects.toMatchObject({
+      code: "unauthenticated",
+      message: "Você precisa estar logado.",
+    });
+  });
+
   it("claim legado sem owner é atômico e colisão de owner é bloqueada", async () => {
     store.set("users/legacy-owner", {
       invite_code: "LEGACY",

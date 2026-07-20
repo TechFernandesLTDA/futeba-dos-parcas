@@ -53,6 +53,8 @@ export interface GameConfirmation {
     saves: number;
     yellowCards: number;
     redCards: number;
+    hasExplicitYellowCards?: boolean;
+    hasExplicitRedCards?: boolean;
     game_id: string;
     // "Bola Murcha" - penalidade de -10 XP
     is_worst_player?: boolean;
@@ -63,6 +65,11 @@ export interface GameConfirmation {
     checkedIn?: boolean;
     wasPresent?: boolean;
     hasPresenceSignal?: boolean;
+    confirmedAt?: Timestamp | Date | null;
+    checkedInAt?: Timestamp | Date | null;
+    lastMinuteSaverEligible?: boolean;
+    wasWaitlistPromoted?: boolean;
+    waitlistPromotedAt?: Timestamp | Date | null;
 }
 
 export interface Team {
@@ -91,6 +98,7 @@ export interface UserStatistics {
     gamesDraw: number;
     bestPlayerCount: number;
     worstPlayerCount: number;
+    recordedEventsGames?: number;
     // Sequencia atual de jogos como MVP
     currentMvpStreak: number;
     // Melhor sequencia historica de MVPs consecutivos
@@ -121,6 +129,22 @@ export interface XpLog {
     xp_milestones: number;
     xp_streak: number;
     xp_penalty: number; // Penalidade "Bola Murcha"
+    xp_top_scorer?: number;
+    xp_hat_trick?: number;
+    xp_first_goal?: number;
+    xp_goalkeeper_goal?: number;
+    xp_fair_play?: number;
+    xp_recorder?: number;
+    xp_early_confirmation?: number;
+    xp_on_time_checkin?: number;
+    xp_last_minute_saver?: number;
+    xp_waitlist_promoted?: number;
+    xp_comeback?: number;
+    xp_first_game_month?: number;
+    xp_monthly_streak?: number;
+    // Aliases legados aceitos apenas em leitura.
+    xp_event_recorder?: number;
+    xp_first_game_of_month?: number;
     goals: number;
     assists: number;
     saves: number;
@@ -128,6 +152,15 @@ export interface XpLog {
     was_clean_sheet: boolean; // NOVO: Flag clean sheet
     // Flag "Bola Murcha"
     was_worst_player: boolean;
+    was_top_scorer?: boolean;
+    was_hat_trick?: boolean;
+    was_first_goal?: boolean;
+    was_goalkeeper_goal?: boolean;
+    was_fair_play?: boolean;
+    recorded_events_count?: number;
+    comeback_type?: string | null;
+    monthly_streak?: number;
+    monthly_streak_tier?: number | null;
     game_result: string;
     /** Status do jogo no momento do processamento — sempre "FINISHED" (#954) */
     game_status: string;
@@ -154,4 +187,29 @@ export interface GamificationSettings {
     xp_streak_10: number;
     // NOVO: Bonus goleiro sem sofrer gols
     xp_clean_sheet: number;
+    xp_top_scorer: number;
+    xp_hat_trick: number;
+    xp_first_goal: number;
+    xp_goalkeeper_goal: number;
+    xp_fair_play: number;
+    xp_event_recorder_per_event: number;
+    xp_event_recorder_min_events: number;
+    xp_event_recorder_max_xp: number;
+    xp_early_confirmation: number;
+    xp_on_time_checkin: number;
+    xp_last_minute_saver: number;
+    xp_waitlist_promoted: number;
+    xp_comeback_14d: number;
+    xp_comeback_30d: number;
+    comeback_14d_threshold_days: number;
+    comeback_30d_threshold_days: number;
+    comeback_max_per_month: number;
+    xp_first_game_of_month: number;
+    xp_monthly_streak_3: number;
+    xp_monthly_streak_6: number;
+    xp_monthly_streak_12: number;
+    xpActions?: Record<string, unknown>;
+    performanceBonuses?: Record<string, unknown>;
+    behaviorBonuses?: Record<string, unknown>;
+    retentionBonuses?: Record<string, unknown>;
 }

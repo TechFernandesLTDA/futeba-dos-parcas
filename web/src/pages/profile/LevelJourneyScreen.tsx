@@ -43,7 +43,6 @@ import {
   getLevelForXp,
   getXpProgress,
   getXpRemaining,
-  XP_VALUES,
 } from '../../types/gamification';
 import { getLevelColor } from '../../types/user';
 import { getLevelBadgeImage, getLevelBadgeDescription, handleBadgeImageError } from '../../utils/levelBadge';
@@ -55,6 +54,7 @@ import { getExperiencePoints, getLogLevelAfter, getXpEarned } from '../../utils/
 import { useBreadcrumbEntityLabel } from '../../contexts/BreadcrumbEntityContext';
 import { LevelDetailsDialog } from './LevelDetailsDialog';
 import { useHideMobileTopBar } from '../../hooks/useMobileTopBarVisibility';
+import { getNearLevelInsight, getXpGuideEntries, summarizeXpLogBreakdown, type XpBreakdownFields } from '../../utils/gamificationInsights';
 
 const logger = createLogger('LevelJourneyScreen');
 
@@ -63,6 +63,7 @@ interface LevelHistory {
   achievedAt: Date;
   xpGained: number;
   source: string;
+  summary: string[];
 }
 
 // #2272: LEVEL_TABLE é constante — divide-se uma única vez no nível do módulo,
@@ -136,6 +137,7 @@ export const LevelJourneyScreen: React.FC = () => {
           achievedAt: (logData.createdAt as { toDate?: () => Date })?.toDate?.() || new Date(),
           xpGained: getXpEarned({ ...rawLog, ...logData }),
           source: (logData.source as string) || t('level.xpSourceGame'),
+          summary: summarizeXpLogBreakdown(logData as XpBreakdownFields, t),
         };
       });
 
@@ -206,6 +208,7 @@ export const LevelJourneyScreen: React.FC = () => {
             achievedAt: (logData.createdAt as { toDate?: () => Date })?.toDate?.() || new Date(),
             xpGained: getXpEarned({ ...rawLog, ...logData }),
             source: (logData.source as string) || t('level.xpSourceGame'),
+            summary: summarizeXpLogBreakdown(logData as XpBreakdownFields, t),
           };
         });
         setHistory(historyData);
@@ -227,6 +230,8 @@ export const LevelJourneyScreen: React.FC = () => {
   const currentEntry = LEVEL_TABLE[currentLevel];
   const nextEntry = currentLevel < 20 ? LEVEL_TABLE[currentLevel + 1] : null;
   const color = getLevelColor(currentLevel, theme);
+  const nearLevelInsight = getNearLevelInsight(currentXp);
+  const xpGuideEntries = getXpGuideEntries(t);
 
   return (
     <Box>
@@ -354,6 +359,20 @@ export const LevelJourneyScreen: React.FC = () => {
                     </Typography>
                   </Box>
                 )}
+                {nearLevelInsight && (
+                  <Box sx={{ mt: 2, p: 1.5, borderRadius: 2, bgcolor: alpha(theme.palette.warning.main, 0.08) }}>
+                    <Typography variant="subtitle2" fontWeight={700} color="warning.main">
+                      {t('level.nearLevelTitle')}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {t('level.nearLevelDescription', {
+                        xp: nearLevelInsight.remainingXp.toLocaleString('pt-BR'),
+                        level: nearLevelInsight.level,
+                        levelName: nearLevelInsight.levelName,
+                      })}
+                    </Typography>
+                  </Box>
+                )}
 
                 {currentLevel >= 20 && (
                   <Box
@@ -408,37 +427,24 @@ export const LevelJourneyScreen: React.FC = () => {
               <Collapse in={xpGuideOpen}>
                 <Box sx={{ px: 2, pb: 2 }}>
                   <Divider sx={{ mb: 1.5 }} />
-                  {[
-                    { key: 'participation', value: XP_VALUES.PARTICIPATION },
-                    { key: 'goal', value: XP_VALUES.GOAL },
-                    { key: 'assist', value: XP_VALUES.ASSIST },
-                    { key: 'save', value: XP_VALUES.SAVE },
-                    { key: 'win', value: XP_VALUES.WIN },
-                    { key: 'mvp', value: XP_VALUES.MVP },
-                    { key: 'bestGk', value: XP_VALUES.BEST_GK },
-                    { key: 'streak3', value: XP_VALUES.STREAK_3 },
-                    { key: 'streak7', value: XP_VALUES.STREAK_7 },
-                    { key: 'streak10', value: XP_VALUES.STREAK_10 },
-                  ].map((item, i) => {
-                    const label = t(`level.xpGuide.${item.key}.label`);
-                    const desc = t(`level.xpGuide.${item.key}.desc`);
+                  {xpGuideEntries.map((item, i) => {
                     return (
                     <Box
-                      key={i}
+                      key={item.id}
                       sx={{
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
                         py: 0.8,
-                        borderBottom: i < 9 ? `1px solid ${theme.palette.divider}` : 'none',
+                        borderBottom: i < xpGuideEntries.length - 1 ? `1px solid ${theme.palette.divider}` : 'none',
                       }}
                     >
                       <Box>
                         <Typography variant="body2" fontWeight={500}>
-                          {label}
+                          {item.label}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
-                          {desc}
+                          {item.description}
                         </Typography>
                       </Box>
                       <Typography variant="body2" fontWeight={700} color="success.main">
@@ -530,7 +536,7 @@ export const LevelJourneyScreen: React.FC = () => {
                           </ListItemIcon>
                           <ListItemText
                             primary={`+${item.xpGained} XP`}
-                            secondary={item.source}
+                            secondary={item.summary.length > 0 ? `${item.source} • ${item.summary.join(' • ')}` : item.source}
                           />
                           <Typography variant="caption" color="text.secondary">
                             {item.achievedAt.toLocaleDateString('pt-BR')}

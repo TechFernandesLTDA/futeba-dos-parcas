@@ -80,8 +80,48 @@ jest.mock("../src/constants", () => ({
   GAME_GENDERS: ["MALE", "FEMALE", "MIXED"],
   DEFAULT_GAME_GENDER: "MIXED",
   XP_ACTIONS: {
-    MVP: 30,
+    PARTICIPATION: 10,
+    GOAL: 25,
+    ASSIST: 20,
+    SAVE: 15,
+    CLEAN_SHEET: 15,
+    WIN: 30,
+    DRAW: 10,
+    MVP: 50,
     WORST_PLAYER: -10,
+  },
+  STREAK_BONUSES: {
+    STREAK_3: 20,
+    STREAK_5: 35,
+    STREAK_7: 50,
+    STREAK_10: 100,
+  },
+  PERFORMANCE_BONUSES: {
+    TOP_SCORER: 15,
+    HAT_TRICK: 30,
+    FIRST_GOAL: 5,
+    GOALKEEPER_GOAL: 20,
+    FAIR_PLAY: 5,
+    EVENT_RECORDER_PER_EVENT: 2,
+    EVENT_RECORDER_MIN_EVENTS: 3,
+    EVENT_RECORDER_MAX_XP: 20,
+  },
+  BEHAVIOR_BONUSES: {
+    EARLY_CONFIRMATION: 5,
+    ON_TIME_CHECKIN: 5,
+    LAST_MINUTE_SAVER: 15,
+    WAITLIST_PROMOTED: 10,
+  },
+  RETENTION_BONUSES: {
+    COMEBACK_14D: 10,
+    COMEBACK_30D: 20,
+    COMEBACK_14D_THRESHOLD_DAYS: 14,
+    COMEBACK_30D_THRESHOLD_DAYS: 30,
+    COMEBACK_MAX_PER_MONTH: 1,
+    FIRST_GAME_OF_MONTH: 15,
+    MONTHLY_STREAK_3: 50,
+    MONTHLY_STREAK_6: 100,
+    MONTHLY_STREAK_12: 250,
   },
   LEVEL_TABLE: {
     levels: [
@@ -1079,7 +1119,7 @@ describe("concludeMvpVoting - contagem de votos e vencedor", () => {
     expect(xpLogSet?.[1]).toEqual(expect.objectContaining({
       user_id: "playerA",
       game_id: "game1",
-      xp_earned: 30,
+      xp_earned: 50,
       transaction_id: "mvp_game1_playerA",
       source: "mvp_voting_concluded",
       source_collection: "mvp_votes",
@@ -1201,8 +1241,8 @@ describe("concludeMvpVoting - contagem de votos e vencedor", () => {
     }));
 
     expect(votingLogSet?.[1]).toEqual(expect.objectContaining({
-      xp_earned: 430,
-      xp_mvp: 30,
+      xp_earned: 450,
+      xp_mvp: 50,
       xp_milestones: 400,
       milestones_unlocked: ["MVP_5", "MVP_10"],
     }));

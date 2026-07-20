@@ -25,3 +25,12 @@ A geração de XP ocorre única e exclusivamente através de eventos validados d
 ## Backend como fonte única de verdade
 
 O cálculo, a validação e a persistência do XP são responsabilidades exclusivas do backend (ou camada de serviço de domínio via transação atômica). O aplicativo (Mobile UI) atua estritamente como um visor de dados persistidos, sendo proibido de executar qualquer lógica aritmética de soma de XP para fins de persistência.
+
+## Gamificação 2.0
+
+Desde a entrega descrita em
+[`specs/feat-2026-07-19-xp-performance-aderencia.md`](../../specs/feat-2026-07-19-xp-performance-aderencia.md),
+o log pós-jogo continua sendo um documento agregado por jogo e jogador. Valores
+base e bônus de performance, retorno, frequência e contribuição são campos do
+mesmo breakdown idempotente. Calendário mensal usa `America/Sao_Paulo`, o teto
+permanece em 500 XP por jogo e não existe reprocessamento retroativo.

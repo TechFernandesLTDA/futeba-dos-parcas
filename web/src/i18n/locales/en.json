@@ -713,7 +713,41 @@
       "voteResultError": "Error loading vote result."
     },
     "gamification": {
-      "loadError": "Error loading gamification settings."
+      "loadError": "Error loading gamification settings.",
+      "actions": {
+        "ALMOST_BADGE": "Almost badge",
+        "ALMOST_LEVEL": "Almost level",
+        "ASSIST": "Assist",
+        "BEST_GK": "Best goalkeeper",
+        "CLEAN_SHEET": "Clean sheet",
+        "COMEBACK_14D": "Comeback 14 days",
+        "COMEBACK_30D": "Comeback 30 days",
+        "DRAW": "Draw",
+        "EARLY_CONFIRMATION": "Early confirmation",
+        "EVENT_RECORDER": "Official recorder",
+        "FAIR_PLAY": "Fair play",
+        "FIRST_GAME_OF_MONTH": "First game of the month",
+        "FIRST_GOAL": "Opened the scoring",
+        "GOAL": "Goal",
+        "GOALKEEPER_GOAL": "Goalkeeper goal",
+        "HAT_TRICK": "Hat-trick",
+        "LAST_MINUTE_SAVER": "Saved the game",
+        "MONTHLY_STREAK_3": "Monthly streak",
+        "MILESTONE": "Milestone unlocked",
+        "MVP": "MVP",
+        "ON_TIME_CHECKIN": "On-time check-in",
+        "PARTICIPATION": "Participation",
+        "SAVE": "Save",
+        "STREAK_10": "Streak 10+",
+        "STREAK_3": "Streak 3+",
+        "STREAK_5": "Streak 5+",
+        "STREAK_7": "Streak 7+",
+        "STREAK_AT_RISK": "Streak at risk",
+        "TOP_SCORER": "Top scorer of the match",
+        "WAITLIST_PROMOTED": "Promoted from waitlist",
+        "WIN": "Win",
+        "WORST_PLAYER": "Worst player"
+      }
     },
     "generic": {
       "loadDataError": "Error loading data. Please try again."
@@ -2073,6 +2107,8 @@
     "baseProgression": "BASE PROGRESSION",
     "howToEarnXp": "How to earn XP",
     "legendsOfFootball": "FOOTBALL LEGENDS",
+    "nearLevelDescription": "{{xp}} XP left to reach level {{level}}: {{levelName}}.",
+    "nearLevelTitle": "Almost at the next level",
     "noRecordsYet": "No records yet",
     "recentHistory": "RECENT HISTORY",
     "xpGuideTip": "💡 Tip: Play regularly and keep your streak to earn XP bonuses!",
@@ -2090,45 +2126,73 @@
     "xpRemaining": "XP remaining",
     "lockedExplanation": "You can explore this level now. It will unlock automatically when you reach the required XP.",
     "xpGuide": {
-      "participation": {
-        "label": "Participation",
-        "desc": "Play a match"
+      "assist": {
+        "label": "Assist",
+        "desc": "Provide an assist"
+      },
+      "earlyConfirmation": {
+        "label": "Early confirmation",
+        "desc": "Confirm 48h before kickoff"
+      },
+      "fairPlay": {
+        "label": "Fair play",
+        "desc": "Play without receiving cards"
+      },
+      "firstGameMonth": {
+        "label": "First of the month",
+        "desc": "Play your first match of the month"
+      },
+      "firstGoal": {
+        "label": "Opened the scoring",
+        "desc": "Score the first goal of the match"
       },
       "goal": {
         "label": "Goal",
         "desc": "Score a goal"
       },
-      "assist": {
-        "label": "Assist",
-        "desc": "Provide an assist"
+      "goalkeeperGoal": {
+        "label": "Goalkeeper goal",
+        "desc": "Score while playing goalkeeper"
       },
-      "save": {
-        "label": "Save",
-        "desc": "Make a save (goalkeeper)"
+      "hatTrick": {
+        "label": "Hat-trick",
+        "desc": "Score 3 or more goals"
       },
-      "win": {
-        "label": "Win",
-        "desc": "Win the match"
+      "lastMinuteSaver": {
+        "label": "Saved the game",
+        "desc": "Confirm late and complete the match"
+      },
+      "monthlyStreak3": {
+        "label": "Monthly streak",
+        "desc": "Play in 3 straight months"
       },
       "mvp": {
         "label": "MVP",
         "desc": "Be elected match MVP"
       },
-      "bestGk": {
-        "label": "Best Goalkeeper",
-        "desc": "Be elected best goalkeeper"
+      "onTimeCheckin": {
+        "label": "Punctuality",
+        "desc": "Check in within 10 min of kickoff"
       },
-      "streak3": {
-        "label": "Streak 3+",
-        "desc": "Play 3+ matches in a row"
+      "participation": {
+        "label": "Participation",
+        "desc": "Play a match"
       },
-      "streak7": {
-        "label": "Streak 7+",
-        "desc": "Play 7+ matches in a row"
+      "save": {
+        "label": "Save",
+        "desc": "Make a save (goalkeeper)"
       },
-      "streak10": {
-        "label": "Streak 10+",
-        "desc": "Play 10+ matches in a row"
+      "topScorer": {
+        "label": "Top scorer of the match",
+        "desc": "Finish as the top scorer"
+      },
+      "waitlistPromoted": {
+        "label": "Promoted from waitlist",
+        "desc": "Leave the waitlist and show up"
+      },
+      "win": {
+        "label": "Win",
+        "desc": "Win the match"
       }
     }
   },
@@ -2720,6 +2784,10 @@
     "mvps": "MVPs",
     "myLocations": "My Locations",
     "myProfile": "My Profile",
+    "gamificationFocus": "This week's focus",
+    "nearBadgeHint_one": "{{count}} left to unlock the {{badge}} badge ({{current}}/{{target}}).",
+    "nearBadgeHint_other": "{{count}} left to unlock the {{badge}} badge ({{current}}/{{target}}).",
+    "nearLevelHint": "{{xp}} XP left to reach level {{level}}: {{levelName}}.",
     "nicknameHelper": "Ex: \"Zé\", \"Bomba\", \"Gordo\"",
     "nicknameLabel": "Nickname (what they call you at the game)",
     "noRecentActivity": "No recent activity",

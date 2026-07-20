@@ -388,6 +388,137 @@ describe("live game event callables", () => {
     );
   });
 
+  test("submitLiveGameEvent mantém minute ausente quando payload não informa minuto", async () => {
+    const txSet = jest.fn();
+
+    mockTeamsGet.mockResolvedValue({
+      docs: [
+        {id: "teamA", data: () => ({player_ids: ["player1"]})},
+        {id: "teamB", data: () => ({player_ids: ["player2"]})},
+      ],
+    });
+
+    mockRunTransaction.mockImplementation(async (callback: any) => callback({
+      get: jest.fn((ref: {path: string}) => {
+        switch (ref.path) {
+          case "games/game1":
+            return Promise.resolve(makeSnapshot({
+              owner_id: "owner1",
+              status: "LIVE",
+              co_organizers: [],
+            }));
+          case "live_scores/game1":
+            return Promise.resolve(makeSnapshot({
+              team1_id: "teamA",
+              team2_id: "teamB",
+              team1_score: 0,
+              team2_score: 0,
+            }));
+          case "teams/teamA":
+            return Promise.resolve(makeSnapshot({
+              game_id: "game1",
+              player_ids: ["player1"],
+            }));
+          case "confirmations/game1_player1":
+          case "confirmations/game1_owner1":
+            return Promise.resolve(makeSnapshot({
+              status: "CONFIRMED",
+            }));
+          case "live_player_stats/game1_player1":
+            return Promise.resolve(makeSnapshot(undefined));
+          default:
+            return Promise.resolve(makeSnapshot(undefined));
+        }
+      }),
+      set: txSet,
+      update: jest.fn(),
+    }));
+
+    const {submitLiveGameEvent} = require("../src/games/live-events");
+    await submitLiveGameEvent(makeRequest({
+      gameId: "game1",
+      eventType: "GOAL",
+      playerId: "player1",
+      playerName: "Player 1",
+      teamId: "teamA",
+    }));
+
+    expect(txSet).toHaveBeenCalledWith(
+      expect.objectContaining({path: "game_events/generated-event-1"}),
+      expect.not.objectContaining({minute: 0}),
+    );
+  });
+
+  test("submitLiveGameEvent treats legacy minute zero as idempotent match for omitted minute", async () => {
+    mockTeamsGet.mockResolvedValue({
+      docs: [
+        {id: "teamA", data: () => ({player_ids: ["player1"]})},
+        {id: "teamB", data: () => ({player_ids: ["player2"]})},
+      ],
+    });
+    mockDirectGet.mockResolvedValue(makeSnapshot({
+      team1_id: "teamA",
+      team2_id: "teamB",
+      team1_score: 1,
+      team2_score: 0,
+    }));
+    mockRunTransaction.mockImplementation(async (callback: any) => callback({
+      get: jest.fn((ref: {path: string}) => {
+        if (ref.path === "games/game1") {
+          return Promise.resolve(makeSnapshot({
+            owner_id: "owner1",
+            status: "LIVE",
+            co_organizers: [],
+          }));
+        }
+        if (ref.path === "live_scores/game1") {
+          return Promise.resolve(makeSnapshot({
+            team1_id: "teamA",
+            team2_id: "teamB",
+            team1_score: 1,
+            team2_score: 0,
+          }));
+        }
+        if (ref.path === "teams/teamA") {
+          return Promise.resolve(makeSnapshot({
+            game_id: "game1",
+            player_ids: ["player1"],
+          }));
+        }
+        if (ref.path === "confirmations/game1_owner1") {
+          return Promise.resolve(makeSnapshot({status: "CONFIRMED"}));
+        }
+        if (ref.path === "game_events/game1_abcdefgh") {
+          return Promise.resolve(makeSnapshot({
+            game_id: "game1",
+            request_id: "abcdefgh",
+            created_by: "owner1",
+            event_type: "GOAL",
+            player_id: "player1",
+            team_id: "teamA",
+            minute: 0,
+            assisted_by_id: null,
+          }));
+        }
+        return Promise.resolve(makeSnapshot(undefined));
+      }),
+      set: jest.fn(),
+      update: jest.fn(),
+    }));
+
+    const {submitLiveGameEvent} = require("../src/games/live-events");
+    const result = await submitLiveGameEvent(makeRequest({
+      gameId: "game1",
+      requestId: "abcdefgh",
+      eventType: "GOAL",
+      playerId: "player1",
+      playerName: "Player 1",
+      teamId: "teamA",
+    }));
+
+    expect(result.duplicate).toBe(true);
+  });
+
   test("submitLiveGameEvent é idempotente para o mesmo requestId", async () => {
     const txSet = jest.fn();
     const txUpdate = jest.fn();

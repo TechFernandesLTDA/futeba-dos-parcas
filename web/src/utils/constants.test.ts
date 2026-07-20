@@ -39,7 +39,7 @@ describe('constants', () => {
 
   it('XP values estão corretos', () => {
     expect(XP_PARTICIPATION).toBe(10);
-    expect(XP_MVP).toBe(30);
+    expect(XP_MVP).toBe(50);
   });
 
   it('ROUTES contém rotas principais', () => {

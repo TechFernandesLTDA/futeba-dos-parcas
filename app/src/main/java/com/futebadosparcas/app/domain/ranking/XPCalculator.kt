@@ -23,10 +23,25 @@ data class XpBreakdown(
     val mvp: Long = 0,
     val milestones: Long = 0,
     val streak: Long = 0,
+    val topScorer: Long = 0,
+    val hatTrick: Long = 0,
+    val firstGoal: Long = 0,
+    val goalkeeperGoal: Long = 0,
+    val fairPlay: Long = 0,
+    val comeback: Long = 0,
+    val firstGameMonth: Long = 0,
+    val monthlyStreak: Long = 0,
+    val recorder: Long = 0,
+    val earlyConfirmation: Long = 0,
+    val onTimeCheckin: Long = 0,
+    val lastMinuteSaver: Long = 0,
+    val waitlistPromoted: Long = 0,
     val penalty: Long = 0 // Penalidade por ser worst player
 ) {
     val total: Long
-        get() = participation + goals + assists + saves + result + mvp + milestones + streak + penalty
+        get() = participation + goals + assists + saves + result + mvp + milestones + streak +
+            topScorer + hatTrick + firstGoal + goalkeeperGoal + fairPlay + comeback + firstGameMonth +
+            monthlyStreak + recorder + earlyConfirmation + onTimeCheckin + lastMinuteSaver + waitlistPromoted + penalty
 
     fun toDisplayMap(): Map<String, Long> {
         val map = mutableMapOf<String, Long>()
@@ -38,6 +53,19 @@ data class XpBreakdown(
         if (mvp > 0) map["MVP"] = mvp
         if (milestones > 0) map["Milestones"] = milestones
         if (streak > 0) map["Sequencia"] = streak
+        if (topScorer > 0) map["Artilheiro do Jogo 🎯"] = topScorer
+        if (hatTrick > 0) map["Hat-trick ⚽⚽⚽"] = hatTrick
+        if (firstGoal > 0) map["Primeiro Gol do Jogo 🥇"] = firstGoal
+        if (goalkeeperGoal > 0) map["Gol do Goleiro 🧤"] = goalkeeperGoal
+        if (fairPlay > 0) map["Fair Play 🤝"] = fairPlay
+        if (comeback > 0) map["Tá de volta! 🔙"] = comeback
+        if (firstGameMonth > 0) map["Primeira do Mês 📅"] = firstGameMonth
+        if (monthlyStreak > 0) map["Sequência Mensal 🔥"] = monthlyStreak
+        if (recorder > 0) map["Mesa Oficial 📝"] = recorder
+        if (earlyConfirmation > 0) map["Confirmação Antecipada ⏰"] = earlyConfirmation
+        if (onTimeCheckin > 0) map["Pontualidade ⏱️"] = onTimeCheckin
+        if (lastMinuteSaver > 0) map["Salvou a Pelada 🦸"] = lastMinuteSaver
+        if (waitlistPromoted > 0) map["Veio da Waitlist 🎟️"] = waitlistPromoted
         if (penalty < 0) map["Bola Murcha"] = penalty
         return map
     }
@@ -83,12 +111,12 @@ object XPCalculator {
 
     // Constantes de XP (Sincronizadas com o Contrato Publico)
     private const val XP_PRESENCE = 10
-    private const val XP_PER_GOAL = 10
-    private const val XP_PER_ASSIST = 7
-    private const val XP_PER_SAVE = 5
-    private const val XP_WIN = 20
+    private const val XP_PER_GOAL = 25
+    private const val XP_PER_ASSIST = 20
+    private const val XP_PER_SAVE = 15
+    private const val XP_WIN = 30
     private const val XP_DRAW = 10
-    private const val XP_MVP = 30
+    private const val XP_MVP = 50
     private const val XP_WORST_PLAYER_PENALTY = -10
 
     // Bonus de Sequencia (Streak)

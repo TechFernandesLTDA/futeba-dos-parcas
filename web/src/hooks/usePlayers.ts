@@ -42,6 +42,19 @@ export interface Player {
   followingCount: number;
   lookingForGameToday?: boolean;
   lookingForGameTodayUntil?: Date | { toDate: () => Date };
+  xpTopScorer?: number;
+  xpHatTrick?: number;
+  xpFirstGoal?: number;
+  xpGoalkeeperGoal?: number;
+  xpFairPlay?: number;
+  xpComeback?: number;
+  xpFirstGameMonth?: number;
+  xpMonthlyStreak?: number;
+  xpRecorder?: number;
+  xpEarlyConfirmation?: number;
+  xpOnTimeCheckin?: number;
+  xpLastMinuteSaver?: number;
+  xpWaitlistPromoted?: number;
   createdAt?: Date;
 }
 
@@ -161,6 +174,19 @@ export const usePlayers = (groupId?: string) => {
               followingCount: (data.followingCount as number) ?? (raw.following_count as number) ?? 0,
               lookingForGameToday: data.lookingForGameToday === true,
               lookingForGameTodayUntil: (data.lookingForGameTodayUntil as Date | { toDate: () => Date } | undefined),
+              xpTopScorer: (data.xpTopScorer as number) ?? (raw.xp_top_scorer as number) ?? 0,
+              xpHatTrick: (data.xpHatTrick as number) ?? (raw.xp_hat_trick as number) ?? 0,
+              xpFirstGoal: (data.xpFirstGoal as number) ?? (raw.xp_first_goal as number) ?? 0,
+              xpGoalkeeperGoal: (data.xpGoalkeeperGoal as number) ?? (raw.xp_goalkeeper_goal as number) ?? 0,
+              xpFairPlay: (data.xpFairPlay as number) ?? (raw.xp_fair_play as number) ?? 0,
+              xpComeback: (data.xpComeback as number) ?? (raw.xp_comeback as number) ?? 0,
+              xpFirstGameMonth: (data.xpFirstGameMonth as number) ?? (raw.xp_first_game_month as number) ?? 0,
+              xpMonthlyStreak: (data.xpMonthlyStreak as number) ?? (raw.xp_monthly_streak as number) ?? 0,
+              xpRecorder: (data.xpRecorder as number) ?? (raw.xp_recorder as number) ?? 0,
+              xpEarlyConfirmation: (data.xpEarlyConfirmation as number) ?? (raw.xp_early_confirmation as number) ?? 0,
+              xpOnTimeCheckin: (data.xpOnTimeCheckin as number) ?? (raw.xp_on_time_checkin as number) ?? 0,
+              xpLastMinuteSaver: (data.xpLastMinuteSaver as number) ?? (raw.xp_last_minute_saver as number) ?? 0,
+              xpWaitlistPromoted: (data.xpWaitlistPromoted as number) ?? (raw.xp_waitlist_promoted as number) ?? 0,
             } as Player;
           });
 
@@ -264,6 +290,19 @@ export const usePlayerDetail = (userId?: string) => {
               followingCount: (data.followingCount as number) ?? (raw.following_count as number) ?? 0,
               lookingForGameToday: data.lookingForGameToday === true,
               lookingForGameTodayUntil: (data.lookingForGameTodayUntil as Date | { toDate: () => Date } | undefined),
+              xpTopScorer: (data.xpTopScorer as number) ?? (raw.xp_top_scorer as number) ?? 0,
+              xpHatTrick: (data.xpHatTrick as number) ?? (raw.xp_hat_trick as number) ?? 0,
+              xpFirstGoal: (data.xpFirstGoal as number) ?? (raw.xp_first_goal as number) ?? 0,
+              xpGoalkeeperGoal: (data.xpGoalkeeperGoal as number) ?? (raw.xp_goalkeeper_goal as number) ?? 0,
+              xpFairPlay: (data.xpFairPlay as number) ?? (raw.xp_fair_play as number) ?? 0,
+              xpComeback: (data.xpComeback as number) ?? (raw.xp_comeback as number) ?? 0,
+              xpFirstGameMonth: (data.xpFirstGameMonth as number) ?? (raw.xp_first_game_month as number) ?? 0,
+              xpMonthlyStreak: (data.xpMonthlyStreak as number) ?? (raw.xp_monthly_streak as number) ?? 0,
+              xpRecorder: (data.xpRecorder as number) ?? (raw.xp_recorder as number) ?? 0,
+              xpEarlyConfirmation: (data.xpEarlyConfirmation as number) ?? (raw.xp_early_confirmation as number) ?? 0,
+              xpOnTimeCheckin: (data.xpOnTimeCheckin as number) ?? (raw.xp_on_time_checkin as number) ?? 0,
+              xpLastMinuteSaver: (data.xpLastMinuteSaver as number) ?? (raw.xp_last_minute_saver as number) ?? 0,
+              xpWaitlistPromoted: (data.xpWaitlistPromoted as number) ?? (raw.xp_waitlist_promoted as number) ?? 0,
               createdAt: raw.created_at?.toDate?.() || (data.createdAt as Date | undefined),
             });
           }

@@ -713,7 +713,41 @@
       "voteResultError": "Error al cargar el resultado de la votación."
     },
     "gamification": {
-      "loadError": "Error al cargar la configuración de gamificación."
+      "loadError": "Error al cargar la configuración de gamificación.",
+      "actions": {
+        "ALMOST_BADGE": "Casi insignia",
+        "ALMOST_LEVEL": "Casi nivel",
+        "ASSIST": "Asistencia",
+        "BEST_GK": "Mejor portero",
+        "CLEAN_SHEET": "Portería a cero",
+        "COMEBACK_14D": "Regreso 14 días",
+        "COMEBACK_30D": "Regreso 30 días",
+        "DRAW": "Empate",
+        "EARLY_CONFIRMATION": "Confirmación anticipada",
+        "EVENT_RECORDER": "Registrador oficial",
+        "FAIR_PLAY": "Fair play",
+        "FIRST_GAME_OF_MONTH": "Primera del mes",
+        "FIRST_GOAL": "Abrió el marcador",
+        "GOAL": "Gol",
+        "GOALKEEPER_GOAL": "Gol del portero",
+        "HAT_TRICK": "Hat-trick",
+        "LAST_MINUTE_SAVER": "Salvó la pachanga",
+        "MONTHLY_STREAK_3": "Racha mensual",
+        "MILESTONE": "Hito conseguido",
+        "MVP": "MVP",
+        "ON_TIME_CHECKIN": "Puntualidad",
+        "PARTICIPATION": "Participación",
+        "SAVE": "Atajada",
+        "STREAK_10": "Racha 10+",
+        "STREAK_3": "Racha 3+",
+        "STREAK_5": "Racha 5+",
+        "STREAK_7": "Racha 7+",
+        "STREAK_AT_RISK": "Racha en riesgo",
+        "TOP_SCORER": "Goleador del partido",
+        "WAITLIST_PROMOTED": "Salió de la waitlist",
+        "WIN": "Victoria",
+        "WORST_PLAYER": "Peor jugador"
+      }
     },
     "generic": {
       "loadDataError": "Error al cargar datos. Inténtalo de nuevo."
@@ -2073,6 +2107,8 @@
     "baseProgression": "PROGRESIÓN BASE",
     "howToEarnXp": "Cómo ganar XP",
     "legendsOfFootball": "LEYENDAS DEL FÚTBOL",
+    "nearLevelDescription": "Faltan {{xp}} XP para alcanzar el nivel {{level}}: {{levelName}}.",
+    "nearLevelTitle": "Casi en el próximo nivel",
     "noRecordsYet": "Sin registros aún",
     "recentHistory": "HISTORIAL RECIENTE",
     "xpGuideTip": "💡 Consejo: ¡Juega regularmente y mantén tu racha para ganar bonos de XP!",
@@ -2090,45 +2126,73 @@
     "xpRemaining": "XP restante",
     "lockedExplanation": "Puedes explorar este nivel ahora. Se desbloqueará automáticamente cuando alcances el XP necesario.",
     "xpGuide": {
-      "participation": {
-        "label": "Participación",
-        "desc": "Juega un partido"
+      "assist": {
+        "label": "Asistencia",
+        "desc": "Da una asistencia"
+      },
+      "earlyConfirmation": {
+        "label": "Confirmación anticipada",
+        "desc": "Confirma 48h antes del partido"
+      },
+      "fairPlay": {
+        "label": "Fair play",
+        "desc": "Juega sin recibir tarjetas"
+      },
+      "firstGameMonth": {
+        "label": "Primera del mes",
+        "desc": "Juega tu primer partido del mes"
+      },
+      "firstGoal": {
+        "label": "Abrió el marcador",
+        "desc": "Marca el primer gol del partido"
       },
       "goal": {
         "label": "Gol",
         "desc": "Marca un gol"
       },
-      "assist": {
-        "label": "Asistencia",
-        "desc": "Da una asistencia"
+      "goalkeeperGoal": {
+        "label": "Gol del portero",
+        "desc": "Marca jugando de portero"
       },
-      "save": {
-        "label": "Defensa",
-        "desc": "Haz una atajada (portero)"
+      "hatTrick": {
+        "label": "Hat-trick",
+        "desc": "Marca 3 o más goles"
       },
-      "win": {
-        "label": "Victoria",
-        "desc": "Gana el partido"
+      "lastMinuteSaver": {
+        "label": "Salvó la pachanga",
+        "desc": "Confirma tarde y completa el partido"
+      },
+      "monthlyStreak3": {
+        "label": "Racha mensual",
+        "desc": "Juega en 3 meses seguidos"
       },
       "mvp": {
         "label": "MVP",
         "desc": "Sé elegido el mejor del partido"
       },
-      "bestGk": {
-        "label": "Mejor Portero",
-        "desc": "Sé elegido mejor portero"
+      "onTimeCheckin": {
+        "label": "Puntualidad",
+        "desc": "Haz check-in hasta 10 min después del inicio"
       },
-      "streak3": {
-        "label": "Racha 3+",
-        "desc": "Juega 3+ partidos seguidos"
+      "participation": {
+        "label": "Participación",
+        "desc": "Juega un partido"
       },
-      "streak7": {
-        "label": "Racha 7+",
-        "desc": "Juega 7+ partidos seguidos"
+      "save": {
+        "label": "Atajada",
+        "desc": "Haz una atajada (portero)"
       },
-      "streak10": {
-        "label": "Racha 10+",
-        "desc": "Juega 10+ partidos seguidos"
+      "topScorer": {
+        "label": "Goleador del partido",
+        "desc": "Termina como goleador del partido"
+      },
+      "waitlistPromoted": {
+        "label": "Salió de la waitlist",
+        "desc": "Sal de la waitlist y asiste"
+      },
+      "win": {
+        "label": "Victoria",
+        "desc": "Gana el partido"
       }
     }
   },
@@ -2720,6 +2784,10 @@
     "mvps": "MVPs",
     "myLocations": "Mis Ubicaciones",
     "myProfile": "Mi Perfil",
+    "gamificationFocus": "Foco de la semana",
+    "nearBadgeHint_one": "Falta {{count}} para desbloquear la insignia {{badge}} ({{current}}/{{target}}).",
+    "nearBadgeHint_other": "Faltan {{count}} para desbloquear la insignia {{badge}} ({{current}}/{{target}}).",
+    "nearLevelHint": "Faltan {{xp}} XP para llegar al nivel {{level}}: {{levelName}}.",
     "nicknameHelper": "Ej: \"Zé\", \"Bomba\", \"Gordo\"",
     "nicknameLabel": "Apodo (como te llaman en el partido)",
     "noRecentActivity": "Ninguna actividad reciente",

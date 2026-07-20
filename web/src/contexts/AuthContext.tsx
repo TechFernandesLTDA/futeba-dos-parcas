@@ -14,7 +14,7 @@ import {
   unlink,
 } from 'firebase/auth';
 import { FirebaseError } from 'firebase/app';
-import { doc, getDoc, getDocs, updateDoc, runTransaction, serverTimestamp, query, collection, where, limit } from 'firebase/firestore';
+import { doc, getDoc, getDocs, updateDoc, runTransaction, serverTimestamp, query, collection, where, limit, onSnapshot } from 'firebase/firestore';
 import { auth, googleProvider, db } from '../services/firebase';
 import { queryClient } from '../services/queryClient';
 import { User } from '../types';
@@ -190,6 +190,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const prevUserRef = useRef<FirebaseUser | null>(null);
   const firebaseUserRef = useRef(firebaseUser);
   firebaseUserRef.current = firebaseUser;
+  const tRef = useRef(t);
+  tRef.current = t;
   const sessionUid = firebaseUser?.uid ?? null;
   const lastTokenRefreshAtRef = useRef(Date.now());
   const lastClaimSyncUidRef = useRef<string | null>(null);
@@ -349,7 +351,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setFirebaseUser(firebaseUser);
 
         if (firebaseUser) {
-          let userData = await fetchUserDataRef.current(firebaseUser.uid);
+          let userData = await fetchUserDataRef.current(firebaseUser.uid, { includeStats: true });
           const claimRole = await getClaimRole(firebaseUser);
 
           // FIX #584/H4: descarta resultado se uid mudou durante fetch
@@ -493,6 +495,57 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       window.clearInterval(intervalId);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [sessionUid]);
+
+  useEffect(() => {
+    if (!sessionUid) return;
+
+    let cancelled = false;
+    let latestStatsRaw: Record<string, unknown> = {};
+    let latestStreakRaw: Record<string, unknown> = {};
+
+    const applyLiveStats = () => {
+      if (cancelled) return;
+
+      setUser((previousUser) => {
+        if (!previousUser || previousUser.id !== sessionUid) return previousUser;
+        return mergeUserStats(
+          previousUser,
+          { ...latestStatsRaw, ...latestStreakRaw },
+          previousUser as unknown as Record<string, unknown>,
+        );
+      });
+    };
+
+    const handleListenerError = (source: 'statistics' | 'user_streaks', listenerError: unknown) => {
+      if (cancelled) return;
+      logger.error(`Erro ao assinar ${source} do usuário autenticado:`, listenerError);
+      setError(tRef.current('feedback.generic.loadDataError'));
+    };
+
+    const unsubscribeStats = onSnapshot(
+      doc(db, 'statistics', sessionUid),
+      (snapshot) => {
+        latestStatsRaw = snapshot.exists() ? snapshot.data() : {};
+        applyLiveStats();
+      },
+      (listenerError) => handleListenerError('statistics', listenerError),
+    );
+
+    const unsubscribeStreak = onSnapshot(
+      query(collection(db, 'user_streaks'), where('user_id', '==', sessionUid), limit(1)),
+      (snapshot) => {
+        latestStreakRaw = snapshot.docs[0]?.data() ?? {};
+        applyLiveStats();
+      },
+      (listenerError) => handleListenerError('user_streaks', listenerError),
+    );
+
+    return () => {
+      cancelled = true;
+      unsubscribeStats();
+      unsubscribeStreak();
     };
   }, [sessionUid]);
 

@@ -21,7 +21,8 @@ Plataforma para organizar peladas, grupos e temporadas com confirmação de pres
 - Gestão de jogos, confirmações, check-in, escalações e eventos ao vivo.
 - Grupos com mural, convites, caixa, mensalistas com rateio exato, enquetes,
   desafios e comunicação direta.
-- XP, níveis, badges, divisões, rankings sazonais, MVP e histórico estatístico.
+- XP, níveis, badges, divisões, rankings sazonais, MVP, bônus por performance,
+  aderência e histórico estatístico.
 - Aplicações Web/PWA, Android e iOS/CMP apoiadas por Firebase e Cloud Functions.
 
 As versões vigentes são independentes por plataforma. Consulte [`versions.json`](versions.json) e as fontes em [`release-notes/`](release-notes/) em vez de copiar números de versão para documentação secundária.
@@ -43,6 +44,9 @@ Fronteiras importantes:
 - `functions/` é o backend serverless em produção.
 - `archive/backend/` é um backend Express/TypeORM arquivado e sem consumidores. Não desenvolva nele sem nova spec e decisão arquitetural explícita.
 - Alterações de CPF precisam manter Functions, Web e KMP sincronizados.
+- Alterações de XP precisam manter `shared/xp-constants.json`, Functions, Web,
+  KMP e Android sincronizados; o backend é a única autoridade de persistência e
+  `xp_logs` permanece agregado por jogo+jogador.
 - O Live Game usa Cloud Functions transacionais para registrar/reverter eventos e
   listeners Firestore para distribuir placar, timeline, estatísticas e votação;
   clientes não escrevem diretamente nas coleções derivadas.

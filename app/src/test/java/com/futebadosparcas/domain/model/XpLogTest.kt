@@ -93,6 +93,19 @@ class XpLogTest {
             assertEquals(0, log.xpMvp)
             assertEquals(0, log.xpMilestones)
             assertEquals(0, log.xpStreak)
+            assertEquals(0, log.xpTopScorer)
+            assertEquals(0, log.xpHatTrick)
+            assertEquals(0, log.xpFirstGoal)
+            assertEquals(0, log.xpGoalkeeperGoal)
+            assertEquals(0, log.xpFairPlay)
+            assertEquals(0, log.xpComeback)
+            assertEquals(0, log.xpFirstGameMonth)
+            assertEquals(0, log.xpMonthlyStreak)
+            assertEquals(0, log.xpRecorder)
+            assertEquals(0, log.xpEarlyConfirmation)
+            assertEquals(0, log.xpOnTimeCheckin)
+            assertEquals(0, log.xpLastMinuteSaver)
+            assertEquals(0, log.xpWaitlistPromoted)
             assertEquals(0, log.goals)
             assertEquals(0, log.assists)
             assertEquals(0, log.saves)
@@ -139,6 +152,22 @@ class XpLogTest {
             assertEquals(2, log.milestonesUnlocked.size)
             assertEquals("milestone_1", log.milestonesUnlocked[0])
             assertEquals("milestone_2", log.milestonesUnlocked[1])
+        }
+
+        @Test
+        @DisplayName("Bônus pós-jogo devem aparecer na origem do log")
+        fun `post game bonuses should appear in log source`() {
+            val log = com.futebadosparcas.data.model.XpLog(
+                xpTopScorer = 15,
+                xpHatTrick = 30,
+                xpRecorder = 20,
+                xpWaitlistPromoted = 10
+            )
+
+            assertTrue(log.source.contains("Artilheiro do Jogo 🎯"))
+            assertTrue(log.source.contains("Hat-trick ⚽⚽⚽"))
+            assertTrue(log.source.contains("Mesa Oficial 📝"))
+            assertTrue(log.source.contains("Veio da Waitlist 🎟️"))
         }
     }
 

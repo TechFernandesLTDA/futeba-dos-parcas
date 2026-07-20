@@ -62,12 +62,18 @@ import type {
 
 // XP Pipeline (níveis, milestones, settings)
 import {
-  DEFAULT_SETTINGS,
   XP_WORST_PLAYER_PENALTY,
   getLevelForXp,
   checkMilestones,
   fitMilestonesWithinGameXpCap,
 } from "./xp/pipeline";
+import {
+  buildDerivedEventStats,
+  buildWaitlistMap,
+  calculatePerGameBonusBreakdown,
+  normalizeGamificationSettings,
+  reconcileXpLogBreakdown,
+} from "./xp/bonus-rules";
 
 // Game helpers (conversores, resultados, fetch)
 import {
@@ -83,6 +89,10 @@ import {
   updateSeasonParticipation,
 } from "./game/helpers";
 import {db} from "./_db";
+import {
+  NotificationType,
+  sendAndSaveNotification,
+} from "./notifications/helpers";
 
 // ==========================================
 // RE-EXPORTS (manter API pública intacta)
@@ -278,6 +288,19 @@ export function calculateNextParticipationStreak(
       typeof raw?.streakStartedAt === "string" ?
         raw.streakStartedAt :
         undefined;
+  if (
+    lastGameDate &&
+    currentDate &&
+    lastDate &&
+    lastDate.getTime() > currentDate.getTime()
+  ) {
+    return {
+      previousStreak: previousCurrent,
+      currentStreak: previousCurrent,
+      longestStreak: Math.max(previousLongest, previousCurrent),
+      streakStartedAt: previousStartedAt || lastGameDate,
+    };
+  }
 
   return {
     previousStreak: previousCurrent,
@@ -287,6 +310,31 @@ export function calculateNextParticipationStreak(
       (previousStartedAt || gameDateKey) :
       gameDateKey,
   };
+}
+
+/**
+ * Detecta se o doc de streak já aponta para jogo mais recente.
+ * @param {admin.firestore.DocumentData | undefined} raw Doc de streak.
+ * @param {string} gameDateKey Data do jogo em yyyy-MM-dd.
+ * @return {boolean} true quando o marcador atual é mais novo.
+ */
+export function hasNewerParticipationStreakMarker(
+  raw: admin.firestore.DocumentData | undefined,
+  gameDateKey: string
+): boolean {
+  const lastGameDate =
+    typeof raw?.last_game_date === "string" ?
+      raw.last_game_date :
+      typeof raw?.lastGameDate === "string" ?
+        raw.lastGameDate :
+        undefined;
+  const lastDate = parseDateKeyAsUtc(lastGameDate);
+  const currentDate = parseDateKeyAsUtc(gameDateKey);
+  return !!(
+    lastDate &&
+    currentDate &&
+    lastDate.getTime() > currentDate.getTime()
+  );
 }
 
 /**
@@ -502,6 +550,21 @@ export const onGameStatusUpdate = onDocumentUpdated(
 
       try {
         // 1. Fetch Dependencies
+        const gameDocRef = db().collection("games")
+          .doc(gameId) as FirebaseFirestore.DocumentReference & {
+            collection?: (
+              name: string
+            ) => FirebaseFirestore.CollectionReference;
+          };
+        const waitlistPromise =
+          typeof gameDocRef.collection === "function" ?
+            gameDocRef.collection("waitlist")
+              .limit(500)
+              .get() :
+            Promise.resolve({
+              docs: [],
+            } as unknown as FirebaseFirestore.QuerySnapshot);
+
         const [
           confirmationsSnap,
           teamsSnap,
@@ -510,6 +573,7 @@ export const onGameStatusUpdate = onDocumentUpdated(
           seasonSnap,
           gameSnap,
           gameEventsSnap,
+          waitlistSnap,
         ] = await Promise.all([
           db().collection("confirmations")
             .where("game_id", "==", gameId)
@@ -535,6 +599,7 @@ export const onGameStatusUpdate = onDocumentUpdated(
             .where("game_id", "==", gameId)
             .limit(500)
             .get(),
+          waitlistPromise,
         ]);
 
         const confirmations = confirmationsSnap.docs
@@ -831,19 +896,23 @@ export const onGameStatusUpdate = onDocumentUpdated(
         const liveScore = liveScoreDoc.exists ?
           toLiveScore(liveScoreDoc.data()) :
           null;
-        const activeSeason = !seasonSnap.empty ?
+        const activeSeason = seasonSnap && !seasonSnap.empty ?
           seasonSnap.docs[0].id :
           null;
         const gameDoc = gameSnap.data() as
           Game | undefined;
 
-        let settings = DEFAULT_SETTINGS;
-        if (settingsSnap.exists) {
-          settings = {
-            ...DEFAULT_SETTINGS,
-            ...settingsSnap.data(),
-          } as GamificationSettings;
-        }
+        const settings = normalizeGamificationSettings(
+          settingsSnap.exists ? settingsSnap.data() : undefined,
+        );
+        const eventStats = buildDerivedEventStats(
+          gameEventsSnap?.docs ?? [],
+          settings,
+          validConfirmations,
+        );
+        const waitlistEntriesByUser = buildWaitlistMap(
+          waitlistSnap?.docs ?? [],
+        );
 
         // Mínimo de 6 jogadores (3v3) para
         // processar XP - sincronizado com Android
@@ -1089,6 +1158,7 @@ export const onGameStatusUpdate = onDocumentUpdated(
                   xp: 0,
                   streak: 0,
                   previousStreak: 0,
+                  comebackXp: 0,
                 };
               }
 
@@ -1100,22 +1170,72 @@ export const onGameStatusUpdate = onDocumentUpdated(
 
               const userEntry =
                 userSnap.data() || {};
+              const previousLastPlayedDateKey =
+                typeof userEntry.last_played_game_date === "string" ?
+                  userEntry.last_played_game_date.trim() :
+                  null;
+              const previousLastPlayedMonthKey =
+                typeof userEntry.last_played_month_key === "string" ?
+                  userEntry.last_played_month_key.trim() :
+                  null;
+              const shouldAdvanceGameDateMarker =
+                previousLastPlayedDateKey == null ||
+                previousLastPlayedDateKey <= gameDateKey;
+              const shouldAdvanceMonthMarker =
+                previousLastPlayedMonthKey == null ||
+                previousLastPlayedMonthKey <= monthKey;
               const streakDoc =
                 streakSnap.docs[0];
               const streakRef = streakDoc?.ref ||
                 db().collection("user_streaks").doc(uid);
+              const streakTemporalMarkersAhead =
+                hasNewerParticipationStreakMarker(
+                  streakDoc?.data(),
+                  gameDateKey
+                );
               const streakState =
                 calculateNextParticipationStreak(
                   streakDoc?.data(),
                   gameDateKey
                 );
               const streakXp =
-                calculateStreakXp(
-                  streakState.currentStreak,
-                  settings
+                streakTemporalMarkersAhead ?
+                  0 :
+                  calculateStreakXp(
+                    streakState.currentStreak,
+                    settings
+                  );
+              const bonusBreakdown =
+                calculatePerGameBonusBreakdown(
+                  {
+                    confirmation: conf,
+                    gameStartedAt: d,
+                    gameDateKey,
+                    monthKey,
+                    userDoc: userEntry,
+                    eventStats,
+                    waitlistEntriesByUser,
+                  },
+                  settings,
+                  !manualRewardApproval
                 );
+              const extraBonusXp =
+                bonusBreakdown.topScorer +
+                bonusBreakdown.hatTrick +
+                bonusBreakdown.firstGoal +
+                bonusBreakdown.goalkeeperGoal +
+                bonusBreakdown.fairPlay +
+                bonusBreakdown.eventRecorder +
+                bonusBreakdown.earlyConfirmation +
+                bonusBreakdown.onTimeCheckin +
+                bonusBreakdown.lastMinuteSaver +
+                bonusBreakdown.waitlistPromoted +
+                bonusBreakdown.comeback +
+                bonusBreakdown.firstGameOfMonth +
+                bonusBreakdown.monthlyStreak;
               const baseXp =
-                baseXpWithoutStreak + streakXp;
+                baseXpWithoutStreak + streakXp +
+                extraBonusXp;
               const currentXp =
                 (userEntry
                   .experience_points as number) || 0;
@@ -1171,6 +1291,9 @@ export const onGameStatusUpdate = onDocumentUpdated(
                 gamesDraw:
                   (stats.gamesDraw || 0) +
                   (result === "DRAW" ? 1 : 0),
+                recordedEventsGames:
+                  (stats.recordedEventsGames || 0) +
+                  (bonusBreakdown.eventRecorder > 0 ? 1 : 0),
                 // #3587/#3588/#3596: estes campos dependem do resultado da
                 // votação, que ainda não existe na transição para FINISHED.
                 // concludeMvpVoting é a única fonte de verdade.
@@ -1216,6 +1339,23 @@ export const onGameStatusUpdate = onDocumentUpdated(
                 level: newLevel,
                 updated_at: now,
               };
+              if (shouldAdvanceGameDateMarker) {
+                userUpdate.last_played_game_date =
+                  gameDateKey;
+              }
+              if (shouldAdvanceMonthMarker) {
+                userUpdate.last_played_month_key =
+                  monthKey;
+                userUpdate.monthly_streak =
+                  bonusBreakdown.monthlyStreakAfter;
+              }
+              if (
+                shouldAdvanceMonthMarker &&
+                bonusBreakdown.comeback > 0
+              ) {
+                userUpdate.last_comeback_month_key =
+                  monthKey;
+              }
               if (
                 cappedMilestones.appliedMilestones.length > 0
               ) {
@@ -1270,31 +1410,91 @@ export const onGameStatusUpdate = onDocumentUpdated(
                     FieldValue.increment(
                       result === "DRAW" ? 1 : 0
                     ),
+                  recordedEventsGames:
+                    FieldValue.increment(
+                      bonusBreakdown.eventRecorder > 0 ? 1 : 0
+                    ),
                   updated_at: now,
                 },
                 {merge: true}
               );
 
-              tx.set(
-                streakRef,
-                {
-                  user_id: uid,
-                  current_streak:
-                    streakState.currentStreak,
-                  longest_streak:
-                    streakState.longestStreak,
-                  last_game_date: gameDateKey,
-                  streak_started_at:
-                    streakState.streakStartedAt,
-                  updated_at: now,
-                },
-                {merge: true}
-              );
+              if (!streakTemporalMarkersAhead) {
+                tx.set(
+                  streakRef,
+                  {
+                    user_id: uid,
+                    current_streak:
+                      streakState.currentStreak,
+                    longest_streak:
+                      streakState.longestStreak,
+                    last_game_date: gameDateKey,
+                    streak_started_at:
+                      streakState.streakStartedAt,
+                    updated_at: now,
+                  },
+                  {merge: true}
+                );
+              }
 
               tx.update(
                 confirmationRef,
                 {xp_earned: playerXp}
               );
+
+              const reconciledLogBreakdown =
+                reconcileXpLogBreakdown(
+                  {
+                    xp_participation:
+                      settings.xp_presence,
+                    xp_goals:
+                      cappedGoals *
+                      settings.xp_per_goal,
+                    xp_assists:
+                      cappedAssists *
+                      settings.xp_per_assist,
+                    xp_saves:
+                      cappedSaves *
+                      settings.xp_per_save,
+                    xp_result: result === "WIN" ?
+                      settings.xp_win :
+                      (result === "DRAW" ?
+                        settings.xp_draw : 0),
+                    xp_mvp: isMvp ?
+                      settings.xp_mvp : 0,
+                    xp_clean_sheet: cleanSheetXp,
+                    xp_milestones: milesXp,
+                    xp_streak: streakXp,
+                    xp_penalty: penaltyXp,
+                    xp_top_scorer:
+                      bonusBreakdown.topScorer,
+                    xp_hat_trick:
+                      bonusBreakdown.hatTrick,
+                    xp_first_goal:
+                      bonusBreakdown.firstGoal,
+                    xp_goalkeeper_goal:
+                      bonusBreakdown.goalkeeperGoal,
+                    xp_fair_play:
+                      bonusBreakdown.fairPlay,
+                    xp_recorder:
+                      bonusBreakdown.eventRecorder,
+                    xp_early_confirmation:
+                      bonusBreakdown.earlyConfirmation,
+                    xp_on_time_checkin:
+                      bonusBreakdown.onTimeCheckin,
+                    xp_last_minute_saver:
+                      bonusBreakdown.lastMinuteSaver,
+                    xp_waitlist_promoted:
+                      bonusBreakdown.waitlistPromoted,
+                    xp_comeback:
+                      bonusBreakdown.comeback,
+                    xp_first_game_month:
+                      bonusBreakdown.firstGameOfMonth,
+                    xp_monthly_streak:
+                      bonusBreakdown.monthlyStreak,
+                  },
+                  playerXp,
+                );
 
               const log: XpLog = {
                 user_id: uid,
@@ -1311,33 +1511,31 @@ export const onGameStatusUpdate = onDocumentUpdated(
                 xp_after: finalXp,
                 level_before: currentLevel,
                 level_after: newLevel,
-                xp_participation:
-                  settings.xp_presence,
-                xp_goals:
-                  cappedGoals *
-                  settings.xp_per_goal,
-                xp_assists:
-                  cappedAssists *
-                  settings.xp_per_assist,
-                xp_saves:
-                  cappedSaves *
-                  settings.xp_per_save,
-                xp_result: result === "WIN" ?
-                  settings.xp_win :
-                  (result === "DRAW" ?
-                    settings.xp_draw : 0),
-                xp_mvp: isMvp ?
-                  settings.xp_mvp : 0,
-                xp_clean_sheet: cleanSheetXp,
-                xp_milestones: milesXp,
-                xp_streak: streakXp,
-                xp_penalty: penaltyXp,
+                ...reconciledLogBreakdown,
                 goals: cappedGoals,
                 assists: cappedAssists,
                 saves: cappedSaves,
                 was_mvp: isMvp,
                 was_clean_sheet: cleanSheetXp > 0,
                 was_worst_player: isWorstPlayer,
+                was_top_scorer:
+                  bonusBreakdown.topScorer > 0,
+                was_hat_trick:
+                  bonusBreakdown.hatTrick > 0,
+                was_first_goal:
+                  bonusBreakdown.firstGoal > 0,
+                was_goalkeeper_goal:
+                  bonusBreakdown.goalkeeperGoal > 0,
+                was_fair_play:
+                  bonusBreakdown.fairPlay > 0,
+                recorded_events_count:
+                  bonusBreakdown.recordedEventsCount,
+                comeback_type:
+                  bonusBreakdown.comebackType,
+                monthly_streak:
+                  bonusBreakdown.monthlyStreakAfter,
+                monthly_streak_tier:
+                  bonusBreakdown.monthlyStreakTier,
                 game_result: result,
                 my_team_score: team ?
                   (liveScore ?
@@ -1413,6 +1611,8 @@ export const onGameStatusUpdate = onDocumentUpdated(
                       newStats.totalGames,
                     gamesWon:
                       newStats.gamesWon,
+                    recordedEventsGames:
+                      newStats.recordedEventsGames || 0,
                     currentMvpStreak:
                       newStats.currentMvpStreak,
                   },
@@ -1450,6 +1650,8 @@ export const onGameStatusUpdate = onDocumentUpdated(
                 streak: streakState.currentStreak,
                 previousStreak:
                   streakState.previousStreak,
+                comebackXp:
+                  bonusBreakdown.comeback,
               };
             }
           );
@@ -1464,6 +1666,16 @@ export const onGameStatusUpdate = onDocumentUpdated(
             streakNotificationPromises.push(
               (async () => {
                 try {
+                  if (transactionResult.comebackXp > 0) {
+                    await sendAndSaveNotification(uid, {
+                      userId: uid,
+                      title: "Tá de volta! 🔙",
+                      body:
+                        `Você voltou pra pelada e ganhou +${transactionResult.comebackXp} XP.`,
+                      type: NotificationType.ACHIEVEMENT,
+                      action: "achievements",
+                    }, `xp_comeback_${gameId}_${uid}`);
+                  }
                   const notifModule =
                     await getNotifications();
                   await notifModule
@@ -2518,6 +2730,7 @@ export * from "./maintenance/soft-delete";
 // FIX #2610: maintainStreaksData nunca foi exportado — job mensal de compactacao
 // de streaks (0 4 1 * *) nunca rodou em producao.
 export {maintainStreaksData} from "./maintenance/compact-streaks";
+export {sendGamificationNudgesDaily} from "./gamification-nudges";
 // FIX #760: keepWarmFunctions removido — escrevia em Firestore mas não aquecia
 // containers de outras funções (isolamento por função em CF v2).
 // Use minInstances na declaração das funções críticas se necessário.

@@ -17,6 +17,11 @@ import {
   LEVEL_TABLE,
   MAX_XP_PER_GAME,
   MIN_XP_PER_GAME,
+  XP_ACTIONS,
+  STREAK_BONUSES,
+  PERFORMANCE_BONUSES,
+  BEHAVIOR_BONUSES,
+  RETENTION_BONUSES,
 } from "../constants";
 
 // ==========================================
@@ -24,20 +29,59 @@ import {
 // ==========================================
 
 export const DEFAULT_SETTINGS: GamificationSettings = {
-  xp_presence: 10,
-  xp_per_goal: 10,
-  xp_per_assist: 7,
-  // Aumentado de 5 para 8 (balance goleiros)
-  xp_per_save: 8,
-  xp_win: 20,
-  xp_draw: 10,
-  xp_mvp: 30,
-  xp_streak_3: 20,
-  xp_streak_5: 35, // NOVO: Bonus intermediário
-  xp_streak_7: 50,
-  xp_streak_10: 100,
-  // NOVO: Bonus goleiro clean sheet
-  xp_clean_sheet: 15,
+  xp_presence: XP_ACTIONS.PARTICIPATION,
+  xp_per_goal: XP_ACTIONS.GOAL,
+  xp_per_assist: XP_ACTIONS.ASSIST,
+  xp_per_save: XP_ACTIONS.SAVE,
+  xp_win: XP_ACTIONS.WIN,
+  xp_draw: XP_ACTIONS.DRAW,
+  xp_mvp: XP_ACTIONS.MVP,
+  xp_streak_3: STREAK_BONUSES.STREAK_3,
+  xp_streak_5: STREAK_BONUSES.STREAK_5,
+  xp_streak_7: STREAK_BONUSES.STREAK_7,
+  xp_streak_10: STREAK_BONUSES.STREAK_10,
+  xp_clean_sheet: XP_ACTIONS.CLEAN_SHEET,
+  xp_top_scorer: PERFORMANCE_BONUSES.TOP_SCORER,
+  xp_hat_trick: PERFORMANCE_BONUSES.HAT_TRICK,
+  xp_first_goal: PERFORMANCE_BONUSES.FIRST_GOAL,
+  xp_goalkeeper_goal: PERFORMANCE_BONUSES.GOALKEEPER_GOAL,
+  xp_fair_play: PERFORMANCE_BONUSES.FAIR_PLAY,
+  xp_event_recorder_per_event:
+    PERFORMANCE_BONUSES.EVENT_RECORDER_PER_EVENT,
+  xp_event_recorder_min_events:
+    PERFORMANCE_BONUSES.EVENT_RECORDER_MIN_EVENTS,
+  xp_event_recorder_max_xp:
+    PERFORMANCE_BONUSES.EVENT_RECORDER_MAX_XP,
+  xp_early_confirmation:
+    BEHAVIOR_BONUSES.EARLY_CONFIRMATION,
+  xp_on_time_checkin:
+    BEHAVIOR_BONUSES.ON_TIME_CHECKIN,
+  xp_last_minute_saver:
+    BEHAVIOR_BONUSES.LAST_MINUTE_SAVER,
+  xp_waitlist_promoted:
+    BEHAVIOR_BONUSES.WAITLIST_PROMOTED,
+  xp_comeback_14d:
+    RETENTION_BONUSES.COMEBACK_14D,
+  xp_comeback_30d:
+    RETENTION_BONUSES.COMEBACK_30D,
+  comeback_14d_threshold_days:
+    RETENTION_BONUSES.COMEBACK_14D_THRESHOLD_DAYS,
+  comeback_30d_threshold_days:
+    RETENTION_BONUSES.COMEBACK_30D_THRESHOLD_DAYS,
+  comeback_max_per_month:
+    RETENTION_BONUSES.COMEBACK_MAX_PER_MONTH,
+  xp_first_game_of_month:
+    RETENTION_BONUSES.FIRST_GAME_OF_MONTH,
+  xp_monthly_streak_3:
+    RETENTION_BONUSES.MONTHLY_STREAK_3,
+  xp_monthly_streak_6:
+    RETENTION_BONUSES.MONTHLY_STREAK_6,
+  xp_monthly_streak_12:
+    RETENTION_BONUSES.MONTHLY_STREAK_12,
+  xpActions: XP_ACTIONS,
+  performanceBonuses: PERFORMANCE_BONUSES,
+  behaviorBonuses: BEHAVIOR_BONUSES,
+  retentionBonuses: RETENTION_BONUSES,
 };
 
 // Penalidade "Bola Murcha" (sync XPCalculator.kt)
@@ -217,7 +261,7 @@ export function checkMilestones(
 
   for (const m of MILESTONES) {
     if (achieved.includes(m.name)) continue;
-    if (stats[m.field] >= m.threshold) {
+    if ((stats[m.field] ?? 0) >= m.threshold) {
       newM.push(m.name);
       xp += m.xpReward;
     }

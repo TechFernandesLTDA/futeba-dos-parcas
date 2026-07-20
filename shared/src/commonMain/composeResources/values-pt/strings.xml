@@ -940,17 +940,17 @@
     <string name="post_game_journey">SUA JORNADA NA PARTIDA</string>
     <string name="post_game_xp_earned">+%d XP</string>
     <string name="post_game_rumoa">RUMO AO PRÓXIMO NÍVEL</string>
-    <string name="post_game_level_up">SUBIU DE NIVEL!</string>
-    <string name="post_game_level">Nivel %d</string>
-    <string name="post_game_level_to">Nivel %d - %s</string>
-    <string name="post_game_current_level">Nivel %d</string>
-    <string name="post_game_progress">%d%% para o proximo nivel</string>
+    <string name="post_game_level_up">SUBIU DE NÍVEL!</string>
+    <string name="post_game_level">Nível %d</string>
+    <string name="post_game_level_to">Nível %d - %s</string>
+    <string name="post_game_current_level">Nível %d</string>
+    <string name="post_game_progress">%d%% para o próximo nível</string>
     <string name="post_game_conquistas">Conquistas Desbloqueadas!</string>
 
     <!-- Player Evolution Card -->
-    <string name="player_evolution_level">NIVEL</string>
+    <string name="player_evolution_level">NÍVEL</string>
     <string name="player_evolution_xp">%d XP</string>
-    <string name="player_evolution_xp_remaining">Faltam %d XP para o proximo nivel</string>
+    <string name="player_evolution_xp_remaining">Faltam %d XP para o próximo nível</string>
     <string name="player_evolution_total">Total: %d XP</string>
     <string name="player_evolution_league">Liga %s</string>
     <string name="player_evolution_rating">Rating: %.1f</string>

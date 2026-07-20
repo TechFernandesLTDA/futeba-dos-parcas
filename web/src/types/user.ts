@@ -73,6 +73,19 @@ export interface User {
   lookingForGameTodayUntil?: Date;
   lookingForGameTodayUpdatedAt?: Date;
   lastGameDate?: Date;
+  xpTopScorer?: number;
+  xpHatTrick?: number;
+  xpFirstGoal?: number;
+  xpGoalkeeperGoal?: number;
+  xpFairPlay?: number;
+  xpComeback?: number;
+  xpFirstGameMonth?: number;
+  xpMonthlyStreak?: number;
+  xpRecorder?: number;
+  xpEarlyConfirmation?: number;
+  xpOnTimeCheckin?: number;
+  xpLastMinuteSaver?: number;
+  xpWaitlistPromoted?: number;
 
   // Invite
   inviteCode?: string;

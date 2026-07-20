@@ -259,6 +259,7 @@ private fun HomeSuccessContent(
     val gamificationSummary = remember(state.gamificationSummary) {
         state.gamificationSummary
     }
+    val progressInsights = remember(state.progressInsights) { state.progressInsights }
     val streak = remember(state.streak) { state.streak }
 
     // ✅ OTIMIZAÇÃO P2#9: Usar derivedStateOf para evitar recálculos desnecessários
@@ -384,6 +385,15 @@ private fun HomeSuccessContent(
                 onProfileClick = onShowPlayerCard,
                 onLevelClick = onLevelJourneyClick  // Abre Rumo ao Estrelato ao clicar no nível
             )
+        }
+
+        if (progressInsights.hasContent) {
+            item(key = "home_progress_nudges") {
+                HomeProgressNudgesSection(
+                    insights = progressInsights,
+                    modifier = Modifier.padding(top = AppDimensions.spacing_small)
+                )
+            }
         }
 
         item(key = "social_feed_entry") {

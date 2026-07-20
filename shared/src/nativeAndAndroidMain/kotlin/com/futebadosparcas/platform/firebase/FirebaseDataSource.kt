@@ -3869,6 +3869,25 @@ private fun dev.gitlive.firebase.firestore.DocumentSnapshot.toXpLogOrNull(): XpL
         xpAssists = safeInt("xp_assists") ?: 0, xpSaves = safeInt("xp_saves") ?: 0,
         xpResult = safeInt("xp_result") ?: 0, xpMvp = safeInt("xp_mvp") ?: 0,
         xpMilestones = safeInt("xp_milestones") ?: 0, xpStreak = safeInt("xp_streak") ?: 0,
+        xpTopScorer = safeInt("xp_top_scorer") ?: 0,
+        xpHatTrick = safeInt("xp_hat_trick") ?: 0,
+        xpFirstGoal = safeInt("xp_first_goal") ?: 0,
+        xpGoalkeeperGoal = safeInt("xp_goalkeeper_goal") ?: 0,
+        xpFairPlay = safeInt("xp_fair_play") ?: 0,
+        xpComeback = safeInt("xp_comeback") ?: 0,
+        xpFirstGameMonth =
+            safeInt("xp_first_game_month")
+                ?: safeInt("xp_first_game_of_month")
+                ?: 0,
+        xpMonthlyStreak = safeInt("xp_monthly_streak") ?: 0,
+        xpRecorder =
+            safeInt("xp_recorder")
+                ?: safeInt("xp_event_recorder")
+                ?: 0,
+        xpEarlyConfirmation = safeInt("xp_early_confirmation") ?: 0,
+        xpOnTimeCheckin = safeInt("xp_on_time_checkin") ?: 0,
+        xpLastMinuteSaver = safeInt("xp_last_minute_saver") ?: 0,
+        xpWaitlistPromoted = safeInt("xp_waitlist_promoted") ?: 0,
         goals = safeInt("goals") ?: 0, assists = safeInt("assists") ?: 0, saves = safeInt("saves") ?: 0,
         wasMvp = get<Boolean?>("was_mvp") ?: get<Boolean?>("wasMvp") ?: false,
         gameResult = get<String?>("game_result") ?: get<String?>("gameResult") ?: "",

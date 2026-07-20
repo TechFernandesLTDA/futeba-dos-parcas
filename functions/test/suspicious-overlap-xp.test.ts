@@ -346,12 +346,14 @@ describe("FIX #2797 — onGameStatusUpdate exclui suspicious_overlap do XP", () 
     // gameSnap usa collection().doc().get() → mockDocGet
 
     mockCollectionGet
+      .mockResolvedValueOnce(makeSnap([])) // waitlist (eagerly created before Promise.all)
       .mockResolvedValueOnce(makeSnap(confirmationDocs)) // confirmations
       .mockResolvedValueOnce(makeSnap([{                  // teams
         player_ids: [flaggedUser, ...normalUsers],
         score: 0,
       }]))
-      .mockResolvedValueOnce(makeSnap([{ is_active: true }])); // seasons
+      .mockResolvedValueOnce(makeSnap([{ is_active: true }])) // seasons
+      .mockResolvedValueOnce(makeSnap([])); // game_events
 
     // Sequência de mockDocGet:
     // 1. owner validation: db().collection("users").doc(owner_id).get()
@@ -371,6 +373,8 @@ describe("FIX #2797 — onGameStatusUpdate exclui suspicious_overlap do XP", () 
           group_id: "group1",
           mvp_id: null,
           worst_player_id: null,
+          xp_reward_review_decision: "APPROVED",
+          xp_reward_reviewed_by: "admin-test",
         }),
       })
       // xp_log idempotency reads — nenhum processado
@@ -452,12 +456,14 @@ describe("FIX #2797 — onGameStatusUpdate exclui suspicious_overlap do XP", () 
     }));
 
     mockCollectionGet
+      .mockResolvedValueOnce(makeSnap([])) // waitlist
       .mockResolvedValueOnce(makeSnap(allNormal))
       .mockResolvedValueOnce(makeSnap([{
         player_ids: normalUsers,
         score: 0,
       }]))
-      .mockResolvedValueOnce(makeSnap([{ is_active: true }]));
+      .mockResolvedValueOnce(makeSnap([{ is_active: true }]))
+      .mockResolvedValueOnce(makeSnap([]));
 
     mockDocGet
       .mockResolvedValueOnce({ exists: true, data: () => ({ uid: "owner1" }) })
@@ -471,6 +477,8 @@ describe("FIX #2797 — onGameStatusUpdate exclui suspicious_overlap do XP", () 
           group_id: "group1",
           mvp_id: null,
           worst_player_id: null,
+          xp_reward_review_decision: "APPROVED",
+          xp_reward_reviewed_by: "admin-test",
         }),
       })
       .mockResolvedValue({ exists: false });
@@ -530,12 +538,14 @@ describe("FIX #2797 — onGameStatusUpdate exclui suspicious_overlap do XP", () 
     ];
 
     mockCollectionGet
+      .mockResolvedValueOnce(makeSnap([])) // waitlist
       .mockResolvedValueOnce(makeSnap(allConfirmations))
       .mockResolvedValueOnce(makeSnap([{
         player_ids: [absentUser, ...normalUsers],
         score: 0,
       }]))
-      .mockResolvedValueOnce(makeSnap([{ is_active: true }]));
+      .mockResolvedValueOnce(makeSnap([{ is_active: true }]))
+      .mockResolvedValueOnce(makeSnap([]));
 
     mockDocGet
       .mockResolvedValueOnce({ exists: true, data: () => ({ uid: "owner1" }) })
@@ -549,6 +559,8 @@ describe("FIX #2797 — onGameStatusUpdate exclui suspicious_overlap do XP", () 
           group_id: "group1",
           mvp_id: null,
           worst_player_id: null,
+          xp_reward_review_decision: "APPROVED",
+          xp_reward_reviewed_by: "admin-test",
         }),
       })
       .mockResolvedValue({ exists: false });

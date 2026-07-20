@@ -8,7 +8,7 @@
     "backToHome": "Voltar para o início",
     "bestGoalkeeperCandidates": "Candidatos a melhor goleiro",
     "blockedPlayers": "Jogadores bloqueados",
-    "breadcrumb": "Breadcrumb",
+    "breadcrumb": "Navegação estrutural",
     "changeProfilePhoto": "Alterar foto de perfil",
     "clearAll": "Limpar todas",
     "clearSearch": "Limpar busca",
@@ -184,7 +184,7 @@
     "logo": "Futeba dos Parças",
     "logoWithBrand": "Logo do Futeba dos Parças",
     "noPhoto": "Sem foto",
-    "preview": "Preview"
+    "preview": "Prévia"
   },
   "app": {
     "name": "Futeba dos Parças"
@@ -196,7 +196,7 @@
     "skip": "Pular",
     "slide1Subtitle": "Crie jogos, convoque os parças e acompanhe tudo em um só lugar — sem grupo de WhatsApp bagunçado.",
     "slide1Title": "Sua pelada, organizada",
-    "slide2Subtitle": "Cada jogo te dá XP. Suba de nível, desbloqueie badges e dispute o ranking mensal da liga.",
+    "slide2Subtitle": "Cada jogo te dá XP. Suba de nível, desbloqueie conquistas e dispute o ranking mensal da liga.",
     "slide2Title": "Jogou, pontuou",
     "slide3Subtitle": "Envie convites, gerencie confirmações e monte os times automaticamente com equilíbrio.",
     "slide3Title": "Chame os parças",
@@ -542,8 +542,8 @@
     "activitiesDesc": "As atividades do grupo aparecerão aqui.",
     "addLocation": "Cadastrar local",
     "addTransaction": "Adicionar transação",
-    "badges": "Nenhum badge conquistado",
-    "badgesDesc": "Jogue mais para desbloquear badges exclusivos!",
+    "badges": "Nenhuma conquista desbloqueada",
+    "badgesDesc": "Jogue mais para desbloquear conquistas exclusivas!",
     "cashbox": "Caixa vazio",
     "cashboxDesc": "Nenhuma transação registrada no caixa do grupo.",
     "challenges": "Nenhum desafio disponível",
@@ -663,7 +663,7 @@
       "verifyAuthError": "Erro ao verificar autenticação. Tente novamente."
     },
     "badges": {
-      "loadError": "Erro ao carregar badges em tempo real"
+      "loadError": "Erro ao carregar conquistas em tempo real"
     },
     "cancel": "Cancelar",
     "cashbox": {
@@ -713,7 +713,41 @@
       "voteResultError": "Erro ao carregar resultado da votação."
     },
     "gamification": {
-      "loadError": "Erro ao carregar configurações de gamificação."
+      "loadError": "Erro ao carregar configurações de gamificação.",
+      "actions": {
+        "ALMOST_BADGE": "Quase conquista",
+        "ALMOST_LEVEL": "Quase nível",
+        "ASSIST": "Assistência",
+        "BEST_GK": "Melhor goleiro",
+        "CLEAN_SHEET": "Sem sofrer gols",
+        "COMEBACK_14D": "Tá de volta! 14 dias",
+        "COMEBACK_30D": "Tá de volta! 30 dias",
+        "DRAW": "Empate",
+        "EARLY_CONFIRMATION": "Confirmação antecipada",
+        "EVENT_RECORDER": "Registrador oficial",
+        "FAIR_PLAY": "Fair play",
+        "FIRST_GAME_OF_MONTH": "Primeira do mês",
+        "FIRST_GOAL": "Abriu o placar",
+        "GOAL": "Gol",
+        "GOALKEEPER_GOAL": "Gol do goleiro",
+        "HAT_TRICK": "Hat-trick",
+        "LAST_MINUTE_SAVER": "Salvou a pelada",
+        "MONTHLY_STREAK_3": "Sequência mensal",
+        "MILESTONE": "Marco conquistado",
+        "MVP": "MVP",
+        "ON_TIME_CHECKIN": "Pontualidade",
+        "PARTICIPATION": "Participação",
+        "SAVE": "Defesa",
+        "STREAK_10": "Sequência 10+",
+        "STREAK_3": "Sequência 3+",
+        "STREAK_5": "Sequência 5+",
+        "STREAK_7": "Sequência 7+",
+        "STREAK_AT_RISK": "Sequência em risco",
+        "TOP_SCORER": "Artilheiro do jogo",
+        "WAITLIST_PROMOTED": "Saiu da waitlist",
+        "WIN": "Vitória",
+        "WORST_PLAYER": "Bola murcha"
+      }
     },
     "generic": {
       "loadDataError": "Erro ao carregar dados. Tente novamente."
@@ -1979,7 +2013,7 @@
     "shareText": "Bora entrar no Futeba dos Parças? Use meu convite e vem jogar com a gente.",
     "invitedCount": "convidados",
     "noCodeYetTitle": "Você ainda não tem um código de convite",
-    "noCodeYetDesc": "Gere seu código para começar a convidar amigos e ganhar badges de Embaixador!",
+    "noCodeYetDesc": "Gere seu código para começar a convidar amigos e ganhar conquistas de Embaixador!",
     "title": "Convidar Amigos",
     "yourCode": "Seu código de convite"
   },
@@ -2073,6 +2107,8 @@
     "baseProgression": "PROGRESSÃO BASE",
     "howToEarnXp": "Como ganhar XP",
     "legendsOfFootball": "LENDAS DO FUTEBOL",
+    "nearLevelDescription": "Faltam {{xp}} XP para alcançar o nível {{level}}: {{levelName}}.",
+    "nearLevelTitle": "Quase lá no próximo nível",
     "noRecordsYet": "Nenhum registro ainda",
     "recentHistory": "HISTÓRICO RECENTE",
     "xpGuideTip": "💡 Dica: Jogue regularmente e mantenha sua sequência para ganhar bônus de XP!",
@@ -2090,45 +2126,73 @@
     "xpRemaining": "XP restante",
     "lockedExplanation": "Você pode explorar este nível agora. Ele será desbloqueado automaticamente quando alcançar o XP necessário.",
     "xpGuide": {
-      "participation": {
-        "label": "Participação",
-        "desc": "Jogue uma partida"
+      "assist": {
+        "label": "Assistência",
+        "desc": "Dê uma assistência"
+      },
+      "earlyConfirmation": {
+        "label": "Confirmação antecipada",
+        "desc": "Confirme 48h antes do jogo"
+      },
+      "fairPlay": {
+        "label": "Fair play",
+        "desc": "Jogue sem receber cartões"
+      },
+      "firstGameMonth": {
+        "label": "Primeira do mês",
+        "desc": "Jogue sua primeira partida do mês"
+      },
+      "firstGoal": {
+        "label": "Abriu o placar",
+        "desc": "Marque o primeiro gol da partida"
       },
       "goal": {
         "label": "Gol",
         "desc": "Marque um gol"
       },
-      "assist": {
-        "label": "Assistência",
-        "desc": "Dê uma assistência"
+      "goalkeeperGoal": {
+        "label": "Gol do goleiro",
+        "desc": "Marque como goleiro"
       },
-      "save": {
-        "label": "Defesa",
-        "desc": "Faça uma defesa (goleiro)"
+      "hatTrick": {
+        "label": "Hat-trick",
+        "desc": "Marque 3 ou mais gols"
       },
-      "win": {
-        "label": "Vitória",
-        "desc": "Vença a partida"
+      "lastMinuteSaver": {
+        "label": "Salvou a pelada",
+        "desc": "Confirme no fim e complete a pelada"
+      },
+      "monthlyStreak3": {
+        "label": "Sequência mensal",
+        "desc": "Jogue em 3 meses seguidos"
       },
       "mvp": {
         "label": "MVP",
         "desc": "Seja eleito o melhor da partida"
       },
-      "bestGk": {
-        "label": "Melhor Goleiro",
-        "desc": "Seja eleito o melhor goleiro"
+      "onTimeCheckin": {
+        "label": "Pontualidade",
+        "desc": "Faça check-in até 10 min após o início"
       },
-      "streak3": {
-        "label": "Sequência 3+",
-        "desc": "Jogue 3+ partidas seguidas"
+      "participation": {
+        "label": "Participação",
+        "desc": "Jogue uma partida"
       },
-      "streak7": {
-        "label": "Sequência 7+",
-        "desc": "Jogue 7+ partidas seguidas"
+      "save": {
+        "label": "Defesa",
+        "desc": "Faça uma defesa (goleiro)"
       },
-      "streak10": {
-        "label": "Sequência 10+",
-        "desc": "Jogue 10+ partidas seguidas"
+      "topScorer": {
+        "label": "Artilheiro do jogo",
+        "desc": "Termine como artilheiro da partida"
+      },
+      "waitlistPromoted": {
+        "label": "Saiu da waitlist",
+        "desc": "Saia da waitlist e compareça"
+      },
+      "win": {
+        "label": "Vitória",
+        "desc": "Vença a partida"
       }
     }
   },
@@ -2339,7 +2403,7 @@
       "filters": {
         "ACHIEVEMENT": "Conquistas",
         "ALL": "Todas",
-        "BADGE_UNLOCKED": "Badges",
+        "BADGE_UNLOCKED": "Conquistas",
         "GAME_CANCELLED": "Cancelados",
         "GAME_CONFIRMED": "Confirmados",
         "GAME_INVITE": "Jogos",
@@ -2640,7 +2704,7 @@
     "avatarUploadCanceled": "O envio da foto foi cancelado.",
     "avatarUploadNetworkError": "A conexão oscilou durante o envio. Verifique sua internet e tente novamente.",
     "genderSaveError": "Perfil salvo, mas não foi possível salvar o gênero. Tente novamente.",
-    "badges": "Badges",
+    "badges": "Conquistas",
     "bioLabel": "Bio",
     "bioPlaceholder": "Conte um pouco sobre você...",
     "cards": "Cartões",
@@ -2650,7 +2714,7 @@
     "defaultUserName": "Usuário",
     "defense": "Defesa",
     "detailedStats": "Estatísticas Detalhadas",
-    "developer": "Developer Menu",
+    "developer": "Menu do desenvolvedor",
     "draws": "Empates",
     "editProfile": "Editar Perfil",
     "editProfileError": "Erro ao salvar perfil. Tente novamente.",
@@ -2720,6 +2784,10 @@
     "mvps": "MVPs",
     "myLocations": "Meus Locais",
     "myProfile": "Meu Perfil",
+    "gamificationFocus": "Foco da semana",
+    "nearBadgeHint_one": "Falta {{count}} para desbloquear a conquista {{badge}} ({{current}}/{{target}}).",
+    "nearBadgeHint_other": "Faltam {{count}} para desbloquear a conquista {{badge}} ({{current}}/{{target}}).",
+    "nearLevelHint": "Faltam {{xp}} XP para chegar ao nível {{level}}: {{levelName}}.",
     "nicknameHelper": "Ex: \"Zé\", \"Bomba\", \"Gordo\"",
     "nicknameLabel": "Apelido (como te chamam na pelada)",
     "noRecentActivity": "Nenhuma atividade recente",
@@ -2766,7 +2834,7 @@
     "skillsHint": "Ajuste suas habilidades manualmente. O sistema também calcula ratings automáticos baseado nos seus jogos.",
     "starRoad": "Rumo ao Estrelato",
     "startStreak": "Comece uma sequência!",
-    "startStreakDesc": "Confirme presença no próximo jogo para iniciar sua streak 🔥",
+    "startStreakDesc": "Confirme presença no próximo jogo para iniciar sua sequência 🔥",
     "statistics": "Estatísticas",
     "streakActive_one": "{{count}} jogo seguido!",
     "streakActive_other": "{{count}} jogos seguidos!",
@@ -2810,7 +2878,7 @@
     "loadActivitiesError": "Erro ao carregar atividades recentes.",
     "loadError": "Erro ao carregar ranking: {{error}}",
     "minPoints": "{{points}}+ pontos",
-    "minRating": "rating {{rating}}+",
+    "minRating": "nota {{rating}}+",
     "myPosition": "Sua posição",
     "noData": "Sem dados de ranking",
     "noDataDesc": "Jogue mais partidas para aparecer no ranking!",
@@ -2926,7 +2994,7 @@
     "deleteItemPhotos": "Fotos de perfil",
     "deleteItemPrefs": "Configurações e preferências",
     "deleteItemProfile": "Perfil e informações pessoais",
-    "deleteItemXp": "XP, nível e badges conquistados",
+    "deleteItemXp": "XP, nível e conquistas desbloqueadas",
     "deleteStep1Desc": "Esta ação é irreversível. Todos os seus dados serão apagados definitivamente, incluindo:",
     "deleteStep1Title": "Excluir conta permanentemente?",
     "deleteStep1Warning": "Após a exclusão você não poderá recuperar sua conta.",
@@ -2943,7 +3011,7 @@
       "animationsSpeed": "Velocidade das Animações",
       "saveSuccess": "Configurações de gamificação salvas!"
     },
-    "gamificationDesc": "XP, Níveis, Badges",
+    "gamificationDesc": "XP, Níveis, Conquistas",
     "gamificationTitle": "Gamificação",
     "language": "Idioma",
     "languageDesc": "Selecione o idioma da interface",
@@ -2953,7 +3021,7 @@
     "ownerOnboardingTitle": "Cadastrar minha quadra",
     "notifications": {
       "achievements": "Notificações de conquistas",
-      "achievementsDescription": "Conquistas e badges",
+      "achievementsDescription": "Conquistas e marcos de XP",
       "achievementsTitle": "Conquistas",
       "gameInvites": "Notificações de convites para jogos",
       "gameInvitesDescription": "Convites para jogos",
@@ -2979,7 +3047,7 @@
       "groupWall": "Posts do mural",
       "groupWallDescription": "Novas publicações no mural do grupo",
       "pushDescription": "Receber notificações push no navegador",
-      "pushTitle": "Push notifications",
+      "pushTitle": "Notificações push",
       "pushToggle": "Ativar notificações push",
       "reminderLabel": "Notificar com antecedência",
       "reminderTime": "Tempo de antecedência do lembrete",
@@ -3511,7 +3579,7 @@
     "stats": {
       "games": "Jogos",
       "goals": "Gols",
-      "assists": "Assists",
+      "assists": "Assistências",
       "mvps": "MVPs",
       "streak": "Sequência",
       "winRate": "Vitórias%"

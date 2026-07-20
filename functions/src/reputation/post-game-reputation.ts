@@ -438,7 +438,7 @@ export const submitPostGameReputation = onCall(
       if (Date.now() > reputationDeadlineMs) {
         throw new HttpsError(
           "failed-precondition",
-          "A janela para enviar ou editar reputacao deste jogo ja encerrou."
+          "A janela para enviar ou editar a reputação deste jogo já encerrou."
         );
       }
 

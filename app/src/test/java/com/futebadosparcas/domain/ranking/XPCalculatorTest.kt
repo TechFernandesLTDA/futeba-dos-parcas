@@ -81,21 +81,21 @@ class XPCalculatorTest {
     inner class GoalsXP {
 
         @Test
-        @DisplayName("1 gol deve dar 10 XP")
-        fun `one goal should give 10 XP`() {
+        @DisplayName("1 gol deve dar 25 XP")
+        fun `one goal should give 25 XP`() {
             val playerData = createPlayerData(goals = 1)
             val result = XPCalculator.calculate(playerData)
 
-            assertEquals(10L, result.breakdown.goals)
+            assertEquals(25L, result.breakdown.goals)
         }
 
         @Test
-        @DisplayName("Hat trick (3 gols) deve dar 30 XP")
-        fun `hat trick should give 30 XP`() {
+        @DisplayName("Hat trick (3 gols) deve dar 75 XP base")
+        fun `hat trick should give 75 XP base`() {
             val playerData = createPlayerData(goals = 3)
             val result = XPCalculator.calculate(playerData)
 
-            assertEquals(30L, result.breakdown.goals)
+            assertEquals(75L, result.breakdown.goals)
         }
 
         @Test
@@ -104,8 +104,8 @@ class XPCalculatorTest {
             val playerData = createPlayerData(goals = 20)
             val result = XPCalculator.calculate(playerData)
 
-            // 15 gols * 10 XP = 150 XP (não 200)
-            assertEquals(150L, result.breakdown.goals)
+            // 15 gols * 25 XP = 375 XP (não 500)
+            assertEquals(375L, result.breakdown.goals)
         }
     }
 
@@ -116,21 +116,21 @@ class XPCalculatorTest {
     inner class AssistsXP {
 
         @Test
-        @DisplayName("1 assistência deve dar 7 XP")
-        fun `one assist should give 7 XP`() {
+        @DisplayName("1 assistência deve dar 20 XP")
+        fun `one assist should give 20 XP`() {
             val playerData = createPlayerData(assists = 1)
             val result = XPCalculator.calculate(playerData)
 
-            assertEquals(7L, result.breakdown.assists)
+            assertEquals(20L, result.breakdown.assists)
         }
 
         @Test
-        @DisplayName("3 assistências (playmaker) devem dar 21 XP")
-        fun `playmaker assists should give 21 XP`() {
+        @DisplayName("3 assistências devem dar 60 XP")
+        fun `playmaker assists should give 60 XP`() {
             val playerData = createPlayerData(assists = 3)
             val result = XPCalculator.calculate(playerData)
 
-            assertEquals(21L, result.breakdown.assists)
+            assertEquals(60L, result.breakdown.assists)
         }
 
         @Test
@@ -139,8 +139,8 @@ class XPCalculatorTest {
             val playerData = createPlayerData(assists = 15)
             val result = XPCalculator.calculate(playerData)
 
-            // 10 assists * 7 XP = 70 XP (não 105)
-            assertEquals(70L, result.breakdown.assists)
+            // 10 assists * 20 XP = 200 XP (não 300)
+            assertEquals(200L, result.breakdown.assists)
         }
     }
 
@@ -151,21 +151,21 @@ class XPCalculatorTest {
     inner class SavesXP {
 
         @Test
-        @DisplayName("1 defesa deve dar 8 XP")
-        fun `one save should give 8 XP`() {
+        @DisplayName("1 defesa deve dar 15 XP")
+        fun `one save should give 15 XP`() {
             val playerData = createPlayerData(saves = 1, position = PlayerPosition.GOALKEEPER)
             val result = XPCalculator.calculate(playerData)
 
-            assertEquals(8L, result.breakdown.saves)
+            assertEquals(15L, result.breakdown.saves)
         }
 
         @Test
-        @DisplayName("10 defesas devem dar 80 XP")
-        fun `ten saves should give 80 XP`() {
+        @DisplayName("10 defesas devem dar 150 XP")
+        fun `ten saves should give 150 XP`() {
             val playerData = createPlayerData(saves = 10, position = PlayerPosition.GOALKEEPER)
             val result = XPCalculator.calculate(playerData)
 
-            assertEquals(80L, result.breakdown.saves)
+            assertEquals(150L, result.breakdown.saves)
         }
 
         @Test
@@ -174,8 +174,8 @@ class XPCalculatorTest {
             val playerData = createPlayerData(saves = 50, position = PlayerPosition.GOALKEEPER)
             val result = XPCalculator.calculate(playerData)
 
-            // 30 saves * 8 XP = 240 XP (não 400)
-            assertEquals(240L, result.breakdown.saves)
+            // 30 saves * 15 XP = 450 XP (não 750)
+            assertEquals(450L, result.breakdown.saves)
         }
     }
 
@@ -186,12 +186,12 @@ class XPCalculatorTest {
     inner class ResultXP {
 
         @Test
-        @DisplayName("Vitória deve dar 20 XP")
-        fun `win should give 20 XP`() {
+        @DisplayName("Vitória deve dar 30 XP")
+        fun `win should give 30 XP`() {
             val playerData = createPlayerData(teamWon = true)
             val result = XPCalculator.calculate(playerData)
 
-            assertEquals(20L, result.breakdown.result)
+            assertEquals(30L, result.breakdown.result)
             assertEquals(GameResult.WIN, result.gameResult)
         }
 
@@ -223,12 +223,12 @@ class XPCalculatorTest {
     inner class MvpXP {
 
         @Test
-        @DisplayName("Ser MVP deve dar 30 XP")
-        fun `being MVP should give 30 XP`() {
+        @DisplayName("Ser MVP deve dar 50 XP")
+        fun `being MVP should give 50 XP`() {
             val playerData = createPlayerData(isMvp = true)
             val result = XPCalculator.calculate(playerData)
 
-            assertEquals(30L, result.breakdown.mvp)
+            assertEquals(50L, result.breakdown.mvp)
         }
 
         @Test
@@ -353,50 +353,50 @@ class XPCalculatorTest {
         @DisplayName("Jogo completo deve somar XP corretamente")
         fun `complete game should sum XP correctly`() {
             val playerData = createPlayerData(
-                goals = 2,       // 20 XP
-                assists = 1,     // 7 XP
-                isMvp = true,    // 30 XP
-                teamWon = true,  // 20 XP
+                goals = 2,       // 50 XP
+                assists = 1,     // 20 XP
+                isMvp = true,    // 50 XP
+                teamWon = true,  // 30 XP
                 currentStreak = 5 // 35 XP
             )
             val result = XPCalculator.calculate(playerData)
 
             // Participação: 10
-            // Gols: 20
-            // Assists: 7
-            // Resultado: 20
-            // MVP: 30
+            // Gols: 50
+            // Assists: 20
+            // Resultado: 30
+            // MVP: 50
             // Streak: 35
-            // Total: 122
+            // Total: 195
             assertEquals(10L, result.breakdown.participation)
-            assertEquals(20L, result.breakdown.goals)
-            assertEquals(7L, result.breakdown.assists)
-            assertEquals(20L, result.breakdown.result)
-            assertEquals(30L, result.breakdown.mvp)
+            assertEquals(50L, result.breakdown.goals)
+            assertEquals(20L, result.breakdown.assists)
+            assertEquals(30L, result.breakdown.result)
+            assertEquals(50L, result.breakdown.mvp)
             assertEquals(35L, result.breakdown.streak)
-            assertEquals(122L, result.totalXp)
+            assertEquals(195L, result.totalXp)
         }
 
         @Test
         @DisplayName("Goleiro completo deve somar XP corretamente")
         fun `goalkeeper complete game should sum XP correctly`() {
             val playerData = createPlayerData(
-                saves = 8,       // 64 XP
-                teamWon = true,  // 20 XP
+                saves = 8,       // 120 XP
+                teamWon = true,  // 30 XP
                 position = PlayerPosition.GOALKEEPER
             )
             val result = XPCalculator.calculate(playerData, opponentsGoals = 2)
 
             // Participação: 10
-            // Defesas: 64
-            // Resultado: 20
+            // Defesas: 120
+            // Resultado: 30
             // Clean Sheet: 0 (sofreu gols)
-            // Total: 94
+            // Total: 160
             assertEquals(10L, result.breakdown.participation)
-            assertEquals(64L, result.breakdown.saves)
-            assertEquals(20L, result.breakdown.result)
+            assertEquals(120L, result.breakdown.saves)
+            assertEquals(30L, result.breakdown.result)
             assertEquals(0L, result.breakdown.cleanSheet)
-            assertEquals(94L, result.totalXp)
+            assertEquals(160L, result.totalXp)
         }
     }
 
@@ -445,8 +445,8 @@ class XPCalculatorTest {
                 currentStreak = 3
             )
 
-            // Participação: 10, Gols: 20, Assists: 7, Win: 20, Streak3: 20
-            assertEquals(77L, result.totalXp)
+            // Participação: 10, Gols: 50, Assists: 20, Win: 30, Streak3: 20
+            assertEquals(130L, result.totalXp)
         }
     }
 

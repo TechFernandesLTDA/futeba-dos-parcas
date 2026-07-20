@@ -12,12 +12,29 @@ import {
     getLevelBadges,
     getGoalkeeperBadges,
     getWinnerBadges,
+    getRecorderBadges,
     calculateMvpStreak,
     getAllBadgesToAward,
     BadgeContext
 } from "../src/badges/badge-helper";
 
 describe("Badge Helper", () => {
+
+    describe("getRecorderBadges", () => {
+        it("awards Mesa Oficial milestones from the transactional counter", () => {
+            expect(getRecorderBadges(9)).toEqual([]);
+            expect(getRecorderBadges(10)).toEqual(["mesa_oficial_10"]);
+            expect(getRecorderBadges(25)).toEqual([
+                "mesa_oficial_10",
+                "mesa_oficial_25"
+            ]);
+            expect(getRecorderBadges(50)).toEqual([
+                "mesa_oficial_10",
+                "mesa_oficial_25",
+                "mesa_oficial_50"
+            ]);
+        });
+    });
 
     // ==================== STREAK BADGES ====================
 

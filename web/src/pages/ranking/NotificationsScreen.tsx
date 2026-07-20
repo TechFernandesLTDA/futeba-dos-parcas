@@ -55,6 +55,7 @@ import { useToast } from '../../contexts/ToastContext';
 import { EmptyState } from '../../components/common/EmptyState';
 import type { NotificationType } from '../../types';
 import { groupNotificationsByContext } from '../../utils/notificationGrouping';
+import { getGamificationActionLabel } from '../../utils/gamificationInsights';
 
 const NOTIFICATION_FILTER_TYPES: Array<NotificationType | 'ALL'> = [
   'ALL',
@@ -185,7 +186,6 @@ export const NotificationsScreen: React.FC = () => {
   const [deleting, setDeleting] = useState(false);
   const [activeActionId, setActiveActionId] = useState<string | null>(null);
   const [actionPending, setActionPending] = useState(false);
-  const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
   const notificationFilters = useMemo(() => NOTIFICATION_FILTER_TYPES.map((type) => ({
     type,
     label: t(`notifications.screen.filters.${type}`),
@@ -193,12 +193,7 @@ export const NotificationsScreen: React.FC = () => {
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
-  const handleDismiss = useCallback((id: string) => {
-    setDismissedIds((prev) => new Set(prev).add(id));
-  }, []);
-
   const filteredNotifications = notifications
-    .filter((n) => !dismissedIds.has(n.id))
     .filter((n) => activeFilter === 'ALL' || n.type === activeFilter);
 
   const groupedNotifications = groupNotificationsByContext(filteredNotifications);
@@ -286,15 +281,14 @@ export const NotificationsScreen: React.FC = () => {
         actions={
           <>
             {unreadCount > 0 && (
-              <Badge badgeContent={unreadCount} color="error" sx={{ mr: 1 }} />
-            )}
-            {unreadCount > 0 && (
               <IconButton
                 onClick={markAllAsRead}
                 aria-label={t('a11y.markAllAsRead')}
                 sx={{ padding: theme.spacing(1.25) }}
               >
-                <DoneAllIcon fontSize="small" />
+                <Badge badgeContent={unreadCount} color="error">
+                  <DoneAllIcon fontSize="small" />
+                </Badge>
               </IconButton>
             )}
             {notifications.length > 0 && (
@@ -435,7 +429,9 @@ export const NotificationsScreen: React.FC = () => {
                                 </Typography>
                                 {notification.actionType && (
                                   <Typography variant="caption" color="text.disabled" sx={{ display: 'block', mt: 0.5 }}>
-                                    {t('notifications.screen.actionType', { action: notification.actionType })}
+                                    {t('notifications.screen.actionType', {
+                                      action: getGamificationActionLabel(notification.actionType, t),
+                                    })}
                                   </Typography>
                                 )}
                                 <Typography variant="caption" color="text.disabled">
@@ -494,10 +490,7 @@ export const NotificationsScreen: React.FC = () => {
                                   </IconButton>
                                 )}
                                 <IconButton
-                                  onClick={() => {
-                                    handleDismiss(notification.id);
-                                    handleDeleteWithUndo(notification);
-                                  }}
+                                  onClick={() => handleDeleteWithUndo(notification)}
                                   aria-label={t('a11y.deleteNotification')}
                                   size="small"
                                   sx={{ padding: theme.spacing(0.5) }}

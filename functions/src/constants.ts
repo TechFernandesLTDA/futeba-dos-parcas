@@ -34,6 +34,9 @@ import xpConstants from "./_constants/xp-constants.json";
 // Re-exporta constantes de XP do JSON centralizado
 export const XP_ACTIONS = xpConstants.xpActions;
 export const STREAK_BONUSES = xpConstants.streakBonuses;
+export const PERFORMANCE_BONUSES = xpConstants.performanceBonuses;
+export const BEHAVIOR_BONUSES = xpConstants.behaviorBonuses;
+export const RETENTION_BONUSES = xpConstants.retentionBonuses;
 export const LEVEL_TABLE = xpConstants.levelTable;
 
 // ==========================================

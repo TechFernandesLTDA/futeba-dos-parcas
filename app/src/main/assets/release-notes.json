@@ -1,7 +1,57 @@
 {
   "platform": "android",
-  "generatedAt": "2026-07-17T14:10:53.642Z",
+  "generatedAt": "2026-07-19T23:42:04.102Z",
   "notes": [
+    {
+      "version": "1.39.0",
+      "buildNumber": 75,
+      "releaseDate": "2026-07-19",
+      "type": "minor",
+      "showPopup": true,
+      "published": true,
+      "headline": "A evolução no Android agora explica e celebra melhor cada conquista da pelada.",
+      "highlights": [
+        {
+          "icon": "celebration",
+          "title": "Mais formas de ganhar XP",
+          "description": "Performance, retorno, frequência e colaboração entram no breakdown pós-jogo."
+        },
+        {
+          "icon": "trending_up",
+          "title": "Próximo objetivo à vista",
+          "description": "Níveis e conquistas próximas ficam mais fáceis de acompanhar."
+        },
+        {
+          "icon": "notifications",
+          "title": "Sequência protegida",
+          "description": "Alertas avisam quando sua frequência estiver em risco."
+        }
+      ],
+      "added": [
+        "Novos rótulos e campos para todos os bônus da Gamificação 2.0.",
+        "Progresso de nível e milestones próximos nas superfícies compatíveis."
+      ],
+      "improved": [
+        "Valores exibidos de gol, assistência, defesa, vitória e MVP acompanham o servidor."
+      ],
+      "fixed": [
+        "Textos de nível e próximo nível usam acentuação correta em PT-BR.",
+        "As duas árvores de recursos PT-BR permanecem sincronizadas e preservam placeholders."
+      ],
+      "issueRefs": [
+        3844,
+        3847,
+        3848,
+        3849,
+        3850,
+        3851,
+        3852,
+        3853,
+        3854,
+        3855,
+        3856
+      ]
+    },
     {
       "version": "1.38.1",
       "buildNumber": 74,
