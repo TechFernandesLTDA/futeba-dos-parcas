@@ -58,6 +58,7 @@ function makeDocRef(collectionName: string, id?: string) {
 function makeQuery(collectionName: string) {
   return {
     where: jest.fn().mockReturnThis(),
+    limit: jest.fn().mockReturnThis(),
     get: collectionName === "teams" ? mockTeamsGet : jest.fn(),
   };
 }
@@ -940,7 +941,10 @@ describe("live game event callables", () => {
     });
     mockRunTransaction.mockImplementation((callback: any) => {
       const run = transactionQueue.then(async () => callback({
-        get: jest.fn((ref: {path: string}) => {
+        get: jest.fn((ref: {path?: string}) => {
+          if (!ref.path) {
+            return Promise.resolve({size: 0, docs: []});
+          }
           if (ref.path.startsWith("games/")) {
             return Promise.resolve(makeSnapshot({
               owner_id: "owner1",

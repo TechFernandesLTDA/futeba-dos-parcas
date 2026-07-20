@@ -26,6 +26,7 @@ import {
   Alert,
   Avatar,
   Chip,
+  Badge,
 } from '@mui/material';
 import { getContrastRatio } from '@mui/material/styles';
 import {
@@ -46,6 +47,7 @@ import {
   MessageIcon,
   CheckCircleIcon,
   PlaceIcon,
+  DirectionsCarIcon,
 } from './gameDetailRuntimeComponents';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
 import { PageContainer } from '../../components/common/PageContainer';
@@ -74,7 +76,9 @@ import { GamePlayersSection } from './GamePlayersSection';
 import { GameWaitlistAction } from './GameWaitlistAction';
 import { isGameWaitlistEligible } from './gameWaitlistEligibility';
 import { PositionReinforcementsPanel } from './PositionReinforcementsPanel';
-import { GameRidesPanel } from './GameRidesPanel';
+import { GameRidesDialog } from './GameRidesDialog';
+import { PendingPlayersSection } from './PendingPlayersSection';
+import { useGameRides } from '../../hooks/useGameRides';
 import { GamePhotosTab } from './GamePhotosTab';
 import { GameVideosTab } from './GameVideosTab';
 import { GameChatPanel } from './GameChatPanel';
@@ -349,6 +353,10 @@ export const GameDetailScreen: React.FC = () => {
   const showPostGameMessages = game?.status === 'FINISHED';
   const canWritePostGameMessage = showPostGameMessages && (isConfirmed || !!canManage);
   const canManagePostGameContent = !!canManage;
+  const ridesEnabled = !!game && ['SCHEDULED', 'CONFIRMED', 'LIVE'].includes(game.status);
+  const ridesApi = useGameRides(game, ridesEnabled);
+  const [ridesDialogOpen, setRidesDialogOpen] = useState(false);
+  const ridesBadgeCount = ridesApi.rides.length;
   // Chat do jogo: visível para qualquer jogo, arquivado 7d após date_time
   const isChatArchived = useMemo(() => {
     if (!game?.dateTime) return false;
@@ -370,6 +378,10 @@ export const GameDetailScreen: React.FC = () => {
   // #2272: arrays derivados memoizados — antes os 3 .filter() rodavam a cada render.
   const confirmedPlayers = useMemo(
     () => confirmations.filter((c) => c.status === 'CONFIRMED'),
+    [confirmations],
+  );
+  const pendingPlayers = useMemo(
+    () => confirmations.filter((c) => c.status === 'PENDING'),
     [confirmations],
   );
   const goalkeepers = useMemo(
@@ -775,6 +787,15 @@ export const GameDetailScreen: React.FC = () => {
                 <CalendarIcon />
               </IconButton>
             </Tooltip>
+            {ridesEnabled && (
+              <Tooltip title={t('gameRides.title')}>
+                <IconButton onClick={() => setRidesDialogOpen(true)} aria-label={t('gameRides.title')}>
+                  <Badge badgeContent={ridesBadgeCount} color="info" overlap="circular">
+                    <DirectionsCarIcon />
+                  </Badge>
+                </IconButton>
+              </Tooltip>
+            )}
             <Menu
               anchorEl={calendarAnchorEl}
               open={Boolean(calendarAnchorEl)}
@@ -922,6 +943,9 @@ export const GameDetailScreen: React.FC = () => {
               <GameInfoPanel game={game} />
             </Grid>
             <Grid xs={12} lg={8}>
+              {canManage && pendingPlayers.length > 0 && (
+                <PendingPlayersSection gameId={gameId!} pendingPlayers={pendingPlayers} />
+              )}
               <GamePlayersSection
                 game={game}
                 confirmedPlayers={confirmedPlayers}
@@ -938,10 +962,6 @@ export const GameDetailScreen: React.FC = () => {
                 game={game}
                 confirmations={confirmations}
                 canManage={isOwner || isCurrentUserAdmin}
-              />
-              <GameRidesPanel
-                game={game}
-                canUse={!!(isConfirmed || canManage)}
               />
               {showCheckInSocial && (
                 <CheckInSocialPanel
@@ -1026,6 +1046,9 @@ export const GameDetailScreen: React.FC = () => {
             </Alert>
           )}
           <GameInfoPanel game={game} />
+          {canManage && pendingPlayers.length > 0 && (
+            <PendingPlayersSection gameId={gameId!} pendingPlayers={pendingPlayers} />
+          )}
           <GamePlayersSection
             game={game}
             confirmedPlayers={confirmedPlayers}
@@ -1042,10 +1065,6 @@ export const GameDetailScreen: React.FC = () => {
             game={game}
             confirmations={confirmations}
             canManage={isOwner || isCurrentUserAdmin}
-          />
-          <GameRidesPanel
-            game={game}
-            canUse={!!(isConfirmed || canManage)}
           />
           {showCheckInSocial && (
             <CheckInSocialPanel
@@ -1212,6 +1231,16 @@ export const GameDetailScreen: React.FC = () => {
         onClose={() => setPositionDialogOpen(false)}
         onConfirm={handleConfirmPresence}
       />
+
+      {ridesEnabled && (
+        <GameRidesDialog
+          open={ridesDialogOpen}
+          onClose={() => setRidesDialogOpen(false)}
+          game={game}
+          canUse={!!(isConfirmed || canManage)}
+          ridesApi={ridesApi}
+        />
+      )}
 
       <Dialog open={cancelDialogOpen} onClose={() => setCancelDialogOpen(false)} fullScreen={isMobile} fullWidth maxWidth="sm" aria-labelledby="cancel-dialog-title">
         <DialogTitle id="cancel-dialog-title">{t('games.cancelPresence')}</DialogTitle>

@@ -320,13 +320,24 @@ class FirebaseDataSourceImpl constructor(
                 .get()
                 .await()
 
+            // Altera status para CANCELLED em vez de deletar o documento.
+            // onGameVacancy (trigger) depende de before=CONFIRMED e
+            // after=CANCELLED para notificar/promover a waitlist. Deletar pelo
+            // Android quebrava esse gatilho silenciosamente (sem notificar
+            // ninguem da fila). Espelha web/src/hooks/useGames.ts.
             val batch = firestore.batch()
             snapshot.documents.forEach { doc ->
-                batch.delete(doc.reference)
+                batch.update(
+                    doc.reference,
+                    mapOf(
+                        "status" to "CANCELLED",
+                        "updated_at" to FieldValue.serverTimestamp()
+                    )
+                )
             }
             batch.commit().await()
 
-            AppLogger.d(TAG) { "Confirmação cancelada: ${snapshot.size()} documentos removidos" }
+            AppLogger.d(TAG) { "Confirmação cancelada: ${snapshot.size()} documentos atualizados" }
         }
     }
 

@@ -88,8 +88,12 @@ fun PostGameReportScreen(
         it.paymentStatus != PaymentStatus.PAID.name
     }
 
-    val totalCollected = paidPlayers.size * report.game.dailyPrice
-    val totalPending = unpaidPlayers.size * report.game.dailyPrice
+    val pricePerPlayer = report.game.resolveExpectedPayment()
+    val partialPaidTotal = report.confirmations.filter {
+        it.status == ConfirmationStatus.CONFIRMED.name && it.hasPartialPayment()
+    }.sumOf { it.partialPayment }
+    val totalCollected = paidPlayers.size * pricePerPlayer + partialPaidTotal
+    val totalPending = unpaidPlayers.size * pricePerPlayer
 
     Scaffold(
         topBar = {

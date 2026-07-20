@@ -100,6 +100,8 @@ interface EventPlayerOption {
 interface RawGameOwner {
   ownerId?: string;
   owner_id?: string;
+  coOrganizers?: string[];
+  co_organizers?: string[];
 }
 
 function mapGameEvent(eventDoc: QueryDocumentSnapshot<DocumentData>): GameEvent {
@@ -172,14 +174,18 @@ export const LiveEventsScreen: React.FC = () => {
     if (!gameId || !user) return;
     let cancelled = false; // #2278: evita setState após unmount
 
-    // Verificar se o usuário pode gerenciar eventos (owner do jogo)
+    // Verificar se o usuário pode gerenciar eventos (dono, co-organizador ou admin).
+    // Antes considerava apenas owner_id, escondendo o botão de co-organizadores
+    // e admins mesmo com permissão server-side valida.
     const checkManagePermission = async () => {
       try {
         const gameDoc = await getDoc(doc(db, 'games', gameId));
         if (gameDoc.exists() && !cancelled) {
           const gameData = snakeToCamel<RawGameOwner>(gameDoc.data());
           const ownerId = gameData.ownerId || gameData.owner_id;
-          setCanManage(user.id === ownerId);
+          const coOrganizers = gameData.coOrganizers ?? gameData.co_organizers ?? [];
+          const isAdminRole = user?.role === 'ADMIN';
+          setCanManage(user.id === ownerId || coOrganizers.includes(user.id) || isAdminRole);
         }
       } catch (err) {
         logger.error('Erro ao verificar permissão de gerenciamento:', err);

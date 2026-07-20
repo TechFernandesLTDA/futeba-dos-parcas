@@ -102,6 +102,7 @@ data class Game(
     @SerialName("goalkeepers_count") val goalkeepersCount: Int = 0,
     @SerialName("daily_price") val dailyPrice: Double = 0.0,
     @SerialName("total_cost") val totalCost: Double = 0.0,
+    @SerialName("price_manual_override") val priceManualOverride: Boolean = false,
     @SerialName("pix_key") val pixKey: String = "",
     @SerialName("number_of_teams") val numberOfTeams: Int = 2,
     @SerialName("owner_id") val ownerId: String = "",
@@ -266,6 +267,28 @@ data class Game(
     override fun toString(): String =
         "Game(id='$id', status=$status, $team1Name $team1Score x $team2Score $team2Name, " +
             "players=$playersCount/$maxPlayers, group=$groupName)"
+
+    /**
+     * Calcula o valor esperado por jogador usando a formula canonica (espelha
+     * web/src/utils/gamePayment.ts e functions/src/games/join-public-game.ts):
+     * se totalCost > 0 e maxPlayers > 0 e !priceManualOverride -> totalCost / maxPlayers;
+     * senao -> dailyPrice; senao -> 0.0.
+     *
+     * Use este metodo em dashboards financeiros em vez de dividir totalCost
+     * pelo numero de confirmados (que diverge do valor cobrado na confirmacao).
+     */
+    fun resolveExpectedPayment(): Double {
+        return if (totalCost > 0.0 && maxPlayers > 0 && !priceManualOverride) {
+            roundCurrency(totalCost / maxPlayers.toDouble())
+        } else if (dailyPrice > 0.0) {
+            dailyPrice
+        } else {
+            0.0
+        }
+    }
+
+    private fun roundCurrency(value: Double): Double =
+        kotlin.math.round(value * 100.0) / 100.0
 
     companion object {
         /** Colecao Firestore */

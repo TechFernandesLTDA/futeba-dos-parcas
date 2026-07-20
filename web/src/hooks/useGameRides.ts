@@ -254,3 +254,5 @@ export function useGameRides(game: Game | null, enabled: boolean) {
     cancelRide,
   };
 }
+
+export type UseGameRidesResult = ReturnType<typeof useGameRides>;
