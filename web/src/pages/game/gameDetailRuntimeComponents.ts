@@ -16,6 +16,7 @@ import * as MoreVertIconModule from '@mui/icons-material/MoreVert';
 import * as MessageIconModule from '@mui/icons-material/ChatBubbleOutline';
 import * as CheckCircleIconModule from '@mui/icons-material/CheckCircle';
 import * as PlaceIconModule from '@mui/icons-material/Place';
+import * as DirectionsCarIconModule from '@mui/icons-material/DirectionsCar';
 
 const REACT_ELEMENT_TYPE_SYMBOLS = new Set([
   Symbol.for('react.forward_ref'),
@@ -72,3 +73,4 @@ export const MoreVertIcon = resolveReactComponent(MoreVertIconModule, 'MoreVert'
 export const MessageIcon = resolveReactComponent(MessageIconModule, 'ChatBubbleOutline');
 export const CheckCircleIcon = resolveReactComponent(CheckCircleIconModule, 'CheckCircle');
 export const PlaceIcon = resolveReactComponent(PlaceIconModule, 'Place');
+export const DirectionsCarIcon = resolveReactComponent(DirectionsCarIconModule, 'DirectionsCar');

@@ -54,10 +54,11 @@ fun GameFinancialSummary(
 ) {
     val currencyFormat = remember { NumberFormat.getCurrencyInstance(Locale.forLanguageTag("pt-BR")) }
 
-    // Calculos financeiros
+    // Calculos financeiros — pricePerPlayer segue a formula canonica
+    // (totalCost / maxPlayers com fallback para dailyPrice), espelhando
+    // web/src/utils/gamePayment.ts e o callable confirmGamePresence.
     val confirmedPlayers = confirmations.filter { it.status == ConfirmationStatus.CONFIRMED.name }
-    val totalPlayers = confirmedPlayers.size
-    val pricePerPlayer = if (totalPlayers > 0) game.totalCost / totalPlayers else game.dailyPrice
+    val pricePerPlayer = game.resolveExpectedPayment()
 
     val paidPlayers = confirmedPlayers.filter { it.paymentStatus == PaymentStatus.PAID.name }
     val partialPlayers = confirmedPlayers.filter { it.hasPartialPayment() }

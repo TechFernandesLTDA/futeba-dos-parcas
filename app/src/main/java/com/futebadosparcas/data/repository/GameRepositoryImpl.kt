@@ -323,8 +323,20 @@ class GameRepositoryImpl constructor(
     override suspend fun removePlayerFromGame(gameId: String, userId: String): Result<Unit> =
         confirmationRepository.removePlayerFromGame(gameId, userId)
 
-    override suspend fun confirmPlayerAsOwner(gameId: String, userId: String): Result<Unit> =
-        confirmationRepository.updateConfirmationStatusForUser(gameId, userId, "CONFIRMED")
+    override suspend fun confirmPlayerAsOwner(gameId: String, userId: String): Result<Unit> {
+        return runCatching {
+            Firebase.functions(FUNCTIONS_REGION)
+                .getHttpsCallable("confirmPlayerAsManager")
+                .call(
+                    mapOf(
+                        "gameId" to gameId,
+                        "userId" to userId
+                    )
+                )
+                .await()
+            AppLogger.i(TAG) { "Jogador $userId confirmado pelo gestor no jogo $gameId" }
+        }
+    }
 
     override suspend fun updatePaymentStatus(gameId: String, userId: String, isPaid: Boolean): Result<Unit> =
         confirmationRepository.updatePaymentStatus(gameId, userId, isPaid)

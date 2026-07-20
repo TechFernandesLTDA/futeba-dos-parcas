@@ -2960,6 +2960,7 @@ export {
   confirmGamePresence,
   joinPublicGame,
 } from "./games/join-public-game";
+export {confirmPlayerAsManager} from "./games/confirm-player-as-manager";
 export {getFieldAvailability} from "./games/field-availability";
 
 // ==========================================

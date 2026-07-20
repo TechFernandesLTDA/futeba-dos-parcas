@@ -10,6 +10,7 @@ import {ERROR_MSGS} from "../error-messages";
 import {db} from "../_db";
 import {checkRateLimit} from "../middleware/rate-limiter";
 import {requireProfileComplete} from "../middleware/require-profile-complete";
+import {isScoreConsistentFromEventStream} from "./live-events";
 
 interface GameLifecycleRequest {
   gameId: string;
@@ -371,6 +372,33 @@ export const finishGameLifecycle = onCall<GameLifecycleRequest>(
         typeof liveScore?.team2_score === "number" ?
           liveScore.team2_score :
           0;
+
+      // Auditoria de consistência: compara o placar do live_scores com a
+      // contagem de eventos GOAL no stream. Divergência indica possível
+      // corrida entre submit e leitura (eventos lidos fora da transação).
+      // Não bloqueia a finalização — apenas registra para investigação.
+      // Espelha auto-close-past-games.ts.
+      if (
+        liveScore &&
+        typeof liveScore.team1_id === "string" &&
+        typeof liveScore.team2_id === "string"
+      ) {
+        const consistent = isScoreConsistentFromEventStream(
+          eventsSnap.docs,
+          liveScore.team1_id,
+          liveScore.team2_id,
+          team1Score,
+          team2Score,
+        );
+        if (!consistent) {
+          logger.warn("[GAME_LIFECYCLE_SCORE_INCONSISTENT]", {
+            gameId,
+            team1Score,
+            team2Score,
+            eventCount: eventsSnap.size,
+          });
+        }
+      }
       const aggregatedEntries = [...aggregated.entries()].map(
         ([playerId, stats]) => ({
           stats,

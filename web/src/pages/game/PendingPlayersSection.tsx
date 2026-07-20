@@ -1,0 +1,93 @@
+import React, { useState } from 'react';
+import {
+  Alert,
+  Box,
+  Button,
+  Chip,
+  CircularProgress,
+  List,
+  ListItem,
+  ListItemAvatar,
+  ListItemText,
+  Typography,
+} from '@mui/material';
+import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
+import CheckIcon from '@mui/icons-material/Check';
+import { useTranslation } from 'react-i18next';
+import type { GameConfirmation } from '../../types/game';
+import { PlayerAvatar } from '../../components/common/GameCard';
+import { useToast } from '../../contexts/ToastContext';
+import { getFirestoreErrorMessage } from '../../utils/firebaseErrors';
+import { confirmPlayerAsManager } from '../../services/cloudFunctions';
+import { useQueryClient } from '@tanstack/react-query';
+
+interface PendingPlayersSectionProps {
+  gameId: string;
+  pendingPlayers: GameConfirmation[];
+}
+
+export const PendingPlayersSection: React.FC<PendingPlayersSectionProps> = ({ gameId, pendingPlayers }) => {
+  const { t } = useTranslation();
+  const { showSuccess, showError } = useToast();
+  const queryClient = useQueryClient();
+  const [confirmingId, setConfirmingId] = useState<string | null>(null);
+
+  if (pendingPlayers.length === 0) return null;
+
+  const handleConfirm = async (userId: string, userName: string) => {
+    setConfirmingId(userId);
+    try {
+      await confirmPlayerAsManager({ gameId, userId });
+      showSuccess(t('games.detail.playerConfirmedByManager', { name: userName }));
+      await queryClient.invalidateQueries({ queryKey: ['gameDetail', gameId] });
+    } catch (err) {
+      showError(getFirestoreErrorMessage(err));
+    } finally {
+      setConfirmingId(null);
+    }
+  };
+
+  return (
+    <Box sx={{ mb: 2 }}>
+      <Alert severity="info" sx={{ mb: 1, py: 0.5 }} icon={<HourglassEmptyIcon />}>
+        <Typography variant="body2" fontWeight={700}>
+          {t('games.detail.pendingPlayers', { count: pendingPlayers.length })}
+        </Typography>
+      </Alert>
+      <List disablePadding dense>
+        {pendingPlayers.map((player) => (
+          <ListItem
+            key={player.id}
+            divider
+            secondaryAction={(
+              <Button
+                size="small"
+                variant="outlined"
+                color="success"
+                startIcon={confirmingId === player.userId ? <CircularProgress size={14} color="inherit" /> : <CheckIcon />}
+                onClick={() => handleConfirm(player.userId, player.userName)}
+                disabled={confirmingId !== null}
+              >
+                {t('common.confirm')}
+              </Button>
+            )}
+          >
+            <ListItemAvatar>
+              <PlayerAvatar name={player.userName} photoUrl={player.userPhoto} size={36} />
+            </ListItemAvatar>
+            <ListItemText
+              primary={(
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Typography variant="body2">{player.userName}</Typography>
+                  {player.position === 'GOALKEEPER' && (
+                    <Chip label="GK" size="small" color="primary" sx={{ height: 18 }} />
+                  )}
+                </Box>
+              )}
+            />
+          </ListItem>
+        ))}
+      </List>
+    </Box>
+  );
+};

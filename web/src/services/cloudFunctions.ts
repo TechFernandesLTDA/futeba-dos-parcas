@@ -679,6 +679,11 @@ export const confirmGamePresence = httpsCallable<
   }
 >(functions, 'confirmGamePresence');
 
+export const confirmPlayerAsManager = httpsCallable<
+  { gameId: string; userId: string; position?: 'GOALKEEPER' | 'FIELD' },
+  { success: boolean; alreadyConfirmed: boolean; confirmationId: string }
+>(functions, 'confirmPlayerAsManager');
+
 export interface FieldAvailabilitySlot {
   date: string;
   startMinutes: number;

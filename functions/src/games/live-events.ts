@@ -521,6 +521,22 @@ export const submitLiveGameEvent = onCall<
           );
         }
 
+        // Cap ativo durante o LIVE: finishGameLifecycle rejeita jogos com mais
+        // de 500 eventos, o que deixaria a finalização presa sem feedback. Ao
+        // rejeitar novos eventos no limite, o gestor precisa deletar eventos
+        // antes de continuar, evitando o deadlock.
+        const eventCountSnap = await tx.get(
+          db().collection("game_events")
+            .where("game_id", "==", payload.gameId)
+            .limit(501)
+        );
+        if (eventCountSnap.size >= 500) {
+          throw new HttpsError(
+            "resource-exhausted",
+            "Limite de 500 eventos por jogo atingido. Finalize o jogo ou remova eventos antigos.",
+          );
+        }
+
         const callerConfirmed =
           callerConfirmationSnap.exists &&
           callerConfirmationSnap.data()?.status ===

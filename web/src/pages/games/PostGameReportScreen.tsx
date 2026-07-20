@@ -111,6 +111,7 @@ interface RawConfirmationDoc {
   isWorstPlayer?: boolean;
   status?: string;
   paymentStatus?: string;
+  partialPayment?: number;
 }
 interface RawNamedUserDoc {
   name?: string;
@@ -228,8 +229,11 @@ export const PostGameReportScreen: React.FC = () => {
             maxPlayers: data.maxPlayers || 0,
             priceManualOverride: data.priceManualOverride,
           });
+          const partialPaidTotal = confirmationsData
+            .filter((c) => (c.paymentStatus === 'PARTIAL' || c.paymentStatus === 'partial') && typeof c.partialPayment === 'number')
+            .reduce((sum, c) => sum + (c.partialPayment as number), 0);
           setFinancialData({
-            totalCollected: paidConfirmations.length * dailyPrice,
+            totalCollected: paidConfirmations.length * dailyPrice + partialPaidTotal,
             totalPending: unpaidConfirmations.length * dailyPrice,
             paidCount: paidConfirmations.length,
             unpaidCount: unpaidConfirmations.length,

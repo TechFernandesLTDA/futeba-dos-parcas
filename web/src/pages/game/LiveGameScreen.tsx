@@ -36,9 +36,7 @@ import {
   Timer as TimerIcon,
   Square as YellowCardIcon,
   Block as RedCardIcon,
-  EmojiEvents as AssistIcon,
   SaveAlt as SaveIcon,
-  SwapHoriz as SubstitutionIcon,
   VolumeUp as SoundOnIcon,
   VolumeOff as SoundOffIcon,
   History as HistoryIcon,
@@ -751,13 +749,13 @@ export const LiveGameScreen: React.FC = () => {
                           }}
                         >
                           {/* Ícones vetoriais por tipo de evento — fix #762 */}
+                          {/* Backend só suporta GOAL, SAVE, YELLOW_CARD, RED_CARD
+                              (functions/src/games/live-events.ts SUPPORTED_EVENT_TYPES). */}
                           {event.eventType === 'GOAL' && <SoccerIcon aria-label={t('games.events.goal')} />}
                           {/* warning.light sobre warning.main = ~1.7:1 no dark; warning.main isolado mantém amarelo legível */}
                           {event.eventType === 'YELLOW_CARD' && <YellowCardIcon aria-label={t('games.events.yellow_card')} sx={{ color: 'warning.main' }} />}
                           {event.eventType === 'RED_CARD' && <RedCardIcon aria-label={t('games.events.red_card')} />}
-                          {event.eventType === 'ASSIST' && <AssistIcon aria-label={t('games.events.assist')} />}
                           {event.eventType === 'SAVE' && <SaveIcon aria-label={t('games.events.save')} />}
-                          {event.eventType === 'SUBSTITUTION' && <SubstitutionIcon aria-label={t('games.events.substitution')} />}
                         </Avatar>
                       </ListItemAvatar>
                       <ListItemText
