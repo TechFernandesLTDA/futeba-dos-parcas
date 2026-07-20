@@ -24,6 +24,20 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ## Android
 
+### [1.39.1][android-1.39.1] - 2026-07-20
+
+#### Adicionado
+- `Game.priceManualOverride`: novo campo no model KMP espelhando o Firestore.
+- `Game.resolveExpectedPayment()`: método no model KMP que implementa a fórmula canônica de preço (espelha `web/src/utils/gamePayment.ts` e o callable `confirmGamePresence`).
+
+#### Corrigido
+- `GameFinancialDashboard` e `GameOwnerComponents` usavam `totalCost / confirmados`; agora usam `Game.resolveExpectedPayment()`.
+- `PostGameReportScreen` usava `dailyPrice` cru; agora usa `resolveExpectedPayment()` e soma pagamentos parciais.
+- `GameRepositoryImpl.confirmPlayerAsOwner` agora chama o callable `confirmPlayerAsManager` (antes fazia write direto bloqueado pelas rules).
+- `FirebaseDataSourceImpl.cancelConfirmation`: `batch.delete()` → `batch.update({status:'CANCELLED'})`, restaurando o trigger `onGameVacancy` de promoção da waitlist.
+
+_Issues: #3862_
+
 ### [1.39.0][android-1.39.0] - 2026-07-19
 
 #### Adicionado
@@ -266,6 +280,24 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 - Bump de versão de manutenção após a mega audit wave de 2026-05-11, sem mudanças funcionais no Android nesta tag.
 
 ## Web
+
+### [1.56.0][web-1.56.0] - 2026-07-20
+
+#### Adicionado
+- `GameRidesDialog`: carona movida de Card inline para Dialog acionado por `IconButton` + `Badge` no header.
+- `PendingPlayersSection`: seção para gestores confirmarem jogadores PENDING via callable `confirmPlayerAsManager`.
+- Wrapper `confirmPlayerAsManager` em `cloudFunctions.ts`.
+- `DirectionsCarIcon` adicionado ao resolver de `gameDetailRuntimeComponents`.
+
+#### Mudado
+- `GameRidesPanel` refatorado para receber `ridesApi` via props (hook liftado para `GameDetailScreen` alimentar o badge).
+- `PostGameReportScreen` soma `partialPayment` ao `totalCollected`.
+
+#### Corrigido
+- `LiveEventsScreen` reconhece co-organizadores e admins no `canManage`.
+- `LiveGameScreen` não renderiza mais ícones de eventos não suportados pelo backend.
+
+_Issues: #3862_
 
 ### [1.55.1][web-1.55.1] - 2026-07-20
 
@@ -2004,6 +2036,19 @@ _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
 
+### [1.12.0][functions-1.12.0] - 2026-07-20
+
+#### Adicionado
+- `functions/src/games/confirm-player-as-manager.ts`: callable com AppCheck, rate limit, validação de `canManageGame`, checagem de capacidade em transaction e auditoria em `audit_logs/`. Idempotente (já CONFIRMED retorna success).
+
+#### Mudado
+- `finishGameLifecycle` agora chama `isScoreConsistentFromEventStream` antes do commit da transaction. Divergências entre `live_scores` e o stream de eventos GOAL são logadas como warning (não bloqueiam a finalização), espelhando o `auto-close-past-games`.
+
+#### Corrigido
+- `submitLiveGameEvent` rejeita novos eventos quando o jogo atinge 500 (cap ativo durante o LIVE). Antes o limite só era verificado na finalização, deixando o jogo preso em LIVE sem feedback até alguém tentar finalizar.
+
+_Issues: #3862_
+
 ### [1.11.1][functions-1.11.1] - 2026-07-20
 
 #### Corrigido
@@ -2724,6 +2769,7 @@ _Issues: #2981_
 _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 
 
+[android-1.39.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.39.1.md
 [android-1.39.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.39.0.md
 [android-1.38.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.38.1.md
 [android-1.38.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.38.0.md
@@ -2745,6 +2791,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.56.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.56.0.md
 [web-1.55.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.55.1.md
 [web-1.55.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.55.0.md
 [web-1.54.23]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.54.23.md
@@ -2913,6 +2960,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [ios-1.6.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.2.md
 [ios-1.6.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.1.md
 [ios-1.6.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.0.md
+[functions-1.12.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.12.0.md
 [functions-1.11.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.11.1.md
 [functions-1.11.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.11.0.md
 [functions-1.10.3]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.10.3.md

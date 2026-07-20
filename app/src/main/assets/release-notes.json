@@ -1,7 +1,30 @@
 {
   "platform": "android",
-  "generatedAt": "2026-07-19T23:42:04.102Z",
+  "generatedAt": "2026-07-20T17:57:36.388Z",
   "notes": [
+    {
+      "version": "1.39.1",
+      "buildNumber": 76,
+      "releaseDate": "2026-07-20",
+      "type": "patch",
+      "showPopup": false,
+      "published": false,
+      "headline": "Cálculo de preço no dashboard e no cancelamento de presença corrigidos.",
+      "highlights": [],
+      "added": [],
+      "improved": [],
+      "fixed": [
+        "O dashboard financeiro e o relatório pós-jogo agora calculam o preço por jogador usando a fórmula correta (custo total dividido pela capacidade máxima do jogo), igual ao valor cobrado na confirmação. Antes o preço variava conforme o número de confirmados.",
+        "Cancelar presença pelo Android não quebra mais a notificação da fila de espera — quem está na waitlist volta a ser avisado quando uma vaga abre.",
+        "`GameFinancialDashboard` e `GameOwnerComponents` usavam `totalCost / confirmados`; agora usam `Game.resolveExpectedPayment()`.",
+        "`PostGameReportScreen` usava `dailyPrice` cru; agora usa `resolveExpectedPayment()` e soma pagamentos parciais.",
+        "`GameRepositoryImpl.confirmPlayerAsOwner` agora chama o callable `confirmPlayerAsManager` (antes fazia write direto bloqueado pelas rules).",
+        "`FirebaseDataSourceImpl.cancelConfirmation`: `batch.delete()` → `batch.update({status:'CANCELLED'})`, restaurando o trigger `onGameVacancy` de promoção da waitlist."
+      ],
+      "issueRefs": [
+        3862
+      ]
+    },
     {
       "version": "1.39.0",
       "buildNumber": 75,
