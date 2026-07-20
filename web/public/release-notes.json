@@ -1,7 +1,29 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-19T23:42:04.104Z",
+  "generatedAt": "2026-07-20T14:36:06.349Z",
   "notes": [
+    {
+      "version": "1.55.1",
+      "buildNumber": null,
+      "releaseDate": "2026-07-20",
+      "type": "patch",
+      "showPopup": false,
+      "published": true,
+      "headline": "A barra lateral voltou a manter proporções consistentes no desktop.",
+      "highlights": [],
+      "added": [],
+      "improved": [],
+      "fixed": [
+        "O item “Atalhos de teclado” não ocupa mais uma área gigante na navegação desktop.",
+        "O ícone de atalhos agora segue o mesmo tamanho dos demais ícones da barra lateral.",
+        "Impedido o crescimento flexível do `ListItemButton` de atalhos no drawer desktop.",
+        "Aplicado o token compartilhado de 24 px ao ícone de atalhos.",
+        "Adicionado contrato automatizado para o tamanho e o comportamento flexível do item."
+      ],
+      "issueRefs": [
+        3860
+      ]
+    },
     {
       "version": "1.55.0",
       "buildNumber": null,
