@@ -8,7 +8,7 @@
       "releaseDate": "2026-07-20",
       "type": "patch",
       "showPopup": false,
-      "published": false,
+      "published": true,
       "headline": "A confirmação de jogadores informa corretamente quando o servidor não conclui a ação.",
       "highlights": [],
       "added": [],
