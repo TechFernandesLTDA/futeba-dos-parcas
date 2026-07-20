@@ -85,6 +85,17 @@ describe("firestore.indexes.json — contratos operacionais", () => {
     }
   });
 
+  it("mantém o índice usado para validar grupos compartilhados em DMs", () => {
+    expect(config.indexes.some((index) =>
+      indexSignature(index) === [
+        "members",
+        "COLLECTION_GROUP",
+        "status:ASCENDING",
+        "user_id:ASCENDING",
+      ].join("|"),
+    )).toBe(true);
+  });
+
   it("habilita TTL para claims de deduplicação de notificações", () => {
     expect(config.fieldOverrides).toContainEqual({
       collectionGroup: "notif_dedup",
