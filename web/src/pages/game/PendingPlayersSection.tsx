@@ -59,32 +59,51 @@ export const PendingPlayersSection: React.FC<PendingPlayersSectionProps> = ({ ga
           <ListItem
             key={player.id}
             divider
-            secondaryAction={(
-              <Button
-                size="small"
-                variant="outlined"
-                color="success"
-                startIcon={confirmingId === player.userId ? <CircularProgress size={14} color="inherit" /> : <CheckIcon />}
-                onClick={() => handleConfirm(player.userId, player.userName)}
-                disabled={confirmingId !== null}
-              >
-                {t('common.confirm')}
-              </Button>
-            )}
+            sx={{
+              px: { xs: 0.5, sm: 2 },
+              py: 1,
+              alignItems: { xs: 'stretch', sm: 'center' },
+              flexDirection: { xs: 'column', sm: 'row' },
+              gap: 1,
+            }}
           >
-            <ListItemAvatar>
-              <PlayerAvatar name={player.userName} photoUrl={player.userPhoto} size={36} />
-            </ListItemAvatar>
-            <ListItemText
-              primary={(
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Typography variant="body2">{player.userName}</Typography>
-                  {player.position === 'GOALKEEPER' && (
-                    <Chip label="GK" size="small" color="primary" sx={{ height: 18 }} />
-                  )}
-                </Box>
-              )}
-            />
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                minWidth: 0,
+                width: { xs: '100%', sm: 'auto' },
+                flex: 1,
+              }}
+            >
+              <ListItemAvatar sx={{ minWidth: 44 }}>
+                <PlayerAvatar name={player.userName} photoUrl={player.userPhoto} size={36} />
+              </ListItemAvatar>
+              <ListItemText
+                sx={{ minWidth: 0, my: 0 }}
+                primary={(
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0 }}>
+                    <Typography variant="body2" sx={{ overflowWrap: 'anywhere' }}>
+                      {player.userName}
+                    </Typography>
+                    {player.position === 'GOALKEEPER' && (
+                      <Chip label="GK" size="small" color="primary" sx={{ height: 18, flexShrink: 0 }} />
+                    )}
+                  </Box>
+                )}
+              />
+            </Box>
+            <Button
+              size="small"
+              variant="outlined"
+              color="success"
+              startIcon={confirmingId === player.userId ? <CircularProgress size={14} color="inherit" /> : <CheckIcon />}
+              onClick={() => handleConfirm(player.userId, player.userName)}
+              disabled={confirmingId !== null}
+              sx={{ width: { xs: '100%', sm: 'auto' }, flexShrink: 0 }}
+            >
+              {t('common.confirm')}
+            </Button>
           </ListItem>
         ))}
       </List>
