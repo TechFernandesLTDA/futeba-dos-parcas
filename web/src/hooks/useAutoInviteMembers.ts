@@ -14,8 +14,19 @@ import { useToast } from '../contexts/ToastContext';
 import { createLogger } from '../utils/logger';
 import { useTranslation } from 'react-i18next';
 import { getActiveMembersToInvite } from '../utils/autoInviteMembers';
+import { getUsersByIds } from '../utils/userBatch';
 
 const logger = createLogger('useAutoInviteMembers');
+const GENERIC_MEMBER_NAME = 'membro';
+
+function usableMemberName(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim();
+  if (!normalized || normalized.toLocaleLowerCase('pt-BR') === GENERIC_MEMBER_NAME) {
+    return null;
+  }
+  return normalized;
+}
 
 export function useAutoInviteMembers() {
   const { t } = useTranslation();
@@ -34,6 +45,10 @@ export function useAutoInviteMembers() {
         const membersToInvite = getActiveMembersToInvite(snapshot.docs, uid);
         if (membersToInvite.length === 0) return 0;
 
+        const usersById = await getUsersByIds(
+          membersToInvite.map((memberDoc) => memberDoc.id),
+          groupId,
+        );
         const batch = writeBatch(db);
 
         // Criar PENDING para os membros do grupo
@@ -41,7 +56,10 @@ export function useAutoInviteMembers() {
         for (const memberDoc of membersToInvite) {
           const memberData = memberDoc.data();
           const memberId = memberDoc.id;
-          const memberName = memberData.display_name || memberData.name || 'Membro';
+          const memberName = usableMemberName(memberData.display_name)
+            || usableMemberName(memberData.name)
+            || usableMemberName(usersById.get(memberId)?.name)
+            || 'Jogador';
 
           const confirmationRef = doc(db, 'confirmations', `${gameId}_${memberId}`);
           const confirmationSnap = await getDoc(confirmationRef);

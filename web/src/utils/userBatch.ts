@@ -6,7 +6,10 @@ export type BatchedUserData = Record<string, unknown> & {
 
 const PUBLIC_PROJECTION_BATCH_LIMIT = 500;
 
-export async function getUsersByIds(userIds: string[]): Promise<Map<string, BatchedUserData>> {
+export async function getUsersByIds(
+  userIds: string[],
+  groupId?: string,
+): Promise<Map<string, BatchedUserData>> {
   const uniqueIds = Array.from(new Set(userIds.filter(Boolean)));
   const users = new Map<string, BatchedUserData>();
   if (uniqueIds.length === 0) return users;
@@ -21,6 +24,7 @@ export async function getUsersByIds(userIds: string[]): Promise<Map<string, Batc
   const responses = await Promise.all(batches.map((userIdsBatch) => getLeaguePlayers({
     userIds: userIdsBatch,
     limit: userIdsBatch.length,
+    ...(groupId ? { groupId } : {}),
   })));
 
   responses.flatMap((response) => response.data.players).forEach((player) => {

@@ -1,7 +1,29 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-20T17:57:36.393Z",
+  "generatedAt": "2026-07-20T18:43:13.891Z",
   "notes": [
+    {
+      "version": "1.56.1",
+      "buildNumber": null,
+      "releaseDate": "2026-07-20",
+      "type": "patch",
+      "showPopup": false,
+      "published": true,
+      "headline": "A lista de confirmação dos jogos volta a identificar os membros pelo nome.",
+      "highlights": [],
+      "added": [],
+      "improved": [],
+      "fixed": [
+        "Convites automáticos de membros do grupo não aparecem mais repetidos como “Membro” quando o nome não está duplicado no cadastro interno do grupo.",
+        "O nome agora é obtido pela projeção autorizada dos participantes do grupo antes de criar a confirmação.",
+        "`useAutoInviteMembers` hidrata nomes ausentes ou genéricos com `getLeaguePlayers` limitado ao grupo.",
+        "`getUsersByIds` aceita `groupId` para incluir membros autorizados que não estão no diretório público global.",
+        "Adicionada cobertura de regressão para membro com placeholder no documento do grupo."
+      ],
+      "issueRefs": [
+        3864
+      ]
+    },
     {
       "version": "1.56.0",
       "buildNumber": null,
