@@ -607,6 +607,23 @@ describe("Index - toGameConfirmation", () => {
     expect(result.waitlistPromotedAt).toBe(confirmedAt);
   });
 
+  test("deve preservar timestamps snake_case de confirmação, check-in e waitlist", () => {
+    const confirmedAt = {seconds: 1};
+    const checkedInAt = {seconds: 2};
+    const waitlistPromotedAt = {seconds: 3};
+    const raw = {
+      user_id: "user-snake",
+      confirmed_at: confirmedAt,
+      checked_in_at: checkedInAt,
+      waitlist_promoted_at: waitlistPromotedAt,
+    };
+
+    const result = toGameConfirmation(raw);
+    expect(result.confirmedAt).toBe(confirmedAt);
+    expect(result.checkedInAt).toBe(checkedInAt);
+    expect(result.waitlistPromotedAt).toBe(waitlistPromotedAt);
+  });
+
   test("deve usar valores padrão para campos ausentes", () => {
     const raw = {};
     const result = toGameConfirmation(raw);
