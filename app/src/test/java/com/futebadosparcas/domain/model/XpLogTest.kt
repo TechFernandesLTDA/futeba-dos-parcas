@@ -157,7 +157,7 @@ class XpLogTest {
         @Test
         @DisplayName("Bônus pós-jogo devem aparecer na origem do log")
         fun `post game bonuses should appear in log source`() {
-            val log = XpLog(
+            val log = com.futebadosparcas.data.model.XpLog(
                 xpTopScorer = 15,
                 xpHatTrick = 30,
                 xpRecorder = 20,
