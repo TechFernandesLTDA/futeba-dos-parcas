@@ -1995,6 +1995,14 @@ _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
 
+### [1.11.1][functions-1.11.1] - 2026-07-20
+
+#### Corrigido
+- Declarado o índice composto do collection group `members` usado por `createDirectChat` para validar `status` e `user_id`.
+- Adicionado contrato automatizado para impedir a remoção acidental do índice.
+
+_Issues: #3858_
+
 ### [1.11.0][functions-1.11.0] - 2026-07-19
 
 #### Adicionado
@@ -2895,6 +2903,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [ios-1.6.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.2.md
 [ios-1.6.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.1.md
 [ios-1.6.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.0.md
+[functions-1.11.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.11.1.md
 [functions-1.11.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.11.0.md
 [functions-1.10.3]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.10.3.md
 [functions-1.10.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.10.2.md
