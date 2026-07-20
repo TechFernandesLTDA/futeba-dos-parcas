@@ -37,4 +37,11 @@ export const appSidebarStyles = {
     overflow: 'hidden',
     textOverflow: 'ellipsis',
   },
+  desktopShortcutsButton: {
+    flexGrow: 0,
+    flexShrink: 0,
+  },
+  shortcutIcon: {
+    fontSize: iconSizes.lg,
+  },
 } as const;

@@ -349,6 +349,17 @@ describe('AppSidebar', () => {
     expect(logoElements.length).toBe(2);
   });
 
+  it('impede que o item de atalhos cresça e mantém o ícone no token da navegação', () => {
+    renderWithTheme(<AppSidebar />);
+
+    expect(screen.getByRole('button', { name: 'Abrir atalhos de teclado' })).toBeInTheDocument();
+    expect(appSidebarStyles.desktopShortcutsButton).toEqual({
+      flexGrow: 0,
+      flexShrink: 0,
+    });
+    expect(appSidebarStyles.shortcutIcon).toEqual({ fontSize: 24 });
+  });
+
   it('mantém os logos do rail e drawer no mesmo token de tamanho', () => {
     renderWithTheme(<AppSidebar />);
 

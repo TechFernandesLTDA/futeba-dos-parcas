@@ -368,7 +368,7 @@ export function AppSidebar() {
           }}
         >
           <ListItemIcon sx={{ color: 'text.secondary', minWidth: 36 }}>
-            <KeyboardIcon aria-hidden />
+            <KeyboardIcon aria-hidden sx={appSidebarStyles.shortcutIcon} />
           </ListItemIcon>
           <ListItemText primary={t('shortcuts.title')} />
           <Chip
@@ -573,11 +573,16 @@ export function AppSidebar() {
         {/* #2192: entrada descobrível para os atalhos de teclado. */}
         <ListItemButton
           onClick={() => window.dispatchEvent(new Event('open-shortcuts'))}
-          sx={{ borderRadius: 2, mx: 0.75, py: 0.75, flexShrink: 0 }}
+          sx={{
+            ...appSidebarStyles.desktopShortcutsButton,
+            borderRadius: 2,
+            mx: 0.75,
+            py: 0.75,
+          }}
           aria-label={t('shortcuts.openLabel')}
         >
           <ListItemIcon sx={{ color: 'text.secondary' }}>
-            <KeyboardIcon aria-hidden />
+            <KeyboardIcon aria-hidden sx={appSidebarStyles.shortcutIcon} />
           </ListItemIcon>
           <ListItemText
             primary={t('shortcuts.title')}
