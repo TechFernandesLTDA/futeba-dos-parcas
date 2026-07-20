@@ -1,7 +1,29 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-20T19:07:29.636Z",
+  "generatedAt": "2026-07-20T20:20:51.112Z",
   "notes": [
+    {
+      "version": "1.56.3",
+      "buildNumber": null,
+      "releaseDate": "2026-07-20",
+      "type": "patch",
+      "showPopup": false,
+      "published": false,
+      "headline": "A confirmação de jogadores informa corretamente quando o servidor não conclui a ação.",
+      "highlights": [],
+      "added": [],
+      "improved": [],
+      "fixed": [
+        "Falhas da ação “Confirmar” deixam de cair na mensagem genérica de acesso ao Firestore.",
+        "A tela agora usa o código retornado pela Cloud Function e orienta recarregar a página quando necessário.",
+        "`PendingPlayersSection` passou a usar `getFunctionsErrorMessage`.",
+        "Adicionado fallback traduzido em português, inglês e espanhol.",
+        "Contrato automatizado impede regressão para o mapeador incorreto de Firestore."
+      ],
+      "issueRefs": [
+        3868
+      ]
+    },
     {
       "version": "1.56.2",
       "buildNumber": null,

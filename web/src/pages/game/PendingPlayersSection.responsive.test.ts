@@ -14,4 +14,11 @@ describe('PendingPlayersSection responsive contract', () => {
     expect(source).toContain("width: { xs: '100%', sm: 'auto' }");
     expect(source).toContain("overflowWrap: 'anywhere'");
   });
+
+  it('mapeia falhas da callable como erro de Functions com fallback acionável', () => {
+    expect(source).toContain('getFunctionsErrorMessage(');
+    expect(source).toContain("'confirmPlayerAsManager'");
+    expect(source).toContain("t('games.detail.confirmPlayerError')");
+    expect(source).not.toContain('getFirestoreErrorMessage(');
+  });
 });

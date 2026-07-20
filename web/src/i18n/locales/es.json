@@ -1174,6 +1174,7 @@
       "confirmationPrice": "Importe para confirmar: {{value}}",
       "copyLink": "Copiar Enlace",
       "playerConfirmedByManager": "{{name}} confirmado(a) con éxito.",
+      "confirmPlayerError": "No se pudo confirmar al jugador. Recarga la página e inténtalo de nuevo.",
       "pendingPlayers_one": "{{count}} jugador esperando confirmación",
       "pendingPlayers_other": "{{count}} jugadores esperando confirmación",
       "deleteConfirm": "¿Estás seguro de que deseas eliminar este partido? Esta acción puede ser revertida por un administrador.",

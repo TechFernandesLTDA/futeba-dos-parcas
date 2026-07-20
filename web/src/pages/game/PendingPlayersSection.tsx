@@ -17,7 +17,7 @@ import { useTranslation } from 'react-i18next';
 import type { GameConfirmation } from '../../types/game';
 import { PlayerAvatar } from '../../components/common/GameCard';
 import { useToast } from '../../contexts/ToastContext';
-import { getFirestoreErrorMessage } from '../../utils/firebaseErrors';
+import { getFunctionsErrorMessage } from '../../utils/firebaseErrors';
 import { confirmPlayerAsManager } from '../../services/cloudFunctions';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -41,7 +41,11 @@ export const PendingPlayersSection: React.FC<PendingPlayersSectionProps> = ({ ga
       showSuccess(t('games.detail.playerConfirmedByManager', { name: userName }));
       await queryClient.invalidateQueries({ queryKey: ['gameDetail', gameId] });
     } catch (err) {
-      showError(getFirestoreErrorMessage(err));
+      showError(getFunctionsErrorMessage(
+        err,
+        'confirmPlayerAsManager',
+        t('games.detail.confirmPlayerError')
+      ));
     } finally {
       setConfirmingId(null);
     }
