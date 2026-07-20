@@ -152,7 +152,6 @@ describe('useAutoBreadcrumbs', () => {
     ['/admin/users', ['Administração', 'Usuários']],
     ['/admin/feedback', ['Administração', 'Feedback']],
     ['/admin/game-reviews', ['Administração', 'Revisões de jogos']],
-    ['/admin/performance', ['Administração', 'Desempenho']],
     ['/dev', ['Início', 'Ferramentas de desenvolvimento']],
     ['/owner/dashboard', ['Proprietário', 'Painel']],
     ['/owner/onboarding', ['Proprietário', 'Cadastro']],

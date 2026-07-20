@@ -158,7 +158,6 @@ const UserManagementScreen = lazy(() => import('./pages/admin/UserManagementScre
 const GameReviewQueueScreen = lazy(() => import('./pages/admin/GameReviewQueueScreen').then(m => ({ default: m.GameReviewQueueScreen })));
 const FeedbackOperationsScreen = lazy(() => import('./pages/admin/FeedbackOperationsScreen').then(m => ({ default: m.FeedbackOperationsScreen })));
 const DevToolsScreen = lazy(() => import('./pages/devtools/DevToolsScreen').then(m => ({ default: m.DevToolsScreen })));
-const PerformanceDashboard = lazy(() => import('./pages/admin/PerformanceDashboard').then(m => ({ default: m.PerformanceDashboard })));
 
 // Error pages
 const NotFoundScreen = lazy(() => import('./pages/error/NotFoundScreen').then(m => ({ default: m.NotFoundScreen })));
@@ -581,7 +580,8 @@ function AppRoutes() {
         <Route path="/admin/feedback" element={<AdminRoute><Suspense fallback={<RouteFallback />}><FeedbackOperationsScreen /></Suspense></AdminRoute>} />
         <Route path="/admin/game-reviews" element={<AdminRoute><Suspense fallback={<RouteFallback />}><GameReviewQueueScreen /></Suspense></AdminRoute>} />
         <Route path="/dev" element={<AdminRoute><Suspense fallback={<RouteFallback />}><DevToolsScreen /></Suspense></AdminRoute>} />
-        <Route path="/admin/performance" element={<AdminRoute><Suspense fallback={<RouteFallback />}><PerformanceDashboard /></Suspense></AdminRoute>} />
+        {/* Painel técnico legado sem pipeline persistente de métricas (#3872). */}
+        <Route path="/admin/performance" element={<AdminRoute><Navigate to="/admin/users" replace /></AdminRoute>} />
       </Route>
       <Route path="/game/:gameId/live" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><LiveGameScreen /></Suspense></ProtectedRoute>} />
       <Route path="/game/:gameId/vote" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><MVPVoteScreen /></Suspense></ProtectedRoute>} />

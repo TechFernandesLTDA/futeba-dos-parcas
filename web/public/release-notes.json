@@ -1,7 +1,29 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-20T20:20:51.112Z",
+  "generatedAt": "2026-07-20T23:46:20.830Z",
   "notes": [
+    {
+      "version": "1.56.4",
+      "buildNumber": null,
+      "releaseDate": "2026-07-20",
+      "type": "patch",
+      "showPopup": false,
+      "published": true,
+      "headline": "A área administrativa deixa de exibir um painel técnico de performance sem dados.",
+      "highlights": [],
+      "added": [],
+      "improved": [],
+      "fixed": [
+        "O endereço antigo do monitor de performance agora leva o administrador para a gestão de usuários.",
+        "A tela vazia de métricas técnicas não é mais carregada no aplicativo publicado.",
+        "`/admin/performance` preserva a proteção de administrador e redireciona para `/admin/users`.",
+        "O import lazy de `PerformanceDashboard` foi removido do bundle.",
+        "Adicionado contrato automatizado para o redirecionamento da rota legada."
+      ],
+      "issueRefs": [
+        3872
+      ]
+    },
     {
       "version": "1.56.3",
       "buildNumber": null,

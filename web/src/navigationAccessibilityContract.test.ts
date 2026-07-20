@@ -55,4 +55,13 @@ describe('contrato de acessibilidade da navegação', () => {
     expect(sidebar).not.toContain('infinite');
     expect(sidebar).toContain('NOTIFICATION_PULSE_CYCLES');
   });
+
+  it('redireciona o painel técnico de performance para a administração útil', () => {
+    const app = source('src/App.tsx');
+
+    expect(app).toContain(
+      '<Route path="/admin/performance" element={<AdminRoute><Navigate to="/admin/users" replace /></AdminRoute>} />',
+    );
+    expect(app).not.toContain("import('./pages/admin/PerformanceDashboard')");
+  });
 });
