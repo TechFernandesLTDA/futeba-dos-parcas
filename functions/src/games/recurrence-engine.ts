@@ -23,10 +23,47 @@ import {
 const ACTIVE_MEMBER_STATUS = "ACTIVE";
 const MAX_CONFIRMATION_WRITES_PER_BATCH = 450;
 const RECURRING_MEMBERS_PAGE_SIZE = 100;
+const USER_PROFILE_READ_BATCH_SIZE = 100;
+const GENERIC_MEMBER_NAME = "membro";
+const UNKNOWN_PLAYER_NAME = "Jogador";
 
 export interface RecurringMemberInvite {
   memberId: string;
   userName: string;
+}
+
+/**
+ * Retorna um nome de perfil utilizável sem propagar placeholders legados.
+ *
+ * @param {admin.firestore.DocumentData | undefined} data - Perfil do usuário.
+ * @return {string | null} Nome normalizado ou null.
+ */
+function profileName(
+  data: admin.firestore.DocumentData | undefined
+): string | null {
+  if (!data) return null;
+  for (const value of [
+    data.display_name,
+    data.displayName,
+    data.name,
+    data.nickname,
+  ]) {
+    if (typeof value === "string" && value.trim().length > 0) {
+      return value.trim();
+    }
+  }
+  return null;
+}
+
+/**
+ * Indica se o nome precisa ser resolvido no perfil canônico do usuário.
+ *
+ * @param {string} value - Nome denormalizado no membro/confirmation.
+ * @return {boolean} True para vazio ou placeholder "Membro".
+ */
+function needsProfileName(value: string): boolean {
+  const normalized = value.trim().toLocaleLowerCase("pt-BR");
+  return normalized.length === 0 || normalized === GENERIC_MEMBER_NAME;
 }
 
 /**
@@ -47,7 +84,7 @@ export function toActiveRecurringMemberInvite(
 
   return {
     memberId,
-    userName: memberData.display_name || memberData.name || "Membro",
+    userName: profileName(memberData) || "",
   };
 }
 
@@ -66,6 +103,50 @@ export function chunkArray<T>(items: T[], size: number): T[][] {
     chunks.push(items.slice(i, i + size));
   }
   return chunks;
+}
+
+/**
+ * Hidrata nomes ausentes/genéricos diretamente de `users/{uid}`.
+ *
+ * @param {admin.firestore.Firestore} db - Instância do Firestore.
+ * @param {RecurringMemberInvite[]} invites - Participantes a normalizar.
+ * @return {Promise<RecurringMemberInvite[]>} Participantes com nomes seguros.
+ */
+export async function hydrateRecurringMemberNames(
+  db: admin.firestore.Firestore,
+  invites: RecurringMemberInvite[]
+): Promise<RecurringMemberInvite[]> {
+  const unresolvedIds = Array.from(new Set(
+    invites
+      .filter((invite) => needsProfileName(invite.userName))
+      .map((invite) => invite.memberId)
+  ));
+  if (unresolvedIds.length === 0) return invites;
+
+  const resolvedNames = new Map<string, string>();
+  for (const idChunk of chunkArray(
+    unresolvedIds,
+    USER_PROFILE_READ_BATCH_SIZE
+  )) {
+    const refs = idChunk.map((memberId) =>
+      db.collection("users").doc(memberId)
+    );
+    const snapshots = await db.getAll(...refs);
+    snapshots.forEach((snapshot) => {
+      const resolved = snapshot.exists ? profileName(snapshot.data()) : null;
+      if (resolved && !needsProfileName(resolved)) {
+        resolvedNames.set(snapshot.id, resolved);
+      }
+    });
+  }
+
+  return invites.map((invite) => {
+    if (!needsProfileName(invite.userName)) return invite;
+    return {
+      ...invite,
+      userName: resolvedNames.get(invite.memberId) || UNKNOWN_PLAYER_NAME,
+    };
+  });
 }
 
 /**
@@ -127,7 +208,7 @@ export async function fetchActiveRecurringMemberInvites(
       membersSnap.docs[membersSnap.docs.length - 1];
   }
 
-  return invites;
+  return hydrateRecurringMemberNames(db, invites);
 }
 
 interface RecurrenceWork {
@@ -688,10 +769,14 @@ export const onGameFinishedCreateRecurrence = onDocumentUpdated(
       }
 
       if (!work.confirmationsCreated && work.groupId) {
+        const [owner] = await hydrateRecurringMemberNames(db, [{
+          memberId: work.ownerId,
+          userName: work.ownerName,
+        }]);
         const participants = [
           {
             userId: work.ownerId,
-            userName: work.ownerName,
+            userName: owner.userName,
             status: "CONFIRMED" as const,
           },
           ...invites.map((invite) => ({

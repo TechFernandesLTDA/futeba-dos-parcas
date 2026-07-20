@@ -12,6 +12,7 @@ const mockWriteBatch = vi.fn();
 const mockBatchSet = vi.fn();
 const mockBatchCommit = vi.fn();
 const mockConfirmGamePresence = vi.fn();
+const mockGetUsersByIds = vi.fn();
 
 vi.mock('firebase/firestore', () => ({
   collection: (...args: any[]) => mockCollection(...args),
@@ -51,6 +52,10 @@ vi.mock('../utils/logger', () => ({
   createLogger: () => ({ error: vi.fn() }),
 }));
 
+vi.mock('../utils/userBatch', () => ({
+  getUsersByIds: (...args: any[]) => mockGetUsersByIds(...args),
+}));
+
 import { useAutoInviteMembers } from './useAutoInviteMembers';
 
 function makeDocRef(...segments: unknown[]) {
@@ -69,6 +74,7 @@ describe('useAutoInviteMembers', () => {
       commit: mockBatchCommit,
     });
     mockConfirmGamePresence.mockResolvedValue({ success: true });
+    mockGetUsersByIds.mockResolvedValue(new Map());
   });
 
   it('preserva confirmações existentes ao auto-convidar membros', async () => {
@@ -134,6 +140,38 @@ describe('useAutoInviteMembers', () => {
       position: 'FIELD',
       isCasualPlayer: false,
     });
+    expect(mockGetUsersByIds).toHaveBeenCalledWith(
+      ['member-1', 'member-2'],
+      'group-1',
+    );
+  });
+
+  it('hidrata nome ausente pela projeção autorizada do grupo', async () => {
+    mockGetDocs.mockResolvedValue({
+      docs: [
+        { id: 'owner-1', data: () => ({ status: 'ACTIVE' }) },
+        { id: 'member-1', data: () => ({ status: 'ACTIVE', name: 'Membro' }) },
+      ],
+    });
+    mockGetDoc.mockResolvedValue({ exists: () => false });
+    mockGetUsersByIds.mockResolvedValue(new Map([
+      ['member-1', { id: 'member-1', name: 'Eduardo Teixeira' }],
+    ]));
+
+    const { result } = renderHook(() => useAutoInviteMembers(), { wrapper: createTestWrapper() });
+
+    await act(async () => {
+      expect(await result.current.autoInvite('game-1', 'group-1')).toBe(1);
+    });
+
+    expect(mockBatchSet).toHaveBeenCalledWith(
+      expect.objectContaining({ path: 'confirmations/game-1_member-1' }),
+      expect.objectContaining({
+        user_id: 'member-1',
+        user_name: 'Eduardo Teixeira',
+        status: 'PENDING',
+      }),
+    );
   });
 
   it('nao chama callable nem batch quando nao ha membros para convidar', async () => {

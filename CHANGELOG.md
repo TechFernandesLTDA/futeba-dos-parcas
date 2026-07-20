@@ -281,6 +281,15 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.56.1][web-1.56.1] - 2026-07-20
+
+#### Corrigido
+- `useAutoInviteMembers` hidrata nomes ausentes ou genéricos com `getLeaguePlayers` limitado ao grupo.
+- `getUsersByIds` aceita `groupId` para incluir membros autorizados que não estão no diretório público global.
+- Adicionada cobertura de regressão para membro com placeholder no documento do grupo.
+
+_Issues: #3864_
+
 ### [1.56.0][web-1.56.0] - 2026-07-20
 
 #### Adicionado
@@ -2036,6 +2045,15 @@ _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
 
+### [1.12.1][functions-1.12.1] - 2026-07-20
+
+#### Corrigido
+- `recurrence-engine` resolve nomes ausentes ou genéricos em `users/{uid}` antes de persistir confirmations.
+- Adicionado fallback seguro “Jogador” apenas para perfis sem qualquer nome utilizável.
+- Incluído script idempotente, com dry-run padrão, para reparar somente `user_name` na partida afetada.
+
+_Issues: #3864_
+
 ### [1.12.0][functions-1.12.0] - 2026-07-20
 
 #### Adicionado
@@ -2791,6 +2809,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.56.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.56.1.md
 [web-1.56.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.56.0.md
 [web-1.55.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.55.1.md
 [web-1.55.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.55.0.md
@@ -2960,6 +2979,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [ios-1.6.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.2.md
 [ios-1.6.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.1.md
 [ios-1.6.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.0.md
+[functions-1.12.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.12.1.md
 [functions-1.12.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.12.0.md
 [functions-1.11.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.11.1.md
 [functions-1.11.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.11.0.md

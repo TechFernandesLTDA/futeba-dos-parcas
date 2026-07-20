@@ -44,6 +44,7 @@ jest.mock("../src/notifications/helpers", () => ({
 import {
   chunkArray,
   fetchActiveRecurringMemberInvites,
+  hydrateRecurringMemberNames,
   onGameFinishedCreateRecurrence,
   toActiveRecurringMemberInvite,
 } from "../src/games/recurrence-engine"
@@ -88,14 +89,14 @@ describe("toActiveRecurringMemberInvite", () => {
     })
   })
 
-  it("usa fallback de nome para membro ativo", () => {
+  it("mantem nome vazio para hidratação pelo perfil canônico", () => {
     expect(toActiveRecurringMemberInvite(
       "member1",
       {status: "ACTIVE"},
       "owner1"
     )).toEqual({
       memberId: "member1",
-      userName: "Membro",
+      userName: "",
     })
   })
 })
@@ -204,6 +205,60 @@ describe("fetchActiveRecurringMemberInvites", () => {
     expect(query.limit).toHaveBeenCalledTimes(2)
     expect(query.startAfter).toHaveBeenCalledTimes(1)
     expect(query.startAfter).toHaveBeenCalledWith(page1Docs[page1Docs.length - 1])
+  })
+})
+
+describe("hydrateRecurringMemberNames", () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+  })
+
+  it("substitui nome ausente ou Membro pelo perfil do usuário", async () => {
+    const fakeDb: any = {
+      collection: jest.fn(() => ({
+        doc: jest.fn((id: string) => ({id, path: `users/${id}`})),
+      })),
+      getAll: jest.fn().mockResolvedValue([
+        {
+          exists: true,
+          id: "member1",
+          data: () => ({name: "Ana Souza"}),
+        },
+        {
+          exists: true,
+          id: "member2",
+          data: () => ({displayName: "Bruno Lima"}),
+        },
+      ]),
+    }
+
+    await expect(hydrateRecurringMemberNames(fakeDb, [
+      {memberId: "member1", userName: ""},
+      {memberId: "member2", userName: "Membro"},
+      {memberId: "member3", userName: "Caio"},
+    ])).resolves.toEqual([
+      {memberId: "member1", userName: "Ana Souza"},
+      {memberId: "member2", userName: "Bruno Lima"},
+      {memberId: "member3", userName: "Caio"},
+    ])
+    expect(fakeDb.getAll).toHaveBeenCalledTimes(1)
+  })
+
+  it("não persiste novamente o placeholder quando o perfil está ausente", async () => {
+    const fakeDb: any = {
+      collection: jest.fn(() => ({
+        doc: jest.fn((id: string) => ({id, path: `users/${id}`})),
+      })),
+      getAll: jest.fn().mockResolvedValue([
+        {exists: false, id: "member1", data: () => undefined},
+      ]),
+    }
+
+    await expect(hydrateRecurringMemberNames(fakeDb, [
+      {memberId: "member1", userName: "Membro"},
+    ])).resolves.toEqual([
+      {memberId: "member1", userName: "Jogador"},
+    ])
   })
 })
 

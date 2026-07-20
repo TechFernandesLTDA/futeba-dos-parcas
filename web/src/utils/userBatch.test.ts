@@ -62,4 +62,16 @@ describe('getUsersByIds', () => {
       limit: 1,
     });
   });
+
+  it('informa o grupo para incluir perfis dos membros autorizados', async () => {
+    getLeaguePlayersMock.mockResolvedValue({ data: { players: [] } });
+
+    await getUsersByIds(['u1'], 'group-1');
+
+    expect(getLeaguePlayersMock).toHaveBeenCalledWith({
+      userIds: ['u1'],
+      limit: 1,
+      groupId: 'group-1',
+    });
+  });
 });
