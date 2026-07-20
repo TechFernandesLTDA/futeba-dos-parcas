@@ -1,7 +1,29 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-20T18:43:13.891Z",
+  "generatedAt": "2026-07-20T19:07:29.636Z",
   "notes": [
+    {
+      "version": "1.56.2",
+      "buildNumber": null,
+      "releaseDate": "2026-07-20",
+      "type": "patch",
+      "showPopup": false,
+      "published": true,
+      "headline": "Nomes longos ficam legíveis na confirmação de jogadores pelo celular.",
+      "highlights": [],
+      "added": [],
+      "improved": [],
+      "fixed": [
+        "O nome do jogador não colide mais com o botão “Confirmar” em telas estreitas.",
+        "No celular, a ação passa para uma linha própria; no desktop, continua compacta à direita.",
+        "`PendingPlayersSection` deixou de usar `secondaryAction` absoluto na lista.",
+        "Conteúdo e ação agora têm layout responsivo `column`/`row`, quebra segura de nomes e largura adaptativa.",
+        "Adicionado contrato automatizado para impedir regressão do layout mobile."
+      ],
+      "issueRefs": [
+        3866
+      ]
+    },
     {
       "version": "1.56.1",
       "buildNumber": null,

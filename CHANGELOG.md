@@ -281,6 +281,15 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.56.2][web-1.56.2] - 2026-07-20
+
+#### Corrigido
+- `PendingPlayersSection` deixou de usar `secondaryAction` absoluto na lista.
+- Conteúdo e ação agora têm layout responsivo `column`/`row`, quebra segura de nomes e largura adaptativa.
+- Adicionado contrato automatizado para impedir regressão do layout mobile.
+
+_Issues: #3866_
+
 ### [1.56.1][web-1.56.1] - 2026-07-20
 
 #### Corrigido
@@ -2809,6 +2818,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.56.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.56.2.md
 [web-1.56.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.56.1.md
 [web-1.56.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.56.0.md
 [web-1.55.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.55.1.md
