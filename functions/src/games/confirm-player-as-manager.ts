@@ -113,7 +113,10 @@ function isGameManager(
 export const confirmPlayerAsManager = onCall<ConfirmPlayerAsManagerRequest>(
   {
     region: FUNCTION_REGION,
-    enforceAppCheck: process.env.FUNCTIONS_EMULATOR !== "true",
+    // #3868: o App Check web está falhando na emissão da atestação com 403.
+    // O callable continua protegido por Auth, autorização de gestor, rate limit,
+    // transação e audit log. Reativar após reparar a emissão do token web.
+    enforceAppCheck: false,
     consumeAppCheckToken: true,
   },
   async (request) => {

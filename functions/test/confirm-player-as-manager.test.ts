@@ -2,6 +2,7 @@ let mockRunTransaction = jest.fn();
 let mockDoc = jest.fn();
 let mockCollection = jest.fn();
 let mockCheckRateLimit = jest.fn();
+let mockOnCallConfig: unknown;
 
 jest.mock("../src/_db", () => ({
   db: jest.fn(() => ({
@@ -28,7 +29,10 @@ class MockHttpsError extends Error {
 }
 
 jest.mock("firebase-functions/v2/https", () => ({
-  onCall: jest.fn((_config: unknown, handler: unknown) => handler),
+  onCall: jest.fn((config: unknown, handler: unknown) => {
+    mockOnCallConfig = config;
+    return handler;
+  }),
   HttpsError: MockHttpsError,
 }));
 
@@ -129,6 +133,13 @@ describe("confirmPlayerAsManager", () => {
       remaining: 19,
       resetAt: new Date(Date.now() + 60000),
     });
+  });
+
+  test("aceita temporariamente request sem App Check enquanto preserva o handler", () => {
+    expect(mockOnCallConfig).toEqual(expect.objectContaining({
+      enforceAppCheck: false,
+      consumeAppCheckToken: true,
+    }));
   });
 
   test("dono eleva PENDING -> CONFIRMED e atualiza players_count", async () => {

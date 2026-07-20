@@ -281,6 +281,15 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.56.3][web-1.56.3] - 2026-07-20
+
+#### Corrigido
+- `PendingPlayersSection` passou a usar `getFunctionsErrorMessage`.
+- Adicionado fallback traduzido em português, inglês e espanhol.
+- Contrato automatizado impede regressão para o mapeador incorreto de Firestore.
+
+_Issues: #3868_
+
 ### [1.56.2][web-1.56.2] - 2026-07-20
 
 #### Corrigido
@@ -2054,6 +2063,15 @@ _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
 
+### [1.12.2][functions-1.12.2] - 2026-07-20
+
+#### Corrigido
+- `confirmPlayerAsManager` aceita temporariamente requests autenticados sem App Check enquanto a emissão web retorna 403.
+- Teste de regressão fixa explicitamente a configuração transitória para evitar mudança silenciosa.
+- A reativação da exigência de App Check permanece vinculada ao reparo da atestação web.
+
+_Issues: #3868_
+
 ### [1.12.1][functions-1.12.1] - 2026-07-20
 
 #### Corrigido
@@ -2818,6 +2836,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.56.3]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.56.3.md
 [web-1.56.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.56.2.md
 [web-1.56.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.56.1.md
 [web-1.56.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.56.0.md
@@ -2989,6 +3008,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [ios-1.6.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.2.md
 [ios-1.6.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.1.md
 [ios-1.6.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.0.md
+[functions-1.12.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.12.2.md
 [functions-1.12.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.12.1.md
 [functions-1.12.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.12.0.md
 [functions-1.11.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.11.1.md

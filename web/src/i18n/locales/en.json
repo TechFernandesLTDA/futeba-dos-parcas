@@ -1174,6 +1174,7 @@
       "confirmationPrice": "Amount to confirm: {{value}}",
       "copyLink": "Copy Link",
       "playerConfirmedByManager": "{{name}} confirmed successfully.",
+      "confirmPlayerError": "The player could not be confirmed. Reload the page and try again.",
       "pendingPlayers_one": "{{count}} player awaiting confirmation",
       "pendingPlayers_other": "{{count}} players awaiting confirmation",
       "deleteConfirm": "Are you sure you want to delete this game? This action can be reverted by an administrator.",

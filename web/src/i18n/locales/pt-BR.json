@@ -1174,6 +1174,7 @@
       "confirmationPrice": "Valor para confirmar: {{value}}",
       "copyLink": "Copiar Link",
       "playerConfirmedByManager": "{{name}} confirmado(a) com sucesso.",
+      "confirmPlayerError": "Não foi possível confirmar o jogador. Recarregue a página e tente novamente.",
       "pendingPlayers_one": "{{count}} jogador aguardando confirmação",
       "pendingPlayers_other": "{{count}} jogadores aguardando confirmação",
       "deleteConfirm": "Tem certeza que deseja excluir este jogo? Esta ação pode ser revertida por um administrador.",
