@@ -90,13 +90,18 @@ export const LevelJourneyScreen: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [xpGuideOpen, setXpGuideOpen] = useState(false);
   const [selectedLevel, setSelectedLevel] = useState<LevelEntry | null>(null);
-  const [breadcrumbUserName, setBreadcrumbUserName] = useState<string | null>(null);
+  // #3884: nome/escudo do usuário-ALVO da rota (pode ser diferente do logado)
+  const [targetProfile, setTargetProfile] = useState<{ name: string | null; favoriteTeam?: string }>({
+    name: null,
+    favoriteTeam: undefined,
+  });
 
   const targetUserId = userId || currentUser?.id;
+  const isOwnProfile = !!targetUserId && targetUserId === currentUser?.id;
   useBreadcrumbEntityLabel(
     'user',
     targetUserId,
-    breadcrumbUserName ?? (targetUserId === currentUser?.id ? currentUser?.name : null),
+    targetProfile.name ?? (isOwnProfile ? currentUser?.name : null),
   );
 
   // #2215: estado de erro dedicado (antes só havia toast) + retry.
@@ -116,7 +121,7 @@ export const LevelJourneyScreen: React.FC = () => {
         const data = snakeToCamel(raw) as Record<string, unknown>;
         const loadedName = [data.name, data.displayName, data.nickname]
           .find((value): value is string => typeof value === 'string' && value.trim().length > 0);
-        setBreadcrumbUserName(loadedName ?? null);
+        setTargetProfile({ name: loadedName ?? null, favoriteTeam: data.favoriteTeam as string | undefined });
         const xp = getExperiencePoints({ ...raw, ...data });
         setCurrentXp(xp);
         setCurrentLevel(getLevelForXp(xp));
@@ -184,6 +189,9 @@ export const LevelJourneyScreen: React.FC = () => {
         if (userDoc.exists()) {
           const raw = userDoc.data();
           const data = snakeToCamel(raw) as Record<string, unknown>;
+          const loadedName = [data.name, data.displayName, data.nickname]
+            .find((value): value is string => typeof value === 'string' && value.trim().length > 0);
+          setTargetProfile({ name: loadedName ?? null, favoriteTeam: data.favoriteTeam as string | undefined });
           const xp = getExperiencePoints({ ...raw, ...data });
           setCurrentXp(xp);
           setCurrentLevel(getLevelForXp(xp));
@@ -232,6 +240,11 @@ export const LevelJourneyScreen: React.FC = () => {
   const color = getLevelColor(currentLevel, theme);
   const nearLevelInsight = getNearLevelInsight(currentXp);
   const xpGuideEntries = getXpGuideEntries(t);
+  // #3884: header deve exibir nome/escudo do usuário-ALVO (:userId), não do logado
+  const headerName = isOwnProfile
+    ? currentUser?.name || t('profile.defaultPlayerName')
+    : targetProfile.name || t('profile.defaultPlayerName');
+  const headerFavoriteTeam = isOwnProfile ? currentUser?.favoriteTeam : targetProfile.favoriteTeam;
 
   return (
     <Box>
@@ -302,9 +315,9 @@ export const LevelJourneyScreen: React.FC = () => {
                   </Box>
                   <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, mb: 0.5 }}>
                     <Typography variant="body2" color="text.secondary">
-                      {currentUser?.name || t('profile.defaultPlayerName')}
+                      {headerName}
                     </Typography>
-                    <TeamBadge teamId={currentUser?.favoriteTeam} size={24} />
+                    <TeamBadge teamId={headerFavoriteTeam} size={24} />
                   </Box>
                   <Typography variant="h5" fontWeight={700}>
                     {currentEntry.name}
