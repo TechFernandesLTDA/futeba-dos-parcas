@@ -740,7 +740,16 @@ export function updateSeasonParticipation(
   };
 
   if (groupId) {
+    // FIX #3879: o doc de participacao e unico por (temporada, usuario)
+    // — o campo escalar group_id guardava apenas o ULTIMO grupo jogado,
+    // fazendo o usuario sumir do ranking dos demais grupos. Acumulamos
+    // todos os grupos em que ele jogou na temporada num array group_ids
+    // (via arrayUnion, idempotente) para que o ranking filtrado por grupo
+    // (where group_ids array-contains) inclua o usuario em cada grupo.
+    // Mantemos group_id escalar por retrocompatibilidade com indices/
+    // leitores legados.
     data.group_id = groupId;
+    data.group_ids = FieldValue.arrayUnion(groupId);
   }
 
   batch.set(

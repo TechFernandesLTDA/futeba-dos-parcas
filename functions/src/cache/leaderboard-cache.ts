@@ -590,11 +590,32 @@ async function getCachedLeaguePlayersDirectory(
     });
   }
 
-  const players = await buildLeaguePlayersDirectory(
-    seasonId,
-    groupId,
-    genderKey
-  );
+  let players: PublicLeaguePlayer[];
+  try {
+    players = await buildLeaguePlayersDirectory(
+      seasonId,
+      groupId,
+      genderKey
+    );
+  } catch (error) {
+    // FIX #3879: distingue indice ausente (FAILED_PRECONDITION — erro de
+    // CONFIGURACAO, nao transitorio) de falhas transitorias, para que a
+    // proxima ocorrencia apareca em alerta em vez de virar "internal"
+    // generico e silencioso. gRPC code 9 === FAILED_PRECONDITION.
+    const code = (error as {code?: number | string})?.code;
+    const message = (error as {message?: string})?.message || "";
+    const isMissingIndex = code === 9 ||
+      code === "failed-precondition" ||
+      /requires an index/i.test(message);
+    if (isMissingIndex) {
+      logger.error(
+        "[LEAGUE_PLAYERS] Indice composto ausente para ranking " +
+        "(FAILED_PRECONDITION) — verifique firestore.indexes.json",
+        {seasonId, groupId, genderKey, error}
+      );
+    }
+    throw error;
+  }
 
   try {
     await writeLeaguePlayersDirectoryCache(
@@ -1271,7 +1292,12 @@ async function fetchLeagueParticipations(
     .where("season_id", "==", seasonId);
 
   if (groupId) {
-    q = q.where("group_id", "==", groupId);
+    // FIX #3879: filtra por array-contains em group_ids (todos os grupos
+    // jogados na temporada) em vez do escalar group_id (apenas o ultimo).
+    // Assim o usuario aparece no ranking de TODOS os grupos em que jogou.
+    // O par de indices exigidos (season_id + group_ids CONTAINS +
+    // orderField + user_id) esta versionado em firestore.indexes.json.
+    q = q.where("group_ids", "array-contains", groupId);
   }
 
   const snap = await q
