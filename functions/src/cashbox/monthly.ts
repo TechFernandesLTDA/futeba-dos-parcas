@@ -1084,9 +1084,28 @@ export const rebuildMonthlyCycle =
           membersSnap.size,
           gamesSnap.size,
           payersSnap.size,
-          schedulesSnap.size,
-          recurringGamesSnap.size
+          schedulesSnap.size
         );
+        // As fontes recorrentes são um histórico cumulativo que só cresce com o
+        // tempo. A query já as ordena por data desc e busca no máximo
+        // MAX_MONTHLY_RECURRING_SOURCE_GAMES + 1 justamente para truncar sem
+        // depender do tamanho do histórico. Descartar as mais antigas é inócuo:
+        // expandRecurringSeries caminha para frente preservando a fase, então
+        // os N jogos mais recentes sempre cobrem qualquer série capaz de
+        // alcançar o período alvo (#3880). Registramos a truncagem e seguimos
+        // com os mais novos — nunca lançamos. Truncar para exatamente
+        // MAX_MONTHLY_RECURRING_SOURCE_GAMES também mantém buildMonthlyCalendar
+        // dentro do seu próprio limite (gamesSnap + recorrentes <= teto).
+        const recurringSourceDocs = recurringGamesSnap.docs.slice(
+          0,
+          MAX_MONTHLY_RECURRING_SOURCE_GAMES
+        );
+        if (recurringGamesSnap.size > MAX_MONTHLY_RECURRING_SOURCE_GAMES) {
+          logger.info(
+            "[MONTHLY_FINANCE] fontes recorrentes truncadas (esperado)",
+            {groupId, periodKey, size: recurringGamesSnap.size}
+          );
+        }
 
         const activeMemberDocs = membersSnap.docs
           .filter((doc) => {
@@ -1122,7 +1141,7 @@ export const rebuildMonthlyCycle =
             periodKey,
             games: [
               ...gamesSnap.docs.map((doc) => rawGameForMonthly(doc)),
-              ...recurringGamesSnap.docs.map((doc) => rawGameForMonthly(doc)),
+              ...recurringSourceDocs.map((doc) => rawGameForMonthly(doc)),
             ],
             schedules: schedulesSnap.docs.map((doc) =>
               rawScheduleForMonthly(doc)
@@ -2385,15 +2404,13 @@ function authorizeMonthlyManager(
  * @param {number} gameSize Quantidade de jogos.
  * @param {number} payerSize Quantidade de cobranças existentes.
  * @param {number} scheduleSize Quantidade de schedules.
- * @param {number} recurringSourceSize Fontes de séries recorrentes.
  */
 function assertQueryLimits(
   rosterSize: number,
   memberSize: number,
   gameSize: number,
   payerSize: number,
-  scheduleSize: number,
-  recurringSourceSize: number
+  scheduleSize: number
 ): void {
   if (rosterSize > MAX_MONTHLY_ROSTER_SIZE ||
       payerSize > MAX_MONTHLY_ROSTER_SIZE) {
@@ -2420,12 +2437,10 @@ function assertQueryLimits(
       "Quantidade de schedules excede o limite seguro"
     );
   }
-  if (recurringSourceSize > MAX_MONTHLY_RECURRING_SOURCE_GAMES) {
-    throw new functions.https.HttpsError(
-      "resource-exhausted",
-      "Quantidade de fontes recorrentes excede o limite seguro"
-    );
-  }
+  // NÃO validamos as fontes recorrentes aqui: diferente dos demais limites
+  // (estado concorrente do grupo, naturalmente limitado), esse é um histórico
+  // cumulativo que cresce para sempre. A truncagem por data desc é o
+  // comportamento correto e é tratada no chamador (#3880).
 }
 
 /**
