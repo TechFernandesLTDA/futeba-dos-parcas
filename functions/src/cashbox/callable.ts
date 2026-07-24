@@ -2,12 +2,15 @@ import * as functions from "firebase-functions/v2";
 import {FieldValue} from "firebase-admin/firestore";
 import {logger} from "firebase-functions/v2";
 import {db} from "../_db";
+import {secureCallable} from "../middleware/secure-callable-wrapper";
+import {RATE_LIMITS} from "../middleware/rate-limiter";
 import {
   CASHBOX_MAX_AMOUNT_CENTS,
   cashboxAmountToCents,
   centsToCashboxAmount,
 } from "./money";
 import {
+  CASHBOX_LEDGER_SCAN_LIMIT_EXCEEDED,
   CashboxSummaryState,
   cashboxContribution,
   cashboxOperationExpiresAt,
@@ -805,10 +808,21 @@ export const voidCashboxEntry = functions.https.onCall<VoidCashboxEntryData>({
 });
 
 export const reconcileCashboxSummary =
-  functions.https.onCall<ReconcileCashboxSummaryData>({
-    region: "southamerica-east1",
-    enforceAppCheck: process.env.FUNCTIONS_EMULATOR !== "true",
-    consumeAppCheckToken: false,
+  secureCallable<ReconcileCashboxSummaryData>({
+    // SECFIX #3881: era onCall cru sem rate limit — varredura completa do
+    // ledger (até 3x em contenção de CAS) custava milhões de leituras/min
+    // sustentado em loop. secureCallable ganha rate limit + audit log de
+    // brinde. consumeAppCheckToken:true evita replay do token em loop.
+    consumeAppCheckToken: true,
+    rateLimit: RATE_LIMITS.CASHBOX_RECONCILE,
+    auditLogContext: async (request: functions.https.CallableRequest) => {
+      const data = request.data && typeof request.data === "object" ?
+        request.data as Record<string, unknown> : {};
+      return {
+        action: "reconcile_cashbox_summary",
+        group_id: typeof data.groupId === "string" ? data.groupId : null,
+      };
+    },
   }, async (request) => {
     const userId = request.auth?.uid;
     const groupId = typeof request.data?.groupId === "string" ?
@@ -874,10 +888,21 @@ export const reconcileCashboxSummary =
         ledgerVersion: summary.ledgerVersion,
       };
     } catch (error) {
+      if (error instanceof functions.https.HttpsError) throw error;
       logger.error(`[CASHBOX] reconciliação falhou para grupo ${groupId}:`, error);
+      const isConflict = error instanceof Error &&
+        error.message === "CASHBOX_RECONCILIATION_CONFLICT";
+      const isTooLarge = error instanceof Error &&
+        error.message === CASHBOX_LEDGER_SCAN_LIMIT_EXCEEDED;
+      if (isTooLarge) {
+        throw new functions.https.HttpsError(
+          "resource-exhausted",
+          "O caixa deste grupo é grande demais para reconciliar " +
+          "automaticamente. Contate o suporte."
+        );
+      }
       throw new functions.https.HttpsError(
-        error instanceof Error && error.message === "CASHBOX_RECONCILIATION_CONFLICT" ?
-          "aborted" : "internal",
+        isConflict ? "aborted" : "internal",
         "Não foi possível reconciliar o caixa"
       );
     }

@@ -550,6 +550,32 @@ describe("calculadora financeira mensal", () => {
       effective_to: "2026-06-30",
     }, "2026-07")).toBe(false);
   });
+
+  it("BUGFIX #3881: preserva elegibilidade via histórico de intervalos (periods)", () => {
+    // Membro ativo 2026-03..05 (exclusivo), removido, e depois readicionado
+    // em 2026-07. O intervalo antigo já foi arquivado em `periods` pelo
+    // callable — a janela ATUAL (2026-07 em diante) não cobre 2026-04,
+    // mas o histórico deve continuar cobrindo.
+    const roster = {
+      active: true,
+      effective_from_period: "2026-07",
+      effective_to_period: null,
+      periods: [{from: "2026-03", to: "2026-05"}],
+    };
+    expect(isMonthlyRosterEligible(roster, "2026-04")).toBe(true);
+    expect(isMonthlyRosterEligible(roster, "2026-03")).toBe(true);
+    // O limite superior é exclusivo, igual à semântica de effective_to_period.
+    expect(isMonthlyRosterEligible(roster, "2026-05")).toBe(false);
+    // Período antes do intervalo histórico continua inelegível.
+    expect(isMonthlyRosterEligible(roster, "2026-02")).toBe(false);
+    // Janela atual (2026-07+) continua funcionando normalmente.
+    expect(isMonthlyRosterEligible(roster, "2026-07")).toBe(true);
+    // Entradas malformadas em `periods` são ignoradas sem quebrar.
+    expect(isMonthlyRosterEligible({
+      ...roster,
+      periods: [{from: "2026-03"}, null, "garbage", {from: "2026-03", to: "2026-05"}],
+    }, "2026-04")).toBe(true);
+  });
 });
 
 describe("lock, replay e baixa mensal", () => {
@@ -801,6 +827,70 @@ describe("callables financeiros mensais", () => {
     });
     expect(state.get("groups/group-1/monthly_member_roster/player-1"))
       .toMatchObject({active: false, revision: 2});
+  });
+
+  it("BUGFIX #3881: arquiva o intervalo anterior ao readicionar membro removido", async () => {
+    state.set("groups/group-1", {owner_id: "owner", status: "ACTIVE"});
+    state.set("groups/group-1/monthly_finance_config/current", {
+      pricing_mode: "FIXED_MONTHLY",
+      revision: 1,
+      roster_revision: 0,
+    });
+    state.set("groups/group-1/members/player-1", {
+      user_id: "player-1",
+      status: "ACTIVE",
+      display_name: "Jogadora",
+    });
+
+    // 1) Adiciona em 2026-03.
+    jest.setSystemTime(new Date("2026-03-05T12:00:00.000Z"));
+    await setMonthlyMember({
+      auth: {uid: "owner", token: {}},
+      data: {groupId: "group-1", targetUserId: "player-1", isMonthly: true},
+    });
+    expect(state.get("groups/group-1/monthly_member_roster/player-1"))
+      .toMatchObject({
+        active: true,
+        effective_from_period: "2026-03",
+        effective_to_period: null,
+        periods: [],
+      });
+
+    // 2) Remove em 2026-05 (fecha a janela em effective_to_period).
+    jest.setSystemTime(new Date("2026-05-10T12:00:00.000Z"));
+    await setMonthlyMember({
+      auth: {uid: "owner", token: {}},
+      data: {groupId: "group-1", targetUserId: "player-1", isMonthly: false},
+    });
+    expect(state.get("groups/group-1/monthly_member_roster/player-1"))
+      .toMatchObject({
+        active: false,
+        effective_from_period: "2026-03",
+        effective_to_period: "2026-05",
+        periods: [],
+      });
+
+    // 3) Readiciona em 2026-07.
+    jest.setSystemTime(new Date("2026-07-11T12:00:00.000Z"));
+    await setMonthlyMember({
+      auth: {uid: "owner", token: {}},
+      data: {groupId: "group-1", targetUserId: "player-1", isMonthly: true},
+    });
+    const rosterAfterReadd = state.get("groups/group-1/monthly_member_roster/player-1");
+    expect(rosterAfterReadd).toMatchObject({
+      active: true,
+      effective_from_period: "2026-07",
+      effective_to_period: null,
+    });
+    // O intervalo fechado anterior (2026-03..2026-05) foi preservado —
+    // sem isso, um rebuild do período intermediário 2026-04 perderia
+    // silenciosamente o histórico de adesão do membro (bug original).
+    expect(rosterAfterReadd?.periods).toEqual([
+      {from: "2026-03", to: "2026-05"},
+    ]);
+    expect(isMonthlyRosterEligible(
+      rosterAfterReadd as Record<string, unknown>, "2026-04"
+    )).toBe(true);
   });
 
   it("bloqueia alterações da configuração e roster no mês atual fechado", async () => {

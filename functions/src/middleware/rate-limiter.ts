@@ -99,6 +99,14 @@ export const RATE_LIMITS = {
     keyPrefix: "finance_settle",
   }, // 60/min
 
+  // Reconciliação do caixa: varre o ledger inteiro (até 3x em contenção de
+  // CAS), então usa o mesmo teto conservador de rebuilds caros (10/min).
+  CASHBOX_RECONCILE: {
+    maxRequests: 10,
+    windowMs: 60 * 1000,
+    keyPrefix: "cashbox_reconcile",
+  }, // 10/min
+
   // Default fallback
   DEFAULT: {
     maxRequests: 10,
