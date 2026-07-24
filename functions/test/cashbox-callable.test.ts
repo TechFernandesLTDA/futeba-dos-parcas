@@ -843,3 +843,80 @@ describe("isActiveGroupManager", () => {
     )).toBe(false);
   });
 });
+
+// Cobertura complementar #3881: auditLogContext e mapeamento de erros do catch
+// (linhas exigidas pelo diff-coverage gate do CI).
+describe("reconcileCashboxSummary — auditLogContext e mapeamento de erros", () => {
+  const summaryModule = require("../src/cashbox/summary");
+  const {https} = require("firebase-functions/v2");
+
+  const adminGroupSnapshot = {
+    exists: true,
+    data: () => ({owner_id: "user-1", status: "ACTIVE"}),
+  };
+  const adminMemberSnapshot = {
+    exists: true,
+    data: () => ({user_id: "user-1", role: "ADMIN", status: "ACTIVE"}),
+  };
+
+  const callAsAdmin = () => {
+    mockGroupRef.get.mockResolvedValueOnce(adminGroupSnapshot);
+    mockMemberRef.get.mockResolvedValueOnce(adminMemberSnapshot);
+    return reconcileCashboxSummary({
+      auth: {uid: "user-1", token: {}},
+      data: {groupId: "group-1"},
+    });
+  };
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it("auditLogContext extrai group_id do payload e tolera payload invalido", async () => {
+    const options = secureCallableOptions.find((option) =>
+      (option as {rateLimit?: unknown}).rateLimit ===
+        RATE_LIMITS.CASHBOX_RECONCILE) as {
+      auditLogContext: (req: unknown) => Promise<Record<string, unknown>>;
+    };
+    await expect(options.auditLogContext({data: {groupId: "group-1"}}))
+      .resolves.toEqual({
+        action: "reconcile_cashbox_summary",
+        group_id: "group-1",
+      });
+    await expect(options.auditLogContext({data: null}))
+      .resolves.toEqual({
+        action: "reconcile_cashbox_summary",
+        group_id: null,
+      });
+  });
+
+  it("mapeia ledger grande demais para resource-exhausted", async () => {
+    jest.spyOn(summaryModule, "reconcileCashboxSummaryForGroup")
+      .mockRejectedValueOnce(
+        new Error(summaryModule.CASHBOX_LEDGER_SCAN_LIMIT_EXCEEDED));
+    await expect(callAsAdmin())
+      .rejects.toMatchObject({code: "resource-exhausted"});
+  });
+
+  it("mapeia conflito de CAS para aborted", async () => {
+    jest.spyOn(summaryModule, "reconcileCashboxSummaryForGroup")
+      .mockRejectedValueOnce(new Error("CASHBOX_RECONCILIATION_CONFLICT"));
+    await expect(callAsAdmin())
+      .rejects.toMatchObject({code: "aborted"});
+  });
+
+  it("mapeia erro desconhecido para internal", async () => {
+    jest.spyOn(summaryModule, "reconcileCashboxSummaryForGroup")
+      .mockRejectedValueOnce(new Error("boom"));
+    await expect(callAsAdmin())
+      .rejects.toMatchObject({code: "internal"});
+  });
+
+  it("re-lanca HttpsError interno sem mascarar o codigo", async () => {
+    jest.spyOn(summaryModule, "reconcileCashboxSummaryForGroup")
+      .mockRejectedValueOnce(
+        new https.HttpsError("failed-precondition", "Grupo indisponível"));
+    await expect(callAsAdmin())
+      .rejects.toMatchObject({code: "failed-precondition"});
+  });
+});
