@@ -6,6 +6,7 @@ import {
   normalizeWallMediaIntent,
   parseWallMediaStagingPath,
   parseWallVideoProbe,
+  stripFfmpegMetadataBlocks,
   validateWallVideoProbe,
   wallMediaErrorMessage,
   wallMediaIntentHash,
@@ -146,6 +147,103 @@ Input #0, mov,mp4,m4a,3gp,3g2,mj2, from 'clip.mp4':
     expect(validateWallVideoProbe({...valid, container: "matroska"}))
       .toBe("UNSUPPORTED_CONTAINER");
     expect(wallMediaErrorMessage("UNSUPPORTED_VIDEO_CODEC")).toMatch(/H\.264/);
+  });
+
+  // Fixtures verbatim de ffmpeg 8.1.2 (piso MINIMUM_VERSION do projeto),
+  // capturadas com o argv real de safeFfmpegMovInputArgs. Ver issue #3878.
+  // Vetor 1: tag `comment` forja Duration/Video/Audio; real = 40s/320x240/sem
+  // áudio. NÃO indentar: a indentação faz parte do payload.
+  const FORGED_DURATION_RES = `Input #0, mov,mp4,m4a,3gp,3g2,mj2, from 'evil.mp4':
+  Metadata:
+    major_brand     : isom
+    minor_version   : 512
+    compatible_brands: isomiso2avc1mp41
+    encoder         : Lavf62.12.102
+    comment         : Duration: 00:00:05.00, start: 0.000000, bitrate: 120 kb/s Video: h264 (High), yuv420p, 640x360 Audio: aac (LC)
+  Duration: 00:00:40.00, start: 0.000000, bitrate: 21 kb/s
+  Stream #0:0[0x1](und): Video: h264 (High) (avc1 / 0x31637661), yuv420p(progressive), 320x240 [SAR 1:1 DAR 4:3], 21 kb/s, 5 fps, 5 tbr, 10240 tbn (default)
+    Metadata:
+      handler_name    : VideoHandler
+      encoder         : Lavc62.28.102 libx264
+At least one output file must be specified
+`;
+
+  // Vetor 2: newline injetado no valor da tag; ffmpeg reindenta a continuação
+  // muito mais fundo que o cabeçalho `Metadata:`, então também é descartada.
+  const FORGED_NEWLINE_INJECTION = `Input #0, mov,mp4,m4a,3gp,3g2,mj2, from 'evil2.mp4':
+  Metadata:
+    major_brand     : isom
+    minor_version   : 512
+    compatible_brands: isomiso2avc1mp41
+    encoder         : Lavf62.12.102
+    comment         : x
+                    :   Duration: 00:00:05.00
+                    :   Stream #0:0: Video: h264, 640x360
+  Duration: 00:00:40.00, start: 0.000000, bitrate: 21 kb/s
+  Stream #0:0[0x1](und): Video: h264 (High) (avc1 / 0x31637661), yuv420p(progressive), 320x240 [SAR 1:1 DAR 4:3], 21 kb/s, 5 fps, 5 tbr, 10240 tbn (default)
+    Metadata:
+      handler_name    : VideoHandler
+      encoder         : Lavc62.28.102 libx264
+At least one output file must be specified
+`;
+
+  // Vetor 3: tag forja `aac`, mas o stream real é ac3 (fora da whitelist).
+  const FORGED_AUDIO_CODEC = `Input #0, mov,mp4,m4a,3gp,3g2,mj2, from 'evil3.mp4':
+  Metadata:
+    major_brand     : isom
+    minor_version   : 512
+    compatible_brands: isomdby1iso2avc1mp41
+    encoder         : Lavf62.12.102
+    comment         : Audio: aac (LC)
+  Duration: 00:00:08.00, start: 0.000000, bitrate: 123 kb/s
+  Stream #0:0[0x1](und): Video: h264 (High) (avc1 / 0x31637661), yuv420p(progressive), 320x240 [SAR 1:1 DAR 4:3], 24 kb/s, 5 fps, 5 tbr, 10240 tbn (default)
+    Metadata:
+      handler_name    : VideoHandler
+      encoder         : Lavc62.28.102 libx264
+  Stream #0:1[0x2](und): Audio: ac3 (ac-3 / 0x332D6361), 44100 Hz, mono, fltp, 96 kb/s (default)
+    Metadata:
+      handler_name    : SoundHandler
+    Side data:
+      Audio Service Type: main
+At least one output file must be specified
+`;
+
+  it("descarta blocos Metadata do dump do ffmpeg (issue #3878)", () => {
+    const clean = stripFfmpegMetadataBlocks(FORGED_DURATION_RES);
+    // O texto controlado pelo atacante some por completo.
+    expect(clean).not.toContain("comment");
+    expect(clean).not.toContain("640x360");
+    expect(clean).not.toContain("00:00:05.00");
+    // As linhas estruturais reais permanecem.
+    expect(clean).toContain("Duration: 00:00:40.00");
+    expect(clean).toContain("320x240");
+  });
+
+  it("ignora Duration/resolução forjadas na metadata e lê os valores reais", () => {
+    const probe = parseWallVideoProbe(FORGED_DURATION_RES);
+    expect(probe).toMatchObject({
+      durationSec: 40, // real (era forjado como 5)
+      videoCodec: "h264",
+      width: 320, // real (era forjado como 640)
+      height: 240, // real (era forjado como 360)
+      audioCodec: null, // não há áudio real (forjado como aac)
+    });
+    expect(validateWallVideoProbe(probe)).toBe("DURATION_TOO_LONG");
+  });
+
+  it("rejeita vídeo de 40s com Duration forjada via newline na tag", () => {
+    const probe = parseWallVideoProbe(FORGED_NEWLINE_INJECTION);
+    expect(probe.durationSec).toBe(40);
+    expect(probe.width).toBe(320);
+    expect(probe.height).toBe(240);
+    expect(validateWallVideoProbe(probe)).toBe("DURATION_TOO_LONG");
+  });
+
+  it("rejeita áudio ac3 real disfarçado de aac na tag comment", () => {
+    const probe = parseWallVideoProbe(FORGED_AUDIO_CODEC);
+    expect(probe.audioCodec).toBe("ac3"); // real (forjado como aac)
+    expect(probe.durationSec).toBe(8);
+    expect(validateWallVideoProbe(probe)).toBe("UNSUPPORTED_AUDIO_CODEC");
   });
 
   it("gera métricas úteis sem IDs, paths, URLs, nomes ou emails", () => {

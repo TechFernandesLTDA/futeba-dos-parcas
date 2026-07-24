@@ -251,17 +251,72 @@ export function detectWallMediaContentType(
 }
 
 /**
+ * Remove os blocos `Metadata:` do dump do ffmpeg antes do parse (issue #3878).
+ *
+ * As tags do container/stream (`comment`, `title`, …) são totalmente
+ * controladas por quem envia. Como o `av_dump_format` imprime o bloco
+ * `Metadata:` ANTES das linhas estruturais reais de `Duration:`/`Stream …:`,
+ * regexes ingênuas (sem âncora, `String.match` sem `/g`) devolvem a primeira
+ * ocorrência — que pode ser a forjada dentro da tag. O ffmpeg reindenta cada
+ * entrada de metadata (e as continuações de valores com `\n`) mais fundo que o
+ * cabeçalho `Metadata:`, então descartar toda linha mais indentada que o
+ * cabeçalho elimina 100% do texto controlado pelo atacante, restando apenas as
+ * linhas estruturais confiáveis. Validado empiricamente com ffmpeg 8.1.2.
+ * @param {string} stderr Saída bruta do probe.
+ * @return {string} Somente as linhas estruturais (sem blocos Metadata).
+ */
+export function stripFfmpegMetadataBlocks(stderr: string): string {
+  const kept: string[] = [];
+  let metaIndent: number | null = null;
+  for (const line of stderr.split("\n")) {
+    const indent = line.length - line.trimStart().length;
+    if (metaIndent !== null) {
+      // Continua dentro do bloco enquanto a indentação for maior que o
+      // cabeçalho; entradas e continuações de valor são sempre mais fundas.
+      if (line.trim() !== "" && indent > metaIndent) continue;
+      metaIndent = null; // Bloco encerrado: reavalia a linha atual.
+    }
+    if (/^\s*Metadata:\s*$/.test(line)) {
+      metaIndent = indent; // Descarta o próprio cabeçalho `Metadata:`.
+      continue;
+    }
+    kept.push(line);
+  }
+  return kept.join("\n");
+}
+
+/**
  * Parseia metadata real emitida pelo ffmpeg.
+ *
+ * Defesa em profundidade contra injeção de metadata MP4 (issue #3878):
+ * 1. Descarta blocos `Metadata:` (texto controlado por quem envia).
+ * 2. Âncora as linhas estruturais ao início da linha com indentação limitada
+ *    (`^ {1,4}`), impedindo que uma linha injetada muito indentada case mesmo
+ *    que a etapa 1 falhasse.
+ * 3. Vídeo/áudio só são lidos de linhas `Stream #N:N …: Video:/Audio:`.
+ * 4. Exige exatamente uma linha estrutural `Duration:`; múltiplas ocorrências
+ *    indicam adulteração e a duração é tratada como ilegível (rejeitada).
  * @param {string} stderr Saída do probe.
  * @return {WallVideoProbe} Metadata normalizada.
  */
 export function parseWallVideoProbe(stderr: string): WallVideoProbe {
-  const input = stderr.match(/Input #0,\s*([^,\n]+(?:,[^\n]+)?),\s*from/i);
-  const duration = stderr.match(
-    /Duration:\s*(\d{2}):(\d{2}):(\d{2}(?:\.\d+)?)/i
+  const structural = stripFfmpegMetadataBlocks(stderr);
+  const input = structural.match(
+    /^Input #\d+,\s*([^,\n]+(?:,[^\n]+)?),\s*from/im
   );
-  const video = stderr.match(/Video:\s*([A-Za-z0-9_]+)[^\n]*?(\d{2,5})x(\d{2,5})/i);
-  const audio = stderr.match(/Audio:\s*([A-Za-z0-9_]+)/i);
+  const durationRe = /^ {1,4}Duration:\s*(\d{2}):(\d{2}):(\d{2}(?:\.\d+)?)/gim;
+  const durationAll = structural.match(durationRe);
+  const duration = durationAll && durationAll.length === 1 ?
+    structural.match(
+      /^ {1,4}Duration:\s*(\d{2}):(\d{2}):(\d{2}(?:\.\d+)?)/im
+    ) :
+    null;
+  const video = structural.match(
+    /^ {1,4}Stream #\d+:\d+[^\n]*:\s*Video:\s*([A-Za-z0-9_]+)[^\n]*?(\d{2,5})x(\d{2,5})/im
+  );
+  const audio = structural.match(
+    /^ {1,4}Stream #\d+:\d+[^\n]*:\s*Audio:\s*([A-Za-z0-9_]+)/im
+  );
   const durationSec = duration ?
     Number(duration[1]) * 3600 + Number(duration[2]) * 60 + Number(duration[3]) :
     null;
