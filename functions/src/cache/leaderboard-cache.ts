@@ -1749,9 +1749,17 @@ async function fetchUsersInBatch(
  * season_participation é atualizada". Pós-partida, ranking ficava
  * stale por até 5 min para todos os clientes.
  *
- * Agora: trigger proativa deleta todos os docs de cache da season.
- * Cache key format: `${seasonId}_${limit}` — query por season_id
- * para capturar todas as variantes de limit cacheadas.
+ * Agora: trigger proativa deleta os docs de cache de RANKINGS da season.
+ * Cache key format: `${seasonId}_${gender}_${limit}` — query por season_id
+ * para capturar todas as variantes cacheadas.
+ *
+ * FIX #3883: a query por `season_id` também casa com o cache de diretório
+ * público da Liga (getLeaguePlayers, #3358), que vive na MESMA coleção
+ * (`cache_leaderboard`) e também carrega `season_id`. Apagá-lo aqui
+ * regredia o #3358 (o diretório era reconstruído com ~10–15k reads a cada
+ * partida encerrada, em vez de 1×/5 min). Por isso filtramos em memória os
+ * docs de diretório (kind == LEAGUE_PLAYERS_CACHE_KIND) antes de deletar —
+ * o diretório permanece sob seu próprio TTL de 5 min.
  *
  * Custo: ~20 trigger invocations por partida encerrada (1 por
  * season_participation doc). Cada invocation: 1 query + batch delete.
@@ -1772,7 +1780,7 @@ export const invalidateLeaderboardOnParticipation = onDocumentWritten(
     const db = getDb();
 
     try {
-      // Buscar todos os docs de cache dessa season
+      // Buscar os docs de cache dessa season
       // (podem haver múltiplos com limites diferentes: 10, 20, 50, 100…)
       const cacheSnap = await db
         .collection(CACHE_COLLECTION)
@@ -1784,17 +1792,33 @@ export const invalidateLeaderboardOnParticipation = onDocumentWritten(
         return;
       }
 
+      // FIX #3883: preservar o cache de diretório público da Liga (#3358).
+      // Rankings (getLeaderboardCached) e diretório (getLeaguePlayers) dividem
+      // a coleção `cache_leaderboard`. Só os docs de diretório carregam `kind`;
+      // os de rankings não têm o campo. Filtramos em memória (Firestore não
+      // indexa `== null`) para NUNCA apagar o diretório colateralmente —
+      // independentemente do `season_id` com que ele foi gravado.
+      const rankingCacheDocs = cacheSnap.docs.filter(
+        (doc) => doc.data()?.kind !== LEAGUE_PLAYERS_CACHE_KIND
+      );
+
+      if (rankingCacheDocs.length === 0) {
+        // Só havia cache de diretório para essa season — nada a invalidar aqui.
+        return;
+      }
+
       const committedBatches =
         await deleteDocsInBatches(
           db,
-          cacheSnap.docs
+          rankingCacheDocs
         );
 
       logger.info(
         "[LEADERBOARD_CACHE] Invalidated " +
-        `${cacheSnap.size} cache doc(s) ` +
+        `${rankingCacheDocs.length} ranking cache doc(s) ` +
         `for season ${seasonId} ` +
-        `in ${committedBatches} batch(es)`
+        `in ${committedBatches} batch(es) ` +
+        "(diretório da Liga preservado)"
       );
     } catch (error) {
       // DECISÃO DE DESIGN (#1040): falha de invalidação é best-effort intencional.
