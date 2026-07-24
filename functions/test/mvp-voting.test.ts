@@ -1184,6 +1184,8 @@ describe("concludeMvpVoting - contagem de votos e vencedor", () => {
         }),
       },
       {empty: false, docs: [{id: "season-active"}]},
+      // FIX #3882: leitura do standing congelado (não existe → season aberta)
+      {exists: false, data: () => null},
       {
         exists: true,
         data: () => ({
@@ -1310,6 +1312,8 @@ describe("concludeMvpVoting - contagem de votos e vencedor", () => {
       {exists: false, data: () => null},
       {exists: true, data: () => ({was_mvp: false})},
       gameSnap,
+      // FIX #3882: leitura do standing congelado (não existe → season aberta)
+      {exists: false, data: () => null},
       userSnap,
       {exists: true, data: () => ({bestPlayerCount: 0})},
     ]);
@@ -1334,7 +1338,8 @@ describe("concludeMvpVoting - contagem de votos e vencedor", () => {
     });
 
     expect(result.xpApplied).toEqual({mvp: true, worst: true, allOk: true});
-    expect(mvpXpTx.get).toHaveBeenCalledTimes(5);
+    // FIX #3882: +1 leitura (standing congelado) no caminho de MVP
+    expect(mvpXpTx.get).toHaveBeenCalledTimes(6);
     expect(worstXpTx.get).toHaveBeenCalledTimes(4);
     expect(mvpXpTx.set).toHaveBeenCalled();
     expect(worstXpTx.set).toHaveBeenCalled();

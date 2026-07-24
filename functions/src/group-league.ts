@@ -109,6 +109,32 @@ type GroupLeagueMatchPayload = {
   date: string;
 };
 
+/**
+ * FIX #3882: fallback determinístico de season quando não há nenhuma
+ * `league_seasons` com is_active==true (ex.: janela de virada de mês ou
+ * falha/atraso dos crons). Deriva a chave YYYY-MM da data do jogo — que é
+ * o próprio doc id canônico das seasons mensais — em vez de descartar a
+ * partida silenciosamente. As standings gravadas com esse season_id são
+ * captadas normalmente pelo archive do mês correspondente.
+ *
+ * @param {string} gameDate Data do jogo (esperado prefixo YYYY-MM-DD).
+ * @param {Date} now Instante atual (injetável para testes).
+ * @return {string} Chave YYYY-MM da temporada alvo.
+ */
+export function deriveFallbackSeasonId(
+  gameDate: string,
+  now: Date = new Date(),
+): string {
+  if (/^\d{4}-\d{2}/.test(gameDate)) {
+    return gameDate.slice(0, 7);
+  }
+  // Sem data utilizável no jogo: usa o mês corrente em BRT (mesmo fuso
+  // dos crons de season).
+  return now.toLocaleDateString("en-CA", {
+    timeZone: "America/Sao_Paulo",
+  }).slice(0, 7);
+}
+
 type GroupLeaguePayloadBuildResult = {
   payload: GroupLeagueMatchPayload | null;
   teamCount: number;
@@ -588,6 +614,24 @@ export const onGameFinishedGroupLeague = onDocumentWritten(
           targetSeasonId = activeSeasonSnap.empty ?
             null :
             activeSeasonSnap.docs[0].id;
+
+          // FIX #3882: sem season ativa (janela de virada de mês ou cron
+          // atrasado/falho), NÃO descartar a partida — deriva o season_id
+          // determinístico (YYYY-MM) da data do jogo. Antes, o retorno
+          // silencioso perdia permanentemente as standings de jogos
+          // finalizados entre 23:59 do último dia e 01:00 do dia 1º.
+          // Log em WARN (não info) para ser distinguível de operação
+          // normal e alertável.
+          if (!targetSeasonId) {
+            targetSeasonId = deriveFallbackSeasonId(matchPayload.date);
+            logger.warn(
+              "[GROUP_LEAGUE] No active season for group " +
+                `${matchPayload.groupId}; applying game ${gameId} to ` +
+                `fallback season ${targetSeasonId} derived from game date ` +
+                "(season turnover window or season cron failure — " +
+                "see issue #3882)",
+            );
+          }
         }
 
         revertedMatchCount = existingMatches.length;
@@ -596,12 +640,6 @@ export const onGameFinishedGroupLeague = onDocumentWritten(
         }
 
         if (!matchPayload || !targetSeasonId) {
-          if (matchPayload && !targetSeasonId) {
-            logger.info(
-              "[GROUP_LEAGUE] No active season for group " +
-                `${matchPayload.groupId}, skipping apply`,
-            );
-          }
           return;
         }
 

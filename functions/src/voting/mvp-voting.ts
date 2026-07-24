@@ -1712,6 +1712,9 @@ function resolveWinnerWithoutTie(
  *
  * Se o log já existe (chamada repetida ou retry), no-op.
  *
+ * FIX #3882: exportada para testes diretos (recebe `db` injetável) e
+ * corrige season_final_standings quando a temporada já foi congelada.
+ *
  * @param {admin.firestore.Firestore} db - instância do Firestore
  * @param {string} gameId - ID do jogo
  * @param {string} userId - ID do usuário (MVP ou worst player)
@@ -1720,7 +1723,7 @@ function resolveWinnerWithoutTie(
  * @param {object} audit - Metadados auditáveis da votação que gerou o XP
  * @return {Promise<void>}
  */
-async function applyVotingXpDelta(
+export async function applyVotingXpDelta(
   db: admin.firestore.Firestore,
   gameId: string,
   userId: string,
@@ -1823,6 +1826,27 @@ async function applyVotingXpDelta(
           Array.isArray(activeSeasonSnap.docs) &&
           activeSeasonSnap.docs[0]?.id ?
           activeSeasonSnap.docs[0].id : null;
+      }
+
+      // FIX #3882: voto concluído APÓS o congelamento da temporada
+      // (checkSeasonEnd roda às 03:00 do dia 1º; a votação fica aberta até
+      // gameEnd + 24h). O incremento em season_participation abaixo não é
+      // relido pelo freeze (one-shot, idempotente por doc-id), então o
+      // mvp_count em season_final_standings ficaria errado para sempre.
+      // Aqui detectamos o standing já congelado e o corrigimos na MESMA
+      // transaction (leitura antes de qualquer write, como o Firestore
+      // exige). Doc id espelha o freeze: `${seasonId}_${safeUserId}`.
+      let frozenStandingRef:
+        admin.firestore.DocumentReference | null = null;
+      if (reason === "MVP" && gameSeasonId) {
+        const safeUserId = userId.replace(/\//g, "_");
+        const candidateRef = db
+          .collection("season_final_standings")
+          .doc(`${gameSeasonId}_${safeUserId}`);
+        const frozenSnap = await txn.get(candidateRef);
+        if (frozenSnap.exists) {
+          frozenStandingRef = candidateRef;
+        }
       }
 
       // FIX #726: MVP bonus (voting reward) is applied OVER the
@@ -1952,6 +1976,23 @@ async function applyVotingXpDelta(
           seasonPartUpdate,
           {merge: true}
         );
+
+        // FIX #3882: temporada já congelada — corrige o mvp_count do
+        // standing final na mesma transaction (idempotente: a transaction
+        // inteira é guardada pelo logRef determinístico acima).
+        if (isMvp && frozenStandingRef) {
+          txn.set(
+            frozenStandingRef,
+            {mvp_count: inc(1)},
+            {merge: true}
+          );
+          logger.warn(
+            `[VOTING_XP] Season ${gameSeasonId} already frozen when MVP ` +
+            `vote for ${userId} in ${gameId} concluded — patched ` +
+            "season_final_standings.mvp_count (+1) to keep frozen " +
+            "standings consistent (issue #3882)"
+          );
+        }
       }
 
       if (weekKey && monthKey) {
