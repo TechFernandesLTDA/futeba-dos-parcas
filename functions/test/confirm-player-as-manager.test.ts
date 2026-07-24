@@ -164,6 +164,32 @@ describe("confirmPlayerAsManager", () => {
     );
   });
 
+  test("#3874: grava capacity_sync_token para o trigger nao somar +1 por cima", async () => {
+    // Contrato #3501: quem escreve players_count em valor absoluto na mesma
+    // transacao DEVE trocar o capacity_sync_token da confirmacao, senao
+    // onConfirmationWrite aplica FieldValue.increment(1) por cima e infla
+    // os contadores do jogo (espelha confirm-game-presence.test.ts).
+    const {tx} = arrangeTransaction({
+      target: confirmationDoc({status: "PENDING", position: "GOALKEEPER", user_id: "target"}),
+      capacity: [capacityDoc({status: "CONFIRMED", position: "FIELD", user_id: "other"})],
+    });
+
+    await confirmPlayerAsManager({
+      auth: {uid: "owner1", token: {role: "USER"}},
+      data: {gameId: "game1", userId: "target"},
+    });
+
+    expect(tx.update).toHaveBeenCalledWith(
+      {path: "confirmations/game1_target"},
+      expect.objectContaining({capacity_sync_token: expect.any(String)})
+    );
+    // Escrita absoluta dos contadores continua correta na mesma transacao.
+    expect(tx.update).toHaveBeenCalledWith(
+      {path: "games/game1"},
+      expect.objectContaining({players_count: 2, goalkeepers_count: 1})
+    );
+  });
+
   test("co-organizador pode confirmar", async () => {
     arrangeTransaction({
       game: gameDoc({owner_id: "owner1", co_organizers: ["coorg1"]}),
