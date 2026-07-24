@@ -1,6 +1,94 @@
 {
   "indexes": [
     {
+      "collectionGroup": "season_participation",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "season_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "group_ids",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "points",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "user_id",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "season_participation",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "season_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "group_ids",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "by_gender.MALE.points",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "user_id",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "season_participation",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "season_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "group_ids",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "by_gender.FEMALE.points",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "user_id",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "season_participation",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "season_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "group_ids",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "by_gender.MIXED.points",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "user_id",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
       "collectionGroup": "games",
       "queryScope": "COLLECTION",
       "fields": [

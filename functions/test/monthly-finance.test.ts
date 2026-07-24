@@ -970,6 +970,101 @@ describe("callables financeiros mensais", () => {
     })).rejects.toMatchObject({code: "failed-precondition"});
   });
 
+  // Regressão #3880: um grupo com muito histórico recorrente (>300 jogos)
+  // não pode mais matar o rebuild permanentemente. A query trunca por data
+  // desc e os jogos mais recentes cobrem qualquer série que alcance o período;
+  // descartar os mais antigos é inócuo — provado comparando 350 vs 100 fontes.
+  const seedGroupWithRecurringNoise = (noiseCount: number) => {
+    state.clear();
+    state.set("groups/group-1", {owner_id: "owner", status: "ACTIVE"});
+    state.set("groups/group-1/monthly_finance_config/current", {
+      pricing_mode: "PER_GAME",
+      fixed_monthly_cost_cents: null,
+      default_game_cost_cents: 10000,
+      revision: 3,
+      roster_revision: 6,
+    });
+    state.set("groups/group-1/members/payer-1", {
+      user_id: "payer-1",
+      status: "ACTIVE",
+      display_name: "Mensalista",
+    });
+    state.set("groups/group-1/monthly_member_roster/payer-1", {
+      user_id: "payer-1",
+      active: true,
+      effective_from_period: "2026-01",
+    });
+    // Série ativa mais recente: projeta 5 quartas de julho (50000 no total).
+    state.set("games/root-game", {
+      group_id: "group-1",
+      date: "2026-06-24",
+      status: "FINISHED",
+      recurrence: "weekly",
+      recurrence_index: 1,
+      recurrence_count: 10,
+      court_cost_cents: 10000,
+      name: "Quarta recorrente",
+    });
+    // Ruído histórico antigo: cada série tem uma única ocorrência em 2024,
+    // então nunca alcança julho/2026 e não altera a apuração. Datas sempre
+    // anteriores à raiz para garantir que a raiz sobreviva à truncagem.
+    for (let index = 0; index < noiseCount; index += 1) {
+      state.set(`games/noise-${String(index).padStart(3, "0")}`, {
+        group_id: "group-1",
+        date: "2024-01-01",
+        status: "FINISHED",
+        recurrence: "weekly",
+        recurrence_index: 1,
+        recurrence_count: 1,
+        court_cost_cents: 99999,
+        name: "Jogo antigo",
+      });
+    }
+  };
+
+  it("rebuild sobrevive a >300 fontes recorrentes truncando as antigas", async () => {
+    const {logger} = require("firebase-functions/v2");
+
+    // Cenário com 100 fontes recorrentes (abaixo do limite): baseline.
+    seedGroupWithRecurringNoise(99);
+    const baseline = await rebuildMonthlyCycle({
+      auth: {uid: "owner", token: {}},
+      data: {groupId: "group-1", periodKey: "2026-07"},
+    });
+    expect(baseline).toMatchObject({
+      totalCourtCostCents: 50000,
+      gameCount: 5,
+      duplicate: false,
+    });
+
+    // Cenário com 350 fontes recorrentes (>300): antes lançava
+    // resource-exhausted permanentemente. Agora conclui e produz EXATAMENTE
+    // o mesmo resultado — prova de que a truncagem é inócua.
+    logger.info.mockClear();
+    seedGroupWithRecurringNoise(349);
+    const truncated = await rebuildMonthlyCycle({
+      auth: {uid: "owner", token: {}},
+      data: {groupId: "group-1", periodKey: "2026-07"},
+    });
+    expect(truncated).toMatchObject({
+      totalCourtCostCents: 50000,
+      gameCount: 5,
+      duplicate: false,
+    });
+    expect(truncated.totalCourtCostCents).toBe(baseline.totalCourtCostCents);
+    expect(truncated.gameCount).toBe(baseline.gameCount);
+
+    // Confirma que o ramo de truncagem foi exercitado (não só "não lançou").
+    expect(logger.info).toHaveBeenCalledWith(
+      "[MONTHLY_FINANCE] fontes recorrentes truncadas (esperado)",
+      expect.objectContaining({
+        groupId: "group-1",
+        periodKey: "2026-07",
+        size: 301,
+      })
+    );
+  });
+
   it("rejeita baixa quando config/roster mudaram após o rebuild", async () => {
     state.set("groups/group-1", {owner_id: "owner", status: "ACTIVE"});
     state.set("groups/group-1/monthly_finance_config/current", {

@@ -26,6 +26,29 @@ import {
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { ReleaseHighlight, ReleaseNote, ReleaseType } from '../../types/releaseNotes';
+import { parseMarkdownLite } from '../../utils/markdownLite';
+
+/**
+ * Renderiza texto com suporte a `**negrito**` (Markdown lite, #3876).
+ * Segmentos não-negrito são renderizados como texto puro (sem `<Box>` extra),
+ * preservando o comportamento anterior quando não há marcação.
+ */
+export const FormattedText: React.FC<{ text: string }> = ({ text }) => {
+  const segments = parseMarkdownLite(text);
+  return (
+    <>
+      {segments.map((segment, index) =>
+        segment.bold ? (
+          <Box key={index} component="span" sx={{ fontWeight: 700 }}>
+            {segment.text}
+          </Box>
+        ) : (
+          <React.Fragment key={index}>{segment.text}</React.Fragment>
+        )
+      )}
+    </>
+  );
+};
 
 /**
  * Mapeia o nome do ícone (DSL `icon=<nome>` da nota) para um ícone do MUI.
@@ -111,7 +134,7 @@ const HighlightCard: React.FC<{ highlight: ReleaseHighlight }> = ({ highlight })
         </Typography>
         {highlight.description && (
           <Typography variant="body2" color="text.secondary">
-            {highlight.description}
+            <FormattedText text={highlight.description} />
           </Typography>
         )}
       </Box>
@@ -142,7 +165,7 @@ const ReleaseSection: React.FC<{
               •
             </Box>
             <Typography variant="body2" color="text.secondary">
-              {item}
+              <FormattedText text={item} />
             </Typography>
           </Box>
         ))}
@@ -168,7 +191,7 @@ export const ReleaseNoteContent: React.FC<{ note: ReleaseNote; showHeadline?: bo
     <Stack spacing={2}>
       {showHeadline && note.headline && (
         <Typography variant="subtitle1" color="text.primary">
-          {note.headline}
+          <FormattedText text={note.headline} />
         </Typography>
       )}
       {note.highlights.length > 0 && (

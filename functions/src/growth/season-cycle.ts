@@ -22,6 +22,25 @@ function getMonthName(monthKey: string): string {
 type SeasonStanding = admin.firestore.DocumentData;
 
 /**
+ * FIX #3882: calcula a chave YYYY-MM do mês seguinte.
+ * Usada para criar/ativar a próxima temporada NO MESMO batch que
+ * desativa a atual, eliminando a janela de ~61min sem temporada ativa
+ * entre o archiveSeason (23:59 do último dia) e o startNewSeason
+ * (01:00 do dia 1º).
+ *
+ * @param {string} monthKey - Chave YYYY-MM do mês atual.
+ * @return {string} Chave YYYY-MM do mês seguinte.
+ */
+export function getNextMonthKey(monthKey: string): string {
+  const [yearStr, monthStr] = monthKey.split("-");
+  const year = parseInt(yearStr, 10);
+  const month = parseInt(monthStr, 10);
+  const nextYear = month === 12 ? year + 1 : year;
+  const nextMonth = month === 12 ? 1 : month + 1;
+  return `${nextYear}-${nextMonth.toString().padStart(2, "0")}`;
+}
+
+/**
  * Monta o payload arquivado sem campos undefined. Firestore rejeita undefined,
  * então temporadas sem standings precisam ser arquiváveis mesmo vazias.
  *
@@ -210,10 +229,41 @@ export const archiveSeason = onSchedule(
           FieldValue.serverTimestamp()
         ));
 
-        await seasonRef.update({
+        // FIX #3882: virada atômica — cria/ativa a próxima temporada NO
+        // MESMO batch que desativa a atual. Antes, a desativação às 23:59
+        // do último dia deixava ~61min sem nenhuma season is_active==true
+        // até o startNewSeason (01:00 do dia 1º), e partidas de liga
+        // finalizadas nessa janela eram descartadas permanentemente pelo
+        // onGameFinishedGroupLeague. O startNewSeason vira um repair
+        // idempotente (já trata "season already exists" + ativa).
+        const nextMonthKey = getNextMonthKey(monthKey);
+        const nextSeasonRef = db()
+          .collection("groups")
+          .doc(groupId)
+          .collection("league_seasons")
+          .doc(nextMonthKey);
+        const nextSeasonDoc = await nextSeasonRef.get();
+
+        const turnoverBatch = db().batch();
+        turnoverBatch.update(seasonRef, {
           is_active: false,
           end_date: FieldValue.serverTimestamp(),
         });
+        if (nextSeasonDoc.exists) {
+          // Já existe (criada manualmente ou por run anterior): só ativa.
+          turnoverBatch.set(nextSeasonRef, {
+            is_active: true,
+            updated_at: FieldValue.serverTimestamp(),
+          }, {merge: true});
+        } else {
+          turnoverBatch.set(nextSeasonRef, {
+            name: `Temporada ${getMonthName(nextMonthKey)}`,
+            is_active: true,
+            start_date: FieldValue.serverTimestamp(),
+            created_at: FieldValue.serverTimestamp(),
+          });
+        }
+        await turnoverBatch.commit();
 
         if (mvp?.user_id) {
           const badgesRef = db()

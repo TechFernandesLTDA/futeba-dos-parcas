@@ -21,7 +21,7 @@
  * user-management.ts.
  */
 
-import {auth} from "firebase-functions/v1";
+import {runWith} from "firebase-functions/v1";
 import * as admin from "firebase-admin";
 import {logger} from "firebase-functions/v2";
 import {Storage} from "@google-cloud/storage";
@@ -53,7 +53,13 @@ const MAX_ANON_ITERATIONS = 1000;
  * @param {admin.auth.UserRecord} user - Registro do usuário deletado
  * @return {Promise<void>}
  */
-export const onUserDeleted = auth
+// FIX #3877: failurePolicy habilita retry real em background functions v1.
+// Sem ele, o `throw` de "PII anonymization incomplete" era no-op (só log) —
+// falha parcial deixava users_private (telefone, cpfHash) e índices
+// cpf_index/phone_index órfãos para sempre. Espelha o `retry: true` dos
+// triggers v2 (ex.: pii-migration.ts).
+export const onUserDeleted = runWith({failurePolicy: true})
+  .auth
   .user()
   .onDelete(
     async (user: admin.auth.UserRecord) => {
@@ -315,7 +321,12 @@ export const onUserDeleted = auth
         while (true) {
           const notificationsSnap = await db
             .collection("notifications")
-            .where("recipient_id", "==", uid)
+            // FIX #3877: o escritor (notifications/helpers.ts) grava
+            // `user_id`, não `recipient_id` — o campo errado fazia a query
+            // voltar sempre vazia e as notificações sobreviverem à exclusão
+            // da conta (PII: user_id, sender_name, title/body). Alinhado com
+            // account-merge.ts que já usa `user_id`.
+            .where("user_id", "==", uid)
             .limit(500)
             .get();
           if (notificationsSnap.empty) break;
@@ -325,13 +336,13 @@ export const onUserDeleted = auth
           notificationsTotal += notificationsSnap.size;
           if (notificationsSnap.size < 500) break;
         }
-        if (notificationsTotal > 0) {
-          logger.info(
-            "[ACCOUNT_CLEANUP] Deletando " +
-            `${notificationsTotal} ` +
-            `notifications do usuário ${uid}`
-          );
-        }
+        // FIX #3877: log incondicional (inclusive 0) — o log condicionado a
+        // > 0 escondia a limpeza que nunca apagava nada.
+        logger.info(
+          "[ACCOUNT_CLEANUP] Deletando " +
+          `${notificationsTotal} ` +
+          `notifications do usuário ${uid}`
+        );
 
         // FIX #786: LGPD Art. 18 VI — coleções de gameplay/social faltantes.
         // confirmations, mvp_votes, xp_logs, statistics, season_participation,

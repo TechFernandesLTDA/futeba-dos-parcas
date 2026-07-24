@@ -112,12 +112,25 @@ jest.mock("firebase-admin", () => {
   return mockAdmin;
 });
 
-jest.mock("firebase-functions/v1", () => ({
+// FIX #3877: o trigger agora é declarado via runWith({failurePolicy: true})
+// para que o throw de "PII anonymization incomplete" cause retry real.
+// O mock captura as opções para o teste de regressão afirmar a flag.
+// Captura das opções fora do jest.fn: jest.clearAllMocks() nos beforeEach
+// apagaria o registro da chamada, que acontece no load do módulo.
+const runWithOptionsCaptured: any[] = [];
+const mockRunWith = jest.fn((opts: any) => {
+  runWithOptionsCaptured.push(opts);
+  return mockRunWithBuilder();
+});
+const mockRunWithBuilder = () => ({
   auth: {
     user: () => ({
       onDelete: (handler: any) => handler,
     }),
   },
+});
+jest.mock("firebase-functions/v1", () => ({
+  runWith: mockRunWith,
 }));
 
 jest.mock("firebase-functions/v2", () => ({
@@ -397,5 +410,96 @@ describe("onUserDeleted — regressão #2323 loop infinito anonimização", () =
       expect(mockStartAfter).toHaveBeenCalled();
     },
     10000
+  );
+});
+
+// ==========================================
+// REGRESSÃO #3877 — LGPD: cleanup de notifications + retry real
+// ==========================================
+
+describe("onUserDeleted — regressão #3877 LGPD", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    batchInstances.length = 0;
+    mockDocGet.mockResolvedValue({exists: false, data: () => null});
+    mockCollectionGet.mockResolvedValue({docs: [], empty: true, size: 0});
+    mockCollectionGroupGet.mockResolvedValue({
+      docs: [],
+      empty: true,
+      size: 0,
+    });
+  });
+
+  afterEach(() => {
+    // Restaura o comportamento default de collection() para não vazar a
+    // implementação por-coleção deste describe para outros testes.
+    mockCollection.mockReturnValue({
+      where: mockWhere,
+      limit: mockLimit,
+      startAfter: mockStartAfter,
+      get: mockCollectionGet,
+    });
+  });
+
+  test(
+    "trigger é declarado com failurePolicy: true (throw causa retry real)",
+    () => {
+      // Antes do fix: auth.user().onDelete(...) sem runWith → failurePolicy
+      // default false → o throw "PII anonymization incomplete" era no-op.
+      // A captura acontece no load do módulo (por isso fora de clearAllMocks).
+      expect(runWithOptionsCaptured).toContainEqual({failurePolicy: true});
+    }
+  );
+
+  test(
+    "cleanup de notifications consulta user_id (campo real do escritor) " +
+    "e apaga os docs",
+    async () => {
+      // Antes do fix: a query usava `recipient_id`, campo que nenhum escritor
+      // grava (helpers.ts grava `user_id`) → retornava vazia e as notificações
+      // sobreviviam à exclusão da conta.
+      const uid = "user-to-delete";
+      const notificationRef = {id: "notif_1", path: "notifications/notif_1"};
+      let notificationsWhereField: string | undefined;
+      let notificationsServed = false;
+
+      mockCollection.mockImplementation((name: string) => {
+        const query: any = {
+          where: jest.fn((field: string) => {
+            if (name === "notifications") {
+              notificationsWhereField = field;
+            }
+            return query;
+          }),
+          limit: jest.fn(() => query),
+          startAfter: jest.fn(() => query),
+          get: jest.fn(() => {
+            if (name === "notifications" && !notificationsServed) {
+              notificationsServed = true;
+              return Promise.resolve({
+                docs: [{ref: notificationRef}],
+                empty: false,
+                size: 1,
+              });
+            }
+            return Promise.resolve({docs: [], empty: true, size: 0});
+          }),
+        };
+        return query;
+      });
+
+      await expect(
+        onUserDeleted(makeUserRecord(uid))
+      ).resolves.not.toThrow();
+
+      // Campo alinhado com o escritor (notifications/helpers.ts: user_id)
+      expect(notificationsWhereField).toBe("user_id");
+
+      // O doc de notification foi de fato enfileirado para delete no batch
+      const deletedRefs = batchInstances.flatMap((b) =>
+        b.delete.mock.calls.map((call: any[]) => call[0])
+      );
+      expect(deletedRefs).toContain(notificationRef);
+    }
   );
 });
