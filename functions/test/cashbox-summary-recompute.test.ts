@@ -49,7 +49,11 @@ jest.mock("firebase-admin/firestore", () => ({
 jest.mock("../src/_db", () => ({db: jest.fn(() => mockDb)}));
 
 const {onCashboxEntryWritten} = require("../src/cashbox/summary-recompute");
-const {reconcileCashboxSummaryForGroup} = require("../src/cashbox/summary");
+const {
+  reconcileCashboxSummaryForGroup,
+  CASHBOX_LEDGER_SCAN_LIMIT_EXCEEDED,
+  MAX_CASHBOX_LEDGER_SCAN_PAGES,
+} = require("../src/cashbox/summary");
 
 function snapshot(exists: boolean, data?: Record<string, unknown>) {
   return {exists, data: () => data};
@@ -199,5 +203,27 @@ describe("onCashboxEntryWritten incremental", () => {
       summary_version: 5,
       summary_source: "test",
     }), {merge: true});
+  });
+
+  it("SECFIX #3881: aborta a varredura em vez de percorrer o ledger indefinidamente", async () => {
+    // Cada página vem cheia (500 docs), então o cursor nunca encerra o
+    // laço "naturalmente" — só o teto de páginas deve interrompê-lo.
+    const fullPage = {
+      size: 500,
+      docs: Array.from({length: 500}, (_, index) => ({
+        id: `entry-${index}`,
+        data: () => ({status: "ACTIVE", type: "INCOME", amount: 1}),
+      })),
+    };
+    mockPageGet.mockResolvedValue(fullPage);
+    mockSummaryGet.mockResolvedValue(snapshot(true, {...summaryData, ledger_version: 1}));
+
+    await expect(reconcileCashboxSummaryForGroup("group1", {source: "test"}))
+      .rejects.toThrow(CASHBOX_LEDGER_SCAN_LIMIT_EXCEEDED);
+
+    // O scan nunca deve varrer mais páginas que o teto configurado.
+    expect(mockPageGet.mock.calls.length).toBeLessThanOrEqual(MAX_CASHBOX_LEDGER_SCAN_PAGES);
+    // E nenhuma escrita parcial/incorreta deve ser commitada no summary.
+    expect(mockRunTransaction).not.toHaveBeenCalled();
   });
 });

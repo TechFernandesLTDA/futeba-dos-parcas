@@ -762,16 +762,44 @@ export function isSameMonthlySettlementOperation(
 }
 
 /**
- * Mantém um roster elegível no mês em que o vínculo esteve ativo.
- * @param {Record<string, unknown>} roster Documento do roster.
- * @param {string} periodKey Período AAAA-MM.
- * @return {boolean} Se o jogador participa do rateio daquele período.
+ * Um intervalo de adesão mensal historicamente encerrado.
+ * `to` é exclusivo (mesma semântica de effective_to_period).
  */
-export function isMonthlyRosterEligible(
+interface MonthlyRosterPeriod {
+  from: string;
+  to: string;
+}
+
+/**
+ * Extrai o histórico de intervalos encerrados persistido no roster.
+ * @param {Record<string, unknown>} roster Documento do roster.
+ * @return {MonthlyRosterPeriod[]} Intervalos válidos, sem normalizar.
+ */
+function monthlyRosterPeriodHistory(
+  roster: Record<string, unknown>
+): MonthlyRosterPeriod[] {
+  const raw = roster.periods;
+  if (!Array.isArray(raw)) return [];
+  const result: MonthlyRosterPeriod[] = [];
+  for (const entry of raw) {
+    if (!entry || typeof entry !== "object") continue;
+    const from = temporalPeriod((entry as Record<string, unknown>).from);
+    const to = temporalPeriod((entry as Record<string, unknown>).to);
+    if (from && to) result.push({from, to});
+  }
+  return result;
+}
+
+/**
+ * Confere se a janela ATUAL (effective_from/to_period) cobre o período.
+ * @param {Record<string, unknown>} roster Documento do roster.
+ * @param {string} periodKey Período AAAA-MM já validado.
+ * @return {boolean} Se a janela corrente cobre o período.
+ */
+function isMonthlyRosterEligibleForCurrentWindow(
   roster: Record<string, unknown>,
   periodKey: string
 ): boolean {
-  assertPeriodKey(periodKey);
   const effectiveFrom = temporalPeriod(
     roster.effective_from_period ?? roster.effective_from
   );
@@ -781,6 +809,30 @@ export function isMonthlyRosterEligible(
   if (effectiveFrom && effectiveFrom > periodKey) return false;
   if (roster.active === true) return !effectiveTo || effectiveTo >= periodKey;
   return Boolean(effectiveTo && effectiveTo > periodKey);
+}
+
+/**
+ * Mantém um roster elegível no mês em que o vínculo esteve ativo.
+ *
+ * BUGFIX #3881: remover e readicionar um membro sobrescrevia o único par
+ * effective_from/to_period, perdendo o intervalo anterior. Agora o
+ * intervalo encerrado é preservado em `roster.periods` (lista de
+ * intervalos) antes de abrir uma nova janela, e a elegibilidade verifica
+ * a janela atual OU qualquer intervalo histórico.
+ *
+ * @param {Record<string, unknown>} roster Documento do roster.
+ * @param {string} periodKey Período AAAA-MM.
+ * @return {boolean} Se o jogador participa do rateio daquele período.
+ */
+export function isMonthlyRosterEligible(
+  roster: Record<string, unknown>,
+  periodKey: string
+): boolean {
+  assertPeriodKey(periodKey);
+  if (isMonthlyRosterEligibleForCurrentWindow(roster, periodKey)) return true;
+  return monthlyRosterPeriodHistory(roster).some(
+    (period) => period.from <= periodKey && periodKey < period.to
+  );
 }
 
 export const configureMonthlyFinance =
@@ -969,6 +1021,23 @@ export const setMonthlyMember = secureCallable<SetMonthlyMemberData>({
       const revision = safeRevision(current.revision) + 1;
       const rosterRevision = safeRevision(config.roster_revision) + 1;
       const effectivePeriod = currentPeriodInSaoPaulo();
+      // BUGFIX #3881: readicionar um membro após remoção sobrescrevia o
+      // único par effective_from/to_period, apagando o intervalo anterior
+      // (ex.: ativo 2026-03..05, removido, readicionado em 2026-07 fazia
+      // um rebuild de 2026-04 excluir o membro silenciosamente). Antes de
+      // abrir a nova janela, arquivamos o intervalo fechado anterior em
+      // `periods` para que isMonthlyRosterEligible continue enxergando-o.
+      const closingPreviousWindow = isMonthly &&
+        current.active === false &&
+        typeof current.effective_from_period === "string" &&
+        typeof current.effective_to_period === "string";
+      const periods = monthlyRosterPeriodHistory(current);
+      if (closingPreviousWindow) {
+        periods.push({
+          from: current.effective_from_period as string,
+          to: current.effective_to_period as string,
+        });
+      }
       tx.set(rosterRef, {
         user_id: targetUserId,
         active: isMonthly,
@@ -981,6 +1050,7 @@ export const setMonthlyMember = secureCallable<SetMonthlyMemberData>({
           current.effective_from_period ?? null,
         effective_to: isMonthly ? null : FieldValue.serverTimestamp(),
         effective_to_period: isMonthly ? null : effectivePeriod,
+        periods,
         updated_by: userId,
         updated_at: FieldValue.serverTimestamp(),
         ...(rosterDoc.exists ? {} : {

@@ -11,6 +11,18 @@ export const CASHBOX_OPERATION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 const RECONCILIATION_ATTEMPTS = 3;
 
 /**
+ * Teto de páginas por varredura do ledger (backstop contra scan ilimitado).
+ * Bem acima de qualquer grupo legítimo — o rate limit do callable
+ * (RATE_LIMITS.CASHBOX_RECONCILE) já é o controle primário de custo; este
+ * teto só existe para impedir que uma ÚNICA chamada varra indefinidamente.
+ * 200 páginas × 500 docs = 100.000 lançamentos.
+ */
+export const MAX_CASHBOX_LEDGER_SCAN_PAGES = 200;
+
+/** Erro lançado quando o ledger excede o teto de varredura. */
+export const CASHBOX_LEDGER_SCAN_LIMIT_EXCEEDED = "CASHBOX_LEDGER_SCAN_LIMIT_EXCEEDED";
+
+/**
  * Expiração dos marcadores idempotentes para evitar crescimento ilimitado.
  * @return {Date} Instante de expiração aceito nativamente pelo Firestore.
  */
@@ -155,14 +167,23 @@ async function scanCashboxLedger(
   let entryCount = 0;
   let lastEntryMillis = 0;
   let cursor: FirebaseFirestore.QueryDocumentSnapshot | null = null;
+  let pagesScanned = 0;
 
   while (true) {
+    // Backstop: nunca varrer indefinidamente, mesmo em ledgers patológicos
+    // ou em loop de contenção de CAS. O rate limit do callable é o
+    // controle primário; isto só limita o custo de UMA chamada.
+    if (pagesScanned >= MAX_CASHBOX_LEDGER_SCAN_PAGES) {
+      throw new Error(CASHBOX_LEDGER_SCAN_LIMIT_EXCEEDED);
+    }
+
     let pageQuery: FirebaseFirestore.Query = cashboxRef
       .orderBy(FieldPath.documentId())
       .limit(CASHBOX_LEDGER_PAGE_SIZE);
     if (cursor) pageQuery = pageQuery.startAfter(cursor);
 
     const page = await pageQuery.get();
+    pagesScanned += 1;
     for (const snapshot of page.docs) {
       const data = snapshot.data();
       const contribution = cashboxContribution(data);

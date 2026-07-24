@@ -3,7 +3,7 @@ const mockTxSet = jest.fn();
 const mockTxUpdate = jest.fn();
 const mockEntryRef = {id: "cashbox-request-0001", path: "groups/group-1/cashbox/cashbox-request-0001"};
 const mockSummaryRef = {path: "groups/group-1/cashbox_summary/current"};
-const mockMemberRef = {path: "groups/group-1/members/user-1"};
+const mockMemberRef = {path: "groups/group-1/members/user-1", get: jest.fn()};
 const mockUserRef = {path: "users/user-1"};
 const operationRefs = new Map<string, {path: string}>();
 const mockMonthlyPayerRef = {
@@ -36,6 +36,7 @@ const mockMonthlyPeriodRef = {
 const mockCashboxRef = {doc: jest.fn(() => mockEntryRef)};
 const mockGroupRef = {
   path: "groups/group-1",
+  get: jest.fn(),
   collection: jest.fn((name: string) => {
     if (name === "members") return {doc: jest.fn(() => mockMemberRef)};
     if (name === "cashbox_summary") return {doc: jest.fn(() => mockSummaryRef)};
@@ -71,6 +72,12 @@ class MockHttpsError extends Error {
   }
 }
 
+const secureCallableOptions: unknown[] = [];
+const mockSecureCallable = jest.fn((options: unknown, handler: unknown) => {
+  secureCallableOptions.push(options);
+  return handler;
+});
+
 jest.mock("firebase-functions/v2", () => ({
   logger: {info: jest.fn(), error: jest.fn()},
   https: {
@@ -84,15 +91,26 @@ jest.mock("firebase-admin/firestore", () => ({
     delete: jest.fn(() => ({_type: "DeleteField"})),
   },
   FieldPath: {documentId: jest.fn(() => "__name__")},
-  Timestamp: class MockTimestamp {},
+  Timestamp: class MockTimestamp {
+    static fromMillis(millis: number) {
+      return new MockTimestamp(millis);
+    }
+    constructor(private readonly millis: number = 0) {}
+    toMillis() { return this.millis; }
+  },
 }));
 jest.mock("../src/_db", () => ({db: jest.fn(() => mockDb)}));
+jest.mock("../src/middleware/secure-callable-wrapper", () => ({
+  secureCallable: mockSecureCallable,
+}));
 
 const {
   createCashboxEntry,
   isActiveGroupManager,
+  reconcileCashboxSummary,
   voidCashboxEntry,
 } = require("../src/cashbox/callable");
+const {RATE_LIMITS} = require("../src/middleware/rate-limiter");
 
 const groupSnapshot = {
   exists: true,
@@ -777,6 +795,35 @@ describe("cashbox callables incrementais", () => {
   });
 });
 
+describe("reconcileCashboxSummary — SECFIX #3881", () => {
+  it("é envolvida em secureCallable com rate limit dedicado e token não replayável", () => {
+    const options = secureCallableOptions.find((option) =>
+      (option as {rateLimit?: unknown}).rateLimit === RATE_LIMITS.CASHBOX_RECONCILE);
+    expect(options).toMatchObject({
+      consumeAppCheckToken: true,
+      rateLimit: RATE_LIMITS.CASHBOX_RECONCILE,
+    });
+  });
+
+  it("nega reconciliação para quem não é admin ativo do grupo, sem varrer o ledger", async () => {
+    mockGroupRef.get.mockResolvedValueOnce({
+      exists: true,
+      data: () => ({owner_id: "owner", status: "ACTIVE"}),
+    });
+    mockMemberRef.get.mockResolvedValueOnce({
+      exists: true,
+      data: () => ({user_id: "user-1", role: "MEMBER", status: "ACTIVE"}),
+    });
+
+    await expect(reconcileCashboxSummary({
+      auth: {uid: "user-1", token: {}},
+      data: {groupId: "group-1"},
+    })).rejects.toMatchObject({code: "permission-denied"});
+
+    expect(mockCashboxRef).not.toHaveProperty("orderBy");
+  });
+});
+
 describe("isActiveGroupManager", () => {
   test("aceita owner canônico mesmo sem membership íntegra", () => {
     expect(isActiveGroupManager(undefined, {owner_id: "user-1"}, "user-1"))
@@ -794,5 +841,82 @@ describe("isActiveGroupManager", () => {
       {owner_id: "other"},
       "user-1"
     )).toBe(false);
+  });
+});
+
+// Cobertura complementar #3881: auditLogContext e mapeamento de erros do catch
+// (linhas exigidas pelo diff-coverage gate do CI).
+describe("reconcileCashboxSummary — auditLogContext e mapeamento de erros", () => {
+  const summaryModule = require("../src/cashbox/summary");
+  const {https} = require("firebase-functions/v2");
+
+  const adminGroupSnapshot = {
+    exists: true,
+    data: () => ({owner_id: "user-1", status: "ACTIVE"}),
+  };
+  const adminMemberSnapshot = {
+    exists: true,
+    data: () => ({user_id: "user-1", role: "ADMIN", status: "ACTIVE"}),
+  };
+
+  const callAsAdmin = () => {
+    mockGroupRef.get.mockResolvedValueOnce(adminGroupSnapshot);
+    mockMemberRef.get.mockResolvedValueOnce(adminMemberSnapshot);
+    return reconcileCashboxSummary({
+      auth: {uid: "user-1", token: {}},
+      data: {groupId: "group-1"},
+    });
+  };
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it("auditLogContext extrai group_id do payload e tolera payload invalido", async () => {
+    const options = secureCallableOptions.find((option) =>
+      (option as {rateLimit?: unknown}).rateLimit ===
+        RATE_LIMITS.CASHBOX_RECONCILE) as {
+      auditLogContext: (req: unknown) => Promise<Record<string, unknown>>;
+    };
+    await expect(options.auditLogContext({data: {groupId: "group-1"}}))
+      .resolves.toEqual({
+        action: "reconcile_cashbox_summary",
+        group_id: "group-1",
+      });
+    await expect(options.auditLogContext({data: null}))
+      .resolves.toEqual({
+        action: "reconcile_cashbox_summary",
+        group_id: null,
+      });
+  });
+
+  it("mapeia ledger grande demais para resource-exhausted", async () => {
+    jest.spyOn(summaryModule, "reconcileCashboxSummaryForGroup")
+      .mockRejectedValueOnce(
+        new Error(summaryModule.CASHBOX_LEDGER_SCAN_LIMIT_EXCEEDED));
+    await expect(callAsAdmin())
+      .rejects.toMatchObject({code: "resource-exhausted"});
+  });
+
+  it("mapeia conflito de CAS para aborted", async () => {
+    jest.spyOn(summaryModule, "reconcileCashboxSummaryForGroup")
+      .mockRejectedValueOnce(new Error("CASHBOX_RECONCILIATION_CONFLICT"));
+    await expect(callAsAdmin())
+      .rejects.toMatchObject({code: "aborted"});
+  });
+
+  it("mapeia erro desconhecido para internal", async () => {
+    jest.spyOn(summaryModule, "reconcileCashboxSummaryForGroup")
+      .mockRejectedValueOnce(new Error("boom"));
+    await expect(callAsAdmin())
+      .rejects.toMatchObject({code: "internal"});
+  });
+
+  it("re-lanca HttpsError interno sem mascarar o codigo", async () => {
+    jest.spyOn(summaryModule, "reconcileCashboxSummaryForGroup")
+      .mockRejectedValueOnce(
+        new https.HttpsError("failed-precondition", "Grupo indisponível"));
+    await expect(callAsAdmin())
+      .rejects.toMatchObject({code: "failed-precondition"});
   });
 });
