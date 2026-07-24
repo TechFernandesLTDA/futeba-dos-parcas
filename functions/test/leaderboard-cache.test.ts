@@ -85,7 +85,10 @@ jest.mock("../src/constants", () => ({
   },
 }));
 
-import {__testing} from "../src/cache/leaderboard-cache";
+import {
+  __testing,
+  invalidateLeaderboardOnParticipation,
+} from "../src/cache/leaderboard-cache";
 
 describe("leaderboard-cache batching", () => {
   beforeEach(() => {
@@ -447,6 +450,92 @@ describe("leaderboard-cache batching", () => {
     expect(Array.from(__testing.sanitizeUserIds(["u1", "u1", "u2"]) ?? []))
       .toEqual(["u1", "u2"]);
     expect(() => __testing.sanitizeUserIds("u1")).toThrow();
+  });
+});
+
+describe("invalidateLeaderboardOnParticipation (#3883)", () => {
+  const invalidate = invalidateLeaderboardOnParticipation as unknown as (
+    event: unknown
+  ) => Promise<void>;
+
+  // Doc do cache de diretório público da Liga (#3358): carrega `kind`.
+  const directoryDoc = {
+    data: () => ({
+      kind: "league_players_directory",
+      season_id: "season-1",
+    }),
+    ref: {path: "cache_leaderboard/league_players__season-1__global__ALL"},
+  };
+
+  // Doc do cache de rankings (getLeaderboardCached): NÃO tem `kind`.
+  const rankingDoc = {
+    data: () => ({season_id: "season-1", rankings: []}),
+    ref: {path: "cache_leaderboard/season-1_ALL_100"},
+  };
+
+  const eventForSeason = (seasonId: string | undefined) => ({
+    data: {
+      before: undefined,
+      after: {data: () => ({season_id: seasonId})},
+    },
+  });
+
+  const mockWhereGet = (docs: unknown[]) => {
+    const get = jest.fn().mockResolvedValue({
+      empty: docs.length === 0,
+      size: docs.length,
+      docs,
+    });
+    mockCollection.mockImplementation(() => ({
+      where: jest.fn(() => ({get})),
+    }));
+    return get;
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockBatchCommit.mockResolvedValue(undefined);
+  });
+
+  it("preserva o cache de diretório e deleta só o cache de rankings", async () => {
+    mockWhereGet([directoryDoc, rankingDoc]);
+
+    await invalidate(eventForSeason("season-1"));
+
+    // Só o doc de rankings é deletado.
+    expect(mockBatchDelete).toHaveBeenCalledTimes(1);
+    expect(mockBatchDelete).toHaveBeenCalledWith(rankingDoc.ref);
+    // Diretório NUNCA é tocado (regressão do #3358 evitada).
+    expect(mockBatchDelete).not.toHaveBeenCalledWith(directoryDoc.ref);
+    expect(mockBatchCommit).toHaveBeenCalledTimes(1);
+  });
+
+  it("não deleta nada quando só existe cache de diretório", async () => {
+    mockWhereGet([directoryDoc]);
+
+    await invalidate(eventForSeason("season-1"));
+
+    expect(mockBatchDelete).not.toHaveBeenCalled();
+    expect(mockBatchCommit).not.toHaveBeenCalled();
+  });
+
+  it("early-return quando o snapshot está vazio (idempotente)", async () => {
+    const get = mockWhereGet([]);
+
+    await invalidate(eventForSeason("season-1"));
+
+    expect(get).toHaveBeenCalledTimes(1);
+    expect(mockBatchDelete).not.toHaveBeenCalled();
+  });
+
+  it("ignora eventos sem season_id", async () => {
+    const get = mockWhereGet([rankingDoc]);
+
+    await invalidate(eventForSeason(undefined));
+
+    // Nem chega a consultar o cache.
+    expect(get).not.toHaveBeenCalled();
+    expect(mockBatchDelete).not.toHaveBeenCalled();
   });
 });
 
