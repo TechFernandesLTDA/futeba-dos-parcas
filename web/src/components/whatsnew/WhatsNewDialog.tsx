@@ -21,7 +21,7 @@ import {
 import { Close as CloseIcon } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { ReleaseNote } from '../../types/releaseNotes';
-import { ReleaseNoteContent, ReleaseTypeBadge } from './ReleaseNoteContent';
+import { FormattedText, ReleaseNoteContent, ReleaseTypeBadge } from './ReleaseNoteContent';
 import { trackEvent } from '../../utils/analytics';
 
 interface WhatsNewDialogProps {
@@ -72,7 +72,7 @@ export const WhatsNewDialog: React.FC<WhatsNewDialogProps> = ({ note, open, onCl
 
           {note.headline && (
             <Typography id="whats-new-dialog-title" variant="h6" component="h2">
-              {note.headline}
+              <FormattedText text={note.headline} />
             </Typography>
           )}
 
