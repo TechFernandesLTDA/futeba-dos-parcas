@@ -449,3 +449,68 @@ describe("leaderboard-cache batching", () => {
     expect(() => __testing.sanitizeUserIds("u1")).toThrow();
   });
 });
+
+// Cobertura complementar #3879: branch de FAILED_PRECONDITION (indice ausente)
+// em getCachedLeaguePlayersDirectory (linhas exigidas pelo diff-coverage gate).
+describe("getCachedLeaguePlayersDirectory — erro de indice ausente (#3879)", () => {
+  const makeFailingCacheRef = () => ({
+    path: "cache_leaderboard/league_players__all_seasons__global__ALL",
+    get: jest.fn().mockRejectedValue(new Error("cache read failed")),
+    collection: jest.fn(() => ({
+      doc: jest.fn((id: string) => ({path: `chunks/${id}`})),
+    })),
+  });
+
+  it("loga erro distinto de configuracao quando a query exige indice e propaga", async () => {
+    const logger = jest.requireMock("firebase-functions").logger;
+    (logger.error as jest.Mock).mockClear();
+    const missingIndexError = Object.assign(
+      new Error("The query requires an index. You can create it here: ..."),
+      {code: 9}
+    );
+    const usersQuery = {
+      where: jest.fn(() => usersQuery),
+      orderBy: jest.fn(() => usersQuery),
+      limit: jest.fn(() => usersQuery),
+      get: jest.fn().mockRejectedValue(missingIndexError),
+    };
+    const cacheRef = makeFailingCacheRef();
+    mockCollection.mockImplementation((name: string) => {
+      if (name === "cache_leaderboard") return {doc: () => cacheRef};
+      if (name === "users") return usersQuery;
+      return {doc: mockDoc};
+    });
+
+    await expect(__testing.getCachedLeaguePlayersDirectory(null, null, "ALL"))
+      .rejects.toBe(missingIndexError);
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.stringContaining("Indice composto ausente"),
+      expect.objectContaining({genderKey: "ALL"})
+    );
+  });
+
+  it("propaga erro transitorio sem log de indice ausente", async () => {
+    const logger = jest.requireMock("firebase-functions").logger;
+    (logger.error as jest.Mock).mockClear();
+    const transientError = new Error("deadline exceeded");
+    const usersQuery = {
+      where: jest.fn(() => usersQuery),
+      orderBy: jest.fn(() => usersQuery),
+      limit: jest.fn(() => usersQuery),
+      get: jest.fn().mockRejectedValue(transientError),
+    };
+    const cacheRef = makeFailingCacheRef();
+    mockCollection.mockImplementation((name: string) => {
+      if (name === "cache_leaderboard") return {doc: () => cacheRef};
+      if (name === "users") return usersQuery;
+      return {doc: mockDoc};
+    });
+
+    await expect(__testing.getCachedLeaguePlayersDirectory(null, null, "ALL"))
+      .rejects.toBe(transientError);
+    expect(logger.error).not.toHaveBeenCalledWith(
+      expect.stringContaining("Indice composto ausente"),
+      expect.anything()
+    );
+  });
+});
