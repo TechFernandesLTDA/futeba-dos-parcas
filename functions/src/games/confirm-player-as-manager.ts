@@ -247,6 +247,11 @@ export const confirmPlayerAsManager = onCall<ConfirmPlayerAsManagerRequest>(
           confirmed_at: serverTs,
           updated_at: serverTs,
           confirmed_by_manager: managerUid,
+          // #3874: sinaliza ao trigger onConfirmationWrite que os contadores
+          // do jogo ja foram reconciliados nesta transacao (contrato #3501,
+          // espelha join-public-game). Sem o token o trigger somaria +1 por
+          // cima da escrita absoluta abaixo, inflando players_count.
+          capacity_sync_token: randomUUID(),
         };
         if (typeof existing.expected_payment !== "number") {
           updateData.expected_payment = payment.amount;
