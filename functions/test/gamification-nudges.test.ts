@@ -387,7 +387,10 @@ const firestore = {
   collectionGroup: jest.fn((name: string) => collectionGroupRef(name)),
 };
 
-import {sendGamificationNudgesDaily} from "../src/gamification-nudges";
+import {
+  runGamificationNudges,
+  sendGamificationNudgesDaily,
+} from "../src/gamification-nudges";
 
 const baseNow = new Date("2026-07-19T15:00:00.000Z");
 
@@ -606,7 +609,7 @@ describe("gamification nudges daily scheduler", () => {
     expect(mockLogger.info).toHaveBeenCalledWith("[GAMIFICATION_NUDGES] daily run complete");
   });
 
-  it("libera a claim e permite retry depois de falha de envio", async () => {
+  it("isola a falha de envio (nao aborta o run), libera a claim e permite retry", async () => {
     seedEligibleUser({experiencePoints: 1755, goals: 0, streak: 2});
 
     mockSendAndSaveNotification.mockImplementationOnce(async (
@@ -618,9 +621,18 @@ describe("gamification nudges daily scheduler", () => {
       throw new Error("FCM unavailable");
     });
 
-    await expect(sendGamificationNudgesDaily()).rejects.toThrow("FCM unavailable");
+    // #3875: o run NAO deve mais propagar a falha do usuario — deve logar e
+    // seguir. A claim e liberada para preservar a idempotencia do dedup.
+    await expect(sendGamificationNudgesDaily()).resolves.toBeUndefined();
     expect(mockReleaseNotificationEvent).toHaveBeenCalledWith(
       "gamification_nudge_almost_level_user-1_2026-07-19",
+    );
+    expect(mockLogger.error).toHaveBeenCalledWith(
+      "[GAMIFICATION_NUDGES] falha ao processar usuário; seguindo",
+      expect.objectContaining({userId: "user-1"}),
+    );
+    expect(mockLogger.info).toHaveBeenCalledWith(
+      "[GAMIFICATION_NUDGES] daily run complete",
     );
 
     await sendGamificationNudgesDaily();
@@ -629,6 +641,119 @@ describe("gamification nudges daily scheduler", () => {
     expect(mockCompleteNotificationEvent).toHaveBeenCalledWith(
       "gamification_nudge_almost_level_user-1_2026-07-19",
     );
+  });
+
+  it("uma falha de usuario nao impede os proximos de receberem nudge", async () => {
+    // Dois usuarios elegiveis a "quase nivel". O primeiro (por ordem de id)
+    // lanca no envio; o segundo ainda deve receber.
+    seedDoc("users/user-a", {experience_points: 1755});
+    seedDoc("users/user-b", {experience_points: 1755});
+
+    mockSendAndSaveNotification.mockImplementation(async (
+      userId: string,
+      payload: Record<string, unknown>,
+      docId?: string,
+    ) => {
+      notificationCalls.push({userId, payload, docId});
+      if (userId === "user-a") {
+        throw new Error("documento corrompido");
+      }
+      store.set(`notifications/${docId}`, {user_id: userId, ...payload});
+      deliveredNotifications.push({userId, payload, docId});
+      return true;
+    });
+
+    await expect(sendGamificationNudgesDaily()).resolves.toBeUndefined();
+
+    expect(mockReleaseNotificationEvent).toHaveBeenCalledWith(
+      "gamification_nudge_almost_level_user-a_2026-07-19",
+    );
+    expect(deliveredNotifications.map(({userId}) => userId)).toContain("user-b");
+    expect(mockLogger.info).toHaveBeenCalledWith(
+      "[GAMIFICATION_NUDGES] daily run complete",
+    );
+  });
+
+  it("persiste o cursor ao esgotar o orcamento e retoma na execucao seguinte", async () => {
+    // Quatro usuarios elegiveis; pageLimit=2 e orcamento estourado apos a
+    // primeira pagina. A primeira execucao processa user-1/user-2 e persiste o
+    // cursor; a segunda retoma de user-3/user-4 (sem reprocessar o prefixo).
+    for (const id of ["user-1", "user-2", "user-3", "user-4"]) {
+      seedDoc(`users/${id}`, {experience_points: 1755});
+    }
+
+    // Relogio artificial: avanca alem do orcamento logo apos a 1a pagina.
+    let ticks = 0;
+    const now = () => {
+      ticks += 1;
+      return ticks === 1 ? 0 : 10_000;
+    };
+
+    await runGamificationNudges({
+      pageLimit: 2,
+      timeBudgetMs: 1_000,
+      concurrency: 1,
+      now,
+    });
+
+    // 1a execucao: apenas user-1 e user-2.
+    expect(notificationCalls.map(({userId}) => userId).sort())
+      .toEqual(["user-1", "user-2"]);
+    // Cursor persistido aponta para o ultimo processado (user-2).
+    expect(store.get("system_state/gamification_nudges_cursor"))
+      .toEqual(expect.objectContaining({last_user_id: "user-2"}));
+
+    // 2a execucao: retoma de user-3 (sem relogio artificial, roda ate o fim).
+    notificationCalls.length = 0;
+    await runGamificationNudges({pageLimit: 2});
+
+    expect(notificationCalls.map(({userId}) => userId).sort())
+      .toEqual(["user-3", "user-4"]);
+    // Varredura concluida: doc de estado apagado.
+    expect(store.has("system_state/gamification_nudges_cursor")).toBe(false);
+    expect(mockLogger.info).toHaveBeenCalledWith(
+      "[GAMIFICATION_NUDGES] daily run complete",
+    );
+  });
+
+  it("encontra o grupo ativo relevante mesmo com mais de 20 memberships", async () => {
+    // Usuario com 25 grupos inativos (ids que ordenam antes) + 1 grupo ativo
+    // com jogo futuro aberto. O limit(20) sem orderBy antigo podia devolver so
+    // os inativos; com orderBy(documentId()) + cap 100, o ativo aparece.
+    const userId = "user-1";
+    seedDoc(`users/${userId}`, {experience_points: 0});
+    seedDoc(`statistics/${userId}`, {totalGoals: 0});
+    seedDoc(`user_streaks/${userId}`, {current_streak: 3});
+
+    for (let index = 0; index < 25; index++) {
+      const groupId = `group-inactive-${String(index).padStart(2, "0")}`;
+      seedDoc(`groups/${groupId}/members/member-${userId}`, {
+        user_id: userId,
+        status: "INACTIVE",
+      });
+    }
+
+    // Id ordena depois dos inativos ("group-inactive-*" < "group-z-active").
+    const activeGroup = "group-z-active";
+    seedDoc(`groups/${activeGroup}/members/member-${userId}`, {
+      user_id: userId,
+      status: "ACTIVE",
+    });
+    seedDoc("games/game-active", {
+      group_id: activeGroup,
+      status: "SCHEDULED",
+      dateTime: {toDate: () => new Date("2026-07-20T15:00:00.000Z")},
+    });
+
+    await sendGamificationNudgesDaily();
+
+    const streakCall = notificationCalls.find(
+      ({payload}) => payload.action === "games",
+    );
+    expect(streakCall).toBeDefined();
+    expect(streakCall?.payload).toEqual(expect.objectContaining({
+      gameId: "game-active",
+    }));
   });
 
   it("seleciona um jogo futuro aberto mesmo quando os primeiros estao confirmados", async () => {
