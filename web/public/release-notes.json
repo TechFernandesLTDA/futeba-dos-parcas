@@ -1,6 +1,6 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-20T23:46:20.830Z",
+  "generatedAt": "2026-07-25T14:21:01.399Z",
   "notes": [
     {
       "version": "1.56.4",
@@ -15,10 +15,7 @@
       "improved": [],
       "fixed": [
         "O endereço antigo do monitor de performance agora leva o administrador para a gestão de usuários.",
-        "A tela vazia de métricas técnicas não é mais carregada no aplicativo publicado.",
-        "`/admin/performance` preserva a proteção de administrador e redireciona para `/admin/users`.",
-        "O import lazy de `PerformanceDashboard` foi removido do bundle.",
-        "Adicionado contrato automatizado para o redirecionamento da rota legada."
+        "A tela vazia de métricas técnicas não é mais carregada no aplicativo publicado."
       ],
       "issueRefs": [
         3872
@@ -37,10 +34,7 @@
       "improved": [],
       "fixed": [
         "Falhas da ação “Confirmar” deixam de cair na mensagem genérica de acesso ao Firestore.",
-        "A tela agora usa o código retornado pela Cloud Function e orienta recarregar a página quando necessário.",
-        "`PendingPlayersSection` passou a usar `getFunctionsErrorMessage`.",
-        "Adicionado fallback traduzido em português, inglês e espanhol.",
-        "Contrato automatizado impede regressão para o mapeador incorreto de Firestore."
+        "A tela agora usa o código retornado pela Cloud Function e orienta recarregar a página quando necessário."
       ],
       "issueRefs": [
         3868
@@ -59,10 +53,7 @@
       "improved": [],
       "fixed": [
         "O nome do jogador não colide mais com o botão “Confirmar” em telas estreitas.",
-        "No celular, a ação passa para uma linha própria; no desktop, continua compacta à direita.",
-        "`PendingPlayersSection` deixou de usar `secondaryAction` absoluto na lista.",
-        "Conteúdo e ação agora têm layout responsivo `column`/`row`, quebra segura de nomes e largura adaptativa.",
-        "Adicionado contrato automatizado para impedir regressão do layout mobile."
+        "No celular, a ação passa para uma linha própria; no desktop, continua compacta à direita."
       ],
       "issueRefs": [
         3866
@@ -81,10 +72,7 @@
       "improved": [],
       "fixed": [
         "Convites automáticos de membros do grupo não aparecem mais repetidos como “Membro” quando o nome não está duplicado no cadastro interno do grupo.",
-        "O nome agora é obtido pela projeção autorizada dos participantes do grupo antes de criar a confirmação.",
-        "`useAutoInviteMembers` hidrata nomes ausentes ou genéricos com `getLeaguePlayers` limitado ao grupo.",
-        "`getUsersByIds` aceita `groupId` para incluir membros autorizados que não estão no diretório público global.",
-        "Adicionada cobertura de regressão para membro com placeholder no documento do grupo."
+        "O nome agora é obtido pela projeção autorizada dos participantes do grupo antes de criar a confirmação."
       ],
       "issueRefs": [
         3864
@@ -107,9 +95,7 @@
       "fixed": [
         "O relatório pós-jogo agora soma pagamentos parciais ao total arrecadado (antes o valor ficava subestimado quando havia pagamentos parciais).",
         "Co-organizadores e administradores voltam a ver o botão \"Adicionar evento\" na tela de eventos ao vivo (antes só o dono do jogo via).",
-        "Removidos ícones de \"Assistência\" e \"Substituição\" na tela ao vivo que nunca eram usados (o sistema só registra gol, defesa e cartões).",
-        "`LiveEventsScreen` reconhece co-organizadores e admins no `canManage`.",
-        "`LiveGameScreen` não renderiza mais ícones de eventos não suportados pelo backend."
+        "Removidos ícones de \"Assistência\" e \"Substituição\" na tela ao vivo que nunca eram usados (o sistema só registra gol, defesa e cartões)."
       ],
       "issueRefs": [
         3862
@@ -128,10 +114,7 @@
       "improved": [],
       "fixed": [
         "O item “Atalhos de teclado” não ocupa mais uma área gigante na navegação desktop.",
-        "O ícone de atalhos agora segue o mesmo tamanho dos demais ícones da barra lateral.",
-        "Impedido o crescimento flexível do `ListItemButton` de atalhos no drawer desktop.",
-        "Aplicado o token compartilhado de 24 px ao ícone de atalhos.",
-        "Adicionado contrato automatizado para o tamanho e o comportamento flexível do item."
+        "O ícone de atalhos agora segue o mesmo tamanho dos demais ícones da barra lateral."
       ],
       "issueRefs": [
         3860
@@ -171,8 +154,7 @@
         "Vocabulário PT-BR foi padronizado em navegação, perfil, ranking e notificações."
       ],
       "fixed": [
-        "Textos residuais em inglês deixaram de aparecer quando o idioma selecionado é PT-BR.",
-        "Traduções e terminologia de gamificação foram corrigidas sem alterar placeholders."
+        "Textos residuais em inglês deixaram de aparecer quando o idioma selecionado é PT-BR."
       ],
       "issueRefs": [
         3843,
@@ -450,8 +432,7 @@
       ],
       "fixed": [
         "O atalho Quadras deixa de redirecionar jogadores silenciosamente para o início.",
-        "Donos de quadra e administradores continuam chegando diretamente à gestão de quadras.",
-        "`/locations` usa `/map/locations` como fallback seguro para usuários sem papel de gestão."
+        "Donos de quadra e administradores continuam chegando diretamente à gestão de quadras."
       ],
       "issueRefs": [
         3737
@@ -479,12 +460,7 @@
         "Corrigido o destaque simultâneo de Perfil com outras seções.",
         "Corrigidos atalhos ausentes e links de breadcrumb que levavam a rotas inexistentes.",
         "Corrigidos overflow da sidebar em telas baixas, skeletons de rotas e correspondência frágil de URLs de quadras.",
-        "Preservado o acesso direto à edição do perfil pela foto e pelo nome.",
-        "Navegação consolidada em `NAV_ITEMS`, com matching por rota, fallback por superfície e `aria-current`.",
-        "Rail `md` com popover acessível e drawer `lg` derivados da mesma fonte de dados.",
-        "404 sensível à autenticação e foco pós-navegação compatível com movimento reduzido.",
-        "Breadcrumbs dinâmicos hierárquicos com redirects de pais válidos.",
-        "Tokens de tema, contraste dark-mode e pluralização i18n alinhados."
+        "Preservado o acesso direto à edição do perfil pela foto e pelo nome."
       ],
       "issueRefs": [
         3726,
@@ -515,10 +491,7 @@
       ],
       "fixed": [
         "Corrigido o rodapé da barra lateral que parecia interativo, mas não aceitava clique nem teclado.",
-        "A ação de salvar deixa de ficar separada dos controles que ela atualiza.",
-        "Identidade da `AppSidebar` migrada para `ListItemButton` acessível com rota `/profile/edit`.",
-        "`SettingsScreen` usa a foto real do jogador e um grid responsivo para notificações.",
-        "Contratos e testes cobrem a navegação do rodapé, o atalho de perfil e a ordem da ação de salvar."
+        "A ação de salvar deixa de ficar separada dos controles que ela atualiza."
       ],
       "issueRefs": [
         3724
@@ -539,9 +512,7 @@
         "A ação continua clara e acessível também em telas menores."
       ],
       "fixed": [
-        "Corrigida a descoberta da edição do perfil próprio na navegação desktop.",
-        "A ação foi movida do rodapé da `ProfileTab` para o cabeçalho, acima do cartão de nível.",
-        "Teste de regressão garante que o botão aparece antes do conteúdo longo e mantém a rota `/profile/edit`."
+        "Corrigida a descoberta da edição do perfil próprio na navegação desktop."
       ],
       "issueRefs": [
         3722
@@ -563,10 +534,7 @@
       ],
       "fixed": [
         "Removida do navegador a tentativa de alterar um timestamp reservado ao servidor.",
-        "Campos opcionais deixam de enviar valores que o Firestore não aceita.",
-        "Payload público do perfil isolado e coberto por testes determinísticos.",
-        "Cobertura de emulador adicionada para todos os campos editáveis e para `updated_at` protegido.",
-        "Permissões de avatar validadas para owner, terceiros, anônimo, MIME, tamanho, filename e exclusão."
+        "Campos opcionais deixam de enviar valores que o Firestore não aceita."
       ],
       "issueRefs": [
         3720
@@ -587,9 +555,7 @@
         "As setas de expansão permanecem alinhadas à direita sem deslocar os textos."
       ],
       "fixed": [
-        "O bloco de FAQ deixa de ficar ancorado à esquerda em telas largas.",
-        "Centralização do contêiner responsivo, do conteúdo dos acordeões e das respostas.",
-        "Identificação semântica da seção de FAQ para tecnologias assistivas."
+        "O bloco de FAQ deixa de ficar ancorado à esquerda em telas largas."
       ],
       "issueRefs": [
         3718
@@ -611,9 +577,7 @@
       ],
       "fixed": [
         "O selo “CONFIRMADO” permanece em uma única linha no cartão da próxima rodada.",
-        "A landing preserva alinhamento, alvos de toque e ausência de rolagem horizontal em diferentes tamanhos de tela.",
-        "Composição responsiva do hero reorganizada com CSS Grid e ordem semântica consistente.",
-        "Restrições de flexbox ajustadas no cabeçalho e no selo de status."
+        "A landing preserva alinhamento, alvos de toque e ausência de rolagem horizontal em diferentes tamanhos de tela."
       ],
       "issueRefs": [
         3716
@@ -630,13 +594,13 @@
       "highlights": [],
       "added": [],
       "improved": [
-        "Visitantes deslogados encontram a landing pública diretamente em `futebadosparcas.com.br`.",
+        "Visitantes deslogados encontram a landing pública diretamente em futebadosparcas.com.br.",
         "A imagem “Futeba dos Parças — Sua pelada organizada. Seu futebol evoluindo.” aparece no destaque principal da página.",
         "Usuários autenticados continuam acessando normalmente o painel pela mesma URL."
       ],
       "fixed": [
         "A raiz do site deixa de redirecionar visitantes diretamente para a tela de login.",
-        "A antiga rota `/launch` passa a apontar para a página principal, evitando conteúdo público duplicado no Google."
+        "A antiga página de lançamento passa a apontar para a página principal, evitando conteúdo público duplicado no Google."
       ],
       "issueRefs": [
         3713
@@ -659,10 +623,7 @@
       ],
       "fixed": [
         "A marca “Futeba dos Parças” e a acentuação em português foram padronizadas na página pública.",
-        "Sitemap, robots, canonical e previews sociais agora usam o domínio oficial `futebadosparcas.com.br` de forma consistente.",
-        "Rotas privadas e de autenticação recebem `noindex, nofollow`.",
-        "O helper compartilhado de testes inclui o `PwaInstallProvider`, eliminando falhas de Login e Home.",
-        "Mocks de busca e jogadores deixam de inicializar Cloud Functions fora do escopo dos testes."
+        "Sitemap, robots, canonical e previews sociais agora usam o domínio oficial futebadosparcas.com.br de forma consistente."
       ],
       "issueRefs": [
         3705,
@@ -689,12 +650,7 @@
       ],
       "fixed": [
         "A Home não mostra mais “Espaço do app — Bloqueado”, pois a persistência de cache é decidida automaticamente pelo navegador e não é uma permissão configurável.",
-        "Fechar a sugestão de instalação deixa de escondê-la para sempre; ela pode reaparecer após 30 dias.",
-        "O listener de `beforeinstallprompt` passou para um provider global e não perde mais o evento ao navegar entre telas.",
-        "A persistência de storage é solicitada silenciosamente após instalação ou abertura standalone, sem bloquear o uso quando o navegador retorna `false`.",
-        "Canonical, Open Graph, Twitter Cards e App Links agora apontam para `https://futebadosparcas.com.br`.",
-        "`firebase-messaging-sw.js` deixou de receber cache imutável de um ano.",
-        "O ciclo de atualização do service worker respeita a confirmação já apresentada pelo aplicativo."
+        "Fechar a sugestão de instalação deixa de escondê-la para sempre; ela pode reaparecer após 30 dias."
       ],
       "issueRefs": [
         3703
@@ -713,9 +669,7 @@
       "improved": [],
       "fixed": [
         "O fluxo de autenticação deixa de depender do domínio técnico do Firebase ao abrir pelo novo endereço oficial.",
-        "O domínio oficial e o callback de autenticação foram autorizados no cliente OAuth do Google.",
-        "`VITE_FIREBASE_AUTH_DOMAIN` agora usa `futebadosparcas.com.br`, mantendo o iframe e o handler de autenticação na mesma origem do aplicativo.",
-        "O cliente OAuth Web autoriza `https://futebadosparcas.com.br` e `https://futebadosparcas.com.br/__/auth/handler`."
+        "O domínio oficial e o callback de autenticação foram autorizados no cliente OAuth do Google."
       ],
       "issueRefs": [
         3700
@@ -735,10 +689,7 @@
       "fixed": [
         "A agenda e a criação de jogos deixam de falhar quando a quadra possui um jogo privado de outro grupo.",
         "Convites, reforços, busca global, confronto e elencos deixam de consultar perfis completos diretamente.",
-        "Resultados de jogadores continuam exibindo somente nome, foto e informações esportivas autorizadas.",
-        "`useFieldGames` e a validação final de conflito usam `getFieldAvailability`, que retorna apenas intervalos ocupados.",
-        "Todas as listagens Web na coleção raiz `users` foram migradas para a projeção whitelist de `getLeaguePlayers`.",
-        "Hidratações com mais de 500 IDs são divididas em lotes sem descarte silencioso."
+        "Resultados de jogadores continuam exibindo somente nome, foto e informações esportivas autorizadas."
       ],
       "issueRefs": [
         3688,
@@ -760,11 +711,7 @@
         "Convidados conseguem abrir o jogo privado específico para o qual foram chamados, sem liberar outros jogos do grupo.",
         "Coorganizadores voltam a usar chat, caronas e recados pós-jogo quando a tela oferece esses controles.",
         "Visitantes sem login podem abrir o detalhe público de uma quadra sem erros causados por avaliações e campos privados.",
-        "Uma avaliação existente pode ser editada sem falhar por conflito nos timestamps protegidos.",
-        "As regras de `games` separam `get` de `list` e reconhecem somente a confirmação determinística do próprio convidado.",
-        "Chat, `game_rides` e `post_game_messages` reutilizam o contrato restrito de owner/coorganizador, preservando autoria e campos imutáveis.",
-        "`LocationDetailScreen` condiciona listeners privados à autenticação e mantém o documento publicado disponível anonimamente.",
-        "Reviews existentes usam `updateDoc` com `updated_at: serverTimestamp()`, sem regravar `created_at` ou `user_id`."
+        "Uma avaliação existente pode ser editada sem falhar por conflito nos timestamps protegidos."
       ],
       "issueRefs": [
         3686,
@@ -786,9 +733,7 @@
       "improved": [],
       "fixed": [
         "A tela de detalhes não exibe mais “sem permissão” para convidados com presença pendente.",
-        "A confirmação do próprio jogador é carregada com segurança e o elenco completo aparece automaticamente após a confirmação.",
-        "`useGameDetail` separa o listener do próprio convite da consulta protegida do elenco e não promove falhas auxiliares de confirmações a erro fatal do jogo.",
-        "A consulta inicial restringe `confirmations` por `game_id` e `user_id`, preservando as regras que bloqueiam dados de outros jogadores antes da confirmação."
+        "A confirmação do próprio jogador é carregada com segurança e o elenco completo aparece automaticamente após a confirmação."
       ],
       "issueRefs": [
         3684
@@ -829,8 +774,7 @@
       ],
       "fixed": [
         "Check-in recupera posição e escolha após falhas sem duplicar ações.",
-        "Favoritos, galeria, cartão de nível, rankings e navegação mobile receberam contraste e semântica corretos.",
-        "Estados de Home, recuperação de check-in, acessibilidade por teclado e internacionalização foram corrigidos."
+        "Favoritos, galeria, cartão de nível, rankings e navegação mobile receberam contraste e semântica corretos."
       ],
       "issueRefs": [
         3605,
@@ -865,8 +809,7 @@
       "improved": [],
       "fixed": [
         "A barra fixa com a sua posição e XP não aparece mais no meio da tela ao navegar a Liga embutida no mobile.",
-        "O comportamento agora respeita o contexto da tela: no modo embutido e em telas menores, a lista segue o scroll normal sem sobreposição visual.",
-        "`web/src/pages/league/LeagueScreen.tsx`: o `IntersectionObserver` da sticky bar agora é desativado quando a Liga está embutida (`embedded`) ou em breakpoint abaixo de `md`, evitando overlay fixa no fluxo mobile da Home."
+        "O comportamento agora respeita o contexto da tela: no modo embutido e em telas menores, a lista segue o scroll normal sem sobreposição visual."
       ],
       "issueRefs": []
     },
@@ -882,14 +825,9 @@
       "added": [],
       "improved": [],
       "fixed": [
-        "O Web agora prioriza o XP canônico salvo em `experience_points`, evitando que campos legados mostrem progresso ou nível incorretos.",
+        "O Web agora prioriza o XP oficial da conta, evitando que campos antigos mostrem progresso ou nível incorretos.",
         "Perfil, rankings e figurinha do jogador passaram a derivar o nível a partir do XP real do usuário, evitando divergência entre telas.",
-        "Jogadores no nível máximo deixam de ver progresso quebrado como `N / 0 XP` no perfil.",
-        "`web/src/utils/xpAccounting.ts`: `experience_points` agora tem prioridade sobre `experiencePoints`, e o nível efetivo passa a ser derivado do XP reconciliado.",
-        "`web/src/hooks/usePlayerCard.ts`: player card passa a reutilizar os helpers canônicos de XP/nível.",
-        "`web/src/pages/home/tabs/ProfileTab.tsx`: perfil deriva o nível do XP autoritativo e renderiza estado terminal correto no nível máximo.",
-        "`web/src/pages/home/tabs/RankingsTab.tsx`: rankings, pódio, badge, cor, barra de progresso e ordenação de XP passam a usar o mesmo XP/nível reconciliado.",
-        "`web/src/utils/xpAccounting.test.ts` e `web/src/pages/home/tabs/ProfileTab.test.tsx`: adicionadas regressões para conflito snake/camel, nível persistido obsoleto e nível máximo."
+        "Jogadores no nível máximo deixam de ver um progresso quebrado, do tipo \"N / 0 XP\", no perfil."
       ],
       "issueRefs": [
         3581,
@@ -908,15 +846,10 @@
       "added": [],
       "improved": [],
       "fixed": [
-        "Removido o write do owner como `CONFIRMED` do batch de auto-invite — isso violava as Firestore rules (PR #3501 exige que CONFIRMED seja escrito apenas pelo callable `confirmGamePresence`). O batch inteiro falhava atomicamente, então NENHUM membro era convidado.",
-        "Owner agora é confirmado via callable `confirmGamePresence` (transacional) após o batch de PENDING commits.",
-        "Checklist de onboarding \"Inicie o caixa\" agora lê `cashbox_summary/current.entry_count` (server-authoritative) em vez de `group.total_balance` (campo morto que nunca é escrito pelo fluxo de caixa).",
-        "Critério de conclusão mudou de `balance !== 0` para `entryCount > 0` — um caixa com receita e despesa iguais tem saldo 0 mas está iniciado.",
-        "`web/src/hooks/useAutoInviteMembers.ts`: removido bloco que escrevia owner CONFIRMED no `writeBatch` (violava `firestore.rules:1468` `status == 'PENDING'` e `:1472` `user_id != userId()`). Agora chama `confirmGamePresence` callable após `batch.commit()`.",
-        "`web/src/hooks/useAutoInviteMembers.test.ts`: adicionado mock de `confirmGamePresence`, 3 novos testes (todos convidados, sem membros, callable falha mas membros convidados).",
-        "`web/src/hooks/useCashboxSummary.ts`: novo hook leve que lê apenas `cashbox_summary/current` via `onSnapshot` (retorna `entryCount`, `balanceCents`, `loading`).",
-        "`web/src/pages/group/GroupDetailScreen.tsx`: substituído `group.totalBalance` (campo morto) por `useCashboxSummary(groupId)` para o card de saldo e checklist de onboarding. Critério do checklist mudou de `balanceValue !== 0` para `entryCount > 0`.",
-        "Service worker `CACHE_NAME` bump v16 → v17."
+        "Corrigido o convite automático de membros ao criar um jogo: a confirmação do dono era recusada pelas regras de segurança e derrubava o lote inteiro, então NENHUM membro era convidado.",
+        "O dono do jogo agora é confirmado por uma operação própria, depois que os convites pendentes são gravados.",
+        "Checklist de onboarding \"Inicie o caixa\" agora lê o resumo oficial do caixa do grupo, em vez de um campo antigo que nunca era preenchido.",
+        "O critério de conclusão passou a ser \"existe algum lançamento\" em vez de \"saldo diferente de zero\" — um caixa com receita e despesa iguais tem saldo zero, mas já está iniciado."
       ],
       "issueRefs": []
     },
@@ -927,27 +860,17 @@
       "type": "patch",
       "showPopup": false,
       "published": true,
-      "headline": "**Criar jogo funcionando novamente!** O erro ao criar jogo a partir do grupo foi corrigido — o campo `xp_processed` estava sendo rejeitado pelas regras de segurança do Firestore.",
+      "headline": "**Criar jogo funcionando novamente!** O erro ao criar jogo a partir do grupo foi corrigido — um campo interno estava sendo recusado pelas regras de segurança.",
       "highlights": [],
       "added": [],
       "improved": [],
       "fixed": [
-        "Removido `xp_processed` do payload de criação de jogo (web) que era bloqueado pelas Firestore rules (PR #3218 endureceu as regras mas os hooks não foram atualizados).",
-        "CSP `connect-src` agora inclui `https://*.firebasestorage.app` — futuro-prova para uploads do Firebase Storage.",
-        "Recurrence engine (Cloud Functions) agora propaga `gender`, `name` e `co_organizers` do jogo pai para os jogos recorrentes filhos.",
-        "Android: `GameRepositoryImpl.createGame` e `updateGame` não enviam mais campos server-managed (`xp_processed`, `validation_*`, `xp_reward_*`, etc.) via client SDK.",
-        "Android: `updateGame` agora usa `SetOptions.merge()` em vez de overwrite completo, evitando deletar campos server-managed.",
-        "Android: `GameDetailViewModel.buildNextGame` reseta todos os campos server-managed ao criar próximo jogo recorrente.",
-        "`web/src/hooks/useGames.ts:528`: removido `xp_processed: false` do payload `useCreateGame` (bloqueado por `hasNoGameValidationClientFields` nas Firestore rules).",
-        "`web/src/hooks/useDuplicateGameCopy.ts:111`: removido `xp_processed: false` do payload de duplicação de jogo.",
-        "`web/src/hooks/useGames.test.ts:554`: removida assertion `xp_processed: false`.",
-        "`firebase.json:65`: CSP `connect-src` adiciona `https://*.firebasestorage.app`.",
-        "`functions/src/games/recurrence-engine.ts:267-268`: adiciona `gender` e `name` do pai ao child payload.",
-        "`functions/src/games/recurrence-engine.ts:286`: `co_organizers` agora copia do pai em vez de sempre `[]`.",
-        "`app/.../GameRepositoryImpl.kt`: `createGame` agora usa `gameToClientWriteMap()` que mapeia manualmente apenas campos client-writable em snake_case, excluindo todos os 27 campos server-managed.",
-        "`app/.../GameRepositoryImpl.kt`: `updateGame` agora usa `SetOptions.merge()` em vez de `.set()` overwrite completo, preservando campos server-managed.",
-        "`app/.../GameDetailViewModel.kt:543-573`: `buildNextGame` reseta todos os campos server-managed (xp_*, validation_*, voting_*, mvp_*, etc.) ao criar jogo recorrente.",
-        "Service worker `CACHE_NAME` bump v15 → v16."
+        "A criação de jogo no web parou de enviar um campo interno que era bloqueado pelas regras de segurança.",
+        "A política de segurança do site já libera os novos endereços de armazenamento, preparando o terreno para os envios de mídia.",
+        "Os jogos recorrentes agora herdam gênero, nome e co-organizadores do jogo original.",
+        "Android: criar e editar jogo não enviam mais campos controlados pelo servidor.",
+        "Android: editar um jogo agora atualiza apenas os campos alterados, sem apagar dados controlados pelo servidor.",
+        "Android: ao criar o próximo jogo de uma recorrência, os dados controlados pelo servidor são zerados."
       ],
       "issueRefs": []
     },
@@ -963,9 +886,7 @@
       "added": [],
       "improved": [],
       "fixed": [
-        "Removido o botão de tela cheia nativo que aparecia duplicado no card do mural (já existe o botão \"ampliar\" que abre o player expandido). O botão de tela cheia nativo agora aparece apenas dentro do player expandido (lightbox).",
-        "`WallPostVideoPlayer`: botão de fullscreen nativo (`FullscreenIcon`) agora só renderiza quando `autoActivate` é true (modo lightbox). No card inline, o botão `OpenInFullIcon` do `WallPostCard` já cumpre o papel de abrir o lightbox onde o fullscreen nativo está disponível.",
-        "Service worker `CACHE_NAME` bump v14 → v15."
+        "Removido o botão de tela cheia nativo que aparecia duplicado no card do mural (já existe o botão \"ampliar\" que abre o player expandido). O botão de tela cheia nativo agora aparece apenas dentro do player expandido (lightbox)."
       ],
       "issueRefs": []
     },
@@ -999,10 +920,8 @@
       "added": [],
       "improved": [],
       "fixed": [
-        "Removido o atributo `crossOrigin` do player de vídeo que fazia o navegador bloquear TODOS os vídeos do mural por política de CORS (o Firebase Storage não envia os headers CORS esperados no download de mídia).",
-        "Um vídeo com o arquivo removido do servidor agora aparece corretamente como indisponível em vez de tentar carregar infinitamente.",
-        "`WallPostVideoPlayer`: removido `crossOrigin=\"anonymous\"`. Teste Playwright com Chromium real provou: sem o atributo o vídeo carrega (readyState=4, duration=22.67s); com o atributo fica bloqueado por CORS (readyState=0). O atributo só seria necessário para canvas frame capture, que o player não faz.",
-        "Data fix em produção: post `e4ee9b9c...` (grupo Clube das quintas) marcado como `LEGACY_OBJECT_MISSING` (storage objeto deletado mas doc dizia READY)."
+        "Corrigido o player de vídeo do mural, que fazia o navegador bloquear TODOS os vídeos por uma política de segurança de origem.",
+        "Um vídeo com o arquivo removido do servidor agora aparece corretamente como indisponível em vez de tentar carregar infinitamente."
       ],
       "issueRefs": [
         3569
@@ -1025,12 +944,7 @@
         "**Vídeos dos jogos:** uma URL expirada não deixa mais o vídeo mudo sem opção — agora há recuperação automática e botão de tentar de novo.",
         "**Upload de vídeo nos jogos:** o app rejeita vídeos longos (acima de 30s) **antes** de iniciar o envio, evitando desperdício de dados.",
         "**Lightbox de vídeo no mural:** vídeos agora podem ser ampliados em tela cheia no desktop, igual às fotos.",
-        "**Download desabilitado:** os players de vídeo não exibem mais o botão de download no Chrome de mesa.",
-        "`WallPostVideoPlayer`: removido `autoPlay` (bloqueado pelo iOS sem `muted`); play programático via `onCanPlay` mantém o gesture chain e o áudio. Cleanup no unmount via ref callback (`pause()` + clear `src`); prop `maxHeight` para o lightbox; `controlsList=\"nodownload\"`.",
-        "`WallPostCard`: lightbox de vídeo (Dialog com `WallPostVideoPlayer` em `maxHeight: 80vh` + botão expand), paridade com o lightbox de imagem.",
-        "`GameVideosTab`: validação de duração pré-upload (`readVideoDuration`); `onError` com recovery de URL via `getDownloadURL` + remount por `key`; removido `muted` sem autoPlay; adicionado `aspectRatio`/`objectFit`/`minHeight`; `controlsList=\"nodownload\"`.",
-        "`WallPostComposer`: submit bloqueado até a duração do vídeo ser lida (`mediaDuration === null`), exceto quando a prévia falha.",
-        "Testes: `videoDuration.test.ts` (novo), `WallPostVideoPlayer`/`WallPostComposer`/`WallPostCard` atualizados; i18n `openVideoFullscreen` (pt-BR/en/es)."
+        "**Download desabilitado:** os players de vídeo não exibem mais o botão de download no Chrome de mesa."
       ],
       "issueRefs": [
         3559
@@ -1049,8 +963,7 @@
       "improved": [],
       "fixed": [
         "Removido o grande espaço invisível que empurrava as informações do grupo para baixo no Web desktop.",
-        "O indicador usado pelo botão Criar Jogo passa a ocupar somente um pixel, sem interferir no layout.",
-        "O sentinela de `IntersectionObserver` usa dimensões CSS explícitas em pixels; valores numéricos de sizing do MUI eram convertidos para `100%`."
+        "O indicador usado pelo botão Criar Jogo passa a ocupar somente um pixel, sem interferir no layout."
       ],
       "issueRefs": []
     },
@@ -1070,9 +983,7 @@
       ],
       "fixed": [
         "Horários que terminam depois da meia-noite agora pertencem ao dia em que o local abriu, inclusive de domingo para segunda-feira.",
-        "O indicador de aberto ou fechado deixa de mudar conforme o fuso do celular, navegador ou servidor.",
-        "`isLocationOpenAt` centraliza a conversão civil por fuso, limites inclusivos, virada semanal e fallback temporário para `America/Sao_Paulo`.",
-        "`isOpenNow`, filtro e cards do mapa compartilham a mesma regra pura e fecham com segurança diante de dados explicitamente inválidos."
+        "O indicador de aberto ou fechado deixa de mudar conforme o fuso do celular, navegador ou servidor."
       ],
       "issueRefs": [
         3550
@@ -1099,11 +1010,7 @@
         "Auth e App Check são renovados uma única vez; uma negação real das regras deixa de entrar em repetição inútil.",
         "URLs antigas do player podem ser renovadas pelo caminho protegido do arquivo antes de apresentar erro.",
         "O bucket agora responde CORS e byte-range para os domínios oficiais do aplicativo, permitindo reprodução móvel do MP4.",
-        "Três cards legados do grupo VIP que apontavam para MP4s inexistentes foram reparados sem apagar suas mensagens.",
-        "Reconciliação autoritativa usa `getDocFromServer` e `getMetadata`; fallback só ocorre após três observações estáveis de `AWAITING_UPLOAD` e `object-not-found`.",
-        "Watchdog do resumable respeita o budget do SDK e pausa em `offline` ou `visibilityState=hidden`.",
-        "Matriz de erros separa Auth, App Check, Rules, rede e integridade; o retry de `storage/unauthorized` fica restrito ao caso conhecido de propagação do logo recém-criado.",
-        "Os dois MP4s reportados foram validados em produção como H.264/AAC, `READY`, poster WebP e respostas parciais HTTP 206."
+        "Três cards legados do grupo VIP que apontavam para MP4s inexistentes foram reparados sem apagar suas mensagens."
       ],
       "issueRefs": [
         3545,
@@ -1127,11 +1034,7 @@
       "fixed": [
         "A autorização do arquivo temporário respeita o limite do Firebase e deixa o vídeo chegar ao processamento.",
         "Tentativas presas deixam de aguardar os dez minutos de repetição interna do SDK antes de apresentar uma saída.",
-        "A renovação de Auth e App Check possui limite de espera e não mantém o compositor bloqueado indefinidamente.",
-        "Storage Rules do staging usam somente grupo e draft, mantendo autor, path, MIME, tamanho, expiração e imutabilidade validados.",
-        "Upload resumível ganhou watchdog de inatividade, cancelamento seguro, proteção contra resolução duplicada e fallback para upload simples.",
-        "Confirmações de rede perdidas consultam o draft autoritativo antes de solicitar um novo envio para o mesmo path imutável.",
-        "Callable de reserva e renovação de credenciais agora têm timeout explícito; o backoff global de upload foi reduzido."
+        "A renovação de Auth e App Check possui limite de espera e não mantém o compositor bloqueado indefinidamente."
       ],
       "issueRefs": [
         3535
@@ -1171,10 +1074,7 @@
       "fixed": [
         "Retentativas de mídia não criam publicações duplicadas nem perdem o texto digitado.",
         "Vídeos MP4 compatíveis ganham capa e reprodução explícita no navegador, inclusive em conexões móveis.",
-        "Falhas de rede, rejeição de formato e expiração apresentam mensagens específicas e permitem recuperar o envio.",
-        "Escritas diretas de posts com mídia foram substituídas pelo pipeline autoritativo, mantendo posts de texto leves.",
-        "Paginação reversa e ordenação determinística do Mural preservam a mensagem mais recente no topo.",
-        "Tokens App Check de uso limitado são solicitados nas operações protegidas contra replay."
+        "Falhas de rede, rejeição de formato e expiração apresentam mensagens específicas e permitem recuperar o envio."
       ],
       "issueRefs": [
         3518,
@@ -1215,10 +1115,7 @@
       "fixed": [
         "Cadastro e união de contas ficam mais resistentes a CPF/telefone duplicados e retries concorrentes.",
         "Agenda de grupos respeita owner/admin e mantém o contrato Firestore usado no Android.",
-        "Upload de avatar e campos de localização preservam o formulário quando a rede ou o Storage falham.",
-        "Fluxos de onboarding não tentam recadastrar um CPF já reconciliado durante a união de contas.",
-        "Escritas de agenda, avatar e localização usam contratos validados, erro acionável e timestamps autoritativos.",
-        "Operações mensais solicitam tokens App Check de uso limitado compatíveis com a proteção anti-replay do backend."
+        "Upload de avatar e campos de localização preservam o formulário quando a rede ou o Storage falham."
       ],
       "issueRefs": [
         3529,
@@ -1242,7 +1139,7 @@
       "improved": [],
       "fixed": [
         "Vídeos MP4 selecionados por celulares passam a ser reconhecidos mesmo quando o navegador informa MIME vazio, genérico ou QuickTime.",
-        "Uploads MP4 usam `video/mp4` de forma consistente, compatível com as regras de Storage.",
+        "Envios de vídeo MP4 passam o tipo de arquivo correto de forma consistente, compatível com as regras de armazenamento.",
         "Publicações antigas com MP4 sem tipo de mídia salvo voltam a exibir o player de vídeo."
       ],
       "issueRefs": [
@@ -1289,9 +1186,7 @@
         "O player não fica mais invisível enquanto o navegador móvel adia o carregamento dos metadados.",
         "O skeleton de carregamento deixa de cobrir e bloquear os controles nativos do vídeo.",
         "Eventos de metadados, dados e reprodução pronta encerram corretamente o estado de carregamento.",
-        "A permissão entre Firebase Storage e Firestore foi restaurada para liberar uploads autorizados de membros e proprietários do grupo.",
-        "Mantém o elemento `video` com opacidade total e altura mínima enquanto o MP4 prepara a reprodução.",
-        "Adiciona cobertura regressiva para controles visíveis antes de `loadedmetadata` em navegadores móveis."
+        "A permissão entre Firebase Storage e Firestore foi restaurada para liberar uploads autorizados de membros e proprietários do grupo."
       ],
       "issueRefs": [
         3522
@@ -1311,9 +1206,7 @@
       "fixed": [
         "Mantém o progresso real na primeira tentativa de envio.",
         "Alterna automaticamente para um modo de upload mais compatível após falhas transitórias de rede ou autorização.",
-        "Preserva as tentativas com renovação de sessão e App Check sem perder o texto ou a mídia selecionada.",
-        "O retry do Storage deixa de repetir exclusivamente o protocolo resumível e usa `uploadBytes` como fallback compatível.",
-        "Adiciona cobertura unitária para a troca de protocolo após `storage/network-request-failed`."
+        "Preserva as tentativas com renovação de sessão e App Check sem perder o texto ou a mídia selecionada."
       ],
       "issueRefs": [
         3522
@@ -1337,9 +1230,7 @@
       ],
       "fixed": [
         "Envios duplicados por toque ou clique rápido são bloqueados.",
-        "Falhas ao finalizar a URL da mídia removem o arquivo temporário sem perder o erro original.",
-        "Preview de imagem e vídeo usa Object URL com cleanup, reduzindo o uso de memória no navegador.",
-        "O compositor mantém estados acessíveis de envio, erro e rascunho preservado."
+        "Falhas ao finalizar a URL da mídia removem o arquivo temporário sem perder o erro original."
       ],
       "issueRefs": []
     },
@@ -1358,10 +1249,7 @@
         "Quando a pré-visualização falhar, o Mural informa o problema sem bloquear a publicação."
       ],
       "fixed": [
-        "Corrigido o erro “Não foi possível preparar este vídeo para visualização” ao anexar vídeos aos posts do grupo.",
-        "Object URLs de vídeos MP4 são criadas e revogadas no ciclo de vida do arquivo selecionado, com cobertura para React Strict Mode.",
-        "Falhas do elemento `<video>` agora exibem estado não bloqueante e preservam o envio do arquivo original.",
-        "Adicionado teste de regressão para publicar vídeo após falha da pré-visualização."
+        "Corrigido o erro “Não foi possível preparar este vídeo para visualização” ao anexar vídeos aos posts do grupo."
       ],
       "issueRefs": [
         3516
@@ -1385,9 +1273,7 @@
       ],
       "fixed": [
         "Uploads do Mural passam a validar formato e tamanho antes do envio, evitando falhas silenciosas.",
-        "Regras do Firestore e Storage protegem mídias do grupo e bloqueiam tipos/extensões não suportados.",
-        "Feed do Mural ordenado cronologicamente com paginação deduplicada e atualização realtime.",
-        "Reprodução de mídia com fallback e retry acessível."
+        "Regras do Firestore e Storage protegem mídias do grupo e bloqueiam tipos/extensões não suportados."
       ],
       "issueRefs": [
         3514
@@ -1412,10 +1298,7 @@
         "Retry de gol ou evento usa o mesmo identificador e não duplica placar ou estatísticas.",
         "Mensagens antigas deixam de desaparecer quando chega uma atualização nova.",
         "Trocar rapidamente de perfil não mostra mais dados da pessoa anterior.",
-        "Membros de grupos antigos voltam a anexar fotos no mural; avatar e onboarding renovam credenciais de Auth/App Check ao repetir uploads transitórios.",
-        "Listeners compartilhados por query, merge por ID e cursores determinísticos para históricos realtime.",
-        "Confirmação e caixa usam callables idempotentes e server-authoritative.",
-        "Upload de imagem compartilha retry para falhas transitórias e informa separadamente permissão, cancelamento e rede."
+        "Membros de grupos antigos voltam a anexar fotos no mural; avatar e onboarding renovam credenciais de Auth/App Check ao repetir uploads transitórios."
       ],
       "issueRefs": [
         3267,
@@ -1443,11 +1326,8 @@
         "Falhas temporárias ao sincronizar o perfil de proprietário deixam registro para diagnóstico sem interromper o cadastro do local."
       ],
       "fixed": [
-        "Corrigido o erro React #130 que podia derrubar `/game/:id` ao carregar componentes do Material UI.",
-        "O Web passa a usar a chave Firebase própria da plataforma, restrita aos domínios autorizados.",
-        "Componentes de runtime do detalhe do jogo normalizam módulos ESM/CJS e falham cedo quando uma exportação não é um elemento React válido.",
-        "Testes renderizam `Unstable_Grid2` e todos os ícones usados pela tela, cobrindo defaults aninhados.",
-        "A sincronização best-effort de claims registra falhas e a configuração pública usa o SDK config Web oficial."
+        "Corrigido um erro que podia derrubar a tela de detalhes do jogo ao carregar alguns componentes.",
+        "O Web passa a usar a chave Firebase própria da plataforma, restrita aos domínios autorizados."
       ],
       "issueRefs": [
         3497
@@ -1469,10 +1349,7 @@
         "Falhas temporárias dos listeners exibem erro persistente e botão para reconectar."
       ],
       "fixed": [
-        "Impede gols duplicados em retries, exclusão de evento de outro jogo e divergência entre o último evento e o placar final.",
-        "Live Game usa quatro listeners Firestore recriáveis, mutações via callables transacionais e `requestId` estável por tentativa lógica.",
-        "Votação em lote respeita a exigência read-before-write do Firestore e resultados consomem apenas agregados autoritativos do jogo.",
-        "Regras limitam votos brutos ao próprio eleitor/admin e autorizam observação determinística do documento próprio ainda inexistente."
+        "Impede gols duplicados em retries, exclusão de evento de outro jogo e divergência entre o último evento e o placar final."
       ],
       "issueRefs": [
         3495
@@ -1515,12 +1392,7 @@
         "Posts do grupo podem ser publicados somente com foto; falhas de envio preservam o rascunho para uma nova tentativa.",
         "O botão de convidar nas tarefas pendentes do grupo volta a abrir o fluxo correto, com etapas mais claras e acionáveis.",
         "A tela inicial ganhou um convite em destaque para trazer novas pessoas ao aplicativo.",
-        "O card do jogador recebeu um visual mais profissional, responsivo e acessível.",
-        "A confirmação OTP e a sincronização de sessão do Firebase receberam timeouts e navegação não bloqueante.",
-        "Composer, hook, Firestore Rules e Storage Rules do mural passaram a aceitar mídia sem legenda e a limpar drafts pelo próprio autor.",
-        "Imagens do mural agora expõem loading, erro, retry, navegação por teclado e lightbox sem bloquear o carregamento lazy.",
-        "O checklist executa ações customizadas sem navegar em seguida, evitando desmontar diálogos recém-abertos.",
-        "Foram adicionados testes de onboarding, convites, mural, regras e acessibilidade do card do jogador."
+        "O card do jogador recebeu um visual mais profissional, responsivo e acessível."
       ],
       "issueRefs": [
         3484
@@ -1543,12 +1415,7 @@
         "Criação, edição, recorrência e formação de jogos receberam correções de concorrência, datas e dados exibidos.",
         "Uploads de fotos, vídeos, logos e avatar ficam mais compatíveis com as regras de armazenamento e evitam arquivos órfãos.",
         "Liga, confronto direto, ranking semanal, caixa do grupo, avaliações de locais, busca e mapas exibem dados mais completos e corretos.",
-        "Notificações, instalação PWA, modo offline, rascunhos e paginação se recuperam melhor de falhas, reconexões e tentativas repetidas.",
-        "Hooks de Firestore e telas de grupos, jogos, locais, liga e perfil validam entradas, preservam timestamps e tratam falhas e concorrência de escrita.",
-        "Fluxos de presença, fila de espera, convites, auto-invite e solicitações de entrada foram alinhados aos contratos server-authoritative.",
-        "Storage e mídia usam paths compatíveis, limpeza compensatória e cancelamento de uploads; mensagens e notificações respeitam o contexto da tela.",
-        "Consultas de busca, recentes, avaliações, standings, head-to-head, ranking e mapas foram corrigidas para ordenação, paginação, filtros e cálculos consistentes.",
-        "A fila offline, atualizações otimistas, cache de DevTools, atalhos, breadcrumbs, PWA e autosave foram endurecidos contra retries, desmontagem e dependências instáveis."
+        "Notificações, instalação PWA, modo offline, rascunhos e paginação se recuperam melhor de falhas, reconexões e tentativas repetidas."
       ],
       "issueRefs": [
         3382,
@@ -1643,10 +1510,7 @@
         "O modal de convite da Liga deixou de misturar jogos com grupos.",
         "A lista de convite mostra somente grupos em que o usuário atual é dono.",
         "O envio de convite para grupo usa uma verificação de pendência compatível com as regras do Firestore.",
-        "Erros de validação do convite agora aparecem com mensagem específica quando possível.",
-        "`useLeagueInvites` restringe opções a grupos próprios e remove alvos de jogo do modal da Liga.",
-        "A consulta de convite pendente inclui `invited_by_id`, evitando `permission-denied` nas regras.",
-        "`group-invites` ganhou teste de leitura por remetente, grupo, destinatário e status."
+        "Erros de validação do convite agora aparecem com mensagem específica quando possível."
       ],
       "issueRefs": []
     },
@@ -1665,11 +1529,7 @@
         "Tocar na foto de um jogador na Liga agora abre a figurinha do player.",
         "Convites pela Liga mostram apenas grupos em que você é dono.",
         "Administradores de grupo não veem mais ação de convite reservada ao dono.",
-        "A tela direta de convite informa claramente quando apenas o dono pode convidar.",
-        "`LeagueScreen` conecta o avatar ao `PlayerCard` em desktop e web mobile.",
-        "`useLeagueInvites` filtra somente grupos com `ownerId` do usuário atual.",
-        "`group_invites` nas Firestore Rules exige `owner_id` do grupo para criação.",
-        "`InvitePlayersScreen` usa o UID canônico do Firebase como `invited_by_id`."
+        "A tela direta de convite informa claramente quando apenas o dono pode convidar."
       ],
       "issueRefs": []
     },
@@ -1688,10 +1548,7 @@
         "Cadastro por convite agora so conclui quando o perfil foi criado corretamente, evitando conta sem XP de apadrinhamento.",
         "Convites de grupo evitam duplicidade entre administradores diferentes.",
         "Geracao de codigo de convite tenta outro codigo quando encontra uma colisao rara.",
-        "Falhas de entrada por convite mostram uma unica mensagem de erro.",
-        "`signUp` limpa a conta Auth recem-criada se a criacao do documento `users/{uid}` falhar.",
-        "`useLeagueInvites` deduplica por `group_id + invited_user_id + status` e usa transacao para convites de jogo.",
-        "`useInvitePlayers` e `InvitePlayersScreen` seguem o mesmo contrato de convite direto."
+        "Falhas de entrada por convite mostram uma unica mensagem de erro."
       ],
       "issueRefs": []
     },
@@ -1745,10 +1602,7 @@
       "improved": [],
       "fixed": [
         "A criação e a edição do grupo agora enviam o logo por um caminho de Storage próprio do usuário autenticado.",
-        "Isso remove a dependência de uma validação instável do Storage que consultava permissões do grupo no Firestore durante o upload.",
-        "Move o upload web de logos de grupo para `users/{uid}/group-logos/{groupId}/logo.{ext}`.",
-        "Adiciona regra de Storage específica para esse path, validando dono do diretório, tipo de imagem e tamanho.",
-        "Mantém `groups/{groupId}.photo_url` como fonte exibida para os demais usuários."
+        "Isso remove a dependência de uma validação instável do Storage que consultava permissões do grupo no Firestore durante o upload."
       ],
       "issueRefs": []
     },
@@ -1765,10 +1619,7 @@
       "improved": [],
       "fixed": [
         "Corrige a falha intermitente em que o grupo era criado, mas o logo não subia porque o Storage ainda não reconhecia a permissão de dono recém-gravada.",
-        "A edição do grupo também passa a repetir automaticamente o upload quando o Storage demora alguns segundos para validar a permissão.",
-        "Adiciona retry curto para uploads de imagem que retornem `storage/unauthorized` ou `storage/unknown` durante a propagação de autorização.",
-        "Reutiliza o mesmo retry no fluxo de criação e no fluxo de edição de grupo.",
-        "Cobre o caso com teste em `useGroups.test.ts`."
+        "A edição do grupo também passa a repetir automaticamente o upload quando o Storage demora alguns segundos para validar a permissão."
       ],
       "issueRefs": []
     },
@@ -1785,10 +1636,7 @@
       "improved": [],
       "fixed": [
         "O grupo e o vínculo de dono agora são criados antes do envio do logo, permitindo que a regra de Storage reconheça o usuário como dono.",
-        "Se o envio do logo falhar por arquivo inválido ou instabilidade, o grupo continua criado e o logo pode ser reenviado na edição.",
-        "Reordena `useCreateGroup` para gravar `groups/{groupId}` e `groups/{groupId}/members/{uid}` antes do upload em `groups/{groupId}/logo.jpg`.",
-        "Atualiza `photo_url` e o espelho `users/{uid}/groups/{groupId}.group_photo` após `getDownloadURL`.",
-        "Reforça `storage.rules` para aceitar dono por `owner_id` além de member-doc admin/owner em logos e thumbs de grupo."
+        "Se o envio do logo falhar por arquivo inválido ou instabilidade, o grupo continua criado e o logo pode ser reenviado na edição."
       ],
       "issueRefs": []
     },
@@ -1804,12 +1652,9 @@
       "added": [],
       "improved": [],
       "fixed": [
-        "A tela Rumo ao Estrelato mostra XP ganho e nivel apos cada evento usando os campos atuais de `xp_logs`.",
+        "A tela Rumo ao Estrelato mostra XP ganho e nivel apos cada evento usando os registros atuais do historico de XP.",
         "Rankings, perfil, detalhes de jogador, confronto direto e pos-jogo deixam de transformar nivel 0 em nivel 1 artificial.",
-        "A jornada de nivel passa a atualizar em tempo real quando um novo XP log e gravado.",
-        "Adiciona normalizador `xpAccounting` para aliases `xp_earned`, `level_after`, `experience_points` e legados.",
-        "Remove fallbacks `|| 1` em leituras de nivel e usa a tabela canonica para derivar nivel por XP.",
-        "Cobre regressao para preservar nivel 0 e ler logs de XP atuais."
+        "A jornada de nivel passa a atualizar em tempo real quando um novo XP log e gravado."
       ],
       "issueRefs": []
     },
@@ -1826,9 +1671,7 @@
       "improved": [],
       "fixed": [
         "O cadastro web guarda o código de convite enquanto o Firebase Auth finaliza a sessão, evitando que o perfil seja criado sem vínculo ao convite.",
-        "O fluxo de Google e email/senha fica mais resistente a corridas no primeiro acesso.",
-        "`AuthContext` mantém um convite pendente em `useRef` e usa esse código quando `onAuthStateChanged` cria `users/{uid}` antes do submit terminar.",
-        "Teste de regressão cobre o cenário em que `createUserWithEmailAndPassword` dispara o observer antes de `signUp` chamar `createUserDocument`."
+        "O fluxo de Google e email/senha fica mais resistente a corridas no primeiro acesso."
       ],
       "issueRefs": []
     },
@@ -1882,9 +1725,7 @@
         "No Android e em navegadores compatíveis, o botão de instalar abre o prompt nativo do navegador.",
         "No iPhone, a tela orienta o fluxo correto pelo Safari para adicionar o app à Tela de Início."
       ],
-      "fixed": [
-        "Service worker atualizado para `futeba-v9`, cacheando o novo ícone PWA e invalidando caches antigos após o deploy."
-      ],
+      "fixed": [],
       "issueRefs": []
     },
     {
@@ -1901,10 +1742,7 @@
       "fixed": [
         "O app instalado ou aberto no celular agora limpa caches antigos quando encontra um bundle que nao existe mais.",
         "A versao web forca atualizacao do service worker para evitar tela em branco causada por arquivos antigos do app.",
-        "Rotas mobile continuam abrindo normalmente e redirecionam para login quando o usuario nao esta autenticado.",
-        "Hosting passa a responder um fallback JavaScript para chunks antigos em `/assets/**`, evitando servir `index.html` como se fosse modulo JS.",
-        "O fallback remove service workers/caches antigos e recarrega a pagina atual com cache bust.",
-        "`sw.js` foi atualizado para `futeba-v8`, purgando caches PWA anteriores na proxima ativacao."
+        "Rotas mobile continuam abrindo normalmente e redirecionam para login quando o usuario nao esta autenticado."
       ],
       "issueRefs": []
     },
@@ -1922,10 +1760,7 @@
       "fixed": [
         "Jogos marcados com 1h30 passam a salvar e exibir o valor proporcional correto por jogador.",
         "A tela de detalhe, cards de jogos, confirmacao de presenca e relatorio pos-jogo usam a mesma conta do aluguel total dividido pelas vagas quando o preco nao foi definido manualmente.",
-        "O jogo reportado para 09/07, das 19:30 as 21:00, foi corrigido para R$ 37,50 por jogador.",
-        "`CreateGameScreen` agora resolve o preco final no submit a partir de `formData.totalCost` e `maxPlayers`, evitando `numericDrafts.dailyPrice` antigo quando outro campo numerico esta ativo.",
-        "O app persiste `price_manual_override` e `duration_minutes` nos jogos criados.",
-        "`resolveExpectedPayment` passa a preferir `total_cost / max_players` para jogos automaticos e preserva `daily_price` apenas quando o preco manual esta marcado."
+        "O jogo reportado para 09/07, das 19:30 as 21:00, foi corrigido para R$ 37,50 por jogador."
       ],
       "issueRefs": []
     },
@@ -1942,9 +1777,7 @@
       "improved": [],
       "fixed": [
         "A tela de detalhes do jogo volta a abrir sem erro inesperado em jogos finalizados.",
-        "Os botões com ícones da tela de jogo ficaram mais estáveis no bundle de produção.",
-        "O build web passa a resolver `@mui/icons-material` para os módulos ESM, evitando que o Rolldown empacote ícones CommonJS como objetos e dispare React #130 em `Button startIcon`.",
-        "Feedback operacional relacionado: `/game/1R8x9xxbT5Ra5gAYTt4A`."
+        "Os botões com ícones da tela de jogo ficaram mais estáveis no bundle de produção."
       ],
       "issueRefs": []
     },
@@ -1961,9 +1794,7 @@
       "improved": [],
       "fixed": [
         "A rota de detalhes do jogo volta a abrir sem cair na tela global de erro inesperado.",
-        "Os botões e ações da tela de jogo ficam mais estáveis no bundle de produção.",
-        "`GameDetailScreen` volta a importar ícones MUI diretamente por componente, removendo o resolvedor de módulos que podia entregar um objeto para o React e disparar React #130.",
-        "Feedback operacional relacionado: `/game/1R8x9xxbT5Ra5gAYTt4A`."
+        "Os botões e ações da tela de jogo ficam mais estáveis no bundle de produção."
       ],
       "issueRefs": []
     },
@@ -1980,9 +1811,7 @@
       "improved": [],
       "fixed": [
         "A tela de detalhes do jogo não deve mais cair no erro inesperado ao renderizar o botão de confirmação de presença.",
-        "O acesso por web mobile e desktop à rota do jogo fica mais estável.",
-        "`GameDetailScreen` agora normaliza módulos de ícones MUI antes de renderizá-los em `startIcon`, evitando React #130 quando o bundle entrega um módulo-objeto em vez do componente.",
-        "Feedback operacional relacionado: `cdod51wm` em `/game/1R8x9xxbT5Ra5gAYTt4A`."
+        "O acesso por web mobile e desktop à rota do jogo fica mais estável."
       ],
       "issueRefs": []
     },
@@ -1999,9 +1828,7 @@
       "improved": [],
       "fixed": [
         "Corrigido um crash reportado ao acessar a rota de detalhes de jogo.",
-        "A abertura da tela de jogo fica mais estavel em web desktop e mobile.",
-        "`GameDetailScreen` e componentes filhos passam a importar icones MUI por caminho direto, evitando que o bundle de producao renderize um objeto no lugar de um componente React.",
-        "Feedback operacional relacionado: `QdqEkNJyKN2ahxBYA6AA`."
+        "A abertura da tela de jogo fica mais estavel em web desktop e mobile."
       ],
       "issueRefs": []
     },
@@ -2019,9 +1846,7 @@
       "fixed": [
         "A tela administrativa de usuarios passa a separar avatar, nome, badges, e-mail e acoes em colunas estaveis no mobile.",
         "Nomes e e-mails longos quebram linha sem invadir o avatar, o checkbox ou o botao de permissao.",
-        "As listas de membros e convite de jogadores tambem recebem a mesma protecao visual para nomes e e-mails longos.",
-        "`UserManagementScreen` reserva largura fixa para o avatar e aplica `minWidth: 0`/quebra responsiva na coluna textual.",
-        "`PlayersScreen` e `InvitePlayersScreen` passam a renderizar nome/e-mail com wrapping controlado em linhas de lista com avatar e acoes."
+        "As listas de membros e convite de jogadores tambem recebem a mesma protecao visual para nomes e e-mails longos."
       ],
       "issueRefs": []
     },
@@ -2037,12 +1862,9 @@
       "added": [],
       "improved": [],
       "fixed": [
-        "O atalho `/?tab=3` passa a usar a mesma tela de Liga com busca, ordenacao, paginacao e acoes de convidar ou mandar mensagem.",
+        "O atalho da aba Liga passa a usar a mesma tela de Liga com busca, ordenacao, paginacao e acoes de convidar ou mandar mensagem.",
         "No menu principal, a Liga deixa de mostrar a experiencia antiga de ranking que nao tinha os controles novos.",
-        "A tela completa da Liga fica embutida na Home sem botao de voltar redundante.",
-        "`HomeScreen` passa a montar `LeagueScreen` na aba `tab=3`, mantendo `/league` como rota secundaria equivalente.",
-        "`LeagueScreen` recebe modo `embedded` para preservar o comportamento correto quando usada dentro da navegacao por abas.",
-        "Cobertura focada garante que `/?tab=3` renderiza a tela nova."
+        "A tela completa da Liga fica embutida na Home sem botao de voltar redundante."
       ],
       "issueRefs": []
     },
@@ -2061,10 +1883,7 @@
         "Busca por nome ou ID deixa de piscar resultados enquanto a digitacao ainda esta em debounce.",
         "Indicadores de zona de promocao/rebaixamento aparecem apenas quando a ordenacao e contexto permitem leitura correta.",
         "Convite pela Liga passa a bloquear jogador que ja faz parte do grupo e respeitar limite de convites pendentes.",
-        "Compartilhamento da posicao passa a mostrar XP em vez de pontos de temporada.",
-        "Remove inconsistencia entre busca local imediata e busca server-side debounced.",
-        "Evita mensagens de ranking baseadas em janela parcial quando a tela esta ordenada por outro campo.",
-        "`useLeagueInvites` replica as validacoes de membership e limite de pendentes da tela dedicada de convites."
+        "Compartilhamento da posicao passa a mostrar XP em vez de pontos de temporada."
       ],
       "issueRefs": []
     },
@@ -2101,8 +1920,7 @@
       "fixed": [
         "A tela de Liga deixa de ficar vazia quando nao ha temporada ativa cadastrada.",
         "XP global e rankings carregam usuarios pesquisaveis com zero pontos de temporada.",
-        "A lista de jogadores passa a usar um backend seguro para permitir convites sem expor dados privados do perfil.",
-        "Remove leituras client-side de `users/{uid}` na Liga, evitando `PERMISSION_DENIED` em perfis com PII."
+        "A lista de jogadores passa a usar um backend seguro para permitir convites sem expor dados privados do perfil."
       ],
       "issueRefs": []
     },
@@ -2120,9 +1938,7 @@
       "fixed": [
         "Usuarios validados voltam a aparecer corretamente nas telas de Liga e XP global.",
         "O fluxo de convite preserva o link quando uma pessoa precisa criar conta antes de entrar no grupo.",
-        "Donos de grupo conseguem convidar jogadores pela busca com menos falhas e sem convites duplicados pendentes.",
-        "Corrige perda de contexto de `/join/:code` ao navegar do login para o cadastro.",
-        "Bloqueia aceite de convite expirado e transicoes invalidas de status nas regras do Firestore."
+        "Donos de grupo conseguem convidar jogadores pela busca com menos falhas e sem convites duplicados pendentes."
       ],
       "issueRefs": []
     },
@@ -2140,8 +1956,7 @@
       "fixed": [
         "A lista de usuarios no admin agora evita sobreposicao entre avatar, nome, email, badges e botoes de acao.",
         "Contas provaveis de QA/teste ficam sinalizadas visualmente, sem afetar usuarios reais validados.",
-        "Emails longos e nomes grandes passam a quebrar linha corretamente no mobile.",
-        "Corrige overflow visual na lista mobile de usuarios administrativos."
+        "Emails longos e nomes grandes passam a quebrar linha corretamente no mobile."
       ],
       "issueRefs": []
     },
@@ -2158,8 +1973,7 @@
       "improved": [],
       "fixed": [
         "Jogadores sem participacao na temporada passam a aparecer na Liga com pontos, jogos e estatisticas zerados.",
-        "A classificacao continua usando os pontos da temporada quando eles existem.",
-        "A Liga nao fica vazia ou incompleta quando usuarios reais ainda nao geraram XP na temporada ativa."
+        "A classificacao continua usando os pontos da temporada quando eles existem."
       ],
       "issueRefs": []
     },
@@ -2184,12 +1998,7 @@
         "A criacao de jogos valida melhor membros elegiveis, horario, dono do grupo e ordenacao dos proximos jogos.",
         "Desafios entre grupos passam a respeitar permissao de dono/admin.",
         "Busca, chat, mural e filtros de jogos preservam melhor resultados e historico paginado.",
-        "Barras de acao mobile, layout admin, QR do jogo e acessibilidade receberam ajustes de responsividade.",
-        "`CashboxScreen` normaliza moeda PT-BR.",
-        "`useAutoInviteMembers` limita convites automaticos a membros `ACTIVE`.",
-        "Edicao/configuracao de grupo respeita donos legados por `owner_id`.",
-        "`GroupChallengesScreen` e rules restringem acoes sensiveis a dono/admin.",
-        "`GamesTab` e `CreateGameScreen` validam horario real de jogo."
+        "Barras de acao mobile, layout admin, QR do jogo e acessibilidade receberam ajustes de responsividade."
       ],
       "issueRefs": [
         3320,
@@ -2227,8 +2036,8 @@
       "highlights": [],
       "added": [],
       "improved": [
-        "Nova rota publica `/launch` com chamada para cadastro, suporte e links legais.",
-        "Deploy web ficou mais confiavel quando o runner nao cria atalhos em `node_modules/.bin`.",
+        "Nova pagina publica de lancamento com chamada para cadastro, suporte e links legais.",
+        "A publicacao da versao web ficou mais confiavel em ambientes de build incompletos.",
         "Primeira abertura web evita preload de chunks frios de Storage e Functions."
       ],
       "fixed": [],
@@ -2295,7 +2104,7 @@
       "improved": [
         "Estados vazios de jogos, grupos, liga e caixa ficaram mais claros e acionaveis.",
         "O prefetch da home passou a limitar grupos recentes para reduzir leitura e carga inicial.",
-        "O app publicou `robots.txt`, `sitemap.xml` e atalhos PWA alinhados com rotas reais.",
+        "O app publicou sitemap, robots e atalhos PWA alinhados com as rotas reais.",
         "A documentacao de suporte, performance e lancamento publico foi consolidada para operacao diaria."
       ],
       "fixed": [],
@@ -2388,10 +2197,7 @@
       "fixed": [
         "A aba Agendados passa a buscar jogos agendados futuros diretamente no banco.",
         "A aba Todos passa a buscar jogos ativos futuros/recentes, sem depender dos 50 primeiros jogos globais.",
-        "A aba Finalizados mantém uma consulta própria para jogos encerrados.",
-        "`GamesTab` envia filtros de status/data para `useGames` antes da consulta Firestore.",
-        "`useGames` passa a aceitar `statuses` e `startDateTime`, usando `where('status', 'in', ...)` e `where('dateTime', '>=', ...)`.",
-        "Testes unitários cobrem os novos filtros `status in` e `dateTime >=`."
+        "A aba Finalizados mantém uma consulta própria para jogos encerrados."
       ],
       "issueRefs": [
         3292
@@ -2417,10 +2223,7 @@
       "fixed": [
         "A tela de criar jogo passa a listar somente grupos próprios com 5 membros ou mais.",
         "Usuários sem grupo elegível recebem uma mensagem clara antes de tentar criar o jogo.",
-        "A criação rápida por template segue a mesma regra de grupo qualificado.",
-        "`CreateGameScreen` remove a opção de criar jogo sem grupo e filtra grupos inelegíveis.",
-        "`useCreateGame` valida o grupo antes de gravar em `games`.",
-        "`firestore.rules` rejeita criação direta de jogo sem `group_id`, com grupo de outro dono, inativo/deletado ou com `member_count < 5`."
+        "A criação rápida por template segue a mesma regra de grupo qualificado."
       ],
       "issueRefs": [
         3290
@@ -2470,9 +2273,7 @@
       "improved": [
         "O índice necessário para buscar posts de mural por grupo e data foi adicionado ao Firestore."
       ],
-      "fixed": [
-        "`firestore.indexes.json` adiciona índice `COLLECTION_GROUP` para `wall_posts` com `group_id ASC` e `created_at DESC`, usado por `useSocialFeed`."
-      ],
+      "fixed": [],
       "issueRefs": [
         3286
       ]
@@ -2502,11 +2303,7 @@
         "Regras do Firestore passam a bloquear spoof de autor, timestamp de cliente, status inválido e campos inesperados em lançamentos do caixa.",
         "O hook legado de leitura do caixa mantém lançamentos estornados no histórico, mas não soma esses valores ao saldo."
       ],
-      "fixed": [
-        "`firestore.rules` exige `group_id`, `created_by == userId()`, `created_at == request.time`, `status == ACTIVE` e whitelist de campos no create de `groups/{groupId}/cashbox`.",
-        "`useCashbox` não inclui transações `VOIDED` no saldo calculado.",
-        "Testes de Firestore Rules cobrem spoof de `created_by`, timestamp cliente, status inválido, campo extra e `group_id` divergente."
-      ],
+      "fixed": [],
       "issueRefs": [
         3284
       ]
@@ -2536,11 +2333,7 @@
         "A tela de caixa usa o UID real do Firebase Auth para checar permissões.",
         "As regras de Firestore e Storage foram alinhadas com o mesmo fallback de dono usado pela rota do grupo."
       ],
-      "fixed": [
-        "`CashboxScreen` deixou de usar `user.id` para checar/gravar permissões e passou a usar `firebaseUser.uid`.",
-        "`firestore.rules` permite owner por `owner_id` em `cashbox` e `cashbox_summary` quando o doc legado em `members/{uid}` não existe.",
-        "`storage.rules` aplica o mesmo fallback para recibos em `groups/{groupId}/receipts`."
-      ],
+      "fixed": [],
       "issueRefs": [
         3282
       ]
@@ -2570,10 +2363,7 @@
         "A tela de desafios passa a usar o documento real do grupo como fonte do nome do desafiante.",
         "O botão de criar desafio só fica ativo quando o grupo atual e a lista de adversários estão disponíveis."
       ],
-      "fixed": [
-        "`GroupChallengesScreen` deixou de depender exclusivamente de `official-groups` para resolver o grupo atual.",
-        "Firestore indexes adicionados para `group-challenges` por `challenged_group_id/created_at` e `challenger_group_id/created_at`."
-      ],
+      "fixed": [],
       "issueRefs": []
     },
     {
@@ -2644,9 +2434,7 @@
       ],
       "fixed": [
         "Evita envio de post vazio com imagem chegando até uma rejeição de backend.",
-        "Corrige inconsistências de release notes exibidas para o usuário.",
-        "Cleanup de mídia do mural cobre paths publicados e reduz retenção de arquivos após soft-delete.",
-        "Lighthouse CI recebeu instalação mais determinística para evitar falhas por binários ausentes."
+        "Corrige inconsistências de release notes exibidas para o usuário."
       ],
       "issueRefs": [
         3261,
@@ -2694,11 +2482,7 @@
         "Check-in web aceita coordenadas de forma consistente, inclusive no fluxo por QR Code.",
         "Placeholder de imagem do mural acompanha melhor o dark mode."
       ],
-      "fixed": [
-        "Check-in web/QR, unpin do mural, soft-delete visível no mural, validação de imagem e tint dark mode.",
-        "Billing parcial deixa de ativar quadra antes da soma de pagamentos aprovados cobrir a mensalidade.",
-        "Auto-close não sobrescreve jogo finalizado e FINISH_TOO_EARLY passou a ser sinal acionável."
-      ],
+      "fixed": [],
       "issueRefs": [
         3231,
         3233,
@@ -2750,7 +2534,7 @@
         "Composer de post com suporte a texto (até 500 caracteres) e anexo de foto."
       ],
       "improved": [
-        "`NotificationSettingsScreen` agora permite silenciar notificações de novos posts do mural."
+        "As configurações de notificação agora permitem silenciar avisos de novos posts do mural."
       ],
       "fixed": [],
       "issueRefs": [
@@ -2793,9 +2577,7 @@
       ],
       "fixed": [
         "Ajustes de placar, badges, convites, recorrência, temporada ativa, notificações e exclusões em lote eliminaram inconsistências encontradas na auditoria final.",
-        "A navegação e a leitura de jogos ao vivo ficaram mais consistentes após a migração dos fluxos críticos para Cloud Functions.",
-        "Follow-ups da auditoria: cap de milestones XP, temporada ativa, reativação de invite code, retry de push multi-device, paginação e deletes batch-safe, Grid2 no home e consistência de badges/leaderboard.",
-        "Regras e UX do web ficaram coerentes com o endurecimento de `firestore.rules` para impedir transições e escritas críticas no cliente."
+        "A navegação e a leitura de jogos ao vivo ficaram mais consistentes após a migração dos fluxos críticos para Cloud Functions."
       ],
       "issueRefs": [
         3199,
@@ -2829,22 +2611,15 @@
       "headline": "**Auth & Onboarding Overhaul**: CNPJ para donos de quadra, contas conectadas (Google) e correções de login/convite.",
       "highlights": [],
       "added": [
-        "**CNPJ no onboarding de dono de quadra**: novo campo CNPJ com máscara `99.999.999/9999-99` e validação, substituindo o texto livre de \"Documento comercial\". Obrigatório para empresas; opcional para pessoa física.",
+        "**CNPJ no onboarding de dono de quadra**: novo campo CNPJ com máscara 99.999.999/9999-99 e validação, substituindo o texto livre de \"Documento comercial\". Obrigatório para empresas; opcional para pessoa física.",
         "**Contas conectadas**: nova seção em Configurações permite vincular e desvincular sua conta Google à sua conta email/senha. Desvincular só é permitido se você tiver uma senha definida (nunca deixa a conta sem login primário)."
       ],
       "improved": [],
       "fixed": [
         "**Convite bypassável via Google corrigido**: o cadastro via Google agora valida o convite no servidor antes de criar a conta — antes era possível contornar o gate de convite logando com Google.",
         "**Mensagens de erro de login limpas**: erros de autenticação agora mostram mensagens amigáveis em PT-BR em vez do texto cru do Firebase. Login com senha errada, Google, recuperação de senha e criação de conta todos mapeados.",
-        "**Setup de perfil não reabre mais**: após salvar o perfil no onboarding, o app não reabre mais o modal de perfil incompleto (o claim `profileComplete` é recomputado antes de navegar).",
-        "**Verificação de CPF com auditoria correta**: falhas de verificação recusadas pelo servidor agora são auditadas com a razão certa (antes eram classificadas como formato inválido).",
-        "`AuthContext.signInWithGoogle`: valida convite server-side antes de criar doc; remove conta Auth órfã se rejeitada (#3186).",
-        "`ProfileSetupScreen`: `recomputeMyProfileClaim` + `refreshClaims` antes de navegar (fix re-gate loop, #3187).",
-        "`AuthContext.setError`: sempre mapeado via `getAuthErrorMessage` (nunca mensagem crua).",
-        "`CpfVerificationScreen`: erro `app/cpf-verification-failed` para auditoria precisa.",
-        "`RegisterScreen`: min-length unificado em 2 via `validateName`.",
-        "`OwnerOnboardingScreen`: campo CNPJ estruturado + mapeamento anti-enumeration de CNPJ duplicado.",
-        "`VerificationBanner` removido (código morto)."
+        "**Setup de perfil não reabre mais**: após salvar o perfil no onboarding, o app não reabre mais o modal de perfil incompleto (a conclusão do perfil é reconferida antes de navegar).",
+        "**Verificação de CPF com auditoria correta**: falhas de verificação recusadas pelo servidor agora são auditadas com a razão certa (antes eram classificadas como formato inválido)."
       ],
       "issueRefs": [
         3186,
@@ -2866,10 +2641,7 @@
       "improved": [
         "Ajusta pesos e espaçamento de textos MD3 na web para combinar com Android e iOS, deixando cards, rótulos e seções com aparência mais consistente."
       ],
-      "fixed": [
-        "Alinha `md3TypeScale` da web aos valores canônicos de `shared/design-tokens.json`.",
-        "Amplia `scripts/check-design-tokens-parity.js` para validar peso e tracking da escala tipográfica web contra os tokens compartilhados."
-      ],
+      "fixed": [],
       "issueRefs": [
         3181
       ]
@@ -2887,10 +2659,7 @@
       "improved": [
         "Links de convite e outras páginas do Web passam a exibir a imagem bonita da bola usada na abertura do app."
       ],
-      "fixed": [
-        "Atualiza `og:image` e metadados Twitter para usar `/logo.png`, o asset canônico do splash.",
-        "Declara tipo, dimensões e texto alternativo da imagem social."
-      ],
+      "fixed": [],
       "issueRefs": []
     },
     {
@@ -2907,10 +2676,7 @@
         "O texto de compartilhar convite ficou mais claro e mais direto.",
         "O link de convite deixa de aparecer duplicado em apps de compartilhamento como WhatsApp e Telegram."
       ],
-      "fixed": [
-        "Remove o link interpolado do texto enviado ao Web Share API, mantendo a URL apenas no campo `url`.",
-        "Mantém as traduções de convite alinhadas em PT-BR, EN e ES."
-      ],
+      "fixed": [],
       "issueRefs": []
     },
     {
@@ -2945,10 +2711,7 @@
       "fixed": [
         "Ao confirmar presença, o jogador vê o valor por pessoa já calculado pela duração escolhida na criação do jogo.",
         "A confirmação deixa de depender de qualquer recálculo por hora e passa a usar o valor proporcional salvo no jogo.",
-        "O registro financeiro da presença guarda o valor esperado para manter relatórios e pagamentos alinhados.",
-        "Centraliza no Web o cálculo de valor esperado de confirmação a partir de `daily_price`, com fallback para `total_cost / max_players` em jogos legados.",
-        "Persiste `payment_status`, `partial_payment`, `expected_payment` e `expected_payment_cents` na criação de confirmações Web e Android/KMP.",
-        "Expande as Firestore Rules para permitir apenas os novos campos financeiros seguros na criação de confirmações."
+        "O registro financeiro da presença guarda o valor esperado para manter relatórios e pagamentos alinhados."
       ],
       "issueRefs": []
     },
@@ -2966,9 +2729,7 @@
       "fixed": [
         "Ao escolher uma quadra com preço por hora, o total do jogo passa a acompanhar o horário de início e fim.",
         "Quadras de R$ 350,00/h agora calculam R$ 700,00 em 2h, R$ 525,00 em 1h30 e demais durações proporcionais.",
-        "A seção de pagamento mostra o cálculo por hora, duração e total para deixar a cobrança mais clara.",
-        "Corrige o cálculo de `totalCost` na tela de criação de jogo para usar `hourlyPrice * duração / 60`.",
-        "Adiciona helpers testáveis para normalizar preço por hora em reais ou centavos e preservar compatibilidade com cadastros antigos."
+        "A seção de pagamento mostra o cálculo por hora, duração e total para deixar a cobrança mais clara."
       ],
       "issueRefs": []
     },
@@ -2984,8 +2745,7 @@
       "added": [],
       "improved": [],
       "fixed": [
-        "Corrige as traduções em inglês e espanhol das telas de criar e editar local.",
-        "Restaura a paridade de chaves i18n entre `pt-BR`, `en` e `es`, corrigindo a falha do `Web CI`."
+        "Corrige as traduções em inglês e espanhol das telas de criar e editar local."
       ],
       "issueRefs": []
     },
@@ -3061,10 +2821,7 @@
         "A listagem pública usa o status comercial individual da quadra para disponibilidade.",
         "O painel administrativo mostra a pendência específica de conta comercial irregular sem duplicar a pendência de mensalidade."
       ],
-      "fixed": [
-        "`isLocationCommerciallyAvailable` não usa mais `venueAccountStatus` como substituto silencioso de `subscriptionStatus`.",
-        "`getLocationCommercialIssues` torna mutuamente exclusivos os avisos de mensalidade individual e conta agregada."
-      ],
+      "fixed": [],
       "issueRefs": [
         3121
       ]
@@ -3084,9 +2841,7 @@
         "O checklist comercial passa a exigir ponto no mapa e horários de funcionamento antes de considerar o cadastro completo.",
         "O painel do dono de quadra usa latitude/longitude no checklist, evitando pendências fantasmas quando a localização já está completa."
       ],
-      "fixed": [
-        "`ownerDashboard` agora propaga latitude/longitude para o checklist de completude."
-      ],
+      "fixed": [],
       "issueRefs": [
         3122
       ]
@@ -3124,7 +2879,7 @@
       "improved": [
         "Cada campo/quadra agora pode registrar jogadores por time, duração mínima de reserva, regras, superfície, dimensões e comodidades específicas.",
         "O cadastro continua aceitando rascunhos incompletos, mas o checklist comercial agora aponta quando faltam detalhes operacionais dos campos.",
-        "A localização passa a consolidar `players_per_team` a partir da quadra principal ativa para melhorar listagens e filtros."
+        "O local passa a herdar o número de jogadores por time da quadra principal ativa, melhorando listagens e filtros."
       ],
       "fixed": [],
       "issueRefs": [
@@ -3431,7 +3186,7 @@
         "Usuários podem solicitar aprovação para cadastrar quadras pela nova tela \"Cadastrar minha quadra\".",
         "A tela de Configurações ganhou entrada para iniciar ou acompanhar o onboarding comercial.",
         "Admins passam a revisar o onboarding pela ficha comercial do usuário, com checklist obrigatório antes da aprovação.",
-        "A aprovação promove o usuário para `FIELD_OWNER`; rejeição/suspensão exigem motivo."
+        "A aprovação promove o usuário a dono de quadra; rejeição e suspensão passam a exigir um motivo."
       ],
       "fixed": [],
       "issueRefs": [
@@ -3671,7 +3426,7 @@
       "added": [],
       "improved": [
         "A disponibilidade da quadra no mobile agora aparece como um resumo compacto com horários livres rápidos.",
-        "O mapa de disponibilidade dos próximos 7 dias continua disponível, mas fica recolhido atrás do botão `7 dias`.",
+        "O mapa de disponibilidade dos próximos 7 dias continua disponível, mas fica recolhido atrás do botão \"7 dias\".",
         "Horários habituais, populares e sugestões foram unidos em uma única régua horizontal, sem chips duplicados."
       ],
       "fixed": [],
@@ -3691,10 +3446,7 @@
       "fixed": [
         "Corrige campos numéricos que preenchiam outro valor automaticamente quando o usuário apagava tudo.",
         "Adiciona exemplos, placeholders e mensagens de validação para jogadores, goleiros, times, recorrência e valores.",
-        "Permite deixar preço vazio durante a edição; ao salvar, vazio é tratado como sem cobrança.",
-        "`CreateGameScreen` separa rascunho de digitação dos valores numéricos validados.",
-        "Payload de criação usa os valores normalizados no submit, evitando envio de número antigo após campo limpo.",
-        "Traduções `pt-BR`, `en` e `es` mantidas em paridade para novas mensagens do formulário."
+        "Permite deixar preço vazio durante a edição; ao salvar, vazio é tratado como sem cobrança."
       ],
       "issueRefs": []
     },
@@ -3730,12 +3482,7 @@
         "Corrige botão de criar jogo aparecendo para visitante ou não-membro.",
         "Corrige menu de ações de membros aparecendo vazio para quem não tinha permissão.",
         "Corrige upload de logo do grupo para respeitar JPG, PNG e WebP.",
-        "Remove textos soltos e melhora truncamento/descoberta de ações na tela de grupos.",
-        "`GroupDetailScreen` passa a condicionar ações sensíveis por membership/admin e usa tabs scrollable no mobile.",
-        "`CashboxScreen` adiciona ledger com filtros, `receipt_url` opcional e fluxo de `VOIDED` auditável.",
-        "`GroupEditScreen` e `storage.rules` alinham extensões reais de logo do grupo.",
-        "`GroupSettingsScreen` oculta menus sem ações possíveis e remove textos hardcoded.",
-        "`GroupPhotosPanel` agrega `game_photos` a partir de jogos reais do grupo sem duplicar dados."
+        "Remove textos soltos e melhora truncamento/descoberta de ações na tela de grupos."
       ],
       "issueRefs": [
         3030,
@@ -3779,9 +3526,7 @@
       "fixed": [
         "Corrige jogadores aparecendo com jogos, gols, assistências ou MVPs zerados mesmo quando já tinham partidas processadas.",
         "Corrige divergência entre a tela de estatísticas e o card do jogador.",
-        "Mantém fallback legado apenas quando a estatística oficial ainda não existe.",
-        "`usePlayerCard`, `useStatistics`, `usePlayers` e `AuthContext` passam a ler `statistics/{uid}` e `user_streaks` como fonte canônica.",
-        "Adiciona normalizador compartilhado para mapear `gamesWon`, `bestPlayerCount`, `totalGames` e campos legados sem drift."
+        "Mantém fallback legado apenas quando a estatística oficial ainda não existe."
       ],
       "issueRefs": []
     },
@@ -3816,9 +3561,7 @@
         "Ajusta espaçamentos, tamanhos e grade de estatísticas para telas pequenas.",
         "Mantém o visual do redesign e o compartilhamento/baixar imagem."
       ],
-      "fixed": [
-        "Adiciona `maxHeight`/`overflowY` responsivo no modal do `PlayerCard` e compacta estilos `xs` para viewport mobile com barras do navegador."
-      ],
+      "fixed": [],
       "issueRefs": []
     },
     {
@@ -3885,9 +3628,7 @@
         "Corrige a renderização desktop que deixava o Criar Jogo preso em um painel lateral estreito.",
         "Mantém o comportamento mobile e as proteções de rascunho/alterações não salvas."
       ],
-      "fixed": [
-        "Remove o wrapper `AdaptiveFormSheet` da `CreateGameScreen` para evitar Drawer lateral no desktop."
-      ],
+      "fixed": [],
       "issueRefs": []
     },
     {
@@ -4079,9 +3820,7 @@
         "Ranking recalcula em tempo real para a temporada selecionada.",
         "Estado de temporada única continua visível e bloqueia troca durante carregamento."
       ],
-      "fixed": [
-        "`useGroupLeague` agora usa a temporada selecionada no query key, fetch e listener em tempo real."
-      ],
+      "fixed": [],
       "issueRefs": [
         2978
       ]
@@ -4231,8 +3970,7 @@
       "improved": [],
       "fixed": [
         "O botão de check-in deixa de aparecer depois que o jogador já fez check-in.",
-        "Removida a aba antiga de fotos que duplicava o álbum em partidas finalizadas.",
-        "Condição web agora usa `checkedIn` em vez de depender do status `CHECKED_IN`, que a Cloud Function não grava."
+        "Removida a aba antiga de fotos que duplicava o álbum em partidas finalizadas."
       ],
       "issueRefs": [
         2981
@@ -4311,8 +4049,7 @@
         "Validações client-side reduzem envios incompletos."
       ],
       "fixed": [
-        "Corrigido o envio de desafios que não gravava `created_by`, causando bloqueio pelas Firestore Rules.",
-        "Criação web de desafios passa a gravar `created_by`, `updated_at`, meta, alvo e prazo."
+        "Corrigido o envio de desafios, que era bloqueado por não registrar quem criou o desafio."
       ],
       "issueRefs": [
         2984
@@ -4344,7 +4081,7 @@
         }
       ],
       "added": [
-        "Nova subcoleção segura `users/{uid}/favorite_squads` para favoritos próprios.",
+        "Seus times favoritos agora ficam guardados numa área privada da sua conta.",
         "Sugestões de favoritos dentro da formação de times."
       ],
       "improved": [
@@ -4512,8 +4249,7 @@
         "Convocações de reforço agora criam confirmação pendente, registro de convocação e notificação em uma operação atômica."
       ],
       "fixed": [
-        "Regras do Firestore para convocações de jogo agora bloqueiam campos arbitrários, status inicial inválido e posições fora do catálogo.",
-        "Fluxo de convocação de reforço usa `writeBatch()` para manter confirmação pendente, summon e notificação consistentes."
+        "Regras do Firestore para convocações de jogo agora bloqueiam campos arbitrários, status inicial inválido e posições fora do catálogo."
       ],
       "issueRefs": [
         2974,
@@ -4554,8 +4290,7 @@
       ],
       "fixed": [
         "Corrigido caso em que a etapa de SMS podia não abrir corretamente no web mobile.",
-        "Corrigido caso em que o botão de enviar SMS no Android podia não disparar se a tela recebesse um contexto embrulhado.",
-        "Fluxo de verificação por SMS deixa de bloquear cadastro legítimo em falhas transitórias do preflight."
+        "Corrigido caso em que o botão de enviar SMS no Android podia não disparar se a tela recebesse um contexto embrulhado."
       ],
       "issueRefs": []
     },
@@ -4593,8 +4328,7 @@
         "A aba de jogos ignora partidas ativas antigas no filtro principal."
       ],
       "fixed": [
-        "Corrigidos casos em que jogos antigos ainda apareciam como abertos, confirmados ou próximos.",
-        "Listas e cards de próximo jogo não priorizam mais partidas antigas que ficaram com status ativo no Firestore."
+        "Corrigidos casos em que jogos antigos ainda apareciam como abertos, confirmados ou próximos."
       ],
       "issueRefs": []
     },
@@ -4627,15 +4361,13 @@
         "Nova entrada de changelog para a versão web mais recente."
       ],
       "improved": [
-        "Navegação entre abas e páginas agora usa a rota completa, incluindo `?tab=`, para não reutilizar scroll de outra tela.",
+        "Navegação entre abas e páginas agora considera a aba atual, para não reaproveitar a rolagem de outra tela.",
         "Foco de acessibilidade na troca de página não desloca mais o conteúdo para baixo da topbar.",
         "Login, cadastro e recuperação de senha ganharam ajustes finos para telas estreitas."
       ],
       "fixed": [
         "Corrigido o comportamento em que algumas páginas abriam levemente roladas para baixo.",
-        "Corrigidos casos em que botões e links podiam quebrar de forma apertada no menor breakpoint mobile.",
-        "Scroll inicial de páginas e abas web ajustado para não ficar escondido sob a topbar.",
-        "Bundle de release notes web atualizado para refletir as mudanças recentes."
+        "Corrigidos casos em que botões e links podiam quebrar de forma apertada no menor breakpoint mobile."
       ],
       "issueRefs": []
     },
@@ -4673,9 +4405,7 @@
       ],
       "fixed": [
         "Removidas mensagens de erro duplicadas (alerta + toast) em vários formulários.",
-        "Corrigidos contrastes e tokens de cor no modo escuro.",
-        "LiveGameScreen com maxWidth no desktop e MuiDialog no tema escuro (#1479).",
-        "Erros duplicados Alert+Toast em EditProfile e no fluxo de CPF (#1421, #1420)."
+        "Corrigidos contrastes e tokens de cor no modo escuro."
       ],
       "issueRefs": [
         1465,

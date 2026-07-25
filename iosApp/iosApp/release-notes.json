@@ -1,6 +1,6 @@
 {
   "platform": "ios",
-  "generatedAt": "2026-07-20T17:57:36.395Z",
+  "generatedAt": "2026-07-25T14:21:01.399Z",
   "notes": [
     {
       "version": "1.7.0",
@@ -18,8 +18,7 @@
         "Valores de XP e progresso permanecem alinhados com Android, Web e Functions."
       ],
       "fixed": [
-        "Recursos PT-BR de nível e próximo nível usam acentuação correta.",
-        "As duas árvores de recursos PT-BR mantêm conteúdo e placeholders sincronizados."
+        "Recursos PT-BR de nível e próximo nível usam acentuação correta."
       ],
       "issueRefs": [
         3844,
@@ -69,8 +68,7 @@
         "Sessões e credenciais passam a distinguir item ausente de erro real do sistema."
       ],
       "fixed": [
-        "Erros de leitura, gravação e remoção do Keychain não são mais ignorados silenciosamente.",
-        "Leitura, atualização e remoção preservam a semântica de item inexistente e propagam as demais falhas."
+        "Erros de leitura, gravação e remoção do Keychain não são mais ignorados silenciosamente."
       ],
       "issueRefs": [
         3609
@@ -111,9 +109,7 @@
         "App iOS em desenvolvimento sobre Kotlin Multiplatform e Compose Multiplatform."
       ],
       "improved": [],
-      "fixed": [
-        "Geração dos 9 PNGs de AppIcon a partir do logo da marca (#1468)."
-      ],
+      "fixed": [],
       "issueRefs": [
         1297
       ]

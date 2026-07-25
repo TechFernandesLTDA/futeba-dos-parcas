@@ -388,7 +388,8 @@ test('toClientNote: extrai a nota de cliente do formato-fonte', () => {
   assert.equal(client.highlights.length, 1);
   assert.equal(client.highlights[0].icon, 'star');
   assert.deepEqual(client.issueRefs, [123, 456]);
-  assert.deepEqual(client.fixed, ['Corrigido crash no login', 'Race condition no XP']);
+  // #3912: "Race condition no XP" vem de "## Técnico" e nao pode chegar a UI.
+  assert.deepEqual(client.fixed, ['Corrigido crash no login']);
 });
 
 test('toClientNote: published omitido vira true; published:false vira false', () => {
@@ -397,7 +398,10 @@ test('toClientNote: published omitido vira true; published:false vira false', ()
   assert.equal(toClientNote({ ...base, fm: { ...validFm(), published: false } }).published, false);
 });
 
-test('toClientNote: usa Fixed tecnico quando Correções do usuario estiver vazio', () => {
+// #3912: antes deste fix o teste abaixo asseverava o oposto — que `fixed` caia
+// para o Fixed tecnico quando Correções estivesse vazio. Isso vazava conteudo de
+// desenvolvedor para a UI, contra a spec feat-2026-05-22 (L134, L257-258).
+test('toClientNote: nunca usa Fixed tecnico, mesmo com Correções do usuario vazio', () => {
   const body = validBody();
   body['Para o usuário'].Correções = [];
   body['Técnico'].Fixed = ['Contrato do mural alinhado'];
@@ -407,7 +411,68 @@ test('toClientNote: usa Fixed tecnico quando Correções do usuario estiver vazi
     fm: validFm(),
     body,
   });
-  assert.deepEqual(client.fixed, ['Contrato do mural alinhado']);
+  assert.deepEqual(client.fixed, []);
+});
+
+test('toClientNote: fixed segue deduplicando e ignorando vazios em Correções', () => {
+  const body = validBody();
+  body['Para o usuário'].Correções = ['Mesmo item', 'Mesmo item', '   ', 'Outro item'];
+  const client = toClientNote({ version: '1.36.0', file: 'f.md', fm: validFm(), body });
+  assert.deepEqual(client.fixed, ['Mesmo item', 'Outro item']);
+});
+
+// ==========================================================================
+// #3912 — portao de marcacao nas secoes de usuario
+// ==========================================================================
+
+/** Roda validateNote com um item injetado numa subsecao de usuario. */
+function errorsForUserItem(sub, item, platform = 'android') {
+  const errors = [];
+  const body = validBody();
+  body['Para o usuário'][sub] = [item];
+  const fm = { ...validFm(), platform };
+  validateNote({ platform, version: '1.22.0', file: 'f.md' }, { fm, body }, errors);
+  return errors;
+}
+
+test('validateNote: crase em secao de usuario e rejeitada', () => {
+  const errors = errorsForUserItem('Correções', 'Corrige o `LiveEventsScreen` no canManage.');
+  assert.ok(
+    errors.some((e) => e.includes('crase')),
+    `esperava erro de crase, veio: ${errors.join('; ')}`
+  );
+});
+
+test('validateNote: crase em "## Técnico" continua permitida', () => {
+  const errors = [];
+  const body = validBody();
+  body['Técnico'].Fixed = ['`LiveEventsScreen` reconhece co-organizadores em `canManage`.'];
+  validateNote({ platform: 'android', version: '1.22.0', file: 'f.md' }, { fm: validFm(), body }, errors);
+  assert.deepEqual(errors, [], `Técnico nao deve ser gateado, veio: ${errors.join('; ')}`);
+});
+
+test('validateNote: **negrito** continua aceito nas secoes de usuario', () => {
+  const errors = errorsForUserItem('Headline', '**Criar jogo funcionando novamente!** Tudo certo.');
+  assert.deepEqual(errors, [], `negrito deve passar, veio: ${errors.join('; ')}`);
+});
+
+test('validateNote: link, cabecalho e tachado em secao de usuario sao rejeitados', () => {
+  for (const [item, token] of [
+    ['Veja o [guia completo](https://exemplo.com).', 'link'],
+    ['# Titulo solto no meio do item.', 'cabecalho'],
+    ['Recurso ~~removido~~ da tela.', 'tachado'],
+  ]) {
+    const errors = errorsForUserItem('Melhorias', item);
+    assert.ok(
+      errors.some((e) => e.includes(token)),
+      `esperava erro de ${token} para "${item}", veio: ${errors.join('; ')}`
+    );
+  }
+});
+
+test('validateNote: portao nao vale para "functions" (sem renderizador)', () => {
+  const errors = errorsForUserItem('Correções', 'Ajusta o callable `confirmPlayerAsManager`.', 'functions');
+  assert.deepEqual(errors, [], `functions nao deve ser gateado, veio: ${errors.join('; ')}`);
 });
 
 test('parseBody: estrutura H2/H3/itens corretamente', () => {
