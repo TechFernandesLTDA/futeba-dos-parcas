@@ -72,6 +72,20 @@ const BUNDLE_TARGETS = {
 const AUTOGEN_START = '<!-- AUTOGEN:START -->';
 const AUTOGEN_END = '<!-- AUTOGEN:END -->';
 
+// Marcacao que os renderizadores de notas NAO implementam (#3912).
+// O unico token entendido nas quatro superficies (web/src/utils/markdownLite.ts e
+// shared/.../domain/markdown/MarkdownLite.kt, consumido por :app e :composeApp) e
+// `**negrito**` (#3876, #3898) — por isso ele e removido do texto antes do teste.
+// `_enfase_` ficou de fora de proposito: zero ocorrencias e falso positivo provavel
+// em prosa que cite snake_case. Ver specs/BUGFIX_3912_RELEASE_NOTES_TECNICO_LEAK.md.
+const BOLD_SPAN = /\*\*(.+?)\*\*/g;
+const UNSUPPORTED_MARKUP = [
+  { name: 'crase (`codigo`)', pattern: /`/ },
+  { name: 'link [texto](url)', pattern: /\[[^\]]*\]\([^)]*\)/ },
+  { name: 'cabecalho "#"', pattern: /(^|\s)#{1,6}\s/ },
+  { name: 'tachado "~~"', pattern: /~~/ },
+];
+
 // ==========================================================================
 // Helpers de erro
 // ==========================================================================
@@ -201,6 +215,35 @@ function discoverNotes() {
   return notes;
 }
 
+/**
+ * Rejeita marcacao nao suportada nos itens de "## Para o usuário" (#3912).
+ *
+ * Esse e o portao que faltava: sem ele, todo token que os renderizadores nao
+ * implementam chega ao usuario em silencio — foi `**` duas vezes (#3876, #3898)
+ * e depois a crase. Restricoes deliberadas:
+ *
+ * - so vale para CLIENT_PLATFORMS; "functions" nao gera bundle nem vai ao
+ *   Firestore, entao suas secoes de usuario nao chegam a renderizador nenhum;
+ * - so vale para "## Para o usuário"; "## Técnico" usa crase legitimamente e
+ *   alimenta o CHANGELOG.md, renderizado pelo GitHub como Markdown completo;
+ * - `**negrito**` e removido antes do teste porque e suportado nas 4 superficies.
+ */
+function validateUserMarkup(user, platform, E) {
+  if (!CLIENT_PLATFORMS.includes(platform)) return;
+  for (const [sub, items] of Object.entries(user)) {
+    for (const item of items) {
+      const stripped = String(item).replace(BOLD_SPAN, '$1');
+      for (const { name, pattern } of UNSUPPORTED_MARKUP) {
+        if (!pattern.test(stripped)) continue;
+        E(
+          `"### ${sub}": marcacao nao suportada pelos renderizadores — ${name}. ` +
+            `Reescreva sem marcacao (o conteudo tecnico vai para "## ${SECTION_TECH}"): "${item}"`
+        );
+      }
+    }
+  }
+}
+
 function validateNote(meta, parsed, errors) {
   const { fm, body } = parsed;
   const file = meta.file;
@@ -240,6 +283,7 @@ function validateNote(meta, parsed, errors) {
     const destaques = user.Destaques || [];
     if (destaques.length > 3) E(`"### Destaques" aceita no maximo 3 itens (tem ${destaques.length})`);
     for (const d of destaques) parseHighlight(d, file, errors);
+    validateUserMarkup(user, meta.platform, E);
   }
   if (tech) {
     for (const sub of Object.keys(tech)) {
@@ -308,7 +352,6 @@ function buildReleaseNoteSourceUrl(note) {
 
 function toClientNote(note) {
   const user = note.body[SECTION_USER] || {};
-  const tech = note.body[SECTION_TECH] || {};
   const highlights = (user.Destaques || [])
     .map((d) => parseHighlight(d, note.file, []))
     .filter(Boolean);
@@ -323,7 +366,11 @@ function toClientNote(note) {
     highlights,
     added: user.Novidades || [],
     improved: user.Melhorias || [],
-    fixed: uniqueNonEmpty([...(user.Correções || []), ...(tech.Fixed || [])]),
+    // So "### Correções" de "## Para o usuário" (#3912). Concatenar tech.Fixed
+    // aqui jogava jargao, nome de simbolo e caminho de arquivo na UI do usuario,
+    // contra a spec feat-2026-05-22 (L134, L257-258). O conteudo tecnico continua
+    // indo para o CHANGELOG.md (buildAutogen) e para technicalSummary (cmdPublish).
+    fixed: uniqueNonEmpty(user.Correções || []),
     issueRefs: note.fm.issues || [],
   };
 }

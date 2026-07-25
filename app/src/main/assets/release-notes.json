@@ -1,6 +1,6 @@
 {
   "platform": "android",
-  "generatedAt": "2026-07-20T17:57:36.388Z",
+  "generatedAt": "2026-07-25T14:21:01.396Z",
   "notes": [
     {
       "version": "1.39.1",
@@ -15,11 +15,7 @@
       "improved": [],
       "fixed": [
         "O dashboard financeiro e o relatório pós-jogo agora calculam o preço por jogador usando a fórmula correta (custo total dividido pela capacidade máxima do jogo), igual ao valor cobrado na confirmação. Antes o preço variava conforme o número de confirmados.",
-        "Cancelar presença pelo Android não quebra mais a notificação da fila de espera — quem está na waitlist volta a ser avisado quando uma vaga abre.",
-        "`GameFinancialDashboard` e `GameOwnerComponents` usavam `totalCost / confirmados`; agora usam `Game.resolveExpectedPayment()`.",
-        "`PostGameReportScreen` usava `dailyPrice` cru; agora usa `resolveExpectedPayment()` e soma pagamentos parciais.",
-        "`GameRepositoryImpl.confirmPlayerAsOwner` agora chama o callable `confirmPlayerAsManager` (antes fazia write direto bloqueado pelas rules).",
-        "`FirebaseDataSourceImpl.cancelConfirmation`: `batch.delete()` → `batch.update({status:'CANCELLED'})`, restaurando o trigger `onGameVacancy` de promoção da waitlist."
+        "Cancelar presença pelo Android não quebra mais a notificação da fila de espera — quem está na waitlist volta a ser avisado quando uma vaga abre."
       ],
       "issueRefs": [
         3862
@@ -58,8 +54,7 @@
         "Valores exibidos de gol, assistência, defesa, vitória e MVP acompanham o servidor."
       ],
       "fixed": [
-        "Textos de nível e próximo nível usam acentuação correta em PT-BR.",
-        "As duas árvores de recursos PT-BR permanecem sincronizadas e preservam placeholders."
+        "Textos de nível e próximo nível usam acentuação correta em PT-BR."
       ],
       "issueRefs": [
         3844,
@@ -130,8 +125,7 @@
       ],
       "fixed": [
         "Confirmação, recusa e remoção de jogadores impedem toques concorrentes e permitem tentar novamente após erro.",
-        "Exclusão de jogo, toque no local e escalações usam nomes e áreas de toque consistentes.",
-        "Touch targets, semantics, rotas mortas, callback de local e feedback de notificações foram corrigidos."
+        "Exclusão de jogo, toque no local e escalações usam nomes e áreas de toque consistentes."
       ],
       "issueRefs": [
         3600,
@@ -198,10 +192,7 @@
       "fixed": [
         "Arquivos com extensão enganosa ou formato inválido são recusados antes do envio.",
         "Erros terminais liberam uma nova tentativa; falhas de rede preservam a mesma operação idempotente.",
-        "Texto e anexo permanecem no compositor quando a publicação não consegue concluir.",
-        "Modelo Android passa a mapear `thumbnail_url` publicado pelo backend.",
-        "ViewModel mantém UUID estável durante retries recuperáveis e o reinicia apenas em estados terminais.",
-        "Estados de progresso, cancelamento, processamento e erro ficam alinhados ao contrato compartilhado do Mural."
+        "Texto e anexo permanecem no compositor quando a publicação não consegue concluir."
       ],
       "issueRefs": [
         3518,
@@ -221,8 +212,7 @@
       "improved": [],
       "fixed": [
         "Horários preservam owner, grupo, recorrência, dia da semana e demais campos no formato esperado pelo Firestore.",
-        "Leituras e atualizações deixam de depender da serialização incompatível do modelo compartilhado.",
-        "`ScheduleRepositoryImpl` converte explicitamente entre o modelo KMP e o modelo Android anotado com `@PropertyName`."
+        "Leituras e atualizações deixam de depender da serialização incompatível do modelo compartilhado."
       ],
       "issueRefs": [
         3529
@@ -247,9 +237,7 @@
         "Aceitar convite ou convocação usa a confirmação transacional do servidor.",
         "Caixa usa operações idempotentes e não altera mais saldo diretamente no Firestore.",
         "Grupo novo converge para um membro, sem contagem duplicada do owner.",
-        "Fotos de câmera de até 10 MiB são comprimidas antes do limite final do Storage; uma falha no envio não é mais ignorada ao salvar o perfil.",
-        "Paginação com dedupe para feed, jogos públicos e locais; zero refetch por emissão no live game.",
-        "Upload de perfil valida o payload comprimido abaixo de 2 MiB e preserva o formulário quando o envio falha."
+        "Fotos de câmera de até 10 MiB são comprimidas antes do limite final do Storage; uma falha no envio não é mais ignorada ao salvar o perfil."
       ],
       "issueRefs": [
         3267,
@@ -277,10 +265,7 @@
       ],
       "fixed": [
         "Removido o botão de localização do mapa que não executava nenhuma ação.",
-        "Cancelamento de lembretes usa a mesma ação do agendamento e remove o `PendingIntent` correto.",
-        "Biometria exige `CryptoObject` AES/GCM com chave auth-per-use no Android Keystore e invalidação por novo cadastro biométrico.",
-        "Intents de FCM, notificações e alarmes são explicitamente limitadas ao pacote do aplicativo.",
-        "Ranking usa `collectLatest` e aguarda o preenchimento paralelo do cache antes de emitir o estado de sucesso."
+        "Ao desativar um lembrete de jogo ele é realmente cancelado — antes o alarme podia continuar agendado."
       ],
       "issueRefs": [
         3497
@@ -302,10 +287,7 @@
         "Erros de conexão em eventos e estatísticas ficam visíveis com opção de tentar novamente."
       ],
       "fixed": [
-        "Retries reutilizam o mesmo identificador do evento para evitar gol duplicado quando a resposta da rede se perde.",
-        "Flows de placar, eventos e estatísticas propagam falhas para a UI em vez de substituí-las por valores vazios.",
-        "O cliente não lista votos brutos; lê somente os documentos determinísticos do próprio eleitor e conclui via callable.",
-        "Resultado da votação consome exclusivamente os agregados autoritativos e reações do documento do jogo."
+        "Retries reutilizam o mesmo identificador do evento para evitar gol duplicado quando a resposta da rede se perde."
       ],
       "issueRefs": [
         3495
@@ -341,9 +323,7 @@
       "fixed": [
         "Aceitar convite de grupo no Android deixa o backend criar o membro e atualizar a contagem.",
         "Recusar ou cancelar convite grava o campo esperado pelas regras atuais.",
-        "Reduz risco de falha em grupos privados e de contagem duplicada de membros.",
-        "`InviteRepositoryImpl` remove escritas client-side de membership, `member_count`, espelho `users/{uid}/groups` e notificacoes de resposta.",
-        "`GroupInvite` passa a mapear `updated_at`."
+        "Reduz risco de falha em grupos privados e de contagem duplicada de membros."
       ],
       "issueRefs": []
     },
@@ -360,11 +340,8 @@
       "improved": [],
       "fixed": [
         "Usuarios com 0 XP permanecem corretamente no nivel 0.",
-        "Logs de XP aceitam `level_before` e `level_after` iguais a 0.",
-        "O resumo da Home reconhece o nivel maximo pela tabela oficial, nao por limite fixo antigo.",
-        "`LevelCalculator` passa a ser uma fachada sobre `LevelTable`.",
-        "Defaults de `User`, `XpLog` e validacao de nivel foram alinhados para 0-20.",
-        "Testes compartilhados e JVM foram atualizados para a curva canonica."
+        "O histórico de XP passou a registrar corretamente eventos de jogadores ainda no nível 0.",
+        "O resumo da Home reconhece o nivel maximo pela tabela oficial, nao por limite fixo antigo."
       ],
       "issueRefs": []
     },
@@ -399,10 +376,7 @@
         "Mensagens de validação ficaram mais claras quando o texto do post está vazio.",
         "Release notes Android 1.36.0/1.36.1 ficam alinhadas entre fonte, asset e GitHub Release."
       ],
-      "fixed": [
-        "Posts fixados fora da janela dos 20 mais recentes deixam de desaparecer do topo.",
-        "Cleanup cliente tenta remover `mediaPath` e `thumbnailPath` em falhas de escrita/remoção."
-      ],
+      "fixed": [],
       "issueRefs": [
         3265,
         3266,
@@ -445,9 +419,7 @@
         "Chat do jogo usa paginação segura para históricos maiores.",
         "Versionamento Android atualizado para 1.36.0, build 63."
       ],
-      "fixed": [
-        "Mural Android acompanha o contrato de rules para pin/unpin e validação de mídia."
-      ],
+      "fixed": [],
       "issueRefs": [
         3231,
         3233,
@@ -496,9 +468,7 @@
         "Mural do grupo valida imagem grande antes do upload e permite desafixar posts.",
         "Chat do jogo usa paginação segura para históricos maiores."
       ],
-      "fixed": [
-        "Mural Android acompanha o contrato de rules para pin/unpin e validação de mídia."
-      ],
+      "fixed": [],
       "issueRefs": [
         3231,
         3233,
@@ -540,7 +510,7 @@
       ],
       "added": [
         "Chat em tempo real por jogo, integrado na tela de detalhes do jogo, apenas para jogadores confirmados.",
-        "Tela `GroupWallScreen` com lista em tempo real, estados vazio/erro/carregando e FAB para criar post.",
+        "Mural do grupo com publicações em tempo real, estados de carregamento, lista vazia e erro, e botão para criar post.",
         "Composer de post com texto e seleção de foto da galeria.",
         "Edição, exclusão (soft-delete) e fixação de posts conforme permissões."
       ],
@@ -584,8 +554,7 @@
         "O perfil e os dados de jogo no app passaram a refletir melhor retenções e liberações de XP."
       ],
       "fixed": [
-        "Ajustes no fluxo de jogo ao vivo e nos mapeamentos de modelo reduziram brechas de inconsistência entre cliente e servidor.",
-        "Ajustes de compatibilidade entre Android, shared e Functions para evitar início/fim de jogo fora do contrato novo de validação."
+        "Ajustes no fluxo de jogo ao vivo e nos mapeamentos de modelo reduziram brechas de inconsistência entre cliente e servidor."
       ],
       "issueRefs": [
         3208,
@@ -632,10 +601,7 @@
       "fixed": [
         "Adiciona placeholders e teclado numérico/decimal nos campos de preço e jogadores.",
         "Mostra exemplos e faixas aceitas para preço, jogadores, goleiros, times e recorrência.",
-        "Deixa mais claro quando usar `0` em jogos sem cobrança.",
-        "`CreateGameScreen` usa `KeyboardOptions` adequadas para campos numéricos.",
-        "`NumberStepper` passa a exibir helper text com os limites aceitos.",
-        "Recursos de string do fluxo de Criar Jogo foram atualizados para documentar ranges e exemplos."
+        "Deixa mais claro quando usar o valor 0 em jogos sem cobrança."
       ],
       "issueRefs": []
     },
@@ -671,10 +637,7 @@
       "fixed": [
         "Corrigido o corte do destaque no resumo semanal.",
         "Corrigido o contraste do perfil no modo escuro.",
-        "Corrigidos vazamentos de memória em telas de tempo real.",
-        "fontSize via MaterialTheme e overflow do hero no WeeklyRecap (#1480).",
-        "TacticalBoard no dark mode; persistência do histórico de busca (#1413).",
-        "Cashbox Android, getMyGroupsFlow, blockPlayer atômico e memory leaks."
+        "Corrigidos vazamentos de memória em telas de tempo real."
       ],
       "issueRefs": [
         1405,
@@ -713,9 +676,7 @@
         "Verificação anti-bot (telefone + CPF) mais robusta logo após o login."
       ],
       "fixed": [
-        "Corrigida a verificação que podia ficar incompleta ao trocar de tela.",
-        "Saga de token refresh do CPF portada de web para Android (#1312).",
-        "Falhas de CI: badge helper, testes desatualizados, avisos do detekt (#1286)."
+        "Corrigida a verificação que podia ficar incompleta ao trocar de tela."
       ],
       "issueRefs": [
         443,

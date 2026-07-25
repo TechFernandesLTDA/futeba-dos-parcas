@@ -111,6 +111,32 @@ Duas seções de nível 2, **exatamente** com estes títulos:
 - `<nome>` do ícone: minúsculas e `_` (ex.: `dark_mode`, `celebration`);
 - proibido `|` dentro de qualquer campo — `validate` rejeita.
 
+### Marcação permitida em "Para o usuário"
+
+Os renderizadores de notas entendem **um único** token de Markdown: `**negrito**`
+(`web/src/utils/markdownLite.ts` e `shared/.../domain/markdown/MarkdownLite.kt`,
+consumido por `:app` e `:composeApp`). Qualquer outra marcação chegaria **literal**
+à tela do usuário, com os símbolos visíveis.
+
+Por isso `validate` **rejeita** nos itens de `## Para o usuário` de `android`,
+`web` e `ios`:
+
+| Marcação | Exemplo rejeitado | Escreva assim |
+|---|---|---|
+| crase | ``Corrige o `LiveGameScreen`.`` | `Corrige a tela de jogo ao vivo.` |
+| link | `Veja o [guia](https://…).` | `Veja o guia no site.` |
+| cabeçalho | `# Título solto` | (texto corrido) |
+| tachado | `Recurso ~~removido~~.` | `Recurso removido.` |
+
+Regra prática: **se o texto cita nome de classe, campo, rota ou caminho de
+arquivo, ele é técnico** — mova para `## Técnico`, onde a crase é livre e o
+`CHANGELOG.md` a renderiza como código. A seção `## Técnico` não é gateada.
+
+`functions` fica de fora do gate: não gera `bundle` nem vai ao Firestore, então
+suas seções de usuário não chegam a renderizador nenhum.
+
+Ver `specs/BUGFIX_3912_RELEASE_NOTES_TECNICO_LEAK.md`.
+
 ### Subseções de "Técnico"
 
 Títulos no padrão Keep a Changelog (em inglês): `Added`, `Changed`,
