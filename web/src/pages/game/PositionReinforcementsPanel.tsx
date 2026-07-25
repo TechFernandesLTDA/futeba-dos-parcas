@@ -65,7 +65,7 @@ export const PositionReinforcementsPanel: React.FC<PositionReinforcementsPanelPr
   if (!canManage || !['SCHEDULED', 'CONFIRMED'].includes(game.status)) return null;
 
   const preferredPositions = getPreferredPositionsForNeed(need)
-    .map((position) => t(`profile.positions.${position}`))
+    .map((position) => t(`player.positions.${position}`))
     .join(', ');
 
   const handleSend = async (candidate: (typeof candidates)[number]) => {
@@ -184,7 +184,7 @@ export const PositionReinforcementsPanel: React.FC<PositionReinforcementsPanelPr
                     secondary={
                       <Stack direction="row" spacing={0.75} useFlexGap flexWrap="wrap" sx={{ mt: 0.5 }}>
                         {candidate.user.preferredPosition && (
-                          <Chip size="small" label={t(`profile.positions.${candidate.user.preferredPosition}`)} />
+                          <Chip size="small" label={t(`player.positions.${candidate.user.preferredPosition}`)} />
                         )}
                         {candidate.isLookingToday && (
                           <Chip size="small" color="success" label={t('games.detail.reinforcements.lookingToday')} />
