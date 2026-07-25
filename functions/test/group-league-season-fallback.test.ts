@@ -28,6 +28,14 @@ jest.mock("firebase-admin/firestore", () => ({
     serverTimestamp: jest.fn(() => ({__serverTimestamp: true})),
     increment: jest.fn((value: number) => ({__increment: value})),
   },
+  // FIX #3908: activeSeasonQuery ganhou orderBy(FieldPath.documentId()) e
+  // start_date do provisionamento sob demanda passou a usar Timestamp.
+  FieldPath: {
+    documentId: jest.fn(() => "__name__"),
+  },
+  Timestamp: {
+    fromDate: jest.fn((date: Date) => ({__timestamp: date.toISOString()})),
+  },
 }));
 
 jest.mock("firebase-functions/v2/firestore", () => ({
@@ -49,7 +57,7 @@ type AnyDoc = Record<string, unknown>;
  * @return {object} Harness com firestore fake e writes capturados.
  */
 function createTurnoverWindowFirestore(currentGame: AnyDoc) {
-  const writes: Array<{kind: "set" | "delete"; path: string; data?: AnyDoc}> = [];
+  const writes: Array<{kind: "set" | "update" | "delete"; path: string; data?: AnyDoc}> = [];
 
   const confirmationDocs = [
     {user_id: "u1", status: "CONFIRMED", goals: 2, assists: 0, is_mvp: true},
@@ -72,6 +80,9 @@ function createTurnoverWindowFirestore(currentGame: AnyDoc) {
   const makeQuery = (path: string): any => ({
     path,
     where: jest.fn(function(this: unknown) {
+      return this;
+    }),
+    orderBy: jest.fn(function(this: unknown) {
       return this;
     }),
     limit: jest.fn(function(this: unknown) {
@@ -118,6 +129,9 @@ function createTurnoverWindowFirestore(currentGame: AnyDoc) {
         }),
         set: jest.fn((ref: {path: string}, data: AnyDoc) => {
           writes.push({kind: "set", path: ref.path, data});
+        }),
+        update: jest.fn((ref: {path: string}, data: AnyDoc) => {
+          writes.push({kind: "update", path: ref.path, data});
         }),
         delete: jest.fn((ref: {path: string}) => {
           writes.push({kind: "delete", path: ref.path});
@@ -252,5 +266,65 @@ describe("FIX #3882 — fallback determinístico de season na liga de grupo", ()
     );
     expect(matchWrite?.data).toMatchObject({season_id: "2026-08"});
     expect(loggerWarn).not.toHaveBeenCalled();
+  });
+
+  // FIX #3908: corrida do provisionamento sob demanda pode deixar duas
+  // `league_seasons` is_active==true para o mesmo grupo (dois jogos de
+  // meses diferentes finalizando ao mesmo tempo — ver D2.5 da spec
+  // BUGFIX_3908). A transação seguinte de onGameFinishedGroupLeague deve
+  // se autocurar: escolher a mais recente (orderBy documentId desc) e
+  // desativar as demais na MESMA transação.
+  it("desativa temporada ativa duplicada quando a leitura encontra mais de uma", async () => {
+    const game = {
+      status: "FINISHED",
+      group_id: "group-1",
+      date: "2026-08-15",
+    };
+    const {firestore, writes} = createTurnoverWindowFirestore(game);
+    const originalRunTransaction = firestore.runTransaction;
+    const staleSeasonRef = {path: "groups/group-1/league_seasons/2026-07"};
+    firestore.runTransaction = jest.fn(async (callback: (tx: unknown) => Promise<void>) => {
+      await originalRunTransaction(async (tx: any) => {
+        const originalGet = tx.get;
+        tx.get = jest.fn(async (query: {path: string}) => {
+          if (
+            query.path !== "games/game-1" &&
+            query.path !== "confirmations" &&
+            query.path !== "teams"
+          ) {
+            // Duas seasons ativas: a mais recente (2026-08, escolhida pelo
+            // orderBy documentId desc) e uma obsoleta (2026-07, corrida).
+            return {
+              docs: [
+                {id: "2026-08", data: () => ({is_active: true}), ref: {path: "groups/group-1/league_seasons/2026-08"}},
+                {id: "2026-07", data: () => ({is_active: true}), ref: staleSeasonRef},
+              ],
+              empty: false,
+            };
+          }
+          return originalGet(query);
+        });
+        await callback(tx);
+      });
+    }) as any;
+    mockDb.mockReturnValue(firestore);
+
+    await mockOnGameWrittenHandler!(gameWriteEvent(
+      {...game, status: "LIVE"},
+      game,
+    ));
+
+    const matchWrite = writes.find(
+      (write) => write.path === "groups/group-1/league_matches/game-1",
+    );
+    // A temporada mais recente venceu — standings vão para ela.
+    expect(matchWrite?.data).toMatchObject({season_id: "2026-08"});
+
+    // A duplicata obsoleta foi desativada NA MESMA transação.
+    const healWrite = writes.find(
+      (write) => write.kind === "update" && write.path === staleSeasonRef.path,
+    );
+    expect(healWrite).toBeDefined();
+    expect(healWrite?.data).toMatchObject({is_active: false});
   });
 });

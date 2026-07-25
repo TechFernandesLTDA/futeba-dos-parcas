@@ -44,6 +44,9 @@ function docRef(path: string) {
       applySet(path, data, options?.merge)),
     update: jest.fn(async (data: Record<string, unknown>) =>
       applyUpdate(path, data)),
+    delete: jest.fn(async () => {
+      store.delete(path);
+    }),
     collection: (name: string) => collectionRef(`${path}/${name}`),
   };
 }
@@ -137,6 +140,10 @@ jest.mock("firebase-admin", () => ({
 jest.mock("firebase-admin/firestore", () => ({
   FieldValue: {
     serverTimestamp: jest.fn(() => ({__serverTimestamp: true})),
+  },
+  // FIX #3908: cursor persistido grava updated_at com Timestamp.fromDate.
+  Timestamp: {
+    fromDate: jest.fn((date: Date) => ({__timestamp: date.toISOString()})),
   },
 }));
 
