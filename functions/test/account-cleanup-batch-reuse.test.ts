@@ -625,5 +625,144 @@ describe(
         ).resolves.not.toThrow();
       }
     );
+
+    test(
+      "erro transitório (código gRPC UNAVAILABLE) no catch de reviews " +
+      "força retry (throw final)",
+      async () => {
+        // collectionGroup é chamado em ordem: cashbox (1ª), reviews (2ª),
+        // activities (3ª). A 1ª chamada resolve vazia (cashbox ok); a 2ª
+        // (reviews) rejeita com erro transitório.
+        let call = 0;
+        mockCollectionGroupGet.mockImplementation(() => {
+          call++;
+          if (call === 2) {
+            const err: any = new Error("Firestore unavailable");
+            err.code = 14; // UNAVAILABLE
+            return Promise.reject(err);
+          }
+          return Promise.resolve({docs: [], empty: true, size: 0});
+        });
+
+        await expect(
+          onUserDeleted(makeUserRecord(), makeEventContext())
+        ).rejects.toThrow("PII anonymization incomplete");
+      }
+    );
+
+    test(
+      "erro permanente (sem código gRPC reconhecido) no catch de reviews " +
+      "NÃO força retry",
+      async () => {
+        let call = 0;
+        mockCollectionGroupGet.mockImplementation(() => {
+          call++;
+          if (call === 2) {
+            return Promise.reject(new TypeError("dado malformado"));
+          }
+          return Promise.resolve({docs: [], empty: true, size: 0});
+        });
+
+        await expect(
+          onUserDeleted(makeUserRecord(), makeEventContext())
+        ).resolves.not.toThrow();
+      }
+    );
+
+    test(
+      "erro transitório (código gRPC UNAVAILABLE) no catch de activities " +
+      "target força retry (throw final)",
+      async () => {
+        // 3ª chamada de collectionGroup (após cashbox e reviews, ambas ok).
+        let call = 0;
+        mockCollectionGroupGet.mockImplementation(() => {
+          call++;
+          if (call === 3) {
+            const err: any = new Error("Firestore unavailable");
+            err.code = 14; // UNAVAILABLE
+            return Promise.reject(err);
+          }
+          return Promise.resolve({docs: [], empty: true, size: 0});
+        });
+
+        await expect(
+          onUserDeleted(makeUserRecord(), makeEventContext())
+        ).rejects.toThrow("PII anonymization incomplete");
+      }
+    );
+
+    test(
+      "erro permanente (sem código gRPC reconhecido) no catch de " +
+      "activities target NÃO força retry",
+      async () => {
+        let call = 0;
+        mockCollectionGroupGet.mockImplementation(() => {
+          call++;
+          if (call === 3) {
+            return Promise.reject(new TypeError("dado malformado"));
+          }
+          return Promise.resolve({docs: [], empty: true, size: 0});
+        });
+
+        await expect(
+          onUserDeleted(makeUserRecord(), makeEventContext())
+        ).resolves.not.toThrow();
+      }
+    );
+
+    test(
+      "erro transitório (código gRPC UNAVAILABLE) no catch de groups " +
+      "força retry (throw final)",
+      async () => {
+        // groups usa db.collection("groups"), não collectionGroup — precisa
+        // interceptar mockCollection por nome (mesmo padrão do teste de
+        // notifications acima) para não afetar as demais coleções.
+        mockCollection.mockImplementation((name: string) => {
+          const query: any = {
+            where: jest.fn(() => query),
+            limit: jest.fn(() => query),
+            startAfter: jest.fn(() => query),
+            get: jest.fn(() => {
+              if (name === "groups") {
+                const err: any = new Error("Firestore unavailable");
+                err.code = 14; // UNAVAILABLE
+                return Promise.reject(err);
+              }
+              return Promise.resolve({docs: [], empty: true, size: 0});
+            }),
+          };
+          return query;
+        });
+
+        await expect(
+          onUserDeleted(makeUserRecord(), makeEventContext())
+        ).rejects.toThrow("PII anonymization incomplete");
+      }
+    );
+
+    test(
+      "erro permanente (sem código gRPC reconhecido) no catch de groups " +
+      "NÃO força retry",
+      async () => {
+        mockCollection.mockImplementation((name: string) => {
+          const query: any = {
+            where: jest.fn(() => query),
+            limit: jest.fn(() => query),
+            startAfter: jest.fn(() => query),
+            get: jest.fn(() => {
+              if (name === "groups") {
+                return Promise.reject(new TypeError("dado malformado"));
+              }
+              return Promise.resolve({docs: [], empty: true, size: 0});
+            }),
+          };
+          return query;
+        });
+
+        await expect(
+          onUserDeleted(makeUserRecord(), makeEventContext())
+        ).resolves.not.toThrow();
+      }
+    );
   }
 );
