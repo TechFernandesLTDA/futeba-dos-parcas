@@ -54,6 +54,11 @@ const TIME_BUDGET_MS = 150_000;
 // porque o cursor local reiniciava a cada run e a varredura recomeçava do zero.
 const CURSOR_STATE_COLLECTION = "system_state";
 const CURSOR_STATE_DOC = "gamification_nudges_cursor";
+// #3901: teto de idade do cursor persistido. Acima disso, a retomada é
+// descartada e a varredura reinicia do começo — evita retomar de um ponto que
+// já não reflete a base de forma útil após uma janela longa sem execução
+// (cron pausado por deploy quebrado, quota, etc.).
+const CURSOR_MAX_AGE_MS = 48 * 60 * 60 * 1000;
 
 const BADGE_HINTS = [
   {
@@ -377,19 +382,39 @@ export async function runGamificationNudges(
     .collection(CURSOR_STATE_COLLECTION)
     .doc(CURSOR_STATE_DOC);
 
-  // Retoma do cursor persistido (se houver). Reobtemos o snapshot pelo id, em
-  // vez de passar a string crua ao startAfter: com orderBy(documentId()) o
-  // cursor é a referência do doc, o que é robusto mesmo se ele foi removido.
-  let cursor: FirebaseFirestore.QueryDocumentSnapshot | null = null;
+  // #3901: retoma do cursor persistido (se houver e não estiver obsoleto).
+  // Passamos a REFERÊNCIA do doc ao startAfter em vez de reler o snapshot:
+  // com orderBy(documentId()) a referência já é um valor de cursor válido,
+  // existindo o doc ou não — o usuário pode ter sido excluído de verdade
+  // (onUserDeleted em account-cleanup.ts faz delete() real, não soft-delete)
+  // entre a execução que persistiu o cursor e esta. Descartar o cursor nesse
+  // caso reiniciava a varredura do zero e reintroduzia a inanição da cauda
+  // que #3875 resolveu. Isso também elimina o get() extra que a versão
+  // anterior fazia só para confirmar existência.
+  let cursor:
+    FirebaseFirestore.QueryDocumentSnapshot |
+    FirebaseFirestore.DocumentReference |
+    null = null;
   const stateSnap = await stateRef.get();
-  const lastUserId = stateSnap.data()?.last_user_id;
+  const stateData = stateSnap.data();
+  const lastUserId = stateData?.last_user_id;
+  const persistedAt = stateData?.updated_at as
+    FirebaseFirestore.Timestamp | undefined;
+  const cursorAgeMs = persistedAt ?
+    now() - persistedAt.toDate().getTime() :
+    null;
+
   if (typeof lastUserId === "string" && lastUserId.length > 0) {
-    const resumeDoc = await db()
-      .collection("users")
-      .doc(lastUserId)
-      .get();
-    if (resumeDoc.exists) {
-      cursor = resumeDoc as FirebaseFirestore.QueryDocumentSnapshot;
+    if (cursorAgeMs !== null && cursorAgeMs > CURSOR_MAX_AGE_MS) {
+      // Único caso em que a retomada é descartada: cursor obsoleto (D2 da
+      // spec). Ausência do doc do usuário deixou de ser motivo de descarte.
+      logger.warn(
+        "[GAMIFICATION_NUDGES] cursor persistido excede 48h; " +
+          "descartando e reiniciando varredura do início",
+        {lastUserId, cursorAgeMs},
+      );
+    } else {
+      cursor = db().collection("users").doc(lastUserId);
     }
   }
 

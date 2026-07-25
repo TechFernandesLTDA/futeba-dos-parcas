@@ -716,6 +716,84 @@ describe("gamification nudges daily scheduler", () => {
     );
   });
 
+  it(
+    "#3901: retoma do ponto seguinte quando o usuario do cursor foi excluido " +
+    "(nao reinicia a varredura)",
+    async () => {
+      // Quatro usuarios elegiveis. A 1a execucao persiste o cursor em
+      // user-2; antes da 2a execucao, user-2 e excluido de verdade (delete
+      // real, como account-cleanup.ts faz). A retomada deve continuar de
+      // user-3/user-4 — nao reiniciar em user-1.
+      for (const id of ["user-1", "user-2", "user-3", "user-4"]) {
+        seedDoc(`users/${id}`, {experience_points: 1755});
+      }
+
+      let ticks = 0;
+      const now = () => {
+        ticks += 1;
+        return ticks === 1 ? 0 : 10_000;
+      };
+
+      await runGamificationNudges({
+        pageLimit: 2,
+        timeBudgetMs: 1_000,
+        concurrency: 1,
+        now,
+      });
+
+      expect(notificationCalls.map(({userId}) => userId).sort())
+        .toEqual(["user-1", "user-2"]);
+      expect(store.get("system_state/gamification_nudges_cursor"))
+        .toEqual(expect.objectContaining({last_user_id: "user-2"}));
+
+      // Usuario do cursor e excluido de verdade (delete real, nao soft-delete).
+      store.delete("users/user-2");
+      notificationCalls.length = 0;
+
+      // now() explicito e proximo do timestamp persistido (10_000ms) — bem
+      // abaixo do teto de 48h — para nao acionar o descarte por idade (#3901
+      // D2), que e testado separadamente.
+      await runGamificationNudges({pageLimit: 2, now: () => 20_000});
+
+      // Retomada continua de user-3/user-4 — NAO reinicia em user-1.
+      expect(notificationCalls.map(({userId}) => userId).sort())
+        .toEqual(["user-3", "user-4"]);
+      expect(store.has("system_state/gamification_nudges_cursor")).toBe(false);
+      expect(mockLogger.warn).not.toHaveBeenCalledWith(
+        expect.stringContaining("cursor persistido excede"),
+        expect.anything(),
+      );
+    },
+  );
+
+  it(
+    "#3901: descarta cursor persistido ha mais de 48h e reinicia do inicio",
+    async () => {
+      for (const id of ["user-1", "user-2"]) {
+        seedDoc(`users/${id}`, {experience_points: 1755});
+      }
+
+      // Cursor persistido apontando para user-1, ha 49h (acima do teto de 48h).
+      const staleUpdatedAt = new Date(baseNow.getTime() - 49 * 60 * 60 * 1000);
+      seedDoc("system_state/gamification_nudges_cursor", {
+        last_user_id: "user-1",
+        updated_at: {toDate: () => staleUpdatedAt},
+      });
+
+      await runGamificationNudges({pageLimit: 10, now: () => baseNow.getTime()});
+
+      // Cursor obsoleto descartado: varredura reinicia do inicio (user-1
+      // tambem recebe nudge, nao e pulado como "ja processado").
+      expect(notificationCalls.map(({userId}) => userId).sort())
+        .toEqual(["user-1", "user-2"]);
+      expect(mockLogger.warn).toHaveBeenCalledWith(
+        "[GAMIFICATION_NUDGES] cursor persistido excede 48h; " +
+          "descartando e reiniciando varredura do início",
+        expect.objectContaining({lastUserId: "user-1"}),
+      );
+    },
+  );
+
   it("encontra o grupo ativo relevante mesmo com mais de 20 memberships", async () => {
     // Usuario com 25 grupos inativos (ids que ordenam antes) + 1 grupo ativo
     // com jogo futuro aberto. O limit(20) sem orderBy antigo podia devolver so
