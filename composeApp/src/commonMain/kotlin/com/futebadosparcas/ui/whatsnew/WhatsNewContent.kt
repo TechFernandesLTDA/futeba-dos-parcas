@@ -171,13 +171,13 @@ internal fun ReleaseHighlightCard(highlight: ReleaseHighlight, modifier: Modifie
         Spacer(Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = highlight.title,
+                text = rememberMarkdownLite(highlight.title),
                 style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.colorScheme.onSurface,
             )
             if (highlight.description.isNotBlank()) {
                 Text(
-                    text = highlight.description,
+                    text = rememberMarkdownLite(highlight.description),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -221,7 +221,7 @@ internal fun ReleaseSection(
                 )
                 Spacer(Modifier.width(8.dp))
                 Text(
-                    text = item,
+                    text = rememberMarkdownLite(item),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -249,7 +249,7 @@ internal fun ReleaseNoteBody(
     ) {
         if (showHeadline && note.headline.isNotBlank()) {
             Text(
-                text = note.headline,
+                text = rememberMarkdownLite(note.headline),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurface,
             )

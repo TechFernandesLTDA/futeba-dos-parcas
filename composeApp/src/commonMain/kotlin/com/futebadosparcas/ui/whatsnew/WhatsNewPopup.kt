@@ -89,7 +89,9 @@ fun WhatsNewBottomSheet(
             Spacer(Modifier.height(8.dp))
 
             Text(
-                text = note.headline.ifBlank { stringResource(Res.string.whats_new_title) },
+                text = rememberMarkdownLite(
+                    note.headline.ifBlank { stringResource(Res.string.whats_new_title) },
+                ),
                 style = MaterialTheme.typography.headlineSmall,
                 color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.semantics { heading() },
