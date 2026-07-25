@@ -672,6 +672,20 @@ async function buildLeaguePlayersDirectory(
     }
   }
 
+  // FIX #3900: roster e estatisticas vem de fontes independentes, entao
+  // participacoes ausentes viram zeros silenciosos na UI em vez de erro.
+  // Grupo com membros ativos e nenhuma participacao e indistinguivel de
+  // "grupo novo que nunca jogou" — logamos para que o estado seja
+  // detectavel sem depender de alguem olhar a tela.
+  if (groupId && usersMap.size > 0 && participations.length === 0) {
+    logger.warn("[LEAGUE_PLAYERS] Grupo sem participacoes na temporada", {
+      seasonId,
+      groupId,
+      genderKey,
+      memberCount: usersMap.size,
+    });
+  }
+
   return Array.from(usersMap.entries()).map(([userId, userData]) => {
     const participation = participationByUser.get(userId);
     return {
@@ -1287,26 +1301,91 @@ async function fetchLeagueParticipations(
   const orderField = isSegmented ?
     `by_gender.${genderKey}.points` :
     "points";
-  let q: FirebaseFirestore.Query = db
+
+  const baseQuery: FirebaseFirestore.Query = db
     .collection("season_participation")
     .where("season_id", "==", seasonId);
 
+  // Ordenacao e limite padrao do diretorio, aplicados a uma query filtrada.
+  const runOrdered = async (
+    query: FirebaseFirestore.Query
+  ): Promise<FirebaseFirestore.QueryDocumentSnapshot[]> => {
+    const snap = await query
+      .orderBy(orderField, "desc")
+      .orderBy("user_id", "asc")
+      .limit(resultLimit)
+      .get();
+    return snap.docs;
+  };
+
+  // Le o mesmo valor que orderField ordena, para reordenar em memoria.
+  const readOrderPoints = (
+    doc: FirebaseFirestore.QueryDocumentSnapshot
+  ): number => {
+    const data = doc.data();
+    const src = isSegmented ?
+      ((data.by_gender || {})[genderKey] || {}) :
+      data;
+    return readNumber(src.points);
+  };
+
+  const readParticipationUserId = (
+    doc: FirebaseFirestore.QueryDocumentSnapshot
+  ): string => {
+    const data = doc.data();
+    return readString(data.user_id) ||
+      readString(data.userId) ||
+      doc.id;
+  };
+
+  let docs: FirebaseFirestore.QueryDocumentSnapshot[];
+
   if (groupId) {
-    // FIX #3879: filtra por array-contains em group_ids (todos os grupos
-    // jogados na temporada) em vez do escalar group_id (apenas o ultimo).
-    // Assim o usuario aparece no ranking de TODOS os grupos em que jogou.
-    // O par de indices exigidos (season_id + group_ids CONTAINS +
-    // orderField + user_id) esta versionado em firestore.indexes.json.
-    q = q.where("group_ids", "array-contains", groupId);
+    // FIX #3879: o filtro por array-contains em group_ids (todos os grupos
+    // jogados na temporada) substitui o escalar group_id (apenas o ultimo),
+    // para o usuario aparecer no ranking de TODOS os grupos em que jogou.
+    //
+    // FIX #3900: aquele fix foi deployado sem backfill de group_ids, e o
+    // Firestore exclui de array-contains todo doc que nao tem o campo.
+    // Documentos gravados antes do deploy so tem group_id escalar, entao a
+    // consulta nova voltava vazia e o diretorio renderizava o roster
+    // completo com estatisticas zeradas — falha silenciosa.
+    //
+    // Unimos as duas consultas para que docs legados e migrados aparecam
+    // juntos. Nao basta usar a legada so quando a nova vem vazia: durante a
+    // migracao o grupo fica em estado misto e a nova volta parcial, o que
+    // deixaria os legados de fora sem disparar nenhum fallback.
+    // TODO(#3900): remover a consulta legada apos concluir o backfill.
+    const [migrated, legacy] = await Promise.all([
+      runOrdered(baseQuery.where("group_ids", "array-contains", groupId)),
+      runOrdered(baseQuery.where("group_id", "==", groupId)),
+    ]);
+
+    const byDocId = new Map<
+      string,
+      FirebaseFirestore.QueryDocumentSnapshot
+    >();
+    for (const doc of migrated) byDocId.set(doc.id, doc);
+    for (const doc of legacy) {
+      if (!byDocId.has(doc.id)) byDocId.set(doc.id, doc);
+    }
+
+    // Duas queries ordenadas de forma independente nao formam um top-N
+    // global quando concatenadas: reordenamos pela mesma chave da query
+    // (pontos desc, user_id asc) antes de aplicar o limite.
+    docs = Array.from(byDocId.values())
+      .sort((a, b) => {
+        const diff = readOrderPoints(b) - readOrderPoints(a);
+        if (diff !== 0) return diff;
+        return readParticipationUserId(a)
+          .localeCompare(readParticipationUserId(b));
+      })
+      .slice(0, resultLimit);
+  } else {
+    docs = await runOrdered(baseQuery);
   }
 
-  const snap = await q
-    .orderBy(orderField, "desc")
-    .orderBy("user_id", "asc")
-    .limit(resultLimit)
-    .get();
-
-  return snap.docs.map((doc) => {
+  return docs.map((doc) => {
     const data = doc.data();
     const src = isSegmented ?
       ((data.by_gender || {})[genderKey] || {}) :

@@ -400,6 +400,138 @@ describe("leaderboard-cache batching", () => {
     ]);
   });
 
+  // FIX #3900: o #3879 passou a filtrar por `group_ids array-contains` sem
+  // backfill. Docs gravados antes daquele deploy so tem o escalar `group_id`
+  // e sao excluidos de array-contains, o que zerava o ranking do grupo.
+  describe("uniao group_ids/group_id (#3900)", () => {
+    const GROUP_ID = "group-1";
+
+    /**
+     * Query de season_participation que responde conforme o filtro de grupo
+     * aplicado, para distinguir a consulta nova da legada.
+     */
+    const makeSeasonQuery = (
+      byFilter: {migrated?: unknown[]; legacy?: unknown[]}
+    ) => {
+      const build = (filters: string[]): any => ({
+        where: jest.fn((field: string, _op: string, value: string) =>
+          build([...filters, `${field}:${value}`])),
+        orderBy: jest.fn(() => build(filters)),
+        limit: jest.fn(() => build(filters)),
+        get: jest.fn(async () => {
+          if (filters.includes(`group_ids:${GROUP_ID}`)) {
+            return {docs: byFilter.migrated ?? []};
+          }
+          if (filters.includes(`group_id:${GROUP_ID}`)) {
+            return {docs: byFilter.legacy ?? []};
+          }
+          return {docs: []};
+        }),
+      });
+      return build([]);
+    };
+
+    const wireCollections = (seasonQuery: unknown, memberIds: string[]) => {
+      const membersRef = {
+        get: jest.fn().mockResolvedValue({
+          docs: memberIds.map((uid) => ({
+            id: `member-${uid}`,
+            data: () => ({status: "ACTIVE", user_id: uid}),
+          })),
+        }),
+      };
+      const usersQuery = {
+        where: jest.fn(() => usersQuery),
+        get: jest.fn().mockResolvedValue({
+          docs: memberIds.map((uid) => ({
+            id: uid,
+            data: () => ({
+              display_name: `Jogador ${uid}`,
+              is_searchable: true,
+              experience_points: 150,
+            }),
+          })),
+        }),
+      };
+      mockCollection.mockImplementation((name: string) => {
+        if (name === "season_participation") return seasonQuery;
+        if (name === "groups") {
+          return {doc: jest.fn(() => ({collection: jest.fn(() => membersRef)}))};
+        }
+        if (name === "users") return usersQuery;
+        return {doc: mockDoc};
+      });
+    };
+
+    const participation = (id: string, userId: string, points: number, extra = {}) => ({
+      id,
+      data: () => ({
+        user_id: userId,
+        season_id: "season-1",
+        group_id: GROUP_ID,
+        points,
+        games_played: 4,
+        wins: 3,
+        ...extra,
+      }),
+    });
+
+    it("doc legado (so group_id) aparece com estatisticas reais", async () => {
+      wireCollections(
+        makeSeasonQuery({migrated: [], legacy: [participation("p1", "u1", 20)]}),
+        ["u1"]
+      );
+
+      const players = await __testing.buildLeaguePlayersDirectory(
+        "season-1",
+        GROUP_ID,
+        "ALL"
+      );
+
+      expect(players).toEqual([
+        expect.objectContaining({userId: "u1", points: 20, wins: 3}),
+      ]);
+    });
+
+    it("estado misto: legado e migrado convivem sem duplicar usuario", async () => {
+      // O fluxo novo grava group_id E group_ids, entao o doc migrado casa nas
+      // duas consultas — a deduplicacao por id de documento e obrigatoria.
+      const migratedDoc = participation("p-u1", "u1", 30, {group_ids: [GROUP_ID]});
+      wireCollections(
+        makeSeasonQuery({
+          migrated: [migratedDoc],
+          legacy: [migratedDoc, participation("p-u2", "u2", 15)],
+        }),
+        ["u1", "u2"]
+      );
+
+      const players = await __testing.buildLeaguePlayersDirectory(
+        "season-1",
+        GROUP_ID,
+        "ALL"
+      );
+
+      expect(players).toHaveLength(2);
+      expect(players).toEqual(expect.arrayContaining([
+        expect.objectContaining({userId: "u1", points: 30}),
+        expect.objectContaining({userId: "u2", points: 15}),
+      ]));
+    });
+
+    it("loga warn quando ha membros ativos e nenhuma participacao", async () => {
+      const logger = jest.requireMock("firebase-functions").logger;
+      (logger.warn as jest.Mock).mockClear();
+      wireCollections(makeSeasonQuery({migrated: [], legacy: []}), ["u1"]);
+
+      await __testing.buildLeaguePlayersDirectory("season-1", GROUP_ID, "ALL");
+
+      expect(logger.warn).toHaveBeenCalledWith(
+        "[LEAGUE_PLAYERS] Grupo sem participacoes na temporada",
+        expect.objectContaining({groupId: GROUP_ID, memberCount: 1})
+      );
+    });
+  });
+
   it("toPublicLeagueUser devolve somente a whitelist esportiva", () => {
     const nowMs = Date.parse("2026-07-14T12:00:00.000Z");
     const result = __testing.toPublicLeagueUser({
