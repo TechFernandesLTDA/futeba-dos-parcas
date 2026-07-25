@@ -162,6 +162,16 @@ function makeUserRecord(uid = "user-to-delete") {
   return {uid};
 }
 
+/**
+ * FIX #3897: onUserDeleted agora recebe o EventContext (2º parâmetro do
+ * onDelete v1) para calcular a idade do evento. `ageMs` simula um evento
+ * originado há `ageMs` no passado — default 0 (evento fresco, comportamento
+ * idêntico ao pré-#3897 nos testes que não testam o teto de idade).
+ */
+function makeEventContext(ageMs = 0): any {
+  return {timestamp: new Date(Date.now() - ageMs).toISOString()};
+}
+
 // ==========================================
 // TESTES
 // ==========================================
@@ -188,7 +198,7 @@ describe("onUserDeleted — regressão #1280 batch reuse", () => {
     mockCollectionGet.mockResolvedValue({docs: [], empty: true, size: 0});
 
     await expect(
-      onUserDeleted(makeUserRecord())
+      onUserDeleted(makeUserRecord(), makeEventContext())
     ).resolves.not.toThrow();
     expect(mockCollection).toHaveBeenCalledWith("push_tokens");
     expect(mockCollection).toHaveBeenCalledWith("push_token_devices");
@@ -212,7 +222,7 @@ describe("onUserDeleted — regressão #1280 batch reuse", () => {
     });
 
     await expect(
-      onUserDeleted(makeUserRecord())
+      onUserDeleted(makeUserRecord(), makeEventContext())
     ).resolves.not.toThrow();
 
     // Pelo menos 2 instâncias de batch (1 inicial + 1 após commit intermediário)
@@ -248,7 +258,7 @@ describe("onUserDeleted — regressão #1280 batch reuse", () => {
 
     // Não deve lançar nenhuma exceção
     await expect(
-      onUserDeleted(makeUserRecord())
+      onUserDeleted(makeUserRecord(), makeEventContext())
     ).resolves.not.toThrow();
 
     // Verificar que múltiplas instâncias de batch foram criadas (recriação após commit)
@@ -276,7 +286,7 @@ describe("onUserDeleted — regressão #1280 batch reuse", () => {
       return Promise.resolve({docs: [], empty: true, size: 0});
     });
 
-    await onUserDeleted(makeUserRecord());
+    await onUserDeleted(makeUserRecord(), makeEventContext());
 
     // Verificar: nenhuma instância commitada teve delete() chamado depois do commit
     // (isso seria o bug de batch-reuse)
@@ -349,7 +359,7 @@ describe("onUserDeleted — regressão #2323 loop infinito anonimização", () =
       });
 
       await expect(
-        onUserDeleted(makeUserRecord())
+        onUserDeleted(makeUserRecord(), makeEventContext())
       ).resolves.not.toThrow();
 
       // 1ª subcoleção: 2 páginas (500 + 250) → 2 chamadas. Demais subcoleções
@@ -365,7 +375,7 @@ describe("onUserDeleted — regressão #2323 loop infinito anonimização", () =
     "termina sem lançar quando subcoleções estão vazias (caminho feliz)",
     async () => {
       await expect(
-        onUserDeleted(makeUserRecord())
+        onUserDeleted(makeUserRecord(), makeEventContext())
       ).resolves.not.toThrow();
       // 3 subcoleções consultadas uma vez cada (todas vazias).
       expect(mockCollectionGroupGet).toHaveBeenCalledTimes(3);
@@ -404,7 +414,7 @@ describe("onUserDeleted — regressão #2323 loop infinito anonimização", () =
       });
 
       await expect(
-        onUserDeleted(makeUserRecord())
+        onUserDeleted(makeUserRecord(), makeEventContext())
       ).rejects.toThrow("PII anonymization incomplete");
 
       expect(mockStartAfter).toHaveBeenCalled();
@@ -447,7 +457,14 @@ describe("onUserDeleted — regressão #3877 LGPD", () => {
       // Antes do fix: auth.user().onDelete(...) sem runWith → failurePolicy
       // default false → o throw "PII anonymization incomplete" era no-op.
       // A captura acontece no load do módulo (por isso fora de clearAllMocks).
-      expect(runWithOptionsCaptured).toContainEqual({failurePolicy: true});
+      // FIX #3897: timeoutSeconds/memory adicionados — função pesada (~16
+      // loops paginados + 2 collectionGroup + Storage) não cabe no default
+      // de 60s. Alinhado com pii-migration.ts (memory em sintaxe v1: "512MB").
+      expect(runWithOptionsCaptured).toContainEqual({
+        failurePolicy: true,
+        timeoutSeconds: 540,
+        memory: "512MB",
+      });
     }
   );
 
@@ -489,7 +506,7 @@ describe("onUserDeleted — regressão #3877 LGPD", () => {
       });
 
       await expect(
-        onUserDeleted(makeUserRecord(uid))
+        onUserDeleted(makeUserRecord(uid), makeEventContext())
       ).resolves.not.toThrow();
 
       // Campo alinhado com o escritor (notifications/helpers.ts: user_id)
@@ -503,3 +520,110 @@ describe("onUserDeleted — regressão #3877 LGPD", () => {
     }
   );
 });
+
+// ==========================================
+// FIX #3897 — teto de idade do evento
+// ==========================================
+
+describe("onUserDeleted — FIX #3897: teto de idade do evento", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    batchInstances.length = 0;
+    mockDocGet.mockResolvedValue({exists: false, data: () => null});
+    mockCollectionGet.mockResolvedValue({docs: [], empty: true, size: 0});
+    mockCollectionGroupGet.mockResolvedValue({
+      docs: [],
+      empty: true,
+      size: 0,
+    });
+  });
+
+  test(
+    "evento com mais de 24h aborta sem tocar Firestore e sem lançar",
+    async () => {
+      // failurePolicy reenfileira por até 7 dias — sem este teto, uma falha
+      // permanente vira 7 dias de tentativas completas. O handler deve
+      // abortar com `return` (nunca `throw`, que rearmaria o retry).
+      const context = makeEventContext(25 * 60 * 60 * 1000); // 25h atrás
+
+      await expect(
+        onUserDeleted(makeUserRecord(), context)
+      ).resolves.toBeUndefined();
+
+      // Abortou ANTES de qualquer leitura/escrita.
+      expect(mockCollection).not.toHaveBeenCalled();
+      expect(mockCollectionGroup).not.toHaveBeenCalled();
+      expect(mockDocDelete).not.toHaveBeenCalled();
+    }
+  );
+
+  test(
+    "evento com menos de 24h processa normalmente (nao aborta)",
+    async () => {
+      const context = makeEventContext(23 * 60 * 60 * 1000); // 23h atrás
+
+      await expect(
+        onUserDeleted(makeUserRecord(), context)
+      ).resolves.not.toThrow();
+
+      expect(mockCollection).toHaveBeenCalledWith("push_tokens");
+    }
+  );
+});
+
+// ==========================================
+// FIX #3897 — split de erro transitório vs permanente na anonimização
+// ==========================================
+
+describe(
+  "onUserDeleted — FIX #3897: erro transitório vs permanente na anonimização",
+  () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+      batchInstances.length = 0;
+      mockDocGet.mockResolvedValue({exists: false, data: () => null});
+      mockCollectionGet.mockResolvedValue({docs: [], empty: true, size: 0});
+      mockCollectionGroupGet.mockResolvedValue({
+        docs: [],
+        empty: true,
+        size: 0,
+      });
+    });
+
+    test(
+      "erro transitório (código gRPC UNAVAILABLE) no catch de cashbox " +
+      "força retry (throw final)",
+      async () => {
+        // Primeira chamada de collectionGroup (cashbox) rejeita com um erro
+        // com `.code` reconhecido como transitório — deve ligar anonFailed
+        // e o handler deve lançar no final (retry via failurePolicy).
+        const transientError: any = new Error("Firestore unavailable");
+        transientError.code = 14; // UNAVAILABLE
+        mockCollectionGroupGet.mockImplementationOnce(
+          () => Promise.reject(transientError)
+        );
+
+        await expect(
+          onUserDeleted(makeUserRecord(), makeEventContext())
+        ).rejects.toThrow("PII anonymization incomplete");
+      }
+    );
+
+    test(
+      "erro permanente (sem código gRPC reconhecido) no catch de cashbox " +
+      "NÃO força retry",
+      async () => {
+        // Erro genérico (ex.: TypeError em dado malformado) — sem `.code`
+        // numérico reconhecido, tratado como permanente. Não deve ligar
+        // anonFailed nem lançar: repetir a mesma limpeza não resolveria.
+        mockCollectionGroupGet.mockImplementationOnce(
+          () => Promise.reject(new TypeError("dado malformado"))
+        );
+
+        await expect(
+          onUserDeleted(makeUserRecord(), makeEventContext())
+        ).resolves.not.toThrow();
+      }
+    );
+  }
+);
