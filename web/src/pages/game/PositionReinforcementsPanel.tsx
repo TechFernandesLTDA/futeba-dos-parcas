@@ -181,6 +181,10 @@ export const PositionReinforcementsPanel: React.FC<PositionReinforcementsPanelPr
                   </ListItemAvatar>
                   <ListItemText
                     primary={candidate.user.name}
+                    // O secondary do MUI embrulha o conteúdo num <Typography variant="body2">,
+                    // que por padrão renderiza <p>. Como aqui o conteúdo é um Stack de Chips
+                    // (ambos <div>), isso gerava <div> dentro de <p> — HTML inválido. #3913
+                    secondaryTypographyProps={{ component: 'div' }}
                     secondary={
                       <Stack direction="row" spacing={0.75} useFlexGap flexWrap="wrap" sx={{ mt: 0.5 }}>
                         {candidate.user.preferredPosition && (
