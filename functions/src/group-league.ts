@@ -4,6 +4,7 @@ import {
   onDocumentWritten,
 } from "firebase-functions/v2/firestore";
 import {db} from "./_db";
+import {buildSeasonName} from "./growth/season-naming";
 import {
   clampStat,
   FUNCTION_REGION,
@@ -602,6 +603,10 @@ export const onGameFinishedGroupLeague = onDocumentWritten(
           undefined;
         let targetSeasonId =
           storedTargetMatch?.matchData.season_id || null;
+        // FIX #3896: referencia da temporada a criar sob demanda.
+        // null = ja existe, ou nao houve necessidade de derivar.
+        let seasonRefToProvision:
+          FirebaseFirestore.DocumentReference | null = null;
 
         if (matchPayload && !targetSeasonId) {
           const activeSeasonQuery = db()
@@ -620,16 +625,39 @@ export const onGameFinishedGroupLeague = onDocumentWritten(
           // determinístico (YYYY-MM) da data do jogo. Antes, o retorno
           // silencioso perdia permanentemente as standings de jogos
           // finalizados entre 23:59 do último dia e 01:00 do dia 1º.
-          // Log em WARN (não info) para ser distinguível de operação
-          // normal e alertável.
+          //
+          // FIX #3896: para grupo criado por usuário isso não era exceção,
+          // era a regra — os crons de temporada só varriam o catálogo
+          // `official-groups` (11 entradas), então nenhum outro grupo
+          // jamais teve `league_seasons`. O fallback gravava standings sob
+          // um season_id sem documento correspondente, invisível para a
+          // aba Liga, e emitia um WARN a cada jogo finalizado da maior
+          // parte da base. Agora a temporada é provisionada sob demanda:
+          // o grupo que de fato joga passa a ter o documento e a tela
+          // enxerga. O log deixa de ser WARN porque deixou de sinalizar
+          // falha de cron.
           if (!targetSeasonId) {
             targetSeasonId = deriveFallbackSeasonId(matchPayload.date);
-            logger.warn(
+            const candidateSeasonRef = db()
+              .collection("groups")
+              .doc(matchPayload.groupId)
+              .collection("league_seasons")
+              .doc(targetSeasonId);
+
+            // Ainda na fase de leitura da transação: o Firestore exige
+            // todos os get() antes de qualquer escrita, e a primeira
+            // escrita desta transação só acontece mais abaixo.
+            const seasonDoc = await tx.get(candidateSeasonRef);
+            if (!seasonDoc.exists) {
+              seasonRefToProvision = candidateSeasonRef;
+            }
+
+            logger.info(
               "[GROUP_LEAGUE] No active season for group " +
                 `${matchPayload.groupId}; applying game ${gameId} to ` +
-                `fallback season ${targetSeasonId} derived from game date ` +
-                "(season turnover window or season cron failure — " +
-                "see issue #3882)",
+                `season ${targetSeasonId} derived from game date ` +
+                `(provisioned=${seasonRefToProvision !== null} — ` +
+                "see issues #3882 e #3896)",
             );
           }
         }
@@ -641,6 +669,22 @@ export const onGameFinishedGroupLeague = onDocumentWritten(
 
         if (!matchPayload || !targetSeasonId) {
           return;
+        }
+
+        // FIX #3896: cria a temporada do grupo antes de gravar standings,
+        // para que `groups/{id}/league_seasons` deixe de ficar vazio e a
+        // aba Liga consiga resolver a temporada corrente. `start_date` e
+        // obrigatorio: useGroupLeague ordena por ele, e documento sem o
+        // campo seria silenciosamente excluido da consulta.
+        if (seasonRefToProvision) {
+          tx.set(seasonRefToProvision, {
+            name: buildSeasonName(targetSeasonId),
+            is_active: true,
+            start_date: FieldValue.serverTimestamp(),
+            created_at: FieldValue.serverTimestamp(),
+            updated_at: FieldValue.serverTimestamp(),
+            provisioned_by: "onGameFinishedGroupLeague",
+          }, {merge: true});
         }
 
         const standingsRef = db()

@@ -79,8 +79,41 @@ function collectionRef(pathPrefix: string) {
   };
 }
 
+// FIX #3896: os crons deixaram de varrer só `official-groups` e passaram a
+// incluir todo grupo com temporada ativa, via collection group.
+function collectionGroupRef(
+  name: string,
+  filters: Array<{field: string; value: unknown}> = []
+) {
+  return {
+    where: (field: string, _op: string, value: unknown) =>
+      collectionGroupRef(name, [...filters, {field, value}]),
+    get: jest.fn(async () => {
+      const docs = Array.from(store.keys())
+        .filter((path) => {
+          const parts = path.split("/");
+          return parts.length >= 3 && parts[parts.length - 2] === name;
+        })
+        .filter((path) => {
+          const data = (store.get(path) ?? {}) as Record<string, unknown>;
+          return filters.every((f) => data[f.field] === f.value);
+        })
+        .map((path) => {
+          const parts = path.split("/");
+          return {
+            id: parts[parts.length - 1],
+            data: () => store.get(path),
+            ref: {path, parent: {parent: {id: parts[parts.length - 3]}}},
+          };
+        });
+      return {docs, empty: docs.length === 0, size: docs.length};
+    }),
+  };
+}
+
 const firestore = {
   collection: jest.fn((name: string) => collectionRef(name)),
+  collectionGroup: jest.fn((name: string) => collectionGroupRef(name)),
   batch: jest.fn(() => {
     const ops: Array<() => void> = [];
     return {
@@ -164,6 +197,29 @@ describe("growth/season-cycle schedulers", () => {
     expect(store.get("groups/group-1/league_seasons/2026-07")).toMatchObject({
       is_active: true,
     });
+  });
+
+  // FIX #3896: antes, os crons varriam apenas `official-groups` (catálogo de
+  // 11 entradas curadas), então grupo criado por usuário nunca tinha
+  // temporada e a aba Liga ficava presa em "liga não começou".
+  it("startNewSeason cobre grupo não oficial que já tem temporada ativa", async () => {
+    // Nenhum official-groups/* — este grupo nasceu do provisionamento sob
+    // demanda em onGameFinishedGroupLeague.
+    store.set("groups/pelada-do-ze/league_seasons/2026-06", {
+      is_active: true,
+      name: "Temporada Junho de 2026",
+    });
+    toLocaleDateStringSpy.mockReturnValue("2026-07-01");
+
+    await startNewSeasonHandler();
+
+    expect(store.get("groups/pelada-do-ze/league_seasons/2026-06"))
+      .toMatchObject({is_active: false});
+    expect(store.get("groups/pelada-do-ze/league_seasons/2026-07"))
+      .toMatchObject({is_active: true});
+    // start_date é obrigatório: useGroupLeague ordena por ele.
+    expect(store.get("groups/pelada-do-ze/league_seasons/2026-07"))
+      .toHaveProperty("start_date");
   });
 
   it("archiveSeason arquiva mesmo sem mvp.user_id", async () => {
