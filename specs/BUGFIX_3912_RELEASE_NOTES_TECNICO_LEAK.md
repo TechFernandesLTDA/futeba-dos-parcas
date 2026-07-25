@@ -202,16 +202,17 @@ Nenhum arquivo `.kt`, nenhum arquivo em `web/src/`, nenhum arquivo em `functions
 
 ## 4. Critérios de aceite
 
-- [ ] `toClientNote().fixed` contém apenas itens de `### Correções`
-- [ ] `node scripts/release-notes.js validate` verde
-- [ ] `node scripts/release-notes.js validate` rejeita uma nota de cliente com crase em
+- [x] `toClientNote().fixed` contém apenas itens de `### Correções`
+- [x] `node scripts/release-notes.js validate` verde — `OK — 260 arquivo(s)`
+      (antes das reescritas: 41 erros = 37 marcação + 4 bundles fora de sincronia)
+- [x] `node scripts/release-notes.js validate` rejeita uma nota de cliente com crase em
       seção de usuário, e **não** rejeita a mesma crase em `## Técnico`
-- [ ] `**negrito**` continua aceito nas seções de usuário
-- [ ] `npm run test:scripts` verde
-- [ ] `node scripts/release-notes.js changelog` produz **zero diff** — prova que o bloco
+- [x] `**negrito**` continua aceito nas seções de usuário
+- [x] `npm run test:scripts` verde — 116/116 (114 antes + 8 novos − 6 substituídos)
+- [x] `node scripts/release-notes.js changelog` produz **zero diff** — prova que o bloco
       `## Técnico` continua íntegro no `CHANGELOG.md`
-- [ ] Zero crases nos campos renderizados dos quatro bundles
-- [ ] `node scripts/release-notes.js bundle` é idempotente após o commit
+- [x] Zero crases nos campos renderizados dos quatro bundles (208/19/0/0 → 0/0/0/0)
+- [x] `node scripts/release-notes.js bundle` é idempotente após o commit
 
 ## 5. Não coberto
 
