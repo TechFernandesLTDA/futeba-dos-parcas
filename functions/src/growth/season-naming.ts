@@ -33,3 +33,25 @@ export function getMonthName(monthKey: string): string {
 export function buildSeasonName(monthKey: string): string {
   return `Temporada ${getMonthName(monthKey)}`;
 }
+
+/**
+ * FIX #3908: converte a chave YYYY-MM da temporada no instante de início
+ * do mês (dia 1º, 00:00 America/Sao_Paulo — 03:00 UTC, sem horário de
+ * verão no Brasil desde 2019).
+ *
+ * Usado como `start_date` da temporada provisionada sob demanda em
+ * `group-league.ts`: a chave ali deriva do MÊS DO JOGO
+ * (`deriveFallbackSeasonId`), que pode ser retroativo. Usar
+ * `FieldValue.serverTimestamp()` (o agora) gravava `start_date` no mês
+ * corrente mesmo quando a temporada era de um mês passado — e
+ * `useGroupLeague` ordena as temporadas por `start_date`.
+ *
+ * @param {string} monthKey Chave no formato YYYY-MM.
+ * @return {Date} Instante do dia 1º às 00:00 BRT do mês informado.
+ */
+export function monthKeyToStartDate(monthKey: string): Date {
+  const [yearStr, monthStr] = monthKey.split("-");
+  const year = parseInt(yearStr, 10);
+  const month = parseInt(monthStr, 10);
+  return new Date(Date.UTC(year, month - 1, 1, 3, 0, 0));
+}

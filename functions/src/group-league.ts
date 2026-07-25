@@ -1,10 +1,10 @@
 import {logger} from "firebase-functions";
-import {FieldValue} from "firebase-admin/firestore";
+import {FieldPath, FieldValue, Timestamp} from "firebase-admin/firestore";
 import {
   onDocumentWritten,
 } from "firebase-functions/v2/firestore";
 import {db} from "./_db";
-import {buildSeasonName} from "./growth/season-naming";
+import {buildSeasonName, monthKeyToStartDate} from "./growth/season-naming";
 import {
   clampStat,
   FUNCTION_REGION,
@@ -609,16 +609,39 @@ export const onGameFinishedGroupLeague = onDocumentWritten(
           FirebaseFirestore.DocumentReference | null = null;
 
         if (matchPayload && !targetSeasonId) {
+          // FIX #3908: orderBy(documentId(),"desc") torna a escolha
+          // determinística quando há mais de uma season is_active==true
+          // para o grupo (corrida de duas transações provisionando meses
+          // diferentes ao mesmo tempo — ver D2.5 da spec BUGFIX_3908).
+          // limit(5) é defensivo: no caso normal há 0 ou 1 documento.
           const activeSeasonQuery = db()
             .collection("groups")
             .doc(matchPayload.groupId)
             .collection("league_seasons")
             .where("is_active", "==", true)
-            .limit(1);
+            .orderBy(FieldPath.documentId(), "desc")
+            .limit(5);
           const activeSeasonSnap = await tx.get(activeSeasonQuery);
           targetSeasonId = activeSeasonSnap.empty ?
             null :
             activeSeasonSnap.docs[0].id;
+
+          // FIX #3908: auto-cura de temporadas ativas duplicadas — se a
+          // leitura acima trouxe mais de uma, desativa as extras (mais
+          // antigas, por causa do orderBy desc) na MESMA transação que
+          // resolve targetSeasonId. Não elimina a corrida na origem (as
+          // duas transações concorrentes não contendem: escrevem em
+          // documentos distintos), mas evita que a duplicidade sobreviva
+          // até o reparo mensal de startNewSeason.
+          if (activeSeasonSnap.docs.length > 1) {
+            for (const extraActiveDoc of activeSeasonSnap.docs.slice(1)) {
+              tx.update(extraActiveDoc.ref, {
+                is_active: false,
+                end_date: FieldValue.serverTimestamp(),
+                updated_at: FieldValue.serverTimestamp(),
+              });
+            }
+          }
 
           // FIX #3882: sem season ativa (janela de virada de mês ou cron
           // atrasado/falho), NÃO descartar a partida — deriva o season_id
@@ -676,11 +699,18 @@ export const onGameFinishedGroupLeague = onDocumentWritten(
         // aba Liga consiga resolver a temporada corrente. `start_date` e
         // obrigatorio: useGroupLeague ordena por ele, e documento sem o
         // campo seria silenciosamente excluido da consulta.
+        //
+        // FIX #3908: start_date deriva do MÊS de targetSeasonId
+        // (monthKeyToStartDate), não de FieldValue.serverTimestamp(). Como
+        // targetSeasonId aqui vem de deriveFallbackSeasonId(matchPayload.date)
+        // — o mês do JOGO, que pode ser retroativo —, usar "agora" gravava
+        // um start_date do mês corrente para uma temporada de mês passado,
+        // e useGroupLeague ordena as temporadas por start_date.
         if (seasonRefToProvision) {
           tx.set(seasonRefToProvision, {
             name: buildSeasonName(targetSeasonId),
             is_active: true,
-            start_date: FieldValue.serverTimestamp(),
+            start_date: Timestamp.fromDate(monthKeyToStartDate(targetSeasonId)),
             created_at: FieldValue.serverTimestamp(),
             updated_at: FieldValue.serverTimestamp(),
             provisioned_by: "onGameFinishedGroupLeague",

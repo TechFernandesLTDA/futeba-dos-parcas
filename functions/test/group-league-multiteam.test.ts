@@ -111,6 +111,9 @@ function createLeagueFirestore(
     where: jest.fn(function() {
       return this;
     }),
+    orderBy: jest.fn(function() {
+      return this;
+    }),
     limit: jest.fn(function() {
       return this;
     }),
