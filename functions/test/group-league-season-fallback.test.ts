@@ -193,9 +193,22 @@ describe("FIX #3882 — fallback determinístico de season na liga de grupo", ()
       "groups/group-1/league_standings/2026-08_u2",
     ]));
 
-    // Alerta em WARN (não info) — distinguível de operação normal
-    expect(loggerWarn).toHaveBeenCalledWith(
-      expect.stringContaining("fallback season 2026-08"),
+    // FIX #3896: a temporada passa a ser provisionada sob demanda, para que
+    // groups/{id}/league_seasons deixe de ficar vazio e a aba Liga consiga
+    // resolver a temporada. start_date é obrigatório: useGroupLeague ordena
+    // por ele, e doc sem o campo sairia silenciosamente da consulta.
+    const seasonWrite = writes.find(
+      (write) => write.path === "groups/group-1/league_seasons/2026-08",
+    );
+    expect(seasonWrite).toBeDefined();
+    expect(seasonWrite?.data).toMatchObject({is_active: true});
+    expect(seasonWrite?.data).toHaveProperty("start_date");
+
+    // FIX #3896: deixou de ser WARN — sem season ativa era o estado normal
+    // de todo grupo não oficial, e o alerta disparava a cada jogo.
+    expect(loggerWarn).not.toHaveBeenCalled();
+    expect(loggerInfo).toHaveBeenCalledWith(
+      expect.stringContaining("season 2026-08"),
     );
   });
 

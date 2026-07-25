@@ -3,20 +3,43 @@ import {logger} from "firebase-functions/v2";
 import * as admin from "firebase-admin";
 import {FieldValue} from "firebase-admin/firestore";
 import {FUNCTION_REGION} from "../constants";
+import {getMonthName} from "./season-naming";
 
 const db = () => admin.firestore();
 
 /**
- * Retorna o nome do mes em portugues
- * @param {string} monthKey - Chave no formato YYYY-MM
- * @return {string} Nome do mes
+ * FIX #3896: os crons varriam o catalogo `official-groups` (11 entradas
+ * curadas por seedOfficialGroups), e nao os grupos reais. Grupo criado por
+ * usuario nunca recebia documento de temporada, entao a aba Liga ficava
+ * permanentemente no estado vazio "liga nao comecou".
+ *
+ * Passamos a cobrir tambem todo grupo que ja tem temporada ativa — inclusive
+ * as provisionadas sob demanda por onGameFinishedGroupLeague. Grupo dormente
+ * (sem temporada ativa) fica de fora de proposito: nao ha por que provisionar
+ * meses para quem parou de jogar, e o provisionamento sob demanda cobre o
+ * retorno.
+ *
+ * A consulta usa apenas o campo `is_active`, entao o indice de campo unico
+ * automatico do Firestore ja atende o escopo de collection group.
+ *
+ * @return {Promise<string[]>} Ids de grupo a gerenciar.
  */
-function getMonthName(monthKey: string): string {
-  const [year, month] = monthKey.split("-");
-  const names = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
-    "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
-  const m = parseInt(month, 10) - 1;
-  return `${names[m]} de ${year}`;
+async function listManagedGroupIds(): Promise<string[]> {
+  const groupIds = new Set<string>();
+
+  const officialSnap = await db().collection("official-groups").get();
+  for (const doc of officialSnap.docs) groupIds.add(doc.id);
+
+  const activeSeasonsSnap = await db()
+    .collectionGroup("league_seasons")
+    .where("is_active", "==", true)
+    .get();
+  for (const doc of activeSeasonsSnap.docs) {
+    const groupId = doc.ref.parent.parent?.id;
+    if (groupId) groupIds.add(groupId);
+  }
+
+  return Array.from(groupIds);
 }
 
 type SeasonStanding = admin.firestore.DocumentData;
@@ -88,11 +111,9 @@ export const startNewSeason = onSchedule(
 
     logger.info("Starting new season", {monthKey});
 
-    const groupsSnap = await db().collection("official-groups").get();
+    const managedGroupIds = await listManagedGroupIds();
 
-    for (const groupDoc of groupsSnap.docs) {
-      const groupId = groupDoc.id;
-
+    for (const groupId of managedGroupIds) {
       try {
         const seasonsRef = db()
           .collection("groups")
@@ -165,7 +186,10 @@ export const startNewSeason = onSchedule(
       }
     }
 
-    logger.info("New seasons started", {monthKey, groups: groupsSnap.size});
+    logger.info("New seasons started", {
+      monthKey,
+      groups: managedGroupIds.length,
+    });
   }
 );
 
@@ -186,11 +210,9 @@ export const archiveSeason = onSchedule(
     const monthKey = `${yearStr}-${monthStr}`;
     logger.info("Archiving season", {monthKey});
 
-    const groupsSnap = await db().collection("official-groups").get();
+    const managedGroupIds = await listManagedGroupIds();
 
-    for (const groupDoc of groupsSnap.docs) {
-      const groupId = groupDoc.id;
-
+    for (const groupId of managedGroupIds) {
       try {
         const seasonRef = db()
           .collection("groups")

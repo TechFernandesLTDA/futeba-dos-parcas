@@ -95,8 +95,41 @@ function collectionRef(pathPrefix: string) {
 // verificar a atomicidade da virada (desativar + ativar no MESMO batch).
 const batchOps: Array<Array<{kind: string; path: string; data: Record<string, unknown>}>> = [];
 
+// FIX #3896: os crons deixaram de varrer só `official-groups` e passaram a
+// incluir todo grupo com temporada ativa, via collection group.
+function collectionGroupRef(
+  name: string,
+  filters: Array<{field: string; value: unknown}> = []
+) {
+  return {
+    where: (field: string, _op: string, value: unknown) =>
+      collectionGroupRef(name, [...filters, {field, value}]),
+    get: jest.fn(async () => {
+      const docs = Array.from(store.keys())
+        .filter((path) => {
+          const parts = path.split("/");
+          return parts.length >= 3 && parts[parts.length - 2] === name;
+        })
+        .filter((path) => {
+          const data = (store.get(path) ?? {}) as Record<string, unknown>;
+          return filters.every((f) => data[f.field] === f.value);
+        })
+        .map((path) => {
+          const parts = path.split("/");
+          return {
+            id: parts[parts.length - 1],
+            data: () => store.get(path),
+            ref: {path, parent: {parent: {id: parts[parts.length - 3]}}},
+          };
+        });
+      return {docs, empty: docs.length === 0, size: docs.length};
+    }),
+  };
+}
+
 const firestore = {
   collection: jest.fn((name: string) => collectionRef(name)),
+  collectionGroup: jest.fn((name: string) => collectionGroupRef(name)),
   batch: jest.fn(() => {
     const ops: Array<() => void> = [];
     const recorded: Array<{kind: string; path: string; data: Record<string, unknown>}> = [];
