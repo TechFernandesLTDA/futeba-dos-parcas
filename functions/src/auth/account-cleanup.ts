@@ -22,6 +22,7 @@
  */
 
 import {runWith} from "firebase-functions/v1";
+import type {EventContext} from "firebase-functions/v1";
 import * as admin from "firebase-admin";
 import {logger} from "firebase-functions/v2";
 import {Storage} from "@google-cloud/storage";
@@ -38,6 +39,54 @@ const getStorage = () => new Storage();
  * timeout da função (e disparar retry infinito).
  */
 const MAX_ANON_ITERATIONS = 1000;
+
+/**
+ * FIX #3897: teto de idade do evento de exclusão. `failurePolicy: true`
+ * reenfileira com backoff por até 7 dias — sem teto, uma falha permanente
+ * (dado malformado, objeto de Storage com 403, quota) vira 7 dias de
+ * tentativas, cada uma varrendo ~16 coleções + 2 collectionGroup e
+ * reescrevendo todos os alvos de anonimização. Acima de 24h abortamos com
+ * `return` (nunca `throw` — ver comentário no handler).
+ */
+const MAX_EVENT_AGE_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * FIX #3897: distingue falha transitória (rede, quota, indisponibilidade —
+ * outra tentativa pode resolver) de falha permanente (dado malformado,
+ * permissão, argumento inválido — nunca vai se resolver sozinha) antes de
+ * ligar `anonFailed`. Só a primeira justifica forçar o retry da limpeza
+ * inteira via failurePolicy; a segunda, se forçada a repetir, apenas
+ * reamplifica writes sem chance de sucesso — as etapas de anonimização
+ * atualizam documentos no lugar sem estreitar o filtro, então os mesmos
+ * documentos voltam a casar na query da próxima tentativa.
+ *
+ * Firestore/gRPC expõe `error.code` como status numérico
+ * (google-gax Status). Sem código estruturado (erro genérico de JS, ex.:
+ * TypeError em dado inesperado) tratamos como permanente — repetir a mesma
+ * lógica sobre o mesmo dado produz o mesmo erro.
+ */
+const TRANSIENT_GRPC_CODES = new Set([
+  1, // CANCELLED
+  2, // UNKNOWN
+  4, // DEADLINE_EXCEEDED
+  8, // RESOURCE_EXHAUSTED
+  10, // ABORTED
+  13, // INTERNAL
+  14, // UNAVAILABLE
+]);
+
+/**
+ * Verifica se um erro capturado nos blocos de anonimização de
+ * `onUserDeleted` é transitório (justifica forçar retry via `anonFailed`)
+ * ou permanente (não justifica).
+ *
+ * @param {unknown} error - Erro capturado no bloco catch
+ * @return {boolean} true se o código gRPC indicar falha transitória
+ */
+function isTransientFirestoreError(error: unknown): boolean {
+  const code = (error as {code?: unknown} | null | undefined)?.code;
+  return typeof code === "number" && TRANSIENT_GRPC_CODES.has(code);
+}
 
 /**
  * Cloud Function: onUserDeleted
@@ -58,12 +107,39 @@ const MAX_ANON_ITERATIONS = 1000;
 // falha parcial deixava users_private (telefone, cpfHash) e índices
 // cpf_index/phone_index órfãos para sempre. Espelha o `retry: true` dos
 // triggers v2 (ex.: pii-migration.ts).
-export const onUserDeleted = runWith({failurePolicy: true})
+// FIX #3897: o #3877 ligou failurePolicy sem ajustar timeout/memória — a
+// função é a mais pesada do módulo de auth (~16 loops paginados + 2
+// collectionGroup + Storage sequencial) e ficou no default de 60s.
+// timeoutSeconds/memory alinhados com pii-migration.ts (mesma família
+// PII/LGPD). NOTA: memory usa sintaxe v1 ("512MB"), não v2 ("512MiB").
+export const onUserDeleted = runWith({
+  failurePolicy: true,
+  timeoutSeconds: 540,
+  memory: "512MB",
+})
   .auth
   .user()
   .onDelete(
-    async (user: admin.auth.UserRecord) => {
+    async (user: admin.auth.UserRecord, context: EventContext) => {
       const uid = user.uid;
+
+      // FIX #3897: teto de idade do evento. failurePolicy reenfileira com
+      // backoff por até 7 dias — sem este teto, uma falha permanente (dado
+      // malformado, 403 no Storage, quota) vira 7 dias de tentativas, cada
+      // uma reexecutando a limpeza inteira do zero. Abortamos com `return` —
+      // NUNCA `throw` aqui: lançar rearmaria exatamente o retry que este
+      // teto existe para cortar.
+      const eventAgeMs = Date.now() - new Date(context.timestamp).getTime();
+      if (eventAgeMs > MAX_EVENT_AGE_MS) {
+        logger.error(
+          `[ACCOUNT_CLEANUP] Evento de exclusão do usuário ${uid} tem ` +
+          `${Math.round(eventAgeMs / 3_600_000)}h (acima do teto de 24h) — ` +
+          "abortando sem novo retry. Falha permanente: requer intervenção " +
+          "manual para completar o cleanup LGPD."
+        );
+        return;
+      }
+
       logger.info(
         `[ACCOUNT_CLEANUP] Usuário ${uid} deletado — iniciando cleanup`
       );
@@ -564,11 +640,23 @@ export const onUserDeleted = runWith({failurePolicy: true})
             );
           }
         } catch (cashboxError) {
-          anonFailed = true;
-          logger.warn(
-            `[ACCOUNT_CLEANUP] Erro ao anonimizar cashbox transactions para ${uid}:`,
-            cashboxError
-          );
+          // FIX #3897: só falha transitória força retry da limpeza inteira.
+          if (isTransientFirestoreError(cashboxError)) {
+            anonFailed = true;
+            logger.warn(
+              "[ACCOUNT_CLEANUP] Erro transitório ao anonimizar cashbox " +
+              `transactions para ${uid} (retry via failurePolicy vai ` +
+              "tentar de novo):",
+              cashboxError
+            );
+          } else {
+            logger.error(
+              "[ACCOUNT_CLEANUP] Erro permanente ao anonimizar cashbox " +
+              `transactions para ${uid} (não força retry — requer ` +
+              "investigação manual):",
+              cashboxError
+            );
+          }
         }
 
         // FIX #1963: location reviews — anonymize user_name (LGPD Art. 18 VI)
@@ -620,11 +708,23 @@ export const onUserDeleted = runWith({failurePolicy: true})
             );
           }
         } catch (reviewsError) {
-          anonFailed = true;
-          logger.warn(
-            `[ACCOUNT_CLEANUP] Erro ao anonimizar location reviews para ${uid}:`,
-            reviewsError
-          );
+          // FIX #3897: só falha transitória força retry da limpeza inteira.
+          if (isTransientFirestoreError(reviewsError)) {
+            anonFailed = true;
+            logger.warn(
+              "[ACCOUNT_CLEANUP] Erro transitório ao anonimizar location " +
+              `reviews para ${uid} (retry via failurePolicy vai tentar ` +
+              "de novo):",
+              reviewsError
+            );
+          } else {
+            logger.error(
+              "[ACCOUNT_CLEANUP] Erro permanente ao anonimizar location " +
+              `reviews para ${uid} (não força retry — requer investigação ` +
+              "manual):",
+              reviewsError
+            );
+          }
         }
 
         // FIX #1965: groups — anonymize ownerName + members[].userName (LGPD Art. 18 VI)
@@ -697,11 +797,21 @@ export const onUserDeleted = runWith({failurePolicy: true})
             );
           }
         } catch (groupsError) {
-          anonFailed = true;
-          logger.warn(
-            `[ACCOUNT_CLEANUP] Erro ao anonimizar grupos para ${uid}:`,
-            groupsError
-          );
+          // FIX #3897: só falha transitória força retry da limpeza inteira.
+          if (isTransientFirestoreError(groupsError)) {
+            anonFailed = true;
+            logger.warn(
+              "[ACCOUNT_CLEANUP] Erro transitório ao anonimizar grupos " +
+              `para ${uid} (retry via failurePolicy vai tentar de novo):`,
+              groupsError
+            );
+          } else {
+            logger.error(
+              "[ACCOUNT_CLEANUP] Erro permanente ao anonimizar grupos " +
+              `para ${uid} (não força retry — requer investigação manual):`,
+              groupsError
+            );
+          }
         }
 
         // FIX #1968: activities — anonymize targetUserName + targetUserPhoto (LGPD Art. 18 VI)
@@ -754,11 +864,23 @@ export const onUserDeleted = runWith({failurePolicy: true})
             );
           }
         } catch (activitiesError) {
-          anonFailed = true;
-          logger.warn(
-            `[ACCOUNT_CLEANUP] Erro ao anonimizar activities target para ${uid}:`,
-            activitiesError
-          );
+          // FIX #3897: só falha transitória força retry da limpeza inteira.
+          if (isTransientFirestoreError(activitiesError)) {
+            anonFailed = true;
+            logger.warn(
+              "[ACCOUNT_CLEANUP] Erro transitório ao anonimizar " +
+              `activities target para ${uid} (retry via failurePolicy ` +
+              "vai tentar de novo):",
+              activitiesError
+            );
+          } else {
+            logger.error(
+              "[ACCOUNT_CLEANUP] Erro permanente ao anonimizar activities " +
+              `target para ${uid} (não força retry — requer investigação ` +
+              "manual):",
+              activitiesError
+            );
+          }
         }
         logger.info(
           `[ACCOUNT_CLEANUP] Cleanup completo para usuário ${uid}`
