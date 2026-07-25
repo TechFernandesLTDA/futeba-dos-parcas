@@ -470,6 +470,27 @@ test('validateNote: link, cabecalho e tachado em secao de usuario sao rejeitados
   }
 });
 
+// "Destaques" e a unica subsecao de usuario sem violacao real no repo hoje, entao
+// nao e exercitada pelos arquivos-fonte. O titulo e a descricao sao renderizados
+// nas 4 superficies (highlights), logo precisam do mesmo portao.
+test('validateNote: crase no titulo/descricao de um destaque e rejeitada', () => {
+  for (const item of [
+    'icon=star | Ranking do `LeagueScreen` | Veja sua posicao na liga',
+    'icon=star | Novo ranking | Veja sua posicao em `season_participation`',
+  ]) {
+    const errors = errorsForUserItem('Destaques', item);
+    assert.ok(
+      errors.some((e) => e.includes('crase')),
+      `esperava erro de crase para "${item}", veio: ${errors.join('; ')}`
+    );
+  }
+});
+
+test('validateNote: destaque valido sem marcacao continua passando', () => {
+  const errors = errorsForUserItem('Destaques', 'icon=star | Novo ranking | Veja sua posicao na liga');
+  assert.deepEqual(errors, [], `destaque limpo deve passar, veio: ${errors.join('; ')}`);
+});
+
 test('validateNote: portao nao vale para "functions" (sem renderizador)', () => {
   const errors = errorsForUserItem('Correções', 'Ajusta o callable `confirmPlayerAsManager`.', 'functions');
   assert.deepEqual(errors, [], `functions nao deve ser gateado, veio: ${errors.join('; ')}`);
