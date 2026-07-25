@@ -1051,6 +1051,32 @@ export const completeAccountMerge = onCall(
       });
 
       const writer = database.bulkWriter();
+      // SECFIX #3909: o BulkWriter não agrega nem propaga falhas individuais
+      // em close() — cada set() devolve sua própria Promise<WriteResult>, que
+      // só rejeita depois que o handler padrão já esgotou os retries de
+      // códigos retryable. Capturamos esse retorno aqui (com catch anexado
+      // imediatamente, para nunca deixar uma promise sem handler) e checamos
+      // as falhas logo após close(), antes do estágio irreversível.
+      const bulkWriteFailures: {path: string; code?: string; message: string}[] = [];
+      const trackedBulkWrites: Promise<void>[] = [];
+      const trackBulkWrite = (
+        ref: FirebaseFirestore.DocumentReference,
+        write: Promise<unknown>,
+      ): void => {
+        trackedBulkWrites.push(write.then(
+          () => undefined,
+          (error: unknown) => {
+            const code = typeof (error as {code?: unknown})?.code === "string" ?
+              (error as {code: string}).code :
+              undefined;
+            bulkWriteFailures.push({
+              path: ref.path,
+              code,
+              message: error instanceof Error ? error.message : String(error),
+            });
+          },
+        ));
+      };
 
       let membershipsCopied = 0;
       let groupOwnershipsTransferred = 0;
@@ -1227,11 +1253,11 @@ export const completeAccountMerge = onCall(
       }
 
       for (const summon of sourceSummons.docs) {
-        writer.set(summon.ref, {
+        trackBulkWrite(summon.ref, writer.set(summon.ref, {
           user_id: targetUid,
           merged_from_alias: true,
           updated_at: FieldValue.serverTimestamp(),
-        }, {merge: true});
+        }, {merge: true}));
       }
 
       const groupInviteDocs = new Map<string, FirebaseFirestore.QueryDocumentSnapshot>();
@@ -1242,20 +1268,20 @@ export const completeAccountMerge = onCall(
         groupInviteDocs.set(invite.ref.path, invite);
       }
       for (const invite of groupInviteDocs.values()) {
-        writer.set(invite.ref, {
+        trackBulkWrite(invite.ref, writer.set(invite.ref, {
           invited_user_id: targetUid,
           invitedUserId: targetUid,
           merged_from_alias: true,
           updated_at: FieldValue.serverTimestamp(),
-        }, {merge: true});
+        }, {merge: true}));
       }
 
       for (const notification of sourceNotifications.docs) {
-        writer.set(notification.ref, {
+        trackBulkWrite(notification.ref, writer.set(notification.ref, {
           user_id: targetUid,
           merged_from_alias: true,
           updated_at: FieldValue.serverTimestamp(),
-        }, {merge: true});
+        }, {merge: true}));
       }
 
       const gameOwnershipDocs = new Map<string, FirebaseFirestore.QueryDocumentSnapshot>();
@@ -1352,6 +1378,33 @@ export const completeAccountMerge = onCall(
         });
       }
       await writer.close();
+      // close() só espera as escritas pendentes — não agrega nem propaga
+      // falhas individuais. Todas as promises rastreadas já estão resolvidas
+      // neste ponto; o await abaixo só drena os handlers de catch.
+      await Promise.all(trackedBulkWrites);
+      if (bulkWriteFailures.length > 0) {
+        logger.error(
+          "[ACCOUNT_MERGE] escritas do BulkWriter falharam; abortando antes " +
+          "do estágio irreversível",
+          {requestId, sourceUid, targetUid, bulkWriteFailures},
+        );
+        // Não tocamos em status/processingLeaseId: o pedido segue
+        // "processing" com a lease adquirida em :888-895, então a retomada
+        // natural por expiração de lease reprocessa os documentos que
+        // faltaram (escritas idempotentes, {merge: true} + IDs
+        // determinísticos). Só registramos diagnóstico para visibilidade.
+        await requestRef.set({
+          lastBulkWriteFailure: {
+            failures: bulkWriteFailures,
+            attemptedAt: FieldValue.serverTimestamp(),
+          },
+        }, {merge: true});
+        throw new HttpsError(
+          "internal",
+          "Não foi possível concluir a união; nenhuma alteração " +
+          "irreversível foi aplicada. Tente novamente em instantes.",
+        );
+      }
 
       // Auth e Firestore não têm transação conjunta. Revalida imediatamente
       // antes do estágio irreversível para não congelar a origem com índice de

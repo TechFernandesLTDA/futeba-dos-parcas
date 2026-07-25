@@ -70,8 +70,12 @@ interface FakeCollectionReference extends FakeQuery {
   doc: (id?: string) => FakeDocumentReference;
 }
 
-function createFakeFirestore(initial: Record<string, Data>) {
+function createFakeFirestore(
+  initial: Record<string, Data>,
+  options: {failBulkWritePaths?: string[]} = {},
+) {
   const state = new Map<string, Data>(Object.entries(initial));
+  const failBulkWritePaths = new Set(options.failBulkWritePaths ?? []);
   let automaticId = 0;
 
   const snapshot = (ref: FakeDocumentReference): FakeDocumentSnapshot => ({
@@ -151,11 +155,22 @@ function createFakeFirestore(initial: Record<string, Data>) {
     delete: jest.fn((ref: FakeDocumentReference) => state.delete(ref.path)),
   };
   const bulkWriter = {
+    // BulkWriter.set() real devolve Promise<WriteResult>; o código de
+    // produção (#3909) depende disso para capturar falhas individuais. Paths
+    // em failBulkWritePaths simulam uma falha definitiva (retries já
+    // esgotados pelo handler padrão do SDK real).
     set: jest.fn((
       ref: FakeDocumentReference,
       data: Data,
-      options?: {merge?: boolean},
-    ) => write(ref, data, options)),
+      writeOptions?: {merge?: boolean},
+    ) => {
+      if (failBulkWritePaths.has(ref.path)) {
+        return Promise.reject(
+          Object.assign(new Error("PERMISSION_DENIED simulado"), {code: "permission-denied"}),
+        );
+      }
+      return Promise.resolve(write(ref, data, writeOptions));
+    }),
     close: jest.fn(async () => undefined),
   };
   const firestore = {
@@ -410,4 +425,136 @@ describe("completeAccountMerge transactional migration", () => {
     expect(transaction.delete).toHaveBeenCalled();
     expect(bulkWriter.close).toHaveBeenCalledTimes(1);
   });
+
+  /**
+   * Fixture mínima com um write do BulkWriter programado para falhar em
+   * definitivo (simula retries do SDK real já esgotados).
+   * @param {string} failPath Path do documento cujo set() deve rejeitar.
+   * @return {{state: Map<string, Data>; auth: {
+   *   getUser: jest.Mock;
+   *   updateUser: jest.Mock;
+   *   revokeRefreshTokens: jest.Mock;
+   *   setCustomUserClaims: jest.Mock;
+   * }}} Estado do Firestore fake e mocks de Auth.
+   */
+  function setupFailingBulkWriteFixture(failPath: string) {
+    const {state, firestore} = createFakeFirestore({
+      [`account_merge_requests/${requestId}`]: {
+        sourceUid,
+        targetUid,
+        status: "ready",
+        proofExpiresAt: Timestamp.fromMillis(Date.now() + 60_000),
+      },
+      [`users_private/${sourceUid}`]: {cpfHash, phoneHash: "old-source-phone"},
+      [`users_private/${targetUid}`]: {cpfHash, phoneHash: "old-target-phone"},
+      [`cpf_index/${cpfHash}`]: {uid: sourceUid, createdAt: "cpf-created"},
+      [`phone_index/${canonicalPhoneHash}`]: {
+        uid: targetUid,
+        createdAt: "phone-created",
+      },
+      "phone_index/old-source-phone": {uid: sourceUid},
+      "phone_index/old-target-phone": {uid: targetUid},
+      "notifications/notification-1": {user_id: sourceUid},
+    }, {failBulkWritePaths: [failPath]});
+    mockDb.mockReturnValue(firestore);
+    mockLoadIdentityIndexHashes.mockImplementation(async (
+      _database: unknown,
+      collectionName: string,
+      uid: string,
+    ) => {
+      if (collectionName === "cpf_index") return [cpfHash];
+      return uid === sourceUid ?
+        ["old-source-phone"] :
+        ["old-target-phone", canonicalPhoneHash];
+    });
+
+    const sourceAuth = {
+      uid: sourceUid,
+      disabled: false,
+      email: "old@example.com",
+      providerData: [{providerId: "google.com"}],
+      customClaims: {},
+    };
+    const targetAuth = {
+      uid: targetUid,
+      disabled: false,
+      email: "main@example.com",
+      phoneNumber: phone,
+      providerData: [],
+      customClaims: {role: "ADMIN"},
+    };
+    const auth = {
+      getUser: jest.fn(async (uid: string) =>
+        uid === sourceUid ? sourceAuth : targetAuth),
+      updateUser: jest.fn(async () => undefined),
+      revokeRefreshTokens: jest.fn(async () => undefined),
+      setCustomUserClaims: jest.fn(async () => undefined),
+    };
+    mockGetAuth.mockReturnValue(auth);
+
+    return {state, auth};
+  }
+
+  it(
+    "aborta antes do estágio irreversível quando um write do BulkWriter " +
+    "falha em definitivo (#3909)",
+    async () => {
+      const {state, auth} = setupFailingBulkWriteFixture(
+        "notifications/notification-1",
+      );
+
+      await expect((completeAccountMerge as unknown as (
+        request: Data,
+      ) => Promise<Data>)({
+        auth: {uid: targetUid, token: {}},
+        data: {requestId},
+      })).rejects.toMatchObject({code: "internal"});
+
+      // Estágio irreversível não pode ter sido executado.
+      expect(auth.updateUser).not.toHaveBeenCalled();
+      expect(auth.revokeRefreshTokens).not.toHaveBeenCalled();
+
+      const requestState = state.get(`account_merge_requests/${requestId}`);
+      expect(requestState?.status).toBe("processing");
+      expect(requestState?.irreversibleStage).toBeUndefined();
+      expect(requestState?.lastBulkWriteFailure).toMatchObject({
+        failures: [
+          expect.objectContaining({path: "notifications/notification-1"}),
+        ],
+      });
+
+      // O documento que falhou continua apontando pra origem: nada foi
+      // migrado nele, e uma nova tentativa (lease expirada) reprocessa.
+      expect(state.get("notifications/notification-1")).toMatchObject({
+        user_id: sourceUid,
+      });
+    },
+  );
+
+  it(
+    "não deixa nenhuma promise de escrita do BulkWriter sem handler quando " +
+    "há falha (#3909)",
+    async () => {
+      const unhandled = jest.fn();
+      process.on("unhandledRejection", unhandled);
+      try {
+        setupFailingBulkWriteFixture("notifications/notification-1");
+
+        await (completeAccountMerge as unknown as (
+          request: Data,
+        ) => Promise<Data>)({
+          auth: {uid: targetUid, token: {}},
+          data: {requestId},
+        }).catch(() => undefined);
+
+        // Dá ao Node uma volta do loop de eventos para reportar qualquer
+        // rejection não tratada antes de checarmos o listener.
+        await new Promise((resolve) => setImmediate(resolve));
+
+        expect(unhandled).not.toHaveBeenCalled();
+      } finally {
+        process.off("unhandledRejection", unhandled);
+      }
+    },
+  );
 });
