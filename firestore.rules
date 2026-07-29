@@ -232,9 +232,14 @@ service cloud.firestore {
     }
 
     function isVerifiedOrGrace() {
+      // FIX #3922: grace period estendido para 2026-10-03 UTC. Fonte única
+      // da data em functions/src/auth/verification-grace.ts — este literal
+      // é validado por scripts/check-verification-grace-parity.js no CI.
+      // Para estender: mudar a data AQUI e em verification-grace.ts, depois
+      // rodar o script de paridade.
       return isAuthenticated() && (
         ("verified" in request.auth.token && request.auth.token.verified == true) ||
-        request.time < timestamp.date(2026, 8, 3)
+        request.time < timestamp.date(2026, 10, 3)
       );
     }
 

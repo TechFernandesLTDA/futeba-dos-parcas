@@ -6,6 +6,7 @@ import {FUNCTION_REGION} from "../constants";
 import {db} from "../_db";
 import {isRecord} from "../validation/guards";
 import {checkRateLimit} from "../middleware/rate-limiter";
+import {VERIFICATION_GRACE_END_MS} from "../auth/verification-grace";
 
 type JoinPosition = "GOALKEEPER" | "FIELD";
 
@@ -34,8 +35,6 @@ export const CONFIRM_GAME_PRESENCE_RATE_LIMIT = {
   windowMs: 60 * 1000,
   keyPrefix: "confirm_game_presence",
 };
-
-const VERIFICATION_GRACE_END_MS = Date.UTC(2026, 7, 3);
 
 /**
  * Valida que um valor é uma string não vazia.

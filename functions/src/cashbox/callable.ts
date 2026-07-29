@@ -4,6 +4,7 @@ import {logger} from "firebase-functions/v2";
 import {db} from "../_db";
 import {secureCallable} from "../middleware/secure-callable-wrapper";
 import {RATE_LIMITS} from "../middleware/rate-limiter";
+import {VERIFICATION_GRACE_END_MS} from "../auth/verification-grace";
 import {
   CASHBOX_MAX_AMOUNT_CENTS,
   cashboxAmountToCents,
@@ -34,7 +35,6 @@ interface CreateCashboxEntryData {
   gameId?: string | null;
 }
 
-const VERIFICATION_GRACE_END_MS = Date.UTC(2026, 7, 3);
 const MONTHLY_PERIOD_PATTERN = /^\d{4}-(0[1-9]|1[0-2])$/;
 
 /**
