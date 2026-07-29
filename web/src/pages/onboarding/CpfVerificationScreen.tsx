@@ -1,4 +1,5 @@
 import { PageContainer } from '../../components/common/PageContainer';
+import { VerificationGraceBanner } from '../../components/common/VerificationGraceBanner';
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -417,6 +418,7 @@ export const CpfVerificationScreen: React.FC = () => {
       }}
     >
       <PageContainer maxWidth="focused">
+        <VerificationGraceBanner />
         <Card elevation={3}>
           <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
             <ProgressHeader />
