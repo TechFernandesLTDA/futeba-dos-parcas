@@ -546,6 +546,21 @@ function checkWebSemanticPalette(tokens, errors) {
   }
 }
 
+function checkIntraPlatformPaletteParity(tokens, errors) {
+  for (const role of Object.keys(tokens.palette)) {
+    const lightRole = tokens.palette[role];
+    const darkRole = tokens.darkPalette && tokens.darkPalette[role];
+    if (!lightRole || !darkRole || typeof lightRole !== 'object' || typeof darkRole !== 'object') continue;
+    for (const shade of ['dark', 'light']) {
+      if (lightRole[shade] && darkRole[shade] && lightRole[shade] === darkRole[shade]) {
+        errors.push(
+          `[intra-platform] ${role}.${shade} idêntico em palette e darkPalette (${tokenHex(lightRole[shade])}) — deve inverter entre temas (issue #3923)`
+        );
+      }
+    }
+  }
+}
+
 function checkKotlinSemanticGreen(tokens, errors) {
   const expected = {
     md3_light_primary: tokens.palette.primary.main,
@@ -763,6 +778,7 @@ function main() {
   // apenas aparecer em algum lugar do arquivo.
   checkWebThemeColor(tokens, errors);
   checkWebSemanticPalette(tokens, errors);
+  checkIntraPlatformPaletteParity(tokens, errors);
   checkKotlinSemanticGreen(tokens, errors);
   checkGamificationParity(tokens, errors);
   checkSurfaceParity(tokens, errors);

@@ -449,10 +449,11 @@ export const UserManagementScreen: React.FC = () => {
   }).length;
 
   const getRoleColor = (role: string) => {
+    const isDark = theme.palette.mode === 'dark';
     switch (role) {
-      case 'ADMIN': return theme.palette.error.main;
-      case 'FIELD_OWNER': return theme.palette.warning.main;
-      default: return theme.palette.grey[500];
+      case 'ADMIN': return isDark ? theme.palette.error.main : theme.palette.error.dark;
+      case 'FIELD_OWNER': return isDark ? theme.palette.warning.main : theme.palette.warning.dark;
+      default: return theme.palette.grey[isDark ? 500 : 700];
     }
   };
 

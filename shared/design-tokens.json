@@ -31,11 +31,11 @@
 
   "darkPalette": {
     "primary": { "main": "#4ADE80", "light": "#86EFAC", "dark": "#2E7D32" },
-    "secondary": { "main": "#5CC8FF", "light": "#90CAF9", "dark": "#004399" },
-    "error": { "main": "#FFB4AB", "light": "#FFCDD2", "dark": "#B71C1C" },
-    "warning": { "main": "#FF9E40", "light": "#FFCC80", "dark": "#8A3A00" },
+    "secondary": { "main": "#5CC8FF", "light": "#90CAF9", "dark": "#3A8FC4" },
+    "error": { "main": "#FFB4AB", "light": "#FFCDD2", "dark": "#C56560" },
+    "warning": { "main": "#FF9E40", "light": "#FFCC80", "dark": "#CC7A2F" },
     "success": { "main": "#66BB6A", "light": "#81C784", "dark": "#2E7D32" },
-    "info": { "main": "#5CC8FF", "light": "#90CAF9", "dark": "#004399" }
+    "info": { "main": "#5CC8FF", "light": "#90CAF9", "dark": "#3A8FC4" }
   },
 
   "gamification": {

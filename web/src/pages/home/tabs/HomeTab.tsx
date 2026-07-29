@@ -707,7 +707,7 @@ function ReconnectSuggestionWidget({
             aria-hidden="true"
             sx={{
               bgcolor: alpha(theme.palette.warning.main, 0.16),
-              color: theme.palette.warning.dark,
+              color: theme.palette.mode === 'dark' ? theme.palette.warning.light : theme.palette.warning.dark,
               width: 44,
               height: 44,
             }}

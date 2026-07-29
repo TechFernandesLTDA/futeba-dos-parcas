@@ -14,6 +14,8 @@ export const DemoDataChip: React.FC<DemoDataChipProps> = ({ data, size = 'small'
 
   const label = getDemoDataLabel(data);
   const reason = data?.demoDataReason || data?.seedId || 'Dado marcado para testes e limpeza futura.';
+  const isDark = theme.palette.mode === 'dark';
+  const chipTextColor = isDark ? theme.palette.warning.light : theme.palette.warning.dark;
 
   return (
     <Tooltip title={reason}>
@@ -26,8 +28,8 @@ export const DemoDataChip: React.FC<DemoDataChipProps> = ({ data, size = 'small'
           fontWeight: 700,
           bgcolor: alpha(theme.palette.warning.main, 0.12),
           borderColor: alpha(theme.palette.warning.main, 0.5),
-          color: theme.palette.warning.dark,
-          '& .MuiChip-icon': { color: theme.palette.warning.dark },
+          color: chipTextColor,
+          '& .MuiChip-icon': { color: chipTextColor },
         }}
       />
     </Tooltip>
