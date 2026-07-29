@@ -42,7 +42,12 @@ afterAll(async () => {
 });
 
 describe("verified grace period — isVerifiedOrGrace() enforcement", () => {
-  it("Usuario nao verificado PODE criar game (dentro da grace period ate 2026-08-03)", async () => {
+  // FIX #3922: a grace period foi estendida para 2026-10-03 UTC. A fonte
+  // única da data está em functions/src/auth/verification-grace.ts, validada
+  // por scripts/check-verification-grace-parity.js. Quando a grace expirar,
+  // este teste vai falhar (assertSucceeds vira failure) — esse é o sinal
+  // para decidir aplicar o enforcement ou estender novamente.
+  it("Usuario nao verificado PODE criar game (dentro da grace period ate 2026-10-03)", async () => {
     const unverifiedDb = asUser(testEnv, UID_UNVERIFIED_GAME_OWNER, {
       role: "PLAYER",
       verified: false,
