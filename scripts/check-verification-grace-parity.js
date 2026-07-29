@@ -19,6 +19,7 @@ const path = require('path');
 const ROOT = path.resolve(__dirname, '..');
 const RULES_PATH = path.join(ROOT, 'firestore.rules');
 const GRACE_TS_PATH = path.join(ROOT, 'functions', 'src', 'auth', 'verification-grace.ts');
+const GRACE_JSON_PATH = path.join(ROOT, 'shared', 'verification-grace.json');
 
 function relative(p) { return path.relative(ROOT, p); }
 
@@ -61,8 +62,18 @@ function main() {
 
   const rulesContent = read(RULES_PATH, 'firestore.rules', errors);
   const tsContent = read(GRACE_TS_PATH, 'verification-grace.ts', errors);
-  if (!rulesContent || !tsContent) {
+  const jsonContent = read(GRACE_JSON_PATH, 'verification-grace.json', errors);
+  if (!rulesContent || !tsContent || !jsonContent) {
     process.exit(1);
+  }
+
+  // Valida JSON canônico (source of truth para web banner).
+  let graceJson;
+  try {
+    graceJson = JSON.parse(jsonContent);
+  } catch (err) {
+    errors.push(`[verification-grace.json] JSON inválido: ${err.message}`);
+    graceJson = null;
   }
 
   const rulesDate = extractRulesDate(rulesContent);
@@ -94,6 +105,25 @@ function main() {
       errors.push(
         `[drift] VERIFICATION_GRACE_END_RULES_LITERAL="${tsDate.literal}" difere de firestore.rules "${rulesDate.literal}"`
       );
+    }
+
+    // Valida JSON canônico contra rules e TS.
+    if (graceJson) {
+      if (graceJson.rulesDateLiteral && graceJson.rulesDateLiteral !== rulesDate.literal) {
+        errors.push(
+          `[drift] verification-grace.json rulesDateLiteral="${graceJson.rulesDateLiteral}" difere de firestore.rules "${rulesDate.literal}"`
+        );
+      }
+      if (graceJson.graceEndIso) {
+        const jsonDate = new Date(graceJson.graceEndIso);
+        const jsonNorm = `${jsonDate.getUTCFullYear()}-${jsonDate.getUTCMonth() + 1}-${jsonDate.getUTCDate()}`;
+        const tsNorm = `${tsDate.year}-${tsDate.month + 1}-${tsDate.day}`;
+        if (jsonNorm !== tsNorm) {
+          errors.push(
+            `[drift] verification-grace.json graceEndIso (${jsonNorm}) difere de verification-grace.ts (${tsNorm})`
+          );
+        }
+      }
     }
 
     // Aviso de proximidade de expiração.
