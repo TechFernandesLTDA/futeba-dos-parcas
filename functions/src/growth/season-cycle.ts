@@ -93,6 +93,25 @@ export function getNextMonthKey(monthKey: string): string {
 }
 
 /**
+ * FIX #3916: calcula a chave YYYY-MM do mês anterior. Inversa de
+ * {@link getNextMonthKey}. Usada pelo catch-up de archiveSeason quando a
+ * invocação das 23:59 escorrega para depois da meia-noite (jitter, cold
+ * start, retry) — nesse caso hoje já é dia 1º e o mês a arquivar é o
+ * anterior, não o corrente.
+ *
+ * @param {string} monthKey Chave YYYY-MM do mês de referência.
+ * @return {string} Chave YYYY-MM do mês anterior.
+ */
+export function getPreviousMonthKey(monthKey: string): string {
+  const [yearStr, monthStr] = monthKey.split("-");
+  const year = parseInt(yearStr, 10);
+  const month = parseInt(monthStr, 10);
+  const prevYear = month === 1 ? year - 1 : year;
+  const prevMonth = month === 1 ? 12 : month - 1;
+  return `${prevYear}-${prevMonth.toString().padStart(2, "0")}`;
+}
+
+/**
  * Monta o payload arquivado sem campos undefined. Firestore rejeita undefined,
  * então temporadas sem standings precisam ser arquiváveis mesmo vazias.
  *
@@ -199,7 +218,27 @@ async function runManagedGroupsCycle(params: {
   } = params;
   const startedAt = now();
 
-  const managedGroupIds = (await listManagedGroupIds()).sort();
+  // FIX #3916: persiste o month_key ANTES de listar grupos, para que uma
+  // falha transitória em listManagedGroupIds() deixe estado de retomada.
+  // Sem isso, se a listagem falhar no último dia, a invocação morre sem
+  // cursor — e sem retryCount/retry, o mês ficaria sem archive. Com o
+  // cursor pré-setado, o retry (via retryCount: 3 nos onSchedule) encontra
+  // o month_key pendente e retoma. {merge: true} preserva last_group_id
+  // de uma corrida parcial anterior.
+  await cursorRef.set({
+    month_key: monthKey,
+    updated_at: Timestamp.fromDate(new Date(now())),
+  }, {merge: true});
+
+  let managedGroupIds: string[];
+  try {
+    managedGroupIds = (await listManagedGroupIds()).sort();
+  } catch (err) {
+    logger.error(`${logLabel}: falha ao listar grupos, cursor persistido para retry`, {
+      monthKey, err,
+    });
+    return;
+  }
 
   let startIndex = 0;
   const lastGroupId = cursorState?.last_group_id;
@@ -570,6 +609,16 @@ export async function runArchiveSeason(
   } else if (isLastDay) {
     monthKey = `${yearStr}-${monthStr}`;
     resumed = false;
+  } else if (Number(dayStr) === 1) {
+    // FIX #3916: catch-up para jitter/retry pós-meia-noite. Se a invocação
+    // das 23:59 do ultimo dia escorregou para depois da meia-noite, hoje ja
+    // e dia 1. Sem cursor pendente, o mes anterior seria perdido para sempre
+    // (nenhum outro caminho o arquivaria). Tratar como retomada do mes
+    // anterior cobre jitter, cold start e retry pos-virada. A idempotencia
+    // por existencia do archive (processArchiveSeasonForGroup) garante que
+    // nao duplica se o mes ja foi arquivado no dia anterior.
+    monthKey = getPreviousMonthKey(`${yearStr}-${monthStr}`);
+    resumed = false;
   } else {
     return;
   }
@@ -595,6 +644,7 @@ export const startNewSeason = onSchedule(
     region: FUNCTION_REGION,
     timeoutSeconds: 540,
     memory: "512MiB",
+    retryCount: 3,
   },
   async () => {
     await runStartNewSeason();
@@ -608,6 +658,7 @@ export const archiveSeason = onSchedule(
     region: FUNCTION_REGION,
     timeoutSeconds: 540,
     memory: "512MiB",
+    retryCount: 3,
   },
   async () => {
     await runArchiveSeason();
