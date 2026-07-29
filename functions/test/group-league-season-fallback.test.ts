@@ -158,9 +158,18 @@ describe("FIX #3882 — fallback determinístico de season na liga de grupo", ()
   beforeEach(() => {
     jest.clearAllMocks();
     mockOnGameWrittenHandler = null;
+    // FIX #3917: o provisionamento sob demanda agora clampa is_active ao mês
+    // corrente via deriveFallbackSeasonId("", new Date()). Fake timers fixam
+    // o "agora" em agosto/2026 para que os testes sejam determinísticos
+    // independentemente de quando rodam.
+    jest.useFakeTimers({now: new Date("2026-08-15T12:00:00Z")});
     jest.isolateModules(() => {
       require("../src/group-league");
     });
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
   });
 
   describe("deriveFallbackSeasonId", () => {
@@ -326,5 +335,65 @@ describe("FIX #3882 — fallback determinístico de season na liga de grupo", ()
     );
     expect(healWrite).toBeDefined();
     expect(healWrite?.data).toMatchObject({is_active: false});
+  });
+
+  // FIX #3917: jogo finalizado após a virada do mês (organizador fechando no
+  // dia seguinte) não deve provisionar a temporada retroativa como ativa —
+  // isso sequestraria a resolução de temporada de todos os jogos seguintes.
+  it("provisiona temporada retroativa como INATIVA (jogo de mês passado)", async () => {
+    // Jogo de 31 de julho finalizado em agosto (fechamento tardio).
+    // Fake timer: agora = 2026-08-15 (beforeEach).
+    const game = {
+      status: "FINISHED",
+      group_id: "group-1",
+      date: "2026-07-31",
+    };
+    const {firestore, writes} = createTurnoverWindowFirestore(game);
+    mockDb.mockReturnValue(firestore);
+
+    await mockOnGameWrittenHandler!(gameWriteEvent(
+      {...game, status: "LIVE"},
+      game,
+    ));
+
+    // A partida FOI armazenada na season do mês do jogo (julho).
+    const matchWrite = writes.find(
+      (write) => write.path === "groups/group-1/league_matches/game-1",
+    );
+    expect(matchWrite).toBeDefined();
+    expect(matchWrite?.data).toMatchObject({season_id: "2026-07"});
+
+    // A temporada de julho foi provisionada, mas como INATIVA — não pode
+    // sequestrar a resolução ativa dos jogos seguintes.
+    const seasonWrite = writes.find(
+      (write) => write.path === "groups/group-1/league_seasons/2026-07",
+    );
+    expect(seasonWrite).toBeDefined();
+    expect(seasonWrite?.data).toMatchObject({is_active: false});
+    expect(seasonWrite?.data).toHaveProperty("start_date");
+  });
+
+  // FIX #3917: jogo do mês corrente (sem season ativa) ainda provisiona com
+  // is_active:true — não regride o comportamento do #3896.
+  it("provisiona temporada do mês corrente como ATIVA (jogo do mês atual)", async () => {
+    // Fake timer: agora = 2026-08-15 (beforeEach).
+    const game = {
+      status: "FINISHED",
+      group_id: "group-1",
+      date: "2026-08-10",
+    };
+    const {firestore, writes} = createTurnoverWindowFirestore(game);
+    mockDb.mockReturnValue(firestore);
+
+    await mockOnGameWrittenHandler!(gameWriteEvent(
+      {...game, status: "LIVE"},
+      game,
+    ));
+
+    const seasonWrite = writes.find(
+      (write) => write.path === "groups/group-1/league_seasons/2026-08",
+    );
+    expect(seasonWrite).toBeDefined();
+    expect(seasonWrite?.data).toMatchObject({is_active: true});
   });
 });

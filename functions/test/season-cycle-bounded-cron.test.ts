@@ -371,4 +371,103 @@ describe("FIX #3908 — crons de temporada com cursor persistido e orçamento de
       .toMatchObject({is_active: true});
     expect(store.has("system_state/season_cycle_start_cursor")).toBe(false);
   });
+
+  // FIX #3916: se a invocação das 23:59 do último dia escorrega para depois
+  // da meia-noite (jitter, cold start, retry), hoje já é dia 1º. Sem cursor
+  // pendente e sem catch-up, o mês anterior seria perdido para sempre.
+  it(
+    "archiveSeason: dia 1º sem cursor arquiva o mês anterior (catch-up pós-meia-noite)",
+    async () => {
+      // Season de julho ativa + standings para poder arquivar.
+      seedActiveSeason("group-a", "2026-07");
+      store.set("groups/group-a/league_standings/2026-07_u1", {
+        season_id: "2026-07",
+        user_id: "u1",
+        user_name: "Jogador 1",
+        points: 10,
+      });
+
+      // Hoje é 1º de agosto às 03:00 UTC = 00:00 BRT — exatamente o cenário
+      // de jitter pós-meia-noite. Sem cursor pendente.
+      await seasonCycle.runArchiveSeason({
+        now: () => new Date("2026-08-01T03:00:00Z").getTime(),
+      });
+
+      // O mês anterior (julho) foi arquivado — não perdido.
+      expect(store.get("season-archive/group-a/seasons/2026-07"))
+        .toMatchObject({month_key: "2026-07"});
+      expect(loggerError).not.toHaveBeenCalled();
+    },
+  );
+
+  // FIX #3916: falha transitória em listManagedGroupIds() no último dia deve
+  // deixar cursor persistido para que o retry (via retryCount) retome.
+  it(
+    "archiveSeason: falha de listManagedGroupIds no último dia persiste cursor para retry",
+    async () => {
+      seedActiveSeason("group-a", "2026-07");
+
+      // Simula falha transitória na listagem de grupos.
+      const originalCollectionGroup = firestore.collectionGroup;
+      firestore.collectionGroup = jest.fn(() => {
+        throw new Error("transient firestore error");
+      });
+
+      // 31 de julho (último dia) às 03:00 UTC = 00:00 BRT.
+      await seasonCycle.runArchiveSeason({
+        now: () => new Date("2026-07-31T03:00:00Z").getTime(),
+      });
+
+      // O cursor foi persistido com o month_key correto, pronto para retry.
+      const cursor = store.get("system_state/season_cycle_archive_cursor");
+      expect(cursor).toEqual(expect.objectContaining({month_key: "2026-07"}));
+
+      // Nada foi arquivado (listagem falhou antes do processamento).
+      expect(store.get("season-archive/group-a/seasons/2026-07")).toBeUndefined();
+
+      // Restaura o mock para o retry simulado.
+      firestore.collectionGroup = originalCollectionGroup;
+
+      // Retry no mesmo dia: encontra o cursor pendente e arquiva normalmente.
+      await seasonCycle.runArchiveSeason({
+        now: () => new Date("2026-07-31T03:00:00Z").getTime(),
+      });
+
+      expect(store.get("season-archive/group-a/seasons/2026-07"))
+        .toMatchObject({month_key: "2026-07"});
+      expect(loggerError).toHaveBeenCalledWith(
+        expect.stringContaining("falha ao listar grupos"),
+        expect.anything(),
+      );
+    },
+  );
+
+  // FIX #3916: mês já arquivado não é reprocessado — idempotência por
+  // existência do archive (catch-up no dia 1 não duplica).
+  it(
+    "archiveSeason: dia 1º não reprocessa mês já arquivado (idempotência)",
+    async () => {
+      // Julho já foi arquivado (no dia 31); hoje é 1º de agosto.
+      store.set("groups/group-a/league_seasons/2026-07", {
+        is_active: false,
+        name: "Temporada Julho de 2026",
+      });
+      store.set("season-archive/group-a/seasons/2026-07", {
+        month_key: "2026-07",
+        name: "Temporada Julho de 2026",
+        standings: [],
+        archived_at: {__serverTimestamp: true},
+      });
+
+      await seasonCycle.runArchiveSeason({
+        now: () => new Date("2026-08-01T03:00:00Z").getTime(),
+      });
+
+      // O archive existente foi preservado (não sobrescrito, não duplicado).
+      const archive = store.get("season-archive/group-a/seasons/2026-07");
+      expect(archive).toMatchObject({month_key: "2026-07"});
+      // standings continua vazio — não foi reprocessado.
+      expect(archive.standings).toEqual([]);
+    },
+  );
 });

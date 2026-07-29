@@ -707,9 +707,17 @@ export const onGameFinishedGroupLeague = onDocumentWritten(
         // um start_date do mês corrente para uma temporada de mês passado,
         // e useGroupLeague ordena as temporadas por start_date.
         if (seasonRefToProvision) {
+          // FIX #3917: clamp is_active ao mês corrente. Antes, temporada
+          // retroativa (jogo finalizado após a virada do mês) era provisionada
+          // com is_active:true incondicionalmente, sequestrando a resolução de
+          // temporada de todos os jogos seguintes por ~30 dias. Agora a season
+          // retroativa fica válida para receber as standings daquele jogo, mas
+          // não elege a resolução ativa. O próximo jogo do mês corrente
+          // provisiona a temporada ativa certa (auto-cura).
+          const currentMonthKey = deriveFallbackSeasonId("", new Date());
           tx.set(seasonRefToProvision, {
             name: buildSeasonName(targetSeasonId),
-            is_active: true,
+            is_active: targetSeasonId === currentMonthKey,
             start_date: Timestamp.fromDate(monthKeyToStartDate(targetSeasonId)),
             created_at: FieldValue.serverTimestamp(),
             updated_at: FieldValue.serverTimestamp(),
