@@ -1046,7 +1046,7 @@ const getVenueAccountStatusColor = (status?: string | null): 'success' | 'warnin
                       <MenuItem key={value} value={value}>{label}</MenuItem>
                     ))}
                   </TextField>
-                  <TextField select size="small" label="Mensalidade" value={subscriptionFilter} onChange={(e) => setSubscriptionFilter(e.target.value as 'ALL' | LocationSubscriptionStatus)} fullWidth>
+                  <TextField select size="small" label="Status da mensalidade" value={subscriptionFilter} onChange={(e) => setSubscriptionFilter(e.target.value as 'ALL' | LocationSubscriptionStatus)} fullWidth>
                     <MenuItem value="ALL">Todas</MenuItem>
                     {Object.entries(LOCATION_SUBSCRIPTION_STATUS_LABELS).map(([value, label]) => (
                       <MenuItem key={value} value={value}>{label}</MenuItem>
@@ -1107,7 +1107,7 @@ const getVenueAccountStatusColor = (status?: string | null): 'success' | 'warnin
                     <MenuItem value="YES">Com campos ativos</MenuItem>
                     <MenuItem value="NO">Sem campos ativos</MenuItem>
                   </TextField>
-                  <TextField select size="small" label="Mensalidade" value={monthlyFeeFilter} onChange={(e) => setMonthlyFeeFilter(e.target.value as LocationMonthlyFeeFilter)} fullWidth>
+                  <TextField select size="small" label="Valor da mensalidade" value={monthlyFeeFilter} onChange={(e) => setMonthlyFeeFilter(e.target.value as LocationMonthlyFeeFilter)} fullWidth>
                     <MenuItem value="ALL">Todas</MenuItem>
                     <MenuItem value="NO_FEE">Sem mensalidade</MenuItem>
                     <MenuItem value="UP_TO_100">Até R$ 100</MenuItem>

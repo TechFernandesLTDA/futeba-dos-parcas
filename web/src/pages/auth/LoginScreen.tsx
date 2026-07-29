@@ -338,7 +338,7 @@ export function LoginScreen() {
               color: theme.palette.info.main,
               '& .MuiButton-startIcon': { mr: { xs: 1, sm: 1.25 } },
               '&:hover': {
-                borderColor: theme.palette.info.dark,
+                borderColor: theme.palette.mode === 'dark' ? theme.palette.info.light : theme.palette.info.dark,
                 backgroundColor: alpha(theme.palette.info.main, 0.04),
               },
             }}

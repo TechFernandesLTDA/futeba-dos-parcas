@@ -323,6 +323,9 @@ export const futebaTheme = createTheme({
       secondary: '#444746',
     },
     divider: '#E5E3E6',
+    action: {
+      selected: alpha(primary.main, 0.12),
+    },
     // #2754: 7 níveis de surface container — valores canônicos de shared/design-tokens.json
     surfaceDim: '#DDD8DD',
     surfaceBright: '#FDF8FD',
@@ -710,7 +713,7 @@ export const futebaDarkTheme = createTheme({
     secondary: {
       main: '#5CC8FF',
       light: '#90CAF9',
-      dark: '#004399',
+      dark: '#3A8FC4',
       contrastText: '#000000',
     },
     background: {
@@ -721,10 +724,10 @@ export const futebaDarkTheme = createTheme({
       primary: '#F1F5F9',
       secondary: '#B0BEC5',
     },
-    error: { main: '#FFB4AB', light: '#FFCDD2', dark: '#B71C1C' },
-    warning: { main: '#FF9E40', light: '#FFCC80', dark: '#8A3A00' },
+    error: { main: '#FFB4AB', light: '#FFCDD2', dark: '#C56560' },
+    warning: { main: '#FF9E40', light: '#FFCC80', dark: '#CC7A2F' },
     success: { main: '#66BB6A', light: '#81C784', dark: '#2E7D32' },
-    info: { main: '#5CC8FF', light: '#90CAF9', dark: '#004399' },
+    info: { main: '#5CC8FF', light: '#90CAF9', dark: '#3A8FC4' },
     action: {
       selected: alpha(darkPrimary.main, 0.18),
     },
