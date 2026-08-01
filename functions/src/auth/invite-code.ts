@@ -6,10 +6,9 @@ import {FieldValue} from "firebase-admin/firestore";
 import {randomInt} from "crypto";
 import {
   checkRateLimit,
-  checkRateLimitByIp,
 } from "../middleware/rate-limiter";
 import {FUNCTION_REGION} from "../constants";
-import {clientIp} from "./anti-abuse";
+import {rateLimitForRequest} from "./anti-abuse";
 import {getLevelForXp} from "../xp/pipeline";
 
 const db = () => admin.firestore();
@@ -647,8 +646,7 @@ export const validateInviteCode = onCall(
     consumeAppCheckToken: process.env.FUNCTIONS_EMULATOR !== "true",
   },
   async (request): Promise<InviteValidationResult> => {
-    const ip = clientIp(request);
-    const rl = await checkRateLimitByIp(ip, {
+    const rl = await rateLimitForRequest(request, {
       maxRequests: 30,
       windowMs: 60 * 1000,
       keyPrefix: "validate_invite_code",

@@ -6,6 +6,7 @@ const updateCalls: Array<{path: string; data: Record<string, unknown>}> = [];
 const mockRandomInt = jest.fn(() => 0);
 const mockCheckRateLimit = jest.fn().mockResolvedValue({allowed: true});
 const mockCheckRateLimitByIp = jest.fn().mockResolvedValue({allowed: true});
+const mockRateLimitForRequest = jest.fn().mockResolvedValue({allowed: true});
 let failNextTransactionCommit = false;
 
 function snap(path: string) {
@@ -143,7 +144,7 @@ jest.mock("../../src/middleware/rate-limiter", () => ({
 }));
 
 jest.mock("../../src/auth/anti-abuse", () => ({
-  clientIp: jest.fn().mockReturnValue("127.0.0.1"),
+  rateLimitForRequest: mockRateLimitForRequest,
 }));
 
 jest.mock("crypto", () => ({
@@ -157,6 +158,7 @@ describe("auth/invite-code apadrinhamento", () => {
     mockRandomInt.mockReturnValue(0);
     mockCheckRateLimit.mockResolvedValue({allowed: true});
     mockCheckRateLimitByIp.mockResolvedValue({allowed: true});
+    mockRateLimitForRequest.mockResolvedValue({allowed: true});
     failNextTransactionCommit = false;
     store.clear();
     setCalls.length = 0;
@@ -247,13 +249,12 @@ describe("auth/invite-code apadrinhamento", () => {
   });
 
   it("validateInviteCode bloqueia rate limit, codigo invalido e auto-convite", async () => {
-    mockCheckRateLimitByIp.mockResolvedValueOnce({allowed: false});
+    mockRateLimitForRequest.mockResolvedValueOnce({allowed: false});
     await expect(callableHandlers.validateInviteCode({
       data: {inviteCode: "ABC123"},
       rawRequest: {headers: {}, ip: "127.0.0.1"},
     })).rejects.toMatchObject({code: "resource-exhausted"});
 
-    mockCheckRateLimitByIp.mockResolvedValue({allowed: true});
     await expect(callableHandlers.validateInviteCode({
       data: {inviteCode: "!"},
       rawRequest: {headers: {}, ip: "127.0.0.1"},
@@ -268,6 +269,25 @@ describe("auth/invite-code apadrinhamento", () => {
       data: {inviteCode: "SELF123"},
       rawRequest: {headers: {}, ip: "127.0.0.1"},
     })).resolves.toEqual({valid: false});
+  });
+
+  it("validateInviteCode aplica rate limit via rateLimitForRequest (sem bucket global)", async () => {
+    await callableHandlers.validateInviteCode({
+      data: {inviteCode: "ABC123"},
+      rawRequest: {headers: {}},
+      app: {appId: "app-xyz"},
+    });
+
+    expect(mockRateLimitForRequest).toHaveBeenCalledTimes(1);
+    expect(mockRateLimitForRequest).toHaveBeenCalledWith(
+      expect.objectContaining({app: {appId: "app-xyz"}}),
+      expect.objectContaining({
+        keyPrefix: "validate_invite_code",
+        maxRequests: 30,
+        windowMs: 60 * 1000,
+      }),
+    );
+    expect(mockCheckRateLimitByIp).not.toHaveBeenCalled();
   });
 
   it("validateInviteCode valida codigo legado e sincroniza invite_codes/{code}", async () => {

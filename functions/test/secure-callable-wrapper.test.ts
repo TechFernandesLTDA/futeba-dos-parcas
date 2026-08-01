@@ -52,6 +52,11 @@ jest.mock("../src/middleware/rate-limiter", () => ({
 
 jest.mock("../src/auth/anti-abuse", () => ({
   clientIp: jest.fn(() => "127.0.0.1"),
+  rateLimitForRequest: jest.fn().mockResolvedValue({
+    allowed: true,
+    remaining: 10,
+    resetAt: new Date(Date.now() + 60_000),
+  }),
 }));
 
 import {secureCallable} from "../src/middleware/secure-callable-wrapper";
