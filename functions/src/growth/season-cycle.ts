@@ -228,6 +228,8 @@ async function runManagedGroupsCycle(params: {
   await cursorRef.set({
     month_key: monthKey,
     updated_at: Timestamp.fromDate(new Date(now())),
+    ...(cursorState?.month_key !== monthKey ?
+      {last_group_id: FieldValue.delete()} : {}),
   }, {merge: true});
 
   let managedGroupIds: string[];

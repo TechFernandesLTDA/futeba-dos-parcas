@@ -38,9 +38,27 @@ function collectionDocs(pathPrefix: string) {
     .map(([path]) => snap(path));
 }
 
+function isDeleteSentinel(value: unknown): boolean {
+  return Boolean(value) &&
+    typeof value === "object" &&
+    (value as {__fieldValueDelete?: boolean}).__fieldValueDelete === true;
+}
+
 function applySet(path: string, data: Record<string, unknown>, merge = false) {
   const current = store.get(path) || {};
-  store.set(path, merge ? {...current, ...data} : data);
+  if (!merge) {
+    store.set(path, data);
+    return;
+  }
+  const merged = {...current};
+  for (const [key, value] of Object.entries(data)) {
+    if (isDeleteSentinel(value)) {
+      delete merged[key];
+    } else {
+      merged[key] = value;
+    }
+  }
+  store.set(path, merged);
 }
 
 function applyUpdate(path: string, data: Record<string, unknown>) {
@@ -157,6 +175,7 @@ jest.mock("firebase-admin", () => ({
 jest.mock("firebase-admin/firestore", () => ({
   FieldValue: {
     serverTimestamp: jest.fn(() => ({__serverTimestamp: true})),
+    delete: jest.fn(() => ({__fieldValueDelete: true})),
   },
   Timestamp: {
     fromDate: jest.fn((date: Date) => ({__timestamp: date.toISOString()})),
@@ -468,6 +487,66 @@ describe("FIX #3908 — crons de temporada com cursor persistido e orçamento de
       expect(archive).toMatchObject({month_key: "2026-07"});
       // standings continua vazio — não foi reprocessado.
       expect(archive.standings).toEqual([]);
+    });
+
+  // FIX #3930: {merge: true} no pre-persist preservava last_group_id do mês
+  // anterior quando a invocação caía no dia 1º do mês novo. Se
+  // listManagedGroupIds() falhava, o cursor persistia com month_key novo mas
+  // last_group_id velho; no dia seguinte, a retomada (findIndex > last_group_id)
+  // pulava todos os grupos ≤ last_group_id para o mês novo inteiro.
+  it(
+    "startNewSeason: cursor last_group_id do mês anterior não vence no dia 1º " +
+    "do mês novo quando listManagedGroupIds falha",
+    async () => {
+      // groupA/groupB < "groupM" < groupZ — sem o fix, só groupZ seria
+      // processado (findIndex(id > "groupM")); com o fix, todos os três.
+      seedActiveSeason("groupA", "2026-08");
+      seedActiveSeason("groupB", "2026-08");
+      seedActiveSeason("groupZ", "2026-08");
+
+      // Cursor deixado pelo mês anterior (agosto): last_group_id="groupM".
+      store.set("system_state/season_cycle_start_cursor", {
+        month_key: "2026-08",
+        last_group_id: "groupM",
+      });
+
+      // 1ª execução: 1º de setembro. Simula falha transitória em
+      // listManagedGroupIds() — o cursor deve ser pré-persistido com
+      // month_key="2026-09" e last_group_id REMOVIDO.
+      const originalCollectionGroup = firestore.collectionGroup;
+      firestore.collectionGroup = jest.fn(() => {
+        throw new Error("transient firestore error");
+      });
+
+      await seasonCycle.runStartNewSeason({
+        now: () => new Date("2026-09-01T04:00:00Z").getTime(),
+      });
+
+      firestore.collectionGroup = originalCollectionGroup;
+
+      // O cursor pré-persistido NÃO pode reter last_group_id="groupM".
+      const cursorAfterFailure =
+        store.get("system_state/season_cycle_start_cursor");
+      expect(cursorAfterFailure).toEqual(expect.objectContaining({month_key: "2026-09"}));
+      expect(cursorAfterFailure).not.toHaveProperty("last_group_id");
+
+      // 2ª execução: 2 de setembro. Retoma pelo cursor pendente — deve
+      // processar TODOS os grupos, não só > "groupM".
+      await seasonCycle.runStartNewSeason({
+        now: () => new Date("2026-09-02T04:00:00Z").getTime(),
+      });
+
+      expect(store.get("groups/groupA/league_seasons/2026-09"))
+        .toMatchObject({is_active: true});
+      expect(store.get("groups/groupB/league_seasons/2026-09"))
+        .toMatchObject({is_active: true});
+      expect(store.get("groups/groupZ/league_seasons/2026-09"))
+        .toMatchObject({is_active: true});
+      expect(store.has("system_state/season_cycle_start_cursor")).toBe(false);
+      expect(loggerError).toHaveBeenCalledWith(
+        expect.stringContaining("falha ao listar grupos"),
+        expect.anything(),
+      );
     },
   );
 });
