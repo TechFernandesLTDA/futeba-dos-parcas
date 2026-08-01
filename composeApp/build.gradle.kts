@@ -129,7 +129,7 @@ kotlin {
 
             // kotlinx-datetime — formatação de datas na feature "Novidades" (Fase G).
             // Mesma versão usada no :shared.
-            implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.1")
+            implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.8.0")
         }
 
         androidMain.dependencies {
