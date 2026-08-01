@@ -40,3 +40,13 @@ describe('parseCashboxAmount', () => {
     expect(normalizeCashboxAmount(10.105)).toBe(10.11);
   });
 });
+
+describe('formatCashboxAmountInput locale (#3945)', () => {
+  it('usa locale informado (en -> ponto decimal)', () => {
+    expect(formatCashboxAmountInput(12.5, 'en')).toBe('12.50');
+  });
+
+  it('usa locale informado (es -> separador de milhar ponto)', () => {
+    expect(formatCashboxAmountInput(1234.5, 'es')).toMatch(/1\.234,50|1234,50/);
+  });
+});

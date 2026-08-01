@@ -521,7 +521,16 @@
     "endReached": "You've reached the end!",
     "viewGames": "View Games",
     "viewGroups": "View Groups",
-    "moreOptions": "More options"
+    "moreOptions": "More options",
+    "date": {
+      "daysAgo_one": "{{count}} day ago",
+      "daysAgo_other": "{{count}} days ago",
+      "hoursAgo_one": "{{count}}h ago",
+      "hoursAgo_other": "{{count}}h ago",
+      "minutesAgo_one": "{{count}} min ago",
+      "minutesAgo_other": "{{count}} min ago",
+      "tomorrow": "Tomorrow"
+    }
   },
   "connection": {
     "offlineLimited": "You are offline — limited functions",
@@ -2450,6 +2459,15 @@
     "checklistPlayFirstGameDesc": "Take part in a finished game",
     "checklistProgress": "{{completed}}/{{total}} completed",
     "firstStepsTitle": "First steps",
+    "grace": {
+      "completeByBody": "Complete your verification (phone + CPF) by {{date}} to continue using the app without interruption.",
+      "daysRemaining_one": "{{count}} day remaining",
+      "daysRemaining_other": "{{count}} days remaining",
+      "expiredBody": "The deadline to complete verification has ended. You need to validate your phone and CPF to continue using the app.",
+      "expiredTitle": "Verification required",
+      "lastDays_one": "Last day!",
+      "lastDays_other": "Last {{count}} days!"
+    },
     "ownerChecklistCashbox": "Start the group cashbox",
     "ownerChecklistCashboxDesc": "Record the first income or expense to control costs.",
     "ownerChecklistConfigureGroup": "Configure the group",

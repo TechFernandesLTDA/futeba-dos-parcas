@@ -1,3 +1,5 @@
+import i18n from 'i18next';
+
 const CASHBOX_CENTS_MULTIPLIER = 100;
 
 function normalizeCashboxAmountString(value: string): string | null {
@@ -42,8 +44,8 @@ export function parseCashboxAmount(value: string): number | null {
   return cents === null ? null : centsToCashboxAmount(cents);
 }
 
-export function formatCashboxAmountInput(value: number): string {
-  return value.toLocaleString('pt-BR', {
+export function formatCashboxAmountInput(value: number, locale?: string): string {
+  return value.toLocaleString(locale || i18n.resolvedLanguage || i18n.language || 'pt-BR', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });

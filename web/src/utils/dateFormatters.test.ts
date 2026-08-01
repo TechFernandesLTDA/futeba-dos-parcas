@@ -1,4 +1,5 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach, beforeAll, afterAll } from 'vitest';
+import i18n from 'i18next';
 import { formatGameDate, formatGameDateLong, formatTimeAgo, formatDateShort } from './dateFormatters';
 
 describe('formatGameDate', () => {
@@ -106,6 +107,48 @@ describe('formatDateShort', () => {
   it('formata Date object corretamente', () => {
     const date = new Date(2026, 2, 14);
     const result = formatDateShort(date);
+    expect(result).toContain('14');
+  });
+});
+
+describe('dateFormatters i18n (#3945)', () => {
+  beforeAll(async () => {
+    await i18n.changeLanguage('en');
+  });
+
+  afterAll(async () => {
+    await i18n.changeLanguage('pt-BR');
+  });
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 2, 14, 10, 0, 0));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('formatGameDate traduz Today/Tomorrow em EN', () => {
+    expect(formatGameDate('14/03/2026')).toBe('Today');
+    expect(formatGameDate('15/03/2026')).toBe('Tomorrow');
+  });
+
+  it('formatGameDateLong traduz Today/Tomorrow em EN', () => {
+    expect(formatGameDateLong('14/03/2026')).toBe('Today');
+    expect(formatGameDateLong('15/03/2026')).toBe('Tomorrow');
+  });
+
+  it('formatTimeAgo usa strings EN', () => {
+    expect(formatTimeAgo(new Date(2026, 2, 14, 9, 59, 45))).toBe('Now');
+    expect(formatTimeAgo(new Date(2026, 2, 14, 9, 30, 0))).toBe('30 min ago');
+    expect(formatTimeAgo(new Date(2026, 2, 14, 7, 0, 0))).toBe('3h ago');
+    expect(formatTimeAgo(new Date(2026, 2, 13, 10, 0, 0))).toBe('Yesterday');
+    expect(formatTimeAgo(new Date(2026, 2, 11, 10, 0, 0))).toBe('3 days ago');
+  });
+
+  it('respeita locale informado para formatação Intl', () => {
+    const result = formatDateShort(new Date(2026, 2, 14), 'pt-BR');
     expect(result).toContain('14');
   });
 });

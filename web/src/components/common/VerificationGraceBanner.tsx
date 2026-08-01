@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { Alert, AlertTitle } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import graceConfig from '../../../../shared/verification-grace.json';
 
 /**
@@ -17,38 +18,42 @@ import graceConfig from '../../../../shared/verification-grace.json';
  * erro indicando que o acesso está bloqueado.
  */
 export function VerificationGraceBanner() {
-  const { daysRemaining, expired } = useMemo(() => {
+  const { t, i18n } = useTranslation();
+  const { daysRemaining, expired, graceEndDate } = useMemo(() => {
     const graceEnd = new Date(graceConfig.graceEndIso);
     const diffMs = graceEnd.getTime() - Date.now();
     const days = Math.ceil(diffMs / (24 * 60 * 60 * 1000));
     return {
       daysRemaining: days,
       expired: days <= 0,
+      graceEndDate: graceEnd,
     };
   }, []);
 
   if (expired) {
     return (
       <Alert severity="error" sx={{ mb: 2 }}>
-        <AlertTitle>Verificação obrigatória</AlertTitle>
-        O prazo para concluir a verificação terminou. Você precisa validar seu
-        telefone e CPF para continuar usando o app.
+        <AlertTitle>{t('onboarding.grace.expiredTitle')}</AlertTitle>
+        {t('onboarding.grace.expiredBody')}
       </Alert>
     );
   }
 
   const urgency = daysRemaining <= 7 ? 'warning' : 'info';
+  const deadline = graceEndDate.toLocaleDateString(i18n.language, {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
 
   return (
     <Alert severity={urgency} sx={{ mb: 2 }}>
       <AlertTitle>
         {daysRemaining <= 7
-          ? `Últimos ${daysRemaining} ${daysRemaining === 1 ? 'dia' : 'dias'}!`
-          : `${daysRemaining} dias restantes`}
+          ? t('onboarding.grace.lastDays', { count: daysRemaining })
+          : t('onboarding.grace.daysRemaining', { count: daysRemaining })}
       </AlertTitle>
-      Complete sua verificação (telefone + CPF) até{' '}
-      {new Date(graceConfig.graceEndIso).toLocaleDateString('pt-BR')} para
-      continuar usando o app sem interrupção.
+      {t('onboarding.grace.completeByBody', { date: deadline })}
     </Alert>
   );
 }

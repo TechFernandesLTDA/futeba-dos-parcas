@@ -521,7 +521,16 @@
     "endReached": "Você chegou ao fim!",
     "viewGames": "Ver Jogos",
     "viewGroups": "Ver Grupos",
-    "moreOptions": "Mais opções"
+    "moreOptions": "Mais opções",
+    "date": {
+      "daysAgo_one": "Há {{count}} dia",
+      "daysAgo_other": "Há {{count}} dias",
+      "hoursAgo_one": "Há {{count}}h",
+      "hoursAgo_other": "Há {{count}}h",
+      "minutesAgo_one": "Há {{count}} min",
+      "minutesAgo_other": "Há {{count}} min",
+      "tomorrow": "Amanhã"
+    }
   },
   "connection": {
     "offlineLimited": "Você está offline — funções limitadas",
@@ -2450,6 +2459,15 @@
     "checklistPlayFirstGameDesc": "Participe de um jogo encerrado",
     "checklistProgress": "{{completed}}/{{total}} concluídos",
     "firstStepsTitle": "Primeiros passos",
+    "grace": {
+      "completeByBody": "Complete sua verificação (telefone + CPF) até {{date}} para continuar usando o app sem interrupção.",
+      "daysRemaining_one": "{{count}} dia restante",
+      "daysRemaining_other": "{{count}} dias restantes",
+      "expiredBody": "O prazo para concluir a verificação terminou. Você precisa validar seu telefone e CPF para continuar usando o app.",
+      "expiredTitle": "Verificação obrigatória",
+      "lastDays_one": "Último dia!",
+      "lastDays_other": "Últimos {{count}} dias!"
+    },
     "ownerChecklistCashbox": "Inicie o caixa do grupo",
     "ownerChecklistCashboxDesc": "Registre a primeira entrada ou saída para controlar custos.",
     "ownerChecklistConfigureGroup": "Configure o grupo",
