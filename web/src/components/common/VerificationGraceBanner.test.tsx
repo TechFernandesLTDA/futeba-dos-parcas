@@ -71,7 +71,7 @@ describe('VerificationGraceBanner i18n EN (#3932)', () => {
     });
     render(<VerificationGraceBanner />);
     expect(screen.getByText(`Last ${days} days!`)).toBeInTheDocument();
-    expect(screen.getByText(new RegExp(expectedDeadline.replace(/\//g, '\\/')))).toBeInTheDocument();
+    expect(screen.getByText((content) => content.includes(expectedDeadline))).toBeInTheDocument();
   });
 
   it('renderiza estado expirado em EN', () => {
