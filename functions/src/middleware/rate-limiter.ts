@@ -37,7 +37,7 @@ export interface RateLimitConfig {
 }
 
 /** Resultado da verificação de rate limit */
-interface RateLimitResult {
+export interface RateLimitResult {
   allowed: boolean;
   remaining: number;
   resetAt: Date;

@@ -16,6 +16,8 @@ import {db} from "../_db";
 import {
   checkRateLimit,
   checkRateLimitByIp,
+  type RateLimitConfig,
+  type RateLimitResult,
 } from "../middleware/rate-limiter";
 import {FUNCTION_REGION} from "../constants";
 import {getAuth} from "../utils/firebase-lazy";
@@ -43,18 +45,47 @@ type AuthUserLookupError = {
 };
 
 /**
- * Valida formato de IP (IPv4 ou IPv6). Evita persistir lixo forjado nos
- * audit logs (FIX #2479 — poluição de forense por valores arbitrários de XFF).
+ * Tipo minimo de requisicao para extrair IP / identidade de rate limit.
+ * Mantido intencionalmente restrito para nao acoplar o helper ao
+ * CallableRequest completo e facilitar testes unitarios.
+ */
+export interface RateLimitRequest {
+  rawRequest?: {
+    ip?: string;
+    headers?: Record<string, string | string[] | undefined>;
+  };
+  auth?: {uid?: string};
+  app?: {appId?: string};
+}
+
+const IPV4 =
+  /^(?:(?:25[0-5]|2[0-4]\d|1?\d?\d)\.){3}(?:25[0-5]|2[0-4]\d|1?\d?\d)$/;
+// IPv6 frouxo (hex groups + "::"), suficiente para sanitização de log.
+const IPV6 = /^(?:[0-9a-fA-F]{0,4}:){2,7}[0-9a-fA-F]{0,4}$/;
+
+/**
+ * Normaliza e valida um candidato a IP (IPv4 ou IPv6).
+ *
+ * FIX #3939 — antes `isValidIp` rejeitava IPv4-mapped IPv6 (`::ffff:1.2.3.4`),
+ * formato dominante em sockets IPv6 dual-stack do GCP/GFE. A rejeicao
+ * degradava `clientIp` para o sentinel "unknown" na maioria das chamadas
+ * reais, colapsando o rate limit num bucket global.
  *
  * @param {string} value - Candidato a IP.
- * @return {boolean} true se IPv4/IPv6 bem-formado.
+ * @return {string | null} IP normalizado (IPv4 when mapeado-IPv6), ou null se invalido.
  */
-function isValidIp(value: string): boolean {
-  const ipv4 =
-    /^(?:(?:25[0-5]|2[0-4]\d|1?\d?\d)\.){3}(?:25[0-5]|2[0-4]\d|1?\d?\d)$/;
-  // IPv6 frouxo (hex groups + "::"), suficiente para sanitização de log.
-  const ipv6 = /^(?:[0-9a-fA-F]{0,4}:){2,7}[0-9a-fA-F]{0,4}$/;
-  return ipv4.test(value) || ipv6.test(value);
+function normalizeIp(value: string): string | null {
+  const trimmed = value.trim();
+  if (IPV4.test(trimmed)) return trimmed;
+
+  const mapped = trimmed.match(
+    /^::ffff:(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$/i,
+  );
+  if (mapped && IPV4.test(mapped[1])) return mapped[1];
+
+  if (IPV6.test(trimmed)) return trimmed;
+
+  return null;
 }
 
 /**
@@ -69,13 +100,14 @@ function isValidIp(value: string): boolean {
  * Fallback: se nenhum IP válido na cadeia, usa rawRequest.ip (IP da conexão
  * direta, normalmente o LB — não ideal para rate-limit mas não-spoofable).
  *
- * @param {object} request - Requisição callable.
- * @return {string} IP confiável do cliente, ou "unknown".
+ * FIX #3939: retorna null (em vez do sentinel "unknown") quando nenhum IP
+ * confiavel é resolvível, forcando consumidores a escolher um bucket
+ * isolado por uid/appcheck em vez de um bucket global compartilhado.
+ *
+ * @param {RateLimitRequest} request - Requisição callable.
+ * @return {string | null} IP confiável do cliente normalizado, ou null.
  */
-export function clientIp(request: {rawRequest?: {
-  ip?: string;
-  headers?: Record<string, string | string[] | undefined>;
-}}): string {
+export function clientIp(request: RateLimitRequest): string | null {
   const xffRaw = request.rawRequest?.headers?.["x-forwarded-for"];
   const xff = typeof xffRaw === "string" ? xffRaw : "";
   const hops = xff
@@ -83,7 +115,10 @@ export function clientIp(request: {rawRequest?: {
     .map((h) => h.trim())
     .filter((h) => h.length > 0);
 
-  const validHops = hops.filter(isValidIp);
+  const validHops = hops
+    .map(normalizeIp)
+    .filter((ip): ip is string => ip !== null);
+
   if (validHops.length >= 2) {
     return validHops[validHops.length - 2];
   }
@@ -92,9 +127,50 @@ export function clientIp(request: {rawRequest?: {
   }
 
   const fallback = request.rawRequest?.ip;
-  if (fallback && isValidIp(fallback)) return fallback;
+  if (fallback) {
+    const normalizedFallback = normalizeIp(fallback);
+    if (normalizedFallback) return normalizedFallback;
+  }
 
-  return "unknown";
+  return null;
+}
+
+/**
+ * Aplica rate limit escolhendo o bucket mais isolado disponivel na request.
+ *
+ * Cadeia de fallback (do mais isolado/preciso ao mais generico):
+ *  1. IP confiavel do cliente  -> bucket por hash de IP (checkRateLimitByIp)
+ *  2. UID autenticado          -> bucket `unknown_${uid}` (callables authed)
+ *  3. App Check appId          -> bucket `unknown_appcheck_${appId}`
+ *                                 (callables publicos com enforceAppCheck)
+ *  4. Ultimo recurso           -> bucket `unknown` (so alcancavel em dev/
+ *                                 emulator, onde App Check nao e enforce).
+ *
+ * Isto substitui o anti-pattern onde IP ausente virava um bucket global
+ * `validate_invite_code:unknown`, permitindo que poucos chamadores
+ * anonimos negassem o servico para todos os demais (DoS de onboarding).
+ *
+ * @param {RateLimitRequest} request - Requisição callable.
+ * @param {RateLimitConfig} config - Configuração de rate limit.
+ * @return {Promise<RateLimitResult>} Resultado da verificação.
+ */
+export async function rateLimitForRequest(
+  request: RateLimitRequest,
+  config: RateLimitConfig,
+): Promise<RateLimitResult> {
+  const ip = clientIp(request);
+  if (ip) {
+    return checkRateLimitByIp(ip, config);
+  }
+  const uid = request.auth?.uid;
+  if (uid) {
+    return checkRateLimit(`unknown_${uid}`, config);
+  }
+  const appId = request.app?.appId;
+  if (appId) {
+    return checkRateLimit(`unknown_appcheck_${appId}`, config);
+  }
+  return checkRateLimit("unknown", config);
 }
 
 /**
@@ -181,8 +257,6 @@ export const canSendSmsOtp = onCall(
       // que realmente controla o número vai receber o SMS; só depois do código
       // o cliente consegue oferecer reivindicação/unificação com segurança.
 
-      const ip = clientIp(request);
-
       const callerCheck = await checkRateLimit(request.auth!.uid, {
         maxRequests: SMS_RATE_LIMIT_PER_CALLER_HOUR,
         windowMs: 60 * 60 * 1000,
@@ -221,11 +295,9 @@ export const canSendSmsOtp = onCall(
         windowMs: 60 * 60 * 1000,
         keyPrefix: "sms_ip",
       };
-      // Sem IP confiável, isola o fallback por UID. Um bucket global
+      // Sem IP confiável, isola o fallback por UID/App Check. Um bucket global
       // "unknown" permitia que poucos usuários bloqueassem todos os demais.
-      const ipCheck = ip === "unknown" ?
-        await checkRateLimit(`unknown_${request.auth.uid}`, ipLimit) :
-        await checkRateLimitByIp(ip, ipLimit);
+      const ipCheck = await rateLimitForRequest(request, ipLimit);
       if (!ipCheck.allowed) {
         return {
           allowed: false,

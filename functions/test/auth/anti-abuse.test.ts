@@ -100,7 +100,12 @@ beforeEach(() => {
   mockGetUserByPhoneNumber.mockRejectedValue({ code: "auth/user-not-found" });
 });
 
-import { canSendSmsOtp, logVerificationFailure } from "../../src/auth/anti-abuse";
+import {
+  canSendSmsOtp,
+  logVerificationFailure,
+  clientIp,
+  rateLimitForRequest,
+} from "../../src/auth/anti-abuse";
 import {
   checkRateLimit,
   checkRateLimitByIp,
@@ -111,6 +116,101 @@ const makeRequest = (overrides: any = {}) => ({
   data: { phone: "+5511999999999", reason: "invalid_format", stage: "phone", ...overrides.data },
   app: { appId: "test-app", token: "test-token" },
   rawRequest: { ip: "127.0.0.1", headers: { "x-forwarded-for": "192.168.1.1" }, ...overrides.rawRequest },
+});
+
+const allowedResult = () => ({
+  allowed: true,
+  remaining: 30,
+  resetAt: new Date(Date.now() + 60_000),
+});
+
+describe("clientIp / rateLimitForRequest (#3939)", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    (checkRateLimit as jest.Mock).mockResolvedValue(allowedResult());
+    (checkRateLimitByIp as jest.Mock).mockResolvedValue(allowedResult());
+  });
+
+  describe("clientIp", () => {
+    it("retorna null quando XFF esta ausente/vazio e nao ha rawRequest.ip", () => {
+      expect(clientIp({rawRequest: {headers: {}}})).toBeNull();
+      expect(clientIp({rawRequest: {headers: {"x-forwarded-for": ""}}})).toBeNull();
+      expect(clientIp({})).toBeNull();
+    });
+
+    it("retorna null quando todos os hops de XFF sao invalidos", () => {
+      expect(
+        clientIp({rawRequest: {headers: {"x-forwarded-for": "lixo, , not-an-ip"}}}),
+      ).toBeNull();
+    });
+
+    it("rejeita sentinel 'unknown' literal e valores arbitrarios", () => {
+      expect(
+        clientIp({rawRequest: {ip: "unknown", headers: {}}}),
+      ).toBeNull();
+    });
+
+    it("normaliza IPv4-mapped IPv6 (::ffff:1.2.3.4) para IPv4", () => {
+      expect(
+        clientIp({rawRequest: {ip: "::ffff:203.0.113.5", headers: {}}}),
+      ).toBe("203.0.113.5");
+      expect(
+        clientIp({rawRequest: {headers: {"x-forwarded-for": "::ffff:203.0.113.5"}}}),
+      ).toBe("203.0.113.5");
+      expect(
+        clientIp({
+          rawRequest: {
+            headers: {"x-forwarded-for": "::ffff:203.0.113.5, 10.0.0.1"},
+          },
+        }),
+      ).toBe("203.0.113.5");
+    });
+  });
+
+  describe("rateLimitForRequest — cadeia de fallback", () => {
+    const config = {maxRequests: 30, windowMs: 60_000, keyPrefix: "validate_invite_code"};
+
+    it("usa bucket por IP quando ha IP confiavel", async () => {
+      await rateLimitForRequest(
+        {rawRequest: {headers: {"x-forwarded-for": "1.2.3.4"}}},
+        config,
+      );
+      expect(checkRateLimitByIp).toHaveBeenCalledWith("1.2.3.4", config);
+      expect(checkRateLimit).not.toHaveBeenCalled();
+    });
+
+    it("cai para bucket unknown_${uid} quando IP ausente e autenticado", async () => {
+      await rateLimitForRequest({auth: {uid: "u1"}}, config);
+      expect(checkRateLimit).toHaveBeenCalledWith("unknown_u1", config);
+      expect(checkRateLimitByIp).not.toHaveBeenCalled();
+    });
+
+    it("cai para bucket unknown_appcheck_${appId} quando anonimo com App Check", async () => {
+      await rateLimitForRequest({app: {appId: "appX"}}, config);
+      expect(checkRateLimit).toHaveBeenCalledWith("unknown_appcheck_appX", config);
+      expect(checkRateLimitByIp).not.toHaveBeenCalled();
+    });
+
+    it("IP ausente + chamadores anonimos com App Checks distintos geram buckets distintos (sem bucket global)", async () => {
+      (checkRateLimit as jest.Mock).mockResolvedValue(allowedResult());
+      for (let i = 0; i < 35; i++) {
+        await rateLimitForRequest({app: {appId: `app-${i}`}}, config);
+      }
+      const keys = (checkRateLimit as jest.Mock).mock.calls.map((c) => c[0]);
+      expect(keys).toHaveLength(35);
+      expect(new Set(keys).size).toBe(35);
+      expect(keys).not.toContain("unknown");
+      expect(keys.every((k) => k.startsWith("unknown_appcheck_"))).toBe(true);
+      expect(checkRateLimitByIp).not.toHaveBeenCalled();
+    });
+
+    it("nunca produz o bucket global 'unknown' quando App Check esta presente", async () => {
+      (checkRateLimit as jest.Mock).mockResolvedValue(allowedResult());
+      await rateLimitForRequest({auth: {uid: "u"}, app: {appId: "a"}}, config);
+      const key = (checkRateLimit as jest.Mock).mock.calls[0][0];
+      expect(key).toBe("unknown_u");
+    });
+  });
 });
 
 describe("Auth — Anti Abuse", () => {
