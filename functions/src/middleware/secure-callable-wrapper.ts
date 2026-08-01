@@ -34,10 +34,13 @@ import {FieldValue} from "firebase-admin/firestore";
 import {randomUUID} from "crypto";
 import {
   checkRateLimit,
-  checkRateLimitByIp,
   RateLimitConfig,
 } from "./rate-limiter";
-import {clientIp} from "../auth/anti-abuse";
+import {
+  clientIp,
+  rateLimitForRequest,
+  type RateLimitRequest,
+} from "../auth/anti-abuse";
 import {FUNCTION_REGION} from "../constants";
 
 /**
@@ -256,16 +259,15 @@ export function secureCallable<
         // get rate-limited, not just permission-denied.
         // ======================================
         if (config.rateLimit) {
-          type ClientRequest = {
-            rawRequest?: {
-              ip?: string;
-              headers?: Record<string, string | string[] | undefined>;
-            };
-          };
-          const ip = clientIp(request as unknown as ClientRequest);
+          const ip = clientIp(
+            request as unknown as RateLimitRequest,
+          ) ?? "unknown";
           const rl = userId ?
             await checkRateLimit(userId, config.rateLimit) :
-            await checkRateLimitByIp(ip, config.rateLimit);
+            await rateLimitForRequest(
+              request as unknown as RateLimitRequest,
+              config.rateLimit,
+            );
 
           if (!rl.allowed) {
             const resetSec = Math.ceil(
