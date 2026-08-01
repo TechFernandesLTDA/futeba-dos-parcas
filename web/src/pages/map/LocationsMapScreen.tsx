@@ -207,30 +207,48 @@ export const LocationsMapScreen: React.FC = () => {
   useEffect(() => {
     let cancelled = false;
     const loadFieldPrices = async () => {
-      try {
-        const prices: Record<string, number> = {};
-        const fieldTypes: Record<string, Set<FieldType>> = {};
-        const addField = (field: Field) => {
-          if (!field.locationId || field.isActive === false) return;
-          if (field.type) {
-            fieldTypes[field.locationId] = fieldTypes[field.locationId] || new Set<FieldType>();
-            fieldTypes[field.locationId].add(field.type);
-          }
-          if (!field.hourlyPrice) return;
-          prices[field.locationId] = Math.min(prices[field.locationId] || Number.MAX_SAFE_INTEGER, field.hourlyPrice);
-        };
-        const subFields = await getDocs(query(collectionGroup(db, 'fields'), where('is_active', '==', true), limit(500)));
-        subFields.docs.forEach((d) => addField({ ...snakeToCamel<Field>(d.data()), id: d.id }));
-        const rootFields = await getDocs(query(collection(db, 'fields'), where('is_active', '==', true), limit(500)));
-        rootFields.docs.forEach((d) => addField({ ...snakeToCamel<Field>(d.data()), id: d.id }));
-        if (!cancelled) {
-          setMinPriceByLocation(prices);
-          setFieldTypesByLocation(Object.fromEntries(
-            Object.entries(fieldTypes).map(([locationId, types]) => [locationId, Array.from(types)]),
-          ));
+      const prices: Record<string, number> = {};
+      const fieldTypes: Record<string, Set<FieldType>> = {};
+      const addField = (field: Field) => {
+        if (!field.locationId || field.isActive === false) return;
+        if (field.type) {
+          fieldTypes[field.locationId] = fieldTypes[field.locationId] || new Set<FieldType>();
+          fieldTypes[field.locationId].add(field.type);
         }
-      } catch (err) {
-        logger.error('Error loading field prices for public filters:', err);
+        if (!field.hourlyPrice) return;
+        prices[field.locationId] = Math.min(prices[field.locationId] || Number.MAX_SAFE_INTEGER, field.hourlyPrice);
+      };
+
+      // #3955: a query de collectionGroup("fields") e a de root collection
+      // /fields rodam de forma independente. Antes um unico try/catch fazia
+      // uma falha (ex.: permission-denied por falta de regra collection-group)
+      // abortar o fallback da root collection, deixando os filtros do mapa
+      // vazios em silencio. Agora cada falha e registrada e surfaced via toast.
+      const [subRes, rootRes] = await Promise.allSettled([
+        getDocs(query(collectionGroup(db, 'fields'), where('is_active', '==', true), limit(500))),
+        getDocs(query(collection(db, 'fields'), where('is_active', '==', true), limit(500))),
+      ]);
+      let hasFailure = false;
+      if (subRes.status === 'fulfilled') {
+        subRes.value.docs.forEach((d) => addField({ ...snakeToCamel<Field>(d.data()), id: d.id }));
+      } else {
+        hasFailure = true;
+        logger.error('Error loading field prices (collectionGroup fields):', subRes.reason);
+      }
+      if (rootRes.status === 'fulfilled') {
+        rootRes.value.docs.forEach((d) => addField({ ...snakeToCamel<Field>(d.data()), id: d.id }));
+      } else {
+        hasFailure = true;
+        logger.error('Error loading field prices (root fields):', rootRes.reason);
+      }
+      if (!cancelled) {
+        setMinPriceByLocation(prices);
+        setFieldTypesByLocation(Object.fromEntries(
+          Object.entries(fieldTypes).map(([locationId, types]) => [locationId, Array.from(types)]),
+        ));
+        if (hasFailure) {
+          showErrorRef.current('Não foi possível carregar alguns filtros de quadras.');
+        }
       }
     };
     loadFieldPrices();

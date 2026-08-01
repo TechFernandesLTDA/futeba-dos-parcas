@@ -567,3 +567,63 @@ describe("confirmations — delete", () => {
     );
   });
 });
+
+// ============================================================
+// COLLECTION GROUP (#3955)
+// ============================================================
+// A query collectionGroup("confirmations") do Android
+// (ConfirmationUseCase.updateAttendanceRate) filtra por user_id e
+// confirmed_at. Exige um match /{path=**}/confirmations/{id}; os matches
+// nested (games/{gameId}/confirmations) e root (/confirmations) nao cobrem o
+// aggregate. Espelha o padrao de cancellations (#2636).
+describe("confirmations — collection group", () => {
+  const NESTED_CONFIRM_PATH = `games/${GAME_ACTIVE}/confirmations/${GAME_ACTIVE}_${UID_PLAYER_B}`;
+
+  beforeAll(async () => {
+    await seedDoc(testEnv, NESTED_CONFIRM_PATH, {
+      game_id: GAME_ACTIVE,
+      user_id: UID_PLAYER_B,
+      status: "CONFIRMED",
+      confirmed_at: new Date(),
+      created_at: new Date(),
+    });
+  });
+
+  it("Player pode listar proprias confirmacoes via collection group (filtro user_id)", async () => {
+    const db = asPlayerB(testEnv);
+    await assertSucceeds(
+      db.collectionGroup("confirmations")
+        .where("user_id", "==", UID_PLAYER_B)
+        .where("confirmed_at", ">", new Date(Date.now() - 90 * 24 * 60 * 60 * 1000))
+        .get()
+    );
+  });
+
+  it("Admin pode listar confirmacoes via collection group", async () => {
+    const db = asAdmin(testEnv);
+    await assertSucceeds(
+      db.collectionGroup("confirmations")
+        .where("user_id", "==", UID_ADMIN)
+        .get()
+    );
+  });
+
+  it("Player pode listar collection group scoped a si mesmo mesmo sem resultados", async () => {
+    const db = asPlayerC(testEnv);
+    await assertSucceeds(
+      db.collectionGroup("confirmations").where("user_id", "==", UID_PLAYER_C).get()
+    );
+  });
+
+  it("Player NAO pode rodar collection group sem filtro de user_id (vazamento)", async () => {
+    const db = asPlayerB(testEnv);
+    await assertFails(db.collectionGroup("confirmations").get());
+  });
+
+  it("Nao-autenticado NAO pode listar confirmacoes via collection group", async () => {
+    const db = asAnon(testEnv);
+    await assertFails(
+      db.collectionGroup("confirmations").where("user_id", "==", UID_PLAYER_B).get()
+    );
+  });
+});

@@ -533,3 +533,52 @@ describe("locations — deleção", () => {
     await assertFails(db.doc(`locations/${LOC_ACTIVE_VERIFIED}`).delete());
   });
 });
+
+// ============================================================
+// FIELDS — COLLECTION GROUP (#3955)
+// ============================================================
+// A query collectionGroup("fields") (web LocationsMapScreen e shared
+// FirebaseDataSource) exige um match /{path=**}/fields/{id}. O match dentro
+// de locations/{locationId}/fields e o root /fields nao cobrem o aggregate.
+describe("fields — collection group", () => {
+  const FIELD_CG_PATH = `locations/${LOC_ACTIVE_VERIFIED}/fields/field-cg-001`;
+
+  beforeAll(async () => {
+    await seedDoc(testEnv, FIELD_CG_PATH, {
+      name: "Quadra CG",
+      location_id: LOC_ACTIVE_VERIFIED,
+      is_active: true,
+      type: "SOCIETY",
+      price_per_hour: 120,
+      created_at: new Date(),
+    });
+  });
+
+  it("Player autenticado pode listar fields via collection group", async () => {
+    const db = asPlayerB(testEnv);
+    await assertSucceeds(
+      db.collectionGroup("fields").where("is_active", "==", true).limit(500).get()
+    );
+  });
+
+  it("Admin pode listar fields via collection group", async () => {
+    const db = asAdmin(testEnv);
+    await assertSucceeds(
+      db.collectionGroup("fields").where("is_active", "==", true).limit(500).get()
+    );
+  });
+
+  it("FIELD_OWNER autenticado pode listar fields via collection group", async () => {
+    const db = asFieldOwner(testEnv);
+    await assertSucceeds(
+      db.collectionGroup("fields").where("is_active", "==", true).limit(500).get()
+    );
+  });
+
+  it("Não-autenticado NÃO pode listar fields via collection group", async () => {
+    const db = asAnon(testEnv);
+    await assertFails(
+      db.collectionGroup("fields").where("is_active", "==", true).limit(500).get()
+    );
+  });
+});

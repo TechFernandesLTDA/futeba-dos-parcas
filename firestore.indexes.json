@@ -2538,6 +2538,20 @@
     },
     {
       "collectionGroup": "confirmations",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        {
+          "fieldPath": "user_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "confirmed_at",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "confirmations",
       "queryScope": "COLLECTION",
       "fields": [
         {
