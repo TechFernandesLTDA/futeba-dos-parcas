@@ -38,7 +38,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       # Instalamos o Semgrep num venv isolado em
       # $RUNNER_TEMP: sem poluir o site-packages do sistema e sem
