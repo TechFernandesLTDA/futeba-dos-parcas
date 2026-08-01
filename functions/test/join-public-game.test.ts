@@ -128,7 +128,7 @@ describe("joinPublicGame rate limit", () => {
   });
 
   test("aplica a mesma verificação ao ingresso público após o grace period", async () => {
-    jest.useFakeTimers().setSystemTime(new Date("2026-08-04T00:00:00.000Z"));
+    jest.useFakeTimers().setSystemTime(new Date("2026-10-04T00:00:00.000Z"));
     try {
       await expect(joinPublicGame({
         auth: {uid: "user1", token: {}},
