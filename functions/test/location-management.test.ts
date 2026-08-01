@@ -440,8 +440,10 @@ describe("location commercial aggregates", () => {
   });
 
   it("persiste agregados comerciais completos no documento da quadra", async () => {
-    resetFirestore();
-    firestoreStore.set("locations/location-1", {
+    jest.useFakeTimers().setSystemTime(new Date("2026-07-15T00:00:00.000Z"));
+    try {
+      resetFirestore();
+      firestoreStore.set("locations/location-1", {
       name: "Arena Parcas",
       amenities: ["Churrasqueira", "Wi-Fi"],
       has_parking: true,
@@ -499,6 +501,9 @@ describe("location commercial aggregates", () => {
       upcoming_games_count: 1,
       location_stats_updated_at: {_type: "ServerTimestamp"},
     });
+    } finally {
+      jest.useRealTimers();
+    }
   });
 
   it("retorna null ao recomputar quadra inexistente", async () => {
