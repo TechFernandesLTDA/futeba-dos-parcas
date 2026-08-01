@@ -204,6 +204,29 @@ const fakeDb = {
     new FakeCollectionRef(name, firestoreStore)
   )),
   batch: mockBatch,
+  runTransaction: jest.fn(async (updateFn: (tx: unknown) => Promise<unknown>) => {
+    const staged: Array<() => void> = [];
+    const tx = {
+      get: (ref: {get: () => Promise<unknown>}) => ref.get(),
+      update: (ref: {update: (data: StoredDoc) => Promise<void>}, data: StoredDoc) => {
+        staged.push(() => ref.update(data));
+      },
+      set: (ref: {set: (data: StoredDoc) => Promise<void>}, data: StoredDoc) => {
+        staged.push(() => ref.set(data));
+      },
+      create: (ref: {set: (data: StoredDoc) => Promise<void>}, data: StoredDoc) => {
+        staged.push(() => ref.set(data));
+      },
+      delete: (ref: {delete: () => Promise<void>}) => {
+        staged.push(() => ref.delete());
+      },
+    };
+    const result = await updateFn(tx);
+    for (const op of staged) {
+      await op();
+    }
+    return result;
+  }),
 };
 
 jest.mock("../src/_db", () => ({
@@ -1240,6 +1263,105 @@ describe("location commercial admin callables", () => {
     expect(collectionSize("locations/paid/subscription_ledger")).toBe(1);
     expect(collectionSize("locations/overdue/subscription_ledger")).toBe(1);
     expect(collectionSize("locations/suspended/subscription_ledger")).toBe(1);
+  });
+
+  it("respeita status TRIAL e nao cobra/suspende quadra em trial (#3953)", async () => {
+    firestoreStore.delete("locations/location-1");
+    firestoreStore.delete("locations/location-1/fields/field-1");
+    firestoreStore.set("locations/trial-arena", {
+      name: "Arena Trial",
+      owner_id: "owner-trial",
+      subscription_status: "TRIAL",
+      commercial_status: "TRIAL",
+      monthly_fee_cents: 15000,
+      billing_due_day: 5,
+    });
+    firestoreStore.set("locations/active-arena", {
+      name: "Arena Active",
+      owner_id: "owner-active",
+      subscription_status: "ACTIVE",
+      commercial_status: "ACTIVE",
+      monthly_fee_cents: 15000,
+      billing_due_day: 5,
+    });
+
+    const result = await processLocationBillingAutomation({
+      periodKey: "2026-07",
+      now: new Date("2026-07-25T12:00:00.000Z"),
+      actorUserId: "system-test",
+    });
+
+    expect(result.processedLocations).toBe(1);
+    expect(result.skippedLocations).toBe(1);
+    expect(result.suspendedLocations).toBe(1);
+    expect(firestoreStore.get("locations/trial-arena")).toMatchObject({
+      subscription_status: "TRIAL",
+      commercial_status: "TRIAL",
+    });
+    expect(collectionSize("locations/trial-arena/subscription_cycles")).toBe(0);
+    expect(collectionSize("locations/trial-arena/subscription_ledger")).toBe(0);
+    expect(firestoreStore.get("locations/active-arena")).toMatchObject({
+      subscription_status: "SUSPENDED",
+      commercial_status: "SUSPENDED",
+      current_billing_cycle_status: "SUSPENDED",
+    });
+  });
+
+  it("cron pagina, grava cursor ao esgotar orcamento e retoma a cauda (#3952)", async () => {
+    firestoreStore.delete("locations/location-1");
+    firestoreStore.delete("locations/location-1/fields/field-1");
+    const totalVenues = 502;
+    const tripAfter = 250;
+    const padId = (index: number) => `venue-${String(index).padStart(4, "0")}`;
+    for (let index = 0; index < totalVenues; index += 1) {
+      firestoreStore.set(`locations/${padId(index)}`, {
+        owner_id: "owner-billing",
+        subscription_status: "ACTIVE",
+        commercial_status: "ACTIVE",
+        monthly_fee_cents: 10000,
+        billing_due_day: 1,
+      });
+    }
+
+    let clockCalls = 0;
+    const injectedClock = () => {
+      clockCalls += 1;
+      if (clockCalls === 1) return 0;
+      if (clockCalls <= tripAfter + 1) return 0;
+      return 1;
+    };
+
+    const firstRun = await processLocationBillingAutomation({
+      periodKey: "2026-07",
+      now: new Date("2026-07-25T12:00:00.000Z"),
+      actorUserId: "system-test",
+      maxRunMs: 1,
+      clockMs: injectedClock,
+    });
+
+    expect(firstRun.budgetExhausted).toBe(true);
+    expect(firstRun.processedLocations).toBe(tripAfter);
+    expect(firstRun.nextCursor).toBe(padId(tripAfter - 1));
+    expect(firestoreStore.get("billing_automation_state/2026-07"))
+      .toMatchObject({last_location_id: firstRun.nextCursor});
+
+    const secondRun = await processLocationBillingAutomation({
+      periodKey: "2026-07",
+      now: new Date("2026-07-25T12:00:00.000Z"),
+      actorUserId: "system-test",
+    });
+
+    expect(secondRun.budgetExhausted).toBe(false);
+    expect(secondRun.resumedFromLocationId).toBe(firstRun.nextCursor);
+    expect(secondRun.processedLocations).toBe(totalVenues - tripAfter);
+    expect(secondRun.nextCursor).toBeNull();
+    expect(firestoreStore.get("billing_automation_state/2026-07")).toBeUndefined();
+    expect(collectionSize("locations/venue-0000/subscription_cycles")).toBe(1);
+    expect(collectionSize("locations/venue-0000/subscription_ledger")).toBe(1);
+    expect(collectionSize(`locations/${padId(totalVenues - 1)}/subscription_cycles`))
+      .toBe(1);
+    expect(collectionSize(`locations/${padId(totalVenues - 1)}/subscription_ledger`))
+      .toBe(1);
   });
 
   it("permite disparo admin manual e registra handler agendado", async () => {
@@ -2667,6 +2789,92 @@ describe("location commercial admin callables", () => {
         decision: "REJECTED",
       },
     })).rejects.toMatchObject({code: "failed-precondition"});
+  });
+
+  it("dupla aprovacao concorrente do mesmo comprovante gera um unico ledger (#3954)", async () => {
+    firestoreStore.set("locations/location-1/subscription_payments/payment-1", {
+      amount_cents: 19990,
+      period_key: "2026-07",
+      paid_at: new Date("2026-07-08T12:00:00.000Z"),
+      receipt_storage_path:
+        "locations/location-1/subscription_receipts/owner-1/2026-07.pdf",
+      status: "PENDING_REVIEW",
+      review_status: "PENDING_REVIEW",
+      submitted_by: "owner-1",
+    });
+
+    await reviewLocationSubscriptionReceipt({
+      auth: {uid: "admin-1", token: {role: "ADMIN"}},
+      data: {
+        locationId: "location-1",
+        paymentId: "payment-1",
+        decision: "APPROVED",
+        notes: "Primeira aprovacao",
+      },
+    });
+    await expect(reviewLocationSubscriptionReceipt({
+      auth: {uid: "admin-2", token: {role: "ADMIN"}},
+      data: {
+        locationId: "location-1",
+        paymentId: "payment-1",
+        decision: "APPROVED",
+        notes: "Segunda aprovacao",
+      },
+    })).rejects.toMatchObject({code: "failed-precondition"});
+
+    expect(collectionSize("locations/location-1/subscription_ledger")).toBe(1);
+    expect(firestoreStore
+      .get("locations/location-1/subscription_ledger/PAYMENT_RECEIPT_APPROVED_payment-1"))
+      .toMatchObject({
+        type: "PAYMENT_RECEIPT_APPROVED",
+        payment_id: "payment-1",
+        actor_user_id: "admin-1",
+      });
+    expect(firestoreStore.get("locations/location-1/subscription_payments/payment-1"))
+      .toMatchObject({review_status: "APPROVED", reviewed_by: "admin-1"});
+  });
+
+  it("soma dois comprovantes do mesmo periodo atomicamente ao aprovar (#3954)", async () => {
+    firestoreStore.set("locations/location-1", {
+      ...firestoreStore.get("locations/location-1"),
+      subscription_status: "SUSPENDED",
+      commercial_status: "SUSPENDED",
+      monthly_fee_cents: 20000,
+    });
+    firestoreStore.set("locations/location-1/subscription_payments/payment-1", {
+      amount_cents: 12000,
+      period_key: "2026-07",
+      paid_at: new Date("2026-07-08T12:00:00.000Z"),
+      receipt_storage_path:
+        "locations/location-1/subscription_receipts/owner-1/2026-07a.pdf",
+      status: "PENDING_REVIEW",
+      review_status: "PENDING_REVIEW",
+    });
+    firestoreStore.set("locations/location-1/subscription_payments/payment-2", {
+      amount_cents: 8000,
+      period_key: "2026-07",
+      paid_at: new Date("2026-07-09T12:00:00.000Z"),
+      receipt_storage_path:
+        "locations/location-1/subscription_receipts/owner-1/2026-07b.pdf",
+      status: "PENDING_REVIEW",
+      review_status: "PENDING_REVIEW",
+    });
+
+    await reviewLocationSubscriptionReceipt({
+      auth: {uid: "admin-1", token: {role: "ADMIN"}},
+      data: {locationId: "location-1", paymentId: "payment-1", decision: "APPROVED"},
+    });
+    expect(firestoreStore.get("locations/location-1"))
+      .toMatchObject({subscription_status: "SUSPENDED"});
+
+    await reviewLocationSubscriptionReceipt({
+      auth: {uid: "admin-1", token: {role: "ADMIN"}},
+      data: {locationId: "location-1", paymentId: "payment-2", decision: "APPROVED"},
+    });
+
+    expect(firestoreStore.get("locations/location-1"))
+      .toMatchObject({subscription_status: "ACTIVE", commercial_status: "ACTIVE"});
+    expect(collectionSize("locations/location-1/subscription_ledger")).toBe(2);
   });
 });
 
