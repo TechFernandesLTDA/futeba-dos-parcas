@@ -164,10 +164,10 @@ describe("invites — leitura", () => {
 // ============================================================
 
 describe("invites — criacao", () => {
-  // #2351: doc-id DEVE ser igual ao code
-  it("Group OWNER pode criar invite com inviter_id == self e doc-id == code", async () => {
+  // #3937: invites sao criados somente pela callable com Admin SDK.
+  it("Group OWNER nao pode criar invite diretamente pelo cliente", async () => {
     const db = asPlayerA(testEnv);
-    await assertSucceeds(
+    await assertFails(
       db.doc("invites/OWN001").set({
         code: "OWN001",
         group_id: GROUP_ID,
@@ -180,9 +180,9 @@ describe("invites — criacao", () => {
     );
   });
 
-  it("Group ADMIN ativo pode criar invite (#3613)", async () => {
+  it("Group ADMIN ativo nao pode criar invite diretamente pelo cliente (#3937)", async () => {
     const db = asPlayerC(testEnv);
-    await assertSucceeds(
+    await assertFails(
       db.doc("invites/ADM001").set({
         code: "ADM001",
         group_id: ADMIN_GROUP_ID,
