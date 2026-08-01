@@ -69,6 +69,10 @@ vi.mock('../services/firebaseStorage', () => ({
   storage: {},
 }));
 
+vi.mock('../services/cloudFunctions', () => ({
+  generateGroupInviteCode: vi.fn(),
+}));
+
 vi.mock('firebase/storage', () => ({
   ref: vi.fn(),
   uploadBytes: vi.fn(),
@@ -104,6 +108,7 @@ vi.mock('../utils/logger', () => ({
 }));
 
 import { removeGroupMembershipArtifacts, useGroups, useGroupDetail, useCreateGroup, useCashbox, useInvitePlayers } from './useGroups';
+import { generateGroupInviteCode } from '../services/cloudFunctions';
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 function makeDocRef(...segments: unknown[]) {
@@ -540,10 +545,11 @@ describe('useInvitePlayers', () => {
   });
 
   it('generateInviteCode retorna código de 6 caracteres em maiúsculas', async () => {
+    vi.mocked(generateGroupInviteCode).mockResolvedValue({ data: { code: 'ABCDEF' } } as never);
     const { result } = renderHook(() => useInvitePlayers(), { wrapper: createTestWrapper() });
     let code: string | undefined;
     await act(async () => { code = await result.current.generateInviteCode('group-1', 'Meu Grupo'); });
-    expect(code).toBeDefined();
+    expect(code).toBe('ABCDEF');
     expect(code!.length).toBe(6);
     expect(code).toBe(code!.toUpperCase());
   });
@@ -555,6 +561,12 @@ describe('useInvitePlayers', () => {
       const result = await callback({
         get: async (ref) => {
           if (ref.path === 'groups/group-1/members/test-user-id') {
+            return {
+              exists: () => false,
+              data: () => undefined,
+            };
+          }
+          if (ref.path === 'groups/group-1/blocked_players/test-user-id') {
             return {
               exists: () => false,
               data: () => undefined,

@@ -6,7 +6,6 @@ import {
   getDoc,
   getDocs,
   runTransaction,
-  setDoc,
   updateDoc,
   query,
   where,
@@ -31,9 +30,9 @@ import { useTranslation } from 'react-i18next';
 import { uploadGroupLogo } from '../utils/groupLogoStorage';
 import { cashboxAmountToCents, centsToCashboxAmount, normalizeCashboxAmount } from '../utils/cashboxAmount';
 import { trackEvent } from '../utils/analytics';
+import { generateGroupInviteCode } from '../services/cloudFunctions';
 
 const logger = createLogger('useGroups');
-const MAX_INVITE_CODE_GENERATION_ATTEMPTS = 5;
 const GROUP_CONFIRMATION_CLEANUP_STATUSES = new Set(['SCHEDULED', 'CONFIRMED']);
 
 function isActiveGroupMemberStatus(status?: GroupMember['status']): boolean {
@@ -552,7 +551,7 @@ export function useCashbox(groupId: string | null) {
 export function useInvitePlayers() {
   const { t } = useTranslation();
   const { user, firebaseUser } = useAuth();
-  const { showSuccess } = useToast();
+  const { showSuccess, showError } = useToast();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const queryClient = useQueryClient();
@@ -565,38 +564,10 @@ export function useInvitePlayers() {
       setError(null);
 
       try {
-        const displayName = firebaseUser?.displayName || user?.name || 'Organizador';
-
-        // #1541: expires_at precisa ser 7 dias no futuro; serverTimestamp() criava
-        // convites já expirados imediatamente.
-        // AUDIT: client-clock drift accepted for 7-day invite expiry window
-        const expiresAt = Timestamp.fromMillis(Date.now() + 7 * 24 * 60 * 60 * 1000);
-        let code: string | null = null;
-        for (let attempt = 0; attempt < MAX_INVITE_CODE_GENERATION_ATTEMPTS; attempt += 1) {
-          const candidate = Math.random().toString(36).substring(2, 8).toUpperCase();
-          const inviteRef = doc(db, 'invites', candidate);
-          const existingInvite = await getDoc(inviteRef);
-          if (existingInvite.exists()) continue;
-
-          // #2351: doc-id == code — lookup por getDoc(code), sem where('code')
-          // (que era LIST e permitia enumerar todos os convites).
-          await setDoc(inviteRef, {
-            code: candidate,
-            group_id: groupId,
-            group_name: groupName,
-            inviter_id: uid,
-            inviter_name: displayName,
-            created_at: serverTimestamp(),
-            expires_at: expiresAt,
-            used: false,
-          });
-          code = candidate;
-          break;
-        }
-
-        if (!code) {
-          throw new Error('Não foi possível gerar um código único. Tente novamente.');
-        }
+        // #3937: geração server-side (crypto.randomInt) via callable. Antes o
+        // cliente usava Math.random() (previsível, podia gerar <6 chars).
+        const result = await generateGroupInviteCode({ groupId, groupName });
+        const code = (result.data as { code: string }).code;
 
         showSuccess(t('feedback.groups.inviteCodeGenerated'));
         setLoading(false);
@@ -656,6 +627,15 @@ export function useInvitePlayers() {
             throw new Error('Você já faz parte deste grupo.');
           }
 
+          // #3936: checa blocked_players ANTES de marcar o convite como usado.
+          // Sem isso, um usuário bloqueado queima o convite (used:true) e o
+          // trigger não cria membership — o convite fica morto permanentemente.
+          const blockedRef = doc(db, 'groups', resolvedGroupId, 'blocked_players', uid);
+          const blockedSnap = await transaction.get(blockedRef);
+          if (blockedSnap.exists()) {
+            throw new Error('Você está bloqueado neste grupo e não pode entrar via convite.');
+          }
+
           transaction.update(inviteRef, {
             used: true,
             used_by: uid,
@@ -681,32 +661,39 @@ export function useInvitePlayers() {
         // `onInviteRedeemed`. Em grupo PRIVADO, navegar pro detalhe antes do
         // member doc existir causa PERMISSION_DENIED (a leitura do grupo exige
         // membership). Aguardamos o member doc aparecer (até ~8s) via listener
-        // antes de resolver sucesso — torna o fluxo síncrono na percepção do
-        // usuário. Timeout não é erro: a membership já está garantida pelo
-        // trigger; só a propagação pode demorar (cold start).
+        // antes de resolver sucesso.
+        // #3936: timeout agora é ERRO (não sucesso). Antes, tratar timeout como
+        // sucesso levava o usuário a navegar e bater em PERMISSION_DENIED sem
+        // recuperação. O trigger tem retry:true, mas se a propagação falhar o
+        // usuário precisa de feedback acionável.
         const memberRef = doc(db, 'groups', groupId, 'members', uid);
-        await new Promise<void>((resolve) => {
-          // `unsubRef` (holder) declarado antes do onSnapshot: o callback pode
-          // disparar sincronamente (cache hit), então a referência precisa
-          // existir no momento da chamada (evita temporal dead zone).
+        await new Promise<void>((resolve, reject) => {
           const unsubRef: { fn?: () => void } = {};
-          let done = false;
-          const finish = () => {
-            if (done) return;
-            done = true;
-            clearTimeout(timeoutId);
+          let settled = false;
+          const timeoutId = setTimeout(() => {
+            if (settled) return;
+            settled = true;
             unsubRef.fn?.();
-            resolve();
-          };
-          const timeoutId = setTimeout(finish, 8000);
+            reject(new Error('Não foi possível confirmar sua entrada no grupo. Tente novamente em instantes.'));
+          }, 8000);
           unsubRef.fn = onSnapshot(
             memberRef,
             (snap) => {
-              if (snap.exists()) finish();
+              if (snap.exists()) {
+                if (settled) return;
+                settled = true;
+                clearTimeout(timeoutId);
+                unsubRef.fn?.();
+                resolve();
+              }
             },
             (err) => {
+              if (settled) return;
+              settled = true;
+              clearTimeout(timeoutId);
+              unsubRef.fn?.();
               logger.error('Erro aguardando membership pós-convite:', err);
-              finish();
+              reject(err);
             }
           );
         });
@@ -718,12 +705,14 @@ export function useInvitePlayers() {
         return groupId;
       } catch (err) {
         logger.error('Error joining group:', err);
-        setError((err as Error).message);
+        const message = (err as Error).message || t('feedback.groups.joinError');
+        setError(message);
+        showError(message);
         setLoading(false);
         throw err;
       }
     },
-    [firebaseUser, user, queryClient, showSuccess, t]
+    [firebaseUser, user, queryClient, showSuccess, showError, t]
   );
 
   return { generateInviteCode, joinByInviteCode, loading, error };

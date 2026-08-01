@@ -78,6 +78,7 @@ export const onInviteRedeemed = onDocumentUpdated(
   {
     document: "invites/{code}",
     region: FUNCTION_REGION,
+    retry: true,
   },
   async (event) => {
     if (!event.data) return;
@@ -139,6 +140,11 @@ export const onInviteRedeemed = onDocumentUpdated(
     // Idempotência barata fora da transação.
     const memberRef = db().doc(`groups/${groupId}/members/${userId}`);
     const blockedRef = db().doc(`groups/${groupId}/blocked_players/${userId}`);
+    // #3936: referência ao convite para reverter (used:true -> false) quando a
+    // criação da membership aborta por condição permanente (grupo inativo ou
+    // usuário bloqueado). Sem isso, o convite fica marcado como usado para
+    // sempre e a rule de update exige used==false — código morto.
+    const inviteRef = event.data.after.ref;
     const memberSnap = await memberRef.get();
     if (memberSnap.exists) {
       logger.info("invite redeemed mas já é membro — skip", {groupId, userId});
@@ -154,6 +160,12 @@ export const onInviteRedeemed = onDocumentUpdated(
         groupId,
         userId,
       });
+      await inviteRef.update({
+        used: false,
+        used_by: FieldValue.delete(),
+        used_at: FieldValue.delete(),
+        last_reject_reason: "GROUP_NOT_FOUND",
+      });
       return;
     }
     const groupMeta = groupSnap.data() as Record<string, unknown>;
@@ -165,6 +177,12 @@ export const onInviteRedeemed = onDocumentUpdated(
         userId,
         groupStatus,
         groupDeleted,
+      });
+      await inviteRef.update({
+        used: false,
+        used_by: FieldValue.delete(),
+        used_at: FieldValue.delete(),
+        last_reject_reason: "GROUP_INACTIVE",
       });
       return;
     }
@@ -202,6 +220,12 @@ export const onInviteRedeemed = onDocumentUpdated(
           groupId,
           userId,
         });
+        tx.update(inviteRef, {
+          used: false,
+          used_by: FieldValue.delete(),
+          used_at: FieldValue.delete(),
+          last_reject_reason: "GROUP_NOT_FOUND",
+        });
         return false;
       }
       const txGroupMeta = txGroupSnap.data() as Record<string, unknown>;
@@ -215,6 +239,12 @@ export const onInviteRedeemed = onDocumentUpdated(
           userId,
           groupStatus: txGroupStatus,
           groupDeleted: txGroupDeleted,
+        });
+        tx.update(inviteRef, {
+          used: false,
+          used_by: FieldValue.delete(),
+          used_at: FieldValue.delete(),
+          last_reject_reason: "GROUP_INACTIVE",
         });
         return false;
       }
@@ -236,6 +266,12 @@ export const onInviteRedeemed = onDocumentUpdated(
         logger.warn("invite redeemed: usuário bloqueado no grupo", {
           groupId,
           userId,
+        });
+        tx.update(inviteRef, {
+          used: false,
+          used_by: FieldValue.delete(),
+          used_at: FieldValue.delete(),
+          last_reject_reason: "BLOCKED",
         });
         return false;
       }
