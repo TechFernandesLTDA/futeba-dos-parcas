@@ -3042,16 +3042,14 @@ service cloud.firestore {
       allow get: if isAuthenticated();
       allow list: if isAdmin();
 
-      // Create: somente admin/owner do grupo, inviter_id == auth.uid, e
-      // doc-id == code (#2351: forca o esquema doc-id=code).
-      // H2 FIX: validacao de expires_at — nao pode ser no passado, max 30 dias no futuro
-      allow create: if isAuthenticated() &&
-                       inviteId == request.resource.data.code &&
-                       request.resource.data.inviter_id == userId() &&
-                       request.resource.data.used == false &&
-                       request.resource.data.expires_at > request.time &&
-                        request.resource.data.expires_at < request.time + duration.value(30, "d") &&
-                       isGroupAdminFor(request.resource.data.group_id);
+      // Create: DENY para clientes (#3937). A geração do código de convite de
+      // grupo agora é server-side (callable generateGroupInviteCode via Admin
+      // SDK, que bypassa rules). Antes, o cliente gerava o código com
+      // Math.random() (previsível) e criava o doc aqui — combinado com
+      // `allow get: if isAuthenticated()` permitia adivinhar/consumir códigos
+      // de grupos privados. Após o deploy desta rule, rodar
+      // `firebase deploy --only firestore:rules`.
+      allow create: if false;
 
       // Update: marcar como usado.
       // FIX #584/H17: era update permitido com `used_by` arbitrário →

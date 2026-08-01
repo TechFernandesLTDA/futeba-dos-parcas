@@ -13,6 +13,8 @@
  */
 
 const mockTxSet = jest.fn();
+const mockTxUpdate = jest.fn();
+const mockInviteRefUpdate = jest.fn();
 const mockTxGet = jest.fn(
   (ref: {get: () => Promise<unknown>}) => ref.get()
 );
@@ -42,6 +44,7 @@ const mockRunTransaction = jest.fn(
     const tx = {
       get: mockTxGet,
       set: mockTxSet,
+      update: mockTxUpdate,
     };
     await callback(tx);
   }
@@ -98,7 +101,7 @@ import {onInviteRedeemed} from "../src/groups/invite-redeemed";
 interface MockEvent {
   data: {
     before: {data: () => unknown};
-    after: {data: () => unknown};
+    after: {data: () => unknown; ref: {update: jest.Mock}};
   };
   params: {code: string};
 }
@@ -107,7 +110,7 @@ function makeEvent(beforeData: unknown, afterData: unknown): MockEvent {
   return {
     data: {
       before: {data: () => beforeData},
-      after: {data: () => afterData},
+      after: {data: () => afterData, ref: {update: mockInviteRefUpdate}},
     },
     params: {code: "PRV001"},
   };
@@ -146,6 +149,7 @@ describe("onInviteRedeemed", () => {
         const tx = {
           get: mockTxGet,
           set: mockTxSet,
+          update: mockTxUpdate,
         };
         await callback(tx);
       }

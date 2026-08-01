@@ -12,7 +12,7 @@ import {rateLimitForRequest} from "./anti-abuse";
 import {getLevelForXp} from "../xp/pipeline";
 
 const db = () => admin.firestore();
-const INVITE_CODE_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+export const INVITE_CODE_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 const APP_INVITE_ACCEPTED_XP = 50;
 const PENDING_APP_INVITE_TTL_MS = 30 * 60 * 1000;
 
@@ -229,7 +229,7 @@ async function syncInviteCodeOwner(
  * @param {number} length - Comprimento do codigo (default 6)
  * @return {string} Codigo gerado
  */
-function generateInviteCode(length = 6): string {
+export function generateInviteCode(length = 6): string {
   // FIX #2650: substitui Math.random() por crypto.randomInt para
   // aleatoriedade criptograficamente segura.
   let code = "";

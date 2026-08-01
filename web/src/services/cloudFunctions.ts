@@ -23,6 +23,11 @@ export const validateInviteCode = httpsCallable<
   InviteCodeValidationResponse
 >(functions, 'validateInviteCode');
 
+export const generateGroupInviteCode = httpsCallable<
+  { groupId: string; groupName: string },
+  { code: string }
+>(functions, 'generateGroupInviteCode');
+
 export const submitDirectMessage = httpsCallable<
   {
     chatId: string;
