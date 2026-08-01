@@ -536,6 +536,21 @@ export const futebaTheme = createTheme({
         }),
       },
     },
+    // #3944: avatares com iniciais (sem foto) herdavam o cinza default do MUI
+    // (grey[400] light / grey[600] dark + color: background.default), que falha
+    // WCAG AA: 1.83:1 no light e 3.87:1 no dark. Forçar primary.main +
+    // contrastText entrega >= 4.66:1 em ambos os temas. O PlayerAvatar canônico
+    // (GameCard.tsx) já aplicava isso via sx; este override cobre os 6 call
+    // sites com <Avatar> cru + iniciais (GameDetail, LocationDetail,
+    // GamePhotosTab, GroupDetail x2, lista de jogadores).
+    MuiAvatar: {
+      styleOverrides: {
+        root: ({ theme }: { theme: import('@mui/material/styles').Theme }) => ({
+          backgroundColor: theme.palette.primary.main,
+          color: theme.palette.primary.contrastText,
+        }),
+      },
+    },
     // #2169: dialogs fullScreen respeitam safe-area (notch/dynamic island +
     // home indicator) centralizadamente, em vez de patch por tela (12+ dialogs).
     MuiDialog: {
@@ -843,6 +858,17 @@ export const futebaDarkTheme = createTheme({
               borderColor: theme.palette.divider,
             },
           },
+        }),
+      },
+    },
+    // #3944: declarado explicitamente no dark (não confiar só no spread do
+    // light) — a função resolve contra este theme, então primary.main vira
+    // #4ADE80 e contrastText #000000, mantendo >= 4.66:1.
+    MuiAvatar: {
+      styleOverrides: {
+        root: ({ theme }: { theme: import('@mui/material/styles').Theme }) => ({
+          backgroundColor: theme.palette.primary.main,
+          color: theme.palette.primary.contrastText,
         }),
       },
     },
