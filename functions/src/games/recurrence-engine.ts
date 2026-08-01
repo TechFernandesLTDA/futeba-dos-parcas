@@ -317,6 +317,7 @@ function isNonRetryableRecurrenceError(error: unknown): boolean {
 function hasIncompleteFollowUp(
   game: admin.firestore.DocumentData
 ): boolean {
+  if (optionalString(game.recurrence_stop_reason)) return false;
   return game.next_game_created === true && (
     typeof game.next_game_id !== "string" ||
     game.next_game_confirmations_created !== true ||
@@ -326,6 +327,7 @@ function hasIncompleteFollowUp(
 
 /**
  * Gera o payload do filho usando somente o snapshot autoritativo atual.
+ * @param {string} sourceGameId - ID do jogo finalizado (para diagnóstico).
  * @param {admin.firestore.DocumentData} current - Jogo atual.
  * @param {string} parentId - ID raiz da série.
  * @param {number} nextIndex - Índice do filho.
@@ -334,6 +336,7 @@ function hasIncompleteFollowUp(
  * @return {Record<string, unknown>} Payload do novo jogo.
  */
 function buildRecurringGame(
+  sourceGameId: string,
   current: admin.firestore.DocumentData,
   parentId: string,
   nextIndex: number,
@@ -341,7 +344,15 @@ function buildRecurringGame(
   recurrence: RecurrenceType
 ): Record<string, unknown> {
   const time = optionalString(current.time) || "00:00";
-  const [hours, minutes] = time.split(":").map(Number);
+  const timeMatch = /^(\d{1,2}):(\d{2})$/.exec(time);
+  if (!timeMatch) {
+    throw new Error(`[RECURRENCE] time inválido em ${sourceGameId}: ${time}`);
+  }
+  const hours = parseInt(timeMatch[1], 10);
+  const minutes = parseInt(timeMatch[2], 10);
+  if (hours > 23 || minutes > 59) {
+    throw new Error(`[RECURRENCE] time inválido em ${sourceGameId}: ${time}`);
+  }
   const pad2 = (n: number) => String(n).padStart(2, "0");
   const dateTime = Timestamp.fromDate(
     new Date(`${nextDate}T${pad2(hours)}:${pad2(minutes)}:00-03:00`)
@@ -680,6 +691,8 @@ export const onGameFinishedCreateRecurrence = onDocumentUpdated(
             if (stop) {
               tx.update(currentRef, {
                 next_game_created: true,
+                next_game_confirmations_created: true,
+                next_game_notification_enqueued: true,
                 recurrence_stop_reason: stop,
                 updated_at: FieldValue.serverTimestamp(),
               });
@@ -702,6 +715,7 @@ export const onGameFinishedCreateRecurrence = onDocumentUpdated(
           });
           if (!childSnap.exists) {
             tx.set(childRef, buildRecurringGame(
+              gameId,
               current,
               parentId,
               nextIndex,
