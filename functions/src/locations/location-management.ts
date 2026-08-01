@@ -217,6 +217,9 @@ interface LocationBillingAutomationResult {
   reactivatedLocations: number;
   inconsistentLocations: number;
   ledgerEntriesCreated: number;
+  resumedFromLocationId: string | null;
+  nextCursor: string | null;
+  budgetExhausted: boolean;
 }
 
 interface CalculateAutoRatingsRequest {
@@ -241,6 +244,7 @@ const ACTIVE_GAME_STATUSES = new Set(["SCHEDULED", "CONFIRMED", "LIVE"]);
 const FINISHED_GAME_STATUSES = new Set(["FINISHED"]);
 const BILLING_SUMMARY_PAGE_SIZE = 500;
 const BILLING_SUMMARY_PAYMENT_CONCURRENCY = 25;
+const BILLING_AUTOMATION_MAX_RUN_MS = 480_000;
 const DEFAULT_BILLING_GRACE_DAYS = 5;
 const DEFAULT_BILLING_SUSPENSION_DAYS = 15;
 const LOCATION_SUBCOLLECTIONS = [
@@ -1083,11 +1087,13 @@ function createSubscriptionLedgerRef(
   locationId: string,
   entry: LocationSubscriptionLedgerEntry
 ) {
-  const ledgerRef = db()
+  const ledgerCollection = db()
     .collection("locations")
     .doc(locationId)
-    .collection("subscription_ledger")
-    .doc();
+    .collection("subscription_ledger");
+  const ledgerRef = typeof entry.payment_id === "string" && entry.payment_id ?
+    ledgerCollection.doc(`${entry.type}_${entry.payment_id}`) :
+    ledgerCollection.doc();
   return {
     ledgerRef,
     data: {
@@ -1136,6 +1142,7 @@ async function resolveSubscriptionStatusAfterApprovedPayment(params: {
   newlyApprovedAmountCents: number;
   currentSubscriptionStatus: unknown;
   currentCommercialStatus: unknown;
+  alreadyApprovedCents?: number;
 }): Promise<{
   paidCents: number | null;
   openBalanceCents: number | null;
@@ -1159,10 +1166,12 @@ async function resolveSubscriptionStatusAfterApprovedPayment(params: {
     };
   }
 
-  const alreadyApprovedCents = await sumApprovedSubscriptionPayments(
-    params.locationId,
-    params.periodKey
-  );
+  const alreadyApprovedCents = typeof params.alreadyApprovedCents === "number" ?
+    params.alreadyApprovedCents :
+    await sumApprovedSubscriptionPayments(
+      params.locationId,
+      params.periodKey
+    );
   const paidCents = alreadyApprovedCents + params.newlyApprovedAmountCents;
   const openBalanceCents = Math.max(params.monthlyFeeCents - paidCents, 0);
   if (openBalanceCents <= 0) {
@@ -1201,40 +1210,6 @@ function chunkArray<T>(items: T[], size: number): T[][] {
  * @return {Promise<Array<FirebaseFirestore.QueryDocumentSnapshot>>} Docs.
  */
 async function fetchAllBillingSummaryLocationDocs(): Promise<
-  Array<FirebaseFirestore.QueryDocumentSnapshot>
-  > {
-  const docs: Array<FirebaseFirestore.QueryDocumentSnapshot> = [];
-  let lastDoc: FirebaseFirestore.QueryDocumentSnapshot | null = null;
-
-  while (true) {
-    let query: FirebaseFirestore.Query = db()
-      .collection("locations")
-      .orderBy(FieldPath.documentId())
-      .limit(BILLING_SUMMARY_PAGE_SIZE);
-    if (lastDoc) {
-      query = query.startAfter(lastDoc);
-    }
-    const snapshot = await query.get();
-    docs.push(...snapshot.docs);
-    if (snapshot.size < BILLING_SUMMARY_PAGE_SIZE) {
-      break;
-    }
-    lastDoc = snapshot.docs[snapshot.docs.length - 1] || null;
-    if (!lastDoc) {
-      break;
-    }
-  }
-
-  return docs;
-}
-
-/**
- * Carrega todas as quadras paginando por documentId para a automação de
- * cobrança (processLocationBillingAutomation). Sem cap silencioso — mesmo
- * padrão de fetchAllBillingSummaryLocationDocs (#3200).
- * @return {Promise<Array<FirebaseFirestore.QueryDocumentSnapshot>>} Docs.
- */
-async function fetchAllLocationDocsForBilling(): Promise<
   Array<FirebaseFirestore.QueryDocumentSnapshot>
   > {
   const docs: Array<FirebaseFirestore.QueryDocumentSnapshot> = [];
@@ -1316,15 +1291,20 @@ export async function processLocationBillingAutomation(params?: {
   periodKey?: string | null;
   now?: Date;
   actorUserId?: string;
+  maxRunMs?: number;
+  clockMs?: () => number;
 }): Promise<LocationBillingAutomationResult> {
   const now = params?.now || new Date();
   const periodKey = params?.periodKey ?
     requirePeriodKey(params.periodKey) :
     billingPeriodKeyForDate(now);
   const actorUserId = params?.actorUserId || "system:billing-automation";
-  // #3200: paginar por documentId para processar TODAS as quadras cobráveis,
-  // sem cap silencioso. Mesmo padrão de fetchAllBillingSummaryLocationDocs.
-  const allLocationDocs = await fetchAllLocationDocsForBilling();
+  const clockMs = params?.clockMs || (() => Date.now());
+  const maxRunMs = Number.isInteger(params?.maxRunMs) &&
+    (params?.maxRunMs as number) > 0 ?
+    (params!.maxRunMs as number) :
+    BILLING_AUTOMATION_MAX_RUN_MS;
+
   const result: LocationBillingAutomationResult = {
     periodKey,
     processedLocations: 0,
@@ -1337,175 +1317,246 @@ export async function processLocationBillingAutomation(params?: {
     reactivatedLocations: 0,
     inconsistentLocations: 0,
     ledgerEntriesCreated: 0,
+    resumedFromLocationId: null,
+    nextCursor: null,
+    budgetExhausted: false,
   };
 
-  for (const doc of allLocationDocs) {
-    const locationId = doc.id || doc.ref?.id;
-    const locData = doc.data() || {};
-    if (!locationId) {
-      result.skippedLocations += 1;
-      continue;
-    }
-
-    const subscriptionStatus = typeof locData.subscription_status === "string" ?
-      locData.subscription_status :
-      "ACTIVE";
-    if (subscriptionStatus === "CANCELLED") {
-      result.skippedLocations += 1;
-      continue;
-    }
-
-    const billingStartsAtIso = toIsoString(locData.billing_starts_at);
-    if (billingStartsAtIso && new Date(billingStartsAtIso).getTime() > now.getTime()) {
-      result.skippedLocations += 1;
-      continue;
-    }
-
-    const ownerId = typeof locData.owner_id === "string" ?
-      locData.owner_id :
+  const cursorRef = db()
+    .collection("billing_automation_state")
+    .doc(periodKey);
+  const cursorDoc = await cursorRef.get();
+  const cursorData = (cursorDoc.data && cursorDoc.data()) || {};
+  const resumedFromLocationId =
+    typeof cursorData.last_location_id === "string" &&
+    cursorData.last_location_id ?
+      cursorData.last_location_id :
       null;
-    const monthlyFeeCents = positiveCents(locData.monthly_fee_cents);
-    const billingDueDay = Number.isInteger(locData.billing_due_day) ?
-      Number(locData.billing_due_day) :
-      null;
-    if (!ownerId || monthlyFeeCents <= 0 || !billingDueDay) {
-      result.inconsistentLocations += 1;
-      continue;
+  result.resumedFromLocationId = resumedFromLocationId;
+
+  const runStartedAt = clockMs();
+  let lastVisitedId = resumedFromLocationId;
+  let lastDoc: FirebaseFirestore.QueryDocumentSnapshot | null = null;
+
+  paging: while (true) {
+    let query: FirebaseFirestore.Query = db()
+      .collection("locations")
+      .orderBy(FieldPath.documentId())
+      .limit(BILLING_SUMMARY_PAGE_SIZE);
+    if (lastDoc) {
+      query = query.startAfter(lastDoc);
+    } else if (resumedFromLocationId) {
+      query = query.startAfter(resumedFromLocationId);
+    }
+    const snapshot = await query.get();
+    if (snapshot.size === 0) {
+      break;
     }
 
-    const paidCents = await sumApprovedSubscriptionPayments(locationId, periodKey);
-    const openBalanceCents = Math.max(monthlyFeeCents - paidCents, 0);
-    const cycleDates = buildBillingCycleDates(
-      periodKey,
-      billingDueDay,
-      locData.billing_grace_days,
-      locData.billing_suspension_days
-    );
-
-    let cycleStatus: "PAID" | "PARTIAL" | "PENDING" | "OVERDUE" | "SUSPENDED";
-    if (openBalanceCents <= 0) {
-      cycleStatus = "PAID";
-      result.paidLocations += 1;
-    } else if (now.getTime() >= cycleDates.suspendAt.getTime()) {
-      cycleStatus = "SUSPENDED";
-      result.suspendedLocations += 1;
-    } else if (now.getTime() >= cycleDates.graceEndsAt.getTime()) {
-      cycleStatus = "OVERDUE";
-      result.overdueLocations += 1;
-    } else if (paidCents > 0) {
-      cycleStatus = "PARTIAL";
-      result.partialLocations += 1;
-    } else {
-      cycleStatus = "PENDING";
-      result.pendingLocations += 1;
-    }
-
-    let nextSubscriptionStatus = subscriptionStatus;
-    if (cycleStatus === "PAID") {
-      nextSubscriptionStatus = "ACTIVE";
-    } else if (cycleStatus === "OVERDUE") {
-      nextSubscriptionStatus = "OVERDUE";
-    } else if (cycleStatus === "SUSPENDED") {
-      nextSubscriptionStatus = "SUSPENDED";
-    }
-
-    const locRef = doc.ref;
-    const cycleRef = locRef.collection("subscription_cycles").doc(periodKey);
-    const batch = db().batch();
-    const statusChanged = nextSubscriptionStatus !== subscriptionStatus ||
-      locData.commercial_status !== nextSubscriptionStatus;
-    const update: FirebaseFirestore.UpdateData<FirebaseFirestore.DocumentData> = {
-      current_billing_period_key: periodKey,
-      current_billing_cycle_status: cycleStatus,
-      current_billing_paid_cents: paidCents,
-      current_billing_open_balance_cents: openBalanceCents,
-      billing_due_at: cycleDates.dueAt,
-      billing_grace_ends_at: cycleDates.graceEndsAt,
-      billing_suspend_at: cycleDates.suspendAt,
-      updated_at: FieldValue.serverTimestamp(),
-      updated_by: actorUserId,
-    };
-    if (statusChanged) {
-      update.subscription_status = nextSubscriptionStatus;
-      update.commercial_status = nextSubscriptionStatus;
-    }
-
-    batch.set(cycleRef, {
-      period_key: periodKey,
-      location_id: locationId,
-      owner_id: ownerId,
-      amount_cents: monthlyFeeCents,
-      paid_cents: paidCents,
-      open_balance_cents: openBalanceCents,
-      billing_due_day: billingDueDay,
-      due_at: cycleDates.dueAt,
-      grace_ends_at: cycleDates.graceEndsAt,
-      suspend_at: cycleDates.suspendAt,
-      grace_days: cycleDates.graceDays,
-      suspension_days: cycleDates.suspensionDays,
-      status: cycleStatus,
-      previous_status: locData.current_billing_cycle_status || null,
-      created_at: FieldValue.serverTimestamp(),
-      updated_at: FieldValue.serverTimestamp(),
-      processed_at: FieldValue.serverTimestamp(),
-    }, {merge: true});
-    batch.update(locRef, update);
-
-    let ledgerType: string | null = null;
-    if (statusChanged) {
-      if (cycleStatus === "PAID") {
-        ledgerType = "BILLING_AUTOMATION_REACTIVATED";
-        result.reactivatedLocations += 1;
-      } else if (cycleStatus === "OVERDUE") {
-        ledgerType = "BILLING_AUTOMATION_OVERDUE";
-      } else if (cycleStatus === "SUSPENDED") {
-        ledgerType = "BILLING_AUTOMATION_SUSPENDED";
+    for (const doc of snapshot.docs) {
+      if (clockMs() - runStartedAt >= maxRunMs) {
+        const budgetExhaustedAt = clockMs();
+        result.budgetExhausted = true;
+        result.nextCursor = lastVisitedId;
+        await cursorRef.set({
+          period_key: periodKey,
+          last_location_id: lastVisitedId,
+          updated_at: FieldValue.serverTimestamp(),
+        });
+        logger.info("Location billing automation budget exhausted", {
+          periodKey,
+          resumedFromLocationId,
+          nextCursor: result.nextCursor,
+          budgetExhaustedAt,
+          processedLocations: result.processedLocations,
+        });
+        break paging;
       }
-    }
 
-    if (ledgerType) {
-      const {ledgerRef, data: ledgerData} = createSubscriptionLedgerRef(
-        locationId,
-        {
-          type: ledgerType,
-          actor_user_id: actorUserId,
-          amount_cents: openBalanceCents,
-          period_key: periodKey,
-          previous_subscription_status: subscriptionStatus,
-          next_subscription_status: nextSubscriptionStatus,
-          previous_commercial_status: locData.commercial_status ?? null,
-          next_commercial_status: nextSubscriptionStatus,
-          billing_due_day: billingDueDay,
-          reason: `Automacao mensal ${periodKey}: ${cycleStatus}`,
-          effective_at: now,
-        }
+      const locationId = doc.id || doc.ref?.id;
+      const locData = doc.data() || {};
+      if (!locationId) {
+        result.skippedLocations += 1;
+        continue;
+      }
+      lastVisitedId = locationId;
+
+      const subscriptionStatus = typeof locData.subscription_status === "string" ?
+        locData.subscription_status :
+        "ACTIVE";
+      if (subscriptionStatus === "CANCELLED" || subscriptionStatus === "TRIAL") {
+        result.skippedLocations += 1;
+        continue;
+      }
+
+      const billingStartsAtIso = toIsoString(locData.billing_starts_at);
+      if (billingStartsAtIso && new Date(billingStartsAtIso).getTime() > now.getTime()) {
+        result.skippedLocations += 1;
+        continue;
+      }
+
+      const ownerId = typeof locData.owner_id === "string" ?
+        locData.owner_id :
+        null;
+      const monthlyFeeCents = positiveCents(locData.monthly_fee_cents);
+      const billingDueDay = Number.isInteger(locData.billing_due_day) ?
+        Number(locData.billing_due_day) :
+        null;
+      if (!ownerId || monthlyFeeCents <= 0 || !billingDueDay) {
+        result.inconsistentLocations += 1;
+        continue;
+      }
+
+      const paidCents = await sumApprovedSubscriptionPayments(locationId, periodKey);
+      const openBalanceCents = Math.max(monthlyFeeCents - paidCents, 0);
+      const cycleDates = buildBillingCycleDates(
+        periodKey,
+        billingDueDay,
+        locData.billing_grace_days,
+        locData.billing_suspension_days
       );
-      batch.set(ledgerRef, ledgerData);
-      result.ledgerEntriesCreated += 1;
+
+      let cycleStatus: "PAID" | "PARTIAL" | "PENDING" | "OVERDUE" | "SUSPENDED";
+      if (openBalanceCents <= 0) {
+        cycleStatus = "PAID";
+        result.paidLocations += 1;
+      } else if (now.getTime() >= cycleDates.suspendAt.getTime()) {
+        cycleStatus = "SUSPENDED";
+        result.suspendedLocations += 1;
+      } else if (now.getTime() >= cycleDates.graceEndsAt.getTime()) {
+        cycleStatus = "OVERDUE";
+        result.overdueLocations += 1;
+      } else if (paidCents > 0) {
+        cycleStatus = "PARTIAL";
+        result.partialLocations += 1;
+      } else {
+        cycleStatus = "PENDING";
+        result.pendingLocations += 1;
+      }
+
+      let nextSubscriptionStatus = subscriptionStatus;
+      if (cycleStatus === "PAID") {
+        nextSubscriptionStatus = "ACTIVE";
+      } else if (cycleStatus === "OVERDUE") {
+        nextSubscriptionStatus = "OVERDUE";
+      } else if (cycleStatus === "SUSPENDED") {
+        nextSubscriptionStatus = "SUSPENDED";
+      }
+
+      const locRef = doc.ref;
+      const cycleRef = locRef.collection("subscription_cycles").doc(periodKey);
+      const batch = db().batch();
+      const statusChanged = nextSubscriptionStatus !== subscriptionStatus ||
+        locData.commercial_status !== nextSubscriptionStatus;
+      const update: FirebaseFirestore.UpdateData<FirebaseFirestore.DocumentData> = {
+        current_billing_period_key: periodKey,
+        current_billing_cycle_status: cycleStatus,
+        current_billing_paid_cents: paidCents,
+        current_billing_open_balance_cents: openBalanceCents,
+        billing_due_at: cycleDates.dueAt,
+        billing_grace_ends_at: cycleDates.graceEndsAt,
+        billing_suspend_at: cycleDates.suspendAt,
+        updated_at: FieldValue.serverTimestamp(),
+        updated_by: actorUserId,
+      };
+      if (statusChanged) {
+        update.subscription_status = nextSubscriptionStatus;
+        update.commercial_status = nextSubscriptionStatus;
+      }
+
+      batch.set(cycleRef, {
+        period_key: periodKey,
+        location_id: locationId,
+        owner_id: ownerId,
+        amount_cents: monthlyFeeCents,
+        paid_cents: paidCents,
+        open_balance_cents: openBalanceCents,
+        billing_due_day: billingDueDay,
+        due_at: cycleDates.dueAt,
+        grace_ends_at: cycleDates.graceEndsAt,
+        suspend_at: cycleDates.suspendAt,
+        grace_days: cycleDates.graceDays,
+        suspension_days: cycleDates.suspensionDays,
+        status: cycleStatus,
+        previous_status: locData.current_billing_cycle_status || null,
+        created_at: FieldValue.serverTimestamp(),
+        updated_at: FieldValue.serverTimestamp(),
+        processed_at: FieldValue.serverTimestamp(),
+      }, {merge: true});
+      batch.update(locRef, update);
+
+      let ledgerType: string | null = null;
+      if (statusChanged) {
+        if (cycleStatus === "PAID") {
+          ledgerType = "BILLING_AUTOMATION_REACTIVATED";
+          result.reactivatedLocations += 1;
+        } else if (cycleStatus === "OVERDUE") {
+          ledgerType = "BILLING_AUTOMATION_OVERDUE";
+        } else if (cycleStatus === "SUSPENDED") {
+          ledgerType = "BILLING_AUTOMATION_SUSPENDED";
+        }
+      }
+
+      if (ledgerType) {
+        const {ledgerRef, data: ledgerData} = createSubscriptionLedgerRef(
+          locationId,
+          {
+            type: ledgerType,
+            actor_user_id: actorUserId,
+            amount_cents: openBalanceCents,
+            period_key: periodKey,
+            previous_subscription_status: subscriptionStatus,
+            next_subscription_status: nextSubscriptionStatus,
+            previous_commercial_status: locData.commercial_status ?? null,
+            next_commercial_status: nextSubscriptionStatus,
+            billing_due_day: billingDueDay,
+            reason: `Automacao mensal ${periodKey}: ${cycleStatus}`,
+            effective_at: now,
+          }
+        );
+        batch.set(ledgerRef, ledgerData);
+        result.ledgerEntriesCreated += 1;
+      }
+
+      await batch.commit();
+      if (statusChanged) {
+        await writeLocationCommercialEvent({
+          locationId,
+          actorUserId,
+          type: "LOCATION_BILLING_AUTOMATION_STATUS_CHANGED",
+          before: {
+            subscription_status: subscriptionStatus,
+            commercial_status: locData.commercial_status ?? null,
+          },
+          after: {
+            subscription_status: nextSubscriptionStatus,
+            commercial_status: nextSubscriptionStatus,
+            billing_cycle_status: cycleStatus,
+            open_balance_cents: openBalanceCents,
+            period_key: periodKey,
+          },
+          reason: `Automacao mensal ${periodKey}`,
+        });
+      }
+
+      result.processedLocations += 1;
     }
 
-    await batch.commit();
-    if (statusChanged) {
-      await writeLocationCommercialEvent({
-        locationId,
-        actorUserId,
-        type: "LOCATION_BILLING_AUTOMATION_STATUS_CHANGED",
-        before: {
-          subscription_status: subscriptionStatus,
-          commercial_status: locData.commercial_status ?? null,
-        },
-        after: {
-          subscription_status: nextSubscriptionStatus,
-          commercial_status: nextSubscriptionStatus,
-          billing_cycle_status: cycleStatus,
-          open_balance_cents: openBalanceCents,
-          period_key: periodKey,
-        },
-        reason: `Automacao mensal ${periodKey}`,
-      });
+    if (snapshot.size < BILLING_SUMMARY_PAGE_SIZE) {
+      break;
     }
+    lastDoc = snapshot.docs[snapshot.docs.length - 1] || null;
+    if (!lastDoc) {
+      break;
+    }
+  }
 
-    result.processedLocations += 1;
+  if (!result.budgetExhausted) {
+    await cursorRef.delete();
+    logger.info("Location billing automation finished", {
+      ...result,
+      resumedFromLocationId,
+    });
   }
 
   return result;
@@ -1688,6 +1739,8 @@ export const processLocationBillingCycles = onSchedule(
   {
     schedule: "every day 04:20",
     timeZone: "America/Sao_Paulo",
+    memory: "512MiB",
+    timeoutSeconds: 540,
     retryCount: 3,
     maxRetrySeconds: 300,
   },
@@ -2848,110 +2901,139 @@ secureCallable<ReviewLocationSubscriptionReceiptRequest>(
       "decision"
     );
     const notes = optionalTrimmed(request.data.notes, 1000);
-    const {locRef, locData} = await getExistingLocation(locationId);
+    const actorUid = request.auth.uid;
+    const {locRef} = await getExistingLocation(locationId);
     const paymentRef = locRef.collection("subscription_payments").doc(paymentId);
-    const paymentDoc = await paymentRef.get();
-    if (!paymentDoc.exists) {
-      throw new HttpsError("not-found", `Payment ${paymentId} not found`);
-    }
-    const paymentData = paymentDoc.data() || {};
-    if (paymentData.review_status !== "PENDING_REVIEW" &&
-      paymentData.status !== "PENDING_REVIEW"
-    ) {
-      throw new HttpsError("failed-precondition", "Payment is not pending review");
-    }
-    if (typeof paymentData.receipt_storage_path !== "string") {
-      throw new HttpsError("failed-precondition", "Payment has no private receipt path");
-    }
 
-    const batch = db().batch();
-    const paymentUpdate: FirebaseFirestore.UpdateData<FirebaseFirestore.DocumentData> = {
-      review_status: decision,
-      status: decision,
-      reviewed_at: FieldValue.serverTimestamp(),
-      reviewed_by: request.auth.uid,
-      review_notes: notes,
-      updated_at: FieldValue.serverTimestamp(),
-    };
-    const paymentAmountCents = positiveCents(paymentData.amount_cents);
-    const paymentPeriodKey = typeof paymentData.period_key === "string" ?
-      paymentData.period_key :
-      null;
-    const resolvedStatus = decision === "APPROVED" ?
-      await resolveSubscriptionStatusAfterApprovedPayment({
-        locationId,
-        periodKey: paymentPeriodKey,
-        monthlyFeeCents: positiveCents(locData.monthly_fee_cents),
-        newlyApprovedAmountCents: paymentAmountCents,
-        currentSubscriptionStatus: locData.subscription_status,
-        currentCommercialStatus: locData.commercial_status,
-      }) :
-      {
-        paidCents: null,
-        openBalanceCents: null,
-        subscriptionStatus: locData.subscription_status ?? null,
-        commercialStatus: locData.commercial_status ?? null,
-      };
-
-    if (decision === "APPROVED") {
-      batch.update(paymentRef, paymentUpdate);
-      batch.update(locRef, {
-        subscription_status: resolvedStatus.subscriptionStatus,
-        commercial_status: resolvedStatus.commercialStatus,
-        last_payment_at: paymentData.paid_at ?? null,
-        last_payment_amount_cents: paymentData.amount_cents ?? null,
-        last_payment_period_key: paymentData.period_key ?? null,
-        last_payment_id: paymentId,
-        updated_at: FieldValue.serverTimestamp(),
-        updated_by: request.auth.uid,
-      });
-    } else {
-      batch.update(paymentRef, paymentUpdate);
-    }
-
-    const {ledgerRef, data: ledgerData} = createSubscriptionLedgerRef(
-      locationId,
-      {
-        type: decision === "APPROVED" ?
-          "PAYMENT_RECEIPT_APPROVED" :
-          "PAYMENT_RECEIPT_REJECTED",
-        actor_user_id: request.auth.uid,
-        amount_cents: typeof paymentData.amount_cents === "number" ?
-          paymentData.amount_cents : null,
-        period_key: typeof paymentData.period_key === "string" ?
-          paymentData.period_key : null,
-        payment_id: paymentId,
-        method: typeof paymentData.method === "string" ? paymentData.method : null,
-        review_status: decision,
-        previous_subscription_status: locData.subscription_status ?? null,
-        next_subscription_status: resolvedStatus.subscriptionStatus,
-        previous_commercial_status: locData.commercial_status ?? null,
-        next_commercial_status: resolvedStatus.commercialStatus,
-        reason: notes,
-        effective_at: paymentData.paid_at ?? FieldValue.serverTimestamp(),
+    const review = await db().runTransaction(async (tx) => {
+      const paymentDoc = await tx.get(paymentRef);
+      if (!paymentDoc.exists) {
+        throw new HttpsError("not-found", `Payment ${paymentId} not found`);
       }
-    );
-    batch.set(ledgerRef, ledgerData);
+      const paymentData = paymentDoc.data() || {};
+      if (paymentData.review_status !== "PENDING_REVIEW" &&
+        paymentData.status !== "PENDING_REVIEW"
+      ) {
+        throw new HttpsError("failed-precondition", "Payment is not pending review");
+      }
+      if (typeof paymentData.receipt_storage_path !== "string") {
+        throw new HttpsError("failed-precondition", "Payment has no private receipt path");
+      }
 
-    await batch.commit();
+      const paymentUpdate: FirebaseFirestore.UpdateData<FirebaseFirestore.DocumentData> = {
+        review_status: decision,
+        status: decision,
+        reviewed_at: FieldValue.serverTimestamp(),
+        reviewed_by: actorUid,
+        review_notes: notes,
+        updated_at: FieldValue.serverTimestamp(),
+      };
+      const paymentAmountCents = positiveCents(paymentData.amount_cents);
+      const paymentPeriodKey = typeof paymentData.period_key === "string" ?
+        paymentData.period_key :
+        null;
+
+      const locDoc = await tx.get(locRef);
+      const currentLocData = locDoc.data() || {};
+
+      let alreadyApprovedCents = 0;
+      if (decision === "APPROVED" && paymentPeriodKey) {
+        const paymentsSnapshot = await tx.get(
+          locRef
+            .collection("subscription_payments")
+            .where("period_key", "==", paymentPeriodKey)
+        );
+        for (const approvedDoc of paymentsSnapshot.docs) {
+          const approved = approvedDoc.data() || {};
+          const approvedReviewStatus = approved.review_status || approved.status;
+          if (approvedReviewStatus === "APPROVED") {
+            alreadyApprovedCents += positiveCents(approved.amount_cents);
+          }
+        }
+      }
+
+      const resolvedStatus = decision === "APPROVED" ?
+        await resolveSubscriptionStatusAfterApprovedPayment({
+          locationId,
+          periodKey: paymentPeriodKey,
+          monthlyFeeCents: positiveCents(currentLocData.monthly_fee_cents),
+          newlyApprovedAmountCents: paymentAmountCents,
+          currentSubscriptionStatus: currentLocData.subscription_status,
+          currentCommercialStatus: currentLocData.commercial_status,
+          alreadyApprovedCents,
+        }) :
+        {
+          paidCents: null,
+          openBalanceCents: null,
+          subscriptionStatus: currentLocData.subscription_status ?? null,
+          commercialStatus: currentLocData.commercial_status ?? null,
+        };
+
+      if (decision === "APPROVED") {
+        tx.update(paymentRef, paymentUpdate);
+        tx.update(locRef, {
+          subscription_status: resolvedStatus.subscriptionStatus,
+          commercial_status: resolvedStatus.commercialStatus,
+          last_payment_at: paymentData.paid_at ?? null,
+          last_payment_amount_cents: paymentData.amount_cents ?? null,
+          last_payment_period_key: paymentData.period_key ?? null,
+          last_payment_id: paymentId,
+          updated_at: FieldValue.serverTimestamp(),
+          updated_by: actorUid,
+        });
+      } else {
+        tx.update(paymentRef, paymentUpdate);
+      }
+
+      const {ledgerRef, data: ledgerData} = createSubscriptionLedgerRef(
+        locationId,
+        {
+          type: decision === "APPROVED" ?
+            "PAYMENT_RECEIPT_APPROVED" :
+            "PAYMENT_RECEIPT_REJECTED",
+          actor_user_id: actorUid,
+          amount_cents: typeof paymentData.amount_cents === "number" ?
+            paymentData.amount_cents : null,
+          period_key: typeof paymentData.period_key === "string" ?
+            paymentData.period_key : null,
+          payment_id: paymentId,
+          method: typeof paymentData.method === "string" ? paymentData.method : null,
+          review_status: decision,
+          previous_subscription_status: currentLocData.subscription_status ?? null,
+          next_subscription_status: resolvedStatus.subscriptionStatus,
+          previous_commercial_status: currentLocData.commercial_status ?? null,
+          next_commercial_status: resolvedStatus.commercialStatus,
+          reason: notes,
+          effective_at: paymentData.paid_at ?? FieldValue.serverTimestamp(),
+        }
+      );
+      tx.set(ledgerRef, ledgerData);
+
+      return {
+        resolvedStatus,
+        previousSubscriptionStatus: currentLocData.subscription_status ?? null,
+        previousCommercialStatus: currentLocData.commercial_status ?? null,
+      };
+    });
+
     await writeLocationCommercialEvent({
       locationId,
-      actorUserId: request.auth.uid,
+      actorUserId: actorUid,
       type: decision === "APPROVED" ?
         "LOCATION_SUBSCRIPTION_RECEIPT_APPROVED" :
         "LOCATION_SUBSCRIPTION_RECEIPT_REJECTED",
       before: {
-        subscription_status: locData.subscription_status ?? null,
-        commercial_status: locData.commercial_status ?? null,
+        subscription_status: review.previousSubscriptionStatus,
+        commercial_status: review.previousCommercialStatus,
         payment_id: paymentId,
       },
       after: {
-        subscription_status: resolvedStatus.subscriptionStatus,
-        commercial_status: resolvedStatus.commercialStatus,
+        subscription_status: review.resolvedStatus.subscriptionStatus,
+        commercial_status: review.resolvedStatus.commercialStatus,
         payment_id: paymentId,
         review_status: decision,
-        paid_cents: resolvedStatus.paidCents,
-        open_balance_cents: resolvedStatus.openBalanceCents,
+        paid_cents: review.resolvedStatus.paidCents,
+        open_balance_cents: review.resolvedStatus.openBalanceCents,
       },
       reason: notes,
     });
@@ -2961,7 +3043,7 @@ secureCallable<ReviewLocationSubscriptionReceiptRequest>(
       locationId,
       paymentId,
       reviewStatus: decision,
-      subscriptionStatus: resolvedStatus.subscriptionStatus,
+      subscriptionStatus: review.resolvedStatus.subscriptionStatus,
     };
   }
 );
