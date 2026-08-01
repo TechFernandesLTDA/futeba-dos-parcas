@@ -25,9 +25,27 @@ function collectionDocs(pathPrefix: string) {
     .map(([path]) => snap(path));
 }
 
+function isDeleteSentinel(value: unknown): boolean {
+  return Boolean(value) &&
+    typeof value === "object" &&
+    (value as {__fieldValueDelete?: boolean}).__fieldValueDelete === true;
+}
+
 function applySet(path: string, data: Record<string, unknown>, merge = false) {
   const current = store.get(path) || {};
-  store.set(path, merge ? {...current, ...data} : data);
+  if (!merge) {
+    store.set(path, data);
+    return;
+  }
+  const merged = {...current};
+  for (const [key, value] of Object.entries(data)) {
+    if (isDeleteSentinel(value)) {
+      delete merged[key];
+    } else {
+      merged[key] = value;
+    }
+  }
+  store.set(path, merged);
 }
 
 function applyUpdate(path: string, data: Record<string, unknown>) {
@@ -140,6 +158,7 @@ jest.mock("firebase-admin", () => ({
 jest.mock("firebase-admin/firestore", () => ({
   FieldValue: {
     serverTimestamp: jest.fn(() => ({__serverTimestamp: true})),
+    delete: jest.fn(() => ({__fieldValueDelete: true})),
   },
   // FIX #3908: cursor persistido grava updated_at com Timestamp.fromDate.
   Timestamp: {
