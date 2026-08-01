@@ -812,4 +812,281 @@ describe("onGameFinishedCreateRecurrence", () => {
       expect.stringContaining("Suppressing retry for non-retryable recurrence error on game-bad")
     )
   })
+
+  it("rejeita time malformado como poison pill não-retryable sem criar filho", async () => {
+    const gamesDoc = jest.fn((id: string) => ({
+      id,
+      path: `games/${id}`,
+    }))
+    const gamesWhereChain: any = {
+      count: jest.fn(() => ({
+        get: jest.fn().mockResolvedValue({data: () => ({count: 0})}),
+      })),
+    }
+    const fakeDb: any = {
+      collection: jest.fn((name: string) => {
+        if (name === "games") {
+          return {
+            where: jest.fn(() => gamesWhereChain),
+            doc: gamesDoc,
+          }
+        }
+        throw new Error(`Unexpected collection ${name}`)
+      }),
+      runTransaction: mockRunTransaction,
+      batch: mockBatch,
+    }
+    mockFirestore.mockReturnValue(fakeDb)
+
+    const afterRef = {path: "games/game-badtime"}
+    const currentGame = {
+      status: "FINISHED",
+      recurrence: "weekly",
+      owner_id: "owner-1",
+      owner_name: "Owner",
+      date: "2026-06-20",
+      time: "20h00",
+      location_name: "Arena Central",
+      visibility: "GROUP",
+    }
+    const txSet = jest.fn()
+    const txUpdate = jest.fn()
+    mockRunTransaction.mockImplementation(async (callback: any) => callback({
+      get: jest.fn((ref: any) => {
+        if (ref === afterRef) {
+          return Promise.resolve({
+            exists: true,
+            data: () => currentGame,
+            get: (field: string) => (currentGame as any)[field],
+          })
+        }
+        if (ref?.id === "recurring_game-badtime_2") {
+          return Promise.resolve({exists: false})
+        }
+        return Promise.resolve({size: 0, empty: true, docs: [], exists: false})
+      }),
+      set: txSet,
+      update: txUpdate,
+    }))
+
+    await expect(onGameFinishedCreateRecurrence({
+      data: {
+        before: {data: () => ({status: "SCHEDULED"})},
+        after: {
+          data: () => currentGame,
+          ref: afterRef,
+        },
+      },
+      params: {gameId: "game-badtime"},
+    })).resolves.toBeUndefined()
+
+    expect(
+      jest.mocked(require("firebase-functions/v2").logger.error)
+    ).toHaveBeenCalledWith(
+      expect.stringContaining("[RECURRENCE] Failed to create/provision recurrence for game-badtime:"),
+      expect.objectContaining({
+        message: expect.stringContaining("[RECURRENCE] time inválido"),
+      })
+    )
+    expect(
+      jest.mocked(require("firebase-functions/v2").logger.info)
+    ).toHaveBeenCalledWith(
+      expect.stringContaining("Suppressing retry for non-retryable recurrence error on game-badtime")
+    )
+    expect(txSet).not.toHaveBeenCalled()
+  })
+
+  it("cria filho com dateTime BRT correto para time válido", async () => {
+    const gamesDoc = jest.fn((id: string) => ({
+      id,
+      path: `games/${id}`,
+    }))
+    const notificationQueueDoc = jest.fn((id: string) => ({
+      id,
+      path: `notification_queue/${id}`,
+    }))
+    const fakeDb: any = {
+      collection: jest.fn((name: string) => {
+        if (name === "games") {
+          return {
+            where: jest.fn(() => ({
+              count: jest.fn(() => ({
+                get: jest.fn().mockResolvedValue({data: () => ({count: 0})}),
+              })),
+            })),
+            doc: gamesDoc,
+          }
+        }
+        if (name === "confirmations") {
+          return {
+            doc: jest.fn((id: string) => ({id, path: `confirmations/${id}`})),
+          }
+        }
+        if (name === "notification_queue") {
+          return {
+            doc: notificationQueueDoc,
+          }
+        }
+        throw new Error(`Unexpected collection ${name}`)
+      }),
+      runTransaction: mockRunTransaction,
+      batch: mockBatch,
+    }
+    mockFirestore.mockReturnValue(fakeDb)
+
+    const afterRef = {path: "games/game-valid"}
+    const currentGame = {
+      status: "FINISHED",
+      recurrence: "weekly",
+      owner_id: "owner-1",
+      owner_name: "Owner",
+      date: "2026-01-05",
+      time: "09:30",
+      next_game_created: true,
+      next_game_id: "recurring_game-valid_2",
+      next_game_confirmations_created: false,
+      next_game_notification_enqueued: false,
+    }
+    let childReads = 0
+    const txSet = jest.fn()
+    const txUpdate = jest.fn()
+    mockRunTransaction.mockImplementation(async (callback: any) => callback({
+      get: jest.fn((ref: any) => {
+        if (ref === afterRef) {
+          return Promise.resolve({
+            exists: true,
+            data: () => currentGame,
+            get: (field: string) => (currentGame as any)[field],
+          })
+        }
+        if (ref?.id === "recurring_game-valid_2") {
+          childReads += 1
+          if (childReads === 1) return Promise.resolve({exists: false})
+          return Promise.resolve({
+            exists: true,
+            id: "recurring_game-valid_2",
+            data: () => ({
+              recurrence_parent_id: "game-valid",
+              recurrence_index: 2,
+              owner_id: "owner-1",
+              status: "SCHEDULED",
+            }),
+          })
+        }
+        return Promise.resolve({exists: false})
+      }),
+      set: txSet,
+      update: txUpdate,
+    }))
+
+    await expect(onGameFinishedCreateRecurrence({
+      data: {
+        before: {data: () => ({status: "SCHEDULED"})},
+        after: {
+          data: () => currentGame,
+          ref: afterRef,
+        },
+      },
+      params: {gameId: "game-valid"},
+    })).resolves.toBeUndefined()
+
+    expect(
+      jest.mocked(require("firebase-admin/firestore").Timestamp.fromDate)
+    ).toHaveBeenCalledWith(new Date("2026-01-12T09:30:00-03:00"))
+    const childWrite = txSet.mock.calls.find(
+      ([ref]: [{id?: string}]) => ref.id === "recurring_game-valid_2"
+    )
+    expect(childWrite).toBeDefined()
+  })
+
+  it("série encerrada não reentra nem emite erro em atualização posterior", async () => {
+    const gamesDoc = jest.fn((id: string) => ({id, path: `games/${id}`}))
+    const gamesWhereChain: any = {
+      count: jest.fn(() => ({
+        get: jest.fn().mockResolvedValue({data: () => ({count: 0})}),
+      })),
+    }
+    const fakeDb: any = {
+      collection: jest.fn((name: string) => {
+        if (name === "games") {
+          return {
+            where: jest.fn(() => gamesWhereChain),
+            doc: gamesDoc,
+          }
+        }
+        throw new Error(`Unexpected collection ${name}`)
+      }),
+      runTransaction: mockRunTransaction,
+      batch: mockBatch,
+    }
+    mockFirestore.mockReturnValue(fakeDb)
+
+    const afterRef = {path: "games/game-stop"}
+    const currentGame = {
+      status: "FINISHED",
+      recurrence: "weekly",
+      owner_id: "owner-1",
+      owner_name: "Owner",
+      date: "2026-06-20",
+      time: "20:00",
+      recurrence_count: 1,
+      recurrence_index: 1,
+    }
+    const txSet = jest.fn()
+    const txUpdate = jest.fn()
+    mockRunTransaction.mockImplementation(async (callback: any) => callback({
+      get: jest.fn((ref: any) => {
+        if (ref === afterRef) {
+          return Promise.resolve({
+            exists: true,
+            data: () => currentGame,
+            get: (field: string) => (currentGame as any)[field],
+          })
+        }
+        return Promise.resolve({size: 0, empty: true, docs: [], exists: false})
+      }),
+      set: txSet,
+      update: txUpdate,
+    }))
+
+    await onGameFinishedCreateRecurrence({
+      data: {
+        before: {data: () => ({status: "SCHEDULED"})},
+        after: {data: () => currentGame, ref: afterRef},
+      },
+      params: {gameId: "game-stop"},
+    })
+
+    expect(txUpdate).toHaveBeenCalledWith(afterRef, expect.objectContaining({
+      next_game_created: true,
+      next_game_confirmations_created: true,
+      next_game_notification_enqueued: true,
+      recurrence_stop_reason: "count",
+    }))
+    expect(txSet).not.toHaveBeenCalled()
+
+    const stoppedGame = {
+      ...currentGame,
+      next_game_created: true,
+      next_game_confirmations_created: true,
+      next_game_notification_enqueued: true,
+      recurrence_stop_reason: "count",
+    }
+
+    jest.clearAllMocks()
+    mockFirestore.mockReturnValue(fakeDb)
+
+    await expect(onGameFinishedCreateRecurrence({
+      data: {
+        before: {data: () => ({...stoppedGame})},
+        after: {data: () => stoppedGame, ref: afterRef},
+      },
+      params: {gameId: "game-stop"},
+    })).resolves.toBeUndefined()
+
+    expect(mockRunTransaction).not.toHaveBeenCalled()
+    expect(
+      jest.mocked(require("firebase-functions/v2").logger.error)
+    ).not.toHaveBeenCalled()
+  })
 })
