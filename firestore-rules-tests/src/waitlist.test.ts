@@ -284,3 +284,45 @@ describe("waitlist — delete", () => {
     );
   });
 });
+
+// ============================================================
+// COLLECTION GROUP (#3955)
+// ============================================================
+// Queries collectionGroup("waitlist") client-side devem ser escopadas ao
+// proprio user_id (ou admin); a varredura de expirados roda server-side em
+// functions/reminders.ts (Admin SDK bypassa rules). O match dentro de
+// games/{gameId}/waitlist nao cobre o aggregate.
+describe("waitlist — collection group", () => {
+  it("Player pode listar propria entrada via collection group (filtro user_id)", async () => {
+    const db = asPlayerB(testEnv);
+    await assertSucceeds(
+      db.collectionGroup("waitlist").where("user_id", "==", UID_PLAYER_B).get()
+    );
+  });
+
+  it("Admin pode listar waitlist via collection group", async () => {
+    const db = asAdmin(testEnv);
+    await assertSucceeds(
+      db.collectionGroup("waitlist").where("user_id", "==", UID_ADMIN).get()
+    );
+  });
+
+  it("Player pode listar collection group scoped a si mesmo mesmo sem resultados", async () => {
+    const db = asPlayerC(testEnv);
+    await assertSucceeds(
+      db.collectionGroup("waitlist").where("user_id", "==", UID_PLAYER_C).get()
+    );
+  });
+
+  it("Player NAO pode rodar collection group sem filtro de user_id (vazamento)", async () => {
+    const db = asPlayerB(testEnv);
+    await assertFails(db.collectionGroup("waitlist").get());
+  });
+
+  it("Nao-autenticado NAO pode listar waitlist via collection group", async () => {
+    const db = asAnon(testEnv);
+    await assertFails(
+      db.collectionGroup("waitlist").where("user_id", "==", UID_PLAYER_B).get()
+    );
+  });
+});

@@ -1510,6 +1510,49 @@ service cloud.firestore {
     }
 
     // ============================================
+    // COLLECTION-GROUP: confirmations (#3955)
+    // ============================================
+    // O match dentro de games/{gameId} (e o root /confirmations) nao cobrem
+    // collection-group queries. A query collectionGroup("confirmations")
+    //   .where("user_id", "==", uid).where("confirmed_at", ">", tresMesesAtras)
+    // do Android (ConfirmationUseCase.updateAttendanceRate) exige match
+    // collection-group, do mesmo modo que cancellations acima.
+    match /{path=**}/confirmations/{confirmationId} {
+      allow read: if isAuthenticated() && (
+        isAdmin() ||
+        resource.data.user_id == userId()
+      );
+    }
+
+    // ============================================
+    // COLLECTION-GROUP: fields (#3955)
+    // ============================================
+    // O match /locations/{locationId}/fields e o root /fields nao cobrem
+    // collection-group queries. A query collectionGroup("fields")
+    //   .where("is_active", "==", true) (web LocationsMapScreen) e a busca por
+    // documentId() (shared FirebaseDataSource) exigem match collection-group.
+    // Leitura aberta a qualquer autenticado, em paridade com os matches
+    // nested/root de fields (allow read: if isAuthenticated()).
+    match /{path=**}/fields/{fieldId} {
+      allow read: if isAuthenticated();
+    }
+
+    // ============================================
+    // COLLECTION-GROUP: waitlist (#3955)
+    // ============================================
+    // O match dentro de games/{gameId} nao cobre collection-group queries.
+    // Queries collectionGroup("waitlist") client-side devem ser escopadas ao
+    // proprio usuario (ou admin); a varredura de expirados roda server-side
+    // (functions/reminders.ts, Admin SDK bypassa rules). Match defensivo em
+    // paridade com o padrao de cancellations/confirmations.
+    match /{path=**}/waitlist/{waitlistId} {
+      allow read: if isAuthenticated() && (
+        isAdmin() ||
+        resource.data.user_id == userId()
+      );
+    }
+
+    // ============================================
     // COLECAO: schedules
     // ============================================
     // CMD-07: Ownership de Horarios
