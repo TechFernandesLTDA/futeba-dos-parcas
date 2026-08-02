@@ -148,7 +148,7 @@ fastlane beta                              # Deploy to Firebase App Distribution
 - **Conventional Commits enforced** via `commitlint.config.js` + Husky pre-commit hook
 - **Node 22** required (see `.nvmrc`) — run `nvm use` before working in `web/` or `functions/`
 - **Dependabot**: monthly schedule, limit 2 PRs, label `dependencies`. Auto-bumps closed — deps handled in batch via `npm audit fix`
-- **Firebase Hosting URL**: `https://futebadosparcas.web.app` (SPA, all routes → `/index.html`)
+- **Firebase Hosting URL**: `https://futebadosparcas.com.br` (SPA, all routes → `/index.html`)
 - **Self-hosted macOS runners** for `macos-arm64` jobs (KMP iOS, CodeQL JS/TS, Play Store deploy) — use skill `futeba-runner` to manage
 - **Workflow shell injection**: NUNCA `echo '${{ secrets.X }}'` direto — use env vars + `printf '%s' "$VAR"`. Skill `futeba-gh-secrets` documents the pattern
 
@@ -769,7 +769,7 @@ Located in `/scripts/` (~70 scripts). Run with: `node scripts/<script_name>.js`
 
 ## Firebase Hosting
 
-Public pages deployed at `https://futebadosparcas.web.app/`:
+Public pages deployed at `https://futebadosparcas.com.br/`:
 
 | Page | Purpose |
 |------|---------|

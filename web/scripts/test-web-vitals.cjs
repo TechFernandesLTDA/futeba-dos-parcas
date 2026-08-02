@@ -5,7 +5,7 @@
 
 const { chromium } = require('playwright');
 
-const URL = 'https://futebadosparcas.web.app';
+const URL = 'https://futebadosparcas.com.br';
 
 async function measureWebVitals() {
   console.log('🚀 Teste de Web Vitals com Playwright\n');

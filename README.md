@@ -12,7 +12,7 @@
 
 Plataforma para organizar peladas, grupos e temporadas com confirmação de presença, formação de times, estatísticas, ranking e gamificação.
 
-[Web em produção](https://futebadosparcas.web.app) · [Releases](https://github.com/TechFernandesLTDA/futeba-dos-parcas/releases) · [Reportar bug](https://github.com/TechFernandesLTDA/futeba-dos-parcas/issues/new?template=bug_report.yml)
+[Web em produção](https://futebadosparcas.com.br) · [Releases](https://github.com/TechFernandesLTDA/futeba-dos-parcas/releases) · [Reportar bug](https://github.com/TechFernandesLTDA/futeba-dos-parcas/issues/new?template=bug_report.yml)
 
 > Este é um repositório privado. Clonar, executar ambientes conectados e acessar projetos Firebase exige autorização explícita da Tech Fernandes Ltda.
 

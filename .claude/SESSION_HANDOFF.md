@@ -92,7 +92,7 @@ Consolidação completa para próxima sessão Claude Code começar saudável.
 | **Master HEAD** | `a765c36` (#405 CodeQL Java drop + JS/TS only) |
 | **PRs abertos** | 0 |
 | **Issues abertas** | 0 |
-| **Hosting** | 🟢 200 OK — https://futebadosparcas.web.app |
+| **Hosting** | 🟢 200 OK — https://futebadosparcas.com.br |
 | **Dependabot** | 1 medium (false positive `uuid` em backend — comprovado) |
 | **Runners** | 2 online (Mac + Mac2), 6 idle dirs (~/actions-runner-3..8 sem service) |
 | **RAM livre** | 10.2 GB |

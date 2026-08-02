@@ -12,7 +12,7 @@ async function testManual() {
   const page = await browser.newPage();
   
   console.log('1. Navegando para /...');
-  await page.goto('https://futebadosparcas.web.app', { waitUntil: 'domcontentloaded' });
+  await page.goto('https://futebadosparcas.com.br', { waitUntil: 'domcontentloaded' });
   
   console.log('2. Aguardando 10 segundos para você ver o que está acontecendo...');
   await page.waitForTimeout(10000);

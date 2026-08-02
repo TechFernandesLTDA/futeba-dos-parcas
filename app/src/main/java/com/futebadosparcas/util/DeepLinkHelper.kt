@@ -14,9 +14,10 @@ class DeepLinkHelper {
     companion object {
         const val SCHEME = "futebadosparcas"
         const val VERIFIED_HOST = "futebadosparcas.web.app"
+        const val VERIFIED_HOST_BR = "futebadosparcas.com.br"
         const val LEGACY_HOST = "futebadosparcas.com"
 
-        private val HTTPS_HOSTS = setOf(VERIFIED_HOST, LEGACY_HOST)
+        private val HTTPS_HOSTS = setOf(VERIFIED_HOST, VERIFIED_HOST_BR, LEGACY_HOST)
     }
 
     fun parse(intent: Intent?): DeepLink = parse(intent?.dataString)
@@ -79,9 +80,9 @@ class DeepLinkHelper {
     fun createProfileLink(userId: String): Uri = "$SCHEME://profile/${Uri.encode(userId)}".toUri()
     fun createInviteLink(inviteCode: String): Uri = "$SCHEME://invite/${Uri.encode(inviteCode)}".toUri()
     fun createShareableGameLink(gameId: String): String =
-        "https://$VERIFIED_HOST/game/${Uri.encode(gameId)}"
+        "https://$VERIFIED_HOST_BR/game/${Uri.encode(gameId)}"
     fun createShareableGroupLink(groupId: String): String =
-        "https://$VERIFIED_HOST/group/${Uri.encode(groupId)}"
+        "https://$VERIFIED_HOST_BR/group/${Uri.encode(groupId)}"
 
     fun isValid(uri: Uri): Boolean = parse(uri).let { it !is DeepLink.Invalid && it !is DeepLink.None }
 

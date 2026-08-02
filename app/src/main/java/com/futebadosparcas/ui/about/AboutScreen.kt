@@ -168,13 +168,13 @@ fun AboutScreen(
                 },
                 onPrivacyClick = {
                     val intent = Intent(Intent.ACTION_VIEW).apply {
-                        data = Uri.parse("https://futebadosparcas.web.app/privacy_policy.html")
+                        data = Uri.parse("https://futebadosparcas.com.br/privacy_policy.html")
                     }
                     context.startActivity(intent)
                 },
                 onTermsClick = {
                     val intent = Intent(Intent.ACTION_VIEW).apply {
-                        data = Uri.parse("https://futebadosparcas.web.app/terms_of_service.html")
+                        data = Uri.parse("https://futebadosparcas.com.br/terms_of_service.html")
                     }
                     context.startActivity(intent)
                 },
@@ -183,7 +183,7 @@ fun AboutScreen(
                 },
                 onChildSafetyClick = {
                     val intent = Intent(Intent.ACTION_VIEW).apply {
-                        data = Uri.parse("https://futebadosparcas.web.app/child_safety.html")
+                        data = Uri.parse("https://futebadosparcas.com.br/child_safety.html")
                     }
                     context.startActivity(intent)
                 }

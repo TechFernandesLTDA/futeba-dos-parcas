@@ -22,7 +22,7 @@ async function testChart() {
   
   console.log('1. Navegando para /profile...');
   try {
-    await page.goto('https://futebadosparcas.web.app/profile', { waitUntil: 'networkidle', timeout: 30000 });
+    await page.goto('https://futebadosparcas.com.br/profile', { waitUntil: 'networkidle', timeout: 30000 });
     console.log('   ✓ Página carregada');
   } catch (err) {
     console.log(`   ✗ Erro: ${err.message}`);

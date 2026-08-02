@@ -19,7 +19,7 @@ Você é chamado pelo agente principal (DeepSeek V4 Pro) para:
 
 - **Futeba dos Parças**: app pra organizar peladas entre amigos. Grupos, jogos, confirmação de presença, rating, XP, estatísticas.
 - **3 usuários reais** (16 no total com QA), **zero DAU**. App funcional mas sem uso orgânico.
-- **Firebase Hosting**: https://futebadosparcas.web.app
+- **Firebase Hosting**: https://futebadosparcas.com.br
 - **Público-alvo**: brasileiros, homens 20-40 anos, jogadores de pelada/futsal/society
 - **Tom**: informal, zoeira de grupo de WhatsApp, mas profissional no produto
 

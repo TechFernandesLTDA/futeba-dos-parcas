@@ -25,7 +25,7 @@ async function testRealBrowser() {
   
   console.log('1. Navegando para /...');
   try {
-    await page.goto('https://futebadosparcas.web.app', { waitUntil: 'networkidle', timeout: 30000 });
+    await page.goto('https://futebadosparcas.com.br', { waitUntil: 'networkidle', timeout: 30000 });
     console.log('   ✓ Página carregada');
   } catch (err) {
     console.log(`   ✗ Erro: ${err.message}`);

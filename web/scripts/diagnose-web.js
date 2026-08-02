@@ -19,7 +19,7 @@ async function fetch(url) {
 async function diagnose() {
   // 1. Verificar HTML principal
   console.log('1. HTML Principal:');
-  const html = await fetch('https://futebadosparcas.web.app');
+  const html = await fetch('https://futebadosparcas.com.br');
   console.log(`   Status: ${html.status}`);
   console.log(`   Tamanho: ${html.body.length} bytes`);
   
@@ -29,7 +29,7 @@ async function diagnose() {
   
   // 2. Verificar bundle principal
   console.log('\n2. Bundle Principal (index.js):');
-  const bundle = await fetch('https://futebadosparcas.web.app/assets/index-C2CAM24o.js');
+  const bundle = await fetch('https://futebadosparcas.com.br/assets/index-C2CAM24o.js');
   console.log(`   Status: ${bundle.status}`);
   console.log(`   Tamanho: ${(bundle.body.length / 1024).toFixed(2)} KB`);
   console.log(`   Cache: ${bundle.headers['cache-control']}`);
@@ -61,7 +61,7 @@ async function diagnose() {
   
   for (const vendor of vendors) {
     try {
-      const v = await fetch(`https://futebadosparcas.web.app/assets/${vendor}`);
+      const v = await fetch(`https://futebadosparcas.com.br/assets/${vendor}`);
       console.log(`   ✓ ${vendor}: ${v.status} (${(v.body.length / 1024).toFixed(0)} KB)`);
     } catch (err) {
       console.log(`   ✗ ${vendor}: ${err.message}`);
@@ -110,7 +110,7 @@ async function diagnose() {
   // 7. Verificar service worker
   console.log('\n7. Service Worker:');
   try {
-    const sw = await fetch('https://futebadosparcas.web.app/service-worker.js');
+    const sw = await fetch('https://futebadosparcas.com.br/service-worker.js');
     console.log(`   Status: ${sw.status}`);
     console.log(`   Tamanho: ${sw.body.length} bytes`);
   } catch (err) {
@@ -120,7 +120,7 @@ async function diagnose() {
   // 8. Verificar manifest
   console.log('\n8. PWA Manifest:');
   try {
-    const manifest = await fetch('https://futebadosparcas.web.app/manifest.json');
+    const manifest = await fetch('https://futebadosparcas.com.br/manifest.json');
     console.log(`   Status: ${manifest.status}`);
     const manifestData = JSON.parse(manifest.body);
     console.log(`   Nome: ${manifestData.name}`);

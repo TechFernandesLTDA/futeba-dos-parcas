@@ -44,7 +44,7 @@ export const InviteFriendScreen: React.FC = () => {
 
   const inviteCode = user?.inviteCode ?? '';
   const inviteCount = user?.inviteCount ?? 0;
-  const inviteLink = inviteCode ? `https://futebadosparcas.web.app/invite/${inviteCode}` : '';
+  const inviteLink = inviteCode ? `https://futebadosparcas.com.br/invite/${inviteCode}` : '';
 
   const getAmbassadorLevel = (count: number): { level: string; icon: string; color: string; next: number } => {
     if (count >= 100) return { level: t('invite.ambassadorLevels.legend'), icon: '👑', color: gColors.gold, next: 0 };

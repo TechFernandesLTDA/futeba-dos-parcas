@@ -16,7 +16,7 @@ Inclua o máximo de informações possível para nos ajudar a reproduzir e enten
 Se desejar enviar informações sensíveis de forma segura, utilize nossa chave PGP:
 
 **Fingerprint:** `XXXX XXXX XXXX XXXX XXXX  XXXX XXXX XXXX XXXX XXXX`
-**Chave pública:** https://futebadosparcas.web.app/pgp-key.asc
+**Chave pública:** https://futebadosparcas.com.br/pgp-key.asc
 
 ## SLA (Service Level Agreement)
 
@@ -43,7 +43,7 @@ O programa de segurança cobre:
 | Cloud Functions (Firebase) | ✅ Dentro do escopo |
 | Firestore Security Rules | ✅ Dentro do escopo |
 | Firebase Hosting | ✅ Dentro do escopo |
-| Site estático (`futebadosparcas.web.app`) | ✅ Dentro do escopo |
+| Site estático (`futebadosparcas.com.br`) | ✅ Dentro do escopo |
 | Dependências de terceiros | ❌ Fora do escopo |
 
 ## Processo de resposta

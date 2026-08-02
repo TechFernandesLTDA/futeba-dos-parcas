@@ -86,7 +86,7 @@ npx jest --no-coverage
 | iPhone web | around `390x844` | Safari-style mobile width, auth/onboarding/forms |
 | Small Android web | around `360x780` | Tight text, bottom nav, keyboard and scroll pressure |
 
-When validating production, use `https://futebadosparcas.web.app`. When validating local preview, rebuild first so `dist/` exists.
+When validating production, use `https://futebadosparcas.com.br`. When validating local preview, rebuild first so `dist/` exists.
 
 ## Auth And Onboarding
 

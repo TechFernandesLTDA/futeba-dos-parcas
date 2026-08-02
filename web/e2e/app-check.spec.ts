@@ -12,7 +12,7 @@ import { test, expect } from '@playwright/test';
  * app não inicializa o App Check e não há o que atestar.
  *
  * Rodar manualmente contra produção (critério de aceite #2 do #3869):
- *   E2E_BASE_URL=https://futebadosparcas.web.app npx playwright test app-check
+ *   E2E_BASE_URL=https://futebadosparcas.com.br npx playwright test app-check
  *
  * O gate é por host (não localhost) e não depende de VITE_RECAPTCHA_SITE_KEY
  * em runtime — essa variável é build-time e já está no bundle de produção.
