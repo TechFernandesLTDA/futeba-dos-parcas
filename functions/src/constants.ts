@@ -75,6 +75,35 @@ export const FIRESTORE_WHERE_IN_LIMIT = 10;
 export const FIRESTORE_PAGINATION_LIMIT = 500;
 
 // ==========================================
+// NOTIFICATION QUEUE
+// ==========================================
+
+/**
+ * Orçamento de tempo (ms) para processar a fila de notificações por execução.
+ * O runtime GCF mata em timeoutSeconds (120s); reservamos ~30s de margem para
+ * commit/persistência final + métricas, evitando que docs fiquem presos em
+ * PROCESSING quando a execução é abortada pelo timeout. Checado antes de cada
+ * claim e de cada doc — a execução para limpa e os docs remanescentes
+ * permanecem PENDING (reprocessados na próxima passada de 1min). (#3941 F1)
+ */
+export const QUEUE_SAFE_BUDGET_MS = 90_000;
+
+/**
+ * Máximo de destinatários por documento da fila de notificações.
+ * A ~200 bytes por token FCM, o limite de 1 MiB/doc cai em ~5.200 tokens;
+ * 500 é o cap seguro que alinha com o limite de multicast FCM e evita
+ * INVALID_ARGUMENT no update de pending_tokens/delivered_tokens. (#3941 F3)
+ */
+export const QUEUE_MAX_RECIPIENTS_PER_DOC = 500;
+
+/**
+ * Janela (ms) após a qual um doc em PROCESSING é considerado stale (claim
+ * órfã de uma execução morta pelo timeout) e deve ser revertido a PENDING.
+ * Igual ao threshold do cron diário original (10 min). (#3941 F1)
+ */
+export const QUEUE_STALE_PROCESSING_MS = 10 * 60 * 1000;
+
+// ==========================================
 // FCM (FIREBASE CLOUD MESSAGING)
 // ==========================================
 

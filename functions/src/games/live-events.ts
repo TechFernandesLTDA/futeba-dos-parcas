@@ -340,7 +340,7 @@ function buildEventPayload(
   request: SubmitLiveGameEventRequest,
   createdBy: string,
   playerPosition: string | null,
-  scoreField: "team1_score" | "team2_score" | null,
+  scoreTeamId: string | null,
 ): Record<string, unknown> {
   return {
     id: eventId,
@@ -359,37 +359,176 @@ function buildEventPayload(
     recorded_by: createdBy,
     player_position: playerPosition,
     request_id: request.requestId ?? null,
-    score_field: scoreField,
+    // #3942: o time creditado no placar passa a ser identificado por ID
+    // (score_team_id), suportando 2-4 times. O campo legado score_field é
+    // mantido como null em novos eventos; o caminho de remoção ainda lê
+    // score_field para eventos gravados antes desta migração.
+    score_team_id: scoreTeamId,
+    score_field: null,
     created_at: FieldValue.serverTimestamp(),
     updated_at: FieldValue.serverTimestamp(),
   };
 }
 
-function resolveScoreField(
-  teamId: string,
-  team1Id: string,
-  team2Id: string,
-): "team1_score" | "team2_score" {
-  if (teamId === team1Id) return "team1_score";
-  if (teamId === team2Id) return "team2_score";
+/**
+ * Resolve o ID do time cujo placar deve ser incrementado/decrementado para
+ * um evento GOAL. A validação de que o time pertence ao jogo já foi feita
+ * pelo snapshot do time (selectedTeamSnap), então aqui apenas retornamos o
+ * próprio teamId — suportando 2-4 times em vez dos 2 fixos legados.
+ *
+ * @param {string} teamId Time do evento (validado contra teams/{gameId}).
+ * @return {string} O mesmo teamId, agora elegível para o placar.
+ */
+function resolveScoreTeamId(teamId: string): string {
+  return teamId;
+}
 
-  throw new HttpsError(
-    "failed-precondition",
-    "Time do evento não bate com o placar ao vivo.",
-  );
+/**
+ * Lê o mapa canônico de placares `scores: {<teamId>: n}` de um doc de
+ * live_scores. Quando o campo `scores` está ausente (docs legados gravados
+ * antes de #3942), reconstrói o mapa a partir de team1_id/team2_id e
+ * team1_score/team2_score — garantindo migração sem perda de dados e
+ * suporte a jogos LIVE já em andamento no momento do deploy.
+ *
+ * @param {FirebaseFirestore.DocumentData | undefined} data Dados de live_scores.
+ * @return {Map<string, number>} Mapa teamId → placar (sempre definido, possivelmente vazio).
+ */
+export function readScoresMap(
+  data?: FirebaseFirestore.DocumentData,
+): Map<string, number> {
+  const map = new Map<string, number>();
+  const rawScores = data?.scores;
+
+  // Caminho canônico: mapa scores presente e não vazio.
+  if (
+    rawScores &&
+    typeof rawScores === "object" &&
+    !Array.isArray(rawScores)
+  ) {
+    for (const [teamId, value] of Object.entries(rawScores)) {
+      if (typeof teamId === "string" && teamId.length > 0) {
+        const numeric = Number(value);
+        map.set(
+          teamId,
+          Number.isFinite(numeric) && numeric > 0 ?
+            Math.floor(numeric) :
+            0,
+        );
+      }
+    }
+    if (map.size > 0) return map;
+  }
+
+  // Fallback legado: reconstitui o mapa a partir de team1/team2.
+  const team1Id =
+    typeof data?.team1_id === "string" ? data.team1_id : "";
+  const team2Id =
+    typeof data?.team2_id === "string" ? data.team2_id : "";
+  if (team1Id) map.set(team1Id, readCounter(data, "team1_score"));
+  if (team2Id) map.set(team2Id, readCounter(data, "team2_score"));
+  return map;
+}
+
+/**
+ * Resolve o time creditado a partir de um evento persistido, suportando
+ * eventos novos (score_team_id) e legados (score_field). O fallback final
+ * usa o team_id já validado/trimado passado pelo caller.
+ *
+ * @param {FirebaseFirestore.DocumentData} eventData Dados do game_event.
+ * @param {FirebaseFirestore.DocumentData} liveScoreData Dados de live_scores.
+ * @param {string} validatedTeamId team_id validado do evento.
+ * @return {string | null} teamId creditado, ou null quando não há candidato.
+ */
+function resolveScoreTeamIdFromEvent(
+  eventData: FirebaseFirestore.DocumentData,
+  liveScoreData: FirebaseFirestore.DocumentData,
+  validatedTeamId: string,
+): string | null {
+  // Caminho canônico (#3942): teamId explícito no evento.
+  const explicit =
+    typeof eventData.score_team_id === "string" ?
+      eventData.score_team_id :
+      "";
+  if (explicit) return explicit;
+
+  // Legado: score_field "team1_score"/"team2_score" → team1_id/team2_id.
+  const legacyField = eventData.score_field;
+  const team1Id =
+    typeof liveScoreData.team1_id === "string" ?
+      liveScoreData.team1_id :
+      "";
+  const team2Id =
+    typeof liveScoreData.team2_id === "string" ?
+      liveScoreData.team2_id :
+      "";
+  if (legacyField === "team1_score" && team1Id) return team1Id;
+  if (legacyField === "team2_score" && team2Id) return team2Id;
+
+  // Fallback final: team_id validado do próprio evento.
+  return validatedTeamId || null;
+}
+
+/**
+ * Constrói o payload de escrita de live_scores combinando o mapa canônico
+ * `scores` com os campos legados team1_id/team2_id/team1_score/team2_score
+ * (dual-write durante a transição da migração #3942, para que leitores
+ * ainda não atualizados continuem funcionando em jogos de 2 times).
+ *
+ * @param {string} gameId ID do jogo.
+ * @param {string} ownerId Dono do jogo.
+ * @param {Map<string, number>} scoresMap Mapa canônico teamId → placar.
+ * @param {FirebaseFirestore.DocumentData} liveScoreData Snapshot atual.
+ * @return {Record<string, unknown>} Payload para tx.set({merge: true}).
+ */
+function buildLiveScoreWrite(
+  gameId: string,
+  ownerId: string,
+  scoresMap: Map<string, number>,
+  liveScoreData: FirebaseFirestore.DocumentData,
+): Record<string, unknown> {
+  const team1Id =
+    typeof liveScoreData.team1_id === "string" ?
+      liveScoreData.team1_id :
+      "";
+  const team2Id =
+    typeof liveScoreData.team2_id === "string" ?
+      liveScoreData.team2_id :
+      "";
+  const deriveLegacy = (
+    teamId: string,
+    fallbackField: "team1_score" | "team2_score",
+  ): number => {
+    if (teamId && scoresMap.has(teamId)) {
+      return scoresMap.get(teamId) ?? 0;
+    }
+    return readCounter(liveScoreData, fallbackField);
+  };
+
+  const write: Record<string, unknown> = {
+    game_id: gameId,
+    owner_id: ownerId,
+    scores: Object.fromEntries(scoresMap),
+    updated_at: FieldValue.serverTimestamp(),
+  };
+  // Dual-write legado apenas quando os ids existem no doc (compat reversa).
+  if (team1Id) {
+    write.team1_id = team1Id;
+    write.team1_score = deriveLegacy(team1Id, "team1_score");
+  }
+  if (team2Id) {
+    write.team2_id = team2Id;
+    write.team2_score = deriveLegacy(team2Id, "team2_score");
+  }
+  return write;
 }
 
 export function isScoreConsistentFromEventStream(
   docs: Array<{
     data: () => FirebaseFirestore.DocumentData;
   }>,
-  team1Id: string,
-  team2Id: string,
-  team1Score: number,
-  team2Score: number,
+  scores: Map<string, number>,
 ): boolean {
-  let derivedTeam1 = 0;
-  let derivedTeam2 = 0;
+  const derived = new Map<string, number>();
 
   for (const doc of docs) {
     const raw = doc.data() ?? {};
@@ -400,17 +539,22 @@ export function isScoreConsistentFromEventStream(
       continue;
     }
 
-    if (teamId === team1Id) {
-      derivedTeam1 += 1;
-    } else if (teamId === team2Id) {
-      derivedTeam2 += 1;
-    }
+    derived.set(teamId, (derived.get(teamId) ?? 0) + 1);
   }
 
-  return (
-    derivedTeam1 === team1Score &&
-    derivedTeam2 === team2Score
-  );
+  // Times com placar esperado devem bater com a contagem derivada do stream.
+  for (const [teamId, expected] of scores) {
+    if ((derived.get(teamId) ?? 0) !== expected) {
+      return false;
+    }
+  }
+  // Gols para times não presentes no mapa de placar indicam divergência.
+  for (const teamId of derived.keys()) {
+    if (!scores.has(teamId)) {
+      return false;
+    }
+  }
+  return true;
 }
 
 export const submitLiveGameEvent = onCall<
@@ -551,7 +695,6 @@ export const submitLiveGameEvent = onCall<
           );
         }
 
-        const liveScoreData = liveScoreSnap.data() ?? {};
         const selectedTeamData = selectedTeamSnap.data() ?? {};
         const selectedTeamGameId =
           selectedTeamData.game_id ?? selectedTeamData.gameId;
@@ -583,14 +726,29 @@ export const submitLiveGameEvent = onCall<
             "Assistente não pertence ao mesmo time.",
           );
         }
+        const liveScoreData = liveScoreSnap.data() ?? {};
+        // #3942: mapa canônico de placares por teamId (2-4 times), com
+        // fallback legado para docs gravados antes da migração.
+        const scoresMap = readScoresMap(liveScoreData);
         const team1Id =
           typeof liveScoreData.team1_id === "string" ?
             liveScoreData.team1_id : "";
         const team2Id =
           typeof liveScoreData.team2_id === "string" ?
             liveScoreData.team2_id : "";
-        let team1Score = readCounter(liveScoreData, "team1_score");
-        let team2Score = readCounter(liveScoreData, "team2_score");
+        // Deriva team1Score/team2Score do mapa atual (pós-mutação quando
+        // chamado após o incremento do GOAL), mantendo compat reversa com
+        // os campos legados quando os ids não estão presentes no mapa.
+        const deriveLegacyScores = () => ({
+          team1Score: team1Id ?
+            (scoresMap.get(team1Id) ??
+              readCounter(liveScoreData, "team1_score")) :
+            readCounter(liveScoreData, "team1_score"),
+          team2Score: team2Id ?
+            (scoresMap.get(team2Id) ??
+              readCounter(liveScoreData, "team2_score")) :
+            readCounter(liveScoreData, "team2_score"),
+        });
 
         if (existingEventSnap?.exists) {
           const existing = existingEventSnap.data() ?? {};
@@ -604,8 +762,8 @@ export const submitLiveGameEvent = onCall<
           return {
             eventId: eventRef.id,
             duplicate: true,
-            team1Score,
-            team2Score,
+            scores: Object.fromEntries(scoresMap),
+            ...deriveLegacyScores(),
           };
         }
 
@@ -614,8 +772,8 @@ export const submitLiveGameEvent = onCall<
           confirmedPayload(assistedConfirmationSnap);
         }
 
-        const scoreField = payload.eventType === "GOAL" ?
-          resolveScoreField(payload.teamId, team1Id, team2Id) :
+        const scoreTeamId = payload.eventType === "GOAL" ?
+          resolveScoreTeamId(payload.teamId) :
           null;
 
         tx.set(
@@ -627,23 +785,25 @@ export const submitLiveGameEvent = onCall<
             typeof playerConfirmationSnap.data()?.position === "string" ?
               playerConfirmationSnap.data()?.position :
               null,
-            scoreField,
+            scoreTeamId,
           ),
         );
 
-        if (scoreField) {
-          if (scoreField === "team1_score") team1Score += 1;
-          else team2Score += 1;
-          tx.set(liveScoreRef, {
-            game_id: payload.gameId,
-            owner_id: game.owner_id,
-            team1_id: team1Id,
-            team2_id: team2Id,
-            [scoreField]: scoreField === "team1_score" ?
-              team1Score : team2Score,
-            updated_at:
-              FieldValue.serverTimestamp(),
-          }, {merge: true});
+        if (payload.eventType === "GOAL" && scoreTeamId) {
+          scoresMap.set(
+            scoreTeamId,
+            (scoresMap.get(scoreTeamId) ?? 0) + 1,
+          );
+          tx.set(
+            liveScoreRef,
+            buildLiveScoreWrite(
+              payload.gameId,
+              game.owner_id,
+              scoresMap,
+              liveScoreData,
+            ),
+            {merge: true},
+          );
         }
 
         const playerDelta: EventDelta = {
@@ -718,8 +878,8 @@ export const submitLiveGameEvent = onCall<
         return {
           eventId: eventRef.id,
           duplicate: false,
-          team1Score,
-          team2Score,
+          scores: Object.fromEntries(scoresMap),
+          ...deriveLegacyScores(),
         };
       },
     );
@@ -738,6 +898,7 @@ export const submitLiveGameEvent = onCall<
     return {
       success: true,
       eventId: result.eventId,
+      scores: result.scores,
       team1Score: result.team1Score,
       team2Score: result.team2Score,
       duplicate: result.duplicate,
@@ -865,20 +1026,19 @@ export const deleteLiveGameEvent = onCall<
             null;
 
         const liveScoreData = liveScoreSnap.data() ?? {};
+        // #3942: resolve o time creditado pelo novo campo score_team_id,
+        // com fallback legado (score_field ou team_id) para eventos antigos.
+        const scoreTeamId = eventType === "GOAL" ?
+          resolveScoreTeamIdFromEvent(eventData, liveScoreData, teamId) :
+          null;
+        // Mapa canônico (com fallback legado) para decrementar/reler.
+        const scoresMap = readScoresMap(liveScoreData);
         const team1Id =
           typeof liveScoreData.team1_id === "string" ?
             liveScoreData.team1_id : "";
         const team2Id =
           typeof liveScoreData.team2_id === "string" ?
             liveScoreData.team2_id : "";
-
-        const storedScoreField = eventData.score_field;
-        const scoreField = eventType === "GOAL" ?
-          storedScoreField === "team1_score" ||
-          storedScoreField === "team2_score" ?
-            storedScoreField :
-            resolveScoreField(teamId, team1Id, team2Id) :
-          null;
 
         const playerConfirmationRef = db()
           .collection("confirmations")
@@ -966,31 +1126,35 @@ export const deleteLiveGameEvent = onCall<
           );
         }
 
-        if (scoreField) {
-          const nextScore = Math.max(
-            0,
-            readCounter(liveScoreData, scoreField) - 1,
+        if (scoreTeamId) {
+          scoresMap.set(
+            scoreTeamId,
+            Math.max(0, (scoresMap.get(scoreTeamId) ?? 0) - 1),
           );
-          tx.set(liveScoreRef, {
-            game_id: payload.gameId,
-            owner_id: game.owner_id,
-            team1_id: team1Id,
-            team2_id: team2Id,
-            [scoreField]: nextScore,
-            updated_at:
-              FieldValue.serverTimestamp(),
-          }, {merge: true});
+          tx.set(
+            liveScoreRef,
+            buildLiveScoreWrite(
+              payload.gameId,
+              game.owner_id,
+              scoresMap,
+              liveScoreData,
+            ),
+            {merge: true},
+          );
         }
 
         tx.delete(eventRef);
 
+        const team1Score = team1Id ?
+          (scoresMap.get(team1Id) ?? readCounter(liveScoreData, "team1_score")) :
+          readCounter(liveScoreData, "team1_score");
+        const team2Score = team2Id ?
+          (scoresMap.get(team2Id) ?? readCounter(liveScoreData, "team2_score")) :
+          readCounter(liveScoreData, "team2_score");
         return {
-          team1Score: scoreField === "team1_score" ?
-            Math.max(0, readCounter(liveScoreData, "team1_score") - 1) :
-            readCounter(liveScoreData, "team1_score"),
-          team2Score: scoreField === "team2_score" ?
-            Math.max(0, readCounter(liveScoreData, "team2_score") - 1) :
-            readCounter(liveScoreData, "team2_score"),
+          scores: Object.fromEntries(scoresMap),
+          team1Score,
+          team2Score,
         };
       },
     );
@@ -1007,6 +1171,7 @@ export const deleteLiveGameEvent = onCall<
     return {
       success: true,
       eventId: payload.eventId,
+      scores: result.scores,
       team1Score: result.team1Score,
       team2Score: result.team2Score,
     };

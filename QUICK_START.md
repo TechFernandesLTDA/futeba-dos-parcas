@@ -126,10 +126,10 @@ when (uiState) {
 ## 🎨 Material 3 Design Tokens
 
 ```kotlin
-// Cores
-MaterialTheme.colorScheme.primary         // Verde Duolingo (#58CC02)
-MaterialTheme.colorScheme.secondary       // Laranja (#FF9600)
-MaterialTheme.colorScheme.tertiary        // Roxo (#6200EA)
+// Cores (seeds canônicas em ThemeConfig.kt / DefaultSeeds, #3933/#3934)
+MaterialTheme.colorScheme.primary         // Verde Futeba (#00852A, WCAG AA)
+MaterialTheme.colorScheme.secondary       // Azul de destaque (#005FCC, paridade web)
+MaterialTheme.colorScheme.tertiary        // Laranja complementar (#FF6D00, distinto)
 
 // Surface hierarchy
 surfaceContainerLowest → Low → Container → High → Highest

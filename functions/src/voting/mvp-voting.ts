@@ -1213,6 +1213,11 @@ export const concludeMvpVoting =
                     gameData
                       .worst_player_id ||
                     null,
+                  // #3940: repassa o status da recompensa para o caller
+                  // decidir se aplica o XP de votação agora ou adia.
+                  xpRewardStatus:
+                    (gameData.xp_reward_status as string) ||
+                    null,
                 };
               }
 
@@ -1393,6 +1398,21 @@ export const concludeMvpVoting =
 
               // 2.11: Atualizar jogo com
               // resultados da votação
+              //
+              // #3940: anti-fraud hold. Quando o jogo está retido para revisão
+              // (HELD_FOR_REVIEW) ou já foi rejeitado pelo admin
+              // (REJECTED_BY_ADMIN), o XP de MVP/Bola Murcha NÃO é pago aqui.
+              // No fluxo HELD, a ordem natural se inverte (votação apurada
+              // antes do pipeline principal), e applyVotingXpDelta pagaria
+              // agora — para depois o onGameStatusUpdate pagar de novo ao ser
+              // liberado. Adiamos o pagamento: o pipeline principal paga tudo
+              // de uma só vez quando o admin aprova; se rejeitar, nunca paga.
+              // O flag voting_xp_pending sinaliza o adiamento para auditoria.
+              const xpRewardStatus =
+                (gameData.xp_reward_status as string) || null;
+              const votingXpHeld =
+                xpRewardStatus === "HELD_FOR_REVIEW" ||
+                xpRewardStatus === "REJECTED_BY_ADMIN";
               const gameUpdates:
                 Record<string, unknown> = {
                   voting_status: "CONCLUDED",
@@ -1423,6 +1443,7 @@ export const concludeMvpVoting =
                       team2Score > team1Score ?
                         "B" :
                         "DRAW",
+                  voting_xp_pending: votingXpHeld,
                 };
 
               if (mvpId) {
@@ -1449,6 +1470,7 @@ export const concludeMvpVoting =
                   countTalliedVotes(bestGkCounts),
                 worstVotes:
                   countTalliedVotes(worstCounts),
+                xpRewardStatus,
               };
             }
           );
@@ -1462,7 +1484,7 @@ export const concludeMvpVoting =
           `Worst=${result.worstPlayerId}`
         );
 
-        // FIX #579: aplicar XP delta MVP +30 / Bola Murcha -10.
+        // FIX #579: aplicar XP delta MVP +50 / Bola Murcha -10.
         // Antes: onGameStatusUpdate fira em FINISHED (24h antes do
         // voting concluir), `mvp_id` e `is_worst_player` ainda não
         // foram escritos → bonus/penalty NUNCA aplicados.
@@ -1475,13 +1497,35 @@ export const concludeMvpVoting =
         // (mvp_${gameId}_${userId} / bola_murcha_${gameId}_${userId}
         // em xp_logs). Segunda chamada vê logDoc.exists e retorna no-op.
         // Antes: guard bloqueava retry após qualquer erro transient
-        // (timeout, network blip) → MVP perdia +30 XP permanentemente
+        // (timeout, network blip) → MVP perdia +50 XP permanentemente
         // sem recovery automático.
         // Separado em dois try/catch independentes para que falha no MVP
         // não impeça aplicação do XP do Bola Murcha e vice-versa.
+        //
+        // FIX #3940: anti-fraud hold. Se xp_reward_status é HELD_FOR_REVIEW
+        // ou REJECTED_BY_ADMIN, NÃO pagamos o XP de votação aqui. No fluxo
+        // HELD a votação é apurada antes do pipeline principal, então pagar
+        // agora duplicaria o crédito quando o admin aprovasse (e nunca seria
+        // retido se rejeitasse). Adiamos: o onGameStatusUpdate paga tudo de
+        // uma vez no release (APPROVE). voting_xp_pending já foi marcado na
+        // transaction acima para auditoria.
+        const votingXpHeld =
+          result.xpRewardStatus === "HELD_FOR_REVIEW" ||
+          result.xpRewardStatus === "REJECTED_BY_ADMIN";
+
+        if (votingXpHeld) {
+          logger.info(
+            "[VOTING_XP] Game " +
+            `${gameId} xp_reward_status=` +
+            `${result.xpRewardStatus} — deferring ` +
+            "MVP/Bola Murcha XP to the main " +
+            "pipeline on release (issue #3940)"
+          );
+        }
+
         let mvpXpApplied = false;
         let worstXpApplied = false;
-        if (result.mvpId) {
+        if (result.mvpId && !votingXpHeld) {
           try {
             await applyVotingXpDelta(
               db,
@@ -1503,7 +1547,7 @@ export const concludeMvpVoting =
             );
           }
         }
-        if (result.worstPlayerId) {
+        if (result.worstPlayerId && !votingXpHeld) {
           try {
             await applyVotingXpDelta(
               db,
@@ -1526,8 +1570,11 @@ export const concludeMvpVoting =
           }
         }
 
-        const xpAllOk = (!result.mvpId || mvpXpApplied) &&
-          (!result.worstPlayerId || worstXpApplied);
+        // Quando o XP está deliberadamente adiado (hold/reject), consideramos
+        // allOk=true: nenhum erro ocorreu, o pagamento foi só postergado.
+        const xpAllOk = votingXpHeld ||
+          ((!result.mvpId || mvpXpApplied) &&
+           (!result.worstPlayerId || worstXpApplied));
 
         return {
           success: true,
@@ -1543,6 +1590,9 @@ export const concludeMvpVoting =
             mvp: mvpXpApplied,
             worst: worstXpApplied,
             allOk: xpAllOk,
+            // #3940: sinaliza ao cliente que o XP de votação foi adiado
+            // (não falhou) porque o jogo está sob revisão anti-fraude.
+            deferred: votingXpHeld,
           },
           message:
             result.alreadyConcluded ?

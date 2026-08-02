@@ -109,9 +109,9 @@ MITO            -> "💎"  // Mito
 ## Material Design 3
 
 ### Cores Utilizadas
-- **Primary**: Verde vibrante (#00C853)
-- **Secondary**: Azul elétrico (#2979FF)
-- **Tertiary**: Laranja (#FF6D00)
+- **Primary**: Verde Futeba (#00852A, WCAG AA)
+- **Secondary**: Azul de destaque (#005FCC, paridade web)
+- **Tertiary**: Laranja complementar (#FF6D00, distinto do azul)
 - **Surface/Background**: Tema adaptativo
 - **GamificationColors**: Ouro, Prata, Bronze, Roxo
 

@@ -115,7 +115,13 @@ async function reconcilePhoneIdentity(
       updatedAt: now,
     }, {merge: true});
     tx.set(userRef, {
-      phone: phoneNumber,
+      // #3935: NÃO gravar `phone` (E.164 em plaintext) em users/{uid}. O guard
+      // público de leitura (firestore.rules) nega o get quando `phone` está
+      // presente e não-vazio — o que tornava TODO usuário verificado ilegível
+      // para os pares (escalção, ranking, perfil). O telefone canônico já vive
+      // em users_private.phoneNumber (acima) e no Firebase Auth.
+      // `phone_verified` é mantido: é booleano (não PII) e o guard
+      // correspondente foi removido das rules.
       phone_verified: true,
       verifiedAt: now,
     }, {merge: true});

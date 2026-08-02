@@ -8,6 +8,11 @@ import com.google.firebase.firestore.ServerTimestamp
 import java.util.Date
 
 // Modelo para o placar do jogo ao vivo
+//
+// #3942: o backend grava o placar por time no mapa `scores` (2-4 times).
+// `scores` é populado apenas via mapper (KMP -> Android); em leitura direta
+// pelo Firestore SDK o campo é ignorado (@IgnoreExtraProperties + val sem
+// setter), caindo nos campos legados team1/team2 — compatível e seguro.
 @IgnoreExtraProperties
 data class LiveGameScore(
     @DocumentId
@@ -15,6 +20,7 @@ data class LiveGameScore(
     @get:PropertyName("game_id")
     @set:PropertyName("game_id")
     var gameId: String = "",
+    val scores: Map<String, Int> = emptyMap(),
     @get:PropertyName("team1_id")
     @set:PropertyName("team1_id")
     var team1Id: String = "",

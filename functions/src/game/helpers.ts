@@ -204,15 +204,45 @@ export function toLiveScore(
     );
   }
 
+  const team1Id = raw.team1_id ?? raw.team1Id ?? "";
+  const team2Id = raw.team2_id ?? raw.team2Id ?? "";
+
+  // #3942: lê o mapa canônico scores (2-4 times). Quando ausente, reconstitui
+  // a partir de team1/team2 para que a determinação de resultado cubra todos
+  // os times via liveScore.scores.
+  const rawScores = raw.scores;
+  let scores: Record<string, number> | undefined;
+  if (
+    rawScores &&
+    typeof rawScores === "object" &&
+    !Array.isArray(rawScores)
+  ) {
+    const normalized: Record<string, number> = {};
+    for (const [teamId, value] of Object.entries(rawScores)) {
+      if (typeof teamId === "string" && teamId.length > 0) {
+        normalized[teamId] = clampScore(Number(value) || 0);
+      }
+    }
+    if (Object.keys(normalized).length > 0) {
+      scores = normalized;
+    }
+  }
+  if (!scores) {
+    // Fallback legado: mapa com apenas team1/team2.
+    const legacy: Record<string, number> = {};
+    if (team1Id) legacy[team1Id] = clampScore(rawTeam1Score);
+    if (team2Id) legacy[team2Id] = clampScore(rawTeam2Score);
+    if (Object.keys(legacy).length > 0) scores = legacy;
+  }
+
   return {
     gameId:
       raw.game_id ?? raw.gameId ?? "",
-    team1Id:
-      raw.team1_id ?? raw.team1Id ?? "",
-    team2Id:
-      raw.team2_id ?? raw.team2Id ?? "",
+    team1Id,
+    team2Id,
     team1Score: clampScore(rawTeam1Score),
     team2Score: clampScore(rawTeam2Score),
+    scores,
   };
 }
 
@@ -325,7 +355,12 @@ export function determineGameResults(
   // Usa liveScore como preferência para resolver placar (compat
   // reversa), fallback para team.score (N times ou ausência de
   // liveScore).
+  // #3942: liveScore.scores (mapa por teamId) é consultado primeiro,
+  // cobrindo times 3 e 4 que não cabem em team1/team2.
   const resolveScore = (t: Team): number => {
+    if (liveScore?.scores && t.id in liveScore.scores) {
+      return liveScore.scores[t.id];
+    }
     if (liveScore) {
       if (t.id === liveScore.team1Id) return liveScore.team1Score;
       if (t.id === liveScore.team2Id) return liveScore.team2Score;
@@ -367,7 +402,11 @@ export function getOpponentScore(
   // placares dos DEMAIS times. Com 2 times = placar do único
   // oponente (idêntico ao comportamento antigo). Substitui a
   // lógica antiga que só tratava 2 times e retornava -1 p/ N > 2.
+  // #3942: liveScore.scores cobre times 3 e 4 também.
   const resolveScore = (t: Team): number => {
+    if (liveScore?.scores && t.id in liveScore.scores) {
+      return liveScore.scores[t.id];
+    }
     if (liveScore) {
       if (t.id === liveScore.team1Id) return liveScore.team1Score;
       if (t.id === liveScore.team2Id) return liveScore.team2Score;

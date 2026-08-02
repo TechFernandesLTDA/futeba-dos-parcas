@@ -1,0 +1,23 @@
+{
+  "displayName": "App Check: token MISSING/INVALID em callable protegida (#3869)",
+  "documentation": {
+    "content": "#3869 — critério de aceite nº 5 (monitoramento).\n\nDispara quando uma Cloud Function callable com `enforceAppCheck: true` rejeita um request porque o token do App Check está ausente (MISSING) ou inválido (INVALID). Isso é o sinal precoce de regressão na emissão do App Check web — deve alertar ANTES de reativar enforcement em massa e ANTES de afetar usuários autenticados.\n\nAção recomendada ao receber este alerta:\n1. Abra os logs da callable no Cloud Logging (filtro do alerta) e confira o `verifications.app`.\n2. Se MISSING/INVALID em escala: investigar emissão do App Check web (reCAPTCHA Enterprise) — vide issue #3869.\n3. NÃO reativar `enforceAppCheck` em novas callables enquanto este alerta estiver ativo.\n\nNota: o filtro cobre o campo estruturado `jsonPayload.verifications.app` emitido pelo framework de callables do Firebase Functions v2 (Cloud Run) e um fallback de texto. Após a primeira ativação real, refine o filtro conforme o schema observado.",
+    "mimeType": "text/markdown"
+  },
+  "combiner": "OR",
+  "conditions": [
+    {
+      "displayName": "Callable rejeitada por App Check ausente/inválido",
+      "conditionMatchedLog": {
+        "filter": "resource.type=\"cloud_run_revision\" AND severity>=WARNING AND (jsonPayload.verifications.app=(\"MISSING\" OR \"INVALID\") OR jsonPayload.\"verifications.app\"=(\"MISSING\" OR \"INVALID\") OR textPayload=~\"(?i).*(app check|appcheck).*(missing|invalid|unverified|verification failed).*\" OR jsonPayload.message=~\"(?i).*(app check|appcheck).*(missing|invalid|unverified|verification failed).*\")"
+      }
+    }
+  ],
+  "alertStrategy": {
+    "notificationRateLimit": {
+      "period": "300s"
+    },
+    "autoClose": "1800s"
+  },
+  "enabled": true
+}

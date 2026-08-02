@@ -1337,7 +1337,7 @@ describe("concludeMvpVoting - contagem de votos e vencedor", () => {
       data: {gameId: "game1"},
     });
 
-    expect(result.xpApplied).toEqual({mvp: true, worst: true, allOk: true});
+    expect(result.xpApplied).toEqual({mvp: true, worst: true, allOk: true, deferred: false});
     // FIX #3882: +1 leitura (standing congelado) no caminho de MVP
     expect(mvpXpTx.get).toHaveBeenCalledTimes(6);
     expect(worstXpTx.get).toHaveBeenCalledTimes(4);
@@ -1452,7 +1452,7 @@ describe("concludeMvpVoting - contagem de votos e vencedor", () => {
     });
 
     expect(result.results.worstPlayerId).toBeNull();
-    expect(result.xpApplied).toEqual({mvp: false, worst: false, allOk: true});
+    expect(result.xpApplied).toEqual({mvp: false, worst: false, allOk: true, deferred: false});
     expect(mockRunTransaction).toHaveBeenCalledTimes(1);
     const gameUpdate = votingTx.update.mock.calls.find(
       ([, data]) => data?.voting_status === "CONCLUDED"
@@ -1819,5 +1819,243 @@ describe("concludeMvpVoting - contagem de votos e vencedor", () => {
     };
 
     await expect(concludeMvpVotingHandler!(request)).rejects.toThrow("dono do jogo");
+  });
+});
+
+// ==========================================
+// REGRESSÃO #3940: anti-fraud hold não paga XP de votação em dobro
+// ==========================================
+//
+// Cenário: jogo HELD_FOR_REVIEW → votação apurada ANTES do pipeline
+// principal → admin APPROVE roda o pipeline e pagaria MVP/Bola Murcha
+// de novo (dobro). O fix defere o XP de votação para o release.
+describe("FIX #3940 — concludeMvpVoting adia XP de votação sob hold anti-fraude", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    const { checkRateLimit } = require("../src/middleware/rate-limiter");
+    (checkRateLimit as jest.Mock).mockResolvedValue({
+      allowed: true,
+      remaining: 4,
+      resetAt: new Date(Date.now() + 60000),
+    });
+    mockCollectionGet.mockResolvedValue({ empty: true, docs: [] });
+  });
+
+  /**
+   * Monta a transaction de votação com MVP=playerA e Bola Murcha=playerZ,
+   * parametrizando o xp_reward_status do jogo.
+   */
+  function makeHeldVotingTransaction(xpRewardStatus: string) {
+    const votes = [
+      { category: "MVP", voter_id: "voter1", voted_player_id: "playerA" },
+      { category: "MVP", voter_id: "voter2", voted_player_id: "playerA" },
+      { category: "WORST", voter_id: "voter3", voted_player_id: "playerZ" },
+      { category: "WORST", voter_id: "voter4", voted_player_id: "playerZ" },
+    ];
+    const votingTx = {
+      get: jest.fn(),
+      update: jest.fn(),
+      set: jest.fn(),
+    };
+    const responses = [
+      { docs: votes.map((v) => ({ data: () => v })), empty: false },
+      {
+        exists: true,
+        data: () => ({
+          status: "FINISHED",
+          voting_status: "OPEN",
+          owner_id: "owner1",
+          xp_reward_status: xpRewardStatus,
+        }),
+      },
+      {
+        docs: [
+          eligibleConfirmationDoc("voter1"),
+          eligibleConfirmationDoc("voter2"),
+          eligibleConfirmationDoc("voter3"),
+          eligibleConfirmationDoc("voter4"),
+          eligibleConfirmationDoc("playerA"),
+          eligibleConfirmationDoc("playerZ"),
+        ],
+        empty: false,
+      },
+      { exists: true, data: () => ({ currentMvpStreak: 0, bestMvpStreak: 0 }) },
+    ];
+    let idx = 0;
+    votingTx.get.mockImplementation(() =>
+      Promise.resolve(responses[idx++] || { exists: false, data: () => ({}) })
+    );
+    return votingTx;
+  }
+
+  test("NÃO paga XP de MVP/Bola Murcha quando xp_reward_status = HELD_FOR_REVIEW", async () => {
+    const votingTx = makeHeldVotingTransaction("HELD_FOR_REVIEW");
+    // Apenas a transaction de votação deve rodar — applyVotingXpDelta NÃO
+    // pode ser chamado (seria uma segunda/third transaction).
+    mockRunTransaction.mockImplementationOnce(
+      async (callback: any) => callback(votingTx)
+    );
+
+    const result = await concludeMvpVotingHandler!({
+      auth: { uid: "owner1", token: { profileComplete: true } },
+      data: { gameId: "game-held" },
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.results.mvpId).toBe("playerA");
+    expect(result.results.worstPlayerId).toBe("playerZ");
+    // XP de votação foi adiado, não aplicado.
+    expect(result.xpApplied).toEqual({
+      mvp: false,
+      worst: false,
+      allOk: true,
+      deferred: true,
+    });
+    // Nenhuma transaction de XP foi aberta (somente a de votação).
+    expect(mockRunTransaction).toHaveBeenCalledTimes(1);
+    // O flag de auditoria voting_xp_pending=true foi gravado no jogo.
+    const gameUpdate = votingTx.update.mock.calls.find(
+      ([, data]) => data?.voting_status === "CONCLUDED"
+    );
+    expect(gameUpdate?.[1]).toEqual(
+      expect.objectContaining({ voting_xp_pending: true })
+    );
+  });
+
+  test("NÃO paga XP de votação quando xp_reward_status = REJECTED_BY_ADMIN", async () => {
+    const votingTx = makeHeldVotingTransaction("REJECTED_BY_ADMIN");
+    mockRunTransaction.mockImplementationOnce(
+      async (callback: any) => callback(votingTx)
+    );
+
+    const result = await concludeMvpVotingHandler!({
+      auth: { uid: "owner1", token: { profileComplete: true } },
+      data: { gameId: "game-rejected" },
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.results.mvpId).toBe("playerA");
+    expect(result.xpApplied.deferred).toBe(true);
+    expect(result.xpApplied.mvp).toBe(false);
+    expect(result.xpApplied.worst).toBe(false);
+    expect(mockRunTransaction).toHaveBeenCalledTimes(1);
+    const gameUpdate = votingTx.update.mock.calls.find(
+      ([, data]) => data?.voting_status === "CONCLUDED"
+    );
+    expect(gameUpdate?.[1]).toEqual(
+      expect.objectContaining({ voting_xp_pending: true })
+    );
+  });
+
+  test("paga XP de votação normalmente quando xp_reward_status = ELIGIBLE (sem hold)", async () => {
+    const votingTx = makeHeldVotingTransaction("ELIGIBLE");
+    // Transaction de XP do MVP: simula applyVotingXpDelta idempotente que
+    // grava o log de votação.
+    const mvpXpTx = {
+      get: jest.fn(),
+      update: jest.fn(),
+      set: jest.fn(),
+    };
+    const gameDate = new Date("2026-06-10T12:00:00-03:00");
+    let xpIdx = 0;
+    const xpResponses = [
+      { exists: false, data: () => null }, // log de votação (não existe)
+      { exists: false, data: () => ({}) }, // log principal (não existe)
+      {
+        exists: true,
+        data: () => ({ dateTime: { toDate: () => gameDate }, gender: "mixed" }),
+      },
+      { empty: false, docs: [{ id: "season-active" }] },
+      { exists: false, data: () => null }, // standing congelado (não existe)
+      {
+        exists: true,
+        data: () => ({ experience_points: 120, level: 1 }),
+      },
+      {
+        exists: true,
+        data: () => ({ currentMvpStreak: 1, bestMvpStreak: 2 }),
+      },
+    ];
+    mvpXpTx.get.mockImplementation(() =>
+      Promise.resolve(
+        xpResponses[xpIdx++] || { exists: false, data: () => ({}) }
+      )
+    );
+    mockRunTransaction
+      .mockImplementationOnce(async (callback: any) => callback(votingTx))
+      .mockImplementationOnce(async (callback: any) => callback(mvpXpTx));
+
+    const result = await concludeMvpVotingHandler!({
+      auth: { uid: "owner1", token: { profileComplete: true } },
+      data: { gameId: "game-eligible" },
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.results.mvpId).toBe("playerA");
+    // Caminho normal: XP aplicado, NÃO adiado.
+    expect(result.xpApplied.deferred).toBe(false);
+    expect(result.xpApplied.mvp).toBe(true);
+    // O flag voting_xp_pending deve ser false (sem hold).
+    const gameUpdate = votingTx.update.mock.calls.find(
+      ([, data]) => data?.voting_status === "CONCLUDED"
+    );
+    expect(gameUpdate?.[1]).toEqual(
+      expect.objectContaining({ voting_xp_pending: false })
+    );
+    // Log de XP do MVP gravado.
+    const mvpLog = mvpXpTx.set.mock.calls.find(
+      ([, data]) => data?.reason === "MVP"
+    );
+    expect(mvpLog?.[1]).toEqual(
+      expect.objectContaining({
+        user_id: "playerA",
+        transaction_id: "mvp_game-eligible_playerA",
+        xp_earned: 50,
+      })
+    );
+  });
+
+  test("replay de votação concluída sob hold não paga XP nem reabre votação", async () => {
+    // Segunda chamada: voting_status já CONCLUDED, xp_reward_status ainda
+    // HELD_FOR_REVIEW. Deve retornar alreadyConcluded sem aplicar XP.
+    const replayTx = {
+      get: jest.fn(),
+      update: jest.fn(),
+      set: jest.fn(),
+    };
+    let idx = 0;
+    const responses = [
+      { docs: [], empty: true },
+      {
+        exists: true,
+        data: () => ({
+          status: "FINISHED",
+          voting_status: "CONCLUDED",
+          owner_id: "owner1",
+          mvp_id: "playerA",
+          worst_player_id: "playerZ",
+          xp_reward_status: "HELD_FOR_REVIEW",
+        }),
+      },
+    ];
+    replayTx.get.mockImplementation(() =>
+      Promise.resolve(responses[idx++] || { exists: false, data: () => ({}) })
+    );
+    mockRunTransaction.mockImplementationOnce(
+      async (callback: any) => callback(replayTx)
+    );
+
+    const result = await concludeMvpVotingHandler!({
+      auth: { uid: "owner1", token: { profileComplete: true } },
+      data: { gameId: "game-replay-held" },
+    });
+
+    expect(result.alreadyConcluded).toBe(true);
+    expect(result.xpApplied.deferred).toBe(true);
+    expect(result.xpApplied.mvp).toBe(false);
+    // Nenhuma escrita no replay.
+    expect(replayTx.set).not.toHaveBeenCalled();
+    expect(replayTx.update).not.toHaveBeenCalled();
+    expect(mockRunTransaction).toHaveBeenCalledTimes(1);
   });
 });

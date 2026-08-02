@@ -62,8 +62,15 @@ function makeLiveScore(
   team2Id: string,
   team1Score: number,
   team2Score: number,
+  scores?: Record<string, number>,
 ): LiveGameScore {
-  return {team1Id, team2Id, team1Score, team2Score} as LiveGameScore;
+  return {
+    team1Id,
+    team2Id,
+    team1Score,
+    team2Score,
+    scores,
+  } as LiveGameScore;
 }
 
 // ---------------------------------------------------------------------------
@@ -206,5 +213,68 @@ describe("getOpponentScore — 3 times (fix #2526)", () => {
   it("retorna -1 se team for undefined", () => {
     const teams = [makeTeam("A", 3), makeTeam("B", 1)];
     expect(getOpponentScore(undefined, null, teams)).toBe(-1);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// #3942: mapa scores cobrindo times 3 e 4 (sem depender de team.score)
+// ---------------------------------------------------------------------------
+
+describe("#3942 determineGameResults via mapa scores (3-4 times)", () => {
+  it("time 3 vencedor usando scores map (team.score=0 ignorado)", () => {
+    // team.score=0 para todos; o resultado vem só do mapa scores.
+    const teams = [
+      makeTeam("A", 0),
+      makeTeam("B", 0),
+      makeTeam("C", 0),
+    ];
+    // A=2 (intermediário=DRAW), B=1 (min=LOSS), C=3 (max=WIN).
+    const live = makeLiveScore("A", "B", 2, 1, {A: 2, B: 1, C: 3});
+    const res = determineGameResults(teams, live);
+    expect(res["A"]).toBe("DRAW");
+    expect(res["B"]).toBe("LOSS");
+    expect(res["C"]).toBe("WIN");
+  });
+
+  it("time 4 perdedor usando scores map em jogo de 4 times", () => {
+    const teams = [
+      makeTeam("A", 0),
+      makeTeam("B", 0),
+      makeTeam("C", 0),
+      makeTeam("D", 0),
+    ];
+    const live = makeLiveScore(
+      "A", "B", 2, 2, {A: 2, B: 2, C: 4, D: 0},
+    );
+    const res = determineGameResults(teams, live);
+    expect(res["C"]).toBe("WIN");
+    expect(res["D"]).toBe("LOSS");
+    expect(res["A"]).toBe("DRAW");
+    expect(res["B"]).toBe("DRAW");
+  });
+
+  it("sem scores map mantém comportamento legado (team.score para time 3)", () => {
+    const teams = [
+      makeTeam("A", 0),
+      makeTeam("B", 0),
+      makeTeam("C", 5),
+    ];
+    // Sem scores: team3 cai em team.score=5.
+    const live = makeLiveScore("A", "B", 0, 0);
+    const res = determineGameResults(teams, live);
+    expect(res["C"]).toBe("WIN");
+  });
+});
+
+describe("#3942 getOpponentScore via mapa scores", () => {
+  it("oponente do time 3 usa scores dos demais times", () => {
+    const teams = [
+      makeTeam("A", 0),
+      makeTeam("B", 0),
+      makeTeam("C", 0),
+    ];
+    const live = makeLiveScore("A", "B", 2, 1, {A: 2, B: 1, C: 0});
+    // Para C: média de A(2) e B(1) = 2 (antes era -1 ou baseado em team.score).
+    expect(getOpponentScore(teams[2], live, teams)).toBe(2);
   });
 });

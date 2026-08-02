@@ -731,8 +731,12 @@ service cloud.firestore {
         (!('height_cm' in resource.data) || resource.data.height_cm == null) &&
         (!('weight_kg' in resource.data) || resource.data.weight_kg == null) &&
         (!('gender' in resource.data) || resource.data.gender == null) &&
-        (!('phone' in resource.data) || resource.data.phone == null || resource.data.phone == '') &&
-        (!('phone_verified' in resource.data) || resource.data.phone_verified == null)
+        (!('phone' in resource.data) || resource.data.phone == null || resource.data.phone == '')
+        // #3935: o guard de `phone_verified` foi REMOVIDO. `phone_verified` é um
+        // booleano (não PII) setado por setUserVerified; mantê-lo no guard
+        // tornava TODO usuário verificado ilegível aos pares. O campo `phone`
+        // (E.164 em plaintext) continua protegido acima — ele é a PII real, e
+        // os writers foram corrigidos para não gravá-lo em users/{uid}.
       );
 
       // #3691: consultas LIST nao conseguem garantir a ausencia de todos os

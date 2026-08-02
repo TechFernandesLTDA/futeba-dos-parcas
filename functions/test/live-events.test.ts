@@ -362,6 +362,7 @@ describe("live game event callables", () => {
     expect(result).toEqual({
       success: true,
       eventId: "generated-event-1",
+      scores: {teamA: 1, teamB: 0},
       team1Score: 1,
       team2Score: 0,
       duplicate: false,
@@ -373,13 +374,15 @@ describe("live game event callables", () => {
         event_type: "GOAL",
         player_id: "player1",
         assisted_by_id: "assist1",
-        score_field: "team1_score",
+        score_team_id: "teamA",
+        score_field: null,
       }),
     );
     expect(txSet).toHaveBeenCalledWith(
       expect.objectContaining({path: "live_scores/game1"}),
       expect.objectContaining({
-        team1_score: expect.anything(),
+        scores: {teamA: 1, teamB: 0},
+        team1_score: 1,
       }),
       {merge: true},
     );
@@ -599,6 +602,7 @@ describe("live game event callables", () => {
     expect(result).toEqual({
       success: true,
       eventId: "game1_abcdefgh",
+      scores: {teamA: 2, teamB: 1},
       team1Score: 2,
       team2Score: 1,
       duplicate: true,
@@ -760,13 +764,15 @@ describe("live game event callables", () => {
     expect(result).toEqual({
       success: true,
       eventId: "event1",
+      scores: {teamA: 1, teamB: 1},
       team1Score: 1,
       team2Score: 1,
     });
     expect(txSet).toHaveBeenCalledWith(
       expect.objectContaining({path: "live_scores/game1"}),
       expect.objectContaining({
-        team1_score: expect.anything(),
+        scores: {teamA: 1, teamB: 1},
+        team1_score: 1,
       }),
       {merge: true},
     );
@@ -901,22 +907,306 @@ describe("live game event callables", () => {
           {data: () => ({event_type: "GOAL", team_id: "teamA"})},
           {data: () => ({event_type: "GOAL", team_id: "teamB"})},
         ],
-        "teamA",
-        "teamB",
-        2,
-        1,
+        new Map([["teamA", 2], ["teamB", 1]]),
       ),
     ).toBe(true);
 
     expect(
       isScoreConsistentFromEventStream(
         [{data: () => ({type: "GOAL", team_id: "teamA"})}],
-        "teamA",
-        "teamB",
-        2,
-        0,
+        new Map([["teamA", 2], ["teamB", 0]]),
       ),
     ).toBe(false);
+  });
+
+  test("readScoresMap lê mapa canônico scores e faz fallback legado", () => {
+    const {readScoresMap} = require("../src/games/live-events");
+
+    // Caminho canônico: mapa scores presente.
+    const canonical = readScoresMap({
+      scores: {teamA: 3, teamB: 1, teamC: 0},
+    });
+    expect(canonical.get("teamA")).toBe(3);
+    expect(canonical.get("teamB")).toBe(1);
+    expect(canonical.get("teamC")).toBe(0);
+    expect(canonical.size).toBe(3);
+
+    // Fallback legado: sem scores, reconstitui de team1/team2.
+    const legacy = readScoresMap({
+      team1_id: "teamA",
+      team2_id: "teamB",
+      team1_score: 2,
+      team2_score: 0,
+    });
+    expect(legacy.get("teamA")).toBe(2);
+    expect(legacy.get("teamB")).toBe(0);
+    expect(legacy.size).toBe(2);
+
+    // Doc vazio/ausente → mapa vazio.
+    expect(readScoresMap(undefined).size).toBe(0);
+    expect(readScoresMap({}).size).toBe(0);
+  });
+
+  // ---------------------------------------------------------------------------
+  // #3942: gols de times 3 e 4 agora são registráveis (antes: failed-precondition)
+  // ---------------------------------------------------------------------------
+
+  test("#3942 submitLiveGameEvent registra GOAL do time 3 em jogo de 3 times", async () => {
+    const txSet = jest.fn();
+    mockTeamsGet.mockResolvedValue({
+      docs: [
+        {id: "teamA", data: () => ({player_ids: ["player1"]})},
+        {id: "teamB", data: () => ({player_ids: ["player2"]})},
+        {id: "teamC", data: () => ({player_ids: ["player3"]})},
+      ],
+    });
+    mockRunTransaction.mockImplementation(async (callback: any) => callback({
+      get: jest.fn((ref: {path: string}) => {
+        switch (ref.path) {
+          case "games/game1":
+            return Promise.resolve(makeSnapshot({
+              owner_id: "owner1",
+              status: "LIVE",
+              co_organizers: [],
+            }));
+          case "live_scores/game1":
+            // live_scores já no schema canônico pós-#3942 (3 times).
+            return Promise.resolve(makeSnapshot({
+              scores: {teamA: 0, teamB: 0, teamC: 0},
+              team1_id: "teamA",
+              team2_id: "teamB",
+              team1_score: 0,
+              team2_score: 0,
+            }));
+          case "teams/teamC":
+            return Promise.resolve(makeSnapshot({
+              game_id: "game1",
+              player_ids: ["player3"],
+            }));
+          case "confirmations/game1_player3":
+          case "confirmations/game1_owner1":
+            return Promise.resolve(makeSnapshot({status: "CONFIRMED"}));
+          case "live_player_stats/game1_player3":
+            return Promise.resolve(makeSnapshot(undefined));
+          default:
+            return Promise.resolve(makeSnapshot(undefined));
+        }
+      }),
+      set: txSet,
+      update: jest.fn(),
+    }));
+
+    const {submitLiveGameEvent} = require("../src/games/live-events");
+    const result = await submitLiveGameEvent(makeRequest({
+      gameId: "game1",
+      eventType: "GOAL",
+      playerId: "player3",
+      playerName: "Player 3",
+      teamId: "teamC",
+      minute: 25,
+    }));
+
+    // Antes do fix este chamado rejeitava com failed-precondition.
+    expect(result.success).toBe(true);
+    expect(result.duplicate).toBe(false);
+    expect(result.scores).toEqual({teamA: 0, teamB: 0, teamC: 1});
+    // Campos legados continuam refletindo apenas team1/team2 (dual-write).
+    expect(result.team1Score).toBe(0);
+    expect(result.team2Score).toBe(0);
+
+    expect(txSet).toHaveBeenCalledWith(
+      expect.objectContaining({path: "game_events/generated-event-1"}),
+      expect.objectContaining({
+        score_team_id: "teamC",
+        team_id: "teamC",
+      }),
+    );
+    expect(txSet).toHaveBeenCalledWith(
+      expect.objectContaining({path: "live_scores/game1"}),
+      expect.objectContaining({
+        scores: {teamA: 0, teamB: 0, teamC: 1},
+      }),
+      {merge: true},
+    );
+  });
+
+  test("#3942 submitLiveGameEvent registra GOAL do time 4 em jogo de 4 times", async () => {
+    const txSet = jest.fn();
+    mockTeamsGet.mockResolvedValue({
+      docs: [
+        {id: "teamA", data: () => ({player_ids: ["p1"]})},
+        {id: "teamB", data: () => ({player_ids: ["p2"]})},
+        {id: "teamC", data: () => ({player_ids: ["p3"]})},
+        {id: "teamD", data: () => ({player_ids: ["p4"]})},
+      ],
+    });
+    mockRunTransaction.mockImplementation(async (callback: any) => callback({
+      get: jest.fn((ref: {path: string}) => {
+        switch (ref.path) {
+          case "games/game1":
+            return Promise.resolve(makeSnapshot({
+              owner_id: "owner1", status: "LIVE", co_organizers: [],
+            }));
+          case "live_scores/game1":
+            return Promise.resolve(makeSnapshot({
+              scores: {teamA: 1, teamB: 0, teamC: 0, teamD: 0},
+              team1_id: "teamA",
+              team2_id: "teamB",
+              team1_score: 1,
+              team2_score: 0,
+            }));
+          case "teams/teamD":
+            return Promise.resolve(makeSnapshot({
+              game_id: "game1", player_ids: ["p4"],
+            }));
+          case "confirmations/game1_p4":
+          case "confirmations/game1_owner1":
+            return Promise.resolve(makeSnapshot({status: "CONFIRMED"}));
+          case "live_player_stats/game1_p4":
+            return Promise.resolve(makeSnapshot(undefined));
+          default:
+            return Promise.resolve(makeSnapshot(undefined));
+        }
+      }),
+      set: txSet,
+      update: jest.fn(),
+    }));
+
+    const {submitLiveGameEvent} = require("../src/games/live-events");
+    const result = await submitLiveGameEvent(makeRequest({
+      gameId: "game1",
+      eventType: "GOAL",
+      playerId: "p4",
+      playerName: "Player 4",
+      teamId: "teamD",
+    }));
+
+    expect(result.success).toBe(true);
+    expect(result.scores).toEqual({teamA: 1, teamB: 0, teamC: 0, teamD: 1});
+    // team1 (teamA) continua rastreando o placar legado corretamente.
+    expect(result.team1Score).toBe(1);
+  });
+
+  test("#3942 deleteLiveGameEvent reverte GOAL do time 3 via score_team_id", async () => {
+    const txSet = jest.fn();
+    const txDelete = jest.fn();
+    mockTeamsGet.mockResolvedValue({
+      docs: [
+        {id: "teamA", data: () => ({player_ids: ["p1"]})},
+        {id: "teamB", data: () => ({player_ids: ["p2"]})},
+        {id: "teamC", data: () => ({player_ids: ["p3"]})},
+      ],
+    });
+    mockRunTransaction.mockImplementation(async (callback: any) => callback({
+      get: jest.fn((ref: {path: string}) => {
+        switch (ref.path) {
+          case "games/game1":
+            return Promise.resolve(makeSnapshot({
+              owner_id: "owner1", status: "LIVE", co_organizers: [],
+            }));
+          case "game_events/eventC":
+            // Evento novo: score_team_id explícito (sem score_field legado).
+            return Promise.resolve(makeSnapshot({
+              game_id: "game1",
+              event_type: "GOAL",
+              player_id: "p3",
+              team_id: "teamC",
+              score_team_id: "teamC",
+              score_field: null,
+              created_by: "owner1",
+            }));
+          case "live_scores/game1":
+            return Promise.resolve(makeSnapshot({
+              scores: {teamA: 0, teamB: 0, teamC: 2},
+              team1_id: "teamA",
+              team2_id: "teamB",
+              team1_score: 0,
+              team2_score: 0,
+            }));
+          case "confirmations/game1_owner1":
+          case "confirmations/game1_p3":
+            return Promise.resolve(makeSnapshot({status: "CONFIRMED"}));
+          case "live_player_stats/game1_p3":
+            return Promise.resolve(makeSnapshot({goals: 2}));
+          default:
+            return Promise.resolve(makeSnapshot(undefined));
+        }
+      }),
+      set: txSet,
+      update: jest.fn(),
+      delete: txDelete,
+    }));
+
+    const {deleteLiveGameEvent} = require("../src/games/live-events");
+    const result = await deleteLiveGameEvent(makeRequest({
+      gameId: "game1",
+      eventId: "eventC",
+    }));
+
+    expect(result.success).toBe(true);
+    expect(result.scores).toEqual({teamA: 0, teamB: 0, teamC: 1});
+    expect(txDelete).toHaveBeenCalledWith(
+      expect.objectContaining({path: "game_events/eventC"}),
+    );
+  });
+
+  test("#3942 submit em live_scores legado (sem mapa scores) cresce o mapa ao marcar time 3", async () => {
+    // Cenário: jogo LIVE aberto antes do deploy, live_scores só tem campos
+    // legados. O primeiro gol do time 3 deve iniciar o mapa scores sem perda.
+    const txSet = jest.fn();
+    mockTeamsGet.mockResolvedValue({
+      docs: [
+        {id: "teamA", data: () => ({player_ids: ["p1"]})},
+        {id: "teamB", data: () => ({player_ids: ["p2"]})},
+        {id: "teamC", data: () => ({player_ids: ["p3"]})},
+      ],
+    });
+    mockRunTransaction.mockImplementation(async (callback: any) => callback({
+      get: jest.fn((ref: {path: string}) => {
+        switch (ref.path) {
+          case "games/game1":
+            return Promise.resolve(makeSnapshot({
+              owner_id: "owner1", status: "LIVE", co_organizers: [],
+            }));
+          case "live_scores/game1":
+            // Sem scores: doc legado pré-migração.
+            return Promise.resolve(makeSnapshot({
+              team1_id: "teamA",
+              team2_id: "teamB",
+              team1_score: 1,
+              team2_score: 0,
+            }));
+          case "teams/teamC":
+            return Promise.resolve(makeSnapshot({
+              game_id: "game1", player_ids: ["p3"],
+            }));
+          case "confirmations/game1_p3":
+          case "confirmations/game1_owner1":
+            return Promise.resolve(makeSnapshot({status: "CONFIRMED"}));
+          case "live_player_stats/game1_p3":
+            return Promise.resolve(makeSnapshot(undefined));
+          default:
+            return Promise.resolve(makeSnapshot(undefined));
+        }
+      }),
+      set: txSet,
+      update: jest.fn(),
+    }));
+
+    const {submitLiveGameEvent} = require("../src/games/live-events");
+    const result = await submitLiveGameEvent(makeRequest({
+      gameId: "game1",
+      eventType: "GOAL",
+      playerId: "p3",
+      playerName: "Player 3",
+      teamId: "teamC",
+    }));
+
+    expect(result.success).toBe(true);
+    // Mapa scores nasce preservando team1/team2 legados + adiciona teamC.
+    expect(result.scores).toEqual({teamA: 1, teamB: 0, teamC: 1});
+    expect(result.team1Score).toBe(1);
+    expect(result.team2Score).toBe(0);
   });
 
   test("rajadas preservam exatamente 100 eventos no mesmo jogo e 1000 em 50 jogos", async () => {

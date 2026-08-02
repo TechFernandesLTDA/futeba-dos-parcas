@@ -4093,6 +4093,12 @@ subir no ranking!</string>
     <!-- LiveGameScreen - Hardcoded strings fix -->
     <string name="live_game_team_default_1">Time 1</string>
     <string name="live_game_team_default_2">Time 2</string>
+    <!-- #3942: nome genérico para times 1-4 (suporte a jogos multi-equipe) -->
+    <string name="live_game_team_default_n">Time %1$d</string>
+    <plurals name="live_game_goals_count">
+        <item quantity="one">%d gol</item>
+        <item quantity="other">%d gols</item>
+    </plurals>
 
     <!-- PostGameReportScreen - Hardcoded strings fix -->
     <string name="report_player_goals">%1$d gols</string>

@@ -105,13 +105,31 @@ class LiveGameViewModel(
                 if (teams.size < 2) {
                     _uiState.value = LiveGameUiState.Error("Times não definidos.")
                 } else {
-                    val team1 = teams.find { it.id == score.team1Id }
-                    val team2 = teams.find { it.id == score.team2Id }
+                    // #3942: resolve o placar por time a partir do mapa canônico
+                    // `score.scores` (2-4 times). Quando ausente (docs legados),
+                    // cai para team1_id/team2_id — mesma estratégia do backend.
+                    val scoresByTeamId: Map<String, Int> = score.scores.ifEmpty {
+                        buildMap {
+                            if (score.team1Id.isNotEmpty()) put(score.team1Id, score.team1Score)
+                            if (score.team2Id.isNotEmpty()) put(score.team2Id, score.team2Score)
+                        }
+                    }
 
-                    if (team1 == null || team2 == null || team1.id == team2.id) {
+                    val teamScores = scoresByTeamId.keys.mapNotNull { teamId ->
+                        teams.find { it.id == teamId }?.let { team ->
+                            TeamScore(
+                                team = team,
+                                score = scoresByTeamId[teamId] ?: 0,
+                                players = confirmations.filter { team.playerIds.contains(it.userId) }
+                            )
+                        }
+                    }
+
+                    if (teamScores.size < 2) {
                         com.futebadosparcas.util.AppLogger.w("LiveGameViewModel") {
                             "Vínculo do placar com os times é inválido: " +
-                                "team1Id=${score.team1Id}, team2Id=${score.team2Id}"
+                                "scores=${score.scores}, team1Id=${score.team1Id}, " +
+                                "team2Id=${score.team2Id}, teams=${teams.map { it.id }}"
                         }
                         _uiState.value = LiveGameUiState.Error(
                             "Placar indisponível: times vinculados não foram encontrados."
@@ -119,16 +137,10 @@ class LiveGameViewModel(
                         return@collect
                     }
 
-                    val team1Players = confirmations.filter { team1.playerIds.contains(it.userId) }
-                    val team2Players = confirmations.filter { team2.playerIds.contains(it.userId) }
-
                     _uiState.value = LiveGameUiState.Success(
                         game = game,
                         score = score,
-                        team1 = team1,
-                        team2 = team2,
-                        team1Players = team1Players,
-                        team2Players = team2Players,
+                        teamScores = teamScores,
                         isOwner = isOwner
                     )
                 }
@@ -156,13 +168,10 @@ class LiveGameViewModel(
 
     fun addGoal(playerId: String, playerName: String, teamId: String, assistedById: String? = null, assistedByName: String? = null, minute: Int = 0) {
         // BUG #7 FIX: Validar que jogador pertence ao time
+        // #3942: aceita qualquer time válido do jogo (2-4 times), não só os 2 primeiros.
         val state = _uiState.value as? LiveGameUiState.Success
         if (state != null) {
-            val team = when (teamId) {
-                state.team1.id -> state.team1
-                state.team2.id -> state.team2
-                else -> null
-            }
+            val team = state.teamScores.firstOrNull { it.team.id == teamId }?.team
             if (team == null || !team.playerIds.contains(playerId)) {
                 viewModelScope.launch { _userMessage.emit("Erro: Jogador não pertence ao time selecionado") }
                 return
@@ -272,14 +281,31 @@ sealed class LiveGameUiState {
     data class Success(
         val game: Game,
         val score: LiveScore,
-        val team1: Team,
-        val team2: Team,
-        val team1Players: List<GameConfirmation>,
-        val team2Players: List<GameConfirmation>,
+        val teamScores: List<TeamScore>,
         val isOwner: Boolean
-    ) : LiveGameUiState()
+    ) : LiveGameUiState() {
+        // O domínio válido é 2..4 times (firestore.rules isValidNumberOfTeams).
+        // O ViewModel filtra < 2 antes de construir este estado; a UI renderiza
+        // qualquer quantidade via FlowRow, então não há require() aqui para não
+        // transformar um dado de servidor inesperado em crash.
+
+        // Compatibilidade com consumidores que esperam os dois primeiros times.
+        val team1: Team get() = teamScores[0].team
+        val team2: Team get() = teamScores[1].team
+        val team1Players: List<GameConfirmation> get() = teamScores[0].players
+        val team2Players: List<GameConfirmation> get() = teamScores[1].players
+    }
     data class Error(val message: String) : LiveGameUiState()
 }
+
+/**
+ * Placar de um time no jogo ao vivo.
+ */
+data class TeamScore(
+    val team: Team,
+    val score: Int,
+    val players: List<GameConfirmation>
+)
 
 sealed class LiveGameNavigationEvent {
     object NavigateToVote : LiveGameNavigationEvent()

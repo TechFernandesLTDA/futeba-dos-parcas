@@ -138,6 +138,51 @@ describe("game lifecycle callables", () => {
     expect(mockTeamsGet).toHaveBeenCalledTimes(1);
   });
 
+  test("#3942 startGameLifecycle inicializa mapa scores com todos os times (3 times)", async () => {
+    const txUpdate = jest.fn();
+    const txSet = jest.fn();
+
+    mockTeamsGet.mockResolvedValue({
+      docs: [
+        {id: "teamA", data: () => ({name: "Time A"})},
+        {id: "teamB", data: () => ({name: "Time B"})},
+        {id: "teamC", data: () => ({name: "Time C"})},
+      ],
+    });
+    mockRunTransaction.mockImplementation(async (callback: any) => callback({
+      get: jest.fn(async (ref: {path?: string}) => ref.path === "games/game1" ? {
+        exists: true,
+        data: () => ({owner_id: "owner1", status: "CONFIRMED"}),
+      } : mockTeamsGet()),
+      update: txUpdate,
+      set: txSet,
+    }));
+
+    const {startGameLifecycle} = require("../src/games/lifecycle");
+    const result = await startGameLifecycle(makeRequest());
+
+    expect(result).toEqual({
+      success: true,
+      status: "LIVE",
+      team1Id: "teamA",
+      team2Id: "teamB",
+    });
+    expect(txSet).toHaveBeenCalledWith(
+      expect.objectContaining({path: "live_scores/game1"}),
+      expect.objectContaining({
+        game_id: "game1",
+        owner_id: "owner1",
+        // Mapa canônico com os 3 times em 0.
+        scores: {teamA: 0, teamB: 0, teamC: 0},
+        // Dual-write legado mantido para leitores não atualizados.
+        team1_id: "teamA",
+        team2_id: "teamB",
+        team1_score: 0,
+        team2_score: 0,
+      })
+    );
+  });
+
   test("start revalida os times na mesma transação do status LIVE", async () => {
     const txUpdate = jest.fn();
     mockTeamsGet.mockResolvedValue({

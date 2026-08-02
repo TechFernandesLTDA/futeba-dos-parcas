@@ -319,6 +319,40 @@ describe("Auth — Verification", () => {
       expect(txDelete).toHaveBeenCalledTimes(1);
     });
 
+    // #3935: setUserVerified NÃO deve gravar `phone` (E.164 em plaintext) em
+    // users/{uid}. Antes, reconcilePhoneIdentity gravava `phone: phoneNumber`,
+    // que é exatamente o guard que torna TODO usuário verificado ilegível aos
+    // pares (escalção, ranking, perfil). O telefone canônico vive em
+    // users_private.phoneNumber + Firebase Auth.
+    it("#3935 não grava phone em users/{uid} (mantém peer-readability)", async () => {
+      mockDocGet.mockResolvedValueOnce({
+        exists: true,
+        data: () => ({cpfVerifiedAt: {_type: "ServerTimestamp"}}),
+      });
+      mockGetUser.mockResolvedValue({
+        uid: "user1",
+        phoneNumber: "+5511999999999",
+        customClaims: {},
+      });
+      const txSet = jest.fn();
+      mockRunTransaction.mockImplementationOnce(async (cb: any) => cb({
+        get: jest.fn()
+          .mockResolvedValueOnce({exists: false, data: () => null})
+          .mockResolvedValueOnce({docs: []}),
+        set: txSet,
+      }));
+      mockSetCustomUserClaims.mockResolvedValueOnce(undefined);
+
+      await setUserVerified(makeRequest());
+
+      // Nenhum tx.set deve conter a chave `phone` no payload de dados.
+      // (phoneNumber/phoneHash/phone_verified são chaves distintas e OK.)
+      const phoneWrites = txSet.mock.calls.filter(
+        ([, data]: any[]) => data && typeof data === "object" && "phone" in data,
+      );
+      expect(phoneWrites).toHaveLength(0);
+    });
+
     it("não concede profileComplete para telefone fora do formato BR", async () => {
       mockDocGet.mockResolvedValueOnce({
         exists: true,

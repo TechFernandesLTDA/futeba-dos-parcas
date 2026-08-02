@@ -1387,4 +1387,60 @@ migração próprias.
 
 ---
 
+### [2026-08-01] Placar de live score representa cada time (#3942)
+
+**Contexto:** Rules aceitam jogos com duas a quatro equipes, mas `live_scores`
+materializa somente os dois primeiros placares.
+
+**Alternativas consideradas:**
+1. Limitar jogos a duas equipes temporariamente.
+2. Migrar o placar para representação por time.
+
+**Decisão:** Opção 2, com placar por time para suportar duas a quatro equipes.
+
+**Justificativa:** Preserva a capacidade já aceita pelo domínio sem perda de dados.
+
+### [2026-08-01] Secondary mobile usa o azul do produto web; tertiary ganha seed própria (#3934, #3933)
+
+**Contexto:** O acento `secondary` tinha **três** valores divergentes: `#005FCC`
+(azul, web/tokens), `#2979FF` (azul "elétrico", scheme estático morto em
+`Color.kt`) e `#FF9600` (laranja, seed que de fato renderizava no Android/iOS).
+Já `tertiary` **nunca era semeado** (`SeedColors.tertiary` sempre `null`) e o
+engine fazia fallback para `secondary` — logo os dois acentos M3 renderizavam a
+**mesma cor**, byte a byte, em 9 telas que os usam em oposição. O gate de paridade
+validava o `Color.kt` estático (morto), não as seeds vivas.
+
+**Alternativas consideradas:**
+1. Manter `secondary=#FF9600` (laranja) como identidade mobile e só semear
+   `tertiary`. Rejeitada: perpetuaria a divergência web↔mobile e deixaria o
+   accent secundário ambíguo entre plataformas.
+2. Unificar `secondary=#005FCC` (azul web) **e** mover o laranja para `tertiary`
+   como seed própria distinta. Aceita.
+
+**Decisão:**
+- `secondary` mobile = `#005FCC` (azul) — paridade com `palette.secondary.main` da web.
+- `tertiary` mobile = `#FF6D00` (laranja complementar) — seed própria, distinta,
+  lida de `brand.tertiary` em `design-tokens.json`. Não colapsa mais.
+- Seeds centralizadas em `DefaultSeeds` (`ThemeConfig.kt`); `ThemeRepositoryImpl`
+  lê delas em vez de re-hardcodar hex, e persiste `TERTIARY_COLOR` no DataStore.
+- Scheme estático morto (`FutebaLight/DarkColorScheme` + 68 `md3_*`) removido de
+  `Color.kt` (Android e composeApp) — zero consumidores, só atraía drift.
+- Gate `check-design-tokens-parity.js` repontado para validar as **seeds vivas**
+  (`DefaultSeeds` em `ThemeConfig.kt`), não mais o `Color.kt` morto.
+
+**Justificativa:** Restaura dois acentos M3 semanticamente distintos (telas de
+comparação ranking, papel de membro, milestones passam a diferenciar) e elimina a
+classe inteira de drift "scheme que não renderiza". Web não muda (já era
+`#005FCC`); iOS/composeApp herda o mesmo default via `AppThemeConfig()`.
+
+**Consequências:** Mudança visual visível no mobile — o accent secundário muda de
+laranja para azul; o laranja (identidade esportiva anterior) reaparece como
+tertiary. Usuários com tema customizado (primary/secondary salvos) passam a ter
+`tertiary` persistido e estável. Teste de regressão `secondary != tertiary`
+adicionado ao `DynamicThemeEngineTest`. Não há release notes de breaking para
+web/functions.
+
+**Relacionado:** issues #3934, #3933, #2745 (critério do scheme deprecated),
+specs `DECISIONS.md`.
+
 <!-- Adicione novas decisões acima desta linha -->

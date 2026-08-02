@@ -561,18 +561,45 @@ function checkIntraPlatformPaletteParity(tokens, errors) {
   }
 }
 
-function checkKotlinSemanticGreen(tokens, errors) {
+/**
+ * Valida as SEEDS que de fato renderizam no Android/iOS — `ThemeConfig.kt`
+ * (KMP commonMain), lidas por [DynamicThemeEngine] e por [ThemeRepositoryImpl].
+ *
+ * #3934 passo 3: o gate anterior validava os `md3_*` privados de `Color.kt`,
+ * que eram codigo morto (zero consumidores) e divergiam do que renderizava.
+ * Agora valida o que o engine de fato semeia: primary/secondary/tertiary.
+ *
+ * tertiary referencia `brand.tertiary` (#FF6D00) — se colapsar em secondary
+ * o engine faz fallback e os dois acentos M3 renderizam iguais (#3933).
+ */
+function checkKotlinSeedParity(tokens, errors) {
+  const file = path.join(
+    ROOT,
+    'shared', 'src', 'commonMain', 'kotlin', 'com', 'futebadosparcas',
+    'domain', 'model', 'ThemeConfig.kt'
+  );
+  const content = readRequiredFile(file, 'shared seed (ThemeConfig.kt)', errors);
+  if (!content) return;
+
   const expected = {
-    md3_light_primary: tokens.palette.primary.main,
-    md3_light_inversePrimary: tokens.darkPalette.primary.main,
-    md3_dark_primary: tokens.darkPalette.primary.main,
-    md3_dark_inversePrimary: tokens.palette.primary.main,
+    primary: tokens.palette.primary.main,      // #00852A
+    secondary: tokens.palette.secondary.main,  // #005FCC — paridade web
+    tertiary: tokens.brand.tertiary.hex,        // #FF6D00 — distinto
   };
 
-  for (const platform of PLATFORMS.filter((platform) => platform.name !== 'web')) {
-    const content = readRequiredFile(platform.file, platform.name, errors);
-    if (!content) continue;
-    checkKotlinValHexes(content, expected, `${platform.name} semantic green`, platform.file, errors);
+  for (const [name, rawHex] of Object.entries(expected)) {
+    const hex6 = normalizeHex(rawHex);
+    // Casa "PRIMARY_ARGB = 0xFF00852A" ou "PRIMARY_ARGB: Int = 0xFF00852A"
+    // (com .toInt() opcional) dentro de DefaultSeeds.
+    const re = new RegExp(
+      '\\b' + name + '_ARGB\\s*(?::\\s*Int)?\\s*=\\s*0xFF' + hex6 + '(?:\\.toInt\\(\\))?',
+      'i'
+    );
+    if (!re.test(content)) {
+      errors.push(
+        `[shared seed] DefaultSeeds.${name}_ARGB diverge — esperado 0xFF${hex6.toUpperCase()} em ${relative(file)}`
+      );
+    }
   }
 }
 
@@ -609,32 +636,12 @@ function checkSurfaceParity(tokens, errors) {
     }
   }
 
-  const lightExpected = {
-    md3_light_surfaceDim: tokens.surface.light.dim,
-    md3_light_surfaceBright: tokens.surface.light.bright,
-    md3_light_surfaceContainerLowest: tokens.surface.light.containerLowest,
-    md3_light_surfaceContainerLow: tokens.surface.light.containerLow,
-    md3_light_surfaceContainer: tokens.surface.light.container,
-    md3_light_surfaceContainerHigh: tokens.surface.light.containerHigh,
-    md3_light_surfaceContainerHighest: tokens.surface.light.containerHighest,
-  };
-
-  const darkExpected = {
-    md3_dark_surfaceDim: tokens.surface.dark.dim,
-    md3_dark_surfaceBright: tokens.surface.dark.bright,
-    md3_dark_surfaceContainerLowest: tokens.surface.dark.containerLowest,
-    md3_dark_surfaceContainerLow: tokens.surface.dark.containerLow,
-    md3_dark_surfaceContainer: tokens.surface.dark.container,
-    md3_dark_surfaceContainerHigh: tokens.surface.dark.containerHigh,
-    md3_dark_surfaceContainerHighest: tokens.surface.dark.containerHighest,
-  };
-
-  for (const platform of PLATFORMS.filter((platform) => platform.name !== 'web')) {
-    const content = readRequiredFile(platform.file, `${platform.name} surface tokens`, errors);
-    if (!content) continue;
-    checkKotlinValHexes(content, lightExpected, `${platform.name} light surface token`, platform.file, errors);
-    checkKotlinValHexes(content, darkExpected, `${platform.name} dark surface token`, platform.file, errors);
-  }
+  // NOTA (#3934): a validacao Kotlin de `md3_*_surface*` foi REMOVIDA. Esses
+  // vals privados (e os schemes FutebaLight/DarkColorScheme que consumiam) eram
+  // codigo morto e foram apagados de Color.kt. No Android/iOS as superficies
+  // sao derivadas em runtime pelo DynamicThemeEngine a partir do TonalPalette
+  // neutro (hue do seed primary) — nao existe hex estatico para comparar.
+  // A paridade viva das cores de acento fica em checkKotlinSeedParity.
 }
 
 // ==========================================
@@ -779,7 +786,7 @@ function main() {
   checkWebThemeColor(tokens, errors);
   checkWebSemanticPalette(tokens, errors);
   checkIntraPlatformPaletteParity(tokens, errors);
-  checkKotlinSemanticGreen(tokens, errors);
+  checkKotlinSeedParity(tokens, errors);
   checkGamificationParity(tokens, errors);
   checkSurfaceParity(tokens, errors);
 

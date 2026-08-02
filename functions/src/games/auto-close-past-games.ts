@@ -17,7 +17,10 @@ import {
 } from "../constants";
 import {db} from "../_db";
 import {buildGameValidationFromFirestore} from "../game-validation/aggregate";
-import {isScoreConsistentFromEventStream} from "./live-events";
+import {
+  isScoreConsistentFromEventStream,
+  readScoresMap,
+} from "./live-events";
 
 export const PAST_GAME_GRACE_DAYS = 2;
 export const PAST_GAME_MIN_PLAYERS = 6;
@@ -427,20 +430,14 @@ async function getGameEvidence(
   ).length;
   const liveScoreData =
     liveScoreSnap.exists ? liveScoreSnap.data() : undefined;
+  // #3942: consistência calculada sobre o mapa canônico de placares
+  // (com fallback legado), suportando jogos de 2-4 times.
+  const scoresMap = readScoresMap(liveScoreData);
   const scoreEventConsistent =
-    liveScoreData &&
-    typeof liveScoreData.team1_id === "string" &&
-    typeof liveScoreData.team2_id === "string" ?
+    liveScoreData && scoresMap.size > 0 ?
       isScoreConsistentFromEventStream(
         gameEventsSnap.docs,
-        liveScoreData.team1_id,
-        liveScoreData.team2_id,
-        typeof liveScoreData.team1_score === "number" ?
-          liveScoreData.team1_score :
-          0,
-        typeof liveScoreData.team2_score === "number" ?
-          liveScoreData.team2_score :
-          0,
+        scoresMap,
       ) :
       undefined;
 

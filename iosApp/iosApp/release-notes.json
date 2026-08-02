@@ -1,7 +1,27 @@
 {
   "platform": "ios",
-  "generatedAt": "2026-07-25T14:21:01.399Z",
+  "generatedAt": "2026-08-02T01:15:42.838Z",
   "notes": [
+    {
+      "version": "1.7.1",
+      "buildNumber": 22,
+      "releaseDate": "2026-08-01",
+      "type": "patch",
+      "showPopup": true,
+      "published": false,
+      "headline": "As cores do app agora seguem o mesmo padrão visual da versão web.",
+      "highlights": [],
+      "added": [],
+      "improved": [],
+      "fixed": [
+        "A cor de destaque secundário mudou de laranja para azul, igual ao site.",
+        "Uma terceira cor de destaque (laranja) agora aparece em rankings e badges, em vez de repetir a secundária."
+      ],
+      "issueRefs": [
+        3934,
+        3933
+      ]
+    },
     {
       "version": "1.7.0",
       "buildNumber": 21,
