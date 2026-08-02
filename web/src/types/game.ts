@@ -126,6 +126,13 @@ export interface LiveGameScore {
   team1Score: number;
   team2Id: string;
   team2Score: number;
+  /**
+   * #3942: mapa canônico de placares por teamId, suportando 2-4 times.
+   * Espelha o campo `scores` gravado em live_scores/{gameId} pelo backend.
+   * Quando ausente (docs legados anteriores à migração), os campos
+   * team1Score/team2Score são usados como fallback.
+   */
+  scores?: Record<string, number>;
   startedAt?: Date;
   finishedAt?: Date;
 }

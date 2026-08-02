@@ -1,5 +1,6 @@
 import * as admin from "firebase-admin";
 import {Timestamp} from "firebase-admin/firestore";
+import {FIRESTORE_WHERE_IN_LIMIT} from "../constants";
 
 const getDb = () => admin.firestore();
 
@@ -47,25 +48,18 @@ function anyExplicitlyFalse(
 }
 
 /**
- * Lê e normaliza as preferências de notificação de um usuário a partir da
- * coleção canônica `notification_settings/{uid}`, tolerando snake_case (web) e
- * camelCase (android). Doc ausente => tudo habilitado (fail-open).
+ * Normaliza um documento cru de `notification_settings` em NotificationSettings.
+ * Extraído de {@link getNotificationSettings} para permitir reuso em leitura
+ * em batch sem N+1 (um get() por usuário). (#3941 F2)
  *
- * @param {string} userId - UID do usuário.
- * @return {Promise<NotificationSettings>} Preferências normalizadas.
+ * @param {Record<string, unknown> | undefined} raw Doc cru (ou undefined).
+ * @return {NotificationSettings} Preferências normalizadas (fail-open).
  */
-export async function getNotificationSettings(
-  userId: string,
-): Promise<NotificationSettings> {
-  const snap = await getDb()
-    .collection("notification_settings")
-    .doc(userId)
-    .get();
-  const d = ((snap.exists ? snap.data() : {}) ?? {}) as Record<string, unknown>;
+function normalizeNotificationSettings(
+  raw: Record<string, unknown> | undefined,
+): NotificationSettings {
+  const d = raw ?? {};
 
-  // mute_until (web) | muteUntilTime (android). Duck-typing em `.toDate`
-  // (em vez de instanceof Timestamp) tolera Firestore Timestamp real e é
-  // testável sem mock de classe.
   let muteUntil: Date | null = null;
   const rawMute = d.mute_until ?? d.muteUntilTime;
   if (
@@ -93,6 +87,65 @@ export async function getNotificationSettings(
     muteGroups,
     raw: d,
   };
+}
+
+/**
+ * Lê e normaliza as preferências de notificação de um usuário a partir da
+ * coleção canônica `notification_settings/{uid}`, tolerando snake_case (web) e
+ * camelCase (android). Doc ausente => tudo habilitado (fail-open).
+ *
+ * @param {string} userId - UID do usuário.
+ * @return {Promise<NotificationSettings>} Preferências normalizadas.
+ */
+export async function getNotificationSettings(
+  userId: string,
+): Promise<NotificationSettings> {
+  const snap = await getDb()
+    .collection("notification_settings")
+    .doc(userId)
+    .get();
+  const d = ((snap.exists ? snap.data() : {}) ?? {}) as Record<string, unknown>;
+  return normalizeNotificationSettings(d);
+}
+
+/**
+ * Lê preferências de MÚLTIPLOS usuários em uma única chamada batched
+ * (`getAll` em chunks do limite do Firestore), eliminando o N+1 serial
+ * (um get() por usuário) no filtro de preferências do batch sender. Um usuário
+ * presente em K docs é lido UMA vez por execução. (#3941 F2)
+ *
+ * Docs ausentes => tudo habilitado (fail-open, igual a getNotificationSettings).
+ * Falha de leitura em massa retorna um mapa vazio; o caller faz fail-open por
+ * usuário para nunca super-suprimir notificação.
+ *
+ * @param {string[]} userIds - UIDs (duplicados são ignorados).
+ * @return {Promise<Map<string, NotificationSettings>>} Mapa uid -> settings.
+ */
+export async function getNotificationSettingsBatch(
+  userIds: string[],
+): Promise<Map<string, NotificationSettings>> {
+  const result = new Map<string, NotificationSettings>();
+  const unique = [...new Set((userIds || []).filter(Boolean))];
+  if (unique.length === 0) return result;
+
+  const firestore = getDb();
+  // db.getAll não tem limite explícito, mas chunks de whereIn (10) mantêm o
+  // padrão do resto do código e limitam burst de documentos por round-trip.
+  for (let i = 0; i < unique.length; i += FIRESTORE_WHERE_IN_LIMIT) {
+    const chunk = unique.slice(i, i + FIRESTORE_WHERE_IN_LIMIT);
+    const refs = chunk.map((uid) =>
+      firestore.collection("notification_settings").doc(uid),
+    );
+    const snapshots = typeof firestore.getAll === "function" ?
+      await firestore.getAll(...refs) :
+      await Promise.all(refs.map((ref) => ref.get()));
+    snapshots.forEach((snap) => {
+      const data = (snap.exists ? snap.data() : undefined) as
+        Record<string, unknown> | undefined;
+      result.set(snap.id, normalizeNotificationSettings(data));
+    });
+  }
+  return result;
 }
 
 /**

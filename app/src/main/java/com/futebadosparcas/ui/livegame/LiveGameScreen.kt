@@ -24,6 +24,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -38,7 +42,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import com.futebadosparcas.R
-import androidx.compose.ui.res.stringResource
 import com.futebadosparcas.ui.adaptive.adaptiveContentWidth
 import com.futebadosparcas.ui.theme.statusBarsPadding
 
@@ -179,10 +182,7 @@ fun LiveGameScreen(
                     if (showAddEventSheet) {
                         AddEventBottomSheet(
                             sheetState = sheetState,
-                            team1 = state.team1,
-                            team2 = state.team2,
-                            team1Players = state.team1Players,
-                            team2Players = state.team2Players,
+                            teamScores = state.teamScores,
                             gameId = gameId,
                             onDismiss = { showAddEventSheet = false },
                             onEventAdded = { eventType, playerId, playerName, teamId, assistId, assistName, minute ->
@@ -344,37 +344,10 @@ private fun LiveGameHeader(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Placar
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // Time 1
-                TeamScoreCard(
-                    teamName = state.team1.name,
-                    score = state.score.team1Score,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.weight(1f)
-                )
-
-                // VS
-                Text(
-                    text = stringResource(R.string.live_game_vs),
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Black,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    modifier = Modifier.padding(horizontal = 8.dp)
-                )
-
-                // Time 2
-                TeamScoreCard(
-                    teamName = state.team2.name,
-                    score = state.score.team2Score,
-                    color = MaterialTheme.colorScheme.secondary,
-                    modifier = Modifier.weight(1f)
-                )
-            }
+            // Placar — 2 times (clássico com "VS") ou 3-4 times (FlowRow responsivo).
+            // #3942: o placar é lido do mapa canônico teamScores, não dos campos
+            // legados team1/team2, para suportar jogos de até 4 times.
+            TeamScoreBoard(teamScores = state.teamScores)
 
             // Botão de finalizar (apenas para organizador e se jogo não finalizado)
             if (state.isOwner && !isFinished) {
@@ -400,21 +373,102 @@ private fun LiveGameHeader(
 }
 
 /**
- * Card de placar de um time
+ * Placar responsivo dos times. Renderiza 2 a 4 times.
+ *
+ * - **2 times:** Row centralizado com separador "VS" (identidade clássica).
+ * - **3-4 times:** [FlowRow] que envolve para a próxima linha em telas
+ *   estreitas e ocupa uma única linha em tablets/desktop, sem overflow.
+ *
+ * Cada time recebe um acento distinto (primary/secondary/tertiary/error) e o
+ * nó é anotado com [contentDescription][androidx.compose.ui.semantics.semantics]
+ * para leitores de tela ("Time A, 2 gols").
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun TeamScoreBoard(
+    teamScores: List<TeamScore>,
+    modifier: Modifier = Modifier
+) {
+    val teamCount = teamScores.size
+    if (teamCount <= 2) {
+        Row(
+            modifier = modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            teamScores.getOrNull(0)?.let { TeamScoreCard(it, index = 0, modifier = Modifier.weight(1f)) }
+
+            Text(
+                text = stringResource(R.string.live_game_vs),
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Black,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                modifier = Modifier.padding(horizontal = 8.dp)
+            )
+
+            teamScores.getOrNull(1)?.let { TeamScoreCard(it, index = 1, modifier = Modifier.weight(1f)) }
+        }
+    } else {
+        FlowRow(
+            modifier = modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            teamScores.forEachIndexed { index, teamScore ->
+                TeamScoreCard(
+                    teamScore = teamScore,
+                    index = index,
+                    // Sem weight: o FlowRow envolve para a próxima linha em
+                    // telas estreitas e mantém uma linha em telas largas.
+                    modifier = Modifier.widthIn(min = 84.dp, max = 120.dp)
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Cor de acento por time, derivada dos roles do Material 3 para garantir
+ * contraste e distinção sem hardcodear hex. Cicla a cada 4 times.
+ */
+@Composable
+private fun teamAccentColor(index: Int): Color = when (index % 4) {
+    0 -> MaterialTheme.colorScheme.primary
+    1 -> MaterialTheme.colorScheme.secondary
+    2 -> MaterialTheme.colorScheme.tertiary
+    else -> MaterialTheme.colorScheme.error
+}
+
+/**
+ * Card de placar de um time. O nome usa onPrimaryContainer (contraste AA
+ * garantido pelo scheme); o número usa o acento do time sobre o próprio
+ * acento a 20% — legível para texto grande/negrito (AA large ≥ 3:1).
+ * O contentDescription descreve time + placar para acessibilidade.
  */
 @Composable
 private fun TeamScoreCard(
-    teamName: String,
-    score: Int,
-    color: Color,
+    teamScore: TeamScore,
+    index: Int,
     modifier: Modifier = Modifier
 ) {
+    val accent = teamAccentColor(index)
+    val displayName = teamScore.team.name.ifEmpty {
+        stringResource(R.string.live_game_team_default_n, index + 1)
+    }
+    // pluralStringResource é @Composable; chamado fora do lambda semantics.
+    val goalsLabel = pluralStringResource(
+        R.plurals.live_game_goals_count, teamScore.score, teamScore.score
+    )
     Column(
-        modifier = modifier,
+        modifier = modifier
+            .padding(vertical = 4.dp)
+            .semantics(mergeDescendants = true) {
+                contentDescription = "$displayName, $goalsLabel"
+            },
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = teamName,
+            text = displayName,
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -427,7 +481,7 @@ private fun TeamScoreCard(
 
         Surface(
             shape = CircleShape,
-            color = color.copy(alpha = 0.2f),
+            color = accent.copy(alpha = 0.2f),
             modifier = Modifier.size(64.dp)
         ) {
             Box(
@@ -435,10 +489,10 @@ private fun TeamScoreCard(
                 modifier = Modifier.fillMaxSize()
             ) {
                 Text(
-                    text = score.toString(),
+                    text = teamScore.score.toString(),
                     style = MaterialTheme.typography.headlineLarge,
                     fontWeight = FontWeight.Black,
-                    color = color
+                    color = accent
                 )
             }
         }
@@ -587,14 +641,11 @@ private fun LiveGameFAB(
 /**
  * Bottom Sheet para adicionar eventos
  */
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 private fun AddEventBottomSheet(
     sheetState: SheetState,
-    team1: Team,
-    team2: Team,
-    team1Players: List<GameConfirmation>,
-    team2Players: List<GameConfirmation>,
+    teamScores: List<TeamScore>,
     gameId: String,
     onDismiss: () -> Unit,
     onEventAdded: (
@@ -608,7 +659,7 @@ private fun AddEventBottomSheet(
     ) -> Unit
 ) {
     var selectedEventType by remember { mutableStateOf(GameEventType.GOAL) }
-    var selectedTeam by remember { mutableStateOf(team1) }
+    var selectedTeamScore by remember { mutableStateOf(teamScores.firstOrNull()) }
     var selectedPlayer by remember { mutableStateOf<GameConfirmation?>(null) }
     var selectedAssist by remember { mutableStateOf<GameConfirmation?>(null) }
     var minute by remember { mutableStateOf("0") }
@@ -684,29 +735,30 @@ private fun AddEventBottomSheet(
 
             HorizontalDivider()
 
-            // Seleção de Time
+            // Seleção de Time — #3942: FlowRow com 2 a 4 times (chips com touch target ≥48dp).
             Text(
                 text = stringResource(R.string.live_game_select_team),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold
             )
 
-            Row(
+            FlowRow(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                FilterChip(
-                    selected = selectedTeam.id == team1.id,
-                    onClick = { selectedTeam = team1 },
-                    label = { Text(team1.name.ifEmpty { stringResource(R.string.live_game_team_default_1) }) },
-                    modifier = Modifier.weight(1f)
-                )
-                FilterChip(
-                    selected = selectedTeam.id == team2.id,
-                    onClick = { selectedTeam = team2 },
-                    label = { Text(team2.name.ifEmpty { stringResource(R.string.live_game_team_default_2) }) },
-                    modifier = Modifier.weight(1f)
-                )
+                teamScores.forEachIndexed { index, teamScore ->
+                    val team = teamScore.team
+                    val label = team.name.ifEmpty {
+                        stringResource(R.string.live_game_team_default_n, index + 1)
+                    }
+                    FilterChip(
+                        selected = selectedTeamScore?.team?.id == team.id,
+                        onClick = { selectedTeamScore = teamScore },
+                        label = { Text(label) },
+                        modifier = Modifier.widthIn(min = 96.dp)
+                    )
+                }
             }
 
             HorizontalDivider()
@@ -721,8 +773,8 @@ private fun AddEventBottomSheet(
             )
 
             // Lista de jogadores atuais baseada no time selecionado
-            val currentPlayers = remember(selectedTeam) {
-                if (selectedTeam.id == team1.id) team1Players else team2Players
+            val currentPlayers = remember(selectedTeamScore) {
+                selectedTeamScore?.players ?: emptyList()
             }
 
             // Seleção de Jogador (Dropdown)
@@ -830,19 +882,23 @@ private fun AddEventBottomSheet(
                 }
                 Button(
                     onClick = {
+                        val teamId = selectedTeamScore?.team?.id
                         // Validação simplificada - em produção, implementar completamente
-                        selectedPlayer?.let { player ->
-                            onEventAdded(
-                                selectedEventType,
-                                player.userId,
-                                player.userName,
-                                selectedTeam.id,
-                                selectedAssist?.userId,
-                                selectedAssist?.userName,
-                                minute.toIntOrNull() ?: 0
-                            )
+                        if (teamId != null) {
+                            selectedPlayer?.let { player ->
+                                onEventAdded(
+                                    selectedEventType,
+                                    player.userId,
+                                    player.userName,
+                                    teamId,
+                                    selectedAssist?.userId,
+                                    selectedAssist?.userName,
+                                    minute.toIntOrNull() ?: 0
+                                )
+                            }
                         }
                     },
+                    enabled = selectedTeamScore != null,
                     modifier = Modifier.weight(1f)
                 ) {
                     Text(stringResource(R.string.action_confirm))

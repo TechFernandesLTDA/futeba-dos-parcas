@@ -23,6 +23,7 @@ import {
 } from "firebase-functions/v2/https";
 import {
   onDocumentCreated,
+  onDocumentUpdated,
 } from "firebase-functions/v2/firestore";
 import {logger} from "firebase-functions/v2";
 import {FieldPath, FieldValue} from "firebase-admin/firestore";
@@ -309,6 +310,149 @@ export const onNewUserCreated = onDocumentCreated(
       );
       // #1030: Relança o erro para que o trigger falhe e o
       // Firebase reprocesse automaticamente com retry
+      throw error;
+    }
+  }
+);
+
+// ==========================================
+// TRIGGER: onUserRoleUpdated (reconciliação)
+// ==========================================
+
+/**
+ * Reconcilia a custom claim `role` sempre que o campo `role`
+ * mudar em `users/{userId}`.
+ *
+ * MOTIVAÇÃO (#3938): As Firestore rules em FASE 2 leem EXCLUSIVAMENTE
+ * a custom claim (`request.auth.token.role`), mas o espelho
+ * `users/{uid}.role` continua editável por ADMIN (regra `allow update`
+ * com bypass `isAdmin()`) e por qualquer script com Admin SDK. Como o
+ * único sync existente era `onDocumentCreated`, rebaixar um usuário
+ * editando o Firestore era um no-op permanente — a claim antiga
+ * persistia e o acesso ADMIN era mantido indefinidamente.
+ *
+ * Este trigger fecha o gap: qualquer mutação de `role` no Firestore
+ * (callable `setUserRole`, console Firebase, CRM, scripts Admin SDK)
+ * é espelhada para a custom claim E seguida de `revokeRefreshTokens`,
+ * espelhando o contrato do `setUserRole`.
+ *
+ * IDEMPOTÊNCIA:
+ * - Só age quando `before.role !== after.role` (ignora updates de
+ *   outros campos, ex.: `claims_updated_at` escrito por `setUserRole`).
+ * - Vira no-op quando a claim já reflete o novo mirror (cobre o fluxo
+ *   do `setUserRole`, que grava a claim ANTES do Firestore: quando o
+ *   trigger dispara a claim já está correta).
+ * - Não escreve de volta em `users/{userId}` (apenas Auth + audit_logs),
+ *   portanto não há risco de loop de trigger.
+ *
+ * @param {object} event - Evento de update do documento Firestore
+ * @return {Promise<void>} Promise vazia
+ */
+export const onUserRoleUpdated = onDocumentUpdated(
+  {document: "users/{userId}", region: FUNCTION_REGION, retry: true},
+  async (event) => {
+    const userId = event.params.userId;
+    const beforeData = event.data?.before?.data();
+    const afterData = event.data?.after?.data();
+
+    if (!beforeData || !afterData) {
+      return;
+    }
+
+    const beforeRole = beforeData.role;
+    const afterRole = afterData.role;
+
+    // Idempotência #1: só reconcilia quando `role` realmente mudou.
+    // Evita reprocessar updates de outros campos (claims_updated_at,
+    // profile updates, etc.) que disparam este trigger.
+    if (beforeRole === afterRole) {
+      return;
+    }
+
+    // Privilégio mínimo se o novo role for inválido/ausente: nunca
+    // preserva um privilégio duvidoso lido do espelho.
+    const newRole =
+      (VALID_ROLES as readonly unknown[]).includes(afterRole) ?
+        afterRole :
+        "PLAYER";
+
+    try {
+      // Idempotência #2: se a claim já bate com o mirror, nada a fazer.
+      // Este é exatamente o caso do `setUserRole`, que seta a claim
+      // ANTES de escrever no Firestore — quando o trigger dispara, a
+      // claim já está correta e o trigger vira no-op.
+      const existingClaims =
+        (await admin.auth().getUser(userId)).customClaims || {};
+
+      if (existingClaims.role === newRole) {
+        logger.info(
+          "[CUSTOM_CLAIMS] onUserRoleUpdated no-op " +
+          `(claim já = ${newRole}) para ${userId}`
+        );
+        return;
+      }
+
+      await admin
+        .auth()
+        .setCustomUserClaims(userId, {
+          ...existingClaims,
+          role: newRole,
+        });
+
+      // Invalida refresh tokens para forçar re-login com o novo role,
+      // espelhando o contrato de segurança do `setUserRole` (#3938).
+      await admin.auth().revokeRefreshTokens(userId);
+
+      logger.warn(
+        "[CUSTOM_CLAIMS] onUserRoleUpdated reconciliou claim " +
+        `para ${userId}: ${beforeRole ?? "(none)"} -> ${newRole} ` +
+        "(refresh tokens revoked)"
+      );
+
+      // Audit log para rastreabilidade de reconciliações originadas
+      // fora do callable `setUserRole` (ex.: console Firebase, scripts
+      // Admin SDK). actor_user_id null sinaliza origem externa ao
+      // callable autenticado.
+      try {
+        await db().collection("audit_logs").add({
+          type: "ROLE_RECONCILED",
+          target_user_id: userId,
+          actor_user_id: null,
+          old_role: beforeRole ?? null,
+          new_role: newRole,
+          timestamp: FieldValue.serverTimestamp(),
+        });
+      } catch (auditError) {
+        logger.error(
+          "[CUSTOM_CLAIMS][AUDIT] Falha ao registrar ROLE_RECONCILED:",
+          auditError
+        );
+        // Non-critical — a claim já foi reconciliada.
+      }
+    } catch (error) {
+      const code = (error as {code?: string} | null)?.code;
+      // #2782: No emulador (test harness / E2E) é comum atualizar docs
+      // users/{uid} direto no Firestore sem o Auth user correspondente.
+      // getUser/setCustomUserClaims lançam auth/user-not-found; o retry
+      // (#1030 via retry:true acima) não resolve user ausente (não é
+      // transiente), então logamos e retornamos SEM relançar — apenas
+      // no emulador. Produção mantém o relançar para retry do Firebase.
+      if (
+        process.env.FUNCTIONS_EMULATOR === "true" &&
+        code === "auth/user-not-found"
+      ) {
+        logger.warn(
+          "[CUSTOM_CLAIMS] onUserRoleUpdated: Auth user ausente no " +
+          `emulador; pulando claims para ${userId} (seed sem Auth user)`
+        );
+        return;
+      }
+      logger.error(
+        `[CUSTOM_CLAIMS] onUserRoleUpdated erro para ${userId}:`,
+        error
+      );
+      // #1030 + FIX #1309-M5: relança para o onDocumentUpdated v2
+      // retentar (habilitado por retry:true acima).
       throw error;
     }
   }

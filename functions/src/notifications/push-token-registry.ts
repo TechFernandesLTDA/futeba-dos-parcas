@@ -358,9 +358,18 @@ export async function getRegisteredPushTokens(
 ): Promise<Map<string, string[]>> {
   const result = new Map<string, string[]>();
   const uniqueUserIds = [...new Set(userIds.filter(Boolean))];
-  for (const chunk of chunked(uniqueUserIds, 10)) {
-    const snapshot = await db().collection(TOKENS_COLLECTION)
-      .where("userId", "in", chunk).get();
+  if (uniqueUserIds.length === 0) return result;
+  // #3941 F2: paralelizar os chunks de whereIn (antes era `for...of await`
+  // serial). Para um grupo de 800 membros (~80 chunks) isto corta de ~1.2s
+  // serial para um único round-trip paralelo. Cada chunk é uma query
+  // independente e a agregação no Map é order-independent.
+  const snapshots = await Promise.all(
+    chunked(uniqueUserIds, 10).map((chunk) =>
+      db().collection(TOKENS_COLLECTION)
+        .where("userId", "in", chunk).get()
+    )
+  );
+  for (const snapshot of snapshots) {
     snapshot.docs.forEach((document) => {
       const record = document.data() as Partial<PushTokenRecord>;
       if (!record.userId || !record.token || isExpired(record.expiresAt)) return;

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
@@ -56,8 +56,11 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { getFirestoreErrorMessage } from '../../utils/firebaseErrors';
-import { Game, GameEvent, GameEventType } from '../../types/game';
+import { Game, GameEvent, GameEventType, Team } from '../../types/game';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
+// #3942: placar ao vivo para 2-4 times (mapa canônico scores + fallback legado).
+import { buildTeamScores, readScoresMap, type TeamScore } from '../../utils/liveScores';
+import { LiveScoreboard } from './LiveScoreboard';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { createLogger } from '../../utils/logger';
 import { EmptyState } from '../../components/common/EmptyState';
@@ -68,8 +71,13 @@ const logger = createLogger('LiveGameScreen');
 
 interface LiveScore {
   id: string;
+  // #3942: campos legados team1/team2 (dual-write do backend).
+  team1Id: string;
   team1Score: number;
+  team2Id: string;
   team2Score: number;
+  // #3942: mapa canônico teamId → placar (2-4 times).
+  scoresMap: Map<string, number>;
   startedAt: Date;
 }
 
@@ -187,6 +195,9 @@ export const LiveGameScreen: React.FC = () => {
   const [game, setGame] = useState<Game | null>(null);
   const [score, setScore] = useState<LiveScore | null>(null);
   const [events, setEvents] = useState<GameEvent[]>([]);
+  // #3942: metadados dos times (id → name) da collection teams/{gameId},
+  // necessários para rotular times 3 e 4 (não presentes no doc games).
+  const [teamsById, setTeamsById] = useState<Record<string, Team>>({});
   const [confirmedPlayers, setConfirmedPlayers] = useState<ConfirmedPlayer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -203,6 +214,48 @@ export const LiveGameScreen: React.FC = () => {
   const canManage = canManageGame(game, uid, isAdmin);
   const isConfirmedPlayer = Boolean(uid && confirmedPlayers.some((player) => player.id === uid));
   const canSubmitEvents = canManage || isConfirmedPlayer;
+
+  // #3942: resolve a lista ordenada de placares (2-4 times) combinando o mapa
+  // canônico de live_scores, os times da collection teams e os nomes legados do
+  // doc games. Quando ainda não há live_scores (pré-início), mostra 0-0 com os
+  // nomes legados team1Name/team2Name — preservando o comportamento anterior.
+  const teamScores = useMemo<TeamScore[]>(() => {
+    const resolved = buildTeamScores({
+      scoresMap: score?.scoresMap,
+      teams: teamsById,
+      seedTeamIds: [score?.team1Id, score?.team2Id],
+      fallbackNames: score
+        ? {
+            ...(score.team1Id
+              ? { [score.team1Id]: game?.team1Name || t('games.teamA') }
+              : {}),
+            ...(score.team2Id
+              ? { [score.team2Id]: game?.team2Name || t('games.teamB') }
+              : {}),
+          }
+        : {},
+      fallbackLabel: (index) => t('games.live.team', { team: index + 1 }),
+    });
+    if (resolved.length > 0) return resolved;
+    return [
+      {
+        teamId: '__team1__',
+        name: game?.team1Name || t('games.teamA'),
+        score: 0,
+        paletteKey: 'primary',
+        isLeader: false,
+        isTied: false,
+      },
+      {
+        teamId: '__team2__',
+        name: game?.team2Name || t('games.teamB'),
+        score: 0,
+        paletteKey: 'secondary',
+        isLeader: false,
+        isTied: false,
+      },
+    ];
+  }, [score, teamsById, game, t]);
 
   const [actionLoading, setActionLoading] = useState(false);
   const [finishing, setFinishing] = useState(false);
@@ -275,10 +328,15 @@ export const LiveGameScreen: React.FC = () => {
     const unsubscribeScore = onSnapshot(scoreRef, (docSnap) => {
       if (docSnap.exists()) {
         const raw = docSnap.data();
+        // #3942: lê o mapa canônico scores (2-4 times) com fallback legado
+        // team1_id/team2_id. readScoresMap é o espelho web do backend.
         setScore({
           id: docSnap.id,
-          team1Score: raw.team1_score ?? 0,
-          team2Score: raw.team2_score ?? 0,
+          team1Id: typeof raw.team1_id === 'string' ? raw.team1_id : '',
+          team1Score: Number(raw.team1_score ?? 0),
+          team2Id: typeof raw.team2_id === 'string' ? raw.team2_id : '',
+          team2Score: Number(raw.team2_score ?? 0),
+          scoresMap: readScoresMap(raw as Record<string, unknown>),
           startedAt: (raw.started_at as { toDate?: () => Date })?.toDate?.() || new Date(),
         });
       } else {
@@ -342,11 +400,43 @@ export const LiveGameScreen: React.FC = () => {
       showErrorRef.current(message);
     });
 
+    // #3942: times da collection teams/{gameId} — fornece nomes para times 3 e 4
+    // (não presentes nos campos team1Name/team2Name do doc games). Listener
+    // realtime mantém os rótulos sincronizados conforme a formação muda.
+    const teamsQuery = query(collection(db, 'teams'), where('game_id', '==', gameId));
+    const unsubscribeTeams = onSnapshot(teamsQuery, (snapshot) => {
+      const mapped = snapshot.docs.reduce<Record<string, Team>>((acc, teamDoc) => {
+        const raw = teamDoc.data();
+        const converted = snakeToCamel(raw);
+        acc[teamDoc.id] = {
+          id: teamDoc.id,
+          gameId: String(raw.game_id ?? converted.gameId ?? gameId),
+          name: String(raw.name ?? converted.name ?? ''),
+          color: String(raw.color ?? converted.color ?? ''),
+          playerIds: Array.isArray(raw.player_ids)
+            ? (raw.player_ids as string[])
+            : Array.isArray(converted.playerIds)
+              ? (converted.playerIds as string[])
+              : [],
+          score: Number(raw.score ?? converted.score ?? 0),
+        };
+        return acc;
+      }, {});
+      setTeamsById(mapped);
+      setListenerError('teams');
+    }, (err) => {
+      logger.error('Error in teams listener:', err);
+      // Teams ausentes não bloqueiam o placar (fallback para nomes legados),
+      // então apenas sinalizamos sem disparar toast para não ser ruidoso.
+      setListenerError('teams', t('games.live.errorLoadTeams', { defaultValue: 'Erro ao carregar times.' }));
+    });
+
     return () => {
       unsubscribeGame();
       unsubscribeScore();
       unsubscribeEvents();
       unsubscribeConfirmations();
+      unsubscribeTeams();
     };
   }, [gameId, listenerRetryKey, setListenerError, t]);
 
@@ -632,69 +722,10 @@ export const LiveGameScreen: React.FC = () => {
           }}
         >
           <CardContent>
-            {/* Scorecard ao vivo com linguagem de placar esportivo. */}
-            {(() => {
-              const s1 = score?.team1Score || 0;
-              const s2 = score?.team2Score || 0;
-              const leader: 1 | 2 | 0 = s1 > s2 ? 1 : s2 > s1 ? 2 : 0;
-              return (
-                <Box sx={{ textAlign: 'center' }}>
-                  <Chip
-                    size="small"
-                    color="error"
-                    label={t('games.statusLive')}
-                    sx={{ fontWeight: 800, letterSpacing: 0.8, mb: 1.5 }}
-                  />
-                  <Box sx={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', gap: { xs: 1.5, sm: 3 } }}>
-                    <Box sx={{ minWidth: 0 }}>
-                      <Typography variant="subtitle1" fontWeight={700} color="text.secondary" noWrap>
-                        {game.team1Name || t('games.teamA')}
-                      </Typography>
-                      <Typography
-                        key={`team-1-${s1}`}
-                        variant="h1"
-                        fontWeight={leader === 1 ? 800 : 600}
-                        sx={{
-                          color: 'primary.main',
-                          opacity: leader === 2 ? 0.6 : 1,
-                          lineHeight: 1,
-                          animation: 'scoreFlash 280ms ease-out',
-                          '@keyframes scoreFlash': {
-                            '0%': { transform: 'scale(1.12)' },
-                            '100%': { transform: 'scale(1)' },
-                          },
-                          transition: (t) => t.transitions.create(['opacity', 'font-weight'], { duration: t.transitions.duration.shorter }),
-                        }}
-                      >
-                        {s1}
-                      </Typography>
-                    </Box>
-                    <Typography variant="h2" color="text.secondary" fontWeight={300} sx={{ px: 1 }}>
-                      –
-                    </Typography>
-                    <Box sx={{ minWidth: 0 }}>
-                      <Typography variant="subtitle1" fontWeight={700} color="text.secondary" noWrap>
-                        {game.team2Name || t('games.teamB')}
-                      </Typography>
-                      <Typography
-                        key={`team-2-${s2}`}
-                        variant="h1"
-                        fontWeight={leader === 2 ? 800 : 600}
-                        sx={{
-                          color: 'secondary.main',
-                          opacity: leader === 1 ? 0.6 : 1,
-                          lineHeight: 1,
-                          animation: 'scoreFlash 280ms ease-out',
-                          transition: (t) => t.transitions.create(['opacity', 'font-weight'], { duration: t.transitions.duration.shorter }),
-                        }}
-                      >
-                        {s2}
-                      </Typography>
-                    </Box>
-                  </Box>
-                </Box>
-              );
-            })()}
+            {/* #3942: placar ao vivo para 2-4 times. LiveScoreboard resolve o
+                layout (clássico de 2 ou grid de 3-4) e a acessibilidade
+                (role=group + região aria-live). */}
+            <LiveScoreboard teamScores={teamScores} isLive={isRunning} />
 
             {/* O placar segue apenas eventos validados no servidor. */}
             {canManage && isRunning && (

@@ -84,6 +84,12 @@ export interface LiveGameScore {
     team2Id: string;
     team1Score: number;
     team2Score: number;
+    /**
+     * #3942: mapa canônico de placares por teamId (2-4 times). Ausente em
+     * live_scores legados pré-migração — nesse caso só team1/team2 estão
+     * disponíveis via team1Id/team2Id/team1Score/team2Score.
+     */
+    scores?: Record<string, number>;
 }
 
 export interface UserStatistics {

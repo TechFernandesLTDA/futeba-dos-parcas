@@ -13,9 +13,11 @@ import {
 } from "../constants";
 import {
   getNotificationSettings,
+  getNotificationSettingsBatch,
   isMuted,
   isGroupMuted,
   isNotificationTypeEnabled,
+  NotificationSettings,
 } from "./preferences";
 
 import {db} from "../_db";
@@ -133,6 +135,12 @@ export function isTransientError(
     code === "messaging/server-unavailable" ||
     code === "messaging/internal-error" ||
     code === "messaging/unknown-error" ||
+    // #3941 F4: quota-exceeded e message-rate-exceeded são documentados pelo
+    // FCM como retentáveis (throttle temporário, não falha permanente).
+    // Antes caíam fora de isTransientError/isInvalidTokenError e o doc virava
+    // SENT sem retry nem log.
+    code === "messaging/quota-exceeded" ||
+    code === "messaging/message-rate-exceeded" ||
     // Erros de rede também são transientes
     (error?.message?.includes("ECONNRESET") ?? false) ||
     (error?.message?.includes("ETIMEDOUT") ?? false) ||
@@ -407,11 +415,7 @@ export async function shouldNotifyUser(
     // `users.notification_preferences` — campo que NENHUM writer produz, logo
     // todo opt-out era ignorado (regressão recorrente #785/#926/#1143).
     const settings = await getNotificationSettings(userId);
-    if (!settings.pushEnabled) return false;
-    if (isMuted(settings)) return false;
-    if (isGroupMuted(settings, groupId)) return false;
-    if (!isNotificationTypeEnabled(settings, notificationType)) return false;
-    return true;
+    return shouldNotifyWithSettings(settings, notificationType, groupId);
   } catch (e) {
     // fail-open: não bloquear notificação em caso de erro de leitura
     logger.error(
@@ -421,6 +425,42 @@ export async function shouldNotifyUser(
     return true;
   }
 }
+
+/**
+ * Mesmo gate de {@link shouldNotifyUser} mas sobre preferências JÁ carregadas
+ * (via {@link getNotificationSettingsBatch}), sem I/O. Permite ao batch sender
+ * filtrar todos os destinatários de uma execução em memória, eliminando o N+1
+ * serial (um get() por usuário × doc) que consumia dezenas de segundos e era
+ * combustível direto do timeout de 120s. (#3941 F2)
+ *
+ * Fail-open: settings ausente no mapa => allow (consistente com shouldNotifyUser
+ * para doc inexistente). Em erro de leitura em massa, o caller deve optar por
+ * fail-open também.
+ *
+ * @param {NotificationSettings | undefined} settings Preferências do usuário.
+ * @param {string} notificationType Tipo/canal da notificação.
+ * @param {string | undefined} groupId Grupo (para checar mute_groups).
+ * @return {boolean} true se deve notificar.
+ */
+export function shouldNotifyWithSettings(
+  settings: NotificationSettings | undefined,
+  notificationType: string,
+  groupId?: string,
+): boolean {
+  // Doc ausente => tudo habilitado (fail-open), igual a getNotificationSettings.
+  if (!settings) return true;
+  if (!settings.pushEnabled) return false;
+  if (isMuted(settings)) return false;
+  if (isGroupMuted(settings, groupId)) return false;
+  if (!isNotificationTypeEnabled(settings, notificationType)) return false;
+  return true;
+}
+
+/**
+ * Reexporta o reader em batch para o batch sender poder pré-carregar todas as
+ * preferências de uma execução numa única chamada. (#3941 F2)
+ */
+export {getNotificationSettingsBatch};
 
 /**
  * Busca tokens FCM de múltiplos usuários com

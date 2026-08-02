@@ -1,7 +1,5 @@
 package com.futebadosparcas.data
 
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
@@ -10,6 +8,7 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.futebadosparcas.domain.model.AppThemeConfig
 import com.futebadosparcas.domain.model.ContrastLevel
+import com.futebadosparcas.domain.model.DefaultSeeds
 import com.futebadosparcas.domain.model.SeedColors
 import com.futebadosparcas.domain.model.ThemeMode
 import com.futebadosparcas.domain.repository.ThemeRepository
@@ -28,6 +27,7 @@ class ThemeRepositoryImpl constructor(
         val THEME_MODE = stringPreferencesKey("theme_mode")
         val PRIMARY_COLOR = intPreferencesKey("primary_color")
         val SECONDARY_COLOR = intPreferencesKey("secondary_color")
+        val TERTIARY_COLOR = intPreferencesKey("tertiary_color")
         val CONTRAST_LEVEL = stringPreferencesKey("contrast_level")
         val USE_DYNAMIC_COLOR = booleanPreferencesKey("use_dynamic_color")
     }
@@ -52,15 +52,23 @@ class ThemeRepositoryImpl constructor(
                 defaultConfig.contrastLevel
             }
 
-            // Usa Compose Color (não android.graphics.Color) para cores semente padrão.
-            val primary = preferences[Keys.PRIMARY_COLOR] ?: Color(0xFF00852A).toArgb()
-            val secondary = preferences[Keys.SECONDARY_COLOR] ?: Color(0xFFFF9600).toArgb()
+            // Seeds lidas do modelo canonico (DefaultSeeds/AppThemeConfig), NAO
+            // hardcodadas aqui — evita drift entre ThemeConfig.kt e este repo (#3934).
+            // #3933: tertiary persistido para nao colapsar em secondary no tema custom.
+            val defaultSeeds = defaultConfig.seedColors
+            val primary = preferences[Keys.PRIMARY_COLOR] ?: defaultSeeds.primary
+            val secondary = preferences[Keys.SECONDARY_COLOR] ?: defaultSeeds.secondary
+            // tertiary resolve sempre para um Int nao-nulo (DefaultSeeds canônico),
+            // garantindo que NAO colapse em secondary mesmo em tema custom/legado (#3933).
+            val tertiary = preferences[Keys.TERTIARY_COLOR]
+                ?: defaultSeeds.tertiary
+                ?: DefaultSeeds.TERTIARY_ARGB
 
             // #2684: Material You (opt-in). Sem nada persistido usa o default da marca.
             val useDynamicColor = preferences[Keys.USE_DYNAMIC_COLOR] ?: defaultConfig.useDynamicColor
 
             AppThemeConfig(
-                seedColors = SeedColors(primary, secondary),
+                seedColors = SeedColors(primary, secondary, tertiary),
                 mode = mode,
                 contrastLevel = contrast,
                 useDynamicColor = useDynamicColor
@@ -72,6 +80,8 @@ class ThemeRepositoryImpl constructor(
             preferences[Keys.THEME_MODE] = config.mode.name
             preferences[Keys.PRIMARY_COLOR] = config.seedColors.primary
             preferences[Keys.SECONDARY_COLOR] = config.seedColors.secondary
+            preferences[Keys.TERTIARY_COLOR] = config.seedColors.tertiary
+                ?: DefaultSeeds.TERTIARY_ARGB
             preferences[Keys.CONTRAST_LEVEL] = config.contrastLevel.name
             preferences[Keys.USE_DYNAMIC_COLOR] = config.useDynamicColor
         }
@@ -103,6 +113,7 @@ class ThemeRepositoryImpl constructor(
             preferences[Keys.THEME_MODE] = defaults.mode.name
             preferences[Keys.PRIMARY_COLOR] = defaults.seedColors.primary
             preferences[Keys.SECONDARY_COLOR] = defaults.seedColors.secondary
+            preferences[Keys.TERTIARY_COLOR] = DefaultSeeds.TERTIARY_ARGB
             preferences[Keys.CONTRAST_LEVEL] = defaults.contrastLevel.name
             preferences[Keys.USE_DYNAMIC_COLOR] = defaults.useDynamicColor
         }

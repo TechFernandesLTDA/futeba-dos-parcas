@@ -3913,15 +3913,60 @@ private fun dev.gitlive.firebase.firestore.DocumentSnapshot.toGameEventOrNull():
 
 private fun dev.gitlive.firebase.firestore.DocumentSnapshot.toLiveScoreOrNull(): LiveScore? {
     if (!exists) return null
+    val team1Id = get<String?>("team1_id") ?: get<String?>("team1Id") ?: ""
+    val team1Score = safeInt("team1_score") ?: safeInt("team1Score") ?: 0
+    val team2Id = get<String?>("team2_id") ?: get<String?>("team2Id") ?: ""
+    val team2Score = safeInt("team2_score") ?: safeInt("team2Score") ?: 0
     return LiveScore(
         id = id, gameId = get<String?>("game_id") ?: get<String?>("gameId") ?: "",
-        team1Id = get<String?>("team1_id") ?: get<String?>("team1Id") ?: "",
-        team1Score = safeInt("team1_score") ?: safeInt("team1Score") ?: 0,
-        team2Id = get<String?>("team2_id") ?: get<String?>("team2Id") ?: "",
-        team2Score = safeInt("team2_score") ?: safeInt("team2Score") ?: 0,
+        // #3942: mapa canônico scores (2-4 times) com fallback legado team1/team2.
+        scores = readScoresMap(team1Id, team1Score, team2Id, team2Score),
+        team1Id = team1Id,
+        team1Score = team1Score,
+        team2Id = team2Id,
+        team2Score = team2Score,
         startedAt = safeLong("started_at") ?: safeLong("startedAt"),
         finishedAt = safeLong("finished_at") ?: safeLong("finishedAt")
     )
+}
+
+/**
+ * Lê o mapa canônico de placares `scores: {<teamId>: n}` de um doc de
+ * live_scores. Espelha `readScoresMap` do backend (functions): quando o
+ * campo `scores` está ausente ou vazio (docs legados gravados antes de
+ * #3942), reconstrói o mapa a partir de team1/team2 — garantindo
+ * migração sem perda de dados e suporte a jogos LIVE já em andamento no
+ * momento do deploy. Valores inválidos/negativos são normalizados para 0.
+ */
+private fun dev.gitlive.firebase.firestore.DocumentSnapshot.readScoresMap(
+    team1Id: String,
+    team1Score: Int,
+    team2Id: String,
+    team2Score: Int,
+): Map<String, Int> {
+    val rawScores = get<Map<*, *>?>("scores")
+    if (rawScores != null && rawScores.isNotEmpty()) {
+        val canonical = buildMap {
+            rawScores.forEach { (key, value) ->
+                val teamId = key as? String
+                if (!teamId.isNullOrEmpty()) {
+                    val numeric = when (value) {
+                        is Number -> value.toInt()
+                        is String -> value.toIntOrNull()
+                        else -> null
+                    }
+                    if (numeric != null) put(teamId, maxOf(0, numeric))
+                }
+            }
+        }
+        if (canonical.isNotEmpty()) return canonical
+    }
+    // Fallback legado: reconstitui o mapa a partir de team1/team2.
+    val legacy = buildMap {
+        if (team1Id.isNotEmpty()) put(team1Id, team1Score)
+        if (team2Id.isNotEmpty()) put(team2Id, team2Score)
+    }
+    return legacy
 }
 
 private fun dev.gitlive.firebase.firestore.DocumentSnapshot.toGroupOrNull(): Group? {

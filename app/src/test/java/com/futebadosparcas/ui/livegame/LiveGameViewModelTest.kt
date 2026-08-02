@@ -230,4 +230,152 @@ class LiveGameViewModelTest {
         coVerify(exactly = 0) { gameRepository.getGameTeams(any()) }
         coVerify(exactly = 0) { gameRepository.getGameConfirmations(any()) }
     }
+
+    // ========== #3942: suporte a 2-4 times via mapa canônico `scores` ==========
+
+    @Test
+    fun `mapa scores com tres times renderiza todos na ordem com placares corretos`() = runTest(dispatcher) {
+        // Backend (#3942) grava scores: {<teamId>: n} em vez de team1/team2.
+        scoreFlow.value = LiveScore(
+            id = "game-1",
+            gameId = "game-1",
+            scores = mapOf("team-a" to 2, "team-b" to 1, "team-c" to 3)
+        )
+        teamsFlow.value = Result.success(
+            listOf(
+                Team(id = "team-a", gameId = "game-1", name = "A", playerIds = listOf("p1")),
+                Team(id = "team-b", gameId = "game-1", name = "B", playerIds = listOf("p2")),
+                Team(id = "team-c", gameId = "game-1", name = "C", playerIds = listOf("p3"))
+            )
+        )
+        confirmationsFlow.value = Result.success(
+            listOf(
+                GameConfirmation(gameId = "game-1", userId = "p1", userName = "Um"),
+                GameConfirmation(gameId = "game-1", userId = "p2", userName = "Dois"),
+                GameConfirmation(gameId = "game-1", userId = "p3", userName = "Tres")
+            )
+        )
+
+        viewModel.loadGame("game-1")
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertInstanceOf(LiveGameUiState.Success::class.java, state)
+        state as LiveGameUiState.Success
+        assertEquals(listOf("team-a", "team-b", "team-c"), state.teamScores.map { it.team.id })
+        assertEquals(listOf(2, 1, 3), state.teamScores.map { it.score })
+        assertEquals(listOf("p3"), state.teamScores[2].players.map { it.userId })
+    }
+
+    @Test
+    fun `mapa scores com quatro times suporta o limite do dominio`() = runTest(dispatcher) {
+        scoreFlow.value = LiveScore(
+            id = "game-1",
+            gameId = "game-1",
+            scores = mapOf("team-a" to 0, "team-b" to 0, "team-c" to 0, "team-d" to 0)
+        )
+        teamsFlow.value = Result.success(
+            listOf(
+                Team(id = "team-a", gameId = "game-1", name = "A", playerIds = listOf("p1")),
+                Team(id = "team-b", gameId = "game-1", name = "B", playerIds = listOf("p2")),
+                Team(id = "team-c", gameId = "game-1", name = "C", playerIds = listOf("p3")),
+                Team(id = "team-d", gameId = "game-1", name = "D", playerIds = listOf("p4"))
+            )
+        )
+        confirmationsFlow.value = Result.success(
+            listOf(
+                GameConfirmation(gameId = "game-1", userId = "p1", userName = "Um"),
+                GameConfirmation(gameId = "game-1", userId = "p2", userName = "Dois"),
+                GameConfirmation(gameId = "game-1", userId = "p3", userName = "Tres"),
+                GameConfirmation(gameId = "game-1", userId = "p4", userName = "Quatro")
+            )
+        )
+
+        viewModel.loadGame("game-1")
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value as LiveGameUiState.Success
+        assertEquals(4, state.teamScores.size)
+        assertEquals(listOf("team-a", "team-b", "team-c", "team-d"), state.teamScores.map { it.team.id })
+    }
+
+    @Test
+    fun `mapa scores ignora times nao vinculados e mantem sucesso quando restam dois ou mais`() = runTest(dispatcher) {
+        // team-fantasma existe no placar mas não na collection teams (doc órfão).
+        scoreFlow.value = LiveScore(
+            id = "game-1",
+            gameId = "game-1",
+            scores = mapOf("team-a" to 1, "team-fantasma" to 5, "team-b" to 2)
+        )
+        teamsFlow.value = Result.success(
+            listOf(
+                Team(id = "team-a", gameId = "game-1", name = "A", playerIds = listOf("p1")),
+                Team(id = "team-b", gameId = "game-1", name = "B", playerIds = listOf("p2"))
+            )
+        )
+
+        viewModel.loadGame("game-1")
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value as LiveGameUiState.Success
+        assertEquals(listOf("team-a", "team-b"), state.teamScores.map { it.team.id })
+        assertEquals(listOf(1, 2), state.teamScores.map { it.score })
+    }
+
+    @Test
+    fun `placar legado sem scores eh reconstruido a partir de team1 e team2`() = runTest(dispatcher) {
+        // Doc gravado antes de #3942: sem campo `scores`. Fallback legado.
+        scoreFlow.value = LiveScore(
+            id = "game-1",
+            gameId = "game-1",
+            team1Id = "team-a",
+            team1Score = 3,
+            team2Id = "team-b",
+            team2Score = 2
+        )
+
+        viewModel.loadGame("game-1")
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value as LiveGameUiState.Success
+        assertEquals(listOf("team-a", "team-b"), state.teamScores.map { it.team.id })
+        assertEquals(listOf(3, 2), state.teamScores.map { it.score })
+    }
+
+    @Test
+    fun `addGoal aceita gol de qualquer time valido em jogo de tres times`() = runTest(dispatcher) {
+        val addGameEventUseCase = mockk<AddGameEventUseCase>(relaxed = true)
+        viewModel = LiveGameViewModel(
+            liveGameRepository = liveGameRepository,
+            gameRepository = gameRepository,
+            authRepository = authRepository,
+            addGameEventUseCase = addGameEventUseCase,
+            finishLiveGameUseCase = mockk<FinishLiveGameUseCase>(relaxed = true)
+        )
+        scoreFlow.value = LiveScore(
+            id = "game-1",
+            gameId = "game-1",
+            scores = mapOf("team-a" to 0, "team-b" to 0, "team-c" to 0)
+        )
+        teamsFlow.value = Result.success(
+            listOf(
+                Team(id = "team-a", gameId = "game-1", name = "A", playerIds = listOf("p1")),
+                Team(id = "team-b", gameId = "game-1", name = "B", playerIds = listOf("p2")),
+                Team(id = "team-c", gameId = "game-1", name = "C", playerIds = listOf("p3"))
+            )
+        )
+
+        viewModel.loadGame("game-1")
+        advanceUntilIdle()
+
+        // Gol do time 3 (team-c) — antes de #3942 isto era impossível de registrar.
+        viewModel.addGoal("p3", "Tres", "team-c")
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) {
+            addGameEventUseCase(match {
+                it.playerId == "p3" && it.teamId == "team-c"
+            })
+        }
+    }
 }

@@ -39,6 +39,14 @@ const PII_FIELDS = [
   "height_cm",
   "weight_kg",
   "gender",
+  // #3935: `phone` (E.164 em plaintext) é gravado em users/{uid} por
+  // reconcilePhoneIdentity/account-merge legados. Incluí-lo aqui dá ao callable
+  // ADMIN `removePiiFromUsers` um caminho de REPARO para limpar docs de
+  // usuários já verificados que ficaram ilegíveis aos pares (o guard público
+  // nega o get quando `phone` está presente e não-vazio). Os writers foram
+  // corrigidos (param de gravar phone), mas os docs históricos precisam do
+  // backfill. Não confundir com users_private.phoneNumber (canônico, privado).
+  "phone",
 ] as const;
 
 /**
@@ -538,6 +546,14 @@ function validatePiiField(field: string, value: unknown): boolean {
           "O",
         ]
           .includes(value)
+    );
+  case "phone":
+    // #3935: E.164 (+...) com até 16 dígitos. Permite null/vazio (cleanup).
+    return (
+      typeof value === "string" &&
+        value.length > 0 &&
+        value.length <= 16 &&
+        /^\+?[0-9]+$/.test(value)
     );
   default:
     return false;

@@ -1026,7 +1026,11 @@ export const completeAccountMerge = onCall(
         tx.set(targetUserRef, {
           ...fallbackProfile,
           cpfVerifiedAt: verifiedAt,
-          phone: targetAuth.phoneNumber,
+          // #3935: NÃO gravar `phone` em users/{uid} — torna o usuário
+          // verificado ilegível para pares (guard público de PII nas rules).
+          // Telefone canônico vive em Firebase Auth + users_private.phoneNumber.
+          // `phone_verified` (booleano, não PII) é mantido; seu guard foi
+          // removido das rules.
           phone_verified: true,
           verifiedAt,
           updated_at: verifiedAt,

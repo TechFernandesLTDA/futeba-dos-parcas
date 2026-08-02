@@ -10,7 +10,10 @@ import {ERROR_MSGS} from "../error-messages";
 import {db} from "../_db";
 import {checkRateLimit} from "../middleware/rate-limiter";
 import {requireProfileComplete} from "../middleware/require-profile-complete";
-import {isScoreConsistentFromEventStream} from "./live-events";
+import {
+  isScoreConsistentFromEventStream,
+  readScoresMap,
+} from "./live-events";
 
 interface GameLifecycleRequest {
   gameId: string;
@@ -243,11 +246,19 @@ export const startGameLifecycle = onCall<GameLifecycleRequest>(
 
       tx.update(gameRef, updates);
 
+      // #3942: placar ao vivo por teamId (suporta 2-4 times). Mantém os
+      // campos legados team1_id/team2_id/team1_score/team2_score em
+      // dual-write para compatibilidade de leitores não atualizados.
+      const initialScores: Record<string, number> = {};
+      for (const team of teams) {
+        initialScores[team.id] = 0;
+      }
       const liveScoreRef =
         db().collection("live_scores").doc(gameId);
       tx.set(liveScoreRef, {
         game_id: gameId,
         owner_id: game.owner_id,
+        scores: initialScores,
         team1_id: team1?.id ?? "team1",
         team1_score: 0,
         team2_id: team2?.id ?? "team2",
@@ -364,31 +375,36 @@ export const finishGameLifecycle = onCall<GameLifecycleRequest>(
       const liveScore = liveScoreSnap.exists ?
         liveScoreSnap.data() :
         undefined;
-      const team1Score =
-        typeof liveScore?.team1_score === "number" ?
-          liveScore.team1_score :
-          0;
-      const team2Score =
-        typeof liveScore?.team2_score === "number" ?
-          liveScore.team2_score :
-          0;
+      // #3942: lê o mapa canônico de placares (com fallback legado) e deriva
+      // os campos team1/team2 para persistir no doc final de games (cujas
+      // rules continuam exigindo team1_score/team2_score).
+      const scoresMap = readScoresMap(liveScore);
+      const team1Id =
+        typeof liveScore?.team1_id === "string" ? liveScore.team1_id : "";
+      const team2Id =
+        typeof liveScore?.team2_id === "string" ? liveScore.team2_id : "";
+      const team1Score = team1Id ?
+        (scoresMap.get(team1Id) ??
+          (typeof liveScore?.team1_score === "number" ?
+            liveScore.team1_score : 0)) :
+        (typeof liveScore?.team1_score === "number" ?
+          liveScore.team1_score : 0);
+      const team2Score = team2Id ?
+        (scoresMap.get(team2Id) ??
+          (typeof liveScore?.team2_score === "number" ?
+            liveScore.team2_score : 0)) :
+        (typeof liveScore?.team2_score === "number" ?
+          liveScore.team2_score : 0);
 
       // Auditoria de consistência: compara o placar do live_scores com a
       // contagem de eventos GOAL no stream. Divergência indica possível
       // corrida entre submit e leitura (eventos lidos fora da transação).
       // Não bloqueia a finalização — apenas registra para investigação.
       // Espelha auto-close-past-games.ts.
-      if (
-        liveScore &&
-        typeof liveScore.team1_id === "string" &&
-        typeof liveScore.team2_id === "string"
-      ) {
+      if (liveScore && scoresMap.size > 0) {
         const consistent = isScoreConsistentFromEventStream(
           eventsSnap.docs,
-          liveScore.team1_id,
-          liveScore.team2_id,
-          team1Score,
-          team2Score,
+          scoresMap,
         );
         if (!consistent) {
           logger.warn("[GAME_LIFECYCLE_SCORE_INCONSISTENT]", {

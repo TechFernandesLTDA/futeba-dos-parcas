@@ -39,6 +39,9 @@ import {
   FIRESTORE_WHERE_IN_LIMIT,
   FIRESTORE_PAGINATION_LIMIT,
   FUNCTION_REGION,
+  QUEUE_SAFE_BUDGET_MS,
+  QUEUE_MAX_RECIPIENTS_PER_DOC,
+  QUEUE_STALE_PROCESSING_MS,
 } from "../constants";
 import {
   sanitizeText,
@@ -47,11 +50,15 @@ import {
   secureCallable,
 } from "../middleware/secure-callable-wrapper";
 import {
-  shouldNotifyUser,
+  shouldNotifyWithSettings,
   isTransientError,
   // FIX #2199: reusa a versão canônica em helpers.ts (removida a duplicata local).
   isInvalidTokenError,
+  getNotificationSettingsBatch,
 } from "./helpers";
+import {
+  NotificationSettings,
+} from "./preferences";
 import {
   filterPushTokensByCanonicalOwner,
   getRegisteredPushTokens,
@@ -170,6 +177,17 @@ export async function enqueueNotification(
     return "";
   }
 
+  // FIX #3941 F3: cap de destinatários por DOC da fila. Sem isto, um doc com
+  // muitos userIds faz o update de pending_tokens/delivered_tokens estourar o
+  // limite de 1 MiB/doc (INVALID_ARGUMENT), que cai no catch do lote e derruba
+  // a execução inteira. Fatiando em N docs de ≤QUEUE_MAX_RECIPIENTS_PER_DOC,
+  // qualquer caller (callable ADMIN ou produtor automático) herda o limite.
+  // A ~200 bytes/token, 500 destinos ficam bem abaixo de 1 MiB e alinham com o
+  // limite de multicast FCM.
+  if (notification.userIds.length > QUEUE_MAX_RECIPIENTS_PER_DOC) {
+    return enqueueNotificationChunked(notification);
+  }
+
   const queueDoc =
     db.collection(QUEUE_COLLECTION).doc();
 
@@ -189,6 +207,78 @@ export async function enqueueNotification(
   );
 
   return queueDoc.id;
+}
+
+/**
+ * Fatia uma notificação grande em múltiplos docs da fila, cada um com no máximo
+ * QUEUE_MAX_RECIPIENTS_PER_DOC destinatários. Retorna o id do primeiro doc
+ * (mantém a assinatura Promise<string> de enqueueNotification para compat).
+ *
+ * Cada doc herda os mesmos title/body/type/data/priority — o processamento
+ * paralelo/a granel da fila trata cada um independentemente. (#3941 F3)
+ *
+ * @param {QueuedNotification} notification Notificação com >MAX destinatários.
+ * @return {Promise<string>} Id do primeiro doc criado.
+ */
+async function enqueueNotificationChunked(
+  notification: QueuedNotification
+): Promise<string> {
+  const db = getFirestore();
+  const userIds = notification.userIds;
+  const firstQueueId = db.collection(QUEUE_COLLECTION).doc().id;
+
+  let currentBatch = db.batch();
+  let batchOpCount = 0;
+  let docCount = 0;
+  let firstDocId = "";
+
+  for (
+    let i = 0;
+    i < userIds.length;
+    i += QUEUE_MAX_RECIPIENTS_PER_DOC
+  ) {
+    const chunk = userIds.slice(
+      i,
+      i + QUEUE_MAX_RECIPIENTS_PER_DOC
+    );
+    const queueDoc = docCount === 0 ?
+      db.collection(QUEUE_COLLECTION).doc(firstQueueId) :
+      db.collection(QUEUE_COLLECTION).doc();
+
+    if (docCount === 0) firstDocId = queueDoc.id;
+
+    currentBatch.set(queueDoc, {
+      ...notification,
+      userIds: chunk,
+      status: "PENDING",
+      priority: notification.priority || "NORMAL",
+      createdAt:
+        FieldValue
+          .serverTimestamp(),
+    });
+    docCount++;
+    batchOpCount++;
+
+    // Batch limit 500 — commit e criar NOVO batch (margem 450).
+    if (batchOpCount >= 450) {
+      await currentBatch.commit();
+      currentBatch = db.batch();
+      batchOpCount = 0;
+    }
+  }
+
+  if (batchOpCount > 0) {
+    await currentBatch.commit();
+  }
+
+  logger.info(
+    "[BATCH_FCM] Notificacao enfileirada em chunks:" +
+    ` ${docCount} docs para` +
+    ` ${userIds.length} usuarios` +
+    ` (primeiro: ${firstDocId})`
+  );
+
+  return firstDocId;
 }
 
 /**
@@ -279,6 +369,20 @@ async function processNotificationQueue():
   let totalFailed = 0;
   let invalidTokensCleaned = 0;
 
+  // FIX #3941 F1: recuperar claims stale (PROCESSING > QUEUE_STALE_PROCESSING_MS)
+  // no INÍCIO de cada execução (1×/min), em vez de apenas no cron diário não
+  // paginado. Docs que uma execução morta pelo timeout deixou em PROCESSING
+  // voltam a PENDING e podem ser reprocessados já nesta passada.
+  try {
+    await recoverStaleProcessingDocs(db);
+  } catch (staleError) {
+    // Recuperação é best-effort: não pode impedir o processamento de PENDING.
+    logger.warn(
+      "[BATCH_FCM] Recuperacao de PROCESSING stale falhou:",
+      staleError
+    );
+  }
+
   try {
     // 1. Buscar notificações pendentes
     const pendingSnap = await db
@@ -304,21 +408,70 @@ async function processNotificationQueue():
       " notificacoes da fila"
     );
 
-    // 2. Reivindicar (claim) cada doc de forma ATÔMICA via transaction.
-    // FIX #2324: o claim PENDING→PROCESSING precisa ser compare-and-swap.
-    // Antes era um batch.update() não-transacional: entre o .get() (passo 1)
-    // e o commit, outra instância concorrente podia ler os MESMOS docs PENDING
-    // e enviar push DUPLICADO. Agora cada doc é reivindicado dentro de uma
-    // transaction que relê o status: se já != PENDING (outra instância pegou,
-    // ou já foi SENT/PROCESSING), pula. Só os docs efetivamente reivindicados
-    // por ESTA execução seguem para envio (idempotência garantida mesmo com
-    // overlap). O conteúdo do doc (userIds/title/body) é imutável, então
-    // reusamos o snapshot do passo 1 — apenas `status` importa para o claim.
-    const claimedDocs:
-      admin.firestore.QueryDocumentSnapshot[] = [];
+    // FIX #3941 F1: o claim PENDING→PROCESSING agora é SOB DEMAND (um doc por
+    // vez, imediatamente antes de trabalhá-lo) e com orçamento de tempo, em
+    // vez de reivindicar todos os 200 docs ANTES de qualquer envio. Quando o
+    // GCF mata em 120s, os docs não trabalhados permanecem PENDING (nunca
+    // PROCESSING), e os já reivindicados são tratados em try/catch por doc
+    // (processSingleQueueDoc) que os reverte a PENDING em erro. O CAS
+    // compare-and-swap (#2324) é preservado: cada doc ainda é reivindicado
+    // dentro de uma transaction que relê o status.
+
+    // 3. Coletar todos os userIds únicos de TODOS os docs pendentes (antes do
+    // claim). Pré-carregar tokens E preferências em batch elimina o N+1 serial
+    // (um get() por usuário × doc) que consumia dezenas de segundos por doc e
+    // empurrava a execução para o timeout de 120s. (#3941 F2)
+    const allUserIds = new Set<string>();
     for (const doc of pendingSnap.docs) {
+      const userIds = doc.data().userIds as string[] | undefined;
+      if (userIds) {
+        userIds.forEach(
+          (id) => allUserIds.add(id)
+        );
+      }
+    }
+
+    const targetedUserIds = new Set<string>();
+
+    // 4. Pré-carregar tokens FCM + preferências de notificação em PARALELO
+    // (uma chamada batched cada). O filtro de preferências continua por-doc
+    // (cada doc tem seu próprio type/groupId), mas agora opera sobre o mapa em
+    // memória — sem get() serial por usuário.
+    // FIX #1282: bloco centralizado com docs[0].type removido — era tipo único para fila multi-tipo.
+    const [tokenMap, settingsMap] = await Promise.all([
+      fetchTokensInBatch(Array.from(allUserIds)).catch((err) => {
+        logger.error("[BATCH_FCM] Erro ao pré-carregar tokens:", err);
+        return new Map<string, string[]>();
+      }),
+      getNotificationSettingsBatch(Array.from(allUserIds)).catch((err) => {
+        logger.error("[BATCH_FCM] Erro ao pré-carregar preferências:", err);
+        return new Map<string, NotificationSettings>();
+      }),
+    ]);
+
+    // 5. Iterar docs: claim-on-demand sob orçamento de tempo + try/catch por
+    // documento. FIX #2324 mantém-se (CAS por doc). FIX #3941 F5: o catch
+    // agora isola a falha a ESTE doc (reverte a PENDING) em vez de abortar o
+    // lote inteiro.
+    const docErrors: unknown[] = [];
+
+    for (const doc of pendingSnap.docs) {
+      // Orçamento de tempo: parar limpo antes do deadline do runtime (120s).
+      // Docs restantes permanecem PENDING (ainda não reivindicados) e são
+      // reprocessados na próxima execução (1×/min). (#3941 F1)
+      if (Date.now() - startTime > QUEUE_SAFE_BUDGET_MS) {
+        logger.info(
+          "[BATCH_FCM] Orçamento de tempo" +
+          ` (${QUEUE_SAFE_BUDGET_MS}ms) esgotado — encerrando;` +
+          " docs restantes permanecem PENDING"
+        );
+        break;
+      }
+
+      // Claim atômico compare-and-swap imediatamente antes de trabalhar.
+      let claimed = false;
       try {
-        const claimed = await db.runTransaction(async (tx) => {
+        claimed = await db.runTransaction(async (tx) => {
           const fresh = await tx.get(doc.ref);
           if (!fresh.exists) return false;
           if (fresh.data()?.status !== "PENDING") {
@@ -333,9 +486,6 @@ async function processNotificationQueue():
           });
           return true;
         });
-        if (claimed) {
-          claimedDocs.push(doc);
-        }
       } catch (claimError) {
         // Falha transitória no claim: não reivindica este doc nesta execução.
         // Permanece PENDING e será reprocessado na próxima passada.
@@ -343,288 +493,34 @@ async function processNotificationQueue():
           `[BATCH_FCM] Falha ao reivindicar doc ${doc.id}:`,
           claimError
         );
-      }
-    }
-
-    if (claimedDocs.length === 0) {
-      logger.info(
-        "[BATCH_FCM] Nenhum doc reivindicado nesta execucao" +
-        " (provavel concorrencia) — encerrando"
-      );
-      return {
-        totalTargeted: 0,
-        totalSent: 0,
-        totalFailed: 0,
-        invalidTokensCleaned: 0,
-        durationMs: Date.now() - startTime,
-      };
-    }
-
-    if (claimedDocs.length < pendingSnap.size) {
-      logger.info(
-        `[BATCH_FCM] Reivindicados ${claimedDocs.length}` +
-        ` de ${pendingSnap.size} docs` +
-        " (demais ja reivindicados por outra execucao)"
-      );
-    }
-
-    // 3. Coletar todos os userIds únicos (apenas dos docs reivindicados)
-    const allUserIds = new Set<string>();
-    for (const doc of claimedDocs) {
-      const data = doc.data();
-      const userIds = data.userIds as string[];
-      if (userIds) {
-        userIds.forEach(
-          (id) => allUserIds.add(id)
-        );
-      }
-    }
-
-    const targetedUserIds = new Set<string>();
-
-    // 4. Buscar tokens FCM em batch para todos os usuários únicos.
-    // O filtro de preferências é aplicado por doc (dentro do loop),
-    // pois a fila é multi-tipo e cada doc tem seu próprio type/groupId.
-    // FIX #1282: bloco centralizado com docs[0].type removido — era tipo único para fila multi-tipo.
-    const tokenMap = await fetchTokensInBatch(
-      Array.from(allUserIds)
-    );
-
-    // 5. Processar cada notificação reivindicada por esta execução.
-    // FIX #2324: itera sobre claimedDocs (não pendingSnap.docs) — assim docs
-    // que outra instância concorrente reivindicou NÃO são reenviados aqui.
-    for (const doc of claimedDocs) {
-      const data = doc.data();
-      const userIds =
-        (data.userIds as string[]) || [];
-      const title = data.title as string;
-      const body = data.body as string;
-      const type = data.type as string;
-      const notifData =
-        (data.data as
-          Record<string, string>) || {};
-      const imageUrl =
-        data.imageUrl as string | undefined;
-
-      // FIX #1282: filtrar preferências de notificação por doc,
-      // usando o type e groupId corretos deste doc específico.
-      // Fail-open: em caso de erro na verificação, inclui o usuário.
-      const docGroupId = notifData?.groupId;
-      const filteredDocUserIds: string[] = [];
-      for (const uid of userIds) {
-        try {
-          const ok = await shouldNotifyUser(uid, type, docGroupId);
-          if (ok) filteredDocUserIds.push(uid);
-        } catch {
-          filteredDocUserIds.push(uid);
-        }
-      }
-      const skippedCount = userIds.length - filteredDocUserIds.length;
-      if (skippedCount > 0) {
-        logger.info(
-          `[BATCH_FCM] Filtrados ${skippedCount} usuarios ` +
-          `por preferencias (tipo: ${type}, doc: ${doc.id})`
-        );
-      }
-      addTargetedUserIds(targetedUserIds, filteredDocUserIds);
-      totalTargeted = targetedUserIds.size;
-
-      const pendingTokens =
-        ((data.pending_tokens as string[] | undefined) || [])
-          .filter(Boolean);
-      const deliveredTokens =
-        ((data.delivered_tokens as string[] | undefined) || [])
-          .filter(Boolean);
-
-      // Em retries, reenvia apenas tokens realmente pendentes; em docs legados,
-      // exclui tokens já entregues para evitar duplicação entre dispositivos.
-      const dispatch =
-        buildDispatchTokens(
-          filteredDocUserIds,
-          tokenMap,
-          pendingTokens,
-          deliveredTokens
-        );
-      const {tokens, tokenToUser} = dispatch;
-
-      if (tokens.length === 0) {
-        // Nenhum token disponível
-        await doc.ref.update({
-          status: "SENT",
-          sent_at:
-            FieldValue
-              .serverTimestamp(),
-          result: {
-            sent: 0,
-            failed: 0,
-            noTokens: userIds.length,
-          },
-        });
         continue;
       }
+      if (!claimed) continue;
 
-      // FIX #3594: materializa o conjunto completo de pendentes antes do
-      // primeiro efeito externo. Assim uma interrupção antes (ou entre) os
-      // checkpoints nunca faz o retry reconstruir o dispatch do zero.
-      await doc.ref.update({
-        pending_tokens: tokens,
-      });
-
-      // 6. Enviar via multicast em chunks
-      const sendResult =
-        await sendMulticastInChunks(
-          tokens,
-          tokenToUser,
-          {
-            title,
-            body,
-            type,
-            data: notifData,
-            imageUrl,
-          },
-          async (progress) => {
-            await persistChunkProgress(doc.ref, progress);
-          }
+      try {
+        const stats = await processSingleQueueDoc(
+          doc,
+          tokenMap,
+          settingsMap,
+          targetedUserIds
         );
-
-      totalSent += sendResult.sent;
-      totalFailed += sendResult.failed;
-      invalidTokensCleaned +=
-        sendResult.invalidTokensCleaned;
-
-      const hasTransientFailures =
-        sendResult.transientFailed > 0;
-      const allFailed =
-        sendResult.failed === tokens.length &&
-        sendResult.transientFailed === 0;
-
-      const currentRetryCount =
-        (data.retry_count as number) || 0;
-      const nextRetryCount = currentRetryCount + 1;
-
-      if (allFailed) {
-        await doc.ref.update({
-          status: "FAILED",
-          sent_at:
-            FieldValue
-              .serverTimestamp(),
-          result: {
-            sent: sendResult.sent,
-            failed: sendResult.failed,
-            transientFailed: sendResult.transientFailed,
-            invalidTokensCleaned:
-              sendResult.invalidTokensCleaned,
-            totalTokens: tokens.length,
-          },
+        totalSent += stats.sent;
+        totalFailed += stats.failed;
+        invalidTokensCleaned +=
+          stats.invalidTokensCleaned;
+      } catch (docError) {
+        // FIX #3941 F5: isola a falha a ESTE doc. Reverte a PENDING com
+        // retry_count++ (ou FAILED se exceder) para que nunca fique preso em
+        // PROCESSING, e continua o lote. Coleta o erro para relançar ao fim e
+        // o Cloud Scheduler (retryCount:1) retentar a execução (idempotente
+        // via CAS: docs já SENT permanecem, os revertidos serão re-claim).
+        docErrors.push(docError);
+        await revertDocToPending(doc).catch((revertErr) => {
+          logger.error(
+            `[BATCH_FCM] Falha ao reverter doc ${doc.id} a PENDING:`,
+            revertErr
+          );
         });
-      } else if (hasTransientFailures) {
-        const pendingUserIds =
-          Array.from(sendResult.pendingUserIds);
-        const deliveredUserIdsArray =
-          Array.from(sendResult.deliveredUserIds);
-        const pendingTokensArray =
-          Array.from(sendResult.pendingTokens);
-        const deliveredTokensArray =
-          Array.from(sendResult.deliveredTokens);
-
-        if (
-          nextRetryCount >= MAX_RETRY_COUNT ||
-          pendingTokensArray.length === 0
-        ) {
-          const terminalUpdate: Record<string, unknown> = {
-            status: "FAILED",
-            retry_count: nextRetryCount,
-            failure_reason:
-              nextRetryCount >= MAX_RETRY_COUNT ?
-                `Excedeu ${MAX_RETRY_COUNT} tentativas de envio` :
-                "Todos os destinos foram entregues ou falharam permanentemente",
-            sent_at:
-              FieldValue
-                .serverTimestamp(),
-            pending_tokens: FieldValue.delete(),
-            result: {
-              sent: sendResult.sent,
-              failed: sendResult.failed,
-              transientFailed: sendResult.transientFailed,
-              invalidTokensCleaned:
-                sendResult.invalidTokensCleaned,
-              totalTokens: tokens.length,
-            },
-          };
-
-          if (deliveredUserIdsArray.length > 0) {
-            terminalUpdate.delivered_user_ids =
-              FieldValue.arrayUnion(...deliveredUserIdsArray);
-          }
-          if (deliveredTokensArray.length > 0) {
-            terminalUpdate.delivered_tokens =
-              FieldValue.arrayUnion(...deliveredTokensArray);
-          }
-
-          await doc.ref.update({
-            ...terminalUpdate,
-          });
-        } else {
-          const retryUpdate: Record<string, unknown> = {
-            status: "PENDING",
-            userIds: pendingUserIds,
-            pending_tokens: pendingTokensArray,
-            retry_count: nextRetryCount,
-            sent_at:
-              FieldValue
-                .serverTimestamp(),
-            result: {
-              sent: sendResult.sent,
-              failed: sendResult.failed,
-              transientFailed: sendResult.transientFailed,
-              invalidTokensCleaned:
-                sendResult.invalidTokensCleaned,
-              totalTokens: tokens.length,
-            },
-          };
-
-          if (deliveredUserIdsArray.length > 0) {
-            retryUpdate.delivered_user_ids =
-              FieldValue.arrayUnion(...deliveredUserIdsArray);
-          }
-          if (deliveredTokensArray.length > 0) {
-            retryUpdate.delivered_tokens =
-              FieldValue.arrayUnion(...deliveredTokensArray);
-          }
-
-          await doc.ref.update(retryUpdate);
-        }
-      } else {
-        const deliveredUserIdsArray =
-          Array.from(sendResult.deliveredUserIds);
-        const deliveredTokensArray =
-          Array.from(sendResult.deliveredTokens);
-        const sentUpdate: Record<string, unknown> = {
-          status: "SENT",
-          sent_at:
-            FieldValue
-              .serverTimestamp(),
-          pending_tokens: FieldValue.delete(),
-          result: {
-            sent: sendResult.sent,
-            failed: sendResult.failed,
-            transientFailed: sendResult.transientFailed,
-            invalidTokensCleaned:
-              sendResult.invalidTokensCleaned,
-            totalTokens: tokens.length,
-          },
-        };
-
-        if (deliveredUserIdsArray.length > 0) {
-          sentUpdate.delivered_user_ids =
-            FieldValue.arrayUnion(...deliveredUserIdsArray);
-        }
-        if (deliveredTokensArray.length > 0) {
-          sentUpdate.delivered_tokens =
-            FieldValue.arrayUnion(...deliveredTokensArray);
-        }
-
-        await doc.ref.update(sentUpdate);
       }
     }
 
@@ -632,11 +528,27 @@ async function processNotificationQueue():
     // Um usuário presente em vários docs conta uma única vez se for elegível
     // em pelo menos um deles.
     totalTargeted = targetedUserIds.size;
+
+    // FIX #3941 F5: se algum doc teve erro inesperado, relança para o Cloud
+    // Scheduler ver FALHA e acionar retryCount:1. Os docs já processados
+    // permanecem em seus estados finais; os revertidos a PENDING serão
+    // reprocessados de forma idempotente na retentativa.
+    if (docErrors.length > 0) {
+      throw new Error(
+        "[BATCH_FCM] " + docErrors.length +
+        " doc(s) falharam durante o processamento;" +
+        " execução sinalizada para retry."
+      );
+    }
   } catch (error) {
+    // Erro estrutural (fetch da fila, prefetch, etc.) — loga e propaga para o
+    // handler agendado sinalizar falha ao Cloud Scheduler. Per-doc errors já
+    // foram tratadas acima (revertidas a PENDING) e relançadas separadamente.
     logger.error(
       "[BATCH_FCM] Erro ao processar fila:",
       error
     );
+    throw error;
   }
 
   const durationMs = Date.now() - startTime;
@@ -655,6 +567,387 @@ async function processNotificationQueue():
     totalFailed,
     invalidTokensCleaned,
     durationMs,
+  };
+}
+
+/**
+ * Recupera docs presos em PROCESSING (claim órfã de uma execução morta pelo
+ * timeout do GCF) revertendo-os a PENDING (ou FAILED se exceder retry_count).
+ *
+ * FIX #3941 F1: antes isto rodava 1×/dia com `.limit(100)` SEM paginação —
+ * docs 101+ ficavam PROCESSING para sempre (notificações órfãs permanentes).
+ * Agora é PAGINADO e rodado no início de cada processNotificationQueue (1×/min)
+ * + no cron diário como backstop.
+ *
+ * Paginação sem cursor: como cada batch RESETA os docs (PROCESSING→PENDING),
+ * a próxima execução da MESMA query retorna a próxima página naturalmente —
+ * sem orderBy/startAfter, portanto sem exigir novo composite index. O query
+ * original (status==PROCESSING, processing_at<date) já era servido por um
+ * composite index existente (o cron diário o usava em produção).
+ *
+ * @param {FirebaseFirestore.Firestore} database Firestore.
+ * @return {Promise<number>} Quantidade de docs recuperados.
+ */
+async function recoverStaleProcessingDocs(
+  database: FirebaseFirestore.Firestore
+): Promise<number> {
+  const staleDate = Timestamp.fromDate(
+    new Date(Date.now() - QUEUE_STALE_PROCESSING_MS)
+  );
+  let recovered = 0;
+
+  // Limite de segurança: evita loop infinito caso os resets não persistam.
+  const MAX_RECOVERY_PASSES = 50;
+  for (let pass = 0; pass < MAX_RECOVERY_PASSES; pass++) {
+    const snapshot = await database
+      .collection(QUEUE_COLLECTION)
+      .where("status", "==", "PROCESSING")
+      .where("processing_at", "<", staleDate)
+      .limit(FIRESTORE_PAGINATION_LIMIT)
+      .get();
+
+    if (snapshot.empty) break;
+
+    const batch = database.batch();
+    snapshot.docs.forEach((doc) => {
+      const retryCount = (doc.data().retry_count as number) || 0;
+      if (retryCount >= MAX_RETRY_COUNT) {
+        // Marcar como FAILED permanente
+        batch.update(doc.ref, {
+          status: "FAILED",
+          failure_reason:
+            `Excedeu ${MAX_RETRY_COUNT}` +
+            " tentativas de" +
+            " reprocessamento",
+        });
+      } else {
+        batch.update(doc.ref, {
+          status: "PENDING",
+          retry_count:
+            FieldValue
+              .increment(1),
+        });
+      }
+    });
+
+    await batch.commit();
+    recovered += snapshot.size;
+
+    // Última página (menos que o limite) ou nada a fazer.
+    if (snapshot.size < FIRESTORE_PAGINATION_LIMIT) break;
+  }
+
+  if (recovered > 0) {
+    logger.info(
+      "[BATCH_FCM]" +
+      ` ${recovered} notificacoes travadas` +
+      " (PROCESSING stale) resetadas para PENDING"
+    );
+  }
+  return recovered;
+}
+
+/**
+ * Reverte um doc preso em PROCESSING de volta a PENDING, incrementando
+ * retry_count. Best-effort: chamado no catch de erro de processSingleQueueDoc
+ * para garantir que um doc nunca fique permanentemente em PROCESSING quando a
+ * execução encontrar um erro inesperado. Se retry_count já exceder o máximo,
+ * marca como FAILED permanente. (#3941 F5)
+ *
+ * Usa CAS (relê status): só reverte se ainda estiver PROCESSING — evita
+ * sobrescrever uma transição concorrente para SENT/FAILED/PENDING.
+ *
+ * @param {admin.firestore.QueryDocumentSnapshot} doc Doc da fila.
+ * @return {Promise<void>}
+ */
+async function revertDocToPending(
+  doc: admin.firestore.QueryDocumentSnapshot
+): Promise<void> {
+  const db = getFirestore();
+  await db.runTransaction(async (tx) => {
+    const fresh = await tx.get(doc.ref);
+    if (!fresh.exists) return;
+    if (fresh.data()?.status !== "PROCESSING") return;
+    const retryCount =
+      (fresh.data()?.retry_count as number) || 0;
+    const nextRetryCount = retryCount + 1;
+    if (nextRetryCount >= MAX_RETRY_COUNT) {
+      tx.update(doc.ref, {
+        status: "FAILED",
+        retry_count: nextRetryCount,
+        failure_reason:
+          `Excedeu ${MAX_RETRY_COUNT}` +
+          " tentativas de reprocessamento",
+        sent_at:
+          FieldValue
+            .serverTimestamp(),
+      });
+    } else {
+      tx.update(doc.ref, {
+        status: "PENDING",
+        retry_count: nextRetryCount,
+        processing_at: FieldValue.delete(),
+      });
+    }
+  });
+}
+
+/**
+ * Processa um único doc da fila já reivindicado (PROCESSING). Contém a lógica
+ * extraída do loop inline: filtro de preferências (em memória), dispatch,
+ * envio multicast em chunks e persistência do resultado.
+ *
+ * Lança em erro inesperado — o caller (processNotificationQueue) reverte o doc
+ * a PENDING via {@link revertDocToPending} e continua o lote. (#3941 F5)
+ *
+ * @param {admin.firestore.QueryDocumentSnapshot} doc Doc da fila.
+ * @param {Map} tokenMap Tokens por uid (pré-carregado).
+ * @param {Map} settingsMap Preferências por uid.
+ * @param {Set} targetedUserIds Acumulador global de elegíveis.
+ * @return {Promise<object>} Estatísticas do doc (sent, failed, invalidTokensCleaned).
+ */
+async function processSingleQueueDoc(
+  doc: admin.firestore.QueryDocumentSnapshot,
+  tokenMap: Map<string, string[]>,
+  settingsMap: Map<string, NotificationSettings>,
+  targetedUserIds: Set<string>
+): Promise<{
+  sent: number;
+  failed: number;
+  invalidTokensCleaned: number;
+}> {
+  const data = doc.data();
+  const userIds =
+    (data.userIds as string[]) || [];
+  const title = data.title as string;
+  const body = data.body as string;
+  const type = data.type as string;
+  const notifData =
+    (data.data as
+      Record<string, string>) || {};
+  const imageUrl =
+    data.imageUrl as string | undefined;
+
+  // FIX #1282: filtrar preferências de notificação por doc, usando o type e
+  // groupId corretos deste doc específico. Operação sobre o mapa em memória
+  // pré-carregado (getNotificationSettingsBatch) — sem get() serial por user.
+  // (#3941 F2)
+  const docGroupId = notifData?.groupId;
+  const filteredDocUserIds: string[] = [];
+  for (const uid of userIds) {
+    const ok = shouldNotifyWithSettings(
+      settingsMap.get(uid),
+      type,
+      docGroupId
+    );
+    if (ok) filteredDocUserIds.push(uid);
+  }
+  const skippedCount = userIds.length - filteredDocUserIds.length;
+  if (skippedCount > 0) {
+    logger.info(
+      `[BATCH_FCM] Filtrados ${skippedCount} usuarios ` +
+      `por preferencias (tipo: ${type}, doc: ${doc.id})`
+    );
+  }
+  addTargetedUserIds(targetedUserIds, filteredDocUserIds);
+
+  const pendingTokens =
+    ((data.pending_tokens as string[] | undefined) || [])
+      .filter(Boolean);
+  const deliveredTokens =
+    ((data.delivered_tokens as string[] | undefined) || [])
+      .filter(Boolean);
+
+  // Em retries, reenvia apenas tokens realmente pendentes; em docs legados,
+  // exclui tokens já entregues para evitar duplicação entre dispositivos.
+  const dispatch =
+    buildDispatchTokens(
+      filteredDocUserIds,
+      tokenMap,
+      pendingTokens,
+      deliveredTokens
+    );
+  const {tokens, tokenToUser} = dispatch;
+
+  if (tokens.length === 0) {
+    // Nenhum token disponível
+    await doc.ref.update({
+      status: "SENT",
+      sent_at:
+        FieldValue
+          .serverTimestamp(),
+      result: {
+        sent: 0,
+        failed: 0,
+        noTokens: userIds.length,
+      },
+    });
+    return {sent: 0, failed: 0, invalidTokensCleaned: 0};
+  }
+
+  // FIX #3594: materializa o conjunto completo de pendentes antes do
+  // primeiro efeito externo. Assim uma interrupção antes (ou entre) os
+  // checkpoints nunca faz o retry reconstruir o dispatch do zero.
+  await doc.ref.update({
+    pending_tokens: tokens,
+  });
+
+  // 6. Enviar via multicast em chunks
+  const sendResult =
+    await sendMulticastInChunks(
+      tokens,
+      tokenToUser,
+      {
+        title,
+        body,
+        type,
+        data: notifData,
+        imageUrl,
+      },
+      async (progress) => {
+        await persistChunkProgress(doc.ref, progress);
+      }
+    );
+
+  const hasTransientFailures =
+    sendResult.transientFailed > 0;
+  const allFailed =
+    sendResult.failed === tokens.length &&
+    sendResult.transientFailed === 0;
+
+  const currentRetryCount =
+    (data.retry_count as number) || 0;
+  const nextRetryCount = currentRetryCount + 1;
+
+  if (allFailed) {
+    await doc.ref.update({
+      status: "FAILED",
+      sent_at:
+        FieldValue
+          .serverTimestamp(),
+      result: {
+        sent: sendResult.sent,
+        failed: sendResult.failed,
+        transientFailed: sendResult.transientFailed,
+        invalidTokensCleaned:
+          sendResult.invalidTokensCleaned,
+        totalTokens: tokens.length,
+      },
+    });
+  } else if (hasTransientFailures) {
+    const pendingUserIds =
+      Array.from(sendResult.pendingUserIds);
+    const deliveredUserIdsArray =
+      Array.from(sendResult.deliveredUserIds);
+    const pendingTokensArray =
+      Array.from(sendResult.pendingTokens);
+    const deliveredTokensArray =
+      Array.from(sendResult.deliveredTokens);
+
+    if (
+      nextRetryCount >= MAX_RETRY_COUNT ||
+      pendingTokensArray.length === 0
+    ) {
+      const terminalUpdate: Record<string, unknown> = {
+        status: "FAILED",
+        retry_count: nextRetryCount,
+        failure_reason:
+          nextRetryCount >= MAX_RETRY_COUNT ?
+            `Excedeu ${MAX_RETRY_COUNT} tentativas de envio` :
+            "Todos os destinos foram entregues ou falharam permanentemente",
+        sent_at:
+          FieldValue
+            .serverTimestamp(),
+        pending_tokens: FieldValue.delete(),
+        result: {
+          sent: sendResult.sent,
+          failed: sendResult.failed,
+          transientFailed: sendResult.transientFailed,
+          invalidTokensCleaned:
+            sendResult.invalidTokensCleaned,
+          totalTokens: tokens.length,
+        },
+      };
+
+      if (deliveredUserIdsArray.length > 0) {
+        terminalUpdate.delivered_user_ids =
+          FieldValue.arrayUnion(...deliveredUserIdsArray);
+      }
+      if (deliveredTokensArray.length > 0) {
+        terminalUpdate.delivered_tokens =
+          FieldValue.arrayUnion(...deliveredTokensArray);
+      }
+
+      await doc.ref.update({
+        ...terminalUpdate,
+      });
+    } else {
+      const retryUpdate: Record<string, unknown> = {
+        status: "PENDING",
+        userIds: pendingUserIds,
+        pending_tokens: pendingTokensArray,
+        retry_count: nextRetryCount,
+        sent_at:
+          FieldValue
+            .serverTimestamp(),
+        result: {
+          sent: sendResult.sent,
+          failed: sendResult.failed,
+          transientFailed: sendResult.transientFailed,
+          invalidTokensCleaned:
+            sendResult.invalidTokensCleaned,
+          totalTokens: tokens.length,
+        },
+      };
+
+      if (deliveredUserIdsArray.length > 0) {
+        retryUpdate.delivered_user_ids =
+          FieldValue.arrayUnion(...deliveredUserIdsArray);
+      }
+      if (deliveredTokensArray.length > 0) {
+        retryUpdate.delivered_tokens =
+          FieldValue.arrayUnion(...deliveredTokensArray);
+      }
+
+      await doc.ref.update(retryUpdate);
+    }
+  } else {
+    const deliveredUserIdsArray =
+      Array.from(sendResult.deliveredUserIds);
+    const deliveredTokensArray =
+      Array.from(sendResult.deliveredTokens);
+    const sentUpdate: Record<string, unknown> = {
+      status: "SENT",
+      sent_at:
+        FieldValue
+          .serverTimestamp(),
+      pending_tokens: FieldValue.delete(),
+      result: {
+        sent: sendResult.sent,
+        failed: sendResult.failed,
+        transientFailed: sendResult.transientFailed,
+        invalidTokensCleaned:
+          sendResult.invalidTokensCleaned,
+        totalTokens: tokens.length,
+      },
+    };
+
+    if (deliveredUserIdsArray.length > 0) {
+      sentUpdate.delivered_user_ids =
+        FieldValue.arrayUnion(...deliveredUserIdsArray);
+    }
+    if (deliveredTokensArray.length > 0) {
+      sentUpdate.delivered_tokens =
+        FieldValue.arrayUnion(...deliveredTokensArray);
+    }
+
+    await doc.ref.update(sentUpdate);
+  }
+
+  return {
+    sent: sendResult.sent,
+    failed: sendResult.failed,
+    invalidTokensCleaned: sendResult.invalidTokensCleaned,
   };
 }
 
@@ -818,6 +1111,20 @@ async function sendMulticastInChunks(
                 transientFailed++;
                 pendingTokens.add(failedToken);
                 chunkPendingTokens.push(failedToken);
+              } else {
+                // FIX #3941 F4: classes de erro FCM fora das duas conhecidas
+                // (invalid-token / transient) eram descartadas em silêncio — o
+                // token saía de pending (mergeChunkCheckpoint) e, com sent>0,
+                // o doc virava SENT sem retry nem log. Códigos como
+                // third-party-auth-error, authentication-error e
+                // mismatched-credential caíam aqui invisíveis. Agora logamos
+                // (userId, prefixo do token, código) para que o alerting veja.
+                logger.error(
+                  `[BATCH_FCM] Unhandled FCM error ${errorCode}` +
+                  ` for user ${userId ?? "?"}` +
+                  ` (token ${failedToken.slice(0, 8)}...):` +
+                  ` ${sendResponse.error.message || "no message"}`
+                );
               }
             }
           }
@@ -1025,6 +1332,9 @@ export const __testing = {
   fetchTokensInBatch,
   mergeChunkCheckpoint,
   sendMulticastInChunks,
+  // #3941: helpers de recuperação/per-doc expostos para testes de regressão.
+  recoverStaleProcessingDocs,
+  revertDocToPending,
 };
 
 // ==========================================
@@ -1554,61 +1864,12 @@ export const cleanupNotificationQueue =
           }
         }
 
-        // Limpar PROCESSING travadas (> 10 min)
-        const tenMinAgo = new Date();
-        tenMinAgo.setMinutes(
-          tenMinAgo.getMinutes() - 10
-        );
-        const staleDate =
-          Timestamp
-            .fromDate(tenMinAgo);
-
-        const staleSnap = await db
-          .collection(QUEUE_COLLECTION)
-          .where(
-            "status",
-            "==",
-            "PROCESSING"
-          )
-          .where(
-            "processing_at",
-            "<",
-            staleDate
-          )
-          .limit(100)
-          .get();
-
-        if (!staleSnap.empty) {
-          const staleBatch = db.batch();
-          staleSnap.docs.forEach((doc) => {
-            const retryCount =
-              doc.data().retry_count || 0;
-            if (retryCount >= MAX_RETRY_COUNT) {
-              // Marcar como FAILED permanente
-              staleBatch.update(doc.ref, {
-                status: "FAILED",
-                failure_reason:
-                  `Excedeu ${MAX_RETRY_COUNT}` +
-                  " tentativas de" +
-                  " reprocessamento",
-              });
-            } else {
-              staleBatch.update(doc.ref, {
-                status: "PENDING",
-                retry_count:
-                  FieldValue
-                    .increment(1),
-              });
-            }
-          });
-
-          await staleBatch.commit();
-          logger.info(
-            "[BATCH_FCM_CLEANUP]" +
-            ` ${staleSnap.size} notificacoes` +
-            " travadas resetadas para PENDING"
-          );
-        }
+        // FIX #3941 F1: limpar PROCESSING travadas (> QUEUE_STALE_PROCESSING_MS)
+        // via o MESMO helper paginado usado no início de cada execução. Antes
+        // era `.limit(100)` SEM paginação — docs 101+ ficavam PROCESSING para
+        // sempre. Agora a recuperação é completa (e redundante ao per-minute,
+        // servindo apenas como backstop diário).
+        await recoverStaleProcessingDocs(db);
 
         logger.info(
           "[BATCH_FCM_CLEANUP]" +

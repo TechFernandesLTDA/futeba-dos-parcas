@@ -29,6 +29,7 @@ import {
 } from "./game-validation/aggregate";
 import {
   isScoreConsistentFromEventStream,
+  readScoresMap,
 } from "./games/live-events";
 
 // Padroniza região default de TODAS as functions v2 que não especificam
@@ -671,22 +672,14 @@ export const onGameStatusUpdate = onDocumentUpdated(
           liveScoreDoc.exists ?
             liveScoreDoc.data() :
             undefined;
+        // #3942: consistência sobre o mapa canônico de placares (2-4 times),
+        // com fallback legado para live_scores ainda não migrados.
+        const scoresMap = readScoresMap(liveScoreData);
         const scoreEventConsistent =
-          liveScoreData &&
-          typeof liveScoreData.team1_id === "string" &&
-          typeof liveScoreData.team2_id === "string" ?
+          liveScoreData && scoresMap.size > 0 ?
             isScoreConsistentFromEventStream(
               gameEventsSnap.docs,
-              liveScoreData.team1_id,
-              liveScoreData.team2_id,
-              typeof liveScoreData.team1_score ===
-                "number" ?
-                liveScoreData.team1_score :
-                gameData.team1_score ?? 0,
-              typeof liveScoreData.team2_score ===
-                "number" ?
-                liveScoreData.team2_score :
-                gameData.team2_score ?? 0,
+              scoresMap,
             ) :
             undefined;
 
@@ -973,6 +966,63 @@ export const onGameStatusUpdate = onDocumentUpdated(
           );
         }
 
+        // #3940: DEDUP BIDIRECIONAL (defesa em profundidade).
+        // O caminho de votação (concludeMvpVoting → applyVotingXpDelta)
+        // credita MVP/Bola Murcha em docs próprios (mvp_${gameId}_${uid} e
+        // bola_murcha_${gameId}_${uid}). O guard existente acima só consulta
+        // o log principal (game_${gameId}_user_${uid}), então o sentido
+        // "votação pagou antes do pipeline" não é coberto. Quando o jogo esteve
+        // HELD_FOR_REVIEW, a ordem dos eventos se inverte e esse caminho fica
+        // exposto. Lemos os 2 docs de votação (apenas quando mvp_id /
+        // worst_player_id existem — leitura barata por doc id determinístico)
+        // e, se já existirem, o pipeline NÃO soma o XP de MVP/penalidade de
+        // novo. Idempotente e consistente com o padrão de leitura acima.
+        const mvpVotingUid =
+          typeof after.mvp_id === "string" &&
+          after.mvp_id.length > 0 ?
+            after.mvp_id : null;
+        const worstVotingUid =
+          typeof after.worst_player_id === "string" &&
+          after.worst_player_id.length > 0 ?
+            after.worst_player_id : null;
+        const [mvpVotingLogSnap, worstVotingLogSnap] = await Promise.all([
+          mvpVotingUid ?
+            db()
+              .collection("xp_logs")
+              .doc(`mvp_${gameId}_${mvpVotingUid}`)
+              .get() :
+            Promise.resolve(
+              {exists: false} as
+                FirebaseFirestore.DocumentSnapshot
+            ),
+          worstVotingUid ?
+            db()
+              .collection("xp_logs")
+              .doc(
+                `bola_murcha_${gameId}_${worstVotingUid}`
+              )
+              .get() :
+            Promise.resolve(
+              {exists: false} as
+                FirebaseFirestore.DocumentSnapshot
+            ),
+        ]);
+        const mvpVotingAlreadyPaid =
+          mvpVotingUid !== null && mvpVotingLogSnap.exists;
+        const worstVotingAlreadyPaid =
+          worstVotingUid !== null && worstVotingLogSnap.exists;
+        if (mvpVotingAlreadyPaid || worstVotingAlreadyPaid) {
+          logger.info(
+            "[XP_IDEMPOTENCY] Voting XP already " +
+            "paid for game " +
+            `${gameId} ` +
+            `(mvp=${mvpVotingAlreadyPaid}, ` +
+            `worst=${worstVotingAlreadyPaid}) ` +
+            "- skipping in main pipeline " +
+            "(issue #3940 bidirectional dedup)"
+          );
+        }
+
         const now = FieldValue.serverTimestamp();
 
         // Date keys for Rankings (BRT timezone)
@@ -1082,8 +1132,12 @@ export const onGameStatusUpdate = onDocumentUpdated(
             xp += settings.xp_draw;
           }
 
-          // MVP XP (now validated)
-          if (isMvp) xp += settings.xp_mvp;
+          // MVP XP (now validated).
+          // #3940: skip se o caminho de votação já pagou o MVP
+          // (dedup bidirecional — ver bloco de leitura acima).
+          if (isMvp && !mvpVotingAlreadyPaid) {
+            xp += settings.xp_mvp;
+          }
 
           // Clean Sheet XP (bonus para goleiros
           // que não sofrem gols)
@@ -1107,9 +1161,11 @@ export const onGameStatusUpdate = onDocumentUpdated(
           xp += cleanSheetXp;
 
           // "Bola Murcha" Penalty (worst player)
-          // synced with XPCalculator.kt
+          // synced with XPCalculator.kt.
+          // #3940: skip se o caminho de votação já aplicou a penalidade
+          // (dedup bidirecional — ver bloco de leitura acima).
           let penaltyXp = 0;
-          if (isWorstPlayer) {
+          if (isWorstPlayer && !worstVotingAlreadyPaid) {
             penaltyXp = XP_WORST_PLAYER_PENALTY;
             logger.info(
               `[PENALTY] User ${uid} is ` +
@@ -1460,7 +1516,7 @@ export const onGameStatusUpdate = onDocumentUpdated(
                       settings.xp_win :
                       (result === "DRAW" ?
                         settings.xp_draw : 0),
-                    xp_mvp: isMvp ?
+                    xp_mvp: (isMvp && !mvpVotingAlreadyPaid) ?
                       settings.xp_mvp : 0,
                     xp_clean_sheet: cleanSheetXp,
                     xp_milestones: milesXp,
@@ -1706,6 +1762,10 @@ export const onGameStatusUpdate = onDocumentUpdated(
           xp_processing: false,
           xp_processed_at: now,
           xp_reward_status: "PROCESSED",
+          // #3940: o XP de votação (MVP/Bola Murcha) foi pago neste pipeline
+          // run (quando mvp_id/worst_player_id já existiam). Limpa o flag de
+          // adiamento setado por concludeMvpVoting durante o hold anti-fraude.
+          voting_xp_pending: false,
         });
 
         logger.info(

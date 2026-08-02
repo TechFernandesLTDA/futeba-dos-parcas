@@ -342,8 +342,8 @@ val onPrimaryLight = Color(0xFFFFFFFF)
 val primaryContainerLight = Color(0xFFD0FFB3)
 val onPrimaryContainerLight = Color(0xFF0E3600)
 
-val secondaryLight = Color(0xFFFF9600)     // Laranja
-val tertiaryLight = Color(0xFF6200EA)      // Roxo
+val secondaryLight = Color(0xFF005FCC)     // Azul (paridade web — seed canônica)
+val tertiaryLight = Color(0xFFFF6D00)      // Laranja complementar (seed própria, #3933)
 
 // Gamificação (cores fixas)
 object GamificationColors {

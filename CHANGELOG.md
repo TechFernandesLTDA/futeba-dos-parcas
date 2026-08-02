@@ -24,6 +24,21 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ## Android
 
+### [1.39.2][android-1.39.2] - 2026-08-01
+
+#### Mudado
+- `secondary` mobile: `#FF9600` → `#005FCC` (alinhado ao `palette.secondary.main` web).
+- `tertiary` seed: `#FF6D00` (antes colapsava em secondary por ser null).
+- `DefaultSeeds` em `ThemeConfig.kt`: constantes canônicas ARGB centralizadas.
+
+#### Removido
+- `FutebaLightColorScheme`, `FutebaDarkColorScheme` e 68 constantes `md3_*` privadas sem consumidores.
+
+#### Corrigido
+- `check-design-tokens-parity.js`: gate CI valida seeds vivas em vez de constantes mortas.
+
+_Issues: #3934, #3933_
+
 ### [1.39.1][android-1.39.1] - 2026-07-20
 
 #### Adicionado
@@ -280,6 +295,21 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 - Bump de versão de manutenção após a mega audit wave de 2026-05-11, sem mudanças funcionais no Android nesta tag.
 
 ## Web
+
+### [1.56.5][web-1.56.5] - 2026-08-01
+
+#### Adicionado
+- `LiveGameScore.scores?: Record<string, number>` no tipo (canônico 2-4 times).
+- `readScoresMap()` e `buildTeamScores()` com fallback legado e ordenação estável.
+- `LiveScoreboard`: componente presentacional com grid responsivo 2-4 times e `aria-live`.
+- `monitoring/app-check-missing-invalid-alert.json`: alerta Cloud Monitoring para falhas de App Check.
+
+#### Corrigido
+- `app-check.spec.ts`: gate de regressão usava variável de ambiente inexistente; agora usa `E2E_BASE_URL` e funciona contra produção.
+- `validate-patterns.yml`: gate de paridade do grace de verificação adicionado ao CI.
+- `playwright.config.ts`: suporte a remote target via `E2E_BASE_URL`.
+
+_Issues: #3942, #3929, #3869_
 
 ### [1.56.4][web-1.56.4] - 2026-07-20
 
@@ -2010,6 +2040,21 @@ _Issues: #1465, #1479, #1421, #1420 · PRs: #1465, #1479, #1421, #1420, #1417_
 
 ## iOS
 
+### [1.7.1][ios-1.7.1] - 2026-08-01
+
+#### Mudado
+- `secondary` iOS: `#FF9600` → `#005FCC` (alinhado ao `palette.secondary.main` web).
+- `tertiary` seed: `#FF6D00` (antes colapsava em secondary por ser null).
+- `DefaultSeeds` em `ThemeConfig.kt` (KMP): constantes canônicas ARGB centralizadas.
+
+#### Removido
+- `FutebaLightColorScheme`, `FutebaDarkColorScheme` e constantes `md3_*` sem consumidores no `composeApp`.
+
+#### Corrigido
+- `check-design-tokens-parity.js`: gate CI valida seeds vivas em vez de constantes mortas.
+
+_Issues: #3934, #3933_
+
 ### [1.7.0][ios-1.7.0] - 2026-07-19
 
 #### Adicionado
@@ -2071,6 +2116,27 @@ _Issues: #3499, #3504, #3509 · PRs: #3511_
 _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
+
+### [1.12.3][functions-1.12.3] - 2026-08-01
+
+#### Adicionado
+- `onUserRoleUpdated`: trigger bidirecional reconcilia role Firestore → Custom Claims em qualquer origem (console, CRM, Admin SDK).
+- `recoverStaleProcessingDocs`: recuperação paginada de docs de notificação presos em PROCESSING.
+- `readScoresMap`: leitor canônico de placar por time (2-4), com fallback legado transparente.
+
+#### Mudado
+- `isScoreConsistentFromEventStream` usa `Map<teamId, number>`.
+- Event payload usa `score_team_id` canônico com fallback legado.
+
+#### Corrigido
+- `concludeMvpVoting` adia XP quando `xp_reward_status` é HELD_FOR_REVIEW ou REJECTED_BY_ADMIN.
+- Pipeline principal consulta logs de votação antes de aplicar MVP/Bola Murcha (defesa em profundidade).
+- `setUserVerified` e `account-merge` não escrevem mais `phone` em `users/{uid}`.
+- `phone` adicionado a `PII_FIELDS` com caminho de reparo via `removePiiFromUsers`.
+- Fila de notificações: orçamento de 90s, claim-on-demand paginado, parallel prefetch, batching de settings, enqueue slicing.
+- Rules: `phone_verified` removido do guarda PII (é booleano, não PII); `phone` E.164 permanece protegido.
+
+_Issues: #3938, #3940, #3941, #3935, #3942_
 
 ### [1.12.2][functions-1.12.2] - 2026-07-20
 
@@ -2823,6 +2889,7 @@ _Issues: #2981_
 _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 
 
+[android-1.39.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.39.2.md
 [android-1.39.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.39.1.md
 [android-1.39.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.39.0.md
 [android-1.38.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.38.1.md
@@ -2845,6 +2912,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.56.5]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.56.5.md
 [web-1.56.4]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.56.4.md
 [web-1.56.3]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.56.3.md
 [web-1.56.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.56.2.md
@@ -3013,11 +3081,13 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [web-1.26.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.26.2.md
 [web-1.26.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.26.1.md
 [web-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.26.0.md
+[ios-1.7.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.7.1.md
 [ios-1.7.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.7.0.md
 [ios-1.6.3]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.3.md
 [ios-1.6.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.2.md
 [ios-1.6.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.1.md
 [ios-1.6.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.0.md
+[functions-1.12.3]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.12.3.md
 [functions-1.12.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.12.2.md
 [functions-1.12.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.12.1.md
 [functions-1.12.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.12.0.md

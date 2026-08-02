@@ -12,6 +12,7 @@ process.env.FUNCTIONS_EMULATOR = "true";
 
 // Mock firebase-admin
 const mockSetCustomUserClaims = jest.fn().mockResolvedValue(undefined);
+const mockRevokeRefreshTokens = jest.fn().mockResolvedValue(undefined);
 const mockGetUser = jest.fn().mockResolvedValue({
   customClaims: {},
 });
@@ -51,7 +52,7 @@ jest.mock("firebase-admin", () => {
     auth: jest.fn(() => ({
       setCustomUserClaims: mockSetCustomUserClaims,
       getUser: mockGetUser,
-      revokeRefreshTokens: jest.fn().mockResolvedValue(undefined),
+      revokeRefreshTokens: mockRevokeRefreshTokens,
     })),
     initializeApp: jest.fn(),
   };
@@ -86,6 +87,7 @@ jest.mock("firebase-admin/firestore", () => ({
 // Capturar handlers
 let setUserRoleHandler: ((request: any) => Promise<any>) | null = null;
 let onNewUserCreatedHandler: ((event: any) => Promise<void>) | null = null;
+let onUserRoleUpdatedHandler: ((event: any) => Promise<void>) | null = null;
 let migrateHandler: ((request: any) => Promise<any>) | null = null;
 
 jest.mock("firebase-functions/v2/https", () => ({
@@ -112,6 +114,10 @@ jest.mock("firebase-functions/v2/https", () => ({
 jest.mock("firebase-functions/v2/firestore", () => ({
   onDocumentCreated: jest.fn((path: string, handler: any) => {
     onNewUserCreatedHandler = handler;
+    return handler;
+  }),
+  onDocumentUpdated: jest.fn((config: any, handler: any) => {
+    onUserRoleUpdatedHandler = handler;
     return handler;
   }),
 }));
@@ -145,6 +151,7 @@ describe("Custom Claims - setUserRole", () => {
     mockLockState = {};
     setUserRoleHandler = null;
     onNewUserCreatedHandler = null;
+    onUserRoleUpdatedHandler = null;
     migrateHandler = null;
 
     jest.isolateModules(() => {
@@ -336,6 +343,7 @@ describe("Custom Claims - onNewUserCreated", () => {
     mockLockState = {};
     setUserRoleHandler = null;
     onNewUserCreatedHandler = null;
+    onUserRoleUpdatedHandler = null;
     migrateHandler = null;
 
     jest.isolateModules(() => {
@@ -414,12 +422,191 @@ describe("Custom Claims - onNewUserCreated", () => {
   });
 });
 
+describe("Custom Claims - onUserRoleUpdated (reconciliação #3938)", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockLockState = {};
+    setUserRoleHandler = null;
+    onNewUserCreatedHandler = null;
+    onUserRoleUpdatedHandler = null;
+    migrateHandler = null;
+
+    jest.isolateModules(() => {
+      require("../src/auth/custom-claims");
+    });
+
+    mockDocGet.mockResolvedValue({
+      exists: true,
+      data: () => ({ role: "PLAYER" }),
+    });
+    mockGetUser.mockResolvedValue({
+      customClaims: {},
+    });
+  });
+
+  test("deve registrar o handler onDocumentUpdated", () => {
+    expect(onUserRoleUpdatedHandler).not.toBeNull();
+    expect(typeof onUserRoleUpdatedHandler).toBe("function");
+  });
+
+  test("deve ignorar quando event.data.before/after é null", async () => {
+    const event = {
+      params: { userId: "u1" },
+      data: { before: null, after: null },
+    };
+
+    await onUserRoleUpdatedHandler!(event);
+
+    expect(mockSetCustomUserClaims).not.toHaveBeenCalled();
+  });
+
+  test("deve ser no-op quando role NÃO mudou", async () => {
+    const event = {
+      params: { userId: "u1" },
+      data: {
+        before: { data: () => ({ role: "PLAYER", name: "X" }) },
+        after: { data: () => ({ role: "PLAYER", name: "Y" }) },
+      },
+    };
+
+    await onUserRoleUpdatedHandler!(event);
+
+    // Outros campos mudaram, mas role não → nada a fazer.
+    expect(mockGetUser).not.toHaveBeenCalled();
+    expect(mockSetCustomUserClaims).not.toHaveBeenCalled();
+  });
+
+  test("deve reconciliar DOWNGRADE (ADMIN -> PLAYER) e revogar tokens", async () => {
+    // Mirror agora é PLAYER, mas a claim ainda é ADMIN (estado vulnerável).
+    mockGetUser.mockResolvedValueOnce({ customClaims: { role: "ADMIN" } });
+
+    const event = {
+      params: { userId: "victim" },
+      data: {
+        before: { data: () => ({ role: "ADMIN" }) },
+        after: { data: () => ({ role: "PLAYER" }) },
+      },
+    };
+
+    await onUserRoleUpdatedHandler!(event);
+
+    expect(mockSetCustomUserClaims).toHaveBeenCalledWith("victim", {
+      role: "PLAYER",
+    });
+    // revokeRefreshTokens é o contrato de segurança crítico do #3938.
+    expect(mockRevokeRefreshTokens).toHaveBeenCalledWith("victim");
+    expect(mockCollectionAdd).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "ROLE_RECONCILED",
+        target_user_id: "victim",
+        new_role: "PLAYER",
+        old_role: "ADMIN",
+        actor_user_id: null,
+      })
+    );
+  });
+
+  test("deve reconciliar UPGRADE (PLAYER -> FIELD_OWNER)", async () => {
+    mockGetUser.mockResolvedValueOnce({ customClaims: { role: "PLAYER" } });
+
+    const event = {
+      params: { userId: "u2" },
+      data: {
+        before: { data: () => ({ role: "PLAYER" }) },
+        after: { data: () => ({ role: "FIELD_OWNER" }) },
+      },
+    };
+
+    await onUserRoleUpdatedHandler!(event);
+
+    expect(mockSetCustomUserClaims).toHaveBeenCalledWith("u2", {
+      role: "FIELD_OWNER",
+    });
+  });
+
+  test("deve ser no-op quando a claim já bate com o mirror (caminho setUserRole)", async () => {
+    // setUserRole seta a claim ANTES de escrever no Firestore; quando o
+    // trigger dispara a claim já está correta.
+    mockGetUser.mockResolvedValueOnce({ customClaims: { role: "ADMIN" } });
+
+    const event = {
+      params: { userId: "u3" },
+      data: {
+        before: { data: () => ({ role: "PLAYER" }) },
+        after: { data: () => ({ role: "ADMIN" }) },
+      },
+    };
+
+    await onUserRoleUpdatedHandler!(event);
+
+    expect(mockSetCustomUserClaims).not.toHaveBeenCalled();
+  });
+
+  test("deve cair para PLAYER quando o novo role é inválido (privilégio mínimo)", async () => {
+    mockGetUser.mockResolvedValueOnce({ customClaims: { role: "ADMIN" } });
+
+    const event = {
+      params: { userId: "u4" },
+      data: {
+        before: { data: () => ({ role: "ADMIN" }) },
+        after: { data: () => ({ role: "SUPER_ADMIN_HACK" }) },
+      },
+    };
+
+    await onUserRoleUpdatedHandler!(event);
+
+    expect(mockSetCustomUserClaims).toHaveBeenCalledWith("u4", {
+      role: "PLAYER",
+    });
+  });
+
+  test("deve relançar erro de Auth em produção (retry #1030)", async () => {
+    const original = process.env.FUNCTIONS_EMULATOR;
+    process.env.FUNCTIONS_EMULATOR = "false";
+    mockGetUser.mockRejectedValueOnce(
+      new Error("Auth service unavailable")
+    );
+
+    const event = {
+      params: { userId: "u5" },
+      data: {
+        before: { data: () => ({ role: "PLAYER" }) },
+        after: { data: () => ({ role: "ADMIN" }) },
+      },
+    };
+
+    await expect(onUserRoleUpdatedHandler!(event)).rejects.toThrow(
+      "Auth service unavailable"
+    );
+    process.env.FUNCTIONS_EMULATOR = original;
+  });
+
+  test("deve tolerar auth/user-not-found no emulador (#2782)", async () => {
+    const err: any = new Error("user not found");
+    err.code = "auth/user-not-found";
+    mockGetUser.mockRejectedValueOnce(err);
+
+    const event = {
+      params: { userId: "seed_only" },
+      data: {
+        before: { data: () => ({ role: "PLAYER" }) },
+        after: { data: () => ({ role: "ADMIN" }) },
+      },
+    };
+
+    // Não deve relançar no emulador (FUNCTIONS_EMULATOR=true no topo).
+    await expect(onUserRoleUpdatedHandler!(event)).resolves.toBeUndefined();
+    expect(mockSetCustomUserClaims).not.toHaveBeenCalled();
+  });
+});
+
 describe("Custom Claims - migrateAllUsersToCustomClaims", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockLockState = {};
     setUserRoleHandler = null;
     onNewUserCreatedHandler = null;
+    onUserRoleUpdatedHandler = null;
     migrateHandler = null;
 
     jest.isolateModules(() => {

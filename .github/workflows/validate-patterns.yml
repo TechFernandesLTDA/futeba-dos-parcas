@@ -6,6 +6,7 @@ on:
     paths:
       - 'web/**'
       - 'functions/**'
+      - 'shared/**'
       - 'scripts/**'
       - 'firestore.rules'
       - 'storage.rules'
@@ -16,6 +17,7 @@ on:
     paths:
       - 'web/**'
       - 'functions/**'
+      - 'shared/**'
       - 'scripts/**'
       - 'firestore.rules'
       - 'storage.rules'
@@ -39,7 +41,7 @@ jobs:
   # bash/grep/ripgrep que levam segundos. Rodam sempre (safety-net repo-wide) e
   # em paralelo com o classificador para reduzir fan-out e tempo de fila.
   validate-conventions:
-    name: Conventions (audit, secrets, rules, headers)
+    name: Conventions (audit, secrets, rules, grace, headers)
     runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
     timeout-minutes: 10
     steps:
@@ -62,6 +64,9 @@ jobs:
 
       - name: Check secrets
         run: bash scripts/check-secrets.sh
+
+      - name: Check verification grace parity
+        run: npm run check:grace
 
       - name: Verify firestore.rules has catch-all deny
         run: |

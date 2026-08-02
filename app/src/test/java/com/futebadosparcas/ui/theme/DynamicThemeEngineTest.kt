@@ -9,6 +9,7 @@ import com.futebadosparcas.domain.model.SeedColors
 import com.futebadosparcas.domain.model.ThemeMode
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
@@ -26,7 +27,8 @@ class DynamicThemeEngineTest {
     private val configNormal = AppThemeConfig(
         seedColors = SeedColors(
             primary = 0xFF00852A.toInt(),
-            secondary = 0xFFFF9600.toInt()
+            secondary = 0xFF005FCC.toInt(),
+            tertiary = 0xFFFF6D00.toInt()
         ),
         contrastLevel = ContrastLevel.NORMAL
     )
@@ -40,6 +42,54 @@ class DynamicThemeEngineTest {
         assertEquals(ThemeMode.LIGHT, config.mode)
         assertEquals(ContrastLevel.NORMAL, config.contrastLevel)
         assertFalse(config.useDynamicColor)
+    }
+
+    // ==================== Seeds canônicas (#3933/#3934) ====================
+
+    @Test
+    fun configuracaoPadrao_seedsSaoCanonicalETernariasDistintas() {
+        // AppThemeConfig() default = source unica de verdade (ThemeConfig.kt),
+        // espelhando shared/design-tokens.json. Drift aqui deve quebrar o gate de CI.
+        val seeds = AppThemeConfig().seedColors
+
+        assertEquals(0xFF00852A.toInt(), seeds.primary, "primary deve ser #00852A (verde marca)")
+        assertEquals(0xFF005FCC.toInt(), seeds.secondary, "secondary deve ser #005FCC (azul, paridade web)")
+        assertEquals(0xFFFF6D00.toInt(), seeds.tertiary, "tertiary deve ser #FF6D00 (laranja complementar)")
+
+        assertNotEquals(
+            seeds.secondary, seeds.tertiary,
+            "secondary e tertiary devem ser seeds distintas — caso contrário colapsam (#3933)"
+        )
+    }
+
+    // ==================== Tertiary != Secondary no ColorScheme (#3933) ====================
+
+    @Test
+    fun gerarEsquema_contrasteNormal_modoClaro_secondaryDiferenteDeTertiary() {
+        val scheme = DynamicThemeEngine.generateColorScheme(configNormal, isDark = false)
+
+        assertNotEquals(
+            scheme.secondary, scheme.tertiary,
+            "colorScheme.secondary deve diferir de tertiary no modo claro (#3933)"
+        )
+        assertNotEquals(
+            scheme.secondaryContainer, scheme.tertiaryContainer,
+            "secondaryContainer deve diferir de tertiaryContainer no modo claro"
+        )
+    }
+
+    @Test
+    fun gerarEsquema_contrasteNormal_modoEscuro_secondaryDiferenteDeTertiary() {
+        val scheme = DynamicThemeEngine.generateColorScheme(configNormal, isDark = true)
+
+        assertNotEquals(
+            scheme.secondary, scheme.tertiary,
+            "colorScheme.secondary deve diferir de tertiary no modo escuro (#3933)"
+        )
+        assertNotEquals(
+            scheme.secondaryContainer, scheme.tertiaryContainer,
+            "secondaryContainer deve diferir de tertiaryContainer no modo escuro"
+        )
     }
 
     // ==================== Testes de alto contraste ====================

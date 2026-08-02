@@ -1,7 +1,28 @@
 {
   "platform": "web",
-  "generatedAt": "2026-07-25T14:21:01.399Z",
+  "generatedAt": "2026-08-02T01:15:42.838Z",
   "notes": [
+    {
+      "version": "1.56.5",
+      "buildNumber": null,
+      "releaseDate": "2026-08-01",
+      "type": "patch",
+      "showPopup": true,
+      "published": false,
+      "headline": "Placar ao vivo agora mostra gols de todos os times (2 a 4 equipes).",
+      "highlights": [],
+      "added": [],
+      "improved": [],
+      "fixed": [
+        "O placar durante o jogo exibe corretamente times 3 e 4 quando a partida tem mais de duas equipes.",
+        "Leitor de tela agora anuncia o placar completo a cada gol, com nomes dos times."
+      ],
+      "issueRefs": [
+        3942,
+        3929,
+        3869
+      ]
+    },
     {
       "version": "1.56.4",
       "buildNumber": null,

@@ -189,6 +189,7 @@ class GameRepositoryImpl constructor(
         return com.futebadosparcas.data.model.LiveGameScore(
             id = id,
             gameId = gameId,
+            scores = scores,
             team1Id = team1Id,
             team1Score = team1Score,
             team2Id = team2Id,

@@ -29,6 +29,12 @@ const UID_USERS_B = "uid-users-b-001";
 const UID_USERS_C = "uid-users-c-001";
 const UID_USERS_D = "uid-users-d-001";
 const UID_USERS_E = "uid-users-e-001";
+// #3935: perfil no formato que setUserVerified realmente produz
+// (phone_verified: true, SEM phone em plaintext).
+const UID_USERS_F = "uid-users-f-001";
+// #3935: perfil legado/histórico que ainda carrega `phone` em plaintext
+// (estado pré-backfill). O guard de `phone` (PII real) permanece ativo.
+const UID_USERS_G = "uid-users-g-001";
 
 function asUsersA() {
   return asUser(testEnv, UID_USERS_A);
@@ -118,6 +124,46 @@ beforeAll(async () => {
     gk_rating: 2.2,
   });
 
+  // #3935: perfil verificado no formato pós-fix — phone_verified: true (booleano,
+  // não PII) e SEM `phone` em plaintext. Antes do fix, o guard de phone_verified
+  // negava o peer-get para TODO usuário verificado.
+  await seedDoc(testEnv, `users/${UID_USERS_F}`, {
+    name: "Jogador F",
+    email: null,
+    role: "PLAYER",
+    is_searchable: true,
+    phone_verified: true,
+    verifiedAt: new Date(),
+    experience_points: 300,
+    level: 3,
+    milestones_achieved: [],
+    created_at: new Date(),
+    striker_rating: 3.5,
+    mid_rating: 3.0,
+    defender_rating: 2.5,
+    gk_rating: 1.0,
+  });
+
+  // #3935: perfil legado com `phone` em plaintext (estado pré-backfill).
+  // Confirma que o guard de `phone` (PII real) permanece ativo — apenas o
+  // guard de `phone_verified` (booleano) foi removido.
+  await seedDoc(testEnv, `users/${UID_USERS_G}`, {
+    name: "Jogador G",
+    email: null,
+    role: "PLAYER",
+    is_searchable: true,
+    phone: "+5511999999999",
+    phone_verified: true,
+    experience_points: 220,
+    level: 2,
+    milestones_achieved: [],
+    created_at: new Date(),
+    striker_rating: 2.7,
+    mid_rating: 2.5,
+    defender_rating: 2.3,
+    gk_rating: 2.1,
+  });
+
   await seedDoc(testEnv, `users/${UID_ADMIN}`, {
     name: "Admin",
     email: "admin@test.com",
@@ -174,6 +220,23 @@ describe("users — leitura", () => {
   it('Player pode ler perfil pesquisável com email/phone vazios', async () => {
     const db = asUsersA();
     await assertSucceeds(db.doc(`users/${UID_USERS_D}`).get());
+  });
+
+  // #3935: usuário verificado (phone_verified: true, sem phone em plaintext)
+  // DEVE ser legível por pares. Antes do fix, o guard de phone_verified negava
+  // o get para todo usuário verificado — degradação progressiva e irreversível
+  // em escalção/ranking/perfil.
+  it('Player pode ler perfil verificado (phone_verified=true, sem phone PII)', async () => {
+    const db = asUsersA();
+    await assertSucceeds(db.doc(`users/${UID_USERS_F}`).get());
+  });
+
+  // #3935: perfil legado com `phone` em plaintext permanece PROTEGIDO — o guard
+  // de `phone` (PII real) foi mantido. Apenas `phone_verified` (booleano) saiu.
+  // Estes docs precisam do backfill removePiiFromUsers (phone agora em PII_FIELDS).
+  it('Player NÃO pode ler perfil legado que ainda expõe phone (PII)', async () => {
+    const db = asUsersA();
+    await assertFails(db.doc(`users/${UID_USERS_G}`).get());
   });
 
   it("Player pode ler perfil legado com isSearchable=true e sem PII no doc", async () => {

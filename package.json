@@ -12,7 +12,8 @@
     "backfill:location-timezones:execute": "node scripts/migrations/backfill-location-time-zones.js --execute",
     "test:load:realtime": "node scripts/load/realtime-multiuser.js",
     "test:load:wall-media": "node scripts/load/group-wall-media.js",
-    "check:tokens": "node scripts/check-design-tokens-parity.js"
+    "check:tokens": "node scripts/check-design-tokens-parity.js",
+    "check:grace": "node scripts/check-verification-grace-parity.js"
   },
   "overrides": {
     "uuid": ">=14.0.0",

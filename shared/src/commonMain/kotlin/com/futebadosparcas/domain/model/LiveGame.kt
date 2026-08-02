@@ -5,11 +5,19 @@ import kotlinx.serialization.Serializable
 
 /**
  * Placar ao vivo de um jogo.
+ *
+ * #3942: o backend grava o placar por time no mapa canônico `scores`
+ * (chave = teamId, valor = gols), suportando jogos de 2 a 4 times. Os
+ * campos legados `team1_*`/`team2_*` permanecem em dual-write durante a
+ * transição para que leitores não atualizados continuem funcionando em
+ * jogos de 2 times. Leitores novos devem preferir [scores] e usar os
+ * campos legados apenas como fallback quando `scores` estiver vazio.
  */
 @Serializable
 data class LiveScore(
     val id: String = "",
     @SerialName("game_id") val gameId: String = "",
+    @SerialName("scores") val scores: Map<String, Int> = emptyMap(),
     @SerialName("team1_id") val team1Id: String = "",
     @SerialName("team1_score") val team1Score: Int = 0,
     @SerialName("team2_id") val team2Id: String = "",

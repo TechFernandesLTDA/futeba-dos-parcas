@@ -134,6 +134,39 @@ describe("Auth — PII migration callables", () => {
       expect(mockDocSet).not.toHaveBeenCalled();
     });
 
+    // #3935: phone agora está em PII_FIELDS (caminho de reparo para limpar
+    // docs históricos que o tornavam ilegível). validatePiiField valida E.164.
+    it("#3935 salva telefone E.164 válido", async () => {
+      const result = await updateUserPii(makeRequest({
+        data: {phone: "+5511999999999"},
+      }) as never);
+
+      expect(result).toEqual({success: true, updated: ["phone"]});
+      expect(mockDocSet).toHaveBeenCalledWith(
+        expect.objectContaining({phone: "+5511999999999"}),
+        {merge: true}
+      );
+    });
+
+    it("#3935 rejeita telefone mal formatado", async () => {
+      await expect(
+        updateUserPii(makeRequest({data: {phone: "not-a-phone"}}) as never)
+      ).rejects.toThrow("Campo phone inválido");
+      expect(mockDocSet).not.toHaveBeenCalled();
+    });
+
+    it("#3935 permite limpar telefone com null (cleanup)", async () => {
+      const result = await updateUserPii(makeRequest({
+        data: {phone: null},
+      }) as never);
+
+      expect(result).toEqual({success: true, updated: ["phone"]});
+      expect(mockDocSet).toHaveBeenCalledWith(
+        expect.objectContaining({phone: null}),
+        {merge: true}
+      );
+    });
+
     it("rejeita request sem autenticação", async () => {
       await expect(
         updateUserPii(makeRequest({auth: null}) as never)
@@ -428,5 +461,40 @@ describe("PII migration atomic helpers", () => {
       userRef,
       {email: {_type: "FieldDelete"}},
     );
+  });
+
+  // #3935: phone agora está em PII_FIELDS para que removePiiFromUsers (callable
+  // ADMIN) possa limpar docs históricos de usuários verificados que ficaram
+  // ilegíveis aos pares (guard público nega o get quando phone está presente).
+  it("#3935 remove phone (caminho de reparo) quando confirmado pela releitura", async () => {
+    const {database, txUpdate} = databaseWith(
+      {phone: "+5511999999999"},
+      {phone: "+5511999999999"},
+    );
+    const result = await removePiiDocumentAtomically(
+      database as never,
+      userRef as never,
+    );
+
+    expect(result).toMatchObject({hadPii: true, changed: true, conflicts: []});
+    expect(txUpdate).toHaveBeenCalledWith(
+      userRef,
+      {phone: {_type: "FieldDelete"}},
+    );
+  });
+
+  it("#3935 sinaliza conflito quando phone privada diverge (não apaga cego)", async () => {
+    const {database, txUpdate} = databaseWith(
+      {phone: "+5511999999999"},
+      {phone: "+5511888888888"},
+    );
+    const result = await removePiiDocumentAtomically(
+      database as never,
+      userRef as never,
+    );
+
+    expect(result.conflicts).toEqual(["phone"]);
+    expect(result.changed).toBe(false);
+    expect(txUpdate).not.toHaveBeenCalled();
   });
 });
