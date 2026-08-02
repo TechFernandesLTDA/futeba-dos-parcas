@@ -18,7 +18,7 @@ test('HomeScreen performance - carregamento inicial', async ({ page }) => {
   });
 
   // Navegar para a home
-  await page.goto('https://futebadosparcas.web.app/', {
+  await page.goto('https://futebadosparcas.com.br/', {
     waitUntil: 'networkidle'
   });
   
@@ -60,7 +60,7 @@ test('NextGameWidget - query otimizada', async ({ page }) => {
     }
   });
   
-  await page.goto('https://futebadosparcas.web.app/', {
+  await page.goto('https://futebadosparcas.com.br/', {
     waitUntil: 'domcontentloaded'
   });
   
@@ -87,7 +87,7 @@ test('Bundle size - verificar chunks', async ({ page }) => {
     }
   });
   
-  await page.goto('https://futebadosparcas.web.app/', {
+  await page.goto('https://futebadosparcas.com.br/', {
     waitUntil: 'networkidle'
   });
   

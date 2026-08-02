@@ -10,7 +10,7 @@ This is the operational map for the Futeba dos Parcas repository. Use it when yo
 - Default branch: `master`
 - Merge policy: squash merge only; PR and 4 CI gates required; human/CODEOWNERS review advisory (0 approvals required).
 - Current GitHub status: see `docs/GITHUB_STATUS.md`.
-- Production web URL: `https://futebadosparcas.web.app`
+- Production web URL: `https://futebadosparcas.com.br`
 - Runtime for `web/` and `functions/`: Node 22 from `.nvmrc`.
 - Main backend: Firebase Auth, Firestore, Cloud Functions v2, App Check.
 - Dormant backend: `archive/backend/` is archived and has no production consumers.

@@ -22,7 +22,7 @@ async function testMUIError() {
   
   console.log('1. Navegando para /...');
   try {
-    await page.goto('https://futebadosparcas.web.app', { waitUntil: 'domcontentloaded', timeout: 30000 });
+    await page.goto('https://futebadosparcas.com.br', { waitUntil: 'domcontentloaded', timeout: 30000 });
     console.log('   ✓ DOM carregado');
   } catch (err) {
     console.log(`   ✗ Erro: ${err.message}`);

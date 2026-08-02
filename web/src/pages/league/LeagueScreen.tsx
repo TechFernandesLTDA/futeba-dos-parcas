@@ -343,7 +343,7 @@ export const LeagueScreen: React.FC<LeagueScreenProps> = ({ embedded = false, ac
   const handleShare = useCallback(async () => {
     if (!currentUserPlayer || !currentUserPosition) return;
     const divParam = currentUserPlayer.division.toLowerCase();
-    const url = `https://futebadosparcas.web.app/league?division=${divParam}`;
+    const url = `https://futebadosparcas.com.br/league?division=${divParam}`;
     const text = `Estou em ${currentUserPosition}º lugar na Liga ${getDivisionLabel(currentUserPlayer.division, t)} com ${currentUserPlayer.experiencePoints ?? 0} XP!`;
     if (navigator.share) {
       try { await navigator.share({ text, url }); } catch { /* cancelled */ }

@@ -143,8 +143,8 @@ open iosApp/iosApp.xcworkspace
 - [ ] Certificados de distribuição
 - [ ] Screenshots (6.7", 5.5", iPad)
 - [ ] Ícones do app (todos os tamanhos)
-- [ ] Privacy Policy URL: https://futebadosparcas.web.app/privacy_policy.html
-- [ ] Terms of Service URL: https://futebadosparcas.web.app/terms_of_service.html
+- [ ] Privacy Policy URL: https://futebadosparcas.com.br/privacy_policy.html
+- [ ] Terms of Service URL: https://futebadosparcas.com.br/terms_of_service.html
 
 ### Checklist Pré-Publicação:
 

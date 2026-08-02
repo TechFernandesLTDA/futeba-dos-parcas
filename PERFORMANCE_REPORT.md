@@ -1,7 +1,7 @@
 # 📊 Relatório de Performance - Futeba dos Parças
 
 **Data:** 2026-05-23  
-**URL:** https://futebadosparcas.web.app  
+**URL:** https://futebadosparcas.com.br  
 **Versão:** Commit 383ae607
 
 ---
@@ -160,7 +160,7 @@ node scripts/test-web-vitals-fast.cjs
 ```
 
 ### Performance Dashboard
-Acesse: https://futebadosparcas.web.app/admin/performance (requer autenticação admin)
+Acesse: https://futebadosparcas.com.br/admin/performance (requer autenticação admin)
 
 ---
 

@@ -15,7 +15,7 @@ Operational status for `TechFernandesLTDA/futeba-dos-parcas`.
 | Wiki | Disabled |
 | Issues | Enabled |
 | Projects | Enabled |
-| Production web URL | `https://futebadosparcas.web.app` |
+| Production web URL | `https://futebadosparcas.com.br` |
 
 ## Current Queue
 

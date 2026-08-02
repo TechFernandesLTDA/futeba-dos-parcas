@@ -12,7 +12,7 @@ async function testSimple() {
   const page = await browser.newPage();
   
   console.log('1. Navegando para /...');
-  const response = await page.goto('https://futebadosparcas.web.app', { waitUntil: 'networkidle' });
+  const response = await page.goto('https://futebadosparcas.com.br', { waitUntil: 'networkidle' });
   console.log(`   Status: ${response.status()}`);
   
   await page.waitForTimeout(3000);

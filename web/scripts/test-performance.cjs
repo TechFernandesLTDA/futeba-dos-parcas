@@ -7,11 +7,11 @@
 const https = require('https');
 
 const URLS = {
-  html: 'https://futebadosparcas.web.app/',
-  indexBundle: 'https://futebadosparcas.web.app/assets/index-CBtnyvi2.js',
-  homeTab: 'https://futebadosparcas.web.app/assets/HomeTab-Bcpoa3VY.js',
-  vendorMui: 'https://futebadosparcas.web.app/assets/vendor-mui-DGuenD1l.js',
-  vendorFirebase: 'https://futebadosparcas.web.app/assets/vendor-firebase-CaKeWVDG.js',
+  html: 'https://futebadosparcas.com.br/',
+  indexBundle: 'https://futebadosparcas.com.br/assets/index-CBtnyvi2.js',
+  homeTab: 'https://futebadosparcas.com.br/assets/HomeTab-Bcpoa3VY.js',
+  vendorMui: 'https://futebadosparcas.com.br/assets/vendor-mui-DGuenD1l.js',
+  vendorFirebase: 'https://futebadosparcas.com.br/assets/vendor-firebase-CaKeWVDG.js',
 };
 
 function measureTTFB(url) {

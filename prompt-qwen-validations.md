@@ -20,7 +20,7 @@ Projeto único: `futebadosparcas`. Node 22.
 Branch `master` protegida: squash-merge, 1 review, code owners, sem force-push.
 
 ### Deploy:
-- **Web**: `firebase deploy --only hosting` → `https://futebadosparcas.web.app`
+- **Web**: `firebase deploy --only hosting` → `https://futebadosparcas.com.br`
 - **Functions**: `firebase deploy --only functions`
 - **Android**: Push da tag `v*` dispara `deploy-production.yml` → Google Play Store (Internal Testing)
 - **Firestore Rules**: `firebase deploy --only firestore:rules`

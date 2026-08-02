@@ -2,7 +2,7 @@
 
 **Data:** 2026-05-23  
 **Commit:** b7737764  
-**URL:** https://futebadosparcas.web.app
+**URL:** https://futebadosparcas.com.br
 
 ---
 
@@ -260,6 +260,6 @@ Com o RUM ativo, as métricas são coletadas de usuários reais:
 - ✅ 56x mais rápido que o budget de Load Time
 - ✅ Sistema de monitoramento completo em produção
 
-**Deploy:** https://futebadosparcas.web.app  
+**Deploy:** https://futebadosparcas.com.br  
 **Commit:** b7737764  
 **Data:** 2026-05-23

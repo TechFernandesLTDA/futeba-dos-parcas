@@ -9,7 +9,7 @@ console.log('=== Diagnóstico de Travamento Web ===\n');
 // 1. Verificar se o bundle está carregando
 console.log('1. Verificando bundle principal...');
 try {
-  const bundle = execSync('curl -s https://futebadosparcas.web.app/assets/index-C2CAM24o.js', { encoding: 'utf8' });
+  const bundle = execSync('curl -s https://futebadosparcas.com.br/assets/index-C2CAM24o.js', { encoding: 'utf8' });
   console.log(`   ✓ Bundle carregado: ${(bundle.length / 1024).toFixed(2)} KB`);
   
   // Verificar se há erros de sintaxe
@@ -26,7 +26,7 @@ try {
 // 2. Verificar se há problemas com imports
 console.log('\n2. Verificando imports no bundle...');
 try {
-  const bundle = execSync('curl -s https://futebadosparcas.web.app/assets/index-C2CAM24o.js', { encoding: 'utf8' });
+  const bundle = execSync('curl -s https://futebadosparcas.com.br/assets/index-C2CAM24o.js', { encoding: 'utf8' });
   
   const importPattern = /from\s+["']([^"']+)["']/g;
   const imports = new Set();
@@ -56,7 +56,7 @@ try {
 // 3. Verificar se há problemas com ProfileGate
 console.log('\n3. Verificando ProfileGate...');
 try {
-  const bundle = execSync('curl -s https://futebadosparcas.web.app/assets/index-C2CAM24o.js', { encoding: 'utf8' });
+  const bundle = execSync('curl -s https://futebadosparcas.com.br/assets/index-C2CAM24o.js', { encoding: 'utf8' });
   
   const profileGateChecks = [
     { name: 'ProfileGate', pattern: /ProfileGate/g },
@@ -76,7 +76,7 @@ try {
 // 4. Verificar se há problemas com AuthContext
 console.log('\n4. Verificando AuthContext...');
 try {
-  const bundle = execSync('curl -s https://futebadosparcas.web.app/assets/index-C2CAM24o.js', { encoding: 'utf8' });
+  const bundle = execSync('curl -s https://futebadosparcas.com.br/assets/index-C2CAM24o.js', { encoding: 'utf8' });
   
   const authChecks = [
     { name: 'AuthProvider', pattern: /AuthProvider/g },
@@ -96,7 +96,7 @@ try {
 // 5. Verificar se há problemas com Firebase
 console.log('\n5. Verificando Firebase...');
 try {
-  const bundle = execSync('curl -s https://futebadosparcas.web.app/assets/index-C2CAM24o.js', { encoding: 'utf8' });
+  const bundle = execSync('curl -s https://futebadosparcas.com.br/assets/index-C2CAM24o.js', { encoding: 'utf8' });
   
   const firebaseChecks = [
     { name: 'initializeApp', pattern: /initializeApp/g },
@@ -115,7 +115,7 @@ try {
 // 6. Verificar se há problemas com rotas
 console.log('\n6. Verificando rotas...');
 try {
-  const bundle = execSync('curl -s https://futebadosparcas.web.app/assets/index-C2CAM24o.js', { encoding: 'utf8' });
+  const bundle = execSync('curl -s https://futebadosparcas.com.br/assets/index-C2CAM24o.js', { encoding: 'utf8' });
   
   const routeChecks = [
     { name: 'BrowserRouter', pattern: /BrowserRouter/g },
@@ -134,7 +134,7 @@ try {
 // 7. Verificar se há problemas com loading states
 console.log('\n7. Verificando loading states...');
 try {
-  const bundle = execSync('curl -s https://futebadosparcas.web.app/assets/index-C2CAM24o.js', { encoding: 'utf8' });
+  const bundle = execSync('curl -s https://futebadosparcas.com.br/assets/index-C2CAM24o.js', { encoding: 'utf8' });
   
   const loadingChecks = [
     { name: 'CircularProgress', pattern: /CircularProgress/g },
@@ -153,7 +153,7 @@ try {
 // 8. Verificar se há problemas com errors
 console.log('\n8. Verificando erros...');
 try {
-  const bundle = execSync('curl -s https://futebadosparcas.web.app/assets/index-C2CAM24o.js', { encoding: 'utf8' });
+  const bundle = execSync('curl -s https://futebadosparcas.com.br/assets/index-C2CAM24o.js', { encoding: 'utf8' });
   
   const errorChecks = [
     { name: 'ErrorBoundary', pattern: /ErrorBoundary/g },

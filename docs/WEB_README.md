@@ -123,7 +123,7 @@ Quando perguntado:
 firebase deploy --only hosting
 ```
 
-URL de produção: `https://futebadosparcas.web.app`
+URL de produção: `https://futebadosparcas.com.br`
 
 ### GitHub Pages
 

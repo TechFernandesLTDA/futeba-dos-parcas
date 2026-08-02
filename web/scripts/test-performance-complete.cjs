@@ -6,7 +6,7 @@
 
 const https = require('https');
 
-const BASE_URL = 'https://futebadosparcas.web.app';
+const BASE_URL = 'https://futebadosparcas.com.br';
 
 function measureRequest(url) {
   return new Promise((resolve, reject) => {

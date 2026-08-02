@@ -2,6 +2,7 @@
   {
     "origin": [
       "https://futebadosparcas.web.app",
+      "https://futebadosparcas.com.br",
       "https://futebadosparcas.firebaseapp.com"
     ],
     "method": ["GET", "HEAD"],

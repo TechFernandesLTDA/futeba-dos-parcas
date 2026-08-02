@@ -1,7 +1,7 @@
 repository:
   name: futeba-dos-parcas
   description: App multi-plataforma para organizar partidas de futebol entre amigos — times, placares e gamificação
-  homepage: https://futebadosparcas.web.app
+  homepage: https://futebadosparcas.com.br
   topics: android, kotlin, jetpack-compose, firebase, react, typescript, football, sports, game-management, kmp
   private: true
   has_issues: true

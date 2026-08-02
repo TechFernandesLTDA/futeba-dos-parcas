@@ -11,7 +11,7 @@
 - **Branch protection**: PR + 4 CI gates required; human/CODEOWNERS review is advisory (0 approvals required); no force-push or deletions.
 - **Dependabot**: monthly schedule, limit 2 PRs, label `dependencies`. Auto-bump PRs get closed — deps handled in batch via `npm audit fix`.
 - **Node 22** required (see `.nvmrc`). Use `nvm use` before working in `web/` or `functions/`.
-- **Firebase Hosting URL**: `https://futebadosparcas.web.app` (SPA, all routes → `/index.html`).
+- **Firebase Hosting URL**: `https://futebadosparcas.com.br` (SPA, all routes → `/index.html`).
 - **Release discipline is mandatory**: any user-visible deploy must keep platform versioning, About/Sobre metadata, release notes, `CHANGELOG.md`, GitHub tag/release, and relevant README/docs in sync.
 
 ---

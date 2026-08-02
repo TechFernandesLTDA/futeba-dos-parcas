@@ -28,10 +28,10 @@ async function testWebApp() {
     requests.push({ url: request.url(), failure: request.failure()?.errorText });
   });
   
-  console.log('1. Navegando para https://futebadosparcas.web.app...');
+  console.log('1. Navegando para https://futebadosparcas.com.br...');
   try {
     const startTime = Date.now();
-    await page.goto('https://futebadosparcas.web.app', { waitUntil: 'networkidle', timeout: 30000 });
+    await page.goto('https://futebadosparcas.com.br', { waitUntil: 'networkidle', timeout: 30000 });
     const loadTime = Date.now() - startTime;
     console.log(`   ✓ Página carregada em ${loadTime}ms`);
   } catch (err) {

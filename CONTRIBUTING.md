@@ -302,7 +302,7 @@ Use o [Bug Report Template](https://github.com/TechFernandesLTDA/futeba-dos-parc
 
 - 💬 [Discussions](https://github.com/TechFernandesLTDA/futeba-dos-parcas/discussions)
 - 📧 [Email](mailto:techfernandesltda@gmail.com)
-- 📖 [Documentação](https://futebadosparcas.web.app)
+- 📖 [Documentação](https://futebadosparcas.com.br)
 
 ---
 

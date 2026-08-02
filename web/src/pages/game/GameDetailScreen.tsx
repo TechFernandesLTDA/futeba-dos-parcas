@@ -471,7 +471,7 @@ export const GameDetailScreen: React.FC = () => {
     }
   };
 
-  const gameShareUrl = game ? `https://futebadosparcas.web.app/game/${game.id}` : '';
+  const gameShareUrl = game ? `https://futebadosparcas.com.br/game/${game.id}` : '';
 
   const handleShare = async () => {
     if (!game) return;
