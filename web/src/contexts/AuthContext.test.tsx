@@ -7,6 +7,8 @@ const mockOnAuthStateChanged = vi.fn();
 const mockSignInWithEmailAndPassword = vi.fn();
 const mockCreateUserWithEmailAndPassword = vi.fn();
 const mockSignInWithPopup = vi.fn();
+const mockSignInWithRedirect = vi.fn();
+const mockGetRedirectResult = vi.fn();
 const mockGetAdditionalUserInfo = vi.fn(() => ({ isNewUser: false }));
 const mockSignOut = vi.fn();
 const mockSendPasswordResetEmail = vi.fn();
@@ -29,6 +31,10 @@ vi.mock('firebase/auth', () => ({
   createUserWithEmailAndPassword: (...args: any[]) => mockCreateUserWithEmailAndPassword(...args),
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   signInWithPopup: (...args: any[]) => mockSignInWithPopup(...args),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  signInWithRedirect: (...args: any[]) => mockSignInWithRedirect(...args),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  getRedirectResult: (...args: any[]) => mockGetRedirectResult(...args),
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   signOut: (...args: any[]) => mockSignOut(...args),
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -154,6 +160,10 @@ describe('AuthContext', () => {
       setTimeout(() => callback(null), 0);
       return vi.fn(); // unsubscribe
     });
+    // #3192: getRedirectResult por padrão retorna null (sem redirect pendente)
+    mockGetRedirectResult.mockResolvedValue(null);
+    // signInWithRedirect por padrão resolve (simula navegação iniciada)
+    mockSignInWithRedirect.mockResolvedValue(undefined);
   });
 
   afterEach(() => {
