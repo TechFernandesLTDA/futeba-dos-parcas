@@ -133,6 +133,11 @@ export function LoginScreen() {
 
     try {
       await signInWithGoogle();
+      // #3192: no fluxo redirect (fallback de popup), a página navega para o
+      // Google antes de haver um currentUser. signInWithGoogle retorna sem
+      // erro, mas ainda não há sessão — não navegamos. Após o retorno do
+      // redirect, a página recarrega, getRedirectResult processa o resultado,
+      // onAuthStateChanged dispara, e o PublicRoute redireciona para '/'.
       if (!getAuth().currentUser) return;
       navigate(resolveRedirect(), { replace: true });
     } catch (err) {

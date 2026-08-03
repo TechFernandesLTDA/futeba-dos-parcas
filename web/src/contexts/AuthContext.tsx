@@ -6,6 +6,8 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   signOut,
   sendPasswordResetEmail,
   updateProfile,
@@ -37,6 +39,11 @@ const USER_ROLES: UserRole[] = ['PLAYER', 'FIELD_OWNER', 'ADMIN'];
 const INVITE_REQUIRED_MESSAGE = 'Para criar sua conta, abra um convite de outro membro do Futeba dos Parças.';
 const INVITE_INVALID_MESSAGE = 'Convite inválido ou expirado. Peça um novo convite para quem te chamou.';
 const AUTH_STARTUP_WATCHDOG_MS = 8_000;
+// #3192: persiste o convite pendente entre o redirect do Google e o retorno.
+// O signInWithRedirect recarrega a página inteira — refs/state do React não
+// sobrevivem. sessionStorage (escopo da aba) carrega o convite até que
+// getRedirectResult processe o resultado.
+const PENDING_GOOGLE_INVITE_KEY = 'futeba:pending-google-invite';
 // ID tokens do Firebase duram uma hora. Aos 55 minutos, getIdToken(false)
 // renova apenas quando o token está vencido ou a até cinco minutos de vencer.
 const AUTH_TOKEN_REFRESH_INTERVAL_MS = 55 * 60 * 1_000;
@@ -440,6 +447,58 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       window.clearTimeout(startupWatchdog);
     };
 
+    // #3192: processa o resultado de um signInWithRedirect do Google.
+    // Deve rodar UMA VEZ no startup da aplicação, antes/de forma concorrente
+    // com onAuthStateChanged. O callback onAuthStateChanged dispara DEPOIS de
+    // getRedirectResult resolver — portanto o pendingInviteRef restaurado
+    // abaixo já estará disponível quando handleAuthStateChange criar o doc.
+    //
+    // Sincronamente (antes de qualquer await): restaura o convite persistido
+    // em sessionStorage para pendingInviteRef, garantindo que o onAuthStateChanged
+    // tenha o convite ao criar o perfil do novo usuário Google via redirect.
+    try {
+      const storedInvite = sessionStorage.getItem(PENDING_GOOGLE_INVITE_KEY);
+      if (storedInvite) {
+        const parsed = JSON.parse(storedInvite) as { code: string; source: string };
+        if (parsed?.code) {
+          pendingInviteRef.current = parsed;
+        }
+      }
+    } catch (sessionErr) {
+      logger.debug('Não foi possível ler convite pendente do sessionStorage:', sessionErr);
+    }
+
+    getRedirectResult(auth)
+      .then((result) => {
+        // Limpa o sessionStorage independente do resultado — o redirect foi
+        // processado (com sucesso ou sem redirect pendente).
+        try {
+          sessionStorage.removeItem(PENDING_GOOGLE_INVITE_KEY);
+        } catch {
+          /* ignore */
+        }
+        if (!result) return; // Não havia redirect pendente
+
+        const isNewAuthUser = getAdditionalUserInfo(result)?.isNewUser === true;
+        if (isNewAuthUser) {
+          trackEvent('registration_completed', { method: 'google' });
+        }
+        // onAuthStateChanged cuidará de carregar/criar o perfil e atualizar
+        // o estado de auth. Não navegamos aqui — PublicRoute/ProtectedRoute
+        // redirecionam conforme o estado de auth.
+      })
+      .catch((redirectErr) => {
+        logger.error('getRedirectResult falhou:', redirectErr);
+        try {
+          sessionStorage.removeItem(PENDING_GOOGLE_INVITE_KEY);
+        } catch {
+          /* ignore */
+        }
+        // Limpa o pendingInviteRef stale (não houve sign-in bem-sucedido)
+        pendingInviteRef.current = null;
+        setError(getAuthErrorMessage(redirectErr, t('auth.googleLoginFailed')));
+      });
+
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       resolveInitialAuth();
       await handleAuthStateChange(firebaseUser);
@@ -632,8 +691,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       pendingInviteRef.current = null;
     } catch (err: unknown) {
+      // #3192: fallback para signInWithRedirect quando o popup falha — ocorre
+      // em navegadores mobile (iOS Safari, Chrome Android) e com bloqueadores
+      // de pop-up. auth/popup-closed-by-user também entra no fallback porque em
+      // mobile o popup "fecha" imediatamente pelo handler do navegador.
+      if (
+        err instanceof FirebaseError &&
+        (err.code === 'auth/popup-blocked' || err.code === 'auth/popup-closed-by-user')
+      ) {
+        // Persiste o convite em sessionStorage — o redirect recarrega a página
+        // inteira e refs/state do React não sobrevivem. O AuthProvider restaura
+        // pendingInviteRef a partir do sessionStorage no startup, antes de
+        // onAuthStateChanged criar o perfil do novo usuário Google.
+        const pendingInvite = pendingInviteRef.current;
+        if (pendingInvite) {
+          try {
+            sessionStorage.setItem(
+              PENDING_GOOGLE_INVITE_KEY,
+              JSON.stringify(pendingInvite),
+            );
+          } catch (sessionErr) {
+            logger.debug('Não foi possível persistir convite no sessionStorage:', sessionErr);
+          }
+        }
+        try {
+          await signInWithRedirect(auth, googleProvider);
+          // signInWithRedirect inicia a navegação para o Google. A página será
+          // recarregada no retorno; getRedirectResult + onAuthStateChanged
+          // processam o resultado. Retorna SEM limpar pendingInviteRef — ele
+          // será restaurado do sessionStorage no próximo carregamento.
+          return;
+        } catch (redirectErr) {
+          logger.error('signInWithRedirect falhou:', redirectErr);
+          pendingInviteRef.current = null;
+          try {
+            sessionStorage.removeItem(PENDING_GOOGLE_INVITE_KEY);
+          } catch {
+            /* ignore */
+          }
+          setError(getAuthErrorMessage(redirectErr, t('auth.googleLoginFailed')));
+          throw redirectErr;
+        }
+      }
+
       pendingInviteRef.current = null;
-      if (err instanceof FirebaseError && err.code === 'auth/popup-closed-by-user') return;
       // FIX #942 + #3187: sempre mapear pelo código (inclui account-exists-with-
       // different-credential e os códigos app/invite-*) — nunca mensagem crua.
       setError(getAuthErrorMessage(err, t('auth.googleLoginFailed')));
