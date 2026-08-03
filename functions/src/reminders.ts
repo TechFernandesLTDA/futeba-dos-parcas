@@ -41,7 +41,8 @@ import {
   acquireSchedulerLock,
   releaseSchedulerLock,
   startSchedulerHeartbeat,
-  SCHEDULER_LOCK_TTL_MS,
+  schedulerLockTtlForTimeout,
+  schedulerHeartbeatIntervalForTtl,
 } from "./utils/scheduler-lock";
 
 // ==========================================
@@ -1435,9 +1436,15 @@ export const autoCancelLowQuorum = onSchedule(
   },
   async () => {
     const lockId = "auto_cancel_low_quorum";
+    // Issue #3974 Defeito B: TTL derivado do timeoutSeconds (300s), não
+    // mais a constante global de 45s do #3967. Antes o lock expirava
+    // ~6× durante uma execução normal (300s/45s); agora TTL = 600s
+    // (> timeout) garante que só expira se o holder morrer de forma
+    // dura por mais que o dobro do timeout máximo.
+    const lockTtlMs = schedulerLockTtlForTimeout(300);
     const lockAcquired = await acquireSchedulerLock(
       lockId,
-      SCHEDULER_LOCK_TTL_MS
+      lockTtlMs
     );
     if (!lockAcquired) {
       logger.warn(
@@ -1450,7 +1457,16 @@ export const autoCancelLowQuorum = onSchedule(
     // Sem isso, uma morte dura (OOM / wall-clock timeout / kill do
     // Cloud Run gen2) não roda o finally e o lock fica congelado em
     // "running" por todo o TTL, engolindo as 3 retries do Scheduler.
-    const heartbeat = startSchedulerHeartbeat(lockId, lockAcquired);
+    //
+    // Issue #3974 Defeito A: o intervalo agora deriva do TTL (não mais
+    // fixo em 15s) e o caller CHECA heartbeat.isLost() no loop
+    // principal — antes o retorno boolean do heartbeat era descartado,
+    // permitindo writes após perder o lock para uma retry.
+    const heartbeat = startSchedulerHeartbeat(
+      lockId,
+      lockAcquired,
+      schedulerHeartbeatIntervalForTtl(lockTtlMs)
+    );
 
     let lockStatus: "completed" | "failed" = "failed";
 
@@ -1505,6 +1521,19 @@ export const autoCancelLowQuorum = onSchedule(
         scanned < AUTO_CANCEL_MAX_GAMES_PER_RUN &&
         Date.now() < deadline
       ) {
+        // Issue #3974 Defeito A: aborta se o lock foi tomado por outra
+        // instância (execução overrunning o TTL + retry entrou, ou
+        // takeover stale). Não re-throw: o novo owner já está rodando,
+        // uma retry extra só competiria com ele. O finally ainda roda
+        // (stop do heartbeat + release pulado, pois não somos mais owner).
+        if (heartbeat.isLost()) {
+          logger.error(
+            "[AUTO_CANCEL] Scheduler lock perdido durante execucao; " +
+            "abortando para evitar writes conflitantes"
+          );
+          return;
+        }
+
         let query: FirebaseFirestore.Query = db()
           .collection("games")
           .where("status", "==", "CONFIRMED")
@@ -1547,6 +1576,18 @@ export const autoCancelLowQuorum = onSchedule(
           if (Date.now() >= deadline) {
             budgetHitMidPage = true;
             break;
+          }
+
+          // Issue #3974 Defeito A: checa lock perdido por doc também —
+          // cada cancelamento envia notificações, então quanto menor a
+          // janela após perder o lock, menos notificações duplicadas o
+          // novo owner causará.
+          if (heartbeat.isLost()) {
+            logger.error(
+              "[AUTO_CANCEL] Scheduler lock perdido durante a pagina; " +
+              "abortando processamento de jogos restantes"
+            );
+            return;
           }
 
           const result = await processLowQuorumGame(gameDoc);
@@ -1619,17 +1660,27 @@ export const autoCancelLowQuorum = onSchedule(
       // Issue #3967: interrompe o heartbeat antes de liberar o lock,
       // evitando heartbeats fantasmas após release.
       heartbeat.stop();
-      try {
-        await releaseSchedulerLock(
-          lockId,
-          lockAcquired,
-          lockStatus
-        );
-      } catch (lockError) {
+      // Issue #3974 Defeito A: se o lock foi perdido (outro owner
+      // tomou), releaseSchedulerLock seria rejeitado (owner divergente)
+      // e só geraria ruído em log — o novo owner cuida da liberação.
+      if (heartbeat.isLost()) {
         logger.warn(
-          "[AUTO_CANCEL] Falha ao liberar scheduler lock:",
-          lockError
+          "[AUTO_CANCEL] Pulando release do lock: owner divergente " +
+          "(lock foi tomado durante a execucao)"
         );
+      } else {
+        try {
+          await releaseSchedulerLock(
+            lockId,
+            lockAcquired,
+            lockStatus
+          );
+        } catch (lockError) {
+          logger.warn(
+            "[AUTO_CANCEL] Falha ao liberar scheduler lock:",
+            lockError
+          );
+        }
       }
     }
   }

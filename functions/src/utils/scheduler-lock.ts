@@ -4,7 +4,7 @@ import {randomUUID} from "node:crypto";
 import {db} from "../_db";
 
 /**
- * Intervalo entre heartbeats do scheduler lock.
+ * Intervalo padrão entre heartbeats do scheduler lock (legado).
  *
  * Issue #3967: antes o lock gravava heartbeat_at uma única vez na
  * aquisição e nunca mais. Numa morte dura (OOM / wall-clock timeout /
@@ -14,22 +14,82 @@ import {db} from "../_db";
  * heartbeat_at fresco durante a execução normal e permite detectar um
  * holder morto assim que o TTL estoura (em vez de esperar o próximo
  * tick agendado).
+ *
+ * Issue #3974: novos callers devem derivar o intervalo do TTL via
+ * schedulerHeartbeatIntervalForTtl() em vez de usar esta constante
+ * solta, para que o intervalo acompanhe o TTL (que agora é >= timeout
+ * da função).
  */
 export const HEARTBEAT_INTERVAL_MS = 15_000;
 
 /**
- * TTL do lock para takeover de locks stale.
+ * Margem de segurança aplicada ao timeoutSeconds da função dona do
+ * lock para obter o TTL. TTL = timeout × este fator.
  *
- * Issue #3967: era uma constante solta por função (25 min para
- * autoCancelLowQuorum = ~12× o timeout efetivo de 120s; 15 min para
- * cleanupAllSoftDeleted vs timeout de 540s), fazendo todas as retries
- * do Scheduler caírem dentro do TTL e serem puladas. Com heartbeat a
- * cada HEARTBEAT_INTERVAL_MS, TTL = 3× o intervalo basta: mantém folga
- * de ~2 heartbeats perdidos antes do takeover (sem falsos positivos
- * durante a execução normal) e detecta morte dura em ~30-45s — dentro
- * da janela de retry do Cloud Scheduler (backoff ~5/15/35s).
+ * Issue #3974 Defeito B: o #3967 reduziu o TTL para 45s (= 3 ×
+ * HEARTBEAT_INTERVAL_MS de 15s), mas cleanupAllSoftDeleted tem
+ * timeoutSeconds:540 — o lock expirava 12× durante uma única execução
+ * normal, permitindo takeover prematuro pelas retries do Cloud
+ * Scheduler. TTL >= timeout × 2 garante folga contra clock drift entre
+ * Firestore e function, e mesmo SEM nenhum heartbeat o lock sobrevive
+ * a uma execução inteira.
  */
-export const SCHEDULER_LOCK_TTL_MS = 3 * HEARTBEAT_INTERVAL_MS;
+export const SCHEDULER_LOCK_TTL_SAFETY_FACTOR = 2;
+
+/**
+ * Quantos heartbeats cabem dentro de um TTL. Quanto maior, mais falhas
+ * isoladas de heartbeat (network blip, throttle transiente) são
+ * toleradas antes que outra instância considere o holder morto e tome
+ * o lock.
+ */
+export const HEARTBEATS_PER_TTL = 4;
+
+/**
+ * TTL padrão do lock (legado). Mantido >= o maior timeoutSeconds entre
+ * os crons (540s do cleanupAllSoftDeleted) × SCHEDULER_LOCK_TTL_SAFETY_FACTOR
+ * para que o default nunca seja menor que um timeout — corrige o
+ * Defeito B (#3974) onde o #3967 tinha fixado TTL=45s (12× menor que o
+ * timeout de 540s). Novos callers devem usar
+ * schedulerLockTtlForTimeout(timeoutSeconds) passando o próprio timeout.
+ */
+export const SCHEDULER_LOCK_TTL_MS =
+  540_000 * SCHEDULER_LOCK_TTL_SAFETY_FACTOR;
+
+/**
+ * Calcula o TTL recomendado para um lock a partir do timeoutSeconds da
+ * função dona do lock.
+ *
+ * Issue #3974: TTL >= timeout impede que o lock expire durante uma
+ * execução normal. O #3967 usava TTL=45s fixo, 12× menor que o timeout
+ * de 540s do cleanupAllSoftDeleted — o lock expirava no meio do job e
+ * uma retry tomava o lock enquanto o holder original ainda gravava.
+ *
+ * @param {number} timeoutSeconds - timeoutSeconds declarado pela função.
+ * @return {number} TTL em milissegundos (= timeoutSeconds × 1000 ×
+ *   SCHEDULER_LOCK_TTL_SAFETY_FACTOR).
+ */
+export function schedulerLockTtlForTimeout(
+  timeoutSeconds: number
+): number {
+  return timeoutSeconds * 1000 * SCHEDULER_LOCK_TTL_SAFETY_FACTOR;
+}
+
+/**
+ * Deriva o intervalo de heartbeat a partir do TTL do lock.
+ *
+ * Issue #3974: o intervalo deve derivar do TTL (TTL / HEARTBEATS_PER_TTL)
+ * para que múltiplos heartbeats caibam dentro de um TTL maior — assim
+ * falhas isoladas de heartbeat não causam takeover falso, e ao mesmo
+ * tempo o TTL (agora >= timeout) impede expiração prematura.
+ *
+ * @param {number} ttlMs - TTL do lock (ver schedulerLockTtlForTimeout).
+ * @return {number} Intervalo entre heartbeats em milissegundos.
+ */
+export function schedulerHeartbeatIntervalForTtl(
+  ttlMs: number
+): number {
+  return Math.max(1_000, Math.floor(ttlMs / HEARTBEATS_PER_TTL));
+}
 
 /**
  * Tenta adquirir um lock distribuído para jobs agendados.
@@ -123,6 +183,27 @@ export async function heartbeatSchedulerLock(
 }
 
 /**
+ * Handle retornado por startSchedulerHeartbeat.
+ *
+ * `stop()` interrompe o intervalo; `isLost()` reporta se um heartbeat
+ * foi rejeitado (outro owner tomou o lock). Callers DEVEM checar
+ * isLost() em seus loops principais e abortar graciosamente quando
+ * true, evitando writes conflitantes com o novo owner (Issue #3974
+ * Defeito A: antes o retorno boolean do heartbeat era ignorado e a
+ * execução continuava mesmo após perder o lock).
+ */
+export interface SchedulerHeartbeatHandle {
+  /** Interrompe o intervalo de heartbeat. */
+  stop: () => void;
+  /**
+   * True quando um heartbeat retornou false — outro owner tomou o lock
+   * (execução overrunning o TTL + retry entrou, ou takeover manual/stale).
+   * Uma vez true, permanece true (o lock não volta para este owner).
+   */
+  isLost: () => boolean;
+}
+
+/**
  * Inicia heartbeat periódico para um lock já adquirido.
  *
  * Issue #3967: o heartbeat é a prova de vida que viabiliza takeover
@@ -130,32 +211,58 @@ export async function heartbeatSchedulerLock(
  * handle retornado DEVE ter stop() chamado no finally do caller —
  * antes de releaseSchedulerLock — para evitar heartbeats fantasmas.
  *
+ * Issue #3974 Defeito A: agora o retorno boolean de heartbeatSchedulerLock
+ * é observado. Se um heartbeat for rejeitado (outro owner tomou o lock),
+ * isLost() passa a retornar true e o caller DEVE abortar a execução.
+ * Antes o boolean era descartado e o holder original continuava
+ * gravando depois de perder o lock, competindo com o novo owner.
+ *
  * @param {string} lockId - Doc ID em system_locks.
  * @param {string} ownerToken - Token retornado na aquisição.
- * @param {number} intervalMs - Intervalo entre heartbeats.
- * @return {object} Handle cujo stop() interrompe o heartbeat.
+ * @param {number} intervalMs - Intervalo entre heartbeats (default
+ *   HEARTBEAT_INTERVAL_MS; prefira schedulerHeartbeatIntervalForTtl).
+ * @return {SchedulerHeartbeatHandle} Handle cujo stop() interrompe o
+ *   heartbeat e cujo isLost() reporta perda de ownership.
  */
 export function startSchedulerHeartbeat(
   lockId: string,
   ownerToken: string,
   intervalMs: number = HEARTBEAT_INTERVAL_MS
-): {stop: () => void} {
+): SchedulerHeartbeatHandle {
+  let lost = false;
   const timer = setInterval(() => {
-    // Best-effort: uma falha de heartbeat isolada não derruba o job —
-    // o pior caso é um takeover prematuro, e o fencing por owner_token
-    // (em releaseSchedulerLock/heartbeatSchedulerLock) impede que dois
+    // Best-effort: uma falha isolada (network/throttle) não derruba o
+    // job nem marca como perdido — só um `false` explícito (owner
+    // divergente) marca. O pior caso de uma falha isolada é um
+    // takeover prematuro, e o fencing por owner_token (em
+    // releaseSchedulerLock/heartbeatSchedulerLock) impede que dois
     // holders gravem resultados conflitantes.
-    void heartbeatSchedulerLock(lockId, ownerToken).catch((err: unknown) => {
-      logger.warn(
-        `[SCHED_LOCK] Heartbeat falhou para ${lockId}:`,
-        err
-      );
-    });
+    void heartbeatSchedulerLock(lockId, ownerToken)
+      .then((ok: boolean) => {
+        // Issue #3974 Defeito A: antes este retorno era ignorado.
+        if (!ok && !lost) {
+          lost = true;
+          logger.error(
+            `[SCHED_LOCK] Heartbeat rejeitado para ${lockId}: ` +
+            "lock foi tomado por outro owner. " +
+            "Caller deve abortar a execucao para evitar writes conflitantes."
+          );
+        }
+      })
+      .catch((err: unknown) => {
+        logger.warn(
+          `[SCHED_LOCK] Heartbeat falhou para ${lockId}:`,
+          err
+        );
+      });
   }, intervalMs);
   // unref evita que o timer segure o event loop na desalocação do
   // container; o cast Defensive lida com ambientes de teste/DOM.
   (timer as {unref?: () => void}).unref?.();
-  return {stop: () => clearInterval(timer)};
+  return {
+    stop: () => clearInterval(timer),
+    isLost: () => lost,
+  };
 }
 
 /**

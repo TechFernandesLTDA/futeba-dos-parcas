@@ -80,9 +80,15 @@ jest.mock("../src/_db", () => ({
 jest.mock("../src/utils/scheduler-lock", () => ({
   acquireSchedulerLock: jest.fn(),
   releaseSchedulerLock: jest.fn(),
-  startSchedulerHeartbeat: jest.fn(() => ({stop: jest.fn()})),
-  SCHEDULER_LOCK_TTL_MS: 45_000,
+  // Issue #3974: handle agora expõe isLost() — callers checam para abortar.
+  startSchedulerHeartbeat: jest.fn(() => ({stop: jest.fn(), isLost: jest.fn().mockReturnValue(false)})),
+  schedulerLockTtlForTimeout: jest.fn((t: number) => t * 1000 * 2),
+  schedulerHeartbeatIntervalForTtl: jest.fn((t: number) => Math.floor(t / 4)),
+  // Issue #3974: TTL default >= maior timeoutSeconds (540s) × 2.
+  SCHEDULER_LOCK_TTL_MS: 540_000 * 2,
   HEARTBEAT_INTERVAL_MS: 15_000,
+  SCHEDULER_LOCK_TTL_SAFETY_FACTOR: 2,
+  HEARTBEATS_PER_TTL: 4,
 }));
 
 import {

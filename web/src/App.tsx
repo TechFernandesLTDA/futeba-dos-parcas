@@ -661,11 +661,23 @@ function CommandPaletteBoundary({ children }: { children: React.ReactNode }) {
  * em /login, /register e /forgot-password — divergindo do document.title,
  * que cada tela define via useDocumentTitle. As chaves aqui são as MESMAS que
  * cada tela usa para o title, para os dois resolvedores nunca divergirem.
+ *
+ * #3975: estende a cobertura para as demais rotas PublicRoute que ainda caíam
+ * no fallback "Não encontrado" — /welcome, /splash e /launch.
+ * - /welcome usa useDocumentTitle(t('welcome.documentTitle')).
+ * - /splash usa useDocumentTitle() (sem arg → title = APP_NAME), então a
+ *   chave equivalente é common.appName ("Futeba dos Parças").
+ * - /launch é um <Navigate to="/" replace />; o destino (/) renderiza o
+ *   LaunchPage público, que não define um title próprio via i18n. A identidade
+ *   estável do landing é o nome do app → common.appName.
  */
 const PUBLIC_ROUTE_TITLES: Record<string, string> = {
   '/login': 'page.title.login',
   '/register': 'page.title.register',
   '/forgot-password': 'auth.forgotPasswordTitle',
+  '/welcome': 'welcome.documentTitle',
+  '/splash': 'common.appName',
+  '/launch': 'common.appName',
 };
 
 function getRouteAnnouncementTitle(

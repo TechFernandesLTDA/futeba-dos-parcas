@@ -9,6 +9,17 @@ const mockTransactionSet = jest.fn();
 const mockTransactionUpdate = jest.fn();
 const mockCollectionGet = jest.fn();
 
+// Issue #3974: mock apenas startSchedulerHeartbeat (mantendo
+// acquire/release reais via jest.requireActual), para controlar
+// isLost() e testar o abort gracioso quando o lock é perdido.
+const mockHeartbeatStop = jest.fn();
+const mockHeartbeatIsLost = jest.fn().mockReturnValue(false);
+const mockHeartbeatHandle = {
+  stop: mockHeartbeatStop,
+  isLost: mockHeartbeatIsLost,
+};
+const mockStartSchedulerHeartbeat = jest.fn(() => mockHeartbeatHandle);
+
 // FIX #3968: a query agora é paginada (orderBy + limit + startAfter com
 // cursor). A chain fluente do mock precisa suportar todos os terminais,
 // caso contrário `.orderBy(...).limit(...).startAfter(...).get()` quebra.
@@ -83,12 +94,28 @@ jest.mock("../src/notifications", () => ({
   },
 }));
 
+// Issue #3974: partial mock — acquireSchedulerLock e releaseSchedulerLock
+// continuam reais (exercitam mockRunTransaction/mockTransactionGet como
+// antes), só startSchedulerHeartbeat é substituído para permitir
+// controlar isLost() nos testes de abort.
+jest.mock("../src/utils/scheduler-lock", () => {
+  const actual = jest.requireActual("../src/utils/scheduler-lock");
+  return {
+    ...actual,
+    startSchedulerHeartbeat: mockStartSchedulerHeartbeat,
+  };
+});
+
 import {autoCancelLowQuorum} from "../src/reminders";
 import {logger} from "firebase-functions";
 
 describe("autoCancelLowQuorum", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // Issue #3974: isLost() default false — abort só é exercitado no
+    // teste específico de lock perdido.
+    mockHeartbeatIsLost.mockReturnValue(false);
+    mockStartSchedulerHeartbeat.mockReturnValue(mockHeartbeatHandle);
     mockRunTransaction.mockImplementation(async (callback: any) =>
       callback({
         get: mockTransactionGet,
@@ -495,6 +522,50 @@ describe("autoCancelLowQuorum", () => {
       );
     } finally {
       dateNowSpy.mockRestore();
+    }
+  });
+
+  // ===== Issue #3974: abort gracioso quando o lock é perdido =====
+
+  it("#3974: aborta a execucao quando heartbeat reporta lock perdido antes do loop", async () => {
+    // Defeito A: antes o retorno boolean do heartbeat era descartado.
+    // Agora o caller checa isLost() e aborta para evitar writes
+    // conflitantes com o novo owner.
+    mockHeartbeatIsLost.mockReturnValue(true);
+
+    await autoCancelLowQuorum();
+
+    // Nenhum jogo foi queryado — abortou no primeiro cheque do loop.
+    expect(mockCollectionGet).not.toHaveBeenCalled();
+    expect(mockTransactionUpdate).not.toHaveBeenCalled();
+    // Lock perdido é CRITICAL — logado em error.
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.stringContaining("Scheduler lock perdido durante execucao")
+    );
+    // Heartbeat foi interrompido no finally.
+    expect(mockHeartbeatStop).toHaveBeenCalled();
+  });
+
+  it("#3974: NAO chama releaseSchedulerLock quando o lock foi perdido", async () => {
+    // Quando o lock foi tomado por outro owner, release seria rejeitado
+    // (owner divergente) e só geraria ruído — o novo owner cuida da
+    // liberação. Verifica-se que o finally pula o release.
+    mockHeartbeatIsLost.mockReturnValue(true);
+    const releaseSpy = jest.spyOn(
+      require("../src/utils/scheduler-lock"),
+      "releaseSchedulerLock"
+    );
+
+    try {
+      await autoCancelLowQuorum();
+
+      expect(releaseSpy).not.toHaveBeenCalled();
+      // acquire ainda foi chamado (lock obtido antes de ser perdido).
+      expect(logger.warn).toHaveBeenCalledWith(
+        expect.stringContaining("Pulando release do lock"),
+      );
+    } finally {
+      releaseSpy.mockRestore();
     }
   });
 });

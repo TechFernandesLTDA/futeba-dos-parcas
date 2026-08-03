@@ -36,7 +36,8 @@ import {
   acquireSchedulerLock,
   releaseSchedulerLock,
   startSchedulerHeartbeat,
-  SCHEDULER_LOCK_TTL_MS,
+  schedulerLockTtlForTimeout,
+  schedulerHeartbeatIntervalForTtl,
 } from "../utils/scheduler-lock";
 
 
@@ -666,21 +667,29 @@ export const cleanupAllSoftDeleted =
     region: "southamerica-east1",
     memory: "512MiB",
     timeoutSeconds: 540,
-    // Issue #3967: retryCount combinado com TTL/heartbeat curtos. Antes
-    // o FIX #1040 (re-throw p/ acionar retry) era letra morta aqui:
+    // Issue #3967: retryCount combinado com TTL/heartbeat. Antes o
+    // FIX #1040 (re-throw p/ acionar retry) era letra morta aqui:
     // sem retryCount, uma falha custava uma SEMANA inteira sem
     // hard-delete (PII retido em subcoleções — #2481/#2529). Sozinho o
-    // retryCount não resolveria: o TTL era 15min vs timeout 540s, toda
-    // retry caía no lock e era pulada (Defeito A). Agora o TTL é
-    // heartbeat-driven (SCHEDULER_LOCK_TTL_MS), permitindo takeover
-    // dentro da janela de retry.
+    // retryCount não resolveria: sem TTL >= timeout (Defeito B do
+    // #3974) toda retry caía no lock e era pulada. Agora o TTL é
+    // derivado do timeoutSeconds via schedulerLockTtlForTimeout()
+    // (>= timeout × 2), permitindo takeover só em morte dura real.
     retryCount: 3,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   }, async (_event) => {
     const lockId = "cleanup_all_soft_deleted";
+    // Issue #3974 Defeito B: TTL derivado do timeoutSeconds (540s). O
+    // #3967 tinha fixado o TTL global em 45s — 12× menor que o timeout
+    // de 540s deste job — fazendo o lock expirar no meio da execução
+    // normal e uma retry tomar o lock enquanto o holder original ainda
+    // gravava. TTL = 1080s (> timeout × SCHEDULER_LOCK_TTL_SAFETY_FACTOR)
+    // só expira se o holder morrer de forma dura por mais que o dobro
+    // do timeout.
+    const lockTtlMs = schedulerLockTtlForTimeout(540);
     const lockAcquired = await acquireSchedulerLock(
       lockId,
-      SCHEDULER_LOCK_TTL_MS
+      lockTtlMs
     );
     if (!lockAcquired) {
       logger.warn(
@@ -689,8 +698,14 @@ export const cleanupAllSoftDeleted =
       return;
     }
 
-    // Issue #3967: heartbeat periódico para takeover rápido em morte dura.
-    const heartbeat = startSchedulerHeartbeat(lockId, lockAcquired);
+    // Issue #3974 Defeito A: intervalo derivado do TTL e caller checa
+    // heartbeat.isLost() no loop de coleções — antes o retorno boolean
+    // do heartbeat era descartado, permitindo writes após perder o lock.
+    const heartbeat = startSchedulerHeartbeat(
+      lockId,
+      lockAcquired,
+      schedulerHeartbeatIntervalForTtl(lockTtlMs)
+    );
 
     let lockStatus: "completed" | "failed" = "failed";
 
@@ -726,6 +741,19 @@ export const cleanupAllSoftDeleted =
     ];
 
     for (const col of collections) {
+      // Issue #3974 Defeito A: aborta se o lock foi tomado por outra
+      // instância (execução overrunning o TTL + retry entrou, ou
+      // takeover stale). Não re-throw: o novo owner já está rodando,
+      // uma retry extra só competiria com ele. Hard-deletes são
+      // idempotentes, mas parar cedo evita métricas/alertas duplicados.
+      if (heartbeat.isLost()) {
+        logger.error(
+          "[SOFT_DELETE_CLEANUP] Scheduler lock perdido durante execucao; " +
+          "abortando colecoes restantes para evitar writes conflitantes"
+        );
+        return;
+      }
+
       logger.info(
         "[SOFT_DELETE_CLEANUP] Processando: " +
         col.name
@@ -839,17 +867,27 @@ export const cleanupAllSoftDeleted =
     } finally {
       // Issue #3967: interrompe o heartbeat antes de liberar o lock.
       heartbeat.stop();
-      try {
-        await releaseSchedulerLock(
-          lockId,
-          lockAcquired,
-          lockStatus
-        );
-      } catch (lockError) {
+      // Issue #3974 Defeito A: se o lock foi perdido (outro owner
+      // tomou), releaseSchedulerLock seria rejeitado (owner divergente)
+      // e só geraria ruído em log — o novo owner cuida da liberação.
+      if (heartbeat.isLost()) {
         logger.warn(
-          "[SOFT_DELETE_CLEANUP] Falha ao liberar scheduler lock:",
-          lockError
+          "[SOFT_DELETE_CLEANUP] Pulando release do lock: owner divergente " +
+          "(lock foi tomado durante a execucao)"
         );
+      } else {
+        try {
+          await releaseSchedulerLock(
+            lockId,
+            lockAcquired,
+            lockStatus
+          );
+        } catch (lockError) {
+          logger.warn(
+            "[SOFT_DELETE_CLEANUP] Falha ao liberar scheduler lock:",
+            lockError
+          );
+        }
       }
     }
   });

@@ -10,10 +10,11 @@ const mockDb = {
   runTransaction: mockRunTransaction,
 };
 const mockWarn = jest.fn();
+const mockError = jest.fn();
 const mockServerTimestamp = {_type: "server-timestamp"};
 
 jest.mock("../src/_db", () => ({db: jest.fn(() => mockDb)}));
-jest.mock("firebase-functions/v2", () => ({logger: {warn: mockWarn}}));
+jest.mock("firebase-functions/v2", () => ({logger: {warn: mockWarn, error: mockError}}));
 jest.mock("firebase-admin/firestore", () => ({
   FieldValue: {serverTimestamp: jest.fn(() => mockServerTimestamp)},
 }));
@@ -23,7 +24,11 @@ const {
   releaseSchedulerLock,
   heartbeatSchedulerLock,
   startSchedulerHeartbeat,
+  schedulerLockTtlForTimeout,
+  schedulerHeartbeatIntervalForTtl,
   SCHEDULER_LOCK_TTL_MS,
+  SCHEDULER_LOCK_TTL_SAFETY_FACTOR,
+  HEARTBEATS_PER_TTL,
   HEARTBEAT_INTERVAL_MS,
 } = require("../src/utils/scheduler-lock");
 
@@ -143,7 +148,7 @@ describe("scheduler lock heartbeat (issue #3967)", () => {
   });
 });
 
-describe("startSchedulerHeartbeat (issue #3967)", () => {
+describe("startSchedulerHeartbeat (issue #3967 / #3974)", () => {
   afterEach(() => {
     jest.useRealTimers();
   });
@@ -167,10 +172,106 @@ describe("startSchedulerHeartbeat (issue #3967)", () => {
     expect(mockTxSet).not.toHaveBeenCalled();
   });
 
-  it("expõe constantes de TTL/heartbeat derivadas (não soltas)", () => {
-    // Issue #3967 critério 3: TTL não é mais 12× o timeout — é
-    // heartbeat-driven e exportado para reuso entre funções.
+  it("issue #3974: isLost() começa false e só vira true quando heartbeat retorna false", async () => {
+    // Defeito A: antes o retorno boolean do heartbeat era ignorado.
+    // Agora isLost() reporta a perda de ownership para o caller abortar.
+    jest.useFakeTimers();
+
+    // Primeiro heartbeat: owner ainda detém o lock (retorna true).
+    mockTxGet.mockResolvedValueOnce({
+      exists: true,
+      data: () => ({owner_token: "owner-1", status: "running"}),
+    });
+    // Segundo heartbeat: outra instância tomou o lock (retorna false).
+    mockTxGet.mockResolvedValueOnce({
+      exists: true,
+      data: () => ({owner_token: "successor", status: "running"}),
+    });
+
+    const handle = startSchedulerHeartbeat("job", "owner-1", 1_000);
+
+    expect(handle.isLost()).toBe(false);
+
+    // t=1s: heartbeat bem-sucedido — continua detendo o lock.
+    await jest.advanceTimersByTimeAsync(1_000);
+    expect(handle.isLost()).toBe(false);
+
+    // t=2s: heartbeat rejeitado — lock foi tomado.
+    await jest.advanceTimersByTimeAsync(1_000);
+    expect(handle.isLost()).toBe(true);
+
+    // isLost é latching: uma vez perdido, não volta mais para este owner.
+    mockTxGet.mockResolvedValue({
+      exists: true,
+      data: () => ({owner_token: "owner-1", status: "running"}),
+    });
+    await jest.advanceTimersByTimeAsync(1_000);
+    expect(handle.isLost()).toBe(true);
+
+    // Erro CRITICAL de takeover deve ser logado.
+    expect(mockError).toHaveBeenCalledWith(
+      expect.stringContaining("Heartbeat rejeitado para job"),
+    );
+
+    handle.stop();
+  });
+
+  it("issue #3974: falha isolada (exceção) do heartbeat NÃO marca isLost", async () => {
+    // Best-effort: uma exceção transiente (network/throttle) não pode
+    // abortar o job — só um `false` explícito (owner divergente) marca.
+    jest.useFakeTimers();
+    mockTxGet.mockRejectedValueOnce(new Error("transient firestore error"));
+
+    const handle = startSchedulerHeartbeat("job", "owner-1", 1_000);
+
+    await jest.advanceTimersByTimeAsync(1_000);
+
+    expect(handle.isLost()).toBe(false);
+    expect(mockWarn).toHaveBeenCalledWith(
+      expect.stringContaining("Heartbeat falhou para job"),
+      expect.any(Error),
+    );
+
+    handle.stop();
+  });
+});
+
+describe("TTL/heartbeat derivados do timeoutSeconds (issue #3974 Defeito B)", () => {
+  it("expõe constantes derivadas (não soltas) e TTL >= maior timeout", () => {
+    // Issue #3974: corrige #3967 onde TTL=45s era 12× menor que o
+    // timeout de 540s. Agora o TTL default (legado) cobre o maior
+    // timeoutSeconds entre os crons (540s) com folga de segurança.
     expect(HEARTBEAT_INTERVAL_MS).toBe(15_000);
-    expect(SCHEDULER_LOCK_TTL_MS).toBe(3 * HEARTBEAT_INTERVAL_MS);
+    expect(SCHEDULER_LOCK_TTL_SAFETY_FACTOR).toBe(2);
+    expect(HEARTBEATS_PER_TTL).toBe(4);
+    expect(SCHEDULER_LOCK_TTL_MS).toBe(540_000 * SCHEDULER_LOCK_TTL_SAFETY_FACTOR);
+    // Invariante chave do Defeito B: TTL default NUNCA menor que o
+    // maior timeoutSeconds declarado (540s).
+    expect(SCHEDULER_LOCK_TTL_MS).toBeGreaterThanOrEqual(540_000);
+  });
+
+  it("schedulerLockTtlForTimeout retorna TTL >= timeout (não 12× menor)", () => {
+    // Repro do Defeito B: #3967 usava TTL=45s para cleanupAllSoftDeleted
+    // (timeoutSeconds:540) — 540/45 = 12 expirações durante a execução.
+    const cleanupTtl = schedulerLockTtlForTimeout(540);
+    expect(cleanupTtl).toBe(540 * 1000 * SCHEDULER_LOCK_TTL_SAFETY_FACTOR);
+    expect(cleanupTtl).toBeGreaterThanOrEqual(540_000);
+
+    const autoCancelTtl = schedulerLockTtlForTimeout(300);
+    expect(autoCancelTtl).toBe(300 * 1000 * SCHEDULER_LOCK_TTL_SAFETY_FACTOR);
+    expect(autoCancelTtl).toBeGreaterThanOrEqual(300_000);
+  });
+
+  it("schedulerHeartbeatIntervalForTtl deriva intervalo do TTL (vários heartbeats por TTL)", () => {
+    // Intervalo = TTL / HEARTBEATS_PER_TTL: múltiplos heartbeats por TTL
+    // toleram falhas isoladas sem takeover prematuro.
+    const cleanupTtl = schedulerLockTtlForTimeout(540); // 1_080_000ms
+    const interval = schedulerHeartbeatIntervalForTtl(cleanupTtl);
+    expect(interval).toBe(Math.floor(cleanupTtl / HEARTBEATS_PER_TTL));
+    expect(interval).toBe(270_000); // 4 heartbeats no TTL de 18min
+
+    // Piso de 1s evita busy-loop em TTL muito pequeno.
+    expect(schedulerHeartbeatIntervalForTtl(0)).toBe(1_000);
+    expect(schedulerHeartbeatIntervalForTtl(500)).toBe(1_000);
   });
 });
