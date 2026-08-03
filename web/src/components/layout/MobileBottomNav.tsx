@@ -9,7 +9,8 @@ import {
   Slide,
   Box,
 } from '@mui/material';
-import { md3TypeScale } from '../../theme';
+import type { Theme } from '@mui/material/styles';
+import { md3TypeScale, getNavSelectedText } from '../../theme';
 import { pageSpacing } from '../../theme/pageTokens';
 import { iconSizes } from '../../theme/iconSizes';
 import { getNavigationGlassStyles } from '../../theme/navigationGlass';
@@ -23,6 +24,19 @@ const BOTTOM_NAV_ITEMS = NAV_ITEMS.filter((item) => item.showInBottomNav);
 const BOTTOM_NAV_ICONS = BOTTOM_NAV_ITEMS.map((item) => (
   React.cloneElement(item.icon, { 'aria-hidden': true, sx: { fontSize: iconSizes.lg } })
 ));
+
+// #3918: cor do item selecionado theme-aware (primary.dark no light → AA 4.5:1).
+// Definido no escopo do módulo para não recriar a fn a cada item do .map().
+const selectedActionSx = (theme: Theme) => ({
+  '&.Mui-selected': {
+    color: getNavSelectedText(theme),
+    bgcolor: 'action.selected',
+    borderRadius: 2,
+    '& .MuiBottomNavigationAction-label': {
+      fontWeight: 600,
+    },
+  },
+});
 
 export function MobileBottomNav({ children }: { children?: React.ReactNode }) {
   const navigate = useNavigate();
@@ -125,16 +139,7 @@ export function MobileBottomNav({ children }: { children?: React.ReactNode }) {
                 aria-label={t(item.labelKey)}
                 aria-current={activeValue === idx ? 'page' : undefined}
                 tabIndex={trigger ? -1 : undefined}
-                sx={{
-                  '&.Mui-selected': {
-                    color: 'primary.main',
-                    bgcolor: 'action.selected',
-                    borderRadius: 2,
-                    '& .MuiBottomNavigationAction-label': {
-                      fontWeight: 600,
-                    },
-                  },
-                }}
+                sx={selectedActionSx}
               />
             ))}
           </BottomNavigation>

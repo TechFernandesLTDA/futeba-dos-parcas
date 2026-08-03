@@ -84,6 +84,20 @@ export interface CleanupResult {
   batchCount: number;
   cutoffDate: Date;
   durationMs: number;
+  /**
+   * Teto de batches permitido por execução. Exportado para que o chamador
+   * saiba qual era a "janela de trabalho" da varredura (issue #3969).
+   */
+  maxBatches: number;
+  /**
+   * `true` quando o laço saiu por `batchCount >= maxBatches` ainda existindo
+   * documentos elegíveis (i.e. `hasMore` permaneceu `true`). Significa que o
+   * backlog NÃO foi totalmente drenado nesta execução e documentos além do
+   * TTL de retenção seguirão carregando PII até a próxima varredura (risco
+   * LGPD — issues #2481 / #3969). O chamador deve logar em `warn` e emitir
+   * um alerta quando isto acontecer.
+   */
+  truncated: boolean;
 }
 
 /** Resultado da cascata de dependências de um jogo. */
@@ -561,10 +575,13 @@ export async function cleanupSoftDeleted(
 
   let totalDeleted = 0;
   let batchCount = 0;
+  // Hoistado para fora do try: precisamos dele no catch para reportar se a
+  // varredura foi truncada por saturação mesmo quando um erro interrompe
+  // o laço (issue #3969).
+  let hasMore = true;
 
   try {
     let lastDoc: admin.firestore.QueryDocumentSnapshot | undefined;
-    let hasMore = true;
 
     while (hasMore && batchCount < maxBatches) {
       let query = db
@@ -628,12 +645,31 @@ export async function cleanupSoftDeleted(
 
     const durationMs = Date.now() - startTime;
 
+    // Issue #3969: sinal de saturação. O laço sai por `batchCount >= maxBatches`
+    // somente quando `hasMore` ainda é true (ou seja, ainda havia documentos
+    // elegíveis). Distinguimos isto do esvaziamento natural para que o chamador
+    // possa alertar — documentos além do TTL de retenção carregam PII (LGPD).
+    const truncated = hasMore && batchCount >= maxBatches;
+
+    if (truncated) {
+      // O job é semanal: cada execução truncada adia a remoção por uma semana
+      // inteira. Avisar aqui garante que a saturação nunca passe em silêncio.
+      logger.warn(
+        "[SOFT_DELETE_CLEANUP] SATURACAO: " +
+        `${collection} atingiu o teto de ${maxBatches} batches ` +
+        `(${totalDeleted} documentos removidos) e ainda ha backlog. ` +
+        "Documentos soft-deleted alem do TTL de retencao " +
+        "permanecerao ate a proxima execucao (risco LGPD)."
+      );
+    }
+
     logger.info(
       "[SOFT_DELETE_CLEANUP] " +
       `${collection}: ${totalDeleted} ` +
       "documentos permanentemente removidos " +
       `em ${batchCount} batches ` +
-      `(${durationMs}ms)`
+      `(${durationMs}ms)` +
+      (truncated ? " [TRUNCADO]" : "")
     );
 
     return {
@@ -642,6 +678,8 @@ export async function cleanupSoftDeleted(
       batchCount,
       cutoffDate,
       durationMs,
+      maxBatches,
+      truncated,
     };
   } catch (error: unknown) {
     logger.error(
@@ -649,12 +687,16 @@ export async function cleanupSoftDeleted(
       `${collection}:`,
       error
     );
+    // Em caso de erro não há como afirmar se restou backlog; reportamos o
+    // estado parcial conhecido (não truncado — a falha já será alertada).
     return {
       collection,
       totalDeleted,
       batchCount,
       cutoffDate,
       durationMs: Date.now() - startTime,
+      maxBatches,
+      truncated: hasMore && batchCount >= maxBatches,
     };
   }
 }

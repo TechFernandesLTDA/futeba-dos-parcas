@@ -463,6 +463,76 @@ describe("cleanupSoftDeleted", () => {
     expect(result.totalDeleted).toBe(10); // 5 * 2 batches
   });
 
+  // ===== Issue #3969: sinal de saturação (truncated) =====
+  test("#3969: reporta truncated=true quando atinge o teto e ainda há backlog (LGPD)", async () => {
+    // Páginas SEMPRE cheias (size === batchSize) → laço sai por maxBatches,
+    // não por esvaziamento. Documentos além do TTL permaneceriam (risco LGPD).
+    const mockDocs = Array.from({ length: 5 }, (_, i) => ({
+      ref: { id: `doc${i}` },
+    }));
+    mockQueryGet.mockResolvedValue({
+      empty: false,
+      docs: mockDocs,
+      size: 5,
+    });
+
+    const result = await cleanupSoftDeleted("games", 30, 2, 5);
+
+    expect(result.batchCount).toBe(2);
+    expect(result.maxBatches).toBe(2);
+    expect(result.truncated).toBe(true);
+  });
+
+  test("#3969: reporta truncated=false quando drena completamente o backlog", async () => {
+    // Página cheia seguida de página vazia → drenou tudo, sem saturação.
+    const mockDocs = Array.from({ length: 5 }, (_, i) => ({
+      ref: { id: `doc${i}` },
+    }));
+    mockQueryGet
+      .mockResolvedValueOnce({ empty: false, docs: mockDocs, size: 5 })
+      .mockResolvedValueOnce({ empty: true, docs: [], size: 0 });
+
+    const result = await cleanupSoftDeleted("games", 30, 10, 5);
+
+    expect(result.batchCount).toBe(1);
+    expect(result.maxBatches).toBe(10);
+    expect(result.truncated).toBe(false);
+  });
+
+  test("#3969: reporta truncated=false quando última página é parcial (fim natural)", async () => {
+    // Primeira página cheia (size === batchSize), segunda parcial → drenou.
+    const fullPage = Array.from({ length: 5 }, (_, i) => ({
+      ref: { id: `doc${i}` },
+    }));
+    const partialPage = [{ ref: { id: "last" } }];
+    mockQueryGet
+      .mockResolvedValueOnce({ empty: false, docs: fullPage, size: 5 })
+      .mockResolvedValueOnce({ empty: false, docs: partialPage, size: 1 });
+
+    const result = await cleanupSoftDeleted("games", 30, 10, 5);
+
+    expect(result.batchCount).toBe(2);
+    expect(result.truncated).toBe(false);
+  });
+
+  test("#3969: reporta truncated=false quando não há nada a deletar", async () => {
+    mockQueryGet.mockResolvedValue({ empty: true, docs: [], size: 0 });
+
+    const result = await cleanupSoftDeleted("games", 30, 10, 100);
+
+    expect(result.batchCount).toBe(0);
+    expect(result.maxBatches).toBe(10);
+    expect(result.truncated).toBe(false);
+  });
+
+  test("#3969: reporta maxBatches informado no resultado", async () => {
+    mockQueryGet.mockResolvedValue({ empty: true, docs: [], size: 0 });
+
+    const result = await cleanupSoftDeleted("locations", 30, 20, 500);
+
+    expect(result.maxBatches).toBe(20);
+  });
+
   test("deve retornar resultado com cutoffDate correto", async () => {
     mockQueryGet.mockResolvedValue({
       empty: true,

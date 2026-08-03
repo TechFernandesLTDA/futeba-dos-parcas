@@ -35,12 +35,7 @@ import { useHapticFeedback } from '../../hooks/useHapticFeedback';
 import { AppLogo } from '../common/AppLogo';
 import { avatarSizes, iconSizes } from '../../theme/iconSizes';
 import { getSearchShortcutTranslationKey } from '../../utils/platformShortcut';
-import {
-  appSidebarLayoutTokens,
-  appSidebarStyles,
-  getAppSidebarOverlayPlacement,
-} from './AppSidebar.styles';
-import { md3TypeScale } from '../../theme';
+import { md3TypeScale, getNavSelectedText } from '../../theme';
 import { getNavigationGlassStyles } from '../../theme/navigationGlass';
 import { navigationControlTokens } from '../../theme/navigationControls';
 import { usePrefetchOnHover } from '../../hooks/useResourcePreloading';
@@ -57,6 +52,12 @@ import {
   getActiveNavIndex,
   resolveNavItemPath,
 } from '../../config/navItems';
+import {
+  appSidebarLayoutTokens,
+  appSidebarStyles,
+  getAppSidebarOverlayPlacement,
+  railNavigationButtonSx,
+} from './AppSidebar.styles';
 
 const pulse = keyframes`
   0% { transform: scale(1); }
@@ -191,7 +192,7 @@ export function AppSidebar() {
                   data-prefetch-route={destination}
                   {...prefetchHandlers}
                   onClick={() => navigateWithHaptic(destination)}
-                  sx={appSidebarStyles.railNavigationButton}
+                  sx={railNavigationButtonSx}
                 >
                   <ListItemIcon
                     sx={{
@@ -208,7 +209,7 @@ export function AppSidebar() {
                     sx={{
                       maxWidth: '100%',
                       fontWeight: active ? 600 : 400,
-                      color: active ? 'primary.main' : 'text.secondary',
+                      color: active ? getNavSelectedText(theme) : 'text.secondary',
                     }}
                   >
                     {t(item.labelKey)}
@@ -233,7 +234,7 @@ export function AppSidebar() {
                   ? t('nav.notificationsAria', { count: unreadCount })
                   : t(notificationNavItem.labelKey)}
                 onClick={() => navigateWithHaptic(resolveNavItemPath(notificationNavItem, user?.role))}
-                sx={appSidebarStyles.railNavigationButton}
+                sx={railNavigationButtonSx}
               >
                 <ListItemIcon
                   sx={{
@@ -258,7 +259,7 @@ export function AppSidebar() {
                   sx={{
                     maxWidth: '100%',
                     fontWeight: notificationsActive ? 600 : 400,
-                    color: notificationsActive ? 'primary.main' : 'text.secondary',
+                    color: notificationsActive ? getNavSelectedText(theme) : 'text.secondary',
                   }}
                 >
                   {t(notificationNavItem.labelKey)}
@@ -280,7 +281,7 @@ export function AppSidebar() {
               aria-expanded={moreOpen}
               aria-controls={moreOpen ? morePopoverId : undefined}
               aria-label={t('nav.sectionMore')}
-              sx={appSidebarStyles.railNavigationButton}
+              sx={railNavigationButtonSx}
             >
               <ListItemIcon sx={{ minWidth: 0, justifyContent: 'center', mb: 0.5 }}>
                 <MoreHoriz sx={{ fontSize: iconSizes.lg }} aria-hidden />
@@ -347,8 +348,8 @@ export function AppSidebar() {
               sx={{
                 '&.Mui-selected': {
                   bgcolor: 'action.selected',
-                  '& .MuiListItemIcon-root': { color: 'primary.main' },
-                  '& .MuiListItemText-primary': { color: 'primary.main', fontWeight: 600 },
+                  '& .MuiListItemIcon-root': { color: getNavSelectedText(theme) },
+                  '& .MuiListItemText-primary': { color: getNavSelectedText(theme), fontWeight: 600 },
                 },
               }}
             >
@@ -495,9 +496,9 @@ export function AppSidebar() {
                     py: 0.75,
                     '&.Mui-selected': {
                       bgcolor: 'action.selected',
-                      '& .MuiListItemIcon-root': { color: 'primary.main' },
+                      '& .MuiListItemIcon-root': { color: getNavSelectedText(theme) },
                       '& .MuiListItemText-primary': {
-                        color: 'primary.main',
+                        color: getNavSelectedText(theme),
                         fontWeight: 600,
                       },
                     },
@@ -544,9 +545,9 @@ export function AppSidebar() {
                     py: 0.75,
                     '&.Mui-selected': {
                       bgcolor: 'action.selected',
-                      '& .MuiListItemIcon-root': { color: 'primary.main' },
+                      '& .MuiListItemIcon-root': { color: getNavSelectedText(theme) },
                       '& .MuiListItemText-primary': {
-                        color: 'primary.main',
+                        color: getNavSelectedText(theme),
                         fontWeight: 600,
                       },
                     },

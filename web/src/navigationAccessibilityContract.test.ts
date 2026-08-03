@@ -21,6 +21,18 @@ describe('contrato de acessibilidade da navegação', () => {
     expect(announcerBlock).toContain('getRouteAnnouncementTitle(');
     expect(announcerBlock).toContain("t('a11y.routeAnnouncement'");
     expect(announcerBlock).not.toContain('document.title');
+
+    // #3971: enumera as rotas públicas (auth) que o anúncio deve cobrir.
+    // Antes só /guide era checado literalmente, então /login, /register e
+    // /forgot-password caíam em "Não encontrado" sem o CI perceber.
+    const publicRoutesBlock = app.slice(
+      app.indexOf('PUBLIC_ROUTE_TITLES'),
+      app.indexOf('function RouteAnnouncer'),
+    );
+    expect(publicRoutesBlock).toContain("'/login': 'page.title.login'");
+    expect(publicRoutesBlock).toContain("'/register': 'page.title.register'");
+    expect(publicRoutesBlock).toContain("'/forgot-password': 'auth.forgotPasswordTitle'");
+    expect(publicRoutesBlock).toMatch(/if \(publicTitle\) return t\(publicTitle\);/);
   });
 
   it('remove a navegação inferior escondida da árvore interativa', () => {

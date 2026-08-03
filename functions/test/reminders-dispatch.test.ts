@@ -80,6 +80,9 @@ jest.mock("../src/_db", () => ({
 jest.mock("../src/utils/scheduler-lock", () => ({
   acquireSchedulerLock: jest.fn(),
   releaseSchedulerLock: jest.fn(),
+  startSchedulerHeartbeat: jest.fn(() => ({stop: jest.fn()})),
+  SCHEDULER_LOCK_TTL_MS: 45_000,
+  HEARTBEAT_INTERVAL_MS: 15_000,
 }));
 
 import {

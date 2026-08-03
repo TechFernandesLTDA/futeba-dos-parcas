@@ -35,12 +35,13 @@ import {ERROR_MSGS} from "../error-messages";
 import {
   acquireSchedulerLock,
   releaseSchedulerLock,
+  startSchedulerHeartbeat,
+  SCHEDULER_LOCK_TTL_MS,
 } from "../utils/scheduler-lock";
 
 
 /** Dias de retenção antes de deletar */
 const RETENTION_DAYS = 30;
-const CLEANUP_LOCK_TTL_MS = 15 * 60 * 1000;
 
 // ==========================================
 // CALLABLE: Soft Delete Game
@@ -665,12 +666,21 @@ export const cleanupAllSoftDeleted =
     region: "southamerica-east1",
     memory: "512MiB",
     timeoutSeconds: 540,
+    // Issue #3967: retryCount combinado com TTL/heartbeat curtos. Antes
+    // o FIX #1040 (re-throw p/ acionar retry) era letra morta aqui:
+    // sem retryCount, uma falha custava uma SEMANA inteira sem
+    // hard-delete (PII retido em subcoleções — #2481/#2529). Sozinho o
+    // retryCount não resolveria: o TTL era 15min vs timeout 540s, toda
+    // retry caía no lock e era pulada (Defeito A). Agora o TTL é
+    // heartbeat-driven (SCHEDULER_LOCK_TTL_MS), permitindo takeover
+    // dentro da janela de retry.
+    retryCount: 3,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   }, async (_event) => {
     const lockId = "cleanup_all_soft_deleted";
     const lockAcquired = await acquireSchedulerLock(
       lockId,
-      CLEANUP_LOCK_TTL_MS
+      SCHEDULER_LOCK_TTL_MS
     );
     if (!lockAcquired) {
       logger.warn(
@@ -678,6 +688,9 @@ export const cleanupAllSoftDeleted =
       );
       return;
     }
+
+    // Issue #3967: heartbeat periódico para takeover rápido em morte dura.
+    const heartbeat = startSchedulerHeartbeat(lockId, lockAcquired);
 
     let lockStatus: "completed" | "failed" = "failed";
 
@@ -696,6 +709,8 @@ export const cleanupAllSoftDeleted =
       collection: string;
       totalDeleted: number;
       batchCount: number;
+      maxBatches: number;
+      truncated: boolean;
     }
 
     const results: CleanupResult[] = [];
@@ -732,7 +747,14 @@ export const cleanupAllSoftDeleted =
       (sum, r) => sum + r.totalDeleted, 0
     );
 
-    // Registrar métricas
+    // Issue #3969: coleções truncadas (teto atingido com backlog restante).
+    // Cada item aqui representa documentos além do TTL de retenção que vão
+    // permanecer carregando PII (LGPD) até a próxima execução semanal.
+    const truncatedCollections = results
+      .filter((r) => r.truncated)
+      .map((r) => r.collection);
+
+    // Registrar métricas — agora com sinal explícito de saturação por coleção.
     await db().collection("metrics").add({
       type: "soft_delete_cleanup_unified",
       timestamp:
@@ -741,17 +763,69 @@ export const cleanupAllSoftDeleted =
       retention_days: RETENTION_DAYS,
       total_deleted: totalDeleted,
       duration_ms: totalDuration,
+      // `true` quando QUALQUER coleção saiu pelo teto. Sinal de baixa
+      // cardinalidade para alertas/dashboard (issue #3969).
+      truncated: truncatedCollections.length > 0,
+      truncated_collections: truncatedCollections,
       results: results.map((r) => ({
         collection: r.collection,
         deleted: r.totalDeleted,
         batches: r.batchCount,
+        max_batches: r.maxBatches,
+        truncated: r.truncated,
       })),
     });
+
+    // Saturação é um problema LGPD: documentos expirados permanecem. O job é
+    // SEMANAL, então uma execução truncada atrasa a deleção em 7 dias inteiros.
+    // Emitimos um alerta persistente (alerts/) para que nunca passe em silêncio.
+    if (truncatedCollections.length > 0) {
+      logger.warn(
+        "[SOFT_DELETE_CLEANUP] SATURACAO DETECTADA: " +
+        "colecoes " +
+        `${truncatedCollections.join(", ")} ` +
+        "atingiram o teto de batches e mantem backlog. " +
+        "Documentos soft-deleted alem do TTL de retencao " +
+        "permanecerao ate a proxima execucao semanal (risco LGPD)."
+      );
+
+      await db().collection("alerts").add({
+        type: "SOFT_DELETE_CLEANUP_TRUNCATED",
+        // WARNING (não CRITICAL): o sistema é projetado para drenar em
+        // múltiplas semanas, mas LGPD exige visibilidade do atraso.
+        severity: "WARNING",
+        title: "Soft-delete cleanup saturado (backlog LGPD)",
+        message:
+          `${truncatedCollections.length} colecao(oes) ` +
+          `(${truncatedCollections.join(", ")}) ` +
+          "atingiram o teto de batches na varredura semanal " +
+          "e mantem backlog. Documentos alem do TTL de retencao " +
+          "permanecerao ate a proxima execucao. " +
+          `Total removido nesta run: ${totalDeleted}.`,
+        metadata: {
+          collections: truncatedCollections,
+          total_deleted: totalDeleted,
+          retention_days: RETENTION_DAYS,
+          results: results.map((r) => ({
+            collection: r.collection,
+            deleted: r.totalDeleted,
+            batches: r.batchCount,
+            max_batches: r.maxBatches,
+            truncated: r.truncated,
+          })),
+        },
+        created_at: FieldValue.serverTimestamp(),
+        acknowledged: false,
+      });
+    }
 
     logger.info(
       "[SOFT_DELETE_CLEANUP] Concluído em " +
       `${totalDuration}ms. Total removido: ` +
-      `${totalDeleted} documentos`
+      `${totalDeleted} documentos` +
+      (truncatedCollections.length > 0 ?
+        ` [${truncatedCollections.length} colecao(oes) TRUNCADA(S)]` :
+        "")
     );
     lockStatus = "completed";
     } catch (error) {
@@ -763,6 +837,8 @@ export const cleanupAllSoftDeleted =
       );
       throw error;
     } finally {
+      // Issue #3967: interrompe o heartbeat antes de liberar o lock.
+      heartbeat.stop();
       try {
         await releaseSchedulerLock(
           lockId,

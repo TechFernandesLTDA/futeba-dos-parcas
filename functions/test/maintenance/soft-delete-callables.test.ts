@@ -140,7 +140,7 @@ describe("Soft Delete — Callables", () => {
     });
     mockRestoreSoftDeleted.mockReset().mockResolvedValue({ success: true, docId: "game1" });
     mockSoftDeleteGroupCascade.mockReset().mockResolvedValue({ groupDeleted: true, gamesDeleted: 3 });
-    mockCleanupSoftDeleted.mockReset().mockResolvedValue({ totalDeleted: 5, batchCount: 1, collection: "games" });
+    mockCleanupSoftDeleted.mockReset().mockResolvedValue({ totalDeleted: 5, batchCount: 1, collection: "games", maxBatches: 10, truncated: false });
   });
 
   describe("softDeleteGame", () => {
@@ -393,9 +393,9 @@ describe("Soft Delete — Callables", () => {
   describe("cleanupAllSoftDeleted", () => {
     it("limpa documentos soft-deleted expirados em todas as colecoes", async () => {
       mockCleanupSoftDeleted
-        .mockResolvedValueOnce({ totalDeleted: 5, batchCount: 1, collection: "games" })
-        .mockResolvedValueOnce({ totalDeleted: 3, batchCount: 1, collection: "groups" })
-        .mockResolvedValueOnce({ totalDeleted: 10, batchCount: 2, collection: "locations" });
+        .mockResolvedValueOnce({ totalDeleted: 5, batchCount: 1, collection: "games", maxBatches: 10, truncated: false })
+        .mockResolvedValueOnce({ totalDeleted: 3, batchCount: 1, collection: "groups", maxBatches: 10, truncated: false })
+        .mockResolvedValueOnce({ totalDeleted: 10, batchCount: 2, collection: "locations", maxBatches: 20, truncated: false });
 
       await cleanupAllSoftDeleted();
 
@@ -407,9 +407,9 @@ describe("Soft Delete — Callables", () => {
 
     it("registra metricas apos cleanup", async () => {
       mockCleanupSoftDeleted
-        .mockResolvedValueOnce({ totalDeleted: 0, batchCount: 0, collection: "games" })
-        .mockResolvedValueOnce({ totalDeleted: 0, batchCount: 0, collection: "groups" })
-        .mockResolvedValueOnce({ totalDeleted: 0, batchCount: 0, collection: "locations" });
+        .mockResolvedValueOnce({ totalDeleted: 0, batchCount: 0, collection: "games", maxBatches: 10, truncated: false })
+        .mockResolvedValueOnce({ totalDeleted: 0, batchCount: 0, collection: "groups", maxBatches: 10, truncated: false })
+        .mockResolvedValueOnce({ totalDeleted: 0, batchCount: 0, collection: "locations", maxBatches: 20, truncated: false });
 
       await cleanupAllSoftDeleted();
 
@@ -427,6 +427,102 @@ describe("Soft Delete — Callables", () => {
       await cleanupAllSoftDeleted();
 
       expect(mockCleanupSoftDeleted).not.toHaveBeenCalled();
+    });
+
+    // ===== Issue #3969: observabilidade de saturação (LGPD) =====
+
+    it("#3969: grava truncated=false na metrica quando NAO ha saturacao", async () => {
+      mockCleanupSoftDeleted
+        .mockResolvedValueOnce({ totalDeleted: 5, batchCount: 1, collection: "games", maxBatches: 10, truncated: false })
+        .mockResolvedValueOnce({ totalDeleted: 3, batchCount: 1, collection: "groups", maxBatches: 10, truncated: false })
+        .mockResolvedValueOnce({ totalDeleted: 10, batchCount: 2, collection: "locations", maxBatches: 20, truncated: false });
+
+      await cleanupAllSoftDeleted();
+
+      // Métrica deve conter o sinal de saturação por coleção
+      expect(mockCollectionAdd).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: "soft_delete_cleanup_unified",
+          truncated: false,
+          truncated_collections: [],
+          results: expect.arrayContaining([
+            expect.objectContaining({
+              collection: "games",
+              truncated: false,
+              max_batches: 10,
+            }),
+          ]),
+        }),
+      );
+
+      // NÃO deve gravar alerta de saturação
+      expect(mockCollectionAdd).not.toHaveBeenCalledWith(
+        expect.objectContaining({ type: "SOFT_DELETE_CLEANUP_TRUNCATED" }),
+      );
+    });
+
+    it("#3969: grava truncated=true, emite logger.warn e cria alerta quando colecao satura", async () => {
+      // Força games a saturar (maxBatches atingido com backlog) — cenário LGPD.
+      mockCleanupSoftDeleted
+        .mockResolvedValueOnce({ totalDeleted: 1000, batchCount: 10, collection: "games", maxBatches: 10, truncated: true })
+        .mockResolvedValueOnce({ totalDeleted: 3, batchCount: 1, collection: "groups", maxBatches: 10, truncated: false })
+        .mockResolvedValueOnce({ totalDeleted: 10, batchCount: 2, collection: "locations", maxBatches: 20, truncated: false });
+
+      await cleanupAllSoftDeleted();
+
+      // Métrica marca saturação ao nível do documento
+      expect(mockCollectionAdd).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: "soft_delete_cleanup_unified",
+          truncated: true,
+          truncated_collections: ["games"],
+          results: expect.arrayContaining([
+            expect.objectContaining({
+              collection: "games",
+              truncated: true,
+              max_batches: 10,
+            }),
+          ]),
+        }),
+      );
+
+      // Alerta persistente gerado (issue #3969 aceite: "Alerta dispara ao forçar maxBatches")
+      expect(mockCollectionAdd).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: "SOFT_DELETE_CLEANUP_TRUNCATED",
+          severity: "WARNING",
+          acknowledged: false,
+          metadata: expect.objectContaining({
+            collections: ["games"],
+            retention_days: 30,
+          }),
+        }),
+      );
+    });
+
+    it("#3969: reporta multiplas colecoes saturadas simultaneamente", async () => {
+      mockCleanupSoftDeleted
+        .mockResolvedValueOnce({ totalDeleted: 1000, batchCount: 10, collection: "games", maxBatches: 10, truncated: true })
+        .mockResolvedValueOnce({ totalDeleted: 1000, batchCount: 10, collection: "groups", maxBatches: 10, truncated: true })
+        .mockResolvedValueOnce({ totalDeleted: 10, batchCount: 2, collection: "locations", maxBatches: 20, truncated: false });
+
+      await cleanupAllSoftDeleted();
+
+      expect(mockCollectionAdd).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: "soft_delete_cleanup_unified",
+          truncated: true,
+          truncated_collections: ["games", "groups"],
+        }),
+      );
+      expect(mockCollectionAdd).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: "SOFT_DELETE_CLEANUP_TRUNCATED",
+          metadata: expect.objectContaining({
+            collections: ["games", "groups"],
+          }),
+        }),
+      );
     });
   });
 });

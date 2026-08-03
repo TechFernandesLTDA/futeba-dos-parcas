@@ -654,6 +654,20 @@ function CommandPaletteBoundary({ children }: { children: React.ReactNode }) {
   );
 }
 
+/**
+ * #3971: Rotas públicas (auth) não geram breadcrumb nem figuram em NAV_ITEMS
+ * (que só cobre destinos autenticados). Sem isso, o anúncio caía no fallback
+ * `errors.notFound` e o leitor de tela dizia "Tela atual: Não encontrado"
+ * em /login, /register e /forgot-password — divergindo do document.title,
+ * que cada tela define via useDocumentTitle. As chaves aqui são as MESMAS que
+ * cada tela usa para o title, para os dois resolvedores nunca divergirem.
+ */
+const PUBLIC_ROUTE_TITLES: Record<string, string> = {
+  '/login': 'page.title.login',
+  '/register': 'page.title.register',
+  '/forgot-password': 'auth.forgotPasswordTitle',
+};
+
 function getRouteAnnouncementTitle(
   pathname: string,
   search: string,
@@ -665,6 +679,9 @@ function getRouteAnnouncementTitle(
 
   if (pathname === '/guide') return t('page.title.appGuide');
   if (pathname.startsWith('/checkin/')) return t('page.title.qrCheckIn');
+
+  const publicTitle = PUBLIC_ROUTE_TITLES[pathname];
+  if (publicTitle) return t(publicTitle);
 
   const activeItem = getActiveNavItem(pathname, search);
   return activeItem ? t(activeItem.labelKey) : t('errors.notFound');

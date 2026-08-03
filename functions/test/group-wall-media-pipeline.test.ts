@@ -1,6 +1,7 @@
 const mockDb = jest.fn();
 const mockGetStorage = jest.fn();
 const mockInfo = jest.fn();
+const mockWarn = jest.fn();
 const mockError = jest.fn();
 const mockCheckRateLimit = jest.fn();
 
@@ -11,7 +12,7 @@ class MockHttpsError extends Error {
 }
 
 jest.mock("firebase-functions/v2", () => ({
-  logger: {info: mockInfo, warn: jest.fn(), error: mockError},
+  logger: {info: mockInfo, warn: mockWarn, error: mockError},
   https: {
     onCall: jest.fn((_config: unknown, handler: unknown) => handler),
     HttpsError: MockHttpsError,
@@ -972,6 +973,88 @@ describe("group wall media pipeline", () => {
         cleanupFailures: 0,
         backlogPossible: false,
       })
+    );
+  });
+
+  // ===== Issue #3969: observabilidade de saturação do janitor =====
+  it("#3969: emite logger.warn quando o janitor saturou (backlog_possible)", async () => {
+    // Uma página cheia (200 drafts == JANITOR_BATCH_SIZE) + deadline expirado
+    // força backlog_possible=true sem precisar de 2.000 drafts no mock.
+    // expires_at fixo no passado distante garante match qualquer que seja
+    // o "now" retornado pelo spy de Date.now() abaixo.
+    const initial: Record<string, Data> = {};
+    for (let index = 0; index < 200; index++) {
+      const postId = index.toString(16).padStart(40, "0");
+      initial[`groups/${groupId}/wall_post_drafts/${postId}`] = {
+        status: "AWAITING_UPLOAD",
+        expires_at: Timestamp.fromMillis(0),
+        temp_path:
+          `groups/${groupId}/wall_media_staging/${postId}/${ownerId}/source.jpg`,
+      };
+    }
+    const {database} = fakeDatabase(initial);
+    mockDb.mockReturnValue(database);
+    mockGetStorage.mockReturnValue({
+      bucket: () => ({
+        file: () => ({delete: async () => undefined}),
+      }),
+    });
+
+    // Simula o relógio. O janitor chama Date.now() em:
+    //  (1) Timestamp.now(), (2) deadline = Date.now()+budget,
+    //  (3) 1º check do while (entra no loop), (4) 2º check do while (sai),
+    //  (5) cálculo final backlogPossible. Mantemos as 3 primeiras chamadas
+    // "em prazo" e as demais "além do deadline" para forçar a saturação.
+    const BASE = 1_700_000_000_000;
+    const dateNowSpy = jest.spyOn(Date, "now");
+    dateNowSpy
+      .mockReturnValueOnce(BASE) // (1) Timestamp.now()
+      .mockReturnValueOnce(BASE) // (2) deadline
+      .mockReturnValueOnce(BASE) // (3) 1º while → entra
+      .mockReturnValue(BASE + 300_000); // (4)+(5) além do deadline → sai
+
+    try {
+      await (cleanupExpiredGroupWallMediaDrafts as unknown as () => Promise<void>)();
+    } finally {
+      dateNowSpy.mockRestore();
+    }
+
+    expect(mockInfo).toHaveBeenCalledWith(
+      "[GROUP_WALL_MEDIA] Janitor completed",
+      expect.objectContaining({backlogPossible: true})
+    );
+    expect(mockWarn).toHaveBeenCalledWith(
+      expect.stringContaining("Janitor SATURADO")
+    );
+  });
+
+  it("#3969: emite logger.warn quando o janitor tem falhas de cleanup", async () => {
+    // Um draft cuja deleção de staging falha → cleanupExpiredWallMediaDraft
+    // retorna FAILED → cleanupFailures > 0 → warn.
+    const postId = "a".padStart(40, "0");
+    const draftPath = `groups/${groupId}/wall_post_drafts/${postId}`;
+    const {database} = fakeDatabase({
+      [draftPath]: {
+        status: "AWAITING_UPLOAD",
+        expires_at: Timestamp.fromMillis(Date.now() - 60_000),
+        temp_path:
+          `groups/${groupId}/wall_media_staging/${postId}/${ownerId}/source.jpg`,
+      },
+    });
+    mockDb.mockReturnValue(database);
+    // bucket.file().delete() lança → cleanup retorna FAILED.
+    mockGetStorage.mockReturnValue({
+      bucket: () => ({
+        file: () => ({delete: async () => {
+          throw new Error("storage unavailable");
+        }}),
+      }),
+    });
+
+    await (cleanupExpiredGroupWallMediaDrafts as unknown as () => Promise<void>)();
+
+    expect(mockWarn).toHaveBeenCalledWith(
+      expect.stringContaining("falhas de cleanup")
     );
   });
 

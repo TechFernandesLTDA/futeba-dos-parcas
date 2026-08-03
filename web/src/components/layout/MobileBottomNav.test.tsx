@@ -3,7 +3,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { MemoryRouter } from 'react-router-dom';
-import { md3TypeScale } from '../../theme';
+import { md3TypeScale, futebaTheme, futebaDarkTheme } from '../../theme';
 import { MobileBottomNav } from './MobileBottomNav';
 
 const navigate = vi.hoisted(() => vi.fn());
@@ -101,5 +101,44 @@ describe('MobileBottomNav', () => {
     expect(firstAction).toHaveAttribute('data-prefetch-route');
     fireEvent.focus(firstAction);
     expect(mockPrefetchFocus).toHaveBeenCalledTimes(1);
+  });
+
+  // #3918: o estado SELECIONADO deve passar WCAG AA. Antes o rótulo verde
+  // (primary.main) caía para ~4.0:1 sobre a tinta do fundo. Agora, no light,
+  // usa primary.dark (~7.2:1); no dark mantém primary.main (5.62:1).
+  it('usa primary.dark (light) e primary.main (dark) no item selecionado', () => {
+    // getComputedStyle normaliza cores hex para rgb(); espelhamos aqui p/ comparar.
+    const hexToRgb = (hex: string) => {
+      const r = parseInt(hex.slice(1, 3), 16);
+      const g = parseInt(hex.slice(3, 5), 16);
+      const b = parseInt(hex.slice(5, 7), 16);
+      return `rgb(${r}, ${g}, ${b})`;
+    };
+
+    const { container: lightContainer } = render(
+      <ThemeProvider theme={futebaTheme}>
+        <MemoryRouter>
+          <MobileBottomNav />
+        </MemoryRouter>
+      </ThemeProvider>,
+    );
+    const lightSelected = lightContainer.querySelector(
+      '.MuiBottomNavigationAction-root.Mui-selected',
+    ) as HTMLElement;
+    expect(lightSelected).not.toBeNull();
+    expect(getComputedStyle(lightSelected).color).toBe(hexToRgb(futebaTheme.palette.primary.dark));
+
+    const { container: darkContainer } = render(
+      <ThemeProvider theme={futebaDarkTheme}>
+        <MemoryRouter>
+          <MobileBottomNav />
+        </MemoryRouter>
+      </ThemeProvider>,
+    );
+    const darkSelected = darkContainer.querySelector(
+      '.MuiBottomNavigationAction-root.Mui-selected',
+    ) as HTMLElement;
+    expect(darkSelected).not.toBeNull();
+    expect(getComputedStyle(darkSelected).color).toBe(hexToRgb(futebaDarkTheme.palette.primary.main));
   });
 });
