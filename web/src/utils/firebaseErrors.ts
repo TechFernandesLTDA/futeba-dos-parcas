@@ -54,6 +54,8 @@ const FIREBASE_AUTH_ERRORS: Record<string, string> = {
   'auth/credential-already-in-use': 'Esta conta Google já está vinculada a outra conta. Entre com seu login original e vincule o Google pelo perfil.',
   'auth/requires-recent-login': 'Sessão expirada. Faça login novamente',
   'auth/operation-not-allowed': 'Método de login não habilitado',
+  // Domain migration: domínio não autorizado no Firebase Console (Authorized Domains)
+  'auth/unauthorized-domain': 'Login com Google não está disponível neste domínio. Tente novamente mais tarde.',
 };
 
 const FIREBASE_FIRESTORE_ERRORS: Record<string, string> = {
