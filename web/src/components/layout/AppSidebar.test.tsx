@@ -94,8 +94,10 @@ import {
   appSidebarLayoutTokens,
   appSidebarStyles,
   getAppSidebarOverlayPlacement,
+  railNavigationButtonSx,
 } from './AppSidebar.styles';
 import { getSearchShortcutTranslationKey } from '../../utils/platformShortcut';
+import { futebaTheme, futebaDarkTheme } from '../../theme';
 import { AppSidebar } from './AppSidebar';
 
 const theme = createTheme();
@@ -370,19 +372,21 @@ describe('AppSidebar', () => {
     }
   });
 
-  it('aplica cantos arredondados e cor ativa também ao botão Mais do rail', () => {
+  it('aplica cantos arredondados e cor ativa theme-aware ao botão Mais do rail', () => {
     mockLocation.pathname = '/settings';
     mockLocation.search = '';
     renderWithTheme(<AppSidebar />);
 
     const moreButton = screen.getByRole('button', { name: 'Mais' });
     expect(moreButton).toHaveClass('Mui-selected');
-    expect(appSidebarStyles.railNavigationButton).toMatchObject({
-      borderRadius: 2,
-      '&.Mui-selected': {
-        '& .MuiListItemIcon-root': { color: 'primary.main' },
-      },
-    });
+    // Layout (serializável) permanece no token.
+    expect(appSidebarStyles.railNavigationButton.borderRadius).toBe(2);
+    // #3918: no light o ícone selecionado usa primary.dark (AA 4.5:1);
+    // no dark mantém primary.main (5.62:1).
+    const lightSelected = railNavigationButtonSx(futebaTheme)['&.Mui-selected'];
+    const darkSelected = railNavigationButtonSx(futebaDarkTheme)['&.Mui-selected'];
+    expect(lightSelected['& .MuiListItemIcon-root'].color).toBe(futebaTheme.palette.primary.dark);
+    expect(darkSelected['& .MuiListItemIcon-root'].color).toBe(futebaDarkTheme.palette.primary.main);
   });
 
   it('aplica cantos arredondados aos itens primários do rail', () => {

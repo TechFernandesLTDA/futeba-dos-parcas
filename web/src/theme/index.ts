@@ -1,4 +1,4 @@
-import { createTheme, alpha } from '@mui/material/styles';
+import { createTheme, alpha, type Theme } from '@mui/material/styles';
 import { motionDuration, motionEasing } from './motion';
 
 // Augmenta a paleta MUI com todos os 7 surface containers do MD3
@@ -56,6 +56,26 @@ const secondary = {
 };
 
 const appFontFamily = 'Poppins, "Plus Jakarta Sans", "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
+
+/**
+ * #3918 — Cor do TEXTO (rótulo + ícone) do item de navegação SELECIONADO.
+ *
+ * Ajustar a tinta do fundo (action.selected) NÃO resolve WCAG AA: tintar o
+ * fundo com o hue do primary.main aproxima as duas luminâncias, e o rótulo
+ * #00852A fica em ~4.05:1 (< 4.5:1) sobre alpha(primary.main, 0.12). A
+ * correção é no TEXTO:
+ *   • light  → primary.dark #005A1C  (~7.2:1 sobre a tinta, ~8.5:1 sobre branco)
+ *   • dark   → primary.main #4ADE80 (já passa, 5.62:1) — mantido
+ *
+ * Mesma convenção já usada em GameCard.tsx
+ * (theme.palette.mode === 'dark' ? .light : .dark), aplicada à navegação.
+ * Centralizar aqui evita drift entre bottom nav e sidebar.
+ */
+export function getNavSelectedText(theme: Theme): string {
+  return theme.palette.mode === 'dark'
+    ? theme.palette.primary.main
+    : theme.palette.primary.dark;
+}
 
 // =============================================================================
 // #2751 — Escala tipográfica MD3 como fonte única de verdade
@@ -323,6 +343,9 @@ export const futebaTheme = createTheme({
       secondary: '#444746',
     },
     divider: '#E5E3E6',
+    // #3918: tinta verde sutil do fundo selecionado (espelha o dark).
+    // Sozinha NÃO garante AA — a correção efetiva está no TEXTO via
+    // getNavSelectedText() (primary.dark no light). Ver comment acima.
     action: {
       selected: alpha(primary.main, 0.12),
     },
@@ -509,7 +532,8 @@ export const futebaTheme = createTheme({
       styleOverrides: {
         root: ({ theme }: { theme: import('@mui/material/styles').Theme }) => ({
           '&.Mui-selected': {
-            color: theme.palette.primary.main,
+            // #3918: primary.dark no light (~7.2:1 AA); primary.main no dark (5.62:1).
+            color: getNavSelectedText(theme),
           },
         }),
       },
@@ -543,9 +567,19 @@ export const futebaTheme = createTheme({
     // (GameCard.tsx) já aplicava isso via sx; este override cobre os 6 call
     // sites com <Avatar> cru + iniciais (GameDetail, LocationDetail,
     // GamePhotosTab, GroupDetail x2, lista de jogadores).
+    //
+    // #3970: o slot DEVE ser `colorDefault`, não `root`. O resolver do MUI
+    // (Avatar.js) aplica `styles.root` a TODOS os avatares — com ou sem foto —
+    // enquanto `styles.colorDefault` só é aplicado quando `ownerState.colorDefault`
+    // é true, i.e. exatamente quando não há <img> (iniciais). Declarar em `root`
+    // pintava de verde também os avatares COM foto, com efeito visível no
+    // TeamBadge (objectFit:contain deixa o fundo aparecer em volta do escudo) e
+    // durante o carregamento de fotos lazy. `colorDefault` mantém 100% do
+    // efeito pretendido pelo #3944 e devolve os avatares com foto ao fundo
+    // transparente.
     MuiAvatar: {
       styleOverrides: {
-        root: ({ theme }: { theme: import('@mui/material/styles').Theme }) => ({
+        colorDefault: ({ theme }: { theme: import('@mui/material/styles').Theme }) => ({
           backgroundColor: theme.palette.primary.main,
           color: theme.palette.primary.contrastText,
         }),
@@ -819,7 +853,8 @@ export const futebaDarkTheme = createTheme({
       styleOverrides: {
         root: ({ theme }: { theme: import('@mui/material/styles').Theme }) => ({
           '&.Mui-selected': {
-            color: theme.palette.primary.main,
+            // #3918: primary.dark no light (~7.2:1 AA); primary.main no dark (5.62:1).
+            color: getNavSelectedText(theme),
           },
         }),
       },
@@ -864,9 +899,11 @@ export const futebaDarkTheme = createTheme({
     // #3944: declarado explicitamente no dark (não confiar só no spread do
     // light) — a função resolve contra este theme, então primary.main vira
     // #4ADE80 e contrastText #000000, mantendo >= 4.66:1.
+    // #3970: slot `colorDefault` (não `root`) para NÃO pintar avatares com foto
+    // — ver comentário no light theme acima.
     MuiAvatar: {
       styleOverrides: {
-        root: ({ theme }: { theme: import('@mui/material/styles').Theme }) => ({
+        colorDefault: ({ theme }: { theme: import('@mui/material/styles').Theme }) => ({
           backgroundColor: theme.palette.primary.main,
           color: theme.palette.primary.contrastText,
         }),

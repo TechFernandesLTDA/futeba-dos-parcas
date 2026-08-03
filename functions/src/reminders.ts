@@ -40,6 +40,8 @@ import {db} from "./_db";
 import {
   acquireSchedulerLock,
   releaseSchedulerLock,
+  startSchedulerHeartbeat,
+  SCHEDULER_LOCK_TTL_MS,
 } from "./utils/scheduler-lock";
 
 // ==========================================
@@ -1186,7 +1188,226 @@ export const testGameReminders = onSchedule(
 
 const AUTO_CANCEL_WINDOW_MS = 2 * 60 * 60 * 1000;
 const AUTO_CANCEL_MIN_PLAYERS = 6;
-const AUTO_CANCEL_LOCK_TTL_MS = 25 * 60 * 1000;
+
+// FIX #3968: hardening da varredura (último cron da família que ainda não
+// tinha recebido o tratamento dos irmãos #3831/#3941/#3952). Antes a query
+// era .get() irrestrito sobre TODOS os jogos CONFIRMED da janela de 2h,
+// rodando em timeout herdado de 120s com processamento serial N+1 — na
+// saturação do pico a função era morta no meio do laço, a cauda da janela
+// nunca era avaliada e o "jogo fantasma" permanecia CONFIRMED (caindo no
+// rateio mensal com included:true — ver cashbox/monthly.ts).
+
+/**
+ * Página da varredura de jogos CONFIRMED na janela de 2h.
+ * O cursor via startAfter(lastProcessedDoc) garante que execuções
+ * consecutivas (a cada 30 min) AVANCEM a cauda em vez de reprocessar
+ * só a cabeça. Mesmo padrão de cleanupExpiredGroupWallMediaDrafts
+ * (groups/wall-media-pipeline.ts) e cleanupExpiredInvites (#3831).
+ */
+const AUTO_CANCEL_PAGE_SIZE = 100;
+
+/**
+ * Teto defensativo de jogos avaliados por execução. Evita laço infinito
+ * caso o cursor não progrida (índice em provisionamento / bug) e limita
+ * o blast radius de uma única rodada sob saturação extrema.
+ */
+const AUTO_CANCEL_MAX_GAMES_PER_RUN = 500;
+
+/**
+ * Orçamento de tempo por execução (ms). Deixa ~60s de margem frente aos
+ * 300s declarados abaixo (lock acquire/release + commit final + métricas),
+ * no mesmo molde do janitor de wall-media (240s/300s). Checado no topo de
+ * cada página E antes de cada doc — um cancelamento com muitas
+ * confirmações consome 1–3s, então checar só no topo da página pode
+ * estourar o deadline no meio dela.
+ */
+const AUTO_CANCEL_TIME_BUDGET_MS = 240_000;
+
+/**
+ * Tamanho do lote de escritas de notificação (saveNotificationToFirestore)
+ * disparadas em paralelo. Antes era um `for` serial N+1 (1 write por
+ * confirmado) — mesmo defeito do #3941. Mesmo BATCH do dispatchReminders.
+ */
+const AUTO_CANCEL_NOTIF_BATCH = 25;
+
+/** Resultado do processamento de um único jogo candidato. */
+type AutoCancelGameResult =
+  | { kind: "cancelled" }
+  | { kind: "skipped" }
+  | { kind: "failed"; error: unknown };
+
+/**
+ * Tenta cancelar um único jogo por baixo quórum dentro de uma transação
+ * idempotente (re-checa status/auto_cancelled e reconta confirmações).
+ *
+ * FIX #3968: isola falhas a ESTE jogo — uma exceção (transação, FCM ou
+ * escrita de notificação) não aborta mais o lote inteiro; o jogo falho é
+ * contabilizado como failure e retomado na próxima execução. Espelha o
+ * per-doc try/catch do processNotificationBatch (#3941 F5).
+ *
+ * @param {FirebaseFirestore.QueryDocumentSnapshot} gameDoc Snapshot do
+ *   jogo candidato (já filtrado por status=CONFIRMED na query externa).
+ * @return {Promise<AutoCancelGameResult>} Resultado do processamento.
+ */
+async function processLowQuorumGame(
+  gameDoc: FirebaseFirestore.QueryDocumentSnapshot
+): Promise<AutoCancelGameResult> {
+  const gameId = gameDoc.id;
+  try {
+    const cancellation = await db()
+      .runTransaction(async (tx) => {
+        const currentGameSnap =
+          await tx.get(gameDoc.ref);
+
+        if (!currentGameSnap.exists) {
+          return null;
+        }
+
+        const currentGameData =
+          currentGameSnap.data();
+        if (!currentGameData) {
+          return null;
+        }
+        // Re-chequa dentro da tx: o status pode ter mudado entre a
+        // query paginada e o claim (TOCTOU), e auto_cancelled evita
+        // duplo cancelamento em rodadas sobrepostas.
+        if (
+          currentGameData.status !== "CONFIRMED" ||
+          currentGameData.auto_cancelled === true
+        ) {
+          return null;
+        }
+
+        const minPlayers =
+          currentGameData.min_players ||
+          AUTO_CANCEL_MIN_PLAYERS;
+        const confirmationsQuery = db()
+          .collection("confirmations")
+          .where("game_id", "==", gameId)
+          .where("status", "==", "CONFIRMED");
+        const confirmationsSnap =
+          await tx.get(confirmationsQuery);
+        const confirmedCount =
+          confirmationsSnap.size;
+
+        logger.info(
+          `[AUTO_CANCEL] Jogo ${gameId}: ` +
+          `${confirmedCount}/${minPlayers} ` +
+          "jogadores confirmados"
+        );
+
+        if (confirmedCount >= minPlayers) {
+          return null;
+        }
+
+        tx.update(gameDoc.ref, {
+          status: "CANCELLED",
+          auto_cancelled: true,
+          cancel_reason: "Baixo quórum",
+          cancelled_by: "system",
+          updated_at:
+            FieldValue
+              .serverTimestamp(),
+        });
+
+        return {
+          gameData: currentGameData,
+          confirmedCount,
+          minPlayers,
+          confirmedUserIds:
+            confirmationsSnap.docs.map((d) => {
+              const data = d.data();
+              return data.user_id || data.userId;
+            }).filter(Boolean) as string[],
+        };
+      });
+
+    if (!cancellation) {
+      return {kind: "skipped"};
+    }
+
+    // Notifica confirmados (push + persistência). FIX #3968: escritas
+    // serializadas N+1 trocadas por lotes paralelos (mesmo remédio do
+    // #3941) — antes um `for` com saveNotificationToFirestore por usuário
+    // consumia boa parte do orçamento só na persistência.
+    if (cancellation.confirmedUserIds.length > 0) {
+      const gameName =
+        cancellation.gameData.location_name ||
+        cancellation.gameData.field_name ||
+        "o jogo";
+      const gameDate =
+        cancellation.gameData.date || "";
+
+      await sendNotificationToUsers(
+        cancellation.confirmedUserIds,
+        {
+          title: GAME_NOTIFICATIONS.GAME_CANCELLED.title["pt-BR"](),
+          body:
+            `${gameName} (${gameDate}) ` +
+            "foi cancelado " +
+            "automaticamente por " +
+            "baixo quórum " +
+            `(${cancellation.confirmedCount}/` +
+            `${cancellation.minPlayers} jogadores).`,
+          type:
+            NotificationType.GAME_CANCELLED,
+          data: {
+            gameId: gameId,
+            reason: "low_quorum",
+          },
+        }
+      );
+
+      for (
+        let i = 0;
+        i < cancellation.confirmedUserIds.length;
+        i += AUTO_CANCEL_NOTIF_BATCH
+      ) {
+        const slice =
+          cancellation.confirmedUserIds.slice(
+            i,
+            i + AUTO_CANCEL_NOTIF_BATCH
+          );
+        await Promise.all(
+          slice.map((uid) =>
+            saveNotificationToFirestore(
+              uid,
+              {
+                userId: uid,
+                title: GAME_NOTIFICATIONS.GAME_CANCELLED.title["pt-BR"](),
+                body:
+                  `${gameName} (${gameDate}) ` +
+                  "foi cancelado " +
+                  "automaticamente por " +
+                  "baixo quórum.",
+                type:
+                  NotificationType.GAME_CANCELLED,
+                gameId: gameId,
+                action:
+                  "game_detail/" + gameId,
+              }
+            )
+          )
+        );
+      }
+    }
+
+    logger.info(
+      `[AUTO_CANCEL] Jogo ${gameId} ` +
+      "cancelado por baixo quórum"
+    );
+    return {kind: "cancelled"};
+  } catch (error) {
+    // Isola a falha a este jogo: loga, contabiliza e segue para o próximo.
+    // O jogo permanece CONFIRMED e é reavaliado na próxima rodada (a
+    // transação é idempotente via re-checagem de status/auto_cancelled).
+    logger.error(
+      `[AUTO_CANCEL] Erro ao processar jogo ${gameId}:`,
+      error
+    );
+    return {kind: "failed", error};
+  }
+}
 
 /**
  * Funcao agendada que roda a cada 30 minutos
@@ -1194,7 +1415,9 @@ const AUTO_CANCEL_LOCK_TTL_MS = 25 * 60 * 1000;
  * poucos jogadores confirmados dentro de 2h.
  *
  * Issue #1786: Cancelamento automático por
- * baixo quórum.
+ * baixo quórum. Issue #3968: varredura paginada
+ * com cursor + orçamento de tempo + try/catch
+ * por doc (irmão de #3831/#3941/#3952).
  */
 export const autoCancelLowQuorum = onSchedule(
   {
@@ -1202,13 +1425,19 @@ export const autoCancelLowQuorum = onSchedule(
     timeZone: "America/Sao_Paulo",
     region: FUNCTION_REGION,
     retryCount: 3,
-    memory: "256MiB",
+    // FIX #3968: antes herdava timeoutSeconds:120 do setGlobalOptions e
+    // declarava memory:"256MiB" (ABAIXO do default global de 512MiB) —
+    // justamente na função que fazia o fetch ilimitado. Alinhado aos
+    // crons de varredura comparáveis: cleanupExpiredInvites (#3831) e o
+    // janitor de wall-media, ambos 300s/512MiB.
+    timeoutSeconds: 300,
+    memory: "512MiB",
   },
   async () => {
     const lockId = "auto_cancel_low_quorum";
     const lockAcquired = await acquireSchedulerLock(
       lockId,
-      AUTO_CANCEL_LOCK_TTL_MS
+      SCHEDULER_LOCK_TTL_MS
     );
     if (!lockAcquired) {
       logger.warn(
@@ -1216,6 +1445,12 @@ export const autoCancelLowQuorum = onSchedule(
       );
       return;
     }
+
+    // Issue #3967: heartbeat periódico prova que este holder está vivo.
+    // Sem isso, uma morte dura (OOM / wall-clock timeout / kill do
+    // Cloud Run gen2) não roda o finally e o lock fica congelado em
+    // "running" por todo o TTL, engolindo as 3 retries do Scheduler.
+    const heartbeat = startSchedulerHeartbeat(lockId, lockAcquired);
 
     let lockStatus: "completed" | "failed" = "failed";
 
@@ -1236,6 +1471,16 @@ export const autoCancelLowQuorum = onSchedule(
       "====\n"
     );
 
+    // Contadores de varredura (#3968): sinalizam saturação quando a janela
+    // de 2h não é drenada dentro do orçamento. Hoje não existia nenhuma
+    // métrica — o log final só dizia "N cancelados".
+    let scanned = 0;
+    let cancelledCount = 0;
+    let skippedCount = 0;
+    let failureCount = 0;
+    let drained = false;
+    const deadline = Date.now() + AUTO_CANCEL_TIME_BUDGET_MS;
+
     try {
       const now = new Date();
       const windowEnd = new Date(
@@ -1249,144 +1494,89 @@ export const autoCancelLowQuorum = onSchedule(
           windowEnd
         );
 
-      const gamesSnap = await db()
-        .collection("games")
-        .where("status", "==", "CONFIRMED")
-        .where("dateTime", ">=", nowTs)
-        .where("dateTime", "<=", endTs)
-        .get();
+      // FIX #3968: cursor paginado. O Firestore já ordena implicitamente
+      // por dateTime (filtro de desigualdade), mas declaramos orderBy
+      // explicitamente para (a) suportar startAfter(lastDoc) com
+      // tie-break por __name__ e (b) tornar a ordem determinística entre
+      // execuções. Assim a cauda avança a cada tick de 30 min.
+      let cursor: FirebaseFirestore.QueryDocumentSnapshot | null = null;
 
-      logger.info(
-        `[AUTO_CANCEL] ${gamesSnap.size} ` +
-        "jogos CONFIRMED dentro da janela de 2h"
-      );
+      while (
+        scanned < AUTO_CANCEL_MAX_GAMES_PER_RUN &&
+        Date.now() < deadline
+      ) {
+        let query: FirebaseFirestore.Query = db()
+          .collection("games")
+          .where("status", "==", "CONFIRMED")
+          .where("dateTime", ">=", nowTs)
+          .where("dateTime", "<=", endTs)
+          .orderBy("dateTime", "asc")
+          .limit(AUTO_CANCEL_PAGE_SIZE);
 
-      let cancelledCount = 0;
+        if (cursor) {
+          query = query.startAfter(cursor);
+        }
 
-      for (const gameDoc of gamesSnap.docs) {
-        const gameId = gameDoc.id;
-        const cancellation = await db()
-          .runTransaction(async (tx) => {
-            const currentGameSnap =
-              await tx.get(gameDoc.ref);
+        const gamesSnap = await query.get();
 
-            if (!currentGameSnap.exists) {
-              return null;
-            }
+        if (gamesSnap.size === 0) {
+          drained = true;
+          break;
+        }
 
-            const currentGameData =
-              currentGameSnap.data();
-            if (!currentGameData) {
-              return null;
-            }
-            if (
-              currentGameData.status !== "CONFIRMED" ||
-              currentGameData.auto_cancelled === true
-            ) {
-              return null;
-            }
+        scanned += gamesSnap.size;
 
-            const minPlayers =
-              currentGameData.min_players ||
-              AUTO_CANCEL_MIN_PLAYERS;
-            const confirmationsQuery = db()
-              .collection("confirmations")
-              .where("game_id", "==", gameId)
-              .where("status", "==", "CONFIRMED");
-            const confirmationsSnap =
-              await tx.get(confirmationsQuery);
-            const confirmedCount =
-              confirmationsSnap.size;
+        logger.info(
+          `[AUTO_CANCEL] Página com ${gamesSnap.size} ` +
+          `jogos (total escaneado: ${scanned})`
+        );
 
-            logger.info(
-              `[AUTO_CANCEL] Jogo ${gameId}: ` +
-              `${confirmedCount}/${minPlayers} ` +
-              "jogadores confirmados"
-            );
+        // Cursor = último doc PROCESSADO (não o último da página): se o
+        // orçamento estourar no meio da página, os jogos não-processados
+        // são retomados na próxima execução via startAfter, em vez de
+        // pulados silenciosamente.
+        let lastProcessed:
+          | FirebaseFirestore.QueryDocumentSnapshot
+          | null = null;
+        let budgetHitMidPage = false;
 
-            if (confirmedCount >= minPlayers) {
-              return null;
-            }
-
-            tx.update(gameDoc.ref, {
-              status: "CANCELLED",
-              auto_cancelled: true,
-              cancel_reason: "Baixo quórum",
-              cancelled_by: "system",
-              updated_at:
-                FieldValue
-                  .serverTimestamp(),
-            });
-
-            return {
-              gameData: currentGameData,
-              confirmedCount,
-              minPlayers,
-              confirmedUserIds:
-                confirmationsSnap.docs.map((d) => {
-                  const data = d.data();
-                  return data.user_id || data.userId;
-                }).filter(Boolean) as string[],
-            };
-          });
-
-        if (cancellation) {
-          if (cancellation.confirmedUserIds.length > 0) {
-            const gameName =
-              cancellation.gameData.location_name ||
-              cancellation.gameData.field_name ||
-              "o jogo";
-            const gameDate =
-              cancellation.gameData.date || "";
-
-            await sendNotificationToUsers(
-              cancellation.confirmedUserIds,
-              {
-                title: GAME_NOTIFICATIONS.GAME_CANCELLED.title["pt-BR"](),
-                body:
-                  `${gameName} (${gameDate}) ` +
-                  "foi cancelado " +
-                  "automaticamente por " +
-                  "baixo quórum " +
-                  `(${cancellation.confirmedCount}/` +
-                  `${cancellation.minPlayers} jogadores).`,
-                type:
-                  NotificationType.GAME_CANCELLED,
-                data: {
-                  gameId: gameId,
-                  reason: "low_quorum",
-                },
-              }
-            );
-
-            for (const uid of cancellation.confirmedUserIds) {
-              await saveNotificationToFirestore(
-                uid,
-                {
-                  userId: uid,
-                  title: GAME_NOTIFICATIONS.GAME_CANCELLED.title["pt-BR"](),
-                  body:
-                    `${gameName} (${gameDate}) ` +
-                    "foi cancelado " +
-                    "automaticamente por " +
-                    "baixo quórum.",
-                  type:
-                    NotificationType.GAME_CANCELLED,
-                  gameId: gameId,
-                  action:
-                    "game_detail/" + gameId,
-                }
-              );
-            }
+        for (const gameDoc of gamesSnap.docs) {
+          // Orçamento checado por doc (não só por página): um
+          // cancelamento com muitas confirmações consome 1–3s; checar
+          // só no topo da página pode estourar o deadline no meio dela.
+          if (Date.now() >= deadline) {
+            budgetHitMidPage = true;
+            break;
           }
 
-          cancelledCount++;
-          logger.info(
-            `[AUTO_CANCEL] Jogo ${gameId} ` +
-            "cancelado por baixo quórum"
-          );
+          const result = await processLowQuorumGame(gameDoc);
+          lastProcessed = gameDoc;
+
+          if (result.kind === "cancelled") {
+            cancelledCount++;
+          } else if (result.kind === "skipped") {
+            skippedCount++;
+          } else {
+            failureCount++;
+          }
+        }
+
+        cursor = lastProcessed;
+
+        // Drenou a janela: última página parcial (e totalmente processada).
+        if (!budgetHitMidPage && gamesSnap.size < AUTO_CANCEL_PAGE_SIZE) {
+          drained = true;
+          break;
+        }
+        // Orçamento estourado ou cursor não progrediu: encerra para
+        // deixar margem segura ao timeout do runtime.
+        if (budgetHitMidPage || !cursor) {
+          break;
         }
       }
+
+      const backlogPossible = !drained &&
+        (scanned > 0 || Date.now() >= deadline);
 
       logger.info(
         "\n====================================" +
@@ -1396,6 +1586,24 @@ export const autoCancelLowQuorum = onSchedule(
         "[AUTO_CANCEL] Concluído! " +
         `${cancelledCount} jogo(s) cancelado(s)`
       );
+      logger.info(
+        "  - Escaneados: " + `${scanned}` +
+        " | Cancelados: " + `${cancelledCount}` +
+        " | Pulados: " + `${skippedCount}` +
+        " | Falhas: " + `${failureCount}`
+      );
+      if (backlogPossible) {
+        // Sinal de saturação: a janela de 2h não foi totalmente drenada
+        // nesta execução. A cauda é retomada no próximo tick (30 min),
+        // mas avisos repetidos indicam que o pico está batendo no
+        // orçamento — sina de alertar para revisar pageSize/budget.
+        logger.warn(
+          "[AUTO_CANCEL] Possível backlog: a janela de 2h não foi " +
+          "totalmente drenada nesta execução (" +
+          `${scanned} escaneados). A cauda será retomada no próximo ` +
+          "tick (30 min)."
+        );
+      }
       logger.info(
         "====================================" +
         "====\n"
@@ -1408,6 +1616,9 @@ export const autoCancelLowQuorum = onSchedule(
       );
       throw error;
     } finally {
+      // Issue #3967: interrompe o heartbeat antes de liberar o lock,
+      // evitando heartbeats fantasmas após release.
+      heartbeat.stop();
       try {
         await releaseSchedulerLock(
           lockId,

@@ -685,6 +685,25 @@ export const cleanupExpiredGroupWallMediaDrafts = functions.scheduler.onSchedule
       timestamp: FieldValue.serverTimestamp(),
     });
   }
+  // Issue #3969: os sinais backlog_possible / cleanup_failures /
+  // oldest_expired_age_ms já eram gravados, mas nunca logados — ninguém
+  // era notificado quando o janitor saturava ou um draft ficava preso.
+  // Drafts EXPIRED que retornam FAILED casam com a query da próxima execução,
+  // então sem alarme a retentativa infinita é invisível.
+  if (backlogPossible) {
+    logger.warn(
+      "[GROUP_WALL_MEDIA] Janitor SATURADO: backlog_possible=true " +
+      `(scanned=${scanned}, oldest_expired_age_ms=${oldestExpiredAgeMs}). ` +
+      "Drafts expirados permanecerao na fila; risco de acumulo."
+    );
+  }
+  if (cleanupFailures > 0) {
+    logger.warn(
+      "[GROUP_WALL_MEDIA] Janitor com falhas de cleanup: " +
+      `${cleanupFailures} draft(s) retornaram FAILED e permanecem ` +
+      "EXPIRED (retentativa infinita, sem contador de tentativas)."
+    );
+  }
   logger.info("[GROUP_WALL_MEDIA] Janitor completed", {
     scanned,
     cleaned,

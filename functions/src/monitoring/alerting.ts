@@ -97,6 +97,16 @@ const THRESHOLDS = {
   UNACKNOWLEDGED_ALERTS_MAX: 20,
   /** Tempo máximo (horas) sem acknowledge */
   ALERT_ACKNOWLEDGE_DEADLINE_HOURS: 48,
+  /**
+   * Idade (ms) do draft expirado mais antigo a partir da qual o janitor de
+   * mural é considerado em atraso (issue #3969). 1h = draft preso além de
+   * várias execuções do janitor (roda a cada 10min).
+   */
+  WALL_MEDIA_OLDEST_EXPIRED_AGE_MS: 60 * 60 * 1000,
+  /** Falhas de cleanup de draft em uma única execução que indicam draft preso */
+  WALL_MEDIA_CLEANUP_FAILURES: 1,
+  /** Janela (ms) para considerar a métrica mais recente do janitor de mural */
+  WALL_MEDIA_METRIC_WINDOW_MS: 30 * 60 * 1000,
 };
 
 // ==========================================
@@ -401,6 +411,126 @@ export const systemHealthCheck =
       }
     } catch (error) {
       checks["xp_processing_errors"] = {
+        status: "ERROR",
+        message: `Erro ao verificar: ${error}`,
+      };
+    }
+
+    // ========================================
+    // CHECK 8: Janitor de mural saturado (issue #3969)
+    // ========================================
+    // O janitor (cleanupExpiredGroupWallMediaDrafts) já gravava
+    // backlog_possible / cleanup_failures / oldest_expired_age_ms nas métricas,
+    // mas NADA lia esses campos. Aqui consumimos a métrica mais recente para
+    // acionar alertas quando o janitor não dá conta do backlog ou um draft
+    // fica preso em retentativa infinita.
+    try {
+      const windowStart = Timestamp.fromMillis(
+        Date.now() - THRESHOLDS.WALL_MEDIA_METRIC_WINDOW_MS
+      );
+      const janitorSnap = await db
+        .collection("metrics")
+        .where("type", "==", "group_wall_media_pipeline")
+        .where("event", "==", "DRAFT_EXPIRED")
+        .where("timestamp", ">=", windowStart)
+        .orderBy("timestamp", "desc")
+        .limit(1)
+        .get();
+
+      if (!janitorSnap.empty) {
+        const latest =
+          janitorSnap.docs[0].data() as {
+            backlog_possible?: boolean;
+            cleanup_failures?: number;
+            oldest_expired_age_ms?: number | null;
+            scanned?: number;
+            orphan_count?: number;
+          };
+        const backlogPossible =
+          latest.backlog_possible === true;
+        const cleanupFailures =
+          typeof latest.cleanup_failures === "number" ?
+            latest.cleanup_failures : 0;
+        const oldestAgeMs =
+          typeof latest.oldest_expired_age_ms === "number" ?
+            latest.oldest_expired_age_ms : null;
+        const oldestStale =
+          oldestAgeMs != null &&
+          oldestAgeMs >
+            THRESHOLDS.WALL_MEDIA_OLDEST_EXPIRED_AGE_MS;
+        const failuresStuck =
+          cleanupFailures >=
+            THRESHOLDS.WALL_MEDIA_CLEANUP_FAILURES;
+
+        const ok = !backlogPossible && !oldestStale && !failuresStuck;
+        checks["wall_media_janitor"] = {
+          status: ok ? "OK" : "WARNING",
+          message:
+            `janitor mural backlog=${backlogPossible}, ` +
+            `falhas=${cleanupFailures}, ` +
+            `oldest_age_ms=${oldestAgeMs}`,
+          value: {
+            backlogPossible,
+            cleanupFailures,
+            oldestExpiredAgeMs: oldestAgeMs,
+          },
+        };
+
+        if (backlogPossible) {
+          alerts.push({
+            type: "WALL_MEDIA_JANITOR_BACKLOG",
+            severity: "WARNING",
+            title:
+              "Janitor de mural com backlog (limite de varredura)",
+            message:
+              "O janitor de mídia do mural não drenou " +
+              "todos os drafts expirados na última execução. " +
+              `Idade do mais antigo: ${oldestAgeMs}ms. ` +
+              "Possível acúmulo de staging órfão.",
+            metadata: {
+              backlog_possible: true,
+              oldest_expired_age_ms: oldestAgeMs,
+              scanned: latest.scanned ?? null,
+              cleaned: latest.orphan_count ?? null,
+            },
+          });
+        }
+
+        if (oldestStale) {
+          alerts.push({
+            type: "WALL_MEDIA_DRAFT_STUCK",
+            severity: "WARNING",
+            title: "Draft de mural preso há muito tempo",
+            message:
+              "Existe draft expirado há " +
+              `${Math.round((oldestAgeMs ?? 0) / 60000)}min ` +
+              "(limite 60min). Provável objeto preso em " +
+              "retentativa infinita sem dead-letter.",
+            metadata: {
+              oldest_expired_age_ms: oldestAgeMs,
+              threshold_ms:
+                THRESHOLDS.WALL_MEDIA_OLDEST_EXPIRED_AGE_MS,
+            },
+          });
+        }
+
+        if (failuresStuck) {
+          alerts.push({
+            type: "WALL_MEDIA_CLEANUP_FAILURES",
+            severity: "WARNING",
+            title: "Falhas de cleanup de draft de mural",
+            message:
+              `${cleanupFailures} draft(s) retornaram ` +
+              "FAILED no último ciclo do janitor e seguem " +
+              "EXPIRED (retentativa infinita).",
+            metadata: {
+              cleanup_failures: cleanupFailures,
+            },
+          });
+        }
+      }
+    } catch (error) {
+      checks["wall_media_janitor"] = {
         status: "ERROR",
         message: `Erro ao verificar: ${error}`,
       };

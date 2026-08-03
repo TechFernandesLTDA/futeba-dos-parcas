@@ -8,10 +8,17 @@ const mockTransactionGet = jest.fn();
 const mockTransactionSet = jest.fn();
 const mockTransactionUpdate = jest.fn();
 const mockCollectionGet = jest.fn();
-const mockWhere = jest.fn().mockReturnThis();
 
-const queryChain: any = { where: mockWhere, get: mockCollectionGet };
-mockWhere.mockReturnValue(queryChain);
+// FIX #3968: a query agora é paginada (orderBy + limit + startAfter com
+// cursor). A chain fluente do mock precisa suportar todos os terminais,
+// caso contrário `.orderBy(...).limit(...).startAfter(...).get()` quebra.
+const queryChain: any = {
+  where: jest.fn().mockReturnThis(),
+  orderBy: jest.fn().mockReturnThis(),
+  limit: jest.fn().mockReturnThis(),
+  startAfter: jest.fn().mockReturnThis(),
+  get: mockCollectionGet,
+};
 
 const mockDoc = jest.fn((id: string) => ({
   id,
@@ -22,7 +29,10 @@ const mockDoc = jest.fn((id: string) => ({
 
 const mockCollection = jest.fn(() => ({
   doc: mockDoc,
-  where: mockWhere,
+  where: queryChain.where,
+  orderBy: queryChain.orderBy,
+  limit: queryChain.limit,
+  startAfter: queryChain.startAfter,
   get: mockCollectionGet,
 }));
 
@@ -50,6 +60,14 @@ jest.mock("firebase-admin", () => ({
   firestore: mockFirestore,
 }));
 
+jest.mock("firebase-functions", () => ({
+  logger: {
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+  },
+}));
+
 jest.mock("firebase-functions/v2/scheduler", () => ({
   onSchedule: jest.fn((_c: any, h: any) => h),
 }));
@@ -65,7 +83,8 @@ jest.mock("../src/notifications", () => ({
   },
 }));
 
-import { autoCancelLowQuorum } from "../src/reminders";
+import {autoCancelLowQuorum} from "../src/reminders";
+import {logger} from "firebase-functions";
 
 describe("autoCancelLowQuorum", () => {
   beforeEach(() => {
@@ -340,5 +359,142 @@ describe("autoCancelLowQuorum", () => {
 
     expect(mockTransactionUpdate).not.toHaveBeenCalled();
     expect(mockSendNotificationToUsers).not.toHaveBeenCalled();
+  });
+
+  // ---- FIX #3968: hardening da varredura ----
+
+  it("pagina a query com orderBy + limit + startAfter (cursor avanca a cauda)", async () => {
+    // Página 1 cheia (100 docs): como o default do mockTransactionGet é
+    // exists:false, todos pulam com 1 get cada — cenário barato que
+    // exercita só a mecânica de paginação. Página 2 vem parcial (3 docs)
+    // e drena a janela.
+    const makeDoc = (id: string) => ({
+      id,
+      ref: { id },
+      data: () => ({}),
+    });
+    const page1 = Array.from({length: 100}, (_, i) =>
+      makeDoc(`game-p1-${i}`)
+    );
+    const page2 = Array.from({length: 3}, (_, i) =>
+      makeDoc(`game-p2-${i}`)
+    );
+
+    mockCollectionGet
+      .mockResolvedValueOnce({ docs: page1, size: 100 })
+      .mockResolvedValueOnce({ docs: page2, size: 3 });
+
+    await autoCancelLowQuorum();
+
+    // Query paginada declarada explicitamente.
+    expect(queryChain.orderBy).toHaveBeenCalledWith("dateTime", "asc");
+    expect(queryChain.limit).toHaveBeenCalledWith(100);
+    // Cursor avançou: startAfter chamado com o ÚLTIMO doc processado da
+    // página 1 — prova que a cauda avança entre execuções consecutivas.
+    expect(queryChain.startAfter).toHaveBeenCalledTimes(1);
+    expect(queryChain.startAfter).toHaveBeenCalledWith(page1[99]);
+    // Duas páginas lidas; nenhuma além do esgotamento da janela.
+    expect(mockCollectionGet).toHaveBeenCalledTimes(2);
+  });
+
+  it("isola falha por doc: jogo que lança não aborta o lote", async () => {
+    const futureDate = new Date(Date.now() + 60 * 60 * 1000);
+    const game2Data = {
+      status: "CONFIRMED",
+      dateTime: { toDate: () => futureDate },
+      location_name: "Campo 2",
+      date: "2026-05-25",
+    };
+    const game1Ref = { id: "game1" };
+    const game2Ref = { id: "game2" };
+
+    mockCollectionGet.mockResolvedValueOnce({
+      docs: [
+        { id: "game1", ref: game1Ref, data: () => ({}) },
+        { id: "game2", ref: game2Ref, data: () => ({}) },
+      ],
+      size: 2,
+    });
+
+    // Ordem das transações: (1) lock acquire, (2) jogo 1 -> lança,
+    // (3) jogo 2 -> cancela, (4) lock release (default do beforeEach).
+    mockRunTransaction
+      .mockImplementationOnce(async (callback: any) => callback({
+        get: mockTransactionGet,
+        set: mockTransactionSet,
+        update: mockTransactionUpdate,
+      }))
+      .mockImplementationOnce(async () => {
+        throw new Error("transação indisponível");
+      });
+
+    // gets da tx: lock acquire (exists:false) + jogo 2 doc + jogo 2 confs.
+    mockTransactionGet
+      .mockResolvedValueOnce({ exists: false, data: () => null })
+      .mockResolvedValueOnce({ exists: true, data: () => game2Data })
+      .mockResolvedValueOnce({
+        docs: [
+          { data: () => ({ user_id: "userA" }) },
+          { data: () => ({ user_id: "userB" }) },
+        ],
+        size: 2,
+      });
+
+    await autoCancelLowQuorum();
+
+    // Jogo 1 não chegou a atualizar (lançou antes); jogo 2 sim.
+    expect(mockTransactionUpdate).toHaveBeenCalledTimes(1);
+    expect(mockTransactionUpdate).toHaveBeenCalledWith(
+      game2Ref,
+      expect.objectContaining({ status: "CANCELLED" })
+    );
+    expect(mockSendNotificationToUsers).toHaveBeenCalledWith(
+      ["userA", "userB"],
+      expect.objectContaining({ title: "Jogo cancelado" })
+    );
+    // Erro do jogo 1 foi logado (não propagado).
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.stringContaining("[AUTO_CANCEL] Erro ao processar jogo game1:"),
+      expect.any(Error)
+    );
+  });
+
+  it("respeita orçamento de tempo: para antes do deadline e emite aviso de backlog", async () => {
+    const gameRef = { id: "game1" };
+    mockCollectionGet.mockResolvedValueOnce({
+      docs: [
+        { id: "game1", ref: gameRef, data: () => ({}) },
+        { id: "game2", ref: { id: "game2" }, data: () => ({}) },
+        { id: "game3", ref: { id: "game3" }, data: () => ({}) },
+      ],
+      size: 3,
+    });
+
+    // Controla Date.now: as 2 primeiras chamadas (cálculo do deadline +
+    // checagem do while) retornam 0; a partir da 3ª (checagem por doc)
+    // retornam um valor acima do orçamento -> budget hit no 1º doc.
+    const HUGE = 10_000_000;
+    let nowCalls = 0;
+    const dateNowSpy = jest
+      .spyOn(Date, "now")
+      .mockImplementation(() => {
+        nowCalls += 1;
+        return nowCalls <= 2 ? 0 : HUGE;
+      });
+
+    try {
+      await autoCancelLowQuorum();
+
+      // Nenhum jogo foi processado (deadline estourou antes do 1º doc).
+      expect(mockTransactionUpdate).not.toHaveBeenCalled();
+      // Apenas uma página foi lida — o laço parou limpo.
+      expect(mockCollectionGet).toHaveBeenCalledTimes(1);
+      // Sinal de saturação emitido.
+      expect(logger.warn).toHaveBeenCalledWith(
+        expect.stringContaining("backlog")
+      );
+    } finally {
+      dateNowSpy.mockRestore();
+    }
   });
 });
