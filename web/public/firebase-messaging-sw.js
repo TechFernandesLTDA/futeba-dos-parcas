@@ -4,7 +4,7 @@ importScripts('https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-comp
 
 firebase.initializeApp({
   apiKey: "AIzaSyBIbLLAfBCPU3dHWyHAdNqHplNWlsUrYa8",
-  authDomain: "futebadosparcas.firebaseapp.com",
+  authDomain: "futebadosparcas.com.br",
   projectId: "futebadosparcas",
   storageBucket: "futebadosparcas.firebasestorage.app",
   messagingSenderId: "490094091078",
