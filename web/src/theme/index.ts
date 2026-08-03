@@ -58,23 +58,43 @@ const secondary = {
 const appFontFamily = 'Poppins, "Plus Jakarta Sans", "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
 
 /**
- * #3918 — Cor do TEXTO (rótulo + ícone) do item de navegação SELECIONADO.
+ * #3918 / #3976 — Cor do TEXTO `primary` sobre uma superfície tingida com a
+ * PRÓPRIA matiz do primary (action.selected, alpha(primary.main, N), fundo do
+ * Alert severity="info", ToggleButton color="primary" selecionado, etc.).
  *
- * Ajustar a tinta do fundo (action.selected) NÃO resolve WCAG AA: tintar o
- * fundo com o hue do primary.main aproxima as duas luminâncias, e o rótulo
- * #00852A fica em ~4.05:1 (< 4.5:1) sobre alpha(primary.main, 0.12). A
- * correção é no TEXTO:
+ * Ajustar a tinta do FUNDO NÃO resolve WCAG AA: tintir o fundo com o hue do
+ * primary.main aproxima as duas luminâncias, e o texto #00852A fica em
+ * ~4.05:1 (< 4.5:1) sobre alpha(primary.main, 0.12), ou ~4.19:1 sobre
+ * alpha(primary.main, 0.08) — abaixo de AA para texto normal. A correção é
+ * no TEXTO:
  *   • light  → primary.dark #005A1C  (~7.2:1 sobre a tinta, ~8.5:1 sobre branco)
  *   • dark   → primary.main #4ADE80 (já passa, 5.62:1) — mantido
  *
+ * Regra GERAL (não restrita à navegação): sempre que um foreground `primary`
+ * aparecer sobre um fundo tingido de primary/info, use esta função. Aplicada em:
+ *   • #3918 — item de navegação selecionado (AppSidebar, MobileBottomNav,
+ *             MuiBottomNavigationAction) via `getNavSelectedText` (alias abaixo)
+ *   • #3976 — ToggleButtonGroup color="primary" (GameReviewQueueScreen) e
+ *             <Link> dentro de <Alert severity="info"> (FeedbackOperationsScreen)
+ *
  * Mesma convenção já usada em GameCard.tsx
- * (theme.palette.mode === 'dark' ? .light : .dark), aplicada à navegação.
- * Centralizar aqui evita drift entre bottom nav e sidebar.
+ * (theme.palette.mode === 'dark' ? .light : .dark). Centralizar aqui evita
+ * drift entre componentes.
  */
-export function getNavSelectedText(theme: Theme): string {
+export function getPrimaryOnTint(theme: Theme): string {
   return theme.palette.mode === 'dark'
     ? theme.palette.primary.main
     : theme.palette.primary.dark;
+}
+
+/**
+ * Alias semântico para o caso de navegação (#3918). Delega em `getPrimaryOnTint`
+ * — mantido para não quebrar os 13 call sites de AppSidebar/MobileBottomNav/
+ * BottomNavAction. Novos usos não-nav devem preferir `getPrimaryOnTint`.
+ * @see getPrimaryOnTint
+ */
+export function getNavSelectedText(theme: Theme): string {
+  return getPrimaryOnTint(theme);
 }
 
 // =============================================================================

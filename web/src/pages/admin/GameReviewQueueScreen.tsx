@@ -30,6 +30,7 @@ import { PageContainer } from '../../components/common/PageContainer';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
 import { EmptyState } from '../../components/common/EmptyState';
 import { LoadingState } from '../../components/common/LoadingState';
+import { getPrimaryOnTint } from '../../theme';
 import { db } from '../../services/firebase';
 import { reviewHeldGameRewards } from '../../services/cloudFunctions';
 import { useToast } from '../../contexts/ToastContext';
@@ -335,6 +336,16 @@ export const GameReviewQueueScreen: React.FC = () => {
                 borderColor: 'divider',
                 m: 0,
                 flex: { xs: '1 1 calc(50% - 4px)', sm: '0 1 auto' },
+              },
+              // #3976: ToggleButton color="primary" selecionado tinha texto
+              // primary.main sobre alpha(primary.main, 0.08) = 4.19:1 (< 4.5:1 AA).
+              // Mesma causa-raiz do #3918 — correção no TEXTO via getPrimaryOnTint
+              // (primary.dark no light ~7.4:1; primary.main no dark já passa).
+              '& .Mui-selected': {
+                color: (theme) => getPrimaryOnTint(theme),
+              },
+              '& .Mui-selected:hover': {
+                color: (theme) => getPrimaryOnTint(theme),
               },
             }}
           >

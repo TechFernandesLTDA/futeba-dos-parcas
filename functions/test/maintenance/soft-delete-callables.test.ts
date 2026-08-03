@@ -15,6 +15,17 @@ const mockWhere = jest.fn().mockReturnThis();
 const mockOrderBy = jest.fn().mockReturnThis();
 const mockLimit = jest.fn().mockReturnThis();
 
+// Issue #3974: mock apenas startSchedulerHeartbeat (mantendo
+// acquire/release reais via jest.requireActual), para controlar
+// isLost() e testar o abort gracioso quando o lock é perdido.
+const mockHeartbeatStop = jest.fn();
+const mockHeartbeatIsLost = jest.fn().mockReturnValue(false);
+const mockHeartbeatHandle = {
+  stop: mockHeartbeatStop,
+  isLost: mockHeartbeatIsLost,
+};
+const mockStartSchedulerHeartbeat = jest.fn(() => mockHeartbeatHandle);
+
 const queryChain: any = { where: mockWhere, orderBy: mockOrderBy, limit: mockLimit, get: mockCollectionGet };
 mockWhere.mockReturnValue(queryChain);
 mockLimit.mockReturnValue(queryChain);
@@ -109,6 +120,18 @@ jest.mock("../../src/_db", () => {
   return { db: dbFn };
 });
 
+// Issue #3974: partial mock — acquireSchedulerLock e releaseSchedulerLock
+// continuam reais (exercitam mockRunTransaction como antes), só
+// startSchedulerHeartbeat é substituído para controlar isLost() nos
+// testes de abort.
+jest.mock("../../src/utils/scheduler-lock", () => {
+  const actual = jest.requireActual("../../src/utils/scheduler-lock");
+  return {
+    ...actual,
+    startSchedulerHeartbeat: mockStartSchedulerHeartbeat,
+  };
+});
+
 import { softDeleteGame, softDeleteGroup, restoreDeletedGame, restoreDeletedGroup, cleanupAllSoftDeleted } from "../../src/maintenance/soft-delete";
 
 const makeAuthRequest = (overrides: any = {}) => ({
@@ -120,6 +143,10 @@ const makeAuthRequest = (overrides: any = {}) => ({
 describe("Soft Delete — Callables", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // Issue #3974: isLost() default false — abort só é exercitado no
+    // teste específico de lock perdido.
+    mockHeartbeatIsLost.mockReturnValue(false);
+    mockStartSchedulerHeartbeat.mockReturnValue(mockHeartbeatHandle);
     mockRunTransaction.mockImplementation(async (callback: any) =>
       callback({
         get: mockTransactionGet,
@@ -523,6 +550,52 @@ describe("Soft Delete — Callables", () => {
           }),
         }),
       );
+    });
+
+    // ===== Issue #3974: abort gracioso quando o lock é perdido =====
+
+    it("#3974: aborta o cleanup quando heartbeat reporta lock perdido", async () => {
+      // Defeito A: antes o retorno boolean do heartbeat era descartado.
+      // Agora o caller checa isLost() no loop de coleções e aborta para
+      // evitar writes conflitantes com o novo owner.
+      mockHeartbeatIsLost.mockReturnValue(true);
+
+      await cleanupAllSoftDeleted();
+
+      // Nenhuma coleção foi processada — abortou no primeiro cheque do loop.
+      expect(mockCleanupSoftDeleted).not.toHaveBeenCalled();
+      // Nenhuma métrica/alerta gravado.
+      expect(mockCollectionAdd).not.toHaveBeenCalled();
+      // Lock perdido é CRITICAL — logado em error.
+      const { logger } = require("firebase-functions/v2");
+      expect(logger.error).toHaveBeenCalledWith(
+        expect.stringContaining("Scheduler lock perdido durante execucao")
+      );
+      // Heartbeat foi interrompido no finally.
+      expect(mockHeartbeatStop).toHaveBeenCalled();
+    });
+
+    it("#3974: NAO chama releaseSchedulerLock quando o lock foi perdido", async () => {
+      // Quando o lock foi tomado por outro owner, release seria rejeitado
+      // (owner divergente) e só geraria ruído — o novo owner cuida da
+      // liberação. Verifica-se que o finally pula o release.
+      mockHeartbeatIsLost.mockReturnValue(true);
+      const releaseSpy = jest.spyOn(
+        require("../../src/utils/scheduler-lock"),
+        "releaseSchedulerLock"
+      );
+
+      try {
+        await cleanupAllSoftDeleted();
+
+        expect(releaseSpy).not.toHaveBeenCalled();
+        const { logger } = require("firebase-functions/v2");
+        expect(logger.warn).toHaveBeenCalledWith(
+          expect.stringContaining("Pulando release do lock"),
+        );
+      } finally {
+        releaseSpy.mockRestore();
+      }
     });
   });
 });

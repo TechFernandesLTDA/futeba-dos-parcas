@@ -25,6 +25,11 @@ describe('contrato de acessibilidade da navegação', () => {
     // #3971: enumera as rotas públicas (auth) que o anúncio deve cobrir.
     // Antes só /guide era checado literalmente, então /login, /register e
     // /forgot-password caíam em "Não encontrado" sem o CI perceber.
+    //
+    // #3975: estende a enumeração para TODAS as rotas PublicRoute, não só as
+    // de auth. Antes apenas 3 de 6 rotas eram checadas, então /welcome,
+    // /splash e /launch regressavam silenciosamente para "Não encontrado".
+    // Cada chave aqui corresponde ao i18n usado pela tela em document.title.
     const publicRoutesBlock = app.slice(
       app.indexOf('PUBLIC_ROUTE_TITLES'),
       app.indexOf('function RouteAnnouncer'),
@@ -32,7 +37,16 @@ describe('contrato de acessibilidade da navegação', () => {
     expect(publicRoutesBlock).toContain("'/login': 'page.title.login'");
     expect(publicRoutesBlock).toContain("'/register': 'page.title.register'");
     expect(publicRoutesBlock).toContain("'/forgot-password': 'auth.forgotPasswordTitle'");
+    expect(publicRoutesBlock).toContain("'/welcome': 'welcome.documentTitle'");
+    expect(publicRoutesBlock).toContain("'/splash': 'common.appName'");
+    expect(publicRoutesBlock).toContain("'/launch': 'common.appName'");
     expect(publicRoutesBlock).toMatch(/if \(publicTitle\) return t\(publicTitle\);/);
+
+    // Nenhuma rota PublicRoute pode ficar de fora — senão o leitor de tela
+    // anuncia "Tela atual: Não encontrado" para telas válidas.
+    expect(app).toMatch(/path="\/splash"[^>]*PublicRoute/);
+    expect(app).toMatch(/path="\/welcome"[^>]*PublicRoute/);
+    expect(app).toMatch(/path="\/launch"/);
   });
 
   it('remove a navegação inferior escondida da árvore interativa', () => {

@@ -55,6 +55,7 @@ import {
 import { useToast } from '../../contexts/ToastContext';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useTranslation } from 'react-i18next';
+import { getPrimaryOnTint } from '../../theme';
 
 type StatusFilter = 'all' | FeedbackStatus;
 type SeverityFilter = 'all' | FeedbackSeverity;
@@ -351,7 +352,18 @@ export const FeedbackOperationsScreen: React.FC = () => {
         <Stack spacing={2}>
           <Alert severity="info">
             {t('feedbackOperations.infoPrefix')}{' '}
-            <Link href="/settings/feedbacks">user_feedback</Link>. {t('feedbackOperations.infoStatuses')}
+            <Link
+              href="/settings/feedbacks"
+              sx={(theme) => ({
+                // #3976: Link herda primary.main sobre o fundo tingido de info
+                // do Alert = 4.47:1 (< 4.5:1 AA). Mesma causa-raiz do #3918 —
+                // correção no TEXTO via getPrimaryOnTint (primary.dark no light
+                // ~7:1; primary.main no dark já passa).
+                color: getPrimaryOnTint(theme),
+              })}
+            >
+              user_feedback
+            </Link>. {t('feedbackOperations.infoStatuses')}
           </Alert>
 
           {criticalOpenFeedbacks.length > 0 && (
