@@ -88,6 +88,9 @@ const LEAGUE_PLAYERS_CACHE_CHUNK_SIZE = 250;
 /** Subcolecao dos chunks do diretorio cacheado. */
 const LEAGUE_PLAYERS_CACHE_CHUNKS_COLLECTION = "chunks";
 
+const CHUNK_ARRAY_MAX_INPUT = 10000;
+const SEASON_CACHE_QUERY_LIMIT = 100;
+
 // ==========================================
 // INTERFACES
 // ==========================================
@@ -315,9 +318,20 @@ function resolveGenderKey(raw: unknown): string {
  * @return {Array<Array<T>>} Lista de chunks.
  */
 function chunkArray<T>(items: T[], size: number): T[][] {
+  let source = items;
+  if (items.length > CHUNK_ARRAY_MAX_INPUT) {
+    logger.warn(
+      "[CHUNK_ARRAY] Entrada excede o limite, truncando",
+      {
+        inputLength: items.length,
+        max: CHUNK_ARRAY_MAX_INPUT,
+      }
+    );
+    source = items.slice(0, CHUNK_ARRAY_MAX_INPUT);
+  }
   const chunks: T[][] = [];
-  for (let index = 0; index < items.length; index += size) {
-    chunks.push(items.slice(index, index + size));
+  for (let index = 0; index < source.length; index += size) {
+    chunks.push(source.slice(index, index + size));
   }
   return chunks;
 }
@@ -1890,6 +1904,7 @@ export const invalidateLeaderboardOnParticipation = onDocumentWritten(
       const cacheSnap = await db
         .collection(CACHE_COLLECTION)
         .where("season_id", "==", seasonId)
+        .limit(SEASON_CACHE_QUERY_LIMIT)
         .get();
 
       if (cacheSnap.empty) {

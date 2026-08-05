@@ -897,6 +897,7 @@ export const LocationDetailScreen: React.FC = () => {
                       <Avatar
                         variant="rounded"
                         src={field.photoUrl || field.photos?.[0]}
+                        alt={field.name}
                         sx={{ width: 56, height: 56, bgcolor: 'action.hover' }}
                       >
                         <SoccerIcon />

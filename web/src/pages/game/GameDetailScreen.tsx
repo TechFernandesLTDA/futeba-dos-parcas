@@ -268,7 +268,7 @@ const CheckInSocialPanel: React.FC<{
           <Stack spacing={1.5}>
             {checkedInPlayers.map((player) => (
               <Stack key={player.id} direction="row" spacing={1.5} alignItems="center">
-                <Avatar src={player.userPhoto}>{player.userName.charAt(0).toUpperCase()}</Avatar>
+                <Avatar src={player.userPhoto} alt={player.userName}>{player.userName.charAt(0).toUpperCase()}</Avatar>
                 <Box sx={{ minWidth: 0, flex: 1 }}>
                   <Typography variant="body2" fontWeight={700}>{player.userName}</Typography>
                   <Typography variant="caption" color="text.secondary">

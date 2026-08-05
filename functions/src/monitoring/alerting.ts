@@ -201,22 +201,30 @@ export const systemHealthCheck =
         });
 
         // Auto-recuperação: resetar flag
-        const resetBatch = db.batch();
-        for (const doc of staleSnap.docs) {
-          resetBatch.update(doc.ref, {
-            xp_processing: false,
-            xp_processing_error:
-              "Auto-reset: processing " +
-              "travado por mais de 1 hora",
-          });
-        }
-        await resetBatch.commit();
+        try {
+          const resetBatch = db.batch();
+          for (const doc of staleSnap.docs) {
+            resetBatch.update(doc.ref, {
+              xp_processing: false,
+              xp_processing_error:
+                "Auto-reset: processing " +
+                "travado por mais de 1 hora",
+            });
+          }
+          await resetBatch.commit();
 
-        logger.info(
-          "[HEALTH_CHECK] Auto-reset de " +
-          `${staleCount} jogos com XP ` +
-          "processing travado"
-        );
+          logger.info(
+            "[HEALTH_CHECK] Auto-reset de " +
+            `${staleCount} jogos com XP ` +
+            "processing travado"
+          );
+        } catch (resetError) {
+          logger.error(
+            "[HEALTH_CHECK] Falha no auto-reset " +
+            "de XP processing travado:",
+            resetError
+          );
+        }
       }
     } catch (error) {
       checks["stale_xp_processing"] = {

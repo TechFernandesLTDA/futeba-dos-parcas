@@ -413,7 +413,7 @@ export const GamePhotosTab: React.FC<GamePhotosTabProps> = ({
               <Box component="img" src={selectedPhotoLive.url} alt={t('gamePhotos.photoAlt', { name: selectedPhotoLive.uploadedByName })} sx={{ maxWidth: '100%', maxHeight: '78vh', objectFit: 'contain' }} />
             </Box>
             <Stack direction="row" spacing={1.5} alignItems="center" sx={{ p: 2 }}>
-              <Avatar src={selectedPhotoLive.uploadedByPhoto}>{selectedPhotoLive.uploadedByName.charAt(0).toUpperCase()}</Avatar>
+              <Avatar src={selectedPhotoLive.uploadedByPhoto} alt={selectedPhotoLive.uploadedByName}>{selectedPhotoLive.uploadedByName.charAt(0).toUpperCase()}</Avatar>
               <Box sx={{ minWidth: 0, flex: 1 }}>
                 <Typography variant="body2" fontWeight={700}>{selectedPhotoLive.uploadedByName}</Typography>
                 {selectedPhotoLive.caption && <Typography variant="body2" color="text.secondary">{selectedPhotoLive.caption}</Typography>}

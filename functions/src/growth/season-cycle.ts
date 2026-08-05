@@ -23,6 +23,9 @@ const SEASON_CYCLE_TIME_BUDGET_MS = 450_000;
 // que os 10 de gamification-nudges.ts porque cada grupo aqui custa até 6
 // round trips (archiveSeason), não 1.
 const SEASON_CYCLE_CONCURRENCY = 5;
+const OFFICIAL_GROUPS_QUERY_LIMIT = 500;
+const ACTIVE_SEASONS_QUERY_LIMIT = 2000;
+const GROUP_ACTIVE_SEASONS_QUERY_LIMIT = 50;
 
 /**
  * FIX #3896: os crons varriam o catalogo `official-groups` (11 entradas
@@ -56,12 +59,13 @@ const SEASON_CYCLE_CONCURRENCY = 5;
 async function listManagedGroupIds(): Promise<string[]> {
   const groupIds = new Set<string>();
 
-  const officialSnap = await db().collection("official-groups").get();
+  const officialSnap = await db().collection("official-groups").limit(OFFICIAL_GROUPS_QUERY_LIMIT).get();
   for (const doc of officialSnap.docs) groupIds.add(doc.id);
 
   const activeSeasonsSnap = await db()
     .collectionGroup("league_seasons")
     .where("is_active", "==", true)
+    .limit(ACTIVE_SEASONS_QUERY_LIMIT)
     .get();
   for (const doc of activeSeasonsSnap.docs) {
     const groupId = doc.ref.parent.parent?.id;
@@ -324,7 +328,7 @@ async function processStartNewSeasonForGroup(
 
     const [exists, activeSeasonsSnap] = await Promise.all([
       seasonRef.get(),
-      seasonsRef.where("is_active", "==", true).get(),
+      seasonsRef.where("is_active", "==", true).limit(GROUP_ACTIVE_SEASONS_QUERY_LIMIT).get(),
     ]);
 
     const batch = db().batch();

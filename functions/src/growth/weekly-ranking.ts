@@ -6,6 +6,9 @@ import {FUNCTION_REGION} from "../constants";
 import {sendNotificationToUsers, NotificationType} from "../notifications/helpers";
 
 const db = () => admin.firestore();
+const WEEKLY_GAMES_QUERY_LIMIT = 5000;
+const GAME_CONFIRMATIONS_QUERY_LIMIT = 200;
+const GAME_TEAMS_QUERY_LIMIT = 100;
 
 interface WeeklyScores {
   [userId: string]: {
@@ -135,6 +138,7 @@ export const processWeeklyRanking = onSchedule(
       .where("status", "==", "FINISHED")
       .where("date", ">=", start.toISOString().split("T")[0])
       .where("date", "<=", end.toISOString().split("T")[0])
+      .limit(WEEKLY_GAMES_QUERY_LIMIT)
       .get();
 
     if (gamesSnap.empty) {
@@ -163,10 +167,12 @@ export const processWeeklyRanking = onSchedule(
               .collection("confirmations")
               .where("game_id", "==", gameId)
               .where("was_present", "==", true)
+              .limit(GAME_CONFIRMATIONS_QUERY_LIMIT)
               .get(),
             db()
               .collection("teams")
               .where("game_id", "==", gameId)
+              .limit(GAME_TEAMS_QUERY_LIMIT)
               .get(),
           ]);
           return {confSnap, teamsSnap};

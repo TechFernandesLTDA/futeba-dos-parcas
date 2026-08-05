@@ -477,6 +477,7 @@ export const EditProfileScreen: React.FC = () => {
                 />
                 <Avatar
                   src={previewUrl || currentUser?.photoURL || undefined}
+                  alt={formData.name || ''}
                   sx={{
                     width: 100,
                     height: 100,

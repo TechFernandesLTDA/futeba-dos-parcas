@@ -107,6 +107,21 @@ export const RATE_LIMITS = {
     keyPrefix: "cashbox_reconcile",
   }, // 10/min
 
+  // Lançamento de transação no caixa do grupo: write financeiro sensível.
+  CASHBOX_ENTRY_CREATE: {
+    maxRequests: 60,
+    windowMs: 60 * 1000,
+    keyPrefix: "cashbox_entry_create",
+  }, // 60/min
+
+  // Estorno de transação no caixa: operação destrutiva (reverte saldo),
+  // teto mais baixo que criação.
+  CASHBOX_ENTRY_VOID: {
+    maxRequests: 30,
+    windowMs: 60 * 1000,
+    keyPrefix: "cashbox_entry_void",
+  }, // 30/min
+
   // Default fallback
   DEFAULT: {
     maxRequests: 10,

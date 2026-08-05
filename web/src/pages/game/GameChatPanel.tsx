@@ -234,6 +234,7 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({ message, isOwn, canDelete, onDe
       {!isOwn && (
         <Avatar
           src={message.senderPhotoUrl ?? undefined}
+          alt={message.senderName}
           sx={{ width: 32, height: 32, mt: 0.25 }}
         >
           {message.senderName.charAt(0).toUpperCase()}

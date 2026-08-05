@@ -62,6 +62,7 @@ interface FakeQuerySnapshot {
 
 interface FakeQuery {
   where: (field: string, op: string, value: unknown) => FakeQuery;
+  limit: () => FakeQuery;
   get: () => Promise<FakeQuerySnapshot>;
 }
 
@@ -113,6 +114,7 @@ function createFakeFirestore(
       collectionPath,
       [...filters, {field, op, value}],
     ),
+    limit: () => query(collectionPath, filters),
     get: async () => {
       const docs = directDocuments(collectionPath).filter((doc) => {
         const data = doc.data() ?? {};

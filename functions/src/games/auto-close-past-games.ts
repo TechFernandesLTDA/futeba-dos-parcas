@@ -93,6 +93,8 @@ function coerceGameDate(value: unknown): Date | null {
 
 const BRT_TIMEZONE = "America/Sao_Paulo";
 const LEGACY_DEFAULT_HOUR = 20;
+const GAME_CONFIRMATIONS_QUERY_LIMIT = 200;
+const GAME_EVENTS_QUERY_LIMIT = 500;
 
 /**
  * Converte um horário-parede BRT para UTC sem depender do timezone do runtime.
@@ -413,10 +415,12 @@ async function getGameEvidence(
         .collection("confirmations")
         .where("game_id", "==", gameId)
         .where("status", "==", "CONFIRMED")
+        .limit(GAME_CONFIRMATIONS_QUERY_LIMIT)
         .get(),
       db()
         .collection("game_events")
         .where("game_id", "==", gameId)
+        .limit(GAME_EVENTS_QUERY_LIMIT)
         .get(),
       db()
         .collection("live_scores")

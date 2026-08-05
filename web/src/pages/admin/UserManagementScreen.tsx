@@ -355,7 +355,9 @@ export const UserManagementScreen: React.FC = () => {
       setSelectedUser(null);
       showSuccess(`Role de ${user.name} atualizado para ${newRole}.`);
     } catch (error) {
-      setError(getFunctionsErrorMessage(error, 'setUserRole', 'Erro ao atualizar role'));
+      const message = getFunctionsErrorMessage(error, 'setUserRole', 'Erro ao atualizar role');
+      setError(message);
+      showError(message);
     } finally {
       setActionLoading(false);
     }

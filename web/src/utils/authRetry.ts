@@ -15,6 +15,15 @@ export function markClaimRefresh(): void {
 }
 
 /**
+ * #4001: Reseta o estado de retry de claims. Deve ser chamado no logout para
+ * evitar que `wasClaimRefreshedRecently()` retorne true na próxima sessão
+ * caso o logout e login ocorram dentro da janela de 30s.
+ */
+export function resetClaimRefreshState(): void {
+  lastClaimRefreshAt = null;
+}
+
+/**
  * Verifica se um refresh de claims ocorreu recentemente (< 30s).
  * Usado pelo retry para evitar loops infinitos.
  */

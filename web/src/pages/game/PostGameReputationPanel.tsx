@@ -212,7 +212,7 @@ export const PostGameReputationPanel: React.FC<PostGameReputationPanelProps> = (
             {selectedCandidate && (
               <Stack spacing={1.5}>
                 <Stack direction="row" spacing={1.5} alignItems="center">
-                  <Avatar src={selectedCandidate.userPhoto}>
+                  <Avatar src={selectedCandidate.userPhoto} alt={selectedCandidate.userName}>
                     {selectedCandidate.userName.charAt(0).toUpperCase()}
                   </Avatar>
                   <Box sx={{ minWidth: 0, flex: 1 }}>
@@ -282,7 +282,7 @@ export const PostGameReputationPanel: React.FC<PostGameReputationPanelProps> = (
                     return (
                       <ListItem key={review.id} disableGutters>
                         <ListItemAvatar>
-                          <Avatar src={candidate?.userPhoto}>
+                          <Avatar src={candidate?.userPhoto} alt={candidate?.userName ?? ''}>
                             {(candidate?.userName ?? '?').charAt(0).toUpperCase()}
                           </Avatar>
                         </ListItemAvatar>

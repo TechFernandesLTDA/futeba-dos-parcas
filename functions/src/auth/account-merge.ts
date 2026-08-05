@@ -44,6 +44,7 @@ const COMPLETE_REQUESTS_PER_HOUR = 3;
 const GOOGLE_PROVIDER_ID = "google.com";
 const PROOF_TTL_MS = 15 * 60 * 1000;
 const PROCESSING_LEASE_MS = 2 * 60 * 1000;
+const MAX_DOCS_PER_QUERY = 500;
 
 type MergeStatus = "pending_cpf" | "ready";
 
@@ -841,25 +842,25 @@ export const completeAccountMerge = onCall(
         sourceGameTemplates,
       ] = await Promise.all([
         sourceUserRef.get(),
-        sourceUserRef.collection("groups").get(),
-        database.collection("confirmations").where("user_id", "==", sourceUid).get(),
-        database.collection("confirmations").where("userId", "==", sourceUid).get(),
-        database.collection("game_summons").where("user_id", "==", sourceUid).get(),
+        sourceUserRef.collection("groups").limit(MAX_DOCS_PER_QUERY).get(),
+        database.collection("confirmations").where("user_id", "==", sourceUid).limit(MAX_DOCS_PER_QUERY).get(),
+        database.collection("confirmations").where("userId", "==", sourceUid).limit(MAX_DOCS_PER_QUERY).get(),
+        database.collection("game_summons").where("user_id", "==", sourceUid).limit(MAX_DOCS_PER_QUERY).get(),
         database.collection("group_invites")
-          .where("invited_user_id", "==", sourceUid).get(),
+          .where("invited_user_id", "==", sourceUid).limit(MAX_DOCS_PER_QUERY).get(),
         database.collection("group_invites")
-          .where("invitedUserId", "==", sourceUid).get(),
-        database.collection("notifications").where("user_id", "==", sourceUid).get(),
-        database.collection("games").where("owner_id", "==", sourceUid).get(),
+          .where("invitedUserId", "==", sourceUid).limit(MAX_DOCS_PER_QUERY).get(),
+        database.collection("notifications").where("user_id", "==", sourceUid).limit(MAX_DOCS_PER_QUERY).get(),
+        database.collection("games").where("owner_id", "==", sourceUid).limit(MAX_DOCS_PER_QUERY).get(),
         database.collection("games")
-          .where("co_organizers", "array-contains", sourceUid).get(),
-        database.collection("locations").where("owner_id", "==", sourceUid).get(),
+          .where("co_organizers", "array-contains", sourceUid).limit(MAX_DOCS_PER_QUERY).get(),
+        database.collection("locations").where("owner_id", "==", sourceUid).limit(MAX_DOCS_PER_QUERY).get(),
         database.collection("locations")
-          .where("managers", "array-contains", sourceUid).get(),
-        database.collection("schedules").where("owner_id", "==", sourceUid).get(),
-        database.collection("live_games").where("owner_id", "==", sourceUid).get(),
-        database.collection("live_scores").where("owner_id", "==", sourceUid).get(),
-        sourceUserRef.collection("game_templates").get(),
+          .where("managers", "array-contains", sourceUid).limit(MAX_DOCS_PER_QUERY).get(),
+        database.collection("schedules").where("owner_id", "==", sourceUid).limit(MAX_DOCS_PER_QUERY).get(),
+        database.collection("live_games").where("owner_id", "==", sourceUid).limit(MAX_DOCS_PER_QUERY).get(),
+        database.collection("live_scores").where("owner_id", "==", sourceUid).limit(MAX_DOCS_PER_QUERY).get(),
+        sourceUserRef.collection("game_templates").limit(MAX_DOCS_PER_QUERY).get(),
       ]);
 
       // Lease transacional evita duas conclusões concorrentes. Repetições após

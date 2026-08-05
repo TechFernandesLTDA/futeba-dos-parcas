@@ -26,6 +26,7 @@ const LEGACY_GAME_VIDEO_CODEC_WHITELIST =
   "h264,hevc,mpeg4,aac,mp3,opus";
 const DOC_LOOKUP_ATTEMPTS = 5;
 const DOC_LOOKUP_DELAY_MS = 1500;
+const GAME_VIDEOS_QUERY_LIMIT = 50;
 
 interface ParsedVideoPath {
   gameId: string;
@@ -219,6 +220,7 @@ async function checkVideoLimits(
   const snapshot = await db()
     .collection("game_videos")
     .where("game_id", "==", parsedPath.gameId)
+    .limit(GAME_VIDEOS_QUERY_LIMIT)
     .get();
   const activeDocs = snapshot.docs.filter((doc) => {
     if (videoDoc && doc.id === videoDoc.id) return false;

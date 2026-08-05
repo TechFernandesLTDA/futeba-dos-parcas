@@ -290,6 +290,7 @@ export const GroupEditScreen: React.FC = () => {
                   />
                   <Avatar
                     src={previewUrl || group.photoUrl || undefined}
+                    alt={formData.name || group.name}
                     sx={{
                       width: 100,
                       height: 100,

@@ -142,6 +142,7 @@ function setupFirestore({
   });
   mockCollection.mockReturnValue({
     where: jest.fn(() => ({
+      limit: jest.fn().mockReturnThis(),
       get: jest.fn(() => Promise.resolve({
         docs: legacyReviews.map((review) => ({
           id: review.id,

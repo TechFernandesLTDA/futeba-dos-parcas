@@ -32,6 +32,9 @@ import {
   readScoresMap,
 } from "./games/live-events";
 
+const GAME_CONFIRMATIONS_QUERY_LIMIT = 200;
+const GAME_TEAMS_QUERY_LIMIT = 100;
+
 // Padroniza região default de TODAS as functions v2 que não especificam
 // region explicitamente. Antes, 15 functions ficavam em us-central1
 // (default do Firebase) enquanto Firestore está em southamerica-east1,
@@ -579,9 +582,11 @@ export const onGameStatusUpdate = onDocumentUpdated(
           db().collection("confirmations")
             .where("game_id", "==", gameId)
             .where("status", "==", "CONFIRMED")
+            .limit(GAME_CONFIRMATIONS_QUERY_LIMIT)
             .get(),
           db().collection("teams")
             .where("game_id", "==", gameId)
+            .limit(GAME_TEAMS_QUERY_LIMIT)
             .get(),
           db().collection("live_scores")
             .doc(gameId)

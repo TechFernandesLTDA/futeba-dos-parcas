@@ -25,7 +25,7 @@ import { snakeToCamel } from '../utils/firestoreHelpers';
 import { createLogger } from '../utils/logger';
 import { getAuthErrorMessage, AppAuthError, APP_AUTH_ERROR_CODES } from '../utils/firebaseErrors';
 import { addBreadcrumb, clearBreadcrumbs } from '../utils/errorContext';
-import { markClaimRefresh } from '../utils/authRetry';
+import { markClaimRefresh, resetClaimRefreshState } from '../utils/authRetry';
 import { useTranslation } from 'react-i18next';
 import type { validateInviteCode as validateInviteCodeType, syncFieldOwnerClaim as syncFieldOwnerClaimType } from '../services/cloudFunctions';
 import { normalizePlayerStats } from '../utils/playerStats';
@@ -168,8 +168,12 @@ interface AuthContextType {
    * Força refresh do ID token, atualizando custom claims (ex: `verified`, `role`)
    * que podem ter sido setados por Cloud Functions após o cadastro.
    * Útil para chamar após etapas de onboarding (verificação de telefone/CPF).
+   *
+   * @param options.expectedClaim Quando informado, verifica se o claim propagou
+   *   no novo token e tenta novamente até 3x com backoff (eventual consistency).
+   * @param options.expectedValue Valor esperado para o claim informado.
    */
-  refreshClaims: () => Promise<void>;
+  refreshClaims: (options?: { expectedClaim?: string; expectedValue?: unknown }) => Promise<void>;
 
   /**
    * #3189: Vincula uma conta Google à conta email/senha atual via linkWithPopup.
@@ -203,6 +207,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const lastTokenRefreshAtRef = useRef(Date.now());
   const lastClaimSyncUidRef = useRef<string | null>(null);
   const pendingInviteRef = useRef<{ code: string; source: string } | null>(null);
+  const processingRedirectNewUserRef = useRef(false);
 
   // Fetch user data from Firestore
   // FIX #578: PII (email, fcm_token, birth_date, height_cm, weight_kg, gender)
@@ -348,6 +353,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         void clearGroupWallMediaOutboxOwner(previousUid).catch((outboxError) => {
           logger.warn('Falha ao limpar anexos pendentes na troca de conta', outboxError);
         });
+        // #4001: cobre perda de sessão SEM logout explícito — ex.: revogação
+        // de refresh tokens pelo setUserRole (mudança de role por admin) ou
+        // expiração de sessão. Sem isto, o cache do TanStack Query serve dados
+        // da identidade anterior para a próxima sessão no mesmo browser.
+        queryClient.clear();
       }
 
       try {
@@ -371,6 +381,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
 
           if (!userData) {
+            if (processingRedirectNewUserRef.current) {
+              return;
+            }
             const pendingInvite = pendingInviteRef.current;
             userData = await createUserDocumentRef.current(
               firebaseUser,
@@ -469,23 +482,101 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     getRedirectResult(auth)
-      .then((result) => {
-        // Limpa o sessionStorage independente do resultado — o redirect foi
-        // processado (com sucesso ou sem redirect pendente).
+      .then(async (result) => {
         try {
           sessionStorage.removeItem(PENDING_GOOGLE_INVITE_KEY);
         } catch {
           /* ignore */
         }
-        if (!result) return; // Não havia redirect pendente
+        if (!result) return;
 
         const isNewAuthUser = getAdditionalUserInfo(result)?.isNewUser === true;
-        if (isNewAuthUser) {
+        if (!isNewAuthUser) return;
+
+        const pendingInvite = pendingInviteRef.current;
+        pendingInviteRef.current = null;
+        processingRedirectNewUserRef.current = true;
+
+        const cleanupRejectedNewUser = async () => {
+          try {
+            await result.user.delete();
+          } catch (deleteErr) {
+            logger.warn('Falha ao remover conta Auth recém-criada no redirect Google:', deleteErr);
+          }
+          await signOut(auth).catch((signOutErr) => {
+            logger.warn('Falha ao encerrar sessão Google redirect:', signOutErr);
+          });
+          queryClient.clear();
+        };
+
+        try {
+          const userSnap = await getDoc(doc(db, 'users', result.user.uid));
+          if (userSnap.exists()) {
+            trackEvent('registration_completed', { method: 'google' });
+            return;
+          }
+
+          if (!pendingInvite?.code) {
+            await cleanupRejectedNewUser();
+            setError(getAuthErrorMessage(
+              new AppAuthError(APP_AUTH_ERROR_CODES.inviteRequired, INVITE_REQUIRED_MESSAGE),
+              t('feedback.auth.verifyAuthError'),
+            ));
+            return;
+          }
+
+          const validateInviteCode = await loadValidateInviteCode();
+          let inviteValidation: Awaited<ReturnType<typeof validateInviteCode>>;
+          try {
+            inviteValidation = await validateInviteCode({ inviteCode: pendingInvite.code });
+          } catch (validationErr) {
+            logger.error('validateInviteCode falhou no redirect Google:', validationErr);
+            await cleanupRejectedNewUser();
+            setError(getAuthErrorMessage(
+              new AppAuthError(APP_AUTH_ERROR_CODES.inviteInvalid, INVITE_INVALID_MESSAGE),
+              t('feedback.auth.verifyAuthError'),
+            ));
+            return;
+          }
+          if (!inviteValidation.data.valid || !inviteValidation.data.inviteCode) {
+            await cleanupRejectedNewUser();
+            setError(getAuthErrorMessage(
+              new AppAuthError(APP_AUTH_ERROR_CODES.inviteInvalid, INVITE_INVALID_MESSAGE),
+              t('feedback.auth.verifyAuthError'),
+            ));
+            return;
+          }
+
+          const created = await createUserDocumentRef.current(result.user, {
+            invited_by_code: inviteValidation.data.inviteCode,
+            invite_source: 'google',
+          });
+          if (!created) {
+            await cleanupRejectedNewUser();
+            setError(getAuthErrorMessage(
+              new AppAuthError(APP_AUTH_ERROR_CODES.inviteRequired, INVITE_REQUIRED_MESSAGE),
+              t('feedback.auth.verifyAuthError'),
+            ));
+            return;
+          }
           trackEvent('registration_completed', { method: 'google' });
+
+          const refreshed = await fetchUserDataRef.current(result.user.uid, { includeStats: true });
+          if (refreshed) {
+            const claimRole = await getClaimRole(result.user);
+            setUser(applyClaimRole(refreshed, claimRole));
+          }
+        } catch (err) {
+          logger.error('Erro ao processar novo usuário do redirect Google:', err);
+          await cleanupRejectedNewUser();
+          setError(getAuthErrorMessage(
+            new AppAuthError(APP_AUTH_ERROR_CODES.inviteRequired, INVITE_REQUIRED_MESSAGE),
+            t('feedback.auth.verifyAuthError'),
+          ));
+        } finally {
+          processingRedirectNewUserRef.current = false;
+          setLoading(false);
         }
-        // onAuthStateChanged cuidará de carregar/criar o perfil e atualizar
-        // o estado de auth. Não navegamos aqui — PublicRoute/ProtectedRoute
-        // redirecionam conforme o estado de auth.
       })
       .catch((redirectErr) => {
         logger.error('getRedirectResult falhou:', redirectErr);
@@ -494,8 +585,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } catch {
           /* ignore */
         }
-        // Limpa o pendingInviteRef stale (não houve sign-in bem-sucedido)
         pendingInviteRef.current = null;
+        processingRedirectNewUserRef.current = false;
+        if (
+          redirectErr instanceof FirebaseError &&
+          (redirectErr.code === 'auth/cancelled-redirect-request' ||
+            redirectErr.code === 'auth/popup-closed-by-user')
+        ) {
+          return;
+        }
         setError(getAuthErrorMessage(redirectErr, t('auth.googleLoginFailed')));
       });
 
@@ -642,9 +740,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Existente NÃO passa por checagem de convite; onAuthStateChanged carrega o perfil.
       const userSnap = await getDoc(doc(db, 'users', result.user.uid));
       if (!userSnap.exists()) {
-        // Convite ausente/ inválido: remove a conta Auth recém-criada (não deixa
-        // órfã) e encerra a sessão. Se o delete falhar (ex.: requires-recent-login),
-        // ainda assim faz signOut.
         const cleanupRejectedNewUser = async () => {
           if (isNewAuthUser) {
             try {
@@ -658,32 +753,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           });
         };
 
-        if (!normalizedInviteCode) {
-          await cleanupRejectedNewUser();
-          throw new AppAuthError(APP_AUTH_ERROR_CODES.inviteRequired, INVITE_REQUIRED_MESSAGE);
-        }
-
-        const validateInviteCode = await loadValidateInviteCode();
-        let inviteValidation: Awaited<ReturnType<typeof validateInviteCode>>;
         try {
-          inviteValidation = await validateInviteCode({ inviteCode: normalizedInviteCode });
-        } catch (validationErr) {
-          logger.error('validateInviteCode falhou no fluxo Google:', validationErr);
-          await cleanupRejectedNewUser();
-          throw new AppAuthError(APP_AUTH_ERROR_CODES.inviteInvalid, INVITE_INVALID_MESSAGE);
-        }
-        if (!inviteValidation.data.valid || !inviteValidation.data.inviteCode) {
-          await cleanupRejectedNewUser();
-          throw new AppAuthError(APP_AUTH_ERROR_CODES.inviteInvalid, INVITE_INVALID_MESSAGE);
-        }
+          if (!normalizedInviteCode) {
+            throw new AppAuthError(APP_AUTH_ERROR_CODES.inviteRequired, INVITE_REQUIRED_MESSAGE);
+          }
 
-        const created = await createUserDocumentRef.current(result.user, {
-          invited_by_code: inviteValidation.data.inviteCode,
-          invite_source: 'google',
-        });
-        if (!created) {
+          const validateInviteCode = await loadValidateInviteCode();
+          let inviteValidation: Awaited<ReturnType<typeof validateInviteCode>>;
+          try {
+            inviteValidation = await validateInviteCode({ inviteCode: normalizedInviteCode });
+          } catch (validationErr) {
+            logger.error('validateInviteCode falhou no fluxo Google:', validationErr);
+            throw new AppAuthError(APP_AUTH_ERROR_CODES.inviteInvalid, INVITE_INVALID_MESSAGE);
+          }
+          if (!inviteValidation.data.valid || !inviteValidation.data.inviteCode) {
+            throw new AppAuthError(APP_AUTH_ERROR_CODES.inviteInvalid, INVITE_INVALID_MESSAGE);
+          }
+
+          const created = await createUserDocumentRef.current(result.user, {
+            invited_by_code: inviteValidation.data.inviteCode,
+            invite_source: 'google',
+          });
+          if (!created) {
+            throw new AppAuthError(APP_AUTH_ERROR_CODES.inviteRequired, INVITE_REQUIRED_MESSAGE);
+          }
+        } catch (newUserErr) {
           await cleanupRejectedNewUser();
-          throw new AppAuthError(APP_AUTH_ERROR_CODES.inviteRequired, INVITE_REQUIRED_MESSAGE);
+          throw newUserErr;
         }
       }
       if (isNewAuthUser) {
@@ -823,6 +919,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       queryClient.clear();
       // Limpa breadcrumbs após logout — próxima sessão começa limpa
       clearBreadcrumbs();
+      // #4001: reseta o estado de retry de claims para a próxima sessão
+      resetClaimRefreshState();
     } catch (err) {
       setError(getAuthErrorMessage(err, t('feedback.auth.logoutError')));
       throw err;
@@ -874,12 +972,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [t]);
 
   // Força refresh do ID token para capturar custom claims atualizados
-  const refreshClaims = useCallback(async () => {
+  const refreshClaims = useCallback(async (options?: {
+    expectedClaim?: string;
+    expectedValue?: unknown;
+  }) => {
     const currentUser = firebaseUserRef.current;
     if (!currentUser) return;
     try {
-      await currentUser.getIdToken(true);
-      markClaimRefresh();
+      const maxAttempts = options?.expectedClaim ? 3 : 1;
+      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        await currentUser.getIdToken(true);
+        markClaimRefresh();
+        if (!options?.expectedClaim) break;
+        try {
+          const tokenResult = await currentUser.getIdTokenResult(false);
+          if (tokenResult.claims[options.expectedClaim] === options.expectedValue) break;
+        } catch (verifyErr) {
+          logger.warn(`Verify claim attempt ${attempt}/${maxAttempts} falhou:`, verifyErr);
+        }
+        if (attempt < maxAttempts) {
+          await new Promise((resolve) => setTimeout(resolve, attempt * 500));
+        }
+      }
       logger.debug('Claims refreshed com sucesso para uid:', currentUser.uid);
     } catch (err) {
       logger.error('Falha ao refreshar claims:', err);

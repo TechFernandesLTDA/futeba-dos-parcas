@@ -48,7 +48,7 @@ interface PostGameHighlightsPanelProps {
 }
 
 const PlayerAvatar: React.FC<{ player?: HighlightPlayer }> = ({ player }) => (
-  <Avatar src={player?.userPhoto} sx={{ width: 44, height: 44 }}>
+  <Avatar src={player?.userPhoto} alt={player?.userName ?? ''} sx={{ width: 44, height: 44 }}>
     {player?.userName.charAt(0).toUpperCase() ?? '?'}
   </Avatar>
 );

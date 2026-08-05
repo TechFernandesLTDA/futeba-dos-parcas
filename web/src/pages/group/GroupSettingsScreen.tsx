@@ -282,6 +282,7 @@ export const GroupSettingsScreen: React.FC = () => {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Avatar
                 src={group.photoUrl}
+                alt={group.name}
                 sx={{
                   width: 56,
                   height: 56,

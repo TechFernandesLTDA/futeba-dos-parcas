@@ -175,7 +175,7 @@ export const PositionReinforcementsPanel: React.FC<PositionReinforcementsPanelPr
                   }
                 >
                   <ListItemAvatar>
-                    <Avatar src={candidate.user.photoUrl}>
+                    <Avatar src={candidate.user.photoUrl} alt={candidate.user.name}>
                       {candidate.user.name.charAt(0).toUpperCase()}
                     </Avatar>
                   </ListItemAvatar>

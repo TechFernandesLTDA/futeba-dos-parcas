@@ -428,6 +428,34 @@ describe("games — criação", () => {
     );
   });
 
+  it("Player NÃO pode criar jogo com daily_price negativo (#3986)", async () => {
+    const db = asPlayerA(testEnv);
+    await assertFails(
+      db.doc("games/game-negative-daily-price").set(validGamePayload({
+        daily_price: -50,
+      }))
+    );
+  });
+
+  it("Player NÃO pode criar jogo com total_cost absurdo (#3986)", async () => {
+    const db = asPlayerA(testEnv);
+    await assertFails(
+      db.doc("games/game-absurd-total-cost").set(validGamePayload({
+        total_cost: 999999,
+      }))
+    );
+  });
+
+  it("Player pode criar jogo com daily_price / total_cost válidos (#3986)", async () => {
+    const db = asPlayerA(testEnv);
+    await assertSucceeds(
+      db.doc("games/game-valid-price").set(validGamePayload({
+        daily_price: 25,
+        total_cost: 350,
+      }))
+    );
+  });
+
   it("Não-autenticado NÃO pode criar jogo", async () => {
     const db = asAnon(testEnv);
     await assertFails(

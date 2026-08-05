@@ -3,7 +3,7 @@ import {FieldValue} from "firebase-admin/firestore";
 import {logger} from "firebase-functions/v2";
 import {db} from "../_db";
 import {secureCallable} from "../middleware/secure-callable-wrapper";
-import {RATE_LIMITS} from "../middleware/rate-limiter";
+import {RATE_LIMITS, checkRateLimit} from "../middleware/rate-limiter";
 import {VERIFICATION_GRACE_END_MS} from "../auth/verification-grace";
 import {
   CASHBOX_MAX_AMOUNT_CENTS,
@@ -182,6 +182,13 @@ export const createCashboxEntry = functions.https.onCall<CreateCashboxEntryData>
     throw new functions.https.HttpsError(
       "unauthenticated",
       "Usuário precisa estar autenticado"
+    );
+  }
+  const createRl = await checkRateLimit(userId, RATE_LIMITS.CASHBOX_ENTRY_CREATE);
+  if (!createRl.allowed) {
+    throw new functions.https.HttpsError(
+      "resource-exhausted",
+      "Muitas tentativas. Tente novamente em alguns segundos."
     );
   }
   const groupId = typeof request.data?.groupId === "string" ?
@@ -478,6 +485,13 @@ export const voidCashboxEntry = functions.https.onCall<VoidCashboxEntryData>({
     request.data.entryId.trim() : "";
   if (!userId) {
     throw new functions.https.HttpsError("unauthenticated", "Usuário precisa estar autenticado");
+  }
+  const voidRl = await checkRateLimit(userId, RATE_LIMITS.CASHBOX_ENTRY_VOID);
+  if (!voidRl.allowed) {
+    throw new functions.https.HttpsError(
+      "resource-exhausted",
+      "Muitas tentativas. Tente novamente em alguns segundos."
+    );
   }
   if (!isSafeDocumentId(groupId) || !isSafeDocumentId(entryId)) {
     throw new functions.https.HttpsError("invalid-argument", "groupId e entryId são obrigatórios");

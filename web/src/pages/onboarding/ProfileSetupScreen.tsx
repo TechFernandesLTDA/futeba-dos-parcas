@@ -23,7 +23,7 @@ import {
   ArrowForward as ArrowForwardIcon,
   PhotoCamera as CameraIcon,
 } from '@mui/icons-material';
-import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { recomputeMyProfileClaim } from '../../services/cloudFunctions';
 import { useAuth } from '../../contexts/AuthContext';
@@ -129,24 +129,9 @@ export const ProfileSetupScreen: React.FC = () => {
           is_searchable: true,
         };
 
-        const userSnap = await getDoc(userRef);
-        if (userSnap.exists()) {
-          await updateDoc(userRef, profileData);
-        } else {
-          await setDoc(userRef, {
-            ...profileData,
-            email: firebaseUser.email || '',
-            role: 'PLAYER',
-            striker_rating: 0,
-            mid_rating: 0,
-            defender_rating: 0,
-            gk_rating: 0,
-            created_at: serverTimestamp(),
-            updated_at: serverTimestamp(),
-          });
-        }
+        await updateDoc(userRef, profileData);
       } catch (firestoreErr) {
-        logger.error('Firestore setDoc failed, rolling back Auth:', firestoreErr);
+        logger.error('Firestore updateDoc failed, rolling back Auth:', firestoreErr);
         try {
           await updateProfile(firebaseUser, {
             displayName: originalDisplayName ?? undefined,
@@ -226,6 +211,7 @@ export const ProfileSetupScreen: React.FC = () => {
                 fontSize: 48,
               }}
               src={previewUrl || firebaseUser?.photoURL || undefined}
+              alt={name || ''}
             >
               {name?.charAt(0)?.toUpperCase() || '?'}
             </Avatar>

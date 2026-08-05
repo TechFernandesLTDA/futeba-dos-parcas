@@ -309,7 +309,7 @@ export const GroupPhotosPanel: React.FC<{
           </Box>
           <AvatarGroup max={4} sx={{ '& .MuiAvatar-root': { width: 28, height: 28, fontSize: '0.75rem' } }}>
             {photos.slice(0, 8).map((photo) => (
-              <Avatar key={photo.id} src={photo.uploadedByPhoto}>{photo.uploadedByName.charAt(0).toUpperCase()}</Avatar>
+              <Avatar key={photo.id} src={photo.uploadedByPhoto} alt={photo.uploadedByName}>{photo.uploadedByName.charAt(0).toUpperCase()}</Avatar>
             ))}
           </AvatarGroup>
         </Stack>
@@ -361,7 +361,7 @@ export const GroupPhotosPanel: React.FC<{
               <Box component="img" src={selectedPhoto.url} alt={t('groupPhotos.photoAlt', { name: selectedPhoto.uploadedByName })} sx={{ maxWidth: '100%', maxHeight: '78vh', objectFit: 'contain' }} />
             </Box>
             <Stack direction="row" spacing={1.5} alignItems="center" sx={{ p: 2 }}>
-              <Avatar src={selectedPhoto.uploadedByPhoto}>{selectedPhoto.uploadedByName.charAt(0).toUpperCase()}</Avatar>
+              <Avatar src={selectedPhoto.uploadedByPhoto} alt={selectedPhoto.uploadedByName}>{selectedPhoto.uploadedByName.charAt(0).toUpperCase()}</Avatar>
               <Box sx={{ minWidth: 0, flex: 1 }}>
                 <Typography variant="body2" fontWeight={700}>{selectedPhoto.uploadedByName}</Typography>
                 <Typography variant="caption" color="text.secondary">{selectedPhoto.gameTitle}</Typography>
@@ -930,6 +930,7 @@ export const GroupDetailScreen: React.FC = () => {
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ xs: 'flex-start', sm: 'center' }}>
               <Avatar
                 src={group.photoUrl}
+                alt={group.name}
                 sx={{
                   width: { xs: 72, sm: 88 },
                   height: { xs: 72, sm: 88 },

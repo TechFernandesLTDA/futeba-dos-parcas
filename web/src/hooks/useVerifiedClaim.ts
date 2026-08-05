@@ -1,5 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import type { User as FirebaseUser } from 'firebase/auth';
+import { onIdTokenChanged } from 'firebase/auth';
+import { auth } from '../services/firebase';
 import { createLogger } from '../utils/logger';
 
 const logger = createLogger('useVerifiedClaim');
@@ -19,32 +21,50 @@ export function useVerifiedClaim(firebaseUser: FirebaseUser | null | undefined):
     uid: null,
     verified: null,
   });
+  const mountedRef = useRef(true);
+  const lastCheckedUidRef = useRef<string | null>(null);
 
-  useEffect(() => {
-    if (!firebaseUser) {
+  const check = useCallback((user: FirebaseUser | null | undefined) => {
+    if (!user) {
       setClaimState({ uid: null, verified: null });
       return;
     }
-
-    const uid = firebaseUser.uid;
-    setClaimState((current) => (current.uid === uid ? current : { uid, verified: null }));
-
-    let cancelled = false;
-    firebaseUser
+    const uid = user.uid;
+    lastCheckedUidRef.current = uid;
+    user
       .getIdTokenResult()
       .then((result) => {
-        if (!cancelled) setClaimState({ uid, verified: result.claims.verified === true });
+        if (lastCheckedUidRef.current !== uid) return;
+        if (mountedRef.current) {
+          setClaimState({ uid, verified: result.claims.verified === true });
+        }
       })
       .catch((err) => {
+        if (lastCheckedUidRef.current !== uid) return;
         // #2290: não engolir o erro silenciosamente — registra para debug.
         // Trata como não-verificado (fail-closed) para manter o gate seguro.
         logger.error('Falha ao resolver custom claim verified:', err);
-        if (!cancelled) setClaimState({ uid, verified: false });
+        if (mountedRef.current) {
+          setClaimState({ uid, verified: false });
+        }
       });
-    return () => {
-      cancelled = true;
-    };
-  }, [firebaseUser]);
+  }, []);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
+
+  useEffect(() => {
+    check(firebaseUser);
+  }, [firebaseUser, check]);
+
+  useEffect(() => {
+    const unsubscribe = onIdTokenChanged(auth, (user) => {
+      if (mountedRef.current) check(user);
+    });
+    return unsubscribe;
+  }, [check]);
 
   if (!firebaseUser) return null;
   return claimState.uid === firebaseUser.uid ? claimState.verified : null;

@@ -37,6 +37,10 @@ type BadgeGameTeam = {
 };
 
 const CARRASCO_MAX_HISTORY_GAMES = 60;
+const USER_CONFIRMATIONS_QUERY_LIMIT = 1000;
+const GAME_CONFIRMATIONS_QUERY_LIMIT = 200;
+const GAME_TEAMS_QUERY_LIMIT = 100;
+const USER_BADGES_QUERY_LIMIT = 100;
 
 /**
  * Concede um badge com XP e cria xp_log idempotente por badge.
@@ -280,6 +284,7 @@ async function checkBadgeOnipresente(
     .collection("confirmations")
     .where("user_id", "==", userId)
     .where("was_present", "==", true)
+    .limit(USER_CONFIRMATIONS_QUERY_LIMIT)
     .get();
 
   const locationIds = new Set<string>();
@@ -307,6 +312,7 @@ async function checkBadgeReiDasQuartas(
     .collection("confirmations")
     .where("user_id", "==", userId)
     .where("was_present", "==", true)
+    .limit(USER_CONFIRMATIONS_QUERY_LIMIT)
     .get();
 
   let quartaCount = 0;
@@ -537,7 +543,7 @@ async function checkBadgeCarrasco(
     historyGameIds.map(async (gameId) => {
       const [gameDoc, teamsSnap, liveScoreDoc] = await Promise.all([
         db().collection("games").doc(gameId).get(),
-        db().collection("teams").where("game_id", "==", gameId).get(),
+        db().collection("teams").where("game_id", "==", gameId).limit(GAME_TEAMS_QUERY_LIMIT).get(),
         db().collection("live_scores").doc(gameId).get(),
       ]);
       return {
@@ -626,11 +632,13 @@ export const onGameFinishedCheckBadges = onDocumentUpdated(
         .collection("confirmations")
         .where("game_id", "==", gameId)
         .where("was_present", "==", true)
+        .limit(GAME_CONFIRMATIONS_QUERY_LIMIT)
         .get();
       const [currentTeamsSnap, currentLiveScoreDoc] = await Promise.all([
         db()
           .collection("teams")
           .where("game_id", "==", gameId)
+          .limit(GAME_TEAMS_QUERY_LIMIT)
           .get(),
         db()
           .collection("live_scores")
@@ -662,12 +670,13 @@ export const onGameFinishedCheckBadges = onDocumentUpdated(
           // query de confirmations repetida.
           const [earnedSnap, userDoc, allUserConfirmationsSnap] =
             await Promise.all([
-              badgesRef.get(),
+              badgesRef.limit(USER_BADGES_QUERY_LIMIT).get(),
               db().collection("users").doc(userId).get(),
               db()
                 .collection("confirmations")
                 .where("user_id", "==", userId)
                 .where("was_present", "==", true)
+                .limit(USER_CONFIRMATIONS_QUERY_LIMIT)
                 .get(),
             ]);
           const earnedIds = new Set(earnedSnap.docs.map((d) => d.id));

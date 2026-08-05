@@ -1,5 +1,5 @@
 const mockGet = jest.fn();
-const mockSelect = jest.fn(() => ({get: mockGet}));
+const mockSelect = jest.fn(() => ({limit: jest.fn().mockReturnThis(), get: mockGet}));
 const mockWhere = jest.fn();
 const mockCollection = jest.fn();
 
@@ -41,7 +41,7 @@ describe("field availability projection", () => {
     jest.clearAllMocks();
     mockWhere.mockReturnValue(query);
     mockCollection.mockReturnValue(query);
-    mockSelect.mockReturnValue({get: mockGet});
+    mockSelect.mockReturnValue({limit: jest.fn().mockReturnThis(), get: mockGet});
     mockGet.mockResolvedValue({docs: []});
   });
 

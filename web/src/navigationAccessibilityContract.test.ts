@@ -22,30 +22,40 @@ describe('contrato de acessibilidade da navegação', () => {
     expect(announcerBlock).toContain("t('a11y.routeAnnouncement'");
     expect(announcerBlock).not.toContain('document.title');
 
-    // #3971: enumera as rotas públicas (auth) que o anúncio deve cobrir.
-    // Antes só /guide era checado literalmente, então /login, /register e
-    // /forgot-password caíam em "Não encontrado" sem o CI perceber.
-    //
-    // #3975: estende a enumeração para TODAS as rotas PublicRoute, não só as
-    // de auth. Antes apenas 3 de 6 rotas eram checadas, então /welcome,
-    // /splash e /launch regressavam silenciosamente para "Não encontrado".
-    // Cada chave aqui corresponde ao i18n usado pela tela em document.title.
     const publicRoutesBlock = app.slice(
       app.indexOf('PUBLIC_ROUTE_TITLES'),
       app.indexOf('function RouteAnnouncer'),
     );
-    expect(publicRoutesBlock).toContain("'/login': 'page.title.login'");
-    expect(publicRoutesBlock).toContain("'/register': 'page.title.register'");
-    expect(publicRoutesBlock).toContain("'/forgot-password': 'auth.forgotPasswordTitle'");
-    expect(publicRoutesBlock).toContain("'/welcome': 'welcome.documentTitle'");
-    expect(publicRoutesBlock).toContain("'/splash': 'common.appName'");
-    expect(publicRoutesBlock).toContain("'/launch': 'common.appName'");
     expect(publicRoutesBlock).toMatch(/if \(publicTitle\) return t\(publicTitle\);/);
 
-    // Nenhuma rota PublicRoute pode ficar de fora — senão o leitor de tela
-    // anuncia "Tela atual: Não encontrado" para telas válidas.
-    expect(app).toMatch(/path="\/splash"[^>]*PublicRoute/);
-    expect(app).toMatch(/path="\/welcome"[^>]*PublicRoute/);
+    const publicRoutes = [...app.matchAll(
+      /<Route\s+path="([^"]+)"\s+element=\{<PublicRoute>/g,
+    )].map((m) => m[1]);
+
+    const mappedEntries = [...publicRoutesBlock.matchAll(
+      /'([^']+)':\s*'([^']+)'/g,
+    )].map((m) => ({ path: m[1], key: m[2] }));
+
+    expect(publicRoutes.length).toBeGreaterThan(0);
+    const unmappedPublicRoutes = publicRoutes.filter(
+      (route) => !mappedEntries.some((entry) => entry.path === route),
+    );
+    expect(unmappedPublicRoutes).toEqual([]);
+
+    const ptBR = JSON.parse(source('src/i18n/locales/pt-BR.json')) as unknown;
+    const hasI18nKey = (dotted: string): boolean => {
+      let cursor: unknown = ptBR;
+      for (const part of dotted.split('.')) {
+        if (typeof cursor !== 'object' || cursor === null) return false;
+        cursor = (cursor as Record<string, unknown>)[part];
+      }
+      return cursor !== undefined;
+    };
+    const orphanKeys = mappedEntries
+      .map((entry) => entry.key)
+      .filter((key) => !hasI18nKey(key));
+    expect(orphanKeys).toEqual([]);
+
     expect(app).toMatch(/path="\/launch"/);
   });
 
