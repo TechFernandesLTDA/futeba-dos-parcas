@@ -302,6 +302,7 @@ export function AppSidebar() {
           >
             <Avatar
               src={user?.photoUrl}
+              alt={user?.name || t('settings.defaultUserName')}
               sx={{ width: avatarSizes.sidebarCompact, height: avatarSizes.sidebarCompact, bgcolor: 'primary.main', color: 'primary.contrastText' }}
             >
               {userInitial}
@@ -610,7 +611,7 @@ export function AppSidebar() {
               px: 1,
             }}
           >
-            <Avatar src={user?.photoUrl} sx={{ width: avatarSizes.sidebar, height: avatarSizes.sidebar, bgcolor: 'primary.main' }}>
+            <Avatar src={user?.photoUrl} alt={user?.name || t('settings.defaultUserName')} sx={{ width: avatarSizes.sidebar, height: avatarSizes.sidebar, bgcolor: 'primary.main' }}>
               {userInitial}
             </Avatar>
             <Box sx={{ flex: 1, minWidth: 0 }}>

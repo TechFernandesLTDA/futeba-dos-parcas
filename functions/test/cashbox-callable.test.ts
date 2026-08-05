@@ -103,6 +103,14 @@ jest.mock("../src/_db", () => ({db: jest.fn(() => mockDb)}));
 jest.mock("../src/middleware/secure-callable-wrapper", () => ({
   secureCallable: mockSecureCallable,
 }));
+jest.mock("../src/middleware/rate-limiter", () => ({
+  ...jest.requireActual("../src/middleware/rate-limiter"),
+  checkRateLimit: jest.fn().mockResolvedValue({
+    allowed: true,
+    remaining: 99,
+    resetAt: new Date(Date.now() + 60000),
+  }),
+}));
 
 const {
   createCashboxEntry,

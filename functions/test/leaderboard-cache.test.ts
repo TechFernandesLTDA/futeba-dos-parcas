@@ -619,7 +619,7 @@ describe("invalidateLeaderboardOnParticipation (#3883)", () => {
       docs,
     });
     mockCollection.mockImplementation(() => ({
-      where: jest.fn(() => ({get})),
+      where: jest.fn(() => ({limit: jest.fn().mockReturnThis(), get})),
     }));
     return get;
   };

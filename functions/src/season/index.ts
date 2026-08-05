@@ -9,6 +9,8 @@ import {
 } from "../constants";
 import {db} from "../_db";
 
+const EXPIRED_SEASONS_QUERY_LIMIT = 100;
+
 /**
  * Busca todos os docs de uma coleção filtrados por igualdade, em páginas por
  * documentId, para evitar leituras não-limitadas.
@@ -104,6 +106,7 @@ export const checkSeasonEnd = onSchedule(
     const snapshot = await seasonsRef
       .where("is_active", "==", true)
       .where("end_date", "<", todayStr)
+      .limit(EXPIRED_SEASONS_QUERY_LIMIT)
       .get();
 
     if (snapshot.empty) {
@@ -169,6 +172,7 @@ export const checkSeasonEnd = onSchedule(
           `${skippedCount}. Continuarão na ` +
           "próxima execução."
         );
+        await commitBatch();
         break;
       }
 

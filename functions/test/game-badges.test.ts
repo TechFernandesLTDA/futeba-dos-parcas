@@ -153,6 +153,7 @@ function collectionRef(pathPrefix: string) {
     }),
     where: (field: string, _op: string, value: unknown) =>
       makeQuery(normalizedPath, [{field, value}]),
+    limit: (value: number) => makeQuery(normalizedPath).limit(value),
   };
 }
 

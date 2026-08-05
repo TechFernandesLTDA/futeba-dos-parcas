@@ -46,7 +46,7 @@ const GameRideItem: React.FC<{ ride: GameRide }> = ({ ride }) => {
   return (
     <ListItem alignItems="flex-start" disableGutters>
       <ListItemAvatar>
-        <Avatar src={ride.userPhoto} sx={{ bgcolor: getRideAvatarColor(ride.type), color: 'common.white' }}>
+        <Avatar src={ride.userPhoto} alt={ride.userName} sx={{ bgcolor: getRideAvatarColor(ride.type), color: 'common.white' }}>
           {ride.userName.charAt(0).toUpperCase()}
         </Avatar>
       </ListItemAvatar>

@@ -13,6 +13,7 @@ const MAX_SCORE = 5;
 const COMMENT_MAX_LENGTH = 160;
 const POST_GAME_REPUTATION_WINDOW_MS =
   MVP_VOTE_WINDOW_HOURS * 60 * 60 * 1000;
+const LEGACY_REVIEWS_QUERY_LIMIT = 1000;
 
 interface SubmitPostGameReputationRequest {
   gameId: string;
@@ -245,6 +246,7 @@ async function loadLegacyAggregateSeed(
   const reviewsSnap = await firestore
     .collection("post_game_reputation")
     .where("target_user_id", "==", targetUserId)
+    .limit(LEGACY_REVIEWS_QUERY_LIMIT)
     .get();
 
   const totals: ReputationTotals = {

@@ -94,6 +94,7 @@ export const TeamOfTheWeek: React.FC = () => {
                 )}
                 <Avatar
                   src={player.userPhoto}
+                  alt={player.userName}
                   sx={{
                     width: 44,
                     height: 44,

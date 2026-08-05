@@ -110,6 +110,7 @@ function collectionRef(pathPrefix: string) {
     }),
     where: (field: string, _op: string, value: unknown) =>
       queryRef(pathPrefix, [{field, value}]),
+    limit: () => queryRef(pathPrefix),
   };
 }
 
@@ -125,6 +126,7 @@ function collectionGroupRef(
   return {
     where: (field: string, _op: string, value: unknown) =>
       collectionGroupRef(name, [...filters, {field, value}]),
+    limit: () => collectionGroupRef(name, filters),
     get: jest.fn(async () => {
       collectionGroupCalls += 1;
       const docs = Array.from(store.keys())

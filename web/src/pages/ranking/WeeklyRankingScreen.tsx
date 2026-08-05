@@ -132,6 +132,7 @@ export const WeeklyRankingScreen: React.FC = () => {
 
                   <Avatar
                     src={player.userPhoto}
+                    alt={player.userName}
                     sx={{ width: 40, height: 40 }}
                   >
                     {player.userName?.charAt(0) || "?"}

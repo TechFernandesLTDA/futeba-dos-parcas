@@ -135,9 +135,9 @@ describe("confirmPlayerAsManager", () => {
     });
   });
 
-  test("aceita temporariamente request sem App Check enquanto preserva o handler", () => {
+  test("exige App Check (reativado) enquanto preserva o handler", () => {
     expect(mockOnCallConfig).toEqual(expect.objectContaining({
-      enforceAppCheck: false,
+      enforceAppCheck: true,
       consumeAppCheckToken: true,
     }));
   });

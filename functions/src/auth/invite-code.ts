@@ -646,49 +646,55 @@ export const validateInviteCode = onCall(
     consumeAppCheckToken: process.env.FUNCTIONS_EMULATOR !== "true",
   },
   async (request): Promise<InviteValidationResult> => {
-    const rl = await rateLimitForRequest(request, {
-      maxRequests: 30,
-      windowMs: 60 * 1000,
-      keyPrefix: "validate_invite_code",
-    });
-    if (!rl.allowed) {
-      throw new HttpsError(
-        "resource-exhausted",
-        "Muitas tentativas. Tente novamente mais tarde."
+    try {
+      const rl = await rateLimitForRequest(request, {
+        maxRequests: 30,
+        windowMs: 60 * 1000,
+        keyPrefix: "validate_invite_code",
+      });
+      if (!rl.allowed) {
+        throw new HttpsError(
+          "resource-exhausted",
+          "Muitas tentativas. Tente novamente mais tarde."
+        );
+      }
+
+      const inviteCode = normalizeInviteCode(
+        (request.data as {inviteCode?: unknown} | undefined)?.inviteCode
       );
-    }
+      const inviter = await findInviterByCode(inviteCode);
+      if (!inviter) {
+        return {valid: false};
+      }
 
-    const inviteCode = normalizeInviteCode(
-      (request.data as {inviteCode?: unknown} | undefined)?.inviteCode
-    );
-    const inviter = await findInviterByCode(inviteCode);
-    if (!inviter) {
-      return {valid: false};
-    }
+      if (request.auth?.uid && request.auth.uid === inviter.uid) {
+        return {valid: false};
+      }
 
-    if (request.auth?.uid && request.auth.uid === inviter.uid) {
-      return {valid: false};
-    }
-
-    await syncInviteCodeOwner(inviteCode, {
-      uid: inviter.uid,
-      name: inviter.name,
-    });
-
-    await persistPendingInviteForAuthUser(
-      request.auth?.uid,
-      inviteCode,
-      {
+      await syncInviteCodeOwner(inviteCode, {
         uid: inviter.uid,
         name: inviter.name,
-      }
-    );
+      });
 
-    return {
-      valid: true,
-      inviteCode,
-      inviterName: inviter.name,
-      xpReward: APP_INVITE_ACCEPTED_XP,
-    };
+      await persistPendingInviteForAuthUser(
+        request.auth?.uid,
+        inviteCode,
+        {
+          uid: inviter.uid,
+          name: inviter.name,
+        }
+      );
+
+      return {
+        valid: true,
+        inviteCode,
+        inviterName: inviter.name,
+        xpReward: APP_INVITE_ACCEPTED_XP,
+      };
+    } catch (error) {
+      if (error instanceof HttpsError) throw error;
+      logger.error("validateInviteCode failed", {error, uid: request.auth?.uid});
+      throw new HttpsError("internal", "An unexpected error occurred");
+    }
   }
 );

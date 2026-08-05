@@ -1284,6 +1284,7 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
                           <Stack direction="row" spacing={1.5} sx={{ minWidth: 0 }}>
                             <Avatar
                               src={location.photoUrl}
+                              alt={location.name}
                               variant="rounded"
                               sx={{
                                 width: { xs: 56, sm: 68 },

@@ -233,10 +233,6 @@ export const generateProfileThumbnail =
           }
         }
 
-        // Cleanup temp files
-        await fs.unlink(tempFilePath);
-        await fs.unlink(tempThumbPath);
-
         // Log metrics
         await db().collection("metrics").add({
           type: "thumbnail_generated",
@@ -264,16 +260,6 @@ export const generateProfileThumbnail =
           error
         );
 
-        // Cleanup temp files on error
-        try {
-          await fs.unlink(tempFilePath)
-            .catch(() => {/* noop */});
-          await fs.unlink(tempThumbPath)
-            .catch(() => {/* noop */});
-        } catch {
-          // Ignorar erros de cleanup
-        }
-
         // Log error
         await db().collection("metrics").add({
           type: "thumbnail_error",
@@ -285,6 +271,11 @@ export const generateProfileThumbnail =
         });
 
         throw error;
+      } finally {
+        await fs.unlink(tempFilePath)
+          .catch(() => {/* noop */});
+        await fs.unlink(tempThumbPath)
+          .catch(() => {/* noop */});
       }
     }
   );
@@ -442,9 +433,6 @@ export const generateGroupThumbnail =
           }
         }
 
-        await fs.unlink(tempFilePath);
-        await fs.unlink(tempThumbPath);
-
         await db().collection("metrics").add({
           type: "group_thumbnail_generated",
           timestamp:
@@ -471,15 +459,6 @@ export const generateGroupThumbnail =
           error
         );
 
-        try {
-          await fs.unlink(tempFilePath)
-            .catch(() => {/* noop */});
-          await fs.unlink(tempThumbPath)
-            .catch(() => {/* noop */});
-        } catch {
-          // Ignorar erros de cleanup
-        }
-
         await db().collection("metrics").add({
           type: "group_thumbnail_error",
           timestamp:
@@ -490,6 +469,11 @@ export const generateGroupThumbnail =
         });
 
         throw error;
+      } finally {
+        await fs.unlink(tempFilePath)
+          .catch(() => {/* noop */});
+        await fs.unlink(tempThumbPath)
+          .catch(() => {/* noop */});
       }
     }
   );

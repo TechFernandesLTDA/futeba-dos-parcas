@@ -299,6 +299,7 @@ export function ProfileTab() {
         <Box sx={{ position: 'relative', display: 'inline-block' }}>
           <Avatar
             src={user?.photoUrl}
+            alt={user?.name || t('settings.defaultUserName')}
             slotProps={{ img: { loading: 'lazy' } }}
             sx={{
               width: 100,

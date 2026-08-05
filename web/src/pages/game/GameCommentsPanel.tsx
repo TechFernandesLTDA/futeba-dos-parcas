@@ -380,7 +380,7 @@ const CommentItem: React.FC<CommentItemProps> = ({
       }}
     >
       <Stack direction="row" spacing={1.25} alignItems="flex-start">
-        <Avatar src={comment.authorPhotoUrl ?? undefined} sx={{ width: 36, height: 36 }}>
+        <Avatar src={comment.authorPhotoUrl ?? undefined} alt={comment.authorName} sx={{ width: 36, height: 36 }}>
           {comment.authorName.charAt(0).toUpperCase()}
         </Avatar>
         <Box sx={{ flex: 1, minWidth: 0 }}>

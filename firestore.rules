@@ -497,6 +497,13 @@ service cloud.firestore {
       return value == null || value is string;
     }
 
+    // Valida daily_price / total_cost do jogo (BRL). Tolerante a ausência:
+    // jogos grátis (sem campo) continuam válidos. Limita valores negativos e
+    // absurdos que bypassariam a validação client-only do CreateGameScreen.
+    function isValidGamePrice(value) {
+      return value == null || (value is number && value >= 0 && value <= 10000);
+    }
+
     // Valida o gênero do jogo (Fase 4b) ∈ {MALE, FEMALE, MIXED}.
     // Enforcement SOFT: valida apenas a categoria do JOGO, NUNCA o gênero do
     // usuário (não bloqueia ninguém de confirmar presença). Tolerante a
@@ -1125,10 +1132,13 @@ service cloud.firestore {
                        // PERF_001 P0 #30: Validacao de scores (0-100) - Previne exploits de XP inflados
                        isValidScore(request.resource.data.team1_score) &&
                        isValidScore(request.resource.data.team2_score) &&
-                       // Validacao de contadores (>= 0)
-                       isNonNegativeNumber(request.resource.data.players_count) &&
-                       isNonNegativeNumber(request.resource.data.goalkeepers_count) &&
-                       // Validacao de coordenadas (#29)
+                        // Validacao de contadores (>= 0)
+                        isNonNegativeNumber(request.resource.data.players_count) &&
+                        isNonNegativeNumber(request.resource.data.goalkeepers_count) &&
+                        // #3986: validacao de precos (BRL 0-10000) - previne negative/absurd via client bypass
+                        isValidGamePrice(request.resource.data.get('daily_price', null)) &&
+                        isValidGamePrice(request.resource.data.get('total_cost', null)) &&
+                        // Validacao de coordenadas (#29)
                        hasValidCoordinates(request.resource.data) &&
                        // P0 #3120: location_id catalogado so pode criar jogo
                        // se a quadra estiver publicada, em dia e com field ativo.
@@ -1158,12 +1168,15 @@ service cloud.firestore {
          gameValidationFieldsUnchanged() &&
          isClientManagedGameStatusTransition(resource.data.status, request.resource.data.status) &&
          // P0 #30: Validacao estrita de scores - Previne exploits de XP
-         isValidScore(request.resource.data.team1_score) &&
-         isValidScore(request.resource.data.team2_score) &&
-         isNonNegativeNumber(request.resource.data.players_count) &&
-         isNonNegativeNumber(request.resource.data.goalkeepers_count) &&
-         // Validacao de genero do jogo (Fase 4b) - enforcement SOFT
-         isValidGameGender(request.resource.data.get('gender', null))) ||
+          isValidScore(request.resource.data.team1_score) &&
+          isValidScore(request.resource.data.team2_score) &&
+          isNonNegativeNumber(request.resource.data.players_count) &&
+          isNonNegativeNumber(request.resource.data.goalkeepers_count) &&
+          // #3986: validacao de precos (BRL 0-10000) - previne negative/absurd via client bypass
+          isValidGamePrice(request.resource.data.get('daily_price', null)) &&
+          isValidGamePrice(request.resource.data.get('total_cost', null)) &&
+          // Validacao de genero do jogo (Fase 4b) - enforcement SOFT
+          isValidGameGender(request.resource.data.get('gender', null))) ||
         // Outros usuarios so podem atualizar contadores via transacao
         // Bug fix: Restrito a membros do grupo ou participantes confirmados do jogo
         // SECFIX #2631: delta de ±1 para impedir manipulacao arbitraria dos contadores

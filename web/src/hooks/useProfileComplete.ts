@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { onIdTokenChanged } from 'firebase/auth';
+import { auth } from '../services/firebase';
 import { useAuth } from '../contexts/AuthContext';
 
 export function useProfileComplete() {
@@ -39,6 +41,13 @@ export function useProfileComplete() {
   useEffect(() => {
     check(firebaseUser);
   }, [firebaseUser, check]);
+
+  useEffect(() => {
+    const unsubscribe = onIdTokenChanged(auth, (user) => {
+      if (mountedRef.current) check(user);
+    });
+    return unsubscribe;
+  }, [check]);
 
   const refresh = useCallback(() => check(firebaseUser, true), [firebaseUser, check]);
 

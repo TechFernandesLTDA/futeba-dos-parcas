@@ -156,6 +156,7 @@ export const CreateGroupScreen: React.FC = () => {
                   />
                   <Avatar
                     src={previewUrl || undefined}
+                    alt={formData.name}
                     sx={{
                       width: 100,
                       height: 100,

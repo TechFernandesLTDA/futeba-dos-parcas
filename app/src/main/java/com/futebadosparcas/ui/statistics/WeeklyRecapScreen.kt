@@ -144,9 +144,7 @@ fun WeeklyRecapScreen(
     LaunchedEffect(pagerState.currentPage, autoAdvance) {
         if (autoAdvance && pagerState.currentPage < totalSlides - 1) {
             delay(5000) // 5 segundos por slide
-            scope.launch {
-                pagerState.animateScrollToPage(pagerState.currentPage + 1)
-            }
+            pagerState.animateScrollToPage(pagerState.currentPage + 1)
         }
     }
 

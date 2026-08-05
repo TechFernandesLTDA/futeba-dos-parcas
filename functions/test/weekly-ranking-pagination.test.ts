@@ -1,5 +1,6 @@
 const mockGamesQuery = {
   where: jest.fn().mockReturnThis(),
+  limit: jest.fn().mockReturnThis(),
   get: jest.fn().mockResolvedValue({empty: true, docs: [], size: 0}),
 };
 
@@ -77,6 +78,7 @@ const mockDb = jest.fn(() => ({
       return {
         where: jest.fn().mockReturnValue({
           where: jest.fn().mockReturnValue({
+            limit: jest.fn().mockReturnThis(),
             get: jest.fn().mockResolvedValue({docs: [], empty: true}),
           }),
         }),
@@ -85,6 +87,7 @@ const mockDb = jest.fn(() => ({
     if (name === "teams") {
       return {
         where: jest.fn().mockReturnValue({
+          limit: jest.fn().mockReturnThis(),
           get: jest.fn().mockResolvedValue({docs: [], empty: true}),
         }),
       };
@@ -108,6 +111,7 @@ describe("processWeeklyRanking pagination", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockGamesQuery.where.mockReturnThis();
+    mockGamesQuery.limit.mockReturnThis();
     mockGamesQuery.get.mockResolvedValue({
       empty: false,
       size: 1,

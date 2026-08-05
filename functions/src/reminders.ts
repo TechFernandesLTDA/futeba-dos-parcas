@@ -55,6 +55,7 @@ const REMINDER_2H_MS = 2 * 60 * 60 * 1000;
 const ONE_HOUR_MS = 60 * 60 * 1000;
 const REMINDER_CONFIRMATIONS_PAGE_SIZE = 100;
 const REMINDER_MEMBERS_PAGE_SIZE = 100;
+const REMINDER_GAMES_WINDOW_QUERY_LIMIT = 5000;
 
 // Tolerancia para a janela de busca.
 // #2993: o cron roda a cada 60 min mas o Cloud Scheduler nao garante
@@ -274,6 +275,7 @@ export async function fetchGamesInReminderWindow(
     .collection("games")
     .where("dateTime", ">=", startTs)
     .where("dateTime", "<=", endTs)
+    .limit(REMINDER_GAMES_WINDOW_QUERY_LIMIT)
     .get();
 
   const games: GameForReminder[] = [];
@@ -321,6 +323,7 @@ export async function fetchGamesInReminderWindow(
       .collection("games")
       .where("date", ">=", minDate)
       .where("date", "<=", maxDate)
+      .limit(REMINDER_GAMES_WINDOW_QUERY_LIMIT)
       .get();
 
     let legacyWithoutDateTimeCount = 0;

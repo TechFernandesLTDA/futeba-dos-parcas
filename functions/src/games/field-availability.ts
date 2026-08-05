@@ -10,6 +10,7 @@ const MAX_FIELD_ID_LENGTH = 128;
 const DEFAULT_GAME_DURATION_MINUTES = 60;
 const MINUTES_PER_DAY = 24 * 60;
 const BLOCKING_STATUSES = new Set(["SCHEDULED", "CONFIRMED", "LIVE"]);
+const FIELD_GAMES_QUERY_LIMIT = 500;
 
 interface FieldAvailabilityRequest {
   fieldId: string;
@@ -140,6 +141,7 @@ export const getFieldAvailability = onCall<FieldAvailabilityRequest>(
       .where("date", ">=", startDate)
       .where("date", "<=", endDate)
       .select("date", "time", "end_time", "status", "deleted_at", "deletedAt")
+      .limit(FIELD_GAMES_QUERY_LIMIT)
       .get();
 
     const slots = snapshot.docs
