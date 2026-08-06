@@ -217,14 +217,19 @@ async function checkVideoLimits(
   parsedPath: ParsedVideoPath,
   videoDoc: FirebaseFirestore.DocumentReference | null
 ): Promise<string | null> {
+  // FIX #4017: filtrar status != REJECTED no servidor para que docs
+  // REJECTED nao consumam a cota do limit. Antes o filtro era em memoria
+  // APOS o .limit(), permitindo que 50+ docs REJECTED escondam videos
+  // ativos e burlem o teto de 10 videos/jogo.
   const snapshot = await db()
     .collection("game_videos")
     .where("game_id", "==", parsedPath.gameId)
+    .where("status", "!=", "REJECTED")
     .limit(GAME_VIDEOS_QUERY_LIMIT)
     .get();
   const activeDocs = snapshot.docs.filter((doc) => {
     if (videoDoc && doc.id === videoDoc.id) return false;
-    return doc.get("status") !== "REJECTED";
+    return true;
   });
 
   if (activeDocs.length >= MAX_VIDEOS_PER_GAME) {

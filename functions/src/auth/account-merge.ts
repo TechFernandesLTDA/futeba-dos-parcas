@@ -863,6 +863,41 @@ export const completeAccountMerge = onCall(
         sourceUserRef.collection("game_templates").limit(MAX_DOCS_PER_QUERY).get(),
       ]);
 
+      // FIX #4015: Detectar saturação antes do estágio irreversível.
+      // Se qualquer query retornar exatamente MAX_DOCS_PER_QUERY docs,
+      // o excedente está sendo ignorado — e como a união é irreversível
+      // (guard alreadyCompleted), esses docs ficariam órfãos para sempre.
+      // Abortar com erro acionável em vez de completar uma união parcial.
+      const saturationChecks: Array<[string, FirebaseFirestore.QuerySnapshot]> = [
+        ["groups", sourceGroupLinks],
+        ["confirmations (user_id)", sourceConfirmationsSnake],
+        ["confirmations (userId)", sourceConfirmationsCamel],
+        ["game_summons", sourceSummons],
+        ["group_invites (invited_user_id)", sourceGroupInvitesSnake],
+        ["group_invites (invitedUserId)", sourceGroupInvitesCamel],
+        ["notifications", sourceNotifications],
+        ["games (owner_id)", sourceOwnedGames],
+        ["games (co_organizers)", sourceCoorganizedGames],
+        ["locations (owner_id)", sourceOwnedLocations],
+        ["locations (managers)", sourceManagedLocations],
+        ["schedules (owner_id)", sourceOwnedSchedules],
+        ["live_games (owner_id)", sourceOwnedLiveGames],
+        ["live_scores (owner_id)", sourceOwnedLiveScores],
+        ["game_templates", sourceGameTemplates],
+      ];
+      const saturated = saturationChecks
+        .filter(([, snap]) => snap.size >= MAX_DOCS_PER_QUERY)
+        .map(([name]) => name);
+      if (saturated.length > 0) {
+        throw new HttpsError(
+          "failed-precondition",
+          `A conta de origem possui ${MAX_DOCS_PER_QUERY}+ documentos em: ` +
+          `${saturated.join(", ")}. A união não pode ser concluída ` +
+          "para evitar perda silenciosa de dados. Contate o suporte " +
+          "para reconciliação manual.",
+        );
+      }
+
       // Lease transacional evita duas conclusões concorrentes. Repetições após
       // expiração continuam seguras porque os destinos têm IDs determinísticos.
       const leaseId = crypto.randomUUID();
