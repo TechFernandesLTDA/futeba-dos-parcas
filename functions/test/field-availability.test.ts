@@ -1,15 +1,13 @@
 const mockGet = jest.fn();
-const mockSelect = jest.fn(() => ({limit: jest.fn().mockReturnThis(), get: mockGet}));
-const mockWhere = jest.fn();
-const mockCollection = jest.fn();
+const queryChain: Record<string, unknown> = {};
+queryChain.where = jest.fn().mockReturnValue(queryChain);
+queryChain.select = jest.fn().mockReturnValue(queryChain);
+queryChain.orderBy = jest.fn().mockReturnValue(queryChain);
+queryChain.limit = jest.fn().mockReturnValue(queryChain);
+queryChain.startAfter = jest.fn().mockReturnValue(queryChain);
+queryChain.get = mockGet;
 
-const query = {
-  where: mockWhere,
-  select: mockSelect,
-};
-
-mockWhere.mockReturnValue(query);
-mockCollection.mockReturnValue(query);
+const mockCollection = jest.fn().mockReturnValue(queryChain);
 
 jest.mock("../src/_db", () => ({
   db: jest.fn(() => ({collection: mockCollection})),
@@ -39,10 +37,14 @@ import {
 describe("field availability projection", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockWhere.mockReturnValue(query);
-    mockCollection.mockReturnValue(query);
-    mockSelect.mockReturnValue({limit: jest.fn().mockReturnThis(), get: mockGet});
-    mockGet.mockResolvedValue({docs: []});
+    queryChain.where = jest.fn().mockReturnValue(queryChain);
+    queryChain.select = jest.fn().mockReturnValue(queryChain);
+    queryChain.orderBy = jest.fn().mockReturnValue(queryChain);
+    queryChain.limit = jest.fn().mockReturnValue(queryChain);
+    queryChain.startAfter = jest.fn().mockReturnValue(queryChain);
+    queryChain.get = mockGet;
+    mockCollection.mockReturnValue(queryChain);
+    mockGet.mockResolvedValue({docs: [], size: 0});
   });
 
   test("rejeita usuário anônimo antes de consultar jogos", async () => {
@@ -129,6 +131,7 @@ describe("field availability projection", () => {
           deletedAt: {seconds: 1},
         })},
       ],
+      size: 3,
     });
 
     const result = await getFieldAvailability({
@@ -150,10 +153,10 @@ describe("field availability projection", () => {
       /visibility|title|group|owner|gameId|private-group|Treino secreto/
     );
     expect(mockCollection).toHaveBeenCalledWith("games");
-    expect(mockWhere).toHaveBeenNthCalledWith(1, "field_id", "==", "field-1");
-    expect(mockWhere).toHaveBeenNthCalledWith(2, "date", ">=", "2026-07-14");
-    expect(mockWhere).toHaveBeenNthCalledWith(3, "date", "<=", "2026-07-21");
-    expect(mockSelect).toHaveBeenCalledWith(
+    expect(queryChain.where).toHaveBeenCalledWith("field_id", "==", "field-1");
+    expect(queryChain.where).toHaveBeenCalledWith("date", ">=", "2026-07-14");
+    expect(queryChain.where).toHaveBeenCalledWith("date", "<=", "2026-07-21");
+    expect(queryChain.select).toHaveBeenCalledWith(
       "date",
       "time",
       "end_time",

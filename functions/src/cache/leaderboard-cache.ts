@@ -1899,43 +1899,55 @@ export const invalidateLeaderboardOnParticipation = onDocumentWritten(
     const db = getDb();
 
     try {
-      // Buscar os docs de cache dessa season
-      // (podem haver múltiplos com limites diferentes: 10, 20, 50, 100…)
-      const cacheSnap = await db
-        .collection(CACHE_COLLECTION)
-        .where("season_id", "==", seasonId)
-        .limit(SEASON_CACHE_QUERY_LIMIT)
-        .get();
+      // FIX #4017: paginar até esvaziar para garantir que TODOS os docs
+      // de cache de ranking sejam invalidados. Antes o .limit(100) sem
+      // cursor podia deixar docs não-invalidados se a season tivesse
+      // >100 variantes de cache (limite × gênero × grupo).
+      const allRankingDocs: FirebaseFirestore.QueryDocumentSnapshot[] = [];
+      let cursor: FirebaseFirestore.QueryDocumentSnapshot | null = null;
 
-      if (cacheSnap.empty) {
-        // Nenhum cache para invalidar — operação idempotente
-        return;
-      }
+      do {
+        let q: FirebaseFirestore.Query = db
+          .collection(CACHE_COLLECTION)
+          .where("season_id", "==", seasonId)
+          .limit(SEASON_CACHE_QUERY_LIMIT);
 
-      // FIX #3883: preservar o cache de diretório público da Liga (#3358).
-      // Rankings (getLeaderboardCached) e diretório (getLeaguePlayers) dividem
-      // a coleção `cache_leaderboard`. Só os docs de diretório carregam `kind`;
-      // os de rankings não têm o campo. Filtramos em memória (Firestore não
-      // indexa `== null`) para NUNCA apagar o diretório colateralmente —
-      // independentemente do `season_id` com que ele foi gravado.
-      const rankingCacheDocs = cacheSnap.docs.filter(
-        (doc) => doc.data()?.kind !== LEAGUE_PLAYERS_CACHE_KIND
-      );
+        if (cursor) {
+          q = q.startAfter(cursor);
+        }
 
-      if (rankingCacheDocs.length === 0) {
-        // Só havia cache de diretório para essa season — nada a invalidar aqui.
+        const page = await q.get();
+
+        if (page.empty) {
+          break;
+        }
+
+        // FIX #3883: preservar o cache de diretório público da Liga (#3358).
+        for (const doc of page.docs) {
+          if (doc.data()?.kind !== LEAGUE_PLAYERS_CACHE_KIND) {
+            allRankingDocs.push(doc);
+          }
+        }
+
+        if (page.size < SEASON_CACHE_QUERY_LIMIT) {
+          break;
+        }
+        cursor = page.docs[page.size - 1];
+      } while (cursor);
+
+      if (allRankingDocs.length === 0) {
         return;
       }
 
       const committedBatches =
         await deleteDocsInBatches(
           db,
-          rankingCacheDocs
+          allRankingDocs
         );
 
       logger.info(
         "[LEADERBOARD_CACHE] Invalidated " +
-        `${rankingCacheDocs.length} ranking cache doc(s) ` +
+        `${allRankingDocs.length} ranking cache doc(s) ` +
         `for season ${seasonId} ` +
         `in ${committedBatches} batch(es) ` +
         "(diretório da Liga preservado)"
