@@ -51,6 +51,7 @@ const GameRideItem: React.FC<{ ride: GameRide }> = ({ ride }) => {
         </Avatar>
       </ListItemAvatar>
       <ListItemText
+        secondaryTypographyProps={{ component: 'div' }}
         primary={(
           <Stack direction="row" spacing={0.75} useFlexGap flexWrap="wrap" alignItems="center">
             <Typography variant="body2" fontWeight={700}>{ride.userName}</Typography>

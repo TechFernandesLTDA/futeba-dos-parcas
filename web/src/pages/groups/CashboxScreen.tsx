@@ -711,6 +711,7 @@ export const CashboxScreen: React.FC = () => {
                     </Avatar>
                   </ListItemAvatar>
                   <ListItemText
+                    secondaryTypographyProps={{ component: 'div' }}
                     primary={
                       <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
                         <Typography variant="body1">{transaction.description}</Typography>
