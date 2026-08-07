@@ -67,8 +67,6 @@ export function MobileBottomNav({ children }: { children?: React.ReactNode }) {
         direction="up"
         in={!trigger}
         timeout={reducedMotion ? 0 : undefined}
-        mountOnEnter
-        unmountOnExit
       >
         <Paper
           aria-hidden={trigger ? true : undefined}

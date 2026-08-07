@@ -1,7 +1,27 @@
 {
   "platform": "web",
-  "generatedAt": "2026-08-02T01:15:42.838Z",
+  "generatedAt": "2026-08-07T04:30:38.484Z",
   "notes": [
+    {
+      "version": "1.56.6",
+      "buildNumber": null,
+      "releaseDate": "2026-08-07",
+      "type": "patch",
+      "showPopup": true,
+      "published": false,
+      "headline": "Correções visuais no mobile: conteúdo não fica mais escondido atrás da barra inferior e filtros/tabs não quebram em telas pequenas.",
+      "highlights": [],
+      "added": [],
+      "improved": [],
+      "fixed": [
+        "Páginas com barra de ação fixa (Jogo, Grupo, Ao Vivo, Votação) não escondem mais o final do conteúdo atrás da navegação inferior em iPhones e Android.",
+        "Abas de detalhes do grupo agora deslizam horizontalmente em telas pequenas em vez de quebrar linha.",
+        "Filtro de gênero da Liga com rolagem horizontal suave no mobile (sem espremer os 4 botões).",
+        "Textos longos (nome do local, endereço, nome do grupo) truncam com elipse em 320px sem criar scroll horizontal.",
+        "Destaque \"Time da Semana\" com foco visível e anúncio correto para leitores de tela."
+      ],
+      "issueRefs": []
+    },
     {
       "version": "1.56.5",
       "buildNumber": null,

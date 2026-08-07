@@ -357,8 +357,8 @@ export function GamesTab() {
               <Card sx={{ mb: { xs: 2, md: 0 }, ...(isLive ? { borderLeft: `3px solid ${theme.palette.error.main}` } : {}) }}>
                 <CardActionArea onClick={() => handleCardClick(game.id)}>
                   <CardContent sx={{ p: { xs: 2, md: 1.5 }, '&:last-child': { pb: { xs: 2, md: 1.5 } } }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: { xs: 1, md: 0.75 } }}>
-                      <Box sx={{ flex: 1 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: { xs: 1, md: 0.75 }, minWidth: 0 }}>
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
                         <Box sx={{ display: 'flex', gap: 0.5, mb: 0.5, alignItems: 'center' }}>
                           {(() => {
                             const sc = getStatusChipColors(theme, game.status);
@@ -420,23 +420,23 @@ export function GamesTab() {
                             />
                           )}
                         </Box>
-                        <Typography variant="subtitle1" fontWeight="bold" noWrap>
+                        <Typography variant="subtitle1" fontWeight="bold" noWrap sx={{ minWidth: 0 }}>
                           {game.locationName || 'Local não definido'}
                         </Typography>
                       </Box>
                     </Box>
 
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, minWidth: 0 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, minWidth: 0 }}>
                         <CalendarMonth fontSize="small" color="action" />
-                        <Typography variant="body2" color="text.secondary">
+                        <Typography variant="body2" color="text.secondary" sx={{ minWidth: 0 }}>
                           {formatGameDate(game.date)}{game.time ? ` às ${game.time}` : ''}
                         </Typography>
                       </Box>
                       {game.locationAddress && (
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                          <LocationOn fontSize="small" color="action" />
-                          <Typography variant="body2" color="text.secondary" noWrap>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, minWidth: 0 }}>
+                          <LocationOn fontSize="small" color="action" sx={{ flexShrink: 0 }} />
+                          <Typography variant="body2" color="text.secondary" noWrap sx={{ minWidth: 0 }}>
                             {game.locationAddress}
                           </Typography>
                         </Box>

@@ -296,6 +296,21 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.56.6][web-1.56.6] - 2026-08-07
+
+#### Mudado
+- `Unstable_Grid2` mantido (MUI v5.15) — migração para `Grid2` adiada para upgrade MUI v6; apenas spacing responsivo ajustado (#2).
+
+#### Corrigido
+- `FixedBottomBar`: largura `sm:600` (antes 480) alinhada à `MobileBottomNav`; adicionado spacer `80px + safe-area` para evitar sobreposição dupla com `MobileBottomNav` em `xs` (#1).
+- `GroupDetailScreen`: `Tabs` sempre `variant="scrollable"` com `scrollButtons="auto"`; spacing do grid interno responsivo `{xs:1, md:1.5}` (#3).
+- `LeagueScreen`: container do `ToggleButtonGroup` com `overflowX:auto` e `width:max-content` para rolagem em 375px (#3).
+- `GamesTab/GroupsTab`: adicionado `minWidth:0` nos containers flex e nos `Typography noWrap` para evitar overflow em 320px (#4).
+- `HeadToHeadScreen/SettingsScreen`: `noWrap` agora com `minWidth:0 + overflow:hidden + textOverflow:ellipsis` (#4).
+- `HomeScreen`: destaque colapsável com `aria-controls="home-highlights-panel"` e `focus-visible` ring; `Collapse` com `id` (#6).
+- `MobileBottomNav`: removido `mountOnEnter/unmountOnExit` do `Slide` para manter navegação no DOM quando oculta, preservando foco de teclado (#6).
+- `pageTokens`: `componentMaxWidth.bottomBar` 480→600 e novo token `fixedBottomBarTokens` (#5).
+
 ### [1.56.5][web-1.56.5] - 2026-08-01
 
 #### Adicionado
@@ -2912,6 +2927,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.56.6]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.56.6.md
 [web-1.56.5]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.56.5.md
 [web-1.56.4]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.56.4.md
 [web-1.56.3]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.56.3.md

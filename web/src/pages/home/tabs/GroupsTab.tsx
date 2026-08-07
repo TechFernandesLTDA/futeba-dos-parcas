@@ -239,8 +239,8 @@ export function GroupsTab() {
                       </Avatar>
 
                       <Box sx={{ flex: 1, minWidth: 0 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Typography variant="subtitle1" fontWeight="bold" noWrap>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0 }}>
+                          <Typography variant="subtitle1" fontWeight="bold" noWrap sx={{ minWidth: 0 }}>
                             {group.name}
                           </Typography>
                           {/* #2213: ícone transmite estado (público/privado) — usar role="img"
@@ -309,10 +309,11 @@ export function GroupsTab() {
                           p: 1,
                           bgcolor: 'action.hover',
                           borderRadius: 1,
+                          minWidth: 0,
                         }}
                       >
-                        <Event fontSize="small" color="primary" />
-                        <Typography variant="body2" color="primary.main" fontWeight="medium" noWrap>
+                        <Event fontSize="small" color="primary" sx={{ flexShrink: 0 }} />
+                        <Typography variant="body2" color="primary.main" fontWeight="medium" noWrap sx={{ minWidth: 0 }}>
                           {t('groups.nextGame')}: {group.nextGameTitle || 'Jogo'} • {formatDateShort(group.nextGameDate)}
                         </Typography>
                       </Box>

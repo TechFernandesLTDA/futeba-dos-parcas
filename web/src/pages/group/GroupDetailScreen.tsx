@@ -1050,8 +1050,8 @@ export const GroupDetailScreen: React.FC = () => {
           <Tabs
             value={tabValue}
             onChange={(_, v) => setTabValue(v)}
-            variant={isMobile ? 'scrollable' : 'fullWidth'}
-            scrollButtons={isMobile ? 'auto' : false}
+            variant="scrollable"
+            scrollButtons="auto"
             allowScrollButtonsMobile
             aria-label={t('groupDetail.sectionsAria')}
             sx={{
@@ -1061,8 +1061,8 @@ export const GroupDetailScreen: React.FC = () => {
               border: `1px solid ${theme.palette.divider}`,
               '& .MuiTab-root': {
                 minHeight: 48,
-                minWidth: isMobile ? 112 : undefined,
-                px: isMobile ? 1.5 : undefined,
+                minWidth: { xs: 100, sm: 112 },
+                px: { xs: 1.25, sm: 1.5 },
                 textTransform: 'none',
                 fontWeight: 800,
               },
@@ -1096,7 +1096,7 @@ export const GroupDetailScreen: React.FC = () => {
         </TabPanel>
 
         <TabPanel value={tabValue} index={2}>
-          <Grid container spacing={2}>
+          <Grid container spacing={{ xs: 1.5, md: 2 }}>
             <Grid xs={12} md={7}>
               <Box sx={{ height: '100%' }}>
                 <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
@@ -1105,7 +1105,7 @@ export const GroupDetailScreen: React.FC = () => {
                     {t('groupDetail.groupStats')}
                   </Typography>
                 </Stack>
-                <Grid container spacing={1.5}>
+                <Grid container spacing={{ xs: 1, md: 1.5 }}>
                   <Grid xs={6}>
                     <GroupStatCard icon={<PeopleIcon />} label={t('groupDetail.activeMembers')} value={activeMembersCount} />
                   </Grid>
