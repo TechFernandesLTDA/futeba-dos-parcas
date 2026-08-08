@@ -45,7 +45,7 @@ export const InfiniteScrollTrigger: React.FC<InfiniteScrollTriggerProps> = ({
           </Typography>
         </Box>
       ) : !hasMore ? (
-        <Typography variant="body2" color="text.disabled">
+        <Typography variant="body2" color="text.secondary">
           {endMessage || t('common.endReached')}
         </Typography>
       ) : null}
