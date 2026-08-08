@@ -1,6 +1,6 @@
 {
   "platform": "android",
-  "generatedAt": "2026-08-08T16:12:34.286Z",
+  "generatedAt": "2026-08-08T20:03:52.949Z",
   "notes": [
     {
       "version": "1.39.3",
@@ -8,7 +8,7 @@
       "releaseDate": "2026-08-08",
       "type": "patch",
       "showPopup": true,
-      "published": false,
+      "published": true,
       "headline": "O envio de videos agora passa por validacao segura no servidor.",
       "highlights": [],
       "added": [],
