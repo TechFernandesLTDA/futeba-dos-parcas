@@ -20,15 +20,12 @@ import {
   Upload as UploadIcon,
 } from '@mui/icons-material';
 import {
-  addDoc,
   collection,
   deleteDoc,
   doc,
   onSnapshot,
   orderBy,
   query,
-  serverTimestamp,
-  updateDoc,
   where,
 } from 'firebase/firestore';
 import {
@@ -40,6 +37,7 @@ import {
 } from 'firebase/storage';
 import { db } from '../../services/firebase';
 import { storage } from '../../services/firebaseStorage';
+import { createGameVideo } from '../../services/cloudFunctions';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { EmptyState } from '../../components/common/EmptyState';
@@ -54,6 +52,14 @@ const MAX_VIDEO_DURATION_SECONDS = 30;
 const CAPTION_MAX_LENGTH = 200;
 const MAX_VIDEOS_PER_GAME = 10;
 const MAX_VIDEOS_PER_USER_PER_GAME = 3;
+const DEFINITIVE_VIDEO_CREATE_FAILURES = new Set([
+  'functions/already-exists',
+  'functions/failed-precondition',
+  'functions/invalid-argument',
+  'functions/not-found',
+  'functions/permission-denied',
+  'functions/resource-exhausted',
+]);
 
 interface GameVideo {
   id: string;
@@ -93,7 +99,7 @@ export const GameVideosTab: React.FC<GameVideosTabProps> = ({
   canManage = isOwner,
 }) => {
   const { t } = useTranslation();
-  const { currentUser, user } = useAuth();
+  const { currentUser } = useAuth();
   const { showSuccess, showError } = useToast();
   const showErrorRef = useRef(showError);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -223,6 +229,7 @@ export const GameVideosTab: React.FC<GameVideosTabProps> = ({
     setUploading(true);
     setUploadProgress(0);
     let uploadedPath: string | null = null;
+    let createCallableAttempted = false;
     try {
       const { cleanCaption } = await validateVideo(file);
       const path = `games/${gameId}/videos/${currentUser.uid}/${safeVideoFileName(file)}`;
@@ -250,24 +257,11 @@ export const GameVideosTab: React.FC<GameVideosTabProps> = ({
       });
       uploadTaskRef.current = null;
 
-      const downloadUrl = await getDownloadURL(fileRef);
-      await addDoc(collection(db, 'game_videos'), {
-        game_id: gameId,
-        url: downloadUrl,
-        storage_path: path,
-        thumbnail_path: null,
-        uploaded_by: currentUser.uid,
-        uploaded_by_name: user?.name || currentUser.displayName || t('common.player'),
-        uploaded_by_photo: user?.photoUrl || currentUser.photoURL || '',
-        content_type: 'video/mp4',
-        size: file.size,
-        duration_sec: null,
+      createCallableAttempted = true;
+      await createGameVideo({
+        gameId,
+        storagePath: path,
         caption: cleanCaption,
-        reactions: {},
-        status: 'PROCESSING',
-        rejection_reason: null,
-        created_at: serverTimestamp(),
-        updated_at: serverTimestamp(),
       });
 
       if (mountedRef.current) {
@@ -280,7 +274,8 @@ export const GameVideosTab: React.FC<GameVideosTabProps> = ({
       if (code === 'storage/canceled') {
         return;
       }
-      if (uploadedPath) {
+      if (uploadedPath &&
+          (!createCallableAttempted || DEFINITIVE_VIDEO_CREATE_FAILURES.has(code))) {
         await deleteObject(storageRef(storage, uploadedPath)).catch((storageErr) => {
           logger.warn('Failed to clean orphaned game video upload:', storageErr);
         });
@@ -340,17 +335,7 @@ export const GameVideosTab: React.FC<GameVideosTabProps> = ({
           }
         });
       }
-      await deleteDoc(doc(db, 'game_videos', video.id)).catch(async (deleteErr) => {
-        await updateDoc(doc(db, 'game_videos', video.id), {
-          url: '',
-          storage_path: null,
-          thumbnail_path: null,
-          updated_at: serverTimestamp(),
-        }).catch((recoveryErr) => {
-          logger.warn('Failed to scrub game video document after storage deletion:', recoveryErr);
-        });
-        throw deleteErr;
-      });
+      await deleteDoc(doc(db, 'game_videos', video.id));
       showSuccess(t('gameVideos.deleteSuccess'));
     } catch (err) {
       logger.error('Error deleting game video:', err);
@@ -436,6 +421,8 @@ export const GameVideosTab: React.FC<GameVideosTabProps> = ({
                       </Stack>
                       {video.status === 'REJECTED' ? (
                         <Alert severity="warning">{t('gameVideos.rejected')}</Alert>
+                      ) : video.status !== 'READY' ? (
+                        <Alert severity="info">{t('gameVideos.status_PROCESSING')}</Alert>
                       ) : (
                         <Box
                           component="video"
@@ -459,7 +446,7 @@ export const GameVideosTab: React.FC<GameVideosTabProps> = ({
                           }}
                         />
                       )}
-                      {video.status !== 'REJECTED' && (
+                      {video.status === 'READY' && (
                         <ReactionBar
                           targetPath={`game_videos/${video.id}`}
                           reactions={video.reactions || {}}

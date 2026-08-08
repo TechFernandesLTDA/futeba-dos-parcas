@@ -7,6 +7,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
+import com.google.firebase.functions.FirebaseFunctions
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageMetadata
 import kotlinx.coroutines.channels.awaitClose
@@ -31,7 +32,8 @@ data class GameVideo(
 class GameVideosRepository(
     private val firestore: FirebaseFirestore,
     private val storage: FirebaseStorage,
-    private val auth: FirebaseAuth
+    private val auth: FirebaseAuth,
+    private val functions: FirebaseFunctions
 ) {
     fun observeVideos(gameId: String): Flow<List<GameVideo>> = callbackFlow {
         val listener = firestore.collection("game_videos")
@@ -88,26 +90,11 @@ class GameVideosRepository(
             .build()
 
         ref.putFile(uri, metadata).await()
-        val downloadUrl = ref.downloadUrl.await().toString()
-
-        firestore.collection("game_videos").add(
+        functions.getHttpsCallable("createGameVideo").call(
             mapOf(
-                "game_id" to gameId,
-                "url" to downloadUrl,
-                "storage_path" to storagePath,
-                "thumbnail_path" to null,
-                "uploaded_by" to uid,
-                "uploaded_by_name" to (currentUser.displayName ?: "Jogador"),
-                "uploaded_by_photo" to (currentUser.photoUrl?.toString() ?: ""),
-                "content_type" to "video/mp4",
-                "size" to sizeBytes,
-                "duration_sec" to null,
-                "caption" to caption,
-                "reactions" to emptyMap<String, List<String>>(),
-                "status" to "PROCESSING",
-                "rejection_reason" to null,
-                "created_at" to FieldValue.serverTimestamp(),
-                "updated_at" to FieldValue.serverTimestamp()
+                "gameId" to gameId,
+                "storagePath" to storagePath,
+                "caption" to caption.trim(),
             )
         ).await()
         Unit

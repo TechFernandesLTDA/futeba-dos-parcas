@@ -1129,6 +1129,10 @@ export const CreateGameScreen: React.FC = () => {
             startDate: formData.date,
             endDate: formData.date,
           });
+          if (availability.truncated) {
+            showError(t('feedback.fieldGames.loadError'));
+            return;
+          }
           const existingSlots = availability.slots;
           const newStart = parseTime(formData.time);
           const parsedNewEnd = formData.endTime ? parseTime(formData.endTime) : newStart + DEFAULT_GAME_DURATION_MINUTES;
