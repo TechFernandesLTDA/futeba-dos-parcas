@@ -1,7 +1,32 @@
 {
   "platform": "web",
-  "generatedAt": "2026-08-02T01:15:42.838Z",
+  "generatedAt": "2026-08-08T15:51:57.920Z",
   "notes": [
+    {
+      "version": "1.56.6",
+      "buildNumber": null,
+      "releaseDate": "2026-08-08",
+      "type": "patch",
+      "showPopup": true,
+      "published": false,
+      "headline": "Uploads de video e disponibilidade de quadras ficaram mais seguros e confiaveis.",
+      "highlights": [],
+      "added": [],
+      "improved": [],
+      "fixed": [
+        "O app nao exibe links de videos enquanto o processamento ainda nao terminou.",
+        "A agenda de quadras nao trata uma resposta parcial como se o horario estivesse livre.",
+        "Chips de raridade e informacoes do grupo agora mantem contraste legivel nos temas claro e escuro.",
+        "Listas de caronas e lancamentos nao geram mais HTML invalido no navegador."
+      ],
+      "issueRefs": [
+        4016,
+        4018,
+        4024,
+        4025,
+        4026
+      ]
+    },
     {
       "version": "1.56.5",
       "buildNumber": null,

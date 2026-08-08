@@ -1,7 +1,26 @@
 {
   "platform": "android",
-  "generatedAt": "2026-08-02T01:15:42.831Z",
+  "generatedAt": "2026-08-08T15:51:57.918Z",
   "notes": [
+    {
+      "version": "1.39.3",
+      "buildNumber": 78,
+      "releaseDate": "2026-08-08",
+      "type": "patch",
+      "showPopup": true,
+      "published": false,
+      "headline": "O envio de videos agora passa por validacao segura no servidor.",
+      "highlights": [],
+      "added": [],
+      "improved": [],
+      "fixed": [
+        "O app nao cria documentos de video diretamente no Firestore.",
+        "Limites de videos por jogo e por jogador passam a ser aplicados de forma autoritativa."
+      ],
+      "issueRefs": [
+        4024
+      ]
+    },
     {
       "version": "1.39.2",
       "buildNumber": 77,
