@@ -1,7 +1,29 @@
 {
   "platform": "web",
-  "generatedAt": "2026-08-08T15:51:57.920Z",
+  "generatedAt": "2026-08-08T16:12:34.323Z",
   "notes": [
+    {
+      "version": "1.56.7",
+      "buildNumber": null,
+      "releaseDate": "2026-08-08",
+      "type": "patch",
+      "showPopup": true,
+      "published": false,
+      "headline": "Uploads de video e componentes visuais agora seguem validacoes de seguranca e acessibilidade mais rigorosas.",
+      "highlights": [],
+      "added": [],
+      "improved": [],
+      "fixed": [
+        "O navegador nao renderiza URLs de videos enquanto o processamento ainda nao terminou.",
+        "Chips de raridade mantem contraste legivel nos temas claro e escuro.",
+        "Chips e descricao do hero de grupos mantem contraste AA nos dois temas."
+      ],
+      "issueRefs": [
+        4024,
+        4025,
+        4026
+      ]
+    },
     {
       "version": "1.56.6",
       "buildNumber": null,
