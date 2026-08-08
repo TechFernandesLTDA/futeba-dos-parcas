@@ -306,6 +306,17 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.56.7][web-1.56.7] - 2026-08-08
+
+#### Adicionado
+- Testes de contraste WCAG e contratos de regressao para renderizacao segura de videos.
+
+#### Corrigido
+- Upload de video usa callable autoritativa e nao grava URL fornecida pelo cliente.
+- Falhas de rede durante a criacao de video nao removem um upload que pode ja ter sido persistido no servidor.
+
+_Issues: #4024, #4025, #4026_
+
 ### [1.56.6][web-1.56.6] - 2026-08-08
 
 #### Adicionado
@@ -2947,6 +2958,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.56.7]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.56.7.md
 [web-1.56.6]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.56.6.md
 [web-1.56.5]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.56.5.md
 [web-1.56.4]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.56.4.md
