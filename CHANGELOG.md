@@ -24,6 +24,16 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ## Android
 
+### [1.39.3][android-1.39.3] - 2026-08-08
+
+#### Mudado
+- `GameVideosRepository` usa a callable `createGameVideo` apos o upload no Storage.
+
+#### Segurança
+- URL, tamanho, tipo, autorizacao e idempotencia do video sao derivados ou validados no backend.
+
+_Issues: #4024_
+
 ### [1.39.2][android-1.39.2] - 2026-08-01
 
 #### Mudado
@@ -295,6 +305,18 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 - Bump de versão de manutenção após a mega audit wave de 2026-05-11, sem mudanças funcionais no Android nesta tag.
 
 ## Web
+
+### [1.56.6][web-1.56.6] - 2026-08-08
+
+#### Adicionado
+- Contratos de regressao para contraste WCAG e aninhamento de HTML.
+
+#### Corrigido
+- Criacao de `game_videos` migrada para callable autoritativa e idempotente.
+- Cleanup de uploads com resposta de rede ambigua preserva o objeto para reconciliacao server-side.
+- Disponibilidade truncada e tratada como falha fechada no fluxo de criacao de jogo.
+
+_Issues: #4016, #4018, #4024, #4025, #4026_
 
 ### [1.56.5][web-1.56.5] - 2026-08-01
 
@@ -2117,6 +2139,18 @@ _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
 
+### [1.12.4][functions-1.12.4] - 2026-08-08
+
+#### Adicionado
+- Callable `createGameVideo` com rate limit, validacao de Storage e transacao idempotente.
+
+#### Corrigido
+- Indice composto para a consulta de videos ativos.
+- URL de video derivada do token de Storage, sem aceitar URL fornecida pelo cliente.
+- Falhas de consulta de limite rejeitam o processamento em vez de deixar documentos presos.
+
+_Issues: #4016, #4017, #4024_
+
 ### [1.12.3][functions-1.12.3] - 2026-08-01
 
 #### Adicionado
@@ -2889,6 +2923,7 @@ _Issues: #2981_
 _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 
 
+[android-1.39.3]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.39.3.md
 [android-1.39.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.39.2.md
 [android-1.39.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.39.1.md
 [android-1.39.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.39.0.md
@@ -2912,6 +2947,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.56.6]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.56.6.md
 [web-1.56.5]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.56.5.md
 [web-1.56.4]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.56.4.md
 [web-1.56.3]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.56.3.md
@@ -3087,6 +3123,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [ios-1.6.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.2.md
 [ios-1.6.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.1.md
 [ios-1.6.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.0.md
+[functions-1.12.4]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.12.4.md
 [functions-1.12.3]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.12.3.md
 [functions-1.12.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.12.2.md
 [functions-1.12.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.12.1.md
