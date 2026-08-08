@@ -180,11 +180,20 @@ object BrandColors {
 }
 
 /**
- * Cores para raridades de badges
+ * Cores para raridades de badges — variantes light (texto sobre fundo tingido alpha 0.15)
+ * Paleta theme-aware: light usa tons escuros para contraste AA sobre surface clara;
+ * dark usa tons claros para contraste AA sobre surface escura.
  */
 object BadgeRarityColors {
-    val Common = Color(0xFF8E8E8E) // Cinza
-    val Rare = Color(0xFF2196F3) // Azul
-    val Epic = Color(0xFF9C27B0) // Roxo
-    val Legendary = Color(0xFFFF9800) // Laranja/Dourado
+    val Common = Color(0xFF616161)
+    val Rare = Color(0xFF0D47A1)
+    val Epic = Color(0xFF9C27B0)
+    val Legendary = Color(0xFF8A4B00)
+}
+
+object BadgeRarityColorsDark {
+    val Common = Color(0xFFBDBDBD)
+    val Rare = Color(0xFF90CAF9)
+    val Epic = Color(0xFFCE93D8)
+    val Legendary = Color(0xFFFFB74D)
 }

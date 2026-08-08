@@ -616,7 +616,7 @@ export const EmptyState: React.FC<{
         {title}
       </Typography>
       {description && (
-        <Typography variant="body2" color="text.disabled" sx={{ mb: 2, maxWidth: 300 }}>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2, maxWidth: 300 }}>
           {description}
         </Typography>
       )}

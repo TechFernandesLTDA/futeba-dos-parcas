@@ -63,7 +63,7 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
         Ops! Algo deu errado
       </Typography>
 
-      <Typography variant="body2" color="text.disabled" sx={{ mb: 3, maxWidth: componentMaxWidth.stateMessage }}>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 3, maxWidth: componentMaxWidth.stateMessage }}>
         {message}
       </Typography>
 

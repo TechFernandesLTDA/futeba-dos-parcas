@@ -872,11 +872,12 @@ private fun getCategoryEmoji(category: BadgeCategory): String {
  */
 @Composable
 private fun getRarityColor(rarity: BadgeRarity): Color {
+    val isDark = androidx.compose.foundation.isSystemInDarkTheme()
     return when (rarity) {
-        BadgeRarity.COMUM -> com.futebadosparcas.ui.theme.BadgeRarityColors.Common
-        BadgeRarity.RARO -> com.futebadosparcas.ui.theme.BadgeRarityColors.Rare
-        BadgeRarity.EPICO -> com.futebadosparcas.ui.theme.BadgeRarityColors.Epic
-        BadgeRarity.LENDARIO -> com.futebadosparcas.ui.theme.BadgeRarityColors.Legendary
+        BadgeRarity.COMUM -> if (isDark) com.futebadosparcas.ui.theme.BadgeRarityColorsDark.Common else com.futebadosparcas.ui.theme.BadgeRarityColors.Common
+        BadgeRarity.RARO -> if (isDark) com.futebadosparcas.ui.theme.BadgeRarityColorsDark.Rare else com.futebadosparcas.ui.theme.BadgeRarityColors.Rare
+        BadgeRarity.EPICO -> if (isDark) com.futebadosparcas.ui.theme.BadgeRarityColorsDark.Epic else com.futebadosparcas.ui.theme.BadgeRarityColors.Epic
+        BadgeRarity.LENDARIO -> if (isDark) com.futebadosparcas.ui.theme.BadgeRarityColorsDark.Legendary else com.futebadosparcas.ui.theme.BadgeRarityColors.Legendary
     }
 }
 
