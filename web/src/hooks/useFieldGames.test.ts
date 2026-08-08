@@ -111,6 +111,20 @@ describe('useFieldGames', () => {
     });
   });
 
+  it('falha fechado quando o backend informa que a resposta foi truncada', async () => {
+    mockGetFieldAvailability.mockResolvedValue({ data: { slots: [], truncated: true } });
+
+    const { result } = renderHook(() => useFieldGames('field-1'), {
+      wrapper: createTestWrapper(),
+    });
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+      expect(result.current.error).not.toBeNull();
+    });
+    expect(result.current.data.byDate.size).toBe(0);
+  });
+
   it('ignora resposta atrasada da quadra anterior', async () => {
     let resolveFirst!: (value: { data: { slots: Array<{ date: string; startMinutes: number; endMinutes: number }> } }) => void;
     const firstRequest = new Promise<{ data: { slots: Array<{ date: string; startMinutes: number; endMinutes: number }> } }>(

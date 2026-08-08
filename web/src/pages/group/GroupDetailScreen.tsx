@@ -951,22 +951,22 @@ export const GroupDetailScreen: React.FC = () => {
                     label={group.isPublic ? t('group.public') : t('groups.privateGroupLabel')}
                     size="small"
                     sx={{
-                      bgcolor: alpha(theme.palette.common.white, 0.16),
+                      bgcolor: alpha(theme.palette.common.black, 0.24),
                       color: 'inherit',
                       '& .MuiChip-icon': { color: 'inherit' },
                     }}
                   />
                 </Stack>
                 {group.description && (
-                  <Typography variant="body2" sx={{ mt: 1, maxWidth: 780, color: alpha(theme.palette.common.white, 0.86) }}>
+                  <Typography variant="body2" sx={{ mt: 1, maxWidth: 780, color: theme.palette.common.white }}>
                     {group.description}
                   </Typography>
                 )}
                 <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ mt: 2 }}>
-                  <Chip icon={<PeopleIcon />} label={t('groups.membersCount', { count: activeMembersCount })} size="small" sx={{ bgcolor: alpha(theme.palette.common.white, 0.16), color: 'inherit', '& .MuiChip-icon': { color: 'inherit' } }} />
-                  <Chip icon={<SoccerIcon />} label={t('groups.gamesCount', { count: totalGamesCount })} size="small" sx={{ bgcolor: alpha(theme.palette.common.white, 0.16), color: 'inherit', '& .MuiChip-icon': { color: 'inherit' } }} />
+                  <Chip icon={<PeopleIcon />} label={t('groups.membersCount', { count: activeMembersCount })} size="small" sx={{ bgcolor: alpha(theme.palette.common.black, 0.24), color: 'inherit', '& .MuiChip-icon': { color: 'inherit' } }} />
+                  <Chip icon={<SoccerIcon />} label={t('groups.gamesCount', { count: totalGamesCount })} size="small" sx={{ bgcolor: alpha(theme.palette.common.black, 0.24), color: 'inherit', '& .MuiChip-icon': { color: 'inherit' } }} />
                   {nextGame && (
-                    <Chip icon={<CalendarIcon />} label={`${t('groups.nextGame')}: ${formatDateShort(nextGame.dateTime)}`} size="small" sx={{ bgcolor: alpha(theme.palette.common.white, 0.16), color: 'inherit', '& .MuiChip-icon': { color: 'inherit' } }} />
+                    <Chip icon={<CalendarIcon />} label={`${t('groups.nextGame')}: ${formatDateShort(nextGame.dateTime)}`} size="small" sx={{ bgcolor: alpha(theme.palette.common.black, 0.24), color: 'inherit', '& .MuiChip-icon': { color: 'inherit' } }} />
                   )}
                 </Stack>
               </Box>

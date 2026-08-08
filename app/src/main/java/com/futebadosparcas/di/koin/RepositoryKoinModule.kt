@@ -219,6 +219,6 @@ val repositoryKoinModule = module {
 
     // Issue #3238: vídeos curtos anexados ao jogo (épico #3240)
     single<com.futebadosparcas.data.repository.GameVideosRepository> {
-        com.futebadosparcas.data.repository.GameVideosRepository(get(), get(), get())
+        com.futebadosparcas.data.repository.GameVideosRepository(get(), get(), get(), get())
     }
 }

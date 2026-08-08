@@ -697,8 +697,13 @@ export interface FieldAvailabilitySlot {
 
 export const getFieldAvailability = httpsCallable<
   { fieldId: string; startDate: string; endDate: string },
-  { slots: FieldAvailabilitySlot[] }
+  { slots: FieldAvailabilitySlot[]; truncated?: boolean }
 >(functions, 'getFieldAvailability');
+
+export const createGameVideo = httpsCallable<
+  { gameId: string; storagePath: string; caption: string },
+  { success: true; videoId: string; alreadyExists: boolean }
+>(functions, 'createGameVideo');
 
 export const toggleFollowUser = httpsCallable<
   { targetUserId: string; follow: boolean },

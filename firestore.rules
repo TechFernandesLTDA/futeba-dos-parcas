@@ -4515,56 +4515,11 @@ service cloud.firestore {
     match /game_videos/{videoId} {
       allow read: if isAuthenticated();
 
-      allow create: if isAuthenticated() &&
-        request.resource.data.keys().hasOnly([
-          'game_id',
-          'url',
-          'storage_path',
-          'thumbnail_path',
-          'uploaded_by',
-          'uploaded_by_name',
-          'uploaded_by_photo',
-          'content_type',
-          'size',
-          'duration_sec',
-          'caption',
-          'reactions',
-          'status',
-          'rejection_reason',
-          'created_at',
-          'updated_at'
-        ]) &&
-        request.resource.data.game_id is string &&
-        request.resource.data.url is string &&
-        request.resource.data.url.size() > 0 &&
-        request.resource.data.url.size() <= 2048 &&
-        request.resource.data.storage_path is string &&
-        request.resource.data.storage_path.matches('^games/[^/]+/videos/' + userId() + '/[^/]+\\.mp4$') &&
-        request.resource.data.thumbnail_path == null &&
-        request.resource.data.uploaded_by == userId() &&
-        request.resource.data.uploaded_by_name is string &&
-        request.resource.data.uploaded_by_name.size() > 0 &&
-        request.resource.data.uploaded_by_name.size() <= 120 &&
-        request.resource.data.uploaded_by_photo is string &&
-        request.resource.data.uploaded_by_photo.size() <= 2048 &&
-        request.resource.data.content_type == 'video/mp4' &&
-        request.resource.data.size is int &&
-        request.resource.data.size > 0 &&
-        request.resource.data.size <= 25 * 1024 * 1024 &&
-        request.resource.data.duration_sec == null &&
-        request.resource.data.caption is string &&
-        request.resource.data.caption.size() <= 200 &&
-        isValidInitialReactionMap(request.resource.data.reactions) &&
-        request.resource.data.status == 'PROCESSING' &&
-        request.resource.data.rejection_reason == null &&
-        request.resource.data.created_at == request.time &&
-        request.resource.data.updated_at == request.time &&
-        exists(/databases/$(database)/documents/games/$(request.resource.data.game_id)) &&
-        get(/databases/$(database)/documents/games/$(request.resource.data.game_id)).data.status == 'FINISHED' &&
-        ((get(/databases/$(database)/documents/confirmations/$(request.resource.data.game_id + '_' + userId())) != null &&
-          get(/databases/$(database)/documents/confirmations/$(request.resource.data.game_id + '_' + userId())).data.status == 'CONFIRMED') ||
-         canManageGame(get(/databases/$(database)/documents/games/$(request.resource.data.game_id)).data) ||
-         isAdmin());
+      // FIX #4024: o documento autoritativo e criado somente pela callable
+      // createGameVideo, que confirma o objeto no Storage, deriva a URL e
+      // aplica os limites dentro de uma transacao. O Admin SDK da callable
+      // nao passa por estas rules; clientes nao podem forjar PROCESSING/URL.
+      allow create: if false;
 
       allow update: if isAuthenticated() &&
         onlyAllowedFields(['reactions']) &&
