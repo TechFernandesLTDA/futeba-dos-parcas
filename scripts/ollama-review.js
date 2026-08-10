@@ -4,7 +4,7 @@
  * Uso ideal: PRs sensíveis (security, CPF, money) — diff fica no Mac.
  *
  * Uso:
- *   echo "<diff>" | node scripts/ollama-review.js [--model qwen2.5-coder:7b]
+ *   echo "<diff>" | node scripts/ollama-review.js [--model qwen3.5:9b]
  *   git diff master...HEAD | node scripts/ollama-review.js
  *   git diff --cached | node scripts/ollama-review.js
  *
@@ -14,8 +14,8 @@
 const { execSync } = require('child_process');
 
 const OLLAMA_URL = process.env.OLLAMA_URL || 'http://localhost:11434';
-const DEFAULT_MODEL = 'qwen2.5-coder:7b';
-const REASONING_MODEL = 'deepseek-r1:7b';
+const DEFAULT_MODEL = 'qwen3.5:9b';
+const REASONING_MODEL = 'deepseek-r1:14b';
 
 const PROMPT_TEMPLATE = `Você é um code reviewer experiente do projeto Futeba dos Parças (Kotlin/Compose Android + React/TS web + Cloud Functions TS).
 
