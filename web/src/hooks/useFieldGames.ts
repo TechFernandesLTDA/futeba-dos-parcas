@@ -126,6 +126,12 @@ export function useFieldGames(
     void getFieldAvailability({ fieldId, startDate, endDate })
       .then(({ data: response }) => {
         if (cancelled) return;
+        if (response.truncated) {
+          setData({ byDate: new Map(), fullyBookedDates: new Set(), conflictDates: new Set() });
+          setError(t('feedback.fieldGames.loadError'));
+          setLoading(false);
+          return;
+        }
         setData(processSlots(response.slots, { openingTime, closingTime }));
         setLoading(false);
         setError(null);

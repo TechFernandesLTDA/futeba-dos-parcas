@@ -946,27 +946,27 @@ export const GroupDetailScreen: React.FC = () => {
                   <Typography variant={isMobile ? 'h5' : 'h4'} fontWeight={900} sx={{ color: 'inherit' }}>
                     {group.name}
                   </Typography>
-                  <Chip
+                   <Chip
                     icon={group.isPublic ? <PublicIcon /> : <LockIcon />}
                     label={group.isPublic ? t('group.public') : t('groups.privateGroupLabel')}
-                    size="small"
-                    sx={{
-                      bgcolor: alpha(theme.palette.common.white, 0.16),
+                     size="small"
+                     sx={{
+                      bgcolor: alpha(theme.palette.common.black, 0.24),
                       color: 'inherit',
                       '& .MuiChip-icon': { color: 'inherit' },
                     }}
                   />
                 </Stack>
                 {group.description && (
-                  <Typography variant="body2" sx={{ mt: 1, maxWidth: 780, color: alpha(theme.palette.common.white, 0.86) }}>
+                  <Typography variant="body2" sx={{ mt: 1, maxWidth: 780, color: theme.palette.common.white }}>
                     {group.description}
                   </Typography>
                 )}
                 <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ mt: 2 }}>
-                  <Chip icon={<PeopleIcon />} label={t('groups.membersCount', { count: activeMembersCount })} size="small" sx={{ bgcolor: alpha(theme.palette.common.white, 0.16), color: 'inherit', '& .MuiChip-icon': { color: 'inherit' } }} />
-                  <Chip icon={<SoccerIcon />} label={t('groups.gamesCount', { count: totalGamesCount })} size="small" sx={{ bgcolor: alpha(theme.palette.common.white, 0.16), color: 'inherit', '& .MuiChip-icon': { color: 'inherit' } }} />
+                  <Chip icon={<PeopleIcon />} label={t('groups.membersCount', { count: activeMembersCount })} size="small" sx={{ bgcolor: alpha(theme.palette.common.black, 0.24), color: 'inherit', '& .MuiChip-icon': { color: 'inherit' } }} />
+                  <Chip icon={<SoccerIcon />} label={t('groups.gamesCount', { count: totalGamesCount })} size="small" sx={{ bgcolor: alpha(theme.palette.common.black, 0.24), color: 'inherit', '& .MuiChip-icon': { color: 'inherit' } }} />
                   {nextGame && (
-                    <Chip icon={<CalendarIcon />} label={`${t('groups.nextGame')}: ${formatDateShort(nextGame.dateTime)}`} size="small" sx={{ bgcolor: alpha(theme.palette.common.white, 0.16), color: 'inherit', '& .MuiChip-icon': { color: 'inherit' } }} />
+                    <Chip icon={<CalendarIcon />} label={`${t('groups.nextGame')}: ${formatDateShort(nextGame.dateTime)}`} size="small" sx={{ bgcolor: alpha(theme.palette.common.black, 0.24), color: 'inherit', '& .MuiChip-icon': { color: 'inherit' } }} />
                   )}
                 </Stack>
               </Box>
@@ -1050,8 +1050,8 @@ export const GroupDetailScreen: React.FC = () => {
           <Tabs
             value={tabValue}
             onChange={(_, v) => setTabValue(v)}
-            variant={isMobile ? 'scrollable' : 'fullWidth'}
-            scrollButtons={isMobile ? 'auto' : false}
+            variant="scrollable"
+            scrollButtons="auto"
             allowScrollButtonsMobile
             aria-label={t('groupDetail.sectionsAria')}
             sx={{
@@ -1061,8 +1061,8 @@ export const GroupDetailScreen: React.FC = () => {
               border: `1px solid ${theme.palette.divider}`,
               '& .MuiTab-root': {
                 minHeight: 48,
-                minWidth: isMobile ? 112 : undefined,
-                px: isMobile ? 1.5 : undefined,
+                minWidth: { xs: 100, sm: 112 },
+                px: { xs: 1.25, sm: 1.5 },
                 textTransform: 'none',
                 fontWeight: 800,
               },
@@ -1096,7 +1096,7 @@ export const GroupDetailScreen: React.FC = () => {
         </TabPanel>
 
         <TabPanel value={tabValue} index={2}>
-          <Grid container spacing={2}>
+          <Grid container spacing={{ xs: 1.5, md: 2 }}>
             <Grid xs={12} md={7}>
               <Box sx={{ height: '100%' }}>
                 <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
@@ -1105,7 +1105,7 @@ export const GroupDetailScreen: React.FC = () => {
                     {t('groupDetail.groupStats')}
                   </Typography>
                 </Stack>
-                <Grid container spacing={1.5}>
+                <Grid container spacing={{ xs: 1, md: 1.5 }}>
                   <Grid xs={6}>
                     <GroupStatCard icon={<PeopleIcon />} label={t('groupDetail.activeMembers')} value={activeMembersCount} />
                   </Grid>

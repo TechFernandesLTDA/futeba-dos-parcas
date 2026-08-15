@@ -62,6 +62,17 @@ async function listManagedGroupIds(): Promise<string[]> {
   const officialSnap = await db().collection("official-groups").limit(OFFICIAL_GROUPS_QUERY_LIMIT).get();
   for (const doc of officialSnap.docs) groupIds.add(doc.id);
 
+  // FIX #4017: sinal de saturação — se a query retornar exatamente o
+  // limite, grupos excedentes param de ter virada de temporada sem
+  // erro. Logar warn para alertar antes de virar um problema de uso.
+  if (officialSnap.size >= OFFICIAL_GROUPS_QUERY_LIMIT) {
+    logger.warn(
+      "[SEASON_CYCLE] listManagedGroupIds: official-groups saturou " +
+      `${OFFICIAL_GROUPS_QUERY_LIMIT} docs — grupos excedentes ` +
+      "não receberão gestão de temporada"
+    );
+  }
+
   const activeSeasonsSnap = await db()
     .collectionGroup("league_seasons")
     .where("is_active", "==", true)
@@ -70,6 +81,13 @@ async function listManagedGroupIds(): Promise<string[]> {
   for (const doc of activeSeasonsSnap.docs) {
     const groupId = doc.ref.parent.parent?.id;
     if (groupId) groupIds.add(groupId);
+  }
+  if (activeSeasonsSnap.size >= ACTIVE_SEASONS_QUERY_LIMIT) {
+    logger.warn(
+      "[SEASON_CYCLE] listManagedGroupIds: league_seasons ativas " +
+      `saturaram ${ACTIVE_SEASONS_QUERY_LIMIT} docs — seasons ` +
+      "excedentes não receberão gestão de temporada"
+    );
   }
 
   return Array.from(groupIds);

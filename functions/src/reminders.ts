@@ -1694,6 +1694,25 @@ export const autoCancelLowQuorum = onSchedule(
 // ==========================================
 
 /**
+ * Página da varredura de entradas waitlist NOTIFIED expiradas.
+ * Cursor via startAfter(lastDoc) garante que execuções consecutivas
+ * (a cada 5 min) AVANCEM a cauda em vez de reler as mesmas 500 entradas
+ * — bug original (#4012) que causou starvation permanente da fila.
+ */
+const WAITLIST_PAGE_SIZE = 100;
+
+/**
+ * Teto defensativo de entradas processadas por execução.
+ */
+const WAITLIST_MAX_PER_RUN = 500;
+
+/**
+ * Orçamento de tempo por execução (ms). Deixa ~60s de margem frente aos
+ * 300s declarados abaixo, mesmo molde do autoCancelLowQuorum.
+ */
+const WAITLIST_TIME_BUDGET_MS = 240_000;
+
+/**
  * Funcao agendada que roda a cada 5 minutos
  * para processar entradas expiradas na lista
  * de espera.
@@ -1703,7 +1722,9 @@ export const autoCancelLowQuorum = onSchedule(
  * Se nao responder, a entrada expira e o
  * proximo jogador na fila e notificado.
  *
- * Issue: Waitlist auto-promotion
+ * Fix #4012: READ_AFTER_WRITE corrigido (reads antes de writes na
+ * transacao), hardening completo (lock, paginacao, error tracking,
+ * timeout) alinhado ao padrao do autoCancelLowQuorum.
  */
 export const processExpiredWaitlistEntries =
   onSchedule(
@@ -1712,9 +1733,31 @@ export const processExpiredWaitlistEntries =
       timeZone: "America/Sao_Paulo",
       region: FUNCTION_REGION,
       retryCount: 3,
-      memory: "256MiB",
+      timeoutSeconds: 300,
+      memory: "512MiB",
     },
     async () => {
+      const lockId = "waitlist_expired_entries";
+      const lockTtlMs = schedulerLockTtlForTimeout(300);
+      const lockAcquired = await acquireSchedulerLock(
+        lockId,
+        lockTtlMs
+      );
+      if (!lockAcquired) {
+        logger.warn(
+          "[WAITLIST] Execucao concorrente detectada; pulando esta rodada"
+        );
+        return;
+      }
+
+      const heartbeat = startSchedulerHeartbeat(
+        lockId,
+        lockAcquired,
+        schedulerHeartbeatIntervalForTtl(lockTtlMs)
+      );
+
+      let lockStatus: "completed" | "failed" = "failed";
+
       logger.info(
         "\n====================================" +
         "===="
@@ -1732,139 +1775,213 @@ export const processExpiredWaitlistEntries =
         "====\n"
       );
 
+      let expiredCount = 0;
+      let promotedCount = 0;
+      let failureCount = 0;
+      let scanned = 0;
+      let drained = false;
+      const deadline = Date.now() + WAITLIST_TIME_BUDGET_MS;
+
       try {
-        const now = new Date();
-        let expiredCount = 0;
-        let promotedCount = 0;
-
-        // Buscar todas as entradas de waitlist
-        // com status NOTIFIED onde
-        // response_deadline ja passou
         const nowTs =
-          Timestamp.fromDate(
-            now
-          );
-        const waitlistQuery = await db()
-          .collectionGroup("waitlist")
-          .where("status", "==", "NOTIFIED")
-          .where(
-            "response_deadline",
-            "<=",
-            nowTs
-          )
-          .limit(500)
-          .get();
+          Timestamp.fromDate(new Date());
 
-        const wlSize = waitlistQuery.size;
-        logger.info(
-          "[WAITLIST] Encontradas " +
-          `${wlSize} entradas expiradas`
-        );
+        // FIX #4012: cursor paginado com orderBy explicito. Antes a query
+        // era limit(500) sem orderBy nem startAfter — como nenhuma entrada
+        // jamais saia de NOTIFIED (o bug primario), o conjunto crescia
+        // monotonicamente e as 500 mais antigas eram re-ler eternamente,
+        // causando starvation das mais novas.
+        let cursor: FirebaseFirestore.QueryDocumentSnapshot | null = null;
 
-        for (
-          const doc of waitlistQuery.docs
+        while (
+          scanned < WAITLIST_MAX_PER_RUN &&
+          Date.now() < deadline
         ) {
-          const data = doc.data();
-          const gameId = data.game_id;
-          const userId = data.user_id;
+          if (heartbeat.isLost()) {
+            logger.error(
+              "[WAITLIST] Scheduler lock perdido durante execucao; " +
+              "abortando para evitar writes conflitantes"
+            );
+            return;
+          }
+
+          let query: FirebaseFirestore.Query = db()
+            .collectionGroup("waitlist")
+            .where("status", "==", "NOTIFIED")
+            .where(
+              "response_deadline",
+              "<=",
+              nowTs
+            )
+            .orderBy("response_deadline", "asc")
+            .limit(WAITLIST_PAGE_SIZE);
+
+          if (cursor) {
+            query = query.startAfter(cursor);
+          }
+
+          const waitlistQuery = await query.get();
+
+          if (waitlistQuery.size === 0) {
+            drained = true;
+            break;
+          }
+
+          scanned += waitlistQuery.size;
 
           logger.info(
-            "[WAITLIST] Processando " +
-            `entrada expirada: ${doc.id}` +
-            ` (game: ${gameId},` +
-            ` user: ${userId})`
+            "[WAITLIST] Pagina com " +
+            `${waitlistQuery.size} entradas ` +
+            `(total escaneado: ${scanned})`
           );
-          try {
-            let nextUserId: string | undefined;
-            let nextUserName: string | undefined;
-            let hasNext = false;
 
-            await db().runTransaction(async (tx) => {
-              // Re-read the entry inside the transaction (TOCTOU guard)
-              const freshEntrySnap = await tx.get(doc.ref);
-              if (!freshEntrySnap.exists) return;
-              const freshData = freshEntrySnap.data();
-              if (freshData?.status !== "NOTIFIED") return; // another worker already handled
+          let lastProcessed:
+            | FirebaseFirestore.QueryDocumentSnapshot
+            | null = null;
+          let budgetHitMidPage = false;
 
-              // 1. Mark entry as EXPIRED
-              const serverTs = FieldValue.serverTimestamp();
-              tx.update(doc.ref, {
-                status: "EXPIRED",
-                expired_at: serverTs,
-              });
+          for (const doc of waitlistQuery.docs) {
+            if (Date.now() >= deadline) {
+              budgetHitMidPage = true;
+              break;
+            }
 
-              // 2. Find next WAITING entry
-              const nextQuery = await tx.get(
-                db()
-                  .collection("games")
-                  .doc(gameId)
-                  .collection("waitlist")
-                  .where("status", "==", "WAITING")
-                  .orderBy("added_at", "asc")
-                  .limit(1)
+            if (heartbeat.isLost()) {
+              logger.error(
+                "[WAITLIST] Scheduler lock perdido durante a pagina; " +
+                "abortando processamento de entradas restantes"
               );
+              return;
+            }
 
-              if (!nextQuery.empty) {
-                const nextEntry = nextQuery.docs[0];
-                const nextData = nextEntry.data();
+            const data = doc.data();
+            const gameId = data.game_id;
+            const userId = data.user_id;
 
-                // 3. Calculate new deadline (30 minutes from now)
-                const now = new Date();
-                const deadlineMs = now.getTime() + 30 * 60 * 1000;
-                const newDeadline = new Date(deadlineMs);
-                const deadlineTs = Timestamp.fromDate(newDeadline);
-                const notifTs = FieldValue.serverTimestamp();
+            logger.info(
+              "[WAITLIST] Processando " +
+              `entrada expirada: ${doc.id}` +
+              ` (game: ${gameId},` +
+              ` user: ${userId})`
+            );
+            try {
+              let nextUserId: string | undefined;
+              let nextUserName: string | undefined;
+              let hasNext = false;
 
-                // 4. Update status to NOTIFIED
-                tx.update(nextEntry.ref, {
-                  status: "NOTIFIED",
-                  notified_at: notifTs,
-                  response_deadline: deadlineTs,
+              // FIX #4012: TODAS as leituras devem vir ANTES de qualquer
+              // escrita dentro de uma transacao Firestore. Antes o
+              // tx.update(doc.ref, {status: "EXPIRED"}) vinha ANTES do
+              // tx.get(nextQuery), violando o contrato read-before-write
+              // do SDK e lancando erro em 100% das entradas processadas.
+              // O erro era engolido pelo catch interno, fazendo o cron
+              // reportar verde enquanto a fila morria em silencio.
+              const didExpire = await db().runTransaction(async (tx) => {
+                // ---- FASE DE LEITURA (todos os get() antes de qualquer escrita) ----
+                const freshEntrySnap = await tx.get(doc.ref);
+                if (!freshEntrySnap.exists) return false;
+                const freshData = freshEntrySnap.data();
+                if (freshData?.status !== "NOTIFIED") return false;
+
+                // Ler proxima entrada WAITING antes de qualquer write
+                const nextQuery = await tx.get(
+                  db()
+                    .collection("games")
+                    .doc(gameId)
+                    .collection("waitlist")
+                    .where("status", "==", "WAITING")
+                    .orderBy("added_at", "asc")
+                    .limit(1)
+                );
+
+                // ---- FASE DE ESCRITA ----
+                tx.update(doc.ref, {
+                  status: "EXPIRED",
+                  expired_at: FieldValue.serverTimestamp(),
                 });
 
-                // Store metadata for notification (outside tx)
-                nextUserId = nextData.user_id;
-                nextUserName = nextData.user_name || "Jogador";
-                hasNext = true;
+                if (!nextQuery.empty) {
+                  const nextEntry = nextQuery.docs[0];
+                  const nextData = nextEntry.data();
+                  const newDeadline = Timestamp.fromDate(
+                    new Date(Date.now() + 30 * 60 * 1000)
+                  );
+
+                  tx.update(nextEntry.ref, {
+                    status: "NOTIFIED",
+                    notified_at: FieldValue.serverTimestamp(),
+                    response_deadline: newDeadline,
+                  });
+
+                  nextUserId = nextData.user_id;
+                  nextUserName = nextData.user_name || "Jogador";
+                  hasNext = true;
+                }
+                return true;
+              });
+
+              lastProcessed = doc;
+
+              // FIX #4012: so contar expired se a transacao de fato
+              // marcou EXPIRED (retornou true). Antes o increment era
+              // cego apos o await.
+              if (didExpire) {
+                expiredCount++;
               }
-            });
 
-            expiredCount++;
-
-            // Send notification OUTSIDE the transaction
-            if (hasNext && nextUserId) {
-              const action = `game_detail/${gameId}`;
-              await sendNotificationToUser(nextUserId, {
-                title: REMINDER_NOTIFICATIONS.WAITLIST_SUMMON.title["pt-BR"](),
-                body: REMINDER_NOTIFICATIONS.WAITLIST_SUMMON.body["pt-BR"](),
-                type: NotificationType.GAME_SUMMON,
-                data: {gameId, action, urgency: "high"},
-              });
-              await saveNotificationToFirestore(nextUserId, {
-                userId: nextUserId,
-                title: REMINDER_NOTIFICATIONS.WAITLIST_SUMMON_FIRESTORE.title["pt-BR"](),
-                body: REMINDER_NOTIFICATIONS.WAITLIST_SUMMON_FIRESTORE.body["pt-BR"](),
-                type: NotificationType.GAME_SUMMON,
-                gameId,
-                action,
-              });
-              promotedCount++;
-              logger.info(
-                "[WAITLIST] Proximo jogador notificado: " +
-                `${nextUserId} (${nextUserName})`
+              // Send notification OUTSIDE the transaction
+              if (hasNext && nextUserId) {
+                const action = `game_detail/${gameId}`;
+                await sendNotificationToUser(nextUserId, {
+                  title: REMINDER_NOTIFICATIONS.WAITLIST_SUMMON.title["pt-BR"](),
+                  body: REMINDER_NOTIFICATIONS.WAITLIST_SUMMON.body["pt-BR"](),
+                  type: NotificationType.GAME_SUMMON,
+                  data: {gameId, action, urgency: "high"},
+                });
+                await saveNotificationToFirestore(nextUserId, {
+                  userId: nextUserId,
+                  title: REMINDER_NOTIFICATIONS.WAITLIST_SUMMON_FIRESTORE.title["pt-BR"](),
+                  body: REMINDER_NOTIFICATIONS.WAITLIST_SUMMON_FIRESTORE.body["pt-BR"](),
+                  type: NotificationType.GAME_SUMMON,
+                  gameId,
+                  action,
+                });
+                promotedCount++;
+                logger.info(
+                  "[WAITLIST] Proximo jogador notificado: " +
+                  `${nextUserId} (${nextUserName})`
+                );
+              } else if (!hasNext) {
+                logger.info(
+                  "[WAITLIST] Nenhum jogador na fila para o jogo " + gameId
+                );
+              }
+            } catch (entryError) {
+              logger.error(
+                "[WAITLIST] Erro ao processar entrada " + `${doc.id}:`,
+                entryError
               );
-            } else if (!hasNext) {
-              logger.info(
-                "[WAITLIST] Nenhum jogador na fila para o jogo " + gameId
-              );
+              failureCount++;
+              // FIX #4012: ainda avanca o cursor — uma entrada problematica
+              // nao deve travar a fila inteira. A proxima execucao
+              // re-tentara esta entrada (status ainda NOTIFIED).
+              lastProcessed = doc;
             }
-          } catch (entryError) {
-            logger.error(
-              "[WAITLIST] Erro ao processar entrada " + `${doc.id}:`,
-              entryError
-            );
+          }
+
+          cursor = lastProcessed;
+
+          if (!budgetHitMidPage && waitlistQuery.size < WAITLIST_PAGE_SIZE) {
+            drained = true;
+            break;
+          }
+          if (budgetHitMidPage || !cursor) {
+            break;
           }
         }
+
+        const backlogPossible = !drained &&
+          (scanned > 0 || Date.now() >= deadline);
 
         logger.info(
           "\n====================================" +
@@ -1874,25 +1991,61 @@ export const processExpiredWaitlistEntries =
           "[WAITLIST] Processamento concluido!"
         );
         logger.info(
-          "  - Entradas expiradas: " +
-          `${expiredCount}`
+          "  - Escaneados: " + `${scanned}` +
+          " | Expiradas: " + `${expiredCount}` +
+          " | Promovidos: " + `${promotedCount}` +
+          " | Falhas: " + `${failureCount}`
         );
-        logger.info(
-          "  - Proximos notificados: " +
-          `${promotedCount}`
-        );
+        if (backlogPossible) {
+          logger.warn(
+            "[WAITLIST] Possivel backlog: nem todas as entradas " +
+            "foram drenadas nesta execucao (" +
+            `${scanned} escaneados). A cauda sera retomada ` +
+            "no proximo tick (5 min)."
+          );
+        }
         logger.info(
           "====================================" +
           "====\n"
         );
+
+        // FIX #4012: se houver falhas, re-throw para o Scheduler
+        // registrar a falha (retryCount: 3) em vez de reportar verde.
+        if (failureCount > 0) {
+          throw new Error(
+            `[WAITLIST] ${failureCount} entradas falharam ao processar`
+          );
+        }
+
+        lockStatus = "completed";
       } catch (error) {
         logger.error(
           "[WAITLIST] Erro fatal ao " +
           "processar lista de espera:",
           error
         );
-        // Re-throw para acionar retry
         throw error;
+      } finally {
+        heartbeat.stop();
+        if (heartbeat.isLost()) {
+          logger.warn(
+            "[WAITLIST] Pulando release do lock: owner divergente " +
+            "(lock foi tomado durante a execucao)"
+          );
+        } else {
+          try {
+            await releaseSchedulerLock(
+              lockId,
+              lockAcquired,
+              lockStatus
+            );
+          } catch (lockError) {
+            logger.warn(
+              "[WAITLIST] Falha ao liberar scheduler lock:",
+              lockError
+            );
+          }
+        }
       }
     }
   );

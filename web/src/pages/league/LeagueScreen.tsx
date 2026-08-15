@@ -648,7 +648,7 @@ export const LeagueScreen: React.FC<LeagueScreenProps> = ({ embedded = false, ac
         </Collapse>
         )}
 
-        <Box sx={{ px: { xs: 1.5, md: 2 }, pb: 1, overflowX: { xs: 'visible', md: 'auto' }, scrollbarWidth: 'none', '&::-webkit-scrollbar': { display: 'none' } }}>
+        <Box sx={{ px: { xs: 1.5, md: 2 }, pb: 1, overflowX: 'auto', scrollbarWidth: 'none', '&::-webkit-scrollbar': { display: 'none' } }}>
           <ToggleButtonGroup
             value={genderFilter}
             exclusive
@@ -656,12 +656,13 @@ export const LeagueScreen: React.FC<LeagueScreenProps> = ({ embedded = false, ac
             onChange={(_, v) => v && setGenderFilter(v)}
             aria-label={t('games.genderFilter.all')}
             sx={{
-              width: { xs: '100%', md: 'auto' },
+              width: { xs: 'max-content', md: 'auto' },
+              minWidth: { xs: '100%', md: 'auto' },
               display: 'flex',
               flexWrap: 'nowrap',
               '& .MuiToggleButton-root': {
-                flex: { xs: 1, md: '0 0 auto' },
-                minWidth: 0,
+                flex: { xs: '1 0 0', md: '0 0 auto' },
+                minWidth: { xs: 72, md: 0 },
                 whiteSpace: 'nowrap',
               },
             }}

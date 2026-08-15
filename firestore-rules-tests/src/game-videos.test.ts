@@ -81,20 +81,20 @@ afterAll(async () => {
 });
 
 describe("game_videos", () => {
-  it("jogador confirmado pode criar video em jogo finalizado", async () => {
-    await assertSucceeds(
+  it("bloqueia criacao direta mesmo para jogador confirmado", async () => {
+    await assertFails(
       asPlayerA(testEnv).doc("game_videos/video-valid").set(validVideo())
     );
   });
 
-  it("organizador e co-organizador podem criar video sem confirmacao", async () => {
-    await assertSucceeds(
+  it("bloqueia criacao direta por organizador e co-organizador", async () => {
+    await assertFails(
       asPlayerB(testEnv).doc("game_videos/video-owner").set(validVideo({
         uploaded_by: UID_PLAYER_B,
         storage_path: `games/${FINISHED_GAME_ID}/videos/${UID_PLAYER_B}/clip.mp4`,
       }))
     );
-    await assertSucceeds(
+    await assertFails(
       asPlayerC(testEnv).doc("game_videos/video-co").set(validVideo({
         uploaded_by: UID_PLAYER_C,
         storage_path: `games/${FINISHED_GAME_ID}/videos/${UID_PLAYER_C}/clip.mp4`,

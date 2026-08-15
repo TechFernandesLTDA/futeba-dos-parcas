@@ -218,29 +218,29 @@ export const md3TypeScale = {
 // BADGE_DEFINITIONS usa COMUM/RARO/EPICO/LENDARIO; aliases EN ficam por compat.
 export const rarityColors: Record<string, string> = {
   // PT-BR (canônico, alinhado a BadgeRarity em types/gamification.ts)
-  COMUM: '#9E9E9E',
-  INCOMUM: '#388E3C', // #2163: era #4CAF50 hardcoded; tom mais escuro p/ contraste light
-  RARO: '#2196F3',
+  COMUM: '#616161',
+  INCOMUM: '#1B5E20',
+  RARO: '#0D47A1',
   EPICO: '#9C27B0',
-  LENDARIO: '#FF9800',
+  LENDARIO: '#8A4B00',
   // EN aliases (legacy / fallback)
-  COMMON: '#9E9E9E',
-  UNCOMMON: '#388E3C',
-  RARE: '#2196F3',
+  COMMON: '#616161',
+  UNCOMMON: '#1B5E20',
+  RARE: '#0D47A1',
   EPIC: '#9C27B0',
-  LEGENDARY: '#FF9800',
+  LEGENDARY: '#8A4B00',
 };
 
 // Dark-mode badge rarity variants — higher brightness for contrast on dark backgrounds
 export const rarityColorsDark: Record<string, string> = {
   COMUM: '#BDBDBD',
   INCOMUM: '#66BB6A', // #2163: variante brilhante p/ dark/OLED
-  RARO: '#42A5F5',
+  RARO: '#90CAF9',
   EPICO: '#CE93D8',
   LENDARIO: '#FFB74D',
   COMMON: '#BDBDBD',
   UNCOMMON: '#66BB6A',
-  RARE: '#42A5F5',
+  RARE: '#90CAF9',
   EPIC: '#CE93D8',
   LEGENDARY: '#FFB74D',
 };

@@ -1,15 +1,13 @@
 const mockGet = jest.fn();
-const mockSelect = jest.fn(() => ({limit: jest.fn().mockReturnThis(), get: mockGet}));
-const mockWhere = jest.fn();
-const mockCollection = jest.fn();
+const queryChain: Record<string, unknown> = {};
+queryChain.where = jest.fn().mockReturnValue(queryChain);
+queryChain.select = jest.fn().mockReturnValue(queryChain);
+queryChain.orderBy = jest.fn().mockReturnValue(queryChain);
+queryChain.limit = jest.fn().mockReturnValue(queryChain);
+queryChain.startAfter = jest.fn().mockReturnValue(queryChain);
+queryChain.get = mockGet;
 
-const query = {
-  where: mockWhere,
-  select: mockSelect,
-};
-
-mockWhere.mockReturnValue(query);
-mockCollection.mockReturnValue(query);
+const mockCollection = jest.fn().mockReturnValue(queryChain);
 
 jest.mock("../src/_db", () => ({
   db: jest.fn(() => ({collection: mockCollection})),
@@ -39,10 +37,14 @@ import {
 describe("field availability projection", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockWhere.mockReturnValue(query);
-    mockCollection.mockReturnValue(query);
-    mockSelect.mockReturnValue({limit: jest.fn().mockReturnThis(), get: mockGet});
-    mockGet.mockResolvedValue({docs: []});
+    queryChain.where = jest.fn().mockReturnValue(queryChain);
+    queryChain.select = jest.fn().mockReturnValue(queryChain);
+    queryChain.orderBy = jest.fn().mockReturnValue(queryChain);
+    queryChain.limit = jest.fn().mockReturnValue(queryChain);
+    queryChain.startAfter = jest.fn().mockReturnValue(queryChain);
+    queryChain.get = mockGet;
+    mockCollection.mockReturnValue(queryChain);
+    mockGet.mockResolvedValue({docs: [], size: 0});
   });
 
   test("rejeita usuário anônimo antes de consultar jogos", async () => {
@@ -129,6 +131,7 @@ describe("field availability projection", () => {
           deletedAt: {seconds: 1},
         })},
       ],
+      size: 3,
     });
 
     const result = await getFieldAvailability({
@@ -150,10 +153,10 @@ describe("field availability projection", () => {
       /visibility|title|group|owner|gameId|private-group|Treino secreto/
     );
     expect(mockCollection).toHaveBeenCalledWith("games");
-    expect(mockWhere).toHaveBeenNthCalledWith(1, "field_id", "==", "field-1");
-    expect(mockWhere).toHaveBeenNthCalledWith(2, "date", ">=", "2026-07-14");
-    expect(mockWhere).toHaveBeenNthCalledWith(3, "date", "<=", "2026-07-21");
-    expect(mockSelect).toHaveBeenCalledWith(
+    expect(queryChain.where).toHaveBeenCalledWith("field_id", "==", "field-1");
+    expect(queryChain.where).toHaveBeenCalledWith("date", ">=", "2026-07-14");
+    expect(queryChain.where).toHaveBeenCalledWith("date", "<=", "2026-07-21");
+    expect(queryChain.select).toHaveBeenCalledWith(
       "date",
       "time",
       "end_time",
@@ -161,6 +164,44 @@ describe("field availability projection", () => {
       "deleted_at",
       "deletedAt"
     );
+  });
+
+  test("pagina alem do limite e nao perde o jogo no fim da janela", async () => {
+    const firstPage = Array.from({length: 500}, (_, index) => ({
+      id: `cancelled-${index}`,
+      data: () => ({
+        date: "2026-07-15",
+        time: "19:00",
+        status: "CANCELLED",
+      }),
+    }));
+    const lastPageDoc = {
+      id: "scheduled-last-day",
+      data: () => ({
+        date: "2026-07-21",
+        time: "20:00",
+        end_time: "21:00",
+        status: "SCHEDULED",
+      }),
+    };
+    mockGet
+      .mockResolvedValueOnce({docs: firstPage, size: 500})
+      .mockResolvedValueOnce({docs: [lastPageDoc], size: 1});
+
+    const result = await getFieldAvailability({
+      auth: {uid: "player-1", token: {}},
+      data: {
+        fieldId: "field-1",
+        startDate: "2026-07-14",
+        endDate: "2026-07-21",
+      },
+    });
+
+    expect(result).toEqual({
+      slots: [{date: "2026-07-21", startMinutes: 1200, endMinutes: 1260}],
+    });
+    expect(mockGet).toHaveBeenCalledTimes(2);
+    expect(queryChain.startAfter).toHaveBeenCalledWith(firstPage[499]);
   });
 
   test("normaliza duração padrão e jogo que cruza meia-noite", () => {

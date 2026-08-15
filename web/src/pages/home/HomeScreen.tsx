@@ -84,6 +84,7 @@ export function HomeScreen() {
               }
             }}
             aria-expanded={towExpanded}
+            aria-controls="home-highlights-panel"
             aria-label={t('home.highlightsAria', 'Destaques — Time da Semana e Ações Rápidas')}
             sx={{
               display: 'flex',
@@ -97,6 +98,10 @@ export function HomeScreen() {
               bgcolor: alpha(theme.palette.primary.main, 0.04),
               border: `1px solid ${alpha(theme.palette.primary.main, 0.12)}`,
               '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.08) },
+              '&:focus-visible': {
+                outline: `2px solid ${theme.palette.primary.main}`,
+                outlineOffset: 2,
+              },
               userSelect: 'none',
             }}
           >
@@ -106,7 +111,7 @@ export function HomeScreen() {
             </Typography>
             {towExpanded ? <ExpandLess fontSize="small" /> : <ExpandMore fontSize="small" />}
           </Box>
-          <Collapse in={towExpanded}>
+          <Collapse in={towExpanded} id="home-highlights-panel">
             <Suspense fallback={null}>
               <TeamOfTheWeek />
             </Suspense>

@@ -11,6 +11,7 @@ const DEFAULT_GAME_DURATION_MINUTES = 60;
 const MINUTES_PER_DAY = 24 * 60;
 const BLOCKING_STATUSES = new Set(["SCHEDULED", "CONFIRMED", "LIVE"]);
 const FIELD_GAMES_QUERY_LIMIT = 500;
+const FIELD_GAMES_MAX_PAGES = 10;
 
 interface FieldAvailabilityRequest {
   fieldId: string;
@@ -24,8 +25,9 @@ export interface FieldBusySlot {
   endMinutes: number;
 }
 
-interface FieldAvailabilityResponse {
+export interface FieldAvailabilityResponse {
   slots: FieldBusySlot[];
+  truncated?: boolean;
 }
 
 /**
@@ -135,16 +137,44 @@ export const getFieldAvailability = onCall<FieldAvailabilityRequest>(
       request.data
     );
 
-    const snapshot = await db()
-      .collection("games")
-      .where("field_id", "==", fieldId)
-      .where("date", ">=", startDate)
-      .where("date", "<=", endDate)
-      .select("date", "time", "end_time", "status", "deleted_at", "deletedAt")
-      .limit(FIELD_GAMES_QUERY_LIMIT)
-      .get();
+    // FIX #4016: paginar até esvaziar para evitar truncagem silenciosa.
+    // Antes a query tinha .limit(500) sem cursor — uma quadra com >500
+    // jogos na janela de 60 dias reportava horários ocupados como livres
+    // (overbooking). Agora paginamos com startAfter até drenar ou até
+    // FIELD_GAMES_MAX_PAGES (safety cap contra abuso).
+    let truncated = false;
+    const allDocs: FirebaseFirestore.QueryDocumentSnapshot[] = [];
+    let cursor: FirebaseFirestore.QueryDocumentSnapshot | null = null;
 
-    const slots = snapshot.docs
+    for (let page = 0; page < FIELD_GAMES_MAX_PAGES; page++) {
+      let q: FirebaseFirestore.Query = db()
+        .collection("games")
+        .where("field_id", "==", fieldId)
+        .where("date", ">=", startDate)
+        .where("date", "<=", endDate)
+        .select("date", "time", "end_time", "status", "deleted_at", "deletedAt")
+        .orderBy("date", "asc")
+        .limit(FIELD_GAMES_QUERY_LIMIT);
+
+      if (cursor) {
+        q = q.startAfter(cursor);
+      }
+
+      const snapshot = await q.get();
+      allDocs.push(...snapshot.docs);
+
+      if (snapshot.size < FIELD_GAMES_QUERY_LIMIT) {
+        cursor = null;
+        break;
+      }
+      cursor = snapshot.docs[snapshot.size - 1];
+    }
+
+    if (cursor) {
+      truncated = true;
+    }
+
+    const slots = allDocs
       .map((doc) => projectGameToBusySlot(doc.data()))
       .filter((slot): slot is FieldBusySlot => slot !== null)
       .sort((left, right) =>
@@ -152,6 +182,6 @@ export const getFieldAvailability = onCall<FieldAvailabilityRequest>(
         left.startMinutes - right.startMinutes
       );
 
-    return {slots};
+    return truncated ? {slots, truncated} : {slots};
   }
 );

@@ -1,7 +1,7 @@
 import React, { ReactNode } from 'react';
 import { Box, type SxProps, type Theme } from '@mui/material';
 import { RAIL_WIDTH, DRAWER_WIDTH } from '../../config/navItems';
-import { componentMaxWidth, pageSpacing } from '../../theme/pageTokens';
+import { componentMaxWidth, fixedBottomBarTokens, pageSpacing } from '../../theme/pageTokens';
 
 interface FixedBottomBarProps {
   children: ReactNode;
@@ -60,30 +60,41 @@ export const FixedBottomBar = React.memo(function FixedBottomBar({
     : 0;
 
   return (
-    <Box
-      sx={[
-        {
-          position: 'fixed',
-          bottom,
-          left,
-          right: { xs: 0, sm: 'auto' },
-          transform: { sm: 'translateX(-50%)' },
-          width: { xs: '100%', sm: 480 },
-          maxWidth: componentMaxWidth.bottomBar,
-          bgcolor: 'background.paper',
-          borderTop: 1,
-          borderColor: 'divider',
-          p: 2,
-          // #2270: padding inferior = 16px (p:2) + safe-area. No md+ não há
-          // home indicator relevante, mas a expressão calc é inócua lá.
-          pb: 'calc(16px + env(safe-area-inset-bottom, 0px))',
-          zIndex,
-        },
-        ...(Array.isArray(sx) ? sx : [sx]),
-      ]}
-    >
-      {children}
-    </Box>
+    <>
+      <Box
+        sx={[
+          {
+            position: 'fixed',
+            bottom,
+            left,
+            right: { xs: 0, sm: 'auto' },
+            transform: { sm: 'translateX(-50%)' },
+            width: { xs: '100%', sm: 600 },
+            maxWidth: componentMaxWidth.bottomBar,
+            bgcolor: 'background.paper',
+            borderTop: 1,
+            borderColor: 'divider',
+            p: 2,
+            // #2270: padding inferior = 16px (p:2) + safe-area. No md+ não há
+            // home indicator relevante, mas a expressão calc é inócua lá.
+            pb: 'calc(16px + env(safe-area-inset-bottom, 0px))',
+            zIndex,
+          },
+          ...(Array.isArray(sx) ? sx : [sx]),
+        ]}
+      >
+        {children}
+      </Box>
+      {/* #1 fix: spacer para conteúdo não ficar sob FixedBottomBar + BottomNav em xs */}
+      <Box
+        aria-hidden
+        sx={{
+          display: { xs: 'block', md: 'none' },
+          height: fixedBottomBarTokens.heightWithSafeArea,
+          flexShrink: 0,
+        }}
+      />
+    </>
   );
 });
 

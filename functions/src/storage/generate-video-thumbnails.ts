@@ -15,24 +15,25 @@ import {
   currentFfmpegPath,
   safeFfmpegMovInputArgs,
 } from "../media/ffmpeg-runtime";
+import {
+  ACCEPTED_VIDEO_CONTENT_TYPE,
+  ACTIVE_VIDEO_STATUSES,
+  GAME_VIDEOS_QUERY_LIMIT,
+  MAX_VIDEO_DURATION_SEC,
+  MAX_VIDEO_SIZE_BYTES,
+  MAX_VIDEOS_PER_GAME,
+  MAX_VIDEOS_PER_USER_PER_GAME,
+  parseGameVideoPath,
+  type ParsedVideoPath,
+} from "./game-video-policy";
+
+export {parseGameVideoPath} from "./game-video-policy";
 
 const execFileAsync = promisify(execFile);
-const MAX_VIDEO_SIZE_BYTES = 25 * 1024 * 1024;
-const MAX_VIDEO_DURATION_SEC = 30;
-const MAX_VIDEOS_PER_GAME = 10;
-const MAX_VIDEOS_PER_USER_PER_GAME = 3;
-const ACCEPTED_VIDEO_CONTENT_TYPE = "video/mp4";
 const LEGACY_GAME_VIDEO_CODEC_WHITELIST =
   "h264,hevc,mpeg4,aac,mp3,opus";
-const DOC_LOOKUP_ATTEMPTS = 5;
+const DOC_LOOKUP_ATTEMPTS = 10;
 const DOC_LOOKUP_DELAY_MS = 1500;
-const GAME_VIDEOS_QUERY_LIMIT = 50;
-
-interface ParsedVideoPath {
-  gameId: string;
-  uploaderId: string;
-  fileName: string;
-}
 
 /**
  * Aguarda por uma quantidade pequena de tempo.
@@ -42,24 +43,6 @@ interface ParsedVideoPath {
  */
 function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-/**
- * Parseia o path canonico de videos de jogos.
- *
- * @param {string} filePath Path do objeto no bucket.
- * @return {ParsedVideoPath | null} Dados extraidos ou null.
- */
-export function parseGameVideoPath(filePath: string): ParsedVideoPath | null {
-  const match = filePath.match(
-    /^games\/([^/]+)\/videos\/([^/]+)\/([A-Za-z0-9._-]+\.mp4)$/
-  );
-  if (!match) return null;
-  return {
-    gameId: match[1],
-    uploaderId: match[2],
-    fileName: match[3],
-  };
 }
 
 /**
@@ -217,14 +200,19 @@ async function checkVideoLimits(
   parsedPath: ParsedVideoPath,
   videoDoc: FirebaseFirestore.DocumentReference | null
 ): Promise<string | null> {
+  // FIX #4017/#4024: consultar somente estados ativos no servidor. O schema
+  // autoritativo so permite PROCESSING, READY ou REJECTED; usar IN tambem
+  // evita que documentos legados sem status sejam tratados como ativos por
+  // acidente apos a migracao da criacao para a callable.
   const snapshot = await db()
     .collection("game_videos")
     .where("game_id", "==", parsedPath.gameId)
+    .where("status", "in", ACTIVE_VIDEO_STATUSES)
     .limit(GAME_VIDEOS_QUERY_LIMIT)
     .get();
   const activeDocs = snapshot.docs.filter((doc) => {
     if (videoDoc && doc.id === videoDoc.id) return false;
-    return doc.get("status") !== "REJECTED";
+    return true;
   });
 
   if (activeDocs.length >= MAX_VIDEOS_PER_GAME) {
@@ -269,6 +257,19 @@ export const generateGameVideoThumbnail =
       const videoDoc = await findVideoDocByStoragePath(filePath);
       const fileSize = parseInt(String(object.size || "0"), 10);
 
+      // FIX #4024: uploads diretos no Storage nao podem virar processamento
+      // orfao nem contornar a cota. A callable cria o doc autoritativo; se o
+      // trigger nao encontra esse doc apos as tentativas de propagacao, limpa
+      // o objeto sem executar ffmpeg.
+      if (!videoDoc) {
+        logger.warn(
+          "[VIDEO_THUMBNAIL] Removing upload without authoritative document " +
+          filePath
+        );
+        await rejectVideo(null, "MISSING_VIDEO_DOCUMENT", file);
+        return;
+      }
+
       if (contentType !== ACCEPTED_VIDEO_CONTENT_TYPE) {
         await rejectVideo(videoDoc, "INVALID_CONTENT_TYPE", file);
         return;
@@ -280,7 +281,14 @@ export const generateGameVideoThumbnail =
         return;
       }
 
-      const limitRejection = await checkVideoLimits(parsedPath, videoDoc);
+      let limitRejection: string | null;
+      try {
+        limitRejection = await checkVideoLimits(parsedPath, videoDoc);
+      } catch (error) {
+        logger.error("[VIDEO_THUMBNAIL] Failed to check video limits", error);
+        await rejectVideo(videoDoc, "PROCESSING_ERROR", file);
+        throw error;
+      }
       if (limitRejection) {
         await rejectVideo(videoDoc, limitRejection, file);
         return;

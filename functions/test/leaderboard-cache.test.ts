@@ -618,8 +618,17 @@ describe("invalidateLeaderboardOnParticipation (#3883)", () => {
       size: docs.length,
       docs,
     });
+    const chain = {
+      orderBy: jest.fn(),
+      limit: jest.fn(),
+      startAfter: jest.fn(),
+      get,
+    };
+    chain.orderBy.mockReturnValue(chain);
+    chain.limit.mockReturnValue(chain);
+    chain.startAfter.mockReturnValue(chain);
     mockCollection.mockImplementation(() => ({
-      where: jest.fn(() => ({limit: jest.fn().mockReturnThis(), get})),
+      where: jest.fn(() => chain),
     }));
     return get;
   };
@@ -640,6 +649,39 @@ describe("invalidateLeaderboardOnParticipation (#3883)", () => {
     // Diretório NUNCA é tocado (regressão do #3358 evitada).
     expect(mockBatchDelete).not.toHaveBeenCalledWith(directoryDoc.ref);
     expect(mockBatchCommit).toHaveBeenCalledTimes(1);
+  });
+
+  it("pagina todas as variantes de cache sem acumular snapshots", async () => {
+    const firstPage = Array.from({length: 100}, (_, index) => ({
+      data: () => ({season_id: "season-1", rankings: []}),
+      ref: {path: `cache_leaderboard/season-1_${index}`},
+    }));
+    const secondPage = [{
+      data: () => ({season_id: "season-1", rankings: []}),
+      ref: {path: "cache_leaderboard/season-1_last"},
+    }];
+    const get = jest.fn()
+      .mockResolvedValueOnce({empty: false, size: 100, docs: firstPage})
+      .mockResolvedValueOnce({empty: false, size: 1, docs: secondPage});
+    const chain = {
+      orderBy: jest.fn(),
+      limit: jest.fn(),
+      startAfter: jest.fn(),
+      get,
+    };
+    chain.orderBy.mockReturnValue(chain);
+    chain.limit.mockReturnValue(chain);
+    chain.startAfter.mockReturnValue(chain);
+    mockCollection.mockImplementation(() => ({
+      where: jest.fn(() => chain),
+    }));
+
+    await invalidate(eventForSeason("season-1"));
+
+    expect(get).toHaveBeenCalledTimes(2);
+    expect(chain.startAfter).toHaveBeenCalledWith(firstPage[99]);
+    expect(mockBatchDelete).toHaveBeenCalledTimes(101);
+    expect(mockBatchCommit).toHaveBeenCalledTimes(2);
   });
 
   it("não deleta nada quando só existe cache de diretório", async () => {

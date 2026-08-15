@@ -728,6 +728,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // convite podia ser contornado logando com Google.
   const signInWithGoogle = useCallback(async (inviteCode?: string) => {
     setError(null);
+      // FIX #3983: medir tempo até rejeição do popup. Em mobile, o fechamento
+      // automático do navegador ocorre em dezenas de ms; um cancelamento
+      // humano leva >1s. Só cair no redirect quando for curto — no desktop,
+      // fechar o pop-up volta a ser no-op silencioso (padrão do projeto,
+      // alinhado com linkGoogleAccount e firebaseErrors.ts).
+      const popupStartedAt = Date.now();
     try {
       const normalizedInviteCode = normalizeInviteCode(inviteCode);
       pendingInviteRef.current = normalizedInviteCode
@@ -789,11 +795,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (err: unknown) {
       // #3192: fallback para signInWithRedirect quando o popup falha — ocorre
       // em navegadores mobile (iOS Safari, Chrome Android) e com bloqueadores
-      // de pop-up. auth/popup-closed-by-user também entra no fallback porque em
-      // mobile o popup "fecha" imediatamente pelo handler do navegador.
+      // de pop-up. auth/popup-closed-by-user também entra no fallback QUANDO
+      // o fechamento é automático do mobile (tempo < POPUP_AUTO_CLOSE_MS).
+      // No desktop, o usuário fechando o pop-up manualmente é cancelamento
+      // silencioso (return), alinhado com linkGoogleAccount e o padrão do
+      // projeto documentado em firebaseErrors.ts (#3983).
+      const POPUP_AUTO_CLOSE_MS = 1500;
+      const elapsedMs = Date.now() - popupStartedAt;
+      const isAutoClosed = err instanceof FirebaseError &&
+        err.code === 'auth/popup-closed-by-user' && elapsedMs < POPUP_AUTO_CLOSE_MS;
       if (
         err instanceof FirebaseError &&
-        (err.code === 'auth/popup-blocked' || err.code === 'auth/popup-closed-by-user')
+        (err.code === 'auth/popup-blocked' || isAutoClosed)
       ) {
         // Persiste o convite em sessionStorage — o redirect recarrega a página
         // inteira e refs/state do React não sobrevivem. O AuthProvider restaura

@@ -41,5 +41,11 @@ export type GridVariant = keyof typeof gridLayout;
 
 export const componentMaxWidth = {
   stateMessage: 320,
-  bottomBar: 480,
+  bottomBar: 600,
+} as const;
+
+export const fixedBottomBarTokens = {
+  /** Altura estimada da FixedBottomBar (p:2 + botão 44px) + respir0 */
+  height: 80,
+  heightWithSafeArea: 'calc(80px + env(safe-area-inset-bottom, 0px))',
 } as const;

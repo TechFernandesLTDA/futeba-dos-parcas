@@ -305,7 +305,7 @@ export const CpfVerificationScreen: React.FC = () => {
         // #3187: verifyCpf respondeu success:false — mensagem específica
         userMsg = t('onboarding.verifyFailed');
       } else if (code === 'functions/already-exists') {
-        userMsg = t('onboarding.errorCpfInUse');
+        userMsg = t('onboarding.errorCpfInUse') + ' Se for sua conta antiga com mesmo CPF, confirme o telefone da conta antiga e solicite unificação pelo fluxo de telefone.';
       } else if (code === 'functions/invalid-argument') {
         userMsg = t('onboarding.errorInvalidCpf');
       } else if (code === 'functions/permission-denied') {

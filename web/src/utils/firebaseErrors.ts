@@ -49,7 +49,7 @@ const FIREBASE_AUTH_ERRORS: Record<string, string> = {
   'auth/network-request-failed': 'Erro de conexão. Verifique sua internet',
   'auth/popup-closed-by-user': 'Login cancelado',
   'auth/popup-blocked': 'Pop-up bloqueado pelo navegador. Permita pop-ups e tente novamente',
-  'auth/account-exists-with-different-credential': 'Já existe uma conta com este email usando outro método de login',
+  'auth/account-exists-with-different-credential': 'Já existe uma conta com este email usando senha. Entre com email e senha e vincule o Google em Perfil > Configurações.',
   // #3189: Google já vinculado a outra conta — orientação de recovery
   'auth/credential-already-in-use': 'Esta conta Google já está vinculada a outra conta. Entre com seu login original e vincule o Google pelo perfil.',
   'auth/requires-recent-login': 'Sessão expirada. Faça login novamente',

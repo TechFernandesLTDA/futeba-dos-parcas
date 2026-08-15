@@ -559,4 +559,72 @@ describe("completeAccountMerge transactional migration", () => {
       }
     },
   );
+
+  it(
+    "aborta com failed-precondition quando notifications satura MAX_DOCS_PER_QUERY (#4015)",
+    async () => {
+      const initial: Record<string, Data> = {
+        [`account_merge_requests/${requestId}`]: {
+          sourceUid,
+          targetUid,
+          status: "ready",
+          proofExpiresAt: Timestamp.fromMillis(Date.now() + 60_000),
+        },
+        [`users/${sourceUid}`]: {display_name: "Source"},
+        [`users/${targetUid}`]: {display_name: "Target"},
+        [`users_private/${sourceUid}`]: {cpfHash, phoneHash: "old-source"},
+        [`users_private/${targetUid}`]: {cpfHash, phoneHash: canonicalPhoneHash},
+        [`cpf_index/${cpfHash}`]: {uid: sourceUid, createdAt: "x"},
+        [`phone_index/${canonicalPhoneHash}`]: {uid: targetUid, createdAt: "y"},
+      };
+      for (let i = 0; i < 500; i++) {
+        initial[`notifications/notif-${i}`] = {user_id: sourceUid};
+      }
+
+      const {firestore} = createFakeFirestore(initial);
+      mockDb.mockReturnValue(firestore);
+      mockLoadIdentityIndexHashes.mockImplementation(async (
+        _db: unknown,
+        collectionName: string,
+        uid: string,
+      ) => {
+        if (collectionName === "cpf_index") return [cpfHash];
+        return uid === sourceUid ?
+          ["old-source"] :
+          [canonicalPhoneHash];
+      });
+      const sourceAuth = {
+        uid: sourceUid,
+        disabled: false,
+        email: "old@example.com",
+        providerData: [{providerId: "google.com"}],
+        customClaims: {},
+      };
+      const targetAuth = {
+        uid: targetUid,
+        disabled: false,
+        email: "main@example.com",
+        phoneNumber: phone,
+        providerData: [],
+        customClaims: {},
+      };
+      mockGetAuth.mockReturnValue({
+        getUser: jest.fn(async (uid: string) =>
+          uid === sourceUid ? sourceAuth : targetAuth),
+        updateUser: jest.fn(async () => undefined),
+        revokeRefreshTokens: jest.fn(async () => undefined),
+        setCustomUserClaims: jest.fn(async () => undefined),
+      });
+
+      await expect((completeAccountMerge as unknown as (
+        request: Data,
+      ) => Promise<Data>)({
+        auth: {uid: targetUid, token: {}},
+        data: {requestId},
+      })).rejects.toMatchObject({
+        code: "failed-precondition",
+        message: expect.stringContaining("notifications"),
+      });
+    },
+  );
 });

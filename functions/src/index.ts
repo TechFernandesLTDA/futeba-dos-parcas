@@ -2812,6 +2812,7 @@ export {
 } from "./monitoring/realtime-slo";
 export * from "./storage/generate-thumbnails";
 export * from "./storage/generate-video-thumbnails";
+export {createGameVideo} from "./storage/game-videos";
 
 // SPEC: feat-2026-05-08-consolidate-shareable-invites
 // Migra groups.invite_code (legacy) -> invites/ (canonical)

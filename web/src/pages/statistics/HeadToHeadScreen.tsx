@@ -479,7 +479,7 @@ export const HeadToHeadScreen: React.FC = () => {
                       <Typography variant="h4" fontWeight={700} color="success.main">
                         {stats.p1WinsAgainst}
                       </Typography>
-                      <Typography variant="caption" color="text.secondary" noWrap>
+                      <Typography variant="caption" color="text.secondary" noWrap sx={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {player1.name}
                       </Typography>
                     </Grid>
@@ -494,7 +494,7 @@ export const HeadToHeadScreen: React.FC = () => {
                       <Typography variant="h4" fontWeight={700} color="success.main">
                         {stats.p2WinsAgainst}
                       </Typography>
-                      <Typography variant="caption" color="text.secondary" noWrap>
+                      <Typography variant="caption" color="text.secondary" noWrap sx={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {player2.name}
                       </Typography>
                     </Grid>
@@ -600,7 +600,7 @@ const PlayerSlot: React.FC<{
     return (
       <Box sx={{ textAlign: 'center' }}>
         <PlayerAvatar name={player.name} photoUrl={player.photoUrl} size={56} level={player.level} />
-        <Typography variant="body2" fontWeight={600} noWrap sx={{ mt: 0.5 }}>
+        <Typography variant="body2" fontWeight={600} noWrap sx={{ mt: 0.5, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>
           {player.name}
         </Typography>
         <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center', mt: 0.5 }}>
@@ -699,7 +699,7 @@ const FriendlyPlayerPanel: React.FC<{
         p: 2,
       }}
     >
-      <Typography variant="subtitle2" fontWeight={800} noWrap>
+      <Typography variant="subtitle2" fontWeight={800} noWrap sx={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>
         {name}
       </Typography>
       <Grid container spacing={1} sx={{ mt: 1 }}>
@@ -771,7 +771,7 @@ const MatchTimelineItem: React.FC<{
             }}
           />
           {match.groupName && (
-            <Typography variant="caption" color="text.secondary" noWrap>
+            <Typography variant="caption" color="text.secondary" noWrap sx={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {match.groupName}
             </Typography>
           )}
