@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigateBack } from "../hooks/useNavigateBack";
 import {
   Avatar,
@@ -7,7 +7,6 @@ import {
   Card,
   CardContent,
   Chip,
-  IconButton,
   Select,
   MenuItem,
   FormControl,
@@ -17,11 +16,11 @@ import {
   CircularProgress,
 } from "@mui/material";
 import {
-  ArrowBack as BackIcon,
   Star as StarIcon,
 } from "@mui/icons-material";
 import { useDreamTeam, usePlayedAgainst, useSaveDreamTeam, DreamTeamPlayer } from "../hooks/useDreamTeam";
 import { PageContainer } from "../components/common/PageContainer";
+import { ScreenHeader } from "../components/common/ScreenHeader";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import { useTranslation } from "react-i18next";
 import { ErrorState } from "../components/common/ErrorState";
@@ -80,7 +79,17 @@ export const DreamTeamScreen: React.FC = () => {
     }
   };
 
-  const selectedIds = new Set(selectedPlayers.map((p) => p.userId).filter(Boolean));
+  // Perf: lookup por id e set de selecionados memoizados — antes cada slot
+  // fazia availablePlayers.find() O(n) e reconstruía o Set a cada render
+  // (cada seleção num Select re-renderiza a tela com 5 slots × n jogadores).
+  const playersById = useMemo(
+    () => new Map(availablePlayers.map((p) => [p.id, p] as const)),
+    [availablePlayers],
+  );
+  const selectedIds = useMemo(
+    () => new Set(selectedPlayers.map((p) => p.userId).filter(Boolean)),
+    [selectedPlayers],
+  );
 
   if (teamLoading || playersLoading) {
     return (
@@ -111,21 +120,20 @@ export const DreamTeamScreen: React.FC = () => {
 
   return (
     <PageContainer maxWidth="form">
-      <Stack direction="row" alignItems="center" spacing={1} mb={3}>
-        <IconButton onClick={goBack} aria-label={t("common.back")}>
-          <BackIcon />
-        </IconButton>
-        <Typography variant="h5" fontWeight="bold" flex={1}>
-          {t("dreamTeam.title")}
-        </Typography>
-      </Stack>
+      {/* #4051: migrado para ScreenHeader — o header manual não-sticky empilhava
+          com a MobileTopBar global no mobile (2 botões "Voltar", 2 títulos). */}
+      <ScreenHeader
+        title={t("dreamTeam.title")}
+        onBack={goBack}
+        backAriaLabel={t("common.back")}
+      />
 
       <Typography variant="body2" color="text.secondary" mb={3}>
         {t("dreamTeam.description")}
       </Typography>
 
       {selectedPlayers.map((slot, index) => {
-        const selected = availablePlayers.find((p: { id: string; name: string; photoUrl?: string; autoStrikerRating: number }) => p.id === slot.userId);
+        const selected = playersById.get(slot.userId);
         return (
           <Card key={`${slot.position}-${index}`} sx={{ mb: 2 }}>
             <CardContent>
@@ -149,7 +157,7 @@ export const DreamTeamScreen: React.FC = () => {
                       aria-label={t("dreamTeam.selectPlayerAria", { position: POSITIONS.find((pos) => pos.value === slot.position)?.label })}
                       renderValue={(val) => {
                         if (!val) return t("dreamTeam.selectPlayer");
-                        const p = availablePlayers.find((pl: { id: string; name: string; autoStrikerRating: number }) => pl.id === val);
+                        const p = playersById.get(val);
                         return p ? `${p.name} (⭐${p.autoStrikerRating.toFixed(1)})` : val;
                       }}
                     >

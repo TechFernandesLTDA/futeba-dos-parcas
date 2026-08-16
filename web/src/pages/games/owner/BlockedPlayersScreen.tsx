@@ -18,7 +18,7 @@ import {
   Block as BlockIcon,
   RemoveCircle as UnblockIcon,
 } from '@mui/icons-material';
-import { doc, getDoc, updateDoc, arrayRemove } from 'firebase/firestore';
+import { doc, documentId, getDoc, getDocs, updateDoc, arrayRemove, collection, query, where } from 'firebase/firestore';
 import { db } from '../../../services/firebase';
 import { useAuth } from '../../../contexts/AuthContext';
 import { PlayerAvatar, LoadingState } from '../../../components/common/GameCard';
@@ -87,22 +87,32 @@ export const BlockedPlayersScreen: React.FC = () => {
             return;
           }
 
-          const players = await Promise.all(
-            blockedIds.map(async (uid: string) => {
-              const userDoc = await getDoc(doc(db, 'users', uid));
-              if (userDoc.exists()) {
-                const data = snakeToCamel<RawBlockedUserDoc>(userDoc.data());
-                return {
-                  id: uid,
-                  name: data.name || 'Jogador',
-                  photoUrl: data.photoUrl,
-                };
-              }
-              return null;
-            })
-          );
-          
-          if (!cancelled) setBlockedPlayers(players.filter(Boolean) as BlockedPlayer[]);
+          // Perf: leitura em batch (chunks de até 10 via documentId() in) em vez
+          // de N getDocs individuais — menos round-trips por usuário bloqueado.
+          const uniqueBlockedIds = Array.from(new Set(blockedIds));
+          const idChunks: string[][] = [];
+          for (let i = 0; i < uniqueBlockedIds.length; i += 10) {
+            idChunks.push(uniqueBlockedIds.slice(i, i + 10));
+          }
+          const userSnaps = await Promise.all(idChunks.map((chunk) =>
+            getDocs(query(collection(db, 'users'), where(documentId(), 'in', chunk)))));
+          const usersById = new Map<string, RawBlockedUserDoc>();
+          userSnaps.forEach((snap) => {
+            snap.docs.forEach((userDoc) => {
+              usersById.set(userDoc.id, snakeToCamel<RawBlockedUserDoc>(userDoc.data()));
+            });
+          });
+          const players = uniqueBlockedIds.flatMap((uid: string) => {
+            const data = usersById.get(uid);
+            if (!data) return [];
+            return [{
+              id: uid,
+              name: data.name || 'Jogador',
+              photoUrl: data.photoUrl,
+            }];
+          });
+
+          if (!cancelled) setBlockedPlayers(players);
         }
         } catch (error) {
         logger.error('Error fetching blocked players:', error);
@@ -163,7 +173,7 @@ export const BlockedPlayersScreen: React.FC = () => {
             <Typography variant="h6" color="text.secondary">
               Nenhum jogador bloqueado
             </Typography>
-            <Typography variant="body2" color="text.disabled">
+            <Typography variant="body2" color="text.secondary">
               Jogadores bloqueados não poderão participar deste jogo
             </Typography>
           </Box>

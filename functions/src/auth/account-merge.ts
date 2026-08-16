@@ -49,6 +49,51 @@ const MAX_DOCS_PER_QUERY = 500;
 type MergeStatus = "pending_cpf" | "ready";
 
 /**
+ * FIX #4039: drena uma coleção de alto volume/baixo risco com cursor
+ * (`startAfter`) em vez de aplicar o guard de saturação. Coleções como
+ * `notifications`, `game_summons` e `group_invites` acumulam centenas de docs
+ * não críticos e saturavam permanentemente o merge; aqui elas são lidas até
+ * esvaziar (o excedente deixa de ser órfão).
+ *
+ * @param {FirebaseFirestore.Firestore} database Instância do Firestore.
+ * @param {string} collection Nome da coleção.
+ * @param {string} field Campo filtrado por igualdade.
+ * @param {string} uid UID de origem.
+ * @return {Promise<Object>} Documentos acumulados e contagem total.
+ */
+async function drainDocsByField(
+  database: FirebaseFirestore.Firestore,
+  collection: string,
+  field: string,
+  uid: string
+): Promise<{
+  docs: FirebaseFirestore.QueryDocumentSnapshot[];
+  size: number;
+}> {
+  const docs: FirebaseFirestore.QueryDocumentSnapshot[] = [];
+  let lastDoc: FirebaseFirestore.QueryDocumentSnapshot | undefined;
+
+  while (true) {
+    let query = database
+      .collection(collection)
+      .where(field, "==", uid)
+      .limit(MAX_DOCS_PER_QUERY);
+    if (lastDoc) {
+      query = query.startAfter(lastDoc);
+    }
+    const snapshot = await query.get();
+    if (snapshot.empty) break;
+
+    docs.push(...snapshot.docs);
+    lastDoc = snapshot.docs[snapshot.docs.length - 1];
+
+    if (snapshot.size < MAX_DOCS_PER_QUERY) break;
+  }
+
+  return {docs, size: docs.length};
+}
+
+/**
  * Deriva estado seguro do pedido pela relação dos CPFs privados.
  * @param {CpfRelation} relation Relação entre os hashes privados.
  * @return {MergeStatus} Estado do pedido.
@@ -845,12 +890,12 @@ export const completeAccountMerge = onCall(
         sourceUserRef.collection("groups").limit(MAX_DOCS_PER_QUERY).get(),
         database.collection("confirmations").where("user_id", "==", sourceUid).limit(MAX_DOCS_PER_QUERY).get(),
         database.collection("confirmations").where("userId", "==", sourceUid).limit(MAX_DOCS_PER_QUERY).get(),
-        database.collection("game_summons").where("user_id", "==", sourceUid).limit(MAX_DOCS_PER_QUERY).get(),
-        database.collection("group_invites")
-          .where("invited_user_id", "==", sourceUid).limit(MAX_DOCS_PER_QUERY).get(),
-        database.collection("group_invites")
-          .where("invitedUserId", "==", sourceUid).limit(MAX_DOCS_PER_QUERY).get(),
-        database.collection("notifications").where("user_id", "==", sourceUid).limit(MAX_DOCS_PER_QUERY).get(),
+        // FIX #4039: coleções de alto volume/baixo risco são drenadas com
+        // cursor em vez de saturar o merge permanentemente.
+        drainDocsByField(database, "game_summons", "user_id", sourceUid),
+        drainDocsByField(database, "group_invites", "invited_user_id", sourceUid),
+        drainDocsByField(database, "group_invites", "invitedUserId", sourceUid),
+        drainDocsByField(database, "notifications", "user_id", sourceUid),
         database.collection("games").where("owner_id", "==", sourceUid).limit(MAX_DOCS_PER_QUERY).get(),
         database.collection("games")
           .where("co_organizers", "array-contains", sourceUid).limit(MAX_DOCS_PER_QUERY).get(),
@@ -863,19 +908,21 @@ export const completeAccountMerge = onCall(
         sourceUserRef.collection("game_templates").limit(MAX_DOCS_PER_QUERY).get(),
       ]);
 
-      // FIX #4015: Detectar saturação antes do estágio irreversível.
+      // FIX #4015/#4039: Detectar saturação antes do estágio irreversível.
       // Se qualquer query retornar exatamente MAX_DOCS_PER_QUERY docs,
       // o excedente está sendo ignorado — e como a união é irreversível
       // (guard alreadyCompleted), esses docs ficariam órfãos para sempre.
       // Abortar com erro acionável em vez de completar uma união parcial.
+      //
+      // FIX #4039: o guard só se aplica a coleções CRÍTICAS de posse. As
+      // coleções de alto volume/baixo risco (notifications, game_summons,
+      // group_invites) foram drenadas com cursor acima — não saturaram, então
+      // não participam deste check. Sem isso, um usuário ativo com 500+
+      // notificações não lidas era bloqueado para sempre sem caminho algum.
       const saturationChecks: Array<[string, FirebaseFirestore.QuerySnapshot]> = [
         ["groups", sourceGroupLinks],
         ["confirmations (user_id)", sourceConfirmationsSnake],
         ["confirmations (userId)", sourceConfirmationsCamel],
-        ["game_summons", sourceSummons],
-        ["group_invites (invited_user_id)", sourceGroupInvitesSnake],
-        ["group_invites (invitedUserId)", sourceGroupInvitesCamel],
-        ["notifications", sourceNotifications],
         ["games (owner_id)", sourceOwnedGames],
         ["games (co_organizers)", sourceCoorganizedGames],
         ["locations (owner_id)", sourceOwnedLocations],
@@ -893,8 +940,8 @@ export const completeAccountMerge = onCall(
           "failed-precondition",
           `A conta de origem possui ${MAX_DOCS_PER_QUERY}+ documentos em: ` +
           `${saturated.join(", ")}. A união não pode ser concluída ` +
-          "para evitar perda silenciosa de dados. Contate o suporte " +
-          "para reconciliação manual.",
+          "para evitar perda silenciosa de dados. Tente novamente mais " +
+          "tarde.",
         );
       }
 

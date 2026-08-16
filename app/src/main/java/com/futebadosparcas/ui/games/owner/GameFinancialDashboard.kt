@@ -53,13 +53,21 @@ fun GameFinancialDashboardScreen(
     // Calculos financeiros — pricePerPlayer segue a formula canonica
     // (totalCost / maxPlayers com fallback para dailyPrice), espelhando
     // web/src/utils/gamePayment.ts e o callable confirmGamePresence.
-    val confirmedPlayers = confirmations.filter { it.status == ConfirmationStatus.CONFIRMED.name }
+    val confirmedPlayers = remember(confirmations) {
+        confirmations.filter { it.status == ConfirmationStatus.CONFIRMED.name }
+    }
     val pricePerPlayer = game.resolveExpectedPayment()
 
-    val paidPlayers = confirmedPlayers.filter { it.paymentStatus == PaymentStatus.PAID.name }
-    val partialPlayers = confirmedPlayers.filter { it.hasPartialPayment() }
-    val pendingPlayers = confirmedPlayers.filter {
-        it.paymentStatus == PaymentStatus.PENDING.name && !it.hasPartialPayment()
+    val paidPlayers = remember(confirmedPlayers) {
+        confirmedPlayers.filter { it.paymentStatus == PaymentStatus.PAID.name }
+    }
+    val partialPlayers = remember(confirmedPlayers) {
+        confirmedPlayers.filter { it.hasPartialPayment() }
+    }
+    val pendingPlayers = remember(confirmedPlayers) {
+        confirmedPlayers.filter {
+            it.paymentStatus == PaymentStatus.PENDING.name && !it.hasPartialPayment()
+        }
     }
 
     val totalCollected = paidPlayers.size * pricePerPlayer +

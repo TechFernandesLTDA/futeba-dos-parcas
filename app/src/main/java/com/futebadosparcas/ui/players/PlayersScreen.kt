@@ -52,6 +52,7 @@ import com.futebadosparcas.ui.components.ShimmerPlayerCard
 import com.futebadosparcas.ui.components.design.AppTopBar
 import com.futebadosparcas.ui.theme.bottomBarPadding
 import com.futebadosparcas.ui.theme.GamificationColors
+import com.futebadosparcas.ui.theme.gamificationTextColor
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.debounce
@@ -671,7 +672,7 @@ private fun PlayerCard(
                     Text(
                         text = stringResource(R.string.players_level_format, player.level),
                         style = MaterialTheme.typography.labelMedium,
-                        color = GamificationColors.Gold,
+                        color = gamificationTextColor(GamificationColors.Gold),
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(horizontal = AppDimensions.spacing_small, vertical = AppDimensions.spacing_extraSmall)
                     )

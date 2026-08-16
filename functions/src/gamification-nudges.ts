@@ -16,7 +16,6 @@ import {
 } from "./notifications/helpers";
 import {
   claimNotificationEventOnce,
-  completeNotificationEvent,
   releaseNotificationEvent,
 } from "./notifications/dedup";
 import {LEVELS} from "./xp/pipeline";
@@ -33,6 +32,14 @@ const BADGE_PROGRESS_THRESHOLD = 0.8;
 const BRT_TIMEZONE = "America/Sao_Paulo";
 const GAME_QUERY_BATCH_SIZE = 5;
 const ACTIVE_GAME_STATUSES = ["SCHEDULED", "CONFIRMED"] as const;
+
+// FIX #4058: cooldown mínimo por (userId, tipo) — cobre o caso em que o valor
+// oscila 1 XP e burlaria a camada de "mudou?". 7 dias.
+const NUDGE_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000;
+// FIX #4058: após N nudges consecutivos não lidos do mesmo tipo, suspende.
+const NUDGE_MAX_CONSECUTIVE_UNREAD = 3;
+// FIX #4058: doc de estado por (userId, tipo) com last_sent_at + last_value.
+const NUDGE_STATE_COLLECTION = "gamification_nudge_state";
 
 // #3875: teto de memberships lidos por usuário. Cobre o número realista de
 // grupos por jogador; combinado com orderBy(documentId()) torna o subconjunto
@@ -87,17 +94,91 @@ const BADGE_HINTS = [
   },
 ] as const;
 
-function todayKey(): string {
-  return new Date().toLocaleDateString("en-CA", {
-    timeZone: BRT_TIMEZONE,
-  });
-}
-
 function notificationDocId(
   type: string,
   userId: string,
 ): string {
-  return `gamification_nudge_${type}_${userId}_${todayKey()}`;
+  // FIX #4058: a chave NÃO pode conter a data. Com `_${todayKey()}`, a claim de
+  // dedup era sempre nova a cada dia → reenvio idêntico para sempre. Chave
+  // estável garante um único doc de notificação por (tipo, usuário) e a política
+  // de reenvio fica em `sendNudgeIfDue` (mudança de valor OU cooldown).
+  return `gamification_nudge_${type}_${userId}`;
+}
+
+/**
+ * Converte um valor possivelmente Timestamp (Firestore) em epoch millis.
+ * @param {unknown} value Valor a converter.
+ * @return {number} Millis ou 0.
+ */
+function timestampMillis(value: unknown): number {
+  if (value && typeof value === "object") {
+    const v = value as {toMillis?: () => number; toDate?: () => Date};
+    if (typeof v.toMillis === "function") return v.toMillis();
+    if (typeof v.toDate === "function") return v.toDate().getTime();
+  }
+  return 0;
+}
+
+/**
+ * FIX #4058: decide se um nudge deve ser (re)enviado e envia se devido.
+ *
+ * Política: envia se o valor mudou desde o último envio OU se o cooldown
+ * expirou; suspende o tipo após N não lidos consecutivos. O estado vive em
+ * `gamification_nudge_state/{type}_{userId}`.
+ *
+ * @param {string} type Tipo do nudge.
+ * @param {string} userId UID alvo.
+ * @param {string | number} value Valor que motivou o nudge.
+ * @param {Function} buildPayload Factory do payload de notificação.
+ * @return {Promise<void>}
+ */
+async function sendNudgeIfDue(
+  type: string,
+  userId: string,
+  value: string | number,
+  buildPayload: () => Parameters<typeof sendAndSaveNotification>[1],
+): Promise<void> {
+  const docId = notificationDocId(type, userId);
+  const stateRef = db()
+    .collection(NUDGE_STATE_COLLECTION)
+    .doc(`${type}_${userId}`);
+  const stateSnap = await stateRef.get();
+  const state = stateSnap.exists ? (stateSnap.data() ?? {}) : {};
+  const now = Date.now();
+  const lastSentAt = timestampMillis(state.last_sent_at);
+  const valueChanged = state.last_value !== value;
+  const cooldownElapsed = now - lastSentAt >= NUDGE_COOLDOWN_MS;
+
+  if (!valueChanged && !cooldownElapsed) return;
+
+  // Supressão por não-engajamento: conta nudges consecutivos não lidos.
+  const prevNotification = await db()
+    .collection("notifications")
+    .doc(docId)
+    .get();
+  const previousUnread = prevNotification.exists &&
+    prevNotification.data()?.read === false;
+  const consecutiveUnread = previousUnread ?
+    (typeof state.consecutive_unread === "number" ?
+      state.consecutive_unread : 0) + 1 :
+    0;
+
+  if (consecutiveUnread >= NUDGE_MAX_CONSECUTIVE_UNREAD) {
+    logger.info(
+      "[GAMIFICATION_NUDGES] nudge suprimido após " +
+      `${consecutiveUnread} não lidos consecutivos`,
+      {type, userId},
+    );
+    return;
+  }
+
+  await sendGamificationNotificationOnce(userId, buildPayload(), docId);
+
+  await stateRef.set({
+    last_sent_at: Timestamp.fromDate(new Date(now)),
+    last_value: value,
+    consecutive_unread: consecutiveUnread,
+  }, {merge: true});
 }
 
 function getAlmostLevelHint(
@@ -154,15 +235,11 @@ async function sendGamificationNotificationOnce(
     throw error;
   }
 
-  try {
-    await completeNotificationEvent(docId);
-  } catch (error) {
-    logger.error(
-      "[GAMIFICATION_NUDGES] failed to complete dedup claim",
-      {docId, userId, error},
-    );
-    throw error;
-  }
+  // FIX #4058: chave estável (sem data) faz a dedup "completed" bloquear para
+  // sempre. Liberamos a claim após o sucesso para permitir reenvio futuro
+  // (decidido por sendNudgeIfDue). A claim só existe para evitar corrida
+  // concorrente no mesmo run.
+  await releaseNotificationEvent(docId);
 }
 
 async function maybeSendAlmostLevel(
@@ -174,8 +251,7 @@ async function maybeSendAlmostLevel(
   const hint = getAlmostLevelHint(currentXp);
   if (!hint) return;
 
-  const docId = notificationDocId("almost_level", userId);
-  await sendGamificationNotificationOnce(userId, {
+  await sendNudgeIfDue("almost_level", userId, hint.xpLeft, () => ({
     userId,
     title: GAMIFICATION_NUDGES.ALMOST_LEVEL.title["pt-BR"](),
     body: GAMIFICATION_NUDGES.ALMOST_LEVEL.body["pt-BR"]({
@@ -184,7 +260,7 @@ async function maybeSendAlmostLevel(
     }),
     type: NotificationType.ACHIEVEMENT,
     action: "achievements",
-  }, docId);
+  }));
 }
 
 async function maybeSendAlmostBadge(
@@ -194,18 +270,22 @@ async function maybeSendAlmostBadge(
   const hint = getAlmostBadgeHint(statsData);
   if (!hint) return;
 
-  const docId = notificationDocId("almost_badge", userId);
-  await sendGamificationNotificationOnce(userId, {
+  await sendNudgeIfDue(
+    "almost_badge",
     userId,
-    title: GAMIFICATION_NUDGES.ALMOST_BADGE.title["pt-BR"](),
-    body: GAMIFICATION_NUDGES.ALMOST_BADGE.body["pt-BR"]({
-      remaining: String(hint.remaining),
-      unit: hint.unit,
-      badgeName: hint.badgeName,
+    `${hint.badgeName}:${hint.remaining}`,
+    () => ({
+      userId,
+      title: GAMIFICATION_NUDGES.ALMOST_BADGE.title["pt-BR"](),
+      body: GAMIFICATION_NUDGES.ALMOST_BADGE.body["pt-BR"]({
+        remaining: String(hint.remaining),
+        unit: hint.unit,
+        badgeName: hint.badgeName,
+      }),
+      type: NotificationType.ACHIEVEMENT,
+      action: "badges",
     }),
-    type: NotificationType.ACHIEVEMENT,
-    action: "badges",
-  }, docId);
+  );
 }
 
 async function findUpcomingOpenGameForUser(
@@ -289,8 +369,7 @@ async function maybeSendStreakAtRisk(
   const gameId = await findUpcomingOpenGameForUser(userId);
   if (!gameId) return;
 
-  const docId = notificationDocId("streak_at_risk", userId);
-  await sendGamificationNotificationOnce(userId, {
+  await sendNudgeIfDue("streak_at_risk", userId, streak, () => ({
     userId,
     title: GAMIFICATION_NUDGES.STREAK_AT_RISK.title["pt-BR"](),
     body: GAMIFICATION_NUDGES.STREAK_AT_RISK.body["pt-BR"]({
@@ -299,7 +378,7 @@ async function maybeSendStreakAtRisk(
     type: NotificationType.ACHIEVEMENT,
     gameId,
     action: "games",
-  }, docId);
+  }));
 }
 
 // #3875: processa um único usuário — nível, badge e streak. Toda a leitura e

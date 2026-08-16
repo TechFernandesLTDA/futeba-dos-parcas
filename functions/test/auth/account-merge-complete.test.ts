@@ -62,7 +62,8 @@ interface FakeQuerySnapshot {
 
 interface FakeQuery {
   where: (field: string, op: string, value: unknown) => FakeQuery;
-  limit: () => FakeQuery;
+  limit: (value?: number) => FakeQuery;
+  startAfter: (lastDoc: FakeDocumentSnapshot) => FakeQuery;
   get: () => Promise<FakeQuerySnapshot>;
 }
 
@@ -109,14 +110,24 @@ function createFakeFirestore(
   const query = (
     collectionPath: string,
     filters: Array<{field: string; op: string; value: unknown}> = [],
+    limitValue?: number,
+    startAfterId?: string,
   ): FakeQuery => ({
     where: (field, op, value) => query(
       collectionPath,
       [...filters, {field, op, value}],
+      limitValue,
+      startAfterId,
     ),
-    limit: () => query(collectionPath, filters),
+    limit: (value) => query(collectionPath, filters, value, startAfterId),
+    startAfter: (lastDoc) => query(
+      collectionPath,
+      filters,
+      limitValue,
+      lastDoc.id,
+    ),
     get: async () => {
-      const docs = directDocuments(collectionPath).filter((doc) => {
+      let docs = directDocuments(collectionPath).filter((doc) => {
         const data = doc.data() ?? {};
         return filters.every(({field, op, value}) => {
           const actual = data[field];
@@ -127,6 +138,12 @@ function createFakeFirestore(
           return false;
         });
       });
+      if (startAfterId !== undefined) {
+        docs = docs.filter((doc) => doc.id.localeCompare(startAfterId) > 0);
+      }
+      if (limitValue !== undefined) {
+        docs = docs.slice(0, limitValue);
+      }
       return {docs, size: docs.length, empty: docs.length === 0};
     },
   });
@@ -561,7 +578,7 @@ describe("completeAccountMerge transactional migration", () => {
   );
 
   it(
-    "aborta com failed-precondition quando notifications satura MAX_DOCS_PER_QUERY (#4015)",
+    "drena notifications além de MAX_DOCS_PER_QUERY sem bloquear o merge (#4039)",
     async () => {
       const initial: Record<string, Data> = {
         [`account_merge_requests/${requestId}`]: {
@@ -577,8 +594,80 @@ describe("completeAccountMerge transactional migration", () => {
         [`cpf_index/${cpfHash}`]: {uid: sourceUid, createdAt: "x"},
         [`phone_index/${canonicalPhoneHash}`]: {uid: targetUid, createdAt: "y"},
       };
-      for (let i = 0; i < 500; i++) {
+      // 1500 notificações não lidas — antes saturava permanentemente o merge.
+      for (let i = 0; i < 1500; i++) {
         initial[`notifications/notif-${i}`] = {user_id: sourceUid};
+      }
+
+      const {firestore} = createFakeFirestore(initial);
+      mockDb.mockReturnValue(firestore);
+      mockLoadIdentityIndexHashes.mockImplementation(async (
+        _db: unknown,
+        collectionName: string,
+        uid: string,
+      ) => {
+        if (collectionName === "cpf_index") return [cpfHash];
+        return uid === sourceUid ?
+          ["old-source"] :
+          [canonicalPhoneHash];
+      });
+      const sourceAuth = {
+        uid: sourceUid,
+        disabled: false,
+        email: "old@example.com",
+        providerData: [{providerId: "google.com"}],
+        customClaims: {},
+      };
+      const targetAuth = {
+        uid: targetUid,
+        disabled: false,
+        email: "main@example.com",
+        phoneNumber: phone,
+        providerData: [],
+        customClaims: {},
+      };
+      mockGetAuth.mockReturnValue({
+        getUser: jest.fn(async (uid: string) =>
+          uid === sourceUid ? sourceAuth : targetAuth),
+        updateUser: jest.fn(async () => undefined),
+        revokeRefreshTokens: jest.fn(async () => undefined),
+        setCustomUserClaims: jest.fn(async () => undefined),
+      });
+
+      const result = await (completeAccountMerge as unknown as (
+        request: Data,
+      ) => Promise<Data>)({
+        auth: {uid: targetUid, token: {}},
+        data: {requestId},
+      });
+
+      expect(result).toEqual(expect.objectContaining({
+        success: true,
+        status: "completed",
+      }));
+    },
+  );
+
+  it(
+    "aborta com failed-precondition quando games (owner_id) satura (#4039)",
+    async () => {
+      const initial: Record<string, Data> = {
+        [`account_merge_requests/${requestId}`]: {
+          sourceUid,
+          targetUid,
+          status: "ready",
+          proofExpiresAt: Timestamp.fromMillis(Date.now() + 60_000),
+        },
+        [`users/${sourceUid}`]: {display_name: "Source"},
+        [`users/${targetUid}`]: {display_name: "Target"},
+        [`users_private/${sourceUid}`]: {cpfHash, phoneHash: "old-source"},
+        [`users_private/${targetUid}`]: {cpfHash, phoneHash: canonicalPhoneHash},
+        [`cpf_index/${cpfHash}`]: {uid: sourceUid, createdAt: "x"},
+        [`phone_index/${canonicalPhoneHash}`]: {uid: targetUid, createdAt: "y"},
+      };
+      // Coleção CRÍTICA de posse saturando: o guard deve ser preservado.
+      for (let i = 0; i < 501; i++) {
+        initial[`games/game-${i}`] = {owner_id: sourceUid};
       }
 
       const {firestore} = createFakeFirestore(initial);
@@ -623,7 +712,7 @@ describe("completeAccountMerge transactional migration", () => {
         data: {requestId},
       })).rejects.toMatchObject({
         code: "failed-precondition",
-        message: expect.stringContaining("notifications"),
+        message: expect.stringContaining("games (owner_id)"),
       });
     },
   );

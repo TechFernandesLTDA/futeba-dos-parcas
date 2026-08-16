@@ -20,7 +20,7 @@ import {
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { LevelEntry } from '../../types/gamification';
-import { getLevelColor } from '../../types/user';
+import { getLevelColor, getLevelTextColor } from '../../types/user';
 import {
   getLevelBadgeDescription,
   getLevelBadgeImage,
@@ -49,6 +49,8 @@ export function LevelDetailsDialog({
   if (!entry) return null;
 
   const color = getLevelColor(entry.level, theme);
+  // #4041: cor segura como TEXTO (prata 1.32:1 / ouro 1.40:1 reprovam AA no light)
+  const textColor = getLevelTextColor(entry.level, theme);
   const xpRemaining = Math.max(entry.xpRequired - currentXp, 0);
   const statusLabel = isCurrent
     ? t('level.statusCurrent')
@@ -167,7 +169,7 @@ export function LevelDetailsDialog({
             <Typography variant="caption" color="text.secondary">
               {t('level.requiredXp')}
             </Typography>
-            <Typography variant="h6" fontWeight={800} color={color}>
+            <Typography variant="h6" fontWeight={800} sx={{ color: textColor }}>
               {entry.xpRequired.toLocaleString('pt-BR')}
             </Typography>
           </Box>

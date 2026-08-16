@@ -39,6 +39,7 @@ import { pageSpacing } from '../../../theme/pageTokens';
 import { PullToRefresh } from '../../../components/common/PullToRefresh';
 import { useDebounce } from '../../../hooks/useDebounce';
 import { formatDateShort } from '../../../utils/dateFormatters';
+import { getPrimaryOnTint } from '../../../theme';
 import { ErrorState } from '../../../components/common/ErrorState';
 import { EmptyState } from '../../../components/common/EmptyState';
 import { PageContainer } from '../../../components/common/PageContainer';
@@ -312,7 +313,16 @@ export function GroupsTab() {
                         }}
                       >
                         <Event fontSize="small" color="primary" />
-                        <Typography variant="body2" color="primary.main" fontWeight="medium" noWrap>
+                        {/* #4048: primary.main (4.79:1 no branco) cai para 4.39:1
+                            sobre o véu neutro action.hover — usa o token AA
+                            getPrimaryOnTint (primary.dark #005A1C no light,
+                            ~7.5:1 sobre o véu; primary.main no dark já passa). */}
+                        <Typography
+                          variant="body2"
+                          fontWeight="medium"
+                          noWrap
+                          sx={{ color: getPrimaryOnTint(theme) }}
+                        >
                           {t('groups.nextGame')}: {group.nextGameTitle || 'Jogo'} • {formatDateShort(group.nextGameDate)}
                         </Typography>
                       </Box>

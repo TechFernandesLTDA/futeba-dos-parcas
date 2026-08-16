@@ -117,7 +117,7 @@ function LocationsMapView({ locations, selectedLocation, onLocationSelect, mapCe
         <Typography variant="body2" color="text.secondary">
           {apiKey ? t('locations.mapLoading') : t('locations.mapUnavailable')}
         </Typography>
-        <Typography variant="caption" color="text.disabled">
+        <Typography variant="caption" color="text.secondary">
           {locations.length} quadras cadastradas
         </Typography>
       </Box>

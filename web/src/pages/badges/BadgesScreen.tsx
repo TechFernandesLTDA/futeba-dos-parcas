@@ -227,7 +227,11 @@ const BadgeItem = React.memo(function BadgeItem({
         }}
         sx={{
           height: '100%',
-          opacity: isUnlocked ? 1 : 0.5,
+          // #4050: opacity removida — o card bloqueado é INTERATIVO (click +
+          // teclado + aria-label) e a opacidade 0.5 multiplicava o contraste do
+          // nome/chip de raridade para 2.07-4.48:1 (AA pede 4.5). O estado
+          // "bloqueado" já é sinalizado pelo grayscale do ícone (:250) +
+          // LockIcon + aria-label.
           ...rarityStyle,
           cursor: 'pointer',
           transition: (t) => t.transitions.create('transform', { duration: t.transitions.duration.shorter }),

@@ -1,7 +1,9 @@
 import {onCall, HttpsError} from "firebase-functions/v2/https";
+import {logger} from "firebase-functions/v2";
 import {FUNCTION_REGION} from "../constants";
 import {db} from "../_db";
 import {isRecord} from "../validation/guards";
+import {checkRateLimit} from "../middleware/rate-limiter";
 
 const DATE_KEY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const TIME_PATTERN = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
@@ -126,11 +128,28 @@ export const getFieldAvailability = onCall<FieldAvailabilityRequest>(
   {
     region: FUNCTION_REGION,
     enforceAppCheck: process.env.FUNCTIONS_EMULATOR !== "true",
-    consumeAppCheckToken: false,
+    // FIX #4046: consome o token de App Check como as callables sensíveis,
+    // e aplica o mesmo rate limit das irmãs (bucket por uid).
+    consumeAppCheckToken: true,
   },
   async (request): Promise<FieldAvailabilityResponse> => {
     if (!request.auth) {
       throw new HttpsError("unauthenticated", "Autenticação necessária.");
+    }
+
+    // FIX #4046: era a única callable alcançável por usuário comum sem rate
+    // limit. Cota compatível com a tela de disponibilidade (read-only, com
+    // janela MAX_RANGE_DAYS).
+    const rateLimitResult = await checkRateLimit(request.auth.uid, {
+      maxRequests: 60,
+      windowMs: 60 * 1000,
+      keyPrefix: "field_availability",
+    });
+    if (!rateLimitResult.allowed) {
+      throw new HttpsError(
+        "resource-exhausted",
+        "Muitas consultas de disponibilidade. Tente novamente em instantes."
+      );
     }
 
     const {fieldId, startDate, endDate} = parseFieldAvailabilityRequest(
@@ -172,6 +191,16 @@ export const getFieldAvailability = onCall<FieldAvailabilityRequest>(
 
     if (cursor) {
       truncated = true;
+    }
+
+    // FIX #4046: sinal de saturação no servidor — uma quadra que passou do teto
+    // de páginas volta `truncated=true` para o cliente, mas o servidor não
+    // registrava nada (mesmo princípio de sinal de saturação do #4017).
+    if (truncated) {
+      logger.warn(
+        "[FIELD_AVAILABILITY] Query truncada para a quadra " +
+        `${fieldId} — ${allDocs.length}+ jogos na janela consultada.`
+      );
     }
 
     const slots = allDocs

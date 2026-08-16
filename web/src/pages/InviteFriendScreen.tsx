@@ -1,4 +1,5 @@
 import { PageContainer } from '../components/common/PageContainer';
+import { ScreenHeader } from '../components/common/ScreenHeader';
 import React, { useCallback, useState } from 'react';
 import { useNavigateBack } from '../hooks/useNavigateBack';
 import {
@@ -15,7 +16,6 @@ import {
   alpha,
 } from '@mui/material';
 import {
-  ArrowBack as BackIcon,
   ContentCopy as CopyIcon,
   Share as ShareIcon,
   EmojiEvents as TrophyIcon,
@@ -98,14 +98,13 @@ export const InviteFriendScreen: React.FC = () => {
 
   return (
     <PageContainer maxWidth="form">
-      <Stack direction="row" alignItems="center" spacing={1} mb={3}>
-        <IconButton onClick={goBack} aria-label={t('a11y.back')}>
-          <BackIcon />
-        </IconButton>
-        <Typography variant="h6" fontWeight="bold" flex={1}>
-          {t('invite.title')}
-        </Typography>
-      </Stack>
+      {/* #4051: migrado para ScreenHeader — o header manual não-sticky empilhava
+          com a MobileTopBar global no mobile (2 botões "Voltar", 2 títulos). */}
+      <ScreenHeader
+        title={t('invite.title')}
+        onBack={goBack}
+        backAriaLabel={t('a11y.back')}
+      />
 
       <Paper sx={{ p: 3, mb: 3, textAlign: 'center', bgcolor: (t) => t.palette.mode === 'dark' ? 'grey.900' : 'grey.50' }}>
         <Typography variant="body2" color="text.secondary" gutterBottom>
@@ -150,7 +149,10 @@ export const InviteFriendScreen: React.FC = () => {
               px: 1,
               borderRadius: 1,
               bgcolor: inviteCount >= l.count ? theme.palette.mode === 'dark' ? alpha(theme.palette.common.white, 0.05) : alpha(theme.palette.common.black, 0.03) : 'transparent',
-              opacity: inviteCount >= l.count ? 1 : 0.5,
+              // #4050: opacity 0.5 removida — multiplicava o contraste das
+              // legendas ("3 convidados") para ~2.5:1 no light. O estado
+              // "não conquistado" segue sinalizado pela ausência do chip
+              // "Conquistado" e pelo peso normal do rótulo.
             }}
           >
             <Typography variant="h6">{l.icon}</Typography>

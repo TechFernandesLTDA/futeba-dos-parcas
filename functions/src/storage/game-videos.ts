@@ -2,7 +2,10 @@ import {createHash} from "node:crypto";
 import {FieldValue} from "firebase-admin/firestore";
 import {getStorage} from "firebase-admin/storage";
 import {HttpsError} from "firebase-functions/v2/https";
+import {logger} from "firebase-functions/v2";
+import {onSchedule} from "firebase-functions/v2/scheduler";
 import {db} from "../_db";
+import {FUNCTION_REGION} from "../constants";
 import {secureCallable} from "../middleware/secure-callable-wrapper";
 import {
   ACCEPTED_VIDEO_CONTENT_TYPE,
@@ -22,6 +25,12 @@ const GAME_VIDEO_RATE_LIMIT = {
   windowMs: 60 * 1000,
   keyPrefix: "game_video_create",
 };
+
+// FIX #4038: docs PROCESSING presos (objeto já deletado) consomem cota para
+// sempre. Este janitor reconcilia docs PROCESSING antigos cujo objeto não
+// existe mais no bucket, marcando-os REJECTED (libera cota).
+const STALE_PROCESSING_AGE_MS = 30 * 60 * 1000;
+const JANITOR_PAGE_LIMIT = 100;
 
 interface ValidatedStoredObject {
   size: number;
@@ -286,5 +295,81 @@ export const createGameVideo = secureCallable<
 
       return {success: true, videoId: videoRef.id, alreadyExists: false};
     });
+  }
+);
+
+/**
+ * Converte `created_at` (Timestamp) em epoch millis, tolerando ausência.
+ * @param {unknown} value Valor de created_at.
+ * @return {number} Millis ou 0.
+ */
+function createdMillis(value: unknown): number {
+  if (value && typeof value === "object") {
+    const v = value as {toMillis?: () => number; toDate?: () => Date};
+    if (typeof v.toMillis === "function") return v.toMillis();
+    if (typeof v.toDate === "function") return v.toDate().getTime();
+  }
+  return 0;
+}
+
+/**
+ * FIX #4038: reconcilia docs `game_videos` presos em PROCESSING cujo objeto
+ * não existe mais no bucket. Sem isso, um doc PROCESSING órfão consome cota
+ * (`ACTIVE_VIDEO_STATUSES`) para sempre e nunca é promovido nem rejeitado,
+ * pois nenhum `onObjectFinalized` volta a disparar para o path deletado.
+ *
+ * Espelha `cleanupExpiredGroupWallMediaDrafts` (mural): job agendado que
+ * confirma no Storage e libera/remove o resíduo.
+ */
+export const reconcileStaleProcessingGameVideos = onSchedule(
+  {
+    region: FUNCTION_REGION,
+    schedule: "every 10 minutes",
+    timeZone: "America/Sao_Paulo",
+    memory: "512MiB",
+    timeoutSeconds: 300,
+  },
+  async () => {
+    const cutoff = Date.now() - STALE_PROCESSING_AGE_MS;
+    const snapshot = await db()
+      .collection("game_videos")
+      .where("status", "==", "PROCESSING")
+      .limit(JANITOR_PAGE_LIMIT)
+      .get();
+
+    let reconciled = 0;
+    for (const doc of snapshot.docs) {
+      const data = doc.data() ?? {};
+      const storagePath = typeof data.storage_path === "string" ?
+        data.storage_path : "";
+      if (!storagePath) continue;
+      if (createdMillis(data.created_at) >= cutoff) continue;
+
+      const bucket = getStorage().bucket();
+      const [exists] = await bucket.file(storagePath).exists().catch(() => [
+        false,
+      ] as const);
+      if (exists) continue;
+
+      await doc.ref.set(
+        {
+          status: "REJECTED",
+          rejection_reason: "STALE_PROCESSING_NO_OBJECT",
+          updated_at: FieldValue.serverTimestamp(),
+        },
+        {merge: true}
+      );
+      reconciled++;
+      logger.warn(
+        "[GAME_VIDEO_JANITOR] PROCESSING órfão reconciliado",
+        {videoId: doc.id, storagePath}
+      );
+    }
+
+    if (reconciled > 0) {
+      logger.info(
+        `[GAME_VIDEO_JANITOR] ${reconciled} doc(s) PROCESSING órfãos rejeitados`
+      );
+    }
   }
 );

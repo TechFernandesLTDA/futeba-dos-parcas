@@ -85,81 +85,21 @@ afterAll(async () => {
 });
 
 describe("game_photos", () => {
-  it("jogador confirmado pode criar foto em jogo finalizado", async () => {
-    await assertSucceeds(
+  it("bloqueia criacao direta para qualquer um (server-only via createGamePhoto #4049)", async () => {
+    await assertFails(
       asPlayerA(testEnv).doc("game_photos/photo-valid").set(validPhoto)
     );
-  });
-
-  it("organizador pode criar foto mesmo sem confirmacao", async () => {
-    await assertSucceeds(
+    await assertFails(
       asPlayerB(testEnv).doc("game_photos/photo-owner").set({
         ...validPhoto,
         uploaded_by: UID_PLAYER_B,
         storage_path: `games/${FINISHED_GAME_ID}/photos/${UID_PLAYER_B}/photo.jpg`,
       })
     );
-  });
-
-  it("co-organizador pode moderar/criar foto no album", async () => {
-    await assertSucceeds(
-      asPlayerC(testEnv).doc("game_photos/photo-co-organizer").set({
-        ...validPhoto,
-        uploaded_by: UID_PLAYER_C,
-        storage_path: `games/${FINISHED_GAME_ID}/photos/${UID_PLAYER_C}/photo.jpg`,
-      })
+    await assertFails(
+      asAdmin(testEnv).doc("game_photos/photo-admin").set(validPhoto)
     );
-  });
-
-  it("bloqueia anonimo e jogador nao confirmado", async () => {
     await assertFails(asAnon(testEnv).doc("game_photos/photo-anon").set(validPhoto));
-    await assertFails(
-      asUser(testEnv, UID_OUTSIDER).doc("game_photos/photo-non-player").set({
-        ...validPhoto,
-        uploaded_by: UID_OUTSIDER,
-        storage_path: `games/${FINISHED_GAME_ID}/photos/${UID_OUTSIDER}/photo.jpg`,
-      })
-    );
-  });
-
-  it("bloqueia foto fora de jogo finalizado", async () => {
-    await assertFails(
-      asPlayerA(testEnv).doc("game_photos/photo-scheduled-game").set({
-        ...validPhoto,
-        game_id: SCHEDULED_GAME_ID,
-        storage_path: `games/${SCHEDULED_GAME_ID}/photos/${UID_PLAYER_A}/photo.jpg`,
-      })
-    );
-  });
-
-  it("bloqueia path que nao pertence ao uploader e tipos inseguros", async () => {
-    await assertFails(
-      asPlayerA(testEnv).doc("game_photos/photo-wrong-path").set({
-        ...validPhoto,
-        storage_path: `games/${FINISHED_GAME_ID}/photos/${UID_PLAYER_B}/photo.jpg`,
-      })
-    );
-    await assertFails(
-      asPlayerA(testEnv).doc("game_photos/photo-svg").set({
-        ...validPhoto,
-        content_type: "image/svg+xml",
-      })
-    );
-  });
-
-  it("bloqueia campos extras e legenda acima do limite", async () => {
-    await assertFails(
-      asPlayerA(testEnv).doc("game_photos/photo-extra-field").set({
-        ...validPhoto,
-        raw_html: "<script>alert(1)</script>",
-      })
-    );
-    await assertFails(
-      asPlayerA(testEnv).doc("game_photos/photo-long-caption").set({
-        ...validPhoto,
-        caption: "a".repeat(161),
-      })
-    );
   });
 
   it("nao permite update de metadados", async () => {
@@ -210,6 +150,28 @@ describe("game_photos", () => {
 
   it("bloqueia delete por terceiro", async () => {
     await assertFails(asUser(testEnv, UID_OUTSIDER).doc("game_photos/photo-by-player-a").delete());
+  });
+
+  it("admin consegue deletar midia orfa apos o jogo ser apagado (#4049)", async () => {
+    await seedDoc(testEnv, "game_photos/photo-orphaned", {
+      ...validPhoto,
+      game_id: "game-photo-deleted",
+      storage_path: "games/game-photo-deleted/photos/uid-player-a-001/photo.jpg",
+    });
+    await assertSucceeds(
+      asAdmin(testEnv).doc("game_photos/photo-orphaned").delete()
+    );
+  });
+
+  it("nao-admin nao deleta midia orfa sem o jogo existir (#4049)", async () => {
+    await seedDoc(testEnv, "game_photos/photo-orphaned-2", {
+      ...validPhoto,
+      game_id: "game-photo-deleted-2",
+      storage_path: "games/game-photo-deleted-2/photos/uid-player-a-001/photo.jpg",
+    });
+    await assertFails(
+      asPlayerA(testEnv).doc("game_photos/photo-orphaned-2").delete()
+    );
   });
 });
 

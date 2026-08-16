@@ -584,6 +584,38 @@ export const onUserDeleted = runWith({
         await queueDelete(db.doc(`user_streaks/${uid}`));
         logger.info(`[ACCOUNT_CLEANUP] Deletando user_streaks/${uid}`);
 
+        // 16. FIX #4049: game_photos / game_videos (uploaded_by == uid) — LGPD.
+        // Coleções top-level chaveadas por uploaded_by (PII denormalizado:
+        // uploaded_by_name/photo). Coleta também os storage_paths para apagar
+        // os objetos do bucket no passo 20.
+        const mediaStoragePaths: string[] = [];
+        let gameMediaTotal = 0;
+        for (const collectionName of ["game_photos", "game_videos"]) {
+          while (true) {
+            const mediaSnap = await db
+              .collection(collectionName)
+              .where("uploaded_by", "==", uid)
+              .limit(500)
+              .get();
+            if (mediaSnap.empty) break;
+            for (const doc of mediaSnap.docs) {
+              const storagePath = doc.data()?.storage_path;
+              if (typeof storagePath === "string" && storagePath) {
+                mediaStoragePaths.push(storagePath);
+              }
+              await queueDelete(doc.ref);
+            }
+            gameMediaTotal += mediaSnap.size;
+            if (mediaSnap.size < 500) break;
+          }
+        }
+        if (gameMediaTotal > 0) {
+          logger.info(
+            `[ACCOUNT_CLEANUP] Deletando ${gameMediaTotal} ` +
+            `game_photos/game_videos do usuário ${uid}`
+          );
+        }
+
         await commitBatch();
 
         let anonFailed = false;
@@ -912,6 +944,24 @@ export const onUserDeleted = runWith({
             } catch (deleteError: unknown) {
               logger.warn(
                 `[ACCOUNT_CLEANUP] Erro ao deletar arquivos do prefixo ${prefix}:`,
+                deleteError
+              );
+            }
+          }
+
+          // FIX #4049: apaga os objetos de mídia de jogo do usuário usando os
+          // storage_paths coletados dos docs game_photos/game_videos (passo 16).
+          // O prefixo é literal no getFiles, então não dá para casar
+          // `games/*/photos/{uid}/` diretamente — usamos o path canônico do doc.
+          for (const mediaPath of mediaStoragePaths) {
+            try {
+              await bucket.file(mediaPath).delete({ignoreNotFound: true});
+              logger.info(
+                `[ACCOUNT_CLEANUP] Mídia de jogo deletada: ${mediaPath}`
+              );
+            } catch (deleteError: unknown) {
+              logger.warn(
+                `[ACCOUNT_CLEANUP] Erro ao deletar mídia ${mediaPath}:`,
                 deleteError
               );
             }

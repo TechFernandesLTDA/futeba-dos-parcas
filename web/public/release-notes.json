@@ -1,7 +1,38 @@
 {
   "platform": "web",
-  "generatedAt": "2026-08-08T20:03:52.952Z",
+  "generatedAt": "2026-08-16T00:55:45.327Z",
   "notes": [
+    {
+      "version": "1.56.8",
+      "buildNumber": null,
+      "releaseDate": "2026-08-15",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "Contraste, acessibilidade e desempenho aprimorados em todo o app web.",
+      "highlights": [],
+      "added": [],
+      "improved": [],
+      "fixed": [
+        "Cores de nível, medalhas e chips agora mantêm contraste legível nos temas claro e escuro.",
+        "Telas de formulário voltam a usar largura adequada em monitores grandes.",
+        "Cabeçalhos duplicados removidos em seis telas no celular.",
+        "Cartões e botões bloqueados mantêm o texto legível nos dois temas.",
+        "A tela de criar jogo exibe textos traduzidos em inglês e espanhol."
+      ],
+      "issueRefs": [
+        4041,
+        4042,
+        4047,
+        4048,
+        4050,
+        4051,
+        4052,
+        4055,
+        4056,
+        4057
+      ]
+    },
     {
       "version": "1.56.7",
       "buildNumber": null,

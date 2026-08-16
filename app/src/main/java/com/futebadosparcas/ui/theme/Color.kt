@@ -89,6 +89,43 @@ object GamificationColors {
 }
 
 /**
+ * Variantes de foreground (texto) da paleta de gamificação, theme-aware.
+ * O tema light usa tons escuros (contraste AA sobre a surface clara tone 99);
+ * o tema dark usa os tons claros. Os hex originais de [GamificationColors]
+ * seguem como fundo de medalha (identidade visual).
+ */
+object GamificationTextColors {
+    val Gold = Color(0xFF8A6D00)
+    val Silver = Color(0xFF616161)
+    val Bronze = Color(0xFF7A4A1F)
+    val Diamond = Color(0xFF00636F)
+}
+
+object GamificationTextColorsDark {
+    val Gold = Color(0xFFFFD700)
+    val Silver = Color(0xFFE0E0E0)
+    val Bronze = Color(0xFFCD7F32)
+    val Diamond = Color(0xFFB9F2FF)
+}
+
+/**
+ * Devolve a cor de texto theme-aware para um token de medalha de gamificação.
+ * Mantém o hex do token como fundo de medalha; escolhe o tom de foreground
+ * legível (>= 4.5:1) contra a surface do tema ativo.
+ */
+@androidx.compose.runtime.Composable
+fun gamificationTextColor(medal: Color): Color {
+    val isDark = LocalIsDarkTheme.current
+    return when (medal) {
+        GamificationColors.Gold -> if (isDark) GamificationTextColorsDark.Gold else GamificationTextColors.Gold
+        GamificationColors.Silver -> if (isDark) GamificationTextColorsDark.Silver else GamificationTextColors.Silver
+        GamificationColors.Bronze -> if (isDark) GamificationTextColorsDark.Bronze else GamificationTextColors.Bronze
+        GamificationColors.Diamond -> if (isDark) GamificationTextColorsDark.Diamond else GamificationTextColors.Diamond
+        else -> medal
+    }
+}
+
+/**
  * Cores de identidade das reações do soundboard (design tokens fixos).
  * Centralizadas aqui para evitar valores hardcoded espalhados na UI.
  */

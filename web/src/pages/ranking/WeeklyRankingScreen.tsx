@@ -8,7 +8,6 @@ import {
   CardActionArea,
   CardContent,
   Chip,
-  IconButton,
   Skeleton,
   Stack,
   Typography,
@@ -16,7 +15,6 @@ import {
   alpha,
 } from "@mui/material";
 import {
-  ArrowBack as BackIcon,
   EmojiEvents as TrophyIcon,
   SportsSoccer as SoccerIcon,
   DirectionsRun as AssistIcon,
@@ -25,6 +23,7 @@ import {
 import { useWeeklyRanking } from "../../hooks/useWeeklyRanking";
 import { useGamificationColors } from "../../hooks/useGamificationColors";
 import { PageContainer } from "../../components/common/PageContainer";
+import { ScreenHeader } from "../../components/common/ScreenHeader";
 import { EmptyState } from "../../components/common/EmptyState";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import { useTranslation } from "react-i18next";
@@ -42,22 +41,23 @@ export const WeeklyRankingScreen: React.FC = () => {
 
   return (
     <PageContainer maxWidth="list">
-      <Stack direction="row" alignItems="center" spacing={1} mb={3}>
-        <IconButton onClick={goBack} aria-label={t('a11y.back')}>
-          <BackIcon />
-        </IconButton>
-        <Typography variant="h5" fontWeight="bold" flex={1}>
-          {t("ranking.weekly.title")}
-        </Typography>
-        {data && (
-          <Chip
-            label={t("home.round", { week: data.weekKey })}
-            size="small"
-            color="primary"
-            variant="outlined"
-          />
-        )}
-      </Stack>
+      {/* #4051: migrado para ScreenHeader — o header manual não-sticky empilhava
+          com a MobileTopBar global no mobile (2 botões "Voltar", 2 títulos). */}
+      <ScreenHeader
+        title={t("ranking.weekly.title")}
+        onBack={goBack}
+        backAriaLabel={t('a11y.back')}
+        actions={
+          data ? (
+            <Chip
+              label={t("home.round", { week: data.weekKey })}
+              size="small"
+              color="primary"
+              variant="outlined"
+            />
+          ) : undefined
+        }
+      />
 
       {isLoading && (
         <Stack spacing={1}>

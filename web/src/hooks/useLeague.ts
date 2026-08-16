@@ -8,7 +8,7 @@ import {
   where,
   QueryConstraint,
 } from 'firebase/firestore';
-import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { db } from '../services/firebase';
 import { getLeaguePlayers } from '../services/cloudFunctions';
 import { LeagueDivision, normalizeLeagueDivision } from '../types/gamification';
@@ -158,6 +158,10 @@ export const useLeague = (
     getNextPageParam: (lastPage) => lastPage.hasMore ? lastPage.nextPageToken : undefined,
     staleTime: 3 * 60 * 1000, // 3 minutos
     gcTime: 10 * 60 * 1000,
+    // Anti-flicker: trocar filtro/ordenação/busca/divisão muda a queryKey e
+    // trocava a lista inteira por skeletons. Com keepPreviousData a lista
+    // anterior permanece visível enquanto a nova página chega.
+    placeholderData: keepPreviousData,
     // O listener em tempo real já invalida o ranking quando os dados mudam.
     // Evita uma segunda chamada apenas por retornar à janela do navegador.
     refetchOnWindowFocus: false,

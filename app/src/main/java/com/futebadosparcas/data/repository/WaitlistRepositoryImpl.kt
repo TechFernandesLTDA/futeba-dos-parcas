@@ -111,12 +111,6 @@ class WaitlistRepositoryImpl constructor(
                 doc.reference.delete().await()
             }
 
-            // Reordenar posicoes restantes
-            val reorderResult = reorderQueue(gameId)
-            if (reorderResult.isFailure) {
-                AppLogger.w(TAG) { "Falha ao reordenar fila após remoção: ${reorderResult.exceptionOrNull()?.message}" }
-            }
-
             AppLogger.i(TAG) { "Usuario $userId removido da lista de espera do jogo $gameId" }
 
             Result.success(Unit)
@@ -243,12 +237,6 @@ class WaitlistRepositoryImpl constructor(
 
             val updatedEntry = entry.copy(status = WaitlistStatus.PROMOTED.name)
 
-            // Reordenar fila
-            val reorderResult = reorderQueue(gameId)
-            if (reorderResult.isFailure) {
-                AppLogger.w(TAG) { "Falha ao reordenar fila após promoção: ${reorderResult.exceptionOrNull()?.message}" }
-            }
-
             AppLogger.i(TAG) { "Usuario ${updatedEntry.userId} promovido da lista de espera do jogo $gameId" }
 
             Result.success(updatedEntry)
@@ -319,13 +307,6 @@ class WaitlistRepositoryImpl constructor(
                 ?: return Result.failure(Exception("Entrada nao encontrada"))
 
             doc.reference.update("status", status.name).await()
-
-            if (status == WaitlistStatus.PROMOTED || status == WaitlistStatus.CANCELLED || status == WaitlistStatus.EXPIRED) {
-                val reorderResult = reorderQueue(gameId)
-                if (reorderResult.isFailure) {
-                    AppLogger.w(TAG) { "Falha ao reordenar fila após mudança de status: ${reorderResult.exceptionOrNull()?.message}" }
-                }
-            }
 
             Result.success(Unit)
         } catch (e: Exception) {
@@ -416,38 +397,6 @@ class WaitlistRepositoryImpl constructor(
             Result.success(snapshot.size())
         } catch (e: Exception) {
             AppLogger.e(TAG, "Erro ao contar lista de espera", e)
-            Result.failure(e)
-        }
-    }
-
-    /**
-     * Reordena as posicoes na fila apos remocao ou promocao.
-     * @return Result<Unit> com sucesso ou falha logada.
-     */
-    private suspend fun reorderQueue(gameId: String): Result<Unit> {
-        return try {
-            // P1 #12: Limit 50 - maximo realista de jogadores na fila
-            val snapshot = waitlistCollection(gameId)
-                .whereIn("status", listOf(
-                    WaitlistStatus.WAITING.name,
-                    WaitlistStatus.NOTIFIED.name
-                ))
-                .orderBy("added_at", Query.Direction.ASCENDING)
-                .limit(50)
-                .get()
-                .await()
-
-            // Batch write para atualizar posicoes atomicamente
-            val batch = firestore.batch()
-            var position = 1
-            for (doc in snapshot.documents) {
-                batch.update(doc.reference, "queue_position", position)
-                position++
-            }
-            batch.commit().await()
-            Result.success(Unit)
-        } catch (e: Exception) {
-            AppLogger.e(TAG, "Erro ao reordenar fila", e)
             Result.failure(e)
         }
     }

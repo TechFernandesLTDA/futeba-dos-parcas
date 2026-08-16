@@ -79,6 +79,9 @@ const SEARCHABLE_USERS_BATCH_SIZE = 500;
 /** Tipo de cache usado pelo diretorio publico da Liga. */
 const LEAGUE_PLAYERS_CACHE_KIND = "league_players_directory";
 
+/** Tipo de cache usado pelos docs de ranking de temporada. */
+const RANKING_CACHE_KIND = "ranking";
+
 /** Versao do schema do cache de diretorio da Liga. */
 const LEAGUE_PLAYERS_CACHE_SCHEMA_VERSION = 3;
 
@@ -90,6 +93,11 @@ const LEAGUE_PLAYERS_CACHE_CHUNKS_COLLECTION = "chunks";
 
 const CHUNK_ARRAY_MAX_INPUT = 10000;
 const SEASON_CACHE_QUERY_LIMIT = 100;
+// FIX #4045: tetos do laço de invalidação. Como o filtro server-side por kind
+// já reduz o conjunto aos docs de ranking (tipicamente 20–40), estes caps são
+// apenas safety net — nunca devem ser atingidos em operação normal.
+const SEASON_CACHE_MAX_PAGES = 10;
+const SEASON_CACHE_INVALIDATION_DEADLINE_MS = 30_000;
 
 // ==========================================
 // INTERFACES
@@ -1687,6 +1695,10 @@ export const getLeaderboardCached =
           .doc(cacheDocId)
           .set({
             season_id: safeSeasonId,
+            // FIX #4045: marca a família do cache para permitir filtro
+            // server-side na invalidação (where kind == "ranking"), separando
+            // docs de ranking dos de diretório da Liga sem ler estes em memória.
+            kind: RANKING_CACHE_KIND,
             gender: genderKey,
             rankings,
             cached_at: now,
@@ -1876,13 +1888,17 @@ async function fetchUsersInBatch(
  * público da Liga (getLeaguePlayers, #3358), que vive na MESMA coleção
  * (`cache_leaderboard`) e também carrega `season_id`. Apagá-lo aqui
  * regredia o #3358 (o diretório era reconstruído com ~10–15k reads a cada
- * partida encerrada, em vez de 1×/5 min). Por isso filtramos em memória os
- * docs de diretório (kind == LEAGUE_PLAYERS_CACHE_KIND) antes de deletar —
- * o diretório permanece sob seu próprio TTL de 5 min.
+ * partida encerrada, em vez de 1×/5 min).
+ *
+ * FIX #4045: o do/while do #4017 removia o ÚNICO teto e varria o diretório
+ * de TODOS os grupos da season (4 × nº de grupos) em memória, só para apagar
+ * ~20–40 docs de ranking — custo escalando com a base inteira. Agora os docs
+ * de ranking carregam `kind: "ranking"`, o filtro é aplicado NO SERVIDOR
+ * (`where kind == "ranking"`) e o laço tem teto de páginas + deadline.
  *
  * Custo: ~20 trigger invocations por partida encerrada (1 por
- * season_participation doc). Cada invocation: 1 query + batch delete.
- * Aceitável para ranking correto imediatamente pós-partida.
+ * season_participation doc). Cada invocation: só os docs de ranking (filtro
+ * server-side) + batch delete.
  */
 export const invalidateLeaderboardOnParticipation = onDocumentWritten(
   {
@@ -1899,41 +1915,42 @@ export const invalidateLeaderboardOnParticipation = onDocumentWritten(
     const db = getDb();
 
     try {
-      // FIX #4017: paginar até esvaziar para garantir que TODOS os docs
-      // de cache de ranking sejam invalidados. Antes o .limit(100) sem
-      // cursor podia deixar docs não-invalidados se a season tivesse
-      // >100 variantes de cache (limite × gênero × grupo).
       const allRankingDocs: FirebaseFirestore.QueryDocumentSnapshot[] = [];
       let cursor: FirebaseFirestore.QueryDocumentSnapshot | null = null;
+      const deadline = Date.now() + SEASON_CACHE_INVALIDATION_DEADLINE_MS;
 
-      do {
+      for (let page = 0; page < SEASON_CACHE_MAX_PAGES; page++) {
+        if (Date.now() >= deadline) {
+          logger.warn(
+            "[LEADERBOARD_CACHE] " +
+            `invalidação da season ${seasonId} atingiu o deadline; ` +
+            "ranking restante cai no TTL de 5 min"
+          );
+          break;
+        }
+
         let q: FirebaseFirestore.Query = db
           .collection(CACHE_COLLECTION)
           .where("season_id", "==", seasonId)
+          .where("kind", "==", RANKING_CACHE_KIND)
           .limit(SEASON_CACHE_QUERY_LIMIT);
 
         if (cursor) {
           q = q.startAfter(cursor);
         }
 
-        const page = await q.get();
-
-        if (page.empty) {
+        const pageSnap = await q.get();
+        if (pageSnap.empty) {
           break;
         }
 
-        // FIX #3883: preservar o cache de diretório público da Liga (#3358).
-        for (const doc of page.docs) {
-          if (doc.data()?.kind !== LEAGUE_PLAYERS_CACHE_KIND) {
-            allRankingDocs.push(doc);
-          }
-        }
+        allRankingDocs.push(...pageSnap.docs);
 
-        if (page.size < SEASON_CACHE_QUERY_LIMIT) {
+        if (pageSnap.size < SEASON_CACHE_QUERY_LIMIT) {
           break;
         }
-        cursor = page.docs[page.size - 1];
-      } while (cursor);
+        cursor = pageSnap.docs[pageSnap.size - 1];
+      }
 
       if (allRankingDocs.length === 0) {
         return;

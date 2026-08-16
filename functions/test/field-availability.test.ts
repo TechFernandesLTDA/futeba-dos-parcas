@@ -13,6 +13,18 @@ jest.mock("../src/_db", () => ({
   db: jest.fn(() => ({collection: mockCollection})),
 }));
 
+// FIX #4046: getFieldAvailability agora aplica rate limit. O check é isolado
+// aqui para não acoplar o teste ao armazenamento de buckets do rate-limiter.
+const mockCheckRateLimit = jest.fn().mockResolvedValue({
+  allowed: true,
+  remaining: 59,
+  resetAt: new Date(Date.now() + 60_000),
+});
+
+jest.mock("../src/middleware/rate-limiter", () => ({
+  checkRateLimit: mockCheckRateLimit,
+}));
+
 class MockHttpsError extends Error {
   code: string;
 

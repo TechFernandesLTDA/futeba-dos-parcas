@@ -141,7 +141,25 @@ async function generateThumbnail(
 }
 
 /**
- * Procura o doc game_videos correspondente ao storage_path.
+ * Faz uma ÚNICA consulta pelo doc game_videos correspondente ao storage_path.
+ *
+ * @param {string} storagePath Path do objeto no bucket.
+ * @return {Promise<FirebaseFirestore.DocumentReference | null>} Doc ref.
+ */
+async function queryVideoDocByStoragePath(
+  storagePath: string
+): Promise<FirebaseFirestore.DocumentReference | null> {
+  const snapshot = await db()
+    .collection("game_videos")
+    .where("storage_path", "==", storagePath)
+    .limit(1)
+    .get();
+  return snapshot.empty ? null : snapshot.docs[0].ref;
+}
+
+/**
+ * Procura o doc game_videos correspondente ao storage_path, com polling para
+ * absorver a latência de propagação da escrita da callable.
  *
  * @param {string} storagePath Path do objeto no bucket.
  * @return {Promise<FirebaseFirestore.DocumentReference | null>} Doc ref.
@@ -150,12 +168,8 @@ async function findVideoDocByStoragePath(
   storagePath: string
 ): Promise<FirebaseFirestore.DocumentReference | null> {
   for (let attempt = 0; attempt < DOC_LOOKUP_ATTEMPTS; attempt++) {
-    const snapshot = await db()
-      .collection("game_videos")
-      .where("storage_path", "==", storagePath)
-      .limit(1)
-      .get();
-    if (!snapshot.empty) return snapshot.docs[0].ref;
+    const ref = await queryVideoDocByStoragePath(storagePath);
+    if (ref) return ref;
     await delay(DOC_LOOKUP_DELAY_MS);
   }
   return null;
@@ -254,7 +268,7 @@ export const generateGameVideoThumbnail =
 
       const bucket = getStorage().bucket(object.bucket);
       const file = bucket.file(filePath);
-      const videoDoc = await findVideoDocByStoragePath(filePath);
+      let videoDoc = await findVideoDocByStoragePath(filePath);
       const fileSize = parseInt(String(object.size || "0"), 10);
 
       // FIX #4024: uploads diretos no Storage nao podem virar processamento
@@ -262,12 +276,26 @@ export const generateGameVideoThumbnail =
       // trigger nao encontra esse doc apos as tentativas de propagacao, limpa
       // o objeto sem executar ffmpeg.
       if (!videoDoc) {
-        logger.warn(
-          "[VIDEO_THUMBNAIL] Removing upload without authoritative document " +
-          filePath
-        );
-        await rejectVideo(null, "MISSING_VIDEO_DOCUMENT", file);
-        return;
+        // FIX #4038: re-verifica imediatamente antes do delete. O polling de
+        // ~15s pode ter esgotado ANTES de a callable createGameVideo criar o
+        // doc (cold start, App Check, rede móvel) — apagar aqui criaria um doc
+        // PROCESSING apontando para objeto inexistente, preso para sempre.
+        // Se o doc apareceu, processamos em vez de apagar.
+        const reappeared = await queryVideoDocByStoragePath(filePath);
+        if (reappeared) {
+          logger.warn(
+            "[VIDEO_THUMBNAIL] Doc autoritativo apareceu durante o lookup; " +
+            "processando em vez de apagar " + filePath
+          );
+          videoDoc = reappeared;
+        } else {
+          logger.warn(
+            "[VIDEO_THUMBNAIL] Removing upload without authoritative document " +
+            filePath
+          );
+          await rejectVideo(null, "MISSING_VIDEO_DOCUMENT", file);
+          return;
+        }
       }
 
       if (contentType !== ACCEPTED_VIDEO_CONTENT_TYPE) {

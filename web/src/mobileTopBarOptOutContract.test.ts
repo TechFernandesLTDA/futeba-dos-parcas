@@ -50,6 +50,43 @@ describe('contrato de opt-out da MobileTopBar (#3839)', () => {
     ).toEqual([]);
   });
 
+  // #4051 (3ª onda): telas com header manual NÃO-sticky (IconButton voltar +
+  // Typography h5/h6) também empilham com a MobileTopBar global. A detecção
+  // por assinatura `sticky` do #3840 não pegava essas. Este scan pega qualquer
+  // header manual; as telas conhecidas que ainda não migraram ficam em
+  // allowlist explícita (dívida documentada, não aprovada silenciosamente).
+  const NON_STICKY_HEADER_ALLOWLIST = new Set([
+    // Headers manuais pré-existentes, fora do escopo do fix #4051 — migrar em
+    // onda própria e remover da lista:
+    'messages/ConversationScreen.tsx',
+    'auth/ForgotPasswordScreen.tsx',
+    'auth/RegisterScreen.tsx',
+    'GroupChallengesScreen.tsx',
+    'onboarding/PhoneVerificationScreen.tsx',
+  ]);
+
+  it('toda pagina com header manual (voltar + heading, mesmo NAO-sticky) faz opt-out da MobileTopBar (#4051)', () => {
+    const offenders: string[] = [];
+
+    for (const file of walkPages(PAGES_DIR)) {
+      const source = readFileSync(file, 'utf8');
+      const hasManualHeader =
+        source.includes('ArrowBack') && /variant=["']h[56]["']/.test(source);
+      const optsOut =
+        source.includes('useHideMobileTopBar') || source.includes('ScreenHeader');
+      const rel = relative(PAGES_DIR, file);
+
+      if (hasManualHeader && !optsOut && !NON_STICKY_HEADER_ALLOWLIST.has(rel)) {
+        offenders.push(rel);
+      }
+    }
+
+    expect(
+      offenders,
+      'Telas com header manual (não-sticky) sem opt-out da MobileTopBar — migre para ScreenHeader ou chame useHideMobileTopBar(). Se for dívida conhecida, registre no NON_STICKY_HEADER_ALLOWLIST'
+    ).toEqual([]);
+  });
+
   it('LeagueScreen so faz opt-out quando standalone (embedded mantem a top bar da home)', () => {
     const source = readFileSync(
       join(PAGES_DIR, 'league/LeagueScreen.tsx'),

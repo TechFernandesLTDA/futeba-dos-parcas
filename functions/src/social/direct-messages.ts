@@ -209,7 +209,9 @@ async function shareActiveGroup(uidA: string, uidB: string): Promise<boolean> {
       .collectionGroup("members")
       .where("user_id", "==", uidA)
       .where("status", "==", "ACTIVE")
-      .limit(DIRECT_CHAT_MEMBERSHIP_PAGE_SIZE);
+      .limit(DIRECT_CHAT_MEMBERSHIP_PAGE_SIZE)
+      // PERF: projection — o doc do membro não é lido, só a ref do grupo.
+      .select("user_id");
     if (lastDoc) {
       membershipsQuery = membershipsQuery.startAfter(lastDoc);
     }
@@ -251,7 +253,9 @@ async function shareConfirmedGame(uidA: string, uidB: string): Promise<boolean> 
       .collection("confirmations")
       .where("user_id", "==", uidA)
       .where("status", "==", "CONFIRMED")
-      .limit(DIRECT_CHAT_CONFIRMATION_PAGE_SIZE);
+      .limit(DIRECT_CHAT_CONFIRMATION_PAGE_SIZE)
+      // PERF: projection — só game_id é usado para cruzar com o peer.
+      .select("game_id");
     if (lastDoc) {
       confirmationsQuery = confirmationsQuery.startAfter(lastDoc);
     }
@@ -272,6 +276,8 @@ async function shareConfirmedGame(uidA: string, uidB: string): Promise<boolean> 
         .collection("confirmations")
         .where("user_id", "==", uidB)
         .where("game_id", "in", gameIdChunk)
+        // PERF: projection — só status é checado.
+        .select("status")
         .get();
 
       if (bConfirmations.docs.some((confirmation) =>

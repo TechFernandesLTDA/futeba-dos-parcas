@@ -66,6 +66,8 @@ mockFirestore.FieldValue = indexFieldValue;
 mockFirestore.Timestamp = indexTimestamp;
 mockFirestore.FieldPath = { documentId: jest.fn(() => "__name__") };
 
+const mockDeleteFiles = jest.fn().mockResolvedValue([]);
+
 jest.mock("firebase-admin", () => ({
   apps: [{ name: "test" }],
   initializeApp: jest.fn(),
@@ -74,6 +76,9 @@ jest.mock("firebase-admin", () => ({
     getUser: jest.fn(),
     setCustomUserClaims: jest.fn(),
     revokeRefreshTokens: jest.fn(),
+  })),
+  storage: jest.fn(() => ({
+    bucket: jest.fn(() => ({deleteFiles: mockDeleteFiles})),
   })),
 }));
 
@@ -153,6 +158,10 @@ describe("Index — Funcoes do index.ts", () => {
     mockRunTransaction.mockReset();
     mockBatchCommit.mockResolvedValue([]);
     mockDocUpdate.mockResolvedValue(undefined);
+    // FIX #4049: coletas extras (game_photos/game_videos) retornam vazio por
+    // padrão quando o teste não programa respostas específicas.
+    mockCollectionGet.mockResolvedValue({docs: [], size: 0});
+    mockDeleteFiles.mockResolvedValue([]);
   });
 
   describe("recalculateLeagueRating", () => {

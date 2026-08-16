@@ -705,6 +705,22 @@ export const createGameVideo = httpsCallable<
   { success: true; videoId: string; alreadyExists: boolean }
 >(functions, 'createGameVideo');
 
+export interface CreateGamePhotoResponse {
+  success: true;
+  photoId: string;
+  alreadyExists: boolean;
+}
+
+// FIX #4049: criação de game_photos migrada para callable — o doc autoritativo
+// deixa de ser criado pelo cliente (firestore.rules bloqueia create) e as cotas
+// MAX_PHOTOS_PER_GAME / MAX_PHOTOS_PER_USER_PER_GAME passam a valer server-side.
+// Contrato espelha createGameVideo: upload no Storage PRIMEIRO no path canônico
+// games/{gameId}/photos/{uid}/{fileName}, depois chama a callable.
+export const createGamePhoto = httpsCallable<
+  { gameId: string; storagePath: string; caption: string },
+  CreateGamePhotoResponse
+>(functions, 'createGamePhoto');
+
 export const toggleFollowUser = httpsCallable<
   { targetUserId: string; follow: boolean },
   { success: boolean; following: boolean; changed: boolean }

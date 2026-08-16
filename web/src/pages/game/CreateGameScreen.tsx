@@ -1661,7 +1661,9 @@ export const CreateGameScreen: React.FC = () => {
 
       const tooltipTitle = hasGames ? (
         <Box sx={{ textAlign: 'center' }}>
-          {dayGames.sort((a, b) => a.startMinutes - b.startMinutes).map((g, i) => (
+          {/* Perf: sort em CÓPIA — sort in-place mutava o array do Map byDate
+              compartilhado entre renders do calendário */}
+          {[...dayGames].sort((a, b) => a.startMinutes - b.startMinutes).map((g, i) => (
             <Typography key={i} variant="caption" sx={{ display: 'block', lineHeight: 1.4 }}>
               {formatTime(g.startMinutes)} - {formatTime(g.endMinutes)}
             </Typography>
@@ -2266,7 +2268,7 @@ export const CreateGameScreen: React.FC = () => {
         <Box>
           <Chip
             icon={<SportsSoccerIcon />}
-            label="Convocação da pelada"
+            label={t('games.create.hero.chipLabel')}
             size="small"
             sx={(theme) => ({
               mb: 1.5,
@@ -2282,7 +2284,7 @@ export const CreateGameScreen: React.FC = () => {
             component="p"
             sx={{ fontWeight: 900, letterSpacing: '-0.04em', maxWidth: 680 }}
           >
-            Monte o jogo sem deixar ponta solta.
+            {t('games.create.hero.title')}
           </Typography>
           <Typography
             variant="body1"
@@ -2292,27 +2294,33 @@ export const CreateGameScreen: React.FC = () => {
               color: alpha(theme.palette.common.white, 0.88),
             })}
           >
-            Defina local, horário, formato, pagamento e regras com um resumo ao vivo antes de chamar a galera.
+            {t('games.create.hero.subtitle')}
           </Typography>
         </Box>
+        {/* #4057: no dark o gradiente é claro (#4ADE80 → #3A8FC4) e o véu branco
+            0.14 deixava os dois rótulos pequenos em 3.04/3.34:1 — o véu escurece
+            para alpha(black, 0.24) no dark e os rótulos usam branco cheio
+            (>= 5.6:1 nos dois temas). */}
         <Box
           sx={(theme) => ({
             minWidth: { xs: '100%', md: 260 },
             borderRadius: 4,
             p: 2,
-            bgcolor: alpha(theme.palette.common.white, 0.14),
+            bgcolor: theme.palette.mode === 'dark'
+              ? alpha(theme.palette.common.black, 0.24)
+              : alpha(theme.palette.common.white, 0.14),
             border: 1,
             borderColor: alpha(theme.palette.common.white, 0.24),
             backdropFilter: 'blur(12px)',
           })}
         >
-          <Typography variant="caption" sx={(theme) => ({ color: alpha(theme.palette.common.white, 0.78) })}>
-            Prévia rápida
+          <Typography variant="caption" sx={{ color: 'common.white' }}>
+            {t('games.create.hero.quickPreview')}
           </Typography>
-          <Typography variant="h6" sx={{ fontWeight: 900 }}>
-            {formData.locationName || 'Local em aberto'}
+          <Typography variant="h6" sx={{ fontWeight: 900, color: 'common.white' }}>
+            {formData.locationName || t('games.create.hero.locationFallback')}
           </Typography>
-          <Typography variant="body2" sx={(theme) => ({ color: alpha(theme.palette.common.white, 0.86) })}>
+          <Typography variant="body2" sx={{ color: 'common.white' }}>
             {selectedDateLabel} · {selectedTimeLabel}
           </Typography>
         </Box>

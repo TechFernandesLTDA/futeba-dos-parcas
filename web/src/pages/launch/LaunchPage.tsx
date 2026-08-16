@@ -405,14 +405,18 @@ function LaunchPageContent() {
               sx={{
                 borderRadius: 4,
                 bgcolor: 'primary.dark',
-                color: 'primary.contrastText',
+                // #4052: no dark, primary.dark é #2E7D32 e o contrastText
+                // herdado (#000000, pensado para o main #4ADE80) dá 4.10:1.
+                // Branco passa nos dois temas (5.13:1 sobre #2E7D32,
+                // 7.5:1 sobre #005A1C do light).
+                color: 'common.white',
                 p: { xs: 3, md: 5 },
               }}
             >
               <Stack direction={{ xs: 'column', md: 'row' }} spacing={3} justifyContent="space-between" alignItems={{ xs: 'flex-start', md: 'center' }}>
                 <Box>
                   <Typography component="h2" variant="h4" fontWeight={900}>O grupo já existe. Falta organizar o jogo.</Typography>
-                  <Typography sx={{ mt: 1, opacity: 0.88, maxWidth: 700 }}>
+                  <Typography sx={{ mt: 1, maxWidth: 700 }}>
                     Crie sua conta, chame os parças e prepare a próxima rodada sem depender de planilhas ou centenas de mensagens.
                   </Typography>
                 </Box>

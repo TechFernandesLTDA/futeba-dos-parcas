@@ -428,13 +428,13 @@ export const NotificationsScreen: React.FC = () => {
                                   {notification.message}
                                 </Typography>
                                 {notification.actionType && (
-                                  <Typography variant="caption" color="text.disabled" sx={{ display: 'block', mt: 0.5 }}>
+                                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
                                     {t('notifications.screen.actionType', {
                                       action: getGamificationActionLabel(notification.actionType, t),
                                     })}
                                   </Typography>
                                 )}
-                                <Typography variant="caption" color="text.disabled">
+                                <Typography variant="caption" color="text.secondary">
                                   {t('notifications.screen.timeWithGroup', {
                                     time: getTimeAgo(notification.createdAt, t),
                                     group: dateLabel,

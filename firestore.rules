@@ -1249,7 +1249,12 @@ service cloud.firestore {
           request.resource.data.status == 'WAITING' &&
           request.resource.data.user_name is string &&
           request.resource.data.queue_position is number &&
-          request.resource.data.added_at is number;
+          request.resource.data.added_at is number &&
+          // FIX #4044: added_at era client-writable (relógio do cliente).
+          // Amarrar ao relógio do servidor (±60s) impede forjar added_at:0
+          // para furar a fila. A ordem FIFO server-side depende disso.
+          request.resource.data.added_at >= request.time.toMillis() - 60000 &&
+          request.resource.data.added_at <= request.time.toMillis() + 60000;
 
         // Sair: somente a propria entrada, game owner, ou admin para moderacao.
         allow delete: if isAuthenticated() &&
@@ -1267,7 +1272,10 @@ service cloud.firestore {
           request.resource.data.status == 'WAITING' &&
           request.resource.data.user_name is string &&
           request.resource.data.queue_position is number &&
-          request.resource.data.added_at is number;
+          request.resource.data.added_at is number &&
+          // FIX #4044: mesma âncora de relógio do servidor do create.
+          request.resource.data.added_at >= request.time.toMillis() - 60000 &&
+          request.resource.data.added_at <= request.time.toMillis() + 60000;
       }
 
       // ============================================
@@ -4437,51 +4445,13 @@ service cloud.firestore {
     // Issue #2982: Jogadores confirmados e organizadores podem
     // subir fotos em jogos finalizados. Todos autenticados podem ver.
     // Apenas uploader, organizador do jogo ou admin podem deletar.
+    // FIX #4049: criação migrada para a callable createGamePhoto, que aplica
+    // MAX_PHOTOS_PER_GAME / MAX_PHOTOS_PER_USER_PER_GAME server-side (como o
+    // #4024 fez para vídeos). Cliente não cria o doc autoritativo.
     match /game_photos/{photoId} {
       allow read: if isAuthenticated();
 
-      allow create: if isAuthenticated() &&
-        request.resource.data.keys().hasOnly([
-          'game_id',
-          'url',
-          'storage_path',
-          'uploaded_by',
-          'uploaded_by_name',
-          'uploaded_by_photo',
-          'content_type',
-          'size',
-          'caption',
-          'reactions',
-          'status',
-          'created_at',
-          'updated_at'
-        ]) &&
-        request.resource.data.game_id is string &&
-        request.resource.data.url is string &&
-        request.resource.data.url.size() > 0 &&
-        request.resource.data.url.size() <= 2048 &&
-        request.resource.data.storage_path is string &&
-        request.resource.data.storage_path.matches('^games/[^/]+/photos/' + userId() + '/[^/]+$') &&
-        request.resource.data.uploaded_by == userId() &&
-        request.resource.data.uploaded_by_name is string &&
-        request.resource.data.uploaded_by_name.size() > 0 &&
-        request.resource.data.uploaded_by_name.size() <= 120 &&
-        request.resource.data.uploaded_by_photo is string &&
-        request.resource.data.uploaded_by_photo.size() <= 2048 &&
-        request.resource.data.content_type in ['image/jpeg', 'image/png', 'image/webp', 'image/gif'] &&
-        request.resource.data.size is int &&
-        request.resource.data.size > 0 &&
-        request.resource.data.size < 10 * 1024 * 1024 &&
-        request.resource.data.caption is string &&
-        request.resource.data.caption.size() <= 160 &&
-        isValidInitialReactionMap(request.resource.data.reactions) &&
-        request.resource.data.status == 'ACTIVE' &&
-        exists(/databases/$(database)/documents/games/$(request.resource.data.game_id)) &&
-        get(/databases/$(database)/documents/games/$(request.resource.data.game_id)).data.status == 'FINISHED' &&
-        ((get(/databases/$(database)/documents/confirmations/$(request.resource.data.game_id + '_' + userId())) != null &&
-          get(/databases/$(database)/documents/confirmations/$(request.resource.data.game_id + '_' + userId())).data.status == 'CONFIRMED') ||
-         canManageGame(get(/databases/$(database)/documents/games/$(request.resource.data.game_id)).data) ||
-         isAdmin());
+      allow create: if false;
 
       allow update: if isAuthenticated() &&
         onlyAllowedFields(['reactions']) &&
@@ -4498,12 +4468,19 @@ service cloud.firestore {
 
       allow delete: if isAuthenticated() &&
         resource.data.game_id is string &&
-        exists(/databases/$(database)/documents/games/$(resource.data.game_id)) &&
         (
+          // FIX #4049: isAdmin() deve vir ANTES do exists(games/...). Com o
+          // jogo apagado, exists() é sempre false e travava até o ADMIN de
+          // limpar mídia órfã pelo app. Admin é a válvula de escape.
           isAdmin() ||
-          resource.data.uploaded_by == userId() ||
-          get(/databases/$(database)/documents/games/$(resource.data.game_id)).data.owner_id == userId() ||
-          userId() in get(/databases/$(database)/documents/games/$(resource.data.game_id)).data.get('co_organizers', [])
+          (
+            exists(/databases/$(database)/documents/games/$(resource.data.game_id)) &&
+            (
+              resource.data.uploaded_by == userId() ||
+              get(/databases/$(database)/documents/games/$(resource.data.game_id)).data.owner_id == userId() ||
+              userId() in get(/databases/$(database)/documents/games/$(resource.data.game_id)).data.get('co_organizers', [])
+            )
+          )
         );
     }
 
@@ -4536,12 +4513,18 @@ service cloud.firestore {
 
       allow delete: if isAuthenticated() &&
         resource.data.game_id is string &&
-        exists(/databases/$(database)/documents/games/$(resource.data.game_id)) &&
         (
+          // FIX #4049: isAdmin() ANTES do exists(games/...) — válvula de
+          // escape para mídia órfã após o jogo ser apagado.
           isAdmin() ||
-          resource.data.uploaded_by == userId() ||
-          get(/databases/$(database)/documents/games/$(resource.data.game_id)).data.owner_id == userId() ||
-          userId() in get(/databases/$(database)/documents/games/$(resource.data.game_id)).data.get('co_organizers', [])
+          (
+            exists(/databases/$(database)/documents/games/$(resource.data.game_id)) &&
+            (
+              resource.data.uploaded_by == userId() ||
+              get(/databases/$(database)/documents/games/$(resource.data.game_id)).data.owner_id == userId() ||
+              userId() in get(/databases/$(database)/documents/games/$(resource.data.game_id)).data.get('co_organizers', [])
+            )
+          )
         );
     }
 

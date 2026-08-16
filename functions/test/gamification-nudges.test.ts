@@ -150,6 +150,7 @@ function clearStore(): void {
       const normalizedDocId = docId ?? `${userId}_${notificationCalls.length}`;
       store.set(`notifications/${normalizedDocId}`, {
         user_id: userId,
+        read: false,
         ...payload,
       });
       if (!optedOutUsers.has(userId)) {
@@ -509,7 +510,7 @@ describe("gamification nudges daily scheduler", () => {
     expect(notificationCalls).toEqual([
       expect.objectContaining({
         userId: "user-1",
-        docId: "gamification_nudge_almost_level_user-1_2026-07-19",
+        docId: "gamification_nudge_almost_level_user-1",
         payload: expect.objectContaining({
           title: "Quase subir de nível!",
           body: "Faltam 95 XP para Experiente",
@@ -519,7 +520,7 @@ describe("gamification nudges daily scheduler", () => {
       }),
       expect.objectContaining({
         userId: "user-1",
-        docId: "gamification_nudge_almost_badge_user-1_2026-07-19",
+        docId: "gamification_nudge_almost_badge_user-1",
         payload: expect.objectContaining({
           title: "Quase conquista!",
           body: "Faltam 5 gols para Goleador",
@@ -529,7 +530,7 @@ describe("gamification nudges daily scheduler", () => {
       }),
       expect.objectContaining({
         userId: "user-1",
-        docId: "gamification_nudge_streak_at_risk_user-1_2026-07-19",
+        docId: "gamification_nudge_streak_at_risk_user-1",
         payload: expect.objectContaining({
           title: "Sequência em risco!",
           body: "Você está com 3 jogos seguidos",
@@ -589,9 +590,9 @@ describe("gamification nudges daily scheduler", () => {
 
     expect(notificationCalls).toHaveLength(3);
     expect(deliveredNotifications).toHaveLength(0);
-    expect(store.has("notifications/gamification_nudge_almost_level_user-1_2026-07-19")).toBe(true);
-    expect(store.has("notifications/gamification_nudge_almost_badge_user-1_2026-07-19")).toBe(true);
-    expect(store.has("notifications/gamification_nudge_streak_at_risk_user-1_2026-07-19")).toBe(true);
+    expect(store.has("notifications/gamification_nudge_almost_level_user-1")).toBe(true);
+    expect(store.has("notifications/gamification_nudge_almost_badge_user-1")).toBe(true);
+    expect(store.has("notifications/gamification_nudge_streak_at_risk_user-1")).toBe(true);
   });
 
   it("nao duplica em corrida concorrente no mesmo dia", async () => {
@@ -605,8 +606,56 @@ describe("gamification nudges daily scheduler", () => {
     expect(notificationCalls).toHaveLength(3);
     expect(deliveredNotifications).toHaveLength(3);
     expect(mockClaimNotificationEventOnce).toHaveBeenCalled();
-    expect(mockCompleteNotificationEvent).toHaveBeenCalledTimes(3);
+    expect(mockReleaseNotificationEvent).toHaveBeenCalledTimes(3);
     expect(mockLogger.info).toHaveBeenCalledWith("[GAMIFICATION_NUDGES] daily run complete");
+  });
+
+  it("#4058: 2 execuções em dias diferentes com estado idêntico ⇒ 1 notificação", async () => {
+    seedEligibleUser({experiencePoints: 1755, goals: 0, streak: 0});
+
+    await sendGamificationNudgesDaily();
+    expect(notificationCalls).toHaveLength(1);
+
+    // Avança 1 dia (dentro do cooldown de 7 dias) mantendo o estado idêntico.
+    jest.setSystemTime(new Date(baseNow.getTime() + 24 * 60 * 60 * 1000));
+    notificationCalls.length = 0;
+
+    await sendGamificationNudgesDaily();
+
+    expect(notificationCalls).toHaveLength(0);
+  });
+
+  it("#4058: reenvia quando o valor muda (sem esperar o cooldown)", async () => {
+    seedEligibleUser({experiencePoints: 1755, goals: 0, streak: 0});
+
+    await sendGamificationNudgesDaily();
+    expect(notificationCalls).toHaveLength(1);
+
+    // xpLeft muda de 95 para 94 — valor diferente justifica reenvio imediato.
+    store.set("users/user-1", {experience_points: 1756});
+    await sendGamificationNudgesDaily();
+
+    expect(notificationCalls).toHaveLength(2);
+  });
+
+  it("#4058: suspende um tipo após 3 não lidos consecutivos", async () => {
+    seedEligibleUser({experiencePoints: 1755, goals: 0, streak: 0});
+
+    await sendGamificationNudgesDaily(); // run 1 → consecutive_unread = 0
+
+    // Cada execução muda o valor para contornar o cooldown; a notificação
+    // permanece não lida (read=false), acumulando não-lidos consecutivos.
+    for (let xp = 1756; xp <= 1758; xp++) {
+      store.set("users/user-1", {experience_points: xp});
+      await sendGamificationNudgesDaily();
+    }
+
+    const levelCalls = notificationCalls.filter(
+      ({payload}) => payload.action === "achievements"
+    ).length;
+    // run1 (95) + run2 (94) + run3 (93) = 3; run4 (92) seria o 4º não lido
+    // consecutivo e é suprimido.
+    expect(levelCalls).toBe(3);
   });
 
   it("isola a falha de envio (nao aborta o run), libera a claim e permite retry", async () => {
@@ -625,7 +674,7 @@ describe("gamification nudges daily scheduler", () => {
     // seguir. A claim e liberada para preservar a idempotencia do dedup.
     await expect(sendGamificationNudgesDaily()).resolves.toBeUndefined();
     expect(mockReleaseNotificationEvent).toHaveBeenCalledWith(
-      "gamification_nudge_almost_level_user-1_2026-07-19",
+      "gamification_nudge_almost_level_user-1",
     );
     expect(mockLogger.error).toHaveBeenCalledWith(
       "[GAMIFICATION_NUDGES] falha ao processar usuário; seguindo",
@@ -638,8 +687,8 @@ describe("gamification nudges daily scheduler", () => {
     await sendGamificationNudgesDaily();
 
     expect(notificationCalls).toHaveLength(2);
-    expect(mockCompleteNotificationEvent).toHaveBeenCalledWith(
-      "gamification_nudge_almost_level_user-1_2026-07-19",
+    expect(mockReleaseNotificationEvent).toHaveBeenCalledWith(
+      "gamification_nudge_almost_level_user-1",
     );
   });
 
@@ -666,7 +715,7 @@ describe("gamification nudges daily scheduler", () => {
     await expect(sendGamificationNudgesDaily()).resolves.toBeUndefined();
 
     expect(mockReleaseNotificationEvent).toHaveBeenCalledWith(
-      "gamification_nudge_almost_level_user-a_2026-07-19",
+      "gamification_nudge_almost_level_user-a",
     );
     expect(deliveredNotifications.map(({userId}) => userId)).toContain("user-b");
     expect(mockLogger.info).toHaveBeenCalledWith(
@@ -841,7 +890,7 @@ describe("gamification nudges daily scheduler", () => {
 
     expect(notificationCalls).toHaveLength(1);
     expect(notificationCalls[0]).toEqual(expect.objectContaining({
-      docId: "gamification_nudge_streak_at_risk_user-1_2026-07-19",
+      docId: "gamification_nudge_streak_at_risk_user-1",
       payload: expect.objectContaining({
         action: "games",
         gameId: "game-11",

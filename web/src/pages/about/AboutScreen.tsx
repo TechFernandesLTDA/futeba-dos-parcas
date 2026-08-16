@@ -213,10 +213,10 @@ export const AboutScreen: React.FC = () => {
         </Card>
 
         <Box sx={{ textAlign: 'center', py: 2 }}>
-          <Typography variant="caption" color="text.disabled">
+          <Typography variant="caption" color="text.secondary">
             {t('about.copyright', { year: new Date().getFullYear() })}
           </Typography>
-          <Typography variant="caption" color="text.disabled" sx={{ display: 'block' }}>
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
             {t('about.madeWithLove')}
           </Typography>
         </Box>

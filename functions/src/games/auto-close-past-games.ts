@@ -376,24 +376,6 @@ export function summarizeAutoCloseEvidence(
 }
 
 /**
- * Conta jogadores confirmados de um jogo.
- *
- * @param {string} gameId - ID do jogo.
- * @return {Promise<number>} Quantidade de confirmações válidas.
- */
-async function getConfirmedCount(
-  gameId: string
-): Promise<number> {
-  const snap = await db()
-    .collection("confirmations")
-    .where("game_id", "==", gameId)
-    .where("status", "==", "CONFIRMED")
-    .get();
-
-  return snap.size;
-}
-
-/**
  * Carrega sinais mínimos para auto-close orientado por evidência.
  *
  * @param {string} gameId - ID do jogo.
@@ -522,15 +504,17 @@ export async function closePastGames(
         gameData.min_players :
         PAST_GAME_MIN_PLAYERS;
 
-    const confirmedCount = await getConfirmedCount(gameDoc.id);
-    const decision = decidePastGameClosure(
-      status,
-      confirmedCount,
-      minPlayers
-    );
+    // PERF: elimina leitura redundante de confirmations por jogo. Antes,
+    // getConfirmedCount (query #1) e getGameEvidence (query #2) consultavam a
+    // MESMA coleção. getGameEvidence já devolve evidence.confirmed_count.
     const {evidence, validationResult} = await getGameEvidence(
       gameDoc.id,
       gameData,
+    );
+    const decision = decidePastGameClosure(
+      status,
+      evidence.confirmed_count,
+      minPlayers
     );
     const evidenceDecision =
       summarizeAutoCloseEvidence(evidence);

@@ -1116,6 +1116,13 @@
       "quickCreateTooltip": "Create using the next occurrence",
       "quickStartDescription": "Use a template, duplicate a previous game, or save this draft as your default setup.",
       "quickStartTitle": "Speed up creation",
+      "hero": {
+        "chipLabel": "Match call-up",
+        "title": "Set up your game without leaving anything behind.",
+        "subtitle": "Set location, time, format, payment and rules with a live summary before calling the squad.",
+        "quickPreview": "Quick preview",
+        "locationFallback": "Location pending"
+      },
       "totalCostHelp": "Total court price. Leave empty/zero when there is no charge.",
       "dailyPriceHelp": "Individual price. Enable Manual to edit; empty counts as R$0.00.",
       "recurrence": "Recurrence",

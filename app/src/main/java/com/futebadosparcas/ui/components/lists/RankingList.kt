@@ -68,6 +68,11 @@ fun RankingList(
     contentPadding: PaddingValues = PaddingValues(vertical = 8.dp),
     showDivisions: Boolean = true
 ) {
+    // Ordena divisões do maior para o menor (memorizado para evitar recomputação)
+    val sortedDivisions = remember(entries) {
+        entries.keys.sortedByDescending { it.ordinal }
+    }
+
     when {
         // Estado de loading inicial
         isLoading -> {
@@ -103,9 +108,6 @@ fun RankingList(
                 contentPadding = contentPadding,
                 hasMoreItems = false // Ranking geralmente não usa paginação
             ) {
-                // Ordena divisões do maior para o menor
-                val sortedDivisions = entries.keys.sortedByDescending { it.ordinal }
-
                 sortedDivisions.forEach { division ->
                     val divisionEntries = entries[division] ?: emptyList()
 

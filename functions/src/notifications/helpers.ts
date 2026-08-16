@@ -361,31 +361,36 @@ async function getUserFcmTokens(
 ): Promise<string[]> {
   const tokenOwners = new Map<string, string>();
   const canonicalTokens = new Set<string>();
-  try {
-    const registered = await getRegisteredPushTokens([userId]);
+  // PERF: as duas leituras são independentes (registro canônico + doc legado)
+  // — paralelizamos para cortar um round-trip do envio individual.
+  const [registered, userDoc] = await Promise.all([
+    getRegisteredPushTokens([userId]).catch((e) => {
+      logger.error("Erro ao buscar registro privado de push:", e);
+      return null;
+    }),
+    db()
+      .collection("users")
+      .doc(userId)
+      .get()
+      .catch((e) => {
+        logger.error(
+          "Erro ao buscar tokens FCM do usuario " +
+          userId + ":",
+          e
+        );
+        return null;
+      }),
+  ]);
+  if (registered) {
     (registered.get(userId) ?? []).forEach((token) => {
       tokenOwners.set(token, userId);
       canonicalTokens.add(token);
     });
-  } catch (e) {
-    logger.error("Erro ao buscar registro privado de push:", e);
   }
-  try {
-    const userDoc = await db()
-      .collection("users")
-      .doc(userId)
-      .get();
-    if (userDoc.exists) {
-      const data = userDoc.data() as Record<string, unknown>;
-      extractTokensFromUserData(data).forEach((token) =>
-        tokenOwners.set(token, userId)
-      );
-    }
-  } catch (e) {
-    logger.error(
-      "Erro ao buscar tokens FCM do usuario " +
-      userId + ":",
-      e
+  if (userDoc?.exists) {
+    const data = userDoc.data() as Record<string, unknown>;
+    extractTokensFromUserData(data).forEach((token) =>
+      tokenOwners.set(token, userId)
     );
   }
   const filtered = await filterPushTokensByCanonicalOwner(

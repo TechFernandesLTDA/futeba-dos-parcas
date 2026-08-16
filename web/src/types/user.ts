@@ -209,7 +209,7 @@ export function getOverallRating(user: User): number {
 }
 
 import { type Theme } from '@mui/material/styles';
-import { getGamificationColors } from '../utils/gamificationColors';
+import { getGamificationColors, getGamificationTextColors } from '../utils/gamificationColors';
 import { getLevelName as getLevelNameFromTable } from './gamification';
 
 /** Retorna o título do nível usando LevelTable (fonte única de verdade) */
@@ -225,6 +225,27 @@ export function getLevelTitle(level: number): string {
  */
 export function getLevelColor(level: number, theme: Theme): string {
   const colors = getGamificationColors(theme);
+  if (level >= 19) return colors.gold;
+  if (level >= 16) return theme.palette.error.main;
+  if (level >= 13) return colors.mvp;
+  if (level >= 11) return theme.palette.info.main;
+  if (level >= 9) return colors.level;
+  if (level >= 6) return theme.palette.success.main;
+  if (level >= 3) return colors.silver;
+  return colors.bronze;
+}
+
+/**
+ * Cor do nível segura como cor de TEXTO (#4041) — mesma cadeia de níveis de
+ * `getLevelColor`, mas usando a paleta de FOREGROUND: no light, os metais puros
+ * (silver 1.32:1, gold 1.40:1, bronze 3.14:1 sobre branco) reprovam AA; aqui
+ * caem para os tons escuros de `gamificationColorsOnLight` (>= 4.5:1). No dark
+ * devolve as mesmas cores de `getLevelColor` (já passam sobre fundo escuro).
+ * Use para `<Typography>`/ícones informativos; mantenha `getLevelColor` para
+ * fundos (badge, barra de progresso, borda decorativa).
+ */
+export function getLevelTextColor(level: number, theme: Theme): string {
+  const colors = getGamificationTextColors(theme);
   if (level >= 19) return colors.gold;
   if (level >= 16) return theme.palette.error.main;
   if (level >= 13) return colors.mvp;

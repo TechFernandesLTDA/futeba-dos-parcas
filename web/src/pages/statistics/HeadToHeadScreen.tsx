@@ -39,6 +39,7 @@ import {
 } from '@mui/icons-material';
 import { useQuery } from '@tanstack/react-query';
 import { useHeadToHead, HeadToHeadMatch } from '../../hooks/useHeadToHead';
+import { useDebounce } from '../../hooks/useDebounce';
 import type { HeadToHeadPeriod } from '../../utils/headToHeadPeriod';
 import { PlayerAvatar, EmptyState } from '../../components/common/GameCard';
 import { ErrorState } from '../../components/common/ErrorState';
@@ -96,10 +97,14 @@ export const HeadToHeadScreen: React.FC = () => {
   const [player2, setPlayer2] = useState<PlayerSearchResult | null>(null);
   const [period, setPeriod] = useState<HeadToHeadPeriod>('all');
 
+  // Debounce evita disparar a callable getLeaguePlayers a cada tecla digitada.
+  // O input continua responsivo; a query só roda quando o usuário para de digitar.
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
+
   const { data: searchResults = [], isLoading: searching } = useQuery({
-    queryKey: ['playerSearch', searchTerm],
-    queryFn: () => searchPlayers(searchTerm),
-    enabled: searchTerm.trim().length >= 2,
+    queryKey: ['playerSearch', debouncedSearchTerm],
+    queryFn: () => searchPlayers(debouncedSearchTerm),
+    enabled: debouncedSearchTerm.trim().length >= 2,
     staleTime: 30 * 1000,
   });
 
@@ -313,7 +318,12 @@ export const HeadToHeadScreen: React.FC = () => {
                   ))}
                 </List>
               )}
-              {searchTerm.length >= 2 && !searching && searchResults.length === 0 && (
+              {/* "Nenhum jogador" só quando o debounce estabilizou — evita
+                  flashing do empty-state enquanto a query debounced não rodou */}
+              {searchTerm.trim().length >= 2
+                && searchTerm.trim() === debouncedSearchTerm
+                && !searching
+                && searchResults.length === 0 && (
                 <Typography variant="body2" color="text.secondary" sx={{ mt: 1, textAlign: 'center' }}>
                   {t('headToHead.noPlayersFound')}
                 </Typography>

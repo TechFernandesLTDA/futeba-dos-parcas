@@ -1867,6 +1867,8 @@ export const processExpiredWaitlistEntries =
             try {
               let nextUserId: string | undefined;
               let nextUserName: string | undefined;
+              let nextEntryRef:
+                FirebaseFirestore.DocumentReference | undefined;
               let hasNext = false;
 
               // FIX #4012: TODAS as leituras devem vir ANTES de qualquer
@@ -1915,6 +1917,7 @@ export const processExpiredWaitlistEntries =
 
                   nextUserId = nextData.user_id;
                   nextUserName = nextData.user_name || "Jogador";
+                  nextEntryRef = nextEntry.ref;
                   hasNext = true;
                 }
                 return true;
@@ -1929,28 +1932,51 @@ export const processExpiredWaitlistEntries =
                 expiredCount++;
               }
 
-              // Send notification OUTSIDE the transaction
+              // Send notification OUTSIDE the transaction.
+              // FIX #4043: a promoção commita na transação, mas a notificação
+              // é enviada depois, fora dela. Se sendNotificationToUser ou
+              // saveNotificationToFirestore lançar, o jogador ficava NOTIFIED
+              // com deadline de 30 min correndo e zero sinal nos dois canais —
+              // e o retry do Scheduler não o reprocessava (deadline no futuro).
+              // Agora uma falha no envio reverte a promoção para WAITING,
+              // liberando a entrada para reprocessamento.
               if (hasNext && nextUserId) {
                 const action = `game_detail/${gameId}`;
-                await sendNotificationToUser(nextUserId, {
-                  title: REMINDER_NOTIFICATIONS.WAITLIST_SUMMON.title["pt-BR"](),
-                  body: REMINDER_NOTIFICATIONS.WAITLIST_SUMMON.body["pt-BR"](),
-                  type: NotificationType.GAME_SUMMON,
-                  data: {gameId, action, urgency: "high"},
-                });
-                await saveNotificationToFirestore(nextUserId, {
-                  userId: nextUserId,
-                  title: REMINDER_NOTIFICATIONS.WAITLIST_SUMMON_FIRESTORE.title["pt-BR"](),
-                  body: REMINDER_NOTIFICATIONS.WAITLIST_SUMMON_FIRESTORE.body["pt-BR"](),
-                  type: NotificationType.GAME_SUMMON,
-                  gameId,
-                  action,
-                });
-                promotedCount++;
-                logger.info(
-                  "[WAITLIST] Proximo jogador notificado: " +
-                  `${nextUserId} (${nextUserName})`
-                );
+                try {
+                  await sendNotificationToUser(nextUserId, {
+                    title: REMINDER_NOTIFICATIONS.WAITLIST_SUMMON.title["pt-BR"](),
+                    body: REMINDER_NOTIFICATIONS.WAITLIST_SUMMON.body["pt-BR"](),
+                    type: NotificationType.GAME_SUMMON,
+                    data: {gameId, action, urgency: "high"},
+                  });
+                  await saveNotificationToFirestore(nextUserId, {
+                    userId: nextUserId,
+                    title: REMINDER_NOTIFICATIONS.WAITLIST_SUMMON_FIRESTORE.title["pt-BR"](),
+                    body: REMINDER_NOTIFICATIONS.WAITLIST_SUMMON_FIRESTORE.body["pt-BR"](),
+                    type: NotificationType.GAME_SUMMON,
+                    gameId,
+                    action,
+                  });
+                  promotedCount++;
+                  logger.info(
+                    "[WAITLIST] Proximo jogador notificado: " +
+                    `${nextUserId} (${nextUserName})`
+                  );
+                } catch (notifyError) {
+                  logger.error(
+                    "[WAITLIST] Falha ao notificar proximo jogador " +
+                    `${nextUserId}; revertendo promocao para WAITING`,
+                    notifyError
+                  );
+                  if (nextEntryRef) {
+                    await nextEntryRef.update({
+                      status: "WAITING",
+                      notified_at: FieldValue.delete(),
+                      response_deadline: FieldValue.delete(),
+                    });
+                  }
+                  failureCount++;
+                }
               } else if (!hasNext) {
                 logger.info(
                   "[WAITLIST] Nenhum jogador na fila para o jogo " + gameId

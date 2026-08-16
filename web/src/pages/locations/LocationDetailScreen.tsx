@@ -952,7 +952,7 @@ export const LocationDetailScreen: React.FC = () => {
                             <Rating value={review.rating} size="small" readOnly />
                           </Box>
                           <Typography variant="body2" color="text.secondary">{review.comment}</Typography>
-                          <Typography variant="caption" color="text.disabled">{review.createdAt.toLocaleDateString('pt-BR')}</Typography>
+                          <Typography variant="caption" color="text.secondary">{review.createdAt.toLocaleDateString('pt-BR')}</Typography>
                         </Box>
                       </Box>
                     </Box>

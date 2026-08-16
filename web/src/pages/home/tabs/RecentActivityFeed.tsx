@@ -211,7 +211,7 @@ export function RecentActivityFeed({ activities, loading }: RecentActivityFeedPr
               <Typography variant="body2" color="text.secondary">
                 {t('profile.noRecentActivity')}
               </Typography>
-              <Typography variant="caption" color="text.disabled" sx={{ display: 'block', mt: 0.5 }}>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
                 {t('profile.noRecentActivityDesc')}
               </Typography>
               <Box sx={{ mt: 1.5, display: 'flex', gap: 1, justifyContent: 'center' }}>

@@ -161,8 +161,8 @@ fun GroupWallScreen(
                         )
                     }
                     is GroupWallUiState.Success -> {
-                        val pinned = state.posts.filter { it.pinned }
-                        val regular = state.posts.filter { !it.pinned }
+                        val pinned = remember(state.posts) { state.posts.filter { it.pinned } }
+                        val regular = remember(state.posts) { state.posts.filter { !it.pinned } }
                         val currentUserId = viewModel.currentUserId()
 
                         LazyColumn(

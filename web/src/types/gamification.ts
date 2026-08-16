@@ -2,7 +2,7 @@
 import type { Theme } from '@mui/material/styles';
 import xpConstants from '../../../shared/xp-constants.json';
 import { gamificationColors, rarityColors } from '../theme';
-import { getGamificationColors } from '../utils/gamificationColors';
+import { getGamificationColors, getGamificationTextColors } from '../utils/gamificationColors';
 
 export const LEAGUE_DIVISIONS = ['BRONZE', 'PRATA', 'OURO', 'DIAMANTE'] as const;
 
@@ -198,8 +198,11 @@ export interface RankingPlayer {
 }
 
 // Cores alinhadas com gamificationColors em theme/index.ts (single source of truth)
-// NOTA (#2163): as cores aqui são light-mode. Para uso visual em telas, prefira
-// `getDivisionColor(division, theme)` que é theme-aware (dark/OLED).
+// ⚠️ #4041: o campo `color` abaixo é o metal LIGHT estático (pensado como FUNDO —
+// borda, tinta, barra de progresso) e NÃO é theme-aware. Para uso visual em telas:
+//   • fundo/borda  → `getDivisionColor(division, theme)` (theme-aware #2163)
+//   • texto        → `getDivisionTextColor(division, theme)` (AA #4041 — no light
+//     prata #E0E0E0 = 1.32:1 e ouro #FFD700 = 1.40:1 como texto reprovam)
 export const DIVISION_CONFIG: Record<LeagueDivision, {
   label: string;
   labelKey: string;
@@ -222,10 +225,27 @@ export function getDivisionLabel(
 
 /**
  * Cor da divisão, theme-aware (#2163). Em dark/OLED retorna a variante mais
- * brilhante de `gamificationColorsDark` para manter contraste WCAG.
+ * brilhante de `gamificationColorsDark` para manter contraste WCAG. Pensada
+ * para FUNDO/borda/tinta; para TEXTO use `getDivisionTextColor` (#4041).
  */
 export function getDivisionColor(division: unknown, theme: Theme): string {
   const colors = getGamificationColors(theme);
+  const map: Record<LeagueDivision, string> = {
+    BRONZE: colors.bronze,
+    PRATA: colors.silver,
+    OURO: colors.gold,
+    DIAMANTE: colors.level,
+  };
+  return map[normalizeLeagueDivision(division)];
+}
+
+/**
+ * Cor da divisão segura como TEXTO (#4041): no light usa os tons escuros de
+ * `gamificationColorsOnLight` (prata/ouro puros reprovam AA sobre paper);
+ * no dark devolve as variantes brilhantes (iguais a `getDivisionColor`).
+ */
+export function getDivisionTextColor(division: unknown, theme: Theme): string {
+  const colors = getGamificationTextColors(theme);
   const map: Record<LeagueDivision, string> = {
     BRONZE: colors.bronze,
     PRATA: colors.silver,

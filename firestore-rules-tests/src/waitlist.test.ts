@@ -122,6 +122,32 @@ describe("waitlist — create", () => {
       })
     );
   });
+
+  it("Player NAO pode criar com added_at fora da janela de request.time (#4044)", async () => {
+    const db = asPlayerC(testEnv);
+    // added_at = 0 (muito no passado) — tentativa clássica de furar a fila.
+    await assertFails(
+      db.doc(`games/${GAME_ID}/waitlist/stale-added-at`).set({
+        user_id: UID_PLAYER_C,
+        game_id: GAME_ID,
+        status: "WAITING",
+        user_name: "Player C",
+        queue_position: 99,
+        added_at: 0,
+      })
+    );
+    // added_at muito no futuro (> 60s à frente do relógio do servidor).
+    await assertFails(
+      db.doc(`games/${GAME_ID}/waitlist/future-added-at`).set({
+        user_id: UID_PLAYER_C,
+        game_id: GAME_ID,
+        status: "WAITING",
+        user_name: "Player C",
+        queue_position: 99,
+        added_at: Date.now() + 24 * 60 * 60 * 1000,
+      })
+    );
+  });
 });
 
 describe("waitlist — read", () => {

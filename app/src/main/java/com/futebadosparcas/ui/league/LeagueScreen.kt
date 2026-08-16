@@ -49,6 +49,7 @@ import com.futebadosparcas.ui.components.design.AppTopBar
 import com.futebadosparcas.ui.components.CachedProfileImage
 import com.futebadosparcas.ui.components.team.TeamBadgeById
 import com.futebadosparcas.ui.theme.GamificationColors
+import com.futebadosparcas.ui.theme.gamificationTextColor
 import com.futebadosparcas.ui.adaptive.rememberWindowSizeClass
 import com.futebadosparcas.R
 import com.futebadosparcas.ui.theme.AppDimensions
@@ -576,28 +577,28 @@ fun DivisionSelector(
                         emoji = stringResource(R.string.league_emoji_diamond),
                         name = stringResource(R.string.league_division_diamond),
                         rating = "70-100",
-                        color = GamificationColors.Diamond,
+                        color = gamificationTextColor(GamificationColors.Diamond),
                         description = stringResource(R.string.league_elite)
                     )
                     DivisionInfoItem(
                         emoji = stringResource(R.string.league_emoji_gold),
                         name = stringResource(R.string.league_division_gold),
                         rating = "50-69",
-                        color = GamificationColors.Gold,
+                        color = gamificationTextColor(GamificationColors.Gold),
                         description = stringResource(R.string.league_experienced)
                     )
                     DivisionInfoItem(
                         emoji = stringResource(R.string.league_emoji_silver),
                         name = stringResource(R.string.league_division_silver),
                         rating = "30-49",
-                        color = GamificationColors.Silver,
+                        color = gamificationTextColor(GamificationColors.Silver),
                         description = stringResource(R.string.league_evolving)
                     )
                     DivisionInfoItem(
                         emoji = stringResource(R.string.league_emoji_bronze),
                         name = stringResource(R.string.league_division_bronze),
                         rating = "0-29",
-                        color = GamificationColors.Bronze,
+                        color = gamificationTextColor(GamificationColors.Bronze),
                         description = stringResource(R.string.league_beginners)
                     )
 

@@ -49,6 +49,7 @@ import com.futebadosparcas.ui.components.EmptyState
 import com.futebadosparcas.ui.components.EmptyStateType
 import com.futebadosparcas.ui.components.animation.BadgeConfetti
 import com.futebadosparcas.ui.theme.GamificationColors
+import com.futebadosparcas.ui.theme.LocalIsDarkTheme
 import com.futebadosparcas.ui.theme.MotionDuration
 import com.futebadosparcas.ui.theme.MotionEasing
 import com.futebadosparcas.ui.theme.rememberReduceMotion
@@ -872,7 +873,7 @@ private fun getCategoryEmoji(category: BadgeCategory): String {
  */
 @Composable
 private fun getRarityColor(rarity: BadgeRarity): Color {
-    val isDark = androidx.compose.foundation.isSystemInDarkTheme()
+    val isDark = LocalIsDarkTheme.current
     return when (rarity) {
         BadgeRarity.COMUM -> if (isDark) com.futebadosparcas.ui.theme.BadgeRarityColorsDark.Common else com.futebadosparcas.ui.theme.BadgeRarityColors.Common
         BadgeRarity.RARO -> if (isDark) com.futebadosparcas.ui.theme.BadgeRarityColorsDark.Rare else com.futebadosparcas.ui.theme.BadgeRarityColors.Rare

@@ -1237,7 +1237,9 @@ fun MovePlayerDialog(
     onDismiss: () -> Unit,
     onMove: (String) -> Unit
 ) {
-    val teams = state.teams.filter { it.id != sourceTeamId }
+    val teams = remember(state.teams, sourceTeamId) {
+        state.teams.filter { it.id != sourceTeamId }
+    }
 
     Dialog(onDismissRequest = onDismiss) {
         Card {
@@ -1271,7 +1273,9 @@ fun FinishGameDialog(
     var selectedMvp by remember { mutableStateOf<String?>(null) }
     var expandedMvp by remember { mutableStateOf(false) }
 
-    val candidates = state.confirmations.filter { it.status == "CONFIRMED" }
+    val candidates = remember(state.confirmations) {
+        state.confirmations.filter { it.status == "CONFIRMED" }
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -1355,7 +1359,9 @@ fun LiveMatchSection(
             }
 
             Column(Modifier.fillMaxWidth()) {
-                val sortedEvents = state.events.sortedByDescending { it.createdAt }
+                val sortedEvents = remember(state.events) {
+                    state.events.sortedByDescending { it.createdAt }
+                }
                 sortedEvents.forEach { event ->
                     Row(
                         modifier = Modifier.padding(vertical = 4.dp),

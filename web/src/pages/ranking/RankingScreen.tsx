@@ -165,7 +165,7 @@ export const RankingScreen: React.FC = () => {
             <Typography variant="h6" color="text.secondary">
               {t('ranking.emptyTitle')}
             </Typography>
-            <Typography variant="body2" color="text.disabled" sx={{ mb: 2 }}>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
               {t('ranking.emptyDesc')}
             </Typography>
             <Button variant="contained" onClick={() => navigate('/?tab=1')}>

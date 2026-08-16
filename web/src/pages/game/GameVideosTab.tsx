@@ -117,6 +117,8 @@ export const GameVideosTab: React.FC<GameVideosTabProps> = ({
   const [videoUrlOverrides, setVideoUrlOverrides] = useState<Record<string, string>>({});
   const [videoRetryKeys, setVideoRetryKeys] = useState<Record<string, number>>({});
   const recoveredVideoIdsRef = useRef<Set<string>>(new Set());
+  // Perf: guarda ids de thumbnails cuja URL já foi resolvida (ver efeito abaixo)
+  const thumbnailAttemptsRef = useRef<Set<string>>(new Set());
 
   showErrorRef.current = showError;
   const activeVideoCount = videos.filter((video) => video.status !== 'REJECTED').length;
@@ -182,8 +184,17 @@ export const GameVideosTab: React.FC<GameVideosTabProps> = ({
     let cancelled = false;
 
     const loadThumbnailUrls = async () => {
+      // Perf: resolve apenas thumbnails NOVOS. O onSnapshot de game_videos
+      // dispara a cada mudança (reação, status) — antes disso refazia
+      // getDownloadURL (rede) para TODOS os vídeos a cada snapshot.
+      const missing = videos.filter(
+        (video) => video.thumbnailPath && !thumbnailAttemptsRef.current.has(video.id),
+      );
+      if (missing.length === 0) return;
+      missing.forEach((video) => thumbnailAttemptsRef.current.add(video.id));
+
       const nextUrls: Record<string, string> = {};
-      await Promise.all(videos.map(async (video) => {
+      await Promise.all(missing.map(async (video) => {
         if (!video.thumbnailPath) return;
         try {
           nextUrls[video.id] = await getDownloadURL(storageRef(storage, video.thumbnailPath));
@@ -193,7 +204,7 @@ export const GameVideosTab: React.FC<GameVideosTabProps> = ({
       }));
 
       if (!cancelled) {
-        setThumbnailUrls(nextUrls);
+        setThumbnailUrls((prev) => ({ ...prev, ...nextUrls }));
       }
     };
 

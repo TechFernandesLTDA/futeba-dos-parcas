@@ -34,7 +34,7 @@ import {
   getXpProgress,
   getXpRemaining,
 } from '../../types/gamification';
-import { getLevelColor } from '../../types/user';
+import { getLevelColor, getLevelTextColor } from '../../types/user';
 import { useGamificationColors } from '../../hooks/useGamificationColors';
 
 const logger = createLogger('PlayerCard');
@@ -347,6 +347,8 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
 
   const numberLocale = i18n.resolvedLanguage || i18n.language;
   const levelColor = useMemo(() => player ? getLevelColor(player.level, theme) : theme.palette.grey[500], [player, theme]);
+  // #4041: cor segura como TEXTO sobre paper (prata/ouro puros reprovam AA no light)
+  const levelTextColor = useMemo(() => player ? getLevelTextColor(player.level, theme) : theme.palette.text.secondary, [player, theme]);
   const levelEntry = player ? getLevelEntry(player.level) : null;
   const xpProgress = useMemo(() => player ? getXpProgress(player.experiencePoints) : 0, [player]);
   const xpRemaining = player ? getXpRemaining(player.experiencePoints) : 0;
@@ -754,8 +756,8 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                       px: { xs: 0.75, sm: 1 },
                       borderRadius: 999,
                       bgcolor: theme.palette.background.paper,
-                      border: `2px solid ${alpha(levelColor, 0.7)}`,
-                      color: levelColor,
+                      border: `2px solid ${alpha(levelTextColor, 0.7)}`,
+                      color: levelTextColor,
                       display: 'grid',
                       placeItems: 'center',
                       boxShadow: theme.shadows[6],

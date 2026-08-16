@@ -1116,6 +1116,13 @@
       "quickCreateTooltip": "Criar usando a próxima ocorrência",
       "quickStartDescription": "Use um template, duplique um jogo anterior ou salve este rascunho como padrão.",
       "quickStartTitle": "Acelere a criação",
+      "hero": {
+        "chipLabel": "Convocação da pelada",
+        "title": "Monte o jogo sem deixar ponta solta.",
+        "subtitle": "Defina local, horário, formato, pagamento e regras com um resumo ao vivo antes de chamar a galera.",
+        "quickPreview": "Prévia rápida",
+        "locationFallback": "Local em aberto"
+      },
       "totalCostHelp": "Valor total da quadra. Pode ficar vazio/zero se não houver cobrança.",
       "dailyPriceHelp": "Valor individual. Ative Manual para editar; vazio conta como R$ 0,00.",
       "recurrence": "Recorrência",

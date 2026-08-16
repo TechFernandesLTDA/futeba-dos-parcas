@@ -156,8 +156,9 @@ export function useWaitlist(gameId: string | null) {
           user_name: currentUser.displayName || 'Jogador',
           user_photo: currentUser.photoURL ?? null,
           position,
-          // queue_position provisório (nº de ativos + 1). A CF reordena
-          // a fila no servidor; cliente nunca promove.
+          // queue_position é derivado do nº de ativos + 1 e reflete a ordem
+          // atual da fila; a prioridade FIFO server-side é determinada por
+          // added_at (validado pelas rules contra request.time, ver #4044).
           queue_position: waitlist.length + 1,
           status: 'WAITING',
           // added_at em epoch millis (NÃO serverTimestamp): paridade com

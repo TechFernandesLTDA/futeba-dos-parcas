@@ -161,6 +161,9 @@ export const confirmPlayerAsManager = onCall<ConfirmPlayerAsManagerRequest>(
               .collection("confirmations")
               .where("game_id", "==", payload.gameId)
               .where("status", "==", "CONFIRMED")
+              // PERF: projection — só `position` (e o id) são usados para
+              // validar capacidade de goleiros/linha.
+              .select("position")
           ),
         ]);
 

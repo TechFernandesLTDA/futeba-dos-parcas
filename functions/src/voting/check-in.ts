@@ -160,6 +160,14 @@ async function loadRecentCheckInCandidates(
     .where("checked_in", "==", true)
     .orderBy("checked_in_at", "desc")
     .limit(CHECKIN_SIGNAL_RECENT_LIMIT)
+    // PERF: projection — só os campos usados pelo anti-cheat de viagem.
+    .select(
+      "game_id",
+      "checked_in_at",
+      "game_date_time",
+      "check_in_lat_approx",
+      "check_in_lng_approx"
+    )
     .get();
 
   return recentSnap.docs
@@ -744,6 +752,8 @@ async function notifyConfirmedPlayersAboutCheckIn(
       .where("game_id", "==", gameId)
       .where("status", "==", "CONFIRMED")
       .limit(50)
+      // PERF: só precisa de user_id para montar a lista de destinatários.
+      .select("user_id")
       .get();
 
     const recipients = confirmationsSnap.docs

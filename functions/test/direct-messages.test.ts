@@ -66,6 +66,7 @@ function makePagedQuery(pages: any[][]) {
   return {
     where: jest.fn().mockReturnThis(),
     limit: jest.fn().mockReturnThis(),
+    select: jest.fn().mockReturnThis(),
     startAfter: jest.fn().mockReturnThis(),
     get: jest.fn().mockImplementation(() =>
       Promise.resolve(makeQuerySnapshot(pages[pageIndex++] ?? []))

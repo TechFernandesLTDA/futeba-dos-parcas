@@ -397,8 +397,11 @@ describe("onUserDeleted — regressão #2323 loop infinito anonimização", () =
       let collectionGetCalls = 0;
       mockCollectionGet.mockImplementation(() => {
         collectionGetCalls++;
-        // Duas consultas adicionais cobrem push_tokens/push_token_devices.
-        if (collectionGetCalls <= 14) {
+        // FIX #4049: game_photos/game_videos acrescentam 2 consultas extras às
+        // de limpeza de docs. Todas as consultas de coleção DOC (não-grupo)
+        // retornam vazio; só a partir daí o loop de `groups` recebe os docs
+        // repetidos para validar o abort por MAX_ANON_ITERATIONS.
+        if (collectionGetCalls <= 16) {
           return Promise.resolve({
             docs: [],
             empty: true,

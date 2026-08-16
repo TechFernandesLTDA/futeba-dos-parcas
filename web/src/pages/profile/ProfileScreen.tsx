@@ -24,6 +24,7 @@ import {
   CircularProgress,
   Avatar,
   Stack,
+  useTheme,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -59,7 +60,7 @@ import { ScreenHeader } from '../../components/common/ScreenHeader';
 import { LoadingScreen } from '../../components/common/LoadingScreen';
 import { TeamBadge } from '../../components/team/TeamBadge';
 import { PageContainer } from '../../components/common/PageContainer';
-import { DIVISION_CONFIG, getDivisionLabel, normalizeLeagueDivision } from '../../types/gamification';
+import { getDivisionColor, getDivisionLabel, normalizeLeagueDivision } from '../../types/gamification';
 import { useTranslation } from 'react-i18next';
 import { getEffectiveRating, type User } from '../../types/user';
 import { isLookingForGameToday } from '../../utils/lookingForGameToday';
@@ -91,6 +92,7 @@ export const ProfileScreen: React.FC = () => {
   const { userId } = useParams<{ userId: string }>();
   const { user: currentUser } = useAuth();
   const { t } = useTranslation();
+  const theme = useTheme();
   useDocumentTitle(t('page.title.profile'));
 
   // Monitoramento de performance
@@ -150,7 +152,9 @@ export const ProfileScreen: React.FC = () => {
   }
 
   const profileDivision = normalizeLeagueDivision(profile.division);
-  const divisionConfig = DIVISION_CONFIG[profileDivision];
+  // #4041/#2163: cor da divisão theme-aware (o campo estático de DIVISION_CONFIG
+  // é light-only) — usada como tinta de fundo/borda do chip, nunca como texto.
+  const divisionColor = getDivisionColor(profileDivision, theme);
 
   return (
     <Box>
@@ -197,16 +201,16 @@ export const ProfileScreen: React.FC = () => {
                       </Box>
                     </Box>
                     {/* Chip da divisão: identidade via border + bg sutil, texto sempre legível (#1380)
-                        Antes usava color: divisionConfig.color como foreground, mas SILVER (#C0C0C0)
-                        sobre paper escuro dava contraste ~1.4:1 (WCAG fail). */}
+                         Antes usava a cor da divisão como foreground, mas SILVER (#E0E0E0)
+                         sobre papel claro dava contraste ~1.3:1 (WCAG fail). */}
                     <Chip
                       label={getDivisionLabel(profileDivision, t)}
                       size="small"
                       variant="outlined"
                       sx={{
-                        bgcolor: alpha(divisionConfig.color, 0.12),
+                        bgcolor: alpha(divisionColor, 0.12),
                         color: 'text.primary',
-                        borderColor: divisionConfig.color,
+                        borderColor: divisionColor,
                         fontWeight: 600,
                         mt: 0.5,
                       }}
@@ -539,7 +543,7 @@ export const ProfileScreen: React.FC = () => {
                       <Typography variant="body2" color="text.secondary">
                         {t('profile.favoriteSquads.empty')}
                       </Typography>
-                      <Typography variant="caption" color="text.disabled">
+                      <Typography variant="caption" color="text.secondary">
                         {t('profile.favoriteSquads.emptyHint')}
                       </Typography>
                     </Box>

@@ -63,6 +63,70 @@ export async function fetchDocsByFieldPaginated(
   return docs;
 }
 
+/**
+ * FIX #4054: garante a existência de uma temporada global ativa.
+ *
+ * A coleção `seasons` tinha um único writer — o próprio `checkSeasonEnd`, que
+ * só cria a PRÓXIMA temporada ao fechar uma existente. Com 0 docs, `snapshot`
+ * fica vazio todos os dias e nada nasce: deadlock de bootstrap que deixa Liga
+ * e XP de temporada inertes (medido: 0 docs em produção).
+ *
+ * Aqui, se não houver NENHUMA season com `is_active == true`, criamos (ou
+ * ativamos, se já existir como pending) a temporada do mês corrente, no
+ * keyspace global `monthly_YYYY_MM`, de forma idempotente (transaction.get()
+ * + set só se ausente — espelha o #1470).
+ *
+ * @param {string} todayStr Data de hoje no formato YYYY-MM-DD (BRT).
+ * @return {Promise<boolean>} true se criou/ativou uma temporada.
+ */
+async function ensureActiveSeason(todayStr: string): Promise<boolean> {
+  const seasonsRef = db().collection("seasons");
+  const activeSnap = await seasonsRef
+    .where("is_active", "==", true)
+    .limit(1)
+    .get();
+  if (!activeSnap.empty) return false;
+
+  const [yearStr, monthStr] = todayStr.split("-");
+  const year = parseInt(yearStr, 10);
+  const month = parseInt(monthStr, 10);
+  if (!Number.isFinite(year) || !Number.isFinite(month) ||
+      month < 1 || month > 12) {
+    return false;
+  }
+
+  const monthId = `monthly_${yearStr}_${monthStr}`;
+  const startDateStr = `${yearStr}-${monthStr}-01`;
+  const lastDay = new Date(Date.UTC(year, month, 0)).getUTCDate();
+  const endDateStr =
+    `${yearStr}-${monthStr}-${lastDay.toString().padStart(2, "0")}`;
+
+  await db().runTransaction(async (transaction) => {
+    const ref = seasonsRef.doc(monthId);
+    const snap = await transaction.get(ref);
+    if (!snap.exists) {
+      transaction.set(ref, {
+        name: `Temporada ${getMonthName(month - 1)} ${year}`,
+        start_date: startDateStr,
+        end_date: endDateStr,
+        is_active: true,
+        pending: false,
+        created_at: FieldValue.serverTimestamp(),
+        type: "MONTHLY",
+      });
+      logger.info(`[SEASON] Bootstraped active season ${monthId}`);
+    } else if (snap.data()?.is_active !== true) {
+      transaction.update(ref, {
+        is_active: true,
+        pending: FieldValue.delete(),
+      });
+      logger.info(`[SEASON] Activated pending season ${monthId}`);
+    }
+  });
+
+  return true;
+}
+
 
 /**
  * Scheduled job para verificar fim de season.
@@ -110,7 +174,18 @@ export const checkSeasonEnd = onSchedule(
       .get();
 
     if (snapshot.empty) {
-      logger.info("[SEASON] No seasons to close.");
+      // FIX #4054: sem season para fechar, mas pode não haver NENHUMA season
+      // ativa — nesse caso a coleção nunca nasce (deadlock de bootstrap).
+      // Garante a temporada do mês corrente e sinaliza com warn quando a
+      // feature estava morta (diferente de "há ativa e ainda não venceu").
+      const bootstrapped = await ensureActiveSeason(todayStr);
+      if (bootstrapped) {
+        logger.warn(
+          "[SEASON] Nenhuma temporada ativa existia; criada/ativada a do mês corrente."
+        );
+      } else {
+        logger.info("[SEASON] No seasons to close.");
+      }
       return;
     }
 

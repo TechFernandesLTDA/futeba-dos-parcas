@@ -101,7 +101,7 @@ function PublicGamesMapView({
         <Typography variant="body2" color="text.secondary">
           {apiKey ? t('games.public.mapLoading') : t('games.public.mapNoApiKey')}
         </Typography>
-        <Typography variant="caption" color="text.disabled">
+        <Typography variant="caption" color="text.secondary">
           {t('games.public.gamesFound', { count: games.length })}
         </Typography>
       </Box>

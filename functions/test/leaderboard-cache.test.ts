@@ -599,9 +599,10 @@ describe("invalidateLeaderboardOnParticipation (#3883)", () => {
     ref: {path: "cache_leaderboard/league_players__season-1__global__ALL"},
   };
 
-  // Doc do cache de rankings (getLeaderboardCached): NÃO tem `kind`.
+  // Doc do cache de rankings (getLeaderboardCached): agora carrega `kind`
+  // "ranking" (#4045) para o filtro server-side da invalidação.
   const rankingDoc = {
-    data: () => ({season_id: "season-1", rankings: []}),
+    data: () => ({kind: "ranking", season_id: "season-1", rankings: []}),
     ref: {path: "cache_leaderboard/season-1_ALL_100"},
   };
 
@@ -613,14 +614,24 @@ describe("invalidateLeaderboardOnParticipation (#3883)", () => {
   });
 
   const mockWhereGet = (docs: unknown[]) => {
+    // Simula o filtro server-side `where("kind","==","ranking")`: o diretório
+    // (kind == "league_players_directory") nunca é retornado pela query.
+    const filtered = docs.filter(
+      (doc) => (doc as {data: () => Record<string, unknown>}).data()?.kind ===
+        "ranking"
+    );
     const get = jest.fn().mockResolvedValue({
-      empty: docs.length === 0,
-      size: docs.length,
-      docs,
+      empty: filtered.length === 0,
+      size: filtered.length,
+      docs: filtered,
     });
-    mockCollection.mockImplementation(() => ({
-      where: jest.fn(() => ({limit: jest.fn().mockReturnThis(), get})),
-    }));
+    const chainable = (): any => ({
+      where: jest.fn(() => chainable()),
+      limit: jest.fn().mockReturnThis(),
+      startAfter: jest.fn().mockReturnThis(),
+      get,
+    });
+    mockCollection.mockImplementation(() => chainable());
     return get;
   };
 

@@ -95,6 +95,7 @@ function arrangeTransaction(input: {
 }) {
   const capacityQuery = {
     where: jest.fn().mockReturnThis(),
+    select: jest.fn().mockReturnThis(),
   };
   const auditDocRef = {set: jest.fn().mockResolvedValue(undefined)};
   const auditCollection = {

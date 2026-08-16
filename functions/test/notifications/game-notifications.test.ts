@@ -706,6 +706,76 @@ describe("Game Notifications", () => {
       expect(mockTransactionUpdate).toHaveBeenCalled();
     });
 
+    it("#4043: promove a 1ª entrada WAITING para NOTIFIED e usa orderBy(added_at)", async () => {
+      mockTransactionGet
+        .mockResolvedValueOnce({
+          exists: true,
+          data: () => ({
+            status: "SCHEDULED",
+            max_players: 14,
+            location_name: "Campo 1",
+            date: "2024-01-15",
+          }),
+        })
+        .mockResolvedValueOnce({
+          exists: true,
+          data: () => ({status: "SCHEDULED", max_players: 14}),
+        })
+        .mockResolvedValueOnce({
+          exists: true,
+          data: () => ({
+            status: "WAITING",
+            user_id: "wl-user-1",
+            user_name: "Jogador",
+          }),
+        });
+      mockCountGet.mockResolvedValueOnce({
+        data: () => ({count: 10}),
+      });
+      const entryRef = {id: "wl-user-1"};
+      mockCollectionGet.mockResolvedValueOnce({
+        empty: false,
+        size: 1,
+        docs: [
+          {
+            id: "wl-user-1",
+            ref: entryRef,
+            data: () => ({
+              status: "WAITING",
+              user_id: "wl-user-1",
+              user_name: "Jogador",
+            }),
+          },
+        ],
+      });
+
+      await onGameVacancy({
+        id: "evt-vacancy-promote",
+        data: {
+          before: {data: () => ({status: "CONFIRMED", game_id: "game1"})},
+          after: {data: () => ({status: "CANCELLED", game_id: "game1"})},
+        },
+        params: {confirmationId: "conf1"},
+      });
+
+      // Regressão do #753/#4043: a query ordenava por "created_at" (campo
+      // inexistente) — o campo real é "added_at".
+      expect(mockOrderBy).toHaveBeenCalledWith("added_at", "asc");
+      // A 1ª entrada WAITING é promovida a NOTIFIED com deadline de 30 min.
+      expect(mockTransactionUpdate).toHaveBeenCalledWith(
+        entryRef,
+        expect.objectContaining({
+          status: "NOTIFIED",
+          notified_at: expect.anything(),
+          response_deadline: expect.anything(),
+        })
+      );
+      expect(mockSendNotificationToUsers).toHaveBeenCalledWith(
+        ["wl-user-1"],
+        expect.objectContaining({type: "GAME_VACANCY"})
+      );
+    });
+
     it("nao notifica se nao era CONFIRMED", async () => {
       await onGameVacancy({
         data: {

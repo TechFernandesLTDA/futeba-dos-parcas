@@ -258,7 +258,7 @@ export const SchedulesScreen: React.FC = () => {
             <Typography variant="h6" color="text.secondary">
               {t('schedule.emptyTitle')}
             </Typography>
-            <Typography variant="body2" color="text.disabled">
+            <Typography variant="body2" color="text.secondary">
               {t('schedule.emptyDesc')}
             </Typography>
             {canManage && (
