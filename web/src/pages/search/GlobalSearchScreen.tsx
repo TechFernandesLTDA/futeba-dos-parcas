@@ -1,8 +1,8 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
-import { Box, IconButton, Typography, useTheme } from '@mui/material';
-import { ArrowBack as BackIcon } from '@mui/icons-material';
+import { Box, useTheme } from '@mui/material';
+import { ScreenHeader } from '../../components/common/ScreenHeader';
 import { SearchPanel } from '../../components/search/SearchPanel';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useTranslation } from 'react-i18next';
@@ -35,25 +35,22 @@ export const GlobalSearchScreen: React.FC = () => {
         overflow: 'hidden',
       }}
     >
-      {/* Header da página */}
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          px: 1,
-          py: 0.5,
-          borderBottom: `1px solid ${theme.palette.divider}`,
+      {/* Header da página
+          #4051: migrado para ScreenHeader (não-sticky, esta tela gerencia o
+          próprio scroll interno) — o header manual empilhava com a MobileTopBar
+          global no mobile (2 botões "Voltar", 2 títulos "Buscar"). O título
+          cru "Buscar" também virou a chave i18n page.title.search. */}
+      <ScreenHeader
+        title={t('page.title.search')}
+        onBack={navigateBack}
+        backAriaLabel={t('a11y.back')}
+        sticky={false}
+        headerSx={{
           bgcolor: 'background.paper',
+          borderBottom: `1px solid ${theme.palette.divider}`,
           flexShrink: 0,
         }}
-      >
-        <IconButton onClick={navigateBack} aria-label={t('a11y.back')}>
-          <BackIcon />
-        </IconButton>
-        <Typography variant="h6" sx={{ ml: 1 }}>
-          Buscar
-        </Typography>
-      </Box>
+      />
 
       {/* SearchPanel ocupa o restante da altura */}
       <Box sx={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>

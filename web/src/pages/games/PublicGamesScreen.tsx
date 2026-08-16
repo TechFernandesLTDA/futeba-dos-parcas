@@ -20,7 +20,6 @@ import {
 } from '@mui/material';
 import Grid from '@mui/material/Unstable_Grid2';
 import {
-  ArrowBack as BackIcon,
   Refresh as RefreshIcon,
   CalendarToday as CalendarIcon,
   Timer as TimerIcon,
@@ -31,6 +30,7 @@ import {
 import { usePublicGames, useJoinPublicGame } from '../../hooks/usePublicGames';
 import { EmptyState } from '../../components/common/EmptyState';
 import { PageContainer } from '../../components/common/PageContainer';
+import { ScreenHeader } from '../../components/common/ScreenHeader';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { Game, FIELD_TYPE_LABELS, GameGender } from '../../types/game';
 import { useTranslation } from 'react-i18next';
@@ -62,17 +62,18 @@ export const PublicGamesScreen: React.FC = () => {
 
   return (
     <PageContainer maxWidth="dashboard">
-      <Stack direction="row" alignItems="center" spacing={1} mb={3}>
-        <IconButton onClick={goBack} aria-label={t('a11y.back')}>
-          <BackIcon />
-        </IconButton>
-        <Typography variant="h5" fontWeight="bold" flex={1}>
-          {t('games.public.title')}
-        </Typography>
-        <IconButton onClick={() => refetch()} aria-label={t('a11y.refresh')}>
-          <RefreshIcon />
-        </IconButton>
-      </Stack>
+      {/* #4051: migrado para ScreenHeader — o header manual não-sticky empilhava
+          com a MobileTopBar global no mobile (2 botões "Voltar", 2 títulos). */}
+      <ScreenHeader
+        title={t('games.public.title')}
+        onBack={goBack}
+        backAriaLabel={t('a11y.back')}
+        actions={
+          <IconButton onClick={() => refetch()} aria-label={t('a11y.refresh')}>
+            <RefreshIcon />
+          </IconButton>
+        }
+      />
 
       <Alert severity="info" icon={<SoccerIcon />} sx={{ mb: 2 }}>
         {t('games.public.info')}

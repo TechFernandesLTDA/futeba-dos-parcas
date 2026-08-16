@@ -26,19 +26,18 @@ import {
   PhotoLibrary as PhotoLibraryIcon,
 } from '@mui/icons-material';
 import {
-  addDoc,
   collection,
   deleteDoc,
   doc,
   onSnapshot,
   orderBy,
   query,
-  serverTimestamp,
   where,
 } from 'firebase/firestore';
-import { deleteObject, getDownloadURL, ref as storageRef, uploadBytesResumable } from 'firebase/storage';
+import { deleteObject, ref as storageRef, uploadBytesResumable } from 'firebase/storage';
 import { db } from '../../services/firebase';
 import { storage } from '../../services/firebaseStorage';
+import { createGamePhoto } from '../../services/cloudFunctions';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { EmptyState } from '../../components/common/EmptyState';
@@ -50,6 +49,17 @@ const logger = createLogger('GamePhotosTab');
 const MAX_PHOTO_SIZE_BYTES = 10 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 const CAPTION_MAX_LENGTH = 160;
+// Falhas da callable createGamePhoto que indicam que o upload NUNCA vai ser
+// aceito — nesses casos limpamos o objeto órfão do Storage. Falhas transitórias
+// mantêm o objeto para permitir retry idempotente (espelha GameVideosTab/#4024).
+const DEFINITIVE_PHOTO_CREATE_FAILURES = new Set([
+  'functions/already-exists',
+  'functions/failed-precondition',
+  'functions/invalid-argument',
+  'functions/not-found',
+  'functions/permission-denied',
+  'functions/resource-exhausted',
+]);
 
 interface GamePhoto {
   id: string;
@@ -86,7 +96,7 @@ export const GamePhotosTab: React.FC<GamePhotosTabProps> = ({
 }) => {
   const theme = useTheme();
   const { t } = useTranslation();
-  const { currentUser, user } = useAuth();
+  const { currentUser } = useAuth();
   const { showSuccess, showError } = useToast();
   const showErrorRef = useRef(showError);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -167,6 +177,7 @@ export const GamePhotosTab: React.FC<GamePhotosTabProps> = ({
 
     setUploading(true);
     let uploadedPath: string | null = null;
+    let createCallableAttempted = false;
     try {
       const cleanCaption = validatePhoto(file);
       const path = `games/${gameId}/photos/${currentUser.uid}/${safeFileName(file)}`;
@@ -192,28 +203,23 @@ export const GamePhotosTab: React.FC<GamePhotosTabProps> = ({
           () => resolve(),
         );
       });
-      const downloadUrl = await getDownloadURL(fileRef);
 
-      await addDoc(collection(db, 'game_photos'), {
-        game_id: gameId,
-        url: downloadUrl,
-        storage_path: path,
-        uploaded_by: currentUser.uid,
-        uploaded_by_name: user?.name || currentUser.displayName || t('common.player'),
-        uploaded_by_photo: user?.photoUrl || currentUser.photoURL || '',
-        content_type: file.type,
-        size: file.size,
+      // FIX #4049: o doc autoritativo agora é criado pela callable
+      // createGamePhoto (cotas server-side + URL assinada gerada no servidor).
+      // A callable valida o objeto já enviado no Storage — upload primeiro.
+      createCallableAttempted = true;
+      await createGamePhoto({
+        gameId,
+        storagePath: path,
         caption: cleanCaption,
-        reactions: {},
-        status: 'ACTIVE',
-        created_at: serverTimestamp(),
-        updated_at: serverTimestamp(),
       });
 
       setCaption('');
       showSuccess(t('gamePhotos.uploadSuccess'));
     } catch (err) {
-      if (uploadedPath) {
+      const code = typeof err === 'object' && err && 'code' in err ? String(err.code) : '';
+      if (uploadedPath &&
+          (!createCallableAttempted || DEFINITIVE_PHOTO_CREATE_FAILURES.has(code))) {
         await deleteObject(storageRef(storage, uploadedPath)).catch((storageErr) => {
           logger.warn('Failed to clean orphaned game photo upload:', storageErr);
         });

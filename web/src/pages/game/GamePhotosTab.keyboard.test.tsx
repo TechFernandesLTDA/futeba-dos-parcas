@@ -42,6 +42,11 @@ vi.mock('firebase/storage', () => ({
 
 vi.mock('../../services/firebase', () => ({ db: {} }));
 vi.mock('../../services/firebaseStorage', () => ({ storage: {} }));
+// FIX #4049: GamePhotosTab agora cria o doc autoritativo via callable
+// createGamePhoto — mock evita inicializar firebaseFunctions real no teste.
+vi.mock('../../services/cloudFunctions', () => ({
+  createGamePhoto: vi.fn().mockResolvedValue({ data: { success: true, photoId: 'photo-1', alreadyExists: false } }),
+}));
 vi.mock('../../contexts/AuthContext', () => ({
   useAuth: () => ({
     currentUser: { uid: 'user-1', displayName: 'Ana' },

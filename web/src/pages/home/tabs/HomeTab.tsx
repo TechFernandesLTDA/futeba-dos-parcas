@@ -577,7 +577,7 @@ function MiniRankingWidget({ groups }: { groups: Group[] }) {
               <Typography variant="body2" color="text.secondary" fontWeight={500}>
                 {t('ranking.noPlayersYet')}
               </Typography>
-              <Typography variant="caption" color="text.disabled" sx={{ display: 'block', mt: 0.5, mb: 1 }}>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5, mb: 1 }}>
                 {t('ranking.participateToAppear', 'Participe de jogos para aparecer no ranking')}
               </Typography>
               <Button
@@ -972,7 +972,13 @@ export function HomeTab() {
                   p: 0,
                 }}
               >
-                <Typography variant="caption" fontWeight="bold" sx={{ color: 'primary.contrastText' }}>
+                {/* #4055: o primeiro plano agora é derivado do FUNDO real (a cor
+                    do nível) — primary.contrastText fixo deixava o dígito branco
+                    sobre ouro/prata/bronze/ciano no light (pior caso 1.32:1).
+                    getContrastText usa contrastThreshold 4.5 (#4056) e cobre os
+                    8 tiers: metais claros → texto escuro; verde/azul/vermelho →
+                    branco (todos >= 4.5:1). */}
+                <Typography variant="caption" fontWeight="bold" sx={{ color: theme.palette.getContrastText(levelColor) }}>
                   {currentLevel}
                 </Typography>
               </Box>

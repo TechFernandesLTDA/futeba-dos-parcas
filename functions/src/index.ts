@@ -1771,6 +1771,11 @@ export const onGameStatusUpdate = onDocumentUpdated(
           // run (quando mvp_id/worst_player_id já existiam). Limpa o flag de
           // adiamento setado por concludeMvpVoting durante o hold anti-fraude.
           voting_xp_pending: false,
+          // FIX #4053: persiste a temporada ativa no jogo quando ele vira
+          // FINISHED. applyVotingXpDelta lê games.season_id (ramo hoje
+          // inalcançável) para creditar o XP de MVP/Bola Murcha na temporada
+          // DO JOGO, não na ativa na hora do voto (virada de mês).
+          ...(activeSeason ? {season_id: activeSeason} : {}),
         });
 
         logger.info(
@@ -2002,6 +2007,17 @@ export const recalculateLeagueRating =
           .where("game_status", "==", "FINISHED")
           .orderBy("created_at", "desc")
           .limit(10)
+          // PERF: projection — só os campos usados no cálculo de rating
+          // (reduz bytes lidos dos xp_logs, que carregam breakdown extenso).
+          .select(
+            "game_id",
+            "game_result",
+            "xp_earned",
+            "my_team_score",
+            "opponent_score",
+            "was_mvp",
+            "created_at"
+          )
           .get();
 
         const recentGames =
@@ -2154,16 +2170,14 @@ export const recalculateLeagueRating =
  * evitando truncamento silencioso do limit(2000).
  *
  * @param {admin.firestore.Query} baseQuery - Base query sem limit
- * @param {admin.firestore.DocumentReference[]} allRefs - Array que
- *   recebe as referências coletadas (mutado in-place)
  * @param {string} label - Nome da coleção para log
- * @return {Promise<void>}
+ * @return {Promise<admin.firestore.DocumentReference[]>} Referências coletadas
  */
 async function collectAllMatching(
   baseQuery: admin.firestore.Query,
-  allRefs: admin.firestore.DocumentReference[],
   label: string
-): Promise<void> {
+): Promise<admin.firestore.DocumentReference[]> {
+  const refs: admin.firestore.DocumentReference[] = [];
   let lastDoc:
     admin.firestore.QueryDocumentSnapshot | undefined;
   let totalFound = 0;
@@ -2178,7 +2192,7 @@ async function collectAllMatching(
     if (snapshot.size === 0) break;
 
     snapshot.docs.forEach((doc) => {
-      allRefs.push(doc.ref);
+      refs.push(doc.ref);
       totalFound++;
     });
     lastDoc =
@@ -2192,6 +2206,8 @@ async function collectAllMatching(
     `${totalFound} ` +
     `${label} to delete`
   );
+
+  return refs;
 }
 
 export const onGameDeleted = onDocumentDeleted(
@@ -2224,53 +2240,80 @@ export const onGameDeleted = onDocumentDeleted(
         return;
       }
       // Coletar todas as referências de
-      // documentos a deletar
-      const allRefs: admin.firestore
-        .DocumentReference[] = [];
-
-      // 1. Delete confirmations (paginated)
-      await collectAllMatching(
-        db()
-          .collection("confirmations")
-          .where("game_id", "==", gameId),
-        allRefs,
-        "confirmations"
-      );
-
-      // 2. Delete teams (paginated)
-      await collectAllMatching(
-        db()
-          .collection("teams")
-          .where("game_id", "==", gameId),
-        allRefs,
-        "teams"
-      );
-
-      // 3. Delete game_events (paginated)
-      await collectAllMatching(
-        db()
-          .collection("game_events")
-          .where("game_id", "==", gameId),
-        allRefs,
-        "game_events"
-      );
-
-      // 4. Delete mvp_votes (paginated)
-      await collectAllMatching(
-        db()
-          .collection("mvp_votes")
-          .where("game_id", "==", gameId),
-        allRefs,
-        "mvp_votes"
-      );
-
-      // 5. Delete live_scores
-      // (document with gameId as ID)
+      // documentos a deletar.
+      // PERF: as 8 varreduras são independentes — paralelizamos para reduzir
+      // a latência do cascade delete (antes eram 7 scans sequenciais paginados).
       const liveScoreRef = db()
         .collection("live_scores")
         .doc(gameId);
-      const liveScoreDoc =
-        await liveScoreRef.get();
+
+      const [
+        confirmationsRefs,
+        teamsRefs,
+        eventsRefs,
+        mvpVotesRefs,
+        xpLogsRefs,
+        photosRefs,
+        videosRefs,
+        liveScoreDoc,
+      ] = await Promise.all([
+        collectAllMatching(
+          db()
+            .collection("confirmations")
+            .where("game_id", "==", gameId),
+          "confirmations"
+        ),
+        collectAllMatching(
+          db()
+            .collection("teams")
+            .where("game_id", "==", gameId),
+          "teams"
+        ),
+        collectAllMatching(
+          db()
+            .collection("game_events")
+            .where("game_id", "==", gameId),
+          "game_events"
+        ),
+        collectAllMatching(
+          db()
+            .collection("mvp_votes")
+            .where("game_id", "==", gameId),
+          "mvp_votes"
+        ),
+        collectAllMatching(
+          db()
+            .collection("xp_logs")
+            .where("game_id", "==", gameId),
+          "xp_logs"
+        ),
+        collectAllMatching(
+          db()
+            .collection("game_photos")
+            .where("game_id", "==", gameId),
+          "game_photos"
+        ),
+        collectAllMatching(
+          db()
+            .collection("game_videos")
+            .where("game_id", "==", gameId),
+          "game_videos"
+        ),
+        liveScoreRef.get(),
+      ]);
+
+      const allRefs: admin.firestore
+        .DocumentReference[] = [
+          ...confirmationsRefs,
+          ...teamsRefs,
+          ...eventsRefs,
+          ...mvpVotesRefs,
+          ...xpLogsRefs,
+          ...photosRefs,
+          ...videosRefs,
+        ];
+
+      // 5. live_scores (document with gameId as ID)
       if (liveScoreDoc.exists) {
         allRefs.push(liveScoreRef);
         logger.info(
@@ -2278,15 +2321,6 @@ export const onGameDeleted = onDocumentDeleted(
           "Found live_score to delete"
         );
       }
-
-      // 6. Delete xp_logs related to this game (paginated)
-      await collectAllMatching(
-        db()
-          .collection("xp_logs")
-          .where("game_id", "==", gameId),
-        allRefs,
-        "xp_logs"
-      );
 
       // Commit em chunks de BATCH_LIMIT para
       // não exceder limite de 500 ops
@@ -2324,6 +2358,24 @@ export const onGameDeleted = onDocumentDeleted(
           "[CASCADE DELETE] No related " +
           "documents found for game " +
           `${gameId}`
+        );
+      }
+
+      // FIX #4049: remove os objetos do Storage (fotos, vídeos e thumbnails
+      // de uma vez, prefixo games/{gameId}/). Sem isso, apagar o jogo deixava
+      // bytes órfãos servidos por URL de token para sempre.
+      try {
+        const bucket = admin.storage().bucket();
+        await bucket.deleteFiles({prefix: `games/${gameId}/`});
+        logger.info(
+          "[CASCADE DELETE] Storage objects removed under " +
+          `games/${gameId}/`
+        );
+      } catch (storageError) {
+        logger.error(
+          "[CASCADE DELETE] Error deleting storage objects for game " +
+          `${gameId}:`,
+          storageError
         );
       }
     } catch (error) {
@@ -2374,12 +2426,37 @@ export const onGroupDeleted = onDocumentDeleted(
     try {
       const allOps: BatchOp[] = [];
 
-      // 1. Delete all members (subcollection)
-      const membersSnap = await db()
-        .collection("groups")
-        .doc(groupId)
-        .collection("members")
-        .get();
+      // PERF: as 7 leituras são independentes — paralelizamos para reduzir a
+      // latência do cascade delete de grupo (antes eram 7 awaits sequenciais).
+      const groupRef = db().collection("groups").doc(groupId);
+      const [
+        membersSnap,
+        cashboxSnap,
+        summarySnap,
+        joinRequestsSnap,
+        invitesSnap,
+        schedulesSnap,
+        gamesSnap,
+      ] = await Promise.all([
+        // 1. Members (subcollection)
+        groupRef.collection("members").get(),
+        // 2. Cashbox entries
+        groupRef.collection("cashbox").get(),
+        // 3. Cashbox summary
+        groupRef.collection("cashbox_summary").get(),
+        // 3.5 Join requests
+        groupRef.collection("join_requests").get(),
+        // 4. Group invites
+        db().collection("group_invites")
+          .where("group_id", "==", groupId).get(),
+        // 5. Schedules
+        db().collection("schedules")
+          .where("group_id", "==", groupId).get(),
+        // 7. Games from this group (marked orphaned below)
+        db().collection("games")
+          .where("group_id", "==", groupId).get(),
+      ]);
+
       membersSnap.docs.forEach(
         (doc) => allOps.push({
           type: "delete", ref: doc.ref,
@@ -2391,12 +2468,6 @@ export const onGroupDeleted = onDocumentDeleted(
         "members to delete"
       );
 
-      // 2. Delete cashbox entries
-      const cashboxSnap = await db()
-        .collection("groups")
-        .doc(groupId)
-        .collection("cashbox")
-        .get();
       cashboxSnap.docs.forEach(
         (doc) => allOps.push({
           type: "delete", ref: doc.ref,
@@ -2408,24 +2479,12 @@ export const onGroupDeleted = onDocumentDeleted(
         "cashbox entries to delete"
       );
 
-      // 3. Delete cashbox_summary
-      const summarySnap = await db()
-        .collection("groups")
-        .doc(groupId)
-        .collection("cashbox_summary")
-        .get();
       summarySnap.docs.forEach(
         (doc) => allOps.push({
           type: "delete", ref: doc.ref,
         })
       );
 
-      // 3.5 Delete join_requests
-      const joinRequestsSnap = await db()
-        .collection("groups")
-        .doc(groupId)
-        .collection("join_requests")
-        .get();
       joinRequestsSnap.docs.forEach(
         (doc) => allOps.push({
           type: "delete", ref: doc.ref,
@@ -2437,11 +2496,6 @@ export const onGroupDeleted = onDocumentDeleted(
         "join_requests to delete"
       );
 
-      // 4. Delete group invites
-      const invitesSnap = await db()
-        .collection("group_invites")
-        .where("group_id", "==", groupId)
-        .get();
       invitesSnap.docs.forEach(
         (doc) => allOps.push({
           type: "delete", ref: doc.ref,
@@ -2453,11 +2507,6 @@ export const onGroupDeleted = onDocumentDeleted(
         "invites to delete"
       );
 
-      // 5. Delete schedules
-      const schedulesSnap = await db()
-        .collection("schedules")
-        .where("group_id", "==", groupId)
-        .get();
       schedulesSnap.docs.forEach(
         (doc) => allOps.push({
           type: "delete", ref: doc.ref,
@@ -2498,10 +2547,6 @@ export const onGroupDeleted = onDocumentDeleted(
       // 7. Mark games from this group as
       // orphaned (don't delete - preserve
       // history)
-      const gamesSnap = await db()
-        .collection("games")
-        .where("group_id", "==", groupId)
-        .get();
       gamesSnap.docs.forEach(
         (doc) => allOps.push({
           type: "update",
@@ -2812,7 +2857,11 @@ export {
 } from "./monitoring/realtime-slo";
 export * from "./storage/generate-thumbnails";
 export * from "./storage/generate-video-thumbnails";
-export {createGameVideo} from "./storage/game-videos";
+export {
+  createGameVideo,
+  reconcileStaleProcessingGameVideos,
+} from "./storage/game-videos";
+export {createGamePhoto} from "./storage/game-photos";
 
 // SPEC: feat-2026-05-08-consolidate-shareable-invites
 // Migra groups.invite_code (legacy) -> invites/ (canonical)

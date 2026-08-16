@@ -286,7 +286,9 @@ export const processWeeklyRanking = onSchedule(
       while (true) {
         let dtQuery = db().collectionGroup("dream_team")
           .orderBy(FieldPath.documentId())
-          .limit(DREAM_TEAM_PAGE_LIMIT);
+          .limit(DREAM_TEAM_PAGE_LIMIT)
+          // PERF: projection — só o array de jogadores é usado para pontuar.
+          .select("players");
         if (lastDoc) {
           dtQuery = dtQuery.startAfter(lastDoc);
         }

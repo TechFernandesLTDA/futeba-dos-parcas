@@ -27,11 +27,12 @@ object ContrastHelper {
      * ```
      */
     fun getContrastingTextColor(backgroundColor: Color): Color {
-        val luminance = backgroundColor.luminance()
-        return if (luminance > 0.5f) {
-            Color(0xFF1A1A1A)  // Texto escuro para fundos claros
+        val dark = Color(0xFF1A1A1A)
+        val light = Color(0xFFFFFFFF)
+        return if (getContrastRatio(dark, backgroundColor) >= getContrastRatio(light, backgroundColor)) {
+            dark
         } else {
-            Color(0xFFFFFFFF)  // Texto claro para fundos escuros
+            light
         }
     }
 

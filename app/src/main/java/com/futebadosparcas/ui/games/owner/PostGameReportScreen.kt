@@ -74,24 +74,34 @@ fun PostGameReportScreen(
     val currencyFormat = remember { NumberFormat.getCurrencyInstance(Locale.forLanguageTag("pt-BR")) }
     val dateFormat = remember { SimpleDateFormat("dd/MM/yyyy", Locale.forLanguageTag("pt-BR")) }
 
-    val presentPlayers = report.confirmations.filter {
-        it.status == ConfirmationStatus.CONFIRMED.name && it.wasPresent
+    val presentPlayers = remember(report.confirmations) {
+        report.confirmations.filter {
+            it.status == ConfirmationStatus.CONFIRMED.name && it.wasPresent
+        }
     }
-    val absentPlayers = report.confirmations.filter {
-        it.status == ConfirmationStatus.CONFIRMED.name && !it.wasPresent
+    val absentPlayers = remember(report.confirmations) {
+        report.confirmations.filter {
+            it.status == ConfirmationStatus.CONFIRMED.name && !it.wasPresent
+        }
     }
-    val paidPlayers = report.confirmations.filter {
-        it.paymentStatus == PaymentStatus.PAID.name
+    val paidPlayers = remember(report.confirmations) {
+        report.confirmations.filter {
+            it.paymentStatus == PaymentStatus.PAID.name
+        }
     }
-    val unpaidPlayers = report.confirmations.filter {
-        it.status == ConfirmationStatus.CONFIRMED.name &&
-        it.paymentStatus != PaymentStatus.PAID.name
+    val unpaidPlayers = remember(report.confirmations) {
+        report.confirmations.filter {
+            it.status == ConfirmationStatus.CONFIRMED.name &&
+            it.paymentStatus != PaymentStatus.PAID.name
+        }
     }
 
     val pricePerPlayer = report.game.resolveExpectedPayment()
-    val partialPaidTotal = report.confirmations.filter {
-        it.status == ConfirmationStatus.CONFIRMED.name && it.hasPartialPayment()
-    }.sumOf { it.partialPayment }
+    val partialPaidTotal = remember(report.confirmations) {
+        report.confirmations.filter {
+            it.status == ConfirmationStatus.CONFIRMED.name && it.hasPartialPayment()
+        }.sumOf { it.partialPayment }
+    }
     val totalCollected = paidPlayers.size * pricePerPlayer + partialPaidTotal
     val totalPending = unpaidPlayers.size * pricePerPlayer
 

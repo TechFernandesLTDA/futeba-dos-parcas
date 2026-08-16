@@ -619,7 +619,7 @@ export const EditProfileScreen: React.FC = () => {
                 <Typography variant="body2" color="text.secondary" gutterBottom>
                   {label}: {formData[key]?.toFixed(1) || '0.0'}
                   {formData[autoKey] > 0 && (
-                    <Typography component="span" variant="caption" color="text.disabled" sx={{ ml: 1 }}>
+                    <Typography component="span" variant="caption" color="text.secondary" sx={{ ml: 1 }}>
                       {t('profile.autoRatingPrefix')}: {formData[autoKey].toFixed(1)}
                     </Typography>
                   )}

@@ -47,7 +47,7 @@ import { PlayerCard } from '../../../components/player/PlayerCard';
 import { TeamBadge } from '../../../components/team/TeamBadge';
 import { useLeague, LeaguePlayer, LeagueFilters } from '../../../hooks/useLeague';
 import { useActiveSeason } from '../../../hooks/useActiveSeason';
-import { DIVISION_CONFIG, LeagueDivision, getXpProgress, getDivisionColor, getDivisionLabel } from '../../../types/gamification';
+import { DIVISION_CONFIG, LeagueDivision, getXpProgress, getDivisionColor, getDivisionTextColor, getDivisionLabel } from '../../../types/gamification';
 import { getLevelBadgeImage, handleBadgeImageError } from '../../../utils/levelBadge';
 import { getEffectiveLevel, getExperiencePoints } from '../../../utils/xpAccounting';
 import {
@@ -108,6 +108,8 @@ const PodiumCard: React.FC<{
   const divisionConfig = {
     ...(DIVISION_CONFIG[player.division] || DIVISION_CONFIG.BRONZE),
     color: getDivisionColor(player.division, theme),
+    // #4041: variante segura como TEXTO (prata/ouro puros reprovam AA no light)
+    textColor: getDivisionTextColor(player.division, theme),
   };
   const playerXp = getPlayerXp(player);
   const playerLevel = getPlayerLevel(player);
@@ -193,7 +195,7 @@ const PodiumCard: React.FC<{
             <Chip label={t('ranking.you')} size="small" color="primary" sx={{ height: 18, fontSize: '0.75rem' }} />
           )}
         </Box>
-        <Typography variant="subtitle2" fontWeight={700} color={showXP ? 'primary.main' : divisionConfig.color} sx={{ mt: 0.5 }}>
+        <Typography variant="subtitle2" fontWeight={700} color={showXP ? 'primary.main' : divisionConfig.textColor} sx={{ mt: 0.5 }}>
           {(showXP ? playerXp : player.points).toLocaleString(locale)}
         </Typography>
         <Typography variant="caption" color="text.secondary">
@@ -205,7 +207,7 @@ const PodiumCard: React.FC<{
           </Typography>
         )}
         {positionChange === 0 && (
-          <Typography variant="caption" color="text.disabled" sx={{ display: 'block', mt: 0.25 }}>
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.25 }}>
             —
           </Typography>
         )}
@@ -641,15 +643,17 @@ export function RankingsTab() {
               </Typography>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                 {(Object.entries(DIVISION_CONFIG) as [LeagueDivision, typeof DIVISION_CONFIG[LeagueDivision]][]).map(([key, config]) => {
-                  // #2163: color theme-aware (dark/OLED)
+                  // #2163: color theme-aware (dark/OLED); #4041: o TEXTO usa a
+                  // variante AA (prata #E0E0E0 = 1.32:1 como texto no light)
                   const divColor = getDivisionColor(key, theme);
+                  const divTextColor = getDivisionTextColor(key, theme);
                   return (
                   <Card key={key} sx={{ border: `1px solid ${alpha(divColor, 0.3)}` }}>
                     <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                        <MilitaryTechIcon sx={{ color: divColor, fontSize: iconSizes.lg }} />
+                        <MilitaryTechIcon sx={{ color: divTextColor, fontSize: iconSizes.lg }} />
                         <Box sx={{ flex: 1 }}>
-                          <Typography variant="subtitle2" fontWeight={700} sx={{ color: divColor }}>
+                          <Typography variant="subtitle2" fontWeight={700} sx={{ color: divTextColor }}>
                             {getDivisionLabel(key, t)}
                           </Typography>
                           <Typography variant="caption" color="text.secondary">
@@ -712,7 +716,7 @@ export function RankingsTab() {
               <Typography variant="h6" color="text.secondary">
                 {t('ranking.noPlayers')}
               </Typography>
-              <Typography variant="body2" color="text.disabled" sx={{ mb: 2 }}>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                 {t('ranking.top100Desc')}
               </Typography>
               <Button variant="outlined" onClick={() => navigate('/?tab=1')}>
@@ -778,10 +782,11 @@ const RankingCard = React.memo(function RankingCard({
 }) {
   const theme = useTheme();
   const { t } = useTranslation();
-  // #2163: color theme-aware (dark/OLED)
+  // #2163: color theme-aware (dark/OLED); #4041: textColor = variante AA p/ TEXTO
   const divisionConfig = {
     ...(DIVISION_CONFIG[player.division as LeagueDivision] || DIVISION_CONFIG.BRONZE),
     color: getDivisionColor(player.division as LeagueDivision, theme),
+    textColor: getDivisionTextColor(player.division as LeagueDivision, theme),
   };
   const playerXp = getPlayerXp(player);
   const playerLevel = getPlayerLevel(player);
@@ -869,7 +874,7 @@ const RankingCard = React.memo(function RankingCard({
                 </Typography>
               )}
               {positionChange === 0 && (
-                <Typography variant="caption" color="text.disabled" sx={{ whiteSpace: 'nowrap' }}>
+                <Typography variant="caption" color="text.secondary" sx={{ whiteSpace: 'nowrap' }}>
                   —
                 </Typography>
               )}
@@ -878,7 +883,7 @@ const RankingCard = React.memo(function RankingCard({
 
           {/* Pontuação */}
           <Box sx={{ textAlign: 'right', flexShrink: 0 }}>
-            <Typography variant="subtitle1" fontWeight={700} color={showXP ? 'primary.main' : divisionConfig.color}>
+            <Typography variant="subtitle1" fontWeight={700} color={showXP ? 'primary.main' : divisionConfig.textColor}>
               {(showXP ? playerXp : player.points).toLocaleString(locale)}
             </Typography>
             <Typography variant="caption" color="text.secondary">

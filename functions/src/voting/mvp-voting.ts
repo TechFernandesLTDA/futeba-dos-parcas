@@ -2012,8 +2012,16 @@ export async function applyVotingXpDelta(
           total_xp: inc(totalGrantedXp),
         };
         const seasonPartUpdate: Record<string, unknown> = {
+          // FIX #4053: user_id e points são obrigatórios para os leitores de
+          // season_participation. Sem user_id, o cleanup LGPD por user_id não
+          // acha o doc e o freeze (season/index.ts) pula a standing; sem
+          // points, o orderBy("points") do ranking exclui o doc (Firestore
+          // omite docs que não têm o campo do orderBy). increment(0) cria o
+          // campo sem alterar o valor.
+          user_id: userId,
           season_id: gameSeasonId,
           total_xp: inc(totalGrantedXp),
+          points: inc(0),
           updated_at: now,
         };
         if (isMvp) {

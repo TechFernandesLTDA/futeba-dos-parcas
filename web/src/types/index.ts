@@ -30,6 +30,7 @@ export {
   normalizeLeagueDivision,
   getDivisionLabel,
   getDivisionColor,
+  getDivisionTextColor,
   getDivisionFromRating,
   getDivisionFromPoints,
   getXPForNextLevel,

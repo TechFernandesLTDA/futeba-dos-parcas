@@ -1,7 +1,32 @@
 {
   "platform": "android",
-  "generatedAt": "2026-08-08T20:03:52.949Z",
+  "generatedAt": "2026-08-16T00:55:45.325Z",
   "notes": [
+    {
+      "version": "1.39.4",
+      "buildNumber": 79,
+      "releaseDate": "2026-08-15",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "Contraste e legibilidade aprimorados em medalhas, divisões e nível do jogador.",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "Código de tipografia sem uso foi removido, reduzindo a manutenção."
+      ],
+      "fixed": [
+        "Raridades de badge agora seguem o tema escolhido no app, não o do celular.",
+        "Medalhas de terceiro lugar e cores de time exibem texto legível.",
+        "Nomes das divisões da Liga e o badge de nível ficam legíveis no tema claro."
+      ],
+      "issueRefs": [
+        4037,
+        4059,
+        4060,
+        4061
+      ]
+    },
     {
       "version": "1.39.3",
       "buildNumber": 78,

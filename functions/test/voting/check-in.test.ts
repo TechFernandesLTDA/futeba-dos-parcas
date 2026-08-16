@@ -97,6 +97,7 @@ function makePagedQuery(pages: any[][]) {
     where: jest.fn().mockReturnThis(),
     orderBy: jest.fn().mockReturnThis(),
     limit: jest.fn().mockReturnThis(),
+    select: jest.fn().mockReturnThis(),
     startAfter: jest.fn().mockReturnThis(),
     get: jest.fn().mockImplementation(() =>
       Promise.resolve(makeQuerySnapshot(pages[pageIndex++] ?? []))
@@ -394,6 +395,7 @@ describe("checkInToGame", () => {
     const confirmationsQuery = {
       where: jest.fn().mockReturnThis(),
       limit: jest.fn().mockReturnThis(),
+      select: jest.fn().mockReturnThis(),
       get: jest.fn().mockResolvedValue({
         docs: [
           { data: () => ({ user_id: "user1" }) },
@@ -442,6 +444,7 @@ describe("checkInToGame", () => {
     const confirmationsQuery = {
       where: jest.fn().mockReturnThis(),
       limit: jest.fn().mockReturnThis(),
+      select: jest.fn().mockReturnThis(),
       get: jest.fn().mockRejectedValue(new Error("Firestore unavailable")),
     };
     mockDbCollection.mockReturnValue(confirmationsQuery);

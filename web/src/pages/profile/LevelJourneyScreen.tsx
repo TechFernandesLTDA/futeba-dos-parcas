@@ -44,7 +44,7 @@ import {
   getXpProgress,
   getXpRemaining,
 } from '../../types/gamification';
-import { getLevelColor } from '../../types/user';
+import { getLevelColor, getLevelTextColor } from '../../types/user';
 import { getLevelBadgeImage, getLevelBadgeDescription, handleBadgeImageError } from '../../utils/levelBadge';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { createLogger } from '../../utils/logger';
@@ -238,6 +238,8 @@ export const LevelJourneyScreen: React.FC = () => {
   const currentEntry = LEVEL_TABLE[currentLevel];
   const nextEntry = currentLevel < 20 ? LEVEL_TABLE[currentLevel + 1] : null;
   const color = getLevelColor(currentLevel, theme);
+  // #4041: cor segura como TEXTO (prata/ouro puros reprovam AA no light)
+  const textColor = getLevelTextColor(currentLevel, theme);
   const nearLevelInsight = getNearLevelInsight(currentXp);
   const xpGuideEntries = getXpGuideEntries(t);
   // #3884: header deve exibir nome/escudo do usuário-ALVO (:userId), não do logado
@@ -341,7 +343,7 @@ export const LevelJourneyScreen: React.FC = () => {
                       <Typography variant="caption" color="text.secondary">
                         {t('profile.levelLabel', { level: currentLevel })}
                       </Typography>
-                      <Typography variant="caption" fontWeight={600} color={color}>
+                      <Typography variant="caption" fontWeight={600} sx={{ color: textColor }}>
                         {Math.round(progress * 100)}%
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
@@ -397,8 +399,8 @@ export const LevelJourneyScreen: React.FC = () => {
                       bgcolor: alpha(color, 0.08),
                     }}
                   >
-                    <TrophyIcon sx={{ color, fontSize: 28, mb: 0.5 }} />
-                    <Typography variant="body2" color={color} fontWeight={600}>
+                    <TrophyIcon sx={{ color: textColor, fontSize: 28, mb: 0.5 }} />
+                    <Typography variant="body2" sx={{ color: textColor }} fontWeight={600}>
                       {t('level.maxReached')}
                     </Typography>
                   </Box>
@@ -590,6 +592,8 @@ export function LevelRow({
   const theme = useTheme();
   const { t } = useTranslation();
   const color = getLevelColor(entry.level, theme);
+  // #4041: cor segura como TEXTO (prata/ouro puros reprovam AA no light)
+  const textColor = getLevelTextColor(entry.level, theme);
 
   return (
     <Card
@@ -598,7 +602,9 @@ export function LevelRow({
         borderRadius: 3,
         border: isCurrent ? `2px solid ${color}` : `1px solid ${theme.palette.divider}`,
         boxShadow: isCurrent ? `0 2px 12px ${alpha(color, 0.2)}` : 'none',
-        opacity: isUnlocked ? 1 : 0.82,
+        // #4050: opacity removida — o card é interativo (CardActionArea) e a
+        // opacidade herdada multiplicava o contraste do texto abaixo de AA.
+        // "Bloqueado" já é sinalizado pelo cadeado + saturate do badge.
         bgcolor: isCurrent ? alpha(color, 0.04) : 'background.paper',
         transition: theme.transitions.create(['transform', 'box-shadow', 'border-color']),
         '&:hover': {
@@ -670,7 +676,7 @@ export function LevelRow({
             <Typography
               variant="body2"
               fontWeight={isCurrent ? 700 : 500}
-              color={isUnlocked ? 'text.primary' : 'text.disabled'}
+              color={isUnlocked ? 'text.primary' : 'text.secondary'}
               noWrap
             >
               {entry.name}
@@ -694,7 +700,7 @@ export function LevelRow({
           </Box>
           <Typography
             variant="caption"
-            color={isUnlocked ? 'text.secondary' : 'text.disabled'}
+            color="text.secondary"
             sx={{ fontStyle: 'italic', display: 'block' }}
             noWrap
           >
@@ -706,7 +712,7 @@ export function LevelRow({
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', flexShrink: 0 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.25 }}>
             {isUnlocked ? (
-              <CheckIcon sx={{ color, fontSize: 20 }} />
+              <CheckIcon sx={{ color: textColor, fontSize: 20 }} />
             ) : (
               <LockIcon sx={{ color: 'text.secondary', fontSize: 18 }} />
             )}
@@ -715,7 +721,7 @@ export function LevelRow({
           <Typography
             variant="caption"
             fontWeight={600}
-            color={isUnlocked ? color : 'text.disabled'}
+            sx={{ color: isUnlocked ? textColor : 'text.secondary' }}
           >
             {entry.xpRequired.toLocaleString('pt-BR')}
           </Typography>

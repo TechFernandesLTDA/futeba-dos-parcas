@@ -609,11 +609,15 @@ service firebase.storage {
                      isImage() && isUnderSize(10);
 
       allow delete: if isAuthenticated() &&
-                      firestore.exists(/databases/(default)/documents/games/$(gameId)) &&
-                      (request.auth.uid == userId ||
-                       firestore.get(/databases/(default)/documents/games/$(gameId)).data.owner_id == request.auth.uid ||
-                       request.auth.uid in firestore.get(/databases/(default)/documents/games/$(gameId)).data.get('co_organizers', []) ||
-                       isAdmin());
+                      (
+                        isAdmin() ||
+                        (
+                          firestore.exists(/databases/(default)/documents/games/$(gameId)) &&
+                          (request.auth.uid == userId ||
+                           firestore.get(/databases/(default)/documents/games/$(gameId)).data.owner_id == request.auth.uid ||
+                           request.auth.uid in firestore.get(/databases/(default)/documents/games/$(gameId)).data.get('co_organizers', []))
+                        )
+                      );
     }
 
     // ============================================
@@ -642,11 +646,15 @@ service firebase.storage {
                      fileName.matches('[A-Za-z0-9._-]+\\.mp4');
 
       allow delete: if isAuthenticated() &&
-                      firestore.exists(/databases/(default)/documents/games/$(gameId)) &&
-                      (request.auth.uid == userId ||
-                       firestore.get(/databases/(default)/documents/games/$(gameId)).data.owner_id == request.auth.uid ||
-                       request.auth.uid in firestore.get(/databases/(default)/documents/games/$(gameId)).data.get('co_organizers', []) ||
-                       isAdmin());
+                      (
+                        isAdmin() ||
+                        (
+                          firestore.exists(/databases/(default)/documents/games/$(gameId)) &&
+                          (request.auth.uid == userId ||
+                           firestore.get(/databases/(default)/documents/games/$(gameId)).data.owner_id == request.auth.uid ||
+                           request.auth.uid in firestore.get(/databases/(default)/documents/games/$(gameId)).data.get('co_organizers', []))
+                        )
+                      );
     }
 
     // ============================================

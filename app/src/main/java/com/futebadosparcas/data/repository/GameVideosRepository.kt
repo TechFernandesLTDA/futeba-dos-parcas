@@ -1,6 +1,7 @@
 package com.futebadosparcas.data.repository
 
 import android.net.Uri
+import androidx.compose.runtime.Immutable
 import com.futebadosparcas.ui.components.reactions.SocialReactionEmojis
 import com.futebadosparcas.util.AppLogger
 import com.google.firebase.auth.FirebaseAuth
@@ -15,6 +16,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 
+@Immutable
 data class GameVideo(
     val id: String,
     val gameId: String,

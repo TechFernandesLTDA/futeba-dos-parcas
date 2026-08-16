@@ -30,6 +30,7 @@ const CONFIRMATION_PAGE_SIZE = 100;
 const GROUP_MEMBER_PAGE_SIZE = 50;
 const MAX_GROUP_VACANCY_NOTIFICATIONS = 20;
 const VACANCY_NOTIFICATION_COOLDOWN_MS = 5 * 60 * 1000;
+const WAITLIST_RESPONSE_WINDOW_MS = 30 * 60 * 1000;
 const ACTIVE_GROUP_MEMBER_STATUS = "ACTIVE";
 
 /**
@@ -706,84 +707,69 @@ export const onGameVacancy = onDocumentUpdated(
           return;
         }
 
-        // 1. Notificar a waitlist
+        // 1. Promover a próxima entrada WAITING e notificá-la.
         // FIX #753: era .collection("waitlist") raiz inexistente.
         // Android escreve em games/{gameId}/waitlist/ (subcollection).
-        // Usar subcollection direta com gameId já disponível.
+        // FIX #4043: orderBy("created_at") era campo INEXISTENTE — a query
+        // lançava FAILED_PRECONDITION (índice ausente) e, mesmo com índice,
+        // retornaria vazio (nenhuma entrada tem created_at). O campo real é
+        // added_at, com índice waitlist(status, added_at) já existente.
+        // FIX #4043: além de notificar, a 1ª entrada WAITING agora é PROMOVIDA
+        // a NOTIFIED (notified_at + response_deadline = now + 30min). Sem isso
+        // a máquina de estados da waitlist não tinha porta de entrada e o
+        // timer de 30 min de reminders.ts era fictício.
         const waitlistSnap = await db()
           .collection("games")
           .doc(gameId)
           .collection("waitlist")
           .where("status", "==", "WAITING")
-          .orderBy("created_at", "asc")
-          .limit(5)
+          .orderBy("added_at", "asc")
+          .limit(3)
           .get();
 
-        type DocSnap =
-          admin.firestore.QueryDocumentSnapshot;
-        const waitlistUserIds =
-          waitlistSnap.docs.map(
-            (doc: DocSnap) => {
+        const waitingUserIds =
+          waitlistSnap.docs
+            .map((doc: admin.firestore.QueryDocumentSnapshot) => {
               const data = doc.data();
               return data.user_id || data.userId;
-            }
-          );
-
-        if (waitlistUserIds.length > 0) {
-          await sendNotificationToUsers(
-            waitlistUserIds,
-            {
-              title: GAME_NOTIFICATIONS.GAME_VACANCY.title["pt-BR"](),
-              body: GAME_NOTIFICATIONS.GAME_VACANCY.body["pt-BR"]({
-                gameName,
-              }),
-              type:
-                NotificationType.GAME_VACANCY,
-              data: {
-                gameId: gameId,
-                action:
-                  "game_detail/" + gameId,
-              },
-            }
-          );
-
-          logger.info(
-            "[GAME_VACANCY] Notificacao" +
-            " enviada para" +
-            ` ${waitlistUserIds.length}` +
-            " na waitlist"
-          );
-        }
-
-        // 2. Se poucos na espera, notificar grupo
-        if (
-          groupId &&
-          waitlistUserIds.length < 3
-        ) {
-          const confirmedUserIds =
-            await fetchConfirmedUserIdsForGame(
-              gameId
-            );
-          const excludedUserIds =
-            new Set<string>([
-              ...confirmedUserIds,
-              ...waitlistUserIds,
-            ]);
-          const memberIds =
-            await fetchEligibleGroupMemberIdsForVacancy(
-              groupId,
-              excludedUserIds,
-              MAX_GROUP_VACANCY_NOTIFICATIONS
+            })
+            .filter(
+              (id: unknown): id is string =>
+                typeof id === "string" && id.length > 0
             );
 
-          if (memberIds.length > 0) {
+        let waitlistUserIds: string[] = [];
+        if (!waitlistSnap.empty) {
+          const entry = waitlistSnap.docs[0];
+          const entryData = entry.data();
+          const nextUserId =
+            entryData.user_id || entryData.userId;
+          const newDeadline =
+            admin.firestore.Timestamp.fromDate(
+              new Date(Date.now() + WAITLIST_RESPONSE_WINDOW_MS)
+            );
+
+          const promoted = await db().runTransaction(async (tx) => {
+            const fresh = await tx.get(entry.ref);
+            if (!fresh.exists || fresh.data()?.status !== "WAITING") {
+              return false;
+            }
+            tx.update(entry.ref, {
+              status: "NOTIFIED",
+              notified_at: FieldValue.serverTimestamp(),
+              response_deadline: newDeadline,
+            });
+            return true;
+          });
+
+          if (promoted && typeof nextUserId === "string" && nextUserId) {
+            waitlistUserIds = [nextUserId];
             await sendNotificationToUsers(
-              memberIds,
+              waitlistUserIds,
               {
                 title: GAME_NOTIFICATIONS.GAME_VACANCY.title["pt-BR"](),
-                body: GAME_NOTIFICATIONS.GAME_VACANCY_GROUP.body["pt-BR"]({
+                body: GAME_NOTIFICATIONS.GAME_VACANCY.body["pt-BR"]({
                   gameName,
-                  gameDate,
                 }),
                 type:
                   NotificationType.GAME_VACANCY,
@@ -796,10 +782,67 @@ export const onGameVacancy = onDocumentUpdated(
             );
 
             logger.info(
-              "[GAME_VACANCY] Notificacao" +
-              " enviada para" +
-              ` ${memberIds.length}` +
-              " membros do grupo"
+              "[GAME_VACANCY] Promovido e notificado " +
+              `${nextUserId} na waitlist`
+            );
+          }
+        }
+
+        // 2. Se poucos na espera, notificar grupo — isolado em try/catch
+        // próprio (FIX #4043): uma falha aqui não derruba a promoção da
+        // waitlist, e vice-versa.
+        if (
+          groupId &&
+          waitingUserIds.length < 3
+        ) {
+          try {
+            const confirmedUserIds =
+              await fetchConfirmedUserIdsForGame(
+                gameId
+              );
+            const excludedUserIds =
+              new Set<string>([
+                ...confirmedUserIds,
+                ...waitingUserIds,
+              ]);
+            const memberIds =
+              await fetchEligibleGroupMemberIdsForVacancy(
+                groupId,
+                excludedUserIds,
+                MAX_GROUP_VACANCY_NOTIFICATIONS
+              );
+
+            if (memberIds.length > 0) {
+              await sendNotificationToUsers(
+                memberIds,
+                {
+                  title: GAME_NOTIFICATIONS.GAME_VACANCY.title["pt-BR"](),
+                  body: GAME_NOTIFICATIONS.GAME_VACANCY_GROUP.body["pt-BR"]({
+                    gameName,
+                    gameDate,
+                  }),
+                  type:
+                    NotificationType.GAME_VACANCY,
+                  data: {
+                    gameId: gameId,
+                    action:
+                      "game_detail/" + gameId,
+                  },
+                }
+              );
+
+              logger.info(
+                "[GAME_VACANCY] Notificacao" +
+                " enviada para" +
+                ` ${memberIds.length}` +
+                " membros do grupo"
+              );
+            }
+          } catch (groupNotifyError) {
+            logger.error(
+              "[GAME_VACANCY] Erro ao notificar" +
+              " grupo sobre vaga:",
+              groupNotifyError
             );
           }
         }

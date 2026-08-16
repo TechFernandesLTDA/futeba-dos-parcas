@@ -330,7 +330,7 @@ export const GroupSettingsScreen: React.FC = () => {
                 </Box>
               )}
               {!pendingLoading && pendingRequests.length === 0 && (
-                <Typography variant="body2" color="text.disabled" sx={{ textAlign: 'center', py: 1 }}>
+                <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 1 }}>
                   {t('group.settings.noPendingRequests')}
                 </Typography>
               )}
@@ -401,7 +401,7 @@ export const GroupSettingsScreen: React.FC = () => {
           </CardContent>
           {members.length === 0 ? (
             <CardContent>
-              <Typography variant="body2" color="text.disabled" sx={{ textAlign: 'center' }}>
+              <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center' }}>
                 {t('group.settings.noMembersFound')}
               </Typography>
             </CardContent>

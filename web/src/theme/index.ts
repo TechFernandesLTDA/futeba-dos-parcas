@@ -253,13 +253,20 @@ export const rarityColorsDark: Record<string, string> = {
 //   Bronze #CD7F32 = 0xFFCD7F32
 //   Diamond #B9F2FF = 0xFFB9F2FF
 // Nota: no light mode, gold (#FFD700) e silver (#E0E0E0) são cores de fundo — use
-// contraste de texto via getContrastText() ou texto escuro fixo (#1A1C1E).
+// contraste de texto via getContrastText() (threshold 4.5 desde #4056 — devolve
+// texto escuro AA para os metais claros) ou a variante de TEXTO
+// `gamificationColorsOnLight` abaixo quando o metal for o FOREGROUND (#4041).
 export const gamificationColors = {
   gold: '#FFD700',
   silver: '#E0E0E0',
   bronze: '#CD7F32',
   diamond: '#B9F2FF',
   platinum: '#00E676',
+  // champion mantém o canônico #E91E63 (pink 500) — paridade com shared/design-tokens.json
+  // e Android (GamificationColors.Champion em Color.kt). É cor de FUNDO/medalha; como
+  // TEXTO use a variante de foreground `gamificationColorsOnLight.champion` (#C2185B)
+  // ou a dark (#F06292). Como fundo de texto pequeno o pink 500 não alcança AA
+  // (4.34:1 com branco) — uso restrito a texto grande / componente gráfico (#4056).
   champion: '#E91E63',
   xp: '#9C27B0',
   level: '#00BCD4',
@@ -272,6 +279,8 @@ export const gamificationColors = {
 // #2236: gold/silver/diamond usam os mesmos hex canônicos do Android (já aplicados
 // na base acima). Bronze permanece clareado (#E8924A) no dark — o #CD7F32 perde
 // contraste sobre fundos escuros.
+// #4056: champion clareado p/ #F06292 — o #E91E63 como TEXTO sobre o paper dark
+// (#1E293B) dava 3.36:1; o novo passa (4.79:1) e como fundo recebe preto (6.88:1).
 export const gamificationColorsDark = {
   ...gamificationColors,
   bronze: '#E8924A',
@@ -279,6 +288,26 @@ export const gamificationColorsDark = {
   xp: '#CE93D8',
   level: '#4DD0E1',
   streak: '#FF7043',
+  champion: '#F06292',
+};
+
+// #4041: variantes de FOREGROUND para o tema light — os metais puros da paleta
+// base (silver #E0E0E0 = 1.32:1, gold #FFD700 = 1.40:1 sobre branco) não são
+// legíveis como cor de TEXTO sobre fundo claro. Mesmo papel que
+// `gamificationColorsDark` exerce no dark: todos os tokens abaixo entregam
+// >= 4.5:1 sobre background.paper (#FFFFFF) e background.default (#FCFCFC).
+// Use via `getGamificationTextColors(theme)` (theme-aware) — nunca direto.
+export const gamificationColorsOnLight: typeof gamificationColors = {
+  gold: '#A16207',      // 4.90:1 sobre branco
+  silver: '#616161',    // 6.19:1
+  bronze: '#8A4B00',    // 6.80:1 (mesmo tom validado no fix Android do #4031)
+  diamond: '#0E7490',   // 5.36:1
+  platinum: '#00794A',  // 5.48:1
+  champion: '#C2185B',  // 5.87:1
+  xp: '#9C27B0',        // 6.31:1 (igual à base — já passava)
+  level: '#00707F',     // 5.80:1
+  mvp: '#A16207',       // 5.36:1 — mesmo matiz do gold
+  streak: '#C2410C',    // 5.18:1
 };
 
 // #2707: OKLCH variants — wider gamut, perceptually uniform. Progressive
@@ -331,6 +360,14 @@ export const radii = {
 export const futebaTheme = createTheme({
   palette: {
     mode: 'light',
+    // #4056: threshold AA (4.5) em vez do default 3 do MUI. `getContrastText()`
+    // devolve texto BRANCO quando a razão contra branco >= threshold — com o
+    // default 3, metais como bronze (#CD7F32, 3.14:1) e streak (#FF5722, 3.16:1)
+    // recebiam branco e reprovavam AA como fundo de badge/chip. Com 4.5 esses
+    // tokens caem para texto escuro (>= 4.8:1). Nenhum contained button das
+    // paletas semânticas muda de cor: todos os `main` têm razão vs branco
+    // >= 4.5 (success 4.76 / error 4.98 / warning 5.02 / info 6.00).
+    contrastThreshold: 4.5,
     primary,
     secondary,
     error: {
@@ -339,7 +376,10 @@ export const futebaTheme = createTheme({
       dark: '#B71C1C',
     },
     warning: {
-      // Escurecido para contraste AA em chips/labels pequenos no light mode.
+      // Escurecido para contraste AA sobre FUNDO BRANCO (5.02:1 vs #FFFFFF).
+      // #4048: atenção — como TEXTO sobre um véu de 10% da própria cor
+      // (padrão `alpha(cor, 0.1)` de chip) cai para ~4.38:1 e reprova; nesse
+      // caso use a variante `.dark` (#8A3A00, ~6.8:1 sobre o véu).
       main: '#B45309',
       light: '#FF9E40',
       dark: '#8A3A00',
@@ -583,7 +623,11 @@ export const futebaTheme = createTheme({
     // #3944: avatares com iniciais (sem foto) herdavam o cinza default do MUI
     // (grey[400] light / grey[600] dark + color: background.default), que falha
     // WCAG AA: 1.83:1 no light e 3.87:1 no dark. Forçar primary.main +
-    // contrastText entrega >= 4.66:1 em ambos os temas. O PlayerAvatar canônico
+    // contrastText entrega >= 4.66:1 em ambos os temas — ATENÇÃO (#4052): essa
+    // garantia vale contra o `main` (light #00852A=4.76 / dark #4ADE80=~10), NÃO
+    // contra o shade `.dark` (#2E7D32 no dark = 4.10 com preto): superfícies
+    // pintadas com o shade `.dark` devem usar texto branco, não herdar
+    // contrastText. O PlayerAvatar canônico
     // (GameCard.tsx) já aplicava isso via sx; este override cobre os 6 call
     // sites com <Avatar> cru + iniciais (GameDetail, LocationDetail,
     // GamePhotosTab, GroupDetail x2, lista de jogadores).
@@ -778,6 +822,8 @@ export const futebaDarkTheme = createTheme({
   shadowsCustom: darkShadowTokens,
   palette: {
     mode: 'dark',
+    // #4056: mesmo threshold AA do light (ver comentário no futebaTheme).
+    contrastThreshold: 4.5,
     primary: darkPrimary,
     secondary: {
       main: '#5CC8FF',
@@ -859,6 +905,16 @@ export const futebaDarkTheme = createTheme({
           '&:hover': {
             boxShadow: `0 4px 8px ${alpha(theme.palette.primary.main, 0.3)}`,
           },
+          // #4052: o hover contained do MUI escurece o fundo para o shade `.dark`
+          // (primary/success → #2E7D32 no dark) mantendo o contrastText pensado
+          // para o `main` (#000000, ~10:1 sobre #4ADE80) — que cai para 4.10:1.
+          // Ex.: botão "Usar localização atual" (/players/nearby, /public-games).
+          // Branco sobre o shade dark devolve >= 5.13:1. Só primary e success:
+          // os shades `.dark` de secondary/error/warning/info passam com preto
+          // (>= 5.4:1).
+          '&.MuiButton-containedPrimary:hover, &.MuiButton-containedSuccess:hover': {
+            color: theme.palette.common.white,
+          },
         }),
       },
     },
@@ -918,7 +974,9 @@ export const futebaDarkTheme = createTheme({
     },
     // #3944: declarado explicitamente no dark (não confiar só no spread do
     // light) — a função resolve contra este theme, então primary.main vira
-    // #4ADE80 e contrastText #000000, mantendo >= 4.66:1.
+    // #4ADE80 e contrastText #000000, mantendo >= 4.66:1 CONTRA O `main`
+    // (~10:1 aqui; #4052: contra o shade `.dark` #2E7D32 preto dá 4.10 — o
+    // contraste do texto sobre o shade dark é tratado no hover do MuiButton).
     // #3970: slot `colorDefault` (não `root`) para NÃO pintar avatares com foto
     // — ver comentário no light theme acima.
     MuiAvatar: {

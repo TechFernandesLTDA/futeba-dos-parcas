@@ -24,6 +24,20 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ## Android
 
+### [1.39.4][android-1.39.4] - 2026-08-15
+
+#### Adicionado
+- `LocalIsDarkTheme` expõe o tema resolvido pelo app como fonte única.
+- `GamificationTextColors` e `GamificationTextColorsDark` para uso como primeiro plano.
+
+#### Mudado
+- `ContrastHelper.getContrastingTextColor` compara as duas opções por razão de contraste em vez de limiar fixo.
+
+#### Removido
+- `ResponsiveTypography.kt` e `DynamicTypeHelper.kt` (667 linhas de código morto).
+
+_Issues: #4037, #4059, #4060, #4061_
+
 ### [1.39.3][android-1.39.3] - 2026-08-08
 
 #### Mudado
@@ -305,6 +319,20 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 - Bump de versão de manutenção após a mega audit wave de 2026-05-11, sem mudanças funcionais no Android nesta tag.
 
 ## Web
+
+### [1.56.8][web-1.56.8] - 2026-08-15
+
+#### Adicionado
+- Novas variantes de cor de gamificação para primeiro plano com contraste AA.
+- Testes de contrato de contraste (raridade, gamificação e hover de botões) e de cabeçalho duplicado.
+
+#### Corrigido
+- `getContrastText` usa limiar 4.5 em vez do default 3.0 do MUI.
+- Tier `form` do `PageContainer` respeita o limite de 900px (antes renderizava 1500px).
+- Upload de fotos migrado para a callable autoritativa `createGamePhoto`.
+- Empty states e legendas usam `text.secondary` em vez de `text.disabled`.
+
+_Issues: #4041, #4042, #4047, #4048, #4050, #4051, #4052, #4055, #4056, #4057_
 
 ### [1.56.7][web-1.56.7] - 2026-08-08
 
@@ -2150,6 +2178,27 @@ _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
 
+### [1.12.5][functions-1.12.5] - 2026-08-15
+
+#### Adicionado
+- `createGamePhoto` com teto por jogo e por usuário, espelhando `createGameVideo`.
+- Job de reconciliação para documentos de vídeo presos em `PROCESSING`.
+- Cooldown e supressão por não-engajamento nos nudges de gamificação.
+
+#### Corrigido
+- Corrida entre reaper e criação de vídeo resolvida (delete condicional e atômico).
+- `onGameVacancy` ordena por `added_at` e promove a primeira entrada para `NOTIFIED`.
+- Merge de conta pagina coleções de alto volume em vez de bloquear permanentemente.
+- Invalidação de cache de ranking com teto de páginas e filtro no servidor.
+- Rate limit adicionado a `getFieldAvailability`.
+- XP de MVP é creditado na temporada do jogo, não na ativa na hora do voto.
+- Índice `confirmations(user_id, status)` restaurado, alinhando repo e produção.
+
+#### Segurança
+- `added_at` da fila de espera ancorado ao relógio do servidor (janela de 60s).
+
+_Issues: #4038, #4039, #4040, #4043, #4044, #4045, #4046, #4049, #4053, #4054, #4058_
+
 ### [1.12.4][functions-1.12.4] - 2026-08-08
 
 #### Adicionado
@@ -2934,6 +2983,7 @@ _Issues: #2981_
 _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 
 
+[android-1.39.4]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.39.4.md
 [android-1.39.3]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.39.3.md
 [android-1.39.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.39.2.md
 [android-1.39.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.39.1.md
@@ -2958,6 +3008,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.56.8]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.56.8.md
 [web-1.56.7]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.56.7.md
 [web-1.56.6]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.56.6.md
 [web-1.56.5]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.56.5.md
@@ -3135,6 +3186,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [ios-1.6.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.2.md
 [ios-1.6.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.1.md
 [ios-1.6.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.0.md
+[functions-1.12.5]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.12.5.md
 [functions-1.12.4]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.12.4.md
 [functions-1.12.3]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.12.3.md
 [functions-1.12.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.12.2.md

@@ -361,7 +361,7 @@ export const StatisticsScreen: React.FC = () => {
                           <Typography variant="body2" color="text.secondary">
                             {t('statistics.goals')}
                           </Typography>
-                          <Typography variant="caption" color="text.disabled">
+                          <Typography variant="caption" color="text.secondary">
                             {memoizedStats.goalsPerGame} {t('statistics.perGame')}
                           </Typography>
                         </Box>
@@ -382,7 +382,7 @@ export const StatisticsScreen: React.FC = () => {
                           <Typography variant="body2" color="text.secondary">
                             {t('statistics.assists')}
                           </Typography>
-                          <Typography variant="caption" color="text.disabled">
+                          <Typography variant="caption" color="text.secondary">
                             {memoizedStats.assistsPerGame} {t('statistics.perGame')}
                           </Typography>
                         </Box>

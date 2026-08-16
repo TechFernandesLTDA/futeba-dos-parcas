@@ -1,6 +1,6 @@
 import Grid from '@mui/material/Unstable_Grid2';
 import { PageContainer } from '../../components/common/PageContainer';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
@@ -485,12 +485,20 @@ const GamesPanel: React.FC<{
   onOpenGame: (gameId: string) => void;
 }> = ({ games, loading, canCreate, onCreate, onOpenGame }) => {
   const { t } = useTranslation();
-  const now = new Date();
-  const sortedAsc = [...games].sort((a, b) => (a.dateTime?.getTime() || 0) - (b.dateTime?.getTime() || 0));
-  const sortedDesc = [...games].sort((a, b) => (b.dateTime?.getTime() || 0) - (a.dateTime?.getTime() || 0));
-  const upcomingGames = sortedAsc.filter((game) => game.status !== 'FINISHED' && game.status !== 'CANCELLED' && (!game.dateTime || game.dateTime >= now));
-  const pastGames = sortedDesc.filter((game) => game.status === 'FINISHED' || (game.dateTime && game.dateTime < now));
-  const visibleHistory = pastGames.length > 0 ? pastGames.slice(0, 8) : sortedDesc.slice(0, 8);
+  // Perf: sorts/filters memoizados — o painel re-renderiza a cada mudança de
+  // estado do GroupDetailScreen (tabs, dialogs, scroll observer) e antes
+  // reordenava a lista de jogos do grupo inteira a cada render.
+  const { upcomingGames, visibleHistory } = useMemo(() => {
+    const now = new Date();
+    const sortedAsc = [...games].sort((a, b) => (a.dateTime?.getTime() || 0) - (b.dateTime?.getTime() || 0));
+    const sortedDesc = [...games].sort((a, b) => (b.dateTime?.getTime() || 0) - (a.dateTime?.getTime() || 0));
+    const upcoming = sortedAsc.filter((game) => game.status !== 'FINISHED' && game.status !== 'CANCELLED' && (!game.dateTime || game.dateTime >= now));
+    const past = sortedDesc.filter((game) => game.status === 'FINISHED' || (game.dateTime && game.dateTime < now));
+    return {
+      upcomingGames: upcoming,
+      visibleHistory: past.length > 0 ? past.slice(0, 8) : sortedDesc.slice(0, 8),
+    };
+  }, [games]);
 
   if (loading) {
     return <ShimmerLoading count={3} type="card" />;
@@ -721,6 +729,25 @@ export const GroupDetailScreen: React.FC = () => {
     }
   };
 
+  // Perf: dados derivados memoizados ANTES dos early-returns (regras de hooks).
+  // Antes disto rodava 2 sorts + 3 filters + new Date() a cada render —
+  // inclusive a cada tick do IntersectionObserver de scroll, que re-renderiza
+  // a tela inteira.
+  const gamesDerived = useMemo(() => {
+    const now = new Date();
+    const sortedGamesDesc = [...games].sort((a, b) => (b.dateTime?.getTime() || 0) - (a.dateTime?.getTime() || 0));
+    const sortedGamesAsc = [...games].sort((a, b) => (a.dateTime?.getTime() || 0) - (b.dateTime?.getTime() || 0));
+    return {
+      finishedGames: games.filter((game) => game.status === 'FINISHED').length,
+      upcomingGames: sortedGamesAsc.filter((game) => game.status !== 'FINISHED' && game.status !== 'CANCELLED' && (!game.dateTime || game.dateTime >= now)),
+      lastGame: sortedGamesDesc.find((game) => game.status === 'FINISHED' || (game.dateTime && game.dateTime < now)) ?? null,
+    };
+  }, [games]);
+  const activeMemberDocCount = useMemo(
+    () => members.filter((member) => member.status === undefined || member.status === 'ACTIVE').length,
+    [members],
+  );
+
   if (loading) {
     return (
       <PageContainer maxWidth="detail">
@@ -776,13 +803,8 @@ export const GroupDetailScreen: React.FC = () => {
     );
   }
 
-  const now = new Date();
-  const sortedGamesDesc = [...games].sort((a, b) => (b.dateTime?.getTime() || 0) - (a.dateTime?.getTime() || 0));
-  const sortedGamesAsc = [...games].sort((a, b) => (a.dateTime?.getTime() || 0) - (b.dateTime?.getTime() || 0));
-  const finishedGames = games.filter((game) => game.status === 'FINISHED').length;
-  const upcomingGames = sortedGamesAsc.filter((game) => game.status !== 'FINISHED' && game.status !== 'CANCELLED' && (!game.dateTime || game.dateTime >= now));
-  const lastGame = sortedGamesDesc.find((game) => game.status === 'FINISHED' || (game.dateTime && game.dateTime < now));
-  const activeMembersCount = members.filter((member) => member.status === undefined || member.status === 'ACTIVE').length || group.memberCount || 0;
+  const { finishedGames, upcomingGames, lastGame } = gamesDerived;
+  const activeMembersCount = activeMemberDocCount || group.memberCount || 0;
   const totalGamesCount = group.totalGamesPlayed || games.length;
   const balanceValue = balanceCents / 100;
   const balanceLabel = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(balanceValue);

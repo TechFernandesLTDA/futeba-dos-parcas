@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   Box,
@@ -207,7 +207,10 @@ export const PlayersScreen: React.FC = () => {
     }
   };
 
-  const getRoleColor = (role: string) => {
+  // Perf: helpers envolvidos em useCallback — antes eram recriados a cada
+  // render, invalidando o React.memo do PlayerMemberItem (a lista inteira
+  // re-renderizava ao abrir dialogs/figurinhas).
+  const getRoleColor = useCallback((role: string) => {
     switch (role) {
       case 'OWNER':
         return theme.palette.error.main;
@@ -216,9 +219,26 @@ export const PlayersScreen: React.FC = () => {
       default:
         return theme.palette.grey[500];
     }
-  };
+  }, [theme]);
 
-  const getRoleLabel = (role: string) => {
+  // #4048: cor do TEXTO do chip de papel. O chip renderiza o texto sobre um
+  // véu de 10% da própria cor (`alpha(main, 0.1)`), que aproxima fundo e texto:
+  // error.main #D32F2F → 4.28:1 e warning.main #B45309 → 4.38:1 (AA pede 4.5).
+  // No light usa o shade `.dark` (5.65:1 / 6.82:1 sobre o véu); no dark o
+  // `.main` claro já passa sobre o véu escuro.
+  const getRoleTextColor = useCallback((role: string) => {
+    const dark = theme.palette.mode === 'dark';
+    switch (role) {
+      case 'OWNER':
+        return dark ? theme.palette.error.main : theme.palette.error.dark;
+      case 'ADMIN':
+        return dark ? theme.palette.warning.main : theme.palette.warning.dark;
+      default:
+        return theme.palette.grey[500];
+    }
+  }, [theme]);
+
+  const getRoleLabel = useCallback((role: string) => {
     switch (role) {
       case 'OWNER':
         return 'Dono';
@@ -227,7 +247,7 @@ export const PlayersScreen: React.FC = () => {
       default:
         return 'Membro';
     }
-  };
+  }, []);
 
   return (
     <Box>
@@ -259,7 +279,7 @@ export const PlayersScreen: React.FC = () => {
           <Typography variant="h6" color="text.secondary" gutterBottom>
             {t('players.restrictedAccess')}
           </Typography>
-          <Typography variant="body2" color="text.disabled" sx={{ mb: 3 }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
             {t('players.restrictedAccessDesc')}
           </Typography>
           <Button variant="outlined" onClick={() => navigate(groupId ? `/group/${groupId}` : '/?tab=2')}>
@@ -289,6 +309,7 @@ export const PlayersScreen: React.FC = () => {
                       onRemove={setConfirmRemoveId}
                       onAvatarClick={setSelectedPlayerId}
                       getRoleColor={getRoleColor}
+                      getRoleTextColor={getRoleTextColor}
                       getRoleLabel={getRoleLabel}
                       currentUserRole={currentUserRole}
                       t={t}
@@ -329,6 +350,7 @@ const PlayerMemberItem = React.memo(function PlayerMemberItem({
   onRemove,
   onAvatarClick,
   getRoleColor,
+  getRoleTextColor,
   getRoleLabel,
   currentUserRole,
   t,
@@ -340,6 +362,7 @@ const PlayerMemberItem = React.memo(function PlayerMemberItem({
   onRemove: (id: string) => void;
   onAvatarClick: (id: string) => void;
   getRoleColor: (role: string) => string;
+  getRoleTextColor: (role: string) => string;
   getRoleLabel: (role: string) => string;
   currentUserRole: string | null;
   t: (key: string, options?: Record<string, unknown>) => string;
@@ -400,8 +423,10 @@ const PlayerMemberItem = React.memo(function PlayerMemberItem({
                   label={getRoleLabel(member.role)}
                   size="small"
                   sx={{
+                    // #4048: véu continua derivado do `.main`; o TEXTO usa a
+                    // variante AA (`.dark` no light) — ver getRoleTextColor.
                     bgcolor: alpha(getRoleColor(member.role), 0.1),
-                    color: getRoleColor(member.role),
+                    color: getRoleTextColor(member.role),
                   }}
                 />
               )}

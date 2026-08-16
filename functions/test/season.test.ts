@@ -174,18 +174,50 @@ describe("checkSeasonEnd - season lista vazia", () => {
     });
   });
 
-  test("deve retornar sem processar quando não há seasons expiradas", async () => {
-    // Query retorna vazio (nenhuma season expirada)
+  test("bootstraps a temporada do mês corrente quando não há seasons expiradas (#4054)", async () => {
+    // Query retorna vazio (nenhuma season expirada) e NÃO há season ativa —
+    // o bootstrap deve criar a temporada do mês corrente de forma idempotente.
     mockQueryGet.mockResolvedValue({
       empty: true,
       docs: [],
     });
+    mockDocGet.mockResolvedValue({exists: false});
 
     await checkSeasonEndHandler!();
 
-    // Nenhum batch commit deve ter ocorrido
+    // Nenhum encerramento ocorreu (batch de fechamento vazio)…
     expect(mockBatchCommit).not.toHaveBeenCalled();
     expect(mockBatchUpdate).not.toHaveBeenCalled();
+    // …mas a temporada do mês corrente foi criada pelo bootstrap.
+    expect(mockTransactionSet).toHaveBeenCalled();
+  });
+
+  test("ativa temporada pending existente em vez de criar duplicata (#4054)", async () => {
+    mockQueryGet.mockResolvedValue({empty: true, docs: []});
+    mockDocGet.mockResolvedValue({
+      exists: true,
+      data: () => ({is_active: false, pending: true}),
+    });
+
+    await checkSeasonEndHandler!();
+
+    // Não criou (set) — apenas ativou a temporada já existente como pending.
+    expect(mockTransactionSet).not.toHaveBeenCalled();
+  });
+
+  test("não cria/ativa quando já existe uma temporada ativa (No seasons to close)", async () => {
+    // 1ª query (expired) vazia; 2ª query (active) com uma temporada ativa.
+    mockQueryGet
+      .mockResolvedValueOnce({empty: true, docs: []})
+      .mockResolvedValueOnce({
+        empty: false,
+        docs: [{id: "monthly_2026_08"}],
+      });
+
+    await checkSeasonEndHandler!();
+
+    expect(mockTransactionSet).not.toHaveBeenCalled();
+    expect(mockRunTransaction).not.toHaveBeenCalled();
   });
 });
 

@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
@@ -25,6 +26,14 @@ import com.futebadosparcas.ui.theme.ThemeViewModel
 import androidx.compose.ui.platform.LocalInspectionMode
 
 
+
+/**
+ * Exposição do tema resolvido pelo [FutebaTheme] (ThemeMode LIGHT/DARK/SYSTEM).
+ * Fonte única de verdade para decidir `isDark` em composables que precisam trocar
+ * paletas theme-aware — NÃO use `isSystemInDarkTheme()` (lê o tema do aparelho,
+ * não a preferência do usuário).
+ */
+val LocalIsDarkTheme = staticCompositionLocalOf { false }
 
 // Mantendo compatibilidade com previews existentes
 @Composable
@@ -84,16 +93,15 @@ fun FutebaTheme(
         }
     }
 
-    // Envolve MaterialTheme com ResponsiveTypographyProvider para disponibilizar
-    // LocalResponsiveTextDimens em toda a árvore de composição (#2209).
-    ResponsiveTypographyProvider {
-        CompositionLocalProvider(LocalReducedMotion provides reducedMotion) {
-            MaterialTheme(
-                colorScheme = colorScheme,
-                typography = FutebaTypography,
-                shapes = FutebaShapes,
-                content = content
-            )
-        }
+    CompositionLocalProvider(
+        LocalReducedMotion provides reducedMotion,
+        LocalIsDarkTheme provides isDark
+    ) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            typography = FutebaTypography,
+            shapes = FutebaShapes,
+            content = content
+        )
     }
 }

@@ -85,8 +85,10 @@ fun GameVideosSection(
     var caption by remember { mutableStateOf("") }
     var feedback by remember { mutableStateOf<String?>(null) }
     val videos = (uiState as? GameVideosUiState.Success)?.videos.orEmpty()
-    val activeVideoCount = videos.count { it.status != "REJECTED" }
-    val userVideoCount = videos.count { it.uploadedBy == currentUserId && it.status != "REJECTED" }
+    val activeVideoCount = remember(videos) { videos.count { it.status != "REJECTED" } }
+    val userVideoCount = remember(videos, currentUserId) {
+        videos.count { it.uploadedBy == currentUserId && it.status != "REJECTED" }
+    }
     val hasReachedGameLimit = activeVideoCount >= MAX_VIDEOS_PER_GAME
     val hasReachedUserLimit = userVideoCount >= MAX_VIDEOS_PER_USER_PER_GAME
     val canUploadNow = canUpload && !hasReachedGameLimit && !hasReachedUserLimit

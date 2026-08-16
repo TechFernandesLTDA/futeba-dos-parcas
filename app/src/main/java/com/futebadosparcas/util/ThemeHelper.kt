@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.res.Configuration
 import android.os.Build
 import androidx.appcompat.app.AppCompatDelegate
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
@@ -186,9 +185,4 @@ fun getDynamicColorScheme(isDark: Boolean): ColorScheme? {
     } else {
         dynamicLightColorScheme(context)
     }
-}
-
-@Composable
-fun isDarkTheme(): Boolean {
-    return isSystemInDarkTheme()
 }

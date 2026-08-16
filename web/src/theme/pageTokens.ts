@@ -1,9 +1,12 @@
 import type { Breakpoint } from '@mui/material/styles';
 
 export const pageSpacing = {
+  // #4047: apenas os tiers LARGOS (list/detail/dashboard) recebem o override
+  // 1320px(lg)/1500px(xl) no PageContainer para limitar o xl do MUI (1536px).
+  // Os estreitos mantêm o cap do próprio breakpoint: focused = 444px, form = 900px.
   containerMaxWidth: {
     focused: 'xs' as const,     // fluxos centrados (auth/onboarding/welcome) — NAO alargar
-    form: 'md' as const,        // formularios
+    form: 'md' as const,        // formularios — cap 900px (evita "mobile esticado")
     list: 'xl' as const,        // listas devem aproveitar desktop sem virar "mobile esticado"
     detail: 'xl' as const,      // telas de detalhe tambem ganham respiro horizontal no desktop
     dashboard: 'xl' as const,   // dashboards

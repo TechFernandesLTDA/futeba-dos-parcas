@@ -351,16 +351,35 @@ export function MonthlyFinancePanel({
   onSetGameOverride,
 }: MonthlyFinancePanelProps) {
   const theme = useTheme();
+  // Perf: cálculo E sorts derivados memoizados — antes sortedMembers/agendaGames
+  // eram reordenados a cada render (todo toggle de rateio re-renderiza o painel).
   const calculation = useMemo(() => {
     try {
-      return { summary: calculateMonthlyFinance(input), error: null };
+      const summary = calculateMonthlyFinance(input);
+      const sortedMembers = [...summary.members].sort((left, right) => {
+        if (left.isMonthly !== right.isMonthly) return left.isMonthly ? -1 : 1;
+        return left.name.localeCompare(right.name, locale);
+      });
+      const agendaGames = [...input.games].sort((left, right) =>
+        left.date.localeCompare(right.date) || left.id.localeCompare(right.id));
+      const includedGameById = new Map(summary.games.map((game) => [game.id, game]));
+      return {
+        summary,
+        sortedMembers,
+        agendaGames,
+        includedGameById,
+        error: null as string | null,
+      };
     } catch (cause) {
       return {
         summary: null,
+        sortedMembers: [],
+        agendaGames: [],
+        includedGameById: new Map<string, never>(),
         error: cause instanceof Error ? cause.message : 'Não foi possível calcular o rateio.',
       };
     }
-  }, [input]);
+  }, [input, locale]);
 
   if (!calculation.summary) {
     return (
@@ -372,15 +391,9 @@ export function MonthlyFinancePanel({
   }
 
   const { summary } = calculation;
-  const sortedMembers = [...summary.members].sort((left, right) => {
-    if (left.isMonthly !== right.isMonthly) return left.isMonthly ? -1 : 1;
-    return left.name.localeCompare(right.name, locale);
-  });
+  const { sortedMembers, agendaGames, includedGameById } = calculation;
   const previousPeriod = shiftMonthlyPeriod(summary.periodKey, -1);
   const nextPeriod = shiftMonthlyPeriod(summary.periodKey, 1);
-  const includedGameById = new Map(summary.games.map((game) => [game.id, game]));
-  const agendaGames = [...input.games].sort((left, right) =>
-    left.date.localeCompare(right.date) || left.id.localeCompare(right.id));
 
   const summaryItems = [
     {

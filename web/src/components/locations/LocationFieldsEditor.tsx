@@ -306,12 +306,14 @@ export function LocationFieldsEditor({
                         component="img"
                         src={photo}
                         alt={`Foto da quadra ${index + 1}`}
+                        loading="lazy"
+                        decoding="async"
                         sx={{
                           width: 92,
                           height: 68,
                           objectFit: 'cover',
                           borderRadius: 1,
-                          flex: '0 0 auto',
+                          flexShrink: 0,
                         }}
                       />
                     ))}

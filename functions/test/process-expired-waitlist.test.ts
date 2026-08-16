@@ -416,4 +416,65 @@ describe("processExpiredWaitlistEntries (#4012)", () => {
     expect(mockTransactionUpdate).not.toHaveBeenCalled();
     expect(mockSendNotificationToUser).not.toHaveBeenCalled();
   });
+
+  it("#4043: reverte a promocao para WAITING quando a notificacao falha", async () => {
+    const entryRef = {id: "wl1"};
+    const nextEntryUpdate = jest.fn().mockResolvedValue(undefined);
+    const nextEntryRef = {id: "wl2", update: nextEntryUpdate};
+
+    mockCollectionGet
+      .mockResolvedValueOnce({
+        docs: [
+          {
+            id: "wl1",
+            ref: entryRef,
+            data: () => ({
+              status: "NOTIFIED",
+              game_id: "game1",
+              user_id: "user1",
+            }),
+          },
+        ],
+        size: 1,
+      })
+      .mockResolvedValueOnce({docs: [], size: 0});
+
+    setupTransactionMock((ref) => {
+      if (ref === entryRef)
+        return {
+          exists: true,
+          data: () => ({
+            status: "NOTIFIED",
+            game_id: "game1",
+            user_id: "user1",
+          }),
+        };
+      return {
+        docs: [
+          {
+            ref: nextEntryRef,
+            data: () => ({
+              user_id: "user2",
+              user_name: "Jogador 2",
+              status: "WAITING",
+            }),
+          },
+        ],
+        empty: false,
+        size: 1,
+      };
+    });
+
+    mockSendNotificationToUser.mockRejectedValueOnce(new Error("FCM unavailable"));
+
+    await expect(processExpiredWaitlistEntries()).rejects.toThrow(
+      /entradas falharam ao processar/
+    );
+
+    expect(nextEntryUpdate).toHaveBeenCalledWith({
+      status: "WAITING",
+      notified_at: expect.anything(),
+      response_deadline: expect.anything(),
+    });
+  });
 });

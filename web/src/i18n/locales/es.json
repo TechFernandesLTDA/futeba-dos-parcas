@@ -1116,6 +1116,13 @@
       "quickCreateTooltip": "Crear usando la próxima ocurrencia",
       "quickStartDescription": "Usa una plantilla, duplica un partido anterior o guarda este borrador como configuración base.",
       "quickStartTitle": "Acelera la creación",
+      "hero": {
+        "chipLabel": "Convocatoria del partido",
+        "title": "Arma el partido sin dejar cabos sueltos.",
+        "subtitle": "Define lugar, horario, formato, pago y reglas con un resumen en vivo antes de llamar a la banda.",
+        "quickPreview": "Vista previa rápida",
+        "locationFallback": "Lugar pendiente"
+      },
       "totalCostHelp": "Valor total de la cancha. Puede quedar vacío/cero si no hay cobro.",
       "dailyPriceHelp": "Valor individual. Activa Manual para editar; vacío cuenta como R$0,00.",
       "recurrence": "Recurrencia",

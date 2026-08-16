@@ -23,6 +23,14 @@ export const PageContainer = React.memo(function PageContainer({
 }: PageContainerProps) {
   const resolvedMaxWidth = pageSpacing.containerMaxWidth[maxWidth];
 
+  // #4047: o override de largura só faz sentido para os tiers LARGOS, cujo
+  // `xl` do MUI (1536px) precisa ser limitado a 1320/1500px (herança do fix
+  // `2a9ba1ad`). Antes a condição listava apenas `focused`, alargando `form`
+  // de 900px para 1500px — o tier virava um no-op ("mobile esticado" em
+  // /settings). tiers estreitos (focused xs=444 / form md=900) mantêm o cap
+  // do próprio breakpoint.
+  const isWideTier = maxWidth === 'list' || maxWidth === 'detail' || maxWidth === 'dashboard';
+
   return (
     <Box
       sx={[
@@ -44,10 +52,12 @@ export const PageContainer = React.memo(function PageContainer({
           display: 'flex',
           flexDirection: 'column',
           minWidth: 0,
-          maxWidth: {
-            lg: maxWidth === 'focused' ? undefined : 'min(100%, 1320px)',
-            xl: maxWidth === 'focused' ? undefined : 'min(100%, 1500px)',
-          },
+          ...(isWideTier && {
+            maxWidth: {
+              lg: 'min(100%, 1320px)',
+              xl: 'min(100%, 1500px)',
+            },
+          }),
         }}
       >
         {children}

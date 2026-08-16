@@ -1,4 +1,5 @@
 import { PageContainer } from '../../components/common/PageContainer';
+import { ScreenHeader } from '../../components/common/ScreenHeader';
 import React, { useMemo, useState } from 'react';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
@@ -21,7 +22,6 @@ import {
   Typography,
 } from '@mui/material';
 import {
-  ArrowBack as BackIcon,
   Search as SearchIcon,
   Group as GroupIcon,
   Public as PublicIcon,
@@ -118,17 +118,18 @@ export const DiscoverGroupsScreen: React.FC = () => {
 
   return (
     <PageContainer maxWidth="list">
-      <Stack direction="row" alignItems="center" spacing={1} mb={2}>
-        <IconButton onClick={goBack} aria-label={t('a11y.back')}>
-          <BackIcon />
-        </IconButton>
-        <Typography variant="h5" fontWeight="bold" flex={1}>
-          {t('groups.discoverGroupsBtn')}
-        </Typography>
-        <IconButton onClick={() => refetchOfficial()} aria-label={t('a11y.refresh')}>
-          <RefreshIcon />
-        </IconButton>
-      </Stack>
+      {/* #4051: migrado para ScreenHeader — o header manual não-sticky empilhava
+          com a MobileTopBar global no mobile (2 botões "Voltar", 2 títulos). */}
+      <ScreenHeader
+        title={t('groups.discoverGroupsBtn')}
+        onBack={goBack}
+        backAriaLabel={t('a11y.back')}
+        actions={
+          <IconButton onClick={() => refetchOfficial()} aria-label={t('a11y.refresh')}>
+            <RefreshIcon />
+          </IconButton>
+        }
+      />
 
       <Alert severity="info" icon={<PublicIcon />} sx={{ mb: 2 }}>
         {t('groups.matchmaking.hero')}

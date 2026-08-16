@@ -878,9 +878,10 @@ export const LeagueScreen: React.FC<LeagueScreenProps> = ({ embedded = false, ac
             )}
 
             {divisionProgress && (
-              <Card sx={{ mb: 2, border: `1px solid ${alpha(DIVISION_CONFIG[
-                LEAGUE_DIVISIONS[LEAGUE_DIVISIONS.indexOf(currentUserPlayer!.division) + 1]
-              ]?.color ?? theme.palette.divider, 0.3)}` }}>
+              <Card sx={{ mb: 2, border: `1px solid ${alpha(getDivisionColor(
+                LEAGUE_DIVISIONS[LEAGUE_DIVISIONS.indexOf(currentUserPlayer!.division) + 1],
+                theme,
+              ) ?? theme.palette.divider, 0.3)}` }}>
                 <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
                     <Typography variant="caption" fontWeight={600}>
@@ -899,9 +900,10 @@ export const LeagueScreen: React.FC<LeagueScreenProps> = ({ embedded = false, ac
                       bgcolor: alpha(theme.palette.primary.main, 0.1),
                       '& .MuiLinearProgress-bar': {
                         borderRadius: 4,
-                        bgcolor: DIVISION_CONFIG[
-                          LEAGUE_DIVISIONS[LEAGUE_DIVISIONS.indexOf(currentUserPlayer!.division) + 1]
-                        ]?.color ?? theme.palette.primary.main,
+                        bgcolor: getDivisionColor(
+                          LEAGUE_DIVISIONS[LEAGUE_DIVISIONS.indexOf(currentUserPlayer!.division) + 1],
+                          theme,
+                        ) ?? theme.palette.primary.main,
                       },
                     }}
                   />

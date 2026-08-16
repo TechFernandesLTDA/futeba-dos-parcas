@@ -421,7 +421,8 @@ fun MainScreen(
     val currentDestination = navBackStackEntry?.destination
 
     // Exibe navegação apenas nas rotas raiz
-    val showNavigation = currentDestination?.route in navItems.map { it.route }
+    val navRoutes = remember(navItems) { navItems.map { it.route } }
+    val showNavigation = currentDestination?.route in navRoutes
 
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -502,14 +503,16 @@ fun MainScreen(
 
     // Converte navItems para NavDestination do componente canônico (#2190).
     // contentDescription null: o label visível já é lido pelo TalkBack — evita anúncio duplo (#2736/#2693).
-    val navDestinations = navItems.map { item ->
-        NavDestination(
-            route = item.route,
-            label = item.label,
-            icon = item.icon,
-            selectedIcon = item.selectedIcon,
-            contentDescription = null
-        )
+    val navDestinations = remember(navItems) {
+        navItems.map { item ->
+            NavDestination(
+                route = item.route,
+                label = item.label,
+                icon = item.icon,
+                selectedIcon = item.selectedIcon,
+                contentDescription = null
+            )
+        }
     }
 
     // Layout adaptativo via AdaptiveNavigationScaffold canônico (#2190).

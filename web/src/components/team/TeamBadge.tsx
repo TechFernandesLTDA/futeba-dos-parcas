@@ -7,7 +7,10 @@ interface TeamBadgeProps {
   size?: number;
 }
 
-export const TeamBadge: React.FC<TeamBadgeProps> = ({ teamId, size = 24 }) => {
+// Perf #perf: memoizado — renderizado dentro de cada item de lista (ranking,
+// jogadores, liga). Props são primitivas (teamId/size), então o memo efetivamente
+// pula re-renders quando o item pai memoizado não re-renderiza.
+export const TeamBadge: React.FC<TeamBadgeProps> = React.memo(({ teamId, size = 24 }) => {
   const { teamsById } = useTeams();
 
   if (!teamId) return null;
@@ -19,6 +22,7 @@ export const TeamBadge: React.FC<TeamBadgeProps> = ({ teamId, size = 24 }) => {
     <Avatar
       src={team.badgeUrl}
       alt={team.name}
+      slotProps={{ img: { loading: 'lazy', decoding: 'async' } }}
       sx={{
         width: size,
         height: size,
@@ -44,4 +48,4 @@ export const TeamBadge: React.FC<TeamBadgeProps> = ({ teamId, size = 24 }) => {
       {badge}
     </Tooltip>
   );
-};
+});

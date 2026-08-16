@@ -1443,4 +1443,29 @@ web/functions.
 **Relacionado:** issues #3934, #3933, #2745 (critério do scheme deprecated),
 specs `DECISIONS.md`.
 
+### [2026-08-14] Restaurar índice `confirmations(user_id, status)` removido colateralmente (#4040)
+
+**Contexto:** O commit `ee0dbc35` (fix de vídeo + a11y, #4027) apagou o índice
+composto `confirmations (user_id ASC, status ASC)` de `firestore.indexes.json`
+junto com mudanças de vídeo. `confirmations` não tem relação com aquele PR; a
+remoção foi colateral. Como `firebase deploy --only firestore:indexes` não apaga
+índices que sumiram do arquivo, o índice continua vivo em produção, deixando o
+repo divergente da produção.
+
+**Alternativas consideradas:**
+1. Restaurar a entrada no repo (alinhando repo e produção).
+2. Apagar o índice em produção e manter fora do repo.
+
+**Decisão:** Opção 1 — restaurar `confirmations (user_id ASC, status ASC)` em
+`firestore.indexes.json`, com `queryScope: COLLECTION`.
+
+**Justificativa:** Custo zero e reflete a realidade de produção. Mantém
+`firestore.indexes.json` como fonte de verdade e evita o modo de falha de
+"quebra em staging/novo ambiente mas funciona em prod" se alguém adicionar
+`orderBy("status")` ou filtro de range a essas queries no futuro.
+
+**Consequências:** Nenhuma mudança de comportamento hoje (queries atuais são só
+de igualdade simples). Novo provisionamento a partir do repo volta a incluir o
+índice.
+
 <!-- Adicione novas decisões acima desta linha -->
