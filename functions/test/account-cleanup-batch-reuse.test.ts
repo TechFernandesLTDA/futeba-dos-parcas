@@ -141,10 +141,16 @@ jest.mock("firebase-functions/v2", () => ({
   },
 }));
 
+// FIX #4049: deleta objetos de mídia de jogo (game_photos/game_videos) usando
+// storage_paths canônicos coletados no passo 16. Mock controlável por teste.
+const mockMediaFileDelete = jest.fn().mockResolvedValue(undefined);
+const mockMediaFile = jest.fn(() => ({delete: mockMediaFileDelete}));
+
 jest.mock("@google-cloud/storage", () => ({
   Storage: jest.fn().mockImplementation(() => ({
     bucket: jest.fn().mockReturnValue({
       getFiles: jest.fn().mockResolvedValue([[]]),
+      file: mockMediaFile,
     }),
   })),
 }));
@@ -769,3 +775,88 @@ describe(
     );
   }
 );
+
+// ==========================================
+// FIX #4049 — limpeza de mídia de jogo (game_photos/game_videos) no Storage
+// ==========================================
+
+describe("onUserDeleted — FIX #4049: mídia de jogo no Storage", () => {
+  const uid = "user-to-delete";
+
+  const mediaQuery = (storagePath: string) => {
+    const query: any = {
+      where: jest.fn(() => query),
+      limit: jest.fn(() => query),
+      startAfter: jest.fn(() => query),
+      get: jest.fn(() =>
+        Promise.resolve({
+          docs: [
+            {
+              id: "media-1",
+              ref: {id: "media-1", path: "media/media-1"},
+              data: () => ({storage_path: storagePath}),
+            },
+          ],
+          empty: false,
+          size: 1,
+        })
+      ),
+    };
+    return query;
+  };
+
+  const emptyQuery = () => {
+    const query: any = {
+      where: jest.fn(() => query),
+      limit: jest.fn(() => query),
+      startAfter: jest.fn(() => query),
+      get: jest.fn(() => Promise.resolve({docs: [], empty: true, size: 0})),
+    };
+    return query;
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    batchInstances.length = 0;
+    mockDocGet.mockResolvedValue({exists: false, data: () => null});
+    mockCollectionGroupGet.mockResolvedValue({docs: [], empty: true, size: 0});
+    mockMediaFileDelete.mockResolvedValue(undefined);
+    mockMediaFile.mockClear();
+
+    mockCollection.mockImplementation((name: string) => {
+      if (name === "game_photos") {
+        return mediaQuery("games/g1/photos/uid/photo.jpg");
+      }
+      if (name === "game_videos") {
+        return mediaQuery("games/g1/videos/uid/clip.mp4");
+      }
+      return emptyQuery();
+    });
+  });
+
+  test("deleta os objetos de mídia usando os storage_paths dos docs", async () => {
+    await expect(
+      onUserDeleted(makeUserRecord(uid), makeEventContext())
+    ).resolves.not.toThrow();
+
+    expect(mockMediaFile).toHaveBeenCalledWith("games/g1/photos/uid/photo.jpg");
+    expect(mockMediaFile).toHaveBeenCalledWith("games/g1/videos/uid/clip.mp4");
+    expect(mockMediaFileDelete).toHaveBeenCalledTimes(2);
+    expect(mockMediaFileDelete).toHaveBeenCalledWith({ignoreNotFound: true});
+  });
+
+  test("loga warn e segue quando a exclusão de uma mídia falha", async () => {
+    mockMediaFileDelete.mockRejectedValue(new Error("storage 403"));
+
+    await expect(
+      onUserDeleted(makeUserRecord(uid), makeEventContext())
+    ).resolves.not.toThrow();
+
+    expect(mockMediaFileDelete).toHaveBeenCalledTimes(2);
+    const logger = jest.requireMock("firebase-functions/v2").logger;
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.stringContaining("Erro ao deletar mídia"),
+      expect.any(Error)
+    );
+  });
+});

@@ -262,11 +262,12 @@ export const gamificationColors = {
   bronze: '#CD7F32',
   diamond: '#B9F2FF',
   platinum: '#00E676',
-  // #4056: era #E91E63 (pink 500) — reprovava AA nos DOIS sentidos: 4.34:1 com
-  // branco e 3.97:1 com o escuro #1A1C1E. Pink 700 passa como fundo (branco
-  // 5.87:1 via getContrastText) e como texto sobre paper (5.87:1). Token ainda
-  // sem call sites visuais — mudança sem impacto visual hoje.
-  champion: '#C2185B',
+  // champion mantém o canônico #E91E63 (pink 500) — paridade com shared/design-tokens.json
+  // e Android (GamificationColors.Champion em Color.kt). É cor de FUNDO/medalha; como
+  // TEXTO use a variante de foreground `gamificationColorsOnLight.champion` (#C2185B)
+  // ou a dark (#F06292). Como fundo de texto pequeno o pink 500 não alcança AA
+  // (4.34:1 com branco) — uso restrito a texto grande / componente gráfico (#4056).
+  champion: '#E91E63',
   xp: '#9C27B0',
   level: '#00BCD4',
   mvp: '#FFD700',

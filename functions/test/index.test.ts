@@ -283,6 +283,19 @@ describe("Index — Funcoes do index.ts", () => {
       expect(mockCollectionGet).not.toHaveBeenCalled();
       expect(mockBatchDelete).not.toHaveBeenCalled();
     });
+
+    it("loga erro mas segue quando a deleção de objetos do Storage falha (#4049)", async () => {
+      mockDocGet.mockResolvedValueOnce({ exists: false });
+      mockDeleteFiles.mockRejectedValueOnce(new Error("storage unavailable"));
+
+      await onGameDeleted(makeEvent());
+
+      const logger = jest.requireMock("firebase-functions/v2").logger;
+      expect(logger.error).toHaveBeenCalledWith(
+        expect.stringContaining("Error deleting storage objects"),
+        expect.any(Error),
+      );
+    });
   });
 
   describe("onGroupDeleted", () => {

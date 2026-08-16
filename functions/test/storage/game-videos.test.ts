@@ -28,6 +28,8 @@ const mockDb = {
   runTransaction: jest.fn(),
 };
 
+const janitorGet = jest.fn();
+
 jest.mock("../../src/_db", () => ({db: jest.fn(() => mockDb)}));
 jest.mock("../../src/middleware/secure-callable-wrapper", () => ({
   secureCallable: jest.fn((_options, handler) => handler),
@@ -49,7 +51,23 @@ jest.mock("firebase-functions/v2/https", () => ({
   },
 }));
 
-import {createGameVideo} from "../../src/storage/game-videos";
+const mockLogger = {
+  info: jest.fn(),
+  warn: jest.fn(),
+  error: jest.fn(),
+};
+
+jest.mock("firebase-functions/v2", () => ({logger: mockLogger}));
+
+let reconcileHandler: (() => Promise<void>) | null = null;
+jest.mock("firebase-functions/v2/scheduler", () => ({
+  onSchedule: jest.fn((_config: unknown, handler: () => Promise<void>) => {
+    reconcileHandler = handler;
+    return handler;
+  }),
+}));
+
+import {createGameVideo, reconcileStaleProcessingGameVideos} from "../../src/storage/game-videos";
 
 type Callable = (request: unknown) => Promise<unknown>;
 const callable = createGameVideo as unknown as Callable;
@@ -63,7 +81,7 @@ function snapshot(exists: boolean, data: Record<string, unknown> = {}) {
 }
 
 function configureDatabase() {
-  const queryChain = {kind: "query", where: jest.fn(), limit: jest.fn()};
+  const queryChain: any = {kind: "query", where: jest.fn(), limit: jest.fn(), get: janitorGet};
   queryChain.where.mockReturnValue(queryChain);
   queryChain.limit.mockReturnValue(queryChain);
   mockDb.collection.mockImplementation((name: string) => ({
@@ -157,5 +175,177 @@ describe("createGameVideo", () => {
 
     await expect(callable(request())).resolves.toMatchObject({success: true, alreadyExists: true});
     expect(mockState.created).toHaveLength(0);
+  });
+});
+
+describe("reconcileStaleProcessingGameVideos (#4038)", () => {
+  const janitor = () => {
+    if (!reconcileHandler) throw new Error("janitor handler not captured");
+    return reconcileHandler();
+  };
+
+  const staleCreatedAt = () => {
+    const old = Date.now() - 60 * 60 * 1000;
+    return {toMillis: () => old, toDate: () => new Date(old)};
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    janitorGet.mockReset();
+    janitorGet.mockResolvedValue({docs: [], size: 0});
+    mockDb.runTransaction.mockReset();
+    mockFile.exists.mockReset();
+
+    const chain: any = {where: jest.fn(), limit: jest.fn(), get: janitorGet};
+    chain.where.mockReturnValue(chain);
+    chain.limit.mockReturnValue(chain);
+    mockDb.collection.mockImplementation(() => ({where: jest.fn(() => chain)}));
+  });
+
+  it("finds stale PROCESSING docs whose object is missing and marks them REJECTED", async () => {
+    const ref = {set: jest.fn().mockResolvedValue(undefined)};
+    janitorGet.mockResolvedValue({
+      docs: [
+        {
+          id: "video-1",
+          data: () => ({storage_path: "games/g-1/videos/u1/clip.mp4", created_at: staleCreatedAt()}),
+          ref,
+        },
+      ],
+      size: 1,
+    });
+    mockFile.exists.mockResolvedValue([false]);
+
+    await janitor();
+
+    expect(ref.set).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: "REJECTED",
+        rejection_reason: "STALE_PROCESSING_NO_OBJECT",
+      }),
+      {merge: true}
+    );
+    expect(mockLogger.warn).toHaveBeenCalled();
+    expect(mockLogger.info).toHaveBeenCalledWith(
+      expect.stringContaining("1 doc(s) PROCESSING")
+    );
+  });
+
+  it("keeps PROCESSING docs whose object still exists", async () => {
+    const ref = {set: jest.fn()};
+    janitorGet.mockResolvedValue({
+      docs: [
+        {
+          id: "video-1",
+          data: () => ({storage_path: "games/g-1/videos/u1/clip.mp4", created_at: staleCreatedAt()}),
+          ref,
+        },
+      ],
+      size: 1,
+    });
+    mockFile.exists.mockResolvedValue([true]);
+
+    await janitor();
+
+    expect(ref.set).not.toHaveBeenCalled();
+    expect(mockLogger.info).not.toHaveBeenCalledWith(
+      expect.stringContaining("doc(s) PROCESSING")
+    );
+  });
+
+  it("skips docs without a storage_path", async () => {
+    const ref = {set: jest.fn()};
+    janitorGet.mockResolvedValue({
+      docs: [
+        {id: "video-1", data: () => ({created_at: staleCreatedAt()}), ref},
+      ],
+      size: 1,
+    });
+
+    await janitor();
+
+    expect(ref.set).not.toHaveBeenCalled();
+    expect(mockFile.exists).not.toHaveBeenCalled();
+  });
+
+  it("treats a storage lookup failure as a missing object and reconciles", async () => {
+    const ref = {set: jest.fn().mockResolvedValue(undefined)};
+    janitorGet.mockResolvedValue({
+      docs: [
+        {
+          id: "video-1",
+          data: () => ({storage_path: "games/g-1/videos/u1/clip.mp4", created_at: staleCreatedAt()}),
+          ref,
+        },
+      ],
+      size: 1,
+    });
+    mockFile.exists.mockRejectedValue(new Error("storage unavailable"));
+
+    await janitor();
+
+    expect(ref.set).toHaveBeenCalledWith(
+      expect.objectContaining({status: "REJECTED"}),
+      {merge: true}
+    );
+  });
+
+  it("does nothing on an empty scan", async () => {
+    janitorGet.mockResolvedValue({docs: [], size: 0});
+
+    await janitor();
+
+    expect(mockFile.exists).not.toHaveBeenCalled();
+    expect(mockLogger.info).not.toHaveBeenCalledWith(
+      expect.stringContaining("doc(s) PROCESSING")
+    );
+  });
+
+  it("treats a created_at with only toDate as stale", async () => {
+    const ref = {set: jest.fn().mockResolvedValue(undefined)};
+    const old = Date.now() - 60 * 60 * 1000;
+    janitorGet.mockResolvedValue({
+      docs: [
+        {
+          id: "video-1",
+          data: () => ({
+            storage_path: "games/g-1/videos/u1/clip.mp4",
+            created_at: {toDate: () => new Date(old)},
+          }),
+          ref,
+        },
+      ],
+      size: 1,
+    });
+    mockFile.exists.mockResolvedValue([false]);
+
+    await janitor();
+
+    expect(ref.set).toHaveBeenCalledWith(
+      expect.objectContaining({status: "REJECTED"}),
+      {merge: true}
+    );
+  });
+
+  it("treats a missing created_at as stale", async () => {
+    const ref = {set: jest.fn().mockResolvedValue(undefined)};
+    janitorGet.mockResolvedValue({
+      docs: [
+        {
+          id: "video-1",
+          data: () => ({storage_path: "games/g-1/videos/u1/clip.mp4"}),
+          ref,
+        },
+      ],
+      size: 1,
+    });
+    mockFile.exists.mockResolvedValue([false]);
+
+    await janitor();
+
+    expect(ref.set).toHaveBeenCalledWith(
+      expect.objectContaining({status: "REJECTED"}),
+      {merge: true}
+    );
   });
 });

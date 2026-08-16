@@ -192,4 +192,41 @@ describe("field availability projection", () => {
       status: "SCHEDULED",
     })).toEqual({date: "2026-07-15", startMinutes: 1410, endMinutes: 1470});
   });
+
+  test("rejeita quando o rate limit de disponibilidade é excedido (#4046)", async () => {
+    mockCheckRateLimit.mockResolvedValueOnce({allowed: false});
+
+    await expect(getFieldAvailability({
+      auth: {uid: "player-1", token: {}},
+      data: {
+        fieldId: "field-1",
+        startDate: "2026-07-14",
+        endDate: "2026-07-21",
+      },
+    })).rejects.toMatchObject({code: "resource-exhausted"});
+
+    expect(mockCollection).not.toHaveBeenCalled();
+  });
+
+  test("marca truncated quando a query passa do teto de páginas (#4046)", async () => {
+    mockGet.mockResolvedValue({
+      docs: Array.from({length: 500}, (_, i) => ({
+        id: `g${i}`,
+        data: () => ({}),
+      })),
+      size: 500,
+    });
+
+    const result = await getFieldAvailability({
+      auth: {uid: "player-1", token: {}},
+      data: {
+        fieldId: "field-1",
+        startDate: "2026-07-14",
+        endDate: "2026-07-21",
+      },
+    });
+
+    expect(mockGet).toHaveBeenCalledTimes(10);
+    expect(result).toEqual({slots: [], truncated: true});
+  });
 });

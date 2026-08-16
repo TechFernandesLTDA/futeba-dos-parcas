@@ -746,3 +746,71 @@ describe("getCachedLeaguePlayersDirectory — erro de indice ausente (#3879)", (
     );
   });
 });
+
+// Cobertura #4045: page-cap (cursor) e deadline do janitor de invalidação.
+describe("invalidateLeaderboardOnParticipation — page-cap e deadline (#4045)", () => {
+  const invalidate = invalidateLeaderboardOnParticipation as unknown as (
+    event: unknown
+  ) => Promise<void>;
+
+  const eventForSeason = (seasonId: string) => ({
+    data: {before: undefined, after: {data: () => ({season_id: seasonId})}},
+  });
+
+  const paginatedCollection = (get: jest.Mock) => {
+    const chainable = (): any => ({
+      where: jest.fn(() => chainable()),
+      limit: jest.fn().mockReturnThis(),
+      startAfter: jest.fn().mockReturnThis(),
+      get,
+    });
+    mockCollection.mockImplementation(() => chainable());
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockBatchCommit.mockResolvedValue(undefined);
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it("avanca o cursor quando a pagina vem cheia (page-cap)", async () => {
+    const rankingDocs = Array.from({length: 100}, (_, i) => ({
+      data: () => ({kind: "ranking", season_id: "season-1"}),
+      ref: {path: `cache_leaderboard/season-1_ALL_${i}`},
+    }));
+    let calls = 0;
+    const get = jest.fn().mockImplementation(() => {
+      calls++;
+      if (calls === 1) {
+        return Promise.resolve({empty: false, size: 100, docs: rankingDocs});
+      }
+      return Promise.resolve({empty: true, size: 0, docs: []});
+    });
+    paginatedCollection(get);
+
+    await invalidate(eventForSeason("season-1"));
+
+    expect(calls).toBe(2);
+    expect(mockBatchDelete).toHaveBeenCalledTimes(100);
+  });
+
+  it("aborta no deadline quando a invalidação estoura o tempo", async () => {
+    let nowCalls = 0;
+    jest.spyOn(Date, "now").mockImplementation(() =>
+      nowCalls++ === 0 ? 0 : 60_000
+    );
+
+    const logger = jest.requireMock("firebase-functions").logger;
+    (logger.warn as jest.Mock).mockClear();
+
+    await invalidate(eventForSeason("season-1"));
+
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.stringContaining("atingiu o deadline"),
+    );
+    expect(mockBatchDelete).not.toHaveBeenCalled();
+  });
+});

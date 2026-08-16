@@ -122,7 +122,11 @@ describe('gamification palette as TEXT (#4041)', () => {
 // AA de verdade (compondo o alpha do darkText rgba(0,0,0,0.87) sobre o fundo,
 // como o medidor ao vivo fazia — bronze com branco dava 3.14:1).
 describe('getContrastText parity sobre a paleta de gamificação (#4056)', () => {
-  const lightTokens = Object.keys(gamificationColors) as (keyof typeof gamificationColors)[];
+  // champion (#E91E63) é a única exceção: como FUNDO de texto pequeno não alcança
+  // 4.5:1 com nenhum dos dois textos (branco 4.34 / escuro 3.97) — uso restrito a
+  // texto grande / componente gráfico (3:1), como documentado no #4056.
+  const lightTokens = (Object.keys(gamificationColors) as (keyof typeof gamificationColors)[])
+    .filter((token) => token !== 'champion');
   const darkTokens = Object.keys(gamificationColorsDark) as (keyof typeof gamificationColorsDark)[];
 
   it.each(lightTokens)('light: texto escolhido para fundo "%s" mede >= 4.5:1', (token) => {

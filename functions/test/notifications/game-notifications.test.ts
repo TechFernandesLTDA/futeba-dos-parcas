@@ -979,5 +979,73 @@ describe("Game Notifications", () => {
       expect(mockSendNotificationToUsers).not.toHaveBeenCalled();
       expect(mockRunTransaction).toHaveBeenCalled();
     });
+
+    it("#4043: nao promove quando a entrada ja saiu de WAITING (TOCTOU)", async () => {
+      mockTransactionGet
+        .mockResolvedValueOnce({
+          exists: true,
+          data: () => ({status: "SCHEDULED", max_players: 14, location_name: "Campo 1"}),
+        })
+        .mockResolvedValueOnce({
+          exists: true,
+          data: () => ({status: "SCHEDULED", max_players: 14}),
+        })
+        .mockResolvedValueOnce({exists: false, data: () => null});
+      mockCountGet.mockResolvedValueOnce({data: () => ({count: 10})});
+      mockCollectionGet.mockResolvedValueOnce({
+        empty: false,
+        size: 1,
+        docs: [
+          {
+            id: "wl-user-1",
+            ref: {id: "wl-user-1"},
+            data: () => ({status: "WAITING", user_id: "wl-user-1"}),
+          },
+        ],
+      });
+
+      await onGameVacancy({
+        id: "evt-vacancy-toctou",
+        data: {
+          before: {data: () => ({status: "CONFIRMED", game_id: "game1"})},
+          after: {data: () => ({status: "CANCELLED", game_id: "game1"})},
+        },
+        params: {confirmationId: "conf1"},
+      });
+
+      expect(mockSendNotificationToUsers).not.toHaveBeenCalled();
+    });
+
+    it("#4043: erro ao notificar grupo é isolado e nao derruba o fluxo", async () => {
+      mockTransactionGet
+        .mockResolvedValueOnce({
+          exists: true,
+          data: () => ({
+            status: "SCHEDULED",
+            max_players: 14,
+            group_id: "group-1",
+            location_name: "Arena",
+          }),
+        })
+        .mockResolvedValueOnce({
+          exists: true,
+          data: () => ({status: "SCHEDULED", max_players: 14, group_id: "group-1"}),
+        });
+      mockCountGet.mockResolvedValueOnce({data: () => ({count: 10})});
+      mockCollectionGet
+        .mockResolvedValueOnce({empty: true, size: 0, docs: []})
+        .mockRejectedValueOnce(new Error("FCM group unavailable"));
+
+      await expect(onGameVacancy({
+        id: "evt-vacancy-group-error",
+        data: {
+          before: {data: () => ({status: "CONFIRMED", game_id: "game1"})},
+          after: {data: () => ({status: "CANCELLED", game_id: "game1"})},
+        },
+        params: {confirmationId: "conf1"},
+      })).resolves.toBeUndefined();
+
+      expect(mockSendNotificationToUsers).not.toHaveBeenCalled();
+    });
   });
 });
