@@ -49,7 +49,8 @@ import com.futebadosparcas.ui.components.design.AppTopBar
 import com.futebadosparcas.ui.components.CachedProfileImage
 import com.futebadosparcas.ui.components.team.TeamBadgeById
 import com.futebadosparcas.ui.theme.GamificationColors
-import com.futebadosparcas.ui.theme.gamificationTextColor
+import com.futebadosparcas.ui.theme.divisionColor
+import com.futebadosparcas.ui.theme.divisionTextColor
 import com.futebadosparcas.ui.adaptive.rememberWindowSizeClass
 import com.futebadosparcas.R
 import com.futebadosparcas.ui.theme.AppDimensions
@@ -324,7 +325,9 @@ fun LeagueHeader(
     onSeasonSelected: (Season) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
-    val divisionColor = getDivisionColor(myParticipation?.getDivisionEnum() ?: LeagueDivision.BRONZE)
+    val division = myParticipation?.getDivisionEnum() ?: LeagueDivision.BRONZE
+    val divisionColor = divisionColor(division)
+    val divisionTextColor = divisionTextColor(division)
 
     Card(
         modifier = Modifier
@@ -416,7 +419,7 @@ fun LeagueHeader(
                     
                     Surface(
                         color = divisionColor.copy(alpha = 0.18f),
-                        contentColor = divisionColor,
+                        contentColor = divisionTextColor,
                         shape = RoundedCornerShape(AppDimensions.radius_large),
                         modifier = Modifier.padding(AppDimensions.spacing_small),
                         border = BorderStroke(AppDimensions.elevation_small, divisionColor.copy(alpha = 0.5f))
@@ -431,7 +434,7 @@ fun LeagueHeader(
                             )
                             Text(
                                 text = (myParticipation?.getDivisionEnum() ?: LeagueDivision.BRONZE).name,
-                                color = divisionColor,
+                                color = divisionTextColor,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = MaterialTheme.typography.bodySmall.fontSize
                             )
@@ -577,28 +580,28 @@ fun DivisionSelector(
                         emoji = stringResource(R.string.league_emoji_diamond),
                         name = stringResource(R.string.league_division_diamond),
                         rating = "70-100",
-                        color = gamificationTextColor(GamificationColors.Diamond),
+                        color = divisionTextColor(LeagueDivision.DIAMANTE),
                         description = stringResource(R.string.league_elite)
                     )
                     DivisionInfoItem(
                         emoji = stringResource(R.string.league_emoji_gold),
                         name = stringResource(R.string.league_division_gold),
                         rating = "50-69",
-                        color = gamificationTextColor(GamificationColors.Gold),
+                        color = divisionTextColor(LeagueDivision.OURO),
                         description = stringResource(R.string.league_experienced)
                     )
                     DivisionInfoItem(
                         emoji = stringResource(R.string.league_emoji_silver),
                         name = stringResource(R.string.league_division_silver),
                         rating = "30-49",
-                        color = gamificationTextColor(GamificationColors.Silver),
+                        color = divisionTextColor(LeagueDivision.PRATA),
                         description = stringResource(R.string.league_evolving)
                     )
                     DivisionInfoItem(
                         emoji = stringResource(R.string.league_emoji_bronze),
                         name = stringResource(R.string.league_division_bronze),
                         rating = "0-29",
-                        color = gamificationTextColor(GamificationColors.Bronze),
+                        color = divisionTextColor(LeagueDivision.BRONZE),
                         description = stringResource(R.string.league_beginners)
                     )
 
@@ -852,16 +855,6 @@ private fun LeagueLoadingState(modifier: Modifier = Modifier) {
                 modifier = Modifier.fillMaxWidth()
             )
         }
-    }
-}
-
-// Helpers
-fun getDivisionColor(division: LeagueDivision): Color {
-    return when (division) {
-        LeagueDivision.BRONZE -> GamificationColors.Bronze
-        LeagueDivision.PRATA -> GamificationColors.Silver
-        LeagueDivision.OURO -> GamificationColors.Gold
-        LeagueDivision.DIAMANTE -> GamificationColors.Diamond
     }
 }
 

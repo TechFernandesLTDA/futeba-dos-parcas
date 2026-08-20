@@ -13,7 +13,6 @@ import {
   Typography,
   useTheme as useMuiTheme,
 } from '@mui/material';
-import { ThemeProvider as MuiThemeProvider } from '@mui/material/styles';
 import {
   CheckCircle,
   EmojiEvents,
@@ -26,7 +25,6 @@ import {
 } from '@mui/icons-material';
 import { Link as RouterLink } from 'react-router-dom';
 import { trackEvent } from '../../utils/analytics';
-import { futebaTheme } from '../../theme';
 import { useTheme as useAppTheme } from '../../contexts/ThemeContext';
 
 const benefits = [
@@ -174,13 +172,20 @@ function LaunchPageContent() {
 
       <Box component="main" id="main-content">
         <Box
+          data-testid="landing-hero"
           sx={{
             bgcolor: 'primary.main',
             color: 'primary.contrastText',
             position: 'relative',
             overflow: 'hidden',
+            // #4069: o brilho decorativo (radial-gradient branco 20% em
+            // 82% 20%) só existe a partir de md, quando o grid tem duas
+            // colunas e o centro do brilho cai sobre a imagem — nunca sobre
+            // o texto. Em xs/sm o grid empilha e o texto ocupa a largura
+            // toda: o brilho clareava o verde sob o eyebrow para 4,18:1
+            // (AA exige 4,5:1 — o primary.main só tem 0,28 de folga).
             '&::before': {
-              content: '""',
+              content: { xs: 'none', md: '""' },
               position: 'absolute',
               inset: 0,
               background: `radial-gradient(circle at 82% 20%, ${alpha(theme.palette.common.white, 0.2)}, transparent 34%)`,
@@ -240,13 +245,29 @@ function LaunchPageContent() {
                   para quem joga e para quem oferece a quadra.
                 </Typography>
                 <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+                  {/* #4071: CTA branco sólido com texto primary.dark — o azul
+                      do secondary (#005FCC, calibrado para TEXTO sobre fundo
+                      claro) tinha só 1,25:1 de separação contra o hero verde e
+                      era o único elemento fora da paleta da dobra. Branco:
+                      4,78:1 contra o hero (>= 3:1 non-text) e ~7,4:1 no texto. */}
                   <Button
                     component={RouterLink}
                     to="/register"
                     variant="contained"
-                    color="secondary"
                     size="large"
                     onClick={() => trackSignup('hero')}
+                    sx={{
+                      bgcolor: 'common.white',
+                      color: 'primary.dark',
+                      '&:hover': {
+                        bgcolor: 'grey.100',
+                      },
+                      // O focus-ring global (primary.dark) é invisível sobre o
+                      // hero verde — aqui o anel precisa ser branco.
+                      '&:focus-visible': {
+                        outlineColor: 'common.white',
+                      },
+                    }}
                   >
                     Organizar minha pelada
                   </Button>
@@ -509,9 +530,9 @@ export function LaunchPage() {
     return () => setDocumentThemeOverride(null);
   }, [setDocumentThemeOverride]);
 
-  return (
-    <MuiThemeProvider theme={futebaTheme}>
-      <LaunchPageContent />
-    </MuiThemeProvider>
-  );
+  // #4070: não há mais MuiThemeProvider local — a override acima agora faz o
+  // ThemeProvider raiz entregar o tema claro (inclusive o <CssBaseline /> que
+  // pinta o body), deixando "a landing é sempre clara" com uma única fonte de
+  // verdade.
+  return <LaunchPageContent />;
 }

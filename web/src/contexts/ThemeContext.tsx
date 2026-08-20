@@ -111,9 +111,17 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   // responsiveFontSizes() redundante e conflitante (ele exige line-heights
   // unitless e não suporta fontSize com clamp). clamp() é a única estratégia
   // responsiva agora.
+  //
+  // #4070: a override de documento ("landing sempre clara", #3740) também
+  // participa da escolha do tema MUI — sem isto, o <CssBaseline /> deste
+  // provider continuava pintando o body com a paleta escura atrás de uma
+  // landing clara (visível no overscroll). Fonte única de verdade: com a
+  // override ativa não é mais necessário um MuiThemeProvider claro dentro da
+  // página pública.
   const theme = useMemo(() => {
+    if (documentThemeOverride === 'light') return futebaTheme;
     return mode === 'oled' ? futebaDarkOledTheme : isDark ? futebaDarkTheme : futebaTheme;
-  }, [isDark, mode]);
+  }, [isDark, mode, documentThemeOverride]);
 
   return (
     <ThemeContext.Provider value={value}>

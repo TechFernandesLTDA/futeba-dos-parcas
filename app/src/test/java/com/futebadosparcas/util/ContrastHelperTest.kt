@@ -4,6 +4,8 @@ import androidx.compose.ui.graphics.Color
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import com.futebadosparcas.ui.theme.MatchEventColors
+import com.futebadosparcas.ui.theme.GamificationColors
 
 /**
  * Testes para [ContrastHelper.getContrastingTextColor] (#4059).
@@ -27,6 +29,16 @@ class ContrastHelperTest {
         "TeamColor.ORANGE #FF9800" to Color(0xFFFF9800),
     )
 
+    private val allRealBackgrounds = affectedBackgrounds + listOf(
+        "TeamColor.GREEN_DARK #00852A" to Color(0xFF00852A),
+        "TeamColor.NAVY #2B70C9" to Color(0xFF2B70C9),
+        "MatchEventColors.YellowCard" to MatchEventColors.YellowCard,
+        "MatchEventColors.RedCard" to MatchEventColors.RedCard,
+        "Division.Silver" to GamificationColors.Silver,
+        "Division.Gold" to GamificationColors.Gold,
+        "Division.Diamond" to GamificationColors.Diamond,
+    )
+
     @Test
     fun `devolve texto escuro com contraste AA nos 6 fundos da banda`() {
         for ((label, bg) in affectedBackgrounds) {
@@ -37,6 +49,15 @@ class ContrastHelperTest {
                 ratio >= 4.5f,
                 "$label deve ter contraste >= 4.5:1, obtido $ratio"
             )
+        }
+    }
+
+    @Test
+    fun `todos os fundos reais atendem contraste AA com o melhor candidato`() {
+        for ((label, bg) in allRealBackgrounds) {
+            val chosen = ContrastHelper.getContrastingTextColor(bg)
+            val ratio = ContrastHelper.getContrastRatio(chosen, bg)
+            assertTrue(ratio >= 4.5f, "$label deve ter contraste >= 4.5:1, obtido $ratio")
         }
     }
 

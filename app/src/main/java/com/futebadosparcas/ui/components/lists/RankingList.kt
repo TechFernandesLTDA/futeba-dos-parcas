@@ -26,6 +26,8 @@ import com.futebadosparcas.ui.league.RankingItem
 import com.futebadosparcas.ui.components.CachedProfileImage
 import com.futebadosparcas.ui.theme.ExpressiveShapeTokens
 import com.futebadosparcas.ui.theme.GamificationColors
+import com.futebadosparcas.ui.theme.divisionColor
+import com.futebadosparcas.ui.theme.divisionTextColor
 import com.futebadosparcas.util.ContrastHelper
 import com.futebadosparcas.ui.components.animation.pressScale
 import com.futebadosparcas.R
@@ -148,14 +150,14 @@ fun DivisionHeader(
     division: LeagueDivision,
     modifier: Modifier = Modifier
 ) {
-    val (backgroundColor, icon) = when (division) {
-        LeagueDivision.DIAMANTE -> GamificationColors.Diamond.copy(alpha = 0.1f) to "💎"
-        LeagueDivision.OURO -> GamificationColors.Gold.copy(alpha = 0.1f) to "🥇"
-        LeagueDivision.PRATA -> GamificationColors.Silver.copy(alpha = 0.1f) to "🥈"
-        LeagueDivision.BRONZE -> GamificationColors.Bronze.copy(alpha = 0.1f) to "🥉"
+    val icon = when (division) {
+        LeagueDivision.DIAMANTE -> "💎"
+        LeagueDivision.OURO -> "🥇"
+        LeagueDivision.PRATA -> "🥈"
+        LeagueDivision.BRONZE -> "🥉"
     }
-
-    val divisionColor = getDivisionColor(division)
+    val backgroundColor = divisionColor(division).copy(alpha = 0.1f)
+    val textColor = divisionTextColor(division)
 
     Surface(
         modifier = modifier
@@ -180,14 +182,14 @@ fun DivisionHeader(
                     text = stringResource(R.string.ranking_division, division.displayName),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = divisionColor
+                    color = textColor
                 )
             }
 
             Icon(
                 imageVector = Icons.Default.EmojiEvents,
                 contentDescription = null,
-                tint = divisionColor,
+                tint = textColor,
                 modifier = Modifier.size(24.dp)
             )
         }
@@ -218,7 +220,7 @@ fun RankingItem(
         ),
         colors = CardDefaults.cardColors(
             containerColor = if (isTopThree) {
-                getDivisionColor(division).copy(alpha = 0.1f)
+                divisionColor(division).copy(alpha = 0.1f)
             } else {
                 MaterialTheme.colorScheme.surface
             }
@@ -292,13 +294,13 @@ fun RankingItem(
             // Valor (pontos)
             Surface(
                 shape = RoundedCornerShape(8.dp),
-                color = getDivisionColor(division).copy(alpha = 0.2f)
+                color = divisionColor(division).copy(alpha = 0.2f)
             ) {
                 Text(
                     text = entry.participation.points.toString(),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = getDivisionColor(division),
+                    color = divisionTextColor(division),
                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
                 )
             }
@@ -373,19 +375,6 @@ private fun RankBadge(
                 )
             }
         }
-    }
-}
-
-/**
- * Retorna a cor apropriada para cada divisão.
- */
-@Composable
-private fun getDivisionColor(division: LeagueDivision): Color {
-    return when (division) {
-        LeagueDivision.DIAMANTE -> GamificationColors.DiamondDark
-        LeagueDivision.OURO -> GamificationColors.Gold
-        LeagueDivision.PRATA -> GamificationColors.SilverDark
-        LeagueDivision.BRONZE -> GamificationColors.Bronze
     }
 }
 

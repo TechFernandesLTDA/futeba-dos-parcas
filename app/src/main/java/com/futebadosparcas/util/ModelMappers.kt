@@ -40,7 +40,6 @@ import com.futebadosparcas.data.model.GameJoinRequest as AndroidGameJoinRequest
 // Gamification imports
 import com.futebadosparcas.data.model.Season as AndroidSeason
 import com.futebadosparcas.data.model.SeasonParticipation as AndroidSeasonParticipation
-import com.futebadosparcas.data.model.LeagueDivision
 import com.futebadosparcas.data.model.UserStreak as AndroidUserStreak
 
 // Ranking imports
@@ -1705,12 +1704,7 @@ fun com.futebadosparcas.domain.model.SeasonParticipation.toAndroidSeasonParticip
         id = id,
         userId = userId,
         seasonId = seasonId,
-        division = when (getDivisionEnum()) {
-            com.futebadosparcas.domain.model.LeagueDivision.BRONZE -> LeagueDivision.BRONZE
-            com.futebadosparcas.domain.model.LeagueDivision.PRATA -> LeagueDivision.PRATA
-            com.futebadosparcas.domain.model.LeagueDivision.OURO -> LeagueDivision.OURO
-            com.futebadosparcas.domain.model.LeagueDivision.DIAMANTE -> LeagueDivision.DIAMANTE
-        },
+        division = getDivisionEnum(),
         points = points,
         gamesPlayed = gamesPlayed,
         wins = wins,
