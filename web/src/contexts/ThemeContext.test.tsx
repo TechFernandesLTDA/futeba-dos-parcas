@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { useTheme as useMuiTheme } from '@mui/material/styles';
 import { ThemeProvider, useTheme } from './ThemeContext';
 
 // Mock window.matchMedia para jsdom
@@ -22,15 +23,24 @@ Object.defineProperty(window, 'matchMedia', {
 
 // Componente auxiliar para acessar o contexto
 function ThemeConsumer() {
-  const { mode, toggleTheme, setMode } = useTheme();
+  const { mode, toggleTheme, setMode, setDocumentThemeOverride } = useTheme();
   return (
     <div>
       <span data-testid="mode">{mode}</span>
       <button onClick={toggleTheme}>toggle</button>
       <button onClick={() => setMode('dark')}>set-dark</button>
       <button onClick={() => setMode('light')}>set-light</button>
+      <button onClick={() => setDocumentThemeOverride('light')}>set-override-light</button>
+      <button onClick={() => setDocumentThemeOverride(null)}>clear-override</button>
     </div>
   );
+}
+
+// #4070: expõe o palette.mode do tema MUI entregue pelo provider (o que o
+// <CssBaseline /> usa para pintar o body) — não só o dataset do documentElement.
+function MuiThemeModeProbe() {
+  const muiTheme = useMuiTheme();
+  return <span data-testid="mui-palette-mode">{muiTheme.palette.mode}</span>;
 }
 
 describe('ThemeContext', () => {
@@ -187,5 +197,34 @@ describe('ThemeContext', () => {
     }).toThrow('useTheme must be used within a ThemeProvider');
 
     consoleSpy.mockRestore();
+  });
+
+  // #4070: a override de documento ("landing sempre clara") precisa trocar
+  // também o tema MUI do provider — antes ela só mexia no documentElement e o
+  // <CssBaseline /> continuava pintando o body escuro atrás da landing clara.
+  it('setDocumentThemeOverride troca o tema MUI (CssBaseline) e não só o documentElement', async () => {
+    const user = userEvent.setup();
+    localStorage.setItem('themeMode', 'dark');
+
+    render(
+      <ThemeProvider>
+        <ThemeConsumer />
+        <MuiThemeModeProbe />
+      </ThemeProvider>,
+    );
+
+    // Salvo dark → tema MUI dark.
+    expect(screen.getByTestId('mui-palette-mode').textContent).toBe('dark');
+    expect(document.documentElement.dataset.resolvedTheme).toBe('dark');
+
+    // Override light (landing) → tema MUI light, não apenas o dataset.
+    await user.click(screen.getByText('set-override-light'));
+    expect(screen.getByTestId('mui-palette-mode').textContent).toBe('light');
+    expect(document.documentElement.dataset.resolvedTheme).toBe('light');
+
+    // Limpa a override → volta ao tema salvo.
+    await user.click(screen.getByText('clear-override'));
+    expect(screen.getByTestId('mui-palette-mode').textContent).toBe('dark');
+    expect(document.documentElement.dataset.resolvedTheme).toBe('dark');
   });
 });

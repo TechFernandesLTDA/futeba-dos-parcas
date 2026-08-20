@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
+import { useTheme as useMuiTheme } from '@mui/material/styles';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { LaunchPage } from './LaunchPage';
 import { ThemeProvider } from '../../contexts/ThemeContext';
@@ -7,6 +8,13 @@ import { ThemeProvider } from '../../contexts/ThemeContext';
 vi.mock('../../utils/analytics', () => ({
   trackEvent: vi.fn(),
 }));
+
+// #4070: expõe o palette.mode do tema MUI que o provider entrega à landing —
+// a página não deve mais carregar um MuiThemeProvider claro próprio.
+function MuiThemeModeProbe() {
+  const muiTheme = useMuiTheme();
+  return <span data-testid="mui-palette-mode">{muiTheme.palette.mode}</span>;
+}
 
 describe('LaunchPage', () => {
   beforeEach(() => localStorage.clear());
@@ -74,5 +82,33 @@ describe('LaunchPage', () => {
       expect(document.documentElement.dataset.resolvedTheme).toBe('dark');
       expect(document.documentElement).toHaveStyle({ colorScheme: 'dark' });
     });
+  });
+
+  // #4070: com dark salvo, o tema MUI entregue pelo provider (o que o
+  // <CssBaseline /> usa para pintar o body) é o claro enquanto a landing está
+  // montada — sem wrapper local na página.
+  it('serves the light MUI theme (body via CssBaseline) while mounted, even with dark saved (#4070)', () => {
+    localStorage.setItem('themeMode', 'dark');
+    render(
+      <MemoryRouter>
+        <ThemeProvider>
+          <LaunchPage />
+          <MuiThemeModeProbe />
+        </ThemeProvider>
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByTestId('mui-palette-mode').textContent).toBe('light');
+  });
+
+  // #4071: o CTA do hero deixa de usar secondary (azul #005FCC sobre verde,
+  // 1,25:1 de separação) e passa a ser branco sólido com texto primary.dark.
+  it('hero CTA is solid white with primary.dark text (#4071)', () => {
+    renderLanding();
+
+    const cta = screen.getByRole('link', { name: 'Organizar minha pelada' });
+    const styles = getComputedStyle(cta);
+    expect(styles.backgroundColor).toBe('rgb(255, 255, 255)');
+    expect(styles.color).toBe('rgb(0, 90, 28)');
   });
 });
