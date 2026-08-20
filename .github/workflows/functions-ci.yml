@@ -221,7 +221,8 @@ jobs:
   firestore-query-perf:
     name: Firestore Query Performance
     needs: [ build ]
-    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    # Gate pesado isolado do pool self-hosted para evitar OOM/exit 137 (#4074).
+    runs-on: ubuntu-latest
     timeout-minutes: 20
     # Tests perf são experimentais — ESM modules de @google-cloud/firestore
     # quebram com ts-jest default. Marcar non-blocking até ajustar transform.

@@ -28,6 +28,35 @@ Registro de decisões técnicas e de produto. Cada entrada deve ter contexto, al
 
 ## Decisões Registradas
 
+### [2026-08-20] Isolar gates pesados de Firestore em runner hospedado
+
+**Contexto:** Os PRs #4072 e #4074 observaram OOM/exit 137 nos gates de
+Security Rules e Query Performance executados no pool self-hosted. Esses testes
+iniciam emuladores e concentram consumo de memória, enquanto os jobs de produto
+devem preservar o runner e o contrato atuais.
+
+**Alternativas consideradas:**
+1. Manter os gates no self-hosted e reduzir workers ou adicionar limpeza. Isso
+   continua sujeito à memória compartilhada e ao estado persistente do host.
+2. Mover somente os dois jobs de testes de Firestore para `ubuntu-latest`. Isso
+   fornece um ambiente hospedado isolado sem ampliar o escopo da mudança.
+
+**Decisão:** Adotar a opção 2. `rules-tests` em
+`.github/workflows/firestore-rules-ci.yml` e `firestore-query-perf` em
+`.github/workflows/functions-ci.yml` usam `ubuntu-latest`. Triggers, nomes,
+dependências, comandos e demais jobs permanecem inalterados.
+
+**Justificativa:** O runner hospedado separa os emuladores dos limites de
+memória do Mac self-hosted e corrige a causa operacional observada sem alterar
+o comportamento dos testes nem os gates de produto.
+
+**Consequências:** Os dois jobs passam a consumir minutos hospedados, mas ficam
+determinísticos quanto ao ambiente e deixam de disputar memória com outros
+gates. O contrato de CI verifica explicitamente essa separação.
+
+**Relacionado:** PRs #4072 e #4074; contrato
+`scripts/ci/ci-runner-portability-workflow-contract.test.js`.
+
 ### [2026-08-20] Tornar os gates CI independentes do host do runner
 
 **Contexto:** Os PRs #4072-#4075 expuseram que os gates dependiam de ferramentas

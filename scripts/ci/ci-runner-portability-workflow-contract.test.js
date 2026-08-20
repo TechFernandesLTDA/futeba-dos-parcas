@@ -7,6 +7,13 @@ const path = require('node:path');
 
 const root = path.resolve(__dirname, '../..');
 const read = (file) => fs.readFileSync(path.join(root, file), 'utf8');
+const job = (workflow, jobId) => {
+  const start = workflow.indexOf(`\n  ${jobId}:`);
+  const nextMatch = /\n  [A-Za-z0-9_-]+:/.exec(workflow.slice(start + 1));
+  const next = nextMatch ? start + 1 + nextMatch.index : -1;
+  assert.ok(start >= 0, `${jobId} job must exist`);
+  return workflow.slice(start, next >= 0 ? next : undefined);
+};
 
 test('workflow contracts do not require brew or rg', () => {
   const workflow = read('.github/workflows/validate-patterns.yml');
@@ -22,6 +29,19 @@ test('Functions tests install the verified media runtime in the same job', () =>
   const workflow = read('.github/workflows/functions-ci.yml');
   const testJob = workflow.slice(workflow.indexOf('\n  test:\n'));
   assert.match(testJob, /run: npm run install:ffmpeg[\s\S]*?name: Run Tests/);
+});
+
+test('Firestore emulator gates use hosted Linux without moving product jobs', () => {
+  const rulesWorkflow = read('.github/workflows/firestore-rules-ci.yml');
+  const functionsWorkflow = read('.github/workflows/functions-ci.yml');
+  const hostedSelector = 'runs-on: ubuntu-latest';
+  const selfHostedSelector = /runs-on: \$\{\{ fromJSON\(vars\.RUNNER_LABELS/;
+
+  assert.match(job(rulesWorkflow, 'rules-tests'), new RegExp(hostedSelector));
+  assert.match(job(functionsWorkflow, 'firestore-query-perf'), new RegExp(hostedSelector));
+  for (const jobId of ['build', 'lint', 'media-runtime-linux', 'test', 'mutation']) {
+    assert.match(job(functionsWorkflow, jobId), selfHostedSelector, `${jobId} must remain self-hosted`);
+  }
 });
 
 test('Android PR validation uses hosted Linux and validates SDK 36', () => {
