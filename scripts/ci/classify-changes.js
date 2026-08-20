@@ -47,6 +47,7 @@ function loadConfig(configPath = defaultConfigPath) {
   return {
     ...config,
     ignoreMatchers: config.ignore.map(globToRegExp),
+    iosAppMatchers: config.ios_app_patterns.map(globToRegExp),
     compiledRules: config.rules.map((rule) => ({
       scopes: rule.scopes,
       matchers: rule.patterns.map(globToRegExp),
@@ -91,6 +92,9 @@ function classifyChangedFiles(files, config = loadConfig()) {
       Object.assign(result, allScopes(config, true));
     }
   }
+
+  // ios_app is deliberately narrower than the fail-safe domain scopes.
+  result.ios_app = normalizedFiles.some((file) => config.iosAppMatchers.some((matcher) => matcher.test(file)));
 
   return { version: config.version, scopes: result, files: normalizedFiles, unknown };
 }

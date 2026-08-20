@@ -1,6 +1,7 @@
 {
   "version": 1,
   "scopes": ["web", "functions", "android", "ios", "ios_app", "rules", "shared_config"],
+  "ios_app_patterns": ["iosApp/**", "Podfile", "Podfile.lock", "iosApp/Podfile", "iosApp/Podfile.lock", ".github/workflows/ios-build.yml"],
   "ignore": [
     "*.md",
     "**/*.md",

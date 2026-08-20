@@ -119,6 +119,15 @@ test('platform lockfiles stay in their owning scope', () => {
   assert.equal(classifyChangedFiles(['gradle/dependency-locks/app.lockfile'], config).scopes.android, true);
 });
 
+test('ios_app is restricted to the iOS app allowlist', () => {
+  for (const file of ['versions.json', 'CHANGELOG.md', 'release-notes/ios/1.0.0.md', 'web/src/App.tsx', 'scripts/ci/other-platform.js']) {
+    assert.equal(classifyChangedFiles([file], config).scopes.ios_app, false, file);
+  }
+  for (const file of ['iosApp/ContentView.swift', 'Podfile', 'Podfile.lock', '.github/workflows/ios-build.yml']) {
+    assert.equal(classifyChangedFiles([file], config).scopes.ios_app, true, file);
+  }
+});
+
 test('workflow changes activate only the relevant gate unless classifier code changes', () => {
   const webWorkflow = classifyChangedFiles(['.github/workflows/web-ci.yml'], config);
   assert.equal(webWorkflow.scopes.web, true);
@@ -128,18 +137,21 @@ test('workflow changes activate only the relevant gate unless classifier code ch
   assert.equal(androidWorkflow.scopes.android, true);
 
   const classifier = classifyChangedFiles(['scripts/ci/classify-changes.js'], config);
-  assert.equal(Object.values(classifier.scopes).every(Boolean), true);
+  assert.equal(classifier.scopes.ios_app, false);
+  assert.equal(Object.entries(classifier.scopes).filter(([scope]) => scope !== 'ios_app').every(([, active]) => active), true);
 });
 
 test('unknown runtime paths fail safe by activating every scope', () => {
   const result = classifyChangedFiles(['futurePlatform/src/main.future'], config);
-  assert.equal(Object.values(result.scopes).every(Boolean), true);
+  assert.equal(result.scopes.ios_app, false);
+  assert.equal(Object.entries(result.scopes).filter(([scope]) => scope !== 'ios_app').every(([, active]) => active), true);
   assert.deepEqual(result.unknown, ['futurePlatform/src/main.future']);
 });
 
 test('unknown GitHub infrastructure paths also activate every scope', () => {
   const result = classifyChangedFiles(['.github/actions/future-ci/action.yml'], config);
-  assert.equal(Object.values(result.scopes).every(Boolean), true);
+  assert.equal(result.scopes.ios_app, false);
+  assert.equal(Object.entries(result.scopes).filter(([scope]) => scope !== 'ios_app').every(([, active]) => active), true);
   assert.deepEqual(result.unknown, ['.github/actions/future-ci/action.yml']);
 });
 

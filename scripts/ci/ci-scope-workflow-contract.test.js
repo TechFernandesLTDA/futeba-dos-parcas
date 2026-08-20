@@ -11,6 +11,7 @@ const androidWorkflow = read('.github/workflows/android-ci.yml');
 const prWorkflow = read('.github/workflows/pr-check.yml');
 const classifierWorkflow = read('.github/workflows/change-scope.yml');
 const iosWorkflow = read('.github/workflows/ios-build.yml');
+const iosDetector = read('scripts/ci/detect-ios-app-changes.js');
 const codeowners = read('.github/CODEOWNERS');
 const settings = read('.github/settings.yml');
 
@@ -149,8 +150,16 @@ test('reusable classifier exports every versioned domain and manual runs remain 
 });
 
 test('iOS app build consumes the narrow classifier contract', () => {
-  assert.match(iosWorkflow, /uses: \.\/\.github\/workflows\/change-scope\.yml/);
-  assert.match(iosWorkflow, /build-ios-app:[\s\S]*?needs: \[build-shared-framework, changes\]/);
-  assert.match(iosWorkflow, /build-ios-app:[\s\S]*?if: needs\.changes\.outputs\.ios_app == 'true'/);
-  assert.match(iosWorkflow, /build-ios-app:[\s\S]*?Setup Xcode/);
+  const iosAppJob = jobBody(iosWorkflow, 'build-ios-app');
+  assert.match(iosWorkflow, /ios_app_scope:[\s\S]*?runs-on: ubuntu-latest/);
+  assert.match(iosWorkflow, /ios_app_scope:[\s\S]*?should_run: \$\{\{ steps\.detect\.outputs\.should_run \}\}/);
+  assert.match(iosAppJob, /needs: \[build-shared-framework, ios_app_scope\]/);
+  assert.match(iosAppJob, /if: needs\.ios_app_scope\.outputs\.should_run == 'true'/);
+  assert.match(iosAppJob, /runs-on: \[self-hosted, macOS, ARM64\]/);
+  assert.doesNotMatch(iosAppJob, /fromJSON\(vars\.RUNNER_LABELS/);
+  assert.match(iosAppJob, /Setup Xcode/);
+  assert.match(iosDetector, /ios_app_patterns/);
+  assert.match(iosDetector, /should_run=/);
+  assert.match(read('.github/ci/change-scopes-v1.json'), /"ios_app_patterns"/);
+  assert.doesNotMatch(iosWorkflow, /needs\.changes\.outputs\.ios_app/);
 });
