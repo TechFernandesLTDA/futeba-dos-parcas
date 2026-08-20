@@ -17,8 +17,9 @@ class DivisionColorsTest {
     fun `foreground da divisao passa AA sobre veu composto`(
         division: LeagueDivision,
         isDarkTheme: Boolean,
-        surface: Color
+        surfaceArgb: Long
     ) {
+        val surface = Color(surfaceArgb)
         val background = composite(divisionColor(division), surface, 0.18f)
         val ratio = ContrastHelper.getContrastRatio(divisionTextColor(division, isDarkTheme), background)
 
@@ -29,9 +30,9 @@ class DivisionColorsTest {
     @MethodSource("divisionIdentityTokens")
     fun `tokens de identidade sao uma tabela unica para as quatro divisoes`(
         division: LeagueDivision,
-        expectedColor: Color
+        expectedColorArgb: Long
     ) {
-        assertEquals(expectedColor, divisionColor(division))
+        assertEquals(Color(expectedColorArgb), divisionColor(division))
     }
 
     private fun composite(foreground: Color, background: Color, alpha: Float): Color = Color(
@@ -44,26 +45,24 @@ class DivisionColorsTest {
     companion object {
         @JvmStatic
         fun divisionsAndThemes(): Stream<Arguments> {
-            val lightSurface = Color(0xFFFAFAFA)
-            val darkSurface = Color(0xFF121212)
             return Stream.of(
-                Arguments.of(LeagueDivision.BRONZE, false, lightSurface),
-                Arguments.of(LeagueDivision.PRATA, false, lightSurface),
-                Arguments.of(LeagueDivision.OURO, false, lightSurface),
-                Arguments.of(LeagueDivision.DIAMANTE, false, lightSurface),
-                Arguments.of(LeagueDivision.BRONZE, true, darkSurface),
-                Arguments.of(LeagueDivision.PRATA, true, darkSurface),
-                Arguments.of(LeagueDivision.OURO, true, darkSurface),
-                Arguments.of(LeagueDivision.DIAMANTE, true, darkSurface),
+                Arguments.of(LeagueDivision.BRONZE, false, 0xFFFAFAFAL),
+                Arguments.of(LeagueDivision.PRATA, false, 0xFFFAFAFAL),
+                Arguments.of(LeagueDivision.OURO, false, 0xFFFAFAFAL),
+                Arguments.of(LeagueDivision.DIAMANTE, false, 0xFFFAFAFAL),
+                Arguments.of(LeagueDivision.BRONZE, true, 0xFF121212L),
+                Arguments.of(LeagueDivision.PRATA, true, 0xFF121212L),
+                Arguments.of(LeagueDivision.OURO, true, 0xFF121212L),
+                Arguments.of(LeagueDivision.DIAMANTE, true, 0xFF121212L),
             )
         }
 
         @JvmStatic
         fun divisionIdentityTokens(): Stream<Arguments> = Stream.of(
-            Arguments.of(LeagueDivision.BRONZE, GamificationColors.Bronze),
-            Arguments.of(LeagueDivision.PRATA, GamificationColors.Silver),
-            Arguments.of(LeagueDivision.OURO, GamificationColors.Gold),
-            Arguments.of(LeagueDivision.DIAMANTE, GamificationColors.Diamond),
+            Arguments.of(LeagueDivision.BRONZE, 0xFFCD7F32L),
+            Arguments.of(LeagueDivision.PRATA, 0xFFE0E0E0L),
+            Arguments.of(LeagueDivision.OURO, 0xFFFFD700L),
+            Arguments.of(LeagueDivision.DIAMANTE, 0xFFB9F2FFL),
         )
     }
 }
