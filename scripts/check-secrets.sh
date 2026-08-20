@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -uo pipefail
 
+source "$(dirname "${BASH_SOURCE[0]}")/portable-search.sh"
+
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -33,43 +35,6 @@ SECRET_PATTERNS=(
 
 COMBINED_PATTERN=$(IFS='|'; echo "${SECRET_PATTERNS[*]}")
 
-EXCLUDE_DIRS=(
-  ".git"
-  "node_modules"
-  "dist"
-  "lib"
-  ".claude"
-  "build"
-  ".gradle"
-  ".firebase"
-  "scripts/archive"
-  "scripts/migrations"
-)
-
-EXCLUDE_FILES=(
-  "*.lock"
-  "*.min.js"
-  "*.map"
-  "*.png"
-  "*.jpg"
-  "*.jpeg"
-  "*.gif"
-  "*.svg"
-  "*.ico"
-  "*.woff"
-  "*.woff2"
-  "*.ttf"
-  "*.eot"
-)
-
-RG_ARGS="--no-heading --line-number --color=never"
-for dir in "${EXCLUDE_DIRS[@]}"; do
-  RG_ARGS="$RG_ARGS --glob=!$dir"
-done
-for file in "${EXCLUDE_FILES[@]}"; do
-  RG_ARGS="$RG_ARGS --glob=!$file"
-done
-
 ALLOWLIST=(
   "scripts/check-secrets.sh"
   "AGENTS.md"
@@ -101,7 +66,7 @@ while IFS=: read -r file line content; do
     fail "$file:$line — SECRET ENCONTRADO: $(echo "$content" | head -c 80)"
   fi
   FOUND=$((FOUND + 1))
-done < <(cd "$ROOT_DIR" && eval rg $RG_ARGS "\"$COMBINED_PATTERN\"" . 2>/dev/null || true)
+done < <(cd "$ROOT_DIR" && portable_search "$COMBINED_PATTERN" . 2>/dev/null || true)
 
 if [ $FOUND -eq 0 ]; then
   pass "Nenhum secret encontrado em arquivos versionados"
