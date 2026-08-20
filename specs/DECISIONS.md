@@ -1584,6 +1584,35 @@ repo divergente da produção.
 de igualdade simples). Novo provisionamento a partir do repo volta a incluir o
 índice.
 
+### [2026-08-20] Janitor de vídeos: erro do Storage é fail-closed; paginação por `created_at` server-side (#4068)
+
+**Contexto:** O janitor `reconcileStaleProcessingGameVideos` (#4038) tratava
+qualquer falha de `exists()` no GCS como "objeto ausente" e rejeitava
+permanentemente o vídeo (`STALE_PROCESSING_NO_OBJECT`) — fail-open
+destrutivo sob erro transitório (5xx/timeout/throttle/IAM).
+
+**Alternativas consideradas:**
+1. Manter o `.catch(() => [false])` e distinguir erro por código de status.
+2. Fail-closed: erro → `logger.warn` + `continue` (adia p/ próxima execução).
+3. Retry com backoff dentro da própria execução do janitor.
+
+**Decisão:** Opção 2 — fail-closed com adiamento. O job roda a cada 10 min,
+o que já é o mecanismo de retry; a ação é irreversível para o usuário, então
+a dúvida resolve a favor do não-ato. A opção 3 adiciona complexidade e
+amplifica carga exatamente quando o Storage está degradado.
+
+Consequências: query do janitor agora filtra `created_at < cutoff` e ordena
+`created_at ASC` no servidor, exigindo o índice composto
+`game_videos(status ASC, created_at ASC)` em `firestore.indexes.json`
+(deploy do índice deve acompanhar/preceder o das functions — senão
+`FAILED_PRECONDITION`, modo de falha da #4029). Docs sem `created_at` ficam
+invisíveis ao janitor (fail-closed intencional; `createGameVideo` sempre
+escreve o campo). Tetos `JANITOR_PAGE_LIMIT` e `SEASON_CACHE_MAX_PAGES`
+agora logam saturação.
+
+**Relacionado:** issues #4068, #4038, #4045, #4029; spec
+`BUGFIX_2026-08-20_storage-janitor-fail-open_4068.md`.
+
 ### [2026-08-20] Override "landing sempre clara" vive no provider MUI; overlay do hero restrito a md+; CTA do hero branco sólido (#4069, #4070, #4071)
 
 **Contexto:** `primary.main` (#00852A) tem só 0,28 de folga AA (4,78:1), então

@@ -1918,6 +1918,7 @@ export const invalidateLeaderboardOnParticipation = onDocumentWritten(
       const allRankingDocs: FirebaseFirestore.QueryDocumentSnapshot[] = [];
       let cursor: FirebaseFirestore.QueryDocumentSnapshot | null = null;
       const deadline = Date.now() + SEASON_CACHE_INVALIDATION_DEADLINE_MS;
+      let hitPageCap = false;
 
       for (let page = 0; page < SEASON_CACHE_MAX_PAGES; page++) {
         if (Date.now() >= deadline) {
@@ -1949,7 +1950,25 @@ export const invalidateLeaderboardOnParticipation = onDocumentWritten(
         if (pageSnap.size < SEASON_CACHE_QUERY_LIMIT) {
           break;
         }
+        if (page === SEASON_CACHE_MAX_PAGES - 1) {
+          hitPageCap = true;
+        }
         cursor = pageSnap.docs[pageSnap.size - 1];
+      }
+
+      // FIX #4068: o for que estoura SEASON_CACHE_MAX_PAGES saía sem log
+      // nenhum — a invalidação ficava parcial e o restante caía no TTL sem
+      // deixar rastro. Os caps "nunca devem ser atingidos em operação
+      // normal" (#4045), que é precisamente quando um log importa: separa
+      // "não havia trabalho" de "não coube".
+      if (hitPageCap) {
+        logger.warn(
+          "[LEADERBOARD_CACHE] " +
+          `invalidação da season ${seasonId} atingiu o teto de ` +
+          `${SEASON_CACHE_MAX_PAGES} páginas ` +
+          `(${allRankingDocs.length} docs); ` +
+          "ranking restante cai no TTL de 5 min"
+        );
       }
 
       if (allRankingDocs.length === 0) {
