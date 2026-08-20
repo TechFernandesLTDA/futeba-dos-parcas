@@ -20,8 +20,8 @@ jobs:
     name: Android Gradle Validation
     needs: changes
     if: needs.changes.outputs.android == 'true'
-    # CI runs on the repository's dedicated Apple Silicon runners.
-    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    # Android's hosted Linux image provides the supported SDK/Gradle toolchain.
+    runs-on: ubuntu-latest
     timeout-minutes: 25
 
     steps:
@@ -41,33 +41,6 @@ jobs:
         uses: gradle/actions/setup-gradle@0723195856401067f7a2779048b490ace7a47d7c  # v5
         with:
           cache-read-only: true
-
-      - name: Ensure unzip is available
-        run: |
-          if command -v unzip >/dev/null 2>&1; then
-            exit 0
-          fi
-
-          if ! command -v apt-get >/dev/null 2>&1; then
-            echo "::error::unzip is required by android-actions/setup-android, and apt-get is unavailable on this runner."
-            exit 1
-          fi
-
-          if [ "$(id -u)" -eq 0 ]; then
-            apt-get update
-            apt-get install -y unzip
-          elif command -v sudo >/dev/null 2>&1; then
-            sudo apt-get update
-            sudo apt-get install -y unzip
-          else
-            echo "::error::unzip is required by android-actions/setup-android, but the runner is not root and sudo is unavailable."
-            exit 1
-          fi
-
-          if ! command -v unzip >/dev/null 2>&1; then
-            echo "::error::The unzip installation completed without providing the unzip executable."
-            exit 1
-          fi
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3

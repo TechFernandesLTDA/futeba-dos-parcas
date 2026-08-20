@@ -53,6 +53,37 @@ ou caminhos do host: `brew`/`rg` no WSL, FFmpeg instalado em job paralelo,
 **Relacionado:** PRs #4072-#4075; spec de contrato
 `scripts/ci/ci-runner-portability-workflow-contract.test.js`.
 
+### [2026-08-20] Gate Android do PR usa runner hospedado
+
+**Contexto:** O runner self-hosted WSL usado pelo PR #4076 não possui `unzip`, e
+`sudo` exige senha. O job Android pesado depende de `android-actions/setup-android`,
+SDK e Gradle, mas não deve instalar pacotes no runner local.
+
+**Alternativas consideradas:**
+1. Instalar `unzip` no WSL durante o job. Rejeitada: depende de privilégios
+   interativos e acopla o gate a uma configuração específica do host.
+2. Manter o job Android no pool self-hosted. Rejeitada: o setup do SDK falha antes
+   das validações quando a dependência não está disponível.
+3. Usar `ubuntu-latest` apenas no job Android pesado e manter `validate` no pool
+   existente. Aceita.
+
+**Decisão:** O job `android` de `.github/workflows/pr-check.yml` roda em
+`ubuntu-latest`. O job mantém setup/validação do Android SDK 36, Gradle, testes,
+paridade de design tokens e o placeholder de `google-services.json`; o bootstrap
+de `unzip` é removido. `validate` e os demais workflows permanecem inalterados.
+
+**Justificativa:** A imagem hospedada fornece o ambiente Linux suportado para
+setup-android/SDK/Gradle sem exigir instalação privilegiada no WSL, tornando o
+gate pesado determinístico e independente do host.
+
+**Consequências:** O gate Android consome runner hospedado e pode gerar custo,
+mas deixa de depender de `unzip` e senha de `sudo` no self-hosted. O contrato de
+CI passa a verificar explicitamente essa separação.
+
+**Relacionado:** PR #4076.
+
+---
+
 ### [2026-07-16] Separar o contêiner de scroll Web por breakpoint do layout
 
 **Contexto:** `#main-content` tem `overflow: auto` em todos os tamanhos, mas só
