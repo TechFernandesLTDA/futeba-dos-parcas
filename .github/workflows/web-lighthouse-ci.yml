@@ -27,8 +27,9 @@ defaults:
 jobs:
   lighthouse:
     name: Lighthouse CI
-    # PRs, pushes e execuções manuais usam os runners Apple Silicon dedicados.
-    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    # Lighthouse precisa de um navegador Linux. Não reutilizar Chrome Windows
+    # exposto por interop WSL no runner self-hosted.
+    runs-on: ubuntu-latest
     timeout-minutes: 20
 
     steps:
@@ -83,6 +84,12 @@ jobs:
         env:
           NPM_CONFIG_PRODUCTION: 'false'
         run: npm ci --legacy-peer-deps --include=dev
+
+      - name: Install and select Linux Chromium
+        if: steps.changes.outputs.should_run == 'true'
+        run: |
+          npx playwright install --with-deps chromium
+          printf 'CHROME_PATH=%s\n' "$(node -e 'process.stdout.write(require("playwright").chromium.executablePath())')" >> "$GITHUB_ENV"
 
       - name: Verify Lighthouse toolchain
         if: steps.changes.outputs.should_run == 'true'

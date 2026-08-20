@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -uo pipefail
 
+source "$(dirname "${BASH_SOURCE[0]}")/portable-search.sh"
+
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -53,7 +55,7 @@ check_web_pattern() {
   while IFS=: read -r file line content; do
     [ -z "$file" ] && continue
     report "$severity" "$file" "$line" "$description" "$code"
-  done < <(cd "$ROOT_DIR" && rg --no-heading --line-number --color=never "$pattern" "web/src/" 2>/dev/null || true)
+  done < <(cd "$ROOT_DIR" && portable_search "$pattern" "web/src/" 2>/dev/null || true)
 }
 
 check_func_pattern() {
@@ -68,7 +70,7 @@ check_func_pattern() {
   while IFS=: read -r file line content; do
     [ -z "$file" ] && continue
     report "$severity" "$file" "$line" "$description" "$code"
-  done < <(cd "$ROOT_DIR" && rg --no-heading --line-number --color=never "$pattern" "functions/src/" 2>/dev/null || true)
+  done < <(cd "$ROOT_DIR" && portable_search "$pattern" "functions/src/" 2>/dev/null || true)
 }
 
 echo "── Web: Firebase Write Patterns ──"
@@ -94,7 +96,7 @@ check_web_pattern \
 check_web_pattern \
   "Cores hardcoded em sx" \
   "WARNING" "FW-004" \
-  "sx=\{\{[^}]*(?:'white'|'black'|'red'|'blue'|'green'|'#[0-9a-fA-F]{3,6}')" \
+  "sx=\{\{[^}]*(('white'|'black'|'red'|'blue'|'green'|'#[0-9a-fA-F]{3,6}'))" \
   "Cores hardcoded em sx={{}} — use theme.palette.*"
 
 echo ""
@@ -103,7 +105,7 @@ echo "── Web: Hook Patterns ──"
 check_web_pattern \
   "onSnapshot sem callback de erro" \
   "WARNING" "HK-001" \
-  "onSnapshot\([^,]+,\s*[^,)]+\)" \
+  "onSnapshot\([^,]+,[[:space:]]*[^,)]+\)" \
   "onSnapshot sem 3º argumento de erro — adicione callback de erro"
 
 check_web_pattern \
@@ -124,7 +126,7 @@ check_func_pattern \
 echo ""
 echo "── Cross-cutting: Secrets ──"
 
-SECRETS_PATTERN="private_key|-----BEGIN\s+(RSA\s+)?PRIVATE\s+KEY|ghp_[A-Za-z0-9]{36}|gho_[A-Za-z0-9]{36}|xox[baprs]-[A-Za-z0-9-]+|AKIA[0-9A-Z]{16}|sk-[A-Za-z0-9]{48}"
+SECRETS_PATTERN="private_key|-----BEGIN[[:space:]]+(RSA[[:space:]]+)?PRIVATE[[:space:]]+KEY|ghp_[A-Za-z0-9]{36}|gho_[A-Za-z0-9]{36}|xox[baprs]-[A-Za-z0-9-]+|AKIA[0-9A-Z]{16}|sk-[A-Za-z0-9]{48}"
 
 echo -e "  ${CYAN}→${NC} Verificando secrets em arquivos versionados"
 while IFS=: read -r file line content; do
@@ -133,7 +135,7 @@ while IFS=: read -r file line content; do
   echo "$file" | grep -qE '\.(md|txt|yml|yaml)$' && continue
   echo "$file" | grep -qE '(\.env\.example|\.env\.template)' && continue
   report "CRITICAL" "$file" "$line" "Possível secret/chave exposta no código" "SEC-001"
-done < <(cd "$ROOT_DIR" && rg --no-heading --line-number --color=never "$SECRETS_PATTERN" --glob '!.git' --glob '!node_modules' --glob '!*.lock' --glob '!dist/**' --glob '!lib/**' --glob '!.claude/**' . 2>/dev/null || true)
+  done < <(cd "$ROOT_DIR" && portable_search "$SECRETS_PATTERN" . 2>/dev/null || true)
 
 echo ""
 echo "═══════════════════════════════════════════"

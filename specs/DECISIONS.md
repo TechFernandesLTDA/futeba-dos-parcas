@@ -28,6 +28,31 @@ Registro de decisões técnicas e de produto. Cada entrada deve ter contexto, al
 
 ## Decisões Registradas
 
+### [2026-08-20] Tornar os gates CI independentes do host do runner
+
+**Contexto:** Os PRs #4072-#4075 expuseram que os gates dependiam de ferramentas
+ou caminhos do host: `brew`/`rg` no WSL, FFmpeg instalado em job paralelo,
+`ANDROID_HOME` ausente e Chrome Windows via interop WSL.
+
+**Alternativas consideradas:**
+1. Manter os runners self-hosted e instalar ferramentas globalmente. Isso deixa
+   o resultado dependente do estado persistente do runner.
+2. Fazer cada job preparar e validar suas dependências, usando fallback POSIX e
+   runner Linux gerenciado para Lighthouse. Isso é reproduzível e não exige
+   secrets ou configuração manual do host.
+
+**Decisão:** Adotar a opção 2. Os scripts usam busca POSIX quando `rg` não está
+   disponível; Functions instala FFmpeg no próprio job de testes; Android instala
+   e valida a plataforma 36; Lighthouse roda em `ubuntu-latest` com Chromium
+   Linux do Playwright selecionado via `CHROME_PATH`.
+
+**Consequências:** O Lighthouse deixa de consumir o runner self-hosted, com custo
+   de minutos gerenciados. O bootstrap Android pode aumentar o primeiro run, mas
+   falha cedo e com diagnóstico claro quando o SDK não está disponível.
+
+**Relacionado:** PRs #4072-#4075; spec de contrato
+`scripts/ci/ci-runner-portability-workflow-contract.test.js`.
+
 ### [2026-07-16] Separar o contêiner de scroll Web por breakpoint do layout
 
 **Contexto:** `#main-content` tem `overflow: auto` em todos os tamanhos, mas só

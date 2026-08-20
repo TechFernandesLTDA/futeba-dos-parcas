@@ -244,7 +244,7 @@ test('mutation testing stays outside PR and preserves its report artifact', () =
   assert.match(uploadStep, /compression-level: 9/);
 });
 
-test('Lighthouse reads PR metadata on a self-hosted runner with hardened checkout', () => {
+test('Lighthouse reads PR metadata with a Linux Chromium runner', () => {
   const lighthouse = extractJob('lighthouse', lighthouseWorkflow);
 
   assert.match(
@@ -252,7 +252,9 @@ test('Lighthouse reads PR metadata on a self-hosted runner with hardened checkou
     /^permissions:\n\s+contents: read\n\s+pull-requests: read$/m
   );
   assertNodeJobContract('lighthouse', lighthouse);
-  assertSelfHostedRunner('lighthouse', lighthouse);
+  assert.match(lighthouse, /runs-on: ubuntu-latest/);
+  assert.match(lighthouse, /npx playwright install --with-deps chromium/);
+  assert.match(lighthouse, /CHROME_PATH=.*chromium\.executablePath/);
   assert.match(lighthouseWorkflow, /github\.rest\.pulls\.listFiles/);
   assert.match(
     lighthouseWorkflow,
