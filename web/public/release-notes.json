@@ -1,7 +1,50 @@
 {
   "platform": "web",
-  "generatedAt": "2026-08-16T00:55:45.327Z",
+  "generatedAt": "2026-08-20T21:14:50.341Z",
   "notes": [
+    {
+      "version": "1.56.9",
+      "buildNumber": null,
+      "releaseDate": "2026-08-20",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "Contraste aprimorado e lista de espera mais confiável no Futeba dos Parças.",
+      "highlights": [
+        {
+          "icon": "accessibility",
+          "title": "Contraste mais legível",
+          "description": "A landing page, os botões e os elementos de tema continuam legíveis em diferentes telas e modos."
+        },
+        {
+          "icon": "hourglass_empty",
+          "title": "Lista de espera confiável",
+          "description": "A entrada na fila agora recebe uma posição oficial, sem duplicatas ou disputa entre aparelhos."
+        }
+      ],
+      "added": [
+        "A entrada na lista de espera passa a ser processada de forma segura pelo servidor."
+      ],
+      "improved": [
+        "A landing page mantém o tema claro corretamente e usa uma ação principal com contraste mais forte.",
+        "Datas e posições da lista de espera são interpretadas de forma consistente entre Web e Android."
+      ],
+      "fixed": [
+        "Corrigidos casos de baixo contraste no hero, no botão principal e em textos sobre gradientes.",
+        "A fila não cria posições concorrentes quando várias pessoas entram ao mesmo tempo."
+      ],
+      "issueRefs": [
+        4063,
+        4064,
+        4065,
+        4066,
+        4067,
+        4068,
+        4069,
+        4070,
+        4071
+      ]
+    },
     {
       "version": "1.56.8",
       "buildNumber": null,
