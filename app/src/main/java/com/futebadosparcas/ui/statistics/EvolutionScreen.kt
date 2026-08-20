@@ -32,6 +32,7 @@ import com.futebadosparcas.ui.components.EmptyState
 import com.futebadosparcas.ui.components.EmptyStateType
 import com.futebadosparcas.ui.components.ShimmerBox
 import com.futebadosparcas.ui.theme.GamificationColors
+import com.futebadosparcas.ui.theme.divisionColor
 import com.futebadosparcas.util.LevelBadgeHelper
 import java.text.SimpleDateFormat
 import java.util.*
@@ -314,12 +315,7 @@ private fun LevelHeader(
 @Composable
 private fun LeagueCard(leagueData: com.futebadosparcas.domain.model.SeasonParticipation) {
     val divisionEnum = leagueData.getDivisionEnum()
-    val divisionColor = when (divisionEnum) {
-        com.futebadosparcas.domain.model.LeagueDivision.DIAMANTE -> GamificationColors.Diamond
-        com.futebadosparcas.domain.model.LeagueDivision.OURO -> GamificationColors.Gold
-        com.futebadosparcas.domain.model.LeagueDivision.PRATA -> GamificationColors.Silver
-        com.futebadosparcas.domain.model.LeagueDivision.BRONZE -> GamificationColors.Bronze
-    }
+    val divisionColor = divisionColor(divisionEnum)
 
     Card(
         modifier = Modifier.fillMaxWidth(),

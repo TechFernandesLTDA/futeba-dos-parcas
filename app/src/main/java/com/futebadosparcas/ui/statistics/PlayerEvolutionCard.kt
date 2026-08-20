@@ -21,6 +21,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.futebadosparcas.domain.model.LeagueDivision
 import com.futebadosparcas.ui.theme.GamificationColors
+import com.futebadosparcas.ui.theme.divisionColor
+import com.futebadosparcas.ui.theme.divisionTextColor
+import com.futebadosparcas.ui.theme.DivisionColors
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
 
@@ -175,12 +178,7 @@ fun PlayerLeagueCard(
     protectionGames: Int,
     modifier: Modifier = Modifier
 ) {
-    val divisionColor = when (division) {
-        LeagueDivision.BRONZE -> GamificationColors.Bronze
-        LeagueDivision.PRATA -> GamificationColors.SilverDark
-        LeagueDivision.OURO -> GamificationColors.Gold
-        LeagueDivision.DIAMANTE -> GamificationColors.DiamondDark
-    }
+    val divisionColor = divisionColor(division)
 
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -210,7 +208,7 @@ fun PlayerLeagueCard(
                     Text(
                         text = getDivisionIcon(division),
                         style = MaterialTheme.typography.titleLarge,
-                        color = com.futebadosparcas.util.ContrastHelper.getContrastingTextColor(divisionColor)
+                        color = divisionTextColor(division)
                     )
                 }
 
@@ -286,10 +284,10 @@ private fun LeagueRatingBar(
     val thresholds = remember { listOf(0, 30, 50, 70, 100) }
     val colors = remember {
         listOf(
-            GamificationColors.Bronze,
-            GamificationColors.Silver,
-            GamificationColors.Gold,
-            GamificationColors.DiamondDark
+            DivisionColors.Bronze,
+            DivisionColors.Silver,
+            DivisionColors.Gold,
+            DivisionColors.Diamond
         )
     }
 
