@@ -4,7 +4,10 @@
 module.exports = {
   ci: {
     collect: {
-      startServerCommand: 'npm run preview -- --port 4173',
+      // strictPort: se a porta 4173 estiver ocupada (processo órfão no runner
+      // self-hosted), falha rápido com erro claro em vez de pular pra outra
+      // porta e auditar silenciosamente o servidor errado.
+      startServerCommand: 'npm run preview -- --port 4173 --strictPort',
       url: ['http://localhost:4173/'],
       numberOfRuns: 3,
     },
