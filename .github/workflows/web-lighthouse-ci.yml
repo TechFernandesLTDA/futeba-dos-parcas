@@ -96,24 +96,6 @@ jobs:
         if: steps.changes.outputs.should_run == 'true'
         run: npm run build
 
-      - name: Runner hygiene (porta do preview + perfis Chrome órfãos)
-        if: steps.changes.outputs.should_run == 'true'
-        run: |
-          # Processo órfão na porta 4173 (vazamento de execução anterior) faz o
-          # vite preview pular de porta e o LHCI auditar o servidor errado.
-          if command -v lsof &>/dev/null; then
-            PIDS="$(lsof -t -i tcp:4173 2>/dev/null || true)"
-            if [ -n "$PIDS" ]; then
-              echo "Matando processo(s) órfão(s) na porta 4173: $PIDS"
-              kill -9 $PIDS 2>/dev/null || true
-            fi
-          elif command -v fuser &>/dev/null; then
-            fuser -k 4173/tcp 2>/dev/null || true
-          fi
-          # Perfis temporários órfãos do chrome-launcher travam o Chrome
-          # (ProcessSingleton) em execuções consecutivas no mesmo runner.
-          rm -rf "${TMPDIR:-/tmp}"/lighthouse.* 2>/dev/null || true
-
       - name: Run Lighthouse CI
         if: steps.changes.outputs.should_run == 'true'
         run: npm run lighthouse

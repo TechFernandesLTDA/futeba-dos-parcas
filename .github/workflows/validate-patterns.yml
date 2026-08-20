@@ -50,31 +50,14 @@ jobs:
 
       - name: Install ripgrep
         run: |
-          if command -v rg &>/dev/null; then
-            echo "ripgrep já disponível no runner."
-            exit 0
+          if ! command -v rg &>/dev/null; then
+            if command -v brew &>/dev/null; then
+              brew install ripgrep
+            else
+              echo "ripgrep is required on the self-hosted macOS runner." >&2
+              exit 1
+            fi
           fi
-          if command -v brew &>/dev/null; then
-            brew install ripgrep
-            exit 0
-          fi
-          # Pool WSL/Linux não tem brew (nem sempre tem sudo p/ apt): instala
-          # binário estático em ~/.local/bin, sem privilégios, e exporta via
-          # GITHUB_PATH para os steps seguintes (audit/secrets usam rg).
-          RG_VERSION="14.1.1"
-          case "$(uname -s)/$(uname -m)" in
-            Linux/x86_64)  RG_TARGET="x86_64-unknown-linux-musl" ;;
-            Linux/aarch64) RG_TARGET="aarch64-unknown-linux-gnu" ;;
-            Darwin/arm64)  RG_TARGET="aarch64-apple-darwin" ;;
-            Darwin/x86_64) RG_TARGET="x86_64-apple-darwin" ;;
-            *) echo "Plataforma sem suporte para instalação de ripgrep: $(uname -s)/$(uname -m)" >&2; exit 1 ;;
-          esac
-          mkdir -p "$HOME/.local/bin"
-          curl -fsSL "https://github.com/BurntSushi/ripgrep/releases/download/${RG_VERSION}/ripgrep-${RG_VERSION}-${RG_TARGET}.tar.gz" -o /tmp/rg.tar.gz
-          tar -xzf /tmp/rg.tar.gz -C /tmp
-          install -m 0755 "/tmp/ripgrep-${RG_VERSION}-${RG_TARGET}/rg" "$HOME/.local/bin/rg"
-          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
-          "$HOME/.local/bin/rg" --version
 
       - name: Run audit patterns
         run: bash scripts/audit-patterns.sh
