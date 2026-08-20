@@ -29,6 +29,8 @@ const mockDb = {
 };
 
 const janitorGet = jest.fn();
+const janitorWhere = jest.fn();
+const janitorOrderBy = jest.fn();
 
 jest.mock("../../src/_db", () => ({db: jest.fn(() => mockDb)}));
 jest.mock("../../src/middleware/secure-callable-wrapper", () => ({
@@ -39,6 +41,9 @@ jest.mock("firebase-admin/storage", () => ({
 }));
 jest.mock("firebase-admin/firestore", () => ({
   FieldValue: {serverTimestamp: jest.fn(() => ({serverTimestamp: true}))},
+  Timestamp: {
+    fromMillis: jest.fn((ms: number) => ({fromMillis: ms})),
+  },
 }));
 jest.mock("firebase-functions/v2/https", () => ({
   HttpsError: class HttpsError extends Error {
@@ -196,10 +201,16 @@ describe("reconcileStaleProcessingGameVideos (#4038)", () => {
     mockDb.runTransaction.mockReset();
     mockFile.exists.mockReset();
 
-    const chain: any = {where: jest.fn(), limit: jest.fn(), get: janitorGet};
-    chain.where.mockReturnValue(chain);
+    const chain: any = {
+      where: janitorWhere,
+      orderBy: janitorOrderBy,
+      limit: jest.fn(),
+      get: janitorGet,
+    };
+    janitorWhere.mockReturnValue(chain);
+    janitorOrderBy.mockReturnValue(chain);
     chain.limit.mockReturnValue(chain);
-    mockDb.collection.mockImplementation(() => ({where: jest.fn(() => chain)}));
+    mockDb.collection.mockImplementation(() => ({where: janitorWhere}));
   });
 
   it("finds stale PROCESSING docs whose object is missing and marks them REJECTED", async () => {
@@ -268,7 +279,7 @@ describe("reconcileStaleProcessingGameVideos (#4038)", () => {
     expect(mockFile.exists).not.toHaveBeenCalled();
   });
 
-  it("treats a storage lookup failure as a missing object and reconciles", async () => {
+  it("NÃO rejeita quando exists() falha — fail-closed, adia e loga (#4068)", async () => {
     const ref = {set: jest.fn().mockResolvedValue(undefined)};
     janitorGet.mockResolvedValue({
       docs: [
@@ -284,10 +295,61 @@ describe("reconcileStaleProcessingGameVideos (#4038)", () => {
 
     await janitor();
 
-    expect(ref.set).toHaveBeenCalledWith(
-      expect.objectContaining({status: "REJECTED"}),
-      {merge: true}
+    // Erro transitorio do GCS (5xx/timeout/throttle) não pode rejeitar
+    // permanentemente o vídeo: o caminho destrutivo fica fechado.
+    expect(ref.set).not.toHaveBeenCalled();
+    expect(mockLogger.warn).toHaveBeenCalledWith(
+      expect.stringContaining("exists() falhou"),
+      expect.objectContaining({videoId: "video-1"})
     );
+    expect(mockLogger.info).not.toHaveBeenCalledWith(
+      expect.stringContaining("doc(s) PROCESSING")
+    );
+  });
+
+  it("loga saturação quando a página do janitor vem cheia (#4068)", async () => {
+    const docs = Array.from({length: 100}, (_, index) => ({
+      id: `video-${index}`,
+      data: () => ({
+        storage_path: `games/g-1/videos/u1/clip-${index}.mp4`,
+        created_at: staleCreatedAt(),
+      }),
+      ref: {set: jest.fn().mockResolvedValue(undefined)},
+    }));
+    janitorGet.mockResolvedValue({docs, size: 100});
+    mockFile.exists.mockResolvedValue([true]);
+
+    await janitor();
+
+    expect(mockLogger.warn).toHaveBeenCalledWith(
+      expect.stringContaining("página cheia")
+    );
+    // Docs com objeto intacto continuam PROCESSING (só o aviso de saturação).
+    expect(mockLogger.info).not.toHaveBeenCalledWith(
+      expect.stringContaining("doc(s) PROCESSING")
+    );
+  });
+
+  it("não loga saturação quando a página vem parcial", async () => {
+    janitorGet.mockResolvedValue({docs: [], size: 0});
+
+    await janitor();
+
+    expect(mockLogger.warn).not.toHaveBeenCalledWith(
+      expect.stringContaining("página cheia")
+    );
+  });
+
+  it("filtra e ordena por created_at no servidor (índice status+created_at) (#4068)", async () => {
+    await janitor();
+
+    expect(janitorWhere).toHaveBeenCalledWith("status", "==", "PROCESSING");
+    expect(janitorWhere).toHaveBeenCalledWith(
+      "created_at",
+      "<",
+      expect.anything()
+    );
+    expect(janitorOrderBy).toHaveBeenCalledWith("created_at", "asc");
   });
 
   it("does nothing on an empty scan", async () => {

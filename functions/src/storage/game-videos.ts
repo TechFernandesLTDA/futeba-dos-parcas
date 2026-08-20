@@ -1,5 +1,5 @@
 import {createHash} from "node:crypto";
-import {FieldValue} from "firebase-admin/firestore";
+import {FieldValue, Timestamp} from "firebase-admin/firestore";
 import {getStorage} from "firebase-admin/storage";
 import {HttpsError} from "firebase-functions/v2/https";
 import {logger} from "firebase-functions/v2";
@@ -334,8 +334,25 @@ export const reconcileStaleProcessingGameVideos = onSchedule(
     const snapshot = await db()
       .collection("game_videos")
       .where("status", "==", "PROCESSING")
+      // FIX #4068: filtro de idade e ordem no servidor (índice composto
+      // game_videos(status ASC, created_at ASC) em firestore.indexes.json).
+      // Antes: fatia arbitrária (ordem __name__, ids = sha256 do path) com
+      // filtro de idade em memória — com >=100 docs PROCESSING, stale além
+      // da primeira página não eram alcançados naquela execução.
+      .where("created_at", "<", Timestamp.fromMillis(cutoff))
+      .orderBy("created_at", "asc")
       .limit(JANITOR_PAGE_LIMIT)
       .get();
+
+    // FIX #4068: página cheia = provavelmente há trabalho pendente além do
+    // limit. Sem este log, saturação é indistinguível de "não havia trabalho".
+    if (snapshot.size >= JANITOR_PAGE_LIMIT) {
+      logger.warn(
+        `[GAME_VIDEO_JANITOR] página cheia (${JANITOR_PAGE_LIMIT} docs ` +
+        "PROCESSING antigos); pode haver docs stale além do limit — " +
+        "a próxima execução (10 min) continua a varredura"
+      );
+    }
 
     let reconciled = 0;
     for (const doc of snapshot.docs) {
@@ -343,12 +360,26 @@ export const reconcileStaleProcessingGameVideos = onSchedule(
       const storagePath = typeof data.storage_path === "string" ?
         data.storage_path : "";
       if (!storagePath) continue;
+      // Defense-in-depth: a query já filtra a idade no servidor; o guard em
+      // memória protege contra docs retornados com created_at anômalo.
       if (createdMillis(data.created_at) >= cutoff) continue;
 
       const bucket = getStorage().bucket();
-      const [exists] = await bucket.file(storagePath).exists().catch(() => [
-        false,
-      ] as const);
+      // FIX #4068: erro do Storage (5xx, timeout, throttling, IAM momentâneo)
+      // NÃO é "objeto ausente". O catch anterior colapsava erro e ausência
+      // no mesmo false e rejeitava permanentemente o vídeo (fail-open
+      // destrutivo — o doc sumia da UI com motivo factualmente errado).
+      // Agora: fail-closed — adia para a próxima execução e loga.
+      let exists: boolean;
+      try {
+        [exists] = await bucket.file(storagePath).exists();
+      } catch (err) {
+        logger.warn(
+          "[GAME_VIDEO_JANITOR] exists() falhou; adiando reconciliação",
+          {videoId: doc.id, storagePath, err}
+        );
+        continue;
+      }
       if (exists) continue;
 
       await doc.ref.set(

@@ -813,4 +813,32 @@ describe("invalidateLeaderboardOnParticipation — page-cap e deadline (#4045)",
     );
     expect(mockBatchDelete).not.toHaveBeenCalled();
   });
+
+  it("loga saturação quando atinge o teto de SEASON_CACHE_MAX_PAGES (#4068)", async () => {
+    // 10 páginas cheias (10 x 100 = 1000 docs): o laço sai pelo teto de
+    // páginas, não por página curta/vazia nem por deadline.
+    const fullPage = Array.from({length: 100}, (_, i) => ({
+      data: () => ({kind: "ranking", season_id: "season-1"}),
+      ref: {path: `cache_leaderboard/season-1_ALL_${i}`},
+    }));
+    const get = jest
+      .fn()
+      .mockResolvedValue({empty: false, size: 100, docs: fullPage});
+    paginatedCollection(get);
+
+    const logger = jest.requireMock("firebase-functions").logger;
+    (logger.warn as jest.Mock).mockClear();
+
+    await invalidate(eventForSeason("season-1"));
+
+    expect(get).toHaveBeenCalledTimes(10);
+    expect(mockBatchDelete).toHaveBeenCalledTimes(1000);
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.stringContaining("teto de 10 páginas"),
+    );
+    // Saiu pelo teto de páginas, não por tempo.
+    expect(logger.warn).not.toHaveBeenCalledWith(
+      expect.stringContaining("deadline"),
+    );
+  });
 });
