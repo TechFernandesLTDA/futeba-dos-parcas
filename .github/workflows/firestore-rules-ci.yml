@@ -26,8 +26,8 @@ concurrency:
 jobs:
   rules-tests:
     name: Testar Firestore Security Rules
-    # Emuladores Firestore+Storage rodam em Linux via setup-java@v4 (#3542).
-    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    # Gate pesado isolado do pool self-hosted para evitar OOM/exit 137 (#4072).
+    runs-on: ubuntu-latest
     timeout-minutes: 15
 
     steps:
