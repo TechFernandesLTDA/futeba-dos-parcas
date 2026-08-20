@@ -98,6 +98,23 @@ CI passa a verificar explicitamente essa separação.
 
 ---
 
+### [2026-08-20] Centralizar cores de divisao na camada de tema sem duplicar o contrato KMP
+
+**Contexto:** As issues #4063 e #4064 encontraram cinco fontes de cor para as divisoes e dois enums Android/KMP com responsabilidades sobrepostas. O enum KMP ja e consumido pelo dominio compartilhado, enquanto os modelos Android ainda precisam representar documentos Firestore.
+
+**Alternativas consideradas:**
+1. Manter os dois enums e apenas apontar as telas para uma nova tabela. Reduz a divergencia visual, mas preserva uma fonte de confusao e `colorHex` morto.
+2. Tornar o enum KMP a unica representacao e fazer a UI ler suas propriedades. Preserva o limite KMP e elimina a duplicacao Android, mas exige ajustar os imports e conversores legados.
+3. Remover `colorHex` do KMP e manter a tabela Android. Evita cor de UI no dominio, mas contradiz o contrato compartilhado existente e amplia o risco.
+
+**Decisao:** Adotar a opcao 2 para o tipo de divisao e manter a identidade visual/foreground em tokens Android de `ui/theme`. O KMP permanece dono do enum, serializacao e regras de rating; a UI nao le hex do dominio para decidir contraste.
+
+**Justificativa:** Elimina a duplicacao sem quebrar consumidores KMP e separa dominio de apresentacao. Uma funcao theme-aware unica pode ser testada com o fundo composto real de cada componente.
+
+**Consequencias:** Conversores Android/KMP redundantes serao removidos ou simplificados. Mudancas futuras de identidade visual ficam restritas aos tokens Android e devem atualizar os testes parametrizados de contraste.
+
+**Relacionado:** spec `BUGFIX_2026-08-20_android-division-contrast.md`, issues #4063, #4064 e #4065.
+
 ### [2026-07-16] Separar o contêiner de scroll Web por breakpoint do layout
 
 **Contexto:** `#main-content` tem `overflow: auto` em todos os tamanhos, mas só
@@ -1537,5 +1554,60 @@ repo divergente da produção.
 **Consequências:** Nenhuma mudança de comportamento hoje (queries atuais são só
 de igualdade simples). Novo provisionamento a partir do repo volta a incluir o
 índice.
+
+### [2026-08-20] Override "landing sempre clara" vive no provider MUI; overlay do hero restrito a md+; CTA do hero branco sólido (#4069, #4070, #4071)
+
+**Contexto:** `primary.main` (#00852A) tem só 0,28 de folga AA (4,78:1), então
+qualquer overlay/alfa sobre o verde reprova silenciosamente: o radial-gradient
+decorativo do hero derrubava o eyebrow para 4,18:1 em 375px e o
+`alpha(contrastText, 0,8)` do `/forgot-password` para 4,46:1 (#4069). Em
+paralelo, a override "landing sempre clara" (#3740) era aplicada ao
+`documentElement` mas não à escolha do tema MUI — o `CssBaseline` pintava o body
+escuro atrás da landing clara, compensado por um `MuiThemeProvider` interno
+duplicado na `LaunchPage` (#4070). Por fim, o CTA do hero usava
+`color="secondary"` (azul #005FCC, calibrado para texto sobre fundo claro)
+sobre o hero verde — separação 1,25:1 e quebra de identidade (#4071).
+
+**Alternativas consideradas:**
+
+1. **#4069 (eyebrow):** (a) restringir o overlay a `md+` (onde o grid tem duas
+   colunas e o brilho cai sobre a imagem, nunca sobre o texto); (b) eyebrow com
+   fundo `primary.dark` (chip); (c) aumentar para ≥14px/800. **Aceita (a)** —
+   preserva o design desktop, remove exatamente a colisão medida e não muda a
+   tipografia. Para o subtítulo: remover o alfa decorativo (sugestão da issue).
+2. **#4070:** replicar a override dentro da página (status quo com duas fontes)
+   vs. fazer a override participar do `useMemo` do tema no `ThemeContext` e
+   remover o wrapper duplicado. **Aceita a segunda** — uma fonte de verdade.
+3. **#4071:** CTA branco sólido + texto `primary.dark` (sugestão da issue),
+   CTA `primary.dark` + texto branco, ou accent âmbar/lima. **Aceita branco
+   sólido** — maior separação do hero (4,78:1 vs 3:1 do dark-on-dark), espelha
+   o "Criar conta" do header (verde sólido sobre branco) e não introduz cor nova.
+
+**Decisão:**
+- `ThemeContext`: `documentThemeOverride` entra no `useMemo` do tema (deps +
+  corpo) — `CssBaseline` pinta o body claro na landing; `MuiThemeProvider`
+  interno da `LaunchPage` removido.
+- Hero `::before`: `content: { xs: 'none', md: '""' }` — brilho decorativo só
+  onde não há texto sob ele.
+- `/forgot-password`: subtítulo com `color="primary.contrastText"` puro.
+- CTA do hero: `bgcolor: common.white`, `color: primary.dark`,
+  hover `grey.100`, `focus-visible` com `outlineColor: common.white` (o
+  focus-ring global `primary.dark` é invisível sobre o hero verde).
+
+**Justificativa:** as três issues compartilham a causa raiz "folga zero do
+verde da marca + invariantes duplicados na landing". Corrigir no token
+(escurecer o verde) mudaria a identidade de todo o app para proteger dois call
+sites; as correções locais eliminam as colisões medidas com custo mínimo.
+
+**Consequências:** body claro no overscroll da landing em dark/OLED; eyebrow
+4,78:1 em todas as viewports; CTA do hero deixa de ser azul (mudança visual
+intencional, ver #4071). Padrões similares (`alpha(contrastText, 0.8)` em
+Login/Register/Splash, CTA mid-page sobre `primary.dark`) ficam como
+follow-up — fora do escopo medido destas issues. Teste sistêmico
+`web/src/theme/landingContrast.test.tsx` valida contraste **pós-overlay**
+(composição alpha), não só o token cru.
+
+**Relacionado:** issues #4069, #4070, #4071 (e #3740, que introduziu a
+override); spec `SPEC_BUGFIX_2026-08-20_WEB_LANDING_A11Y_THEME_4069_4070_4071.md`.
 
 <!-- Adicione novas decisões acima desta linha -->

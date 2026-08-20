@@ -223,7 +223,9 @@ describe('CreateGameScreen', () => {
     });
     expect(removeFavorite).toHaveAttribute('aria-pressed', 'true');
     expect(localStorage.getItem('favorite_locations')).toContain('loc-1');
-  });
+    // Timeout ampliado (padrão do repo p/ testes de interação): userEvent +
+    // combobox MUI excedem os 5s padrão em runners CI compartilhados.
+  }, 15000);
 
   it('traduz o nome acessível do favorito para inglês', async () => {
     mockLocations = [{
@@ -238,7 +240,9 @@ describe('CreateGameScreen', () => {
     expect(screen.getByRole('button', {
       name: 'Add location to favorites',
     })).toBeInTheDocument();
-  });
+    // Timeout ampliado (padrão do repo p/ testes de interação): userEvent +
+    // combobox MUI excedem os 5s padrão em runners CI compartilhados.
+  }, 15000);
 });
 
 describe('CreateGameScreen pricing helpers', () => {

@@ -17,7 +17,7 @@ import {
   Email,
   ArrowBack,
 } from '@mui/icons-material';
-import { useTheme, useMediaQuery, alpha } from '@mui/material';
+import { useTheme, useMediaQuery } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
@@ -98,7 +98,10 @@ export function ForgotPasswordScreen() {
           <Typography variant="h5" fontWeight="bold" color="primary.contrastText">
             {t('auth.forgotPasswordTitle')}
           </Typography>
-          <Typography variant="body1" sx={{ color: alpha(theme.palette.primary.contrastText, 0.8), mt: 0.5 }}>
+          {/* #4069: sem alpha — o painel é um gradiente primary.main →
+              primary.dark e branco a 80% reprovava AA no topo do gradiente
+              (4,46:1). ContrasteText puro entrega 4,78:1 no pior ponto. */}
+          <Typography variant="body1" color="primary.contrastText" sx={{ mt: 0.5 }}>
             {t('auth.forgotPasswordSubtitle')}
           </Typography>
         </Box>

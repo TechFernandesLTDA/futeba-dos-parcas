@@ -3,6 +3,7 @@ package com.futebadosparcas.data.model
 import com.futebadosparcas.domain.validation.ValidationErrorCode
 import com.futebadosparcas.domain.validation.ValidationHelper
 import com.futebadosparcas.domain.validation.ValidationResult
+import com.futebadosparcas.domain.model.LeagueDivision
 import com.google.firebase.firestore.DocumentId
 import com.google.firebase.firestore.Exclude
 import com.google.firebase.firestore.IgnoreExtraProperties
@@ -102,13 +103,6 @@ enum class MilestoneType(
     WINS_25("Campeao", "Venca 25 jogos", 150L, 25, "gamesWon"),
     WINS_50("Dominador", "Venca 50 jogos", 300L, 50, "gamesWon"),
     WINS_100("Invicto", "Venca 100 jogos", 750L, 100, "gamesWon")
-}
-
-enum class LeagueDivision(val displayName: String, val colorHex: String) {
-    BRONZE("Bronze", "#5D4037"),
-    PRATA("Prata", "#757575"),
-    OURO("Ouro", "#FFD700"),
-    DIAMANTE("Diamante", "#00BCD4")
 }
 
 @IgnoreExtraProperties

@@ -2,7 +2,6 @@ package com.futebadosparcas.domain.usecase.ranking
 
 import com.futebadosparcas.domain.model.LeagueDivision
 import com.futebadosparcas.domain.model.SeasonParticipation
-import com.futebadosparcas.domain.model.LeagueDivision as SharedLeagueDivision
 import com.futebadosparcas.domain.model.Season
 import com.futebadosparcas.domain.model.User
 import com.futebadosparcas.domain.repository.GamificationRepository
@@ -29,17 +28,6 @@ class GetLeagueStandingsUseCase constructor(
     companion object {
         private const val TAG = "GetLeagueStandingsUseCase"
 
-        /**
-         * Converte LeagueDivision do Android para Shared.
-         */
-        private fun toSharedDivision(division: LeagueDivision): SharedLeagueDivision {
-            return when (division) {
-                LeagueDivision.BRONZE -> SharedLeagueDivision.BRONZE
-                LeagueDivision.PRATA -> SharedLeagueDivision.PRATA
-                LeagueDivision.OURO -> SharedLeagueDivision.OURO
-                LeagueDivision.DIAMANTE -> SharedLeagueDivision.DIAMANTE
-            }
-        }
     }
 
     /**
@@ -100,9 +88,8 @@ class GetLeagueStandingsUseCase constructor(
                 .getOrElse { return Result.failure(it) }
                 ?: return Result.failure(IllegalStateException("Nenhuma temporada ativa"))
 
-            // 2. Buscar classificacao da divisao (converter para SharedLeagueDivision)
-            val sharedDivision = toSharedDivision(division)
-            val participations = leagueService.getPlayersByDivision(season.id, sharedDivision, limit)
+            // 2. Buscar classificacao da divisao
+            val participations = leagueService.getPlayersByDivision(season.id, division, limit)
                 .getOrElse { return Result.failure(it) }
 
             // 3. Buscar dados dos usuários
