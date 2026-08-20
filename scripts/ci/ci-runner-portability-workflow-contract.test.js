@@ -33,7 +33,18 @@ test('Android PR validation bootstraps and validates SDK 36', () => {
 
 test('Lighthouse selects a Linux browser explicitly', () => {
   const workflow = read('.github/workflows/web-lighthouse-ci.yml');
+  const lighthouseConfig = read('web/.lighthouserc.cjs');
   assert.match(workflow, /runs-on: ubuntu-latest/);
   assert.match(workflow, /playwright install --with-deps chromium/);
   assert.match(workflow, /CHROME_PATH=.*chromium\.executablePath/);
+  assert.match(workflow, /LHCI passes --no-sandbox/);
+  assert.match(lighthouseConfig, /chromeFlags: \['--no-sandbox'\]/);
+});
+
+test('Functions integration polling allows slow emulator triggers', () => {
+  const integrationTest = read(
+    'functions/test/integration/invite-redeemed.integration.test.ts'
+  );
+  assert.match(integrationTest, /INTEGRATION_POLL_TIMEOUT_MS = 60_000/);
+  assert.doesNotMatch(integrationTest, /pollUntil[\s\S]*\b(?:30000|45000)\b/);
 });

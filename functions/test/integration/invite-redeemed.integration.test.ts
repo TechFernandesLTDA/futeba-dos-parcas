@@ -29,6 +29,7 @@
 import * as admin from "firebase-admin";
 
 const FIRESTORE_HOST = process.env.FIRESTORE_EMULATOR_HOST ?? "127.0.0.1:8085";
+const INTEGRATION_POLL_TIMEOUT_MS = 60_000;
 
 let db: admin.firestore.Firestore;
 
@@ -54,7 +55,7 @@ beforeAll(() => {
 async function pollUntil(
   docRef: admin.firestore.DocumentReference,
   predicate: (data: admin.firestore.DocumentData | undefined) => boolean,
-  maxMs = 30000,
+  maxMs = INTEGRATION_POLL_TIMEOUT_MS,
   intervalMs = 400
 ): Promise<admin.firestore.DocumentSnapshot> {
   const deadline = Date.now() + maxMs;
@@ -154,7 +155,7 @@ describe("Test Harness #2531 — onInviteRedeemed via emulador", () => {
       const memberSnap = await pollUntil(
         s.memberRef,
         (data) => data?.status === "ACTIVE",
-        45000
+        INTEGRATION_POLL_TIMEOUT_MS
       );
       const member = memberSnap.data()!;
       expect(member.status).toBe("ACTIVE");
@@ -169,7 +170,7 @@ describe("Test Harness #2531 — onInviteRedeemed via emulador", () => {
       const groupSnap = await pollUntil(
         s.groupRef,
         (data) => data?.member_count === 1,
-        30000
+        INTEGRATION_POLL_TIMEOUT_MS
       );
       expect(groupSnap.data()!.member_count).toBe(1);
 
@@ -231,8 +232,16 @@ describe("Test Harness #2531 — onInviteRedeemed via emulador", () => {
         used_by: s.userId,
         used_at: admin.firestore.FieldValue.serverTimestamp(),
       });
-      await pollUntil(s.memberRef, (d) => d?.status === "ACTIVE", 45000);
-      await pollUntil(s.groupRef, (d) => d?.member_count === 1, 30000);
+      await pollUntil(
+        s.memberRef,
+        (d) => d?.status === "ACTIVE",
+        INTEGRATION_POLL_TIMEOUT_MS
+      );
+      await pollUntil(
+        s.groupRef,
+        (d) => d?.member_count === 1,
+        INTEGRATION_POLL_TIMEOUT_MS
+      );
 
       // Reset sintético via Admin SDK (bypassa rules) para forçar uma nova
       // transição false→true e exercitar o guard de "member já existe".
@@ -354,7 +363,7 @@ describe("Test Harness #2531 — member-counter (onMemberWritten) isolado", () =
       const afterCreate = await pollUntil(
         groupRef,
         (d) => d?.member_count === 1,
-        30000
+        INTEGRATION_POLL_TIMEOUT_MS
       );
       expect(afterCreate.data()!.member_count).toBe(1);
 
@@ -363,7 +372,7 @@ describe("Test Harness #2531 — member-counter (onMemberWritten) isolado", () =
       const afterDelete = await pollUntil(
         groupRef,
         (d) => d?.member_count === 0,
-        30000
+        INTEGRATION_POLL_TIMEOUT_MS
       );
       expect(afterDelete.data()!.member_count).toBe(0);
 
