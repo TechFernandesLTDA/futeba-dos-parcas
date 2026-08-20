@@ -2577,7 +2577,7 @@
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "added_at",
+          "fieldPath": "queue_position",
           "order": "ASCENDING"
         }
       ]

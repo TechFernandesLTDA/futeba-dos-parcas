@@ -1892,7 +1892,7 @@ export const processExpiredWaitlistEntries =
                     .doc(gameId)
                     .collection("waitlist")
                     .where("status", "==", "WAITING")
-                    .orderBy("added_at", "asc")
+                    .orderBy("queue_position", "asc")
                     .limit(1)
                 );
 

@@ -3019,6 +3019,7 @@ export * from "./locations/location-management";
 // - onStatisticsWrittenForAutoRatings: recalcula auto-ratings server-side
 //   quando statistics/{userId} muda.
 export * from "./ratings/auto-ratings";
+export * from "./waitlist/join-game-waitlist";
 
 // ==========================================
 // GROUP LEAGUE (#1783)

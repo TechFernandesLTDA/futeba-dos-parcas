@@ -4,6 +4,20 @@ Registro de decisões técnicas e de produto. Cada entrada deve ter contexto, al
 
 ---
 
+## 2026-08-20 — Waitlist #4066/#4067: join callable e contrato snake_case autoritativo
+
+**Contexto:** Android bypassava `@SerialName` ao usar o `CustomClassMapper`; web e Android calculavam `queue_position` fora de transação e ambos escreviam timestamps do relógio local.
+
+**Decisão:** centralizar criação/reentrada em `joinGameWaitlist`, uma callable autenticada que lê e grava a entrada canônica dentro de uma transação. `queue_position` é `max(active.queue_position) + 1`, `added_at` é um `Timestamp` gerado no servidor, e as rules negam `create/update` direto. A posição permanece estável após remoção para evitar renumeração concorrente.
+
+O Firestore usa snake_case e `Timestamp` como contrato de transporte. Web converte timestamps para epoch millis; Android usa DTO com `@PropertyName` e normaliza `Timestamp`, `Date`, `Long` e `Number` na fronteira do domínio. A promoção continua ordenando pelo mesmo `queue_position`, eliminando divergência entre exibição e promoção.
+
+**Consequências:** elimina relógio e posição forjáveis no cliente, torna joins concorrentes serializáveis e corrige leituras Android de documentos existentes. Requer deploy coordenado da callable/rules antes de liberar clientes; esta PR não faz deploy.
+
+**Relacionado:** `#4066`, `#4067`, `specs/bugfix-2026-08-20-waitlist-authoritative-join.md`.
+
+---
+
 ## Template de Decisão
 
 ```markdown

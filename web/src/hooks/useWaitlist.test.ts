@@ -6,39 +6,25 @@ import { createTestWrapper } from '../test/renderWithProviders';
 // Mocks antes dos imports do módulo testado
 const mockOnSnapshot = vi.fn();
 const mockDoc = vi.fn();
-const mockSetDoc = vi.fn();
 const mockDeleteDoc = vi.fn();
-const mockGetDocs = vi.fn();
 const mockCollection = vi.fn();
 const mockQuery = vi.fn();
-const mockWhere = vi.fn();
 const mockOrderBy = vi.fn();
 const mockLimit = vi.fn();
-const mockBatchDelete = vi.fn();
-const mockBatchCommit = vi.fn().mockResolvedValue(undefined);
-const mockWriteBatch = vi.fn(() => ({
-  delete: mockBatchDelete,
-  update: vi.fn(),
-  set: vi.fn(),
-  commit: mockBatchCommit,
-}));
+const { mockJoinGameWaitlist } = vi.hoisted(() => ({ mockJoinGameWaitlist: vi.fn() }));
 
 vi.mock('firebase/firestore', () => ({
   collection: (...a: any[]) => mockCollection(...a),
   query: (...a: any[]) => mockQuery(...a),
-  where: (...a: any[]) => mockWhere(...a),
   orderBy: (...a: any[]) => mockOrderBy(...a),
   limit: (...a: any[]) => mockLimit(...a),
   onSnapshot: (...a: any[]) => mockOnSnapshot(...a),
   doc: (...a: any[]) => mockDoc(...a),
-  setDoc: (...a: any[]) => mockSetDoc(...a),
   deleteDoc: (...a: any[]) => mockDeleteDoc(...a),
-  getDocs: (...a: any[]) => mockGetDocs(...a),
-  writeBatch: (...a: any[]) => mockWriteBatch(...a),
-  serverTimestamp: vi.fn(() => ({ _seconds: 0 })),
 }));
 
 vi.mock('../services/firebase', () => ({ db: {} }));
+vi.mock('../services/cloudFunctions', () => ({ joinGameWaitlist: mockJoinGameWaitlist }));
 
 const mockShowSuccess = vi.fn();
 const mockShowError = vi.fn();
@@ -76,8 +62,10 @@ describe('useWaitlist', () => {
     mockCollection.mockReturnValue('c');
     mockOrderBy.mockReturnValue('o');
     mockLimit.mockReturnValue('l');
-    mockWhere.mockReturnValue('w');
     mockDoc.mockReturnValue('entry-ref');
+    mockJoinGameWaitlist.mockResolvedValue({ data: {
+      success: true, alreadyActive: false, entryId: 'u1', queuePosition: 1,
+    } });
   });
 
   it('gameId nulo: não cria listener, não fica loading', () => {
@@ -105,50 +93,33 @@ describe('useWaitlist', () => {
   });
 
   it('joinWaitlist bloqueia duplicata ativa (idempotência)', async () => {
-    mockGetDocs.mockResolvedValueOnce({
-      empty: false,
-      docs: [{ data: () => ({ status: 'WAITING' }) }],
-    });
+    mockJoinGameWaitlist.mockResolvedValueOnce({ data: { alreadyActive: true } });
     const { result } = renderHook(() => useWaitlist('g1'), { wrapper: createTestWrapper() });
     let ok: boolean | undefined;
     await act(async () => {
       ok = await result.current.joinWaitlist();
     });
     expect(ok).toBe(false);
-    expect(mockSetDoc).not.toHaveBeenCalled();
+    expect(mockJoinGameWaitlist).toHaveBeenCalledWith({ gameId: 'g1', position: 'LINE' });
     expect(mockShowError).toHaveBeenCalled();
   });
 
-  it('joinWaitlist grava schema snake_case com status WAITING e added_at numérico', async () => {
-    mockGetDocs.mockResolvedValueOnce({ empty: true, docs: [] });
-    mockSetDoc.mockResolvedValueOnce(undefined);
+  it('joinWaitlist usa a callable e não grava campos autoritativos no cliente', async () => {
     const { result } = renderHook(() => useWaitlist('g1'), { wrapper: createTestWrapper() });
     await act(async () => {
       await result.current.joinWaitlist('GOALKEEPER');
     });
-    expect(mockDoc).toHaveBeenCalledWith({}, 'games', 'g1', 'waitlist', 'u1');
-    expect(mockSetDoc).toHaveBeenCalledTimes(1);
-    const payload = mockSetDoc.mock.calls[0][1];
-    expect(payload.game_id).toBe('g1');
-    expect(payload.user_id).toBe('u1');
-    expect(payload.status).toBe('WAITING');
-    expect(payload.position).toBe('GOALKEEPER');
-    expect(typeof payload.added_at).toBe('number');
+    expect(mockJoinGameWaitlist).toHaveBeenCalledWith({ gameId: 'g1', position: 'GOALKEEPER' });
     expect(mockShowSuccess).toHaveBeenCalled();
   });
 
   it('leaveWaitlist remove as entradas do próprio usuário', async () => {
-    mockGetDocs.mockResolvedValueOnce({
-      empty: false,
-      docs: [{ ref: { id: 'a' } }, { ref: { id: 'b' } }],
-    });
-    // leaveWaitlist usa writeBatch.delete (não deleteDoc individual). #2330
     const { result } = renderHook(() => useWaitlist('g1'), { wrapper: createTestWrapper() });
     await act(async () => {
       await result.current.leaveWaitlist();
     });
-    expect(mockBatchDelete).toHaveBeenCalledTimes(2);
-    expect(mockBatchCommit).toHaveBeenCalled();
+    expect(mockDoc).toHaveBeenCalledWith({}, 'games', 'g1', 'waitlist', 'u1');
+    expect(mockDeleteDoc).toHaveBeenCalledWith('entry-ref');
     expect(mockShowSuccess).toHaveBeenCalled();
   });
 });

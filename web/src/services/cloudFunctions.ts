@@ -672,6 +672,11 @@ export const joinPublicGame = httpsCallable<
   }
 >(functions, 'joinPublicGame');
 
+export const joinGameWaitlist = httpsCallable<
+  { gameId: string; position: string },
+  { success: true; alreadyActive: boolean; entryId: string; queuePosition: number }
+>(functions, 'joinGameWaitlist');
+
 export const confirmGamePresence = httpsCallable<
   { gameId: string; position: 'GOALKEEPER' | 'FIELD'; isCasualPlayer?: boolean },
   {

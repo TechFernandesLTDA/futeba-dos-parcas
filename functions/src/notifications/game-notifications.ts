@@ -710,10 +710,8 @@ export const onGameVacancy = onDocumentUpdated(
         // 1. Promover a próxima entrada WAITING e notificá-la.
         // FIX #753: era .collection("waitlist") raiz inexistente.
         // Android escreve em games/{gameId}/waitlist/ (subcollection).
-        // FIX #4043: orderBy("created_at") era campo INEXISTENTE — a query
-        // lançava FAILED_PRECONDITION (índice ausente) e, mesmo com índice,
-        // retornaria vazio (nenhuma entrada tem created_at). O campo real é
-        // added_at, com índice waitlist(status, added_at) já existente.
+        // A ordem autoritativa é queue_position, atribuída pela callable de
+        // join dentro de uma transação e compartilhada pelos dois clientes.
         // FIX #4043: além de notificar, a 1ª entrada WAITING agora é PROMOVIDA
         // a NOTIFIED (notified_at + response_deadline = now + 30min). Sem isso
         // a máquina de estados da waitlist não tinha porta de entrada e o
@@ -723,7 +721,7 @@ export const onGameVacancy = onDocumentUpdated(
           .doc(gameId)
           .collection("waitlist")
           .where("status", "==", "WAITING")
-          .orderBy("added_at", "asc")
+          .orderBy("queue_position", "asc")
           .limit(3)
           .get();
 
