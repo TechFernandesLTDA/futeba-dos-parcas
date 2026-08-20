@@ -26,6 +26,17 @@ test('Functions tests install the verified media runtime in the same job', () =>
 
 test('Android PR validation bootstraps and validates SDK 36', () => {
   const workflow = read('.github/workflows/pr-check.yml');
+  const unzipStep = workflow.indexOf('- name: Ensure unzip is available');
+  const androidSetup = workflow.indexOf('uses: android-actions/setup-android@v3');
+
+  assert.ok(unzipStep >= 0, 'Android validation must bootstrap unzip');
+  assert.ok(unzipStep < androidSetup, 'unzip must be available before setup-android');
+  assert.match(workflow, /command -v unzip/);
+  assert.match(workflow, /apt-get install -y unzip/);
+  assert.match(workflow, /\[ "\$\(id -u\)" -eq 0 \]/);
+  assert.match(workflow, /command -v sudo/);
+  assert.match(workflow, /sudo apt-get install -y unzip/);
+  assert.match(workflow, /::error::unzip is required by android-actions\/setup-android/);
   assert.match(workflow, /uses: android-actions\/setup-android@v3/);
   assert.match(workflow, /sdkmanager --install[\s\S]*platforms;android-36/);
   assert.match(workflow, /platforms\/android-36\/android\.jar/);
