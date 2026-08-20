@@ -2569,6 +2569,20 @@
       ]
     },
     {
+      "collectionGroup": "waitlist",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "added_at",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
       "collectionGroup": "cancellations",
       "queryScope": "COLLECTION_GROUP",
       "fields": [
