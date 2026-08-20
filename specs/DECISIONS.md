@@ -1655,5 +1655,3 @@ follow-up — fora do escopo medido destas issues. Teste sistêmico
 override); spec `SPEC_BUGFIX_2026-08-20_WEB_LANDING_A11Y_THEME_4069_4070_4071.md`.
 
 <!-- Adicione novas decisões acima desta linha -->
-
-
