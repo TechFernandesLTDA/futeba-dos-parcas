@@ -1668,4 +1668,33 @@ follow-up — fora do escopo medido destas issues. Teste sistêmico
 **Relacionado:** issues #4069, #4070, #4071 (e #3740, que introduziu a
 override); spec `SPEC_BUGFIX_2026-08-20_WEB_LANDING_A11Y_THEME_4069_4070_4071.md`.
 
+### [2026-08-20] Condicionar o build do app iOS ao escopo estreito do classificador
+
+**Contexto:** `ios-build.yml` era acionado por mudanças KMP/Gradle e executava
+`setup-xcode` mesmo quando somente metadata de versão ou notas de release de
+outra plataforma havia mudado. O escopo `ios` precisa continuar cobrindo
+frameworks compartilhados, mas não representa necessariamente uma mudança no
+app iOS.
+
+**Alternativas consideradas:**
+1. Restringir os `paths` do workflow. Rejeitada: removeria os gates KMP
+   necessários e não forneceria um contrato consumível pelo job.
+2. Criar o escopo `ios_app` no classificador e condicionar somente
+   `Build iOS App` a ele. Aceita: preserva os triggers de push/release e separa
+   o build do app dos gates de framework.
+
+**Decisão:** adicionar o output `ios_app`, ativado por `iosApp/**`,
+`Podfile`/`Podfile.lock` e `.github/workflows/ios-build.yml`. O job `Build iOS
+App` exige `ios_app == 'true'`; quando o escopo não é afetado, seu skip é
+considerado sucesso pelo notify. `versions.json` e notas Android/Web/Functions
+não ativam esse output.
+
+**Consequências:** mudanças compartilhadas ainda executam testes e frameworks
+iOS, mas não reservam runner para Xcode. Mudanças reais no app e pushes em
+branches de release mantêm o build completo. O contrato está coberto por
+`classify-changes.test.js` e `ci-scope-workflow-contract.test.js`.
+
+**Relacionado:** `.github/ci/change-scopes-v1.json`,
+`.github/workflows/ios-build.yml`.
+
 <!-- Adicione novas decisões acima desta linha -->

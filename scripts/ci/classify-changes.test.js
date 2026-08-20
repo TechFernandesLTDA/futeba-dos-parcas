@@ -41,6 +41,7 @@ test('web, Storage Rules and version metadata do not activate Android', () => {
     functions: false,
     android: false,
     ios: false,
+    ios_app: false,
     rules: true,
     shared_config: true,
   });
@@ -56,6 +57,7 @@ test('Android, Gradle and KMP shared paths activate Android gates', () => {
 
   assert.equal(result.scopes.android, true);
   assert.equal(result.scopes.ios, true, 'KMP shared code also impacts iOS');
+  assert.equal(result.scopes.ios_app, false, 'KMP shared code does not require the iOS app job');
   assert.equal(result.scopes.shared_config, true);
   assert.equal(result.scopes.web, false);
 });
@@ -67,6 +69,7 @@ test('design tokens activate every consumer without activating Functions or Rule
     functions: false,
     android: true,
     ios: true,
+    ios_app: false,
     rules: false,
     shared_config: true,
   });
@@ -86,6 +89,7 @@ test('XP constants activate every runtime consumer before the broad shared rule'
     functions: true,
     android: true,
     ios: true,
+    ios_app: false,
     rules: false,
     shared_config: true,
   });
@@ -107,6 +111,11 @@ test('platform lockfiles stay in their owning scope', () => {
   assert.equal(classifyChangedFiles(['web/package-lock.json'], config).scopes.android, false);
   assert.equal(classifyChangedFiles(['functions/package-lock.json'], config).scopes.functions, true);
   assert.equal(classifyChangedFiles(['iosApp/Podfile.lock'], config).scopes.ios, true);
+  assert.equal(classifyChangedFiles(['iosApp/Podfile.lock'], config).scopes.ios_app, true);
+  assert.equal(classifyChangedFiles(['versions.json'], config).scopes.ios_app, false);
+  assert.equal(classifyChangedFiles(['release-notes/android/1.0.0.md'], config).scopes.ios_app, false);
+  assert.equal(classifyChangedFiles(['release-notes/web/1.0.0.md'], config).scopes.ios_app, false);
+  assert.equal(classifyChangedFiles(['release-notes/functions/1.0.0.md'], config).scopes.ios_app, false);
   assert.equal(classifyChangedFiles(['gradle/dependency-locks/app.lockfile'], config).scopes.android, true);
 });
 

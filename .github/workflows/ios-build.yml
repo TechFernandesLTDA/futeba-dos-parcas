@@ -29,6 +29,10 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  changes:
+    name: Classify iOS changes
+    uses: ./.github/workflows/change-scope.yml
+
   kmp-shared-tests:
     name: KMP Shared Unit Tests
     runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
@@ -105,7 +109,8 @@ jobs:
     name: Build iOS App
     runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
     timeout-minutes: 60
-    needs: build-shared-framework
+    needs: [build-shared-framework, changes]
+    if: needs.changes.outputs.ios_app == 'true'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -174,7 +179,7 @@ jobs:
     name: Notify Build Status
     runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
     timeout-minutes: 5
-    needs: [kmp-shared-tests, build-shared-framework, build-ios-app]
+    needs: [kmp-shared-tests, build-shared-framework, build-ios-app, changes]
     if: always()
     steps:
       - name: Check build status
@@ -183,10 +188,17 @@ jobs:
           echo "Framework Build: ${{ needs.build-shared-framework.result }}"
           echo "iOS App Build: ${{ needs.build-ios-app.result }}"
 
-          if [ "${{ needs.kmp-shared-tests.result }}" == "success" ] && \
-             [ "${{ needs.build-shared-framework.result }}" == "success" ] && \
-             [ "${{ needs.build-ios-app.result }}" == "success" ]; then
+          if [ "${{ needs.kmp-shared-tests.result }}" != "success" ] || \
+             [ "${{ needs.build-shared-framework.result }}" != "success" ]; then
+            echo "iOS pipeline had failures"
+            exit 1
+          fi
+
+          if [ "${{ needs.build-ios-app.result }}" == "success" ]; then
             echo "iOS pipeline succeeded!"
+          elif [ "${{ needs.build-ios-app.result }}" == "skipped" ] && \
+               [ "${{ needs.changes.outputs.ios_app }}" != "true" ]; then
+            echo "iOS app build skipped: no iOS app files changed"
           else
             echo "iOS pipeline had failures"
             exit 1

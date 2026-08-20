@@ -10,6 +10,7 @@ const read = (relativePath) => fs.readFileSync(path.join(repoRoot, relativePath)
 const androidWorkflow = read('.github/workflows/android-ci.yml');
 const prWorkflow = read('.github/workflows/pr-check.yml');
 const classifierWorkflow = read('.github/workflows/change-scope.yml');
+const iosWorkflow = read('.github/workflows/ios-build.yml');
 const codeowners = read('.github/CODEOWNERS');
 const settings = read('.github/settings.yml');
 
@@ -137,7 +138,7 @@ test('declarative branch protection keeps stable gates and the single-owner revi
 
 test('reusable classifier exports every versioned domain and manual runs remain full', () => {
   assert.match(classifierWorkflow, /workflow_call:/);
-  for (const output of ['web', 'functions', 'android', 'ios', 'rules', 'shared_config']) {
+  for (const output of ['web', 'functions', 'android', 'ios', 'ios_app', 'rules', 'shared_config']) {
     assert.match(classifierWorkflow, new RegExp(`^      ${output}:`, 'm'));
   }
   assert.match(classifierWorkflow, /node scripts\/ci\/classify-changes\.js/);
@@ -145,4 +146,11 @@ test('reusable classifier exports every versioned domain and manual runs remain 
   const script = read('scripts/ci/classify-changes.js');
   assert.match(script, /eventName === 'workflow_dispatch'/);
   assert.match(script, /forceAll: true/);
+});
+
+test('iOS app build consumes the narrow classifier contract', () => {
+  assert.match(iosWorkflow, /uses: \.\/\.github\/workflows\/change-scope\.yml/);
+  assert.match(iosWorkflow, /build-ios-app:[\s\S]*?needs: \[build-shared-framework, changes\]/);
+  assert.match(iosWorkflow, /build-ios-app:[\s\S]*?if: needs\.changes\.outputs\.ios_app == 'true'/);
+  assert.match(iosWorkflow, /build-ios-app:[\s\S]*?Setup Xcode/);
 });
