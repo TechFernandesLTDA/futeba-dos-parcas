@@ -52,7 +52,7 @@ test('Android heavy jobs run only for trusted scoped events', () => {
   assert.match(jobBody(prWorkflow, 'android'), /\.\/gradlew .* :app:testDebugUnitTest/);
 });
 
-test('PR code runs on the self-hosted Mac with read-only checkout credentials', () => {
+test('PR code uses read-only checkout credentials and hosted Android tooling', () => {
   assert.match(androidWorkflow, /permissions:\s*\n\s*contents: read/);
   assert.match(prWorkflow, /permissions:\s*\n\s*contents: read/);
   assert.doesNotMatch(prWorkflow, /\b(?:checks|security-events|contents): write\b/);
@@ -67,7 +67,8 @@ test('PR code runs on the self-hosted Mac with read-only checkout credentials', 
     assert.equal(nonPersistent, checkouts, `${name} must not persist checkout credentials`);
   }
 
-  assert.match(jobBody(prWorkflow, 'android'), /fromJSON\(vars\.RUNNER_LABELS/);
+  assert.match(jobBody(prWorkflow, 'android'), /runs-on: ubuntu-latest/);
+  assert.doesNotMatch(jobBody(prWorkflow, 'android'), /Ensure unzip|apt-get|sudo/);
   assert.match(codeowners, /^\/scripts\/ci\/ @TechFernandesLTDA\/dev-team$/m);
   assert.match(codeowners, /^\/scripts\/web-ci-workflow-contract\.test\.js @TechFernandesLTDA\/dev-team$/m);
 });
@@ -112,6 +113,14 @@ test('PR Check keeps Validate PR stable while moving Gradle to a scoped job', ()
   assert.match(validate, /if: always\(\)/);
   assert.match(validate, /\[ "\$ANDROID_CHANGED" = "true" \] && \[ "\$ANDROID_RESULT" != "success" \]/);
   assert.doesNotMatch(validate, /gradlew|setup-gradle/i);
+});
+
+test('PR Check keeps Android SDK validation and the placeholder on the hosted job', () => {
+  const android = jobBody(prWorkflow, 'android');
+  assert.match(android, /uses: android-actions\/setup-android@v3/);
+  assert.match(android, /sdkmanager --install "platform-tools" "platforms;android-36" "build-tools;36\.0\.0"/);
+  assert.match(android, /test -f "\$\{ANDROID_SDK_ROOT:-\$\{ANDROID_HOME:-\}\}\/platforms\/android-36\/android\.jar"/);
+  assert.match(android, /name: Create google-services\.json placeholder/);
 });
 
 test('declarative branch protection keeps stable gates and the single-owner review policy', () => {

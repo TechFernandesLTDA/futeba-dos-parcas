@@ -7,6 +7,11 @@ module.exports = {
       startServerCommand: 'npm run preview -- --port 4173',
       url: ['http://localhost:4173/'],
       numberOfRuns: 3,
+      // GitHub-hosted Linux runners do not expose a usable Chromium sandbox.
+      // This changes only browser startup, not Lighthouse collection or budgets.
+      settings: {
+        chromeFlags: ['--no-sandbox'],
+      },
     },
     assert: {
       assertions: {
