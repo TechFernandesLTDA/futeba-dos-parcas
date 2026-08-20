@@ -48,17 +48,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install ripgrep
-        run: |
-          if ! command -v rg &>/dev/null; then
-            if command -v brew &>/dev/null; then
-              brew install ripgrep
-            else
-              echo "ripgrep is required on the self-hosted macOS runner." >&2
-              exit 1
-            fi
-          fi
-
       - name: Run audit patterns
         run: bash scripts/audit-patterns.sh
 
@@ -112,6 +101,9 @@ jobs:
             echo "❌ X-XSS-Protection ausente em firebase.json"
             exit 1
           fi
+
+      - name: Validate CI workflow contracts
+        run: node --test scripts/ci/ci-runner-portability-workflow-contract.test.js
 
       - name: Upload audit report
         if: always()
