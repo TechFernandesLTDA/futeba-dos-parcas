@@ -1243,18 +1243,9 @@ service cloud.firestore {
         // Entrar: somente a propria entrada, status inicial WAITING,
         // game_id coerente com o path, campos minimos validados.
         // Impede forjar status PROMOTED/queue_position de terceiros.
-        allow create: if isAuthenticated() &&
-          request.resource.data.user_id == userId() &&
-          request.resource.data.game_id == gameId &&
-          request.resource.data.status == 'WAITING' &&
-          request.resource.data.user_name is string &&
-          request.resource.data.queue_position is number &&
-          request.resource.data.added_at is number &&
-          // FIX #4044: added_at era client-writable (relógio do cliente).
-          // Amarrar ao relógio do servidor (±60s) impede forjar added_at:0
-          // para furar a fila. A ordem FIFO server-side depende disso.
-          request.resource.data.added_at >= request.time.toMillis() - 60000 &&
-          request.resource.data.added_at <= request.time.toMillis() + 60000;
+        // Join/reentrada passam pela callable transacional, que é a única
+        // superfície autorizada a atribuir posição e timestamps.
+        allow create: if false;
 
         // Sair: somente a propria entrada, game owner, ou admin para moderacao.
         allow delete: if isAuthenticated() &&
@@ -1263,19 +1254,7 @@ service cloud.firestore {
         // Promoção/expiração continuam server-only. A única atualização de
         // cliente aceita é reabrir o documento canônico `{userId}` depois de
         // um estado terminal, com o mesmo contrato estrito de um novo join.
-        allow update: if isAuthenticated() &&
-          waitlistId == userId() &&
-          resource.data.user_id == userId() &&
-          resource.data.status in ['PROMOTED', 'EXPIRED', 'CANCELLED'] &&
-          request.resource.data.user_id == userId() &&
-          request.resource.data.game_id == gameId &&
-          request.resource.data.status == 'WAITING' &&
-          request.resource.data.user_name is string &&
-          request.resource.data.queue_position is number &&
-          request.resource.data.added_at is number &&
-          // FIX #4044: mesma âncora de relógio do servidor do create.
-          request.resource.data.added_at >= request.time.toMillis() - 60000 &&
-          request.resource.data.added_at <= request.time.toMillis() + 60000;
+        allow update: if false;
       }
 
       // ============================================

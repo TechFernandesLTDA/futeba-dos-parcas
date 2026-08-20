@@ -2,9 +2,10 @@ package com.futebadosparcas.data.repository
 
 import com.futebadosparcas.domain.model.GameWaitlist
 import com.futebadosparcas.domain.model.WaitlistStatus
+import com.futebadosparcas.data.model.AndroidGameWaitlist
 import com.futebadosparcas.util.AppLogger
-import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.functions.FirebaseFunctions
 import com.google.firebase.firestore.Query
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -19,7 +20,8 @@ import java.util.Date
  * - games/{gameId}/waitlist/{userId}
  */
 class WaitlistRepositoryImpl constructor(
-    private val firestore: FirebaseFirestore
+    private val firestore: FirebaseFirestore,
+    private val functions: FirebaseFunctions
 ) : WaitlistRepository {
 
     companion object {
@@ -41,48 +43,22 @@ class WaitlistRepositoryImpl constructor(
         position: String
     ): Result<GameWaitlist> {
         return try {
-            // P1 #12: Verificar se ja esta na lista (limit 1 - basta saber se existe)
-            val existing = waitlistCollection(gameId)
-                .whereEqualTo("user_id", userId)
-                .whereIn("status", listOf(
-                    WaitlistStatus.WAITING.name,
-                    WaitlistStatus.NOTIFIED.name
-                ))
-                .limit(1)
-                .get()
+            val result = functions.getHttpsCallable("joinGameWaitlist")
+                .call(mapOf("gameId" to gameId, "position" to position))
                 .await()
-
-            if (!existing.isEmpty) {
-                return Result.failure(
-                    IllegalStateException("Voce ja esta na lista de espera deste jogo")
-                )
-            }
-
-            // P1 #12: Calcular posicao na fila (limit 50 - maximo realista)
-            val currentCount = waitlistCollection(gameId)
-                .whereIn("status", listOf(
-                    WaitlistStatus.WAITING.name,
-                    WaitlistStatus.NOTIFIED.name
-                ))
-                .limit(50)
-                .get()
-                .await()
-                .size()
-
-            val entry = GameWaitlist(
+            val data = result.data as? Map<*, *> ?: error("Resposta invalida da waitlist")
+            val queuePosition = (data["queuePosition"] as? Number)?.toInt()
+                ?: error("Posicao ausente na resposta da waitlist")
+            val entryWithId = GameWaitlist(
+                id = userId,
                 gameId = gameId,
                 userId = userId,
                 userName = userName,
                 userPhoto = userPhoto,
                 position = position,
-                queuePosition = currentCount + 1,
+                queuePosition = queuePosition,
                 status = WaitlistStatus.WAITING.name,
-                addedAt = Date().time
             )
-
-            val docRef = waitlistCollection(gameId).document(userId)
-            docRef.set(entry).await()
-            val entryWithId = entry.copy(id = userId)
 
             AppLogger.i(TAG) { "Usuario $userId adicionado a lista de espera do jogo $gameId na posicao ${entryWithId.queuePosition}" }
 
@@ -134,7 +110,7 @@ class WaitlistRepositoryImpl constructor(
                 .await()
 
             val list = snapshot.documents.mapNotNull { doc ->
-                doc.toObject(GameWaitlist::class.java)?.copy(id = doc.id)
+                doc.toObject(AndroidGameWaitlist::class.java)?.toDomain(doc.id)
             }
 
             Result.success(list)
@@ -160,7 +136,7 @@ class WaitlistRepositoryImpl constructor(
                 }
 
                 val list = snapshot?.documents?.mapNotNull { doc ->
-                    doc.toObject(GameWaitlist::class.java)?.copy(id = doc.id)
+                    doc.toObject(AndroidGameWaitlist::class.java)?.toDomain(doc.id)
                 } ?: emptyList()
 
                 trySend(Result.success(list))
@@ -183,7 +159,8 @@ class WaitlistRepositoryImpl constructor(
                 .await()
 
             val entry = docs.documents.firstOrNull()
-                ?.toObject(GameWaitlist::class.java)
+                ?.toObject(AndroidGameWaitlist::class.java)
+                ?.toDomain()
 
             Result.success(entry?.queuePosition)
         } catch (e: Exception) {
@@ -225,7 +202,7 @@ class WaitlistRepositoryImpl constructor(
                 .await()
 
             val doc = snapshot.documents.firstOrNull() ?: return Result.success(null)
-            val entry = doc.toObject(GameWaitlist::class.java)?.copy(id = doc.id)
+            val entry = doc.toObject(AndroidGameWaitlist::class.java)?.toDomain(doc.id)
                 ?: return Result.success(null)
 
             // Atualizar status para PROMOTED
@@ -259,7 +236,7 @@ class WaitlistRepositoryImpl constructor(
                 .await()
 
             val doc = snapshot.documents.firstOrNull() ?: return Result.success(null)
-            val entry = doc.toObject(GameWaitlist::class.java)?.copy(id = doc.id)
+            val entry = doc.toObject(AndroidGameWaitlist::class.java)?.toDomain(doc.id)
                 ?: return Result.success(null)
 
             // Calcular deadline de resposta
@@ -328,7 +305,7 @@ class WaitlistRepositoryImpl constructor(
                 .await()
 
             val list = snapshot.documents.mapNotNull { doc ->
-                doc.toObject(GameWaitlist::class.java)?.copy(id = doc.id)
+                doc.toObject(AndroidGameWaitlist::class.java)?.toDomain(doc.id)
             }
 
             Result.success(list)
@@ -401,3 +378,17 @@ class WaitlistRepositoryImpl constructor(
         }
     }
 }
+
+private fun AndroidGameWaitlist.toDomain(documentId: String = id): GameWaitlist = GameWaitlist(
+    id = documentId,
+    gameId = gameId,
+    userId = userId,
+    userName = userName,
+    userPhoto = userPhoto,
+    position = position,
+    queuePosition = queuePosition.toInt(),
+    status = status,
+    addedAt = timestampMillis(addedAt),
+    notifiedAt = timestampMillis(notifiedAt),
+    responseDeadline = timestampMillis(responseDeadline),
+)

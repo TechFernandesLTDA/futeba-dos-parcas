@@ -758,9 +758,8 @@ describe("Game Notifications", () => {
         params: {confirmationId: "conf1"},
       });
 
-      // Regressão do #753/#4043: a query ordenava por "created_at" (campo
-      // inexistente) — o campo real é "added_at".
-      expect(mockOrderBy).toHaveBeenCalledWith("added_at", "asc");
+      // A ordem agora usa a posição atribuída pela callable transacional.
+      expect(mockOrderBy).toHaveBeenCalledWith("queue_position", "asc");
       // A 1ª entrada WAITING é promovida a NOTIFIED com deadline de 30 min.
       expect(mockTransactionUpdate).toHaveBeenCalledWith(
         entryRef,

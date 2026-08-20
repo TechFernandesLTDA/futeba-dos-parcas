@@ -53,9 +53,9 @@ afterAll(async () => {
 });
 
 describe("waitlist — create", () => {
-  it("Player pode adicionar si mesmo a waitlist com status WAITING", async () => {
+  it("Player nao pode criar waitlist diretamente; callable e a autoridade", async () => {
     const db = asPlayerC(testEnv);
-    await assertSucceeds(
+    await assertFails(
       db.doc(`games/${GAME_ID}/waitlist/${UID_PLAYER_C}`).set({
         user_id: UID_PLAYER_C,
         game_id: GAME_ID,
@@ -123,9 +123,9 @@ describe("waitlist — create", () => {
     );
   });
 
-  it("Player NAO pode criar com added_at fora da janela de request.time (#4044)", async () => {
+  it("Player nao pode forjar queue_position ou added_at (#4067)", async () => {
     const db = asPlayerC(testEnv);
-    // added_at = 0 (muito no passado) — tentativa clássica de furar a fila.
+    // A callable gera ambos os campos; qualquer escrita direta e negada.
     await assertFails(
       db.doc(`games/${GAME_ID}/waitlist/stale-added-at`).set({
         user_id: UID_PLAYER_C,
@@ -136,7 +136,6 @@ describe("waitlist — create", () => {
         added_at: 0,
       })
     );
-    // added_at muito no futuro (> 60s à frente do relógio do servidor).
     await assertFails(
       db.doc(`games/${GAME_ID}/waitlist/future-added-at`).set({
         user_id: UID_PLAYER_C,
@@ -206,7 +205,7 @@ describe("waitlist — update", () => {
     );
   });
 
-  it("Player pode reentrar pelo doc canonico apos estado terminal", async () => {
+  it("Player nao pode reabrir entrada terminal diretamente", async () => {
     await seedDoc(testEnv, `games/${GAME_ID}/waitlist/${UID_PLAYER_C}`, {
       user_id: UID_PLAYER_C,
       game_id: GAME_ID,
@@ -216,7 +215,7 @@ describe("waitlist — update", () => {
       added_at: Date.now() - 60_000,
     });
     const db = asPlayerC(testEnv);
-    await assertSucceeds(
+    await assertFails(
       db.doc(`games/${GAME_ID}/waitlist/${UID_PLAYER_C}`).set({
         user_id: UID_PLAYER_C,
         game_id: GAME_ID,

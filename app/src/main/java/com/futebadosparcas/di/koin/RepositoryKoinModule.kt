@@ -193,7 +193,7 @@ val repositoryKoinModule = module {
     }
 
     single<com.futebadosparcas.data.repository.WaitlistRepository> {
-        WaitlistRepositoryImpl(get())
+        WaitlistRepositoryImpl(get(), get())
     }
 
     single<com.futebadosparcas.data.repository.CachedGameRepository> {
