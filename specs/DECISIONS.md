@@ -42,6 +42,35 @@ O Firestore usa snake_case e `Timestamp` como contrato de transporte. Web conver
 
 ## Decisões Registradas
 
+### [2026-08-20] Executar o gate KMP Shared Unit Tests em Ubuntu hospedado
+
+**Contexto:** O job `KMP Shared Unit Tests` falhava quando roteado para o runner
+self-hosted WSL porque o Android SDK não estava disponível, embora o teste JVM
+do módulo `shared` dependa do Android target.
+
+**Alternativas consideradas:**
+1. Corrigir e manter o job no pool self-hosted. Exigiria provisionamento uniforme
+   do SDK em todos os runners WSL e manteria uma dependência operacional fora do
+   workflow.
+2. Mover todo o workflow iOS para Ubuntu. Não é viável porque os jobs seguintes
+   precisam de Xcode e compilação iOS.
+3. Mover somente o job de testes compartilhados para `ubuntu-latest` e declarar
+   JDK, Android SDK e `local.properties` no próprio job.
+
+**Decisão:** Adotar a opção 3. O job `KMP Shared Unit Tests` usa `ubuntu-latest`,
+instala a plataforma Android 36 e cria `local.properties` a partir de
+`ANDROID_SDK_ROOT`; os jobs de framework, app iOS e notificação permanecem no
+pool macOS configurável.
+
+**Justificativa:** O gate JVM passa a ter uma imagem hospedada e reproduzível com
+as dependências declaradas, sem alterar o ambiente necessário para os jobs iOS.
+
+**Consequências:** O teste iOS best-effort continua no job, mas não bloqueia o
+gate em Linux. O contrato de CI protege a separação entre o job Linux e os jobs
+macOS.
+
+**Relacionado:** PR de infraestrutura para corrigir o gate `KMP Shared Unit Tests`.
+
 ### [2026-08-20] Isolar gates pesados de Firestore em runner hospedado
 
 **Contexto:** Os PRs #4072 e #4074 observaram OOM/exit 137 nos gates de
