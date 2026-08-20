@@ -84,6 +84,23 @@ CI passa a verificar explicitamente essa separação.
 
 ---
 
+### [2026-08-20] Centralizar cores de divisao na camada de tema sem duplicar o contrato KMP
+
+**Contexto:** As issues #4063 e #4064 encontraram cinco fontes de cor para as divisoes e dois enums Android/KMP com responsabilidades sobrepostas. O enum KMP ja e consumido pelo dominio compartilhado, enquanto os modelos Android ainda precisam representar documentos Firestore.
+
+**Alternativas consideradas:**
+1. Manter os dois enums e apenas apontar as telas para uma nova tabela. Reduz a divergencia visual, mas preserva uma fonte de confusao e `colorHex` morto.
+2. Tornar o enum KMP a unica representacao e fazer a UI ler suas propriedades. Preserva o limite KMP e elimina a duplicacao Android, mas exige ajustar os imports e conversores legados.
+3. Remover `colorHex` do KMP e manter a tabela Android. Evita cor de UI no dominio, mas contradiz o contrato compartilhado existente e amplia o risco.
+
+**Decisao:** Adotar a opcao 2 para o tipo de divisao e manter a identidade visual/foreground em tokens Android de `ui/theme`. O KMP permanece dono do enum, serializacao e regras de rating; a UI nao le hex do dominio para decidir contraste.
+
+**Justificativa:** Elimina a duplicacao sem quebrar consumidores KMP e separa dominio de apresentacao. Uma funcao theme-aware unica pode ser testada com o fundo composto real de cada componente.
+
+**Consequencias:** Conversores Android/KMP redundantes serao removidos ou simplificados. Mudancas futuras de identidade visual ficam restritas aos tokens Android e devem atualizar os testes parametrizados de contraste.
+
+**Relacionado:** spec `BUGFIX_2026-08-20_android-division-contrast.md`, issues #4063, #4064 e #4065.
+
 ### [2026-07-16] Separar o contêiner de scroll Web por breakpoint do layout
 
 **Contexto:** `#main-content` tem `overflow: auto` em todos os tamanhos, mas só

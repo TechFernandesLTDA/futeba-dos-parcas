@@ -3,6 +3,7 @@ package com.futebadosparcas.data.model
 import com.futebadosparcas.domain.validation.ValidationErrorCode
 import com.futebadosparcas.domain.validation.ValidationHelper
 import com.futebadosparcas.domain.validation.ValidationResult
+import com.futebadosparcas.domain.model.LeagueDivision
 import com.google.firebase.firestore.DocumentId
 import com.google.firebase.firestore.Exclude
 import com.google.firebase.firestore.IgnoreExtraProperties

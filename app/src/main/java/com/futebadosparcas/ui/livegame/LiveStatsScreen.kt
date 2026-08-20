@@ -265,7 +265,6 @@ private fun PlayerStatsCard(
                                         fontWeight = FontWeight.Bold,
                                         color = ContrastHelper.getContrastingTextColor(com.futebadosparcas.ui.theme.MatchEventColors.YellowCard),
                                         modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
-                                        fontSize = MaterialTheme.typography.labelSmall.fontSize * 0.8f
                                     )
                                 }
                             }
@@ -281,7 +280,6 @@ private fun PlayerStatsCard(
                                         fontWeight = FontWeight.Bold,
                                         color = ContrastHelper.getContrastingTextColor(com.futebadosparcas.ui.theme.MatchEventColors.RedCard),
                                         modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
-                                        fontSize = MaterialTheme.typography.labelSmall.fontSize * 0.8f
                                     )
                                 }
                             }

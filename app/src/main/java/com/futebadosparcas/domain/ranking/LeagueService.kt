@@ -87,31 +87,6 @@ class LeagueServiceImpl constructor(
         private const val PROTECTION_GAMES = 5
         private const val MAX_RECENT_GAMES = 10
 
-        /**
-         * Converte LeagueDivision do Android para Shared.
-         * Ambos usam os mesmos nomes em portugues.
-         */
-        fun toSharedDivision(division: com.futebadosparcas.data.model.LeagueDivision): SharedLeagueDivision {
-            return when (division) {
-                com.futebadosparcas.data.model.LeagueDivision.BRONZE -> SharedLeagueDivision.BRONZE
-                com.futebadosparcas.data.model.LeagueDivision.PRATA -> SharedLeagueDivision.PRATA
-                com.futebadosparcas.data.model.LeagueDivision.OURO -> SharedLeagueDivision.OURO
-                com.futebadosparcas.data.model.LeagueDivision.DIAMANTE -> SharedLeagueDivision.DIAMANTE
-            }
-        }
-
-        /**
-         * Converte LeagueDivision do Shared para Android.
-         * Ambos usam os mesmos nomes em portugues.
-         */
-        fun toAndroidDivision(division: SharedLeagueDivision): com.futebadosparcas.data.model.LeagueDivision {
-            return when (division) {
-                SharedLeagueDivision.BRONZE -> com.futebadosparcas.data.model.LeagueDivision.BRONZE
-                SharedLeagueDivision.PRATA -> com.futebadosparcas.data.model.LeagueDivision.PRATA
-                SharedLeagueDivision.OURO -> com.futebadosparcas.data.model.LeagueDivision.OURO
-                SharedLeagueDivision.DIAMANTE -> com.futebadosparcas.data.model.LeagueDivision.DIAMANTE
-            }
-        }
     }
 
     private val seasonParticipationCollection = firestore.collection("season_participation")
@@ -270,10 +245,9 @@ class LeagueServiceImpl constructor(
         limit: Int
     ): Result<List<SeasonParticipation>> {
         return try {
-            val androidDivision = toAndroidDivision(division)
             val snapshot = seasonParticipationCollection
                 .whereEqualTo("season_id", seasonId)
-                .whereEqualTo("division", androidDivision.name)
+                .whereEqualTo("division", division.name)
                 .orderBy("league_rating", com.google.firebase.firestore.Query.Direction.DESCENDING)
                 .limit(limit.toLong())
                 .get()
