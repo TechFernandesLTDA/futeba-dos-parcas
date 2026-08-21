@@ -18,6 +18,9 @@ on:
       ios:
         description: iOS files changed
         value: ${{ jobs.classify.outputs.ios }}
+      ios_app:
+        description: iOS app or CocoaPods/workflow files changed
+        value: ${{ jobs.classify.outputs.ios_app }}
       rules:
         description: Firebase Rules files changed
         value: ${{ jobs.classify.outputs.rules }}
@@ -39,6 +42,7 @@ jobs:
       functions: ${{ steps.scope.outputs.functions }}
       android: ${{ steps.scope.outputs.android }}
       ios: ${{ steps.scope.outputs.ios }}
+      ios_app: ${{ steps.scope.outputs.ios_app }}
       rules: ${{ steps.scope.outputs.rules }}
       shared_config: ${{ steps.scope.outputs.shared_config }}
     steps:

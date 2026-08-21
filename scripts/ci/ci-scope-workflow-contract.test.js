@@ -10,6 +10,8 @@ const read = (relativePath) => fs.readFileSync(path.join(repoRoot, relativePath)
 const androidWorkflow = read('.github/workflows/android-ci.yml');
 const prWorkflow = read('.github/workflows/pr-check.yml');
 const classifierWorkflow = read('.github/workflows/change-scope.yml');
+const iosWorkflow = read('.github/workflows/ios-build.yml');
+const iosDetector = read('scripts/ci/detect-ios-app-changes.js');
 const codeowners = read('.github/CODEOWNERS');
 const settings = read('.github/settings.yml');
 
@@ -137,7 +139,7 @@ test('declarative branch protection keeps stable gates and the single-owner revi
 
 test('reusable classifier exports every versioned domain and manual runs remain full', () => {
   assert.match(classifierWorkflow, /workflow_call:/);
-  for (const output of ['web', 'functions', 'android', 'ios', 'rules', 'shared_config']) {
+  for (const output of ['web', 'functions', 'android', 'ios', 'ios_app', 'rules', 'shared_config']) {
     assert.match(classifierWorkflow, new RegExp(`^      ${output}:`, 'm'));
   }
   assert.match(classifierWorkflow, /node scripts\/ci\/classify-changes\.js/);
@@ -145,4 +147,32 @@ test('reusable classifier exports every versioned domain and manual runs remain 
   const script = read('scripts/ci/classify-changes.js');
   assert.match(script, /eventName === 'workflow_dispatch'/);
   assert.match(script, /forceAll: true/);
+});
+
+test('iOS app build consumes the narrow classifier contract', () => {
+  const iosAppJob = jobBody(iosWorkflow, 'build-ios-app');
+  assert.match(iosWorkflow, /ios_app_scope:[\s\S]*?runs-on: ubuntu-latest/);
+  assert.match(iosWorkflow, /ios_app_scope:[\s\S]*?should_run: \$\{\{ steps\.detect\.outputs\.should_run \}\}/);
+  assert.match(iosAppJob, /needs: \[build-shared-framework, ios_app_scope\]/);
+  assert.match(iosAppJob, /if: needs\.ios_app_scope\.outputs\.should_run == 'true'/);
+  assert.match(iosAppJob, /runs-on: \[self-hosted, macOS, ARM64\]/);
+  assert.doesNotMatch(iosAppJob, /fromJSON\(vars\.RUNNER_LABELS/);
+  assert.match(iosAppJob, /Setup Xcode/);
+  assert.match(iosDetector, /ios_app_patterns/);
+  assert.match(iosDetector, /should_run=/);
+  const scopes = read('.github/ci/change-scopes-v1.json');
+  assert.match(scopes, /"ios_app_patterns"/);
+  assert.match(scopes, /"iosApp\/\*\*"/);
+  assert.match(scopes, /"Podfile\.lock"/);
+  assert.doesNotMatch(scopes, /"ios_app_patterns"[^\n]*\.github\/workflows\/ios-build\.yml/);
+  assert.doesNotMatch(scopes, /"iosApp\/Podfile\.lock",\n\s+"\.github\/workflows\/ios-build\.yml"/);
+  assert.doesNotMatch(iosWorkflow, /needs\.changes\.outputs\.ios_app/);
+});
+
+test('iOS workflow-only changes are excluded from the app-build contract', () => {
+  const scopes = read('.github/ci/change-scopes-v1.json');
+  const classifierTests = read('scripts/ci/classify-changes.test.js');
+
+  assert.match(scopes, /"patterns": \["\.github\/workflows\/ios-build\.yml"\][\s\S]*?"scopes": \["ios", "shared_config"\]/);
+  assert.match(classifierTests, /changing only the iOS workflow does not activate the iOS app build/);
 });

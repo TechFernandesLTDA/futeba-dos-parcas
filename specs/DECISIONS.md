@@ -1668,4 +1668,42 @@ follow-up — fora do escopo medido destas issues. Teste sistêmico
 **Relacionado:** issues #4069, #4070, #4071 (e #3740, que introduziu a
 override); spec `SPEC_BUGFIX_2026-08-20_WEB_LANDING_A11Y_THEME_4069_4070_4071.md`.
 
+### [2026-08-20] Separar os gates KMP e app iOS por ambiente e escopo
+
+**Contexto:** `ios-build.yml` era acionado por mudanças KMP/Gradle e executava
+`setup-xcode` mesmo quando somente metadata de versão ou notas de release de
+outra plataforma havia mudado. O escopo `ios` precisa continuar cobrindo
+frameworks compartilhados, mas não representa necessariamente uma mudança no
+app iOS. Além disso, o teste JVM `KMP Shared Unit Tests` falhava no runner
+self-hosted WSL por depender de um Android SDK não provisionado.
+
+**Alternativas consideradas:**
+1. Restringir os `paths` do workflow. Rejeitada: removeria os gates KMP
+   necessários e não forneceria um contrato consumível pelo job.
+2. Criar o escopo `ios_app` no classificador e condicionar somente
+   `Build iOS App` a ele. Aceita: preserva os triggers de push/release e separa
+   o build do app dos gates de framework.
+3. Mover somente `KMP Shared Unit Tests` para `ubuntu-latest` e declarar JDK,
+   Android SDK e `local.properties` no próprio job. Os jobs que compilam
+   frameworks/app continuam no pool macOS configurável.
+
+**Decisão:** adotar as opções 2 e 3. Adicionar o output `ios_app`, ativado por `iosApp/**`
+e `Podfile`/`Podfile.lock` (incluindo os arquivos equivalentes sob `iosApp/`). A
+alteração isolada de `.github/workflows/ios-build.yml` ativa apenas `ios` e
+`shared_config`, nunca `ios_app`, para não reservar um runner macOS para o próprio
+ajuste do workflow. O job `Build iOS App` exige `ios_app == 'true'`; quando o
+escopo não é afetado, seu skip é considerado sucesso pelo notify. `versions.json` e notas Android/Web/Functions
+não ativam esse output. O job `KMP Shared Unit Tests` usa `ubuntu-latest`,
+instala a plataforma Android 36 e cria `local.properties` a partir de
+`ANDROID_SDK_ROOT`; os demais jobs iOS permanecem no pool macOS.
+
+**Consequências:** mudanças compartilhadas ainda executam testes e frameworks
+iOS, mas não reservam runner para Xcode. Mudanças reais no app e pushes em
+branches de release mantêm o build completo. O contrato está coberto por
+`classify-changes.test.js`, `ci-scope-workflow-contract.test.js` e
+`kmp-shared-workflow-contract.test.js`.
+
+**Relacionado:** `.github/ci/change-scopes-v1.json`,
+`.github/workflows/ios-build.yml`, PRs #4079 e #4080.
+
 <!-- Adicione novas decisões acima desta linha -->
