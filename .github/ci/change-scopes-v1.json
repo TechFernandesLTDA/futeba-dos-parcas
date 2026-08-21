@@ -1,6 +1,7 @@
 {
   "version": 1,
-  "scopes": ["web", "functions", "android", "ios", "rules", "shared_config"],
+  "scopes": ["web", "functions", "android", "ios", "ios_app", "rules", "shared_config"],
+  "ios_app_patterns": ["iosApp/**", "Podfile", "Podfile.lock", "iosApp/Podfile", "iosApp/Podfile.lock"],
   "ignore": [
     "*.md",
     "**/*.md",
@@ -22,7 +23,7 @@
         "scripts/ci/classify-changes.test.js",
         "scripts/ci/ci-scope-workflow-contract.test.js"
       ],
-      "scopes": ["web", "functions", "android", "ios", "rules", "shared_config"]
+      "scopes": ["web", "functions", "android", "ios", "ios_app", "rules", "shared_config"]
     },
     {
       "patterns": ["web/**", "release-notes/web/**"],
@@ -55,7 +56,21 @@
       "scopes": ["android", "ios", "shared_config"]
     },
     {
-      "patterns": ["iosApp/**", "release-notes/ios/**"],
+      "patterns": ["iosApp/**"],
+      "scopes": ["ios"]
+    },
+    {
+      "patterns": [
+        "iosApp/**",
+        "Podfile",
+        "Podfile.lock",
+        "iosApp/Podfile",
+        "iosApp/Podfile.lock"
+      ],
+      "scopes": ["ios", "ios_app"]
+    },
+    {
+      "patterns": ["release-notes/ios/**"],
       "scopes": ["ios"]
     },
     {
