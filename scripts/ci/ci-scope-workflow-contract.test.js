@@ -160,6 +160,19 @@ test('iOS app build consumes the narrow classifier contract', () => {
   assert.match(iosAppJob, /Setup Xcode/);
   assert.match(iosDetector, /ios_app_patterns/);
   assert.match(iosDetector, /should_run=/);
-  assert.match(read('.github/ci/change-scopes-v1.json'), /"ios_app_patterns"/);
+  const scopes = read('.github/ci/change-scopes-v1.json');
+  assert.match(scopes, /"ios_app_patterns"/);
+  assert.match(scopes, /"iosApp\/\*\*"/);
+  assert.match(scopes, /"Podfile\.lock"/);
+  assert.doesNotMatch(scopes, /"ios_app_patterns"[^\n]*\.github\/workflows\/ios-build\.yml/);
+  assert.doesNotMatch(scopes, /"iosApp\/Podfile\.lock",\n\s+"\.github\/workflows\/ios-build\.yml"/);
   assert.doesNotMatch(iosWorkflow, /needs\.changes\.outputs\.ios_app/);
+});
+
+test('iOS workflow-only changes are excluded from the app-build contract', () => {
+  const scopes = read('.github/ci/change-scopes-v1.json');
+  const classifierTests = read('scripts/ci/classify-changes.test.js');
+
+  assert.match(scopes, /"patterns": \["\.github\/workflows\/ios-build\.yml"\][\s\S]*?"scopes": \["ios", "shared_config"\]/);
+  assert.match(classifierTests, /changing only the iOS workflow does not activate the iOS app build/);
 });

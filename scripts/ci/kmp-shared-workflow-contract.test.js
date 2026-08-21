@@ -26,11 +26,13 @@ test('KMP shared unit tests use hosted Linux with a complete Android SDK contrac
 });
 
 test('iOS build jobs remain on the configurable macOS runner pool', () => {
-  for (const id of ['build-shared-framework', 'build-ios-app', 'notify']) {
+  for (const id of ['build-shared-framework', 'notify']) {
     assert.match(
       jobBody(id),
       /runs-on: \$\{\{ fromJSON\(vars\.RUNNER_LABELS \|\| '\["self-hosted","macOS","ARM64"\]'\) \}\}/,
       `${id} must remain on the macOS runner pool`
     );
   }
+
+  assert.match(jobBody('build-ios-app'), /runs-on: \[self-hosted, macOS, ARM64\]/);
 });

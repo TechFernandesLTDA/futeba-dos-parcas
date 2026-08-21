@@ -1,7 +1,7 @@
 {
   "version": 1,
   "scopes": ["web", "functions", "android", "ios", "ios_app", "rules", "shared_config"],
-  "ios_app_patterns": ["iosApp/**", "Podfile", "Podfile.lock", "iosApp/Podfile", "iosApp/Podfile.lock", ".github/workflows/ios-build.yml"],
+  "ios_app_patterns": ["iosApp/**", "Podfile", "Podfile.lock", "iosApp/Podfile", "iosApp/Podfile.lock"],
   "ignore": [
     "*.md",
     "**/*.md",
@@ -65,8 +65,7 @@
         "Podfile",
         "Podfile.lock",
         "iosApp/Podfile",
-        "iosApp/Podfile.lock",
-        ".github/workflows/ios-build.yml"
+        "iosApp/Podfile.lock"
       ],
       "scopes": ["ios", "ios_app"]
     },

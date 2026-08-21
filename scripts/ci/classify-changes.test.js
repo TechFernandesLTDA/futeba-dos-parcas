@@ -123,9 +123,17 @@ test('ios_app is restricted to the iOS app allowlist', () => {
   for (const file of ['versions.json', 'CHANGELOG.md', 'release-notes/ios/1.0.0.md', 'web/src/App.tsx', 'scripts/ci/other-platform.js']) {
     assert.equal(classifyChangedFiles([file], config).scopes.ios_app, false, file);
   }
-  for (const file of ['iosApp/ContentView.swift', 'Podfile', 'Podfile.lock', '.github/workflows/ios-build.yml']) {
+  for (const file of ['iosApp/ContentView.swift', 'Podfile', 'Podfile.lock', 'iosApp/Podfile', 'iosApp/Podfile.lock']) {
     assert.equal(classifyChangedFiles([file], config).scopes.ios_app, true, file);
   }
+});
+
+test('changing only the iOS workflow does not activate the iOS app build', () => {
+  const result = classifyChangedFiles(['.github/workflows/ios-build.yml'], config);
+
+  assert.equal(result.scopes.ios, true);
+  assert.equal(result.scopes.shared_config, true);
+  assert.equal(result.scopes.ios_app, false);
 });
 
 test('workflow changes activate only the relevant gate unless classifier code changes', () => {

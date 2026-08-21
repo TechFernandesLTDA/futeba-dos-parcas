@@ -1687,10 +1687,12 @@ self-hosted WSL por depender de um Android SDK não provisionado.
    Android SDK e `local.properties` no próprio job. Os jobs que compilam
    frameworks/app continuam no pool macOS configurável.
 
-**Decisão:** adotar as opções 2 e 3. Adicionar o output `ios_app`, ativado por `iosApp/**`,
-`Podfile`/`Podfile.lock` e `.github/workflows/ios-build.yml`. O job `Build iOS
-App` exige `ios_app == 'true'`; quando o escopo não é afetado, seu skip é
-considerado sucesso pelo notify. `versions.json` e notas Android/Web/Functions
+**Decisão:** adotar as opções 2 e 3. Adicionar o output `ios_app`, ativado por `iosApp/**`
+e `Podfile`/`Podfile.lock` (incluindo os arquivos equivalentes sob `iosApp/`). A
+alteração isolada de `.github/workflows/ios-build.yml` ativa apenas `ios` e
+`shared_config`, nunca `ios_app`, para não reservar um runner macOS para o próprio
+ajuste do workflow. O job `Build iOS App` exige `ios_app == 'true'`; quando o
+escopo não é afetado, seu skip é considerado sucesso pelo notify. `versions.json` e notas Android/Web/Functions
 não ativam esse output. O job `KMP Shared Unit Tests` usa `ubuntu-latest`,
 instala a plataforma Android 36 e cria `local.properties` a partir de
 `ANDROID_SDK_ROOT`; os demais jobs iOS permanecem no pool macOS.
