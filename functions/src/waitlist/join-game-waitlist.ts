@@ -1,6 +1,6 @@
 import * as admin from "firebase-admin";
-import {HttpsError, onCall, type CallableRequest} from "firebase-functions/v2/https";
-import {FUNCTION_REGION} from "../constants";
+import {HttpsError, type CallableRequest} from "firebase-functions/v2/https";
+import {secureCallable} from "../middleware/secure-callable-wrapper";
 
 export interface JoinGameWaitlistData {
   gameId?: unknown;
@@ -14,6 +14,14 @@ export interface JoinGameWaitlistResult {
   queuePosition: number;
 }
 
+// FIX #4081: teto de fila por jogo, aplicado na transação. Sem este teto um
+// caller autenticado criava entradas de waitlist em loop (escrita não-medida
+// em coleção sem TTL + um trigger onGameVacancy por entrada).
+export const MAX_WAITLIST_PER_GAME = 200;
+
+const POSITION_FIELD = "FIELD";
+const POSITION_GOALKEEPER = "GOALKEEPER";
+
 /**
  * Retorna a instância compartilhada do Firestore Admin.
  * @return {object} instância do Firestore
@@ -24,7 +32,47 @@ function getDb() {
 }
 
 /**
+ * Normaliza a posição do jogador contra o enum do domínio.
+ * Qualquer valor diferente de `GOALKEEPER` (inclusive ausente/inválido)
+ * colapsa para `FIELD`, o default do DTO.
+ * @param {unknown} value Posição crua recebida.
+ * @return {string} Posição normalizada.
+ */
+function normalizePosition(value: unknown): string {
+  return value === POSITION_GOALKEEPER ? POSITION_GOALKEEPER : POSITION_FIELD;
+}
+
+/**
+ * Verifica a autorização de gestor do jogo.
+ * @param {FirebaseFirestore.DocumentData} game Dados do jogo.
+ * @param {string} uid UID do caller.
+ * @param {boolean} isAdmin Claim administrativo.
+ * @return {boolean} Se o caller pode gerenciar o jogo.
+ */
+function isGameManager(
+  game: FirebaseFirestore.DocumentData,
+  uid: string,
+  isAdmin: boolean
+): boolean {
+  const coOrganizers = Array.isArray(game.co_organizers) ?
+    game.co_organizers : [];
+  return isAdmin || game.owner_id === uid || coOrganizers.includes(uid);
+}
+
+/**
+ * Reconhece somente os contratos públicos suportados pelo produto.
+ * @param {FirebaseFirestore.DocumentData} game Documento atual do jogo.
+ * @return {boolean} Se o jogo aceita participantes externos ao grupo.
+ */
+function isOpenToPublic(game: FirebaseFirestore.DocumentData): boolean {
+  return game.visibility === "PUBLIC_OPEN" ||
+    (game.is_public === true && !game.visibility);
+}
+
+/**
  * Executa o join idempotente e atribui a posição dentro de uma transação.
+ * A transação revalida estado do jogo e autorização do caller para impedir
+ * bypass por cliente (o write roda via Admin SDK e ignora as firestore.rules).
  * @param {CallableRequest<JoinGameWaitlistData>} request chamada autenticada
  * @return {Promise<JoinGameWaitlistResult>} resultado canônico do join
  */
@@ -35,23 +83,65 @@ export async function joinGameWaitlistHandler(
   if (!uid) throw new HttpsError("unauthenticated", "Authentication required");
 
   const gameId = request.data?.gameId;
-  const position = request.data?.position;
   if (typeof gameId !== "string" || gameId.trim() === "") {
     throw new HttpsError("invalid-argument", "gameId is required");
   }
-  if (typeof position !== "string" || position.trim() === "") {
-    throw new HttpsError("invalid-argument", "position is required");
-  }
+  const position = normalizePosition(request.data?.position);
 
   const db = getDb();
   const gameRef = db.collection("games").doc(gameId);
   const entryRef = gameRef.collection("waitlist").doc(uid);
-  const gameSnap = await gameRef.get();
-  if (!gameSnap.exists) throw new HttpsError("not-found", "Game not found");
+  const confirmationRef = db.collection("confirmations").doc(`${gameId}_${uid}`);
+  const isAdmin = ((request.auth?.token ?? {}) as Record<string, unknown>)
+    .role === "ADMIN";
 
   const userSnap = await db.collection("users").doc(uid).get();
   const user = userSnap.data() ?? {};
   const entry = await db.runTransaction(async (tx) => {
+    const gameSnap = await tx.get(gameRef);
+    if (!gameSnap.exists) throw new HttpsError("not-found", "Game not found");
+    const game = gameSnap.data() ?? {};
+
+    const status = game.status;
+    if (status !== "SCHEDULED" && status !== "CONFIRMED") {
+      throw new HttpsError(
+        "permission-denied",
+        "Este jogo não aceita novas entradas na fila de espera."
+      );
+    }
+
+    const rawGroupId = game.group_id ?? game.groupId;
+    const groupId = typeof rawGroupId === "string" ? rawGroupId.trim() : "";
+    let isActiveMember = false;
+    if (groupId) {
+      const memberSnap = await tx.get(
+        db.collection("groups").doc(groupId).collection("members").doc(uid)
+      );
+      if (memberSnap.exists) {
+        const membership = memberSnap.data() ?? {};
+        isActiveMember =
+          membership.user_id === uid && membership.status === "ACTIVE";
+      }
+    }
+    if (!isGameManager(game, uid, isAdmin) &&
+        !isActiveMember &&
+        !isOpenToPublic(game)) {
+      throw new HttpsError(
+        "permission-denied",
+        "Você precisa pertencer ao grupo deste jogo para entrar na fila."
+      );
+    }
+
+    const confirmationSnap = await tx.get(confirmationRef);
+    const alreadyConfirmed = confirmationSnap.exists &&
+      confirmationSnap.data()?.status === "CONFIRMED";
+    if (alreadyConfirmed) {
+      throw new HttpsError(
+        "permission-denied",
+        "Você já está confirmado neste jogo."
+      );
+    }
+
     const [current, active] = await Promise.all([
       tx.get(entryRef),
       tx.get(gameRef.collection("waitlist")
@@ -60,6 +150,13 @@ export async function joinGameWaitlistHandler(
     const currentData = current.data();
     if (current.exists && ["WAITING", "NOTIFIED"].includes(currentData?.status)) {
       return {alreadyActive: true, queuePosition: Number(currentData?.queue_position) || 0};
+    }
+
+    if (active.docs.length >= MAX_WAITLIST_PER_GAME) {
+      throw new HttpsError(
+        "resource-exhausted",
+        "A fila de espera deste jogo está cheia."
+      );
     }
 
     const maxPosition = active.docs.reduce((max, doc) => {
@@ -97,7 +194,18 @@ export async function joinGameWaitlistHandler(
   };
 }
 
-export const joinGameWaitlist = onCall(
-  {region: FUNCTION_REGION},
+export const joinGameWaitlist = secureCallable<
+  JoinGameWaitlistData,
+  JoinGameWaitlistResult
+>(
+  {
+    rateLimit: {
+      maxRequests: 10,
+      windowMs: 60_000,
+      keyPrefix: "waitlist_join",
+    },
+    consumeAppCheckToken: true,
+    auditLogContext: async (r) => ({gameId: r.data?.gameId}),
+  },
   joinGameWaitlistHandler,
 );

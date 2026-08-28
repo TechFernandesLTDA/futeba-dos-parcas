@@ -14,7 +14,7 @@ const mockState = {
 const mockFile = {
   exists: jest.fn(),
   getMetadata: jest.fn(),
-  getSignedUrl: jest.fn(),
+  setMetadata: jest.fn(),
 };
 
 const mockBucket = {
@@ -103,6 +103,7 @@ function request(overrides: Record<string, unknown> = {}) {
 
 describe("createGamePhoto", () => {
   beforeEach(() => {
+    jest.clearAllMocks();
     mockState.metadata = {
       contentType: "image/jpeg",
       size: "1000",
@@ -115,7 +116,7 @@ describe("createGamePhoto", () => {
     mockState.created = [];
     mockFile.exists.mockResolvedValue([true]);
     mockFile.getMetadata.mockImplementation(async () => [mockState.metadata]);
-    mockFile.getSignedUrl.mockResolvedValue(["https://storage.example/photo.jpg"]);
+    mockFile.setMetadata.mockResolvedValue([{}]);
     configureDatabase();
   });
 
@@ -131,8 +132,32 @@ describe("createGamePhoto", () => {
       status: "ACTIVE",
       content_type: "image/jpeg",
       caption: "Golaco",
-      url: "https://storage.example/photo.jpg",
     });
+    expect(mockState.created[0].data.url).toMatch(
+      /^https:\/\/firebasestorage\.googleapis\.com\/v0\/b\/futebadosparcas\.appspot\.com\/o\/games%2Fgame-1%2Fphotos%2Fplayer%2Fphoto\.jpg\?alt=media&token=[0-9a-fA-F-]{36}$/
+    );
+    expect(mockState.created[0].data.url).not.toContain("X-Goog-Signature");
+    expect(mockFile.setMetadata).toHaveBeenCalledWith({
+      metadata: expect.objectContaining({
+        firebaseStorageDownloadTokens: expect.any(String),
+      }),
+    });
+  });
+
+  it("reuses an existing download token instead of writing new metadata", async () => {
+    mockState.metadata = {
+      contentType: "image/jpeg",
+      size: "1000",
+      metadata: {firebaseStorageDownloadTokens: "existing-token"},
+    };
+
+    const result = await callable(request());
+
+    expect(result).toMatchObject({success: true, alreadyExists: false});
+    expect(mockState.created[0].data.url).toContain(
+      "?alt=media&token=existing-token"
+    );
+    expect(mockFile.setMetadata).not.toHaveBeenCalled();
   });
 
   it("rejects a document-only request when the Storage object is absent", async () => {

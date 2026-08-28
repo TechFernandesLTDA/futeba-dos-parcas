@@ -4,6 +4,11 @@ import {getStorage} from "firebase-admin/storage";
 import {HttpsError} from "firebase-functions/v2/https";
 import {db} from "../_db";
 import {secureCallable} from "../middleware/secure-callable-wrapper";
+import {
+  firebaseDownloadUrl,
+  firstStorageDownloadToken,
+  ensureStorageDownloadToken,
+} from "./game-video-policy";
 
 // FIX #4049: game_photos não tinha NENHUM teto server-side (o irmão game_videos
 // recebeu o tratamento completo no #4024). Aqui espelhamos o teto por jogo e por
@@ -154,12 +159,28 @@ async function validateStoredObject(
     );
   }
 
-  const [url] = await file.getSignedUrl({
-    action: "read",
-    expires: Date.now() + 5 * 365 * 24 * 60 * 60 * 1000,
-  });
+  // FIX #4083: substitui getSignedUrl (5 anos, irrevogavel, dependente de
+  // signBlob) pelo download token rotacionavel do Firebase — mesmo fluxo do
+  // irmao game_videos. Trocar o token no metadata derruba toda URL antiga.
+  const customMetadata = (metadata.metadata ?? {}) as Record<string, string>;
+  const currentToken = firstStorageDownloadToken(
+    customMetadata.firebaseStorageDownloadTokens
+  );
+  const token = ensureStorageDownloadToken(customMetadata);
+  if (!currentToken) {
+    await file.setMetadata({
+      metadata: {
+        ...customMetadata,
+        firebaseStorageDownloadTokens: token,
+      },
+    });
+  }
 
-  return {size, url, contentType};
+  return {
+    size,
+    url: firebaseDownloadUrl(bucket.name, storagePath, token),
+    contentType,
+  };
 }
 
 /**
