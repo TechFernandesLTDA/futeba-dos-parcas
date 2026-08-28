@@ -859,4 +859,67 @@ describe("onUserDeleted — FIX #4049: mídia de jogo no Storage", () => {
       expect.any(Error)
     );
   });
+
+  test(
+    "FIX #4082: pagina game_photos com cursor e conta docs únicos (sem inflar)",
+    async () => {
+      // 550 docs em game_photos → 2 páginas (500 + 50). Antes do fix, a query
+      // sem startAfter relia sempre os mesmos 500 docs (leitura quadrática) e
+      // gameMediaTotal somava o tamanho bruto da página (inflando o log de
+      // auditoria LGPD com duplicados).
+      const photos = Array.from({length: 550}, (_, i) => ({
+        id: `photo_${i}`,
+        ref: {id: `photo_${i}`, path: `game_photos/photo_${i}`},
+        data: () => ({storage_path: `games/g1/photos/${i}.jpg`}),
+      }));
+
+      let page = 0;
+      const gamePhotosQuery = (() => {
+        const query: any = {
+          where: jest.fn(() => query),
+          limit: jest.fn(() => query),
+          startAfter: jest.fn(() => query),
+          get: jest.fn(() => {
+            const start = page * 500;
+            const chunk = photos.slice(start, start + 500);
+            page++;
+            return Promise.resolve({
+              docs: chunk,
+              empty: chunk.length === 0,
+              size: chunk.length,
+            });
+          }),
+        };
+        return query;
+      })();
+
+      mockCollection.mockImplementation((name: string) => {
+        if (name === "game_photos") return gamePhotosQuery;
+        return emptyQuery();
+      });
+
+      await expect(
+        onUserDeleted(makeUserRecord(uid), makeEventContext())
+      ).resolves.not.toThrow();
+
+      // Cursor avançou (startAfter chamado na 2ª página).
+      expect(gamePhotosQuery.startAfter).toHaveBeenCalled();
+
+      // gameMediaTotal conta exatamente 550 docs únicos (não 500+500=1000).
+      const logger = jest.requireMock("firebase-functions/v2").logger;
+      expect(logger.info).toHaveBeenCalledWith(
+        expect.stringContaining("550 game_photos/game_videos")
+      );
+
+      // 550 refs únicos de game_photos enfileirados para delete.
+      const deletedPaths = batchInstances.flatMap((b) =>
+        b.delete.mock.calls.map((call: any[]) => call[0].path)
+      );
+      const photoPaths = deletedPaths.filter((p: string) =>
+        p.startsWith("game_photos/")
+      );
+      expect(new Set(photoPaths).size).toBe(550);
+    },
+    10000
+  );
 });

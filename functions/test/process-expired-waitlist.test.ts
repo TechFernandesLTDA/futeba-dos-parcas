@@ -417,7 +417,7 @@ describe("processExpiredWaitlistEntries (#4012)", () => {
     expect(mockSendNotificationToUser).not.toHaveBeenCalled();
   });
 
-  it("#4043: reverte a promocao para WAITING quando a notificacao falha", async () => {
+  it("#4043/#4087: nao reverte a promocao quando as DUAS chamadas falham", async () => {
     const entryRef = {id: "wl1"};
     const nextEntryUpdate = jest.fn().mockResolvedValue(undefined);
     const nextEntryRef = {id: "wl2", update: nextEntryUpdate};
@@ -465,16 +465,83 @@ describe("processExpiredWaitlistEntries (#4012)", () => {
       };
     });
 
-    mockSendNotificationToUser.mockRejectedValueOnce(new Error("FCM unavailable"));
+    mockSaveNotificationToFirestore.mockRejectedValueOnce(
+      new Error("Firestore unavailable")
+    );
+    mockSendNotificationToUser.mockRejectedValue(new Error("FCM unavailable"));
 
     await expect(processExpiredWaitlistEntries()).rejects.toThrow(
       /entradas falharam ao processar/
     );
 
-    expect(nextEntryUpdate).toHaveBeenCalledWith({
-      status: "WAITING",
-      notified_at: expect.anything(),
-      response_deadline: expect.anything(),
+    // A promoção já commitou na transação; falha nas duas entregas NÃO reverte
+    // B para WAITING (senão a vaga ficaria órfã).
+    expect(nextEntryUpdate).not.toHaveBeenCalled();
+  });
+
+  it("#4087: nao reverte a promocao quando o push foi entregue mas a persistencia in-app falhou", async () => {
+    const entryRef = {id: "wl1"};
+    const nextEntryUpdate = jest.fn().mockResolvedValue(undefined);
+    const nextEntryRef = {id: "wl2", update: nextEntryUpdate};
+
+    mockCollectionGet
+      .mockResolvedValueOnce({
+        docs: [
+          {
+            id: "wl1",
+            ref: entryRef,
+            data: () => ({
+              status: "NOTIFIED",
+              game_id: "game1",
+              user_id: "user1",
+            }),
+          },
+        ],
+        size: 1,
+      })
+      .mockResolvedValueOnce({docs: [], size: 0});
+
+    setupTransactionMock((ref) => {
+      if (ref === entryRef)
+        return {
+          exists: true,
+          data: () => ({
+            status: "NOTIFIED",
+            game_id: "game1",
+            user_id: "user1",
+          }),
+        };
+      return {
+        docs: [
+          {
+            ref: nextEntryRef,
+            data: () => ({
+              user_id: "user2",
+              user_name: "Jogador 2",
+              status: "WAITING",
+            }),
+          },
+        ],
+        empty: false,
+        size: 1,
+      };
     });
+
+    mockSaveNotificationToFirestore.mockRejectedValueOnce(
+      new Error("Firestore unavailable")
+    );
+    mockSendNotificationToUser.mockResolvedValueOnce(true);
+
+    await expect(processExpiredWaitlistEntries()).rejects.toThrow(
+      /entradas falharam ao processar/
+    );
+
+    // Push entregue + persistência falhou → B permanece NOTIFIED (a vaga
+    // permanece atribuída, nenhuma entrada órfã) e NÃO há revert para WAITING.
+    expect(nextEntryUpdate).not.toHaveBeenCalled();
+    expect(mockTransactionUpdate).toHaveBeenCalledWith(
+      nextEntryRef,
+      expect.objectContaining({status: "NOTIFIED"})
+    );
   });
 });
