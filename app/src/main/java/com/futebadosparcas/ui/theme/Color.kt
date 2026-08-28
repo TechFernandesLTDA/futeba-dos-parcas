@@ -95,6 +95,7 @@ object GamificationColors {
  * seguem como fundo de medalha (identidade visual).
  */
 object GamificationTextColors {
+    // #8A6D00 dava 4,48:1 sobre o veu de 18% do proprio Gold — abaixo de AA (#4063).
     val Gold = Color(0xFF7A6000)
     val Silver = Color(0xFF616161)
     val Bronze = Color(0xFF7A4A1F)

@@ -105,6 +105,14 @@ enum class MilestoneType(
     WINS_100("Invicto", "Venca 100 jogos", 750L, 100, "gamesWon")
 }
 
+// Cor da divisao removida no #4064 (era a 5a fonte divergente, sem nenhum leitor).
+// Fonte unica: `ui/theme/DivisionColors.kt`.
+enum class LeagueDivision(val displayName: String) {
+    BRONZE("Bronze"),
+    PRATA("Prata"),
+    OURO("Ouro"),
+    DIAMANTE("Diamante")
+}
 @IgnoreExtraProperties
 data class Season(
     @DocumentId
