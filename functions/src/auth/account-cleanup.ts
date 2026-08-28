@@ -588,15 +588,36 @@ export const onUserDeleted = runWith({
         // Coleções top-level chaveadas por uploaded_by (PII denormalizado:
         // uploaded_by_name/photo). Coleta também os storage_paths para apagar
         // os objetos do bucket no passo 20.
+        // FIX #4082: paginação por cursor (startAfter) + guarda de iterações.
+        // Antes a query relia do começo a cada página (sem startAfter) e a
+        // terminação dependia de um efeito colateral do queueDelete (dedup +
+        // auto-commit aos 450 ops), não da estrutura do laço — reintroduzindo
+        // o anti-pattern que o #2323 corrigiu no laço de cashbox logo abaixo.
+        // SEM orderBy explícito (reusa a ordenação implícita por __name__ do
+        // single-field index já existente), idêntico ao laço de cashbox.
         const mediaStoragePaths: string[] = [];
         let gameMediaTotal = 0;
         for (const collectionName of ["game_photos", "game_videos"]) {
+          let mediaLastDoc:
+            admin.firestore.QueryDocumentSnapshot | null = null;
+          let mediaIterations = 0;
           while (true) {
-            const mediaSnap = await db
+            if (++mediaIterations > MAX_ANON_ITERATIONS) {
+              logger.error(
+                `[ACCOUNT_CLEANUP] Limite de ${MAX_ANON_ITERATIONS} ` +
+                `iterações excedido ao paginar ${collectionName} para ${uid} ` +
+                "— abortando para evitar loop infinito"
+              );
+              break;
+            }
+            let mediaQuery = db
               .collection(collectionName)
               .where("uploaded_by", "==", uid)
-              .limit(500)
-              .get();
+              .limit(500);
+            if (mediaLastDoc) {
+              mediaQuery = mediaQuery.startAfter(mediaLastDoc);
+            }
+            const mediaSnap = await mediaQuery.get();
             if (mediaSnap.empty) break;
             for (const doc of mediaSnap.docs) {
               const storagePath = doc.data()?.storage_path;
@@ -604,8 +625,9 @@ export const onUserDeleted = runWith({
                 mediaStoragePaths.push(storagePath);
               }
               await queueDelete(doc.ref);
+              gameMediaTotal++;
             }
-            gameMediaTotal += mediaSnap.size;
+            mediaLastDoc = mediaSnap.docs[mediaSnap.docs.length - 1];
             if (mediaSnap.size < 500) break;
           }
         }
