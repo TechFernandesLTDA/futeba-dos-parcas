@@ -1,11 +1,11 @@
 {
   "platform": "android",
-  "generatedAt": "2026-08-20T21:14:50.334Z",
+  "generatedAt": "2026-08-28T16:23:47.957Z",
   "notes": [
     {
       "version": "1.39.5",
       "buildNumber": 80,
-      "releaseDate": "2026-08-20",
+      "releaseDate": "2026-08-28",
       "type": "patch",
       "showPopup": true,
       "published": true,
@@ -27,11 +27,14 @@
       ],
       "improved": [
         "Cores de Bronze, Prata, Ouro e Diamante foram centralizadas para preservar identidade e contraste.",
-        "Cartões de eventos e indicadores de ranking ganharam texto com tamanho e contraste mais adequados."
+        "Cartões de eventos e indicadores de ranking ganharam texto com tamanho e contraste mais adequados.",
+        "Ícones de placeholder (sem foto/imagem) agora usam a cor correta do tema, sem véu translúcido."
       ],
       "fixed": [
         "Corrigida a legibilidade do badge e dos contadores da Liga no tema claro.",
-        "Corrigidas conversões de dados da lista de espera vindos do Firestore, incluindo timestamps."
+        "Corrigidas conversões de dados da lista de espera vindos do Firestore, incluindo timestamps.",
+        "Badge de divisão no tema escuro (Bronze e Ouro) e o nome da divisão na tela de Evolução ficam legíveis.",
+        "Contador de cartão vermelho usa cor com contraste AA e tamanho de fonte padrão."
       ],
       "issueRefs": [
         4063,
@@ -42,7 +45,12 @@
         4068,
         4069,
         4070,
-        4071
+        4071,
+        4084,
+        4085,
+        4088,
+        4089,
+        4090
       ]
     },
     {

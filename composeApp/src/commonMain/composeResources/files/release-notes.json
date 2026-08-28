@@ -1,7 +1,25 @@
 {
   "platform": "ios",
-  "generatedAt": "2026-08-20T21:14:50.343Z",
+  "generatedAt": "2026-08-28T16:23:47.965Z",
   "notes": [
+    {
+      "version": "1.7.2",
+      "buildNumber": 23,
+      "releaseDate": "2026-08-28",
+      "type": "patch",
+      "showPopup": true,
+      "published": false,
+      "headline": "O app agora acompanha o tema escuro do iPhone.",
+      "highlights": [],
+      "added": [],
+      "improved": [],
+      "fixed": [
+        "O iOS deixa de renderizar sempre claro: quando o sistema está em modo escuro, o app também escurece e a barra de status permanece legível."
+      ],
+      "issueRefs": [
+        4086
+      ]
+    },
     {
       "version": "1.7.1",
       "buildNumber": 22,

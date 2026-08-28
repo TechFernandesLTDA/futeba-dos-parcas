@@ -9,8 +9,8 @@
     "version": "1.56.9"
   },
   "ios": {
-    "version": "1.7.1",
-    "buildNumber": 22
+    "version": "1.7.2",
+    "buildNumber": 23
   },
   "functions": {
     "version": "1.12.6"
