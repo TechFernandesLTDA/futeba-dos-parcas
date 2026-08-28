@@ -2,17 +2,17 @@
   "$schema": "./scripts/versions.schema.json",
   "_comment": "Registro central de versoes — fonte unica de verdade. Atualizado por scripts/bump-version.js. Modelo: independente por plataforma. Ver specs/feat-2026-05-22-version-control-release-notes.md",
   "android": {
-    "version": "1.39.4",
-    "buildNumber": 79
+    "version": "1.39.5",
+    "buildNumber": 80
   },
   "web": {
-    "version": "1.56.8"
+    "version": "1.56.9"
   },
   "ios": {
-    "version": "1.7.1",
-    "buildNumber": 22
+    "version": "1.7.2",
+    "buildNumber": 23
   },
   "functions": {
-    "version": "1.12.5"
+    "version": "1.12.6"
   }
 }

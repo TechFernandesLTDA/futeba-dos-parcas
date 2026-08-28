@@ -1,7 +1,58 @@
 {
   "platform": "android",
-  "generatedAt": "2026-08-16T00:55:45.325Z",
+  "generatedAt": "2026-08-28T16:23:47.957Z",
   "notes": [
+    {
+      "version": "1.39.5",
+      "buildNumber": 80,
+      "releaseDate": "2026-08-28",
+      "type": "patch",
+      "showPopup": true,
+      "published": true,
+      "headline": "Liga mais legível e lista de espera mais confiável no Android.",
+      "highlights": [
+        {
+          "icon": "emoji_events",
+          "title": "Divisões mais claras",
+          "description": "As cores e os textos das divisões da Liga agora permanecem legíveis nos temas claro e escuro."
+        },
+        {
+          "icon": "groups",
+          "title": "Fila sem disputa",
+          "description": "A posição na lista de espera é definida pelo servidor e permanece consistente entre dispositivos."
+        }
+      ],
+      "added": [
+        "A entrada na lista de espera usa o mesmo processo seguro do Web, com posição oficial e reentrada idempotente."
+      ],
+      "improved": [
+        "Cores de Bronze, Prata, Ouro e Diamante foram centralizadas para preservar identidade e contraste.",
+        "Cartões de eventos e indicadores de ranking ganharam texto com tamanho e contraste mais adequados.",
+        "Ícones de placeholder (sem foto/imagem) agora usam a cor correta do tema, sem véu translúcido."
+      ],
+      "fixed": [
+        "Corrigida a legibilidade do badge e dos contadores da Liga no tema claro.",
+        "Corrigidas conversões de dados da lista de espera vindos do Firestore, incluindo timestamps.",
+        "Badge de divisão no tema escuro (Bronze e Ouro) e o nome da divisão na tela de Evolução ficam legíveis.",
+        "Contador de cartão vermelho usa cor com contraste AA e tamanho de fonte padrão."
+      ],
+      "issueRefs": [
+        4063,
+        4064,
+        4065,
+        4066,
+        4067,
+        4068,
+        4069,
+        4070,
+        4071,
+        4084,
+        4085,
+        4088,
+        4089,
+        4090
+      ]
+    },
     {
       "version": "1.39.4",
       "buildNumber": 79,

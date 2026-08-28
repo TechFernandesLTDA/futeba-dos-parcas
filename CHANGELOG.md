@@ -24,6 +24,30 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ## Android
 
+### [1.39.5][android-1.39.5] - 2026-08-28
+
+#### Adicionado
+- `DivisionColors` centraliza tokens de identidade e foreground por tema para as quatro divisões.
+- `AndroidGameWaitlist` adapta o schema snake_case do Firestore e normaliza timestamps.
+- Testes parametrizados cobrem contraste AA das divisões nos temas claro e escuro (e alto contraste no badge).
+
+#### Mudado
+- `WaitlistRepositoryImpl` usa `joinGameWaitlist` e deixa criação, posição e timestamps autoritativos no backend.
+- League ranking e componentes de estatísticas compartilham o modelo de `LeagueDivision` e os tokens centralizados.
+- `DivisionColorsTest` valida contra os tokens reais do `ColorScheme`, não literais de alto contraste.
+
+#### Removido
+- Métodos client-side mortos de waitlist (`promoteNextInLine`/`notifyNextInLine`/`updateWaitlistStatus`).
+- 18 símbolos sem caller em `Gradients.kt` e a pintura de gradiente ocluída em `GroupsScreen`.
+- `colorHex` morto do enum `LeagueDivision` (fonte única em `DivisionColors`).
+
+#### Corrigido
+- Contraste de Ouro, Prata, Bronze, Diamante e cartões de jogo corrigido sobre fundos reais.
+- Writes client-authored de `queue_position` e datas da fila removidos do Android.
+- Tokens dark de Bronze (`#EBC98F`) e Ouro (`#FFE45A`) e `MatchEventColors.RedCard` (`#C62828`) corrigidos para AA.
+
+_Issues: #4063, #4064, #4065, #4066, #4067, #4068, #4069, #4070, #4071, #4084, #4085, #4088, #4089, #4090 · PRs: #4072, #4073, #4074, #4075, #4093, #4094_
+
 ### [1.39.4][android-1.39.4] - 2026-08-15
 
 #### Adicionado
@@ -319,6 +343,23 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 - Bump de versão de manutenção após a mega audit wave de 2026-05-11, sem mudanças funcionais no Android nesta tag.
 
 ## Web
+
+### [1.56.9][web-1.56.9] - 2026-08-20
+
+#### Adicionado
+- Callable `joinGameWaitlist` transacional e idempotente para atribuição server-authoritative de `queue_position`.
+- Testes de contraste AA após composição de overlays e testes de contrato para tema e landing page.
+
+#### Mudado
+- `ThemeProvider` passa a aplicar `documentThemeOverride` também ao tema MUI e ao `CssBaseline`.
+- `useWaitlist` remove writes client-authored de posição e timestamps, usando a callable e normalizando `Timestamp`, `Date` e epoch millis.
+- CTA do hero usa a paleta da marca com fundo branco e texto `primary.dark`; brilho radial fica restrito a `md+`.
+
+#### Corrigido
+- Contraste de subtítulos, CTA e elementos de divisão corrigido para atender WCAG AA.
+- Join duplicado e corrida de posições da lista de espera eliminados no fluxo Web.
+
+_Issues: #4063, #4064, #4065, #4066, #4067, #4068, #4069, #4070, #4071 · PRs: #4072, #4073, #4074, #4075_
 
 ### [1.56.8][web-1.56.8] - 2026-08-15
 
@@ -2101,6 +2142,16 @@ _Issues: #1465, #1479, #1421, #1420 · PRs: #1465, #1479, #1421, #1420, #1417_
 
 ## iOS
 
+### [1.7.2][ios-1.7.2] - 2026-08-28
+
+#### Mudado
+- `AppContent()` passa `AppThemeConfig(mode = ThemeMode.SYSTEM)` para `FutebaTheme`, fazendo `isSystemInDarkTheme()` voltar a ser lido.
+
+#### Corrigido
+- Comentários desatualizados sobre o controle da status bar no iOS (`Theme.ios.kt` / `MainViewController.kt`) corrigidos para descrever o mecanismo real (segue o sistema via `UIUserInterfaceStyle = Automatic`).
+
+_Issues: #4086_
+
 ### [1.7.1][ios-1.7.1] - 2026-08-01
 
 #### Mudado
@@ -2177,6 +2228,28 @@ _Issues: #3499, #3504, #3509 · PRs: #3511_
 _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
+
+### [1.12.6][functions-1.12.6] - 2026-08-28
+
+#### Adicionado
+- `joinGameWaitlistHandler` com autenticação, validação de argumentos, idempotência e atribuição transacional de `queue_position`.
+- `joinGameWaitlist` agora é `secureCallable` com App Check, rate limit, audit log, autorização de grupo/status e teto de fila (`MAX_WAITLIST_PER_GAME`).
+- Índice composto `game_videos(status ASC, created_at ASC)` para o janitor server-side.
+- Logs de saturação para o janitor de vídeos e a invalidação paginada do cache de leaderboard.
+
+#### Mudado
+- `onGameVacancy` e `processExpiredWaitlistEntries` ordenam a fila por `queue_position`.
+- `processExpiredWaitlistEntries` persiste a notificação antes do push (com retry) e não reverte a entrada promovida em falha de entrega.
+- `createGamePhoto` usa download token rotacionável (`firebaseDownloadUrl`) em vez de `getSignedUrl` irrevogável.
+- Passo 16 de `onUserDeleted` pagina com `startAfter` + guarda `MAX_ANON_ITERATIONS`.
+- `reconcileStaleProcessingGameVideos` filtra e ordena por `created_at` no Firestore antes de processar a página.
+
+#### Corrigido
+- Lookup de Storage deixou de colapsar erro transitório em ausência de objeto, evitando rejeição destrutiva.
+- Promoção e join da fila foram centralizados no backend para impedir corridas entre clientes.
+- Leitura duplicada no passo 16 de `onUserDeleted` eliminada (log de auditoria LGPD sem total inflado).
+
+_Issues: #4063, #4064, #4065, #4066, #4067, #4068, #4069, #4070, #4071, #4081, #4082, #4083, #4087 · PRs: #4072, #4073, #4074, #4075, #4091, #4092_
 
 ### [1.12.5][functions-1.12.5] - 2026-08-15
 
@@ -2983,6 +3056,7 @@ _Issues: #2981_
 _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 
 
+[android-1.39.5]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.39.5.md
 [android-1.39.4]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.39.4.md
 [android-1.39.3]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.39.3.md
 [android-1.39.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.39.2.md
@@ -3008,6 +3082,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.56.9]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.56.9.md
 [web-1.56.8]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.56.8.md
 [web-1.56.7]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.56.7.md
 [web-1.56.6]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.56.6.md
@@ -3180,12 +3255,14 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [web-1.26.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.26.2.md
 [web-1.26.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.26.1.md
 [web-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.26.0.md
+[ios-1.7.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.7.2.md
 [ios-1.7.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.7.1.md
 [ios-1.7.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.7.0.md
 [ios-1.6.3]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.3.md
 [ios-1.6.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.2.md
 [ios-1.6.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.1.md
 [ios-1.6.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.0.md
+[functions-1.12.6]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.12.6.md
 [functions-1.12.5]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.12.5.md
 [functions-1.12.4]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.12.4.md
 [functions-1.12.3]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.12.3.md
