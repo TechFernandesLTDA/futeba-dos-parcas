@@ -14,8 +14,9 @@ import com.futebadosparcas.domain.model.ThemeMode
  * Setup de tema específico de plataforma (status bar, dynamic colors, safe-area, etc).
  *
  * - Android: configura cor de status/navigation bar e aparência clara/escura.
- * - iOS: status bar é controlada pelo host SwiftUI; insets de safe-area são tratados
- *   pelo `ComposeUIViewController` + `WindowInsets.safeDrawing` no scaffold raiz.
+ * - iOS: status bar é controlada via `ComposeUIViewControllerConfiguration.delegate`
+ *   (`MainViewController.kt`); insets de safe-area são tratados pelo
+ *   `ComposeUIViewController` + `WindowInsets.safeDrawing` no scaffold raiz.
  */
 @Composable
 internal expect fun PlatformThemeSetup(
