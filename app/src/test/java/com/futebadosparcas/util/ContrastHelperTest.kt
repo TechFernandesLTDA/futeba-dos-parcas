@@ -30,13 +30,23 @@ class ContrastHelperTest {
     )
 
     private val allRealBackgrounds = affectedBackgrounds + listOf(
-        "TeamColor.GREEN_DARK #00852A" to Color(0xFF00852A),
-        "TeamColor.NAVY #2B70C9" to Color(0xFF2B70C9),
+        "ThemePresets.GREEN #00852A" to Color(0xFF00852A),
+        "ThemePresets.NAVY #2B70C9" to Color(0xFF2B70C9),
+        "ThemePresets.RED #FF4B4B" to Color(0xFFFF4B4B),
+        "ThemePresets.BLUE #1CB0F6" to Color(0xFF1CB0F6),
+        "ThemePresets.ORANGE #FF9600" to Color(0xFFFF9600),
+        "ThemePresets.PURPLE #CE82FF" to Color(0xFFCE82FF),
+        "TeamColor.YELLOW #FFEB3B" to Color(0xFFFFEB3B),
+        "TeamColor.WHITE #FFFFFF" to Color(0xFFFFFFFF),
+        "TeamColor.BLACK #212121" to Color(0xFF212121),
+        "TeamColor.PURPLE #9C27B0" to Color(0xFF9C27B0),
         "MatchEventColors.YellowCard" to MatchEventColors.YellowCard,
         "MatchEventColors.RedCard" to MatchEventColors.RedCard,
+        "Division.Bronze" to GamificationColors.Bronze,
         "Division.Silver" to GamificationColors.Silver,
         "Division.Gold" to GamificationColors.Gold,
         "Division.Diamond" to GamificationColors.Diamond,
+        "Division.Platinum" to GamificationColors.Platinum,
     )
 
     @Test

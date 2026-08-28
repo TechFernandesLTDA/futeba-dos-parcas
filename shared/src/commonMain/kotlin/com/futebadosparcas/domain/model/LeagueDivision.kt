@@ -32,23 +32,22 @@ import kotlinx.serialization.Serializable
 enum class LeagueDivision(
     val displayName: String,
     val emoji: String,
-    val colorHex: String,
     /** Rating minimo para esta divisao (escala 0-100) */
     val minRating: Double,
     /** Rating maximo para esta divisao (escala 0-100) */
     val maxRating: Double
 ) {
     @SerialName("BRONZE")
-    BRONZE("Bronze", "🥉", "#5D4037", 0.0, 29.99),
+    BRONZE("Bronze", "🥉", 0.0, 29.99),
 
     @SerialName("PRATA")
-    PRATA("Prata", "🥈", "#757575", 30.0, 49.99),
+    PRATA("Prata", "🥈", 30.0, 49.99),
 
     @SerialName("OURO")
-    OURO("Ouro", "🥇", "#FFD700", 50.0, 69.99),
+    OURO("Ouro", "🥇", 50.0, 69.99),
 
     @SerialName("DIAMANTE")
-    DIAMANTE("Diamante", "💎", "#00BCD4", 70.0, 100.0);
+    DIAMANTE("Diamante", "💎", 70.0, 100.0);
 
     companion object {
         /**

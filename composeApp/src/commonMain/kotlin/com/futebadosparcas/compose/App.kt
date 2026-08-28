@@ -80,9 +80,11 @@ import com.futebadosparcas.compose.resources.profile_hub_action_stats
 import com.futebadosparcas.compose.resources.profile_hub_action_stats_body
 import com.futebadosparcas.compose.resources.profile_hub_body
 import com.futebadosparcas.compose.resources.profile_hub_title
+import com.futebadosparcas.domain.model.AppThemeConfig
 import com.futebadosparcas.domain.model.Game
 import com.futebadosparcas.domain.model.GameConfirmation
 import com.futebadosparcas.domain.model.Team
+import com.futebadosparcas.domain.model.ThemeMode
 import com.futebadosparcas.domain.repository.AuthRepository
 import com.futebadosparcas.platform.firebase.FirebaseDataSource
 import com.futebadosparcas.platform.PlatformShareFactory
@@ -128,7 +130,17 @@ fun App() {
 
 @Composable
 private fun AppContent() {
-    FutebaTheme {
+    // #4086 — iOS nunca renderizava dark: `FutebaTheme` era chamado sem `themeConfig` e o
+    // default de `AppThemeConfig.mode` é LIGHT, tornando o ramo SYSTEM inalcançável e
+    // `isSystemInDarkTheme()` código morto. Passamos SYSTEM explicitamente para o app
+    // acompanhar o modo do iOS (UIUserInterfaceStyle = Automatic no Info.plist).
+    //
+    // MÍNIMO aceitável: não há `ThemeRepositoryImpl` para iOS — a única implementação é
+    // DataStore, Android-only, em `app/.../data/ThemeRepositoryImpl.kt` — então a config
+    // persistida não é coletável por enquanto. Quando a rota de tema do iOS existir
+    // (paridade com Android), substituir por uma coleta de `ThemeRepository.themeConfig`
+    // como faz `app/.../ui/theme/Theme.kt`.
+    FutebaTheme(themeConfig = AppThemeConfig(mode = ThemeMode.SYSTEM)) {
         // #2673/#2691 — Surface de fundo desenha edge-to-edge (cor cobre toda a tela,
         // inclusive sob status bar / notch / home indicator), enquanto o conteúdo
         // interno respeita a safe-area via `WindowInsets.safeDrawing`.

@@ -1,5 +1,10 @@
 package com.futebadosparcas.ui.components.avatar
 
+// TODO(#4090): este arquivo (CustomAvatar + AvatarCustomizerScreen) esta SEM referencias
+// Kotlin em todo o repo (0 callers) — o unico hit externo e em strings.xml (labels avatar_*).
+// Nao deletar ainda: pode ser feature planejada. Triagem separada decide entre plugar
+// no nav graph ou remover o arquivo + strings orfas (avatar_*, cd_locked).
+
 import androidx.annotation.StringRes
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable

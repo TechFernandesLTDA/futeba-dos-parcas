@@ -44,7 +44,6 @@ import com.futebadosparcas.ui.components.EmptyState
 import com.futebadosparcas.ui.components.EmptyStateType
 import com.futebadosparcas.ui.theme.MotionDuration
 import com.futebadosparcas.ui.theme.MotionEasing
-import com.futebadosparcas.ui.theme.brandAccentGradient
 import com.futebadosparcas.ui.theme.rememberReduceMotion
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -487,8 +486,7 @@ private fun GroupPhoto(
 ) {
     Box(
         modifier = modifier
-            .clip(CircleShape)
-            .background(brush = brandAccentGradient()),
+            .clip(CircleShape),
         contentAlignment = Alignment.Center
     ) {
         CachedProfileImage(

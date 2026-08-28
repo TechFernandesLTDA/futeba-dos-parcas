@@ -1867,8 +1867,6 @@ export const processExpiredWaitlistEntries =
             try {
               let nextUserId: string | undefined;
               let nextUserName: string | undefined;
-              let nextEntryRef:
-                FirebaseFirestore.DocumentReference | undefined;
               let hasNext = false;
 
               // FIX #4012: TODAS as leituras devem vir ANTES de qualquer
@@ -1917,7 +1915,6 @@ export const processExpiredWaitlistEntries =
 
                   nextUserId = nextData.user_id;
                   nextUserName = nextData.user_name || "Jogador";
-                  nextEntryRef = nextEntry.ref;
                   hasNext = true;
                 }
                 return true;
@@ -1933,22 +1930,19 @@ export const processExpiredWaitlistEntries =
               }
 
               // Send notification OUTSIDE the transaction.
-              // FIX #4043: a promoção commita na transação, mas a notificação
-              // é enviada depois, fora dela. Se sendNotificationToUser ou
-              // saveNotificationToFirestore lançar, o jogador ficava NOTIFIED
-              // com deadline de 30 min correndo e zero sinal nos dois canais —
-              // e o retry do Scheduler não o reprocessava (deadline no futuro).
-              // Agora uma falha no envio reverte a promoção para WAITING,
-              // liberando a entrada para reprocessamento.
+              // FIX #4087: persistir ANTES de enviar o push e NÃO reverter a
+              // promoção em falha. O FIX #4043 revertia apenas B para WAITING
+              // — mas o push já podia ter sido entregue (vaga órfã: A EXPIRED,
+              // B WAITING e nenhum driver re-promove). Agora falha de entrega é
+              // falha de *entrega*, não de *estado*: o response_deadline de
+              // 30 min expira B e o próprio cron promove o próximo no run
+              // seguinte — a máquina de estados se auto-recupera sem vaga órfã.
               if (hasNext && nextUserId) {
                 const action = `game_detail/${gameId}`;
+                let deliverable = true;
+
+                // (1) Persistir a notificação in-app primeiro.
                 try {
-                  await sendNotificationToUser(nextUserId, {
-                    title: REMINDER_NOTIFICATIONS.WAITLIST_SUMMON.title["pt-BR"](),
-                    body: REMINDER_NOTIFICATIONS.WAITLIST_SUMMON.body["pt-BR"](),
-                    type: NotificationType.GAME_SUMMON,
-                    data: {gameId, action, urgency: "high"},
-                  });
                   await saveNotificationToFirestore(nextUserId, {
                     userId: nextUserId,
                     title: REMINDER_NOTIFICATIONS.WAITLIST_SUMMON_FIRESTORE.title["pt-BR"](),
@@ -1957,25 +1951,69 @@ export const processExpiredWaitlistEntries =
                     gameId,
                     action,
                   });
-                  promotedCount++;
+                } catch (persistError) {
+                  deliverable = false;
+                  logger.error(
+                    "[WAITLIST] persist_failed: falha ao persistir " +
+                    `notificação in-app para ${nextUserId} (${nextUserName}); ` +
+                    "mantendo status NOTIFIED para auto-recuperação",
+                    persistError
+                  );
+                  failureCount++;
+                }
+
+                // (2) Enviar o push, com retry único para falha transiente.
+                const pushPayload = {
+                  title: REMINDER_NOTIFICATIONS.WAITLIST_SUMMON.title["pt-BR"](),
+                  body: REMINDER_NOTIFICATIONS.WAITLIST_SUMMON.body["pt-BR"](),
+                  type: NotificationType.GAME_SUMMON,
+                  data: {gameId, action, urgency: "high"},
+                };
+                let pushSent = false;
+                try {
+                  pushSent = await sendNotificationToUser(
+                    nextUserId,
+                    pushPayload
+                  );
+                } catch (firstPushError) {
+                  logger.warn(
+                    "[WAITLIST] push_retry: primeira tentativa de push falhou " +
+                    `para ${nextUserId} (${nextUserName}); re-tentando`,
+                    firstPushError
+                  );
+                  pushSent = false;
+                }
+                if (!pushSent) {
+                  try {
+                    pushSent = await sendNotificationToUser(
+                      nextUserId,
+                      pushPayload
+                    );
+                  } catch (retryPushError) {
+                    pushSent = false;
+                    logger.warn(
+                      "[WAITLIST] push_retry_failed: re-tentativa de push " +
+                      `falhou para ${nextUserId} (${nextUserName})`,
+                      retryPushError
+                    );
+                  }
+                }
+                if (pushSent) {
                   logger.info(
                     "[WAITLIST] Proximo jogador notificado: " +
                     `${nextUserId} (${nextUserName})`
                   );
-                } catch (notifyError) {
+                } else {
+                  deliverable = false;
                   logger.error(
-                    "[WAITLIST] Falha ao notificar proximo jogador " +
-                    `${nextUserId}; revertendo promocao para WAITING`,
-                    notifyError
+                    "[WAITLIST] push_failed: push não entregue para " +
+                    `${nextUserId} (${nextUserName})`
                   );
-                  if (nextEntryRef) {
-                    await nextEntryRef.update({
-                      status: "WAITING",
-                      notified_at: FieldValue.delete(),
-                      response_deadline: FieldValue.delete(),
-                    });
-                  }
                   failureCount++;
+                }
+
+                if (deliverable) {
+                  promotedCount++;
                 }
               } else if (!hasNext) {
                 logger.info(
