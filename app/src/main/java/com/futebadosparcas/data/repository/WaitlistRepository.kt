@@ -1,17 +1,18 @@
 package com.futebadosparcas.data.repository
 
 import com.futebadosparcas.domain.model.GameWaitlist
-import com.futebadosparcas.domain.model.WaitlistStatus
 import kotlinx.coroutines.flow.Flow
 
 /**
  * Repositorio para gerenciar a lista de espera de jogos (Issue #32).
  *
- * Responsabilidades:
- * - Adicionar jogadores a lista de espera quando o jogo estiver lotado
- * - Manter a ordem da fila
- * - Notificar proximo da fila quando houver vaga
- * - Auto-promocao apos timeout
+ * Responsabilidades (client-side):
+ * - Adicionar jogadores a lista de espera quando o jogo estiver lotado (via callable joinGameWaitlist)
+ * - Remover jogadores da fila
+ * - Ler/observar a ordem da fila
+ *
+ * Promocao, notificacao e expiracao sao SERVER-ONLY (Admin SDK via Cloud Functions);
+ * o cliente nao atualiza status de waitlist (rules negam update).
  */
 interface WaitlistRepository {
 
@@ -75,56 +76,6 @@ interface WaitlistRepository {
      * @return true se estiver na lista de espera
      */
     suspend fun isInWaitlist(gameId: String, userId: String): Result<Boolean>
-
-    /**
-     * Promove o proximo jogador da lista de espera para confirmado.
-     * Chamado quando alguem cancela e abre vaga.
-     *
-     * @param gameId ID do jogo
-     * @return Resultado com o jogador promovido ou null se lista vazia
-     */
-    suspend fun promoteNextInLine(gameId: String): Result<GameWaitlist?>
-
-    /**
-     * Notifica o proximo jogador da fila sobre a vaga disponivel.
-     *
-     * @param gameId ID do jogo
-     * @param autoPromoteMinutes Minutos para auto-promocao
-     * @return Resultado com a entrada notificada
-     */
-    suspend fun notifyNextInLine(
-        gameId: String,
-        autoPromoteMinutes: Int = 30
-    ): Result<GameWaitlist?>
-
-    /**
-     * Atualiza o status de uma entrada na lista de espera.
-     *
-     * @param gameId ID do jogo
-     * @param userId ID do usuario
-     * @param status Novo status
-     * @return Resultado de sucesso ou erro
-     */
-    suspend fun updateWaitlistStatus(
-        gameId: String,
-        userId: String,
-        status: WaitlistStatus
-    ): Result<Unit>
-
-    /**
-     * Busca entradas que expiraram (nao responderam no tempo limite).
-     * Usado por um worker para processar auto-promocao.
-     *
-     * @return Lista de entradas expiradas
-     */
-    suspend fun getExpiredEntries(): Result<List<GameWaitlist>>
-
-    /**
-     * Processa entradas expiradas, promovendo os proximos da fila.
-     *
-     * @return Numero de promocoes realizadas
-     */
-    suspend fun processExpiredEntries(): Result<Int>
 
     /**
      * Busca o tamanho da lista de espera de um jogo.

@@ -73,7 +73,7 @@ fun CachedAsyncImage(
                 contentDescription = contentDescription,
                 modifier = Modifier
                     .size(size * 0.6f),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
         } else {
             // AsyncImage com caching via Coil
@@ -165,7 +165,7 @@ fun CachedFieldImage(
                 imageVector = Icons.Filled.ImageNotSupported,
                 contentDescription = stringResource(R.string.cd_field_image),
                 modifier = Modifier.size(width * 0.4f),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
         } else {
             val context = LocalContext.current
@@ -234,7 +234,7 @@ fun CachedGroupImage(
                 imageVector = Icons.Filled.Groups,
                 contentDescription = stringResource(R.string.cd_group_photo, groupName),
                 modifier = Modifier.size(size * 0.5f),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
         } else {
             // AsyncImage com caching via Coil
