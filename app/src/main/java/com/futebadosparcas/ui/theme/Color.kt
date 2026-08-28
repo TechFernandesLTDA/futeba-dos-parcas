@@ -102,9 +102,9 @@ object GamificationTextColors {
 }
 
 object GamificationTextColorsDark {
-    val Gold = Color(0xFFFFD700)
+    val Gold = Color(0xFFFFE45A)
     val Silver = Color(0xFFE0E0E0)
-    val Bronze = Color(0xFFCD7F32)
+    val Bronze = Color(0xFFEBC98F)
     val Diamond = Color(0xFFB9F2FF)
 }
 
@@ -184,7 +184,7 @@ object MatchEventColors {
     val FoulBackground = Color(0xFFF3E5F5)
 
     val YellowCard = Color(0xFFFDD835)
-    val RedCard = Color(0xFFD32F2F)
+    val RedCard = Color(0xFFC62828)
 }
 
 /**

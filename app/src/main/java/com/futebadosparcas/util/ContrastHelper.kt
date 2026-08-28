@@ -1,6 +1,8 @@
 package com.futebadosparcas.util
 
+import android.util.Log
 import androidx.compose.ui.graphics.Color
+import com.futebadosparcas.BuildConfig
 import kotlin.math.pow
 
 /**
@@ -14,6 +16,8 @@ import kotlin.math.pow
  * baseado na luminância relativa do background.
  */
 object ContrastHelper {
+    private const val TAG = "ContrastHelper"
+
     /**
      * Retorna cor de texto (claro ou escuro) baseado no background
      *
@@ -29,11 +33,13 @@ object ContrastHelper {
     fun getContrastingTextColor(backgroundColor: Color): Color {
         val dark = Color(0xFF1A1A1A)
         val light = Color(0xFFFFFFFF)
-        return if (getContrastRatio(dark, backgroundColor) >= getContrastRatio(light, backgroundColor)) {
-            dark
-        } else {
-            light
+        val rd = getContrastRatio(dark, backgroundColor)
+        val rl = getContrastRatio(light, backgroundColor)
+        val best = maxOf(rd, rl)
+        if (BuildConfig.DEBUG && best < 4.5f) {
+            Log.w(TAG, "Nenhum candidato atinge AA sobre $backgroundColor (melhor=$best)")
         }
+        return if (rd >= rl) dark else light
     }
 
     /**

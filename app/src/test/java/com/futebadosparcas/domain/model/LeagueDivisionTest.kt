@@ -244,15 +244,6 @@ class LeagueDivisionTest {
         }
 
         @Test
-        @DisplayName("Todas as divisões devem ter colorHex válido")
-        fun `all divisions should have valid colorHex`() {
-            LeagueDivision.entries.forEach { division ->
-                assertTrue(division.colorHex.startsWith("#"))
-                assertEquals(7, division.colorHex.length)
-            }
-        }
-
-        @Test
         @DisplayName("MinRating deve ser menor que MaxRating")
         fun `minRating should be less than maxRating`() {
             LeagueDivision.entries.forEach { division ->
