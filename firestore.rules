@@ -1251,9 +1251,9 @@ service cloud.firestore {
         allow delete: if isAuthenticated() &&
           (resource.data.user_id == userId() || isGameOwner(gameId) || isAdmin());
 
-        // Promoção/expiração continuam server-only. A única atualização de
-        // cliente aceita é reabrir o documento canônico `{userId}` depois de
-        // um estado terminal, com o mesmo contrato estrito de um novo join.
+        // Promoção/expiração continuam server-only e TODA atualização de
+        // cliente é negada — reabertura/entrada na fila passa exclusivamente
+        // pela callable transacional (Admin SDK), nunca por update de cliente.
         allow update: if false;
       }
 
