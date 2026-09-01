@@ -111,8 +111,8 @@ kotlin {
             implementation("org.jetbrains.androidx.navigation:navigation-compose:2.9.2")
 
             // ViewModel + Lifecycle - atualizado para 2.9.6
-            implementation("org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose:2.9.6")
-            implementation("org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose:2.9.6")
+            implementation("org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose:2.11.0")
+            implementation("org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose:2.11.0")
 
             // Koin 4.1.1 — DI multiplatform (mesmo usado no :app Android)
             // koin-core: módulos, get(), startKoin
