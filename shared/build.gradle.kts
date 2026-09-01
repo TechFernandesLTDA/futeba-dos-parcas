@@ -94,7 +94,7 @@ kotlin {
 
                 // GitLive Firebase Kotlin SDK 2.4.0 - suporta Android + iOS
                 // wasmJs NAO suportado - ver wasmJsMain para stubs
-                val gitLiveVersion = "2.4.0"
+                val gitLiveVersion = "2.6.0"
                 implementation("dev.gitlive:firebase-auth:$gitLiveVersion")
                 implementation("dev.gitlive:firebase-firestore:$gitLiveVersion")
                 implementation("dev.gitlive:firebase-storage:$gitLiveVersion")
