@@ -291,6 +291,7 @@ fun AndroidNotificationType.toKmpNotificationType(): KmpNotificationType {
         AndroidNotificationType.GAME_REMINDER -> KmpNotificationType.GAME_REMINDER
         AndroidNotificationType.GAME_CANCELLED -> KmpNotificationType.GAME_CANCELLED
         AndroidNotificationType.GAME_CONFIRMED -> KmpNotificationType.GAME_CONFIRMED
+        AndroidNotificationType.GAME_VACANCY -> KmpNotificationType.GAME_VACANCY
         AndroidNotificationType.MEMBER_JOINED -> KmpNotificationType.MEMBER_JOINED
         AndroidNotificationType.MEMBER_LEFT -> KmpNotificationType.MEMBER_LEFT
         AndroidNotificationType.CASHBOX_ENTRY -> KmpNotificationType.CASHBOX_ENTRY
@@ -314,6 +315,7 @@ fun KmpNotificationType.toAndroidNotificationType(): AndroidNotificationType {
         KmpNotificationType.GAME_REMINDER -> AndroidNotificationType.GAME_REMINDER
         KmpNotificationType.GAME_CANCELLED -> AndroidNotificationType.GAME_CANCELLED
         KmpNotificationType.GAME_CONFIRMED -> AndroidNotificationType.GAME_CONFIRMED
+        KmpNotificationType.GAME_VACANCY -> AndroidNotificationType.GAME_VACANCY
         KmpNotificationType.MEMBER_JOINED -> AndroidNotificationType.MEMBER_JOINED
         KmpNotificationType.MEMBER_LEFT -> AndroidNotificationType.MEMBER_LEFT
         KmpNotificationType.CASHBOX_ENTRY -> AndroidNotificationType.CASHBOX_ENTRY
@@ -1136,6 +1138,7 @@ fun AndroidMVPVote.toKmpMVPVote(): com.futebadosparcas.domain.model.MVPVote {
             VoteCategory.MVP -> com.futebadosparcas.domain.model.VoteCategory.MVP
             VoteCategory.WORST -> com.futebadosparcas.domain.model.VoteCategory.WORST
             VoteCategory.BEST_GOALKEEPER -> com.futebadosparcas.domain.model.VoteCategory.BEST_GOALKEEPER
+            VoteCategory.CUSTOM -> com.futebadosparcas.domain.model.VoteCategory.CUSTOM
         },
         votedAt = votedAt?.time
     )
@@ -1154,6 +1157,7 @@ fun com.futebadosparcas.domain.model.MVPVote.toAndroidMVPVote(): AndroidMVPVote 
             com.futebadosparcas.domain.model.VoteCategory.MVP -> VoteCategory.MVP
             com.futebadosparcas.domain.model.VoteCategory.WORST -> VoteCategory.WORST
             com.futebadosparcas.domain.model.VoteCategory.BEST_GOALKEEPER -> VoteCategory.BEST_GOALKEEPER
+            com.futebadosparcas.domain.model.VoteCategory.CUSTOM -> VoteCategory.CUSTOM
         },
         votedAt = votedAt?.let { java.util.Date(it) }
     )

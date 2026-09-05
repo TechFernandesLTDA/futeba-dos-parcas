@@ -135,4 +135,30 @@
     <color name="rarity_raro">#2196F3</color>
     <color name="rarity_epico">#9C27B0</color>
     <color name="rarity_lendario">#FFD700</color>
+
+    <!-- Material Theme Colors (aliases for widget compatibility) -->
+    <color name="md_theme_primary">@color/primary</color>
+    <color name="md_theme_onPrimary">@color/on_primary</color>
+    <color name="md_theme_primaryContainer">@color/primary_container</color>
+    <color name="md_theme_onPrimaryContainer">@color/on_primary_container</color>
+    <color name="md_theme_secondary">@color/secondary</color>
+    <color name="md_theme_onSecondary">@color/on_secondary</color>
+    <color name="md_theme_secondaryContainer">@color/secondary_container</color>
+    <color name="md_theme_onSecondaryContainer">@color/on_secondary_container</color>
+    <color name="md_theme_tertiary">@color/tertiary</color>
+    <color name="md_theme_onTertiary">@color/on_tertiary</color>
+    <color name="md_theme_tertiaryContainer">@color/tertiary_container</color>
+    <color name="md_theme_onTertiaryContainer">@color/on_tertiary_container</color>
+    <color name="md_theme_error">@color/error</color>
+    <color name="md_theme_onError">@color/on_error</color>
+    <color name="md_theme_errorContainer">@color/error_container</color>
+    <color name="md_theme_onErrorContainer">@color/on_error_container</color>
+    <color name="md_theme_background">@color/background</color>
+    <color name="md_theme_onBackground">@color/on_background</color>
+    <color name="md_theme_surface">@color/surface</color>
+    <color name="md_theme_onSurface">@color/on_surface</color>
+    <color name="md_theme_surfaceVariant">@color/surface_variant</color>
+    <color name="md_theme_onSurfaceVariant">@color/on_surface_variant</color>
+    <color name="md_theme_outline">@color/outline</color>
+    <color name="md_theme_outlineVariant">@color/outline_variant</color>
 </resources>

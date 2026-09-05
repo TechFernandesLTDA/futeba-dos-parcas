@@ -159,19 +159,44 @@ class GameExperienceRepositoryAdapter(
 ) : GameExperienceRepository {
 
     override suspend fun submitVote(vote: MVPVote): Result<kotlin.Unit> {
-        return kmpRepository.submitVote(vote.toKmpModel())
+        return kmpRepository.submitVote(vote.toKmpModel(), vote.skipped)
     }
 
     override suspend fun isVotingOpen(gameId: String): Result<Boolean> {
         return kmpRepository.isVotingOpen(gameId)
     }
 
+    override suspend fun getVotingTimeRemaining(gameId: String): Result<Long> {
+        return kmpRepository.getVotingTimeRemaining(gameId)
+    }
+
     override suspend fun hasUserVoted(gameId: String, userId: String): Result<Boolean> {
         return kmpRepository.hasUserVoted(gameId, userId)
     }
 
+    override suspend fun hasUserVotedCategory(
+        gameId: String,
+        userId: String,
+        category: com.futebadosparcas.data.model.VoteCategory
+    ): Result<Boolean> {
+        return kmpRepository.hasUserVotedCategory(gameId, userId, category.toKmpCategory())
+    }
+
     override suspend fun getGameVotes(gameId: String): Result<List<MVPVote>> {
         return kmpRepository.getGameVotes(gameId)
+            .map { list -> list.map { it.toAndroidModel() } }
+    }
+
+    override fun getGameVotesFlow(gameId: String): Flow<List<MVPVote>> {
+        return kmpRepository.getGameVotesFlow(gameId)
+            .map { list -> list.map { it.toAndroidModel() } }
+    }
+
+    override suspend fun getVoteResults(
+        gameId: String,
+        isAnonymous: Boolean
+    ): Result<List<com.futebadosparcas.data.model.VoteResultWithPodium>> {
+        return kmpRepository.getVoteResults(gameId, isAnonymous)
             .map { list -> list.map { it.toAndroidModel() } }
     }
 
@@ -181,6 +206,63 @@ class GameExperienceRepositoryAdapter(
 
     override suspend fun checkAllVoted(gameId: String): Result<Boolean> {
         return kmpRepository.checkAllVoted(gameId)
+    }
+
+    override suspend fun getSkippedCount(
+        gameId: String,
+        category: com.futebadosparcas.data.model.VoteCategory
+    ): Result<Int> {
+        return kmpRepository.getSkippedCount(gameId, category.toKmpCategory())
+    }
+
+    override suspend fun submitAttributeRating(rating: com.futebadosparcas.data.model.AttributeRating): Result<kotlin.Unit> {
+        return kmpRepository.submitAttributeRating(rating.toKmpModel())
+    }
+
+    override suspend fun getPlayerAttributeRatings(
+        gameId: String,
+        playerId: String
+    ): Result<List<com.futebadosparcas.data.model.AttributeRating>> {
+        return kmpRepository.getPlayerAttributeRatings(gameId, playerId)
+            .map { list -> list.map { it.toAndroidModel() } }
+    }
+
+    override suspend fun getPlayerAverageRating(
+        gameId: String,
+        playerId: String
+    ): Result<com.futebadosparcas.data.model.AttributeRating?> {
+        return kmpRepository.getPlayerAverageRating(gameId, playerId)
+            .map { it?.toAndroidModel() }
+    }
+
+    override suspend fun getMVPStreak(userId: String): Result<com.futebadosparcas.data.model.MVPStreak?> {
+        return kmpRepository.getMVPStreak(userId)
+            .map { it?.toAndroidModel() }
+    }
+
+    override suspend fun updateMVPStreak(
+        userId: String,
+        gameId: String,
+        wasMVP: Boolean
+    ): Result<com.futebadosparcas.data.model.MVPStreak> {
+        return kmpRepository.updateMVPStreak(userId, gameId, wasMVP)
+            .map { it.toAndroidModel() }
+    }
+
+    override suspend fun checkMVPStreakBadge(userId: String): Result<Boolean> {
+        return kmpRepository.checkMVPStreakBadge(userId)
+    }
+
+    override suspend fun getVotingSettings(groupId: String): Result<com.futebadosparcas.data.model.VotingSettings?> {
+        return kmpRepository.getVotingSettings(groupId)
+            .map { it?.toAndroidModel() }
+    }
+
+    override suspend fun updateVotingSettings(
+        groupId: String,
+        settings: com.futebadosparcas.data.model.VotingSettings
+    ): Result<kotlin.Unit> {
+        return kmpRepository.updateVotingSettings(groupId, settings.toKmpModel())
     }
 }
 
@@ -309,11 +391,7 @@ private fun MVPVote.toKmpModel(): KmpMVPVote {
         gameId = gameId,
         voterId = voterId,
         votedPlayerId = votedPlayerId,
-        category = when (category) {
-            com.futebadosparcas.data.model.VoteCategory.MVP -> KmpVoteCategory.MVP
-            com.futebadosparcas.data.model.VoteCategory.WORST -> KmpVoteCategory.WORST
-            com.futebadosparcas.data.model.VoteCategory.BEST_GOALKEEPER -> KmpVoteCategory.BEST_GOALKEEPER
-        },
+        category = category.toKmpCategory(),
         votedAt = votedAt?.time
     )
 }
@@ -324,13 +402,28 @@ private fun KmpMVPVote.toAndroidModel(): MVPVote {
         gameId = gameId,
         voterId = voterId,
         votedPlayerId = votedPlayerId,
-        category = when (category) {
-            KmpVoteCategory.MVP -> com.futebadosparcas.data.model.VoteCategory.MVP
-            KmpVoteCategory.WORST -> com.futebadosparcas.data.model.VoteCategory.WORST
-            KmpVoteCategory.BEST_GOALKEEPER -> com.futebadosparcas.data.model.VoteCategory.BEST_GOALKEEPER
-        },
+        category = category.toAndroidCategory(),
         votedAt = votedAt?.let { java.util.Date(it) }
     )
+}
+
+// VoteCategory conversions
+private fun com.futebadosparcas.data.model.VoteCategory.toKmpCategory(): KmpVoteCategory {
+    return when (this) {
+        com.futebadosparcas.data.model.VoteCategory.MVP -> KmpVoteCategory.MVP
+        com.futebadosparcas.data.model.VoteCategory.WORST -> KmpVoteCategory.WORST
+        com.futebadosparcas.data.model.VoteCategory.BEST_GOALKEEPER -> KmpVoteCategory.BEST_GOALKEEPER
+        com.futebadosparcas.data.model.VoteCategory.CUSTOM -> KmpVoteCategory.CUSTOM
+    }
+}
+
+private fun KmpVoteCategory.toAndroidCategory(): com.futebadosparcas.data.model.VoteCategory {
+    return when (this) {
+        KmpVoteCategory.MVP -> com.futebadosparcas.data.model.VoteCategory.MVP
+        KmpVoteCategory.WORST -> com.futebadosparcas.data.model.VoteCategory.WORST
+        KmpVoteCategory.BEST_GOALKEEPER -> com.futebadosparcas.data.model.VoteCategory.BEST_GOALKEEPER
+        KmpVoteCategory.CUSTOM -> com.futebadosparcas.data.model.VoteCategory.CUSTOM
+    }
 }
 
 // GameEvent
@@ -408,4 +501,128 @@ private fun PlayerPosition.toKmpModel(): KmpPlayerPosition {
         PlayerPosition.GOALKEEPER -> KmpPlayerPosition.GOALKEEPER
         PlayerPosition.FIELD -> KmpPlayerPosition.LINE
     }
+}
+
+// ========== Game Experience Conversion Functions ==========
+
+// AttributeRating conversions
+private fun com.futebadosparcas.data.model.AttributeRating.toKmpModel(): com.futebadosparcas.domain.model.AttributeRating {
+    return com.futebadosparcas.domain.model.AttributeRating(
+        id = id,
+        gameId = gameId,
+        raterId = raterId,
+        ratedPlayerId = ratedPlayerId,
+        defense = defense,
+        attack = attack,
+        technique = technique,
+        hustle = hustle,
+        fairPlay = fairPlay,
+        ratedAt = ratedAt?.time
+    )
+}
+
+private fun com.futebadosparcas.domain.model.AttributeRating.toAndroidModel(): com.futebadosparcas.data.model.AttributeRating {
+    return com.futebadosparcas.data.model.AttributeRating(
+        id = id,
+        gameId = gameId,
+        raterId = raterId,
+        ratedPlayerId = ratedPlayerId,
+        defense = defense,
+        attack = attack,
+        technique = technique,
+        hustle = hustle,
+        fairPlay = fairPlay,
+        ratedAt = ratedAt?.let { java.util.Date(it) }
+    )
+}
+
+// MVPStreak conversions
+private fun com.futebadosparcas.domain.model.MVPStreak.toAndroidModel(): com.futebadosparcas.data.model.MVPStreak {
+    return com.futebadosparcas.data.model.MVPStreak(
+        id = "",
+        userId = userId,
+        currentStreak = currentStreak,
+        maxStreak = maxStreak,
+        lastMvpGameId = lastMvpGameId,
+        updatedAt = java.util.Date(updatedAt)
+    )
+}
+
+// MVPVoteResult conversions
+private fun com.futebadosparcas.domain.model.MVPVoteResult.toAndroidModel(): com.futebadosparcas.data.model.MVPVoteResult {
+    return com.futebadosparcas.data.model.MVPVoteResult(
+        playerId = playerId,
+        playerName = playerName,
+        playerPhoto = playerPhoto,
+        voteCount = voteCount,
+        percentage = percentage,
+        position = position,
+        category = category.toAndroidCategory(),
+        voters = voters
+    )
+}
+
+// VoteResultWithPodium conversions
+private fun com.futebadosparcas.domain.model.VoteResultWithPodium.toAndroidModel(): com.futebadosparcas.data.model.VoteResultWithPodium {
+    return com.futebadosparcas.data.model.VoteResultWithPodium(
+        category = category.toAndroidCategory(),
+        customCategoryId = customCategoryId,
+        customCategoryName = customCategoryName,
+        results = results.map { it.toAndroidModel() },
+        totalVotes = totalVotes,
+        skippedCount = skippedCount,
+        isAnonymous = isAnonymous
+    )
+}
+
+// VotingSettings conversions
+private fun com.futebadosparcas.domain.model.VotingSettings.toAndroidModel(): com.futebadosparcas.data.model.VotingSettings {
+    return com.futebadosparcas.data.model.VotingSettings(
+        isAnonymous = isAnonymous,
+        votingTimeoutHours = votingTimeoutHours,
+        showTop3 = showTop3,
+        separateGoalkeeperVoting = separateGoalkeeperVoting,
+        allowSkipVote = allowSkipVote,
+        customCategories = customCategories.map { it.toAndroidModel() },
+        enabledCategories = enabledCategories
+    )
+}
+
+private fun com.futebadosparcas.data.model.VotingSettings.toKmpModel(): com.futebadosparcas.domain.model.VotingSettings {
+    return com.futebadosparcas.domain.model.VotingSettings(
+        isAnonymous = isAnonymous,
+        votingTimeoutHours = votingTimeoutHours,
+        showTop3 = showTop3,
+        separateGoalkeeperVoting = separateGoalkeeperVoting,
+        allowSkipVote = allowSkipVote,
+        customCategories = customCategories.map { it.toKmpModel() },
+        enabledCategories = enabledCategories
+    )
+}
+
+// CustomVoteCategory conversions
+private fun com.futebadosparcas.domain.model.CustomVoteCategory.toAndroidModel(): com.futebadosparcas.data.model.CustomVoteCategory {
+    return com.futebadosparcas.data.model.CustomVoteCategory(
+        id = id,
+        name = name,
+        description = description,
+        emoji = emoji,
+        isActive = isActive,
+        createdAt = java.util.Date(createdAt),
+        forGoalkeepersOnly = forGoalkeepersOnly,
+        forFieldPlayersOnly = forFieldPlayersOnly
+    )
+}
+
+private fun com.futebadosparcas.data.model.CustomVoteCategory.toKmpModel(): com.futebadosparcas.domain.model.CustomVoteCategory {
+    return com.futebadosparcas.domain.model.CustomVoteCategory(
+        id = id,
+        name = name,
+        description = description,
+        emoji = emoji,
+        isActive = isActive,
+        createdAt = createdAt?.time ?: 0,
+        forGoalkeepersOnly = forGoalkeepersOnly,
+        forFieldPlayersOnly = forFieldPlayersOnly
+    )
 }

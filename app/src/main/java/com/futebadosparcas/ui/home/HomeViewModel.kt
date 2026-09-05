@@ -130,8 +130,9 @@ class HomeViewModel @Inject constructor(
 
         // Usar cache se disponível e recente (< 30s)
         val currentTime = System.currentTimeMillis()
-        if (!forceRetry && cachedSuccessState != null && (currentTime - lastLoadTime) < CACHE_DURATION_MS) {
-            _uiState.value = cachedSuccessState!!
+        val cached = cachedSuccessState
+        if (!forceRetry && cached != null && (currentTime - lastLoadTime) < CACHE_DURATION_MS) {
+            _uiState.value = cached
             _loadingState.value = LoadingState.Success
             return
         }

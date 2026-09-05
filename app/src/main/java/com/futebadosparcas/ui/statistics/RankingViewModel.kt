@@ -131,7 +131,10 @@ class RankingViewModel @Inject constructor(
                     _evolutionState.value = EvolutionUiState.Error("Erro ao carregar usuario")
                     return@launch
                 }
-                val user = userResult.getOrNull()!!
+                val user = userResult.getOrNull() ?: run {
+                    _evolutionState.value = EvolutionUiState.Error("Usuario nao encontrado")
+                    return@launch
+                }
 
                 // Buscar estatisticas
                 val statsResult = statisticsRepository.getMyStatistics()

@@ -7,6 +7,7 @@ enum class PlayerPosition {
 
 enum class PaymentStatus {
     PENDING,
+    PARTIAL,  // Issue #69: Pagamento parcial
     PAID,
     OVERDUE,
     CANCELLED

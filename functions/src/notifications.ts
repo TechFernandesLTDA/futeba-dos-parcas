@@ -40,6 +40,7 @@ export enum NotificationType {
   LEVEL_UP = "LEVEL_UP",
   RANKING_CHANGED = "RANKING_CHANGED",
   MVP_RECEIVED = "MVP_RECEIVED",
+  LIVE_GAME_GOAL = "LIVE_GAME_GOAL",
 }
 
 // ==========================================
@@ -913,6 +914,122 @@ export const onGroupInviteCreated = onDocumentCreated(
       console.log(`[GROUP_INVITE] Notificacao enviada com sucesso para ${invitedUserId}`);
     } catch (e) {
       console.error(`[GROUP_INVITE] Erro ao enviar notificacao para ${invitedUserId}:`, e);
+    }
+  }
+);
+
+// ==========================================
+// LIVE GAME GOAL NOTIFICATION
+// ==========================================
+
+/**
+ * Trigger que envia notificacao push quando um gol e marcado em jogo ao vivo.
+ * Notifica membros do grupo que nao estao presentes no jogo.
+ */
+export const onLiveGameGoal = onDocumentCreated(
+  "game_events/{eventId}",
+  async (event) => {
+    const gameEvent = event.data?.data();
+    if (!gameEvent) return;
+
+    // Verificar se e um gol
+    if (gameEvent.event_type !== "GOAL") {
+      return;
+    }
+
+    const eventId = event.params.eventId;
+    const gameId = gameEvent.game_id;
+    const playerName = gameEvent.player_name || "Jogador";
+    // teamId is available in gameEvent.team_id if needed for future use
+
+    console.log(`[GOAL] Gol registrado: ${playerName} (game: ${gameId})`);
+
+    try {
+      // Buscar dados do jogo para verificar grupo
+      const gameDoc = await getDb().collection("games").doc(gameId).get();
+      if (!gameDoc.exists) {
+        console.log(`[GOAL] Jogo ${gameId} nao encontrado`);
+        return;
+      }
+
+      const game = gameDoc.data();
+      const groupId = game?.group_id;
+
+      if (!groupId) {
+        console.log(`[GOAL] Jogo ${gameId} nao pertence a um grupo`);
+        return;
+      }
+
+      // Buscar placar atual
+      const scoreDoc = await getDb().collection("live_scores").doc(gameId).get();
+      if (!scoreDoc.exists) {
+        console.log(`[GOAL] Placar nao encontrado para ${gameId}`);
+        return;
+      }
+
+      const score = scoreDoc.data();
+      const team1Score = score?.team1_score || 0;
+      const team2Score = score?.team2_score || 0;
+
+      // Buscar nomes dos times
+      const team1Id = score?.team1_id;
+      const team2Id = score?.team2_id;
+
+      let team1Name = "Time 1";
+      let team2Name = "Time 2";
+
+      if (team1Id) {
+        const team1Doc = await getDb().collection("teams").doc(team1Id).get();
+        team1Name = team1Doc.data()?.name || "Time 1";
+      }
+      if (team2Id) {
+        const team2Doc = await getDb().collection("teams").doc(team2Id).get();
+        team2Name = team2Doc.data()?.name || "Time 2";
+      }
+
+      // Buscar membros do grupo
+      const membersSnap = await getDb().collection("groups")
+        .doc(groupId)
+        .collection("members")
+        .where("role", "in", ["MEMBER", "ADMIN", "OWNER"])
+        .get();
+
+      // Buscar jogadores confirmados no jogo (para excluir)
+      const confirmationsSnap = await getDb().collection("confirmations")
+        .where("game_id", "==", gameId)
+        .where("status", "==", "CONFIRMED")
+        .get();
+
+      const confirmedPlayerIds = new Set(
+        confirmationsSnap.docs.map((doc: any) => doc.data().user_id || doc.data().userId)
+      );
+
+      // Filtrar membros que NAO estao jogando
+      const memberIdsToNotify = membersSnap.docs
+        .map((doc: any) => doc.id)
+        .filter((id: string) => !confirmedPlayerIds.has(id));
+
+      if (memberIdsToNotify.length === 0) {
+        console.log(`[GOAL] Nenhum membro para notificar (todos estao jogando)`);
+        return;
+      }
+
+      const scoreText = `${team1Name} ${team1Score} x ${team2Score} ${team2Name}`;
+
+      await sendNotificationToUsers(memberIdsToNotify, {
+        title: "GOL!",
+        body: `${playerName} marcou! Placar: ${scoreText}`,
+        type: NotificationType.LIVE_GAME_GOAL,
+        data: {
+          gameId: gameId,
+          eventId: eventId,
+          action: "live_game/" + gameId,
+        },
+      });
+
+      console.log(`[GOAL] Notificacao enviada para ${memberIdsToNotify.length} membros`);
+    } catch (e) {
+      console.error("[GOAL] Erro ao enviar notificacao de gol:", e);
     }
   }
 );

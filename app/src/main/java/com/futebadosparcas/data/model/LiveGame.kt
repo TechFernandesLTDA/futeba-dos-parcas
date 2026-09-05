@@ -33,12 +33,50 @@ data class LiveGameScore(
     var startedAt: Date? = null,
     @get:PropertyName("finished_at")
     @set:PropertyName("finished_at")
-    var finishedAt: Date? = null
+    var finishedAt: Date? = null,
+    // Timer state for configurable timer feature
+    @get:PropertyName("current_half")
+    @set:PropertyName("current_half")
+    var currentHalf: Int = 1, // 1 = primeiro tempo, 2 = segundo tempo
+    @get:PropertyName("half_duration_minutes")
+    @set:PropertyName("half_duration_minutes")
+    var halfDurationMinutes: Int = 25, // Duracao de cada tempo em minutos
+    @get:PropertyName("is_paused")
+    @set:PropertyName("is_paused")
+    var isPaused: Boolean = false,
+    @get:PropertyName("paused_at")
+    @set:PropertyName("paused_at")
+    var pausedAt: Date? = null,
+    @get:PropertyName("total_paused_time_ms")
+    @set:PropertyName("total_paused_time_ms")
+    var totalPausedTimeMs: Long = 0, // Tempo total em pausa em milissegundos
+    @get:PropertyName("half_started_at")
+    @set:PropertyName("half_started_at")
+    var halfStartedAt: Date? = null, // Quando o tempo atual comecou
+    // Stats per half
+    @get:PropertyName("team1_score_first_half")
+    @set:PropertyName("team1_score_first_half")
+    var team1ScoreFirstHalf: Int = 0,
+    @get:PropertyName("team2_score_first_half")
+    @set:PropertyName("team2_score_first_half")
+    var team2ScoreFirstHalf: Int = 0
 ) {
     constructor() : this(id = "")
+
+    @Exclude
+    fun getEffectiveStartTime(): Long? {
+        val halfStart = halfStartedAt?.time ?: startedAt?.time ?: return null
+        return if (isPaused) {
+            // Se pausado, retorna o tempo ate a pausa
+            pausedAt?.time ?: halfStart
+        } else {
+            // Se nao pausado, ajusta pelo tempo total em pausa
+            halfStart + totalPausedTimeMs
+        }
+    }
 }
 
-// Eventos do jogo (gols, assistencias, cartoes)
+// Eventos do jogo (gols, assistencias, cartoes, substituicoes)
 @IgnoreExtraProperties
 data class GameEvent(
     @DocumentId
@@ -73,7 +111,25 @@ data class GameEvent(
     @ServerTimestamp
     @get:PropertyName("created_at")
     @set:PropertyName("created_at")
-    var createdAt: Date? = null
+    var createdAt: Date? = null,
+    // Half indicator for stats per half feature
+    @get:PropertyName("half")
+    @set:PropertyName("half")
+    var half: Int = 1, // 1 = primeiro tempo, 2 = segundo tempo
+    // Substitution fields
+    @get:PropertyName("player_out_id")
+    @set:PropertyName("player_out_id")
+    var playerOutId: String? = null,
+    @get:PropertyName("player_out_name")
+    @set:PropertyName("player_out_name")
+    var playerOutName: String? = null,
+    // Heat map field position (optional)
+    @get:PropertyName("field_position_x")
+    @set:PropertyName("field_position_x")
+    var fieldPositionX: Float? = null, // 0.0 a 1.0 (esquerda para direita)
+    @get:PropertyName("field_position_y")
+    @set:PropertyName("field_position_y")
+    var fieldPositionY: Float? = null  // 0.0 a 1.0 (topo para baixo)
 ) {
     constructor() : this(id = "")
 
@@ -83,6 +139,9 @@ data class GameEvent(
     } catch (e: Exception) {
         GameEventType.GOAL
     }
+
+    @Exclude
+    fun hasFieldPosition(): Boolean = fieldPositionX != null && fieldPositionY != null
 }
 
 enum class GameEventType {

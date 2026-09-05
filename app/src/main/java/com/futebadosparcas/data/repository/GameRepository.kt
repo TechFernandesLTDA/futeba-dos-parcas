@@ -59,6 +59,11 @@ interface GameRepository {
     suspend fun getGoalkeeperCount(gameId: String): Result<Int>
     suspend fun cancelConfirmation(gameId: String): Result<Unit>
     suspend fun removePlayerFromGame(gameId: String, userId: String): Result<Unit>
+    /**
+     * Confirma um jogador pendente (apenas para manager/owner).
+     * Atualiza status de PENDING para CONFIRMED.
+     */
+    suspend fun confirmPlayerAsOwner(gameId: String, userId: String): Result<Unit>
     suspend fun updateGameStatus(gameId: String, status: String): Result<Unit>
     suspend fun updateGameConfirmationStatus(gameId: String, isOpen: Boolean): Result<Unit>
     suspend fun updatePaymentStatus(gameId: String, userId: String, isPaid: Boolean): Result<Unit>
@@ -149,4 +154,15 @@ interface GameRepository {
         gameId: String,
         position: String = "FIELD"
     ): Result<GameConfirmation>
+
+    // === GAME OWNER FEATURES (Issues #61-70) ===
+
+    /**
+     * Issue #69: Atualiza pagamento parcial de um jogador.
+     */
+    suspend fun updatePartialPayment(
+        gameId: String,
+        userId: String,
+        amount: Double
+    ): Result<Unit>
 }

@@ -363,7 +363,7 @@ class GroupRepository @Inject constructor(
 
             // Verificar se é admin/owner
             val roleResult = getMyRoleInGroup(groupId)
-            if (roleResult.isFailure) return Result.failure(roleResult.exceptionOrNull()!!)
+            if (roleResult.isFailure) return Result.failure(roleResult.exceptionOrNull() ?: Exception("Erro ao verificar permissao"))
             
             val role = roleResult.getOrNull()
             if (role != GroupMemberRole.OWNER && role != GroupMemberRole.ADMIN) {
@@ -437,7 +437,7 @@ class GroupRepository @Inject constructor(
 
             // Verificar se é owner
             val roleResult = getMyRoleInGroup(groupId)
-            if (roleResult.isFailure) return Result.failure(roleResult.exceptionOrNull()!!)
+            if (roleResult.isFailure) return Result.failure(roleResult.exceptionOrNull() ?: Exception("Erro ao verificar permissao"))
 
             if (roleResult.getOrNull() != GroupMemberRole.OWNER) {
                 return Result.failure(Exception("Apenas o dono pode promover administradores"))
@@ -470,7 +470,7 @@ class GroupRepository @Inject constructor(
 
             // Verificar se é owner
             val roleResult = getMyRoleInGroup(groupId)
-            if (roleResult.isFailure) return Result.failure(roleResult.exceptionOrNull()!!)
+            if (roleResult.isFailure) return Result.failure(roleResult.exceptionOrNull() ?: Exception("Erro ao verificar permissao"))
 
             if (roleResult.getOrNull() != GroupMemberRole.OWNER) {
                 return Result.failure(Exception("Apenas o dono pode rebaixar administradores"))

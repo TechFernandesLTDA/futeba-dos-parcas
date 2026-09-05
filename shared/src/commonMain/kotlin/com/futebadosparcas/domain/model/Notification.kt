@@ -175,6 +175,7 @@ enum class NotificationType(val displayName: String) {
     GAME_REMINDER("Lembrete de jogo"),
     GAME_CANCELLED("Jogo cancelado"),
     GAME_CONFIRMED("Jogo confirmado"),
+    GAME_VACANCY("Vaga disponível"),
     MEMBER_JOINED("Novo membro"),
     MEMBER_LEFT("Membro saiu"),
     CASHBOX_ENTRY("Entrada no caixa"),

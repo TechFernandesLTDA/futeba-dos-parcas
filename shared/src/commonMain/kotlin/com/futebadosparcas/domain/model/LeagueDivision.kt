@@ -72,8 +72,8 @@ enum class LeagueDivision(
             return when (value?.uppercase()) {
                 "DIAMANTE", "DIAMOND" -> DIAMANTE
                 "OURO", "GOLD" -> OURO
-                "PRATA", "SILVER", "SILVER" -> PRATA
-                "BRONZE", "BRONZE" -> BRONZE
+                "PRATA", "SILVER" -> PRATA
+                "BRONZE" -> BRONZE
                 else -> BRONZE
             }
         }

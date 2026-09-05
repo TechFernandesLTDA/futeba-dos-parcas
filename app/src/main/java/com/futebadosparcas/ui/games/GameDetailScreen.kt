@@ -12,7 +12,9 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -384,7 +386,7 @@ fun GameDetailContent(
                         modifier = Modifier.padding(16.dp)
                     )
                 }
-                items(state.teams) { team ->
+                items(state.teams, key = { it.id }) { team ->
                     TeamCard(
                         team = team,
                         players = state.confirmations.filter { it.userId in team.playerIds },
@@ -410,7 +412,7 @@ fun GameDetailContent(
                 }
             }
 
-            items(state.confirmations) { confirmation ->
+            items(state.confirmations, key = { it.id }) { confirmation ->
                 ConfirmationCard(
                     confirmation = confirmation,
                     isOwner = state.canManageGame,
@@ -424,7 +426,8 @@ fun GameDetailContent(
                     onAcceptClick = {
                         showPositionDialog = true
                     },
-                    onDeclineClick = { viewModel.toggleConfirmation(gameId) }
+                    onDeclineClick = { viewModel.toggleConfirmation(gameId) },
+                    onOwnerConfirmClick = { viewModel.confirmPlayerAsOwner(gameId, confirmation.userId) }
                 )
             }
         }
@@ -532,8 +535,12 @@ fun GameHeaderSection(
                         overflow = TextOverflow.Ellipsis
                     )
                 }
-                TextButton(onClick = onGenerateTeams) {
-                    Text(stringResource(R.string.generate_teams), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Row(horizontalArrangement = Arrangement.SpaceEvenly, modifier = Modifier.fillMaxWidth()) {
+                    TextButton(onClick = onGenerateTeams) {
+                        Icon(Icons.Default.Casino, null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(4.dp))
+                        Text(stringResource(R.string.generate_teams), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    }
                 }
                 TextButton(
                     onClick = onCancel,
@@ -554,7 +561,8 @@ fun ConfirmationCard(
     onPaymentClick: () -> Unit,
     onRemoveClick: () -> Unit,
     onAcceptClick: () -> Unit,
-    onDeclineClick: () -> Unit
+    onDeclineClick: () -> Unit,
+    onOwnerConfirmClick: () -> Unit = {}
 ) {
     Card(
         modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp).fillMaxWidth(),
@@ -572,15 +580,48 @@ fun ConfirmationCard(
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(confirmation.userName, fontWeight = FontWeight.SemiBold)
-                Text(confirmation.position, style = MaterialTheme.typography.bodySmall)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = when (confirmation.position.uppercase()) {
+                            "FIELD", "LINE" -> stringResource(R.string.field_player)
+                            "GOALKEEPER" -> stringResource(R.string.goalkeeper)
+                            else -> confirmation.position
+                        },
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                    // Mostrar status PENDING para o dono
+                    if (confirmation.status == "PENDING" && isOwner) {
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Surface(
+                            shape = RoundedCornerShape(4.dp),
+                            color = MaterialTheme.colorScheme.tertiaryContainer
+                        ) {
+                            Text(
+                                text = stringResource(R.string.awaiting_confirmation),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onTertiaryContainer,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            )
+                        }
+                    }
+                }
             }
 
+            // Se for o proprio jogador com convite pendente, mostrar botoes de aceitar/recusar
             if (currentUserId == confirmation.userId && confirmation.status == "PENDING") {
                 IconButton(onClick = onAcceptClick) {
                     Icon(Icons.Default.Check, stringResource(R.string.accept), tint = MaterialTheme.colorScheme.primary)
                 }
                 IconButton(onClick = onDeclineClick) {
                     Icon(Icons.Default.Close, stringResource(R.string.decline), tint = MaterialTheme.colorScheme.error)
+                }
+            } else if (confirmation.status == "PENDING" && isOwner && currentUserId != confirmation.userId) {
+                // Se for o dono e o jogador ainda nao confirmou, permitir confirmar pelo jogador
+                IconButton(onClick = onOwnerConfirmClick) {
+                    Icon(Icons.Default.PersonAdd, stringResource(R.string.confirm_player), tint = MaterialTheme.colorScheme.primary)
+                }
+                IconButton(onClick = onRemoveClick) {
+                    Icon(Icons.Outlined.Delete, stringResource(R.string.action_remove), tint = MaterialTheme.colorScheme.error)
                 }
             } else {
                 if (isOwner || currentUserId == confirmation.userId) {
@@ -607,19 +648,71 @@ fun TeamCard(
     canManage: Boolean,
     onPlayerClick: (String) -> Unit
 ) {
-    Card(modifier = Modifier.padding(16.dp).fillMaxWidth()) {
+    // Tentar parsear a cor do time (fallback para surfaceContainerHigh)
+    val teamColor = try {
+        val colorValue = team.color.toLongOrNull(16) ?: 0xFF2196F3
+        Color(colorValue)
+    } catch (e: Exception) {
+        MaterialTheme.colorScheme.surfaceContainerHigh
+    }
+
+    // Calcular forca do time (media simples baseada em quantidade)
+    val teamStrength = if (players.isNotEmpty()) {
+        // Placeholder: em producao, usar ratings reais
+        3.0f + (players.size * 0.1f)
+    } else 0f
+
+    Card(
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp).fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+        ),
+        border = BorderStroke(2.dp, teamColor)
+    ) {
         Column(modifier = Modifier.padding(12.dp)) {
-            Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-                Text(team.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                Text(stringResource(R.string.goals_count, team.score), style = MaterialTheme.typography.titleMedium)
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    // Indicador de cor do colete
+                    Box(
+                        modifier = Modifier
+                            .size(24.dp)
+                            .background(teamColor, CircleShape)
+                            .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(team.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                }
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    // Forca do time
+                    if (players.isNotEmpty()) {
+                        Surface(
+                            shape = RoundedCornerShape(4.dp),
+                            color = MaterialTheme.colorScheme.primaryContainer
+                        ) {
+                            Text(
+                                text = stringResource(R.string.team_strength_value, teamStrength),
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        }
+                        Spacer(Modifier.width(8.dp))
+                    }
+                    Text(stringResource(R.string.goals_count, team.score), style = MaterialTheme.typography.titleMedium)
+                }
             }
+
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-            // 🔧 OTIMIZADO: Use LazyColumn instead of forEach for proper Compose list rendering
-            LazyColumn(modifier = Modifier.fillMaxWidth()) {
-                items(
-                    items = players,
-                    key = { it.userId }  // ✅ Each player has unique key for efficient recomposition
-                ) { player ->
+
+            // Lista de jogadores
+            Column(modifier = Modifier.fillMaxWidth()) {
+                players.forEach { player ->
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -627,11 +720,68 @@ fun TeamCard(
                             .padding(vertical = 4.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(player.userName, modifier = Modifier.weight(1f))
+                        CachedProfileImage(
+                            photoUrl = player.userPhoto,
+                            userName = player.userName,
+                            size = 28.dp
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                player.userName,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                            if (player.position == PlayerPosition.GOALKEEPER.name) {
+                                Text(
+                                    stringResource(R.string.goalkeeper),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
                         if (player.goals > 0) {
-                            Text("⚽ ${player.goals} ", fontSize = 12.sp)
+                            Surface(
+                                shape = CircleShape,
+                                color = MaterialTheme.colorScheme.tertiaryContainer
+                            ) {
+                                Text(
+                                    text = "${player.goals}",
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onTertiaryContainer
+                                )
+                            }
+                        }
+                        if (player.assists > 0) {
+                            Spacer(Modifier.width(4.dp))
+                            Text(
+                                text = stringResource(R.string.assists_count, player.assists),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
                     }
+                }
+            }
+
+            // Indicador de goleiro
+            val hasGoalkeeper = players.any { it.position == PlayerPosition.GOALKEEPER.name }
+            if (players.isNotEmpty()) {
+                Spacer(Modifier.height(8.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        if (hasGoalkeeper) Icons.Default.CheckCircle else Icons.Default.Warning,
+                        null,
+                        modifier = Modifier.size(14.dp),
+                        tint = if (hasGoalkeeper) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+                    )
+                    Spacer(Modifier.width(4.dp))
+                    Text(
+                        text = if (hasGoalkeeper) stringResource(R.string.has_goalkeeper) else stringResource(R.string.no_goalkeeper),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = if (hasGoalkeeper) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.error
+                    )
                 }
             }
         }

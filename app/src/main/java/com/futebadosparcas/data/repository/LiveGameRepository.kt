@@ -29,7 +29,12 @@ class LiveGameRepository @Inject constructor(
     /**
      * Inicia um jogo ao vivo
      */
-    suspend fun startLiveGame(gameId: String, team1Id: String, team2Id: String): Result<LiveGameScore> {
+    suspend fun startLiveGame(
+        gameId: String,
+        team1Id: String,
+        team2Id: String,
+        halfDurationMinutes: Int = 25
+    ): Result<LiveGameScore> {
         return try {
             val docRef = scoresCollection.document(gameId)
 
@@ -39,14 +44,101 @@ class LiveGameRepository @Inject constructor(
                 team1Id = team1Id,
                 team1Score = 0,
                 team2Id = team2Id,
-                team2Score = 0
+                team2Score = 0,
+                currentHalf = 1,
+                halfDurationMinutes = halfDurationMinutes,
+                isPaused = false,
+                totalPausedTimeMs = 0
             )
 
             docRef.set(score).await()
-            AppLogger.d(TAG) { "Jogo ao vivo iniciado: $gameId" }
+            AppLogger.d(TAG) { "Jogo ao vivo iniciado: $gameId com $halfDurationMinutes min por tempo" }
             Result.success(score)
         } catch (e: Exception) {
             AppLogger.e(TAG, "Erro ao iniciar jogo ao vivo", e)
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Pausa o timer do jogo
+     */
+    suspend fun pauseTimer(gameId: String): Result<Unit> {
+        return try {
+            val scoreDoc = scoresCollection.document(gameId)
+            scoreDoc.update(
+                mapOf(
+                    "is_paused" to true,
+                    "paused_at" to com.google.firebase.firestore.FieldValue.serverTimestamp()
+                )
+            ).await()
+            AppLogger.d(TAG) { "Timer pausado: $gameId" }
+            Result.success(Unit)
+        } catch (e: Exception) {
+            AppLogger.e(TAG, "Erro ao pausar timer", e)
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Resume o timer do jogo
+     */
+    suspend fun resumeTimer(gameId: String): Result<Unit> {
+        return try {
+            val scoreDoc = scoresCollection.document(gameId)
+
+            firestore.runTransaction { transaction ->
+                val snapshot = transaction.get(scoreDoc)
+                val score = snapshot.toObject(LiveGameScore::class.java)
+                    ?: return@runTransaction
+
+                val pausedAt = score.pausedAt?.time ?: return@runTransaction
+                val now = System.currentTimeMillis()
+                val pauseDuration = now - pausedAt
+                val newTotalPausedTime = score.totalPausedTimeMs + pauseDuration
+
+                transaction.update(scoreDoc, mapOf(
+                    "is_paused" to false,
+                    "paused_at" to null,
+                    "total_paused_time_ms" to newTotalPausedTime
+                ))
+            }.await()
+
+            AppLogger.d(TAG) { "Timer retomado: $gameId" }
+            Result.success(Unit)
+        } catch (e: Exception) {
+            AppLogger.e(TAG, "Erro ao retomar timer", e)
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Inicia o segundo tempo
+     */
+    suspend fun startSecondHalf(gameId: String): Result<Unit> {
+        return try {
+            val scoreDoc = scoresCollection.document(gameId)
+
+            firestore.runTransaction { transaction ->
+                val snapshot = transaction.get(scoreDoc)
+                val score = snapshot.toObject(LiveGameScore::class.java)
+                    ?: return@runTransaction
+
+                // Salvar placar do primeiro tempo
+                transaction.update(scoreDoc, mapOf(
+                    "current_half" to 2,
+                    "half_started_at" to com.google.firebase.firestore.FieldValue.serverTimestamp(),
+                    "is_paused" to false,
+                    "total_paused_time_ms" to 0L,
+                    "team1_score_first_half" to score.team1Score,
+                    "team2_score_first_half" to score.team2Score
+                ))
+            }.await()
+
+            AppLogger.d(TAG) { "Segundo tempo iniciado: $gameId" }
+            Result.success(Unit)
+        } catch (e: Exception) {
+            AppLogger.e(TAG, "Erro ao iniciar segundo tempo", e)
             Result.failure(e)
         }
     }
@@ -114,7 +206,7 @@ class LiveGameRepository @Inject constructor(
     }
 
     /**
-     * Adiciona um evento ao jogo (gol, cartão, etc)
+     * Adiciona um evento ao jogo (gol, cartão, substituicao, etc)
      * Apenas owner ou jogadores confirmados podem adicionar eventos.
      */
     suspend fun addGameEvent(
@@ -125,9 +217,14 @@ class LiveGameRepository @Inject constructor(
         teamId: String,
         assistedById: String? = null,
         assistedByName: String? = null,
-        minute: Int = 0
+        minute: Int = 0,
+        half: Int = 1,
+        playerOutId: String? = null,
+        playerOutName: String? = null,
+        fieldPositionX: Float? = null,
+        fieldPositionY: Float? = null
     ): Result<GameEvent> {
-        AppLogger.d(TAG) { "addGameEvent: Iniciando - gameId=$gameId, eventType=$eventType, playerId=$playerId, teamId=$teamId" }
+        AppLogger.d(TAG) { "addGameEvent: Iniciando - gameId=$gameId, eventType=$eventType, playerId=$playerId, teamId=$teamId, half=$half" }
 
         return try {
             // Validar permissão
@@ -150,7 +247,12 @@ class LiveGameRepository @Inject constructor(
                 teamId = teamId,
                 assistedById = assistedById,
                 assistedByName = assistedByName,
-                minute = minute
+                minute = minute,
+                half = half,
+                playerOutId = playerOutId,
+                playerOutName = playerOutName,
+                fieldPositionX = fieldPositionX,
+                fieldPositionY = fieldPositionY
             )
 
             docRef.set(event).await()
@@ -163,11 +265,46 @@ class LiveGameRepository @Inject constructor(
             // Atualizar estatísticas do jogador
             updatePlayerStats(gameId, playerId, teamId, eventType, assistedById)
 
+            // Atualizar status de jogadores em campo para substituicoes
+            if (eventType == GameEventType.SUBSTITUTION && playerOutId != null) {
+                updatePlayerOnFieldStatus(gameId, playerId, playerOutId)
+            }
+
             AppLogger.d(TAG) { "Evento adicionado: ${eventType.name} playerId=$playerId" }
             Result.success(event)
         } catch (e: Exception) {
             AppLogger.e(TAG, "Erro ao adicionar evento", e)
             Result.failure(e)
+        }
+    }
+
+    // deleteGameEvent foi movido para o final da classe com verificação de permissão
+
+    /**
+     * Atualiza status de jogadores em campo apos substituicao
+     */
+    private suspend fun updatePlayerOnFieldStatus(gameId: String, playerInId: String, playerOutId: String) {
+        try {
+            val playerInStatsId = "${gameId}_$playerInId"
+            val playerOutStatsId = "${gameId}_$playerOutId"
+
+            firestore.runTransaction { transaction ->
+                // Marcar jogador que saiu como nao jogando
+                val playerOutDoc = liveStatsCollection.document(playerOutStatsId)
+                val playerOutSnapshot = transaction.get(playerOutDoc)
+                if (playerOutSnapshot.exists()) {
+                    transaction.update(playerOutDoc, "is_playing", false)
+                }
+
+                // Marcar jogador que entrou como jogando (criar se nao existir)
+                val playerInDoc = liveStatsCollection.document(playerInStatsId)
+                val playerInSnapshot = transaction.get(playerInDoc)
+                if (playerInSnapshot.exists()) {
+                    transaction.update(playerInDoc, "is_playing", true)
+                }
+            }.await()
+        } catch (e: Exception) {
+            AppLogger.e(TAG, "Erro ao atualizar status de jogadores em campo", e)
         }
     }
 

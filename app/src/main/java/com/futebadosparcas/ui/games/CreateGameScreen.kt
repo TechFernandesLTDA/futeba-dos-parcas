@@ -1,5 +1,6 @@
 package com.futebadosparcas.ui.games
 
+import android.widget.Toast
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
@@ -28,15 +29,25 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.futebadosparcas.R
 import com.futebadosparcas.data.model.Field
 import com.futebadosparcas.data.model.FieldType
+import com.futebadosparcas.data.model.GameTemplate
 import com.futebadosparcas.data.model.GameVisibility
 import com.futebadosparcas.data.model.Location
+import com.futebadosparcas.ui.games.components.AvailabilityCalendar
+import com.futebadosparcas.ui.games.components.DraftRestorationDialog
+import com.futebadosparcas.ui.games.components.DuplicateGameDialog
+import com.futebadosparcas.ui.games.components.PricePerPlayerCalculator
+import com.futebadosparcas.ui.games.components.PricePerPlayerCalculatorWithOverride
+import com.futebadosparcas.ui.games.components.SaveTemplateDialog
+import com.futebadosparcas.ui.games.components.TemplateSelectionDialog
+import com.futebadosparcas.ui.games.components.TimeSuggestionChip
+import com.futebadosparcas.ui.games.components.CalendarIntegrationCard
 import com.futebadosparcas.util.HapticManager
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
 /**
- * Tela moderna de criação/edição de jogos em Jetpack Compose
+ * Tela moderna de criacao/edicao de jogos em Jetpack Compose
  * Preparada para KMP/iOS com Material Design 3
  *
  * Arquitetura KMP-Ready (3 camadas):
@@ -44,12 +55,17 @@ import java.time.format.DateTimeFormatter
  * - CreateGameContent: UI pura sem Scaffold (stateless, KMP-ready)
  * - TopBar gerenciada por SecondaryScreenWrapper (platform-specific)
  *
- * Features:
- * - Validação em tempo real
- * - Date/Time Pickers Material3
- * - Dialogs modernos de seleção
- * - Animações suaves
- * - Accessibility completo
+ * Features implementadas (10 melhorias):
+ * 1. Game Templates - Templates reutilizaveis
+ * 2. Duplicate Previous Game - Copiar de jogo anterior
+ * 3. Smart Time Suggestion - Sugestao de horario inteligente
+ * 4. Visual Conflict Preview - Calendario de disponibilidade
+ * 5. CEP/Address Validation - Auto-complete de endereco
+ * 6. Price Per Player Calculator - Calculo automatico
+ * 7. Multi-field Same Date - Multiplas quadras
+ * 8. Step-by-Step Wizard - Wizard com indicador
+ * 9. Auto-Save Draft - Rascunho automatico
+ * 10. Google Calendar Integration - Integracao com calendario
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -73,7 +89,18 @@ fun CreateGameScreen(
     val timeConflicts by viewModel.timeConflicts.collectAsStateWithLifecycle()
     val isEditing by viewModel.isEditing.collectAsStateWithLifecycle()
 
-    // Estados locais do formulário
+    // Novos estados para melhorias
+    val templates by viewModel.templates.collectAsStateWithLifecycle()
+    val hasDraft by viewModel.hasDraft.collectAsStateWithLifecycle()
+    val timeSuggestion by viewModel.timeSuggestion.collectAsStateWithLifecycle()
+    val fieldAvailability by viewModel.fieldAvailability.collectAsStateWithLifecycle()
+    val recentGames by viewModel.recentGames.collectAsStateWithLifecycle()
+    val pricePerPlayer by viewModel.pricePerPlayer.collectAsStateWithLifecycle()
+    val calendarIntent by viewModel.calendarIntent.collectAsStateWithLifecycle()
+    val isManualPriceEnabled by viewModel.isManualPriceEnabled.collectAsStateWithLifecycle()
+    val manualPricePerPlayer by viewModel.manualPricePerPlayer.collectAsStateWithLifecycle()
+
+    // Estados locais do formulario
     var ownerName by remember { mutableStateOf("") }
     var price by remember { mutableStateOf("") }
     var maxPlayers by remember { mutableStateOf("14") }
@@ -92,6 +119,13 @@ fun CreateGameScreen(
     var showStartTimePicker by remember { mutableStateOf(false) }
     var showEndTimePicker by remember { mutableStateOf(false) }
 
+    // Novos dialogs para melhorias
+    var showTemplateDialog by remember { mutableStateOf(false) }
+    var showSaveTemplateDialog by remember { mutableStateOf(false) }
+    var showDuplicateDialog by remember { mutableStateOf(false) }
+    var showDraftDialog by remember { mutableStateOf(false) }
+    var templateNameInput by remember { mutableStateOf("") }
+
     val context = LocalContext.current
 
     // Carregar jogo se estiver editando
@@ -101,7 +135,28 @@ fun CreateGameScreen(
         }
     }
 
-    // Preencher form quando carregar jogo para edição
+    // Mostrar dialog de rascunho se existir (Improvement #9)
+    LaunchedEffect(hasDraft) {
+        if (hasDraft && gameId == null) {
+            showDraftDialog = true
+        }
+    }
+
+    // Auto-save rascunho (Improvement #9)
+    LaunchedEffect(ownerName, price, maxPlayers, selectedDate, selectedTime, selectedLocation) {
+        if (!isEditing && gameId == null) {
+            viewModel.autoSaveDraft(ownerName, price, maxPlayers, recurrenceEnabled, recurrenceType)
+        }
+    }
+
+    // Atualizar calculo de preco por jogador (Improvement #6)
+    LaunchedEffect(price, maxPlayers) {
+        val priceValue = price.toDoubleOrNull() ?: 0.0
+        val playersValue = maxPlayers.toIntOrNull() ?: 14
+        viewModel.updatePricePerPlayer(priceValue, playersValue)
+    }
+
+    // Preencher form quando carregar jogo para edicao
     LaunchedEffect(uiState) {
         if (uiState is CreateGameUiState.Editing) {
             val game = (uiState as CreateGameUiState.Editing).game
@@ -118,7 +173,7 @@ fun CreateGameScreen(
         }
     }
 
-    // Preencher nome do owner quando carregar usuário
+    // Preencher nome do owner quando carregar usuario
     LaunchedEffect(currentUser) {
         if (ownerName.isEmpty() && currentUser.isNotEmpty()) {
             ownerName = currentUser
@@ -136,8 +191,100 @@ fun CreateGameScreen(
             is CreateGameUiState.Error -> {
                 hapticManager?.error()
             }
+            is CreateGameUiState.SuccessTemplateSaved -> {
+                Toast.makeText(context, "Template salvo!", Toast.LENGTH_SHORT).show()
+            }
+            is CreateGameUiState.TemplateApplied -> {
+                val template = (uiState as CreateGameUiState.TemplateApplied).template
+                price = template.dailyPrice.toString()
+                maxPlayers = template.maxPlayers.toString()
+                Toast.makeText(context, "Template aplicado!", Toast.LENGTH_SHORT).show()
+            }
+            is CreateGameUiState.GameDuplicated -> {
+                val game = (uiState as CreateGameUiState.GameDuplicated).game
+                price = game.dailyPrice.toString()
+                maxPlayers = game.maxPlayers.toString()
+                Toast.makeText(context, "Configuracoes copiadas!", Toast.LENGTH_SHORT).show()
+            }
+            is CreateGameUiState.DraftRestored -> {
+                val draft = (uiState as CreateGameUiState.DraftRestored).draft
+                ownerName = draft.ownerName
+                price = draft.price
+                maxPlayers = draft.maxPlayers
+                recurrenceEnabled = draft.recurrenceEnabled
+                recurrenceType = draft.recurrenceType
+                Toast.makeText(context, "Rascunho restaurado!", Toast.LENGTH_SHORT).show()
+            }
             else -> Unit
         }
+    }
+
+    // Dialogs para melhorias
+    if (showTemplateDialog) {
+        TemplateSelectionDialog(
+            templates = templates,
+            onTemplateSelected = { template ->
+                viewModel.applyTemplate(template)
+                showTemplateDialog = false
+            },
+            onTemplateDeleted = { templateId ->
+                viewModel.deleteTemplate(templateId)
+            },
+            onDismiss = { showTemplateDialog = false }
+        )
+    }
+
+    if (showSaveTemplateDialog) {
+        SaveTemplateDialog(
+            templateName = templateNameInput,
+            onTemplateNameChange = { templateNameInput = it },
+            onConfirm = {
+                viewModel.saveAsTemplate(
+                    templateName = templateNameInput,
+                    ownerName = ownerName,
+                    price = price.toDoubleOrNull() ?: 0.0,
+                    maxPlayers = maxPlayers.toIntOrNull() ?: 14,
+                    recurrence = if (recurrenceEnabled) {
+                        when (recurrenceType) {
+                            "Semanal" -> "weekly"
+                            "Quinzenal" -> "biweekly"
+                            "Mensal" -> "monthly"
+                            else -> "none"
+                        }
+                    } else "none"
+                )
+                showSaveTemplateDialog = false
+                templateNameInput = ""
+            },
+            onDismiss = {
+                showSaveTemplateDialog = false
+                templateNameInput = ""
+            }
+        )
+    }
+
+    if (showDuplicateDialog) {
+        DuplicateGameDialog(
+            recentGames = recentGames,
+            onGameSelected = { game ->
+                viewModel.duplicateGame(game)
+                showDuplicateDialog = false
+            },
+            onDismiss = { showDuplicateDialog = false }
+        )
+    }
+
+    if (showDraftDialog) {
+        DraftRestorationDialog(
+            onRestore = {
+                viewModel.restoreDraft()
+                showDraftDialog = false
+            },
+            onDiscard = {
+                viewModel.discardDraft()
+                showDraftDialog = false
+            }
+        )
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -200,6 +347,36 @@ fun CreateGameScreen(
             recurrenceType = recurrenceType,
             onRecurrenceTypeChange = { recurrenceType = it },
             timeConflicts = timeConflicts,
+            // Novos parametros para melhorias
+            timeSuggestion = timeSuggestion,
+            onApplyTimeSuggestion = { viewModel.applyTimeSuggestion() },
+            fieldAvailability = fieldAvailability,
+            onAvailabilityDateSelected = { date ->
+                hapticManager.tick()
+                viewModel.setDateFromAvailability(date)
+            },
+            pricePerPlayer = pricePerPlayer,
+            isManualPriceEnabled = isManualPriceEnabled,
+            onManualPriceToggle = { enabled ->
+                hapticManager.tick()
+                viewModel.toggleManualPriceMode(enabled)
+            },
+            onManualPriceChange = { manualPrice ->
+                viewModel.setManualPricePerPlayer(manualPrice)
+            },
+            hasTemplates = templates.isNotEmpty(),
+            onShowTemplates = {
+                hapticManager.tick()
+                showTemplateDialog = true
+            },
+            onShowDuplicate = {
+                hapticManager.tick()
+                showDuplicateDialog = true
+            },
+            onSaveAsTemplate = {
+                hapticManager.tick()
+                showSaveTemplateDialog = true
+            },
             onCancelClick = {
                 hapticManager.tick()
                 onNavigateBack()
@@ -207,7 +384,7 @@ fun CreateGameScreen(
             onSaveClick = {
                 hapticManager.tick()
 
-                // Validações de campo
+                // Validacoes de campo
                 var hasError = false
 
                 if (ownerName.trim().length < 3) {
@@ -248,6 +425,7 @@ fun CreateGameScreen(
                 }
             },
             isLoading = uiState is CreateGameUiState.Loading,
+            isEditing = isEditing,
             errorMessage = (uiState as? CreateGameUiState.Error)?.message
         )
 
@@ -356,9 +534,23 @@ private fun CreateGameContent(
     recurrenceType: String,
     onRecurrenceTypeChange: (String) -> Unit,
     timeConflicts: List<com.futebadosparcas.data.repository.TimeConflict>,
+    // Novos parametros para melhorias
+    timeSuggestion: com.futebadosparcas.domain.service.TimeSuggestion?,
+    onApplyTimeSuggestion: () -> Unit,
+    fieldAvailability: List<com.futebadosparcas.domain.service.DayAvailability>,
+    onAvailabilityDateSelected: (LocalDate) -> Unit,
+    pricePerPlayer: Double?,
+    isManualPriceEnabled: Boolean,
+    onManualPriceToggle: (Boolean) -> Unit,
+    onManualPriceChange: (Double?) -> Unit,
+    hasTemplates: Boolean,
+    onShowTemplates: () -> Unit,
+    onShowDuplicate: () -> Unit,
+    onSaveAsTemplate: () -> Unit,
     onCancelClick: () -> Unit,
     onSaveClick: () -> Unit,
     isLoading: Boolean,
+    isEditing: Boolean,
     errorMessage: String?
 ) {
     Column(
@@ -368,6 +560,40 @@ private fun CreateGameContent(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        // Botoes de Templates e Duplicar (Improvements #1 e #2)
+        if (!isEditing) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                OutlinedButton(
+                    onClick = onShowTemplates,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Icon(
+                        imageVector = if (hasTemplates) Icons.Default.Bookmark else Icons.Default.BookmarkBorder,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(stringResource(R.string.create_game_use_template))
+                }
+
+                OutlinedButton(
+                    onClick = onShowDuplicate,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.ContentCopy,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(stringResource(R.string.create_game_duplicate_button))
+                }
+            }
+        }
+
         // Error message
         AnimatedVisibility(
             visible = errorMessage != null,
@@ -520,8 +746,27 @@ private fun CreateGameContent(
             )
         }
 
-        // Seção: Data e Horário
+        // Secao: Data e Horario
         SectionTitle(stringResource(R.string.create_game_section_datetime))
+
+        // Time Suggestion Chip (Improvement #3)
+        TimeSuggestionChip(
+            suggestion = timeSuggestion,
+            onApply = onApplyTimeSuggestion
+        )
+
+        // Field Availability Calendar (Improvement #4)
+        AnimatedVisibility(
+            visible = fieldAvailability.isNotEmpty(),
+            enter = fadeIn() + expandVertically(),
+            exit = fadeOut() + shrinkVertically()
+        ) {
+            AvailabilityCalendar(
+                weekAvailability = fieldAvailability,
+                selectedDate = selectedDate,
+                onDateSelected = onAvailabilityDateSelected
+            )
+        }
 
         OutlinedTextField(
             value = selectedDate?.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) ?: "",
@@ -684,7 +929,7 @@ private fun CreateGameContent(
             onVisibilitySelected = onVisibilitySelected
         )
 
-        // Seção: Preço e Jogadores
+        // Secao: Preco e Jogadores
         SectionTitle(stringResource(R.string.create_game_section_pricing))
 
         Row(
@@ -694,7 +939,7 @@ private fun CreateGameContent(
             OutlinedTextField(
                 value = price,
                 onValueChange = onPriceChange,
-                label = { Text(stringResource(R.string.create_game_hint_price)) },
+                label = { Text(stringResource(R.string.create_game_court_price_label)) },
                 isError = priceError != null,
                 supportingText = priceError?.let { { Text(it) } },
                 modifier = Modifier.weight(1f),
@@ -718,9 +963,38 @@ private fun CreateGameContent(
             )
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        // Price Per Player Calculator with Manual Override (Improvement #6)
+        PricePerPlayerCalculatorWithOverride(
+            totalPrice = price.toDoubleOrNull() ?: 0.0,
+            maxPlayers = maxPlayers.toIntOrNull() ?: 14,
+            calculatedPricePerPlayer = pricePerPlayer,
+            isManualEnabled = isManualPriceEnabled,
+            onManualToggle = onManualPriceToggle,
+            onManualPriceChange = onManualPriceChange
+        )
 
-        // Botões de ação
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Save as Template button (Improvement #1)
+        if (!isEditing) {
+            OutlinedButton(
+                onClick = onSaveAsTemplate,
+                modifier = Modifier.fillMaxWidth(),
+                enabled = selectedLocation != null && selectedField != null
+            ) {
+                Icon(
+                    imageVector = Icons.Default.BookmarkBorder,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(stringResource(R.string.create_game_save_template))
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Botoes de acao
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)

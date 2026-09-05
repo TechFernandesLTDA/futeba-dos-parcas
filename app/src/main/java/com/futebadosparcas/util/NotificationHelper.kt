@@ -43,11 +43,13 @@ class NotificationHelper @Inject constructor(
         const val CHANNEL_SOCIAL = "social_channel"
         const val CHANNEL_ACHIEVEMENTS = "achievements_channel"
         const val CHANNEL_REMINDERS = "reminders_channel"
+        const val CHANNEL_LIVE_GAME = "live_game_channel"
 
         const val NOTIFICATION_ID_GAME = 1000
         const val NOTIFICATION_ID_SOCIAL = 2000
         const val NOTIFICATION_ID_ACHIEVEMENT = 3000
         const val NOTIFICATION_ID_REMINDER = 4000
+        const val NOTIFICATION_ID_LIVE_GOAL = 5000
     }
 
     init {
@@ -87,6 +89,13 @@ class NotificationHelper @Inject constructor(
                     NotificationManager.IMPORTANCE_HIGH
                 ).apply {
                     description = "Lembretes de jogos próximos"
+                },
+                NotificationChannel(
+                    CHANNEL_LIVE_GAME,
+                    "Jogo ao Vivo",
+                    NotificationManager.IMPORTANCE_HIGH
+                ).apply {
+                    description = "Gols e eventos durante o jogo ao vivo"
                 }
             )
 
@@ -219,6 +228,55 @@ class NotificationHelper @Inject constructor(
             .build()
 
         notificationManager.notify(NOTIFICATION_ID_REMINDER, notification)
+    }
+
+    /**
+     * Show goal notification for live game
+     *
+     * Envia notificacao de gol para membros do grupo que nao estao no jogo
+     */
+    fun showGoalNotification(
+        gameId: String,
+        scorerName: String,
+        team1Name: String,
+        team1Score: Int,
+        team2Name: String,
+        team2Score: Int
+    ) {
+        val title = context.getString(R.string.live_game_goal_notification_title)
+        val scoreText = "$team1Name $team1Score x $team2Score $team2Name"
+        val message = context.getString(
+            R.string.live_game_goal_notification_body,
+            scorerName,
+            scoreText
+        )
+
+        val intent = Intent(context, MainActivityCompose::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            putExtra("navigate_to", "live_game")
+            putExtra("game_id", gameId)
+        }
+
+        val pendingIntent = PendingIntent.getActivity(
+            context,
+            NOTIFICATION_ID_LIVE_GOAL,
+            intent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
+        val notification = NotificationCompat.Builder(context, CHANNEL_LIVE_GAME)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentTitle(title)
+            .setContentText(message)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true)
+            .setContentIntent(pendingIntent)
+            .setDefaults(NotificationCompat.DEFAULT_VIBRATE)
+            .build()
+
+        // Usar ID unico baseado no timestamp para permitir multiplas notificacoes
+        val uniqueId = NOTIFICATION_ID_LIVE_GOAL + (System.currentTimeMillis() % 1000).toInt()
+        notificationManager.notify(uniqueId, notification)
     }
 
     /**

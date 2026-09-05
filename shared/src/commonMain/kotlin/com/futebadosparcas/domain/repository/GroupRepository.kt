@@ -200,4 +200,33 @@ interface GroupRepository {
      * Implementação deve retornar URL pública.
      */
     suspend fun uploadGroupPhoto(groupId: String, photoPath: String): Result<String>
+
+    // === GAME OWNER FEATURES (Issues #64, #68) ===
+
+    /**
+     * Issue #64: Bloqueia um jogador do grupo.
+     * Jogadores bloqueados não podem ver nem confirmar jogos do grupo.
+     */
+    suspend fun blockPlayer(
+        groupId: String,
+        userId: String,
+        userName: String,
+        reason: String,
+        blockedBy: String
+    ): Result<Unit>
+
+    /**
+     * Issue #64: Desbloqueia um jogador do grupo.
+     */
+    suspend fun unblockPlayer(groupId: String, userId: String): Result<Unit>
+
+    /**
+     * Issue #64: Retorna lista de jogadores bloqueados do grupo.
+     */
+    suspend fun getBlockedPlayers(groupId: String): Result<List<String>>
+
+    /**
+     * Issue #68: Atualiza regras do grupo.
+     */
+    suspend fun updateGroupRules(groupId: String, rules: String): Result<Unit>
 }

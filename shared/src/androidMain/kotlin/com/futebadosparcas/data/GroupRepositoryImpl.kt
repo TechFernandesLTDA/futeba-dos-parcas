@@ -11,6 +11,7 @@ import com.futebadosparcas.platform.logging.PlatformLogger
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.tasks.await
 
 /**
  * Implementação Android do GroupRepository.
@@ -404,6 +405,85 @@ class GroupRepositoryImpl(
             firebaseDataSource.uploadGroupPhoto(groupId, photoPath)
         } catch (e: Exception) {
             PlatformLogger.e(TAG, "Erro ao fazer upload de foto", e)
+            Result.failure(e)
+        }
+    }
+
+    // ========== GAME OWNER FEATURES (Issues #64, #68) ==========
+
+    private val firestore get() = firebaseDataSource.getFirestoreInstance()
+
+    override suspend fun blockPlayer(
+        groupId: String,
+        userId: String,
+        userName: String,
+        reason: String,
+        blockedBy: String
+    ): Result<Unit> {
+        return try {
+            PlatformLogger.d(TAG, "Bloqueando jogador $userId do grupo $groupId")
+            val blockedPlayerData = mapOf(
+                "user_id" to userId,
+                "user_name" to userName,
+                "reason" to reason,
+                "blocked_by" to blockedBy,
+                "blocked_at" to com.google.firebase.firestore.FieldValue.serverTimestamp()
+            )
+            firestore.collection("groups")
+                .document(groupId)
+                .collection("blocked_players")
+                .document(userId)
+                .set(blockedPlayerData)
+                .await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            PlatformLogger.e(TAG, "Erro ao bloquear jogador", e)
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun unblockPlayer(groupId: String, userId: String): Result<Unit> {
+        return try {
+            PlatformLogger.d(TAG, "Desbloqueando jogador $userId do grupo $groupId")
+            firestore.collection("groups")
+                .document(groupId)
+                .collection("blocked_players")
+                .document(userId)
+                .delete()
+                .await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            PlatformLogger.e(TAG, "Erro ao desbloquear jogador", e)
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun getBlockedPlayers(groupId: String): Result<List<String>> {
+        return try {
+            PlatformLogger.d(TAG, "Buscando jogadores bloqueados do grupo $groupId")
+            val snapshot = firestore.collection("groups")
+                .document(groupId)
+                .collection("blocked_players")
+                .get()
+                .await()
+            val blockedIds = snapshot.documents.mapNotNull { it.getString("user_id") }
+            Result.success(blockedIds)
+        } catch (e: Exception) {
+            PlatformLogger.e(TAG, "Erro ao buscar jogadores bloqueados", e)
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun updateGroupRules(groupId: String, rules: String): Result<Unit> {
+        return try {
+            PlatformLogger.d(TAG, "Atualizando regras do grupo $groupId")
+            firestore.collection("groups")
+                .document(groupId)
+                .update("rules", rules)
+                .await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            PlatformLogger.e(TAG, "Erro ao atualizar regras", e)
             Result.failure(e)
         }
     }

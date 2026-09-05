@@ -39,6 +39,8 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import java.text.Normalizer
+import java.time.LocalDate
+import java.time.LocalTime
 import javax.inject.Inject
 import com.futebadosparcas.util.toAndroidLocations
 import com.futebadosparcas.util.toAndroidFields
@@ -786,4 +788,57 @@ private fun String.normalizeForSearch(): String {
         .replace("\\p{InCombiningDiacriticalMarks}+".toRegex(), "")
         .lowercase()
         .trim()
+}
+
+/**
+ * Versão aprimorada do seletor de local com recursos adicionais:
+ * - Mapa interativo
+ * - Filtro por distância
+ * - Locais favoritos
+ * - Histórico de locais recentes
+ * - Disponibilidade em tempo real
+ * - Galeria de fotos
+ * - Avaliações e reviews
+ * - Preços de aluguel
+ * - Filtro por amenidades
+ * - Criação inline de local
+ *
+ * @param onDismiss Callback quando o dialog é fechado
+ * @param onLocationSelected Callback quando um local é selecionado (sem quadra específica)
+ * @param onLocationAndFieldSelected Callback quando local e quadra são selecionados
+ * @param selectedDate Data do jogo para verificação de disponibilidade
+ * @param selectedTime Hora de início do jogo
+ * @param selectedEndTime Hora de término do jogo
+ * @param useEnhancedSelector Se true, usa a tela completa. Se false, usa o dialog simples.
+ */
+@Composable
+fun EnhancedLocationSelectionDialog(
+    onDismiss: () -> Unit,
+    onLocationSelected: (Location) -> Unit,
+    onLocationAndFieldSelected: ((Location, Field) -> Unit)? = null,
+    selectedDate: java.time.LocalDate? = null,
+    selectedTime: java.time.LocalTime? = null,
+    selectedEndTime: java.time.LocalTime? = null,
+    useEnhancedSelector: Boolean = true
+) {
+    if (useEnhancedSelector) {
+        // Usa a nova tela completa com todos os recursos
+        LocationSelectorScreen(
+            onDismiss = onDismiss,
+            onLocationSelected = onLocationSelected,
+            onFieldSelected = { location, field ->
+                onLocationAndFieldSelected?.invoke(location, field)
+                    ?: onLocationSelected(location)
+            },
+            selectedDate = selectedDate,
+            selectedTime = selectedTime,
+            selectedEndTime = selectedEndTime
+        )
+    } else {
+        // Fallback para o dialog simples
+        LocationSelectionDialog(
+            onDismiss = onDismiss,
+            onLocationSelected = onLocationSelected
+        )
+    }
 }

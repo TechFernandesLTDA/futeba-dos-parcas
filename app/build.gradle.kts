@@ -216,6 +216,9 @@ dependencies {
     implementation("com.patrykandpatrick.vico:compose-m3:1.14.0")
     implementation("com.patrykandpatrick.vico:core:1.14.0")
 
+    // QR Code Generation (for Pix payments)
+    implementation("com.google.zxing:core:3.5.3")
+
     // Date/Time
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.5.0") // For shared module interop
     // implementation("com.jakewharton.threetenabp:threetenabp:1.4.7") // Migrated to java.time

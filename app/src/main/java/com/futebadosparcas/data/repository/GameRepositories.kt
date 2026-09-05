@@ -36,18 +36,7 @@ interface GameTeamRepository {
     suspend fun updateTeams(teams: List<Team>): Result<Unit>
 }
 
-/**
- * Interface para gerenciamento de experiencia de jogo (votacao MVP).
- * Implementado por GameExperienceRepositoryAdapter que delega para o repositorio KMP.
- */
-interface GameExperienceRepository {
-    suspend fun submitVote(vote: MVPVote): Result<Unit>
-    suspend fun isVotingOpen(gameId: String): Result<Boolean>
-    suspend fun hasUserVoted(gameId: String, userId: String): Result<Boolean>
-    suspend fun getGameVotes(gameId: String): Result<List<MVPVote>>
-    suspend fun concludeVoting(gameId: String): Result<Unit>
-    suspend fun checkAllVoted(gameId: String): Result<Boolean>
-}
+// GameExperienceRepository interface is defined in GameExperienceRepository.kt
 
 /**
  * Interface para gerenciamento de solicitacoes de participacao em jogos.

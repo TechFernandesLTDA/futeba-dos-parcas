@@ -288,4 +288,49 @@ object RepositoryModule {
     ): com.futebadosparcas.data.repository.GameTeamRepository {
         return com.futebadosparcas.data.repository.GameTeamRepositoryAdapter(kmpRepository)
     }
+
+    /**
+     * Repositorio para formacoes de times salvas.
+     */
+    @Provides
+    @Singleton
+    fun provideSavedFormationRepository(
+        firestore: FirebaseFirestore
+    ): com.futebadosparcas.ui.games.teamformation.SavedFormationRepository {
+        return com.futebadosparcas.ui.games.teamformation.SavedFormationRepository(firestore)
+    }
+
+    // ========== PRESENCE & CONFIRMATION FEATURES (Issues #31-40) ==========
+
+    /**
+     * Issue #32: Repositorio para lista de espera de jogos.
+     */
+    @Provides
+    @Singleton
+    fun provideWaitlistRepository(
+        firestore: FirebaseFirestore
+    ): com.futebadosparcas.data.repository.WaitlistRepository {
+        return com.futebadosparcas.data.repository.WaitlistRepositoryImpl(firestore)
+    }
+
+    /**
+     * Issues #31-40: Use case para gerenciar confirmacoes de presenca.
+     */
+    @Provides
+    @Singleton
+    fun provideConfirmationUseCase(
+        gameRepository: com.futebadosparcas.data.repository.GameRepository,
+        waitlistRepository: com.futebadosparcas.data.repository.WaitlistRepository,
+        notificationRepository: com.futebadosparcas.domain.repository.NotificationRepository,
+        userRepository: UserRepository,
+        firestore: FirebaseFirestore
+    ): com.futebadosparcas.domain.usecase.ConfirmationUseCase {
+        return com.futebadosparcas.domain.usecase.ConfirmationUseCase(
+            gameRepository,
+            waitlistRepository,
+            notificationRepository,
+            userRepository,
+            firestore
+        )
+    }
 }

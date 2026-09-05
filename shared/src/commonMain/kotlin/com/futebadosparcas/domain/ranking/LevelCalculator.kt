@@ -72,6 +72,9 @@ object LevelCalculator {
         val xpInCurrentLevel = xp - currentLevelInfo.xpRequired
         val xpNeededForNext = currentLevelInfo.xpForNextLevel
 
+        // BUG FIX: Evitar divisão por zero
+        if (xpNeededForNext <= 0) return 1f
+
         return (xpInCurrentLevel.toFloat() / xpNeededForNext.toFloat()).coerceIn(0f, 1f)
     }
 

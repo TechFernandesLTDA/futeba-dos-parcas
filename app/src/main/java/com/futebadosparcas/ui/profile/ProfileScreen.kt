@@ -1382,7 +1382,7 @@ private fun ProfileLoadingShimmer() {
         }
 
         // Card shimmers
-        items(4) {
+        items(4, key = { "shimmer_$it" }) {
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp)
