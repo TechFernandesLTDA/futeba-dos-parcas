@@ -3,7 +3,8 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 describe('Firestore profile update rules', () => {
-  const rules = readFileSync(resolve(process.cwd(), '../firestore.rules'), 'utf8');
+  const rules = readFileSync(resolve(process.cwd(), '../firestore.rules'), 'utf8')
+    .replace(/\r\n/g, '\n');
   const usersUpdateRule = rules.slice(
     rules.indexOf('      allow update: if\n          isAdmin() ||'),
     rules.indexOf('      allow delete: if false;', rules.indexOf('      allow update: if\n          isAdmin() ||'))

@@ -27,3 +27,14 @@ eventual disputa pela porta entre a selecao e a inicializacao do preview.
 - Implementar utilitario e configurar workflow/Playwright.
 - Testar com 5173 ocupada e validar contratos existentes de CI.
 - Executar validacao de tipos, testes e build web; acompanhar CI do PR.
+
+## Validacao ampliada em Windows e Linux
+
+- Dois contratos Web falharam apenas por separadores de caminho Windows e CRLF.
+  Normalizar a entrada de comparacao, mantendo as mesmas assercoes e allowlist.
+- O job 101368181957 falhou em `docker info` no Mac sem daemon Docker.
+  Executar o gate de FFmpeg Linux em ubuntu-latest, preservando a imagem fixada,
+  hashes do binario e testes de seguranca. Nenhuma verificacao sera ignorada.
+- A tentativa E2E 33988865005 passou da disputa de porta, mas o processo de
+  emuladores recebeu SIGKILL (exit 137) no Mac compartilhado. Isolar esse job em
+  ubuntu-latest evita competir com o build iOS e fornece ambiente limpo por run.

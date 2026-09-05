@@ -1715,3 +1715,10 @@ branches de release mantêm o build completo. O contrato está coberto por
 - Mantidos strictPort e proibicao de reutilizacao no CI; nenhum processo de outro job e encerrado.
 - Sem release de produto: alteracao exclusiva de infraestrutura e verificacao.
 - Spec: bugfix-2026-09-05-web-e2e-port.md.
+
+## 2026-09-05: Portabilidade da validacao
+
+- Contratos Web normalizam separadores de caminhos e CRLF antes de comparar fontes; as assercoes permanecem iguais.
+- Gate FFmpeg Linux migra para ubuntu-latest: o job 101368181957 falhou por Docker indisponivel no Mac.
+- Imagem Linux fixada por digest, hashes do FFmpeg e testes de seguranca foram preservados.
+- O E2E 33988865005 recebeu SIGKILL (exit 137) no Mac compartilhado. O job passa a usar Ubuntu isolado por execucao, mantendo emuladores, seed e testes completos.
