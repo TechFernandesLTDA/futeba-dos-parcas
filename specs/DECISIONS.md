@@ -1707,3 +1707,11 @@ branches de release mantêm o build completo. O contrato está coberto por
 `.github/workflows/ios-build.yml`, PRs #4079 e #4080.
 
 <!-- Adicione novas decisões acima desta linha -->
+
+## 2026-09-05: Porta efemera para Web E2E
+
+- Evidencia: run 33963440088 falha antes do Playwright por porta 5173 ocupada.
+- CI seleciona E2E_PORT livre em loopback; comando, health check e baseURL usam a mesma porta.
+- Mantidos strictPort e proibicao de reutilizacao no CI; nenhum processo de outro job e encerrado.
+- Sem release de produto: alteracao exclusiva de infraestrutura e verificacao.
+- Spec: bugfix-2026-09-05-web-e2e-port.md.

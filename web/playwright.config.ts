@@ -39,7 +39,12 @@ const remoteBaseUrl =
   process.env.E2E_BASE_URL ?? process.env.BASE_URL;
 const isRemoteTarget =
   !!remoteBaseUrl && !/127\.0\.0\.1|localhost/i.test(remoteBaseUrl);
-const baseURL = isRemoteTarget ? remoteBaseUrl! : 'http://127.0.0.1:5173';
+const localPort = Number(process.env.E2E_PORT ?? '5173');
+if (!Number.isInteger(localPort) || localPort < 1 || localPort > 65535) {
+  throw new Error('E2E_PORT must be an integer between 1 and 65535');
+}
+const localBaseURL = `http://127.0.0.1:${localPort}`;
+const baseURL = isRemoteTarget ? remoteBaseUrl! : localBaseURL;
 
 export default defineConfig({
   testDir: './e2e',
@@ -85,9 +90,9 @@ export default defineConfig({
           // O dev server somado a Java emulators + functions + chromium estourava o
           // runner self-hosted (OOM, exit 137). #2784
           command: process.env.CI
-            ? 'npm run preview -- --host 127.0.0.1 --port 5173 --strictPort'
-            : 'npm run dev -- --host 127.0.0.1 --port 5173 --strictPort',
-          url: 'http://127.0.0.1:5173',
+            ? `npm run preview -- --host 127.0.0.1 --port ${localPort} --strictPort`
+            : `npm run dev -- --host 127.0.0.1 --port ${localPort} --strictPort`,
+          url: localBaseURL,
           reuseExistingServer: !process.env.CI,
           timeout: process.env.CI ? 60000 : 30000,
         },

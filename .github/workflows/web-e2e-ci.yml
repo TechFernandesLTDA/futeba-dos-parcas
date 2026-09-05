@@ -104,6 +104,9 @@ jobs:
         working-directory: web
         run: npx playwright install --with-deps chromium
 
+      - name: Selecionar porta livre para o preview E2E
+        run: node scripts/ci/allocate-web-e2e-port.js
+
       - name: E2E (emulador + seed + Playwright)
         timeout-minutes: 20
         # emulators:exec sobe/derruba emuladores automaticamente.
