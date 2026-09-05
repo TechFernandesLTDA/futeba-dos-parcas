@@ -64,7 +64,8 @@ val viewModelKoinModule = module {
     viewModel {
         GamesViewModel(
             gameRepository = get(),
-            notificationRepository = get(),
+            observeUnreadCountUseCase = get(),
+            confirmationUseCase = get(),
             savedStateHandle = get()
         )
     }
@@ -98,7 +99,7 @@ val viewModelKoinModule = module {
             gamificationRepository = get(),
             statisticsRepository = get(),
             locationRepository = get(),
-            notificationRepository = get(),
+            observeUnreadCountUseCase = get(),
             preferencesManager = get(),
             profilePhotoDataSource = get(),
             firestore = get(),
@@ -166,7 +167,9 @@ val viewModelKoinModule = module {
         LiveGameViewModel(
             liveGameRepository = get(),
             gameRepository = get(),
-            authRepository = get()
+            authRepository = get(),
+            addGameEventUseCase = get(),
+            finishLiveGameUseCase = get()
         )
     }
 

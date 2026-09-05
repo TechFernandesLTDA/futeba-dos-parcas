@@ -6,6 +6,9 @@ import com.futebadosparcas.domain.model.*
 import com.futebadosparcas.domain.repository.AuthRepository
 import com.futebadosparcas.data.repository.GameRepository
 import com.futebadosparcas.data.repository.LiveGameRepository
+import com.futebadosparcas.domain.usecase.livegame.AddGameEventUseCase
+import com.futebadosparcas.domain.usecase.livegame.AddGameEventParams
+import com.futebadosparcas.domain.usecase.livegame.FinishLiveGameUseCase
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.*
@@ -15,7 +18,8 @@ class LiveGameViewModel(
     private val liveGameRepository: LiveGameRepository,
     private val gameRepository: GameRepository,
     private val authRepository: AuthRepository,
-    // private val badgeAwarder: com.futebadosparcas.domain.gamification.BadgeAwarder
+    private val addGameEventUseCase: AddGameEventUseCase,
+    private val finishLiveGameUseCase: FinishLiveGameUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<LiveGameUiState>(LiveGameUiState.Loading)
@@ -137,14 +141,9 @@ class LiveGameViewModel(
 
     fun finishGame() {
         viewModelScope.launch {
-            val result = liveGameRepository.finishGame(currentGameId)
+            val result = finishLiveGameUseCase(currentGameId)
             if (result.isSuccess) {
-                // Atualizar status do jogo para FINISHED
-                gameRepository.updateGameStatus(currentGameId, "FINISHED")
                 _userMessage.emit("Jogo finalizado com sucesso!")
-
-                // Gamification: Awarding logic moved to Cloud Function
-                // badgeAwarder.checkAndAwardBadges removed to prevent duplication
             } else {
                 _userMessage.emit("Erro ao finalizar jogo: ${result.exceptionOrNull()?.message}")
             }
@@ -152,101 +151,108 @@ class LiveGameViewModel(
     }
 
     fun addGoal(playerId: String, playerName: String, teamId: String, assistedById: String? = null, assistedByName: String? = null, minute: Int = 0) {
-        viewModelScope.launch {
-            com.futebadosparcas.util.AppLogger.d("LiveGameViewModel") { "addGoal: currentGameId=$currentGameId, playerId=$playerId, teamId=$teamId" }
+        // BUG #7 FIX: Validar que jogador pertence ao time
+        val state = _uiState.value as? LiveGameUiState.Success
+        if (state != null) {
+            val team = when (teamId) {
+                state.team1.id -> state.team1
+                state.team2.id -> state.team2
+                else -> null
+            }
+            if (team == null || !team.playerIds.contains(playerId)) {
+                viewModelScope.launch { _userMessage.emit("Erro: Jogador não pertence ao time selecionado") }
+                return
+            }
+        }
 
+        addEvent(
+            eventType = GameEventType.GOAL,
+            playerId = playerId,
+            playerName = playerName,
+            teamId = teamId,
+            assistedById = assistedById,
+            assistedByName = assistedByName,
+            minute = minute,
+            successMessage = "Gol de $playerName!",
+            errorMessage = "Erro ao adicionar gol"
+        )
+    }
+
+    fun addSave(playerId: String, playerName: String, teamId: String, minute: Int = 0) {
+        addEvent(
+            eventType = GameEventType.SAVE,
+            playerId = playerId,
+            playerName = playerName,
+            teamId = teamId,
+            minute = minute,
+            successMessage = "Defesa de $playerName!",
+            errorMessage = "Erro ao adicionar defesa"
+        )
+    }
+
+    fun addYellowCard(playerId: String, playerName: String, teamId: String, minute: Int = 0) {
+        addEvent(
+            eventType = GameEventType.YELLOW_CARD,
+            playerId = playerId,
+            playerName = playerName,
+            teamId = teamId,
+            minute = minute,
+            successMessage = "Cartão amarelo para $playerName",
+            errorMessage = "Erro ao adicionar cartão"
+        )
+    }
+
+    fun addRedCard(playerId: String, playerName: String, teamId: String, minute: Int = 0) {
+        addEvent(
+            eventType = GameEventType.RED_CARD,
+            playerId = playerId,
+            playerName = playerName,
+            teamId = teamId,
+            minute = minute,
+            successMessage = "Cartão vermelho para $playerName",
+            errorMessage = "Erro ao adicionar cartão"
+        )
+    }
+
+    /**
+     * Método centralizado para adicionar eventos via AddGameEventUseCase.
+     * Elimina duplicação de código entre addGoal, addSave, addYellowCard, addRedCard.
+     */
+    private fun addEvent(
+        eventType: GameEventType,
+        playerId: String,
+        playerName: String,
+        teamId: String,
+        assistedById: String? = null,
+        assistedByName: String? = null,
+        minute: Int = 0,
+        successMessage: String,
+        errorMessage: String
+    ) {
+        viewModelScope.launch {
             if (currentGameId.isEmpty()) {
                 _userMessage.emit("Erro: ID do jogo não carregado")
                 return@launch
             }
 
-            // BUG #7 FIX: Validar que jogador pertence ao time
-            val state = _uiState.value as? LiveGameUiState.Success
-            if (state != null) {
-                val team = when (teamId) {
-                    state.team1.id -> state.team1
-                    state.team2.id -> state.team2
-                    else -> null
-                }
-                if (team == null || !team.playerIds.contains(playerId)) {
-                    _userMessage.emit("Erro: Jogador não pertence ao time selecionado")
-                    return@launch
-                }
-            }
-
-            val result = liveGameRepository.addGameEvent(
-                gameId = currentGameId,
-                eventType = GameEventType.GOAL,
-                playerId = playerId,
-                playerName = playerName,
-                teamId = teamId,
-                assistedById = assistedById,
-                assistedByName = assistedByName,
-                minute = minute
+            val result = addGameEventUseCase(
+                AddGameEventParams(
+                    gameId = currentGameId,
+                    eventType = eventType,
+                    playerId = playerId,
+                    playerName = playerName,
+                    teamId = teamId,
+                    assistedById = assistedById,
+                    assistedByName = assistedByName,
+                    minute = minute
+                )
             )
 
             if (result.isSuccess) {
-                _userMessage.emit("⚽ Gol de $playerName!")
+                _userMessage.emit(successMessage)
             } else {
-                com.futebadosparcas.util.AppLogger.e("LiveGameViewModel", "Erro ao adicionar gol", result.exceptionOrNull())
-                _userMessage.emit("Erro ao adicionar gol: ${result.exceptionOrNull()?.message}")
-            }
-        }
-    }
-
-    fun addSave(playerId: String, playerName: String, teamId: String, minute: Int = 0) {
-        viewModelScope.launch {
-            val result = liveGameRepository.addGameEvent(
-                gameId = currentGameId,
-                eventType = GameEventType.SAVE,
-                playerId = playerId,
-                playerName = playerName,
-                teamId = teamId,
-                minute = minute
-            )
-
-            if (result.isSuccess) {
-                _userMessage.emit("🧤 Defesa de $playerName!")
-            } else {
-                _userMessage.emit("Erro ao adicionar defesa")
-            }
-        }
-    }
-
-    fun addYellowCard(playerId: String, playerName: String, teamId: String, minute: Int = 0) {
-        viewModelScope.launch {
-            val result = liveGameRepository.addGameEvent(
-                gameId = currentGameId,
-                eventType = GameEventType.YELLOW_CARD,
-                playerId = playerId,
-                playerName = playerName,
-                teamId = teamId,
-                minute = minute
-            )
-
-            if (result.isSuccess) {
-                _userMessage.emit("🟨 Cartão amarelo para $playerName")
-            } else {
-                _userMessage.emit("Erro ao adicionar cartão")
-            }
-        }
-    }
-
-    fun addRedCard(playerId: String, playerName: String, teamId: String, minute: Int = 0) {
-        viewModelScope.launch {
-            val result = liveGameRepository.addGameEvent(
-                gameId = currentGameId,
-                eventType = GameEventType.RED_CARD,
-                playerId = playerId,
-                playerName = playerName,
-                teamId = teamId,
-                minute = minute
-            )
-
-            if (result.isSuccess) {
-                _userMessage.emit("🟥 Cartão vermelho para $playerName")
-            } else {
-                _userMessage.emit("Erro ao adicionar cartão")
+                com.futebadosparcas.util.AppLogger.e("LiveGameViewModel", errorMessage, result.exceptionOrNull())
+                _userMessage.emit("$errorMessage: ${result.exceptionOrNull()?.message}")
             }
         }
     }

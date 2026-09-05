@@ -6,6 +6,8 @@ import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.domain.model.Game
 import com.futebadosparcas.data.repository.GameRepository
 import com.futebadosparcas.data.repository.GameFilterType
+import com.futebadosparcas.domain.usecase.ConfirmationUseCase
+import com.futebadosparcas.domain.usecase.notification.ObserveUnreadCountUseCase
 import com.futebadosparcas.util.AppLogger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -28,7 +30,8 @@ data class GameWithConfirmations(
 @OptIn(kotlinx.coroutines.FlowPreview::class)
 class GamesViewModel(
     private val gameRepository: GameRepository,
-    private val notificationRepository: com.futebadosparcas.domain.repository.NotificationRepository,
+    private val observeUnreadCountUseCase: ObserveUnreadCountUseCase,
+    private val confirmationUseCase: ConfirmationUseCase,
     private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -76,7 +79,7 @@ class GamesViewModel(
     private fun observeUnreadCount() {
         unreadCountJob?.cancel()
         unreadCountJob = viewModelScope.launch {
-            notificationRepository.getUnreadCountFlow()
+            observeUnreadCountUseCase()
                 .catch { e ->
                     // Tratamento de erro: zerar contador em caso de falha
                     AppLogger.e(TAG, "Erro ao observar notificacoes", e)
@@ -258,14 +261,19 @@ class GamesViewModel(
      * Confirma presença rapidamente na lista de jogos.
      * Usa posição FIELD como padrão.
      * Usa persistentScope para garantir conclusão mesmo com navegação.
+     * Delega para ConfirmationUseCase que valida deadline, limite de vagas e lista de espera.
      */
     fun quickConfirmPresence(gameId: String) {
         persistentScope.launch {
             try {
-                val result = gameRepository.confirmPresence(gameId, "FIELD", false)
+                val result = confirmationUseCase.confirmPresence(gameId, "FIELD", false)
                 result.fold(
-                    onSuccess = {
-                        AppLogger.d(TAG) { "Presença confirmada com sucesso no jogo $gameId" }
+                    onSuccess = { confirmResult ->
+                        if (confirmResult.addedToWaitlist) {
+                            AppLogger.d(TAG) { "Adicionado à lista de espera do jogo $gameId (posição ${confirmResult.waitlistPosition})" }
+                        } else {
+                            AppLogger.d(TAG) { "Presença confirmada com sucesso no jogo $gameId" }
+                        }
                     },
                     onFailure = { error ->
                         AppLogger.e(TAG, "Erro ao confirmar presença", error)
