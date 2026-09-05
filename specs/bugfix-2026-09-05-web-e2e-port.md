@@ -41,3 +41,8 @@ eventual disputa pela porta entre a selecao e a inicializacao do preview.
 - Dois contratos de recursos Android assumiam cwd no repositorio, enquanto o
   Gradle configura C:/TEMP no Windows. Fornecer futeba.repoRoot aos testes e usar
   esse caminho antes do fallback local, preservando o workaround de encoding.
+- O job 101372805251 encontrou FFmpeg Homebrew ligado a uma dylib x265 ausente.
+  Executar os testes Functions no Ubuntu com o runtime verificado existente.
+- O snapshot E2E 33990197521 mostrou o login em ingles (Sign In), enquanto os
+  seletores da suite usam portugues. Fixar locale pt-BR no contexto Playwright,
+  preservando o comportamento de idioma do produto e as assercoes dos testes.

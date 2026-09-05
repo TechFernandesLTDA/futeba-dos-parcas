@@ -65,6 +65,7 @@ export default defineConfig({
     : 'html',
   use: {
     baseURL,
+    locale: 'pt-BR',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
   },

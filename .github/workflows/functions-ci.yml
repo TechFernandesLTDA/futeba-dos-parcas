@@ -133,7 +133,7 @@ jobs:
   test:
     name: Unit Tests
     needs: [ build ]
-    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    runs-on: ubuntu-latest
     timeout-minutes: 15
 
     steps:

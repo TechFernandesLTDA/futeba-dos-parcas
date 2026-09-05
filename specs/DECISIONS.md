@@ -1723,3 +1723,10 @@ branches de release mantêm o build completo. O contrato está coberto por
 - Imagem Linux fixada por digest, hashes do FFmpeg e testes de seguranca foram preservados.
 - O E2E 33988865005 recebeu SIGKILL (exit 137) no Mac compartilhado. O job passa a usar Ubuntu isolado por execucao, mantendo emuladores, seed e testes completos.
 - Os testes Android recebem futeba.repoRoot do Gradle para localizar XMLs mesmo com workingDir=C:/TEMP no Windows; mantido o workaround de encoding existente.
+# 2026-09-05 — Ambiente deterministico para Functions e E2E
+
+Os testes Functions usam Ubuntu e o runtime FFmpeg verificado para evitar a
+dependencia Homebrew quebrada observada no job 101372805251. O Playwright usa
+locale pt-BR, idioma dos seletores da suite; o snapshot do run 33990197521
+confirmou que a deteccao de idioma do navegador renderizava Sign In em ingles.
+Nenhum teste ou gate foi desabilitado.

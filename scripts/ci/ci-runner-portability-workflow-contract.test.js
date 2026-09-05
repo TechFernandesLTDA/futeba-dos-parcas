@@ -44,7 +44,8 @@ test('Firestore and media runtime gates use hosted Linux', () => {
   assert.match(mediaJob, /docker run --rm --platform linux\/amd64/);
   assert.match(mediaJob, /node:22-bookworm@sha256:[a-f0-9]{64}/);
   assert.match(mediaJob, /test\/group-wall-media-ffmpeg\.test\.ts/);
-  for (const jobId of ['build', 'lint', 'test', 'mutation']) {
+  assert.match(job(functionsWorkflow, 'test'), new RegExp(hostedSelector));
+  for (const jobId of ['build', 'lint', 'mutation']) {
     assert.match(job(functionsWorkflow, jobId), selfHostedSelector, `${jobId} must remain self-hosted`);
   }
 });

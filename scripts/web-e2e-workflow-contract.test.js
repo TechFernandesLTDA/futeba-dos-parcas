@@ -99,6 +99,7 @@ test('CI allocates its own preview port without reusing an unrelated server', ()
   assert.ok(e2eWorkflow.indexOf('allocate-web-e2e-port.js') < e2eWorkflow.indexOf('- name: E2E ('));
   assert.match(playwrightConfig, /process\.env\.E2E_PORT \?\? '5173'/);
   assert.match(playwrightConfig, /url: localBaseURL/);
+  assert.match(playwrightConfig, /locale: 'pt-BR'/);
   assert.match(playwrightConfig, /reuseExistingServer: !process\.env\.CI/);
   assert.match(playwrightConfig, /--port \$\{localPort\} --strictPort/);
 });
