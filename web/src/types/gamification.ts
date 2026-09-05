@@ -1,3 +1,6 @@
+// Source of truth: shared/xp-constants.json — keep in sync
+import xpConstants from '../../../shared/xp-constants.json';
+
 export type LeagueDivision = 'BRONZE' | 'SILVER' | 'GOLD' | 'PLATINUM' | 'DIAMOND' | 'CHAMPION';
 
 export type BadgeType = 
@@ -224,17 +227,22 @@ export const CARD_RARITY_CONFIG: Record<CardRarity, { label: string; color: stri
 };
 
 export const XP_VALUES = {
-  PARTICIPATION: 10,
-  GOAL: 5,
-  ASSIST: 3,
-  SAVE: 2,
-  MVP: 50,
-  WIN: 20,
-  STREAK_3: 10,
-  STREAK_7: 20,
-  STREAK_10: 30,
+  PARTICIPATION: xpConstants.xpActions.PARTICIPATION,
+  GOAL: xpConstants.xpActions.GOAL,
+  ASSIST: xpConstants.xpActions.ASSIST,
+  SAVE: xpConstants.xpActions.SAVE,
+  CLEAN_SHEET: xpConstants.xpActions.CLEAN_SHEET,
+  MVP: xpConstants.xpActions.MVP,
+  WIN: xpConstants.xpActions.WIN,
+  DRAW: xpConstants.xpActions.DRAW,
+  STREAK_3: xpConstants.streakBonuses.STREAK_3,
+  STREAK_5: xpConstants.streakBonuses.STREAK_5,
+  STREAK_7: xpConstants.streakBonuses.STREAK_7,
+  STREAK_10: xpConstants.streakBonuses.STREAK_10,
+  WORST_PLAYER: xpConstants.xpActions.WORST_PLAYER,
+  // Legacy aliases for backward compatibility (web-only concepts)
   BEST_GK: 25,
-  BOLA_MURCHA: -20,
+  BOLA_MURCHA: xpConstants.xpActions.WORST_PLAYER,
 };
 
 export function getDivisionFromPoints(points: number): LeagueDivision {
@@ -258,32 +266,13 @@ export interface LevelEntry {
   phrase: string;
 }
 
-export const LEVEL_TABLE: LevelEntry[] = [
-  // Fase 1: Níveis 0-10 (Progressão Base)
-  { level: 0,  xpRequired: 0,      name: 'Novato',       phrase: 'Todo craque começou assim. Bora jogar!' },
-  { level: 1,  xpRequired: 100,    name: 'Iniciante',    phrase: 'Primeiros passos na pelada. Continue assim!' },
-  { level: 2,  xpRequired: 350,    name: 'Amador',       phrase: 'Já mostra garra em campo!' },
-  { level: 3,  xpRequired: 850,    name: 'Regular',      phrase: 'Presença garantida na pelada!' },
-  { level: 4,  xpRequired: 1850,   name: 'Experiente',   phrase: 'Conhece cada canto do campo!' },
-  { level: 5,  xpRequired: 3850,   name: 'Habilidoso',   phrase: 'Dribles e passes que encantam!' },
-  { level: 6,  xpRequired: 7350,   name: 'Profissional', phrase: 'Joga como se fosse pago pra isso!' },
-  { level: 7,  xpRequired: 12850,  name: 'Expert',       phrase: 'Domina todos os fundamentos!' },
-  { level: 8,  xpRequired: 20850,  name: 'Mestre',       phrase: 'Nível de academia de futebol!' },
-  { level: 9,  xpRequired: 32850,  name: 'Lenda',        phrase: 'Seu nome é lembrado nas peladas!' },
-  { level: 10, xpRequired: 52850,  name: 'Imortal',      phrase: 'Transcendeu o futebol amador!' },
-
-  // Fase 2: Níveis 11-20 (Lendas do Futebol)
-  { level: 11, xpRequired: 75000,  name: 'Garrincha',        phrase: 'Alegria do Povo! Dribla até o vento!' },
-  { level: 12, xpRequired: 100000, name: 'Zico',             phrase: 'O Galinho de Quintino! Craque nato!' },
-  { level: 13, xpRequired: 128000, name: 'Cruyff',           phrase: 'Futebol Total! Visão de jogo única!' },
-  { level: 14, xpRequired: 160000, name: 'Beckham',          phrase: 'Precisão cirúrgica nos passes!' },
-  { level: 15, xpRequired: 198000, name: 'Ronaldinho',       phrase: 'Joga bonito! O sorriso do futebol!' },
-  { level: 16, xpRequired: 242000, name: 'Ronaldo Fenômeno', phrase: 'Fenômeno! Velocidade e gols!' },
-  { level: 17, xpRequired: 295000, name: 'Messi',            phrase: 'La Pulga! Gênio da bola!' },
-  { level: 18, xpRequired: 360000, name: 'Cristiano Ronaldo', phrase: 'CR7! Determinação e excelência!' },
-  { level: 19, xpRequired: 440000, name: 'Diego Maradona',   phrase: 'La Mano de Dios! Pura magia!' },
-  { level: 20, xpRequired: 528500, name: 'Pelé',             phrase: 'O Rei do Futebol! Nível máximo!' },
-];
+// Level table imported from shared/xp-constants.json (source of truth)
+export const LEVEL_TABLE: LevelEntry[] = xpConstants.levelTable.levels.map((entry) => ({
+  level: entry.level,
+  xpRequired: entry.xpRequired,
+  name: entry.name,
+  phrase: entry.phrase,
+}));
 
 /** Retorna o nível correspondente ao XP absoluto */
 export function getLevelForXp(totalXp: number): number {

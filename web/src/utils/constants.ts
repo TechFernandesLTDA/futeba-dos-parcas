@@ -1,6 +1,11 @@
 /**
  * Constantes centralizadas para evitar magic numbers/strings no código.
+ *
+ * XP values: Source of truth is shared/xp-constants.json
  */
+
+// Source of truth: shared/xp-constants.json — keep in sync
+import xpConstants from '../../../shared/xp-constants.json';
 
 // Layout
 export const MOBILE_MAX_WIDTH = 480;
@@ -38,16 +43,16 @@ export const ACTIVITIES_LIMIT = 5;
 // Cache
 export const STALE_TIME_MS = 5 * 60 * 1000; // 5 minutos
 
-// XP System
-export const XP_PARTICIPATION = 10;
-export const XP_GOAL = 5;
-export const XP_ASSIST = 3;
-export const XP_SAVE = 2;
-export const XP_MVP = 50;
-export const XP_WIN = 20;
-export const XP_STREAK_3 = 10;
-export const XP_STREAK_7 = 20;
-export const XP_STREAK_10 = 30;
+// XP System — source of truth: shared/xp-constants.json
+export const XP_PARTICIPATION = xpConstants.xpActions.PARTICIPATION;
+export const XP_GOAL = xpConstants.xpActions.GOAL;
+export const XP_ASSIST = xpConstants.xpActions.ASSIST;
+export const XP_SAVE = xpConstants.xpActions.SAVE;
+export const XP_MVP = xpConstants.xpActions.MVP;
+export const XP_WIN = xpConstants.xpActions.WIN;
+export const XP_STREAK_3 = xpConstants.streakBonuses.STREAK_3;
+export const XP_STREAK_7 = xpConstants.streakBonuses.STREAK_7;
+export const XP_STREAK_10 = xpConstants.streakBonuses.STREAK_10;
 
 // Routes
 export const ROUTES = {
