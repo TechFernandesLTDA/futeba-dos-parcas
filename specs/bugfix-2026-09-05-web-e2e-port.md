@@ -38,3 +38,6 @@ eventual disputa pela porta entre a selecao e a inicializacao do preview.
 - A tentativa E2E 33988865005 passou da disputa de porta, mas o processo de
   emuladores recebeu SIGKILL (exit 137) no Mac compartilhado. Isolar esse job em
   ubuntu-latest evita competir com o build iOS e fornece ambiente limpo por run.
+- Dois contratos de recursos Android assumiam cwd no repositorio, enquanto o
+  Gradle configura C:/TEMP no Windows. Fornecer futeba.repoRoot aos testes e usar
+  esse caminho antes do fallback local, preservando o workaround de encoding.

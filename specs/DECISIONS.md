@@ -1722,3 +1722,4 @@ branches de release mantêm o build completo. O contrato está coberto por
 - Gate FFmpeg Linux migra para ubuntu-latest: o job 101368181957 falhou por Docker indisponivel no Mac.
 - Imagem Linux fixada por digest, hashes do FFmpeg e testes de seguranca foram preservados.
 - O E2E 33988865005 recebeu SIGKILL (exit 137) no Mac compartilhado. O job passa a usar Ubuntu isolado por execucao, mantendo emuladores, seed e testes completos.
+- Os testes Android recebem futeba.repoRoot do Gradle para localizar XMLs mesmo com workingDir=C:/TEMP no Windows; mantido o workaround de encoding existente.
