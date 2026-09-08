@@ -158,7 +158,13 @@ object DynamicThemeEngine {
         return blendColors(base, target, ratio)
     }
 
-    private fun onColorFor(background: Color): Color {
+    /**
+     * Returns the foreground with the strongest accessible contrast for an opaque [background].
+     *
+     * Kept in the theme engine so CMP surfaces such as medal badges use the same WCAG
+     * decision as generated Material color roles (#4096).
+     */
+    internal fun onColorFor(background: Color): Color {
         // #2677: WCAG AA contrast-aware. Tenta texto escuro e claro; fallback ao maior contraste.
         val darkText = Color(0xFF0B0F0D)
         val lightText = Color(0xFFF5F7F6)

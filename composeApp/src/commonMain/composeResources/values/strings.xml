@@ -3638,6 +3638,12 @@ subir no ranking!</string>
     <string name="avatar_no_number">Sem número</string>
 
     <!-- Theme Settings -->
+    <string name="theme_mode_light">Claro</string>
+    <string name="theme_mode_dark">Escuro</string>
+    <string name="theme_mode_system">Sistema</string>
+    <string name="theme_settings_unavailable">As configurações de aparência não estão disponíveis neste ambiente.</string>
+    <string name="profile_hub_action_theme">Aparência</string>
+    <string name="profile_hub_action_theme_body">Escolha claro, escuro ou siga o sistema.</string>
     <string name="theme_mode">Modo</string>
 
     <!-- Shared/Continue -->

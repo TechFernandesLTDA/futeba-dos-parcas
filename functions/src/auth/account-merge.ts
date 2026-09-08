@@ -22,6 +22,7 @@ import {
   resolveLegacyIdentityHash,
 } from "./identity-index";
 import {isValidPhoneBR} from "../validation/phone-br";
+import {GAMIFICATION_UID_COLLECTIONS} from "./account-owned-collections";
 
 export {resolveLegacyIdentityHash} from "./identity-index";
 
@@ -91,6 +92,357 @@ async function drainDocsByField(
   }
 
   return {docs, size: docs.length};
+}
+
+const GAMIFICATION_MERGE_PAGE_SIZE = 100;
+
+type OwnedDocumentMerge = {
+  collection: string;
+  ownerField: string;
+  markerField?: string;
+  targetId: (
+    source: FirebaseFirestore.QueryDocumentSnapshot,
+    data: FirebaseFirestore.DocumentData
+  ) => string;
+  mergeData: (
+    source: FirebaseFirestore.DocumentData,
+    target: FirebaseFirestore.DocumentData
+  ) => FirebaseFirestore.DocumentData;
+};
+
+/**
+ * Migra uma coleção por páginas que deixam de casar com o UID de origem.
+ * A gravação do destino e a remoção/retarget da origem ocorrem na mesma
+ * transação, permitindo retomada segura depois de timeout ou retry.
+ *
+ * @param {FirebaseFirestore.Firestore} database Firestore.
+ * @param {string} sourceUid UID de origem.
+ * @param {string} targetUid UID canônico.
+ * @param {OwnedDocumentMerge} options Regras da coleção.
+ * @return {Promise<number>} Docs processados nesta tentativa.
+ */
+async function migrateOwnedDocuments(
+  database: FirebaseFirestore.Firestore,
+  sourceUid: string,
+  targetUid: string,
+  options: OwnedDocumentMerge,
+): Promise<number> {
+  let total = 0;
+
+  while (true) {
+    const page = await database.collection(options.collection)
+      .where(options.ownerField, "==", sourceUid)
+      .limit(GAMIFICATION_MERGE_PAGE_SIZE)
+      .get();
+    if (page.empty) break;
+
+    const processed = await database.runTransaction(async (tx) => {
+      const targetRefs = page.docs.map((source) => database
+        .collection(options.collection)
+        .doc(options.targetId(source, source.data())));
+      const refsByPath = new Map<string, FirebaseFirestore.DocumentReference>();
+      for (const source of page.docs) refsByPath.set(source.ref.path, source.ref);
+      for (const target of targetRefs) refsByPath.set(target.path, target);
+      const fresh = await tx.getAll(...refsByPath.values());
+      const freshByPath = new Map(fresh.map((snap) => [snap.ref.path, snap]));
+      const mergedByTargetPath = new Map<string, {
+        ref: FirebaseFirestore.DocumentReference;
+        data: FirebaseFirestore.DocumentData;
+      }>();
+      const sourceRefsToDelete = new Map<
+        string,
+        FirebaseFirestore.DocumentReference
+      >();
+      let migrated = 0;
+
+      for (let index = 0; index < page.docs.length; index++) {
+        const staleSource = page.docs[index];
+        const source = freshByPath.get(staleSource.ref.path);
+        const sourceData = source?.data();
+        if (!source?.exists || sourceData?.[options.ownerField] !== sourceUid) {
+          continue;
+        }
+        const targetRef = targetRefs[index];
+        const target = freshByPath.get(targetRef.path);
+        const accumulated = mergedByTargetPath.get(targetRef.path)?.data;
+        const targetData = accumulated ?? (
+          targetRef.path === source.ref.path ? {} : target?.data() ?? {}
+        );
+        mergedByTargetPath.set(targetRef.path, {
+          ref: targetRef,
+          data: {
+            ...options.mergeData(sourceData, targetData),
+            [options.ownerField]: targetUid,
+            [options.markerField ?? "merged_from_uid"]: sourceUid,
+            updated_at: FieldValue.serverTimestamp(),
+          },
+        });
+        if (targetRef.path !== source.ref.path) {
+          sourceRefsToDelete.set(source.ref.path, source.ref);
+        }
+        migrated++;
+      }
+      for (const {ref, data} of mergedByTargetPath.values()) {
+        tx.set(ref, data, {merge: true});
+      }
+      for (const sourceRef of sourceRefsToDelete.values()) {
+        tx.delete(sourceRef);
+      }
+      return migrated;
+    });
+
+    if (processed === 0) {
+      throw new HttpsError(
+        "aborted",
+        `A migração de ${options.collection} não avançou. Tente novamente.`,
+      );
+    }
+    total += processed;
+  }
+
+  return total;
+}
+
+/**
+ * Conta marcadores de uma migração já concluída, inclusive após retry.
+ * @param {FirebaseFirestore.Firestore} database Firestore.
+ * @param {string} collection Coleção consultada.
+ * @param {string} markerField Campo de retomada/auditoria.
+ * @param {string} sourceUid UID de origem.
+ * @return {Promise<number>} Total migrado por esta origem.
+ */
+async function countMigratedDocuments(
+  database: FirebaseFirestore.Firestore,
+  collection: string,
+  markerField: string,
+  sourceUid: string,
+): Promise<number> {
+  let total = 0;
+  let lastDoc: FirebaseFirestore.QueryDocumentSnapshot | undefined;
+  while (true) {
+    let query = database.collection(collection)
+      .where(markerField, "==", sourceUid)
+      .limit(MAX_DOCS_PER_QUERY);
+    if (lastDoc) query = query.startAfter(lastDoc);
+    const page = await query.get();
+    if (page.empty) break;
+    total += page.size;
+    lastDoc = page.docs[page.docs.length - 1];
+    if (page.size < MAX_DOCS_PER_QUERY) break;
+  }
+  return total;
+}
+
+const STATISTICS_ADDITIVE_FIELDS = [
+  "totalGames",
+  "totalGoals",
+  "totalAssists",
+  "totalSaves",
+  "totalYellowCards",
+  "totalRedCards",
+  "gamesWon",
+  "gamesLost",
+  "gamesDraw",
+  "bestPlayerCount",
+  "worstPlayerCount",
+  "recordedEventsGames",
+] as const;
+
+/**
+ * Combina estatísticas das duas identidades sem perder histórico.
+ * @param {FirebaseFirestore.DocumentData} source Estatísticas da origem.
+ * @param {FirebaseFirestore.DocumentData} target Estatísticas canônicas.
+ * @return {FirebaseFirestore.DocumentData} Estatísticas combinadas.
+ */
+export function mergeStatisticsData(
+  source: FirebaseFirestore.DocumentData,
+  target: FirebaseFirestore.DocumentData,
+): FirebaseFirestore.DocumentData {
+  const merged = {...source, ...target};
+  for (const field of STATISTICS_ADDITIVE_FIELDS) {
+    const sourceValue = Number(source[field] ?? 0);
+    const targetValue = Number(target[field] ?? 0);
+    if (Number.isFinite(sourceValue) || Number.isFinite(targetValue)) {
+      merged[field] =
+        (Number.isFinite(sourceValue) ? sourceValue : 0) +
+        (Number.isFinite(targetValue) ? targetValue : 0);
+    }
+  }
+  for (const field of ["currentMvpStreak", "bestMvpStreak"] as const) {
+    merged[field] = Math.max(
+      Number(source[field] ?? 0) || 0,
+      Number(target[field] ?? 0) || 0,
+    );
+  }
+  return merged;
+}
+
+const SEASON_ADDITIVE_FIELDS = [
+  "points",
+  "games_played",
+  "wins",
+  "draws",
+  "losses",
+  "goals_scored",
+  "assists",
+  "mvp_count",
+  "total_xp",
+] as const;
+
+/**
+ * Soma campos numéricos preservando os demais campos canônicos.
+ * @param {FirebaseFirestore.DocumentData} source Documento da origem.
+ * @param {FirebaseFirestore.DocumentData} target Documento canônico.
+ * @param {string[]} fields Campos aditivos.
+ * @return {FirebaseFirestore.DocumentData} Documento combinado.
+ */
+function sumNumericFields(
+  source: FirebaseFirestore.DocumentData,
+  target: FirebaseFirestore.DocumentData,
+  fields: readonly string[],
+): FirebaseFirestore.DocumentData {
+  const result: FirebaseFirestore.DocumentData = {...source, ...target};
+  for (const field of fields) {
+    const sourceValue = Number(source[field] ?? 0);
+    const targetValue = Number(target[field] ?? 0);
+    result[field] =
+      (Number.isFinite(sourceValue) ? sourceValue : 0) +
+      (Number.isFinite(targetValue) ? targetValue : 0);
+  }
+  return result;
+}
+
+/**
+ * Combina a participação de uma mesma temporada.
+ * @param {FirebaseFirestore.DocumentData} source Participação da origem.
+ * @param {FirebaseFirestore.DocumentData} target Participação canônica.
+ * @return {FirebaseFirestore.DocumentData} Participação combinada.
+ */
+export function mergeSeasonParticipationData(
+  source: FirebaseFirestore.DocumentData,
+  target: FirebaseFirestore.DocumentData,
+): FirebaseFirestore.DocumentData {
+  const merged = sumNumericFields(source, target, SEASON_ADDITIVE_FIELDS);
+  const genders = new Set([
+    ...Object.keys(source.by_gender ?? {}),
+    ...Object.keys(target.by_gender ?? {}),
+  ]);
+  if (genders.size > 0) {
+    merged.by_gender = {};
+    for (const gender of genders) {
+      merged.by_gender[gender] = sumNumericFields(
+        source.by_gender?.[gender] ?? {},
+        target.by_gender?.[gender] ?? {},
+        SEASON_ADDITIVE_FIELDS,
+      );
+    }
+  }
+  merged.group_ids = [...new Set([
+    ...(Array.isArray(source.group_ids) ? source.group_ids : []),
+    ...(Array.isArray(target.group_ids) ? target.group_ids : []),
+    source.group_id,
+    target.group_id,
+  ].filter((value): value is string => typeof value === "string" && !!value))];
+  for (const field of ["position", "rank", "final_position"] as const) {
+    const positions = [source[field], target[field]]
+      .map(Number)
+      .filter((value) => Number.isFinite(value) && value > 0);
+    if (positions.length > 0) merged[field] = Math.min(...positions);
+  }
+  return merged;
+}
+
+/**
+ * Converte os formatos de timestamp usados nos documentos para epoch ms.
+ * @param {unknown} value Timestamp, Date ou valor parseável.
+ * @return {number|undefined} Epoch ms quando reconhecido.
+ */
+function timestampMillis(value: unknown): number | undefined {
+  if (value && typeof (value as {toMillis?: unknown}).toMillis === "function") {
+    return (value as {toMillis: () => number}).toMillis();
+  }
+  if (value instanceof Date) return value.getTime();
+  const parsed = typeof value === "string" || typeof value === "number" ?
+    new Date(value).getTime() : NaN;
+  return Number.isFinite(parsed) ? parsed : undefined;
+}
+
+/**
+ * Escolhe o timestamp mais antigo ou mais recente.
+ * @param {unknown} left Primeiro timestamp.
+ * @param {unknown} right Segundo timestamp.
+ * @param {"earliest"|"latest"} choose Regra de seleção.
+ * @return {unknown} Valor original selecionado.
+ */
+function timestampChoice(
+  left: unknown,
+  right: unknown,
+  choose: "earliest" | "latest",
+): unknown {
+  if (left == null) return right;
+  if (right == null) return left;
+  const leftMs = timestampMillis(left);
+  const rightMs = timestampMillis(right);
+  if (leftMs == null || rightMs == null) return right;
+  return choose === "earliest" ?
+    (leftMs <= rightMs ? left : right) :
+    (leftMs >= rightMs ? left : right);
+}
+
+/**
+ * Une badges iguais em um único documento canônico.
+ * @param {FirebaseFirestore.DocumentData} source Badge da origem.
+ * @param {FirebaseFirestore.DocumentData} target Badge canônico.
+ * @return {FirebaseFirestore.DocumentData} Badge combinado.
+ */
+export function mergeUserBadgeData(
+  source: FirebaseFirestore.DocumentData,
+  target: FirebaseFirestore.DocumentData,
+): FirebaseFirestore.DocumentData {
+  const merged: FirebaseFirestore.DocumentData = {
+    ...source,
+    ...target,
+    earned: source.earned === true || target.earned === true,
+    count: (Number(source.count) || 0) + (Number(target.count) || 0),
+  };
+  const earnedAt = timestampChoice(
+    source.earned_at,
+    target.earned_at,
+    "earliest",
+  );
+  if (earnedAt !== undefined) merged.earned_at = earnedAt;
+  const lastEarnedAt = timestampChoice(
+    source.last_earned_at ?? source.earned_at,
+    target.last_earned_at ?? target.earned_at,
+    "latest",
+  );
+  if (lastEarnedAt !== undefined) merged.last_earned_at = lastEarnedAt;
+  return merged;
+}
+
+/**
+ * Resolve o ID determinístico de um log para a identidade canônica.
+ * @param {FirebaseFirestore.QueryDocumentSnapshot} source Log da origem.
+ * @param {FirebaseFirestore.DocumentData} data Payload do log.
+ * @param {string} targetUid UID canônico.
+ * @return {string} ID canônico do log.
+ */
+function xpLogTargetId(
+  source: FirebaseFirestore.QueryDocumentSnapshot,
+  data: FirebaseFirestore.DocumentData,
+  targetUid: string,
+): string {
+  const gameId = typeof data.game_id === "string" ? data.game_id : undefined;
+  if (gameId && source.id.startsWith("game_")) {
+    return `game_${gameId}_user_${targetUid}`;
+  }
+  if (gameId && source.id.startsWith("mvp_")) {
+    return `mvp_${gameId}_${targetUid}`;
+  }
+  if (gameId && source.id.startsWith("bola_murcha_")) {
+    return `bola_murcha_${gameId}_${targetUid}`;
+  }
+  return source.id;
 }
 
 /**
@@ -1137,6 +1489,158 @@ export const completeAccountMerge = onCall(
         }, {merge: true});
       });
 
+      // FIX #4112: as seis coleções canônicas de gamificação são migradas
+      // antes do estágio irreversível. Os helpers paginam e cada transação
+      // retira os docs processados do filtro da origem, permitindo retomada.
+      const statisticsDefinition = GAMIFICATION_UID_COLLECTIONS.statistics;
+      const sourceStatisticsRef = database.doc(
+        `${statisticsDefinition.collection}/${sourceUid}`
+      );
+      const targetStatisticsRef = database.doc(
+        `${statisticsDefinition.collection}/${targetUid}`
+      );
+      await database.runTransaction(async (tx) => {
+        const [sourceStatistics, targetStatistics] = await tx.getAll(
+          sourceStatisticsRef,
+          targetStatisticsRef,
+        );
+        if (!sourceStatistics.exists) return;
+        tx.set(targetStatisticsRef, {
+          ...mergeStatisticsData(
+            sourceStatistics.data() ?? {},
+            targetStatistics.data() ?? {},
+          ),
+          user_id: targetUid,
+          merged_from_uid: sourceUid,
+          updated_at: FieldValue.serverTimestamp(),
+        }, {merge: true});
+        tx.delete(sourceStatisticsRef);
+      });
+
+      const xpDefinition = GAMIFICATION_UID_COLLECTIONS.xpLogs;
+      const xpLogsAttempted = await migrateOwnedDocuments(
+        database,
+        sourceUid,
+        targetUid,
+        {
+          collection: xpDefinition.collection,
+          ownerField: xpDefinition.ownerField,
+          targetId: (source, data) => xpLogTargetId(
+            source,
+            data,
+            targetUid,
+          ),
+          // Colisão representa o mesmo evento idempotente; o registro já
+          // pertencente à conta canônica vence.
+          mergeData: (source, target) => ({...source, ...target}),
+        },
+      );
+
+      const badgeDefinition = GAMIFICATION_UID_COLLECTIONS.userBadges;
+      const badgesAttempted = await migrateOwnedDocuments(
+        database,
+        sourceUid,
+        targetUid,
+        {
+          collection: badgeDefinition.collection,
+          ownerField: badgeDefinition.ownerField,
+          targetId: (source, data) => {
+            const badgeId = typeof data.badge_id === "string" ?
+              data.badge_id : source.id.replace(`${sourceUid}_`, "");
+            return `${targetUid}_${badgeId}`;
+          },
+          mergeData: mergeUserBadgeData,
+        },
+      );
+
+      const seasonDefinition =
+        GAMIFICATION_UID_COLLECTIONS.seasonParticipation;
+      const seasonsAttempted = await migrateOwnedDocuments(
+        database,
+        sourceUid,
+        targetUid,
+        {
+          collection: seasonDefinition.collection,
+          ownerField: seasonDefinition.ownerField,
+          targetId: (source, data) => {
+            const seasonId = typeof data.season_id === "string" ?
+              data.season_id : source.id.endsWith(`_${sourceUid}`) ?
+                source.id.slice(0, -sourceUid.length - 1) : source.id;
+            return `${seasonId}_${targetUid}`;
+          },
+          mergeData: mergeSeasonParticipationData,
+        },
+      );
+
+      const voteDefinition = GAMIFICATION_UID_COLLECTIONS.mvpVotes;
+      const votesAttempted = await migrateOwnedDocuments(
+        database,
+        sourceUid,
+        targetUid,
+        {
+          collection: voteDefinition.collection,
+          ownerField: voteDefinition.ownerField,
+          markerField: "merged_vote_from_uid",
+          targetId: (source, data) => {
+            const gameId = typeof data.game_id === "string" ?
+              data.game_id : undefined;
+            const category = typeof data.category === "string" ?
+              data.category : undefined;
+            return gameId && category ?
+              `${gameId}_${targetUid}_${category}` : source.id;
+          },
+          // Em uma colisão, o voto emitido pela conta canônica vence.
+          mergeData: (source, target) => ({...source, ...target}),
+        },
+      );
+      const voteReferencesAttempted = await migrateOwnedDocuments(
+        database,
+        sourceUid,
+        targetUid,
+        {
+          collection: voteDefinition.collection,
+          ownerField: "voted_player_id",
+          markerField: "merged_voted_player_from_uid",
+          targetId: (source) => source.id,
+          mergeData: (source) => source,
+        },
+      );
+
+      const canonicalUser = await targetUserRef.get();
+      const canonicalUserData = canonicalUser.data() ?? {};
+      const canonicalName = canonicalUserData.display_name ??
+        canonicalUserData.name ?? canonicalUserData.username ??
+        "Usuário";
+      const canonicalPhoto = canonicalUserData.photo_url ??
+        canonicalUserData.photoUrl ?? null;
+      const activityDefinition = GAMIFICATION_UID_COLLECTIONS.activities;
+      const activitiesAttempted = await migrateOwnedDocuments(
+        database,
+        sourceUid,
+        targetUid,
+        {
+          collection: activityDefinition.collection,
+          ownerField: activityDefinition.ownerField,
+          targetId: (source) => source.id,
+          mergeData: (source) => ({
+            ...source,
+            user_name: canonicalName,
+            user_photo: canonicalPhoto,
+          }),
+        },
+      );
+      logger.info("[ACCOUNT_MERGE] Gamificação migrada nesta tentativa", {
+        requestId,
+        sourceUid,
+        targetUid,
+        xpLogsAttempted,
+        badgesAttempted,
+        seasonsAttempted,
+        votesAttempted,
+        voteReferencesAttempted,
+        activitiesAttempted,
+      });
+
       const writer = database.bulkWriter();
       // SECFIX #3909: o BulkWriter não agrega nem propaga falhas individuais
       // em close() — cada set() devolve sua própria Promise<WriteResult>, que
@@ -1543,6 +2047,59 @@ export const completeAccountMerge = onCall(
         );
       }
 
+      // Reconstrói contagens pelos marcadores do destino. Isso mantém o
+      // manifest correto quando uma tentativa anterior já migrou páginas e a
+      // lease expirou antes do fechamento do pedido.
+      const [
+        targetStatisticsAfter,
+        xpLogsMigrated,
+        userBadgesMigrated,
+        seasonParticipationMigrated,
+        mvpVotesMigrated,
+        mvpVoteReferencesMigrated,
+        activitiesMigrated,
+      ] = await Promise.all([
+        targetStatisticsRef.get(),
+        countMigratedDocuments(
+          database,
+          xpDefinition.collection,
+          "merged_from_uid",
+          sourceUid,
+        ),
+        countMigratedDocuments(
+          database,
+          badgeDefinition.collection,
+          "merged_from_uid",
+          sourceUid,
+        ),
+        countMigratedDocuments(
+          database,
+          seasonDefinition.collection,
+          "merged_from_uid",
+          sourceUid,
+        ),
+        countMigratedDocuments(
+          database,
+          voteDefinition.collection,
+          "merged_vote_from_uid",
+          sourceUid,
+        ),
+        countMigratedDocuments(
+          database,
+          voteDefinition.collection,
+          "merged_voted_player_from_uid",
+          sourceUid,
+        ),
+        countMigratedDocuments(
+          database,
+          activityDefinition.collection,
+          "merged_from_uid",
+          sourceUid,
+        ),
+      ]);
+      const statisticsMigrated =
+        targetStatisticsAfter.data()?.merged_from_uid === sourceUid ? 1 : 0;
+
       const completedAt = FieldValue.serverTimestamp();
       await database.runTransaction(async (tx) => {
         const fresh = await tx.get(requestRef);
@@ -1571,6 +2128,13 @@ export const completeAccountMerge = onCall(
             liveGamesOwnershipMigrated,
             liveScoresOwnershipMigrated,
             gameTemplatesMigrated,
+            statisticsMigrated,
+            xpLogsMigrated,
+            userBadgesMigrated,
+            seasonParticipationMigrated,
+            mvpVotesMigrated,
+            mvpVoteReferencesMigrated,
+            activitiesMigrated,
             sourceProfilePreserved: sourceUser.exists,
           },
           completedAt,

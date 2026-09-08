@@ -50,6 +50,7 @@ import com.futebadosparcas.compose.resources.report_player_goals
 import com.futebadosparcas.compose.resources.share
 import com.futebadosparcas.domain.model.*
 import com.futebadosparcas.ui.adaptive.AdaptiveTopBar
+import com.futebadosparcas.ui.theme.DynamicThemeEngine
 import org.jetbrains.compose.resources.stringResource
 
 // Log: removeu imports java.*, resources android, etc.
@@ -160,7 +161,7 @@ fun PostGameReportScreen(
                         Icon(
                             imageVector = Icons.Filled.Chat,
                             contentDescription = stringResource(Res.string.owner_share_whatsapp_cd),
-                            tint = Color(0xFF25D366) // verde whatsapp
+                            tint = MaterialTheme.colorScheme.primary
                         )
                     }
                     IconButton(onClick = onShare) {
@@ -258,7 +259,7 @@ fun PostGameReportScreen(
                 ReportPlayerRow(
                     player = player,
                     icon = Icons.Filled.CheckCircle,
-                    iconColor = Color(0xFF25D366)
+                    iconColor = MaterialTheme.colorScheme.primary
                 )
             }
 
@@ -409,7 +410,7 @@ private fun MvpCard(player: GameConfirmation) {
             Icon(
                 imageVector = Icons.Filled.Star,
                 contentDescription = stringResource(Res.string.owner_mvp_short),
-                tint = Color(0xFFFFD700),
+                tint = MaterialTheme.colorScheme.onTertiaryContainer,
                 modifier = Modifier.size(32.dp)
             )
             Spacer(modifier = Modifier.width(12.dp))
@@ -460,7 +461,7 @@ private fun ReportStatsCard(
                 StatBox(
                     value = presentCount.toString(),
                     label = stringResource(Res.string.owner_present),
-                    color = Color(0xFF25D366)
+                    color = MaterialTheme.colorScheme.primary
                 )
                 StatBox(
                     value = absentCount.toString(),
@@ -475,7 +476,7 @@ private fun ReportStatsCard(
                 StatBox(
                     value = yellowCards.toString(),
                     label = stringResource(Res.string.owner_yellow),
-                    color = Color(0xFFFDD835)
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 StatBox(
                     value = redCards.toString(),
@@ -557,7 +558,7 @@ private fun ReportTopPlayersCard(
                             text = "${index + 1}",
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Bold,
-                            color = if (index == 1) Color.Black else Color.White
+                            color = DynamicThemeEngine.onColorFor(medalColor)
                         )
                     }
 
@@ -642,7 +643,7 @@ private fun ReportFinancialCard(
                         text = formatCurrency(collected),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF25D366)
+                        color = MaterialTheme.colorScheme.onSecondaryContainer
                     )
                     Text(
                         text = stringResource(Res.string.owner_paid_count_parenthesized, paidCount),

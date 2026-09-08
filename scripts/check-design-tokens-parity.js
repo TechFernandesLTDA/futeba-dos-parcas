@@ -36,6 +36,9 @@ const PLATFORMS = [
   },
   {
     name: 'composeApp',
+    // #4098: CMP uses DynamicThemeEngine/DefaultSeeds, not a static palette.
+    // Keep shape/motion checks; live shared seeds are checked separately.
+    staticPalette: false,
     file: path.join(
       ROOT,
       'composeApp', 'src', 'commonMain', 'kotlin', 'com', 'futebadosparcas', 'ui', 'theme', 'Color.kt'
@@ -297,7 +300,7 @@ function checkGamificationParity(tokens, errors) {
     Streak: tokens.gamification.streak,
   };
 
-  for (const platform of PLATFORMS.filter((platform) => platform.name !== 'web')) {
+  for (const platform of PLATFORMS.filter((platform) => platform.name !== 'web' && platform.staticPalette !== false)) {
     const content = readRequiredFile(platform.file, `${platform.name} gamification tokens`, errors);
     if (!content) continue;
     checkKotlinValHexes(
@@ -673,10 +676,23 @@ const MOTION_FILES = [
   },
 ];
 
-/** Verifica se o número aparece como token isolado (não como substring). */
-function fileContainsNumber(content, n) {
-  const re = new RegExp('(?<![\\d.])' + n + '(?![\\d.])');
-  return re.test(content);
+/** Remove comentários para que exemplos/documentação não satisfaçam o gate. */
+function stripSourceComments(content) {
+  return content
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/(^|[^:])\/\/.*$/gm, '$1');
+}
+
+/** Declarações aceitas para uma duração, por chave e valor. */
+function durationPatterns(name, value) {
+  const duration = escapeRegExp(String(value));
+  return {
+    css: new RegExp('\\b' + escapeRegExp(name) + '\\s*:\\s*' + duration + '\\b'),
+    kotlin: new RegExp(
+      '\\b(?:const\\s+)?val\\s+' + escapeRegExp(name) +
+      '\\s*(?::\\s*\\w+)?\\s*=\\s*' + duration + '\\b'
+    ),
+  };
 }
 
 /**
@@ -697,7 +713,7 @@ function easingPatterns(curve) {
 }
 
 /** Valida durations e easings do bloco `motion` em todas as plataformas. */
-function checkMotionParity(tokens, errors) {
+function checkMotionParity(tokens, errors, motionFiles = MOTION_FILES) {
   const motion = tokens.motion;
   if (!motion || !motion.duration || !motion.easing) {
     errors.push('[motion] bloco `motion` ausente ou incompleto em shared/design-tokens.json');
@@ -714,15 +730,16 @@ function checkMotionParity(tokens, errors) {
   // Easings canônicas (cada curva é um array [x1,y1,x2,y2]).
   const easings = motion.easing;
 
-  for (const platform of MOTION_FILES) {
+  for (const platform of motionFiles) {
     if (!fs.existsSync(platform.file)) {
       errors.push(`[${platform.name}] arquivo de motion ausente: ${path.relative(ROOT, platform.file)}`);
       continue;
     }
-    const content = fs.readFileSync(platform.file, 'utf8').toLowerCase();
+    const content = stripSourceComments(fs.readFileSync(platform.file, 'utf8')).toLowerCase();
 
     for (const [name, value] of Object.entries(durations)) {
-      if (!fileContainsNumber(content, value)) {
+      const { css, kotlin } = durationPatterns(name, value);
+      if (!css.test(content) && !kotlin.test(content)) {
         errors.push(
           `[${platform.name}] duration ausente: motion.duration.${name} (${value}ms) — esperado em ${path.relative(ROOT, platform.file)}`
         );
@@ -731,7 +748,10 @@ function checkMotionParity(tokens, errors) {
 
     for (const [name, curve] of Object.entries(easings)) {
       const { css, kotlin } = easingPatterns(curve);
-      if (!css.test(content) && !kotlin.test(content)) {
+      // Match the declaration, not a curve appearing elsewhere or in a comment.
+      const cssDeclaration = new RegExp('\\b' + escapeRegExp(name) + '\\s*:\\s*[\'\"]' + css.source);
+      const kotlinDeclaration = new RegExp('\\bval\\s+' + escapeRegExp(name) + '\\s*(?::\\s*easing)?\\s*=\\s*' + kotlin.source);
+      if (!cssDeclaration.test(content) && !kotlinDeclaration.test(content)) {
         errors.push(
           `[${platform.name}] easing ausente: motion.easing.${name} ([${curve.join(', ')}]) — esperado em ${path.relative(ROOT, platform.file)}`
         );
@@ -765,6 +785,7 @@ function main() {
   const errors = [];
 
   for (const platform of PLATFORMS) {
+    if (platform.staticPalette === false) continue;
     if (!fs.existsSync(platform.file)) {
       errors.push(`[${platform.name}] arquivo de tema ausente: ${platform.file}`);
       continue;
@@ -810,4 +831,6 @@ function main() {
   process.exit(0);
 }
 
-main();
+if (require.main === module) main();
+
+module.exports = { checkMotionParity };

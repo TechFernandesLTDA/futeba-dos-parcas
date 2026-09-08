@@ -369,10 +369,10 @@ describe("onUserDeleted — regressão #2323 loop infinito anonimização", () =
       ).resolves.not.toThrow();
 
       // 1ª subcoleção: 2 páginas (500 + 250) → 2 chamadas. Demais subcoleções
-      // (reviews, activities): 1 chamada vazia cada. Total esperado: 4.
+      // (reviews, members, activities): 1 chamada vazia cada. Total: 5.
       // O ponto crucial: o loop ENCERROU (chamadas finitas) em vez de repetir
       // a página de 500 para sempre.
-      expect(cgCallCount).toBe(4);
+      expect(cgCallCount).toBe(5);
     },
     10000
   );
@@ -383,8 +383,8 @@ describe("onUserDeleted — regressão #2323 loop infinito anonimização", () =
       await expect(
         onUserDeleted(makeUserRecord(), makeEventContext())
       ).resolves.not.toThrow();
-      // 3 subcoleções consultadas uma vez cada (todas vazias).
-      expect(mockCollectionGroupGet).toHaveBeenCalledTimes(3);
+      // 4 subcoleções consultadas uma vez cada (todas vazias).
+      expect(mockCollectionGroupGet).toHaveBeenCalledTimes(4);
     }
   );
 
@@ -395,38 +395,35 @@ describe("onUserDeleted — regressão #2323 loop infinito anonimização", () =
         id: `group_${i}`,
         ref: {id: `group_${i}`},
         data: () => ({
-          ownerId: "other-user",
-          members: [],
+          owner_id: "user-to-delete",
         }),
       }));
-
-      let collectionGetCalls = 0;
-      mockCollectionGet.mockImplementation(() => {
-        collectionGetCalls++;
-        // FIX #4049: game_photos/game_videos acrescentam 2 consultas extras às
-        // de limpeza de docs. Todas as consultas de coleção DOC (não-grupo)
-        // retornam vazio; só a partir daí o loop de `groups` recebe os docs
-        // repetidos para validar o abort por MAX_ANON_ITERATIONS.
-        if (collectionGetCalls <= 16) {
-          return Promise.resolve({
-            docs: [],
-            empty: true,
-            size: 0,
-          });
-        }
-
-        return Promise.resolve({
-          docs: repeatingGroupDocs,
-          empty: false,
-          size: repeatingGroupDocs.length,
-        });
+      const groupsStartAfter = jest.fn();
+      mockCollection.mockImplementation((name: string) => {
+        const query: any = {
+          where: jest.fn(() => query),
+          limit: jest.fn(() => query),
+          startAfter: groupsStartAfter.mockImplementation(() => query),
+          get: jest.fn(() => Promise.resolve(name === "groups" ? {
+            docs: repeatingGroupDocs,
+            empty: false,
+            size: repeatingGroupDocs.length,
+          } : {docs: [], empty: true, size: 0})),
+        };
+        return query;
       });
 
       await expect(
         onUserDeleted(makeUserRecord(), makeEventContext())
       ).rejects.toThrow("PII anonymization incomplete");
 
-      expect(mockStartAfter).toHaveBeenCalled();
+      expect(groupsStartAfter).toHaveBeenCalled();
+      mockCollection.mockReturnValue({
+        where: mockWhere,
+        limit: mockLimit,
+        startAfter: mockStartAfter,
+        get: mockCollectionGet,
+      });
     },
     10000
   );
@@ -775,6 +772,150 @@ describe(
     );
   }
 );
+
+describe("onUserDeleted — FIX #4113: schema real de grupos", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    batchInstances.length = 0;
+    mockDocGet.mockResolvedValue({exists: false, data: () => null});
+    mockCollectionGet.mockResolvedValue({docs: [], empty: true, size: 0});
+    mockCollectionGroupGet.mockResolvedValue({
+      docs: [],
+      empty: true,
+      size: 0,
+    });
+  });
+
+  afterEach(() => {
+    mockCollection.mockReturnValue({
+      where: mockWhere,
+      limit: mockLimit,
+      startAfter: mockStartAfter,
+      get: mockCollectionGet,
+    });
+    mockCollectionGroup.mockReturnValue({
+      where: jest.fn().mockReturnThis(),
+      limit: jest.fn().mockReturnThis(),
+      startAfter: jest.fn().mockReturnThis(),
+      get: mockCollectionGroupGet,
+    });
+  });
+
+  test("anonimiza owner/member snake_case e remove convite real", async () => {
+    const uid = "user-to-delete";
+    const groupRef = {path: "groups/group-1"};
+    const memberRef = {path: `groups/group-1/members/${uid}`};
+    const inviteRef = {path: "group_invites/invite-1"};
+    let ownerQueryField: string | undefined;
+    const served = new Set<string>();
+
+    mockCollection.mockImplementation((name: string) => {
+      let field: string | undefined;
+      const query: any = {
+        where: jest.fn((nextField: string) => {
+          field = nextField;
+          if (name === "groups") ownerQueryField = nextField;
+          return query;
+        }),
+        limit: jest.fn(() => query),
+        startAfter: jest.fn(() => query),
+        get: jest.fn(() => {
+          const key = `${name}:${field}`;
+          if (name === "groups" && !served.has(key)) {
+            served.add(key);
+            return Promise.resolve({
+              docs: [{
+                ref: groupRef,
+                data: () => ({
+                  owner_id: uid,
+                  owner_name: "Nome real",
+                  members: [uid],
+                }),
+              }],
+              empty: false,
+              size: 1,
+            });
+          }
+          if (
+            name === "group_invites" &&
+            field === "invited_user_id" &&
+            !served.has(key)
+          ) {
+            served.add(key);
+            return Promise.resolve({
+              docs: [{ref: inviteRef}],
+              empty: false,
+              size: 1,
+              forEach: (callback: (doc: {ref: unknown}) => void) =>
+                callback({ref: inviteRef}),
+            });
+          }
+          return Promise.resolve({docs: [], empty: true, size: 0});
+        }),
+      };
+      return query;
+    });
+
+    mockCollectionGroup.mockImplementation((name: string) => {
+      const query: any = {
+        where: jest.fn(() => query),
+        limit: jest.fn(() => query),
+        startAfter: jest.fn(() => query),
+        get: jest.fn(() => Promise.resolve(name === "members" ? {
+          docs: [{ref: memberRef}],
+          empty: false,
+          size: 1,
+          forEach: (callback: (doc: {ref: unknown}) => void) =>
+            callback({ref: memberRef}),
+        } : {docs: [], empty: true, size: 0})),
+      };
+      return query;
+    });
+
+    await onUserDeleted(makeUserRecord(uid), makeEventContext());
+
+    expect(ownerQueryField).toBe("owner_id");
+    const updates = batchInstances.flatMap((batch) => batch.update.mock.calls);
+    expect(updates).toContainEqual([
+      groupRef,
+      {owner_name: "Usuário removido"},
+    ]);
+    expect(updates).toContainEqual([
+      memberRef,
+      {
+        user_name: "Usuário removido",
+        user_photo: null,
+        user_photo_url: null,
+      },
+    ]);
+    expect(updates.some(([, data]) => "members" in data)).toBe(false);
+    const deletes = batchInstances.flatMap((batch) =>
+      batch.delete.mock.calls.map((call) => call[0])
+    );
+    expect(deletes).toContain(inviteRef);
+    expect(deletes).toContainEqual(
+      expect.objectContaining({path: `statistics/${uid}`})
+    );
+  });
+
+  test("falha transitória na subcoleção members força retry", async () => {
+    mockCollectionGroup.mockImplementation((name: string) => {
+      const query: any = {
+        where: jest.fn(() => query),
+        limit: jest.fn(() => query),
+        startAfter: jest.fn(() => query),
+        get: jest.fn(() => name === "members" ?
+          Promise.reject(Object.assign(new Error("unavailable"), {code: 14})) :
+          Promise.resolve({docs: [], empty: true, size: 0})),
+      };
+      return query;
+    });
+
+    await expect(
+      onUserDeleted(makeUserRecord(), makeEventContext())
+    ).rejects.toThrow("PII anonymization incomplete");
+  });
+});
 
 // ==========================================
 // FIX #4049 — limpeza de mídia de jogo (game_photos/game_videos) no Storage

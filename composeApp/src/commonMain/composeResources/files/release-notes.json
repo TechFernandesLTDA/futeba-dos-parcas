@@ -1,7 +1,31 @@
 {
   "platform": "ios",
-  "generatedAt": "2026-08-28T16:23:47.965Z",
+  "generatedAt": "2026-09-08T03:45:17.289Z",
   "notes": [
+    {
+      "version": "1.8.0",
+      "buildNumber": 24,
+      "releaseDate": "2026-09-08",
+      "type": "minor",
+      "showPopup": true,
+      "published": false,
+      "headline": "Escolha como o app aparece no iPhone.",
+      "highlights": [],
+      "added": [
+        "A tela Aparência permite escolher tema claro, escuro ou acompanhar o sistema e mantém sua escolha."
+      ],
+      "improved": [],
+      "fixed": [
+        "Números do pódio têm contraste adequado sobre as medalhas."
+      ],
+      "issueRefs": [
+        4096,
+        4097,
+        4098,
+        4109,
+        4115
+      ]
+    },
     {
       "version": "1.7.2",
       "buildNumber": 23,

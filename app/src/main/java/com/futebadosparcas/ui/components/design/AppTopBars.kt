@@ -3,7 +3,8 @@ package com.futebadosparcas.ui.components.design
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.sizeIn
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -411,11 +412,14 @@ private fun NotificationIconWithBadge(
                 contentColor = MaterialTheme.colorScheme.onError,
                 shape = CircleShape,
                 modifier = Modifier
-                    .size(16.dp)
+                    .sizeIn(minWidth = 16.dp, minHeight = 16.dp)
                     .align(Alignment.TopEnd)
                     .offset(x = (-4).dp, y = 4.dp)
             ) {
-                Box(contentAlignment = Alignment.Center) {
+                Box(
+                    modifier = Modifier.padding(horizontal = 3.dp, vertical = 1.dp),
+                    contentAlignment = Alignment.Center
+                ) {
                     Text(
                         text = if (unreadCount > 9) "9+" else unreadCount.toString(),
                         color = MaterialTheme.colorScheme.onError,

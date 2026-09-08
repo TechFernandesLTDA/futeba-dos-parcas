@@ -28,6 +28,7 @@ import androidx.compose.material.icons.filled.NewReleases
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.QueryStats
 import androidx.compose.material.icons.filled.SportsSoccer
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -78,6 +79,10 @@ import com.futebadosparcas.compose.resources.profile_hub_action_setup
 import com.futebadosparcas.compose.resources.profile_hub_action_setup_body
 import com.futebadosparcas.compose.resources.profile_hub_action_stats
 import com.futebadosparcas.compose.resources.profile_hub_action_stats_body
+import com.futebadosparcas.compose.resources.profile_hub_action_theme
+import com.futebadosparcas.compose.resources.profile_hub_action_theme_body
+import com.futebadosparcas.compose.resources.theme_settings_unavailable
+import com.futebadosparcas.compose.resources.theme_settings
 import com.futebadosparcas.compose.resources.profile_hub_body
 import com.futebadosparcas.compose.resources.profile_hub_title
 import com.futebadosparcas.domain.model.AppThemeConfig
@@ -86,6 +91,7 @@ import com.futebadosparcas.domain.model.GameConfirmation
 import com.futebadosparcas.domain.model.Team
 import com.futebadosparcas.domain.model.ThemeMode
 import com.futebadosparcas.domain.repository.AuthRepository
+import com.futebadosparcas.domain.repository.ThemeRepository
 import com.futebadosparcas.platform.firebase.FirebaseDataSource
 import com.futebadosparcas.platform.PlatformShareFactory
 import com.futebadosparcas.platform.storage.PreferencesService
@@ -110,6 +116,7 @@ import com.futebadosparcas.ui.core.RankingRouteScreen
 import com.futebadosparcas.ui.core.WelcomeScreen
 import com.futebadosparcas.ui.theme.FutebaTheme
 import com.futebadosparcas.ui.theme.MotionSpring
+import com.futebadosparcas.ui.theme.ThemeSettingsScreen
 import com.futebadosparcas.ui.theme.rememberReduceMotion
 import com.futebadosparcas.ui.whatsnew.WhatsNewPopupHost
 import com.futebadosparcas.ui.whatsnew.WhatsNewScreen
@@ -130,17 +137,17 @@ fun App() {
 
 @Composable
 private fun AppContent() {
-    // #4086 — iOS nunca renderizava dark: `FutebaTheme` era chamado sem `themeConfig` e o
-    // default de `AppThemeConfig.mode` é LIGHT, tornando o ramo SYSTEM inalcançável e
-    // `isSystemInDarkTheme()` código morto. Passamos SYSTEM explicitamente para o app
-    // acompanhar o modo do iOS (UIUserInterfaceStyle = Automatic no Info.plist).
-    //
-    // MÍNIMO aceitável: não há `ThemeRepositoryImpl` para iOS — a única implementação é
-    // DataStore, Android-only, em `app/.../data/ThemeRepositoryImpl.kt` — então a config
-    // persistida não é coletável por enquanto. Quando a rota de tema do iOS existir
-    // (paridade com Android), substituir por uma coleta de `ThemeRepository.themeConfig`
-    // como faz `app/.../ui/theme/Theme.kt`.
-    FutebaTheme(themeConfig = AppThemeConfig(mode = ThemeMode.SYSTEM)) {
+    val systemDefault = remember { AppThemeConfig(mode = ThemeMode.SYSTEM) }
+    val themeRepository: ThemeRepository? = runCatching { koinInject<ThemeRepository>() }.getOrNull()
+    val themeConfig = themeRepository
+        ?.themeConfig
+        ?.collectAsStateWithLifecycle(initialValue = systemDefault)
+        ?.value
+        ?: systemDefault
+
+    // #4097 — iOS persists the user choice through ThemeRepository. Targets without a
+    // repository retain the safe SYSTEM fallback while their CMP wiring is ported.
+    FutebaTheme(themeConfig = themeConfig) {
         // #2673/#2691 — Surface de fundo desenha edge-to-edge (cor cobre toda a tela,
         // inclusive sob status bar / notch / home indicator), enquanto o conteúdo
         // interno respeita a safe-area via `WindowInsets.safeDrawing`.
@@ -170,6 +177,7 @@ fun AppNavigation(
     navController: NavHostController = rememberNavController()
 ) {
     val authRepository: AuthRepository? = runCatching { koinInject<AuthRepository>() }.getOrNull()
+    val themeRepository: ThemeRepository? = runCatching { koinInject<ThemeRepository>() }.getOrNull()
     val preferencesService: PreferencesService? = runCatching { koinInject<PreferencesService>() }.getOrNull()
     val platformShare = remember { runCatching { PlatformShareFactory.create() }.getOrNull() }
     val startDestination = if (authRepository?.isLoggedIn() == true) AppRoutes.HOME else AppRoutes.WELCOME
@@ -551,6 +559,12 @@ fun AppNavigation(
                         }
                     ),
                     FeatureHubAction(
+                        label = stringResource(Res.string.profile_hub_action_theme),
+                        description = stringResource(Res.string.profile_hub_action_theme_body),
+                        icon = Icons.Filled.Settings,
+                        onClick = { navController.navigate(AppRoutes.THEME_SETTINGS) }
+                    ),
+                    FeatureHubAction(
                         label = stringResource(Res.string.profile_hub_action_blocked),
                         description = stringResource(Res.string.profile_hub_action_blocked_body),
                         icon = Icons.Filled.Block,
@@ -558,6 +572,23 @@ fun AppNavigation(
                     )
                 )
             )
+        }
+
+        composable(AppRoutes.THEME_SETTINGS) {
+            if (themeRepository != null) {
+                ThemeSettingsScreen(
+                    repository = themeRepository,
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            } else {
+                UnavailableRouteScreen(
+                    title = stringResource(Res.string.theme_settings),
+                    message = stringResource(Res.string.theme_settings_unavailable),
+                    contextId = AppRoutes.THEME_SETTINGS,
+                    onRetry = {},
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
         }
 
         // Ranking

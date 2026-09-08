@@ -64,6 +64,7 @@ export interface Location {
   billingDueDay?: number;
   billingStartsAt?: Date;
   billingExpiresAt?: Date;
+  trialStartedAt?: Date;
   billingExceptionNote?: string;
   venueAccountId?: string;
   venueAccountStatus?: LocationSubscriptionStatus;

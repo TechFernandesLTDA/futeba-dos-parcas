@@ -14,8 +14,10 @@ import com.futebadosparcas.domain.repository.LocationRepository
 import com.futebadosparcas.domain.repository.LiveGameRepository
 import com.futebadosparcas.domain.repository.RankingRepository
 import com.futebadosparcas.domain.repository.StatisticsRepository
+import com.futebadosparcas.domain.repository.ThemeRepository
 import com.futebadosparcas.platform.firebase.FirebaseDataSource
 import com.futebadosparcas.platform.storage.PreferencesService
+import com.futebadosparcas.ui.theme.IosThemeRepository
 import org.koin.core.module.Module
 import org.koin.dsl.module
 
@@ -23,6 +25,7 @@ internal actual fun platformComposeAppModules(): List<Module> = listOf(
     module {
         single { FirebaseDataSource() }
         single { PreferencesService() }
+        single<ThemeRepository> { IosThemeRepository(get()) }
         single<AuthRepository> { AuthRepositoryImpl(get()) }
         single<RankingRepository> { RankingRepositoryImpl(get()) }
         single<GamificationRepository> { GamificationRepositoryImpl(get()) }

@@ -24,6 +24,13 @@ Plataforma para organizar peladas, grupos e temporadas com confirmação de pres
 - XP, níveis, badges, divisões, rankings sazonais, MVP, bônus por performance,
   aderência e histórico estatístico.
 - Aplicações Web/PWA, Android e iOS/CMP apoiadas por Firebase e Cloud Functions.
+- No iOS, Aparência permite escolher claro, escuro ou sistema e preserva a
+  preferência entre sessões; a tipografia usa a fonte nativa da plataforma.
+
+A revisão comercial sinaliza contratos vencidos, trials sem data e trials com
+mais de 30 dias. O limite de trial é apenas um critério de revisão, sem cobrança
+ou suspensão automática. A auditoria por localização fica em
+`billing_automation_runs/{run}/locations/{locationId}`.
 
 As versões vigentes são independentes por plataforma. Consulte [`versions.json`](versions.json) e as fontes em [`release-notes/`](release-notes/) em vez de copiar números de versão para documentação secundária.
 

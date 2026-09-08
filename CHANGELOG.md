@@ -24,6 +24,17 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ## Android
 
+### [1.39.6][android-1.39.6] - 2026-09-08
+
+#### Mudado
+- Top bar legado sem consumidores removido.
+- Easing duplicado removido sem alterar a curva das animações.
+
+#### Corrigido
+- Matriz de contraste cobre todas as superfícies e níveis de contraste.
+
+_Issues: #4099, #4108, #4115_
+
 ### [1.39.5][android-1.39.5] - 2026-08-28
 
 #### Adicionado
@@ -343,6 +354,17 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 - Bump de versão de manutenção após a mega audit wave de 2026-05-11, sem mudanças funcionais no Android nesta tag.
 
 ## Web
+
+### [1.56.10][web-1.56.10] - 2026-09-08
+
+#### Mudado
+- Alias de easing duplicado removido; consumidores usam a mesma curva standard.
+
+#### Corrigido
+- Contrato raw de grupos alinhado ao Firestore e conversão explícita para o domínio.
+- Regressão Chromium verifica color-scheme, landing e contraste dos indicadores nativos.
+
+_Issues: #4111, #4113, #4114, #4115_
 
 ### [1.56.9][web-1.56.9] - 2026-08-20
 
@@ -2142,6 +2164,15 @@ _Issues: #1465, #1479, #1421, #1420 · PRs: #1465, #1479, #1421, #1420, #1417_
 
 ## iOS
 
+### [1.8.0][ios-1.8.0] - 2026-09-08
+
+#### Mudado
+- Preferência persistida em NSUserDefaults, com default SYSTEM.
+- iOS usa a fonte nativa; Poppins fica nos recursos Android e wasm.
+- Paletas estáticas sem consumidores e alias de easing duplicado removidos.
+
+_Issues: #4096, #4097, #4098, #4109, #4115_
+
 ### [1.7.2][ios-1.7.2] - 2026-08-28
 
 #### Mudado
@@ -2228,6 +2259,16 @@ _Issues: #3499, #3504, #3509 · PRs: #3511_
 _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
+
+### [1.12.7][functions-1.12.7] - 2026-09-08
+
+#### Corrigido
+- Anonimização usa o contrato canônico de grupos e membros.
+- Novo índice collection-group `members.user_id` deve estar READY antes do deploy das Functions de limpeza; os índices existentes de coleção são preservados.
+- Revisão de trials e status legados preserva os motivos de inconsistência.
+- Auditoria comercial armazena detalhes por localização, sem listas ilimitadas no documento principal.
+
+_Issues: #4100, #4107, #4110, #4112, #4113_
 
 ### [1.12.6][functions-1.12.6] - 2026-08-28
 
@@ -3056,6 +3097,7 @@ _Issues: #2981_
 _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 
 
+[android-1.39.6]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.39.6.md
 [android-1.39.5]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.39.5.md
 [android-1.39.4]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.39.4.md
 [android-1.39.3]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.39.3.md
@@ -3082,6 +3124,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.56.10]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.56.10.md
 [web-1.56.9]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.56.9.md
 [web-1.56.8]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.56.8.md
 [web-1.56.7]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.56.7.md
@@ -3255,6 +3298,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [web-1.26.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.26.2.md
 [web-1.26.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.26.1.md
 [web-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.26.0.md
+[ios-1.8.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.8.0.md
 [ios-1.7.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.7.2.md
 [ios-1.7.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.7.1.md
 [ios-1.7.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.7.0.md
@@ -3262,6 +3306,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [ios-1.6.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.2.md
 [ios-1.6.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.1.md
 [ios-1.6.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.0.md
+[functions-1.12.7]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.12.7.md
 [functions-1.12.6]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.12.6.md
 [functions-1.12.5]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.12.5.md
 [functions-1.12.4]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.12.4.md

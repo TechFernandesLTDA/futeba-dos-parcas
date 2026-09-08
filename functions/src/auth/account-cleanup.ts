@@ -26,6 +26,10 @@ import type {EventContext} from "firebase-functions/v1";
 import * as admin from "firebase-admin";
 import {logger} from "firebase-functions/v2";
 import {Storage} from "@google-cloud/storage";
+import {
+  FIELD_OWNED_GAMIFICATION_COLLECTIONS,
+  GAMIFICATION_UID_COLLECTIONS,
+} from "./account-owned-collections";
 
 // Lazy initialization para evitar erro de initializeApp
 const getDb = () => admin.firestore();
@@ -446,135 +450,35 @@ export const onUserDeleted = runWith({
           );
         }
 
-        // 9. FIX #786: mvp_votes (voter_id == uid) — loop to handle >500
-        let mvpVotesTotal = 0;
-        while (true) {
-          const mvpVotesSnap = await db
-            .collection("mvp_votes")
-            .where("voter_id", "==", uid)
-            .limit(500)
-            .get();
-          if (mvpVotesSnap.empty) break;
-          for (const doc of mvpVotesSnap.docs) {
-            await queueDelete(doc.ref);
-          }
-          mvpVotesTotal += mvpVotesSnap.size;
-          if (mvpVotesSnap.size < 500) break;
-        }
-        if (mvpVotesTotal > 0) {
-          logger.info(
-            `[ACCOUNT_CLEANUP] Deletando ${mvpVotesTotal} ` +
-            `mvp_votes do usuário ${uid}`
-          );
-        }
+        // FIX #4112/#4113: uma única lista, compartilhada com account-merge,
+        // define as coleções de gamificação pertencentes ao UID. statistics é
+        // chaveada pelo próprio uid e os escritores não gravam user_id.
+        const statisticsDefinition = GAMIFICATION_UID_COLLECTIONS.statistics;
+        await queueDelete(db.doc(
+          `${statisticsDefinition.collection}/${uid}`
+        ));
+        logger.info(
+          `[ACCOUNT_CLEANUP] Deletando statistics/${uid} por document-id`
+        );
 
-        // 10. FIX #786: xp_logs (user_id == uid) — loop to handle >500
-        let xpLogsTotal = 0;
-        while (true) {
-          const xpLogsSnap = await db
-            .collection("xp_logs")
-            .where("user_id", "==", uid)
-            .limit(500)
-            .get();
-          if (xpLogsSnap.empty) break;
-          for (const doc of xpLogsSnap.docs) {
-            await queueDelete(doc.ref);
+        for (const definition of FIELD_OWNED_GAMIFICATION_COLLECTIONS) {
+          let total = 0;
+          while (true) {
+            const snapshot = await db
+              .collection(definition.collection)
+              .where(definition.ownerField, "==", uid)
+              .limit(500)
+              .get();
+            if (snapshot.empty) break;
+            for (const doc of snapshot.docs) {
+              await queueDelete(doc.ref);
+            }
+            total += snapshot.size;
+            if (snapshot.size < 500) break;
           }
-          xpLogsTotal += xpLogsSnap.size;
-          if (xpLogsSnap.size < 500) break;
-        }
-        if (xpLogsTotal > 0) {
           logger.info(
-            `[ACCOUNT_CLEANUP] Deletando ${xpLogsTotal} ` +
-            `xp_logs do usuário ${uid}`
-          );
-        }
-
-        // 11. FIX #786: statistics (user_id == uid) — loop to handle >500
-        let statisticsTotal = 0;
-        while (true) {
-          const statisticsSnap = await db
-            .collection("statistics")
-            .where("user_id", "==", uid)
-            .limit(500)
-            .get();
-          if (statisticsSnap.empty) break;
-          for (const doc of statisticsSnap.docs) {
-            await queueDelete(doc.ref);
-          }
-          statisticsTotal += statisticsSnap.size;
-          if (statisticsSnap.size < 500) break;
-        }
-        if (statisticsTotal > 0) {
-          logger.info(
-            `[ACCOUNT_CLEANUP] Deletando ${statisticsTotal} ` +
-            `statistics do usuário ${uid}`
-          );
-        }
-
-        // 12. FIX #786: season_participation (user_id == uid) — loop to handle >500
-        let seasonPartTotal = 0;
-        while (true) {
-          const seasonPartSnap = await db
-            .collection("season_participation")
-            .where("user_id", "==", uid)
-            .limit(500)
-            .get();
-          if (seasonPartSnap.empty) break;
-          for (const doc of seasonPartSnap.docs) {
-            await queueDelete(doc.ref);
-          }
-          seasonPartTotal += seasonPartSnap.size;
-          if (seasonPartSnap.size < 500) break;
-        }
-        if (seasonPartTotal > 0) {
-          logger.info(
-            `[ACCOUNT_CLEANUP] Deletando ${seasonPartTotal} ` +
-            `season_participation do usuário ${uid}`
-          );
-        }
-
-        // 13. FIX #786: activities (user_id == uid) — loop to handle >500
-        let activitiesTotal = 0;
-        while (true) {
-          const activitiesSnap = await db
-            .collection("activities")
-            .where("user_id", "==", uid)
-            .limit(500)
-            .get();
-          if (activitiesSnap.empty) break;
-          for (const doc of activitiesSnap.docs) {
-            await queueDelete(doc.ref);
-          }
-          activitiesTotal += activitiesSnap.size;
-          if (activitiesSnap.size < 500) break;
-        }
-        if (activitiesTotal > 0) {
-          logger.info(
-            `[ACCOUNT_CLEANUP] Deletando ${activitiesTotal} ` +
-            `activities do usuário ${uid}`
-          );
-        }
-
-        // 14. FIX #786: user_badges (user_id == uid) — loop to handle >500
-        let userBadgesTotal = 0;
-        while (true) {
-          const userBadgesSnap = await db
-            .collection("user_badges")
-            .where("user_id", "==", uid)
-            .limit(500)
-            .get();
-          if (userBadgesSnap.empty) break;
-          for (const doc of userBadgesSnap.docs) {
-            await queueDelete(doc.ref);
-          }
-          userBadgesTotal += userBadgesSnap.size;
-          if (userBadgesSnap.size < 500) break;
-        }
-        if (userBadgesTotal > 0) {
-          logger.info(
-            `[ACCOUNT_CLEANUP] Deletando ${userBadgesTotal} ` +
-            `user_badges do usuário ${uid}`
+            `[ACCOUNT_CLEANUP] Deletando ${total} ` +
+            `${definition.collection} do usuário ${uid}`
           );
         }
 
@@ -781,11 +685,14 @@ export const onUserDeleted = runWith({
           }
         }
 
-        // FIX #1965: groups — anonymize ownerName + members[].userName (LGPD Art. 18 VI)
-        // Owner name and member names are denormalized and retain PII after deletion.
+        // FIX #4113: os escritores gravam owner_id/owner_name no documento e
+        // user_id/user_name/user_photo_url na subcoleção canônica members.
+        // O ramo anterior lia ownerId e um array members[] de objetos, forma
+        // que nenhum escritor real produz.
         try {
           let groupsTotal = 0;
-          let lastDoc: admin.firestore.DocumentSnapshot | null = null;
+          let lastDoc:
+            admin.firestore.QueryDocumentSnapshot | null = null;
           let groupsIterations = 0;
           while (true) {
             if (++groupsIterations > MAX_ANON_ITERATIONS) {
@@ -797,59 +704,87 @@ export const onUserDeleted = runWith({
               anonFailed = true;
               break;
             }
-            let query = db.collection("groups").limit(500);
+            let query = db.collection("groups")
+              .where("owner_id", "==", uid)
+              .limit(500);
             if (lastDoc) query = query.startAfter(lastDoc);
             const groupsSnap = await query.get();
             if (groupsSnap.empty) break;
             const groupsBatch = db.batch();
-            let batchOps = 0;
             for (const doc of groupsSnap.docs) {
-              const data = doc.data();
-              let modified = false;
-              const updates: Record<string, unknown> = {};
-
-              if (data.ownerId === uid && data.ownerName) {
-                updates.ownerName = "Usuário removido";
-                modified = true;
-              }
-
-              if (data.members && Array.isArray(data.members)) {
-                const updatedMembers = data.members.map(
-                  (m: Record<string, unknown>) =>
-                    m.userId === uid ?
-                      {...m, userName: "Usuário removido"} :
-                      m
-                );
-                // Only update if something actually changed
-                const hasChange = data.members.some(
-                  (m: Record<string, unknown>, i: number) =>
-                    m.userId === uid &&
-                    m.userName !== updatedMembers[i].userName
-                );
-                if (hasChange) {
-                  updates.members = updatedMembers;
-                  modified = true;
-                }
-              }
-
-              if (modified) {
-                groupsBatch.update(doc.ref, updates);
-                batchOps++;
-                groupsTotal++;
-              }
+              groupsBatch.update(doc.ref, {
+                owner_name: "Usuário removido",
+              });
             }
-            if (batchOps > 0) {
-              await groupsBatch.commit();
-            }
+            await groupsBatch.commit();
+            groupsTotal += groupsSnap.size;
             lastDoc = groupsSnap.docs[groupsSnap.docs.length - 1];
             if (groupsSnap.size < 500) break;
           }
-          if (groupsTotal > 0) {
-            logger.info(
-              `[ACCOUNT_CLEANUP] Anonimizando ${groupsTotal} ` +
-                `grupos com PII do usuário ${uid}`
-            );
+
+          let membersTotal = 0;
+          let membersLastDoc:
+            admin.firestore.QueryDocumentSnapshot | null = null;
+          let membersIterations = 0;
+          while (true) {
+            if (++membersIterations > MAX_ANON_ITERATIONS) {
+              logger.error(
+                `[ACCOUNT_CLEANUP] Limite de ${MAX_ANON_ITERATIONS} ` +
+                "iterações excedido ao anonimizar membros de grupos para " +
+                `${uid}`
+              );
+              anonFailed = true;
+              break;
+            }
+            let membersQuery = db.collectionGroup("members")
+              .where("user_id", "==", uid)
+              .limit(500);
+            if (membersLastDoc) {
+              membersQuery = membersQuery.startAfter(membersLastDoc);
+            }
+            const membersSnap = await membersQuery.get();
+            if (membersSnap.empty) break;
+            const membersBatch = db.batch();
+            membersSnap.forEach((doc) => {
+              membersBatch.update(doc.ref, {
+                user_name: "Usuário removido",
+                user_photo: null,
+                user_photo_url: null,
+              });
+            });
+            await membersBatch.commit();
+            membersTotal += membersSnap.size;
+            membersLastDoc = membersSnap.docs[membersSnap.docs.length - 1];
+            if (membersSnap.size < 500) break;
           }
+
+          let groupInvitesTotal = 0;
+          const inviteFields = [
+            "invited_user_id",
+            "invitedUserId",
+            "invited_by_id",
+            "invitedById",
+          ];
+          for (const field of inviteFields) {
+            while (true) {
+              const inviteSnap = await db.collection("group_invites")
+                .where(field, "==", uid)
+                .limit(450)
+                .get();
+              if (inviteSnap.empty) break;
+              const inviteBatch = db.batch();
+              inviteSnap.forEach((doc) => inviteBatch.delete(doc.ref));
+              await inviteBatch.commit();
+              groupInvitesTotal += inviteSnap.size;
+              if (inviteSnap.size < 450) break;
+            }
+          }
+
+          logger.info(
+            "[ACCOUNT_CLEANUP] Anonimização de grupos concluída para " +
+            `${uid}: owners=${groupsTotal}, members=${membersTotal}, ` +
+            `group_invites=${groupInvitesTotal}`
+          );
         } catch (groupsError) {
           // FIX #3897: só falha transitória força retry da limpeza inteira.
           if (isTransientFirestoreError(groupsError)) {

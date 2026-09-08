@@ -29,6 +29,7 @@ const SUBSCRIPTION_STATUSES = [
   "SUSPENDED",
   "CANCELLED",
 ] as const;
+const DEFAULT_SUBSCRIPTION_STATUS = "ACTIVE";
 
 const BILLING_PLAN_CODES = [
   "TRIAL",
@@ -222,6 +223,11 @@ interface LocationBillingAutomationResult {
   budgetExhausted: boolean;
 }
 
+interface BillingAutomationLocationRecord {
+  locationId: string;
+  reason: string;
+}
+
 interface CalculateAutoRatingsRequest {
   userId: string;
 }
@@ -245,6 +251,7 @@ const FINISHED_GAME_STATUSES = new Set(["FINISHED"]);
 const BILLING_SUMMARY_PAGE_SIZE = 500;
 const BILLING_SUMMARY_PAYMENT_CONCURRENCY = 25;
 const BILLING_AUTOMATION_MAX_RUN_MS = 480_000;
+const TRIAL_REVIEW_AGE_DAYS = 30;
 const DEFAULT_BILLING_GRACE_DAYS = 5;
 const DEFAULT_BILLING_SUSPENSION_DAYS = 15;
 const LOCATION_SUBCOLLECTIONS = [
@@ -373,6 +380,47 @@ function toIsoString(value: unknown): string | null {
       null;
   }
   return null;
+}
+
+/**
+ * Resolve o status de assinatura ausente sem apagar valores desconhecidos.
+ * @param {unknown} value Valor bruto vindo do Firestore.
+ * @return {string} Status armazenado ou fallback contratual.
+ */
+function resolveStoredSubscriptionStatus(value: unknown): string {
+  return typeof value === "string" ? value : DEFAULT_SUBSCRIPTION_STATUS;
+}
+
+/**
+ * Verifica se uma data Firestore já atingiu seu limite inclusivo.
+ * @param {unknown} value Data bruta vinda do Firestore.
+ * @param {Date} now Relógio de referência.
+ * @return {boolean} Se a data já venceu.
+ */
+function isIsoDateOnOrBefore(value: unknown, now: Date): boolean {
+  const iso = toIsoString(value);
+  if (!iso) return false;
+  const timestamp = new Date(iso).getTime();
+  return Number.isFinite(timestamp) && timestamp <= now.getTime();
+}
+
+/**
+ * Classifica trials que exigem revisão comercial sem alterar a assinatura.
+ * @param {unknown} trialStartedAt Data de entrada no trial.
+ * @param {Date} now Relógio de referência.
+ * @return {string | null} Código de pendência, se houver.
+ */
+function getTrialCommercialIssueCode(
+  trialStartedAt: unknown,
+  now: Date
+): "trialStartMissing" | "trialExpired" | null {
+  const iso = toIsoString(trialStartedAt);
+  if (!iso) return "trialStartMissing";
+  const startedAt = new Date(iso).getTime();
+  if (!Number.isFinite(startedAt)) return "trialStartMissing";
+  return now.getTime() - startedAt >= TRIAL_REVIEW_AGE_DAYS * 86_400_000 ?
+    "trialExpired" :
+    null;
 }
 
 /**
@@ -921,11 +969,13 @@ async function recomputeChangedLocationIds(
  * Monta snapshot operacional/comercial para solicitações do owner.
  * @param {FirebaseFirestore.DocumentData} locData Dados da location.
  * @param {FirebaseFirestore.DocumentData[]} fields Campos vinculados.
+ * @param {Date} now Relógio de referência para prazos comerciais.
  * @return {Record<string, unknown>} Resumo auditável.
  */
-function buildLocationCommercialRequestSnapshot(
+export function buildLocationCommercialRequestSnapshot(
   locData: FirebaseFirestore.DocumentData,
-  fields: FirebaseFirestore.DocumentData[]
+  fields: FirebaseFirestore.DocumentData[],
+  now = new Date()
 ): Record<string, unknown> {
   const photos = getLocationPhotos(locData);
   const activeFields = fields.filter((field) => isFieldActive(field));
@@ -980,9 +1030,13 @@ function buildLocationCommercialRequestSnapshot(
   const publicationStatus = typeof locData.publication_status === "string" ?
     locData.publication_status :
     "DRAFT";
-  const subscriptionStatus = typeof locData.subscription_status === "string" ?
-    locData.subscription_status :
-    "TRIAL";
+  const subscriptionStatus = resolveStoredSubscriptionStatus(
+    locData.subscription_status
+  );
+  const contractExpired = isIsoDateOnOrBefore(locData.billing_expires_at, now);
+  const trialIssueCode = subscriptionStatus === "TRIAL" ?
+    getTrialCommercialIssueCode(locData.trial_started_at, now) :
+    null;
   const commercialIssueCodes: string[] = [];
   if (locData.is_active !== true) commercialIssueCodes.push("inactive");
   if (locData.is_verified !== true) commercialIssueCodes.push("notVerified");
@@ -990,6 +1044,8 @@ function buildLocationCommercialRequestSnapshot(
   if (!["TRIAL", "ACTIVE"].includes(subscriptionStatus)) {
     commercialIssueCodes.push("billingIrregular");
   }
+  if (contractExpired) commercialIssueCodes.push("contractExpired");
+  if (trialIssueCode) commercialIssueCodes.push(trialIssueCode);
   if (!hasFieldRegistry) commercialIssueCodes.push("noFields");
   if (!hasActiveFieldRegistry) commercialIssueCodes.push("noActiveFields");
   if (!positiveCents(locData.monthly_fee_cents)) commercialIssueCodes.push("noMonthlyFee");
@@ -1007,7 +1063,9 @@ function buildLocationCommercialRequestSnapshot(
     hasActiveFieldRegistry &&
     positiveCents(locData.monthly_fee_cents) > 0 &&
     Number.isInteger(locData.billing_due_day) &&
-    ["TRIAL", "ACTIVE"].includes(subscriptionStatus);
+    ["TRIAL", "ACTIVE"].includes(subscriptionStatus) &&
+    !contractExpired &&
+    trialIssueCode !== "trialExpired";
 
   return {
     publication_status: publicationStatus,
@@ -1027,6 +1085,8 @@ function buildLocationCommercialRequestSnapshot(
     billing_due_day: Number.isInteger(locData.billing_due_day) ?
       Number(locData.billing_due_day) :
       null,
+    billing_expires_at_iso: toIsoString(locData.billing_expires_at),
+    trial_started_at_iso: toIsoString(locData.trial_started_at),
     city: typeof locData.city === "string" ? locData.city : null,
     state: typeof locData.state === "string" ? locData.state : null,
     requested_at_iso: new Date().toISOString(),
@@ -1142,6 +1202,8 @@ async function resolveSubscriptionStatusAfterApprovedPayment(params: {
   newlyApprovedAmountCents: number;
   currentSubscriptionStatus: unknown;
   currentCommercialStatus: unknown;
+  billingExpiresAt?: unknown;
+  now?: Date;
   alreadyApprovedCents?: number;
 }): Promise<{
   paidCents: number | null;
@@ -1149,6 +1211,12 @@ async function resolveSubscriptionStatusAfterApprovedPayment(params: {
   subscriptionStatus: string | null;
   commercialStatus: string | null;
 }> {
+  if (isIsoDateOnOrBefore(params.billingExpiresAt, params.now || new Date())) {
+    throw new HttpsError(
+      "failed-precondition",
+      "Billing contract has expired and must be renewed before accepting payment"
+    );
+  }
   const currentSubscriptionStatus =
     typeof params.currentSubscriptionStatus === "string" ?
       params.currentSubscriptionStatus :
@@ -1283,6 +1351,69 @@ async function getBillingSummaryPaymentTotals(
 }
 
 /**
+ * Persiste a rastreabilidade da execução e alerta inconsistências cobraveis.
+ * @param {object} params Resultado e IDs da execução.
+ * @return {Promise<void>} Promessa resolvida após a gravação atômica.
+ */
+async function recordLocationBillingAutomationRun(params: {
+  periodKey: string;
+  now: Date;
+  result: LocationBillingAutomationResult;
+  skippedLocations: BillingAutomationLocationRecord[];
+  inconsistentLocations: BillingAutomationLocationRecord[];
+}): Promise<void> {
+  const runId = `${params.periodKey}_${params.now.getTime()}`;
+  const runRef = db().collection("billing_automation_runs").doc(runId);
+  const detailRecords = [
+    ...params.skippedLocations.map((record) => ({...record, type: "SKIPPED"})),
+    ...params.inconsistentLocations.map((record) => ({
+      ...record,
+      type: "INCONSISTENT",
+    })),
+  ];
+  for (let index = 0; index < detailRecords.length; index += 500) {
+    const batch = db().batch();
+    for (const record of detailRecords.slice(index, index + 500)) {
+      batch.set(runRef.collection("locations").doc(record.locationId), {
+        location_id: record.locationId,
+        type: record.type,
+        reason: record.reason,
+        created_at: FieldValue.serverTimestamp(),
+      });
+    }
+    await batch.commit();
+  }
+
+  const summaryBatch = db().batch();
+  summaryBatch.set(runRef, {
+    run_id: runId,
+    period_key: params.periodKey,
+    executed_at: params.now,
+    result: params.result,
+    skipped_locations_count: params.skippedLocations.length,
+    inconsistent_locations_count: params.inconsistentLocations.length,
+    created_at: FieldValue.serverTimestamp(),
+  });
+  if (params.inconsistentLocations.length > 0) {
+    const alertRef = db().collection("alerts").doc();
+    summaryBatch.set(alertRef, {
+      type: "LOCATION_BILLING_INCONSISTENCY",
+      severity: "CRITICAL",
+      title: "Quadras publicadas impossíveis de cobrar",
+      message: `${params.inconsistentLocations.length} quadra(s) exigem revisão comercial antes da cobrança.`,
+      metadata: {
+        billing_run_id: runId,
+        period_key: params.periodKey,
+        inconsistent_locations_count: params.inconsistentLocations.length,
+      },
+      created_at: FieldValue.serverTimestamp(),
+      acknowledged: false,
+    });
+  }
+  await summaryBatch.commit();
+}
+
+/**
  * Processa ciclos mensais de cobranca de quadras.
  * @param {object} params Parametros opcionais de execucao.
  * @return {Promise<LocationBillingAutomationResult>} Resultado consolidado.
@@ -1321,6 +1452,8 @@ export async function processLocationBillingAutomation(params?: {
     nextCursor: null,
     budgetExhausted: false,
   };
+  const skippedLocationRecords: BillingAutomationLocationRecord[] = [];
+  const inconsistentLocationRecords: BillingAutomationLocationRecord[] = [];
 
   const cursorRef = db()
     .collection("billing_automation_state")
@@ -1381,17 +1514,28 @@ export async function processLocationBillingAutomation(params?: {
       }
       lastVisitedId = locationId;
 
-      const subscriptionStatus = typeof locData.subscription_status === "string" ?
-        locData.subscription_status :
-        "ACTIVE";
+      const subscriptionStatus = resolveStoredSubscriptionStatus(
+        locData.subscription_status
+      );
       if (subscriptionStatus === "CANCELLED" || subscriptionStatus === "TRIAL") {
         result.skippedLocations += 1;
+        skippedLocationRecords.push({
+          locationId,
+          reason: subscriptionStatus === "TRIAL" ? "TRIAL" : "CANCELLED",
+        });
         continue;
       }
 
       const billingStartsAtIso = toIsoString(locData.billing_starts_at);
       if (billingStartsAtIso && new Date(billingStartsAtIso).getTime() > now.getTime()) {
         result.skippedLocations += 1;
+        skippedLocationRecords.push({locationId, reason: "BEFORE_BILLING_START"});
+        continue;
+      }
+
+      if (isIsoDateOnOrBefore(locData.billing_expires_at, now)) {
+        result.skippedLocations += 1;
+        skippedLocationRecords.push({locationId, reason: "CONTRACT_EXPIRED"});
         continue;
       }
 
@@ -1404,6 +1548,14 @@ export async function processLocationBillingAutomation(params?: {
         null;
       if (!ownerId || monthlyFeeCents <= 0 || !billingDueDay) {
         result.inconsistentLocations += 1;
+        inconsistentLocationRecords.push({
+          locationId,
+          reason: [
+            !ownerId ? "MISSING_OWNER" : null,
+            monthlyFeeCents <= 0 ? "MISSING_MONTHLY_FEE" : null,
+            !billingDueDay ? "MISSING_BILLING_DUE_DAY" : null,
+          ].filter((reason): reason is string => reason !== null).join(","),
+        });
         continue;
       }
 
@@ -1558,6 +1710,14 @@ export async function processLocationBillingAutomation(params?: {
       resumedFromLocationId,
     });
   }
+
+  await recordLocationBillingAutomationRun({
+    periodKey,
+    now,
+    result,
+    skippedLocations: skippedLocationRecords,
+    inconsistentLocations: inconsistentLocationRecords,
+  });
 
   return result;
 }
@@ -1958,10 +2118,9 @@ secureCallable<GetAdminLocationBillingSummaryRequest>(
         const locData = doc.data() || {};
         const locationId = doc.id || doc.ref?.id;
         if (!locationId) return null;
-        const subscriptionStatus =
-          typeof locData.subscription_status === "string" ?
-            locData.subscription_status :
-            "ACTIVE";
+        const subscriptionStatus = resolveStoredSubscriptionStatus(
+          locData.subscription_status
+        );
         const publicationStatus =
           typeof locData.publication_status === "string" ?
             locData.publication_status :
@@ -2614,6 +2773,9 @@ secureCallable<SetLocationSubscriptionRequest>(
       updated_at: FieldValue.serverTimestamp(),
       updated_by: request.auth.uid,
     };
+    if (subscriptionStatus === "TRIAL" && locData.subscription_status !== "TRIAL") {
+      update.trial_started_at = FieldValue.serverTimestamp();
+    }
     if (hasBillingPlanCode) update.billing_plan_code = billingPlanCode;
     if (hasBillingPlanLabel) update.billing_plan_label = billingPlanLabel;
     if (hasBillingCycle) update.billing_cycle = billingCycle;
@@ -2702,6 +2864,7 @@ secureCallable<RegisterLocationSubscriptionPaymentRequest>(
       newlyApprovedAmountCents: amountCents,
       currentSubscriptionStatus: locData.subscription_status,
       currentCommercialStatus: locData.commercial_status,
+      billingExpiresAt: locData.billing_expires_at,
     });
     const {ledgerRef, data: ledgerData} = createSubscriptionLedgerRef(
       locationId,
@@ -2960,6 +3123,7 @@ secureCallable<ReviewLocationSubscriptionReceiptRequest>(
           newlyApprovedAmountCents: paymentAmountCents,
           currentSubscriptionStatus: currentLocData.subscription_status,
           currentCommercialStatus: currentLocData.commercial_status,
+          billingExpiresAt: currentLocData.billing_expires_at,
           alreadyApprovedCents,
         }) :
         {

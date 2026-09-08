@@ -157,12 +157,13 @@ export function stringOrNull(value: unknown): string | null {
 }
 
 /**
- * Normaliza status da conta com fallback seguro.
+ * Normaliza status da conta distinguindo legado ausente de dado inválido.
  * @param {unknown} value Valor bruto.
  * @return {VenueAccountStatus} Status valido.
  */
 export function normalizeVenueAccountStatus(value: unknown): VenueAccountStatus {
-  return isVenueAccountStatus(value) ? value : "TRIAL";
+  if (value === null || value === undefined) return "ACTIVE";
+  return isVenueAccountStatus(value) ? value : "SUSPENDED";
 }
 
 /**

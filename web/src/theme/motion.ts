@@ -37,12 +37,6 @@ export const motionEasing = {
   standard: 'cubic-bezier(0.2, 0, 0, 1)',
 
   /**
-   * Emphasized — foco e destaque. Transições de high-emphasis (FAB, hero).
-   * cubic-bezier(0.2, 0, 0, 1) com variante acelerada na saída.
-   */
-  emphasized: 'cubic-bezier(0.2, 0, 0, 1)',
-
-  /**
    * Decelerate — elementos que entram em tela (deslizam para dentro).
    * cubic-bezier(0, 0, 0, 1)
    */

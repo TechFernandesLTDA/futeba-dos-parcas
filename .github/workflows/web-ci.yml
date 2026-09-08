@@ -14,6 +14,7 @@ on:
       - 'scripts/ci/verify-vitest-shards.test.js'
       - 'scripts/ci/vitest-shard-plan.js'
       - 'scripts/ci/run-vitest-shard.js'
+      - 'scripts/test-web-native-color-scheme.cjs'
   workflow_dispatch:
   # Cron noturno (03:00 UTC) — dispara apenas o job de mutation testing.
   # Os jobs de PR/push (quality/tests) são desativados no schedule
@@ -85,6 +86,14 @@ jobs:
       - name: TypeScript and production build
         if: matrix.run_quality
         run: npm run build
+
+      - name: Install Chromium for native color-scheme regression
+        if: matrix.run_quality
+        run: npx playwright install chromium
+
+      - name: Test native color-scheme propagation
+        if: matrix.run_quality
+        run: node ../scripts/test-web-native-color-scheme.cjs
 
       - name: Run Vitest shard
         run: >-

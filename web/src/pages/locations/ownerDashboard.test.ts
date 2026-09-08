@@ -142,7 +142,7 @@ describe('ownerDashboard', () => {
       [],
     );
 
-    expect(summary.subscriptionStatus).toBe('SUSPENDED');
+    expect(summary.subscriptionStatus).toBe('ACTIVE');
     expect(summary.commerciallyAvailable).toBe(true);
     expect(summary.commercialIssues).toContain('conta comercial irregular');
     expect(summary.commercialIssues).not.toContain('mensalidade irregular');

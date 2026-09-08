@@ -3,6 +3,7 @@ import { Field, isLocationCommerciallyAvailable, Location } from '../../types/lo
 import {
   getLocationCommercialIssues,
   getLocationPublicationStatus,
+  getLocationSubscriptionStatus,
   getLocationQualityChecklist,
   locationMatchesManageFilters,
   ManageLocationFilterState,
@@ -146,6 +147,48 @@ describe('manageLocationFilters', () => {
 
     expect(issues).toContain('conta comercial irregular');
     expect(issues).not.toContain('mensalidade irregular');
+  });
+
+  it('usa o status individual atualizado pelo cron no filtro administrativo', () => {
+    const location = baseLocation({
+      subscriptionStatus: 'SUSPENDED',
+      venueAccountId: 'owner-123',
+      venueAccountStatus: 'ACTIVE',
+    });
+
+    expect(getLocationSubscriptionStatus(location)).toBe('SUSPENDED');
+    expect(locationMatchesManageFilters(location, baseFilters({ subscriptionFilter: 'SUSPENDED' })))
+      .toBe(true);
+  });
+
+  it('mostra pendências da conta e da mensalidade sem mascarar uma pela outra', () => {
+    const issues = getLocationCommercialIssues(baseLocation({
+      subscriptionStatus: 'SUSPENDED',
+      venueAccountId: 'owner-123',
+      venueAccountStatus: 'OVERDUE',
+    }));
+
+    expect(issues).toContain('conta comercial irregular');
+    expect(issues).toContain('mensalidade irregular');
+  });
+
+  it('expõe contrato expirado e trial envelhecido no painel administrativo', () => {
+    const now = new Date('2026-08-01T12:00:00.000Z');
+    const issues = getLocationCommercialIssues(baseLocation({
+      subscriptionStatus: 'TRIAL',
+      billingExpiresAt: new Date('2026-07-01T00:00:00.000Z'),
+      trialStartedAt: new Date('2026-06-01T00:00:00.000Z'),
+    }), now);
+    const missingTrialStart = getLocationCommercialIssues(
+      baseLocation({ subscriptionStatus: 'TRIAL' }),
+      now,
+    );
+
+    expect(issues).toEqual(expect.arrayContaining([
+      'contrato expirado',
+      'período de teste vencido',
+    ]));
+    expect(missingTrialStart).toContain('início do período de teste não registrado');
   });
 
   it('mantém disponibilidade pública baseada no status individual da quadra', () => {

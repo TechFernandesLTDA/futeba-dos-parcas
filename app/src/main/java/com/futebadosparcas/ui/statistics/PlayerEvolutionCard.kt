@@ -22,7 +22,7 @@ import androidx.compose.ui.unit.sp
 import com.futebadosparcas.domain.model.LeagueDivision
 import com.futebadosparcas.ui.theme.GamificationColors
 import com.futebadosparcas.ui.theme.divisionColor
-import com.futebadosparcas.ui.theme.divisionTextColor
+import com.futebadosparcas.util.ContrastHelper
 import com.futebadosparcas.ui.theme.DivisionColors
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
@@ -208,7 +208,7 @@ fun PlayerLeagueCard(
                     Text(
                         text = getDivisionIcon(division),
                         style = MaterialTheme.typography.titleLarge,
-                        color = divisionTextColor(division)
+                        color = ContrastHelper.getContrastingTextColor(divisionColor)
                     )
                 }
 

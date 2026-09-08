@@ -1,6 +1,6 @@
 {
   "name": "functions",
-  "version": "1.12.6",
+  "version": "1.12.7",
   "scripts": {
     "install:ffmpeg": "node scripts/install-wall-media-ffmpeg.cjs",
     "gcp-build": "npm run install:ffmpeg && npm run build",

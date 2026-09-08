@@ -291,6 +291,7 @@ const {
   inviteLocationManager,
   processLocationBillingAutomation,
   processLocationBillingCycles,
+  buildLocationCommercialRequestSnapshot,
   registerLocationSubscriptionPayment,
   rebuildLocationCommercialStats,
   recomputeLocationAggregates,
@@ -306,6 +307,55 @@ const {
   onNestedLocationFieldWrittenUpdateStats,
   onRootFieldWrittenUpdateLocationStats,
 } = require("../src/locations/location-management");
+
+describe("location commercial billing review", () => {
+  const now = new Date("2026-08-01T12:00:00.000Z");
+
+  it("marca trial envelhecido ou sem início para revisão comercial", () => {
+    const agedTrial = buildLocationCommercialRequestSnapshot({
+      subscription_status: "TRIAL",
+      trial_started_at: new Date("2026-06-01T12:00:00.000Z"),
+      is_active: true,
+      is_verified: true,
+      publication_status: "PUBLISHED",
+      monthly_fee_cents: 15000,
+      billing_due_day: 5,
+    }, [], now);
+    const missingTrialStart = buildLocationCommercialRequestSnapshot({
+      subscription_status: "TRIAL",
+      is_active: true,
+      is_verified: true,
+      publication_status: "PUBLISHED",
+      monthly_fee_cents: 15000,
+      billing_due_day: 5,
+    }, [], now);
+
+    expect(agedTrial).toMatchObject({
+      commercial_issue_codes: expect.arrayContaining(["trialExpired"]),
+      ready_for_publication_approval: false,
+    });
+    expect(missingTrialStart).toMatchObject({
+      commercial_issue_codes: expect.arrayContaining(["trialStartMissing"]),
+    });
+  });
+
+  it("marca contrato expirado sem classificá-lo como inadimplência", () => {
+    const snapshot = buildLocationCommercialRequestSnapshot({
+      subscription_status: "ACTIVE",
+      billing_expires_at: new Date("2026-07-01T12:00:00.000Z"),
+      is_active: true,
+      is_verified: true,
+      publication_status: "PUBLISHED",
+      monthly_fee_cents: 15000,
+      billing_due_day: 5,
+    }, [], now);
+
+    expect(snapshot).toMatchObject({
+      commercial_issue_codes: expect.arrayContaining(["contractExpired"]),
+      ready_for_publication_approval: false,
+    });
+  });
+});
 
 describe("location commercial aggregates", () => {
   it("calcula campos ativos, preco minimo e media por tipo", () => {
@@ -1307,6 +1357,103 @@ describe("location commercial admin callables", () => {
     });
   });
 
+  it("audita skips, alerta dados inconsistentes e respeita a janela contratual", async () => {
+    firestoreStore.delete("locations/location-1");
+    firestoreStore.delete("locations/location-1/fields/field-1");
+    firestoreStore.set("locations/missing-status", {
+      owner_id: "owner-active",
+      monthly_fee_cents: 15000,
+      billing_due_day: 5,
+    });
+    firestoreStore.set("locations/future-contract", {
+      owner_id: "owner-future",
+      subscription_status: "ACTIVE",
+      monthly_fee_cents: 15000,
+      billing_due_day: 5,
+      billing_starts_at: new Date("2026-08-01T00:00:00.000Z"),
+    });
+    firestoreStore.set("locations/expired-contract", {
+      owner_id: "owner-expired",
+      subscription_status: "ACTIVE",
+      monthly_fee_cents: 15000,
+      billing_due_day: 5,
+      billing_expires_at: new Date("2026-07-01T00:00:00.000Z"),
+    });
+    firestoreStore.set("locations/trial-contract", {
+      owner_id: "owner-trial",
+      subscription_status: "TRIAL",
+      monthly_fee_cents: 15000,
+      billing_due_day: 5,
+    });
+    firestoreStore.set("locations/inconsistent-contract", {
+      subscription_status: "ACTIVE",
+      monthly_fee_cents: 15000,
+    });
+
+    const result = await processLocationBillingAutomation({
+      periodKey: "2026-07",
+      now: new Date("2026-07-20T12:00:00.000Z"),
+      actorUserId: "system-test",
+    });
+
+    expect(result).toMatchObject({
+      processedLocations: 1,
+      skippedLocations: 3,
+      inconsistentLocations: 1,
+    });
+    expect(collectionSize("locations/missing-status/subscription_cycles")).toBe(1);
+    expect(collectionSize("locations/expired-contract/subscription_cycles")).toBe(0);
+    const [runPath, run] = findFirstDoc("billing_automation_runs");
+    expect(run).toMatchObject({
+      skipped_locations_count: 3,
+      inconsistent_locations_count: 1,
+    });
+    expect(collectionSize(`${runPath}/locations`)).toBe(4);
+    expect(firestoreStore.get(`${runPath}/locations/expired-contract`)).toMatchObject({
+      type: "SKIPPED",
+      reason: "CONTRACT_EXPIRED",
+    });
+    expect(firestoreStore.get(`${runPath}/locations/inconsistent-contract`)).toMatchObject({
+      type: "INCONSISTENT",
+      reason: "MISSING_OWNER,MISSING_BILLING_DUE_DAY",
+    });
+    const [, alert] = findFirstDoc("alerts");
+    expect(alert).toMatchObject({
+      type: "LOCATION_BILLING_INCONSISTENCY",
+      severity: "CRITICAL",
+      acknowledged: false,
+      metadata: expect.objectContaining({
+        inconsistent_locations_count: 1,
+      }),
+    });
+  });
+
+  it("pagina detalhes de skips sem exceder o limite do documento da execução", async () => {
+    firestoreStore.delete("locations/location-1");
+    firestoreStore.delete("locations/location-1/fields/field-1");
+    for (let index = 0; index < 501; index += 1) {
+      firestoreStore.set(`locations/trial-${String(index).padStart(3, "0")}`, {
+        owner_id: "owner-trial",
+        subscription_status: "TRIAL",
+        monthly_fee_cents: 15000,
+        billing_due_day: 5,
+      });
+    }
+
+    await processLocationBillingAutomation({
+      periodKey: "2026-07",
+      now: new Date("2026-07-20T12:00:00.000Z"),
+      actorUserId: "system-test",
+    });
+
+    const [runPath, run] = findFirstDoc("billing_automation_runs");
+    expect(run).toMatchObject({
+      skipped_locations_count: 501,
+      inconsistent_locations_count: 0,
+    });
+    expect(collectionSize(`${runPath}/locations`)).toBe(501);
+  });
+
   it("cron pagina, grava cursor ao esgotar orcamento e retoma a cauda (#3952)", async () => {
     firestoreStore.delete("locations/location-1");
     firestoreStore.delete("locations/location-1/fields/field-1");
@@ -1922,6 +2069,9 @@ describe("location commercial admin callables", () => {
       },
     });
 
+    expect(firestoreStore.get("locations/location-1")).toMatchObject({
+      trial_started_at: {_type: "ServerTimestamp"},
+    });
     const [, ledger] = findFirstDoc("locations/location-1/subscription_ledger");
     expect(ledger).toMatchObject({
       type: "SUBSCRIPTION_STATUS_CHANGED",
@@ -2214,6 +2364,28 @@ describe("location commercial admin callables", () => {
       next_subscription_status: "ACTIVE",
       previous_commercial_status: null,
       next_commercial_status: "ACTIVE",
+    });
+  });
+
+  it("bloqueia pagamento aprovado quando o contrato ja expirou", async () => {
+    firestoreStore.set("locations/location-1", {
+      ...firestoreStore.get("locations/location-1"),
+      subscription_status: "OVERDUE",
+      commercial_status: "OVERDUE",
+      billing_expires_at: new Date("2020-01-01T00:00:00.000Z"),
+    });
+
+    await expect(registerLocationSubscriptionPayment({
+      auth: {uid: "admin-1"},
+      data: {
+        locationId: "location-1",
+        amountCents: 19990,
+        periodKey: "2026-07",
+      },
+    })).rejects.toMatchObject({code: "failed-precondition"});
+    expect(firestoreStore.get("locations/location-1")).toMatchObject({
+      subscription_status: "OVERDUE",
+      commercial_status: "OVERDUE",
     });
   });
 

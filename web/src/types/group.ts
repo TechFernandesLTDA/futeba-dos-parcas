@@ -6,6 +6,24 @@ export type GroupType = 'PRIVATE' | 'PUBLIC';
 
 export type GroupMemberStatus = 'ACTIVE' | 'INACTIVE' | 'REMOVED' | 'BLOCKED' | 'BANNED';
 
+/** Forma persistida em `groups/{groupId}` antes de snakeToCamel(). */
+export interface FirestoreGroupDocument {
+  name: string;
+  description: string;
+  photo_url: string | null;
+  type: GroupType;
+  is_public: boolean;
+  owner_id: string;
+  owner_name: string;
+  member_count: number;
+  members: string[];
+  total_games_played: number;
+  status: 'ACTIVE' | 'INACTIVE' | 'DELETED';
+  created_at: unknown;
+  updated_at: unknown;
+  default_gender?: string;
+}
+
 export interface GroupMember {
   userId: string;
   userName: string;
@@ -29,7 +47,7 @@ export interface Group {
   isPublic: boolean;
   isPrivate?: boolean;
   
-  // Owner
+  // Owner (modelo de domínio convertido de owner_id/owner_name)
   ownerId: string;
   ownerName: string;
   

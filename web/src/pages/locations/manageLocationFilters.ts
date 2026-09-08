@@ -38,7 +38,25 @@ export const getLocationPublicationStatus = (location: Location): LocationPublic
   location.publicationStatus || (location.isVerified ? 'PUBLISHED' : 'PENDING_REVIEW');
 
 export const getLocationSubscriptionStatus = (location: Location): LocationSubscriptionStatus =>
-  location.venueAccountStatus || location.subscriptionStatus || 'ACTIVE';
+  location.subscriptionStatus || 'ACTIVE';
+
+// No product trial duration existed in the repository. This only creates a
+// review signal after 30 days; it does not change the subscription or billing.
+const TRIAL_REVIEW_AGE_MS = 30 * 24 * 60 * 60 * 1000;
+
+const toTimestamp = (value: unknown): number | null => {
+  if (value instanceof Date) return value.getTime();
+  if (value && typeof value === 'object' && 'toDate' in value && typeof value.toDate === 'function') {
+    const date = value.toDate();
+    return date instanceof Date && !Number.isNaN(date.getTime()) ? date.getTime() : null;
+  }
+  return null;
+};
+
+const isOnOrBefore = (value: unknown, now: Date) => {
+  const timestamp = toTimestamp(value);
+  return timestamp !== null && timestamp <= now.getTime();
+};
 
 const matchesBooleanFilter = (value: boolean | undefined, filter: LocationBooleanFilter) => {
   if (filter === 'ALL') return true;
@@ -62,18 +80,28 @@ const matchesMonthlyFeeFilter = (monthlyFeeCents: number | undefined, filter: Lo
   return fee > 30000;
 };
 
-export const getLocationCommercialIssues = (location: Location): string[] => {
+export const getLocationCommercialIssues = (location: Location, now = new Date()): string[] => {
   const issues: string[] = [];
   const publicationStatus = getLocationPublicationStatus(location);
-  const subscriptionStatus = location.subscriptionStatus || 'ACTIVE';
+  const subscriptionStatus = getLocationSubscriptionStatus(location);
 
   if (location.isActive !== true) issues.push('inativa');
   if (location.isVerified !== true) issues.push('não verificada');
   if (publicationStatus !== 'PUBLISHED') issues.push('não publicada');
   if (location.venueAccountId && !['TRIAL', 'ACTIVE'].includes(location.venueAccountStatus || 'ACTIVE')) {
     issues.push('conta comercial irregular');
-  } else if (!['TRIAL', 'ACTIVE'].includes(subscriptionStatus)) {
+  }
+  if (!['TRIAL', 'ACTIVE'].includes(subscriptionStatus)) {
     issues.push('mensalidade irregular');
+  }
+  if (isOnOrBefore(location.billingExpiresAt, now)) issues.push('contrato expirado');
+  if (subscriptionStatus === 'TRIAL') {
+    const trialStartedAt = toTimestamp(location.trialStartedAt);
+    if (trialStartedAt === null) {
+      issues.push('início do período de teste não registrado');
+    } else if (now.getTime() - trialStartedAt >= TRIAL_REVIEW_AGE_MS) {
+      issues.push('período de teste vencido');
+    }
   }
   if ((location.fieldCount || 0) <= 0) issues.push('sem quadras cadastradas');
   if (location.hasActiveFields === false) issues.push('sem quadras ativas');

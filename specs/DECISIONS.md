@@ -4,6 +4,39 @@ Registro de decisões técnicas e de produto. Cada entrada deve ter contexto, al
 
 ---
 
+## 2026-09-08 — Temas, movimento e revisão comercial das issues abertas
+
+**Contexto:** #4096–#4115 expuseram controles nativos com esquema claro em telas escuras, foregrounds fixos, paletas CMP sem consumidores e estados comerciais inconsistentes.
+
+**Decisões:**
+
+- #4115, alternativa (b): remover `emphasized`, idêntico a `standard`, e migrar todos os consumidores sem alterar a curva. O gate verifica nome e valor, com regressões que trocam curvas entre nomes. Uma curva nova exigiria uma mudança visual deliberada.
+- #4098, alternativa (A): remover as cinco paletas estáticas CMP sem consumidores. O gate mantém os checks CMP de forma/movimento e os seeds compartilhados do `DynamicThemeEngine`; não exige uma paleta morta para satisfazer a busca textual.
+- #4099: selecionar texto das divisões usando os fundos reais do `ColorScheme`, preservando os tokens existentes quando atendem 4,5:1. Isso também cobre contraste alto sem manter outra tabela divergente.
+- #4097/#4109: iOS persiste a preferência de tema em NSUserDefaults, com default `SYSTEM`, e usa fonte nativa. Recursos Poppins ficam nas plataformas que os utilizam. A medição do framework não demonstrou redução de tamanho, portanto não se promete economia numérica.
+- #4110: trial com mais de 30 dias é sinalizado para revisão, sem suspensão/cobrança automática por esse critério. **30 dias é uma decisão nova, reversível, de triagem; não é uma regra comercial anterior comprovada.** Trial sem data também exige revisão. Status de conta ausente segue compatibilidade legada ACTIVE; valor inválido explícito permanece restritivo.
+- #4107: contrato vencido impede gerar novos ciclos e reativar por pagamento. Auditoria mantém resumo limitado no run/alerta e detalhes paginados por localização, evitando exceder 1 MiB por documento.
+
+**Consequências:** comportamento e diagnósticos são cobertos por regressões focadas. As alterações são preparadas em PR; nenhum deploy é implícito nesta decisão. Execução de UI mobile depende dos ambientes de teste indicados nas specs.
+
+**Relacionado:** `specs/bugfix-2026-09-08-accessibility-motion.md`, `specs/BUGFIX_IOS_THEME_PARITY_4096_4097_4098_4109.md`, `specs/BUGFIX_4107_4110_4111_BILLING_INTEGRITY.md`.
+
+---
+
+## 2026-09-08 — Exclusão e união de identidades sem perder dados associados
+
+**Contexto:** #4100/#4112/#4113 omitiam coleções de grupos/gamificação e usavam nomes de campos diferentes dos gravadores reais.
+
+**Decisão:** paginar cascatas de grupo com deletes/updates que removem cada página da query; retomar automaticamente após falhas. Compartilhar a lista de coleções de gamificação entre exclusão e merge. Mesclar dados por transação com destinos canônicos, marcadores de origem e consolidação de colisões na mesma página. Somar estatísticas/contagens, preservar logs/votos canônicos em colisões e retargetar referências antes de desabilitar a conta de origem. Limpar ambas as formas comprovadas de foto de membro (`user_photo` e `user_photo_url`).
+
+**Alternativa:** carregar coleções inteiras e usar escrita em lote sem reler destinos simplifica o código, mas deixa limites de memória e perda por colisão/retry.
+
+**Consequências:** o manifest pode ser reconstruído após progresso parcial; operações permanecem limitadas por página. Publicar o índice collection-group `members.user_id` e aguardar READY antes do rollout de Functions. O schema web raw é separado do domínio camelCase.
+
+**Relacionado:** `specs/BUGFIX_4100_4112_4113_ACCOUNT_GROUP_INTEGRITY.md`.
+
+---
+
 ## 2026-08-20 — Waitlist #4066/#4067: join callable e contrato snake_case autoritativo
 
 **Contexto:** Android bypassava `@SerialName` ao usar o `CustomClassMapper`; web e Android calculavam `queue_position` fora de transação e ambos escreviam timestamps do relógio local.

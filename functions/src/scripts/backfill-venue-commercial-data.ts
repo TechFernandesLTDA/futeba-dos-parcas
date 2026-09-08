@@ -218,6 +218,8 @@ function buildLocationUpdates(params: {
   }
   if (!valid(data.subscription_status, SUBSCRIPTION_STATUSES)) {
     updates.subscription_status = "TRIAL";
+    updates.trial_started_at = FieldValue.serverTimestamp();
+    review.push("subscription_status defaulted to TRIAL");
   }
   if (!valid(data.commercial_status, SUBSCRIPTION_STATUSES)) {
     updates.commercial_status = updates.subscription_status ??
@@ -228,7 +230,10 @@ function buildLocationUpdates(params: {
     updates.monthly_fee_cents = null;
     review.push("monthly_fee_cents undefined");
   }
-  if (!hasOwn(data, "billing_due_day")) updates.billing_due_day = null;
+  if (!hasOwn(data, "billing_due_day")) {
+    updates.billing_due_day = null;
+    review.push("billing_due_day undefined");
+  }
   if (!hasOwn(data, "field_count") ||
       data.field_count !== params.fieldCount) {
     updates.field_count = params.fieldCount;
@@ -675,6 +680,7 @@ if (require.main === module) {
 
 export {
   buildChangedVenueAccountUpdates,
+  buildLocationUpdates,
   buildVenueAccountDocument,
   cents,
   hasVenueAccountFixes,

@@ -28,6 +28,7 @@ object AppRoutes {
     const val GROUP_DETAIL = "group/{groupId}"
     const val PROFILE = "profile"
     const val PROFILE_SETUP = "profile_setup"
+    const val THEME_SETTINGS = "theme_settings"
 
     // ─── Bucket Core — ferramentas do organizador / pós-jogo (#2671) ──────────
     // Telas reais já existentes em ui/core/ cabeadas a partir do detalhe do jogo

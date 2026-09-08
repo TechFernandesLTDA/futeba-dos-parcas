@@ -490,7 +490,7 @@ export const futebaTheme = createTheme({
       leavingScreen: 195,
     },
     easing: {
-      easeInOut: motionEasing.emphasized,
+      easeInOut: motionEasing.standard,
       easeOut: motionEasing.decelerate,
       easeIn: motionEasing.accelerate,
       sharp: motionEasing.accelerate,
@@ -672,7 +672,9 @@ export const futebaTheme = createTheme({
           minWidth: 0,
           minHeight: '100%',
           overflowX: 'clip',
-          colorScheme: 'light',
+          // Follow the document override, including the always-light landing.
+          // A fixed light value here masks dark/OLED on body and #root.
+          colorScheme: 'inherit',
           WebkitTapHighlightColor: 'transparent',
         },
         // O ripple do MuiButtonBase continua sendo o feedback primário. Links e

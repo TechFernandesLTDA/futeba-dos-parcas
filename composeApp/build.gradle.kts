@@ -132,6 +132,10 @@ kotlin {
             implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.1")
         }
 
+        commonTest.dependencies {
+            implementation(kotlin("test"))
+        }
+
         androidMain.dependencies {
             // Android-specific dependencies
             implementation("androidx.activity:activity-compose:1.12.3")

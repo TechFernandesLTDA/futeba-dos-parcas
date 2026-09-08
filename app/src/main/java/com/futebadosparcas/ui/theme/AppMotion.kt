@@ -93,12 +93,6 @@ object MotionEasing {
     val Standard: Easing = CubicBezierEasing(0.2f, 0f, 0f, 1f)
 
     /**
-     * Emphasized — foco e destaque. Transições de high-emphasis (FAB, hero).
-     * Equivalente CSS: cubic-bezier(0.2, 0, 0, 1)
-     */
-    val Emphasized: Easing = CubicBezierEasing(0.2f, 0f, 0f, 1f)
-
-    /**
      * Decelerate — elementos que entram em tela (deslizam para dentro).
      * Equivalente CSS: cubic-bezier(0, 0, 0, 1)
      */

@@ -2827,6 +2827,15 @@
   ],
   "fieldOverrides": [
     {
+      "collectionGroup": "members",
+      "fieldPath": "user_id",
+      "indexes": [
+        { "order": "ASCENDING", "queryScope": "COLLECTION" },
+        { "order": "DESCENDING", "queryScope": "COLLECTION" },
+        { "order": "ASCENDING", "queryScope": "COLLECTION_GROUP" }
+      ]
+    },
+    {
       "collectionGroup": "member_counter_events",
       "fieldPath": "expires_at",
       "ttl": true,

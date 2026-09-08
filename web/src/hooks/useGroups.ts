@@ -20,7 +20,13 @@ import {
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { db } from '../services/firebase';
 import { storage } from '../services/firebaseStorage';
-import { Group, GroupMember, GroupRole, CashboxTransaction } from '../types/group';
+import {
+  CashboxTransaction,
+  FirestoreGroupDocument,
+  Group,
+  GroupMember,
+  GroupRole,
+} from '../types/group';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { snakeToCamel, toDate } from '../utils/firestoreHelpers';
@@ -393,7 +399,7 @@ export function useCreateGroup() {
         const memberRef = doc(collection(db, 'groups', groupRef.id, 'members'), uid);
         const displayName = firebaseUser?.displayName || user?.name || 'Dono';
 
-        const newGroup: Record<string, unknown> = {
+        const newGroup: FirestoreGroupDocument = {
           name: groupData.name,
           description: groupData.description || '',
           photo_url: null,

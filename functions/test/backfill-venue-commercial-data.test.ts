@@ -16,12 +16,32 @@ jest.mock("firebase-admin/firestore", () => ({
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const {
   buildChangedVenueAccountUpdates,
+  buildLocationUpdates,
   buildVenueAccountDocument,
   cents,
   hasVenueAccountFixes,
 } = require("../src/scripts/backfill-venue-commercial-data");
 
 describe("backfill-venue-commercial-data", () => {
+  it("marca defaults comerciais ambíguos para revisão no dry-run", () => {
+    const {updates, manualReview} = buildLocationUpdates({
+      data: {},
+      fieldCount: 1,
+      activeFieldCount: 1,
+      fieldType: "SOCIETY",
+    });
+
+    expect(updates).toMatchObject({
+      subscription_status: "TRIAL",
+      trial_started_at: {_type: "ServerTimestamp"},
+      billing_due_day: null,
+    });
+    expect(manualReview).toEqual(expect.arrayContaining([
+      "subscription_status defaulted to TRIAL",
+      "billing_due_day undefined",
+    ]));
+  });
+
   it("preserva zero como valor valido em centavos", () => {
     expect(cents(0)).toBe(0);
     expect(cents(1500)).toBe(1500);

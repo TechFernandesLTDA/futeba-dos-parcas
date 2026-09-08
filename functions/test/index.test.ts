@@ -310,6 +310,8 @@ describe("Index — Funcoes do index.ts", () => {
         .mockResolvedValueOnce({ docs: [], size: 0 })
         .mockResolvedValueOnce({ docs: [], size: 0 })
         .mockResolvedValueOnce({ docs: [], size: 0 })
+        .mockResolvedValueOnce({ docs: [], size: 0 })
+        .mockResolvedValueOnce({ docs: [], size: 0 })
         .mockResolvedValueOnce({ docs: [{ ref: { id: "g1" } }], size: 1 });
 
       await onGroupDeleted({
@@ -348,6 +350,8 @@ describe("Index — Funcoes do index.ts", () => {
         .mockResolvedValueOnce({ docs: [], size: 0 })
         .mockResolvedValueOnce({ docs: [], size: 0 })
         .mockResolvedValueOnce({ docs: [], size: 0 })
+        .mockResolvedValueOnce({ docs: [], size: 0 })
+        .mockResolvedValueOnce({ docs: [], size: 0 })
         .mockResolvedValueOnce({ docs: [{ ref: { id: "game1" }, data: () => ({}) }], size: 1 });
 
       await onGroupDeleted({
@@ -359,6 +363,75 @@ describe("Index — Funcoes do index.ts", () => {
         expect.any(Object),
         expect.objectContaining({ group_deleted: true }),
       );
+    });
+
+    it("pagina wall_posts e remove group_polls sem acumular a cascata", async () => {
+      const wallPage = Array.from({length: 200}, (_, index) => ({
+        ref: {id: `wall-${index}`},
+        data: () => ({}),
+      }));
+      const wallTail = [{ref: {id: "wall-200"}, data: () => ({})}];
+      const poll = {ref: {id: "poll-1"}, data: () => ({})};
+      const empty = {docs: [], empty: true, size: 0};
+      mockCollectionGet
+        .mockResolvedValueOnce(empty)
+        .mockResolvedValueOnce(empty)
+        .mockResolvedValueOnce(empty)
+        .mockResolvedValueOnce(empty)
+        .mockResolvedValueOnce({
+          docs: wallPage,
+          empty: false,
+          size: wallPage.length,
+        })
+        .mockResolvedValueOnce({docs: wallTail, empty: false, size: 1})
+        .mockResolvedValueOnce(empty)
+        .mockResolvedValueOnce({docs: [poll], empty: false, size: 1})
+        .mockResolvedValueOnce(empty)
+        .mockResolvedValueOnce(empty);
+
+      await onGroupDeleted({
+        data: {data: () => null},
+        params: {groupId: "group1"},
+      });
+
+      expect(mockBatchDelete).toHaveBeenCalledTimes(202);
+      expect(mockBatchCommit).toHaveBeenCalledTimes(3);
+    });
+
+    it("retry reprocessa somente a página cujo commit falhou", async () => {
+      const wall = {ref: {id: "wall-retry"}, data: () => ({})};
+      const empty = {docs: [], empty: true, size: 0};
+      // Primeira tentativa chega até wall_posts e o batch atômico falha.
+      for (let index = 0; index < 4; index++) {
+        mockCollectionGet.mockResolvedValueOnce(empty);
+      }
+      mockCollectionGet.mockResolvedValueOnce({
+        docs: [wall], empty: false, size: 1,
+      });
+      // Segunda tentativa relê os quatro prefixos e a mesma página pendente.
+      for (let index = 0; index < 4; index++) {
+        mockCollectionGet.mockResolvedValueOnce(empty);
+      }
+      mockCollectionGet.mockResolvedValueOnce({
+        docs: [wall], empty: false, size: 1,
+      });
+      for (let index = 0; index < 4; index++) {
+        mockCollectionGet.mockResolvedValueOnce(empty);
+      }
+      mockBatchCommit
+        .mockRejectedValueOnce(new Error("UNAVAILABLE"))
+        .mockResolvedValue([]);
+
+      const event = {
+        data: {data: () => null},
+        params: {groupId: "group1"},
+      };
+      await expect(onGroupDeleted(event)).rejects.toThrow("UNAVAILABLE");
+      await expect(onGroupDeleted(event)).resolves.toBeUndefined();
+
+      const retryDeletes = mockBatchDelete.mock.calls
+        .filter(([ref]) => ref === wall.ref);
+      expect(retryDeletes).toHaveLength(2);
     });
   });
 

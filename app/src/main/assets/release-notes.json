@@ -1,7 +1,28 @@
 {
   "platform": "android",
-  "generatedAt": "2026-08-28T16:23:47.957Z",
+  "generatedAt": "2026-09-08T03:45:17.286Z",
   "notes": [
+    {
+      "version": "1.39.6",
+      "buildNumber": 81,
+      "releaseDate": "2026-09-08",
+      "type": "patch",
+      "showPopup": true,
+      "published": false,
+      "headline": "Liga e notificações mais legíveis.",
+      "highlights": [],
+      "added": [],
+      "improved": [],
+      "fixed": [
+        "Texto das divisões considera os fundos reais também em contraste alto.",
+        "O contador de notificações cresce para acomodar fontes ampliadas."
+      ],
+      "issueRefs": [
+        4099,
+        4108,
+        4115
+      ]
+    },
     {
       "version": "1.39.5",
       "buildNumber": 80,

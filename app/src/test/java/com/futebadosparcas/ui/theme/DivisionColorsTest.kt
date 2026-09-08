@@ -24,17 +24,11 @@ import org.junit.jupiter.params.provider.MethodSource
  * - chip de pontos do ranking (RankingList) — surface @ 0.2 sobre o card @ 0.1
  * - header de divisao (RankingList) — background @ 0.1
  * - legenda (LeagueScreen) — primaryContainer @ 0.3 sobre surface
+ * - badge de evolução (PlayerEvolutionCard) — identidade sólida, foreground próprio
  *
- * Escopo dos schemes (contraste):
- * - O BADGE e o objeto desta issue (#4084): validado nos 2 temas E nos 2
- *   schemes (NORMAL + HIGH), porque o bug original era exatamente testar o
- *   badge contra os literais de ALTO CONTRASTE como se fossem o default.
- * - Os outros 3 call sites sao validados no scheme DEFAULT, como na analise da
- *   propria issue. Eles usam [divisionTextColor], que (assim como
- *   gamificationTextColor) so distingue light/dark e NAO e contrast-level-aware
- *   — em HIGH, a legenda (primaryContainer #1565C0) reprova AA para PRATA/OURO/
- *   DIAMANTE no light. Tratar isso exigiria um LocalContrastLevel novo, fora do
- *   escopo desta issue (follow-up separado).
+ * Todos os call sites sao cobertos nos schemes NORMAL/HIGH e light/dark.
+ * O foreground agora usa o ColorScheme real e preserva os tokens do tema
+ * normal quando eles ja atendem AA (#4099).
  */
 class DivisionColorsTest {
 
@@ -43,7 +37,8 @@ class DivisionColorsTest {
         BADGE_LIGA,
         CHIP_RANKING,
         HEADER_DIVISAO,
-        LEGENDA
+        LEGENDA,
+        EVOLUTION_SOLID_BADGE
     }
 
     @ParameterizedTest(name = "{0} {1} {2} {3}")
@@ -57,7 +52,15 @@ class DivisionColorsTest {
         val config = AppThemeConfig(contrastLevel = contrastLevel)
         val scheme = DynamicThemeEngine.generateColorScheme(config, isDarkTheme)
         val background = compositeBackground(scheme, division, callSite)
-        val ratio = ContrastHelper.getContrastRatio(divisionTextColor(division, isDarkTheme), background)
+        val foreground = if (callSite == CallSite.EVOLUTION_SOLID_BADGE) {
+            ContrastHelper.getContrastingTextColor(divisionColor(division))
+        } else {
+            divisionTextColor(division, isDarkTheme, scheme)
+        }
+        val ratio = ContrastHelper.getContrastRatio(foreground, background)
+        if (contrastLevel == ContrastLevel.NORMAL && callSite != CallSite.EVOLUTION_SOLID_BADGE) {
+            assertEquals(divisionTextColor(division, isDarkTheme), foreground)
+        }
 
         assertTrue(
             ratio >= 4.5f,
@@ -89,6 +92,7 @@ class DivisionColorsTest {
             }
             CallSite.HEADER_DIVISAO -> composite(identity, scheme.background, 0.1f)
             CallSite.LEGENDA -> composite(scheme.primaryContainer, scheme.surface, 0.3f)
+            CallSite.EVOLUTION_SOLID_BADGE -> identity
         }
     }
 
@@ -107,9 +111,6 @@ class DivisionColorsTest {
                 for (isDark in listOf(false, true)) {
                     for (level in ContrastLevel.entries) {
                         for (site in CallSite.entries) {
-                            // HIGH so e exercitado no BADGE (objeto do #4084);
-                            // os demais call sites sao validados no scheme DEFAULT.
-                            if (level == ContrastLevel.HIGH && site != CallSite.BADGE_LIGA) continue
                             args.add(Arguments.of(division, isDark, level, site))
                         }
                     }

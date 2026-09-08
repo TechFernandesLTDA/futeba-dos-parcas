@@ -2399,6 +2399,59 @@ export const onGameDeleted = onDocumentDeleted(
 // SECFIX #495: memory + timeout pra cascade delete em 9 coleções
 // (group_members, games, season_participation, etc) — pode processar
 // 200+ jogadores e 50+ jogos
+interface GroupCascadeOp {
+  type: "delete" | "update";
+  ref: admin.firestore.DocumentReference;
+  data?: Record<string, unknown>;
+}
+
+/**
+ * Drena uma query cuja própria mutação remove cada documento do filtro.
+ * Cada página é um batch atômico e um retry retoma apenas os docs restantes.
+ *
+ * @param {admin.firestore.Query} baseQuery Query sem limit.
+ * @param {string} label Nome usado em observabilidade.
+ * @param {Function} buildOps Operações derivadas de cada documento.
+ * @return {Promise<number>} Quantidade de documentos processados.
+ */
+async function drainGroupCascadeQuery(
+  baseQuery: admin.firestore.Query,
+  label: string,
+  buildOps: (
+    doc: admin.firestore.QueryDocumentSnapshot
+  ) => GroupCascadeOp[]
+): Promise<number> {
+  const PAGE_SIZE = 200;
+  let total = 0;
+
+  while (true) {
+    const snapshot = await baseQuery.limit(PAGE_SIZE).get();
+    if (snapshot.empty) break;
+
+    const ops = snapshot.docs.flatMap(buildOps);
+    for (let i = 0; i < ops.length; i += FIRESTORE_BATCH_SAFE_LIMIT) {
+      const batch = db().batch();
+      const chunk = ops.slice(i, i + FIRESTORE_BATCH_SAFE_LIMIT);
+      for (const op of chunk) {
+        if (op.type === "delete") {
+          batch.delete(op.ref);
+        } else if (op.data) {
+          batch.update(op.ref, op.data);
+        }
+      }
+      await batch.commit();
+    }
+
+    total += snapshot.size;
+    if (snapshot.size < PAGE_SIZE) break;
+  }
+
+  logger.info(
+    `[CASCADE DELETE] Processed ${total} ${label}`
+  );
+  return total;
+}
+
 export const onGroupDeleted = onDocumentDeleted(
   {
     document: "groups/{groupId}",
@@ -2413,207 +2466,73 @@ export const onGroupDeleted = onDocumentDeleted(
       `deletion for group ${groupId}`
     );
 
-    const BATCH_LIMIT = FIRESTORE_BATCH_SAFE_LIMIT;
-
-    // Interface para agrupar operações de
-    // delete e update separadamente
-    interface BatchOp {
-      type: "delete" | "update";
-      ref: admin.firestore.DocumentReference;
-      data?: Record<string, unknown>;
-    }
-
     try {
-      const allOps: BatchOp[] = [];
-
-      // PERF: as 7 leituras são independentes — paralelizamos para reduzir a
-      // latência do cascade delete de grupo (antes eram 7 awaits sequenciais).
       const groupRef = db().collection("groups").doc(groupId);
-      const [
-        membersSnap,
-        cashboxSnap,
-        summarySnap,
-        joinRequestsSnap,
-        invitesSnap,
-        schedulesSnap,
-        gamesSnap,
-      ] = await Promise.all([
-        // 1. Members (subcollection)
-        groupRef.collection("members").get(),
-        // 2. Cashbox entries
-        groupRef.collection("cashbox").get(),
-        // 3. Cashbox summary
-        groupRef.collection("cashbox_summary").get(),
-        // 3.5 Join requests
-        groupRef.collection("join_requests").get(),
-        // 4. Group invites
-        db().collection("group_invites")
-          .where("group_id", "==", groupId).get(),
-        // 5. Schedules
-        db().collection("schedules")
-          .where("group_id", "==", groupId).get(),
-        // 7. Games from this group (marked orphaned below)
-        db().collection("games")
-          .where("group_id", "==", groupId).get(),
-      ]);
+      const deleteDoc = (doc: admin.firestore.QueryDocumentSnapshot) => [{
+        type: "delete" as const,
+        ref: doc.ref,
+      }];
 
-      membersSnap.docs.forEach(
-        (doc) => allOps.push({
-          type: "delete", ref: doc.ref,
-        })
-      );
-      logger.info(
-        "[CASCADE DELETE] Found " +
-        `${membersSnap.size} ` +
-        "members to delete"
-      );
-
-      cashboxSnap.docs.forEach(
-        (doc) => allOps.push({
-          type: "delete", ref: doc.ref,
-        })
-      );
-      logger.info(
-        "[CASCADE DELETE] Found " +
-        `${cashboxSnap.size} ` +
-        "cashbox entries to delete"
-      );
-
-      summarySnap.docs.forEach(
-        (doc) => allOps.push({
-          type: "delete", ref: doc.ref,
-        })
-      );
-
-      joinRequestsSnap.docs.forEach(
-        (doc) => allOps.push({
-          type: "delete", ref: doc.ref,
-        })
-      );
-      logger.info(
-        "[CASCADE DELETE] Found " +
-        `${joinRequestsSnap.size} ` +
-        "join_requests to delete"
-      );
-
-      invitesSnap.docs.forEach(
-        (doc) => allOps.push({
-          type: "delete", ref: doc.ref,
-        })
-      );
-      logger.info(
-        "[CASCADE DELETE] Found " +
-        `${invitesSnap.size} ` +
-        "invites to delete"
-      );
-
-      schedulesSnap.docs.forEach(
-        (doc) => allOps.push({
-          type: "delete", ref: doc.ref,
-        })
-      );
-      logger.info(
-        "[CASCADE DELETE] Found " +
-        `${schedulesSnap.size} ` +
-        "schedules to delete"
-      );
-
-      // 6. Delete user group references (users/{uid}/groups/{groupId})
-      // FIX #2605: collectionGroup("groups").where(documentId(), "==", groupId)
-      // falhava com "odd number of segments" — documentId() em collection-group
-      // exige path completo de documento, nao ID de 1 segmento.
-      // Substituido por iteracao nos membros conhecidos (ja lidos no passo 1)
-      // deletando users/{uid}/groups/{groupId} por path direto.
-      for (const memberDoc of membersSnap.docs) {
-        const memberData = memberDoc.data();
-        const uid = memberData.user_id;
-        if (uid) {
-          const userGroupRef = db()
-            .collection("users")
-            .doc(uid)
-            .collection("groups")
-            .doc(groupId);
-          allOps.push({
-            type: "delete", ref: userGroupRef,
-          });
+      await drainGroupCascadeQuery(
+        groupRef.collection("members"),
+        "members and user group references",
+        (memberDoc) => {
+          const operations: GroupCascadeOp[] = deleteDoc(memberDoc);
+          const uid = memberDoc.data().user_id;
+          if (typeof uid === "string" && uid) {
+            operations.push({
+              type: "delete",
+              ref: db().collection("users").doc(uid)
+                .collection("groups").doc(groupId),
+            });
+          }
+          return operations;
         }
-      }
-      logger.info(
-        "[CASCADE DELETE] Found " +
-        `${membersSnap.size} ` +
-        "user group references to delete"
       );
-
-      // 7. Mark games from this group as
-      // orphaned (don't delete - preserve
-      // history)
-      gamesSnap.docs.forEach(
-        (doc) => allOps.push({
+      await drainGroupCascadeQuery(
+        groupRef.collection("cashbox"), "cashbox entries", deleteDoc
+      );
+      await drainGroupCascadeQuery(
+        groupRef.collection("cashbox_summary"), "cashbox summaries", deleteDoc
+      );
+      await drainGroupCascadeQuery(
+        groupRef.collection("join_requests"), "join requests", deleteDoc
+      );
+      await drainGroupCascadeQuery(
+        groupRef.collection("wall_posts"), "wall posts", deleteDoc
+      );
+      await drainGroupCascadeQuery(
+        db().collection("group_invites").where("group_id", "==", groupId),
+        "group invites",
+        deleteDoc
+      );
+      await drainGroupCascadeQuery(
+        db().collection("group_polls").where("group_id", "==", groupId),
+        "group polls",
+        deleteDoc
+      );
+      await drainGroupCascadeQuery(
+        db().collection("schedules").where("group_id", "==", groupId),
+        "schedules",
+        deleteDoc
+      );
+      await drainGroupCascadeQuery(
+        db().collection("games").where("group_id", "==", groupId),
+        "games marked orphaned",
+        (doc) => [{
           type: "update",
           ref: doc.ref,
           data: {
             group_id: null,
             group_deleted: true,
-            group_deleted_at:
-              FieldValue
-                .serverTimestamp(),
+            group_deleted_at: FieldValue.serverTimestamp(),
           },
-        })
-      );
-      logger.info(
-        "[CASCADE DELETE] Marked " +
-        `${gamesSnap.size} ` +
-        "games as orphaned"
+        }]
       );
 
-      // Commit em chunks de BATCH_LIMIT para
-      // não exceder limite de 500 ops
-      const totalOps = allOps.length;
-      if (totalOps > 0) {
-        for (
-          let i = 0;
-          i < allOps.length;
-          i += BATCH_LIMIT
-        ) {
-          const chunk = allOps.slice(
-            i, i + BATCH_LIMIT
-          );
-          const batch = db().batch();
-          chunk.forEach((op) => {
-            if (op.type === "delete") {
-              batch.delete(op.ref);
-            } else if (
-              op.type === "update" &&
-              op.data
-            ) {
-              batch.update(
-                op.ref, op.data
-              );
-            }
-          });
-          await batch.commit();
-          const batchNum = Math.floor(
-            i / BATCH_LIMIT
-          ) + 1;
-          logger.info(
-            "[CASCADE DELETE] " +
-            `Committed batch ${batchNum} ` +
-            `(${chunk.length} ops)`
-          );
-        }
-        logger.info(
-          "[CASCADE DELETE] Successfully " +
-          `processed ${totalOps} ` +
-          "operations for group " +
-          `${groupId}`
-        );
-      } else {
-        logger.info(
-          "[CASCADE DELETE] No related " +
-          "documents found for group " +
-          `${groupId}`
-        );
-      }
+      logger.info(
+        `[CASCADE DELETE] Completed cascade for group ${groupId}`
+      );
     } catch (error) {
       logger.error(
         "[CASCADE DELETE] Error during " +

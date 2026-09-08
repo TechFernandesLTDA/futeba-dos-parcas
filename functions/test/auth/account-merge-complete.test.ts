@@ -201,7 +201,13 @@ function createFakeFirestore(
     bulkWriter: jest.fn(() => bulkWriter),
   };
 
-  return {state, firestore, transaction, bulkWriter};
+  return {
+    state,
+    firestore,
+    transaction,
+    bulkWriter,
+    failBulkWritePaths,
+  };
 }
 
 describe("completeAccountMerge transactional migration", () => {
@@ -303,6 +309,102 @@ describe("completeAccountMerge transactional migration", () => {
         invitedUserId: sourceUid,
       },
       "notifications/notification-1": {user_id: sourceUid},
+      [`statistics/${sourceUid}`]: {
+        totalGames: 5,
+        totalGoals: 2,
+        currentMvpStreak: 1,
+        bestMvpStreak: 3,
+      },
+      [`statistics/${targetUid}`]: {
+        totalGames: 2,
+        totalGoals: 1,
+        currentMvpStreak: 2,
+        bestMvpStreak: 2,
+      },
+      [`xp_logs/game_game-2_user_${sourceUid}`]: {
+        user_id: sourceUid,
+        game_id: "game-2",
+        xp_earned: 15,
+      },
+      [`xp_logs/game_game-2_user_${targetUid}`]: {
+        user_id: targetUid,
+        game_id: "game-2",
+        xp_earned: 20,
+      },
+      [`user_badges/${sourceUid}_GAMES_10`]: {
+        user_id: sourceUid,
+        badge_id: "GAMES_10",
+        earned: true,
+        count: 2,
+        earned_at: Timestamp.fromMillis(1_000),
+        last_earned_at: Timestamp.fromMillis(3_000),
+      },
+      "user_badges/legacy-source-games-10": {
+        user_id: sourceUid,
+        badge_id: "GAMES_10",
+        earned: true,
+        count: 4,
+        earned_at: Timestamp.fromMillis(500),
+        last_earned_at: Timestamp.fromMillis(5_000),
+      },
+      [`user_badges/${targetUid}_GAMES_10`]: {
+        user_id: targetUid,
+        badge_id: "GAMES_10",
+        earned: true,
+        count: 1,
+        earned_at: Timestamp.fromMillis(2_000),
+        last_earned_at: Timestamp.fromMillis(2_000),
+      },
+      [`user_badges/${sourceUid}_GOALS_10`]: {
+        user_id: sourceUid,
+        badge_id: "GOALS_10",
+        earned: true,
+        count: 1,
+        earned_at: Timestamp.fromMillis(4_000),
+      },
+      [`season_participation/season-1_${sourceUid}`]: {
+        user_id: sourceUid,
+        season_id: "season-1",
+        points: 7,
+        games_played: 3,
+        total_xp: 200,
+        position: 2,
+        group_ids: ["group-1"],
+        by_gender: {MALE: {points: 7, total_xp: 200}},
+      },
+      [`season_participation/season-1_${targetUid}`]: {
+        user_id: targetUid,
+        season_id: "season-1",
+        points: 3,
+        games_played: 1,
+        total_xp: 100,
+        position: 5,
+        group_ids: ["group-2"],
+        by_gender: {MALE: {points: 3, total_xp: 100}},
+      },
+      [`mvp_votes/game-2_${sourceUid}_BEST_PLAYER`]: {
+        game_id: "game-2",
+        voter_id: sourceUid,
+        voted_player_id: "other-player",
+        category: "BEST_PLAYER",
+      },
+      [`mvp_votes/game-2_${targetUid}_BEST_PLAYER`]: {
+        game_id: "game-2",
+        voter_id: targetUid,
+        voted_player_id: "canonical-choice",
+        category: "BEST_PLAYER",
+      },
+      "mvp_votes/game-3_other_BEST_PLAYER": {
+        game_id: "game-3",
+        voter_id: "other-voter",
+        voted_player_id: sourceUid,
+        category: "BEST_PLAYER",
+      },
+      "activities/game-2": {
+        user_id: sourceUid,
+        user_name: "Nome anterior",
+        user_photo: "source.jpg",
+      },
       "games/game-1": {
         owner_id: sourceUid,
         ownerId: sourceUid,
@@ -392,6 +494,13 @@ describe("completeAccountMerge transactional migration", () => {
         liveGamesOwnershipMigrated: 1,
         liveScoresOwnershipMigrated: 1,
         gameTemplatesMigrated: 1,
+        statisticsMigrated: 1,
+        xpLogsMigrated: 1,
+        userBadgesMigrated: 2,
+        seasonParticipationMigrated: 1,
+        mvpVotesMigrated: 1,
+        mvpVoteReferencesMigrated: 1,
+        activitiesMigrated: 1,
       },
     });
     expect(state.get("groups/group-1")).toMatchObject({
@@ -415,6 +524,58 @@ describe("completeAccountMerge transactional migration", () => {
     });
     expect(state.has("confirmations/game-1_source-a")).toBe(false);
     expect(state.has("confirmations/game-1_source-b")).toBe(false);
+    expect(state.has(`statistics/${sourceUid}`)).toBe(false);
+    expect(state.get(`statistics/${targetUid}`)).toMatchObject({
+      totalGames: 7,
+      totalGoals: 3,
+      currentMvpStreak: 2,
+      bestMvpStreak: 3,
+      user_id: targetUid,
+    });
+    expect(state.has(`xp_logs/game_game-2_user_${sourceUid}`)).toBe(false);
+    expect(state.get(`xp_logs/game_game-2_user_${targetUid}`)).toMatchObject({
+      user_id: targetUid,
+      xp_earned: 20,
+      merged_from_uid: sourceUid,
+    });
+    expect(state.has(`user_badges/${sourceUid}_GAMES_10`)).toBe(false);
+    expect(state.has("user_badges/legacy-source-games-10")).toBe(false);
+    expect(state.has(`user_badges/${sourceUid}_GOALS_10`)).toBe(false);
+    expect(state.get(`user_badges/${targetUid}_GAMES_10`)).toMatchObject({
+      user_id: targetUid,
+      count: 7,
+    });
+    expect(
+      (state.get(`user_badges/${targetUid}_GAMES_10`)
+        ?.earned_at as Timestamp).toMillis()
+    ).toBe(500);
+    expect(state.has(`season_participation/season-1_${sourceUid}`))
+      .toBe(false);
+    expect(state.get(`season_participation/season-1_${targetUid}`))
+      .toMatchObject({
+        user_id: targetUid,
+        points: 10,
+        games_played: 4,
+        total_xp: 300,
+        position: 2,
+        group_ids: ["group-1", "group-2"],
+        by_gender: {MALE: {points: 10, total_xp: 300}},
+      });
+    expect(state.has(`mvp_votes/game-2_${sourceUid}_BEST_PLAYER`))
+      .toBe(false);
+    expect(state.get(`mvp_votes/game-2_${targetUid}_BEST_PLAYER`))
+      .toMatchObject({
+        voter_id: targetUid,
+        voted_player_id: "canonical-choice",
+      });
+    expect(state.get("mvp_votes/game-3_other_BEST_PLAYER")).toMatchObject({
+      voted_player_id: targetUid,
+    });
+    expect(state.get("activities/game-2")).toMatchObject({
+      user_id: targetUid,
+      user_name: "Nome canônico",
+      user_photo: "target.jpg",
+    });
     expect(state.get("games/game-1")).toMatchObject({
       owner_id: targetUid,
       ownerId: targetUid,
@@ -457,7 +618,7 @@ describe("completeAccountMerge transactional migration", () => {
    * }}} Estado do Firestore fake e mocks de Auth.
    */
   function setupFailingBulkWriteFixture(failPath: string) {
-    const {state, firestore} = createFakeFirestore({
+    const {state, firestore, failBulkWritePaths} = createFakeFirestore({
       [`account_merge_requests/${requestId}`]: {
         sourceUid,
         targetUid,
@@ -474,6 +635,7 @@ describe("completeAccountMerge transactional migration", () => {
       "phone_index/old-source-phone": {uid: sourceUid},
       "phone_index/old-target-phone": {uid: targetUid},
       "notifications/notification-1": {user_id: sourceUid},
+      [`statistics/${sourceUid}`]: {totalGames: 4, totalGoals: 2},
     }, {failBulkWritePaths: [failPath]});
     mockDb.mockReturnValue(firestore);
     mockLoadIdentityIndexHashes.mockImplementation(async (
@@ -511,7 +673,7 @@ describe("completeAccountMerge transactional migration", () => {
     };
     mockGetAuth.mockReturnValue(auth);
 
-    return {state, auth};
+    return {state, auth, failBulkWritePaths};
   }
 
   it(
@@ -574,6 +736,45 @@ describe("completeAccountMerge transactional migration", () => {
       } finally {
         process.off("unhandledRejection", unhandled);
       }
+    },
+  );
+
+  it(
+    "retry após progresso parcial preserva gamificação e manifest (#4112)",
+    async () => {
+      const {state, auth, failBulkWritePaths} =
+        setupFailingBulkWriteFixture("notifications/notification-1");
+      const invoke = () => (completeAccountMerge as unknown as (
+        request: Data,
+      ) => Promise<Data>)({
+        auth: {uid: targetUid, token: {}},
+        data: {requestId},
+      });
+
+      await expect(invoke()).rejects.toMatchObject({code: "internal"});
+      expect(state.has(`statistics/${sourceUid}`)).toBe(false);
+      expect(state.get(`statistics/${targetUid}`)).toMatchObject({
+        totalGames: 4,
+        totalGoals: 2,
+        merged_from_uid: sourceUid,
+      });
+      expect(auth.updateUser).not.toHaveBeenCalled();
+
+      state.set(`account_merge_requests/${requestId}`, {
+        ...state.get(`account_merge_requests/${requestId}`),
+        processingLeaseExpiresAt: Timestamp.fromMillis(Date.now() - 1),
+      });
+      failBulkWritePaths.clear();
+
+      await expect(invoke()).resolves.toMatchObject({
+        success: true,
+        status: "completed",
+      });
+      expect(state.get(`account_merge_requests/${requestId}`)).toMatchObject({
+        status: "completed",
+        manifest: expect.objectContaining({statisticsMigrated: 1}),
+      });
+      expect(auth.updateUser).toHaveBeenCalledTimes(1);
     },
   );
 

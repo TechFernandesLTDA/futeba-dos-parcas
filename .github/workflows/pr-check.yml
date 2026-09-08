@@ -86,7 +86,9 @@ jobs:
           echo "Reminder: PRs should reference a spec file in /specs/"
 
       - name: Design tokens parity (web/Android/composeApp vs shared/design-tokens.json)
-        run: node scripts/check-design-tokens-parity.js
+        run: |
+          node --test scripts/check-design-tokens-motion.test.js
+          node scripts/check-design-tokens-parity.js
 
       - name: Build Check
         run: ./gradlew --max-workers=6 --no-daemon compileDebugKotlin

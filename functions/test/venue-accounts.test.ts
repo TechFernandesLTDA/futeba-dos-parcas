@@ -130,6 +130,9 @@ const {
 } = require("../src/admin/venue-accounts");
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
+const {normalizeVenueAccountStatus} = require("../src/locations/venue-account-shared");
+
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const {logger} = require("firebase-functions/v2");
 
 function resetFirestore() {
@@ -173,6 +176,12 @@ describe("venue account admin callables", () => {
     resetFirestore();
     seedOwner();
     seedLocations();
+  });
+
+  it("aceita legado sem status, mas falha fechado para status inválido", () => {
+    expect(normalizeVenueAccountStatus(undefined)).toBe("ACTIVE");
+    expect(normalizeVenueAccountStatus(null)).toBe("ACTIVE");
+    expect(normalizeVenueAccountStatus("invalid")).toBe("SUSPENDED");
   });
 
   it("cria conta comercial, calcula mensalidade e denormaliza nas quadras", async () => {
