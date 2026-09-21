@@ -98,7 +98,11 @@ function extractTsObject(content, objectName) {
   const match = assignment.exec(content) || property.exec(content);
   if (!match) return null;
 
-  const open = content.indexOf('{', match.index);
+  return sliceBraceBlock(content, content.indexOf('{', match.index));
+}
+
+/** Retorna o bloco `{ ... }` balanceado a partir de `open` (índice da chave de abertura), ignorando strings. */
+function sliceBraceBlock(content, open) {
   let depth = 0;
   let quote = null;
   let escaped = false;
@@ -655,10 +659,12 @@ function checkSurfaceParity(tokens, errors) {
 const MOTION_FILES = [
   {
     name: 'web motion.ts',
+    kind: 'ts',
     file: path.join(ROOT, 'web', 'src', 'theme', 'motion.ts'),
   },
   {
     name: 'android :app AppMotion.kt',
+    kind: 'kotlin',
     file: path.join(
       ROOT,
       'app', 'src', 'main', 'java', 'com', 'futebadosparcas', 'ui', 'theme', 'AppMotion.kt'
@@ -666,6 +672,7 @@ const MOTION_FILES = [
   },
   {
     name: 'composeApp Motion.kt',
+    kind: 'kotlin',
     file: path.join(
       ROOT,
       'composeApp', 'src', 'commonMain', 'kotlin', 'com', 'futebadosparcas', 'ui', 'theme', 'Motion.kt'
@@ -673,67 +680,163 @@ const MOTION_FILES = [
   },
 ];
 
-/** Verifica se o número aparece como token isolado (não como substring). */
-function fileContainsNumber(content, n) {
-  const re = new RegExp('(?<![\\d.])' + n + '(?![\\d.])');
-  return re.test(content);
+/** `standard` -> `Standard` (nome do símbolo Kotlin para um token camelCase). */
+function pascalCase(name) {
+  return name.charAt(0).toUpperCase() + name.slice(1);
 }
 
 /**
- * Constrói os padrões de easing aceitos a partir de [x1, y1, x2, y2].
- * Aceita o formato CSS `cubic-bezier(0.2, 0, 0, 1)` (web) e o Kotlin
- * `CubicBezierEasing(0.2f, 0f, 0f, 1f)` (Android/composeApp).
+ * Padrão regex para um número de curva. Inteiros aceitam a forma `0` e `0.0`
+ * (Kotlin costuma escrever `0f`, o M3 upstream `0.0f`); decimais casam
+ * literalmente. `suffix` é `f` para Kotlin e vazio para CSS.
  */
-function easingPatterns(curve) {
-  const cssNums = curve.map((v) => String(v));
-  const kotlinNums = curve.map((v) => `${v}f`);
-  const css = new RegExp(
-    'cubic-bezier\\(\\s*' + cssNums.map((n) => n.replace('.', '\\.')).join('\\s*,\\s*') + '\\s*\\)'
-  );
-  const kotlin = new RegExp(
-    'cubicbeziereasing\\(\\s*' + kotlinNums.map((n) => n.replace('.', '\\.')).join('\\s*,\\s*') + '\\s*\\)'
-  );
-  return { css, kotlin };
+function curveNumberPattern(value, suffix) {
+  const literal = String(value);
+  const base = Number.isInteger(value) ? `${literal}(?:\\.0)?` : escapeRegExp(literal);
+  return base + suffix;
 }
 
-/** Valida durations e easings do bloco `motion` em todas as plataformas. */
-function checkMotionParity(tokens, errors) {
+/**
+ * Regex que casa a DECLARAÇÃO do easing `name` ligada à curva `curve` na
+ * plataforma `kind` (#4115). O nome do símbolo faz parte do padrão, então
+ * trocar os valores de dois easings entre si deixa o gate vermelho:
+ *  - kotlin: `val Standard: Easing = CubicBezierEasing(0.2f, 0f, 0f, 1f)`
+ *  - ts:     `standard: 'cubic-bezier(0.2, 0, 0, 1)'`
+ */
+function easingDeclarationPattern(name, curve, kind) {
+  if (kind === 'kotlin') {
+    const nums = curve.map((v) => curveNumberPattern(v, 'f')).join('\\s*,\\s*');
+    return new RegExp(
+      `\\bval\\s+${escapeRegExp(pascalCase(name))}\\s*(?::\\s*Easing)?\\s*=\\s*CubicBezierEasing\\(\\s*${nums}\\s*\\)`
+    );
+  }
+  const nums = curve.map((v) => curveNumberPattern(v, '')).join('\\s*,\\s*');
+  return new RegExp(`\\b${escapeRegExp(name)}\\s*:\\s*['"]cubic-bezier\\(\\s*${nums}\\s*\\)['"]`);
+}
+
+/**
+ * Regex que casa a DECLARAÇÃO da duration `name` ligada ao valor `value`:
+ *  - kotlin: `const val Short = 150`
+ *  - ts:     `short: 150`
+ */
+function durationDeclarationPattern(name, value, kind) {
+  if (kind === 'kotlin') {
+    return new RegExp(`\\bconst\\s+val\\s+${escapeRegExp(pascalCase(name))}\\s*(?::\\s*Int)?\\s*=\\s*${value}\\b`);
+  }
+  return new RegExp(`\\b${escapeRegExp(name)}\\s*:\\s*${value}\\b`);
+}
+
+/** Extrai o corpo `{ ... }` de `object <name> {` em Kotlin (com balanceamento de chaves). */
+function extractKotlinObject(content, objectName) {
+  const header = new RegExp(`\\bobject\\s+${escapeRegExp(objectName)}\\s*\\{`).exec(content);
+  if (!header) return null;
+  return sliceBraceBlock(content, content.indexOf('{', header.index));
+}
+
+/**
+ * Símbolos de easing DECLARADOS no bloco da plataforma. Usado para pegar
+ * símbolo órfão: um `Emphasized`/`emphasized` que não existe mais nos tokens
+ * canônicos (#4115).
+ */
+function declaredEasingNames(block, kind) {
+  const re = kind === 'kotlin'
+    ? /\bval\s+([A-Za-z_]\w*)\s*(?::\s*Easing)?\s*=\s*CubicBezierEasing\(/g
+    : /^\s*([A-Za-z_$][\w$]*)\s*:\s*['"]cubic-bezier\(/gm;
+  return [...block.matchAll(re)].map((m) => m[1]);
+}
+
+/** Símbolos de duration DECLARADOS no bloco da plataforma (`const val X = n` / `x: n`). */
+function declaredDurationNames(block, kind) {
+  const re = kind === 'kotlin'
+    ? /\bconst\s+val\s+([A-Za-z_]\w*)\s*(?::\s*Int)?\s*=\s*\d+\b/g
+    : /^\s*([A-Za-z_$][\w$]*)\s*:\s*\d+\s*,?\s*$/gm;
+  return [...block.matchAll(re)].map((m) => m[1]);
+}
+
+/**
+ * Valida durations e easings do bloco `motion` em todas as plataformas.
+ *
+ * #4115: a validação é NOME → VALOR, não "o valor aparece em algum lugar do
+ * arquivo". Cada easing/duration canônico precisa estar ligado ao seu símbolo
+ * na declaração (`val Standard = CubicBezierEasing(...)`, `standard: 'cubic-bezier(...)'`),
+ * e todo símbolo declarado na plataforma precisa existir nos tokens — um
+ * alias órfão (ex.: `Emphasized`) é drift tanto quanto um valor trocado.
+ *
+ * `motionFiles` é injetável para os testes (scripts/check-design-tokens-parity.test.js).
+ */
+function checkMotionParity(tokens, errors, motionFiles = MOTION_FILES) {
   const motion = tokens.motion;
   if (!motion || !motion.duration || !motion.easing) {
     errors.push('[motion] bloco `motion` ausente ou incompleto em shared/design-tokens.json');
     return;
   }
 
-  // Durations canônicas a validar (ignora as *Reduced=0, que são triviais).
+  // Durations canônicas a validar por nome (ignora as *Reduced=0, que são triviais
+  // e nem toda plataforma declara). Para o check de símbolo órfão vale o bloco todo.
   const durations = {
     short: motion.duration.short,
     medium: motion.duration.medium,
     long: motion.duration.long,
   };
+  const knownDurationNames = new Set(Object.keys(motion.duration).map((n) => n.toLowerCase()));
 
   // Easings canônicas (cada curva é um array [x1,y1,x2,y2]).
   const easings = motion.easing;
+  const knownEasingNames = new Set(Object.keys(easings).map((n) => n.toLowerCase()));
 
-  for (const platform of MOTION_FILES) {
+  for (const platform of motionFiles) {
+    const rel = path.relative(ROOT, platform.file);
     if (!fs.existsSync(platform.file)) {
-      errors.push(`[${platform.name}] arquivo de motion ausente: ${path.relative(ROOT, platform.file)}`);
+      errors.push(`[${platform.name}] arquivo de motion ausente: ${rel}`);
       continue;
     }
-    const content = fs.readFileSync(platform.file, 'utf8').toLowerCase();
+    const content = fs.readFileSync(platform.file, 'utf8');
+    const kind = platform.kind;
+    const symbolPrefix = kind === 'kotlin' ? 'MotionEasing.' : 'motionEasing.';
+    const durationPrefix = kind === 'kotlin' ? 'MotionDuration.' : 'motionDuration.';
 
-    for (const [name, value] of Object.entries(durations)) {
-      if (!fileContainsNumber(content, value)) {
+    const durationBlock = kind === 'kotlin'
+      ? extractKotlinObject(content, 'MotionDuration')
+      : extractTsObject(content, 'motionDuration');
+    if (!durationBlock) {
+      errors.push(`[${platform.name}] bloco ${durationPrefix.slice(0, -1)} ausente em ${rel}`);
+    } else {
+      for (const [name, value] of Object.entries(durations)) {
+        if (!durationDeclarationPattern(name, value, kind).test(durationBlock)) {
+          errors.push(
+            `[${platform.name}] duration diverge: ${durationPrefix}${kind === 'kotlin' ? pascalCase(name) : name} deve ser ${value} (motion.duration.${name}) em ${rel}`
+          );
+        }
+      }
+      for (const declared of declaredDurationNames(durationBlock, kind)) {
+        if (!knownDurationNames.has(declared.toLowerCase())) {
+          errors.push(
+            `[${platform.name}] duration sem token canônico: ${durationPrefix}${declared} não existe em shared/design-tokens.json#motion.duration (${rel})`
+          );
+        }
+      }
+    }
+
+    const easingBlock = kind === 'kotlin'
+      ? extractKotlinObject(content, 'MotionEasing')
+      : extractTsObject(content, 'motionEasing');
+    if (!easingBlock) {
+      errors.push(`[${platform.name}] bloco ${symbolPrefix.slice(0, -1)} ausente em ${rel}`);
+      continue;
+    }
+
+    for (const [name, curve] of Object.entries(easings)) {
+      if (!easingDeclarationPattern(name, curve, kind).test(easingBlock)) {
         errors.push(
-          `[${platform.name}] duration ausente: motion.duration.${name} (${value}ms) — esperado em ${path.relative(ROOT, platform.file)}`
+          `[${platform.name}] easing diverge: ${symbolPrefix}${kind === 'kotlin' ? pascalCase(name) : name} deve ser [${curve.join(', ')}] (motion.easing.${name}) em ${rel}`
         );
       }
     }
 
-    for (const [name, curve] of Object.entries(easings)) {
-      const { css, kotlin } = easingPatterns(curve);
-      if (!css.test(content) && !kotlin.test(content)) {
+    for (const declared of declaredEasingNames(easingBlock, kind)) {
+      if (!knownEasingNames.has(declared.toLowerCase())) {
         errors.push(
-          `[${platform.name}] easing ausente: motion.easing.${name} ([${curve.join(', ')}]) — esperado em ${path.relative(ROOT, platform.file)}`
+          `[${platform.name}] easing sem token canônico: ${symbolPrefix}${declared} não existe em shared/design-tokens.json#motion.easing — remova o símbolo ou adicione o token (${rel})`
         );
       }
     }
@@ -810,4 +913,14 @@ function main() {
   process.exit(0);
 }
 
-main();
+if (require.main === module) {
+  main();
+}
+
+// Exports para scripts/check-design-tokens-parity.test.js (#4115).
+module.exports = {
+  MOTION_FILES,
+  checkMotionParity,
+  easingDeclarationPattern,
+  durationDeclarationPattern,
+};

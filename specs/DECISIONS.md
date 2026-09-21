@@ -1706,4 +1706,50 @@ branches de release mantêm o build completo. O contrato está coberto por
 **Relacionado:** `.github/ci/change-scopes-v1.json`,
 `.github/workflows/ios-build.yml`, PRs #4079 e #4080.
 
+### [2026-09-21] `motion.easing.emphasized` removido — o design system tem uma curva de uso geral só (#4115)
+
+**Contexto:** `motion.easing.emphasized` era byte a byte igual a `standard`
+(`[0.2, 0, 0, 1]`) no `shared/design-tokens.json` e nas três plataformas
+(`AppMotion.kt`, `composeApp/.../Motion.kt`, `web/src/theme/motion.ts`). O KDoc
+prometia "foco e destaque" mas entregava a curva padrão; 5 call sites Android e
+2 web pediam `Emphasized` sem receber nada diferente. O gate
+`checkMotionParity` não pegava porque só conferia que a curva aparecia em
+algum lugar do arquivo, não a ligação nome→curva — um swap entre `Standard` e
+`Decelerate` passaria verde.
+
+**Alternativas consideradas:**
+1. **(a) Dar a `emphasized` a curva própria do M3.** Rejeitada após verificar
+   a fonte: o token canônico `md.sys.motion.easing.emphasized` é um *path* de
+   dois segmentos (`M 0,0 C 0.05,0,0.133333,0.06,0.166666,0.4 C 0.208333,0.82,0.25,1,1,1`)
+   que não cabe num único cubic-bezier. A aproximação bezier oficial usada
+   pelas implementações é idêntica à `standard`:
+   - material-web `tokens/versions/latest/sass/_md-sys-motion.scss`
+     (`md.sys.motion.easing.emphasized`): `$easing-emphasized: $easing-standard;`
+     com `$easing-standard: cubic-bezier(0.2, 0, 0, 1)`.
+   - Compose Material3 `androidx/compose/material3/tokens/MotionTokens.kt`:
+     `EasingEmphasizedCubicBezier = CubicBezierEasing(0.2f, 0.0f, 0.0f, 1.0f)`
+     == `EasingStandardCubicBezier`.
+   Ou seja, num design system de bezier único não existe curva `emphasized`
+   distinta para copiar — só as variantes `emphasized.decelerate`
+   (`0.05, 0.7, 0.1, 1`) e `emphasized.accelerate` (`0.3, 0, 0.8, 0.15`), que
+   são outros papéis e nenhum call site pede.
+2. **(b) Assumir o alias e removê-lo.** Aceita.
+
+**Decisão:** remover `emphasized` do token e das três plataformas; migrar os
+call sites (`SuccessAnimationOverlay`, `StreakFlame`, `WeeklyRecapScreen`,
+`web/src/theme/index.ts` `easeInOut`, `GamificationCelebration`) para
+`standard`. `checkMotionParity` passa a validar NOME → VALOR na declaração
+(`val Standard = CubicBezierEasing(...)`, `standard: 'cubic-bezier(...)'`) para
+easings e durations, e falha em símbolo declarado sem token canônico (pega um
+`Emphasized` órfão). Gate coberto por `scripts/check-design-tokens-parity.test.js`
+(swap, símbolo órfão, easing ausente).
+
+**Consequências:** o design system tem três easings (`standard`, `decelerate`,
+`accelerate`). Quem precisar de destaque de fato deve propor um token novo com
+fonte M3 citada (ex.: `emphasizedDecelerate`), nunca reintroduzir um alias com
+o mesmo valor — o teste de tokens falha se duas curvas forem iguais.
+
+**Relacionado:** issue #4115, `shared/design-tokens.json#motion.easing`,
+`scripts/check-design-tokens-parity.js`, `DESIGN_TOKENS.md`.
+
 <!-- Adicione novas decisões acima desta linha -->
