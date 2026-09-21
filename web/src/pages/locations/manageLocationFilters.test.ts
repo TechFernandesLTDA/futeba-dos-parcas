@@ -4,6 +4,7 @@ import {
   getLocationCommercialIssues,
   getLocationPublicationStatus,
   getLocationQualityChecklist,
+  getLocationSubscriptionStatus,
   locationMatchesManageFilters,
   ManageLocationFilterState,
 } from './manageLocationFilters';
@@ -146,6 +147,30 @@ describe('manageLocationFilters', () => {
 
     expect(issues).toContain('conta comercial irregular');
     expect(issues).not.toContain('mensalidade irregular');
+  });
+
+  // #4110: venueAccountStatus (só admin escreve, na mão) não pode sombrear
+  // subscriptionStatus (o cron de cobrança escreve todo dia). Uma quadra que
+  // o cron suspendeu por inadimplência precisa continuar aparecendo como
+  // SUSPENDED — e com pendência — mesmo com a conta comercial congelada em
+  // ACTIVE.
+  it('não deixa a conta comercial congelada (ACTIVE) esconder a mensalidade suspensa pelo cron', () => {
+    const location = baseLocation({
+      subscriptionStatus: 'SUSPENDED',
+      venueAccountId: 'owner-123',
+      venueAccountStatus: 'ACTIVE',
+    });
+
+    expect(getLocationSubscriptionStatus(location)).toBe('SUSPENDED');
+
+    const issues = getLocationCommercialIssues(location);
+    expect(issues).toContain('mensalidade irregular');
+    expect(issues).not.toContain('conta comercial irregular');
+
+    expect(locationMatchesManageFilters(location, baseFilters({ subscriptionFilter: 'SUSPENDED' })))
+      .toBe(true);
+    expect(locationMatchesManageFilters(location, baseFilters({ subscriptionFilter: 'ACTIVE' })))
+      .toBe(false);
   });
 
   it('mantém disponibilidade pública baseada no status individual da quadra', () => {
