@@ -15,11 +15,15 @@
  * - groups/{id}/members/{uid} (via users/{uid}/groups) → anonymize
  *   user_name + user_photo_url/user_photo (#4113)
  * - groups/{id}/cashbox (player_id, via users/{uid}/groups) → anonymize
- *   player_name do jogador pagador
+ *   player_name do jogador pagador e, no MESMO update, as ocorrências do
+ *   player_name original como palavra inteira em `description` (#4113)
  * - groups/{id}/monthly_finance_periods/{p}/payers/{uid} (via
  *   users/{uid}/groups) → anonymize user_name + user_photo_url
  * - group_invites (invited_user_id/invitedUserId) → delete;
  *   (invited_by_id) → anonymize invited_by_name (#4113)
+ * - post_game_reputation (reviewer_id / target_user_id) → anonymize
+ *   reviewer_name + reviewer_photo / target_user_name + target_user_photo;
+ *   notas, comentário e agregados não mudam (#4113)
  * - statistics/{uid} → delete pelo ID (escritor não grava user_id) (#4113)
  * - activities (user_id) → delete. Não há anonimização do lado "alvo":
  *   nenhum escritor grava targetUserId/targetUserName em activities (a
@@ -52,9 +56,11 @@ import {
   GROUPS,
   LOCATION_REVIEWS,
   MONTHLY_PAYERS,
+  POST_GAME_REPUTATION,
   STATISTICS,
   USER_GROUP_LINKS,
   USER_STREAKS,
+  redactNameInText,
 } from "./uid-owned-collections";
 
 // Lazy initialization para evitar erro de initializeApp
@@ -993,11 +999,17 @@ export const onUserDeleted = runWith({
         // alcançado. Cobri-los exigiria collectionGroup em cashbox.player_id e
         // payers.user_id com fieldOverride novo (fora deste fix).
         let cashboxPlayerTotal = 0;
+        let cashboxDescriptionTotal = 0;
         let monthlyPayersTotal = 0;
 
         // Anonimiza `player_name` nas entradas de caixa do grupo em que o
         // usuário é o pagador. Cursor obrigatório: o filtro (player_id) não
         // muda na anonimização (#2323). Retorna false se a guarda estourar.
+        // #4113: a `description` (texto livre; o Android gravava "Pagamento
+        // de <nome>") é corrigida no MESMO update — depois que player_name
+        // vira "Usuário removido" o nome original some e um retry não teria
+        // mais o que procurar. Só o nome inteiro é substituído (nomes < 3
+        // caracteres ficam, ver redactNameInText); o resto do texto fica.
         const anonymizeCashboxPlayer = async (
           groupId: string
         ): Promise<boolean> => {
@@ -1021,19 +1033,31 @@ export const onUserDeleted = runWith({
             if (snap.empty) return true;
             const playerBatch = db.batch();
             let ops = 0;
+            let descriptionOps = 0;
             for (const doc of snap.docs) {
-              const playerName = (doc.data() ?? {})[CASHBOX.playerNameField];
+              const data = doc.data() ?? {};
+              const playerName = data[CASHBOX.playerNameField];
               // A baixa mensal (monthly.ts:1831) grava player_id sem nome:
               // não cria o campo. Já anonimizado: não reescreve no retry.
               if (!playerName || playerName === ANONYMIZED_USER_NAME) continue;
-              playerBatch.update(doc.ref, {
+              const update: Record<string, unknown> = {
                 [CASHBOX.playerNameField]: ANONYMIZED_USER_NAME,
-              });
+              };
+              const description = data[CASHBOX.descriptionField];
+              if (typeof playerName === "string" && typeof description === "string") {
+                const redacted = redactNameInText(description, playerName);
+                if (redacted !== description) {
+                  update[CASHBOX.descriptionField] = redacted;
+                  descriptionOps++;
+                }
+              }
+              playerBatch.update(doc.ref, update);
               ops++;
             }
             if (ops > 0) {
               await playerBatch.commit();
               cashboxPlayerTotal += ops;
+              cashboxDescriptionTotal += descriptionOps;
             }
             lastDoc = snap.docs[snap.docs.length - 1];
             if (snap.size < 500) return true;
@@ -1215,7 +1239,8 @@ export const onUserDeleted = runWith({
           logger.info(
             `[ACCOUNT_CLEANUP] Anonimizando ${groupMembersTotal} ` +
               `groups/*/members/${uid}, ${cashboxPlayerTotal} cashbox ` +
-              `(player_name) e ${monthlyPayersTotal} payers mensais; ` +
+              `(player_name; ${cashboxDescriptionTotal} com description) e ` +
+              `${monthlyPayersTotal} payers mensais; ` +
               `removendo ${groupLinksTotal} links users/${uid}/groups ` +
               `(${groupLinksKeptTotal} mantidos para retry)`
           );
@@ -1298,6 +1323,96 @@ export const onUserDeleted = runWith({
           }
         }
 
+        // #4113: post_game_reputation (coleção raiz) — PII denormalizada nos
+        // DOIS lados da avaliação (post-game-reputation.ts:488-493): como
+        // avaliador (reviewer_name/reviewer_photo) e como avaliado
+        // (target_user_name/target_user_photo). O doc permanece: notas,
+        // comentário e os agregados reputation_* do alvo não mudam. Nenhum
+        // trigger escuta esta coleção, e o seed legado de agregados
+        // (loadLegacyAggregateSeed) só lê as notas — o update não recalcula
+        // nada. Foto vira "" (o valor vazio que o próprio escritor grava).
+        // Queries de escopo COLLECTION por igualdade (índice single-field
+        // automático, sem índice novo), cursor obrigatório (o filtro não
+        // muda na anonimização, #2323) e páginas de 500 → batch <= 500 ops.
+        // Um lado com falha não impede o outro.
+        const reputationTotals = {reviewer: 0, target: 0};
+        for (const side of POST_GAME_REPUTATION.sides) {
+          try {
+            let reputationLastDoc:
+              admin.firestore.QueryDocumentSnapshot | null = null;
+            let reputationIterations = 0;
+            while (true) {
+              if (++reputationIterations > MAX_ANON_ITERATIONS) {
+                logger.error(
+                  `[ACCOUNT_CLEANUP] Limite de ${MAX_ANON_ITERATIONS} ` +
+                    "iterações excedido ao anonimizar post_game_reputation " +
+                    `(${side.uidField}) para ${uid} — abortando para evitar loop infinito`
+                );
+                anonFailed = true;
+                break;
+              }
+              let reputationQuery = db
+                .collection(POST_GAME_REPUTATION.collection)
+                .where(side.uidField, "==", uid)
+                .limit(500);
+              if (reputationLastDoc) {
+                reputationQuery = reputationQuery.startAfter(reputationLastDoc);
+              }
+              const reputationSnap = await reputationQuery.get();
+              if (reputationSnap.empty) break;
+              const reputationBatch = db.batch();
+              let ops = 0;
+              for (const doc of reputationSnap.docs) {
+                const data = doc.data() ?? {};
+                const name = data[side.nameField];
+                const photo = data[side.photoField];
+                // Idempotente: sem PII (já anonimizado ou gravado vazio)
+                // não reescreve no retry.
+                const nameClean = name === undefined || name === null ||
+                  name === "" || name === ANONYMIZED_USER_NAME;
+                const photoClean = photo === undefined || photo === null ||
+                  photo === POST_GAME_REPUTATION.emptyPhoto;
+                if (nameClean && photoClean) continue;
+                reputationBatch.update(doc.ref, {
+                  [side.nameField]: ANONYMIZED_USER_NAME,
+                  [side.photoField]: POST_GAME_REPUTATION.emptyPhoto,
+                });
+                ops++;
+              }
+              if (ops > 0) {
+                await reputationBatch.commit();
+                reputationTotals[side.label] += ops;
+              }
+              reputationLastDoc =
+                reputationSnap.docs[reputationSnap.docs.length - 1];
+              if (reputationSnap.size < 500) break;
+            }
+          } catch (reputationError) {
+            // FIX #3897: só falha transitória força retry da limpeza inteira.
+            if (isTransientFirestoreError(reputationError)) {
+              anonFailed = true;
+              logger.warn(
+                "[ACCOUNT_CLEANUP] Erro transitório ao anonimizar " +
+                `post_game_reputation (${side.uidField}) para ${uid} (retry ` +
+                "via failurePolicy vai tentar de novo):",
+                reputationError
+              );
+            } else {
+              logger.error(
+                "[ACCOUNT_CLEANUP] Erro permanente ao anonimizar " +
+                `post_game_reputation (${side.uidField}) para ${uid} (não ` +
+                "força retry — requer investigação manual):",
+                reputationError
+              );
+            }
+          }
+        }
+        logger.info(
+          `[ACCOUNT_CLEANUP] Anonimizando ${reputationTotals.reviewer} ` +
+            `post_game_reputation como avaliador e ${reputationTotals.target} ` +
+            `como avaliado do usuário ${uid}`
+        );
+
         // #4113: observabilidade — contagem por coleção, sempre logada
         // (inclusive zeros). Zero numa coleção em que o usuário tinha
         // atividade é o sinal do "campo errado ⇒ query vazia" (#3877/#4113)
@@ -1328,10 +1443,13 @@ export const onUserDeleted = runWith({
               groups_owner_anonymized: groupsTotal,
               group_members_anonymized: groupMembersTotal,
               cashbox_player_anonymized: cashboxPlayerTotal,
+              cashbox_description_redacted: cashboxDescriptionTotal,
               monthly_payers_anonymized: monthlyPayersTotal,
               user_group_links_deleted: groupLinksTotal,
               user_group_links_kept: groupLinksKeptTotal,
               group_invites_anonymized: groupInvitesAnonymizedTotal,
+              post_game_reputation_reviewer_anonymized: reputationTotals.reviewer,
+              post_game_reputation_target_anonymized: reputationTotals.target,
             },
             anonFailed,
           }

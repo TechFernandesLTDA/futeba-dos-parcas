@@ -20,7 +20,13 @@
  *   SEM `player_name`);
  * - groups/{id}/monthly_finance_periods/{p}: cashbox/monthly.ts:1327 e
  *   .../payers/{uid}: cashbox/monthly.ts:1286-1305 (`user_id`, `user_name`,
- *   `user_photo_url`).
+ *   `user_photo_url`);
+ * - groups/{id}/cashbox/{id}.description: a descrição padrão do Android
+ *   (RecordPaymentUseCase: "Pagamento de <nome>") gravada por
+ *   createCashboxEntry, e texto livre digitado pelo organizador;
+ * - post_game_reputation/{gameId}_{reviewer}_{target}:
+ *   functions/src/reputation/post-game-reputation.ts:488-493 (`reviewer_*` e
+ *   `target_user_*`, foto vazia gravada como "").
  *
  * O Firestore é um fake em memória: as asserções são sobre o ESTADO FINAL,
  * não sobre quais mocks foram chamados.
@@ -365,6 +371,117 @@ function seedWriterShapes(): void {
     created_at: "2026-08-10T12:00:00Z",
   });
 
+  // Descrição padrão do Android (RecordPaymentUseCase, antes do #4113):
+  // "Pagamento de <nome>", gravada por createCashboxEntry.
+  state.set("groups/g-member/cashbox/pay-default-desc", {
+    group_id: "g-member",
+    type: "INCOME",
+    amount: 30,
+    amount_cents: 3000,
+    description: "Pagamento de Fulano da Silva",
+    category: "SINGLE_PAYMENT",
+    status: "ACTIVE",
+    reference_date: 1785542400000,
+    player_id: UID,
+    player_name: "Fulano da Silva",
+    created_by: OTHER,
+    created_by_id: OTHER,
+    created_by_name: "Outro Jogador",
+    created_at: "2026-08-02T12:00:00Z",
+  });
+  // Descrição livre com o nome repetido, em caixa diferente, e palavras que
+  // CONTÊM parte do nome (não podem ser tocadas).
+  state.set("groups/g-member/cashbox/pay-free-desc", {
+    group_id: "g-member",
+    type: "INCOME",
+    amount: 50,
+    amount_cents: 5000,
+    description: "Fulano da Silva pagou 2 meses (FULANO DA SILVA traz troco); Fulanos da Silveira não",
+    category: "MONTHLY_FEE",
+    status: "ACTIVE",
+    reference_date: 1785542400000,
+    player_id: UID,
+    player_name: "Fulano da Silva",
+    created_by: OTHER,
+    created_by_id: OTHER,
+    created_by_name: "Outro Jogador",
+    created_at: "2026-08-03T12:00:00Z",
+  });
+
+  // post_game_reputation (post-game-reputation.ts:488-493): excluído como
+  // AVALIADOR…
+  state.set(`post_game_reputation/game-1_${UID}_${OTHER}`, {
+    game_id: "game-1",
+    group_id: "g-member",
+    reviewer_id: UID,
+    reviewer_name: "Fulano da Silva",
+    reviewer_photo: "https://cdn.example/fulano.jpg",
+    target_user_id: OTHER,
+    target_user_name: "Outro Jogador",
+    target_user_photo: "https://cdn.example/outro.jpg",
+    punctuality: 5,
+    respect: 4,
+    commitment: 5,
+    overall: 4.67,
+    comment: "Chegou cedo",
+    updated_at: "2026-08-05T22:00:00Z",
+    created_at: "2026-08-05T22:00:00Z",
+  });
+  // …como avaliador sem foto (o escritor grava `?? ""`)…
+  state.set(`post_game_reputation/game-2_${UID}_${OTHER}`, {
+    game_id: "game-2",
+    group_id: null,
+    reviewer_id: UID,
+    reviewer_name: "Fulano da Silva",
+    reviewer_photo: "",
+    target_user_id: OTHER,
+    target_user_name: "Outro Jogador",
+    target_user_photo: "",
+    punctuality: 3,
+    respect: 3,
+    commitment: 3,
+    overall: 3,
+    comment: "",
+    updated_at: "2026-08-12T22:00:00Z",
+    created_at: "2026-08-12T22:00:00Z",
+  });
+  // …e como AVALIADO.
+  state.set(`post_game_reputation/game-1_${OTHER}_${UID}`, {
+    game_id: "game-1",
+    group_id: "g-member",
+    reviewer_id: OTHER,
+    reviewer_name: "Outro Jogador",
+    reviewer_photo: "https://cdn.example/outro.jpg",
+    target_user_id: UID,
+    target_user_name: "Fulano da Silva",
+    target_user_photo: "https://cdn.example/fulano.jpg",
+    punctuality: 4,
+    respect: 5,
+    commitment: 4,
+    overall: 4.33,
+    comment: "Bom de bola",
+    updated_at: "2026-08-05T23:00:00Z",
+    created_at: "2026-08-05T23:00:00Z",
+  });
+  // Avaliação entre terceiros: não pode ser tocada.
+  state.set(`post_game_reputation/game-1_${OTHER}_third-user`, {
+    game_id: "game-1",
+    group_id: "g-member",
+    reviewer_id: OTHER,
+    reviewer_name: "Outro Jogador",
+    reviewer_photo: "https://cdn.example/outro.jpg",
+    target_user_id: "third-user",
+    target_user_name: "Terceiro",
+    target_user_photo: "",
+    punctuality: 2,
+    respect: 3,
+    commitment: 2,
+    overall: 2.33,
+    comment: "Atrasou",
+    updated_at: "2026-08-05T23:30:00Z",
+    created_at: "2026-08-05T23:30:00Z",
+  });
+
   // Período mensal (monthly.ts:1327) + pagadores (monthly.ts:1286-1305).
   state.set("groups/g-member/monthly_finance_periods/2026-08", {
     period_key: "2026-08",
@@ -575,6 +692,101 @@ describe("onUserDeleted — #4113 anonimização com payload real do escritor", 
   );
 
   test(
+    "cashbox description: substitui o player_name original no MESMO update " +
+    "(padrão \"Pagamento de <nome>\" e texto livre); outros campos intactos",
+    async () => {
+      const defaultBefore = state.get("groups/g-member/cashbox/pay-default-desc");
+      const freeBefore = state.get("groups/g-member/cashbox/pay-free-desc");
+
+      await runCleanup();
+
+      expect(state.get("groups/g-member/cashbox/pay-default-desc")).toEqual({
+        ...defaultBefore,
+        player_name: ANON,
+        description: `Pagamento de ${ANON}`,
+      });
+      expect(state.get("groups/g-member/cashbox/pay-free-desc")).toEqual({
+        ...freeBefore,
+        player_name: ANON,
+        description: `${ANON} pagou 2 meses (${ANON} traz troco); Fulanos da Silveira não`,
+      });
+      // Descrição sem o nome não é reescrita.
+      expect(state.get("groups/g-member/cashbox/pay-user")).toMatchObject({
+        player_name: ANON,
+        description: "Mensalidade agosto",
+      });
+      expect(finalCounts()).toMatchObject({
+        cashbox_player_anonymized: 3,
+        cashbox_description_redacted: 2,
+      });
+    },
+  );
+
+  test(
+    "post_game_reputation: anonimiza nome/foto do excluído como avaliador E " +
+    "como avaliado; notas, comentário e o outro lado intactos",
+    async () => {
+      const unrelatedBefore = state.get(`post_game_reputation/game-1_${OTHER}_third-user`);
+      const asReviewerBefore = state.get(`post_game_reputation/game-1_${UID}_${OTHER}`);
+      const asReviewerNoPhotoBefore = state.get(`post_game_reputation/game-2_${UID}_${OTHER}`);
+      const asTargetBefore = state.get(`post_game_reputation/game-1_${OTHER}_${UID}`);
+
+      await runCleanup();
+
+      expect(state.get(`post_game_reputation/game-1_${UID}_${OTHER}`)).toEqual({
+        ...asReviewerBefore,
+        reviewer_name: ANON,
+        reviewer_photo: "",
+      });
+      expect(state.get(`post_game_reputation/game-2_${UID}_${OTHER}`)).toEqual({
+        ...asReviewerNoPhotoBefore,
+        reviewer_name: ANON,
+        reviewer_photo: "",
+      });
+      expect(state.get(`post_game_reputation/game-1_${OTHER}_${UID}`)).toEqual({
+        ...asTargetBefore,
+        target_user_name: ANON,
+        target_user_photo: "",
+      });
+      expect(state.get(`post_game_reputation/game-1_${OTHER}_third-user`)).toEqual(unrelatedBefore);
+      expect(finalCounts()).toMatchObject({
+        post_game_reputation_reviewer_anonymized: 2,
+        post_game_reputation_target_anonymized: 1,
+      });
+      // Escopo COLLECTION por igualdade (índice single-field automático).
+      expect(queryLog).toContainEqual({scope: "post_game_reputation", fields: ["reviewer_id"]});
+      expect(queryLog).toContainEqual({scope: "post_game_reputation", fields: ["target_user_id"]});
+    },
+  );
+
+  test(
+    "post_game_reputation: falha transitória num lado não impede o outro e " +
+    "o retry completa",
+    async () => {
+      // A 1ª leitura do escopo é a do lado avaliador (reviewer_id).
+      failNextGet.set("post_game_reputation", 14); // UNAVAILABLE
+
+      await expect(runCleanup()).rejects.toThrow("PII anonymization incomplete");
+
+      expect(state.get(`post_game_reputation/game-1_${UID}_${OTHER}`))
+        .toMatchObject({reviewer_name: "Fulano da Silva"});
+      expect(state.get(`post_game_reputation/game-1_${OTHER}_${UID}`))
+        .toMatchObject({target_user_name: ANON, target_user_photo: ""});
+
+      mockLoggerInfo.mockClear();
+      await expect(runCleanup()).resolves.toBeUndefined();
+
+      expect(state.get(`post_game_reputation/game-1_${UID}_${OTHER}`))
+        .toMatchObject({reviewer_name: ANON, reviewer_photo: ""});
+      expect(finalCounts()).toMatchObject({
+        post_game_reputation_reviewer_anonymized: 2,
+        // Já anonimizado na 1ª tentativa: não é reescrito.
+        post_game_reputation_target_anonymized: 0,
+      });
+    },
+  );
+
+  test(
     "monthly_finance_periods/{p}/payers/{uid}: anonimiza user_name e anula " +
     "user_photo_url do excluído; outros pagadores e períodos intocados",
     async () => {
@@ -675,10 +887,11 @@ describe("onUserDeleted — #4113 anonimização com payload real do escritor", 
   test("nenhum valor de PII do usuário excluído sobrevive no Firestore", async () => {
     await runCleanup();
 
+    // Substring (não só igualdade): pega o nome dentro de descrições livres.
     const leaked = [...state.entries()].filter(([, data]) =>
       Object.values(data).some((value) =>
-        value === "Fulano da Silva" ||
-        (typeof value === "string" && value.includes("fulano"))));
+        typeof value === "string" &&
+        (value.includes("Fulano da Silva") || value.includes("fulano"))));
     expect(leaked).toEqual([]);
   });
 
@@ -695,8 +908,11 @@ describe("onUserDeleted — #4113 anonimização com payload real do escritor", 
       group_invites_anonymized: 1,
       location_reviews_anonymized: 1,
       cashbox_anonymized: 1,
-      cashbox_player_anonymized: 1,
+      cashbox_player_anonymized: 3,
+      cashbox_description_redacted: 2,
       monthly_payers_anonymized: 1,
+      post_game_reputation_reviewer_anonymized: 2,
+      post_game_reputation_target_anonymized: 1,
     });
     // #1968: contador do bloco morto de activities "alvo" removido.
     expect(finalCounts()).not.toHaveProperty("activities_target_anonymized");
@@ -716,7 +932,10 @@ describe("onUserDeleted — #4113 anonimização com payload real do escritor", 
       user_group_links_deleted: 0,
       group_invites_deleted: 0,
       cashbox_player_anonymized: 0,
+      cashbox_description_redacted: 0,
       monthly_payers_anonymized: 0,
+      post_game_reputation_reviewer_anonymized: 0,
+      post_game_reputation_target_anonymized: 0,
     });
   });
 

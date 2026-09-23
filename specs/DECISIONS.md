@@ -1796,6 +1796,15 @@ seis pontos. Spec: `specs/BUGFIX_2026-09-21_OPEN_ISSUES_BATCH_4096_4115.md`.
    consultar por coleção, sem índice novo. A query por `activities.targetUserId`
    foi removida por não ter escritor.
 9. **#4108, badge:** acima de 99 notificações o badge mostra `99+`.
+10. **#4113, nome em texto livre:** o nome do pagador sai da descrição padrão
+    do caixa no Android (`"Pagamento"`), porque ele já vai em `player_name`.
+    Na limpeza, o `player_name` original é trocado por "Usuário removido" na
+    `description` quando aparece como palavra inteira, no mesmo update que
+    anonimiza `player_name`. Nomes com menos de 3 caracteres, apelidos e grafias
+    diferentes não são tratados, para não corromper texto. Em
+    `post_game_reputation`, nome e foto do avaliador e do avaliado são
+    anonimizados; a foto vira `""`, o mesmo vazio que o escritor grava. O
+    comentário livre da avaliação não é alterado.
 
 **Relacionado:** issues #4096–#4115.
 

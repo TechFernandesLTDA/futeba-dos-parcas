@@ -232,6 +232,11 @@ export const LOCATION_REVIEWS = {
  * `created_by` tem fieldOverride COLLECTION_GROUP (firestore.indexes.json);
  * `player_id` NÃO tem — por isso o cleanup consulta `player_id` em escopo
  * COLLECTION (`path(groupId)`), grupo a grupo, a partir de users/{uid}/groups.
+ *
+ * `description` é texto livre e pode repetir o nome do pagador (o Android
+ * gravava "Pagamento de <nome>" por padrão em RecordPaymentUseCase). O cleanup
+ * substitui o `player_name` original dentro dela no MESMO update que anonimiza
+ * `player_name` — depois dele o nome original não existe mais em lugar algum.
  */
 export const CASHBOX = {
   collectionGroup: "cashbox",
@@ -239,6 +244,7 @@ export const CASHBOX = {
   nameField: "created_by_name",
   playerIdField: "player_id",
   playerNameField: "player_name",
+  descriptionField: "description",
   path: (groupId: string): string =>
     `${GROUPS.collection}/${groupId}/cashbox`,
 } as const;
@@ -259,6 +265,37 @@ export const MONTHLY_PAYERS = {
   path: (groupId: string, periodKey: string, uid: string): string =>
     `${GROUPS.collection}/${groupId}/monthly_finance_periods/${periodKey}` +
     `/payers/${uid}`,
+} as const;
+
+/**
+ * `post_game_reputation/{gameId}_{reviewerId}_{targetUserId}` (coleção raiz)
+ * — reputation/post-game-reputation.ts:488-493 grava os DOIS lados da
+ * avaliação com PII denormalizada das confirmations: quem avaliou
+ * (`reviewer_id`, `reviewer_name`, `reviewer_photo`) e quem foi avaliado
+ * (`target_user_id`, `target_user_name`, `target_user_photo`). Sem foto, o
+ * escritor grava `""` — o cleanup usa o mesmo valor vazio.
+ *
+ * `reviewer_id`/`target_user_id` não têm fieldOverride: o índice single-field
+ * automático de escopo COLLECTION atende a igualdade (sem índice novo).
+ */
+export const POST_GAME_REPUTATION = {
+  collection: "post_game_reputation",
+  /** Valor vazio que o escritor grava quando não há foto. */
+  emptyPhoto: "",
+  sides: [
+    {
+      label: "reviewer",
+      uidField: "reviewer_id",
+      nameField: "reviewer_name",
+      photoField: "reviewer_photo",
+    },
+    {
+      label: "target",
+      uidField: "target_user_id",
+      nameField: "target_user_name",
+      photoField: "target_user_photo",
+    },
+  ],
 } as const;
 
 /**
@@ -434,7 +471,9 @@ export const UID_OWNED_COLLECTIONS: readonly UidOwnedCollection[] = [
     // `created_by`/`created_by_id`/`player_id` sem tocar valores.
     merge: "none",
     cleanup: "anonymize",
-    piiFields: [CASHBOX.nameField, CASHBOX.playerNameField],
+    // `description`: só as ocorrências do player_name original são
+    // substituídas (redactNameInText); o resto do texto é preservado.
+    piiFields: [CASHBOX.nameField, CASHBOX.playerNameField, CASHBOX.descriptionField],
   },
   {
     collection: "groups/{groupId}/monthly_finance_periods/{periodKey}/payers",
@@ -460,6 +499,21 @@ export const UID_OWNED_COLLECTIONS: readonly UidOwnedCollection[] = [
     piiFields: [LOCATION_REVIEWS.nameField, ...LOCATION_REVIEWS.photoFields],
   },
   {
+    collection: POST_GAME_REPUTATION.collection,
+    uidFields: POST_GAME_REPUTATION.sides.map((side) => side.uidField),
+    docIdScheme: "{gameId}_{reviewerId}_{targetUserId}",
+    writer: "reputation/post-game-reputation.ts:488-493",
+    // Não migrado. Um merge precisaria: (1) repoint de reviewer_id e
+    // target_user_id; (2) recriar o doc no ID determinístico do uid canônico,
+    // resolvendo colisão quando o canônico já avaliou/foi avaliado pelo mesmo
+    // par no mesmo jogo; (3) recomputar os agregados reputation_* (somas e
+    // reputation_reviews_count) em users/{target} dos dois uids — mover só os
+    // docs deixaria a média do canônico dessincronizada.
+    merge: "none",
+    cleanup: "anonymize",
+    piiFields: POST_GAME_REPUTATION.sides.flatMap((side) => [side.nameField, side.photoField]),
+  },
+  {
     collection: "games",
     uidFields: ["owner_id", "co_organizers"],
     writer: "games",
@@ -474,6 +528,52 @@ export const UID_OWNED_COLLECTIONS: readonly UidOwnedCollection[] = [
     cleanup: "none",
   },
 ];
+
+/**
+ * Tamanho mínimo (em caracteres, após trim) de um nome para ser substituído
+ * em texto livre. Nomes curtos ("Zé", "Lu") casariam como palavra em textos
+ * sem relação com a pessoa e corromperiam a descrição.
+ */
+export const MIN_REDACTABLE_NAME_LENGTH = 3;
+
+// Caractere de "palavra" Unicode-aware: letra, dígito ou marca combinante.
+// `\b` do JS só entende [A-Za-z0-9_] — trataria "ã"/"é" como fronteira.
+const WORD_CHAR = "[\\p{L}\\p{N}\\p{M}]";
+
+/**
+ * Substitui as ocorrências de `name` como PALAVRA INTEIRA em `text` —
+ * sem diferenciar maiúsculas/minúsculas e com fronteira Unicode-aware
+ * (acentos do português contam como letra: "Ana" não casa dentro de
+ * "Banana" nem de "Anaí"). Espaços internos do nome casam com qualquer
+ * sequência de espaços. Nomes com menos de MIN_REDACTABLE_NAME_LENGTH
+ * caracteres não são substituídos. Texto e nome são comparados em NFC; sem
+ * ocorrência, o texto original volta intacto (mesma referência de string).
+ *
+ * @param {string} text Texto livre (ex.: descrição do lançamento de caixa).
+ * @param {string} name Nome original a remover.
+ * @param {string} replacement Valor que entra no lugar do nome.
+ * @return {string} Texto com o nome substituído.
+ */
+export function redactNameInText(
+  text: string,
+  name: string,
+  replacement: string = ANONYMIZED_USER_NAME,
+): string {
+  const normalizedName = name.normalize("NFC").trim();
+  if (Array.from(normalizedName).length < MIN_REDACTABLE_NAME_LENGTH) return text;
+  const namePattern = normalizedName
+    .split(/\s+/)
+    .map((part) => part.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+    .join("\\s+");
+  const pattern = new RegExp(
+    `(?<!${WORD_CHAR})${namePattern}(?!${WORD_CHAR})`,
+    "giu",
+  );
+  const source = text.normalize("NFC");
+  // Função como substituto: `$&`/`$1` no replacement não são interpretados.
+  const redacted = source.replace(pattern, () => replacement);
+  return redacted === source ? text : redacted;
+}
 
 /**
  * Soma contadores numéricos de dois registros: campos numéricos presentes
