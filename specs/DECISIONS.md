@@ -1789,8 +1789,12 @@ seis pontos. Spec: `specs/BUGFIX_2026-09-21_OPEN_ISSUES_BATCH_4096_4115.md`.
    O merge também transfere `experience_points`, `level` e `milestones_achieved`
    do perfil, com marcador `xp_merged_to` para ser idempotente no retry.
    Membros de grupo são anonimizados, não apagados, para não disparar
-   `onMemberLeft`. As queries collection-group da limpeza têm índice declarado
-   em `firestore.indexes.json`, que precisa estar READY antes do deploy das Functions.
+   `onMemberLeft`. As queries collection-group por uid (`cashbox.created_by`,
+   `reviews.user_id`, `members.user_id`) têm índice declarado em
+   `firestore.indexes.json`, que precisa estar READY antes do deploy das
+   Functions. Anonimizações novas preferem enumerar `users/{uid}/groups` e
+   consultar por coleção, sem índice novo. A query por `activities.targetUserId`
+   foi removida por não ter escritor.
 9. **#4108, badge:** acima de 99 notificações o badge mostra `99+`.
 
 **Relacionado:** issues #4096–#4115.

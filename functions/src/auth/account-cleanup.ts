@@ -14,10 +14,20 @@
  * - groups (owner_id/owner_name; ownerId legado) → anonymize owner name (#1965/#4113)
  * - groups/{id}/members/{uid} (via users/{uid}/groups) → anonymize
  *   user_name + user_photo_url/user_photo (#4113)
+ * - groups/{id}/cashbox (player_id, via users/{uid}/groups) → anonymize
+ *   player_name do jogador pagador
+ * - groups/{id}/monthly_finance_periods/{p}/payers/{uid} (via
+ *   users/{uid}/groups) → anonymize user_name + user_photo_url
  * - group_invites (invited_user_id/invitedUserId) → delete;
  *   (invited_by_id) → anonymize invited_by_name (#4113)
  * - statistics/{uid} → delete pelo ID (escritor não grava user_id) (#4113)
- * - activities (targetUserId) → anonymize targetUserName + targetUserPhoto (#1968)
+ * - activities (user_id) → delete. Não há anonimização do lado "alvo":
+ *   nenhum escritor grava targetUserId/targetUserName em activities (a
+ *   query de collectionGroup do #1968 era código morto e foi removida).
+ *
+ * Grupos que o usuário já DEIXOU não aparecem em users/{uid}/groups, então
+ * o financeiro (player_name/payers) desses grupos não é alcançado — cobri-los
+ * exigiria collectionGroup em cashbox.player_id / payers.user_id com índice.
  *
  * Os nomes de campo vêm de `uid-owned-collections.ts` (lista canônica
  * compartilhada com account-merge.ts, verificada contra os escritores reais).
@@ -41,6 +51,7 @@ import {
   GROUP_MEMBERS,
   GROUPS,
   LOCATION_REVIEWS,
+  MONTHLY_PAYERS,
   STATISTICS,
   USER_GROUP_LINKS,
   USER_STREAKS,
@@ -622,6 +633,7 @@ export const onUserDeleted = runWith({
           activitiesTotal += activitiesSnap.size;
           if (activitiesSnap.size < 500) break;
         }
+        // Sem anonimização "alvo" (#1968): nenhum escritor grava targetUserId em activities; autor = user_id acima.
         if (activitiesTotal > 0) {
           logger.info(
             `[ACCOUNT_CLEANUP] Deletando ${activitiesTotal} ` +
@@ -963,18 +975,179 @@ export const onUserDeleted = runWith({
           }
         }
 
+        // Financeiro do grupo — PII do jogador PAGADOR (LGPD Art. 18 VI):
+        // - groups/{g}/cashbox: `player_name` onde `player_id == uid`
+        //   (cashbox/callable.ts:430-431);
+        // - groups/{g}/monthly_finance_periods/{p}/payers/{uid}: `user_name`
+        //   + `user_photo_url` (cashbox/monthly.ts:1286-1296).
+        // Diferente de `created_by` (collectionGroup acima, com fieldOverride),
+        // `player_id`/payers não têm índice de collectionGroup — um
+        // collectionGroup aqui falharia com FAILED_PRECONDITION. Por isso a
+        // varredura é grupo a grupo, em escopo COLLECTION (índice single-field
+        // automático; sem orderBy explícito, ordena por __name__), a partir do
+        // espelho users/{uid}/groups, DENTRO do laço de membros abaixo e ANTES
+        // de apagar o link: se a etapa falhar, o link fica e o retry
+        // (failurePolicy) reencontra o grupo.
+        // LIMITAÇÃO: grupos que o usuário já DEIXOU não estão em
+        // users/{uid}/groups, então o player_name/payers desses grupos não é
+        // alcançado. Cobri-los exigiria collectionGroup em cashbox.player_id e
+        // payers.user_id com fieldOverride novo (fora deste fix).
+        let cashboxPlayerTotal = 0;
+        let monthlyPayersTotal = 0;
+
+        // Anonimiza `player_name` nas entradas de caixa do grupo em que o
+        // usuário é o pagador. Cursor obrigatório: o filtro (player_id) não
+        // muda na anonimização (#2323). Retorna false se a guarda estourar.
+        const anonymizeCashboxPlayer = async (
+          groupId: string
+        ): Promise<boolean> => {
+          let lastDoc: admin.firestore.QueryDocumentSnapshot | null = null;
+          let iterations = 0;
+          while (true) {
+            if (++iterations > MAX_ANON_ITERATIONS) {
+              logger.error(
+                `[ACCOUNT_CLEANUP] Limite de ${MAX_ANON_ITERATIONS} ` +
+                  "iterações excedido ao anonimizar cashbox (player_id) do " +
+                  `grupo ${groupId} para ${uid} — abortando para evitar loop infinito`
+              );
+              return false;
+            }
+            let query = db
+              .collection(CASHBOX.path(groupId))
+              .where(CASHBOX.playerIdField, "==", uid)
+              .limit(500);
+            if (lastDoc) query = query.startAfter(lastDoc);
+            const snap = await query.get();
+            if (snap.empty) return true;
+            const playerBatch = db.batch();
+            let ops = 0;
+            for (const doc of snap.docs) {
+              const playerName = (doc.data() ?? {})[CASHBOX.playerNameField];
+              // A baixa mensal (monthly.ts:1831) grava player_id sem nome:
+              // não cria o campo. Já anonimizado: não reescreve no retry.
+              if (!playerName || playerName === ANONYMIZED_USER_NAME) continue;
+              playerBatch.update(doc.ref, {
+                [CASHBOX.playerNameField]: ANONYMIZED_USER_NAME,
+              });
+              ops++;
+            }
+            if (ops > 0) {
+              await playerBatch.commit();
+              cashboxPlayerTotal += ops;
+            }
+            lastDoc = snap.docs[snap.docs.length - 1];
+            if (snap.size < 500) return true;
+          }
+        };
+
+        // Anonimiza o doc de pagador do usuário em cada período mensal do
+        // grupo: lista os períodos (sem filtro, paginado por cursor) e lê
+        // payers/{uid} pelo ID — update() só se existir (em doc inexistente
+        // derrubaria o batch). Retorna false se a guarda estourar.
+        const anonymizeMonthlyPayer = async (
+          groupId: string
+        ): Promise<boolean> => {
+          let lastPeriod: admin.firestore.QueryDocumentSnapshot | null = null;
+          let iterations = 0;
+          while (true) {
+            if (++iterations > MAX_ANON_ITERATIONS) {
+              logger.error(
+                `[ACCOUNT_CLEANUP] Limite de ${MAX_ANON_ITERATIONS} ` +
+                  "iterações excedido ao anonimizar payers mensais do " +
+                  `grupo ${groupId} para ${uid} — abortando para evitar loop infinito`
+              );
+              return false;
+            }
+            let query = db
+              .collection(MONTHLY_PAYERS.periodsPath(groupId))
+              .limit(500);
+            if (lastPeriod) query = query.startAfter(lastPeriod);
+            const periodsSnap = await query.get();
+            if (periodsSnap.empty) return true;
+            const payerRefs = periodsSnap.docs.map((period) =>
+              db.doc(MONTHLY_PAYERS.path(groupId, period.id, uid)));
+            const payerSnaps = await Promise.all(
+              payerRefs.map((payerRef) => payerRef.get())
+            );
+            const payersBatch = db.batch();
+            let ops = 0;
+            payerSnaps.forEach((payerSnap, index) => {
+              if (!payerSnap.exists) return;
+              const data = payerSnap.data() ?? {};
+              const alreadyAnonymized =
+                data[MONTHLY_PAYERS.nameField] === ANONYMIZED_USER_NAME &&
+                MONTHLY_PAYERS.photoFields.every(
+                  (field) => (data[field] ?? null) === null
+                );
+              if (alreadyAnonymized) return;
+              payersBatch.update(payerRefs[index], {
+                [MONTHLY_PAYERS.nameField]: ANONYMIZED_USER_NAME,
+                ...Object.fromEntries(
+                  MONTHLY_PAYERS.photoFields.map((field) => [field, null])
+                ),
+              });
+              ops++;
+            });
+            if (ops > 0) {
+              await payersBatch.commit();
+              monthlyPayersTotal += ops;
+            }
+            lastPeriod = periodsSnap.docs[periodsSnap.docs.length - 1];
+            if (periodsSnap.size < 500) return true;
+          }
+        };
+
+        // Isola a falha de uma etapa financeira de um grupo: erro num grupo
+        // não interrompe membros nem os demais grupos. Retorna true só se a
+        // etapa terminou — qualquer falha mantém o link do grupo (único
+        // ponteiro para ele no retry automático ou numa reexecução manual).
+        const runGroupFinanceStep = async (
+          label: string,
+          groupId: string,
+          step: (groupId: string) => Promise<boolean>
+        ): Promise<boolean> => {
+          try {
+            const complete = await step(groupId);
+            if (!complete) anonFailed = true;
+            return complete;
+          } catch (financeError) {
+            // FIX #3897: só falha transitória força retry da limpeza inteira.
+            if (isTransientFirestoreError(financeError)) {
+              anonFailed = true;
+              logger.warn(
+                `[ACCOUNT_CLEANUP] Erro transitório ao anonimizar ${label} ` +
+                `do grupo ${groupId} para ${uid} (retry via failurePolicy ` +
+                "vai tentar de novo):",
+                financeError
+              );
+            } else {
+              logger.error(
+                `[ACCOUNT_CLEANUP] Erro permanente ao anonimizar ${label} ` +
+                `do grupo ${groupId} para ${uid} (não força retry — requer ` +
+                "investigação manual):",
+                financeError
+              );
+            }
+            return false;
+          }
+        };
+
         // #4113: groups/{id}/members/{uid} — fonte canônica de membership
         // (rules autorizam por ela) e onde a PII real de membro mora:
         // `user_name` + `user_photo_url` (web) / `user_photo` (KMP). Nunca
         // era lida. Descobrimos os grupos pelo espelho users/{uid}/groups
         // (gravado por web/KMP em toda entrada de grupo): custa N leituras
-        // diretas por ID, sem exigir índice de collectionGroup em
-        // members.user_id (não existe fieldOverride para esse escopo). O doc
+        // diretas por ID, sem query collectionGroup em members.user_id. O doc
         // de membro é ANONIMIZADO, não apagado, para não disparar
         // onMemberLeft/member_count. O link órfão sob o users/{uid} já
-        // apagado é removido no mesmo batch.
+        // apagado é removido no mesmo batch — só depois de o financeiro do
+        // grupo (bloco acima) ter sido anonimizado por completo.
+        // Cada link gera até 2 ops (update do membro + delete do link): a
+        // página de 200 mantém o batch em <= 400 ops, abaixo do teto de 500.
+        const GROUP_LINK_PAGE_SIZE = 200;
         let groupMembersTotal = 0;
         let groupLinksTotal = 0;
+        let groupLinksKeptTotal = 0;
         try {
           let linkLastDoc:
             admin.firestore.QueryDocumentSnapshot | null = null;
@@ -991,7 +1164,7 @@ export const onUserDeleted = runWith({
             }
             let linkQuery = db
               .collection(USER_GROUP_LINKS.path(uid))
-              .limit(500);
+              .limit(GROUP_LINK_PAGE_SIZE);
             if (linkLastDoc) linkQuery = linkQuery.startAfter(linkLastDoc);
             const linkSnap = await linkQuery.get();
             if (linkSnap.empty) break;
@@ -999,6 +1172,18 @@ export const onUserDeleted = runWith({
             let batchOps = 0;
             for (const link of linkSnap.docs) {
               const groupId = link.id;
+              // Financeiro ANTES de apagar o link: o link é o que permite ao
+              // retry reencontrar o grupo.
+              const cashboxDone = await runGroupFinanceStep(
+                "cashbox (player_id)",
+                groupId,
+                anonymizeCashboxPlayer
+              );
+              const payersDone = await runGroupFinanceStep(
+                "payers mensais",
+                groupId,
+                anonymizeMonthlyPayer
+              );
               const memberRef = db.doc(GROUP_MEMBERS.path(groupId, uid));
               // Leitura direta: update() em doc inexistente derrubaria o
               // batch inteiro, e set({merge}) criaria um membro fantasma.
@@ -1013,20 +1198,26 @@ export const onUserDeleted = runWith({
                 batchOps++;
                 groupMembersTotal++;
               }
-              membersBatch.delete(link.ref);
-              batchOps++;
-              groupLinksTotal++;
+              if (cashboxDone && payersDone) {
+                membersBatch.delete(link.ref);
+                batchOps++;
+                groupLinksTotal++;
+              } else {
+                groupLinksKeptTotal++;
+              }
             }
             if (batchOps > 0) {
               await membersBatch.commit();
             }
             linkLastDoc = linkSnap.docs[linkSnap.docs.length - 1];
-            if (linkSnap.size < 500) break;
+            if (linkSnap.size < GROUP_LINK_PAGE_SIZE) break;
           }
           logger.info(
             `[ACCOUNT_CLEANUP] Anonimizando ${groupMembersTotal} ` +
-              `groups/*/members/${uid} e removendo ${groupLinksTotal} ` +
-              `links users/${uid}/groups`
+              `groups/*/members/${uid}, ${cashboxPlayerTotal} cashbox ` +
+              `(player_name) e ${monthlyPayersTotal} payers mensais; ` +
+              `removendo ${groupLinksTotal} links users/${uid}/groups ` +
+              `(${groupLinksKeptTotal} mantidos para retry)`
           );
         } catch (membersError) {
           // FIX #3897: só falha transitória força retry da limpeza inteira.
@@ -1107,74 +1298,6 @@ export const onUserDeleted = runWith({
           }
         }
 
-        // FIX #1968: activities — anonymize targetUserName + targetUserPhoto (LGPD Art. 18 VI)
-        // Activities where the deleted user is referenced as a target (by other users).
-        // FIX #2323: paginação por cursor (startAfter) + guarda de iterações.
-        // Mesma causa-raiz dos loops acima: o filtro (targetUserId) não muda na
-        // anonimização → query sem cursor reprocessava os mesmos 500 docs em
-        // loop. SEM orderBy explícito (reusa ordenação por __name__).
-        let targetActivitiesTotal = 0;
-        try {
-          let activitiesLastDoc:
-            admin.firestore.QueryDocumentSnapshot | null = null;
-          let activitiesIterations = 0;
-          while (true) {
-            if (++activitiesIterations > MAX_ANON_ITERATIONS) {
-              logger.error(
-                `[ACCOUNT_CLEANUP] Limite de ${MAX_ANON_ITERATIONS} ` +
-                  "iterações excedido ao anonimizar activities target " +
-                  `para ${uid} — abortando para evitar loop infinito`
-              );
-              anonFailed = true;
-              break;
-            }
-            let activitiesQuery = db
-              .collectionGroup("activities")
-              .where("targetUserId", "==", uid)
-              .limit(500);
-            if (activitiesLastDoc) {
-              activitiesQuery = activitiesQuery.startAfter(activitiesLastDoc);
-            }
-            const activitiesSnap = await activitiesQuery.get();
-            if (activitiesSnap.empty) break;
-            const activitiesBatch = db.batch();
-            activitiesSnap.forEach((doc) => {
-              activitiesBatch.update(doc.ref, {
-                targetUserName: "Usuário removido",
-                targetUserPhoto: null,
-              });
-            });
-            await activitiesBatch.commit();
-            targetActivitiesTotal += activitiesSnap.size;
-            activitiesLastDoc =
-              activitiesSnap.docs[activitiesSnap.docs.length - 1];
-            if (activitiesSnap.size < 500) break;
-          }
-          if (targetActivitiesTotal > 0) {
-            logger.info(
-              `[ACCOUNT_CLEANUP] Anonimizando ${targetActivitiesTotal} ` +
-                `activities com target PII do usuário ${uid}`
-            );
-          }
-        } catch (activitiesError) {
-          // FIX #3897: só falha transitória força retry da limpeza inteira.
-          if (isTransientFirestoreError(activitiesError)) {
-            anonFailed = true;
-            logger.warn(
-              "[ACCOUNT_CLEANUP] Erro transitório ao anonimizar " +
-              `activities target para ${uid} (retry via failurePolicy ` +
-              "vai tentar de novo):",
-              activitiesError
-            );
-          } else {
-            logger.error(
-              "[ACCOUNT_CLEANUP] Erro permanente ao anonimizar activities " +
-              `target para ${uid} (não força retry — requer investigação ` +
-              "manual):",
-              activitiesError
-            );
-          }
-        }
         // #4113: observabilidade — contagem por coleção, sempre logada
         // (inclusive zeros). Zero numa coleção em que o usuário tinha
         // atividade é o sinal do "campo errado ⇒ query vazia" (#3877/#4113)
@@ -1204,9 +1327,11 @@ export const onUserDeleted = runWith({
               location_reviews_anonymized: reviewsTotal,
               groups_owner_anonymized: groupsTotal,
               group_members_anonymized: groupMembersTotal,
+              cashbox_player_anonymized: cashboxPlayerTotal,
+              monthly_payers_anonymized: monthlyPayersTotal,
               user_group_links_deleted: groupLinksTotal,
+              user_group_links_kept: groupLinksKeptTotal,
               group_invites_anonymized: groupInvitesAnonymizedTotal,
-              activities_target_anonymized: targetActivitiesTotal,
             },
             anonFailed,
           }

@@ -105,15 +105,17 @@ describe("firestore.indexes.json — contratos operacionais", () => {
     });
   });
 
-  it("habilita collection-group para as queries de anonimização do onUserDeleted (#4113)", () => {
-    // account-cleanup.ts consulta estes campos via collectionGroup(); sem o
-    // índice COLLECTION_GROUP a query falha com FAILED_PRECONDITION e a PII
-    // sobrevive à exclusão da conta. Os índices de COLLECTION são mantidos
-    // para não desligar as queries por coleção que já existiam.
+  it("habilita collection-group para as queries por uid (#4113)", () => {
+    // Sem o índice COLLECTION_GROUP a query falha com FAILED_PRECONDITION:
+    // - cashbox.created_by e reviews.user_id: anonimização do onUserDeleted
+    //   (account-cleanup.ts); a falha deixaria a PII viva após a exclusão.
+    // - members.user_id: findUpcomingOpenGameForUser (gamification-nudges.ts).
+    // Os índices de COLLECTION são mantidos para não desligar as queries por
+    // coleção que já existiam.
     for (const [collectionGroup, fieldPath] of [
       ["cashbox", "created_by"],
       ["reviews", "user_id"],
-      ["activities", "targetUserId"],
+      ["members", "user_id"],
     ]) {
       const override = config.fieldOverrides.find(
         (candidate) =>

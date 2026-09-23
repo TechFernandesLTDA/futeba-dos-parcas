@@ -72,6 +72,23 @@ esta spec registra apenas a abordagem escolhida e os arquivos tocados.
 - Ramo morto `members[]` de objetos removido; `group_invites` incluída.
 - Testes usam o payload real de `useGroups.ts`.
 
+### #4113 (continuação) — índices collection-group e PII de caixa
+- Índices `COLLECTION_GROUP` declarados em `firestore.indexes.json` para
+  `cashbox.created_by` e `reviews.user_id` (anonimização) e `members.user_id`
+  (`findUpcomingOpenGameForUser` em `gamification-nudges.ts`). Os índices de
+  escopo de coleção são mantidos. Sem eles a query falha com
+  `FAILED_PRECONDITION`, tratado como permanente, e a PII sobrevive.
+- Query `collectionGroup("activities").where("targetUserId")` removida: nenhum
+  escritor grava `targetUserId` em activities, então a query nunca casava e
+  dependia de um índice inexistente.
+- `player_name` em `groups/{g}/cashbox` (`player_id == uid`) e `user_name` /
+  `user_photo_url` em `groups/{g}/monthly_finance_periods/{p}/payers/{uid}`
+  passam a ser anonimizados. Os grupos vêm de `users/{uid}/groups`, com queries
+  de escopo de coleção e sem índice novo. Limitação: grupos que o usuário já
+  deixou não aparecem nessa lista.
+- Não verificado: o estado dos índices em produção, porque este ambiente não
+  tem credenciais do Firebase.
+
 ### #4100 — `onGroupDeleted` sem paginação e sem `wall_posts`/`group_polls`
 - Cascata extraída para `functions/src/groups/group-cascade.ts`: leitura por
   cursor (450 por página) e commit incremental, com memória limitada a uma

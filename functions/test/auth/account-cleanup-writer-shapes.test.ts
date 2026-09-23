@@ -14,7 +14,13 @@
  * - group_invites: web/src/pages/groups/InvitePlayersScreen.tsx:229-240;
  * - statistics/{uid}: functions/src/index.ts onGameFinished (SEM `user_id`);
  * - locations/{id}/reviews/{uid}: web LocationDetailScreen.tsx:376-393;
- * - groups/{id}/cashbox/{id}: functions/src/cashbox/callable.ts:434-436.
+ * - groups/{id}/cashbox/{id}: functions/src/cashbox/callable.ts:420-438
+ *   (`created_by`/`created_by_name` de quem lançou; `player_id`/`player_name`
+ *   do pagador) e a baixa mensal cashbox/monthly.ts:1822-1843 (`player_id`
+ *   SEM `player_name`);
+ * - groups/{id}/monthly_finance_periods/{p}: cashbox/monthly.ts:1327 e
+ *   .../payers/{uid}: cashbox/monthly.ts:1286-1305 (`user_id`, `user_name`,
+ *   `user_photo_url`).
  *
  * O Firestore é um fake em memória: as asserções são sobre o ESTADO FINAL,
  * não sobre quais mocks foram chamados.
@@ -23,6 +29,16 @@
 type Data = Record<string, unknown>;
 
 const state = new Map<string, Data>();
+
+/**
+ * Registro das consultas executadas (`scope` = caminho da coleção ou
+ * `collectionGroup:<nome>`) — permite afirmar que o cleanup só usa
+ * collectionGroup nos campos que têm fieldOverride em firestore.indexes.json.
+ */
+const queryLog: Array<{scope: string; fields: string[]}> = [];
+
+/** Injeta erro (código gRPC) na PRÓXIMA leitura de um escopo de consulta. */
+const failNextGet = new Map<string, number>();
 
 const idOf = (path: string): string => path.split("/").pop() ?? "";
 const parentCollectionOf = (path: string): string =>
@@ -63,6 +79,7 @@ function makeSnap(path: string): FakeSnap {
 }
 
 function makeQuery(
+  scope: string,
   matchesPath: (path: string) => boolean,
   filters: Array<{field: string; value: unknown}> = [],
   limitValue?: number,
@@ -71,12 +88,18 @@ function makeQuery(
   return {
     where: (field: string, op: string, value: unknown) => {
       if (op !== "==") throw new Error(`operador não suportado no fake: ${op}`);
-      return makeQuery(matchesPath, [...filters, {field, value}], limitValue, afterPath);
+      return makeQuery(scope, matchesPath, [...filters, {field, value}], limitValue, afterPath);
     },
-    limit: (value: number) => makeQuery(matchesPath, filters, value, afterPath),
+    limit: (value: number) => makeQuery(scope, matchesPath, filters, value, afterPath),
     startAfter: (snap: FakeSnap) =>
-      makeQuery(matchesPath, filters, limitValue, snap.ref.path),
+      makeQuery(scope, matchesPath, filters, limitValue, snap.ref.path),
     get: async () => {
+      queryLog.push({scope, fields: filters.map(({field}) => field)});
+      const failureCode = failNextGet.get(scope);
+      if (failureCode !== undefined) {
+        failNextGet.delete(scope);
+        throw Object.assign(new Error(`fake: falha em ${scope}`), {code: failureCode});
+      }
       // Ordem por path completo em code units (= ordem por __name__ do
       // Firestore real, inclusive em collectionGroup).
       let paths = [...state.keys()]
@@ -122,9 +145,9 @@ function makeBatch() {
 const fakeDb = {
   doc: (path: string) => makeRef(path),
   collection: (path: string) =>
-    makeQuery((docPath) => parentCollectionOf(docPath) === path),
+    makeQuery(path, (docPath) => parentCollectionOf(docPath) === path),
   collectionGroup: (name: string) =>
-    makeQuery((docPath) => {
+    makeQuery(`collectionGroup:${name}`, (docPath) => {
       const parts = docPath.split("/");
       return parts.length >= 2 && parts[parts.length - 2] === name;
     }),
@@ -183,6 +206,8 @@ const runCleanup = (): Promise<void> => onUserDeleted(
  */
 function seedWriterShapes(): void {
   state.clear();
+  queryLog.length = 0;
+  failNextGet.clear();
   state.set(`users/${UID}`, {name: "Fulano da Silva"});
 
   // Grupo criado pelo usuário excluído (useGroups.ts:396-411).
@@ -284,6 +309,122 @@ function seedWriterShapes(): void {
     created_by: UID,
     created_by_name: "Fulano da Silva",
     amount: 30,
+  });
+
+  // Cashbox: pagamento lançado pelo dono (OTHER) em que o excluído é o
+  // jogador pagador — payload de createCashboxEntry (callable.ts:420-438).
+  state.set("groups/g-member/cashbox/pay-user", {
+    group_id: "g-member",
+    type: "INCOME",
+    amount: 25,
+    amount_cents: 2500,
+    description: "Mensalidade agosto",
+    category: "MONTHLY_FEE",
+    status: "ACTIVE",
+    reference_date: 1785542400000,
+    player_id: UID,
+    player_name: "Fulano da Silva",
+    created_by: OTHER,
+    created_by_id: OTHER,
+    created_by_name: "Outro Jogador",
+    created_at: "2026-08-01T12:00:00Z",
+  });
+  // Pagamento de OUTRO jogador no mesmo grupo: não pode ser tocado.
+  state.set("groups/g-member/cashbox/pay-other", {
+    group_id: "g-member",
+    type: "INCOME",
+    amount: 25,
+    amount_cents: 2500,
+    description: "Mensalidade agosto",
+    category: "MONTHLY_FEE",
+    status: "ACTIVE",
+    player_id: OTHER,
+    player_name: "Outro Jogador",
+    created_by: OTHER,
+    created_by_id: OTHER,
+    created_by_name: "Outro Jogador",
+    created_at: "2026-08-01T12:05:00Z",
+  });
+  // Baixa mensal (monthly.ts:1822-1843): `player_id` SEM `player_name`.
+  state.set("groups/g-member/cashbox/monthly_req-1", {
+    group_id: "g-member",
+    type: "INCOME",
+    amount: 25,
+    amount_cents: 2500,
+    description: "Mensalidade 2026-08",
+    category: "MONTHLY_FEE",
+    status: "ACTIVE",
+    request_id: "req-1",
+    player_id: UID,
+    reference_period: "2026-08",
+    monthly_period_key: "2026-08",
+    monthly_payer_id: UID,
+    created_by: OTHER,
+    created_by_id: OTHER,
+    created_by_name: "Outro Jogador",
+    created_at: "2026-08-10T12:00:00Z",
+  });
+
+  // Período mensal (monthly.ts:1327) + pagadores (monthly.ts:1286-1305).
+  state.set("groups/g-member/monthly_finance_periods/2026-08", {
+    period_key: "2026-08",
+    status: "FINALIZED",
+    revision: 1,
+    calculation_hash: "hash-08",
+    total_court_cost_cents: 5000,
+    received_cents: 2500,
+    open_cents: 2500,
+  });
+  state.set(`groups/g-member/monthly_finance_periods/2026-08/payers/${UID}`, {
+    user_id: UID,
+    user_name: "Fulano da Silva",
+    user_photo_url: "https://cdn.example/fulano.jpg",
+    active: true,
+    expected_cents: 2500,
+    paid_cents: 2500,
+    outstanding_cents: 0,
+    status: "PAID",
+    payment_count: 1,
+    period_key: "2026-08",
+    revision: 1,
+    calculation_hash: "hash-08",
+    updated_at: "2026-08-10T12:00:00Z",
+    created_at: "2026-08-01T00:00:00Z",
+  });
+  state.set(`groups/g-member/monthly_finance_periods/2026-08/payers/${OTHER}`, {
+    user_id: OTHER,
+    user_name: "Outro Jogador",
+    user_photo_url: "https://cdn.example/outro.jpg",
+    active: true,
+    expected_cents: 2500,
+    paid_cents: 0,
+    outstanding_cents: 2500,
+    status: "PENDING",
+    payment_count: 0,
+    period_key: "2026-08",
+    revision: 1,
+    calculation_hash: "hash-08",
+    updated_at: "2026-08-01T00:00:00Z",
+    created_at: "2026-08-01T00:00:00Z",
+  });
+  // Período sem cobrança do excluído: não pode ganhar pagador fantasma.
+  state.set("groups/g-member/monthly_finance_periods/2026-09", {
+    period_key: "2026-09",
+    status: "DRAFT",
+    revision: 1,
+    calculation_hash: "hash-09",
+  });
+  state.set(`groups/g-member/monthly_finance_periods/2026-09/payers/${OTHER}`, {
+    user_id: OTHER,
+    user_name: "Outro Jogador",
+    user_photo_url: null,
+    active: true,
+    expected_cents: 5000,
+    paid_cents: 0,
+    outstanding_cents: 5000,
+    status: "PENDING",
+    period_key: "2026-09",
+    revision: 1,
   });
 }
 
@@ -402,6 +543,135 @@ describe("onUserDeleted — #4113 anonimização com payload real do escritor", 
     });
   });
 
+  test(
+    "cashbox (player_id): anonimiza player_name do pagador excluído, não " +
+    "cria o campo na baixa mensal e não toca o pagamento de outro jogador",
+    async () => {
+      const otherEntryBefore = state.get("groups/g-member/cashbox/pay-other");
+      const monthlyEntryBefore = state.get("groups/g-member/cashbox/monthly_req-1");
+
+      await runCleanup();
+
+      expect(state.get("groups/g-member/cashbox/pay-user")).toEqual({
+        group_id: "g-member",
+        type: "INCOME",
+        amount: 25,
+        amount_cents: 2500,
+        description: "Mensalidade agosto",
+        category: "MONTHLY_FEE",
+        status: "ACTIVE",
+        reference_date: 1785542400000,
+        player_id: UID,
+        player_name: ANON,
+        created_by: OTHER,
+        created_by_id: OTHER,
+        created_by_name: "Outro Jogador",
+        created_at: "2026-08-01T12:00:00Z",
+      });
+      expect(state.get("groups/g-member/cashbox/pay-other")).toEqual(otherEntryBefore);
+      expect(state.get("groups/g-member/cashbox/monthly_req-1")).toEqual(monthlyEntryBefore);
+      expect(state.get("groups/g-member/cashbox/monthly_req-1")).not.toHaveProperty("player_name");
+    },
+  );
+
+  test(
+    "monthly_finance_periods/{p}/payers/{uid}: anonimiza user_name e anula " +
+    "user_photo_url do excluído; outros pagadores e períodos intocados",
+    async () => {
+      const periodPath = "groups/g-member/monthly_finance_periods";
+      const otherPayerBefore = state.get(`${periodPath}/2026-08/payers/${OTHER}`);
+      const otherPayerSeptBefore = state.get(`${periodPath}/2026-09/payers/${OTHER}`);
+      const periodBefore = state.get(`${periodPath}/2026-08`);
+
+      await runCleanup();
+
+      expect(state.get(`${periodPath}/2026-08/payers/${UID}`)).toEqual({
+        user_id: UID,
+        user_name: ANON,
+        user_photo_url: null,
+        active: true,
+        expected_cents: 2500,
+        paid_cents: 2500,
+        outstanding_cents: 0,
+        status: "PAID",
+        payment_count: 1,
+        period_key: "2026-08",
+        revision: 1,
+        calculation_hash: "hash-08",
+        updated_at: "2026-08-10T12:00:00Z",
+        created_at: "2026-08-01T00:00:00Z",
+      });
+      expect(state.get(`${periodPath}/2026-08/payers/${OTHER}`)).toEqual(otherPayerBefore);
+      expect(state.get(`${periodPath}/2026-09/payers/${OTHER}`)).toEqual(otherPayerSeptBefore);
+      expect(state.get(`${periodPath}/2026-08`)).toEqual(periodBefore);
+      // Período sem cobrança do excluído: nenhum pagador fantasma criado.
+      expect(state.has(`${periodPath}/2026-09/payers/${UID}`)).toBe(false);
+    },
+  );
+
+  test(
+    "financeiro: falha transitória mantém o link users/{uid}/groups do grupo " +
+    "e o retry (failurePolicy) completa a anonimização",
+    async () => {
+      const payerPath = `groups/g-member/monthly_finance_periods/2026-08/payers/${UID}`;
+      failNextGet.set("groups/g-member/monthly_finance_periods", 14); // UNAVAILABLE
+
+      await expect(runCleanup()).rejects.toThrow("PII anonymization incomplete");
+
+      // O link do grupo com falha sobrevive (é o ponteiro do retry); os
+      // demais grupos seguem o fluxo normal.
+      expect(state.has(`users/${UID}/groups/g-member`)).toBe(true);
+      expect(state.has(`users/${UID}/groups/g-owned`)).toBe(false);
+      expect(state.get(payerPath)).toMatchObject({user_name: "Fulano da Silva"});
+      // Etapas independentes: cashbox e membro do mesmo grupo já anonimizados.
+      expect(state.get("groups/g-member/cashbox/pay-user")).toMatchObject({player_name: ANON});
+      expect(state.get(`groups/g-member/members/${UID}`)).toMatchObject({user_name: ANON});
+      expect(finalCounts()).toMatchObject({
+        user_group_links_deleted: 2,
+        user_group_links_kept: 1,
+      });
+
+      mockLoggerInfo.mockClear();
+      await expect(runCleanup()).resolves.toBeUndefined();
+
+      expect(state.get(payerPath)).toMatchObject({user_name: ANON, user_photo_url: null});
+      expect(state.has(`users/${UID}/groups/g-member`)).toBe(false);
+      expect(finalCounts()).toMatchObject({
+        // player_name já anonimizado na 1ª tentativa: não é reescrito.
+        cashbox_player_anonymized: 0,
+        monthly_payers_anonymized: 1,
+        user_group_links_deleted: 1,
+        user_group_links_kept: 0,
+      });
+    },
+  );
+
+  test(
+    "sem índice novo: collectionGroup só em cashbox.created_by e " +
+    "reviews.user_id (fieldOverrides existentes); nada em activities (#1968)",
+    async () => {
+      await runCleanup();
+
+      const collectionGroupQueries = new Set(queryLog
+        .filter(({scope}) => scope.startsWith("collectionGroup:"))
+        .map(({scope, fields}) =>
+          `${scope.slice("collectionGroup:".length)}.${fields.join("+")}`));
+      expect([...collectionGroupQueries].sort()).toEqual([
+        "cashbox.created_by",
+        "reviews.user_id",
+      ]);
+      // Financeiro do pagador: escopo COLLECTION, grupo a grupo.
+      expect(queryLog).toContainEqual({
+        scope: "groups/g-member/cashbox",
+        fields: ["player_id"],
+      });
+      expect(queryLog).toContainEqual({
+        scope: "groups/g-member/monthly_finance_periods",
+        fields: [],
+      });
+    },
+  );
+
   test("nenhum valor de PII do usuário excluído sobrevive no Firestore", async () => {
     await runCleanup();
 
@@ -420,11 +690,16 @@ describe("onUserDeleted — #4113 anonimização com payload real do escritor", 
       groups_owner_anonymized: 1,
       group_members_anonymized: 2,
       user_group_links_deleted: 3,
+      user_group_links_kept: 0,
       group_invites_deleted: 2,
       group_invites_anonymized: 1,
       location_reviews_anonymized: 1,
       cashbox_anonymized: 1,
+      cashbox_player_anonymized: 1,
+      monthly_payers_anonymized: 1,
     });
+    // #1968: contador do bloco morto de activities "alvo" removido.
+    expect(finalCounts()).not.toHaveProperty("activities_target_anonymized");
   });
 
   test("reexecução (retry via failurePolicy) é idempotente e não relança", async () => {
@@ -440,6 +715,8 @@ describe("onUserDeleted — #4113 anonimização com payload real do escritor", 
       group_members_anonymized: 0,
       user_group_links_deleted: 0,
       group_invites_deleted: 0,
+      cashbox_player_anonymized: 0,
+      monthly_payers_anonymized: 0,
     });
   });
 

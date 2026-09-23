@@ -2885,8 +2885,8 @@
       ]
     },
     {
-      "collectionGroup": "activities",
-      "fieldPath": "targetUserId",
+      "collectionGroup": "members",
+      "fieldPath": "user_id",
       "ttl": false,
       "indexes": [
         { "order": "ASCENDING", "queryScope": "COLLECTION" },

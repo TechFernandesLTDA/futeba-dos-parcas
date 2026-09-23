@@ -224,12 +224,41 @@ export const LOCATION_REVIEWS = {
 
 /**
  * `groups/{id}/cashbox/{entryId}` — cashbox/callable.ts:434-436
- * (`created_by`, `created_by_name`).
+ * (`created_by`, `created_by_name`: quem LANÇOU a entrada) e
+ * cashbox/callable.ts:430-431 (`player_id`, `player_name`: o jogador que
+ * PAGOU, opcional). A baixa mensal (cashbox/monthly.ts:1831) grava só
+ * `player_id`, sem nome.
+ *
+ * `created_by` tem fieldOverride COLLECTION_GROUP (firestore.indexes.json);
+ * `player_id` NÃO tem — por isso o cleanup consulta `player_id` em escopo
+ * COLLECTION (`path(groupId)`), grupo a grupo, a partir de users/{uid}/groups.
  */
 export const CASHBOX = {
   collectionGroup: "cashbox",
   uidField: "created_by",
   nameField: "created_by_name",
+  playerIdField: "player_id",
+  playerNameField: "player_name",
+  path: (groupId: string): string =>
+    `${GROUPS.collection}/${groupId}/cashbox`,
+} as const;
+
+/**
+ * `groups/{groupId}/monthly_finance_periods/{periodKey}/payers/{uid}` —
+ * cashbox/monthly.ts:1286-1296 (`user_id`, `user_name`, `user_photo_url`;
+ * ID do doc = uid do pagador). Sem índice de collectionGroup: o cleanup lista
+ * os períodos de cada grupo (escopo COLLECTION, sem filtro) e lê o pagador
+ * pelo ID.
+ */
+export const MONTHLY_PAYERS = {
+  uidField: "user_id",
+  nameField: "user_name",
+  photoFields: ["user_photo_url"] as readonly string[],
+  periodsPath: (groupId: string): string =>
+    `${GROUPS.collection}/${groupId}/monthly_finance_periods`,
+  path: (groupId: string, periodKey: string, uid: string): string =>
+    `${GROUPS.collection}/${groupId}/monthly_finance_periods/${periodKey}` +
+    `/payers/${uid}`,
 } as const;
 
 /**
@@ -398,11 +427,28 @@ export const UID_OWNED_COLLECTIONS: readonly UidOwnedCollection[] = [
   },
   {
     collection: "groups/{groupId}/cashbox",
-    uidFields: [CASHBOX.uidField],
-    writer: "cashbox/callable.ts:434-436",
+    uidFields: [CASHBOX.uidField, CASHBOX.playerIdField],
+    writer: "cashbox/callable.ts:430-436, cashbox/monthly.ts:1831",
+    // Não migrado: a entrada é lançamento contábil do grupo (auditoria do
+    // caixa). Se o merge passar a tratá-la, o correto é repoint de
+    // `created_by`/`created_by_id`/`player_id` sem tocar valores.
     merge: "none",
     cleanup: "anonymize",
-    piiFields: [CASHBOX.nameField],
+    piiFields: [CASHBOX.nameField, CASHBOX.playerNameField],
+  },
+  {
+    collection: "groups/{groupId}/monthly_finance_periods/{periodKey}/payers",
+    uidFields: [MONTHLY_PAYERS.uidField],
+    docIdScheme: "{uid}",
+    writer: "cashbox/monthly.ts:1286-1296",
+    // Não migrado: o doc é a cobrança calculada para aquele uid no período
+    // (expected/paid/outstanding + calculation_hash). Mover para o uid
+    // canônico exigiria somar cobranças e reconciliar juntos os settlements
+    // (`payer_id`, monthly.ts) e as entradas de caixa da baixa
+    // (`monthly_payer_id`/`player_id`) — fora do escopo do merge atual.
+    merge: "none",
+    cleanup: "anonymize",
+    piiFields: [MONTHLY_PAYERS.nameField, ...MONTHLY_PAYERS.photoFields],
   },
   {
     collection: "locations/{locationId}/reviews",
