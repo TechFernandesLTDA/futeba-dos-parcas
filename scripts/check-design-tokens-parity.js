@@ -36,10 +36,27 @@ const PLATFORMS = [
   },
   {
     name: 'composeApp',
+    // `file` continua apontando para Color.kt porque checkKotlinRadiusAndSpacing
+    // deriva Shape.kt a partir dele.
     file: path.join(
       ROOT,
       'composeApp', 'src', 'commonMain', 'kotlin', 'com', 'futebadosparcas', 'ui', 'theme', 'Color.kt'
     ),
+    // #4098: o composeApp NÃO tem paleta estática de gamificação — `GamificationColors`
+    // (e as outras 4 paletas mortas) foram removidos de Color.kt por terem 0
+    // consumidores e não serem theme-aware. O ColorScheme do módulo é gerado em
+    // runtime pelo DynamicThemeEngine a partir das seeds de shared/ThemeConfig.kt
+    // (validadas em checkKotlinSeedParity — brand.primary inclusive). Mesma
+    // filosofia do #3934: validar o que RENDERIZA, não vals mortos.
+    staticPalette: false,
+    // Os únicos hexes de gamificação que o composeApp de fato renderiza são as
+    // medalhas do pódio (PostGameReportScreen, #4096). checkGamificationParity
+    // valida esses vals contra gamification.gold/silver/bronze.
+    gamificationFile: path.join(
+      ROOT,
+      'composeApp', 'src', 'commonMain', 'kotlin', 'com', 'futebadosparcas', 'ui', 'core', 'PostGameReportScreen.kt'
+    ),
+    gamificationVals: { MedalGold: 'gold', MedalSilver: 'silver', MedalBronze: 'bronze' },
   },
 ];
 
@@ -302,13 +319,25 @@ function checkGamificationParity(tokens, errors) {
   };
 
   for (const platform of PLATFORMS.filter((platform) => platform.name !== 'web')) {
-    const content = readRequiredFile(platform.file, `${platform.name} gamification tokens`, errors);
+    // #4098: plataforma sem paleta estática — valida só os vals que renderizam
+    // (ex.: medalhas do pódio no composeApp), mapeados em `gamificationVals`.
+    const file = platform.gamificationFile || platform.file;
+    const expected = platform.gamificationVals
+      ? Object.fromEntries(
+          Object.entries(platform.gamificationVals).map(([valName, tokenKey]) => [
+            valName,
+            tokens.gamification[tokenKey],
+          ])
+        )
+      : kotlinGamification;
+
+    const content = readRequiredFile(file, `${platform.name} gamification tokens`, errors);
     if (!content) continue;
     checkKotlinValHexes(
       content,
-      kotlinGamification,
+      expected,
       `${platform.name} gamification token`,
-      platform.file,
+      file,
       errors
     );
   }
@@ -872,6 +901,12 @@ function main() {
       errors.push(`[${platform.name}] arquivo de tema ausente: ${platform.file}`);
       continue;
     }
+    // #4098: plataformas sem paleta estática (composeApp) não carregam os hexes
+    // canônicos em Color.kt — brand.primary é validado nas seeds
+    // (checkKotlinSeedParity) e gamificação nos vals que renderizam
+    // (checkGamificationParity via `gamificationVals`).
+    if (platform.staticPalette === false) continue;
+
     const content = fs.readFileSync(platform.file, 'utf8').toLowerCase();
 
     for (const [tokenName, hexRaw] of Object.entries(canonical)) {
