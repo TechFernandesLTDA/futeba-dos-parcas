@@ -162,7 +162,11 @@ export async function hardDeleteGroupCascade(
     "members",
     async (docs) => {
       for (const memberDoc of docs) {
-        await enqueue((b) => b.delete(memberDoc.ref));
+        // ORDEM IMPORTA: a referência espelhada em users/{uid}/groups/{id} é
+        // enfileirada ANTES do doc do membro. Se um flush cair entre as duas
+        // ops e o batch seguinte falhar, o retry ainda encontra o membro e
+        // reapaga a referência (delete é idempotente). Na ordem inversa, o
+        // membro já teria sido commitado e a referência ficaria órfã.
         const uid = memberDoc.data()?.user_id;
         if (typeof uid === "string" && uid.length > 0) {
           const userGroupRef = firestore
@@ -173,6 +177,7 @@ export async function hardDeleteGroupCascade(
           await enqueue((b) => b.delete(userGroupRef));
           userGroupRefs++;
         }
+        await enqueue((b) => b.delete(memberDoc.ref));
       }
     }
   );

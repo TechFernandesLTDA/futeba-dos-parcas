@@ -360,6 +360,19 @@ describe("Index — Funcoes do index.ts", () => {
       expect(mockBatchCommit).toHaveBeenCalledTimes(1);
     });
 
+    it("enfileira users/{uid}/groups/{id} antes do doc do membro (retry nao deixa referencia orfa)", async () => {
+      programCascadeReads({
+        members: [[{ ref: { id: "m1" }, data: () => ({ user_id: "user1" }) }]],
+      });
+
+      await onGroupDeleted(makeEvent());
+
+      const deletedIds = mockBatchDelete.mock.calls.map(([ref]) => ref.id);
+      // A referencia espelhada (doc "group1" em users/user1/groups) vem antes de m1
+      expect(deletedIds.indexOf("group1")).toBeGreaterThanOrEqual(0);
+      expect(deletedIds.indexOf("group1")).toBeLessThan(deletedIds.indexOf("m1"));
+    });
+
     it("deleta cashbox entries e join_requests", async () => {
       programCascadeReads({
         cashbox: [[{ ref: { id: "tx1" } }]],
