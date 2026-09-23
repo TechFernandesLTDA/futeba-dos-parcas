@@ -105,6 +105,39 @@ describe("firestore.indexes.json — contratos operacionais", () => {
     });
   });
 
+  it("habilita collection-group para as queries de anonimização do onUserDeleted (#4113)", () => {
+    // account-cleanup.ts consulta estes campos via collectionGroup(); sem o
+    // índice COLLECTION_GROUP a query falha com FAILED_PRECONDITION e a PII
+    // sobrevive à exclusão da conta. Os índices de COLLECTION são mantidos
+    // para não desligar as queries por coleção que já existiam.
+    for (const [collectionGroup, fieldPath] of [
+      ["cashbox", "created_by"],
+      ["reviews", "user_id"],
+      ["activities", "targetUserId"],
+    ]) {
+      const override = config.fieldOverrides.find(
+        (candidate) =>
+          candidate.collectionGroup === collectionGroup &&
+          candidate.fieldPath === fieldPath,
+      );
+      expect(override, `${collectionGroup}.${fieldPath}`).toBeDefined();
+      const indexes = (override?.indexes ?? []) as Array<{
+        queryScope?: string;
+        order?: string;
+        arrayConfig?: string;
+      }>;
+      const scopes = indexes.map(
+        (index) => `${index.queryScope}:${index.order ?? index.arrayConfig}`,
+      );
+      expect(scopes).toEqual(expect.arrayContaining([
+        "COLLECTION:ASCENDING",
+        "COLLECTION:DESCENDING",
+        "COLLECTION:CONTAINS",
+        "COLLECTION_GROUP:ASCENDING",
+      ]));
+    }
+  });
+
   it("não contém índices compostos duplicados", () => {
     const signatures = config.indexes.map(indexSignature);
     expect(new Set(signatures).size).toBe(signatures.length);

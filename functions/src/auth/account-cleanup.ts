@@ -10,10 +10,17 @@
  * - sessions/{uid} → LGPD session cleanup
  * - verification_failures (uid=uid) → LGPD cleanup
  * - cashbox transactions (created_by) → anonymize created_by_name (#1961)
- * - location reviews (user_id) → anonymize user_name (#1963)
- * - groups (ownerId + members[].userName) → anonymize denormalized PII (#1965)
+ * - location reviews (user_id) → anonymize user_name + user_photo(_url) (#1963)
+ * - groups (owner_id/owner_name; ownerId legado) → anonymize owner name (#1965/#4113)
+ * - groups/{id}/members/{uid} (via users/{uid}/groups) → anonymize
+ *   user_name + user_photo_url/user_photo (#4113)
+ * - group_invites (invited_user_id/invitedUserId) → delete;
+ *   (invited_by_id) → anonymize invited_by_name (#4113)
+ * - statistics/{uid} → delete pelo ID (escritor não grava user_id) (#4113)
  * - activities (targetUserId) → anonymize targetUserName + targetUserPhoto (#1968)
  *
+ * Os nomes de campo vêm de `uid-owned-collections.ts` (lista canônica
+ * compartilhada com account-merge.ts, verificada contra os escritores reais).
  * Usuários sem CPF verificado (sem users_private) são no-op silencioso.
  *
  * NOTA: usa firebase-functions/v1 pois v2 ainda não suporta
@@ -26,6 +33,18 @@ import type {EventContext} from "firebase-functions/v1";
 import * as admin from "firebase-admin";
 import {logger} from "firebase-functions/v2";
 import {Storage} from "@google-cloud/storage";
+import {
+  ANONYMIZED_USER_NAME,
+  AUDIT_LOGS,
+  CASHBOX,
+  GROUP_INVITES,
+  GROUP_MEMBERS,
+  GROUPS,
+  LOCATION_REVIEWS,
+  STATISTICS,
+  USER_GROUP_LINKS,
+  USER_STREAKS,
+} from "./uid-owned-collections";
 
 // Lazy initialization para evitar erro de initializeApp
 const getDb = () => admin.firestore();
@@ -185,6 +204,43 @@ export const onUserDeleted = runWith({
           if (batchOps >= 450) await commitBatch();
         };
 
+        // #4113: deleção paginada por cursor (startAfter) + guarda de
+        // iterações. A terminação não depende do dedup/auto-commit do
+        // queueDelete (anti-pattern apontado no #4082). Usado pelas coleções
+        // incluídas nesta correção.
+        const deleteAllByField = async (
+          collectionName: string,
+          field: string
+        ): Promise<number> => {
+          let total = 0;
+          let lastDoc: admin.firestore.QueryDocumentSnapshot | null = null;
+          let iterations = 0;
+          while (true) {
+            if (++iterations > MAX_ANON_ITERATIONS) {
+              logger.error(
+                `[ACCOUNT_CLEANUP] Limite de ${MAX_ANON_ITERATIONS} ` +
+                `iterações excedido ao paginar ${collectionName} (${field}) ` +
+                `para ${uid} — abortando para evitar loop infinito`
+              );
+              break;
+            }
+            let query = db
+              .collection(collectionName)
+              .where(field, "==", uid)
+              .limit(500);
+            if (lastDoc) query = query.startAfter(lastDoc);
+            const snap = await query.get();
+            if (snap.empty) break;
+            for (const doc of snap.docs) {
+              await queueDelete(doc.ref);
+              total++;
+            }
+            lastDoc = snap.docs[snap.docs.length - 1];
+            if (snap.size < 500) break;
+          }
+          return total;
+        };
+
         // FIX #935: Tokens FCM ficam no campo `fcm_token` de users/{uid}.
         // Ao deletar o documento abaixo, o campo é removido implicitamente,
         // impedindo envio de notificações ao dispositivo do ex-usuário.
@@ -271,8 +327,8 @@ export const onUserDeleted = runWith({
         let auditLogsTotal = 0;
         while (true) {
           const auditLogsSnap = await db
-            .collection("audit_logs")
-            .where("target_user_id", "==", uid)
+            .collection(AUDIT_LOGS.collection)
+            .where(AUDIT_LOGS.targetField, "==", uid)
             .limit(500)
             .get();
           if (auditLogsSnap.empty) break;
@@ -294,8 +350,8 @@ export const onUserDeleted = runWith({
         let auditActorLogsTotal = 0;
         while (true) {
           const auditActorLogsSnap = await db
-            .collection("audit_logs")
-            .where("actor_user_id", "==", uid)
+            .collection(AUDIT_LOGS.collection)
+            .where(AUDIT_LOGS.actorField, "==", uid)
             .limit(500)
             .get();
           if (auditActorLogsSnap.empty) break;
@@ -309,6 +365,17 @@ export const onUserDeleted = runWith({
           logger.info(
             `[ACCOUNT_CLEANUP] Deletando ${auditActorLogsTotal} ` +
             `audit_logs por actor_user_id do usuário ${uid}`
+          );
+        }
+
+        // 4b'. #4113: demais campos de uid gravados pelos escritores de
+        // audit_logs (performed_by, manager_uid, source_user_id) — mesma
+        // política de apagamento do #2081 para logs em que o usuário é ator.
+        let auditOtherLogsTotal = 0;
+        for (const field of AUDIT_LOGS.otherUidFields) {
+          auditOtherLogsTotal += await deleteAllByField(
+            AUDIT_LOGS.collection,
+            field
           );
         }
 
@@ -490,12 +557,18 @@ export const onUserDeleted = runWith({
           );
         }
 
-        // 11. FIX #786: statistics (user_id == uid) — loop to handle >500
+        // 11. FIX #786 + #4113: statistics/{uid}. O escritor das Functions
+        // (index.ts onGameFinished) grava o doc pelo ID = uid SEM campo
+        // user_id — a query por user_id só alcançava docs do escritor
+        // Android legado e o doc canônico sobrevivia à exclusão. Apaga pelo
+        // ID e mantém a query como complemento legado.
         let statisticsTotal = 0;
+        await queueDelete(db.doc(`${STATISTICS.collection}/${STATISTICS.docId(uid)}`));
+        statisticsTotal++;
         while (true) {
           const statisticsSnap = await db
-            .collection("statistics")
-            .where("user_id", "==", uid)
+            .collection(STATISTICS.collection)
+            .where(STATISTICS.legacyUidField, "==", uid)
             .limit(500)
             .get();
           if (statisticsSnap.empty) break;
@@ -581,8 +654,35 @@ export const onUserDeleted = runWith({
         // 15. FIX #1841: user_streaks/{uid} — LGPD Art. 18 VI
         // Dados de streak (current_streak, longest_streak, last_game_date)
         // devem ser apagados junto com os demais dados pessoais.
-        await queueDelete(db.doc(`user_streaks/${uid}`));
-        logger.info(`[ACCOUNT_CLEANUP] Deletando user_streaks/${uid}`);
+        await queueDelete(
+          db.doc(`${USER_STREAKS.collection}/${USER_STREAKS.docId(uid)}`)
+        );
+        // #4113: os leitores localizam o streak por user_id — docs legados
+        // com ID ≠ uid sobreviviam. O doc {uid} já enfileirado é deduplicado.
+        const userStreaksTotal = 1 + await deleteAllByField(
+          USER_STREAKS.collection,
+          USER_STREAKS.uidField
+        );
+        logger.info(
+          `[ACCOUNT_CLEANUP] Deletando user_streaks do usuário ${uid}`
+        );
+
+        // 15b. #4113: group_invites endereçados ao usuário (invited_user_id;
+        // invitedUserId legado). Carregam invited_user_name/photo — o convite
+        // é do próprio usuário excluído, então é apagado como os demais
+        // registros dele (confirmations, notifications). Paginação por cursor via
+        // deleteAllByField.
+        let groupInvitesDeletedTotal = 0;
+        for (const invitedField of GROUP_INVITES.invitedUserFields) {
+          groupInvitesDeletedTotal += await deleteAllByField(
+            GROUP_INVITES.collection,
+            invitedField
+          );
+        }
+        logger.info(
+          `[ACCOUNT_CLEANUP] Deletando ${groupInvitesDeletedTotal} ` +
+          `group_invites do usuário ${uid}`
+        );
 
         // 16. FIX #4049: game_photos / game_videos (uploaded_by == uid) — LGPD.
         // Coleções top-level chaveadas por uploaded_by (PII denormalizado:
@@ -651,8 +751,8 @@ export const onUserDeleted = runWith({
         // explícito (espelha o loop de `groups` abaixo): reusa a ordenação
         // implícita por __name__ do single-field index já existente — não exige
         // índice composto novo (que não existe em firestore.indexes.json).
+        let cashboxTotal = 0;
         try {
-          let cashboxTotal = 0;
           let cashboxLastDoc:
             admin.firestore.QueryDocumentSnapshot | null = null;
           let cashboxIterations = 0;
@@ -667,8 +767,8 @@ export const onUserDeleted = runWith({
               break;
             }
             let cashboxQuery = db
-              .collectionGroup("cashbox")
-              .where("created_by", "==", uid)
+              .collectionGroup(CASHBOX.collectionGroup)
+              .where(CASHBOX.uidField, "==", uid)
               .limit(500);
             if (cashboxLastDoc) {
               cashboxQuery = cashboxQuery.startAfter(cashboxLastDoc);
@@ -678,7 +778,7 @@ export const onUserDeleted = runWith({
             const cashboxBatch = db.batch();
             cashboxSnap.forEach((doc) => {
               cashboxBatch.update(doc.ref, {
-                created_by_name: "Usuário removido",
+                [CASHBOX.nameField]: ANONYMIZED_USER_NAME,
               });
             });
             await cashboxBatch.commit();
@@ -719,8 +819,8 @@ export const onUserDeleted = runWith({
         // Mesma causa-raiz do loop de cashbox: o filtro (user_id) não muda na
         // anonimização → query sem cursor reprocessava os mesmos 500 docs em
         // loop. SEM orderBy explícito (reusa ordenação por __name__).
+        let reviewsTotal = 0;
         try {
-          let reviewsTotal = 0;
           let reviewsLastDoc:
             admin.firestore.QueryDocumentSnapshot | null = null;
           let reviewsIterations = 0;
@@ -735,8 +835,8 @@ export const onUserDeleted = runWith({
               break;
             }
             let reviewsQuery = db
-              .collectionGroup("reviews")
-              .where("user_id", "==", uid)
+              .collectionGroup(LOCATION_REVIEWS.collectionGroup)
+              .where(LOCATION_REVIEWS.uidField, "==", uid)
               .limit(500);
             if (reviewsLastDoc) {
               reviewsQuery = reviewsQuery.startAfter(reviewsLastDoc);
@@ -745,8 +845,13 @@ export const onUserDeleted = runWith({
             if (reviewsSnap.empty) break;
             const reviewsBatch = db.batch();
             reviewsSnap.forEach((doc) => {
+              // #4113: o web grava `user_photo`, o KMP `user_photo_url` —
+              // a foto também é PII e ficava para trás.
               reviewsBatch.update(doc.ref, {
-                user_name: "Usuário removido",
+                [LOCATION_REVIEWS.nameField]: ANONYMIZED_USER_NAME,
+                ...Object.fromEntries(
+                  LOCATION_REVIEWS.photoFields.map((field) => [field, null])
+                ),
               });
             });
             await reviewsBatch.commit();
@@ -781,75 +886,65 @@ export const onUserDeleted = runWith({
           }
         }
 
-        // FIX #1965: groups — anonymize ownerName + members[].userName (LGPD Art. 18 VI)
-        // Owner name and member names are denormalized and retain PII after deletion.
+        // FIX #1965 + #4113: groups — anonymize owner name (LGPD Art. 18 VI)
+        // #4113: o bloco original lia `ownerId`/`ownerName` e `members[]` de
+        // objetos — formas que NENHUM escritor grava (useGroups.ts:402-406 e
+        // GroupRepository.kt:1014 gravam `owner_id`/`owner_name` e `members`
+        // como array de STRINGS). Era código morto: o trigger reportava
+        // sucesso e o nome do dono ficava gravado. Agora consulta pelo campo
+        // real (query filtrada em vez de varrer a coleção inteira) e mantém
+        // a forma camel só como defesa legada. O array `members` não carrega
+        // PII e não é tocado; a PII de membro mora na subcoleção (bloco
+        // seguinte).
+        let groupsTotal = 0;
         try {
-          let groupsTotal = 0;
-          let lastDoc: admin.firestore.DocumentSnapshot | null = null;
-          let groupsIterations = 0;
-          while (true) {
-            if (++groupsIterations > MAX_ANON_ITERATIONS) {
-              logger.error(
-                `[ACCOUNT_CLEANUP] Limite de ${MAX_ANON_ITERATIONS} ` +
-                  "iterações excedido ao anonimizar grupos " +
-                  `para ${uid} — abortando para evitar loop infinito`
-              );
-              anonFailed = true;
-              break;
-            }
-            let query = db.collection("groups").limit(500);
-            if (lastDoc) query = query.startAfter(lastDoc);
-            const groupsSnap = await query.get();
-            if (groupsSnap.empty) break;
-            const groupsBatch = db.batch();
-            let batchOps = 0;
-            for (const doc of groupsSnap.docs) {
-              const data = doc.data();
-              let modified = false;
-              const updates: Record<string, unknown> = {};
-
-              if (data.ownerId === uid && data.ownerName) {
-                updates.ownerName = "Usuário removido";
-                modified = true;
-              }
-
-              if (data.members && Array.isArray(data.members)) {
-                const updatedMembers = data.members.map(
-                  (m: Record<string, unknown>) =>
-                    m.userId === uid ?
-                      {...m, userName: "Usuário removido"} :
-                      m
+          for (const ownerField of GROUPS.ownerIdFields) {
+            const ownerNameField = GROUPS.ownerNameByIdField[ownerField];
+            let lastDoc: admin.firestore.DocumentSnapshot | null = null;
+            let groupsIterations = 0;
+            while (true) {
+              if (++groupsIterations > MAX_ANON_ITERATIONS) {
+                logger.error(
+                  `[ACCOUNT_CLEANUP] Limite de ${MAX_ANON_ITERATIONS} ` +
+                    `iterações excedido ao anonimizar grupos (${ownerField}) ` +
+                    `para ${uid} — abortando para evitar loop infinito`
                 );
-                // Only update if something actually changed
-                const hasChange = data.members.some(
-                  (m: Record<string, unknown>, i: number) =>
-                    m.userId === uid &&
-                    m.userName !== updatedMembers[i].userName
-                );
-                if (hasChange) {
-                  updates.members = updatedMembers;
-                  modified = true;
-                }
+                anonFailed = true;
+                break;
               }
-
-              if (modified) {
-                groupsBatch.update(doc.ref, updates);
+              let query = db
+                .collection(GROUPS.collection)
+                .where(ownerField, "==", uid)
+                .limit(500);
+              if (lastDoc) query = query.startAfter(lastDoc);
+              const groupsSnap = await query.get();
+              if (groupsSnap.empty) break;
+              const groupsBatch = db.batch();
+              let batchOps = 0;
+              for (const doc of groupsSnap.docs) {
+                const data = doc.data() ?? {};
+                if (data[ownerField] !== uid) continue;
+                if (
+                  !data[ownerNameField] ||
+                  data[ownerNameField] === ANONYMIZED_USER_NAME
+                ) continue;
+                groupsBatch.update(doc.ref, {
+                  [ownerNameField]: ANONYMIZED_USER_NAME,
+                });
                 batchOps++;
                 groupsTotal++;
               }
+              if (batchOps > 0) {
+                await groupsBatch.commit();
+              }
+              lastDoc = groupsSnap.docs[groupsSnap.docs.length - 1];
+              if (groupsSnap.size < 500) break;
             }
-            if (batchOps > 0) {
-              await groupsBatch.commit();
-            }
-            lastDoc = groupsSnap.docs[groupsSnap.docs.length - 1];
-            if (groupsSnap.size < 500) break;
           }
-          if (groupsTotal > 0) {
-            logger.info(
-              `[ACCOUNT_CLEANUP] Anonimizando ${groupsTotal} ` +
-                `grupos com PII do usuário ${uid}`
-            );
-          }
+          logger.info(
+            `[ACCOUNT_CLEANUP] Anonimizando ${groupsTotal} ` +
+              `grupos com owner_name do usuário ${uid}`
+          );
         } catch (groupsError) {
           // FIX #3897: só falha transitória força retry da limpeza inteira.
           if (isTransientFirestoreError(groupsError)) {
@@ -868,14 +963,158 @@ export const onUserDeleted = runWith({
           }
         }
 
+        // #4113: groups/{id}/members/{uid} — fonte canônica de membership
+        // (rules autorizam por ela) e onde a PII real de membro mora:
+        // `user_name` + `user_photo_url` (web) / `user_photo` (KMP). Nunca
+        // era lida. Descobrimos os grupos pelo espelho users/{uid}/groups
+        // (gravado por web/KMP em toda entrada de grupo): custa N leituras
+        // diretas por ID, sem exigir índice de collectionGroup em
+        // members.user_id (não existe fieldOverride para esse escopo). O doc
+        // de membro é ANONIMIZADO, não apagado, para não disparar
+        // onMemberLeft/member_count. O link órfão sob o users/{uid} já
+        // apagado é removido no mesmo batch.
+        let groupMembersTotal = 0;
+        let groupLinksTotal = 0;
+        try {
+          let linkLastDoc:
+            admin.firestore.QueryDocumentSnapshot | null = null;
+          let linkIterations = 0;
+          while (true) {
+            if (++linkIterations > MAX_ANON_ITERATIONS) {
+              logger.error(
+                `[ACCOUNT_CLEANUP] Limite de ${MAX_ANON_ITERATIONS} ` +
+                  "iterações excedido ao anonimizar membros de grupo " +
+                  `para ${uid} — abortando para evitar loop infinito`
+              );
+              anonFailed = true;
+              break;
+            }
+            let linkQuery = db
+              .collection(USER_GROUP_LINKS.path(uid))
+              .limit(500);
+            if (linkLastDoc) linkQuery = linkQuery.startAfter(linkLastDoc);
+            const linkSnap = await linkQuery.get();
+            if (linkSnap.empty) break;
+            const membersBatch = db.batch();
+            let batchOps = 0;
+            for (const link of linkSnap.docs) {
+              const groupId = link.id;
+              const memberRef = db.doc(GROUP_MEMBERS.path(groupId, uid));
+              // Leitura direta: update() em doc inexistente derrubaria o
+              // batch inteiro, e set({merge}) criaria um membro fantasma.
+              const memberSnap = await memberRef.get();
+              if (memberSnap.exists) {
+                membersBatch.update(memberRef, {
+                  [GROUP_MEMBERS.nameField]: ANONYMIZED_USER_NAME,
+                  ...Object.fromEntries(
+                    GROUP_MEMBERS.photoFields.map((field) => [field, null])
+                  ),
+                });
+                batchOps++;
+                groupMembersTotal++;
+              }
+              membersBatch.delete(link.ref);
+              batchOps++;
+              groupLinksTotal++;
+            }
+            if (batchOps > 0) {
+              await membersBatch.commit();
+            }
+            linkLastDoc = linkSnap.docs[linkSnap.docs.length - 1];
+            if (linkSnap.size < 500) break;
+          }
+          logger.info(
+            `[ACCOUNT_CLEANUP] Anonimizando ${groupMembersTotal} ` +
+              `groups/*/members/${uid} e removendo ${groupLinksTotal} ` +
+              `links users/${uid}/groups`
+          );
+        } catch (membersError) {
+          // FIX #3897: só falha transitória força retry da limpeza inteira.
+          if (isTransientFirestoreError(membersError)) {
+            anonFailed = true;
+            logger.warn(
+              "[ACCOUNT_CLEANUP] Erro transitório ao anonimizar membros de " +
+              `grupo para ${uid} (retry via failurePolicy vai tentar de novo):`,
+              membersError
+            );
+          } else {
+            logger.error(
+              "[ACCOUNT_CLEANUP] Erro permanente ao anonimizar membros de " +
+              `grupo para ${uid} (não força retry — requer investigação manual):`,
+              membersError
+            );
+          }
+        }
+
+        // #4113: group_invites enviados PELO usuário (invited_by_id). O doc
+        // pertence ao fluxo do convidado — só o nome de quem convidou
+        // (invited_by_name) é anonimizado. Cursor obrigatório: o filtro
+        // (invited_by_id) não muda na anonimização (#2323).
+        let groupInvitesAnonymizedTotal = 0;
+        try {
+          let inviterLastDoc:
+            admin.firestore.QueryDocumentSnapshot | null = null;
+          let inviterIterations = 0;
+          while (true) {
+            if (++inviterIterations > MAX_ANON_ITERATIONS) {
+              logger.error(
+                `[ACCOUNT_CLEANUP] Limite de ${MAX_ANON_ITERATIONS} ` +
+                  "iterações excedido ao anonimizar group_invites " +
+                  `(invited_by_id) para ${uid} — abortando para evitar loop infinito`
+              );
+              anonFailed = true;
+              break;
+            }
+            let inviterQuery = db
+              .collection(GROUP_INVITES.collection)
+              .where(GROUP_INVITES.inviterField, "==", uid)
+              .limit(500);
+            if (inviterLastDoc) {
+              inviterQuery = inviterQuery.startAfter(inviterLastDoc);
+            }
+            const inviterSnap = await inviterQuery.get();
+            if (inviterSnap.empty) break;
+            const inviterBatch = db.batch();
+            inviterSnap.forEach((doc) => {
+              inviterBatch.update(doc.ref, {
+                [GROUP_INVITES.inviterNameField]: ANONYMIZED_USER_NAME,
+              });
+            });
+            await inviterBatch.commit();
+            groupInvitesAnonymizedTotal += inviterSnap.size;
+            inviterLastDoc = inviterSnap.docs[inviterSnap.docs.length - 1];
+            if (inviterSnap.size < 500) break;
+          }
+          logger.info(
+            `[ACCOUNT_CLEANUP] Anonimizando ${groupInvitesAnonymizedTotal} ` +
+              `group_invites enviados pelo usuário ${uid}`
+          );
+        } catch (inviterError) {
+          // FIX #3897: só falha transitória força retry da limpeza inteira.
+          if (isTransientFirestoreError(inviterError)) {
+            anonFailed = true;
+            logger.warn(
+              "[ACCOUNT_CLEANUP] Erro transitório ao anonimizar group_invites " +
+              `para ${uid} (retry via failurePolicy vai tentar de novo):`,
+              inviterError
+            );
+          } else {
+            logger.error(
+              "[ACCOUNT_CLEANUP] Erro permanente ao anonimizar group_invites " +
+              `para ${uid} (não força retry — requer investigação manual):`,
+              inviterError
+            );
+          }
+        }
+
         // FIX #1968: activities — anonymize targetUserName + targetUserPhoto (LGPD Art. 18 VI)
         // Activities where the deleted user is referenced as a target (by other users).
         // FIX #2323: paginação por cursor (startAfter) + guarda de iterações.
         // Mesma causa-raiz dos loops acima: o filtro (targetUserId) não muda na
         // anonimização → query sem cursor reprocessava os mesmos 500 docs em
         // loop. SEM orderBy explícito (reusa ordenação por __name__).
+        let targetActivitiesTotal = 0;
         try {
-          let targetActivitiesTotal = 0;
           let activitiesLastDoc:
             admin.firestore.QueryDocumentSnapshot | null = null;
           let activitiesIterations = 0;
@@ -936,8 +1175,41 @@ export const onUserDeleted = runWith({
             );
           }
         }
+        // #4113: observabilidade — contagem por coleção, sempre logada
+        // (inclusive zeros). Zero numa coleção em que o usuário tinha
+        // atividade é o sinal do "campo errado ⇒ query vazia" (#3877/#4113)
+        // e deve virar alerta, não silêncio.
         logger.info(
-          `[ACCOUNT_CLEANUP] Cleanup completo para usuário ${uid}`
+          `[ACCOUNT_CLEANUP] Cleanup completo para usuário ${uid}`,
+          {
+            uid,
+            counts: {
+              audit_logs_target: auditLogsTotal,
+              audit_logs_actor: auditActorLogsTotal,
+              audit_logs_other: auditOtherLogsTotal,
+              rate_limits: rateLimitsTotal,
+              verification_failures: verifyFailTotal,
+              notifications: notificationsTotal,
+              confirmations: confirmationsTotal,
+              mvp_votes: mvpVotesTotal,
+              xp_logs: xpLogsTotal,
+              statistics: statisticsTotal,
+              season_participation: seasonPartTotal,
+              activities: activitiesTotal,
+              user_badges: userBadgesTotal,
+              user_streaks: userStreaksTotal,
+              group_invites_deleted: groupInvitesDeletedTotal,
+              game_media: gameMediaTotal,
+              cashbox_anonymized: cashboxTotal,
+              location_reviews_anonymized: reviewsTotal,
+              groups_owner_anonymized: groupsTotal,
+              group_members_anonymized: groupMembersTotal,
+              user_group_links_deleted: groupLinksTotal,
+              group_invites_anonymized: groupInvitesAnonymizedTotal,
+              activities_target_anonymized: targetActivitiesTotal,
+            },
+            anonFailed,
+          }
         );
 
         // 20. Limpar arquivos órfãos do Storage (profile photos + thumbnails)

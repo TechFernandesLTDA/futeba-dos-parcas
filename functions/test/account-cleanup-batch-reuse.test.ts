@@ -391,42 +391,61 @@ describe("onUserDeleted — regressão #2323 loop infinito anonimização", () =
   test(
     "aborta quando a paginação de grupos não avança e atinge MAX_ANON_ITERATIONS",
     async () => {
+      // #4113: payload REAL do escritor (web/src/hooks/useGroups.ts:396-411):
+      // owner_id/owner_name snake e `members` como array de STRINGS de uid.
+      // Grupo de outro dono em que o usuário excluído é só membro — o doc
+      // raiz não tem PII dele e não pode ser reescrito.
       const repeatingGroupDocs = Array.from({length: 500}, (_, i) => ({
         id: `group_${i}`,
-        ref: {id: `group_${i}`},
+        ref: {id: `group_${i}`, path: `groups/group_${i}`},
         data: () => ({
-          ownerId: "other-user",
-          members: [],
+          owner_id: "other-user",
+          owner_name: "Outro Dono",
+          members: ["other-user", "user-to-delete"],
         }),
       }));
 
-      let collectionGetCalls = 0;
-      mockCollectionGet.mockImplementation(() => {
-        collectionGetCalls++;
-        // FIX #4049: game_photos/game_videos acrescentam 2 consultas extras às
-        // de limpeza de docs. Todas as consultas de coleção DOC (não-grupo)
-        // retornam vazio; só a partir daí o loop de `groups` recebe os docs
-        // repetidos para validar o abort por MAX_ANON_ITERATIONS.
-        if (collectionGetCalls <= 16) {
-          return Promise.resolve({
-            docs: [],
-            empty: true,
-            size: 0,
-          });
-        }
-
-        return Promise.resolve({
-          docs: repeatingGroupDocs,
-          empty: false,
-          size: repeatingGroupDocs.length,
-        });
+      // Roteia por NOME de coleção (não por contagem de chamadas): novas
+      // coleções no cleanup não deslocam o cenário. Só `groups` repete a
+      // mesma página cheia para validar o abort por MAX_ANON_ITERATIONS.
+      const groupsStartAfter = jest.fn();
+      mockCollection.mockImplementation((name: string) => {
+        const query: any = {
+          where: jest.fn(() => query),
+          limit: jest.fn(() => query),
+          startAfter: jest.fn(() => {
+            if (name === "groups") groupsStartAfter();
+            return query;
+          }),
+          get: jest.fn(() => Promise.resolve(name === "groups" ? {
+            docs: repeatingGroupDocs,
+            empty: false,
+            size: repeatingGroupDocs.length,
+          } : {docs: [], empty: true, size: 0})),
+        };
+        return query;
       });
 
-      await expect(
-        onUserDeleted(makeUserRecord(), makeEventContext())
-      ).rejects.toThrow("PII anonymization incomplete");
+      try {
+        await expect(
+          onUserDeleted(makeUserRecord(), makeEventContext())
+        ).rejects.toThrow("PII anonymization incomplete");
 
-      expect(mockStartAfter).toHaveBeenCalled();
+        expect(groupsStartAfter).toHaveBeenCalled();
+        // Nenhum doc de grupo alheio foi reescrito (o ramo morto de
+        // `members[]` objetos não existe mais).
+        const groupUpdates = batchInstances.flatMap((b) =>
+          b.update.mock.calls.filter((call: any[]) =>
+            String(call[0]?.path ?? "").startsWith("groups/")));
+        expect(groupUpdates).toHaveLength(0);
+      } finally {
+        mockCollection.mockReturnValue({
+          where: mockWhere,
+          limit: mockLimit,
+          startAfter: mockStartAfter,
+          get: mockCollectionGet,
+        });
+      }
     },
     10000
   );
