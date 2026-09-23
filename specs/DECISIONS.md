@@ -1782,6 +1782,16 @@ seis pontos. Spec: `specs/BUGFIX_2026-09-21_OPEN_ISSUES_BATCH_4096_4115.md`.
    em `NSUserDefaults` com as mesmas chaves do DataStore Android. Default de
    instalação nova continua `SYSTEM`. Cores-semente customizadas e Material You
    ficam fora do iOS.
+8. **#4112/#4113, coleções por uid:** a lista canônica de coleções e campos
+   que identificam um uid vive em `functions/src/auth/uid-owned-collections.ts`
+   e é usada por `account-merge.ts` e `account-cleanup.ts`. Toda coleção nova
+   com dado de usuário entra nessa lista, com estratégia de merge e de limpeza.
+   O merge também transfere `experience_points`, `level` e `milestones_achieved`
+   do perfil, com marcador `xp_merged_to` para ser idempotente no retry.
+   Membros de grupo são anonimizados, não apagados, para não disparar
+   `onMemberLeft`. As queries collection-group da limpeza têm índice declarado
+   em `firestore.indexes.json`, que precisa estar READY antes do deploy das Functions.
+9. **#4108, badge:** acima de 99 notificações o badge mostra `99+`.
 
 **Relacionado:** issues #4096–#4115.
 

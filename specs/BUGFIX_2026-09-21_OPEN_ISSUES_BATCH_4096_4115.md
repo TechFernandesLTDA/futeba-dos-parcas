@@ -1,10 +1,10 @@
 # BUGFIX: Lote de issues abertas — auditoria Firebase, a11y, design system e paridade iOS (#4096–#4115)
 
-> **Status:** `APPROVED` → `IN_PROGRESS`
+> **Status:** `FIXED`
 > **Severidade:** `HIGH` (6 issues high, 4 medium, 4 chore)
 > **Autor:** Claude Code (a pedido do owner do repo)
 > **Data:** 2026-09-21
-> **PR:** branch `claude/open-issues-3093zf`
+> **PR:** #4118 (substitui #4117)
 
 ---
 
@@ -120,11 +120,16 @@ esta spec registra apenas a abordagem escolhida e os arquivos tocados.
 
 | Camada | Comando | Resultado |
 |--------|---------|-----------|
-| Functions | `npm run build && npm run lint && npx jest --no-coverage` | ver PR |
-| Web | `npx tsc --noEmit && npm run lint && npx vitest run` | ver PR |
-| Android | `./gradlew :app:compileDebugKotlin` + `testDebugUnitTest` | ver PR |
-| composeApp | `./gradlew :composeApp:compileDebugKotlinAndroid` | ver PR (iOS não compila em Linux) |
-| Tokens | `node scripts/check-design-tokens-parity.js` | ver PR |
+| Functions | `npm run build && npm run lint && npx jest --no-coverage` | build e lint ok; 1875 testes passam. A única suíte vermelha (`group-wall-media-ffmpeg`) exige binário FFmpeg vendorizado ausente no sandbox |
+| Web | `npx tsc --noEmit && npm run lint && npx vitest run` nas suítes tocadas | ok |
+| Android | `:app:compileDebugKotlin`, `:app:detekt`, `DivisionColorsTest` + `GamificationTextColorTest` | ok (157 testes). Teste instrumentado do badge compilado, não executado (sem emulador) |
+| composeApp | `:composeApp:compileDebugKotlinAndroid`, `compileNonIosMainKotlinMetadata`, `detekt` | ok. Targets iOS não compilam em Linux |
+| Tokens | `node scripts/check-design-tokens-parity.js` + `node --test scripts/check-design-tokens-parity.test.js` | ok |
+| Índices | `firestore-rules-tests` `indexes-contract.test.ts` | ok |
+| Contratos CI | `node --test scripts/ci/*.test.js` | ok (54) |
+
+**Deploy:** publicar `firestore.indexes.json` e aguardar READY antes de
+`firebase deploy --only functions`; depois `firestore.rules`.
 
 ---
 
