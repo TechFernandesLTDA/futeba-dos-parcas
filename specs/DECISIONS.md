@@ -1752,4 +1752,37 @@ o mesmo valor — o teste de tokens falha se duas curvas forem iguais.
 **Relacionado:** issue #4115, `shared/design-tokens.json#motion.easing`,
 `scripts/check-design-tokens-parity.js`, `DESIGN_TOKENS.md`.
 
+### [2026-09-21] Lote de issues abertas: decisões de produto e arquitetura (#4097, #4098, #4100, #4107, #4109, #4111)
+
+**Contexto:** as issues do lote #4096–#4115 pediam escolha explícita em
+seis pontos. Spec: `specs/BUGFIX_2026-09-21_OPEN_ISSUES_BATCH_4096_4115.md`.
+
+**Decisões:**
+1. **#4111, default de `subscription_status`:** valor ausente ou inválido vale
+   `ACTIVE` nos quatro leitores (`resolveSubscriptionStatusOrDefault`). É o
+   caminho fail-closed: a quadra entra na cobrança ou cai em
+   `inconsistentLocations`, que agora gera alerta CRITICAL. O resolver comercial
+   ainda emite `subscriptionStatusInvalid`. O script de backfill mantém `TRIAL`
+   por ser conservador, mas sinaliza revisão e inicia `trial_started_at`.
+2. **#4111, envelhecimento de TRIAL:** `TRIAL_MAX_DAYS = 30`. TRIAL vencido
+   emite `trialExpired` como pendência e **não** muda de status sozinho.
+3. **#4107, contrato vencido:** o cron transiciona para `CANCELLED` uma única
+   vez, com ledger `BILLING_AUTOMATION_CONTRACT_EXPIRED`. Pagamento aprovado
+   não reativa contrato vencido. A cascata de `venue_accounts.billing_expires_at`
+   para as quadras vinculadas ficou fora: nenhuma data de cobrança é
+   denormalizada hoje, e cascatear só esta criaria nova assimetria.
+4. **#4100, cascatas de grupo:** hard delete (`groups/group-cascade.ts`) e soft
+   delete (`soft-delete-helper.ts`) continuam separados, porque têm semânticas
+   por coleção diferentes. O hard delete também remove `group_poll_votes`.
+5. **#4109, fonte no iOS:** iOS usa a fonte do sistema (SF, HIG). Poppins vive
+   no source set `nonIosMain` (Android + wasmJs) e não entra no framework iOS.
+6. **#4098:** paletas mortas do `composeApp/ui/theme/Color.kt` removidas.
+   As medalhas do pós-jogo vivem como constantes privadas da tela.
+7. **#4097, tema no iOS:** Claro/Escuro/Sistema e alto contraste, persistidos
+   em `NSUserDefaults` com as mesmas chaves do DataStore Android. Default de
+   instalação nova continua `SYSTEM`. Cores-semente customizadas e Material You
+   ficam fora do iOS.
+
+**Relacionado:** issues #4096–#4115.
+
 <!-- Adicione novas decisões acima desta linha -->
