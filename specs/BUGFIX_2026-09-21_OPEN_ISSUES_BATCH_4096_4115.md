@@ -89,6 +89,34 @@ esta spec registra apenas a abordagem escolhida e os arquivos tocados.
 - Não verificado: o estado dos índices em produção, porque este ambiente não
   tem credenciais do Firebase.
 
+### #4113 (continuação 2) — PII em avaliações pós-jogo e na descrição do caixa
+**Requisito:** ao excluir a conta, nome e foto do usuário não podem sobreviver
+em `post_game_reputation` nem na descrição livre de lançamentos do caixa.
+
+**Escritores confirmados:**
+- `functions/src/reputation/post-game-reputation.ts:488-493` grava
+  `reviewer_id`, `reviewer_name`, `reviewer_photo`, `target_user_id`,
+  `target_user_name` e `target_user_photo` na coleção raiz `post_game_reputation`.
+- `app/.../domain/usecase/cashbox/RecordPaymentUseCase.kt:83` usa a descrição
+  padrão `"Pagamento de ${playerName}"`, gravada por `createCashboxEntry` em
+  `groups/{g}/cashbox/{id}.description`.
+
+**Design:**
+- `post_game_reputation`: anonimiza `reviewer_name`/`reviewer_photo` onde
+  `reviewer_id == uid` e `target_user_name`/`target_user_photo` onde
+  `target_user_id == uid`. Queries de escopo de coleção paginadas, sem índice
+  novo. Notas e agregados não mudam.
+- Descrição do caixa, nas duas pontas:
+  1. Escrita: a descrição padrão do Android deixa de conter o nome (o nome já
+     vai em `player_name`).
+  2. Limpeza: no mesmo update que anonimiza `player_name`, as ocorrências do
+     `player_name` original como palavra inteira na `description` viram
+     "Usuário removido". Nomes com menos de 3 caracteres não são substituídos,
+     para não corromper texto.
+- Entradas novas em `uid-owned-collections.ts`.
+
+**Testes:** payload real dos escritores em `account-cleanup-writer-shapes.test.ts`.
+
 ### #4100 — `onGroupDeleted` sem paginação e sem `wall_posts`/`group_polls`
 - Cascata extraída para `functions/src/groups/group-cascade.ts`: leitura por
   cursor (450 por página) e commit incremental, com memória limitada a uma
