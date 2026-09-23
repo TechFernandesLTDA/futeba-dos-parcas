@@ -18,7 +18,7 @@ esta spec registra apenas a abordagem escolhida e os arquivos tocados.
 |------|--------|---------------------|
 | Functions — cobrança de quadras | #4107, #4111 | `functions/src/locations/location-management.ts`, `venue-account-shared.ts`, `scripts/backfill-venue-commercial-data.ts`, `monitoring/alerting.ts` |
 | Functions — contas | #4112, #4113 | `functions/src/auth/account-merge.ts`, `account-cleanup.ts`, novo `uid-owned-collections.ts` |
-| Functions — cascata de grupo | #4100 | `functions/src/index.ts` (`onGroupDeleted`) |
+| Functions — cascata de grupo | #4100 | `functions/src/index.ts` (`onGroupDeleted`), novo `functions/src/groups/group-cascade.ts` |
 | Web | #4114, #4110 (leitura), #4113 (tipo) | `web/src/theme/index.ts`, `contexts/ThemeContext.tsx`, `pages/locations/manageLocationFilters.ts`, `types/group.ts` |
 | Android | #4108, #4099 | `ui/components/design/AppTopBars.kt`, `ui/theme/DivisionColors.kt`, `LocalContrastLevel` |
 | Design system (3 plataformas) | #4115 | `shared/design-tokens.json`, `AppMotion.kt`, `Motion.kt`, `web/src/theme/motion.ts`, `scripts/check-design-tokens-parity.js` |
@@ -73,8 +73,13 @@ esta spec registra apenas a abordagem escolhida e os arquivos tocados.
 - Testes usam o payload real de `useGroups.ts`.
 
 ### #4100 — `onGroupDeleted` sem paginação e sem `wall_posts`/`group_polls`
-- Leituras via `collectAllMatching()` (mesmo padrão de `onGameDeleted`).
-- `wall_posts` (subcoleção) e `group_polls` (root) entram na cascata hard.
+- Cascata extraída para `functions/src/groups/group-cascade.ts`: leitura por
+  cursor (450 por página) e commit incremental, com memória limitada a uma
+  página e um batch.
+- `wall_posts` (subcoleção), `group_polls` e `group_poll_votes` (root) entram
+  na cascata hard.
+- `users/{uid}/groups/{id}` é apagado antes do doc do membro, para um retry
+  após falha parcial nunca deixar a referência órfã.
 
 ### #4114 — `color-scheme` fica `light` em `body`/`#root` no dark/OLED
 - `color-scheme` sai da regra incondicional e passa a ser declarado por tema
@@ -82,8 +87,10 @@ esta spec registra apenas a abordagem escolhida e os arquivos tocados.
 - Landing sempre clara preservada (segue o atributo).
 
 ### #4108 — badge de notificações recorta "9+" em fontScale ≥ 1,287
-- `NotificationIconWithBadge` usa `BadgedBox`/`Badge` do Material 3
-  (dimensiona ao conteúdo, `coerceAtMost(99)`).
+- `NotificationIconWithBadge` usa o `Badge` do Material 3 num `Box` que não
+  recorta, alinhado ao `IconButton`. `BadgedBox` foi descartado porque o
+  `IconButton` recorta o conteúdo em 40dp e cortava o badge de dois dígitos.
+- Rótulo `99+` acima do teto; contagem anunciada via `stateDescription`.
 - `FutebaTopBar.kt` (deprecated, 0 call sites) removido.
 
 ### #4099 — `divisionTextColor` não é contrast-level-aware
