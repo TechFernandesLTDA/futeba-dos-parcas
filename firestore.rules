@@ -1695,6 +1695,16 @@ service cloud.firestore {
            'status', 'goals', 'assists', 'saves', 'goalkeeper',
            'was_present', 'team', 'updated_at',
          ]))
+        // FIX #4144: remocao de membro pelo admin do grupo marca CANCELLED
+        // (em vez de delete) para disparar onGameVacancy e promover a
+        // waitlist. Restrito: so status, e jogo ainda ativo. O admin do
+        // grupo do jogo (confirmations nao tem group_id — vem do game).
+        (get(/databases/$(database)/documents/games/$(resource.data.game_id)).data.get('group_id', null) != null &&
+         isGroupAdmin(get(/databases/$(database)/documents/games/$(resource.data.game_id)).data.group_id) &&
+         resource.data.status == 'CONFIRMED' &&
+         request.resource.data.status == 'CANCELLED' &&
+         get(/databases/$(database)/documents/games/$(resource.data.game_id)).data.status in ['SCHEDULED', 'CONFIRMED'] &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updated_at'])) ||
         // SECFIX #2608: branch de isConfirmedPlayer para flags is_mvp/
         // is_best_gk/is_worst_player removido — group-league.ts e
         // weekly-ranking.ts consumiam essas flags sem revalidacao contra
