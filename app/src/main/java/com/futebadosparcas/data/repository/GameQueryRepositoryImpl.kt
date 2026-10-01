@@ -7,6 +7,7 @@ import com.futebadosparcas.data.local.model.toEntity
 import com.futebadosparcas.data.model.Game as AndroidGame
 import com.futebadosparcas.data.model.GameConfirmation as AndroidGameConfirmation
 import com.futebadosparcas.data.model.GameEvent as AndroidGameEvent
+import com.futebadosparcas.domain.model.FieldBusySlot
 import com.futebadosparcas.domain.model.GameStatus
 import com.futebadosparcas.data.model.Team as AndroidTeam
 import com.futebadosparcas.domain.model.User
@@ -32,6 +33,7 @@ import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.Query
+import com.google.firebase.functions.FirebaseFunctions
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.channels.awaitClose
@@ -58,7 +60,8 @@ class GameQueryRepositoryImpl constructor(
     private val gameDao: GameDao,
     private val groupRepository: GroupRepository,
     private val confirmationRepository: GameConfirmationRepository,
-    private val permissionManager: com.futebadosparcas.domain.permission.PermissionManager
+    private val permissionManager: com.futebadosparcas.domain.permission.PermissionManager,
+    private val functions: com.google.firebase.functions.FirebaseFunctions
 ) : KmpGameQueryRepository {
 
     private val gamesCollection = firestore.collection("games")
@@ -1335,8 +1338,10 @@ class GameQueryRepositoryImpl constructor(
                                 if (gameIds.isEmpty()) {
                                     emptyList()
                                 } else {
-                                    // Busca paralela em chunks de 10 (limite do whereIn)
-                                    BatchOperationHelper.parallelWhereIn(
+                                    // FIX #4126: leitura unitária em paralelo —
+                                    // whereIn(documentId) não é constraint provável
+                                    // para as rules de LIST de games.
+                                    BatchOperationHelper.parallelGetByIds(
                                         collection = gamesCollection,
                                         ids = gameIds,
                                         mapper = { doc ->
@@ -1518,6 +1523,55 @@ class GameQueryRepositoryImpl constructor(
         }
     }
 
+    override suspend fun getFieldBusySlots(
+        fieldId: String,
+        startDate: String,
+        endDate: String,
+        excludeGameId: String?
+    ): Result<List<FieldBusySlot>> {
+        return try {
+            if (fieldId.isEmpty()) {
+                return Result.success(emptyList())
+            }
+
+            val payload = buildMap<String, Any?> {
+                put("fieldId", fieldId)
+                put("startDate", startDate)
+                put("endDate", endDate)
+                excludeGameId?.let { put("excludeGameId", it) }
+            }
+
+            val result = functions.getHttpsCallable("getFieldAvailability")
+                .call(payload)
+                .await()
+
+            @Suppress("UNCHECKED_CAST")
+            val data = result.data as? Map<String, Any?>
+                ?: error("Resposta inválida da callable getFieldAvailability")
+
+            if (data["truncated"] == true) {
+                AppLogger.w(TAG) { "getFieldAvailability truncado para $fieldId" }
+            }
+
+            @Suppress("UNCHECKED_CAST")
+            val rawSlots = data["slots"] as? List<Map<String, Any?>> ?: emptyList()
+            val slots = rawSlots.mapNotNull { slot ->
+                val date = slot["date"] as? String
+                val startMinutes = (slot["startMinutes"] as? Number)?.toInt()
+                val endMinutes = (slot["endMinutes"] as? Number)?.toInt()
+                if (date != null && startMinutes != null && endMinutes != null) {
+                    FieldBusySlot(date, startMinutes, endMinutes)
+                } else {
+                    null
+                }
+            }
+            Result.success(slots)
+        } catch (e: Exception) {
+            AppLogger.e(TAG, "Erro ao buscar disponibilidade de quadra", e)
+            Result.failure(e)
+        }
+    }
+
     override suspend fun checkTimeConflict(
         fieldId: String,
         date: String,
@@ -1530,48 +1584,55 @@ class GameQueryRepositoryImpl constructor(
                 return Result.success(emptyList())
             }
 
-            val gamesResult = getGamesByFieldAndDate(fieldId, date)
-            if (gamesResult.isFailure) {
-                return Result.failure(gamesResult.exceptionOrNull() ?: Exception("Erro ao buscar jogos"))
+            // FIX #4127: callable getFieldAvailability com janela D-1..D —
+            // jogo que vira a meia-noite do dia anterior (ex: 23:00-01:00)
+            // precisa entrar no cálculo. Slots são sanitizados (sem
+            // metadados do jogo privado).
+            val previousDay = java.time.LocalDate.parse(date)
+                .minusDays(1)
+                .format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE)
+            val slotsResult = getFieldBusySlots(
+                fieldId = fieldId,
+                startDate = previousDay,
+                endDate = date,
+                excludeGameId = excludeGameId
+            )
+            if (slotsResult.isFailure) {
+                // Critério #4127: falha da callable NÃO pode ser engolida —
+                // caller decide bloquear/avisar.
+                return Result.failure(
+                    slotsResult.exceptionOrNull() ?: Exception("Erro ao verificar disponibilidade")
+                )
             }
+            val busySlots = slotsResult.getOrNull() ?: emptyList()
 
-            val existingGames = (gamesResult.getOrNull() ?: emptyList())
-                .filter { it.id != excludeGameId }
-                .filter {
-                    it.status in setOf(
-                        GameStatus.SCHEDULED.name,
-                        GameStatus.CONFIRMED.name,
-                        GameStatus.LIVE.name
-                    )
-                }
-
-            val conflicts = mutableListOf<TimeConflict>()
-
-            // Converte horarios para minutos desde meia-noite para facilitar comparacao
             val newStart = timeToMinutes(startTime)
             var newEnd = timeToMinutes(endTime)
-
-            // Tratar virada de meia-noite (ex: 23:00 - 01:00)
             if (newEnd <= newStart && endTime.isNotEmpty()) {
-                newEnd += 1440 // Adiciona 24 horas em minutos
+                newEnd += 1440
             }
 
-            for (game in existingGames) {
-                val existingStart = timeToMinutes(game.time)
-                var existingEnd = timeToMinutes(game.endTime)
-
-                if (existingEnd <= existingStart && game.endTime.isNotEmpty()) {
+            val conflicts = mutableListOf<TimeConflict>()
+            for (slot in busySlots) {
+                // Slot do dia D: offset 0. Slot de D-1 (virada de meia-noite):
+                // desloca para o final do dia anterior ao D.
+                val dayOffset = if (slot.date < date) -1440 else 0
+                val existingStart = slot.startMinutes + dayOffset
+                var existingEnd = slot.endMinutes + dayOffset
+                if (existingEnd <= existingStart) {
                     existingEnd += 1440
                 }
 
-                // Verifica sobreposição: dois intervalos [A,B] e [C,D] se sobrepõem se A < D e C < B
                 if (newStart < existingEnd && existingStart < newEnd) {
-                    // Calcula minutos de sobreposição
                     val overlapStart = maxOf(newStart, existingStart)
                     val overlapEnd = minOf(newEnd, existingEnd)
-                    val overlapMinutes = overlapEnd - overlapStart
-
-                    conflicts.add(TimeConflict(conflictingGame = game, overlapMinutes = overlapMinutes))
+                    conflicts.add(
+                        TimeConflict(
+                            conflictingTime = formatMinutes(slot.startMinutes),
+                            conflictingEndTime = formatMinutes(slot.endMinutes),
+                            overlapMinutes = overlapEnd - overlapStart
+                        )
+                    )
                 }
             }
 
@@ -1582,23 +1643,11 @@ class GameQueryRepositoryImpl constructor(
         }
     }
 
-    override suspend fun getGamesByFieldAndDate(fieldId: String, date: String): Result<List<Game>> {
-        return try {
-            // Limite de 50 jogos por campo/data para evitar leituras excessivas
-            val snapshot = gamesCollection
-                .whereEqualTo("field_id", fieldId)
-                .whereEqualTo("date", date)
-                .limit(50)
-                .get()
-                .await()
-
-            val androidGames = snapshot.toObjects(AndroidGame::class.java)
-                .filterNotSoftDeleted() // P2 #40: Excluir jogos soft-deletados
-            Result.success(androidGames.toKmpGames())
-        } catch (e: Exception) {
-            AppLogger.e(TAG, "Erro ao buscar jogos por quadra e data", e)
-            Result.failure(e)
-        }
+    private fun formatMinutes(totalMinutes: Int): String {
+        val normalized = totalMinutes % 1440
+        val hours = normalized / 60
+        val minutes = normalized % 60
+        return "%02d:%02d".format(hours, minutes)
     }
 
     private fun timeToMinutes(time: String): Int {

@@ -59,8 +59,15 @@ class FirebaseDataSourceImpl constructor(
             AppLogger.d(TAG) { "Buscando $limit jogos futuros" }
 
             val now = Date()
+            // FIX #4126: só jogos públicos podem entrar em LIST sem vínculo —
+            // as rules de games passaram a exigir constraint provável
+            // (visibility in [...]).
             val snapshot = firestore.collection(COLLECTION_GAMES)
                 .whereGreaterThanOrEqualTo("dateTime", now)
+                .whereIn("visibility", listOf(
+                    GameVisibility.PUBLIC_OPEN.name,
+                    GameVisibility.PUBLIC_CLOSED.name
+                ))
                 .orderBy("dateTime", Query.Direction.ASCENDING)
                 .limit(limit.toLong())
                 .get()
@@ -76,8 +83,13 @@ class FirebaseDataSourceImpl constructor(
         AppLogger.d(TAG) { "Iniciando flow de jogos futuros (limit=$limit)" }
 
         val now = Date()
+        // FIX #4126: mesmo gate de visibilidade do getUpcomingGames.
         val listener = firestore.collection(COLLECTION_GAMES)
             .whereGreaterThanOrEqualTo("dateTime", now)
+            .whereIn("visibility", listOf(
+                GameVisibility.PUBLIC_OPEN.name,
+                GameVisibility.PUBLIC_CLOSED.name
+            ))
             .orderBy("dateTime", Query.Direction.ASCENDING)
             .limit(limit.toLong())
             .addSnapshotListener { snapshot, error ->
@@ -158,8 +170,9 @@ class FirebaseDataSourceImpl constructor(
                 return@suspendWithRetryResult emptyList()
             }
 
-            // 3. Buscar jogos em paralelo (chunks de 10, limite do whereIn)
-            val games = BatchOperationHelper.parallelWhereIn(
+            // 3. FIX #4126: leitura unitária em paralelo — whereIn(documentId)
+            // não é constraint provável para as rules de LIST de games.
+            val games = BatchOperationHelper.parallelGetByIds(
                 collection = firestore.collection(COLLECTION_GAMES),
                 ids = gameIds,
                 mapper = { doc -> doc.toObject(Game::class.java) }

@@ -5,8 +5,12 @@ import android.content.Context
 import android.content.Intent
 
 /**
- * BroadcastReceiver que é acionado quando o dispositivo é reiniciado.
- * Responsável por re-agendar os alarmes de lembretes inteligentes.
+ * BroadcastReceiver acionado quando o dispositivo é reiniciado.
+ *
+ * FIX #4142: não re-agenda mais os alarmes legados (STREAK_CHECK diário e
+ * WEEKLY_RECAP dominical com números hardcoded). Faz a migração inversa:
+ * cancela os alarmes que sobreviveram do app anterior para que o resumo
+ * semanal falso ("0 jogos e 0 XP") não reapareça após reiniciar.
  */
 class BootReceiver : BroadcastReceiver() {
 
@@ -14,16 +18,10 @@ class BootReceiver : BroadcastReceiver() {
         if (intent.action == Intent.ACTION_BOOT_COMPLETED ||
             intent.action == "android.intent.action.QUICKBOOT_POWERON"
         ) {
-            AppLogger.d("BootReceiver") { "Dispositivo reiniciado - re-agendando lembretes" }
-
-            // Re-agenda lembretes periódicos
-            val reminderHelper = SmartReminderHelper(context)
-            reminderHelper.scheduleDailyStreakCheck()
-            reminderHelper.scheduleWeeklyRecap()
-
-            // TODO: Re-agendar lembretes de jogos futuros do usuário
-            // Isso requer buscar jogos confirmados do Firestore
-            // e re-agendar os alarmes para cada um
+            AppLogger.d("BootReceiver") {
+                "Dispositivo reiniciado — cancelando alarmes legados do SmartReminder"
+            }
+            LegacySmartReminderCleaner.cancelStaleAlarms(context)
         }
     }
 }

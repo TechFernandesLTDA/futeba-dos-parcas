@@ -7,9 +7,14 @@ import com.futebadosparcas.ui.games.GameWithConfirmations
 
 /**
  * Representa um conflito de horário encontrado
+ *
+ * FIX #4127: não carrega mais o Game inteiro (que expunha metadados do
+ * jogo privado de outro grupo via LIST). UI mostra "Horário ocupado
+ * (HH:mm–HH:mm)".
  */
 data class TimeConflict(
-    val conflictingGame: Game,
+    val conflictingTime: String,
+    val conflictingEndTime: String,
     val overlapMinutes: Int
 )
 
@@ -94,9 +99,15 @@ interface GameRepository {
     ): Result<List<TimeConflict>>
 
     /**
-     * Busca todos os jogos agendados para uma quadra em uma data específica.
+     * FIX #4127: disponibilidade de quadra via callable getFieldAvailability
+     * (slots sanitizados, sem metadados de jogos privados).
      */
-    suspend fun getGamesByFieldAndDate(fieldId: String, date: String): Result<List<Game>>
+    suspend fun getFieldBusySlots(
+        fieldId: String,
+        startDate: String,
+        endDate: String,
+        excludeGameId: String? = null
+    ): Result<List<com.futebadosparcas.domain.model.FieldBusySlot>>
 
     // Live Game Events
     fun getGameEventsFlow(gameId: String): kotlinx.coroutines.flow.Flow<Result<List<com.futebadosparcas.data.model.GameEvent>>>

@@ -8,6 +8,9 @@ const mockTransactionGet = jest.fn();
 const mockTransactionSet = jest.fn();
 const mockTransactionUpdate = jest.fn();
 const mockCollectionGet = jest.fn();
+const mockCollectionAdd = jest.fn().mockResolvedValue({id: "audit-1"});
+const mockBatchUpdate = jest.fn();
+const mockBatchCommit = jest.fn().mockResolvedValue([]);
 
 // Issue #3974: mock apenas startSchedulerHeartbeat (mantendo
 // acquire/release reais via jest.requireActual), para controlar
@@ -36,6 +39,13 @@ const mockDoc = jest.fn((id: string) => ({
   get: jest.fn(),
   update: mockDocUpdate,
   set: mockDocSet,
+  // FIX #4133: subcoleção waitlist do jogo (games/{id}/waitlist).
+  collection: jest.fn(() => ({
+    where: queryChain.where,
+    orderBy: queryChain.orderBy,
+    limit: queryChain.limit,
+    get: mockCollectionGet,
+  })),
 }));
 
 const mockCollection = jest.fn(() => ({
@@ -45,6 +55,7 @@ const mockCollection = jest.fn(() => ({
   limit: queryChain.limit,
   startAfter: queryChain.startAfter,
   get: mockCollectionGet,
+  add: mockCollectionAdd,
 }));
 
 const mockFieldValue = {
@@ -60,6 +71,11 @@ const mockFirestore = jest.fn(() => ({
   FieldValue: mockFieldValue,
   Timestamp: mockTimestamp,
   runTransaction: mockRunTransaction,
+  // FIX #4133: batch de expiração da waitlist.
+  batch: jest.fn(() => ({
+    update: mockBatchUpdate,
+    commit: mockBatchCommit,
+  })),
 }));
 
 (mockFirestore as any).FieldValue = mockFieldValue;
@@ -177,7 +193,8 @@ describe("autoCancelLowQuorum", () => {
     );
     expect(mockSendNotificationToUsers).toHaveBeenCalledWith(
       ["user1", "user2"],
-      expect.objectContaining({ title: "Jogo cancelado" })
+      expect.objectContaining({ title: "Jogo cancelado" }),
+      undefined
     );
   });
 
@@ -293,6 +310,157 @@ describe("autoCancelLowQuorum", () => {
     expect(mockTransactionUpdate).toHaveBeenCalledWith(
       gameRef,
       expect.objectContaining({ status: "CANCELLED" })
+    );
+  });
+
+  it("#4133: nao cancela jogo CHEIO com max_players menor que o default", async () => {
+    const futureDate = new Date(Date.now() + 60 * 60 * 1000);
+    const gameData = {
+      status: "CONFIRMED",
+      dateTime: { toDate: () => futureDate },
+      max_players: 5,
+      location_name: "Quadra pequena",
+      date: "2026-10-01",
+    };
+    mockCollectionGet.mockResolvedValueOnce({
+      docs: [
+        {
+          id: "game-small",
+          ref: { id: "game-small" },
+          data: () => gameData,
+        },
+      ],
+      size: 1,
+    });
+    mockTransactionGet
+      .mockResolvedValueOnce({
+        exists: false,
+        data: () => null,
+      })
+      .mockResolvedValueOnce({
+        exists: true,
+        data: () => gameData,
+      })
+      .mockResolvedValueOnce({
+        docs: Array.from({length: 5}, (_, i) => ({
+          data: () => ({user_id: `user${i}`}),
+        })),
+        size: 5,
+      });
+
+    await autoCancelLowQuorum();
+
+    // 5 confirmados = jogo cheio (max_players 5): não cancela mesmo com
+    // min_players ausente (default 6 > max 5).
+    expect(mockTransactionUpdate).not.toHaveBeenCalled();
+    expect(mockSendNotificationToUsers).not.toHaveBeenCalled();
+  });
+
+  it("#4133/#1786: opt-out auto_cancel_enabled=false pula o cancelamento", async () => {
+    const futureDate = new Date(Date.now() + 60 * 60 * 1000);
+    const gameData = {
+      status: "CONFIRMED",
+      dateTime: { toDate: () => futureDate },
+      auto_cancel_enabled: false,
+      location_name: "Campo",
+      date: "2026-10-01",
+    };
+    mockCollectionGet.mockResolvedValueOnce({
+      docs: [
+        {
+          id: "game-optout",
+          ref: { id: "game-optout" },
+          data: () => gameData,
+        },
+      ],
+      size: 1,
+    });
+    mockTransactionGet
+      .mockResolvedValueOnce({
+        exists: false,
+        data: () => null,
+      })
+      .mockResolvedValueOnce({
+        exists: true,
+        data: () => gameData,
+      })
+      .mockResolvedValueOnce({
+        docs: [{data: () => ({user_id: "user1"})}],
+        size: 1,
+      });
+
+    await autoCancelLowQuorum();
+
+    expect(mockTransactionUpdate).not.toHaveBeenCalled();
+    expect(mockSendNotificationToUsers).not.toHaveBeenCalled();
+  });
+
+  it("#4133/#1786: cancelamento expira waitlist, notifica e grava audit log", async () => {
+    const futureDate = new Date(Date.now() + 60 * 60 * 1000);
+    const gameData = {
+      status: "CONFIRMED",
+      dateTime: { toDate: () => futureDate },
+      location_name: "Campo 1",
+      date: "2026-10-01",
+    };
+    const gameRef = {id: "game1"};
+    mockCollectionGet
+      .mockResolvedValueOnce({
+        docs: [{id: "game1", ref: gameRef, data: () => gameData}],
+        size: 1,
+      })
+      .mockResolvedValueOnce({
+        empty: false,
+        size: 2,
+        docs: [
+          {
+            ref: {id: "wl-a", parent: {parent: {id: "game1"}}},
+            data: () => ({user_id: "wl-user-a", status: "WAITING"}),
+          },
+          {
+            ref: {id: "wl-b", parent: {parent: {id: "game1"}}},
+            data: () => ({user_id: "wl-user-b", status: "NOTIFIED"}),
+          },
+        ],
+      });
+    mockTransactionGet
+      .mockResolvedValueOnce({
+        exists: false,
+        data: () => null,
+      })
+      .mockResolvedValueOnce({
+        exists: true,
+        data: () => gameData,
+      })
+      .mockResolvedValueOnce({
+        docs: [{data: () => ({user_id: "user1"})}],
+        size: 1,
+      });
+
+    await autoCancelLowQuorum();
+
+    expect(mockBatchUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({id: "wl-a"}),
+      expect.objectContaining({
+        status: "EXPIRED",
+        expired_reason: "game_cancelled",
+      })
+    );
+    expect(mockBatchUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({id: "wl-b"}),
+      expect.objectContaining({status: "EXPIRED"})
+    );
+    expect(mockBatchCommit).toHaveBeenCalled();
+    expect(mockSendNotificationToUsers).toHaveBeenCalledWith(
+      ["wl-user-a", "wl-user-b"],
+      expect.objectContaining({type: "GAME_CANCELLED"})
+    );
+    expect(mockCollectionAdd).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "AUTO_CANCEL_LOW_QUORUM",
+        target_id: "game1",
+        reason: "LOW_QUORUM",
+      })
     );
   });
 
@@ -477,7 +645,8 @@ describe("autoCancelLowQuorum", () => {
     );
     expect(mockSendNotificationToUsers).toHaveBeenCalledWith(
       ["userA", "userB"],
-      expect.objectContaining({ title: "Jogo cancelado" })
+      expect.objectContaining({ title: "Jogo cancelado" }),
+      undefined
     );
     // Erro do jogo 1 foi logado (não propagado).
     expect(logger.error).toHaveBeenCalledWith(

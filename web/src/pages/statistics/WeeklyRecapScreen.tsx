@@ -28,7 +28,7 @@ import {
   LocalFireDepartment as FireIcon,
   Timeline as TimelineIcon,
 } from '@mui/icons-material';
-import { doc, getDoc, collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, limit, getDocs } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -138,11 +138,44 @@ export const WeeklyRecapScreen: React.FC = () => {
         }
 
         const gamesRef = collection(db, 'games');
-        const q = query(gamesRef, where('participants', 'array-contains', targetUserId), orderBy('date', 'desc'), limit(10));
-        const snapshot = await getDocs(q);
+        // FIX #4126: LIST de games exige constraint provável pelas rules —
+        // array-contains em `participants` não é constraint provável. O
+        // caminho autoritativo é confirmations (user_id == alvo) e depois
+        // leitura unitária dos jogos (get já coberto por dono/membro/público).
+        const confQ = query(
+          collection(db, 'confirmations'),
+          where('user_id', '==', targetUserId),
+          where('status', 'in', ['CONFIRMED', 'CHECKED_IN']),
+          limit(30),
+        );
+        const confSnapshot = await getDocs(confQ);
+        const participantGameIds = confSnapshot.docs
+          .map((confDoc) => {
+            const raw = confDoc.data() as { game_id?: string };
+            return raw.game_id;
+          })
+          .filter((id): id is string => Boolean(id))
+          .slice(0, 10);
+        const gameSnaps = await Promise.all(
+          participantGameIds.map((id) => getDoc(doc(gamesRef, id))),
+        );
+        const sortedGameDocs = gameSnaps
+          .filter((gameSnap) => gameSnap.exists())
+          .sort((left, right) => {
+            const toMillis = (gameSnap: typeof right) => {
+              const raw = gameSnap.data() as RawWeeklyGameDoc | undefined;
+              const dateField = raw?.date;
+              const parsed = (typeof dateField === 'object' && dateField?.toDate)
+                ? (dateField.toDate() as Date).getTime()
+                : (typeof dateField === 'string' ? new Date(dateField).getTime() : 0);
+              return Number.isFinite(parsed) ? parsed : 0;
+            };
+            return toMillis(right) - toMillis(left);
+          })
+          .slice(0, 10);
 
         const gamesData: GameRecord[] = [];
-        snapshot.docs.forEach((d) => {
+        sortedGameDocs.forEach((d) => {
           const data = snakeToCamel<RawWeeklyGameDoc>(d.data());
           const userTeam = data.team1Players?.includes(targetUserId) ? 'A' : data.team2Players?.includes(targetUserId) ? 'B' : null;
           const dateField = data.date;

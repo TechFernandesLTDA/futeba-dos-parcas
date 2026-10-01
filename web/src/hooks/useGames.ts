@@ -89,16 +89,32 @@ interface GamesFilters {
   orderDirection?: 'asc' | 'desc';
 }
 
+// FIX #4126: visibilities acessíveis por LIST sem vínculo. Com as rules
+// restritas, toda query de LIST em games precisa de filtro server-side que
+// torne a regra provável: visibilidade pública OU group_id OU owner_id.
+const ACCESSIBLE_VISIBILITIES = ['PUBLIC_OPEN', 'PUBLIC_CLOSED'] as const;
+
 function buildGamesQuery(filters?: GamesFilters): Query<DocumentData> {
   const gamesRef = collection(db, 'games');
   const constraints: QueryConstraint[] = [];
+
+  // FIX #4126: soft-deleted nunca podem entrar no escopo da query (as rules
+  // avaliam a regra contra todo doc possível — sem este filtro a query
+  // inteira é negada, e com `.get()`-default ela vazava doc deletado).
+  constraints.push(where('deleted_at', '==', null));
 
   if (filters?.status) {
     constraints.push(where('status', '==', filters.status));
   } else if (filters?.statuses?.length) {
     constraints.push(where('status', 'in', filters.statuses.slice(0, 10)));
   }
-  if (filters?.groupId) constraints.push(where('group_id', '==', filters.groupId));
+  if (filters?.groupId) {
+    constraints.push(where('group_id', '==', filters.groupId));
+  } else {
+    // Sem vínculo de grupo: apenas jogos públicos (GROUP_ONLY vaza se
+    // não houver constraint de visibilidade).
+    constraints.push(where('visibility', 'in', [...ACCESSIBLE_VISIBILITIES]));
+  }
   if (filters?.date) constraints.push(where('date', '==', filters.date));
   if (filters?.startDateTime) constraints.push(where('dateTime', '>=', filters.startDateTime));
   constraints.push(orderBy('dateTime', filters?.orderDirection ?? 'asc'));

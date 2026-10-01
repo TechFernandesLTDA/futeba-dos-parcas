@@ -3,12 +3,12 @@ package com.futebadosparcas.ui.badges
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.data.model.Badge
+import com.futebadosparcas.data.model.BadgeCatalog
 import com.futebadosparcas.data.model.BadgeType
 import com.futebadosparcas.data.model.UserBadge
 import com.futebadosparcas.domain.repository.AuthRepository
 import com.futebadosparcas.domain.repository.GamificationRepository
 import com.futebadosparcas.util.AppLogger
-import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
@@ -89,15 +89,13 @@ class BadgesViewModel(
                     return@launch
                 }
 
-                // OTIMIZACAO: Batch fetch de badge definitions via whereIn (chunks de 10)
-                // Antes: N queries sequenciais (1 por badge) = 200-500ms cada = 2-5s total
-                // Depois: ceil(N/10) queries paralelas = 100-200ms total
-                val badgeIds = userBadges.map { it.badgeId }.distinct()
-                val badgeDefinitions = fetchBadgeDefinitionsBatch(badgeIds)
-
-                // Montar BadgeWithData combinando user badges com definitions
+                // FIX #4138: definições vem do catálogo local alinhado aos
+                // badge_id reais gravados pelas Cloud Functions. A leitura
+                // da coleção raiz `badges` (nunca escrita por functions)
+                // devolvía vazio em prod → tela sempre Empty.
                 val badgesWithData = userBadges.mapNotNull { userBadge ->
-                    val badge = badgeDefinitions[userBadge.badgeId] ?: return@mapNotNull null
+                    val badge = BadgeCatalog.definitionFor(userBadge.badgeId)
+                        ?: return@mapNotNull null
                     val dataUserBadge = com.futebadosparcas.data.model.UserBadge(
                         id = userBadge.id,
                         userId = userBadge.userId,
@@ -128,48 +126,6 @@ class BadgesViewModel(
                 _uiState.value = BadgesUiState.Error("Erro ao carregar conquistas: ${e.message}")
             }
         }
-    }
-
-    /**
-     * Busca definicoes de badges em batch usando whereIn (chunks de 10).
-     * Substitui N queries sequenciais por ceil(N/10) queries paralelas.
-     *
-     * @return Map de badgeId -> Badge definition
-     */
-    private suspend fun fetchBadgeDefinitionsBatch(badgeIds: List<String>): Map<String, Badge> {
-        if (badgeIds.isEmpty()) return emptyMap()
-
-        val results = mutableMapOf<String, Badge>()
-
-        // Usar coroutineScope para structured concurrency
-        // (garante que children sao cancelados se o caller for cancelado)
-        coroutineScope {
-            val deferredChunks = badgeIds.chunked(10).map { chunk ->
-                async {
-                    try {
-                        val snapshot = firestore.collection("badges")
-                            .whereIn(FieldPath.documentId(), chunk)
-                            .get()
-                            .await()
-
-                        snapshot.documents.mapNotNull { doc ->
-                            val badge = doc.toObject(Badge::class.java)
-                            if (badge != null) doc.id to badge else null
-                        }
-                    } catch (e: Exception) {
-                        AppLogger.e(TAG, "Erro ao buscar batch de badges", e)
-                        emptyList()
-                    }
-                }
-            }
-
-            // Aguardar todos os chunks em paralelo
-            deferredChunks.awaitAll().forEach { pairs ->
-                pairs.forEach { (id, badge) -> results[id] = badge }
-            }
-        }
-
-        return results
     }
 
     /**

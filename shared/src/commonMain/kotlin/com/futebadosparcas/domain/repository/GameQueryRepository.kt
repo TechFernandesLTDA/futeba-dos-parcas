@@ -1,6 +1,7 @@
 package com.futebadosparcas.domain.repository
 
 import com.futebadosparcas.domain.model.Game
+import com.futebadosparcas.domain.model.FieldBusySlot
 import com.futebadosparcas.domain.model.GameConfirmation
 import com.futebadosparcas.domain.model.GameDetailConsolidated
 import com.futebadosparcas.domain.model.GameEvent
@@ -145,7 +146,15 @@ interface GameQueryRepository {
     ): Result<List<TimeConflict>>
 
     /**
-     * Busca todos os jogos agendados para uma quadra em uma data especifica.
+     * FIX #4127: disponibilidade de quadra via callable `getFieldAvailability`
+     * (sanitizada, sem metadados de jogos privados). A LIST direta em games
+     * vazava doc privado de outro grupo e, com as rules do #4126, viraria
+     * double-booking silencioso.
      */
-    suspend fun getGamesByFieldAndDate(fieldId: String, date: String): Result<List<Game>>
+    suspend fun getFieldBusySlots(
+        fieldId: String,
+        startDate: String,
+        endDate: String,
+        excludeGameId: String? = null
+    ): Result<List<FieldBusySlot>>
 }

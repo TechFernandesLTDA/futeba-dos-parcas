@@ -445,6 +445,16 @@
       ]
     },
     {
+      "collectionGroup": "league_seasons",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        {
+          "fieldPath": "is_active",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
       "collectionGroup": "user_locations",
       "queryScope": "COLLECTION",
       "fields": [
@@ -2449,42 +2459,42 @@
           "order": "DESCENDING"
         }
       ]
+    },
+    {
+      "collectionGroup": "official-groups",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "category",
+          "order": "ASCENDING"
         },
         {
-          "collectionGroup": "official-groups",
-          "queryScope": "COLLECTION",
-          "fields": [
-            {
-              "fieldPath": "category",
-              "order": "ASCENDING"
-            },
-            {
-              "fieldPath": "name",
-              "order": "ASCENDING"
-            }
-          ]
+          "fieldPath": "name",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "games",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "is_public",
+          "order": "ASCENDING"
         },
         {
-          "collectionGroup": "games",
-          "queryScope": "COLLECTION",
-          "fields": [
-            {
-              "fieldPath": "is_public",
-              "order": "ASCENDING"
-            },
-            {
-              "fieldPath": "visibility",
-              "order": "ASCENDING"
-            },
-            {
-              "fieldPath": "status",
-              "order": "ASCENDING"
-            },
-            {
-              "fieldPath": "date",
-              "order": "ASCENDING"
-            }
-          ]
+          "fieldPath": "visibility",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "date",
+          "order": "ASCENDING"
+        }
+      ]
     },
     {
       "collectionGroup": "xp_logs",
@@ -2823,76 +2833,81 @@
           "order": "ASCENDING"
         }
       ]
-    }
-  ],
-  "fieldOverrides": [
-    {
-      "collectionGroup": "member_counter_events",
-      "fieldPath": "expires_at",
-      "ttl": true,
-      "indexes": []
     },
     {
-      "collectionGroup": "cashbox_summary_ops",
-      "fieldPath": "expires_at",
-      "ttl": true,
-      "indexes": []
-    },
-    {
-      "collectionGroup": "confirmation_counter_events",
-      "fieldPath": "expires_at",
-      "ttl": true,
-      "indexes": []
-    },
-    {
-      "collectionGroup": "realtime_slo_samples",
-      "fieldPath": "expires_at",
-      "ttl": true,
-      "indexes": []
-    },
-    {
-      "collectionGroup": "notif_dedup",
-      "fieldPath": "expires_at",
-      "ttl": true,
-      "indexes": []
-    },
-    {
-      "collectionGroup": "cancellations",
-      "fieldPath": "user_id",
-      "ttl": false,
-      "indexes": []
-    },
-    {
-      "collectionGroup": "cashbox",
-      "fieldPath": "created_by",
-      "ttl": false,
-      "indexes": [
-        { "order": "ASCENDING", "queryScope": "COLLECTION" },
-        { "order": "DESCENDING", "queryScope": "COLLECTION" },
-        { "arrayConfig": "CONTAINS", "queryScope": "COLLECTION" },
-        { "order": "ASCENDING", "queryScope": "COLLECTION_GROUP" }
+      "collectionGroup": "games",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "deleted_at",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "visibility",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "dateTime",
+          "order": "ASCENDING"
+        }
       ]
     },
     {
-      "collectionGroup": "reviews",
-      "fieldPath": "user_id",
-      "ttl": false,
-      "indexes": [
-        { "order": "ASCENDING", "queryScope": "COLLECTION" },
-        { "order": "DESCENDING", "queryScope": "COLLECTION" },
-        { "arrayConfig": "CONTAINS", "queryScope": "COLLECTION" },
-        { "order": "ASCENDING", "queryScope": "COLLECTION_GROUP" }
+      "collectionGroup": "games",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "deleted_at",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "visibility",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "dateTime",
+          "order": "DESCENDING"
+        }
       ]
     },
     {
-      "collectionGroup": "members",
-      "fieldPath": "user_id",
-      "ttl": false,
-      "indexes": [
-        { "order": "ASCENDING", "queryScope": "COLLECTION" },
-        { "order": "DESCENDING", "queryScope": "COLLECTION" },
-        { "arrayConfig": "CONTAINS", "queryScope": "COLLECTION" },
-        { "order": "ASCENDING", "queryScope": "COLLECTION_GROUP" }
+      "collectionGroup": "games",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "deleted_at",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "group_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "dateTime",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "games",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "visibility",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "locationName",
+          "order": "ASCENDING"
+        }
       ]
     }
   ]

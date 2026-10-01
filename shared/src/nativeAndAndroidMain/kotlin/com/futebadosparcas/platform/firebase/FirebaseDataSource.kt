@@ -277,19 +277,40 @@ actual class FirebaseDataSource actual constructor() {
 
     actual suspend fun cancelConfirmation(gameId: String, userId: String): Result<Unit> {
         return try {
-            // Tentar deletar pelo ID determinístico primeiro
-            val docRef = firestore.collection(COLLECTION_CONFIRMATIONS).document("${gameId}_${userId}")
+            // FIX #4144: marcar CANCELLED em vez de deletar. O trigger
+            // onGameVacancy depende de before=CONFIRMED -> after=CANCELLED
+            // (UPDATE); delete deixava a vaga sem promover a waitlist.
+            // Espelha app FirebaseDataSourceImpl.kt e web useGames.ts.
+            val batch = firestore.batch()
+            val docRef =
+                firestore.collection(COLLECTION_CONFIRMATIONS)
+                    .document("${gameId}_${userId}")
             val doc = docRef.get()
             if (doc.exists) {
-                docRef.delete()
+                batch.update(
+                    docRef,
+                    mapOf(
+                        "status" to "CANCELLED",
+                        "updated_at" to FieldValue.serverTimestamp,
+                    ),
+                )
             } else {
                 // Fallback: buscar por query
                 val query = firestore.collection(COLLECTION_CONFIRMATIONS)
                     .where { "game_id" equalTo gameId }
                     .where { "user_id" equalTo userId }
                     .get()
-                query.documents.forEach { it.reference.delete() }
+                query.documents.forEach {
+                    batch.update(
+                        it.reference,
+                        mapOf(
+                            "status" to "CANCELLED",
+                            "updated_at" to FieldValue.serverTimestamp,
+                        ),
+                    )
+                }
             }
+            batch.commit()
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
@@ -321,21 +342,38 @@ actual class FirebaseDataSource actual constructor() {
 
     actual suspend fun removePlayerFromGame(gameId: String, userId: String): Result<Unit> {
         return try {
-            // Tentar deletar pelo ID determinístico primeiro
-            val docRef = firestore.collection(COLLECTION_CONFIRMATIONS).document("${gameId}_${userId}")
+            // FIX #4144: CANCELLED em vez de delete (mesmo motivo do
+            // cancelConfirmation — trigger onGameVacancy depende de UPDATE).
+            val batch = firestore.batch()
+            val docRef =
+                firestore.collection(COLLECTION_CONFIRMATIONS)
+                    .document("${gameId}_${userId}")
             val doc = docRef.get()
             if (doc.exists) {
-                docRef.delete()
+                batch.update(
+                    docRef,
+                    mapOf(
+                        "status" to "CANCELLED",
+                        "updated_at" to FieldValue.serverTimestamp,
+                    ),
+                )
             } else {
                 // Fallback: buscar por query
                 val snapshot = firestore.collection(COLLECTION_CONFIRMATIONS)
                     .where { "game_id" equalTo gameId }
                     .where { "user_id" equalTo userId }
                     .get()
-                val batch = firestore.batch()
-                snapshot.documents.forEach { d -> batch.delete(d.reference) }
-                batch.commit()
+                snapshot.documents.forEach { d ->
+                    batch.update(
+                        d.reference,
+                        mapOf(
+                            "status" to "CANCELLED",
+                            "updated_at" to FieldValue.serverTimestamp,
+                        ),
+                    )
+                }
             }
+            batch.commit()
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)

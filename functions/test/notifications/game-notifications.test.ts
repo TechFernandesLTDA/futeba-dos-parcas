@@ -114,6 +114,7 @@ import {
   onGameCreated,
   onGameUpdatedNotification,
   onGameVacancy,
+  onGameVacancyDeleted,
 } from "../../src/notifications/game-notifications";
 
 describe("Game Notifications", () => {
@@ -126,6 +127,15 @@ describe("Game Notifications", () => {
       })
     );
     mockTransactionGet.mockResolvedValue({
+      exists: true,
+      data: () => ({
+        status: "SCHEDULED",
+        max_players: 14,
+      }),
+    });
+    // FIX #4144: promoteWaitlistOnVacancy lê o jogo via doc.get() antes de
+    // qualquer transação (sem gate de cooldown na promoção).
+    mockDocGet.mockResolvedValue({
       exists: true,
       data: () => ({
         status: "SCHEDULED",
@@ -556,7 +566,32 @@ describe("Game Notifications", () => {
       expect(mockSendNotificationToUsers).toHaveBeenCalledWith(
         ["user1", "user2"],
         expect.objectContaining({ title: "Jogo cancelado" }),
+        undefined
       );
+    });
+
+    it("#4135: cancelamento pelo SISTEMA não manda push 'pelo organizador'", async () => {
+      await onGameUpdatedNotification({
+        data: {
+          before: { data: () => ({ status: "SCHEDULED", date: "2024-01-01", location_id: "loc1" }) },
+          after: { data: () => ({ status: "CANCELLED", date: "2024-01-01", location_id: "loc1", auto_cancelled: true, cancelled_by: "system" }) },
+        },
+        params: { gameId: "game1" },
+      });
+
+      expect(mockSendNotificationToUsers).not.toHaveBeenCalled();
+    });
+
+    it("#4135: auto_closed (auto-close de jogo passado) não manda push de cancelamento", async () => {
+      await onGameUpdatedNotification({
+        data: {
+          before: { data: () => ({ status: "CONFIRMED", date: "2024-01-01", location_id: "loc1" }) },
+          after: { data: () => ({ status: "CANCELLED", date: "2024-01-01", location_id: "loc1", auto_closed: true, cancelled_by: "system" }) },
+        },
+        params: { gameId: "game1" },
+      });
+
+      expect(mockSendNotificationToUsers).not.toHaveBeenCalled();
     });
 
     it("nao notifica quando status nao mudou para CANCELLED", async () => {
@@ -681,16 +716,7 @@ describe("Game Notifications", () => {
   });
 
   describe("onGameVacancy", () => {
-    it("notifica waitlist quando vaga abre (CONFIRMED -> CANCELLED)", async () => {
-      mockTransactionGet.mockResolvedValueOnce({
-        exists: true,
-        data: () => ({
-          status: "SCHEDULED",
-          max_players: 14,
-          location_name: "Campo 1",
-          date: "2024-01-15",
-        }),
-      });
+    it("não notifica quando waitlist vazia e sem grupo (CONFIRMED -> CANCELLED)", async () => {
       mockCollectionGet.mockResolvedValue({ empty: true, size: 0, docs: [] });
 
       await onGameVacancy({
@@ -702,25 +728,22 @@ describe("Game Notifications", () => {
         params: { confirmationId: "conf1" },
       });
 
-      expect(mockRunTransaction).toHaveBeenCalled();
-      expect(mockTransactionUpdate).toHaveBeenCalled();
+      expect(mockSendNotificationToUsers).not.toHaveBeenCalled();
+      expect(mockTransactionUpdate).not.toHaveBeenCalled();
     });
 
     it("#4043: promove a 1ª entrada WAITING para NOTIFIED e usa orderBy(added_at)", async () => {
+      mockDocGet.mockResolvedValueOnce({
+        exists: true,
+        data: () => ({
+          status: "SCHEDULED",
+          max_players: 14,
+          location_name: "Campo 1",
+          date: "2024-01-15",
+        }),
+      });
+      // Único tx.get: re-checa a entrada fresh antes de promover (TOCTOU).
       mockTransactionGet
-        .mockResolvedValueOnce({
-          exists: true,
-          data: () => ({
-            status: "SCHEDULED",
-            max_players: 14,
-            location_name: "Campo 1",
-            date: "2024-01-15",
-          }),
-        })
-        .mockResolvedValueOnce({
-          exists: true,
-          data: () => ({status: "SCHEDULED", max_players: 14}),
-        })
         .mockResolvedValueOnce({
           exists: true,
           data: () => ({
@@ -788,7 +811,7 @@ describe("Game Notifications", () => {
     });
 
     it("nao notifica se jogo nao esta SCHEDULED ou CONFIRMED", async () => {
-      mockTransactionGet.mockResolvedValueOnce({
+      mockDocGet.mockResolvedValueOnce({
         exists: true,
         data: () => ({ status: "FINISHED", max_players: 14 }),
       });
@@ -805,16 +828,24 @@ describe("Game Notifications", () => {
       expect(mockSendNotificationToUsers).not.toHaveBeenCalled();
     });
 
-    it("respeita idempotencia vacancy_notified_at < 5 min", async () => {
+    it("respeita idempotencia vacancy_notified_at < 5 min no broadcast ao grupo (FIX #4144)", async () => {
       const recentDate = new Date(Date.now() - 60 * 1000);
+      const gameData = {
+        status: "SCHEDULED",
+        max_players: 14,
+        group_id: "group-1",
+        vacancy_notified_at: { toDate: () => recentDate },
+      };
+      mockDocGet.mockResolvedValueOnce({
+        exists: true,
+        data: () => gameData,
+      });
+      // Claim do broadcast lê o jogo dentro da tx.
       mockTransactionGet.mockResolvedValueOnce({
         exists: true,
-        data: () => ({
-          status: "SCHEDULED",
-          max_players: 14,
-          vacancy_notified_at: { toDate: () => recentDate },
-        }),
+        data: () => gameData,
       });
+      mockCollectionGet.mockResolvedValue({ empty: true, size: 0, docs: [] });
 
       await onGameVacancy({
         id: "evt-vacancy-throttle",
@@ -826,10 +857,77 @@ describe("Game Notifications", () => {
       });
 
       expect(mockSendNotificationToUsers).not.toHaveBeenCalled();
+      expect(mockTransactionUpdate).not.toHaveBeenCalled();
+    });
+
+    it("#4144: promoção da waitlist ignora o cooldown de 5 min (2ª vaga em < 5 min promove)", async () => {
+      const recentDate = new Date(Date.now() - 60 * 1000);
+      mockDocGet.mockResolvedValueOnce({
+        exists: true,
+        data: () => ({
+          status: "SCHEDULED",
+          max_players: 14,
+          group_id: "group-1",
+          location_name: "Campo 1",
+          vacancy_notified_at: { toDate: () => recentDate },
+        }),
+      });
+      mockTransactionGet
+        .mockResolvedValueOnce({
+          exists: true,
+          data: () => ({
+            status: "WAITING",
+            user_id: "wl-user-1",
+            user_name: "Jogador",
+          }),
+        });
+      mockCountGet.mockResolvedValueOnce({
+        data: () => ({count: 10}),
+      });
+      const entryRef = {id: "wl-user-1"};
+      mockCollectionGet.mockResolvedValueOnce({
+        empty: false,
+        size: 1,
+        docs: [
+          {
+            id: "wl-user-1",
+            ref: entryRef,
+            data: () => ({
+              status: "WAITING",
+              user_id: "wl-user-1",
+              user_name: "Jogador",
+            }),
+          },
+        ],
+      });
+
+      await onGameVacancy({
+        id: "evt-vacancy-second-within-5min",
+        data: {
+          before: {data: () => ({status: "CONFIRMED", game_id: "game1"})},
+          after: {data: () => ({status: "CANCELLED", game_id: "game1"})},
+        },
+        params: {confirmationId: "conf1"},
+      });
+
+      // Promoção acontece MESMO com vacancy_notified_at recente.
+      expect(mockTransactionUpdate).toHaveBeenCalledWith(
+        entryRef,
+        expect.objectContaining({status: "NOTIFIED"})
+      );
+      expect(mockSendNotificationToUsers).toHaveBeenCalledWith(
+        ["wl-user-1"],
+        expect.objectContaining({type: "GAME_VACANCY"})
+      );
+      // Broadcast ao grupo NÃO acontece (claim em cooldown).
+      expect(mockSendNotificationToUsers).not.toHaveBeenCalledWith(
+        expect.arrayContaining(["member-1"]),
+        expect.anything()
+      );
     });
 
     it("nao notifica quando jogo continua cheio (currentPlayers >= maxPlayers)", async () => {
-      mockTransactionGet.mockResolvedValueOnce({
+      mockDocGet.mockResolvedValueOnce({
         exists: true,
         data: () => ({ status: "SCHEDULED", max_players: 14, location_name: "Campo" }),
       });
@@ -850,22 +948,18 @@ describe("Game Notifications", () => {
       expect(mockTransactionUpdate).not.toHaveBeenCalled();
     });
 
-    it("nao consome cooldown quando o cancelamento apenas reduz overbooking para lotado", async () => {
+    it("não consome cooldown quando o cancelamento apenas reduz overbooking para lotado", async () => {
       const gameData = {
         status: "SCHEDULED",
         max_players: 14,
+        group_id: "group-1",
         location_name: "Campo",
       };
+      mockDocGet
+        .mockResolvedValueOnce({exists: true, data: () => gameData})
+        .mockResolvedValueOnce({exists: true, data: () => gameData});
       mockTransactionGet
-        .mockResolvedValueOnce({
-          exists: true,
-          data: () => gameData,
-        })
-        .mockResolvedValueOnce({
-          exists: true,
-          data: () => gameData,
-        })
-        .mockResolvedValueOnce({
+        .mockResolvedValue({
           exists: true,
           data: () => gameData,
         });
@@ -899,11 +993,12 @@ describe("Game Notifications", () => {
         ...event,
       });
 
+      // Apenas o 2º evento (com vaga real) consome o cooldown do broadcast.
       expect(mockTransactionUpdate).toHaveBeenCalledTimes(1);
     });
 
     it("notifica membros elegiveis do grupo quando a waitlist e pequena", async () => {
-      mockTransactionGet.mockResolvedValueOnce({
+      mockDocGet.mockResolvedValueOnce({
         exists: true,
         data: () => ({
           status: "SCHEDULED",
@@ -959,12 +1054,18 @@ describe("Game Notifications", () => {
       );
     });
 
-    it("usa claim transacional para evitar TOCTOU no throttle de vaga", async () => {
-      mockRunTransaction.mockResolvedValueOnce({
-        shouldNotify: false,
-        reason: "throttled",
-        game: null,
+    it("broadcast ao grupo em cooldown não envia notificação (claim transacional)", async () => {
+      mockDocGet.mockResolvedValueOnce({
+        exists: true,
+        data: () => ({
+          status: "SCHEDULED",
+          max_players: 14,
+          group_id: "group-1",
+          location_name: "Arena",
+        }),
       });
+      mockRunTransaction.mockResolvedValueOnce(false);
+      mockCollectionGet.mockResolvedValueOnce({empty: true, size: 0, docs: []});
 
       await onGameVacancy({
         id: "evt-vacancy-race",
@@ -980,15 +1081,11 @@ describe("Game Notifications", () => {
     });
 
     it("#4043: nao promove quando a entrada ja saiu de WAITING (TOCTOU)", async () => {
+      mockDocGet.mockResolvedValueOnce({
+        exists: true,
+        data: () => ({status: "SCHEDULED", max_players: 14, location_name: "Campo 1"}),
+      });
       mockTransactionGet
-        .mockResolvedValueOnce({
-          exists: true,
-          data: () => ({status: "SCHEDULED", max_players: 14, location_name: "Campo 1"}),
-        })
-        .mockResolvedValueOnce({
-          exists: true,
-          data: () => ({status: "SCHEDULED", max_players: 14}),
-        })
         .mockResolvedValueOnce({exists: false, data: () => null});
       mockCountGet.mockResolvedValueOnce({data: () => ({count: 10})});
       mockCollectionGet.mockResolvedValueOnce({
@@ -1016,20 +1113,15 @@ describe("Game Notifications", () => {
     });
 
     it("#4043: erro ao notificar grupo é isolado e nao derruba o fluxo", async () => {
-      mockTransactionGet
-        .mockResolvedValueOnce({
-          exists: true,
-          data: () => ({
-            status: "SCHEDULED",
-            max_players: 14,
-            group_id: "group-1",
-            location_name: "Arena",
-          }),
-        })
-        .mockResolvedValueOnce({
-          exists: true,
-          data: () => ({status: "SCHEDULED", max_players: 14, group_id: "group-1"}),
-        });
+      mockDocGet.mockResolvedValueOnce({
+        exists: true,
+        data: () => ({
+          status: "SCHEDULED",
+          max_players: 14,
+          group_id: "group-1",
+          location_name: "Arena",
+        }),
+      });
       mockCountGet.mockResolvedValueOnce({data: () => ({count: 10})});
       mockCollectionGet
         .mockResolvedValueOnce({empty: true, size: 0, docs: []})
@@ -1045,6 +1137,85 @@ describe("Game Notifications", () => {
       })).resolves.toBeUndefined();
 
       expect(mockSendNotificationToUsers).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("onGameVacancyDeleted (#4144)", () => {
+    it("DELETE de confirmação CONFIRMED promove a waitlist", async () => {
+      mockDocGet.mockResolvedValueOnce({
+        exists: true,
+        data: () => ({
+          status: "SCHEDULED",
+          max_players: 14,
+          location_name: "Campo 1",
+        }),
+      });
+      mockCountGet.mockResolvedValueOnce({data: () => ({count: 10})});
+      const entryRef = {id: "wl-user-1"};
+      mockTransactionGet.mockResolvedValueOnce({
+        exists: true,
+        data: () => ({
+          status: "WAITING",
+          user_id: "wl-user-1",
+        }),
+      });
+      mockCollectionGet.mockResolvedValueOnce({
+        empty: false,
+        size: 1,
+        docs: [
+          {
+            id: "wl-user-1",
+            ref: entryRef,
+            data: () => ({
+              status: "WAITING",
+              user_id: "wl-user-1",
+            }),
+          },
+        ],
+      });
+
+      await onGameVacancyDeleted({
+        id: "evt-vacancy-del-1",
+        data: {
+          data: () => ({status: "CONFIRMED", game_id: "game1"}),
+        },
+        params: {confirmationId: "game1_user1"},
+      });
+
+      expect(mockTransactionUpdate).toHaveBeenCalledWith(
+        entryRef,
+        expect.objectContaining({status: "NOTIFIED"})
+      );
+      expect(mockSendNotificationToUsers).toHaveBeenCalledWith(
+        ["wl-user-1"],
+        expect.objectContaining({type: "GAME_VACANCY"})
+      );
+    });
+
+    it("DELETE de confirmação não-CONFIRMED não promove", async () => {
+      await onGameVacancyDeleted({
+        id: "evt-vacancy-del-2",
+        data: {
+          data: () => ({status: "CANCELLED", game_id: "game1"}),
+        },
+        params: {confirmationId: "game1_user1"},
+      });
+
+      expect(mockSendNotificationToUsers).not.toHaveBeenCalled();
+      expect(mockDocGet).not.toHaveBeenCalled();
+    });
+
+    it("DELETE de confirmação sem game_id não promove", async () => {
+      await onGameVacancyDeleted({
+        id: "evt-vacancy-del-3",
+        data: {
+          data: () => ({status: "CONFIRMED"}),
+        },
+        params: {confirmationId: "game1_user1"},
+      });
+
+      expect(mockSendNotificationToUsers).not.toHaveBeenCalled();
+      expect(mockDocGet).not.toHaveBeenCalled();
     });
   });
 });

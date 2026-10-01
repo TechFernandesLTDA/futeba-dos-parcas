@@ -273,7 +273,10 @@ fun CreateGameScreen(
                     hasError = true
                 }
 
-                val priceValue = price.toDoubleOrNull()
+                // FIX #4136: o helper/placeholder pedem "15,00" (vírgula
+                // decimal BR), mas toDoubleOrNull() rejeita vírgula. Aceita
+                // ambos os formatos antes de validar.
+                val priceValue = price.trim().replace(',', '.').toDoubleOrNull()
                 if (priceValue == null || priceValue < 0) {
                     priceError = context.getString(R.string.create_game_error_price)
                     hasError = true
@@ -526,8 +529,11 @@ private fun CreateGameContent(
                         )
                         if (timeConflicts.isNotEmpty()) {
                             val conflict = timeConflicts.first()
+                            // FIX #4127: TimeConflict não carrega mais o jogo
+                            // (metadados de doc privado de outro grupo); mostra
+                            // apenas o horário ocupado, igual ao web.
                             Text(
-                                text = "Conflito com ${conflict.conflictingGame.ownerName} (${conflict.conflictingGame.time} - ${conflict.conflictingGame.endTime})",
+                                text = "Horário ocupado (${conflict.conflictingTime} - ${conflict.conflictingEndTime})",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onTertiaryContainer
                             )

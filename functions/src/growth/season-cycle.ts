@@ -4,6 +4,7 @@ import * as admin from "firebase-admin";
 import {FieldValue, Timestamp} from "firebase-admin/firestore";
 import {FUNCTION_REGION} from "../constants";
 import {getMonthName} from "./season-naming";
+import {mirrorBadgeToRoot} from "../badges/user-badge-docs";
 
 const db = () => admin.firestore();
 
@@ -25,6 +26,7 @@ const SEASON_CYCLE_TIME_BUDGET_MS = 450_000;
 const SEASON_CYCLE_CONCURRENCY = 5;
 const OFFICIAL_GROUPS_QUERY_LIMIT = 500;
 const ACTIVE_SEASONS_QUERY_LIMIT = 2000;
+const ACTIVE_SEASONS_PAGE_SIZE = 500;
 const GROUP_ACTIVE_SEASONS_QUERY_LIMIT = 50;
 
 /**
@@ -73,22 +75,42 @@ async function listManagedGroupIds(): Promise<string[]> {
     );
   }
 
-  const activeSeasonsSnap = await db()
+  // FIX #4128: a query de collection group exige o índice COLLECTION_GROUP
+  // de `league_seasons.is_active` declarado em firestore.indexes.json. Sem
+  // ele, FAILED_PRECONDITION derrubava startNewSeason/archiveSeason todo dia.
+  // FIX #4017 + #4128: paginação com startAfter em páginas de 500 até o cap
+  // ACTIVE_SEASONS_QUERY_LIMIT — antes, o limit(2000) único saturava em
+  // silêncio e seasons excedentes ficavam sem virada de temporada.
+  const seasonsQuery = db()
     .collectionGroup("league_seasons")
     .where("is_active", "==", true)
-    .limit(ACTIVE_SEASONS_QUERY_LIMIT)
-    .get();
-  for (const doc of activeSeasonsSnap.docs) {
-    const groupId = doc.ref.parent.parent?.id;
-    if (groupId) groupIds.add(groupId);
-  }
-  if (activeSeasonsSnap.size >= ACTIVE_SEASONS_QUERY_LIMIT) {
-    logger.warn(
-      "[SEASON_CYCLE] listManagedGroupIds: league_seasons ativas " +
-      `saturaram ${ACTIVE_SEASONS_QUERY_LIMIT} docs — seasons ` +
-      "excedentes não receberão gestão de temporada"
-    );
-  }
+    .limit(ACTIVE_SEASONS_PAGE_SIZE);
+
+  let lastPage: admin.firestore.QueryDocumentSnapshot[] = [];
+  do {
+    let pageQuery = seasonsQuery;
+    if (lastPage.length > 0) {
+      pageQuery = seasonsQuery.startAfter(
+        lastPage[lastPage.length - 1]
+      );
+    }
+    const activeSeasonsSnap = await pageQuery.get();
+    for (const doc of activeSeasonsSnap.docs) {
+      const groupId = doc.ref.parent.parent?.id;
+      if (groupId) groupIds.add(groupId);
+    }
+    lastPage = activeSeasonsSnap.docs;
+    if (
+      lastPage.length > 0 &&
+      groupIds.size + lastPage.length >= ACTIVE_SEASONS_QUERY_LIMIT
+    ) {
+      logger.warn(
+        "[SEASON_CYCLE] listManagedGroupIds: league_seasons ativas " +
+        `saturaram ${ACTIVE_SEASONS_QUERY_LIMIT} docs — seasons ` +
+        "excedentes não receberão gestão de temporada"
+      );
+    }
+  } while (lastPage.length === ACTIVE_SEASONS_PAGE_SIZE);
 
   return Array.from(groupIds);
 }
@@ -515,6 +537,18 @@ async function processArchiveSeasonForGroup(
         type: "MVP_LIGA",
         earned_at: FieldValue.serverTimestamp(),
         earned: true,
+      });
+
+      // FIX #4138: espelha para user_badges raiz (único lugar lido
+      // pelos clientes) — antes o MVP da Liga era invisível nas telas.
+      await mirrorBadgeToRoot(mvp.user_id, {
+        badgeId: `mvp_liga_${monthKey}`,
+        name: `MVP da Liga - ${getMonthName(monthKey)}`,
+        icon: "🏆",
+        type: "MVP_LIGA",
+        earnedAt: FieldValue.serverTimestamp(),
+        earned: true,
+        count: 1,
       });
     } else if (mvp) {
       logger.warn("Season archived without MVP badge due to missing user_id", {
