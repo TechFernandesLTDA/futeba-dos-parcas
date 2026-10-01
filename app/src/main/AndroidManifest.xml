@@ -165,16 +165,12 @@
                 tools:node="remove" />
         </provider>
 
-        <!-- BroadcastReceiver para lembretes inteligentes -->
+        <!-- FIX #4142: ReminderBroadcastReceiver não agenda mais alarmes
+             (resumo semanal falso removido); o receiver permanece apenas
+             como alvo do cancelamento dos alarmes legados. -->
         <receiver
             android:name=".util.ReminderBroadcastReceiver"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="GAME_REMINDER" />
-                <action android:name="STREAK_CHECK" />
-                <action android:name="WEEKLY_RECAP" />
-            </intent-filter>
-        </receiver>
+            android:exported="false" />
 
         <!-- BroadcastReceiver para reiniciar alarmes após boot -->
         <receiver

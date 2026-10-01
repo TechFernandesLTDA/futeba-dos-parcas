@@ -1762,9 +1762,16 @@ subir no ranking!</string>
     <string name="badges_error_title">Erro ao carregar conquistas</string>
 
     <!-- Home Components -->
-    <string name="streak_widget_title">%d dias de sequência!</string>
-    <string name="streak_widget_record">Recorde: %d dias</string>
-    <string name="streak_widget_days">dias</string>
+    <!-- FIX #4145: sequência conta JOGOS (não dias), com plural. -->
+    <plurals name="streak_widget_title">
+        <item quantity="one">%d jogo seguido!</item>
+        <item quantity="other">%d jogos seguidos!</item>
+    </plurals>
+    <plurals name="streak_widget_record">
+        <item quantity="one">Recorde: %d jogo</item>
+        <item quantity="other">Recorde: %d jogos</item>
+    </plurals>
+    <string name="streak_widget_days">jogos</string>
     <string name="challenges_title">Desafios em Andamento</string>
     <string name="recent_badges_title">Conquistas Recentes</string>
     <string name="home_error_message">Erro ao carregar dados da home</string>

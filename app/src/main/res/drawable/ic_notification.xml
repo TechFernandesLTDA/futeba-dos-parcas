@@ -1,10 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- FIX #4141: ícone de notificação deve ser silhueta monocromática com
+     transparência (não um círculo branco cheio — bloqueado em alguns
+     launchers e ilegível na barra). Bola com contorno e pentágonos. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
     <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M12,2C6.48,2 2,6.48 2,12s4.48,10 10,10 10,-4.48 10,-10S17.52,2 12,2zM12,16c-2.21,0 -4,-1.79 -4,-4s1.79,-4 4,-4 4,1.79 4,4 -1.79,4 -4,4z"/>
+        android:fillColor="@android:color/white"
+        android:pathData="M12,2C6.48,2 2,6.48 2,12s4.48,10 10,10 10,-4.48 10,-10S17.52,2 12,2zM12,3.8c2.2,0 4.19,0.89 5.63,2.32l-2.13,1.23h-7L6.37,6.12C7.81,4.69 9.8,3.8 12,3.8zM3.8,12c0,-2.05 0.78,-3.91 2.05,-5.32l2.16,1.25l1.75,3.03l-1.4,4.02l-2.05,0.53C5.06,15.05 3.8,13.68 3.8,12zM12,20.2c-1.51,0 -2.91,-0.44 -4.09,-1.2l0.97,-2.65l0.01,-0.01h6.22l0.98,2.66C14.91,19.76 13.51,20.2 12,20.2zM17.69,15.51l-2.05,-0.53l-1.4,-4.02l1.75,-3.03l2.16,-1.25C19.42,8.09 20.2,9.95 20.2,12c0,1.68 -0.87,3.05 -2.51,3.51z"/>
 </vector>
