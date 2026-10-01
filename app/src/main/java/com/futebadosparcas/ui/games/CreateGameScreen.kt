@@ -273,7 +273,10 @@ fun CreateGameScreen(
                     hasError = true
                 }
 
-                val priceValue = price.toDoubleOrNull()
+                // FIX #4136: o helper/placeholder pedem "15,00" (vírgula
+                // decimal BR), mas toDoubleOrNull() rejeita vírgula. Aceita
+                // ambos os formatos antes de validar.
+                val priceValue = price.trim().replace(',', '.').toDoubleOrNull()
                 if (priceValue == null || priceValue < 0) {
                     priceError = context.getString(R.string.create_game_error_price)
                     hasError = true
