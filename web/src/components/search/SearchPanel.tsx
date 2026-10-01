@@ -206,9 +206,13 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
       }
 
       if (tab === 0 || tab === 3) {
+        // FIX #4126: LIST de games exige constraint provável — busca pública
+        // (GROUP_ONLY de outros grupos não é mais devolvida pela query).
+        const accessibleVisibilities = ['PUBLIC_OPEN', 'PUBLIC_CLOSED'];
         const gameQueries = [
           query(
             collection(db, 'games'),
+            where('visibility', 'in', accessibleVisibilities),
             where('locationName', '>=', searchTerm),
             where('locationName', '<=', prefixUpperBound),
             orderBy('locationName'),
@@ -216,6 +220,7 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
           ),
           query(
             collection(db, 'games'),
+            where('visibility', 'in', accessibleVisibilities),
             where('location_name', '>=', searchTerm),
             where('location_name', '<=', prefixUpperBound),
             orderBy('location_name'),
