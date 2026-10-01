@@ -282,6 +282,7 @@ jest.mock("firebase-functions/v2/firestore", () => ({
 const {
   acceptLocationManagerInvite,
   assignLocationOwner,
+  buildLocationCommercialRequestSnapshot,
   buildLocationFieldAggregates,
   buildLocationGameAggregates,
   buildLocationReviewAggregates,
@@ -306,6 +307,13 @@ const {
   onNestedLocationFieldWrittenUpdateStats,
   onRootFieldWrittenUpdateLocationStats,
 } = require("../src/locations/location-management");
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const {
+  DEFAULT_SUBSCRIPTION_STATUS,
+  TRIAL_MAX_DAYS,
+  normalizeVenueAccountStatus,
+  resolveSubscriptionStatusOrDefault,
+} = require("../src/locations/venue-account-shared");
 
 describe("location commercial aggregates", () => {
   it("calcula campos ativos, preco minimo e media por tipo", () => {
@@ -2875,6 +2883,352 @@ describe("location commercial admin callables", () => {
     expect(firestoreStore.get("locations/location-1"))
       .toMatchObject({subscription_status: "ACTIVE", commercial_status: "ACTIVE"});
     expect(collectionSize("locations/location-1/subscription_ledger")).toBe(2);
+  });
+});
+
+describe("billing contract expiry (#4107) e trial aging/observabilidade (#4111)", () => {
+  const NOW = new Date("2026-07-20T12:00:00.000Z");
+  const DAY_MS = 24 * 60 * 60 * 1000;
+
+  beforeEach(() => {
+    resetFirestore();
+    firestoreStore.set("locations/location-1", {
+      name: "Arena Parcas",
+      description: "Quadra completa para jogos dos parças.",
+      owner_id: "owner-1",
+      publication_status: "PUBLISHED",
+      subscription_status: "ACTIVE",
+      commercial_status: "ACTIVE",
+      is_active: true,
+      is_verified: true,
+      address: "Rua das Quadras, 100",
+      city: "Sao Paulo",
+      state: "SP",
+      phone: "+5511999999999",
+      photo_url: "https://example.com/arena.jpg",
+      latitude: -23.55052,
+      longitude: -46.633308,
+      opening_time: "08:00",
+      closing_time: "23:00",
+      operating_days: [1, 2, 3, 4, 5, 6],
+      min_game_duration_minutes: 60,
+      monthly_fee_cents: 19990,
+      billing_due_day: 10,
+    });
+    firestoreStore.set("locations/location-1/fields/field-1", {
+      name: "Campo 1",
+      is_active: true,
+      hourly_price: 12000,
+    });
+  });
+
+  it("#4107: cron nao gera ciclo para contrato vencido e encerra como CANCELLED uma unica vez", async () => {
+    firestoreStore.set("locations/location-1", {
+      ...firestoreStore.get("locations/location-1"),
+      billing_starts_at: new Date("2026-01-01T00:00:00.000Z"),
+      billing_expires_at: new Date("2026-06-30T23:59:59.000Z"),
+    });
+
+    const result = await processLocationBillingAutomation({
+      periodKey: "2026-07",
+      now: NOW,
+      actorUserId: "system-test",
+    });
+
+    expect(result).toMatchObject({
+      processedLocations: 0,
+      expiredLocations: 1,
+      expiredLocationIds: ["location-1"],
+      inconsistentLocations: 0,
+      ledgerEntriesCreated: 1,
+    });
+    expect(collectionSize("locations/location-1/subscription_cycles")).toBe(0);
+    expect(firestoreStore.get("locations/location-1")).toMatchObject({
+      subscription_status: "CANCELLED",
+      commercial_status: "CANCELLED",
+      updated_by: "system-test",
+    });
+    const [, ledger] = findFirstDoc("locations/location-1/subscription_ledger");
+    expect(ledger).toMatchObject({
+      type: "BILLING_AUTOMATION_CONTRACT_EXPIRED",
+      actor_user_id: "system-test",
+      period_key: "2026-07",
+      previous_subscription_status: "ACTIVE",
+      next_subscription_status: "CANCELLED",
+      previous_commercial_status: "ACTIVE",
+      next_commercial_status: "CANCELLED",
+    });
+    expect(collectionSize("locations/location-1/commercial_events")).toBe(1);
+
+    // Segunda execucao: ja CANCELLED → apenas skip, sem novo ledger/evento.
+    const secondRun = await processLocationBillingAutomation({
+      periodKey: "2026-07",
+      now: NOW,
+      actorUserId: "system-test",
+    });
+    expect(secondRun).toMatchObject({
+      expiredLocations: 0,
+      skippedLocations: 1,
+      skippedLocationIds: ["location-1"],
+      ledgerEntriesCreated: 0,
+    });
+    expect(collectionSize("locations/location-1/subscription_ledger")).toBe(1);
+    expect(collectionSize("locations/location-1/commercial_events")).toBe(1);
+  });
+
+  it("#4107: contrato com billing_expires_at futuro continua sendo cobrado normalmente", async () => {
+    firestoreStore.set("locations/location-1", {
+      ...firestoreStore.get("locations/location-1"),
+      billing_expires_at: new Date("2026-12-31T23:59:59.000Z"),
+    });
+
+    const result = await processLocationBillingAutomation({
+      periodKey: "2026-07",
+      now: NOW,
+      actorUserId: "system-test",
+    });
+
+    expect(result).toMatchObject({processedLocations: 1, expiredLocations: 0});
+    expect(collectionSize("locations/location-1/subscription_cycles")).toBe(1);
+    expect(firestoreStore.get("locations/location-1")?.subscription_status)
+      .not.toBe("CANCELLED");
+  });
+
+  it("#4107: resolver comercial marca contractExpired e tira da aprovacao de publicacao", () => {
+    const base = firestoreStore.get("locations/location-1") as Record<string, unknown>;
+    const fields = [firestoreStore.get("locations/location-1/fields/field-1")];
+
+    const healthy = buildLocationCommercialRequestSnapshot(
+      {...base, billing_expires_at: new Date("2026-12-31T00:00:00.000Z")},
+      fields,
+      NOW
+    );
+    expect(healthy.commercial_issue_codes).not.toContain("contractExpired");
+    expect(healthy.ready_for_publication_approval).toBe(true);
+
+    const expired = buildLocationCommercialRequestSnapshot(
+      {...base, billing_expires_at: new Date("2026-06-30T00:00:00.000Z")},
+      fields,
+      NOW
+    );
+    expect(expired.commercial_issue_codes).toContain("contractExpired");
+    expect(expired.ready_for_publication_approval).toBe(false);
+    expect(expired.billing_expires_at_iso).toBe("2026-06-30T00:00:00.000Z");
+  });
+
+  it("#4107: pagamento aprovado nao devolve ACTIVE para contrato vencido", async () => {
+    firestoreStore.set("locations/location-1", {
+      ...firestoreStore.get("locations/location-1"),
+      subscription_status: "OVERDUE",
+      commercial_status: "OVERDUE",
+      billing_expires_at: new Date("2020-01-01T00:00:00.000Z"),
+    });
+
+    await expect(registerLocationSubscriptionPayment({
+      auth: {uid: "admin-1"},
+      data: {
+        locationId: "location-1",
+        amountCents: 19990,
+        periodKey: "2026-07",
+        paidAtIso: "2026-07-05T12:00:00.000Z",
+      },
+    })).resolves.toMatchObject({subscriptionStatus: "CANCELLED"});
+
+    expect(firestoreStore.get("locations/location-1")).toMatchObject({
+      subscription_status: "CANCELLED",
+      commercial_status: "CANCELLED",
+      last_payment_amount_cents: 19990,
+    });
+    const [, ledger] = findFirstDoc("locations/location-1/subscription_ledger");
+    expect(ledger).toMatchObject({
+      type: "PAYMENT_REGISTERED",
+      previous_subscription_status: "OVERDUE",
+      next_subscription_status: "CANCELLED",
+    });
+  });
+
+  it("#4111: doc sem subscription_status resolve o mesmo default em todos os leitores", async () => {
+    const base = firestoreStore.get("locations/location-1") as Record<string, unknown>;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const {subscription_status: _omit, ...withoutStatus} = base;
+    firestoreStore.set("locations/location-1", withoutStatus);
+    const fields = [firestoreStore.get("locations/location-1/fields/field-1")];
+
+    // Helper compartilhado (fail-closed: cai no status que recebe escrutinio).
+    expect(DEFAULT_SUBSCRIPTION_STATUS).toBe("ACTIVE");
+    expect(resolveSubscriptionStatusOrDefault(undefined)).toBe("ACTIVE");
+    expect(resolveSubscriptionStatusOrDefault("PAUSED")).toBe("ACTIVE");
+    expect(resolveSubscriptionStatusOrDefault("TRIAL")).toBe("TRIAL");
+    expect(normalizeVenueAccountStatus(undefined)).toBe(DEFAULT_SUBSCRIPTION_STATUS);
+
+    // Leitor 1: resolver comercial.
+    const snapshot = buildLocationCommercialRequestSnapshot(withoutStatus, fields, NOW);
+    expect(snapshot.subscription_status).toBe(DEFAULT_SUBSCRIPTION_STATUS);
+    expect(snapshot.commercial_issue_codes).toContain("subscriptionStatusInvalid");
+    expect(snapshot.commercial_issue_codes).not.toContain("billingIrregular");
+
+    // Leitor 2: cron de cobranca (entra no laco e gera ciclo).
+    const cron = await processLocationBillingAutomation({
+      periodKey: "2026-07",
+      now: NOW,
+      actorUserId: "system-test",
+    });
+    expect(cron).toMatchObject({processedLocations: 1, skippedLocations: 0});
+    expect(collectionSize("locations/location-1/subscription_cycles")).toBe(1);
+
+    // Leitor 3: painel financeiro admin.
+    firestoreStore.set("locations/location-1", withoutStatus);
+    const summary = await getAdminLocationBillingSummary({
+      auth: {uid: "admin-1", token: {role: "ADMIN"}},
+      data: {periodKey: "2026-07"},
+    });
+    expect(summary.locations).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        id: "location-1",
+        subscriptionStatus: DEFAULT_SUBSCRIPTION_STATUS,
+      }),
+    ]));
+    expect(summary.summary.activeLocations).toBe(1);
+  });
+
+  it("#4111: TRIAL envelhecido vira trialExpired; TRIAL fresco nao gera pendencia", () => {
+    const base = firestoreStore.get("locations/location-1") as Record<string, unknown>;
+    const fields = [firestoreStore.get("locations/location-1/fields/field-1")];
+
+    const fresh = buildLocationCommercialRequestSnapshot(
+      {
+        ...base,
+        subscription_status: "TRIAL",
+        trial_started_at: new Date(NOW.getTime() - 5 * DAY_MS),
+      },
+      fields,
+      NOW
+    );
+    expect(fresh.commercial_issue_codes).not.toContain("trialExpired");
+    expect(fresh.commercial_issue_codes).not.toContain("billingIrregular");
+
+    const aged = buildLocationCommercialRequestSnapshot(
+      {
+        ...base,
+        subscription_status: "TRIAL",
+        trial_started_at: new Date(NOW.getTime() - (TRIAL_MAX_DAYS + 1) * DAY_MS),
+      },
+      fields,
+      NOW
+    );
+    expect(aged.subscription_status).toBe("TRIAL");
+    expect(aged.commercial_issue_codes).toContain("trialExpired");
+
+    // TRIAL sem relogio ainda nao envelhece (o cron grava trial_started_at).
+    const unknownAge = buildLocationCommercialRequestSnapshot(
+      {...base, subscription_status: "TRIAL"},
+      fields,
+      NOW
+    );
+    expect(unknownAge.commercial_issue_codes).not.toContain("trialExpired");
+  });
+
+  it("#4111: cron grava trial_started_at na primeira observacao e persiste doc de execucao com IDs", async () => {
+    firestoreStore.set("locations/trial-new", {
+      owner_id: "owner-trial",
+      subscription_status: "TRIAL",
+      commercial_status: "TRIAL",
+      monthly_fee_cents: 15000,
+      billing_due_day: 5,
+    });
+    firestoreStore.set("locations/trial-old", {
+      owner_id: "owner-trial",
+      subscription_status: "TRIAL",
+      commercial_status: "TRIAL",
+      monthly_fee_cents: 15000,
+      billing_due_day: 5,
+      trial_started_at: new Date(NOW.getTime() - (TRIAL_MAX_DAYS + 3) * DAY_MS),
+    });
+    firestoreStore.set("locations/broken", {
+      owner_id: "owner-broken",
+      subscription_status: "ACTIVE",
+      billing_due_day: 5,
+    });
+    firestoreStore.set("locations/cancelled", {
+      owner_id: "owner-cancelled",
+      subscription_status: "CANCELLED",
+      monthly_fee_cents: 10000,
+      billing_due_day: 5,
+    });
+
+    const result = await processLocationBillingAutomation({
+      periodKey: "2026-07",
+      now: NOW,
+      actorUserId: "system-test",
+    });
+
+    expect(result).toMatchObject({
+      runId: "2026-07_2026-07-20T12-00-00-000Z",
+      processedLocations: 1,
+      skippedLocations: 3,
+      inconsistentLocations: 1,
+      agedTrialLocations: 1,
+      skippedLocationIds: ["cancelled", "trial-new", "trial-old"],
+      inconsistentLocationIds: ["broken"],
+      agedTrialLocationIds: ["trial-old"],
+      expiredLocationIds: [],
+    });
+    expect(firestoreStore.get("locations/trial-new")).toMatchObject({
+      subscription_status: "TRIAL",
+      trial_started_at: NOW,
+      updated_by: "system-test",
+    });
+    expect(collectionSize("locations/trial-new/subscription_cycles")).toBe(0);
+    expect(collectionSize("locations/trial-new/subscription_ledger")).toBe(0);
+    expect(firestoreStore.get("locations/trial-old")).toMatchObject({
+      subscription_status: "TRIAL",
+    });
+
+    const runDoc = firestoreStore.get(
+      "billing_automation_runs/2026-07_2026-07-20T12-00-00-000Z"
+    );
+    expect(runDoc).toMatchObject({
+      run_id: "2026-07_2026-07-20T12-00-00-000Z",
+      period_key: "2026-07",
+      actor_user_id: "system-test",
+      started_at: NOW,
+      processed_locations: 1,
+      skipped_locations: 3,
+      inconsistent_locations: 1,
+      aged_trial_locations: 1,
+      expired_locations: 0,
+      skipped_location_ids: ["cancelled", "trial-new", "trial-old"],
+      inconsistent_location_ids: ["broken"],
+      aged_trial_location_ids: ["trial-old"],
+      expired_location_ids: [],
+      id_list_cap: 200,
+      budget_exhausted: false,
+    });
+  });
+
+  it("#4111: setLocationSubscription inicia o relogio ao entrar em TRIAL e preserva o existente", async () => {
+    await setLocationSubscription({
+      auth: {uid: "admin-1"},
+      data: {locationId: "location-1", subscriptionStatus: "TRIAL"},
+    });
+    const first = firestoreStore.get("locations/location-1");
+    expect(first?.subscription_status).toBe("TRIAL");
+    expect(first?.trial_started_at).toBeInstanceOf(Date);
+    const startedAt = first?.trial_started_at;
+
+    // Ja em TRIAL com relogio → nao reinicia.
+    await setLocationSubscription({
+      auth: {uid: "admin-1"},
+      data: {locationId: "location-1", subscriptionStatus: "TRIAL", adminNotes: "x"},
+    });
+    expect(firestoreStore.get("locations/location-1")?.trial_started_at).toBe(startedAt);
+
+    // Sai de TRIAL: relogio fica como historico; nao muda.
+    await setLocationSubscription({
+      auth: {uid: "admin-1"},
+      data: {locationId: "location-1", subscriptionStatus: "ACTIVE"},
+    });
+    expect(firestoreStore.get("locations/location-1")?.trial_started_at).toBe(startedAt);
   });
 });
 

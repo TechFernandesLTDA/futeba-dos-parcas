@@ -299,65 +299,178 @@ describe("Index — Funcoes do index.ts", () => {
   });
 
   describe("onGroupDeleted", () => {
+    // FIX #4100: a cascata é sequencial e paginada (450/página), então a
+    // ordem dos `.get()` é determinística. Este helper programa as páginas
+    // por coleção nessa ordem — coleções omitidas retornam 1 página vazia.
+    const CASCADE_ORDER = [
+      "members",
+      "cashbox",
+      "cashbox_summary",
+      "join_requests",
+      "wall_posts",
+      "group_invites",
+      "group_polls",
+      "group_poll_votes",
+      "schedules",
+      "games",
+    ] as const;
+    type CascadeCollection = typeof CASCADE_ORDER[number];
+    type Page = any[];
+
+    const programCascadeReads = (
+      pages: Partial<Record<CascadeCollection, Page[]>>,
+    ) => {
+      for (const name of CASCADE_ORDER) {
+        const collectionPages = pages[name] ?? [[]];
+        for (const docs of collectionPages) {
+          mockCollectionGet.mockResolvedValueOnce({ docs, size: docs.length });
+        }
+      }
+    };
+
+    const makeDocs = (prefix: string, count: number, data?: () => any) =>
+      Array.from({ length: count }, (_, i) => ({
+        ref: { id: `${prefix}${i + 1}` },
+        ...(data ? { data } : {}),
+      }));
+
+    const makeEvent = () => ({
+      data: { data: () => null },
+      params: { groupId: "group1" },
+    });
+
     it("deleta membros e subcolecoes em cascata", async () => {
       // FIX #2605: member-based iteration for user group refs.
       // Member docs must include data() with user_id so the new code
       // can extract the uid to delete users/{uid}/groups/{groupId}.
-      mockCollectionGet
-        .mockResolvedValueOnce({ docs: [{ ref: { id: "m1" }, data: () => ({ user_id: "user1" }) }], size: 1 })
-        .mockResolvedValueOnce({ docs: [{ ref: { id: "tx1" } }], size: 1 })
-        .mockResolvedValueOnce({ docs: [], size: 0 })
-        .mockResolvedValueOnce({ docs: [], size: 0 })
-        .mockResolvedValueOnce({ docs: [], size: 0 })
-        .mockResolvedValueOnce({ docs: [], size: 0 })
-        .mockResolvedValueOnce({ docs: [{ ref: { id: "g1" } }], size: 1 });
-
-      await onGroupDeleted({
-        data: { data: () => null },
-        params: { groupId: "group1" },
+      programCascadeReads({
+        members: [[{ ref: { id: "m1" }, data: () => ({ user_id: "user1" }) }]],
+        cashbox: [[{ ref: { id: "tx1" } }]],
+        games: [[{ ref: { id: "g1" } }]],
       });
 
-      expect(mockBatchDelete).toHaveBeenCalled();
-      expect(mockBatchUpdate).toHaveBeenCalled();
-      expect(mockBatchCommit).toHaveBeenCalled();
+      await onGroupDeleted(makeEvent());
+
+      // m1 + users/user1/groups/group1 + tx1
+      expect(mockBatchDelete).toHaveBeenCalledTimes(3);
+      expect(mockBatchDelete).toHaveBeenCalledWith({ id: "m1" });
+      expect(mockBatchDelete).toHaveBeenCalledWith({ id: "tx1" });
+      expect(mockSubColDoc).toHaveBeenCalledWith("group1");
+      expect(mockBatchUpdate).toHaveBeenCalledTimes(1);
+      expect(mockBatchCommit).toHaveBeenCalledTimes(1);
+    });
+
+    it("enfileira users/{uid}/groups/{id} antes do doc do membro (retry nao deixa referencia orfa)", async () => {
+      programCascadeReads({
+        members: [[{ ref: { id: "m1" }, data: () => ({ user_id: "user1" }) }]],
+      });
+
+      await onGroupDeleted(makeEvent());
+
+      const deletedIds = mockBatchDelete.mock.calls.map(([ref]) => ref.id);
+      // A referencia espelhada (doc "group1" em users/user1/groups) vem antes de m1
+      expect(deletedIds.indexOf("group1")).toBeGreaterThanOrEqual(0);
+      expect(deletedIds.indexOf("group1")).toBeLessThan(deletedIds.indexOf("m1"));
     });
 
     it("deleta cashbox entries e join_requests", async () => {
-      mockCollectionGet
-        .mockResolvedValueOnce({ docs: [], size: 0 })
-        .mockResolvedValueOnce({ docs: [{ ref: { id: "tx1" } }], size: 1 })
-        .mockResolvedValueOnce({ docs: [], size: 0 })
-        .mockResolvedValueOnce({ docs: [{ ref: { id: "jr1" } }], size: 1 })
-        .mockResolvedValueOnce({ docs: [], size: 0 })
-        .mockResolvedValueOnce({ docs: [], size: 0 })
-        .mockResolvedValueOnce({ docs: [], size: 0 });
-
-      await onGroupDeleted({
-        data: { data: () => null },
-        params: { groupId: "group1" },
+      programCascadeReads({
+        cashbox: [[{ ref: { id: "tx1" } }]],
+        join_requests: [[{ ref: { id: "jr1" } }]],
       });
 
-      expect(mockBatchDelete).toHaveBeenCalled();
+      await onGroupDeleted(makeEvent());
+
+      expect(mockBatchDelete).toHaveBeenCalledWith({ id: "tx1" });
+      expect(mockBatchDelete).toHaveBeenCalledWith({ id: "jr1" });
+      expect(mockBatchDelete).toHaveBeenCalledTimes(2);
     });
 
     it("marca jogos do grupo como orphaned", async () => {
-      mockCollectionGet
-        .mockResolvedValueOnce({ docs: [], size: 0 })
-        .mockResolvedValueOnce({ docs: [], size: 0 })
-        .mockResolvedValueOnce({ docs: [], size: 0 })
-        .mockResolvedValueOnce({ docs: [], size: 0 })
-        .mockResolvedValueOnce({ docs: [], size: 0 })
-        .mockResolvedValueOnce({ docs: [], size: 0 })
-        .mockResolvedValueOnce({ docs: [{ ref: { id: "game1" }, data: () => ({}) }], size: 1 });
-
-      await onGroupDeleted({
-        data: { data: () => null },
-        params: { groupId: "group1" },
+      programCascadeReads({
+        games: [[{ ref: { id: "game1" }, data: () => ({}) }]],
       });
 
+      await onGroupDeleted(makeEvent());
+
       expect(mockBatchUpdate).toHaveBeenCalledWith(
-        expect.any(Object),
-        expect.objectContaining({ group_deleted: true }),
+        { id: "game1" },
+        expect.objectContaining({ group_id: null, group_deleted: true }),
+      );
+      expect(mockBatchDelete).not.toHaveBeenCalled();
+    });
+
+    it("deleta wall_posts, group_polls e group_poll_votes (#4100)", async () => {
+      programCascadeReads({
+        wall_posts: [[{ ref: { id: "wp1" } }, { ref: { id: "wp2" } }]],
+        group_polls: [[{ ref: { id: "poll1" } }]],
+        group_poll_votes: [[{ ref: { id: "poll1_user1" } }]],
+      });
+
+      await onGroupDeleted(makeEvent());
+
+      expect(mockSubCol).toHaveBeenCalledWith("wall_posts");
+      expect(mockCollection).toHaveBeenCalledWith("group_polls");
+      expect(mockCollection).toHaveBeenCalledWith("group_poll_votes");
+      expect(mockWhere).toHaveBeenCalledWith("group_id", "==", "group1");
+      expect(mockBatchDelete).toHaveBeenCalledWith({ id: "wp1" });
+      expect(mockBatchDelete).toHaveBeenCalledWith({ id: "wp2" });
+      expect(mockBatchDelete).toHaveBeenCalledWith({ id: "poll1" });
+      expect(mockBatchDelete).toHaveBeenCalledWith({ id: "poll1_user1" });
+      expect(mockBatchDelete).toHaveBeenCalledTimes(4);
+      expect(mockBatchCommit).toHaveBeenCalledTimes(1);
+    });
+
+    it("pagina leituras com limit(450) + startAfter e commita em multiplos batches (#4100)", async () => {
+      // 450 docs na 1a página (cheia → busca próxima) + 5 na 2a (parcial → para).
+      const page1 = makeDocs("tx", 450);
+      const page2 = makeDocs("tx-extra", 5);
+      programCascadeReads({ cashbox: [page1, page2] });
+
+      await onGroupDeleted(makeEvent());
+
+      expect(mockLimit).toHaveBeenCalledWith(450);
+      // Cursor: exatamente 1 startAfter, com o último doc da página cheia.
+      expect(mockStartAfter).toHaveBeenCalledTimes(1);
+      expect(mockStartAfter).toHaveBeenCalledWith(page1[449]);
+      // 455 deletes distribuídos em 2 batches (450 + 5).
+      expect(mockBatchDelete).toHaveBeenCalledTimes(455);
+      expect(mockBatchCommit).toHaveBeenCalledTimes(2);
+      // Nenhuma leitura crua sem limit: todo get passa por limit().
+      expect(mockLimit.mock.calls.length).toBeGreaterThanOrEqual(mockCollectionGet.mock.calls.length);
+    });
+
+    it("commita incrementalmente quando membros geram 2 ops cada (#4100)", async () => {
+      // 300 membros → 600 ops (member + users/{uid}/groups/{gid}) em 1 página
+      // parcial: o acumulador deve flushar em 450 e de novo no final.
+      const members = makeDocs("m", 300, () => ({ user_id: "u" }));
+      programCascadeReads({ members: [members] });
+
+      await onGroupDeleted(makeEvent());
+
+      expect(mockBatchDelete).toHaveBeenCalledTimes(600);
+      expect(mockBatchCommit).toHaveBeenCalledTimes(2);
+    });
+
+    it("nao commita nada quando grupo nao tem documentos relacionados", async () => {
+      programCascadeReads({});
+
+      await onGroupDeleted(makeEvent());
+
+      expect(mockBatchDelete).not.toHaveBeenCalled();
+      expect(mockBatchUpdate).not.toHaveBeenCalled();
+      expect(mockBatchCommit).not.toHaveBeenCalled();
+    });
+
+    it("propaga erro do Firestore para forcar retry do trigger", async () => {
+      mockCollectionGet.mockRejectedValueOnce(new Error("UNAVAILABLE"));
+
+      await expect(onGroupDeleted(makeEvent())).rejects.toThrow("UNAVAILABLE");
+
+      const logger = jest.requireMock("firebase-functions/v2").logger;
+      expect(logger.error).toHaveBeenCalledWith(
+        expect.stringContaining("Error during cascade deletion for group group1"),
+        expect.any(Error),
       );
     });
   });

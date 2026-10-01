@@ -50,9 +50,19 @@ import com.futebadosparcas.compose.resources.report_player_goals
 import com.futebadosparcas.compose.resources.share
 import com.futebadosparcas.domain.model.*
 import com.futebadosparcas.ui.adaptive.AdaptiveTopBar
+import com.futebadosparcas.ui.theme.DynamicThemeEngine
 import org.jetbrains.compose.resources.stringResource
 
 // Log: removeu imports java.*, resources android, etc.
+
+// #4096/#4098: cores fixas das medalhas do pódio (ouro/prata/bronze). São fundos OPACOS,
+// portanto independentes do tema — por isso ficam como literais, definidos uma única vez
+// aqui (a paleta GamificationColors do módulo foi removida em #4098 por não ter
+// consumidores). O foreground do número NUNCA é hardcoded: é escolhido em runtime por
+// DynamicThemeEngine.onColorFor(medalColor), que garante o maior contraste WCAG.
+private val MedalGold = Color(0xFFFFD700)
+private val MedalSilver = Color(0xFFE0E0E0)
+private val MedalBronze = Color(0xFFCD7F32)
 // Substituiu formatacao monetaria por funcao local
 
 /**
@@ -160,7 +170,8 @@ fun PostGameReportScreen(
                         Icon(
                             imageVector = Icons.Filled.Chat,
                             contentDescription = stringResource(Res.string.owner_share_whatsapp_cd),
-                            tint = Color(0xFF25D366) // verde whatsapp
+                            // #4096: token do tema (primary >= 3,0:1 sobre surface nos dois modos)
+                            tint = MaterialTheme.colorScheme.primary
                         )
                     }
                     IconButton(onClick = onShare) {
@@ -258,7 +269,7 @@ fun PostGameReportScreen(
                 ReportPlayerRow(
                     player = player,
                     icon = Icons.Filled.CheckCircle,
-                    iconColor = Color(0xFF25D366)
+                    iconColor = MaterialTheme.colorScheme.primary // #4096
                 )
             }
 
@@ -409,7 +420,8 @@ private fun MvpCard(player: GameConfirmation) {
             Icon(
                 imageVector = Icons.Filled.Star,
                 contentDescription = stringResource(Res.string.owner_mvp_short),
-                tint = Color(0xFFFFD700),
+                // #4096: onTertiaryContainer garante contraste sobre o container do card
+                tint = MaterialTheme.colorScheme.onTertiaryContainer,
                 modifier = Modifier.size(32.dp)
             )
             Spacer(modifier = Modifier.width(12.dp))
@@ -460,7 +472,8 @@ private fun ReportStatsCard(
                 StatBox(
                     value = presentCount.toString(),
                     label = stringResource(Res.string.owner_present),
-                    color = Color(0xFF25D366)
+                    // #4096: onSurface (13,2:1 light / 10,7:1 dark sobre surfaceContainerHighest)
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 StatBox(
                     value = absentCount.toString(),
@@ -475,7 +488,8 @@ private fun ReportStatsCard(
                 StatBox(
                     value = yellowCards.toString(),
                     label = stringResource(Res.string.owner_yellow),
-                    color = Color(0xFFFDD835)
+                    // #4096: amarelo literal reprovava no light (1,08:1); onSurface passa nos dois modos
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 StatBox(
                     value = redCards.toString(),
@@ -541,9 +555,9 @@ private fun ReportTopPlayersCard(
                 ) {
                     // Medal/position
                     val medalColor = when (index) {
-                        0 -> Color(0xFFFFD700)
-                        1 -> Color(0xFFE0E0E0)
-                        2 -> Color(0xFFCD7F32)
+                        0 -> MedalGold
+                        1 -> MedalSilver
+                        2 -> MedalBronze
                         else -> MaterialTheme.colorScheme.onSurfaceVariant
                     }
                     Box(
@@ -557,7 +571,8 @@ private fun ReportTopPlayersCard(
                             text = "${index + 1}",
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Bold,
-                            color = if (index == 1) Color.Black else Color.White
+                            // #4096: foreground contrast-aware (paridade com ContrastHelper do :app)
+                            color = DynamicThemeEngine.onColorFor(medalColor)
                         )
                     }
 
@@ -642,7 +657,8 @@ private fun ReportFinancialCard(
                         text = formatCurrency(collected),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF25D366)
+                        // #4096: mesmo token dos irmãos do card (14,6:1 light / 15,7:1 dark)
+                        color = MaterialTheme.colorScheme.onSecondaryContainer
                     )
                     Text(
                         text = stringResource(Res.string.owner_paid_count_parenthesized, paidCount),

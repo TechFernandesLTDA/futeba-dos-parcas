@@ -158,7 +158,13 @@ object DynamicThemeEngine {
         return blendColors(base, target, ratio)
     }
 
-    private fun onColorFor(background: Color): Color {
+    /**
+     * #2677/#4096: escolhe o foreground (texto escuro ou claro) com maior contraste WCAG
+     * sobre [background]. `internal` para que telas com fundos opacos fixos (ex.: medalhas
+     * do pódio em PostGameReportScreen) reutilizem o mesmo algoritmo em vez de hardcodar
+     * Color.White/Color.Black.
+     */
+    internal fun onColorFor(background: Color): Color {
         // #2677: WCAG AA contrast-aware. Tenta texto escuro e claro; fallback ao maior contraste.
         val darkText = Color(0xFF0B0F0D)
         val lightText = Color(0xFFF5F7F6)
