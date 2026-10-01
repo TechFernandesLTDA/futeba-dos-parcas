@@ -19,6 +19,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -561,6 +562,8 @@ private fun CreateGameContent(
         SectionTitle(stringResource(R.string.create_game_section_basic_info))
 
         OutlinedTextField(
+            // FIX #4137: teclado com capitalização para campos de texto livre.
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
             value = ownerName,
             onValueChange = onOwnerNameChange,
             label = { Text(stringResource(R.string.create_game_hint_owner)) },
@@ -579,6 +582,8 @@ private fun CreateGameContent(
                 onExpandedChange = { expanded = it }
             ) {
                 OutlinedTextField(
+            // FIX #4137: teclado com capitalização para campos de texto livre.
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
                     value = selectedGroup?.groupName ?: "",
                     onValueChange = {},
                     readOnly = true,
@@ -618,6 +623,8 @@ private fun CreateGameContent(
         SectionTitle(stringResource(R.string.create_game_section_datetime))
 
         OutlinedTextField(
+            // FIX #4137: teclado com capitalização para campos de texto livre.
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
             value = selectedDate?.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) ?: "",
             onValueChange = {},
             label = { Text(stringResource(R.string.create_game_hint_date)) },
@@ -645,6 +652,8 @@ private fun CreateGameContent(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             OutlinedTextField(
+            // FIX #4137: teclado com capitalização para campos de texto livre.
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
                 value = selectedTime?.format(DateTimeFormatter.ofPattern("HH:mm")) ?: "",
                 onValueChange = {},
                 label = { Text(stringResource(R.string.create_game_hint_start)) },
@@ -668,6 +677,8 @@ private fun CreateGameContent(
             )
 
             OutlinedTextField(
+            // FIX #4137: teclado com capitalização para campos de texto livre.
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
                 value = selectedEndTime?.format(DateTimeFormatter.ofPattern("HH:mm")) ?: "",
                 onValueChange = {},
                 label = { Text(stringResource(R.string.create_game_hint_end)) },
@@ -745,6 +756,8 @@ private fun CreateGameContent(
                             onExpandedChange = { expandedRecurrence = it }
                         ) {
                             OutlinedTextField(
+            // FIX #4137: teclado com capitalização para campos de texto livre.
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
                                 value = recurrenceDisplayNames[recurrenceType] ?: recurrenceType,
                                 onValueChange = {},
                                 readOnly = true,

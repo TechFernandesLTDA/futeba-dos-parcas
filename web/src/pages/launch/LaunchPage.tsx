@@ -113,6 +113,9 @@ function LaunchPageContent() {
           top: 0,
           zIndex: theme.zIndex.appBar,
           backdropFilter: 'blur(12px)',
+          // FIX #4130 (a11y): com status-bar `default` o header precisa
+          // respeitar a safe-area (Dynamic Island/notch no PWA iOS).
+          paddingTop: 'env(safe-area-inset-top, 0px)',
         }}
       >
         <Container maxWidth="lg">

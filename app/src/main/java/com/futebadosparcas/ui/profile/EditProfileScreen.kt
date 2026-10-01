@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import coil3.compose.AsyncImage
 import com.futebadosparcas.domain.model.FieldType
@@ -571,6 +572,8 @@ private fun BasicInfoSection(
         )
 
         OutlinedTextField(
+            // FIX #4137: teclado com capitalização para campos de texto livre.
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
             value = name,
             onValueChange = onNameChange,
             label = { Text(stringResource(R.string.edit_profile_full_name)) },
@@ -580,6 +583,8 @@ private fun BasicInfoSection(
         )
 
         OutlinedTextField(
+            // FIX #4137: teclado com capitalização para campos de texto livre.
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
             value = nickname,
             onValueChange = onNicknameChange,
             label = { Text(stringResource(R.string.edit_profile_nickname)) },
@@ -589,6 +594,8 @@ private fun BasicInfoSection(
         )
 
         OutlinedTextField(
+            // FIX #4137: teclado com capitalização para campos de texto livre.
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
             value = birthDate?.let { dateFormatter.format(it) } ?: "",
             onValueChange = {},
             label = { Text(stringResource(R.string.edit_profile_birth_date)) },
@@ -697,6 +704,8 @@ private fun PhysicalInfoSection(
             onExpandedChange = { genderExpanded = it }
         ) {
             OutlinedTextField(
+            // FIX #4137: teclado com capitalização para campos de texto livre.
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
                 value = mapValueToEntry(gender, genderValues.toList(), genderEntries.toList()),
                 onValueChange = {},
                 readOnly = true,
@@ -760,6 +769,8 @@ private fun PhysicalInfoSection(
             onExpandedChange = { footExpanded = it }
         ) {
             OutlinedTextField(
+            // FIX #4137: teclado com capitalização para campos de texto livre.
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
                 value = mapValueToEntry(dominantFoot, footValues.toList(), footEntries.toList()),
                 onValueChange = {},
                 readOnly = true,
@@ -882,6 +893,8 @@ private fun PositionSection(
             onExpandedChange = { primaryExpanded = it }
         ) {
             OutlinedTextField(
+            // FIX #4137: teclado com capitalização para campos de texto livre.
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
                 value = mapValueToEntry(primaryPosition, positionValues.toList(), positionEntries.toList()),
                 onValueChange = {},
                 readOnly = true,
@@ -914,6 +927,8 @@ private fun PositionSection(
             onExpandedChange = { secondaryExpanded = it }
         ) {
             OutlinedTextField(
+            // FIX #4137: teclado com capitalização para campos de texto livre.
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
                 value = mapValueToEntry(secondaryPosition, positionValues.toList(), positionEntries.toList()),
                 onValueChange = {},
                 readOnly = true,
@@ -946,6 +961,8 @@ private fun PositionSection(
             onExpandedChange = { playStyleExpanded = it }
         ) {
             OutlinedTextField(
+            // FIX #4137: teclado com capitalização para campos de texto livre.
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
                 value = mapValueToEntry(playStyle, playStyleValues.toList(), playStyleEntries.toList()),
                 onValueChange = {},
                 readOnly = true,

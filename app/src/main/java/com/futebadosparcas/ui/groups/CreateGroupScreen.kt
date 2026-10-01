@@ -1,5 +1,7 @@
 package com.futebadosparcas.ui.groups
 
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -177,6 +179,8 @@ fun CreateGroupScreen(
 
             // Campo de nome
             OutlinedTextField(
+            // FIX #4137: teclado com capitalização para campos de texto livre.
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
                 value = groupName,
                 onValueChange = { groupName = it },
                 label = { Text(stringResource(R.string.fragment_create_group_hint_2)) },
@@ -204,6 +208,8 @@ fun CreateGroupScreen(
 
             // Campo de descrição
             OutlinedTextField(
+            // FIX #4137: teclado com capitalização para campos de texto livre.
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
                 value = groupDescription,
                 onValueChange = {
                     if (it.length <= 200) groupDescription = it

@@ -1,5 +1,7 @@
 package com.futebadosparcas.ui.messages
 
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -97,6 +99,8 @@ fun ConversationScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 OutlinedTextField(
+            // FIX #4137: teclado com capitalização para campos de texto livre.
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
                     value = text,
                     onValueChange = { text = it.take(1000) },
                     placeholder = { Text(stringResource(R.string.direct_messages_placeholder)) },
