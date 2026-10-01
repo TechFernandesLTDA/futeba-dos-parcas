@@ -67,6 +67,31 @@ function isActiveMembershipDoc(
 }
 
 /**
+ * Normaliza o valor de dateTime para comparação estável.
+ *
+ * FIX #4143: `before.dateTime !== after.dateTime` entre Timestamps é SEMPRE
+ * true (cada data() desserializa instância nova) — qualquer escrita em
+ * games/{id} virava "data/local mudou", com transação extra e push falso.
+ *
+ * @param {unknown} value Valor bruto (Timestamp, Date ou string).
+ * @return {string} Normalização comparável.
+ */
+function normalizeDateTimeForChangeCheck(value: unknown): string {
+  if (
+    value &&
+    typeof value === "object" &&
+    "toMillis" in value &&
+    typeof value.toMillis === "function"
+  ) {
+    return String(value.toMillis());
+  }
+  if (value instanceof Date) {
+    return String(value.getTime());
+  }
+  return String(value ?? "");
+}
+
+/**
  * Decide se a atualização alterou a data ou local do jogo.
  *
  * @param {Record<string, unknown>} before
@@ -79,7 +104,8 @@ function hasGameUpdateNotificationRelevantChange(
 ): boolean {
   return (
     before.date !== after.date ||
-    before.dateTime !== after.dateTime ||
+    normalizeDateTimeForChangeCheck(before.dateTime) !==
+      normalizeDateTimeForChangeCheck(after.dateTime) ||
     before.location_id !== after.location_id ||
     before.locationId !== after.locationId
   );
@@ -387,6 +413,14 @@ export const onGameUpdatedNotification =
         before.status !== "CANCELLED" &&
         after.status === "CANCELLED"
       ) {
+        // FIX #4135: cancelamentos pelo SISTEMA têm push próprio — o texto
+        // "cancelado pelo organizador" é falso e, no baixo quórum, gerava
+        // DOIS pushes contraditórios para as mesmas pessoas.
+        const systemCancellation =
+          after.auto_closed === true ||
+          after.cancelled_by === "system" ||
+          after.auto_cancelled === true;
+
         try {
           const userIds =
             confirmedUserIds ??
@@ -395,7 +429,14 @@ export const onGameUpdatedNotification =
             );
           confirmedUserIds = userIds;
 
-          if (userIds.length > 0) {
+          if (
+            userIds.length > 0 &&
+            !systemCancellation
+          ) {
+            const gameGroupId =
+              typeof after.group_id === "string" ?
+                after.group_id :
+                undefined;
             await sendNotificationToUsers(
               userIds,
               {
@@ -406,7 +447,8 @@ export const onGameUpdatedNotification =
                 data: {
                   gameId: gameId,
                 },
-              }
+              },
+              gameGroupId
             );
           }
         } catch (e) {

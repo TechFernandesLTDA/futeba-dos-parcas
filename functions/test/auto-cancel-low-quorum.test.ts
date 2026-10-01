@@ -193,7 +193,8 @@ describe("autoCancelLowQuorum", () => {
     );
     expect(mockSendNotificationToUsers).toHaveBeenCalledWith(
       ["user1", "user2"],
-      expect.objectContaining({ title: "Jogo cancelado" })
+      expect.objectContaining({ title: "Jogo cancelado" }),
+      undefined
     );
   });
 
@@ -644,7 +645,8 @@ describe("autoCancelLowQuorum", () => {
     );
     expect(mockSendNotificationToUsers).toHaveBeenCalledWith(
       ["userA", "userB"],
-      expect.objectContaining({ title: "Jogo cancelado" })
+      expect.objectContaining({ title: "Jogo cancelado" }),
+      undefined
     );
     // Erro do jogo 1 foi logado (não propagado).
     expect(logger.error).toHaveBeenCalledWith(

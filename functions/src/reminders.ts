@@ -1474,7 +1474,10 @@ async function processLowQuorumGame(
             gameId: gameId,
             reason: "low_quorum",
           },
-        }
+        },
+        // FIX #4135: respeitar mute_groups do grupo do jogo.
+        (cancellation.gameData.group_id as string | undefined) ||
+          undefined
       );
 
       for (
