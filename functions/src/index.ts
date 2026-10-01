@@ -35,6 +35,14 @@ import {
 const GAME_CONFIRMATIONS_QUERY_LIMIT = 200;
 const GAME_TEAMS_QUERY_LIMIT = 100;
 
+// FIX #4150: janela de dias que mantém a sequência de participações.
+// BUSINESS_RULES define streak por jogos CONSECUTIVOS — pelada semanal
+// (lacuna de 7 dias) tem que MANTER. Antes o corte era gapDays <= 1, o
+// que zerava toda sequência semanal (7/7 user_streaks em prod com
+// longest_streak = 1). 8 = 7 + 1 de tolerância (mesma janela do
+// SmartReminderHelper; decisão registrada em specs/DECISIONS.md).
+const STREAK_KEEP_GAP_DAYS = 8;
+
 // Padroniza região default de TODAS as functions v2 que não especificam
 // region explicitamente. Antes, 15 functions ficavam em us-central1
 // (default do Firebase) enquanto Firestore está em southamerica-east1,
@@ -284,8 +292,14 @@ export function calculateNextParticipationStreak(
     null;
   const keepsStreak =
     previousCurrent > 0 &&
-    (gapDays === null || (gapDays >= 0 && gapDays <= 1));
-  const currentStreak = keepsStreak ? previousCurrent + 1 : 1;
+    (gapDays === null || (gapDays >= 0 && gapDays <= STREAK_KEEP_GAP_DAYS));
+  // FIX #4150: mesmo dia NÃO soma (paridade com o gêmeo KMP
+  // GamificationRepositoryImpl: diffInDays == 0 não incrementa) — duas
+  // peladas no sábado não contam como 2 jogos seguidos.
+  const sameDayAttendance = gapDays === 0;
+  const currentStreak = keepsStreak ?
+    (sameDayAttendance ? previousCurrent : previousCurrent + 1) :
+    1;
   const previousStartedAt =
     typeof raw?.streak_started_at === "string" ?
       raw.streak_started_at :
@@ -3102,7 +3116,11 @@ export {
 // ==========================================
 export {toggleFollowUser} from "./social/follow";
 export {discoverNearbyPlayers} from "./social/nearby-players";
-export {createDirectChat, submitDirectMessage} from "./social/direct-messages";
+export {
+  createDirectChat,
+  submitDirectMessage,
+  onDirectMessageDeleted,
+} from "./social/direct-messages";
 export {submitContentReport} from "./social/reports";
 export {onGroupWallPostSoftDeletedCleanupMedia} from "./groups/wall-media-cleanup";
 export {

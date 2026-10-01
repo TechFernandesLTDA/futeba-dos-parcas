@@ -54,7 +54,7 @@ vi.mock('../../contexts/AuthContext', () => ({
   }),
 }));
 vi.mock('../../contexts/ToastContext', () => ({
-  useToast: () => ({ showSuccess: vi.fn(), showError: vi.fn() }),
+  useToast: () => ({ showSuccess: vi.fn(), showError: vi.fn(), showWithAction: vi.fn() }),
 }));
 vi.mock('../../components/reactions/ReactionBar', () => ({
   ReactionBar: () => <div data-testid="reaction-bar" />,
@@ -100,16 +100,16 @@ describe('GamePhotosTab keyboard accessibility', () => {
     expect(screen.getByRole('dialog', { name: 'Foto enviada por Ana' })).toBeInTheDocument();
   });
 
-  it('mantém excluir como ação irmã sem abrir o lightbox', async () => {
+  it('mantém excluir como ação irmã sem abrir o lightbox (agora com confirmação #4148)', async () => {
     const user = userEvent.setup();
     renderTab();
     const thumbnail = await screen.findByRole('button', { name: 'Foto enviada por Ana' });
     const deleteButton = screen.getByRole('button', { name: 'Excluir foto' });
 
     expect(thumbnail).not.toContainElement(deleteButton);
+    // FIX #4148: 1º toque NÃO apaga — pede confirmação no toast.
     await user.click(deleteButton);
-
-    await waitFor(() => expect(mockDeleteDoc).toHaveBeenCalledOnce());
+    expect(mockDeleteDoc).not.toHaveBeenCalled();
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 });

@@ -315,6 +315,13 @@ async function findUpcomingOpenGameForUser(
   if (groupIds.length === 0) return null;
 
   const nowTs = Timestamp.fromDate(new Date());
+  // FIX #4150: o nudge só faz sentido se CONFIRMAR a presença ainda salva
+  // a sequência — a janela que mantém é de 8 dias (pelada semanal + 1).
+  // Jogo aberto a 3+ dias com a regra antiga era promessa sem efeito.
+  const STREAK_KEEP_WINDOW_MS = 8 * 24 * 60 * 60 * 1000;
+  const windowEndTs = Timestamp.fromDate(
+    new Date(Date.now() + STREAK_KEEP_WINDOW_MS)
+  );
 
   for (const groupBatch of chunk(groupIds, GAME_QUERY_BATCH_SIZE)) {
     const batchResults = await Promise.all(
@@ -324,6 +331,7 @@ async function findUpcomingOpenGameForUser(
           .where("group_id", "==", groupId)
           .where("status", "in", ACTIVE_GAME_STATUSES)
           .where("dateTime", ">", nowTs)
+          .where("dateTime", "<=", windowEndTs)
           .orderBy("dateTime", "asc")
           // #3875: limita leitura de jogos futuros por grupo. Já vamos parar no
           // primeiro jogo aberto não confirmado; ler tudo era amplificação de

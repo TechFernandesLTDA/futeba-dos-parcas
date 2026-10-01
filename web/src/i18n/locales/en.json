@@ -1650,7 +1650,8 @@
     "unpin": "Unpin",
     "postOptions": "Post options",
     "edited": "edited",
-    "notMember": "Join the group to participate in the wall."
+    "notMember": "Join the group to participate in the wall.",
+    "deleteConfirm": "Delete post?"
   },
   "socialFeed": {
     "title": "Feed",
@@ -2287,13 +2288,13 @@
         "nameRequired": "Name is required",
         "phoneInvalid": "Invalid phone (use area code + number)",
         "playersPerTeamRange": "Between 3 and 11",
-      "stateRequired": "State is required.",
-      "timeZoneInvalid": "Select a valid time zone.",
+        "stateRequired": "State is required.",
+        "timeZoneInvalid": "Select a valid time zone.",
         "websiteInvalid": "Invalid URL. Must start with http:// or https://"
       },
-    "timeZoneHelper": "Used to calculate opening hours correctly, including after midnight.",
-    "timeZoneLabel": "Location time zone",
-    "websiteLabel": "Website"
+      "timeZoneHelper": "Used to calculate opening hours correctly, including after midnight.",
+      "timeZoneLabel": "Location time zone",
+      "websiteLabel": "Website"
     },
     "quickCreate": {
       "title": "Create Location",

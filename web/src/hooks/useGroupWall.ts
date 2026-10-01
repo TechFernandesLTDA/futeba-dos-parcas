@@ -834,10 +834,12 @@ export function useCreateWallPost(groupId?: string) {
 
 export function useDeleteWallPost(groupId?: string) {
   const { currentUser } = useAuth();
-  const { showError } = useToast();
+  // FIX #4148: exclusão de post do mural passa a exigir confirmação.
+  const { showError, showWithAction } = useToast();
+  const { t } = useTranslation();
   const [deleting, setDeleting] = useState(false);
 
-  const remove = useCallback(
+  const executeRemove = useCallback(
     async (post: WallPost) => {
       if (!groupId || !currentUser?.uid) {
         const error = new Error('Grupo não encontrado.');
@@ -856,6 +858,22 @@ export function useDeleteWallPost(groupId?: string) {
       }
     },
     [groupId, currentUser, showError],
+  );
+
+  const remove = useCallback(
+    async (post: WallPost) => {
+      showWithAction(
+        t('groupWall.deleteConfirm'),
+        {
+          label: t('common.confirm'),
+          onClick: () => {
+            void executeRemove(post);
+          },
+        },
+        'warning',
+      );
+    },
+    [executeRemove, showWithAction, t],
   );
 
   return { remove, deleting };

@@ -118,9 +118,13 @@ export const maintainStreaksData = onSchedule(
       let invalidDocuments = 0;
       let totalDocs = 0;
       const now = new Date();
-      const thirtyDaysAgo = new Date(
-        now.getTime() -
-        30 * 24 * 60 * 60 * 1000
+      // FIX #4150: a janela que MANTÉM a sequência é de 8 dias (pelada
+      // semanal); mostrar "3 jogos seguidos" para alguém que joga há 15
+      // dias é sequência morta. Compactação alinhada: inatividade >
+      // janela + 1 reseta.
+      const STREAK_DEAD_AFTER_MS = 9 * 24 * 60 * 60 * 1000;
+      const deadThreshold = new Date(
+        now.getTime() - STREAK_DEAD_AFTER_MS
       );
 
       let batch = db().batch();
@@ -206,7 +210,7 @@ export const maintainStreaksData = onSchedule(
 
           if (
             lastGameDate &&
-            lastGameDate < thirtyDaysAgo &&
+            lastGameDate < deadThreshold &&
             data.current_streak > 0
           ) {
             logger.info(
@@ -217,7 +221,7 @@ export const maintainStreaksData = onSchedule(
               current_streak: 0,
               last_game_date: null,
               streak_started_at: null,
-              reset_reason: "Inatividade 30+ dias",
+              reset_reason: "Inatividade 9+ dias",
               reset_at: FieldValue.serverTimestamp(),
             });
             expiredStreaks++;

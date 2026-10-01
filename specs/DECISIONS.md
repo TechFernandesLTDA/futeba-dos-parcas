@@ -4,6 +4,40 @@ Registro de decisões técnicas e de produto. Cada entrada deve ter contexto, al
 
 ---
 
+## 2026-10-01 — Streak de participação: janela de 8 dias (#4150)
+
+**Contexto:** o escritor autoritativo de `user_streaks` é o servidor
+(`firestore.rules` aceita write só de admin). A regra server-side
+(`calculateNextParticipationStreak`) mantinha a sequência apenas com
+lacuna ≤ 1 dia — copiada do gêmeo KMP — o que zerava toda pelada
+semanal (7/7 user_streaks em prod com longest_streak = 1),
+contradizendo `docs/BUSINESS_RULES.md` ("jogos consecutivos") e
+tornando inalcançáveis os bônus Streak 3/5/7/10 e as badges
+STREAK_7/30 para o jogador regular. O nudge "sequência em risco" piorava
+a contradição: prometia salvar uma sequência já perdida pela regra.
+
+**Decisão:** a sequência se mantém com lacuna de até **8 dias** (7 da
+pelada semanal + 1 de tolerância, mesma janela do SmartReminderHelper);
+dois jogos no mesmo dia não incrementam (paridade com o gêmeo KMP,
+que não soma em diffInDays == 0); a compactação (reset de sequência
+morta) roda com inatividade > 9 dias; o nudge "sequência em risco" só
+dispara se existe jogo aberto do grupo dentro da janela. Alternativa
+considerada e descartada por custo: sequência por jogos do grupo
+("compareceu ao FINISHED anterior do mesmo grupo") — definição mais
+fiel ao BUSINESS_RULES, mas depende de dados de presença esparsos e de
+uma lookup adicional por jogo finalizado. Revisitável se a base
+crescer.
+
+**Consequências:** peladas semanais constroem streak; mudança de
+comportamento de XP bônus (mais jogadores atingem Streak 3/5/7/10) —
+sem migração de histórico (streaks existentes eram todos 0/1 e a regra
+novo-registro se aplica a partir do próximo jogo). `docs/BUSINESS_RULES.md`
+atualizado com a janela.
+
+**Relacionado:** `#4150`, `#4145`.
+
+---
+
 ## 2026-08-20 — Waitlist #4066/#4067: join callable e contrato snake_case autoritativo
 
 **Contexto:** Android bypassava `@SerialName` ao usar o `CustomClassMapper`; web e Android calculavam `queue_position` fora de transação e ambos escreviam timestamps do relógio local.

@@ -117,6 +117,18 @@ const DEFAULT_TX_GET = {exists: false, data: () => null};
 
 function setupTransactionMock(impl: (refOrQuery: any) => any) {
   mockTransactionGet.mockImplementation(async (refOrQuery: any) => {
+    // FIX #4134: doc do jogo lido pelo gate do cron antes de promover.
+    if (
+      refOrQuery &&
+      typeof refOrQuery === "object" &&
+      refOrQuery.id === "game1" &&
+      typeof refOrQuery.collection === "function"
+    ) {
+      return {
+        exists: true,
+        data: () => ({status: "SCHEDULED", max_players: 14}),
+      };
+    }
     const result = impl(refOrQuery);
     if (result instanceof Error) throw result;
     return result;
@@ -543,5 +555,168 @@ describe("processExpiredWaitlistEntries (#4012)", () => {
       nextEntryRef,
       expect.objectContaining({status: "NOTIFIED"})
     );
+  });
+
+  // ============================================================
+  // FIX #4134: o cron LÊ o jogo antes de convocar a fila
+  // ============================================================
+
+  it("#4134: jogo CANCELADO não convoca a fila (mas marca EXPIRED)", async () => {
+    const entryRef = {id: "wl1"};
+    const nextRef = {id: "wl2"};
+
+    mockCollectionGet
+      .mockResolvedValueOnce({
+        docs: [
+          {
+            id: "wl1",
+            ref: entryRef,
+            data: () => ({
+              status: "NOTIFIED",
+              game_id: "game1",
+              user_id: "user1",
+            }),
+          },
+        ],
+        size: 1,
+      })
+      .mockResolvedValueOnce({docs: [], size: 0});
+
+    setupTransactionMock((ref) => {
+      if (ref === entryRef)
+        return {
+          exists: true,
+          data: () => ({
+            status: "NOTIFIED",
+            game_id: "game1",
+            user_id: "user1",
+          }),
+        };
+      return {
+        docs: [
+          {
+            ref: nextRef,
+            data: () => ({user_id: "user2", status: "WAITING"}),
+          },
+        ],
+        empty: false,
+        size: 1,
+      };
+    });
+    // Sobrescreve o intercept global: jogo cancelado.
+    mockTransactionGet.mockImplementation(async (refOrQuery: any) => {
+      if (
+        refOrQuery &&
+        typeof refOrQuery === "object" &&
+        refOrQuery.id === "game1" &&
+        typeof refOrQuery.collection === "function"
+      ) {
+        return {
+          exists: true,
+          data: () => ({status: "CANCELLED"}),
+        };
+      }
+      if (refOrQuery === entryRef)
+        return {
+          exists: true,
+          data: () => ({
+            status: "NOTIFIED",
+            game_id: "game1",
+            user_id: "user1",
+          }),
+        };
+      return {docs: [], empty: true, size: 0};
+    });
+
+    await processExpiredWaitlistEntries();
+
+    expect(mockTransactionUpdate).toHaveBeenCalledWith(
+      entryRef,
+      expect.objectContaining({status: "EXPIRED"})
+    );
+    expect(mockTransactionUpdate).not.toHaveBeenCalledWith(
+      nextRef,
+      expect.objectContaining({status: "NOTIFIED"})
+    );
+    expect(mockSendNotificationToUser).not.toHaveBeenCalled();
+  });
+
+  it("#4134: jogo CHEIO não promove a fila", async () => {
+    const entryRef = {id: "wl1"};
+    const nextRef = {id: "wl2"};
+
+    mockCollectionGet
+      .mockResolvedValueOnce({
+        docs: [
+          {
+            id: "wl1",
+            ref: entryRef,
+            data: () => ({
+              status: "NOTIFIED",
+              game_id: "game1",
+              user_id: "user1",
+            }),
+          },
+        ],
+        size: 1,
+      })
+      .mockResolvedValueOnce({docs: [], size: 0});
+
+    let queryCall = 0;
+    mockTransactionGet.mockImplementation(async (refOrQuery: any) => {
+      if (
+        refOrQuery &&
+        typeof refOrQuery === "object" &&
+        refOrQuery.id === "game1" &&
+        typeof refOrQuery.collection === "function"
+      ) {
+        return {
+          exists: true,
+          data: () => ({status: "CONFIRMED", max_players: 5}),
+        };
+      }
+      if (refOrQuery === entryRef)
+        return {
+          exists: true,
+          data: () => ({
+            status: "NOTIFIED",
+            game_id: "game1",
+            user_id: "user1",
+          }),
+        };
+      // Queries: 1ª = confirmations (5 confirmados = cheio), 2ª = nextQuery.
+      queryCall++;
+      if (queryCall === 1) {
+        return {
+          docs: Array.from({length: 5}, (_, i) => ({
+            data: () => ({user_id: `u${i}`}),
+          })),
+          empty: false,
+          size: 5,
+        };
+      }
+      return {
+        docs: [
+          {
+            ref: nextRef,
+            data: () => ({user_id: "user2", status: "WAITING"}),
+          },
+        ],
+        empty: false,
+        size: 1,
+      };
+    });
+
+    await processExpiredWaitlistEntries();
+
+    expect(mockTransactionUpdate).toHaveBeenCalledWith(
+      entryRef,
+      expect.objectContaining({status: "EXPIRED"})
+    );
+    expect(mockTransactionUpdate).not.toHaveBeenCalledWith(
+      nextRef,
+      expect.objectContaining({status: "NOTIFIED"})
+    );
+    expect(mockSendNotificationToUser).not.toHaveBeenCalled();
   });
 });

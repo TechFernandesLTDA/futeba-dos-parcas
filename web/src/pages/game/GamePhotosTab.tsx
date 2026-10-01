@@ -97,7 +97,8 @@ export const GamePhotosTab: React.FC<GamePhotosTabProps> = ({
   const theme = useTheme();
   const { t } = useTranslation();
   const { currentUser } = useAuth();
-  const { showSuccess, showError } = useToast();
+  // FIX #4148: exclusão pede confirmação explícita (showWithAction 'Confirmar').
+  const { showSuccess, showError, showWithAction } = useToast();
   const showErrorRef = useRef(showError);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -244,6 +245,22 @@ export const GamePhotosTab: React.FC<GamePhotosTabProps> = ({
       return;
     }
 
+    // FIX #4148: em touch (>= 600px/iPad) a lixeira é clicável sobre a foto
+    // e apagava em 1 toque sem confirmação. Exclusão agora exige um segundo
+    // toque em "Confirmar" no toast (ação acessível por teclado — #4121).
+    showWithAction(
+      t('gamePhotos.deletePhoto'),
+      {
+        label: t('common.confirm'),
+        onClick: () => {
+          void executeDelete(photo);
+        },
+      },
+      'warning',
+    );
+  };
+
+  const executeDelete = async (photo: GamePhoto) => {
     setDeletingId(photo.id);
     try {
       if (photo.storagePath) {
