@@ -159,7 +159,9 @@ class GameRepositoryImpl constructor(
     )
 
     private fun KmpTimeConflict.toAndroidTimeConflict(): TimeConflict = TimeConflict(
-        conflictingGame = conflictingGame, // Já é domain.model.Game
+        // FIX #4127: TimeConflict não carrega mais Game inteiro.
+        conflictingTime = conflictingTime,
+        conflictingEndTime = conflictingEndTime,
         overlapMinutes = overlapMinutes
     )
 
@@ -298,8 +300,13 @@ class GameRepositoryImpl constructor(
     ): Result<List<TimeConflict>> =
         queryRepository.checkTimeConflict(fieldId, date, startTime, endTime, excludeGameId).map { it.toAndroidTimeConflicts() }
 
-    override suspend fun getGamesByFieldAndDate(fieldId: String, date: String): Result<List<Game>> =
-        queryRepository.getGamesByFieldAndDate(fieldId, date)
+    override suspend fun getFieldBusySlots(
+        fieldId: String,
+        startDate: String,
+        endDate: String,
+        excludeGameId: String?
+    ): Result<List<com.futebadosparcas.domain.model.FieldBusySlot>> =
+        queryRepository.getFieldBusySlots(fieldId, startDate, endDate, excludeGameId)
 
     // ========== Confirmation Methods - Delegação para GameConfirmationRepository ==========
     override suspend fun getGameConfirmations(gameId: String): Result<List<com.futebadosparcas.domain.model.GameConfirmation>> =

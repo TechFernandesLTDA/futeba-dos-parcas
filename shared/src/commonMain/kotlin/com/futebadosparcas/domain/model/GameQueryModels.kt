@@ -25,11 +25,29 @@ data class PaginatedGames(
 
 /**
  * Representa um conflito de horario encontrado.
+ *
+ * FIX #4127: nao carrega mais o `Game` inteiro (que, via LIST direta em
+ * games, expunha metadados de jogos privados de outros grupos). O conflito
+ * agora traz apenas o horario ocupado — a UI mostra "Horario ocupado
+ * (HH:mm-HH:mm)", igual ao web.
  */
 @Serializable
 data class TimeConflict(
-    val conflictingGame: Game,
+    val conflictingTime: String,
+    val conflictingEndTime: String,
     val overlapMinutes: Int
+)
+
+/**
+ * FIX #4127: slot ocupado sanitizado da callable `getFieldAvailability`
+ * (sem ids, dono ou coordenadas — a autoridade de disponibilidade de
+ * quadra migrou do web no fix #3688).
+ */
+@Serializable
+data class FieldBusySlot(
+    val date: String,
+    val startMinutes: Int,
+    val endMinutes: Int
 )
 
 /**

@@ -1090,18 +1090,38 @@ service cloud.firestore {
       //
       // Stage 3 (PR futuro): denormalizar games pra games_public (sem lat/lng
       // exato) e callable getGamePreciseLocation(gameId) gateway pra owner+confirmed.
-      allow get: if isVerifiedOrGrace() &&
-                    (!('deleted_at' in resource.data) || resource.data.deleted_at == null || isAdmin()) &&
-                    (resource.data.get('visibility', null) != 'GROUP_ONLY' ||
-                     (resource.data.group_id != null && isGroupMember(resource.data.group_id)) ||
-                     hasOwnGameInvitation(gameId) ||
-                     isAdmin());
+      // FIX #4126: LIST de games não pode mais usar blacklist
+      // (`get('visibility', null) != 'GROUP_ONLY'`) nem gate de `in deleted_at`:
+      // na avaliação de query ambos viram default-satisfatíveis e uma LIST
+      // sem filtro devolvia jogos GROUP_ONLY de outros grupos e soft-deleted
+      // (reproduzido no emulador; 0 DENY em 30 dias em prod). A regra agora é
+      // WHITELIST com acesso direto de campo — o engine exige do cliente um
+      // filtro correspondente (visibility in [...] / owner_id / group_id).
+      //
+      // Estrutura (mesma do fix #2522 em groups):
+      // - Ramo PÚBLICO: satisfazível por list query — sem get() e sem gate de
+      //   deleted_at (clientes filtram soft-deleted pós-fetch; server-side
+      //   também já filtra deleted_at == null).
+      // - Ramo PRIVADO: gates estritos por doc (get) — dono, membro do grupo
+      //   ou convite próprio (get apenas, jamais amplia LIST).
+      // - Admin: sempre passável.
+      allow get: if isVerifiedOrGrace() && (
+                    (resource.data.visibility == 'PUBLIC_OPEN' ||
+                     resource.data.visibility == 'PUBLIC_CLOSED') ||
+                    (
+                      (!('deleted_at' in resource.data) || resource.data.deleted_at == null) &&
+                      (resource.data.owner_id == userId() ||
+                       (resource.data.group_id != null && isGroupMember(resource.data.group_id)) ||
+                       hasOwnGameInvitation(gameId))
+                    ) ||
+                    isAdmin());
 
-      allow list: if isVerifiedOrGrace() &&
-                     (!('deleted_at' in resource.data) || resource.data.deleted_at == null || isAdmin()) &&
-                     (resource.data.get('visibility', null) != 'GROUP_ONLY' ||
-                      (resource.data.group_id != null && isGroupMember(resource.data.group_id)) ||
-                      isAdmin());
+      allow list: if isVerifiedOrGrace() && (
+                     (resource.data.visibility == 'PUBLIC_OPEN' ||
+                      resource.data.visibility == 'PUBLIC_CLOSED') ||
+                     (resource.data.owner_id != null && resource.data.owner_id == userId()) ||
+                     (resource.data.group_id != null && isGroupMember(resource.data.group_id)) ||
+                     isAdmin());
 
       // Profile Complete Gate: criar jogo exige CPF + telefone completos.
       // SECFIX #422: rejeita criacao de jogo com data no passado
@@ -1114,6 +1134,11 @@ service cloud.firestore {
                        !('deleted_at' in request.resource.data) &&
                        !('deletedAt' in request.resource.data) &&
                        hasNoGameValidationClientFields(request.resource.data) &&
+                       // FIX #4126: visibilidade obrigatória e válida — LIST
+                       // usa whitelist por acesso direto; doc sem visibility
+                       // ficaria ilegível em listas públicas. get() default
+                       // evita evaluation error quando o campo está ausente.
+                       request.resource.data.get('visibility', null) in ['GROUP_ONLY', 'PUBLIC_OPEN', 'PUBLIC_CLOSED'] &&
                        // SECFIX #866: status inicial deve ser SCHEDULED para prevenir criação em estado inválido
                        request.resource.data.status == 'SCHEDULED' &&
                        // SECFIX #422: data deve ser futura (1h tolerance)
