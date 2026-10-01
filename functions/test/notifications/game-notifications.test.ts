@@ -556,7 +556,32 @@ describe("Game Notifications", () => {
       expect(mockSendNotificationToUsers).toHaveBeenCalledWith(
         ["user1", "user2"],
         expect.objectContaining({ title: "Jogo cancelado" }),
+        undefined
       );
+    });
+
+    it("#4135: cancelamento pelo SISTEMA não manda push 'pelo organizador'", async () => {
+      await onGameUpdatedNotification({
+        data: {
+          before: { data: () => ({ status: "SCHEDULED", date: "2024-01-01", location_id: "loc1" }) },
+          after: { data: () => ({ status: "CANCELLED", date: "2024-01-01", location_id: "loc1", auto_cancelled: true, cancelled_by: "system" }) },
+        },
+        params: { gameId: "game1" },
+      });
+
+      expect(mockSendNotificationToUsers).not.toHaveBeenCalled();
+    });
+
+    it("#4135: auto_closed (auto-close de jogo passado) não manda push de cancelamento", async () => {
+      await onGameUpdatedNotification({
+        data: {
+          before: { data: () => ({ status: "CONFIRMED", date: "2024-01-01", location_id: "loc1" }) },
+          after: { data: () => ({ status: "CANCELLED", date: "2024-01-01", location_id: "loc1", auto_closed: true, cancelled_by: "system" }) },
+        },
+        params: { gameId: "game1" },
+      });
+
+      expect(mockSendNotificationToUsers).not.toHaveBeenCalled();
     });
 
     it("nao notifica quando status nao mudou para CANCELLED", async () => {

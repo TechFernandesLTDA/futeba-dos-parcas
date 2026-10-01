@@ -1543,6 +1543,19 @@ export const completeAccountMerge = onCall(
         );
       }
 
+      // FIX #4124 (LGPD): o user_locations da ORIGEM é apagado — a posição
+      // GPS da conta desabilitada não deve sobreviver nem ser herdada sem
+      // novo consentimento (spec nearby §3.4).
+      try {
+        await database.collection("user_locations").doc(sourceUid).delete();
+      } catch (locationDeleteError) {
+        logger.warn("[ACCOUNT_MERGE] Falha ao apagar user_locations da origem", {
+          requestId,
+          sourceUid,
+          error: locationDeleteError,
+        });
+      }
+
       const completedAt = FieldValue.serverTimestamp();
       await database.runTransaction(async (tx) => {
         const fresh = await tx.get(requestRef);
