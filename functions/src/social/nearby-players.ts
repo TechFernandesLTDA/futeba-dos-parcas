@@ -4,6 +4,7 @@ import {logger} from "firebase-functions/v2";
 import {Timestamp} from "firebase-admin/firestore";
 import {
   distanceBetween,
+  geohashForLocation,
   geohashQueryBounds,
 } from "geofire-common";
 import {db} from "../_db";
@@ -533,3 +534,149 @@ export const __testing = {
   loadBlockedSet,
   loadPublicProfiles,
 };
+
+// ==========================================
+// FIX #4123: updateMyLocation — ÚNICO caminho de escrita de posição
+// ==========================================
+
+/**
+ * Cooldown por uid entre atualizações de posição (triangulação exige
+ * centros em sequência rápida; 10 min mata as 3 sondagens do repro).
+ */
+export const LOCATION_UPDATE_COOLDOWN_MS = 10 * 60 * 1000;
+
+/**
+ * Velocidade implausível para descartar teletransporte (m/s). Avião
+ * comercial ~250 m/s; acima disso o salto não é deslocamento real.
+ */
+const MAX_PLAUSIBLE_SPEED_MPS = 300;
+
+interface UpdateMyLocationRequest {
+  lat: number;
+  lng: number;
+}
+
+/**
+ * Callable server-owner para gravar a posição do caller.
+ *
+ * FIX #4123: as rules de user_locations passam a bloquear lat/lng do
+ * cliente — a posição só entra por aqui, com:
+ * - App Check + auth (secureCallable);
+ * - cooldown de 10 min por uid (idempotente dentro do cooldown);
+ * - checagem de plausibilidade contra a posição anterior (teletransporte
+ *   rejeitado);
+ * - geohash calculado NO SERVIDOR.
+ */
+export const updateMyLocation = secureCallable<
+  UpdateMyLocationRequest,
+  {
+    lat: number;
+    lng: number;
+    geohash: string;
+    throttled: boolean;
+  }
+>(
+  {
+    appCheck: true,
+    consumeAppCheckToken: false,
+    rateLimit: {
+      maxRequests: 10,
+      windowMs: 60 * 1000,
+      keyPrefix: "update_my_location",
+    },
+    auditLogContext: async (request) => ({
+      hasLat: isRecord(request.data) && isFiniteNumber(request.data.lat),
+      hasLng: isRecord(request.data) && isFiniteNumber(request.data.lng),
+    }),
+  },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "Login obrigatório.");
+    }
+
+    if (!isRecord(request.data)) {
+      throw new HttpsError("invalid-argument", "Payload inválido.");
+    }
+    const lat = request.data.lat;
+    const lng = request.data.lng;
+    if (
+      !isFiniteNumber(lat) || lat < -90 || lat > 90 ||
+      !isFiniteNumber(lng) || lng < -180 || lng > 180
+    ) {
+      throw new HttpsError("invalid-argument", "Coordenadas inválidas.");
+    }
+
+    const uid = request.auth.uid;
+    const nowMs = Date.now();
+    const locationRef = db().doc(`user_locations/${uid}`);
+    const currentSnap = await locationRef.get();
+    const current = currentSnap.data() ?? {};
+
+    // Cooldown: dentro da janela devolve a posição já gravada sem escrever
+    // (o caller tem o mesmo resultado — sondagens repetidas não mudam nada).
+    const lastUpdate = current.location_updated_at instanceof Timestamp ?
+      current.location_updated_at.toMillis() :
+      null;
+    if (lastUpdate !== null && nowMs - lastUpdate < LOCATION_UPDATE_COOLDOWN_MS) {
+      const storedLat = current.lat;
+      const storedLng = current.lng;
+      if (
+        isFiniteNumber(storedLat) && isFiniteNumber(storedLng) &&
+        typeof current.geohash === "string" && current.geohash.length > 0
+      ) {
+        return {
+          lat: storedLat,
+          lng: storedLng,
+          geohash: current.geohash,
+          throttled: true,
+        };
+      }
+      // Doc incompleto: segue para a escrita abaixo.
+    }
+
+    // Plausibilidade: teletransporte em relação à posição anterior.
+    const prevLat = current.lat;
+    const prevLng = current.lng;
+    if (
+      isFiniteNumber(prevLat) && isFiniteNumber(prevLng) &&
+      lastUpdate !== null
+    ) {
+      const elapsedSeconds = Math.max(
+        1,
+        (nowMs - lastUpdate) / 1000
+      );
+      const meters = distanceBetween(
+        [prevLat, prevLng],
+        [lat, lng]
+      ) * 1000;
+      if (meters / elapsedSeconds > MAX_PLAUSIBLE_SPEED_MPS) {
+        logger.warn("[NEARBY] Posição implausível rejeitada", {
+          uid,
+          meters,
+          elapsedSeconds,
+        });
+        throw new HttpsError(
+          "failed-precondition",
+          "Movimento implausível detectado. Tente novamente mais tarde."
+        );
+      }
+    }
+
+    const geohash = geohashForLocation([lat, lng]);
+    const payload: Record<string, unknown> = {
+      user_id: uid,
+      location_sharing_enabled: true,
+      lat,
+      lng,
+      geohash,
+      location_updated_at: Timestamp.fromMillis(nowMs),
+    };
+    if (current.location_consent_at === undefined) {
+      payload.location_consent_at = Timestamp.fromMillis(nowMs);
+    }
+
+    await locationRef.set(payload, {merge: true});
+
+    return {lat, lng, geohash, throttled: false};
+  }
+);

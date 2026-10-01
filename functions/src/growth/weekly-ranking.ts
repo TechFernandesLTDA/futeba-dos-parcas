@@ -4,6 +4,7 @@ import * as admin from "firebase-admin";
 import {FieldPath, FieldValue, Timestamp} from "firebase-admin/firestore";
 import {FUNCTION_REGION} from "../constants";
 import {sendNotificationToUsers, NotificationType} from "../notifications/helpers";
+import {mirrorBadgeToRoot} from "../badges/user-badge-docs";
 
 const db = () => admin.firestore();
 const WEEKLY_GAMES_QUERY_LIMIT = 5000;
@@ -378,6 +379,21 @@ export const processWeeklyRanking = onSchedule(
             new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
           ),
           earned: true,
+        });
+
+        // FIX #4138: espelha para user_badges raiz (único lugar lido
+        // pelos clientes) — antes o mito era invisível nas telas.
+        await mirrorBadgeToRoot(topPlayer.userId, {
+          badgeId: `mito_rodada_${weekKey}`,
+          name: `Mito da Rodada ${weekKey}`,
+          icon: "👑",
+          type: "MITO_RODADA",
+          earnedAt: FieldValue.serverTimestamp(),
+          expiresAt: Timestamp.fromDate(
+            new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+          ),
+          earned: true,
+          count: 1,
         });
 
         logger.info("Mito da Rodada badge awarded", {

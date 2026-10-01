@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useMemo, useCallback, useEffect, useRef } from 'react';
-import { Snackbar, Alert, AlertColor, IconButton, Box, LinearProgress } from '@mui/material';
+import { Snackbar, Alert, AlertColor, IconButton, Box, Button, LinearProgress } from '@mui/material';
 import { Close as CloseIcon } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 
@@ -241,12 +241,16 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 </Box>
               ) : toast.action ? (
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  <Box
-                    component="span"
+                  {/* FIX #4121 (a11y): era <span onClick> sem teclado — a
+                      ação "Atualizar" (nova versão) e "Desfazer" das
+                      notificações ficavam inacessíveis (WCAG 2.1.1). */}
+                  <Button
+                    size="small"
                     sx={{
-                      cursor: 'pointer',
                       textDecoration: 'underline',
                       mr: 1,
+                      minWidth: 0,
+                      px: 1,
                     }}
                     onClick={() => {
                       toast.action!.onClick();
@@ -254,7 +258,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                     }}
                   >
                     {toast.action.label}
-                  </Box>
+                  </Button>
                   <IconButton
                     aria-label={t('a11y.closeNotification')}
                     onClick={() => dismissToast(toast.id)}

@@ -274,6 +274,31 @@ export const onUserDeleted = runWith({
         queuedDeletePaths.add(userRef.path);
         logger.info(`[ACCOUNT_CLEANUP] Deletando users/${uid} (inclui fcm_token)`);
 
+        // FIX #4139 (LGPD art. 18 VI): delete() NÃO apaga subcoleções —
+        // users/{uid}/groups, /badges e /preferences sobreviviam como pai
+        // fantasma (1 uid fantasma em prod com 2 vínculos de grupo). O
+        // recursiveDelete (mesmo padrão do soft-delete-helper #2529) enumera
+        // e apaga as subcoleções; novas subcoleções sob users/{uid} passam a
+        // herdar o cleanup automaticamente.
+        try {
+          const bulkWriter = db.bulkWriter();
+          bulkWriter.onWriteError((error) => {
+            logger.warn(
+              `[ACCOUNT_CLEANUP] retry subcoleções users/${uid}: ` +
+              `attempt ${error.failedAttempts} — ${error.message}`
+            );
+            return error.failedAttempts <= 3;
+          });
+          await db.recursiveDelete(userRef, bulkWriter);
+          await bulkWriter.close();
+        } catch (recursiveError) {
+          logger.error(
+            `[ACCOUNT_CLEANUP] Falha no recursiveDelete de users/${uid} ` +
+            "(subcoleções podem ter restado — backfill será necessário)",
+            recursiveError
+          );
+        }
+
         // Tokens push privados também são dados pessoais e ficam fora de
         // users/{uid}. Paginar evita deixar instalações residuais após o
         // direito de exclusão LGPD.
@@ -701,6 +726,12 @@ export const onUserDeleted = runWith({
           `[ACCOUNT_CLEANUP] Deletando ${groupInvitesDeletedTotal} ` +
           `group_invites do usuário ${uid}`
         );
+
+        // 16. FIX #4124 (LGPD): user_locations/{uid} guarda coordenadas GPS
+        // precisas (lat/lng/geohash) — o corte de 30 dias só ESCONDE na
+        // descoberta; sem isso a posição sobrevivia ao direito de exclusão.
+        await queueDelete(db.doc(`user_locations/${uid}`));
+        logger.info(`[ACCOUNT_CLEANUP] Deletando user_locations/${uid}`);
 
         // 16. FIX #4049: game_photos / game_videos (uploaded_by == uid) — LGPD.
         // Coleções top-level chaveadas por uploaded_by (PII denormalizado:

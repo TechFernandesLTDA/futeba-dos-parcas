@@ -93,6 +93,14 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <!-- FIX #4140: tap em push em background/quit usa o click_action
+                 FLUTTER_NOTIFICATION_CLICK enviado pelo Functions. Sem este
+                 intent-filter o tap abria o launcher sem extras e o app
+                 caia na Home em vez de navegar para game_detail. -->
+            <intent-filter>
+                <action android:name="FLUTTER_NOTIFICATION_CLICK" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
         </activity>
 
         <activity
@@ -143,6 +151,13 @@
             android:name="com.google.android.geo.API_KEY"
             android:value="${MAPS_API_KEY}" />
 
+        <!-- FIX #4140: canal default para notificações FCM entregues ao
+             system tray em background (o app cria futeba_notifications em
+             runtime no FcmService). Sem isso cai em "Miscellaneous". -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="futeba_notifications" />
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
@@ -165,16 +180,12 @@
                 tools:node="remove" />
         </provider>
 
-        <!-- BroadcastReceiver para lembretes inteligentes -->
+        <!-- FIX #4142: ReminderBroadcastReceiver não agenda mais alarmes
+             (resumo semanal falso removido); o receiver permanece apenas
+             como alvo do cancelamento dos alarmes legados. -->
         <receiver
             android:name=".util.ReminderBroadcastReceiver"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="GAME_REMINDER" />
-                <action android:name="STREAK_CHECK" />
-                <action android:name="WEEKLY_RECAP" />
-            </intent-filter>
-        </receiver>
+            android:exported="false" />
 
         <!-- BroadcastReceiver para reiniciar alarmes após boot -->
         <receiver

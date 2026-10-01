@@ -1,4 +1,5 @@
 import {MILESTONES} from "../xp/pipeline";
+import {db} from "../_db";
 
 export interface UserBadgeDocInput {
   badgeId: string;
@@ -12,6 +13,28 @@ export interface UserBadgeDocInput {
   expiresAt?: unknown;
   earned?: boolean;
   count?: number;
+}
+
+/**
+ * FIX #4138: espelha uma badge gravada em users/{uid}/badges (subcoleção
+ * sem leitor) para a coleção raiz user_badges — o único lugar que os
+ * clientes leem (web useBadges e Android FirebaseDataSource). Id
+ * determinístico `{uid}_{badge_id}` (mesmo padrão dos milestones) com
+ * merge:true torna a operação idempotente (backfill incluído).
+ *
+ * @param {string} userId UID dono do badge.
+ * @param {UserBadgeDocInput} input Dados do badge.
+ * @return {Promise<void>} -
+ */
+export async function mirrorBadgeToRoot(
+  userId: string,
+  input: UserBadgeDocInput
+): Promise<void> {
+  const docId = `${userId}_${input.badgeId}`;
+  await db()
+    .collection("user_badges")
+    .doc(docId)
+    .set(buildUserBadgeAggregateDoc(userId, input), {merge: true});
 }
 
 /**

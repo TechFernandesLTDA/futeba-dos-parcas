@@ -97,38 +97,24 @@ class DirectMessagesRepository(
     }.onFailure { AppLogger.e(TAG, "Erro ao criar DM com $targetUid", it) }
 
     suspend fun sendMessage(chat: DirectChat, text: String): Result<Unit> = runCatching {
-        val currentUser = auth.currentUser ?: error("Usuário não autenticado")
+        if (auth.currentUser == null) error("Usuário não autenticado")
         val cleanText = text.trim()
         require(cleanText.isNotEmpty() && cleanText.length <= MAX_TEXT_LENGTH) {
             "Mensagem deve ter entre 1 e $MAX_TEXT_LENGTH caracteres"
         }
 
-        val chatRef = firestore.collection("chats").document(chat.id)
-        val messageRef = chatRef.collection("messages").document()
-        val batch = firestore.batch()
-        batch.set(
-            messageRef,
-            mapOf(
-                "sender_id" to currentUser.uid,
-                "sender_name" to (currentUser.displayName ?: "Jogador"),
-                "sender_photo_url" to currentUser.photoUrl?.toString(),
-                "text" to cleanText,
-                "created_at" to FieldValue.serverTimestamp(),
-                "deleted_by" to null,
-                "deleted_at" to null
-            )
-        )
-        val updates = mutableMapOf<String, Any>(
-            "last_message" to cleanText,
-            "last_message_at" to FieldValue.serverTimestamp(),
-            "last_sender_id" to currentUser.uid,
-            "unread_count.${currentUser.uid}" to 0
-        )
-        chat.participants
-            .filter { it != currentUser.uid }
-            .forEach { updates["unread_count.$it"] = FieldValue.increment(1) }
-        batch.update(chatRef, updates)
-        batch.commit().await()
+        // FIX #4119: as rules exigem a callable submitDirectMessage
+        // (allow create: if false em /messages e preview do chat server-side).
+        // O batch direto era negado 100% em produção. Espelha
+        // web/src/hooks/useDirectMessages.ts. A callable escreve a mensagem
+        // e o preview (last_message/unread_count) atomicamente.
+        val result = functions.getHttpsCallable("submitDirectMessage")
+            .call(mapOf("chatId" to chat.id, "text" to cleanText))
+            .await()
+        val data = result.data as? Map<*, *> ?: error("Resposta inválida da callable")
+        if (data["messageId"] !is String) {
+            error("messageId ausente na resposta")
+        }
         Unit
     }.onFailure { AppLogger.e(TAG, "Erro ao enviar DM ${chat.id}", it) }
 

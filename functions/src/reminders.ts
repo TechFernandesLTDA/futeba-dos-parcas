@@ -1282,9 +1282,26 @@ async function processLowQuorumGame(
           return null;
         }
 
+        // FIX #4133 (critério #1786): opt-out por jogo. O organizador pode
+        // desativar o auto-cancel com auto_cancel_enabled: false.
+        if (currentGameData.auto_cancel_enabled === false) {
+          logger.info(
+            `[AUTO_CANCEL] Jogo ${gameId}: opt-out ` +
+            "(auto_cancel_enabled=false) — cancelamento ignorado"
+          );
+          return null;
+        }
+
+        // FIX #4133: quórum efetivo = min(min_players, max_players). Antes
+        // o default 6 combinado com max_players 2-5 cancelava jogos CHEIOS
+        // (nenhum cliente escreve min_players no create).
+        const configuredMin =
+          currentGameData.min_players || AUTO_CANCEL_MIN_PLAYERS;
+        const maxPlayers = currentGameData.max_players;
         const minPlayers =
-          currentGameData.min_players ||
-          AUTO_CANCEL_MIN_PLAYERS;
+          typeof maxPlayers === "number" && maxPlayers > 0 ?
+            Math.min(configuredMin, maxPlayers) :
+            configuredMin;
         const confirmationsQuery = db()
           .collection("confirmations")
           .where("game_id", "==", gameId)
@@ -1330,6 +1347,104 @@ async function processLowQuorumGame(
       return {kind: "skipped"};
     }
 
+    // FIX #4133 (critério #1786): log de auditoria do cancelamento.
+    try {
+      await db().collection("audit_logs").add({
+        action: "AUTO_CANCEL_LOW_QUORUM",
+        target_id: gameId,
+        performed_by: "system",
+        performed_at: FieldValue.serverTimestamp(),
+        reason: "LOW_QUORUM",
+        confirmed_count: cancellation.confirmedCount,
+        min_players: cancellation.minPlayers,
+        previous_status:
+          cancellation.gameData?.status || null,
+      });
+    } catch (auditError) {
+      logger.warn(
+        `[AUTO_CANCEL] Falha ao gravar audit_logs para ${gameId}`,
+        auditError
+      );
+    }
+
+    // FIX #4133 (critério #1786): avisar a waitlist. Antes o cancelamento
+    // deixava entradas WAITING/NOTIFIED órfãs num jogo CANCELLED (sem
+    // driver: onGameVacancy não roda e processExpiredWaitlistEntries só
+    // processa NOTIFIED expirado, sem re-checar o status do jogo).
+    try {
+      const waitlistSnap = await db()
+        .collection("games")
+        .doc(gameId)
+        .collection("waitlist")
+        .where("status", "in", ["WAITING", "NOTIFIED"])
+        .limit(100)
+        .get();
+      const waitlistEntries = waitlistSnap.docs;
+      if (waitlistEntries.length > 0) {
+        const expireBatch = db().batch();
+        const waitlistUserIds: string[] = [];
+        for (const entry of waitlistEntries) {
+          expireBatch.update(entry.ref, {
+            status: "EXPIRED",
+            expired_at: FieldValue.serverTimestamp(),
+            expired_reason: "game_cancelled",
+          });
+          const entryData = entry.data();
+          if (entryData.user_id) {
+            waitlistUserIds.push(
+              entryData.user_id as string
+            );
+          }
+        }
+        await expireBatch.commit();
+
+        const wlGameName =
+          cancellation.gameData.location_name ||
+          cancellation.gameData.field_name ||
+          "o jogo";
+        if (waitlistUserIds.length > 0) {
+          await sendNotificationToUsers(
+            waitlistUserIds,
+            {
+              title:
+                GAME_NOTIFICATIONS.GAME_CANCELLED.title["pt-BR"](),
+              body:
+                `${wlGameName} (${cancellation.gameData.date || ""}) ` +
+                "foi cancelado automaticamente por baixo quórum. " +
+                "Você estava na fila de espera.",
+              type: NotificationType.GAME_CANCELLED,
+              data: {
+                gameId: gameId,
+                reason: "low_quorum_waitlist",
+              },
+            }
+          );
+          for (const uid of waitlistUserIds) {
+            await saveNotificationToFirestore(uid, {
+              userId: uid,
+              title:
+                GAME_NOTIFICATIONS.GAME_CANCELLED.title["pt-BR"](),
+              body:
+                `${wlGameName} foi cancelado automaticamente ` +
+                "por baixo quórum. Você estava na fila de espera.",
+              type: NotificationType.GAME_CANCELLED,
+              gameId: gameId,
+              action: "game_detail/" + gameId,
+            });
+          }
+        }
+        logger.info(
+          `[AUTO_CANCEL] Waitlist de ${gameId}: ` +
+          `${waitlistEntries.length} entrada(s) expirada(s)`
+        );
+      }
+    } catch (waitlistError) {
+      logger.warn(
+        `[AUTO_CANCEL] Falha ao expirar waitlist de ${gameId}`,
+        waitlistError
+      );
+    }
+
     // Notifica confirmados (push + persistência). FIX #3968: escritas
     // serializadas N+1 trocadas por lotes paralelos (mesmo remédio do
     // #3941) — antes um `for` com saveNotificationToFirestore por usuário
@@ -1359,7 +1474,10 @@ async function processLowQuorumGame(
             gameId: gameId,
             reason: "low_quorum",
           },
-        }
+        },
+        // FIX #4135: respeitar mute_groups do grupo do jogo.
+        (cancellation.gameData.group_id as string | undefined) ||
+          undefined
       );
 
       for (

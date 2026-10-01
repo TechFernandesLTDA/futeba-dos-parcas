@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { geohashForLocation } from 'geofire-common';
+import { updateMyLocation } from '../services/cloudFunctions';
 import { deleteField, doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { discoverNearbyPlayers, NearbyPlayer } from '../services/cloudFunctions';
@@ -95,6 +95,9 @@ export function useNearbyPlayers() {
     setError(null);
     try {
       const location = await getCurrentBrowserLocation();
+      // FIX #4123: refresh do GPS pelo caminho autoritativo antes da busca
+      // (respeita cooldown; falha não bloqueia a busca).
+      await updateMyLocation({ lat: location.lat, lng: location.lng }).catch(() => undefined);
       const result = await discoverNearbyPlayers({
         ...location,
         radiusKm,
@@ -114,16 +117,11 @@ export function useNearbyPlayers() {
     setSharingLoading(true);
     setError(null);
     try {
+      // FIX #4123: posição só entra pela callable server-owner
+      // updateMyLocation (cooldown 10 min, plausibilidade, geohash
+      // no servidor). As rules bloqueiam lat/lng via cliente.
       const location = await getCurrentBrowserLocation();
-      await setDoc(doc(db, 'user_locations', currentUser.uid), {
-        user_id: currentUser.uid,
-        location_sharing_enabled: true,
-        location_consent_at: serverTimestamp(),
-        location_updated_at: serverTimestamp(),
-        geohash: geohashForLocation([location.lat, location.lng]),
-        lat: location.lat,
-        lng: location.lng,
-      });
+      await updateMyLocation({ lat: location.lat, lng: location.lng });
       await loadSharingState();
       await refreshFromCurrentLocation();
     } catch (err) {
