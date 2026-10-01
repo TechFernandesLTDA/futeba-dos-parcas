@@ -107,6 +107,12 @@ const THRESHOLDS = {
   WALL_MEDIA_CLEANUP_FAILURES: 1,
   /** Janela (ms) para considerar a métrica mais recente do janitor de mural */
   WALL_MEDIA_METRIC_WINDOW_MS: 30 * 60 * 1000,
+  /**
+   * Janela (ms) para considerar a execução mais recente do cron de cobrança
+   * de quadras (issue #4111). O cron roda 1x/dia (04:20 BRT); 48h cobre
+   * uma execução perdida sem alertar sobre runs antigos para sempre.
+   */
+  BILLING_AUTOMATION_RUN_WINDOW_MS: 48 * 60 * 60 * 1000,
 };
 
 // ==========================================
@@ -559,6 +565,107 @@ export const systemHealthCheck =
       }
     } catch (error) {
       checks["wall_media_janitor"] = {
+        status: "ERROR",
+        message: `Erro ao verificar: ${error}`,
+      };
+    }
+
+    // ========================================
+    // CHECK 9: Cron de cobrança de quadras com quadras impossíveis de
+    // cobrar (issue #4111)
+    // ========================================
+    // processLocationBillingCycles grava um doc por execução em
+    // `billing_automation_runs` com contadores + listas de IDs. Antes os
+    // contadores morriam num logger.info. `inconsistent_locations > 0`
+    // significa quadra publicada e impossível de cobrar (sem dono, sem
+    // mensalidade ou sem vencimento): incidente, não estatística.
+    // Dedupe: um alerta por run (metadata.run_id), não um a cada 15min.
+    try {
+      const windowStart = Timestamp.fromMillis(
+        Date.now() - THRESHOLDS.BILLING_AUTOMATION_RUN_WINDOW_MS
+      );
+      const runsSnap = await db
+        .collection("billing_automation_runs")
+        .where("started_at", ">=", windowStart)
+        .orderBy("started_at", "desc")
+        .limit(1)
+        .get();
+
+      if (!runsSnap.empty) {
+        const latestRun = runsSnap.docs[0].data() as {
+          run_id?: string;
+          period_key?: string;
+          inconsistent_locations?: number;
+          inconsistent_location_ids?: string[];
+          expired_locations?: number;
+          aged_trial_locations?: number;
+          aged_trial_location_ids?: string[];
+        };
+        const runId = typeof latestRun.run_id === "string" ?
+          latestRun.run_id :
+          runsSnap.docs[0].id;
+        const inconsistentCount =
+          typeof latestRun.inconsistent_locations === "number" ?
+            latestRun.inconsistent_locations : 0;
+        const inconsistentIds = Array.isArray(latestRun.inconsistent_location_ids) ?
+          latestRun.inconsistent_location_ids.filter(
+            (id): id is string => typeof id === "string"
+          ) :
+          [];
+        const agedTrialCount =
+          typeof latestRun.aged_trial_locations === "number" ?
+            latestRun.aged_trial_locations : 0;
+
+        const ok = inconsistentCount === 0;
+        checks["billing_automation_inconsistent"] = {
+          status: ok ? "OK" : "WARNING",
+          message:
+            `run ${runId}: ${inconsistentCount} quadra(s) impossível(is) ` +
+            `de cobrar, ${agedTrialCount} trial(s) envelhecido(s)`,
+          value: {
+            runId,
+            inconsistentLocations: inconsistentCount,
+            agedTrialLocations: agedTrialCount,
+          },
+        };
+
+        if (!ok) {
+          const alreadyAlertedSnap = await db
+            .collection("alerts")
+            .where("type", "==", "BILLING_AUTOMATION_INCONSISTENT_LOCATIONS")
+            .where("metadata.run_id", "==", runId)
+            .limit(1)
+            .get();
+
+          if (alreadyAlertedSnap.empty) {
+            alerts.push({
+              type: "BILLING_AUTOMATION_INCONSISTENT_LOCATIONS",
+              severity: "CRITICAL",
+              title: "Quadras impossíveis de cobrar no cron de cobrança",
+              message:
+                `${inconsistentCount} quadra(s) sem dono, mensalidade ou ` +
+                "dia de vencimento foram descartadas pelo cron de cobrança " +
+                `(run ${runId}, período ${latestRun.period_key ?? "?"}). ` +
+                `IDs: ${inconsistentIds.join(", ") || "(sem IDs)"}`,
+              metadata: {
+                run_id: runId,
+                period_key: latestRun.period_key ?? null,
+                count: inconsistentCount,
+                locationIds: inconsistentIds,
+                expired_locations: latestRun.expired_locations ?? 0,
+                aged_trial_locations: agedTrialCount,
+                aged_trial_location_ids: Array.isArray(
+                  latestRun.aged_trial_location_ids
+                ) ?
+                  latestRun.aged_trial_location_ids :
+                  [],
+              },
+            });
+          }
+        }
+      }
+    } catch (error) {
+      checks["billing_automation_inconsistent"] = {
         status: "ERROR",
         message: `Erro ao verificar: ${error}`,
       };

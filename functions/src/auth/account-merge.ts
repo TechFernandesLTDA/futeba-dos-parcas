@@ -22,6 +22,16 @@ import {
   resolveLegacyIdentityHash,
 } from "./identity-index";
 import {isValidPhoneBR} from "../validation/phone-br";
+import {getLevelForXp} from "../xp/pipeline";
+import {
+  ACTIVITIES,
+  MVP_VOTES,
+  SEASON_PARTICIPATION,
+  STATISTICS,
+  USER_BADGES,
+  XP_LOGS,
+  sumNumericCounters,
+} from "./uid-owned-collections";
 
 export {resolveLegacyIdentityHash} from "./identity-index";
 
@@ -152,6 +162,124 @@ export function mergeConfirmationRecords(
     return leftMillis - rightMillis || left.id.localeCompare(right.id);
   });
   return Object.assign({}, ...ordered.map(({data}) => data));
+}
+
+/**
+ * Une listas de strings sem duplicatas, tolerando valores ausentes.
+ *
+ * @param {unknown[]} lists Listas persistidas (podem não ser arrays).
+ * @return {string[]} União ordenada por inserção.
+ */
+function unionStringLists(...lists: unknown[]): string[] {
+  const merged = new Set<string>();
+  for (const list of lists) {
+    if (!Array.isArray(list)) continue;
+    for (const item of list) {
+      if (typeof item === "string" && item.length > 0) merged.add(item);
+    }
+  }
+  return [...merged];
+}
+
+/**
+ * #4112: funde `statistics/{sourceUid}` em `statistics/{targetUid}`.
+ *
+ * Todo campo numérico é SOMADO (jogos, gols, assistências, cartões...) — o
+ * destino pode já ter histórico próprio. Exceções vêm de
+ * `STATISTICS.maxFields` (máximos históricos: maior vence) e
+ * `STATISTICS.latestFields` (estado corrente: destino vence). Campos não
+ * numéricos seguem a regra do perfil: destino vence, origem preenche
+ * lacunas. Escritores gravam contadores camelCase (Functions) e snake_case
+ * (Android legado) — cada chave é somada de forma independente, como os
+ * leitores já toleram as duas grafias.
+ *
+ * @param {FirebaseFirestore.DocumentData} source Estatísticas da origem.
+ * @param {FirebaseFirestore.DocumentData} target Estatísticas do destino.
+ * @param {string} targetUid Identidade canônica.
+ * @return {FirebaseFirestore.DocumentData} Documento consolidado.
+ */
+export function mergeStatisticsRecords(
+  source: FirebaseFirestore.DocumentData,
+  target: FirebaseFirestore.DocumentData,
+  targetUid: string,
+): FirebaseFirestore.DocumentData {
+  const merged: FirebaseFirestore.DocumentData = {...source, ...target};
+  const keys = new Set([...Object.keys(source), ...Object.keys(target)]);
+  for (const key of keys) {
+    const s = source[key];
+    const t = target[key];
+    const sNum = typeof s === "number" && Number.isFinite(s);
+    const tNum = typeof t === "number" && Number.isFinite(t);
+    if (!sNum || !tNum) {
+      // Número só de um lado: copia (o spread já cobre o caso do destino).
+      if (sNum && t === undefined) merged[key] = s;
+      continue;
+    }
+    if (STATISTICS.maxFields.includes(key)) {
+      merged[key] = Math.max(s, t);
+    } else if (STATISTICS.latestFields.includes(key)) {
+      merged[key] = t;
+    } else {
+      merged[key] = s + t;
+    }
+  }
+  merged[STATISTICS.legacyUidField] = targetUid;
+  merged.merged_from_alias = true;
+  return merged;
+}
+
+/**
+ * #4112: funde `season_participation/{seasonId}_{sourceUid}` no doc do
+ * destino da mesma temporada. Contadores (`SEASON_PARTICIPATION.counterFields`)
+ * são somados no nível plano e dentro de `by_gender.{G}`; `group_ids` é
+ * unido; os demais campos (rating/divisão de liga, locks, timestamps)
+ * seguem "destino vence, origem preenche".
+ *
+ * @param {FirebaseFirestore.DocumentData} source Participação da origem.
+ * @param {FirebaseFirestore.DocumentData} target Participação do destino.
+ * @param {string} targetUid Identidade canônica.
+ * @return {FirebaseFirestore.DocumentData} Documento consolidado.
+ */
+export function mergeSeasonParticipationRecords(
+  source: FirebaseFirestore.DocumentData,
+  target: FirebaseFirestore.DocumentData,
+  targetUid: string,
+): FirebaseFirestore.DocumentData {
+  const merged: FirebaseFirestore.DocumentData = {
+    ...source,
+    ...target,
+    ...sumNumericCounters(source, target, SEASON_PARTICIPATION.counterFields),
+  };
+
+  const genderField = SEASON_PARTICIPATION.genderMapField;
+  const sourceGenders = (source[genderField] ?? {}) as Record<string, unknown>;
+  const targetGenders = (target[genderField] ?? {}) as Record<string, unknown>;
+  const genderKeys = new Set([
+    ...Object.keys(sourceGenders),
+    ...Object.keys(targetGenders),
+  ]);
+  if (genderKeys.size > 0) {
+    const mergedGenders: Record<string, unknown> = {};
+    for (const gender of genderKeys) {
+      const s = (sourceGenders[gender] ?? {}) as Record<string, unknown>;
+      const t = (targetGenders[gender] ?? {}) as Record<string, unknown>;
+      mergedGenders[gender] = {
+        ...s,
+        ...t,
+        ...sumNumericCounters(s, t, SEASON_PARTICIPATION.counterFields),
+      };
+    }
+    merged[genderField] = mergedGenders;
+  }
+
+  for (const field of SEASON_PARTICIPATION.unionFields) {
+    const union = unionStringLists(source[field], target[field]);
+    if (union.length > 0) merged[field] = union;
+  }
+
+  merged[SEASON_PARTICIPATION.uidField] = targetUid;
+  merged.merged_from_alias = true;
+  return merged;
 }
 
 const PROFILE_FALLBACK_FIELDS = [
@@ -885,6 +1013,13 @@ export const completeAccountMerge = onCall(
         sourceOwnedLiveGames,
         sourceOwnedLiveScores,
         sourceGameTemplates,
+        sourceStatistics,
+        sourceUserBadges,
+        sourceSeasonParticipation,
+        sourceXpLogs,
+        sourceMvpVotesCast,
+        sourceMvpVotesReceived,
+        sourceActivities,
       ] = await Promise.all([
         sourceUserRef.get(),
         sourceUserRef.collection("groups").limit(MAX_DOCS_PER_QUERY).get(),
@@ -906,6 +1041,21 @@ export const completeAccountMerge = onCall(
         database.collection("live_games").where("owner_id", "==", sourceUid).limit(MAX_DOCS_PER_QUERY).get(),
         database.collection("live_scores").where("owner_id", "==", sourceUid).limit(MAX_DOCS_PER_QUERY).get(),
         sourceUserRef.collection("game_templates").limit(MAX_DOCS_PER_QUERY).get(),
+        // #4112: gamificação. statistics é 1 doc por uid (ID = uid, sem
+        // campo user_id no escritor das Functions) — lido pelo ID.
+        database.doc(`${STATISTICS.collection}/${STATISTICS.docId(sourceUid)}`).get(),
+        // user_badges e season_participation são CRÍTICAS (o jogador perde
+        // conquistas/ranking se ficarem para trás) → guard de saturação.
+        database.collection(USER_BADGES.collection)
+          .where(USER_BADGES.uidField, "==", sourceUid).limit(MAX_DOCS_PER_QUERY).get(),
+        database.collection(SEASON_PARTICIPATION.collection)
+          .where(SEASON_PARTICIPATION.uidField, "==", sourceUid).limit(MAX_DOCS_PER_QUERY).get(),
+        // xp_logs, mvp_votes e activities acumulam 1 doc por jogo → drenadas
+        // com cursor (repoint idempotente, sem risco de perda por truncagem).
+        drainDocsByField(database, XP_LOGS.collection, XP_LOGS.uidField, sourceUid),
+        drainDocsByField(database, MVP_VOTES.collection, MVP_VOTES.voterField, sourceUid),
+        drainDocsByField(database, MVP_VOTES.collection, MVP_VOTES.votedPlayerField, sourceUid),
+        drainDocsByField(database, ACTIVITIES.collection, ACTIVITIES.uidField, sourceUid),
       ]);
 
       // FIX #4015/#4039: Detectar saturação antes do estágio irreversível.
@@ -931,6 +1081,12 @@ export const completeAccountMerge = onCall(
         ["live_games (owner_id)", sourceOwnedLiveGames],
         ["live_scores (owner_id)", sourceOwnedLiveScores],
         ["game_templates", sourceGameTemplates],
+        // #4112: conquistas e ranking são irrecuperáveis se truncados.
+        [`${USER_BADGES.collection} (${USER_BADGES.uidField})`, sourceUserBadges],
+        [
+          `${SEASON_PARTICIPATION.collection} (${SEASON_PARTICIPATION.uidField})`,
+          sourceSeasonParticipation,
+        ],
       ];
       const saturated = saturationChecks
         .filter(([, snap]) => snap.size >= MAX_DOCS_PER_QUERY)
@@ -1464,6 +1620,236 @@ export const completeAccountMerge = onCall(
           return 1;
         });
       }
+
+      // ------------------------------------------------------------------
+      // #4112: gamificação. Até aqui a união movia a CAUSA (confirmations)
+      // e abandonava o EFEITO (XP, estatísticas, badges, temporada) na
+      // origem — que é desabilitada para sempre no estágio irreversível.
+      // Cada passo é idempotente: origem apagada ou re-apontada some da
+      // query na retomada por expiração de lease.
+      // ------------------------------------------------------------------
+
+      // statistics/{uid}: SOMA contadores no destino, apaga a origem. A
+      // leitura inicial só poupa a transação; a decisão usa a releitura.
+      let statisticsMerged = 0;
+      if (sourceStatistics.exists) {
+        statisticsMerged = await database.runTransaction(async (tx) => {
+          const sourceStatsRef = database
+            .doc(`${STATISTICS.collection}/${STATISTICS.docId(sourceUid)}`);
+          const targetStatsRef = database
+            .doc(`${STATISTICS.collection}/${STATISTICS.docId(targetUid)}`);
+          const [freshSource, freshTarget] = await Promise.all([
+            tx.get(sourceStatsRef),
+            tx.get(targetStatsRef),
+          ]);
+          if (!freshSource.exists) return 0;
+          tx.set(targetStatsRef, {
+            ...mergeStatisticsRecords(
+              freshSource.data() ?? {},
+              freshTarget.data() ?? {},
+              targetUid,
+            ),
+            updated_at: FieldValue.serverTimestamp(),
+          }, {merge: true});
+          tx.delete(sourceStatsRef);
+          return 1;
+        });
+      }
+
+      // season_participation/{seasonId}_{uid}: funde por temporada e apaga a
+      // origem — sem isso o jogador aparece duas vezes no ranking.
+      let seasonParticipationMerged = 0;
+      for (const participation of sourceSeasonParticipation.docs) {
+        const rawSeasonId = participation.data()[SEASON_PARTICIPATION.seasonIdField];
+        const seasonId = typeof rawSeasonId === "string" && rawSeasonId ?
+          rawSeasonId :
+          participation.id.endsWith(`_${sourceUid}`) ?
+            participation.id.slice(0, -(sourceUid.length + 1)) :
+            undefined;
+        if (!seasonId) {
+          logger.warn("[ACCOUNT_MERGE] season_participation sem season_id; ignorado", {
+            requestId,
+            path: participation.ref.path,
+          });
+          continue;
+        }
+        const targetParticipationRef = database.doc(
+          `${SEASON_PARTICIPATION.collection}/` +
+          SEASON_PARTICIPATION.docId(seasonId, targetUid),
+        );
+        seasonParticipationMerged += await database.runTransaction(async (tx) => {
+          const [freshSource, freshTarget] = await Promise.all([
+            tx.get(participation.ref),
+            tx.get(targetParticipationRef),
+          ]);
+          if (
+            !freshSource.exists ||
+            freshSource.data()?.[SEASON_PARTICIPATION.uidField] !== sourceUid
+          ) return 0;
+          tx.set(targetParticipationRef, {
+            ...mergeSeasonParticipationRecords(
+              freshSource.data() ?? {},
+              freshTarget.data() ?? {},
+              targetUid,
+            ),
+            [SEASON_PARTICIPATION.seasonIdField]: seasonId,
+            updated_at: FieldValue.serverTimestamp(),
+          }, {merge: true});
+          if (targetParticipationRef.path !== participation.ref.path) {
+            tx.delete(participation.ref);
+          }
+          return 1;
+        });
+      }
+
+      // user_badges/{uid}_{badgeId}: UNIÃO. Badge já no destino → mantém a
+      // do destino; badge só na origem → copiada com a data original.
+      let userBadgesCopied = 0;
+      let userBadgesSkipped = 0;
+      for (const badge of sourceUserBadges.docs) {
+        const rawBadgeId = badge.data()[USER_BADGES.badgeIdField];
+        const badgeId = typeof rawBadgeId === "string" && rawBadgeId ?
+          rawBadgeId :
+          badge.id.startsWith(`${sourceUid}_`) ?
+            badge.id.slice(sourceUid.length + 1) :
+            badge.id;
+        const targetBadgeRef = database.doc(
+          `${USER_BADGES.collection}/${USER_BADGES.docId(targetUid, badgeId)}`,
+        );
+        const outcome = await database.runTransaction(async (tx) => {
+          const [freshSource, freshTarget] = await Promise.all([
+            tx.get(badge.ref),
+            tx.get(targetBadgeRef),
+          ]);
+          if (
+            !freshSource.exists ||
+            freshSource.data()?.[USER_BADGES.uidField] !== sourceUid
+          ) return "none";
+          if (!freshTarget.exists) {
+            tx.set(targetBadgeRef, {
+              ...freshSource.data(),
+              [USER_BADGES.uidField]: targetUid,
+              [USER_BADGES.badgeIdField]: badgeId,
+              merged_from_alias: true,
+            });
+          }
+          if (targetBadgeRef.path !== badge.ref.path) tx.delete(badge.ref);
+          return freshTarget.exists ? "skipped" : "copied";
+        });
+        if (outcome === "copied") userBadgesCopied++;
+        if (outcome === "skipped") userBadgesSkipped++;
+      }
+
+      // mvp_votes emitidos: o ID carrega o voterId
+      // ({gameId}_{voterId}_{category}) e a checagem "já votou" lê esse ID.
+      // Move para o ID canônico; se o destino já votou na mesma categoria do
+      // mesmo jogo, o voto da origem é descartado (um voto por eleitor).
+      let mvpVotesCastMigrated = 0;
+      const mvpVotesReceivedDocs = new Map<string, FirebaseFirestore.QueryDocumentSnapshot>();
+      for (const vote of sourceMvpVotesReceived.docs) {
+        mvpVotesReceivedDocs.set(vote.ref.path, vote);
+      }
+      for (const vote of sourceMvpVotesCast.docs) {
+        // Um doc não pode estar nos dois conjuntos (auto-voto é proibido),
+        // mas a dedup protege contra dados legados inconsistentes.
+        mvpVotesReceivedDocs.delete(vote.ref.path);
+        const data = vote.data();
+        const gameId = data[MVP_VOTES.gameIdField];
+        const category = data[MVP_VOTES.categoryField];
+        const canonicalRef = typeof gameId === "string" && gameId &&
+          typeof category === "string" && category ?
+          database.doc(
+            `${MVP_VOTES.collection}/${MVP_VOTES.docId(gameId, targetUid, category)}`,
+          ) :
+          vote.ref;
+        mvpVotesCastMigrated += await database.runTransaction(async (tx) => {
+          const [freshSource, freshTarget] = await Promise.all([
+            tx.get(vote.ref),
+            tx.get(canonicalRef),
+          ]);
+          if (
+            !freshSource.exists ||
+            freshSource.data()?.[MVP_VOTES.voterField] !== sourceUid
+          ) return 0;
+          const sourceData = freshSource.data() ?? {};
+          const repointed = {
+            ...sourceData,
+            id: canonicalRef.id,
+            [MVP_VOTES.voterField]: targetUid,
+            ...(sourceData[MVP_VOTES.votedPlayerField] === sourceUid ?
+              {[MVP_VOTES.votedPlayerField]: targetUid} :
+              {}),
+            merged_from_alias: true,
+          };
+          if (canonicalRef.path === vote.ref.path) {
+            tx.set(canonicalRef, repointed, {merge: true});
+          } else {
+            if (!freshTarget.exists) tx.set(canonicalRef, repointed);
+            tx.delete(vote.ref);
+          }
+          return 1;
+        });
+      }
+
+      // mvp_votes recebidos, xp_logs e activities: o ID não é lido por
+      // ninguém como identidade do uid → basta re-apontar o campo no lugar.
+      for (const vote of mvpVotesReceivedDocs.values()) {
+        trackBulkWrite(vote.ref, writer.set(vote.ref, {
+          [MVP_VOTES.votedPlayerField]: targetUid,
+          merged_from_alias: true,
+        }, {merge: true}));
+      }
+      for (const xpLog of sourceXpLogs.docs) {
+        trackBulkWrite(xpLog.ref, writer.set(xpLog.ref, {
+          [XP_LOGS.uidField]: targetUid,
+          merged_from_alias: true,
+        }, {merge: true}));
+      }
+      for (const activity of sourceActivities.docs) {
+        trackBulkWrite(activity.ref, writer.set(activity.ref, {
+          [ACTIVITIES.uidField]: targetUid,
+          merged_from_alias: true,
+          updated_at: FieldValue.serverTimestamp(),
+        }, {merge: true}));
+      }
+
+      // users/{uid}.experience_points / level / milestones_achieved: o
+      // agregado de XP que os xp_logs acima derivam. Marcador
+      // `xp_merged_to` na origem torna a transferência idempotente na
+      // retomada (increment cego dobraria o XP).
+      const xpPointsTransferred = await database.runTransaction(async (tx) => {
+        const [freshSource, freshTarget] = await Promise.all([
+          tx.get(sourceUserRef),
+          tx.get(targetUserRef),
+        ]);
+        const sourceData = freshSource.data() ?? {};
+        const targetData = freshTarget.data() ?? {};
+        if (!freshSource.exists || sourceData.xp_merged_to === targetUid) return 0;
+        const sourceXp = typeof sourceData.experience_points === "number" ?
+          sourceData.experience_points :
+          0;
+        const targetXp = typeof targetData.experience_points === "number" ?
+          targetData.experience_points :
+          0;
+        const mergedXp = Math.max(0, sourceXp + targetXp);
+        const now = FieldValue.serverTimestamp();
+        tx.set(targetUserRef, {
+          experience_points: mergedXp,
+          level: getLevelForXp(mergedXp),
+          milestones_achieved: unionStringLists(
+            sourceData.milestones_achieved,
+            targetData.milestones_achieved,
+          ),
+          updated_at: now,
+        }, {merge: true});
+        tx.set(sourceUserRef, {
+          xp_merged_to: targetUid,
+          xp_merged_at: now,
+          updated_at: now,
+        }, {merge: true});
+        return sourceXp;
+      });
+
       await writer.close();
       // close() só espera as escritas pendentes — não agrega nem propaga
       // falhas individuais. Todas as promises rastreadas já estão resolvidas
@@ -1585,6 +1971,16 @@ export const completeAccountMerge = onCall(
             liveScoresOwnershipMigrated,
             gameTemplatesMigrated,
             sourceProfilePreserved: sourceUser.exists,
+            // #4112: gamificação auditável por coleção.
+            statisticsMerged,
+            seasonParticipationMerged,
+            userBadgesCopied,
+            userBadgesSkipped,
+            xpLogsMigrated: sourceXpLogs.size,
+            mvpVotesCastMigrated,
+            mvpVotesReceivedMigrated: mvpVotesReceivedDocs.size,
+            activitiesMigrated: sourceActivities.size,
+            xpPointsTransferred,
           },
           completedAt,
           updatedAt: completedAt,
@@ -1608,6 +2004,11 @@ export const completeAccountMerge = onCall(
         sourceUid,
         targetUid,
         membershipsCopied,
+        statisticsMerged,
+        seasonParticipationMerged,
+        userBadgesCopied,
+        xpLogsMigrated: sourceXpLogs.size,
+        xpPointsTransferred,
         providersToRelink,
       });
       return {

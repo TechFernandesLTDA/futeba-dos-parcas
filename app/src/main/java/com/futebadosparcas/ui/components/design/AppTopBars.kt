@@ -3,18 +3,16 @@ package com.futebadosparcas.ui.components.design
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.Badge
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarColors
@@ -23,12 +21,14 @@ import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
 /**
@@ -379,11 +379,34 @@ object AppTopBar {
 // Componentes auxiliares internos
 // ============================================================================
 
+/** Teto exibido no badge de notificacoes (mesmo clamp de DirectMessagesScreen). */
+private const val MAX_BADGE_COUNT = 99
+
+/** Tag de teste do slot de 48dp (botao + badge) de notificacoes da [AppTopBar.Root]. */
+internal const val NOTIFICATION_SLOT_TEST_TAG = "app_top_bar_notification_slot"
+
+/** Tag de teste do badge de contagem de notificacoes da [AppTopBar.Root]. */
+internal const val NOTIFICATION_BADGE_TEST_TAG = "app_top_bar_notification_badge"
+
 /**
  * Icone de notificacao com badge de contagem.
  *
- * Exibe um icone de notificacao com um badge circular vermelho
- * mostrando a quantidade de notificacoes nao lidas.
+ * Usa o [Badge] do Material 3, que se dimensiona ao conteudo (labelSmall em sp) e
+ * vira "pilula" quando o rotulo cresce — em vez do circulo fixo de 16dp que
+ * recortava "9+" a partir de fontScale 1,287 (#4108).
+ *
+ * Por que NAO `IconButton { BadgedBox { ... } }`: o IconButton do M3 (1.4.0) aplica
+ * `clip(CircleShape)` num container de 40dp e o BadgedBox posiciona o badge a 12dp
+ * do fim do icone — um badge de 2 digitos ja passa da borda desse container em
+ * fontScale 1,0 e fica quase todo recortado em 2,0. E com `BadgedBox { IconButton }`
+ * a ancora vira o alvo de 48dp e o badge invade a acao vizinha (Grupos).
+ * Por isso o badge fica num [Box] (que nao recorta) alinhado ao topo/fim do alvo
+ * de 48dp: cresce para DENTRO dele, sem vazar para a TopAppBar nem para o lado.
+ *
+ * Acessibilidade: o alvo de toque continua 48dp (o [Badge] nao consome toques) e a
+ * contagem entra no no do proprio botao via `stateDescription` (TalkBack:
+ * "Notificacoes, 15, botao"); o badge visual sai da arvore semantica para nao ser
+ * anunciado duas vezes.
  *
  * @param unreadCount Numero de notificacoes nao lidas (0 oculta o badge)
  * @param onClick Callback ao clicar no icone
@@ -395,8 +418,17 @@ private fun NotificationIconWithBadge(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Box(modifier = modifier) {
-        IconButton(onClick = onClick) {
+    // Acima do teto mostra "99+": exibir "99" para 150 notificacoes seria
+    // informacao errada, a mesma classe de defeito que o #4108 corrige.
+    val badgeLabel = if (unreadCount > MAX_BADGE_COUNT) "$MAX_BADGE_COUNT+" else unreadCount.toString()
+
+    Box(modifier = modifier.testTag(NOTIFICATION_SLOT_TEST_TAG)) {
+        IconButton(
+            onClick = onClick,
+            modifier = Modifier.semantics {
+                if (unreadCount > 0) stateDescription = badgeLabel
+            }
+        ) {
             Icon(
                 painter = painterResource(id = R.drawable.ic_notifications),
                 contentDescription = stringResource(R.string.cd_notifications),
@@ -406,24 +438,21 @@ private fun NotificationIconWithBadge(
 
         // Badge de contagem (visivel apenas quando > 0)
         if (unreadCount > 0) {
-            Surface(
-                color = MaterialTheme.colorScheme.error,
+            Badge(
+                containerColor = MaterialTheme.colorScheme.error,
                 contentColor = MaterialTheme.colorScheme.onError,
-                shape = CircleShape,
                 modifier = Modifier
-                    .size(16.dp)
                     .align(Alignment.TopEnd)
                     .offset(x = (-4).dp, y = 4.dp)
+                    // testTag ANTES do clear: sobrevive para os testes; o Text interno sai da arvore.
+                    .testTag(NOTIFICATION_BADGE_TEST_TAG)
+                    .clearAndSetSemantics {}
             ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Text(
-                        text = if (unreadCount > 9) "9+" else unreadCount.toString(),
-                        color = MaterialTheme.colorScheme.onError,
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center
-                    )
-                }
+                Text(
+                    text = badgeLabel,
+                    maxLines = 1,
+                    softWrap = false
+                )
             }
         }
     }

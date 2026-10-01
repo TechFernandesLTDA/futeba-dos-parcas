@@ -177,8 +177,7 @@ Tokens de duração/easing centralizados, alinhados ao Material Design 3 Motion.
 
 | Token        | Curva CSS                    | Android (`MotionEasing`)         | Uso típico                              |
 |--------------|------------------------------|----------------------------------|-----------------------------------------|
-| `standard`   | `cubic-bezier(0.2, 0, 0, 1)` | `MotionEasing.Standard`          | Uso geral                               |
-| `emphasized` | `cubic-bezier(0.2, 0, 0, 1)` | `MotionEasing.Emphasized`        | FAB, hero, destaque high-emphasis       |
+| `standard`   | `cubic-bezier(0.2, 0, 0, 1)` | `MotionEasing.Standard`          | Uso geral + FAB, hero, high-emphasis    |
 | `decelerate` | `cubic-bezier(0, 0, 0, 1)`   | `MotionEasing.Decelerate`        | Elementos que entram em tela            |
 | `accelerate` | `cubic-bezier(0.3, 0, 1, 1)` | `MotionEasing.Accelerate`        | Elementos que saem de tela              |
 

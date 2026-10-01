@@ -16,6 +16,7 @@ jest.mock("firebase-admin/firestore", () => ({
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const {
   buildChangedVenueAccountUpdates,
+  buildLocationUpdates,
   buildVenueAccountDocument,
   cents,
   hasVenueAccountFixes,
@@ -106,5 +107,57 @@ describe("backfill-venue-commercial-data", () => {
       backfill_source: "backfill-venue-commercial-data",
     });
     expect(updates.updated_at).toEqual({_type: "ServerTimestamp"});
+  });
+
+  it("#4111: subscription_status invalido e billing_due_day ausente entram na revisao manual", () => {
+    const {updates, manualReview} = buildLocationUpdates({
+      data: {
+        owner_id: "owner-1",
+        publication_status: "PUBLISHED",
+        subscription_status: "PAUSED",
+        monthly_fee_cents: 9000,
+        address: "Rua A, 1",
+        photos: ["a.jpg"],
+      },
+      fieldCount: 1,
+      activeFieldCount: 1,
+      fieldType: "SOCIETY",
+    });
+
+    expect(updates).toMatchObject({
+      subscription_status: "TRIAL",
+      commercial_status: "TRIAL",
+      trial_started_at: {_type: "ServerTimestamp"},
+      billing_due_day: null,
+    });
+    expect(manualReview).toEqual(expect.arrayContaining([
+      "subscription_status invalid/missing, defaulted to TRIAL",
+      "billing_due_day undefined",
+    ]));
+  });
+
+  it("#4111: TRIAL valido sem relogio ganha trial_started_at; status valido nao gera revisao", () => {
+    const {updates, manualReview} = buildLocationUpdates({
+      data: {
+        owner_id: "owner-1",
+        publication_status: "PUBLISHED",
+        subscription_status: "TRIAL",
+        commercial_status: "TRIAL",
+        monthly_fee_cents: 9000,
+        billing_due_day: 10,
+        address: "Rua A, 1",
+        photos: ["a.jpg"],
+      },
+      fieldCount: 1,
+      activeFieldCount: 1,
+      fieldType: "SOCIETY",
+    });
+
+    expect(updates).toMatchObject({trial_started_at: {_type: "ServerTimestamp"}});
+    expect(updates).not.toHaveProperty("subscription_status");
+    expect(manualReview).not.toEqual(expect.arrayContaining([
+      expect.stringContaining("subscription_status"),
+    ]));
+    expect(manualReview).not.toContain("billing_due_day undefined");
   });
 });
