@@ -627,23 +627,31 @@ const PlayerSlot: React.FC<{
 
   return (
     <Box sx={{ textAlign: 'center' }}>
-      <Box
+      {/* FIX #4122 (a11y): o slot vazio era um <Box onClick> sem role,
+          tabIndex, onKeyDown nem nome acessível — com Tab o foco pulava o
+          slot, o card de busca nunca abria e a tela ficava inutilizável
+          por teclado/leitor de tela (WCAG 2.1.1 e 4.1.2). O irmão preenchido
+          usa <Button> para a mesma ação — paridade restaurada. */}
+      <Button
+        variant="text"
         onClick={onSelect}
+        aria-label={t('a11y.selectPlayer', { label })}
         sx={{
           width: 56,
           height: 56,
+          minWidth: 56,
           borderRadius: '50%',
           border: `2px dashed ${theme.palette.divider}`,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           mx: 'auto',
-          cursor: 'pointer',
+          p: 0,
           '&:hover': { borderColor: 'primary.main' },
         }}
       >
         <SearchIcon sx={{ color: 'text.disabled' }} />
-      </Box>
+      </Button>
       <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
         {label}
       </Typography>

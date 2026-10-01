@@ -3,6 +3,7 @@
     "addEvent": "Add event",
     "addLocation": "Add location",
     "addToCalendar": "Add to Calendar",
+    "selectPlayer": "Select player: {{label}}",
     "adminMenu": "Admin menu",
     "back": "Go back",
     "backToHome": "Back to home",
@@ -1099,6 +1100,7 @@
       "maxPlayers": "Max. Players",
       "maxPlayersHelp": "E.g.: 14. Total outfield spots, from {{min}} to {{max}} players.",
       "membersCount": "{{count}} members",
+      "membersCount_one": "{{count}} member",
       "noActiveFieldsAtLocation": "This location has no active field available. The owner/admin must complete the listing before games can be created.",
       "noCommercialLocations": "No published field with a valid subscription is available right now. Use a manual location or wait for app approval.",
       "noFieldsAtLocation": "No fields registered at this location. The location info will be used.",
@@ -2287,13 +2289,13 @@
         "nameRequired": "Name is required",
         "phoneInvalid": "Invalid phone (use area code + number)",
         "playersPerTeamRange": "Between 3 and 11",
-      "stateRequired": "State is required.",
-      "timeZoneInvalid": "Select a valid time zone.",
+        "stateRequired": "State is required.",
+        "timeZoneInvalid": "Select a valid time zone.",
         "websiteInvalid": "Invalid URL. Must start with http:// or https://"
       },
-    "timeZoneHelper": "Used to calculate opening hours correctly, including after midnight.",
-    "timeZoneLabel": "Location time zone",
-    "websiteLabel": "Website"
+      "timeZoneHelper": "Used to calculate opening hours correctly, including after midnight.",
+      "timeZoneLabel": "Location time zone",
+      "websiteLabel": "Website"
     },
     "quickCreate": {
       "title": "Create Location",
@@ -2324,6 +2326,7 @@
     "worstPlayer": "Worst Player",
     "finalResult": "Final Result",
     "votesCount": "{{count}} votes",
+    "votesCount_one": "{{count}} vote",
     "exportPdf": "Export PDF",
     "exporting": "Exporting...",
     "exportError": "Error exporting PDF",
@@ -2449,6 +2452,7 @@
       },
       "timeWithGroup": "{{time}} · {{group}}",
       "unreadCount": "{{count}} unread",
+      "unreadCount_one": "{{count}} unread",
       "undo": "Undo"
     }
   },
@@ -2713,6 +2717,7 @@
     "restrictedAccessDesc": "You need to be a member of this group to see the players.",
     "title": "Players",
     "titleWithCount": "Players ({{count}})",
+    "titleWithCount_one": "Player ({{count}})",
     "viewPlayerCardAria": "View {{name}}'s player card"
   },
   "profile": {
@@ -2978,6 +2983,7 @@
     "deleteError": "Error deleting schedule",
     "itemDescription_other": "{{day}} at {{time}} • {{players}} players",
     "playersCount": "{{count}} players",
+    "playersCount_one": "{{count}} player",
     "toggleError": "Error changing status",
     "day0": "Sunday",
     "day1": "Monday",
@@ -3412,6 +3418,7 @@
     "managePlayers": "Manage Players",
     "myFields": "My Fields",
     "myFieldsCount": "My Fields ({{count}})",
+    "myFieldsCount_one": "My Fields ({{count}})",
     "needsAttention": "Needs attention",
     "noLedgerEvents": "No financial events registered yet.",
     "noPaymentsYet": "No payment or receipt found for this venue yet.",
