@@ -217,18 +217,31 @@ function buildLocationUpdates(params: {
     review.push("publication_status defaulted to PENDING_REVIEW");
   }
   if (!valid(data.subscription_status, SUBSCRIPTION_STATUSES)) {
+    // Backfill conservador persiste TRIAL (nunca cobra automaticamente), mas
+    // #4111: nunca em silencio — entra na revisao manual e o relogio de
+    // envelhecimento comeca agora, para o trial virar pendencia em
+    // TRIAL_MAX_DAYS caso o admin nao defina o plano.
     updates.subscription_status = "TRIAL";
+    review.push("subscription_status invalid/missing, defaulted to TRIAL");
+  }
+  const effectiveSubscriptionStatus =
+    updates.subscription_status ?? data.subscription_status;
+  if (effectiveSubscriptionStatus === "TRIAL" && !data.trial_started_at) {
+    updates.trial_started_at = FieldValue.serverTimestamp();
   }
   if (!valid(data.commercial_status, SUBSCRIPTION_STATUSES)) {
-    updates.commercial_status = updates.subscription_status ??
-      data.subscription_status ??
-      "TRIAL";
+    updates.commercial_status = effectiveSubscriptionStatus ?? "TRIAL";
   }
   if (!hasOwn(data, "monthly_fee_cents")) {
     updates.monthly_fee_cents = null;
     review.push("monthly_fee_cents undefined");
   }
-  if (!hasOwn(data, "billing_due_day")) updates.billing_due_day = null;
+  if (!hasOwn(data, "billing_due_day")) {
+    // #4111: billing_due_day null e exatamente a condicao de
+    // `inconsistentLocations` no cron — nao pode ser anulado em silencio.
+    updates.billing_due_day = null;
+    review.push("billing_due_day undefined");
+  }
   if (!hasOwn(data, "field_count") ||
       data.field_count !== params.fieldCount) {
     updates.field_count = params.fieldCount;
@@ -675,6 +688,7 @@ if (require.main === module) {
 
 export {
   buildChangedVenueAccountUpdates,
+  buildLocationUpdates,
   buildVenueAccountDocument,
   cents,
   hasVenueAccountFixes,

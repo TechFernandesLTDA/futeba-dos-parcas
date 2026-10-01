@@ -1,6 +1,7 @@
 package com.futebadosparcas.ui.theme
 
 import androidx.compose.ui.graphics.Color
+import com.futebadosparcas.domain.model.ContrastLevel
 
 /**
  * Paleta semantica Compose (gamificacao, campos, status, marcas).
@@ -109,21 +110,71 @@ object GamificationTextColorsDark {
 }
 
 /**
- * Devolve a cor de texto theme-aware para um token de medalha de gamificação.
- * Mantém o hex do token como fundo de medalha; escolhe o tom de foreground
- * legível (>= 4.5:1) contra a surface do tema ativo.
+ * Foreground de gamificação para o scheme de ALTO CONTRASTE em tema light (#4099).
+ *
+ * O scheme HIGH ([HighContrastLightColors]) troca o `primaryContainer` por #1565C0,
+ * e o véu da legenda da Liga (0.3 sobre surface branca) vira #B9D1EC — os tokens
+ * light padrão caem para 3,8-4,4:1 ali. Estes tons foram escolhidos para
+ * >= 7:1 (AAA, a promessa do [HighContrastTheme]) nos 4 call sites reais
+ * (badge, chip, header e legenda) — validado em `DivisionColorsTest`.
+ *
+ * No tema dark HIGH (surface #000000, primaryContainer #448AFF) os tokens de
+ * [GamificationTextColorsDark] já atingem >= 8:1 em todos os call sites, por isso
+ * são reutilizados sem variante própria.
  */
-@androidx.compose.runtime.Composable
-fun gamificationTextColor(medal: Color): Color {
-    val isDark = LocalIsDarkTheme.current
+object GamificationTextColorsHighContrast {
+    val Gold = Color(0xFF4A3A00)
+    val Silver = Color(0xFF333333)
+    val Bronze = Color(0xFF4A2C12)
+    val Diamond = Color(0xFF00404A)
+}
+
+/**
+ * Versão pura (testável) de [gamificationTextColor]: resolve o foreground pela
+ * combinação {light, dark} x {NORMAL, HIGH}. Devolve o próprio [medal] para
+ * tokens fora da tabela.
+ */
+fun gamificationTextColor(
+    medal: Color,
+    isDarkTheme: Boolean,
+    contrastLevel: ContrastLevel = ContrastLevel.NORMAL
+): Color {
+    // Dark: tons claros já passam AAA nos dois schemes; light HIGH precisa da tabela escura.
+    val highContrastLight = contrastLevel == ContrastLevel.HIGH && !isDarkTheme
     return when (medal) {
-        GamificationColors.Gold -> if (isDark) GamificationTextColorsDark.Gold else GamificationTextColors.Gold
-        GamificationColors.Silver -> if (isDark) GamificationTextColorsDark.Silver else GamificationTextColors.Silver
-        GamificationColors.Bronze -> if (isDark) GamificationTextColorsDark.Bronze else GamificationTextColors.Bronze
-        GamificationColors.Diamond -> if (isDark) GamificationTextColorsDark.Diamond else GamificationTextColors.Diamond
+        GamificationColors.Gold -> when {
+            isDarkTheme -> GamificationTextColorsDark.Gold
+            highContrastLight -> GamificationTextColorsHighContrast.Gold
+            else -> GamificationTextColors.Gold
+        }
+        GamificationColors.Silver -> when {
+            isDarkTheme -> GamificationTextColorsDark.Silver
+            highContrastLight -> GamificationTextColorsHighContrast.Silver
+            else -> GamificationTextColors.Silver
+        }
+        GamificationColors.Bronze -> when {
+            isDarkTheme -> GamificationTextColorsDark.Bronze
+            highContrastLight -> GamificationTextColorsHighContrast.Bronze
+            else -> GamificationTextColors.Bronze
+        }
+        GamificationColors.Diamond -> when {
+            isDarkTheme -> GamificationTextColorsDark.Diamond
+            highContrastLight -> GamificationTextColorsHighContrast.Diamond
+            else -> GamificationTextColors.Diamond
+        }
         else -> medal
     }
 }
+
+/**
+ * Devolve a cor de texto theme-aware para um token de medalha de gamificação.
+ * Mantém o hex do token como fundo de medalha; escolhe o tom de foreground
+ * legível (>= 4.5:1) contra a surface do tema ativo, levando em conta o nível
+ * de contraste efetivo ([LocalContrastLevel]) — #4099.
+ */
+@androidx.compose.runtime.Composable
+fun gamificationTextColor(medal: Color): Color =
+    gamificationTextColor(medal, LocalIsDarkTheme.current, LocalContrastLevel.current)
 
 /**
  * Cores de identidade das reações do soundboard (design tokens fixos).

@@ -9,6 +9,12 @@ import {
 import {calculateAutoRatingsFromStats} from "../ratings/auto-ratings";
 import {db} from "../_db";
 import {ERROR_MSGS} from "../error-messages";
+import {
+  isContractExpired,
+  isTrialAged,
+  isVenueAccountStatus,
+  resolveSubscriptionStatusOrDefault,
+} from "./venue-account-shared";
 
 interface DeleteLocationRequest {
   locationId: string;
@@ -206,6 +212,7 @@ interface RecomputeLocationAggregatesRequest {
 }
 
 interface LocationBillingAutomationResult {
+  runId: string;
   periodKey: string;
   processedLocations: number;
   skippedLocations: number;
@@ -216,7 +223,20 @@ interface LocationBillingAutomationResult {
   suspendedLocations: number;
   reactivatedLocations: number;
   inconsistentLocations: number;
+  /** Contratos com `billing_expires_at` no passado encerrados nesta execucao (#4107). */
+  expiredLocations: number;
+  /** Quadras em TRIAL ha mais de TRIAL_MAX_DAYS observadas nesta execucao (#4111). */
+  agedTrialLocations: number;
   ledgerEntriesCreated: number;
+  /**
+   * Listas de IDs (#4111): o cron do dinheiro nao pode descartar quadra em
+   * silencio. Limitadas a BILLING_AUTOMATION_ID_LIST_CAP para manter logs e o
+   * doc de execucao bounded; os contadores continuam exatos.
+   */
+  skippedLocationIds: string[];
+  inconsistentLocationIds: string[];
+  expiredLocationIds: string[];
+  agedTrialLocationIds: string[];
   resumedFromLocationId: string | null;
   nextCursor: string | null;
   budgetExhausted: boolean;
@@ -247,6 +267,10 @@ const BILLING_SUMMARY_PAYMENT_CONCURRENCY = 25;
 const BILLING_AUTOMATION_MAX_RUN_MS = 480_000;
 const DEFAULT_BILLING_GRACE_DAYS = 5;
 const DEFAULT_BILLING_SUSPENSION_DAYS = 15;
+/** Maximo de IDs por lista no resultado/doc de execucao do cron de cobranca (#4111). */
+const BILLING_AUTOMATION_ID_LIST_CAP = 200;
+/** Colecao com um doc por execucao do cron de cobranca (#4111). */
+const BILLING_AUTOMATION_RUNS_COLLECTION = "billing_automation_runs";
 const LOCATION_SUBCOLLECTIONS = [
   "reviews",
   "fields",
@@ -919,13 +943,17 @@ async function recomputeChangedLocationIds(
 
 /**
  * Monta snapshot operacional/comercial para solicitações do owner.
+ * Tambem e o resolver de status comercial (`commercial_issue_codes`,
+ * `ready_for_publication_approval`) usado pelas callables admin.
  * @param {FirebaseFirestore.DocumentData} locData Dados da location.
  * @param {FirebaseFirestore.DocumentData[]} fields Campos vinculados.
+ * @param {Date} now Instante de referencia (injetavel em testes).
  * @return {Record<string, unknown>} Resumo auditável.
  */
-function buildLocationCommercialRequestSnapshot(
+export function buildLocationCommercialRequestSnapshot(
   locData: FirebaseFirestore.DocumentData,
-  fields: FirebaseFirestore.DocumentData[]
+  fields: FirebaseFirestore.DocumentData[],
+  now: Date = new Date()
 ): Record<string, unknown> {
   const photos = getLocationPhotos(locData);
   const activeFields = fields.filter((field) => isFieldActive(field));
@@ -980,9 +1008,18 @@ function buildLocationCommercialRequestSnapshot(
   const publicationStatus = typeof locData.publication_status === "string" ?
     locData.publication_status :
     "DRAFT";
-  const subscriptionStatus = typeof locData.subscription_status === "string" ?
-    locData.subscription_status :
-    "TRIAL";
+  // #4111: default unico e fail-closed compartilhado com o cron e o painel.
+  const subscriptionStatus = resolveSubscriptionStatusOrDefault(
+    locData.subscription_status
+  );
+  const subscriptionStatusInvalid = !isVenueAccountStatus(locData.subscription_status);
+  // #4107: contrato com `billing_expires_at` no passado esta encerrado.
+  const contractExpired = isContractExpired(locData.billing_expires_at, now);
+  // #4111: TRIAL sem saida automatica precisa envelhecer e virar pendencia.
+  // Decisao de produto: o status continua TRIAL (sem transicao automatica),
+  // mas a quadra passa a aparecer como pendencia para o admin/owner.
+  const trialExpired = subscriptionStatus === "TRIAL" &&
+    isTrialAged(locData.trial_started_at, now);
   const commercialIssueCodes: string[] = [];
   if (locData.is_active !== true) commercialIssueCodes.push("inactive");
   if (locData.is_verified !== true) commercialIssueCodes.push("notVerified");
@@ -990,6 +1027,9 @@ function buildLocationCommercialRequestSnapshot(
   if (!["TRIAL", "ACTIVE"].includes(subscriptionStatus)) {
     commercialIssueCodes.push("billingIrregular");
   }
+  if (subscriptionStatusInvalid) commercialIssueCodes.push("subscriptionStatusInvalid");
+  if (contractExpired) commercialIssueCodes.push("contractExpired");
+  if (trialExpired) commercialIssueCodes.push("trialExpired");
   if (!hasFieldRegistry) commercialIssueCodes.push("noFields");
   if (!hasActiveFieldRegistry) commercialIssueCodes.push("noActiveFields");
   if (!positiveCents(locData.monthly_fee_cents)) commercialIssueCodes.push("noMonthlyFee");
@@ -1007,7 +1047,8 @@ function buildLocationCommercialRequestSnapshot(
     hasActiveFieldRegistry &&
     positiveCents(locData.monthly_fee_cents) > 0 &&
     Number.isInteger(locData.billing_due_day) &&
-    ["TRIAL", "ACTIVE"].includes(subscriptionStatus);
+    ["TRIAL", "ACTIVE"].includes(subscriptionStatus) &&
+    !contractExpired;
 
   return {
     publication_status: publicationStatus,
@@ -1027,9 +1068,11 @@ function buildLocationCommercialRequestSnapshot(
     billing_due_day: Number.isInteger(locData.billing_due_day) ?
       Number(locData.billing_due_day) :
       null,
+    billing_expires_at_iso: toIsoString(locData.billing_expires_at),
+    trial_started_at_iso: toIsoString(locData.trial_started_at),
     city: typeof locData.city === "string" ? locData.city : null,
     state: typeof locData.state === "string" ? locData.state : null,
-    requested_at_iso: new Date().toISOString(),
+    requested_at_iso: now.toISOString(),
   };
 }
 
@@ -1142,7 +1185,9 @@ async function resolveSubscriptionStatusAfterApprovedPayment(params: {
   newlyApprovedAmountCents: number;
   currentSubscriptionStatus: unknown;
   currentCommercialStatus: unknown;
+  billingExpiresAt?: unknown;
   alreadyApprovedCents?: number;
+  now?: Date;
 }): Promise<{
   paidCents: number | null;
   openBalanceCents: number | null;
@@ -1157,12 +1202,21 @@ async function resolveSubscriptionStatusAfterApprovedPayment(params: {
     typeof params.currentCommercialStatus === "string" ?
       params.currentCommercialStatus :
       currentSubscriptionStatus;
+  // #4107: pagamento aprovado NAO reativa contrato vencido. O estado
+  // consistente com o cron (que encerra contratos expirados como CANCELLED)
+  // e devolver CANCELLED: o valor pago fica registrado no ledger/pagamentos,
+  // mas a quadra nao volta a ACTIVE ate um admin renovar `billing_expires_at`.
+  const contractExpired = isContractExpired(
+    params.billingExpiresAt,
+    params.now || new Date()
+  );
+  const reactivatedStatus = contractExpired ? "CANCELLED" : "ACTIVE";
   if (!params.periodKey || params.monthlyFeeCents <= 0) {
     return {
       paidCents: null,
       openBalanceCents: null,
-      subscriptionStatus: "ACTIVE",
-      commercialStatus: "ACTIVE",
+      subscriptionStatus: reactivatedStatus,
+      commercialStatus: reactivatedStatus,
     };
   }
 
@@ -1178,17 +1232,26 @@ async function resolveSubscriptionStatusAfterApprovedPayment(params: {
     return {
       paidCents,
       openBalanceCents,
-      subscriptionStatus: "ACTIVE",
-      commercialStatus: "ACTIVE",
+      subscriptionStatus: reactivatedStatus,
+      commercialStatus: reactivatedStatus,
     };
   }
 
   return {
     paidCents,
     openBalanceCents,
-    subscriptionStatus: currentSubscriptionStatus,
-    commercialStatus: currentCommercialStatus,
+    subscriptionStatus: contractExpired ? "CANCELLED" : currentSubscriptionStatus,
+    commercialStatus: contractExpired ? "CANCELLED" : currentCommercialStatus,
   };
+}
+
+/**
+ * Adiciona ID a uma lista bounded do resultado do cron (#4111).
+ * @param {string[]} list Lista alvo.
+ * @param {string} id ID da quadra.
+ */
+function pushBoundedLocationId(list: string[], id: string): void {
+  if (list.length < BILLING_AUTOMATION_ID_LIST_CAP) list.push(id);
 }
 
 /**
@@ -1305,7 +1368,10 @@ export async function processLocationBillingAutomation(params?: {
     (params!.maxRunMs as number) :
     BILLING_AUTOMATION_MAX_RUN_MS;
 
+  // ID de execucao: sortable e deterministico para o mesmo `now` (testes).
+  const runId = `${periodKey}_${now.toISOString().replace(/[:.]/g, "-")}`;
   const result: LocationBillingAutomationResult = {
+    runId,
     periodKey,
     processedLocations: 0,
     skippedLocations: 0,
@@ -1316,7 +1382,13 @@ export async function processLocationBillingAutomation(params?: {
     suspendedLocations: 0,
     reactivatedLocations: 0,
     inconsistentLocations: 0,
+    expiredLocations: 0,
+    agedTrialLocations: 0,
     ledgerEntriesCreated: 0,
+    skippedLocationIds: [],
+    inconsistentLocationIds: [],
+    expiredLocationIds: [],
+    agedTrialLocationIds: [],
     resumedFromLocationId: null,
     nextCursor: null,
     budgetExhausted: false,
@@ -1381,17 +1453,90 @@ export async function processLocationBillingAutomation(params?: {
       }
       lastVisitedId = locationId;
 
-      const subscriptionStatus = typeof locData.subscription_status === "string" ?
-        locData.subscription_status :
-        "ACTIVE";
-      if (subscriptionStatus === "CANCELLED" || subscriptionStatus === "TRIAL") {
+      // #4111: default unico fail-closed compartilhado com resolver/painel.
+      const subscriptionStatus = resolveSubscriptionStatusOrDefault(
+        locData.subscription_status
+      );
+      if (subscriptionStatus === "CANCELLED") {
         result.skippedLocations += 1;
+        pushBoundedLocationId(result.skippedLocationIds, locationId);
+        continue;
+      }
+      if (subscriptionStatus === "TRIAL") {
+        // FIX #3953: TRIAL nao gera ciclo nem suspende. #4111: mas precisa
+        // envelhecer — primeira observacao sem `trial_started_at` grava o
+        // relogio (backfill = agora) e trials acima de TRIAL_MAX_DAYS sao
+        // registrados no doc de execucao para virarem pendencia.
+        result.skippedLocations += 1;
+        pushBoundedLocationId(result.skippedLocationIds, locationId);
+        if (!locData.trial_started_at) {
+          await doc.ref.update({
+            trial_started_at: now,
+            updated_at: FieldValue.serverTimestamp(),
+            updated_by: actorUserId,
+          });
+        } else if (isTrialAged(locData.trial_started_at, now)) {
+          result.agedTrialLocations += 1;
+          pushBoundedLocationId(result.agedTrialLocationIds, locationId);
+        }
         continue;
       }
 
       const billingStartsAtIso = toIsoString(locData.billing_starts_at);
       if (billingStartsAtIso && new Date(billingStartsAtIso).getTime() > now.getTime()) {
         result.skippedLocations += 1;
+        pushBoundedLocationId(result.skippedLocationIds, locationId);
+        continue;
+      }
+
+      // #4107: guarda simetrica a `billing_starts_at`. Contrato com
+      // `billing_expires_at` no passado esta encerrado: nao gera ciclo, nao
+      // cobra e transiciona (uma unica vez — CANCELLED ja foi pulado acima)
+      // para CANCELLED com ledger e evento proprios.
+      if (isContractExpired(locData.billing_expires_at, now)) {
+        result.expiredLocations += 1;
+        pushBoundedLocationId(result.expiredLocationIds, locationId);
+        const expiredBatch = db().batch();
+        expiredBatch.update(doc.ref, {
+          subscription_status: "CANCELLED",
+          commercial_status: "CANCELLED",
+          updated_at: FieldValue.serverTimestamp(),
+          updated_by: actorUserId,
+        });
+        const {ledgerRef, data: ledgerData} = createSubscriptionLedgerRef(
+          locationId,
+          {
+            type: "BILLING_AUTOMATION_CONTRACT_EXPIRED",
+            actor_user_id: actorUserId,
+            period_key: periodKey,
+            previous_subscription_status: subscriptionStatus,
+            next_subscription_status: "CANCELLED",
+            previous_commercial_status: locData.commercial_status ?? null,
+            next_commercial_status: "CANCELLED",
+            reason: `Automacao mensal ${periodKey}: contrato expirado em ` +
+              `${toIsoString(locData.billing_expires_at)}`,
+            effective_at: now,
+          }
+        );
+        expiredBatch.set(ledgerRef, ledgerData);
+        await expiredBatch.commit();
+        result.ledgerEntriesCreated += 1;
+        await writeLocationCommercialEvent({
+          locationId,
+          actorUserId,
+          type: "LOCATION_BILLING_AUTOMATION_STATUS_CHANGED",
+          before: {
+            subscription_status: subscriptionStatus,
+            commercial_status: locData.commercial_status ?? null,
+          },
+          after: {
+            subscription_status: "CANCELLED",
+            commercial_status: "CANCELLED",
+            billing_expires_at_iso: toIsoString(locData.billing_expires_at),
+            period_key: periodKey,
+          },
+          reason: `Automacao mensal ${periodKey}: contrato expirado`,
+        });
         continue;
       }
 
@@ -1403,7 +1548,10 @@ export async function processLocationBillingAutomation(params?: {
         Number(locData.billing_due_day) :
         null;
       if (!ownerId || monthlyFeeCents <= 0 || !billingDueDay) {
+        // #4111: quadra que nunca entra no laco e impossivel de cobrar.
+        // Fica registrada por ID no doc de execucao e gera alerta.
         result.inconsistentLocations += 1;
+        pushBoundedLocationId(result.inconsistentLocationIds, locationId);
         continue;
       }
 
@@ -1559,7 +1707,65 @@ export async function processLocationBillingAutomation(params?: {
     });
   }
 
+  await persistBillingAutomationRun(result, now, actorUserId);
+
   return result;
+}
+
+/**
+ * Persiste um doc por execucao do cron em `billing_automation_runs` (#4111)
+ * com contadores + listas de IDs, para que quadras descartadas por
+ * `continue` deixem rastro consultavel (admin e monitoring/alerting.ts).
+ * Falha de persistencia nao derruba o cron: e observabilidade, nao cobranca.
+ * @param {LocationBillingAutomationResult} result Resultado consolidado.
+ * @param {Date} now Instante de referencia da execucao.
+ * @param {string} actorUserId Ator (sistema ou admin).
+ * @return {Promise<void>} Promise resolvida apos tentativa de gravacao.
+ */
+async function persistBillingAutomationRun(
+  result: LocationBillingAutomationResult,
+  now: Date,
+  actorUserId: string
+): Promise<void> {
+  try {
+    await db()
+      .collection(BILLING_AUTOMATION_RUNS_COLLECTION)
+      .doc(result.runId)
+      .set({
+        run_id: result.runId,
+        period_key: result.periodKey,
+        actor_user_id: actorUserId,
+        started_at: now,
+        finished_at: FieldValue.serverTimestamp(),
+        processed_locations: result.processedLocations,
+        skipped_locations: result.skippedLocations,
+        paid_locations: result.paidLocations,
+        partial_locations: result.partialLocations,
+        pending_locations: result.pendingLocations,
+        overdue_locations: result.overdueLocations,
+        suspended_locations: result.suspendedLocations,
+        reactivated_locations: result.reactivatedLocations,
+        inconsistent_locations: result.inconsistentLocations,
+        expired_locations: result.expiredLocations,
+        aged_trial_locations: result.agedTrialLocations,
+        ledger_entries_created: result.ledgerEntriesCreated,
+        skipped_location_ids: result.skippedLocationIds,
+        inconsistent_location_ids: result.inconsistentLocationIds,
+        expired_location_ids: result.expiredLocationIds,
+        aged_trial_location_ids: result.agedTrialLocationIds,
+        id_list_cap: BILLING_AUTOMATION_ID_LIST_CAP,
+        resumed_from_location_id: result.resumedFromLocationId,
+        next_cursor: result.nextCursor,
+        budget_exhausted: result.budgetExhausted,
+        created_at: FieldValue.serverTimestamp(),
+      });
+  } catch (error) {
+    logger.error("Location billing automation run doc failed", {
+      runId: result.runId,
+      periodKey: result.periodKey,
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
 }
 
 /**
@@ -1958,10 +2164,10 @@ secureCallable<GetAdminLocationBillingSummaryRequest>(
         const locData = doc.data() || {};
         const locationId = doc.id || doc.ref?.id;
         if (!locationId) return null;
-        const subscriptionStatus =
-          typeof locData.subscription_status === "string" ?
-            locData.subscription_status :
-            "ACTIVE";
+        // #4111: default unico fail-closed compartilhado com cron/resolver.
+        const subscriptionStatus = resolveSubscriptionStatusOrDefault(
+          locData.subscription_status
+        );
         const publicationStatus =
           typeof locData.publication_status === "string" ?
             locData.publication_status :
@@ -2037,6 +2243,8 @@ secureCallable<GetAdminLocationBillingSummaryRequest>(
               Number(locData.billing_due_day) :
               null,
             billingStartsAtIso: toIsoString(locData.billing_starts_at),
+            billingExpiresAtIso: toIsoString(locData.billing_expires_at),
+            trialStartedAtIso: toIsoString(locData.trial_started_at),
             expectedCents,
             receivedCents: paymentTotals.receivedCents,
             openBalanceCents: Math.max(
@@ -2607,6 +2815,7 @@ secureCallable<SetLocationSubscriptionRequest>(
       billing_expires_at: locData.billing_expires_at ?? null,
       billing_exception_note: locData.billing_exception_note ?? null,
       admin_notes: locData.admin_notes ?? null,
+      trial_started_at: locData.trial_started_at ?? null,
     };
     const update: FirebaseFirestore.UpdateData<FirebaseFirestore.DocumentData> = {
       subscription_status: subscriptionStatus,
@@ -2626,6 +2835,13 @@ secureCallable<SetLocationSubscriptionRequest>(
       update.billing_exception_note = billingExceptionNote;
     }
     if (hasAdminNotes) update.admin_notes = adminNotes;
+    // #4111: toda entrada em TRIAL inicia o relogio de envelhecimento.
+    // Quadra que ja estava em TRIAL com relogio preserva a data original.
+    if (subscriptionStatus === "TRIAL" &&
+      !(locData.subscription_status === "TRIAL" && locData.trial_started_at)
+    ) {
+      update.trial_started_at = new Date();
+    }
 
     const {ledgerRef, data: ledgerData} = createSubscriptionLedgerRef(
       locationId,
@@ -2702,6 +2918,7 @@ secureCallable<RegisterLocationSubscriptionPaymentRequest>(
       newlyApprovedAmountCents: amountCents,
       currentSubscriptionStatus: locData.subscription_status,
       currentCommercialStatus: locData.commercial_status,
+      billingExpiresAt: locData.billing_expires_at,
     });
     const {ledgerRef, data: ledgerData} = createSubscriptionLedgerRef(
       locationId,
@@ -2960,6 +3177,7 @@ secureCallable<ReviewLocationSubscriptionReceiptRequest>(
           newlyApprovedAmountCents: paymentAmountCents,
           currentSubscriptionStatus: currentLocData.subscription_status,
           currentCommercialStatus: currentLocData.commercial_status,
+          billingExpiresAt: currentLocData.billing_expires_at,
           alreadyApprovedCents,
         }) :
         {

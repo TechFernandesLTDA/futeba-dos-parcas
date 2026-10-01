@@ -3,7 +3,7 @@ package com.futebadosparcas.ui.theme
 import androidx.compose.ui.graphics.Color
 
 /**
- * Paleta semantica Compose (gamificacao, campos, status, marcas).
+ * Paleta semantica Compose (eventos de partida ao vivo, marcas).
  *
  * O ColorScheme Material 3 NAO vive mais aqui: ele e gerado em runtime pelo
  * [DynamicThemeEngine] a partir das seeds canonicas em `ThemeConfig.kt`
@@ -13,83 +13,14 @@ import androidx.compose.ui.graphics.Color
  */
 
 // ==========================================
-// SEMANTIC COLORS COMPOSE (Gamificação)
-// Para uso em Compose com cores especiais
+// SEMANTIC COLORS COMPOSE (eventos de partida, marcas)
 // ==========================================
-
-object ThemePresets {
-    val Green = Color(0xFF00852A)
-    val Blue = Color(0xFF1CB0F6)
-    val Orange = Color(0xFFFF9600)
-    val Purple = Color(0xFFCE82FF)
-    val Red = Color(0xFFFF4B4B)
-    val Navy = Color(0xFF2B70C9)
-
-    val All = listOf(Green, Blue, Orange, Purple, Red, Navy)
-}
-
-/**
- * Cores especiais para gamificação
- */
-object GamificationColors {
-    val Gold = Color(0xFFFFD700)
-    val Silver = Color(0xFFE0E0E0)
-    val Bronze = Color(0xFFCD7F32)
-    val Diamond = Color(0xFFB9F2FF)
-
-    val Purple = Color(0xFF6200EA)
-    val PurpleLight = Color(0xFFB388FF)
-
-    val XpGreen = Color(0xFF00852A)  // WCAG AA
-    val Xp = Color(0xFF9C27B0)       // Purple XP
-    val XpLightGreen = Color(0xFF64DD17)
-    val Level = Color(0xFF00BCD4)     // Cyan level
-    val Mvp = Color(0xFFFFD700)       // Gold MVP
-    val Streak = Color(0xFFFF5722)    // Orange streak
-    val LevelUpGold = Color(0xFFFFAB00)
-
-    val Platinum = Color(0xFF00E676)   // Platinum division
-    val Champion = Color(0xFFE91E63)   // Champion division
-
-    // Contraste para texto/ícones
-    val DiamondDark = Color(0xFF008394) // Cyan 700
-    val SilverDark = Color(0xFF616161) // Grey 700
-
-    val FireStart = Color(0xFFFF9800) // Orange
-    val FireEnd = Color(0xFFF44336) // Red
-
-    // Gradient Variants
-    val GoldLight = Color(0xFFFFE082)
-    val BronzeLight = Color(0xFFE6A370)
-}
-
-/**
- * Cores para tipos de campo
- */
-object FieldTypeColors {
-    val Society = Color(0xFF2E7D32) // Verde escuro
-    val Futsal = Color(0xFF1565C0) // Azul profundo
-    val Campo = Color(0xFF558B2F) // Verde campo
-    val Areia = Color(0xFFF9A825) // Amarelo areia
-    val Outros = Color(0xFF757575) // Cinza neutro
-
-    // Legacy aliases
-    val Grass = Color(0xFF388E3C)
-    val Synthetic = Color(0xFF4CAF50)
-    val Sand = Color(0xFFFBC02D)
-}
-
-/**
- * Cores para status de jogos
- */
-object GameStatusColors {
-    val Scheduled = Color(0xFF388E3C) // Verde
-    val InProgress = Color(0xFF1976D2) // Azul
-    val Finished = Color(0xFF616161) // Cinza
-    val Cancelled = Color(0xFFD32F2F) // Vermelho
-    val Full = Color(0xFFFF6F00) // Laranja
-    val Warning = Color(0xFFE6A300) // Amarelo/Laranja aviso
-}
+//
+// #4098: ThemePresets, GamificationColors, FieldTypeColors, GameStatusColors e
+// BadgeRarityColors foram removidos — 0 consumidores no modulo e nao eram
+// theme-aware. Cores fixas de gamificacao (ouro/prata/bronze do podio) vivem
+// como constantes privadas na propria tela que as usa (PostGameReportScreen),
+// com o foreground escolhido em runtime por DynamicThemeEngine.onColorFor(...).
 
 /**
  * Cores para eventos de partida ao vivo
@@ -115,12 +46,3 @@ object BrandColors {
     val Pix = Color(0xFF00C9A7) // Verde-água Pix
 }
 
-/**
- * Cores para raridades de badges
- */
-object BadgeRarityColors {
-    val Common = Color(0xFF8E8E8E) // Cinza
-    val Rare = Color(0xFF2196F3) // Azul
-    val Epic = Color(0xFF9C27B0) // Roxo
-    val Legendary = Color(0xFFFF9800) // Laranja/Dourado
-}
