@@ -98,7 +98,7 @@ export const GamificationCelebration = React.memo(function GamificationCelebrati
           borderRadius: 2,
           border: `1px solid ${alpha(accentColor, 0.35)}`,
           bgcolor: alpha(theme.palette.background.paper, 0.96),
-          animation: `rewardToastIn ${GAMIFICATION_CELEBRATION_DURATION_MS}ms ${motionEasing.emphasized} both`,
+          animation: `rewardToastIn ${GAMIFICATION_CELEBRATION_DURATION_MS}ms ${motionEasing.standard} both`,
         }}
       >
         <Box

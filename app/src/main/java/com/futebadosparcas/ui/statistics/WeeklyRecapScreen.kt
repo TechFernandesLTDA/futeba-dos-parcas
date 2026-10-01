@@ -485,7 +485,7 @@ private fun PerformanceSlide(data: WeeklyRecapData) {
             targetValue = data.winRate,
             animationSpec = tween(
                 durationMillis = MotionDuration.getLong(reducedMotion),
-                easing = MotionEasing.Emphasized
+                easing = MotionEasing.Standard
             )
         )
     }

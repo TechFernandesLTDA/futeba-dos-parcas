@@ -30,6 +30,30 @@ const VENUE_ACCOUNT_BILLING_CYCLES = [
 ] as const;
 
 export type VenueAccountStatus = (typeof VENUE_ACCOUNT_STATUSES)[number];
+
+/**
+ * Default unico para `subscription_status`/`status` ausente ou invalido
+ * (#4111). Antes cada leitor escolhia o seu: o cron cobrava como "ACTIVE",
+ * o resolver comercial e a conta agregada tratavam como "TRIAL" (isento de
+ * cobranca e sem data para envelhecer) — dado corrompido virava servico
+ * gratuito invisivel.
+ *
+ * Decisao fail-closed: valor ausente/invalido cai em "ACTIVE", o unico
+ * status que recebe escrutinio automatico em todos os caminhos —
+ * o cron gera ciclo (ou registra a quadra em `inconsistentLocations`,
+ * que agora alerta), o painel financeiro conta no MRR esperado e o
+ * resolver comercial marca `subscriptionStatusInvalid`. "TRIAL" so seria
+ * aceitavel com `trial_started_at` garantido, o que um doc sem status
+ * tambem nao tem.
+ */
+export const DEFAULT_SUBSCRIPTION_STATUS: VenueAccountStatus = "ACTIVE";
+
+/**
+ * Idade maxima (dias) de um TRIAL antes de aparecer como pendencia
+ * comercial (`trialExpired`). Decisao de produto (#4111): nao ha mudanca
+ * automatica de status, apenas sinalizacao.
+ */
+export const TRIAL_MAX_DAYS = 30;
 export type VenueAccountBillingScope =
   (typeof VENUE_ACCOUNT_BILLING_SCOPES)[number];
 export type VenueAccountPlanCode = (typeof VENUE_ACCOUNT_PLAN_CODES)[number];
@@ -157,12 +181,73 @@ export function stringOrNull(value: unknown): string | null {
 }
 
 /**
+ * Resolve `subscription_status` (location) ou `status` (venue_account)
+ * aplicando o default unico fail-closed (#4111). Todos os leitores —
+ * resolver comercial, cron de cobranca, painel financeiro e conta agregada —
+ * DEVEM usar este helper em vez de escolher o proprio fallback.
+ * @param {unknown} value Valor bruto do documento.
+ * @return {VenueAccountStatus} Status valido.
+ */
+export function resolveSubscriptionStatusOrDefault(
+  value: unknown
+): VenueAccountStatus {
+  return isVenueAccountStatus(value) ? value : DEFAULT_SUBSCRIPTION_STATUS;
+}
+
+/**
  * Normaliza status da conta com fallback seguro.
  * @param {unknown} value Valor bruto.
  * @return {VenueAccountStatus} Status valido.
  */
 export function normalizeVenueAccountStatus(value: unknown): VenueAccountStatus {
-  return isVenueAccountStatus(value) ? value : "TRIAL";
+  return resolveSubscriptionStatusOrDefault(value);
+}
+
+/**
+ * Converte Date/Timestamp Firestore em epoch ms, ou null quando invalido.
+ * @param {unknown} value Valor bruto do documento.
+ * @return {number | null} Epoch ms ou null.
+ */
+export function toEpochMs(value: unknown): number | null {
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? null : value.getTime();
+  }
+  if (value && typeof value === "object" &&
+    "toDate" in value &&
+    typeof (value as {toDate: unknown}).toDate === "function"
+  ) {
+    const parsed = (value as {toDate: () => unknown}).toDate();
+    return parsed instanceof Date && !Number.isNaN(parsed.getTime()) ?
+      parsed.getTime() :
+      null;
+  }
+  return null;
+}
+
+/**
+ * Verifica se o contrato comercial ja venceu (#4107).
+ * `billing_expires_at` no passado significa contrato encerrado: nao deve
+ * gerar ciclo, nao deve voltar a ACTIVE e deve sair do fluxo de publicacao.
+ * @param {unknown} billingExpiresAt Valor bruto de `billing_expires_at`.
+ * @param {Date} now Instante de referencia.
+ * @return {boolean} True quando a data existe e ja passou.
+ */
+export function isContractExpired(billingExpiresAt: unknown, now: Date): boolean {
+  const expiresAtMs = toEpochMs(billingExpiresAt);
+  return expiresAtMs !== null && expiresAtMs < now.getTime();
+}
+
+/**
+ * Verifica se um TRIAL passou de `TRIAL_MAX_DAYS` (#4111).
+ * @param {unknown} trialStartedAt Valor bruto de `trial_started_at`.
+ * @param {Date} now Instante de referencia.
+ * @return {boolean} True quando o trial e mais velho que o limite.
+ */
+export function isTrialAged(trialStartedAt: unknown, now: Date): boolean {
+  const startedAtMs = toEpochMs(trialStartedAt);
+  if (startedAtMs === null) return false;
+  const maxAgeMs = TRIAL_MAX_DAYS * 24 * 60 * 60 * 1000;
+  return now.getTime() - startedAtMs > maxAgeMs;
 }
 
 /**

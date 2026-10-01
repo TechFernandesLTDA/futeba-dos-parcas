@@ -1,6 +1,7 @@
 package com.futebadosparcas.compose.di
 
 import com.futebadosparcas.ui.core.LoginViewModel
+import com.futebadosparcas.ui.settings.ThemeSettingsViewModel
 import com.futebadosparcas.ui.whatsnew.releaseNotesModule
 import org.koin.core.module.Module
 import org.koin.compose.viewmodel.dsl.viewModel
@@ -28,6 +29,10 @@ val composeAppModule = module {
 
     // Bucket Core ViewModels
     viewModel { LoginViewModel(get()) }
+
+    // Preferências — tema (#4097). `ThemeRepository` é provido por plataforma em
+    // platformComposeAppModules(): iOS = NSUserDefaults; Android harness/wasmJs = memória.
+    viewModel { ThemeSettingsViewModel(get()) }
     // viewModel { GamesViewModel(get()) }  // requer GameRepository (plataforma)
     // viewModel { ProfileSetupViewModel(get()) }
 
