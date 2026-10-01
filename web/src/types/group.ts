@@ -30,6 +30,13 @@ export interface Group {
   isPrivate?: boolean;
   
   // Owner
+  // #4113: o doc no Firestore grava snake_case (`owner_id`/`owner_name` —
+  // ver useGroups.ts `newGroup`/transferência de posse em
+  // GroupSettingsScreen.tsx). Os leitores web (parseGroupDoc/fetchPublicGroups
+  // em useGroups.ts) passam o doc por `snakeToCamel()` antes de tipar como
+  // `Group`, então `ownerId`/`ownerName` aqui refletem o campo já convertido
+  // — não é o nome bruto do doc. Não usar `raw.ownerId`/`raw.ownerName` direto
+  // num doc do Firestore sem passar por `snakeToCamel` primeiro.
   ownerId: string;
   ownerName: string;
   

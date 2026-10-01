@@ -80,7 +80,9 @@ class RecordPaymentUseCase constructor(
             category = params.category.name,
             customCategory = null,
             amount = params.amount,
-            description = params.description.ifBlank { "Pagamento de ${params.playerName}" },
+            // #4113: a descrição padrão NÃO leva o nome do jogador — ele já
+            // vai em `player_name`, que o cleanup LGPD anonimiza.
+            description = params.description.ifBlank { DEFAULT_PAYMENT_DESCRIPTION },
             createdById = params.createdByUserId,
             createdByName = params.createdByUserName,
             referenceDate = Clock.System.now().toEpochMilliseconds(),
@@ -101,6 +103,17 @@ class RecordPaymentUseCase constructor(
 
         return result.getOrThrow()
     }
+
+    companion object {
+        /**
+         * Descrição usada quando o pagamento é registrado sem descrição.
+         *
+         * Neutra de propósito (#4113): texto livre com o nome do jogador
+         * sobrevivia à exclusão da conta. O nome já é exibido a partir de
+         * `player_name` (lista do caixa no Android: "Categoria • Nome").
+         */
+        const val DEFAULT_PAYMENT_DESCRIPTION = "Pagamento"
+    }
 }
 
 /**
@@ -111,7 +124,8 @@ class RecordPaymentUseCase constructor(
  * @property playerName Nome do jogador para exibição
  * @property amount Valor do pagamento
  * @property category Categoria do pagamento (MONTHLY_FEE, WEEKLY_FEE, SINGLE_PAYMENT)
- * @property description Descrição do pagamento (opcional)
+ * @property description Descrição do pagamento (opcional; em branco usa
+ *   [RecordPaymentUseCase.DEFAULT_PAYMENT_DESCRIPTION], sem o nome do jogador)
  * @property gameId ID do jogo relacionado (opcional)
  * @property receiptUrl URL do comprovante já enviado (opcional)
  * @property receiptFilePath Caminho do comprovante a ser enviado (opcional)

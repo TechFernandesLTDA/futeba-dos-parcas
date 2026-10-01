@@ -241,4 +241,99 @@ describe("monitoring/alerting — systemHealthCheck", () => {
     );
     expect(wallMediaAlerts).toHaveLength(0);
   });
+
+  const billingRun = (overrides: Record<string, unknown>) => () => ({
+    empty: false,
+    size: 1,
+    docs: [{
+      id: "2026-07_run-1",
+      data: () => ({
+        run_id: "2026-07_run-1",
+        period_key: "2026-07",
+        inconsistent_locations: 0,
+        inconsistent_location_ids: [],
+        expired_locations: 0,
+        aged_trial_locations: 0,
+        aged_trial_location_ids: [],
+        ...overrides,
+      }),
+    }],
+  });
+
+  it("#4111: gera alerta CRITICAL quando o cron de cobranca reporta inconsistent_locations > 0", async () => {
+    queryDocsByCollection.billing_automation_runs = billingRun({
+      inconsistent_locations: 2,
+      inconsistent_location_ids: ["loc-a", "loc-b"],
+      aged_trial_locations: 1,
+      aged_trial_location_ids: ["loc-trial"],
+    });
+
+    await systemHealthCheck();
+
+    expect(addedAlerts).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "BILLING_AUTOMATION_INCONSISTENT_LOCATIONS",
+          severity: "CRITICAL",
+          metadata: expect.objectContaining({
+            run_id: "2026-07_run-1",
+            period_key: "2026-07",
+            count: 2,
+            locationIds: ["loc-a", "loc-b"],
+            aged_trial_location_ids: ["loc-trial"],
+          }),
+        }),
+      ]),
+    );
+    const healthCheck = addedMetrics.find((m) => m.type === "health_check");
+    expect(healthCheck?.checks).toEqual(
+      expect.objectContaining({
+        billing_automation_inconsistent: expect.objectContaining({status: "WARNING"}),
+      }),
+    );
+  });
+
+  it("#4111: NAO gera alerta de cobranca quando a execucao mais recente nao tem inconsistencias", async () => {
+    queryDocsByCollection.billing_automation_runs = billingRun({});
+
+    await systemHealthCheck();
+
+    expect(addedAlerts.filter((a) =>
+      a.type === "BILLING_AUTOMATION_INCONSISTENT_LOCATIONS",
+    )).toHaveLength(0);
+    const healthCheck = addedMetrics.find((m) => m.type === "health_check");
+    expect(healthCheck?.checks).toEqual(
+      expect.objectContaining({
+        billing_automation_inconsistent: expect.objectContaining({status: "OK"}),
+      }),
+    );
+  });
+
+  it("#4111: NAO duplica o alerta quando a mesma run ja foi alertada", async () => {
+    queryDocsByCollection.billing_automation_runs = billingRun({
+      inconsistent_locations: 1,
+      inconsistent_location_ids: ["loc-a"],
+    });
+    queryDocsByCollection.alerts = () => ({
+      empty: false,
+      size: 1,
+      docs: [{id: "alert-1", data: () => ({type: "BILLING_AUTOMATION_INCONSISTENT_LOCATIONS"})}],
+    });
+
+    await systemHealthCheck();
+
+    expect(addedAlerts.filter((a) =>
+      a.type === "BILLING_AUTOMATION_INCONSISTENT_LOCATIONS",
+    )).toHaveLength(0);
+  });
+
+  it("#4111: NAO gera alerta de cobranca quando nao ha execucao recente do cron", async () => {
+    await systemHealthCheck();
+
+    expect(addedAlerts.filter((a) =>
+      a.type === "BILLING_AUTOMATION_INCONSISTENT_LOCATIONS",
+    )).toHaveLength(0);
+    const healthCheck = addedMetrics.find((m) => m.type === "health_check");
+    expect(healthCheck?.checks).not.toHaveProperty("billing_automation_inconsistent");
+  });
 });
