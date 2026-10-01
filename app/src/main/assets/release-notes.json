@@ -1,7 +1,72 @@
 {
   "platform": "android",
-  "generatedAt": "2026-08-28T16:23:47.957Z",
+  "generatedAt": "2026-10-01T12:15:43.248Z",
   "notes": [
+    {
+      "version": "1.40.0",
+      "buildNumber": 81,
+      "releaseDate": "2026-10-01",
+      "type": "minor",
+      "showPopup": true,
+      "published": true,
+      "headline": "Mensagens diretas, push e teclado funcionando como esperado — e a sequência de jogos finalmente cresce.",
+      "highlights": [
+        {
+          "icon": "chat",
+          "title": "Mensagens diretas enviando",
+          "description": "O envio de mensagens diretas volta a funcionar em produção, pelo caminho seguro do servidor."
+        },
+        {
+          "icon": "notifications_active",
+          "title": "Push que abre o app",
+          "description": "Tocar na notificação com o app fechado agora abre o jogo certo."
+        },
+        {
+          "icon": "local_fire_department",
+          "title": "Sequência que cresce",
+          "description": "Jogar toda semana mantém sua sequência de jogos — ela não zera mais por contar dias corridos."
+        }
+      ],
+      "added": [
+        "Conquistas conquistadas agora aparecem na tela de Badges com nome e descrição corretos.",
+        "Confirmação antes de apagar fotos e vídeos de jogos.",
+        "Preço aceita vírgula (15,00) na criação de jogo, igual ao exemplo da própria tela.",
+        "Campos de texto pedem capitalização ao teclado: nome, apelido, grupo, endereço e chat."
+      ],
+      "improved": [
+        "Conflito de horário de quadra verificado pelo servidor ao criar/editar jogo, mostrando \"Horário ocupado (HH:mm–HH:mm)\" sem expor dados de outros grupos.",
+        "Sequência exibida como \"jogos seguidos\" com plural correto, sem \"0 dias\" e sem chama quando está zerada.",
+        "Notificações em segundo plano chegam no canal certo, com ícone legível."
+      ],
+      "fixed": [
+        "Toque na push com o app fechado não cai mais na tela inicial sem abrir nada.",
+        "O resumo semanal falso (\"0 jogos e 0 XP\") deixa de ser enviado após reiniciar o aparelho.",
+        "A animação de back preditivo (Android 15+) voltou a funcionar.",
+        "Barra de navegação do sistema legível no tema escuro."
+      ],
+      "issueRefs": [
+        4096,
+        4097,
+        4098,
+        4099,
+        4108,
+        4109,
+        4119,
+        4120,
+        4125,
+        4127,
+        4136,
+        4137,
+        4138,
+        4140,
+        4141,
+        4142,
+        4145,
+        4146,
+        4149,
+        4150
+      ]
+    },
     {
       "version": "1.39.5",
       "buildNumber": 80,

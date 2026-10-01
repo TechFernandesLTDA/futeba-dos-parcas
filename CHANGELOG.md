@@ -24,6 +24,30 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ## Android
 
+### [1.40.0][android-1.40.0] - 2026-10-01
+
+#### Adicionado
+- `refreshCurrentLocation` via callable `updateMyLocation` antes de `discoverNearbyPlayers` (#4123).
+- Intent-filter `FLUTTER_NOTIFICATION_CLICK` na SplashActivity + `default_notification_channel_id` no manifest + `copyPushExtras` para deep link de jogo (#4140).
+- `BadgeCatalog` local com todos os IDs gravados pelas Cloud Functions (milestones UPPERCASE, ambassador, mito_rodada, mvp_liga) (#4138).
+- `BatchOperationHelper.parallelGetByIds` para leitura unitária em vez de `whereIn(documentId)` (#4126).
+- `LegacySmartReminderCleaner` cancelando alarmes WEEKLY_RECAP/STREAK_CHECK legados no boot (#4142).
+
+#### Mudado
+- `DirectMessagesRepository.sendMessage` via callable `submitDirectMessage` (#4119).
+- `checkTimeConflict`/`getGamesByFieldAndDate` via callable `getFieldAvailability` (janela D-1..D, `excludeGameId` server-side); `TimeConflict` sem `Game` inteiro (#4127).
+- `getUpcomingGames`/Flow com `whereIn visibility`; `getGamesByGroup` mantém constraint de grupo (#4126).
+- `cancelConfirmation`/`removePlayerFromGame` no KMP shared trocam delete por update→CANCELLED (#4144).
+- `SetupSystemBars` removido (SideEffect do FutebaTheme é a única fonte de system bars) (#4125); `BackHandler` raiz removido (#4149).
+- `KeyboardOptions(capitalization = Sentences)` em campos de texto livre de 6 telas (#4137).
+
+#### Corrigido
+- Preço com vírgula normalizado antes de `toDoubleOrNull` (#4136).
+- Streak server-side com janela de 8 dias e mesmo dia sem incremento (#4150).
+- `ic_notification` silhueta monocromática (#4141).
+
+_Issues: #4096, #4097, #4098, #4099, #4108, #4109, #4119, #4120, #4125, #4127, #4136, #4137, #4138, #4140, #4141, #4142, #4145, #4146, #4149, #4150 · PRs: #4118, #4153, #4154, #4155, #4157, #4159, #4161_
+
 ### [1.39.5][android-1.39.5] - 2026-08-28
 
 #### Adicionado
@@ -343,6 +367,32 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 - Bump de versão de manutenção após a mega audit wave de 2026-05-11, sem mudanças funcionais no Android nesta tag.
 
 ## Web
+
+### [1.57.0][web-1.57.0] - 2026-10-01
+
+#### Adicionado
+- Callable `updateMyLocation` server-owner com cooldown de 10 min, checagem de plausibilidade e geohash calculado no servidor (#4123).
+- Trigger `onDirectMessageDeleted` recalculando preview de chats após exclusão de mensagem (#4120).
+- Espelho `user_badges` para badges de subcoleção (ambassador/mito_rodada/mvp_liga) + backfill `backfill-badges-mirror.ts` (#4138).
+- Índices COLLECTION_GROUP `league_seasons.is_active` e compostos de games (deleted_at/status/visibility/dateTime, visibility/locationName) (#4128, #4126).
+- 18 apple-touch-startup-images por modo/dispositivo (#4131).
+
+#### Mudado
+- Rules de `games`: get/list em whitelist por acesso direto de campo (PUBLIC_OPEN/PUBLIC_CLOSED, owner, grupo); `create` exige `visibility` válido (#4126).
+- Rules de `user_locations`: `create: if false` e `update` apenas para revogação — posição só via callable (#4123).
+- Queries de LIST em games migradas para constraints server-side (useGames, usePublicGames, usePrefetchHome, SearchPanel, WeeklyRecap via confirmations) (#4126).
+- `stripUndefinedValues` compartilhado preservando FieldValue/Timestamp/GeoPoint (#4147).
+- theme-color passa a usar `background.default` (superfície M3) (#4132); status-bar PWA `default` + safe-area na landing (#4130).
+
+#### Corrigido
+- Confirmações removidas de grupo marcadas CANCELLED em vez de apagadas, disparando promoção de waitlist (#4144).
+- Health check CHECK 5 sem query de 2 desigualdades (#4129).
+- `onGameUpdatedNotification` compara dateTime normalizado com toMillis (#4143).
+- Cancelamentos do sistema não enviam push "cancelado pelo organizador" (#4135).
+- `removeGroupMembershipArtifacts` e cron da waitlist com gate de status do jogo (#4134, #4148).
+- onUserDeleted com recursiveDelete de subcoleções e purge de user_locations (#4139, #4124).
+
+_Issues: #4096, #4097, #4098, #4099, #4100, #4107, #4108, #4109, #4110, #4111, #4112, #4113, #4114, #4115, #4121, #4122, #4123, #4124, #4126, #4127, #4129, #4130, #4131, #4132, #4134, #4135, #4138, #4139, #4143, #4146, #4147, #4148 · PRs: #4118, #4151, #4152, #4154, #4155, #4156, #4158, #4159, #4160, #4161_
 
 ### [1.56.9][web-1.56.9] - 2026-08-20
 
@@ -2142,6 +2192,18 @@ _Issues: #1465, #1479, #1421, #1420 · PRs: #1465, #1479, #1421, #1420, #1417_
 
 ## iOS
 
+### [1.8.0][ios-1.8.0] - 2026-10-01
+
+#### Adicionado
+- Tela de tema iOS (Claro/Escuro/Sistema + alto contraste) persistida em `NSUserDefaults`; default `SYSTEM` (#4097).
+
+#### Mudado
+- `platformTypographyFontFamily` efetivamente aplica SF no iOS; Poppins realocada para `nonIosMain` (#4109).
+- PostGameReportScreen usa `onColorFor`/tokens em vez de `Color.White` hardcoded; 6 literais trocados por tokens (#4096).
+- Removidas as 5 paletas CMP sem consumidor (#4098).
+
+_Issues: #4096, #4097, #4098, #4099, #4109 · PRs: #4118, #4154_
+
 ### [1.7.2][ios-1.7.2] - 2026-08-28
 
 #### Mudado
@@ -2228,6 +2290,35 @@ _Issues: #3499, #3504, #3509 · PRs: #3511_
 _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
+
+### [1.13.0][functions-1.13.0] - 2026-10-01
+
+#### Adicionado
+- Callable `updateMyLocation` (App Check, rate limit, cooldown de 10 min, plausibilidade de movimento, geohash server-side) (#4123).
+- Trigger `onDocumentDeleted` de confirmations → `promoteWaitlistOnVacancy` compartilhado com `onGameVacancy` (#4144).
+- Trigger `onDirectMessageDeleted` recalculando preview de chats (#4120).
+- `mirrorBadgeToRoot` para ambassador/mito_rodada/mvp_liga + backfill de badges históricas (#4138).
+- `audit_logs` com `AUTO_CANCEL_LOW_QUORUM` e opt-out por jogo (`auto_cancel_enabled`) (#4133).
+- Backfills: `backfill-badges-mirror.ts`, `backfill-lgpd-ghost-users.ts` (#4138, #4139).
+
+#### Mudado
+- `processExpiredWaitlistEntries` lê o jogo na transação: cancelado/iniciado/cheio não convoca a fila (#4134).
+- Quórum efetivo = min(min_players, max_players) no auto-cancel (#4133).
+- Rules de `games` (get/list whitelist, create com visibility) e `user_locations` (create: false, update só revogação) (#4126, #4123).
+- `stripUndefinedValues` único preservando FieldValue/Timestamp/GeoPoint (#4147).
+- `calculateNextParticipationStreak` com janela STREAK_KEEP_GAP_DAYS=8; compact-streaks reset > 9 dias; nudge streak_at_risk limitado à janela (#4150).
+- onUserDeleted: recursiveDelete de users/{uid} + user_locations + anonimização de DMs (#4139, #4124, #4120).
+- account-merge migra gamificação completa e apaga user_locations da origem (#4118, #4124).
+
+#### Corrigido
+- `listManagedGroupIds` com índice COLLECTION_GROUP de league_seasons e paginação startAfter (#4128).
+- systemHealthCheck CHECK 5 sem query de 2 desigualdades (#4129).
+- `onGroupDeleted` cascata paginada (#4118).
+- billing_expires_at vencido → CANCELLED uma vez, com ledger (#4118).
+- `hasGameUpdateNotificationRelevantChange` com toMillis (#4143).
+- Push de cancelamento do sistema suprimido + mute_groups respeitado (#4135).
+
+_Issues: #4100, #4107, #4108, #4109, #4110, #4111, #4112, #4113, #4119, #4120, #4123, #4124, #4126, #4128, #4129, #4133, #4134, #4135, #4138, #4139, #4140, #4141, #4143, #4144, #4147, #4150 · PRs: #4118, #4151, #4152, #4153, #4154, #4155, #4156, #4159, #4161_
 
 ### [1.12.6][functions-1.12.6] - 2026-08-28
 
@@ -3056,6 +3147,7 @@ _Issues: #2981_
 _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 
 
+[android-1.40.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.40.0.md
 [android-1.39.5]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.39.5.md
 [android-1.39.4]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.39.4.md
 [android-1.39.3]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.39.3.md
@@ -3082,6 +3174,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.57.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.57.0.md
 [web-1.56.9]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.56.9.md
 [web-1.56.8]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.56.8.md
 [web-1.56.7]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.56.7.md
@@ -3255,6 +3348,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [web-1.26.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.26.2.md
 [web-1.26.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.26.1.md
 [web-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.26.0.md
+[ios-1.8.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.8.0.md
 [ios-1.7.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.7.2.md
 [ios-1.7.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.7.1.md
 [ios-1.7.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.7.0.md
@@ -3262,6 +3356,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [ios-1.6.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.2.md
 [ios-1.6.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.1.md
 [ios-1.6.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.0.md
+[functions-1.13.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.13.0.md
 [functions-1.12.6]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.12.6.md
 [functions-1.12.5]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.12.5.md
 [functions-1.12.4]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.12.4.md
