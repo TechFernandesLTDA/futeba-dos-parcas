@@ -113,9 +113,14 @@ class MainActivityCompose : AppCompatActivity() {
         val gameId = intent?.getStringExtra("gameId")
         val openBadges = intent?.getBooleanExtra("openBadges", false) ?: false
         val notificationType = intent?.getStringExtra("notificationType")
+        // FIX #4140: payload `data` das push do Functions inclui
+        // action = "game_detail/<id>" (sendNotificationToUser).
+        val actionRoute = intent?.getStringExtra("action")
+            ?.takeIf { it.startsWith("game_detail/") }
 
         deepLinkTarget.value = when {
             appLinkRoute != null -> appLinkRoute
+            actionRoute != null -> actionRoute
             gameId != null -> "game_detail/$gameId"
             openBadges -> "badges"
             notificationType == "level_up" -> "evolution"

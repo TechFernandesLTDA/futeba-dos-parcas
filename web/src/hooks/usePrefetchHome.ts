@@ -41,8 +41,12 @@ export function usePrefetchHome() {
     const prefetchNextGame = async () => {
       try {
         const gamesRef = collection(db, 'games');
+        // FIX #4126: escopo do dono — o prefetch existe para pré-buscar a
+        // confirmação do USUÁRIO no próximo jogo dele; query sem vínculo
+        // deixou de ser permitida pelas rules de LIST (whitelist).
         const q = query(
           gamesRef,
+          where('owner_id', '==', uid),
           where('status', 'in', ['SCHEDULED', 'CONFIRMED', 'LIVE']),
           where('dateTime', '>=', Timestamp.fromDate(new Date())),
           orderBy('dateTime', 'asc'),

@@ -381,19 +381,39 @@ export const systemHealthCheck =
     try {
       // FIX #993: adicionar filtro temporal — antes pegava TODOS os
       // jogos com erro historicamente (alertas perpétuos de erros antigos).
-      const dayAgo = Timestamp.fromMillis(
-        Date.now() - 24 * 60 * 60 * 1000
-      );
+      // FIX #4129: DUAS desigualdades (xp_processing_error != null +
+      // updated_at >= dayAgo) exigem índice na ordem lexicográfica
+      // (updated_at, xp_processing_error, __name__) — diferente do índice
+      // declarado (xp_processing_error, updated_at DESC). 100% das
+      // execuções do health check falhavam com FAILED_PRECONDITION e o
+      // status global ficava DEGRADED. A query foi dividida em 2:
+      // desigualdade única + filtro temporal no cliente.
+      const dayAgoMillis =
+        Date.now() - 24 * 60 * 60 * 1000;
+      const dayAgoMs = dayAgoMillis;
       const errorGamesSnap = await db
         .collection("games")
         .where(
           "xp_processing_error", "!=", null
         )
-        .where("updated_at", ">=", dayAgo)
-        .limit(10)
+        .limit(50)
         .get();
-
-      const errorCount = errorGamesSnap.size;
+      const errorGamesInWindow =
+        errorGamesSnap.docs.filter((doc) => {
+          const data = doc.data();
+          const updatedAt = data.updated_at;
+          const millis =
+            updatedAt &&
+            typeof updatedAt === "object" &&
+            typeof updatedAt.toMillis === "function" ?
+              updatedAt.toMillis() :
+              null;
+          return millis !== null && millis >= dayAgoMs;
+        });
+      const errorCount =
+        errorGamesInWindow.length > 10 ?
+          10 :
+          errorGamesInWindow.length;
       const xpOk = errorCount <=
         THRESHOLDS.XP_FAILURES_PER_DAY;
       checks["xp_processing_errors"] = {
@@ -406,7 +426,7 @@ export const systemHealthCheck =
 
       if (!xpOk) {
         const gameIds =
-          errorGamesSnap.docs.map(
+          errorGamesInWindow.map(
             (d) => d.id
           );
         alerts.push({

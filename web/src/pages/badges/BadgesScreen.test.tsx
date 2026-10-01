@@ -62,6 +62,7 @@ vi.mock('../../types/gamification', () => ({
     { id: 'badge-2', name: 'MVP da Galera', description: 'Seja MVP 5 vezes', category: 'mvp', rarity: 'RARO', icon: '🌟', xpReward: 200, requirement: '5 MVPs' },
     { id: 'badge-3', name: 'Artilheiro', description: 'Marque 10 gols', category: 'goals', rarity: 'RARO', icon: '⚽', xpReward: 150, requirement: '10 gols' },
   ],
+  getDynamicBadgeDefinition: () => null,
   rarityColors: { COMUM: '#8f8f8f', RARO: '#4fc3f7' },
 }));
 

@@ -30,6 +30,7 @@ import com.futebadosparcas.ui.adaptive.rememberAdaptiveSpacing
 import com.futebadosparcas.ui.adaptive.adaptiveValue
 import com.futebadosparcas.R
 import com.futebadosparcas.ui.theme.AppDimensions
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 
 @Composable
@@ -91,7 +92,12 @@ fun StreakWidget(
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = stringResource(R.string.streak_widget_title, streak.currentStreak),
+                    // FIX #4145: sequência conta jogos e tem plural.
+                    text = pluralStringResource(
+                        R.plurals.streak_widget_title,
+                        streak.currentStreak,
+                        streak.currentStreak
+                    ),
                     style = if (windowSizeClass.isCompact)
                         MaterialTheme.typography.titleMedium
                     else
@@ -99,7 +105,11 @@ fun StreakWidget(
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = stringResource(R.string.streak_widget_record, streak.longestStreak),
+                    text = pluralStringResource(
+                        R.plurals.streak_widget_record,
+                        streak.longestStreak,
+                        streak.longestStreak
+                    ),
                     style = if (windowSizeClass.isCompact)
                         MaterialTheme.typography.bodySmall
                     else

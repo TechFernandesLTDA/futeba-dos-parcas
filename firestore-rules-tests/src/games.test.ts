@@ -9,7 +9,7 @@
  * - Escalação: player não pode alterar owner_id
  */
 
-import { describe, it, beforeAll, afterAll } from "vitest";
+import { describe, it, beforeAll, afterAll, expect } from "vitest";
 import { assertFails, assertSucceeds } from "@firebase/rules-unit-testing";
 import type { RulesTestEnvironment } from "@firebase/rules-unit-testing";
 import {
@@ -49,6 +49,7 @@ const validGamePayload = (overrides: Record<string, unknown> = {}) => ({
   title: "Novo Jogo",
   owner_id: UID_PLAYER_A,
   status: "SCHEDULED",
+  visibility: "GROUP_ONLY", // FIX #4126: visibilidade obrigatória no create
   date_time: futureDate,
   max_players: 10,
   max_goalkeepers: 2,
@@ -70,6 +71,12 @@ beforeAll(async () => {
     status: "ACTIVE",
     member_count: 5,
   });
+  // FIX #4126: isGroupMember() valida via subcoleção members.
+  await seedDoc(testEnv, `groups/${GROUP_PLAYER_A_QUALIFIED}/members/${UID_PLAYER_A}`, {
+    user_id: UID_PLAYER_A,
+    role: "OWNER",
+    status: "ACTIVE",
+  });
   await seedDoc(testEnv, `groups/${GROUP_PLAYER_A_SMALL}`, {
     name: "Grupo Player A Pequeno",
     owner_id: UID_PLAYER_A,
@@ -88,6 +95,7 @@ beforeAll(async () => {
     title: "Jogo Ativo",
     owner_id: UID_PLAYER_A,
     status: "SCHEDULED",
+    visibility: "PUBLIC_OPEN", // FIX #4126: LIST usa whitelist por visibilidade
     date_time: futureDate,
     max_players: 10,
     max_goalkeepers: 2,
@@ -96,6 +104,17 @@ beforeAll(async () => {
     team1_score: null,
     team2_score: null,
     group_id: GROUP_PLAYER_A_QUALIFIED,
+    co_organizers: [],
+  });
+
+  // Jogo público para testes de LIST (#4126)
+  await seedDoc(testEnv, "games/game-public-list-001", {
+    title: "Jogo Publico LIST",
+    owner_id: UID_PLAYER_A,
+    status: "SCHEDULED",
+    visibility: "PUBLIC_OPEN",
+    date_time: futureDate,
+    max_players: 10,
     co_organizers: [],
   });
 
@@ -244,6 +263,86 @@ describe("games — leitura", () => {
     await assertFails(
       db.collection("games").where("visibility", "==", "GROUP_ONLY").get()
     );
+  });
+
+  // ==========================================================
+  // FIX #4126: LIST com whitelist de visibilidade
+  // ==========================================================
+
+  it("LIST sem filtro de visibilidade NÃO devolve jogos privados (#4126)", async () => {
+    const db = asPlayerB(testEnv);
+    // Range amplo que incluiria o jogo GROUP_ONLY de outro grupo. Com a
+    // regra antiga (get('visibility', null) != 'GROUP_ONLY' default-
+    // satisfatível) a query ia e vazava; com a whitelist o engine exige
+    // constraint e nega a query inteira.
+    await assertFails(
+      db.collection("games").where("date_time", ">=", new Date(0)).get()
+    );
+  });
+
+  it("LIST com filtro de visibilidade pública retorna jogos públicos (#4126)", async () => {
+    const db = asPlayerB(testEnv);
+    const snap = await assertSucceeds(
+      db
+        .collection("games")
+        .where("visibility", "in", ["PUBLIC_OPEN", "PUBLIC_CLOSED"])
+        .where("date_time", ">=", new Date(0))
+        .get()
+    );
+    const ids = snap.docs.map((doc) => doc.id);
+    expect(ids).toContain("game-public-list-001");
+    expect(ids).not.toContain(GAME_GROUP_ONLY_INVITED);
+  });
+
+  it("LIST por owner_id retorna apenas jogos do dono (#4126)", async () => {
+    const db = asPlayerA(testEnv);
+    const snap = await assertSucceeds(
+      db
+        .collection("games")
+        .where("owner_id", "==", UID_PLAYER_A)
+        .where("date_time", ">=", new Date(0))
+        .get()
+    );
+    const ids = snap.docs.map((doc) => doc.id);
+    expect(ids).toContain("game-public-list-001");
+  });
+
+  it("Membro pode LISTAR jogos do grupo com filtro group_id (#4126)", async () => {
+    // Player A é dono/membro de GROUP_PLAYER_A_QUALIFIED.
+    const db = asPlayerA(testEnv);
+    const snap = await assertSucceeds(
+      db
+        .collection("games")
+        .where("group_id", "==", GROUP_PLAYER_A_QUALIFIED)
+        .get()
+    );
+    const ids = snap.docs.map((doc) => doc.id);
+    expect(ids).toContain(GAME_GROUP_ONLY_INVITED);
+  });
+
+  it("Não-membro NÃO pode LISTAR jogos GROUP_ONLY por group_id (#4126)", async () => {
+    // Player B tem apenas convite PENDING (não é membro do grupo).
+    const db = asPlayerB(testEnv);
+    await assertFails(
+      db
+        .collection("games")
+        .where("group_id", "==", GROUP_PLAYER_A_QUALIFIED)
+        .get()
+    );
+  });
+
+  it("Documento sem visibility não entra em LIST pública (#4126)", async () => {
+    // GAME_ACTIVE agora tem visibility PUBLIC_OPEN; GAME_DELETED (sem
+    // visibility, soft-deleted) não pode ser devolvido por query pública.
+    const db = asPlayerB(testEnv);
+    const snap = await assertSucceeds(
+      db
+        .collection("games")
+        .where("visibility", "in", ["PUBLIC_OPEN", "PUBLIC_CLOSED"])
+        .get()
+    );
+    const ids = snap.docs.map((doc) => doc.id);
+    expect(ids).not.toContain(GAME_DELETED);
   });
 });
 

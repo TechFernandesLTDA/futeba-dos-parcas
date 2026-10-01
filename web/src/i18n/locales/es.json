@@ -3,6 +3,7 @@
     "addEvent": "Añadir evento",
     "addLocation": "Añadir lugar",
     "addToCalendar": "Añadir al Calendario",
+    "selectPlayer": "Seleccionar jugador: {{label}}",
     "adminMenu": "Menú de administración",
     "back": "Volver",
     "backToHome": "Volver al inicio",
@@ -1099,6 +1100,7 @@
       "maxPlayers": "Máx. Jugadores",
       "maxPlayersHelp": "Ej.: 14. Total de cupos de línea, de {{min}} a {{max}} jugadores.",
       "membersCount": "{{count}} miembros",
+      "membersCount_one": "{{count}} miembro",
       "noActiveFieldsAtLocation": "Este lugar no tiene una cancha activa disponible. El dueño/admin debe completar el cadastro antes de liberar partidos.",
       "noCommercialLocations": "No hay canchas publicadas y con mensualidad válida disponibles ahora. Usa un lugar manual o espera la aprobación de la app.",
       "noFieldsAtLocation": "No hay canchas registradas en este lugar. Se usará la información del lugar.",
@@ -2287,13 +2289,13 @@
         "nameRequired": "El nombre es obligatorio",
         "phoneInvalid": "Teléfono inválido (usa código de área + número)",
         "playersPerTeamRange": "Entre 3 y 11",
-      "stateRequired": "El estado es obligatorio.",
-      "timeZoneInvalid": "Selecciona una zona horaria válida.",
+        "stateRequired": "El estado es obligatorio.",
+        "timeZoneInvalid": "Selecciona una zona horaria válida.",
         "websiteInvalid": "URL inválida. Debe comenzar con http:// o https://"
       },
-    "timeZoneHelper": "Se usa para calcular correctamente los horarios, incluso después de medianoche.",
-    "timeZoneLabel": "Zona horaria del local",
-    "websiteLabel": "Sitio"
+      "timeZoneHelper": "Se usa para calcular correctamente los horarios, incluso después de medianoche.",
+      "timeZoneLabel": "Zona horaria del local",
+      "websiteLabel": "Sitio"
     },
     "quickCreate": {
       "title": "Crear Local",
@@ -2324,6 +2326,7 @@
     "worstPlayer": "Peor Jugador",
     "finalResult": "Resultado Final",
     "votesCount": "{{count}} votos",
+    "votesCount_one": "{{count}} voto",
     "exportPdf": "Exportar PDF",
     "exporting": "Exportando...",
     "exportError": "Error al exportar PDF",
@@ -2449,6 +2452,7 @@
       },
       "timeWithGroup": "{{time}} · {{group}}",
       "unreadCount": "{{count}} no leídas",
+      "unreadCount_one": "{{count}} no leídas",
       "undo": "Deshacer"
     }
   },
@@ -2713,6 +2717,7 @@
     "restrictedAccessDesc": "Necesitas ser miembro de este grupo para ver a los jugadores.",
     "title": "Jugadores",
     "titleWithCount": "Jugadores ({{count}})",
+    "titleWithCount_one": "Jugador ({{count}})",
     "viewPlayerCardAria": "Ver figurita de {{name}}"
   },
   "profile": {
@@ -2978,6 +2983,7 @@
     "deleteError": "Error al eliminar horario",
     "itemDescription_other": "{{day}} a las {{time}} • {{players}} jugadores",
     "playersCount": "{{count}} jugadores",
+    "playersCount_one": "{{count}} jugador",
     "toggleError": "Error al cambiar estado",
     "day0": "Domingo",
     "day1": "Lunes",
@@ -3412,6 +3418,7 @@
     "managePlayers": "Gestionar Jugadores",
     "myFields": "Mis Canchas",
     "myFieldsCount": "Mis Canchas ({{count}})",
+    "myFieldsCount_one": "Mis Canchas ({{count}})",
     "needsAttention": "Necesita atención",
     "noLedgerEvents": "Aún no hay eventos financieros registrados.",
     "noPaymentsYet": "Todavía no hay pagos ni comprobantes para esta sede.",

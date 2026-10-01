@@ -47,8 +47,12 @@ async function fetchPublicGames(variant: PublicGamesVariant): Promise<Game[]> {
   const now = new Date();
 
   if (variant === 'map') {
+    // FIX #4126: visibilidade como constraint provável (whitelist das rules).
+    // is_public é derivado de visibility; o filtro authorization-relevante
+    // é `visibility in [...]`.
     const q = query(
       gamesRef,
+      where('visibility', 'in', ['PUBLIC_OPEN', 'PUBLIC_CLOSED']),
       where('is_public', '==', true),
       where('status', 'in', ['SCHEDULED', 'CONFIRMED']),
       where('dateTime', '>=', Timestamp.fromDate(now)),
