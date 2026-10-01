@@ -13,7 +13,30 @@
     <meta name="apple-mobile-web-app-title" content="Futeba" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <!-- FIX #4130 (a11y): black-translucent pintava relógio/bateria de BRANCO
+         sobre o tema claro (1,01:1). `default` mantém o texto legível em
+         qualquer modo e o conteúdo respeita safe-area via env() nos bars. -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <!-- FIX #4131: apple-touch-startup-images (2º critério do #2716) —
+         fundo sólido por tamanho/dispositivo; elimina o flash branco no 1º launch do PWA no iPhone. Nota: as imagens são light; no dark o fundo combina com o default light theme do PWA em Cold Start. -->
+    <link rel="apple-touch-startup-image" media="(device-width: 320px) and (device-height: 548px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="/startup/light-640x1096.png" />
+    <link rel="apple-touch-startup-image" media="(device-width: 320px) and (device-height: 548px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)" href="/startup/light-1096x640.png" />
+    <link rel="apple-touch-startup-image" media="(device-width: 375px) and (device-height: 647px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="/startup/light-750x1294.png" />
+    <link rel="apple-touch-startup-image" media="(device-width: 375px) and (device-height: 647px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)" href="/startup/light-1294x750.png" />
+    <link rel="apple-touch-startup-image" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="/startup/light-1125x2436.png" />
+    <link rel="apple-touch-startup-image" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)" href="/startup/light-2436x1125.png" />
+    <link rel="apple-touch-startup-image" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="/startup/light-1242x2688.png" />
+    <link rel="apple-touch-startup-image" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)" href="/startup/light-2688x1242.png" />
+    <link rel="apple-touch-startup-image" media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="/startup/light-1170x2532.png" />
+    <link rel="apple-touch-startup-image" media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)" href="/startup/light-2532x1170.png" />
+    <link rel="apple-touch-startup-image" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="/startup/light-1284x2778.png" />
+    <link rel="apple-touch-startup-image" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)" href="/startup/light-2778x1284.png" />
+    <link rel="apple-touch-startup-image" media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="/startup/light-1290x2796.png" />
+    <link rel="apple-touch-startup-image" media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)" href="/startup/light-2796x1290.png" />
+    <link rel="apple-touch-startup-image" media="(device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="/startup/light-1536x2048.png" />
+    <link rel="apple-touch-startup-image" media="(device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)" href="/startup/light-2048x1536.png" />
+    <link rel="apple-touch-startup-image" media="(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="/startup/light-2048x2732.png" />
+    <link rel="apple-touch-startup-image" media="(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)" href="/startup/light-2732x2048.png" />
     <link rel="canonical" href="https://futebadosparcas.com.br/" />
     <meta property="og:title" content="Futeba dos Parças | Organize sua pelada" />
     <meta property="og:description" content="Organize peladas, monte times equilibrados, acompanhe estatísticas e gerencie seu futebol amador." />

@@ -1,5 +1,7 @@
 package com.futebadosparcas.ui.groups
 
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -131,6 +133,8 @@ fun WallPostComposer(
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         OutlinedTextField(
+            // FIX #4137: teclado com capitalização para campos de texto livre.
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
             value = text,
             onValueChange = { if (it.length <= MAX_TEXT_LENGTH) text = it },
             modifier = Modifier.fillMaxWidth(),

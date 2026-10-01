@@ -1,5 +1,7 @@
 package com.futebadosparcas.ui.onboarding
 
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -95,6 +97,8 @@ fun ProfileSetupScreen(
 
             // Campo Nome
             OutlinedTextField(
+            // FIX #4137: teclado com capitalização para campos de texto livre.
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
                 value = name,
                 onValueChange = { name = it },
                 label = { Text(stringResource(R.string.profile_setup_name)) },
@@ -108,6 +112,8 @@ fun ProfileSetupScreen(
 
             // Campo Apelido
             OutlinedTextField(
+            // FIX #4137: teclado com capitalização para campos de texto livre.
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
                 value = nickname,
                 onValueChange = { nickname = it },
                 label = { Text(stringResource(R.string.profile_setup_nickname)) },

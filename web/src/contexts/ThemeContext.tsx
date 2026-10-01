@@ -83,7 +83,10 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     document.documentElement.dataset.resolvedTheme = resolvedMode;
     document.documentElement.style.colorScheme = resolvedMode;
     themeColorElements.forEach((element) => {
-      element.content = resolvedTheme.palette.primary.main;
+      // FIX #4130: theme-color = superfície do app (padrão M3) — primary.main
+      // no dark/OLED pintava a barra do navegador de verde neon sobre app
+      // slate.
+      element.content = resolvedTheme.palette.background.default;
       element.removeAttribute('media');
     });
 
