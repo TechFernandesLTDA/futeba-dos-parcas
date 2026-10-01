@@ -105,6 +105,41 @@ describe("firestore.indexes.json — contratos operacionais", () => {
     });
   });
 
+  it("habilita collection-group para as queries por uid (#4113)", () => {
+    // Sem o índice COLLECTION_GROUP a query falha com FAILED_PRECONDITION:
+    // - cashbox.created_by e reviews.user_id: anonimização do onUserDeleted
+    //   (account-cleanup.ts); a falha deixaria a PII viva após a exclusão.
+    // - members.user_id: findUpcomingOpenGameForUser (gamification-nudges.ts).
+    // Os índices de COLLECTION são mantidos para não desligar as queries por
+    // coleção que já existiam.
+    for (const [collectionGroup, fieldPath] of [
+      ["cashbox", "created_by"],
+      ["reviews", "user_id"],
+      ["members", "user_id"],
+    ]) {
+      const override = config.fieldOverrides.find(
+        (candidate) =>
+          candidate.collectionGroup === collectionGroup &&
+          candidate.fieldPath === fieldPath,
+      );
+      expect(override, `${collectionGroup}.${fieldPath}`).toBeDefined();
+      const indexes = (override?.indexes ?? []) as Array<{
+        queryScope?: string;
+        order?: string;
+        arrayConfig?: string;
+      }>;
+      const scopes = indexes.map(
+        (index) => `${index.queryScope}:${index.order ?? index.arrayConfig}`,
+      );
+      expect(scopes).toEqual(expect.arrayContaining([
+        "COLLECTION:ASCENDING",
+        "COLLECTION:DESCENDING",
+        "COLLECTION:CONTAINS",
+        "COLLECTION_GROUP:ASCENDING",
+      ]));
+    }
+  });
+
   it("não contém índices compostos duplicados", () => {
     const signatures = config.indexes.map(indexSignature);
     expect(new Set(signatures).size).toBe(signatures.length);

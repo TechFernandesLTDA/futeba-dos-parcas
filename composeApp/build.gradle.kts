@@ -92,6 +92,17 @@ kotlin {
         val iosArm64Main by getting { dependsOn(iosMain) }
         val iosSimulatorArm64Main by getting { dependsOn(iosMain) }
 
+        // #4109: source set intermediário Android + wasmJs. Guarda a família Poppins
+        // (`rememberPoppinsFontFamily()`) e os `.ttf` em `nonIosMain/composeResources/font/`.
+        // Os recursos do Compose são empacotados por source set, então o iOS (que usa a
+        // fonte de sistema SF) não recebe os ~788 KB de Poppins nem os acessores
+        // `Res.font.poppins_*`.
+        val nonIosMain by creating {
+            dependsOn(commonMain)
+        }
+        val androidMain by getting { dependsOn(nonIosMain) }
+        val wasmJsMain by getting { dependsOn(nonIosMain) }
+
         commonMain.dependencies {
             // Compose Multiplatform 1.10.0
             implementation(compose.runtime)
