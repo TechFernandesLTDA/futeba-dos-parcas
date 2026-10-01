@@ -3101,7 +3101,7 @@ export {
 // SOCIAL GRAPH (#3235 / #3240)
 // ==========================================
 export {toggleFollowUser} from "./social/follow";
-export {discoverNearbyPlayers} from "./social/nearby-players";
+export {discoverNearbyPlayers, updateMyLocation} from "./social/nearby-players";
 export {createDirectChat, submitDirectMessage} from "./social/direct-messages";
 export {submitContentReport} from "./social/reports";
 export {onGroupWallPostSoftDeletedCleanupMedia} from "./groups/wall-media-cleanup";

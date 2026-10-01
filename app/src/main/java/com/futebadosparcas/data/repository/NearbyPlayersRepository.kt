@@ -40,23 +40,29 @@ class NearbyPlayersRepository(
     }
 
     suspend fun enableSharing(lat: Double, lng: Double): Result<Unit> = runCatching {
-        val uid = currentUid()
-        firestore.collection("user_locations")
-            .document(uid)
-            .set(
-                mapOf(
-                    "user_id" to uid,
-                    "location_sharing_enabled" to true,
-                    "location_consent_at" to FieldValue.serverTimestamp(),
-                    "location_updated_at" to FieldValue.serverTimestamp(),
-                    "geohash" to encodeGeohash(lat, lng),
-                    "lat" to lat,
-                    "lng" to lng
-                )
-            )
+        // FIX #4123: a posição só entra pela callable server-owner
+        // updateMyLocation (cooldown de 10 min, plausibilidade e geohash
+        // calculado no servidor). As rules bloqueiam lat/lng via cliente.
+        currentUid()
+        functions
+            .getHttpsCallable("updateMyLocation")
+            .call(mapOf("lat" to lat, "lng" to lng))
             .await()
         Unit
     }.onFailure { AppLogger.e(TAG, "Erro ao ativar localização compartilhada", it) }
+
+    /**
+     * FIX #4123: refresh do GPS atual pelo caminho autoritativo
+     * (callable). Chamado antes do discover pelo ViewModel.
+     */
+    suspend fun refreshCurrentLocation(lat: Double, lng: Double): Result<Unit> = runCatching {
+        currentUid()
+        functions
+            .getHttpsCallable("updateMyLocation")
+            .call(mapOf("lat" to lat, "lng" to lng))
+            .await()
+        Unit
+    }.onFailure { AppLogger.w(TAG) { "updateMyLocation falhou: ${it.message}" } }
 
     suspend fun disableSharing(): Result<Unit> = runCatching {
         val uid = currentUid()
