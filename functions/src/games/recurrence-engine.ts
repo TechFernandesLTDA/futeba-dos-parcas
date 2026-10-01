@@ -273,30 +273,9 @@ function recurrenceType(value: unknown): RecurrenceType | null {
   return null;
 }
 
-/**
- * Remove campos undefined antes de gravar no Firestore.
- *
- * @template T
- * @param {T} value Valor original.
- * @return {T} Valor sem campos undefined.
- */
-function stripUndefinedValues<T>(value: T): T {
-  if (Array.isArray(value)) {
-    return value
-      .filter((item) => item !== undefined)
-      .map((item) => stripUndefinedValues(item)) as T;
-  }
-
-  if (!value || typeof value !== "object") {
-    return value;
-  }
-
-  return Object.fromEntries(
-    Object.entries(value as Record<string, unknown>)
-      .filter(([, entryValue]) => entryValue !== undefined)
-      .map(([key, entryValue]) => [key, stripUndefinedValues(entryValue)])
-  ) as T;
-}
+// FIX #4147: strip compartilhado que preserva FieldValue/Timestamp/GeoPoint
+// (a cópia local destrava sentinelas — ver utils/strip-undefined.ts).
+import {stripUndefinedValues} from "../utils/strip-undefined";
 
 /**
  * Classifica erros permanentes de invariantes/dados para evitar retry infinito.

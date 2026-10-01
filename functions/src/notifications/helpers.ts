@@ -8,6 +8,7 @@ import {logger} from "firebase-functions";
 import * as admin from "firebase-admin";
 import {FieldValue, FieldPath} from "firebase-admin/firestore";
 import {
+  ANDROID_NOTIFICATION_CHANNEL_ID,
   FCM_TTL_SECONDS,
   FIRESTORE_WHERE_IN_LIMIT,
 } from "../constants";
@@ -629,7 +630,11 @@ export async function sendNotificationToUser(
         priority: "high",
         ttl: FCM_TTL_SECONDS,
         notification: {
-          channelId: notification.type,
+          // FIX #4140/#4141: channelId fixo do canal único que o app cria
+          // em runtime ("futeba_notifications"). Antes usava notification.type
+          // (ex: GAME_INVITE) — canal inexistente fazia a push em background
+          // cair em "Miscellaneous" (sem heads-up) ou sumir.
+          channelId: ANDROID_NOTIFICATION_CHANNEL_ID,
           sound: "default",
           clickAction:
             notification.data?.action ||

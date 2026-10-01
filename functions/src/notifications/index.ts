@@ -26,6 +26,7 @@ export {
   onGameCreated,
   onGameUpdatedNotification,
   onGameVacancy,
+  onGameVacancyDeleted,
 } from "./game-notifications";
 
 // Presence notifications: confirmações, convites,

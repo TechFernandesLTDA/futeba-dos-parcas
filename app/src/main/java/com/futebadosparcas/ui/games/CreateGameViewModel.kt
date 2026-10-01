@@ -125,6 +125,9 @@ class CreateGameViewModel(
     private val _timeConflicts = MutableStateFlow<List<TimeConflict>>(emptyList())
     val timeConflicts: StateFlow<List<TimeConflict>> = _timeConflicts
 
+    // FIX #4127: sinaliza falha na checagem de disponibilidade (UI mostra aviso).
+    val timeConflictCheckFailed = MutableStateFlow(false)
+
     private val _isEditing = MutableStateFlow(false)
     val isEditing: StateFlow<Boolean> = _isEditing
 
@@ -787,11 +790,19 @@ class CreateGameViewModel(
             result.fold(
                 onSuccess = { conflicts ->
                     _timeConflicts.value = conflicts
+                    timeConflictCheckFailed.value = false
                     if (conflicts.isNotEmpty()) {
                         _uiState.value = CreateGameUiState.ConflictDetected(conflicts)
                     }
                 },
-                onFailure = { /* Ignorar erros de verificacao */ }
+                onFailure = {
+                    // FIX #4127: falha da callable NÃO é engolida (viraria
+                    // double-booking silencioso). Sinaliza para a UI mostrar
+                    // aviso "não foi possível verificar a disponibilidade".
+                    _timeConflicts.value = emptyList()
+                    timeConflictCheckFailed.value = true
+                    AppLogger.w(TAG) { "checkTimeConflict falhou: ${it.message}" }
+                }
             )
         }
     }

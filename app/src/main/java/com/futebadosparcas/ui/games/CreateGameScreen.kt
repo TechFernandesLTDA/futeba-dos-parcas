@@ -529,8 +529,11 @@ private fun CreateGameContent(
                         )
                         if (timeConflicts.isNotEmpty()) {
                             val conflict = timeConflicts.first()
+                            // FIX #4127: TimeConflict não carrega mais o jogo
+                            // (metadados de doc privado de outro grupo); mostra
+                            // apenas o horário ocupado, igual ao web.
                             Text(
-                                text = "Conflito com ${conflict.conflictingGame.ownerName} (${conflict.conflictingGame.time} - ${conflict.conflictingGame.endTime})",
+                                text = "Horário ocupado (${conflict.conflictingTime} - ${conflict.conflictingEndTime})",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onTertiaryContainer
                             )

@@ -29,6 +29,49 @@ import {
 // Lazy initialization para evitar erro de initializeApp
 const getDb = () => admin.firestore();
 
+/**
+ * FIX #4138: nomes de exibição para badges cujo catálogo raiz `badges`
+ * (nunca escrito por functions) não tem o doc — sem isso o push mostrava
+ * o id cru ("Você desbloqueou: hat_trick!"). Fallback após doc `badges`
+ * e campo `name` do próprio doc user_badges.
+ */
+const BADGE_DISPLAY_NAMES: Record<string, string> = {
+  hat_trick: "Hat-Trick",
+  poker: "Poker de Gols",
+  manita: "Manita",
+  playmaker: "Garçom",
+  balanced_player: "Jogador Completo",
+  clean_sheet: "Não Sofreu Gols",
+  paredao: "Paredão",
+  defensive_wall: "Muralha",
+  penalty_saver: "Pega-Pênalti",
+  streak_7: "Sequência de 7",
+  iron_man: "Homem de Ferro",
+  streak_30: "Sequência de 30",
+  veteran_50: "Veterano (50 jogos)",
+  veteran_100: "Veterano (100 jogos)",
+  winner_25: "Vencedor (25 vitórias)",
+  winner_50: "Vencedor (50 vitórias)",
+  level_5: "Nível 5",
+  level_10: "Nível 10",
+  mvp_streak_3: "MVP 3x Seguidas",
+  mesa_oficial_10: "Mesa Oficial (10)",
+  mesa_oficial_25: "Mesa Oficial (25)",
+  mesa_oficial_50: "Mesa Oficial (50)",
+  mvp_1: "Primeiro MVP",
+  mvp_10: "MVP de 10 jogos",
+  goals_10: "Goleador (10 gols)",
+  assists_50: "Garçom (50 assistências)",
+  wins_10: "Vencedor (10 vitórias)",
+  wins_50: "Vencedor (50 vitórias)",
+  games_100: "Maratonista (100 jogos)",
+  onipresente: "Onipresente",
+  rei_das_quartas: "Rei das Quartas",
+  carrasco: "Carrasco",
+  first_game: "Primeiro Jogo",
+  streak_3: "Sequência de 3",
+};
+
 // ==========================================
 // LEVEL UP
 // ==========================================
@@ -159,7 +202,10 @@ export const onBadgeAwarded = onDocumentCreated(
         null;
 
       const badgeName =
-        badge?.name || badge?.title || badgeId;
+        badge?.name || badge?.title ||
+        BADGE_DISPLAY_NAMES[badgeId as string] ||
+        (typeof userBadge.name === "string" ? userBadge.name : null) ||
+        badgeId;
       const badgeIconUrl =
         badge?.icon_url ||
         badge?.iconUrl ||
