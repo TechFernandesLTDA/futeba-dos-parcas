@@ -490,7 +490,7 @@ export const futebaTheme = createTheme({
       leavingScreen: 195,
     },
     easing: {
-      easeInOut: motionEasing.emphasized,
+      easeInOut: motionEasing.standard,
       easeOut: motionEasing.decelerate,
       easeIn: motionEasing.accelerate,
       sharp: motionEasing.accelerate,
@@ -672,7 +672,6 @@ export const futebaTheme = createTheme({
           minWidth: 0,
           minHeight: '100%',
           overflowX: 'clip',
-          colorScheme: 'light',
           WebkitTapHighlightColor: 'transparent',
         },
         // O ripple do MuiButtonBase continua sendo o feedback primário. Links e
@@ -683,11 +682,19 @@ export const futebaTheme = createTheme({
             opacity: 0.72,
           },
         },
-        'html[data-resolved-theme="light"]': {
+        // #4114: color-scheme precisa valer em html, body E #root — o
+        // controle nativo do user agent (glifo do picker de data/hora, popup
+        // de calendário/relógio, spinner de number, scrollbar interna,
+        // realce de autofill) é desenhado a partir do color-scheme herdado
+        // do elemento mais próximo, e body/#root têm declaração própria
+        // (acima) que não herda de html.
+        'html[data-resolved-theme="light"], html[data-resolved-theme="light"] body, html[data-resolved-theme="light"] #root': {
           colorScheme: 'light',
+        },
+        'html[data-resolved-theme="light"]': {
           backgroundColor: '#FCFCFC',
         },
-        'html[data-resolved-theme="dark"]': {
+        'html[data-resolved-theme="dark"], html[data-resolved-theme="dark"] body, html[data-resolved-theme="dark"] #root': {
           colorScheme: 'dark',
         },
         '@supports not (overflow: clip)': {

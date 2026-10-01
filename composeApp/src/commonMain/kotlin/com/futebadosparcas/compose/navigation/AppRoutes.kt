@@ -50,6 +50,10 @@ object AppRoutes {
     /** Jogadores bloqueados de um grupo/jogo. */
     const val BLOCKED_PLAYERS = "blocked_players"
 
+    // ─── Preferências ────────────────────────────────────────────────────────
+    /** Tema (Claro / Escuro / Sistema + alto contraste) — paridade com Android/Web (#4097). */
+    const val THEME_SETTINGS = "theme_settings"
+
     // ─── Bucket Gamification ─────────────────────────────────────────────────
     const val RANKING = "ranking"
     const val BADGES = "badges"

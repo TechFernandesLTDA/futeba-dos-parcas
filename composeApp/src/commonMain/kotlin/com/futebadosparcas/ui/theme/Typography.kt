@@ -6,41 +6,28 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
-import com.futebadosparcas.compose.resources.Res
-import com.futebadosparcas.compose.resources.poppins_bold
-import com.futebadosparcas.compose.resources.poppins_light
-import com.futebadosparcas.compose.resources.poppins_medium
-import com.futebadosparcas.compose.resources.poppins_regular
-import com.futebadosparcas.compose.resources.poppins_semibold
-import org.jetbrains.compose.resources.Font
 
 /**
- * #2675 — Família de fonte Poppins carregada via composeResources (cross-platform).
+ * #4109 — Família de fonte da plataforma, resolvida por `expect`/`actual`.
  *
- * Os arquivos .ttf vivem em `composeApp/src/commonMain/composeResources/font/` e são
- * os MESMOS pesos usados no Android (`app/src/main/res/font/poppins_*.ttf`), garantindo
- * paridade visual entre Android e iOS.
+ * - Android / wasmJs: Poppins via composeResources (`rememberPoppinsFontFamily()` em
+ *   `nonIosMain`, onde também vivem os `.ttf`).
+ * - iOS: `FontFamily.Default` (fonte de sistema SF, HIG). O `actual` de iOS nunca toca
+ *   nos acessores `Res.font.*` da Poppins, então a família não é construída nem
+ *   empacotada lá.
  *
- * O carregamento de fonte via `org.jetbrains.compose.resources.Font(...)` é @Composable
- * no Compose Multiplatform (resolve o asset de forma assíncrona), por isso a família
- * precisa ser construída dentro de um contexto @Composable — daí
- * `rememberPoppinsFontFamily()` em vez de uma `val` top-level.
+ * Antes, `platformTypographyFontFamily(rememberPoppinsFontFamily())` avaliava o argumento
+ * em TODAS as plataformas e o iOS descartava o resultado — pagando o bundle sem usar.
  */
 @Composable
-private fun rememberPoppinsFontFamily(): FontFamily = FontFamily(
-    Font(Res.font.poppins_light, FontWeight.Light),
-    Font(Res.font.poppins_regular, FontWeight.Normal),
-    Font(Res.font.poppins_medium, FontWeight.Medium),
-    Font(Res.font.poppins_semibold, FontWeight.SemiBold),
-    Font(Res.font.poppins_bold, FontWeight.Bold)
-)
+internal expect fun rememberPlatformFontFamily(): FontFamily
 
 /**
  * #2675/#2670 — Typography Material 3 do app usando a fonte apropriada por plataforma.
  *
- * Android e wasmJs mantêm Poppins para paridade com a superfície principal. iOS passa
- * por `platformTypographyFontFamily(...)` e usa a fonte de sistema do target, aproximando
- * a UI do HIG/SF sem duplicar escalas tipográficas.
+ * Android e wasmJs mantêm Poppins para paridade com a superfície principal. iOS usa a
+ * fonte de sistema do target via [rememberPlatformFontFamily], aproximando a UI do HIG/SF
+ * sem duplicar escalas tipográficas.
  *
  * Dynamic Type / acessibilidade: todas as medidas usam `sp` (unidade escalável), então
  * a tipografia respeita o ajuste de tamanho de fonte do sistema onde a plataforma o
@@ -48,11 +35,11 @@ private fun rememberPoppinsFontFamily(): FontFamily = FontFamily(
  * pública para ler o nível de Dynamic Type do UIKit dentro do Compose; o uso de `sp`
  * garante o melhor comportamento disponível sem inventar API inexistente.
  *
- * É @Composable porque depende de `rememberPoppinsFontFamily()`.
+ * É @Composable porque depende de [rememberPlatformFontFamily].
  */
 @Composable
 fun rememberFutebaTypography(): Typography {
-    val appFontFamily = platformTypographyFontFamily(rememberPoppinsFontFamily())
+    val appFontFamily = rememberPlatformFontFamily()
     return Typography(
         displayLarge = TextStyle(
             fontFamily = appFontFamily,
@@ -161,5 +148,3 @@ fun rememberFutebaTypography(): Typography {
         )
     )
 }
-
-internal expect fun platformTypographyFontFamily(appFontFamily: FontFamily): FontFamily

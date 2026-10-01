@@ -121,7 +121,7 @@ fun StreakFlame(
         animationSpec = infiniteRepeatable(
             animation = tween(
                 durationMillis = coreDuration,
-                easing = MotionEasing.Emphasized
+                easing = MotionEasing.Standard
             ),
             repeatMode = RepeatMode.Reverse
         ),
@@ -514,7 +514,7 @@ fun StreakLevelUpAnimation(
             targetValue = 1.2f,
             animationSpec = tween(
                 durationMillis = MotionDuration.getMedium(reducedMotion),
-                easing = MotionEasing.Emphasized
+                easing = MotionEasing.Standard
             )
         )
         scale.animateTo(

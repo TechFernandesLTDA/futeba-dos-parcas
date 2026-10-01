@@ -87,16 +87,19 @@ object MotionDuration {
 // ==========================================
 object MotionEasing {
     /**
-     * Standard — uso geral. Elementos que entram e saem do viewport.
+     * Standard — uso geral. Elementos que entram e saem do viewport, e também
+     * as transições de high-emphasis (FAB, hero, celebrações).
      * Equivalente CSS: cubic-bezier(0.2, 0, 0, 1)
+     *
+     * Não existe `Emphasized` separado (#4115): a curva canônica do M3
+     * `md.sys.motion.easing.emphasized` é um path de dois segmentos que não
+     * cabe num único cubic-bezier, e a aproximação bezier oficial — Compose
+     * `MotionTokens.EasingEmphasizedCubicBezier = CubicBezierEasing(0.2f, 0f, 0f, 1f)`
+     * e material-web `$easing-emphasized: $easing-standard` — é idêntica à
+     * standard. Manter um alias com o mesmo valor só prometia uma diferença
+     * que nunca existiu. Decisão em specs/DECISIONS.md.
      */
     val Standard: Easing = CubicBezierEasing(0.2f, 0f, 0f, 1f)
-
-    /**
-     * Emphasized — foco e destaque. Transições de high-emphasis (FAB, hero).
-     * Equivalente CSS: cubic-bezier(0.2, 0, 0, 1)
-     */
-    val Emphasized: Easing = CubicBezierEasing(0.2f, 0f, 0f, 1f)
 
     /**
      * Decelerate — elementos que entram em tela (deslizam para dentro).

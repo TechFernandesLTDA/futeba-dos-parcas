@@ -4085,6 +4085,20 @@ subir no ranking!</string>
     <string name="release_section_improved">Melhorias</string>
     <string name="release_section_fixed">Correções</string>
 
+    <!-- Tema — tela de preferências do composeApp (iOS, paridade #4097) -->
+    <string name="theme_mode_desc">Escolha como o app deve aparecer neste aparelho.</string>
+    <string name="theme_mode_light_hint">Sempre com fundo claro.</string>
+    <string name="theme_mode_dark_hint">Sempre com fundo escuro.</string>
+    <string name="theme_mode_system_hint">Acompanha a aparência do sistema.</string>
+    <string name="theme_high_contrast">Alto Contraste</string>
+    <string name="theme_high_contrast_desc">Aumenta o contraste de texto e elementos visuais (WCAG AAA)</string>
+    <string name="theme_settings_preview_label">Prévia das cores do tema</string>
+    <string name="theme_settings_mode_note">A escolha fica salva neste aparelho e vale para todas as telas.</string>
+    <string name="theme_settings_error_body">Não foi possível carregar as preferências de tema.</string>
+    <string name="theme_settings_unavailable_body">As preferências de tema não estão disponíveis neste ambiente.</string>
+    <string name="profile_hub_action_theme">Tema</string>
+    <string name="profile_hub_action_theme_body">Claro, escuro ou seguindo o sistema — e alto contraste.</string>
+
     <!-- Accessibility descriptions -->
     <string name="a11y_state_selected">Selecionado</string>
     <string name="a11y_state_not_selected">Não selecionado</string>
