@@ -883,8 +883,45 @@ describe("gamification nudges daily scheduler", () => {
     }));
   });
 
-  it("seleciona um jogo futuro aberto mesmo quando os primeiros estao confirmados", async () => {
+  it("#4150: NÃO manda nudge de streak quando o jogo aberto está fora da janela de 8 dias", async () => {
+    // game-11 e game-12 são os únicos abertos e estão a +12/+13 dias —
+    // confirmar não salva mais a sequência com a janela de 8 dias.
     seedFutureGameBurstFixture();
+
+    await sendGamificationNudgesDaily();
+
+    expect(notificationCalls).toHaveLength(0);
+  });
+
+  it("#4150: seleciona jogo futuro aberto DENTRO da janela de 8 dias", async () => {
+    const userId = "user-1";
+    const groupId = "group-1";
+    seedDoc(`users/${userId}`, {experience_points: 0});
+    seedDoc(`statistics/${userId}`, {totalGoals: 0});
+    seedDoc(`user_streaks/${userId}`, {current_streak: 3});
+    seedDoc(`groups/${groupId}/members/member-1`, {
+      user_id: userId,
+      status: "ACTIVE",
+    });
+
+    // Jogos a +2..+6 dias: user-1 confirmou nos 3 primeiros; o 1º aberto
+    // (sem confirmação dele) é game-4, a +5 dias — dentro da janela de 8.
+    for (let index = 1; index <= 5; index++) {
+      const gameId = `game-${index}`;
+      const start = new Date(Date.UTC(2026, 6, 20 + index, 15, 0, 0));
+      seedDoc(`games/${gameId}`, {
+        group_id: groupId,
+        status: "CONFIRMED",
+        dateTime: {toDate: () => start},
+      });
+      if (index <= 3) {
+        seedDoc(`confirmations/game-${index}_${userId}`, {
+          game_id: gameId,
+          user_id: userId,
+          status: "CONFIRMED",
+        });
+      }
+    }
 
     await sendGamificationNudgesDaily();
 
@@ -893,7 +930,7 @@ describe("gamification nudges daily scheduler", () => {
       docId: "gamification_nudge_streak_at_risk_user-1",
       payload: expect.objectContaining({
         action: "games",
-        gameId: "game-11",
+        gameId: "game-4",
       }),
     }));
   });

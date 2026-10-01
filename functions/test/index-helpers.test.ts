@@ -323,7 +323,8 @@ describe("Index - XP streak helpers", () => {
     });
   });
 
-  test("calculateNextParticipationStreak reinicia quando há lacuna", () => {
+  test("calculateNextParticipationStreak MANTÉM sequência semanal (FIX #4150)", () => {
+    // Lacuna de 7 dias (pelada semanal) mantém a sequência com a janela de 8.
     expect(calculateNextParticipationStreak(
       {
         currentStreak: 5,
@@ -334,9 +335,45 @@ describe("Index - XP streak helpers", () => {
       "2026-07-08"
     )).toEqual({
       previousStreak: 5,
+      currentStreak: 6,
+      longestStreak: 6,
+      streakStartedAt: "2026-06-27",
+    });
+  });
+
+  test("calculateNextParticipationStreak reinicia quando a lacuna passa da janela (#4150)", () => {
+    // Lacuna de 9 dias (> janela de 8) zera.
+    expect(calculateNextParticipationStreak(
+      {
+        currentStreak: 5,
+        longestStreak: 5,
+        lastGameDate: "2026-07-01",
+        streakStartedAt: "2026-06-27",
+      },
+      "2026-07-10"
+    )).toEqual({
+      previousStreak: 5,
       currentStreak: 1,
       longestStreak: 5,
-      streakStartedAt: "2026-07-08",
+      streakStartedAt: "2026-07-10",
+    });
+  });
+
+  test("calculateNextParticipationStreak: mesmo dia não incrementa (#4150)", () => {
+    // Duas peladas no mesmo dia contam como 1 da sequência (paridade KMP).
+    expect(calculateNextParticipationStreak(
+      {
+        current_streak: 3,
+        longest_streak: 3,
+        last_game_date: "2026-07-08",
+        streak_started_at: "2026-07-06",
+      },
+      "2026-07-08"
+    )).toEqual({
+      previousStreak: 3,
+      currentStreak: 3,
+      longestStreak: 3,
+      streakStartedAt: "2026-07-06",
     });
   });
 

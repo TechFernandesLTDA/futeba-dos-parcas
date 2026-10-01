@@ -1652,7 +1652,8 @@
     "unpin": "Unpin",
     "postOptions": "Post options",
     "edited": "edited",
-    "notMember": "Join the group to participate in the wall."
+    "notMember": "Join the group to participate in the wall.",
+    "deleteConfirm": "Delete post?"
   },
   "socialFeed": {
     "title": "Feed",

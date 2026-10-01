@@ -45,6 +45,7 @@
 import {runWith} from "firebase-functions/v1";
 import type {EventContext} from "firebase-functions/v1";
 import * as admin from "firebase-admin";
+import {FieldValue} from "firebase-admin/firestore";
 import {logger} from "firebase-functions/v2";
 import {Storage} from "@google-cloud/storage";
 import {
@@ -732,6 +733,57 @@ export const onUserDeleted = runWith({
         // descoberta; sem isso a posição sobrevivia ao direito de exclusão.
         await queueDelete(db.doc(`user_locations/${uid}`));
         logger.info(`[ACCOUNT_CLEANUP] Deletando user_locations/${uid}`);
+
+        // 15b. FIX #4120 (LGPD): anonimiza DMs — chats/{id}/messages com
+        // sender_id == uid perdem nome/foto; o texto fica (o interlocutor
+        // ainda leu), mas sem PII remanescente do titular excluído.
+        try {
+          let chatsAnonymized = 0;
+          const chatsSnap = await db.collection("chats")
+            .where("participants", "array-contains", uid)
+            .limit(100)
+            .get();
+          for (const chatDoc of chatsSnap.docs) {
+            let msgTotal = 0;
+            let msgLastDoc:
+              admin.firestore.QueryDocumentSnapshot | null = null;
+            let msgIterations = 0;
+            while (msgIterations < 20) {
+              let msgQuery: admin.firestore.Query = chatDoc.ref
+                .collection("messages")
+                .where("sender_id", "==", uid)
+                .limit(300);
+              if (msgLastDoc) {
+                msgQuery = msgQuery.startAfter(msgLastDoc);
+              }
+              const msgSnap = await msgQuery.get();
+              if (msgSnap.empty) break;
+              for (const msgDoc of msgSnap.docs) {
+                batch.update(msgDoc.ref, {
+                  sender_name: "Usuário excluído",
+                  sender_photo_url: FieldValue.delete(),
+                });
+                batchOps++;
+                msgTotal++;
+                if (batchOps >= 450) await commitBatch();
+              }
+              msgLastDoc = msgSnap.docs[msgSnap.docs.length - 1];
+              msgIterations++;
+            }
+            chatsAnonymized += msgTotal;
+          }
+          if (chatsAnonymized > 0) {
+            logger.info(
+              `[ACCOUNT_CLEANUP] Anonimizadas ${chatsAnonymized} mensagens ` +
+              `de DM do usuário ${uid}`
+            );
+          }
+        } catch (dmError) {
+          logger.warn(
+            `[ACCOUNT_CLEANUP] Falha ao anonimizar DMs de ${uid}`,
+            dmError
+          );
+        }
 
         // 16. FIX #4049: game_photos / game_videos (uploaded_by == uid) — LGPD.
         // Coleções top-level chaveadas por uploaded_by (PII denormalizado:

@@ -114,6 +114,15 @@ Jogo 10 ✓ → Streak = 1  (recomeça)
 - Não confirmar presença antes do jogo
 - Não comparecer no jogo
 - Rejeitar convite (se já tinha streak)
+- Deixar a lacuna entre participações passar da janela (FIX #4150)
+
+**Janela temporal (FIX #4150):** a sequência se mantém quando a lacuna
+entre jogos participados é de até **8 dias** (pelada semanal + 1 de
+tolerância). Com a regra anterior (lacuna ≤ 1 dia), uma pelada semanal
+nunca passava de 1 — contradizendo a definição por "jogos
+consecutivos" acima. Dois jogos no MESMO dia não incrementam (a
+sequência conta jogos com lacuna > 0). A compactação (reset de
+sequência morta) roda com inatividade > 9 dias.
 
 **Referência:** `backend/SERVICES.md:StatisticsService` - atualiza streaks
 
