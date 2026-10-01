@@ -131,6 +131,10 @@ class SplashActivityCompose : AppCompatActivity() {
     private fun navigateToMain() {
         val intent = Intent(this, MainActivityCompose::class.java)
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        // FIX #4140: repassa os extras do tap na push em background/quit
+        // (gameId, notificationType, action) para o handleIntentExtras do
+        // MainActivityCompose navegar para game_detail/{id}.
+        copyPushExtras(intent)
         startActivity(intent)
         finish()
     }
@@ -138,7 +142,21 @@ class SplashActivityCompose : AppCompatActivity() {
     private fun navigateToLogin() {
         val intent = Intent(this, LoginActivityCompose::class.java)
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        // FIX #4140: mesmo após login, o deep link da push deve sobreviver.
+        copyPushExtras(intent)
         startActivity(intent)
         finish()
+    }
+
+    /**
+     * FIX #4140: copia os extras da notificação (payload `data` do FCM)
+     * do intent de abertura para o intent de destino.
+     */
+    private fun copyPushExtras(target: Intent) {
+        val source = intent
+        val extras = source.extras ?: return
+        for (key in listOf("gameId", "notificationType", "action")) {
+            extras.getString(key)?.let { target.putExtra(key, it) }
+        }
     }
 }

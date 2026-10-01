@@ -124,6 +124,14 @@ export const FCM_BODY_MAX_LENGTH = 500;
  */
 export const FCM_TTL_SECONDS = 3600;
 
+/**
+ * FIX #4140/#4141: canal único de notificação que o app Android cria em
+ * runtime (FcmService CHANNEL_ID) e declara no manifest como
+ * default_notification_channel_id. O Functions deve mandar SEMPRE este id —
+ * antes usava notification.type (canal inexistente → Miscellaneous).
+ */
+export const ANDROID_NOTIFICATION_CHANNEL_ID = "futeba_notifications";
+
 // ==========================================
 // RATE LIMITING
 // ==========================================
