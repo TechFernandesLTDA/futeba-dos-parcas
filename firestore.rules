@@ -1614,6 +1614,16 @@ service cloud.firestore {
     // COLECAO: confirmations
     // ============================================
     match /confirmations/{confirmationId} {
+      // FIX #4144: helpers de leitura do jogo pai (o doc de confirmation
+      // nao tem group_id — vem do game). Funções evitam gets() repetidos
+      // inline e mantêm o budget de expressões sob controle.
+      function gameGroupIdOf(gameId) {
+        return get(/databases/$(database)/documents/games/$(gameId)).data.get('group_id', null);
+      }
+      function gameStatusOf(gameId) {
+        return get(/databases/$(database)/documents/games/$(gameId)).data.get('status', null);
+      }
+
       // #1016: ampliar leitura para admins, dono do jogo e confirmados (necessario para list query)
       allow read: if isAuthenticated() && (
         resource.data.user_id == userId() ||
@@ -1694,7 +1704,17 @@ service cloud.firestore {
          request.resource.data.diff(resource.data).affectedKeys().hasOnly([
            'status', 'goals', 'assists', 'saves', 'goalkeeper',
            'was_present', 'team', 'updated_at',
-         ]))
+         ])) ||
+        // FIX #4144: remocao de membro pelo admin do grupo marca CANCELLED
+        // (em vez de delete) para disparar onGameVacancy e promover a
+        // waitlist. Restrito: so status, e jogo ainda ativo. O admin do
+        // grupo do jogo (confirmations nao tem group_id — vem do game).
+        (gameGroupIdOf(resource.data.game_id) != null &&
+         isGroupAdmin(gameGroupIdOf(resource.data.game_id)) &&
+         resource.data.status == 'CONFIRMED' &&
+         request.resource.data.status == 'CANCELLED' &&
+         gameStatusOf(resource.data.game_id) in ['SCHEDULED', 'CONFIRMED'] &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updated_at']))
         // SECFIX #2608: branch de isConfirmedPlayer para flags is_mvp/
         // is_best_gk/is_worst_player removido — group-league.ts e
         // weekly-ranking.ts consumiam essas flags sem revalidacao contra
