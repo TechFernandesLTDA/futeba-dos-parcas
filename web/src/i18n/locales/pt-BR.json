@@ -3,6 +3,7 @@
     "addEvent": "Adicionar evento",
     "addLocation": "Adicionar local",
     "addToCalendar": "Adicionar ao Calendário",
+    "selectPlayer": "Selecionar jogador: {{label}}",
     "adminMenu": "Menu de administração",
     "back": "Voltar",
     "backToHome": "Voltar para o início",
@@ -1099,6 +1100,7 @@
       "maxPlayers": "Máx. Jogadores",
       "maxPlayersHelp": "Ex.: 14. Total de vagas de linha, de {{min}} a {{max}} jogadores.",
       "membersCount": "{{count}} membros",
+      "membersCount_one": "{{count}} membro",
       "noActiveFieldsAtLocation": "Este local não tem quadra ativa disponível. O dono/admin precisa completar o cadastro antes de liberar jogos.",
       "noCommercialLocations": "Nenhuma quadra publicada e com mensalidade válida está disponível agora. Use local manual ou aguarde a liberação pelo app.",
       "noFieldsAtLocation": "Nenhuma quadra cadastrada neste local. As informações do local serão usadas.",
@@ -2287,13 +2289,13 @@
         "nameRequired": "Nome é obrigatório",
         "phoneInvalid": "Telefone inválido (use DDD + número)",
         "playersPerTeamRange": "Entre 3 e 11",
-      "stateRequired": "Estado é obrigatório.",
-      "timeZoneInvalid": "Selecione um fuso horário válido.",
+        "stateRequired": "Estado é obrigatório.",
+        "timeZoneInvalid": "Selecione um fuso horário válido.",
         "websiteInvalid": "URL inválida. Deve começar com http:// ou https://"
       },
-    "timeZoneHelper": "Usado para calcular corretamente os horários, inclusive após a meia-noite.",
-    "timeZoneLabel": "Fuso horário do local",
-    "websiteLabel": "Site"
+      "timeZoneHelper": "Usado para calcular corretamente os horários, inclusive após a meia-noite.",
+      "timeZoneLabel": "Fuso horário do local",
+      "websiteLabel": "Site"
     },
     "quickCreate": {
       "title": "Criar Local",
@@ -2324,6 +2326,7 @@
     "worstPlayer": "Bola Murcha",
     "finalResult": "Resultado Final",
     "votesCount": "{{count}} votos",
+    "votesCount_one": "{{count}} voto",
     "exportPdf": "Exportar PDF",
     "exporting": "Exportando...",
     "exportError": "Erro ao exportar PDF",
@@ -2449,6 +2452,7 @@
       },
       "timeWithGroup": "{{time}} · {{group}}",
       "unreadCount": "{{count}} não lidas",
+      "unreadCount_one": "{{count}} não lida",
       "undo": "Desfazer"
     }
   },
@@ -2713,6 +2717,7 @@
     "restrictedAccessDesc": "Você precisa ser membro deste grupo para ver os jogadores.",
     "title": "Jogadores",
     "titleWithCount": "Jogadores ({{count}})",
+    "titleWithCount_one": "Jogador ({{count}})",
     "viewPlayerCardAria": "Ver figurinha de {{name}}"
   },
   "profile": {
@@ -2978,6 +2983,7 @@
     "deleteError": "Erro ao excluir agendamento",
     "itemDescription_other": "{{day}} às {{time}} • {{players}} jogadores",
     "playersCount": "{{count}} jogadores",
+    "playersCount_one": "{{count}} jogador",
     "toggleError": "Erro ao alterar status",
     "day0": "Domingo",
     "day1": "Segunda-feira",
@@ -3412,6 +3418,7 @@
     "managePlayers": "Gerenciar Jogadores",
     "myFields": "Minhas Quadras",
     "myFieldsCount": "Minhas Quadras ({{count}})",
+    "myFieldsCount_one": "Minha Quadra ({{count}})",
     "needsAttention": "Precisa de atenção",
     "noLedgerEvents": "Nenhum evento financeiro registrado ainda.",
     "noPaymentsYet": "Nenhum pagamento ou comprovante encontrado para esta quadra.",
