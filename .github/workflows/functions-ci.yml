@@ -100,7 +100,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Restore verified Linux x64 FFmpeg binary
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             functions/vendor/ffmpeg/ffmpeg
