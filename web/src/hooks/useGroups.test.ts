@@ -301,7 +301,7 @@ describe('removeGroupMembershipArtifacts', () => {
     mockWhere.mockImplementation((...args: unknown[]) => args);
   });
 
-  it('remove vínculo do usuário e apaga confirmações futuras do grupo', async () => {
+  it('marca confirmações futuras do grupo como CANCELLED (não apaga, FIX #4144)', async () => {
     mockGetDocs.mockResolvedValue({
       docs: [
         { id: 'game-1', data: () => ({ status: 'SCHEDULED', group_id: 'group-1' }) },
@@ -319,8 +319,19 @@ describe('removeGroupMembershipArtifacts', () => {
       expect.objectContaining({ status: 'REMOVED' }),
     );
     expect(mockBatchDelete).toHaveBeenCalledWith(expect.objectContaining({ path: 'users/user-1/groups/group-1' }));
-    expect(mockBatchDelete).toHaveBeenCalledWith(expect.objectContaining({ path: 'confirmations/game-1_user-1' }));
-    expect(mockBatchDelete).toHaveBeenCalledWith(expect.objectContaining({ path: 'confirmations/game-2_user-1' }));
+    // FIX #4144: o trigger onGameVacancy exige UPDATE (before CONFIRMED ->
+    // after CANCELLED); delete deixava a vaga sem promover a waitlist.
+    expect(mockBatchUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ path: 'confirmations/game-1_user-1' }),
+      expect.objectContaining({ status: 'CANCELLED' }),
+    );
+    expect(mockBatchUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ path: 'confirmations/game-2_user-1' }),
+      expect.objectContaining({ status: 'CANCELLED' }),
+    );
+    expect(mockBatchDelete).not.toHaveBeenCalledWith(
+      expect.objectContaining({ path: 'confirmations/game-1_user-1' }),
+    );
     expect(mockBatchCommit).toHaveBeenCalled();
   });
 });
