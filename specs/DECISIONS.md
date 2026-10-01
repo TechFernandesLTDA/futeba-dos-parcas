@@ -1706,6 +1706,108 @@ branches de release mantêm o build completo. O contrato está coberto por
 **Relacionado:** `.github/ci/change-scopes-v1.json`,
 `.github/workflows/ios-build.yml`, PRs #4079 e #4080.
 
+### [2026-09-21] `motion.easing.emphasized` removido — o design system tem uma curva de uso geral só (#4115)
+
+**Contexto:** `motion.easing.emphasized` era byte a byte igual a `standard`
+(`[0.2, 0, 0, 1]`) no `shared/design-tokens.json` e nas três plataformas
+(`AppMotion.kt`, `composeApp/.../Motion.kt`, `web/src/theme/motion.ts`). O KDoc
+prometia "foco e destaque" mas entregava a curva padrão; 5 call sites Android e
+2 web pediam `Emphasized` sem receber nada diferente. O gate
+`checkMotionParity` não pegava porque só conferia que a curva aparecia em
+algum lugar do arquivo, não a ligação nome→curva — um swap entre `Standard` e
+`Decelerate` passaria verde.
+
+**Alternativas consideradas:**
+1. **(a) Dar a `emphasized` a curva própria do M3.** Rejeitada após verificar
+   a fonte: o token canônico `md.sys.motion.easing.emphasized` é um *path* de
+   dois segmentos (`M 0,0 C 0.05,0,0.133333,0.06,0.166666,0.4 C 0.208333,0.82,0.25,1,1,1`)
+   que não cabe num único cubic-bezier. A aproximação bezier oficial usada
+   pelas implementações é idêntica à `standard`:
+   - material-web `tokens/versions/latest/sass/_md-sys-motion.scss`
+     (`md.sys.motion.easing.emphasized`): `$easing-emphasized: $easing-standard;`
+     com `$easing-standard: cubic-bezier(0.2, 0, 0, 1)`.
+   - Compose Material3 `androidx/compose/material3/tokens/MotionTokens.kt`:
+     `EasingEmphasizedCubicBezier = CubicBezierEasing(0.2f, 0.0f, 0.0f, 1.0f)`
+     == `EasingStandardCubicBezier`.
+   Ou seja, num design system de bezier único não existe curva `emphasized`
+   distinta para copiar — só as variantes `emphasized.decelerate`
+   (`0.05, 0.7, 0.1, 1`) e `emphasized.accelerate` (`0.3, 0, 0.8, 0.15`), que
+   são outros papéis e nenhum call site pede.
+2. **(b) Assumir o alias e removê-lo.** Aceita.
+
+**Decisão:** remover `emphasized` do token e das três plataformas; migrar os
+call sites (`SuccessAnimationOverlay`, `StreakFlame`, `WeeklyRecapScreen`,
+`web/src/theme/index.ts` `easeInOut`, `GamificationCelebration`) para
+`standard`. `checkMotionParity` passa a validar NOME → VALOR na declaração
+(`val Standard = CubicBezierEasing(...)`, `standard: 'cubic-bezier(...)'`) para
+easings e durations, e falha em símbolo declarado sem token canônico (pega um
+`Emphasized` órfão). Gate coberto por `scripts/check-design-tokens-parity.test.js`
+(swap, símbolo órfão, easing ausente).
+
+**Consequências:** o design system tem três easings (`standard`, `decelerate`,
+`accelerate`). Quem precisar de destaque de fato deve propor um token novo com
+fonte M3 citada (ex.: `emphasizedDecelerate`), nunca reintroduzir um alias com
+o mesmo valor — o teste de tokens falha se duas curvas forem iguais.
+
+**Relacionado:** issue #4115, `shared/design-tokens.json#motion.easing`,
+`scripts/check-design-tokens-parity.js`, `DESIGN_TOKENS.md`.
+
+### [2026-09-21] Lote de issues abertas: decisões de produto e arquitetura (#4097, #4098, #4100, #4107, #4109, #4111)
+
+**Contexto:** as issues do lote #4096–#4115 pediam escolha explícita em
+seis pontos. Spec: `specs/BUGFIX_2026-09-21_OPEN_ISSUES_BATCH_4096_4115.md`.
+
+**Decisões:**
+1. **#4111, default de `subscription_status`:** valor ausente ou inválido vale
+   `ACTIVE` nos quatro leitores (`resolveSubscriptionStatusOrDefault`). É o
+   caminho fail-closed: a quadra entra na cobrança ou cai em
+   `inconsistentLocations`, que agora gera alerta CRITICAL. O resolver comercial
+   ainda emite `subscriptionStatusInvalid`. O script de backfill mantém `TRIAL`
+   por ser conservador, mas sinaliza revisão e inicia `trial_started_at`.
+2. **#4111, envelhecimento de TRIAL:** `TRIAL_MAX_DAYS = 30`. TRIAL vencido
+   emite `trialExpired` como pendência e **não** muda de status sozinho.
+3. **#4107, contrato vencido:** o cron transiciona para `CANCELLED` uma única
+   vez, com ledger `BILLING_AUTOMATION_CONTRACT_EXPIRED`. Pagamento aprovado
+   não reativa contrato vencido. A cascata de `venue_accounts.billing_expires_at`
+   para as quadras vinculadas ficou fora: nenhuma data de cobrança é
+   denormalizada hoje, e cascatear só esta criaria nova assimetria.
+4. **#4100, cascatas de grupo:** hard delete (`groups/group-cascade.ts`) e soft
+   delete (`soft-delete-helper.ts`) continuam separados, porque têm semânticas
+   por coleção diferentes. O hard delete também remove `group_poll_votes`.
+5. **#4109, fonte no iOS:** iOS usa a fonte do sistema (SF, HIG). Poppins vive
+   no source set `nonIosMain` (Android + wasmJs) e não entra no framework iOS.
+6. **#4098:** paletas mortas do `composeApp/ui/theme/Color.kt` removidas.
+   As medalhas do pós-jogo vivem como constantes privadas da tela.
+7. **#4097, tema no iOS:** Claro/Escuro/Sistema e alto contraste, persistidos
+   em `NSUserDefaults` com as mesmas chaves do DataStore Android. Default de
+   instalação nova continua `SYSTEM`. Cores-semente customizadas e Material You
+   ficam fora do iOS.
+8. **#4112/#4113, coleções por uid:** a lista canônica de coleções e campos
+   que identificam um uid vive em `functions/src/auth/uid-owned-collections.ts`
+   e é usada por `account-merge.ts` e `account-cleanup.ts`. Toda coleção nova
+   com dado de usuário entra nessa lista, com estratégia de merge e de limpeza.
+   O merge também transfere `experience_points`, `level` e `milestones_achieved`
+   do perfil, com marcador `xp_merged_to` para ser idempotente no retry.
+   Membros de grupo são anonimizados, não apagados, para não disparar
+   `onMemberLeft`. As queries collection-group por uid (`cashbox.created_by`,
+   `reviews.user_id`, `members.user_id`) têm índice declarado em
+   `firestore.indexes.json`, que precisa estar READY antes do deploy das
+   Functions. Anonimizações novas preferem enumerar `users/{uid}/groups` e
+   consultar por coleção, sem índice novo. A query por `activities.targetUserId`
+   foi removida por não ter escritor.
+9. **#4108, badge:** acima de 99 notificações o badge mostra `99+`.
+10. **#4113, nome em texto livre:** o nome do pagador sai da descrição padrão
+    do caixa no Android (`"Pagamento"`), porque ele já vai em `player_name`.
+    Na limpeza, o `player_name` original é trocado por "Usuário removido" na
+    `description` quando aparece como palavra inteira, no mesmo update que
+    anonimiza `player_name`. Nomes com menos de 3 caracteres, apelidos e grafias
+    diferentes não são tratados, para não corromper texto. Em
+    `post_game_reputation`, nome e foto do avaliador e do avaliado são
+    anonimizados; a foto vira `""`, o mesmo vazio que o escritor grava. O
+    comentário livre da avaliação não é alterado.
+
+**Relacionado:** issues #4096–#4115.
+
 <!-- Adicione novas decisões acima desta linha -->
 
 ## 2026-09-05: Porta efemera para Web E2E

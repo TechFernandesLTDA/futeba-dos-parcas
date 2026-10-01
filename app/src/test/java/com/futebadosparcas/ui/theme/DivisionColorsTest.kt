@@ -25,16 +25,14 @@ import org.junit.jupiter.params.provider.MethodSource
  * - header de divisao (RankingList) — background @ 0.1
  * - legenda (LeagueScreen) — primaryContainer @ 0.3 sobre surface
  *
- * Escopo dos schemes (contraste):
- * - O BADGE e o objeto desta issue (#4084): validado nos 2 temas E nos 2
- *   schemes (NORMAL + HIGH), porque o bug original era exatamente testar o
- *   badge contra os literais de ALTO CONTRASTE como se fossem o default.
- * - Os outros 3 call sites sao validados no scheme DEFAULT, como na analise da
- *   propria issue. Eles usam [divisionTextColor], que (assim como
- *   gamificationTextColor) so distingue light/dark e NAO e contrast-level-aware
- *   — em HIGH, a legenda (primaryContainer #1565C0) reprova AA para PRATA/OURO/
- *   DIAMANTE no light. Tratar isso exigiria um LocalContrastLevel novo, fora do
- *   escopo desta issue (follow-up separado).
+ * Escopo dos schemes (contraste) — #4099:
+ * - Os 4 call sites sao validados nos 2 temas E nos 2 schemes (NORMAL + HIGH).
+ *   Antes (#4093) so o badge cobria HIGH; a legenda em HIGH light
+ *   (primaryContainer #1565C0 -> veu #B9D1EC) reprovava AA para PRATA/OURO/
+ *   DIAMANTE (3,83-4,44). [divisionTextColor] agora recebe o [ContrastLevel]
+ *   (em runtime via `LocalContrastLevel`) e resolve tokens proprios para HIGH.
+ * - Em HIGH exige-se tambem AAA (>= 7:1), que e a promessa do HighContrastTheme.
+ * - Os valores do scheme NORMAL sao travados por teste de regressao (#4093).
  */
 class DivisionColorsTest {
 
@@ -54,15 +52,53 @@ class DivisionColorsTest {
         contrastLevel: ContrastLevel,
         callSite: CallSite
     ) {
-        val config = AppThemeConfig(contrastLevel = contrastLevel)
-        val scheme = DynamicThemeEngine.generateColorScheme(config, isDarkTheme)
-        val background = compositeBackground(scheme, division, callSite)
-        val ratio = ContrastHelper.getContrastRatio(divisionTextColor(division, isDarkTheme), background)
+        val ratio = contrastRatioAt(division, isDarkTheme, contrastLevel, callSite)
 
         assertTrue(
-            ratio >= 4.5f,
-            "$division/${if (isDarkTheme) "dark" else "light"}/$contrastLevel/$callSite " +
-                "deve ter contraste >= 4.5:1, obtido $ratio"
+            ratio >= AA_NORMAL_TEXT,
+            "$division/${isDarkTheme.themeName()}/$contrastLevel/$callSite " +
+                "deve ter contraste >= $AA_NORMAL_TEXT:1, obtido $ratio"
+        )
+    }
+
+    @ParameterizedTest(name = "{0} {1} HIGH {2}")
+    @MethodSource("highContrastCallSites")
+    fun `em alto contraste o foreground da divisao passa AAA`(
+        division: LeagueDivision,
+        isDarkTheme: Boolean,
+        callSite: CallSite
+    ) {
+        val ratio = contrastRatioAt(division, isDarkTheme, ContrastLevel.HIGH, callSite)
+
+        assertTrue(
+            ratio >= AAA_NORMAL_TEXT,
+            "$division/${isDarkTheme.themeName()}/HIGH/$callSite " +
+                "deve ter contraste >= $AAA_NORMAL_TEXT:1 (promessa do HighContrastTheme), obtido $ratio"
+        )
+    }
+
+    @ParameterizedTest(name = "{0} {1} NORMAL mantem token do #4093")
+    @MethodSource("normalSchemeTokens")
+    fun `scheme NORMAL preserva os tokens validados no 4093`(
+        division: LeagueDivision,
+        isDarkTheme: Boolean,
+        expectedColorArgb: Long
+    ) {
+        // Overload de 2 argumentos (default NORMAL) e chamada explicita devem coincidir.
+        assertEquals(Color(expectedColorArgb), divisionTextColor(division, isDarkTheme))
+        assertEquals(Color(expectedColorArgb), divisionTextColor(division, isDarkTheme, ContrastLevel.NORMAL))
+    }
+
+    @ParameterizedTest(name = "{0} {1} {2} divisionTextColor == gamificationTextColor")
+    @MethodSource("allCombinations")
+    fun `divisionTextColor e gamificationTextColor resolvem a mesma tabela`(
+        division: LeagueDivision,
+        isDarkTheme: Boolean,
+        contrastLevel: ContrastLevel
+    ) {
+        assertEquals(
+            gamificationTextColor(divisionColor(division), isDarkTheme, contrastLevel),
+            divisionTextColor(division, isDarkTheme, contrastLevel)
         )
     }
 
@@ -73,6 +109,21 @@ class DivisionColorsTest {
         expectedColorArgb: Long
     ) {
         assertEquals(Color(expectedColorArgb), divisionColor(division))
+    }
+
+    private fun contrastRatioAt(
+        division: LeagueDivision,
+        isDarkTheme: Boolean,
+        contrastLevel: ContrastLevel,
+        callSite: CallSite
+    ): Float {
+        val config = AppThemeConfig(contrastLevel = contrastLevel)
+        val scheme = DynamicThemeEngine.generateColorScheme(config, isDarkTheme)
+        val background = compositeBackground(scheme, division, callSite)
+        return ContrastHelper.getContrastRatio(
+            divisionTextColor(division, isDarkTheme, contrastLevel),
+            background
+        )
     }
 
     private fun compositeBackground(
@@ -99,7 +150,13 @@ class DivisionColorsTest {
         1f
     )
 
+    private fun Boolean.themeName() = if (this) "dark" else "light"
+
     companion object {
+        private const val AA_NORMAL_TEXT = 4.5f
+        private const val AAA_NORMAL_TEXT = 7.0f
+
+        /** 4 divisoes x 2 temas x 2 niveis de contraste x 4 call sites = 64 casos. */
         @JvmStatic
         fun allCallSites(): Stream<Arguments> {
             val args = mutableListOf<Arguments>()
@@ -107,9 +164,6 @@ class DivisionColorsTest {
                 for (isDark in listOf(false, true)) {
                     for (level in ContrastLevel.entries) {
                         for (site in CallSite.entries) {
-                            // HIGH so e exercitado no BADGE (objeto do #4084);
-                            // os demais call sites sao validados no scheme DEFAULT.
-                            if (level == ContrastLevel.HIGH && site != CallSite.BADGE_LIGA) continue
                             args.add(Arguments.of(division, isDark, level, site))
                         }
                     }
@@ -117,6 +171,45 @@ class DivisionColorsTest {
             }
             return args.stream()
         }
+
+        @JvmStatic
+        fun highContrastCallSites(): Stream<Arguments> {
+            val args = mutableListOf<Arguments>()
+            for (division in LeagueDivision.entries) {
+                for (isDark in listOf(false, true)) {
+                    for (site in CallSite.entries) {
+                        args.add(Arguments.of(division, isDark, site))
+                    }
+                }
+            }
+            return args.stream()
+        }
+
+        @JvmStatic
+        fun allCombinations(): Stream<Arguments> {
+            val args = mutableListOf<Arguments>()
+            for (division in LeagueDivision.entries) {
+                for (isDark in listOf(false, true)) {
+                    for (level in ContrastLevel.entries) {
+                        args.add(Arguments.of(division, isDark, level))
+                    }
+                }
+            }
+            return args.stream()
+        }
+
+        /** Tokens do scheme NORMAL validados no #4093 — nao podem regredir (#4099). */
+        @JvmStatic
+        fun normalSchemeTokens(): Stream<Arguments> = Stream.of(
+            Arguments.of(LeagueDivision.BRONZE, false, 0xFF7A4A1FL),
+            Arguments.of(LeagueDivision.PRATA, false, 0xFF616161L),
+            Arguments.of(LeagueDivision.OURO, false, 0xFF7A6000L),
+            Arguments.of(LeagueDivision.DIAMANTE, false, 0xFF00636FL),
+            Arguments.of(LeagueDivision.BRONZE, true, 0xFFEBC98FL),
+            Arguments.of(LeagueDivision.PRATA, true, 0xFFE0E0E0L),
+            Arguments.of(LeagueDivision.OURO, true, 0xFFFFE45AL),
+            Arguments.of(LeagueDivision.DIAMANTE, true, 0xFFB9F2FFL),
+        )
 
         @JvmStatic
         fun divisionIdentityTokens(): Stream<Arguments> = Stream.of(

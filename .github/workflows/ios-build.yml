@@ -66,6 +66,10 @@ jobs:
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          # O default da action instala o pacote legado `tools`, removido do
+          # cmdline-tools 16.0 das imagens atuais do runner (sdkmanager sai com 1).
+          packages: 'platform-tools'
 
       - name: Install Android SDK platform
         run: sdkmanager "platforms;android-36"

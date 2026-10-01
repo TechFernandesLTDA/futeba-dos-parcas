@@ -353,8 +353,8 @@ describe("onUserDeleted — regressão #2323 loop infinito anonimização", () =
       mockCollectionGroupGet.mockImplementation(() => {
         cgCallCount++;
         // Apenas a PRIMEIRA subcoleção consultada (cashbox transactions) tem
-        // docs; chamadas subsequentes (reviews/activities) já vêm vazias para
-        // manter o teste focado e rápido.
+        // docs; a chamada subsequente (reviews) já vem vazia para manter o
+        // teste focado e rápido.
         if (cgCallCount === 1) {
           return Promise.resolve(makeSnap(PAGE_1, "tx"));
         }
@@ -368,11 +368,12 @@ describe("onUserDeleted — regressão #2323 loop infinito anonimização", () =
         onUserDeleted(makeUserRecord(), makeEventContext())
       ).resolves.not.toThrow();
 
-      // 1ª subcoleção: 2 páginas (500 + 250) → 2 chamadas. Demais subcoleções
-      // (reviews, activities): 1 chamada vazia cada. Total esperado: 4.
+      // 1ª subcoleção: 2 páginas (500 + 250) → 2 chamadas. Reviews: 1
+      // chamada vazia. Total esperado: 3 (o collectionGroup de activities
+      // "alvo" do #1968 era código morto e foi removido).
       // O ponto crucial: o loop ENCERROU (chamadas finitas) em vez de repetir
       // a página de 500 para sempre.
-      expect(cgCallCount).toBe(4);
+      expect(cgCallCount).toBe(3);
     },
     10000
   );
@@ -383,50 +384,83 @@ describe("onUserDeleted — regressão #2323 loop infinito anonimização", () =
       await expect(
         onUserDeleted(makeUserRecord(), makeEventContext())
       ).resolves.not.toThrow();
-      // 3 subcoleções consultadas uma vez cada (todas vazias).
-      expect(mockCollectionGroupGet).toHaveBeenCalledTimes(3);
+      // 2 subcoleções (cashbox created_by, reviews) consultadas uma vez cada
+      // (ambas vazias).
+      expect(mockCollectionGroupGet).toHaveBeenCalledTimes(2);
+    }
+  );
+
+  test(
+    "#1968: não consulta collectionGroup('activities') — nenhum escritor " +
+    "grava targetUserId e a query exigiria índice de collectionGroup",
+    async () => {
+      await expect(
+        onUserDeleted(makeUserRecord(), makeEventContext())
+      ).resolves.not.toThrow();
+
+      expect(mockCollectionGroup.mock.calls.map((call: any[]) => call[0]))
+        .toEqual(["cashbox", "reviews"]);
     }
   );
 
   test(
     "aborta quando a paginação de grupos não avança e atinge MAX_ANON_ITERATIONS",
     async () => {
+      // #4113: payload REAL do escritor (web/src/hooks/useGroups.ts:396-411):
+      // owner_id/owner_name snake e `members` como array de STRINGS de uid.
+      // Grupo de outro dono em que o usuário excluído é só membro — o doc
+      // raiz não tem PII dele e não pode ser reescrito.
       const repeatingGroupDocs = Array.from({length: 500}, (_, i) => ({
         id: `group_${i}`,
-        ref: {id: `group_${i}`},
+        ref: {id: `group_${i}`, path: `groups/group_${i}`},
         data: () => ({
-          ownerId: "other-user",
-          members: [],
+          owner_id: "other-user",
+          owner_name: "Outro Dono",
+          members: ["other-user", "user-to-delete"],
         }),
       }));
 
-      let collectionGetCalls = 0;
-      mockCollectionGet.mockImplementation(() => {
-        collectionGetCalls++;
-        // FIX #4049: game_photos/game_videos acrescentam 2 consultas extras às
-        // de limpeza de docs. Todas as consultas de coleção DOC (não-grupo)
-        // retornam vazio; só a partir daí o loop de `groups` recebe os docs
-        // repetidos para validar o abort por MAX_ANON_ITERATIONS.
-        if (collectionGetCalls <= 16) {
-          return Promise.resolve({
-            docs: [],
-            empty: true,
-            size: 0,
-          });
-        }
-
-        return Promise.resolve({
-          docs: repeatingGroupDocs,
-          empty: false,
-          size: repeatingGroupDocs.length,
-        });
+      // Roteia por NOME de coleção (não por contagem de chamadas): novas
+      // coleções no cleanup não deslocam o cenário. Só `groups` repete a
+      // mesma página cheia para validar o abort por MAX_ANON_ITERATIONS.
+      const groupsStartAfter = jest.fn();
+      mockCollection.mockImplementation((name: string) => {
+        const query: any = {
+          where: jest.fn(() => query),
+          limit: jest.fn(() => query),
+          startAfter: jest.fn(() => {
+            if (name === "groups") groupsStartAfter();
+            return query;
+          }),
+          get: jest.fn(() => Promise.resolve(name === "groups" ? {
+            docs: repeatingGroupDocs,
+            empty: false,
+            size: repeatingGroupDocs.length,
+          } : {docs: [], empty: true, size: 0})),
+        };
+        return query;
       });
 
-      await expect(
-        onUserDeleted(makeUserRecord(), makeEventContext())
-      ).rejects.toThrow("PII anonymization incomplete");
+      try {
+        await expect(
+          onUserDeleted(makeUserRecord(), makeEventContext())
+        ).rejects.toThrow("PII anonymization incomplete");
 
-      expect(mockStartAfter).toHaveBeenCalled();
+        expect(groupsStartAfter).toHaveBeenCalled();
+        // Nenhum doc de grupo alheio foi reescrito (o ramo morto de
+        // `members[]` objetos não existe mais).
+        const groupUpdates = batchInstances.flatMap((b) =>
+          b.update.mock.calls.filter((call: any[]) =>
+            String(call[0]?.path ?? "").startsWith("groups/")));
+        expect(groupUpdates).toHaveLength(0);
+      } finally {
+        mockCollection.mockReturnValue({
+          where: mockWhere,
+          limit: mockLimit,
+          startAfter: mockStartAfter,
+          get: mockCollectionGet,
+        });
+      }
     },
     10000
   );
@@ -639,9 +673,9 @@ describe(
       "erro transitório (código gRPC UNAVAILABLE) no catch de reviews " +
       "força retry (throw final)",
       async () => {
-        // collectionGroup é chamado em ordem: cashbox (1ª), reviews (2ª),
-        // activities (3ª). A 1ª chamada resolve vazia (cashbox ok); a 2ª
-        // (reviews) rejeita com erro transitório.
+        // collectionGroup é chamado em ordem: cashbox (1ª), reviews (2ª).
+        // A 1ª chamada resolve vazia (cashbox ok); a 2ª (reviews) rejeita
+        // com erro transitório.
         let call = 0;
         mockCollectionGroupGet.mockImplementation(() => {
           call++;
@@ -667,47 +701,6 @@ describe(
         mockCollectionGroupGet.mockImplementation(() => {
           call++;
           if (call === 2) {
-            return Promise.reject(new TypeError("dado malformado"));
-          }
-          return Promise.resolve({docs: [], empty: true, size: 0});
-        });
-
-        await expect(
-          onUserDeleted(makeUserRecord(), makeEventContext())
-        ).resolves.not.toThrow();
-      }
-    );
-
-    test(
-      "erro transitório (código gRPC UNAVAILABLE) no catch de activities " +
-      "target força retry (throw final)",
-      async () => {
-        // 3ª chamada de collectionGroup (após cashbox e reviews, ambas ok).
-        let call = 0;
-        mockCollectionGroupGet.mockImplementation(() => {
-          call++;
-          if (call === 3) {
-            const err: any = new Error("Firestore unavailable");
-            err.code = 14; // UNAVAILABLE
-            return Promise.reject(err);
-          }
-          return Promise.resolve({docs: [], empty: true, size: 0});
-        });
-
-        await expect(
-          onUserDeleted(makeUserRecord(), makeEventContext())
-        ).rejects.toThrow("PII anonymization incomplete");
-      }
-    );
-
-    test(
-      "erro permanente (sem código gRPC reconhecido) no catch de " +
-      "activities target NÃO força retry",
-      async () => {
-        let call = 0;
-        mockCollectionGroupGet.mockImplementation(() => {
-          call++;
-          if (call === 3) {
             return Promise.reject(new TypeError("dado malformado"));
           }
           return Promise.resolve({docs: [], empty: true, size: 0});
