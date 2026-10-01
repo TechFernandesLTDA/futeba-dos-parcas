@@ -84,6 +84,10 @@ class NearbyPlayersViewModel(
     fun search(lat: Double, lng: Double) {
         viewModelScope.launch {
             _uiState.value = NearbyPlayersUiState.Loading
+            // FIX #4123: refresh do GPS pelo caminho autoritativo antes da
+            // busca (respeita cooldown de 10 min; falha não bloqueia a
+            // busca — usa a última posição válida).
+            repository.refreshCurrentLocation(lat, lng)
             repository.discover(lat, lng, _radiusKm.value, _socialFilter.value)
                 .onSuccess { players ->
                     _uiState.value = if (players.isEmpty()) {

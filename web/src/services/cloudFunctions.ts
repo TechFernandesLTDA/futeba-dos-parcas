@@ -705,6 +705,11 @@ export const getFieldAvailability = httpsCallable<
   { slots: FieldAvailabilitySlot[]; truncated?: boolean }
 >(functions, 'getFieldAvailability');
 
+export const updateMyLocation = httpsCallable<
+  { lat: number; lng: number },
+  { lat: number; lng: number; geohash: string; throttled: boolean }
+>(functions, 'updateMyLocation');
+
 export const createGameVideo = httpsCallable<
   { gameId: string; storagePath: string; caption: string },
   { success: true; videoId: string; alreadyExists: boolean }
