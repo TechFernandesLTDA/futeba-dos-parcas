@@ -291,15 +291,37 @@ class FakeGameRepository constructor() : GameRepository {
                 val overlapStart = maxOf(newStart, existingStart)
                 val overlapEnd = minOf(newEnd, existingEnd)
                 val overlapMinutes = overlapEnd - overlapStart
-                conflicts.add(TimeConflict(game, overlapMinutes))
+                conflicts.add(
+                    TimeConflict(
+                        conflictingTime = game.time,
+                        conflictingEndTime = game.endTime,
+                        overlapMinutes = overlapMinutes
+                    )
+                )
             }
         }
 
         return Result.success(conflicts)
     }
 
-    override suspend fun getGamesByFieldAndDate(fieldId: String, date: String): Result<List<Game>> {
-        return Result.success(games.filter { it.fieldId == fieldId && it.date == date })
+    override suspend fun getFieldBusySlots(
+        fieldId: String,
+        startDate: String,
+        endDate: String,
+        excludeGameId: String?
+    ): Result<List<com.futebadosparcas.domain.model.FieldBusySlot>> {
+        return Result.success(
+            games
+                .filter { it.fieldId == fieldId && it.date in listOf(startDate, endDate) }
+                .filter { it.id != excludeGameId }
+                .map { game ->
+                    com.futebadosparcas.domain.model.FieldBusySlot(
+                        date = game.date,
+                        startMinutes = timeToMinutes(game.time),
+                        endMinutes = timeToMinutes(game.endTime)
+                    )
+                }
+        )
     }
 
     override suspend fun summonPlayers(gameId: String, confirmations: List<GameConfirmation>): Result<Unit> {

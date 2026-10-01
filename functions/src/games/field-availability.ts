@@ -19,6 +19,9 @@ interface FieldAvailabilityRequest {
   fieldId: string;
   startDate: string;
   endDate: string;
+  // FIX #4127: edição — o jogo em edição não deve bloquear a própria vaga
+  // (a callable não devolve ids, então o caller não consegue filtrar sozinho).
+  excludeGameId?: string;
 }
 
 export interface FieldBusySlot {
@@ -91,7 +94,12 @@ export function parseFieldAvailabilityRequest(
     );
   }
 
-  return {fieldId, startDate, endDate};
+  const excludeGameId =
+    typeof data.excludeGameId === "string" && data.excludeGameId.trim() ?
+      data.excludeGameId.trim() :
+      undefined;
+
+  return {fieldId, startDate, endDate, excludeGameId};
 }
 
 /**
@@ -152,9 +160,8 @@ export const getFieldAvailability = onCall<FieldAvailabilityRequest>(
       );
     }
 
-    const {fieldId, startDate, endDate} = parseFieldAvailabilityRequest(
-      request.data
-    );
+    const {fieldId, startDate, endDate, excludeGameId} =
+      parseFieldAvailabilityRequest(request.data);
 
     // FIX #4016: paginar até esvaziar para evitar truncagem silenciosa.
     // Antes a query tinha .limit(500) sem cursor — uma quadra com >500
@@ -203,7 +210,9 @@ export const getFieldAvailability = onCall<FieldAvailabilityRequest>(
       );
     }
 
+    // FIX #4127: o jogo em edição não bloqueia a própria janela.
     const slots = allDocs
+      .filter((doc) => !excludeGameId || doc.id !== excludeGameId)
       .map((doc) => projectGameToBusySlot(doc.data()))
       .filter((slot): slot is FieldBusySlot => slot !== null)
       .sort((left, right) =>

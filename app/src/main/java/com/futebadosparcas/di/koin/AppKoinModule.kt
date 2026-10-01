@@ -40,7 +40,7 @@ val appKoinModule = module {
     }
 
     single<GameQueryRepository> {
-        GameQueryRepositoryImpl(get(), get(), get(), get(), get(), get())
+        GameQueryRepositoryImpl(get(), get(), get(), get(), get(), get(), get())
     }
 
     single<GameConfirmationRepository> {
