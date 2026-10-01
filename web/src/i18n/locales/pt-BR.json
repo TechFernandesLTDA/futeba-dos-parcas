@@ -1652,7 +1652,8 @@
     "unpin": "Desfixar",
     "postOptions": "Opções do post",
     "edited": "editado",
-    "notMember": "Entre no grupo para participar do mural."
+    "notMember": "Entre no grupo para participar do mural.",
+    "deleteConfirm": "Excluir publicação?"
   },
   "socialFeed": {
     "title": "Feed",

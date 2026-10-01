@@ -2001,6 +2001,36 @@ export const processExpiredWaitlistEntries =
                 const freshData = freshEntrySnap.data();
                 if (freshData?.status !== "NOTIFIED") return false;
 
+                // FIX #4134: LER O JOGO antes de promover/notificar. Antes o
+                // cron convocava a fila inteira para jogo cancelado, cheio ou
+                // já iniciado (onGameVacancy tem o gate; o cron não).
+                // A entrada expirada continua sendo marcada EXPIRED
+                // (idempotência: não volta a ser reescaneada toda rodada);
+                // só a PROMOÇÃO depende do jogo estar aberto com vaga.
+                const gameSnap = await tx.get(
+                  db().collection("games").doc(gameId)
+                );
+                const gameData = gameSnap.exists ? gameSnap.data() : null;
+                const gameStatus = gameData?.status;
+                const maxPlayers =
+                  typeof gameData?.max_players === "number" ?
+                    gameData.max_players :
+                    14;
+                let confirmedCount = 0;
+                if (gameStatus === "SCHEDULED" || gameStatus === "CONFIRMED") {
+                  const confirmationsSnap = await tx.get(
+                    db()
+                      .collection("confirmations")
+                      .where("game_id", "==", gameId)
+                      .where("status", "==", "CONFIRMED")
+                  );
+                  confirmedCount = confirmationsSnap.size;
+                }
+                const canSummon =
+                  (gameStatus === "SCHEDULED" ||
+                    gameStatus === "CONFIRMED") &&
+                  confirmedCount < maxPlayers;
+
                 // Ler proxima entrada WAITING antes de qualquer write
                 const nextQuery = await tx.get(
                   db()
@@ -2018,7 +2048,10 @@ export const processExpiredWaitlistEntries =
                   expired_at: FieldValue.serverTimestamp(),
                 });
 
-                if (!nextQuery.empty) {
+                if (
+                  !nextQuery.empty &&
+                  canSummon
+                ) {
                   const nextEntry = nextQuery.docs[0];
                   const nextData = nextEntry.data();
                   const newDeadline = Timestamp.fromDate(

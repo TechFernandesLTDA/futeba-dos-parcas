@@ -1,5 +1,7 @@
 /* istanbul ignore file -- callable wrapper exercised through Firestore/emulator social suites. */
 import {onCall, HttpsError} from "firebase-functions/v2/https";
+import {onDocumentUpdated} from "firebase-functions/v2/firestore";
+import {logger} from "firebase-functions/v2";
 import {FieldValue} from "firebase-admin/firestore";
 import {FUNCTION_REGION} from "../constants";
 import {db} from "../_db";
@@ -542,5 +544,65 @@ export const submitDirectMessage = onCall(
     });
 
     return {messageId: messageRef.id};
+  }
+);
+
+
+// ==========================================
+// FIX #4120 (LGPD): preview do chat após exclusão de mensagem
+// ==========================================
+
+/**
+ * Trigger: quando uma mensagem é excluída (deleted_at passa de null para
+ * setado pelo próprio remetente), recalcula o preview do chat — a lista
+ * de conversas continuava mostrando o texto da mensagem excluída e as
+ * rules impedem o cliente de escrever o preview.
+ */
+export const onDirectMessageDeleted = onDocumentUpdated(
+  {document: "chats/{chatId}/messages/{messageId}", region: FUNCTION_REGION},
+  async (event) => {
+    const before = event.data?.before.data();
+    const after = event.data?.after.data();
+    if (!before || !after) return;
+
+    const wasDeleted = before.deleted_at == null;
+    const isDeleted = after.deleted_at != null;
+    if (!wasDeleted || !isDeleted) return;
+
+    const chatId = event.params.chatId;
+    const previewRef = db().doc(`chats/${chatId}`);
+
+    try {
+      // Última mensagem não excluída da conversa.
+      const lastMessagesSnap = await previewRef
+        .collection("messages")
+        .orderBy("created_at", "desc")
+        .limit(20)
+        .get();
+      const lastLive = lastMessagesSnap.docs
+        .map((docSnap) => docSnap.data())
+        .find((data) => data?.deleted_at == null);
+
+      const updates: Record<string, unknown> = {
+        updated_at: FieldValue.serverTimestamp(),
+      };
+      if (lastLive) {
+        updates.last_message = lastLive.text ?? "";
+        updates.last_message_at =
+          lastLive.created_at ?? FieldValue.serverTimestamp();
+        updates.last_sender_id = lastLive.sender_id ?? null;
+      } else {
+        updates.last_message = FieldValue.delete();
+        updates.last_message_at = FieldValue.delete();
+        updates.last_sender_id = FieldValue.delete();
+      }
+      await previewRef.update(updates);
+    } catch (error) {
+      logger.error("[DM] Falha ao recalcular preview do chat", {
+        chatId,
+        error,
+      });
+      throw error;
+    }
   }
 );

@@ -100,7 +100,8 @@ export const GameVideosTab: React.FC<GameVideosTabProps> = ({
 }) => {
   const { t } = useTranslation();
   const { currentUser } = useAuth();
-  const { showSuccess, showError } = useToast();
+  // FIX #4148: exclusão de vídeo pede confirmação.
+  const { showSuccess, showError, showWithAction } = useToast();
   const showErrorRef = useRef(showError);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const uploadTaskRef = useRef<UploadTask | null>(null);
@@ -328,6 +329,20 @@ export const GameVideosTab: React.FC<GameVideosTabProps> = ({
       return;
     }
 
+    // FIX #4148: vídeo também apagava em 1 toque sem confirmação.
+    showWithAction(
+      t('gameVideos.deleteVideo'),
+      {
+        label: t('common.confirm'),
+        onClick: () => {
+          void executeDelete(video);
+        },
+      },
+      'warning',
+    );
+  };
+
+  const executeDelete = async (video: GameVideo) => {
     setDeletingId(video.id);
     try {
       if (video.storagePath) {

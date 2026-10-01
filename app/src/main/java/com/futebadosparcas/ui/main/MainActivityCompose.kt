@@ -3,7 +3,6 @@ package com.futebadosparcas.ui.main
 import android.content.Intent
 import android.content.res.Configuration
 import android.os.Bundle
-import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.focusable
@@ -153,8 +152,12 @@ class MainActivityCompose : AppCompatActivity() {
                 mutableStateOf(!preferencesManager.isPermissionOnboardingCompleted())
             }
 
-            SetupSystemBars(isDark)
-
+            // FIX #4125: SetupSystemBars REMOVIDO — lia
+            // MaterialTheme.colorScheme FORA do FutebaTheme (baseline light
+            // #FEF7FF) e disputava a barra do sistema com o SideEffect do
+            // tema (que já pinta com o colorScheme resolvido e é a única
+            // fonte). No dark a barra de navegação ficava quase branca sob
+            // ícones brancos.
             FutebaTheme(
                 themeConfig = themeConfig,
                 darkTheme = isDark
@@ -213,25 +216,6 @@ class MainActivityCompose : AppCompatActivity() {
     }
 }
 
-@Composable
-private fun SetupSystemBars(isDark: Boolean) {
-    val view = LocalView.current
-    val window = (view.context as? androidx.activity.ComponentActivity)?.window
-
-    val surfaceColor = MaterialTheme.colorScheme.surface
-
-    LaunchedEffect(isDark, surfaceColor) {
-        window?.let {
-            it.statusBarColor = Color.Transparent.toArgb()
-            it.navigationBarColor = surfaceColor.toArgb()
-
-            WindowInsetsControllerCompat(window, view).apply {
-                isAppearanceLightStatusBars = !isDark
-                isAppearanceLightNavigationBars = !isDark
-            }
-        }
-    }
-}
 
 /**
  * Gate anti-bot pos-login (Opcao b, spec #1302).
@@ -467,14 +451,11 @@ fun MainScreen(
         }
     }
 
-    // Trata o botão voltar
-    BackHandler(enabled = true) {
-        if (currentDestination?.route != Screen.Home.route) {
-            navController.popBackStack()
-        } else {
-            (context as? androidx.activity.ComponentActivity)?.finish()
-        }
-    }
+    // FIX #4149: BackHandler(enabled = true) na raiz interceptava TODO o
+    // back e desligava a animação de back preditivo (Android 15+, opt-in no
+    // manifest). O NavHost já faz o mesmo trabalho (popBackStack ao subir na
+    // pilha) e o sistema encerra a activity quando a pilha esvazia — o
+    // handler era redundante.
 
     // Callback de navegação com single-top e save/restore state
     val onNavigate: (String) -> Unit = { route ->
