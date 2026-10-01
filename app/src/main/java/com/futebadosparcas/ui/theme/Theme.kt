@@ -35,6 +35,15 @@ import androidx.compose.ui.platform.LocalInspectionMode
  */
 val LocalIsDarkTheme = staticCompositionLocalOf { false }
 
+/**
+ * Nível de contraste EFETIVO resolvido pelo [FutebaTheme] (preferência do usuário
+ * OU alto contraste do sistema). Espelha [LocalIsDarkTheme]: composables que
+ * escolhem paletas theme-aware (ex.: `divisionTextColor`, `gamificationTextColor`)
+ * precisam saber que o scheme HIGH troca radicalmente os containers
+ * (primaryContainer #8CFB8F -> #1565C0) — #4099.
+ */
+val LocalContrastLevel = staticCompositionLocalOf { ContrastLevel.NORMAL }
+
 // Mantendo compatibilidade com previews existentes
 @Composable
 @Suppress("DEPRECATION")
@@ -69,9 +78,17 @@ fun FutebaTheme(
     } else {
         DynamicThemeEngine.generateColorScheme(finalConfig, isDark)
     }
+    // Contraste efetivo: preferência do usuário OU alto contraste do sistema. É o
+    // MESMO valor que seleciona o scheme HIGH abaixo e que vai para
+    // LocalContrastLevel — assim foreground e fundo nunca divergem (#4099).
+    val contrastLevel = if (finalConfig.contrastLevel == ContrastLevel.HIGH || isSystemHighContrast()) {
+        ContrastLevel.HIGH
+    } else {
+        ContrastLevel.NORMAL
+    }
     val colorScheme = getAccessibleColorScheme(
         isDarkTheme = isDark,
-        preferHighContrast = finalConfig.contrastLevel == ContrastLevel.HIGH,
+        preferHighContrast = contrastLevel == ContrastLevel.HIGH,
         defaultLightScheme = baseColorScheme,
         defaultDarkScheme = baseColorScheme
     )
@@ -95,7 +112,8 @@ fun FutebaTheme(
 
     CompositionLocalProvider(
         LocalReducedMotion provides reducedMotion,
-        LocalIsDarkTheme provides isDark
+        LocalIsDarkTheme provides isDark,
+        LocalContrastLevel provides contrastLevel
     ) {
         MaterialTheme(
             colorScheme = colorScheme,

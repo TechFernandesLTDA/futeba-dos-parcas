@@ -37,8 +37,28 @@ export interface LocationQualityChecklistItem {
 export const getLocationPublicationStatus = (location: Location): LocationPublicationStatus =>
   location.publicationStatus || (location.isVerified ? 'PUBLISHED' : 'PENDING_REVIEW');
 
-export const getLocationSubscriptionStatus = (location: Location): LocationSubscriptionStatus =>
-  location.venueAccountStatus || location.subscriptionStatus || 'ACTIVE';
+// #4110: `venueAccountStatus` (denormalizado, escrito só por admin na mão) não
+// pode sombrear `subscriptionStatus` (atualizado diariamente pelo cron de
+// cobrança) — senão uma quadra suspensa por inadimplência continua exibindo
+// "ACTIVE" no admin porque o cron nunca toca em `venueAccountStatus`. Vence o
+// status mais severo entre os dois eixos.
+const LOCATION_SUBSCRIPTION_STATUS_SEVERITY: LocationSubscriptionStatus[] = [
+  'CANCELLED',
+  'SUSPENDED',
+  'OVERDUE',
+  'TRIAL',
+  'ACTIVE',
+];
+
+export const getLocationSubscriptionStatus = (location: Location): LocationSubscriptionStatus => {
+  const individual = location.subscriptionStatus || 'ACTIVE';
+  const account = location.venueAccountStatus;
+  if (!account) return individual;
+  return LOCATION_SUBSCRIPTION_STATUS_SEVERITY.indexOf(account) <
+    LOCATION_SUBSCRIPTION_STATUS_SEVERITY.indexOf(individual)
+    ? account
+    : individual;
+};
 
 const matchesBooleanFilter = (value: boolean | undefined, filter: LocationBooleanFilter) => {
   if (filter === 'ALL') return true;
@@ -70,9 +90,14 @@ export const getLocationCommercialIssues = (location: Location): string[] => {
   if (location.isActive !== true) issues.push('inativa');
   if (location.isVerified !== true) issues.push('não verificada');
   if (publicationStatus !== 'PUBLISHED') issues.push('não publicada');
+  // #4110: os dois eixos são independentes (conta comercial vs. mensalidade
+  // individual) e podem estar irregulares ao mesmo tempo — `else if` escondia
+  // "mensalidade irregular" sempre que a conta comercial (congelada) estava
+  // ACTIVE, mesmo com o cron tendo suspendido a quadra.
   if (location.venueAccountId && !['TRIAL', 'ACTIVE'].includes(location.venueAccountStatus || 'ACTIVE')) {
     issues.push('conta comercial irregular');
-  } else if (!['TRIAL', 'ACTIVE'].includes(subscriptionStatus)) {
+  }
+  if (!['TRIAL', 'ACTIVE'].includes(subscriptionStatus)) {
     issues.push('mensalidade irregular');
   }
   if ((location.fieldCount || 0) <= 0) issues.push('sem quadras cadastradas');

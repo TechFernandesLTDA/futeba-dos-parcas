@@ -291,11 +291,13 @@ async function maybeSendAlmostBadge(
 async function findUpcomingOpenGameForUser(
   userId: string,
 ): Promise<string | null> {
-  // #3875: orderBy(documentId()) torna o subconjunto lido determinístico
-  // (servido pelo índice single-field automático que a query anterior já
-  // usava implicitamente) e o cap sobe para MEMBERSHIP_QUERY_LIMIT. Antes, o
-  // limit(20) sem orderBy devolvia memberships arbitrários e podia descartar o
-  // grupo ativo relevante, fazendo o nudge de "streak em risco" nunca sair.
+  // #3875: orderBy(documentId()) torna o subconjunto lido determinístico e o
+  // cap sobe para MEMBERSHIP_QUERY_LIMIT. Índices single-field automáticos só
+  // cobrem o escopo de coleção: esta query collection-group depende do
+  // override members.user_id (COLLECTION_GROUP) em firestore.indexes.json.
+  // Antes, o limit(20) sem orderBy devolvia memberships arbitrários e podia
+  // descartar o grupo ativo relevante, fazendo o nudge de "streak em risco"
+  // nunca sair.
   const memberships = await db()
     .collectionGroup("members")
     .where("user_id", "==", userId)
