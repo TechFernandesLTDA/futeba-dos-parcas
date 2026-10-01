@@ -41,7 +41,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useBadges } from '../../hooks/useBadges';
 import { LoadingState } from '../../components/common/GameCard';
 import { ErrorState } from '../../components/common/ErrorState';
-import { BADGE_DEFINITIONS, BadgeDefinition } from '../../types/gamification';
+import { BADGE_DEFINITIONS, getDynamicBadgeDefinition, BadgeDefinition } from '../../types/gamification';
 import { rarityColors, rarityColorsDark } from '../../theme';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { PageContainer } from '../../components/common/PageContainer';
@@ -94,9 +94,15 @@ export const BadgesScreen: React.FC = () => {
   }), [t]);
 
   const filteredBadges = useMemo(() => {
-    if (selectedCategory === 'all') return BADGE_DEFINITIONS;
-    return BADGE_DEFINITIONS.filter((b) => b.category === selectedCategory);
-  }, [selectedCategory]);
+    // FIX #4138: badges dinâmicas (mito_rodada_*/mvp_liga_*) desbloqueadas
+    // pelo usuário entram na grade mesmo sem estar no catálogo estático.
+    const dynamic = Array.from(unlockedIds)
+      .map((id) => getDynamicBadgeDefinition(id))
+      .filter((d): d is BadgeDefinition => d !== null);
+    const all = [...BADGE_DEFINITIONS, ...dynamic];
+    if (selectedCategory === 'all') return all;
+    return all.filter((b) => b.category === selectedCategory);
+  }, [selectedCategory, unlockedIds]);
 
   const progress = useMemo(() => (
     BADGE_DEFINITIONS.length > 0

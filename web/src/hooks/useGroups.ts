@@ -68,7 +68,13 @@ export async function removeGroupMembershipArtifacts(
       const gameData = gameDoc.data();
       if (gameData.deleted_at || gameData.deletedAt) continue;
       if (!GROUP_CONFIRMATION_CLEANUP_STATUSES.has(String(gameData.status || ''))) continue;
-      batch.delete(doc(db, 'confirmations', `${gameDoc.id}_${userId}`));
+      // FIX #4144: marcar CANCELLED em vez de apagar — o trigger onGameVacancy
+      // (before CONFIRMED → after CANCELLED) só existe em UPDATE; delete
+      // deixava a vaga sem promover a waitlist silenciosamente.
+      batch.update(doc(db, 'confirmations', `${gameDoc.id}_${userId}`), {
+        status: 'CANCELLED',
+        updated_at: serverTimestamp(),
+      });
       confirmationDeletes += 1;
     }
   }

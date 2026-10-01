@@ -3,6 +3,7 @@ import {logger} from "firebase-functions/v2";
 import * as admin from "firebase-admin";
 import {FieldValue} from "firebase-admin/firestore";
 import {FUNCTION_REGION} from "../constants";
+import {mirrorBadgeToRoot} from "./user-badge-docs";
 
 const db = () => admin.firestore();
 
@@ -45,6 +46,18 @@ async function awardAmbassadorBadge(userId: string, inviteCount: number) {
       level: threshold.level,
       earned_at: FieldValue.serverTimestamp(),
       earned: true,
+    });
+
+    // FIX #4138: espelha para user_badges raiz — as telas (web/Android)
+    // leem só a raiz; antes o badge ficava invisível para sempre.
+    await mirrorBadgeToRoot(userId, {
+      badgeId: threshold.badgeId,
+      name: threshold.name,
+      icon: threshold.icon,
+      type: "AMBASSADOR",
+      earnedAt: FieldValue.serverTimestamp(),
+      earned: true,
+      count: 1,
     });
 
     logger.info("Awarded ambassador badge", {

@@ -9,6 +9,7 @@ import * as admin from "firebase-admin";
 import {FieldValue} from "firebase-admin/firestore";
 import {
   onDocumentCreated,
+  onDocumentDeleted,
   onDocumentUpdated,
 } from "firebase-functions/v2/firestore";
 import {
@@ -548,9 +549,270 @@ export const onGameUpdatedNotification =
 // GAME VACANCY
 // ==========================================
 
+
+/**
+ * Núcleo de promoção de vaga (FIX #4144), compartilhado por:
+ * - onGameVacancy (trigger UPDATE: before CONFIRMED -> after CANCELLED);
+ * - onGameVacancyDeleted (trigger DELETE de confirmação CONFIRMED — caminho
+ *   que clientes ainda usam: fila offline, remoção de membro via cliente
+ *   sem branch de rules, etc).
+ *
+ * Cooldown de 5 min passa a valer SOMENTE para o broadcast ao grupo:
+ * cada vaga aberta promove UMA pessoa nova da waitlist (promovee diferente
+ * a cada evento, sem risco de spam), e o antigo gate que engolia a 2ª
+ * vaga dentro de 5 min foi removido.
+ *
+ * @param {string} gameId - Id do jogo com vaga aberta.
+ * @return {Promise<void>} -
+ */
+export async function promoteWaitlistOnVacancy(
+  gameId: string
+): Promise<void> {
+  const gameRef = db()
+    .collection("games")
+    .doc(gameId);
+
+  try {
+    const gameDoc = await gameRef.get();
+    const game = gameDoc.data() as
+      Record<string, unknown> |
+      undefined;
+    if (!game) {
+      return;
+    }
+
+    if (
+      game.status !== "SCHEDULED" &&
+      game.status !== "CONFIRMED"
+    ) {
+      return;
+    }
+
+    const maxPlayers =
+      typeof game.max_players === "number" ?
+        game.max_players :
+        typeof game.maxPlayers === "number" ?
+          game.maxPlayers :
+          14;
+    const groupId =
+      typeof game.group_id === "string" ?
+        game.group_id :
+        typeof game.groupId === "string" ?
+          game.groupId :
+          undefined;
+    const gameName =
+      typeof game.location_name === "string" ?
+        game.location_name :
+        typeof game.field_name === "string" ?
+          game.field_name :
+          "o jogo";
+    const gameDate =
+      typeof game.date === "string" ?
+        game.date :
+        "";
+
+    // Contar confirmações atuais
+    const currentPlayers =
+      await countConfirmedPlayersForGame(
+        gameId
+      );
+
+    // Só promove se há vaga real após cancelamento (FIX #1582).
+    if (currentPlayers >= maxPlayers) {
+      return;
+    }
+
+    // 1. Promover a próxima entrada WAITING e notificá-la — SEM cooldown.
+    // FIX #753: ordem autoritativa é queue_position (FIX #4043: promote a
+    // NOTIFIED com response_deadline = now + 30min).
+    const waitlistSnap = await db()
+      .collection("games")
+      .doc(gameId)
+      .collection("waitlist")
+      .where("status", "==", "WAITING")
+      .orderBy("queue_position", "asc")
+      .limit(3)
+      .get();
+
+    const waitingUserIds =
+      waitlistSnap.docs
+        .map((doc: admin.firestore.QueryDocumentSnapshot) => {
+          const data = doc.data();
+          return data.user_id || data.userId;
+        })
+        .filter(
+          (id: unknown): id is string =>
+            typeof id === "string" && id.length > 0
+        );
+
+    if (!waitlistSnap.empty) {
+      const entry = waitlistSnap.docs[0];
+      const entryData = entry.data();
+      const nextUserId =
+        entryData.user_id || entryData.userId;
+      const newDeadline =
+        admin.firestore.Timestamp.fromDate(
+          new Date(Date.now() + WAITLIST_RESPONSE_WINDOW_MS)
+        );
+
+      const promoted = await db().runTransaction(async (tx) => {
+        const fresh = await tx.get(entry.ref);
+        if (!fresh.exists || fresh.data()?.status !== "WAITING") {
+          return false;
+        }
+        tx.update(entry.ref, {
+          status: "NOTIFIED",
+          notified_at: FieldValue.serverTimestamp(),
+          response_deadline: newDeadline,
+        });
+        return true;
+      });
+
+      if (promoted && typeof nextUserId === "string" && nextUserId) {
+        await sendNotificationToUsers(
+          [nextUserId],
+          {
+            title: GAME_NOTIFICATIONS.GAME_VACANCY.title["pt-BR"](),
+            body: GAME_NOTIFICATIONS.GAME_VACANCY.body["pt-BR"]({
+              gameName,
+            }),
+            type:
+              NotificationType.GAME_VACANCY,
+            data: {
+              gameId: gameId,
+              action:
+                "game_detail/" + gameId,
+            },
+          }
+        );
+
+        logger.info(
+          "[GAME_VACANCY] Promovido e notificado " +
+          `${nextUserId} na waitlist`
+        );
+      }
+    }
+
+    // 2. Se poucos na espera, notificar grupo — isolado em try/catch
+    // próprio (FIX #4043). FIX #4144: o broadcast (muitas pessoas de uma
+    // vez) continua com cooldown de 5 min via claim vacancy_notified_at;
+    // a promoção individual acima nunca mais é travada por ele.
+    if (
+      groupId &&
+      waitingUserIds.length < 3
+    ) {
+      try {
+        const broadcastClaim =
+          await db().runTransaction(async (tx) => {
+            const freshDoc = await tx.get(gameRef);
+            if (!freshDoc.exists) {
+              return false;
+            }
+            const freshGame = freshDoc.data() as
+              Record<string, unknown> |
+              undefined;
+            if (
+              !freshGame ||
+              (freshGame.status !== "SCHEDULED" &&
+                freshGame.status !== "CONFIRMED")
+            ) {
+              return false;
+            }
+
+            const freshNotifiedAt =
+              freshGame.vacancy_notified_at &&
+              typeof freshGame.vacancy_notified_at === "object" &&
+              "toDate" in freshGame.vacancy_notified_at &&
+              typeof freshGame.vacancy_notified_at.toDate === "function" ?
+                freshGame.vacancy_notified_at.toDate() as Date :
+                null;
+
+            if (
+              freshNotifiedAt &&
+              (Date.now() - freshNotifiedAt.getTime()) <
+                VACANCY_NOTIFICATION_COOLDOWN_MS
+            ) {
+              return false;
+            }
+
+            tx.update(gameRef, {
+              vacancy_notified_at:
+                FieldValue.serverTimestamp(),
+            });
+            return true;
+          });
+
+        if (!broadcastClaim) {
+          logger.info(
+            "[GAME_VACANCY] Broadcast ao grupo em cooldown para " +
+            `${gameId}.`
+          );
+          return;
+        }
+
+        const confirmedUserIds =
+          await fetchConfirmedUserIdsForGame(
+            gameId
+          );
+        const excludedUserIds =
+          new Set<string>([
+            ...confirmedUserIds,
+            ...waitingUserIds,
+          ]);
+        const memberIds =
+          await fetchEligibleGroupMemberIdsForVacancy(
+            groupId,
+            excludedUserIds,
+            MAX_GROUP_VACANCY_NOTIFICATIONS
+          );
+
+        if (memberIds.length > 0) {
+          await sendNotificationToUsers(
+            memberIds,
+            {
+              title: GAME_NOTIFICATIONS.GAME_VACANCY.title["pt-BR"](),
+              body: GAME_NOTIFICATIONS.GAME_VACANCY_GROUP.body["pt-BR"]({
+                gameName,
+                gameDate,
+              }),
+              type:
+                NotificationType.GAME_VACANCY,
+              data: {
+                gameId: gameId,
+                action:
+                  "game_detail/" + gameId,
+              },
+            }
+          );
+
+          logger.info(
+            "[GAME_VACANCY] Notificacao" +
+            " enviada para" +
+            ` ${memberIds.length}` +
+            " membros do grupo"
+          );
+        }
+      } catch (groupNotifyError) {
+        logger.error(
+          "[GAME_VACANCY] Erro ao notificar" +
+          " grupo sobre vaga:",
+          groupNotifyError
+        );
+      }
+    }
+  } catch (e) {
+    logger.error(
+      "[GAME_VACANCY] Erro ao" +
+      " processar vaga:",
+      e
+    );
+    throw e;
+  }
+}
+
 /**
  * Trigger quando um jogador cancela presença e
- * abre vaga. Notifica waitlist e membros do grupo.
+ * abre vaga (update CONFIRMED -> CANCELLED).
  */
 export const onGameVacancy = onDocumentUpdated(
   {document: "confirmations/{confirmationId}", region: FUNCTION_REGION},
@@ -586,316 +848,55 @@ export const onGameVacancy = onDocumentUpdated(
     );
 
     try {
-      const gameRef = db()
-        .collection("games")
-        .doc(gameId);
-      const vacancyCheck =
-        await db().runTransaction(async (tx) => {
-          const gameDoc = await tx.get(gameRef);
-          if (!gameDoc.exists) {
-            return {
-              shouldNotify: false,
-              reason: "missing",
-              game: null,
-            };
-          }
-
-          const game = gameDoc.data() as
-            Record<string, unknown> |
-            undefined;
-          if (!game) {
-            return {
-              shouldNotify: false,
-              reason: "missing",
-              game: null,
-            };
-          }
-
-          if (
-            game.status !== "SCHEDULED" &&
-            game.status !== "CONFIRMED"
-          ) {
-            return {
-              shouldNotify: false,
-              reason: "closed",
-              game: null,
-            };
-          }
-
-          const notifiedAt =
-            game.vacancy_notified_at &&
-            typeof game.vacancy_notified_at === "object" &&
-            "toDate" in game.vacancy_notified_at &&
-            typeof game.vacancy_notified_at.toDate === "function" ?
-              game.vacancy_notified_at.toDate() as Date :
-              null;
-
-          if (
-            notifiedAt &&
-            (Date.now() - notifiedAt.getTime()) <
-              VACANCY_NOTIFICATION_COOLDOWN_MS
-          ) {
-            return {
-              shouldNotify: false,
-              reason: "throttled",
-              game: null,
-            };
-          }
-
-          return {
-            shouldNotify: true,
-            reason: "eligible",
-            game,
-          };
-        });
-
-      if (!vacancyCheck.shouldNotify || !vacancyCheck.game) {
-        if (vacancyCheck.reason === "throttled") {
-          logger.info(
-            "[GAME_VACANCY] Vaga ja notificada recentemente" +
-            ` para jogo ${gameId}, ignorando.`
-          );
-        }
-        await completeNotificationEvent(`game_vacancy:${event.id}`);
-        return;
-      }
-
-      const game = vacancyCheck.game;
-
-      const maxPlayers =
-        typeof game.max_players === "number" ?
-          game.max_players :
-          typeof game.maxPlayers === "number" ?
-            game.maxPlayers :
-            14;
-      const groupId =
-        typeof game.group_id === "string" ?
-          game.group_id :
-          typeof game.groupId === "string" ?
-            game.groupId :
-            undefined;
-      const gameName =
-        typeof game.location_name === "string" ?
-          game.location_name :
-          typeof game.field_name === "string" ?
-            game.field_name :
-            "o jogo";
-      const gameDate =
-        typeof game.date === "string" ?
-          game.date :
-          "";
-
-      // Contar confirmações atuais
-      const currentPlayers =
-        await countConfirmedPlayersForGame(
-          gameId
-        );
-
-      // Só notifica se há vaga real após cancelamento
-      // FIX #1582: condição era currentPlayers >= maxPlayers - 1,
-      // que disparava mesmo quando o jogo continuava cheio
-      // (ex: 15 confirmados, 1 cancela → 14 = maxPlayers, sem vaga).
-      if (currentPlayers < maxPlayers) {
-        const vacancyClaim =
-          await db().runTransaction(async (tx) => {
-            const gameDoc = await tx.get(gameRef);
-            if (!gameDoc.exists) {
-              return false;
-            }
-
-            const freshGame = gameDoc.data() as
-              Record<string, unknown> |
-              undefined;
-            if (!freshGame) {
-              return false;
-            }
-
-            if (
-              freshGame.status !== "SCHEDULED" &&
-              freshGame.status !== "CONFIRMED"
-            ) {
-              return false;
-            }
-
-            const freshNotifiedAt =
-              freshGame.vacancy_notified_at &&
-              typeof freshGame.vacancy_notified_at === "object" &&
-              "toDate" in freshGame.vacancy_notified_at &&
-              typeof freshGame.vacancy_notified_at.toDate === "function" ?
-                freshGame.vacancy_notified_at.toDate() as Date :
-                null;
-
-            if (
-              freshNotifiedAt &&
-              (Date.now() - freshNotifiedAt.getTime()) <
-                VACANCY_NOTIFICATION_COOLDOWN_MS
-            ) {
-              return false;
-            }
-
-            tx.update(gameRef, {
-              vacancy_notified_at:
-                FieldValue.serverTimestamp(),
-            });
-            return true;
-          });
-
-        if (!vacancyClaim) {
-          logger.info(
-            "[GAME_VACANCY] Vaga real detectada, mas outro handler" +
-            ` ja reivindicou o cooldown para ${gameId}.`
-          );
-          await completeNotificationEvent(`game_vacancy:${event.id}`);
-          return;
-        }
-
-        // 1. Promover a próxima entrada WAITING e notificá-la.
-        // FIX #753: era .collection("waitlist") raiz inexistente.
-        // Android escreve em games/{gameId}/waitlist/ (subcollection).
-        // A ordem autoritativa é queue_position, atribuída pela callable de
-        // join dentro de uma transação e compartilhada pelos dois clientes.
-        // FIX #4043: além de notificar, a 1ª entrada WAITING agora é PROMOVIDA
-        // a NOTIFIED (notified_at + response_deadline = now + 30min). Sem isso
-        // a máquina de estados da waitlist não tinha porta de entrada e o
-        // timer de 30 min de reminders.ts era fictício.
-        const waitlistSnap = await db()
-          .collection("games")
-          .doc(gameId)
-          .collection("waitlist")
-          .where("status", "==", "WAITING")
-          .orderBy("queue_position", "asc")
-          .limit(3)
-          .get();
-
-        const waitingUserIds =
-          waitlistSnap.docs
-            .map((doc: admin.firestore.QueryDocumentSnapshot) => {
-              const data = doc.data();
-              return data.user_id || data.userId;
-            })
-            .filter(
-              (id: unknown): id is string =>
-                typeof id === "string" && id.length > 0
-            );
-
-        let waitlistUserIds: string[] = [];
-        if (!waitlistSnap.empty) {
-          const entry = waitlistSnap.docs[0];
-          const entryData = entry.data();
-          const nextUserId =
-            entryData.user_id || entryData.userId;
-          const newDeadline =
-            admin.firestore.Timestamp.fromDate(
-              new Date(Date.now() + WAITLIST_RESPONSE_WINDOW_MS)
-            );
-
-          const promoted = await db().runTransaction(async (tx) => {
-            const fresh = await tx.get(entry.ref);
-            if (!fresh.exists || fresh.data()?.status !== "WAITING") {
-              return false;
-            }
-            tx.update(entry.ref, {
-              status: "NOTIFIED",
-              notified_at: FieldValue.serverTimestamp(),
-              response_deadline: newDeadline,
-            });
-            return true;
-          });
-
-          if (promoted && typeof nextUserId === "string" && nextUserId) {
-            waitlistUserIds = [nextUserId];
-            await sendNotificationToUsers(
-              waitlistUserIds,
-              {
-                title: GAME_NOTIFICATIONS.GAME_VACANCY.title["pt-BR"](),
-                body: GAME_NOTIFICATIONS.GAME_VACANCY.body["pt-BR"]({
-                  gameName,
-                }),
-                type:
-                  NotificationType.GAME_VACANCY,
-                data: {
-                  gameId: gameId,
-                  action:
-                    "game_detail/" + gameId,
-                },
-              }
-            );
-
-            logger.info(
-              "[GAME_VACANCY] Promovido e notificado " +
-              `${nextUserId} na waitlist`
-            );
-          }
-        }
-
-        // 2. Se poucos na espera, notificar grupo — isolado em try/catch
-        // próprio (FIX #4043): uma falha aqui não derruba a promoção da
-        // waitlist, e vice-versa.
-        if (
-          groupId &&
-          waitingUserIds.length < 3
-        ) {
-          try {
-            const confirmedUserIds =
-              await fetchConfirmedUserIdsForGame(
-                gameId
-              );
-            const excludedUserIds =
-              new Set<string>([
-                ...confirmedUserIds,
-                ...waitingUserIds,
-              ]);
-            const memberIds =
-              await fetchEligibleGroupMemberIdsForVacancy(
-                groupId,
-                excludedUserIds,
-                MAX_GROUP_VACANCY_NOTIFICATIONS
-              );
-
-            if (memberIds.length > 0) {
-              await sendNotificationToUsers(
-                memberIds,
-                {
-                  title: GAME_NOTIFICATIONS.GAME_VACANCY.title["pt-BR"](),
-                  body: GAME_NOTIFICATIONS.GAME_VACANCY_GROUP.body["pt-BR"]({
-                    gameName,
-                    gameDate,
-                  }),
-                  type:
-                    NotificationType.GAME_VACANCY,
-                  data: {
-                    gameId: gameId,
-                    action:
-                      "game_detail/" + gameId,
-                  },
-                }
-              );
-
-              logger.info(
-                "[GAME_VACANCY] Notificacao" +
-                " enviada para" +
-                ` ${memberIds.length}` +
-                " membros do grupo"
-              );
-            }
-          } catch (groupNotifyError) {
-            logger.error(
-              "[GAME_VACANCY] Erro ao notificar" +
-              " grupo sobre vaga:",
-              groupNotifyError
-            );
-          }
-        }
-      }
+      await promoteWaitlistOnVacancy(gameId);
     } catch (e) {
-      logger.error(
-        "[GAME_VACANCY] Erro ao" +
-        " processar vaga:",
-        e
-      );
       await releaseNotificationEvent(`game_vacancy:${event.id}`);
       throw e;
     }
     await completeNotificationEvent(`game_vacancy:${event.id}`);
+  }
+);
+
+/**
+ * FIX #4144: trigger DELETE de confirmação. Clientes que ainda apagam a
+ * confirmação (fila offline do web, remoção de membro por caminhos sem
+ * branch de rules, apps desatualizados) não passam pelo onGameVacancy
+ * (que exige before/after) — a vaga ficava sem promover a waitlist em
+ * silêncio. Este trigger cobre o mesmo fluxo no delete.
+ */
+export const onGameVacancyDeleted = onDocumentDeleted(
+  {document: "confirmations/{confirmationId}", region: FUNCTION_REGION},
+  async (event) => {
+    const deleted = event.data?.data();
+    if (!deleted) return;
+
+    // Só havia vaga real se a confirmação apagada era CONFIRMED.
+    if (deleted.status !== "CONFIRMED") return;
+
+    const gameId =
+      deleted.game_id || deleted.gameId;
+    if (!gameId) return;
+
+    const claimed =
+      await claimNotificationEventOnce(
+        `game_vacancy_del:${event.id}`
+      );
+    if (!claimed) return;
+
+    const confirmationId =
+      event.params.confirmationId;
+    logger.info(
+      "[GAME_VACANCY] Vaga aberta por DELETE de" +
+      ` confirmacao ${confirmationId}` +
+      ` no jogo ${gameId}`
+    );
+
+    try {
+      await promoteWaitlistOnVacancy(gameId);
+    } catch (e) {
+      await releaseNotificationEvent(`game_vacancy_del:${event.id}`);
+      throw e;
+    }
+    await completeNotificationEvent(`game_vacancy_del:${event.id}`);
   }
 );

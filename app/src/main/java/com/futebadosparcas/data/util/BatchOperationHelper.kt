@@ -82,6 +82,44 @@ object BatchOperationHelper {
     }
 
     /**
+     * FIX #4126: leitura unitária (getDoc) em paralelo de N documentos.
+     *
+     * Substitui `whereIn(FieldPath.documentId(), ...)` para coleções cujas
+     * rules de LIST exigem constraint provável por campo (games) — whereIn
+     * por documentId não é constraint para o engine e a query inteira era
+     * negada. `get` é avaliado por documento (dono/membro/público).
+     *
+     * @param collection Referência à coleção do Firestore
+     * @param ids Lista de IDs para buscar
+     * @param mapper Função para converter DocumentSnapshot em objeto
+     * @return Lista de objetos mapeados (nulls são filtrados)
+     */
+    suspend fun <T> parallelGetByIds(
+        collection: CollectionReference,
+        ids: List<String>,
+        mapper: (DocumentSnapshot) -> T?
+    ): List<T> {
+        if (ids.isEmpty()) return emptyList()
+
+        return coroutineScope {
+            ids.distinct()
+                .map { id ->
+                    async {
+                        try {
+                            val doc = collection.document(id).get().await()
+                            if (doc.exists()) mapper(doc) else null
+                        } catch (e: Exception) {
+                            AppLogger.w(TAG) { "Erro ao buscar doc $id: ${e.message}" }
+                            null
+                        }
+                    }
+                }
+                .awaitAll()
+                .filterNotNull()
+        }
+    }
+
+    /**
      * Variante que aceita Query customizada em vez de CollectionReference.
      * Útil quando há filtros adicionais além do whereIn.
      *
