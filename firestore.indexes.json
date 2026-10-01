@@ -445,6 +445,16 @@
       ]
     },
     {
+      "collectionGroup": "league_seasons",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        {
+          "fieldPath": "is_active",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
       "collectionGroup": "user_locations",
       "queryScope": "COLLECTION",
       "fields": [
