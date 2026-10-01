@@ -1707,3 +1707,26 @@ branches de release mantêm o build completo. O contrato está coberto por
 `.github/workflows/ios-build.yml`, PRs #4079 e #4080.
 
 <!-- Adicione novas decisões acima desta linha -->
+
+## 2026-09-05: Porta efemera para Web E2E
+
+- Evidencia: run 33963440088 falha antes do Playwright por porta 5173 ocupada.
+- CI seleciona E2E_PORT livre em loopback; comando, health check e baseURL usam a mesma porta.
+- Mantidos strictPort e proibicao de reutilizacao no CI; nenhum processo de outro job e encerrado.
+- Sem release de produto: alteracao exclusiva de infraestrutura e verificacao.
+- Spec: bugfix-2026-09-05-web-e2e-port.md.
+
+## 2026-09-05: Portabilidade da validacao
+
+- Contratos Web normalizam separadores de caminhos e CRLF antes de comparar fontes; as assercoes permanecem iguais.
+- Gate FFmpeg Linux migra para ubuntu-latest: o job 101368181957 falhou por Docker indisponivel no Mac.
+- Imagem Linux fixada por digest, hashes do FFmpeg e testes de seguranca foram preservados.
+- O E2E 33988865005 recebeu SIGKILL (exit 137) no Mac compartilhado. O job passa a usar Ubuntu isolado por execucao, mantendo emuladores, seed e testes completos.
+- Os testes Android recebem futeba.repoRoot do Gradle para localizar XMLs mesmo com workingDir=C:/TEMP no Windows; mantido o workaround de encoding existente.
+# 2026-09-05 — Ambiente deterministico para Functions e E2E
+
+Os testes Functions usam Ubuntu e o runtime FFmpeg verificado para evitar a
+dependencia Homebrew quebrada observada no job 101372805251. O Playwright usa
+locale pt-BR, idioma dos seletores da suite; o snapshot do run 33990197521
+confirmou que a deteccao de idioma do navegador renderizava Sign In em ingles.
+Nenhum teste ou gate foi desabilitado.

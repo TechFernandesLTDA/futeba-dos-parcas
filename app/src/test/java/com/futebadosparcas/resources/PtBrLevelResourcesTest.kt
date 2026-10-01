@@ -7,7 +7,11 @@ import org.junit.jupiter.api.Test
 
 class PtBrLevelResourcesTest {
 
-    private val repositoryRoot = listOf(Path.of("."), Path.of(".."))
+    private val repositoryRoot = listOfNotNull(
+        System.getProperty("futeba.repoRoot")?.let { Path.of(it) },
+        Path.of("."),
+        Path.of("..")
+    )
         .first { candidate -> candidate.resolve("shared").toFile().isDirectory }
 
     private val resourcePaths = listOf(

@@ -11,7 +11,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import { readdirSync, readFileSync } from 'node:fs';
-import { join, relative } from 'node:path';
+import { join, relative, sep } from 'node:path';
 
 const PAGES_DIR = join(process.cwd(), 'src/pages');
 
@@ -40,7 +40,7 @@ describe('contrato de opt-out da MobileTopBar (#3839)', () => {
         source.includes('useHideMobileTopBar') || source.includes('ScreenHeader');
 
       if (hasManualHeader && !optsOut) {
-        offenders.push(relative(PAGES_DIR, file));
+        offenders.push(relative(PAGES_DIR, file).split(sep).join('/'));
       }
     }
 
@@ -74,7 +74,7 @@ describe('contrato de opt-out da MobileTopBar (#3839)', () => {
         source.includes('ArrowBack') && /variant=["']h[56]["']/.test(source);
       const optsOut =
         source.includes('useHideMobileTopBar') || source.includes('ScreenHeader');
-      const rel = relative(PAGES_DIR, file);
+      const rel = relative(PAGES_DIR, file).split(sep).join('/');
 
       if (hasManualHeader && !optsOut && !NON_STICKY_HEADER_ALLOWLIST.has(rel)) {
         offenders.push(rel);

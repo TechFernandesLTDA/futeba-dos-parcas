@@ -120,7 +120,11 @@ class AndroidEnumLabelResourcesTest {
     }
 
     private fun readStrings(valuesDirectory: String): Map<String, String> {
-        val resourceRoot = sequenceOf(Path.of("src/main/res"), Path.of("app/src/main/res"))
+        val resourceRoot = sequenceOf(
+            System.getProperty("futeba.repoRoot")?.let { Path.of(it).resolve("app/src/main/res") },
+            Path.of("src/main/res"),
+            Path.of("app/src/main/res")
+        ).filterNotNull()
             .firstOrNull(Files::isDirectory)
             ?: error("Android resource directory not found")
         val xml = String(

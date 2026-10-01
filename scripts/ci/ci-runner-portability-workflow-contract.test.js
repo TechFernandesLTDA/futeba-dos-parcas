@@ -31,7 +31,7 @@ test('Functions tests install the verified media runtime in the same job', () =>
   assert.match(testJob, /run: npm run install:ffmpeg[\s\S]*?name: Run Tests/);
 });
 
-test('Firestore emulator gates use hosted Linux without moving product jobs', () => {
+test('Firestore and media runtime gates use hosted Linux', () => {
   const rulesWorkflow = read('.github/workflows/firestore-rules-ci.yml');
   const functionsWorkflow = read('.github/workflows/functions-ci.yml');
   const hostedSelector = 'runs-on: ubuntu-latest';
@@ -39,7 +39,13 @@ test('Firestore emulator gates use hosted Linux without moving product jobs', ()
 
   assert.match(job(rulesWorkflow, 'rules-tests'), new RegExp(hostedSelector));
   assert.match(job(functionsWorkflow, 'firestore-query-perf'), new RegExp(hostedSelector));
-  for (const jobId of ['build', 'lint', 'media-runtime-linux', 'test', 'mutation']) {
+  const mediaJob = job(functionsWorkflow, 'media-runtime-linux');
+  assert.match(mediaJob, new RegExp(hostedSelector));
+  assert.match(mediaJob, /docker run --rm --platform linux\/amd64/);
+  assert.match(mediaJob, /node:22-bookworm@sha256:[a-f0-9]{64}/);
+  assert.match(mediaJob, /test\/group-wall-media-ffmpeg\.test\.ts/);
+  assert.match(job(functionsWorkflow, 'test'), new RegExp(hostedSelector));
+  for (const jobId of ['build', 'lint', 'mutation']) {
     assert.match(job(functionsWorkflow, jobId), selfHostedSelector, `${jobId} must remain self-hosted`);
   }
 });
