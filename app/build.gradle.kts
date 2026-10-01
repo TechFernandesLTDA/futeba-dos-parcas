@@ -105,6 +105,8 @@ android {
 
         unitTests.all {
             it.useJUnitPlatform()
+            // Contratos de recursos nao podem depender do diretorio temporario do Windows.
+            it.systemProperty("futeba.repoRoot", rootProject.projectDir.absolutePath)
             it.maxHeapSize = "2g"
             // Fix encoding issues for paths with special characters (ç, etc.)
             it.jvmArgs(

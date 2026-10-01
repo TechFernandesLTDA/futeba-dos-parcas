@@ -92,3 +92,14 @@ test('optimized E2E preview opts into emulators without weakening production', (
     assert.match(service, /if \(shouldUseFirebaseEmulators\)/);
   }
 });
+
+test('CI allocates its own preview port without reusing an unrelated server', () => {
+  assert.match(extractJob(e2eWorkflow, 'web-e2e'), /runs-on: ubuntu-latest/);
+  assert.match(e2eWorkflow, /run: node scripts\/ci\/allocate-web-e2e-port\.js/);
+  assert.ok(e2eWorkflow.indexOf('allocate-web-e2e-port.js') < e2eWorkflow.indexOf('- name: E2E ('));
+  assert.match(playwrightConfig, /process\.env\.E2E_PORT \?\? '5173'/);
+  assert.match(playwrightConfig, /url: localBaseURL/);
+  assert.match(playwrightConfig, /locale: 'pt-BR'/);
+  assert.match(playwrightConfig, /reuseExistingServer: !process\.env\.CI/);
+  assert.match(playwrightConfig, /--port \$\{localPort\} --strictPort/);
+});
