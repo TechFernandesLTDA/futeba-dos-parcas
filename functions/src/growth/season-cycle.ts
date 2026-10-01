@@ -4,6 +4,7 @@ import * as admin from "firebase-admin";
 import {FieldValue, Timestamp} from "firebase-admin/firestore";
 import {FUNCTION_REGION} from "../constants";
 import {getMonthName} from "./season-naming";
+import {mirrorBadgeToRoot} from "../badges/user-badge-docs";
 
 const db = () => admin.firestore();
 
@@ -515,6 +516,18 @@ async function processArchiveSeasonForGroup(
         type: "MVP_LIGA",
         earned_at: FieldValue.serverTimestamp(),
         earned: true,
+      });
+
+      // FIX #4138: espelha para user_badges raiz (único lugar lido
+      // pelos clientes) — antes o MVP da Liga era invisível nas telas.
+      await mirrorBadgeToRoot(mvp.user_id, {
+        badgeId: `mvp_liga_${monthKey}`,
+        name: `MVP da Liga - ${getMonthName(monthKey)}`,
+        icon: "🏆",
+        type: "MVP_LIGA",
+        earnedAt: FieldValue.serverTimestamp(),
+        earned: true,
+        count: 1,
       });
     } else if (mvp) {
       logger.warn("Season archived without MVP badge due to missing user_id", {

@@ -268,14 +268,20 @@ export interface BadgeDefinition {
   progressThreshold?: number;
 }
 
+// FIX #4138: IDs alinhados aos que as Cloud Functions realmente gravam em
+// user_badges (badge-helper.ts, game-badges.ts, xp/pipeline.ts milestones).
+// Antes: HAT_TRICK/PAREDAO (uppercase) nunca casavam com hat_trick/paredao
+// gravados, e ~15 badges gravadas não existiam no catálogo (invisíveis).
 export const BADGE_DEFINITIONS: BadgeDefinition[] = [
   { id: 'first_game', name: 'Primeira Pelada', description: 'Participe do seu primeiro jogo', icon: '⚽', category: 'participation', rarity: 'COMUM', requirement: 'Participar de 1 jogo', xpReward: 50 },
   { id: 'streak_3', name: 'Sequência Iniciante', description: 'Jogue 3 partidas seguidas', icon: '🔥', category: 'streak', rarity: 'COMUM', requirement: 'Sequência de 3 jogos', xpReward: 30 },
   { id: 'streak_7', name: 'Semana Perfeita', description: 'Jogue 7 partidas seguidas', icon: '💪', category: 'streak', rarity: 'RARO', requirement: 'Sequência de 7 jogos', xpReward: 100 },
   { id: 'streak_30', name: 'Mês Imbatível', description: 'Jogue 30 partidas seguidas', icon: '🏆', category: 'streak', rarity: 'LENDARIO', requirement: 'Sequência de 30 jogos', xpReward: 500 },
+  { id: 'iron_man', name: 'Homem de Ferro', description: 'Jogue várias partidas seguidas sem faltar', icon: '⚙️', category: 'streak', rarity: 'EPICO', requirement: 'Sequência longa de jogos', xpReward: 400 },
   { id: 'mvp_1', name: 'Estreante MVP', description: 'Seja eleito MVP pela primeira vez', icon: '⭐', category: 'mvp', rarity: 'COMUM', requirement: '1 MVP', xpReward: 100 },
   { id: 'mvp_10', name: 'Estrela em Ascensão', description: 'Seja eleito MVP 10 vezes', icon: '🌟', category: 'mvp', rarity: 'RARO', requirement: '10 MVPs', xpReward: 300 },
   { id: 'mvp_50', name: 'Lenda do MVP', description: 'Seja eleito MVP 50 vezes', icon: '👑', category: 'mvp', rarity: 'LENDARIO', requirement: '50 MVPs', xpReward: 1000 },
+  { id: 'mvp_streak_3', name: 'MVP 3x Seguidas', description: 'Seja eleito MVP 3 partidas seguidas', icon: '✨', category: 'mvp', rarity: 'EPICO', requirement: '3 MVPs seguidos', xpReward: 250 },
   { id: 'goals_10', name: 'Goleador', description: 'Marque 10 gols', icon: '🥅', category: 'goals', rarity: 'COMUM', requirement: '10 gols', xpReward: 50, progressStat: 'totalGoals', progressThreshold: 10 },
   { id: 'goals_100', name: 'Artilheiro', description: 'Marque 100 gols', icon: '⚽', category: 'goals', rarity: 'RARO', requirement: '100 gols', xpReward: 200, progressStat: 'totalGoals', progressThreshold: 100 },
   { id: 'goals_500', name: 'Máquina de Gols', description: 'Marque 500 gols', icon: '🎯', category: 'goals', rarity: 'LENDARIO', requirement: '500 gols', xpReward: 1000, progressStat: 'totalGoals', progressThreshold: 500 },
@@ -283,12 +289,34 @@ export const BADGE_DEFINITIONS: BadgeDefinition[] = [
   { id: 'assists_200', name: 'Mestre das Assistências', description: 'Dê 200 assistências', icon: '🎭', category: 'assists', rarity: 'RARO', requirement: '200 assists', xpReward: 300, progressStat: 'totalAssists', progressThreshold: 200 },
   { id: 'wins_10', name: 'Vencedor', description: 'Vença 10 jogos', icon: '🏅', category: 'wins', rarity: 'COMUM', requirement: '10 vitórias', xpReward: 100, progressStat: 'totalWins', progressThreshold: 10 },
   { id: 'wins_50', name: 'Campeão', description: 'Vença 50 jogos', icon: '🏆', category: 'wins', rarity: 'RARO', requirement: '50 vitórias', xpReward: 400, progressStat: 'totalWins', progressThreshold: 50 },
+  { id: 'winner_25', name: 'Conquistador', description: 'Vença 25 jogos', icon: '🎖️', category: 'wins', rarity: 'RARO', requirement: '25 vitórias', xpReward: 300, progressStat: 'totalWins', progressThreshold: 25 },
+  { id: 'winner_50', name: 'Tetacampeão', description: 'Vença 50 jogos', icon: '🥇', category: 'wins', rarity: 'EPICO', requirement: '50 vitórias', xpReward: 450, progressStat: 'totalWins', progressThreshold: 50 },
   { id: 'saves_10', name: 'Muralha', description: 'Faça 10 defesas', icon: '🧤', category: 'saves', rarity: 'COMUM', requirement: '10 defesas', xpReward: 100, progressStat: 'totalSaves', progressThreshold: 10 },
   { id: 'saves_50', name: 'Paredão', description: 'Faça 50 defesas', icon: '🛡️', category: 'saves', rarity: 'RARO', requirement: '50 defesas', xpReward: 300, progressStat: 'totalSaves', progressThreshold: 50 },
   { id: 'games_100', name: 'Veterano', description: 'Participe de 100 jogos', icon: '🎖️', category: 'participation', rarity: 'EPICO', requirement: '100 jogos', xpReward: 500 },
   { id: 'games_500', name: 'Lenda Viva', description: 'Participe de 500 jogos', icon: '🏟️', category: 'participation', rarity: 'LENDARIO', requirement: '500 jogos', xpReward: 2000 },
-  { id: 'HAT_TRICK', name: 'Hat-Trick', description: 'Marque 3+ gols em uma única partida', icon: '⚽', category: 'performance', rarity: 'RARO', requirement: '3+ gols em uma partida', xpReward: 150 },
-  { id: 'PAREDAO', name: 'Paredão', description: 'Termine uma partida sem sofrer gols como goleiro', icon: '🧤', category: 'performance', rarity: 'RARO', requirement: 'Clean sheet como goleiro', xpReward: 150 },
+  { id: 'veteran_50', name: 'Veterano (50)', description: 'Participe de 50 jogos', icon: '📌', category: 'participation', rarity: 'RARO', requirement: '50 jogos', xpReward: 300 },
+  { id: 'veteran_100', name: 'Veterano (100)', description: 'Participe de 100 jogos', icon: '🏅', category: 'participation', rarity: 'EPICO', requirement: '100 jogos', xpReward: 450 },
+  { id: 'level_5', name: 'Nível 5', description: 'Alcance o nível 5', icon: '5️⃣', category: 'level', rarity: 'COMUM', requirement: 'Nível 5', xpReward: 100 },
+  { id: 'level_10', name: 'Nível 10', description: 'Alcance o nível 10', icon: '🔟', category: 'level', rarity: 'RARO', requirement: 'Nível 10', xpReward: 300 },
+  { id: 'hat_trick', name: 'Hat-Trick', description: 'Marque 3+ gols em uma única partida', icon: '⚽', category: 'performance', rarity: 'RARO', requirement: '3+ gols em uma partida', xpReward: 150 },
+  { id: 'poker', name: 'Poker de Gols', description: 'Marque 4+ gols em uma única partida', icon: '♠️', category: 'performance', rarity: 'EPICO', requirement: '4+ gols em uma partida', xpReward: 200 },
+  { id: 'manita', name: 'Manita', description: 'Marque 5+ gols em uma única partida', icon: '🖐️', category: 'performance', rarity: 'LENDARIO', requirement: '5+ gols em uma partida', xpReward: 300 },
+  { id: 'playmaker', name: 'Maestro', description: 'Dê 3+ assistências em uma partida', icon: '🎩', category: 'performance', rarity: 'RARO', requirement: '3+ assistências em uma partida', xpReward: 150 },
+  { id: 'balanced_player', name: 'Jogador Completo', description: 'Gol e assistência na mesma partida', icon: '⚖️', category: 'performance', rarity: 'COMUM', requirement: '1 gol e 1 assistência em uma partida', xpReward: 100 },
+  { id: 'clean_sheet', name: 'Clean Sheet', description: 'Termine uma partida sem sofrer gols como goleiro', icon: '🥚', category: 'performance', rarity: 'COMUM', requirement: 'Clean sheet como goleiro', xpReward: 100 },
+  { id: 'paredao', name: 'Paredão', description: 'Faça várias defesas em uma partida', icon: '🧱', category: 'performance', rarity: 'RARO', requirement: 'Muitas defesas em uma partida', xpReward: 150 },
+  { id: 'defensive_wall', name: 'Muralha Defensiva', description: 'Domine as defesas na partida', icon: '🛡️', category: 'performance', rarity: 'EPICO', requirement: 'Performance defensiva excepcional', xpReward: 200 },
+  { id: 'onipresente', name: 'Onipresente', description: 'Esteja presente em praticamente todos os jogos', icon: '👁️', category: 'participation', rarity: 'EPICO', requirement: 'Presença em quase todos os jogos', xpReward: 350 },
+  { id: 'rei_das_quartas', name: 'Rei das Quartas', description: 'Domine os jogos de quarta-feira', icon: '👑', category: 'participation', rarity: 'RARO', requirement: 'Presença consistente às quartas', xpReward: 200 },
+  { id: 'carrasco', name: 'Carrasco', description: 'Decida jogos com gols no fim', icon: '🗡️', category: 'performance', rarity: 'RARO', requirement: 'Gols decisivos', xpReward: 200 },
+  { id: 'mesa_oficial_10', name: 'Mesa Oficial (10)', description: 'Anote a súmula de 10 jogos', icon: '📝', category: 'community', rarity: 'COMUM', requirement: '10 jogos como anotador', xpReward: 100 },
+  { id: 'mesa_oficial_25', name: 'Mesa Oficial (25)', description: 'Anote a súmula de 25 jogos', icon: '📋', category: 'community', rarity: 'RARO', requirement: '25 jogos como anotador', xpReward: 250 },
+  { id: 'mesa_oficial_50', name: 'Mesa Oficial (50)', description: 'Anote a súmula de 50 jogos', icon: '📚', category: 'community', rarity: 'EPICO', requirement: '50 jogos como anotador', xpReward: 400 },
+  { id: 'ambassador_bronze', name: 'Embaixador Bronze', description: 'Convide 3 jogadores que entraram no app', icon: '🥉', category: 'community', rarity: 'COMUM', requirement: '3 convites convertidos', xpReward: 100 },
+  { id: 'ambassador_prata', name: 'Embaixador Prata', description: 'Convide 10 jogadores que entraram no app', icon: '🥈', category: 'community', rarity: 'RARO', requirement: '10 convites convertidos', xpReward: 200 },
+  { id: 'ambassador_ouro', name: 'Embaixador Ouro', description: 'Convide 30 jogadores que entraram no app', icon: '🥇', category: 'community', rarity: 'EPICO', requirement: '30 convites convertidos', xpReward: 350 },
+  { id: 'ambassador_lenda', name: 'Embaixador Lenda', description: 'Convide 100 jogadores que entraram no app', icon: '👑', category: 'community', rarity: 'LENDARIO', requirement: '100 convites convertidos', xpReward: 600 },
   { id: 'ARTILHEIRO_MES', name: 'Artilheiro do Mês', description: 'Seja o maior goleador do mês', icon: '👑', category: 'performance', rarity: 'EPICO', requirement: 'Mais gols no mês', xpReward: 300 },
   { id: 'FOMINHA', name: 'Fominha', description: 'Jogue 3 partidas na mesma semana', icon: '🔥', category: 'presence', rarity: 'COMUM', requirement: '3 jogos na mesma semana', xpReward: 50 },
   { id: 'ORGANIZADOR_MASTER', name: 'Organizador Master', description: 'Organize 10 jogos', icon: '📋', category: 'community', rarity: 'RARO', requirement: '10 jogos organizados', xpReward: 200 },
@@ -297,6 +325,40 @@ export const BADGE_DEFINITIONS: BadgeDefinition[] = [
   { id: 'FAIXA_PRETA', name: 'Faixa Preta', description: 'Participe de 200 jogos', icon: '🥋', category: 'level', rarity: 'EPICO', requirement: '200 jogos', xpReward: 800 },
   { id: 'MITO', name: 'Mito', description: 'Seja eleito MVP 20 vezes', icon: '💎', category: 'level', rarity: 'LENDARIO', requirement: '20 MVPs', xpReward: 1000 },
 ];
+
+/**
+ * FIX #4138: badges dinâmicas (temporárias) gravadas com id parametrizado
+ * pelas functions — `mito_rodada_{weekKey}` (weekly-ranking) e
+ * `mvp_liga_{monthKey}` (season-cycle). Não podem viver no catálogo
+ * estático; derivamos a definição do prefixo.
+ */
+export function getDynamicBadgeDefinition(badgeId: string): BadgeDefinition | null {
+  if (badgeId.startsWith('mito_rodada_')) {
+    return {
+      id: badgeId,
+      name: 'Mito da Rodada',
+      description: 'Melhor pontuação da rodada no ranking semanal',
+      icon: '👑',
+      category: 'performance',
+      rarity: 'EPICO',
+      requirement: 'Ser o #1 da rodada',
+      xpReward: 0,
+    };
+  }
+  if (badgeId.startsWith('mvp_liga_')) {
+    return {
+      id: badgeId,
+      name: 'MVP da Liga',
+      description: 'MVP do mês na temporada da liga',
+      icon: '🏆',
+      category: 'performance',
+      rarity: 'LENDARIO',
+      requirement: 'MVP do mês',
+      xpReward: 0,
+    };
+  }
+  return null;
+}
 
 export const BADGE_RARITY_CONFIG: Record<BadgeRarity, { label: string; color: string }> = {
   COMUM: { label: 'Comum', color: rarityColors.COMUM },
