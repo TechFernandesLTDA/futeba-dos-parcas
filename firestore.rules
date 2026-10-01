@@ -1927,6 +1927,7 @@ service cloud.firestore {
           fieldUnchanged('billing_due_day') &&
           fieldUnchanged('billing_starts_at') &&
           fieldUnchanged('billing_expires_at') &&
+          fieldUnchanged('trial_started_at') &&
           fieldUnchanged('billing_exception_note') &&
           fieldUnchanged('published_at') &&
           fieldUnchanged('published_by') &&
@@ -4220,6 +4221,26 @@ service cloud.firestore {
     // SECURITY: Escrito APENAS por Cloud Functions para telemetria.
     // Admins podem ler para analise de performance.
     match /metrics/{metricId} {
+      allow read: if isAuthenticated() && isAdmin();
+      allow create, update, delete: if false;
+    }
+
+    // ============================================
+    // COLECAO: billing_automation_runs (execucoes do cron de cobranca de quadras)
+    // ============================================
+    // SECURITY: Escrito APENAS pelo cron processLocationBillingCycles (Admin SDK).
+    // Guarda contadores + listas de IDs (skipped/inconsistent/expired/agedTrial)
+    // por rodada para auditoria e alerta (#4111). Admins leem; cliente nunca escreve.
+    match /billing_automation_runs/{runId} {
+      allow read: if isAuthenticated() && isAdmin();
+      allow create, update, delete: if false;
+    }
+
+    // ============================================
+    // COLECAO: billing_automation_state (cursor do cron de cobranca)
+    // ============================================
+    // SECURITY: Estado interno do cron; somente Admin SDK escreve.
+    match /billing_automation_state/{stateId} {
       allow read: if isAuthenticated() && isAdmin();
       allow create, update, delete: if false;
     }

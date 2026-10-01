@@ -86,13 +86,13 @@ fun SuccessAnimationOverlay(
         enter = fadeIn(
             animationSpec = tween(
                 durationMillis = animationDuration,
-                easing = MotionEasing.Emphasized
+                easing = MotionEasing.Standard
             )
         ) + scaleIn(
             initialScale = 0.5f,
             animationSpec = tween(
                 durationMillis = animationDuration,
-                easing = MotionEasing.Emphasized
+                easing = MotionEasing.Standard
             )
         ),
         exit = fadeOut(
