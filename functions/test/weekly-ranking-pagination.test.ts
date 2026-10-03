@@ -68,7 +68,13 @@ jest.mock("../src/notifications/helpers", () => ({
   },
 }));
 
+// IMPORTANT: mantém o módulo real de constants (spread de requireActual).
+// src/badges/user-badge-docs.ts → src/xp/pipeline.ts avalia
+// `XP_ACTIONS.PARTICIPATION` na carga do módulo; um factory mock que
+// substitui TODO o módulo deixa XP_ACTIONS undefined e quebra a suíte
+// inteira (inclusive o dry run do Stryker, que roda todos os testes).
 jest.mock("../src/constants", () => ({
+  ...jest.requireActual("../src/constants"),
   FUNCTION_REGION: "southamerica-east1",
 }));
 
