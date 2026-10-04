@@ -113,39 +113,43 @@ jobs:
 
       - name: E2E (emulador + seed + Playwright)
         timeout-minutes: 20
-        # emulators:exec sobe/derruba emuladores automaticamente.
-        # O script inline faz seed e roda Playwright (webServer = vite preview no CI).
+        # emulators:exec morria silenciosamente após 'Serving at port' em TODOS
+        # os runs (exit 2, zero log — pipeline nunca passou desde 06/06). Aqui o
+        # emulador sobe em background com log em arquivo: a espera de readiness
+        # é pelo marcador oficial 'All emulators ready' e qualquer falha imprime
+        # o log real do emulador. Kill por PID (sem pkill -f, contrato).
         run: |
-          # systemd-oomd nas imagens ubuntu-latest mata o cgroup inteiro sob
-          # pico de memória (JVM do Firestore + 141 functions carregando de
-          # uma vez) — morte instantânea e SEM NENHUMA linha de erro, exatamente
-          # o sintoma histórico deste step. Desligado só para este job.
-          sudo systemctl stop systemd-oomd 2>/dev/null || true
-          sudo systemctl disable systemd-oomd 2>/dev/null || true
-          echo "[diag] portas em uso antes dos emuladores:"
-          (ss -tlnp 2>/dev/null || netstat -tlnp 2>/dev/null) | grep -E ":(5001|8085|9099|9199|4000|4400|4943|9150)" || echo "[diag] nenhuma das portas dos emuladores ocupada"
-          # Traça memória/disk a cada 3s — sobrevive a morte do shell e é lido no step de diagnóstico.
-          (while true; do echo "$(date +%T) $(free -m | tr -s ' ' | grep Mem:) $(free -m | tr -s ' ' | grep Swap:)" >> "$RUNNER_TEMP/mem-trace.log"; sleep 3; done &)
-          set -o pipefail
-          firebase emulators:exec \
+          firebase emulators:start \
             --only auth,firestore,functions \
             --project demo-futebadosparcas \
-            'bash -c "
-              set -e
-              export FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099
-              export FIRESTORE_EMULATOR_HOST=127.0.0.1:8085
-              export FIREBASE_STORAGE_EMULATOR_HOST=127.0.0.1:9199
-              export GCLOUD_PROJECT=demo-futebadosparcas
-              echo \"[e2e] Emuladores prontos — seed...\"
-              NODE_PATH=functions/node_modules tsx scripts/seed-e2e-users.ts
-              NODE_PATH=functions/node_modules tsx scripts/seed-e2e-groups.ts
-              echo \"[e2e] Seed OK — Playwright (vite preview via webServer config)...\"
-              cd web && npx playwright test --project=chromium
-            "'
+            > "$RUNNER_TEMP/emu.log" 2>&1 &
+          echo $! > "$RUNNER_TEMP/emu.pid"
+          export FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099
+          export FIRESTORE_EMULATOR_HOST=127.0.0.1:8085
+          export FIREBASE_STORAGE_EMULATOR_HOST=127.0.0.1:9199
+          export GCLOUD_PROJECT=demo-futebadosparcas
+          ready=""
+          for i in $(seq 1 60); do
+            if grep -q "All emulators ready" "$RUNNER_TEMP/emu.log" 2>/dev/null; then
+              ready=sim
+              break
+            fi
+            sleep 2
+          done
+          if [ -z "$ready" ]; then
+            echo "[e2e] emuladores não ficaram prontos em 120s — log:"
+            tail -80 "$RUNNER_TEMP/emu.log"
+            exit 1
+          fi
+          echo "[e2e] Emuladores prontos — seed..."
+          NODE_PATH=functions/node_modules tsx scripts/seed-e2e-users.ts
+          NODE_PATH=functions/node_modules tsx scripts/seed-e2e-groups.ts
+          echo "[e2e] Seed OK — Playwright (vite preview via webServer config)..."
+          set +e
+          cd web && npx playwright test --project=chromium
           code=$?
-          echo "[diag] emulators:exec exit=$code"
-          echo "[diag] últimas 40 linhas do emulador:"
-          tail -40 "$RUNNER_TEMP/emul-e2e.log" || true
+          kill "$(cat "$RUNNER_TEMP/emu.pid")" 2>/dev/null || true
+          echo "[e2e] playwright exit=$code"
           exit $code
         env:
           CI: "true"
