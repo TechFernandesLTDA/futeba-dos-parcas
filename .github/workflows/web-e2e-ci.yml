@@ -116,7 +116,7 @@ jobs:
         # emulators:exec sobe/derruba emuladores automaticamente.
         # O script inline faz seed e roda Playwright (webServer = vite preview no CI).
         run: |
-          firebase emulators:exec \
+          firebase --debug emulators:exec \
             --only auth,firestore,functions \
             --project demo-futebadosparcas \
             'bash -c "
