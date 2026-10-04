@@ -1,0 +1,968 @@
+{
+  "gerado_em": "2026-10-04",
+  "rodada": 1,
+  "venues": [
+    {
+      "nome": "JB Esportes & Eventos",
+      "endereco": {
+        "rua": "R. João Bettega",
+        "numero": "3173",
+        "bairro": "Portão",
+        "cidade": "Curitiba",
+        "uf": "PR"
+      },
+      "telefone": "(41) 99290-2962",
+      "whatsapp": null,
+      "preco_hora": null,
+      "qtd_quadras": 8,
+      "detalhe_quadras": "4 futsal + 4 society, sendo 6 cobertas e 2 abertas",
+      "tipo_piso": "society e futsal (grama sintética)",
+      "horarios": {
+        "segunda": "08:00-01:00",
+        "terca": "08:00-01:00",
+        "quarta": "08:00-01:00",
+        "quinta": "08:00-22:00",
+        "sexta": "08:00-05:00",
+        "sabado": "09:00-00:00",
+        "domingo": "09:00-17:00"
+      },
+      "nota_media": 4.6,
+      "contagem_avaliacoes": 2772,
+      "comentarios": [
+        {
+          "autor": "Douglas Lopes",
+          "data": "2017-06-20",
+          "texto": "Quadras excelentes, bom atendimento no bar e boa localização.",
+          "fonte_url": "https://pt.foursquare.com/v/jb-esportes/4bb7a17398c7ef3bbb183002"
+        },
+        {
+          "autor": "Cristian Pedroso",
+          "data": "2010-05-26",
+          "texto": "Grande variedade de quadras para sintético e futsal, embora eu tenha achado as quadras de futsal mto pequenas.",
+          "fonte_url": "https://pt.foursquare.com/v/jb-esportes/4bb7a17398c7ef3bbb183002"
+        },
+        {
+          "autor": "Willians Alves",
+          "data": "2015-05-07",
+          "texto": "Quadra boa, preço médio e atendimento horrível.",
+          "fonte_url": "https://pt.foursquare.com/v/jb-esportes/4bb7a17398c7ef3bbb183002"
+        }
+      ],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.futemais.com.br/post/onde-jogar-futebol-em-curitiba",
+          "dado": "endereço, telefone, 8 quadras (4 futsal/4 society, 6 cobertas), nota 4,6/5 (2772 avaliações)"
+        },
+        {
+          "url": "https://jbesportes.com.br/quadras/",
+          "dado": "8 quadras (4 futsal e 4 society), 6 cobertas, vestiários, 5 espaços para eventos, lanchonete, estacionamento próprio"
+        },
+        {
+          "url": "https://pt.foursquare.com/v/jb-esportes/4bb7a17398c7ef3bbb183002",
+          "dado": "comentários de usuários (Foursquare, públicos)"
+        },
+        {
+          "url": "https://www.findglocal.com/BR/Curitiba/287174824694709/JB-esportes-&-eventos",
+          "dado": "horários de funcionamento e descrição histórica (7 quadras, desde 1994, pioneira em grama sintética)"
+        },
+        {
+          "url": "https://www.partida.app/blog/como-escolher-quadra-society-para-pelada",
+          "dado": "JB Esportes oferece 6% de desconto nas locações mensais vs jogo avulso, prioridade de reserva e coletes grátis para mensalistas"
+        }
+      ],
+      "instagram": "https://instagram.com/jbesportes",
+      "site": "https://jbesportes.com.br/",
+      "confidence": "alta",
+      "horarios_fonte": "https://www.findglocal.com/BR/Curitiba/287174824694709/JB-esportes-&-eventos (espelho antigo da página oficial do Facebook; pode estar desatualizado)"
+    },
+    {
+      "nome": "Arena Amigos da Bola",
+      "endereco": {
+        "rua": "Rua Estados Unidos",
+        "numero": "2851",
+        "bairro": "Boa Vista",
+        "cidade": "Curitiba",
+        "uf": "PR",
+        "cep": "82540-030"
+      },
+      "telefone": "(41) 3206-6241",
+      "whatsapp": "(41) 99272-6241",
+      "preco_hora": null,
+      "qtd_quadras": 2,
+      "detalhe_quadras": "2 quadras de futebol society sintético cobertas + 1 mini quadra",
+      "tipo_piso": "society (grama sintética)",
+      "horarios": {
+        "segunda": "08:00-01:30",
+        "terca": "08:00-01:30",
+        "quarta": "08:00-01:30",
+        "quinta": "08:00-01:30",
+        "sexta": "08:00-01:30",
+        "sabado": "08:00-20:00",
+        "domingo": "08:00-01:30"
+      },
+      "nota_media": 5.0,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [
+        {
+          "url": "https://gerenciador.webquadras.com.br/resources/uploaded-files/sport_center_photo/6264/C2.jpg",
+          "fonte": "webquadras.com.br (site de reservas da própria arena)"
+        },
+        {
+          "url": "https://gerenciador.webquadras.com.br/resources/uploaded-files/sport_center_photo/6269/H.jpg",
+          "fonte": "webquadras.com.br"
+        },
+        {
+          "url": "https://gerenciador.webquadras.com.br/resources/uploaded-files/sport_center_photo/7100/PHOTO-2019-02-22-13-48-48.jpg",
+          "fonte": "webquadras.com.br"
+        }
+      ],
+      "fontes": [
+        {
+          "url": "https://webquadras.com.br/arenaamigosdabola",
+          "dado": "endereço, telefone, WhatsApp, 2 quadras society cobertas + mini quadra, horários, bar, 4 churrasqueiras, estacionamento R$2,00"
+        },
+        {
+          "url": "https://www.futemais.com.br/post/onde-jogar-futebol-em-curitiba",
+          "dado": "CEP 82540-030, nota 5,0/5, churrasqueiras, vestiários"
+        }
+      ],
+      "site": "https://webquadras.com.br/arenaamigosdabola",
+      "confidence": "alta"
+    },
+    {
+      "nome": "Arena dos Campeões",
+      "endereco": {
+        "rua": "R. Antônio Barbosa Ferraz Júnior",
+        "numero": "360",
+        "bairro": "Portão",
+        "cidade": "Curitiba",
+        "uf": "PR"
+      },
+      "telefone": null,
+      "whatsapp": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": "arena society + campo de areia; estacionamento, bar, vestiários, espaço com churrasqueira",
+      "tipo_piso": "society e areia",
+      "horarios": null,
+      "nota_media": 4.5,
+      "contagem_avaliacoes": 514,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.futemais.com.br/post/onde-jogar-futebol-em-curitiba",
+          "dado": "endereço, nota 4,5/5 (514 avaliações), estrutura society + areia, mensalistas e avulsos"
+        }
+      ],
+      "site": "https://www.arenadoscampeoes.com.br/",
+      "confidence": "alta"
+    },
+    {
+      "nome": "Centro Esportivo Ipiranga",
+      "endereco": {
+        "rua": "Rua Ipiranga",
+        "numero": "770",
+        "bairro": "Capão Raso",
+        "cidade": "Curitiba",
+        "uf": "PR"
+      },
+      "telefone": "(41) 3598-7098",
+      "whatsapp": "(41) 99598-4368",
+      "preco_hora": null,
+      "qtd_quadras": 3,
+      "detalhe_quadras": "3 quadras de futebol society cobertas, grama sintética importada; salões com Wi-Fi/TV, eventos, escolinha Atlético",
+      "tipo_piso": "society (grama sintética)",
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://ceipiranga.com.br/site/",
+          "dado": "endereço Rua Ipiranga 770 Capão Raso, telefones (41) 3598-7098 e WhatsApp (41) 99598-4368, 3 quadras society cobertas grama sintética"
+        },
+        {
+          "url": "https://www.futemais.com.br/post/onde-jogar-futebol-em-curitiba",
+          "dado": "bairro Capão Raso, estrutura para eventos"
+        }
+      ],
+      "site": "https://ceipiranga.com.br/site/",
+      "instagram": "https://instagram.com/ceipiranga",
+      "confidence": "alta"
+    },
+    {
+      "nome": "Pé de Coelho Esportes",
+      "endereco": {
+        "rua": "R. Pedro Floriano Sobrinho",
+        "numero": "600",
+        "bairro": "Fazendinha",
+        "cidade": "Curitiba",
+        "uf": "PR",
+        "cep": "81330-050"
+      },
+      "telefone": "(41) 99746-3259",
+      "whatsapp": null,
+      "preco_hora": null,
+      "qtd_quadras": 1,
+      "detalhe_quadras": "arena society com quadra coberta de grama sintética Sportlink; bar, vestiários masc/fem, estacionamento 50 veículos, 2 churrasqueiras com TV e geladeiras",
+      "tipo_piso": "society (grama sintética Sportlink)",
+      "horarios": null,
+      "nota_media": 4.5,
+      "contagem_avaliacoes": 448,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.futemais.com.br/post/onde-jogar-futebol-em-curitiba",
+          "dado": "endereço completo, telefone, nota 4,5/5 (448 avaliações), estrutura"
+        }
+      ],
+      "site": "https://pedecoelhoesportes.com.br/",
+      "confidence": "alta"
+    },
+    {
+      "nome": "Goleadores",
+      "endereco": {
+        "rua": "Av. Senador Salgado Filho",
+        "numero": "1700",
+        "bairro": "Uberaba",
+        "cidade": "Curitiba",
+        "uf": "PR"
+      },
+      "telefone": "(41) 3319-6008",
+      "whatsapp": null,
+      "preco_hora": null,
+      "qtd_quadras": 2,
+      "detalhe_quadras": "2 quadras society, 1 coberta, grama sintética Sportlink; gramado para crianças, salão com brinquedos, espetinhos quintas e sábados",
+      "tipo_piso": "society (grama sintética Sportlink)",
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.futemais.com.br/post/onde-jogar-futebol-em-curitiba",
+          "dado": "endereço, telefone, 2 quadras (1 coberta), estrutura"
+        }
+      ],
+      "site": "http://goleadores.com.br/",
+      "confidence": "alta"
+    },
+    {
+      "nome": "Contorno da Bola",
+      "endereco": {
+        "rua": "Rua Adolpho Bressan",
+        "numero": "609",
+        "bairro": "Orleans",
+        "cidade": "Curitiba",
+        "uf": "PR"
+      },
+      "telefone": "(41) 3373-7001",
+      "whatsapp": "(41) 98849-0857",
+      "preco_hora": null,
+      "qtd_quadras": 14,
+      "detalhe_quadras": "14 quadras de areia (site próprio); outras fontes citam 13-15 quadras; ~9.000 m²; futevôlei, beach tennis, vôlei de praia, futebol society na areia",
+      "tipo_piso": "areia (futevôlei/beach tennis/vôlei/society)",
+      "horarios": {
+        "observacao": "fontes divergem: Wellhub 09:00-23:00 seg-sex; beachtennisbra 07:00-00:00 seg-sex, 07:00-22:00 sáb, 08:00-15:00 dom",
+        "segunda": "07:00-00:00",
+        "sabado": "07:00-22:00",
+        "domingo": "08:00-15:00"
+      },
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [
+        {
+          "url": "https://contornodabola.com.br/wp-content/uploads/2026/03/contorno-da-bola.jpg",
+          "fonte": "contornodabola.com.br (site oficial)"
+        }
+      ],
+      "fontes": [
+        {
+          "url": "https://contornodabola.com.br/",
+          "dado": "14 quadras de areia, WhatsApp 41 98849-0857, Instagram @contornodabolaoficial, locação e aulas"
+        },
+        {
+          "url": "https://wellhub.com/pt-br/search/partners/contorno-da-bola/",
+          "dado": "Rua Delfina Braga Visinoni 5227 / Rua Adolpho Bressan 609 - Orleans, horários, tel (41) 98849-0857"
+        },
+        {
+          "url": "https://www.guiatelefone.com/empresas/curitiba-pr/praticas-esportivas/aluguel-de-quadras-esportivas",
+          "dado": "Rua Adolpho Bressan 609, Orleans, tel (41) 3373-7001"
+        },
+        {
+          "url": "https://fpt.com.br/Torneio/Info/2025/fpt-beach-series-1500-212-fpt-beach-series-1500-contorno-da-bola-5377",
+          "dado": "FPT Beach Series no Contorno da Bola, 15 quadras, tel (41) 3373-7001"
+        }
+      ],
+      "instagram": "https://www.instagram.com/contornodabolaoficial",
+      "site": "https://contornodabola.com.br/",
+      "confidence": "alta"
+    },
+    {
+      "nome": "ASBAC Futebol Society",
+      "endereco": {
+        "rua": "Rua Mateus Leme",
+        "numero": "3992",
+        "bairro": "São Lourenço",
+        "cidade": "Curitiba",
+        "uf": "PR",
+        "cep": "82200-000"
+      },
+      "telefone": "(41) 3254-2182",
+      "whatsapp": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": "quadras de futebol sintético + futsal coberta; clube com lago, churrasqueiras e estacionamento",
+      "tipo_piso": "society (sintético) e futsal",
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.futemais.com.br/post/onde-jogar-futebol-em-curitiba",
+          "dado": "endereço, telefone, quadras sintético + futsal coberta, clube"
+        },
+        {
+          "url": "https://www.guiatelefone.com/empresas/curitiba-pr/praticas-esportivas/aluguel-de-quadras-esportivas",
+          "dado": "Rua Mateus Leme 3992 São Lourenço, tel (41) 3254-2182"
+        }
+      ],
+      "confidence": "alta"
+    },
+    {
+      "nome": "Cancha Copa 70",
+      "endereco": {
+        "rua": "Rua Rodolfo Bernardelli",
+        "numero": "530",
+        "bairro": "Uberaba",
+        "cidade": "Curitiba",
+        "uf": "PR",
+        "cep": "81580-010"
+      },
+      "telefone": "(41) 3053-1310",
+      "whatsapp": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": "locável por hora; estacionamento gratuito; formas de pagamento: dinheiro",
+      "tipo_piso": null,
+      "horarios": {
+        "segunda": "09:00-23:45",
+        "terca": "09:00-23:45",
+        "quarta": "09:00-23:45",
+        "quinta": "09:00-23:45",
+        "sexta": "09:00-23:45",
+        "sabado": "09:00-23:45",
+        "domingo": "09:00-23:45"
+      },
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.guiatelefone.com/curitiba-pr/praticas-esportivas/1303382/cancha-copa-70",
+          "dado": "endereço, telefone, horários 09:00-23:45 todos os dias, estacionamento"
+        }
+      ],
+      "confidence": "media"
+    },
+    {
+      "nome": "Gitos Esportes Barreirinha",
+      "endereco": {
+        "rua": "Rua Flávio Dallegrave",
+        "numero": "9981",
+        "bairro": "Barreirinha",
+        "cidade": "Curitiba",
+        "uf": "PR",
+        "cep": "82220-120"
+      },
+      "telefone": "(41) 3585-3980",
+      "whatsapp": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.guiatelefone.com/curitiba-pr/praticas-esportivas/1405299/gitos-esportes-barreirinha",
+          "dado": "endereço e telefone"
+        },
+        {
+          "url": "https://listaamarela.com.br/pr-curitiba/quadras-esportivas-aluguel/pagina/3",
+          "dado": "categoria Quadras Esportivas - Aluguel"
+        }
+      ],
+      "confidence": "media"
+    },
+    {
+      "nome": "K10 Sports Center",
+      "endereco": {
+        "rua": "Rua Teffé",
+        "numero": "1204",
+        "bairro": "Bom Retiro",
+        "cidade": "Curitiba",
+        "uf": "PR"
+      },
+      "telefone": "(41) 3338-8028",
+      "whatsapp": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://canchea.com/br/quadras/",
+          "dado": "K10 Sports Center, Rua Teffé 1204, Bom Retiro, tel (41) 3338-8028"
+        },
+        {
+          "url": "https://listaamarela.com.br/pr-curitiba/quadras-esportivas-aluguel/pagina/3",
+          "dado": "categoria Quadras Esportivas - Aluguel"
+        }
+      ],
+      "confidence": "media"
+    },
+    {
+      "nome": "Clube 3 Marias",
+      "endereco": {
+        "rua": "Av. Três Marias",
+        "numero": "274",
+        "bairro": "São Braz",
+        "cidade": "Curitiba",
+        "uf": "PR",
+        "cep": "82310-000"
+      },
+      "telefone": "(41) 3370-3000",
+      "whatsapp": "(41) 99163-9097",
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": "campo de society coberto com grama sintética, iluminação e telas laterais, locado por hora para peladas/escolinhas/campeonatos; ginásio de futsal coberto com piso modular (Fac Sports, tel 41 99115-4004); Arena 3 – Beach Sports (beach tênis, futvôlei, vôlei de praia, cobertas e ao ar livre)",
+      "tipo_piso": "society (grama sintética coberta), futsal (piso modular) e areia",
+      "horarios": {
+        "observacao": "secretaria: seg-sex 8h-18h, sáb 9h-13h"
+      },
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://3marias.com.br/",
+          "dado": "campo society coberto locado por hora, ginásio futsal, Arena 3 beach sports, telefones, secretaria"
+        },
+        {
+          "url": "https://3marias.com.br/__l5e/assets-v1/6a2f944c-02b4-4c30-8d9d-d4e23147157d/estatuto-social.pdf",
+          "dado": "sede na Av. Três Marias, 274, bairro São Brás"
+        },
+        {
+          "url": "https://www.econodata.com.br/consulta-empresa/76693084000158-clube-3-marias",
+          "dado": "CNPJ, CEP 82310-000 (registro aponta Av. 3 Marias, 25 - divergência de número entre fontes)"
+        }
+      ],
+      "site": "https://3marias.com.br/",
+      "confidence": "alta"
+    },
+    {
+      "nome": "Clube da Bola",
+      "endereco": {
+        "rua": "Rua Francisco Nunes",
+        "numero": "110",
+        "bairro": "Rebouças",
+        "cidade": "Curitiba",
+        "uf": "PR",
+        "cep": "80215-000"
+      },
+      "telefone": "(41) 3332-8388",
+      "whatsapp": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": "quadras de madeira cobertas para futsal, vôlei, basquete e handebol; churrasco; perto da PUC/UFPR/Rodoviária",
+      "tipo_piso": "futsal (piso de madeira) e poliesportiva",
+      "horarios": {
+        "observacao": "seg-sex 12:00-23:45"
+      },
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.telelistas.net/locais/pr/curitiba/aluguel+de+quadras+esportivas/bu-878424/clube+da+bola+em+reboucas",
+          "dado": "endereço, CEP, quadras de madeira cobertas, modalidades, funcionamento seg-sex 12h-23h45"
+        },
+        {
+          "url": "https://www.guiatelefone.com/empresas/curitiba-pr/praticas-esportivas/aluguel-de-quadras-esportivas",
+          "dado": "telefone (41) 3332-8388"
+        }
+      ],
+      "site": "http://www.clubebola.blogspot.com/",
+      "confidence": "alta"
+    },
+    {
+      "nome": "Trieste Stadium (Trieste FC)",
+      "endereco": {
+        "rua": "Rua Professor Francisco Zardo",
+        "numero": "920",
+        "bairro": "Santa Felicidade",
+        "cidade": "Curitiba",
+        "uf": "PR",
+        "cep": "82320-000"
+      },
+      "telefone": "(41) 3272-0290",
+      "whatsapp": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": "complexo tipo campo: campo oficial de futebol, escolinha, academia, piscinas, ginásio poliesportivo, restaurante/bar, alojamento para atletas",
+      "tipo_piso": "campo (grama) + ginásio poliesportivo",
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://triestefc.com.br/o-clube/estrutura/",
+          "dado": "endereço, estrutura completa, fundação 1937"
+        },
+        {
+          "url": "https://www.futemais.com.br/post/onde-jogar-futebol-em-curitiba",
+          "dado": "telefone (41) 3272-0290, descrição"
+        }
+      ],
+      "site": "https://triestefc.com.br/",
+      "confidence": "alta"
+    },
+    {
+      "nome": "Confraria da Bola",
+      "endereco": {
+        "rua": "R. Cecílio Toniolo",
+        "numero": "79",
+        "bairro": "Portão",
+        "cidade": "Curitiba",
+        "uf": "PR"
+      },
+      "telefone": "(41) 3229-3738",
+      "whatsapp": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://maisnobairro.com.br/quadras-esportivas/portao/curitiba/pr/confraria-da-bola-342688",
+          "dado": "endereço e telefone"
+        },
+        {
+          "url": "https://listaamarela.com.br/pr-curitiba/quadras-esportivas-aluguel/pagina/3",
+          "dado": "categoria Quadras Esportivas - Aluguel"
+        }
+      ],
+      "confidence": "media"
+    },
+    {
+      "nome": "Quadra Sete Esportes - Locação de Quadra",
+      "endereco": {
+        "rua": "Rua Cascavel",
+        "numero": "470",
+        "bairro": "Boqueirão",
+        "cidade": "Curitiba",
+        "uf": "PR",
+        "cep": "81670-180"
+      },
+      "telefone": "(41) 3276-1099",
+      "whatsapp": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.citiservi.com.br/ficar/quadras-esportivas-em-curitiba",
+          "dado": "nome, R Cascavel 470, CEP 81670-180"
+        },
+        {
+          "url": "https://www.encontrabrasil.com.br/locacao-de-quadras/curitiba-pr",
+          "dado": "Rua Cascavel, 470 - Boqueirão"
+        },
+        {
+          "url": "https://www.encontrabrasil.com.br/locacao-de-quadras/curitiba-pr",
+          "dado": "telefone (41) 3276-1099"
+        }
+      ],
+      "confidence": "media"
+    },
+    {
+      "nome": "Sociedade Morgenau",
+      "endereco": {
+        "rua": "Av. Senador Souza Naves",
+        "numero": "945",
+        "bairro": "Cristo Rei",
+        "cidade": "Curitiba",
+        "uf": "PR",
+        "cep": "80050-152"
+      },
+      "telefone": "(41) 3362-1000",
+      "whatsapp": null,
+      "preco_hora": null,
+      "qtd_quadras": 1,
+      "detalhe_quadras": "quadra de futebol society de grama sintética; vestiários, lanchonete, churrasqueira; locação liberada também para não sócios",
+      "tipo_piso": "society (grama sintética)",
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [
+        {
+          "url": "https://morgenau.com.br/wp-content/uploads/2020/10/locacao.jpg",
+          "fonte": "morgenau.com.br (site oficial, post de locação)"
+        }
+      ],
+      "fontes": [
+        {
+          "url": "https://morgenau.com.br/contato/",
+          "dado": "Av. Souza Naves 945, Cristo Rei, tel 41 3362-1000"
+        },
+        {
+          "url": "https://morgenau.com.br/locacao-quadra-de-futebol-society/",
+          "dado": "locação de quadra society (página oficial)"
+        },
+        {
+          "url": "https://www.futemais.com.br/post/onde-jogar-futebol-em-curitiba",
+          "dado": "locação para não sócios, estrutura"
+        }
+      ],
+      "site": "https://morgenau.com.br/",
+      "confidence": "alta"
+    },
+    {
+      "nome": "Ricardinho Sports",
+      "endereco": {
+        "rua": "Rua Eunice Weaver",
+        "numero": "320",
+        "bairro": "Campo Comprido",
+        "cidade": "Curitiba",
+        "uf": "PR"
+      },
+      "telefone": "(41) 3503-7156",
+      "whatsapp": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.guiatelefone.com/empresas/curitiba-pr/praticas-esportivas/aluguel-de-quadras-esportivas",
+          "dado": "endereço e telefone"
+        }
+      ],
+      "confidence": "media"
+    },
+    {
+      "nome": "Armazém da Bola",
+      "endereco": {
+        "rua": "Rua Renato Polatti",
+        "numero": "3100",
+        "bairro": "Campo Comprido",
+        "cidade": "Curitiba",
+        "uf": "PR"
+      },
+      "telefone": "(41) 3308-2044",
+      "whatsapp": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.guiatelefone.com/empresas/curitiba-pr/praticas-esportivas/aluguel-de-quadras-esportivas",
+          "dado": "endereço e telefone"
+        },
+        {
+          "url": "https://www.citiservi.com.br/ficar/quadras-esportivas-em-curitiba",
+          "dado": "Armazem Da Bola, Av Iguaçu 3791 (endereço divergente entre diretórios)"
+        }
+      ],
+      "confidence": "media"
+    },
+    {
+      "nome": "Espartakos Aluguel de Quadras",
+      "endereco": {
+        "rua": "Rodovia BR-116",
+        "numero": "4749",
+        "bairro": "Bairro Alto",
+        "cidade": "Curitiba",
+        "uf": "PR",
+        "cep": "82590-200"
+      },
+      "telefone": "(41) 3367-9905",
+      "whatsapp": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.guiatelefone.com/empresas/curitiba-pr/praticas-esportivas/aluguel-de-quadras-esportivas",
+          "dado": "endereço e telefone"
+        },
+        {
+          "url": "https://www.citiservi.com.br/ficar/quadras-esportivas-em-curitiba",
+          "dado": "Rod Br-116 4749, CEP 82590-200"
+        }
+      ],
+      "confidence": "media"
+    },
+    {
+      "nome": "Gold Soccer",
+      "endereco": {
+        "rua": "Rua Piquiri",
+        "numero": "217",
+        "bairro": "Rebouças",
+        "cidade": "Curitiba",
+        "uf": "PR"
+      },
+      "telefone": "(41) 3334-3821",
+      "whatsapp": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.guiatelefone.com/empresas/curitiba-pr/praticas-esportivas/aluguel-de-quadras-esportivas",
+          "dado": "endereço e telefone"
+        }
+      ],
+      "confidence": "media"
+    },
+    {
+      "nome": "Jacaré da Bola",
+      "endereco": {
+        "rua": "Rua Hugo Kinzelmann",
+        "numero": "37",
+        "bairro": "Campina do Siqueira",
+        "cidade": "Curitiba",
+        "uf": "PR"
+      },
+      "telefone": "(41) 3373-2288",
+      "whatsapp": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.guiatelefone.com/empresas/curitiba-pr/praticas-esportivas/aluguel-de-quadras-esportivas",
+          "dado": "endereço e telefone"
+        }
+      ],
+      "confidence": "media"
+    },
+    {
+      "nome": "A Toca da Bola",
+      "endereco": {
+        "rua": "Rua Mariluz",
+        "numero": "200",
+        "bairro": "Alto Boqueirão",
+        "cidade": "Curitiba",
+        "uf": "PR"
+      },
+      "telefone": "(41) 3344-1242",
+      "whatsapp": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.guiatelefone.com/empresas/curitiba-pr/praticas-esportivas/aluguel-de-quadras-esportivas",
+          "dado": "endereço e telefone"
+        }
+      ],
+      "confidence": "media"
+    },
+    {
+      "nome": "América Sports And Fitness",
+      "endereco": {
+        "rua": "Rua Doutor Alfredo Vieira Barcelos",
+        "numero": "905",
+        "bairro": "Uberaba",
+        "cidade": "Curitiba",
+        "uf": "PR"
+      },
+      "telefone": "(41) 3366-9294",
+      "whatsapp": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.guiatelefone.com/empresas/curitiba-pr/praticas-esportivas/aluguel-de-quadras-esportivas",
+          "dado": "endereço e telefone"
+        }
+      ],
+      "confidence": "media"
+    },
+    {
+      "nome": "Olimpic Sports Quadras Poliesportivas",
+      "endereco": {
+        "rua": "Rua Albino Niquele",
+        "numero": "220",
+        "bairro": "Umbará",
+        "cidade": "Curitiba",
+        "uf": "PR"
+      },
+      "telefone": "(41) 3348-9250",
+      "whatsapp": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.guiatelefone.com/empresas/curitiba-pr/praticas-esportivas/aluguel-de-quadras-esportivas",
+          "dado": "endereço e telefone"
+        }
+      ],
+      "confidence": "media"
+    },
+    {
+      "nome": "Atlanta Locação de Quadras de Esportes",
+      "endereco": {
+        "rua": "Rua Carolina Derosso",
+        "numero": "36",
+        "bairro": "Xaxim",
+        "cidade": "Curitiba",
+        "uf": "PR"
+      },
+      "telefone": "(41) 3275-1711",
+      "whatsapp": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.guiatelefone.com/empresas/curitiba-pr/praticas-esportivas/aluguel-de-quadras-esportivas",
+          "dado": "endereço e telefone"
+        }
+      ],
+      "confidence": "media"
+    },
+    {
+      "nome": "Arena GG",
+      "endereco": {
+        "cidade": "Curitiba",
+        "uf": "PR",
+        "observacao": "bairro não informado nas fontes"
+      },
+      "telefone": null,
+      "whatsapp": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.futemais.com.br/post/onde-jogar-futebol-em-curitiba",
+          "dado": "arena society: aluguel de campo, espaço para eventos, escolinha e quiosque para churrasco (sem endereço publicado)"
+        }
+      ],
+      "confidence": "baixa",
+      "instagram": "https://instagram.com/arenagg11"
+    }
+  ],
+  "contexto_mercado_precos": [
+    {
+      "faixa": "R$ 80 - R$ 200/hora (society, Curitiba)",
+      "fonte": "https://esporteuai.com.br/quadra-society-curitiba/"
+    },
+    {
+      "faixa": "noturno R$ 120-250/h; diurno/fim de semana a partir de R$ 80/h; mensalistas com desconto (ex.: JB Esportes 6% nas locações mensais)",
+      "fonte": "https://www.partida.app/blog/como-escolher-quadra-society-para-pelada"
+    },
+    {
+      "faixa": "referência nacional: society R$ 80-150/h (promocional) e R$ 180-350/h (nobre); futsal R$ 60-120/h e R$ 120-250/h",
+      "fonte": "https://www.animovamos.com/br/blog/artigo/guia-definitivo-como-alugar-quadra-de-futebol-society-e-organizar-seu-evento-esportivo"
+    }
+  ]
+}
