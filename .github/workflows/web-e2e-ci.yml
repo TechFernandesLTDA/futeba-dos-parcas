@@ -116,6 +116,12 @@ jobs:
         # emulators:exec sobe/derruba emuladores automaticamente.
         # O script inline faz seed e roda Playwright (webServer = vite preview no CI).
         run: |
+          # systemd-oomd nas imagens ubuntu-latest mata o cgroup inteiro sob
+          # pico de memória (JVM do Firestore + 141 functions carregando de
+          # uma vez) — morte instantânea e SEM NENHUMA linha de erro, exatamente
+          # o sintoma histórico deste step. Desligado só para este job.
+          sudo systemctl stop systemd-oomd 2>/dev/null || true
+          sudo systemctl disable systemd-oomd 2>/dev/null || true
           echo "[diag] portas em uso antes dos emuladores:"
           (ss -tlnp 2>/dev/null || netstat -tlnp 2>/dev/null) | grep -E ":(5001|8085|9099|9199|4000|4400|4943|9150)" || echo "[diag] nenhuma das portas dos emuladores ocupada"
           set -o pipefail
