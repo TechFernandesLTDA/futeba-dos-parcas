@@ -87,9 +87,18 @@ function initAdmin(): void {
       '[seed-e2e-groups] FIREBASE_AUTH_EMULATOR_HOST não definido.'
     );
   }
+  // Mesma guarda do seed-e2e-users: projeto demo-* usa credencial mockada
+  // para não depender de Application Default Credentials na CI.
   if (admin.apps.length === 0) {
+    const projectId = process.env.GCLOUD_PROJECT || 'futebadosparcas';
+    const credential = projectId.startsWith('demo-')
+      ? ({
+          getAccessToken: async () => ({ accessToken: 'owner', expires_in: 1_800 }),
+        } as unknown as admin.credential.Credential)
+      : undefined;
     admin.initializeApp({
-      projectId: process.env.GCLOUD_PROJECT || 'futebadosparcas',
+      projectId,
+      ...(credential ? { credential } : {}),
     });
   }
 }
@@ -161,6 +170,20 @@ async function upsertGroup(group: GroupSeed): Promise<void> {
       user_name: getTestUserName(uid),
       role,
       status: 'ACTIVE',
+      joined_at: now,
+    });
+
+    // Espelho denormalizado users/{uid}/groups/{gid} — fonte primária de
+    // fetchUserGroups() no web (web/src/hooks/useGroups.ts). Sem ele a aba
+    // Grupos/Jogos lista "0 grupos" e o chrome das abas não renderiza,
+    // quebrando access-matrix, jornada-jogos e grupos.spec no E2E.
+    // Mesmo shape do invite-redeemed (functions/src/groups/invite-redeemed.ts).
+    await upsertDoc(`users/${uid}/groups`, group.id, {
+      id: group.id,
+      group_id: group.id,
+      group_name: group.name,
+      group_photo: null,
+      role,
       joined_at: now,
     });
   }

@@ -24,7 +24,7 @@ jobs:
       FIREBASE_AUTH_EMULATOR_HOST: 127.0.0.1:9099
       FIRESTORE_EMULATOR_HOST: 127.0.0.1:8085
       FIREBASE_STORAGE_EMULATOR_HOST: 127.0.0.1:9199
-      GCLOUD_PROJECT: futebadosparcas
+      GCLOUD_PROJECT: demo-futebadosparcas
       VITE_TEST_PLAYER_EMAIL: test.player@futeba.test
       VITE_TEST_PLAYER_PASSWORD: Test123!@#
       VITE_TEST_FIELD_OWNER_EMAIL: test.fieldowner@futeba.test
@@ -36,12 +36,16 @@ jobs:
       # Em modo emulador (VITE_USE_EMULATOR=true) o SDK conecta nos emuladores,
       # então os valores reais são irrelevantes; só o projectId casa com o
       # GCLOUD_PROJECT do emulador Firestore. #2784
+      # Projeto demo-*: emuladores 100% offline, sem busca de Admin SDK config
+      # nem credenciais no runner (issue CI Web E2E, 03/10/2026).
       VITE_FIREBASE_API_KEY: "demo-api-key"
       VITE_FIREBASE_AUTH_DOMAIN: "futebadosparcas.firebaseapp.com"
-      VITE_FIREBASE_PROJECT_ID: "futebadosparcas"
+      VITE_FIREBASE_PROJECT_ID: "demo-futebadosparcas"
       VITE_FIREBASE_STORAGE_BUCKET: "futebadosparcas.appspot.com"
       VITE_FIREBASE_MESSAGING_SENDER_ID: "000000000000"
       VITE_FIREBASE_APP_ID: "1:000000000000:web:0000000000000000000000"
+      # Seeds/globalSetup leem GCLOUD_PROJECT (definido acima) para inicializar
+      # o Admin SDK contra o emulador com o mesmo projectId do --project.
 
     steps:
       - name: Checkout
@@ -114,7 +118,7 @@ jobs:
         run: |
           firebase emulators:exec \
             --only auth,firestore,functions \
-            --project futebadosparcas \
+            --project demo-futebadosparcas \
             'bash -c "
               set -e
               echo \"[e2e] Emuladores prontos — seed...\"
