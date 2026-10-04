@@ -87,18 +87,12 @@ function initAdmin(): void {
       '[seed-e2e-groups] FIREBASE_AUTH_EMULATOR_HOST não definido.'
     );
   }
-  // Mesma guarda do seed-e2e-users: projeto demo-* usa credencial mockada
-  // para não depender de Application Default Credentials na CI.
+  // Mesma regra do seed-e2e-users: SEM credencial — os emuladores via env
+  // dispensam autenticação e o caminho de credential mockada quebra o
+  // Firestore (firestore/invalid-credential). Test-harness-ci já valida isso.
   if (admin.apps.length === 0) {
-    const projectId = process.env.GCLOUD_PROJECT || 'futebadosparcas';
-    const credential = projectId.startsWith('demo-')
-      ? ({
-          getAccessToken: async () => ({ accessToken: 'owner', expires_in: 1_800 }),
-        } as unknown as admin.credential.Credential)
-      : undefined;
     admin.initializeApp({
-      projectId,
-      ...(credential ? { credential } : {}),
+      projectId: process.env.GCLOUD_PROJECT || 'futebadosparcas',
     });
   }
 }

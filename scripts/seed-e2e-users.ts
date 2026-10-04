@@ -86,19 +86,13 @@ function initAdmin(): void {
   // Verificar se o Admin SDK já foi inicializado (evitar double-init
   // quando importado como módulo no globalSetup do Playwright)
   if (admin.apps.length === 0) {
-    const projectId = process.env.GCLOUD_PROJECT || 'futebadosparcas';
-    // Em projetos demo-* (emuladores offline, CI) não existe credencial real.
-    // Sem isso o Admin SDK tenta Application Default Credentials, trava o
-    // runner e o passo de seed nunca conclui. Com os hosts de emulador
-    // definidos, o token mockado nunca é usado em rede.
-    const credential = projectId.startsWith('demo-')
-      ? ({
-          getAccessToken: async () => ({ accessToken: 'owner', expires_in: 1_800 }),
-        } as unknown as admin.credential.Credential)
-      : undefined;
+    // SEM credencial: com FIRESTORE_EMULATOR_HOST/FIREBASE_AUTH_EMULATOR_HOST
+    // definidos o Admin SDK usa os emuladores sem autenticação — é exatamente
+    // assim que o test-harness-ci passa no runner. Qualquer credential mock
+    // (getAccessToken etc.) força o caminho de credenciais do google-auth-
+    // library e quebra a inicialização do Firestore (firestore/invalid-credential).
     admin.initializeApp({
-      projectId,
-      ...(credential ? { credential } : {}),
+      projectId: process.env.GCLOUD_PROJECT || 'futebadosparcas',
     });
   }
 }
