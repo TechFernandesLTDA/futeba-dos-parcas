@@ -125,12 +125,23 @@ jobs:
           echo "[diag] portas em uso antes dos emuladores:"
           (ss -tlnp 2>/dev/null || netstat -tlnp 2>/dev/null) | grep -E ":(5001|8085|9099|9199|4000|4400|4943|9150)" || echo "[diag] nenhuma das portas dos emuladores ocupada"
           # Traça memória/disk a cada 3s — sobrevive a morte do shell e é lido no step de diagnóstico.
-          (while true; do echo "$(date +%T) mem=$(free -m | awk '/Mem:/{print $3"/"$2}') swap=$(free -m | awk '/Swap:/{print $3"/"$2}') disk=$(df -m / | awk 'NR==2{print $4"G free'}')" >> "$RUNNER_TEMP/mem-trace.log"; sleep 3; done &)
+          (while true; do echo "$(date +%T) $(free -m | tr -s ' ' | grep Mem:) $(free -m | tr -s ' ' | grep Swap:)" >> "$RUNNER_TEMP/mem-trace.log"; sleep 3; done &)
           set -o pipefail
-          firebase --debug emulators:exec \
+          firebase emulators:exec \
             --only auth,firestore,functions \
             --project demo-futebadosparcas \
-            'echo SCRIPT_RODOU && env | grep -E "FIREBASE|GCLOUD|JAVA" | head -5'
+            'bash -c "
+              set -e
+              export FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099
+              export FIRESTORE_EMULATOR_HOST=127.0.0.1:8085
+              export FIREBASE_STORAGE_EMULATOR_HOST=127.0.0.1:9199
+              export GCLOUD_PROJECT=demo-futebadosparcas
+              echo \"[e2e] Emuladores prontos — seed...\"
+              NODE_PATH=functions/node_modules tsx scripts/seed-e2e-users.ts
+              NODE_PATH=functions/node_modules tsx scripts/seed-e2e-groups.ts
+              echo \"[e2e] Seed OK — Playwright (vite preview via webServer config)...\"
+              cd web && npx playwright test --project=chromium
+            "'
           code=$?
           echo "[diag] emulators:exec exit=$code"
           echo "[diag] últimas 40 linhas do emulador:"
