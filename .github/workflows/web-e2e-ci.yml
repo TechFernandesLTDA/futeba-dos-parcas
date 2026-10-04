@@ -116,6 +116,9 @@ jobs:
         # emulators:exec sobe/derruba emuladores automaticamente.
         # O script inline faz seed e roda Playwright (webServer = vite preview no CI).
         run: |
+          echo "[diag] portas em uso antes dos emuladores:"
+          (ss -tlnp 2>/dev/null || netstat -tlnp 2>/dev/null) | grep -E ":(5001|8085|9099|9199|4000|4400|4943|9150)" || echo "[diag] nenhuma das portas dos emuladores ocupada"
+          set -o pipefail
           firebase --debug emulators:exec \
             --only auth,firestore,functions \
             --project demo-futebadosparcas \
@@ -126,7 +129,12 @@ jobs:
               NODE_PATH=functions/node_modules tsx scripts/seed-e2e-groups.ts
               echo \"[e2e] Seed OK — Playwright (vite preview via webServer config)...\"
               cd web && npx playwright test --project=chromium
-            "'
+            "' 2>&1 | tee "$RUNNER_TEMP/emul-e2e.log"
+          code=$?
+          echo "[diag] emulators:exec exit=$code"
+          echo "[diag] últimas 40 linhas do emulador:"
+          tail -40 "$RUNNER_TEMP/emul-e2e.log" || true
+          exit $code
         env:
           CI: "true"
           DEBUG: "pw:webserver"
