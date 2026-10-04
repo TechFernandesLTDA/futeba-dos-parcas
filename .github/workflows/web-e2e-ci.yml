@@ -124,6 +124,8 @@ jobs:
           sudo systemctl disable systemd-oomd 2>/dev/null || true
           echo "[diag] portas em uso antes dos emuladores:"
           (ss -tlnp 2>/dev/null || netstat -tlnp 2>/dev/null) | grep -E ":(5001|8085|9099|9199|4000|4400|4943|9150)" || echo "[diag] nenhuma das portas dos emuladores ocupada"
+          # Traça memória/disk a cada 3s — sobrevive a morte do shell e é lido no step de diagnóstico.
+          (while true; do echo "$(date +%T) mem=$(free -m | awk '/Mem:/{print $3"/"$2}') swap=$(free -m | awk '/Swap:/{print $3"/"$2}') disk=$(df -m / | awk 'NR==2{print $4"G free'}')" >> "$RUNNER_TEMP/mem-trace.log"; sleep 3; done &)
           set -o pipefail
           firebase --debug emulators:exec \
             --only auth,firestore,functions \
@@ -144,6 +146,14 @@ jobs:
         env:
           CI: "true"
           DEBUG: "pw:webserver"
+
+      - name: Diagnóstico pós-morte (memória + OOM do kernel)
+        if: always()
+        run: |
+          echo "[diag] trilha de memória (últimas 25 amostras):"
+          tail -25 "$RUNNER_TEMP/mem-trace.log" 2>/dev/null || echo "(sem trilha)"
+          echo "[diag] OOM/kill no kernel:"
+          sudo dmesg 2>/dev/null | grep -iE "oom|killed process|out of memory" | tail -10 || echo "(sem entradas de OOM no dmesg)"
 
       - name: Upload — Playwright report
         if: always()
