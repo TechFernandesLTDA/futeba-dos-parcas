@@ -117,7 +117,7 @@ jobs:
         # os runs (exit 2, zero log — pipeline nunca passou desde 06/06). Aqui o
         # emulador sobe em background com log em arquivo: a espera de readiness
         # é pelo marcador oficial 'All emulators ready' e qualquer falha imprime
-        # o log real do emulador. Kill por PID (sem pkill -f, contrato).
+        # o log real do emulador. Kill por PID (o contrato proíbe pkill).
         run: |
           firebase emulators:start \
             --only auth,firestore,functions \
