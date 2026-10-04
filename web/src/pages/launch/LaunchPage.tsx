@@ -283,6 +283,8 @@ function LaunchPageContent() {
                       '&:focus-visible': {
                         outlineColor: 'common.white',
                       },
+                      // Alvo de toque >= 44px no mobile (padrão do header/footer).
+                      minHeight: 44,
                     }}
                   >
                     Organizar minha pelada
@@ -299,6 +301,7 @@ function LaunchPageContent() {
                         borderColor: theme.palette.primary.contrastText,
                         bgcolor: alpha(theme.palette.common.white, 0.1),
                       },
+                      minHeight: 44,
                     }}
                   >
                     Ver como funciona
@@ -464,7 +467,7 @@ function LaunchPageContent() {
                   color="secondary"
                   size="large"
                   onClick={() => trackSignup('mid_page')}
-                  sx={{ flexShrink: 0 }}
+                  sx={{ flexShrink: 0, minHeight: 44 }}
                 >
                   Começar agora
                 </Button>

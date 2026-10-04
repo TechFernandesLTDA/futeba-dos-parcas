@@ -14,6 +14,7 @@ import {
   ListItemIcon,
   ListItemText,
   Divider,
+  Link,
   useTheme,
   Avatar,
   Chip,
@@ -38,6 +39,7 @@ import { ScreenHeader } from '../../components/common/ScreenHeader';
 import { useTranslation } from 'react-i18next';
 import { useReleaseNotes } from '../../hooks/useReleaseNotes';
 import { ReleaseTypeBadge } from '../../components/whatsnew/ReleaseNoteContent';
+import { SEO_PARENT_COMPANY_URL } from '../../components/seo/metadata';
 import { formatReleaseDate } from '../../utils/releaseNotesFormat';
 
 export const AboutScreen: React.FC = () => {
@@ -218,6 +220,17 @@ export const AboutScreen: React.FC = () => {
           </Typography>
           <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
             {t('about.madeWithLove')}
+          </Typography>
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+            {t('about.aProductOf')}{' '}
+            <Link
+              href={SEO_PARENT_COMPANY_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              underline="hover"
+            >
+              Tech Fernandes
+            </Link>
           </Typography>
         </Box>
       </PageContainer>
