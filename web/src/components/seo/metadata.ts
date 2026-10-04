@@ -2,6 +2,11 @@ export const SEO_SITE_URL = 'https://futebadosparcas.com.br';
 export const SEO_SITE_NAME = 'Futeba dos Parças';
 export const SEO_IMAGE_URL = `${SEO_SITE_URL}/og-futeba-dos-parcas.png`;
 const SEO_LOGO_URL = `${SEO_SITE_URL}/logo.png`;
+// O Futeba dos Parças é um produto da Tech Fernandes LTDA (techfernandes.com.br).
+// A atribuição aparece no rodapé da landing e nos metadados OG/Twitter/JSON-LD.
+export const SEO_PARENT_COMPANY_NAME = 'Tech Fernandes';
+export const SEO_PARENT_COMPANY_URL = 'https://techfernandes.com.br';
+export const SEO_PRODUCT_ATTRIBUTION = 'Um produto da Tech Fernandes.';
 
 const DEFAULT_DESCRIPTION =
   'Organize peladas, monte times equilibrados, acompanhe estatísticas e gerencie seu futebol amador com o Futeba dos Parças.';
@@ -123,7 +128,7 @@ export function applySeoMetadata(pathname: string): SeoRouteMetadata {
   upsertMeta('meta[property="og:title"]', { property: 'og:title', content: metadata.title });
   upsertMeta('meta[property="og:description"]', {
     property: 'og:description',
-    content: metadata.description,
+    content: `${metadata.description} ${SEO_PRODUCT_ATTRIBUTION}`,
   });
   upsertMeta('meta[property="og:type"]', { property: 'og:type', content: metadata.type ?? 'website' });
   upsertMeta('meta[property="og:url"]', { property: 'og:url', content: url });
@@ -141,7 +146,7 @@ export function applySeoMetadata(pathname: string): SeoRouteMetadata {
   upsertMeta('meta[name="twitter:title"]', { name: 'twitter:title', content: metadata.title });
   upsertMeta('meta[name="twitter:description"]', {
     name: 'twitter:description',
-    content: metadata.description,
+    content: `${metadata.description} ${SEO_PRODUCT_ATTRIBUTION}`,
   });
   upsertMeta('meta[name="twitter:image"]', { name: 'twitter:image', content: SEO_IMAGE_URL });
   upsertMeta('meta[name="twitter:image:alt"]', {
@@ -161,6 +166,11 @@ export function applySeoMetadata(pathname: string): SeoRouteMetadata {
       url: SEO_LOGO_URL,
       width: 512,
       height: 512,
+    },
+    parentOrganization: {
+      '@type': 'Organization',
+      name: 'Tech Fernandes LTDA',
+      url: SEO_PARENT_COMPANY_URL,
     },
   });
   upsertJsonLd('seo-software-application-jsonld', {
