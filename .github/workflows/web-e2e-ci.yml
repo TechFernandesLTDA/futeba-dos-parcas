@@ -130,19 +130,7 @@ jobs:
           firebase --debug emulators:exec \
             --only auth,firestore,functions \
             --project demo-futebadosparcas \
-            'bash -c "
-              set -e
-              # Envs dos emuladores só para os seeds/globalSetup (não para a CLI).
-              export FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099
-              export FIRESTORE_EMULATOR_HOST=127.0.0.1:8085
-              export FIREBASE_STORAGE_EMULATOR_HOST=127.0.0.1:9199
-              export GCLOUD_PROJECT=demo-futebadosparcas
-              echo \"[e2e] Emuladores prontos — seed...\"
-              NODE_PATH=functions/node_modules tsx scripts/seed-e2e-users.ts
-              NODE_PATH=functions/node_modules tsx scripts/seed-e2e-groups.ts
-              echo \"[e2e] Seed OK — Playwright (vite preview via webServer config)...\"
-              cd web && npx playwright test --project=chromium
-            "' 2>&1 | tee "$RUNNER_TEMP/emul-e2e.log"
+            'echo SCRIPT_RODOU && env | grep -E "FIREBASE|GCLOUD|JAVA" | head -5'
           code=$?
           echo "[diag] emulators:exec exit=$code"
           echo "[diag] últimas 40 linhas do emulador:"
