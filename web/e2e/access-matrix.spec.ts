@@ -3,18 +3,27 @@
  *
  * Cobre 10 rotas × 3 roles (PLAYER, FIELD_OWNER, ADMIN) = 30 testes.
  *
- * Assertion pattern:
- * - Navegação bem-sucedida (URL exata, elemento esperado visível) → PERMITIDO
- * - Redirect para `/` → NEGADO (sem error visível)
- * - Redirect para `/login` → FALHA no fixture (não esperado)
+ * Semântica (fonte: App.tsx + specs/PERMISSION_MATRIX.md — Seção 1 — Telas Web):
+ * - PERMITIDO: URL final casa com a rota (ou o redirect canônico dela — ex.
+ *   /games → /?tab=1, /groups → /?tab=2) e o elemento esperado fica visível.
+ * - NEGADO: o guarda de rota redireciona — AdminRoute → '/', FieldOwnerOrAdminRoute
+ *   → '/' (ou fallbackTo informado, ex. /locations → /map/locations).
+ *   - Redirect para /login = FALHA no fixture (não esperado).
+ *
+ * Lições da primeira execução completa em CI (triagem R1, 04/10/2026):
+ * - `goto` recarrega o documento: a restauração de sessão no emulador pode
+ *   levar >5s no runner. TODAS as asserções usam locators/toHaveURL com
+ *   auto-retry — nunca assert de valor único nem waitForURL + comparação.
+ * - A copy das telas mudou (ex. "Novo Jogo" → "Criar Jogo", "Locais" →
+ *   "Gerenciar Locais") — elementos conferidos contra snapshots reais.
+ * - getByText com regex ampla colide com o chrome (nav) — usar heading role.
+ * - /group/create é FieldOwnerOrAdminRoute (FIX #1033): só FIELD_OWNER/ADMIN.
  *
  * Pré-requisito:
  *   - Emulador Firebase Auth rodando
  *   - VITE_USE_EMULATOR=true no web app
- *   - seed-e2e-users.ts executado
+ *   - seed-e2e-users.ts executado (automático via globalSetup)
  *   Consulte web/e2e/README.md para instruções.
- *
- * Fonte: specs/PERMISSION_MATRIX.md (Seção 1 — Telas Web)
  */
 
 import { Page } from '@playwright/test';
@@ -35,6 +44,16 @@ interface AccessMatrixEntry {
    */
   expectedElement?: string | null;
   expectedElementSelector?: 'text' | 'role' | 'heading';
+  /**
+   * Regex da URL final quando a rota permitida redireciona para outro path
+   * canônico (ex. /games → /?tab=1). Default: a própria rota.
+   */
+  allowedUrl?: RegExp;
+  /**
+   * Regex da URL esperada quando o acesso é NEGADO (destino do redirect do
+   * guarda). Default: '/' ou '/login' (o /login é falha de fixture).
+   */
+  deniedUrl?: RegExp;
 }
 
 const accessMatrix: AccessMatrixEntry[] = [
@@ -52,15 +71,17 @@ const accessMatrix: AccessMatrixEntry[] = [
     route: '/games',
     description: 'Lista de Jogos — todos os autenticados',
     allowedRoles: ['player', 'fieldOwner', 'admin'],
+    // /games é Navigate → /?tab=1 (mantém o menu de navegação da Home)
+    allowedUrl: /\/\?tab=1$/,
     expectedElement: 'Jogos',
-    expectedElementSelector: 'text',
+    expectedElementSelector: 'heading',
   },
   {
     route: '/game/create',
     description: 'Criar Jogo — todos os autenticados',
     allowedRoles: ['player', 'fieldOwner', 'admin'],
-    expectedElement: 'Novo Jogo',
-    expectedElementSelector: 'text',
+    expectedElement: 'Criar Jogo',
+    expectedElementSelector: 'heading',
   },
 
   // Rotas de grupos
@@ -68,15 +89,18 @@ const accessMatrix: AccessMatrixEntry[] = [
     route: '/groups',
     description: 'Lista de Grupos — todos os autenticados',
     allowedRoles: ['player', 'fieldOwner', 'admin'],
-    expectedElement: 'Grupos',
+    // /groups é Navigate → /?tab=2
+    allowedUrl: /\/\?tab=2$/,
+    expectedElement: 'Meus Grupos',
     expectedElementSelector: 'text',
   },
   {
     route: '/group/create',
-    description: 'Criar Grupo — todos os autenticados',
-    allowedRoles: ['player', 'fieldOwner', 'admin'],
-    expectedElement: 'Novo Grupo',
-    expectedElementSelector: 'text',
+    // FIX #1033: apenas FIELD_OWNER ou ADMIN podem criar grupos via URL direta
+    description: 'Criar Grupo — FIELD_OWNER, ADMIN',
+    allowedRoles: ['fieldOwner', 'admin'],
+    expectedElement: 'Criar Grupo',
+    expectedElementSelector: 'heading',
   },
 
   // Rotas de locais (FIELD_OWNER / ADMIN only)
@@ -84,15 +108,17 @@ const accessMatrix: AccessMatrixEntry[] = [
     route: '/locations',
     description: 'Lista de Locais — FIELD_OWNER, ADMIN',
     allowedRoles: ['fieldOwner', 'admin'],
-    expectedElement: 'Locais',
-    expectedElementSelector: 'text',
+    expectedElement: 'Gerenciar Locais',
+    expectedElementSelector: 'heading',
+    // PLAYER negado cai no mapa público (fallbackTo do guarda)
+    deniedUrl: /\/map\/locations$/,
   },
   {
     route: '/location/create',
     description: 'Criar Local — FIELD_OWNER, ADMIN',
     allowedRoles: ['fieldOwner', 'admin'],
-    expectedElement: 'Novo Local',
-    expectedElementSelector: 'text',
+    expectedElement: 'Criar Local',
+    expectedElementSelector: 'heading',
   },
 
   // Rotas administrativas
@@ -125,83 +151,62 @@ const accessMatrix: AccessMatrixEntry[] = [
 // TESTES TABLE-DRIVEN
 // ==========================================
 
+/** Escapa a rota para uso como regex de URL. */
+function routeToUrlRegex(route: string): RegExp {
+  const escaped = route.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`${escaped}$`);
+}
+
+/**
+ * Valida o resultado da navegação para uma rota da matriz:
+ * - Permitido: URL final (auto-retry) + elemento visível.
+ * - Negado: URL final é o destino do redirect do guarda (auto-retry).
+ *
+ * O auto-retry é essencial: o `goto` recarrega o documento e a restauração
+ * de sessão no emulador pode levar >5s no runner; o redirect do guarda
+ * acontece DEPOIS dessa restauração.
+ */
+async function expectAccess(
+  page: Page,
+  entry: AccessMatrixEntry,
+  role: 'player' | 'fieldOwner' | 'admin'
+): Promise<void> {
+  if (entry.allowedRoles.includes(role)) {
+    await expect(page).toHaveURL(entry.allowedUrl ?? routeToUrlRegex(entry.route), {
+      timeout: 15_000,
+    });
+
+    if (entry.expectedElement) {
+      const locator = selectLocator(page, entry.expectedElement, entry.expectedElementSelector);
+      await expect(locator).toBeVisible({ timeout: 10_000 });
+    }
+  } else {
+    // Esperado: redirect do guarda para o destino de negação
+    await expect(page).toHaveURL(entry.deniedUrl ?? /\/$|\/login/, { timeout: 15_000 });
+    // Se redirecionou para /login, é falha no fixture (não esperado)
+    await expect(page).not.toHaveURL(/\/login/);
+  }
+}
+
 test.describe('Access Matrix — Validação de Permissões por Role', () => {
   for (const entry of accessMatrix) {
     test.describe(`Rota: ${entry.route}`, () => {
       // PLAYER
       test(`PLAYER → ${entry.description}`, async ({ playerPage }) => {
         await playerPage.goto(entry.route);
-        // Aguarda navegação finalizar (max 5s)
-        await playerPage.waitForURL(/.*/, { timeout: 5000 });
-
-        const currentUrl = playerPage.url();
-
-        if (entry.allowedRoles.includes('player')) {
-          // Esperado: acesso permitido
-          expect(currentUrl).toBe(
-            `${playerPage.context().browser()?.contexts()[0]?.pages()[0]?.url().split(entry.route)[0] || 'http://localhost:5173'}${entry.route}`
-          );
-
-          if (entry.expectedElement) {
-            const locator = selectLocator(playerPage, entry.expectedElement, entry.expectedElementSelector);
-            await expect(locator).toBeVisible({ timeout: 5000 });
-          }
-        } else {
-          // Esperado: redirect para / (acesso negado)
-          expect(currentUrl).toMatch(/\/$|\/login/);
-          // Se redirecionou para /login, é falha no fixture (não esperado)
-          expect(currentUrl).not.toMatch(/\/login/);
-        }
+        await expectAccess(playerPage, entry, 'player');
       });
 
       // FIELD_OWNER
       test(`FIELD_OWNER → ${entry.description}`, async ({ fieldOwnerPage }) => {
         await fieldOwnerPage.goto(entry.route);
-        // Aguarda navegação finalizar
-        await fieldOwnerPage.waitForURL(/.*/, { timeout: 5000 });
-
-        const currentUrl = fieldOwnerPage.url();
-
-        if (entry.allowedRoles.includes('fieldOwner')) {
-          // Esperado: acesso permitido
-          expect(currentUrl).toBe(
-            `${fieldOwnerPage.context().browser()?.contexts()[0]?.pages()[0]?.url().split(entry.route)[0] || 'http://localhost:5173'}${entry.route}`
-          );
-
-          if (entry.expectedElement) {
-            const locator = selectLocator(fieldOwnerPage, entry.expectedElement, entry.expectedElementSelector);
-            await expect(locator).toBeVisible({ timeout: 5000 });
-          }
-        } else {
-          // Esperado: redirect para / (acesso negado)
-          expect(currentUrl).toMatch(/\/$|\/login/);
-          expect(currentUrl).not.toMatch(/\/login/);
-        }
+        await expectAccess(fieldOwnerPage, entry, 'fieldOwner');
       });
 
       // ADMIN
       test(`ADMIN → ${entry.description}`, async ({ adminPage }) => {
         await adminPage.goto(entry.route);
-        // Aguarda navegação finalizar
-        await adminPage.waitForURL(/.*/, { timeout: 5000 });
-
-        const currentUrl = adminPage.url();
-
-        if (entry.allowedRoles.includes('admin')) {
-          // Esperado: acesso permitido
-          expect(currentUrl).toBe(
-            `${adminPage.context().browser()?.contexts()[0]?.pages()[0]?.url().split(entry.route)[0] || 'http://localhost:5173'}${entry.route}`
-          );
-
-          if (entry.expectedElement) {
-            const locator = selectLocator(adminPage, entry.expectedElement, entry.expectedElementSelector);
-            await expect(locator).toBeVisible({ timeout: 5000 });
-          }
-        } else {
-          // Esperado: redirect para / (acesso negado)
-          expect(currentUrl).toMatch(/\/$|\/login/);
-          expect(currentUrl).not.toMatch(/\/login/);
-        }
+        await expectAccess(adminPage, entry, 'admin');
       });
     });
   }

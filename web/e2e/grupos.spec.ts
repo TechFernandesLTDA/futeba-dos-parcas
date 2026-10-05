@@ -59,7 +59,6 @@ test.describe.serial('E2E — Domínio Grupos', () => {
   test.describe('Discover', () => {
     test('deve listar grupo público ativo no discover', async ({ playerPage }) => {
       await playerPage.goto('/?tab=2');
-      await playerPage.waitForLoadState('networkidle');
 
       // Page chrome loaded first: heading "Meus Grupos" visible
       await expect(
@@ -85,7 +84,6 @@ test.describe.serial('E2E — Domínio Grupos', () => {
   test.describe('Preview', () => {
     test('membro deve ver grupo público sem erro', async ({ playerPage }) => {
       await playerPage.goto(`/group/${GROUPS.public.id}`);
-      await playerPage.waitForLoadState('networkidle');
 
       // Heading do grupo visível
       await expect(
@@ -103,7 +101,6 @@ test.describe.serial('E2E — Domínio Grupos', () => {
     }) => {
       // admin NÃO é membro de Galáticos FC mas é grupo público — deve ver preview
       await adminPage.goto(`/group/${GROUPS.public.id}`);
-      await adminPage.waitForLoadState('networkidle');
 
       // Grupo público permite visualização para não-membros
       await expect(
@@ -131,7 +128,6 @@ test.describe.serial('E2E — Domínio Grupos', () => {
     }) => {
       // player NÃO é membro do Clube Secreto (grupo privado)
       await playerPage.goto(`/group/${GROUPS.secret.id}`);
-      await playerPage.waitForLoadState('networkidle');
 
       // Deve mostrar tela de erro (rule de leitura exige membership)
       await expect(
@@ -151,7 +147,6 @@ test.describe.serial('E2E — Domínio Grupos', () => {
     }) => {
       // fieldOwner é admin do Clube Secreto (adicionado via seed)
       await fieldOwnerPage.goto(`/group/${GROUPS.secret.id}`);
-      await fieldOwnerPage.waitForLoadState('networkidle');
 
       // Verifica que o grupo carregou
       await expect(
@@ -179,7 +174,6 @@ test.describe.serial('E2E — Domínio Grupos', () => {
 
       // player NÃO é membro do Clube Secreto — vai aceitar o convite
       await playerPage.goto(`/join/${inviteCode}`);
-      await playerPage.waitForLoadState('networkidle');
 
       // Aguarda o preview do convite carregar
       await expect(
@@ -209,7 +203,6 @@ test.describe.serial('E2E — Domínio Grupos', () => {
     test('convite expirado não pode ser aceito', async ({ playerPage }) => {
       // E2EEXP é um convite pré-seedado com expires_at no passado
       await playerPage.goto('/join/E2EEXP');
-      await playerPage.waitForLoadState('networkidle');
 
       // Deve mostrar mensagem de convite expirado
       await expect(

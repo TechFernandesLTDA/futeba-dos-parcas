@@ -1,9 +1,11 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Navigation', () => {
-  test('should redirect unauthenticated users to login', async ({ page }) => {
+  test('página inicial pública exibe CTA de login para não autenticados', async ({ page }) => {
+    // A home é pública por design: não autenticado vê o conteúdo com os
+    // CTAs "Entrar"/"Criar conta" (funil de growth) — sem redirect.
     await page.goto('/');
-    await expect(page).toHaveURL(/login|welcome/);
+    await expect(page.getByRole('link', { name: /entrar/i })).toBeVisible({ timeout: 10_000 });
   });
 
   test('should have skip-nav link for accessibility', async ({ page }) => {

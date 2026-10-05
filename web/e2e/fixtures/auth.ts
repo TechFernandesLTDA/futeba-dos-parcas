@@ -122,3 +122,17 @@ export async function loginAsAdmin(page: Page): Promise<void> {
   );
   await performLogin(page, credentials);
 }
+
+/**
+ * Autentica como PLAYER não verificado (custom claim verified=false).
+ * Usado para validar o guarda VerifiedRoute → /onboarding.
+ * Credenciais lidas de VITE_TEST_UNVERIFIED_EMAIL / VITE_TEST_UNVERIFIED_PASSWORD.
+ */
+export async function loginAsUnverifiedPlayer(page: Page): Promise<void> {
+  const credentials = getCredentials(
+    'VITE_TEST_UNVERIFIED_EMAIL',
+    'VITE_TEST_UNVERIFIED_PASSWORD',
+    'PLAYER_UNVERIFIED'
+  );
+  await performLogin(page, credentials);
+}

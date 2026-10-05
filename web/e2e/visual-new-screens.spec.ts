@@ -77,9 +77,9 @@ const visualRoutes: VisualRoute[] = [
   },
   {
     route: '/admin/performance',
-    description: 'painel de performance do administrador',
+    description: 'painel de performance do administrador (redirect para /admin/users — def6643f: dashboard vazio removido)',
     role: 'admin',
-    expectedPattern: /performance|painel|métricas|metricas/i,
+    expectedPattern: /usuários|usuarios|admin/i,
   },
 ];
 

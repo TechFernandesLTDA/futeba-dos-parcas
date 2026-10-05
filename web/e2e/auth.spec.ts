@@ -23,12 +23,16 @@ import { test, expect as fixtureExpect } from './fixtures';
 baseTest.describe('Authentication — UI pública', () => {
   baseTest('should show login page', async ({ page }) => {
     await page.goto('/login');
-    await expect(page.getByRole('heading', { name: /login|entrar/i })).toBeVisible();
+    // Copy atual: h1 "Futeba dos Parças" + formulário aria-label "Entrar"
+    await expect(page.getByRole('heading', { name: /futeba/i })).toBeVisible();
+    await expect(page.locator('form[aria-label="Entrar"]')).toBeVisible({ timeout: 10_000 });
   });
 
   baseTest('should show register page', async ({ page }) => {
     await page.goto('/register');
-    await expect(page.getByRole('heading', { name: /cadastr/i })).toBeVisible();
+    // Copy atual: h1 "Criar Conta" + formulário aria-label "Criar Conta"
+    await expect(page.getByRole('heading', { name: /criar conta/i })).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('form[aria-label="Criar Conta"]')).toBeVisible({ timeout: 10_000 });
   });
 
   baseTest('should navigate from login to register', async ({ page }) => {

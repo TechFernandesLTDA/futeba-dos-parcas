@@ -33,6 +33,8 @@ jobs:
       VITE_TEST_FIELD_OWNER_PASSWORD: Test123!@#
       VITE_TEST_ADMIN_EMAIL: test.admin@futeba.test
       VITE_TEST_ADMIN_PASSWORD: Test123!@#
+      VITE_TEST_UNVERIFIED_EMAIL: test.unverified@futeba.test
+      VITE_TEST_UNVERIFIED_PASSWORD: Test123!@#
       VITE_USE_EMULATOR: "true"
       # Config Firebase dummy para satisfazer verify-env.mjs no build E2E.
       # Em modo emulador (VITE_USE_EMULATOR=true) o SDK conecta nos emuladores,

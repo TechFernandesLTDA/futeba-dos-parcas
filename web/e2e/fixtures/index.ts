@@ -20,7 +20,7 @@
  */
 
 import { test as base, Page } from '@playwright/test';
-import { loginAsPlayer, loginAsFieldOwner, loginAsAdmin } from './auth';
+import { loginAsPlayer, loginAsFieldOwner, loginAsAdmin, loginAsUnverifiedPlayer } from './auth';
 
 // ==========================================
 // TIPOS DAS FIXTURES ESTENDIDAS
@@ -33,6 +33,8 @@ interface AuthFixtures {
   fieldOwnerPage: Page;
   /** Página autenticada com role ADMIN. */
   adminPage: Page;
+  /** Página autenticada como PLAYER sem custom claim `verified`. */
+  unverifiedPlayerPage: Page;
 }
 
 // ==========================================
@@ -81,6 +83,20 @@ export const test = base.extend<AuthFixtures>({
     const page = await context.newPage();
 
     await loginAsAdmin(page);
+
+    await use(page);
+
+    await context.close();
+  },
+  /**
+   * Fixture unverifiedPlayerPage: abre contexto isolado e autentica como
+   * PLAYER sem o custom claim `verified` (para validar VerifiedRoute).
+   */
+  unverifiedPlayerPage: async ({ browser, baseURL }, use) => {
+    const context = await browser.newContext({ baseURL });
+    const page = await context.newPage();
+
+    await loginAsUnverifiedPlayer(page);
 
     await use(page);
 

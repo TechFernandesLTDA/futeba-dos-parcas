@@ -2,8 +2,8 @@
  * Testes E2E da jornada crítica: login → aba Jogos.
  *
  * Cobre:
- *   1. Acesso público — usuário não autenticado é redirecionado para /login
- *      ao tentar acessar a home (/?tab=1).
+ *   1. Acesso público — a home (/?tab=1) é pública: não autenticado vê a aba
+ *      Jogos com os CTAs "Entrar"/"Criar conta" (funil de growth).
  *   2. PLAYER autenticado — aba Jogos renderiza corretamente (título, filtros,
  *      FAB "Criar Jogo") mesmo sem jogos criados (estado vazio esperado).
  *   3. Guarda VerifiedRoute — PLAYER não verificado (sem telefone/CPF) é
@@ -27,12 +27,18 @@ import { test, expect as fixtureExpect } from './fixtures';
 
 baseTest.describe('Jornada Jogos — UI pública', () => {
   /**
-   * Usuário não autenticado que tenta acessar a home
-   * deve ser redirecionado para /login.
+   * A home com a aba Jogos é PÚBLICA (descoberta sem login — funil de growth:
+   * landing_viewed → signup_cta_clicked). Não autenticado vê os jogos com os
+   * CTAs "Entrar"/"Criar conta" no cabeçalho.
    */
-  baseTest('não autenticado — /?tab=1 redireciona para login', async ({ page }) => {
+  baseTest('não autenticado — /?tab=1 renderiza aba Jogos pública com CTA de login', async ({ page }) => {
     await page.goto('/?tab=1');
-    await expect(page).toHaveURL(/login/);
+
+    // Aba Jogos renderiza (não há mais redirect para /login — home pública)
+    await expect(page.getByRole('heading', { name: /jogos/i })).toBeVisible({ timeout: 10_000 });
+
+    // CTA de login/cadastro presente no cabeçalho (funil de conversão)
+    await expect(page.getByRole('link', { name: /entrar/i })).toBeVisible({ timeout: 10_000 });
   });
 
   /**
@@ -66,31 +72,33 @@ test.describe('Jornada Jogos — fixtures por role (requer emulador)', () => {
     // Navega diretamente para a aba Jogos (viewport-agnóstico — evita clicar em nav chrome)
     await playerPage.goto('/?tab=1');
 
-    // Título da seção
+    // Título da seção (timeout maior: goto recarrega o documento e a
+    // restauração de sessão no emulador pode levar >5s no runner)
     await fixtureExpect(
       playerPage.getByRole('heading', { name: /jogos/i })
-    ).toBeVisible();
+    ).toBeVisible({ timeout: 10_000 });
 
     // Aba de filtro "Todos" sempre presente
     await fixtureExpect(
       playerPage.getByRole('tab', { name: /todos/i })
-    ).toBeVisible();
+    ).toBeVisible({ timeout: 10_000 });
 
-    // FAB de criação de jogo sempre visível para PLAYER
+    // FAB de criação de jogo — o rótulo também aparece no nav desktop
+    // ("Criar Jogo"), então pegamos o primeiro match (FAB) sem strict violation
     await fixtureExpect(
-      playerPage.getByRole('button', { name: /criar jogo/i })
-    ).toBeVisible();
+      playerPage.getByRole('button', { name: /criar jogo/i }).first()
+    ).toBeVisible({ timeout: 10_000 });
   });
 
   /**
    * PLAYER não verificado — /game/create aciona o guarda VerifiedRoute.
-   * O seed cria o usuário sem phone_verified/cpf_verified, portanto
-   * a VerifiedRoute deve redirecionar para o onboarding de telefone.
+   * O seed cria o usuário dedicado `e2e-test-player-unverified` (custom claim
+   * verified=false), portanto a VerifiedRoute deve redirecionar para o
+   * onboarding de telefone.
    */
-  test('PLAYER não verificado — /game/create redireciona para onboarding', async ({ playerPage }) => {
-    await playerPage.goto('/game/create');
-    await playerPage.waitForURL(/onboarding/);
-    await fixtureExpect(playerPage).toHaveURL(/onboarding/);
+  test('PLAYER não verificado — /game/create redireciona para onboarding', async ({ unverifiedPlayerPage }) => {
+    await unverifiedPlayerPage.goto('/game/create');
+    await fixtureExpect(unverifiedPlayerPage).toHaveURL(/onboarding/, { timeout: 15_000 });
   });
 
   /**
@@ -102,14 +110,14 @@ test.describe('Jornada Jogos — fixtures por role (requer emulador)', () => {
 
     await fixtureExpect(
       fieldOwnerPage.getByRole('heading', { name: /jogos/i })
-    ).toBeVisible();
+    ).toBeVisible({ timeout: 10_000 });
 
     await fixtureExpect(
       fieldOwnerPage.getByRole('tab', { name: /todos/i })
-    ).toBeVisible();
+    ).toBeVisible({ timeout: 10_000 });
 
     await fixtureExpect(
-      fieldOwnerPage.getByRole('button', { name: /criar jogo/i })
-    ).toBeVisible();
+      fieldOwnerPage.getByRole('button', { name: /criar jogo/i }).first()
+    ).toBeVisible({ timeout: 10_000 });
   });
 });
