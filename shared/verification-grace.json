@@ -2,5 +2,8 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "description": "Grace period de verificacao (phone+CPF). Source of truth compartilhada entre web (VerificationGraceBanner), functions (verification-grace.ts) e firestore.rules (validado por scripts/check-verification-grace-parity.js). Issue #3922.",
   "graceEndIso": "2026-10-03T00:00:00Z",
-  "rulesDateLiteral": "2026, 10, 3"
+  "rulesDateLiteral": "2026, 10, 3",
+  "mode": "applied",
+  "appliedAt": "2026-10-04T00:00:00Z",
+  "appliedNote": "Decisão do dono (Renan): verificação obrigatória em vigor; produção já negava não verificados desde 03/10. Para estender, volte mode=grace e atualize a data nos três arquivos."
 }

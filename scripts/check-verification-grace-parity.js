@@ -129,7 +129,17 @@ function main() {
     // Aviso de proximidade de expiração.
     const graceEnd = new Date(Date.UTC(tsDate.year, tsDate.month, tsDate.day));
     const daysUntilExpiry = Math.ceil((graceEnd.getTime() - Date.now()) / (24 * 60 * 60 * 1000));
-    if (daysUntilExpiry <= 0) {
+    // Expiração: só é erro quando o modo ainda é "grace". Com mode=applied o
+    // bloqueio já está em vigor em produção (decisão do dono em 04/10/2026) e
+    // a data histórica não governa mais nada — o propósito do script permanece
+    // o de sempre: detectar drift entre rules/ts/json se a data mudar de novo.
+    if (graceJson && graceJson.mode === "applied") {
+      warnings.push(
+        `[applied] grace period encerrado em ${graceEnd.toISOString().slice(0, 10)} — ` +
+        `verificação obrigatória em vigor. Para estender o prazo, volte mode=grace ` +
+        `e atualize a data nos três arquivos.`,
+      );
+    } else if (daysUntilExpiry <= 0) {
       errors.push(
         `[expirado] grace period venceu em ${graceEnd.toISOString().slice(0, 10)}. ` +
         `Usuários não verificados são negados. Decida apply vs extend AGORA.`
