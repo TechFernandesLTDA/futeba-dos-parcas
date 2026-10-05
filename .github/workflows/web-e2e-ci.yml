@@ -173,3 +173,5 @@ jobs:
           if-no-files-found: warn
           retention-days: 1
           compression-level: 9
+
+# registry-reindex-20261005: commit trivial para invalidar o cache de ingest do Actions (ghost BuildFailed wf_id=375847629)
