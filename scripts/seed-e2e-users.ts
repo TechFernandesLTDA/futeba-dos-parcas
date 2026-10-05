@@ -86,6 +86,11 @@ function initAdmin(): void {
   // Verificar se o Admin SDK já foi inicializado (evitar double-init
   // quando importado como módulo no globalSetup do Playwright)
   if (admin.apps.length === 0) {
+    // SEM credencial: com FIRESTORE_EMULATOR_HOST/FIREBASE_AUTH_EMULATOR_HOST
+    // definidos o Admin SDK usa os emuladores sem autenticação — é exatamente
+    // assim que o test-harness-ci passa no runner. Qualquer credential mock
+    // (getAccessToken etc.) força o caminho de credenciais do google-auth-
+    // library e quebra a inicialização do Firestore (firestore/invalid-credential).
     admin.initializeApp({
       projectId: process.env.GCLOUD_PROJECT || 'futebadosparcas',
     });

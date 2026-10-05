@@ -21,10 +21,12 @@ jobs:
     timeout-minutes: 30
 
     env:
-      FIREBASE_AUTH_EMULATOR_HOST: 127.0.0.1:9099
-      FIRESTORE_EMULATOR_HOST: 127.0.0.1:8085
-      FIREBASE_STORAGE_EMULATOR_HOST: 127.0.0.1:9199
-      GCLOUD_PROJECT: futebadosparcas
+      # NÃO definir FIREBASE_*_EMULATOR_HOST nem GCLOUD_PROJECT aqui:
+      # no processo da CLI do firebase-tools essas variáveis fazem o hub
+      # acreditar que os emuladores já estão rodando externamente e ele
+      # nunca os inicia (nenhuma linha "+ auth: ... running" no log) —
+      # crash silencioso histórico deste job. Elas são exportadas APENAS
+      # dentro do script interno, para os seeds/globalSetup.
       VITE_TEST_PLAYER_EMAIL: test.player@futeba.test
       VITE_TEST_PLAYER_PASSWORD: Test123!@#
       VITE_TEST_FIELD_OWNER_EMAIL: test.fieldowner@futeba.test
@@ -36,9 +38,11 @@ jobs:
       # Em modo emulador (VITE_USE_EMULATOR=true) o SDK conecta nos emuladores,
       # então os valores reais são irrelevantes; só o projectId casa com o
       # GCLOUD_PROJECT do emulador Firestore. #2784
+      # Projeto demo-*: emuladores 100% offline, sem busca de Admin SDK config
+      # nem credenciais no runner (issue CI Web E2E, 03/10/2026).
       VITE_FIREBASE_API_KEY: "demo-api-key"
       VITE_FIREBASE_AUTH_DOMAIN: "futebadosparcas.firebaseapp.com"
-      VITE_FIREBASE_PROJECT_ID: "futebadosparcas"
+      VITE_FIREBASE_PROJECT_ID: "demo-futebadosparcas"
       VITE_FIREBASE_STORAGE_BUCKET: "futebadosparcas.appspot.com"
       VITE_FIREBASE_MESSAGING_SENDER_ID: "000000000000"
       VITE_FIREBASE_APP_ID: "1:000000000000:web:0000000000000000000000"
@@ -109,23 +113,55 @@ jobs:
 
       - name: E2E (emulador + seed + Playwright)
         timeout-minutes: 20
-        # emulators:exec sobe/derruba emuladores automaticamente.
-        # O script inline faz seed e roda Playwright (webServer = vite preview no CI).
+        # emulators:exec morria silenciosamente após 'Serving at port' em TODOS
+        # os runs (exit 2, zero log — pipeline nunca passou desde 06/06). Aqui o
+        # emulador sobe em background com log em arquivo: a espera de readiness
+        # é pelo marcador oficial 'All emulators ready' e qualquer falha imprime
+        # o log real do emulador. Kill por PID (o contrato proíbe pkill).
         run: |
-          firebase emulators:exec \
+          firebase emulators:start \
             --only auth,firestore,functions \
-            --project futebadosparcas \
-            'bash -c "
-              set -e
-              echo \"[e2e] Emuladores prontos — seed...\"
-              NODE_PATH=functions/node_modules tsx scripts/seed-e2e-users.ts
-              NODE_PATH=functions/node_modules tsx scripts/seed-e2e-groups.ts
-              echo \"[e2e] Seed OK — Playwright (vite preview via webServer config)...\"
-              cd web && npx playwright test --project=chromium
-            "'
+            --project demo-futebadosparcas \
+            > "$RUNNER_TEMP/emu.log" 2>&1 &
+          echo $! > "$RUNNER_TEMP/emu.pid"
+          export FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099
+          export FIRESTORE_EMULATOR_HOST=127.0.0.1:8085
+          export FIREBASE_STORAGE_EMULATOR_HOST=127.0.0.1:9199
+          export GCLOUD_PROJECT=demo-futebadosparcas
+          ready=""
+          for i in $(seq 1 60); do
+            if grep -q "All emulators ready" "$RUNNER_TEMP/emu.log" 2>/dev/null; then
+              ready=sim
+              break
+            fi
+            sleep 2
+          done
+          if [ -z "$ready" ]; then
+            echo "[e2e] emuladores não ficaram prontos em 120s — log:"
+            tail -80 "$RUNNER_TEMP/emu.log"
+            exit 1
+          fi
+          echo "[e2e] Emuladores prontos — seed..."
+          NODE_PATH=functions/node_modules tsx scripts/seed-e2e-users.ts
+          NODE_PATH=functions/node_modules tsx scripts/seed-e2e-groups.ts
+          echo "[e2e] Seed OK — Playwright (vite preview via webServer config)..."
+          set +e
+          cd web && npx playwright test --project=chromium
+          code=$?
+          kill "$(cat "$RUNNER_TEMP/emu.pid")" 2>/dev/null || true
+          echo "[e2e] playwright exit=$code"
+          exit $code
         env:
           CI: "true"
           DEBUG: "pw:webserver"
+
+      - name: Diagnóstico pós-morte (memória + OOM do kernel)
+        if: always()
+        run: |
+          echo "[diag] trilha de memória (últimas 25 amostras):"
+          tail -25 "$RUNNER_TEMP/mem-trace.log" 2>/dev/null || echo "(sem trilha)"
+          echo "[diag] OOM/kill no kernel:"
+          sudo dmesg 2>/dev/null | grep -iE "oom|killed process|out of memory" | tail -10 || echo "(sem entradas de OOM no dmesg)"
 
       - name: Upload — Playwright report
         if: always()

@@ -87,6 +87,9 @@ function initAdmin(): void {
       '[seed-e2e-groups] FIREBASE_AUTH_EMULATOR_HOST não definido.'
     );
   }
+  // Mesma regra do seed-e2e-users: SEM credencial — os emuladores via env
+  // dispensam autenticação e o caminho de credential mockada quebra o
+  // Firestore (firestore/invalid-credential). Test-harness-ci já valida isso.
   if (admin.apps.length === 0) {
     admin.initializeApp({
       projectId: process.env.GCLOUD_PROJECT || 'futebadosparcas',
@@ -161,6 +164,20 @@ async function upsertGroup(group: GroupSeed): Promise<void> {
       user_name: getTestUserName(uid),
       role,
       status: 'ACTIVE',
+      joined_at: now,
+    });
+
+    // Espelho denormalizado users/{uid}/groups/{gid} — fonte primária de
+    // fetchUserGroups() no web (web/src/hooks/useGroups.ts). Sem ele a aba
+    // Grupos/Jogos lista "0 grupos" e o chrome das abas não renderiza,
+    // quebrando access-matrix, jornada-jogos e grupos.spec no E2E.
+    // Mesmo shape do invite-redeemed (functions/src/groups/invite-redeemed.ts).
+    await upsertDoc(`users/${uid}/groups`, group.id, {
+      id: group.id,
+      group_id: group.id,
+      group_name: group.name,
+      group_photo: null,
+      role,
       joined_at: now,
     });
   }
