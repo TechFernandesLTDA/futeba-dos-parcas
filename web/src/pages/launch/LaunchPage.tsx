@@ -26,6 +26,15 @@ import {
 import { Link as RouterLink } from 'react-router-dom';
 import { trackEvent } from '../../utils/analytics';
 import { useTheme as useAppTheme } from '../../contexts/ThemeContext';
+import { SEO_PARENT_COMPANY_URL } from '../../components/seo/metadata';
+
+const currentYear = new Date().getFullYear();
+
+const footerLinks = [
+  { label: 'Termos', href: '/terms_of_service.html' },
+  { label: 'Privacidade', href: '/privacy_policy.html' },
+  { label: 'Exclusão de conta', href: '/delete_account.html' },
+];
 
 const benefits = [
   {
@@ -228,6 +237,10 @@ function LaunchPageContent() {
                 component="img"
                 src="/og-futeba-dos-parcas.png"
                 alt="Amigos reunidos em um campo com a marca Futeba dos Parças"
+                // Dimensões explícitas evitam CLS; o LCP é pré-carregado via
+                // <link rel="preload"> no index.html (React 18 não suporta fetchPriority).
+                width={1200}
+                height={630}
                 sx={{
                   gridArea: 'heroImage',
                   display: 'block',
@@ -270,6 +283,8 @@ function LaunchPageContent() {
                       '&:focus-visible': {
                         outlineColor: 'common.white',
                       },
+                      // Alvo de toque >= 44px no mobile (padrão do header/footer).
+                      minHeight: 44,
                     }}
                   >
                     Organizar minha pelada
@@ -286,6 +301,7 @@ function LaunchPageContent() {
                         borderColor: theme.palette.primary.contrastText,
                         bgcolor: alpha(theme.palette.common.white, 0.1),
                       },
+                      minHeight: 44,
                     }}
                   >
                     Ver como funciona
@@ -451,7 +467,7 @@ function LaunchPageContent() {
                   color="secondary"
                   size="large"
                   onClick={() => trackSignup('mid_page')}
-                  sx={{ flexShrink: 0 }}
+                  sx={{ flexShrink: 0, minHeight: 44 }}
                 >
                   Começar agora
                 </Button>
@@ -503,22 +519,56 @@ function LaunchPageContent() {
       <Box component="footer" sx={{ bgcolor: 'background.paper' }}>
         <Container maxWidth="lg" sx={{ py: 4, pb: { xs: 11, md: 4 } }}>
           <Stack direction={{ xs: 'column', md: 'row' }} spacing={3} justifyContent="space-between" alignItems={{ xs: 'flex-start', md: 'center' }}>
-            <Stack spacing={0.5}>
-              <Typography fontWeight={900}>Futeba dos Parças</Typography>
-              <Typography variant="body2" color="text.secondary">A tecnologia que joga junto com o futebol amador.</Typography>
+            <Stack spacing={1}>
+              <Stack spacing={0.5}>
+                <Typography fontWeight={900}>Futeba dos Parças</Typography>
+                <Typography variant="body2" color="text.secondary">A tecnologia que joga junto com o futebol amador.</Typography>
+              </Stack>
+              <Typography variant="body2" color="text.secondary">
+                Um produto da{' '}
+                <Link
+                  href={SEO_PARENT_COMPANY_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  fontWeight={700}
+                >
+                  Tech Fernandes
+                </Link>
+                .
+              </Typography>
             </Stack>
-            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ color: 'text.secondary' }}>
-              <Link href="/terms_of_service.html">Termos</Link>
-              <Link href="/privacy_policy.html">Privacidade</Link>
-              <Link href="/delete_account.html">Exclusão de conta</Link>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={{ xs: 0.5, sm: 2 }} sx={{ color: 'text.secondary' }}>
+              {footerLinks.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  sx={{
+                    // Alvo de toque >= 44px no mobile (WCAG 2.5.8 / Material touch targets).
+                    minHeight: 44,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                  }}
+                >
+                  {item.label}
+                </Link>
+              ))}
               <Link
                 href="mailto:techfernandesltda@gmail.com?subject=Quero%20conhecer%20o%20Futeba%20dos%20Par%C3%A7as"
                 onClick={() => trackSupport('footer')}
+                sx={{
+                  minHeight: 44,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                }}
               >
                 Falar com suporte
               </Link>
             </Stack>
           </Stack>
+          <Divider sx={{ mt: { xs: 2, md: 3 }, mb: 1.5 }} />
+          <Typography variant="caption" color="text.secondary" display="block">
+            © {currentYear} Tech Fernandes LTDA. Todos os direitos reservados.
+          </Typography>
         </Container>
       </Box>
     </Box>
