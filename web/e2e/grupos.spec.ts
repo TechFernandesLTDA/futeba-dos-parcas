@@ -85,10 +85,10 @@ test.describe.serial('E2E — Domínio Grupos', () => {
     test('membro deve ver grupo público sem erro', async ({ playerPage }) => {
       await playerPage.goto(`/group/${GROUPS.public.id}`);
 
-      // Heading do grupo visível
+      // Heading do grupo visível (o nome aparece no h1 e em outro nível — .first())
       await expect(
-        playerPage.getByRole('heading', { name: GROUPS.public.name })
-      ).toBeVisible({ timeout: 10000 });
+        playerPage.getByRole('heading', { name: GROUPS.public.name }).first()
+      ).toBeVisible({ timeout: 10_000 });
 
       // NÃO deve mostrar tela de erro
       await expect(
@@ -103,9 +103,10 @@ test.describe.serial('E2E — Domínio Grupos', () => {
       await adminPage.goto(`/group/${GROUPS.public.id}`);
 
       // Grupo público permite visualização para não-membros
+      // (o nome aparece em mais de um heading — .first() evita strict violation)
       await expect(
-        adminPage.getByRole('heading', { name: GROUPS.public.name })
-      ).toBeVisible({ timeout: 10000 });
+        adminPage.getByRole('heading', { name: GROUPS.public.name }).first()
+      ).toBeVisible({ timeout: 10_000 });
 
       // NÃO deve mostrar tela de erro
       await expect(
@@ -150,7 +151,7 @@ test.describe.serial('E2E — Domínio Grupos', () => {
 
       // Verifica que o grupo carregou
       await expect(
-        fieldOwnerPage.getByRole('heading', { name: GROUPS.secret.name })
+        fieldOwnerPage.getByRole('heading', { name: GROUPS.secret.name }).first()
       ).toBeVisible({ timeout: 10000 });
 
       // Clica no botão "Convidar" (visível para admins na tab Membros)
@@ -191,7 +192,7 @@ test.describe.serial('E2E — Domínio Grupos', () => {
 
       // player agora é membro — deve ver o grupo sem erro
       await expect(
-        playerPage.getByRole('heading', { name: GROUPS.secret.name })
+        playerPage.getByRole('heading', { name: GROUPS.secret.name }).first()
       ).toBeVisible({ timeout: 10000 });
 
       // NÃO deve mostrar tela de erro

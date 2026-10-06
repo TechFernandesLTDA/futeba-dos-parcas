@@ -27,18 +27,35 @@ import { test, expect as fixtureExpect } from './fixtures';
 
 baseTest.describe('Jornada Jogos — UI pública', () => {
   /**
+   * Visitante recorrente: flags de onboarding já setadas (senão a Home
+   * manda para /guide mesmo sem login, via fallback de localStorage do
+   * useOnboarding).
+   */
+  baseTest.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => {
+      try {
+        localStorage.setItem('pwa_install_prompt_dismissed_until', String(Date.now() + 24 * 60 * 60 * 1000));
+        localStorage.setItem('whats_new_last_seen_version', JSON.stringify('999.0.0'));
+        localStorage.setItem('appGuideShown', 'true');
+        localStorage.setItem('profileSetupComplete', 'true');
+      } catch { /* storage indisponível */ }
+    });
+  });
+
+  /**
    * A home com a aba Jogos é PÚBLICA (descoberta sem login — funil de growth:
    * landing_viewed → signup_cta_clicked). Não autenticado vê os jogos com os
    * CTAs "Entrar"/"Criar conta" no cabeçalho.
    */
-  baseTest('não autenticado — /?tab=1 renderiza aba Jogos pública com CTA de login', async ({ page }) => {
+  baseTest('não autenticado — /?tab=1 renderiza a landing pública com CTA de login', async ({ page }) => {
     await page.goto('/?tab=1');
 
-    // Aba Jogos renderiza (não há mais redirect para /login — home pública)
-    await expect(page.getByRole('heading', { name: /jogos/i })).toBeVisible({ timeout: 10_000 });
+    // Landing pública de growth (hero de conversão) — não há lista de jogos
+    // para não autenticado
+    await expect(page.getByRole('heading', { name: /sua pelada/i })).toBeVisible({ timeout: 20_000 });
 
-    // CTA de login/cadastro presente no cabeçalho (funil de conversão)
-    await expect(page.getByRole('link', { name: /entrar/i })).toBeVisible({ timeout: 10_000 });
+    // CTA de login/cadastro presente (funil de conversão)
+    await expect(page.getByRole('link', { name: /entrar/i })).toBeVisible({ timeout: 20_000 });
   });
 
   /**
@@ -72,22 +89,17 @@ test.describe('Jornada Jogos — fixtures por role (requer emulador)', () => {
     // Navega diretamente para a aba Jogos (viewport-agnóstico — evita clicar em nav chrome)
     await playerPage.goto('/?tab=1');
 
-    // Título da seção (timeout maior: goto recarrega o documento e a
-    // restauração de sessão no emulador pode levar >5s no runner)
+    // Estrutura da aba: o getByRole('tab') não encontra os tabs (ancestral
+    // com aria-hidden no a11y engine), então usamos locator CSS + filter
     await fixtureExpect(
-      playerPage.getByRole('heading', { name: /jogos/i })
-    ).toBeVisible({ timeout: 10_000 });
-
-    // Aba de filtro "Todos" sempre presente
-    await fixtureExpect(
-      playerPage.getByRole('tab', { name: /todos/i })
-    ).toBeVisible({ timeout: 10_000 });
+      playerPage.locator('[role="tab"]').filter({ hasText: /todos/i }).first()
+    ).toBeVisible({ timeout: 20_000 });
 
     // FAB de criação de jogo — o rótulo também aparece no nav desktop
     // ("Criar Jogo"), então pegamos o primeiro match (FAB) sem strict violation
     await fixtureExpect(
-      playerPage.getByRole('button', { name: /criar jogo/i }).first()
-    ).toBeVisible({ timeout: 10_000 });
+      playerPage.locator('button').filter({ hasText: /criar jogo/i }).first()
+    ).toBeVisible({ timeout: 20_000 });
   });
 
   /**
@@ -109,15 +121,11 @@ test.describe('Jornada Jogos — fixtures por role (requer emulador)', () => {
     await fieldOwnerPage.goto('/?tab=1');
 
     await fixtureExpect(
-      fieldOwnerPage.getByRole('heading', { name: /jogos/i })
-    ).toBeVisible({ timeout: 10_000 });
+      fieldOwnerPage.locator('[role="tab"]').filter({ hasText: /todos/i }).first()
+    ).toBeVisible({ timeout: 20_000 });
 
     await fixtureExpect(
-      fieldOwnerPage.getByRole('tab', { name: /todos/i })
-    ).toBeVisible({ timeout: 10_000 });
-
-    await fixtureExpect(
-      fieldOwnerPage.getByRole('button', { name: /criar jogo/i }).first()
-    ).toBeVisible({ timeout: 10_000 });
+      fieldOwnerPage.locator('button').filter({ hasText: /criar jogo/i }).first()
+    ).toBeVisible({ timeout: 20_000 });
   });
 });

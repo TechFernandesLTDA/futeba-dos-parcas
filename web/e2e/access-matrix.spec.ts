@@ -62,7 +62,8 @@ const accessMatrix: AccessMatrixEntry[] = [
     route: '/',
     description: 'Home — todos os autenticados',
     allowedRoles: ['player', 'fieldOwner', 'admin'],
-    expectedElement: 'Próximos Jogos',
+    // Saudação sempre presente na HomeTab ("Olá, <nome>!")
+    expectedElement: 'Olá,',
     expectedElementSelector: 'text',
   },
 
@@ -71,10 +72,11 @@ const accessMatrix: AccessMatrixEntry[] = [
     route: '/games',
     description: 'Lista de Jogos — todos os autenticados',
     allowedRoles: ['player', 'fieldOwner', 'admin'],
-    // /games é Navigate → /?tab=1 (mantém o menu de navegação da Home)
+    // /games é Navigate → /?tab=1 (mantém o menu de navegação da Home).
+    // Sem elemento: o h6 "Jogos" fica DENTRO do botão do nav (ARIA presentational
+    // para descendentes de button) — getByRole('heading') não o expõe.
     allowedUrl: /\/\?tab=1$/,
-    expectedElement: 'Jogos',
-    expectedElementSelector: 'heading',
+    expectedElement: null,
   },
   {
     route: '/game/create',

@@ -61,6 +61,21 @@ function getCredentials(
  * - Button type="submit" com texto "Entrar"
  */
 async function performLogin(page: Page, credentials: TestCredentials): Promise<void> {
+  // Visitante recorrente: suprime o prompt PWA ("Usar como app") — o MUI Dialog
+  // aberto marca o <main> com aria-hidden e o conteúdo fica invisível para
+  // getByRole; seta também as flags de onboarding.
+  await page.addInitScript(() => {
+    try {
+      localStorage.setItem(
+        'pwa_install_prompt_dismissed_until',
+        String(Date.now() + 24 * 60 * 60 * 1000)
+      );
+      localStorage.setItem('whats_new_last_seen_version', JSON.stringify('999.0.0'));
+      localStorage.setItem('appGuideShown', 'true');
+      localStorage.setItem('profileSetupComplete', 'true');
+    } catch { /* storage indisponível */ }
+  });
+
   await page.goto('/login');
 
   // Aguarda o formulário estar visível antes de interagir

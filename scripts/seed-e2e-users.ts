@@ -182,6 +182,14 @@ async function upsertTestUser(user: TestUser): Promise<void> {
       favorite_team: 'Futeba dos Parças',
       is_searchable: true,
       role: user.role,
+      // Onboarding completo — sem isso a Home redireciona todo usuário novo
+      // para /guide (HomeTab useEffect hasSeenCarousel → navigate('/guide')),
+      // quebrando os testes E2E de rotas com AppLayout (/ , /?tab=*).
+      onboarding: {
+        carousel_completed_at: admin.firestore.FieldValue.serverTimestamp(),
+        checklist_dismissed: true,
+        version: 1,
+      },
       created_at: admin.firestore.FieldValue.serverTimestamp(),
       updated_at: admin.firestore.FieldValue.serverTimestamp(),
     },
@@ -205,7 +213,7 @@ export async function seedE2EUsers(): Promise<void> {
     await upsertTestUser(user);
   }
 
-  console.log('[seed-e2e-users] Seed concluído com sucesso. 3 usuários prontos para E2E.');
+  console.log(`[seed-e2e-users] Seed concluído com sucesso. ${TEST_USERS.length} usuários prontos para E2E.`);
 }
 
 // ==========================================
