@@ -23,12 +23,15 @@ import { test, expect as fixtureExpect } from './fixtures';
 baseTest.describe('Authentication — UI pública', () => {
   baseTest('should show login page', async ({ page }) => {
     await page.goto('/login');
-    await expect(page.getByRole('heading', { name: /login|entrar/i })).toBeVisible();
+    // Copy atual da tela: h1 "Futeba dos Parças" + status "Tela atual: Login".
+    await expect(page.getByRole('heading', { name: /futeba dos parças/i })).toBeVisible();
+    await expect(page.getByText('Tela atual: Login')).toBeVisible();
   });
 
   baseTest('should show register page', async ({ page }) => {
     await page.goto('/register');
-    await expect(page.getByRole('heading', { name: /cadastr/i })).toBeVisible();
+    // Copy atual da tela: h1 "Criar Conta" (antes "Cadastro").
+    await expect(page.getByRole('heading', { name: /criar conta/i })).toBeVisible();
   });
 
   baseTest('should navigate from login to register', async ({ page }) => {
