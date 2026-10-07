@@ -151,12 +151,19 @@ test.describe.serial('E2E — Domínio Grupos', () => {
     }) => {
       // Diagnóstico: erros de console/página/rede aparecem no stdout do runner.
       const attachDiagnostics = (page: Page, tag: string) => {
+        // eslint-disable-next-line no-console
         page.on('pageerror', (err) => console.log(`[${tag}][pageerror]`, err.message));
         page.on('console', (msg) => {
-          if (msg.type() === 'error') console.log(`[${tag}][console.error]`, msg.text());
+          if (msg.type() === 'error') {
+            // eslint-disable-next-line no-console
+            console.log(`[${tag}][console.error]`, msg.text());
+          }
         });
         page.on('response', (res) => {
-          if (res.status() >= 400) console.log(`[${tag}][http ${res.status()}]`, res.url());
+          if (res.status() >= 400) {
+            // eslint-disable-next-line no-console
+            console.log(`[${tag}][http ${res.status()}]`, res.url());
+          }
         });
       };
       attachDiagnostics(fieldOwnerPage, 'owner');
