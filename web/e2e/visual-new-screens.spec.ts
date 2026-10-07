@@ -75,12 +75,8 @@ const visualRoutes: VisualRoute[] = [
     role: 'admin',
     expectedPattern: /usuários|usuarios|admin/i,
   },
-  {
-    route: '/admin/performance',
-    description: 'painel de performance do administrador',
-    role: 'admin',
-    expectedPattern: /performance|painel|métricas|metricas/i,
-  },
+  // /admin/performance foi removida do produto (App.tsx: Navigate para
+  // /admin/users) — entrada obsoleta retirada da triagem R2 (06/10).
 ];
 
 async function assertVisualContract(page: Page, route: VisualRoute): Promise<void> {

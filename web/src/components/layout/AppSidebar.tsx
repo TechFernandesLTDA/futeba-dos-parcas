@@ -146,6 +146,7 @@ export function AppSidebar() {
           <Tooltip title={t('nav.search')} placement={overlayPlacement.tooltipPlacement}>
             <ListItemButton
               onClick={openSearch}
+              aria-label={t('nav.search')}
               sx={{ flexDirection: 'column', py: 1.25, borderRadius: 2 }}
             >
               <ListItemIcon sx={{ minWidth: 0, justifyContent: 'center', mb: 0.5 }}>
@@ -161,6 +162,7 @@ export function AppSidebar() {
               data-prefetch-route="/game/create"
               {...prefetchHandlers}
               onClick={() => navigateWithHaptic('/game/create')}
+              aria-label={t('games.createGame')}
               sx={{
                 flexDirection: 'column',
                 py: 1.25,

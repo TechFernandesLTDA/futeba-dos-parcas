@@ -134,8 +134,6 @@ test.describe('Access Matrix — Validação de Permissões por Role', () => {
         // Aguarda navegação finalizar (max 5s)
         await playerPage.waitForURL(/.*/, { timeout: 5000 });
 
-        const currentUrl = playerPage.url();
-
         if (entry.allowedRoles.includes('player')) {
           // Esperado: acesso permitido — elemento distintivo visível, sem /login.
           await expect(playerPage).not.toHaveURL(/\/login/);
@@ -160,8 +158,6 @@ test.describe('Access Matrix — Validação de Permissões por Role', () => {
         // Aguarda navegação finalizar
         await fieldOwnerPage.waitForURL(/.*/, { timeout: 5000 });
 
-        const currentUrl = fieldOwnerPage.url();
-
         if (entry.allowedRoles.includes('fieldOwner')) {
           // Esperado: acesso permitido — elemento distintivo visível, sem /login.
           await expect(fieldOwnerPage).not.toHaveURL(/\/login/);
@@ -185,8 +181,6 @@ test.describe('Access Matrix — Validação de Permissões por Role', () => {
         await adminPage.goto(entry.route);
         // Aguarda navegação finalizar
         await adminPage.waitForURL(/.*/, { timeout: 5000 });
-
-        const currentUrl = adminPage.url();
 
         if (entry.allowedRoles.includes('admin')) {
           // Esperado: acesso permitido — elemento distintivo visível, sem /login.
