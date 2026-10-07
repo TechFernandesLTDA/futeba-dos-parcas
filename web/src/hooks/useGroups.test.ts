@@ -660,18 +660,25 @@ describe('useInvitePlayers', () => {
     expect(mockOnSnapshot).not.toHaveBeenCalled();
   });
 
-  it('joinByInviteCode falha quando o grupo já foi soft-deletado', async () => {
+  it('joinByInviteCode NÃO consulta groups/{id} (grupo privado nega read a não-membro) e marca o convite como usado', async () => {
+    // QA FIX 2026-10-07: a transação não lê mais o grupo — a validação
+    // (existe, ACTIVE, não soft-deleted) é autoritativa no trigger
+    // onInviteRedeemed. Em grupo PRIVADO o transaction.get() lançava
+    // permission-denied e quebrava o join por convite.
+    const readPaths: string[] = [];
+    const updated: Array<{ path: string; data: unknown }> = [];
     mockDoc.mockImplementation((...segments: unknown[]) => makeDocRef(...segments));
     mockRunTransaction.mockImplementation(async (_db: unknown, callback: (tx: { get: (ref: { path: string }) => Promise<unknown>; update: (ref: { path: string }, data: unknown) => void }) => Promise<string>) => {
       await callback({
         get: async (ref) => {
-          if (ref.path === 'groups/group-1') {
+          readPaths.push(ref.path);
+          if (ref.path === 'groups/group-1/members/test-user-id') {
             return {
-              exists: () => true,
-              data: () => ({ deleted_at: { seconds: 1 }, status: 'DELETED' }),
+              exists: () => false,
+              data: () => ({}),
             };
           }
-          if (ref.path === 'groups/group-1/members/test-user-id') {
+          if (ref.path === 'groups/group-1/blocked_players/test-user-id') {
             return {
               exists: () => false,
               data: () => ({}),
@@ -687,16 +694,24 @@ describe('useInvitePlayers', () => {
             }),
           };
         },
-        update: vi.fn(),
+        update: (ref, data) => {
+          updated.push({ path: ref.path, data });
+        },
       });
       return 'group-1';
     });
 
     const { result } = renderHook(() => useInvitePlayers(), { wrapper: createTestWrapper() });
 
-    await expect(act(async () => {
+    // Sucesso: cliente só valida convite + self reads e marca used=true.
+    await act(async () => {
       await result.current.joinByInviteCode('ABC123');
-    })).rejects.toThrow('Código de convite inválido ou expirado');
+    });
+
+    expect(readPaths).not.toContain('groups/group-1');
+    expect(updated).toHaveLength(1);
+    expect(updated[0].path).toBe('invites/ABC123');
+    expect(updated[0].data).toMatchObject({ used: true, used_by: 'test-user-id' });
   });
 
   it('joinByInviteCode falha com código inválido', async () => {

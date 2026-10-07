@@ -324,6 +324,57 @@ describe("groups/members — invariantes de identidade e saída", () => {
 });
 
 // ============================================================
+// BLOCKED_PLAYERS — leitura do próprio doc
+// O fluxo de entrada por convite (#3391) e o self-create em grupo
+// público (#2153) leem blocked_players/{self} ANTES de haver
+// membership — a rule precisa permitir read do próprio doc.
+// ============================================================
+
+describe("groups/blocked_players — leitura do próprio doc", () => {
+  it("não-membro PODE ler o PRÓPRIO doc (inexistente) em blocked_players", async () => {
+    // Read de doc inexistente ainda avalia a rule — é o caso da
+    // transação de join para quem NUNCA foi bloqueado.
+    await assertSucceeds(
+      asPlayerC(testEnv)
+        .doc(`groups/${GROUP_PUBLIC}/blocked_players/${UID_PLAYER_C}`)
+        .get()
+    );
+  });
+
+  it("não-membro bloqueado PODE ler o próprio doc em blocked_players", async () => {
+    await assertSucceeds(
+      asUser(testEnv, UID_MEMBERSHIP_OUTSIDER)
+        .doc(`groups/${GROUP_BLOCKED_REJOIN}/blocked_players/${UID_MEMBERSHIP_OUTSIDER}`)
+        .get()
+    );
+  });
+
+  it("não-membro NÃO pode ler doc de OUTRO jogador em blocked_players", async () => {
+    await assertFails(
+      asPlayerC(testEnv)
+        .doc(`groups/${GROUP_PUBLIC}/blocked_players/${UID_MEMBERSHIP_OUTSIDER}`)
+        .get()
+    );
+  });
+
+  it("membro do grupo continua podendo ler blocked_players", async () => {
+    await assertSucceeds(
+      asPlayerA(testEnv)
+        .doc(`groups/${GROUP_BLOCKED_REJOIN}/blocked_players/${UID_MEMBERSHIP_OUTSIDER}`)
+        .get()
+    );
+  });
+
+  it("não-autenticado NÃO lê blocked_players", async () => {
+    await assertFails(
+      asAnon(testEnv)
+        .doc(`groups/${GROUP_BLOCKED_REJOIN}/blocked_players/${UID_MEMBERSHIP_OUTSIDER}`)
+        .get()
+    );
+  });
+});
+
+// ============================================================
 // PAPÉIS E OWNERSHIP — #3589, #3592, #3601
 // ============================================================
 

@@ -2788,9 +2788,17 @@ service cloud.firestore {
       // SUB-COLECAO: blocked_players
       // #2157: Admin/owner do grupo pode bloquear/desbloquear jogadores.
       // DocId == userId do jogador bloqueado.
+      // FIX QA 2026-10-07: read do PRÓPRIO doc é permitido para qualquer
+      // usuário autenticado — o fluxo de entrada por convite (#3391) e o
+      // self-create em grupo público (#2153) leem blocked_players/{self}
+      // ANTES de existir membership; exigir isGroupMember negava a read
+      // (PERMISSION_DENIED) e quebrava o join com convite no cliente.
+      // Privacidade preservada: o usuário só descobre SE ELE MESMO está
+      // bloqueado — nunca quem mais está.
       // ============================================
       match /blocked_players/{blockedUserId} {
-        allow read: if isAuthenticated() && isGroupMember(groupId);
+        allow read: if isAuthenticated() &&
+          (isGroupMember(groupId) || blockedUserId == userId());
         allow create: if isAuthenticated() && isGroupAdmin(groupId) &&
           request.resource.data.user_id == blockedUserId &&
           request.resource.data.blocked_by == userId() &&

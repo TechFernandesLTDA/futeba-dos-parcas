@@ -39,14 +39,6 @@ function isActiveGroupMemberStatus(status?: GroupMember['status']): boolean {
   return status === undefined || status === 'ACTIVE';
 }
 
-function isGroupUnavailable(raw: Record<string, unknown> | undefined): boolean {
-  if (!raw) return true;
-  return (raw.deleted_at !== null && raw.deleted_at !== undefined) ||
-    (raw.deletedAt !== null && raw.deletedAt !== undefined) ||
-    raw.status === 'DELETED' ||
-    raw.is_active === false;
-}
-
 export async function removeGroupMembershipArtifacts(
   groupId: string,
   userId: string,
@@ -620,11 +612,17 @@ export function useInvitePlayers() {
             throw new Error(t('feedback.groups.invalidInviteCode'));
           }
 
-          const groupRef = doc(db, 'groups', resolvedGroupId);
-          const groupSnap = await transaction.get(groupRef);
-          if (!groupSnap.exists() || isGroupUnavailable(groupSnap.data() as Record<string, unknown> | undefined)) {
-            throw new Error(t('feedback.groups.invalidInviteCode'));
-          }
+          // QA FIX 2026-10-07: a transação NÃO lê mais groups/{resolvedGroupId}.
+          // Em grupo PRIVADO a rule nega a read a não-membro (by design,
+          // #511/#1035) — o transaction.get() lançava permission-denied e
+          // quebrava o join por convite justamente no caso de uso principal
+          // do convite. A validação de grupo (existe, status ACTIVE, não
+          // soft-deleted, blocked) é feita autoritativamente pelo trigger
+          // server-side `onInviteRedeemed` via Admin SDK; o cliente aguarda
+          // o member doc aparecer (listener abaixo, 8s) para dar feedback.
+          // blocked_players/{self} continua checado aqui (read do próprio
+          // doc é permitida pela rule) para dar erro imediato e não queimar
+          // o convite (#3936).
 
           const memberRef = doc(db, 'groups', resolvedGroupId, 'members', uid);
           const memberSnap = await transaction.get(memberRef);
