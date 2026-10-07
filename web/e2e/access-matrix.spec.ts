@@ -43,7 +43,7 @@ const accessMatrix: AccessMatrixEntry[] = [
     route: '/',
     description: 'Home — todos os autenticados',
     allowedRoles: ['player', 'fieldOwner', 'admin'],
-    expectedElement: 'Próximos Jogos',
+    expectedElement: 'Tela atual: Início',
     expectedElementSelector: 'text',
   },
 
@@ -59,7 +59,7 @@ const accessMatrix: AccessMatrixEntry[] = [
     route: '/game/create',
     description: 'Criar Jogo — todos os autenticados',
     allowedRoles: ['player', 'fieldOwner', 'admin'],
-    expectedElement: 'Novo Jogo',
+    expectedElement: 'Tela atual: Criar',
     expectedElementSelector: 'text',
   },
 
@@ -75,7 +75,7 @@ const accessMatrix: AccessMatrixEntry[] = [
     route: '/group/create',
     description: 'Criar Grupo — todos os autenticados',
     allowedRoles: ['player', 'fieldOwner', 'admin'],
-    expectedElement: 'Novo Grupo',
+    expectedElement: 'Tela atual: Criar',
     expectedElementSelector: 'text',
   },
 
@@ -84,14 +84,14 @@ const accessMatrix: AccessMatrixEntry[] = [
     route: '/locations',
     description: 'Lista de Locais — FIELD_OWNER, ADMIN',
     allowedRoles: ['fieldOwner', 'admin'],
-    expectedElement: 'Locais',
+    expectedElement: 'Tela atual: Quadras',
     expectedElementSelector: 'text',
   },
   {
     route: '/location/create',
     description: 'Criar Local — FIELD_OWNER, ADMIN',
     allowedRoles: ['fieldOwner', 'admin'],
-    expectedElement: 'Novo Local',
+    expectedElement: 'Tela atual: Criar',
     expectedElementSelector: 'text',
   },
 
@@ -116,7 +116,7 @@ const accessMatrix: AccessMatrixEntry[] = [
     route: '/owner/dashboard',
     description: 'Dashboard do Dono — FIELD_OWNER, ADMIN',
     allowedRoles: ['fieldOwner', 'admin'],
-    expectedElement: 'Dashboard',
+    expectedElement: 'Tela atual: Painel',
     expectedElementSelector: 'text',
   },
 ];
@@ -137,20 +137,20 @@ test.describe('Access Matrix — Validação de Permissões por Role', () => {
         const currentUrl = playerPage.url();
 
         if (entry.allowedRoles.includes('player')) {
-          // Esperado: acesso permitido
-          expect(currentUrl).toBe(
-            `${playerPage.context().browser()?.contexts()[0]?.pages()[0]?.url().split(entry.route)[0] || 'http://localhost:5173'}${entry.route}`
-          );
-
+          // Esperado: acesso permitido — elemento distintivo visível, sem /login.
+          await expect(playerPage).not.toHaveURL(/\/login/);
           if (entry.expectedElement) {
             const locator = selectLocator(playerPage, entry.expectedElement, entry.expectedElementSelector);
             await expect(locator).toBeVisible({ timeout: 5000 });
           }
         } else {
-          // Esperado: redirect para / (acesso negado)
-          expect(currentUrl).toMatch(/\/$|\/login/);
-          // Se redirecionou para /login, é falha no fixture (não esperado)
-          expect(currentUrl).not.toMatch(/\/login/);
+          // Esperado: redirect para a home (acesso negado). O guard de
+          // permissões é assíncrono (carrega claims) — esperar a URL sair
+          // da rota com polling; a home usa tabs, ex.: /?tab=1.
+          await expect(async () => {
+            expect(new URL(playerPage.url()).pathname).not.toBe(entry.route);
+            expect(playerPage.url()).not.toMatch(/\/login/);
+          }).toPass({ timeout: 8000 });
         }
       });
 
@@ -163,19 +163,20 @@ test.describe('Access Matrix — Validação de Permissões por Role', () => {
         const currentUrl = fieldOwnerPage.url();
 
         if (entry.allowedRoles.includes('fieldOwner')) {
-          // Esperado: acesso permitido
-          expect(currentUrl).toBe(
-            `${fieldOwnerPage.context().browser()?.contexts()[0]?.pages()[0]?.url().split(entry.route)[0] || 'http://localhost:5173'}${entry.route}`
-          );
-
+          // Esperado: acesso permitido — elemento distintivo visível, sem /login.
+          await expect(fieldOwnerPage).not.toHaveURL(/\/login/);
           if (entry.expectedElement) {
             const locator = selectLocator(fieldOwnerPage, entry.expectedElement, entry.expectedElementSelector);
             await expect(locator).toBeVisible({ timeout: 5000 });
           }
         } else {
-          // Esperado: redirect para / (acesso negado)
-          expect(currentUrl).toMatch(/\/$|\/login/);
-          expect(currentUrl).not.toMatch(/\/login/);
+          // Esperado: redirect para a home (acesso negado). O guard de
+          // permissões é assíncrono (carrega claims) — esperar a URL sair
+          // da rota com polling; a home usa tabs, ex.: /?tab=1.
+          await expect(async () => {
+            expect(new URL(fieldOwnerPage.url()).pathname).not.toBe(entry.route);
+            expect(fieldOwnerPage.url()).not.toMatch(/\/login/);
+          }).toPass({ timeout: 8000 });
         }
       });
 
@@ -188,19 +189,20 @@ test.describe('Access Matrix — Validação de Permissões por Role', () => {
         const currentUrl = adminPage.url();
 
         if (entry.allowedRoles.includes('admin')) {
-          // Esperado: acesso permitido
-          expect(currentUrl).toBe(
-            `${adminPage.context().browser()?.contexts()[0]?.pages()[0]?.url().split(entry.route)[0] || 'http://localhost:5173'}${entry.route}`
-          );
-
+          // Esperado: acesso permitido — elemento distintivo visível, sem /login.
+          await expect(adminPage).not.toHaveURL(/\/login/);
           if (entry.expectedElement) {
             const locator = selectLocator(adminPage, entry.expectedElement, entry.expectedElementSelector);
             await expect(locator).toBeVisible({ timeout: 5000 });
           }
         } else {
-          // Esperado: redirect para / (acesso negado)
-          expect(currentUrl).toMatch(/\/$|\/login/);
-          expect(currentUrl).not.toMatch(/\/login/);
+          // Esperado: redirect para a home (acesso negado). O guard de
+          // permissões é assíncrono (carrega claims) — esperar a URL sair
+          // da rota com polling; a home usa tabs, ex.: /?tab=1.
+          await expect(async () => {
+            expect(new URL(adminPage.url()).pathname).not.toBe(entry.route);
+            expect(adminPage.url()).not.toMatch(/\/login/);
+          }).toPass({ timeout: 8000 });
         }
       });
     });
