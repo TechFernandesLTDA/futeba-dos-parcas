@@ -122,3 +122,27 @@ export async function loginAsAdmin(page: Page): Promise<void> {
   );
   await performLogin(page, credentials);
 }
+
+/**
+ * Autentica como PLAYER NÃO verificado (claim verified=false).
+ * Após o login o app NÃO vai para '/': ProtectedRoute redireciona
+ * direto para /onboarding/phone (sem telefone no Auth) — aguardamos
+ * esse destino em vez da home.
+ */
+export async function loginAsUnverified(page: Page): Promise<void> {
+  const credentials = getCredentials(
+    'VITE_TEST_UNVERIFIED_EMAIL',
+    'VITE_TEST_UNVERIFIED_PASSWORD',
+    'PLAYER_UNVERIFIED'
+  );
+
+  await page.goto('/login');
+  const loginForm = page.locator('form[aria-label="Entrar"]');
+  await loginForm.waitFor({ state: 'visible' });
+  await loginForm.getByRole('textbox', { name: 'Email' }).fill(credentials.email);
+  await loginForm.getByRole('textbox', { name: 'Senha' }).fill(credentials.password);
+  await loginForm.getByRole('button', { name: 'Entrar' }).click();
+
+  // Unverified nunca chega em '/': cai direto no onboarding.
+  await page.waitForURL(/\/onboarding\/(phone|cpf)/, { timeout: 15000 });
+}

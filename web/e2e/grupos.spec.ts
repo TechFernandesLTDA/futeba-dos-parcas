@@ -27,6 +27,7 @@
  */
 
 import { test, expect } from './fixtures';
+import type { Page } from '@playwright/test';
 
 // ==========================================
 // CONSTANTES
@@ -67,9 +68,10 @@ test.describe.serial('E2E — Domínio Grupos', () => {
         playerPage.getByText(/meus grupos/i)
       ).toBeVisible({ timeout: 15000 });
 
-      // Grupo público ativo (player é membro) deve estar visível
+      // Grupo público ativo (player é membro) deve estar visível.
+      // .first(): o nome pode aparecer em mais de um nó (heading + card).
       await expect(
-        playerPage.getByText(GROUPS.public.name)
+        playerPage.getByText(GROUPS.public.name).first()
       ).toBeVisible({ timeout: 5000 });
 
       // Grupo soft-deleted NÃO deve aparecer
@@ -147,6 +149,19 @@ test.describe.serial('E2E — Domínio Grupos', () => {
       fieldOwnerPage,
       playerPage,
     }) => {
+      // Diagnóstico: erros de console/página/rede aparecem no stdout do runner.
+      const attachDiagnostics = (page: Page, tag: string) => {
+        page.on('pageerror', (err) => console.log(`[${tag}][pageerror]`, err.message));
+        page.on('console', (msg) => {
+          if (msg.type() === 'error') console.log(`[${tag}][console.error]`, msg.text());
+        });
+        page.on('response', (res) => {
+          if (res.status() >= 400) console.log(`[${tag}][http ${res.status()}]`, res.url());
+        });
+      };
+      attachDiagnostics(fieldOwnerPage, 'owner');
+      attachDiagnostics(playerPage, 'player');
+
       // fieldOwner é admin do Clube Secreto (adicionado via seed)
       await fieldOwnerPage.goto(`/group/${GROUPS.secret.id}`);
 
@@ -166,8 +181,10 @@ test.describe.serial('E2E — Domínio Grupos', () => {
       // Clica "Gerar Convite" dentro do dialog
       await fieldOwnerPage.getByRole('button', { name: /gerar convite/i }).click();
 
-      // Aguarda o código de convite aparecer no TextField
-      const codeInput = fieldOwnerPage.getByLabel(/código do convite/i);
+      // Aguarda o código de convite aparecer no TextField.
+      // getByRole textbox: o regex de label casaria também com o botão
+      // "Copiar código do convite" (strict mode violation).
+      const codeInput = fieldOwnerPage.getByRole('textbox', { name: 'Código do Convite' });
       await expect(codeInput).toBeVisible({ timeout: 5000 });
 
       const inviteCode = await codeInput.inputValue();
@@ -179,7 +196,7 @@ test.describe.serial('E2E — Domínio Grupos', () => {
 
       // Aguarda o preview do convite carregar
       await expect(
-        playerPage.getByText(GROUPS.secret.name)
+        playerPage.getByText(GROUPS.secret.name).first()
       ).toBeVisible({ timeout: 10000 });
 
       // Clica "Aceitar e entrar" — isso dispara joinByInviteCode que:

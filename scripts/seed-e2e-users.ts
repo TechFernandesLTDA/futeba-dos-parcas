@@ -29,6 +29,11 @@ interface TestUser {
   nickname: string;
   preferredPosition: 'GOLEIRO' | 'ZAGUEIRO' | 'LATERAL' | 'VOLANTE' | 'MEIA' | 'ATACANTE';
   role: UserRole;
+  /**
+   * Custom claim `verified` (default true). O caso do PLAYER não verificado
+   * existe para validar a guarda VerifiedRoute/ProtectedRoute → /onboarding.
+   */
+  verified?: boolean;
 }
 
 // ==========================================
@@ -64,6 +69,16 @@ const TEST_USERS: TestUser[] = [
     nickname: 'Admin E2E',
     preferredPosition: 'ZAGUEIRO',
     role: 'ADMIN',
+  },
+  {
+    uid: 'e2e-test-player-unverified',
+    email: process.env.VITE_TEST_UNVERIFIED_EMAIL || 'test.unverified@futeba.test',
+    password: process.env.VITE_TEST_UNVERIFIED_PASSWORD || 'Test123!@#',
+    displayName: 'Jogador Não Verificado E2E',
+    nickname: 'Unverified E2E',
+    preferredPosition: 'ATACANTE',
+    role: 'PLAYER',
+    verified: false,
   },
 ];
 
@@ -144,7 +159,7 @@ async function upsertTestUser(user: TestUser): Promise<void> {
   // E2E visual/acesso precisa de usuários já prontos para passar pelos gates.
   await authAdmin.setCustomUserClaims(userRecord.uid, {
     role: user.role,
-    verified: true,
+    verified: user.verified ?? true,
     profileComplete: true,
   });
   console.log(`[seed] Custom Claims definidos: uid=${userRecord.uid} role=${user.role}`);
@@ -159,8 +174,8 @@ async function upsertTestUser(user: TestUser): Promise<void> {
       nickname: user.nickname,
       phone: '+5511999999999',
       phone_number: '+5511999999999',
-      cpf_verified: true,
-      verified: true,
+      cpf_verified: user.verified ?? true,
+      verified: user.verified ?? true,
       profile_complete: true,
       preferred_position: user.preferredPosition,
       preferred_field_types: ['SOCIETY'],
@@ -190,7 +205,7 @@ export async function seedE2EUsers(): Promise<void> {
     await upsertTestUser(user);
   }
 
-  console.log('[seed-e2e-users] Seed concluído com sucesso. 3 usuários prontos para E2E.');
+  console.log(`[seed-e2e-users] Seed concluído com sucesso. ${TEST_USERS.length} usuários prontos para E2E.`);
 }
 
 // ==========================================
