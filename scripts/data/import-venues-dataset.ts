@@ -300,28 +300,28 @@ function buildCreateData(
     country: "Brasil",
     neighborhood: district ?? "",
     region: "",
-    ownerId: ownerUid,
+    owner_id: ownerUid,
     managers: [],
-    isVerified: false,
-    isActive: true,
-    publicationStatus: "DRAFT",
+    is_verified: false,
+    is_active: true,
+    publication_status: "DRAFT",
     rating: 0,
-    ratingCount: 0,
+    rating_count: 0,
     description: `${venue.nome} — quadra${(venue.qtd_quadras ?? 1) > 1 ? "s" : ""} de futebol em ${district ?? city}.`,
-    photoUrl: venue.fotos?.[0] ?? null,
+    photo_url: venue.fotos?.[0] ?? null,
     photos: venue.fotos ?? [],
     amenities: [],
     phone: venue.telefone?.trim() ?? null,
     whatsapp: venue.whatsapp?.trim() ?? null,
     website: venue.site?.trim() ?? null,
     instagram: venue.instagram?.trim() ?? null,
-    timeZone: DEFAULT_TIMEZONE,
-    openingTime: hours?.openingTime ?? "08:00",
-    closingTime: hours?.closingTime ?? "23:59",
-    operatingDays: hours?.operatingDays ?? [1, 2, 3, 4, 5, 6, 0],
-    minGameDurationMinutes: 60,
-    fieldCount: fields.length,
-    hasActiveFields: fields.length > 0,
+    time_zone: DEFAULT_TIMEZONE,
+    opening_time: hours?.openingTime ?? "08:00",
+    closing_time: hours?.closingTime ?? "23:59",
+    operating_days: hours?.operatingDays ?? [1, 2, 3, 4, 5, 6, 0],
+    min_game_duration_minutes: 60,
+    field_count: fields.length,
+    has_active_fields: fields.length > 0,
     external_data: {
       rating: venue.nota_media ?? null,
       rating_count: venue.contagem_avaliacoes ?? null,
@@ -365,7 +365,7 @@ function buildPatchData(
     ["whatsapp", venue.whatsapp?.trim() ?? null],
     ["website", venue.site?.trim() ?? null],
     ["instagram", venue.instagram?.trim() ?? null],
-    ["photoUrl", venue.fotos?.[0] ?? null],
+    ["photo_url", venue.fotos?.[0] ?? null],
     ["photos", (venue.fotos ?? []).length > 0 ? venue.fotos : null],
   ];
   for (const [key, value] of fills) {
@@ -374,9 +374,9 @@ function buildPatchData(
 
   const hours = parseHours(venue.horarios);
   if (hours) {
-    if (isBlank(data.openingTime)) patch.openingTime = hours.openingTime;
-    if (isBlank(data.closingTime)) patch.closingTime = hours.closingTime;
-    if (isBlank(data.operatingDays)) patch.operatingDays = hours.operatingDays;
+    if (isBlank(data.opening_time)) patch.opening_time = hours.openingTime;
+    if (isBlank(data.closing_time)) patch.closing_time = hours.closingTime;
+    if (isBlank(data.operating_days)) patch.operating_days = hours.operatingDays;
   }
 
   // Enriquecimento com dados externos nunca sobrescreve o que existe.
@@ -529,14 +529,14 @@ async function main() {
             name: `Quadra ${i + 1}`,
             type: f.type,
             description: null,
-            photoUrl: null,
-            isActive: true,
-            hourlyPrice: f.priceCents ? f.priceCents / 100 : 0,
+            photo_url: null,
+            is_active: true,
+            hourly_price: f.priceCents ? f.priceCents / 100 : 0,
             photos: [],
             managers: [],
-            isCovered: false,
-            playersPerTeam: null,
-            minBookingMinutes: 60,
+            is_covered: false,
+            players_per_team: null,
+            min_booking_minutes: 60,
             created_at: FieldValue.serverTimestamp(),
             updated_at: FieldValue.serverTimestamp(),
           });
@@ -544,9 +544,38 @@ async function main() {
         }
         if (ops >= MAX_BATCH_OPS) await commitBatch();
       } else if (plan.action === "patch" && plan.locationId && plan.patchData) {
-        batch.update(db.collection("locations").doc(plan.locationId), plan.patchData);
+        const locRef = db.collection("locations").doc(plan.locationId);
+        batch.update(locRef, plan.patchData);
         ops += 1;
-        if (ops >= MAX_BATCH_OPS) await commitBatch();
+        // Enriquecimento de quadras: cria as que o detalhe/qtd do dataset
+        // indicam e que ainda não existem (ex.: venue importado sem quadras
+        // na R1 cuja R2 identificou quantidade/tipo).
+        const {fields} = buildFieldPlan(plan.venue);
+        const existingFields = await locRef.collection("fields").get();
+        const missing = Math.max(0, fields.length - existingFields.size);
+        for (let i = 0; i < missing; i++) {
+          const f = fields[existingFields.size + i];
+          batch.set(locRef.collection("fields").doc(), {
+            name: `Quadra ${existingFields.size + i + 1}`,
+            type: f.type,
+            description: null,
+            photo_url: null,
+            is_active: true,
+            hourly_price: f.priceCents ? f.priceCents / 100 : 0,
+            photos: [],
+            managers: [],
+            is_covered: false,
+            players_per_team: null,
+            min_booking_minutes: 60,
+            created_at: FieldValue.serverTimestamp(),
+            updated_at: FieldValue.serverTimestamp(),
+          });
+          ops += 1;
+          if (ops >= MAX_BATCH_OPS) await commitBatch();
+        }
+        if (missing > 0) {
+          console.log(`      + ${missing} quadra(s) criada(s) por enriquecimento`);
+        }
       }
     } catch (err) {
       stats.errors += 1;
