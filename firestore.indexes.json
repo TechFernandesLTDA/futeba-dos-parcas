@@ -445,16 +445,6 @@
       ]
     },
     {
-      "collectionGroup": "league_seasons",
-      "queryScope": "COLLECTION_GROUP",
-      "fields": [
-        {
-          "fieldPath": "is_active",
-          "order": "ASCENDING"
-        }
-      ]
-    },
-    {
       "collectionGroup": "user_locations",
       "queryScope": "COLLECTION",
       "fields": [
@@ -2907,6 +2897,30 @@
         {
           "fieldPath": "locationName",
           "order": "ASCENDING"
+        }
+      ]
+    }
+  ],
+  "fieldOverrides": [
+    {
+      "collectionGroup": "league_seasons",
+      "fieldPath": "is_active",
+      "indexes": [
+        {
+          "order": "ASCENDING",
+          "queryScope": "COLLECTION"
+        },
+        {
+          "order": "DESCENDING",
+          "queryScope": "COLLECTION"
+        },
+        {
+          "arrayConfig": "CONTAINS",
+          "queryScope": "COLLECTION"
+        },
+        {
+          "order": "ASCENDING",
+          "queryScope": "COLLECTION_GROUP"
         }
       ]
     }
