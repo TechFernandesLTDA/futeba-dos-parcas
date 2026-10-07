@@ -9,7 +9,7 @@
  *
  * Referências: FIX #1024, GAP #7 (#1080), App.tsx ProtectedRoute.
  */
-import { test, expect } from '../fixtures';
+import { test, expect } from './fixtures';
 
 test.describe('E2E — Domínio Acesso — Guarda de verificação (unverified)', () => {
   test('unverified cai direto no onboarding após o login', async ({
