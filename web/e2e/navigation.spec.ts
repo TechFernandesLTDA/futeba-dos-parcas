@@ -1,9 +1,12 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Navigation', () => {
-  test('should redirect unauthenticated users to login', async ({ page }) => {
+  test('visitante em / vê a landing pública (sem redirect)', async ({ page }) => {
+    // Comportamento atual do produto: "/" é a landing pública de marketing
+    // (CTA de cadastro); redirect para /login só em rotas autenticadas.
     await page.goto('/');
-    await expect(page).toHaveURL(/login|welcome/);
+    await expect(page.getByRole('heading', { name: /futeba dos parças/i })).toBeVisible();
+    await expect(page).toHaveURL(/\/$/);
   });
 
   test('should have skip-nav link for accessibility', async ({ page }) => {

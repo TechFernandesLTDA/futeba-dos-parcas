@@ -39,6 +39,22 @@ interface AuthFixtures {
 // EXTENSÃO DO test BASE DO PLAYWRIGHT
 // ==========================================
 
+/**
+ * Dispensa overlays que bloqueiam interação após o login (prompt de
+ * instalação PWA "Usar como app", popup de novidades etc.). Best-effort:
+ * se nenhum overlay existir, não faz nada. Sem isso, testes que procuram
+ * botões da página ficam cegos (o modal captura o DOM visível).
+ */
+export async function dismissOverlays(page: Page): Promise<void> {
+  for (const label of ['Entendi', 'Fechar', 'Agora não', 'Não, obrigado']) {
+    const btn = page.getByRole('button', { name: new RegExp(`^${label}$`, 'i') });
+    if (await btn.isVisible({ timeout: 800 }).catch(() => false)) {
+      await btn.click().catch(() => {});
+      await page.waitForTimeout(300);
+    }
+  }
+}
+
 export const test = base.extend<AuthFixtures>({
   /**
    * Fixture playerPage: abre contexto isolado e autentica como PLAYER.
@@ -51,6 +67,7 @@ export const test = base.extend<AuthFixtures>({
     const page = await context.newPage();
 
     await loginAsPlayer(page);
+    await dismissOverlays(page);
 
     // Cede a página autenticada para o corpo do teste
     await use(page);
@@ -67,6 +84,7 @@ export const test = base.extend<AuthFixtures>({
     const page = await context.newPage();
 
     await loginAsFieldOwner(page);
+    await dismissOverlays(page);
 
     await use(page);
 
@@ -81,6 +99,7 @@ export const test = base.extend<AuthFixtures>({
     const page = await context.newPage();
 
     await loginAsAdmin(page);
+    await dismissOverlays(page);
 
     await use(page);
 
