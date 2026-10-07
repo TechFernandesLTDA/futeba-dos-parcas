@@ -20,12 +20,40 @@
  */
 
 import * as fs from "fs";
+import * as os from "os";
 import * as path from "path";
 import * as admin from "firebase-admin";
 import {FieldValue} from "firebase-admin/firestore";
 
 if (!admin.apps.length) {
-  admin.initializeApp();
+  // --cli-credential: autentica com a sessão do firebase CLI do usuário
+  // (refresh_token de ~/.config/configstore/firebase-tools.json + o client
+  // OAuth público do próprio firebase-tools). Escreve com a identidade do
+  // usuário logado — sem service account nova e sem segredos no repo.
+  const args0 = process.argv.slice(2);
+  if (args0.includes("--cli-credential")) {
+    const cfgPath = path.join(os.homedir(), ".config", "configstore", "firebase-tools.json");
+    const cfg = JSON.parse(fs.readFileSync(cfgPath, "utf8"));
+    const refreshToken = cfg.tokens?.refresh_token;
+    if (!refreshToken) {
+      console.error("✗ --cli-credential: sem refresh_token em " + cfgPath +
+          ". Rode `firebase login` primeiro.");
+      process.exit(1);
+    }
+    admin.initializeApp({
+      projectId: "futebadosparcas",
+      credential: admin.credential.refreshToken({
+        type: "authorized_user",
+        client_id: "564921029129-p4j63bjwvusvcq5nrpe7j4o85gctione.apps.googleusercontent.com",
+        client_secret: "YSo5NnkNIfoS4bf3FTo5Fop-",
+        refresh_token: refreshToken,
+      }),
+    });
+  } else {
+    // Sem --cli-credential: usa ADC (gcloud auth application-default login)
+    // com o projectId explícito do projeto do app.
+    admin.initializeApp({projectId: "futebadosparcas"});
+  }
 }
 
 const db = admin.firestore();
@@ -401,7 +429,10 @@ async function main() {
 
   const dataset = JSON.parse(fs.readFileSync(datasetPath, "utf8")) as {venues: VenueDataset[]};
   const venues = dataset.venues ?? [];
-  console.log(`Dataset: ${datasetPath} — ${venues.length} venue(s). Modo: ${execute ? "EXECUTE" : "DRY-RUN (nada é escrito)"}`);
+  const limitIdx = args.indexOf("--limit");
+  const limit = limitIdx >= 0 ? Number(args[limitIdx + 1]) : venues.length;
+  const sliced = venues.slice(0, Number.isInteger(limit) && limit > 0 ? limit : venues.length);
+  console.log(`Dataset: ${datasetPath} — ${sliced.length}/${venues.length} venue(s). Modo: ${execute ? "EXECUTE" : "DRY-RUN (nada é escrito)"}`);
 
   if (execute && !ownerUid) {
     console.error("✗ --execute exige --owner-uid (Location exige ownerId). Abortado.");
@@ -426,7 +457,7 @@ async function main() {
   const stats = {create: 0, patch: 0, skip: 0, fields: 0, manualReview: 0, errors: 0};
   const plans: VenuePlan[] = [];
 
-  for (const venue of venues) {
+  for (const venue of sliced) {
     try {
       if (!venue.nome?.trim()) {
         stats.skip += 1;
