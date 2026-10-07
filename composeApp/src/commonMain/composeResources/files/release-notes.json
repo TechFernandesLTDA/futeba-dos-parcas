@@ -1,7 +1,43 @@
 {
   "platform": "ios",
-  "generatedAt": "2026-08-28T16:23:47.965Z",
+  "generatedAt": "2026-10-01T12:15:43.254Z",
   "notes": [
+    {
+      "version": "1.8.0",
+      "buildNumber": 24,
+      "releaseDate": "2026-10-01",
+      "type": "minor",
+      "showPopup": true,
+      "published": true,
+      "headline": "Escolha de tema no iOS e pódio com contraste correto.",
+      "highlights": [
+        {
+          "icon": "dark_mode",
+          "title": "Seu tema no iOS",
+          "description": "O app iOS agora tem tela de escolha de tema (Claro/Escuro/Sistema + alto contraste), em paridade com Android e Web."
+        },
+        {
+          "icon": "emoji_events",
+          "title": "Pódio legível",
+          "description": "Os números do pódio pós-jogo ficam legíveis em qualquer tema."
+        }
+      ],
+      "added": [],
+      "improved": [
+        "Fontes do sistema (SF) no iOS — removidos 788 KB de fontes que o app nunca renderizava.",
+        "Catálogo de badges sem paletas de cores mortas."
+      ],
+      "fixed": [
+        "Número do pódio com contraste de 1,40:1 → 13,76:1, usando os mesmos tokens de contraste do Android."
+      ],
+      "issueRefs": [
+        4096,
+        4097,
+        4098,
+        4099,
+        4109
+      ]
+    },
     {
       "version": "1.7.2",
       "buildNumber": 23,

@@ -1,7 +1,84 @@
 {
   "platform": "web",
-  "generatedAt": "2026-08-28T16:23:47.964Z",
+  "generatedAt": "2026-10-01T12:15:43.253Z",
   "notes": [
+    {
+      "version": "1.57.0",
+      "buildNumber": null,
+      "releaseDate": "2026-10-01",
+      "type": "minor",
+      "showPopup": true,
+      "published": true,
+      "headline": "Jogos privados protegidos, conquistas visíveis de verdade e navegação completa por teclado no Futeba dos Parças.",
+      "highlights": [
+        {
+          "icon": "lock",
+          "title": "Jogos privados protegidos",
+          "description": "A lista de jogos não expõe mais partidas privadas de outros grupos nem jogos removidos."
+        },
+        {
+          "icon": "emoji_events",
+          "title": "Conquistas que aparecem",
+          "description": "Badges como Embaixador, Mito da Rodada e MVP da Liga agora aparecem nas telas de conquistas em todas as plataformas."
+        },
+        {
+          "icon": "keyboard",
+          "title": "Tudo pelo teclado",
+          "description": "Comparar jogadores e as ações dos avisos (Atualizar, Desfazer, Confirmar) funcionam com Tab e leitor de tela."
+        }
+      ],
+      "added": [
+        "Busca de \"jogadores próximos\" usa sua posição real ao tocar em Atualizar, com proteção anti-rastreamento.",
+        "Disponibilidade de quadra verificada pelo servidor ao criar/editar jogo no computador, sem expor dados de jogos privados.",
+        "Publicações, fotos e vídeos de jogos agora pedem confirmação antes de apagar.",
+        "Números com plural correto: \"1 voto\", \"1 membro\", \"1 jogo\"."
+      ],
+      "improved": [
+        "A barra do navegador acompanha a cor de fundo do app nos temas claro, escuro e OLED.",
+        "O PWA no iPhone abre sem flash branco e com a tela inicial correta para cada aparelho.",
+        "O resumo semanal deixa de avisar sobre partidas canceladas pelo sistema como se fossem canceladas pelo organizador."
+      ],
+      "fixed": [
+        "Badges conquistados (17/17 em produção) deixam de ficar invisíveis na tela de conquistas.",
+        "Excluir mensagem de conversa atualiza a prévia da lista de conversas.",
+        "O botão \"Atualizar\" do aviso de nova versão voltou a funcionar por teclado.",
+        "A busca de \"jogadores próximos\" volta a funcionar depois de 30 dias com o compartilhamento ligado."
+      ],
+      "issueRefs": [
+        4096,
+        4097,
+        4098,
+        4099,
+        4100,
+        4107,
+        4108,
+        4109,
+        4110,
+        4111,
+        4112,
+        4113,
+        4114,
+        4115,
+        4121,
+        4122,
+        4123,
+        4124,
+        4126,
+        4127,
+        4129,
+        4130,
+        4131,
+        4132,
+        4134,
+        4135,
+        4138,
+        4139,
+        4143,
+        4146,
+        4147,
+        4148
+      ]
+    },
     {
       "version": "1.56.9",
       "buildNumber": null,
