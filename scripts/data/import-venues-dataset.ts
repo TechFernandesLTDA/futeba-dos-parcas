@@ -84,6 +84,7 @@ interface VenueDataset {
     bairro?: string | null;
     cidade?: string | null;
     uf?: string | null;
+    cep?: string | null;
   };
   telefone?: string | null;
   whatsapp?: string | null;
@@ -100,6 +101,14 @@ interface VenueDataset {
   fotos?: string[];
   fontes?: VenueSource[];
   confidence?: string | null;
+  /** Coordenadas verificáveis (geocoding/OSM). Ausente/null = não gravar. */
+  coordenadas?: {lat: number; lon: number} | null;
+  /** Finalidade validada na pesquisa (ex.: comercial_aluguel). */
+  finalidade?: string | null;
+  /** Origem primária do registro (ex.: web, osm). */
+  origem?: string | null;
+  /** Rodada do epic #4186 em que o registro entrou (R1..R8). */
+  rodada_dados?: string | null;
 }
 
 interface ParsedHours {
@@ -226,19 +235,42 @@ function buildFieldPlan(
   return {fields, notes};
 }
 
-async function loadExistingLocations(): Promise<Map<string, FirebaseFirestore.QueryDocumentSnapshot>> {
+/**
+ * Carrega as locations existentes das cidades presentes no dataset.
+ * A chave é `cidade::nomeNormalizado` — dedupe multi-cidade (RMC/R4-R8) sem
+ * colidir venues de cidades diferentes que compartilham nome.
+ */
+async function loadExistingLocations(
+    cities: string[],
+): Promise<Map<string, FirebaseFirestore.QueryDocumentSnapshot>> {
   const byKey = new Map<string, FirebaseFirestore.QueryDocumentSnapshot>();
-  // Varredura por cidade curada (dataset atual é Curitiba).
-  const snap = await db.collection("locations")
-      .where("city", "==", "Curitiba")
-      .get();
-  for (const doc of snap.docs) {
-    const name = doc.get("name");
-    if (typeof name === "string" && name.trim()) {
-      byKey.set(normalizeName(name), doc);
+  for (const city of cities) {
+    const snap = await db.collection("locations")
+        .where("city", "==", city)
+        .get();
+    for (const doc of snap.docs) {
+      const name = doc.get("name");
+      if (typeof name === "string" && name.trim()) {
+        byKey.set(`${city}::${normalizeName(name)}`, doc);
+      }
     }
   }
   return byKey;
+}
+
+/** Cidade de um venue do dataset (fallback: cidade do dataset / Curitiba). */
+function cityOf(venue: VenueDataset, datasetCity?: string): string {
+  return venue.endereco?.cidade?.trim() || datasetCity || "Curitiba";
+}
+
+function validCoord(
+    value: unknown,
+): value is {lat: number; lon: number} {
+  if (!value || typeof value !== "object") return false;
+  const c = value as {lat?: unknown; lon?: unknown};
+  return typeof c.lat === "number" && Number.isFinite(c.lat)
+    && typeof c.lon === "number" && Number.isFinite(c.lon)
+    && Math.abs(c.lat) <= 90 && Math.abs(c.lon) <= 180;
 }
 
 function isBlank(value: unknown): boolean {
@@ -266,13 +298,14 @@ function buildCreateData(
     venue: VenueDataset,
     ownerUid: string,
     manualReview: string[],
+    datasetCity?: string,
 ): FirebaseFirestore.UpdateData {
   const end = venue.endereco ?? {};
   const street = end.rua?.trim() ?? null;
   const number = end.numero?.trim() ?? null;
   const district = end.bairro?.trim() ?? null;
-  const city = end.cidade?.trim() ?? "Curitiba";
-  const state = end.uf?.trim() ?? "PR";
+  const city = end.cidade?.trim() || datasetCity || "Curitiba";
+  const state = end.uf?.trim() || "PR";
   const hours = parseHours(venue.horarios);
   const {fields} = buildFieldPlan(venue);
 
@@ -290,7 +323,7 @@ function buildCreateData(
   const data: FirebaseFirestore.UpdateData = {
     name: venue.nome.trim(),
     address: addressParts.join(" - "),
-    cep: "",
+    cep: end.cep?.trim() ?? "",
     street: street ?? "",
     number: number ?? "",
     complement: "",
@@ -326,8 +359,11 @@ function buildCreateData(
       rating: venue.nota_media ?? null,
       rating_count: venue.contagem_avaliacoes ?? null,
       confidence: venue.confidence ?? null,
+      finalidade: venue.finalidade ?? null,
+      origem: venue.origem ?? null,
       tipo_piso: venue.tipo_piso ?? null,
       detalhe_quadras: venue.detalhe_quadras ?? null,
+      rodada_dados: venue.rodada_dados ?? null,
       comments: (venue.comentarios ?? []).slice(0, 3).map((c) => ({
         autor: c.autor ?? null,
         data: c.data ?? null,
@@ -342,6 +378,10 @@ function buildCreateData(
     updated_at: FieldValue.serverTimestamp(),
     updated_by: SOURCE_LABEL,
   };
+  if (validCoord(venue.coordenadas)) {
+    data.latitude = venue.coordenadas.lat;
+    data.longitude = venue.coordenadas.lon;
+  }
   return data;
 }
 
@@ -361,6 +401,7 @@ function buildPatchData(
     ["district", end.bairro?.trim() ?? null],
     ["city", end.cidade?.trim() ?? null],
     ["state", end.uf?.trim() ?? null],
+    ["cep", end.cep?.trim() ?? null],
     ["phone", venue.telefone?.trim() ?? null],
     ["whatsapp", venue.whatsapp?.trim() ?? null],
     ["website", venue.site?.trim() ?? null],
@@ -370,6 +411,11 @@ function buildPatchData(
   ];
   for (const [key, value] of fills) {
     if (value != null && isBlank(data[key])) patch[key] = value;
+  }
+  // Coordenadas verificáveis só preenchem o que está vazio.
+  if (validCoord(venue.coordenadas)) {
+    if (isBlank(data.latitude)) patch.latitude = venue.coordenadas.lat;
+    if (isBlank(data.longitude)) patch.longitude = venue.coordenadas.lon;
   }
 
   const hours = parseHours(venue.horarios);
@@ -384,8 +430,11 @@ function buildPatchData(
     rating: venue.nota_media ?? null,
     rating_count: venue.contagem_avaliacoes ?? null,
     confidence: venue.confidence ?? null,
+    finalidade: venue.finalidade ?? null,
+    origem: venue.origem ?? null,
     tipo_piso: venue.tipo_piso ?? null,
     detalhe_quadras: venue.detalhe_quadras ?? null,
+    rodada_dados: venue.rodada_dados ?? null,
     comments: (venue.comentarios ?? []).slice(0, 3).map((c) => ({
       autor: c.autor ?? null,
       data: c.data ?? null,
@@ -427,8 +476,13 @@ async function main() {
   const ownerIdx = args.indexOf("--owner-uid");
   const ownerUid = ownerIdx >= 0 ? args[ownerIdx + 1] : null;
 
-  const dataset = JSON.parse(fs.readFileSync(datasetPath, "utf8")) as {venues: VenueDataset[]};
+  const dataset = JSON.parse(fs.readFileSync(datasetPath, "utf8")) as {
+    cidade?: string;
+    rodada?: number;
+    venues: VenueDataset[];
+  };
   const venues = dataset.venues ?? [];
+  const datasetCity = dataset.cidade?.trim() || undefined;
   const limitIdx = args.indexOf("--limit");
   const limit = limitIdx >= 0 ? Number(args[limitIdx + 1]) : venues.length;
   const sliced = venues.slice(0, Number.isInteger(limit) && limit > 0 ? limit : venues.length);
@@ -440,9 +494,14 @@ async function main() {
   }
 
   let existing: Map<string, FirebaseFirestore.QueryDocumentSnapshot>;
+  // Cidades distintas do dataset: dedupe idempotente multi-cidade.
+  const cities = [...new Set(
+      venues.map((v) => cityOf(v, datasetCity)).filter(Boolean),
+  )];
   try {
-    existing = await loadExistingLocations();
-    console.log(`Locations existentes em Curitiba: ${existing.size}`);
+    existing = await loadExistingLocations(cities);
+    console.log(`Cidades do dataset (${cities.length}): ${cities.join(", ")}`);
+    console.log(`Locations existentes nessas cidades: ${existing.size}`);
   } catch (err) {
     if (execute) {
       console.error("✗ --execute exige acesso ao Firestore com credenciais válidas. Abortado.");
@@ -463,7 +522,7 @@ async function main() {
         stats.skip += 1;
         continue;
       }
-      const key = normalizeName(venue.nome);
+      const key = `${cityOf(venue, datasetCity)}::${normalizeName(venue.nome)}`;
       const match = existing.get(key);
       const manualReview: string[] = [];
       if (match) {
@@ -474,7 +533,7 @@ async function main() {
         });
         stats.patch += 1;
       } else {
-        const createData = buildCreateData(venue, ownerUid ?? "", manualReview);
+        const createData = buildCreateData(venue, ownerUid ?? "", manualReview, datasetCity);
         const {fields, notes} = buildFieldPlan(venue);
         plans.push({
           venue, action: "create", createData, fieldsToCreate: fields,
