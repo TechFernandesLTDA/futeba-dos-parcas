@@ -47,7 +47,7 @@ rootProject.plugins.withType<org.jetbrains.kotlin.gradle.targets.wasm.yarn.WasmY
         // brace-expansion: lockfile 1.1.12 → 1.1.14 (GHSA-f886)
         // brace-expansion@^5 (via minimatch@9) é eliminada automaticamente ao
         // atualizar minimatch@^9 para 9.0.9, que muda sua dep para brace-expansion@^2
-        resolution("brace-expansion") { include("1.1.14") }
+        resolution("brace-expansion") { include("1.1.21") }
         // diff: ReDoS via O(n^2) backtracking em diffs grandes (GHSA-73rr)
         // advisory afeta >= 6.0.0, < 8.0.3; bump para 9.0.0 (latest estável)
         resolution("diff") { include("9.0.0") }
@@ -58,7 +58,7 @@ rootProject.plugins.withType<org.jetbrains.kotlin.gradle.targets.wasm.yarn.WasmY
         // http-proxy-middleware: host-header-driven backend routing bypass (GHSA-64mm)
         resolution("http-proxy-middleware") { include("2.0.10") }
         // js-yaml: quadratic-complexity DoS em merge keys repetidas (GHSA-h67p)
-        resolution("js-yaml") { include("4.2.0") }
+        resolution("js-yaml") { include("4.3.2") }
         // launch-editor: NTLMv2 hash disclosure via UNC path (GHSA-v6wh)
         resolution("launch-editor") { include("2.14.1") }
         // lodash: ReDoS e template injection (GHSA-r5fr, GHSA-f23m)
@@ -76,13 +76,13 @@ rootProject.plugins.withType<org.jetbrains.kotlin.gradle.targets.wasm.yarn.WasmY
         resolution("picomatch") { include("2.3.2") }
         // postcss: injeção de newline em grid layouts (GHSA-qx2v)
         // advisory afeta < 8.5.10; bump para 8.5.13 (latest estável)
-        resolution("postcss") { include("8.5.13") }
+        resolution("postcss") { include("8.5.23") }
         // serialize-javascript: CPU exhaustion DoS e RCE via RegExp.flags (GHSA-qj8w, GHSA-5c6j)
         resolution("serialize-javascript") { include("7.0.5") }
         // shell-quote: quote() não escapava newlines em object .op (GHSA-w7jw)
-        resolution("shell-quote") { include("1.8.4") }
+        resolution("shell-quote") { include("1.11.0") }
         // socket.io-parser: attachments ilimitados levando a OOM (GHSA-677m)
-        resolution("socket.io-parser") { include("4.2.6") }
+        resolution("socket.io-parser") { include("4.2.7") }
         // uuid: insegurança no gerador de números aleatórios (GHSA-w5hq)
         // advisory afeta < 14.0.0; bump major 8.x → 14.0.0 (build-time only, sem API breaking em consumidores)
         resolution("uuid") { include("14.0.0") }
@@ -90,9 +90,31 @@ rootProject.plugins.withType<org.jetbrains.kotlin.gradle.targets.wasm.yarn.WasmY
         resolution("webpack") { include("5.106.2") }
         // webpack-dev-server: DNS rebinding e SSRF (GHSA-9jgg, GHSA-4v9v)
         // advisory atual também exige >= 5.2.5 para HMR proxy hardening (GHSA-mx8g)
-        resolution("webpack-dev-server") { include("5.2.5") }
+        resolution("webpack-dev-server") { include("5.2.6") }
         // ws: memory exhaustion DoS por fragmentos pequenos (GHSA-96hv)
         resolution("ws") { include("8.21.0") }
+        // Dependabot sweep 08/10/2026: baseline-browser-mapping < 2.11.0 possui advisories (build-time only)
+        resolution("baseline-browser-mapping") { include("2.11.0") }
+        // Dependabot sweep 08/10/2026: body-parser < 1.20.6 possui advisories (build-time only)
+        resolution("body-parser") { include("1.20.6") }
+        // Dependabot sweep 08/10/2026: browserslist < 4.28.7 possui advisories (build-time only)
+        resolution("browserslist") { include("4.28.7") }
+        // Dependabot sweep 08/10/2026: compression < 1.8.2 possui advisories (build-time only)
+        resolution("compression") { include("1.8.2") }
+        // Dependabot sweep 08/10/2026: engine.io < 6.6.10 possui advisories (build-time only)
+        resolution("engine.io") { include("6.6.10") }
+        // Dependabot sweep 08/10/2026: fast-uri < 3.1.8 possui advisories (build-time only)
+        resolution("fast-uri") { include("3.1.8") }
+        // Dependabot sweep 08/10/2026: nanoid < 3.3.18 possui advisories (build-time only)
+        resolution("nanoid") { include("3.3.18") }
+        // Dependabot sweep 08/10/2026: postcss-selector-parser < 7.1.6 possui advisories (build-time only)
+        resolution("postcss-selector-parser") { include("7.1.6") }
+        // Dependabot sweep 08/10/2026: proxy-addr < 2.0.8 possui advisories (build-time only)
+        resolution("proxy-addr") { include("2.0.8") }
+        // Dependabot sweep 08/10/2026: qs < 6.16.0 possui advisories (build-time only)
+        resolution("qs") { include("6.16.0") }
+        // Dependabot sweep 08/10/2026: source-map-js < 1.2.2 possui advisories (build-time only)
+        resolution("source-map-js") { include("1.2.2") }
     }
 }
 
