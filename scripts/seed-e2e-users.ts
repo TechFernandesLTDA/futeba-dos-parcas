@@ -190,6 +190,35 @@ async function upsertTestUser(user: TestUser): Promise<void> {
   console.log(`[seed] Documento Firestore users/${userRecord.uid} sincronizado`);
 }
 
+/**
+ * #4190: em emulador novo o trigger `onNewUserCreated` (Functions) dispara DEPOIS
+ * de createUser e sobrescreve os custom claims semeados (perde `profileComplete`),
+ * o que abria o ProfileGate ("Complete seu Perfil") por cima das telas e quebrava
+ * os testes de PLAYER. Aguarda os claims estabilizarem e reaplica se divergirem.
+ */
+async function settleClaims(): Promise<void> {
+  const authAdmin = admin.auth();
+  let stableRounds = 0;
+  for (let attempt = 0; attempt < 12 && stableRounds < 2; attempt++) {
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    let drifted = false;
+    for (const user of TEST_USERS) {
+      const record = await authAdmin.getUser(user.uid);
+      const claims = record.customClaims ?? {};
+      if (claims.profileComplete !== true || claims.role !== user.role) {
+        drifted = true;
+        await authAdmin.setCustomUserClaims(user.uid, {
+          role: user.role,
+          verified: user.verified ?? true,
+          profileComplete: true,
+        });
+        console.log(`[seed] Claims de ${user.role} reaplicados (trigger sobrescreveu)`);
+      }
+    }
+    stableRounds = drifted ? 0 : stableRounds + 1;
+  }
+}
+
 // ==========================================
 // FUNÇÃO PRINCIPAL EXPORTADA
 // Usada pelo globalSetup do Playwright e
@@ -204,6 +233,8 @@ export async function seedE2EUsers(): Promise<void> {
   for (const user of TEST_USERS) {
     await upsertTestUser(user);
   }
+
+  await settleClaims();
 
   console.log(`[seed-e2e-users] Seed concluído com sucesso. ${TEST_USERS.length} usuários prontos para E2E.`);
 }

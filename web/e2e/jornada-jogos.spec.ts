@@ -34,7 +34,9 @@ baseTest.describe('Jornada Jogos — UI pública', () => {
     // Comportamento atual: a landing pública cobre / e /?tab=N; redirect para
     // /login acontece apenas em rotas autenticadas (ex.: /game/create).
     await page.goto('/?tab=1');
-    await expect(page.getByRole('heading', { name: /futeba dos parças/i })).toBeVisible();
+    // O nome da marca na barra só aparece em sm+ (display none no mobile); o h1
+    // do hero existe em todos os viewports (#4190).
+    await expect(page.getByRole('heading', { level: 1, name: /sua pelada sai do grupo/i })).toBeVisible();
     await expect(page).toHaveURL(/\?tab=1$/);
   });
 

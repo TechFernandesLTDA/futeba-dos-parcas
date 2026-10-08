@@ -965,7 +965,7 @@ export const GroupDetailScreen: React.FC = () => {
               </Avatar>
               <Box sx={{ minWidth: 0, flex: 1 }}>
                 <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
-                  <Typography variant={isMobile ? 'h5' : 'h4'} fontWeight={900} sx={{ color: 'inherit' }}>
+                  <Typography variant={isMobile ? 'h5' : 'h4'} component="p" fontWeight={900} sx={{ color: 'inherit' }}>
                     {group.name}
                   </Typography>
                   <Chip

@@ -38,4 +38,42 @@ describe('xpAccounting', () => {
     expect(getXpEarned({ xpGained: 15 })).toBe(15);
     expect(getLogLevelAfter({ newLevel: 4 })).toBe(4);
   });
+
+  it('cobre todos os aliases de XP total (xp, total_xp, totalXp)', () => {
+    expect(getExperiencePoints({ xp: 42 })).toBe(42);
+    expect(getExperiencePoints({ total_xp: 43 })).toBe(43);
+    expect(getExperiencePoints({ totalXp: 44 })).toBe(44);
+  });
+
+  it('cobre todos os aliases de XP ganho (xp_gained, amount)', () => {
+    expect(getXpEarned({ xp_gained: 11 })).toBe(11);
+    expect(getXpEarned({ amount: 12 })).toBe(12);
+  });
+
+  it('cobre todos os aliases de nível logado (levelAfter, new_level)', () => {
+    expect(getLogLevelAfter({ levelAfter: 6 })).toBe(6);
+    expect(getLogLevelAfter({ new_level: 7 })).toBe(7);
+  });
+
+  it('deriva o nível a partir de xpAfter/xp_after (sem nível logado)', () => {
+    const expected = getEffectiveLevel({ experience_points: 850 });
+    expect(getLogLevelAfter({ xpAfter: 850 })).toBe(expected);
+    expect(getLogLevelAfter({ xp_after: 850 })).toBe(expected);
+  });
+
+  it('aplica o fallback quando o campo está ausente', () => {
+    expect(getExperiencePoints({}, 7)).toBe(7);
+    expect(getXpEarned({}, 5)).toBe(5);
+  });
+
+  it('converte strings numéricas e ignora strings vazias', () => {
+    expect(getExperiencePoints({ xp: '55' })).toBe(55);
+    expect(getXpEarned({ amount: '20' })).toBe(20);
+    expect(getExperiencePoints({ xp: '', total_xp: 8 })).toBe(8);
+  });
+
+  it('rejeita valores não-finitos e cai para o próximo alias', () => {
+    expect(getExperiencePoints({ xp: NaN, totalXp: 9 })).toBe(9);
+    expect(getExperiencePoints({ experience_points: Infinity, xp: 3 })).toBe(3);
+  });
 });

@@ -5,7 +5,9 @@ test.describe('Navigation', () => {
     // Comportamento atual do produto: "/" é a landing pública de marketing
     // (CTA de cadastro); redirect para /login só em rotas autenticadas.
     await page.goto('/');
-    await expect(page.getByRole('heading', { name: /futeba dos parças/i })).toBeVisible();
+    // O nome da marca na barra só aparece em sm+ (display none no mobile); o h1
+    // do hero existe em todos os viewports (#4190).
+    await expect(page.getByRole('heading', { level: 1, name: /sua pelada sai do grupo/i })).toBeVisible();
     await expect(page).toHaveURL(/\/$/);
   });
 

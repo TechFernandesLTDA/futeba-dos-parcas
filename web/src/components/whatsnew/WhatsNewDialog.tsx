@@ -3,19 +3,24 @@
  * web app. Espelha `WhatsNewBottomSheet.kt` do Android.
  *
  * Spec: feat-2026-05-22-version-control-release-notes.md — Fase F, task #22.
+ *
+ * #4189 (a11y): o pop-up aparece sem ação do usuário, então NÃO pode ser um
+ * `Dialog` modal do MUI — o Modal marca todos os irmãos do portal (inclusive
+ * `<main>`) com `aria-hidden="true"`, escondendo a página inteira de leitores
+ * de tela. Aqui é um painel não-modal (`role="dialog"` + `aria-modal="false"`)
+ * ancorado no rodapé: o conteúdo da página continua exposto na árvore de
+ * acessibilidade, o foco vai para o painel ao abrir e Esc fecha.
  */
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   Box,
   Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
   IconButton,
+  Paper,
+  Slide,
   Stack,
   Typography,
-  useMediaQuery,
   useTheme,
 } from '@mui/material';
 import { Close as CloseIcon } from '@mui/icons-material';
@@ -33,7 +38,7 @@ interface WhatsNewDialogProps {
 export const WhatsNewDialog: React.FC<WhatsNewDialogProps> = ({ note, open, onClose }) => {
   const { t } = useTranslation();
   const theme = useTheme();
-  const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
+  const panelRef = useRef<HTMLDivElement>(null);
 
   // Analytics: registra a exibição do pop-up uma vez por abertura.
   useEffect(() => {
@@ -42,50 +47,82 @@ export const WhatsNewDialog: React.FC<WhatsNewDialogProps> = ({ note, open, onCl
     }
   }, [open, note.version, note.platform]);
 
+  // Painel não-modal: leva o foco para ele ao abrir (leitores de tela anunciam o
+  // conteúdo) e fecha com Esc em qualquer ponto da página enquanto estiver aberto.
+  useEffect(() => {
+    if (!open) return undefined;
+    panelRef.current?.focus();
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [open, onClose]);
+
+  const labelledBy = note.headline ? 'whats-new-dialog-title' : 'whats-new-dialog-eyebrow';
+
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      fullScreen={fullScreen}
-      maxWidth="sm"
-      fullWidth
-      aria-labelledby="whats-new-dialog-title"
-    >
-      <DialogContent sx={{ pt: 3 }}>
-        <Stack spacing={2}>
-          <Stack direction="row" alignItems="center" justifyContent="space-between">
-            <Typography variant="overline" color="text.secondary">
-              {t('whatsNew.popupEyebrow', { version: note.version })}
-            </Typography>
-            <Stack direction="row" alignItems="center" spacing={1}>
-              <ReleaseTypeBadge type={note.type} />
-              <IconButton
-                size="small"
-                onClick={onClose}
-                aria-label={t('common.close')}
-                edge="end"
-              >
-                <CloseIcon fontSize="small" />
-              </IconButton>
+    <Slide direction="up" in={open} mountOnEnter unmountOnExit>
+      <Paper
+        ref={panelRef}
+        role="dialog"
+        aria-modal="false"
+        aria-labelledby={labelledBy}
+        tabIndex={-1}
+        elevation={12}
+        sx={{
+          position: 'fixed',
+          left: 0,
+          right: 0,
+          bottom: 0,
+          mx: 'auto',
+          width: { xs: '100%', sm: 520 },
+          maxWidth: '100%',
+          maxHeight: '85vh',
+          overflowY: 'auto',
+          zIndex: theme.zIndex.snackbar,
+          borderTopLeftRadius: 16,
+          borderTopRightRadius: 16,
+          outline: 'none',
+          pb: 'env(safe-area-inset-bottom)',
+        }}
+      >
+        <Box sx={{ px: 3, pt: 3 }}>
+          <Stack spacing={2}>
+            <Stack direction="row" alignItems="center" justifyContent="space-between">
+              <Typography id="whats-new-dialog-eyebrow" variant="overline" color="text.secondary">
+                {t('whatsNew.popupEyebrow', { version: note.version })}
+              </Typography>
+              <Stack direction="row" alignItems="center" spacing={1}>
+                <ReleaseTypeBadge type={note.type} />
+                <IconButton
+                  size="small"
+                  onClick={onClose}
+                  aria-label={t('common.close')}
+                  edge="end"
+                >
+                  <CloseIcon fontSize="small" />
+                </IconButton>
+              </Stack>
             </Stack>
+
+            {note.headline && (
+              <Typography id="whats-new-dialog-title" variant="h6" component="h2">
+                <FormattedText text={note.headline} />
+              </Typography>
+            )}
+
+            <Box>
+              <ReleaseNoteContent note={note} showHeadline={false} />
+            </Box>
           </Stack>
-
-          {note.headline && (
-            <Typography id="whats-new-dialog-title" variant="h6" component="h2">
-              <FormattedText text={note.headline} />
-            </Typography>
-          )}
-
-          <Box>
-            <ReleaseNoteContent note={note} showHeadline={false} />
-          </Box>
-        </Stack>
-      </DialogContent>
-      <DialogActions sx={{ px: 3, pb: 3 }}>
-        <Button variant="contained" fullWidth onClick={onClose} sx={{ minHeight: 48 }}>
-          {t('whatsNew.popupDismiss')}
-        </Button>
-      </DialogActions>
-    </Dialog>
+        </Box>
+        <Box sx={{ px: 3, pb: 3, pt: 2 }}>
+          <Button variant="contained" fullWidth onClick={onClose} sx={{ minHeight: 48 }}>
+            {t('whatsNew.popupDismiss')}
+          </Button>
+        </Box>
+      </Paper>
+    </Slide>
   );
 };

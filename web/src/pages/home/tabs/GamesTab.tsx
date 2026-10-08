@@ -193,7 +193,7 @@ export function GamesTab() {
           placeholder={t('games.search.placeholder')}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          aria-label={t('games.search.placeholder')}
+          inputProps={{ 'aria-label': t('games.search.placeholder') }}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">

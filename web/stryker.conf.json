@@ -3,19 +3,24 @@
   "packageManager": "npm",
   "testRunner": "vitest",
   "coverageAnalysis": "perTest",
+  "dryRunTimeoutMinutes": 20,
   "inPlace": true,
   "mutate": [
     "src/utils/camelToSnake.ts",
     "src/utils/cpfValidator.ts",
     "src/utils/semver.ts",
-    "src/utils/validation.ts"
+    "src/utils/validation.ts",
+    "src/utils/routeGuards.ts",
+    "src/utils/xpAccounting.ts",
+    "src/utils/authRetry.ts",
+    "src/hooks/useVerifiedClaim.ts"
   ],
   "thresholds": {
     "high": 80,
     "low": 60,
-    "break": null
+    "break": 60
   },
-  "reporters": ["html", "clear-text", "progress"],
+  "reporters": ["html", "clear-text"],
   "htmlReporter": {
     "fileName": "reports/mutation/mutation.html"
   },

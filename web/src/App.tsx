@@ -28,6 +28,12 @@ import { getActiveNavItem } from './config/navItems';
 import { BreadcrumbEntityProvider } from './contexts/BreadcrumbEntityContext';
 import { getSpecificRouteFallback } from './utils/routeFallback';
 import {
+  isAdminRole,
+  isFieldOwnerOrAdminRole,
+  isOnboardingPath,
+  onboardingStepFor,
+} from './utils/routeGuards';
+import {
 
   HomeScreenSkeleton,
   GameDetailSkeleton,
@@ -247,12 +253,11 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   }
 
   // Onboarding: rotas /onboarding/* permitem !verified
-  const isOnboardingRoute = location.pathname.startsWith('/onboarding/');
+  const isOnboardingRoute = isOnboardingPath(location.pathname);
   if (verified === false && !isOnboardingRoute) {
     // FIX #1024: se já tem telefone verificado, vai direto pro CPF; caso contrário,
     // começa pelo telefone. Evita regredir o usuário que já completou essa etapa.
-    const nextStep = activeUser.phoneNumber ? '/onboarding/cpf' : '/onboarding/phone';
-    return <Navigate to={nextStep} replace />;
+    return <Navigate to={onboardingStepFor(activeUser.phoneNumber)} replace />;
   }
 
   return <>{children}</>;
@@ -317,8 +322,7 @@ function VerifiedRoute({ children }: { children: React.ReactNode }) {
   if (verified === null) return <AppLoadingFallback />;
 
   if (verified === false) {
-    const nextStep = activeUser.phoneNumber ? '/onboarding/cpf' : '/onboarding/phone';
-    return <Navigate to={nextStep} replace />;
+    return <Navigate to={onboardingStepFor(activeUser.phoneNumber)} replace />;
   }
 
   return <>{children}</>;
@@ -337,7 +341,7 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
   // criando silent gap (unauth user via home em vez de login).
   // FIX #574 (C3): preserva from-location pra restaurar deep link pós-login.
   if (!firebaseUser) return <Navigate to="/login" state={{ from: location }} replace />;
-  if (user?.role !== 'ADMIN') return <Navigate to="/" replace />;
+  if (!isAdminRole(user?.role)) return <Navigate to="/" replace />;
   return <>{children}</>;
 }
 
@@ -359,7 +363,7 @@ function FieldOwnerOrAdminRoute({
   // FIX #584/H5: unauth user → /login (vide AdminRoute).
   // FIX #574 (C3): preserva from-location pra restaurar deep link pós-login.
   if (!firebaseUser) return <Navigate to="/login" state={{ from: location }} replace />;
-  if (user?.role !== 'ADMIN' && user?.role !== 'FIELD_OWNER') {
+  if (!isFieldOwnerOrAdminRole(user?.role)) {
     return <Navigate to={fallbackTo} replace />;
   }
   return <>{children}</>;
@@ -423,8 +427,7 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
     // ProtectedRoute → /onboarding/phone → PublicRoute → / → ProtectedRoute...).
     // Redireciona diretamente pro próximo passo do onboarding.
     if (verified === false) {
-      const nextStep = activeUser.phoneNumber ? '/onboarding/cpf' : '/onboarding/phone';
-      return <Navigate to={nextStep} replace />;
+      return <Navigate to={onboardingStepFor(activeUser.phoneNumber)} replace />;
     }
 
     return <Navigate to="/" replace />;
