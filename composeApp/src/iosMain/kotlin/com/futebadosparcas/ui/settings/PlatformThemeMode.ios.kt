@@ -3,9 +3,6 @@ package com.futebadosparcas.ui.settings
 import com.futebadosparcas.domain.model.ThemeMode
 import platform.UIKit.UIApplication
 import platform.UIKit.UIUserInterfaceStyle
-import platform.UIKit.UIUserInterfaceStyleDark
-import platform.UIKit.UIUserInterfaceStyleLight
-import platform.UIKit.UIUserInterfaceStyleUnspecified
 import platform.UIKit.UIWindow
 
 /**
@@ -19,9 +16,9 @@ import platform.UIKit.UIWindow
  */
 internal actual fun applyPlatformThemeMode(mode: ThemeMode) {
     val style: UIUserInterfaceStyle = when (mode) {
-        ThemeMode.LIGHT -> UIUserInterfaceStyleLight
-        ThemeMode.DARK -> UIUserInterfaceStyleDark
-        ThemeMode.SYSTEM -> UIUserInterfaceStyleUnspecified
+        ThemeMode.LIGHT -> UIUserInterfaceStyle.UIUserInterfaceStyleLight
+        ThemeMode.DARK -> UIUserInterfaceStyle.UIUserInterfaceStyleDark
+        ThemeMode.SYSTEM -> UIUserInterfaceStyle.UIUserInterfaceStyleUnspecified
     }
     UIApplication.sharedApplication.windows
         .mapNotNull { it as? UIWindow }
