@@ -76,6 +76,9 @@ function evaluateRun(run, expectSha) {
  *  - findRun({ ref, since }) -> Promise<run|null>  (run mais recente criado >= since)
  *  - sleep(ms) -> Promise<void>
  *  - now() -> number (ms)
+ *  - onRun(run) -> void           (opcional; recebe o run assim que aparece)
+ *  - cancelRun(run) -> Promise    (opcional; chamado quando o gate desiste por timeout,
+ *                                  para não deixar um E2E órfão ocupando o runner)
  */
 async function runGate({
   ref,
@@ -83,6 +86,8 @@ async function runGate({
   dispatch,
   findRun,
   sleep,
+  onRun,
+  cancelRun,
   now = () => Date.now(),
   timeoutMs = DEFAULT_TIMEOUT_MS,
   pollMs = DEFAULT_POLL_MS,
@@ -98,6 +103,7 @@ async function runGate({
     const run = await findRun({ ref, since });
     if (run) {
       lastRun = run;
+      if (onRun) onRun(run);
       const ev = evaluateRun(run, expectSha);
       if (ev.verdict !== 'pending') {
         return { ...ev, run_id: run.id ?? null, html_url: run.html_url ?? null };
@@ -112,6 +118,13 @@ async function runGate({
       };
     }
     if (now() >= deadline) {
+      if (cancelRun && lastRun && lastRun.id != null) {
+        try {
+          await cancelRun(lastRun);
+        } catch (err) {
+          console.error(`e2e-gate: falha ao cancelar run ${lastRun.id}: ${err && err.message}`);
+        }
+      }
       return {
         verdict: 'timeout',
         exitCode: EXIT.TIMEOUT,
@@ -164,6 +177,11 @@ function realDeps({ repo }) {
         html_url: r.url,
       };
     },
+    cancelRun: async ({ id }) => {
+      execFileSync('gh', ['run', 'cancel', String(id), ...repoArgs], {
+        stdio: ['ignore', 'inherit', 'inherit'],
+      });
+    },
     sleep: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
   };
 }
@@ -193,11 +211,26 @@ async function main() {
     return EXIT.USAGE;
   }
   const repo = process.env.GITHUB_REPOSITORY || undefined;
+  const deps = realDeps({ repo });
+  let currentRun = null;
+  // Gate cancelado (PR atualizado => concurrency cancel-in-progress): cancela
+  // também o E2E disparado, senão ele segue ocupando a fila de emuladores.
+  for (const signal of ['SIGINT', 'SIGTERM']) {
+    process.on(signal, () => {
+      const done = () => process.exit(128 + (signal === 'SIGINT' ? 2 : 15));
+      if (currentRun && currentRun.id != null && currentRun.status !== 'completed') {
+        deps.cancelRun(currentRun).then(done, done);
+      } else {
+        done();
+      }
+    });
+  }
   const result = await runGate({
     ref: args.ref,
     expectSha: args.expectSha,
     timeoutMs: args.timeoutMs,
-    ...realDeps({ repo }),
+    ...deps,
+    onRun: (run) => { currentRun = run; },
   });
   console.log(JSON.stringify({ gate: 'E2E Gate', ...result }));
   return result.exitCode;

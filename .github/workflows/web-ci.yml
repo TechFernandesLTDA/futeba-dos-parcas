@@ -15,6 +15,11 @@ on:
       - 'scripts/ci/vitest-shard-plan.js'
       - 'scripts/ci/run-vitest-shard.js'
   workflow_dispatch:
+    inputs:
+      run_mutation:
+        description: 'Executar também o Stryker (lento, ocupa um runner por muito tempo)'
+        type: boolean
+        default: false
   # Cron noturno (03:00 UTC) — dispara apenas o job de mutation testing.
   # Os jobs de PR/push (quality/tests) são desativados no schedule
   # via `if` para não rodar à toa nos runners self-hosted.
@@ -134,11 +139,13 @@ jobs:
           fi
 
   # Mutation testing (Stryker) — mede o SINAL dos testes (mutation score) no
-  # core de utils/services. Roda apenas no cron noturno e via workflow_dispatch,
-  # NUNCA em PR/push, pois é mais lento e relatório-apenas (thresholds.break=null).
+  # core de utils/services. Roda apenas no cron noturno e no workflow_dispatch
+  # com run_mutation=true, NUNCA em PR/push nem em dispatch comum: é lento e
+  # segura um runner Linux compartilhado por muito tempo. O threshold do
+  # stryker.conf.json (break=60) continua valendo e faz o job falhar.
   mutation:
     name: Mutation Testing (Stryker)
-    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.run_mutation)
     runs-on: ${{ fromJSON(vars.RUNNER_LABELS_LINUX || vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
     timeout-minutes: 30
     steps:

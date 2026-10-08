@@ -137,3 +137,60 @@ test('runGate: startup_failure do run real propaga infra_blocked (não verde)', 
 test('runGate: exige ref', async () => {
   await assert.rejects(runGate({ dispatch: async () => {}, findRun: async () => null, sleep: async () => {} }), TypeError);
 });
+
+test('runGate: timeout cancela o E2E disparado (não deixa run órfão na fila de emuladores)', async () => {
+  const clock = fakeClock();
+  const cancelled = [];
+  const seen = [];
+  const result = await runGate({
+    ref: 'feat/x',
+    expectSha: SHA,
+    dispatch: async () => {},
+    findRun: async () => ({ id: 77, status: 'in_progress', conclusion: null, head_sha: SHA }),
+    onRun: (run) => { seen.push(run.id); },
+    cancelRun: async (run) => { cancelled.push(run.id); },
+    sleep: clock.sleep,
+    now: clock.now,
+    pollMs: 1000,
+    timeoutMs: 3000,
+  });
+  assert.equal(result.exitCode, EXIT.TIMEOUT);
+  assert.deepEqual(cancelled, [77]);
+  assert.ok(seen.length > 0 && seen.every((id) => id === 77));
+});
+
+test('runGate: falha ao cancelar não mascara o veredito de timeout', async () => {
+  const clock = fakeClock();
+  const origError = console.error;
+  console.error = () => {};
+  try {
+    const result = await runGate({
+      ref: 'feat/x',
+      expectSha: SHA,
+      dispatch: async () => {},
+      findRun: async () => ({ id: 5, status: 'queued', conclusion: null, head_sha: SHA }),
+      cancelRun: async () => { throw new Error('boom'); },
+      sleep: clock.sleep,
+      now: clock.now,
+      pollMs: 1000,
+      timeoutMs: 2000,
+    });
+    assert.equal(result.exitCode, EXIT.TIMEOUT);
+  } finally {
+    console.error = origError;
+  }
+});
+
+test('runGate: run concluído com sucesso nunca é cancelado', async () => {
+  const cancelled = [];
+  const result = await runGate({
+    ref: 'master',
+    expectSha: SHA,
+    dispatch: async () => {},
+    findRun: async () => ({ id: 3, status: 'completed', conclusion: 'success', head_sha: SHA }),
+    cancelRun: async (run) => { cancelled.push(run.id); },
+    sleep: async () => {},
+  });
+  assert.equal(result.exitCode, EXIT.PASS);
+  assert.deepEqual(cancelled, []);
+});

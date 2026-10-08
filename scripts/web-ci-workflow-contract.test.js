@@ -223,10 +223,17 @@ test('mutation testing stays outside PR and preserves its report artifact', () =
 
   assert.match(workflow, /^\s{2}workflow_dispatch:$/m);
   assert.match(workflow, /^\s{2}schedule:$/m);
+  // Dispatch comum NÃO roda Stryker: só com run_mutation=true (ou no cron).
+  assert.match(workflow, /run_mutation:\n\s+description: .*\n\s+type: boolean\n\s+default: false/);
   assert.match(
     mutation,
-    /if: github\.event_name == 'schedule' \|\| github\.event_name == 'workflow_dispatch'/
+    /if: github\.event_name == 'schedule' \|\| \(github\.event_name == 'workflow_dispatch' && inputs\.run_mutation\)/
   );
+  assert.doesNotMatch(mutation, /pull_request|push/);
+  // O threshold continua bloqueando o job de mutation.
+  const stryker = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'web', 'stryker.conf.json'), 'utf8'));
+  assert.equal(stryker.thresholds.break, 60);
+  assert.ok(stryker.concurrency <= 4, 'Stryker não pode ocupar todos os núcleos do host compartilhado');
   assertNodeJobContract('mutation', mutation);
   assert.match(mutationTestStep, /run: npm run test:mutation/);
   assert.doesNotMatch(
@@ -252,8 +259,9 @@ test('Lighthouse reads PR metadata with a Linux Chromium runner', () => {
     /^permissions:\n\s+contents: read\n\s+pull-requests: read$/m
   );
   assertNodeJobContract('lighthouse', lighthouse);
-  assert.match(lighthouse, /runs-on: ubuntu-24.04/);
-  assert.match(lighthouse, /npx playwright install --with-deps chromium/);
+  assert.match(lighthouse, /runs-on: \$\{\{ fromJSON\(vars\.RUNNER_LABELS_LINUX \|\| vars\.RUNNER_LABELS \|\| '\[\"self-hosted\",\"macOS\",\"ARM64\"\]'\) \}\}/);
+  assert.match(lighthouse, /npx playwright install chromium/);
+  assert.doesNotMatch(lighthouse, /--with-deps/);
   assert.match(lighthouse, /CHROME_PATH=.*chromium\.executablePath/);
   assert.match(lighthouseWorkflow, /github\.rest\.pulls\.listFiles/);
   assert.match(

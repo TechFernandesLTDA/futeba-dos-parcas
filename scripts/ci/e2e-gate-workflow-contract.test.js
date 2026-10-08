@@ -8,6 +8,7 @@ const path = require('node:path');
 const repoRoot = path.resolve(__dirname, '..', '..');
 const gate = fs.readFileSync(path.join(repoRoot, '.github/workflows/e2e-gate.yml'), 'utf8');
 const e2e = fs.readFileSync(path.join(repoRoot, '.github/workflows/web-e2e-ci.yml'), 'utf8');
+const doc = fs.readFileSync(path.join(repoRoot, 'docs/ci/E2E_GATE.md'), 'utf8');
 
 test('gate roda em PR e em push para master (pós-merge)', () => {
   assert.match(gate, /on:\n  pull_request:\n    branches: \[master\]\n  push:\n    branches: \[master\]/);
@@ -17,8 +18,39 @@ test('gate tem permissão explícita para disparar workflow e nada além de leit
   assert.match(gate, /permissions:\n  contents: read\n  actions: write/);
 });
 
-test('job chama-se E2E Gate (nome do check a exigir na proteção)', () => {
-  assert.match(gate, /jobs:\n  e2e-gate:\n    name: E2E Gate\n/);
+test('job chama-se E2E Gate (nome do check que a convenção exige verde)', () => {
+  assert.match(gate, /\n  e2e-gate:\n    name: E2E Gate\n/);
+  assert.match(doc, /E2E Gate/);
+});
+
+test('gate roda nos runners Linux do WSL e classifica escopo para sempre reportar', () => {
+  assert.match(gate, /\n  changes:\n    name: Classify changes\n    uses: \.\/\.github\/workflows\/change-scope\.yml/);
+  assert.match(gate, /needs: \[changes\]/);
+  assert.match(gate, /runs-on: \$\{\{ fromJSON\(vars\.RUNNER_LABELS_LINUX \|\| vars\.RUNNER_LABELS \|\| '\["self-hosted","macOS","ARM64"\]'\) \}\}/);
+  assert.doesNotMatch(gate, /runs-on: ubuntu-/);
+  // Falha da classificação reprova o check (não fica skipped).
+  assert.match(gate, /if: \$\{\{ !cancelled\(\) \}\}/);
+  assert.match(gate, /CHANGES_RESULT" != "success"[\s\S]*?exit 1/);
+});
+
+test('PR cancela o gate anterior; master mantém um gate por SHA', () => {
+  assert.match(gate, /group: e2e-gate-\$\{\{ github\.event_name == 'pull_request' && github\.ref \|\| github\.sha \}\}/);
+  assert.match(gate, /cancel-in-progress: \$\{\{ github\.event_name == 'pull_request' \}\}/);
+});
+
+test('verificação pós-merge abre issue com permissão mínima só no push de master', () => {
+  const issueJob = gate.slice(gate.indexOf('\n  post-merge-issue:'));
+  assert.match(issueJob, /needs: \[e2e-gate\]/);
+  assert.match(issueJob, /if: \$\{\{ failure\(\) && github\.event_name == 'push' \}\}/);
+  assert.match(issueJob, /permissions:\n      contents: read\n      issues: write/);
+  assert.match(issueJob, /gh issue create/);
+  assert.match(issueJob, /gh issue comment/);
+});
+
+test('o script cancela o E2E órfão quando o gate é cancelado ou estoura o tempo', () => {
+  const script = fs.readFileSync(path.join(repoRoot, 'scripts/ci/e2e-gate.js'), 'utf8');
+  assert.match(script, /'gh', \['run', 'cancel'/);
+  assert.match(script, /process\.on\(signal/);
 });
 
 test('gate nunca mascara falha (sem continue-on-error, || true, pipes ou tail/grep)', () => {

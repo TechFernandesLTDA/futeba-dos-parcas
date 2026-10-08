@@ -3,6 +3,7 @@
   "packageManager": "npm",
   "testRunner": "vitest",
   "coverageAnalysis": "perTest",
+  "concurrency": 4,
   "dryRunTimeoutMinutes": 20,
   "inPlace": true,
   "mutate": [

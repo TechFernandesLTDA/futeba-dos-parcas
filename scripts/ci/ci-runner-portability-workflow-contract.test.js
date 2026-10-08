@@ -68,8 +68,9 @@ test('Android PR validation uses hosted Linux and validates SDK 36', () => {
 test('Lighthouse selects a Linux browser explicitly', () => {
   const workflow = read('.github/workflows/web-lighthouse-ci.yml');
   const lighthouseConfig = read('web/.lighthouserc.cjs');
-  assert.match(workflow, /runs-on: ubuntu-24.04/);
-  assert.match(workflow, /playwright install --with-deps chromium/);
+  assert.match(workflow, /runs-on: \$\{\{ fromJSON\(vars\.RUNNER_LABELS_LINUX \|\| vars\.RUNNER_LABELS \|\| '\[\"self-hosted\",\"macOS\",\"ARM64\"\]'\) \}\}/);
+  assert.match(workflow, /playwright install chromium/);
+  assert.doesNotMatch(workflow, /--with-deps/);
   assert.match(workflow, /CHROME_PATH=.*chromium\.executablePath/);
   assert.match(workflow, /LHCI passes --no-sandbox/);
   assert.match(lighthouseConfig, /chromeFlags: \['--no-sandbox'\]/);
@@ -81,4 +82,68 @@ test('Functions integration polling allows slow emulator triggers', () => {
   );
   assert.match(integrationTest, /INTEGRATION_POLL_TIMEOUT_MS = 60_000/);
   assert.doesNotMatch(integrationTest, /pollUntil[\s\S]*\b(?:30000|45000)\b/);
+});
+
+test('Heavy emulator, browser and Android jobs run on the Linux WSL runners', () => {
+  const linux = new RegExp(String.raw`runs-on: \$\{\{ fromJSON\(vars\.RUNNER_LABELS_LINUX \|\| vars\.RUNNER_LABELS \|\| '\[\"self-hosted\",\"macOS\",\"ARM64\"\]'\) \}\}`);
+  const heavy = {
+    'web-e2e-ci.yml': ['web-e2e'],
+    'web-lighthouse-ci.yml': ['lighthouse'],
+    'functions-integration-ci.yml': ['functions-integration'],
+    'realtime-load-ci.yml': ['realtime-load'],
+    'test-harness-ci.yml': ['test-harness'],
+    'android-ci.yml': ['lint', 'detekt', 'test', 'build', 'gate'],
+    'e2e-gate.yml': ['e2e-gate', 'post-merge-issue'],
+  };
+  for (const [file, jobs] of Object.entries(heavy)) {
+    const workflow = read(`.github/workflows/${file}`);
+    for (const jobId of jobs) {
+      assert.match(job(workflow, jobId), linux, `${file}:${jobId} must use RUNNER_LABELS_LINUX`);
+      assert.doesNotMatch(job(workflow, jobId), /runs-on: ubuntu-/, `${file}:${jobId} must not use hosted minutes`);
+    }
+  }
+});
+
+test('Android CI on Linux provisions the SDK instead of relying on a Mac install', () => {
+  const workflow = read('.github/workflows/android-ci.yml');
+  for (const jobId of ['lint', 'detekt', 'test', 'build']) {
+    const body = job(workflow, jobId);
+    assert.match(body, /uses: android-actions\/setup-android@v3/, jobId);
+    assert.match(body, /platforms;android-36/, jobId);
+    assert.ok(
+      body.indexOf('setup-android') < body.indexOf('sdk.dir='),
+      `${jobId} must install the SDK before writing local.properties`
+    );
+  }
+});
+
+test('Xcode and the arm64 macrobenchmark stay on the Mac runner', () => {
+  const macro = read('.github/workflows/android-macrobenchmark.yml');
+  assert.match(job(macro, 'macrobenchmark'), new RegExp(String.raw`runs-on: \$\{\{ fromJSON\(vars\.RUNNER_LABELS \|\| '\[\"self-hosted\",\"macOS\",\"ARM64\"\]'\) \}\}`));
+  assert.match(macro, /arch: arm64-v8a/);
+  const ios = read('.github/workflows/ios-build.yml');
+  assert.match(ios, /runs-on: \[self-hosted, macOS, ARM64, futeba\]/);
+});
+
+test('Emulator jobs on the shared WSL host serialize through one concurrency group', () => {
+  const group = /group: firebase-emulator-integration-\$\{\{ github\.repository \}\}\n\s+cancel-in-progress: false/;
+  assert.match(read('.github/workflows/web-e2e-ci.yml'), group);
+  assert.match(read('.github/workflows/test-harness-ci.yml'), group);
+  assert.match(job(read('.github/workflows/functions-integration-ci.yml'), 'functions-integration'), group);
+});
+
+test('Mutation testing never runs on PR/push or plain dispatch', () => {
+  for (const file of ['web-ci.yml', 'functions-ci.yml']) {
+    const workflow = read(`.github/workflows/${file}`);
+    assert.match(workflow, /run_mutation:\n\s+description: .*\n\s+type: boolean\n\s+default: false/, file);
+    assert.match(
+      job(workflow, 'mutation'),
+      /if: github\.event_name == 'schedule' \|\| \(github\.event_name == 'workflow_dispatch' && inputs\.run_mutation\)/,
+      file
+    );
+  }
+  const web = JSON.parse(read('web/stryker.conf.json'));
+  const functions = JSON.parse(read('functions/stryker.conf.json'));
+  assert.equal(web.thresholds.break, 60, 'web mutation threshold must keep blocking');
+  assert.ok(web.concurrency <= 4 && functions.concurrency <= 4);
 });

@@ -21,7 +21,7 @@ permissions:
 jobs:
   web-e2e:
     name: Web E2E — Emulador (auth+firestore+functions)
-    runs-on: ubuntu-24.04
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS_LINUX || vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
     timeout-minutes: 30
 
     env:
@@ -113,7 +113,7 @@ jobs:
 
       - name: Instalar browsers Playwright
         working-directory: web
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install chromium
 
       - name: Selecionar porta livre para o preview E2E
         run: node scripts/ci/allocate-web-e2e-port.js
@@ -180,5 +180,3 @@ jobs:
           if-no-files-found: warn
           retention-days: 1
           compression-level: 9
-
-# registry-reindex-20261005: commit trivial para invalidar o cache de ingest do Actions (ghost BuildFailed wf_id=375847629)
