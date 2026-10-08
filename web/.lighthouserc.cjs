@@ -14,7 +14,7 @@ module.exports = {
       ],
       numberOfRuns: 3,
       settings: {
-        chromeFlags: ['--no-sandbox', '--headless'],
+        chromeFlags: ['--no-sandbox'],
       },
     },
     assert: {
