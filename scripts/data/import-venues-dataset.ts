@@ -25,6 +25,9 @@ import * as path from "path";
 import * as admin from "firebase-admin";
 import {FieldValue} from "firebase-admin/firestore";
 
+// VENUES_PROJECT_ID permite apontar para o emulador (projeto demo-*) nos testes.
+const PROJECT_ID = process.env.VENUES_PROJECT_ID ?? "futebadosparcas";
+
 if (!admin.apps.length) {
   // --cli-credential: autentica com a sessão do firebase CLI do usuário
   // (refresh_token de ~/.config/configstore/firebase-tools.json + o client
@@ -41,7 +44,7 @@ if (!admin.apps.length) {
       process.exit(1);
     }
     admin.initializeApp({
-      projectId: "futebadosparcas",
+      projectId: PROJECT_ID,
       credential: admin.credential.refreshToken({
         type: "authorized_user",
         client_id: "564921029129-p4j63bjwvusvcq5nrpe7j4o85gctione.apps.googleusercontent.com",
@@ -52,7 +55,7 @@ if (!admin.apps.length) {
   } else {
     // Sem --cli-credential: usa ADC (gcloud auth application-default login)
     // com o projectId explícito do projeto do app.
-    admin.initializeApp({projectId: "futebadosparcas"});
+    admin.initializeApp({projectId: PROJECT_ID});
   }
 }
 
@@ -452,7 +455,7 @@ function buildPatchData(
   patch.updated_at = FieldValue.serverTimestamp();
   patch.updated_by = SOURCE_LABEL;
 
-  if (!isBlank(data.rating) || !isBlank(data.ratingCount)) {
+  if (Number(data.rating) > 0 || Number(data.rating_count) > 0) {
     manualReview.push(
         "venue já tem rating do app — nota externa registrada apenas em external_data",
     );
