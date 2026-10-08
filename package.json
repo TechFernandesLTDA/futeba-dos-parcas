@@ -20,5 +20,7 @@
     "gaxios": ">=7.1.4",
     "@tootallnate/once": ">=3.0.1",
     "retry-request": ">=8.0.2"
-  }
+  },
+  "license": "UNLICENSED",
+  "private": true
 }
