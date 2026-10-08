@@ -122,7 +122,7 @@ export function MobileTopBar({ unreadCount, title, showBack, onBack, breadcrumbs
             alignItems: 'center',
             gap: 0.5,
             px: 2,
-            pb: 0.75,
+            pb: 0,
             overflowX: 'auto',
             whiteSpace: 'nowrap',
             // Esconde a barra de rolagem mantendo o scroll funcional
@@ -156,6 +156,12 @@ export function MobileTopBar({ unreadCount, title, showBack, onBack, breadcrumbs
                     variant="caption"
                     color="text.secondary"
                     sx={{
+                      // #4190: alvo de toque mínimo 44x44 (WCAG 2.5.8) — o link do
+                      // breadcrumb tinha só 16px de altura no mobile.
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      minHeight: 44,
+                      minWidth: 44,
                       maxWidth: 140,
                       overflow: 'hidden',
                       textDecoration: 'none',

@@ -70,6 +70,21 @@ describe('MobileTopBar', () => {
     expect(separator).toHaveStyle({ color: theme.palette.text.secondary });
   });
 
+  it('link do breadcrumb tem alvo de toque mínimo de 44x44 (#4190)', () => {
+    renderWithTheme(
+      <MobileTopBar
+        unreadCount={0}
+        showBack
+        onBack={vi.fn()}
+        breadcrumbs={[{ label: 'Local', to: '/map/locations' }, { label: 'Novo' }]}
+      />,
+    );
+
+    const link = screen.getByRole('link', { name: 'Local' });
+    expect(link).toHaveAttribute('href', '/map/locations');
+    expect(link).toHaveStyle({ minHeight: '44px', minWidth: '44px' });
+  });
+
   it('tem display responsivo xs flex e md none', () => {
     const { container } = renderWithTheme(<MobileTopBar unreadCount={0} />);
     const header = container.querySelector('.MuiAppBar-root');
