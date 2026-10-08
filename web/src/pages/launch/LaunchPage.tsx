@@ -36,6 +36,14 @@ const footerLinks = [
   { label: 'Exclusão de conta', href: '/delete_account.html' },
 ];
 
+const guideLinks = [
+  { label: 'Como Funciona', href: '/como-funciona' },
+  { label: 'Organizar Pelada', href: '/organizar-pelada' },
+  { label: 'Ranking & MVP', href: '/ranking-futebol-amador' },
+  { label: 'Gestão & Caixa', href: '/gestao-de-pelada' },
+  { label: 'Parcerias com Quadras', href: '/parcerias' },
+];
+
 const benefits = [
   {
     icon: <Groups />,
@@ -235,7 +243,7 @@ function LaunchPageContent() {
 
               <Box
                 component="img"
-                src="/og-futeba-dos-parcas.png"
+                src="/og-futeba-dos-parcas-hero.webp"
                 alt="Amigos reunidos em um campo com a marca Futeba dos Parças"
                 // Dimensões explícitas evitam CLS; o LCP é pré-carregado via
                 // <link rel="preload"> no index.html (React 18 não suporta fetchPriority).
@@ -537,6 +545,32 @@ function LaunchPageContent() {
                 .
               </Typography>
             </Stack>
+            <Stack spacing={1}>
+              <Typography variant="caption" fontWeight={800} color="text.primary" sx={{ textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                Guias & Conteúdo
+              </Typography>
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={{ xs: 0.5, sm: 2 }} sx={{ color: 'text.secondary', flexWrap: 'wrap' }}>
+                {guideLinks.map((item) => (
+                  <Link
+                    key={item.href}
+                    component={RouterLink}
+                    to={item.href}
+                    sx={{
+                      minHeight: 44,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      color: 'text.secondary',
+                      '&:hover': { color: 'text.primary' },
+                    }}
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+              </Stack>
+            </Stack>
+          </Stack>
+          <Divider sx={{ my: 2 }} />
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={{ xs: 0.5, sm: 2 }} justifyContent="space-between" alignItems={{ xs: 'flex-start', sm: 'center' }}>
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={{ xs: 0.5, sm: 2 }} sx={{ color: 'text.secondary' }}>
               {footerLinks.map((item) => (
                 <Link

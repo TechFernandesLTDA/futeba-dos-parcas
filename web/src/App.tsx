@@ -72,6 +72,11 @@ const LoginScreen = lazy(() => import('./pages/auth/LoginScreen').then(m => ({ d
 const RegisterScreen = lazy(() => import('./pages/auth/RegisterScreen').then(m => ({ default: m.RegisterScreen })));
 const ForgotPasswordScreen = lazy(() => import('./pages/auth/ForgotPasswordScreen').then(m => ({ default: m.ForgotPasswordScreen })));
 const LaunchPage = lazy(() => import('./pages/launch/LaunchPage').then(m => ({ default: m.LaunchPage })));
+const HowToOrganizePage = lazy(() => import('./pages/growth/HowToOrganizePage').then(m => ({ default: m.HowToOrganizePage })));
+const AmateurRankingPage = lazy(() => import('./pages/growth/AmateurRankingPage').then(m => ({ default: m.AmateurRankingPage })));
+const PeladaManagementPage = lazy(() => import('./pages/growth/PeladaManagementPage').then(m => ({ default: m.PeladaManagementPage })));
+const HowItWorksPage = lazy(() => import('./pages/growth/HowItWorksPage').then(m => ({ default: m.HowItWorksPage })));
+const PartnershipsPage = lazy(() => import('./pages/growth/PartnershipsPage').then(m => ({ default: m.PartnershipsPage })));
 
 // Home
 const HomeScreen = lazy(() => import('./pages/home/HomeScreen').then(m => ({ default: m.HomeScreen })));
@@ -487,6 +492,13 @@ function AppRoutes() {
       <Route path="/register" element={<PublicRoute><Suspense fallback={<RouteFallback />}><RegisterScreen /></Suspense></PublicRoute>} />
       <Route path="/forgot-password" element={<PublicRoute><Suspense fallback={<RouteFallback />}><ForgotPasswordScreen /></Suspense></PublicRoute>} />
       <Route path="/launch" element={<Navigate to="/" replace />} />
+
+      {/* Public Growth & Content Routes (SEO) */}
+      <Route path="/organizar-pelada" element={<Suspense fallback={<RouteFallback />}><HowToOrganizePage /></Suspense>} />
+      <Route path="/ranking-futebol-amador" element={<Suspense fallback={<RouteFallback />}><AmateurRankingPage /></Suspense>} />
+      <Route path="/gestao-de-pelada" element={<Suspense fallback={<RouteFallback />}><PeladaManagementPage /></Suspense>} />
+      <Route path="/como-funciona" element={<Suspense fallback={<RouteFallback />}><HowItWorksPage /></Suspense>} />
+      <Route path="/parcerias" element={<Suspense fallback={<RouteFallback />}><PartnershipsPage /></Suspense>} />
 
       {/* A raiz é pública para visitantes e preserva o painel para usuários autenticados. */}
       <Route path="/" element={<RootRoute />}>

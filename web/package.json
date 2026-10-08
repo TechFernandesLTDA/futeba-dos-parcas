@@ -1,11 +1,11 @@
 {
   "name": "futeba-web",
   "private": true,
-  "version": "1.57.0",
+  "version": "1.58.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "node scripts/verify-env.mjs && node node_modules/typescript/bin/tsc && node node_modules/vite/bin/vite.js build",
+    "build": "node scripts/verify-env.mjs && node node_modules/typescript/bin/tsc && node node_modules/vite/bin/vite.js build && node scripts/prerender-public-pages.mjs",
     "typecheck:test": "tsc --project tsconfig.test.json --noEmit",
     "preview": "vite preview",
     "lint": "node node_modules/eslint/bin/eslint.js . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",

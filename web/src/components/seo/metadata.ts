@@ -19,21 +19,77 @@ export interface SeoRouteMetadata {
   description: string;
   canonicalPath: string;
   index: boolean;
-  type?: 'website';
+  type?: 'website' | 'article';
+  ogImage?: string;
+  category?: string;
 }
 
-const PUBLIC_ROUTE_METADATA: Readonly<Record<string, SeoRouteMetadata>> = {
+export const PUBLIC_ROUTE_METADATA: Readonly<Record<string, SeoRouteMetadata>> = {
   '/': {
     title: `${SEO_SITE_NAME} | Organize sua pelada`,
     description: DEFAULT_DESCRIPTION,
     canonicalPath: '/',
     index: true,
+    ogImage: SEO_IMAGE_URL,
+    type: 'website',
   },
   '/launch': {
     title: `${SEO_SITE_NAME} | Organize peladas, times e campeonatos`,
     description: LAUNCH_DESCRIPTION,
     canonicalPath: '/',
     index: true,
+    ogImage: SEO_IMAGE_URL,
+    type: 'website',
+  },
+  '/organizar-pelada': {
+    title: `Como Organizar Pelada de Futebol: Guia Passo a Passo | ${SEO_SITE_NAME}`,
+    description:
+      'Checklist completo para organizar peladas sem confusão: confirmação de presença, sorteio de times equilibrados, vagas e lista de espera.',
+    canonicalPath: '/organizar-pelada',
+    index: true,
+    ogImage: `${SEO_SITE_URL}/og/og-organizar-pelada.png`,
+    type: 'article',
+    category: 'Organização',
+  },
+  '/ranking-futebol-amador': {
+    title: `Ranking de Futebol Amador: Estatísticas, Artilharia e MVP | ${SEO_SITE_NAME}`,
+    description:
+      'Como criar e gerenciar o ranking da sua pelada: XP por presença, gols, assistências e defesas, e votação de MVP, melhor goleiro e bola murcha.',
+    canonicalPath: '/ranking-futebol-amador',
+    index: true,
+    ogImage: `${SEO_SITE_URL}/og/og-ranking-futebol-amador.png`,
+    type: 'article',
+    category: 'Estatísticas',
+  },
+  '/gestao-de-pelada': {
+    title: `Gestão de Pelada: Mensalistas, Caixa Financeiro e Despesas | ${SEO_SITE_NAME}`,
+    description:
+      'Guia para organizar mensalistas, diaristas, rateio da quadra e o caixa do racha, com o painel de finanças do Futeba dos Parças.',
+    canonicalPath: '/gestao-de-pelada',
+    index: true,
+    ogImage: `${SEO_SITE_URL}/og/og-gestao-de-pelada.png`,
+    type: 'article',
+    category: 'Gestão Financeira',
+  },
+  '/como-funciona': {
+    title: `Como Funciona o Futeba dos Parças | Para Organizadores, Jogadores e Quadras`,
+    description:
+      'Conheça todos os fluxos do Futeba dos Parças: sorteio de times equilibrados, confirmação de presença, check-in, XP e ranking e locais de quadras.',
+    canonicalPath: '/como-funciona',
+    index: true,
+    ogImage: `${SEO_SITE_URL}/og/og-como-funciona.png`,
+    type: 'website',
+    category: 'Produto',
+  },
+  '/parcerias': {
+    title: `Parcerias para Quadras e Arenas Society | ${SEO_SITE_NAME}`,
+    description:
+      'Divulgue sua arena para quem organiza peladas no Futeba dos Parças, um produto da Tech Fernandes. Entre em contato para cadastrar sua quadra.',
+    canonicalPath: '/parcerias',
+    index: true,
+    ogImage: `${SEO_SITE_URL}/og/og-parcerias.png`,
+    type: 'website',
+    category: 'Parcerias',
   },
 };
 
@@ -73,6 +129,8 @@ export function getSeoMetadata(pathname: string): SeoRouteMetadata {
     description: privateMetadata?.description ?? DEFAULT_DESCRIPTION,
     canonicalPath: normalizedPath,
     index: false,
+    ogImage: SEO_IMAGE_URL,
+    type: 'website',
   };
 }
 
@@ -117,6 +175,7 @@ function upsertJsonLd(id: string, payload: Record<string, unknown>): void {
 export function applySeoMetadata(pathname: string): SeoRouteMetadata {
   const metadata = getSeoMetadata(pathname);
   const url = canonicalUrl(metadata.canonicalPath);
+  const ogImageUrl = metadata.ogImage ?? SEO_IMAGE_URL;
   const robots = metadata.index
     ? 'index, follow, max-image-preview:large'
     : 'noindex, nofollow';
@@ -132,13 +191,13 @@ export function applySeoMetadata(pathname: string): SeoRouteMetadata {
   });
   upsertMeta('meta[property="og:type"]', { property: 'og:type', content: metadata.type ?? 'website' });
   upsertMeta('meta[property="og:url"]', { property: 'og:url', content: url });
-  upsertMeta('meta[property="og:image"]', { property: 'og:image', content: SEO_IMAGE_URL });
+  upsertMeta('meta[property="og:image"]', { property: 'og:image', content: ogImageUrl });
   upsertMeta('meta[property="og:image:type"]', { property: 'og:image:type', content: 'image/png' });
   upsertMeta('meta[property="og:image:width"]', { property: 'og:image:width', content: '1200' });
   upsertMeta('meta[property="og:image:height"]', { property: 'og:image:height', content: '630' });
   upsertMeta('meta[property="og:image:alt"]', {
     property: 'og:image:alt',
-    content: `${SEO_SITE_NAME} — organize sua pelada`,
+    content: `${metadata.title} — ${SEO_SITE_NAME}`,
   });
   upsertMeta('meta[property="og:site_name"]', { property: 'og:site_name', content: SEO_SITE_NAME });
   upsertMeta('meta[property="og:locale"]', { property: 'og:locale', content: 'pt_BR' });
@@ -148,10 +207,10 @@ export function applySeoMetadata(pathname: string): SeoRouteMetadata {
     name: 'twitter:description',
     content: `${metadata.description} ${SEO_PRODUCT_ATTRIBUTION}`,
   });
-  upsertMeta('meta[name="twitter:image"]', { name: 'twitter:image', content: SEO_IMAGE_URL });
+  upsertMeta('meta[name="twitter:image"]', { name: 'twitter:image', content: ogImageUrl });
   upsertMeta('meta[name="twitter:image:alt"]', {
     name: 'twitter:image:alt',
-    content: `${SEO_SITE_NAME} — organize sua pelada`,
+    content: `${metadata.title} — ${SEO_SITE_NAME}`,
   });
 
   upsertJsonLd('seo-organization-jsonld', {
@@ -173,15 +232,16 @@ export function applySeoMetadata(pathname: string): SeoRouteMetadata {
       url: SEO_PARENT_COMPANY_URL,
     },
   });
+
   upsertJsonLd('seo-software-application-jsonld', {
     '@context': 'https://schema.org',
     '@type': 'SoftwareApplication',
     '@id': `${SEO_SITE_URL}/#software-application`,
     name: SEO_SITE_NAME,
     applicationCategory: 'SportsApplication',
-    operatingSystem: 'Web, Android, iOS',
-    url,
-    description: metadata.description,
+    operatingSystem: 'Web, Android',
+    url: `${SEO_SITE_URL}/`,
+    description: DEFAULT_DESCRIPTION,
     inLanguage: 'pt-BR',
     publisher: { '@id': `${SEO_SITE_URL}/#organization` },
     offers: {
@@ -190,6 +250,27 @@ export function applySeoMetadata(pathname: string): SeoRouteMetadata {
       priceCurrency: 'BRL',
     },
   });
+
+  if (metadata.canonicalPath !== '/' && metadata.index) {
+    upsertJsonLd('seo-breadcrumb-jsonld', {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        {
+          '@type': 'ListItem',
+          position: 1,
+          name: 'Início',
+          item: `${SEO_SITE_URL}/`,
+        },
+        {
+          '@type': 'ListItem',
+          position: 2,
+          name: metadata.title.split('|')[0].trim(),
+          item: url,
+        },
+      ],
+    });
+  }
 
   return metadata;
 }

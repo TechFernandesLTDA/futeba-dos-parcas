@@ -1,4 +1,20 @@
 User-agent: *
 Allow: /
+Allow: /organizar-pelada
+Allow: /ranking-futebol-amador
+Allow: /gestao-de-pelada
+Allow: /como-funciona
+Allow: /parcerias
+Allow: /terms_of_service.html
+Allow: /privacy_policy.html
+Allow: /delete_account.html
+Disallow: /admin/
+Disallow: /onboarding/
+Disallow: /settings/
+Disallow: /messages/
+Disallow: /group/*/edit
+Disallow: /group/*/settings
+Disallow: /group/*/cashbox
+Disallow: /profile/edit
 
 Sitemap: https://futebadosparcas.com.br/sitemap.xml

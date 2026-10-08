@@ -368,6 +368,26 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.58.0][web-1.58.0] - 2026-10-07
+
+#### Adicionado
+- Rotas públicas `/organizar-pelada`, `/ranking-futebol-amador`, `/gestao-de-pelada`, `/como-funciona` e `/parcerias` (`web/src/pages/growth`) (#4197).
+- `buildUtmUrl` em `utils/analytics.ts`, evento `partnership_inquiry_clicked` e novas páginas em `landing_viewed` (#4197).
+- Metadados por rota em `seo/metadata.ts` (title, description, canonical, OG/Twitter, BreadcrumbList) e cartões `web/public/og/*.png` gerados por `scripts/generate-og-images.mjs` (#4196).
+- Prerender estático pós-build (`scripts/prerender-public-pages.mjs`, dados em `prerender-routes.mjs`) com HTML indexável por rota, sem alterar o `index.html` da raiz (#4177).
+- Testes `prerenderParity.test.ts` (prerender x metadata.ts e index.html x metadata.ts) e `growthPages.test.tsx` (copy verificável, UTMs, XP conforme `shared/xp-constants.json`).
+- `docs/parcerias-quadras.md` com o programa de parcerias para quadras (#4197).
+
+#### Mudado
+- `sitemap.xml` com as 6 URLs públicas e `robots.txt` bloqueando áreas autenticadas (#4177).
+- `firebase.json` hosting com `trailingSlash: false` para que `/organizar-pelada` sirva o HTML prerenderizado sem redirecionar para `/organizar-pelada/`, igual ao canonical (#4177).
+- `.lighthouserc.cjs` audita as 6 rotas públicas; a meta de performance 0.9 fica em `warn` porque o preset mobile ainda não a atinge (#4196).
+- Hero da landing servido como `og-futeba-dos-parcas-hero.webp` (1000x525, 70 KB) com preload no `index.html`; o PNG de 1,2 MB segue só para OG/Twitter (#4196).
+- Imports de ícones dos guias por caminho (`@mui/icons-material/X`), o que destrava os testes no vitest (o barrel travava o worker) (#4197).
+- JSON-LD e OG description estáticos de `web/index.html` sincronizados com `seo/metadata.ts`; `operatingSystem` passa a `Web, Android`, pois o app iOS ainda não está publicado (#4187).
+
+_Issues: #4177, #4196, #4197, #4187_
+
 ### [1.57.0][web-1.57.0] - 2026-10-01
 
 #### Adicionado
@@ -3174,6 +3194,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.58.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.58.0.md
 [web-1.57.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.57.0.md
 [web-1.56.9]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.56.9.md
 [web-1.56.8]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.56.8.md

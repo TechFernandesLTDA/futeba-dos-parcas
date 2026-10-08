@@ -30,10 +30,20 @@ export interface AnalyticsEventMap {
   password_reset: Record<string, never>;
 
   // Acquisition / conversion
-  landing_viewed: { page: 'launch' | 'home' };
+  landing_viewed: {
+    page:
+      | 'launch'
+      | 'home'
+      | 'organizar-pelada'
+      | 'ranking-futebol-amador'
+      | 'gestao-de-pelada'
+      | 'como-funciona'
+      | 'parcerias';
+  };
   signup_cta_clicked: { location: string };
   support_cta_clicked: { channel: 'whatsapp' | 'email'; location: string };
   registration_completed: { method: 'email' | 'google' };
+  partnership_inquiry_clicked: { source: string };
 
   // Games
   game_created: { fieldType: string; groupId?: string };
@@ -197,4 +207,33 @@ export function trackEvent<E extends EventName>(
  */
 export function trackScreenView(screenName: string): void {
   trackEvent('screen_viewed', { screen: screenName });
+}
+
+export interface UtmParams {
+  utm_source: string;
+  utm_medium: string;
+  utm_campaign: string;
+  utm_content?: string;
+  utm_term?: string;
+}
+
+/**
+ * Constrói uma URL com parâmetros UTM canônicos para rastreamento de campanhas e conversão.
+ */
+export function buildUtmUrl(path: string, params: UtmParams): string {
+  const [base, hash] = path.split('#');
+  const [pathname, search] = base.split('?');
+  const searchParams = new URLSearchParams(search || '');
+  searchParams.set('utm_source', params.utm_source);
+  searchParams.set('utm_medium', params.utm_medium);
+  searchParams.set('utm_campaign', params.utm_campaign);
+  if (params.utm_content) {
+    searchParams.set('utm_content', params.utm_content);
+  }
+  if (params.utm_term) {
+    searchParams.set('utm_term', params.utm_term);
+  }
+  const queryString = searchParams.toString();
+  const fullBase = queryString ? `${pathname}?${queryString}` : pathname;
+  return hash ? `${fullBase}#${hash}` : fullBase;
 }

@@ -1,7 +1,51 @@
 {
   "platform": "web",
-  "generatedAt": "2026-10-01T12:15:43.253Z",
+  "generatedAt": "2026-10-08T02:16:54.491Z",
   "notes": [
+    {
+      "version": "1.58.0",
+      "buildNumber": null,
+      "releaseDate": "2026-10-07",
+      "type": "minor",
+      "showPopup": false,
+      "published": true,
+      "headline": "Novos guias públicos no Futeba dos Parças explicam como organizar a pelada, o ranking, o caixa e as parcerias com quadras.",
+      "highlights": [
+        {
+          "icon": "menu_book",
+          "title": "Guias para organizar a pelada",
+          "description": "Páginas abertas sobre confirmação de presença, lista de espera e sorteio equilibrado de times."
+        },
+        {
+          "icon": "emoji_events",
+          "title": "Ranking e votação explicados",
+          "description": "O guia de ranking mostra o XP por jogo e a votação de MVP, melhor goleiro e bola murcha."
+        },
+        {
+          "icon": "handshake",
+          "title": "Parcerias com quadras",
+          "description": "Donos de arena encontram como divulgar o local e entrar em contato com a Tech Fernandes."
+        }
+      ],
+      "added": [
+        "Cinco páginas públicas novas: Como funciona, Como organizar pelada, Ranking de futebol amador, Gestão de pelada e Parcerias.",
+        "Links para os guias no rodapé da página inicial, com a atribuição \"Um produto da Tech Fernandes\" mantida.",
+        "Cartões de compartilhamento (Open Graph/Twitter) próprios para cada guia."
+      ],
+      "improved": [
+        "Cada guia tem título, descrição e endereço canônico próprios para os buscadores.",
+        "Os botões de cadastro dos guias carregam parâmetros UTM para medir de onde vêm os novos usuários.",
+        "A imagem da página inicial carrega mais rápido (de 1,2 MB para 70 KB).",
+        "O menu do cabeçalho dos guias não quebra mais as palavras em telas largas."
+      ],
+      "fixed": [],
+      "issueRefs": [
+        4177,
+        4196,
+        4197,
+        4187
+      ]
+    },
     {
       "version": "1.57.0",
       "buildNumber": null,
