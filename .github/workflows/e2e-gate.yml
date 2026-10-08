@@ -1,0 +1,43 @@
+name: E2E Gate
+
+# Gate E2E obrigatório (#4192). Em PR: despacha web-e2e-ci.yml no branch/SHA do
+# PR e só passa com conclusion=success no mesmo SHA. Em push para master
+# (pós-merge): mesmo gate no SHA de master (dispatcher pós-merge).
+# Não cria check verde: o job falha quando o run real falha ou não executa.
+
+on:
+  pull_request:
+    branches: [master]
+  push:
+    branches: [master]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  e2e-gate:
+    name: E2E Gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Validar contratos do gate E2E
+        run: node --test scripts/ci/e2e-gate.test.js scripts/ci/e2e-gate-workflow-contract.test.js
+
+      - name: Disparar e aguardar web-e2e-ci no SHA exato
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GATE_REF: ${{ github.head_ref || github.ref_name }}
+          GATE_EXPECT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: node scripts/ci/e2e-gate.js --ref "$GATE_REF" --expect-sha "$GATE_EXPECT_SHA" --timeout-min 45
