@@ -25,14 +25,19 @@ test('KMP shared unit tests use hosted Linux with a complete Android SDK contrac
   assert.match(tests, /\.\/gradlew :shared:testDebugUnitTest/);
 });
 
-test('iOS build jobs remain on the configurable macOS runner pool', () => {
-  for (const id of ['build-shared-framework', 'notify']) {
+test('iOS framework and app builds stay pinned to the self-hosted Mac (no hosted macOS minutes)', () => {
+  for (const id of ['build-shared-framework', 'build-ios-app']) {
     assert.match(
       jobBody(id),
-      /runs-on: \$\{\{ fromJSON\(vars\.RUNNER_LABELS \|\| '\["self-hosted","macOS","ARM64"\]'\) \}\}/,
-      `${id} must remain on the macOS runner pool`
+      /runs-on: \[self-hosted, macOS, ARM64, futeba\]/,
+      `${id} must run on the self-hosted futeba Mac`
     );
   }
+  assert.doesNotMatch(workflow, /runs-on:\s*['"]?macos-/i, 'hosted macOS runners are 10x billed');
 
-  assert.match(jobBody('build-ios-app'), /runs-on: \[self-hosted, macOS, ARM64\]/);
+  assert.match(
+    jobBody('notify'),
+    /runs-on: \$\{\{ fromJSON\(vars\.RUNNER_LABELS \|\| '\["self-hosted","macOS","ARM64"\]'\) \}\}/,
+    'notify must remain on the configurable runner pool'
+  );
 });

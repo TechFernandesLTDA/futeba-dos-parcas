@@ -149,7 +149,7 @@ fastlane beta                              # Deploy to Firebase App Distribution
 - **Node 22** required (see `.nvmrc`) — run `nvm use` before working in `web/` or `functions/`
 - **Dependabot**: monthly schedule, limit 2 PRs, label `dependencies`. Auto-bumps closed — deps handled in batch via `npm audit fix`
 - **Firebase Hosting URL**: `https://futebadosparcas.com.br` (SPA, all routes → `/index.html`)
-- **Self-hosted macOS runners** for `macos-arm64` jobs (KMP iOS, CodeQL JS/TS, Play Store deploy) — use skill `futeba-runner` to manage
+- **Self-hosted macOS runners** for `macos-arm64` jobs (KMP iOS, Semgrep, Play Store deploy) — use skill `futeba-runner` to manage
 - **Workflow shell injection**: NUNCA `echo '${{ secrets.X }}'` direto — use env vars + `printf '%s' "$VAR"`. Skill `futeba-gh-secrets` documents the pattern
 
 ---
@@ -596,7 +596,7 @@ Ou use a skill `/futeba-status` para snapshot completo (CI, runners, RAM, hostin
 
 - **KMP Framework build**: falha em Linux runners (requer macOS) — **ignorar** ou rodar em self-hosted ARM
 - **Notify Build Status**: depende do KMP Framework, falha em cascata em Linux — **ignorar**
-- **CodeQL**: apenas JavaScript/TypeScript em macOS ARM64. Java/Kotlin desabilitado (libtrace.dylib x86_64-only). Decisão em `specs/DECISIONS.md`
+- **CodeQL removido (07/10/2026)**: exige GitHub Advanced Security (pago) em repo privado. SAST = Semgrep (falha em ERROR), segredos = gitleaks CLI, Kotlin = Detekt. Sem upload de SARIF (artifact). Ver `docs/CI_RUNNERS.md`
 - **Build iOS App**: `skipping` em PRs que não tocam `:shared` — esperado
 - **Self-hosted macOS runner OOM**: daemon disappeared/stopped → `gh run rerun --failed` (não é bug, é capacidade)
 
@@ -612,7 +612,8 @@ Ou use a skill `/futeba-status` para snapshot completo (CI, runners, RAM, hostin
 | `release.yml` | Tag | Create GitHub release |
 | `version-bump.yml` | Manual | Bump version via script |
 | `ios-build.yml` | Push/PR | KMP iOS framework build (macOS runner) |
-| `codeql.yml` | Schedule/PR | Security vulnerability scanning |
+| `semgrep.yml` | Schedule/PR | SAST (Semgrep), falha em ERROR |
+| `secret-scan.yml` | Push/PR/Schedule | Segredos (gitleaks CLI) |
 | `claude.yml` | Issue/PR | Claude Code AI assistance |
 | `claude-code-review.yml` | PR | Automated code review via Claude |
 | `pr-review-to-issues.yml` | PR review | Convert PR review comments to issues |

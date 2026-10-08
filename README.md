@@ -7,7 +7,8 @@
 [![iOS Build](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/ios-build.yml/badge.svg?branch=master)](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/ios-build.yml)
 [![Functions CI](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/functions-ci.yml/badge.svg?branch=master)](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/functions-ci.yml)
 [![Firestore Rules](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/firestore-rules-ci.yml/badge.svg?branch=master)](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/firestore-rules-ci.yml)
-[![CodeQL](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/codeql.yml/badge.svg?branch=master)](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/codeql.yml)
+[![Semgrep](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/semgrep.yml/badge.svg?branch=master)](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/semgrep.yml)
+[![Secret Scan](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/secret-scan.yml/badge.svg?branch=master)](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/secret-scan.yml)
 [![Lighthouse](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/web-lighthouse-ci.yml/badge.svg?branch=master)](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/web-lighthouse-ci.yml)
 [![Produção](https://img.shields.io/badge/produ%C3%A7%C3%A3o-futebadosparcas.com.br-1a7f37)](https://futebadosparcas.com.br)
 [![Plataformas](https://img.shields.io/badge/plataformas-Web%20(PWA)%20%C2%B7%20Android%20%C2%B7%20iOS-5319e7)](#arquitetura)
@@ -214,7 +215,7 @@ fonte durável para binários de distribuição.
   domínios autorizados e Android restrita ao package name e certificados SHA-1.
   Embora essas chaves apareçam no cliente, nunca deixe suas restrições abertas.
 - Escritas Firestore devem validar entrada, tratar erro e usar timestamps do servidor; operações multi-documento devem ser atômicas.
-- CodeQL, Semgrep, regras Firebase e CI complementam a revisão humana, mas não substituem testes do fluxo real.
+- Semgrep, gitleaks, regras Firebase e CI complementam a revisão humana, mas não substituem testes do fluxo real.
 
 ## Documentação
 

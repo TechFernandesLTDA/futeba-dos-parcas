@@ -1,0 +1,44 @@
+# Configuração do gitleaks (CLI oficial, ver .github/workflows/secret-scan.yml).
+# Estende as regras padrão; a allowlist cobre apenas falsos positivos auditados
+# em 07/10/2026 (chaves públicas por design e exemplos de documentação).
+title = "Futeba dos Parças — gitleaks"
+
+[extend]
+useDefault = true
+
+# Chave de API Web do Firebase (AIza...): identifica o projeto, não é segredo
+# (o acesso é controlado por Firestore Rules / App Check). Fica no bundle web.
+[[allowlists]]
+description = "Firebase Web API key (pública por design)"
+targetRules = ["gcp-api-key", "generic-api-key"]
+paths = [
+  '''web/\.env\.(production|example)$''',
+  '''web/public/firebase-messaging-sw\.js$''',
+  '''web/src/services/firebase\.ts$''',
+  '''web/dist/.*''',
+  '''(^|/)index\.html$''',
+]
+
+# reCAPTCHA *site key* é pública (vai no HTML); a secret key nunca entra no repo.
+[[allowlists]]
+description = "reCAPTCHA site key pública"
+targetRules = ["generic-api-key"]
+regexTarget = "line"
+regexes = ['''VITE_RECAPTCHA_SITE_KEY=''']
+
+# Exemplos de documentação com valores fictícios (senhaSegura123, eyJhbG...).
+[[allowlists]]
+description = "Exemplos fictícios em documentação"
+targetRules = ["generic-api-key", "curl-auth-header"]
+paths = [
+  '''API_REFERENCE\.md$''',
+  '''backend/CONTROLLERS\.md$''',
+  '''MIGRATION_GUIDE\.md$''',
+  '''shared/src/commonMain/kotlin/com/futebadosparcas/platform/storage/SecureStorage\.kt$''',
+]
+
+# OAuth client do gcloud/Firebase CLI (publicado pelo Google no próprio SDK).
+[[allowlists]]
+description = "OAuth client público do gcloud CLI (ADC refresh token)"
+targetRules = ["generic-api-key"]
+paths = ['''scripts/data/import-venues-dataset\.ts$''']

@@ -110,7 +110,9 @@ jobs:
 
   build-shared-framework:
     name: Build Shared KMP Framework
-    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    # Kotlin/Native para iOS exige macOS: fixo no Mac self-hosted (label `futeba`),
+    # nunca em runner hospedado (macOS hospedado consome 10x os minutos gratuitos).
+    runs-on: [self-hosted, macOS, ARM64, futeba]
     timeout-minutes: 40
     needs: kmp-shared-tests
     steps:
@@ -142,7 +144,8 @@ jobs:
 
   build-ios-app:
     name: Build iOS App
-    runs-on: [self-hosted, macOS, ARM64]
+    # Xcode so existe no Mac self-hosted (label `futeba`); sem minutos hospedados.
+    runs-on: [self-hosted, macOS, ARM64, futeba]
     timeout-minutes: 60
     needs: [build-shared-framework, ios_app_scope]
     if: needs.ios_app_scope.outputs.should_run == 'true'
