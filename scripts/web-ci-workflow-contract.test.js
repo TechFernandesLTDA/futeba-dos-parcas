@@ -75,7 +75,7 @@ function assertSelfHostedRunner(jobId, job) {
 
   assert.equal(
     runnerLine?.trim(),
-    "runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '[\"self-hosted\",\"macOS\",\"ARM64\"]') }}",
+    "runs-on: ${{ fromJSON(vars.RUNNER_LABELS_LINUX || vars.RUNNER_LABELS || '[\"self-hosted\",\"macOS\",\"ARM64\"]') }}",
     `${jobId} must use the repository runner selector`
   );
 }

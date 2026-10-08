@@ -20,7 +20,7 @@ jobs:
     permissions:
       contents: read
       issues: write
-    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS_LINUX || vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
