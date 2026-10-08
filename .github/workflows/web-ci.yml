@@ -56,7 +56,7 @@ jobs:
             lane: Tests (2/2)
             run_quality: false
     # O repositório usa runners Apple Silicon dedicados também para PRs internos.
-    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS_LINUX || vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
     timeout-minutes: 20
     steps:
       - name: Checkout code
@@ -105,7 +105,7 @@ jobs:
     if: ${{ always() && github.event_name != 'schedule' }}
     needs: [changes, web_shards]
     # O gate agrega needs.*.result no mesmo pool de runners do restante do CI.
-    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS_LINUX || vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
     timeout-minutes: 5
     steps:
       - name: Enforce classified Web result
@@ -139,7 +139,7 @@ jobs:
   mutation:
     name: Mutation Testing (Stryker)
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
-    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS_LINUX || vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
     timeout-minutes: 30
     steps:
       - name: Checkout code

@@ -25,9 +25,10 @@ on:
         default: ''
 
 # Cada evento gera um resumo independente — agrupa por run observado.
+# Uma coleta por vez; eventos novos substituem os pendentes (evita fila no runner).
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.workflow_run.id || github.run_id }}
-  cancel-in-progress: false
+  group: ci-metrics
+  cancel-in-progress: true
 
 permissions:
   actions: read
@@ -36,7 +37,9 @@ permissions:
 jobs:
   collect:
     name: Coletar métricas de CI
-    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    # Só métricas do branch principal (PRs geravam dezenas de runs enfileirados).
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.head_branch == 'master'
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS_LINUX || vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
     timeout-minutes: 5
     steps:
       - name: Checkout code

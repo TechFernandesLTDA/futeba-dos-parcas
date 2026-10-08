@@ -36,7 +36,7 @@ jobs:
   semgrep:
     name: Semgrep (TypeScript)
     # O venv mantém o Semgrep isolado no runner macOS persistente.
-    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS_LINUX || vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
     timeout-minutes: 25
 
     steps:

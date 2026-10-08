@@ -120,7 +120,7 @@ jobs:
     name: Validate PR
     if: always()
     needs: [ changes, android ]
-    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS_LINUX || vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
     timeout-minutes: 5
     steps:
       - name: Verify scoped PR checks
