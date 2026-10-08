@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createTheme, ThemeProvider } from '@mui/material';
@@ -169,8 +169,7 @@ describe('GroupEditScreen', () => {
     const user = userEvent.setup();
     renderScreen();
     const nameInput = await screen.findByRole('textbox', { name: nameFieldLabel });
-    await user.clear(nameInput);
-    await user.type(nameInput, 'Pelada de quarta');
+    fireEvent.change(nameInput, { target: { value: 'Pelada de quarta' } });
     await user.click(screen.getByRole('button', { name: 'a11y.saveGroupChanges' }));
 
     await waitFor(() => expect(mockUpdateDoc).toHaveBeenCalledTimes(1));
@@ -184,7 +183,7 @@ describe('GroupEditScreen', () => {
     const user = userEvent.setup();
     renderScreen();
     const nameInput = await screen.findByRole('textbox', { name: nameFieldLabel });
-    await user.clear(nameInput);
+    fireEvent.change(nameInput, { target: { value: '' } });
     await user.click(screen.getByRole('button', { name: 'a11y.saveGroupChanges' }));
     await waitFor(() => {
       expect(mockUpdateDoc).not.toHaveBeenCalled();
