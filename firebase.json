@@ -21,6 +21,7 @@
       "!/.well-known/**",
       "**/node_modules/**"
     ],
+    "trailingSlash": false,
     "rewrites": [
       {
         "source": "/assets/**",
