@@ -1,6 +1,6 @@
 {
   "platform": "ios",
-  "generatedAt": "2026-10-01T12:15:43.254Z",
+  "generatedAt": "2026-10-08T04:48:22.175Z",
   "notes": [
     {
       "version": "1.8.0",
@@ -8,7 +8,7 @@
       "releaseDate": "2026-10-01",
       "type": "minor",
       "showPopup": true,
-      "published": true,
+      "published": false,
       "headline": "Escolha de tema no iOS e pódio com contraste correto.",
       "highlights": [
         {

@@ -21,6 +21,30 @@ if (localPropertiesFile.exists()) {
     localProperties.load(FileInputStream(localPropertiesFile))
 }
 
+// Fail-fast da assinatura de release. Sem STORE_FILE em local.properties (ou com o
+// arquivo ausente), o signingConfig "release" fica sem storeFile e o BundleTool
+// quebra com NullPointerException em :app:signReleaseBundle, sem dizer o motivo.
+// Os workflows (deploy-production/deploy-beta/release) materializam o keystore a
+// partir do secret KEYSTORE_BASE64 em $RUNNER_TEMP/release.jks e gravam STORE_FILE
+// em local.properties; em build local, crie local.properties com STORE_FILE,
+// STORE_PASSWORD, KEY_ALIAS e KEY_PASSWORD.
+val releaseStoreFilePath: String? = localProperties.getProperty("STORE_FILE")
+gradle.taskGraph.whenReady {
+    val signedReleaseTask = allTasks.firstOrNull {
+        it.project.path == ":app" &&
+            (it.name == "bundleRelease" || it.name == "signReleaseBundle" || it.name == "packageReleaseBundle")
+    }
+    if (signedReleaseTask != null &&
+        (releaseStoreFilePath.isNullOrBlank() || !file(releaseStoreFilePath).exists())
+    ) {
+        throw GradleException(
+            "Keystore de release ausente: STORE_FILE=" + (releaseStoreFilePath ?: "(nao definido)") +
+                " em local.properties. Em CI, o passo 'Decode and save keystore' deve gravar " +
+                "\$RUNNER_TEMP/release.jks a partir do secret KEYSTORE_BASE64 antes de ./gradlew bundleRelease."
+        )
+    }
+}
+
 android {
     namespace = "com.futebadosparcas"
     compileSdk = 36

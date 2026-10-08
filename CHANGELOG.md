@@ -379,6 +379,11 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 - `docs/parcerias-quadras.md` com o programa de parcerias para quadras (#4197).
 
 #### Mudado
+- `WhatsNewDialog` passa de `Dialog` modal MUI para painel não-modal (`role="dialog"`, `aria-modal="false"`) com foco e Esc, para não marcar `<main>` com `aria-hidden` (#4189).
+- `MobileTopBar` com links de breadcrumb de no mínimo 44x44 (#4190); guardas de rota extraídos para `utils/routeGuards.ts` com testes unitários e de mutação (#4191).
+- `useInvitePlayers` não lê mais `groups/{id}` dentro da transação do convite; a validação do grupo fica no trigger `onInviteRedeemed` (#4209).
+- `firestore.rules`: leitura do próprio doc em `groups/{id}/blocked_players/{uid}` liberada a qualquer usuário autenticado (#4209).
+- `firestore.indexes.json`: `league_seasons.is_active` movido para `fieldOverrides` e quatro índices compostos de `games` implantados (#4215).
 - `sitemap.xml` com as 6 URLs públicas e `robots.txt` bloqueando áreas autenticadas (#4177).
 - `firebase.json` hosting com `trailingSlash: false` para que `/organizar-pelada` sirva o HTML prerenderizado sem redirecionar para `/organizar-pelada/`, igual ao canonical (#4177).
 - `.lighthouserc.cjs` audita as 6 rotas públicas; a meta de performance 0.9 fica em `warn` porque o preset mobile ainda não a atinge (#4196).
@@ -386,7 +391,7 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 - Imports de ícones dos guias por caminho (`@mui/icons-material/X`), o que destrava os testes no vitest (o barrel travava o worker) (#4197).
 - JSON-LD e OG description estáticos de `web/index.html` sincronizados com `seo/metadata.ts`; `operatingSystem` passa a `Web, Android`, pois o app iOS ainda não está publicado (#4187).
 
-_Issues: #4177, #4196, #4197, #4187_
+_Issues: #4177, #4196, #4197, #4187, #4185, #4189, #4190, #4191_
 
 ### [1.57.0][web-1.57.0] - 2026-10-01
 
@@ -398,6 +403,8 @@ _Issues: #4177, #4196, #4197, #4187_
 - 18 apple-touch-startup-images por modo/dispositivo (#4131).
 
 #### Mudado
+- Página Sobre com a chave i18n `about.aProductOf` (pt-BR, en, es) e CTAs da landing com `minHeight: 44` (#4181).
+- `AppSidebar` com `aria-label` explícito nos botões de busca e criar jogo no rail colapsado (#4208).
 - Rules de `games`: get/list em whitelist por acesso direto de campo (PUBLIC_OPEN/PUBLIC_CLOSED, owner, grupo); `create` exige `visibility` válido (#4126).
 - Rules de `user_locations`: `create: if false` e `update` apenas para revogação — posição só via callable (#4123).
 - Queries de LIST em games migradas para constraints server-side (useGames, usePublicGames, usePrefetchHome, SearchPanel, WeeklyRecap via confirmations) (#4126).
@@ -412,7 +419,7 @@ _Issues: #4177, #4196, #4197, #4187_
 - `removeGroupMembershipArtifacts` e cron da waitlist com gate de status do jogo (#4134, #4148).
 - onUserDeleted com recursiveDelete de subcoleções e purge de user_locations (#4139, #4124).
 
-_Issues: #4096, #4097, #4098, #4099, #4100, #4107, #4108, #4109, #4110, #4111, #4112, #4113, #4114, #4115, #4121, #4122, #4123, #4124, #4126, #4127, #4129, #4130, #4131, #4132, #4134, #4135, #4138, #4139, #4143, #4146, #4147, #4148 · PRs: #4118, #4151, #4152, #4154, #4155, #4156, #4158, #4159, #4160, #4161_
+_Issues: #4181, #4208, #4096, #4097, #4098, #4099, #4100, #4107, #4108, #4109, #4110, #4111, #4112, #4113, #4114, #4115, #4121, #4122, #4123, #4124, #4126, #4127, #4129, #4130, #4131, #4132, #4134, #4135, #4138, #4139, #4143, #4146, #4147, #4148 · PRs: #4118, #4151, #4152, #4154, #4155, #4156, #4158, #4159, #4160, #4161_
 
 ### [1.56.9][web-1.56.9] - 2026-08-20
 
