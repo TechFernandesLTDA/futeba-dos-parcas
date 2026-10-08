@@ -2,21 +2,18 @@
 
 ## Reportando vulnerabilidades
 
-Se você descobrir uma vulnerabilidade de segurança, **não abra uma issue pública**. Entre em contato diretamente pelo e-mail:
-
-**[support@futebadosparcas.com](mailto:support@futebadosparcas.com)**
+Se você descobrir uma vulnerabilidade de segurança, **não abra uma issue pública** nem poste detalhes em Discussions ou PRs.
+Envie um e-mail para **[suporte@futebadosparcas.com.br](mailto:suporte@futebadosparcas.com.br)** com o assunto `[SECURITY] <resumo>`
+(alternativa: [contato@futebadosparcas.com.br](mailto:contato@futebadosparcas.com.br)).
 
 Inclua o máximo de informações possível para nos ajudar a reproduzir e entender o problema:
-- Descrição detalhada da vulnerabilidade
+- Descrição detalhada da vulnerabilidade e componente afetado (Web, Android, iOS, Functions, Rules)
 - Passos para reproduzir
 - Impacto potencial
 - Sugestões de mitigação (se houver)
 
-### Criptografia
-Se desejar enviar informações sensíveis de forma segura, utilize nossa chave PGP:
-
-**Fingerprint:** `XXXX XXXX XXXX XXXX XXXX  XXXX XXXX XXXX XXXX XXXX`
-**Chave pública:** https://futebadosparcas.com.br/pgp-key.asc
+Não inclua dados pessoais reais de usuários nem credenciais ativas no relato. Se precisar enviar algo sensível,
+combine primeiro um canal seguro por e-mail; ainda não publicamos chave PGP.
 
 ## SLA (Service Level Agreement)
 
@@ -29,8 +26,7 @@ Se desejar enviar informações sensíveis de forma segura, utilize nossa chave 
 
 ## Programa de Recompensas
 Atualmente não oferecemos recompensas financeiras, mas todo relato válido receberá:
-- Crédito público no README e changelog
-- Badge exclusivo "Security Researcher" no app (se aplicável)
+- Crédito público no changelog (com seu consentimento)
 
 ## Escopo
 
@@ -39,7 +35,8 @@ O programa de segurança cobre:
 | Componente | Escopo |
 |------------|--------|
 | App Android (Kotlin/Compose) | ✅ Dentro do escopo |
-| App Web (React/TypeScript) | ✅ Dentro do escopo |
+| App iOS (Compose Multiplatform) | ✅ Dentro do escopo |
+| App Web / PWA (React/TypeScript) | ✅ Dentro do escopo |
 | Cloud Functions (Firebase) | ✅ Dentro do escopo |
 | Firestore Security Rules | ✅ Dentro do escopo |
 | Firebase Hosting | ✅ Dentro do escopo |
@@ -78,3 +75,7 @@ Apenas a versão mais recente do app recebe correções de segurança.
 - Os resultados são publicados como SARIF na aba **Security** do repositório. Atualmente o scan é **report-only** (não bloqueia o build) — será endurecido conforme o ruído baixar.
 - Workflow: [`.github/workflows/semgrep.yml`](.github/workflows/semgrep.yml).
 - **CodeQL** complementa o Semgrep com análise de fluxo de dados em JavaScript/TypeScript ([`.github/workflows/codeql.yml`](.github/workflows/codeql.yml)).
+
+---
+
+Produto da **Tech Fernandes LTDA** · [futebadosparcas.com.br](https://futebadosparcas.com.br)

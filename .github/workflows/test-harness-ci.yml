@@ -32,6 +32,10 @@ concurrency:
   group: firebase-emulator-integration-${{ github.repository }}
   cancel-in-progress: false
 
+# Menor privilégio: jobs que precisam de mais declaram permissions próprias.
+permissions:
+  contents: read
+
 jobs:
   test-harness:
     name: Test Harness — Functions Integration (Emulador)

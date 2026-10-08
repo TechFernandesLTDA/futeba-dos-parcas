@@ -1,56 +1,52 @@
 name: 💡 Feature Request
-description: Sugerir uma nova funcionalidade
+description: Sugerir uma nova funcionalidade ou melhoria
 title: "[FEATURE] "
-labels: ["enhancement", "needs-triage"]
+labels: ["type:feature", "status:needs-triage"]
 body:
   - type: markdown
     attributes:
       value: |
-        Obrigado pela sugestão! Descreva a feature desejada.
+        Obrigado pela sugestão! Descreva o problema antes da solução.
 
   - type: dropdown
     id: platform
     attributes:
       label: Plataforma
+      description: Onde o problema ocorre?
       options:
-        - Android
-        - iOS
-        - Web
-        - Todas
+        - 📱 Android
+        - 🍎 iOS
+        - 🌐 Web
+        - ⚙️ Backend (Cloud Functions)
     validations:
       required: true
 
   - type: textarea
     id: problem
     attributes:
-      label: Problema que Resolve
-      description: Qual problema esta feature resolve?
-      placeholder: |
-        Como usuário, eu gostaria de...
+      label: Problema que resolve
+      placeholder: Como organizador/jogador, eu gostaria de...
     validations:
       required: true
 
   - type: textarea
     id: solution
     attributes:
-      label: Solução Proposta
-      description: Como você imagina a feature?
-      placeholder: |
-        A feature deveria...
+      label: Solução proposta
     validations:
       required: true
 
   - type: textarea
     id: alternatives
     attributes:
-      label: Alternativas Consideradas
-      description: Outras soluções que você pensou?
+      label: Alternativas consideradas
 
+  # Lido por .github/workflows/issue-automation.yml (priority:high|medium|low).
   - type: dropdown
     id: priority
     attributes:
-      label: Prioridade
+      label: Prioridade sugerida
       options:
-        - 🔥 Must-have
-        - ⭐ Nice to have
-        - 💭 Wishlist
+        - 🔴 Alta
+        - 🟡 Média
+        - 🟢 Baixa

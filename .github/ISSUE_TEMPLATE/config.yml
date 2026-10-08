@@ -3,6 +3,9 @@ contact_links:
   - name: 💬 Discussões
     url: https://github.com/TechFernandesLTDA/futeba-dos-parcas/discussions
     about: Tire dúvidas e discuta ideias antes de abrir uma issue
-  - name: 📖 Documentação
+  - name: 🔒 Vulnerabilidade de segurança
+    url: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/SECURITY.md
+    about: Não abra issue pública. Siga o canal privado descrito em SECURITY.md
+  - name: 🌐 Futeba dos Parças (produção)
     url: https://futebadosparcas.com.br
-    about: Consulte a documentação do projeto
+    about: Aplicativo em produção e canais de suporte ao usuário

@@ -15,8 +15,14 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
+# Menor privilégio: jobs que precisam de mais declaram permissions próprias.
+permissions:
+  contents: read
+
 jobs:
   claude-review:
+    # Dependabot não recebe secrets de Actions: a review falharia sempre.
+    if: github.actor != 'dependabot[bot]'
     # Optional: Filter by PR author
     # if: |
     #   github.event.pull_request.user.login == 'external-contributor' ||

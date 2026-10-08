@@ -1,24 +1,45 @@
-# Core application
+# Revisão sugerida por área. Hoje a org tem um único membro elegível, então
+# o review é consultivo (ver .github/BRANCH_STRATEGY.md); o arquivo documenta
+# responsabilidade e passa a valer assim que a proteção de branch estiver ativa.
+# Último padrão que casar vence.
+
+# Padrão: todo o repositório
+* @TechFernandesLTDA/dev-team
+
+# Aplicativos
 /app/ @TechFernandesLTDA/dev-team
 /shared/ @TechFernandesLTDA/dev-team
 /composeApp/ @TechFernandesLTDA/dev-team
-
-# Backend
-/functions/ @TechFernandesLTDA/dev-team
-/firestore.rules @TechFernandesLTDA/dev-team
-
-# Web
+/iosApp/ @TechFernandesLTDA/dev-team
 /web/ @TechFernandesLTDA/dev-team
 
-# Config & CI
+# Backend e dados (impacto em produção: rules, índices, functions)
+/functions/ @TechFernandesLTDA/dev-team
+/firestore.rules @TechFernandesLTDA/dev-team
+/firestore.indexes.json @TechFernandesLTDA/dev-team
+/storage.rules @TechFernandesLTDA/dev-team
+/firebase.json @TechFernandesLTDA/dev-team
+/firestore-rules-tests/ @TechFernandesLTDA/dev-team
+
+# Releases e versionamento
+/versions.json @TechFernandesLTDA/dev-team
+/release-notes/ @TechFernandesLTDA/dev-team
+/fastlane/ @TechFernandesLTDA/dev-team
+
+# CI, segurança e governança
 /.github/ @TechFernandesLTDA/dev-team
 /.github/workflows/ @TechFernandesLTDA/dev-team
+/.github/CODEOWNERS @TechFernandesLTDA/dev-team
 /scripts/ci/ @TechFernandesLTDA/dev-team
-/.claude/ @TechFernandesLTDA/dev-team
 /scripts/web-ci-workflow-contract.test.js @TechFernandesLTDA/dev-team
+/.claude/ @TechFernandesLTDA/dev-team
+/.codex/ @TechFernandesLTDA/dev-team
 
-# Docs
+# Documentação e specs
+/docs/ @TechFernandesLTDA/dev-team
+/specs/ @TechFernandesLTDA/dev-team
 /README.md @TechFernandesLTDA/dev-team
 /CLAUDE.md @TechFernandesLTDA/dev-team
+/AGENTS.md @TechFernandesLTDA/dev-team
 /SECURITY.md @TechFernandesLTDA/dev-team
-/specs/ @TechFernandesLTDA/dev-team
+/CONTRIBUTING.md @TechFernandesLTDA/dev-team

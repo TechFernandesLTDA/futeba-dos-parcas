@@ -94,7 +94,7 @@ test('optimized E2E preview opts into emulators without weakening production', (
 });
 
 test('CI allocates its own preview port without reusing an unrelated server', () => {
-  assert.match(extractJob(e2eWorkflow, 'web-e2e'), /runs-on: ubuntu-latest/);
+  assert.match(extractJob(e2eWorkflow, 'web-e2e'), /runs-on: ubuntu-24.04/);
   assert.match(e2eWorkflow, /run: node scripts\/ci\/allocate-web-e2e-port\.js/);
   assert.ok(e2eWorkflow.indexOf('allocate-web-e2e-port.js') < e2eWorkflow.indexOf('- name: E2E ('));
   assert.match(playwrightConfig, /process\.env\.E2E_PORT \?\? '5173'/);

@@ -1,0 +1,54 @@
+name: 🛠️ Tarefa técnica
+description: Manutenção, CI, dependências, refatoração, testes ou documentação
+title: "[TASK] "
+labels: ["type:chore", "status:needs-triage"]
+body:
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Tipo
+      description: Ajuste a label type:* depois, se necessário (type:refactor, type:test, type:docs).
+      options:
+        - CI / runners / workflows
+        - Dependências
+        - Refatoração
+        - Testes
+        - Documentação
+        - Outro
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Área principal
+      description: Aplique a label area:* correspondente.
+      options:
+        - web
+        - android
+        - ios
+        - functions
+        - rules
+        - shared
+        - ci
+        - docs
+        - release
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Contexto e objetivo
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Critérios de aceite
+      placeholder: |
+        - [ ] ...
+        - [ ] ...
+    validations:
+      required: true

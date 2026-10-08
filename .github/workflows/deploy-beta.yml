@@ -9,6 +9,15 @@ on:
       - develop
   workflow_dispatch:  # Allow manual trigger
 
+# Menor privilégio: jobs que precisam de mais declaram permissions próprias.
+permissions:
+  contents: read
+
+# Deploys nunca são cancelados no meio; execuções do mesmo ref entram em fila.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   deploy-beta:
     name: Build & Deploy Beta

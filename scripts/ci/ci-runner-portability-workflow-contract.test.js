@@ -34,7 +34,7 @@ test('Functions tests install the verified media runtime in the same job', () =>
 test('Firestore and media runtime gates use hosted Linux', () => {
   const rulesWorkflow = read('.github/workflows/firestore-rules-ci.yml');
   const functionsWorkflow = read('.github/workflows/functions-ci.yml');
-  const hostedSelector = 'runs-on: ubuntu-latest';
+  const hostedSelector = 'runs-on: ubuntu-24.04';
   const selfHostedSelector = /runs-on: \$\{\{ fromJSON\(vars\.RUNNER_LABELS/;
 
   assert.match(job(rulesWorkflow, 'rules-tests'), new RegExp(hostedSelector));
@@ -58,7 +58,7 @@ test('Android PR validation uses hosted Linux and validates SDK 36', () => {
 
   assert.ok(androidJobStart >= 0, 'Android validation job must exist');
   assert.ok(validateJobStart > androidJobStart, 'Android job must precede validate');
-  assert.match(androidJob, /runs-on: ubuntu-latest/);
+  assert.match(androidJob, /runs-on: ubuntu-24.04/);
   assert.match(androidJob, /uses: android-actions\/setup-android@v3/);
   assert.match(androidJob, /sdkmanager --install[\s\S]*platforms;android-36/);
   assert.match(androidJob, /platforms\/android-36\/android\.jar/);
@@ -68,7 +68,7 @@ test('Android PR validation uses hosted Linux and validates SDK 36', () => {
 test('Lighthouse selects a Linux browser explicitly', () => {
   const workflow = read('.github/workflows/web-lighthouse-ci.yml');
   const lighthouseConfig = read('web/.lighthouserc.cjs');
-  assert.match(workflow, /runs-on: ubuntu-latest/);
+  assert.match(workflow, /runs-on: ubuntu-24.04/);
   assert.match(workflow, /playwright install --with-deps chromium/);
   assert.match(workflow, /CHROME_PATH=.*chromium\.executablePath/);
   assert.match(workflow, /LHCI passes --no-sandbox/);

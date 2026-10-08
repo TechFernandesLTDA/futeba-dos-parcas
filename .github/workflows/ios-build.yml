@@ -28,10 +28,15 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# Menor privilégio: jobs que precisam de mais declaram permissions próprias.
+permissions:
+  contents: read
+
 jobs:
   ios_app_scope:
     name: Detect iOS app changes
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
     outputs:
       should_run: ${{ steps.detect.outputs.should_run }}
     steps:
@@ -52,7 +57,7 @@ jobs:
 
   kmp-shared-tests:
     name: KMP Shared Unit Tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
       - name: Checkout code

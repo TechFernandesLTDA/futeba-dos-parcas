@@ -1,75 +1,78 @@
 name: 🐛 Bug Report
 description: Reportar um bug ou comportamento inesperado
 title: "[BUG] "
-labels: ["bug", "needs-triage"]
+labels: ["type:bug", "status:needs-triage"]
 body:
   - type: markdown
     attributes:
       value: |
-        Obrigado por reportar um bug! Preencha as informações abaixo.
+        Obrigado por reportar! Não inclua dados pessoais, tokens ou credenciais.
+        Vulnerabilidades de segurança **não** devem ser abertas aqui: veja `SECURITY.md`.
 
   - type: dropdown
     id: platform
     attributes:
       label: Plataforma
-      description: Onde o bug ocorre?
+      description: Onde o problema ocorre?
       options:
-        - Android
-        - iOS
-        - Web
-        - Backend (Cloud Functions)
+        - 📱 Android
+        - 🍎 iOS
+        - 🌐 Web
+        - ⚙️ Backend (Cloud Functions)
     validations:
       required: true
 
   - type: input
     id: version
     attributes:
-      label: Versão do App
-      description: Qual versão você está usando?
-      placeholder: "1.7.2"
+      label: Versão do app
+      description: "Qual versão você está usando? (Web: rodapé do app; Android/iOS: Configurações > Sobre)"
+      placeholder: "1.57.0"
     validations:
       required: true
 
   - type: textarea
     id: description
     attributes:
-      label: Descrição do Bug
-      description: Descreva o bug de forma clara e concisa
-      placeholder: |
-        O que aconteceu? O que você esperava que acontecesse?
+      label: Descrição do bug
+      description: O que aconteceu? O que você esperava que acontecesse?
     validations:
       required: true
 
   - type: textarea
     id: steps
     attributes:
-      label: Passos para Reproduzir
-      description: Como reproduzir o problema?
+      label: Passos para reproduzir
       placeholder: |
         1. Abrir a tela X
-        2. Clicar em Y
-        3. Ver erro Z
+        2. Tocar em Y
+        3. Ver o erro Z
     validations:
       required: true
 
   - type: textarea
     id: logs
     attributes:
-      label: Logs/Screenshots
-      description: Cole logs ou adicione screenshots
-      placeholder: |
-        ```
-        Logs aqui
-        ```
+      label: Logs / screenshots
+      description: Cole logs (sem dados sensíveis) ou anexe imagens.
+      render: shell
 
+  - type: input
+    id: device
+    attributes:
+      label: Dispositivo / navegador
+      placeholder: "Galaxy S23 (Android 14) · Chrome 130 · iPhone 15 (iOS 18)"
+
+  # As opções abaixo são lidas por .github/workflows/issue-automation.yml
+  # (priority:critical|high|medium|low). Mantenha os textos em sincronia.
   - type: dropdown
     id: severity
     attributes:
       label: Severidade
       options:
-        - 🔴 Critical (app crash, perda de dados)
-        - 🟠 High (feature não funciona)
-        - 🟡 Medium (workaround possível)
-        - 🟢 Low (visual, menor impacto)
+        - 🔴 Crítico (app quebra, perda de dados, segurança)
+        - 🟠 Alto (funcionalidade principal quebrada)
+        - 🟡 Médio (há contorno)
+        - 🟢 Baixo (visual / impacto menor)
     validations:
       required: true

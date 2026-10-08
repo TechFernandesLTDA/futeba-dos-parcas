@@ -69,7 +69,7 @@ test('PR code uses read-only checkout credentials and hosted Android tooling', (
     assert.equal(nonPersistent, checkouts, `${name} must not persist checkout credentials`);
   }
 
-  assert.match(jobBody(prWorkflow, 'android'), /runs-on: ubuntu-latest/);
+  assert.match(jobBody(prWorkflow, 'android'), /runs-on: ubuntu-24.04/);
   assert.doesNotMatch(jobBody(prWorkflow, 'android'), /Ensure unzip|apt-get|sudo/);
   assert.match(codeowners, /^\/scripts\/ci\/ @TechFernandesLTDA\/dev-team$/m);
   assert.match(codeowners, /^\/scripts\/web-ci-workflow-contract\.test\.js @TechFernandesLTDA\/dev-team$/m);
@@ -151,7 +151,7 @@ test('reusable classifier exports every versioned domain and manual runs remain 
 
 test('iOS app build consumes the narrow classifier contract', () => {
   const iosAppJob = jobBody(iosWorkflow, 'build-ios-app');
-  assert.match(iosWorkflow, /ios_app_scope:[\s\S]*?runs-on: ubuntu-latest/);
+  assert.match(iosWorkflow, /ios_app_scope:[\s\S]*?runs-on: ubuntu-24.04/);
   assert.match(iosWorkflow, /ios_app_scope:[\s\S]*?should_run: \$\{\{ steps\.detect\.outputs\.should_run \}\}/);
   assert.match(iosAppJob, /needs: \[build-shared-framework, ios_app_scope\]/);
   assert.match(iosAppJob, /if: needs\.ios_app_scope\.outputs\.should_run == 'true'/);

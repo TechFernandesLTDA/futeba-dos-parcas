@@ -31,6 +31,10 @@ env:
   JAVA_DISTRIBUTION: 'temurin'
   EMULATOR_API: 34
 
+# Menor privilégio: jobs que precisam de mais declaram permissions próprias.
+permissions:
+  contents: read
+
 jobs:
   macrobenchmark:
     name: Macrobenchmark (API 34)
