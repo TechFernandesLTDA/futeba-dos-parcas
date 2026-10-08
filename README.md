@@ -11,7 +11,7 @@
 [![Lighthouse](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/web-lighthouse-ci.yml/badge.svg?branch=master)](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/web-lighthouse-ci.yml)
 [![Produção](https://img.shields.io/badge/produ%C3%A7%C3%A3o-futebadosparcas.com.br-1a7f37)](https://futebadosparcas.com.br)
 [![Plataformas](https://img.shields.io/badge/plataformas-Web%20(PWA)%20%C2%B7%20Android%20%C2%B7%20iOS-5319e7)](#arquitetura)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![License: Proprietária](https://img.shields.io/badge/license-propriet%C3%A1ria-red.svg)](LICENSE)
 
 Plataforma para organizar peladas, grupos e temporadas com confirmação de presença, formação de times, estatísticas, ranking e gamificação. Disponível para **Web (PWA), Android e iOS**.
 
@@ -236,4 +236,4 @@ fonte durável para binários de distribuição.
 
 O acesso ao código é restrito. Colaboradores autorizados devem seguir [`CONTRIBUTING.md`](CONTRIBUTING.md), a proteção de `master`, CODEOWNERS e os checks obrigatórios.
 
-Distribuído sob a [licença MIT](LICENSE). © Tech Fernandes LTDA.
+Software proprietário — todos os direitos reservados. Consulte [LICENSE](LICENSE). © Tech Fernandes LTDA.
