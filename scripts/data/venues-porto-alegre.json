@@ -1,0 +1,362 @@
+{
+  "gerado_em": "2026-10-07",
+  "rodada": 5,
+  "slug": "porto-alegre",
+  "issue": 4195,
+  "titulo": "Porto Alegre (R5)",
+  "coleta": {
+    "data": "2026-10-07",
+    "ferramentas": "pesquisa web (fichas públicas por item) + OpenStreetMap/Overpass (scripts/data/build-venues-osm.mjs)",
+    "regra": "apenas dados públicos verificáveis; campos sem fonte = null; todo item tem >=1 fonte com URL; entra no app como DRAFT/não verificado"
+  },
+  "cobertura": {
+    "Porto Alegre": 9
+  },
+  "venues": [
+    {
+      "nome": "Arena Soccer",
+      "endereco": {
+        "rua": "Avenida da Cavalhada",
+        "numero": "4217",
+        "bairro": "Cavalhada",
+        "cidade": "Porto Alegre",
+        "uf": "RS",
+        "cep": null
+      },
+      "telefone": "(51) 3307-6400",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": "Aluguel de Campo de Futebol",
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://canchea.com/br/quadras/",
+          "dado": "Arena Soccer com endereço (Av. da Cavalhada, 4217, Cavalhada, Porto Alegre), telefone (51) 3307-6400 e categoria 'Aluguel de Campo de Futebol'"
+        },
+        {
+          "url": "https://listaamarela.com.br/rs-porto-alegre/quadras-esportivas-aluguel",
+          "dado": "Arena Soccer com telefone (51) 3307-6400 na categoria Quadras Esportivas - Aluguel"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R5",
+      "origem": "web",
+      "finalidade": "comercial_indicado"
+    },
+    {
+      "nome": "HD Sports Complex",
+      "endereco": {
+        "rua": "Rua Lauro Müller",
+        "numero": "860",
+        "bairro": "Navegantes",
+        "cidade": "Porto Alegre",
+        "uf": "RS",
+        "cep": null
+      },
+      "telefone": null,
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.buscaquadras.com.br/",
+          "dado": "endereço (Rua Lauro Müller, 860, Navegantes, Porto Alegre) em plataforma de aluguel de quadras"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R5",
+      "origem": "web",
+      "finalidade": "comercial_indicado"
+    },
+    {
+      "nome": "MCM Esportes BIG",
+      "endereco": {
+        "rua": "Rua Sergio Jungblut Dieterich",
+        "numero": "1011",
+        "bairro": "São João",
+        "cidade": "Porto Alegre",
+        "uf": "RS",
+        "cep": null
+      },
+      "telefone": null,
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.buscaquadras.com.br/",
+          "dado": "endereço (Rua Sergio Jungblut Dieterich, 1011, São João, Porto Alegre) em plataforma de aluguel de quadras"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R5",
+      "origem": "web",
+      "finalidade": "comercial_indicado"
+    },
+    {
+      "nome": "Meca Sports Bar",
+      "endereco": {
+        "rua": "Avenida Baltazar de Oliveira Garcia",
+        "numero": "2274",
+        "bairro": "São Sebastião",
+        "cidade": "Porto Alegre",
+        "uf": "RS",
+        "cep": "91150-000"
+      },
+      "telefone": null,
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": 4,
+      "detalhe_quadras": "4 quadras de futebol society sintético cobertas + 8 quadras poliesportivas de areia",
+      "tipo_piso": "society (grama sintética, coberta)",
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://webquadras.com.br/mecasportsbar?a=16265037",
+          "dado": "endereço (Av. Baltazar de Oliveira Garcia, 2274, São Sebastião), CEP 91150-000, estrutura (4 quadras de futebol society sintético cobertas) e descrição de locação; a página traz dois horários conflitantes, por isso horarios=null e telefone não exposto"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R5",
+      "origem": "web",
+      "finalidade": "comercial_indicado"
+    },
+    {
+      "nome": "Sarandi Esportes",
+      "endereco": {
+        "rua": "Avenida Francisco Silveira Bitencourt",
+        "numero": "1035",
+        "bairro": "Sarandi",
+        "cidade": "Porto Alegre",
+        "uf": "RS",
+        "cep": null
+      },
+      "telefone": null,
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": 6,
+      "detalhe_quadras": "2 quadras de fut-7 em grama sintética, 2 quadras de fut-5 em grama sintética e 2 quadras de futsal, todas com placar digital",
+      "tipo_piso": "society (grama sintética)",
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.buscaquadras.com.br/",
+          "dado": "endereço (Av. Francisco Silveira Bitencourt, 1035, Sarandi, Porto Alegre) e composição do complexo (2 fut-7 + 2 fut-5 + 2 futsal)"
+        }
+      ],
+      "confidence": "alta",
+      "coordenadas": null,
+      "rodada_dados": "R5",
+      "origem": "web",
+      "finalidade": "comercial_indicado"
+    },
+    {
+      "nome": "Soccer City",
+      "endereco": {
+        "rua": "Rua Lauro Müller",
+        "numero": "700",
+        "bairro": "Navegantes",
+        "cidade": "Porto Alegre",
+        "uf": "RS",
+        "cep": null
+      },
+      "telefone": "(51) 3574-5501",
+      "whatsapp": null,
+      "site": "https://www.soccercitypoa.com.br",
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": 6,
+      "detalhe_quadras": "4 campos de society (futebol 7) 30m x 50m, sendo 2 cobertos, + 2 campos de futebol 5 17m x 30m, ambos cobertos",
+      "tipo_piso": "society (grama sintética, monofilada padrão FIFA)",
+      "horarios": {
+        "segunda": "09:00-00:00",
+        "terca": "09:00-00:00",
+        "quarta": "09:00-00:00",
+        "quinta": "09:00-00:00",
+        "sexta": "09:00-00:00",
+        "sabado": "09:00-22:00"
+      },
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://bestguia.com.br/e/63/soccer-city",
+          "dado": "endereço (Rua Lauro Muller, 700, Navegantes), descrição do complexo (6 campos, medidas, cobertura), grama sintética padrão FIFA, horários de funcionamento e site"
+        },
+        {
+          "url": "https://listaamarela.com.br/rs-porto-alegre/quadras-esportivas-aluguel",
+          "dado": "telefone (51) 3574-5501 na categoria Quadras Esportivas - Aluguel"
+        },
+        {
+          "url": "https://guiafacil.com/encontre/quadras-esportivas-aluguel/porto-alegre/rs",
+          "dado": "Soccer City na categoria de aluguel, R. Lauro Müller, Porto Alegre"
+        }
+      ],
+      "confidence": "alta",
+      "coordenadas": {
+        "lat": -29.996547,
+        "lon": -51.19448
+      },
+      "rodada_dados": "R5",
+      "origem": "web",
+      "finalidade": "comercial_indicado"
+    },
+    {
+      "nome": "Soccer Sports",
+      "endereco": {
+        "rua": "Rua Santo Antônio",
+        "numero": "17",
+        "bairro": "Floresta",
+        "cidade": "Porto Alegre",
+        "uf": "RS",
+        "cep": "90230-011"
+      },
+      "telefone": "(51) 99980-9950",
+      "whatsapp": null,
+      "site": "https://soccersportspoa.com.br",
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.waze.com/pt-BR/live-map/directions/br/rs/soccer-sports-or-aluguel-de-quadras-e-espaco-para-festas?to=place.ChIJbW2r6gJ5GZURcgWlD1pwNHw",
+          "dado": "nome 'Soccer Sports | Aluguel de Quadras e Espaço para Festas', endereço (R. Santo Antônio, 17, Floresta), CEP 90230-011, telefone (51) 99980-9950 e site"
+        }
+      ],
+      "confidence": "alta",
+      "coordenadas": null,
+      "rodada_dados": "R5",
+      "origem": "web",
+      "finalidade": "comercial_indicado"
+    },
+    {
+      "nome": "South Seven Football Society Synthetic Grass",
+      "endereco": {
+        "rua": "Avenida Cavalhada",
+        "numero": null,
+        "bairro": "Cavalhada",
+        "cidade": "Porto Alegre",
+        "uf": "RS",
+        "cep": null
+      },
+      "telefone": "(51) 3261-7777",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://listaamarela.com.br/rs-porto-alegre/quadras-esportivas-aluguel",
+          "dado": "telefone (51) 3261-7777 na categoria Quadras Esportivas - Aluguel"
+        },
+        {
+          "url": "https://guiafacil.com/encontre/quadras-esportivas-aluguel/porto-alegre/rs",
+          "dado": "endereço Av. Cavalhada em Porto Alegre e telefone na categoria de aluguel"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R5",
+      "origem": "web",
+      "finalidade": "comercial_indicado"
+    },
+    {
+      "nome": "Sul Sete Football Society",
+      "endereco": {
+        "rua": "Avenida Cavalhada",
+        "numero": null,
+        "bairro": "Cavalhada",
+        "cidade": "Porto Alegre",
+        "uf": "RS",
+        "cep": null
+      },
+      "telefone": "(51) 3022-4966",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://listaamarela.com.br/rs-porto-alegre/quadras-esportivas-aluguel",
+          "dado": "telefone (51) 3022-4966 na categoria Quadras Esportivas - Aluguel"
+        },
+        {
+          "url": "https://guiafacil.com/encontre/quadras-esportivas-aluguel/porto-alegre/rs",
+          "dado": "endereço Av. Cavalhada em Porto Alegre e telefone na categoria de aluguel"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R5",
+      "origem": "web",
+      "finalidade": "comercial_indicado"
+    }
+  ]
+}

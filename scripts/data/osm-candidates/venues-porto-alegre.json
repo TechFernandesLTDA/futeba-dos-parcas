@@ -1,0 +1,1471 @@
+{
+ "gerado_em": "2026-10-08",
+ "rodada": 5,
+ "cidade": "Porto Alegre",
+ "uf": "RS",
+ "slug": "porto-alegre",
+ "issue": 4195,
+ "fonte": {
+  "provedor": "OpenStreetMap (via Nominatim + Overpass API)",
+  "licenca": "ODbL 1.0 — https://www.openstreetmap.org/copyright",
+  "nominatim_url": "https://www.openstreetmap.org/relation/242397",
+  "nominatim_display_name": "Porto Alegre, Rio Grande do Sul, Região Sul, Brasil",
+  "overpass_mirror": "https://overpass-api.de/api/interpreter",
+  "overpass_query": "[out:json][timeout:180];\narea(3600242397)->.a;\n(\n  node[\"leisure\"=\"pitch\"](area.a);\n  way[\"leisure\"=\"pitch\"](area.a);\n  relation[\"leisure\"=\"pitch\"](area.a);\n  node[\"leisure\"=\"sports_centre\"](area.a);\n  way[\"leisure\"=\"sports_centre\"](area.a);\n);\nout body center meta;",
+  "osm_base_timestamp": "2026-10-08T00:26:50Z"
+ },
+ "coleta": {
+  "data": "2026-10-08",
+  "ferramenta": "scripts/data/build-venues-osm.mjs",
+  "finalidade": "dataset curado de quadras para importação DRAFT (revisão humana antes de publicar)"
+ },
+ "estatisticas": {
+  "candidatos_osm": 1033,
+  "sem_nome": 888,
+  "institucional": 2,
+  "acesso_restrito": 7,
+  "amenity_descartada": 0,
+  "sem_sinal_de_futebol": 101,
+  "other_excluded": 0,
+  "sem_coordenada": 0,
+  "mantidos": 35,
+  "duplicatas_removidas": 0
+ },
+ "venues": [
+  {
+   "nome": "01 Poliesportiva",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Porto Alegre",
+    "uf": "RS",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "concreto (OSM: surface=concrete)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1103586218",
+     "dado": "OpenStreetMap (way/1103586218): sport=soccer;basketball, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -30.0514634,
+    "lon": -51.2331661
+   },
+   "rodada_dados": "R5",
+   "osm": {
+    "type": "way",
+    "id": 1103586218,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "07 Futebol 7 Grama Sintética",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Porto Alegre",
+    "uf": "RS",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama sintética (OSM: surface=artificial_turf)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/220800585",
+     "dado": "OpenStreetMap (way/220800585): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -30.052341,
+    "lon": -51.2331089
+   },
+   "rodada_dados": "R5",
+   "osm": {
+    "type": "way",
+    "id": 220800585,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "08 Futebol 7 Grama Sintética",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Porto Alegre",
+    "uf": "RS",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama sintética (OSM: surface=artificial_turf)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1103588150",
+     "dado": "OpenStreetMap (way/1103588150): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -30.052787,
+    "lon": -51.2330849
+   },
+   "rodada_dados": "R5",
+   "osm": {
+    "type": "way",
+    "id": 1103588150,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "09 Futebol 7 Grama Sintética",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Porto Alegre",
+    "uf": "RS",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama sintética (OSM: surface=artificial_turf)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1103588151",
+     "dado": "OpenStreetMap (way/1103588151): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -30.0533107,
+    "lon": -51.2330699
+   },
+   "rodada_dados": "R5",
+   "osm": {
+    "type": "way",
+    "id": 1103588151,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "10 Futebol de Areia",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Porto Alegre",
+    "uf": "RS",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1105039453",
+     "dado": "OpenStreetMap (way/1105039453): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -30.0537605,
+    "lon": -51.2330746
+   },
+   "rodada_dados": "R5",
+   "osm": {
+    "type": "way",
+    "id": 1105039453,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "20 Futebol 7 Grama Sintética",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Porto Alegre",
+    "uf": "RS",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama sintética (OSM: surface=artificial_turf)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1103588933",
+     "dado": "OpenStreetMap (way/1103588933): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -30.0551819,
+    "lon": -51.2332977
+   },
+   "rodada_dados": "R5",
+   "osm": {
+    "type": "way",
+    "id": 1103588933,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "21 Futebol 7 Grama Sintética",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Porto Alegre",
+    "uf": "RS",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama sintética (OSM: surface=artificial_turf)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1103588934",
+     "dado": "OpenStreetMap (way/1103588934): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -30.0556118,
+    "lon": -51.2334348
+   },
+   "rodada_dados": "R5",
+   "osm": {
+    "type": "way",
+    "id": 1103588934,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campão",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Porto Alegre",
+    "uf": "RS",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama natural (OSM: surface=grass)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/98542909",
+     "dado": "OpenStreetMap (way/98542909): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -30.0294641,
+    "lon": -51.176905
+   },
+   "rodada_dados": "R5",
+   "osm": {
+    "type": "way",
+    "id": 98542909,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campinho da vila ecologica",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Porto Alegre",
+    "uf": "RS",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/243500966",
+     "dado": "OpenStreetMap (way/243500966): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -30.0791827,
+    "lon": -51.2373118
+   },
+   "rodada_dados": "R5",
+   "osm": {
+    "type": "way",
+    "id": 243500966,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campinho da vila união",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Porto Alegre",
+    "uf": "RS",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1322825772",
+     "dado": "OpenStreetMap (way/1322825772): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -30.0766753,
+    "lon": -51.2334834
+   },
+   "rodada_dados": "R5",
+   "osm": {
+    "type": "way",
+    "id": 1322825772,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campinho da vlla figueira",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Porto Alegre",
+    "uf": "RS",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1322825799",
+     "dado": "OpenStreetMap (way/1322825799): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -30.0746131,
+    "lon": -51.2312583
+   },
+   "rodada_dados": "R5",
+   "osm": {
+    "type": "way",
+    "id": 1322825799,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo 1",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Porto Alegre",
+    "uf": "RS",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/692275146",
+     "dado": "OpenStreetMap (way/692275146): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -30.1233253,
+    "lon": -51.2098725
+   },
+   "rodada_dados": "R5",
+   "osm": {
+    "type": "way",
+    "id": 692275146,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo 2",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Porto Alegre",
+    "uf": "RS",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/692275147",
+     "dado": "OpenStreetMap (way/692275147): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -30.1232505,
+    "lon": -51.2092747
+   },
+   "rodada_dados": "R5",
+   "osm": {
+    "type": "way",
+    "id": 692275147,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo da fase",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Porto Alegre",
+    "uf": "RS",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1322825882",
+     "dado": "OpenStreetMap (way/1322825882): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -30.0809056,
+    "lon": -51.2322702
+   },
+   "rodada_dados": "R5",
+   "osm": {
+    "type": "way",
+    "id": 1322825882,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo da Figueira",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Porto Alegre",
+    "uf": "RS",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/243502694",
+     "dado": "OpenStreetMap (way/243502694): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -30.043149,
+    "lon": -51.1224746
+   },
+   "rodada_dados": "R5",
+   "osm": {
+    "type": "way",
+    "id": 243502694,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo da Tuca",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Porto Alegre",
+    "uf": "RS",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama natural (OSM: surface=grass)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/243505866",
+     "dado": "OpenStreetMap (way/243505866): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -30.0704336,
+    "lon": -51.1742176
+   },
+   "rodada_dados": "R5",
+   "osm": {
+    "type": "way",
+    "id": 243505866,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "campo de futebol do condomineo alto das pedras",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Porto Alegre",
+    "uf": "RS",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/887354386",
+     "dado": "OpenStreetMap (way/887354386): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -30.1172285,
+    "lon": -51.1915159
+   },
+   "rodada_dados": "R5",
+   "osm": {
+    "type": "way",
+    "id": 887354386,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo de Futebol PAMPA",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Porto Alegre",
+    "uf": "RS",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/127734471",
+     "dado": "OpenStreetMap (way/127734471): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -30.1498817,
+    "lon": -51.1423194
+   },
+   "rodada_dados": "R5",
+   "osm": {
+    "type": "way",
+    "id": 127734471,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Esportivo Praça Capataz João Ribeiro",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Porto Alegre",
+    "uf": "RS",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/692276515",
+     "dado": "OpenStreetMap (way/692276515): sport=soccer;Ginástica, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -30.1031019,
+    "lon": -51.2254279
+   },
+   "rodada_dados": "R5",
+   "osm": {
+    "type": "way",
+    "id": 692276515,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo george black",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Porto Alegre",
+    "uf": "RS",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1174825022",
+     "dado": "OpenStreetMap (way/1174825022): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -30.0686593,
+    "lon": -51.2086078
+   },
+   "rodada_dados": "R5",
+   "osm": {
+    "type": "way",
+    "id": 1174825022,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Suplementar",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Porto Alegre",
+    "uf": "RS",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/101566841",
+     "dado": "OpenStreetMap (way/101566841): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -30.0599946,
+    "lon": -51.2149142
+   },
+   "rodada_dados": "R5",
+   "osm": {
+    "type": "way",
+    "id": 101566841,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo vila gaucha",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Porto Alegre",
+    "uf": "RS",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/424602755",
+     "dado": "OpenStreetMap (way/424602755): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -30.0714016,
+    "lon": -51.2352649
+   },
+   "rodada_dados": "R5",
+   "osm": {
+    "type": "way",
+    "id": 424602755,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Futebol Giovanella",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Porto Alegre",
+    "uf": "RS",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/723293854",
+     "dado": "OpenStreetMap (way/723293854): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -30.0952773,
+    "lon": -51.2313681
+   },
+   "rodada_dados": "R5",
+   "osm": {
+    "type": "way",
+    "id": 723293854,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Futebol PC",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Porto Alegre",
+    "uf": "RS",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/830853782",
+     "dado": "OpenStreetMap (way/830853782): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -30.0419955,
+    "lon": -51.1296528
+   },
+   "rodada_dados": "R5",
+   "osm": {
+    "type": "way",
+    "id": 830853782,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Grêmio Foot-Ball Porto Alegrense",
+   "endereco": {
+    "rua": "Largo Patrono Fernando Kroeff",
+    "numero": "1",
+    "bairro": null,
+    "cidade": "Porto Alegre",
+    "uf": "RS",
+    "cep": "90880-440"
+   },
+   "telefone": "+55 51 3218-2000",
+   "whatsapp": null,
+   "site": "https://gremio.net/",
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/244178645",
+     "dado": "OpenStreetMap (way/244178645): sport=soccer, Largo Patrono Fernando Kroeff, 1, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -30.0603493,
+    "lon": -51.2138164
+   },
+   "rodada_dados": "R5",
+   "osm": {
+    "type": "way",
+    "id": 244178645,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Petrópole Tênis Clube",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Porto Alegre",
+    "uf": "RS",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": "https://www.petropole.com.br/",
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/253881079",
+     "dado": "OpenStreetMap (way/253881079): sport=tennis;soccer;swimming, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -30.0474417,
+    "lon": -51.1918415
+   },
+   "rodada_dados": "R5",
+   "osm": {
+    "type": "way",
+    "id": 253881079,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Praça 2",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Porto Alegre",
+    "uf": "RS",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/244251392",
+     "dado": "OpenStreetMap (way/244251392): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -29.994817,
+    "lon": -51.1037946
+   },
+   "rodada_dados": "R5",
+   "osm": {
+    "type": "way",
+    "id": 244251392,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Praça 4502",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Porto Alegre",
+    "uf": "RS",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/38438726",
+     "dado": "OpenStreetMap (way/38438726): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -30.1018622,
+    "lon": -51.2424999
+   },
+   "rodada_dados": "R5",
+   "osm": {
+    "type": "way",
+    "id": 38438726,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Praça Luiz de Calasans",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Porto Alegre",
+    "uf": "RS",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/102927080",
+     "dado": "OpenStreetMap (way/102927080): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -29.9790736,
+    "lon": -51.1273088
+   },
+   "rodada_dados": "R5",
+   "osm": {
+    "type": "way",
+    "id": 102927080,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Pracinha / Quadra Poliesportiva",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Porto Alegre",
+    "uf": "RS",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/542128792",
+     "dado": "OpenStreetMap (way/542128792): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -30.036817,
+    "lon": -51.1123101
+   },
+   "rodada_dados": "R5",
+   "osm": {
+    "type": "way",
+    "id": 542128792,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra da Praça ADel de Carvalho",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Porto Alegre",
+    "uf": "RS",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "concreto (OSM: surface=concrete)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1433417518",
+     "dado": "OpenStreetMap (way/1433417518): sport=basketball;soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -30.1274188,
+    "lon": -51.2339836
+   },
+   "rodada_dados": "R5",
+   "osm": {
+    "type": "way",
+    "id": 1433417518,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra de Futebol",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Porto Alegre",
+    "uf": "RS",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1322825984",
+     "dado": "OpenStreetMap (way/1322825984): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -30.0184494,
+    "lon": -51.1457435
+   },
+   "rodada_dados": "R5",
+   "osm": {
+    "type": "way",
+    "id": 1322825984,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra Esportiva",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Porto Alegre",
+    "uf": "RS",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/693525970",
+     "dado": "OpenStreetMap (way/693525970): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -30.1273709,
+    "lon": -51.2068565
+   },
+   "rodada_dados": "R5",
+   "osm": {
+    "type": "way",
+    "id": 693525970,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "SOCIEDADE ESPORTIVA PADRE REUS",
+   "endereco": {
+    "rua": "RUA G BALNEARIO ARADO VELHO",
+    "numero": "66",
+    "bairro": "belem novo",
+    "cidade": "Porto Alegre",
+    "uf": "RS",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1322826207",
+     "dado": "OpenStreetMap (way/1322826207): sport=soccer, RUA G BALNEARIO ARADO VELHO, 66, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "alta",
+   "coordenadas": {
+    "lat": -30.213132,
+    "lon": -51.1733212
+   },
+   "rodada_dados": "R5",
+   "osm": {
+    "type": "way",
+    "id": 1322826207,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Sport Club Internacional",
+   "endereco": {
+    "rua": "Avenida Padre Cacique",
+    "numero": "891",
+    "bairro": "Praia de Belas",
+    "cidade": "Porto Alegre",
+    "uf": "RS",
+    "cep": "90810-240"
+   },
+   "telefone": "+55 51 3230-4600",
+   "whatsapp": null,
+   "site": "https://www.internacional.com.br/",
+   "instagram": "https://instagram.com/scinternacional",
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/328021546",
+     "dado": "OpenStreetMap (way/328021546): sport=soccer, Avenida Padre Cacique, 891, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "alta",
+   "coordenadas": {
+    "lat": -30.0654271,
+    "lon": -51.2355329
+   },
+   "rodada_dados": "R5",
+   "osm": {
+    "type": "way",
+    "id": 328021546,
+    "sinal_futebol": "sport"
+   }
+  }
+ ]
+}

@@ -1,0 +1,5374 @@
+{
+ "gerado_em": "2026-10-08",
+ "rodada": 6,
+ "cidade": "São Paulo",
+ "uf": "SP",
+ "slug": "sao-paulo",
+ "issue": 4195,
+ "fonte": {
+  "provedor": "OpenStreetMap (via Nominatim + Overpass API)",
+  "licenca": "ODbL 1.0 — https://www.openstreetmap.org/copyright",
+  "nominatim_url": "https://www.openstreetmap.org/relation/298285",
+  "nominatim_display_name": "São Paulo, Região Sudeste, Brasil",
+  "overpass_mirror": "https://overpass-api.de/api/interpreter",
+  "overpass_query": "[out:json][timeout:180];\narea(3600298285)->.a;\n(\n  node[\"leisure\"=\"pitch\"](area.a);\n  way[\"leisure\"=\"pitch\"](area.a);\n  relation[\"leisure\"=\"pitch\"](area.a);\n  node[\"leisure\"=\"sports_centre\"](area.a);\n  way[\"leisure\"=\"sports_centre\"](area.a);\n);\nout body center meta;",
+  "osm_base_timestamp": "2026-10-08T00:26:50Z"
+ },
+ "coleta": {
+  "data": "2026-10-08",
+  "ferramenta": "scripts/data/build-venues-osm.mjs",
+  "finalidade": "dataset curado de quadras para importação DRAFT (revisão humana antes de publicar)"
+ },
+ "estatisticas": {
+  "candidatos_osm": 4443,
+  "sem_nome": 4105,
+  "institucional": 12,
+  "acesso_restrito": 16,
+  "amenity_descartada": 1,
+  "sem_sinal_de_futebol": 173,
+  "other_excluded": 0,
+  "sem_coordenada": 0,
+  "mantidos": 130,
+  "duplicatas_removidas": 6
+ },
+ "venues": [
+  {
+   "nome": "Academia de Futebol 1 - Sociedade Esportiva Palmeiras",
+   "endereco": {
+    "rua": "Avenida Marquês de São Vicente",
+    "numero": "2650",
+    "bairro": "Barra Funda",
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": "05036-040"
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/168757340",
+     "dado": "OpenStreetMap (way/168757340): sport=soccer, Avenida Marquês de São Vicente, 2650, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "alta",
+   "coordenadas": {
+    "lat": -23.5154075,
+    "lon": -46.6830792
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 168757340,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Academia Esportiva Pinheiral",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama natural (OSM: surface=grass)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/396950064",
+     "dado": "OpenStreetMap (way/396950064): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.4864489,
+    "lon": -46.6314173
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 396950064,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Aguia Dourada",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/243446864",
+     "dado": "OpenStreetMap (way/243446864): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.7887628,
+    "lon": -46.7162445
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 243446864,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Área de Lazer",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/node/11142231995",
+     "dado": "OpenStreetMap (node/11142231995): sport=volleyball;soccer;basketball;handball, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.5618997,
+    "lon": -46.6158638
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "node",
+    "id": 11142231995,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Arena Brasilândia",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/826549214",
+     "dado": "OpenStreetMap (way/826549214): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.4761467,
+    "lon": -46.6962865
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 826549214,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Arena Cohab",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/484765116",
+     "dado": "OpenStreetMap (way/484765116): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.6633859,
+    "lon": -46.7792065
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 484765116,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Arena Dragões da Areia (Fliperama)",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1442024948",
+     "dado": "OpenStreetMap (way/1442024948): sport=beachsoccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.5951133,
+    "lon": -46.4466886
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 1442024948,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Arena EZTC",
+   "endereco": {
+    "rua": "Avenida Roque Petroni Júnior",
+    "numero": "759",
+    "bairro": "Brooklin",
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": "+55 11 5183-8007",
+   "whatsapp": null,
+   "site": "https://arenaeztec.com.br/",
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/123814350",
+     "dado": "OpenStreetMap (way/123814350): sport=soccer, Avenida Roque Petroni Júnior, 759, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "alta",
+   "coordenadas": {
+    "lat": -23.6247397,
+    "lon": -46.6951521
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 123814350,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Arena Heliopolis",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/237819862",
+     "dado": "OpenStreetMap (way/237819862): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.6099193,
+    "lon": -46.5929051
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 237819862,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Arena Ligeirinho Polo Grêmio Novohorizontino",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama natural (OSM: surface=grass)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1442037924",
+     "dado": "OpenStreetMap (way/1442037924): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.8142995,
+    "lon": -46.7396729
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 1442037924,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Arena Pancetas",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama natural (OSM: surface=grass)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1442016093",
+     "dado": "OpenStreetMap (way/1442016093): sport=futsal, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.6016311,
+    "lon": -46.4911338
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 1442016093,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Arena Verona",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/548789763",
+     "dado": "OpenStreetMap (way/548789763): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.7638689,
+    "lon": -46.6815624
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 548789763,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Bola Sport Clube",
+   "endereco": {
+    "rua": "Rua Domingos Tarroso",
+    "numero": "100",
+    "bairro": "Vila Rubi",
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": "04823-090"
+   },
+   "telefone": "+55 11 5662-8000",
+   "whatsapp": null,
+   "site": "http://www.bolasportclube.com.br",
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/619055702",
+     "dado": "OpenStreetMap (way/619055702): sport=football, Rua Domingos Tarroso, 100, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "alta",
+   "coordenadas": {
+    "lat": -23.7269068,
+    "lon": -46.6973866
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 619055702,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "BR Laguna",
+   "endereco": {
+    "rua": "Rua Acari",
+    "numero": "87",
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/958465265",
+     "dado": "OpenStreetMap (way/958465265): sport=soccer, Rua Acari, 87, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.6408287,
+    "lon": -46.7213036
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 958465265,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campão",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/node/13691551820",
+     "dado": "OpenStreetMap (node/13691551820): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.6676412,
+    "lon": -46.781169
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "node",
+    "id": 13691551820,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campinho",
+   "endereco": {
+    "rua": "Praça Antônia Maturano Lago",
+    "numero": null,
+    "bairro": "Vila Roque",
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "concreto (OSM: surface=concrete)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/682345244",
+     "dado": "OpenStreetMap (way/682345244): sport=soccer;volleyball;basketball, Praça Antônia Maturano Lago, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.4760683,
+    "lon": -46.6554728
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 682345244,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campinho de Barro da Praça",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/881212572",
+     "dado": "OpenStreetMap (way/881212572): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.5722806,
+    "lon": -46.4790155
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 881212572,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campinho de terra 1",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/805012162",
+     "dado": "OpenStreetMap (way/805012162): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.6069275,
+    "lon": -46.4857114
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 805012162,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campinho de terra 2",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/805012163",
+     "dado": "OpenStreetMap (way/805012163): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.6072974,
+    "lon": -46.4853957
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 805012163,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campinho SACRA",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1024909599",
+     "dado": "OpenStreetMap (way/1024909599): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.4777037,
+    "lon": -46.7368728
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 1024909599,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/681375021",
+     "dado": "OpenStreetMap (way/681375021): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.6137474,
+    "lon": -46.7369073
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 681375021,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Bororé Centro de Promoção",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/438908864",
+     "dado": "OpenStreetMap (way/438908864): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.7615773,
+    "lon": -46.6773903
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 438908864,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo CDM",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/437650024",
+     "dado": "OpenStreetMap (way/437650024): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.5997517,
+    "lon": -46.4837151
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 437650024,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo CEU Paz",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1322471666",
+     "dado": "OpenStreetMap (way/1322471666): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.4470789,
+    "lon": -46.6881202
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 1322471666,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Colorado",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/node/2288302926",
+     "dado": "OpenStreetMap (node/2288302926): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.7359563,
+    "lon": -46.6919224
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "node",
+    "id": 2288302926,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo da 17",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1289771373",
+     "dado": "OpenStreetMap (way/1289771373): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.8617403,
+    "lon": -46.7070704
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 1289771373,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "campo de futbol",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama natural (OSM: surface=grass)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1379136216",
+     "dado": "OpenStreetMap (way/1379136216): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.6533802,
+    "lon": -46.7696471
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 1379136216,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo de Futebol 1° de Maio",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/153784492",
+     "dado": "OpenStreetMap (way/153784492): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.6259674,
+    "lon": -46.4497981
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 153784492,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo de Futebol Anhanguera",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/251266042",
+     "dado": "OpenStreetMap (way/251266042): nome=\"Campo de Futebol Anhanguera\", sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "baixa",
+   "coordenadas": {
+    "lat": -23.6660427,
+    "lon": -46.6931846
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 251266042,
+    "sinal_futebol": "nome"
+   }
+  },
+  {
+   "nome": "Campo de futebol do Jardim São Joaquim",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama natural (OSM: surface=grass)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/576879637",
+     "dado": "OpenStreetMap (way/576879637): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.6871251,
+    "lon": -46.7503049
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 576879637,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo de Futebol dos Metalúrgicos",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/223268160",
+     "dado": "OpenStreetMap (way/223268160): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.5976455,
+    "lon": -46.4048812
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 223268160,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo de futebol favelinha",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/719100695",
+     "dado": "OpenStreetMap (way/719100695): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.5834976,
+    "lon": -46.5899107
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 719100695,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo de Futebol Jd. Moraes Prado",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/345318700",
+     "dado": "OpenStreetMap (way/345318700): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.7730767,
+    "lon": -46.6810919
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 345318700,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo de Várzea do Corinthians - Rio Pequeno",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama sintética (OSM: surface=artificial_turf)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1391408038",
+     "dado": "OpenStreetMap (way/1391408038): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.5712013,
+    "lon": -46.7605954
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 1391408038,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do A.D Beira Rio Cidade Tiradentes",
+   "endereco": {
+    "rua": "Avenida Naylor de Oliveira",
+    "numero": null,
+    "bairro": "Cidade Tiradentes",
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": "08470-800"
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/549728224",
+     "dado": "OpenStreetMap (way/549728224): sport=soccer, Avenida Naylor de Oliveira, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.588294,
+    "lon": -46.394822
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 549728224,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Bandeirantes",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama natural (OSM: surface=grass)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/346317007",
+     "dado": "OpenStreetMap (way/346317007): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.6800256,
+    "lon": -46.7394156
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 346317007,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Carolina",
+   "endereco": {
+    "rua": "Rua Susana de Góis",
+    "numero": "86",
+    "bairro": "Bairro do Limão",
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": "02725-070"
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1303262603",
+     "dado": "OpenStreetMap (way/1303262603): sport=soccer;futebol_de_areia, Rua Susana de Góis, 86, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "alta",
+   "coordenadas": {
+    "lat": -23.5015053,
+    "lon": -46.6827929
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 1303262603,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Central",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama natural (OSM: surface=grass)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/390765554",
+     "dado": "OpenStreetMap (way/390765554): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.5345873,
+    "lon": -46.4418596
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 390765554,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Colorado",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/451643179",
+     "dado": "OpenStreetMap (way/451643179): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.5826818,
+    "lon": -46.7562658
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 451643179,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Flamengo Vila Maria FC",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/249339549",
+     "dado": "OpenStreetMap (way/249339549): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.5282824,
+    "lon": -46.5941304
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 249339549,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do JB",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/390765586",
+     "dado": "OpenStreetMap (way/390765586): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.5470704,
+    "lon": -46.4363399
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 390765586,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Letícia",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/384188668",
+     "dado": "OpenStreetMap (way/384188668): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.6659352,
+    "lon": -46.7452789
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 384188668,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Morro do Urubu",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama natural (OSM: surface=grass)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/556931099",
+     "dado": "OpenStreetMap (way/556931099): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.597223,
+    "lon": -46.4119488
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 556931099,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Palmeirinha",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama sintética (OSM: surface=artificial_turf)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/245808933",
+     "dado": "OpenStreetMap (way/245808933): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.6174425,
+    "lon": -46.7235495
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 245808933,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Paulista",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/424463334",
+     "dado": "OpenStreetMap (way/424463334): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.496307,
+    "lon": -46.5662272
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 424463334,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Vladimir",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama sintética (OSM: surface=artificial_turf)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/629307788",
+     "dado": "OpenStreetMap (way/629307788): sport=football;soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.6094659,
+    "lon": -46.3982663
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 629307788,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Dom Bosco",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama natural (OSM: surface=grass)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/390765578",
+     "dado": "OpenStreetMap (way/390765578): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.5352496,
+    "lon": -46.441128
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 390765578,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Futebol Society",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama sintética (OSM: surface=artificial_turf)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1282533893",
+     "dado": "OpenStreetMap (way/1282533893): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.6677951,
+    "lon": -46.7800383
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 1282533893,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Jd. São Norbeto",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/436035983",
+     "dado": "OpenStreetMap (way/436035983): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.8160297,
+    "lon": -46.7038729
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 436035983,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Lucélia",
+   "endereco": {
+    "rua": "Travessa Particular",
+    "numero": "6",
+    "bairro": "Jardim Lucélia",
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/542806845",
+     "dado": "OpenStreetMap (way/542806845): sport=soccer, Travessa Particular, 6, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "alta",
+   "coordenadas": {
+    "lat": -23.757902,
+    "lon": -46.673006
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 542806845,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "campo Mutirão",
+   "endereco": {
+    "rua": "Rua Tajal",
+    "numero": "315350",
+    "bairro": "Jardim Dom José",
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": "05886120"
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama sintética (OSM: surface=artificial_turf)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1486840750",
+     "dado": "OpenStreetMap (way/1486840750): sport=soccer, Rua Tajal, 315350, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "alta",
+   "coordenadas": {
+    "lat": -23.6801202,
+    "lon": -46.7921768
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 1486840750,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Nos Travamos",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/681292695",
+     "dado": "OpenStreetMap (way/681292695): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.5351152,
+    "lon": -46.4062434
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 681292695,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Nova Era F.C",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/622595464",
+     "dado": "OpenStreetMap (way/622595464): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.5883849,
+    "lon": -46.4094518
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 622595464,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Regional Campo LImpo",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama natural (OSM: surface=grass)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/426586450",
+     "dado": "OpenStreetMap (way/426586450): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.6350889,
+    "lon": -46.7693526
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 426586450,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Sintético do Jd.Graúna;Campo Sintetico do Jd.Graúna",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/691090730",
+     "dado": "OpenStreetMap (way/691090730): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.7223613,
+    "lon": -46.672055
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 691090730,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campos de futebol soçaite SESC Itaquera",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama natural (OSM: surface=grass)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/436487823",
+     "dado": "OpenStreetMap (way/436487823): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.5818906,
+    "lon": -46.4741856
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 436487823,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "CCT Frederico Antônio Germano Menzen",
+   "endereco": {
+    "rua": "Avenida Marquês de São Vicente",
+    "numero": "2724",
+    "bairro": "Barra Funda",
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": "05036-040"
+   },
+   "telefone": "+55 11 3861-0100",
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/418131738",
+     "dado": "OpenStreetMap (way/418131738): sport=soccer, Avenida Marquês de São Vicente, 2724, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "alta",
+   "coordenadas": {
+    "lat": -23.5152203,
+    "lon": -46.6850036
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 418131738,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "CDC Cidade Ademar",
+   "endereco": {
+    "rua": null,
+    "numero": "557",
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/759441852",
+     "dado": "OpenStreetMap (way/759441852): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.6549788,
+    "lon": -46.6742043
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 759441852,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "CDC Curtiball",
+   "endereco": {
+    "rua": "Rua Pascoal da Costa",
+    "numero": "4",
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1447730517",
+     "dado": "OpenStreetMap (way/1447730517): sport=futsal, Rua Pascoal da Costa, 4, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.499801,
+    "lon": -46.6929882
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 1447730517,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "CDC Flor da Mocidade do Burgo Paulista",
+   "endereco": {
+    "rua": "Rua Bartolomeu Belland",
+    "numero": "2",
+    "bairro": "Burgo Paulista",
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/153756890",
+     "dado": "OpenStreetMap (way/153756890): sport=soccer, Rua Bartolomeu Belland, 2, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "alta",
+   "coordenadas": {
+    "lat": -23.5178035,
+    "lon": -46.4828407
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 153756890,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "CDC IRENE",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama sintética (OSM: surface=artificial_turf)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1486836796",
+     "dado": "OpenStreetMap (way/1486836796): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.6647029,
+    "lon": -46.7947114
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 1486836796,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "CDC Jd. Niterói",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama natural (OSM: surface=grass)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1554004661",
+     "dado": "OpenStreetMap (way/1554004661): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.6816647,
+    "lon": -46.6656634
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 1554004661,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "CDC Marcilio Alves do Prado",
+   "endereco": {
+    "rua": "Rua Carlos Manelli",
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/391220028",
+     "dado": "OpenStreetMap (way/391220028): sport=soccer, Rua Carlos Manelli, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.5230952,
+    "lon": -46.4227712
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 391220028,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "CDC Represa Nova",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama natural (OSM: surface=grass)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/203471022",
+     "dado": "OpenStreetMap (way/203471022): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.6920065,
+    "lon": -46.6663073
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 203471022,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "CDC Serra da Queimada",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama sintética (OSM: surface=artificial_turf)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/379733667",
+     "dado": "OpenStreetMap (way/379733667): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.5269481,
+    "lon": -46.4108846
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 379733667,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "CDM",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/242519628",
+     "dado": "OpenStreetMap (way/242519628): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.4888568,
+    "lon": -46.4816309
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 242519628,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "CDM Ayrton Senna da Silva",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/252259077",
+     "dado": "OpenStreetMap (way/252259077): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.5163057,
+    "lon": -46.505341
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 252259077,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "CDM Manoel Vidal",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/153783875",
+     "dado": "OpenStreetMap (way/153783875): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.5137201,
+    "lon": -46.5243634
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 153783875,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "CDM São Luiz II",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/155203559",
+     "dado": "OpenStreetMap (way/155203559): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.5414913,
+    "lon": -46.4786786
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 155203559,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Centro de Treinamento da Associação Portuguesa de Desportos",
+   "endereco": {
+    "rua": "Rodovia Parque",
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/558287698",
+     "dado": "OpenStreetMap (way/558287698): sport=soccer, Rodovia Parque, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.4946289,
+    "lon": -46.5140801
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 558287698,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Centro de Treinamento Liderança",
+   "endereco": {
+    "rua": "Rua Coração de Bugre",
+    "numero": "203",
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1209869926",
+     "dado": "OpenStreetMap (way/1209869926): sport=soccer, Rua Coração de Bugre, 203, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.4834065,
+    "lon": -46.7237721
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 1209869926,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Centro Esportivo André Vittal",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/node/6122582171",
+     "dado": "OpenStreetMap (node/6122582171): sport=soccer;karate;basketball;kung_fu;tai, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.598654,
+    "lon": -46.401942
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "node",
+    "id": 6122582171,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Chute Inicial",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/930715312",
+     "dado": "OpenStreetMap (way/930715312): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.5011773,
+    "lon": -46.5776974
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 930715312,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Círculo Militar de São Paulo",
+   "endereco": {
+    "rua": "Rua Abílio Soares",
+    "numero": "1589",
+    "bairro": "Ibirapuera",
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": "04005-005"
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": "http://www.circulomilitar.com.br/",
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/125450922",
+     "dado": "OpenStreetMap (way/125450922): sport=soccer;basketball;multi;swimming;athletics;beachvolleyball;shooting;futsal;pickleball;volleyball;billiards;chess;gymnastics;scuba_diving;table_tennis;yoga, Rua Abílio Soares, 1589, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "alta",
+   "coordenadas": {
+    "lat": -23.581068,
+    "lon": -46.6554005
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 125450922,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Clube Atletico Martinica",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/145805854",
+     "dado": "OpenStreetMap (way/145805854): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.6320586,
+    "lon": -46.7633807
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 145805854,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Clube da Comunidade Monte Azul",
+   "endereco": {
+    "rua": "Avenida Tomás de Sousa",
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/488922692",
+     "dado": "OpenStreetMap (way/488922692): sport=futsal;volleyball;basketball, Avenida Tomás de Sousa, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.6457395,
+    "lon": -46.7373882
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 488922692,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Clube Espotivo da Penha",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/158449115",
+     "dado": "OpenStreetMap (way/158449115): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.524381,
+    "lon": -46.5544564
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 158449115,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Clube Lauzane Paulista",
+   "endereco": {
+    "rua": "Rua Maria Bandini Savoy",
+    "numero": "172",
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": "02435-040"
+   },
+   "telefone": "+55 11 2255-0743",
+   "whatsapp": null,
+   "site": "http://www.clubelausanne.com.br/",
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/274706256",
+     "dado": "OpenStreetMap (way/274706256): sport=soccer, Rua Maria Bandini Savoy, 172, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.4798471,
+    "lon": -46.6423958
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 274706256,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Clube Vila Maria",
+   "endereco": {
+    "rua": "Rua Professora Maria José Barone Fernandes",
+    "numero": "483",
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": "02117-021"
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/node/3473369873",
+     "dado": "OpenStreetMap (node/3473369873): sport=soccer, Rua Professora Maria José Barone Fernandes, 483, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.517937,
+    "lon": -46.5911014
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "node",
+    "id": 3473369873,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "CMTC Clube",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/320124717",
+     "dado": "OpenStreetMap (way/320124717): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.5239782,
+    "lon": -46.6246653
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 320124717,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Doricar Quadra Esportiva",
+   "endereco": {
+    "rua": "Avenida Ede",
+    "numero": "800",
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": "02203-001"
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "concreto (OSM: surface=concrete)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/621006448",
+     "dado": "OpenStreetMap (way/621006448): sport=soccer, Avenida Ede, 800, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.4927632,
+    "lon": -46.5906953
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 621006448,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "E.C. U.R.C.A.",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/155188371",
+     "dado": "OpenStreetMap (way/155188371): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.5399527,
+    "lon": -46.4760991
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 155188371,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "E.C.Verona",
+   "endereco": {
+    "rua": "Rua Eduardo Sanchez",
+    "numero": null,
+    "bairro": "Cidade Tiradentes",
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/561565952",
+     "dado": "OpenStreetMap (way/561565952): sport=soccer, Rua Eduardo Sanchez, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.5940635,
+    "lon": -46.4009507
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 561565952,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Escolinha Botafogo",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama sintética (OSM: surface=artificial_turf)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1484626422",
+     "dado": "OpenStreetMap (way/1484626422): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.6769425,
+    "lon": -46.7949004
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 1484626422,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Escolinha do Botafogo",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1484626421",
+     "dado": "OpenStreetMap (way/1484626421): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.6769585,
+    "lon": -46.7948312
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 1484626421,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Estádio Grêmio Desportivo e Recreativo 7 de Setembro",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama natural (OSM: surface=grass)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/548720061",
+     "dado": "OpenStreetMap (way/548720061): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.5625787,
+    "lon": -46.5705402
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 548720061,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Estrela do Pari",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama sintética (OSM: surface=artificial_turf)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/255620882",
+     "dado": "OpenStreetMap (way/255620882): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.5245285,
+    "lon": -46.6184188
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 255620882,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Ginásio Gigantinho",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/node/2288303872",
+     "dado": "OpenStreetMap (node/2288303872): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.7388421,
+    "lon": -46.689275
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "node",
+    "id": 2288303872,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Ginasio poliesportivo",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1424214908",
+     "dado": "OpenStreetMap (way/1424214908): sport=futsal;basketball;volleyball;handball, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.6605991,
+    "lon": -46.691272
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 1424214908,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Ibrachina Arena",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1071788896",
+     "dado": "OpenStreetMap (way/1071788896): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.5658823,
+    "lon": -46.6025706
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 1071788896,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Jaú Atlético Clube da Penha",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/153784090",
+     "dado": "OpenStreetMap (way/153784090): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.5131784,
+    "lon": -46.542908
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 153784090,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Juventus Academy Interlagos",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1052133853",
+     "dado": "OpenStreetMap (way/1052133853): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.6733848,
+    "lon": -46.6948094
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 1052133853,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Master Ball",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/681390033",
+     "dado": "OpenStreetMap (way/681390033): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.4718468,
+    "lon": -46.6819347
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 681390033,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Nacional",
+   "endereco": {
+    "rua": "Avenida Marquês de São Vicente",
+    "numero": "2477",
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/node/5580503528",
+     "dado": "OpenStreetMap (node/5580503528): sport=soccer, Avenida Marquês de São Vicente, 2477, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.516817,
+    "lon": -46.6847646
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "node",
+    "id": 5580503528,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Pelezão - Centro Educacional e Esportivo Edson Arantes do Nascimento",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": "Alto da Lapa",
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/30636430",
+     "dado": "OpenStreetMap (way/30636430): sport=swimming;soccer;basketball;tennis;volleyball;beachvolleyball;running, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.5283524,
+    "lon": -46.7180806
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 30636430,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Perna de Pau Beach",
+   "endereco": {
+    "rua": "Rua Nova York",
+    "numero": "1302",
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": "04560-002"
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1383650056",
+     "dado": "OpenStreetMap (way/1383650056): sport=soccer, Rua Nova York, 1302, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.6082864,
+    "lon": -46.6779715
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 1383650056,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Pista de Skate e Quadra Vila Calú",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/436153417",
+     "dado": "OpenStreetMap (way/436153417): sport=soccer;skateboard, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.7350618,
+    "lon": -46.789289
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 436153417,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Poli Esportivo 2",
+   "endereco": {
+    "rua": "Rua Curitiba",
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/521409325",
+     "dado": "OpenStreetMap (way/521409325): sport=soccer;multi;swimming;shooting;gymnastics;scuba_diving, Rua Curitiba, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.5814714,
+    "lon": -46.6544096
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 521409325,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Pomar1",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "concreto (OSM: surface=concrete)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/478726487",
+     "dado": "OpenStreetMap (way/478726487): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.5220204,
+    "lon": -46.6147749
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 478726487,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "quadra",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/node/13633996945",
+     "dado": "OpenStreetMap (node/13633996945): sport=futsal, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.6516876,
+    "lon": -46.7702762
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "node",
+    "id": 13633996945,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra A",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1412826273",
+     "dado": "OpenStreetMap (way/1412826273): sport=futsal, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.642117,
+    "lon": -46.6083481
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 1412826273,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "quadra aberta",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/node/13691551812",
+     "dado": "OpenStreetMap (node/13691551812): sport=futsal, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.6641453,
+    "lon": -46.7828951
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "node",
+    "id": 13691551812,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra B",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1412826274",
+     "dado": "OpenStreetMap (way/1412826274): sport=futsal, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.6431119,
+    "lon": -46.6087602
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 1412826274,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra belvedere",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "concreto (OSM: surface=concrete)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1419038940",
+     "dado": "OpenStreetMap (way/1419038940): sport=soccer;basketball;volleyball, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.4996194,
+    "lon": -46.6759864
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 1419038940,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra da Praça Cazuza",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "concreto (OSM: surface=concrete)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/741260638",
+     "dado": "OpenStreetMap (way/741260638): sport=soccer;basketball;fitness, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.5447444,
+    "lon": -46.6954929
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 741260638,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra de Futebol de Areia",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/544421926",
+     "dado": "OpenStreetMap (way/544421926): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.7296834,
+    "lon": -46.718748
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 544421926,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra de Futebol Society",
+   "endereco": {
+    "rua": "Parque Vila do Rodeio",
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/629305198",
+     "dado": "OpenStreetMap (way/629305198): sport=soccer, Parque Vila do Rodeio, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.5722267,
+    "lon": -46.405721
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 629305198,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra de Futsal",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/544421927",
+     "dado": "OpenStreetMap (way/544421927): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.7290833,
+    "lon": -46.7189892
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 544421927,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra de Futsal Anhanguera",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/981854938",
+     "dado": "OpenStreetMap (way/981854938): nome=\"Quadra de Futsal Anhanguera\", sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "baixa",
+   "coordenadas": {
+    "lat": -23.6662666,
+    "lon": -46.6924312
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 981854938,
+    "sinal_futebol": "nome"
+   }
+  },
+  {
+   "nome": "Quadra do Parque Europa",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/770855173",
+     "dado": "OpenStreetMap (way/770855173): sport=soccer;volleyball, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.6823857,
+    "lon": -46.7443785
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 770855173,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra Ernesto Bottoni",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1156629258",
+     "dado": "OpenStreetMap (way/1156629258): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.4101152,
+    "lon": -46.7356508
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 1156629258,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra Futebol de Areia",
+   "endereco": {
+    "rua": "Rua Renato Katsuya Sato",
+    "numero": null,
+    "bairro": "Parque Cruzeiro do Sul",
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/611891543",
+     "dado": "OpenStreetMap (way/611891543): nome=\"Quadra Futebol de Areia\", Rua Renato Katsuya Sato, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "baixa",
+   "coordenadas": {
+    "lat": -23.4949059,
+    "lon": -46.4578996
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 611891543,
+    "sinal_futebol": "nome"
+   }
+  },
+  {
+   "nome": "Quadra Jardim Brasil",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "concreto (OSM: surface=concrete)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/681434083",
+     "dado": "OpenStreetMap (way/681434083): sport=soccer;basketball;volleyball, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.6285886,
+    "lon": -46.5945528
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 681434083,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra Patriarca - Futebol Society",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama sintética (OSM: surface=artificial_turf)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/894399659",
+     "dado": "OpenStreetMap (way/894399659): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.5390026,
+    "lon": -46.5060816
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 894399659,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra Poliesportiva Coberta",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/node/5842755722",
+     "dado": "OpenStreetMap (node/5842755722): sport=soccer;basketball;volleyball;handball;tennis;dodgeball, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.4815605,
+    "lon": -46.6265801
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "node",
+    "id": 5842755722,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra Poliesportiva Descoberta",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/461279417",
+     "dado": "OpenStreetMap (way/461279417): sport=soccer;volleyball;handball;tennis, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.4813472,
+    "lon": -46.6264493
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 461279417,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra Santa Tereza",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/790565010",
+     "dado": "OpenStreetMap (way/790565010): sport=soccer;tennis;basketball;multi, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.6528604,
+    "lon": -46.604481
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 790565010,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra Sintética",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/555872703",
+     "dado": "OpenStreetMap (way/555872703): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.7360208,
+    "lon": -46.709224
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 555872703,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra Universo",
+   "endereco": {
+    "rua": "Praça Hereny da Costa",
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/714916585",
+     "dado": "OpenStreetMap (way/714916585): sport=soccer, Praça Hereny da Costa, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.5895387,
+    "lon": -46.5343821
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 714916585,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quuadra Jardim Real",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama sintética (OSM: surface=artificial_turf)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/544424949",
+     "dado": "OpenStreetMap (way/544424949): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.7306935,
+    "lon": -46.7163897
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 544424949,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "S.L. Benfica do Brasil Vila Maria",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/249339547",
+     "dado": "OpenStreetMap (way/249339547): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.5286384,
+    "lon": -46.5916972
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 249339547,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "SAI",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/237755289",
+     "dado": "OpenStreetMap (way/237755289): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.7615104,
+    "lon": -46.6879812
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 237755289,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Salido Sport Center",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/843295527",
+     "dado": "OpenStreetMap (way/843295527): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.6144825,
+    "lon": -46.6748283
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 843295527,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Santa Luzia F.C.",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/252291477",
+     "dado": "OpenStreetMap (way/252291477): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.5370925,
+    "lon": -46.4853099
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 252291477,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Savip Futebol Clube",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/482769777",
+     "dado": "OpenStreetMap (way/482769777): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.4734269,
+    "lon": -46.6819343
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 482769777,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "SESC Ipiranga",
+   "endereco": {
+    "rua": "Rua Bom Pastor",
+    "numero": "822",
+    "bairro": "Ipiranga",
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": "04203-000"
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": "https://www.sescsp.org.br/unidades/5_IPIRANGA/#/uaba=programacao#/fdata=id%3D5",
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/177664939",
+     "dado": "OpenStreetMap (way/177664939): sport=basketball;swimming;athletics;soccer, Rua Bom Pastor, 822, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "alta",
+   "coordenadas": {
+    "lat": -23.5841456,
+    "lon": -46.6081403
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 177664939,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Sigon",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "concreto (OSM: surface=concrete)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/717355019",
+     "dado": "OpenStreetMap (way/717355019): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.5034583,
+    "lon": -46.4745768
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 717355019,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Terrão da Portuguesinha - Rio Pequeno",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama sintética (OSM: surface=artificial_turf)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/242398190",
+     "dado": "OpenStreetMap (way/242398190): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.5638705,
+    "lon": -46.7548548
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 242398190,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Vibe Society",
+   "endereco": {
+    "rua": "Rua Santo Eurilo",
+    "numero": "198",
+    "bairro": "Jaguaré",
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": "http://www.vibesociety.com.br/",
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama sintética (OSM: surface=artificial_turf)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/619019471",
+     "dado": "OpenStreetMap (way/619019471): sport=soccer, Rua Santo Eurilo, 198, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "alta",
+   "coordenadas": {
+    "lat": -23.5551974,
+    "lon": -46.7411618
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 619019471,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Vigor Esporte Clube",
+   "endereco": {
+    "rua": "Avenida Carlos de Campos",
+    "numero": "935",
+    "bairro": null,
+    "cidade": "São Paulo",
+    "uf": "SP",
+    "cep": "03028-001"
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": {
+    "segunda": "09:00-22:00",
+    "terca": "09:00-22:00",
+    "quarta": "09:00-22:00",
+    "quinta": "09:00-22:00",
+    "sexta": "09:00-22:00",
+    "sabado": "09:00-22:00",
+    "domingo": "09:00-22:00"
+   },
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/331884292",
+     "dado": "OpenStreetMap (way/331884292): sport=soccer, Avenida Carlos de Campos, 935, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.5245993,
+    "lon": -46.6105838
+   },
+   "rodada_dados": "R6",
+   "osm": {
+    "type": "way",
+    "id": 331884292,
+    "sinal_futebol": "sport"
+   }
+  }
+ ]
+}

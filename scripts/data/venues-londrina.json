@@ -1,0 +1,278 @@
+{
+  "gerado_em": "2026-10-07",
+  "rodada": 4,
+  "slug": "londrina",
+  "issue": 4195,
+  "titulo": "Londrina (R4)",
+  "coleta": {
+    "data": "2026-10-07",
+    "ferramentas": "pesquisa web (fichas públicas por item) + OpenStreetMap/Overpass (scripts/data/build-venues-osm.mjs)",
+    "regra": "apenas dados públicos verificáveis; campos sem fonte = null; todo item tem >=1 fonte com URL; entra no app como DRAFT/não verificado"
+  },
+  "cobertura": {
+    "Londrina": 7
+  },
+  "venues": [
+    {
+      "nome": "ArenA Futebol Society",
+      "endereco": {
+        "rua": "R. Sebastião Antonio Souza Callero",
+        "numero": null,
+        "bairro": null,
+        "cidade": "Londrina",
+        "uf": "PR",
+        "cep": null
+      },
+      "telefone": null,
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://guiafacil.com/encontre/quadras-esportivas-aluguel/londrina/pr",
+          "dado": "endereço R. Sebastião Antonio Souza Callero e categoria 'Quadras Esportivas - Aluguel' em Londrina"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R4",
+      "origem": "web",
+      "finalidade": "comercial_indicado"
+    },
+    {
+      "nome": "Candeias Esporte Lazer e Recreação",
+      "endereco": {
+        "rua": "Avenida Higienópolis",
+        "numero": "333",
+        "bairro": "Centro",
+        "cidade": "Londrina",
+        "uf": "PR",
+        "cep": null
+      },
+      "telefone": null,
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://listatudo.com.br/centro-londrina/quadras-esportivas-aluguel-locais/",
+          "dado": "endereço (Av. Higienópolis, 333, Centro) e descrição de aluguel de quadras esportivas; telefone parcialmente oculto na fonte, por isso null"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R4",
+      "origem": "web",
+      "finalidade": "comercial_indicado"
+    },
+    {
+      "nome": "Coca Sport Bar",
+      "endereco": {
+        "rua": "Rua Pompeu Soares Cardoso",
+        "numero": "695",
+        "bairro": "Jardim das Palmeiras",
+        "cidade": "Londrina",
+        "uf": "PR",
+        "cep": "86083-470"
+      },
+      "telefone": "(43) 3356-7107",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://guia.londrina.br/locacao-de-quadras-em-londrina-pr",
+          "dado": "endereço (Rua Pompeu Soares Cardoso, 695, Jardim das Palmeiras), CEP 86083-470 e telefone (43) 3356-7107 na categoria Locação de Quadras"
+        },
+        {
+          "url": "https://guiafacil.com/encontre/quadras-esportivas-aluguel/londrina/pr",
+          "dado": "Coca Sport Bar listada em 'Quadras Esportivas - Aluguel' (o guia informa R. Francisco Mendes, endereço divergente)"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R4",
+      "origem": "web",
+      "finalidade": "comercial_indicado"
+    },
+    {
+      "nome": "Firula Futebol Society",
+      "endereco": {
+        "rua": "Avenida Brasília",
+        "numero": "8720",
+        "bairro": "Lindóia",
+        "cidade": "Londrina",
+        "uf": "PR",
+        "cep": "86031-770"
+      },
+      "telefone": "(43) 9971-6782",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://guia.londrina.br/locacao-de-quadras-em-londrina-pr",
+          "dado": "endereço (Av. Brasília, 8720, Lindóia), CEP 86031-770 e telefone (43) 9971-6782; o guia também lista 'Firula Fc Society' na Rua Dom Fernando, 545, Aeroporto, com o mesmo telefone"
+        },
+        {
+          "url": "https://guiafacil.com/encontre/quadras-esportivas-aluguel/londrina/pr",
+          "dado": "listagem na categoria de aluguel de quadras esportivas em Londrina"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R4",
+      "origem": "web",
+      "finalidade": "comercial_indicado"
+    },
+    {
+      "nome": "Q.A.P. Complexo Esportivo Ltda",
+      "endereco": {
+        "rua": "Rua Seimu Oguido",
+        "numero": "276",
+        "bairro": "Alpes",
+        "cidade": "Londrina",
+        "uf": "PR",
+        "cep": null
+      },
+      "telefone": "(43) 3067-0793",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://guia.londrina.br/locacao-de-quadras-em-londrina-pr",
+          "dado": "endereço (Rua Seimu Oguido, 276, Alpes) e telefone (43) 3067-0793 na categoria Locação de Quadras"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R4",
+      "origem": "web",
+      "finalidade": "comercial_indicado"
+    },
+    {
+      "nome": "R10 Society",
+      "endereco": {
+        "rua": "Avenida Cruzeiro do Sul",
+        "numero": "1000",
+        "bairro": "Leste Oeste",
+        "cidade": "Londrina",
+        "uf": "PR",
+        "cep": null
+      },
+      "telefone": "(43) 3338-0510",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://guia.londrina.br/locacao-de-quadras-em-londrina-pr",
+          "dado": "endereço (Av. Cruzeiro do Sul, 1000, Leste Oeste) e telefone (43) 3338-0510 na categoria Locação de Quadras"
+        },
+        {
+          "url": "https://guiafacil.com/encontre/quadras-esportivas-aluguel/londrina/pr",
+          "dado": "R10 Society listada em 'Quadras Esportivas - Aluguel' em Londrina, Av. Cruzeiro do Sul"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R4",
+      "origem": "web",
+      "finalidade": "comercial_indicado"
+    },
+    {
+      "nome": "Stadium Futebol Society",
+      "endereco": {
+        "rua": "Rua Taubaté",
+        "numero": "333",
+        "bairro": "Veraliz",
+        "cidade": "Londrina",
+        "uf": "PR",
+        "cep": "86062-490"
+      },
+      "telefone": "(43) 3348-0005",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.guiatelefone.com/empresas/londrina-pr/praticas-esportivas/aluguel-de-quadras-esportivas",
+          "dado": "nome, endereço completo (Rua Taubaté, 333, Veraliz) e telefone (43) 3348-0005"
+        },
+        {
+          "url": "https://guiafacil.com/encontre/quadras-esportivas-aluguel/londrina/pr",
+          "dado": "listagem na categoria Aluguel de Quadras Esportivas com endereço e CEP 86062-490"
+        }
+      ],
+      "confidence": "alta",
+      "coordenadas": null,
+      "rodada_dados": "R4",
+      "origem": "web",
+      "finalidade": "comercial_indicado"
+    }
+  ]
+}

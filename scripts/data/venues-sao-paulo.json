@@ -1,0 +1,510 @@
+{
+  "gerado_em": "2026-10-07",
+  "rodada": 6,
+  "slug": "sao-paulo",
+  "issue": 4195,
+  "titulo": "São Paulo capital (R6)",
+  "coleta": {
+    "data": "2026-10-07",
+    "ferramentas": "pesquisa web (fichas públicas por item) + OpenStreetMap/Overpass (scripts/data/build-venues-osm.mjs)",
+    "regra": "apenas dados públicos verificáveis; campos sem fonte = null; todo item tem >=1 fonte com URL; entra no app como DRAFT/não verificado"
+  },
+  "cobertura": {
+    "São Paulo": 12
+  },
+  "venues": [
+    {
+      "nome": "Appito Arena Vila Leopoldina",
+      "endereco": {
+        "rua": "Avenida Eng. Roberto Zuccolo",
+        "numero": "214",
+        "bairro": "Vila Leopoldina",
+        "cidade": "São Paulo",
+        "uf": "SP",
+        "cep": null
+      },
+      "telefone": null,
+      "whatsapp": null,
+      "site": "https://appito.com/arena/vilaleopoldina",
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://appito.com/arena/vilaleopoldina",
+          "dado": "endereço Av. Eng. Roberto Zuccolo, 214, São Paulo (entre as marginais Pinheiros e Tietê, 400m da CPTM Imperatriz Leopoldina), quadras de futebol society e reserva online"
+        },
+        {
+          "url": "https://appito.com/arena",
+          "dado": "unidades Appito Arena (Vila Leopoldina, Limão, Alphaville, Campinas) com aluguel de quadra society"
+        }
+      ],
+      "confidence": "alta",
+      "coordenadas": {
+        "lat": -23.524168,
+        "lon": -46.743182
+      },
+      "rodada_dados": "R6",
+      "origem": "web",
+      "finalidade": "comercial_indicado"
+    },
+    {
+      "nome": "Arena Ibirapuera Sport Club",
+      "endereco": {
+        "rua": "Avenida Dr. Dante Pazzanese",
+        "numero": "421",
+        "bairro": "Ibirapuera",
+        "cidade": "São Paulo",
+        "uf": "SP",
+        "cep": "04012-180"
+      },
+      "telefone": "(11) 93444-4444",
+      "whatsapp": null,
+      "site": "https://www.arenaibirapuera.com.br",
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": "1 campo society oficial (divisível em 3 quadras 8x8) + 1 quadra society 7x7 + 1 quadra 5x5",
+      "tipo_piso": "society (grama sintética certificada FIFA)",
+      "horarios": {
+        "segunda": "06:00-23:00",
+        "terca": "06:00-23:00",
+        "quarta": "06:00-23:00",
+        "quinta": "06:00-23:00",
+        "sexta": "06:00-23:00",
+        "sabado": "06:00-20:00",
+        "domingo": "06:00-18:00"
+      },
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.arenaibirapuera.com.br/",
+          "dado": "endereço (Av. Dr. Dante Pazzanese, 421, Ibirapuera, CEP 04012-180), horários de funcionamento e telefone (11) 93444-4444"
+        },
+        {
+          "url": "https://www.arenaibirapuera.com.br/quadra-society",
+          "dado": "descrição dos campos de society, gramado sintético certificado FIFA e seções de aluguel de quadras/pacotes mensais"
+        }
+      ],
+      "confidence": "alta",
+      "coordenadas": null,
+      "rodada_dados": "R6",
+      "origem": "web",
+      "finalidade": "comercial_indicado"
+    },
+    {
+      "nome": "Artgol Society",
+      "endereco": {
+        "rua": "Avenida Cipriano Rodrigues",
+        "numero": "240",
+        "bairro": "Vila Formosa",
+        "cidade": "São Paulo",
+        "uf": "SP",
+        "cep": null
+      },
+      "telefone": null,
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://endlista.com.br/regiao/aluguel-de-quadras-esportivas/zona-leste/sao-paulo/SP",
+          "dado": "listagem 'Aluguel de Quadras Esportivas - Artgol Society', Av. Cipriano Rodrigues, 240, Vila Formosa, São Paulo"
+        },
+        {
+          "url": "https://nominatim.openstreetmap.org/",
+          "dado": "coordenadas obtidas por geocodificação (Nominatim/OSM, ODbL) com número, rua e município conferidos"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": {
+        "lat": -23.574216,
+        "lon": -46.531276
+      },
+      "rodada_dados": "R6",
+      "origem": "web",
+      "finalidade": "comercial_indicado"
+    },
+    {
+      "nome": "Playball Ipiranga",
+      "endereco": {
+        "rua": "Avenida Teresa Cristina",
+        "numero": "676",
+        "bairro": "Ipiranga",
+        "cidade": "São Paulo",
+        "uf": "SP",
+        "cep": null
+      },
+      "telefone": "(11) 2062-6594",
+      "whatsapp": null,
+      "site": "https://playball.com.br",
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": 5,
+      "detalhe_quadras": "5 quadras de society, com quadras cobertas e churrasqueiras",
+      "tipo_piso": "society (grama sintético)",
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://playball.com.br/locacoes/",
+          "dado": "unidade Ipiranga com 5 quadras disponíveis, quadras cobertas, churrasqueiras e telefone (11) 2062-6594"
+        },
+        {
+          "url": "https://vejasp.abril.com.br/cidades/para-jogar-futebol-society/",
+          "dado": "endereço da Playball Ipiranga: Avenida Teresa Cristina, 676, São Paulo (matéria de 2012, atualizada em 2018)"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R6",
+      "origem": "web",
+      "finalidade": "comercial_indicado"
+    },
+    {
+      "nome": "Playball Pompéia",
+      "endereco": {
+        "rua": "Avenida Nicolas Boer",
+        "numero": "66",
+        "bairro": "Pompéia",
+        "cidade": "São Paulo",
+        "uf": "SP",
+        "cep": null
+      },
+      "telefone": "(11) 3611-5519",
+      "whatsapp": null,
+      "site": "https://playball.com.br",
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": 15,
+      "detalhe_quadras": "15 quadras de society, com quadra de areia, espaço para eventos e churrasqueiras",
+      "tipo_piso": "society (grama sintético)",
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://playball.com.br/locacoes/",
+          "dado": "unidade Pompéia com 15 quadras disponíveis, quadra de areia, churrasqueiras e telefones (11) 3611-5519 / (11) 3611-5518 / (11) 94327-3477"
+        },
+        {
+          "url": "https://vejasp.abril.com.br/cidades/para-jogar-futebol-society/",
+          "dado": "endereço da Playball Pompéia: Avenida Nicolas Boer, 66, São Paulo (matéria de 2012, atualizada em 2018)"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R6",
+      "origem": "web",
+      "finalidade": "comercial_indicado"
+    },
+    {
+      "nome": "Poli Futebol Society",
+      "endereco": {
+        "rua": "Rua Dona Ana Neri",
+        "numero": "721",
+        "bairro": "Mooca",
+        "cidade": "São Paulo",
+        "uf": "SP",
+        "cep": null
+      },
+      "telefone": null,
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://endlista.com.br/regiao/aluguel-de-quadras-esportivas/zona-leste/sao-paulo/SP",
+          "dado": "listagem 'Aluguel de Quadras Esportivas - Poli Futebol Society', Rua Dona Ana Neri, 721, Mooca, São Paulo"
+        },
+        {
+          "url": "https://nominatim.openstreetmap.org/",
+          "dado": "coordenadas obtidas por geocodificação (Nominatim/OSM, ODbL) com número, rua e município conferidos"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": {
+        "lat": -23.560448,
+        "lon": -46.616146
+      },
+      "rodada_dados": "R6",
+      "origem": "web",
+      "finalidade": "comercial_indicado"
+    },
+    {
+      "nome": "Power Sports Vip",
+      "endereco": {
+        "rua": "Avenida Talma de Oliveira",
+        "numero": "77",
+        "bairro": "Vila Moreira",
+        "cidade": "São Paulo",
+        "uf": "SP",
+        "cep": null
+      },
+      "telefone": null,
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://vejasp.abril.com.br/cidades/para-jogar-futebol-society/",
+          "dado": "Power Sports Vip na seleção de clubes da capital para alugar quadra de futebol society: Avenida Talma de Oliveira, 77, São Paulo, (11) 2098-3300"
+        },
+        {
+          "url": "https://endlista.com.br/regiao/aluguel-de-quadras-esportivas/zona-leste/sao-paulo/SP",
+          "dado": "listagem 'Aluguel de Quadras Esportivas - Power Sports Futebol', Av. Talma de Oliveira, 77, Vila Moreira, São Paulo"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R6",
+      "origem": "web",
+      "finalidade": "comercial_indicado"
+    },
+    {
+      "nome": "Six Soccer Arena Carrão",
+      "endereco": {
+        "rua": "Avenida Conselheiro Carrão",
+        "numero": "1595",
+        "bairro": "Vila Carrão",
+        "cidade": "São Paulo",
+        "uf": "SP",
+        "cep": null
+      },
+      "telefone": null,
+      "whatsapp": null,
+      "site": "https://www.sixsoccer.com.br",
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": 1,
+      "detalhe_quadras": "1 quadra society",
+      "tipo_piso": "society (grama sintético)",
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.sixsoccer.com.br/unidades",
+          "dado": "unidade Carrão: Av. Conselheiro Carrão, 1595, quadra society, estacionamento no local"
+        },
+        {
+          "url": "https://nominatim.openstreetmap.org/",
+          "dado": "coordenadas obtidas por geocodificação (Nominatim/OSM, ODbL) com número, rua e município conferidos"
+        }
+      ],
+      "confidence": "alta",
+      "coordenadas": {
+        "lat": -23.544963,
+        "lon": -46.545337
+      },
+      "rodada_dados": "R6",
+      "origem": "web",
+      "finalidade": "comercial_indicado"
+    },
+    {
+      "nome": "Six Soccer Arena Jaguaré",
+      "endereco": {
+        "rua": "Rua Santo Eurilo",
+        "numero": "198",
+        "bairro": "Jaguaré",
+        "cidade": "São Paulo",
+        "uf": "SP",
+        "cep": null
+      },
+      "telefone": null,
+      "whatsapp": null,
+      "site": "https://www.sixsoccer.com.br",
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": 3,
+      "detalhe_quadras": "3 quadras de futebol society 6x6",
+      "tipo_piso": "society (grama sintético de alto padrão)",
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.sixsoccer.com.br/unidades",
+          "dado": "unidade Jaguaré: Rua Santo Eurilo, 198, 3 quadras de futebol society 6x6, gramado sintético, iluminação noturna e vestiários"
+        },
+        {
+          "url": "https://www.openstreetmap.org/way/619019471",
+          "dado": "OpenStreetMap (ODbL): elemento com nome/endereço compatível; fornece coordenadas. OpenStreetMap (way/619019471): sport=soccer, Rua Santo Eurilo, 198, coletado em 2026-10-08"
+        }
+      ],
+      "confidence": "alta",
+      "coordenadas": {
+        "lat": -23.5551974,
+        "lon": -46.7411618
+      },
+      "rodada_dados": "R6",
+      "origem": "web",
+      "finalidade": "comercial_indicado"
+    },
+    {
+      "nome": "Six Soccer Arena Limão",
+      "endereco": {
+        "rua": "Avenida Nossa Senhora do Ó",
+        "numero": "1756",
+        "bairro": "Limão",
+        "cidade": "São Paulo",
+        "uf": "SP",
+        "cep": null
+      },
+      "telefone": null,
+      "whatsapp": null,
+      "site": "https://www.sixsoccer.com.br",
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": 1,
+      "detalhe_quadras": "1 quadra society iluminada",
+      "tipo_piso": "society (grama sintético)",
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.sixsoccer.com.br/unidades",
+          "dado": "unidade Limão: Av. Nossa Senhora do Ó, 1756, uma quadra society iluminada, vestiários e espaço para eventos"
+        },
+        {
+          "url": "https://nominatim.openstreetmap.org/",
+          "dado": "coordenadas obtidas por geocodificação (Nominatim/OSM, ODbL) com número, rua e município conferidos"
+        }
+      ],
+      "confidence": "alta",
+      "coordenadas": {
+        "lat": -23.504891,
+        "lon": -46.689546
+      },
+      "rodada_dados": "R6",
+      "origem": "web",
+      "finalidade": "comercial_indicado"
+    },
+    {
+      "nome": "Six Soccer Arena Saúde",
+      "endereco": {
+        "rua": "Rua Paracatu",
+        "numero": "775",
+        "bairro": "Saúde",
+        "cidade": "São Paulo",
+        "uf": "SP",
+        "cep": null
+      },
+      "telefone": null,
+      "whatsapp": null,
+      "site": "https://www.sixsoccer.com.br",
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": 2,
+      "detalhe_quadras": "2 quadras de futebol society + 1 quadra de areia",
+      "tipo_piso": "society (grama sintético)",
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.sixsoccer.com.br/unidades",
+          "dado": "unidade Saúde: Rua Paracatu, 775 (500m do Metrô Saúde), duas quadras de futebol society e uma de areia, estacionamento no local"
+        },
+        {
+          "url": "https://nominatim.openstreetmap.org/",
+          "dado": "coordenadas obtidas por geocodificação (Nominatim/OSM, ODbL) com número, rua e município conferidos"
+        }
+      ],
+      "confidence": "alta",
+      "coordenadas": {
+        "lat": -23.621952,
+        "lon": -46.633775
+      },
+      "rodada_dados": "R6",
+      "origem": "web",
+      "finalidade": "comercial_indicado"
+    },
+    {
+      "nome": "Soccer Mania Futebol Society",
+      "endereco": {
+        "rua": "Rua Jalisco",
+        "numero": "8",
+        "bairro": "Vila Regente Feijó",
+        "cidade": "São Paulo",
+        "uf": "SP",
+        "cep": null
+      },
+      "telefone": null,
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://endlista.com.br/regiao/aluguel-de-quadras-esportivas/zona-leste/sao-paulo/SP",
+          "dado": "listagem 'Aluguel de Quadras Esportivas - Soccer Mania Futebol Society', Rua Jalisco, 8, Vila Regente Feijó, São Paulo"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R6",
+      "origem": "web",
+      "finalidade": "comercial_indicado"
+    }
+  ]
+}

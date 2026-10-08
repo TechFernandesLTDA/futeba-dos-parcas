@@ -1,0 +1,364 @@
+{
+ "gerado_em": "2026-10-08",
+ "rodada": 3,
+ "cidade": "Almirante Tamandaré",
+ "uf": "PR",
+ "slug": "almirante-tamandare",
+ "issue": 4194,
+ "fonte": {
+  "provedor": "OpenStreetMap (via Nominatim + Overpass API)",
+  "licenca": "ODbL 1.0 — https://www.openstreetmap.org/copyright",
+  "nominatim_url": "https://www.openstreetmap.org/relation/297693",
+  "nominatim_display_name": "Almirante Tamandaré, Paraná, Região Sul, Brasil",
+  "overpass_mirror": "https://overpass-api.de/api/interpreter",
+  "overpass_query": "[out:json][timeout:180];\narea(3600297693)->.a;\n(\n  node[\"leisure\"=\"pitch\"](area.a);\n  way[\"leisure\"=\"pitch\"](area.a);\n  relation[\"leisure\"=\"pitch\"](area.a);\n  node[\"leisure\"=\"sports_centre\"](area.a);\n  way[\"leisure\"=\"sports_centre\"](area.a);\n);\nout body center meta;",
+  "osm_base_timestamp": "2026-10-08T00:28:50Z"
+ },
+ "coleta": {
+  "data": "2026-10-08",
+  "ferramenta": "scripts/data/build-venues-osm.mjs",
+  "finalidade": "dataset curado de quadras para importação DRAFT (revisão humana antes de publicar)"
+ },
+ "estatisticas": {
+  "candidatos_osm": 47,
+  "sem_nome": 39,
+  "institucional": 0,
+  "acesso_restrito": 0,
+  "amenity_descartada": 0,
+  "sem_sinal_de_futebol": 0,
+  "other_excluded": 0,
+  "sem_coordenada": 0,
+  "mantidos": 8,
+  "duplicatas_removidas": 0
+ },
+ "venues": [
+  {
+   "nome": "Arena Poliesportiva",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Almirante Tamandaré",
+    "uf": "PR",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/693434573",
+     "dado": "OpenStreetMap (way/693434573): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -25.317682,
+    "lon": -49.2890384
+   },
+   "rodada_dados": "R3",
+   "osm": {
+    "type": "way",
+    "id": 693434573,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Assemat",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Almirante Tamandaré",
+    "uf": "PR",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/578687443",
+     "dado": "OpenStreetMap (way/578687443): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -25.3151758,
+    "lon": -49.2987131
+   },
+   "rodada_dados": "R3",
+   "osm": {
+    "type": "way",
+    "id": 578687443,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo de Futebol Saturno",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Almirante Tamandaré",
+    "uf": "PR",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/549025397",
+     "dado": "OpenStreetMap (way/549025397): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -25.3309284,
+    "lon": -49.3079359
+   },
+   "rodada_dados": "R3",
+   "osm": {
+    "type": "way",
+    "id": 549025397,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Tanguá",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Almirante Tamandaré",
+    "uf": "PR",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1180652373",
+     "dado": "OpenStreetMap (way/1180652373): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -25.3726082,
+    "lon": -49.3064537
+   },
+   "rodada_dados": "R3",
+   "osm": {
+    "type": "way",
+    "id": 1180652373,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Escolinha de Futebol do Coritiba",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Almirante Tamandaré",
+    "uf": "PR",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/572859793",
+     "dado": "OpenStreetMap (way/572859793): sport=football, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -25.3122406,
+    "lon": -49.2946503
+   },
+   "rodada_dados": "R3",
+   "osm": {
+    "type": "way",
+    "id": 572859793,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Ginásio de Esportes Buzatão",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Almirante Tamandaré",
+    "uf": "PR",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/572859521",
+     "dado": "OpenStreetMap (way/572859521): sport=soccer;basketball;football, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -25.3157467,
+    "lon": -49.2981031
+   },
+   "rodada_dados": "R3",
+   "osm": {
+    "type": "way",
+    "id": 572859521,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Paraíso da Bola",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Almirante Tamandaré",
+    "uf": "PR",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama sintética (OSM: surface=artificial_turf)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1106121158",
+     "dado": "OpenStreetMap (way/1106121158): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -25.3198869,
+    "lon": -49.3078635
+   },
+   "rodada_dados": "R3",
+   "osm": {
+    "type": "way",
+    "id": 1106121158,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra de Futebol",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Almirante Tamandaré",
+    "uf": "PR",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/693434575",
+     "dado": "OpenStreetMap (way/693434575): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -25.31794,
+    "lon": -49.289619
+   },
+   "rodada_dados": "R3",
+   "osm": {
+    "type": "way",
+    "id": 693434575,
+    "sinal_futebol": "sport"
+   }
+  }
+ ]
+}

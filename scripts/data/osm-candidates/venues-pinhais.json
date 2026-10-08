@@ -1,0 +1,241 @@
+{
+ "gerado_em": "2026-10-08",
+ "rodada": 3,
+ "cidade": "Pinhais",
+ "uf": "PR",
+ "slug": "pinhais",
+ "issue": 4194,
+ "fonte": {
+  "provedor": "OpenStreetMap (via Nominatim + Overpass API)",
+  "licenca": "ODbL 1.0 — https://www.openstreetmap.org/copyright",
+  "nominatim_url": "https://www.openstreetmap.org/relation/297611",
+  "nominatim_display_name": "Pinhais, Paraná, Região Sul, Brasil",
+  "overpass_mirror": "https://overpass.kumi.systems/api/interpreter",
+  "overpass_query": "[out:json][timeout:180];\narea(3600297611)->.a;\n(\n  node[\"leisure\"=\"pitch\"](area.a);\n  way[\"leisure\"=\"pitch\"](area.a);\n  relation[\"leisure\"=\"pitch\"](area.a);\n  node[\"leisure\"=\"sports_centre\"](area.a);\n  way[\"leisure\"=\"sports_centre\"](area.a);\n);\nout body center meta;",
+  "osm_base_timestamp": "2026-07-24T11:04:51Z"
+ },
+ "coleta": {
+  "data": "2026-10-08",
+  "ferramenta": "scripts/data/build-venues-osm.mjs",
+  "finalidade": "dataset curado de quadras para importação DRAFT (revisão humana antes de publicar)"
+ },
+ "estatisticas": {
+  "candidatos_osm": 76,
+  "sem_nome": 66,
+  "institucional": 0,
+  "acesso_restrito": 0,
+  "amenity_descartada": 0,
+  "sem_sinal_de_futebol": 5,
+  "other_excluded": 0,
+  "sem_coordenada": 0,
+  "mantidos": 5,
+  "duplicatas_removidas": 0
+ },
+ "venues": [
+  {
+   "nome": "Cancha de Futebol de Praia Pineville",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Pinhais",
+    "uf": "PR",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/729117709",
+     "dado": "OpenStreetMap (way/729117709): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -25.4278783,
+    "lon": -49.1743859
+   },
+   "rodada_dados": "R3",
+   "osm": {
+    "type": "way",
+    "id": 729117709,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Clube Galvão",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Pinhais",
+    "uf": "PR",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/783293786",
+     "dado": "OpenStreetMap (way/783293786): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -25.4257447,
+    "lon": -49.1503238
+   },
+   "rodada_dados": "R3",
+   "osm": {
+    "type": "way",
+    "id": 783293786,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Estádio Manoel José da Silva",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Pinhais",
+    "uf": "PR",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama natural (OSM: surface=grass)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1274096638",
+     "dado": "OpenStreetMap (way/1274096638): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -25.4139547,
+    "lon": -49.1708982
+   },
+   "rodada_dados": "R3",
+   "osm": {
+    "type": "way",
+    "id": 1274096638,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "quadra de area",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Pinhais",
+    "uf": "PR",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1461849382",
+     "dado": "OpenStreetMap (way/1461849382): sport=soccer;volleyball, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -25.4276338,
+    "lon": -49.199714
+   },
+   "rodada_dados": "R3",
+   "osm": {
+    "type": "way",
+    "id": 1461849382,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra Poliesportiva Pineville",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Pinhais",
+    "uf": "PR",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "concreto (OSM: surface=concrete)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/729117710",
+     "dado": "OpenStreetMap (way/729117710): sport=soccer;basketball;multi, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -25.4277819,
+    "lon": -49.1746591
+   },
+   "rodada_dados": "R3",
+   "osm": {
+    "type": "way",
+    "id": 729117710,
+    "sinal_futebol": "sport"
+   }
+  }
+ ]
+}

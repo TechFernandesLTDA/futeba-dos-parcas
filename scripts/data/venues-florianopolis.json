@@ -1,0 +1,262 @@
+{
+  "gerado_em": "2026-10-07",
+  "rodada": 7,
+  "slug": "florianopolis",
+  "issue": 4195,
+  "titulo": "Florianópolis (R7)",
+  "coleta": {
+    "data": "2026-10-07",
+    "ferramentas": "pesquisa web (fichas públicas por item) + OpenStreetMap/Overpass (scripts/data/build-venues-osm.mjs)",
+    "regra": "apenas dados públicos verificáveis; campos sem fonte = null; todo item tem >=1 fonte com URL; entra no app como DRAFT/não verificado"
+  },
+  "cobertura": {
+    "Florianópolis": 7
+  },
+  "venues": [
+    {
+      "nome": "Arena Futebol Indoor",
+      "endereco": {
+        "rua": "Rua Ver. Gercino Silva",
+        "numero": "91",
+        "bairro": "Canto",
+        "cidade": "Florianópolis",
+        "uf": "SC",
+        "cep": "88075-560"
+      },
+      "telefone": "(48) 99911-0608",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.locaisdobrasil.com.br/encontre/campo-de-futebol/florianopolis-sc/arena-futebol-indoor/62865724911b8129b7e7c359",
+          "dado": "ficha no diretório Locais do Brasil: endereço, CEP e telefone do estabelecimento (categoria campo de futebol)"
+        }
+      ],
+      "confidence": "baixa",
+      "coordenadas": null,
+      "rodada_dados": "R7",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    },
+    {
+      "nome": "Arena Maria Chuteira",
+      "endereco": {
+        "rua": "Rua Prof. Antônio Mâncio Costa",
+        "numero": "69",
+        "bairro": "Jardim Atlântico",
+        "cidade": "Florianópolis",
+        "uf": "SC",
+        "cep": "88095-140"
+      },
+      "telefone": "(48) 98423-0205",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.locaisdobrasil.com.br/encontre/campo-de-futebol/florianopolis-sc/arena-maria-chuteira/62865739911b8129b7e7c365",
+          "dado": "ficha no diretório Locais do Brasil: endereço, CEP e telefone do estabelecimento (categoria campo de futebol)"
+        }
+      ],
+      "confidence": "baixa",
+      "coordenadas": null,
+      "rodada_dados": "R7",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    },
+    {
+      "nome": "Estação da Bola Futebol Indoor",
+      "endereco": {
+        "rua": "Rua Ursulina Senna de Castro",
+        "numero": "203",
+        "bairro": "Estreito",
+        "cidade": "Florianópolis",
+        "uf": "SC",
+        "cep": "88070-290"
+      },
+      "telefone": "(48) 3334-3535",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.locaisdobrasil.com.br/encontre/campo-de-futebol/florianopolis-sc/estacao-da-bola-futebol-indoor/6286572b911b8129b7e7c35d",
+          "dado": "ficha no diretório Locais do Brasil: endereço, CEP e telefone do estabelecimento (categoria campo de futebol)"
+        }
+      ],
+      "confidence": "baixa",
+      "coordenadas": null,
+      "rodada_dados": "R7",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    },
+    {
+      "nome": "Floripa Soccer",
+      "endereco": {
+        "rua": "Rua do Tico Tico",
+        "numero": null,
+        "bairro": "Santinho",
+        "cidade": "Florianópolis",
+        "uf": "SC",
+        "cep": "88058-700"
+      },
+      "telefone": "(48) 99106-1231",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.locaisdobrasil.com.br/encontre/campo-de-futebol/florianopolis-sc/floripa-soccer/62865766911b8129b7e7c380",
+          "dado": "ficha no diretório Locais do Brasil: endereço, CEP e telefone do estabelecimento (categoria campo de futebol)"
+        }
+      ],
+      "confidence": "baixa",
+      "coordenadas": null,
+      "rodada_dados": "R7",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    },
+    {
+      "nome": "Floripa Society Futebol e Lazer",
+      "endereco": {
+        "rua": "Rua do Gramal",
+        "numero": "1600",
+        "bairro": "Campeche",
+        "cidade": "Florianópolis",
+        "uf": "SC",
+        "cep": "88063-020"
+      },
+      "telefone": "(48) 98817-5100",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.locaisdobrasil.com.br/encontre/campo-de-futebol/florianopolis-sc/floripa-society-futebol-e-lazer/6286571f911b8129b7e7c356",
+          "dado": "ficha no diretório Locais do Brasil: endereço, CEP e telefone do estabelecimento (categoria campo de futebol)"
+        }
+      ],
+      "confidence": "baixa",
+      "coordenadas": null,
+      "rodada_dados": "R7",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    },
+    {
+      "nome": "Show de Bola",
+      "endereco": {
+        "rua": "Rodovia José Carlos Daux",
+        "numero": "11200",
+        "bairro": "Santo Antonio de Lisboa",
+        "cidade": "Florianópolis",
+        "uf": "SC",
+        "cep": "88050-000"
+      },
+      "telefone": "(48) 99126-9990",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.locaisdobrasil.com.br/encontre/campo-de-futebol/florianopolis-sc/show-de-bola/62865752911b8129b7e7c374",
+          "dado": "ficha no diretório Locais do Brasil: endereço, CEP e telefone do estabelecimento (categoria campo de futebol)"
+        }
+      ],
+      "confidence": "baixa",
+      "coordenadas": null,
+      "rodada_dados": "R7",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    },
+    {
+      "nome": "Zingabool - Campo de Futebol 7",
+      "endereco": {
+        "rua": "Rua Paulina Marques dos Santos",
+        "numero": "1",
+        "bairro": "Ingleses do Rio Vermelho",
+        "cidade": "Florianópolis",
+        "uf": "SC",
+        "cep": "88058-300"
+      },
+      "telefone": "(48) 98413-5970",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.locaisdobrasil.com.br/encontre/campo-de-futebol/florianopolis-sc/zingabool-campo-de-futebol-7/6286575f911b8129b7e7c37c",
+          "dado": "ficha no diretório Locais do Brasil: endereço, CEP e telefone do estabelecimento (categoria campo de futebol)"
+        }
+      ],
+      "confidence": "baixa",
+      "coordenadas": null,
+      "rodada_dados": "R7",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    }
+  ]
+}

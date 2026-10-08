@@ -1,0 +1,323 @@
+{
+ "gerado_em": "2026-10-08",
+ "rodada": 3,
+ "cidade": "Colombo",
+ "uf": "PR",
+ "slug": "colombo",
+ "issue": 4194,
+ "fonte": {
+  "provedor": "OpenStreetMap (via Nominatim + Overpass API)",
+  "licenca": "ODbL 1.0 — https://www.openstreetmap.org/copyright",
+  "nominatim_url": "https://www.openstreetmap.org/relation/297809",
+  "nominatim_display_name": "Colombo, Paraná, Região Sul, Brasil",
+  "overpass_mirror": "https://overpass-api.de/api/interpreter",
+  "overpass_query": "[out:json][timeout:180];\narea(3600297809)->.a;\n(\n  node[\"leisure\"=\"pitch\"](area.a);\n  way[\"leisure\"=\"pitch\"](area.a);\n  relation[\"leisure\"=\"pitch\"](area.a);\n  node[\"leisure\"=\"sports_centre\"](area.a);\n  way[\"leisure\"=\"sports_centre\"](area.a);\n);\nout body center meta;",
+  "osm_base_timestamp": "2026-10-08T01:23:26Z"
+ },
+ "coleta": {
+  "data": "2026-10-08",
+  "ferramenta": "scripts/data/build-venues-osm.mjs",
+  "finalidade": "dataset curado de quadras para importação DRAFT (revisão humana antes de publicar)"
+ },
+ "estatisticas": {
+  "candidatos_osm": 87,
+  "sem_nome": 71,
+  "institucional": 0,
+  "acesso_restrito": 0,
+  "amenity_descartada": 0,
+  "sem_sinal_de_futebol": 8,
+  "other_excluded": 0,
+  "sem_coordenada": 0,
+  "mantidos": 7,
+  "duplicatas_removidas": 1
+ },
+ "venues": [
+  {
+   "nome": "Campo de Futebol Maria do Rosario",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Colombo",
+    "uf": "PR",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama natural (OSM: surface=grass)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/621847367",
+     "dado": "OpenStreetMap (way/621847367): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -25.3565494,
+    "lon": -49.1622714
+   },
+   "rodada_dados": "R3",
+   "osm": {
+    "type": "way",
+    "id": 621847367,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo de Treino",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Colombo",
+    "uf": "PR",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/169221687",
+     "dado": "OpenStreetMap (way/169221687): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -25.3908392,
+    "lon": -49.1694676
+   },
+   "rodada_dados": "R3",
+   "osm": {
+    "type": "way",
+    "id": 169221687,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Casalare Del Nono",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Colombo",
+    "uf": "PR",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama natural (OSM: surface=grass)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/426933511",
+     "dado": "OpenStreetMap (way/426933511): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -25.2365668,
+    "lon": -49.1881131
+   },
+   "rodada_dados": "R3",
+   "osm": {
+    "type": "way",
+    "id": 426933511,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Estádio Ressaca",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Colombo",
+    "uf": "PR",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/614959458",
+     "dado": "OpenStreetMap (way/614959458): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -25.3434042,
+    "lon": -49.1995488
+   },
+   "rodada_dados": "R3",
+   "osm": {
+    "type": "way",
+    "id": 614959458,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Jomin Sports",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Colombo",
+    "uf": "PR",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/546652790",
+     "dado": "OpenStreetMap (way/546652790): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -25.3567644,
+    "lon": -49.2000324
+   },
+   "rodada_dados": "R3",
+   "osm": {
+    "type": "way",
+    "id": 546652790,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Santa Mônica Clube de Campo",
+   "endereco": {
+    "rua": "Rodovia Régis Bittencourt",
+    "numero": "5000",
+    "bairro": "Mauá",
+    "cidade": "Colombo",
+    "uf": "PR",
+    "cep": "83413-663"
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/node/13468881524",
+     "dado": "OpenStreetMap (node/13468881524): sport=golf;soccer;tennis;basketball;badminton;billiards;shooting;bmx;swimming;volleyball;beachvolleyball;gymnastics, Rodovia Régis Bittencourt, 5000, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "alta",
+   "coordenadas": {
+    "lat": -25.3779345,
+    "lon": -49.1542427
+   },
+   "rodada_dados": "R3",
+   "osm": {
+    "type": "node",
+    "id": 13468881524,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Só Esporte Grama Sintética",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Colombo",
+    "uf": "PR",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/620132123",
+     "dado": "OpenStreetMap (way/620132123): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -25.3403395,
+    "lon": -49.1566371
+   },
+   "rodada_dados": "R3",
+   "osm": {
+    "type": "way",
+    "id": 620132123,
+    "sinal_futebol": "sport"
+   }
+  }
+ ]
+}

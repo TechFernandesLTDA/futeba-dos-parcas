@@ -1,0 +1,521 @@
+{
+  "gerado_em": "2026-10-07",
+  "rodada": 8,
+  "slug": "joinville",
+  "issue": 4195,
+  "titulo": "Joinville (R8)",
+  "coleta": {
+    "data": "2026-10-07",
+    "ferramentas": "pesquisa web (fichas públicas por item) + OpenStreetMap/Overpass (scripts/data/build-venues-osm.mjs)",
+    "regra": "apenas dados públicos verificáveis; campos sem fonte = null; todo item tem >=1 fonte com URL; entra no app como DRAFT/não verificado"
+  },
+  "cobertura": {
+    "Joinville": 13
+  },
+  "venues": [
+    {
+      "nome": "Arena Costa e Silva Society e Lanchonete",
+      "endereco": {
+        "rua": "Rua Jacob",
+        "numero": "218",
+        "bairro": "Costa e Silva",
+        "cidade": "Joinville",
+        "uf": "SC",
+        "cep": "89220-500"
+      },
+      "telefone": "(47) 99995-9266",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.locaisdobrasil.com.br/encontre/campo-de-futebol/joinville-sc/arena-costa-e-silva-society-e-lanchonete/62a186f36e1550eac4c76c02",
+          "dado": "ficha no diretório Locais do Brasil: endereço, CEP e telefone do estabelecimento (categoria campo de futebol)"
+        }
+      ],
+      "confidence": "baixa",
+      "coordenadas": null,
+      "rodada_dados": "R8",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    },
+    {
+      "nome": "Arena Seven Soccer Joinville - A7S",
+      "endereco": {
+        "rua": "Rua Dona Francisca",
+        "numero": "9215",
+        "bairro": "Zona Industrial Norte",
+        "cidade": "Joinville",
+        "uf": "SC",
+        "cep": "89219-600"
+      },
+      "telefone": "(47) 98417-5649",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.locaisdobrasil.com.br/encontre/campo-de-futebol/joinville-sc/arena-seven-soccer-joinville-a7s-joinville/62a18a5e6e1550eac4c76ea0",
+          "dado": "ficha no diretório Locais do Brasil: endereço, CEP e telefone do estabelecimento (categoria campo de futebol)"
+        },
+        {
+          "url": "https://nominatim.openstreetmap.org/",
+          "dado": "coordenadas obtidas por geocodificação (Nominatim/OSM, ODbL) com número, rua e município conferidos"
+        }
+      ],
+      "confidence": "baixa",
+      "coordenadas": {
+        "lat": -26.245684,
+        "lon": -48.884442
+      },
+      "rodada_dados": "R8",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    },
+    {
+      "nome": "Bate Bola Futebol Society",
+      "endereco": {
+        "rua": "Rua Monsenhor Gercino",
+        "numero": "56",
+        "bairro": "Floresta",
+        "cidade": "Joinville",
+        "uf": "SC",
+        "cep": "89211-313"
+      },
+      "telefone": "(47) 3025-7337",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.locaisdobrasil.com.br/encontre/campo-de-futebol/joinville-sc/bate-bola-futebol-society/62a186dd6e1550eac4c76bf1",
+          "dado": "ficha no diretório Locais do Brasil: endereço, CEP e telefone do estabelecimento (categoria campo de futebol)"
+        },
+        {
+          "url": "https://nominatim.openstreetmap.org/",
+          "dado": "coordenadas obtidas por geocodificação (Nominatim/OSM, ODbL) com número, rua e município conferidos"
+        }
+      ],
+      "confidence": "baixa",
+      "coordenadas": {
+        "lat": -26.324609,
+        "lon": -48.843678
+      },
+      "rodada_dados": "R8",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    },
+    {
+      "nome": "Centro Esportivo Nippon Futebol e Society",
+      "endereco": {
+        "rua": "Rua Passo Fundo",
+        "numero": "344",
+        "bairro": "Fátima",
+        "cidade": "Joinville",
+        "uf": "SC",
+        "cep": "89210-795"
+      },
+      "telefone": "(47) 99260-2259",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.locaisdobrasil.com.br/encontre/campo-de-futebol/joinville-sc/centro-esportivo-nippon-futebol-e-society/62a187156e1550eac4c76c1c",
+          "dado": "ficha no diretório Locais do Brasil: endereço, CEP e telefone do estabelecimento (categoria campo de futebol)"
+        },
+        {
+          "url": "https://nominatim.openstreetmap.org/",
+          "dado": "coordenadas obtidas por geocodificação (Nominatim/OSM, ODbL) com número, rua e município conferidos"
+        }
+      ],
+      "confidence": "baixa",
+      "coordenadas": {
+        "lat": -26.33128,
+        "lon": -48.81414
+      },
+      "rodada_dados": "R8",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    },
+    {
+      "nome": "Estrela da Vila Baumer Futebol Society",
+      "endereco": {
+        "rua": "Rua Estrela",
+        "numero": "53",
+        "bairro": "Saguaçu",
+        "cidade": "Joinville",
+        "uf": "SC",
+        "cep": "89221-710"
+      },
+      "telefone": "(47) 99125-4800",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.locaisdobrasil.com.br/encontre/campo-de-futebol/joinville-sc/estrela-da-vila-baumer-futebol-society/62a186d66e1550eac4c76bec",
+          "dado": "ficha no diretório Locais do Brasil: endereço, CEP e telefone do estabelecimento (categoria campo de futebol)"
+        },
+        {
+          "url": "https://www.openstreetmap.org/way/996050582",
+          "dado": "OpenStreetMap (ODbL): elemento com nome/endereço compatível; fornece coordenadas. OpenStreetMap (way/996050582): nome=\"Estrela da Vila Baumer Futebol Society\", sem rua no OSM, coletado em 2026-10-08"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": {
+        "lat": -26.2755196,
+        "lon": -48.8463454
+      },
+      "rodada_dados": "R8",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    },
+    {
+      "nome": "Foot Bar Society",
+      "endereco": {
+        "rua": "Rua Max Colin",
+        "numero": "455",
+        "bairro": "Centro",
+        "cidade": "Joinville",
+        "uf": "SC",
+        "cep": "89201-215"
+      },
+      "telefone": "(47) 98457-0890",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.locaisdobrasil.com.br/encontre/campo-de-futebol/joinville-sc/foot-bar-society/62a186d26e1550eac4c76be9",
+          "dado": "ficha no diretório Locais do Brasil: endereço, CEP e telefone do estabelecimento (categoria campo de futebol)"
+        }
+      ],
+      "confidence": "baixa",
+      "coordenadas": null,
+      "rodada_dados": "R8",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    },
+    {
+      "nome": "Planeta Football Society",
+      "endereco": {
+        "rua": "Rua Pref. Baltazar Buschle",
+        "numero": null,
+        "bairro": "Comasa",
+        "cidade": "Joinville",
+        "uf": "SC",
+        "cep": "89228-000"
+      },
+      "telefone": "(47) 99196-9840",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.locaisdobrasil.com.br/encontre/campo-de-futebol/joinville-sc/planeta-football-society/62a186f86e1550eac4c76c06",
+          "dado": "ficha no diretório Locais do Brasil: endereço, CEP e telefone do estabelecimento (categoria campo de futebol)"
+        }
+      ],
+      "confidence": "baixa",
+      "coordenadas": null,
+      "rodada_dados": "R8",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    },
+    {
+      "nome": "Praia Esportes",
+      "endereco": {
+        "rua": "Avenida Santos Dumont",
+        "numero": "1790",
+        "bairro": "Bom Retiro",
+        "cidade": "Joinville",
+        "uf": "SC",
+        "cep": "89223-005"
+      },
+      "telefone": "(47) 99629-8826",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.locaisdobrasil.com.br/encontre/campo-de-futebol/joinville-sc/praia-esportes/639d2c3338576aac65175851",
+          "dado": "ficha no diretório Locais do Brasil: endereço, CEP e telefone do estabelecimento (categoria campo de futebol)"
+        },
+        {
+          "url": "https://nominatim.openstreetmap.org/",
+          "dado": "coordenadas obtidas por geocodificação (Nominatim/OSM, ODbL) com número, rua e município conferidos"
+        }
+      ],
+      "confidence": "baixa",
+      "coordenadas": {
+        "lat": -26.256982,
+        "lon": -48.851465
+      },
+      "rodada_dados": "R8",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    },
+    {
+      "nome": "Real Arena Society",
+      "endereco": {
+        "rua": "Rua Willy Schossland",
+        "numero": "1267",
+        "bairro": "Aventureiro",
+        "cidade": "Joinville",
+        "uf": "SC",
+        "cep": "89225-501"
+      },
+      "telefone": "(47) 99144-4548",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.locaisdobrasil.com.br/encontre/campo-de-futebol/joinville-sc/real-arena-society/62a186d46e1550eac4c76bea",
+          "dado": "ficha no diretório Locais do Brasil: endereço, CEP e telefone do estabelecimento (categoria campo de futebol)"
+        }
+      ],
+      "confidence": "baixa",
+      "coordenadas": null,
+      "rodada_dados": "R8",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    },
+    {
+      "nome": "Schulze Centro de Esportes",
+      "endereco": {
+        "rua": "Rua Rio do Ferro",
+        "numero": "1325",
+        "bairro": "Aventureiro",
+        "cidade": "Joinville",
+        "uf": "SC",
+        "cep": "89225-860"
+      },
+      "telefone": "(47) 98415-7870",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.locaisdobrasil.com.br/encontre/campo-de-futebol/joinville-sc/schulze-centro-de-esportes/62a186bd6e1550eac4c76bd9",
+          "dado": "ficha no diretório Locais do Brasil: endereço, CEP e telefone do estabelecimento (categoria campo de futebol)"
+        }
+      ],
+      "confidence": "baixa",
+      "coordenadas": null,
+      "rodada_dados": "R8",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    },
+    {
+      "nome": "Society Medeiros",
+      "endereco": {
+        "rua": "Rua dos Timbiras",
+        "numero": "290",
+        "bairro": "Jardim Sofia",
+        "cidade": "Joinville",
+        "uf": "SC",
+        "cep": "89223-490"
+      },
+      "telefone": "(47) 98910-9530",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.locaisdobrasil.com.br/encontre/campo-de-futebol/joinville-sc/society-medeiros/62a187006e1550eac4c76c0c",
+          "dado": "ficha no diretório Locais do Brasil: endereço, CEP e telefone do estabelecimento (categoria campo de futebol)"
+        }
+      ],
+      "confidence": "baixa",
+      "coordenadas": null,
+      "rodada_dados": "R8",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    },
+    {
+      "nome": "Soratto Futebol Society",
+      "endereco": {
+        "rua": "Rua Perdiz",
+        "numero": "799",
+        "bairro": "Aventureiro",
+        "cidade": "Joinville",
+        "uf": "SC",
+        "cep": "89226-110"
+      },
+      "telefone": "(47) 3425-5925",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.locaisdobrasil.com.br/encontre/campo-de-futebol/joinville-sc/soratto-futebol-society/62a186e76e1550eac4c76bf9",
+          "dado": "ficha no diretório Locais do Brasil: endereço, CEP e telefone do estabelecimento (categoria campo de futebol)"
+        },
+        {
+          "url": "https://nominatim.openstreetmap.org/",
+          "dado": "coordenadas obtidas por geocodificação (Nominatim/OSM, ODbL) com número, rua e município conferidos"
+        }
+      ],
+      "confidence": "baixa",
+      "coordenadas": {
+        "lat": -26.24503,
+        "lon": -48.814727
+      },
+      "rodada_dados": "R8",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    },
+    {
+      "nome": "TOK de Bola - Quadras Society para Locação",
+      "endereco": {
+        "rua": "Rua Elly Soares",
+        "numero": "297",
+        "bairro": "Floresta",
+        "cidade": "Joinville",
+        "uf": "SC",
+        "cep": "89211-715"
+      },
+      "telefone": "(47) 99609-4303",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.locaisdobrasil.com.br/encontre/campo-de-futebol/joinville-sc/tok-de-bola-quadras-society-para-locacao/62a187246e1550eac4c76c28",
+          "dado": "ficha no diretório Locais do Brasil: endereço, CEP e telefone do estabelecimento (categoria campo de futebol)"
+        },
+        {
+          "url": "https://nominatim.openstreetmap.org/",
+          "dado": "coordenadas obtidas por geocodificação (Nominatim/OSM, ODbL) com número, rua e município conferidos"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": {
+        "lat": -26.336086,
+        "lon": -48.844297
+      },
+      "rodada_dados": "R8",
+      "finalidade": "comercial_aluguel",
+      "origem": "web"
+    }
+  ]
+}
