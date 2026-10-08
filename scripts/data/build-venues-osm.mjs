@@ -14,7 +14,7 @@
  *    dataset guarda a consulta Overpass, o arquivo do Nominatim e o
  *    timestamp base do OSM.
  *  - Dedupe por nome normalizado + proximidade dentro do município.
- *  - Escrita SOMENTE nos arquivos scripts/data/venues-<slug>.json (nunca
+ *  - Escrita SOMENTE nos arquivos scripts/data/osm-candidates/venues-<slug>.json (nunca
  *    Firestore): a importação DRAFT é executada pelo coordenador.
  *
  * Uso:
@@ -416,7 +416,9 @@ async function processCity(city, opts) {
     venues,
   };
 
-  const outPath = path.join(__dirname, `venues-${city.slug}.json`);
+  const outDir = path.join(__dirname, "osm-candidates");
+  fs.mkdirSync(outDir, {recursive: true});
+  const outPath = path.join(outDir, `venues-${city.slug}.json`);
   fs.writeFileSync(outPath, JSON.stringify(dataset, null, 1) + "\n", "utf8");
   return {city, stats, outPath, venues: venues.length};
 }
@@ -453,7 +455,7 @@ async function main() {
       const res = await processCity(city, opts);
       results.push({ok: true, ...res});
       console.log(JSON.stringify(res.stats));
-      console.log(`  → scripts/data/venues-${city.slug}.json (${res.venues} venues)`);
+      console.log(`  → scripts/data/osm-candidates/venues-${city.slug}.json (${res.venues} venues)`);
     } catch (err) {
       results.push({ok: false, city, error: String(err.message ?? err)});
       console.error(`  ✗ falhou: ${err.message}`);

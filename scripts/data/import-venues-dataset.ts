@@ -256,9 +256,48 @@ async function loadExistingLocations(
       if (typeof name === "string" && name.trim()) {
         byKey.set(`${city}::${normalizeName(name)}`, doc);
       }
+      // Índice secundário por endereço (rua + número) — evita duplicar venues
+      // já existentes com nome ligeiramente diferente.
+      const addr = addressKey(city, doc.get("street"), doc.get("number"));
+      if (addr && !byKey.has(addr)) byKey.set(addr, doc);
     }
   }
   return byKey;
+}
+
+/** Chave de endereço `addr::cidade::rua|numero` (null se faltar rua ou número). */
+function addressKey(city: string, street: unknown, number: unknown): string | null {
+  if (typeof street !== "string" || typeof number !== "string") return null;
+  const st = normalizeName(street.replace(/^(r|rua|av|avenida|al|alameda|rod|rodovia|tv|travessa|estrada)\.?\s+/i, ""));
+  const nu = number.trim().toLowerCase();
+  if (!st || !nu) return null;
+  return `addr::${city}::${st}|${nu}`;
+}
+
+/**
+ * Procura location existente: 1) cidade+nome exato; 2) cidade+rua+número;
+ * 3) mesmo município e um nome contido no outro (menor com >= 8 caracteres).
+ */
+function findExisting(
+    existing: Map<string, FirebaseFirestore.QueryDocumentSnapshot>,
+    venue: VenueDataset,
+    city: string,
+): {doc: FirebaseFirestore.QueryDocumentSnapshot; by: string} | null {
+  const exact = existing.get(`${city}::${normalizeName(venue.nome)}`);
+  if (exact) return {doc: exact, by: "nome"};
+  const addr = addressKey(city, venue.endereco?.rua, venue.endereco?.numero);
+  const byAddr = addr ? existing.get(addr) : undefined;
+  if (byAddr) return {doc: byAddr, by: "endereço"};
+  const mine = normalizeName(venue.nome);
+  for (const [key, doc] of existing) {
+    if (!key.startsWith(`${city}::`)) continue;
+    const other = key.slice(city.length + 2);
+    const [short, long] = mine.length <= other.length ? [mine, other] : [other, mine];
+    if (short.length >= 8 && (long === short || long.startsWith(`${short} `))) {
+      return {doc, by: "nome parecido"};
+    }
+  }
+  return null;
 }
 
 /** Cidade de um venue do dataset (fallback: cidade do dataset / Curitiba). */
@@ -504,8 +543,9 @@ async function main() {
   try {
     existing = await loadExistingLocations(cities);
     console.log(`Cidades do dataset (${cities.length}): ${cities.join(", ")}`);
-    console.log(`Locations existentes nessas cidades: ${existing.size}`);
+    console.log(`Locations existentes nessas cidades: ${new Set([...existing.values()].map((d) => d.id)).size}`);
   } catch (err) {
+    console.error(`  (detalhe: ${(err as Error).message})`);
     if (execute) {
       console.error("✗ --execute exige acesso ao Firestore com credenciais válidas. Abortado.");
       process.exit(1);
@@ -525,11 +565,14 @@ async function main() {
         stats.skip += 1;
         continue;
       }
-      const key = `${cityOf(venue, datasetCity)}::${normalizeName(venue.nome)}`;
-      const match = existing.get(key);
+      const found = findExisting(existing, venue, cityOf(venue, datasetCity));
+      const match = found?.doc;
       const manualReview: string[] = [];
       if (match) {
         const patchData = buildPatchData(venue, match, manualReview);
+        if (found && found.by !== "nome") {
+          manualReview.push(`venue existente reconhecido por ${found.by} ("${match.get("name")}") — confirmar que é o mesmo local`);
+        }
         plans.push({
           venue, action: "patch", locationId: match.id,
           patchData, fieldsToCreate: [], manualReview,

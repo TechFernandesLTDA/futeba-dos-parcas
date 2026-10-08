@@ -148,7 +148,9 @@ async function importerProof(label, datasetPath) {
     assert.equal((run2.match(/(\d+) criar/) || [])[1], '0', 'plano da 2ª execução deve ter 0 criar');
   });
   check(`${label}: 2ª execução só enriquece (patch = todos)`, () => {
-    assert.equal((run2.match(/(\d+) enriquecer/) || [])[1], String(run1.match(/(\d+) criar/)[1]));
+    const n = (txt, re) => Number((txt.match(re) || [])[1]);
+    assert.equal(n(run2, /(\d+) enriquecer/), n(run1, /(\d+) criar/) + n(run1, /(\d+) enriquecer/));
+    assert.equal(n(run2, /(\d+) criar/), 0);
   });
   const locs = await db.collection('locations').get();
   const imported = locs.docs.filter((d) => d.get('updated_by') === 'venue-dataset-import' && d.get('owner_id') === 'system-venue-import');
@@ -222,7 +224,22 @@ async function main() {
   await clearAll();
   const tmpDataset = path.join(os.tmpdir(), `venues-mini-${Date.now()}.json`);
   fs.writeFileSync(tmpDataset, JSON.stringify(miniDataset));
+  // location pré-existente com nome diferente mas MESMO endereço (rua+número):
+  // o importador deve enriquecer (não duplicar) e preservar status/verificação.
+  await db.collection('locations').doc('pre-addr').set({
+    name: 'Arena Teste Um Futebol e Diversão', city: 'Pinhais', street: 'Av. Rua A', number: '10',
+    owner_id: 'mock_admin', is_verified: true, publication_status: 'SUSPENDED', phone: null,
+  });
   const summary = {mini: await importerProof('dataset sintético', tmpDataset)};
+  const pinhais = await db.collection('locations').where('city', '==', 'Pinhais').get();
+  const preAddr = (await db.collection('locations').doc('pre-addr').get()).data();
+  check('dedupe por endereço: sem duplicata em Pinhais, status/verificação preservados e telefone preenchido', () => {
+    assert.equal(pinhais.size, 1);
+    assert.equal(preAddr.publication_status, 'SUSPENDED');
+    assert.equal(preAddr.is_verified, true);
+    assert.equal(preAddr.owner_id, 'mock_admin');
+    assert.equal(preAddr.phone, '(41) 3000-0001');
+  });
 
   const extra = (process.env.VENUES_TEST_DATASETS || '').split(',').map((s) => s.trim()).filter(Boolean);
   for (const ds of extra) {
