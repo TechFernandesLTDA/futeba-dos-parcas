@@ -252,7 +252,7 @@ test('Lighthouse reads PR metadata with a Linux Chromium runner', () => {
     /^permissions:\n\s+contents: read\n\s+pull-requests: read$/m
   );
   assertNodeJobContract('lighthouse', lighthouse);
-  assert.match(lighthouse, /runs-on: ubuntu-latest/);
+  assert.match(lighthouse, /runs-on: ubuntu-24.04/);
   assert.match(lighthouse, /npx playwright install --with-deps chromium/);
   assert.match(lighthouse, /CHROME_PATH=.*chromium\.executablePath/);
   assert.match(lighthouseWorkflow, /github\.rest\.pulls\.listFiles/);

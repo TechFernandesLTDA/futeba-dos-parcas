@@ -1,52 +1,176 @@
+# Dependabot: updates AGRUPADOS por ecossistema para reduzir o ruído de PRs.
+# - Minor/patch: 1 PR por grupo/mês (cadência mensal, como antes).
+# - Major: PR separado e sempre manual, e os majors que exigem migração
+#   planejada ficam em `ignore` (ex.: Gradle/KMP/Compose, React 19, MUI 6+).
+# - Alertas de segurança do GitHub (Dependabot alerts) continuam ativos independentemente deste arquivo.
 version: 2
 updates:
-  # Gradle dependencies (Android)
   - package-ecosystem: "gradle"
     directory: "/"
     schedule:
       interval: "monthly"
-      day: "monday"
       time: "09:00"
       timezone: "America/Sao_Paulo"
-    open-pull-requests-limit: 2
-    reviewers:
-      - "TechFernandesLTDA"
+    open-pull-requests-limit: 5
     labels:
       - "dependencies"
+      - "type:chore"
     commit-message:
       prefix: "chore(deps)"
       include: "scope"
+    groups:
+      kotlin-kmp:
+        patterns: ["org.jetbrains.kotlin*", "org.jetbrains.kotlinx*", "com.google.devtools.ksp*", "org.jetbrains.compose*"]
+        update-types: ["minor", "patch"]
+      androidx-compose:
+        patterns: ["androidx.*", "com.google.android.material*"]
+        update-types: ["minor", "patch"]
+      firebase-google:
+        patterns: ["com.google.firebase*", "com.google.gms*", "com.google.android.gms*", "dev.gitlive*"]
+        update-types: ["minor", "patch"]
+      ktor-networking:
+        patterns: ["io.ktor*", "com.squareup*"]
+        update-types: ["minor", "patch"]
+      gradle-other:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+    ignore:
+      # Majors do toolchain exigem migração planejada (issue própria).
+      - dependency-name: "org.jetbrains.kotlin*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "org.jetbrains.compose*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "com.android.tools.build:gradle"
+        update-types: ["version-update:semver-major"]
 
-  # npm dependencies (Cloud Functions)
   - package-ecosystem: "npm"
     directory: "/functions"
     schedule:
       interval: "monthly"
-      day: "monday"
       time: "09:00"
       timezone: "America/Sao_Paulo"
-    open-pull-requests-limit: 2
-    reviewers:
-      - "TechFernandesLTDA"
+    open-pull-requests-limit: 5
     labels:
       - "dependencies"
+      - "type:chore"
     commit-message:
       prefix: "chore(deps)"
       include: "scope"
+    groups:
+      functions-firebase:
+        patterns: ["firebase-*", "@firebase/*", "@google-cloud/*"]
+        update-types: ["minor", "patch"]
+      functions-lint-types:
+        patterns: ["eslint*", "@eslint/*", "@typescript-eslint/*", "typescript*", "@types/*", "prettier*"]
+        update-types: ["minor", "patch"]
+      functions-test:
+        patterns: ["jest*", "ts-jest", "@stryker-mutator/*", "vitest*", "tsx"]
+        update-types: ["minor", "patch"]
+      functions-other:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+    ignore:
+      # Cloud Functions roda em Node 22; majors do runtime/eslint exigem validação dedicada.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "firebase-functions"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "firebase-admin"
+        update-types: ["version-update:semver-major"]
 
-  # GitHub Actions
+  - package-ecosystem: "npm"
+    directory: "/web"
+    schedule:
+      interval: "monthly"
+      time: "09:00"
+      timezone: "America/Sao_Paulo"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "type:chore"
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"
+    groups:
+      web-react:
+        patterns: ["react", "react-dom", "react-router*", "@types/react*"]
+        update-types: ["minor", "patch"]
+      web-mui:
+        patterns: ["@mui/*", "@emotion/*"]
+        update-types: ["minor", "patch"]
+      web-tanstack:
+        patterns: ["@tanstack/*"]
+        update-types: ["minor", "patch"]
+      web-firebase:
+        patterns: ["firebase", "firebase-*"]
+        update-types: ["minor", "patch"]
+      web-tooling:
+        patterns: ["vite*", "@vitejs/*", "vitest*", "@vitest/*", "@playwright/*", "playwright*", "eslint*", "@eslint/*", "@typescript-eslint/*", "typescript*", "@testing-library/*", "jsdom", "@stryker-mutator/*"]
+        update-types: ["minor", "patch"]
+      web-other:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+    ignore:
+      # Majors do stack de UI exigem migração planejada.
+      - dependency-name: "react"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "react-dom"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@types/react*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@mui/*"
+        update-types: ["version-update:semver-major"]
+
+  - package-ecosystem: "npm"
+    directory: "/firestore-rules-tests"
+    schedule:
+      interval: "monthly"
+      time: "09:00"
+      timezone: "America/Sao_Paulo"
+    open-pull-requests-limit: 2
+    labels:
+      - "dependencies"
+      - "type:chore"
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"
+    groups:
+      rules-tests:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+      time: "09:00"
+      timezone: "America/Sao_Paulo"
+    open-pull-requests-limit: 2
+    labels:
+      - "dependencies"
+      - "type:chore"
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"
+    groups:
+      root-tooling:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "monthly"
-      day: "monday"
       time: "09:00"
       timezone: "America/Sao_Paulo"
-    open-pull-requests-limit: 2
-    reviewers:
-      - "TechFernandesLTDA"
+    open-pull-requests-limit: 3
     labels:
       - "dependencies"
+      - "type:chore"
     commit-message:
       prefix: "chore(ci)"
       include: "scope"
+    groups:
+      github-actions:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]

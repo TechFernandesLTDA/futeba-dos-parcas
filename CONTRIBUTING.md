@@ -14,6 +14,7 @@ Obrigado por considerar contribuir!
 - [Padrões de Código](#padrões-de-código)
 - [Conventional Commits](#conventional-commits)
 - [Processo de Pull Request](#processo-de-pull-request)
+- [Issues, labels e board](#issues-labels-e-board)
 - [Reportando Bugs](#reportando-bugs)
 
 ---
@@ -67,7 +68,7 @@ Siga a convenção de [Conventional Commits](#conventional-commits).
 git push origin feature/minha-feature
 ```
 
-Abra um PR no GitHub seguindo o [template](.github/pull_request_template.md).
+Abra um PR no GitHub seguindo o [template](.github/pull_request_template.md) e referencie a issue com `refs #N`.
 
 ---
 
@@ -75,12 +76,12 @@ Abra um PR no GitHub seguindo o [template](.github/pull_request_template.md).
 
 ### Pré-requisitos
 
-- JDK 17+
-- Android Studio Ladybug (2024.2.1+)
-- Android SDK 35
+- JDK 21 (Gradle e emuladores Firebase)
+- Android Studio atual + Android SDK 36 (`minSdk 24`, `targetSdk 35`)
 - Git
-- Firebase CLI (para Functions)
-- Node.js 22+ (para Web e Functions)
+- Firebase CLI (Functions e emuladores)
+- Node.js 22 (versão em `.nvmrc`; `nvm use`)
+- Xcode (somente para iOS)
 
 ### Setup Android
 
@@ -245,11 +246,10 @@ Usamos [Conventional Commits](https://www.conventionalcommits.org/) para padroni
 | `chore` | Tarefas de build, config, dependências |
 | `perf` | Melhorias de performance |
 | `ci` | CI/CD pipelines |
-| `security` | Correções de segurança |
 
 ### Escopos comuns
 
-`auth`, `games`, `groups`, `profile`, `ranking`, `xp`, `notifications`, `functions`, `web`, `firestore`, `deps`, `build`
+Escopos validados pelo commitlint: `web`, `android`, `ios`, `shared`, `functions`, `firebase`, `ci`, `deps`. Outros escopos de domínio (`auth`, `games`, `groups`, `xp`...) geram apenas aviso.
 
 ### Exemplos
 
@@ -262,7 +262,7 @@ test(games): adicionar testes unitários para GameViewModel
 chore(deps): atualizar Compose BOM para 2024.09.00
 perf(firestore): otimizar consultas do leaderboard
 ci(deploy): adicionar step de validação de segurança
-security(functions): adicionar rate limiting nas callables
+fix(functions): adicionar rate limiting nas callables
 ```
 
 ---
@@ -278,10 +278,30 @@ security(functions): adicionar rate limiting nas callables
 
 ### Revisão
 
-- Espere pelo menos 1 aprovação
+- Revisão por CODEOWNERS é consultiva hoje (org com um único membro elegível; ver `.github/BRANCH_STRATEGY.md`)
 - Responda aos comentários
 - Faça as mudanças solicitadas
 - Mantenha a branch atualizada com `master`
+
+---
+
+## Issues, labels e board
+
+Toda issue/PR deve ter **pelo menos uma label `type:*` e uma `area:*`** (a automação aplica o básico a partir dos
+templates de `.github/ISSUE_TEMPLATE/`). Fonte de verdade: [`.github/labels.yml`](.github/labels.yml).
+
+| Prefixo | Valores | Observação |
+|---------|---------|------------|
+| `type:*` | `bug`, `feature`, `enhancement`, `refactor`, `test`, `docs`, `chore`, `security`, `audit`, `question` | O que é o trabalho |
+| `area:*` | `web`, `android`, `ios`, `functions`, `firebase`, `rules`, `shared`, `ci`, `docs`, `release`, `seo`, `a11y`, `i18n`, `performance`, `design-system`, `gamification`, `admin`, `analytics`, `billing`, `locations` | Onde mexe (várias permitidas) |
+| `priority:*` | `critical` (P0), `high` (P1), `medium` (P2), `low` (P3) | Espelha o campo Priority do board |
+| `status:*` | `needs-triage`, `needs-discussion`, `ready`, `in-progress`, `review`, `blocked` | Estado de fluxo; Status nativo do board continua manual |
+| Outras | `epic` (+ `epic:*` temáticas históricas), `dependencies`, `lgpd`, `good-first-issue`, `help-wanted`, `duplicate`, `wontfix` | |
+
+- **Épicos** (`epic`) agrupam sub-issues nativas e têm um *milestone* próprio (Campanha 5×5, Quadras, Site, Releases).
+- **Board:** [Futeba — Campanhas](https://github.com/orgs/TechFernandesLTDA/projects/3) (campos Priority P0-P3, Area, Rodada).
+- **Renomear/consolidar labels:** use a API/UI (preserva as issues antigas) e atualize `.github/labels.yml`; o sync não apaga labels.
+- **CI e runners:** [`docs/CI_RUNNERS.md`](docs/CI_RUNNERS.md).
 
 ---
 
@@ -291,7 +311,7 @@ Use o [Bug Report Template](https://github.com/TechFernandesLTDA/futeba-dos-parc
 
 **Informações importantes:**
 - Versão do app
-- Plataforma (Android/iOS)
+- Plataforma (Android/iOS/Web/Backend)
 - Passos para reproduzir
 - Logs/screenshots
 - Severidade

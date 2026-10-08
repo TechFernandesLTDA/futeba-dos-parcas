@@ -1,110 +1,292 @@
-# Type labels
-- name: "type: bug"
+# Fonte de verdade das labels do repositório (sincronizada por .github/workflows/sync-labels.yml).
+# Taxonomia documentada em CONTRIBUTING.md. O sync NÃO apaga labels fora deste arquivo (prune: false).
+# Para renomear uma label, use a API/UI (preserva as issues) e depois atualize este arquivo.
+
+# Tipo (type:*) — pelo menos um por issue/PR
+- name: "type:audit"
+  color: "8b5cf6"
+  description: "Achado de auditoria automatizada de código"
+
+- name: "type:bug"
   color: "d73a4a"
-  description: "Something isn't working"
+  description: "Algo não está funcionando"
 
-- name: "type: feature"
-  color: "0e8a16"
-  description: "New feature or request"
-
-- name: "type: enhancement"
-  color: "a2eeef"
-  description: "Improvement to existing feature"
-
-- name: "type: docs"
-  color: "0075ca"
-  description: "Documentation only changes"
-
-- name: "type: refactor"
-  color: "fbca04"
-  description: "Code refactoring"
-
-- name: "type: test"
+- name: "type:chore"
   color: "c5def5"
-  description: "Adding or updating tests"
+  description: "Manutenção, build, CI e tooling"
 
-- name: "type: chore"
-  color: "fef2c0"
-  description: "Build, CI, or tooling changes"
+- name: "type:docs"
+  color: "0075ca"
+  description: "Documentação"
 
-# Priority labels
-- name: "priority: critical"
-  color: "b60205"
-  description: "Urgent - needs immediate attention"
+- name: "type:enhancement"
+  color: "a2eeef"
+  description: "Melhoria de funcionalidade ou código existente"
 
-- name: "priority: high"
-  color: "d93f0b"
-  description: "High priority"
-
-- name: "priority: medium"
-  color: "fbca04"
-  description: "Medium priority"
-
-- name: "priority: low"
+- name: "type:feature"
   color: "0e8a16"
-  description: "Low priority"
+  description: "Nova funcionalidade"
 
-# Status labels
-- name: "status: needs-triage"
-  color: "ededed"
-  description: "Needs initial review and categorization"
+- name: "type:question"
+  color: "d876e3"
+  description: "Dúvida ou pedido de informação"
 
-- name: "status: in-progress"
-  color: "0052cc"
-  description: "Currently being worked on"
-
-- name: "status: blocked"
-  color: "d73a4a"
-  description: "Blocked by another issue or external factor"
-
-- name: "status: needs-review"
+- name: "type:refactor"
   color: "fbca04"
-  description: "Ready for review"
+  description: "Refatoração sem mudança de comportamento"
 
-- name: "status: wont-fix"
-  color: "ffffff"
-  description: "Will not be fixed"
+- name: "type:security"
+  color: "ee0701"
+  description: "Vulnerabilidade ou preocupação de segurança"
 
-- name: "status: duplicate"
-  color: "cfd3d7"
-  description: "Duplicate of another issue"
+- name: "type:test"
+  color: "c5def5"
+  description: "Criação ou ajuste de testes"
 
-# Platform labels
-- name: "platform: android"
+# Área (area:*) — uma ou mais por issue/PR
+- name: "area:a11y"
+  color: "0e8a16"
+  description: "Acessibilidade"
+
+- name: "area:admin"
+  color: "d93f0b"
+  description: "Administração da plataforma"
+
+- name: "area:analytics"
+  color: "1d76db"
+  description: "Métricas, ranking e relatórios"
+
+- name: "area:android"
   color: "3ddc84"
-  description: "Android specific"
+  description: "App Android (Kotlin/Compose)"
 
-- name: "platform: ios"
+- name: "area:billing"
+  color: "fbca04"
+  description: "Cobrança, mensalidade e assinatura"
+
+- name: "area:ci"
+  color: "fbca04"
+  description: "CI/CD, workflows e runners"
+
+- name: "area:design-system"
+  color: "5319e7"
+  description: "Design system, tema e dark mode"
+
+- name: "area:docs"
+  color: "0075ca"
+  description: "Documentação e guias"
+
+- name: "area:firebase"
+  color: "ffca28"
+  description: "Firebase: Auth, Firestore, Storage, FCM"
+
+- name: "area:functions"
+  color: "f9d0c4"
+  description: "Cloud Functions (Firebase)"
+
+- name: "area:gamification"
+  color: "ffd700"
+  description: "XP, badges, níveis e rankings"
+
+- name: "area:i18n"
+  color: "006b75"
+  description: "Internacionalização e traduções"
+
+- name: "area:ios"
+  color: "555555"
+  description: "App iOS (Compose Multiplatform)"
+
+- name: "area:locations"
+  color: "0e8a16"
+  description: "Quadras, locais, campos e descoberta"
+
+- name: "area:performance"
+  color: "c2e0c6"
+  description: "Performance e otimização"
+
+- name: "area:release"
+  color: "1d76db"
+  description: "Releases, versionamento e lojas"
+
+- name: "area:rules"
+  color: "b60205"
+  description: "Firestore/Storage rules e testes de rules"
+
+- name: "area:seo"
+  color: "0e8a16"
+  description: "SEO, indexação e conteúdo público"
+
+- name: "area:shared"
+  color: "5319e7"
+  description: "Módulo KMP shared"
+
+- name: "area:web"
+  color: "61dafb"
+  description: "Web / PWA (React + Vite)"
+
+# Prioridade (priority:*) — P0..P3 do board
+- name: "priority:critical"
+  color: "b60205"
+  description: "P0 — resolver imediatamente"
+
+- name: "priority:high"
+  color: "fbca04"
+  description: "P1 — próxima rodada"
+
+- name: "priority:low"
+  color: "c5def5"
+  description: "P3 — quando houver folga"
+
+- name: "priority:medium"
+  color: "0e8a16"
+  description: "P2 — planejado"
+
+# Status (status:*)
+- name: "status:blocked"
   color: "000000"
-  description: "iOS specific"
+  description: "Bloqueado por dependência externa"
 
-- name: "platform: web"
-  color: "f1e05a"
-  description: "Web/Firebase specific"
+- name: "status:in-progress"
+  color: "1d76db"
+  description: "Em andamento"
 
-- name: "platform: backend"
-  color: "ff6b6b"
-  description: "Backend/Cloud Functions"
+- name: "status:needs-discussion"
+  color: "ededed"
+  description: "Precisa de discussão antes de implementar"
 
-- name: "platform: shared"
-  color: "b794f4"
-  description: "Shared KMP code"
+- name: "status:needs-triage"
+  color: "ededed"
+  description: "Precisa de triagem inicial"
 
-# Good labels for contributors
-- name: "good first issue"
-  color: "7057ff"
-  description: "Good for newcomers"
+- name: "status:ready"
+  color: "0e8a16"
+  description: "Pronto para ser trabalhado"
 
-- name: "help wanted"
-  color: "008672"
-  description: "Extra attention is needed"
+- name: "status:review"
+  color: "d4c5f9"
+  description: "Em revisão"
 
-# Dependencies
+# Outros (épicos temáticos, auditorias, comunidade, dependências)
+- name: "audit-wave"
+  color: "5319e7"
+  description: "Onda de auditoria multi-modelo 2026-05-26"
+
+- name: "audit-wave-3"
+  color: "6366f1"
+  description: "Onda de auditoria lógica multi-agente 2026-07-09"
+
+- name: "automated"
+  color: "ededed"
+  description: "Criada por automação (ex.: pr-review-to-issues)"
+
+- name: "cmp-migration"
+  color: "0075ca"
+  description: "Migração Compose Multiplatform (histórico: fases 0-8)"
+
 - name: "dependencies"
   color: "0366d6"
-  description: "Dependency updates"
+  description: "Atualização de dependências (Dependabot)"
 
-# CI/CD
-- name: "ci/cd"
+- name: "duplicate"
+  color: "cfd3d7"
+  description: "Duplicada de outra issue"
+
+- name: "epic"
+  color: "8b5cf6"
+  description: "Epic que agrupa sub-issues"
+
+- name: "epic:accessibility"
   color: "1d76db"
-  description: "Continuous integration/deployment"
+  description: "Acessibilidade (WCAG / TalkBack / teclado)"
+
+- name: "epic:android-architecture"
+  color: "3ddc84"
+  description: "Android — Arquitetura UI & Qualidade de Código"
+
+- name: "epic:cloud-functions"
+  color: "fbca04"
+  description: "Cloud Functions — Robustez & Performance"
+
+- name: "epic:cross-platform-parity"
+  color: "d93f0b"
+  description: "Paridade Cross-Platform (Web ↔ Android)"
+
+- name: "epic:gamification"
+  color: "ffd700"
+  description: "Epic: Gamificação 2.0 — XP por Performance & Aderência"
+
+- name: "epic:i18n"
+  color: "0e8a16"
+  description: "i18n & Localização (strings hardcoded)"
+
+- name: "epic:infra-ci-testing"
+  color: "5319e7"
+  description: "Infra, CI/CD, Build & Testes"
+
+- name: "epic:ios-hig"
+  color: "555555"
+  description: "iOS — Fidelidade HIG / Liquid Glass (Compose-MP)"
+
+- name: "epic:motion-design"
+  color: "ec4899"
+  description: "Motion & Animação cross-platform"
+
+- name: "epic:realtime-scale"
+  color: "0b7285"
+  description: "Escalabilidade realtime, consistência multiusuário e carga 10/100/1000"
+
+- name: "epic:security-rules"
+  color: "b60205"
+  description: "Segurança & Firebase Rules Hardening"
+
+- name: "epic:social-interaction"
+  color: "ec4899"
+  description: "Rede social da pelada: chat, mural, DMs, reações, feed UGC, seguir, geo, vídeos"
+
+- name: "epic:ux-states"
+  color: "bfd4f2"
+  description: "Estados de UX (loading/error/empty) & Bugs de Fluxo"
+
+- name: "epic:venue-monetization"
+  color: "8b5cf6"
+  description: "Monetização e gestão comercial de quadras"
+
+- name: "epic:web-data-hooks"
+  color: "006b75"
+  description: "Web — Data Layer, Hooks & Qualidade de Estado"
+
+- name: "epic:web-design-system"
+  color: "5319e7"
+  description: "Web — Design System, Tema (Dark/OLED) & Polish Visual"
+
+- name: "epic:web-mobile-pwa"
+  color: "0075ca"
+  description: "Web Mobile / PWA — safe-area, install, chrome"
+
+- name: "epic:web-navigation"
+  color: "c5def5"
+  description: "Web — Navegação, Layout & Mobile UX"
+
+- name: "good-first-issue"
+  color: "7057ff"
+  description: "Bom para iniciantes"
+
+- name: "help-wanted"
+  color: "008672"
+  description: "Ajuda necessária"
+
+- name: "lgpd"
+  color: "b60205"
+  description: "LGPD/GDPR: proteção de dados"
+
+- name: "silent-failure"
+  color: "fbca04"
+  description: "Erro engolido sem log/rethrow/feedback de UI"
+
+- name: "ui-ux-audit"
+  color: "e4572e"
+  description: "Achado de auditoria visual/UX"
+
+- name: "wontfix"
+  color: "ffffff"
+  description: "Não será tratada"

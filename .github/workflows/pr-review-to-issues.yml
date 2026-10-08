@@ -78,14 +78,14 @@ jobs:
             
             // Patterns to identify critical issues
             const criticalPatterns = [
-              { regex: /🚨\s*\*\*Critical\*\*[:\s]*(.*?)(?=\n\n|\n-|\n\*|$)/gis, severity: 'critical', label: 'priority: critical' },
-              { regex: /⚠️\s*\*\*Warning\*\*[:\s]*(.*?)(?=\n\n|\n-|\n\*|$)/gis, severity: 'high', label: 'priority: high' },
-              { regex: /🔴\s*\*\*Error\*\*[:\s]*(.*?)(?=\n\n|\n-|\n\*|$)/gis, severity: 'critical', label: 'priority: critical' },
-              { regex: /🟡\s*\*\*Issue\*\*[:\s]*(.*?)(?=\n\n|\n-|\n\*|$)/gis, severity: 'medium', label: 'priority: medium' },
-              { regex: /\*\*Security Issue\*\*[:\s]*(.*?)(?=\n\n|\n-|\n\*|$)/gis, severity: 'critical', label: 'security' },
-              { regex: /\*\*Bug\*\*[:\s]*(.*?)(?=\n\n|\n-|\n\*|$)/gis, severity: 'high', label: 'bug' },
-              { regex: /\*\*Performance\*\*[:\s]*(.*?)(?=\n\n|\n-|\n\*|$)/gis, severity: 'medium', label: 'performance' },
-              { regex: /\*\*Memory Leak\*\*[:\s]*(.*?)(?=\n\n|\n-|\n\*|$)/gis, severity: 'critical', label: 'bug' },
+              { regex: /🚨\s*\*\*Critical\*\*[:\s]*(.*?)(?=\n\n|\n-|\n\*|$)/gis, severity: 'critical', label: 'priority:critical' },
+              { regex: /⚠️\s*\*\*Warning\*\*[:\s]*(.*?)(?=\n\n|\n-|\n\*|$)/gis, severity: 'high', label: 'priority:high' },
+              { regex: /🔴\s*\*\*Error\*\*[:\s]*(.*?)(?=\n\n|\n-|\n\*|$)/gis, severity: 'critical', label: 'priority:critical' },
+              { regex: /🟡\s*\*\*Issue\*\*[:\s]*(.*?)(?=\n\n|\n-|\n\*|$)/gis, severity: 'medium', label: 'priority:medium' },
+              { regex: /\*\*Security Issue\*\*[:\s]*(.*?)(?=\n\n|\n-|\n\*|$)/gis, severity: 'critical', label: 'type:security' },
+              { regex: /\*\*Bug\*\*[:\s]*(.*?)(?=\n\n|\n-|\n\*|$)/gis, severity: 'high', label: 'type:bug' },
+              { regex: /\*\*Performance\*\*[:\s]*(.*?)(?=\n\n|\n-|\n\*|$)/gis, severity: 'medium', label: 'area:performance' },
+              { regex: /\*\*Memory Leak\*\*[:\s]*(.*?)(?=\n\n|\n-|\n\*|$)/gis, severity: 'critical', label: 'type:bug' },
             ];
             
             let issuesCreated = 0;
@@ -138,22 +138,13 @@ jobs:
                 
                 try {
                   // Determine labels based on severity and type
-                  const labels = ['automated', 'needs-triage', pattern.label];
+                  const labels = ['automated', 'status:needs-triage', pattern.label];
                   
                   // Add type label if identifiable
-                  if (issueDescription.toLowerCase().includes('security')) labels.push('security');
-                  if (issueDescription.toLowerCase().includes('performance')) labels.push('performance');
-                  if (issueDescription.toLowerCase().includes('bug')) labels.push('bug');
-                  if (issueDescription.toLowerCase().includes('memory')) labels.push('memory-leak');
-                  
-                  // Try to detect module from description
-                  const modules = ['games', 'players', 'groups', 'statistics', 'notifications', 'profile', 'badges'];
-                  for (const module of modules) {
-                    if (issueDescription.toLowerCase().includes(module)) {
-                      labels.push(`module: ${module}`);
-                      break;
-                    }
-                  }
+                  if (issueDescription.toLowerCase().includes('security')) labels.push('type:security');
+                  if (issueDescription.toLowerCase().includes('performance')) labels.push('area:performance');
+                  if (issueDescription.toLowerCase().includes('bug')) labels.push('type:bug');
+                  if (issueDescription.toLowerCase().includes('memory')) labels.push('area:performance');
                   
                   // Create the issue
                   const issue = await github.rest.issues.create({

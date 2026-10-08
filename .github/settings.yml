@@ -1,8 +1,8 @@
 repository:
   name: futeba-dos-parcas
-  description: App multi-plataforma para organizar partidas de futebol entre amigos — times, placares e gamificação
+  description: "Futeba dos Parças — app Android, iOS e Web (PWA) para organizar peladas: jogos, times, placares, grupos e gamificação. Produto da Tech Fernandes LTDA."
   homepage: https://futebadosparcas.com.br
-  topics: android, kotlin, jetpack-compose, firebase, react, typescript, football, sports, game-management, kmp
+  topics: android, ios, web, pwa, kotlin, kotlin-multiplatform, compose-multiplatform, jetpack-compose, react, typescript, vite, material-ui, firebase, cloud-functions, football, sports, game-management, gamification, tech-fernandes
   private: true
   has_issues: true
   has_projects: true
@@ -13,64 +13,7 @@ repository:
   allow_rebase_merge: false
   delete_branch_on_merge: true
 
-labels:
-  - name: bug
-    color: d73a4a
-    description: Algo não está funcionando
-  - name: feature
-    color: 0e8a16
-    description: Nova funcionalidade
-  - name: improvement
-    color: a2eeef
-    description: Melhoria de código existente
-  - name: documentation
-    color: 0075ca
-    description: Documentação
-  - name: android
-    color: 3DDC84
-    description: Relacionado ao app Android
-  - name: web
-    color: 61DAFB
-    description: Relacionado ao app Web
-  - name: firebase
-    color: FFCA28
-    description: Relacionado ao Firebase
-  - name: security
-    color: d93f0b
-    description: Segurança
-  - name: performance
-    color: 5319e7
-    description: Performance
-  - name: dependencies
-    color: 0366d6
-    description: Dependências
-  - name: "priority:critical"
-    color: B60205
-    description: Prioridade crítica
-  - name: "priority:high"
-    color: FBCA04
-    description: Prioridade alta
-  - name: "priority:medium"
-    color: 0E8A16
-    description: Prioridade média
-  - name: "priority:low"
-    color: C5DEF5
-    description: Prioridade baixa
-  - name: "status:blocked"
-    color: "000000"
-    description: Bloqueado
-  - name: "status:in-progress"
-    color: 1D76DB
-    description: Em andamento
-  - name: "status:review"
-    color: D4C5F9
-    description: Em revisão
-  - name: good-first-issue
-    color: 7057ff
-    description: Bom para iniciantes
-  - name: help-wanted
-    color: "008672"
-    description: Ajuda necessária
+# Labels: fonte de verdade em .github/labels.yml (sync-labels.yml, prune: false).
 
 branches:
   - name: master

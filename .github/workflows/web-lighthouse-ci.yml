@@ -25,11 +25,18 @@ defaults:
     working-directory: web
 
 jobs:
+  # Em PR, só roda Lighthouse quando há mudança em Web (check continua reportado como skipped).
+  changes:
+    name: Classify changes
+    uses: ./.github/workflows/change-scope.yml
+
   lighthouse:
     name: Lighthouse CI
+    needs: [changes]
+    if: github.event_name != 'pull_request' || needs.changes.outputs.web == 'true'
     # Lighthouse precisa de um navegador Linux. Não reutilizar Chrome Windows
     # exposto por interop WSL no runner self-hosted.
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
 
     steps:

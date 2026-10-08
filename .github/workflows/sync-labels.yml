@@ -12,8 +12,14 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   sync:
+    permissions:
+      contents: read
+      issues: write
     runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
     timeout-minutes: 10
     steps:
@@ -21,5 +27,7 @@ jobs:
       - uses: micnncim/action-label-syncer@3abd5ab72fda571e69fffd97bd4e0033dd5f495c  # v1
         with:
           manifest: .github/labels.yml
+          # Nunca apagar labels fora do manifesto (histórico de milhares de issues).
+          prune: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

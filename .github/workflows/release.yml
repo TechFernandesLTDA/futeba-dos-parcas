@@ -15,10 +15,15 @@ on:
 env:
   RELEASE_TAG: ${{ inputs.release_tag || github.ref_name }}
 
-# Cancela execucoes anteriores
+# Nunca cancela uma release em andamento (evita upload parcial de assets);
+# execucoes da mesma tag ficam em fila.
 concurrency:
   group: ${{ github.workflow }}-${{ inputs.release_tag || github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
+
+# Menor privilégio: jobs que precisam de mais declaram permissions próprias.
+permissions:
+  contents: read
 
 jobs:
   build-release:

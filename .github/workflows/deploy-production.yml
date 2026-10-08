@@ -23,6 +23,11 @@ on:
 permissions:
   contents: read
 
+# Deploys nunca são cancelados no meio; execuções do mesmo ref entram em fila.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   deploy-production:
     name: Build & Deploy to Play Store

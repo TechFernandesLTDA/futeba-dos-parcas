@@ -8,11 +8,16 @@
 [![Functions CI](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/functions-ci.yml/badge.svg?branch=master)](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/functions-ci.yml)
 [![Firestore Rules](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/firestore-rules-ci.yml/badge.svg?branch=master)](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/firestore-rules-ci.yml)
 [![CodeQL](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/codeql.yml/badge.svg?branch=master)](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/codeql.yml)
+[![Lighthouse](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/web-lighthouse-ci.yml/badge.svg?branch=master)](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/web-lighthouse-ci.yml)
+[![Produção](https://img.shields.io/badge/produ%C3%A7%C3%A3o-futebadosparcas.com.br-1a7f37)](https://futebadosparcas.com.br)
+[![Plataformas](https://img.shields.io/badge/plataformas-Web%20(PWA)%20%C2%B7%20Android%20%C2%B7%20iOS-5319e7)](#arquitetura)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-Plataforma para organizar peladas, grupos e temporadas com confirmação de presença, formação de times, estatísticas, ranking e gamificação.
+Plataforma para organizar peladas, grupos e temporadas com confirmação de presença, formação de times, estatísticas, ranking e gamificação. Disponível para **Web (PWA), Android e iOS**.
 
-[Web em produção](https://futebadosparcas.com.br) · [Releases](https://github.com/TechFernandesLTDA/futeba-dos-parcas/releases) · [Reportar bug](https://github.com/TechFernandesLTDA/futeba-dos-parcas/issues/new?template=bug_report.yml)
+**Um produto da [Tech Fernandes LTDA](https://techfernandes.com.br).**
+
+[Web em produção](https://futebadosparcas.com.br) · [Releases](https://github.com/TechFernandesLTDA/futeba-dos-parcas/releases) · [Board](https://github.com/orgs/TechFernandesLTDA/projects/3) · [Reportar bug](https://github.com/TechFernandesLTDA/futeba-dos-parcas/issues/new?template=bug_report.yml) · [CI e runners](docs/CI_RUNNERS.md)
 
 > Este é um repositório privado. Clonar, executar ambientes conectados e acessar projetos Firebase exige autorização explícita da Tech Fernandes Ltda.
 
@@ -147,18 +152,25 @@ workflow agendado/manual `Realtime load CI`.
 ## Estrutura do repositório
 
 ```text
-app/                    Android nativo
+app/                    Android nativo (Kotlin/Compose)
 shared/                 domínio e modelos KMP
 composeApp/             UI Compose Multiplatform
 iosApp/                 host iOS
+baselineprofile/        baseline profile do Android
+macrobenchmark/         benchmarks de performance do Android
+fastlane/               metadados e lanes de loja (Android/iOS)
 web/                    aplicação React/PWA
 functions/              Cloud Functions em produção
+firestore.rules         regras Firestore (+ storage.rules, firestore.indexes.json)
 firestore-rules-tests/  testes de autorização e integridade
-docs/                   documentação operacional
+monitoring/             alertas e dashboards
+docs/                   documentação operacional (docs/CI_RUNNERS.md, docs/archive/)
 specs/                  specs e decisões técnicas
 scripts/                automações, migrações e validadores
 release-notes/          fontes das notas por plataforma
-.github/workflows/      CI, segurança, release e automações
+versions.json           versões independentes por plataforma
+.github/                workflows, templates, labels, CODEOWNERS, dependabot
+.claude/ .codex/ .agent/ .opencode/  configuração de agentes de IA (ver AGENTS.md)
 archive/backend/        backend legado arquivado
 ```
 
@@ -168,7 +180,7 @@ archive/backend/        backend legado arquivado
 2. Verifique se já existe issue ou PR para o mesmo problema.
 3. Use uma spec em [`specs/`](specs/) quando o trabalho exigir decisão de produto, regra ou arquitetura.
 4. Implemente com testes e valide todas as plataformas afetadas.
-5. Use [Conventional Commits](https://www.conventionalcommits.org/) e abra um PR com impacto, causa, validação e riscos.
+5. Use [Conventional Commits](https://www.conventionalcommits.org/) e abra um PR com impacto, causa, validação e riscos. Toda issue/PR leva labels `type:*` e `area:*` ([taxonomia](CONTRIBUTING.md#issues-labels-e-board)).
 6. Faça squash merge somente com CI verde e os requisitos de revisão atendidos.
 
 Detalhes: [`CONTRIBUTING.md`](CONTRIBUTING.md), [`AGENTS.md`](AGENTS.md) e [`docs/AGENT_OPERATING_MODEL.md`](docs/AGENT_OPERATING_MODEL.md).
@@ -216,6 +228,7 @@ fonte durável para binários de distribuição.
 | [`docs/operations/GROUP_WALL_MEDIA_PIPELINE.md`](docs/operations/GROUP_WALL_MEDIA_PIPELINE.md) | Mural, mídia, FFmpeg, retries, escala, IAM e rollback |
 | [`docs/QA_SMOKE_MATRIX.md`](docs/QA_SMOKE_MATRIX.md) | Gates de regressão e release |
 | [`docs/RELEASE_PROCESS.md`](docs/RELEASE_PROCESS.md) | Versionamento, notas, tags e deploy |
+| [`docs/CI_RUNNERS.md`](docs/CI_RUNNERS.md) | Topologia de runners, regras de workflow e como reativar o CI |
 | [`docs/SETUP_GUIDE.md`](docs/SETUP_GUIDE.md) | Setup detalhado por plataforma |
 | [`specs/DECISIONS.md`](specs/DECISIONS.md) | Decisões arquiteturais vigentes |
 
@@ -223,4 +236,4 @@ fonte durável para binários de distribuição.
 
 O acesso ao código é restrito. Colaboradores autorizados devem seguir [`CONTRIBUTING.md`](CONTRIBUTING.md), a proteção de `master`, CODEOWNERS e os checks obrigatórios.
 
-Distribuído sob a [licença MIT](LICENSE). © Tech Fernandes Ltda.
+Distribuído sob a [licença MIT](LICENSE). © Tech Fernandes LTDA.

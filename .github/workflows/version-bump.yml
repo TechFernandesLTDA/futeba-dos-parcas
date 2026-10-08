@@ -20,6 +20,10 @@ concurrency:
   group: android-version-bump
   cancel-in-progress: false
 
+# Menor privilégio: jobs que precisam de mais declaram permissions próprias.
+permissions:
+  contents: read
+
 jobs:
   prepare-version-pr:
     runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}

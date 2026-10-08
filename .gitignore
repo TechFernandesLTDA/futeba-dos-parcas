@@ -160,3 +160,17 @@ xcuserdata/
 # iOS — Firebase config (baixar via `firebase apps:sdkconfig IOS <APP_ID>`)
 iosApp/iosApp/GoogleService-Info.plist
 iosApp/GoogleService-Info.plist
+
+# Artefatos gerados (não versionar)
+audit-report.txt
+.firebase/
+coverage/
+.nyc_output/
+*.tsbuildinfo
+.vite/
+.turbo/
+*.pid
+*.hprof
+*.bak
+*.orig
+*.rej
