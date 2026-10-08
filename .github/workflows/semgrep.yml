@@ -4,6 +4,11 @@ name: "Semgrep Security Scan"
 # functions/src e web/src. Guardrail barato contra os pontos-cegos
 # sistematicos de codigo gerado por IA: deserializacao insegura, XSS,
 # secrets hardcoded e validacao de input ausente.
+#
+# Substitui o CodeQL (que exige GitHub Advanced Security, pago, em repo
+# privado). O relatorio NAO vai para a aba Security (upload de SARIF tambem
+# exige GHAS): sai como artifact (JSON + texto) e no Job Summary, e o job
+# FALHA quando houver achado de severidade ERROR.
 on:
   pull_request:
     branches: [master, develop]
@@ -14,11 +19,11 @@ on:
       - '.github/workflows/semgrep.yml'
   schedule:
     # Semanal — segunda-feira 03:30 UTC.
-    # Horario deslocado do CodeQL (01:30) para nao competir pelo runner.
+    # Horario deslocado do gitleaks (06:00) para nao competir pelo runner.
     - cron: '30 3 * * 1'
   workflow_dispatch:
 
-# Cancela scan anterior do mesmo branch/PR (mesmo padrao do codeql.yml/web-ci.yml)
+# Cancela scan anterior do mesmo branch/PR (mesmo padrao do web-ci.yml)
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -33,21 +38,16 @@ jobs:
     # O venv mantém o Semgrep isolado no runner macOS persistente.
     runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
     timeout-minutes: 25
-    permissions:
-      # Necessario para o upload-sarif publicar na aba Security.
-      security-events: write
-      contents: read
-      # Repo privado: upload-sarif exige actions:read (igual ao codeql.yml).
-      actions: read
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       # Instalamos o Semgrep num venv isolado em
       # $RUNNER_TEMP: sem poluir o site-packages do sistema e sem
-      # --break-system-packages. (A action Docker returntocorp/semgrep e estavel
-      # em Linux, mas o venv mantem o controle de versao explicito.)
+      # --break-system-packages.
       - name: Install Semgrep CLI
         run: |
           python3 -m venv "$RUNNER_TEMP/semgrep-venv"
@@ -56,11 +56,10 @@ jobs:
           "$RUNNER_TEMP/semgrep-venv/bin/semgrep" --version
 
       # Rulesets: TypeScript, React, OWASP Top Ten, Secrets e JavaScript.
-      # SOFT GATE (report-only): findings (exit 1) NAO quebram o build nesta fase
-      # — aparecem na aba Security via SARIF. Mas uma falha de infra (semgrep nao
-      # gerou SARIF) quebra o job de proposito, em vez de ser mascarada por
-      # `|| true` (evita scan silenciosamente vazio passando como verde).
-      # Podemos endurecer depois (falhar em findings) quando o ruido baixar.
+      # Gera semgrep.json (máquina) e semgrep.txt (humano) — sem SARIF.
+      # O exit code do semgrep é ignorado aqui; o gate real é o passo seguinte,
+      # que lê o JSON. Falta do JSON = falha de infra e quebra o job de propósito
+      # (evita scan silenciosamente vazio passando como verde).
       - name: Run Semgrep scan
         run: |
           set +e
@@ -71,23 +70,58 @@ jobs:
             --config p/secrets \
             --config p/javascript \
             functions/src web/src \
-            --sarif --output semgrep.sarif \
+            --json-output semgrep.json \
+            --text-output semgrep.txt \
             --metrics off
           SCAN_EXIT=$?
           set -e
-          if [ ! -f semgrep.sarif ]; then
-            echo "::error::Semgrep nao gerou SARIF (exit=$SCAN_EXIT) — scan falhou (infra)."
+          if [ ! -f semgrep.json ]; then
+            echo "::error::Semgrep nao gerou semgrep.json (exit=$SCAN_EXIT) — scan falhou (infra)."
             exit 1
           fi
-          echo "Semgrep concluido (exit=$SCAN_EXIT). Findings publicados via SARIF (soft gate)."
+          echo "Semgrep concluido (exit=$SCAN_EXIT)."
 
-      # `if: always() && hashFiles(...)`: faz upload mesmo com findings (semgrep
-      # sai != 0), mas so se o SARIF existir — evita o erro "Path does not exist"
-      # quando o scan falhou antes de gerar o arquivo.
-      - name: Upload SARIF to Security tab
-        if: always() && hashFiles('semgrep.sarif') != ''
-        uses: github/codeql-action/upload-sarif@03e4368ac7daa2bd82b3e85262f3bf87ee112f57  # v3
+      # GATE: falha se houver qualquer achado ERROR. WARNING/INFO são apenas
+      # reportados (Job Summary + artifact). Anotações ::error aparecem no PR.
+      - name: Gate on ERROR findings
+        run: |
+          python3 - <<'PY'
+          import json, os, sys
+          from collections import Counter
+
+          data = json.load(open("semgrep.json", encoding="utf-8"))
+          results = data.get("results", [])
+          sev = Counter(r["extra"]["severity"] for r in results)
+          errors = [r for r in results if r["extra"]["severity"] == "ERROR"]
+
+          lines = ["## Semgrep", "",
+                   "| Severidade | Achados |", "| --- | --- |"]
+          for name in ("ERROR", "WARNING", "INFO"):
+              lines.append(f"| {name} | {sev.get(name, 0)} |")
+          if errors:
+              lines += ["", "### Achados ERROR (bloqueiam o job)", ""]
+              for r in errors:
+                  lines.append(f"- `{r['path']}:{r['start']['line']}` — `{r['check_id']}`")
+          summary = os.environ.get("GITHUB_STEP_SUMMARY")
+          if summary:
+              with open(summary, "a", encoding="utf-8") as fh:
+                  fh.write("\n".join(lines) + "\n")
+
+          print(f"Semgrep: {len(results)} achados "
+                f"(ERROR={sev.get('ERROR', 0)}, WARNING={sev.get('WARNING', 0)}, INFO={sev.get('INFO', 0)})")
+          for r in errors:
+              msg = r["extra"]["message"].splitlines()[0][:200]
+              print(f"::error file={r['path']},line={r['start']['line']},title={r['check_id']}::{msg}")
+          sys.exit(1 if errors else 0)
+          PY
+
+      - name: Upload Semgrep report
+        if: always()
+        uses: actions/upload-artifact@v4
         with:
-          sarif_file: semgrep.sarif
-          # Categoria propria — nao colide com o upload do CodeQL.
-          category: semgrep
+          name: semgrep-report
+          path: |
+            semgrep.json
+            semgrep.txt
+          if-no-files-found: ignore
+          retention-days: 14

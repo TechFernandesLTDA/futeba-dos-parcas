@@ -1,16 +1,16 @@
 # CI: runners, workflows e como reativar
 
-> Atualizado em 07/10/2026. Este documento é a fonte de verdade da topologia de CI.
+> Atualizado em 08/10/2026. Este documento é a fonte de verdade da topologia de CI.
 > `scripts/SELF_HOSTED_RUNNER.md` e `docs/ci/wsl2-self-hosted-runner.md` descrevem a instalação
 > de runners; a tabela de workflows de `SELF_HOSTED_RUNNER.md` está desatualizada.
 
 ## Estado atual (importante)
 
-- **GitHub Actions está parado por billing lock da organização** (issue #4203). Runs novos
-  morrem como `startup_failure` (nome vazio, path `BuildFailed`, 0 jobs) **inclusive nos
-  runners self-hosted**. Só o dono da conta resolve, pela UI de billing.
-- Enquanto isso, a validação é local: lint, typecheck, testes, build, `actionlint` e os
-  contratos de workflow (`node --test scripts/*.test.js scripts/ci/*.test.js`).
+- **Actions voltou a funcionar (07/10/2026)**: o billing lock da organização (issue #4203) foi
+  resolvido ao regularizar o cartão. O GHAS pago foi desligado nos repos privados — ver
+  "Custos e GitHub Advanced Security" abaixo.
+- Validação local (lint, typecheck, testes, build, `actionlint` e os contratos de workflow:
+  `node --test scripts/*.test.js scripts/ci/*.test.js`) continua útil antes de abrir PR.
 
 ## Topologia de runners
 
@@ -35,7 +35,10 @@ pertencem a este repo e não devem ser alterados.
   `ubuntu-latest` migra para o Ubuntu 26 em **19/10/2026** e mudaria toolchains (Android SDK,
   Playwright, Docker) sem aviso. Para migrar de propósito: mude o pin e rode os contratos.
   Os contratos em `scripts/**/**-contract.test.js` exigem o pin atual.
-- `['self-hosted','macOS','ARM64']` literal: somente `ios-build` / `build-ios-app` (Xcode).
+- `[self-hosted, macOS, ARM64, futeba]` literal: `ios-build` (`build-shared-framework` e
+  `build-ios-app`, que exigem macOS/Xcode). O label `futeba` fixa o `MacBook-Pro-de-Renan`;
+  **nunca** usar `macos-*` hospedado (consome 10x os minutos gratuitos). Contrato em
+  `scripts/ci/kmp-shared-workflow-contract.test.js`.
 
 ### Failover para Windows (não validado)
 
@@ -58,13 +61,12 @@ gh variable set RUNNER_LABELS -R TechFernandesLTDA/futeba-dos-parcas --body '["s
   (um deploy ou release nunca é cancelado no meio; runs do mesmo ref entram em fila).
 - **`timeout-minutes`** em todo job (hoje: 5 a 60 min).
 - **Permissões mínimas**: todo workflow declara `permissions: contents: read` no topo; jobs
-  que precisam de mais (`release`: `contents: write`; `version-bump`; `codeql`/`semgrep`:
-  `security-events: write`; `sync-labels`: `issues: write`) declaram no próprio job. O default
+  que precisam de mais (`release`: `contents: write`; `version-bump`; `sync-labels`: `issues: write`) declaram no próprio job. O default
   do repositório também é `read`.
 - **Escopo por mudança**: `change-scope.yml` + `.github/ci/change-scopes-v1.json` classificam os
   arquivos alterados (`web`, `functions`, `android`, `ios`, `rules`...). Os jobs de Web, Functions,
   Android (`android-ci`, `pr-check`) e Lighthouse (em PR) só executam quando o escopo muda (job
-  pulado conta como sucesso para checks obrigatórios). `ios-build`, `firestore-rules-ci`, `codeql`,
+  pulado conta como sucesso para checks obrigatórios). `ios-build`, `firestore-rules-ci`,
   `semgrep` e `realtime-load-ci` usam filtros `paths`. Assim, mudança só em `web/**` não dispara
   Android nem iOS; docs/markdown são ignorados.
 - **Cache**: `setup-node` com `cache: npm` (e `cache-dependency-path` por subprojeto) e
@@ -75,6 +77,39 @@ gh variable set RUNNER_LABELS -R TechFernandesLTDA/futeba-dos-parcas --body '["s
 - `claude-code-review` não roda em PRs do Dependabot (não recebem secrets).
 - `sync-labels` usa `prune: false`: o manifesto `.github/labels.yml` cria/atualiza labels mas
   nunca apaga as que não estão nele.
+
+## Custos e GitHub Advanced Security (GHAS)
+
+A organização está no plano **Free** e o GHAS (Code Security + Secret Protection, ~US$ 49/mês)
+foi desligado em todos os repositórios privados. Consequências e substitutos gratuitos:
+
+| Antes (pago em repo privado) | Agora (gratuito) |
+| --- | --- |
+| CodeQL (`codeql.yml`) — removido | `semgrep.yml` (SAST TypeScript) falhando em achados **ERROR** |
+| `github/codeql-action/upload-sarif` (Semgrep, Detekt) — falha com "Advanced Security must be enabled" | Relatório como **artifact** (`semgrep-report`, `detekt-report`) + Job Summary; sem SARIF, sem `security-events: write` |
+| Secret Protection / push protection | `secret-scan.yml`: **binário CLI** do gitleaks (a `gitleaks-action` v2 exige licença paga em org), `--redact`, config em `.gitleaks.toml` |
+
+Regras para novos workflows neste repo:
+
+- **Não** usar `github/codeql-action/*` nem `security-events: write` (falha ou cobra GHAS).
+- Ferramentas de segurança devem gerar JSON/texto, subir como artifact e **falhar o job** em
+  achados de severidade alta (o gate mora no workflow, não na aba Security).
+- Falso positivo do gitleaks: ajustar a allowlist em `.gitleaks.toml` com a menor abrangência
+  possível (regra + caminho/regex) e comentar o motivo.
+- CodeQL só volta se o repositório for **público** (gratuito): condicionar o job a
+  `github.event.repository.private == false`.
+
+### Minutos de Actions (limite de 2.000 min/mês no Free)
+
+- Os budgets de Actions/Packages/LFS/Codespaces da org são US$ 0 **com bloqueio**: nunca há
+  cobrança, mas os jobs **hospedados** param ao estourar os minutos incluídos.
+- Minutos de runner **self-hosted não contam**. Hosted Linux (`ubuntu-24.04`) conta 1x;
+  **macOS hospedado conta 10x** — por isso todo job macOS usa o Mac self-hosted (`futeba`).
+- Hosted hoje (só o que exige Linux): `firestore-rules-ci`, `web-lighthouse-ci`, `web-e2e-ci`,
+  `pr-check` (job `android`), `functions-ci` (`test`, `firestore-query-perf`,
+  `media-runtime-linux`), `ios-build` (`ios_app_scope`, `kmp-shared-tests`) e `secret-scan`
+  (~1 min por execução). Os 2 runners Windows ociosos podem absorver jobs leves se faltar
+  minuto (ver "Failover para Windows").
 
 ## Operação do runner `tf-desktop-runner` (Windows, sem admin)
 

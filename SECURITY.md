@@ -72,9 +72,15 @@ Apenas a versão mais recente do app recebe correções de segurança.
 ### Análise estática (SAST)
 
 - **Semgrep** roda automaticamente em PRs que tocam superfícies TypeScript (`functions/**`, `web/**`), além de um scan semanal agendado. Rulesets: `p/typescript`, `p/react`, `p/owasp-top-ten`, `p/secrets`, `p/javascript`.
-- Os resultados são publicados como SARIF na aba **Security** do repositório. Atualmente o scan é **report-only** (não bloqueia o build) — será endurecido conforme o ruído baixar.
+- O relatório sai como artifact (`semgrep-report`: JSON + texto) e no Job Summary — **não** vai para a aba Security (SARIF exige GitHub Advanced Security, pago em repositório privado). O job **falha em achados de severidade ERROR**; WARNING/INFO são só reportados.
 - Workflow: [`.github/workflows/semgrep.yml`](.github/workflows/semgrep.yml).
-- **CodeQL** complementa o Semgrep com análise de fluxo de dados em JavaScript/TypeScript ([`.github/workflows/codeql.yml`](.github/workflows/codeql.yml)).
+- **CodeQL foi removido**: só é gratuito em repositório público. Se o repositório virar público, ele pode voltar (`github.event.repository.private == false`).
+
+### Varredura de segredos
+
+- **gitleaks** (binário CLI oficial v8.30.1, verificado por sha256; a `gitleaks-action` exige licença paga em organização) roda em PRs (commits novos), em push na `master` e semanalmente (histórico completo), sempre com `--redact`.
+- Configuração e allowlist mínima de falsos positivos auditados: [`.gitleaks.toml`](.gitleaks.toml). Workflow: [`.github/workflows/secret-scan.yml`](.github/workflows/secret-scan.yml).
+- Localmente: `gitleaks detect --source . --config .gitleaks.toml --redact`.
 
 ---
 

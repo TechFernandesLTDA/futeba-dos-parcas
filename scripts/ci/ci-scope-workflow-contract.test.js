@@ -75,23 +75,18 @@ test('PR code uses read-only checkout credentials and hosted Android tooling', (
   assert.match(codeowners, /^\/scripts\/web-ci-workflow-contract\.test\.js @TechFernandesLTDA\/dev-team$/m);
 });
 
-test('trusted Detekt alone can publish SARIF without weakening PR permissions', () => {
+test('Detekt keeps trusted-only execution and publishes its report as an artifact (no paid GHAS SARIF)', () => {
   const detekt = jobBody(androidWorkflow, 'detekt');
   assert.match(detekt, /github\.event_name != 'pull_request'/);
-  assert.match(detekt, /permissions:\s*\n\s*contents: read\s*\n\s*security-events: write/);
-  assert.equal(
-    (androidWorkflow.match(/security-events: write/g) ?? []).length,
-    1,
-    'security-events write must remain exclusive to the trusted Detekt job'
-  );
-  assert.match(
-    detekt,
-    /name: Upload Detekt SARIF to GitHub Security[\s\S]*?uses: github\/codeql-action\/upload-sarif@[\s\S]*?continue-on-error: true/
-  );
+  assert.match(detekt, /permissions:\s*\n\s*contents: read\s*\n\s*runs-on:/);
+  // SARIF upload / security-events exigem GitHub Advanced Security (pago em repo privado).
+  assert.doesNotMatch(androidWorkflow, /security-events:/);
+  assert.doesNotMatch(androidWorkflow, /upload-sarif/);
   assert.match(
     detekt,
     /name: Upload Detekt Report[\s\S]*?continue-on-error: true[\s\S]*?name: detekt-report[\s\S]*?retention-days: 7/
   );
+  assert.match(detekt, /run: \.\/gradlew --max-workers=6 --no-daemon detekt/);
   assert.doesNotMatch(jobBody(androidWorkflow, 'gate'), /\b(?:checks|security-events|contents): write\b/);
 });
 
@@ -155,7 +150,7 @@ test('iOS app build consumes the narrow classifier contract', () => {
   assert.match(iosWorkflow, /ios_app_scope:[\s\S]*?should_run: \$\{\{ steps\.detect\.outputs\.should_run \}\}/);
   assert.match(iosAppJob, /needs: \[build-shared-framework, ios_app_scope\]/);
   assert.match(iosAppJob, /if: needs\.ios_app_scope\.outputs\.should_run == 'true'/);
-  assert.match(iosAppJob, /runs-on: \[self-hosted, macOS, ARM64\]/);
+  assert.match(iosAppJob, /runs-on: \[self-hosted, macOS, ARM64, futeba\]/);
   assert.doesNotMatch(iosAppJob, /fromJSON\(vars\.RUNNER_LABELS/);
   assert.match(iosAppJob, /Setup Xcode/);
   assert.match(iosDetector, /ios_app_patterns/);

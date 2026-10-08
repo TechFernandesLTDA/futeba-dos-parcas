@@ -1,0 +1,4 @@
+self-hosted-runner:
+  # Labels customizados dos runners self-hosted (ver docs/CI_RUNNERS.md).
+  labels:
+    - futeba
