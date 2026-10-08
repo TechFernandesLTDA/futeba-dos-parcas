@@ -1,0 +1,159 @@
+{
+ "gerado_em": "2026-10-08",
+ "rodada": 3,
+ "cidade": "São José dos Pinhais",
+ "uf": "PR",
+ "slug": "sao-jose-dos-pinhais",
+ "issue": 4194,
+ "fonte": {
+  "provedor": "OpenStreetMap (via Nominatim + Overpass API)",
+  "licenca": "ODbL 1.0 — https://www.openstreetmap.org/copyright",
+  "nominatim_url": "https://www.openstreetmap.org/relation/297533",
+  "nominatim_display_name": "São José dos Pinhais, Paraná, Região Sul, Brasil",
+  "overpass_mirror": "https://overpass-api.de/api/interpreter",
+  "overpass_query": "[out:json][timeout:180];\narea(3600297533)->.a;\n(\n  node[\"leisure\"=\"pitch\"](area.a);\n  way[\"leisure\"=\"pitch\"](area.a);\n  relation[\"leisure\"=\"pitch\"](area.a);\n  node[\"leisure\"=\"sports_centre\"](area.a);\n  way[\"leisure\"=\"sports_centre\"](area.a);\n);\nout body center meta;",
+  "osm_base_timestamp": "2026-10-08T00:24:43Z"
+ },
+ "coleta": {
+  "data": "2026-10-08",
+  "ferramenta": "scripts/data/build-venues-osm.mjs",
+  "finalidade": "dataset curado de quadras para importação DRAFT (revisão humana antes de publicar)"
+ },
+ "estatisticas": {
+  "candidatos_osm": 104,
+  "sem_nome": 90,
+  "institucional": 0,
+  "acesso_restrito": 0,
+  "amenity_descartada": 0,
+  "sem_sinal_de_futebol": 11,
+  "other_excluded": 0,
+  "sem_coordenada": 0,
+  "mantidos": 3,
+  "duplicatas_removidas": 0
+ },
+ "venues": [
+  {
+   "nome": "Campo do Anselmo",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São José dos Pinhais",
+    "uf": "PR",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/398008050",
+     "dado": "OpenStreetMap (way/398008050): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -25.8097881,
+    "lon": -48.8968524
+   },
+   "rodada_dados": "R3",
+   "osm": {
+    "type": "way",
+    "id": 398008050,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Clube Aliança",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São José dos Pinhais",
+    "uf": "PR",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/node/850043673",
+     "dado": "OpenStreetMap (node/850043673): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -25.5212444,
+    "lon": -49.1874256
+   },
+   "rodada_dados": "R3",
+   "osm": {
+    "type": "node",
+    "id": 850043673,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "moro sports",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "São José dos Pinhais",
+    "uf": "PR",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1554637616",
+     "dado": "OpenStreetMap (way/1554637616): sport=soccer;baseball;beachvolleyball;volleyball, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -25.5274703,
+    "lon": -49.1877657
+   },
+   "rodada_dados": "R3",
+   "osm": {
+    "type": "way",
+    "id": 1554637616,
+    "sinal_futebol": "sport"
+   }
+  }
+ ]
+}

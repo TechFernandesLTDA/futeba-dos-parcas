@@ -1,0 +1,77 @@
+{
+ "gerado_em": "2026-10-08",
+ "rodada": 3,
+ "cidade": "Araucária",
+ "uf": "PR",
+ "slug": "araucaria",
+ "issue": 4194,
+ "fonte": {
+  "provedor": "OpenStreetMap (via Nominatim + Overpass API)",
+  "licenca": "ODbL 1.0 — https://www.openstreetmap.org/copyright",
+  "nominatim_url": "https://www.openstreetmap.org/relation/297778",
+  "nominatim_display_name": "Araucária, Paraná, Região Sul, Brasil",
+  "overpass_mirror": "https://overpass.kumi.systems/api/interpreter",
+  "overpass_query": "[out:json][timeout:180];\narea(3600297778)->.a;\n(\n  node[\"leisure\"=\"pitch\"](area.a);\n  way[\"leisure\"=\"pitch\"](area.a);\n  relation[\"leisure\"=\"pitch\"](area.a);\n  node[\"leisure\"=\"sports_centre\"](area.a);\n  way[\"leisure\"=\"sports_centre\"](area.a);\n);\nout body center meta;",
+  "osm_base_timestamp": "2026-07-15T15:22:01Z"
+ },
+ "coleta": {
+  "data": "2026-10-08",
+  "ferramenta": "scripts/data/build-venues-osm.mjs",
+  "finalidade": "dataset curado de quadras para importação DRAFT (revisão humana antes de publicar)"
+ },
+ "estatisticas": {
+  "candidatos_osm": 23,
+  "sem_nome": 21,
+  "institucional": 0,
+  "acesso_restrito": 0,
+  "amenity_descartada": 0,
+  "sem_sinal_de_futebol": 1,
+  "other_excluded": 0,
+  "sem_coordenada": 0,
+  "mantidos": 1,
+  "duplicatas_removidas": 0
+ },
+ "venues": [
+  {
+   "nome": "Ginásio Joval de Souza",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Araucária",
+    "uf": "PR",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/478182583",
+     "dado": "OpenStreetMap (way/478182583): sport=futsal,_vôlei,_handebol, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -25.5954554,
+    "lon": -49.3882378
+   },
+   "rodada_dados": "R3",
+   "osm": {
+    "type": "way",
+    "id": 478182583,
+    "sinal_futebol": "sport"
+   }
+  }
+ ]
+}

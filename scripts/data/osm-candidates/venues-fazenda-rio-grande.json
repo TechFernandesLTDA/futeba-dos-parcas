@@ -1,0 +1,77 @@
+{
+ "gerado_em": "2026-10-08",
+ "rodada": 3,
+ "cidade": "Fazenda Rio Grande",
+ "uf": "PR",
+ "slug": "fazenda-rio-grande",
+ "issue": 4194,
+ "fonte": {
+  "provedor": "OpenStreetMap (via Nominatim + Overpass API)",
+  "licenca": "ODbL 1.0 — https://www.openstreetmap.org/copyright",
+  "nominatim_url": "https://www.openstreetmap.org/relation/297811",
+  "nominatim_display_name": "Fazenda Rio Grande, Paraná, Região Sul, Brasil",
+  "overpass_mirror": "https://overpass.kumi.systems/api/interpreter",
+  "overpass_query": "[out:json][timeout:180];\narea(3600297811)->.a;\n(\n  node[\"leisure\"=\"pitch\"](area.a);\n  way[\"leisure\"=\"pitch\"](area.a);\n  relation[\"leisure\"=\"pitch\"](area.a);\n  node[\"leisure\"=\"sports_centre\"](area.a);\n  way[\"leisure\"=\"sports_centre\"](area.a);\n);\nout body center meta;",
+  "osm_base_timestamp": "2026-07-24T11:04:51Z"
+ },
+ "coleta": {
+  "data": "2026-10-08",
+  "ferramenta": "scripts/data/build-venues-osm.mjs",
+  "finalidade": "dataset curado de quadras para importação DRAFT (revisão humana antes de publicar)"
+ },
+ "estatisticas": {
+  "candidatos_osm": 32,
+  "sem_nome": 29,
+  "institucional": 0,
+  "acesso_restrito": 0,
+  "amenity_descartada": 0,
+  "sem_sinal_de_futebol": 2,
+  "other_excluded": 0,
+  "sem_coordenada": 0,
+  "mantidos": 1,
+  "duplicatas_removidas": 0
+ },
+ "venues": [
+  {
+   "nome": "Quadra de Fotebol",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Fazenda Rio Grande",
+    "uf": "PR",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama sintética (OSM: surface=artificial_turf)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1531521392",
+     "dado": "OpenStreetMap (way/1531521392): sport=futsal, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -25.6515915,
+    "lon": -49.309083
+   },
+   "rodada_dados": "R3",
+   "osm": {
+    "type": "way",
+    "id": 1531521392,
+    "sinal_futebol": "sport"
+   }
+  }
+ ]
+}

@@ -1,0 +1,815 @@
+{
+ "gerado_em": "2026-10-08",
+ "rodada": 7,
+ "cidade": "Florianópolis",
+ "uf": "SC",
+ "slug": "florianopolis",
+ "issue": 4195,
+ "fonte": {
+  "provedor": "OpenStreetMap (via Nominatim + Overpass API)",
+  "licenca": "ODbL 1.0 — https://www.openstreetmap.org/copyright",
+  "nominatim_url": "https://www.openstreetmap.org/relation/296561",
+  "nominatim_display_name": "Florianópolis, Santa Catarina, Região Sul, Brasil",
+  "overpass_mirror": "https://overpass.kumi.systems/api/interpreter",
+  "overpass_query": "[out:json][timeout:180];\narea(3600296561)->.a;\n(\n  node[\"leisure\"=\"pitch\"](area.a);\n  way[\"leisure\"=\"pitch\"](area.a);\n  relation[\"leisure\"=\"pitch\"](area.a);\n  node[\"leisure\"=\"sports_centre\"](area.a);\n  way[\"leisure\"=\"sports_centre\"](area.a);\n);\nout body center meta;",
+  "osm_base_timestamp": "2026-07-15T15:22:01Z"
+ },
+ "coleta": {
+  "data": "2026-10-08",
+  "ferramenta": "scripts/data/build-venues-osm.mjs",
+  "finalidade": "dataset curado de quadras para importação DRAFT (revisão humana antes de publicar)"
+ },
+ "estatisticas": {
+  "candidatos_osm": 689,
+  "sem_nome": 619,
+  "institucional": 2,
+  "acesso_restrito": 7,
+  "amenity_descartada": 0,
+  "sem_sinal_de_futebol": 42,
+  "other_excluded": 0,
+  "sem_coordenada": 0,
+  "mantidos": 19,
+  "duplicatas_removidas": 0
+ },
+ "venues": [
+  {
+   "nome": "Adrenalina Club Campeche",
+   "endereco": {
+    "rua": "Rua Laureano",
+    "numero": "127",
+    "bairro": null,
+    "cidade": "Florianópolis",
+    "uf": "SC",
+    "cep": null
+   },
+   "telefone": "+55 48 99118-4255",
+   "whatsapp": null,
+   "site": "https://adrenalina club.com.br",
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1276038873",
+     "dado": "OpenStreetMap (way/1276038873): sport=athletics;beachvolleyball;fitness;soccer;tennis, Rua Laureano, 127, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -27.6749448,
+    "lon": -48.5062621
+   },
+   "rodada_dados": "R7",
+   "osm": {
+    "type": "way",
+    "id": 1276038873,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Bandeirante R.F.C.",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Florianópolis",
+    "uf": "SC",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama sintética (OSM: surface=artificial_turf)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/198243780",
+     "dado": "OpenStreetMap (way/198243780): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -27.7041364,
+    "lon": -48.5290485
+   },
+   "rodada_dados": "R7",
+   "osm": {
+    "type": "way",
+    "id": 198243780,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Barrense Futebol Clube",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Florianópolis",
+    "uf": "SC",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/314198164",
+     "dado": "OpenStreetMap (way/314198164): nome=\"Barrense Futebol Clube\", sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "baixa",
+   "coordenadas": {
+    "lat": -27.5797392,
+    "lon": -48.4323522
+   },
+   "rodada_dados": "R7",
+   "osm": {
+    "type": "way",
+    "id": 314198164,
+    "sinal_futebol": "nome"
+   }
+  },
+  {
+   "nome": "Campinho de Futebol",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Florianópolis",
+    "uf": "SC",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1206727067",
+     "dado": "OpenStreetMap (way/1206727067): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -27.4550705,
+    "lon": -48.3948263
+   },
+   "rodada_dados": "R7",
+   "osm": {
+    "type": "way",
+    "id": 1206727067,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo de Futebol Amora",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Florianópolis",
+    "uf": "SC",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/374111992",
+     "dado": "OpenStreetMap (way/374111992): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -27.511428,
+    "lon": -48.4843454
+   },
+   "rodada_dados": "R7",
+   "osm": {
+    "type": "way",
+    "id": 374111992,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo de Futebol Arena da Ilha",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Florianópolis",
+    "uf": "SC",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama sintética (OSM: surface=artificial_turf)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/580905828",
+     "dado": "OpenStreetMap (way/580905828): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -27.4704759,
+    "lon": -48.4092093
+   },
+   "rodada_dados": "R7",
+   "osm": {
+    "type": "way",
+    "id": 580905828,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo de Futebol de Areia",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Florianópolis",
+    "uf": "SC",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1206727069",
+     "dado": "OpenStreetMap (way/1206727069): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -27.4549285,
+    "lon": -48.3949904
+   },
+   "rodada_dados": "R7",
+   "osm": {
+    "type": "way",
+    "id": 1206727069,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo de futebol do CCMV",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Florianópolis",
+    "uf": "SC",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama sintética (OSM: surface=artificial_turf)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/312152260",
+     "dado": "OpenStreetMap (way/312152260): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -27.557812,
+    "lon": -48.4951774
+   },
+   "rodada_dados": "R7",
+   "osm": {
+    "type": "way",
+    "id": 312152260,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo de Futebol Zingabol 2",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Florianópolis",
+    "uf": "SC",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama sintética (OSM: surface=artificial_turf)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/681296254",
+     "dado": "OpenStreetMap (way/681296254): nome=\"Campo de Futebol Zingabol 2\", sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "baixa",
+   "coordenadas": {
+    "lat": -27.4495352,
+    "lon": -48.4034951
+   },
+   "rodada_dados": "R7",
+   "osm": {
+    "type": "way",
+    "id": 681296254,
+    "sinal_futebol": "nome"
+   }
+  },
+  {
+   "nome": "Campo do Internacional",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Florianópolis",
+    "uf": "SC",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama natural (OSM: surface=grass)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/247558865",
+     "dado": "OpenStreetMap (way/247558865): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -27.6691933,
+    "lon": -48.5306087
+   },
+   "rodada_dados": "R7",
+   "osm": {
+    "type": "way",
+    "id": 247558865,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Canto do Rio Futebol Clube",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Florianópolis",
+    "uf": "SC",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/451351285",
+     "dado": "OpenStreetMap (way/451351285): nome=\"Canto do Rio Futebol Clube\", sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "baixa",
+   "coordenadas": {
+    "lat": -27.699597,
+    "lon": -48.5499233
+   },
+   "rodada_dados": "R7",
+   "osm": {
+    "type": "way",
+    "id": 451351285,
+    "sinal_futebol": "nome"
+   }
+  },
+  {
+   "nome": "Clube dos 40",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Florianópolis",
+    "uf": "SC",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama natural (OSM: surface=grass)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/282270735",
+     "dado": "OpenStreetMap (way/282270735): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -27.7044127,
+    "lon": -48.5334369
+   },
+   "rodada_dados": "R7",
+   "osm": {
+    "type": "way",
+    "id": 282270735,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Estádio Bartolomeu Manoel Daniel",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Florianópolis",
+    "uf": "SC",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama natural (OSM: surface=grass)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/974852101",
+     "dado": "OpenStreetMap (way/974852101): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -27.6727702,
+    "lon": -48.4845483
+   },
+   "rodada_dados": "R7",
+   "osm": {
+    "type": "way",
+    "id": 974852101,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Futebol Santa Cruz",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Florianópolis",
+    "uf": "SC",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/159543849",
+     "dado": "OpenStreetMap (way/159543849): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -27.6148105,
+    "lon": -48.4497181
+   },
+   "rodada_dados": "R7",
+   "osm": {
+    "type": "way",
+    "id": 159543849,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Ginásio de Esportes João Pessoa Machado",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Florianópolis",
+    "uf": "SC",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/651774597",
+     "dado": "OpenStreetMap (way/651774597): sport=futsal;volleyball;basketball, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -27.4352773,
+    "lon": -48.4589449
+   },
+   "rodada_dados": "R7",
+   "osm": {
+    "type": "way",
+    "id": 651774597,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Nosso Quintal",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Florianópolis",
+    "uf": "SC",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama natural (OSM: surface=grass)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/580877145",
+     "dado": "OpenStreetMap (way/580877145): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -27.4566692,
+    "lon": -48.3971093
+   },
+   "rodada_dados": "R7",
+   "osm": {
+    "type": "way",
+    "id": 580877145,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Palmeiras",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Florianópolis",
+    "uf": "SC",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1190870416",
+     "dado": "OpenStreetMap (way/1190870416): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -27.6286963,
+    "lon": -48.4728278
+   },
+   "rodada_dados": "R7",
+   "osm": {
+    "type": "way",
+    "id": 1190870416,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Paula Ramos Júnior Futebol Clube",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Florianópolis",
+    "uf": "SC",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama natural (OSM: surface=grass)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/239508409",
+     "dado": "OpenStreetMap (way/239508409): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -27.5860765,
+    "lon": -48.5065946
+   },
+   "rodada_dados": "R7",
+   "osm": {
+    "type": "way",
+    "id": 239508409,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Sociedade Esportiva e Recreativa Campinas",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Florianópolis",
+    "uf": "SC",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/node/1846283760",
+     "dado": "OpenStreetMap (node/1846283760): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -27.6732214,
+    "lon": -48.4853061
+   },
+   "rodada_dados": "R7",
+   "osm": {
+    "type": "node",
+    "id": 1846283760,
+    "sinal_futebol": "sport"
+   }
+  }
+ ]
+}

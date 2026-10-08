@@ -25,6 +25,9 @@ import * as path from "path";
 import * as admin from "firebase-admin";
 import {FieldValue} from "firebase-admin/firestore";
 
+// VENUES_PROJECT_ID permite apontar para o emulador (projeto demo-*) nos testes.
+const PROJECT_ID = process.env.VENUES_PROJECT_ID ?? "futebadosparcas";
+
 if (!admin.apps.length) {
   // --cli-credential: autentica com a sessão do firebase CLI do usuário
   // (refresh_token de ~/.config/configstore/firebase-tools.json + o client
@@ -41,7 +44,7 @@ if (!admin.apps.length) {
       process.exit(1);
     }
     admin.initializeApp({
-      projectId: "futebadosparcas",
+      projectId: PROJECT_ID,
       credential: admin.credential.refreshToken({
         type: "authorized_user",
         client_id: "564921029129-p4j63bjwvusvcq5nrpe7j4o85gctione.apps.googleusercontent.com",
@@ -52,7 +55,7 @@ if (!admin.apps.length) {
   } else {
     // Sem --cli-credential: usa ADC (gcloud auth application-default login)
     // com o projectId explícito do projeto do app.
-    admin.initializeApp({projectId: "futebadosparcas"});
+    admin.initializeApp({projectId: PROJECT_ID});
   }
 }
 
@@ -84,6 +87,7 @@ interface VenueDataset {
     bairro?: string | null;
     cidade?: string | null;
     uf?: string | null;
+    cep?: string | null;
   };
   telefone?: string | null;
   whatsapp?: string | null;
@@ -100,6 +104,14 @@ interface VenueDataset {
   fotos?: string[];
   fontes?: VenueSource[];
   confidence?: string | null;
+  /** Coordenadas verificáveis (geocoding/OSM). Ausente/null = não gravar. */
+  coordenadas?: {lat: number; lon: number} | null;
+  /** Finalidade validada na pesquisa (ex.: comercial_aluguel). */
+  finalidade?: string | null;
+  /** Origem primária do registro (ex.: web, osm). */
+  origem?: string | null;
+  /** Rodada do epic #4186 em que o registro entrou (R1..R8). */
+  rodada_dados?: string | null;
 }
 
 interface ParsedHours {
@@ -226,19 +238,81 @@ function buildFieldPlan(
   return {fields, notes};
 }
 
-async function loadExistingLocations(): Promise<Map<string, FirebaseFirestore.QueryDocumentSnapshot>> {
+/**
+ * Carrega as locations existentes das cidades presentes no dataset.
+ * A chave é `cidade::nomeNormalizado` — dedupe multi-cidade (RMC/R4-R8) sem
+ * colidir venues de cidades diferentes que compartilham nome.
+ */
+async function loadExistingLocations(
+    cities: string[],
+): Promise<Map<string, FirebaseFirestore.QueryDocumentSnapshot>> {
   const byKey = new Map<string, FirebaseFirestore.QueryDocumentSnapshot>();
-  // Varredura por cidade curada (dataset atual é Curitiba).
-  const snap = await db.collection("locations")
-      .where("city", "==", "Curitiba")
-      .get();
-  for (const doc of snap.docs) {
-    const name = doc.get("name");
-    if (typeof name === "string" && name.trim()) {
-      byKey.set(normalizeName(name), doc);
+  for (const city of cities) {
+    const snap = await db.collection("locations")
+        .where("city", "==", city)
+        .get();
+    for (const doc of snap.docs) {
+      const name = doc.get("name");
+      if (typeof name === "string" && name.trim()) {
+        byKey.set(`${city}::${normalizeName(name)}`, doc);
+      }
+      // Índice secundário por endereço (rua + número) — evita duplicar venues
+      // já existentes com nome ligeiramente diferente.
+      const addr = addressKey(city, doc.get("street"), doc.get("number"));
+      if (addr && !byKey.has(addr)) byKey.set(addr, doc);
     }
   }
   return byKey;
+}
+
+/** Chave de endereço `addr::cidade::rua|numero` (null se faltar rua ou número). */
+function addressKey(city: string, street: unknown, number: unknown): string | null {
+  if (typeof street !== "string" || typeof number !== "string") return null;
+  const st = normalizeName(street.replace(/^(r|rua|av|avenida|al|alameda|rod|rodovia|tv|travessa|estrada)\.?\s+/i, ""));
+  const nu = number.trim().toLowerCase();
+  if (!st || !nu) return null;
+  return `addr::${city}::${st}|${nu}`;
+}
+
+/**
+ * Procura location existente: 1) cidade+nome exato; 2) cidade+rua+número;
+ * 3) mesmo município e um nome contido no outro (menor com >= 8 caracteres).
+ */
+function findExisting(
+    existing: Map<string, FirebaseFirestore.QueryDocumentSnapshot>,
+    venue: VenueDataset,
+    city: string,
+): {doc: FirebaseFirestore.QueryDocumentSnapshot; by: string} | null {
+  const exact = existing.get(`${city}::${normalizeName(venue.nome)}`);
+  if (exact) return {doc: exact, by: "nome"};
+  const addr = addressKey(city, venue.endereco?.rua, venue.endereco?.numero);
+  const byAddr = addr ? existing.get(addr) : undefined;
+  if (byAddr) return {doc: byAddr, by: "endereço"};
+  const mine = normalizeName(venue.nome);
+  for (const [key, doc] of existing) {
+    if (!key.startsWith(`${city}::`)) continue;
+    const other = key.slice(city.length + 2);
+    const [short, long] = mine.length <= other.length ? [mine, other] : [other, mine];
+    if (short.length >= 8 && (long === short || long.startsWith(`${short} `))) {
+      return {doc, by: "nome parecido"};
+    }
+  }
+  return null;
+}
+
+/** Cidade de um venue do dataset (fallback: cidade do dataset / Curitiba). */
+function cityOf(venue: VenueDataset, datasetCity?: string): string {
+  return venue.endereco?.cidade?.trim() || datasetCity || "Curitiba";
+}
+
+function validCoord(
+    value: unknown,
+): value is {lat: number; lon: number} {
+  if (!value || typeof value !== "object") return false;
+  const c = value as {lat?: unknown; lon?: unknown};
+  return typeof c.lat === "number" && Number.isFinite(c.lat)
+    && typeof c.lon === "number" && Number.isFinite(c.lon)
+    && Math.abs(c.lat) <= 90 && Math.abs(c.lon) <= 180;
 }
 
 function isBlank(value: unknown): boolean {
@@ -266,13 +340,14 @@ function buildCreateData(
     venue: VenueDataset,
     ownerUid: string,
     manualReview: string[],
+    datasetCity?: string,
 ): FirebaseFirestore.UpdateData {
   const end = venue.endereco ?? {};
   const street = end.rua?.trim() ?? null;
   const number = end.numero?.trim() ?? null;
   const district = end.bairro?.trim() ?? null;
-  const city = end.cidade?.trim() ?? "Curitiba";
-  const state = end.uf?.trim() ?? "PR";
+  const city = end.cidade?.trim() || datasetCity || "Curitiba";
+  const state = end.uf?.trim() || "PR";
   const hours = parseHours(venue.horarios);
   const {fields} = buildFieldPlan(venue);
 
@@ -290,7 +365,7 @@ function buildCreateData(
   const data: FirebaseFirestore.UpdateData = {
     name: venue.nome.trim(),
     address: addressParts.join(" - "),
-    cep: "",
+    cep: end.cep?.trim() ?? "",
     street: street ?? "",
     number: number ?? "",
     complement: "",
@@ -326,8 +401,11 @@ function buildCreateData(
       rating: venue.nota_media ?? null,
       rating_count: venue.contagem_avaliacoes ?? null,
       confidence: venue.confidence ?? null,
+      finalidade: venue.finalidade ?? null,
+      origem: venue.origem ?? null,
       tipo_piso: venue.tipo_piso ?? null,
       detalhe_quadras: venue.detalhe_quadras ?? null,
+      rodada_dados: venue.rodada_dados ?? null,
       comments: (venue.comentarios ?? []).slice(0, 3).map((c) => ({
         autor: c.autor ?? null,
         data: c.data ?? null,
@@ -342,6 +420,10 @@ function buildCreateData(
     updated_at: FieldValue.serverTimestamp(),
     updated_by: SOURCE_LABEL,
   };
+  if (validCoord(venue.coordenadas)) {
+    data.latitude = venue.coordenadas.lat;
+    data.longitude = venue.coordenadas.lon;
+  }
   return data;
 }
 
@@ -361,6 +443,7 @@ function buildPatchData(
     ["district", end.bairro?.trim() ?? null],
     ["city", end.cidade?.trim() ?? null],
     ["state", end.uf?.trim() ?? null],
+    ["cep", end.cep?.trim() ?? null],
     ["phone", venue.telefone?.trim() ?? null],
     ["whatsapp", venue.whatsapp?.trim() ?? null],
     ["website", venue.site?.trim() ?? null],
@@ -370,6 +453,11 @@ function buildPatchData(
   ];
   for (const [key, value] of fills) {
     if (value != null && isBlank(data[key])) patch[key] = value;
+  }
+  // Coordenadas verificáveis só preenchem o que está vazio.
+  if (validCoord(venue.coordenadas)) {
+    if (isBlank(data.latitude)) patch.latitude = venue.coordenadas.lat;
+    if (isBlank(data.longitude)) patch.longitude = venue.coordenadas.lon;
   }
 
   const hours = parseHours(venue.horarios);
@@ -384,8 +472,11 @@ function buildPatchData(
     rating: venue.nota_media ?? null,
     rating_count: venue.contagem_avaliacoes ?? null,
     confidence: venue.confidence ?? null,
+    finalidade: venue.finalidade ?? null,
+    origem: venue.origem ?? null,
     tipo_piso: venue.tipo_piso ?? null,
     detalhe_quadras: venue.detalhe_quadras ?? null,
+    rodada_dados: venue.rodada_dados ?? null,
     comments: (venue.comentarios ?? []).slice(0, 3).map((c) => ({
       autor: c.autor ?? null,
       data: c.data ?? null,
@@ -403,7 +494,7 @@ function buildPatchData(
   patch.updated_at = FieldValue.serverTimestamp();
   patch.updated_by = SOURCE_LABEL;
 
-  if (!isBlank(data.rating) || !isBlank(data.ratingCount)) {
+  if (Number(data.rating) > 0 || Number(data.rating_count) > 0) {
     manualReview.push(
         "venue já tem rating do app — nota externa registrada apenas em external_data",
     );
@@ -427,8 +518,13 @@ async function main() {
   const ownerIdx = args.indexOf("--owner-uid");
   const ownerUid = ownerIdx >= 0 ? args[ownerIdx + 1] : null;
 
-  const dataset = JSON.parse(fs.readFileSync(datasetPath, "utf8")) as {venues: VenueDataset[]};
+  const dataset = JSON.parse(fs.readFileSync(datasetPath, "utf8")) as {
+    cidade?: string;
+    rodada?: number;
+    venues: VenueDataset[];
+  };
   const venues = dataset.venues ?? [];
+  const datasetCity = dataset.cidade?.trim() || undefined;
   const limitIdx = args.indexOf("--limit");
   const limit = limitIdx >= 0 ? Number(args[limitIdx + 1]) : venues.length;
   const sliced = venues.slice(0, Number.isInteger(limit) && limit > 0 ? limit : venues.length);
@@ -440,10 +536,16 @@ async function main() {
   }
 
   let existing: Map<string, FirebaseFirestore.QueryDocumentSnapshot>;
+  // Cidades distintas do dataset: dedupe idempotente multi-cidade.
+  const cities = [...new Set(
+      venues.map((v) => cityOf(v, datasetCity)).filter(Boolean),
+  )];
   try {
-    existing = await loadExistingLocations();
-    console.log(`Locations existentes em Curitiba: ${existing.size}`);
+    existing = await loadExistingLocations(cities);
+    console.log(`Cidades do dataset (${cities.length}): ${cities.join(", ")}`);
+    console.log(`Locations existentes nessas cidades: ${new Set([...existing.values()].map((d) => d.id)).size}`);
   } catch (err) {
+    console.error(`  (detalhe: ${(err as Error).message})`);
     if (execute) {
       console.error("✗ --execute exige acesso ao Firestore com credenciais válidas. Abortado.");
       process.exit(1);
@@ -463,18 +565,21 @@ async function main() {
         stats.skip += 1;
         continue;
       }
-      const key = normalizeName(venue.nome);
-      const match = existing.get(key);
+      const found = findExisting(existing, venue, cityOf(venue, datasetCity));
+      const match = found?.doc;
       const manualReview: string[] = [];
       if (match) {
         const patchData = buildPatchData(venue, match, manualReview);
+        if (found && found.by !== "nome") {
+          manualReview.push(`venue existente reconhecido por ${found.by} ("${match.get("name")}") — confirmar que é o mesmo local`);
+        }
         plans.push({
           venue, action: "patch", locationId: match.id,
           patchData, fieldsToCreate: [], manualReview,
         });
         stats.patch += 1;
       } else {
-        const createData = buildCreateData(venue, ownerUid ?? "", manualReview);
+        const createData = buildCreateData(venue, ownerUid ?? "", manualReview, datasetCity);
         const {fields, notes} = buildFieldPlan(venue);
         plans.push({
           venue, action: "create", createData, fieldsToCreate: fields,

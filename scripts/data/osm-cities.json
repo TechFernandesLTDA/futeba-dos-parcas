@@ -1,0 +1,18 @@
+{
+  "observacao": "Manifesto das cidades pesquisadas por OSM/Overpass para os datasets de venues. Cada cidade gera um arquivo venues-<slug>.json em scripts/data/osm-candidates/ (CANDIDATOS: não são importados; servem para cruzar coordenadas/fontes com a pesquisa web nos datasets curados). 'rodada' segue o epic #4186 (R3 = RMC, R4-R8 = novas praças).",
+  "cidades": [
+    {"nome": "São José dos Pinhais", "uf": "PR", "rodada": 3, "slug": "sao-jose-dos-pinhais", "epic_issue": 4194},
+    {"nome": "Pinhais", "uf": "PR", "rodada": 3, "slug": "pinhais", "epic_issue": 4194},
+    {"nome": "Almirante Tamandaré", "uf": "PR", "rodada": 3, "slug": "almirante-tamandare", "epic_issue": 4194},
+    {"nome": "Campo Largo", "uf": "PR", "rodada": 3, "slug": "campo-largo", "epic_issue": 4194},
+    {"nome": "Araucária", "uf": "PR", "rodada": 3, "slug": "araucaria", "epic_issue": 4194},
+    {"nome": "Colombo", "uf": "PR", "rodada": 3, "slug": "colombo", "epic_issue": 4194},
+    {"nome": "Fazenda Rio Grande", "uf": "PR", "rodada": 3, "slug": "fazenda-rio-grande", "epic_issue": 4194},
+    {"nome": "Piraquara", "uf": "PR", "rodada": 3, "slug": "piraquara", "epic_issue": 4194},
+    {"nome": "Londrina", "uf": "PR", "rodada": 4, "slug": "londrina", "epic_issue": 4195},
+    {"nome": "Porto Alegre", "uf": "RS", "rodada": 5, "slug": "porto-alegre", "epic_issue": 4195},
+    {"nome": "São Paulo", "uf": "SP", "rodada": 6, "slug": "sao-paulo", "epic_issue": 4195, "observacao": "capital (município de São Paulo/SP)"},
+    {"nome": "Florianópolis", "uf": "SC", "rodada": 7, "slug": "florianopolis", "epic_issue": 4195},
+    {"nome": "Joinville", "uf": "SC", "rodada": 8, "slug": "joinville", "epic_issue": 4195}
+  ]
+}

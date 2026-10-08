@@ -1,0 +1,856 @@
+{
+ "gerado_em": "2026-10-08",
+ "rodada": 8,
+ "cidade": "Joinville",
+ "uf": "SC",
+ "slug": "joinville",
+ "issue": 4195,
+ "fonte": {
+  "provedor": "OpenStreetMap (via Nominatim + Overpass API)",
+  "licenca": "ODbL 1.0 — https://www.openstreetmap.org/copyright",
+  "nominatim_url": "https://www.openstreetmap.org/relation/296650",
+  "nominatim_display_name": "Joinville, Santa Catarina, Região Sul, Brasil",
+  "overpass_mirror": "https://overpass-api.de/api/interpreter",
+  "overpass_query": "[out:json][timeout:180];\narea(3600296650)->.a;\n(\n  node[\"leisure\"=\"pitch\"](area.a);\n  way[\"leisure\"=\"pitch\"](area.a);\n  relation[\"leisure\"=\"pitch\"](area.a);\n  node[\"leisure\"=\"sports_centre\"](area.a);\n  way[\"leisure\"=\"sports_centre\"](area.a);\n);\nout body center meta;",
+  "osm_base_timestamp": "2026-10-08T00:27:50Z"
+ },
+ "coleta": {
+  "data": "2026-10-08",
+  "ferramenta": "scripts/data/build-venues-osm.mjs",
+  "finalidade": "dataset curado de quadras para importação DRAFT (revisão humana antes de publicar)"
+ },
+ "estatisticas": {
+  "candidatos_osm": 326,
+  "sem_nome": 277,
+  "institucional": 1,
+  "acesso_restrito": 0,
+  "amenity_descartada": 0,
+  "sem_sinal_de_futebol": 27,
+  "other_excluded": 0,
+  "sem_coordenada": 0,
+  "mantidos": 20,
+  "duplicatas_removidas": 1
+ },
+ "venues": [
+  {
+   "nome": "América Futebol Clube",
+   "endereco": {
+    "rua": "Rua Edgar Schneider",
+    "numero": "130",
+    "bairro": "América",
+    "cidade": "Joinville",
+    "uf": "SC",
+    "cep": "89204-345"
+   },
+   "telefone": "+55 47 3433 1170",
+   "whatsapp": null,
+   "site": "https://www.americafutebolclube.com.br",
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/456746102",
+     "dado": "OpenStreetMap (way/456746102): nome=\"América Futebol Clube\", Rua Edgar Schneider, 130, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -26.2858621,
+    "lon": -48.8467959
+   },
+   "rodada_dados": "R8",
+   "osm": {
+    "type": "way",
+    "id": 456746102,
+    "sinal_futebol": "nome"
+   }
+  },
+  {
+   "nome": "Bar e Quadra de Esportes Adolfo",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Joinville",
+    "uf": "SC",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/553763496",
+     "dado": "OpenStreetMap (way/553763496): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -26.3169782,
+    "lon": -48.8533432
+   },
+   "rodada_dados": "R8",
+   "osm": {
+    "type": "way",
+    "id": 553763496,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Cristo Rei",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Joinville",
+    "uf": "SC",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/264985773",
+     "dado": "OpenStreetMap (way/264985773): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -26.3126529,
+    "lon": -48.9238852
+   },
+   "rodada_dados": "R8",
+   "osm": {
+    "type": "way",
+    "id": 264985773,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Fluminense",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Joinville",
+    "uf": "SC",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/257690346",
+     "dado": "OpenStreetMap (way/257690346): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -26.2667518,
+    "lon": -48.9248068
+   },
+   "rodada_dados": "R8",
+   "osm": {
+    "type": "way",
+    "id": 257690346,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Ouro Verde",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Joinville",
+    "uf": "SC",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/749816762",
+     "dado": "OpenStreetMap (way/749816762): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -26.2675565,
+    "lon": -48.9278281
+   },
+   "rodada_dados": "R8",
+   "osm": {
+    "type": "way",
+    "id": 749816762,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Tamandaré",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Joinville",
+    "uf": "SC",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/256874391",
+     "dado": "OpenStreetMap (way/256874391): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -26.3480479,
+    "lon": -48.8039087
+   },
+   "rodada_dados": "R8",
+   "osm": {
+    "type": "way",
+    "id": 256874391,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Nova Joinville",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Joinville",
+    "uf": "SC",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama natural (OSM: surface=grass)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/665875797",
+     "dado": "OpenStreetMap (way/665875797): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -26.314123,
+    "lon": -48.8002208
+   },
+   "rodada_dados": "R8",
+   "osm": {
+    "type": "way",
+    "id": 665875797,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Cancha do Neco",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Joinville",
+    "uf": "SC",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1006298576",
+     "dado": "OpenStreetMap (way/1006298576): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -26.321036,
+    "lon": -48.7966421
+   },
+   "rodada_dados": "R8",
+   "osm": {
+    "type": "way",
+    "id": 1006298576,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Estádio da Baixada",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Joinville",
+    "uf": "SC",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/278451657",
+     "dado": "OpenStreetMap (way/278451657): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -26.3796765,
+    "lon": -48.8240177
+   },
+   "rodada_dados": "R8",
+   "osm": {
+    "type": "way",
+    "id": 278451657,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Estádio Melchior Beninca",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Joinville",
+    "uf": "SC",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/273417510",
+     "dado": "OpenStreetMap (way/273417510): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -26.2666624,
+    "lon": -48.8050037
+   },
+   "rodada_dados": "R8",
+   "osm": {
+    "type": "way",
+    "id": 273417510,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Estrela da Vila Baumer Futebol Society",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Joinville",
+    "uf": "SC",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "concreto (OSM: surface=concrete)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/996050582",
+     "dado": "OpenStreetMap (way/996050582): nome=\"Estrela da Vila Baumer Futebol Society\", sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "baixa",
+   "coordenadas": {
+    "lat": -26.2755196,
+    "lon": -48.8463454
+   },
+   "rodada_dados": "R8",
+   "osm": {
+    "type": "way",
+    "id": 996050582,
+    "sinal_futebol": "nome"
+   }
+  },
+  {
+   "nome": "Ginásio ADE",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Joinville",
+    "uf": "SC",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "concreto (OSM: surface=concrete)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/470072649",
+     "dado": "OpenStreetMap (way/470072649): sport=soccer;basketball;volleyball, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -26.2666528,
+    "lon": -48.8706755
+   },
+   "rodada_dados": "R8",
+   "osm": {
+    "type": "way",
+    "id": 470072649,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Joinville Esporte Clube - Centro de Treinamento",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Joinville",
+    "uf": "SC",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/256774873",
+     "dado": "OpenStreetMap (way/256774873): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -26.3125328,
+    "lon": -48.9190077
+   },
+   "rodada_dados": "R8",
+   "osm": {
+    "type": "way",
+    "id": 256774873,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Lins Sports Society",
+   "endereco": {
+    "rua": "Rua Jonecir José Baierski",
+    "numero": "1075",
+    "bairro": "Petrópolis",
+    "cidade": "Joinville",
+    "uf": "SC",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1322835389",
+     "dado": "OpenStreetMap (way/1322835389): sport=soccer, Rua Jonecir José Baierski, 1075, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "alta",
+   "coordenadas": {
+    "lat": -26.3534126,
+    "lon": -48.8327164
+   },
+   "rodada_dados": "R8",
+   "osm": {
+    "type": "way",
+    "id": 1322835389,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra 2 do Adolfo",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Joinville",
+    "uf": "SC",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/553763497",
+     "dado": "OpenStreetMap (way/553763497): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -26.3166241,
+    "lon": -48.8530463
+   },
+   "rodada_dados": "R8",
+   "osm": {
+    "type": "way",
+    "id": 553763497,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra Coberta ADE",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Joinville",
+    "uf": "SC",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "concreto (OSM: surface=concrete)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/470072645",
+     "dado": "OpenStreetMap (way/470072645): sport=soccer;basketball;volleyball, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -26.2660101,
+    "lon": -48.8707092
+   },
+   "rodada_dados": "R8",
+   "osm": {
+    "type": "way",
+    "id": 470072645,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Real Sociedade Esporte Clube",
+   "endereco": {
+    "rua": "Rua Karl W. Noack",
+    "numero": "194",
+    "bairro": "São Marcos",
+    "cidade": "Joinville",
+    "uf": "SC",
+    "cep": "89214-350"
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/257181126",
+     "dado": "OpenStreetMap (way/257181126): sport=soccer, Rua Karl W. Noack, 194, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "alta",
+   "coordenadas": {
+    "lat": -26.3121566,
+    "lon": -48.8781801
+   },
+   "rodada_dados": "R8",
+   "osm": {
+    "type": "way",
+    "id": 257181126,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Sindicato dos Mecânicos",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Joinville",
+    "uf": "SC",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "concreto (OSM: surface=concrete)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/517281361",
+     "dado": "OpenStreetMap (way/517281361): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -26.264043,
+    "lon": -48.8665857
+   },
+   "rodada_dados": "R8",
+   "osm": {
+    "type": "way",
+    "id": 517281361,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Sindicato dos Mecânicos Quadra de Futsal 2",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Joinville",
+    "uf": "SC",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "concreto (OSM: surface=concrete)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/517281394",
+     "dado": "OpenStreetMap (way/517281394): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -26.264379,
+    "lon": -48.8665641
+   },
+   "rodada_dados": "R8",
+   "osm": {
+    "type": "way",
+    "id": 517281394,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Viracopos Esporte Clube",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Joinville",
+    "uf": "SC",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/523394440",
+     "dado": "OpenStreetMap (way/523394440): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -26.2405101,
+    "lon": -48.8439293
+   },
+   "rodada_dados": "R8",
+   "osm": {
+    "type": "way",
+    "id": 523394440,
+    "sinal_futebol": "sport"
+   }
+  }
+ ]
+}

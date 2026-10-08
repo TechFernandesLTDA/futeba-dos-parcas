@@ -1,0 +1,1832 @@
+{
+  "gerado_em": "2026-10-07",
+  "rodada": 3,
+  "slug": "rmc",
+  "issue": 4194,
+  "titulo": "Região Metropolitana de Curitiba (R3)",
+  "coleta": {
+    "data": "2026-10-07",
+    "ferramentas": "pesquisa web (fichas públicas por item) + OpenStreetMap/Overpass (scripts/data/build-venues-osm.mjs)",
+    "regra": "apenas dados públicos verificáveis; campos sem fonte = null; todo item tem >=1 fonte com URL; entra no app como DRAFT/não verificado"
+  },
+  "cobertura": {
+    "São José dos Pinhais": 6,
+    "Pinhais": 7,
+    "Almirante Tamandaré": 5,
+    "Campo Largo": 7,
+    "Araucária": 7,
+    "Colombo": 8,
+    "Fazenda Rio Grande": 3,
+    "Piraquara": 2
+  },
+  "venues": [
+    {
+      "nome": "Arena Almirante Esportes",
+      "endereco": {
+        "rua": "Dalzira Sila",
+        "numero": "574",
+        "bairro": "Pacotuba",
+        "cidade": "Almirante Tamandaré",
+        "uf": "PR",
+        "cep": null
+      },
+      "telefone": null,
+      "whatsapp": null,
+      "site": "https://www.arenaesporteseeventos.com.br",
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": "cancha de futebol sintético + 2 quadras de vôlei de areia + 1 quadra de beach tennis (estrutura descrita no anúncio do imóvel)",
+      "tipo_piso": "grama sintética",
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.linkedin.com/company/arena-almirante",
+          "dado": "página da empresa: 'Um novo conceito em locação de quadras', quadras esportivas em Almirante Tamandaré com Fut Society, vôlei de praia e beach tennis, endereço Dalzira Sila, 574 e site arenaesporteseeventos.com.br"
+        },
+        {
+          "url": "https://www.trajetoriaimoveis.com.br/imoveis/almirante-tamandare",
+          "dado": "corrobora o endereço (arena na Rua Dalzira Sila, 574 - Pacotuba, Almirante Tamandaré/PR) e detalha a estrutura (1 cancha de futebol sintético, 2 quadras de vôlei de areia, 1 quadra de beach tennis, estacionamento e vestiários); OBS: o anúncio é de compra/venda do imóvel, operação corrente deve ser revalidada em revisão humana"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": {
+        "lat": -25.297075,
+        "lon": -49.31966
+      },
+      "rodada_dados": "R3",
+      "finalidade": "comercial_aluguel",
+      "origem": "web"
+    },
+    {
+      "nome": "Arena M10 Futebol Society Vôlei e Futevôlei",
+      "endereco": {
+        "rua": null,
+        "numero": null,
+        "bairro": null,
+        "cep": null,
+        "cidade": "Almirante Tamandaré",
+        "uf": "PR"
+      },
+      "telefone": null,
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": 1,
+      "detalhe_quadras": "quadra de Futebol Society em grama sintética Fut7 + 2 quadras de Beach Sports (futvôlei/vôlei de praia) + futmesa",
+      "tipo_piso": "society (grama sintética)",
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://guiafix.com.br/almirante-tamandare-pr/futebol",
+          "dado": "descrição do espaço: quadra de futebol society em grama sintética (Fut7), 2 quadras de beach sports, futmesa, bar e lanchonete, churrasqueiras, vestiários e estacionamento; o rodapé do diretório classifica os listados como 'Aluguel de quadra society, campo de futebol ou arena coberta ... com agendamento por hora'. Endereço e telefone não informados"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R3",
+      "finalidade": "comercial_aluguel",
+      "origem": "web"
+    },
+    {
+      "nome": "Bini Sports",
+      "endereco": {
+        "rua": null,
+        "numero": null,
+        "bairro": "Centro",
+        "cidade": "Almirante Tamandaré",
+        "uf": "PR",
+        "cep": null
+      },
+      "telefone": "(41) 3047-2358",
+      "whatsapp": null,
+      "site": "http://www.binisports.com.br/",
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": 1,
+      "detalhe_quadras": "1 quadra de grama sintética para Futebol Society (quadra coberta), com bar, churrasqueira e espaço para festas",
+      "tipo_piso": "society (grama sintética)",
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "http://www.binisports.com.br/",
+          "dado": "site oficial: 'A BINI SPORTS disponibiliza 1 quadra de grama sintética para Futebol Society, e um espaço para locação', localização no Centro de Almirante Tamandaré, telefone (41) 3047-2358 e celular (41) 9553-6202 (não identificado como WhatsApp, mantido só como referência em telefone), e-mail contato@binisports.com.br; rua e número não informados"
+        },
+        {
+          "url": "https://guiafix.com.br/almirante-tamandare-pr/futebol",
+          "dado": "descrição da locação de quadra de futebol society com quadra coberta na região central, bar, churrasqueira, banheiros e vestiários"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R3",
+      "finalidade": "comercial_aluguel",
+      "origem": "web"
+    },
+    {
+      "nome": "Park Sports",
+      "endereco": {
+        "rua": null,
+        "numero": null,
+        "bairro": null,
+        "cep": null,
+        "cidade": "Almirante Tamandaré",
+        "uf": "PR"
+      },
+      "telefone": null,
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://guiafix.com.br/almirante-tamandare-pr/futebol",
+          "dado": "descrição do prestador: 'Quadra exclusiva para a prática de futebol... Oferecemos locação para jogos entre amigos e uma escolinha de futebol', espaço iluminado com piso de qualidade; endereço, telefone e horários não informados"
+        }
+      ],
+      "confidence": "baixa",
+      "coordenadas": null,
+      "rodada_dados": "R3",
+      "finalidade": "comercial_aluguel",
+      "origem": "web"
+    },
+    {
+      "nome": "Refúgio da Bola",
+      "endereco": {
+        "rua": "R. Justo Manfron",
+        "numero": "1968",
+        "bairro": null,
+        "cidade": "Almirante Tamandaré",
+        "uf": "PR",
+        "cep": "83508-185"
+      },
+      "telefone": "(41) 3657-2534 / (41) 8826-5405 / (41) 7820-8214",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": "grama sintética",
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.encontraalmirantetamandare.com.br/empresas/refugio-da-bola/",
+          "dado": "ficha do diretório local: 'empresa de Locação de Quadra Esportiva Refúgio da Bola em Almirante Tamandaré', endereço (R. Justo Manfron, 1968 - Alm. Tamandaré - PR - 83508-185) e três telefones listados como '(41) 3657-2534 / (41) 8826-5405 / (41) 7820-8214' (nenhum identificado como WhatsApp)"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R3",
+      "finalidade": "comercial_aluguel",
+      "origem": "web"
+    },
+    {
+      "nome": "Arena BFS - Quadras de Futsal",
+      "endereco": {
+        "rua": "R. Jeronin Durski",
+        "numero": "181",
+        "bairro": "Estação",
+        "cidade": "Araucária",
+        "uf": "PR",
+        "cep": "83705-172"
+      },
+      "telefone": "(41) 99720-8775",
+      "whatsapp": null,
+      "site": null,
+      "instagram": "https://instagram.com/arenabfs",
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://wiki.araucaria.pr.gov.br/books/turismo-araucaria/page/estadios-ginasios-e-quadras",
+          "dado": "listagem oficial: quadras de futsal, endereço (R. Jeronin Durski, 181 - Estação, CEP 83705-172), contato (41) 99720-8775 e Instagram @arenabfs; locação não declarada literalmente na fonte (finalidade=comercial_indicado)"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R3",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    },
+    {
+      "nome": "Camisa 10 Centro Esportivo e Eventos",
+      "endereco": {
+        "rua": "R. Nossa Senhora dos Remédios",
+        "numero": "2027",
+        "bairro": "Fazenda Velha",
+        "cidade": "Araucária",
+        "uf": "PR",
+        "cep": "83704-525"
+      },
+      "telefone": "(41) 98464-2467",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://wiki.araucaria.pr.gov.br/books/turismo-araucaria/page/estadios-ginasios-e-quadras",
+          "dado": "listagem oficial: centro esportivo e eventos, endereço (R. Nossa Senhora dos Remédios, 2027 - Fazenda Velha, CEP 83704-525) e contato (41) 98464-2467; modalidade e locação não detalhadas"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R3",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    },
+    {
+      "nome": "Fênix Sports - Quadra de Society",
+      "endereco": {
+        "rua": "R. Bernardino Lemos",
+        "numero": "223",
+        "bairro": "Costeira",
+        "cidade": "Araucária",
+        "uf": "PR",
+        "cep": "83709-160"
+      },
+      "telefone": "(41) 99126-0501",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": "society",
+      "horarios": {
+        "segunda": "18:00-23:00",
+        "terca": "18:00-23:00",
+        "quarta": "18:00-23:00",
+        "quinta": "18:00-23:00",
+        "sexta": "18:00-23:00",
+        "sabado": "17:00-23:00"
+      },
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://wiki.araucaria.pr.gov.br/books/turismo-araucaria/page/estadios-ginasios-e-quadras",
+          "dado": "listagem oficial: serviço 'aluguel para jogos e festas', endereço (R. Bernardino Lemos, 223 - Costeira, Araucária - PR, 83709-160), funcionamento (seg-sex 18:00-23:00, sáb 17:00-23:00) e contato (41) 99126-0501; domingo não informado"
+        }
+      ],
+      "confidence": "alta",
+      "coordenadas": null,
+      "rodada_dados": "R3",
+      "finalidade": "comercial_aluguel",
+      "origem": "web"
+    },
+    {
+      "nome": "Locação de Quadras (Quadra do Marcelo)",
+      "endereco": {
+        "rua": "R. Antônio Cândido Nascimento",
+        "numero": "6936",
+        "bairro": "Fazenda Velha",
+        "cidade": "Araucária",
+        "uf": "PR",
+        "cep": "83703-135"
+      },
+      "telefone": "(41) 3642-3744",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://wiki.araucaria.pr.gov.br/books/turismo-araucaria/page/estadios-ginasios-e-quadras",
+          "dado": "listagem oficial 'Locação de Quadras (Quadra do Marcelo)': endereço (R. Antônio Cândido Nascimento, 6936 - Fazenda Velha, CEP 83703-135) e contatos (41) 3642-3744 e (41) 99997-2038; modalidade e funcionamento não informados"
+        }
+      ],
+      "confidence": "alta",
+      "coordenadas": null,
+      "rodada_dados": "R3",
+      "finalidade": "comercial_aluguel",
+      "origem": "web"
+    },
+    {
+      "nome": "Malla's Futsal",
+      "endereco": {
+        "rua": "R. Dr. Guilherme da Mota Corrêa",
+        "numero": "264",
+        "bairro": "Centro",
+        "cidade": "Araucária",
+        "uf": "PR",
+        "cep": "83702-210"
+      },
+      "telefone": null,
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://wiki.araucaria.pr.gov.br/books/turismo-araucaria/page/estadios-ginasios-e-quadras",
+          "dado": "listagem oficial: futsal, endereço (R. Dr. Guilherme da Mota Corrêa, 264 - Centro, CEP 83702-210); contato, funcionamento e locação não informados"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R3",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    },
+    {
+      "nome": "Na Cancha Sports e Bar",
+      "endereco": {
+        "rua": "R. Peroba",
+        "numero": "73",
+        "bairro": "Capela Velha",
+        "cidade": "Araucária",
+        "uf": "PR",
+        "cep": "83705-330"
+      },
+      "telefone": "(41) 99285-1357",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": {
+        "segunda": "17:00-01:00",
+        "terca": "17:00-01:00",
+        "quarta": "17:00-01:00",
+        "quinta": "17:00-01:00",
+        "sexta": "17:00-01:00",
+        "sabado": "09:00-01:00",
+        "domingo": "09:00-01:00"
+      },
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://wiki.araucaria.pr.gov.br/books/turismo-araucaria/page/estadios-ginasios-e-quadras",
+          "dado": "listagem oficial: endereço (R. Peroba, 73 - Capela Velha, CEP 83705-330), funcionamento (seg-sex 17:00-01:00; sáb e dom 09:00-01:00) e contato (41) 99285-1357. OBS: mesma rua e número da entrada 'Escola Coxa Araucária' da página — a fonte não detalha a modalidade nem se a quadra é alugada separadamente, por isso finalidade=comercial_indicado"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": {
+        "lat": -25.561983,
+        "lon": -49.3882
+      },
+      "rodada_dados": "R3",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    },
+    {
+      "nome": "Sintético do Armando",
+      "endereco": {
+        "rua": "Av. Independência",
+        "numero": "1630",
+        "bairro": "Porto das Laranjeiras",
+        "cidade": "Araucária",
+        "uf": "PR",
+        "cep": "83704-295"
+      },
+      "telefone": "(41) 3642-2641",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": "grama sintética",
+      "horarios": {
+        "segunda": "18:00-00:00",
+        "terca": "18:00-00:00",
+        "quarta": "18:00-00:00",
+        "quinta": "18:00-00:00",
+        "sexta": "18:00-00:00",
+        "sabado": "18:00-00:00"
+      },
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://wiki.araucaria.pr.gov.br/books/turismo-araucaria/page/estadios-ginasios-e-quadras",
+          "dado": "listagem oficial: endereço (Av. Independência, 1630 - Porto das Laranjeiras, CEP 83704-295), funcionamento (seg a sáb 18:00-00:00) e contato (41) 3642-2641; domingo e locação não informados"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R3",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    },
+    {
+      "nome": "AABB Campo Largo",
+      "endereco": {
+        "rua": null,
+        "numero": null,
+        "bairro": null,
+        "cep": null,
+        "cidade": "Campo Largo",
+        "uf": "PR"
+      },
+      "telefone": null,
+      "whatsapp": "(41) 98887-4315",
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": 5,
+      "contagem_avaliacoes": 1,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://guiafix.com.br/campo-largo-pr/futebol",
+          "dado": "descrição do prestador: 'Clube Recreativo: Oferecemos locação de campo de futebol, quadra poliesportiva, salão de eventos e churrasqueiras! Além disso, também gerenciamos campeonatos de esportes em geral', WhatsApp (41) 98887-4315 (link wa.me/5541988874315) e avaliação 5,0 (1 avaliação). ATENÇÃO: é um clube recreativo; a locação é anunciada publicamente, mas a abertura de acesso a não sócios não foi confirmada — confidence=baixa e revisão humana recomendada"
+        }
+      ],
+      "confidence": "baixa",
+      "coordenadas": null,
+      "rodada_dados": "R3",
+      "finalidade": "comercial_aluguel",
+      "origem": "web"
+    },
+    {
+      "nome": "Arena do Bilo",
+      "endereco": {
+        "rua": null,
+        "numero": null,
+        "bairro": null,
+        "cep": null,
+        "cidade": "Campo Largo",
+        "uf": "PR"
+      },
+      "telefone": null,
+      "whatsapp": "(41) 98730-6684",
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": 5,
+      "contagem_avaliacoes": 1,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://guiafix.com.br/campo-largo-pr/futebol",
+          "dado": "descrição 'campo de futebol, quadra de vôlei, lanchonete e bebidas', WhatsApp (41) 98730-6684 (link wa.me/5541987306684) e avaliação 5,0 (1 avaliação) na plataforma; o rodapé do diretório classifica os listados como 'Aluguel de quadra society, campo de futebol ou arena coberta ... com agendamento por hora'; endereço não informado"
+        }
+      ],
+      "confidence": "baixa",
+      "coordenadas": null,
+      "rodada_dados": "R3",
+      "finalidade": "comercial_aluguel",
+      "origem": "web"
+    },
+    {
+      "nome": "Arena Vital",
+      "endereco": {
+        "rua": null,
+        "numero": null,
+        "bairro": null,
+        "cidade": "Campo Largo",
+        "uf": "PR",
+        "cep": null
+      },
+      "telefone": null,
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": "futebol society (quantidade de quadras não informada)",
+      "tipo_piso": null,
+      "horarios": {
+        "segunda": "18:00-23:00",
+        "terca": "18:00-23:00",
+        "quarta": "18:00-23:00",
+        "quinta": "18:00-23:00",
+        "sexta": "18:00-23:00",
+        "sabado": "11:00-21:00"
+      },
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://filmaeu.com.br/parceiros/arena-vital-campo-largo",
+          "dado": "página de parceiro: 'Arena Vital - Quadra esportiva em Campo Largo', modalidade 'Futebol Society' e horários (seg-sex 18:00-23:00, sáb 11:00-21:00, dom fechado); endereço exibido apenas como 'Campo Largo, PR' e telefone não informados"
+        }
+      ],
+      "confidence": "baixa",
+      "coordenadas": null,
+      "rodada_dados": "R3",
+      "finalidade": "comercial_aluguel",
+      "origem": "web"
+    },
+    {
+      "nome": "RB Esportes Escolinha de Futebol e Aluguel de Quadras",
+      "endereco": {
+        "rua": "Rua Cyro Dorneles Marques",
+        "numero": "153",
+        "bairro": "Jardim Emília",
+        "cidade": "Campo Largo",
+        "uf": "PR",
+        "cep": null
+      },
+      "telefone": null,
+      "whatsapp": "(41) 99813-0072",
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": 5,
+      "contagem_avaliacoes": 1,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://listatudo.com.br/jardim-rondinha-campo-largo/festas-e-eventos/",
+          "dado": "categoria 'Quadras Esportivas - Aluguel': endereço (Rua Cyro Dorneles Marques, 153 - Jardim Emília - Campo Largo - PR), telefone parcial '413393-18..' (incompleto na fonte, por isso telefone=null) e texto 'oferecemos aluguel de quadras esportivas, treinamento esportivo...'"
+        },
+        {
+          "url": "https://guiafix.com.br/campo-largo-pr/futebol",
+          "dado": "descrição 'a melhor e mais tradicional escola de futebol e locação de quadras esportivas', WhatsApp (41) 99813-0072 (link wa.me/5541998130072) e avaliação 5,0 (1 avaliação) na plataforma"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R3",
+      "finalidade": "comercial_aluguel",
+      "origem": "web"
+    },
+    {
+      "nome": "Real Soccer",
+      "endereco": {
+        "rua": "Rua Pedro Sovierzoski",
+        "numero": "257",
+        "bairro": "Centro",
+        "cidade": "Campo Largo",
+        "uf": "PR",
+        "cep": null
+      },
+      "telefone": "(41) 9185-1951",
+      "whatsapp": null,
+      "site": "http://www.ce-realsoccer.com.br/",
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": 2,
+      "detalhe_quadras": "2 quadras de grama sintética cobertas, com vestiário, lanchonete, bar e churrasqueira",
+      "tipo_piso": "society (grama sintética)",
+      "horarios": {
+        "segunda": "16:00-23:30",
+        "terca": "16:00-23:30",
+        "quarta": "16:00-23:30",
+        "quinta": "16:00-23:30",
+        "sexta": "16:00-23:30",
+        "sabado": "10:00-22:00"
+      },
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://guia.folhadecampolargo.com.br/anuncio/111/locaccedilatildeo-de-quadras-e-escolinha-de-fu/real-soccer",
+          "dado": "ficha do guia local (categoria 'Locação de Quadras e Escolinha de Futebol'): endereço (Rua Pedro Sovierzoski, 257 - Centro, Campo Largo), telefone (41) 9185-1951, horário de atendimento (seg-sex 16h-23h30, sáb 10h-22h; domingo não informado), 2 quadras de grama sintética cobertas, vestiário, lanchonete, bar e churrasqueira; links 'Veja também' da página: http://www.ce-realsoccer.com.br/ e https://www.facebook.com/realsoccercampolargo/"
+        }
+      ],
+      "confidence": "alta",
+      "coordenadas": {
+        "lat": -25.4537599,
+        "lon": -49.5349661
+      },
+      "rodada_dados": "R3",
+      "finalidade": "comercial_aluguel",
+      "origem": "web"
+    },
+    {
+      "nome": "RM Soccer Locação de Quadra de Futebol",
+      "endereco": {
+        "rua": null,
+        "numero": null,
+        "bairro": null,
+        "cep": null,
+        "cidade": "Campo Largo",
+        "uf": "PR"
+      },
+      "telefone": null,
+      "whatsapp": "(41) 99879-9032",
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": 5,
+      "contagem_avaliacoes": 1,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://guiafix.com.br/campo-largo-pr/futebol",
+          "dado": "nome do prestador no diretório de Campo Largo indica 'Locação de Quadra de Futebol', WhatsApp (41) 99879-9032 (link wa.me/5541998799032) e avaliação 5,0 (1 avaliação); endereço, telefone fixo e horários não informados"
+        }
+      ],
+      "confidence": "baixa",
+      "coordenadas": null,
+      "rodada_dados": "R3",
+      "finalidade": "comercial_aluguel",
+      "origem": "web"
+    },
+    {
+      "nome": "Zavatti Futebol Society",
+      "endereco": {
+        "rua": "Rod. Eng. Raul Azevedo Macedo",
+        "numero": "4603",
+        "bairro": "Centro",
+        "cidade": "Campo Largo",
+        "uf": "PR",
+        "cep": null
+      },
+      "telefone": "(41) 3399-3736",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": {
+        "segunda": "17:00-00:00",
+        "terca": "17:00-00:00",
+        "quarta": "17:00-00:00",
+        "quinta": "17:00-00:00",
+        "sexta": "17:00-00:00",
+        "sabado": "14:00-22:00"
+      },
+      "nota_media": 4.7,
+      "contagem_avaliacoes": 85,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.buser.com.br/destinos/pontos-turisticos/pr/campo-largo/zavatti-futebol-society",
+          "dado": "página do ponto turístico: nota 4,7 (85 avaliações), telefone (41) 3399-3736 e status de abertura. Endereço (Rod. Eng. Raul Azevedo Macedo, 4603 - Centro) e horários (seg-sex 17:00-00:00, sáb 14:00-22:00, dom fechado) vieram da mesma página em coleta anterior de 2026-10-07; a extração de retorno do dia só devolveu nota e telefone (seções colapsadas), então endereço e horários pedem reconfirmação em revisão"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R3",
+      "finalidade": "comercial_aluguel",
+      "origem": "web"
+    },
+    {
+      "nome": "Arena DFC",
+      "endereco": {
+        "rua": "Rodovia da Uva",
+        "numero": "7517",
+        "bairro": "Centro",
+        "cidade": "Colombo",
+        "uf": "PR",
+        "cep": "83414-300"
+      },
+      "telefone": "(41) 99967-3034",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.locaisdobrasil.com.br/encontre/campo-de-futebol/colombo-pr/arena-dfc/647a782b424b1ac500a7c2e9",
+          "dado": "ficha no diretório Locais do Brasil: endereço, CEP, telefone e descrição do estabelecimento (categoria campo de futebol)"
+        }
+      ],
+      "confidence": "baixa",
+      "coordenadas": null,
+      "rodada_dados": "R3",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    },
+    {
+      "nome": "Arena Mauá",
+      "endereco": {
+        "rua": "Rua Antônio Amílton Bagio",
+        "numero": "105",
+        "bairro": "Mauá",
+        "cidade": "Colombo",
+        "uf": "PR",
+        "cep": "83413-600"
+      },
+      "telefone": "(41) 99780-6656",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": {
+        "domingo": "15:00-00:00",
+        "segunda": "18:00-00:00",
+        "terca": "18:00-00:00",
+        "quarta": "18:00-00:00",
+        "quinta": "18:00-00:00",
+        "sexta": "18:00-00:00",
+        "sabado": "15:00-00:00"
+      },
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.locaisdobrasil.com.br/encontre/campo-de-futebol/colombo-pr/arena-maua/647a7833424b1ac500a7c2f2",
+          "dado": "ficha no diretório Locais do Brasil: endereço, CEP, telefone, horários e descrição do estabelecimento (categoria campo de futebol)"
+        }
+      ],
+      "confidence": "baixa",
+      "coordenadas": null,
+      "rodada_dados": "R3",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    },
+    {
+      "nome": "Jomin Sports",
+      "endereco": {
+        "rua": "Avenida São Gabriel",
+        "numero": "1604",
+        "bairro": "São Gabriel",
+        "cidade": "Colombo",
+        "uf": "PR",
+        "cep": "83404-000"
+      },
+      "telefone": "(41) 99688-9980",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": {
+        "domingo": "07:00-13:00",
+        "segunda": "17:30-00:00",
+        "terca": "17:30-00:00",
+        "quarta": "17:30-00:00",
+        "quinta": "17:30-00:00",
+        "sexta": "17:30-00:00",
+        "sabado": "17:30-00:00"
+      },
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.locaisdobrasil.com.br/encontre/campo-de-futebol/colombo-pr/jomin-sports/647a782f424b1ac500a7c2ee",
+          "dado": "ficha no diretório Locais do Brasil: endereço, CEP, telefone, horários e descrição do estabelecimento (categoria campo de futebol)"
+        },
+        {
+          "url": "https://www.openstreetmap.org/way/546652790",
+          "dado": "OpenStreetMap (ODbL): elemento com nome/endereço compatível; fornece coordenadas. OpenStreetMap (way/546652790): sport=soccer, sem rua no OSM, coletado em 2026-10-08"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": {
+        "lat": -25.3567644,
+        "lon": -49.2000324
+      },
+      "rodada_dados": "R3",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    },
+    {
+      "nome": "Kanxa Esportiva Santos Dumont",
+      "endereco": {
+        "rua": "Avenida Santos Dumont",
+        "numero": "461",
+        "bairro": "Santa Fé",
+        "cidade": "Colombo",
+        "uf": "PR",
+        "cep": "83403-500"
+      },
+      "telefone": "(41) 99990-7284",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": "quadra de futebol sintético, coberta; lanchonete e eventos",
+      "tipo_piso": "sintético",
+      "horarios": {
+        "domingo": "07:00-13:00",
+        "terca": "05:00-00:00",
+        "quarta": "05:00-00:00",
+        "quinta": "05:00-00:00",
+        "sexta": "05:00-00:00",
+        "sabado": "11:00-00:00"
+      },
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.locaisdobrasil.com.br/encontre/campo-de-futebol/colombo-pr/kanxa-esportiva-santos-dumont/647a7834424b1ac500a7c2f4",
+          "dado": "ficha no diretório Locais do Brasil: endereço, CEP, telefone, horários e descrição do estabelecimento (categoria campo de futebol): \"Quadra de futebol sintético, coberta. Lanchonete e eventos.\""
+        },
+        {
+          "url": "https://guiafix.com.br/colombo-pr/futebol",
+          "dado": "GuiaFix lista o prestador Kanxa Esportiva Santos Dumont na categoria Futebol de Colombo (aluguel de quadra society/campo/arena com agendamento por hora)"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R3",
+      "finalidade": "comercial_aluguel",
+      "origem": "web"
+    },
+    {
+      "nome": "RM Esportes",
+      "endereco": {
+        "rua": "Avenida Annibale Ferrarini",
+        "numero": "13",
+        "bairro": "Colônia Faria",
+        "cidade": "Colombo",
+        "uf": "PR",
+        "cep": "83430-000"
+      },
+      "telefone": "(41) 99846-4806",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": "sintético",
+      "horarios": {
+        "segunda": "18:00-00:00",
+        "terca": "18:00-00:00",
+        "quarta": "18:00-00:00",
+        "quinta": "18:00-00:00",
+        "sexta": "18:00-00:00",
+        "sabado": "18:00-00:00"
+      },
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.locaisdobrasil.com.br/encontre/campo-de-futebol/colombo-pr/rm-esportes/647a782c424b1ac500a7c2ea",
+          "dado": "ficha no diretório Locais do Brasil: endereço, CEP, telefone, horários seg-sáb e descrição do estabelecimento (categoria campo de futebol); avaliação de usuário cita quadras amplas com grama sintética em boa condição"
+        }
+      ],
+      "confidence": "baixa",
+      "coordenadas": null,
+      "rodada_dados": "R3",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    },
+    {
+      "nome": "RRV Futebol Society",
+      "endereco": {
+        "rua": "Rua Jaguariaíva",
+        "numero": null,
+        "bairro": "Paloma",
+        "cidade": "Colombo",
+        "uf": "PR",
+        "cep": "83410-300"
+      },
+      "telefone": "(41) 99895-0826",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.locaisdobrasil.com.br/encontre/campo-de-futebol/colombo-pr/rrv-futebol-society/647a7834424b1ac500a7c2f3",
+          "dado": "ficha no diretório Locais do Brasil: endereço, CEP, telefone e descrição do estabelecimento (categoria campo de futebol) (ficha sem número do imóvel)"
+        }
+      ],
+      "confidence": "baixa",
+      "coordenadas": null,
+      "rodada_dados": "R3",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    },
+    {
+      "nome": "Seven Soccer",
+      "endereco": {
+        "rua": "Rua Rondônia",
+        "numero": "182",
+        "bairro": "Campo Pequeno",
+        "cidade": "Colombo",
+        "uf": "PR",
+        "cep": "83404-320"
+      },
+      "telefone": "(41) 99943-2245",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": 2,
+      "detalhe_quadras": "2 quadras cobertas de futebol com grama sintética; 4 churrasqueiras, vestiários, lanchonete e estacionamento",
+      "tipo_piso": "grama sintética",
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.locaisdobrasil.com.br/encontre/campo-de-futebol/colombo-pr/seven-soccer/647a7825424b1ac500a7c2e2",
+          "dado": "ficha no diretório Locais do Brasil: endereço, CEP, telefone e descrição do estabelecimento (categoria campo de futebol): \"2 quadras cobertas de futebol com grama sintética, 4 churrasqueiras, vestiários, lanchonete e estacionamento\""
+        },
+        {
+          "url": "https://guiafix.com.br/colombo-pr/futebol",
+          "dado": "GuiaFix descreve o mesmo estabelecimento: 2 quadras cobertas de futebol com grama sintética, 4 churrasqueiras, vestiários, lanchonete e estacionamento"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R3",
+      "finalidade": "comercial_aluguel",
+      "origem": "web"
+    },
+    {
+      "nome": "Toca do Chico - Canchas de Futebol",
+      "endereco": {
+        "rua": "Rua Nossa Senhora de Fátima",
+        "numero": "1354",
+        "bairro": "Colônia Faria",
+        "cidade": "Colombo",
+        "uf": "PR",
+        "cep": "83412-420"
+      },
+      "telefone": "(41) 3666-9847",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.locaisdobrasil.com.br/encontre/campo-de-futebol/colombo-pr/toca-do-chico-canchas-de-futebol/647a7829424b1ac500a7c2e7",
+          "dado": "ficha no diretório Locais do Brasil: endereço, CEP, telefone e descrição do estabelecimento (categoria campo de futebol)"
+        }
+      ],
+      "confidence": "baixa",
+      "coordenadas": null,
+      "rodada_dados": "R3",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    },
+    {
+      "nome": "Arena LIFAZ",
+      "endereco": {
+        "rua": "Rua José Custódio dos Santos",
+        "numero": "201",
+        "bairro": "Eucaliptos",
+        "cidade": "Fazenda Rio Grande",
+        "uf": "PR",
+        "cep": "83821-100"
+      },
+      "telefone": null,
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": "campo de futebol (liga amadora e aluguel para treinos)",
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.locaisdobrasil.com.br/encontre/campo-de-futebol/fazenda-rio-grande-pr/arena-lifaz-cwbet/64f344a33037cb99d64d6cd1",
+          "dado": "ficha no Locais do Brasil: endereço e descrição \"Campo de Futebol, para uso na LIGA DA FAZENDA FUTEBOL AMADOR e também para aluguel para times treinarem\""
+        }
+      ],
+      "confidence": "baixa",
+      "coordenadas": null,
+      "rodada_dados": "R3",
+      "finalidade": "comercial_aluguel",
+      "origem": "web"
+    },
+    {
+      "nome": "FV Sports",
+      "endereco": {
+        "rua": "Avenida das Américas",
+        "numero": null,
+        "bairro": "Eucaliptos",
+        "cidade": "Fazenda Rio Grande",
+        "uf": "PR",
+        "cep": "83820-023"
+      },
+      "telefone": "(41) 99991-8676",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.locaisdobrasil.com.br/encontre/campo-de-futebol/fazenda-rio-grande-pr/fv-sports/64f344a43037cb99d64d6cd2",
+          "dado": "ficha no diretório Locais do Brasil: endereço, CEP, telefone e descrição do estabelecimento (categoria campo de futebol) (ficha sem número do imóvel)"
+        }
+      ],
+      "confidence": "baixa",
+      "coordenadas": null,
+      "rodada_dados": "R3",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    },
+    {
+      "nome": "Quirinosports Futsal e Society",
+      "endereco": {
+        "rua": "Rua Francisco da Conceição Machado",
+        "numero": "100",
+        "bairro": "São Sebastião",
+        "cidade": "Fazenda Rio Grande",
+        "uf": "PR",
+        "cep": "83824-505"
+      },
+      "telefone": "(41) 98876-8676",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": "quadras cobertas, tamanhos oficiais Fut7 e Futsal; estacionamento amplo e bar",
+      "tipo_piso": null,
+      "horarios": {
+        "segunda": "18:00-00:00",
+        "terca": "18:00-00:00",
+        "quarta": "18:00-00:00",
+        "quinta": "18:00-00:00",
+        "sexta": "18:00-00:30",
+        "sabado": "15:00-00:30"
+      },
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.locaisdobrasil.com.br/encontre/campo-de-futebol/fazenda-rio-grande-pr/quirinosports-futsal-e-society/64f344a73037cb99d64d6cd4",
+          "dado": "ficha no diretório Locais do Brasil: endereço, CEP, telefone, horários e descrição do estabelecimento (categoria campo de futebol)"
+        },
+        {
+          "url": "https://guiafix.com.br/fazenda-rio-grande-pr/futebol",
+          "dado": "GuiaFix: \"Quadras cobertas, tamanhos oficiais Fut7 e Futsal. Mega estacionamento, local amplo... Atendimento de bar\" (trecho exibido na busca; página bloqueia acesso automatizado)"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R3",
+      "finalidade": "comercial_aluguel",
+      "origem": "web"
+    },
+    {
+      "nome": "Aquila Sports",
+      "endereco": {
+        "rua": "Rua Alzira de Araújo Souza",
+        "numero": "156",
+        "bairro": "Atuba",
+        "cidade": "Pinhais",
+        "uf": "PR",
+        "cep": "83326-140"
+      },
+      "telefone": null,
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": 1,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.locaisdobrasil.com.br/encontre/campo-de-futebol/pinhais-pr",
+          "dado": "listagem do diretório: endereço (Rua Alzira de Araújo Souza, 156 - Atuba, CEP 83326-140), 1 avaliação com menções a qualidade do campo, e página afirma que os campos listados oferecem aluguel por hora; telefone e horários não informados"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": {
+        "lat": -25.4042389,
+        "lon": -49.1921462
+      },
+      "rodada_dados": "R3",
+      "finalidade": "comercial_aluguel",
+      "origem": "web"
+    },
+    {
+      "nome": "Arena Lounge Sports e Eventos",
+      "endereco": {
+        "rua": "R. Quinze de Outubro",
+        "numero": "92",
+        "bairro": "Centro",
+        "cidade": "Pinhais",
+        "uf": "PR",
+        "cep": "83323-040"
+      },
+      "telefone": "(41) 99677-9988",
+      "whatsapp": null,
+      "site": null,
+      "instagram": "https://instagram.com/arenaloungesports",
+      "preco_hora": null,
+      "qtd_quadras": 2,
+      "detalhe_quadras": "2 quadras de futebol society cobertas (mais 3 quadras de areia para futevôlei/vôlei de praia)",
+      "tipo_piso": null,
+      "horarios": {
+        "segunda": "08:00-23:59",
+        "terca": "08:00-23:59",
+        "quarta": "08:00-23:59",
+        "quinta": "08:00-23:59",
+        "sexta": "08:00-23:59",
+        "sabado": "08:00-23:59"
+      },
+      "nota_media": null,
+      "contagem_avaliacoes": 1,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://wellhub.com/pt-br/search/partners/arena-lounge-sports-e-eventos-centro/",
+          "dado": "página oficial do parceiro: endereço (R. Quinze de Outubro, 92 - Centro, Pinhais - PR, 83323-040), telefone (41) 99677-9988, Instagram @arenaloungesports, 2 quadras de futebol society cobertas + 3 quadras de areia, 8 churrasqueiras, vestiários/estacionamento, exigência de agendamento e horários (seg-sáb 08:00-23:59, dom fechado)"
+        },
+        {
+          "url": "https://www.locaisdobrasil.com.br/encontre/campo-de-futebol/pinhais-pr",
+          "dado": "listagem da mesma arena com endereço DIVERGENTE (PR-415 - Maria Antonieta, Pinhais - PR, 83323-410) e contagem de 1 avaliação; divergência não resolvida, por isso confidence=média"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": {
+        "lat": -25.439,
+        "lon": -49.191481
+      },
+      "rodada_dados": "R3",
+      "finalidade": "comercial_aluguel",
+      "origem": "web"
+    },
+    {
+      "nome": "Arena São José - SJP",
+      "endereco": {
+        "rua": "Rua Zacarias Alves Pereira",
+        "numero": "358",
+        "bairro": "Aristocrata",
+        "cidade": "Pinhais",
+        "uf": "PR",
+        "cep": "83030-480"
+      },
+      "telefone": null,
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": {
+        "segunda": "08:00-00:00",
+        "terca": "08:00-00:00",
+        "quarta": "08:00-00:00",
+        "quinta": "08:00-00:00",
+        "sexta": "08:00-00:00",
+        "sabado": "08:00-00:00",
+        "domingo": "08:00-00:00"
+      },
+      "nota_media": null,
+      "contagem_avaliacoes": 2,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.locaisdobrasil.com.br/encontre/campo-de-futebol/pinhais-pr",
+          "dado": "listagem do diretório (página de Pinhais): endereço (Rua Zacarias Alves Pereira, 358 - Aristocrata, CEP 83030-480), horários 08:00-00:00 todos os dias, 2 avaliações e descrição do próprio estabelecimento (futebol society, futevôlei, beach tennis, bar e cozinha); página afirma que os campos listados oferecem aluguel por hora. OBS: CEP 83030 e geocodificação apontam para São José dos Pinhais e não para Pinhais — cidade atribuída conforme o diretório, coordenadas anuladas"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R3",
+      "finalidade": "comercial_aluguel",
+      "origem": "web"
+    },
+    {
+      "nome": "Camisa 9",
+      "endereco": {
+        "rua": "Avenida Ayrton Senna da Silva",
+        "numero": "2700",
+        "bairro": "Centro",
+        "cidade": "Pinhais",
+        "uf": "PR",
+        "cep": "83323-290"
+      },
+      "telefone": null,
+      "whatsapp": null,
+      "site": "https://camisa9.webquadras.com.br/",
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": 4,
+      "detalhe_quadras": "1 quadra de futebol de campo em grama (descoberta) + 3 quadras de futebol society sintético (cobertas)",
+      "tipo_piso": "society (grama sintética) e grama natural",
+      "horarios": {
+        "segunda": "08:45-00:00",
+        "terca": "08:45-00:00",
+        "quarta": "08:45-00:00",
+        "quinta": "08:45-00:00",
+        "sexta": "08:45-00:00",
+        "sabado": "08:00-00:00",
+        "domingo": "09:00-15:00"
+      },
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://camisa9.webquadras.com.br/",
+          "dado": "site oficial (plataforma WebQuadras de reserva): estrutura com 1 quadra de futebol de campo em grama descoberta e 3 quadras de futebol society sintético cobertas, estacionamento com mais de 70 vagas, churrasqueiras, salão de festas e 2 vestiários; endereço do estabelecimento (Av. Ayrton Senna da Silva, 2700 - Centro, CEP 83.323-290) e bloco 'Horário de funcionamento' (seg-sex 08:45-24h, sáb 08h-24h, dom 09h-15h). ATENÇÃO: o texto 'Sobre' da mesma página menciona 2 quadras 25x45m e seg-sáb 9h-23h30 (divergência interna) e o telefone exibido está ilegível ('(41) 88288-499'), por isso telefone ficou null"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": {
+        "lat": -25.444395,
+        "lon": -49.185784
+      },
+      "rodada_dados": "R3",
+      "finalidade": "comercial_aluguel",
+      "origem": "web"
+    },
+    {
+      "nome": "Campo do Arizona",
+      "endereco": {
+        "rua": "Rua Maria Gonçalves García",
+        "numero": "526",
+        "bairro": "Alto Tarumã",
+        "cidade": "Pinhais",
+        "uf": "PR",
+        "cep": "83325-620"
+      },
+      "telefone": null,
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": {
+        "segunda": "11:00-21:00",
+        "terca": "11:00-21:00",
+        "quarta": "11:00-21:00",
+        "quinta": "11:00-21:00",
+        "sexta": "11:00-21:00",
+        "sabado": "11:00-21:00"
+      },
+      "nota_media": null,
+      "contagem_avaliacoes": 13,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.locaisdobrasil.com.br/encontre/campo-de-futebol/pinhais-pr",
+          "dado": "listagem do diretório: endereço (Rua Maria Gonçalves García, 526 - Alto Tarumã, CEP 83325-620), horários (seg-sáb 11:00-21:00, dom fechado), 13 avaliações e segmento campo de futebol; página afirma que os campos listados oferecem aluguel por hora"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": {
+        "lat": -25.413316,
+        "lon": -49.171385
+      },
+      "rodada_dados": "R3",
+      "finalidade": "comercial_aluguel",
+      "origem": "web"
+    },
+    {
+      "nome": "Campo do Jardim Claudia",
+      "endereco": {
+        "rua": "Rua Japim",
+        "numero": "1284",
+        "bairro": "Jardim Claudia",
+        "cidade": "Pinhais",
+        "uf": "PR",
+        "cep": "83326-420"
+      },
+      "telefone": null,
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": 5,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.locaisdobrasil.com.br/encontre/campo-de-futebol/pinhais-pr",
+          "dado": "listagem do diretório: endereço (Rua Japim, 1284 - Jardim Claudia, CEP 83326-420), 5 avaliações e página afirma que os campos listados oferecem aluguel por hora; telefone e horários não informados"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": {
+        "lat": -25.4025534,
+        "lon": -49.1750309
+      },
+      "rodada_dados": "R3",
+      "finalidade": "comercial_aluguel",
+      "origem": "web"
+    },
+    {
+      "nome": "Cancha do Corinthians - Campo de futebol Suíço e Society",
+      "endereco": {
+        "rua": "Rua Henrique Coelho Neto",
+        "numero": "534",
+        "bairro": "Vargem Grande",
+        "cidade": "Pinhais",
+        "uf": "PR",
+        "cep": "83330-021"
+      },
+      "telefone": null,
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": {
+        "segunda": "08:00-00:00",
+        "terca": "08:00-00:00",
+        "quarta": "08:00-00:00",
+        "quinta": "08:00-00:00",
+        "sexta": "08:00-00:00",
+        "sabado": "08:00-00:00",
+        "domingo": "08:00-00:00"
+      },
+      "nota_media": null,
+      "contagem_avaliacoes": 20,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.locaisdobrasil.com.br/encontre/campo-de-futebol/pinhais-pr",
+          "dado": "listagem do diretório: endereço (Rua Henrique Coelho Neto, 534 - Vargem Grande, CEP 83330-021), horários 08:00-00:00 todos os dias, 20 avaliações e segmento 'campo de futebol suíço e society'; página afirma que os campos listados oferecem aluguel por hora"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": {
+        "lat": -25.446701,
+        "lon": -49.181367
+      },
+      "rodada_dados": "R3",
+      "finalidade": "comercial_aluguel",
+      "origem": "web"
+    },
+    {
+      "nome": "Arena Geraldão",
+      "endereco": {
+        "rua": "Rua Elizabete de Souza",
+        "numero": "798",
+        "bairro": "Guarituba",
+        "cidade": "Piraquara",
+        "uf": "PR",
+        "cep": "83312-100"
+      },
+      "telefone": "(41) 98403-8656",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": "campo de futebol suíço",
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.locaisdobrasil.com.br/encontre/campo-de-futebol/piraquara-pr/arena-geraldao/6583755e3a218469044678a0",
+          "dado": "ficha no Locais do Brasil: endereço e descrição \"Futebol Suíço é na Arena Geraldão!! Disponível para locação. Contato 98403-8656 Fernando\""
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R3",
+      "finalidade": "comercial_aluguel",
+      "origem": "web"
+    },
+    {
+      "nome": "Cancha do Bombeiro Pica Pau",
+      "endereco": {
+        "rua": "Rua Fernandes Carlos Beetz",
+        "numero": "460",
+        "bairro": "Águas Claras",
+        "cidade": "Piraquara",
+        "uf": "PR",
+        "cep": "83309-000"
+      },
+      "telefone": "(41) 99744-6618",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": "campo de futebol suíço",
+      "tipo_piso": null,
+      "horarios": {
+        "domingo": "09:00-15:00",
+        "segunda": "10:00-19:00",
+        "terca": "10:00-19:00",
+        "quarta": "10:00-19:00",
+        "quinta": "10:00-19:00",
+        "sexta": "10:00-19:00",
+        "sabado": "09:00-19:00"
+      },
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.locaisdobrasil.com.br/encontre/campo-de-futebol/piraquara-pr/cancha-do-bombeiro-pica-pau/658f23e35b61b875da193cd8",
+          "dado": "ficha no Locais do Brasil: endereço, CEP, telefone, horários e texto \"gostaria de mais informações sobre o aluguel do campo de futebol suíço\""
+        }
+      ],
+      "confidence": "baixa",
+      "coordenadas": null,
+      "rodada_dados": "R3",
+      "finalidade": "comercial_aluguel",
+      "origem": "web"
+    },
+    {
+      "nome": "Arena Machado - Campo Sintético",
+      "endereco": {
+        "rua": "Rua Arcidio Claudino Barbosa",
+        "numero": null,
+        "bairro": "Agaraú",
+        "cidade": "São José dos Pinhais",
+        "uf": "PR",
+        "cep": "83024-991"
+      },
+      "telefone": "(41) 99804-6945",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": "grama sintética",
+      "horarios": {
+        "segunda": "18:00-23:00",
+        "terca": "19:00-23:00",
+        "quarta": "19:00-23:00",
+        "quinta": "19:00-23:00",
+        "sexta": "19:00-23:00",
+        "sabado": "08:00-18:00"
+      },
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.locaisdobrasil.com.br/encontre/campo-de-futebol/sao-jose-dos-pinhais-pr/arena-machado-campo-sintetico/63d9ed3b0154bf87c7237434",
+          "dado": "ficha no diretório: segmento 'campo de futebol' com 'campo sintético' no nome, endereço (Rua Arcidio Claudino Barbosa, bairro Agaraú, CEP 83024-991), telefone (41) 99804-6945 e horários (seg 18h-23h, ter-sex 19h-23h, sáb 8h-18h, dom fechado); quantidade de quadras, preço e locação avulsa não informados"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": {
+        "lat": -25.658879,
+        "lon": -49.239572
+      },
+      "rodada_dados": "R3",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    },
+    {
+      "nome": "Arpo Esportes - Futebol Society",
+      "endereco": {
+        "rua": "Alameda Arpo",
+        "numero": "1800",
+        "bairro": "Costeira",
+        "cidade": "São José dos Pinhais",
+        "uf": "PR",
+        "cep": null
+      },
+      "telefone": "(41) 3398-7974",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": 2,
+      "detalhe_quadras": "2 quadras de grama sintética cobertas (Fut5 e Fut7)",
+      "tipo_piso": "society (grama sintética)",
+      "horarios": {
+        "segunda": "08:00-00:30",
+        "terca": "08:00-00:30",
+        "quarta": "08:00-00:30",
+        "quinta": "08:00-00:30",
+        "sexta": "08:00-00:30",
+        "sabado": "08:00-22:30",
+        "domingo": "08:00-12:30"
+      },
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://listatudo.com.br/parana/curitiba-e-regiao/sao-jose-dos-pinhais/festas-e-eventos/locais/quadras-esportivas-aluguel/arpo-esportes-futebol-society/",
+          "dado": "categoria 'Quadras Esportivas - Aluguel': endereço (Alameda Arpo, 1800 - Costeira - São José dos Pinhais - PR), telefone (41) 3398-7974, horários (seg-sex 8h-0h30, sáb 8h-22h30, dom 8h-12h30), 'Locação de Quadras', 2 quadras de grama sintética cobertas Fut5/Fut7, bar, vestiários, churrasqueira e estacionamento"
+        }
+      ],
+      "confidence": "alta",
+      "coordenadas": {
+        "lat": -25.559349,
+        "lon": -49.167038
+      },
+      "rodada_dados": "R3",
+      "finalidade": "comercial_aluguel",
+      "origem": "web"
+    },
+    {
+      "nome": "Campo do Primavera",
+      "endereco": {
+        "rua": "Rua Osvaldo da Silva Bassu",
+        "numero": "1121",
+        "bairro": "Parque da Fonte",
+        "cidade": "São José dos Pinhais",
+        "uf": "PR",
+        "cep": "83050-590"
+      },
+      "telefone": null,
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": 19,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.locaisdobrasil.com.br/encontre/campo-de-futebol/sao-jose-dos-pinhais-pr",
+          "dado": "listagem do diretório: segmento 'campo de futebol', endereço (Rua Osvaldo da Silva Bassu, 1121 - Parque da Fonte, CEP 83050-590) e contagem de 19 avaliações; telefone, horários e confirmação de locação não informados"
+        }
+      ],
+      "confidence": "baixa",
+      "coordenadas": {
+        "lat": -25.49725,
+        "lon": -49.174216
+      },
+      "rodada_dados": "R3",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    },
+    {
+      "nome": "Chácara das Vaquinhas",
+      "endereco": {
+        "rua": "Estrada Vila Nova",
+        "numero": "500",
+        "bairro": "Cachoeira",
+        "cidade": "São José dos Pinhais",
+        "uf": "PR",
+        "cep": null
+      },
+      "telefone": "(41) 99815-2946",
+      "whatsapp": null,
+      "site": "https://www.chacaradasvaquinhas.com.br/",
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": 1,
+      "detalhe_quadras": "campo de futebol Society 30x50 (grama natural)",
+      "tipo_piso": "society (grama natural)",
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.chacaradasvaquinhas.com.br/pagina/sub/chacara-das-vaquinhas/",
+          "dado": "site oficial: endereço (Estrada Vila Nova, 500 - Bairro Cachoeira), telefone (41) 99815-2946, campo de futebol Society 30x50 em grama natural e locação do espaço para eventos (lazer, eventos, gastronomia). Não é quadra dedicada de aluguel por hora: locação do espaço como um todo"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": {
+        "lat": -25.609721,
+        "lon": -49.23581
+      },
+      "rodada_dados": "R3",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    },
+    {
+      "nome": "Connect Sports Futebol e Fitness",
+      "endereco": {
+        "rua": "Rua João Fraga Neto",
+        "numero": "2538",
+        "bairro": "Guatupê",
+        "cidade": "São José dos Pinhais",
+        "uf": "PR",
+        "cep": "83060-540"
+      },
+      "telefone": "(41) 3383-7485",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": {
+        "segunda": "06:00-22:00",
+        "terca": "06:00-22:00",
+        "quarta": "06:00-22:00",
+        "quinta": "06:00-22:00",
+        "sexta": "06:00-22:00",
+        "sabado": "09:00-13:00"
+      },
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.locaisdobrasil.com.br/encontre/campo-de-futebol/sao-jose-dos-pinhais-pr/connect-sports-futebol-e-fitness/63d9ec940154bf87c72373be",
+          "dado": "ficha no diretório: segmento 'campo de futebol', endereço (Rua João Fraga Neto, 2538 - Guatupê, CEP 83060-540), telefone (41) 3383-7485 e horários (seg-sex 6h-22h, sáb 9h-13h, dom fechado). ATENÇÃO: o nome sugere também atividade fitness e a página não detalha se há aluguel avulso por hora — manter em revisão"
+        }
+      ],
+      "confidence": "baixa",
+      "coordenadas": {
+        "lat": -25.486934,
+        "lon": -49.144708
+      },
+      "rodada_dados": "R3",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    },
+    {
+      "nome": "Dalefama centro esportivo",
+      "endereco": {
+        "rua": "Rua Ângelo Sgarbe",
+        "numero": null,
+        "bairro": "São Sebastião",
+        "cidade": "São José dos Pinhais",
+        "uf": "PR",
+        "cep": "83075-280"
+      },
+      "telefone": null,
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": {
+        "segunda": "07:00-00:00",
+        "terca": "07:00-00:00",
+        "quarta": "07:00-00:00",
+        "quinta": "07:00-00:00",
+        "sexta": "07:00-00:00",
+        "sabado": "07:00-00:00",
+        "domingo": "08:00-23:00"
+      },
+      "nota_media": null,
+      "contagem_avaliacoes": 2,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.locaisdobrasil.com.br/encontre/campo-de-futebol/sao-jose-dos-pinhais-pr",
+          "dado": "listagem do diretório: segmento 'campo de futebol', endereço (Rua Ângelo Sgarbe - São Sebastião, CEP 83075-280), horários (seg-sáb 7h-00h, dom 8h-23h) e contagem de 2 avaliações; telefone não informado"
+        }
+      ],
+      "confidence": "baixa",
+      "coordenadas": null,
+      "rodada_dados": "R3",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    }
+  ]
+}
