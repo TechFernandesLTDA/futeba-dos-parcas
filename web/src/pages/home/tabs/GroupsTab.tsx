@@ -121,7 +121,7 @@ export function GroupsTab() {
           placeholder={t('groups.search.placeholder')}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          aria-label={t('groups.search.ariaLabel')}
+          inputProps={{ 'aria-label': t('groups.search.ariaLabel') }}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
