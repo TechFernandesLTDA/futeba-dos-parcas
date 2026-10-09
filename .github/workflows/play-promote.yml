@@ -43,7 +43,7 @@ concurrency:
 jobs:
   promote:
     name: Promote to ${{ inputs.track }}
-    runs-on: ${{ fromJSON(vars.RUNNER_LABELS_LINUX || vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS_LINUX || '["self-hosted","Linux","X64","futeba-general"]') }}
     timeout-minutes: 10
     steps:
       - name: Guard

@@ -1,6 +1,6 @@
 # CI: runners, workflows e como reativar
 
-> Atualizado em 08/10/2026. Este documento é a fonte de verdade da topologia de CI.
+> Atualizado em 09/10/2026. Este documento é a fonte de verdade da topologia de CI.
 > `scripts/SELF_HOSTED_RUNNER.md` e `docs/ci/wsl2-self-hosted-runner.md` descrevem a instalação
 > de runners; a tabela de workflows de `SELF_HOSTED_RUNNER.md` está desatualizada.
 
@@ -14,45 +14,36 @@
 
 ## Topologia de runners
 
-| Runner (repo) | SO / arch | Labels | Instalação | Papel |
-| --- | --- | --- | --- | --- |
-| `MacBook-Pro-de-Renan` (id 30) | macOS ARM64 | `self-hosted, macOS, ARM64, futeba` | app/serviço do macOS | **Padrão** de todos os jobs que usam `vars.RUNNER_LABELS`; único com Xcode (`build-ios-app`) |
-| `futeba-windows-local` (id 29) | Windows 11 x64 | `self-hosted, Windows, X64` | Serviço Windows (`actions.runner.TechFernandesLTDA-futeba-dos-parcas.futeba-windows-local`, LocalSystem, `C:\actions-runner-futeba`) | Standby/failover Windows (ver ressalvas) |
-| `tf-desktop-runner` (id 31) | Windows 11 x64 (mesmo host) | `self-hosted, Windows, X64` | `C:\Users\renan\actions-runner\run.cmd` iniciado pela pasta Startup do usuário (sem admin) | 2º slot Windows em paralelo |
-| GitHub-hosted | `ubuntu-24.04` | — | — | Apenas jobs que exigem Linux (Docker, Playwright com deps de sistema, Lighthouse, rules) |
+> **Sem runner macOS desde 09/10/2026.** O `MacBook-Pro-de-Renan` foi removido. Tudo roda nos
+> runners Linux do WSL do PC. iOS está estacionado (#4202).
 
+| Runner (org) | Labels | Papel | Variável |
+| --- | --- | --- | --- |
+| `tf-wsl-1` | `self-hosted, Linux, X64, futeba-emulators` | Exclusivo dos jobs com emulador Firebase (Web E2E, Functions Integration, Test Harness, Realtime Load, rules-tests, query-perf) | `RUNNER_LABELS_EMULATORS` |
+| `tf-wsl-2..4` | `self-hosted, Linux, X64, futeba-general` (+ `bv2`, compartilhado com o brazuka-v2) | Pool geral: Android (lint, testes, build, **deploy na Play**, release), Web, Lighthouse, Functions, Semgrep, automações | `RUNNER_LABELS_LINUX` |
+| `tf-wsl-gate`, `tf-wsl-gate-2` | `futeba-poller` (sem labels padrão) | Jobs leves: E2E Gate (polling), issue pós-merge, classificação de escopo | `RUNNER_LABELS_POLLER` |
+| `futeba-windows-local`, `tf-desktop-runner` (repo) | `self-hosted, Windows, X64` | Standby; nenhum workflow usa hoje | — |
+
+Os runners vivem na VM do WSL. O keepalive é a tarefa agendada do Windows `WSL-Runners-Keepalive`
+(a cada 5 min, `hermes/scripts/wsl-keepalive.ps1`), e o `.wslconfig` tem `vmIdleTimeout=-1`.
 Os serviços de runner de **outros repositórios** no mesmo host (`bv2-*`, `bkc-*`, `cc-*`) não
 pertencem a este repo e não devem ser alterados.
 
 ### Como cada workflow escolhe o runner
 
-- `runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}`: usado por
-  quase todos os jobs. A variável de repositório `RUNNER_LABELS` (hoje `["self-hosted","macOS","ARM64"]`)
-  é o **único ponto de troca** de runner.
-- `runs-on: ubuntu-24.04` (hosted): `firestore-rules-ci`, `web-lighthouse-ci`, `web-e2e-ci`,
-  `pr-check` (job `android`), `functions-ci` (`test`, `firestore-query-perf`, `media-runtime-linux`)
-  e `ios-build` (`ios_app_scope`, `kmp-shared-tests`). São pinados em **24.04** porque
-  `ubuntu-latest` migra para o Ubuntu 26 em **19/10/2026** e mudaria toolchains (Android SDK,
-  Playwright, Docker) sem aviso. Para migrar de propósito: mude o pin e rode os contratos.
-  Os contratos em `scripts/**/**-contract.test.js` exigem o pin atual.
-- `[self-hosted, macOS, ARM64, futeba]` literal: `ios-build` (`build-shared-framework` e
-  `build-ios-app`, que exigem macOS/Xcode). O label `futeba` fixa o `MacBook-Pro-de-Renan`;
-  **nunca** usar `macos-*` hospedado (consome 10x os minutos gratuitos). Contrato em
-  `scripts/ci/kmp-shared-workflow-contract.test.js`.
-
-### Failover para Windows (não validado)
-
-Trocar `RUNNER_LABELS` para `["self-hosted","Windows","X64"]` faz os 2 runners Windows
-(`futeba-windows-local` + `tf-desktop-runner`) atenderem os jobs, mas **os workflows foram
-escritos para bash/macOS**: no Windows o shell padrão de `run:` é PowerShell. Antes de usar como
-failover é preciso (1) `defaults.run.shell: bash` (Git Bash existe no host) e revisar `pipefail`,
-`brew`, `chmod`, caminhos; (2) rodar os jobs com CI ativa. Os jobs de iOS **nunca** rodam em Windows.
-
-```bash
-# trocar o runner padrão (exige permissão de admin do repo); reverter com o valor macOS
-gh variable set RUNNER_LABELS -R TechFernandesLTDA/futeba-dos-parcas --body '["self-hosted","Windows","X64"]'
-gh variable set RUNNER_LABELS -R TechFernandesLTDA/futeba-dos-parcas --body '["self-hosted","macOS","ARM64"]'
-```
+- `runs-on: ${{ fromJSON(vars.RUNNER_LABELS_LINUX || '["self-hosted","Linux","X64","futeba-general"]') }}`:
+  pool geral (padrão). Os jobs de emulador usam `vars.RUNNER_LABELS_EMULATORS || ...` e os de polling
+  usam `vars.RUNNER_LABELS_POLLER || ...`. A variável legada `RUNNER_LABELS` (Mac) não é mais lida.
+- `fromJSON(vars.RUNNER_LABELS_LINUX || '["ubuntu-24.04"]')`: jobs que antes eram hospedados.
+  O fallback hospedado só vale se a variável sumir; o orçamento hospedado é US$ 0.
+- Os builds Gradle que dependiam do SDK pré-instalado no Mac (`deploy-production`, `deploy-beta`,
+  `release`, `android-macrobenchmark`) instalam o SDK com `android-actions/setup-android@v4` + `sdkmanager`.
+- `android-macrobenchmark`: só `workflow_dispatch`, emulador `x86_64` (KVM do WSL). Não roda em push.
+- **iOS** (`ios-build`: `build-shared-framework`/`build-ios-app`; `ios-testflight`): continuam
+  fixos em `[self-hosted, macOS, ARM64, futeba]`, mas só rodam com `vars.IOS_MAC_RUNNER == 'true'`.
+  Sem Mac, o `ios-build` roda só os testes KMP compartilhados (Linux) e o `notify` passa.
+  **Nunca** usar `macos-*` hospedado (10x os minutos). Para retomar o iOS: registrar um runner macOS
+  com o label `futeba` e `gh variable set IOS_MAC_RUNNER -R TechFernandesLTDA/futeba-dos-parcas --body true`.
 
 ## Regras de workflow (aplicadas e auditadas por `actionlint`)
 

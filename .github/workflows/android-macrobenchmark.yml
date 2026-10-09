@@ -11,14 +11,7 @@
 name: Android Macrobenchmark
 
 on:
-  push:
-    branches: [master]
-    paths:
-      - 'app/**'
-      - 'shared/**'
-      - 'composeApp/**'
-      - 'macrobenchmark/**'
-  # Permite disparo manual para runs pontuais
+  # Só manual: sem o Mac, o emulador roda no pool Linux compartilhado (tf-wsl, KVM).
   workflow_dispatch:
 
 # Cancela execução anterior do mesmo branch para poupar runner
@@ -38,7 +31,7 @@ permissions:
 jobs:
   macrobenchmark:
     name: Macrobenchmark (API 34)
-    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS_LINUX || '["self-hosted","Linux","X64","futeba-general"]') }}
     timeout-minutes: 60
 
     env:
@@ -58,6 +51,16 @@ jobs:
         uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6  # v6.4.0
         with:
           cache-read-only: false
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v4
+        with:
+          packages: 'platform-tools'
+
+      - name: Install Android SDK 36
+        run: |
+          sdkmanager --install "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+          test -f "${ANDROID_SDK_ROOT:-${ANDROID_HOME:-}}/platforms/android-36/android.jar"
 
       - name: Configurar ambiente Android
         run: |
@@ -90,7 +93,7 @@ jobs:
         uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d  # v2
         with:
           api-level: ${{ env.EMULATOR_API }}
-          arch: arm64-v8a
+          arch: x86_64
           profile: pixel_6
           disable-animations: true
           emulator-options: -no-window -no-snapshot -gpu swiftshader_indirect -noaudio -no-boot-anim

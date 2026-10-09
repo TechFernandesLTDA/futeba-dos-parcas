@@ -51,7 +51,7 @@ jobs:
     name: Build TypeScript
     needs: [ changes ]
     if: github.event_name != 'schedule' && needs.changes.outputs.functions == 'true'
-    runs-on: ${{ fromJSON(vars.RUNNER_LABELS_LINUX || vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS_LINUX || '["self-hosted","Linux","X64","futeba-general"]') }}
     timeout-minutes: 15
 
     steps:
@@ -74,7 +74,7 @@ jobs:
   lint:
     name: ESLint Check
     needs: [ build ]
-    runs-on: ${{ fromJSON(vars.RUNNER_LABELS_LINUX || vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS_LINUX || '["self-hosted","Linux","X64","futeba-general"]') }}
     timeout-minutes: 15
 
     steps:
@@ -286,7 +286,7 @@ jobs:
 
   mutation:
     name: Mutation Testing (Stryker)
-    runs-on: ${{ fromJSON(vars.RUNNER_LABELS_LINUX || vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS_LINUX || '["self-hosted","Linux","X64","futeba-general"]') }}
     # Caro: roda apenas no schedule noturno ou disparo manual com run_mutation=true — NUNCA em push/PR.
     # Usa uma instalacao isolada. Fora do caminho
     # critico de PR.

@@ -42,6 +42,8 @@ concurrency:
 jobs:
   diagnose:
     name: Diagnose signing environment
+    # Sem runner macOS desde 09/10/2026 (iOS estacionado, #4202).
+    if: vars.IOS_MAC_RUNNER == 'true'
     runs-on: [self-hosted, macOS, ARM64, futeba]
     timeout-minutes: 10
     steps:

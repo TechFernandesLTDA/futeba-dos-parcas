@@ -101,7 +101,7 @@ test('optimized E2E preview opts into emulators without weakening production', (
 
 test('CI allocates its own preview port without reusing an unrelated server', () => {
   // WSL (runners tf-wsl-*) tem as libs do Playwright; E2E não gasta minutos hospedados.
-  assert.match(extractJob(e2eWorkflow, 'web-e2e'), /runs-on: \$\{\{ fromJSON\(vars\.RUNNER_LABELS_EMULATORS \|\| vars\.RUNNER_LABELS_LINUX \|\| vars\.RUNNER_LABELS \|\| '\[\"self-hosted\",\"macOS\",\"ARM64\"\]'\) \}\}/);
+  assert.match(extractJob(e2eWorkflow, 'web-e2e'), /runs-on: \$\{\{ fromJSON\(vars\.RUNNER_LABELS_EMULATORS \|\| vars\.RUNNER_LABELS_LINUX \|\| '\[\"self-hosted\",\"Linux\",\"X64\",\"futeba-general\"\]'\) \}\}/);
   assert.doesNotMatch(e2eWorkflow, /playwright install --with-deps/);
   assert.match(e2eWorkflow, /run: node scripts\/ci\/allocate-web-e2e-port\.js/);
   assert.ok(e2eWorkflow.indexOf('allocate-web-e2e-port.js') < e2eWorkflow.indexOf('- name: E2E ('));
