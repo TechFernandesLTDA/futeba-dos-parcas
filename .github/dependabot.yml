@@ -95,6 +95,9 @@ updates:
         update-types: ["version-update:semver-major"]
       - dependency-name: "firebase-admin"
         update-types: ["version-update:semver-major"]
+      # Stryker 10 (major): core e jest-runner sobem juntos e o mutation testing não roda no CI de PR.
+      - dependency-name: "@stryker-mutator/*"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: "npm"
     directory: "/web"
@@ -138,6 +141,8 @@ updates:
         update-types: ["version-update:semver-major"]
       - dependency-name: "@mui/*"
         update-types: ["version-update:semver-major"]
+      - dependency-name: "@stryker-mutator/*"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: "npm"
     directory: "/firestore-rules-tests"
@@ -174,6 +179,10 @@ updates:
       root-tooling:
         patterns: ["*"]
         update-types: ["minor", "patch"]
+    ignore:
+      # scripts/ da raiz compartilham a API do firebase-admin das Functions (mantido em 13).
+      - dependency-name: "firebase-admin"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: "github-actions"
     directory: "/"

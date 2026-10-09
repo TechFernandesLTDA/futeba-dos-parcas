@@ -1931,7 +1931,7 @@ export const settleMonthlyCharge =
     }
   });
 
-/* eslint-disable valid-jsdoc -- helpers privados têm contratos TypeScript. */
+
 /** Liga o hash financeiro às revisões autoritativas de configuração/roster. */
 function bindCalculationToRevisions(
   calculationHash: string,
@@ -2201,7 +2201,7 @@ function nextRecurringDate(
     firstNextMonth.getUTCMonth() + 1
   ).padStart(2, "0")}-${String(Math.min(day, lastDay)).padStart(2, "0")}`;
 }
-/* eslint-enable valid-jsdoc */
+
 
 /**
  * Valida dinheiro inteiro em centavos dentro do limite do caixa.

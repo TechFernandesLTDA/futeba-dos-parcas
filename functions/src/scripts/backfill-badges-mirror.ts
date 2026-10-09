@@ -1,4 +1,4 @@
-/* eslint-disable require-jsdoc */
+
 /**
  * FIX #4138: backfill espelhando badges que as functions gravavam SOMENTE
  * em users/{uid}/badges (subcoleção sem leitor) para a coleção raiz
