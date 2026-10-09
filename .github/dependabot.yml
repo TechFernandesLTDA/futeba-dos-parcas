@@ -58,6 +58,9 @@ updates:
         update-types: ["version-update:semver-minor"]
       - dependency-name: "io.ktor*"
         update-types: ["version-update:semver-major"]
+      # SQLDelight 2.3+ publica klibs com ABI do Kotlin 2.3; o projeto está no Kotlin 2.2.x (migração coordenada: #4265).
+      - dependency-name: "app.cash.sqldelight*"
+        update-types: ["version-update:semver-minor", "version-update:semver-major"]
       - dependency-name: "androidx.*"
         update-types: ["version-update:semver-minor", "version-update:semver-major"]
 
