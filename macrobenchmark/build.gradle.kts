@@ -34,9 +34,6 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    kotlinOptions {
-        jvmTarget = "17"
-    }
 
     // Aponta para o módulo :app como alvo dos benchmarks
     targetProjectPath = ":app"
@@ -67,4 +64,11 @@ dependencies {
 
     // Macrobenchmark — mesma versão usada no módulo baselineprofile
     implementation("androidx.benchmark:benchmark-macro-junit4:1.4.1")
+}
+
+// Kotlin 2.4: kotlinOptions {} virou erro; usar compilerOptions DSL.
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+    }
 }
