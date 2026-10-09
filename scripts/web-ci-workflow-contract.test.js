@@ -100,7 +100,7 @@ function assertNodeJobContract(jobId, job) {
   const setupNodeStep = extractActionStep(
     jobId,
     job,
-    'actions/setup-node@v4'
+    'actions/setup-node@v6'
   );
 
   assert.match(setupNodeStep, /\n\s+node-version: '22'/);
