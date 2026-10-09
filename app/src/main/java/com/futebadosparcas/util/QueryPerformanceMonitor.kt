@@ -1,8 +1,8 @@
 package com.futebadosparcas.util
 
 import com.google.firebase.analytics.FirebaseAnalytics
-import com.google.firebase.analytics.ktx.analytics
-import com.google.firebase.ktx.Firebase
+import com.google.firebase.analytics.analytics
+import com.google.firebase.Firebase
 
 /**
  * ✅ OTIMIZAÇÃO #6: Query Performance Monitoring
