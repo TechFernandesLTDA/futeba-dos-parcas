@@ -76,21 +76,21 @@ kotlin {
             implementation("org.jetbrains.androidx.navigation:navigation-compose:2.9.2")
 
             // ViewModel + Lifecycle - atualizado para 2.9.6
-            implementation("org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose:2.11.0")
-            implementation("org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose:2.11.0")
+            implementation("org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose:2.9.6")
+            implementation("org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose:2.9.6")
 
             // Koin 4.1.1 — DI multiplatform (mesmo usado no :app Android)
             // koin-core: módulos, get(), startKoin
             // koin-compose: KoinApplication composable
             // koin-compose-viewmodel: koinViewModel() em commonMain
-            val koinVersion = "4.2.2"
+            val koinVersion = "4.1.1"
             implementation("io.insert-koin:koin-core:$koinVersion")
             implementation("io.insert-koin:koin-compose:$koinVersion")
             implementation("io.insert-koin:koin-compose-viewmodel:$koinVersion")
 
             // Coil 3 - Image Loading (Kotlin Multiplatform)
-            implementation("io.coil-kt.coil3:coil:3.6.3")
-            implementation("io.coil-kt.coil3:coil-compose:3.6.3")
+            implementation("io.coil-kt.coil3:coil:3.3.0")
+            implementation("io.coil-kt.coil3:coil-compose:3.3.0")
 
             // kotlinx-datetime — formatação de datas na feature "Novidades" (Fase G).
             // Mesma versão usada no :shared.
@@ -103,7 +103,7 @@ kotlin {
             implementation("androidx.compose.ui:ui-tooling-preview:1.10.2")
 
             // Coil 3 - Network support for Android
-            implementation("io.coil-kt.coil3:coil-network-okhttp:3.6.3")
+            implementation("io.coil-kt.coil3:coil-network-okhttp:3.3.0")
         }
 
         iosMain.dependencies {

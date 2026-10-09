@@ -230,7 +230,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.9.0")
 
     // Dependency Injection - Koin
-    val koinVersion = "4.2.2"
+    val koinVersion = "4.1.1"
     implementation("io.insert-koin:koin-core:$koinVersion")
     implementation("io.insert-koin:koin-android:$koinVersion")
     implementation("io.insert-koin:koin-compose:$koinVersion")
@@ -257,9 +257,9 @@ dependencies {
     implementation("com.google.android.libraries.identity.googleid:googleid:1.2.1")
 
     // Image Loading - Coil 3 Kotlin Multiplatform
-    implementation("io.coil-kt.coil3:coil:3.6.3")
-    implementation("io.coil-kt.coil3:coil-compose:3.6.3")
-    implementation("io.coil-kt.coil3:coil-network-okhttp:3.6.3")
+    implementation("io.coil-kt.coil3:coil:3.3.0")
+    implementation("io.coil-kt.coil3:coil-compose:3.3.0")
+    implementation("io.coil-kt.coil3:coil-network-okhttp:3.3.0")
 
     // Shimmer Effect
     implementation("com.facebook.shimmer:shimmer:0.5.0")

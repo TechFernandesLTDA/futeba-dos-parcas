@@ -61,6 +61,13 @@ updates:
       # SQLDelight 2.3+ publica klibs com ABI do Kotlin 2.3; o projeto está no Kotlin 2.2.x (migração coordenada: #4265).
       - dependency-name: "app.cash.sqldelight*"
         update-types: ["version-update:semver-minor", "version-update:semver-major"]
+      # Koin 4.2+, Coil 3.4+ e lifecycle JetBrains 2.10+ publicam klibs iOS com ABI do Kotlin 2.3 (projeto no 2.2.x; refs #4265).
+      - dependency-name: "io.insert-koin*"
+        update-types: ["version-update:semver-minor", "version-update:semver-major"]
+      - dependency-name: "io.coil-kt.coil3*"
+        update-types: ["version-update:semver-minor", "version-update:semver-major"]
+      - dependency-name: "org.jetbrains.androidx.lifecycle*"
+        update-types: ["version-update:semver-minor", "version-update:semver-major"]
       - dependency-name: "androidx.*"
         update-types: ["version-update:semver-minor", "version-update:semver-major"]
 
