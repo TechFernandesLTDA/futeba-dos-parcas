@@ -1,0 +1,1290 @@
+{
+  "gerado_em": "2026-10-08",
+  "rodada": 9,
+  "slug": "enriquecimento",
+  "issue": 4195,
+  "modo": "enriquecimento",
+  "titulo": "Enriquecimento não destrutivo (R9)",
+  "coleta": {
+    "data": "2026-10-08",
+    "ferramentas": "sites oficiais, fichas do Google Maps no navegador e datasets curados R1-R8",
+    "regra": "patch mode: só preenche campos vazios (ou o horário padrão do importador); fontes acrescentadas; nada é apagado; segue DRAFT/não verificado"
+  },
+  "estatisticas": {
+    "quadras_curated": 6,
+    "maps_descartado_divergente": 14,
+    "maps_aplicado": 23,
+    "quadras_singular_min": 3,
+    "com_preco": 2,
+    "quadras_dataset": 2
+  },
+  "venues": [
+    {
+      "nome": "Soratto Futebol Society",
+      "location_id": "00CCpmF80wickQD6CzNU",
+      "endereco": {
+        "rua": null,
+        "numero": null,
+        "bairro": null,
+        "cidade": "Joinville",
+        "uf": "SC",
+        "cep": null
+      },
+      "telefone": null,
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": 1,
+      "detalhe_quadras": "1 quadra de society (grama sintética)",
+      "tipo_piso": "grama sintética",
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.webquadras.com.br/sorattosociety",
+          "dado": "página do centro no WebQuadras (descrição indexada em 08/10/2026): 'uma quadra para futebol society com grama sintética'; ficha do Google Maps confirma o endereço R. Perdiz, 799, Aventureiro"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    },
+    {
+      "nome": "Meca Sports Bar",
+      "location_id": "0NtaOSwLMbxNFGQVDKl7",
+      "endereco": {
+        "rua": null,
+        "numero": null,
+        "bairro": null,
+        "cidade": "Porto Alegre",
+        "uf": "RS",
+        "cep": null
+      },
+      "telefone": "(51) 98939-5794",
+      "whatsapp": null,
+      "site": "http://mecasportsbar.webquadras.com.br/",
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.google.com/maps/search/Meca+Sports+Bar+Avenida+Baltazar+de+Oliveira+Garcia+Porto+Alegre",
+          "dado": "ficha do Google Maps (consultada em 08/10/2026, 'Meca Sports Bar'): telefone (51) 98939-5794; site"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    },
+    {
+      "nome": "Artgol Society",
+      "location_id": "1CNG9seJZFCzH69YC3zb",
+      "endereco": {
+        "rua": null,
+        "numero": null,
+        "bairro": null,
+        "cidade": "São Paulo",
+        "uf": "SP",
+        "cep": null
+      },
+      "telefone": "(11) 3794-5754",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.google.com/maps/search/Artgol+Society+Avenida+Cipriano+Rodrigues+S%C3%A3o+Paulo",
+          "dado": "ficha do Google Maps (consultada em 08/10/2026, 'Artgol Esporte e Lazer – Quadras de Futebol Society e Salão de Festas'): telefone (11) 3794-5754; status permanentemente_fechado"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_indicado",
+      "origem": "web",
+      "status_operacional": "permanentemente_fechado"
+    },
+    {
+      "nome": "Arena Vital",
+      "location_id": "2VXpmjnljgFYv7L9rGTf",
+      "endereco": {
+        "rua": null,
+        "numero": null,
+        "bairro": null,
+        "cidade": "Campo Largo",
+        "uf": "PR",
+        "cep": null
+      },
+      "telefone": "(41) 99962-8881",
+      "whatsapp": null,
+      "site": "https://pedido.anota.ai/loja/arena-vital?f=msa",
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.google.com/maps/search/Arena+Vital+Campo+Largo",
+          "dado": "ficha do Google Maps (consultada em 08/10/2026, 'Arena Vital'): telefone (41) 99962-8881; site"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_aluguel",
+      "origem": "web"
+    },
+    {
+      "nome": "Arena Maria Chuteira",
+      "location_id": "2xz54LjnqW5A20ZPHWI1",
+      "endereco": {
+        "rua": null,
+        "numero": null,
+        "bairro": null,
+        "cidade": "Florianópolis",
+        "uf": "SC",
+        "cep": null
+      },
+      "telefone": null,
+      "whatsapp": null,
+      "site": "https://globalspot-nine.vercel.app/",
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.google.com/maps/search/Arena+Maria+Chuteira+Florian%C3%B3polis",
+          "dado": "ficha do Google Maps (consultada em 08/10/2026, 'Arena Maria Chuteira'): site"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    },
+    {
+      "nome": "Trieste Stadium (Trieste FC)",
+      "location_id": "4p6bXQHYNaFbR40VG5Qk",
+      "endereco": {
+        "rua": null,
+        "numero": null,
+        "bairro": null,
+        "cidade": "Curitiba",
+        "uf": "PR",
+        "cep": null
+      },
+      "telefone": null,
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": 1,
+      "detalhe_quadras": "1 campo de futebol oficial (gramado sintético)",
+      "tipo_piso": "campo (gramado sintético)",
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://triestefc.com.br/o-clube/estrutura/",
+          "dado": "site oficial do Trieste FC (Estrutura): complexo esportivo com campo oficial de futebol, escolinha, academia, piscinas e ginásio poliesportivo"
+        }
+      ],
+      "confidence": "alta",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": null,
+      "origem": "web"
+    },
+    {
+      "nome": "Armazém da Bola",
+      "location_id": "4pBXd4KGSJDochvOiPvq",
+      "endereco": {
+        "rua": null,
+        "numero": null,
+        "bairro": null,
+        "cidade": "Curitiba",
+        "uf": "PR",
+        "cep": null
+      },
+      "telefone": null,
+      "whatsapp": null,
+      "site": null,
+      "instagram": "armazemdabolaoficial",
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.google.com/maps/search/Armaz%C3%A9m+da+Bola+Rua+Renato+Polatti+Curitiba",
+          "dado": "ficha do Google Maps (consultada em 08/10/2026, 'ARMAZÉM DA BOLA'): instagram"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": null,
+      "origem": "web"
+    },
+    {
+      "nome": "Arena Costa e Silva Society e Lanchonete",
+      "location_id": "5YP9HYLs77YaTVmOuVAD",
+      "endereco": {
+        "rua": null,
+        "numero": null,
+        "bairro": null,
+        "cidade": "Joinville",
+        "uf": "SC",
+        "cep": null
+      },
+      "telefone": null,
+      "whatsapp": null,
+      "site": "https://pt-br.facebook.com/arenacostaesilvasociety/",
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.google.com/maps/search/Arena+Costa+e+Silva+Society+e+Lanchonete+Rua+Jacob+Joinville",
+          "dado": "ficha do Google Maps (consultada em 08/10/2026, 'Arena Costa e Silva Society e Lanchonete'): site"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    },
+    {
+      "nome": "Aquila Sports",
+      "location_id": "77MSW68c97SMz6WVyq6l",
+      "endereco": {
+        "rua": null,
+        "numero": null,
+        "bairro": null,
+        "cidade": "Pinhais",
+        "uf": "PR",
+        "cep": null
+      },
+      "telefone": "(41) 99780-8184",
+      "whatsapp": null,
+      "site": null,
+      "instagram": "sassasportsoficial",
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.google.com/maps/search/Aquila+Sports+Rua+Alzira+de+Ara%C3%BAjo+Souza+Pinhais",
+          "dado": "ficha do Google Maps (consultada em 08/10/2026, 'Sassa Sports'): telefone (41) 99780-8184; instagram; status permanentemente_fechado"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_aluguel",
+      "origem": "web",
+      "status_operacional": "permanentemente_fechado"
+    },
+    {
+      "nome": "Jomin Sports",
+      "location_id": "Bbs2XWts1wNbXT8iPqVW",
+      "endereco": {
+        "rua": null,
+        "numero": null,
+        "bairro": null,
+        "cidade": "Colombo",
+        "uf": "PR",
+        "cep": null
+      },
+      "telefone": null,
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.google.com/maps/search/Jomin+Sports+Avenida+S%C3%A3o+Gabriel+Colombo",
+          "dado": "ficha do Google Maps (consultada em 08/10/2026, 'jomin sports'): status permanentemente_fechado"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_indicado",
+      "origem": "web",
+      "status_operacional": "permanentemente_fechado"
+    },
+    {
+      "nome": "Gold Soccer",
+      "location_id": "CQaXdKnQSWt00Sl0xREL",
+      "endereco": {
+        "rua": null,
+        "numero": null,
+        "bairro": null,
+        "cidade": "Curitiba",
+        "uf": "PR",
+        "cep": null
+      },
+      "telefone": null,
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.google.com/maps/search/Gold+Soccer+Rua+Piquiri+Curitiba",
+          "dado": "ficha do Google Maps (consultada em 08/10/2026, 'Gold Soccer'): status permanentemente_fechado"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": null,
+      "origem": "web",
+      "status_operacional": "permanentemente_fechado"
+    },
+    {
+      "nome": "R10 Society",
+      "location_id": "De0qeWU5ieIysPH8Lkd3",
+      "endereco": {
+        "rua": null,
+        "numero": null,
+        "bairro": null,
+        "cidade": "Londrina",
+        "uf": "PR",
+        "cep": null
+      },
+      "telefone": null,
+      "whatsapp": null,
+      "site": "https://www.facebook.com/R10society/",
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.google.com/maps/search/R10+Society+Avenida+Cruzeiro+do+Sul+Londrina",
+          "dado": "ficha do Google Maps (consultada em 08/10/2026, 'R10 Society'): site; status permanentemente_fechado"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_indicado",
+      "origem": "web",
+      "status_operacional": "permanentemente_fechado"
+    },
+    {
+      "nome": "Kanxa Esportiva Santos Dumont",
+      "location_id": "E5HoUsHoocXjHKBRj9Qf",
+      "endereco": {
+        "rua": null,
+        "numero": null,
+        "bairro": null,
+        "cidade": "Colombo",
+        "uf": "PR",
+        "cep": null
+      },
+      "telefone": null,
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": 1,
+      "detalhe_quadras": "1 quadra de futebol sintético, coberta; lanchonete e eventos (mínimo: a fonte descreve no singular, sem número)",
+      "tipo_piso": "sintético",
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.locaisdobrasil.com.br/encontre/campo-de-futebol/colombo-pr/kanxa-esportiva-santos-dumont/647a7834424b1ac500a7c2f4",
+          "dado": "ficha no diretório Locais do Brasil: endereço, CEP, telefone, horários e descrição do estabelecimento (categoria campo de futebol): \"Quadra de futebol sintético, coberta. Lanchonete e eventos.\""
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_aluguel",
+      "origem": "web"
+    },
+    {
+      "nome": "Soccer Mania Futebol Society",
+      "location_id": "Evd2NkpXmAoM28DMaG0M",
+      "endereco": {
+        "rua": null,
+        "numero": null,
+        "bairro": null,
+        "cidade": "São Paulo",
+        "uf": "SP",
+        "cep": null
+      },
+      "telefone": "(11) 3213-6326",
+      "whatsapp": null,
+      "site": "https://www.soccermania.com.br/",
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": 1,
+      "detalhe_quadras": "1 campo de society (grama sintética, 20x40 m)",
+      "tipo_piso": "grama sintética",
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.soccermania.com.br/",
+          "dado": "site oficial: '01 campo de grama sintética, 02 vestiários e espaço com churrasqueiras'; aluguel de campo a partir de R$ 350 (1h30 a 2h), dimensões 20x40 m"
+        },
+        {
+          "url": "https://www.google.com/maps/search/Soccer+Mania+Futebol+Society+Rua+Jalisco+S%C3%A3o+Paulo",
+          "dado": "ficha do Google Maps (consultada em 08/10/2026, 'Soccermania Futebol Society'): telefone (11) 3213-6326"
+        }
+      ],
+      "confidence": "alta",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_indicado",
+      "origem": "web",
+      "precos": [
+        {
+          "item": "Aluguel de campo (1h30 a 2h)",
+          "valor": "a partir de R$ 350"
+        },
+        {
+          "item": "Festa infantil",
+          "valor": "a partir de R$ 599"
+        }
+      ]
+    },
+    {
+      "nome": "Clube 3 Marias",
+      "location_id": "Fl94PAGfkLgE88TqjdyP",
+      "endereco": {
+        "rua": null,
+        "numero": null,
+        "bairro": null,
+        "cidade": "Curitiba",
+        "uf": "PR",
+        "cep": null
+      },
+      "telefone": null,
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": 2,
+      "detalhe_quadras": "1 quadra society coberta (gramado sintético iluminado) + 1 quadra de futsal (piso modular)",
+      "tipo_piso": "society coberto e futsal",
+      "horarios": {
+        "observacao": "secretaria: seg-sex 8h-18h, sáb 9h-13h"
+      },
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://3marias.com.br/",
+          "dado": "campo society coberto locado por hora, ginásio futsal, Arena 3 beach sports, telefones, secretaria"
+        },
+        {
+          "url": "https://3marias.com.br/__l5e/assets-v1/6a2f944c-02b4-4c30-8d9d-d4e23147157d/estatuto-social.pdf",
+          "dado": "sede na Av. Três Marias, 274, bairro São Brás"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": null,
+      "origem": "web"
+    },
+    {
+      "nome": "AABB Campo Largo",
+      "location_id": "GvG4K30Wt8NYIkihW2Yq",
+      "endereco": {
+        "rua": null,
+        "numero": null,
+        "bairro": null,
+        "cidade": "Campo Largo",
+        "uf": "PR",
+        "cep": null
+      },
+      "telefone": "(41) 98887-4315",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.google.com/maps/search/AABB+Campo+Largo+Campo+Largo",
+          "dado": "ficha do Google Maps (consultada em 08/10/2026, 'AABB - Campo Largo'): telefone (41) 98887-4315"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_aluguel",
+      "origem": "web"
+    },
+    {
+      "nome": "Poli Futebol Society",
+      "location_id": "IqohfxCqRBpmQj1EgAC8",
+      "endereco": {
+        "rua": null,
+        "numero": null,
+        "bairro": null,
+        "cidade": "São Paulo",
+        "uf": "SP",
+        "cep": null
+      },
+      "telefone": "(11) 3277-5406",
+      "whatsapp": null,
+      "site": "https://m.facebook.com/polifutebolsociety/",
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.google.com/maps/search/Poli+Futebol+Society+Rua+Dona+Ana+Neri+S%C3%A3o+Paulo",
+          "dado": "ficha do Google Maps (consultada em 08/10/2026, 'Quadra de Futebol Poli Esportes'): telefone (11) 3277-5406; site; status permanentemente_fechado"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_indicado",
+      "origem": "web",
+      "status_operacional": "permanentemente_fechado"
+    },
+    {
+      "nome": "Candeias Esporte Lazer e Recreação",
+      "location_id": "JgMC2uVBRFgZklW1SaoD",
+      "endereco": {
+        "rua": null,
+        "numero": null,
+        "bairro": null,
+        "cidade": "Londrina",
+        "uf": "PR",
+        "cep": null
+      },
+      "telefone": "0800 007 2252",
+      "whatsapp": null,
+      "site": "https://www.clubecandeias.com/",
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.google.com/maps/search/Candeias+Esporte+Lazer+e+Recrea%C3%A7%C3%A3o+Avenida+Higien%C3%B3polis+Londrina",
+          "dado": "ficha do Google Maps (consultada em 08/10/2026, 'Clube Candeias - Loja Londrina'): telefone 0800 007 2252; site"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    },
+    {
+      "nome": "Arena BFS - Quadras de Futsal",
+      "location_id": "Lm6mFZZhCSJSriaP4vgo",
+      "endereco": {
+        "rua": null,
+        "numero": null,
+        "bairro": null,
+        "cidade": "Araucária",
+        "uf": "PR",
+        "cep": null
+      },
+      "telefone": null,
+      "whatsapp": null,
+      "site": "https://linksuteisbfs.netlify.app/",
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.google.com/maps/search/Arena+BFS+-+Quadras+de+Futsal+R.+Jeronin+Durski+Arauc%C3%A1ria",
+          "dado": "ficha do Google Maps (consultada em 08/10/2026, 'Arena BFS - Quadras de Futsal'): site"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    },
+    {
+      "nome": "Arena Machado - Campo Sintético",
+      "location_id": "MCKPH4x3ANmpm1EhRJFT",
+      "endereco": {
+        "rua": null,
+        "numero": null,
+        "bairro": null,
+        "cidade": "São José dos Pinhais",
+        "uf": "PR",
+        "cep": null
+      },
+      "telefone": null,
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.google.com/maps/search/Arena+Machado+-+Campo+Sint%C3%A9tico+Rua+Arcidio+Claudino+Barbosa+S%C3%A3o+Jos%C3%A9+dos+Pinhais",
+          "dado": "ficha do Google Maps (consultada em 08/10/2026, 'Arena Machado - Campo Sintético'): status permanentemente_fechado"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_indicado",
+      "origem": "web",
+      "status_operacional": "permanentemente_fechado"
+    },
+    {
+      "nome": "América Sports And Fitness",
+      "location_id": "MVJv01Ero6d6FdvHNXSr",
+      "endereco": {
+        "rua": null,
+        "numero": null,
+        "bairro": null,
+        "cidade": "Curitiba",
+        "uf": "PR",
+        "cep": null
+      },
+      "telefone": null,
+      "whatsapp": null,
+      "site": "https://academiaamerica.com.br/",
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.google.com/maps/search/Am%C3%A9rica+Sports+And+Fitness+Rua+Doutor+Alfredo+Vieira+Barcelos+Curitiba",
+          "dado": "ficha do Google Maps (consultada em 08/10/2026, 'América Sports and Fitness - Academia'): site"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": null,
+      "origem": "web"
+    },
+    {
+      "nome": "Arena do Bilo",
+      "location_id": "NuxaCdKw4EhB12OBuYQW",
+      "endereco": {
+        "rua": null,
+        "numero": null,
+        "bairro": null,
+        "cidade": "Campo Largo",
+        "uf": "PR",
+        "cep": null
+      },
+      "telefone": "(41) 98730-6684",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.google.com/maps/search/Arena+do+Bilo+Campo+Largo",
+          "dado": "ficha do Google Maps (consultada em 08/10/2026, 'Arena do Bilo'): telefone (41) 98730-6684"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_aluguel",
+      "origem": "web"
+    },
+    {
+      "nome": "Arena Soccer",
+      "location_id": "PkAjfD4QOyCukHK9pM7N",
+      "endereco": {
+        "rua": null,
+        "numero": null,
+        "bairro": null,
+        "cidade": "Porto Alegre",
+        "uf": "RS",
+        "cep": null
+      },
+      "telefone": null,
+      "whatsapp": null,
+      "site": null,
+      "instagram": "arenasoccerfut7",
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.google.com/maps/search/Arena+Soccer+Avenida+da+Cavalhada+Porto+Alegre",
+          "dado": "ficha do Google Maps (consultada em 08/10/2026, 'Arena Soccer Fut7'): instagram"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    },
+    {
+      "nome": "A Toca da Bola",
+      "location_id": "Uzebo1RKUWXrNNOUu3lZ",
+      "endereco": {
+        "rua": null,
+        "numero": null,
+        "bairro": null,
+        "cidade": "Curitiba",
+        "uf": "PR",
+        "cep": null
+      },
+      "telefone": null,
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.google.com/maps/search/A+Toca+da+Bola+Rua+Mariluz+Curitiba",
+          "dado": "ficha do Google Maps (consultada em 08/10/2026, 'A Toca da Bola'): status permanentemente_fechado"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": null,
+      "origem": "web",
+      "status_operacional": "permanentemente_fechado"
+    },
+    {
+      "nome": "HD Sports Complex",
+      "location_id": "VJgR2rTcYKOwr3tWPlXq",
+      "endereco": {
+        "rua": null,
+        "numero": null,
+        "bairro": null,
+        "cidade": "Porto Alegre",
+        "uf": "RS",
+        "cep": null
+      },
+      "telefone": "(51) 99312-1476",
+      "whatsapp": null,
+      "site": "https://www.hdsportscomplex.com.br/",
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": 6,
+      "detalhe_quadras": "4 quadras de society (cobertas, medidas oficiais) + 1 quadra de futsal + 1 campo de futebol 11 sintético oficial",
+      "tipo_piso": "grama sintética",
+      "horarios": {
+        "segunda": "09:00-00:00",
+        "terca": "09:00-00:00",
+        "quarta": "09:00-00:00",
+        "quinta": "09:00-00:00",
+        "sexta": "09:00-00:00",
+        "sabado": "08:00-22:00",
+        "domingo": "19:00-22:00"
+      },
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.hdsportscomplex.com.br/complexo",
+          "dado": "site oficial: 'complexo poliesportivo, completamente coberto, composto de quatro quadras de futebol society, quadra de futsal e campo 11 sintético tamanho oficial'; telefone (51) 99312.1476; horário: segunda a sexta 09h às 24h, sábado 08h às 22h, domingo 19h às 22h"
+        }
+      ],
+      "confidence": "alta",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    },
+    {
+      "nome": "MCM Esportes BIG",
+      "location_id": "WcOCLHQq5uqGK9GdzYiz",
+      "endereco": {
+        "rua": null,
+        "numero": null,
+        "bairro": null,
+        "cidade": "Porto Alegre",
+        "uf": "RS",
+        "cep": null
+      },
+      "telefone": "(51) 3347-6060",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.google.com/maps/search/MCM+Esportes+BIG+Rua+Sergio+Jungblut+Dieterich+Porto+Alegre",
+          "dado": "ficha do Google Maps (consultada em 08/10/2026, 'MCM Esportes - Big Sertório'): telefone (51) 3347-6060"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    },
+    {
+      "nome": "Quadra Sete Esportes - Locação de Quadra",
+      "location_id": "ZlQIx9Dmiayg7UseGZZq",
+      "endereco": {
+        "rua": null,
+        "numero": null,
+        "bairro": null,
+        "cidade": "Curitiba",
+        "uf": "PR",
+        "cep": null
+      },
+      "telefone": null,
+      "whatsapp": null,
+      "site": "https://www.facebook.com/pages/Quadra-Sete-Esportes-Ltda/249657715097867",
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": 2,
+      "detalhe_quadras": "1 quadra de futsal (piso flutuante) + 1 quadra society (futebol 7)",
+      "tipo_piso": "futsal e society",
+      "horarios": {
+        "segunda": "13:00-00:00",
+        "terca": "13:00-00:00",
+        "quarta": "13:00-00:00",
+        "quinta": "13:00-00:00",
+        "sexta": "13:00-00:00",
+        "sabado": "13:00-00:00"
+      },
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.citiservi.com.br/ficar/quadras-esportivas-em-curitiba",
+          "dado": "nome, R Cascavel 470, CEP 81670-180"
+        },
+        {
+          "url": "https://www.encontrabrasil.com.br/locacao-de-quadras/curitiba-pr",
+          "dado": "Rua Cascavel, 470 - Boqueirão"
+        },
+        {
+          "url": "https://www.google.com/maps/search/Quadra+Sete+Esportes+-+Loca%C3%A7%C3%A3o+de+Quadra+Rua+Cascavel+Curitiba",
+          "dado": "ficha do Google Maps (consultada em 08/10/2026, 'Quadra 7 Esportes'): site"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": null,
+      "origem": "web"
+    },
+    {
+      "nome": "Arena LIFAZ",
+      "location_id": "gsRglRWoH16kdLP011f8",
+      "endereco": {
+        "rua": null,
+        "numero": null,
+        "bairro": null,
+        "cidade": "Fazenda Rio Grande",
+        "uf": "PR",
+        "cep": null
+      },
+      "telefone": null,
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": 1,
+      "detalhe_quadras": "1 campo de futebol (liga amadora e aluguel para treinos) (mínimo: a fonte descreve no singular, sem número)",
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.locaisdobrasil.com.br/encontre/campo-de-futebol/fazenda-rio-grande-pr/arena-lifaz-cwbet/64f344a33037cb99d64d6cd1",
+          "dado": "ficha no Locais do Brasil: endereço e descrição \"Campo de Futebol, para uso na LIGA DA FAZENDA FUTEBOL AMADOR e também para aluguel para times treinarem\""
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_aluguel",
+      "origem": "web"
+    },
+    {
+      "nome": "Soccer Sports",
+      "location_id": "lwhEBMaAE1XQfvQW1ati",
+      "endereco": {
+        "rua": null,
+        "numero": null,
+        "bairro": null,
+        "cidade": "Porto Alegre",
+        "uf": "RS",
+        "cep": null
+      },
+      "telefone": null,
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": 2,
+      "detalhe_quadras": "1 quadra de society (grama sintética, coberta) + 1 quadra de futsal (piso poliesportivo de madeira, coberta; também vôlei)",
+      "tipo_piso": "grama sintética (society) e madeira (futsal/vôlei)",
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://soccersportspoa.com.br",
+          "dado": "site oficial (Floresta, Porto Alegre): quadra de society coberta com grama sintética, quadra coberta de piso poliesportivo de madeira para futsal/vôlei e tabela de valores"
+        }
+      ],
+      "confidence": "alta",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_indicado",
+      "origem": "web",
+      "precos": [
+        {
+          "item": "Futsal/vôlei avulso",
+          "valor": "R$ 130 (unidade de tempo não informada no site)"
+        },
+        {
+          "item": "Futsal/vôlei mensalista",
+          "valor": "R$ 110"
+        },
+        {
+          "item": "Society avulso",
+          "valor": "R$ 160"
+        },
+        {
+          "item": "Society mensalista",
+          "valor": "R$ 140"
+        },
+        {
+          "item": "Combo quadra + espaço social",
+          "valor": "R$ 600 por 3 h (R$ 700 por 4 h)"
+        }
+      ]
+    },
+    {
+      "nome": "Power Sports Vip",
+      "location_id": "tQ7A9JSkSSEx9gamp8yx",
+      "endereco": {
+        "rua": null,
+        "numero": null,
+        "bairro": null,
+        "cidade": "São Paulo",
+        "uf": "SP",
+        "cep": null
+      },
+      "telefone": null,
+      "whatsapp": null,
+      "site": "https://www.powersportsvip.com.br/",
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": 6,
+      "detalhe_quadras": "6 quadras de society (4 cobertas e 2 abertas)",
+      "tipo_piso": "grama sintética",
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.powersportsvip.com.br/",
+          "dado": "site oficial: '6 quadras de futebol society (4 cobertas e 2 abertas) para locação avulsa ou mensal, todas com grama sintética importada'; também 1 quadra de tênis aberta (não contada)"
+        }
+      ],
+      "confidence": "alta",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    },
+    {
+      "nome": "Cancha do Bombeiro Pica Pau",
+      "location_id": "wAZJkZXxBHEG16nfJvNq",
+      "endereco": {
+        "rua": null,
+        "numero": null,
+        "bairro": null,
+        "cidade": "Piraquara",
+        "uf": "PR",
+        "cep": null
+      },
+      "telefone": null,
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": 1,
+      "detalhe_quadras": "1 campo de futebol suíço (mínimo: a fonte descreve no singular, sem número)",
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.locaisdobrasil.com.br/encontre/campo-de-futebol/piraquara-pr/cancha-do-bombeiro-pica-pau/658f23e35b61b875da193cd8",
+          "dado": "ficha no Locais do Brasil: endereço, CEP, telefone, horários e texto \"gostaria de mais informações sobre o aluguel do campo de futebol suíço\""
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_aluguel",
+      "origem": "web"
+    },
+    {
+      "nome": "Clube da Bola",
+      "location_id": "wpPWjKdqR2rzCEEUdXwP",
+      "endereco": {
+        "rua": null,
+        "numero": null,
+        "bairro": null,
+        "cidade": "Curitiba",
+        "uf": "PR",
+        "cep": null
+      },
+      "telefone": null,
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": {
+        "observacao": "seg-sex 12:00-23:45"
+      },
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.telelistas.net/locais/pr/curitiba/aluguel+de+quadras+esportivas/bu-878424/clube+da+bola+em+reboucas",
+          "dado": "endereço, CEP, quadras de madeira cobertas, modalidades, funcionamento seg-sex 12h-23h45"
+        },
+        {
+          "url": "https://www.guiatelefone.com/empresas/curitiba-pr/praticas-esportivas/aluguel-de-quadras-esportivas",
+          "dado": "telefone (41) 3332-8388"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": null,
+      "origem": "web"
+    },
+    {
+      "nome": "Categeró Centro Esportivo",
+      "location_id": "zDGt6JvRTJIl0ZRmq3bB",
+      "endereco": {
+        "rua": null,
+        "numero": null,
+        "bairro": null,
+        "cidade": "Florianópolis",
+        "uf": "SC",
+        "cep": null
+      },
+      "telefone": null,
+      "whatsapp": null,
+      "site": "https://www.instagram.com/categerocentroesportivo",
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.google.com/maps/search/Categer%C3%B3+Futebol+Indoor+Monte+Verde+Florian%C3%B3polis",
+          "dado": "ficha do Google Maps (consultada em 08/10/2026, 'Categero Centro Esportivo Ltda.'): site"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_aluguel",
+      "origem": "web"
+    }
+  ]
+}

@@ -68,8 +68,8 @@ function validateDataset(dataset, options = {}) {
   if (typeof dataset.gerado_em !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(dataset.gerado_em)) {
     push('gerado_em ausente/inválido (esperado YYYY-MM-DD com data de coleta)');
   }
-  if (!Number.isInteger(dataset.rodada) || dataset.rodada < 1 || dataset.rodada > 8) {
-    push('rodada ausente/inválida (1..8)');
+  if (!Number.isInteger(dataset.rodada) || dataset.rodada < 1 || dataset.rodada > 9) {
+    push('rodada ausente/inválida (1..9)');
   }
   if (!Array.isArray(dataset.venues) || dataset.venues.length === 0) {
     push('venues ausente ou vazio');
@@ -182,7 +182,7 @@ function validateDataset(dataset, options = {}) {
       push(`${where} (${nome}): coordenadas fora do Brasil ou não numéricas`);
     }
     if (v.rodada_dados !== undefined && v.rodada_dados !== null
-      && !/^R[1-8]$/.test(v.rodada_dados)) {
+      && !/^R[1-9]$/.test(v.rodada_dados)) {
       push(`${where} (${nome}): rodada_dados inválida "${v.rodada_dados}"`);
     }
 
@@ -230,7 +230,16 @@ function main(argv) {
     const errors = validateDataset(dataset, {prefix: path.basename(file)});
     const venues = Array.isArray(dataset.venues) ? dataset.venues : [];
     // Dedupe GLOBAL entre datasets (mesmo venue não pode entrar em 2 rodadas).
-    venues.forEach((v, i) => {
+    // Datasets de enriquecimento (modo=enriquecimento) apontam venues já importados por location_id.
+    const enriquecimento = dataset && dataset.modo === 'enriquecimento';
+    if (enriquecimento) {
+      venues.forEach((v, i) => {
+        if (!v || typeof v.location_id !== 'string' || v.location_id.length < 10) {
+          errors.push(`${path.basename(file)}: venues[${i}] ("${v && v.nome}") sem location_id (obrigatório no modo enriquecimento)`);
+        }
+      });
+    }
+    if (!enriquecimento) venues.forEach((v, i) => {
       const cidade = v && v.endereco ? v.endereco.cidade : '';
       const key = `${cidade || ''}::${normalizeName(v && v.nome)}`;
       if (seenGlobal.has(key) && seenGlobal.get(key) !== file) {
