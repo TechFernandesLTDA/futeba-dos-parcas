@@ -141,6 +141,9 @@ updates:
         update-types: ["version-update:semver-major"]
       - dependency-name: "@mui/*"
         update-types: ["version-update:semver-major"]
+      # devDependency sem uso em web/ (seeds usam functions/node_modules); Functions e root ficam no 13.
+      - dependency-name: "firebase-admin"
+        update-types: ["version-update:semver-major"]
       - dependency-name: "@stryker-mutator/*"
         update-types: ["version-update:semver-major"]
 
