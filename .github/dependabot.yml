@@ -130,6 +130,9 @@ updates:
       # Cloud Functions roda em Node 22; majors do runtime/eslint exigem validação dedicada.
       - dependency-name: "@types/node"
         update-types: ["version-update:semver-major"]
+      # typescript-eslint 8.x declara peer typescript <6.1; TS 7 dá ERESOLVE no npm ci (#4317).
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
       - dependency-name: "firebase-functions"
         update-types: ["version-update:semver-major"]
       - dependency-name: "firebase-admin"
@@ -193,6 +196,9 @@ updates:
       - dependency-name: "date-fns"
         update-types: ["version-update:semver-major"]
       # v7 aplica regras do React Compiler e quebra o lint atual; web segue em ESLint 8.
+      # ESLint 10 remove o eslintrc; a web usa .eslintrc.cjs (flat config é migração própria) (#4318).
+      - dependency-name: "eslint"
+        update-types: ["version-update:semver-major"]
       - dependency-name: "eslint-plugin-react-hooks"
         update-types: ["version-update:semver-major"]
       # vitest 5 quebra mocks da suíte (groupWallMediaService) e precisa subir junto de @vitest/* e do runner do Stryker.
