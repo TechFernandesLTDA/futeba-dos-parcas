@@ -146,6 +146,9 @@ updates:
         update-types: ["version-update:semver-major"]
       - dependency-name: "@stryker-mutator/*"
         update-types: ["version-update:semver-major"]
+      # 0.5+ exige ESLint 9/10 (peer); o web está no ESLint 8 (migração de lint do web ainda não planejada).
+      - dependency-name: "eslint-plugin-react-refresh"
+        update-types: ["version-update:semver-minor", "version-update:semver-major"]
 
   - package-ecosystem: "npm"
     directory: "/firestore-rules-tests"
