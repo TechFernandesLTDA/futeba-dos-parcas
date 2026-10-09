@@ -64,6 +64,11 @@ updates:
       # JUnit 6 exige api/params/engine/platform-launcher juntos; migração coordenada depois do toolchain (#4265).
       - dependency-name: "org.junit*"
         update-types: ["version-update:semver-major"]
+      # maps-compose 9 exige compileSdk 37 (app em 36) e migra para android-maps-utils; o Maps SDK 20 só com maps-compose 8+.
+      - dependency-name: "com.google.maps.android*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "com.google.android.gms:play-services-maps"
+        update-types: ["version-update:semver-major"]
       # SQLDelight 2.3+ publica klibs com ABI do Kotlin 2.3; o projeto está no Kotlin 2.2.x (migração coordenada: #4265).
       - dependency-name: "app.cash.sqldelight*"
         update-types: ["version-update:semver-minor", "version-update:semver-major"]
@@ -168,6 +173,9 @@ updates:
         update-types: ["version-update:semver-major"]
       # @mui/x-date-pickers 6 declara peer date-fns ^2 || ^3; só avança com a migração do MUI X.
       - dependency-name: "date-fns"
+        update-types: ["version-update:semver-major"]
+      # v7 aplica regras do React Compiler e quebra o lint atual; web segue em ESLint 8.
+      - dependency-name: "eslint-plugin-react-hooks"
         update-types: ["version-update:semver-major"]
       # vitest 5 quebra mocks da suíte (groupWallMediaService) e precisa subir junto de @vitest/* e do runner do Stryker.
       - dependency-name: "vitest"
