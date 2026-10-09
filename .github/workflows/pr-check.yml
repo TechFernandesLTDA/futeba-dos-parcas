@@ -43,7 +43,7 @@ jobs:
           cache-read-only: true
 
       - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+        uses: android-actions/setup-android@v4
         with:
           # O default da action instala o pacote legado `tools`, removido do
           # cmdline-tools 16.0 das imagens atuais do runner (sdkmanager sai com 1).
