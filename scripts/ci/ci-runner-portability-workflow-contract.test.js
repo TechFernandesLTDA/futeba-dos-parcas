@@ -64,7 +64,7 @@ test('Android PR validation uses Linux runner and validates SDK 36', () => {
   assert.ok(androidJobStart >= 0, 'Android validation job must exist');
   assert.ok(validateJobStart > androidJobStart, 'Android job must precede validate');
   assert.match(androidJob, /runs-on: (?:ubuntu-24\.04|\$\{\{ fromJSON\(vars\.RUNNER_LABELS_LINUX)/);
-  assert.match(androidJob, /uses: android-actions\/setup-android@v3/);
+  assert.match(androidJob, /uses: android-actions\/setup-android@v4/);
   assert.match(androidJob, /sdkmanager --install[\s\S]*platforms;android-36/);
   assert.match(androidJob, /platforms\/android-36\/android\.jar/);
   assert.doesNotMatch(androidJob, /unzip|apt-get install|sudo/);
@@ -113,7 +113,7 @@ test('Android CI on Linux provisions the SDK instead of relying on a Mac install
   const workflow = read('.github/workflows/android-ci.yml');
   for (const jobId of ['lint', 'detekt', 'test', 'build']) {
     const body = job(workflow, jobId);
-    assert.match(body, /uses: android-actions\/setup-android@v3/, jobId);
+    assert.match(body, /uses: android-actions\/setup-android@v4/, jobId);
     assert.match(body, /platforms;android-36/, jobId);
     assert.ok(
       body.indexOf('setup-android') < body.indexOf('sdk.dir='),
