@@ -12,7 +12,21 @@
     ".agent/**",
     ".claude/**",
     ".opencode/**",
-    ".github/ISSUE_TEMPLATE/**"
+    ".github/ISSUE_TEMPLATE/**",
+    ".github/dependabot.yml",
+    ".github/labels.yml",
+    ".github/CODEOWNERS",
+    ".github/settings.yml",
+    ".github/actionlint.yaml",
+    ".github/workflows/claude.yml",
+    ".github/workflows/claude-code-review.yml",
+    ".github/workflows/sync-labels.yml",
+    ".github/workflows/issue-automation.yml",
+    ".github/workflows/pr-review-to-issues.yml",
+    ".github/workflows/ci-metrics.yml",
+    ".github/workflows/play-promote.yml",
+    ".github/workflows/play-track-status.yml",
+    ".github/workflows/publish-release-notes.yml"
   ],
   "rules": [
     {
