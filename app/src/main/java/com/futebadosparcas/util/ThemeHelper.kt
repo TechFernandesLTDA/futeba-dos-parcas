@@ -86,7 +86,7 @@ class ThemeHelper constructor(
     fun getPrimaryColor(): Int {
         val typedValue = android.util.TypedValue()
         context.theme.resolveAttribute(
-            com.google.android.material.R.attr.colorPrimary,
+            androidx.appcompat.R.attr.colorPrimary,
             typedValue,
             true
         )
@@ -138,7 +138,7 @@ class ThemeHelper constructor(
     fun getErrorColor(): Int {
         val typedValue = android.util.TypedValue()
         context.theme.resolveAttribute(
-            com.google.android.material.R.attr.colorError,
+            androidx.appcompat.R.attr.colorError,
             typedValue,
             true
         )
