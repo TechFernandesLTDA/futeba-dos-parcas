@@ -34,8 +34,8 @@ afterAll(async () => {
 });
 
 describe("user_locations rules", () => {
-  it("dono pode ativar compartilhamento com consentimento e coordenadas validas", async () => {
-    await assertSucceeds(
+  it("dono NAO pode ativar compartilhamento com lat/lng pelo cliente (FIX #4123: so a callable updateMyLocation grava a posicao)", async () => {
+    await assertFails(
       asPlayerA(testEnv).doc(`user_locations/${UID_PLAYER_A}`).set(enabledLocation)
     );
   });

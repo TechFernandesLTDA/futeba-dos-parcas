@@ -41,11 +41,13 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-i18next": "^17.0.7",
-    "react-router-dom": "^6.21.3",
+    "react-router-dom": "^7.18.4",
     "recharts": "^3.8.1",
     "web-vitals": "^4.2.4"
   },
   "overrides": {
+    "@grpc/grpc-js": "^1.13.6",
+    "basic-ftp": "^6.2.1",
     "esbuild": "^0.28.1",
     "js-yaml": "^4.2.0",
     "qs": "^6.15.3",

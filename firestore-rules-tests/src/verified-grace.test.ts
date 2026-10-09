@@ -47,7 +47,7 @@ describe("verified grace period — isVerifiedOrGrace() enforcement", () => {
   // por scripts/check-verification-grace-parity.js. Quando a grace expirar,
   // este teste vai falhar (assertSucceeds vira failure) — esse é o sinal
   // para decidir aplicar o enforcement ou estender novamente.
-  it("Usuario nao verificado PODE criar game (dentro da grace period ate 2026-10-03)", async () => {
+  it("Usuario nao verificado com perfil completo pode criar game (a criacao exige profileComplete, nao verified)", async () => {
     const unverifiedDb = asUser(testEnv, UID_UNVERIFIED_GAME_OWNER, {
       role: "PLAYER",
       verified: false,
@@ -58,6 +58,7 @@ describe("verified grace period — isVerifiedOrGrace() enforcement", () => {
         title: "Jogo Unverified",
         owner_id: UID_UNVERIFIED_GAME_OWNER,
         status: "SCHEDULED",
+        visibility: "GROUP_ONLY", // FIX #4126
         date_time: FUTURE_DATE,
         max_players: 10,
         max_goalkeepers: 2,
@@ -76,6 +77,7 @@ describe("verified grace period — isVerifiedOrGrace() enforcement", () => {
       title: "Grace Confirm Test",
       owner_id: UID_PLAYER_A,
       status: "SCHEDULED",
+      visibility: "GROUP_ONLY", // FIX #4126
       date_time: FUTURE_DATE,
       max_players: 10,
       max_goalkeepers: 2,
@@ -189,6 +191,7 @@ describe("verified grace period — isVerifiedOrGrace() enforcement", () => {
         title: "Jogo Verificado",
         owner_id: UID_PLAYER_A,
         status: "SCHEDULED",
+        visibility: "GROUP_ONLY", // FIX #4126
         date_time: FUTURE_DATE,
         max_players: 10,
         max_goalkeepers: 2,
@@ -213,6 +216,7 @@ describe("verified grace period — isVerifiedOrGrace() enforcement", () => {
         title: "Admin Jogo",
         owner_id: "uid-admin-unverified",
         status: "SCHEDULED",
+        visibility: "GROUP_ONLY", // FIX #4126
         date_time: FUTURE_DATE,
         max_players: 10,
         max_goalkeepers: 2,

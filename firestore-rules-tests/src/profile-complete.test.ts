@@ -53,6 +53,7 @@ function validGame(ownerId: string) {
     title: "Jogo Profile Gate",
     owner_id: ownerId,
     status: "SCHEDULED",
+    visibility: "GROUP_ONLY", // FIX #4126
     date_time: futureDate,
     max_players: 10,
     max_goalkeepers: 2,
