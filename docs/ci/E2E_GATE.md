@@ -66,3 +66,7 @@ Web e Functions rodam Stryker **apenas** no cron noturno (03:00 e 04:00 UTC) e n
 `workflow_dispatch` com `run_mutation=true`. Nunca em PR, push ou dispatch comum.
 O threshold do web (`break: 60`) continua bloqueando o job; `concurrency: 4` evita
 que o Stryker ocupe todos os núcleos do host compartilhado com o brazuka-v2.
+
+## Merges em sequência (superseded)
+
+No pós-merge (`push` em master), se o run do E2E ficar `stale` (o master avançou) ou for `cancelled` porque um commit mais novo entrou na fila, e o master já estiver em outro SHA, o gate reporta `superseded` (exit 0): quem cobre o código é o gate do commit mais novo. Falha real de teste (`conclusion=failure`) nunca é convertida.
