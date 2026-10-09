@@ -31,10 +31,12 @@ test('Functions tests install the verified media runtime in the same job', () =>
   assert.match(testJob, /run: npm run install:ffmpeg[\s\S]*?name: Run Tests/);
 });
 
-test('Firestore and media runtime gates use hosted Linux', () => {
+test('Firestore and media runtime gates use Linux runners (tf-wsl, fallback hosted)', () => {
   const rulesWorkflow = read('.github/workflows/firestore-rules-ci.yml');
   const functionsWorkflow = read('.github/workflows/functions-ci.yml');
-  const hostedSelector = 'runs-on: ubuntu-24.04';
+  // Orçamento hospedado esgotado (out/2026): o job usa tf-wsl via RUNNER_LABELS_LINUX, com
+  // fallback para ubuntu-24.04 hospedado quando a variável não existe.
+  const hostedSelector = String.raw`runs-on: (?:ubuntu-24\.04|\$\{\{ fromJSON\(vars\.RUNNER_LABELS_LINUX \|\| '\["ubuntu-24\.04"\]'\) \}\})`;
   const selfHostedSelector = /runs-on: \$\{\{ fromJSON\(vars\.RUNNER_LABELS/;
 
   assert.match(job(rulesWorkflow, 'rules-tests'), new RegExp(hostedSelector));
@@ -50,7 +52,7 @@ test('Firestore and media runtime gates use hosted Linux', () => {
   }
 });
 
-test('Android PR validation uses hosted Linux and validates SDK 36', () => {
+test('Android PR validation uses Linux runner and validates SDK 36', () => {
   const workflow = read('.github/workflows/pr-check.yml');
   const androidJobStart = workflow.indexOf('\n  android:\n');
   const validateJobStart = workflow.indexOf('\n  validate:\n');
@@ -58,7 +60,7 @@ test('Android PR validation uses hosted Linux and validates SDK 36', () => {
 
   assert.ok(androidJobStart >= 0, 'Android validation job must exist');
   assert.ok(validateJobStart > androidJobStart, 'Android job must precede validate');
-  assert.match(androidJob, /runs-on: ubuntu-24.04/);
+  assert.match(androidJob, /runs-on: (?:ubuntu-24\.04|\$\{\{ fromJSON\(vars\.RUNNER_LABELS_LINUX)/);
   assert.match(androidJob, /uses: android-actions\/setup-android@v3/);
   assert.match(androidJob, /sdkmanager --install[\s\S]*platforms;android-36/);
   assert.match(androidJob, /platforms\/android-36\/android\.jar/);
