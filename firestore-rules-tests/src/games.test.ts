@@ -414,6 +414,7 @@ describe("games — criação", () => {
         title: "Fraude",
         owner_id: UID_PLAYER_B, // escalação
         status: "SCHEDULED",
+        visibility: "GROUP_ONLY", // FIX #4126
         date_time: futureDate,
         max_players: 10,
         max_goalkeepers: 2,
@@ -459,6 +460,7 @@ describe("games — criação", () => {
         title: "Jogo Admin",
         owner_id: UID_PLAYER_B,
         status: "SCHEDULED",
+        visibility: "GROUP_ONLY", // FIX #4126
         date_time: futureDate,
         max_players: 10,
         max_goalkeepers: 2,
@@ -498,6 +500,7 @@ describe("games — criação", () => {
         title: "Exploit",
         owner_id: UID_PLAYER_A,
         status: "SCHEDULED",
+        visibility: "GROUP_ONLY", // FIX #4126
         date_time: futureDate,
         max_players: 10,
         max_goalkeepers: 2,
@@ -516,6 +519,7 @@ describe("games — criação", () => {
         title: "Invalido",
         owner_id: UID_PLAYER_A,
         status: "SCHEDULED",
+        visibility: "GROUP_ONLY", // FIX #4126
         date_time: futureDate,
         max_players: 1, // inválido (mínimo é 2)
         max_goalkeepers: 0,
@@ -562,6 +566,7 @@ describe("games — criação", () => {
         title: "Anon",
         owner_id: "qualquer",
         status: "SCHEDULED",
+        visibility: "GROUP_ONLY", // FIX #4126
         date_time: futureDate,
         max_players: 10,
         max_goalkeepers: 2,
@@ -579,6 +584,7 @@ describe("games — criação", () => {
         title: "Times válidos",
         owner_id: UID_PLAYER_A,
         status: "SCHEDULED",
+        visibility: "GROUP_ONLY", // FIX #4126
         date_time: futureDate,
         max_players: 10,
         max_goalkeepers: 2,
@@ -600,6 +606,7 @@ describe("games — criação", () => {
         title: "Times demais",
         owner_id: UID_PLAYER_A,
         status: "SCHEDULED",
+        visibility: "GROUP_ONLY", // FIX #4126
         date_time: futureDate,
         max_players: 10,
         max_goalkeepers: 2,
@@ -619,6 +626,7 @@ describe("games — criação", () => {
         title: "Times de menos",
         owner_id: UID_PLAYER_A,
         status: "SCHEDULED",
+        visibility: "GROUP_ONLY", // FIX #4126
         date_time: futureDate,
         max_players: 10,
         max_goalkeepers: 2,
@@ -638,6 +646,7 @@ describe("games — criação", () => {
         title: "Sem campo de times",
         owner_id: UID_PLAYER_A,
         status: "SCHEDULED",
+        visibility: "GROUP_ONLY", // FIX #4126
         date_time: futureDate,
         max_players: 10,
         max_goalkeepers: 2,
@@ -659,6 +668,7 @@ describe("games — criação", () => {
         title: "Recorrência por contagem",
         owner_id: UID_PLAYER_A,
         status: "SCHEDULED",
+        visibility: "GROUP_ONLY", // FIX #4126
         date_time: futureDate,
         max_players: 10,
         max_goalkeepers: 2,
@@ -681,6 +691,7 @@ describe("games — criação", () => {
         title: "Recorrência por data-fim",
         owner_id: UID_PLAYER_A,
         status: "SCHEDULED",
+        visibility: "GROUP_ONLY", // FIX #4126
         date_time: futureDate,
         max_players: 10,
         max_goalkeepers: 2,
@@ -703,6 +714,7 @@ describe("games — criação", () => {
         title: "Recorrência exagerada",
         owner_id: UID_PLAYER_A,
         status: "SCHEDULED",
+        visibility: "GROUP_ONLY", // FIX #4126
         date_time: futureDate,
         max_players: 10,
         max_goalkeepers: 2,
@@ -723,6 +735,7 @@ describe("games — criação", () => {
         title: "Recorrência de 1",
         owner_id: UID_PLAYER_A,
         status: "SCHEDULED",
+        visibility: "GROUP_ONLY", // FIX #4126
         date_time: futureDate,
         max_players: 10,
         max_goalkeepers: 2,
@@ -745,6 +758,7 @@ describe("games — criação", () => {
         title: "Jogo Feminino",
         owner_id: UID_PLAYER_A,
         status: "SCHEDULED",
+        visibility: "GROUP_ONLY", // FIX #4126
         date_time: futureDate,
         max_players: 10,
         max_goalkeepers: 2,
@@ -766,6 +780,7 @@ describe("games — criação", () => {
         title: "Gênero Inválido",
         owner_id: UID_PLAYER_A,
         status: "SCHEDULED",
+        visibility: "GROUP_ONLY", // FIX #4126
         date_time: futureDate,
         max_players: 10,
         max_goalkeepers: 2,
@@ -811,6 +826,7 @@ describe("games — atualização", () => {
       title: "Validacao Owner",
       owner_id: UID_PLAYER_A,
       status: "SCHEDULED",
+      visibility: "GROUP_ONLY", // FIX #4126
       date_time: futureDate,
       max_players: 10,
       max_goalkeepers: 2,
@@ -860,6 +876,7 @@ describe("games — atualização", () => {
       title: "Validacao Admin",
       owner_id: UID_PLAYER_A,
       status: "SCHEDULED",
+      visibility: "GROUP_ONLY", // FIX #4126
       date_time: futureDate,
       max_players: 10,
       max_goalkeepers: 2,
@@ -1004,6 +1021,7 @@ describe("games — deleção", () => {
       title: "Para Deletar",
       owner_id: UID_PLAYER_B,
       status: "SCHEDULED",
+      visibility: "GROUP_ONLY", // FIX #4126
       date_time: futureDate,
       max_players: 10,
       max_goalkeepers: 2,
@@ -1019,6 +1037,7 @@ describe("games — deleção", () => {
       title: "Para Deletar Owner",
       owner_id: UID_PLAYER_A,
       status: "SCHEDULED",
+      visibility: "GROUP_ONLY", // FIX #4126
       date_time: futureDate,
       max_players: 10,
       max_goalkeepers: 2,
