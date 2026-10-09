@@ -186,6 +186,25 @@ function realDeps({ repo }) {
   };
 }
 
+/**
+ * Pós-merge em branch (push): se o resultado foi `stale` ou `cancelled` e o
+ * branch JÁ avançou para outro commit, o gate do commit mais novo cobre este —
+ * vira `superseded` (exit 0). Nunca converte falha real de teste. Pura.
+ */
+function applySuperseded(result, { expectSha, currentHeadSha }) {
+  const supersedable = result.verdict === 'stale' ||
+    (result.verdict === 'fail' && result.reason === 'conclusion=cancelled');
+  if (!supersedable || !expectSha || !currentHeadSha || currentHeadSha === expectSha) {
+    return result;
+  }
+  return {
+    ...result,
+    verdict: 'superseded',
+    exitCode: EXIT.PASS,
+    reason: `${result.reason}; branch avançou para ${currentHeadSha} — o gate desse commit cobre este`,
+  };
+}
+
 function parseArgs(argv) {
   const args = {};
   for (let i = 0; i < argv.length; i += 1) {
@@ -193,6 +212,7 @@ function parseArgs(argv) {
     if (k === '--ref') args.ref = argv[++i];
     else if (k === '--expect-sha') args.expectSha = argv[++i];
     else if (k === '--timeout-min') args.timeoutMs = Number(argv[++i]) * 60000;
+    else if (k === '--allow-superseded') args.allowSuperseded = true;
     else throw new Error(`argumento desconhecido: ${k}`);
   }
   return args;
@@ -225,13 +245,23 @@ async function main() {
       }
     });
   }
-  const result = await runGate({
+  let result = await runGate({
     ref: args.ref,
     expectSha: args.expectSha,
     timeoutMs: args.timeoutMs,
     ...deps,
     onRun: (run) => { currentRun = run; },
   });
+  if (args.allowSuperseded) {
+    let currentHeadSha = null;
+    try {
+      currentHeadSha = execFileSync('gh', ['api', `repos/${repo}/commits/${args.ref}`, '--jq', '.sha'],
+          { encoding: 'utf8' }).trim();
+    } catch (err) {
+      console.error(`e2e-gate: não consegui ler o head de ${args.ref}: ${err.message}`);
+    }
+    result = applySuperseded(result, { expectSha: args.expectSha, currentHeadSha });
+  }
   console.log(JSON.stringify({ gate: 'E2E Gate', ...result }));
   return result.exitCode;
 }
@@ -243,4 +273,4 @@ if (require.main === module) {
   );
 }
 
-module.exports = { EXIT, evaluateRun, runGate, parseArgs };
+module.exports = { EXIT, evaluateRun, runGate, parseArgs, applySuperseded };

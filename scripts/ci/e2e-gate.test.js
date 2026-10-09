@@ -194,3 +194,21 @@ test('runGate: run concluído com sucesso nunca é cancelado', async () => {
   assert.equal(result.exitCode, EXIT.PASS);
   assert.deepEqual(cancelled, []);
 });
+
+test('applySuperseded: stale/cancelled com branch avançado vira superseded (exit 0)', () => {
+  const { applySuperseded, EXIT } = require('./e2e-gate');
+  const stale = { verdict: 'stale', exitCode: EXIT.FAIL, reason: 'head_sha b != esperado a' };
+  assert.equal(applySuperseded(stale, { expectSha: 'a', currentHeadSha: 'b' }).verdict, 'superseded');
+  assert.equal(applySuperseded(stale, { expectSha: 'a', currentHeadSha: 'b' }).exitCode, EXIT.PASS);
+  const cancelled = { verdict: 'fail', exitCode: EXIT.FAIL, reason: 'conclusion=cancelled' };
+  assert.equal(applySuperseded(cancelled, { expectSha: 'a', currentHeadSha: 'b' }).verdict, 'superseded');
+});
+
+test('applySuperseded: nunca converte falha real nem branch parado', () => {
+  const { applySuperseded, EXIT } = require('./e2e-gate');
+  const failure = { verdict: 'fail', exitCode: EXIT.FAIL, reason: 'conclusion=failure' };
+  assert.equal(applySuperseded(failure, { expectSha: 'a', currentHeadSha: 'b' }).verdict, 'fail');
+  const cancelled = { verdict: 'fail', exitCode: EXIT.FAIL, reason: 'conclusion=cancelled' };
+  assert.equal(applySuperseded(cancelled, { expectSha: 'a', currentHeadSha: 'a' }).verdict, 'fail');
+  assert.equal(applySuperseded(cancelled, { expectSha: 'a', currentHeadSha: null }).verdict, 'fail');
+});

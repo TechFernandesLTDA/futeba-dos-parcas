@@ -76,7 +76,10 @@ jobs:
           GITHUB_REPOSITORY: ${{ github.repository }}
           GATE_REF: ${{ github.head_ref || github.ref_name }}
           GATE_EXPECT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-        run: node scripts/ci/e2e-gate.js --ref "$GATE_REF" --expect-sha "$GATE_EXPECT_SHA" --timeout-min 45
+          # Pós-merge: merges em sequência deixam o run "stale"/cancelado; se master
+          # já avançou, o gate do commit novo cobre este (não é falha de teste).
+          ALLOW_SUPERSEDED: ${{ github.event_name == 'push' && '--allow-superseded' || '' }}
+        run: node scripts/ci/e2e-gate.js --ref "$GATE_REF" --expect-sha "$GATE_EXPECT_SHA" --timeout-min 45 $ALLOW_SUPERSEDED
 
       - name: Sem impacto em E2E — gate dispensado
         if: ${{ needs.changes.outputs.web != 'true' && needs.changes.outputs.functions != 'true' && needs.changes.outputs.rules != 'true' && needs.changes.outputs.shared_config != 'true' }}
