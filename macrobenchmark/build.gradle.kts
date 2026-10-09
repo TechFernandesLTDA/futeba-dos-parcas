@@ -20,7 +20,7 @@ android {
 
     defaultConfig {
         minSdk = 24
-        targetSdk = 35
+        targetSdk = 36
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         // Desabilita profiling por padrão para runs de CI/emulador.

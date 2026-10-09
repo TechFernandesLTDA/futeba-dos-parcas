@@ -52,7 +52,7 @@ android {
     defaultConfig {
         applicationId = "com.futebadosparcas"
         minSdk = 24
-        targetSdk = 35
+        targetSdk = 36
         versionCode = 81
         versionName = "1.40.0"
 

@@ -34,6 +34,7 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 - `LegacySmartReminderCleaner` cancelando alarmes WEEKLY_RECAP/STREAK_CHECK legados no boot (#4142).
 
 #### Mudado
+- targetSdk 35 → 36 (Android 16), exigência da Google Play para atualizações; compileSdk já era 36.
 - `DirectMessagesRepository.sendMessage` via callable `submitDirectMessage` (#4119).
 - `checkTimeConflict`/`getGamesByFieldAndDate` via callable `getFieldAvailability` (janela D-1..D, `excludeGameId` server-side); `TimeConflict` sem `Game` inteiro (#4127).
 - `getUpcomingGames`/Flow com `whereIn visibility`; `getGamesByGroup` mantém constraint de grupo (#4126).
