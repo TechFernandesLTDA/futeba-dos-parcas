@@ -1,4 +1,4 @@
-/* eslint-disable require-jsdoc */
+
 /**
  * FIX #4139 + #4124: backfill LGPD.
  *
