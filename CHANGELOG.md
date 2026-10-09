@@ -369,6 +369,20 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.58.1][web-1.58.1] - 2026-10-08
+
+#### Mudado
+- Boot adiado nas páginas públicas: o JS (entry + modulepreload) só começa a baixar depois do first-contentful-paint, via `boot-<hash>.js` externo e bloco JSON `boot-assets` (sem inline novo, exceto o guard da home) (#4196).
+- Handoff do HTML prerenderizado (`src/utils/prerenderHandoff.ts`): o conteúdo estático fica em `#prerender` e o `#root` do React só aparece quando renderiza um `<h1>` (timeout de 10 s como rede de segurança), mantendo o LCP no HTML estático e sem CLS (#4196).
+- Home (`/`) prerenderizada no shell com o hero da LaunchPage (textos conferidos por `prerenderParity.test.ts`). Guard inline (hash sha256 no CSP do `firebase.json`) desliga o estático fora de `/` e para quem tem sessão conhecida (`fdp:auth-hint`, gravada pelo `AuthContext`) (#4196).
+- Poppins self-hosted (`web/public/fonts`, latin, `font-display: swap`, preload de 400 e 700) no lugar do CSS render-blocking do Google Fonts; logotipo do cabeçalho da landing em `logo-96.webp` (3,5 KB) no lugar do PNG de 292 KB (#4196).
+- Chunking por `build.rolldownOptions.output.codeSplitting.groups` (`web/vite/chunkGroups.ts`): react/recharts/Firebase de serviços frios/MUI icons/i18n em grupos próprios, com teste `chunkGroups.test.ts` (vendor-mui de 605 KB para 450 KB) (#4196).
+- `useResourcePreloading` só antecipa telas autenticadas quando há sessão (`prefetchRoutes`) (#4196).
+- `.lighthouserc.cjs`: gate de performance mobile passa a bloqueante (0,85; meta 0,9, medida 91-97 no método de referência) (#4196).
+- Lighthouse CI serve `dist` com `web/scripts/serve-dist.mjs` (replica o `firebase.json`: HTML prerenderizado por rota, rewrites, CSP); o `vite preview` ignorava `dist/<rota>/index.html` e media o shell SPA (#4196).
+
+_Issues: #4196_
+
 ### [1.58.0][web-1.58.0] - 2026-10-07
 
 #### Adicionado
@@ -3202,6 +3216,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.58.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.58.1.md
 [web-1.58.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.58.0.md
 [web-1.57.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.57.0.md
 [web-1.56.9]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.56.9.md

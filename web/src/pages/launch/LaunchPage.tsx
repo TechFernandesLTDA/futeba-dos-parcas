@@ -146,7 +146,7 @@ function LaunchPageContent() {
             <Stack direction="row" alignItems="center" spacing={1.25} sx={{ minWidth: 0 }}>
               <Box
                 component="img"
-                src="/logo.png"
+                src="/logo-96.webp"
                 alt="Logotipo do Futeba dos Parças"
                 sx={{
                   width: { xs: 36, sm: 42 },

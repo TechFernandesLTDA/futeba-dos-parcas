@@ -23,6 +23,7 @@ import { User } from '../types';
 import type { UserRole } from '../types/user';
 import { snakeToCamel } from '../utils/firestoreHelpers';
 import { createLogger } from '../utils/logger';
+import { revealApp, setAuthHint } from '../utils/prerenderHandoff';
 import { getAuthErrorMessage, AppAuthError, APP_AUTH_ERROR_CODES } from '../utils/firebaseErrors';
 import { addBreadcrumb, clearBreadcrumbs } from '../utils/errorContext';
 import { markClaimRefresh, resetClaimRefreshState } from '../utils/authRetry';
@@ -599,6 +600,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       resolveInitialAuth();
+      // #4196: dica para o guard do shell não mostrar o hero estático da home a quem já está logado.
+      setAuthHint(Boolean(firebaseUser));
+      if (firebaseUser && window.location.pathname === '/') revealApp();
       await handleAuthStateChange(firebaseUser);
     },
     (err) => {

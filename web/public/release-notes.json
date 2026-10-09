@@ -1,7 +1,27 @@
 {
   "platform": "web",
-  "generatedAt": "2026-10-09T03:24:31.391Z",
+  "generatedAt": "2026-10-09T05:11:55.287Z",
   "notes": [
+    {
+      "version": "1.58.1",
+      "buildNumber": null,
+      "releaseDate": "2026-10-08",
+      "type": "patch",
+      "showPopup": false,
+      "published": true,
+      "headline": "A página inicial e os guias do Futeba dos Parças agora abrem bem mais rápido no celular.",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "Os guias (Como funciona, Organizar pelada, Ranking, Gestão e Parcerias) aparecem quase de imediato, sem esperar o aplicativo carregar.",
+        "A página inicial mostra o topo (título, foto e botão de cadastro) antes do restante carregar.",
+        "Fontes e logotipo carregam mais leves, sem depender de servidores externos para pintar o texto."
+      ],
+      "fixed": [],
+      "issueRefs": [
+        4196
+      ]
+    },
     {
       "version": "1.58.0",
       "buildNumber": null,
