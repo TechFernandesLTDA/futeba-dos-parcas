@@ -8,8 +8,8 @@ plugins {
 // Forçar Kotlin stdlib 2.2.10 para evitar mismatch com compiler
 configurations.all {
     resolutionStrategy {
-        force("org.jetbrains.kotlin:kotlin-stdlib:2.2.10")
-        force("org.jetbrains.kotlin:kotlin-stdlib-common:2.2.10")
+        force("org.jetbrains.kotlin:kotlin-stdlib:2.2.21")
+        force("org.jetbrains.kotlin:kotlin-stdlib-common:2.2.21")
     }
 }
 
@@ -72,10 +72,10 @@ kotlin {
             dependsOn(commonMain)
             dependencies {
                 // Ktor Client
-                implementation("io.ktor:ktor-client-core:2.3.8")
-                implementation("io.ktor:ktor-client-content-negotiation:2.3.8")
-                implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.8")
-                implementation("io.ktor:ktor-client-logging:2.3.8")
+                implementation("io.ktor:ktor-client-core:2.3.13")
+                implementation("io.ktor:ktor-client-content-negotiation:2.3.13")
+                implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.13")
+                implementation("io.ktor:ktor-client-logging:2.3.13")
 
                 // SQLDelight 2.2.1
                 implementation("app.cash.sqldelight:runtime:2.2.1")
@@ -83,7 +83,7 @@ kotlin {
 
                 // GitLive Firebase Kotlin SDK 2.4.0 - suporta Android + iOS
                 // Android + iOS apenas
-                val gitLiveVersion = "2.4.0"
+                val gitLiveVersion = "2.7.0"
                 implementation("dev.gitlive:firebase-auth:$gitLiveVersion")
                 implementation("dev.gitlive:firebase-firestore:$gitLiveVersion")
                 implementation("dev.gitlive:firebase-storage:$gitLiveVersion")
@@ -98,7 +98,7 @@ kotlin {
             dependsOn(nativeAndAndroidMain)
             dependencies {
                 // Ktor Android engine
-                implementation("io.ktor:ktor-client-okhttp:2.3.8")
+                implementation("io.ktor:ktor-client-okhttp:2.3.13")
 
                 // SQLDelight Android driver
                 implementation("app.cash.sqldelight:android-driver:2.2.1")
@@ -129,7 +129,7 @@ kotlin {
 
             dependencies {
                 // Ktor iOS engine
-                implementation("io.ktor:ktor-client-darwin:2.3.8")
+                implementation("io.ktor:ktor-client-darwin:2.3.13")
 
                 // SQLDelight native driver
                 implementation("app.cash.sqldelight:native-driver:2.2.1")
