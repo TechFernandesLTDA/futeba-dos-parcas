@@ -276,9 +276,9 @@ dependencies {
 
     // Charts
     implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
-    implementation("com.patrykandpatrick.vico:compose:1.14.0")
-    implementation("com.patrykandpatrick.vico:compose-m3:1.14.0")
-    implementation("com.patrykandpatrick.vico:core:1.14.0")
+    implementation("com.patrykandpatrick.vico:compose:2.5.2")
+    implementation("com.patrykandpatrick.vico:compose-m3:2.5.2")
+    implementation("com.patrykandpatrick.vico:core:2.5.2")
 
     // Date/Time
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.5.0") // For shared module interop
