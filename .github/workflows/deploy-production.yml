@@ -19,6 +19,11 @@ on:
       - 'android-v*.*.*'
       - 'v*.*.*'
   workflow_dispatch:  # Allow manual trigger
+    inputs:
+      dry_run:
+        description: 'Só compila e assina o AAB (sem enviar à Play). Valida o runner/assinatura.'
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -128,7 +133,15 @@ jobs:
         # tentativas anteriores que tinham bytes corrompidos).
         run: ./gradlew bundleRelease --no-configuration-cache --rerun-tasks
 
+      - name: Verificar assinatura do AAB (dry run)
+        if: ${{ inputs.dry_run }}
+        run: |
+          test -s app/build/outputs/bundle/release/app-release.aab
+          jarsigner -verify app/build/outputs/bundle/release/app-release.aab | tail -1
+          echo "Dry run: AAB assinado; upload para a Play pulado."
+
       - name: Upload AAB to Play Store (Internal Testing)
+        if: ${{ !inputs.dry_run }}
         uses: r0adkll/upload-google-play@e738b9dd8f2476ea806d921b64aacd24f34515a5  # v1
         with:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_STORE_SERVICE_ACCOUNT_JSON }}
