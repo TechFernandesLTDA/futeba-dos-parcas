@@ -64,7 +64,7 @@ test('PR code uses read-only checkout credentials and hosted Android tooling', (
     ['PR Check', prWorkflow],
     ['Change Scope', classifierWorkflow],
   ]) {
-    const checkouts = (workflow.match(/uses: actions\/checkout@v4/g) ?? []).length;
+    const checkouts = (workflow.match(/uses: actions\/checkout@v7/g) ?? []).length;
     const nonPersistent = (workflow.match(/persist-credentials: false/g) ?? []).length;
     assert.equal(nonPersistent, checkouts, `${name} must not persist checkout credentials`);
   }

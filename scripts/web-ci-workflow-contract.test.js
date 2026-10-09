@@ -84,7 +84,7 @@ function assertHardenedCheckout(jobId, job) {
   const checkoutStep = extractActionStep(
     jobId,
     job,
-    'actions/checkout@v4'
+    'actions/checkout@v7'
   );
 
   assert.match(checkoutStep, /\n\s+with:/);
@@ -243,7 +243,7 @@ test('mutation testing stays outside PR and preserves its report artifact', () =
   );
   assert.match(uploadStep, /if: always\(\)/);
   assert.match(uploadStep, /continue-on-error: true/);
-  assert.match(uploadStep, /uses: actions\/upload-artifact@v4/);
+  assert.match(uploadStep, /uses: actions\/upload-artifact@v6/);
   assert.match(uploadStep, /name: mutation-report/);
   assert.match(uploadStep, /path: web\/reports\/mutation\//);
   assert.match(uploadStep, /if-no-files-found: warn/);
