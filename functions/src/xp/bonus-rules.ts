@@ -1,4 +1,4 @@
-/* eslint-disable require-jsdoc */
+
 import type {
   GameConfirmation,
   GamificationSettings,
