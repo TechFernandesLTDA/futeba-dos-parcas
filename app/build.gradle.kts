@@ -266,7 +266,7 @@ dependencies {
 
     // Google Maps & Places
     implementation("com.google.android.gms:play-services-maps:19.0.0")
-    implementation("com.google.maps.android:maps-compose:4.4.1")
+    implementation("com.google.maps.android:maps-compose:4.4.2")
     implementation("com.google.android.gms:play-services-location:21.4.0")
     implementation("com.google.android.libraries.places:places:4.1.0")
 
@@ -294,10 +294,10 @@ dependencies {
     implementation("androidx.core:core-splashscreen:1.2.0")
 
     // Testing - JUnit 5 (Jupiter)
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.1")
-    testImplementation("org.junit.jupiter:junit-jupiter-params:5.10.1")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.10.1")
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.10.1")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.14.4")
+    testImplementation("org.junit.jupiter:junit-jupiter-params:5.14.4")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.14.4")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.14.4")
 
     // JUnit 4 for Android Instrumentation Tests
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
