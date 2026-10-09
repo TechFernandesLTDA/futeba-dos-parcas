@@ -11,9 +11,9 @@ plugins {
 // Forçar Kotlin stdlib 2.2.10 para evitar mismatch com compiler (Compose 1.10.0 puxa 2.2.21)
 configurations.all {
     resolutionStrategy {
-        force("org.jetbrains.kotlin:kotlin-stdlib:2.2.10")
-        force("org.jetbrains.kotlin:kotlin-stdlib-common:2.2.10")
-        force("org.jetbrains.kotlin:kotlin-stdlib-wasm-js:2.2.10")
+        force("org.jetbrains.kotlin:kotlin-stdlib:2.4.20")
+        force("org.jetbrains.kotlin:kotlin-stdlib-common:2.4.20")
+        force("org.jetbrains.kotlin:kotlin-stdlib-wasm-js:2.4.20")
     }
 }
 
@@ -140,7 +140,7 @@ kotlin {
 
             // kotlinx-datetime — formatação de datas na feature "Novidades" (Fase G).
             // Mesma versão usada no :shared.
-            implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.1")
+            implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.8.0")
         }
 
         androidMain.dependencies {

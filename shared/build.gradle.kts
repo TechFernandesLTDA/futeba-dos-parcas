@@ -10,9 +10,9 @@ plugins {
 // Forçar Kotlin stdlib 2.2.10 para evitar mismatch com compiler
 configurations.all {
     resolutionStrategy {
-        force("org.jetbrains.kotlin:kotlin-stdlib:2.2.10")
-        force("org.jetbrains.kotlin:kotlin-stdlib-common:2.2.10")
-        force("org.jetbrains.kotlin:kotlin-stdlib-wasm-js:2.2.10")
+        force("org.jetbrains.kotlin:kotlin-stdlib:2.4.20")
+        force("org.jetbrains.kotlin:kotlin-stdlib-common:2.4.20")
+        force("org.jetbrains.kotlin:kotlin-stdlib-wasm-js:2.4.20")
     }
 }
 
@@ -58,13 +58,13 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 // Coroutines - suporta wasmJs
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
 
                 // Serialization - suporta wasmJs
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
 
                 // DateTime - suporta wasmJs
-                implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.1")
+                implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.8.0")
             }
         }
 
@@ -118,7 +118,7 @@ kotlin {
                 // GitLive traz firebase-firestore, firebase-auth, firebase-storage transitivamente
                 // kotlinx-coroutines-play-services: necessário para Tasks.await() em código legado
                 // TODO: Fase 2 - remover após migração completa para GitLive suspend functions
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.9.0")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.11.0")
 
                 // AndroidX Security Crypto (para SecureStorage)
                 implementation("androidx.security:security-crypto:1.1.0")
