@@ -2,7 +2,7 @@ plugins {
     kotlin("multiplatform")
     id("com.android.library")
     kotlin("plugin.serialization")
-    id("app.cash.sqldelight") version "2.2.1"
+    id("app.cash.sqldelight") version "2.4.0"
 }
 
 // Forçar Kotlin stdlib 2.2.10 para evitar mismatch com compiler
@@ -78,8 +78,8 @@ kotlin {
                 implementation("io.ktor:ktor-client-logging:2.3.8")
 
                 // SQLDelight 2.2.1
-                implementation("app.cash.sqldelight:runtime:2.2.1")
-                implementation("app.cash.sqldelight:coroutines-extensions:2.2.1")
+                implementation("app.cash.sqldelight:runtime:2.4.0")
+                implementation("app.cash.sqldelight:coroutines-extensions:2.4.0")
 
                 // GitLive Firebase Kotlin SDK 2.4.0 - suporta Android + iOS
                 // Android + iOS apenas
@@ -101,7 +101,7 @@ kotlin {
                 implementation("io.ktor:ktor-client-okhttp:2.3.8")
 
                 // SQLDelight Android driver
-                implementation("app.cash.sqldelight:android-driver:2.2.1")
+                implementation("app.cash.sqldelight:android-driver:2.4.0")
 
                 // Firebase Android SDK - fornecido via GitLive SDK (transitivo)
                 // GitLive traz firebase-firestore, firebase-auth, firebase-storage transitivamente
@@ -132,7 +132,7 @@ kotlin {
                 implementation("io.ktor:ktor-client-darwin:2.3.8")
 
                 // SQLDelight native driver
-                implementation("app.cash.sqldelight:native-driver:2.2.1")
+                implementation("app.cash.sqldelight:native-driver:2.4.0")
             }
         }
     }

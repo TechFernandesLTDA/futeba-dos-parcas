@@ -177,7 +177,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
 
     // Core Library Desugaring
-    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.2")
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
 
     // Core Android
     implementation("androidx.core:core-ktx:1.17.0")
@@ -230,7 +230,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.9.0")
 
     // Dependency Injection - Koin
-    val koinVersion = "4.1.1"
+    val koinVersion = "4.2.2"
     implementation("io.insert-koin:koin-core:$koinVersion")
     implementation("io.insert-koin:koin-android:$koinVersion")
     implementation("io.insert-koin:koin-compose:$koinVersion")
@@ -254,12 +254,12 @@ dependencies {
     // Credentials para Google Sign-In
     implementation("androidx.credentials:credentials:1.5.0")
     implementation("androidx.credentials:credentials-play-services-auth:1.5.0")
-    implementation("com.google.android.libraries.identity.googleid:googleid:1.2.0")
+    implementation("com.google.android.libraries.identity.googleid:googleid:1.2.1")
 
     // Image Loading - Coil 3 Kotlin Multiplatform
-    implementation("io.coil-kt.coil3:coil:3.3.0")
-    implementation("io.coil-kt.coil3:coil-compose:3.3.0")
-    implementation("io.coil-kt.coil3:coil-network-okhttp:3.3.0")
+    implementation("io.coil-kt.coil3:coil:3.6.3")
+    implementation("io.coil-kt.coil3:coil-compose:3.6.3")
+    implementation("io.coil-kt.coil3:coil-network-okhttp:3.6.3")
 
     // Shimmer Effect
     implementation("com.facebook.shimmer:shimmer:0.5.0")
@@ -304,8 +304,8 @@ dependencies {
     androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
 
     // MockK for Kotlin
-    testImplementation("io.mockk:mockk:1.14.9")
-    androidTestImplementation("io.mockk:mockk-android:1.14.9")
+    testImplementation("io.mockk:mockk:1.14.11")
+    androidTestImplementation("io.mockk:mockk-android:1.14.11")
 
     // Turbine for Flow testing
     testImplementation("app.cash.turbine:turbine:1.2.1")
@@ -315,8 +315,8 @@ dependencies {
     androidTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
 
     // Truth for better assertions
-    testImplementation("com.google.truth:truth:1.1.5")
-    androidTestImplementation("com.google.truth:truth:1.1.5")
+    testImplementation("com.google.truth:truth:1.4.5")
+    androidTestImplementation("com.google.truth:truth:1.4.5")
 
     // Compose UI Testing
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
@@ -350,10 +350,10 @@ dependencies {
     implementation("androidx.work:work-runtime-ktx:2.11.1")
 
     // Gson for Object Conversion
-    implementation("com.google.code.gson:gson:2.13.2")
+    implementation("com.google.code.gson:gson:2.14.0")
 
     // Lottie Animations
-    implementation("com.airbnb.android:lottie:6.0.0")
+    implementation("com.airbnb.android:lottie:6.7.1")
 
     // Baseline Profile - ProfileInstaller para aplicar profiles em runtime
     implementation("androidx.profileinstaller:profileinstaller:1.4.1")
