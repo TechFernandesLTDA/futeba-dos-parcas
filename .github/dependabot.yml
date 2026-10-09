@@ -58,6 +58,20 @@ updates:
         update-types: ["version-update:semver-minor"]
       - dependency-name: "io.ktor*"
         update-types: ["version-update:semver-major"]
+      # okhttp 5 vem em bloco (core + interceptors + Ktor/Retrofit), junto da migração do toolchain (#4265).
+      - dependency-name: "com.squareup.okhttp3*"
+        update-types: ["version-update:semver-major"]
+      # JUnit 6 exige api/params/engine/platform-launcher juntos; migração coordenada depois do toolchain (#4265).
+      - dependency-name: "org.junit*"
+        update-types: ["version-update:semver-major"]
+      # places 6 foi compilado com metadata de Kotlin mais novo que o 2.2.x do projeto (#4265).
+      - dependency-name: "com.google.android.libraries.places:places"
+        update-types: ["version-update:semver-major"]
+      # maps-compose 9 exige compileSdk 37 (app em 36) e migra para android-maps-utils; o Maps SDK 20 só com maps-compose 8+.
+      - dependency-name: "com.google.maps.android*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "com.google.android.gms:play-services-maps"
+        update-types: ["version-update:semver-major"]
       # SQLDelight 2.3+ publica klibs com ABI do Kotlin 2.3; o projeto está no Kotlin 2.2.x (migração coordenada: #4265).
       - dependency-name: "app.cash.sqldelight*"
         update-types: ["version-update:semver-minor", "version-update:semver-major"]
@@ -156,6 +170,20 @@ updates:
         update-types: ["version-update:semver-major"]
       # devDependency sem uso em web/ (seeds usam functions/node_modules); Functions e root ficam no 13.
       - dependency-name: "firebase-admin"
+        update-types: ["version-update:semver-major"]
+      # Tipos do Node acompanham o runtime do CI (20/22), não o major mais recente.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
+      # @mui/x-date-pickers 6 declara peer date-fns ^2 || ^3; só avança com a migração do MUI X.
+      - dependency-name: "date-fns"
+        update-types: ["version-update:semver-major"]
+      # v7 aplica regras do React Compiler e quebra o lint atual; web segue em ESLint 8.
+      - dependency-name: "eslint-plugin-react-hooks"
+        update-types: ["version-update:semver-major"]
+      # vitest 5 quebra mocks da suíte (groupWallMediaService) e precisa subir junto de @vitest/* e do runner do Stryker.
+      - dependency-name: "vitest"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@vitest/*"
         update-types: ["version-update:semver-major"]
       - dependency-name: "@stryker-mutator/*"
         update-types: ["version-update:semver-major"]
