@@ -19,7 +19,7 @@ test('KMP shared unit tests use hosted Linux with a complete Android SDK contrac
   const tests = jobBody('kmp-shared-tests');
 
   assert.match(tests, /runs-on: \$\{\{ fromJSON\(vars\.RUNNER_LABELS_LINUX \|\| '\[\"ubuntu-24\.04\"\]'\) \}\}/);
-  assert.match(tests, /uses: android-actions\/setup-android@v3/);
+  assert.match(tests, /uses: android-actions\/setup-android@v4/);
   assert.match(tests, /sdkmanager "platforms;android-36"/);
   assert.match(tests, /echo "sdk\.dir=\$ANDROID_SDK_ROOT" > local\.properties/);
   assert.match(tests, /\.\/gradlew :shared:testDebugUnitTest/);

@@ -157,3 +157,7 @@ cd C:\Users\renan\actions-runner
 ## Runner dedicado a emuladores (futeba-emulators)
 
 Os jobs que sobem emuladores Firebase (Web E2E, Functions Integration, Test Harness, Realtime Load) usam `vars.RUNNER_LABELS_EMULATORS = ["self-hosted","Linux","X64","futeba-emulators"]`. Só o runner de org `tf-wsl-1` tem essa label. Todos os runners WSL compartilham 127.0.0.1 (9099/8085/5001), então um único runner serializa esses jobs pela fila nativa do GitHub, sem cancelar nada. O grupo de concurrency global antigo (`firebase-emulator-integration`) cancelava runs pendentes de outros refs, porque o GitHub guarda só 1 pendente por grupo. Para adicionar capacidade, use portas dinâmicas por job antes de pôr a label em outro runner.
+
+## Runners do E2E Gate (futeba-poller)
+
+O job `E2E Gate` só faz polling por até 45 min. Ele roda em `vars.RUNNER_LABELS_POLLER = ["futeba-poller"]`, nos runners leves `tf-wsl-gate` e `tf-wsl-gate-2` (serviços systemd em /opt/ar-tf-wsl-gate*, sem labels padrão). Assim o pool geral (`futeba-general`) fica livre para Android, Web e Lighthouse.

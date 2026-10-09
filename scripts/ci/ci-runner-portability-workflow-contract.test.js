@@ -98,7 +98,6 @@ test('Heavy emulator, browser and Android jobs run on the Linux WSL runners', ()
     'realtime-load-ci.yml': ['realtime-load'],
     'test-harness-ci.yml': ['test-harness'],
     'android-ci.yml': ['lint', 'detekt', 'test', 'build', 'gate'],
-    'e2e-gate.yml': ['e2e-gate', 'post-merge-issue'],
   };
   for (const [file, jobs] of Object.entries(heavy)) {
     const workflow = read(`.github/workflows/${file}`);
@@ -128,6 +127,14 @@ test('Xcode and the arm64 macrobenchmark stay on the Mac runner', () => {
   assert.match(macro, /arch: arm64-v8a/);
   const ios = read('.github/workflows/ios-build.yml');
   assert.match(ios, /runs-on: \[self-hosted, macOS, ARM64, futeba\]/);
+});
+
+test('E2E Gate polling jobs use the light futeba-poller runners, never hosted minutes', () => {
+  const gate = read('.github/workflows/e2e-gate.yml');
+  for (const jobId of ['e2e-gate', 'post-merge-issue']) {
+    assert.match(job(gate, jobId), /runs-on: \$\{\{ fromJSON\(vars\.RUNNER_LABELS_POLLER \|\| vars\.RUNNER_LABELS_LINUX \|\| /, jobId);
+    assert.doesNotMatch(job(gate, jobId), /runs-on: ubuntu-/, jobId);
+  }
 });
 
 test('Emulator jobs on the shared WSL host serialize through the dedicated emulator runner', () => {
