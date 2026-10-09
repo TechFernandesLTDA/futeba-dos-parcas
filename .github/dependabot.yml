@@ -70,6 +70,9 @@ updates:
       # único uso é o gráfico de colunas de ExpandableStatsSection.kt. Sem ganho funcional (#4314, #4315).
       - dependency-name: "com.patrykandpatrick.vico*"
         update-types: ["version-update:semver-major"]
+      # retrofit 3 puxa okhttp 5 transitivo; okhttp 4 segue até a migração de toolchain (#4265) (#4320).
+      - dependency-name: "com.squareup.retrofit2*"
+        update-types: ["version-update:semver-major"]
       # JUnit 6 exige api/params/engine/platform-launcher juntos; migração coordenada depois do toolchain (#4265).
       - dependency-name: "org.junit*"
         update-types: ["version-update:semver-major"]
