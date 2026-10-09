@@ -24,7 +24,6 @@ module.exports = [
       "jest.config.js",
       "jest.integration.config.js",
       "jest.perf.config.js",
-      ".eslintrc.js",
       "eslint.config.js",
       "src/**/*.d.ts",
     ],
