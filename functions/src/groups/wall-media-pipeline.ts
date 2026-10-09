@@ -872,7 +872,7 @@ function isSafeWallMediaFinalPath(
   ).test(value);
 }
 
-/* eslint-disable require-jsdoc -- helpers privados têm contratos TypeScript. */
+
 export async function claimDraftForProcessing(
   database: FirebaseFirestore.Firestore,
   parsed: ReturnType<typeof parseWallMediaStagingPath> & object,
@@ -1602,4 +1602,4 @@ async function writeMetricSafely(
     });
   }
 }
-/* eslint-enable require-jsdoc */
+
