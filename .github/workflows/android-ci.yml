@@ -17,8 +17,8 @@ permissions:
   contents: read
 
 env:
-  JAVA_VERSION: '17'
-  JAVA_DISTRIBUTION: 'temurin'
+  JAVA_VERSION: '21'
+  JAVA_DISTRIBUTION: 'jetbrains'
 
 jobs:
   changes:
@@ -45,7 +45,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Setup JDK 17
+      - name: Setup JDK 21 (JetBrains, daemon toolchain)
         uses: actions/setup-java@v4
         with:
           java-version: ${{ env.JAVA_VERSION }}
@@ -108,7 +108,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Setup JDK 17
+      - name: Setup JDK 21 (JetBrains, daemon toolchain)
         uses: actions/setup-java@v4
         with:
           java-version: ${{ env.JAVA_VERSION }}
@@ -174,7 +174,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Setup JDK 17
+      - name: Setup JDK 21 (JetBrains, daemon toolchain)
         uses: actions/setup-java@v4
         with:
           java-version: ${{ env.JAVA_VERSION }}
@@ -244,7 +244,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Setup JDK 17
+      - name: Setup JDK 21 (JetBrains, daemon toolchain)
         uses: actions/setup-java@v4
         with:
           java-version: ${{ env.JAVA_VERSION }}
