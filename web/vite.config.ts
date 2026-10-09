@@ -4,6 +4,7 @@ import react from '@vitejs/plugin-react'
 import { visualizer } from 'rollup-plugin-visualizer'
 import path from 'path'
 import fs from 'fs'
+import { codeSplittingGroups } from './vite/chunkGroups'
 
 // Versão lida de versions.json (raiz) em build time — fonte única de verdade.
 // Build number vem do CI (GITHUB_RUN_NUMBER) ou 'dev' em local.
@@ -57,60 +58,9 @@ export default defineConfig({
         )
       },
     },
-    rollupOptions: {
+    rolldownOptions: {
       output: {
-        manualChunks(id) {
-          // Core React ecosystem
-          if (id.includes('node_modules/react') || id.includes('node_modules/react-dom') || id.includes('react-router-dom')) {
-            return 'vendor-react'
-          }
-          // MUI icons (separate from core MUI for better caching)
-          if (id.includes('@mui/icons-material')) {
-            return 'vendor-mui-icons'
-          }
-          // MUI core + Emotion
-          if (id.includes('@mui/') || id.includes('@emotion/')) {
-            return 'vendor-mui'
-          }
-          // Firebase side services: keep cold-path SDKs out of the initial auth/data chunk.
-          if (id.includes('firebase/messaging')) {
-            return 'vendor-firebase-messaging'
-          }
-          if (id.includes('firebase/storage')) {
-            return 'vendor-firebase-storage'
-          }
-          if (id.includes('firebase/functions')) {
-            return 'vendor-firebase-functions'
-          }
-          if (id.includes('firebase/analytics')) {
-            return 'vendor-firebase-analytics'
-          }
-          // Firebase SDK
-          if (id.includes('firebase/')) {
-            return 'vendor-firebase'
-          }
-          // TanStack Query
-          if (id.includes('@tanstack/react-query')) {
-            return 'vendor-query'
-          }
-          // Date utilities
-          if (id.includes('date-fns')) {
-            return 'vendor-utils'
-          }
-          // Charts (Recharts)
-          if (id.includes('recharts') || id.includes('d3-')) {
-            return 'vendor-charts'
-          }
-          // i18n locales (large JSON, code-split for lazy loading)
-          if (id.includes('src/i18n/locales/')) {
-            return 'i18n-locales'
-          }
-          // Google Maps (heavy, only used in map screens)
-          if (id.includes('@react-google-maps') || id.includes('@googlemaps')) {
-            return 'vendor-google-maps'
-          }
-          return undefined
-        },
+        codeSplitting: { groups: codeSplittingGroups },
       },
     },
   },

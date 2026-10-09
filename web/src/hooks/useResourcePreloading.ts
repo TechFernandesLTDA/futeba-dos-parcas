@@ -79,7 +79,9 @@ function preloadRouteModule(route: string): Promise<void> {
  * - Preconnect to Firebase APIs
  * - Prefetch likely next routes based on current route
  */
-export function useResourcePreloading() {
+export function useResourcePreloading(options: { prefetchRoutes?: boolean } = {}) {
+  // #4196: as telas prefetchadas exigem sessão; visitantes (home pública e guias) não devem baixá-las.
+  const { prefetchRoutes = true } = options;
   const location = useLocation();
   const prefetchedRoutes = useRef<Set<string>>(new Set());
 
@@ -112,7 +114,7 @@ export function useResourcePreloading() {
       '/statistics': ['/league'],
     };
 
-    if (!canPrefetchOnCurrentNetwork()) return;
+    if (!prefetchRoutes || !canPrefetchOnCurrentNetwork()) return;
 
     const currentPath = location.pathname;
     const routesToPrefetch = prefetchMap[currentPath] || [];
@@ -127,7 +129,7 @@ export function useResourcePreloading() {
         }
       });
     });
-  }, [location.pathname]);
+  }, [location.pathname, prefetchRoutes]);
 }
 
 /**

@@ -3,8 +3,12 @@ import ReactDOM from 'react-dom/client';
 import App from './App.tsx';
 import { createLogger } from './utils/logger';
 import { PwaInstallProvider } from './hooks/usePwaInstall';
+import { initPrerenderHandoff } from './utils/prerenderHandoff';
 
 const swLogger = createLogger('ServiceWorker');
+
+// Páginas públicas prerenderizadas: mantém o HTML estático até o app ter conteúdo equivalente (#4196).
+initPrerenderHandoff();
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

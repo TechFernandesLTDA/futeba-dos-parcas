@@ -1,6 +1,7 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { createHash } from 'node:crypto';
 import {
   PUBLIC_ROUTE_METADATA,
   SEO_PARENT_COMPANY_URL,
@@ -9,7 +10,7 @@ import {
   applySeoMetadata,
 } from './metadata';
 // @ts-expect-error módulo .mjs de script de build, sem tipos
-import { routes, SITE_URL } from '../../../scripts/prerender-routes.mjs';
+import { routes, SITE_URL, homePage, HOME_GUARD_SOURCE } from '../../../scripts/prerender-routes.mjs';
 
 interface PrerenderRoute {
   path: string;
@@ -84,5 +85,50 @@ describe('branding Tech Fernandes: index.html x metadata.ts', () => {
   it('OG/Twitter description estáticas carregam a atribuição', () => {
     expect(indexHtml).toContain(`${SEO_PRODUCT_ATTRIBUTION}" />`);
     expect(indexHtml.match(new RegExp(SEO_PRODUCT_ATTRIBUTION.replace('.', '\\.'), 'g'))?.length).toBeGreaterThanOrEqual(2);
+  });
+});
+
+// Home estática (#4196): o hero prerenderizado precisa ser equivalente ao topo da LaunchPage e o guard
+// inline do shell precisa estar autorizado no CSP do Firebase Hosting.
+describe('home prerenderizada (#4196)', () => {
+  const normalize = (value: string) => value.replace(/\s+/g, ' ').trim();
+  const launchPage = normalize(readFileSync(resolve(process.cwd(), 'src/pages/launch/LaunchPage.tsx'), 'utf8'));
+
+  it.each(Object.entries(homePage))('LaunchPage contém o texto estático "%s"', (_key, text) => {
+    expect(launchPage).toContain(normalize(text as string));
+  });
+
+  it('o CSP do firebase.json autoriza o hash sha256 do guard inline', () => {
+    const firebase = JSON.parse(readFileSync(resolve(process.cwd(), '../firebase.json'), 'utf8'));
+    const csp = firebase.hosting.headers
+      .flatMap((h: { headers: { key: string; value: string }[] }) => h.headers)
+      .find((h: { key: string }) => h.key === 'Content-Security-Policy').value as string;
+    const hash = createHash('sha256').update(HOME_GUARD_SOURCE as string).digest('base64');
+    expect(csp).toContain(`'sha256-${hash}'`);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    window.history.pushState({}, '', '/');
+  });
+
+  it('o guard só deixa o estático em "/" e sem sessão conhecida', () => {
+    const run = (path: string, hint: string | null) => {
+      const store = new Map<string, string>(hint ? [['fdp:auth-hint', hint]] : []);
+      vi.stubGlobal('localStorage', {
+        getItem: (key: string) => store.get(key) ?? null,
+        setItem: (key: string, value: string) => store.set(key, value),
+        removeItem: (key: string) => store.delete(key),
+      });
+      document.documentElement.removeAttribute('data-no-prerender');
+      window.history.pushState({}, '', path);
+      new Function(HOME_GUARD_SOURCE as string)();
+      return document.documentElement.hasAttribute('data-no-prerender');
+    };
+    expect(run('/', null)).toBe(false);
+    expect(run('/?tab=1', null)).toBe(false);
+    expect(run('/', '1')).toBe(true);
+    expect(run('/games', null)).toBe(true);
+    expect(run('/organizar-pelada', null)).toBe(true);
   });
 });

@@ -463,7 +463,8 @@ function AppRoutes() {
   const location = useLocation();
   const focusMainContent = useFocusOnNavigate();
   useScrollRestoration();
-  useResourcePreloading();
+  const { firebaseUser: preloadUser } = useAuth();
+  useResourcePreloading({ prefetchRoutes: Boolean(preloadUser) });
   const routeTransitionKey = `${location.pathname}${location.search}`;
   const routeTransitionVariant = location.pathname === '/' ? 'fade' : 'slideUp';
 

@@ -141,3 +141,23 @@ export const routes = [
     ],
   },
 ];
+
+// Home (/): hero estático equivalente ao topo da LaunchPage. Os textos DEVEM existir em
+// src/pages/launch/LaunchPage.tsx (teste src/components/seo/prerenderParity.test.ts) — #4196.
+export const homePage = {
+  overline: 'Da convocação ao apito final',
+  heading: 'Sua pelada sai do grupo e entra em campo.',
+  lead: 'Confirmações, times, placar, estatísticas e ranking em um só lugar para quem organiza, para quem joga e para quem oferece a quadra.',
+  cta: 'Organizar minha pelada',
+  headerLogin: 'Entrar',
+  headerRegister: 'Criar conta',
+  imageAlt: 'Amigos reunidos em um campo com a marca Futeba dos Parças',
+  logoAlt: 'Logotipo do Futeba dos Parças',
+};
+
+// Guard inline do shell (index.html): o shell serve TODAS as rotas do SPA (rewrite **), então o hero
+// estático da home só pode aparecer em "/" e para quem não tem sessão conhecida (dica gravada pelo
+// AuthContext em localStorage). Nas demais rotas o atributo desliga o #prerender antes do 1º paint.
+// O hash sha256 deste texto precisa estar em script-src do firebase.json (teste firebaseCspHashes).
+export const HOME_GUARD_SOURCE =
+  "(function(){var d=document.documentElement;try{var p=location.pathname;if((p!=='/'&&p!=='')||localStorage.getItem('fdp:auth-hint')==='1')d.setAttribute('data-no-prerender','')}catch(e){d.setAttribute('data-no-prerender','')}})();";

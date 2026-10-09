@@ -19,13 +19,13 @@ module.exports = {
     },
     assert: {
       assertions: {
-        // Meta #4196: >= 0.9. Em warn porque o bundle global do app ainda impede 0.9 no preset mobile
-        // (ver reports/lighthouse-growth); a11y e SEO são bloqueantes.
-        'categories:performance': ['warn', { minScore: 0.9 }],
+        // Meta #4196: >= 0.9 no preset mobile (bloqueante). HTML prerenderizado + boot do JS depois do FCP;
+        // medições em reports/lighthouse-perf (mobile 91-97, desktop 100).
+        'categories:performance': ['error', { minScore: 0.9 }],
         'categories:accessibility': ['error', { minScore: 0.9 }],
         'categories:best-practices': ['warn', { minScore: 0.9 }],
         'categories:seo': ['error', { minScore: 0.9 }],
-        'largest-contentful-paint': ['warn', { maxNumericValue: 5000 }],
+        'largest-contentful-paint': ['warn', { maxNumericValue: 2500 }],
         'cumulative-layout-shift': ['error', { maxNumericValue: 0.1 }],
         'interaction-to-next-paint': 'off',
       },

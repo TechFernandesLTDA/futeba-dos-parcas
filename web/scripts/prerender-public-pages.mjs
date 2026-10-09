@@ -1,4 +1,5 @@
 import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
@@ -8,9 +9,12 @@ import {
   PARENT_ORG_NAME,
   PARENT_ORG_URL,
   ATTRIBUTION,
+  homePage,
+  HOME_GUARD_SOURCE,
 } from './prerender-routes.mjs';
 
-// Gera HTML estático (head por rota + conteúdo semântico no #root) para as páginas
+// Gera HTML estático (head por rota + conteúdo semântico em #prerender; o #root do React fica escondido
+// até o handoff em src/utils/prerenderHandoff.ts) para as páginas
 // públicas indexáveis. O index.html da raiz NÃO é alterado: ele é o shell SPA servido
 // para todas as demais rotas (rewrite **), e conteúdo de marketing ali apareceria em
 // rotas autenticadas antes do React montar.
@@ -38,13 +42,32 @@ const ROUTE_CHUNKS = {
 const SHARED_CHUNKS = ['GrowthHeader', 'GrowthFooter', 'GrowthBreadcrumbs', 'GrowthCtaSection', 'GrowthFaq'];
 const assetFiles = existsSync(resolve(distDir, 'assets')) ? readdirSync(resolve(distDir, 'assets')) : [];
 
-function chunkPreloads(route) {
+function routeChunkFiles(route) {
   const names = [ROUTE_CHUNKS[route.path], ...SHARED_CHUNKS].filter(Boolean);
-  const files = names
+  return names
     .map((name) => assetFiles.find((f) => f.startsWith(`${name}-`) && f.endsWith('.js')))
-    .filter(Boolean);
-  return files.map((f) => `    <link rel="modulepreload" crossorigin href="/assets/${f}">`).join('\n');
+    .filter(Boolean)
+    .map((f) => `/assets/${f}`);
 }
+
+// Boot adiado (#4196): o JS do app só começa a ser baixado DEPOIS do first-contentful-paint. Nas páginas
+// prerenderizadas o conteúdo já está no HTML, então o bundle (entry + modulepreloads) não precisa disputar
+// banda/CPU com a primeira pintura nem com as fontes; o React monta em segundo plano e o handoff
+// (src/utils/prerenderHandoff.ts) troca o estático pelo app. Arquivo externo e com hash no nome (não exige
+// hash de CSP nem quebra o cache immutable). Lê os assets de um bloco JSON (não executável) no HTML.
+const BOOT_SOURCE = `(function(){var c;try{c=JSON.parse(document.getElementById('boot-assets').textContent)}catch(e){return}var t=false;function go(){if(t)return;t=true;(c.preload||[]).forEach(function(h){var l=document.createElement('link');l.rel='modulepreload';l.href=h;document.head.appendChild(l)});var s=document.createElement('script');s.type='module';s.src=c.entry;document.head.appendChild(s)}if(document.documentElement.hasAttribute('data-no-prerender')){go();return}try{new PerformanceObserver(function(l,o){if(l.getEntriesByName('first-contentful-paint').length){o.disconnect();setTimeout(go,0)}}).observe({type:'paint',buffered:true})}catch(e){go();return}setTimeout(go,3000)})();`;
+const BOOT_FILE = `boot-${createHash('sha256').update(BOOT_SOURCE).digest('hex').slice(0, 8)}.js`;
+mkdirSync(resolve(distDir, 'assets'), { recursive: true });
+writeFileSync(resolve(distDir, 'assets', BOOT_FILE), BOOT_SOURCE, 'utf8');
+
+const ENTRY_RE = /[ \t]*<script type="module" crossorigin src="(\/assets\/index-[^"]+\.js)"><\/script>\r?\n?/i;
+const MODULEPRELOAD_RE = /[ \t]*<link rel="modulepreload" crossorigin href="([^"]+)"[^>]*>\r?\n?/gi;
+const entryMatch = baseHtml.match(ENTRY_RE);
+if (!entryMatch) {
+  console.error('[prerender] Erro: script de entrada do Vite não encontrado em dist/index.html.');
+  process.exit(1);
+}
+const BASE_PRELOADS = [...baseHtml.matchAll(MODULEPRELOAD_RE)].map((m) => m[1]);
 
 function escapeHtml(value) {
   return String(value)
@@ -169,19 +192,100 @@ function generatePrerenderedHtml(route) {
   // O preload do hero é da landing da raiz; nas guias ele só disputa banda com o JS.
   html = replaceOnce(html, /[ \t]*<link rel="preload" as="image" href="\/og-futeba-dos-parcas-hero\.webp"[^>]*>\r?\n?/i, '', 'hero preload', route);
 
+  html = replaceOnce(html, ENTRY_RE, '', 'entry script', route);
+  html = html.replace(MODULEPRELOAD_RE, '');
+  const preloads = [...new Set([...BASE_PRELOADS, ...routeChunkFiles(route)])];
+  const bootAssets = JSON.stringify({ entry: entryMatch[1], preload: preloads });
   html = replaceOnce(
     html,
     /<\/head>/i,
-    `${chunkPreloads(route)}\n    <script type="application/ld+json" id="seo-breadcrumb-jsonld">${breadcrumbJsonLd(route)}</script>\n  </head>`,
+    `    <script type="application/json" id="boot-assets">${bootAssets}</script>
+    <script defer src="/assets/${BOOT_FILE}"></script>
+    <script type="application/ld+json" id="seo-breadcrumb-jsonld">${breadcrumbJsonLd(route)}</script>
+  </head>`,
     'head end',
     route,
   );
   html = replaceOnce(
     html,
     '<div id="root"></div>',
-    `<div id="root">${generateSemanticContent(route)}</div>`,
+    `<div id="prerender">${generateSemanticContent(route)}</div><div id="root" style="display:none"></div>`,
     'root',
     route,
+  );
+  return html;
+}
+
+// ---------------------------------------------------------------------------------------------
+// Home ("/"): hero estático no shell (dist/index.html). O shell atende todas as rotas do SPA, por isso o
+// guard inline (HOME_GUARD_SOURCE) desliga o #prerender fora de "/" e para quem tem sessão conhecida.
+const HOME_CSS = `
+body{margin:0}
+#prerender~#root{display:none}
+[data-no-prerender] #prerender{display:none}
+[data-no-prerender] #prerender~#root{display:block}
+.ph{font-family:Poppins,"Plus Jakarta Sans","SF Pro Text","Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:#fcfcfc;color:#1a1c1e;min-height:100vh;line-height:1.5;letter-spacing:.5px}
+.ph *{box-sizing:border-box}
+.ph a{text-decoration:none}
+.ph-wrap{max-width:1200px;margin:0 auto;padding:0 16px}
+.ph-header{background:rgba(255,255,255,.96);border-bottom:1px solid #e5e3e6;position:sticky;top:0;z-index:1100}
+.ph-hrow{display:flex;align-items:center;justify-content:space-between;min-height:64px;padding-top:8px;padding-bottom:8px;gap:8px}
+.ph-brand{display:flex;align-items:center;gap:10px;min-width:0}
+.ph-logo{width:36px;height:36px;border-radius:50%;object-fit:contain;flex-shrink:0}
+.ph-name{display:none;font-weight:900;font-size:1rem;white-space:nowrap}
+.ph-actions{display:flex;gap:8px;flex-shrink:0}
+.ph-hb{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 24px;border-radius:12px;font-size:13px;font-weight:600;white-space:nowrap;color:#00852a}
+.ph-hb.f{background:#00852a;color:#fff}
+.ph-hero{background:#00852a;color:#fff}
+.ph-grid{display:grid;grid-template-columns:minmax(0,1fr);grid-template-areas:"intro" "heroImage" "details";row-gap:24px;align-items:center;padding:32px 0}
+.ph-intro{grid-area:intro;max-width:720px}
+.ph-over{display:block;font-size:11px;font-weight:800;line-height:2.66;letter-spacing:.14em;text-transform:uppercase;margin-bottom:24px}
+.ph-h1{margin:0;font-size:36px;line-height:1.02;font-weight:900;letter-spacing:normal}
+.ph-img{grid-area:heroImage;display:block;width:100%;max-width:500px;height:auto;aspect-ratio:1200/630;object-fit:cover;border-radius:48px;justify-self:center;box-shadow:0 7px 8px -4px rgba(0,0,0,.2),0 12px 17px 2px rgba(0,0,0,.14),0 5px 22px 4px rgba(0,0,0,.12)}
+.ph-details{grid-area:details;max-width:720px}
+.ph-lead{margin:0 0 24px;font-size:22px;line-height:32px;font-weight:600;opacity:.9;max-width:650px;letter-spacing:normal}
+.ph-cta{display:flex;align-items:center;justify-content:center;min-height:46px;padding:8px 22px;border-radius:12px;background:#fff;color:#005a1c;font-size:15px;font-weight:600}
+@media(min-width:600px){.ph-wrap{padding:0 24px}.ph-hrow{min-height:72px;padding-top:12px;padding-bottom:12px}.ph-logo{width:42px;height:42px}.ph-name{display:block}.ph-h1{font-size:39px}.ph-cta{display:inline-flex}}
+@media(min-width:900px){.ph-grid{grid-template-columns:minmax(0,1fr) minmax(360px,500px);grid-template-areas:"intro heroImage" "details heroImage";column-gap:72px;padding:88px 0}.ph-h1{font-size:41.7px}.ph-lead{font-size:23.4px}}
+`.replace(/\n/g, '');
+
+function generateHomeContent() {
+  const h = homePage;
+  return `<style>${HOME_CSS}</style><div class="ph">
+    <header class="ph-header"><div class="ph-wrap ph-hrow">
+      <span class="ph-brand"><img class="ph-logo" src="/logo-96.webp" width="36" height="36" alt="${escapeHtml(h.logoAlt)}"><span class="ph-name">${escapeHtml(SITE_NAME)}</span></span>
+      <span class="ph-actions"><a class="ph-hb" href="/login">${escapeHtml(h.headerLogin)}</a><a class="ph-hb f" href="/register">${escapeHtml(h.headerRegister)}</a></span>
+    </div></header>
+    <main><section class="ph-hero"><div class="ph-wrap"><div class="ph-grid">
+      <div class="ph-intro"><span class="ph-over">${escapeHtml(h.overline)}</span><h1 class="ph-h1">${escapeHtml(h.heading)}</h1></div>
+      <img class="ph-img" src="/og-futeba-dos-parcas-hero.webp" width="1200" height="630" alt="${escapeHtml(h.imageAlt)}" fetchpriority="high">
+      <div class="ph-details"><p class="ph-lead">${escapeHtml(h.lead)}</p><a class="ph-cta" href="/register">${escapeHtml(h.cta)}</a></div>
+    </div></div></section></main>
+  </div>`;
+}
+
+function generateHomeShell() {
+  const ctx = { path: '/' };
+  let html = baseHtml;
+  html = replaceOnce(html, ENTRY_RE, '', 'entry script', ctx);
+  html = html.replace(MODULEPRELOAD_RE, '');
+  const bootAssets = JSON.stringify({ entry: entryMatch[1], preload: BASE_PRELOADS });
+  html = replaceOnce(
+    html,
+    /<\/head>/i,
+    `    <script>${HOME_GUARD_SOURCE}</script>
+    <script type="application/json" id="boot-assets">${bootAssets}</script>
+    <script defer src="/assets/${BOOT_FILE}"></script>
+  </head>`,
+    'head end',
+    ctx,
+  );
+  html = replaceOnce(
+    html,
+    '<div id="root"></div>',
+    `<div id="prerender">${generateHomeContent()}</div><div id="root"></div>`,
+    'root',
+    ctx,
   );
   return html;
 }
@@ -197,4 +301,6 @@ for (const route of routes) {
   console.log(`[prerender] ${outPath}`);
 }
 
+writeFileSync(templatePath, generateHomeShell(), 'utf8');
+console.log(`[prerender] ${templatePath} (home + shell)`);
 console.log(`[prerender] ${routes.length} páginas geradas.`);
