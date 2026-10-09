@@ -232,9 +232,9 @@ jobs:
     # Tests perf são experimentais — ESM modules de @google-cloud/firestore
     # quebram com ts-jest default. Marcar non-blocking até ajustar transform.
     continue-on-error: true
-    concurrency:
-      group: futeba-functions-firebase-emulators
-      cancel-in-progress: false
+    # Sem `concurrency`: o job roda em VM hospedada própria (portas isoladas).
+    # O grupo antigo só servia para serializar emuladores no host compartilhado e
+    # fazia o GitHub cancelar o job pendente ("higher priority waiting request").
 
     steps:
       - name: Checkout code

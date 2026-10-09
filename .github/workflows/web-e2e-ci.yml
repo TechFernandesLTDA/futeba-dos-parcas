@@ -108,8 +108,11 @@ jobs:
         # memória) durante os testes — evita o `vite dev` que estourava o runner
         # por OOM. O build roda ANTES dos emuladores (menor pico de memória) e
         # herda as VITE_* do job env (incluindo VITE_USE_EMULATOR=true). #2784
+        # Usa `build:e2e` (e não `build -- --mode e2e`): o script `build` termina em
+        # `&& prerender`, então o npm anexaria `--mode e2e` ao prerender e o vite
+        # buildaria em production, sem wiring de emulador (login batia no Google).
         working-directory: web
-        run: npm run build -- --mode e2e
+        run: npm run build:e2e
 
       - name: Instalar browsers Playwright
         working-directory: web

@@ -80,7 +80,11 @@ test('optimized E2E preview opts into emulators without weakening production', (
   const job = extractJob(e2eWorkflow, 'web-e2e');
   const buildStep = extractStep(job, 'Build web (modo emulador)');
 
-  assert.match(buildStep, /run: npm run build -- --mode e2e/);
+  assert.match(buildStep, /run: npm run build:e2e/);
+  // O `--mode e2e` precisa ir direto no `vite build`; anexar ao `npm run build`
+  // o jogaria no fim da cadeia (prerender) e o bundle sairia em production.
+  const webPackage = JSON.parse(read('web/package.json'));
+  assert.match(webPackage.scripts['build:e2e'], /vite\.js build --mode e2e/);
   assert.match(emulatorMode, /env\.VITE_USE_EMULATOR === 'true'/);
   assert.match(emulatorMode, /env\.DEV \|\| env\.MODE === 'e2e'/);
 

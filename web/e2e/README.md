@@ -82,7 +82,7 @@ configurado.
 Os serviços em `web/src/services/firebase*.ts` conectam Auth, Firestore,
 Storage e Functions automaticamente quando `VITE_USE_EMULATOR=true` e o Vite
 está em desenvolvimento. Para o preview otimizado do CI, o artefato deve ser
-gerado com `npm run build -- --mode e2e`; um build production normal nunca
+gerado com `npm run build:e2e`; um build production normal nunca
 aceita o opt-in do emulador. Portas padrão: Auth=9099, Firestore=8085,
 Storage=9199, Functions=5001.
 
