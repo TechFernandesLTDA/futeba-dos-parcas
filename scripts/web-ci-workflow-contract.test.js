@@ -75,7 +75,7 @@ function assertSelfHostedRunner(jobId, job) {
 
   assert.equal(
     runnerLine?.trim(),
-    "runs-on: ${{ fromJSON(vars.RUNNER_LABELS_LINUX || vars.RUNNER_LABELS || '[\"self-hosted\",\"macOS\",\"ARM64\"]') }}",
+    "runs-on: ${{ fromJSON(vars.RUNNER_LABELS_LINUX || '[\"self-hosted\",\"Linux\",\"X64\",\"futeba-general\"]') }}",
     `${jobId} must use the repository runner selector`
   );
 }
@@ -259,7 +259,7 @@ test('Lighthouse reads PR metadata with a Linux Chromium runner', () => {
     /^permissions:\n\s+contents: read\n\s+pull-requests: read$/m
   );
   assertNodeJobContract('lighthouse', lighthouse);
-  assert.match(lighthouse, /runs-on: \$\{\{ fromJSON\(vars\.RUNNER_LABELS_LINUX \|\| vars\.RUNNER_LABELS \|\| '\[\"self-hosted\",\"macOS\",\"ARM64\"\]'\) \}\}/);
+  assert.match(lighthouse, /runs-on: \$\{\{ fromJSON\(vars\.RUNNER_LABELS_LINUX \|\| '\[\"self-hosted\",\"Linux\",\"X64\",\"futeba-general\"\]'\) \}\}/);
   assert.match(lighthouse, /npx playwright install chromium/);
   assert.doesNotMatch(lighthouse, /--with-deps/);
   assert.match(lighthouse, /CHROME_PATH=.*chromium\.executablePath/);

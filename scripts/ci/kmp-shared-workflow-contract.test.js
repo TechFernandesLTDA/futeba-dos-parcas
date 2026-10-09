@@ -37,7 +37,7 @@ test('iOS framework and app builds stay pinned to the self-hosted Mac (no hosted
 
   assert.match(
     jobBody('notify'),
-    /runs-on: \$\{\{ fromJSON\(vars\.RUNNER_LABELS \|\| '\["self-hosted","macOS","ARM64"\]'\) \}\}/,
+    /runs-on: \$\{\{ fromJSON\(vars\.RUNNER_LABELS_LINUX \|\| '\["self-hosted","Linux","X64","futeba-general"\]'\) \}\}/,
     'notify must remain on the configurable runner pool'
   );
 });

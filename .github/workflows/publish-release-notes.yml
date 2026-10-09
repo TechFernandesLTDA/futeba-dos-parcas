@@ -39,7 +39,7 @@ concurrency:
 jobs:
   publish:
     name: Publish release notes
-    runs-on: ${{ fromJSON(vars.RUNNER_LABELS_LINUX || vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS_LINUX || '["self-hosted","Linux","X64","futeba-general"]') }}
     timeout-minutes: 10
     # Publica a partir do que esta na master (fonte unica das notas).
     if: github.ref == 'refs/heads/master'

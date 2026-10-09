@@ -149,7 +149,7 @@ fastlane beta                              # Deploy to Firebase App Distribution
 - **Node 22** required (see `.nvmrc`) — run `nvm use` before working in `web/` or `functions/`
 - **Dependabot**: monthly schedule, limit 2 PRs, label `dependencies`. Auto-bumps closed — deps handled in batch via `npm audit fix`
 - **Firebase Hosting URL**: `https://futebadosparcas.com.br` (SPA, all routes → `/index.html`)
-- **Self-hosted macOS runners** for `macos-arm64` jobs (KMP iOS, Semgrep, Play Store deploy) — use skill `futeba-runner` to manage
+- **Runners self-hosted Linux (WSL)**: sem Mac desde 09/10/2026. Topologia em `docs/CI_RUNNERS.md`; iOS só com `vars.IOS_MAC_RUNNER=true`
 - **Workflow shell injection**: NUNCA `echo '${{ secrets.X }}'` direto — use env vars + `printf '%s' "$VAR"`. Skill `futeba-gh-secrets` documents the pattern
 
 ---
@@ -598,7 +598,7 @@ Ou use a skill `/futeba-status` para snapshot completo (CI, runners, RAM, hostin
 - **Notify Build Status**: depende do KMP Framework, falha em cascata em Linux — **ignorar**
 - **CodeQL removido (07/10/2026)**: exige GitHub Advanced Security (pago) em repo privado. SAST = Semgrep (falha em ERROR), segredos = gitleaks CLI, Kotlin = Detekt. Sem upload de SARIF (artifact). Ver `docs/CI_RUNNERS.md`
 - **Build iOS App**: `skipping` em PRs que não tocam `:shared` — esperado
-- **Self-hosted macOS runner OOM**: daemon disappeared/stopped → `gh run rerun --failed` (não é bug, é capacidade)
+- **Runner WSL offline**: o WSL parou → a tarefa `WSL-Runners-Keepalive` religa em até 5 min (ver `docs/CI_RUNNERS.md`)
 
 ### CI/CD Workflows (`.github/workflows/`)
 
@@ -611,7 +611,7 @@ Ou use a skill `/futeba-status` para snapshot completo (CI, runners, RAM, hostin
 | `deploy-production.yml` | Release | Google Play production deploy |
 | `release.yml` | Tag | Create GitHub release |
 | `version-bump.yml` | Manual | Bump version via script |
-| `ios-build.yml` | Push/PR | KMP iOS framework build (macOS runner) |
+| `ios-build.yml` | Push/PR | Testes KMP compartilhados (Linux); framework/app iOS só com `IOS_MAC_RUNNER=true` |
 | `semgrep.yml` | Schedule/PR | SAST (Semgrep), falha em ERROR |
 | `secret-scan.yml` | Push/PR/Schedule | Segredos (gitleaks CLI) |
 | `claude.yml` | Issue/PR | Claude Code AI assistance |

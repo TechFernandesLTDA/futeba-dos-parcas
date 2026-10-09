@@ -149,7 +149,7 @@ test('iOS app build consumes the narrow classifier contract', () => {
   assert.match(iosWorkflow, /ios_app_scope:[\s\S]*?runs-on: \$\{\{ fromJSON\(vars\.RUNNER_LABELS_LINUX \|\| '\[\"ubuntu-24\.04\"\]'\) \}\}/);
   assert.match(iosWorkflow, /ios_app_scope:[\s\S]*?should_run: \$\{\{ steps\.detect\.outputs\.should_run \}\}/);
   assert.match(iosAppJob, /needs: \[build-shared-framework, ios_app_scope\]/);
-  assert.match(iosAppJob, /if: needs\.ios_app_scope\.outputs\.should_run == 'true'/);
+  assert.match(iosAppJob, /if: vars\.IOS_MAC_RUNNER == 'true' && needs\.ios_app_scope\.outputs\.should_run == 'true'/);
   assert.match(iosAppJob, /runs-on: \[self-hosted, macOS, ARM64, futeba\]/);
   assert.doesNotMatch(iosAppJob, /fromJSON\(vars\.RUNNER_LABELS/);
   assert.match(iosAppJob, /Setup Xcode/);

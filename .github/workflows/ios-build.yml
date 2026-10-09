@@ -112,6 +112,8 @@ jobs:
     name: Build Shared KMP Framework
     # Kotlin/Native para iOS exige macOS: fixo no Mac self-hosted (label `futeba`),
     # nunca em runner hospedado (macOS hospedado consome 10x os minutos gratuitos).
+    # Sem runner macOS desde 09/10/2026 (iOS estacionado, #4202): liga com vars.IOS_MAC_RUNNER=true.
+    if: vars.IOS_MAC_RUNNER == 'true'
     runs-on: [self-hosted, macOS, ARM64, futeba]
     timeout-minutes: 40
     needs: kmp-shared-tests
@@ -148,7 +150,7 @@ jobs:
     runs-on: [self-hosted, macOS, ARM64, futeba]
     timeout-minutes: 60
     needs: [build-shared-framework, ios_app_scope]
-    if: needs.ios_app_scope.outputs.should_run == 'true'
+    if: vars.IOS_MAC_RUNNER == 'true' && needs.ios_app_scope.outputs.should_run == 'true'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -215,7 +217,7 @@ jobs:
 
   notify:
     name: Notify Build Status
-    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS_LINUX || '["self-hosted","Linux","X64","futeba-general"]') }}
     timeout-minutes: 5
     needs: [kmp-shared-tests, build-shared-framework, build-ios-app, ios_app_scope]
     if: always()
@@ -225,6 +227,14 @@ jobs:
           echo "KMP Tests: ${{ needs.kmp-shared-tests.result }}"
           echo "Framework Build: ${{ needs.build-shared-framework.result }}"
           echo "iOS App Build: ${{ needs.build-ios-app.result }}"
+
+          if [ "${{ vars.IOS_MAC_RUNNER }}" != "true" ]; then
+            if [ "${{ needs.kmp-shared-tests.result }}" != "success" ]; then
+              echo "KMP shared tests failed"; exit 1
+            fi
+            echo "Sem runner macOS (iOS estacionado, #4202): só os testes KMP compartilhados rodaram."
+            exit 0
+          fi
 
           if [ "${{ needs.kmp-shared-tests.result }}" != "success" ] || \
              [ "${{ needs.build-shared-framework.result }}" != "success" ]; then

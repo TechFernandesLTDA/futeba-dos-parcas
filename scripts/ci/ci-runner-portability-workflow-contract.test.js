@@ -73,7 +73,7 @@ test('Android PR validation uses Linux runner and validates SDK 36', () => {
 test('Lighthouse selects a Linux browser explicitly', () => {
   const workflow = read('.github/workflows/web-lighthouse-ci.yml');
   const lighthouseConfig = read('web/.lighthouserc.cjs');
-  assert.match(workflow, /runs-on: \$\{\{ fromJSON\(vars\.RUNNER_LABELS_LINUX \|\| vars\.RUNNER_LABELS \|\| '\[\"self-hosted\",\"macOS\",\"ARM64\"\]'\) \}\}/);
+  assert.match(workflow, /runs-on: \$\{\{ fromJSON\(vars\.RUNNER_LABELS_LINUX \|\| '\[\"self-hosted\",\"Linux\",\"X64\",\"futeba-general\"\]'\) \}\}/);
   assert.match(workflow, /playwright install chromium/);
   assert.doesNotMatch(workflow, /--with-deps/);
   assert.match(workflow, /CHROME_PATH=.*chromium\.executablePath/);
@@ -90,7 +90,7 @@ test('Functions integration polling allows slow emulator triggers', () => {
 });
 
 test('Heavy emulator, browser and Android jobs run on the Linux WSL runners', () => {
-  const linux = new RegExp(String.raw`runs-on: \$\{\{ fromJSON\((vars\.RUNNER_LABELS_EMULATORS \|\| )?vars\.RUNNER_LABELS_LINUX \|\| vars\.RUNNER_LABELS \|\| '\[\"self-hosted\",\"macOS\",\"ARM64\"\]'\) \}\}`);
+  const linux = new RegExp(String.raw`runs-on: \$\{\{ fromJSON\((vars\.RUNNER_LABELS_EMULATORS \|\| )?vars\.RUNNER_LABELS_LINUX \|\| '\[\"self-hosted\",\"Linux\",\"X64\",\"futeba-general\"\]'\) \}\}`);
   const heavy = {
     'web-e2e-ci.yml': ['web-e2e'],
     'web-lighthouse-ci.yml': ['lighthouse'],
@@ -121,12 +121,16 @@ test('Android CI on Linux provisions the SDK instead of relying on a Mac install
   }
 });
 
-test('Xcode and the arm64 macrobenchmark stay on the Mac runner', () => {
+test('Sem runner macOS: macrobenchmark manual no Linux (x86_64) e iOS só com IOS_MAC_RUNNER', () => {
   const macro = read('.github/workflows/android-macrobenchmark.yml');
-  assert.match(job(macro, 'macrobenchmark'), new RegExp(String.raw`runs-on: \$\{\{ fromJSON\(vars\.RUNNER_LABELS \|\| '\[\"self-hosted\",\"macOS\",\"ARM64\"\]'\) \}\}`));
-  assert.match(macro, /arch: arm64-v8a/);
+  assert.match(job(macro, 'macrobenchmark'), new RegExp(String.raw`runs-on: \$\{\{ fromJSON\(vars\.RUNNER_LABELS_LINUX \|\| '\[\"self-hosted\",\"Linux\",\"X64\",\"futeba-general\"\]'\) \}\}`));
+  assert.match(macro, /arch: x86_64/);
+  assert.doesNotMatch(macro, /\n  push:/, 'macrobenchmark não roda em push (emulador pesado no pool compartilhado)');
   const ios = read('.github/workflows/ios-build.yml');
   assert.match(ios, /runs-on: \[self-hosted, macOS, ARM64, futeba\]/);
+  assert.match(job(ios, 'build-shared-framework'), /if: vars\.IOS_MAC_RUNNER == 'true'/);
+  assert.match(job(ios, 'build-ios-app'), /if: vars\.IOS_MAC_RUNNER == 'true' && /);
+  assert.match(job(read('.github/workflows/ios-testflight.yml'), 'diagnose'), /if: vars\.IOS_MAC_RUNNER == 'true'/);
 });
 
 test('E2E Gate polling jobs use the light futeba-poller runners, never hosted minutes', () => {

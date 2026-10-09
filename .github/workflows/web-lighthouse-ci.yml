@@ -37,7 +37,7 @@ jobs:
     # Lighthouse precisa de um navegador Linux (Chromium do Playwright). Roda nos
     # runners Linux do WSL (deps do Playwright já instaladas); não reutilizar o
     # Chrome Windows exposto por interop WSL.
-    runs-on: ${{ fromJSON(vars.RUNNER_LABELS_LINUX || vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS_LINUX || '["self-hosted","Linux","X64","futeba-general"]') }}
     timeout-minutes: 20
 
     steps:

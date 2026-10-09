@@ -17,7 +17,7 @@ test('CI Metrics uses the configurable self-hosted runner pool', () => {
   assert.match(workflow, /workflow_run\.head_branch == 'master'/);
   assert.match(
     workflow,
-    /runs-on: \$\{\{ fromJSON\(vars\.RUNNER_LABELS_LINUX \|\| vars\.RUNNER_LABELS \|\| '\["self-hosted","macOS","ARM64"\]'\) \}\}/
+    /runs-on: \$\{\{ fromJSON\(vars\.RUNNER_LABELS_LINUX \|\| '\["self-hosted","Linux","X64","futeba-general"\]'\) \}\}/
   );
 });
 

@@ -31,7 +31,7 @@ env:
 jobs:
   deploy:
     name: Deploy Functions (service account)
-    runs-on: ${{ fromJSON(vars.RUNNER_LABELS_LINUX || vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS_LINUX || '["self-hosted","Linux","X64","futeba-general"]') }}
     timeout-minutes: 45
     steps:
       - name: Guard (confirmacao e ref)
