@@ -39,7 +39,6 @@
         "baselineprofile/**",
         "macrobenchmark/**",
         "fastlane/**",
-        "kotlin-js-store/**",
         "gradle/**",
         "build.gradle.kts",
         "settings.gradle.kts",

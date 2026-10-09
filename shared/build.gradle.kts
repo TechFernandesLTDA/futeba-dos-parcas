@@ -1,5 +1,3 @@
-import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
-
 plugins {
     kotlin("multiplatform")
     id("com.android.library")
@@ -12,7 +10,6 @@ configurations.all {
     resolutionStrategy {
         force("org.jetbrains.kotlin:kotlin-stdlib:2.2.10")
         force("org.jetbrains.kotlin:kotlin-stdlib-common:2.2.10")
-        force("org.jetbrains.kotlin:kotlin-stdlib-wasm-js:2.2.10")
     }
 }
 
@@ -43,27 +40,19 @@ kotlin {
         }
     }
 
-    // Web target (wasmJs) - Fase 0: infraestrutura
-    // SQLDelight 2.2.1 já suporta wasmJs nativamente
-    // Ktor 2.x não tem variante wasmJs - migração para Ktor 3.x na Fase 2
-    @OptIn(ExperimentalWasmDsl::class)
-    wasmJs {
-        browser()
-    }
-
     sourceSets {
         // ========================
-        // commonMain: apenas libs com suporte universal (incluindo wasmJs)
+        // commonMain: apenas libs com suporte universal
         // ========================
         val commonMain by getting {
             dependencies {
-                // Coroutines - suporta wasmJs
+                // Coroutines
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
 
-                // Serialization - suporta wasmJs
+                // Serialization
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
 
-                // DateTime - suporta wasmJs
+                // DateTime
                 implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.1")
             }
         }
@@ -76,24 +65,24 @@ kotlin {
 
         // ========================
         // nativeAndAndroidMain: sourceset intermediário para Android + iOS
-        // Ktor 2.x fica aqui (sem suporte wasmJs) - migrar para Ktor 3.x na Fase 2
-        // SQLDelight 2.2.1 já está no commonMain via plugin (suporta wasmJs)
+        // Ktor 2.x fica aqui (Android + iOS)
+        // SQLDelight 2.2.1 já está no commonMain via plugin
         // ========================
         val nativeAndAndroidMain by creating {
             dependsOn(commonMain)
             dependencies {
-                // Ktor Client - não tem variante wasmJs no 2.x
+                // Ktor Client
                 implementation("io.ktor:ktor-client-core:2.3.8")
                 implementation("io.ktor:ktor-client-content-negotiation:2.3.8")
                 implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.8")
                 implementation("io.ktor:ktor-client-logging:2.3.8")
 
-                // SQLDelight 2.2.1 - suporta wasmJs via web-worker-driver
+                // SQLDelight 2.2.1
                 implementation("app.cash.sqldelight:runtime:2.2.1")
                 implementation("app.cash.sqldelight:coroutines-extensions:2.2.1")
 
                 // GitLive Firebase Kotlin SDK 2.4.0 - suporta Android + iOS
-                // wasmJs NAO suportado - ver wasmJsMain para stubs
+                // Android + iOS apenas
                 val gitLiveVersion = "2.4.0"
                 implementation("dev.gitlive:firebase-auth:$gitLiveVersion")
                 implementation("dev.gitlive:firebase-firestore:$gitLiveVersion")
@@ -145,18 +134,6 @@ kotlin {
                 // SQLDelight native driver
                 implementation("app.cash.sqldelight:native-driver:2.2.1")
             }
-        }
-
-        // ========================
-        // wasmJsMain: Web - stubs de Fase 0
-        // Firebase e HTTP reais: Fase 2 (GitLive SDK + Ktor 3.x)
-        // SQLDelight: Fase 3 (web-worker-driver quando migrar para 2.2.1)
-        // ========================
-        val wasmJsMain by getting {
-            // Coroutines, serialization, datetime disponíveis via commonMain
-            // SQLDelight 2.2.1 suporta wasmJs nativamente (runtime incluído automaticamente pelo plugin)
-            // TODO: Fase 2 - adicionar GitLive Firebase SDK (suporta wasmJs)
-            // TODO: Fase 2 - adicionar Ktor 3.x (suporta wasmJs nativo)
         }
     }
 }
