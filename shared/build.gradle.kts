@@ -83,7 +83,7 @@ kotlin {
 
                 // GitLive Firebase Kotlin SDK 2.4.0 - suporta Android + iOS
                 // Android + iOS apenas
-                val gitLiveVersion = "2.4.0"
+                val gitLiveVersion = "2.7.0"
                 implementation("dev.gitlive:firebase-auth:$gitLiveVersion")
                 implementation("dev.gitlive:firebase-firestore:$gitLiveVersion")
                 implementation("dev.gitlive:firebase-storage:$gitLiveVersion")
