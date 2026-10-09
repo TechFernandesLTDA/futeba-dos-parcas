@@ -31,11 +31,11 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Set up JDK 17
+      - name: Set up JDK 21 (JetBrains, daemon toolchain)
         uses: actions/setup-java@v4
         with:
-          java-version: '17'
-          distribution: 'temurin'
+          java-version: '21'
+          distribution: 'jetbrains'
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@0723195856401067f7a2779048b490ace7a47d7c  # v5

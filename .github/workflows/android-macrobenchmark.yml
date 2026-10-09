@@ -27,8 +27,8 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  JAVA_VERSION: '17'
-  JAVA_DISTRIBUTION: 'temurin'
+  JAVA_VERSION: '21'
+  JAVA_DISTRIBUTION: 'jetbrains'
   EMULATOR_API: 34
 
 # Menor privilégio: jobs que precisam de mais declaram permissions próprias.
@@ -48,7 +48,7 @@ jobs:
       - name: Checkout código
         uses: actions/checkout@v4
 
-      - name: Setup JDK 17
+      - name: Setup JDK 21 (JetBrains, daemon toolchain)
         uses: actions/setup-java@v4
         with:
           java-version: ${{ env.JAVA_VERSION }}
