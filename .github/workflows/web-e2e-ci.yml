@@ -21,7 +21,7 @@ permissions:
 jobs:
   web-e2e:
     name: Web E2E — Emulador (auth+firestore+functions)
-    runs-on: ubuntu-24.04
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS_LINUX || vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
     timeout-minutes: 30
 
     env:
@@ -108,12 +108,15 @@ jobs:
         # memória) durante os testes — evita o `vite dev` que estourava o runner
         # por OOM. O build roda ANTES dos emuladores (menor pico de memória) e
         # herda as VITE_* do job env (incluindo VITE_USE_EMULATOR=true). #2784
+        # Usa `build:e2e` (e não `build -- --mode e2e`): o script `build` termina em
+        # `&& prerender`, então o npm anexaria `--mode e2e` ao prerender e o vite
+        # buildaria em production, sem wiring de emulador (login batia no Google).
         working-directory: web
-        run: npm run build -- --mode e2e
+        run: npm run build:e2e
 
       - name: Instalar browsers Playwright
         working-directory: web
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install chromium
 
       - name: Selecionar porta livre para o preview E2E
         run: node scripts/ci/allocate-web-e2e-port.js
@@ -180,5 +183,3 @@ jobs:
           if-no-files-found: warn
           retention-days: 1
           compression-level: 9
-
-# registry-reindex-20261005: commit trivial para invalidar o cache de ingest do Actions (ghost BuildFailed wf_id=375847629)

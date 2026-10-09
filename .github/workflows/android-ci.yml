@@ -36,7 +36,7 @@ jobs:
     name: Lint Check
     needs: changes
     if: github.event_name != 'pull_request' && needs.changes.outputs.android == 'true'
-    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS_LINUX || vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
     timeout-minutes: 25
 
     steps:
@@ -55,6 +55,16 @@ jobs:
         uses: gradle/actions/setup-gradle@0723195856401067f7a2779048b490ace7a47d7c  # v5
         with:
           cache-read-only: ${{ github.ref != 'refs/heads/master' }}
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools'
+
+      - name: Install Android SDK 36
+        run: |
+          sdkmanager --install "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+          test -f "${ANDROID_SDK_ROOT:-${ANDROID_HOME:-}}/platforms/android-36/android.jar"
 
       - name: Setup environment
         run: |
@@ -99,7 +109,7 @@ jobs:
     if: needs.changes.outputs.android == 'true' && github.event_name != 'pull_request'
     permissions:
       contents: read
-    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS_LINUX || vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
     timeout-minutes: 20
 
     steps:
@@ -118,6 +128,16 @@ jobs:
         uses: gradle/actions/setup-gradle@0723195856401067f7a2779048b490ace7a47d7c  # v5
         with:
           cache-read-only: ${{ github.ref != 'refs/heads/master' }}
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools'
+
+      - name: Install Android SDK 36
+        run: |
+          sdkmanager --install "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+          test -f "${ANDROID_SDK_ROOT:-${ANDROID_HOME:-}}/platforms/android-36/android.jar"
 
       - name: Setup environment
         run: |
@@ -165,7 +185,7 @@ jobs:
     permissions:
       contents: read
       checks: write
-    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS_LINUX || vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
     timeout-minutes: 30
 
     steps:
@@ -184,6 +204,16 @@ jobs:
         uses: gradle/actions/setup-gradle@0723195856401067f7a2779048b490ace7a47d7c  # v5
         with:
           cache-read-only: ${{ github.ref != 'refs/heads/master' }}
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools'
+
+      - name: Install Android SDK 36
+        run: |
+          sdkmanager --install "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+          test -f "${ANDROID_SDK_ROOT:-${ANDROID_HOME:-}}/platforms/android-36/android.jar"
 
       - name: Setup environment
         run: |
@@ -232,7 +262,7 @@ jobs:
 
   build:
     name: Build Debug APK
-    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS_LINUX || vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
     timeout-minutes: 40
     # Todos os gates completos permanecem obrigatorios em push/manual com impacto Android.
     needs: [ changes, lint, detekt, test ]
@@ -254,6 +284,16 @@ jobs:
         uses: gradle/actions/setup-gradle@0723195856401067f7a2779048b490ace7a47d7c  # v5
         with:
           cache-read-only: ${{ github.ref != 'refs/heads/master' }}
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools'
+
+      - name: Install Android SDK 36
+        run: |
+          sdkmanager --install "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+          test -f "${ANDROID_SDK_ROOT:-${ANDROID_HOME:-}}/platforms/android-36/android.jar"
 
       - name: Setup environment
         run: |
@@ -301,7 +341,7 @@ jobs:
     name: Android CI Gate
     if: always()
     needs: [ changes, lint, detekt, test, build ]
-    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS_LINUX || vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
     timeout-minutes: 5
     steps:
       - name: Verify scoped Android checks

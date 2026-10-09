@@ -6,6 +6,7 @@
     "configFile": "jest.config.js"
   },
   "coverageAnalysis": "perTest",
+  "concurrency": 4,
   "mutate": [
     "src/xp/**/*.ts",
     "src/voting/**/*.ts",

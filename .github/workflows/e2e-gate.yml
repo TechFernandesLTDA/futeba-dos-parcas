@@ -1,0 +1,116 @@
+name: E2E Gate
+
+# Gate E2E OBRIGATÓRIO (#4192). Em PR: despacha web-e2e-ci.yml no branch do PR e
+# só passa com conclusion=success no MESMO SHA. Em push para master
+# (verificação pós-merge): mesmo gate no SHA de master e, se falhar, abre (ou
+# atualiza) uma issue. Não cria check verde fabricado: o job falha quando o run
+# real falha, estoura o tempo ou não executa.
+#
+# A obrigatoriedade NÃO vem de branch protection (API devolve 403 no plano
+# free): vem deste check "E2E Gate" + a convenção documentada em
+# docs/ci/E2E_GATE.md (PR só entra com "E2E Gate" verde) + a verificação
+# pós-merge abaixo.
+#
+# PRs sem impacto em web/functions/rules/config compartilhada passam sem
+# disparar o E2E (classificador change-scope), então o check sempre reporta.
+
+on:
+  pull_request:
+    branches: [master]
+  push:
+    branches: [master]
+  workflow_dispatch: {}
+
+# PR: um gate por PR (novo push cancela o anterior e o E2E dele).
+# master: um gate por SHA, sem cancelar o pós-merge de commits anteriores.
+concurrency:
+  group: e2e-gate-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  changes:
+    name: Classify changes
+    uses: ./.github/workflows/change-scope.yml
+
+  e2e-gate:
+    name: E2E Gate
+    needs: [changes]
+    # Sem always(): se o classificador falhar o check falha (step abaixo), em vez
+    # de ficar "skipped" e parecer aprovado.
+    if: ${{ !cancelled() }}
+    # Linux self-hosted (WSL). O gate só faz polling; o E2E roda em outro runner.
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS_LINUX || vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    timeout-minutes: 60
+
+    steps:
+      - name: Exigir classificação de escopo válida
+        env:
+          CHANGES_RESULT: ${{ needs.changes.result }}
+        run: |
+          if [ "$CHANGES_RESULT" != "success" ]; then
+            echo "Classificação de escopo falhou: $CHANGES_RESULT" >&2
+            exit 1
+          fi
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Configurar Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Validar contratos do gate E2E
+        run: node --test scripts/ci/e2e-gate.test.js scripts/ci/e2e-gate-workflow-contract.test.js
+
+      - name: Disparar e aguardar web-e2e-ci no SHA exato
+        if: ${{ needs.changes.outputs.web == 'true' || needs.changes.outputs.functions == 'true' || needs.changes.outputs.rules == 'true' || needs.changes.outputs.shared_config == 'true' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GATE_REF: ${{ github.head_ref || github.ref_name }}
+          GATE_EXPECT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: node scripts/ci/e2e-gate.js --ref "$GATE_REF" --expect-sha "$GATE_EXPECT_SHA" --timeout-min 45
+
+      - name: Sem impacto em E2E — gate dispensado
+        if: ${{ needs.changes.outputs.web != 'true' && needs.changes.outputs.functions != 'true' && needs.changes.outputs.rules != 'true' && needs.changes.outputs.shared_config != 'true' }}
+        run: echo "Nenhum arquivo de web/functions/rules/config compartilhada mudou; E2E não é necessário."
+
+  # Verificação pós-merge: se o E2E falhar em master, abre/atualiza uma issue.
+  post-merge-issue:
+    name: Issue de falha do E2E pós-merge
+    needs: [e2e-gate]
+    if: ${{ failure() && github.event_name == 'push' }}
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS_LINUX || vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: write
+
+    steps:
+      - name: Abrir ou atualizar issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          COMMIT_SHA: ${{ github.sha }}
+        run: |
+          title="E2E Gate falhou em master"
+          body="O E2E Gate falhou na verificação pós-merge.
+
+          - Commit: ${COMMIT_SHA}
+          - Run: ${RUN_URL}
+
+          Abra o run, siga o link do Web E2E CI e corrija a causa. Não aumente retries para mascarar flaky. Convenção em docs/ci/E2E_GATE.md."
+          existing="$(gh issue list --state open --label area:ci --search "\"$title\" in:title" --json number --jq '.[0].number // empty')"
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body "$body"
+          else
+            gh issue create --title "$title" --label area:ci --label type:bug --body "$body"
+          fi

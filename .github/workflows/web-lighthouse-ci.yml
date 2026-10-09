@@ -34,9 +34,10 @@ jobs:
     name: Lighthouse CI
     needs: [changes]
     if: github.event_name != 'pull_request' || needs.changes.outputs.web == 'true'
-    # Lighthouse precisa de um navegador Linux. Não reutilizar Chrome Windows
-    # exposto por interop WSL no runner self-hosted.
-    runs-on: ubuntu-24.04
+    # Lighthouse precisa de um navegador Linux (Chromium do Playwright). Roda nos
+    # runners Linux do WSL (deps do Playwright já instaladas); não reutilizar o
+    # Chrome Windows exposto por interop WSL.
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS_LINUX || vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
     timeout-minutes: 20
 
     steps:
@@ -97,7 +98,7 @@ jobs:
         run: |
           # LHCI passes --no-sandbox from web/.lighthouserc.cjs to this Linux browser.
           # The flag is required by the runner environment and does not alter metrics.
-          npx playwright install --with-deps chromium
+          npx playwright install chromium
           printf 'CHROME_PATH=%s\n' "$(node -e 'process.stdout.write(require("playwright").chromium.executablePath())')" >> "$GITHUB_ENV"
 
       - name: Verify Lighthouse toolchain

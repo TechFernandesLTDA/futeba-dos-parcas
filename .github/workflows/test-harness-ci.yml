@@ -39,7 +39,7 @@ permissions:
 jobs:
   test-harness:
     name: Test Harness — Functions Integration (Emulador)
-    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS_LINUX || vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
     timeout-minutes: 30
 
     env:

@@ -80,7 +80,11 @@ test('optimized E2E preview opts into emulators without weakening production', (
   const job = extractJob(e2eWorkflow, 'web-e2e');
   const buildStep = extractStep(job, 'Build web (modo emulador)');
 
-  assert.match(buildStep, /run: npm run build -- --mode e2e/);
+  assert.match(buildStep, /run: npm run build:e2e/);
+  // O `--mode e2e` precisa ir direto no `vite build`; anexar ao `npm run build`
+  // o jogaria no fim da cadeia (prerender) e o bundle sairia em production.
+  const webPackage = JSON.parse(read('web/package.json'));
+  assert.match(webPackage.scripts['build:e2e'], /vite\.js build --mode e2e/);
   assert.match(emulatorMode, /env\.VITE_USE_EMULATOR === 'true'/);
   assert.match(emulatorMode, /env\.DEV \|\| env\.MODE === 'e2e'/);
 
@@ -94,7 +98,9 @@ test('optimized E2E preview opts into emulators without weakening production', (
 });
 
 test('CI allocates its own preview port without reusing an unrelated server', () => {
-  assert.match(extractJob(e2eWorkflow, 'web-e2e'), /runs-on: ubuntu-24.04/);
+  // WSL (runners tf-wsl-*) tem as libs do Playwright; E2E não gasta minutos hospedados.
+  assert.match(extractJob(e2eWorkflow, 'web-e2e'), /runs-on: \$\{\{ fromJSON\(vars\.RUNNER_LABELS_LINUX \|\| vars\.RUNNER_LABELS \|\| '\[\"self-hosted\",\"macOS\",\"ARM64\"\]'\) \}\}/);
+  assert.doesNotMatch(e2eWorkflow, /playwright install --with-deps/);
   assert.match(e2eWorkflow, /run: node scripts\/ci\/allocate-web-e2e-port\.js/);
   assert.ok(e2eWorkflow.indexOf('allocate-web-e2e-port.js') < e2eWorkflow.indexOf('- name: E2E ('));
   assert.match(playwrightConfig, /process\.env\.E2E_PORT \?\? '5173'/);

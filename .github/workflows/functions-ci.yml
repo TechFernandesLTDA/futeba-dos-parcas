@@ -22,6 +22,11 @@ on:
   schedule:
     - cron: '0 4 * * *' # Todo dia as 04:00 UTC (~01:00 BRT)
   workflow_dispatch:
+    inputs:
+      run_mutation:
+        description: 'Executar também o Stryker (lento, ocupa um runner por muito tempo)'
+        type: boolean
+        default: false
 
 # Cancela execucoes anteriores do mesmo branch/PR
 concurrency:
@@ -227,9 +232,9 @@ jobs:
     # Tests perf são experimentais — ESM modules de @google-cloud/firestore
     # quebram com ts-jest default. Marcar non-blocking até ajustar transform.
     continue-on-error: true
-    concurrency:
-      group: futeba-functions-firebase-emulators
-      cancel-in-progress: false
+    # Sem `concurrency`: o job roda em VM hospedada própria (portas isoladas).
+    # O grupo antigo só servia para serializar emuladores no host compartilhado e
+    # fazia o GitHub cancelar o job pendente ("higher priority waiting request").
 
     steps:
       - name: Checkout code
@@ -282,10 +287,10 @@ jobs:
   mutation:
     name: Mutation Testing (Stryker)
     runs-on: ${{ fromJSON(vars.RUNNER_LABELS_LINUX || vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
-    # Caro: roda apenas no schedule noturno ou disparo manual — NUNCA em push/PR.
+    # Caro: roda apenas no schedule noturno ou disparo manual com run_mutation=true — NUNCA em push/PR.
     # Usa uma instalacao isolada. Fora do caminho
     # critico de PR.
-    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.run_mutation)
     timeout-minutes: 45
 
     steps:

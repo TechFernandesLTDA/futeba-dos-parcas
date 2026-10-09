@@ -10,7 +10,7 @@ name: Functions Integration CI (#2533)
 # O E2E web (discover/preview público, #2532) é wired em workflow próprio
 # quando aquela suite estiver validada — ver #2533/#2530.
 #
-# Roda em macOS ARM64 e usa o cache npm local do runner. A instalação e o build
+# Roda nos runners Linux do WSL (vars.RUNNER_LABELS_LINUX) e usa o cache npm do runner. A instalação e o build
 # são feitos no próprio job para não depender da cota de Actions artifacts.
 
 on:
@@ -46,10 +46,12 @@ jobs:
     # Roda quando functions OU rules mudam: rules (firestore.rules) afetam os
     # triggers/disparos testados aqui. Um PR web-only nao aciona este workflow.
     if: needs.changes.outputs.functions == 'true' || needs.changes.outputs.rules == 'true'
-    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS_LINUX || vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
     timeout-minutes: 25
     concurrency:
-      group: futeba-functions-firebase-emulators
+      # Mesmo grupo dos demais jobs de emulador: no WSL todos os runners
+      # compartilham 127.0.0.1 (9099/8085/5001), então só um sobe por vez.
+      group: firebase-emulator-integration-${{ github.repository }}
       cancel-in-progress: false
 
     steps:
