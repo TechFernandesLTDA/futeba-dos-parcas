@@ -1,0 +1,100 @@
+{
+  "project": "futebadosparcas",
+  "imported_locations": 117,
+  "camel_location_docs": 0,
+  "camel_field_docs": 0,
+  "camel_keys": {},
+  "status": {
+    "DRAFT": 113,
+    "SUSPENDED": 4
+  },
+  "verified_true": [
+    "F3pHv28Zo9fA2JPSytB5 Cancha do Corinthians [SUSPENDED]",
+    "MfRt6fKpuSmXQ6B9xpY6 JB Esportes & Eventos [SUSPENDED]",
+    "gfkNKZgYq78GjbrZObSd Camisa 9 Futebol e Diversão [SUSPENDED]",
+    "zMy9DLGBQpLF0PTILwRl Arena Amigos da Bola [SUSPENDED]"
+  ],
+  "with_fields": 40,
+  "fields_total": 118,
+  "field_count_mismatch": [],
+  "has_active_fields_mismatch": [],
+  "no_fields": 77,
+  "with_phone": 95,
+  "with_website": 41,
+  "with_sources": 117,
+  "closed_flagged": 8,
+  "with_price_table": 2,
+  "by_city": {
+    "Curitiba": {
+      "venues": 27,
+      "quadras": 36,
+      "venues_com_quadras": 10
+    },
+    "Joinville": {
+      "venues": 13,
+      "quadras": 1,
+      "venues_com_quadras": 1
+    },
+    "São Paulo": {
+      "venues": 12,
+      "quadras": 35,
+      "venues_com_quadras": 9
+    },
+    "Porto Alegre": {
+      "venues": 9,
+      "quadras": 20,
+      "venues_com_quadras": 5
+    },
+    "Colombo": {
+      "venues": 8,
+      "quadras": 3,
+      "venues_com_quadras": 2
+    },
+    "Londrina": {
+      "venues": 7,
+      "quadras": 0,
+      "venues_com_quadras": 0
+    },
+    "Pinhais": {
+      "venues": 7,
+      "quadras": 8,
+      "venues_com_quadras": 3
+    },
+    "Campo Largo": {
+      "venues": 7,
+      "quadras": 2,
+      "venues_com_quadras": 1
+    },
+    "Araucária": {
+      "venues": 7,
+      "quadras": 0,
+      "venues_com_quadras": 0
+    },
+    "São José dos Pinhais": {
+      "venues": 6,
+      "quadras": 3,
+      "venues_com_quadras": 2
+    },
+    "Almirante Tamandaré": {
+      "venues": 5,
+      "quadras": 4,
+      "venues_com_quadras": 3
+    },
+    "Florianópolis": {
+      "venues": 4,
+      "quadras": 4,
+      "venues_com_quadras": 2
+    },
+    "Fazenda Rio Grande": {
+      "venues": 3,
+      "quadras": 1,
+      "venues_com_quadras": 1
+    },
+    "Piraquara": {
+      "venues": 2,
+      "quadras": 1,
+      "venues_com_quadras": 1
+    }
+  },
+  "generated_at": "2026-10-09T03:13:50.085Z"
+}

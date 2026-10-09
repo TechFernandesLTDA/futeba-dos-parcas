@@ -192,6 +192,15 @@ test('datasets reais do repositório validam sem erros', () => {
     const errors = validateDataset(dataset, {prefix: f});
     total += errors.length;
     for (const e of errors) console.error(`    ✗ ${e}`);
+    if (dataset.modo === 'enriquecimento') {
+      const ids = new Set();
+      for (const v of dataset.venues || []) {
+        assert.ok(typeof v.location_id === 'string' && v.location_id.length >= 10, `${f}: "${v.nome}" sem location_id`);
+        assert.ok(!ids.has(v.location_id), `${f}: location_id repetido ${v.location_id}`);
+        ids.add(v.location_id);
+      }
+      continue;
+    }
     for (const v of dataset.venues || []) {
       const key = `${(v.endereco && v.endereco.cidade) || ''}::${normalizeName(v.nome)}`;
       assert.ok(!seen.has(key), `${f}: "${v.nome}" duplicado com ${seen.get(key)}`);
@@ -199,4 +208,17 @@ test('datasets reais do repositório validam sem erros', () => {
     }
   }
   assert.equal(total, 0, `${total} erro(s) nos datasets do repo`);
+});
+test('rodada 9 (enriquecimento) é aceita e R9 é rodada_dados válida', () => {
+  const ds = {gerado_em: '2026-10-08', rodada: 9, modo: 'enriquecimento', venues: [{
+    nome: 'Arena X', location_id: 'abcdefghij12', endereco: {cidade: 'Curitiba', uf: 'PR'},
+    fontes: [{url: 'https://exemplo.com.br/x', dado: 'ficha oficial da arena'}],
+    comentarios: [], fotos: [], confidence: 'média', rodada_dados: 'R9', qtd_quadras: 2, horarios: {segunda: '08:00-00:30'},
+  }]};
+  assert.deepEqual(validateDataset(ds, {prefix: 't'}), []);
+});
+
+test('rodada 10 continua inválida', () => {
+  const errors = validateDataset({gerado_em: '2026-10-08', rodada: 10, venues: [{nome: 'Arena X'}]}, {prefix: 't'});
+  assert.ok(errors.some((e) => e.includes('rodada')));
 });

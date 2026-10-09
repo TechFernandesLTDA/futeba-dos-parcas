@@ -1,0 +1,578 @@
+{
+  "generated_at": "2026-10-09T03:12:37.411Z",
+  "project_id": "futebadosparcas",
+  "docs": [
+    {
+      "path": "locations/F3pHv28Zo9fA2JPSytB5",
+      "data": {
+        "country": "Brasil",
+        "city": "Pinhais",
+        "owner_id": "mock_admin",
+        "latitude": -25.448291,
+        "created_at": null,
+        "instagram": null,
+        "cep": "83330-021",
+        "min_game_duration_minutes": 60,
+        "number": "534",
+        "closing_time": "23:00",
+        "street": "Rua Henrique Coelho Neto",
+        "photo_url": null,
+        "state": "PR",
+        "complement": "",
+        "place_id": null,
+        "longitude": -49.1774825,
+        "website": null,
+        "address": "Rua Henrique Coelho Neto, 534 - Vargem Grande, Pinhais - PR",
+        "opening_time": "08:00",
+        "is_verified": true,
+        "rating_count": 0,
+        "fullAddress": "Rua Henrique Coelho Neto, 534 - Vargem Grande, Pinhais - PR - Pinhais, PR",
+        "name": "Cancha do Corinthians",
+        "neighborhood": "Vargem Grande",
+        "region": "Grande Curitiba – Pinhais",
+        "whatsapp": null,
+        "closingTime": "23:00",
+        "isVerified": true,
+        "openingTime": "08:00",
+        "description": "",
+        "minGameDurationMinutes": 60,
+        "isActive": true,
+        "playersPerTeam": 7,
+        "fieldTypeInferred": true,
+        "fieldType": "SOCIETY",
+        "has_active_fields": true,
+        "field_count": 1,
+        "field_type": "SOCIETY",
+        "primary_field_type": "SOCIETY",
+        "amenities": [
+          "wi-fi grátis",
+          "estacionamento",
+          "acessibilidade"
+        ],
+        "operating_days": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "phone": "(41) 99944-2404",
+        "location_stats_source": "cloud_functions",
+        "hourly_price_by_type": {},
+        "average_hourly_price_cents": null,
+        "finished_games_count": 0,
+        "active_field_count": 1,
+        "rating": 0,
+        "games_this_week_count": 0,
+        "review_count": 0,
+        "average_rating": 0,
+        "games_last_30_days_count": 0,
+        "upcoming_games_count": 0,
+        "active_field_types": [
+          "SOCIETY"
+        ],
+        "amenities_normalized": [
+          "acessibilidade",
+          "estacionamento",
+          "wi_fi_gratis"
+        ],
+        "min_hourly_price_cents": null,
+        "games_count": 0,
+        "last_activity_at": null,
+        "last_game_at": null,
+        "active_field_amenities": [],
+        "is_active": false,
+        "commercial_status": "SUSPENDED",
+        "subscription_status": "SUSPENDED",
+        "publication_status": "SUSPENDED",
+        "unpublished_reason": "Despublicado pelo administrador: apenas Meia Praia Sport Bar publicada.",
+        "time_zone": "America/Sao_Paulo",
+        "district": "Vargem Grande",
+        "updated_by": "venue-dataset-import",
+        "location_stats_updated_at": {
+          "_seconds": 1791443407,
+          "_nanoseconds": 244000000
+        },
+        "external_data": {
+          "rating": null,
+          "rating_count": 20,
+          "confidence": "média",
+          "finalidade": "comercial_aluguel",
+          "origem": "web",
+          "tipo_piso": null,
+          "detalhe_quadras": null,
+          "rodada_dados": "R3",
+          "comments": [],
+          "imported_at": "2026-10-08T02:03:56.323Z",
+          "imported_by": "venue-dataset-import",
+          "operational_status": "em_operacao",
+          "manual_review_resolved": {
+            "at": "2026-10-09T03:12:23.805Z",
+            "by": "venue-dataset-import",
+            "rodada": "R9"
+          },
+          "sources": [
+            {
+              "url": "https://www.locaisdobrasil.com.br/encontre/campo-de-futebol/pinhais-pr",
+              "dado": "listagem do diretório: endereço (Rua Henrique Coelho Neto, 534 - Vargem Grande, CEP 83330-021), horários 08:00-00:00 todos os dias, 20 avaliações e segmento 'campo de futebol suíço e society'; página afirma que os campos listados oferecem aluguel por hora"
+            },
+            {
+              "url": "https://www.google.com/maps/search/Cancha+do+Corinthians+Rua+Henrique+Coelho+Neto+Pinhais",
+              "dado": "ficha do Google Maps (consultada em 08/10/2026): 'Cancha do Corinthians - Campo', R. Henrique Coelho Neto, 534, Vargem Grande, Pinhais, sem marcação de fechado"
+            }
+          ]
+        },
+        "updated_at": {
+          "_seconds": 1791515545,
+          "_nanoseconds": 34000000
+        }
+      }
+    },
+    {
+      "path": "locations/MfRt6fKpuSmXQ6B9xpY6",
+      "data": {
+        "amenities": [
+          "vestiários completos",
+          "bar",
+          "estacionamento",
+          "iluminação profissional"
+        ],
+        "country": "Brasil",
+        "city": "Curitiba",
+        "owner_id": "mock_admin",
+        "latitude": -25.4881045,
+        "created_at": null,
+        "description": "Regras de reserva: agendamento antecipado por WhatsApp; pagamento via pix/cartão; tolerância média 10–15 min",
+        "instagram": "jbesportes",
+        "cep": "81070-001",
+        "min_game_duration_minutes": 60,
+        "number": "3173",
+        "closing_time": "00:00",
+        "street": "Rua João Bettega",
+        "photo_url": null,
+        "state": "PR",
+        "complement": "",
+        "place_id": null,
+        "longitude": -49.3198734,
+        "address": "Rua João Bettega, 3173 - Portão, Curitiba - PR",
+        "operating_days": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "opening_time": "14:00",
+        "is_verified": true,
+        "rating_count": 0,
+        "phone": "(41) 99290-2962",
+        "fullAddress": "Rua João Bettega, 3173 - Portão, Curitiba - PR - Curitiba, PR",
+        "name": "JB Esportes & Eventos",
+        "neighborhood": "Portão",
+        "region": "Sul",
+        "whatsapp": "(41) 99290-2962",
+        "closingTime": "00:00",
+        "isVerified": true,
+        "openingTime": "14:00",
+        "minGameDurationMinutes": 60,
+        "isActive": true,
+        "playersPerTeam": 7,
+        "fieldTypeInferred": true,
+        "fieldType": "SOCIETY",
+        "has_active_fields": true,
+        "field_type": "FUTSAL",
+        "primary_field_type": "FUTSAL",
+        "website": "https://jbesportes.com.br",
+        "field_count": 8,
+        "location_stats_source": "cloud_functions",
+        "hourly_price_by_type": {},
+        "average_hourly_price_cents": null,
+        "finished_games_count": 0,
+        "active_field_count": 8,
+        "rating": 0,
+        "games_this_week_count": 0,
+        "review_count": 0,
+        "average_rating": 0,
+        "games_last_30_days_count": 0,
+        "upcoming_games_count": 0,
+        "active_field_types": [
+          "FUTSAL"
+        ],
+        "amenities_normalized": [
+          "bar",
+          "estacionamento",
+          "iluminacao_profissional",
+          "vestiarios_completos"
+        ],
+        "min_hourly_price_cents": null,
+        "games_count": 0,
+        "last_activity_at": null,
+        "last_game_at": null,
+        "active_field_amenities": [],
+        "is_active": false,
+        "commercial_status": "SUSPENDED",
+        "subscription_status": "SUSPENDED",
+        "publication_status": "SUSPENDED",
+        "unpublished_reason": "Despublicado pelo administrador: apenas Meia Praia Sport Bar publicada.",
+        "time_zone": "America/Sao_Paulo",
+        "external_data": {
+          "rating": 4.6,
+          "rating_count": 2772,
+          "confidence": "alta",
+          "tipo_piso": "society e futsal (grama sintética)",
+          "detalhe_quadras": "4 futsal + 4 society, sendo 6 cobertas e 2 abertas",
+          "comments": [
+            {
+              "autor": "Douglas Lopes",
+              "data": "2017-06-20",
+              "texto": "Quadras excelentes, bom atendimento no bar e boa localização.",
+              "fonte_url": "https://pt.foursquare.com/v/jb-esportes/4bb7a17398c7ef3bbb183002"
+            },
+            {
+              "autor": "Cristian Pedroso",
+              "data": "2010-05-26",
+              "texto": "Grande variedade de quadras para sintético e futsal, embora eu tenha achado as quadras de futsal mto pequenas.",
+              "fonte_url": "https://pt.foursquare.com/v/jb-esportes/4bb7a17398c7ef3bbb183002"
+            },
+            {
+              "autor": "Willians Alves",
+              "data": "2015-05-07",
+              "texto": "Quadra boa, preço médio e atendimento horrível.",
+              "fonte_url": "https://pt.foursquare.com/v/jb-esportes/4bb7a17398c7ef3bbb183002"
+            }
+          ],
+          "sources": [
+            {
+              "url": "https://www.futemais.com.br/post/onde-jogar-futebol-em-curitiba",
+              "dado": "endereço, telefone, 8 quadras (4 futsal/4 society, 6 cobertas), nota 4,6/5 (2772 avaliações)"
+            },
+            {
+              "url": "https://jbesportes.com.br/quadras/",
+              "dado": "8 quadras (4 futsal e 4 society), 6 cobertas, vestiários, 5 espaços para eventos, lanchonete, estacionamento próprio"
+            },
+            {
+              "url": "https://pt.foursquare.com/v/jb-esportes/4bb7a17398c7ef3bbb183002",
+              "dado": "comentários de usuários (Foursquare, públicos)"
+            },
+            {
+              "url": "https://www.findglocal.com/BR/Curitiba/287174824694709/JB-esportes-&-eventos",
+              "dado": "horários de funcionamento e descrição histórica (7 quadras, desde 1994, pioneira em grama sintética)"
+            },
+            {
+              "url": "https://www.partida.app/blog/como-escolher-quadra-society-para-pelada",
+              "dado": "JB Esportes oferece 6% de desconto nas locações mensais vs jogo avulso, prioridade de reserva e coletes grátis para mensalistas"
+            }
+          ],
+          "imported_at": "2026-10-07T00:53:48.547Z",
+          "imported_by": "venue-dataset-import"
+        },
+        "operatingDays": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "updated_at": {
+          "_seconds": 1791334429,
+          "_nanoseconds": 703000000
+        },
+        "district": "Portão",
+        "updated_by": "venue-dataset-import",
+        "location_stats_updated_at": {
+          "_seconds": 1791443407,
+          "_nanoseconds": 592000000
+        }
+      }
+    },
+    {
+      "path": "locations/gfkNKZgYq78GjbrZObSd",
+      "data": {
+        "country": "Brasil",
+        "city": "Pinhais",
+        "owner_id": "FOlvyYHcZWPNqTGHkbSytMUwIAz1",
+        "created_at": null,
+        "description": "",
+        "cep": "83323-290",
+        "min_game_duration_minutes": 60,
+        "number": "2700",
+        "street": "Av. Ayrton Senna da Silva",
+        "photo_url": null,
+        "state": "PR",
+        "complement": "",
+        "place_id": null,
+        "address": "Av. Ayrton Senna da Silva, 2700 - Centro, Pinhais - PR",
+        "is_verified": true,
+        "rating_count": 0,
+        "fullAddress": "Av. Ayrton Senna da Silva, 2700 - Centro, Pinhais - PR - Pinhais, PR",
+        "name": "Camisa 9 Futebol e Diversão",
+        "neighborhood": "Centro",
+        "region": "Grande Curitiba – Pinhais",
+        "whatsapp": null,
+        "closingTime": "23:00",
+        "isVerified": true,
+        "openingTime": "08:00",
+        "minGameDurationMinutes": 60,
+        "isActive": true,
+        "playersPerTeam": 7,
+        "fieldTypeInferred": true,
+        "fieldType": "SOCIETY",
+        "gpsInferred": true,
+        "latitude": -25.4443953,
+        "longitude": -49.1857843,
+        "has_active_fields": true,
+        "field_type": "SOCIETY",
+        "amenities": [
+          "quadra coberta",
+          "grama sintética",
+          "lanchonete",
+          "vestiário",
+          "playground",
+          "salão de eventos",
+          "estacionamento",
+          "churrasqueira",
+          "telão"
+        ],
+        "website": "https://www.camisa9.esp.br/",
+        "operating_days": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "phone": "(41) 98828-8499",
+        "closing_time": "23:30",
+        "opening_time": "09:00",
+        "instagram": "espacocamisa9",
+        "location_stats_source": "cloud_functions",
+        "hourly_price_by_type": {},
+        "average_hourly_price_cents": null,
+        "finished_games_count": 0,
+        "rating": 0,
+        "games_this_week_count": 0,
+        "review_count": 0,
+        "average_rating": 0,
+        "games_last_30_days_count": 0,
+        "upcoming_games_count": 0,
+        "amenities_normalized": [
+          "churrasqueira",
+          "estacionamento",
+          "grama_sintetica",
+          "lanchonete",
+          "playground",
+          "quadra_coberta",
+          "salao_de_eventos",
+          "telao",
+          "vestiario"
+        ],
+        "min_hourly_price_cents": null,
+        "games_count": 0,
+        "last_activity_at": null,
+        "last_game_at": null,
+        "active_field_amenities": [],
+        "is_active": false,
+        "commercial_status": "SUSPENDED",
+        "subscription_status": "SUSPENDED",
+        "publication_status": "SUSPENDED",
+        "unpublished_reason": "Despublicado pelo administrador: apenas Meia Praia Sport Bar publicada.",
+        "time_zone": "America/Sao_Paulo",
+        "district": "Centro",
+        "updated_by": "venue-dataset-import",
+        "active_field_count": 4,
+        "field_count": 4,
+        "external_data": {
+          "rating": null,
+          "rating_count": null,
+          "confidence": "média",
+          "finalidade": "comercial_aluguel",
+          "origem": "web",
+          "tipo_piso": "society (grama sintética) e grama natural",
+          "detalhe_quadras": "1 quadra de futebol de campo em grama (descoberta) + 3 quadras de futebol society sintético (cobertas)",
+          "rodada_dados": "R3",
+          "comments": [],
+          "sources": [
+            {
+              "url": "https://camisa9.webquadras.com.br/",
+              "dado": "site oficial (plataforma WebQuadras de reserva): estrutura com 1 quadra de futebol de campo em grama descoberta e 3 quadras de futebol society sintético cobertas, estacionamento com mais de 70 vagas, churrasqueiras, salão de festas e 2 vestiários; endereço do estabelecimento (Av. Ayrton Senna da Silva, 2700 - Centro, CEP 83.323-290) e bloco 'Horário de funcionamento' (seg-sex 08:45-24h, sáb 08h-24h, dom 09h-15h). ATENÇÃO: o texto 'Sobre' da mesma página menciona 2 quadras 25x45m e seg-sáb 9h-23h30 (divergência interna) e o telefone exibido está ilegível ('(41) 88288-499'), por isso telefone ficou null"
+            }
+          ],
+          "imported_at": "2026-10-08T02:03:56.322Z",
+          "imported_by": "venue-dataset-import",
+          "operational_status": "em_operacao",
+          "manual_review_resolved": {
+            "at": "2026-10-09T03:12:23.504Z",
+            "by": "venue-dataset-import",
+            "rodada": "R9"
+          }
+        },
+        "updated_at": {
+          "_seconds": 1791515544,
+          "_nanoseconds": 854000000
+        },
+        "active_field_types": [
+          "CAMPO",
+          "SOCIETY"
+        ],
+        "primary_field_type": "CAMPO",
+        "location_stats_updated_at": {
+          "_seconds": 1791515545,
+          "_nanoseconds": 87000000
+        }
+      }
+    },
+    {
+      "path": "locations/zMy9DLGBQpLF0PTILwRl",
+      "data": {
+        "amenities": [
+          "bar",
+          "churrasqueiras",
+          "vestiários",
+          "estacionamento"
+        ],
+        "country": "Brasil",
+        "city": "Curitiba",
+        "owner_id": "mock_admin",
+        "latitude": -25.392827,
+        "created_at": null,
+        "description": "Regras de reserva: plataforma/WhatsApp",
+        "instagram": "arenaamigosdabola",
+        "cep": "82540-030",
+        "min_game_duration_minutes": 60,
+        "number": "2851",
+        "closing_time": "01:30",
+        "street": "Rua Estados Unidos",
+        "photo_url": null,
+        "state": "PR",
+        "complement": "",
+        "place_id": null,
+        "longitude": -49.2572238,
+        "address": "Rua Estados Unidos, 2851 - Boa Vista, Curitiba - PR",
+        "opening_time": "08:00",
+        "is_verified": true,
+        "rating_count": 0,
+        "phone": "(41) 99272-6241",
+        "fullAddress": "Rua Estados Unidos, 2851 - Boa Vista, Curitiba - PR - Curitiba, PR",
+        "name": "Arena Amigos da Bola",
+        "neighborhood": "Boa Vista",
+        "region": "Norte",
+        "whatsapp": "(41) 99272-6241",
+        "closingTime": "01:30",
+        "isVerified": true,
+        "openingTime": "08:00",
+        "minGameDurationMinutes": 60,
+        "isActive": true,
+        "playersPerTeam": 7,
+        "fieldTypeInferred": true,
+        "fieldType": "SOCIETY",
+        "has_active_fields": true,
+        "field_type": "SOCIETY",
+        "primary_field_type": "SOCIETY",
+        "website": "https://arenaamigosdabola.com.br/",
+        "operating_days": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "field_count": 2,
+        "location_stats_source": "cloud_functions",
+        "hourly_price_by_type": {},
+        "average_hourly_price_cents": null,
+        "finished_games_count": 0,
+        "active_field_count": 2,
+        "rating": 0,
+        "games_this_week_count": 0,
+        "review_count": 0,
+        "average_rating": 0,
+        "games_last_30_days_count": 0,
+        "upcoming_games_count": 0,
+        "active_field_types": [
+          "SOCIETY"
+        ],
+        "amenities_normalized": [
+          "bar",
+          "churrasqueiras",
+          "estacionamento",
+          "vestiarios"
+        ],
+        "min_hourly_price_cents": null,
+        "games_count": 0,
+        "last_activity_at": null,
+        "last_game_at": null,
+        "active_field_amenities": [],
+        "is_active": false,
+        "commercial_status": "SUSPENDED",
+        "subscription_status": "SUSPENDED",
+        "publication_status": "SUSPENDED",
+        "unpublished_reason": "Despublicado pelo administrador: apenas Meia Praia Sport Bar publicada.",
+        "time_zone": "America/Sao_Paulo",
+        "photoUrl": {
+          "url": "https://gerenciador.webquadras.com.br/resources/uploaded-files/sport_center_photo/6264/C2.jpg",
+          "fonte": "webquadras.com.br (site de reservas da própria arena)"
+        },
+        "external_data": {
+          "rating": 5,
+          "rating_count": null,
+          "confidence": "alta",
+          "tipo_piso": "society (grama sintética)",
+          "detalhe_quadras": "2 quadras de futebol society sintético cobertas + 1 mini quadra",
+          "comments": [],
+          "sources": [
+            {
+              "url": "https://webquadras.com.br/arenaamigosdabola",
+              "dado": "endereço, telefone, WhatsApp, 2 quadras society cobertas + mini quadra, horários, bar, 4 churrasqueiras, estacionamento R$2,00"
+            },
+            {
+              "url": "https://www.futemais.com.br/post/onde-jogar-futebol-em-curitiba",
+              "dado": "CEP 82540-030, nota 5,0/5, churrasqueiras, vestiários"
+            }
+          ],
+          "imported_at": "2026-10-07T00:53:48.547Z",
+          "imported_by": "venue-dataset-import"
+        },
+        "operatingDays": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "updated_at": {
+          "_seconds": 1791334429,
+          "_nanoseconds": 703000000
+        },
+        "district": "Boa Vista",
+        "updated_by": "venue-dataset-import",
+        "photos": [
+          {
+            "url": "https://gerenciador.webquadras.com.br/resources/uploaded-files/sport_center_photo/6264/C2.jpg",
+            "fonte": "webquadras.com.br (site de reservas da própria arena)"
+          },
+          {
+            "url": "https://gerenciador.webquadras.com.br/resources/uploaded-files/sport_center_photo/6269/H.jpg",
+            "fonte": "webquadras.com.br"
+          },
+          {
+            "url": "https://gerenciador.webquadras.com.br/resources/uploaded-files/sport_center_photo/7100/PHOTO-2019-02-22-13-48-48.jpg",
+            "fonte": "webquadras.com.br"
+          }
+        ],
+        "location_stats_updated_at": {
+          "_seconds": 1791443408,
+          "_nanoseconds": 731000000
+        }
+      }
+    }
+  ]
+}

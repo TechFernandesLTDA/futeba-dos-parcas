@@ -110,8 +110,14 @@ interface VenueDataset {
   finalidade?: string | null;
   /** Origem primária do registro (ex.: web, osm). */
   origem?: string | null;
-  /** Rodada do epic #4186 em que o registro entrou (R1..R8). */
+  /** Rodada do epic #4186 em que o registro entrou (R1..R9). */
   rodada_dados?: string | null;
+  /** Enriquecimento: id exato da location em produção (evita dedupe por nome). */
+  location_id?: string | null;
+  /** Situação operacional segundo a fonte (ex.: permanentemente_fechado, temporariamente_fechado). */
+  status_operacional?: string | null;
+  /** Tabela de preços publicada pela fonte (texto livre; unidade conforme a fonte). */
+  precos?: Array<{item: string; valor: string}> | null;
 }
 
 interface ParsedHours {
@@ -148,6 +154,7 @@ function parseHours(horarios: Record<string, string> | null | undefined): Parsed
   const days: number[] = [];
   let minOpen = "23:59";
   let maxClose = "00:00";
+  let maxCloseKey = "00:00";
   let found = false;
   for (const [key, range] of Object.entries(horarios)) {
     const idx = dayIndex[key.trim().toLowerCase()];
@@ -158,12 +165,24 @@ function parseHours(horarios: Record<string, string> | null | undefined): Parsed
     const close = parseHour(closeRaw, "23:59");
     days.push(idx);
     found = true;
-    // Quadra que fecha depois da meia-noite: conta como "abre mais cedo".
     if (open < minOpen) minOpen = open;
-    if (close > maxClose) maxClose = close;
+    // Fechamento depois da meia-noite (ex.: 08:00-00:30) conta como 24h+: o
+    // closing_time gravado é o mais tardio de fato, não o maior string.
+    const closeKey = close <= open ? `${24 + Number(close.slice(0, 2))}${close.slice(2)}` : close;
+    if (closeKey > maxCloseKey) {
+      maxCloseKey = closeKey;
+      maxClose = close;
+    }
   }
   if (!found) return null;
   return {openingTime: minOpen, closingTime: maxClose, operatingDays: days.sort()};
+}
+
+/** Horário padrão do importador (sem fonte): permite sobrescrever com dado sourced. */
+function hasImporterDefaultHours(data: FirebaseFirestore.DocumentData): boolean {
+  const days = Array.isArray(data.operating_days) ? [...data.operating_days].sort().join(",") : "";
+  return data.opening_time === "08:00" && data.closing_time === "23:59" &&
+    days === "0,1,2,3,4,5,6" && data.external_data?.imported_by === SOURCE_LABEL;
 }
 
 /** Extrai contagem de quadras por tipo de "4 futsal + 4 society, ...". */
@@ -333,6 +352,8 @@ interface VenuePlan {
   createData?: FirebaseFirestore.UpdateData;
   patchData?: FirebaseFirestore.UpdateData;
   fieldsToCreate: Array<{type: FieldType; priceCents: number | null}>;
+  /** Patch: quantas quadras já existiam sob a location. */
+  existingFieldCount?: number;
   manualReview: string[];
 }
 
@@ -462,13 +483,17 @@ function buildPatchData(
 
   const hours = parseHours(venue.horarios);
   if (hours) {
-    if (isBlank(data.opening_time)) patch.opening_time = hours.openingTime;
-    if (isBlank(data.closing_time)) patch.closing_time = hours.closingTime;
-    if (isBlank(data.operating_days)) patch.operating_days = hours.operatingDays;
+    // Venue criado pelo importador sem horário sourced tem o padrão 08:00-23:59 nos 7 dias:
+    // esse padrão não é dado existente e pode ser substituído por horário com fonte.
+    const defaults = hasImporterDefaultHours(data);
+    if (defaults || isBlank(data.opening_time)) patch.opening_time = hours.openingTime;
+    if (defaults || isBlank(data.closing_time)) patch.closing_time = hours.closingTime;
+    if (defaults || isBlank(data.operating_days)) patch.operating_days = hours.operatingDays;
   }
 
-  // Enriquecimento com dados externos nunca sobrescreve o que existe.
-  const external: Data = {
+  // external_data: enriquecimento NÃO destrutivo. Só valores não nulos entram
+  // (nada existente vira null) e as fontes são acrescentadas (dedupe por URL).
+  const incoming: Data = {
     rating: venue.nota_media ?? null,
     rating_count: venue.contagem_avaliacoes ?? null,
     confidence: venue.confidence ?? null,
@@ -477,20 +502,32 @@ function buildPatchData(
     tipo_piso: venue.tipo_piso ?? null,
     detalhe_quadras: venue.detalhe_quadras ?? null,
     rodada_dados: venue.rodada_dados ?? null,
-    comments: (venue.comentarios ?? []).slice(0, 3).map((c) => ({
+    operational_status: venue.status_operacional ?? null,
+    price_table: venue.precos && venue.precos.length > 0 ? venue.precos : null,
+  };
+  const prevExternal = (data.external_data ?? {}) as Data;
+  const external: Data = {};
+  for (const [k, v] of Object.entries(incoming)) {
+    if (v != null) external[k] = v;
+  }
+  if ((venue.comentarios ?? []).length > 0) {
+    external.comments = (venue.comentarios ?? []).slice(0, 3).map((c) => ({
       autor: c.autor ?? null,
       data: c.data ?? null,
       texto: c.texto,
       fonte_url: c.fonte_url ?? null,
-    })),
-    sources: venue.fontes ?? [],
-    imported_at: new Date().toISOString(),
-    imported_by: SOURCE_LABEL,
-  };
-  patch.external_data = {
-    ...(data.external_data ?? {}),
-    ...external,
-  };
+    }));
+  }
+  const prevSources: VenueSource[] = Array.isArray(prevExternal.sources) ? prevExternal.sources : [];
+  const seenUrls = new Set(prevSources.map((s) => s.url));
+  external.sources = [...prevSources, ...(venue.fontes ?? []).filter((s) => !seenUrls.has(s.url))];
+  external.enriched_at = new Date().toISOString();
+  external.enriched_by = SOURCE_LABEL;
+  if (!prevExternal.imported_at) {
+    external.imported_at = new Date().toISOString();
+    external.imported_by = SOURCE_LABEL;
+  }
+  patch.external_data = {...prevExternal, ...external};
   patch.updated_at = FieldValue.serverTimestamp();
   patch.updated_by = SOURCE_LABEL;
 
@@ -515,14 +552,18 @@ async function main() {
   const datasetPath = path.resolve(
       datasetIdx >= 0 ? args[datasetIdx + 1] : path.join(__dirname, "venues-curitiba.json"),
   );
+  // --patch-only (ou "modo": "enriquecimento" no dataset): nunca cria locations;
+  // venues sem match viram skip. Rodadas de enriquecimento usam location_id exato.
   const ownerIdx = args.indexOf("--owner-uid");
   const ownerUid = ownerIdx >= 0 ? args[ownerIdx + 1] : null;
 
   const dataset = JSON.parse(fs.readFileSync(datasetPath, "utf8")) as {
     cidade?: string;
     rodada?: number;
+    modo?: string;
     venues: VenueDataset[];
   };
+  const patchOnly = args.includes("--patch-only") || dataset.modo === "enriquecimento";
   const venues = dataset.venues ?? [];
   const datasetCity = dataset.cidade?.trim() || undefined;
   const limitIdx = args.indexOf("--limit");
@@ -565,7 +606,17 @@ async function main() {
         stats.skip += 1;
         continue;
       }
-      const found = findExisting(existing, venue, cityOf(venue, datasetCity));
+      let found = findExisting(existing, venue, cityOf(venue, datasetCity));
+      if (venue.location_id) {
+        // id exato tem precedência sobre qualquer heurística de nome/endereço.
+        const byId = [...existing.values()].find((d) => d.id === venue.location_id);
+        if (!byId) {
+          console.error(`  ✗ location_id ${venue.location_id} (${venue.nome}) não existe em produção — pulado`);
+          stats.skip += 1;
+          continue;
+        }
+        found = {doc: byId, by: "nome"};
+      }
       const match = found?.doc;
       const manualReview: string[] = [];
       if (match) {
@@ -573,11 +624,24 @@ async function main() {
         if (found && found.by !== "nome") {
           manualReview.push(`venue existente reconhecido por ${found.by} ("${match.get("name")}") — confirmar que é o mesmo local`);
         }
+        // Quadras faltantes (qtd/detalhe do dataset menos as já existentes).
+        const plannedFields = buildFieldPlan(venue).fields;
+        const existingCount = (await match.ref.collection("fields").get()).size;
+        const toCreate = plannedFields.slice(existingCount);
+        if (toCreate.length > 0) {
+          patchData.field_count = existingCount + toCreate.length;
+          patchData.has_active_fields = true;
+        }
         plans.push({
           venue, action: "patch", locationId: match.id,
-          patchData, fieldsToCreate: [], manualReview,
+          patchData, fieldsToCreate: toCreate, existingFieldCount: existingCount, manualReview,
         });
         stats.patch += 1;
+        stats.fields += toCreate.length;
+      } else if (patchOnly) {
+        console.log(`  - ${venue.nome}: sem location existente (modo patch-only) — pulado`);
+        stats.skip += 1;
+        continue;
       } else {
         const createData = buildCreateData(venue, ownerUid ?? "", manualReview, datasetCity);
         const {fields, notes} = buildFieldPlan(venue);
@@ -601,7 +665,12 @@ async function main() {
 
   for (const plan of plans) {
     const flag = plan.action === "create" ? "+" : (plan.action === "patch" ? "~" : "-");
-    console.log(` ${flag} ${plan.venue.nome}${plan.locationId ? ` (id=${plan.locationId})` : ""}`);
+    console.log(` ${flag} ${plan.venue.nome}${plan.locationId ? ` (id=${plan.locationId})` : ""}` +
+        `${plan.action === "patch" && plan.fieldsToCreate.length > 0 ? ` [+${plan.fieldsToCreate.length} quadra(s)]` : ""}`);
+    if (plan.action === "patch" && plan.patchData) {
+      const keys = Object.keys(plan.patchData).filter((k) => !["external_data", "updated_at", "updated_by"].includes(k));
+      console.log(`    campos preenchidos: ${keys.length > 0 ? keys.join(", ") : "(apenas external_data)"}`);
+    }
     for (const note of plan.manualReview) console.log(`    ⚠ ${note}`);
   }
 
@@ -652,16 +721,13 @@ async function main() {
         const locRef = db.collection("locations").doc(plan.locationId);
         batch.update(locRef, plan.patchData);
         ops += 1;
-        // Enriquecimento de quadras: cria as que o detalhe/qtd do dataset
-        // indicam e que ainda não existem (ex.: venue importado sem quadras
-        // na R1 cuja R2 identificou quantidade/tipo).
-        const {fields} = buildFieldPlan(plan.venue);
-        const existingFields = await locRef.collection("fields").get();
-        const missing = Math.max(0, fields.length - existingFields.size);
-        for (let i = 0; i < missing; i++) {
-          const f = fields[existingFields.size + i];
+        // Enriquecimento de quadras: cria as que o detalhe/qtd do dataset indicam
+        // e que ainda não existem (field_count/has_active_fields já vão no patch).
+        const existingCount = plan.existingFieldCount ?? 0;
+        for (let i = 0; i < plan.fieldsToCreate.length; i++) {
+          const f = plan.fieldsToCreate[i];
           batch.set(locRef.collection("fields").doc(), {
-            name: `Quadra ${existingFields.size + i + 1}`,
+            name: `Quadra ${existingCount + i + 1}`,
             type: f.type,
             description: null,
             photo_url: null,
@@ -678,8 +744,20 @@ async function main() {
           ops += 1;
           if (ops >= MAX_BATCH_OPS) await commitBatch();
         }
-        if (missing > 0) {
-          console.log(`      + ${missing} quadra(s) criada(s) por enriquecimento`);
+        // Preço por hora público (explícito na fonte): só preenche quadras sem preço.
+        const priceCents = priceToCents(plan.venue.preco_hora);
+        if (priceCents) {
+          const existingFields = await locRef.collection("fields").get();
+          for (const fd of existingFields.docs) {
+            if (!(Number(fd.get("hourly_price")) > 0)) {
+              batch.update(fd.ref, {hourly_price: priceCents / 100, updated_at: FieldValue.serverTimestamp()});
+              ops += 1;
+              if (ops >= MAX_BATCH_OPS) await commitBatch();
+            }
+          }
+        }
+        if (plan.fieldsToCreate.length > 0) {
+          console.log(`      + ${plan.fieldsToCreate.length} quadra(s) criada(s) por enriquecimento`);
         }
       }
     } catch (err) {

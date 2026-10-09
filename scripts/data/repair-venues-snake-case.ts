@@ -25,6 +25,7 @@
  * Usage:
  *   NODE_PATH=functions/node_modules npx tsx scripts/data/repair-venues-snake-case.ts \
  *     [--plan-out reports/venues-repair-plan.json] [--execute] [--include-divergent]
+ *     [--only <id,id>] [--backup-out reports/venues-legacy-backup.json]
  *
  * Ambiente: VENUES_PROJECT_ID (padrão futebadosparcas). Com FIRESTORE_EMULATOR_HOST
  * definido o Admin SDK fala com o emulador (use projeto demo-*).
@@ -64,6 +65,9 @@ const CAMEL_TO_SNAKE: Record<string, string> = {
   minGameDurationMinutes: "min_game_duration_minutes",
   fieldCount: "field_count",
   fieldType: "field_type",
+  fullAddress: "full_address",
+  fieldTypeInferred: "field_type_inferred",
+  gpsInferred: "gps_inferred",
   primaryFieldType: "primary_field_type",
   activeFieldCount: "active_field_count",
   activeFieldTypes: "active_field_types",
@@ -146,6 +150,12 @@ async function main() {
   const args = process.argv.slice(2);
   const execute = args.includes("--execute");
   const includeDivergent = args.includes("--include-divergent");
+  // --only <id,id>: restringe o reparo a esses docs (uso: revisão manual resolvida, com --include-divergent).
+  const onlyIdx = args.indexOf("--only");
+  const only = onlyIdx >= 0 ? new Set(args[onlyIdx + 1].split(",").map((x) => x.trim()).filter(Boolean)) : null;
+  // --backup-out <arquivo>: grava o estado ANTERIOR (location + fields) dos docs que serão escritos.
+  const backupIdx = args.indexOf("--backup-out");
+  const backupOut = backupIdx >= 0 ? path.resolve(args[backupIdx + 1]) : null;
   const planIdx = args.indexOf("--plan-out");
   const planOut = planIdx >= 0 ? path.resolve(args[planIdx + 1]) : null;
   const emulator = process.env.FIRESTORE_EMULATOR_HOST ?? null;
@@ -180,6 +190,7 @@ async function main() {
   const writes: Array<{ref: admin.firestore.DocumentReference; update: Record<string, unknown>}> = [];
 
   for (const doc of snap.docs) {
+    if (only && !only.has(doc.id)) continue;
     const data = doc.data();
     const conv = convert(data);
     const fields = await doc.ref.collection("fields").get();
@@ -235,6 +246,19 @@ async function main() {
     console.log(`  ~ ${header.name}: renomeia ${Object.keys(conv.renamed).join(",") || "-"}; ` +
         `remove camel mantendo snake ${Object.keys(conv.droppedCamel).join(",") || "-"}`);
     if (hasChanges(conv)) writes.push({ref: doc.ref, update: conv.update});
+  }
+
+  if (backupOut && writes.length > 0) {
+    const backup: Array<{path: string; data: unknown}> = [];
+    for (const w of writes) {
+      const before = await w.ref.get();
+      backup.push({path: w.ref.path, data: JSON.parse(JSON.stringify(before.data() ?? null))});
+    }
+    fs.mkdirSync(path.dirname(backupOut), {recursive: true});
+    fs.writeFileSync(backupOut, JSON.stringify({
+      generated_at: new Date().toISOString(), project_id: PROJECT_ID, docs: backup,
+    }, null, 2));
+    console.log(`Backup de ${backup.length} documento(s) em ${backupOut}`);
   }
 
   if (execute) {

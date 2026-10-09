@@ -10,8 +10,9 @@ Datasets curados para o importador `import-venues-dataset.ts`. Tudo entra no app
 | `venues-londrina.json` | R4 (#4195) | Londrina | 7 |
 | `venues-porto-alegre.json` | R5 (#4195) | Porto Alegre | 9 |
 | `venues-sao-paulo.json` | R6 (#4195) | São Paulo (capital) | 12 |
-| `venues-florianopolis.json` | R7 (#4195) | Florianópolis | 7 |
+| `venues-florianopolis.json` | R7 (#4195), revisada em 08/10 | Florianópolis (fichas do Maps + site oficial) | 4 |
 | `venues-joinville.json` | R8 (#4195) | Joinville | 13 |
+| `venues-enriquecimento-r9.json` | R9 (#4195) | enriquecimento não destrutivo (`modo: enriquecimento`, `location_id` exato) de venues já importados | 33 |
 
 ## Regras dos dados
 
@@ -55,3 +56,21 @@ node scripts/data/test-venues-emulator.mjs
 
 Leitura somente-leitura de produção em 07/10/2026: 27 locations importadas (25 camelCase DRAFT +
 2 pré-existentes snake_case SUSPENDED) e **31** field docs sob elas — o corpo do PR #4206 dizia 37.
+
+## Rodada R9: enriquecimento e revisão manual (08/10/2026)
+
+- `venues-florianopolis.json` foi refeito: 7 itens de diretório → 4 confirmados (Estação da Bola com site oficial WebQuadras,
+  Categeró, Floripa Society e Maria Chuteira com ficha do Maps). Removidos: Arena Futebol Indoor (Maps: permanentemente
+  fechado) e Floripa Soccer, Show de Bola e Zingabool (endereço/telefone da ficha divergem do diretório).
+- `venues-enriquecimento-r9.json` é gerado por `enrichment/build-venues-enrichment.py` a partir do snapshot de produção
+  (`snapshot-venues.js`), das fichas do Google Maps (`enrichment/maps-evidence-r9.jsonl`), dos datasets curados e de páginas
+  oficiais citadas em `fontes[]`. Aplicação: `import-venues-dataset.ts --dataset scripts/data/venues-enriquecimento-r9.json`
+  (patch only; sem criar locations). O patch **só preenche vazios** (ou o horário padrão 08:00-23:59 do importador), acrescenta
+  fontes sem apagar as existentes, cria as quadras que faltam e atualiza `field_count`/`has_active_fields`.
+  Situação `permanentemente_fechado`/`temporariamente_fechado` da ficha do Maps vai para `external_data.operational_status`;
+  tabelas de preço sem unidade explícita vão para `external_data.price_table` (nunca para `hourly_price`).
+- Quantidade de quadras só entra com número explícito na fonte; descrição no singular vale 1 (mínimo) e está marcada no detalhe.
+- Revisão manual: `resolve-venues-manual-review.ts` (RMC: Camisa 9 e Cancha do Corinthians, resolvidas pela fonte) e
+  `repair-venues-snake-case.ts --only <ids> --include-divergent --backup-out` (as 2 legadas: snake_case é a verdade; backup em
+  `enrichment/venues-legacy-backup.json`). O repair agora também converte `fullAddress`, `fieldTypeInferred` e `gpsInferred`.
+- Verificação somente-leitura: `verify-venues-production.js` (relatório de 08/10 em `enrichment/venues-prod-verification-2026-10-08.json`).

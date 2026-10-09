@@ -1,29 +1,145 @@
 {
-  "gerado_em": "2026-10-07",
+  "gerado_em": "2026-10-08",
   "rodada": 7,
   "slug": "florianopolis",
   "issue": 4195,
   "titulo": "Florianópolis (R7)",
   "coleta": {
-    "data": "2026-10-07",
-    "ferramentas": "pesquisa web (fichas públicas por item) + OpenStreetMap/Overpass (scripts/data/build-venues-osm.mjs)",
-    "regra": "apenas dados públicos verificáveis; campos sem fonte = null; todo item tem >=1 fonte com URL; entra no app como DRAFT/não verificado"
+    "data": "2026-10-08",
+    "ferramentas": "site oficial (WebQuadras), fichas do Google Maps consultadas no navegador, Guia Floripa e diretório Locais do Brasil",
+    "regra": "apenas dados públicos verificáveis; campos sem fonte = null; venues sem confirmação em fonte atual foram removidos (Arena Futebol Indoor: ficha do Maps 'Permanentemente fechado'; Floripa Soccer, Show de Bola, Zingabool: endereço/telefone da ficha divergem do diretório); entra no app como DRAFT/não verificado"
   },
   "cobertura": {
-    "Florianópolis": 7
+    "Florianópolis": 4
+  },
+  "revisao_r7": {
+    "removidos": [
+      {
+        "nome": "Arena Futebol Indoor",
+        "motivo": "Google Maps marca 'Permanentemente fechado' (08/10/2026)"
+      },
+      {
+        "nome": "Floripa Soccer",
+        "motivo": "ficha do Maps aponta Caminho dos Açores, 2150 (dataset tinha Rua do Tico Tico) e sem telefone: endereço não confirmado"
+      },
+      {
+        "nome": "Show de Bola",
+        "motivo": "busca no Maps retorna outro estabelecimento (Floripa Showbol, Av. Santa Catarina 1818); Rodovia José Carlos Daux 11200 não confirmada"
+      },
+      {
+        "nome": "Zingabool - Campo de Futebol 7",
+        "motivo": "ficha do Maps 'Zinga Bol' tem outro endereço e telefone; dado do diretório não confirmado"
+      }
+    ]
   },
   "venues": [
     {
-      "nome": "Arena Futebol Indoor",
+      "nome": "Estação da Bola Futebol Indoor",
       "endereco": {
-        "rua": "Rua Ver. Gercino Silva",
-        "numero": "91",
-        "bairro": "Canto",
+        "rua": "Rua Ursulina Senna de Castro",
+        "numero": "203",
+        "bairro": "Estreito",
         "cidade": "Florianópolis",
         "uf": "SC",
-        "cep": "88075-560"
+        "cep": "88070-290"
       },
-      "telefone": "(48) 99911-0608",
+      "telefone": "(48) 3334-3535",
+      "whatsapp": null,
+      "site": "https://estacaodabola.webquadras.com.br/",
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": 2,
+      "detalhe_quadras": "2 quadras de society (futebol suíço sintético, cobertas)",
+      "tipo_piso": "grama sintética",
+      "horarios": {
+        "segunda": "08:00-00:30",
+        "terca": "08:00-00:30",
+        "quarta": "08:00-00:30",
+        "quinta": "08:00-00:30",
+        "sexta": "08:00-00:30",
+        "sabado": "08:00-22:00",
+        "domingo": "08:00-22:00"
+      },
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://estacaodabola.webquadras.com.br/",
+          "dado": "site oficial (sistema de reservas WebQuadras): estrutura de 2 quadras de futebol suíço sintético cobertas, horário de funcionamento por dia, endereço (Rua Ursulina de Senna Castro, 203, Estreito, em frente ao DETRAN) e telefone (48) 3334-3535"
+        },
+        {
+          "url": "https://www.google.com/maps/place/Esta%C3%A7%C3%A3o+da+Bola+Futebol+Indoor/@-27.5934772,-48.5813331,17z",
+          "dado": "ficha do Google Maps (consultada em 08/10/2026): endereço com CEP 88070-290, coordenadas do estabelecimento, nota 4,6, site oficial vinculado e sem marcação de fechado"
+        },
+        {
+          "url": "https://guiafloripa.com.br/servicos/esportes/futebol-escolinhas-quadras/estacao-da-bola-futebol-indoor.php",
+          "dado": "ficha no Guia Floripa (categoria futebol/quadras em Florianópolis)"
+        }
+      ],
+      "confidence": "alta",
+      "coordenadas": {
+        "lat": -27.5934772,
+        "lon": -48.5813331
+      },
+      "rodada_dados": "R7",
+      "finalidade": "comercial_aluguel",
+      "origem": "web"
+    },
+    {
+      "nome": "Categeró Centro Esportivo",
+      "endereco": {
+        "rua": "Rodovia Virgílio Várzea",
+        "numero": "310",
+        "bairro": "Monte Verde",
+        "cidade": "Florianópolis",
+        "uf": "SC",
+        "cep": "88032-005"
+      },
+      "telefone": "(48) 3238-2203",
+      "whatsapp": null,
+      "site": null,
+      "instagram": "categerocentroesportivo",
+      "preco_hora": null,
+      "qtd_quadras": 2,
+      "detalhe_quadras": "2 quadras de futsal (futebol indoor)",
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.google.com/maps/place/Categero+Centro+Esportivo+Ltda./@-27.5565209,-48.4992676,17z",
+          "dado": "ficha do Google Maps (consultada em 08/10/2026): Rod. Virgílio Várzea, 310, Monte Verde, CEP 88032-005, telefone (48) 3238-2203, nota 4,4, Instagram vinculado e sem marcação de fechado"
+        },
+        {
+          "url": "https://guiafloripa.com.br/servicos/esportes/categero-futebol-indoor.php",
+          "dado": "Guia Floripa: 'Categeró Futebol Indoor | Aluguel de Quadras de Futebol em Florianópolis' — duas quadras de futebol indoor, bar, churrasqueiras e vestiário, Rodovia Virgílio Várzea, 310"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": {
+        "lat": -27.5565209,
+        "lon": -48.4992676
+      },
+      "rodada_dados": "R7",
+      "finalidade": "comercial_aluguel",
+      "origem": "web"
+    },
+    {
+      "nome": "Floripa Society Futebol e Lazer",
+      "endereco": {
+        "rua": "Rua do Gramal",
+        "numero": "1600",
+        "bairro": "Campeche",
+        "cidade": "Florianópolis",
+        "uf": "SC",
+        "cep": "88063-020"
+      },
+      "telefone": "(48) 98817-5100",
       "whatsapp": null,
       "site": null,
       "instagram": null,
@@ -38,12 +154,19 @@
       "fotos": [],
       "fontes": [
         {
-          "url": "https://www.locaisdobrasil.com.br/encontre/campo-de-futebol/florianopolis-sc/arena-futebol-indoor/62865724911b8129b7e7c359",
+          "url": "https://www.locaisdobrasil.com.br/encontre/campo-de-futebol/florianopolis-sc/floripa-society-futebol-e-lazer/6286571f911b8129b7e7c356",
           "dado": "ficha no diretório Locais do Brasil: endereço, CEP e telefone do estabelecimento (categoria campo de futebol)"
+        },
+        {
+          "url": "https://www.google.com/maps/place/Floripa+Society+Futebol+e+Lazer/@-27.693715,-48.499716,17z",
+          "dado": "ficha do Google Maps (consultada em 08/10/2026): R. do Gramal, 1600, Campeche, CEP 88063-020, telefone (48) 98817-5100 (igual ao do diretório), nota 4,7 e sem marcação de fechado"
         }
       ],
-      "confidence": "baixa",
-      "coordenadas": null,
+      "confidence": "média",
+      "coordenadas": {
+        "lat": -27.693715,
+        "lon": -48.499716
+      },
       "rodada_dados": "R7",
       "finalidade": "comercial_indicado",
       "origem": "web"
@@ -75,184 +198,13 @@
         {
           "url": "https://www.locaisdobrasil.com.br/encontre/campo-de-futebol/florianopolis-sc/arena-maria-chuteira/62865739911b8129b7e7c365",
           "dado": "ficha no diretório Locais do Brasil: endereço, CEP e telefone do estabelecimento (categoria campo de futebol)"
-        }
-      ],
-      "confidence": "baixa",
-      "coordenadas": null,
-      "rodada_dados": "R7",
-      "finalidade": "comercial_indicado",
-      "origem": "web"
-    },
-    {
-      "nome": "Estação da Bola Futebol Indoor",
-      "endereco": {
-        "rua": "Rua Ursulina Senna de Castro",
-        "numero": "203",
-        "bairro": "Estreito",
-        "cidade": "Florianópolis",
-        "uf": "SC",
-        "cep": "88070-290"
-      },
-      "telefone": "(48) 3334-3535",
-      "whatsapp": null,
-      "site": null,
-      "instagram": null,
-      "preco_hora": null,
-      "qtd_quadras": null,
-      "detalhe_quadras": null,
-      "tipo_piso": null,
-      "horarios": null,
-      "nota_media": null,
-      "contagem_avaliacoes": null,
-      "comentarios": [],
-      "fotos": [],
-      "fontes": [
+        },
         {
-          "url": "https://www.locaisdobrasil.com.br/encontre/campo-de-futebol/florianopolis-sc/estacao-da-bola-futebol-indoor/6286572b911b8129b7e7c35d",
-          "dado": "ficha no diretório Locais do Brasil: endereço, CEP e telefone do estabelecimento (categoria campo de futebol)"
+          "url": "https://www.google.com/maps/search/Arena+Maria+Chuteira+Florian%C3%B3polis",
+          "dado": "ficha do Google Maps (consultada em 08/10/2026): R. Prof. Antônio Mâncio Costa, 69, Jardim Atlântico, CEP 88095-140, telefone (48) 98423-0205 (igual ao do diretório), nota 4,6 e sem marcação de fechado"
         }
       ],
-      "confidence": "baixa",
-      "coordenadas": null,
-      "rodada_dados": "R7",
-      "finalidade": "comercial_indicado",
-      "origem": "web"
-    },
-    {
-      "nome": "Floripa Soccer",
-      "endereco": {
-        "rua": "Rua do Tico Tico",
-        "numero": null,
-        "bairro": "Santinho",
-        "cidade": "Florianópolis",
-        "uf": "SC",
-        "cep": "88058-700"
-      },
-      "telefone": "(48) 99106-1231",
-      "whatsapp": null,
-      "site": null,
-      "instagram": null,
-      "preco_hora": null,
-      "qtd_quadras": null,
-      "detalhe_quadras": null,
-      "tipo_piso": null,
-      "horarios": null,
-      "nota_media": null,
-      "contagem_avaliacoes": null,
-      "comentarios": [],
-      "fotos": [],
-      "fontes": [
-        {
-          "url": "https://www.locaisdobrasil.com.br/encontre/campo-de-futebol/florianopolis-sc/floripa-soccer/62865766911b8129b7e7c380",
-          "dado": "ficha no diretório Locais do Brasil: endereço, CEP e telefone do estabelecimento (categoria campo de futebol)"
-        }
-      ],
-      "confidence": "baixa",
-      "coordenadas": null,
-      "rodada_dados": "R7",
-      "finalidade": "comercial_indicado",
-      "origem": "web"
-    },
-    {
-      "nome": "Floripa Society Futebol e Lazer",
-      "endereco": {
-        "rua": "Rua do Gramal",
-        "numero": "1600",
-        "bairro": "Campeche",
-        "cidade": "Florianópolis",
-        "uf": "SC",
-        "cep": "88063-020"
-      },
-      "telefone": "(48) 98817-5100",
-      "whatsapp": null,
-      "site": null,
-      "instagram": null,
-      "preco_hora": null,
-      "qtd_quadras": null,
-      "detalhe_quadras": null,
-      "tipo_piso": null,
-      "horarios": null,
-      "nota_media": null,
-      "contagem_avaliacoes": null,
-      "comentarios": [],
-      "fotos": [],
-      "fontes": [
-        {
-          "url": "https://www.locaisdobrasil.com.br/encontre/campo-de-futebol/florianopolis-sc/floripa-society-futebol-e-lazer/6286571f911b8129b7e7c356",
-          "dado": "ficha no diretório Locais do Brasil: endereço, CEP e telefone do estabelecimento (categoria campo de futebol)"
-        }
-      ],
-      "confidence": "baixa",
-      "coordenadas": null,
-      "rodada_dados": "R7",
-      "finalidade": "comercial_indicado",
-      "origem": "web"
-    },
-    {
-      "nome": "Show de Bola",
-      "endereco": {
-        "rua": "Rodovia José Carlos Daux",
-        "numero": "11200",
-        "bairro": "Santo Antonio de Lisboa",
-        "cidade": "Florianópolis",
-        "uf": "SC",
-        "cep": "88050-000"
-      },
-      "telefone": "(48) 99126-9990",
-      "whatsapp": null,
-      "site": null,
-      "instagram": null,
-      "preco_hora": null,
-      "qtd_quadras": null,
-      "detalhe_quadras": null,
-      "tipo_piso": null,
-      "horarios": null,
-      "nota_media": null,
-      "contagem_avaliacoes": null,
-      "comentarios": [],
-      "fotos": [],
-      "fontes": [
-        {
-          "url": "https://www.locaisdobrasil.com.br/encontre/campo-de-futebol/florianopolis-sc/show-de-bola/62865752911b8129b7e7c374",
-          "dado": "ficha no diretório Locais do Brasil: endereço, CEP e telefone do estabelecimento (categoria campo de futebol)"
-        }
-      ],
-      "confidence": "baixa",
-      "coordenadas": null,
-      "rodada_dados": "R7",
-      "finalidade": "comercial_indicado",
-      "origem": "web"
-    },
-    {
-      "nome": "Zingabool - Campo de Futebol 7",
-      "endereco": {
-        "rua": "Rua Paulina Marques dos Santos",
-        "numero": "1",
-        "bairro": "Ingleses do Rio Vermelho",
-        "cidade": "Florianópolis",
-        "uf": "SC",
-        "cep": "88058-300"
-      },
-      "telefone": "(48) 98413-5970",
-      "whatsapp": null,
-      "site": null,
-      "instagram": null,
-      "preco_hora": null,
-      "qtd_quadras": null,
-      "detalhe_quadras": null,
-      "tipo_piso": null,
-      "horarios": null,
-      "nota_media": null,
-      "contagem_avaliacoes": null,
-      "comentarios": [],
-      "fotos": [],
-      "fontes": [
-        {
-          "url": "https://www.locaisdobrasil.com.br/encontre/campo-de-futebol/florianopolis-sc/zingabool-campo-de-futebol-7/6286575f911b8129b7e7c37c",
-          "dado": "ficha no diretório Locais do Brasil: endereço, CEP e telefone do estabelecimento (categoria campo de futebol)"
-        }
-      ],
-      "confidence": "baixa",
+      "confidence": "média",
       "coordenadas": null,
       "rodada_dados": "R7",
       "finalidade": "comercial_indicado",
