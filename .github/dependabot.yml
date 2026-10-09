@@ -42,6 +42,24 @@ updates:
         update-types: ["version-update:semver-major"]
       - dependency-name: "com.android.tools.build:gradle"
         update-types: ["version-update:semver-major"]
+      # Toolchain Android/KMP travada (validado em CI nos PRs #4250, #4261, #4263 e #4170/#4172):
+      # - Kotlin 2.4 exige KSP2; o projeto usa KSP1 (ksp.useKSP2=false) por histórico de
+      #   corrupção de cache do KSP2, e kotlinOptions {} vira erro de script.
+      # - Ktor 3.x (klib do iOS) não resolve com Kotlin 2.2.x/Gradle 9.1; o único uso é ViaCepClient.
+      # - androidx core/navigation/lifecycle recentes exigem compileSdk 37 e AGP 9.1+ (hoje AGP 9.0.1/36).
+      # Issue #4265. Reabrir tudo junto na migração planejada (AGP 9.1+, compileSdk 37, Kotlin 2.4, KSP2, Ktor 3).
+      - dependency-name: "org.jetbrains.kotlin*"
+        update-types: ["version-update:semver-minor"]
+      - dependency-name: "org.jetbrains.kotlinx*"
+        update-types: ["version-update:semver-minor"]
+      - dependency-name: "com.google.devtools.ksp*"
+        update-types: ["version-update:semver-minor", "version-update:semver-major"]
+      - dependency-name: "org.jetbrains.compose*"
+        update-types: ["version-update:semver-minor"]
+      - dependency-name: "io.ktor*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "androidx.*"
+        update-types: ["version-update:semver-minor", "version-update:semver-major"]
 
   - package-ecosystem: "npm"
     directory: "/functions"
