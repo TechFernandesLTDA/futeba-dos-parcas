@@ -85,7 +85,7 @@ test('Functions integration polling allows slow emulator triggers', () => {
 });
 
 test('Heavy emulator, browser and Android jobs run on the Linux WSL runners', () => {
-  const linux = new RegExp(String.raw`runs-on: \$\{\{ fromJSON\(vars\.RUNNER_LABELS_LINUX \|\| vars\.RUNNER_LABELS \|\| '\[\"self-hosted\",\"macOS\",\"ARM64\"\]'\) \}\}`);
+  const linux = new RegExp(String.raw`runs-on: \$\{\{ fromJSON\((vars\.RUNNER_LABELS_EMULATORS \|\| )?vars\.RUNNER_LABELS_LINUX \|\| vars\.RUNNER_LABELS \|\| '\[\"self-hosted\",\"macOS\",\"ARM64\"\]'\) \}\}`);
   const heavy = {
     'web-e2e-ci.yml': ['web-e2e'],
     'web-lighthouse-ci.yml': ['lighthouse'],
@@ -125,11 +125,20 @@ test('Xcode and the arm64 macrobenchmark stay on the Mac runner', () => {
   assert.match(ios, /runs-on: \[self-hosted, macOS, ARM64, futeba\]/);
 });
 
-test('Emulator jobs on the shared WSL host serialize through one concurrency group', () => {
-  const group = /group: firebase-emulator-integration-\$\{\{ github\.repository \}\}\n\s+cancel-in-progress: false/;
-  assert.match(read('.github/workflows/web-e2e-ci.yml'), group);
-  assert.match(read('.github/workflows/test-harness-ci.yml'), group);
-  assert.match(job(read('.github/workflows/functions-integration-ci.yml'), 'functions-integration'), group);
+test('Emulator jobs on the shared WSL host serialize through the dedicated emulator runner', () => {
+  // Um único runner (label futeba-emulators) serializa os jobs de emulador.
+  // O grupo global antigo cancelava runs pendentes de OUTROS refs (fila de 1).
+  const emu = /runs-on: \$\{\{ fromJSON\(vars\.RUNNER_LABELS_EMULATORS \|\| /;
+  for (const [file, jobId] of [['web-e2e-ci.yml', 'web-e2e'], ['test-harness-ci.yml', 'test-harness'],
+    ['functions-integration-ci.yml', 'functions-integration'], ['realtime-load-ci.yml', 'realtime-load']]) {
+    assert.match(job(read(`.github/workflows/${file}`), jobId), emu, `${file}:${jobId}`);
+  }
+  const perRef = /group: \$\{\{ github\.workflow \}\}-\$\{\{ github\.ref \}\}\n\s+cancel-in-progress: false/;
+  assert.match(read('.github/workflows/web-e2e-ci.yml'), perRef);
+  assert.match(read('.github/workflows/test-harness-ci.yml'), perRef);
+  for (const file of ['web-e2e-ci.yml', 'test-harness-ci.yml', 'functions-integration-ci.yml', 'realtime-load-ci.yml']) {
+    assert.doesNotMatch(read(`.github/workflows/${file}`), /firebase-emulator-integration/, file);
+  }
 });
 
 test('Mutation testing never runs on PR/push or plain dispatch', () => {

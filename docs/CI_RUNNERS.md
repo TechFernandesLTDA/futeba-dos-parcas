@@ -153,3 +153,7 @@ cd C:\Users\renan\actions-runner
 3. Rode `Web CI`, `Functions CI`, `Android CI` e `E2E` em uma branch e confira que nenhum job
    do escopo errado executa.
 4. Só então merge de PRs que dependem de CI.
+
+## Runner dedicado a emuladores (futeba-emulators)
+
+Os jobs que sobem emuladores Firebase (Web E2E, Functions Integration, Test Harness, Realtime Load) usam `vars.RUNNER_LABELS_EMULATORS = ["self-hosted","Linux","X64","futeba-emulators"]`. Só o runner de org `tf-wsl-1` tem essa label. Todos os runners WSL compartilham 127.0.0.1 (9099/8085/5001), então um único runner serializa esses jobs pela fila nativa do GitHub, sem cancelar nada. O grupo de concurrency global antigo (`firebase-emulator-integration`) cancelava runs pendentes de outros refs, porque o GitHub guarda só 1 pendente por grupo. Para adicionar capacidade, use portas dinâmicas por job antes de pôr a label em outro runner.

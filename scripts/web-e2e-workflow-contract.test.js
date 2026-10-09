@@ -36,9 +36,11 @@ function extractStep(job, stepName) {
   return nextStep === -1 ? job.slice(start) : job.slice(start, nextStep);
 }
 
-test('Firebase emulator workflows share one non-cancelling concurrency group', () => {
+test('Firebase emulator workflows serialize on the dedicated runner without cross-ref cancellation', () => {
+  // O runner dedicado (futeba-emulators) serializa; o grupo global antigo
+  // cancelava runs pendentes de outros refs (o GitHub guarda só 1 pendente).
   const concurrencyContract =
-    /concurrency:\n  group: firebase-emulator-integration-\$\{\{ github\.repository \}\}\n  cancel-in-progress: false/;
+    /concurrency:\n  group: \$\{\{ github\.workflow \}\}-\$\{\{ github\.ref \}\}\n  cancel-in-progress: false/;
 
   assert.match(e2eWorkflow, concurrencyContract);
   assert.match(harnessWorkflow, concurrencyContract);
@@ -99,7 +101,7 @@ test('optimized E2E preview opts into emulators without weakening production', (
 
 test('CI allocates its own preview port without reusing an unrelated server', () => {
   // WSL (runners tf-wsl-*) tem as libs do Playwright; E2E não gasta minutos hospedados.
-  assert.match(extractJob(e2eWorkflow, 'web-e2e'), /runs-on: \$\{\{ fromJSON\(vars\.RUNNER_LABELS_LINUX \|\| vars\.RUNNER_LABELS \|\| '\[\"self-hosted\",\"macOS\",\"ARM64\"\]'\) \}\}/);
+  assert.match(extractJob(e2eWorkflow, 'web-e2e'), /runs-on: \$\{\{ fromJSON\(vars\.RUNNER_LABELS_EMULATORS \|\| vars\.RUNNER_LABELS_LINUX \|\| vars\.RUNNER_LABELS \|\| '\[\"self-hosted\",\"macOS\",\"ARM64\"\]'\) \}\}/);
   assert.doesNotMatch(e2eWorkflow, /playwright install --with-deps/);
   assert.match(e2eWorkflow, /run: node scripts\/ci\/allocate-web-e2e-port\.js/);
   assert.ok(e2eWorkflow.indexOf('allocate-web-e2e-port.js') < e2eWorkflow.indexOf('- name: E2E ('));
