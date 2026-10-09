@@ -61,6 +61,9 @@ updates:
       # okhttp 5 vem em bloco (core + interceptors + Ktor/Retrofit), junto da migração do toolchain (#4265).
       - dependency-name: "com.squareup.okhttp3*"
         update-types: ["version-update:semver-major"]
+      # JUnit 6 exige api/params/engine/platform-launcher juntos; migração coordenada depois do toolchain (#4265).
+      - dependency-name: "org.junit*"
+        update-types: ["version-update:semver-major"]
       # SQLDelight 2.3+ publica klibs com ABI do Kotlin 2.3; o projeto está no Kotlin 2.2.x (migração coordenada: #4265).
       - dependency-name: "app.cash.sqldelight*"
         update-types: ["version-update:semver-minor", "version-update:semver-major"]
