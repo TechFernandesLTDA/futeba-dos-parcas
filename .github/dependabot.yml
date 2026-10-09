@@ -163,6 +163,9 @@ updates:
       # Tipos do Node acompanham o runtime do CI (20/22), não o major mais recente.
       - dependency-name: "@types/node"
         update-types: ["version-update:semver-major"]
+      # @mui/x-date-pickers 6 declara peer date-fns ^2 || ^3; só avança com a migração do MUI X.
+      - dependency-name: "date-fns"
+        update-types: ["version-update:semver-major"]
       - dependency-name: "@stryker-mutator/*"
         update-types: ["version-update:semver-major"]
       # 0.5+ exige ESLint 9/10 (peer); o web está no ESLint 8 (migração de lint do web ainda não planejada).
