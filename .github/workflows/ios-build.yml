@@ -35,7 +35,7 @@ permissions:
 jobs:
   ios_app_scope:
     name: Detect iOS app changes
-    runs-on: ubuntu-24.04
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS_LINUX || '["ubuntu-24.04"]') }}
     timeout-minutes: 5
     outputs:
       should_run: ${{ steps.detect.outputs.should_run }}
@@ -57,7 +57,7 @@ jobs:
 
   kmp-shared-tests:
     name: KMP Shared Unit Tests
-    runs-on: ubuntu-24.04
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS_LINUX || '["ubuntu-24.04"]') }}
     timeout-minutes: 30
     steps:
       - name: Checkout code
