@@ -1,6 +1,8 @@
 # Dependabot: updates AGRUPADOS por ecossistema para reduzir o ruído de PRs.
 # - Minor/patch: 1 PR por grupo/mês (cadência mensal, como antes).
-# - Major: PR separado e sempre manual, e os majors que exigem migração
+# - Major: 1 PR agrupado por ecossistema/mês (`*-majors`), sempre manual. Cada PR
+#   custa 30-60 min de CI serial nos runners do PC; não abrir um PR por major.
+#   Os majors que exigem migração
 #   planejada ficam em `ignore` (ex.: Gradle/KMP/Compose, React 19, MUI 6+).
 # - Alertas de segurança do GitHub (Dependabot alerts) continuam ativos independentemente deste arquivo.
 version: 2
@@ -11,7 +13,7 @@ updates:
       interval: "monthly"
       time: "09:00"
       timezone: "America/Sao_Paulo"
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 3
     labels:
       - "dependencies"
       - "type:chore"
@@ -19,6 +21,9 @@ updates:
       prefix: "chore(deps)"
       include: "scope"
     groups:
+      gradle-majors:
+        patterns: ["*"]
+        update-types: ["major"]
       kotlin-kmp:
         patterns: ["org.jetbrains.kotlin*", "org.jetbrains.kotlinx*", "com.google.devtools.ksp*", "org.jetbrains.compose*"]
         update-types: ["minor", "patch"]
@@ -94,7 +99,7 @@ updates:
       interval: "monthly"
       time: "09:00"
       timezone: "America/Sao_Paulo"
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 3
     labels:
       - "dependencies"
       - "type:chore"
@@ -102,6 +107,9 @@ updates:
       prefix: "chore(deps)"
       include: "scope"
     groups:
+      npm-functions-majors:
+        patterns: ["*"]
+        update-types: ["major"]
       functions-firebase:
         patterns: ["firebase-*", "@firebase/*", "@google-cloud/*"]
         update-types: ["minor", "patch"]
@@ -132,7 +140,7 @@ updates:
       interval: "monthly"
       time: "09:00"
       timezone: "America/Sao_Paulo"
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 3
     labels:
       - "dependencies"
       - "type:chore"
@@ -140,6 +148,9 @@ updates:
       prefix: "chore(deps)"
       include: "scope"
     groups:
+      npm-web-majors:
+        patterns: ["*"]
+        update-types: ["major"]
       web-react:
         patterns: ["react", "react-dom", "react-router*", "@types/react*"]
         update-types: ["minor", "patch"]
@@ -205,6 +216,9 @@ updates:
       prefix: "chore(deps)"
       include: "scope"
     groups:
+      npm-firestore-rules-tests-majors:
+        patterns: ["*"]
+        update-types: ["major"]
       rules-tests:
         patterns: ["*"]
         update-types: ["minor", "patch"]
@@ -223,6 +237,9 @@ updates:
       prefix: "chore(deps)"
       include: "scope"
     groups:
+      npm-majors:
+        patterns: ["*"]
+        update-types: ["major"]
       root-tooling:
         patterns: ["*"]
         update-types: ["minor", "patch"]
@@ -245,6 +262,9 @@ updates:
       prefix: "chore(ci)"
       include: "scope"
     groups:
+      actions-majors:
+        patterns: ["*"]
+        update-types: ["major"]
       github-actions:
         patterns: ["*"]
         update-types: ["minor", "patch"]

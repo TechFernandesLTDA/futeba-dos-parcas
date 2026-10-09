@@ -114,7 +114,7 @@ test('PR Check keeps Validate PR stable while moving Gradle to a scoped job', ()
 
 test('PR Check keeps Android SDK validation and the placeholder on the hosted job', () => {
   const android = jobBody(prWorkflow, 'android');
-  assert.match(android, /uses: android-actions\/setup-android@v3/);
+  assert.match(android, /uses: android-actions\/setup-android@v4/);
   assert.match(android, /sdkmanager --install "platform-tools" "platforms;android-36" "build-tools;36\.0\.0"/);
   assert.match(android, /test -f "\$\{ANDROID_SDK_ROOT:-\$\{ANDROID_HOME:-\}\}\/platforms\/android-36\/android\.jar"/);
   assert.match(android, /name: Create google-services\.json placeholder/);

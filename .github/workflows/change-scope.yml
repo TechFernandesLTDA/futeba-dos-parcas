@@ -34,7 +34,9 @@ permissions:
 jobs:
   classify:
     name: Classify changed files
-    runs-on: ${{ fromJSON(vars.RUNNER_LABELS_LINUX || vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    # Classificação é leve (checkout + node): roda nos runners futeba-poller
+    # para não esperar o pool geral.
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS_POLLER || vars.RUNNER_LABELS_LINUX || vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
     timeout-minutes: 5
     outputs:
       scope_version: ${{ steps.scope.outputs.scope_version }}
