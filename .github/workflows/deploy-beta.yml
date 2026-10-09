@@ -26,7 +26,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up JDK 21 (JetBrains, daemon toolchain)
         uses: actions/setup-java@v6
@@ -100,7 +100,7 @@ jobs:
             --release-notes-file /tmp/release-notes.txt
 
       - name: Upload APK artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: app-release-apk
           path: app/build/outputs/apk/release/app-release.apk

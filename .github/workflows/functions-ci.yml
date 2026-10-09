@@ -56,7 +56,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Node.js 22
         uses: actions/setup-node@v6
@@ -79,7 +79,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Node.js 22
         uses: actions/setup-node@v6
@@ -102,10 +102,10 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Restore verified Linux x64 FFmpeg binary
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             functions/vendor/ffmpeg/ffmpeg
@@ -145,7 +145,7 @@ jobs:
       # fetch-depth: 0 traz o historico completo. O diff-cover precisa do
       # merge-base com origin/master para isolar as linhas novas/alteradas do PR.
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -170,7 +170,7 @@ jobs:
       - name: Upload Test Coverage (best-effort)
         if: always()
         continue-on-error: true
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: functions-coverage
           path: functions/coverage/
@@ -238,7 +238,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Node.js 22
         uses: actions/setup-node@v6
@@ -295,7 +295,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Node.js 22
         uses: actions/setup-node@v6
@@ -313,7 +313,7 @@ jobs:
       - name: Upload Mutation Report
         if: always()
         continue-on-error: true
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: functions-mutation-report
           path: functions/reports/mutation/

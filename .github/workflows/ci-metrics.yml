@@ -43,7 +43,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
 
@@ -74,7 +74,7 @@ jobs:
         # A coleta acima continua autoritativa. Falha isolada de armazenamento
         # não deve ocultar métricas já publicadas no summary do próprio run.
         continue-on-error: true
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: ci-metrics-${{ github.event.workflow_run.id || github.run_id }}
           path: |

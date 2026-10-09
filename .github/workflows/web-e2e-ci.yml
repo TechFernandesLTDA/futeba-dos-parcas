@@ -56,7 +56,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Configurar Node.js 22
         uses: actions/setup-node@v6
@@ -176,7 +176,7 @@ jobs:
       - name: Upload — Playwright report
         if: always()
         continue-on-error: true
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: playwright-report-web-e2e
           path: web/playwright-report/
