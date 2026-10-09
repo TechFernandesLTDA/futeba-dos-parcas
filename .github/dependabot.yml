@@ -64,6 +64,9 @@ updates:
       # JUnit 6 exige api/params/engine/platform-launcher juntos; migração coordenada depois do toolchain (#4265).
       - dependency-name: "org.junit*"
         update-types: ["version-update:semver-major"]
+      # places 6 foi compilado com metadata de Kotlin mais novo que o 2.2.x do projeto (#4265).
+      - dependency-name: "com.google.android.libraries.places:places"
+        update-types: ["version-update:semver-major"]
       # maps-compose 9 exige compileSdk 37 (app em 36) e migra para android-maps-utils; o Maps SDK 20 só com maps-compose 8+.
       - dependency-name: "com.google.maps.android*"
         update-types: ["version-update:semver-major"]
