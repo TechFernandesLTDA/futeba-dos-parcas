@@ -1,0 +1,97 @@
+name: Play Promote
+
+# Promove um versionCode JÁ enviado à Play (via deploy-production.yml → internal)
+# para beta/production, com rollout gradual opcional. Manual, exige confirmação e
+# verifica a trilha depois do commit. Ref. docs/RELEASE_PROCESS.md.
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_code:
+        description: 'versionCode a promover (ex.: 81)'
+        required: true
+        type: string
+      track:
+        description: 'Trilha de destino'
+        required: true
+        type: choice
+        options:
+          - beta
+          - production
+      user_fraction:
+        description: 'Fração do rollout gradual (ex.: 0.2). Vazio = 100%'
+        required: false
+        default: ''
+        type: string
+      release_name:
+        description: 'Nome da release (ex.: 1.40.0)'
+        required: false
+        default: ''
+        type: string
+      confirm:
+        description: 'Digite "promote" para confirmar'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: play-promote
+  cancel-in-progress: false
+
+jobs:
+  promote:
+    name: Promote to ${{ inputs.track }}
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS_LINUX || vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    timeout-minutes: 10
+    steps:
+      - name: Guard
+        env:
+          CONFIRM: ${{ inputs.confirm }}
+        run: |
+          if [ "$CONFIRM" != "promote" ]; then
+            echo "::error::Confirmacao invalida (digite promote)"
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - name: Install dependencies
+        env:
+          HUSKY: '0'
+        run: npm ci
+
+      - name: Write service account credentials
+        env:
+          SA_JSON: ${{ secrets.PLAY_STORE_SERVICE_ACCOUNT_JSON }}
+        run: |
+          umask 077
+          printf '%s' "$SA_JSON" > "$RUNNER_TEMP/play-sa.json"
+          test -s "$RUNNER_TEMP/play-sa.json"
+
+      - name: Promote
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/play-sa.json
+          VERSION_CODE: ${{ inputs.version_code }}
+          TRACK: ${{ inputs.track }}
+          USER_FRACTION: ${{ inputs.user_fraction }}
+          RELEASE_NAME: ${{ inputs.release_name }}
+        run: |
+          ARGS=(--version-code "$VERSION_CODE" --track "$TRACK")
+          if [ -n "$USER_FRACTION" ]; then ARGS+=(--user-fraction "$USER_FRACTION"); fi
+          if [ -n "$RELEASE_NAME" ]; then ARGS+=(--name "$RELEASE_NAME"); fi
+          node scripts/ci/play-promote.js "${ARGS[@]}"
+
+      - name: Verify track
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/play-sa.json
+        run: node scripts/ci/play-track-status.js --version-code "${{ inputs.version_code }}" --track "${{ inputs.track }}"
+
+      - name: Cleanup credentials
+        if: always()
+        run: rm -f "$RUNNER_TEMP/play-sa.json"
