@@ -160,9 +160,14 @@ async function main() {
   const planOut = planIdx >= 0 ? path.resolve(args[planIdx + 1]) : null;
   const emulator = process.env.FIRESTORE_EMULATOR_HOST ?? null;
 
-  const snap = await db.collection("locations")
-      .where("external_data.imported_by", "==", IMPORT_LABEL)
-      .get();
+  // --all-locations: varre a coleção inteira (locations legadas fora do importador,
+  // ex.: owners mock_admin/usuários com chaves camelCase de data-fixes antigos).
+  const allLocations = args.includes("--all-locations");
+  const snap = allLocations ?
+    await db.collection("locations").get() :
+    await db.collection("locations")
+        .where("external_data.imported_by", "==", IMPORT_LABEL)
+        .get();
   console.log(`Projeto: ${PROJECT_ID}${emulator ? ` (EMULADOR ${emulator})` : " (Firestore real)"}. ` +
       `Locations importadas: ${snap.size}. Modo: ${execute ? "EXECUTE" : "DRY-RUN"}`);
 
@@ -172,7 +177,8 @@ async function main() {
     emulator_host: emulator,
     mode: execute ? "execute" : "dry-run",
     write_performed: false,
-    target_query: `locations where external_data.imported_by == '${IMPORT_LABEL}'`,
+    target_query: allLocations ? "locations (coleção inteira, --all-locations)" :
+      `locations where external_data.imported_by == '${IMPORT_LABEL}'`,
     totals: {
       locations_scanned: snap.size,
       locations_to_fix: 0,
