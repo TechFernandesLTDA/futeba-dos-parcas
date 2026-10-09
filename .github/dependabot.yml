@@ -66,6 +66,10 @@ updates:
       # okhttp 5 vem em bloco (core + interceptors + Ktor/Retrofit), junto da migração do toolchain (#4265).
       - dependency-name: "com.squareup.okhttp3*"
         update-types: ["version-update:semver-major"]
+      # vico 2.x/3.x troca a API do gráfico (CartesianChartHost/ModelProducer) e compose/compose-m3/core sobem juntos;
+      # único uso é o gráfico de colunas de ExpandableStatsSection.kt. Sem ganho funcional (#4314, #4315).
+      - dependency-name: "com.patrykandpatrick.vico*"
+        update-types: ["version-update:semver-major"]
       # JUnit 6 exige api/params/engine/platform-launcher juntos; migração coordenada depois do toolchain (#4265).
       - dependency-name: "org.junit*"
         update-types: ["version-update:semver-major"]
@@ -195,6 +199,12 @@ updates:
       - dependency-name: "vitest"
         update-types: ["version-update:semver-major"]
       - dependency-name: "@vitest/*"
+        update-types: ["version-update:semver-major"]
+      # typescript-eslint ainda não suporta TS 7 (Failed to load plugin; ERESOLVE no npm ci) (#4309).
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
+      # jsdom 30 quebra toHaveStyle com min()/rem em AppSidebar.test e MobileBottomNav.test; dev-only, sem ganho (#4311).
+      - dependency-name: "jsdom"
         update-types: ["version-update:semver-major"]
       - dependency-name: "@stryker-mutator/*"
         update-types: ["version-update:semver-major"]
