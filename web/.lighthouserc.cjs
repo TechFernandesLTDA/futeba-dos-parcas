@@ -3,7 +3,7 @@
 module.exports = {
   ci: {
     collect: {
-      startServerCommand: 'npm run preview -- --port 4173',
+      startServerCommand: 'node scripts/serve-dist.mjs dist 4173 ../firebase.json',
       url: [
         'http://localhost:4173/',
         'http://localhost:4173/organizar-pelada',
