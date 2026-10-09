@@ -1,4 +1,4 @@
-/* eslint-disable require-jsdoc */
+
 import * as admin from "firebase-admin";
 import {Timestamp} from "firebase-admin/firestore";
 import {onSchedule} from "firebase-functions/v2/scheduler";

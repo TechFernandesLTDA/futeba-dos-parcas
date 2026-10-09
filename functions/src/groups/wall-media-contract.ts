@@ -447,7 +447,7 @@ export function extensionForContentType(type: WallMediaContentType): string {
   return "mp4";
 }
 
-/* eslint-disable require-jsdoc -- helpers privados de bucket são autoexplicativos. */
+
 function normalizeMetricNumber(value: number | null | undefined): number | null {
   return typeof value === "number" && Number.isFinite(value) && value >= 0 ?
     Math.round(value) : null;
@@ -478,4 +478,4 @@ function bucketDuration(value: number | null | undefined): string | null {
   if (value <= 30) return "15_30S";
   return "GT_30S";
 }
-/* eslint-enable require-jsdoc */
+

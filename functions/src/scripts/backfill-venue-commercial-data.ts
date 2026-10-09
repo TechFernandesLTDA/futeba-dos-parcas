@@ -1,4 +1,4 @@
-/* eslint-disable require-jsdoc */
+
 /**
  * Conservative venue commercial backfill for issue #3131.
  *
