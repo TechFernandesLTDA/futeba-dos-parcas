@@ -1,0 +1,196 @@
+name: iOS TestFlight
+
+# Pipeline de distribuicao iOS (TestFlight) no Mac self-hosted (label `futeba`).
+# Workflow MANUAL, em 3 modos:
+#
+#   diagnose         (padrao) Somente leitura: relata identidades de assinatura, contas
+#                    Apple do Xcode e perfis de provisionamento do usuario que executa
+#                    o runner. Nao assina, nao envia nada.
+#   archive-unsigned Compila os frameworks KMP de DEVICE (release) e arquiva o app SEM
+#                    assinatura: prova que o wiring de frameworks para device funciona.
+#   upload           Arquiva assinado e envia ao App Store Connect/TestFlight.
+#                    Exige UMA destas credenciais (ver docs/RELEASE_PROCESS.md, secao iOS):
+#                      (a) secrets ASC_KEY_ID + ASC_ISSUER_ID + ASC_KEY_P8_BASE64
+#                          (API Key do App Store Connect) e o secret/var IOS_TEAM_ID; ou
+#                      (b) identidade de distribuicao no keychain + conta Apple no Xcode
+#                          do usuario do runner (detectado pelo modo diagnose) e IOS_TEAM_ID.
+#                    Sem credencial, o job falha cedo com a lista exata do que falta.
+#
+# Pre-requisito externo: Apple Developer Program ativo e app com bundle id
+# com.futebadosparcas criado no App Store Connect (ver specs/IOS_TESTFLIGHT_SETUP.md).
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'diagnose | archive-unsigned | upload'
+        required: true
+        default: diagnose
+        type: choice
+        options:
+          - diagnose
+          - archive-unsigned
+          - upload
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-testflight
+  cancel-in-progress: false
+
+jobs:
+  diagnose:
+    name: Diagnose signing environment
+    runs-on: [self-hosted, macOS, ARM64, futeba]
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Report signing environment (no secrets)
+        run: |
+          set +e
+          echo "== usuario do runner =="; whoami; id -un
+          echo "== macOS/Xcode =="; sw_vers; xcodebuild -version
+          echo "== keychains =="; security list-keychains; security default-keychain
+          echo "== identidades de assinatura (codesigning) =="
+          security find-identity -v -p codesigning
+          echo "== identidades de distribuicao =="
+          security find-identity -v -p codesigning | grep -Ei "Apple Distribution|iPhone Distribution" || echo "NENHUMA identidade de distribuicao"
+          echo "== perfis de provisionamento =="
+          ls "$HOME/Library/MobileDevice/Provisioning Profiles" 2>/dev/null | wc -l
+          echo "== contas/times Apple no Xcode (e-mails mascarados) =="
+          defaults read com.apple.dt.Xcode IDEProvisioningTeams 2>&1 | sed -E 's/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+/<email>/g' | head -40
+          defaults read com.apple.dt.Xcode DVTDeveloperAccountManagerAppleIDLists 2>&1 | sed -E 's/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+/<email>/g' | head -20
+          echo "== credenciais App Store Connect configuradas como secrets =="
+          [ -n "${ASC_KEY_ID}" ] && echo "ASC_KEY_ID: presente" || echo "ASC_KEY_ID: AUSENTE"
+          [ -n "${ASC_ISSUER_ID}" ] && echo "ASC_ISSUER_ID: presente" || echo "ASC_ISSUER_ID: AUSENTE"
+          [ -n "${ASC_KEY_P8_BASE64}" ] && echo "ASC_KEY_P8_BASE64: presente" || echo "ASC_KEY_P8_BASE64: AUSENTE"
+          [ -n "${IOS_TEAM_ID}" ] && echo "IOS_TEAM_ID: presente" || echo "IOS_TEAM_ID: AUSENTE"
+          exit 0
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_P8_BASE64: ${{ secrets.ASC_KEY_P8_BASE64 }}
+          IOS_TEAM_ID: ${{ secrets.IOS_TEAM_ID || vars.IOS_TEAM_ID }}
+
+  archive:
+    name: Archive (${{ inputs.mode }})
+    if: inputs.mode != 'diagnose'
+    needs: diagnose
+    runs-on: [self-hosted, macOS, ARM64, futeba]
+    timeout-minutes: 90
+    env:
+      ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+      ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+      ASC_KEY_P8_BASE64: ${{ secrets.ASC_KEY_P8_BASE64 }}
+      IOS_TEAM_ID: ${{ secrets.IOS_TEAM_ID || vars.IOS_TEAM_ID }}
+      MODE: ${{ inputs.mode }}
+    steps:
+      - name: Guard (release so da master ou tag ios-v*)
+        run: |
+          if [ "$MODE" = "upload" ]; then
+            case "$GITHUB_REF" in
+              refs/heads/master|refs/tags/ios-v*) ;;
+              *) echo "::error::upload so a partir da master ou de tag ios-v*: $GITHUB_REF"; exit 1 ;;
+            esac
+          fi
+
+      - name: Preflight credentials (upload)
+        if: inputs.mode == 'upload'
+        run: |
+          MISSING=""
+          [ -n "$IOS_TEAM_ID" ] || MISSING="$MISSING IOS_TEAM_ID"
+          if [ -z "$ASC_KEY_ID$ASC_ISSUER_ID$ASC_KEY_P8_BASE64" ]; then
+            if ! security find-identity -v -p codesigning | grep -Eqi "Apple Distribution|iPhone Distribution"; then
+              MISSING="$MISSING (ASC_KEY_ID ASC_ISSUER_ID ASC_KEY_P8_BASE64 | identidade de distribuicao no keychain + conta Apple no Xcode)"
+            fi
+          else
+            [ -n "$ASC_KEY_ID" ] || MISSING="$MISSING ASC_KEY_ID"
+            [ -n "$ASC_ISSUER_ID" ] || MISSING="$MISSING ASC_ISSUER_ID"
+            [ -n "$ASC_KEY_P8_BASE64" ] || MISSING="$MISSING ASC_KEY_P8_BASE64"
+          fi
+          if [ -n "$MISSING" ]; then
+            echo "::error::Credenciais ausentes para upload ao TestFlight:$MISSING"
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+
+      - name: Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@0723195856401067f7a2779048b490ace7a47d7c  # v5
+        with:
+          cache-read-only: true
+
+      - name: Build KMP frameworks for device (release)
+        run: |
+          chmod +x gradlew
+          ./gradlew :shared:linkReleaseFrameworkIosArm64 :composeApp:linkReleaseFrameworkIosArm64
+
+      - name: Generate device Xcode project
+        run: |
+          cd iosApp
+          if ! command -v xcodegen >/dev/null 2>&1; then brew install xcodegen; fi
+          # O project.yml aponta para os frameworks de simulador (debug); o archive precisa
+          # dos de device (release). Spec derivada em arquivo temporario, sem alterar o repo.
+          sed -e 's#iosSimulatorArm64/debugFramework#iosArm64/releaseFramework#g' \
+              -e 's#DEVELOPMENT_TEAM: ""#DEVELOPMENT_TEAM: "'"${IOS_TEAM_ID}"'"#' \
+              project.yml > project.device.yml
+          xcodegen generate --spec project.device.yml
+          pod install
+
+      - name: Archive
+        run: |
+          set -o pipefail
+          ARGS=(-workspace iosApp/iosApp.xcworkspace -scheme iosApp -configuration Release
+                -destination 'generic/platform=iOS' -archivePath "$RUNNER_TEMP/iosApp.xcarchive"
+                SKIP_KMP_BUILD=YES)
+          if [ "$MODE" = "archive-unsigned" ]; then
+            xcodebuild archive "${ARGS[@]}" CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY=""
+          else
+            if [ -n "$ASC_KEY_P8_BASE64" ]; then
+              umask 077
+              printf '%s' "$ASC_KEY_P8_BASE64" | base64 --decode > "$RUNNER_TEMP/AuthKey_${ASC_KEY_ID}.p8"
+              AUTH=(-authenticationKeyPath "$RUNNER_TEMP/AuthKey_${ASC_KEY_ID}.p8"
+                    -authenticationKeyID "$ASC_KEY_ID" -authenticationKeyIssuerID "$ASC_ISSUER_ID")
+            else
+              AUTH=()
+            fi
+            xcodebuild archive "${ARGS[@]}" -allowProvisioningUpdates "${AUTH[@]}" DEVELOPMENT_TEAM="$IOS_TEAM_ID"
+          fi
+          test -d "$RUNNER_TEMP/iosApp.xcarchive"
+          echo "archive CFBundleVersion=$(/usr/libexec/PlistBuddy -c 'Print :ApplicationProperties:CFBundleVersion' "$RUNNER_TEMP/iosApp.xcarchive/Info.plist") short=$(/usr/libexec/PlistBuddy -c 'Print :ApplicationProperties:CFBundleShortVersionString' "$RUNNER_TEMP/iosApp.xcarchive/Info.plist")"
+
+      - name: Export and upload to TestFlight
+        if: inputs.mode == 'upload'
+        run: |
+          cat > "$RUNNER_TEMP/ExportOptions.plist" <<PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0"><dict>
+            <key>method</key><string>app-store-connect</string>
+            <key>destination</key><string>upload</string>
+            <key>teamID</key><string>${IOS_TEAM_ID}</string>
+            <key>signingStyle</key><string>automatic</string>
+            <key>uploadSymbols</key><true/>
+          </dict></plist>
+          PLIST
+          if [ -n "$ASC_KEY_P8_BASE64" ]; then
+            AUTH=(-authenticationKeyPath "$RUNNER_TEMP/AuthKey_${ASC_KEY_ID}.p8"
+                  -authenticationKeyID "$ASC_KEY_ID" -authenticationKeyIssuerID "$ASC_ISSUER_ID")
+          else
+            AUTH=()
+          fi
+          xcodebuild -exportArchive -archivePath "$RUNNER_TEMP/iosApp.xcarchive" \
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
+            -allowProvisioningUpdates "${AUTH[@]}"
+
+      - name: Cleanup credentials
+        if: always()
+        run: rm -f "$RUNNER_TEMP"/AuthKey_*.p8 "$RUNNER_TEMP/ExportOptions.plist"

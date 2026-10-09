@@ -144,9 +144,47 @@ aqui: os artefatos gerados já entraram no commit do release (passo 4).
 > Admin SDK. Se o job falhar com `PERMISSION_DENIED`, garanta que a SA do secret
 > `PLAY_STORE_SERVICE_ACCOUNT_JSON` tem `roles/datastore.user` no projeto Firebase.
 
+## Workflows manuais de release (service accounts)
+
+Todos exigem os secrets já configurados no repositório; nenhum imprime credenciais.
+
+| Workflow | Para quê | Credencial |
+| --- | --- | --- |
+| `Deploy to Google Play Store` (`deploy-production.yml`) | Build do AAB assinado e upload na trilha **internal**. Para uma versão já tagueada: `gh workflow run deploy-production.yml --ref android-vX.Y.Z` (builda a tag, não a master). | `KEYSTORE_*`, `KEY_*`, `GOOGLE_SERVICES_JSON`, `PLAY_STORE_SERVICE_ACCOUNT_JSON` |
+| `Play Track Status` (`play-track-status.yml`) | Prova, via Play Developer API (somente leitura), que um `versionCode` está numa trilha: `gh workflow run play-track-status.yml -f version_code=81 -f track=internal`. | `PLAY_STORE_SERVICE_ACCOUNT_JSON` |
+| `Deploy Functions` (`deploy-functions.yml`) | Deploy das Cloud Functions por **service account** (não por usuário) a partir da master ou de tag `functions-v*`; confirma `-f confirm=deploy-functions` e verifica que todas as funções estão ACTIVE. | `FIREBASE_SERVICE_ACCOUNT_JSON` |
+| `Publish Release Notes` (`publish-release-notes.yml`) | Publica notas de **web** ou **android** no Firestore (`gh workflow run publish-release-notes.yml -f platform=web -f versions="1.57.0 1.58.0"`) e lê os documentos de volta. Só roda na master. | `FIREBASE_SERVICE_ACCOUNT_JSON` (ou `PLAY_STORE_SERVICE_ACCOUNT_JSON`, `-f credential=play-store`) |
+| `iOS TestFlight` (`ios-testflight.yml`) | `diagnose` (identidades/contas do Mac), `archive-unsigned` (prova o build de device) e `upload` (TestFlight). | Ver abaixo |
+
+### Assinatura Android (keystore)
+
+`deploy-production.yml`, `deploy-beta.yml` e `release.yml` materializam o keystore do
+mesmo jeito: `KEYSTORE_BASE64` é decodificado para `$RUNNER_TEMP/release.jks` e
+`local.properties` recebe `STORE_FILE`, `STORE_PASSWORD`, `KEY_ALIAS` e `KEY_PASSWORD`
+(senhas vindas dos secrets `*_B64`). O secret `KEYSTORE_PATH` não é lido por nenhum
+workflow. Sem `STORE_FILE` o `signingConfigs.release` fica sem `storeFile` e o
+`:app:signReleaseBundle` quebrava com `NullPointerException` do BundleTool; agora
+`app/build.gradle.kts` falha antes, com a mensagem `Keystore de release ausente`.
+Build local de release exige o mesmo `local.properties` com um keystore real.
+
+### iOS / TestFlight — o que é necessário
+
+O app iOS ainda não está na App Store e `release-notes/ios/*.md` permanece
+`published: false` até o lançamento. Para publicar no TestFlight é preciso:
+
+1. Apple Developer Program ativo (pago, decisão do dono) e o app `com.futebadosparcas`
+   criado no App Store Connect.
+2. Uma das duas credenciais:
+   - **API Key do App Store Connect** como secrets `ASC_ISSUER_ID`, `ASC_KEY_ID` e
+     `ASC_KEY_P8_BASE64` (conteúdo do `.p8` em base64), mais `IOS_TEAM_ID`
+     (secret ou variável de repositório com o Team ID de 10 caracteres); ou
+   - identidade **Apple Distribution** no keychain do usuário do runner + conta Apple
+     logada no Xcode desse usuário (o modo `diagnose` informa se existem).
+3. `gh workflow run ios-testflight.yml -f mode=upload` (a partir da master ou de tag `ios-v*`).
+
 ## Publicar no Firestore manualmente
 
-Fallback caso a CI não tenha rodado o `publish`. O `package.json` da raiz já traz
+Fallback caso a CI não tenha rodado o `publish` (para web, use o workflow `Publish Release Notes`). O `package.json` da raiz já traz
 `firebase-admin` como dependência — instale e rode da raiz do repo com
 credenciais de service account:
 

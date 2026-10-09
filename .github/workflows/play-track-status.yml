@@ -1,0 +1,62 @@
+name: Play Track Status
+
+# Consulta SOMENTE LEITURA das trilhas do Google Play com a service account de
+# publicacao (PLAY_STORE_SERVICE_ACCOUNT_JSON). Usado para provar que um build
+# (versionCode) esta na trilha apos o workflow `Deploy to Google Play Store`.
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_code:
+        description: 'versionCode esperado (ex.: 81). Vazio = so listar'
+        required: false
+        type: string
+      track:
+        description: 'Trilha onde o versionCode deve estar (ex.: internal). Vazio = qualquer'
+        required: false
+        default: internal
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  status:
+    name: Play track status
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS_LINUX || vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - name: Install dependencies
+        env:
+          HUSKY: '0'
+        run: npm ci
+
+      - name: Write service account credentials
+        env:
+          SA_JSON: ${{ secrets.PLAY_STORE_SERVICE_ACCOUNT_JSON }}
+        run: |
+          umask 077
+          printf '%s' "$SA_JSON" > "$RUNNER_TEMP/play-sa.json"
+          test -s "$RUNNER_TEMP/play-sa.json"
+          node scripts/ci/describe-service-account.js "$RUNNER_TEMP/play-sa.json"
+
+      - name: Query tracks
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/play-sa.json
+          VERSION_CODE: ${{ inputs.version_code }}
+          TRACK: ${{ inputs.track }}
+        run: |
+          ARGS=(--package com.futebadosparcas)
+          if [ -n "$VERSION_CODE" ]; then ARGS+=(--version-code "$VERSION_CODE"); fi
+          if [ -n "$TRACK" ]; then ARGS+=(--track "$TRACK"); fi
+          node scripts/ci/play-track-status.js "${ARGS[@]}"
+
+      - name: Cleanup credentials
+        if: always()
+        run: rm -f "$RUNNER_TEMP/play-sa.json"

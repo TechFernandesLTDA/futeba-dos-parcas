@@ -1,0 +1,79 @@
+name: Deploy Functions
+
+# Deploy das Cloud Functions por SERVICE ACCOUNT (FIREBASE_SERVICE_ACCOUNT_JSON),
+# nunca por conta de usuario. Workflow manual: roda a partir da master ou de uma
+# tag `functions-v*`, exige confirmacao explicita e verifica ao final que todas
+# as funcoes estao ACTIVE. O predeploy de firebase.json executa npm ci,
+# install:ffmpeg, lint e build. Ref. docs/RELEASE_PROCESS.md.
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Digite "deploy-functions" para confirmar o deploy em producao'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-functions
+  cancel-in-progress: false
+
+env:
+  FIREBASE_PROJECT: futebadosparcas
+
+jobs:
+  deploy:
+    name: Deploy Functions (service account)
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS_LINUX || vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    timeout-minutes: 45
+    steps:
+      - name: Guard (confirmacao e ref)
+        env:
+          CONFIRM: ${{ inputs.confirm }}
+        run: |
+          if [ "$CONFIRM" != "deploy-functions" ]; then
+            echo "::error::Confirmacao invalida (digite deploy-functions)"
+            exit 1
+          fi
+          case "$GITHUB_REF" in
+            refs/heads/master|refs/tags/functions-v*) ;;
+            *) echo "::error::Deploy so a partir da master ou de tag functions-v*: $GITHUB_REF"; exit 1 ;;
+          esac
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Write service account credentials
+        env:
+          SA_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+        run: |
+          umask 077
+          printf '%s' "$SA_JSON" > "$RUNNER_TEMP/firebase-sa.json"
+          test -s "$RUNNER_TEMP/firebase-sa.json"
+          node scripts/ci/describe-service-account.js "$RUNNER_TEMP/firebase-sa.json"
+
+      - name: Deploy functions
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/firebase-sa.json
+          HUSKY: '0'
+        run: |
+          npx --yes firebase-tools@15.23.0 deploy --only functions \
+            --project "$FIREBASE_PROJECT" --non-interactive
+
+      - name: Verify all functions ACTIVE
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/firebase-sa.json
+          HUSKY: '0'
+        run: |
+          npm ci
+          node scripts/ci/verify-functions-active.js --project "$FIREBASE_PROJECT"
+
+      - name: Cleanup credentials
+        if: always()
+        run: rm -f "$RUNNER_TEMP/firebase-sa.json"

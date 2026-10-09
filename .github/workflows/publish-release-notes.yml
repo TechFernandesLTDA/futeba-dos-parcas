@@ -1,0 +1,98 @@
+name: Publish Release Notes
+
+# Publica release notes (web/android) no Firestore `release_notes` pelo mecanismo
+# oficial (scripts/release-notes.js publish, Admin SDK). Complementa o job
+# `publish-release-notes` de release.yml, que cobre apenas tags Android. Upsert
+# idempotente (set merge). Notas com `published: false` sao recusadas pelo script.
+# Ref. docs/RELEASE_PROCESS.md ("Publicar no Firestore manualmente").
+
+on:
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: 'Plataforma cliente'
+        required: true
+        type: choice
+        options:
+          - web
+          - android
+      versions:
+        description: 'Versoes separadas por espaco (ex.: "1.57.0 1.58.0")'
+        required: true
+        type: string
+      credential:
+        description: 'Service account usada (precisa de roles/datastore.user)'
+        required: true
+        default: firebase
+        type: choice
+        options:
+          - firebase
+          - play-store
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-release-notes
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Publish release notes
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS_LINUX || vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    timeout-minutes: 10
+    # Publica a partir do que esta na master (fonte unica das notas).
+    if: github.ref == 'refs/heads/master'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - name: Install dependencies (firebase-admin)
+        env:
+          HUSKY: '0'
+        run: npm ci
+
+      - name: Validate release notes
+        run: node scripts/release-notes.js validate
+
+      - name: Write service account credentials
+        env:
+          SA_FIREBASE: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+          SA_PLAY: ${{ secrets.PLAY_STORE_SERVICE_ACCOUNT_JSON }}
+          CREDENTIAL: ${{ inputs.credential }}
+        run: |
+          umask 077
+          if [ "$CREDENTIAL" = "play-store" ]; then
+            printf '%s' "$SA_PLAY" > "$RUNNER_TEMP/sa.json"
+          else
+            printf '%s' "$SA_FIREBASE" > "$RUNNER_TEMP/sa.json"
+          fi
+          test -s "$RUNNER_TEMP/sa.json"
+
+      - name: Publish notes
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/sa.json
+          PLATFORM: ${{ inputs.platform }}
+          VERSIONS: ${{ inputs.versions }}
+        run: |
+          for v in $VERSIONS; do
+            if [[ ! "$v" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              echo "::error::Versao invalida: $v"
+              exit 1
+            fi
+            node scripts/release-notes.js publish --platform "$PLATFORM" --version "$v"
+          done
+
+      - name: Read back published documents
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/sa.json
+          PLATFORM: ${{ inputs.platform }}
+          VERSIONS: ${{ inputs.versions }}
+        run: node scripts/ci/verify-release-notes-published.js "$PLATFORM" $VERSIONS
+
+      - name: Cleanup credentials
+        if: always()
+        run: rm -f "$RUNNER_TEMP/sa.json"

@@ -1,6 +1,6 @@
 {
   "platform": "web",
-  "generatedAt": "2026-10-08T02:16:54.491Z",
+  "generatedAt": "2026-10-08T04:48:22.172Z",
   "notes": [
     {
       "version": "1.58.0",
@@ -30,20 +30,30 @@
       "added": [
         "Cinco páginas públicas novas: Como funciona, Como organizar pelada, Ranking de futebol amador, Gestão de pelada e Parcerias.",
         "Links para os guias no rodapé da página inicial, com a atribuição \"Um produto da Tech Fernandes\" mantida.",
-        "Cartões de compartilhamento (Open Graph/Twitter) próprios para cada guia."
+        "Cartões de compartilhamento (Open Graph/Twitter) próprios para cada guia.",
+        "O pop-up de novidades deixa de cobrir a página para leitores de tela: agora é um painel no rodapé, fechado com Esc."
       ],
       "improved": [
         "Cada guia tem título, descrição e endereço canônico próprios para os buscadores.",
         "Os botões de cadastro dos guias carregam parâmetros UTM para medir de onde vêm os novos usuários.",
         "A imagem da página inicial carrega mais rápido (de 1,2 MB para 70 KB).",
-        "O menu do cabeçalho dos guias não quebra mais as palavras em telas largas."
+        "O menu do cabeçalho dos guias não quebra mais as palavras em telas largas.",
+        "Os links do caminho de navegação no celular têm área de toque de 44 px."
       ],
-      "fixed": [],
+      "fixed": [
+        "Entrar em um grupo privado por convite volta a funcionar: o app não lê mais dados do grupo antes de você ser membro.",
+        "Listas de jogos voltam a carregar com os índices de consulta restaurados.",
+        "Os campos de busca de jogos e grupos têm nome acessível e o nome do grupo não duplica o título da página."
+      ],
       "issueRefs": [
         4177,
         4196,
         4197,
-        4187
+        4187,
+        4185,
+        4189,
+        4190,
+        4191
       ]
     },
     {
@@ -75,20 +85,25 @@
         "Busca de \"jogadores próximos\" usa sua posição real ao tocar em Atualizar, com proteção anti-rastreamento.",
         "Disponibilidade de quadra verificada pelo servidor ao criar/editar jogo no computador, sem expor dados de jogos privados.",
         "Publicações, fotos e vídeos de jogos agora pedem confirmação antes de apagar.",
-        "Números com plural correto: \"1 voto\", \"1 membro\", \"1 jogo\"."
+        "Números com plural correto: \"1 voto\", \"1 membro\", \"1 jogo\".",
+        "A página Sobre agora mostra \"Um produto da Tech Fernandes\", com link para o site da empresa."
       ],
       "improved": [
         "A barra do navegador acompanha a cor de fundo do app nos temas claro, escuro e OLED.",
         "O PWA no iPhone abre sem flash branco e com a tela inicial correta para cada aparelho.",
-        "O resumo semanal deixa de avisar sobre partidas canceladas pelo sistema como se fossem canceladas pelo organizador."
+        "O resumo semanal deixa de avisar sobre partidas canceladas pelo sistema como se fossem canceladas pelo organizador.",
+        "Botões da página inicial no celular com área de toque de 44 px, mais fáceis de acertar."
       ],
       "fixed": [
         "Badges conquistados (17/17 em produção) deixam de ficar invisíveis na tela de conquistas.",
         "Excluir mensagem de conversa atualiza a prévia da lista de conversas.",
         "O botão \"Atualizar\" do aviso de nova versão voltou a funcionar por teclado.",
-        "A busca de \"jogadores próximos\" volta a funcionar depois de 30 dias com o compartilhamento ligado."
+        "A busca de \"jogadores próximos\" volta a funcionar depois de 30 dias com o compartilhamento ligado.",
+        "Com o menu lateral recolhido, os botões de busca e de criar jogo continuam com nome para leitores de tela."
       ],
       "issueRefs": [
+        4181,
+        4208,
         4096,
         4097,
         4098,
