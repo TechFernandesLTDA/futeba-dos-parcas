@@ -58,6 +58,19 @@ updates:
         update-types: ["version-update:semver-minor"]
       - dependency-name: "io.ktor*"
         update-types: ["version-update:semver-major"]
+      # SQLDelight 2.3+ publica klibs com ABI do Kotlin 2.3; o projeto está no Kotlin 2.2.x (migração coordenada: #4265).
+      - dependency-name: "app.cash.sqldelight*"
+        update-types: ["version-update:semver-minor", "version-update:semver-major"]
+      # Koin 4.2+, Coil 3.4+ e lifecycle JetBrains 2.10+ publicam klibs iOS com ABI do Kotlin 2.3 (projeto no 2.2.x; refs #4265).
+      # googleid 1.2.1 foi compilado com metadata Kotlin 2.4 (o projeto está no 2.2.x; refs #4265).
+      - dependency-name: "com.google.android.libraries.identity.googleid:googleid"
+        update-types: ["version-update:semver-patch", "version-update:semver-minor", "version-update:semver-major"]
+      - dependency-name: "io.insert-koin*"
+        update-types: ["version-update:semver-minor", "version-update:semver-major"]
+      - dependency-name: "io.coil-kt.coil3*"
+        update-types: ["version-update:semver-minor", "version-update:semver-major"]
+      - dependency-name: "org.jetbrains.androidx.lifecycle*"
+        update-types: ["version-update:semver-minor", "version-update:semver-major"]
       - dependency-name: "androidx.*"
         update-types: ["version-update:semver-minor", "version-update:semver-major"]
 
