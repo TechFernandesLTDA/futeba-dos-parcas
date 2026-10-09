@@ -169,6 +169,11 @@ updates:
       # @mui/x-date-pickers 6 declara peer date-fns ^2 || ^3; só avança com a migração do MUI X.
       - dependency-name: "date-fns"
         update-types: ["version-update:semver-major"]
+      # vitest 5 quebra mocks da suíte (groupWallMediaService) e precisa subir junto de @vitest/* e do runner do Stryker.
+      - dependency-name: "vitest"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@vitest/*"
+        update-types: ["version-update:semver-major"]
       - dependency-name: "@stryker-mutator/*"
         update-types: ["version-update:semver-major"]
       # 0.5+ exige ESLint 9/10 (peer); o web está no ESLint 8 (migração de lint do web ainda não planejada).
