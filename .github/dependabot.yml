@@ -1,270 +1,191 @@
-# Dependabot: updates AGRUPADOS por ecossistema para reduzir o ruído de PRs.
-# - Minor/patch: 1 PR por grupo/mês (cadência mensal, como antes).
-# - Major: 1 PR agrupado por ecossistema/mês (`*-majors`), sempre manual. Cada PR
-#   custa 30-60 min de CI serial nos runners do PC; não abrir um PR por major.
-#   Os majors que exigem migração
-#   planejada ficam em `ignore` (ex.: Gradle/KMP/Compose, React 19, MUI 6+).
-# - Alertas de segurança do GitHub (Dependabot alerts) continuam ativos independentemente deste arquivo.
+# Dependabot enxuto (09/10/2026). Cada PR custa 30-60 min de CI serial nos runners do PC.
+# - 1 PR por ecossistema/mês com TODAS as atualizações minor/patch (grupo único).
+# - Majors NUNCA viram PR automático: migração de major é issue planejada (ex.: #4265).
+# - rebase-strategy: disabled. Sem isso, cada merge no master rebaseia todos os PRs abertos
+#   e roda o CI inteiro de novo. Para atualizar um PR, comente `@dependabot rebase`.
+# - Alertas e PRs de SEGURANÇA continuam ativos (Dependabot security updates); revise os alertas.
 version: 2
 updates:
-  - package-ecosystem: "gradle"
-    directory: "/"
-    schedule:
-      interval: "monthly"
-      time: "09:00"
-      timezone: "America/Sao_Paulo"
-    open-pull-requests-limit: 3
-    labels:
-      - "dependencies"
-      - "type:chore"
-    commit-message:
-      prefix: "chore(deps)"
-      include: "scope"
-    groups:
-      gradle-majors:
-        patterns: ["*"]
-        update-types: ["major"]
-      kotlin-kmp:
-        patterns: ["org.jetbrains.kotlin*", "org.jetbrains.kotlinx*", "com.google.devtools.ksp*", "org.jetbrains.compose*"]
-        update-types: ["minor", "patch"]
-      androidx-compose:
-        patterns: ["androidx.*", "com.google.android.material*"]
-        update-types: ["minor", "patch"]
-      firebase-google:
-        patterns: ["com.google.firebase*", "com.google.gms*", "com.google.android.gms*", "dev.gitlive*"]
-        update-types: ["minor", "patch"]
-      ktor-networking:
-        patterns: ["io.ktor*", "com.squareup*"]
-        update-types: ["minor", "patch"]
-      gradle-other:
-        patterns: ["*"]
-        update-types: ["minor", "patch"]
-    ignore:
-      # Majors do toolchain exigem migração planejada (issue própria).
-      - dependency-name: "org.jetbrains.kotlin*"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "org.jetbrains.compose*"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "com.android.tools.build:gradle"
-        update-types: ["version-update:semver-major"]
-      # Toolchain Android/KMP travada (validado em CI nos PRs #4250, #4261, #4263 e #4170/#4172):
-      # - Kotlin 2.4 exige KSP2; o projeto usa KSP1 (ksp.useKSP2=false) por histórico de
-      #   corrupção de cache do KSP2, e kotlinOptions {} vira erro de script.
-      # - Ktor 3.x (klib do iOS) não resolve com Kotlin 2.2.x/Gradle 9.1; o único uso é ViaCepClient.
-      # - androidx core/navigation/lifecycle recentes exigem compileSdk 37 e AGP 9.1+ (hoje AGP 9.0.1/36).
-      # Issue #4265. Reabrir tudo junto na migração planejada (AGP 9.1+, compileSdk 37, Kotlin 2.4, KSP2, Ktor 3).
-      - dependency-name: "org.jetbrains.kotlin*"
-        update-types: ["version-update:semver-minor"]
-      - dependency-name: "org.jetbrains.kotlinx*"
-        update-types: ["version-update:semver-minor"]
-      - dependency-name: "com.google.devtools.ksp*"
-        update-types: ["version-update:semver-minor", "version-update:semver-major"]
-      - dependency-name: "org.jetbrains.compose*"
-        update-types: ["version-update:semver-minor"]
-      - dependency-name: "io.ktor*"
-        update-types: ["version-update:semver-major"]
-      # okhttp 5 vem em bloco (core + interceptors + Ktor/Retrofit), junto da migração do toolchain (#4265).
-      - dependency-name: "com.squareup.okhttp3*"
-        update-types: ["version-update:semver-major"]
-      # JUnit 6 exige api/params/engine/platform-launcher juntos; migração coordenada depois do toolchain (#4265).
-      - dependency-name: "org.junit*"
-        update-types: ["version-update:semver-major"]
-      # places 6 foi compilado com metadata de Kotlin mais novo que o 2.2.x do projeto (#4265).
-      - dependency-name: "com.google.android.libraries.places:places"
-        update-types: ["version-update:semver-major"]
-      # maps-compose 9 exige compileSdk 37 (app em 36) e migra para android-maps-utils; o Maps SDK 20 só com maps-compose 8+.
-      - dependency-name: "com.google.maps.android*"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "com.google.android.gms:play-services-maps"
-        update-types: ["version-update:semver-major"]
-      # SQLDelight 2.3+ publica klibs com ABI do Kotlin 2.3; o projeto está no Kotlin 2.2.x (migração coordenada: #4265).
-      - dependency-name: "app.cash.sqldelight*"
-        update-types: ["version-update:semver-minor", "version-update:semver-major"]
-      # Koin 4.2+, Coil 3.4+ e lifecycle JetBrains 2.10+ publicam klibs iOS com ABI do Kotlin 2.3 (projeto no 2.2.x; refs #4265).
-      # googleid 1.2.1 foi compilado com metadata Kotlin 2.4 (o projeto está no 2.2.x; refs #4265).
-      - dependency-name: "com.google.android.libraries.identity.googleid:googleid"
-        update-types: ["version-update:semver-patch", "version-update:semver-minor", "version-update:semver-major"]
-      - dependency-name: "io.insert-koin*"
-        update-types: ["version-update:semver-minor", "version-update:semver-major"]
-      - dependency-name: "io.coil-kt.coil3*"
-        update-types: ["version-update:semver-minor", "version-update:semver-major"]
-      - dependency-name: "org.jetbrains.androidx.lifecycle*"
-        update-types: ["version-update:semver-minor", "version-update:semver-major"]
-      - dependency-name: "androidx.*"
-        update-types: ["version-update:semver-minor", "version-update:semver-major"]
-
-  - package-ecosystem: "npm"
-    directory: "/functions"
-    schedule:
-      interval: "monthly"
-      time: "09:00"
-      timezone: "America/Sao_Paulo"
-    open-pull-requests-limit: 3
-    labels:
-      - "dependencies"
-      - "type:chore"
-    commit-message:
-      prefix: "chore(deps)"
-      include: "scope"
-    groups:
-      npm-functions-majors:
-        patterns: ["*"]
-        update-types: ["major"]
-      functions-firebase:
-        patterns: ["firebase-*", "@firebase/*", "@google-cloud/*"]
-        update-types: ["minor", "patch"]
-      functions-lint-types:
-        patterns: ["eslint*", "@eslint/*", "@typescript-eslint/*", "typescript*", "@types/*", "prettier*"]
-        update-types: ["minor", "patch"]
-      functions-test:
-        patterns: ["jest*", "ts-jest", "@stryker-mutator/*", "vitest*", "tsx"]
-        update-types: ["minor", "patch"]
-      functions-other:
-        patterns: ["*"]
-        update-types: ["minor", "patch"]
-    ignore:
-      # Cloud Functions roda em Node 22; majors do runtime/eslint exigem validação dedicada.
-      - dependency-name: "@types/node"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "firebase-functions"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "firebase-admin"
-        update-types: ["version-update:semver-major"]
-      # Stryker 10 (major): core e jest-runner sobem juntos e o mutation testing não roda no CI de PR.
-      - dependency-name: "@stryker-mutator/*"
-        update-types: ["version-update:semver-major"]
-
-  - package-ecosystem: "npm"
-    directory: "/web"
-    schedule:
-      interval: "monthly"
-      time: "09:00"
-      timezone: "America/Sao_Paulo"
-    open-pull-requests-limit: 3
-    labels:
-      - "dependencies"
-      - "type:chore"
-    commit-message:
-      prefix: "chore(deps)"
-      include: "scope"
-    groups:
-      npm-web-majors:
-        patterns: ["*"]
-        update-types: ["major"]
-      web-react:
-        patterns: ["react", "react-dom", "react-router*", "@types/react*"]
-        update-types: ["minor", "patch"]
-      web-mui:
-        patterns: ["@mui/*", "@emotion/*"]
-        update-types: ["minor", "patch"]
-      web-tanstack:
-        patterns: ["@tanstack/*"]
-        update-types: ["minor", "patch"]
-      web-firebase:
-        patterns: ["firebase", "firebase-*"]
-        update-types: ["minor", "patch"]
-      web-tooling:
-        patterns: ["vite*", "@vitejs/*", "vitest*", "@vitest/*", "@playwright/*", "playwright*", "eslint*", "@eslint/*", "@typescript-eslint/*", "typescript*", "@testing-library/*", "jsdom", "@stryker-mutator/*"]
-        update-types: ["minor", "patch"]
-      web-other:
-        patterns: ["*"]
-        update-types: ["minor", "patch"]
-    ignore:
-      # Majors do stack de UI exigem migração planejada.
-      - dependency-name: "react"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "react-dom"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "@types/react*"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "@mui/*"
-        update-types: ["version-update:semver-major"]
-      # devDependency sem uso em web/ (seeds usam functions/node_modules); Functions e root ficam no 13.
-      - dependency-name: "firebase-admin"
-        update-types: ["version-update:semver-major"]
-      # Tipos do Node acompanham o runtime do CI (20/22), não o major mais recente.
-      - dependency-name: "@types/node"
-        update-types: ["version-update:semver-major"]
-      # @mui/x-date-pickers 6 declara peer date-fns ^2 || ^3; só avança com a migração do MUI X.
-      - dependency-name: "date-fns"
-        update-types: ["version-update:semver-major"]
-      # v7 aplica regras do React Compiler e quebra o lint atual; web segue em ESLint 8.
-      - dependency-name: "eslint-plugin-react-hooks"
-        update-types: ["version-update:semver-major"]
-      # vitest 5 quebra mocks da suíte (groupWallMediaService) e precisa subir junto de @vitest/* e do runner do Stryker.
-      - dependency-name: "vitest"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "@vitest/*"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "@stryker-mutator/*"
-        update-types: ["version-update:semver-major"]
-      # 0.5+ exige ESLint 9/10 (peer); o web está no ESLint 8 (migração de lint do web ainda não planejada).
-      - dependency-name: "eslint-plugin-react-refresh"
-        update-types: ["version-update:semver-minor", "version-update:semver-major"]
-
-  - package-ecosystem: "npm"
-    directory: "/firestore-rules-tests"
-    schedule:
-      interval: "monthly"
-      time: "09:00"
-      timezone: "America/Sao_Paulo"
-    open-pull-requests-limit: 2
-    labels:
-      - "dependencies"
-      - "type:chore"
-    commit-message:
-      prefix: "chore(deps)"
-      include: "scope"
-    groups:
-      npm-firestore-rules-tests-majors:
-        patterns: ["*"]
-        update-types: ["major"]
-      rules-tests:
-        patterns: ["*"]
-        update-types: ["minor", "patch"]
-
-  - package-ecosystem: "npm"
-    directory: "/"
-    schedule:
-      interval: "monthly"
-      time: "09:00"
-      timezone: "America/Sao_Paulo"
-    open-pull-requests-limit: 2
-    labels:
-      - "dependencies"
-      - "type:chore"
-    commit-message:
-      prefix: "chore(deps)"
-      include: "scope"
-    groups:
-      npm-majors:
-        patterns: ["*"]
-        update-types: ["major"]
-      root-tooling:
-        patterns: ["*"]
-        update-types: ["minor", "patch"]
-    ignore:
-      # scripts/ da raiz compartilham a API do firebase-admin das Functions (mantido em 13).
-      - dependency-name: "firebase-admin"
-        update-types: ["version-update:semver-major"]
-
-  - package-ecosystem: "github-actions"
-    directory: "/"
-    schedule:
-      interval: "monthly"
-      time: "09:00"
-      timezone: "America/Sao_Paulo"
-    open-pull-requests-limit: 3
-    labels:
-      - "dependencies"
-      - "type:chore"
-    commit-message:
-      prefix: "chore(ci)"
-      include: "scope"
-    groups:
-      actions-majors:
-        patterns: ["*"]
-        update-types: ["major"]
-      github-actions:
-        patterns: ["*"]
-        update-types: ["minor", "patch"]
+- package-ecosystem: gradle
+  directory: /
+  schedule:
+    interval: monthly
+    time: 09:00
+    timezone: America/Sao_Paulo
+  open-pull-requests-limit: 2
+  labels:
+  - dependencies
+  - type:chore
+  commit-message:
+    prefix: chore(deps)
+    include: scope
+  groups:
+    gradle-minor-patch:
+      patterns:
+      - '*'
+      update-types:
+      - minor
+      - patch
+  ignore:
+  - &id001
+    dependency-name: '*'
+    update-types:
+    - version-update:semver-major
+  - dependency-name: org.jetbrains.kotlin*
+    update-types:
+    - version-update:semver-minor
+  - dependency-name: org.jetbrains.kotlinx*
+    update-types:
+    - version-update:semver-minor
+  - dependency-name: com.google.devtools.ksp*
+    update-types:
+    - version-update:semver-minor
+    - version-update:semver-major
+  - dependency-name: org.jetbrains.compose*
+    update-types:
+    - version-update:semver-minor
+  - dependency-name: app.cash.sqldelight*
+    update-types:
+    - version-update:semver-minor
+    - version-update:semver-major
+  - dependency-name: com.google.android.libraries.identity.googleid:googleid
+    update-types:
+    - version-update:semver-patch
+    - version-update:semver-minor
+    - version-update:semver-major
+  - dependency-name: io.insert-koin*
+    update-types:
+    - version-update:semver-minor
+    - version-update:semver-major
+  - dependency-name: io.coil-kt.coil3*
+    update-types:
+    - version-update:semver-minor
+    - version-update:semver-major
+  - dependency-name: org.jetbrains.androidx.lifecycle*
+    update-types:
+    - version-update:semver-minor
+    - version-update:semver-major
+  - dependency-name: androidx.*
+    update-types:
+    - version-update:semver-minor
+    - version-update:semver-major
+  rebase-strategy: disabled
+- package-ecosystem: npm
+  directory: /functions
+  schedule:
+    interval: monthly
+    time: 09:00
+    timezone: America/Sao_Paulo
+  open-pull-requests-limit: 2
+  labels:
+  - dependencies
+  - type:chore
+  commit-message:
+    prefix: chore(deps)
+    include: scope
+  groups:
+    npm-functions-minor-patch:
+      patterns:
+      - '*'
+      update-types:
+      - minor
+      - patch
+  ignore:
+  - *id001
+  rebase-strategy: disabled
+- package-ecosystem: npm
+  directory: /web
+  schedule:
+    interval: monthly
+    time: 09:00
+    timezone: America/Sao_Paulo
+  open-pull-requests-limit: 2
+  labels:
+  - dependencies
+  - type:chore
+  commit-message:
+    prefix: chore(deps)
+    include: scope
+  groups:
+    npm-web-minor-patch:
+      patterns:
+      - '*'
+      update-types:
+      - minor
+      - patch
+  ignore:
+  - *id001
+  - dependency-name: eslint-plugin-react-refresh
+    update-types:
+    - version-update:semver-minor
+    - version-update:semver-major
+  rebase-strategy: disabled
+- package-ecosystem: npm
+  directory: /firestore-rules-tests
+  schedule:
+    interval: monthly
+    time: 09:00
+    timezone: America/Sao_Paulo
+  open-pull-requests-limit: 2
+  labels:
+  - dependencies
+  - type:chore
+  commit-message:
+    prefix: chore(deps)
+    include: scope
+  groups:
+    npm-firestore-rules-tests-minor-patch:
+      patterns:
+      - '*'
+      update-types:
+      - minor
+      - patch
+  rebase-strategy: disabled
+  ignore:
+  - *id001
+- package-ecosystem: npm
+  directory: /
+  schedule:
+    interval: monthly
+    time: 09:00
+    timezone: America/Sao_Paulo
+  open-pull-requests-limit: 2
+  labels:
+  - dependencies
+  - type:chore
+  commit-message:
+    prefix: chore(deps)
+    include: scope
+  groups:
+    npm-minor-patch:
+      patterns:
+      - '*'
+      update-types:
+      - minor
+      - patch
+  ignore:
+  - *id001
+  rebase-strategy: disabled
+- package-ecosystem: github-actions
+  directory: /
+  schedule:
+    interval: monthly
+    time: 09:00
+    timezone: America/Sao_Paulo
+  open-pull-requests-limit: 2
+  labels:
+  - dependencies
+  - type:chore
+  commit-message:
+    prefix: chore(ci)
+    include: scope
+  groups:
+    actions-minor-patch:
+      patterns:
+      - '*'
+      update-types:
+      - minor
+      - patch
+  rebase-strategy: disabled
+  ignore:
+  - *id001
