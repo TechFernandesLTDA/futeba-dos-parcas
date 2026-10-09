@@ -38,9 +38,12 @@ test('Firestore and media runtime gates use Linux runners (tf-wsl, fallback host
   // fallback para ubuntu-24.04 hospedado quando a variável não existe.
   const hostedSelector = String.raw`runs-on: (?:ubuntu-24\.04|\$\{\{ fromJSON\(vars\.RUNNER_LABELS_LINUX \|\| '\["ubuntu-24\.04"\]'\) \}\})`;
   const selfHostedSelector = /runs-on: \$\{\{ fromJSON\(vars\.RUNNER_LABELS/;
+  // Jobs que sobem emuladores vão para o runner dedicado (futeba-emulators): todos os
+  // runners WSL compartilham 127.0.0.1:9099/8085.
+  const emulatorSelector = String.raw`runs-on: \$\{\{ fromJSON\(vars\.RUNNER_LABELS_EMULATORS \|\| vars\.RUNNER_LABELS_LINUX \|\| '\["ubuntu-24\.04"\]'\) \}\}`;
 
-  assert.match(job(rulesWorkflow, 'rules-tests'), new RegExp(hostedSelector));
-  assert.match(job(functionsWorkflow, 'firestore-query-perf'), new RegExp(hostedSelector));
+  assert.match(job(rulesWorkflow, 'rules-tests'), new RegExp(emulatorSelector));
+  assert.match(job(functionsWorkflow, 'firestore-query-perf'), new RegExp(emulatorSelector));
   const mediaJob = job(functionsWorkflow, 'media-runtime-linux');
   assert.match(mediaJob, new RegExp(hostedSelector));
   assert.match(mediaJob, /docker run --rm --platform linux\/amd64/);

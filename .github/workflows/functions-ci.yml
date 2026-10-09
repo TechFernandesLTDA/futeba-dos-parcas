@@ -227,7 +227,7 @@ jobs:
     name: Firestore Query Performance
     needs: [ build ]
     # Gate pesado isolado do pool self-hosted para evitar OOM/exit 137 (#4074).
-    runs-on: ${{ fromJSON(vars.RUNNER_LABELS_LINUX || '["ubuntu-24.04"]') }}
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS_EMULATORS || vars.RUNNER_LABELS_LINUX || '["ubuntu-24.04"]') }}
     timeout-minutes: 20
     # Tests perf são experimentais — ESM modules de @google-cloud/firestore
     # quebram com ts-jest default. Marcar non-blocking até ajustar transform.
