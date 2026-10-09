@@ -268,7 +268,7 @@ dependencies {
     implementation("com.google.android.gms:play-services-maps:20.0.0")
     implementation("com.google.maps.android:maps-compose:4.4.1")
     implementation("com.google.android.gms:play-services-location:21.4.0")
-    implementation("com.google.android.libraries.places:places:4.1.0")
+    implementation("com.google.android.libraries.places:places:6.0.2")
 
     // Video playback - clipes curtos de jogos (#3238)
     implementation("androidx.media3:media3-exoplayer:1.5.1")
