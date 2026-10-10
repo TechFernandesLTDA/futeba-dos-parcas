@@ -324,6 +324,7 @@ describe('UserManagementScreen', () => {
         'Com pendência', 'Cadastro incompleto', 'Tentar novamente', 'Criado em', 'Ficha comercial do usuário',
         'Contato e atividade', 'Última atualização', 'Último login', 'Onboarding comercial',
         'Salvar conta comercial', 'Alterar role em lote', 'Confirmar alteração de role',
+        'Limpar filtros',
       ];
       const sourceLines = source.split('\n').map((line) => line.trim());
       const found = forbidden.filter((text) => sourceLines.some((line) => (

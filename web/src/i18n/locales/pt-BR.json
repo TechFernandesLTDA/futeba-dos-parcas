@@ -199,7 +199,8 @@
       "success": {
         "roleUpdated": "Role de {{name}} atualizado para {{role}}.",
         "bulkUpdated": "{{count}} usuário(s) atualizado(s).",
-        "accountUpdated": "Conta comercial atualizada."
+        "accountUpdated": "Conta comercial atualizada.",
+        "onboardingReviewed": "Onboarding {{status}} para {{name}}."
       },
       "scope": {
         "owner": "Cobrança por dono",
@@ -222,7 +223,8 @@
         "finalMonthly": "mensalidade final"
       },
       "actions": {
-        "changeSelected": "Alterar ({{count}})"
+        "changeSelected": "Alterar ({{count}})",
+        "clearFilters": "Limpar filtros"
       },
       "filters": {
         "roleLabel": "Role",

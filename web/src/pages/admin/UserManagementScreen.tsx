@@ -664,7 +664,7 @@ export const UserManagementScreen: React.FC = () => {
         termsReviewed: false,
         billingReviewed: false,
       });
-      showSuccess(`Onboarding ${nextStatus.toLowerCase()} para ${selectedUser.name}.`);
+      showSuccess(t('admin.userManagement.success.onboardingReviewed', { status: nextStatus.toLowerCase(), name: selectedUser.name }));
     } catch (error) {
       logger.error('Error reviewing owner onboarding:', error);
       showError(getFunctionsErrorMessage(error, 'reviewVenueOwnerOnboarding', t('admin.userManagement.errors.reviewOnboarding')));
@@ -780,7 +780,7 @@ export const UserManagementScreen: React.FC = () => {
               icon={<SearchOffIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />}
               title={t('empty.noUserFound')}
               description={t('empty.noUserFoundDesc', { query: searchQuery || t('admin.userManagement.selectedFilters') })}
-              actionLabel="Limpar filtros"
+              actionLabel={t('admin.userManagement.actions.clearFilters')}
               onAction={() => {
                 setSearchQuery('');
                 setRoleFilter('ALL');

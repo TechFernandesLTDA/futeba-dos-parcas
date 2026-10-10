@@ -199,7 +199,8 @@
       "success": {
         "roleUpdated": "{{name}}'s role updated to {{role}}.",
         "bulkUpdated": "{{count}} user(s) updated.",
-        "accountUpdated": "Commercial account updated."
+        "accountUpdated": "Commercial account updated.",
+        "onboardingReviewed": "Onboarding {{status}} for {{name}}."
       },
       "scope": {
         "owner": "Billing per owner",
@@ -222,7 +223,8 @@
         "finalMonthly": "final monthly fee"
       },
       "actions": {
-        "changeSelected": "Change ({{count}})"
+        "changeSelected": "Change ({{count}})",
+        "clearFilters": "Clear filters"
       },
       "filters": {
         "roleLabel": "Role",
