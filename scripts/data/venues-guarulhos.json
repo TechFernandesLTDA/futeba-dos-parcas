@@ -1,0 +1,128 @@
+{
+  "gerado_em": "2026-10-10",
+  "rodada": 9,
+  "slug": "guarulhos",
+  "issue": 4186,
+  "titulo": "Guarulhos (coletor de cidades novas, execucao 12)",
+  "coleta": {
+    "data": "2026-10-10",
+    "ferramentas": "pesquisa web + fichas publicas (WebQuadras, Guia Destak, SESI) + guia futemais.com.br (busca) + OpenStreetMap/Overpass (candidatos, nao importados)",
+    "regra": "apenas dados publicos verificaveis; campos sem fonte = null; todo item tem >=1 fonte com URL; entra no app como DRAFT/nao verificado"
+  },
+  "cobertura": {
+    "Guarulhos": 3
+  },
+  "venues": [
+    {
+      "nome": "Society Terceiro Tempo",
+      "endereco": {
+        "rua": "Rua Padre Celestino",
+        "numero": "607",
+        "bairro": "Centro",
+        "cidade": "Guarulhos",
+        "uf": "SP",
+        "cep": "07013-100"
+      },
+      "telefone": "(11) 98899-2343",
+      "whatsapp": "(11) 98899-2343",
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": 2,
+      "detalhe_quadras": "2 quadras society sintetico descobertas",
+      "tipo_piso": "sintetico",
+      "horarios": null,
+      "nota_media": 5,
+      "contagem_avaliacoes": 2,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.webquadras.com.br/societyterceirotempo",
+          "dado": "ficha WebQuadras com reserva online: endereco, CEP, telefone, estrutura (2 quadras society sintetico descoberta), avaliacao 5 (2) e aviso de locacao por WhatsApp"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_aluguel",
+      "origem": "web"
+    },
+    {
+      "nome": "Free Ball Futebol Society Macedo",
+      "endereco": {
+        "rua": "Rua Kida",
+        "numero": "80",
+        "bairro": "Macedo",
+        "cidade": "Guarulhos",
+        "uf": "SP",
+        "cep": null
+      },
+      "telefone": "(11) 94735-6776",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": 3,
+      "detalhe_quadras": "2 quadras society sintetico cobertas 20m x 36m + 1 quadra society sintetico descoberta 14m x 33m",
+      "tipo_piso": "sintetico",
+      "horarios": null,
+      "nota_media": 4.5,
+      "contagem_avaliacoes": 595,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://guiadestakonline.com.br/listing/free-ball-futebol-society-aluguel-de-quadras-de-futebol-society-em-guarulhos-sp/",
+          "dado": "anuncio de aluguel de quadras: endereco Rua Kida, 80 - Macedo, 2 quadras cobertas e 1 descoberta, promocao de aluguel R$ 200 avulso e R$ 700 mensal (telefone ocultado na pagina)"
+        },
+        {
+          "url": "https://futemais.com.br/campos-e-quadras-de-futebol-society-em-guarulhos-sao-paulo",
+          "dado": "guia futemais: Free Ball Society - Macedo, R. Kida, 80, telefone (11) 94735-6776, quadras cobertas, nota 4,5 (595 avaliacoes)"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_aluguel",
+      "origem": "web"
+    },
+    {
+      "nome": "SESI Guarulhos (espaco esportivo)",
+      "endereco": {
+        "rua": "Rua Benedito Caetano da Cruz",
+        "numero": "100",
+        "bairro": "Jardim Adriana",
+        "cidade": "Guarulhos",
+        "uf": "SP",
+        "cep": "07135-151"
+      },
+      "telefone": "(11) 2404-7200",
+      "whatsapp": "(11) 2404-7203",
+      "site": "https://guarulhos.sesisp.org.br/espacos-para-locacao",
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": 2,
+      "detalhe_quadras": "1 campo society grama (locacao nos fins de semana, 8h as 17h) + 1 quadra futsal coberta de 700 m2 (20m x 35m)",
+      "tipo_piso": "grama e quadra coberta",
+      "horarios": {
+        "observacao": "fins de semana, das 8h as 17h (sujeito a alteracao)"
+      },
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://guarulhos.sesisp.org.br/espacos-para-locacao",
+          "dado": "pagina oficial do SESI Guarulhos: locacao de espaco esportivo (campo de grama e quadra coberta) e tabela de valores 2026 para comunidade em geral; endereco e telefones na pagina"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_aluguel",
+      "origem": "web"
+    }
+  ]
+}

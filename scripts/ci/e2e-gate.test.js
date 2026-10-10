@@ -212,3 +212,90 @@ test('applySuperseded: nunca converte falha real nem branch parado', () => {
   assert.equal(applySuperseded(cancelled, { expectSha: 'a', currentHeadSha: 'a' }).verdict, 'fail');
   assert.equal(applySuperseded(cancelled, { expectSha: 'a', currentHeadSha: null }).verdict, 'fail');
 });
+
+test('runGate: erro transitório do findRun não derruba o gate (#4340)', async () => {
+  let calls = 0;
+  const result = await runGate({
+    ref: 'master',
+    expectSha: SHA,
+    dispatch: async () => {},
+    findRun: async () => {
+      calls += 1;
+      if (calls === 1) throw new Error('error connecting to api.github.com');
+      return { id: 9, status: 'completed', conclusion: 'success', head_sha: SHA };
+    },
+    sleep: async () => {},
+  });
+  assert.equal(calls, 2);
+  assert.equal(result.verdict, 'pass');
+  assert.equal(result.exitCode, EXIT.PASS);
+});
+
+test('runGate: erro transitório depois de achar o run mantém o run e conclui', async () => {
+  const seq = [
+    () => ({ id: 9, status: 'in_progress', conclusion: null, head_sha: SHA }),
+    () => { throw new Error('error connecting to api.github.com'); },
+    () => ({ id: 9, status: 'completed', conclusion: 'failure', head_sha: SHA }),
+  ];
+  let i = 0;
+  const result = await runGate({
+    ref: 'master', expectSha: SHA, dispatch: async () => {},
+    findRun: async () => seq[i++](), sleep: async () => {},
+  });
+  assert.equal(result.exitCode, EXIT.FAIL);
+  assert.equal(result.run_id, 9);
+});
+
+test('runGate: falhas de polling seguidas sem fim viram infra_blocked e cancelam o run órfão', async () => {
+  const cancelled = [];
+  let n = 0;
+  const result = await runGate({
+    ref: 'master', expectSha: SHA, dispatch: async () => {},
+    findRun: async () => {
+      n += 1;
+      if (n === 1) return { id: 5, status: 'in_progress', conclusion: null, head_sha: SHA };
+      throw new Error('error connecting to api.github.com');
+    },
+    cancelRun: async (r) => { cancelled.push(r.id); },
+    sleep: async () => {},
+    maxConsecutivePollErrors: 3,
+  });
+  assert.equal(result.verdict, 'infra_blocked');
+  assert.equal(result.exitCode, EXIT.INFRA_BLOCKED);
+  assert.deepEqual(cancelled, [5]);
+});
+
+test('runGate: erro de polling não é confundido com "nenhum run apareceu"', async () => {
+  let t = 0;
+  let n = 0;
+  const result = await runGate({
+    ref: 'master', expectSha: SHA, dispatch: async () => {},
+    findRun: async () => {
+      n += 1;
+      if (n <= 2) throw new Error('boom');
+      return { id: 1, status: 'completed', conclusion: 'success', head_sha: SHA };
+    },
+    now: () => t, sleep: async () => { t += 10 * 60 * 1000; },
+    timeoutMs: 60 * 60 * 1000,
+  });
+  assert.equal(result.verdict, 'pass');
+});
+
+test('runGate: dispatch com falha transitória é repetido; falha persistente propaga', async () => {
+  let d = 0;
+  const ok = await runGate({
+    ref: 'master', expectSha: SHA,
+    dispatch: async () => { d += 1; if (d < 3) throw new Error('error connecting to api.github.com'); },
+    findRun: async () => ({ id: 1, status: 'completed', conclusion: 'success', head_sha: SHA }),
+    sleep: async () => {},
+  });
+  assert.equal(d, 3);
+  assert.equal(ok.exitCode, EXIT.PASS);
+
+  let e = 0;
+  await assert.rejects(runGate({
+    ref: 'master', dispatch: async () => { e += 1; throw new Error('down'); },
+    findRun: async () => null, sleep: async () => {}, dispatchAttempts: 2,
+  }), /down/);
+  assert.equal(e, 2);
+});

@@ -116,6 +116,13 @@
       "slug": "salvador",
       "epic_issue": 4186,
       "observacao": "capital (município de Salvador/BA); curadoria web sobre candidatos OSM"
+    },
+    {
+      "nome": "Guarulhos",
+      "uf": "SP",
+      "rodada": 10,
+      "slug": "guarulhos",
+      "epic_issue": 4186
     }
   ]
 }
