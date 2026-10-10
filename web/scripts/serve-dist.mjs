@@ -43,6 +43,10 @@ function send(req, res, file, status = 200) {
   } else { res.writeHead(status, headers); res.end(body); }
 }
 const isFile = (p) => { try { return fs.statSync(p).isFile(); } catch { return false; } };
+const rewrites = (fb.rewrites || [])
+  .filter((r) => r.source && r.destination)
+  .map((r) => ({ re: g2(r.source), dest: path.join(dist, r.destination) }))
+  .filter((r) => isFile(r.dest));
 http.createServer((req, res) => {
   const urlPath = decodeURIComponent(req.url.split('?')[0]);
   const abs = path.join(dist, urlPath);
@@ -50,6 +54,7 @@ http.createServer((req, res) => {
   if (isFile(abs)) return send(req, res, abs);
   const idx = path.join(abs, 'index.html');
   if (isFile(idx)) return send(req, res, idx);
-  if (urlPath.startsWith('/assets/')) return send(req, res, path.join(dist, 'asset-fallback.js'));
+  // Rewrites do firebase.json, na ordem (o primeiro que casa vence), como no Firebase Hosting.
+  for (const rw of rewrites) if (rw.re.test(urlPath) && rw.dest) return send(req, res, rw.dest);
   return send(req, res, path.join(dist, 'index.html'));
 }).listen(port, '127.0.0.1', () => console.log('listening', port));

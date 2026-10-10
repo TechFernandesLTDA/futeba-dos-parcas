@@ -301,6 +301,21 @@ for (const route of routes) {
   console.log(`[prerender] ${outPath}`);
 }
 
-writeFileSync(templatePath, generateHomeShell(), 'utf8');
+const homeShell = generateHomeShell();
+writeFileSync(templatePath, homeShell, 'utf8');
 console.log(`[prerender] ${templatePath} (home + shell)`);
+
+// Shell SPA das demais rotas (#4327): o rewrite ** do Firebase Hosting devolve HTTP 200 para qualquer caminho,
+// então o HTML inicial NUNCA pode se declarar indexável nem apontar o canonical para a home (soft 404 /
+// duplicata da raiz). Rotas desconhecidas e rotas autenticadas saem noindex e sem canonical; o que é público
+// é servido por arquivo estático (/, guias prerenderizadas) ou por rewrite explícito (/launch -> index.html).
+const ROBOTS_RE = /<meta name="robots" content=".*?" \/>/i;
+const CANONICAL_RE = /[ \t]*<link rel="canonical" href=".*?" \/>\r?\n?/i;
+const shellCtx = { path: '/app-shell' };
+let appShell = homeShell;
+appShell = replaceOnce(appShell, ROBOTS_RE, '<meta name="robots" content="noindex, nofollow" />', 'robots', shellCtx);
+appShell = replaceOnce(appShell, CANONICAL_RE, '', 'canonical', shellCtx);
+const appShellPath = resolve(distDir, 'app-shell.html');
+writeFileSync(appShellPath, appShell, 'utf8');
+console.log(`[prerender] ${appShellPath} (shell SPA noindex, sem canonical)`);
 console.log(`[prerender] ${routes.length} páginas geradas.`);
