@@ -114,7 +114,8 @@
       "uf": "MS",
       "rodada": 10,
       "slug": "campo-grande",
-      "epic_issue": null
+      "epic_issue": 4186,
+      "observacao": "coletor de cidades novas (Execução 18)"
     }
   ]
 }
