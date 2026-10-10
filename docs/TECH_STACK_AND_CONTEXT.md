@@ -54,7 +54,7 @@
 | **Linguagem** | Kotlin | 2.2.10 | Type-safe, null-safe language |
 | **Min SDK** | Android | 24 (7.0) | Support older devices |
 | **Target SDK** | Android | 35 (15.0) | Latest OS features + security |
-| **compileSdk** | Android | 36 | Compile target |
+| **compileSdk** | Android | 37 | Compile target |
 | **Compilação** | Gradle (AGP 9.0.1) | 8.7+ | Build system |
 | **JDK** | OpenJDK | 17+ | Gradle requirement |
 
@@ -348,7 +348,7 @@ Quando NÃO usar:
 ### Android SDK Versioning
 
 ```
-compileSdk: SDK 36 (Android 16)
+compileSdk: SDK 37
 Target: SDK 35 (Android 15)
 Mínimo: SDK 24 (Android 7.0)
 JDK: 17+
