@@ -28,8 +28,12 @@
         "destination": "/asset-fallback.js"
       },
       {
-        "source": "**",
+        "source": "/launch",
         "destination": "/index.html"
+      },
+      {
+        "source": "**",
+        "destination": "/app-shell.html"
       }
     ],
     "headers": [
