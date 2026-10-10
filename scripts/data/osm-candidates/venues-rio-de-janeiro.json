@@ -1,0 +1,8072 @@
+{
+ "gerado_em": "2026-10-10",
+ "rodada": 9,
+ "cidade": "Rio de Janeiro",
+ "uf": "RJ",
+ "slug": "rio-de-janeiro",
+ "issue": 4186,
+ "fonte": {
+  "provedor": "OpenStreetMap (via Nominatim + Overpass API)",
+  "licenca": "ODbL 1.0 — https://www.openstreetmap.org/copyright",
+  "nominatim_url": "https://www.openstreetmap.org/relation/2697338",
+  "nominatim_display_name": "Rio de Janeiro, Região Sudeste, Brasil",
+  "overpass_mirror": "https://overpass-api.de/api/interpreter",
+  "overpass_query": "[out:json][timeout:180];\narea(3602697338)->.a;\n(\n  node[\"leisure\"=\"pitch\"](area.a);\n  way[\"leisure\"=\"pitch\"](area.a);\n  relation[\"leisure\"=\"pitch\"](area.a);\n  node[\"leisure\"=\"sports_centre\"](area.a);\n  way[\"leisure\"=\"sports_centre\"](area.a);\n);\nout body center meta;",
+  "osm_base_timestamp": "2026-10-10T01:20:34Z"
+ },
+ "coleta": {
+  "data": "2026-10-10",
+  "ferramenta": "scripts/data/build-venues-osm.mjs",
+  "finalidade": "dataset curado de quadras para importação DRAFT (revisão humana antes de publicar)"
+ },
+ "estatisticas": {
+  "candidatos_osm": 3298,
+  "sem_nome": 2818,
+  "institucional": 8,
+  "acesso_restrito": 17,
+  "amenity_descartada": 0,
+  "sem_sinal_de_futebol": 252,
+  "other_excluded": 0,
+  "sem_coordenada": 0,
+  "mantidos": 196,
+  "duplicatas_removidas": 7
+ },
+ "venues": [
+  {
+   "nome": "APES",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/706171277",
+     "dado": "OpenStreetMap (way/706171277): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8459154,
+    "lon": -43.3728677
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 706171277,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Aquidabola",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/219576501",
+     "dado": "OpenStreetMap (way/219576501): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.9096661,
+    "lon": -43.2924841
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 219576501,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Área de Lazer da Comlurb",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama natural (OSM: surface=grass)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/467283417",
+     "dado": "OpenStreetMap (way/467283417): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.922795,
+    "lon": -43.6652153
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 467283417,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Arena Campão",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama natural (OSM: surface=grass)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/688526932",
+     "dado": "OpenStreetMap (way/688526932): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.825167,
+    "lon": -43.3276863
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 688526932,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Arena Zezinho",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama sintética (OSM: surface=artificial_turf)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/320110459",
+     "dado": "OpenStreetMap (way/320110459): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.9484711,
+    "lon": -43.1905669
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 320110459,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Associação Atlética Portuguesa",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/261516873",
+     "dado": "OpenStreetMap (way/261516873): sport=soccer;swimming, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8017118,
+    "lon": -43.2080833
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 261516873,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "BeerBall",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/190469348",
+     "dado": "OpenStreetMap (way/190469348): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8297178,
+    "lon": -43.3251063
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 190469348,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Beni",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/699262365",
+     "dado": "OpenStreetMap (way/699262365): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.854031,
+    "lon": -43.3819789
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 699262365,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Bonsucesso Futebol Clube",
+   "endereco": {
+    "rua": "Avenida Teixeira de Castro",
+    "numero": "65",
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": "http://www.bonsucessofcrj.com.br/",
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/257779436",
+     "dado": "OpenStreetMap (way/257779436): nome=\"Bonsucesso Futebol Clube\", Avenida Teixeira de Castro, 65, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "baixa",
+   "coordenadas": {
+    "lat": -22.8618024,
+    "lon": -43.2532339
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 257779436,
+    "sinal_futebol": "nome"
+   }
+  },
+  {
+   "nome": "Campão",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/168522483",
+     "dado": "OpenStreetMap (way/168522483): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.9517576,
+    "lon": -43.3550466
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 168522483,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campinho",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/29670642",
+     "dado": "OpenStreetMap (way/29670642): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.954793,
+    "lon": -43.1768756
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 29670642,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campinho da Lauro Muller",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama sintética (OSM: surface=artificial_turf)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/997299090",
+     "dado": "OpenStreetMap (way/997299090): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.9566959,
+    "lon": -43.1758744
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 997299090,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campinho da Rua do Rio",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1322466505",
+     "dado": "OpenStreetMap (way/1322466505): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8764392,
+    "lon": -43.411005
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1322466505,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campinho de Futebol",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/824840885",
+     "dado": "OpenStreetMap (way/824840885): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.9575217,
+    "lon": -43.6084634
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 824840885,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campinho de Terra da Rua do Rio",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/792245123",
+     "dado": "OpenStreetMap (way/792245123): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8745099,
+    "lon": -43.4109083
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 792245123,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campinho do seu Adilson",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1377934157",
+     "dado": "OpenStreetMap (way/1377934157): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8365583,
+    "lon": -43.3533304
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1377934157,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/295090264",
+     "dado": "OpenStreetMap (way/295090264): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.9344199,
+    "lon": -43.3688325
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 295090264,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo 1 \"Altair Gomes de Figueiredo\"",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/555819146",
+     "dado": "OpenStreetMap (way/555819146): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.9619606,
+    "lon": -43.3625202
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 555819146,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo 2 \"Abel Carlos da Silva Braga\"",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/555819144",
+     "dado": "OpenStreetMap (way/555819144): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.9620525,
+    "lon": -43.3636501
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 555819144,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo 3 \"Carlos Alberto Parreira\"",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1171769693",
+     "dado": "OpenStreetMap (way/1171769693): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.9610801,
+    "lon": -43.3636408
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1171769693,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Ana Gonzaga",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/592222651",
+     "dado": "OpenStreetMap (way/592222651): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.9124422,
+    "lon": -43.5950185
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 592222651,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Araguainha",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/592357540",
+     "dado": "OpenStreetMap (way/592357540): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8873899,
+    "lon": -43.6064794
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 592357540,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Barão do Rio Verde",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama natural (OSM: surface=grass)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/808558538",
+     "dado": "OpenStreetMap (way/808558538): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.9070569,
+    "lon": -43.5826673
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 808558538,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Barbante",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama natural (OSM: surface=grass)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/544265319",
+     "dado": "OpenStreetMap (way/544265319): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8987161,
+    "lon": -43.5850569
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 544265319,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Beira Rio",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama natural (OSM: surface=grass)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1257345855",
+     "dado": "OpenStreetMap (way/1257345855): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.851708,
+    "lon": -43.5416006
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1257345855,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Cocotá",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/255121257",
+     "dado": "OpenStreetMap (way/255121257): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8037512,
+    "lon": -43.1799743
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 255121257,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo da Alvorada",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/258142559",
+     "dado": "OpenStreetMap (way/258142559): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8818817,
+    "lon": -43.4161635
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 258142559,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo da Associação dos Servidores Civis da Aeronáutica",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/252734080",
+     "dado": "OpenStreetMap (way/252734080): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8186681,
+    "lon": -43.2248527
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 252734080,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo da Barão",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/592357532",
+     "dado": "OpenStreetMap (way/592357532): sport=multi;soccer;volleyball;basketball, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8891615,
+    "lon": -43.6048531
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 592357532,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo da Barreira",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1491122195",
+     "dado": "OpenStreetMap (way/1491122195): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.826654,
+    "lon": -43.3635355
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1491122195,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo da Bomba",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1320129800",
+     "dado": "OpenStreetMap (way/1320129800): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.824269,
+    "lon": -43.3759236
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1320129800,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "CAMPO DA C.A.H",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/208929527",
+     "dado": "OpenStreetMap (way/208929527): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8723439,
+    "lon": -43.2564147
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 208929527,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo da Candoca",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/933604913",
+     "dado": "OpenStreetMap (way/933604913): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.9166038,
+    "lon": -43.5053776
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 933604913,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo da Cova",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1320129799",
+     "dado": "OpenStreetMap (way/1320129799): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8257495,
+    "lon": -43.3795267
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1320129799,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo da Lycio",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/592357541",
+     "dado": "OpenStreetMap (way/592357541): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8911146,
+    "lon": -43.5962959
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 592357541,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo da Malha",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/258142561",
+     "dado": "OpenStreetMap (way/258142561): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8846617,
+    "lon": -43.4154829
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 258142561,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo da Paty",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1105802613",
+     "dado": "OpenStreetMap (way/1105802613): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8549195,
+    "lon": -43.2453354
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1105802613,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo da Pedreira",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/815972495",
+     "dado": "OpenStreetMap (way/815972495): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.822319,
+    "lon": -43.3595576
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 815972495,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo da Portuguesa",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1320129791",
+     "dado": "OpenStreetMap (way/1320129791): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8169766,
+    "lon": -43.3721649
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1320129791,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo da praça",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/409858205",
+     "dado": "OpenStreetMap (way/409858205): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.9732527,
+    "lon": -43.3344904
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 409858205,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo da Praça do 18",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/839987855",
+     "dado": "OpenStreetMap (way/839987855): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8595186,
+    "lon": -43.2414591
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 839987855,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo da Praça do Areal",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1101820929",
+     "dado": "OpenStreetMap (way/1101820929): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.9557245,
+    "lon": -43.5831604
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1101820929,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo da Reta",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/815972492",
+     "dado": "OpenStreetMap (way/815972492): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8109397,
+    "lon": -43.3614168
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 815972492,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo da Santa Edwiges",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1320129806",
+     "dado": "OpenStreetMap (way/1320129806): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8310101,
+    "lon": -43.3939223
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1320129806,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo da Selva",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/174111494",
+     "dado": "OpenStreetMap (way/174111494): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8783862,
+    "lon": -43.496105
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 174111494,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo da Shering Brasil",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/40748892",
+     "dado": "OpenStreetMap (way/40748892): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.9496787,
+    "lon": -43.371787
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 40748892,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo da Vila do Mexicano",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1223139470",
+     "dado": "OpenStreetMap (way/1223139470): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8848282,
+    "lon": -43.2316148
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1223139470,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo da VJ",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/530047424",
+     "dado": "OpenStreetMap (way/530047424): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8729127,
+    "lon": -43.2404219
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 530047424,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo de Camará",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/174282732",
+     "dado": "OpenStreetMap (way/174282732): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8688721,
+    "lon": -43.4977327
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 174282732,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo de futebol",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama natural (OSM: surface=grass)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/49857326",
+     "dado": "OpenStreetMap (way/49857326): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.9176901,
+    "lon": -43.2291237
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 49857326,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo de Futebol Comunitário",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama natural (OSM: surface=grass)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/256770332",
+     "dado": "OpenStreetMap (way/256770332): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.943588,
+    "lon": -43.360988
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 256770332,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "campo de futebol da Amendoeira",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1303520153",
+     "dado": "OpenStreetMap (way/1303520153): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.9892603,
+    "lon": -43.3087134
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1303520153,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo de Futebol da Associação",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/592357534",
+     "dado": "OpenStreetMap (way/592357534): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8916143,
+    "lon": -43.6097299
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 592357534,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo de Futebol da Associação Altética de Guaratiba",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/825232468",
+     "dado": "OpenStreetMap (way/825232468): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.9495265,
+    "lon": -43.6030691
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 825232468,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo de Futebol da Faetec",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama natural (OSM: surface=grass)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/166788588",
+     "dado": "OpenStreetMap (way/166788588): sport=soccer;athletics;fitness, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8934305,
+    "lon": -43.3250604
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 166788588,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo de Futebol da Granja",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/700918686",
+     "dado": "OpenStreetMap (way/700918686): nome=\"Campo de Futebol da Granja\", sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "baixa",
+   "coordenadas": {
+    "lat": -22.9295846,
+    "lon": -43.3688652
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 700918686,
+    "sinal_futebol": "nome"
+   }
+  },
+  {
+   "nome": "Campo de futebol do Aterro do Cocotá - Ilha do Governador",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama natural (OSM: surface=grass)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/147684243",
+     "dado": "OpenStreetMap (way/147684243): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.817668,
+    "lon": -43.1857593
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 147684243,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo de futebol do CIAM",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1163511593",
+     "dado": "OpenStreetMap (way/1163511593): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8969252,
+    "lon": -43.3284601
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1163511593,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo de futebol do condomínio Madri",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/681288350",
+     "dado": "OpenStreetMap (way/681288350): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8122534,
+    "lon": -43.3670612
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 681288350,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo de Futebol Nossa Senhora da Alegria",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/55833445",
+     "dado": "OpenStreetMap (way/55833445): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8147935,
+    "lon": -43.3631927
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 55833445,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo de Futebol Vivendas",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/700918680",
+     "dado": "OpenStreetMap (way/700918680): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.9377616,
+    "lon": -43.3667516
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 700918680,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo de Grama Sintética K1",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/492442665",
+     "dado": "OpenStreetMap (way/492442665): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8542206,
+    "lon": -43.4643833
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 492442665,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo de grama sintética Mija no Pé",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/548467578",
+     "dado": "OpenStreetMap (way/548467578): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8549641,
+    "lon": -43.4536746
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 548467578,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo de grama síntetica Mundigol",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1112148189",
+     "dado": "OpenStreetMap (way/1112148189): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8519097,
+    "lon": -43.4643008
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1112148189,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo de Society",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1163511601",
+     "dado": "OpenStreetMap (way/1163511601): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8855352,
+    "lon": -43.3282705
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1163511601,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Desembargador Moacir Braga Land",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/591949573",
+     "dado": "OpenStreetMap (way/591949573): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.901185,
+    "lon": -43.5970214
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 591949573,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do 15",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/752657976",
+     "dado": "OpenStreetMap (way/752657976): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.9444178,
+    "lon": -43.3913394
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 752657976,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "CAMPO DO ABRIGO",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/208929528",
+     "dado": "OpenStreetMap (way/208929528): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8726953,
+    "lon": -43.2567703
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 208929528,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Agrião",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama sintética (OSM: surface=artificial_turf)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/167516142",
+     "dado": "OpenStreetMap (way/167516142): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.9711346,
+    "lon": -43.2832872
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 167516142,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Araújo",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/613403665",
+     "dado": "OpenStreetMap (way/613403665): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8816421,
+    "lon": -43.559569
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 613403665,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Asilo",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/126340684",
+     "dado": "OpenStreetMap (way/126340684): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8313751,
+    "lon": -43.3820379
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 126340684,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Barro Vermelho",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/715999821",
+     "dado": "OpenStreetMap (way/715999821): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.83535,
+    "lon": -43.4122511
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 715999821,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Beni 2",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/701976842",
+     "dado": "OpenStreetMap (way/701976842): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8502844,
+    "lon": -43.3752766
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 701976842,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Brasileirinho",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/112675884",
+     "dado": "OpenStreetMap (way/112675884): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8255252,
+    "lon": -43.3913247
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 112675884,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Cabo Chico",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/492442664",
+     "dado": "OpenStreetMap (way/492442664): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8543799,
+    "lon": -43.4636531
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 492442664,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Cavaleiro",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1320129804",
+     "dado": "OpenStreetMap (way/1320129804): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8303523,
+    "lon": -43.3876941
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1320129804,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "CAMPO DO CORÉIA",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/42165885",
+     "dado": "OpenStreetMap (way/42165885): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8824716,
+    "lon": -43.2523475
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 42165885,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Cruz",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/592357525",
+     "dado": "OpenStreetMap (way/592357525): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8930817,
+    "lon": -43.6009632
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 592357525,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Danilo",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/815972491",
+     "dado": "OpenStreetMap (way/815972491): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8127003,
+    "lon": -43.3603952
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 815972491,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "CAMPO DO ESPERANÇA",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/208928432",
+     "dado": "OpenStreetMap (way/208928432): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8763721,
+    "lon": -43.2530357
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 208928432,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Falcão",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/112582195",
+     "dado": "OpenStreetMap (way/112582195): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8119173,
+    "lon": -43.380992
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 112582195,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Final Feliz",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1320129794",
+     "dado": "OpenStreetMap (way/1320129794): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8262289,
+    "lon": -43.3874536
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1320129794,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Jabour",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/469237497",
+     "dado": "OpenStreetMap (way/469237497): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8796444,
+    "lon": -43.4926155
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 469237497,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Laguinho",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/815972494",
+     "dado": "OpenStreetMap (way/815972494): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8190265,
+    "lon": -43.3530485
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 815972494,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Lazer Quinze CDD",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/734693856",
+     "dado": "OpenStreetMap (way/734693856): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.9484906,
+    "lon": -43.3636173
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 734693856,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Maçarico",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/385054713",
+     "dado": "OpenStreetMap (way/385054713): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8163118,
+    "lon": -43.3379391
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 385054713,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Mangueirinha",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/97474042",
+     "dado": "OpenStreetMap (way/97474042): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.820786,
+    "lon": -43.3507603
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 97474042,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Muralha",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1331051275",
+     "dado": "OpenStreetMap (way/1331051275): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8888946,
+    "lon": -43.3809929
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1331051275,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Olaria",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/174111536",
+     "dado": "OpenStreetMap (way/174111536): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.877599,
+    "lon": -43.5001418
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 174111536,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Ouro Negro",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1159629849",
+     "dado": "OpenStreetMap (way/1159629849): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8940468,
+    "lon": -43.4448475
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1159629849,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Parque União",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1102973669",
+     "dado": "OpenStreetMap (way/1102973669): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8491729,
+    "lon": -43.2413794
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1102973669,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Querosene",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1470165265",
+     "dado": "OpenStreetMap (way/1470165265): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.9236284,
+    "lon": -43.202816
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1470165265,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Rongo",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/819631473",
+     "dado": "OpenStreetMap (way/819631473): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8173565,
+    "lon": -43.3575522
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 819631473,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Sapão",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama natural (OSM: surface=grass)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1296737014",
+     "dado": "OpenStreetMap (way/1296737014): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8180813,
+    "lon": -43.3615219
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1296737014,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Sargento",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/169400686",
+     "dado": "OpenStreetMap (way/169400686): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8603171,
+    "lon": -43.2854981
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 169400686,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "CAMPO DO SOCIETY",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/208928397",
+     "dado": "OpenStreetMap (way/208928397): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8797934,
+    "lon": -43.2520636
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 208928397,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Suvaquinho",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1320129797",
+     "dado": "OpenStreetMap (way/1320129797): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8273968,
+    "lon": -43.3832126
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1320129797,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Terra Nostra",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1320129814",
+     "dado": "OpenStreetMap (way/1320129814): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8279353,
+    "lon": -43.3682254
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1320129814,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Torre",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama natural (OSM: surface=grass)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/173919837",
+     "dado": "OpenStreetMap (way/173919837): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8718256,
+    "lon": -43.5113054
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 173919837,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Universal Futebol Clube",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama natural (OSM: surface=grass)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/154987865",
+     "dado": "OpenStreetMap (way/154987865): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.9424853,
+    "lon": -43.3817006
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 154987865,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Valora",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama natural (OSM: surface=grass)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1322465878",
+     "dado": "OpenStreetMap (way/1322465878): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.9518617,
+    "lon": -43.5589231
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1322465878,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Vasquinho",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/258142565",
+     "dado": "OpenStreetMap (way/258142565): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8838313,
+    "lon": -43.4114478
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 258142565,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Vera Cruz",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/199986804",
+     "dado": "OpenStreetMap (way/199986804): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8104439,
+    "lon": -43.3302699
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 199986804,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Vila",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/745743992",
+     "dado": "OpenStreetMap (way/745743992): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8301256,
+    "lon": -43.2826252
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 745743992,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Zinco",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/560227404",
+     "dado": "OpenStreetMap (way/560227404): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.9164571,
+    "lon": -43.2010417
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 560227404,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Grande Atlético Clube",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/220679545",
+     "dado": "OpenStreetMap (way/220679545): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.9008384,
+    "lon": -43.5453505
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 220679545,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo RD",
+   "endereco": {
+    "rua": "Rua Alfredo de Azevedo",
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama natural (OSM: surface=grass)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/808558537",
+     "dado": "OpenStreetMap (way/808558537): sport=soccer, Rua Alfredo de Azevedo, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.9168599,
+    "lon": -43.5866085
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 808558537,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Seu Antônio Escoteiro",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1257628971",
+     "dado": "OpenStreetMap (way/1257628971): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.9197251,
+    "lon": -43.2012337
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1257628971,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Taquarana",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama natural (OSM: surface=grass)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/592357528",
+     "dado": "OpenStreetMap (way/592357528): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8899802,
+    "lon": -43.5993658
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 592357528,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Centro de Futebol Zico",
+   "endereco": {
+    "rua": "Rua Miguel Antônio Fernandes",
+    "numero": "700",
+    "bairro": "Recreio dos Bandeirantes",
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": "22790-701"
+   },
+   "telefone": "+55 21 2442 1842",
+   "whatsapp": null,
+   "site": "http://www.ziconarede.com.br/",
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/320843501",
+     "dado": "OpenStreetMap (way/320843501): sport=soccer, Rua Miguel Antônio Fernandes, 700, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "alta",
+   "coordenadas": {
+    "lat": -23.010078,
+    "lon": -43.4772586
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 320843501,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Centro de Treinamento Moacyr Barbosa",
+   "endereco": {
+    "rua": "Avenida Arroio Fundo",
+    "numero": null,
+    "bairro": "Jacarepaguá",
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": "https://vasco.com.br/",
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1171781429",
+     "dado": "OpenStreetMap (way/1171781429): sport=soccer, Avenida Arroio Fundo, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.956781,
+    "lon": -43.3641055
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1171781429,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "CERC",
+   "endereco": {
+    "rua": "Estrada Padre Roser",
+    "numero": "388",
+    "bairro": "Vila da Penha",
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": "21210200"
+   },
+   "telefone": "+55 21 3352-2746",
+   "whatsapp": null,
+   "site": "https://www.clubecerc.com.br/",
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/node/3195614661",
+     "dado": "OpenStreetMap (node/3195614661): sport=futsal;beachvolleyball;baseball;volleyball;swimming, Estrada Padre Roser, 388, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "alta",
+   "coordenadas": {
+    "lat": -22.8408515,
+    "lon": -43.3166166
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "node",
+    "id": 3195614661,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Chopp Boll Societ",
+   "endereco": {
+    "rua": "Estrada do Barro Vermelho",
+    "numero": "1483",
+    "bairro": "Rocha Miranda",
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": "21540-501"
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/331094215",
+     "dado": "OpenStreetMap (way/331094215): sport=soccer, Estrada do Barro Vermelho, 1483, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "alta",
+   "coordenadas": {
+    "lat": -22.8451494,
+    "lon": -43.3383391
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 331094215,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Clube Beneficente dos Sargentos da Marinha",
+   "endereco": {
+    "rua": "Rua Professora Paula Aquiles",
+    "numero": "55",
+    "bairro": "Vila da Penha",
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": "21221-410"
+   },
+   "telefone": "+55 21 2482 9870",
+   "whatsapp": null,
+   "site": null,
+   "instagram": "https://instagram.com/camsargentos",
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/500703434",
+     "dado": "OpenStreetMap (way/500703434): sport=football;basketball;swimming, Rua Professora Paula Aquiles, 55, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "alta",
+   "coordenadas": {
+    "lat": -22.8477936,
+    "lon": -43.3069072
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 500703434,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Clube EZN",
+   "endereco": {
+    "rua": "Rua Brás Cubas",
+    "numero": "300",
+    "bairro": "Pavuna",
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": "21520050"
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/681288352",
+     "dado": "OpenStreetMap (way/681288352): sport=soccer;basketball;swimming;athletics, Rua Brás Cubas, 300, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "alta",
+   "coordenadas": {
+    "lat": -22.8110891,
+    "lon": -43.3665267
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 681288352,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "compo",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/941852388",
+     "dado": "OpenStreetMap (way/941852388): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8517395,
+    "lon": -43.2888374
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 941852388,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Condomínio Esporte Clube",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/169284857",
+     "dado": "OpenStreetMap (way/169284857): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.964704,
+    "lon": -43.2262685
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 169284857,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Coppe nou",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/367937851",
+     "dado": "OpenStreetMap (way/367937851): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8639031,
+    "lon": -43.2294013
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 367937851,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Escolinha de Futebol",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/833931213",
+     "dado": "OpenStreetMap (way/833931213): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.9264699,
+    "lon": -43.652831
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 833931213,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Esporte Clube Guanabara",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/297958666",
+     "dado": "OpenStreetMap (way/297958666): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.9167577,
+    "lon": -43.6793
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 297958666,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Esporte Clube Paranhos",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1322467075",
+     "dado": "OpenStreetMap (way/1322467075): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8552364,
+    "lon": -43.2696141
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1322467075,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Estádio do Grêmio da Coppe",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/367937832",
+     "dado": "OpenStreetMap (way/367937832): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8633708,
+    "lon": -43.2291805
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 367937832,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Estrelas do Futuro",
+   "endereco": {
+    "rua": "Estrada do Pontal",
+    "numero": "6625",
+    "bairro": "Recreio dos Bandeirantes",
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": "+55 21 2490 6379",
+   "whatsapp": null,
+   "site": "http://www.estrelasdofuturobotafogo.com.br/",
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama sintética (OSM: surface=artificial_turf)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/314014009",
+     "dado": "OpenStreetMap (way/314014009): sport=soccer, Estrada do Pontal, 6625, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "alta",
+   "coordenadas": {
+    "lat": -23.0300322,
+    "lon": -43.4804105
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 314014009,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Fluminense Football Club",
+   "endereco": {
+    "rua": "Rua Álvaro Chaves",
+    "numero": "41",
+    "bairro": "Laranjeiras",
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": "22231-220"
+   },
+   "telefone": "+55 21 3030 5094",
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/718032637",
+     "dado": "OpenStreetMap (way/718032637): sport=soccer;tennis;basketball;swimming;athletics;volleyball;shooting;futsal;handball, Rua Álvaro Chaves, 41, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "alta",
+   "coordenadas": {
+    "lat": -22.9373001,
+    "lon": -43.1854422
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 718032637,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Futebol Society",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/449602521",
+     "dado": "OpenStreetMap (way/449602521): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8568261,
+    "lon": -43.3509591
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 449602521,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Futevôlei Pedra Do Lemr",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/node/13278787375",
+     "dado": "OpenStreetMap (node/13278787375): sport=futsal, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.9627105,
+    "lon": -43.1655126
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "node",
+    "id": 13278787375,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Gramadinho",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama natural (OSM: surface=grass)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/149321974",
+     "dado": "OpenStreetMap (way/149321974): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8962742,
+    "lon": -43.5923583
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 149321974,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Henrique Rodo",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/598383283",
+     "dado": "OpenStreetMap (way/598383283): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8874143,
+    "lon": -43.366451
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 598383283,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "IBGE - Campo de Futebol",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama natural (OSM: surface=grass)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/390474333",
+     "dado": "OpenStreetMap (way/390474333): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8186941,
+    "lon": -43.3061958
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 390474333,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Juventude Samba Show",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "concreto (OSM: surface=concrete)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1324289076",
+     "dado": "OpenStreetMap (way/1324289076): sport=futsal;soccer;basketball, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.9075067,
+    "lon": -43.2338457
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1324289076,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Mocidade Futebol Clube",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1300902081",
+     "dado": "OpenStreetMap (way/1300902081): nome=\"Mocidade Futebol Clube\", sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "baixa",
+   "coordenadas": {
+    "lat": -22.8200213,
+    "lon": -43.4016955
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1300902081,
+    "sinal_futebol": "nome"
+   }
+  },
+  {
+   "nome": "Ninho do Urubu",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/380722770",
+     "dado": "OpenStreetMap (way/380722770): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.9843299,
+    "lon": -43.5024895
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 380722770,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "NOVO EVEREST ATLÉTICO CLUBE",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama natural (OSM: surface=grass)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1479537497",
+     "dado": "OpenStreetMap (way/1479537497): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.872173,
+    "lon": -43.267239
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1479537497,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Pau Ferro Futebol Clube",
+   "endereco": {
+    "rua": "Rua Camatiá",
+    "numero": "45",
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": "22743-360"
+   },
+   "telefone": "+55 21 2425-4469;+55 21 2425-8740",
+   "whatsapp": null,
+   "site": "https://www.pauferro.com.br/",
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/292976686",
+     "dado": "OpenStreetMap (way/292976686): sport=soccer, Rua Camatiá, 45, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.9266686,
+    "lon": -43.343299
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 292976686,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Pavunense Futebol Clube",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/313181504",
+     "dado": "OpenStreetMap (way/313181504): nome=\"Pavunense Futebol Clube\", sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "baixa",
+   "coordenadas": {
+    "lat": -22.8035607,
+    "lon": -43.3581439
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 313181504,
+    "sinal_futebol": "nome"
+   }
+  },
+  {
+   "nome": "Praça Carmela Dutra",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/142424806",
+     "dado": "OpenStreetMap (way/142424806): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8897197,
+    "lon": -43.2294146
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 142424806,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Praça Carmésia",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/258142566",
+     "dado": "OpenStreetMap (way/258142566): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8863257,
+    "lon": -43.4145788
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 258142566,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Praça Condomínio Novos Horizontes",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/911573288",
+     "dado": "OpenStreetMap (way/911573288): sport=soccer;volleyball;running, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8023736,
+    "lon": -43.2033474
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 911573288,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Praça do Fico",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/290446838",
+     "dado": "OpenStreetMap (way/290446838): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8771646,
+    "lon": -43.4175338
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 290446838,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Praça do Rala Coco",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/258142560",
+     "dado": "OpenStreetMap (way/258142560): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8833032,
+    "lon": -43.4139374
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 258142560,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Praça Humberto Gotuzzo",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/192357525",
+     "dado": "OpenStreetMap (way/192357525): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8288027,
+    "lon": -43.301984
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 192357525,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Praça Quadra de Esportes do Parque Rubens Vaz",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/630826523",
+     "dado": "OpenStreetMap (way/630826523): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8524717,
+    "lon": -43.2437765
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 630826523,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama natural (OSM: surface=grass)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/707975285",
+     "dado": "OpenStreetMap (way/707975285): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8303351,
+    "lon": -43.2853492
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 707975285,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra 2020",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/733411663",
+     "dado": "OpenStreetMap (way/733411663): sport=soccer;basketball;volleyball, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.9077177,
+    "lon": -43.5789691
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 733411663,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra Barbante",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/592994724",
+     "dado": "OpenStreetMap (way/592994724): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8986779,
+    "lon": -43.5861186
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 592994724,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra Carlos Magno",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/592217479",
+     "dado": "OpenStreetMap (way/592217479): sport=multi;soccer;football;volleyball, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.9079773,
+    "lon": -43.5952012
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 592217479,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra coberta",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1163511587",
+     "dado": "OpenStreetMap (way/1163511587): sport=futsal, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8940535,
+    "lon": -43.3241958
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1163511587,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra Cocotá",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/255121266",
+     "dado": "OpenStreetMap (way/255121266): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8033838,
+    "lon": -43.1808652
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 255121266,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra Condominio da Marinha",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/274701205",
+     "dado": "OpenStreetMap (way/274701205): sport=soccer;basketball;volleyball, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8007671,
+    "lon": -43.2021702
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 274701205,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra da amendoeira",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1163511585",
+     "dado": "OpenStreetMap (way/1163511585): sport=futsal, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8941221,
+    "lon": -43.323671
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1163511585,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra da Casa Branca",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/272919347",
+     "dado": "OpenStreetMap (way/272919347): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.9356796,
+    "lon": -43.2494205
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 272919347,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra da Figueira",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "concreto (OSM: surface=concrete)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/990166765",
+     "dado": "OpenStreetMap (way/990166765): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.9391551,
+    "lon": -43.2546238
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 990166765,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra da Lycio",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/592357542",
+     "dado": "OpenStreetMap (way/592357542): sport=multi;soccer;volleyball, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8910268,
+    "lon": -43.5966247
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 592357542,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra da Praça Castelo Branco",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/685506502",
+     "dado": "OpenStreetMap (way/685506502): sport=soccer;basketball;handball, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.9126818,
+    "lon": -43.6237129
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 685506502,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra da Praça Palmares",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/710331659",
+     "dado": "OpenStreetMap (way/710331659): sport=soccer;basketball, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8860042,
+    "lon": -43.6396093
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 710331659,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra da Zumba",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/299704042",
+     "dado": "OpenStreetMap (way/299704042): sport=soccer;multi, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8135708,
+    "lon": -43.3525482
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 299704042,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra de Areia",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/314803210",
+     "dado": "OpenStreetMap (way/314803210): sport=soccer;multi, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8779792,
+    "lon": -43.3423212
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 314803210,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra de Futebol",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/681286678",
+     "dado": "OpenStreetMap (way/681286678): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8832116,
+    "lon": -43.4398072
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 681286678,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra de futebol do 492",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/835083362",
+     "dado": "OpenStreetMap (way/835083362): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.9303055,
+    "lon": -43.1883689
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 835083362,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra de Futsal",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "concreto (OSM: surface=concrete)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/707972184",
+     "dado": "OpenStreetMap (way/707972184): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8301894,
+    "lon": -43.2823571
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 707972184,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra de Futsal da Casa do Zico",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1163511590",
+     "dado": "OpenStreetMap (way/1163511590): sport=futsal, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8910851,
+    "lon": -43.3236649
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1163511590,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra de futsal do murialdo",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1163511604",
+     "dado": "OpenStreetMap (way/1163511604): sport=futsal, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8907029,
+    "lon": -43.3238936
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1163511604,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra Dercides Alvez dos Santos",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/592357536",
+     "dado": "OpenStreetMap (way/592357536): sport=multi;soccer;volleyball, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8892421,
+    "lon": -43.6100724
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 592357536,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra do Alto",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/687030190",
+     "dado": "OpenStreetMap (way/687030190): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.9957423,
+    "lon": -43.2432098
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 687030190,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra do Chapadão",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1320129792",
+     "dado": "OpenStreetMap (way/1320129792): sport=futsal, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8192041,
+    "lon": -43.375255
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1320129792,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra do Colônia",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "concreto (OSM: surface=concrete)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1487558198",
+     "dado": "OpenStreetMap (way/1487558198): sport=futsal;volleyball;basketball, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.940424,
+    "lon": -43.3933639
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1487558198,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra do Condomínio",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/733408658",
+     "dado": "OpenStreetMap (way/733408658): sport=soccer;volleyball, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.9070755,
+    "lon": -43.5817036
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 733408658,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra do Final Feliz",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "concreto (OSM: surface=concrete)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1417456241",
+     "dado": "OpenStreetMap (way/1417456241): sport=futsal, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.825347,
+    "lon": -43.3871819
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1417456241,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra do reservatório 1",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "concreto (OSM: surface=concrete)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/676166163",
+     "dado": "OpenStreetMap (way/676166163): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.9190263,
+    "lon": -43.6021729
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 676166163,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra do reservatório 2",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "concreto (OSM: surface=concrete)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/676166164",
+     "dado": "OpenStreetMap (way/676166164): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.9192736,
+    "lon": -43.6021391
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 676166164,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra do Terreiro",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1470165574",
+     "dado": "OpenStreetMap (way/1470165574): sport=futsal, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.922461,
+    "lon": -43.2002723
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1470165574,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra Esportiva",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/217868076",
+     "dado": "OpenStreetMap (way/217868076): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8846069,
+    "lon": -43.2516101
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 217868076,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra Futsal",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1322465536",
+     "dado": "OpenStreetMap (way/1322465536): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.9006503,
+    "lon": -43.5969422
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1322465536,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra João Wesley",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/592006687",
+     "dado": "OpenStreetMap (way/592006687): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.909731,
+    "lon": -43.5945626
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 592006687,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra Nova da Divisa",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1491122193",
+     "dado": "OpenStreetMap (way/1491122193): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8240804,
+    "lon": -43.3613783
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1491122193,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra poli esportiva",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "concreto (OSM: surface=concrete)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/828318634",
+     "dado": "OpenStreetMap (way/828318634): sport=soccer;volleyball, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.825763,
+    "lon": -43.2357493
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 828318634,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra polieportiva República",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1163511607",
+     "dado": "OpenStreetMap (way/1163511607): sport=futsal, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.893647,
+    "lon": -43.3283028
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1163511607,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra Poliesportiva",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/217868074",
+     "dado": "OpenStreetMap (way/217868074): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8844068,
+    "lon": -43.2528905
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 217868074,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra poliesportiva Amizade",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/911386048",
+     "dado": "OpenStreetMap (way/911386048): sport=soccer;volleyball;athletics, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8022129,
+    "lon": -43.2048266
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 911386048,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra poliesportiva do CIAM",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1163511592",
+     "dado": "OpenStreetMap (way/1163511592): sport=futsal, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8961068,
+    "lon": -43.3278748
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1163511592,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra polisesportiva 1",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1163511603",
+     "dado": "OpenStreetMap (way/1163511603): sport=futsal, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8851609,
+    "lon": -43.3279612
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1163511603,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra polisesportiva 2",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1163511602",
+     "dado": "OpenStreetMap (way/1163511602): sport=futsal, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8853008,
+    "lon": -43.3280756
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1163511602,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra polisesportiva República 2",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1163511608",
+     "dado": "OpenStreetMap (way/1163511608): sport=futsal, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.893538,
+    "lon": -43.329047
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1163511608,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra Portuguesa",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/912542096",
+     "dado": "OpenStreetMap (way/912542096): sport=soccer;volleyball, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.7995374,
+    "lon": -43.2037588
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 912542096,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra Praça do Patriarca",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/314803211",
+     "dado": "OpenStreetMap (way/314803211): sport=soccer;basketball, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8781255,
+    "lon": -43.3420652
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 314803211,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra Realeza",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/674423671",
+     "dado": "OpenStreetMap (way/674423671): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.9185023,
+    "lon": -43.5996971
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 674423671,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra Recanto Verde",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/704935442",
+     "dado": "OpenStreetMap (way/704935442): sport=soccer;basketball;multi, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8989596,
+    "lon": -43.6804334
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 704935442,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra Santos Dummont",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/912545709",
+     "dado": "OpenStreetMap (way/912545709): sport=soccer;volleyball, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.7997761,
+    "lon": -43.2056477
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 912545709,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra Sgt Wilson J. do Nascimento",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/592331305",
+     "dado": "OpenStreetMap (way/592331305): sport=multi;soccer;basketball;volleyball;football, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.9027798,
+    "lon": -43.5960096
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 592331305,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra society",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/193614247",
+     "dado": "OpenStreetMap (way/193614247): sport=multi;basketball;soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.9172325,
+    "lon": -43.2287749
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 193614247,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra Velha da Divisa",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/831192282",
+     "dado": "OpenStreetMap (way/831192282): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.822377,
+    "lon": -43.3633507
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 831192282,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra Zé Biriba",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "concreto (OSM: surface=concrete)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/674425059",
+     "dado": "OpenStreetMap (way/674425059): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.9254076,
+    "lon": -43.6035816
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 674425059,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quarto Centenário",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama natural (OSM: surface=grass)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/558630009",
+     "dado": "OpenStreetMap (way/558630009): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.9090272,
+    "lon": -43.6036593
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 558630009,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Realengo Futebol Clube",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/211509709",
+     "dado": "OpenStreetMap (way/211509709): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8726779,
+    "lon": -43.4242899
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 211509709,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "soccer",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "concreto (OSM: surface=concrete)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/728903855",
+     "dado": "OpenStreetMap (way/728903855): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.9209018,
+    "lon": -43.3437794
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 728903855,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Sport Court",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/554946972",
+     "dado": "OpenStreetMap (way/554946972): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.955086,
+    "lon": -43.169703
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 554946972,
+    "sinal_futebol": "sport"
+   }
+  }
+ ]
+}
