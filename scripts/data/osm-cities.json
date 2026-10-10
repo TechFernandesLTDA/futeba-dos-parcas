@@ -108,6 +108,13 @@
       "slug": "recife",
       "epic_issue": 4186,
       "observacao": "coletor de cidades novas (Execução 8)"
+    },
+    {
+      "nome": "Goiânia",
+      "uf": "GO",
+      "rodada": 9,
+      "slug": "goiania",
+      "epic_issue": 4186
     }
   ]
 }
