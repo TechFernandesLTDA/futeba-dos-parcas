@@ -17,6 +17,10 @@ paths = [
   '''web/src/services/firebase\.ts$''',
   '''web/dist/.*''',
   '''(^|/)index\.html$''',
+  # Android: google-services.json traz a mesma classe de chave (identifica o
+  # projeto; acesso controlado por Rules/App Check). O arquivo real está no
+  # .gitignore; só aparece no histórico (commit inicial).
+  '''^app/google-services\.json$''',
 ]
 
 # reCAPTCHA *site key* é pública (vai no HTML); a secret key nunca entra no repo.
