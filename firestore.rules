@@ -4001,15 +4001,13 @@ service cloud.firestore {
           request.resource.data.game_id is string &&
           request.resource.data.target_id is string &&
           request.resource.data.target_path ==
-            'games/' + request.resource.data.game_id +
-            '/photos/' + request.resource.data.target_id
+            'game_photos/' + request.resource.data.target_id
         ) || (
           request.resource.data.target_type == 'game_video' &&
           request.resource.data.game_id is string &&
           request.resource.data.target_id is string &&
           request.resource.data.target_path ==
-            'games/' + request.resource.data.game_id +
-            '/videos/' + request.resource.data.target_id
+            'game_videos/' + request.resource.data.target_id
         );
       }
 
