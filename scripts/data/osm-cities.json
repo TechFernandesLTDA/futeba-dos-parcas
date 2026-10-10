@@ -13,6 +13,7 @@
     {"nome": "Porto Alegre", "uf": "RS", "rodada": 5, "slug": "porto-alegre", "epic_issue": 4195},
     {"nome": "São Paulo", "uf": "SP", "rodada": 6, "slug": "sao-paulo", "epic_issue": 4195, "observacao": "capital (município de São Paulo/SP)"},
     {"nome": "Florianópolis", "uf": "SC", "rodada": 7, "slug": "florianopolis", "epic_issue": 4195},
-    {"nome": "Joinville", "uf": "SC", "rodada": 8, "slug": "joinville", "epic_issue": 4195}
+    {"nome": "Joinville", "uf": "SC", "rodada": 8, "slug": "joinville", "epic_issue": 4195},
+    {"nome": "Rio de Janeiro", "uf": "RJ", "rodada": 9, "slug": "rio-de-janeiro", "epic_issue": 4186, "observacao": "capital (município do Rio de Janeiro/RJ); coleta via coletor de cidades novas"}
   ]
 }

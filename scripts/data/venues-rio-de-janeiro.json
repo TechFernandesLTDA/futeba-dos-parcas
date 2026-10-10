@@ -1,0 +1,162 @@
+{
+  "gerado_em": "2026-10-09",
+  "rodada": 9,
+  "slug": "rio-de-janeiro",
+  "issue": 4186,
+  "titulo": "Rio de Janeiro (R9)",
+  "coleta": {
+    "data": "2026-10-09",
+    "ferramentas": "pesquisa web + fichas públicas (Futemais, site oficial Society Show) + OpenStreetMap/Overpass (scripts/data/build-venues-osm.mjs, 196 candidatos só-OSM NÃO importados)",
+    "regra": "apenas dados públicos verificáveis; campos sem fonte = null; todo item tem >=1 fonte com URL; entra no app como DRAFT/não verificado"
+  },
+  "cobertura": {
+    "Rio de Janeiro": 4
+  },
+  "observacao": "Rejeitados: candidatos OSM sem nome/endereço (campos de praça, clubes, pelada comunitária); Clube da Barra e Montanha Clube (clubes); Arena Esportiva Rio, Arena Society Ícaro, Local do Gol (sem número de endereço na fonte); BR Arena (só SP); Complexo Arena (Nova Friburgo, fora do município).",
+  "venues": [
+    {
+      "nome": "Arena Society Show",
+      "endereco": {
+        "rua": "Rua Timóteo da Costa",
+        "numero": "988",
+        "bairro": "Leblon",
+        "cidade": "Rio de Janeiro",
+        "uf": "RJ",
+        "cep": "22450-130"
+      },
+      "telefone": null,
+      "whatsapp": null,
+      "site": "https://societyshow.com.br/",
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://societyshow.com.br/",
+          "dado": "site oficial: locação de quadras de futebol society desde 2004, duas quadras (futebol 5 e 7), endereço no Leblon"
+        },
+        {
+          "url": "https://www.futemais.com.br/post/onde-jogar-futebol-em-rio-de-janeiro",
+          "dado": "matéria Futemais: endereço Rua Timóteo da Costa, 988, Leblon, CEP 22.450-130; telefone listado (formato incompleto, não usado)"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    },
+    {
+      "nome": "Arena Akxe (Akxe Sportside Club)",
+      "endereco": {
+        "rua": "Avenida Prefeito Dulcídio Cardoso",
+        "numero": "2900",
+        "bairro": "Barra da Tijuca",
+        "cidade": "Rio de Janeiro",
+        "uf": "RJ",
+        "cep": "22631-052"
+      },
+      "telefone": "(21) 2263-4306",
+      "whatsapp": null,
+      "site": null,
+      "instagram": "https://instagram.com/arenaakxebarra",
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.futemais.com.br/post/onde-jogar-futebol-em-rio-de-janeiro",
+          "dado": "matéria Futemais: endereço, CEP, telefone (21) 2263-4306, site e Instagram da arena society com grama sintética"
+        }
+      ],
+      "confidence": "baixa",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    },
+    {
+      "nome": "Arena Tijuca",
+      "endereco": {
+        "rua": "Rua Conde de Bonfim",
+        "numero": "186",
+        "bairro": "Tijuca",
+        "cidade": "Rio de Janeiro",
+        "uf": "RJ",
+        "cep": null
+      },
+      "telefone": "(21) 96459-2242",
+      "whatsapp": null,
+      "site": null,
+      "instagram": "https://instagram.com/arenatijuca_",
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.futemais.com.br/post/onde-jogar-futebol-em-rio-de-janeiro",
+          "dado": "matéria Futemais: endereço R. Conde de Bonfim, 186, Tijuca; telefone (21) 96459-2242; Instagram @arenatijuca_"
+        }
+      ],
+      "confidence": "baixa",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    },
+    {
+      "nome": "Goal Arena",
+      "endereco": {
+        "rua": "Avenida Ayrton Senna",
+        "numero": "2150",
+        "bairro": "Barra da Tijuca (Casa Shopping)",
+        "cidade": "Rio de Janeiro",
+        "uf": "RJ",
+        "cep": "22775-900"
+      },
+      "telefone": null,
+      "whatsapp": null,
+      "site": "https://goalarena.com.br/",
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.futemais.com.br/post/onde-jogar-futebol-em-rio-de-janeiro",
+          "dado": "matéria Futemais: Av. Ayrton Senna, 2150 (Casa Shopping), Barra da Tijuca, CEP 22775-900; campo 11x11 e três society; site citado (não acessível na coleta)"
+        }
+      ],
+      "confidence": "baixa",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    }
+  ]
+}
