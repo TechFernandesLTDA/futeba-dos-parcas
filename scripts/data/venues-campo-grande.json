@@ -1,0 +1,220 @@
+{
+  "gerado_em": "2026-10-10",
+  "rodada": 9,
+  "slug": "campo-grande",
+  "issue": null,
+  "titulo": "Campo Grande/MS (R10)",
+  "coleta": {
+    "data": "2026-10-10",
+    "ferramentas": "pesquisa web (listagens e fichas de diretórios de aluguel) + OpenStreetMap/Overpass (scripts/data/build-venues-osm.mjs; 10 candidatos, nenhum com endereço de locação)",
+    "regra": "apenas dados públicos verificáveis; campos sem fonte = null; todo item tem >=1 fonte com URL; entra no app como DRAFT/não verificado"
+  },
+  "cobertura": {
+    "Campo Grande": 5
+  },
+  "venues": [
+    {
+      "nome": "Bate Bola Campo Society",
+      "endereco": {
+        "rua": "Rua Brilhante",
+        "numero": "1633",
+        "bairro": "Vila Carvalho",
+        "cidade": "Campo Grande",
+        "uf": "MS",
+        "cep": null
+      },
+      "telefone": "(67) 3325-7492",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://esportes.cuiket.com.br/mato-grosso-do-sul/aluguel-quadras-esportivas/campo-grande/",
+          "dado": "listagem de aluguel de quadras esportivas: Bate Bola Campo Society, Rua Brilhante, 1633, telefone (67) 3325-7492"
+        },
+        {
+          "url": "https://oggo.com.br/cat/aluguel-de-quadras-esportivas/mato-grosso-do-sul/campo-grande",
+          "dado": "ficha OggO: telefone (67) 3325-7492, categoria Aluguel de Quadras Esportivas"
+        },
+        {
+          "url": "https://www.guiatelefone.com/empresas/campo-grande-ms/praticas-esportivas/aluguel-de-quadras-esportivas",
+          "dado": "listagem Guia Telefone: Rua Brilhante, 1633, Vila Carvalho, Campo Grande/MS"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    },
+    {
+      "nome": "Quadra VIP Futebol Society (Coronel Antonino)",
+      "endereco": {
+        "rua": "Avenida Castelo Branco",
+        "numero": "617",
+        "bairro": "Coronel Antonino",
+        "cidade": "Campo Grande",
+        "uf": "MS",
+        "cep": null
+      },
+      "telefone": "(67) 3351-3885",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://esportes.cuiket.com.br/mato-grosso-do-sul/aluguel-quadras-esportivas/campo-grande/",
+          "dado": "listagem Cuiket: Quadra Vip-Futebol Society - Coronel Antonino, Av Pres Castelo Branco, 617, telefone (67) 3351-3885"
+        },
+        {
+          "url": "https://oggo.com.br/cat/aluguel-de-quadras-esportivas/mato-grosso-do-sul/campo-grande",
+          "dado": "ficha OggO Quadra Vip: telefone (67) 3351-3885, endereço Av Castelo Branco, 617, Coronel Antonino"
+        },
+        {
+          "url": "https://www.guiatelefone.com/empresas/campo-grande-ms/praticas-esportivas/aluguel-de-quadras-esportivas",
+          "dado": "listagem Guia Telefone: Quadra Vip, Avenida Castelo Branco, 617, Coronel Antonino"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    },
+    {
+      "nome": "Gol de Placa",
+      "endereco": {
+        "rua": "Avenida Afonso Pena",
+        "numero": "4076",
+        "bairro": null,
+        "cidade": "Campo Grande",
+        "uf": "MS",
+        "cep": null
+      },
+      "telefone": "(67) 3384-4860",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://esportes.cuiket.com.br/mato-grosso-do-sul/aluguel-quadras-esportivas/campo-grande/",
+          "dado": "listagem Cuiket: Gol de Placa, Av Afonso Pena, 4076, telefone (67) 3384-4860, aluguel de quadras"
+        },
+        {
+          "url": "https://oggo.com.br/l/gol-de-placa-1433",
+          "dado": "ficha OggO GOL DE PLACA, Campo Grande/MS: telefone (67) 3384-4860, aluguel de quadras esportivas (sem endereço na ficha)"
+        }
+      ],
+      "confidence": "baixa",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    },
+    {
+      "nome": "Speed Play Locação de Quadra Esportiva",
+      "endereco": {
+        "rua": "Rua Cruzeiro do Sul",
+        "numero": "550",
+        "bairro": "Santo Antônio",
+        "cidade": "Campo Grande",
+        "uf": "MS",
+        "cep": null
+      },
+      "telefone": "(67) 3362-5201",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.guiatelefone.com/empresas/campo-grande-ms/praticas-esportivas/aluguel-de-quadras-esportivas",
+          "dado": "listagem Guia Telefone: Speed Play Locação de Quadra Esportiva, Rua Cruzeiro do Sul, 550, Santo Antônio, (67) 3362-5201"
+        },
+        {
+          "url": "https://oggo.com.br/l/speed-play-locacao-de-quadra-esportiva-626",
+          "dado": "ficha OggO: SPEED PLAY LOCAÇÃO DE QUADRA ESPORTIVA, telefone (67) 3362-5201"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    },
+    {
+      "nome": "Bola na Rede Quadra Bar",
+      "endereco": {
+        "rua": "Rua General Bertoldo Klinger",
+        "numero": "1150",
+        "bairro": "Vila Nossa Senhora das Graças",
+        "cidade": "Campo Grande",
+        "uf": "MS",
+        "cep": null
+      },
+      "telefone": "(67) 3365-3739",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.guiatelefone.com/empresas/campo-grande-ms/praticas-esportivas/aluguel-de-quadras-esportivas",
+          "dado": "listagem Guia Telefone: Bola na Rede Quadra Bar, Rua General Bertoldo Klinger, 1150, Vila Nossa Senhora das Graças, (67) 3365-3739"
+        },
+        {
+          "url": "https://oggo.com.br/l/bola-na-rede-quadra-bar-669255",
+          "dado": "ficha OggO: BOLA NA REDE QUADRA BAR, telefone (67) 3365-3739, aluguel de quadras esportivas"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    }
+  ]
+}
