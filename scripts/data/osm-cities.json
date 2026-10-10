@@ -115,6 +115,13 @@
       "rodada": 10,
       "slug": "guarulhos",
       "epic_issue": 4186
+    },
+    {
+      "nome": "João Pessoa",
+      "uf": "PB",
+      "rodada": 9,
+      "slug": "joao-pessoa",
+      "epic_issue": 4186
     }
   ]
 }
