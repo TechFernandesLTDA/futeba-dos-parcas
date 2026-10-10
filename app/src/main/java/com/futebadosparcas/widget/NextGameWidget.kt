@@ -59,18 +59,6 @@ class NextGameWidget : AppWidgetProvider() {
                 val appWidgetIds = appWidgetManager.getAppWidgetIds(widgetComponent)
                 onUpdate(context, appWidgetManager, appWidgetIds)
             }
-            ACTION_CONFIRM -> {
-                val gameId = intent.getStringExtra(EXTRA_GAME_ID)
-                if (gameId != null) {
-                    // Abre o app na tela do jogo
-                    val openIntent = Intent(context, MainActivityCompose::class.java).apply {
-                        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-                        putExtra("navigate_to", "game_detail")
-                        putExtra("game_id", gameId)
-                    }
-                    context.startActivity(openIntent)
-                }
-            }
         }
     }
 
@@ -243,8 +231,6 @@ class NextGameWidget : AppWidgetProvider() {
 
     companion object {
         const val ACTION_REFRESH = "com.futebadosparcas.widget.ACTION_REFRESH"
-        const val ACTION_CONFIRM = "com.futebadosparcas.widget.ACTION_CONFIRM"
-        const val EXTRA_GAME_ID = "game_id"
 
         /**
          * Atualiza todos os widgets do app.

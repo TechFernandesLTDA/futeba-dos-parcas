@@ -15,6 +15,7 @@ Datasets curados para o importador `import-venues-dataset.ts`. Tudo entra no app
 | `venues-belo-horizonte.json` | R9 (#4195) | Belo Horizonte (fontes: sites oficiais, Minha Quadra, ListaTudo, Lista Amarela, Guia Fácil) | 6 |
 | `venues-enriquecimento-r9.json` | R9 (#4195) | enriquecimento não destrutivo (`modo: enriquecimento`, `location_id` exato) de venues já importados | 33 |
 | `venues-rio-de-janeiro.json` | R9 (coletor de cidades novas, #4186) | Rio de Janeiro (capital) | 4 |
+| `venues-recife.json` | R9 (coletor de cidades novas, #4186, execução 8) | Recife | 5 |
 
 ## Regras dos dados
 

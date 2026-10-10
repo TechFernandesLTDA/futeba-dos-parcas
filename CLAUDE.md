@@ -186,7 +186,7 @@ fastlane beta                              # Deploy to Firebase App Distribution
 ### Version
 
 - **Current versions**: Web 1.53.0, Android 1.37.0 (build 72), iOS 1.6.1 (build 18), Functions 1.9.0. Source of truth: `versions.json`.
-- **SDK**: compileSdk 36, minSdk 24, targetSdk 35, JDK 21
+- **SDK**: compileSdk 37, minSdk 24, targetSdk 35, JDK 21
 - **Kotlin**: 2.2.10
 - **AGP**: 9.0.1
 - **Compose BOM**: 2024.09.00
