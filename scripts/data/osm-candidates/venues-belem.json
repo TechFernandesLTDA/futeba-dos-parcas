@@ -1,0 +1,938 @@
+{
+ "gerado_em": "2026-10-10",
+ "rodada": 10,
+ "cidade": "Belém",
+ "uf": "PA",
+ "slug": "belem",
+ "issue": 4186,
+ "fonte": {
+  "provedor": "OpenStreetMap (via Nominatim + Overpass API)",
+  "licenca": "ODbL 1.0 — https://www.openstreetmap.org/copyright",
+  "nominatim_url": "https://www.openstreetmap.org/relation/185567",
+  "nominatim_display_name": "Belém, Pará, Região Norte, Brasil",
+  "overpass_mirror": "https://overpass-api.de/api/interpreter",
+  "overpass_query": "[out:json][timeout:180];\narea(3600185567)->.a;\n(\n  node[\"leisure\"=\"pitch\"](area.a);\n  way[\"leisure\"=\"pitch\"](area.a);\n  relation[\"leisure\"=\"pitch\"](area.a);\n  node[\"leisure\"=\"sports_centre\"](area.a);\n  way[\"leisure\"=\"sports_centre\"](area.a);\n);\nout body center meta;",
+  "osm_base_timestamp": "2026-10-10T07:55:18Z"
+ },
+ "coleta": {
+  "data": "2026-10-10",
+  "ferramenta": "scripts/data/build-venues-osm.mjs",
+  "finalidade": "dataset curado de quadras para importação DRAFT (revisão humana antes de publicar)"
+ },
+ "estatisticas": {
+  "candidatos_osm": 327,
+  "sem_nome": 271,
+  "institucional": 1,
+  "acesso_restrito": 7,
+  "amenity_descartada": 0,
+  "sem_sinal_de_futebol": 26,
+  "other_excluded": 0,
+  "sem_coordenada": 0,
+  "mantidos": 22,
+  "duplicatas_removidas": 0
+ },
+ "venues": [
+  {
+   "nome": "Arena",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Belém",
+    "uf": "PA",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/352867467",
+     "dado": "OpenStreetMap (way/352867467): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -1.3323297,
+    "lon": -48.4371779
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 352867467,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Arena da Vileta",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Belém",
+    "uf": "PA",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1242978724",
+     "dado": "OpenStreetMap (way/1242978724): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -1.4355934,
+    "lon": -48.4691538
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 1242978724,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Arena Elite",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Belém",
+    "uf": "PA",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/node/12392907548",
+     "dado": "OpenStreetMap (node/12392907548): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -1.4287728,
+    "lon": -48.4505594
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "node",
+    "id": 12392907548,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Arena Tucumã",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Belém",
+    "uf": "PA",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1490866554",
+     "dado": "OpenStreetMap (way/1490866554): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -1.4025905,
+    "lon": -48.4823789
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 1490866554,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campinho da Rua do Fio",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Belém",
+    "uf": "PA",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1311289121",
+     "dado": "OpenStreetMap (way/1311289121): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -1.417694,
+    "lon": -48.487561
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 1311289121,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campinho de areia",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Belém",
+    "uf": "PA",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1341395227",
+     "dado": "OpenStreetMap (way/1341395227): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -1.387028,
+    "lon": -48.4406779
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 1341395227,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo de Futebol",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Belém",
+    "uf": "PA",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1169952539",
+     "dado": "OpenStreetMap (way/1169952539): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -1.4137789,
+    "lon": -48.4452269
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 1169952539,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo de futebol 1",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Belém",
+    "uf": "PA",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama natural (OSM: surface=grass)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1419006683",
+     "dado": "OpenStreetMap (way/1419006683): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -1.4107906,
+    "lon": -48.463426
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 1419006683,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo de futebol 2",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Belém",
+    "uf": "PA",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama natural (OSM: surface=grass)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1419006684",
+     "dado": "OpenStreetMap (way/1419006684): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -1.4111995,
+    "lon": -48.4630062
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 1419006684,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo de Futebol da Tuna",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Belém",
+    "uf": "PA",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama natural (OSM: surface=grass)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/921427853",
+     "dado": "OpenStreetMap (way/921427853): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -1.4187567,
+    "lon": -48.445447
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 921427853,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo de Futebol da ViaçãoForte",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Belém",
+    "uf": "PA",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/544262419",
+     "dado": "OpenStreetMap (way/544262419): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -1.3734747,
+    "lon": -48.4246489
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 544262419,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo de futebol do 14 Bis",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Belém",
+    "uf": "PA",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama natural (OSM: surface=grass)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1418755558",
+     "dado": "OpenStreetMap (way/1418755558): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -1.419939,
+    "lon": -48.4574971
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 1418755558,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "CAMPO DO JOSÉ MARIA",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Belém",
+    "uf": "PA",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama natural (OSM: surface=grass)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1322154204",
+     "dado": "OpenStreetMap (way/1322154204): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -1.2750805,
+    "lon": -48.4269834
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 1322154204,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Seminário Equatorial Teológico Batista",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Belém",
+    "uf": "PA",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/162765912",
+     "dado": "OpenStreetMap (way/162765912): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -1.4045841,
+    "lon": -48.4324134
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 162765912,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Complexo Exportivo Florestão (Olivar)",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Belém",
+    "uf": "PA",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1342280669",
+     "dado": "OpenStreetMap (way/1342280669): sport=soccer;running;volleyball;fitness, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -1.3104714,
+    "lon": -48.4465551
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 1342280669,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Estádio Evandro Almeida",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Belém",
+    "uf": "PA",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama natural (OSM: surface=grass)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/27626609",
+     "dado": "OpenStreetMap (way/27626609): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -1.4451489,
+    "lon": -48.4660782
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 27626609,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "La Vai a Bola",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Belém",
+    "uf": "PA",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1227002055",
+     "dado": "OpenStreetMap (way/1227002055): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -1.3677279,
+    "lon": -48.429917
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 1227002055,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "P2 SOCCER",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Belém",
+    "uf": "PA",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1146052722",
+     "dado": "OpenStreetMap (way/1146052722): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -1.3008663,
+    "lon": -48.4716617
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 1146052722,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra de futsal barão de igarape mirim",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Belém",
+    "uf": "PA",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1333221098",
+     "dado": "OpenStreetMap (way/1333221098): sport=futsal, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -1.465888,
+    "lon": -48.4658333
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 1333221098,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra dos Capuchinhos",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Belém",
+    "uf": "PA",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/node/9694110029",
+     "dado": "OpenStreetMap (node/9694110029): sport=soccer;basketball;volleyball, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -1.4569273,
+    "lon": -48.4699341
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "node",
+    "id": 9694110029,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra Esportiva",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Belém",
+    "uf": "PA",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "concreto (OSM: surface=concrete)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/474390239",
+     "dado": "OpenStreetMap (way/474390239): sport=soccer;volleyball;handball, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -1.3192073,
+    "lon": -48.4350166
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 474390239,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadras Externas da UEPA",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Belém",
+    "uf": "PA",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/645593409",
+     "dado": "OpenStreetMap (way/645593409): sport=volleyball;futsal;basketball;handball, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -1.4406097,
+    "lon": -48.459153
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 645593409,
+    "sinal_futebol": "sport"
+   }
+  }
+ ]
+}
