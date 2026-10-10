@@ -1,0 +1,208 @@
+{
+  "gerado_em": "2026-10-10",
+  "rodada": 9,
+  "slug": "recife",
+  "issue": 4186,
+  "titulo": "Recife (R10, coletor de cidades novas)",
+  "coleta": {
+    "data": "2026-10-10",
+    "ferramentas": "OpenStreetMap/Overpass (scripts/data/build-venues-osm.mjs, 647 candidatos, descartados por falta de nome/endereço de locação) + pesquisa web em diretórios de aluguel (listatudo, encontrarecife, telelistas, oggo, canchea) e cruzamento de telefone/endereço entre fontes",
+    "regra": "apenas dados públicos verificáveis; campos sem fonte = null; todo item tem >=1 fonte com URL; entra no app como DRAFT/não verificado"
+  },
+  "cobertura": {
+    "Recife": 5
+  },
+  "venues": [
+    {
+      "nome": "Cendesul Futebol Society e Eventos",
+      "endereco": {
+        "rua": "Avenida Vinte de Janeiro",
+        "numero": "1200",
+        "bairro": "Boa Viagem",
+        "cidade": "Recife",
+        "uf": "PE",
+        "cep": "51130-120"
+      },
+      "telefone": "(81) 3341-5336",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.encontrarecife.com.br/l/locacao-de-quadra-em-recife.shtml",
+          "dado": "diretório Encontra Recife, categoria locação de quadras: nome, endereço, CEP e telefone"
+        },
+        {
+          "url": "https://listatudo.com.br/recife-recife/quadras-esportivas-aluguel-locais/",
+          "dado": "diretório ListaTudo, categoria quadras esportivas aluguel: endereço (Avenida 20 Janeiro, 1200) e descrição de aluguel de quadras"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    },
+    {
+      "nome": "Espaço Arena Futebol Society e Lazer",
+      "endereco": {
+        "rua": "Rua Salgado",
+        "numero": "99",
+        "bairro": "Boa Viagem",
+        "cidade": "Recife",
+        "uf": "PE",
+        "cep": "51130-320"
+      },
+      "telefone": "(81) 3341-8140",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.encontrarecife.com.br/l/locacao-de-quadra-em-recife.shtml",
+          "dado": "diretório Encontra Recife, categoria locação de quadras: nome, endereço, CEP e telefone"
+        },
+        {
+          "url": "https://listatudo.com.br/recife-recife/quadras-esportivas-aluguel-locais/",
+          "dado": "diretório ListaTudo: endereço (Rua Salgado, 99) e descrição de aluguel de quadras esportivas"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    },
+    {
+      "nome": "Stadium Soccer Futebol Society",
+      "endereco": {
+        "rua": "Avenida Vinte de Janeiro",
+        "numero": "1000",
+        "bairro": "Boa Viagem",
+        "cidade": "Recife",
+        "uf": "PE",
+        "cep": "51130-120"
+      },
+      "telefone": "(81) 3341-5102",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": "descrição do estabelecimento no OggO: dois campos de 1134 m2 (campos society); a contagem é do texto do anúncio",
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.encontrarecife.com.br/l/locacao-de-quadra-em-recife.shtml",
+          "dado": "diretório Encontra Recife, categoria locação de quadras: nome, endereço, CEP e telefone"
+        },
+        {
+          "url": "https://oggo.com.br/cat/aluguel-de-campo-de-futebol/pernambuco/recife",
+          "dado": "OggO, categoria Aluguel de Campo de Futebol em Recife: nome e descrição de estrutura (dois campos)"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    },
+    {
+      "nome": "Bom de Bola Centro Society",
+      "endereco": {
+        "rua": "Rua Francisco Berenguer",
+        "numero": "678",
+        "bairro": "Campo Grande",
+        "cidade": "Recife",
+        "uf": "PE",
+        "cep": null
+      },
+      "telefone": "(81) 3083-0344",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://oggo.com.br/l/bom-de-bola-centro-society-9696",
+          "dado": "ficha OggO: categoria Aluguel de Campo de Futebol, telefone e endereço (R Francisco Berenguer, 678, Campo Grande)"
+        }
+      ],
+      "confidence": "baixa",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    },
+    {
+      "nome": "Society Bate Bola",
+      "endereco": {
+        "rua": "Avenida Caxangá",
+        "numero": "5405",
+        "bairro": "Várzea",
+        "cidade": "Recife",
+        "uf": "PE",
+        "cep": null
+      },
+      "telefone": null,
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://listatudo.com.br/recife-recife/quadras-esportivas-aluguel-locais/",
+          "dado": "diretório ListaTudo: endereço (Avenida Caxangá, 5405) e descrição de aluguel de quadras esportivas; telefone exibido truncado, portanto null"
+        },
+        {
+          "url": "https://www.telelistas.net/pe/recife/aluguel+de+quadras+esportivas",
+          "dado": "diretório Telelistas, categoria aluguel de quadras esportivas: endereço (Avenida Caxangá, 5405) e descrição de campo de futebol society"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    }
+  ]
+}

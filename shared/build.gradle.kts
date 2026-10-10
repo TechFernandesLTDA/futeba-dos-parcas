@@ -140,7 +140,7 @@ kotlin {
 
 extensions.configure<com.android.build.api.dsl.LibraryExtension>("android") {
     namespace = "com.futebadosparcas.shared"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         minSdk = 24

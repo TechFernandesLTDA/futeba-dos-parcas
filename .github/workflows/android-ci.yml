@@ -61,10 +61,10 @@ jobs:
         with:
           packages: 'platform-tools'
 
-      - name: Install Android SDK 36
+      - name: Install Android SDK 37
         run: |
-          sdkmanager --install "platform-tools" "platforms;android-36" "build-tools;36.0.0"
-          test -f "${ANDROID_SDK_ROOT:-${ANDROID_HOME:-}}/platforms/android-36/android.jar"
+          sdkmanager --install "platform-tools" "platforms;android-37.0" "build-tools;36.0.0"
+          test -f "${ANDROID_SDK_ROOT:-${ANDROID_HOME:-}}/platforms/android-37.0/android.jar"
 
       - name: Setup environment
         run: |
@@ -134,10 +134,10 @@ jobs:
         with:
           packages: 'platform-tools'
 
-      - name: Install Android SDK 36
+      - name: Install Android SDK 37
         run: |
-          sdkmanager --install "platform-tools" "platforms;android-36" "build-tools;36.0.0"
-          test -f "${ANDROID_SDK_ROOT:-${ANDROID_HOME:-}}/platforms/android-36/android.jar"
+          sdkmanager --install "platform-tools" "platforms;android-37.0" "build-tools;36.0.0"
+          test -f "${ANDROID_SDK_ROOT:-${ANDROID_HOME:-}}/platforms/android-37.0/android.jar"
 
       - name: Setup environment
         run: |
@@ -210,10 +210,10 @@ jobs:
         with:
           packages: 'platform-tools'
 
-      - name: Install Android SDK 36
+      - name: Install Android SDK 37
         run: |
-          sdkmanager --install "platform-tools" "platforms;android-36" "build-tools;36.0.0"
-          test -f "${ANDROID_SDK_ROOT:-${ANDROID_HOME:-}}/platforms/android-36/android.jar"
+          sdkmanager --install "platform-tools" "platforms;android-37.0" "build-tools;36.0.0"
+          test -f "${ANDROID_SDK_ROOT:-${ANDROID_HOME:-}}/platforms/android-37.0/android.jar"
 
       - name: Setup environment
         run: |
@@ -290,10 +290,10 @@ jobs:
         with:
           packages: 'platform-tools'
 
-      - name: Install Android SDK 36
+      - name: Install Android SDK 37
         run: |
-          sdkmanager --install "platform-tools" "platforms;android-36" "build-tools;36.0.0"
-          test -f "${ANDROID_SDK_ROOT:-${ANDROID_HOME:-}}/platforms/android-36/android.jar"
+          sdkmanager --install "platform-tools" "platforms;android-37.0" "build-tools;36.0.0"
+          test -f "${ANDROID_SDK_ROOT:-${ANDROID_HOME:-}}/platforms/android-37.0/android.jar"
 
       - name: Setup environment
         run: |

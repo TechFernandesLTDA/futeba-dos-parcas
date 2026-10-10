@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "com.futebadosparcas.baselineprofile"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         minSdk = 28

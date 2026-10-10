@@ -1,0 +1,1389 @@
+{
+ "gerado_em": "2026-10-10",
+ "rodada": 10,
+ "cidade": "Recife",
+ "uf": "PE",
+ "slug": "recife",
+ "issue": 4186,
+ "fonte": {
+  "provedor": "OpenStreetMap (via Nominatim + Overpass API)",
+  "licenca": "ODbL 1.0 — https://www.openstreetmap.org/copyright",
+  "nominatim_url": "https://www.openstreetmap.org/relation/303585",
+  "nominatim_display_name": "Recife, Pernambuco, Região Nordeste, Brasil",
+  "overpass_mirror": "https://overpass-api.de/api/interpreter",
+  "overpass_query": "[out:json][timeout:180];\narea(3600303585)->.a;\n(\n  node[\"leisure\"=\"pitch\"](area.a);\n  way[\"leisure\"=\"pitch\"](area.a);\n  relation[\"leisure\"=\"pitch\"](area.a);\n  node[\"leisure\"=\"sports_centre\"](area.a);\n  way[\"leisure\"=\"sports_centre\"](area.a);\n);\nout body center meta;",
+  "osm_base_timestamp": "2026-10-10T06:22:28Z"
+ },
+ "coleta": {
+  "data": "2026-10-10",
+  "ferramenta": "scripts/data/build-venues-osm.mjs",
+  "finalidade": "dataset curado de quadras para importação DRAFT (revisão humana antes de publicar)"
+ },
+ "estatisticas": {
+  "candidatos_osm": 647,
+  "sem_nome": 562,
+  "institucional": 1,
+  "acesso_restrito": 0,
+  "amenity_descartada": 0,
+  "sem_sinal_de_futebol": 51,
+  "other_excluded": 0,
+  "sem_coordenada": 0,
+  "mantidos": 33,
+  "duplicatas_removidas": 0
+ },
+ "venues": [
+  {
+   "nome": "Bom Sucesso Futebol Clube",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Recife",
+    "uf": "PE",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/node/10927548917",
+     "dado": "OpenStreetMap (node/10927548917): nome=\"Bom Sucesso Futebol Clube\", sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "baixa",
+   "coordenadas": {
+    "lat": -8.0221786,
+    "lon": -34.9077631
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "node",
+    "id": 10927548917,
+    "sinal_futebol": "nome"
+   }
+  },
+  {
+   "nome": "Cacique futebol clube",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Recife",
+    "uf": "PE",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/136150314",
+     "dado": "OpenStreetMap (way/136150314): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -8.0529461,
+    "lon": -34.9141638
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 136150314,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campinho da Vila Arraes",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Recife",
+    "uf": "PE",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1324584079",
+     "dado": "OpenStreetMap (way/1324584079): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -8.0450802,
+    "lon": -34.9613621
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 1324584079,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo 1",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Recife",
+    "uf": "PE",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama natural (OSM: surface=grass)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/860166922",
+     "dado": "OpenStreetMap (way/860166922): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -7.9499345,
+    "lon": -34.9693161
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 860166922,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo 2",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Recife",
+    "uf": "PE",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama natural (OSM: surface=grass)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/860166921",
+     "dado": "OpenStreetMap (way/860166921): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -7.9489811,
+    "lon": -34.9688736
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 860166921,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo da Jamaica",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Recife",
+    "uf": "PE",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/782262083",
+     "dado": "OpenStreetMap (way/782262083): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -8.1083888,
+    "lon": -34.8954564
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 782262083,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo da União",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Recife",
+    "uf": "PE",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/243409624",
+     "dado": "OpenStreetMap (way/243409624): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -8.0068304,
+    "lon": -34.9322906
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 243409624,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo de futebol de areia do Parque Santos Dumont",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Recife",
+    "uf": "PE",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/474483108",
+     "dado": "OpenStreetMap (way/474483108): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -8.1295185,
+    "lon": -34.9071609
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 474483108,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo de Roda de Fogo",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Recife",
+    "uf": "PE",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/807837633",
+     "dado": "OpenStreetMap (way/807837633): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -8.0584775,
+    "lon": -34.9373741
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 807837633,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Alto do Eucalipto",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Recife",
+    "uf": "PE",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/823180316",
+     "dado": "OpenStreetMap (way/823180316): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -8.005356,
+    "lon": -34.9198047
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 823180316,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Arroz",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Recife",
+    "uf": "PE",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama natural (OSM: surface=grass)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/242420406",
+     "dado": "OpenStreetMap (way/242420406): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -8.0763623,
+    "lon": -34.9497323
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 242420406,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Bueirão",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Recife",
+    "uf": "PE",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/246205209",
+     "dado": "OpenStreetMap (way/246205209): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -8.0459832,
+    "lon": -34.9138086
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 246205209,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do café",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Recife",
+    "uf": "PE",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/823180319",
+     "dado": "OpenStreetMap (way/823180319): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -8.0087848,
+    "lon": -34.9075762
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 823180319,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Floresta",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Recife",
+    "uf": "PE",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/626456352",
+     "dado": "OpenStreetMap (way/626456352): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -8.0892536,
+    "lon": -34.9424668
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 626456352,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Nacional",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Recife",
+    "uf": "PE",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/428084503",
+     "dado": "OpenStreetMap (way/428084503): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -8.1209671,
+    "lon": -34.9453436
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 428084503,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Onze",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Recife",
+    "uf": "PE",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/385483504",
+     "dado": "OpenStreetMap (way/385483504): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -8.0408466,
+    "lon": -34.8788462
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 385483504,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Ur-07",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Recife",
+    "uf": "PE",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/691064764",
+     "dado": "OpenStreetMap (way/691064764): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -8.0382628,
+    "lon": -34.9826544
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 691064764,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "CAMPO EL SALVADOR",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Recife",
+    "uf": "PE",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/737354547",
+     "dado": "OpenStreetMap (way/737354547): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -8.0795723,
+    "lon": -34.9403448
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 737354547,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Palmeirinha do Jordão",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Recife",
+    "uf": "PE",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/666496906",
+     "dado": "OpenStreetMap (way/666496906): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -8.1339843,
+    "lon": -34.9338727
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 666496906,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Society",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Recife",
+    "uf": "PE",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1383024056",
+     "dado": "OpenStreetMap (way/1383024056): nome=\"Campo Society\", sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "baixa",
+   "coordenadas": {
+    "lat": -8.1288283,
+    "lon": -34.9096188
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 1383024056,
+    "sinal_futebol": "nome"
+   }
+  },
+  {
+   "nome": "Centro de esportes de praia",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Recife",
+    "uf": "PE",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/685087605",
+     "dado": "OpenStreetMap (way/685087605): sport=beachvolleyball;beachsoccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -8.1307228,
+    "lon": -34.9069922
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 685087605,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Clube Português do Recife",
+   "endereco": {
+    "rua": "Avenida Conselheiro Rosa e Silva",
+    "numero": "172",
+    "bairro": "Graças",
+    "cidade": "Recife",
+    "uf": "PE",
+    "cep": "52020-220"
+   },
+   "telefone": "+55 81 3231-5400",
+   "whatsapp": null,
+   "site": "https://www.clubeportuguesdorecife.com.br/",
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/384770629",
+     "dado": "OpenStreetMap (way/384770629): sport=soccer, Avenida Conselheiro Rosa e Silva, 172, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "alta",
+   "coordenadas": {
+    "lat": -8.0500901,
+    "lon": -34.8955634
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 384770629,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "CT do Santa Cruz",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Recife",
+    "uf": "PE",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/859822573",
+     "dado": "OpenStreetMap (way/859822573): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -7.9482847,
+    "lon": -34.9687304
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 859822573,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "CT do Sport",
+   "endereco": {
+    "rua": "Estrada Cova da Onça",
+    "numero": null,
+    "bairro": "Guabiraba",
+    "cidade": "Recife",
+    "uf": "PE",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": "https://www.sportrecife.com.br/",
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/524172045",
+     "dado": "OpenStreetMap (way/524172045): sport=soccer, Estrada Cova da Onça, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -7.9405191,
+    "lon": -34.9227579
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 524172045,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "futebol society",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Recife",
+    "uf": "PE",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/253661691",
+     "dado": "OpenStreetMap (way/253661691): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -8.0620402,
+    "lon": -34.9117084
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 253661691,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Ginásio",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Recife",
+    "uf": "PE",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/683396249",
+     "dado": "OpenStreetMap (way/683396249): sport=soccer;volleyball;basketball;badminton, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -8.1300659,
+    "lon": -34.9071498
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 683396249,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Mini Campo Lagoa Encantada",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Recife",
+    "uf": "PE",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/424768372",
+     "dado": "OpenStreetMap (way/424768372): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -8.1269546,
+    "lon": -34.9499201
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 424768372,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Recife",
+    "uf": "PE",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/762375357",
+     "dado": "OpenStreetMap (way/762375357): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -8.1076389,
+    "lon": -34.9165674
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 762375357,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra de Futebol",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Recife",
+    "uf": "PE",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/548627974",
+     "dado": "OpenStreetMap (way/548627974): nome=\"Quadra de Futebol\", sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "baixa",
+   "coordenadas": {
+    "lat": -8.1294898,
+    "lon": -34.9320987
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 548627974,
+    "sinal_futebol": "nome"
+   }
+  },
+  {
+   "nome": "Quadra do Morro",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Recife",
+    "uf": "PE",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/607793393",
+     "dado": "OpenStreetMap (way/607793393): sport=soccer;volleyball;running, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -8.0194248,
+    "lon": -34.9149257
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 607793393,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra Poli Esportiva de Bola na Rede",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Recife",
+    "uf": "PE",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/931884788",
+     "dado": "OpenStreetMap (way/931884788): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -7.9643736,
+    "lon": -34.9247994
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 931884788,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra Poliesportiva Lagoa Encantada",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Recife",
+    "uf": "PE",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "concreto (OSM: surface=concrete)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/424765290",
+     "dado": "OpenStreetMap (way/424765290): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -8.1242221,
+    "lon": -34.9511998
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 424765290,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Santa Cruz Futebol Clube",
+   "endereco": {
+    "rua": "Avenida Beberibe",
+    "numero": null,
+    "bairro": "Arruda",
+    "cidade": "Recife",
+    "uf": "PE",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/666863654",
+     "dado": "OpenStreetMap (way/666863654): nome=\"Santa Cruz Futebol Clube\", Avenida Beberibe, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "baixa",
+   "coordenadas": {
+    "lat": -8.0267161,
+    "lon": -34.8916001
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 666863654,
+    "sinal_futebol": "nome"
+   }
+  }
+ ]
+}
