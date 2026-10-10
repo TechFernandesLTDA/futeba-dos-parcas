@@ -135,7 +135,7 @@
       "nome": "Parque Futebol",
       "endereco": {
         "rua": "SGAS 608, Conjunto G, Lote 60B",
-        "numero": "60B",
+        "numero": null,
         "bairro": "Asa Sul",
         "cidade": "Brasília",
         "uf": "DF",
