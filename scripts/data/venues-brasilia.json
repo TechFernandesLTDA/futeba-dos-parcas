@@ -1,0 +1,170 @@
+{
+  "gerado_em": "2026-10-09",
+  "rodada": 9,
+  "slug": "brasilia",
+  "issue": 4186,
+  "titulo": "Brasília - DF (R9)",
+  "coleta": {
+    "data": "2026-10-09",
+    "ferramentas": "pesquisa web (sites oficiais e diretórios por item); OpenStreetMap/Overpass consultado (relação 421151, DF) só como lista de candidatos, sem item importado só-OSM",
+    "regra": "apenas dados públicos verificáveis; campos sem fonte = null; todo item tem >=1 fonte com URL; entra no app como DRAFT/não verificado",
+    "limitacoes": "Nominatim não resolve Brasília/DF como relação (script build-venues-osm.mjs falha: 'tipo OSM não suportado como área: node'); candidatos OSM não foram cruzados um a um; preço, telefone e horário só entram quando publicados na fonte; Arena Futebol Clube removida (sem número de campos, site oficial inacessível na coleta, confiança baixa)"
+  },
+  "cobertura": {
+    "Brasília": 4
+  },
+  "venues": [
+    {
+      "nome": "Real Society",
+      "endereco": {
+        "rua": "Área Especial, Lote 21",
+        "numero": null,
+        "bairro": "Setor Hípico Sul",
+        "cidade": "Brasília",
+        "uf": "DF",
+        "cep": "70610-010"
+      },
+      "telefone": null,
+      "whatsapp": null,
+      "site": "https://realsociety.com.br/",
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": 5,
+      "detalhe_quadras": "5 campos de futebol society sintéticos com iluminação, vestiários, bar, salão, churrasqueiras e estacionamento (site oficial). Aluguel pelo sistema Matchpoint.",
+      "tipo_piso": "grama sintética",
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://realsociety.com.br/",
+          "dado": "site oficial: 5 campos sintéticos, aluguel de quadra via Matchpoint, Setor Hípico Sul desde 2006"
+        },
+        {
+          "url": "https://realsociety-br.matchpoint.com.es/Pages/11-sobre_nos_real_society",
+          "dado": "página Sobre nós (Matchpoint): 5 campos sintéticos disponíveis para aluguel; rodapé com CEP 70610-010 (texto do rodapé com grafia irregular na rua, por isso rua/lote conferidos só parcialmente)"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_aluguel",
+      "origem": "web"
+    },
+    {
+      "nome": "Ases-DF - Quadras de Grama Sintética (Clube Ases)",
+      "endereco": {
+        "rua": "SCES Trecho 2, Conjunto 33",
+        "numero": null,
+        "bairro": "Setor de Clubes Esportivos Sul",
+        "cidade": "Brasília",
+        "uf": "DF",
+        "cep": null
+      },
+      "telefone": "(61) 3225-4540",
+      "whatsapp": null,
+      "site": "https://ases-df.org.br/novo/campos-de-futebol/",
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": 2,
+      "detalhe_quadras": "2 quadras de society (grama sintética) locadas por associados e não associados nas noites de segunda a sexta. Clube aberto 8h às 24h, com iluminação noturna. Reservas pelo telefone do clube.",
+      "tipo_piso": "grama sintética",
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://ases-df.org.br/novo/campos-de-futebol/",
+          "dado": "site oficial: duas quadras de grama sintética locadas por associados e não associados; telefone de reservas (61) 3225-4540"
+        },
+        {
+          "url": "https://ases-df.org.br/novo/conheca-a-ases-2/",
+          "dado": "site oficial: sede no SCES Trecho 2, conjunto 33; funcionamento das 8h às 24h; iluminação para a noite"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_aluguel",
+      "origem": "web"
+    },
+    {
+      "nome": "AABR - Campo Society (Associação Atlética Banco de Brasília)",
+      "endereco": {
+        "rua": "Setor de Clubes Esportivos Sul, Trecho 1, Conjunto 3",
+        "numero": "Lotes 5/6",
+        "bairro": "Setor de Clubes Esportivos Sul",
+        "cidade": "Brasília",
+        "uf": "DF",
+        "cep": null
+      },
+      "telefone": "(61) 3201-1643",
+      "whatsapp": null,
+      "site": "https://aabr.org.br/campos-de-futebol/",
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": 1,
+      "detalhe_quadras": "1 campo society para locação por hora. Tabela publicada no site: associados R$ 150,00 (dia) e R$ 200,00 (noite); não associados R$ 220,00 (dia) e R$ 280,00 (noite). Campo principal de grama natural é outro espaço e não entra aqui.",
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://aabr.org.br/campos-de-futebol/",
+          "dado": "site oficial: campo society com tabela de locação por hora (associados e não associados, dia e noite)"
+        },
+        {
+          "url": "https://aabr.org.br/o-clube/",
+          "dado": "site oficial: secretaria no SCES Trecho 1, Conjunto 3, Lotes 5/6; telefones (61) 3201-1643 e (61) 98151-7692"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_aluguel",
+      "origem": "web"
+    },
+    {
+      "nome": "Parque Futebol",
+      "endereco": {
+        "rua": "SGAS 608, Conjunto G, Lote 60B",
+        "numero": "60B",
+        "bairro": "Asa Sul",
+        "cidade": "Brasília",
+        "uf": "DF",
+        "cep": null
+      },
+      "telefone": "(61) 3702-3334",
+      "whatsapp": null,
+      "site": "http://www.parquefutebol.com.br",
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": 2,
+      "detalhe_quadras": "2 campos de futebol em grama sintética, vestiários feminino e masculino, área coberta com mesas e cadeiras; também oferece espaço para festas com brinquedos infláveis (opcional).",
+      "tipo_piso": "grama sintética",
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.organizandoeventos.com.br/parquefutebol",
+          "dado": "diretório Organizando Eventos: 2 campos de grama sintética, vestiários, endereço SGAS 608 Conj. G Lote 60B, telefone (61) 3702-3334 e (61) 99902-3334"
+        }
+      ],
+      "confidence": "baixa",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    }
+  ]
+}
