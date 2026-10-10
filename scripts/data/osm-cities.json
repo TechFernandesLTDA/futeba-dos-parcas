@@ -14,6 +14,7 @@
     {"nome": "São Paulo", "uf": "SP", "rodada": 6, "slug": "sao-paulo", "epic_issue": 4195, "observacao": "capital (município de São Paulo/SP)"},
     {"nome": "Florianópolis", "uf": "SC", "rodada": 7, "slug": "florianopolis", "epic_issue": 4195},
     {"nome": "Joinville", "uf": "SC", "rodada": 8, "slug": "joinville", "epic_issue": 4195},
-    {"nome": "Rio de Janeiro", "uf": "RJ", "rodada": 9, "slug": "rio-de-janeiro", "epic_issue": 4186, "observacao": "capital (município do Rio de Janeiro/RJ); coleta via coletor de cidades novas"}
+    {"nome": "Rio de Janeiro", "uf": "RJ", "rodada": 9, "slug": "rio-de-janeiro", "epic_issue": 4186, "observacao": "capital (município do Rio de Janeiro/RJ); coleta via coletor de cidades novas"},
+    {"nome": "Salvador", "uf": "BA", "rodada": 9, "slug": "salvador", "epic_issue": 4186, "observacao": "capital (município de Salvador/BA); curadoria web sobre candidatos OSM"}
   ]
 }

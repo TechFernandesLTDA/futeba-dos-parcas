@@ -1,0 +1,1881 @@
+{
+ "gerado_em": "2026-10-10",
+ "rodada": 9,
+ "cidade": "Salvador",
+ "uf": "BA",
+ "slug": "salvador",
+ "issue": 4186,
+ "fonte": {
+  "provedor": "OpenStreetMap (via Nominatim + Overpass API)",
+  "licenca": "ODbL 1.0 — https://www.openstreetmap.org/copyright",
+  "nominatim_url": "https://www.openstreetmap.org/relation/362362",
+  "nominatim_display_name": "Salvador, Bahia, Região Nordeste, Brasil",
+  "overpass_mirror": "https://overpass.kumi.systems/api/interpreter",
+  "overpass_query": "[out:json][timeout:180];\narea(3600362362)->.a;\n(\n  node[\"leisure\"=\"pitch\"](area.a);\n  way[\"leisure\"=\"pitch\"](area.a);\n  relation[\"leisure\"=\"pitch\"](area.a);\n  node[\"leisure\"=\"sports_centre\"](area.a);\n  way[\"leisure\"=\"sports_centre\"](area.a);\n);\nout body center meta;",
+  "osm_base_timestamp": "2026-07-28T02:16:18Z"
+ },
+ "coleta": {
+  "data": "2026-10-10",
+  "ferramenta": "scripts/data/build-venues-osm.mjs",
+  "finalidade": "dataset curado de quadras para importação DRAFT (revisão humana antes de publicar)"
+ },
+ "estatisticas": {
+  "candidatos_osm": 1346,
+  "sem_nome": 1231,
+  "institucional": 4,
+  "acesso_restrito": 5,
+  "amenity_descartada": 0,
+  "sem_sinal_de_futebol": 58,
+  "other_excluded": 0,
+  "sem_coordenada": 0,
+  "mantidos": 45,
+  "duplicatas_removidas": 3
+ },
+ "venues": [
+  {
+   "nome": "A Britinha",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Salvador",
+    "uf": "BA",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/681456034",
+     "dado": "OpenStreetMap (way/681456034): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -12.8846798,
+    "lon": -38.4099793
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 681456034,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Arena Bêco",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Salvador",
+    "uf": "BA",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1530476670",
+     "dado": "OpenStreetMap (way/1530476670): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -12.9187375,
+    "lon": -38.4471516
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1530476670,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Arena Ladur - Lobato",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Salvador",
+    "uf": "BA",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama sintética (OSM: surface=artificial_turf)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/674334090",
+     "dado": "OpenStreetMap (way/674334090): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -12.9244815,
+    "lon": -38.4824828
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 674334090,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Arena Pedreiras de Santa Luzia do Lobato",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Salvador",
+    "uf": "BA",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama natural (OSM: surface=grass)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/674120290",
+     "dado": "OpenStreetMap (way/674120290): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -12.9302317,
+    "lon": -38.4865874
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 674120290,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Associação Desportiva Zebrão - ADZ",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Salvador",
+    "uf": "BA",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/48786425",
+     "dado": "OpenStreetMap (way/48786425): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -12.9788095,
+    "lon": -38.4444605
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 48786425,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Associação dos Empregados da Paranapanema",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Salvador",
+    "uf": "BA",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/633712755",
+     "dado": "OpenStreetMap (way/633712755): sport=football, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -12.9037326,
+    "lon": -38.353706
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 633712755,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Baixa Fria",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": "Pau Miudo",
+    "cidade": "Salvador",
+    "uf": "BA",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/374034287",
+     "dado": "OpenStreetMap (way/374034287): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -12.9633403,
+    "lon": -38.4825802
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 374034287,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campão da Titania",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Salvador",
+    "uf": "BA",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/681494744",
+     "dado": "OpenStreetMap (way/681494744): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -12.8873594,
+    "lon": -38.4119549
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 681494744,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campinho Baixa da Paracaína",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Salvador",
+    "uf": "BA",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/node/13136862582",
+     "dado": "OpenStreetMap (node/13136862582): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -12.920305,
+    "lon": -38.4407542
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "node",
+    "id": 13136862582,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo - Quinta Portuguesa",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Salvador",
+    "uf": "BA",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/657105374",
+     "dado": "OpenStreetMap (way/657105374): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -12.8837628,
+    "lon": -38.3576348
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 657105374,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo 1 do Parque São Cristovão",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Salvador",
+    "uf": "BA",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/988340813",
+     "dado": "OpenStreetMap (way/988340813): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -12.9047677,
+    "lon": -38.3656517
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 988340813,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "campo aguas  claras",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Salvador",
+    "uf": "BA",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1204034127",
+     "dado": "OpenStreetMap (way/1204034127): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -12.8840657,
+    "lon": -38.4236308
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1204034127,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Brinco do Uruguai Rei Pelé",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Salvador",
+    "uf": "BA",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/node/13261552241",
+     "dado": "OpenStreetMap (node/13261552241): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -12.9297417,
+    "lon": -38.4944211
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "node",
+    "id": 13261552241,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo da associação vira copos",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Salvador",
+    "uf": "BA",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/827499480",
+     "dado": "OpenStreetMap (way/827499480): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -12.967078,
+    "lon": -38.4777192
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 827499480,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "campo da vila militar",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Salvador",
+    "uf": "BA",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/node/13809333726",
+     "dado": "OpenStreetMap (node/13809333726): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -12.9303766,
+    "lon": -38.5099315
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "node",
+    "id": 13809333726,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo de Futebol",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Salvador",
+    "uf": "BA",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/node/7088651366",
+     "dado": "OpenStreetMap (node/7088651366): nome=\"Campo de Futebol\", sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "baixa",
+   "coordenadas": {
+    "lat": -12.9015276,
+    "lon": -38.3563263
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "node",
+    "id": 7088651366,
+    "sinal_futebol": "nome"
+   }
+  },
+  {
+   "nome": "Campo de futebol do análise",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Salvador",
+    "uf": "BA",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama natural (OSM: surface=grass)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/456697647",
+     "dado": "OpenStreetMap (way/456697647): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -12.9283016,
+    "lon": -38.5096654
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 456697647,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo de Futebol do Campus",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Salvador",
+    "uf": "BA",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama natural (OSM: surface=grass)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/277875944",
+     "dado": "OpenStreetMap (way/277875944): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -12.960772,
+    "lon": -38.4467838
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 277875944,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo de Futebol do Final de linha de Brotas",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Salvador",
+    "uf": "BA",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/102235078",
+     "dado": "OpenStreetMap (way/102235078): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -12.9826004,
+    "lon": -38.4772933
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 102235078,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo de futebol público com aparelho de atividade física.",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Salvador",
+    "uf": "BA",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1164019707",
+     "dado": "OpenStreetMap (way/1164019707): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -12.9009136,
+    "lon": -38.3507417
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1164019707,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo de futebool de Pernambues",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Salvador",
+    "uf": "BA",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/88299683",
+     "dado": "OpenStreetMap (way/88299683): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -12.9695636,
+    "lon": -38.4613539
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 88299683,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo de Mirantes de Periperi",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Salvador",
+    "uf": "BA",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/102436082",
+     "dado": "OpenStreetMap (way/102436082): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -12.8742155,
+    "lon": -38.4667759
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 102436082,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Areal",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Salvador",
+    "uf": "BA",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/609063273",
+     "dado": "OpenStreetMap (way/609063273): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -12.9182763,
+    "lon": -38.4938811
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 609063273,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Bariri",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Salvador",
+    "uf": "BA",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/node/13333860997",
+     "dado": "OpenStreetMap (node/13333860997): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -12.9995704,
+    "lon": -38.4768303
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "node",
+    "id": 13333860997,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Bate Estaca",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Salvador",
+    "uf": "BA",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/556406503",
+     "dado": "OpenStreetMap (way/556406503): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -12.9297876,
+    "lon": -38.4944877
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 556406503,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Lasca",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Salvador",
+    "uf": "BA",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/436807864",
+     "dado": "OpenStreetMap (way/436807864): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -12.9208482,
+    "lon": -38.5010034
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 436807864,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Paraíso",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Salvador",
+    "uf": "BA",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/85080804",
+     "dado": "OpenStreetMap (way/85080804): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -12.9348179,
+    "lon": -38.474843
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 85080804,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Futebol",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Salvador",
+    "uf": "BA",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/633719642",
+     "dado": "OpenStreetMap (way/633719642): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -12.8954977,
+    "lon": -38.3633282
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 633719642,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Poliesportivo do Rio Vermelho",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Salvador",
+    "uf": "BA",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama sintética (OSM: surface=artificial_turf)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/48623160",
+     "dado": "OpenStreetMap (way/48623160): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -13.0112641,
+    "lon": -38.4935545
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 48623160,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Clube Assalba",
+   "endereco": {
+    "rua": "Rua da Ilha",
+    "numero": null,
+    "bairro": "Itapuã",
+    "cidade": "Salvador",
+    "uf": "BA",
+    "cep": "41620-620"
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/787108846",
+     "dado": "OpenStreetMap (way/787108846): sport=soccer;swimming, Rua da Ilha, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -12.9418241,
+    "lon": -38.3676375
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 787108846,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Clube São Paulo - Ministério Público da Bahia",
+   "endereco": {
+    "rua": "Rua Joaquim Ferreira",
+    "numero": null,
+    "bairro": null,
+    "cidade": "Salvador",
+    "uf": "BA",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/604321613",
+     "dado": "OpenStreetMap (way/604321613): sport=soccer;tennis;football, Rua Joaquim Ferreira, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -12.8986468,
+    "lon": -38.3606676
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 604321613,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Costa Verde Tennis Clube",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Salvador",
+    "uf": "BA",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/570007963",
+     "dado": "OpenStreetMap (way/570007963): sport=soccer;tennis;swimming;multi, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -12.9533538,
+    "lon": -38.3860698
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 570007963,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Fazendão",
+   "endereco": {
+    "rua": "Rua Antônio Fernandes",
+    "numero": null,
+    "bairro": "Jardim das Margaridas",
+    "cidade": "Salvador",
+    "uf": "BA",
+    "cep": "41502-590"
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": "https://esporteclubebahia.com.br/",
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/290841450",
+     "dado": "OpenStreetMap (way/290841450): sport=soccer, Rua Antônio Fernandes, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -12.89584,
+    "lon": -38.3536856
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 290841450,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Instituto Dani Alves",
+   "endereco": {
+    "rua": "Rua da Ilha",
+    "numero": null,
+    "bairro": "Itapuã",
+    "cidade": "Salvador",
+    "uf": "BA",
+    "cep": "41620-620"
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1247287313",
+     "dado": "OpenStreetMap (way/1247287313): sport=soccer;multi, Rua da Ilha, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -12.9432368,
+    "lon": -38.368087
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1247287313,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "LBV",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Salvador",
+    "uf": "BA",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/813977760",
+     "dado": "OpenStreetMap (way/813977760): sport=futsal, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -12.9193497,
+    "lon": -38.5003219
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 813977760,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Mota Academia de Futebol",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Salvador",
+    "uf": "BA",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/node/7088651362",
+     "dado": "OpenStreetMap (node/7088651362): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -12.904113,
+    "lon": -38.3538171
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "node",
+    "id": 7088651362,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Salvador",
+    "uf": "BA",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/437322215",
+     "dado": "OpenStreetMap (way/437322215): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -12.9799564,
+    "lon": -38.4445271
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 437322215,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra - Golzinho",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Salvador",
+    "uf": "BA",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/437322216",
+     "dado": "OpenStreetMap (way/437322216): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -12.9802112,
+    "lon": -38.4444078
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 437322216,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra de esportes",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Salvador",
+    "uf": "BA",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama natural (OSM: surface=grass)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/938445654",
+     "dado": "OpenStreetMap (way/938445654): sport=soccer;volleyball, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -12.9396239,
+    "lon": -38.4475957
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 938445654,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra de futebol",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Salvador",
+    "uf": "BA",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/845826952",
+     "dado": "OpenStreetMap (way/845826952): nome=\"Quadra de futebol\", sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "baixa",
+   "coordenadas": {
+    "lat": -12.9726595,
+    "lon": -38.4436446
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 845826952,
+    "sinal_futebol": "nome"
+   }
+  },
+  {
+   "nome": "Quadra Poliesportiva do IFBA",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Salvador",
+    "uf": "BA",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/607153610",
+     "dado": "OpenStreetMap (way/607153610): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -12.9612906,
+    "lon": -38.4999113
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 607153610,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "quadras de voley e futvoley",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Salvador",
+    "uf": "BA",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1243380243",
+     "dado": "OpenStreetMap (way/1243380243): nome=\"quadras de voley e futvoley\", sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "baixa",
+   "coordenadas": {
+    "lat": -12.9104363,
+    "lon": -38.4972819
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1243380243,
+    "sinal_futebol": "nome"
+   }
+  },
+  {
+   "nome": "Qudra Poliesportiva Mirantes de Periperi",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Salvador",
+    "uf": "BA",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "concreto (OSM: surface=concrete)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1124685819",
+     "dado": "OpenStreetMap (way/1124685819): sport=futsal;soccer;basketball;volleyball, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -12.8719938,
+    "lon": -38.4660691
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1124685819,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Tok de Bola",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Salvador",
+    "uf": "BA",
+    "cep": null
+   },
+   "telefone": "+55 71 3371-5179",
+   "whatsapp": null,
+   "site": "http://tokdebolasalvador.com.br",
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/469138904",
+     "dado": "OpenStreetMap (way/469138904): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -12.9745983,
+    "lon": -38.4321997
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 469138904,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Torebão",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Salvador",
+    "uf": "BA",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/436807863",
+     "dado": "OpenStreetMap (way/436807863): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -12.9291684,
+    "lon": -38.5131249
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 436807863,
+    "sinal_futebol": "sport"
+   }
+  }
+ ]
+}
