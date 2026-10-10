@@ -325,7 +325,10 @@ describe('UserManagementScreen', () => {
         'Contato e atividade', 'Última atualização', 'Último login', 'Onboarding comercial',
         'Salvar conta comercial', 'Alterar role em lote', 'Confirmar alteração de role',
       ];
-      const found = forbidden.filter((text) => new RegExp(`(>|["'\`]|^\s+)${text}(<|["'\`]|\s*$)`, 'm').test(source));
+      const sourceLines = source.split('\n').map((line) => line.trim());
+      const found = forbidden.filter((text) => sourceLines.some((line) => (
+        line === text || line.includes(`>${text}<`) || line.includes(`'${text}'`) || line.includes(`"${text}"`)
+      )));
       expect(found).toEqual([]);
     });
   });
