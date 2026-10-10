@@ -2,6 +2,14 @@
   "observacao": "Manifesto das cidades pesquisadas por OSM/Overpass para os datasets de venues. Cada cidade gera um arquivo venues-<slug>.json em scripts/data/osm-candidates/ (CANDIDATOS: não são importados; servem para cruzar coordenadas/fontes com a pesquisa web nos datasets curados). 'rodada' segue o epic #4186 (R3 = RMC, R4-R8 = novas praças).",
   "cidades": [
     {
+      "nome": "Teresina",
+      "uf": "PI",
+      "rodada": 10,
+      "slug": "teresina",
+      "epic_issue": 4186,
+      "observacao": "coletor de cidades novas (Execução 17)"
+    },
+    {
       "nome": "São José dos Pinhais",
       "uf": "PR",
       "rodada": 3,
