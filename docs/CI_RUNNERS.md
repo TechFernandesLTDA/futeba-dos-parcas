@@ -152,3 +152,11 @@ Os jobs que sobem emuladores Firebase (Web E2E, Functions Integration, Test Harn
 ## Runners do E2E Gate (futeba-poller)
 
 O job `E2E Gate` só faz polling por até 45 min. Ele roda em `vars.RUNNER_LABELS_POLLER = ["futeba-poller"]`, nos runners leves `tf-wsl-gate` e `tf-wsl-gate-2` (serviços systemd em /opt/ar-tf-wsl-gate*, sem labels padrão). Assim o pool geral (`futeba-general`) fica livre para Android, Web e Lighthouse.
+
+## Memória e Gradle nos runners WSL (09/10/2026)
+
+- `.wslconfig` do host: `memory=8GB`, `processors=8`, `swap=8GB`, `autoMemoryReclaim=dropCache` (devolve o cache ao Windows). Com 12 GB a VM tomava a RAM do PC e, com 3 builds Gradle de 6 GB em paralelo, caía inteira.
+- `tf-wsl-4` está desligado: com 8 GB cabem 2 jobs Gradle + emuladores + gates.
+- Cada runner tem o próprio `GRADLE_USER_HOME` (`/home/ghrunner/.gradle-tf-wsl-N`, definido em `/opt/ar-tf-wsl-N/.env`). O post-step do `setup-gradle` para todos os daemons do user home, e com um home compartilhado derrubava builds de outros runners ("Gradle build daemon has been stopped: stop command received").
+- `gradle.properties` de cada user home (tem precedência sobre o do projeto): `org.gradle.jvmargs=-Xmx3g`, `kotlin.compiler.execution.strategy=in-process`, `org.gradle.workers.max=2`, `org.gradle.daemon=false`. Com o daemon Kotlin separado em 1 GB, o `compileReleaseKotlin` estourava com GC overhead.
+- Validação: `deploy-production` com `dry_run=true` no Linux (run 38010351597): AAB assinado em 7m50s; o PC ficou com no mínimo 8,4 GB livres.
