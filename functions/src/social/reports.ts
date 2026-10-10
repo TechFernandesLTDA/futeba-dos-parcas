@@ -25,6 +25,8 @@ interface SubmitContentReportRequest {
 interface NormalizedReportTarget {
   targetPath: string;
   firestorePath: string;
+  /** Quando definido, o doc alvo precisa ter game_id igual a este valor. */
+  requiredGameId?: string;
   fields: Record<string, string>;
 }
 
@@ -134,21 +136,26 @@ function buildReportTarget(
     };
   }
 
-  const collectionByType: Record<Exclude<
-    ReportTargetType,
-    "group_wall_post"
-  >, string> = {
+  // Fotos e videos de jogo vivem em colecoes top-level (game_photos/game_videos,
+  // com campo game_id), nao em subcolecoes de games/{gameId}. Chat e comentarios
+  // continuam como subcolecoes do jogo. Issue #4332.
+  const topLevelCollectionByType: Partial<Record<ReportTargetType, string>> = {
+    game_photo: "game_photos",
+    game_video: "game_videos",
+  };
+  const topLevel = topLevelCollectionByType[request.targetType];
+  const subcollectionByType: Partial<Record<ReportTargetType, string>> = {
     game_chat_message: "chat",
     game_comment: "comments",
-    game_photo: "photos",
-    game_video: "videos",
   };
-  const collection = collectionByType[request.targetType];
-  const targetPath =
-    `games/${request.gameId}/${collection}/${request.targetId}`;
+  const targetPath = topLevel ?
+    `${topLevel}/${request.targetId}` :
+    `games/${request.gameId}/${subcollectionByType[request.targetType]}/` +
+      `${request.targetId}`;
   return {
     targetPath,
     firestorePath: targetPath,
+    requiredGameId: topLevel ? request.gameId : undefined,
     fields: {
       game_id: request.gameId ?? "",
       target_id: request.targetId ?? "",
@@ -188,6 +195,11 @@ export const submitContentReport = onCall(
     const target = buildReportTarget(payload);
     const targetSnap = await db().doc(target.firestorePath).get();
     if (!targetSnap.exists) {
+      throw new HttpsError("not-found", "Conteúdo não encontrado.");
+    }
+    // Midia vive fora de games/{id}: impede vincular a denuncia a outro jogo.
+    if (target.requiredGameId &&
+      targetSnap.data()?.game_id !== target.requiredGameId) {
       throw new HttpsError("not-found", "Conteúdo não encontrado.");
     }
 
