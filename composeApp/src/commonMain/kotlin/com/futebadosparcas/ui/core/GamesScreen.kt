@@ -1,5 +1,6 @@
 package com.futebadosparcas.ui.core
 
+import com.futebadosparcas.compose.di.koinViewModelOrNull
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -60,7 +61,7 @@ import org.koin.compose.viewmodel.koinViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GamesScreen(
-    viewModel: GamesViewModel? = runCatching { koinViewModel<GamesViewModel>() }.getOrNull(),
+    viewModel: GamesViewModel? = koinViewModelOrNull<GamesViewModel>(),
     onGameClick: (String) -> Unit = {},
     onCreateGameClick: () -> Unit = {}
 ) {
