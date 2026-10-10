@@ -12,6 +12,11 @@ const WORKFLOW_FILE = 'web-e2e-ci.yml';
 const DEFAULT_TIMEOUT_MS = 45 * 60 * 1000;
 const DEFAULT_POLL_MS = 30 * 1000;
 const NO_RUN_GRACE_MS = 5 * 60 * 1000;
+// Erros transitórios do gh/rede (#4340): não derrubam o gate; são tentados de novo
+// dentro do deadline. Só desistimos após uma sequência longa de falhas seguidas.
+const DISPATCH_ATTEMPTS = 4;
+const DISPATCH_RETRY_MS = 15 * 1000;
+const MAX_CONSECUTIVE_POLL_ERRORS = 20;
 
 const EXIT = Object.freeze({
   PASS: 0,
@@ -70,6 +75,19 @@ function evaluateRun(run, expectSha) {
   };
 }
 
+function errMessage(err) {
+  return String((err && err.stderr && String(err.stderr).trim()) || (err && err.message) || err).split('\n')[0];
+}
+
+async function cancelQuietly(cancelRun, run) {
+  if (!cancelRun || !run || run.id == null) return;
+  try {
+    await cancelRun(run);
+  } catch (err) {
+    console.error(`e2e-gate: falha ao cancelar run ${run.id}: ${errMessage(err)}`);
+  }
+}
+
 /**
  * Orquestra dispatch + espera. Dependências injetadas para teste:
  *  - dispatch({ ref }) -> Promise<void>
@@ -92,15 +110,48 @@ async function runGate({
   timeoutMs = DEFAULT_TIMEOUT_MS,
   pollMs = DEFAULT_POLL_MS,
   noRunGraceMs = NO_RUN_GRACE_MS,
+  dispatchAttempts = DISPATCH_ATTEMPTS,
+  dispatchRetryMs = DISPATCH_RETRY_MS,
+  maxConsecutivePollErrors = MAX_CONSECUTIVE_POLL_ERRORS,
 }) {
   if (!ref) throw new TypeError('runGate: ref obrigatório');
   const since = now();
-  await dispatch({ ref });
+  for (let attempt = 1; ; attempt += 1) {
+    try {
+      await dispatch({ ref });
+      break;
+    } catch (err) {
+      if (attempt >= dispatchAttempts) throw err;
+      console.error(`e2e-gate: dispatch falhou (tentativa ${attempt}/${dispatchAttempts}): ${errMessage(err)}`);
+      await sleep(dispatchRetryMs * attempt);
+    }
+  }
 
   const deadline = since + timeoutMs;
   let lastRun = null;
+  let pollErrors = 0;
   for (;;) {
-    const run = await findRun({ ref, since });
+    let run = null;
+    let pollFailed = false;
+    try {
+      run = await findRun({ ref, since });
+      pollErrors = 0;
+    } catch (err) {
+      // Falha transitória de rede/API no polling: trata como "pending" e tenta de novo.
+      pollFailed = true;
+      pollErrors += 1;
+      console.error(`e2e-gate: falha transitória no polling (${pollErrors}/${maxConsecutivePollErrors}): ${errMessage(err)}`);
+      if (pollErrors >= maxConsecutivePollErrors) {
+        await cancelQuietly(cancelRun, lastRun);
+        return {
+          verdict: 'infra_blocked',
+          exitCode: EXIT.INFRA_BLOCKED,
+          reason: `API do GitHub inacessível: ${pollErrors} falhas seguidas no polling (${errMessage(err)})`,
+          run_id: lastRun ? lastRun.id ?? null : null,
+          html_url: lastRun ? lastRun.html_url ?? null : null,
+        };
+      }
+    }
     if (run) {
       lastRun = run;
       if (onRun) onRun(run);
@@ -108,7 +159,7 @@ async function runGate({
       if (ev.verdict !== 'pending') {
         return { ...ev, run_id: run.id ?? null, html_url: run.html_url ?? null };
       }
-    } else if (now() - since >= noRunGraceMs) {
+    } else if (!pollFailed && now() - since >= noRunGraceMs) {
       return {
         verdict: 'infra_blocked',
         exitCode: EXIT.INFRA_BLOCKED,
@@ -118,13 +169,7 @@ async function runGate({
       };
     }
     if (now() >= deadline) {
-      if (cancelRun && lastRun && lastRun.id != null) {
-        try {
-          await cancelRun(lastRun);
-        } catch (err) {
-          console.error(`e2e-gate: falha ao cancelar run ${lastRun.id}: ${err && err.message}`);
-        }
-      }
+      await cancelQuietly(cancelRun, lastRun);
       return {
         verdict: 'timeout',
         exitCode: EXIT.TIMEOUT,
