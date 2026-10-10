@@ -10,7 +10,7 @@
     "regra": "apenas dados públicos verificáveis; campos sem fonte = null; todo item tem >=1 fonte com URL; entra no app como DRAFT/não verificado"
   },
   "cobertura": {
-    "Natal": 3
+    "Natal": 2
   },
   "venues": [
     {
@@ -84,56 +84,16 @@
         {
           "url": "https://www.locaisdobrasil.com.br/encontre/quadra-de-esportes/natal-rn/arena-gol-projeto2toke-escolinha-de-futebol/64662fb90c7502265dcd379a",
           "dado": "ficha no diretório Locais do Brasil: endereço, telefone (84) 98731-0194 e descrição do próprio estabelecimento com texto explícito 'Locacao de campo society'"
+        },
+        {
+          "url": "https://www.locaisdobrasil.com.br/encontre/quadra-de-esportes/natal-rn/society-arena-gol-planalto/6286ccdd911b8129b7e801da",
+          "dado": "segunda ficha do mesmo estabelecimento no diretório Locais do Brasil ('SOCIETY ARENA GOL PLANALTO'): mesmo número (13), mesmo CEP 59073-070 e mesma rua (Rua Eng. João Hélio Alves Rocha = Travessa Eng. João Hélio); traz outro telefone, (84) 98890-5772, e horário 24h, não usados por divergirem da ficha principal. Consolidado na revisão do PR #4353 para não duplicar o venue."
         }
       ],
       "confidence": "média",
       "coordenadas": null,
       "rodada_dados": "R9",
       "finalidade": "comercial_aluguel",
-      "origem": "web"
-    },
-    {
-      "nome": "SOCIETY ARENA GOL PLANALTO",
-      "endereco": {
-        "rua": "Rua Engenheiro João Hélio Alves Rocha",
-        "numero": "13",
-        "bairro": "Planalto",
-        "cidade": "Natal",
-        "uf": "RN",
-        "cep": "59073-070"
-      },
-      "telefone": "(84) 98890-5772",
-      "whatsapp": null,
-      "site": null,
-      "instagram": null,
-      "preco_hora": null,
-      "qtd_quadras": null,
-      "detalhe_quadras": null,
-      "tipo_piso": null,
-      "horarios": {
-        "segunda": "00:00-23:59",
-        "terca": "00:00-23:59",
-        "quarta": "00:00-23:59",
-        "quinta": "00:00-23:59",
-        "sexta": "00:00-23:59",
-        "sabado": "00:00-23:59",
-        "domingo": "00:00-23:59",
-        "observacao": "diretório: aberto 24 horas"
-      },
-      "nota_media": null,
-      "contagem_avaliacoes": null,
-      "comentarios": [],
-      "fotos": [],
-      "fontes": [
-        {
-          "url": "https://www.locaisdobrasil.com.br/encontre/quadra-de-esportes/natal-rn/society-arena-gol-planalto/6286ccdd911b8129b7e801da",
-          "dado": "ficha no diretório Locais do Brasil: endereço, CEP 59073-070, telefone (84) 98890-5772, horário 24h, categoria quadra de esportes"
-        }
-      ],
-      "confidence": "baixa",
-      "coordenadas": null,
-      "rodada_dados": "R9",
-      "finalidade": "comercial_indicado",
       "origem": "web"
     }
   ]
