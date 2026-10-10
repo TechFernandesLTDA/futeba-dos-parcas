@@ -13,6 +13,7 @@ Datasets curados para o importador `import-venues-dataset.ts`. Tudo entra no app
 | `venues-florianopolis.json` | R7 (#4195), revisada em 08/10 | Florianópolis (fichas do Maps + site oficial) | 4 |
 | `venues-joinville.json` | R8 (#4195) | Joinville | 13 |
 | `venues-enriquecimento-r9.json` | R9 (#4195) | enriquecimento não destrutivo (`modo: enriquecimento`, `location_id` exato) de venues já importados | 33 |
+| `venues-goiania.json` | R9 (coletor de cidades novas, #4186) | Goiânia | 5 |
 | `venues-rio-de-janeiro.json` | R9 (coletor de cidades novas, #4186) | Rio de Janeiro (capital) | 4 |
 | `venues-recife.json` | R9 (coletor de cidades novas, #4186, execução 8) | Recife | 5 |
 
