@@ -41,8 +41,22 @@ paths = [
   '''shared/src/commonMain/kotlin/com/futebadosparcas/platform/storage/SecureStorage\.kt$''',
 ]
 
-# OAuth client do gcloud/Firebase CLI (publicado pelo Google no próprio SDK).
+# Histórico do vazamento do client_secret OAuth (issue #4343): o literal já foi
+# removido do código; estes dois commits o contêm e só serão limpos se o dono
+# reescrever o histórico. A allowlist por COMMIT (não por caminho) garante que
+# qualquer nova ocorrência no mesmo arquivo seja detectada. A rotação do segredo
+# no Google Cloud Console é o que de fato invalida o vazamento.
 [[allowlists]]
-description = "OAuth client público do gcloud CLI (ADC refresh token)"
-targetRules = ["generic-api-key"]
-paths = ['''scripts/data/import-venues-dataset\.ts$''']
+description = "Commits históricos com client_secret OAuth (issue #4343, a rotacionar)"
+commits = [
+  "7b77b4e37d4f5fbe5f45382bafbafdcd10de7bc8",
+  "171781ea8cc12fa43ca1742cd1be025ddd5b523c",
+]
+
+# Regra extra: client_secret literal em código/JSON (as regras padrão só pegaram
+# isso via generic-api-key, e uma allowlist por caminho chegou a escondê-lo).
+[[rules]]
+id = "oauth-client-secret-literal"
+description = "client_secret OAuth escrito literalmente"
+regex = '''(?i)client_?secret["']?\s*[:=]\s*["'][A-Za-z0-9_\-]{16,}["']'''
+tags = ["oauth", "secret"]
