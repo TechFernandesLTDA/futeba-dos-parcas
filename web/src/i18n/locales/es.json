@@ -180,7 +180,213 @@
     "user": "Usuario"
   },
   "admin": {
-    "noUserRegisteredDesc": "Aún no hay usuarios en el sistema."
+    "noUserRegisteredDesc": "Aún no hay usuarios en el sistema.",
+    "userManagement": {
+      "noName": "Sin nombre",
+      "dateNotInformed": "No informada",
+      "errors": {
+        "loadUsers": "Error al cargar usuarios.",
+        "updateRole": "Error al actualizar el rol",
+        "bulkFailed": "{{count}} fallo(s) en la actualización.",
+        "invalidValue": "Introduce un valor válido para {{field}}.",
+        "dueDayRange": "El día de vencimiento debe estar entre 1 y 31.",
+        "dateOrder": "La fecha de inicio debe ser anterior al fin del contrato.",
+        "saveAccount": "No se pudo guardar la cuenta comercial.",
+        "checklistRequired": "Revisa toda la lista de verificación antes de aprobar.",
+        "reasonRequired": "Indica el motivo de la decisión.",
+        "reviewOnboarding": "No se pudo revisar el onboarding."
+      },
+      "success": {
+        "roleUpdated": "Rol de {{name}} actualizado a {{role}}.",
+        "bulkUpdated": "{{count}} usuario(s) actualizado(s).",
+        "accountUpdated": "Cuenta comercial actualizada."
+      },
+      "scope": {
+        "owner": "Cobro por dueño",
+        "fieldCount": "Cobro por campo",
+        "manual": "Cobro manual",
+        "venue": "Cobro por cancha"
+      },
+      "accountStatus": {
+        "trial": "Prueba",
+        "active": "Al día",
+        "overdue": "Atrasada",
+        "suspended": "Suspendida",
+        "cancelled": "Cancelada",
+        "none": "Sin cuenta"
+      },
+      "fields": {
+        "baseValue": "valor base",
+        "perVenue": "valor por cancha",
+        "perActiveField": "valor por campo activo",
+        "finalMonthly": "mensualidad final"
+      },
+      "actions": {
+        "changeSelected": "Cambiar ({{count}})"
+      },
+      "filters": {
+        "roleLabel": "Rol",
+        "allRoles": "Todos los roles",
+        "commercialLabel": "Comercial",
+        "all": "Todos",
+        "fieldOwners": "Dueños de cancha",
+        "withVenues": "Con canchas",
+        "withPublished": "Con una publicada",
+        "withPending": "Con pendientes",
+        "incomplete": "Registro incompleto"
+      },
+      "selectedFilters": "filtros seleccionados",
+      "summary": {
+        "shownOne": "{{shown}} de {{total}} usuario mostrado",
+        "shownOther": "{{shown}} de {{total}} usuarios mostrados",
+        "serverSearch": " · búsqueda en el servidor en {{users}} y {{venues}}",
+        "usersOne": "{{count}} usuario",
+        "usersOther": "{{count}} usuarios",
+        "venuesOne": "{{count}} cancha",
+        "venuesOther": "{{count}} canchas",
+        "scanLimit": " · límite de escaneo alcanzado",
+        "moreAvailable": " · hay más disponibles"
+      },
+      "table": {
+        "name": "Nombre",
+        "email": "Correo electrónico",
+        "status": "Estado",
+        "createdAt": "Creado el"
+      },
+      "badges": {
+        "you": "Tú",
+        "active": "Activo",
+        "qaTest": "QA/prueba",
+        "incompleteRegistration": "registro incompleto",
+        "realValidated": "Real validado",
+        "venuesInReview": "{{count}} en revisión",
+        "venuesOverdue": "{{count}} con pendientes",
+        "venuesIncomplete": "{{count}} incompleta(s)"
+      },
+      "fallback": {
+        "emailNotRegistered": "Correo no registrado",
+        "phoneNotRegistered": "Teléfono no registrado",
+        "notRegistered": "No registrado",
+        "emailNotInformedLower": "correo no informado",
+        "phoneNotInformedLower": "teléfono no informado",
+        "emailNotInformed": "Correo no informado",
+        "cityNotInformed": "Ciudad no informada"
+      },
+      "gamesOne": "{{count}} partido",
+      "gamesOther": "{{count}} partidos",
+      "sheet": {
+        "title": "Ficha comercial del usuario",
+        "contactActivity": "Contacto y actividad",
+        "phone": "Teléfono",
+        "lastUpdate": "Última actualización",
+        "lastLogin": "Último inicio de sesión",
+        "onboarding": "Onboarding comercial",
+        "noRequest": "Sin solicitud",
+        "responsible": "Responsable: {{name}} · {{email}} · {{phone}}",
+        "business": "Empresa/cancha: {{name}}",
+        "previousReason": "Motivo anterior: {{reason}}",
+        "approveHint": "Para aprobar, confirma que contacto, canchas, términos y cobro fueron revisados.",
+        "contactReviewed": "Contacto revisado",
+        "venuesReviewed": "Canchas revisadas",
+        "termsReviewed": "Términos revisados",
+        "billingReviewed": "Cobro revisado",
+        "reviewReason": "Motivo/observación de la revisión",
+        "approve": "Aprobar y promover",
+        "reject": "Rechazar",
+        "suspend": "Suspender",
+        "noRequestYet": "Este usuario aún no abrió una solicitud comercial en la app."
+      },
+      "account": {
+        "title": "Cuenta comercial",
+        "edit": "Editar cuenta",
+        "create": "Crear cuenta",
+        "computedFee": "Mensualidad calculada",
+        "legacy": "Heredado por cancha: {{amount}}",
+        "scopeDue": "Alcance y vencimiento",
+        "dayN": "día {{day}}",
+        "venuesFields": "{{venues}} cancha(s) · {{fields}} campo(s) activo(s)",
+        "billingContact": "Contacto financiero",
+        "statusSummary": "Cuenta {{status}} con {{count}} cancha(s) publicada(s) vinculada(s).",
+        "noAggregated": "Este usuario aún no tiene una cuenta comercial agregada en `venue_accounts`. Las canchas siguen en el modelo heredado por cancha hasta la migración."
+      },
+      "summaryCards": {
+        "monthlyRevenue": "Ingreso mensual",
+        "activeSubscriptions": "{{count}} suscripción(es) activa(s)",
+        "venues": "Canchas",
+        "venuesDetail": "{{published}} publicadas · {{pending}} en revisión",
+        "risks": "Riesgos",
+        "risksDetail": "{{overdue}} pendientes · {{incomplete}} incompletas"
+      },
+      "venuesList": {
+        "title": "Canchas vinculadas y acciones comerciales",
+        "view": "Ver",
+        "incompleteAddress": "Dirección comercial incompleta",
+        "dueDay": "vence el día {{day}}",
+        "feeNotDefined": "Mensualidad no definida",
+        "none": "Este usuario aún no tiene canchas vinculadas. Promover a Field Owner solo prepara el acceso comercial."
+      },
+      "roleDialog": {
+        "auditNote": "Los cambios de rol usan la operación auditada de permisos. Degradar a un dueño de cancha con registros vinculados exige confirmación reforzada."
+      },
+      "confirm": {
+        "title": "Confirmar cambio de rol",
+        "selfDemotion": "Estás a punto de quitar tu propio acceso de administrador. Se necesita otro admin para revertirlo.",
+        "adminPromotion": "Los admins tienen acceso total al sistema. Confirma solo si este usuario debe administrar la plataforma.",
+        "ownerDemotion": "Este dueño tiene {{total}} cancha(s) vinculada(s), {{published}} publicada(s) y {{amount}} de mensualidad agregada. Degradar a Player no transfiere ni suspende las canchas automáticamente.",
+        "changeRoleQuestion": "¿Cambiar el rol de <strong>{{name}}</strong> de <strong>{{from}}</strong> a <strong>{{to}}</strong>?",
+        "typeToConfirm": "Escribe ALTERAR para confirmar",
+        "reloginNote": "El usuario deberá iniciar sesión de nuevo tras el cambio."
+      },
+      "accountDialog": {
+        "title": "Cuenta comercial agregada",
+        "intro": "Configura la mensualidad del dueño de cancha como contrato único. Los cambios usan una callable auditada y generan un evento comercial.",
+        "statusActive": "Activa",
+        "billingModel": "Modelo de cobro",
+        "billingModelHelp": "Define cómo se calculará la mensualidad total.",
+        "modelOwner": "Valor único por dueño",
+        "modelVenue": "Valor por cancha",
+        "modelField": "Valor por campo activo",
+        "modelManual": "Valor manual cerrado",
+        "basePlan": "Plan base",
+        "noPlan": "Sin plan definido",
+        "planName": "Nombre comercial del plan",
+        "planNameHelp": "Ej.: Fundador 2026, Socio Premium, Personalizado.",
+        "cycle": "Ciclo",
+        "noCycle": "Sin ciclo definido",
+        "cycleMonthly": "Mensual",
+        "cycleQuarterly": "Trimestral",
+        "cycleSemiannual": "Semestral",
+        "cycleAnnual": "Anual",
+        "cycleCustom": "Personalizado",
+        "dueDay": "Día de vencimiento",
+        "dueDayHelp": "Usa de 1 a 31. Puede quedar vacío durante el onboarding.",
+        "baseFee": "Valor base del plan (R$)",
+        "baseFeeHelp": "Precio completo antes de acuerdos.",
+        "manualFee": "Mensualidad final manual (R$)",
+        "manualFeeHelp": "Usado en cobro por dueño o anulación manual.",
+        "venueFee": "Valor por cancha (R$)",
+        "venueFeeHelp": "Usado cuando el modelo es por cancha.",
+        "fieldFee": "Valor por campo activo (R$)",
+        "fieldFeeHelp": "Usado cuando el modelo es por campo activo.",
+        "billingStart": "Inicio del cobro",
+        "contractEnd": "Fin/renovación del contrato",
+        "billingEmail": "Correo financiero",
+        "billingPhone": "Teléfono financiero",
+        "document": "Documento comercial",
+        "linkedVenues": "Canchas vinculadas a la cuenta",
+        "fieldCount": "{{count}} campo(s)",
+        "noVenuesToLink": "Este usuario aún no tiene canchas para vincular.",
+        "publicNote": "Observación visible/contractual",
+        "internalNotes": "Notas internas",
+        "save": "Guardar cuenta comercial"
+      },
+      "bulk": {
+        "title": "Cambiar rol en lote",
+        "prompt": "Cambiar el rol de {{count}} usuario(s) seleccionado(s) a:",
+        "note": "Los usuarios modificados deberán iniciar sesión de nuevo. Tu propio usuario se ignora en cambios en lote.",
+        "ownerRisk": "{{count}} dueño(s) seleccionado(s) tienen canchas vinculadas. La degradación en lote a Player está bloqueada; haz el cambio individual desde la ficha comercial para revisar el impacto."
+      }
+    }
   },
   "alt": {
     "logo": "Futeba dos Parças",

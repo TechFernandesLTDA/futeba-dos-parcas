@@ -180,7 +180,213 @@
     "user": "Usuário"
   },
   "admin": {
-    "noUserRegisteredDesc": "Ainda não há usuários no sistema."
+    "noUserRegisteredDesc": "Ainda não há usuários no sistema.",
+    "userManagement": {
+      "noName": "Sem nome",
+      "dateNotInformed": "Não informada",
+      "errors": {
+        "loadUsers": "Erro ao carregar usuários.",
+        "updateRole": "Erro ao atualizar role",
+        "bulkFailed": "{{count}} falha(s) na atualização.",
+        "invalidValue": "Informe um valor válido para {{field}}.",
+        "dueDayRange": "Dia de vencimento deve ficar entre 1 e 31.",
+        "dateOrder": "A data de início deve ser anterior ao fim do contrato.",
+        "saveAccount": "Não foi possível salvar a conta comercial.",
+        "checklistRequired": "Revise todo o checklist antes de aprovar.",
+        "reasonRequired": "Informe o motivo da decisão.",
+        "reviewOnboarding": "Não foi possível revisar o onboarding."
+      },
+      "success": {
+        "roleUpdated": "Role de {{name}} atualizado para {{role}}.",
+        "bulkUpdated": "{{count}} usuário(s) atualizado(s).",
+        "accountUpdated": "Conta comercial atualizada."
+      },
+      "scope": {
+        "owner": "Cobrança por dono",
+        "fieldCount": "Cobrança por campo",
+        "manual": "Cobrança manual",
+        "venue": "Cobrança por quadra"
+      },
+      "accountStatus": {
+        "trial": "Teste",
+        "active": "Em dia",
+        "overdue": "Em atraso",
+        "suspended": "Suspensa",
+        "cancelled": "Cancelada",
+        "none": "Sem conta"
+      },
+      "fields": {
+        "baseValue": "valor base",
+        "perVenue": "valor por quadra",
+        "perActiveField": "valor por campo ativo",
+        "finalMonthly": "mensalidade final"
+      },
+      "actions": {
+        "changeSelected": "Alterar ({{count}})"
+      },
+      "filters": {
+        "roleLabel": "Role",
+        "allRoles": "Todos os roles",
+        "commercialLabel": "Comercial",
+        "all": "Todos",
+        "fieldOwners": "Donos de quadra",
+        "withVenues": "Com quadras",
+        "withPublished": "Com publicada",
+        "withPending": "Com pendência",
+        "incomplete": "Cadastro incompleto"
+      },
+      "selectedFilters": "filtros selecionados",
+      "summary": {
+        "shownOne": "{{shown}} de {{total}} usuário exibido",
+        "shownOther": "{{shown}} de {{total}} usuários exibidos",
+        "serverSearch": " · busca server-side em {{users}} e {{venues}}",
+        "usersOne": "{{count}} usuário",
+        "usersOther": "{{count}} usuários",
+        "venuesOne": "{{count}} quadra",
+        "venuesOther": "{{count}} quadras",
+        "scanLimit": " · limite de varredura atingido",
+        "moreAvailable": " · mais disponíveis"
+      },
+      "table": {
+        "name": "Nome",
+        "email": "Email",
+        "status": "Status",
+        "createdAt": "Criado em"
+      },
+      "badges": {
+        "you": "Você",
+        "active": "Ativo",
+        "qaTest": "QA/teste",
+        "incompleteRegistration": "cadastro incompleto",
+        "realValidated": "Real validado",
+        "venuesInReview": "{{count}} em revisão",
+        "venuesOverdue": "{{count}} com pendência",
+        "venuesIncomplete": "{{count}} incompleta(s)"
+      },
+      "fallback": {
+        "emailNotRegistered": "Email não cadastrado",
+        "phoneNotRegistered": "Telefone não cadastrado",
+        "notRegistered": "Não cadastrado",
+        "emailNotInformedLower": "email não informado",
+        "phoneNotInformedLower": "telefone não informado",
+        "emailNotInformed": "Email não informado",
+        "cityNotInformed": "Cidade não informada"
+      },
+      "gamesOne": "{{count}} jogo",
+      "gamesOther": "{{count}} jogos",
+      "sheet": {
+        "title": "Ficha comercial do usuário",
+        "contactActivity": "Contato e atividade",
+        "phone": "Telefone",
+        "lastUpdate": "Última atualização",
+        "lastLogin": "Último login",
+        "onboarding": "Onboarding comercial",
+        "noRequest": "Sem solicitação",
+        "responsible": "Responsável: {{name}} · {{email}} · {{phone}}",
+        "business": "Empresa/quadra: {{name}}",
+        "previousReason": "Motivo anterior: {{reason}}",
+        "approveHint": "Para aprovar, confirme que contato, quadras, termos e cobrança foram revisados.",
+        "contactReviewed": "Contato revisado",
+        "venuesReviewed": "Quadras revisadas",
+        "termsReviewed": "Termos revisados",
+        "billingReviewed": "Cobrança revisada",
+        "reviewReason": "Motivo/observação da revisão",
+        "approve": "Aprovar e promover",
+        "reject": "Rejeitar",
+        "suspend": "Suspender",
+        "noRequestYet": "Este usuário ainda não abriu solicitação comercial pelo app."
+      },
+      "account": {
+        "title": "Conta comercial",
+        "edit": "Editar conta",
+        "create": "Criar conta",
+        "computedFee": "Mensalidade calculada",
+        "legacy": "Legado por quadra: {{amount}}",
+        "scopeDue": "Escopo e vencimento",
+        "dayN": "dia {{day}}",
+        "venuesFields": "{{venues}} quadra(s) · {{fields}} campo(s) ativo(s)",
+        "billingContact": "Contato financeiro",
+        "statusSummary": "Conta {{status}} com {{count}} quadra(s) publicada(s) vinculada(s).",
+        "noAggregated": "Este usuário ainda não tem uma conta comercial agregada em `venue_accounts`. As quadras seguem no modelo legado por quadra até a migração."
+      },
+      "summaryCards": {
+        "monthlyRevenue": "Receita mensal",
+        "activeSubscriptions": "{{count}} assinatura(s) ativa(s)",
+        "venues": "Quadras",
+        "venuesDetail": "{{published}} publicadas · {{pending}} em revisão",
+        "risks": "Riscos",
+        "risksDetail": "{{overdue}} pendências · {{incomplete}} incompletas"
+      },
+      "venuesList": {
+        "title": "Quadras vinculadas e ações comerciais",
+        "view": "Ver",
+        "incompleteAddress": "Endereço comercial incompleto",
+        "dueDay": "vence dia {{day}}",
+        "feeNotDefined": "Mensalidade não definida",
+        "none": "Este usuário ainda não tem quadras vinculadas. Promover para Field Owner apenas prepara o acesso comercial."
+      },
+      "roleDialog": {
+        "auditNote": "Alterações de role usam a operação auditada de permissões. Rebaixar dono de quadra com cadastros vinculados exige confirmação reforçada."
+      },
+      "confirm": {
+        "title": "Confirmar alteração de role",
+        "selfDemotion": "Você está prestes a remover seu próprio acesso de administrador. Esta ação requer outro admin para reverter.",
+        "adminPromotion": "Admins têm acesso total ao sistema. Confirme apenas se este usuário deve administrar a plataforma.",
+        "ownerDemotion": "Este dono possui {{total}} quadra(s) vinculada(s), {{published}} publicada(s) e {{amount}} de mensalidade agregada. Rebaixar para Player não transfere nem suspende as quadras automaticamente.",
+        "changeRoleQuestion": "Alterar role de <strong>{{name}}</strong> de <strong>{{from}}</strong> para <strong>{{to}}</strong>?",
+        "typeToConfirm": "Digite ALTERAR para confirmar",
+        "reloginNote": "O usuário precisará fazer login novamente após a alteração."
+      },
+      "accountDialog": {
+        "title": "Conta comercial agregada",
+        "intro": "Configure a mensalidade do dono de quadra como contrato único. As alterações usam callable auditada e geram evento comercial.",
+        "statusActive": "Ativa",
+        "billingModel": "Modelo de cobrança",
+        "billingModelHelp": "Define como a mensalidade total será calculada.",
+        "modelOwner": "Valor único por dono",
+        "modelVenue": "Valor por quadra",
+        "modelField": "Valor por campo ativo",
+        "modelManual": "Valor manual fechado",
+        "basePlan": "Plano base",
+        "noPlan": "Sem plano definido",
+        "planName": "Nome comercial do plano",
+        "planNameHelp": "Ex.: Fundador 2026, Parceiro Premium, Customizado.",
+        "cycle": "Ciclo",
+        "noCycle": "Sem ciclo definido",
+        "cycleMonthly": "Mensal",
+        "cycleQuarterly": "Trimestral",
+        "cycleSemiannual": "Semestral",
+        "cycleAnnual": "Anual",
+        "cycleCustom": "Customizado",
+        "dueDay": "Dia de vencimento",
+        "dueDayHelp": "Use 1 a 31. Pode ficar vazio durante onboarding.",
+        "baseFee": "Valor base do plano (R$)",
+        "baseFeeHelp": "Preço cheio antes de acordos.",
+        "manualFee": "Mensalidade final manual (R$)",
+        "manualFeeHelp": "Usado em cobrança por dono ou override manual.",
+        "venueFee": "Valor por quadra (R$)",
+        "venueFeeHelp": "Usado quando o modelo for por quadra.",
+        "fieldFee": "Valor por campo ativo (R$)",
+        "fieldFeeHelp": "Usado quando o modelo for por campo ativo.",
+        "billingStart": "Início da cobrança",
+        "contractEnd": "Fim/renovação do contrato",
+        "billingEmail": "Email financeiro",
+        "billingPhone": "Telefone financeiro",
+        "document": "Documento comercial",
+        "linkedVenues": "Quadras vinculadas à conta",
+        "fieldCount": "{{count}} campo(s)",
+        "noVenuesToLink": "Este usuário ainda não possui quadras para vincular.",
+        "publicNote": "Observação visível/contratual",
+        "internalNotes": "Notas internas",
+        "save": "Salvar conta comercial"
+      },
+      "bulk": {
+        "title": "Alterar role em lote",
+        "prompt": "Alterar role de {{count}} usuário(s) selecionado(s) para:",
+        "note": "Usuários alterados precisarão fazer login novamente. Seu próprio usuário é ignorado em alterações em lote.",
+        "ownerRisk": "{{count}} dono(s) selecionado(s) têm quadras vinculadas. Rebaixamento em lote para Player fica bloqueado; faça a alteração individual pela ficha comercial para revisar impacto."
+      }
+    }
   },
   "alt": {
     "logo": "Futeba dos Parças",

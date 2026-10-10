@@ -1,9 +1,12 @@
-import { beforeEach, describe, it, expect, vi } from 'vitest';
+import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { ThemeProvider, createTheme } from '@mui/material';
 import { MemoryRouter } from 'react-router-dom';
+import { readFileSync } from 'fs';
+import { join } from 'path';
+import i18n from 'i18next';
 
 const mockSearchAdminUsers = vi.fn();
 const mockUpsertVenueAccount = vi.fn();
@@ -297,4 +300,33 @@ describe('UserManagementScreen', () => {
       billingContactEmail: 'financeiro@arena.test',
     }));
   }, 15000);
+  describe('i18n (#4339)', () => {
+    afterEach(async () => {
+      await i18n.changeLanguage('pt-BR');
+    });
+
+    it.each([
+      ['en', 'Manage Users', 'All roles', 'Todos os roles'],
+      ['es', 'Administrar Usuarios', 'Todos los roles', 'Todos os roles'],
+    ])('traduz título e filtros em %s', async (lng, title, allRoles, ptText) => {
+      await i18n.changeLanguage(lng);
+      renderWithTheme(<UserManagementScreen />);
+      expect(await screen.findByText(title)).toBeInTheDocument();
+      expect(await screen.findByText(allRoles)).toBeInTheDocument();
+      expect(screen.queryByText(ptText)).not.toBeInTheDocument();
+      expect(screen.queryByText('Gerenciar Usuários')).not.toBeInTheDocument();
+    });
+
+    it('não mantém textos PT-BR fixos no JSX da tela', () => {
+      const source = readFileSync(join(__dirname, 'UserManagementScreen.tsx'), 'utf8');
+      const forbidden = [
+        'Gerenciar Usuários', 'Todos os roles', 'Donos de quadra', 'Com quadras', 'Com publicada',
+        'Com pendência', 'Cadastro incompleto', 'Tentar novamente', 'Criado em', 'Ficha comercial do usuário',
+        'Contato e atividade', 'Última atualização', 'Último login', 'Onboarding comercial',
+        'Salvar conta comercial', 'Alterar role em lote', 'Confirmar alteração de role',
+      ];
+      const found = forbidden.filter((text) => new RegExp(`(>|["'\`]|^\s+)${text}(<|["'\`]|\s*$)`, 'm').test(source));
+      expect(found).toEqual([]);
+    });
+  });
 });

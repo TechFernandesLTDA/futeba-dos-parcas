@@ -180,7 +180,213 @@
     "user": "User"
   },
   "admin": {
-    "noUserRegisteredDesc": "There are no users in the system yet."
+    "noUserRegisteredDesc": "There are no users in the system yet.",
+    "userManagement": {
+      "noName": "No name",
+      "dateNotInformed": "Not provided",
+      "errors": {
+        "loadUsers": "Error loading users.",
+        "updateRole": "Error updating role",
+        "bulkFailed": "{{count}} update(s) failed.",
+        "invalidValue": "Enter a valid value for {{field}}.",
+        "dueDayRange": "Due day must be between 1 and 31.",
+        "dateOrder": "The start date must be before the contract end date.",
+        "saveAccount": "Could not save the commercial account.",
+        "checklistRequired": "Review the whole checklist before approving.",
+        "reasonRequired": "Provide the reason for the decision.",
+        "reviewOnboarding": "Could not review the onboarding."
+      },
+      "success": {
+        "roleUpdated": "{{name}}'s role updated to {{role}}.",
+        "bulkUpdated": "{{count}} user(s) updated.",
+        "accountUpdated": "Commercial account updated."
+      },
+      "scope": {
+        "owner": "Billing per owner",
+        "fieldCount": "Billing per field",
+        "manual": "Manual billing",
+        "venue": "Billing per venue"
+      },
+      "accountStatus": {
+        "trial": "Trial",
+        "active": "Up to date",
+        "overdue": "Overdue",
+        "suspended": "Suspended",
+        "cancelled": "Cancelled",
+        "none": "No account"
+      },
+      "fields": {
+        "baseValue": "base value",
+        "perVenue": "value per venue",
+        "perActiveField": "value per active field",
+        "finalMonthly": "final monthly fee"
+      },
+      "actions": {
+        "changeSelected": "Change ({{count}})"
+      },
+      "filters": {
+        "roleLabel": "Role",
+        "allRoles": "All roles",
+        "commercialLabel": "Commercial",
+        "all": "All",
+        "fieldOwners": "Venue owners",
+        "withVenues": "With venues",
+        "withPublished": "With a published venue",
+        "withPending": "With pending issues",
+        "incomplete": "Incomplete registration"
+      },
+      "selectedFilters": "selected filters",
+      "summary": {
+        "shownOne": "{{shown}} of {{total}} user shown",
+        "shownOther": "{{shown}} of {{total}} users shown",
+        "serverSearch": " · server-side search across {{users}} and {{venues}}",
+        "usersOne": "{{count}} user",
+        "usersOther": "{{count}} users",
+        "venuesOne": "{{count}} venue",
+        "venuesOther": "{{count}} venues",
+        "scanLimit": " · scan limit reached",
+        "moreAvailable": " · more available"
+      },
+      "table": {
+        "name": "Name",
+        "email": "Email",
+        "status": "Status",
+        "createdAt": "Created at"
+      },
+      "badges": {
+        "you": "You",
+        "active": "Active",
+        "qaTest": "QA/test",
+        "incompleteRegistration": "incomplete registration",
+        "realValidated": "Validated real",
+        "venuesInReview": "{{count}} in review",
+        "venuesOverdue": "{{count}} with pending issues",
+        "venuesIncomplete": "{{count}} incomplete"
+      },
+      "fallback": {
+        "emailNotRegistered": "Email not registered",
+        "phoneNotRegistered": "Phone not registered",
+        "notRegistered": "Not registered",
+        "emailNotInformedLower": "email not provided",
+        "phoneNotInformedLower": "phone not provided",
+        "emailNotInformed": "Email not provided",
+        "cityNotInformed": "City not provided"
+      },
+      "gamesOne": "{{count}} game",
+      "gamesOther": "{{count}} games",
+      "sheet": {
+        "title": "User commercial profile",
+        "contactActivity": "Contact and activity",
+        "phone": "Phone",
+        "lastUpdate": "Last update",
+        "lastLogin": "Last login",
+        "onboarding": "Commercial onboarding",
+        "noRequest": "No request",
+        "responsible": "Contact: {{name}} · {{email}} · {{phone}}",
+        "business": "Company/venue: {{name}}",
+        "previousReason": "Previous reason: {{reason}}",
+        "approveHint": "To approve, confirm that contact, venues, terms and billing have been reviewed.",
+        "contactReviewed": "Contact reviewed",
+        "venuesReviewed": "Venues reviewed",
+        "termsReviewed": "Terms reviewed",
+        "billingReviewed": "Billing reviewed",
+        "reviewReason": "Review reason/notes",
+        "approve": "Approve and promote",
+        "reject": "Reject",
+        "suspend": "Suspend",
+        "noRequestYet": "This user has not opened a commercial request in the app yet."
+      },
+      "account": {
+        "title": "Commercial account",
+        "edit": "Edit account",
+        "create": "Create account",
+        "computedFee": "Calculated monthly fee",
+        "legacy": "Legacy per venue: {{amount}}",
+        "scopeDue": "Scope and due date",
+        "dayN": "day {{day}}",
+        "venuesFields": "{{venues}} venue(s) · {{fields}} active field(s)",
+        "billingContact": "Billing contact",
+        "statusSummary": "Account {{status}} with {{count}} linked published venue(s).",
+        "noAggregated": "This user does not have an aggregated commercial account in `venue_accounts` yet. Venues remain on the legacy per-venue model until migration."
+      },
+      "summaryCards": {
+        "monthlyRevenue": "Monthly revenue",
+        "activeSubscriptions": "{{count}} active subscription(s)",
+        "venues": "Venues",
+        "venuesDetail": "{{published}} published · {{pending}} in review",
+        "risks": "Risks",
+        "risksDetail": "{{overdue}} pending · {{incomplete}} incomplete"
+      },
+      "venuesList": {
+        "title": "Linked venues and commercial actions",
+        "view": "View",
+        "incompleteAddress": "Incomplete business address",
+        "dueDay": "due on day {{day}}",
+        "feeNotDefined": "Monthly fee not set",
+        "none": "This user has no linked venues yet. Promoting to Field Owner only prepares commercial access."
+      },
+      "roleDialog": {
+        "auditNote": "Role changes use the audited permissions operation. Demoting a venue owner with linked venues requires strong confirmation."
+      },
+      "confirm": {
+        "title": "Confirm role change",
+        "selfDemotion": "You are about to remove your own administrator access. Another admin is required to revert this.",
+        "adminPromotion": "Admins have full access to the system. Confirm only if this user should administer the platform.",
+        "ownerDemotion": "This owner has {{total}} linked venue(s), {{published}} published and {{amount}} in aggregated monthly fees. Demoting to Player does not transfer or suspend the venues automatically.",
+        "changeRoleQuestion": "Change role of <strong>{{name}}</strong> from <strong>{{from}}</strong> to <strong>{{to}}</strong>?",
+        "typeToConfirm": "Type ALTERAR to confirm",
+        "reloginNote": "The user will need to sign in again after the change."
+      },
+      "accountDialog": {
+        "title": "Aggregated commercial account",
+        "intro": "Set the venue owner monthly fee as a single contract. Changes use an audited callable and generate a commercial event.",
+        "statusActive": "Active",
+        "billingModel": "Billing model",
+        "billingModelHelp": "Defines how the total monthly fee is calculated.",
+        "modelOwner": "Single value per owner",
+        "modelVenue": "Value per venue",
+        "modelField": "Value per active field",
+        "modelManual": "Fixed manual value",
+        "basePlan": "Base plan",
+        "noPlan": "No plan set",
+        "planName": "Plan commercial name",
+        "planNameHelp": "E.g.: Founder 2026, Premium Partner, Custom.",
+        "cycle": "Cycle",
+        "noCycle": "No cycle set",
+        "cycleMonthly": "Monthly",
+        "cycleQuarterly": "Quarterly",
+        "cycleSemiannual": "Semiannual",
+        "cycleAnnual": "Annual",
+        "cycleCustom": "Custom",
+        "dueDay": "Due day",
+        "dueDayHelp": "Use 1 to 31. Can be empty during onboarding.",
+        "baseFee": "Plan base value (R$)",
+        "baseFeeHelp": "Full price before agreements.",
+        "manualFee": "Manual final monthly fee (R$)",
+        "manualFeeHelp": "Used for per-owner billing or manual override.",
+        "venueFee": "Value per venue (R$)",
+        "venueFeeHelp": "Used when the model is per venue.",
+        "fieldFee": "Value per active field (R$)",
+        "fieldFeeHelp": "Used when the model is per active field.",
+        "billingStart": "Billing start",
+        "contractEnd": "Contract end/renewal",
+        "billingEmail": "Billing email",
+        "billingPhone": "Billing phone",
+        "document": "Commercial document",
+        "linkedVenues": "Venues linked to the account",
+        "fieldCount": "{{count}} field(s)",
+        "noVenuesToLink": "This user has no venues to link yet.",
+        "publicNote": "Visible/contractual note",
+        "internalNotes": "Internal notes",
+        "save": "Save commercial account"
+      },
+      "bulk": {
+        "title": "Bulk role change",
+        "prompt": "Change role of {{count}} selected user(s) to:",
+        "note": "Changed users will need to sign in again. Your own user is ignored in bulk changes.",
+        "ownerRisk": "{{count}} selected owner(s) have linked venues. Bulk demotion to Player is blocked; make the change individually from the commercial profile to review the impact."
+      }
+    }
   },
   "alt": {
     "logo": "Futeba dos Parças",
