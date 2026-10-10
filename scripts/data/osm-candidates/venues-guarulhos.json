@@ -1,0 +1,733 @@
+{
+ "gerado_em": "2026-10-10",
+ "rodada": 10,
+ "cidade": "Guarulhos",
+ "uf": "SP",
+ "slug": "guarulhos",
+ "issue": 4186,
+ "fonte": {
+  "provedor": "OpenStreetMap (via Nominatim + Overpass API)",
+  "licenca": "ODbL 1.0 — https://www.openstreetmap.org/copyright",
+  "nominatim_url": "https://www.openstreetmap.org/relation/298165",
+  "nominatim_display_name": "Guarulhos, São Paulo, Região Sudeste, Brasil",
+  "overpass_mirror": "https://overpass.kumi.systems/api/interpreter",
+  "overpass_query": "[out:json][timeout:180];\narea(3600298165)->.a;\n(\n  node[\"leisure\"=\"pitch\"](area.a);\n  way[\"leisure\"=\"pitch\"](area.a);\n  relation[\"leisure\"=\"pitch\"](area.a);\n  node[\"leisure\"=\"sports_centre\"](area.a);\n  way[\"leisure\"=\"sports_centre\"](area.a);\n);\nout body center meta;",
+  "osm_base_timestamp": "2026-05-31T22:37:44Z"
+ },
+ "coleta": {
+  "data": "2026-10-10",
+  "ferramenta": "scripts/data/build-venues-osm.mjs",
+  "finalidade": "dataset curado de quadras para importação DRAFT (revisão humana antes de publicar)"
+ },
+ "estatisticas": {
+  "candidatos_osm": 399,
+  "sem_nome": 357,
+  "institucional": 3,
+  "acesso_restrito": 5,
+  "amenity_descartada": 0,
+  "sem_sinal_de_futebol": 17,
+  "other_excluded": 0,
+  "sem_coordenada": 0,
+  "mantidos": 17,
+  "duplicatas_removidas": 0
+ },
+ "venues": [
+  {
+   "nome": "A. A. Macedo",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Guarulhos",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/153006824",
+     "dado": "OpenStreetMap (way/153006824): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.4672494,
+    "lon": -46.5168184
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 153006824,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "A.D. Vila Nova",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Guarulhos",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/493355618",
+     "dado": "OpenStreetMap (way/493355618): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.4215357,
+    "lon": -46.4227968
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 493355618,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Associação dos Servidores Municipais de Guarulhos",
+   "endereco": {
+    "rua": "Avenida Bom Clima",
+    "numero": "615",
+    "bairro": "Bom Clima",
+    "cidade": "Guarulhos",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/423655036",
+     "dado": "OpenStreetMap (way/423655036): sport=soccer;basketball;swimming;volleyball, Avenida Bom Clima, 615, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "alta",
+   "coordenadas": {
+    "lat": -23.4532742,
+    "lon": -46.5169269
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 423655036,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "C.S.E. João do Pulo",
+   "endereco": {
+    "rua": "Avenida Maria Cerri",
+    "numero": null,
+    "bairro": "Jardim Divinolândia",
+    "cidade": "Guarulhos",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/610949947",
+     "dado": "OpenStreetMap (way/610949947): sport=soccer;tennis, Avenida Maria Cerri, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.4398992,
+    "lon": -46.5144571
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 610949947,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo da Paz",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Guarulhos",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/154526903",
+     "dado": "OpenStreetMap (way/154526903): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.4120058,
+    "lon": -46.5031628
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 154526903,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo da União",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Guarulhos",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/681440903",
+     "dado": "OpenStreetMap (way/681440903): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.421875,
+    "lon": -46.4332565
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 681440903,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Caxias",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Guarulhos",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/681440899",
+     "dado": "OpenStreetMap (way/681440899): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.4204475,
+    "lon": -46.4300192
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 681440899,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Futebol Munira",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Guarulhos",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/841550836",
+     "dado": "OpenStreetMap (way/841550836): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.4026078,
+    "lon": -46.4774876
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 841550836,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Ginásio Poliesportivo Paschoal Thomeu",
+   "endereco": {
+    "rua": "Rua João Bernardo Medeiros",
+    "numero": "233",
+    "bairro": "Bom Clima",
+    "cidade": "Guarulhos",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/531497757",
+     "dado": "OpenStreetMap (way/531497757): sport=soccer;basketball;volleyball, Rua João Bernardo Medeiros, 233, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "alta",
+   "coordenadas": {
+    "lat": -23.4549393,
+    "lon": -46.5131258
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 531497757,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Panelão das 7",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Guarulhos",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/199505610",
+     "dado": "OpenStreetMap (way/199505610): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.4615514,
+    "lon": -46.4965316
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 199505610,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra da Orobó",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Guarulhos",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "concreto (OSM: surface=concrete)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/681440904",
+     "dado": "OpenStreetMap (way/681440904): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.4221193,
+    "lon": -46.4336733
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 681440904,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra Glorinha Pimentel",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Guarulhos",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "concreto (OSM: surface=concrete)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/675045151",
+     "dado": "OpenStreetMap (way/675045151): sport=soccer;basketball, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.4429666,
+    "lon": -46.4621582
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 675045151,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra Maria Célia",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Guarulhos",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "concreto (OSM: surface=concrete)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/420900660",
+     "dado": "OpenStreetMap (way/420900660): sport=soccer;basketball;volleyball, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.408813,
+    "lon": -46.4974852
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 420900660,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra Poliesportiva Coberta",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Guarulhos",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/948285466",
+     "dado": "OpenStreetMap (way/948285466): sport=soccer;basketball;multi;volleyball;futsal, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.5030683,
+    "lon": -46.5480034
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 948285466,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "quadra SENAI",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Guarulhos",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "concreto (OSM: surface=concrete)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/733800793",
+     "dado": "OpenStreetMap (way/733800793): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.4571001,
+    "lon": -46.5279946
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 733800793,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "TieBreak - Tennis e Fitness",
+   "endereco": {
+    "rua": "Avenida Prefeito Antônio da Costa Santos",
+    "numero": "177",
+    "bairro": "Cocaia",
+    "cidade": "Guarulhos",
+    "uf": "SP",
+    "cep": "07121-395"
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/187561241",
+     "dado": "OpenStreetMap (way/187561241): sport=tennis;soccer, Avenida Prefeito Antônio da Costa Santos, 177, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "alta",
+   "coordenadas": {
+    "lat": -23.4450007,
+    "lon": -46.5238791
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 187561241,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Viela 5",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Guarulhos",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/152960544",
+     "dado": "OpenStreetMap (way/152960544): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -23.4117107,
+    "lon": -46.509918
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 152960544,
+    "sinal_futebol": "sport"
+   }
+  }
+ ]
+}
