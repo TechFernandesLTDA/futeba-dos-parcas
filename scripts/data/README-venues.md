@@ -19,6 +19,7 @@ Datasets curados para o importador `import-venues-dataset.ts`. Tudo entra no app
 | `venues-teresina.json` | R9 (coletor de cidades novas, #4186, execução 17) | Teresina | 3 |
 | `venues-campo-grande.json` | R9 (coletor de cidades novas, #4186, execução 18) | Campo Grande/MS | 5 |
 | `venues-joao-pessoa.json` | R9 (coletor de cidades novas, #4186, execução 16) | João Pessoa | 8 |
+| `venues-natal.json` | R9 (coletor de cidades novas, #4186, execução 15) | Natal | 2 |
 | `venues-belem.json` | R9 (coletor de cidades novas, #4186) | Belém (capital) | 9 |
 
 ## Regras dos dados
