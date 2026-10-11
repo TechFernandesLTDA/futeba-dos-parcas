@@ -263,7 +263,10 @@
         "realValidated": "Real validado",
         "venuesInReview": "{{count}} em revisão",
         "venuesOverdue": "{{count}} com pendência",
-        "venuesIncomplete": "{{count}} incompleta(s)"
+        "venuesIncomplete": "{{count}} incompleta(s)",
+        "venuesCount": "{{count}} quadra(s)",
+        "venuesPublished": "{{count}} publicada(s)",
+        "plan": "Plano {{label}}"
       },
       "fallback": {
         "emailNotRegistered": "Email não cadastrado",
@@ -324,6 +327,7 @@
         "view": "Ver",
         "incompleteAddress": "Endereço comercial incompleto",
         "dueDay": "vence dia {{day}}",
+        "managersCount": "{{count}} gerente(s)",
         "feeNotDefined": "Mensalidade não definida",
         "none": "Este usuário ainda não tem quadras vinculadas. Promover para Field Owner apenas prepara o acesso comercial."
       },

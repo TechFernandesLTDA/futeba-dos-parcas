@@ -263,7 +263,10 @@
         "realValidated": "Validated real",
         "venuesInReview": "{{count}} in review",
         "venuesOverdue": "{{count}} with pending issues",
-        "venuesIncomplete": "{{count}} incomplete"
+        "venuesIncomplete": "{{count}} incomplete",
+        "venuesCount": "{{count}} venue(s)",
+        "venuesPublished": "{{count}} published",
+        "plan": "Plan {{label}}"
       },
       "fallback": {
         "emailNotRegistered": "Email not registered",
@@ -324,6 +327,7 @@
         "view": "View",
         "incompleteAddress": "Incomplete business address",
         "dueDay": "due on day {{day}}",
+        "managersCount": "{{count}} manager(s)",
         "feeNotDefined": "Monthly fee not set",
         "none": "This user has no linked venues yet. Promoting to Field Owner only prepares commercial access."
       },

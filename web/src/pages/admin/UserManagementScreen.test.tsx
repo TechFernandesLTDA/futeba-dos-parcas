@@ -324,11 +324,11 @@ describe('UserManagementScreen', () => {
         'Com pendência', 'Cadastro incompleto', 'Tentar novamente', 'Criado em', 'Ficha comercial do usuário',
         'Contato e atividade', 'Última atualização', 'Último login', 'Onboarding comercial',
         'Salvar conta comercial', 'Alterar role em lote', 'Confirmar alteração de role',
-        'Limpar filtros',
+        'Limpar filtros', 'quadra(s)', 'publicada(s)', 'campo(s)', 'gerente(s)', 'Plano ',
       ];
       const sourceLines = source.split('\n').map((line) => line.trim());
       const found = forbidden.filter((text) => sourceLines.some((line) => (
-        line === text || line.includes(`>${text}<`) || line.includes(`'${text}'`) || line.includes(`"${text}"`)
+        line === text || line.includes(`>${text}<`) || line.includes(`'${text}'`) || line.includes(`"${text}"`) || line.includes(`} ${text}`) || line.includes(`\`${text}`)
       )));
       expect(found).toEqual([]);
     });

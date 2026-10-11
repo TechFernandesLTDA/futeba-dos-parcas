@@ -263,7 +263,10 @@
         "realValidated": "Real validado",
         "venuesInReview": "{{count}} en revisión",
         "venuesOverdue": "{{count}} con pendientes",
-        "venuesIncomplete": "{{count}} incompleta(s)"
+        "venuesIncomplete": "{{count}} incompleta(s)",
+        "venuesCount": "{{count}} cancha(s)",
+        "venuesPublished": "{{count}} publicada(s)",
+        "plan": "Plan {{label}}"
       },
       "fallback": {
         "emailNotRegistered": "Correo no registrado",
@@ -324,6 +327,7 @@
         "view": "Ver",
         "incompleteAddress": "Dirección comercial incompleta",
         "dueDay": "vence el día {{day}}",
+        "managersCount": "{{count}} gerente(s)",
         "feeNotDefined": "Mensualidad no definida",
         "none": "Este usuario aún no tiene canchas vinculadas. Promover a Field Owner solo prepara el acceso comercial."
       },

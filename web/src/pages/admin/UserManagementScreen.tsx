@@ -897,7 +897,7 @@ export const UserManagementScreen: React.FC = () => {
                             {(u.role === 'FIELD_OWNER' || (ownerSummaries[u.id]?.totalLocations || 0) > 0) && (
                               <Box sx={{ display: 'inline-flex', flexWrap: 'wrap', gap: 0.5, ml: 0.5 }}>
                                 <Chip
-                                  label={`${ownerSummaries[u.id]?.totalLocations || 0} quadra(s)`}
+                                  label={t('admin.userManagement.badges.venuesCount', { count: ownerSummaries[u.id]?.totalLocations || 0 })}
                                   size="small"
                                   variant="outlined"
                                   color={(ownerSummaries[u.id]?.overdueLocations || 0) > 0 ? 'warning' : 'default'}
@@ -925,7 +925,7 @@ export const UserManagementScreen: React.FC = () => {
                                     />
                                     {venueAccount.billingPlanLabel && (
                                       <Chip
-                                        label={`Plano ${venueAccount.billingPlanLabel}`}
+                                        label={t('admin.userManagement.badges.plan', { label: venueAccount.billingPlanLabel })}
                                         size="small"
                                         variant="outlined"
                                       />
@@ -1107,8 +1107,8 @@ export const UserManagementScreen: React.FC = () => {
                                 },
                               }}
                             >
-                              <Chip label={`${ownerSummary?.totalLocations || 0} quadra(s)`} size="small" variant="outlined" />
-                              <Chip label={`${ownerSummary?.publishedLocations || 0} publicada(s)`} size="small" color="success" variant="outlined" />
+                              <Chip label={t('admin.userManagement.badges.venuesCount', { count: ownerSummary?.totalLocations || 0 })} size="small" variant="outlined" />
+                              <Chip label={t('admin.userManagement.badges.venuesPublished', { count: ownerSummary?.publishedLocations || 0 })} size="small" color="success" variant="outlined" />
                               {(ownerSummary?.monthlyFeeTotalCents || 0) > 0 && (
                                 <Chip label={formatCurrency(ownerSummary?.monthlyFeeTotalCents)} size="small" color="success" variant="outlined" />
                               )}
@@ -1352,7 +1352,7 @@ export const UserManagementScreen: React.FC = () => {
                         />
                         {selectedVenueAccount.billingPlanLabel && (
                           <Chip
-                            label={`Plano ${selectedVenueAccount.billingPlanLabel}`}
+                            label={t('admin.userManagement.badges.plan', { label: selectedVenueAccount.billingPlanLabel })}
                             size="small"
                             variant="outlined"
                           />
@@ -1488,8 +1488,8 @@ export const UserManagementScreen: React.FC = () => {
                           }
                           secondary={[
                             location.city || location.state ? `${location.city || t('admin.userManagement.fallback.cityNotInformed')}${location.state ? `/${location.state}` : ''}` : t('admin.userManagement.venuesList.incompleteAddress'),
-                            `${location.fieldCount} campo(s)`,
-                            `${location.managersCount} gerente(s)`,
+                            t('admin.userManagement.accountDialog.fieldCount', { count: location.fieldCount }),
+                            t('admin.userManagement.venuesList.managersCount', { count: location.managersCount }),
                             location.monthlyFeeCents ? `${formatCurrency(location.monthlyFeeCents)}${location.billingDueDay ? ` · ${t('admin.userManagement.venuesList.dueDay', { day: location.billingDueDay })}` : ''}` : t('admin.userManagement.venuesList.feeNotDefined'),
                           ].join(' · ')}
                         />
