@@ -1,0 +1,130 @@
+{
+  "gerado_em": "2026-10-10",
+  "rodada": 9,
+  "slug": "teresina",
+  "issue": 4186,
+  "titulo": "Teresina (R9, coletor de cidades novas)",
+  "coleta": {
+    "data": "2026-10-10",
+    "ferramentas": "OpenStreetMap/Overpass (scripts/data/build-venues-osm.mjs, 669 candidatos, 109 com sinal de futebol; quase todos campos públicos, escolas, clubes ou sem endereço de locação) + pesquisa web em diretórios de aluguel (Guia Fácil, GuiaFix, Locais do Brasil, Trip.com, JuridicoOnline/CNPJ) e cruzamento de endereço entre fontes",
+    "regra": "apenas dados públicos verificáveis; campos sem fonte = null; todo item tem >=1 fonte com URL; entra no app como DRAFT/não verificado"
+  },
+  "cobertura": {
+    "Teresina": 3
+  },
+  "venues": [
+    {
+      "nome": "Arena Fut7 the Dirceu",
+      "endereco": {
+        "rua": "Rua Ferdinand Freitas",
+        "numero": "2885",
+        "bairro": "Parque Ideal",
+        "cidade": "Teresina",
+        "uf": "PI",
+        "cep": "64078-635"
+      },
+      "telefone": "(86) 98800-8261",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.trip.com/travel-guide/attraction/teresina/arena-fut7-the-dirceu-137222557/",
+          "dado": "endereço R. Ferdinand Freitas, 2885, Parque Ideal, CEP 64078-635 e telefone (+55 86 98800-8261) em ficha de guia de viagem"
+        },
+        {
+          "url": "https://guiafacil.com/encontre/quadras-esportivas-aluguel/teresina/pi",
+          "dado": "diretório Guia Fácil, categoria Quadras Esportivas - Aluguel em Teresina: Arena Fut7 the Dirceu listada como locação de quadra (endereço Ferdinand Freitas)"
+        },
+        {
+          "url": "https://guiafix.com.br/teresina-pi/futebol",
+          "dado": "GuiaFix, categoria Futebol em Teresina: 'Aluguel de quadra society ... por hora' com Arena Fut7 the Dirceu como prestador"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_aluguel",
+      "origem": "web"
+    },
+    {
+      "nome": "Show de Bola Futebol Society",
+      "endereco": {
+        "rua": "Rua Governador Raimundo Artur Vasconcelos",
+        "numero": "4969",
+        "bairro": "Alto Alegre",
+        "cidade": "Teresina",
+        "uf": "PI",
+        "cep": "64006-245"
+      },
+      "telefone": null,
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.locaisdobrasil.com.br/encontre/quadra-de-esportes/teresina-pi",
+          "dado": "diretório Locais do Brasil, categoria quadra de esportes em Teresina: 'Show de Bola Futebol Society', endereço Rua Gov. Raimundo Artur Vasconcelos, 4969, Alto Alegre, CEP 64006-245"
+        }
+      ],
+      "confidence": "baixa",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    },
+    {
+      "nome": "Arena Area 51 Fut7 Society",
+      "endereco": {
+        "rua": "Rua Álvaro Martins",
+        "numero": "1750",
+        "bairro": "Ininga",
+        "cidade": "Teresina",
+        "uf": "PI",
+        "cep": "64049-610"
+      },
+      "telefone": "(86) 8190-0203",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://juridicoonline.com.br/empresa/60996439000148-arena-area-51-fut7-society-ltda",
+          "dado": "cadastro CNPJ 60.996.439/0001-48 (ativo desde 26/05/2025): nome Arena Area 51 Fut7 Society, CNAE 9311500 Gestão de Instalações de Esportes, endereço Rua Alvaro Martins 1750, Ininga, telefone (86) 8190-0203. Não traz texto explícito de locação: confirmar"
+        }
+      ],
+      "confidence": "baixa",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    }
+  ]
+}

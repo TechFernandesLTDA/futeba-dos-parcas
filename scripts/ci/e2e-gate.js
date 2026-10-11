@@ -17,6 +17,10 @@ const NO_RUN_GRACE_MS = 5 * 60 * 1000;
 const DISPATCH_ATTEMPTS = 4;
 const DISPATCH_RETRY_MS = 15 * 1000;
 const MAX_CONSECUTIVE_POLL_ERRORS = 20;
+// #4365: execFileSync bloqueia o event loop; sem timeout, um `gh` travado impediria
+// até a janela noRunGraceMs de disparar. Estourar o timeout lança erro, tratado como
+// falha transitória (polling) ou erro de dispatch (retry).
+const GH_TIMEOUT_MS = 60 * 1000;
 
 const EXIT = Object.freeze({
   PASS: 0,
@@ -91,12 +95,18 @@ async function cancelQuietly(cancelRun, run) {
 /**
  * Orquestra dispatch + espera. Dependências injetadas para teste:
  *  - dispatch({ ref }) -> Promise<void>
- *  - findRun({ ref, since }) -> Promise<run|null>  (run mais recente criado >= since)
+ *  - findRun({ ref, since, expectSha }) -> Promise<run|null>
+ *        (run criado >= since; com expectSha, SÓ o run desse SHA — #4346: gates de
+ *        commits seguidos no mesmo branch não podem acompanhar/cancelar o run um do outro)
  *  - sleep(ms) -> Promise<void>
  *  - now() -> number (ms)
  *  - onRun(run) -> void           (opcional; recebe o run assim que aparece)
  *  - cancelRun(run) -> Promise    (opcional; chamado quando o gate desiste por timeout,
  *                                  para não deixar um E2E órfão ocupando o runner)
+ *  - headSha({ ref }) -> Promise<string|null>   (opcional; só usado com allowSuperseded)
+ *  - allowSuperseded: pós-merge em branch. Se o branch já avançou além de expectSha
+ *    ANTES do dispatch ou enquanto nenhum run desse SHA existe, devolve `superseded`
+ *    (exit 0) sem ocupar a fila do runner de emuladores: o gate do commit mais novo cobre.
  */
 async function runGate({
   ref,
@@ -113,12 +123,42 @@ async function runGate({
   dispatchAttempts = DISPATCH_ATTEMPTS,
   dispatchRetryMs = DISPATCH_RETRY_MS,
   maxConsecutivePollErrors = MAX_CONSECUTIVE_POLL_ERRORS,
+  headSha,
+  allowSuperseded = false,
 }) {
   if (!ref) throw new TypeError('runGate: ref obrigatório');
   const since = now();
+  // Janela "sem run" medida a partir do fim do dispatch (#4365): os retries do
+  // dispatch (até ~90 s) não podem consumir noRunGraceMs. `since` segue como filtro
+  // de createdAt e base do deadline total.
+  let dispatchedAt = since;
+
+  // Retorna o resultado `superseded` se o branch avançou; null caso contrário
+  // (inclusive quando não dá para ler o head: na dúvida o gate continua).
+  const checkAdvanced = async () => {
+    if (!allowSuperseded || !expectSha || !headSha) return null;
+    let head = null;
+    try {
+      head = await headSha({ ref });
+    } catch (err) {
+      console.error(`e2e-gate: não consegui ler o head de ${ref}: ${errMessage(err)}`);
+    }
+    if (!head || head === expectSha) return null;
+    return {
+      verdict: 'superseded',
+      exitCode: EXIT.PASS,
+      reason: `branch avançou para ${head} sem run de ${WORKFLOW_FILE} em ${expectSha} — o gate do commit mais novo cobre este`,
+      run_id: null,
+      html_url: null,
+    };
+  };
+
+  const advancedBeforeDispatch = await checkAdvanced();
+  if (advancedBeforeDispatch) return advancedBeforeDispatch;
   for (let attempt = 1; ; attempt += 1) {
     try {
       await dispatch({ ref });
+      dispatchedAt = now();
       break;
     } catch (err) {
       if (attempt >= dispatchAttempts) throw err;
@@ -134,7 +174,7 @@ async function runGate({
     let run = null;
     let pollFailed = false;
     try {
-      run = await findRun({ ref, since });
+      run = await findRun({ ref, since, expectSha });
       pollErrors = 0;
     } catch (err) {
       // Falha transitória de rede/API no polling: trata como "pending" e tenta de novo.
@@ -159,7 +199,11 @@ async function runGate({
       if (ev.verdict !== 'pending') {
         return { ...ev, run_id: run.id ?? null, html_url: run.html_url ?? null };
       }
-    } else if (!pollFailed && now() - since >= noRunGraceMs) {
+    } else if (!pollFailed) {
+      const advanced = await checkAdvanced();
+      if (advanced) return advanced;
+    }
+    if (!run && !pollFailed && now() - dispatchedAt >= noRunGraceMs) {
       return {
         verdict: 'infra_blocked',
         exitCode: EXIT.INFRA_BLOCKED,
@@ -169,36 +213,46 @@ async function runGate({
       };
     }
     if (now() >= deadline) {
+      const wasInProgress = Boolean(lastRun && lastRun.status === 'in_progress');
       await cancelQuietly(cancelRun, lastRun);
-      return {
+      const out = {
         verdict: 'timeout',
         exitCode: EXIT.TIMEOUT,
         reason: `sem conclusão após ${Math.round(timeoutMs / 60000)} min`,
         run_id: lastRun ? lastRun.id ?? null : null,
         html_url: lastRun ? lastRun.html_url ?? null : null,
       };
+      if (wasInProgress) {
+        out.warning = `run ${lastRun.id} estava in_progress e foi cancelado pelo timeout; o resultado dele ficou indeterminado`;
+        console.error(`e2e-gate: aviso: ${out.warning}`);
+      }
+      return out;
     }
     await sleep(pollMs);
   }
 }
 
 /** Implementação real via gh CLI (execFile, sem shell, sem jq). */
-function ghJson(args) {
-  const out = execFileSync('gh', args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
+function ghJson(args, exec = execFileSync) {
+  const out = exec('gh', args, {
+    encoding: 'utf8',
+    stdio: ['ignore', 'pipe', 'pipe'],
+    timeout: GH_TIMEOUT_MS,
+  });
   return JSON.parse(out);
 }
 
-function realDeps({ repo }) {
+function realDeps({ repo, exec = execFileSync }) {
   const repoArgs = repo ? ['--repo', repo] : [];
   return {
     dispatch: async ({ ref }) => {
-      execFileSync(
+      exec(
         'gh',
         ['workflow', 'run', WORKFLOW_FILE, '--ref', ref, ...repoArgs],
-        { stdio: ['ignore', 'inherit', 'inherit'] },
+        { stdio: ['ignore', 'inherit', 'inherit'], timeout: GH_TIMEOUT_MS },
       );
     },
-    findRun: async ({ ref, since }) => {
+    findRun: async ({ ref, since, expectSha }) => {
       const list = ghJson([
         'run', 'list',
         '--workflow', WORKFLOW_FILE,
@@ -207,10 +261,13 @@ function realDeps({ repo }) {
         '--limit', '10',
         '--json', 'databaseId,headSha,status,conclusion,createdAt,url',
         ...repoArgs,
-      ]);
+      ], exec);
       const sinceIso = new Date(since - 60 * 1000).toISOString();
+      // Só o run do SHA esperado: workflow_dispatch resolve o head do branch no
+      // momento do dispatch, e gates de pushes seguidos no master não podem pegar
+      // (nem cancelar por timeout) o run do commit vizinho (#4346).
       const fresh = list
-        .filter((r) => r.createdAt >= sinceIso)
+        .filter((r) => r.createdAt >= sinceIso && (!expectSha || r.headSha === expectSha))
         .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
       if (!fresh.length) return null;
       const r = fresh[0];
@@ -222,9 +279,15 @@ function realDeps({ repo }) {
         html_url: r.url,
       };
     },
+    headSha: async ({ ref }) => {
+      const out = exec('gh', ['api', `repos/${repo}/commits/${ref}`, '--jq', '.sha'],
+        { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], timeout: GH_TIMEOUT_MS });
+      return out.trim() || null;
+    },
     cancelRun: async ({ id }) => {
-      execFileSync('gh', ['run', 'cancel', String(id), ...repoArgs], {
+      exec('gh', ['run', 'cancel', String(id), ...repoArgs], {
         stdio: ['ignore', 'inherit', 'inherit'],
+        timeout: GH_TIMEOUT_MS,
       });
     },
     sleep: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
@@ -237,10 +300,13 @@ function realDeps({ repo }) {
  * vira `superseded` (exit 0). Nunca converte falha real de teste. Pura.
  */
 function applySuperseded(result, { expectSha, currentHeadSha }) {
-  const supersedable = result.verdict === 'stale' ||
+  const supersedable = result.verdict === 'stale' || result.verdict === 'timeout' ||
     (result.verdict === 'fail' && result.reason === 'conclusion=cancelled');
   if (!supersedable || !expectSha || !currentHeadSha || currentHeadSha === expectSha) {
     return result;
+  }
+  if (result.verdict === 'timeout' && result.warning) {
+    console.error(`e2e-gate: aviso: ${result.warning} (resultado final: superseded)`);
   }
   return {
     ...result,
@@ -294,6 +360,7 @@ async function main() {
     ref: args.ref,
     expectSha: args.expectSha,
     timeoutMs: args.timeoutMs,
+    allowSuperseded: Boolean(args.allowSuperseded),
     ...deps,
     onRun: (run) => { currentRun = run; },
   });
@@ -301,7 +368,7 @@ async function main() {
     let currentHeadSha = null;
     try {
       currentHeadSha = execFileSync('gh', ['api', `repos/${repo}/commits/${args.ref}`, '--jq', '.sha'],
-          { encoding: 'utf8' }).trim();
+          { encoding: 'utf8', timeout: GH_TIMEOUT_MS }).trim();
     } catch (err) {
       console.error(`e2e-gate: não consegui ler o head de ${args.ref}: ${err.message}`);
     }
@@ -318,4 +385,4 @@ if (require.main === module) {
   );
 }
 
-module.exports = { EXIT, evaluateRun, runGate, parseArgs, applySuperseded };
+module.exports = { EXIT, GH_TIMEOUT_MS, evaluateRun, runGate, parseArgs, applySuperseded, realDeps };
