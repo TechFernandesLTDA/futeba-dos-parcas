@@ -2,7 +2,7 @@
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { EXIT, evaluateRun, runGate, applySuperseded } = require('./e2e-gate');
+const { EXIT, GH_TIMEOUT_MS, evaluateRun, runGate, applySuperseded, realDeps } = require('./e2e-gate');
 
 const SHA = 'a'.repeat(40);
 const OTHER = 'b'.repeat(40);
@@ -332,15 +332,18 @@ test('runGate: master já avançou antes do dispatch -> superseded sem despachar
 test('runGate: sem run do SHA e master avançou durante a espera -> superseded (não infra_blocked)', async () => {
   const clock = fakeClock();
   const heads = [SHA, SHA, OTHER];
+  let dispatches = 0;
   const result = await runGate({
     ref: 'master', expectSha: SHA, allowSuperseded: true,
     headSha: async () => heads.shift() ?? OTHER,
-    dispatch: async () => {},
+    dispatch: async () => { dispatches += 1; },
     findRun: async () => null,
     sleep: clock.sleep, now: clock.now, pollMs: 10, timeoutMs: 60 * 60 * 1000,
   });
   assert.equal(result.verdict, 'superseded');
   assert.equal(result.exitCode, EXIT.PASS);
+  // Prova que o superseded veio da espera pós-dispatch, não da checagem pré-dispatch.
+  assert.equal(dispatches, 1);
 });
 
 test('runGate: master parado e sem run -> continua infra_blocked (nunca verde)', async () => {
@@ -387,4 +390,101 @@ test('applySuperseded: timeout com master avançado vira superseded; falha real 
   assert.equal(applySuperseded(timeout, { expectSha: 'a', currentHeadSha: 'a' }).verdict, 'timeout');
   const real = { verdict: 'fail', exitCode: EXIT.FAIL, reason: 'conclusion=failure' };
   assert.equal(applySuperseded(real, { expectSha: 'a', currentHeadSha: 'b' }).verdict, 'fail');
+});
+
+test('realDeps: toda chamada gh recebe timeout (gh travado não bloqueia o gate)', async () => {
+  const calls = [];
+  const exec = (cmd, args, opts) => {
+    calls.push({ cmd, args, opts });
+    return args[0] === 'run' && args[1] === 'list' ? '[]' : `${SHA}\n`;
+  };
+  const deps = realDeps({ repo: 'o/r', exec });
+  await deps.dispatch({ ref: 'master' });
+  await deps.findRun({ ref: 'master', since: 0, expectSha: SHA });
+  assert.equal(await deps.headSha({ ref: 'master' }), SHA);
+  await deps.cancelRun({ id: 7 });
+  assert.equal(calls.length, 4);
+  for (const c of calls) {
+    assert.equal(c.cmd, 'gh');
+    assert.equal(c.opts.timeout, GH_TIMEOUT_MS, c.args.join(' '));
+  }
+  assert.ok(GH_TIMEOUT_MS > 0 && GH_TIMEOUT_MS <= 120000);
+});
+
+test('runGate: timeout do gh no polling é transitório e o run é encontrado depois', async () => {
+  const clock = fakeClock();
+  let n = 0;
+  const result = await runGate({
+    ref: 'feat/x', expectSha: SHA,
+    dispatch: async () => {},
+    findRun: async () => {
+      n += 1;
+      if (n === 1) throw Object.assign(new Error('spawnSync gh ETIMEDOUT'), { code: 'ETIMEDOUT' });
+      return { id: 3, status: 'completed', conclusion: 'success', head_sha: SHA };
+    },
+    sleep: clock.sleep, now: clock.now, pollMs: 10, timeoutMs: 1000,
+  });
+  assert.equal(result.verdict, 'pass');
+});
+
+test('runGate: retries do dispatch não consomem a janela noRunGraceMs', async () => {
+  const clock = fakeClock();
+  let attempts = 0;
+  let findCalls = 0;
+  const result = await runGate({
+    ref: 'master', expectSha: SHA,
+    // 3 falhas = 15s + 30s + 45s de espera de retry (90 s) > noRunGraceMs (60 s).
+    dispatch: async () => { attempts += 1; if (attempts < 4) throw new Error('boom'); },
+    findRun: async () => {
+      findCalls += 1;
+      return findCalls < 3 ? null : { id: 5, status: 'completed', conclusion: 'success', head_sha: SHA };
+    },
+    sleep: clock.sleep, now: clock.now, pollMs: 10000, timeoutMs: 60 * 60000,
+    noRunGraceMs: 60000, dispatchRetryMs: 15000,
+  });
+  assert.equal(attempts, 4);
+  assert.equal(result.verdict, 'pass');
+});
+
+test('runGate: janela sem run conta a partir do fim do dispatch', async () => {
+  const clock = fakeClock();
+  const result = await runGate({
+    ref: 'master', expectSha: SHA,
+    dispatch: async () => { await clock.sleep(30000); },
+    findRun: async () => null,
+    sleep: clock.sleep, now: clock.now, pollMs: 1000, timeoutMs: 60 * 60000, noRunGraceMs: 5000,
+  });
+  assert.equal(result.verdict, 'infra_blocked');
+  assert.ok(clock.now() >= 35000, `esperou só ${clock.now()}ms`);
+});
+
+test('runGate: timeout com run in_progress cancelado carrega aviso de resultado indeterminado', async () => {
+  const clock = fakeClock();
+  const cancelled = [];
+  const result = await runGate({
+    ref: 'master', expectSha: SHA,
+    dispatch: async () => {},
+    findRun: async () => ({ id: 11, status: 'in_progress', conclusion: null, head_sha: SHA }),
+    cancelRun: async (r) => { cancelled.push(r.id); },
+    sleep: clock.sleep, now: clock.now, pollMs: 1000, timeoutMs: 5000,
+  });
+  assert.equal(result.verdict, 'timeout');
+  assert.deepEqual(cancelled, [11]);
+  assert.match(result.warning, /in_progress.*indeterminado/);
+  const sup = applySuperseded(result, { expectSha: SHA, currentHeadSha: OTHER });
+  assert.equal(sup.verdict, 'superseded');
+  assert.equal(sup.exitCode, EXIT.PASS);
+  assert.ok(sup.warning);
+});
+
+test('runGate: timeout com run queued não gera aviso', async () => {
+  const clock = fakeClock();
+  const result = await runGate({
+    ref: 'master', expectSha: SHA,
+    dispatch: async () => {},
+    findRun: async () => ({ id: 12, status: 'queued', conclusion: null, head_sha: SHA }),
+    sleep: clock.sleep, now: clock.now, pollMs: 1000, timeoutMs: 5000,
+  });
+  assert.equal(result.verdict, 'timeout');
+  assert.equal(result.warning, undefined);
 });
