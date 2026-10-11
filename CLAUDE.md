@@ -174,7 +174,7 @@ fastlane beta                              # Deploy to Firebase App Distribution
 
 ### Tech Stack
 
-- **Kotlin 2.2.10** with **Jetpack Compose** (all new screens)
+- **Kotlin 2.4.20** with **Jetpack Compose** (all new screens)
 - **MVVM + Clean Architecture**
 - **Koin 4.1.1** for DI (migrated from Hilt in CMP Phase 1)
 - **Firebase** (Firestore, Auth, Storage, Cloud Functions v2, FCM, **App Check**)
@@ -187,11 +187,11 @@ fastlane beta                              # Deploy to Firebase App Distribution
 
 - **Current versions**: Web 1.53.0, Android 1.37.0 (build 72), iOS 1.6.1 (build 18), Functions 1.9.0. Source of truth: `versions.json`.
 - **SDK**: compileSdk 37, minSdk 24, targetSdk 35, JDK 21
-- **Kotlin**: 2.2.10
+- **Kotlin**: 2.4.20
 - **AGP**: 9.0.1
 - **Compose BOM**: 2024.09.00
 - **Compose Multiplatform**: 1.10.0
-- **KSP**: 2.2.10-2.0.2
+- **KSP**: 2.3.12 (KSP2; Room 2.8.5)
 - **Material 3**: Latest (adaptive navigation, pull-to-refresh)
 
 ---

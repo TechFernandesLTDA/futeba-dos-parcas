@@ -117,6 +117,22 @@
       "epic_issue": 4186
     },
     {
+      "nome": "Campo Grande",
+      "uf": "MS",
+      "rodada": 10,
+      "slug": "campo-grande",
+      "epic_issue": 4186,
+      "observacao": "coletor de cidades novas (Execução 18)"
+    },
+    {
+      "nome": "Teresina",
+      "uf": "PI",
+      "rodada": 10,
+      "slug": "teresina",
+      "epic_issue": 4186,
+      "observacao": "coletor de cidades novas (Execução 17)"
+    },
+    {
       "nome": "João Pessoa",
       "uf": "PB",
       "rodada": 9,
