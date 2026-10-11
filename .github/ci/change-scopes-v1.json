@@ -13,6 +13,7 @@
     ".claude/**",
     ".opencode/**",
     ".github/ISSUE_TEMPLATE/**",
+    "scripts/data/**",
     ".github/dependabot.yml",
     ".github/labels.yml",
     ".github/CODEOWNERS",
