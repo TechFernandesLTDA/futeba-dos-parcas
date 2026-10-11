@@ -1,5 +1,5 @@
 {
-  "observacao": "Manifesto das cidades pesquisadas por OSM/Overpass para os datasets de venues. Cada cidade gera um arquivo venues-<slug>.json em scripts/data/osm-candidates/ (CANDIDATOS: não são importados; servem para cruzar coordenadas/fontes com a pesquisa web nos datasets curados). 'rodada' segue o epic #4186 (R3 = RMC, R4-R8 = novas praças).",
+  "observacao": "Manifesto das cidades pesquisadas por OSM/Overpass para os datasets de venues. Cada cidade gera um arquivo venues-<slug>.json em scripts/data/osm-candidates/ (CANDIDATOS: não são importados; servem para cruzar coordenadas/fontes com a pesquisa web nos datasets curados). 'rodada' segue o epic #4186 (R3 = RMC, R4-R8 = novas praças, R9 = cidades novas do coletor; o validador aceita rodada 1..9).",
   "cidades": [
     {
       "nome": "São José dos Pinhais",
@@ -138,6 +138,14 @@
       "rodada": 9,
       "slug": "joao-pessoa",
       "epic_issue": 4186
+    },
+    {
+      "nome": "Manaus",
+      "uf": "AM",
+      "rodada": 9,
+      "slug": "manaus",
+      "epic_issue": 4186,
+      "observacao": "capital (município de Manaus/AM); coleta via coletor de cidades novas"
     },
     {
       "nome": "Natal",

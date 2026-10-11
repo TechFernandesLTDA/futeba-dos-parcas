@@ -1,0 +1,1758 @@
+{
+ "gerado_em": "2026-10-10",
+ "rodada": 9,
+ "cidade": "Manaus",
+ "uf": "AM",
+ "slug": "manaus",
+ "issue": 4186,
+ "fonte": {
+  "provedor": "OpenStreetMap (via Nominatim + Overpass API)",
+  "licenca": "ODbL 1.0 — https://www.openstreetmap.org/copyright",
+  "nominatim_url": "https://www.openstreetmap.org/relation/332493",
+  "nominatim_display_name": "Manaus, Amazonas, Região Norte, 69000-000, Brasil",
+  "overpass_mirror": "https://overpass-api.de/api/interpreter",
+  "overpass_query": "[out:json][timeout:180];\narea(3600332493)->.a;\n(\n  node[\"leisure\"=\"pitch\"](area.a);\n  way[\"leisure\"=\"pitch\"](area.a);\n  relation[\"leisure\"=\"pitch\"](area.a);\n  node[\"leisure\"=\"sports_centre\"](area.a);\n  way[\"leisure\"=\"sports_centre\"](area.a);\n);\nout body center meta;",
+  "osm_base_timestamp": "2026-10-10T07:20:36Z"
+ },
+ "coleta": {
+  "data": "2026-10-10",
+  "ferramenta": "scripts/data/build-venues-osm.mjs",
+  "finalidade": "dataset curado de quadras para importação DRAFT (revisão humana antes de publicar)"
+ },
+ "estatisticas": {
+  "candidatos_osm": 287,
+  "sem_nome": 166,
+  "institucional": 3,
+  "acesso_restrito": 3,
+  "amenity_descartada": 0,
+  "sem_sinal_de_futebol": 71,
+  "other_excluded": 0,
+  "sem_coordenada": 0,
+  "mantidos": 42,
+  "duplicatas_removidas": 2
+ },
+ "venues": [
+  {
+   "nome": "Arena Campo do Roma",
+   "endereco": {
+    "rua": "Rua Campo do Roma",
+    "numero": null,
+    "bairro": "Novo Aleixo",
+    "cidade": "Manaus",
+    "uf": "AM",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/306161231",
+     "dado": "OpenStreetMap (way/306161231): sport=soccer, Rua Campo do Roma, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -3.0521088,
+    "lon": -59.953189
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 306161231,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Arena Juruá",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Manaus",
+    "uf": "AM",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1237349332",
+     "dado": "OpenStreetMap (way/1237349332): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -3.0653728,
+    "lon": -60.0364053
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1237349332,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Associação Amigos da Receita",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Manaus",
+    "uf": "AM",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/167925504",
+     "dado": "OpenStreetMap (way/167925504): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -2.9869284,
+    "lon": -60.0129483
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 167925504,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Bate Bola Society",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Manaus",
+    "uf": "AM",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "concreto (OSM: surface=concrete)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1387400941",
+     "dado": "OpenStreetMap (way/1387400941): sport=futsal, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -3.0914527,
+    "lon": -60.0423907
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1387400941,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo da Betânia 1",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Manaus",
+    "uf": "AM",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/682972011",
+     "dado": "OpenStreetMap (way/682972011): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -3.1313089,
+    "lon": -59.9963776
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 682972011,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo da Betânia 2",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Manaus",
+    "uf": "AM",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/682972012",
+     "dado": "OpenStreetMap (way/682972012): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -3.1308609,
+    "lon": -59.9955053
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 682972012,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo da Lagoa Azul",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Manaus",
+    "uf": "AM",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1279615946",
+     "dado": "OpenStreetMap (way/1279615946): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -3.1174149,
+    "lon": -59.9456618
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1279615946,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo da Rua São Luiz",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Manaus",
+    "uf": "AM",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1182082478",
+     "dado": "OpenStreetMap (way/1182082478): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -3.0292426,
+    "lon": -59.9249429
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1182082478,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo de Areia do Aruanã",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Manaus",
+    "uf": "AM",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/919778365",
+     "dado": "OpenStreetMap (way/919778365): sport=soccer;volleyball, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -3.0971129,
+    "lon": -60.0531314
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 919778365,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo De Futebol",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Manaus",
+    "uf": "AM",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/node/2942531711",
+     "dado": "OpenStreetMap (node/2942531711): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -3.0506645,
+    "lon": -59.9659863
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "node",
+    "id": 2942531711,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo de Futebol da Liga Desportiva do Amazonas",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Manaus",
+    "uf": "AM",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/node/3109789283",
+     "dado": "OpenStreetMap (node/3109789283): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -3.0461681,
+    "lon": -59.9504235
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "node",
+    "id": 3109789283,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo de Futebol do Cinzão",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Manaus",
+    "uf": "AM",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1098012807",
+     "dado": "OpenStreetMap (way/1098012807): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -3.1091945,
+    "lon": -59.9788091
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1098012807,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo De Futebol Do Núcleo Quinze",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Manaus",
+    "uf": "AM",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/803414046",
+     "dado": "OpenStreetMap (way/803414046): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -3.0469678,
+    "lon": -59.9776375
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 803414046,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo De Futebol Do Núcleo Vinte E Três",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Manaus",
+    "uf": "AM",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/node/2942553421",
+     "dado": "OpenStreetMap (node/2942553421): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -3.033019,
+    "lon": -59.958283
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "node",
+    "id": 2942553421,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo De Futebol Do Núcleo Vinte E Um",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Manaus",
+    "uf": "AM",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/node/2942544920",
+     "dado": "OpenStreetMap (node/2942544920): nome=\"Campo De Futebol Do Núcleo Vinte E Um\", sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "baixa",
+   "coordenadas": {
+    "lat": -3.0374438,
+    "lon": -59.9596777
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "node",
+    "id": 2942544920,
+    "sinal_futebol": "nome"
+   }
+  },
+  {
+   "nome": "Campo de futebol raio do sol",
+   "endereco": {
+    "rua": "Rua Araguaia",
+    "numero": null,
+    "bairro": null,
+    "cidade": "Manaus",
+    "uf": "AM",
+    "cep": "69097-035"
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/node/5317043721",
+     "dado": "OpenStreetMap (node/5317043721): sport=soccer, Rua Araguaia, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -3.0079475,
+    "lon": -59.9664627
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "node",
+    "id": 5317043721,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo de Futebol São Cristovão",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Manaus",
+    "uf": "AM",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/290974287",
+     "dado": "OpenStreetMap (way/290974287): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -3.0719486,
+    "lon": -59.9437142
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 290974287,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo de Futebol Sintético",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Manaus",
+    "uf": "AM",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/416147501",
+     "dado": "OpenStreetMap (way/416147501): nome=\"Campo de Futebol Sintético\", sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "baixa",
+   "coordenadas": {
+    "lat": -3.0836441,
+    "lon": -60.0091843
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 416147501,
+    "sinal_futebol": "nome"
+   }
+  },
+  {
+   "nome": "Campo de Futebol Teixerão",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Manaus",
+    "uf": "AM",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/166761655",
+     "dado": "OpenStreetMap (way/166761655): nome=\"Campo de Futebol Teixerão\", sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "baixa",
+   "coordenadas": {
+    "lat": -3.0455114,
+    "lon": -59.926555
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 166761655,
+    "sinal_futebol": "nome"
+   }
+  },
+  {
+   "nome": "Campo do Areal",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Manaus",
+    "uf": "AM",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1322151785",
+     "dado": "OpenStreetMap (way/1322151785): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -3.1173136,
+    "lon": -59.9484712
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1322151785,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Bolota",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Manaus",
+    "uf": "AM",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/166308126",
+     "dado": "OpenStreetMap (way/166308126): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -3.0697071,
+    "lon": -60.0485038
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 166308126,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Buracão",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Manaus",
+    "uf": "AM",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/493368943",
+     "dado": "OpenStreetMap (way/493368943): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -3.0742055,
+    "lon": -60.0576591
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 493368943,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Cophasa",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Manaus",
+    "uf": "AM",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/259229956",
+     "dado": "OpenStreetMap (way/259229956): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -3.0849278,
+    "lon": -60.058293
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 259229956,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Estrela",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Manaus",
+    "uf": "AM",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/node/2934701165",
+     "dado": "OpenStreetMap (node/2934701165): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -3.102038,
+    "lon": -60.062338
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "node",
+    "id": 2934701165,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Maracambira",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Manaus",
+    "uf": "AM",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1322151856",
+     "dado": "OpenStreetMap (way/1322151856): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -3.1190174,
+    "lon": -59.9420451
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1322151856,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Mijacão",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Manaus",
+    "uf": "AM",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1322151755",
+     "dado": "OpenStreetMap (way/1322151755): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -3.1168037,
+    "lon": -59.9510533
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1322151755,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Nacional",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Manaus",
+    "uf": "AM",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/node/2984454900",
+     "dado": "OpenStreetMap (node/2984454900): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -3.0898884,
+    "lon": -59.9891568
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "node",
+    "id": 2984454900,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Sulamérica",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Manaus",
+    "uf": "AM",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/43290968",
+     "dado": "OpenStreetMap (way/43290968): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -3.123894,
+    "lon": -60.0360636
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 43290968,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Vermelhão",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Manaus",
+    "uf": "AM",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1105901409",
+     "dado": "OpenStreetMap (way/1105901409): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -3.1212527,
+    "lon": -59.944321
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1105901409,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Francisco Sales",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Manaus",
+    "uf": "AM",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/172341499",
+     "dado": "OpenStreetMap (way/172341499): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -3.05575,
+    "lon": -60.0293061
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 172341499,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Rio Negro e Solimões",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Manaus",
+    "uf": "AM",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1105901296",
+     "dado": "OpenStreetMap (way/1105901296): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -3.1261038,
+    "lon": -59.9363346
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1105901296,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Centro Social Urbano do Alvorada",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Manaus",
+    "uf": "AM",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/493368936",
+     "dado": "OpenStreetMap (way/493368936): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -3.0796443,
+    "lon": -60.0509177
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 493368936,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Cidade Nova Sete Society",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Manaus",
+    "uf": "AM",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/node/2942601536",
+     "dado": "OpenStreetMap (node/2942601536): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -3.0290763,
+    "lon": -59.9577626
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "node",
+    "id": 2942601536,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Complexo Esportivo Do Núcleo Nove",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Manaus",
+    "uf": "AM",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/762272828",
+     "dado": "OpenStreetMap (way/762272828): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -3.0293021,
+    "lon": -59.9614303
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 762272828,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "CT Nacional",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Manaus",
+    "uf": "AM",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/166856770",
+     "dado": "OpenStreetMap (way/166856770): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -3.0899106,
+    "lon": -59.9891873
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 166856770,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Distrito da Bola",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Manaus",
+    "uf": "AM",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/230980936",
+     "dado": "OpenStreetMap (way/230980936): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -3.1357848,
+    "lon": -59.986387
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 230980936,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Estádio da Colina",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Manaus",
+    "uf": "AM",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/485974665",
+     "dado": "OpenStreetMap (way/485974665): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -3.1216189,
+    "lon": -60.03771
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 485974665,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "FEFF - Campo de Atividades Esportivas",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Manaus",
+    "uf": "AM",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/163237718",
+     "dado": "OpenStreetMap (way/163237718): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -3.0984282,
+    "lon": -59.9758967
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 163237718,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Futsal",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Manaus",
+    "uf": "AM",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/416147583",
+     "dado": "OpenStreetMap (way/416147583): nome=\"Futsal\", sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "baixa",
+   "coordenadas": {
+    "lat": -3.0834016,
+    "lon": -60.0086115
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 416147583,
+    "sinal_futebol": "nome"
+   }
+  },
+  {
+   "nome": "Futvôlei",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Manaus",
+    "uf": "AM",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/416147502",
+     "dado": "OpenStreetMap (way/416147502): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -3.0844531,
+    "lon": -60.0097075
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 416147502,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra Coberta de futsal",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Manaus",
+    "uf": "AM",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/513679431",
+     "dado": "OpenStreetMap (way/513679431): nome=\"Quadra Coberta de futsal\", sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "baixa",
+   "coordenadas": {
+    "lat": -3.0832183,
+    "lon": -60.0083936
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 513679431,
+    "sinal_futebol": "nome"
+   }
+  },
+  {
+   "nome": "Quadra de Futebol Oésio de Melo",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Manaus",
+    "uf": "AM",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/node/2979399745",
+     "dado": "OpenStreetMap (node/2979399745): nome=\"Quadra de Futebol Oésio de Melo\", sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "baixa",
+   "coordenadas": {
+    "lat": -3.1193197,
+    "lon": -59.9826717
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "node",
+    "id": 2979399745,
+    "sinal_futebol": "nome"
+   }
+  }
+ ]
+}

@@ -1,0 +1,134 @@
+{
+  "gerado_em": "2026-10-10",
+  "rodada": 9,
+  "slug": "manaus",
+  "issue": 4186,
+  "titulo": "Manaus/AM (R9)",
+  "coleta": {
+    "data": "2026-10-10",
+    "ferramentas": "OpenStreetMap/Overpass (scripts/data/build-venues-osm.mjs, 42 candidatos, nenhum importado sem fonte de locação) + pesquisa web (WebQuadras, sites oficiais, Buser) + ficha do Maps não consultada (navegador indisponível nesta execução)",
+    "regra": "apenas dados públicos verificáveis; campos sem fonte = null; todo item tem >=1 fonte com URL; entra no app como DRAFT/não verificado"
+  },
+  "cobertura": {
+    "Manaus": 3
+  },
+  "venues": [
+    {
+      "nome": "Arena GG",
+      "endereco": {
+        "rua": "Av. Autaz Mirim",
+        "numero": "9777",
+        "bairro": "Jorge Teixeira",
+        "cidade": "Manaus",
+        "uf": "AM",
+        "cep": "69088-245"
+      },
+      "telefone": "(92) 99100-6679",
+      "whatsapp": null,
+      "site": "https://www.webquadras.com.br/arenagg",
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": "2 campos de futebol society sintético (descobertos) + 1 quadra de areia poliesportiva; a página também cita 'Avenida Itaúba nº 10' no texto institucional, divergente do endereço de contato: conferir antes de publicar",
+      "tipo_piso": "grama sintética",
+      "horarios": {
+        "observacao": "Segunda a domingo 00:00-24:00 (WebQuadras)"
+      },
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.webquadras.com.br/arenagg",
+          "dado": "página de reserva WebQuadras: texto 'trabalhamos com locação de campo de futebol society', endereço de contato, telefone, estrutura (2 society + 1 areia) e horário de funcionamento"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_aluguel",
+      "origem": "web"
+    },
+    {
+      "nome": "Arena Olímpico",
+      "endereco": {
+        "rua": "Av. Constantino Nery",
+        "numero": "1111",
+        "bairro": "São Geraldo",
+        "cidade": "Manaus",
+        "uf": "AM",
+        "cep": null
+      },
+      "telefone": "(92) 99206-1541",
+      "whatsapp": "(92) 99206-1541",
+      "site": "https://www.arenaolimpico.com.br/",
+      "instagram": "https://www.instagram.com/arena_olimpico/",
+      "preco_hora": null,
+      "qtd_quadras": 3,
+      "detalhe_quadras": "3 campos de futebol society com grama sintética (fonte: site oficial, 'São três campos de futebol society'); funciona dentro do Olímpico Clube",
+      "tipo_piso": "grama sintética",
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.arenaolimpico.com.br/contato/",
+          "dado": "endereço Av. Constantino Nery, 1111 - São Geraldo, Manaus - AM; WhatsApp (92) 99206-1541; e-mail de contato"
+        },
+        {
+          "url": "https://www.arenaolimpico.com.br/quem-somos/",
+          "dado": "autodescrição 'somos mais do que uma simples locadora de quadras society'; campos de grama sintética"
+        },
+        {
+          "url": "https://www.arenaolimpico.com.br/",
+          "dado": "3 campos de futebol society; reserva online; estacionamento e vestiários"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_aluguel",
+      "origem": "web"
+    },
+    {
+      "nome": "Mumu Society Torquato",
+      "endereco": {
+        "rua": "Av. Torquato Tapajós",
+        "numero": "361",
+        "bairro": "Flores",
+        "cidade": "Manaus",
+        "uf": "AM",
+        "cep": "69058-830"
+      },
+      "telefone": "(92) 98419-1505",
+      "whatsapp": null,
+      "site": "https://webquadras.com.br/mumusociety",
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": "4 campos de futebol society com grama sintética; 3 quadras de areia poliesportivas (fonte: WebQuadras); localizado dentro do Clube Municipal",
+      "tipo_piso": "grama sintética",
+      "horarios": {
+        "observacao": "Segunda a sábado 08:00-01:00 (do dia seguinte); domingo 08:00-14:00 (WebQuadras, sujeito a feriados)"
+      },
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://webquadras.com.br/mumusociety",
+          "dado": "página de reserva WebQuadras: endereço Av. Torquato Tapajós, 361, Flores, CEP 69.058-830; telefone; 4 campos society sintéticos; horário de funcionamento; CNPJ informado"
+        }
+      ],
+      "confidence": "baixa",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    }
+  ]
+}
