@@ -1,0 +1,100 @@
+{
+  "gerado_em": "2026-10-10",
+  "rodada": 9,
+  "slug": "natal",
+  "issue": 4186,
+  "titulo": "Natal (coletor de cidades novas, execução 15)",
+  "coleta": {
+    "data": "2026-10-10",
+    "ferramentas": "busca web + extração de fichas do diretório Locais do Brasil; OSM (build-venues-osm.mjs) apenas como candidatos",
+    "regra": "apenas dados públicos verificáveis; campos sem fonte = null; todo item tem >=1 fonte com URL; entra no app como DRAFT/não verificado"
+  },
+  "cobertura": {
+    "Natal": 2
+  },
+  "venues": [
+    {
+      "nome": "Arena Joan Society, Quintas",
+      "endereco": {
+        "rua": "Rua Marcos Cavalcante",
+        "numero": null,
+        "bairro": "Quintas",
+        "cidade": "Natal",
+        "uf": "RN",
+        "cep": "59035-050"
+      },
+      "telefone": "(84) 98816-0642",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": {
+        "segunda": "05:00-23:59",
+        "terca": "05:00-23:59",
+        "quarta": "05:00-23:59",
+        "quinta": "05:00-23:59",
+        "sexta": "05:00-23:59",
+        "sabado": "05:00-23:59",
+        "domingo": "05:00-23:59",
+        "observacao": "fonte diz 05h às 00h; fim registrado como 23:59 (limite do formato)"
+      },
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.locaisdobrasil.com.br/encontre/quadra-de-esportes/natal-rn/arena-joan-society-quintas/6286ccec911b8129b7e801e2",
+          "dado": "ficha no diretório Locais do Brasil: endereço (Rua Marcos Cavalcante, Quintas, CEP 59035-050), telefone (84) 98816-0642, horário 05h-00h, categoria quadra de esportes"
+        }
+      ],
+      "confidence": "baixa",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    },
+    {
+      "nome": "Arena Gol - Projeto2toke Escolinha de Futebol",
+      "endereco": {
+        "rua": "Travessa Engenheiro João Hélio",
+        "numero": "13",
+        "bairro": "Planalto",
+        "cidade": "Natal",
+        "uf": "RN",
+        "cep": "59073-070"
+      },
+      "telefone": "(84) 98731-0194",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.locaisdobrasil.com.br/encontre/quadra-de-esportes/natal-rn/arena-gol-projeto2toke-escolinha-de-futebol/64662fb90c7502265dcd379a",
+          "dado": "ficha no diretório Locais do Brasil: endereço, telefone (84) 98731-0194 e descrição do próprio estabelecimento com texto explícito 'Locacao de campo society'"
+        },
+        {
+          "url": "https://www.locaisdobrasil.com.br/encontre/quadra-de-esportes/natal-rn/society-arena-gol-planalto/6286ccdd911b8129b7e801da",
+          "dado": "segunda ficha do mesmo estabelecimento no diretório Locais do Brasil ('SOCIETY ARENA GOL PLANALTO'): mesmo número (13), mesmo CEP 59073-070 e mesma rua (Rua Eng. João Hélio Alves Rocha = Travessa Eng. João Hélio); traz outro telefone, (84) 98890-5772, e horário 24h, não usados por divergirem da ficha principal. Consolidado na revisão do PR #4353 para não duplicar o venue."
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_aluguel",
+      "origem": "web"
+    }
+  ]
+}

@@ -31,7 +31,6 @@ const WEB_XP_ACTION_VALUES = {
   MONTHLY_STREAK_3: xpConstants.retentionBonuses.MONTHLY_STREAK_3,
   GOALKEEPER_GOAL: xpConstants.performanceBonuses.GOALKEEPER_GOAL,
   FAIR_PLAY: xpConstants.performanceBonuses.FAIR_PLAY,
-  BEST_GK: 25,
   BOLA_MURCHA: xpConstants.xpActions.WORST_PLAYER,
 } as const;
 
