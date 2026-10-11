@@ -1,0 +1,4511 @@
+{
+ "gerado_em": "2026-10-10",
+ "rodada": 10,
+ "cidade": "Teresina",
+ "uf": "PI",
+ "slug": "teresina",
+ "issue": 4186,
+ "fonte": {
+  "provedor": "OpenStreetMap (via Nominatim + Overpass API)",
+  "licenca": "ODbL 1.0 — https://www.openstreetmap.org/copyright",
+  "nominatim_url": "https://www.openstreetmap.org/relation/302749",
+  "nominatim_display_name": "Teresina, Piauí, Região Nordeste, Brasil",
+  "overpass_mirror": "https://overpass-api.de/api/interpreter",
+  "overpass_query": "[out:json][timeout:180];\narea(3600302749)->.a;\n(\n  node[\"leisure\"=\"pitch\"](area.a);\n  way[\"leisure\"=\"pitch\"](area.a);\n  relation[\"leisure\"=\"pitch\"](area.a);\n  node[\"leisure\"=\"sports_centre\"](area.a);\n  way[\"leisure\"=\"sports_centre\"](area.a);\n);\nout body center meta;",
+  "osm_base_timestamp": "2026-10-10T10:50:14Z"
+ },
+ "coleta": {
+  "data": "2026-10-10",
+  "ferramenta": "scripts/data/build-venues-osm.mjs",
+  "finalidade": "dataset curado de quadras para importação DRAFT (revisão humana antes de publicar)"
+ },
+ "estatisticas": {
+  "candidatos_osm": 669,
+  "sem_nome": 477,
+  "institucional": 1,
+  "acesso_restrito": 3,
+  "amenity_descartada": 0,
+  "sem_sinal_de_futebol": 77,
+  "other_excluded": 0,
+  "sem_coordenada": 0,
+  "mantidos": 109,
+  "duplicatas_removidas": 2
+ },
+ "venues": [
+  {
+   "nome": "Arena Cavalaria da PM",
+   "endereco": {
+    "rua": "Avenida São Francisco",
+    "numero": "2802",
+    "bairro": "Extrema",
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": "64083-080"
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/596162907",
+     "dado": "OpenStreetMap (way/596162907): sport=soccer;football, Avenida São Francisco, 2802, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "alta",
+   "coordenadas": {
+    "lat": -5.1197155,
+    "lon": -42.7619959
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 596162907,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Arena Colorado",
+   "endereco": {
+    "rua": "Rua das Acerolas",
+    "numero": null,
+    "bairro": "Colorado",
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/node/12264597036",
+     "dado": "OpenStreetMap (node/12264597036): sport=soccer;volleyball, Rua das Acerolas, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.0941842,
+    "lon": -42.7358702
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "node",
+    "id": 12264597036,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Arena da Villa Futebol Society",
+   "endereco": {
+    "rua": "Rua Caçapava",
+    "numero": null,
+    "bairro": "Vila do Avião",
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1320484380",
+     "dado": "OpenStreetMap (way/1320484380): sport=soccer, Rua Caçapava, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.0109545,
+    "lon": -42.7864105
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 1320484380,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Arena Prof. João Gonçalves de Oliveira",
+   "endereco": {
+    "rua": "Avenida Presidente Kennedy",
+    "numero": null,
+    "bairro": "Socopo",
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama sintética (OSM: surface=artificial_turf)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1322451924",
+     "dado": "OpenStreetMap (way/1322451924): sport=soccer, Avenida Presidente Kennedy, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -4.9985382,
+    "lon": -42.7590173
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 1322451924,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Bom de Bola",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/743080191",
+     "dado": "OpenStreetMap (way/743080191): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.0886272,
+    "lon": -42.7951705
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 743080191,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campinho do Frei Damião",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama sintética (OSM: surface=artificial_turf)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1333672278",
+     "dado": "OpenStreetMap (way/1333672278): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.0924999,
+    "lon": -42.7336184
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 1333672278,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campinho Planalto",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1094526650",
+     "dado": "OpenStreetMap (way/1094526650): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.0601277,
+    "lon": -42.7723546
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 1094526650,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo comunitário",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/682334248",
+     "dado": "OpenStreetMap (way/682334248): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.035633,
+    "lon": -42.827688
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 682334248,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Conj Redenção",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1428409133",
+     "dado": "OpenStreetMap (way/1428409133): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.1207815,
+    "lon": -42.7932447
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 1428409133,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo da Baixada",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/244088688",
+     "dado": "OpenStreetMap (way/244088688): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.1424662,
+    "lon": -42.7920534
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 244088688,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo da Vila Operária",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/253412566",
+     "dado": "OpenStreetMap (way/253412566): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.0768008,
+    "lon": -42.8190014
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 253412566,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo de futebol",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/888282237",
+     "dado": "OpenStreetMap (way/888282237): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -4.9628317,
+    "lon": -42.768558
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 888282237,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo de Futebol - Deus Quer",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/697616746",
+     "dado": "OpenStreetMap (way/697616746): nome=\"Campo de Futebol - Deus Quer\", sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "baixa",
+   "coordenadas": {
+    "lat": -5.1211277,
+    "lon": -42.7053425
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 697616746,
+    "sinal_futebol": "nome"
+   }
+  },
+  {
+   "nome": "Campo de Futebol Gayosão",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/656528637",
+     "dado": "OpenStreetMap (way/656528637): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -4.9793705,
+    "lon": -42.6511627
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 656528637,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo de Futebol Jóquei Club",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/683259198",
+     "dado": "OpenStreetMap (way/683259198): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.078601,
+    "lon": -42.7888011
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 683259198,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo de Futebol Municipal APCDEP",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama natural (OSM: surface=grass)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/888277569",
+     "dado": "OpenStreetMap (way/888277569): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.0226475,
+    "lon": -42.7868099
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 888277569,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo de Futebol Serra Dourada",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama natural (OSM: surface=grass)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1295104003",
+     "dado": "OpenStreetMap (way/1295104003): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -4.99687,
+    "lon": -42.7402195
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 1295104003,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Taquari",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/684263438",
+     "dado": "OpenStreetMap (way/684263438): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.0463305,
+    "lon": -42.7449767
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 684263438,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo e futebol de areia",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/682334227",
+     "dado": "OpenStreetMap (way/682334227): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.034392,
+    "lon": -42.8197786
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 682334227,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Oficial - Cerâmica Cil",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/888422622",
+     "dado": "OpenStreetMap (way/888422622): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.2865891,
+    "lon": -42.7973276
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 888422622,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Oficial - Res. Dignidade",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/888422628",
+     "dado": "OpenStreetMap (way/888422628): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.1697842,
+    "lon": -42.7925841
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 888422628,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Oficial Assis Pinisilina",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/888422629",
+     "dado": "OpenStreetMap (way/888422629): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.0923086,
+    "lon": -42.7753522
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 888422629,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Oficial Carlos Lima",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/888422631",
+     "dado": "OpenStreetMap (way/888422631): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.1091961,
+    "lon": -42.7649769
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 888422631,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Oficial do Conj Francisco Marreirosq",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/888422635",
+     "dado": "OpenStreetMap (way/888422635): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.1158446,
+    "lon": -42.7494904
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 888422635,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Oficial do Esplanada",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/888212315",
+     "dado": "OpenStreetMap (way/888212315): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.1936348,
+    "lon": -42.7626492
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 888212315,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Oficial Emanuel Evangelista",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/888432006",
+     "dado": "OpenStreetMap (way/888432006): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.1083164,
+    "lon": -42.7337119
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 888432006,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Oficial Estevão",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/888432013",
+     "dado": "OpenStreetMap (way/888432013): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.0547448,
+    "lon": -42.7660801
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 888432013,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Oficial Irinel Oliveira",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/888277577",
+     "dado": "OpenStreetMap (way/888277577): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.0087061,
+    "lon": -42.7748321
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 888277577,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Oficial Vila da Glória",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/888432022",
+     "dado": "OpenStreetMap (way/888432022): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.1900871,
+    "lon": -42.7485473
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 888432022,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Sitricom",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/277524706",
+     "dado": "OpenStreetMap (way/277524706): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.0202687,
+    "lon": -42.8135881
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 277524706,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Society - Vila Santa Clara",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/888432029",
+     "dado": "OpenStreetMap (way/888432029): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.1751292,
+    "lon": -42.7618223
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 888432029,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Society Alberto Hidd",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/888432030",
+     "dado": "OpenStreetMap (way/888432030): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.1404596,
+    "lon": -42.7479618
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 888432030,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Society Angelim",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/888432032",
+     "dado": "OpenStreetMap (way/888432032): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.1739661,
+    "lon": -42.7947288
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 888432032,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Society Betinho",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/888212310",
+     "dado": "OpenStreetMap (way/888212310): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.1640587,
+    "lon": -42.7878422
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 888212310,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Society Cabo Gimarães",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/581007268",
+     "dado": "OpenStreetMap (way/581007268): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.025923,
+    "lon": -42.8102095
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 581007268,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Society Cidade Nova",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/888432040",
+     "dado": "OpenStreetMap (way/888432040): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.1063141,
+    "lon": -42.7896315
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 888432040,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Society Clemiltão",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/888394209",
+     "dado": "OpenStreetMap (way/888394209): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.0424496,
+    "lon": -42.7465864
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 888394209,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Society da Ampliação do Parque Piauí",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/643924969",
+     "dado": "OpenStreetMap (way/643924969): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.1434087,
+    "lon": -42.7802437
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 643924969,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Society da Av.Marechal Castelo Branco",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/886468732",
+     "dado": "OpenStreetMap (way/886468732): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.0699607,
+    "lon": -42.8046298
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 886468732,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Society da Integração",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/888432041",
+     "dado": "OpenStreetMap (way/888432041): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.1580809,
+    "lon": -42.77241
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 888432041,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Society da Nova Teresina",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/888432042",
+     "dado": "OpenStreetMap (way/888432042): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.0156176,
+    "lon": -42.7953015
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 888432042,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Society da Tabuleta",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/884180300",
+     "dado": "OpenStreetMap (way/884180300): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.1278543,
+    "lon": -42.8128612
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 884180300,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Society da Vila Maria",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/888394208",
+     "dado": "OpenStreetMap (way/888394208): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.0438738,
+    "lon": -42.7488203
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 888394208,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Society da Vila Paraíso",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/781332891",
+     "dado": "OpenStreetMap (way/781332891): nome=\"Campo Society da Vila Paraíso\", sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "baixa",
+   "coordenadas": {
+    "lat": -5.1521946,
+    "lon": -42.7818511
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 781332891,
+    "sinal_futebol": "nome"
+   }
+  },
+  {
+   "nome": "Campo Society da Vila Tiradentes",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/888432043",
+     "dado": "OpenStreetMap (way/888432043): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.1420009,
+    "lon": -42.7718678
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 888432043,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Society Dagmar Mazza",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/888432044",
+     "dado": "OpenStreetMap (way/888432044): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.1590736,
+    "lon": -42.7677681
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 888432044,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Society do Artesão",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/888432046",
+     "dado": "OpenStreetMap (way/888432046): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.0360691,
+    "lon": -42.8325782
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 888432046,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Society do Bela Vista III",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/888432047",
+     "dado": "OpenStreetMap (way/888432047): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.1342085,
+    "lon": -42.7719481
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 888432047,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Society do CAIC",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/888432048",
+     "dado": "OpenStreetMap (way/888432048): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.1024436,
+    "lon": -42.7428982
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 888432048,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo society do Lot Cidade Verde",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/888432049",
+     "dado": "OpenStreetMap (way/888432049): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.1172165,
+    "lon": -42.7522503
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 888432049,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Society do Mafrense",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/888234560",
+     "dado": "OpenStreetMap (way/888234560): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.044182,
+    "lon": -42.8352007
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 888234560,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Society do Monte Verde",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/888432050",
+     "dado": "OpenStreetMap (way/888432050): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -4.9976478,
+    "lon": -42.8212624
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 888432050,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Society do Parque Brasil",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/888432051",
+     "dado": "OpenStreetMap (way/888432051): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.0139057,
+    "lon": -42.8279822
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 888432051,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Society do Real Cpagre",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama natural (OSM: surface=grass)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/474615273",
+     "dado": "OpenStreetMap (way/474615273): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.0530228,
+    "lon": -42.8190962
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 474615273,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Society do Santa Sofia",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/888422613",
+     "dado": "OpenStreetMap (way/888422613): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.0281806,
+    "lon": -42.8062927
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 888422613,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Society Dom Avelar",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/888432052",
+     "dado": "OpenStreetMap (way/888432052): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.0587142,
+    "lon": -42.7307637
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 888432052,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Society Joaquim Filho",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/784360124",
+     "dado": "OpenStreetMap (way/784360124): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.1362678,
+    "lon": -42.800194
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 784360124,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Society José de Arimateia da S.Oliveira",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/888432053",
+     "dado": "OpenStreetMap (way/888432053): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -4.9876441,
+    "lon": -42.8292939
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 888432053,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Society José Paulino Duarte",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/888432054",
+     "dado": "OpenStreetMap (way/888432054): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.1153995,
+    "lon": -42.7638317
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 888432054,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Society José Rocha",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/682560334",
+     "dado": "OpenStreetMap (way/682560334): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.0534166,
+    "lon": -42.8086661
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 682560334,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Society Loteamento Porto Alegre",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/888432056",
+     "dado": "OpenStreetMap (way/888432056): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.1863033,
+    "lon": -42.7546617
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 888432056,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Society Maria da Consolação",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/768689264",
+     "dado": "OpenStreetMap (way/768689264): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.1351816,
+    "lon": -42.7758319
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 768689264,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Society Morada do Sol",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/604091215",
+     "dado": "OpenStreetMap (way/604091215): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.0716245,
+    "lon": -42.7605499
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 604091215,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Society Murilo Resende",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/888432058",
+     "dado": "OpenStreetMap (way/888432058): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.0909295,
+    "lon": -42.7866503
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 888432058,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Society Ogmar Monteiro",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/887986053",
+     "dado": "OpenStreetMap (way/887986053): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.0589697,
+    "lon": -42.7398445
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 887986053,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Society Palmeirão",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/887551024",
+     "dado": "OpenStreetMap (way/887551024): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.0556638,
+    "lon": -42.8345812
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 887551024,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Society Parque Mão Santa",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/822069901",
+     "dado": "OpenStreetMap (way/822069901): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.0528955,
+    "lon": -42.7465992
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 822069901,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Society Parque Sul",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/888297113",
+     "dado": "OpenStreetMap (way/888297113): nome=\"Campo Society Parque Sul\", sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "baixa",
+   "coordenadas": {
+    "lat": -5.1511782,
+    "lon": -42.7547199
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 888297113,
+    "sinal_futebol": "nome"
+   }
+  },
+  {
+   "nome": "Campo Society Raul Lopes",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama natural (OSM: surface=grass)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/683545170",
+     "dado": "OpenStreetMap (way/683545170): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.0718047,
+    "lon": -42.8007928
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 683545170,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Society Recanto dos Pássaros",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/888189025",
+     "dado": "OpenStreetMap (way/888189025): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.1184968,
+    "lon": -42.7106059
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 888189025,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Society Ribeiro Magalhães",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/888463819",
+     "dado": "OpenStreetMap (way/888463819): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.0296386,
+    "lon": -42.8183858
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 888463819,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Society Salvador",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/887359085",
+     "dado": "OpenStreetMap (way/887359085): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.0694785,
+    "lon": -42.8177816
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 887359085,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Society Tácito de Sousa Aguiar (Tassuzão)",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/888463823",
+     "dado": "OpenStreetMap (way/888463823): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -4.9806886,
+    "lon": -42.8222434
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 888463823,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Centro Esportivo Almeidão",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/518948880",
+     "dado": "OpenStreetMap (way/518948880): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.1004196,
+    "lon": -42.7615017
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 518948880,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Circulo Militar de Teresina",
+   "endereco": {
+    "rua": "Rua Acre",
+    "numero": "380",
+    "bairro": "Frei Serafim",
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": "64014-047"
+   },
+   "telefone": "+55 86 3221 5354",
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": {
+    "segunda": "08:00-18:00",
+    "terca": "08:00-18:00",
+    "quarta": "08:00-18:00",
+    "quinta": "08:00-18:00",
+    "sexta": "08:00-18:00"
+   },
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/761323058",
+     "dado": "OpenStreetMap (way/761323058): sport=swimming;basketball;soccer, Rua Acre, 380, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "alta",
+   "coordenadas": {
+    "lat": -5.0843013,
+    "lon": -42.7972428
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 761323058,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Clube da APOCEPI",
+   "endereco": {
+    "rua": "Avenida Presidente Kennedy",
+    "numero": null,
+    "bairro": "Pedra Mole",
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1303778576",
+     "dado": "OpenStreetMap (way/1303778576): sport=soccer;swimming;volleyball, Avenida Presidente Kennedy, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.0261115,
+    "lon": -42.7710386
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 1303778576,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Clube da Ordem dos Advogados do Brasil (OAB)",
+   "endereco": {
+    "rua": "Avenida Professor Camilo Filho",
+    "numero": "930",
+    "bairro": "Gurupi",
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": "64091095"
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1500327293",
+     "dado": "OpenStreetMap (way/1500327293): sport=soccer;swimming;athletics;volleyball;multi, Avenida Professor Camilo Filho, 930, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "alta",
+   "coordenadas": {
+    "lat": -5.0783055,
+    "lon": -42.7298143
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 1500327293,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Complexo Esportivo Balneário Curva São Paulo",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/888463842",
+     "dado": "OpenStreetMap (way/888463842): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.1103278,
+    "lon": -42.7307826
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 888463842,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Complexo Esportivo Horácio Parente",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama natural (OSM: surface=grass)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/888432025",
+     "dado": "OpenStreetMap (way/888432025): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.0644715,
+    "lon": -42.7530229
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 888432025,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Ginásio Edmilson Jorge",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/413065672",
+     "dado": "OpenStreetMap (way/413065672): sport=futsal;volleyball;basketball, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.1039056,
+    "lon": -42.7530826
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 413065672,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Ginásio poliesportivo Einstein",
+   "endereco": {
+    "rua": "Rua Bonifácio de Carvalho",
+    "numero": null,
+    "bairro": "Morada do Sol",
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1147312116",
+     "dado": "OpenStreetMap (way/1147312116): sport=futsal, Rua Bonifácio de Carvalho, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.0669025,
+    "lon": -42.7701339
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 1147312116,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Mini Estádio Agenosão",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/888463880",
+     "dado": "OpenStreetMap (way/888463880): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -4.9994076,
+    "lon": -42.8269677
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 888463880,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Mini estádio Belchior Barros",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/887009982",
+     "dado": "OpenStreetMap (way/887009982): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.0690391,
+    "lon": -42.8269474
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 887009982,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Mini estádio Bentão",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/615906957",
+     "dado": "OpenStreetMap (way/615906957): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.0472627,
+    "lon": -42.7595439
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 615906957,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Mini Estádio Buenos Aires",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/471227680",
+     "dado": "OpenStreetMap (way/471227680): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.0395286,
+    "lon": -42.805806
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 471227680,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Mini Estádio Dom Bosco",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/888463883",
+     "dado": "OpenStreetMap (way/888463883): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.1099721,
+    "lon": -42.8068706
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 888463883,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Mini Estádio Euclidão",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/641017133",
+     "dado": "OpenStreetMap (way/641017133): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.1489026,
+    "lon": -42.7835167
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 641017133,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Mini estádio Ferreirão",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/887992597",
+     "dado": "OpenStreetMap (way/887992597): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.1034348,
+    "lon": -42.7279183
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 887992597,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Mini estádio Josué Martins",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/417299757",
+     "dado": "OpenStreetMap (way/417299757): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.1283483,
+    "lon": -42.7884078
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 417299757,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Mini estádio Lobatão",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/888463886",
+     "dado": "OpenStreetMap (way/888463886): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.0583444,
+    "lon": -42.7591367
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 888463886,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Mini estádio Morros",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/888463887",
+     "dado": "OpenStreetMap (way/888463887): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.032635,
+    "lon": -42.7673408
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 888463887,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Mini Estádio Planaltão;Campo do Planalto",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama natural (OSM: surface=grass)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/888234509",
+     "dado": "OpenStreetMap (way/888234509): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.0621641,
+    "lon": -42.7814526
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 888234509,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Mini Estádio Rui Lima (Bariri)",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/relation/12048063",
+     "dado": "OpenStreetMap (relation/12048063): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.0718817,
+    "lon": -42.8169072
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "relation",
+    "id": 12048063,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Mini estádio Tatazão",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/888422581",
+     "dado": "OpenStreetMap (way/888422581): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.161737,
+    "lon": -42.7588691
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 888422581,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Mini Estádio Wall Ferraz",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/682334241",
+     "dado": "OpenStreetMap (way/682334241): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.0387467,
+    "lon": -42.8304617
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 682334241,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "quadra 3",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/380176181",
+     "dado": "OpenStreetMap (way/380176181): sport=basketball;soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.0548849,
+    "lon": -42.8054843
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 380176181,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra de Esporte Vila Cristalina",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/721544616",
+     "dado": "OpenStreetMap (way/721544616): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.0451763,
+    "lon": -42.8036524
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 721544616,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra do APCDEP",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "concreto (OSM: surface=concrete)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/888277570",
+     "dado": "OpenStreetMap (way/888277570): sport=volleyball;futsal, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.0222568,
+    "lon": -42.7870918
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 888277570,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra Esportiva da Taboca",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "concreto (OSM: surface=concrete)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1442896849",
+     "dado": "OpenStreetMap (way/1442896849): sport=futsal;basketball;volleyball, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.0869942,
+    "lon": -42.6937611
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 1442896849,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra Esportiva Maurício José",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/822069900",
+     "dado": "OpenStreetMap (way/822069900): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.0442673,
+    "lon": -42.748373
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 822069900,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra Esportiva Parque Firmino Filho",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/888493463",
+     "dado": "OpenStreetMap (way/888493463): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -4.9944262,
+    "lon": -42.8315803
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 888493463,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra Esportiva Raimundo L. Ferraz",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/887551023",
+     "dado": "OpenStreetMap (way/887551023): sport=futsal;multi, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.0473616,
+    "lon": -42.8379454
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 887551023,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra Esportiva Wall Ferraz",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/887551027",
+     "dado": "OpenStreetMap (way/887551027): sport=futsal, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.0609733,
+    "lon": -42.8364739
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 887551027,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra Pedro Balzi",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/887992601",
+     "dado": "OpenStreetMap (way/887992601): sport=futsal;basketball, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.1001916,
+    "lon": -42.7074317
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 887992601,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra poliesportiva",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "concreto (OSM: surface=concrete)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/683236983",
+     "dado": "OpenStreetMap (way/683236983): sport=soccer;tennis;basketball;multi, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.0771569,
+    "lon": -42.7917043
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 683236983,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra Poliesportiva - Deus Quer",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/697616744",
+     "dado": "OpenStreetMap (way/697616744): sport=volleyball;futsal, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.1216766,
+    "lon": -42.7101445
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 697616744,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra Poliesportiva Dep. Francisco Trintade",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/887952395",
+     "dado": "OpenStreetMap (way/887952395): sport=futsal;basketball;volleyball, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.1905333,
+    "lon": -42.7746516
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 887952395,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra Santa Marta",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/814318589",
+     "dado": "OpenStreetMap (way/814318589): sport=volleyball;futsal;crossfit, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.0514273,
+    "lon": -42.7945343
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 814318589,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra Wellington Nogueira",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Teresina",
+    "uf": "PI",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "concreto (OSM: surface=concrete)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/377688422",
+     "dado": "OpenStreetMap (way/377688422): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -5.1130871,
+    "lon": -42.7850835
+   },
+   "rodada_dados": "R10",
+   "osm": {
+    "type": "way",
+    "id": 377688422,
+    "sinal_futebol": "sport"
+   }
+  }
+ ]
+}

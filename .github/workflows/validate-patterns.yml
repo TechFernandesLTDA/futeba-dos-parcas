@@ -104,6 +104,13 @@ jobs:
             exit 1
           fi
 
+      - name: Validate venue datasets (scripts/data)
+        # Datasets de quadras não disparam o CI de build (change-scopes ignora scripts/data/**);
+        # esta é a validação deles.
+        run: |
+          node scripts/data/validate-venues-dataset.js
+          node --test scripts/data/validate-venues-dataset.test.js
+
       - name: Validate Firestore index manifest contracts
         run: node --test scripts/firestore-index-contract.test.js
 

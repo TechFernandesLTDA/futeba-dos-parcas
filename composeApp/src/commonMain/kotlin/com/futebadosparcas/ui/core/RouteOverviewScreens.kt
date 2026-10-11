@@ -1,5 +1,6 @@
 package com.futebadosparcas.ui.core
 
+import com.futebadosparcas.compose.di.koinInjectOrNull
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -67,7 +68,7 @@ private sealed interface RouteLoadState<out T> {
 
 @Composable
 fun RankingRouteScreen(onNavigateBack: () -> Unit) {
-    val repository: RankingRepository? = runCatching { koinInject<RankingRepository>() }.getOrNull()
+    val repository: RankingRepository? = koinInjectOrNull<RankingRepository>()
     var state by remember(repository) {
         mutableStateOf<RouteLoadState<List<PlayerRankingItem>>>(RouteLoadState.Loading)
     }
@@ -143,7 +144,7 @@ fun RankingRouteScreen(onNavigateBack: () -> Unit) {
 
 @Composable
 fun BadgesRouteScreen(onNavigateBack: () -> Unit) {
-    val repository: GamificationRepository? = runCatching { koinInject<GamificationRepository>() }.getOrNull()
+    val repository: GamificationRepository? = koinInjectOrNull<GamificationRepository>()
     var state by remember(repository) {
         mutableStateOf<RouteLoadState<List<BadgeDefinition>>>(RouteLoadState.Loading)
     }
@@ -217,7 +218,7 @@ fun BadgesRouteScreen(onNavigateBack: () -> Unit) {
 
 @Composable
 fun LocationsRouteScreen(onNavigateBack: () -> Unit) {
-    val repository: LocationRepository? = runCatching { koinInject<LocationRepository>() }.getOrNull()
+    val repository: LocationRepository? = koinInjectOrNull<LocationRepository>()
     var state by remember(repository) {
         mutableStateOf<RouteLoadState<List<Location>>>(RouteLoadState.Loading)
     }
@@ -292,7 +293,7 @@ fun CashboxRouteScreen(
     groupId: String?,
     onNavigateBack: () -> Unit
 ) {
-    val repository: CashboxRepository? = runCatching { koinInject<CashboxRepository>() }.getOrNull()
+    val repository: CashboxRepository? = koinInjectOrNull<CashboxRepository>()
     var state by remember(repository, groupId) {
         mutableStateOf<RouteLoadState<Pair<CashboxSummary, List<CashboxEntry>>>>(RouteLoadState.Loading)
     }

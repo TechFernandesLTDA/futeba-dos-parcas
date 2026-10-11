@@ -1,0 +1,815 @@
+{
+ "gerado_em": "2026-10-10",
+ "rodada": 9,
+ "cidade": "João Pessoa",
+ "uf": "PB",
+ "slug": "joao-pessoa",
+ "issue": 4186,
+ "fonte": {
+  "provedor": "OpenStreetMap (via Nominatim + Overpass API)",
+  "licenca": "ODbL 1.0 — https://www.openstreetmap.org/copyright",
+  "nominatim_url": "https://www.openstreetmap.org/relation/301405",
+  "nominatim_display_name": "João Pessoa, Paraíba, Região Nordeste, Brasil",
+  "overpass_mirror": "https://overpass-api.de/api/interpreter",
+  "overpass_query": "[out:json][timeout:180];\narea(3600301405)->.a;\n(\n  node[\"leisure\"=\"pitch\"](area.a);\n  way[\"leisure\"=\"pitch\"](area.a);\n  relation[\"leisure\"=\"pitch\"](area.a);\n  node[\"leisure\"=\"sports_centre\"](area.a);\n  way[\"leisure\"=\"sports_centre\"](area.a);\n);\nout body center meta;",
+  "osm_base_timestamp": "2026-10-10T10:22:26Z"
+ },
+ "coleta": {
+  "data": "2026-10-10",
+  "ferramenta": "scripts/data/build-venues-osm.mjs",
+  "finalidade": "dataset curado de quadras para importação DRAFT (revisão humana antes de publicar)"
+ },
+ "estatisticas": {
+  "candidatos_osm": 312,
+  "sem_nome": 269,
+  "institucional": 1,
+  "acesso_restrito": 2,
+  "amenity_descartada": 0,
+  "sem_sinal_de_futebol": 21,
+  "other_excluded": 0,
+  "sem_coordenada": 0,
+  "mantidos": 19,
+  "duplicatas_removidas": 0
+ },
+ "venues": [
+  {
+   "nome": "Campo Chico Matemático",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "João Pessoa",
+    "uf": "PB",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/729206966",
+     "dado": "OpenStreetMap (way/729206966): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -7.1546817,
+    "lon": -34.8852857
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 729206966,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo da AFRAFEP",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "João Pessoa",
+    "uf": "PB",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/194792099",
+     "dado": "OpenStreetMap (way/194792099): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -7.1636651,
+    "lon": -34.7969049
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 194792099,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo da Ceasa",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "João Pessoa",
+    "uf": "PB",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1032409615",
+     "dado": "OpenStreetMap (way/1032409615): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -7.1640805,
+    "lon": -34.8655256
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1032409615,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo da Emlur",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "João Pessoa",
+    "uf": "PB",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1278659956",
+     "dado": "OpenStreetMap (way/1278659956): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -7.1132115,
+    "lon": -34.8600806
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1278659956,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo da Mangueira",
+   "endereco": {
+    "rua": "Rua Bom Jesus",
+    "numero": null,
+    "bairro": "Rangel",
+    "cidade": "João Pessoa",
+    "uf": "PB",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/729205511",
+     "dado": "OpenStreetMap (way/729205511): sport=soccer, Rua Bom Jesus, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -7.1496838,
+    "lon": -34.8704278
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 729205511,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo de Futebol de areia do Paratibe",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "João Pessoa",
+    "uf": "PB",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1319362855",
+     "dado": "OpenStreetMap (way/1319362855): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -7.2043574,
+    "lon": -34.8405688
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1319362855,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo de Futebol do Celeste",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "João Pessoa",
+    "uf": "PB",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/779196303",
+     "dado": "OpenStreetMap (way/779196303): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -7.1819737,
+    "lon": -34.8713045
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 779196303,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo de Futebol Sesi",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "João Pessoa",
+    "uf": "PB",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama natural (OSM: surface=grass)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1470433501",
+     "dado": "OpenStreetMap (way/1470433501): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -7.1771974,
+    "lon": -34.8988247
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1470433501,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do CSU",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "João Pessoa",
+    "uf": "PB",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/194683903",
+     "dado": "OpenStreetMap (way/194683903): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -7.0994272,
+    "lon": -34.8573996
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 194683903,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo esportivo de Areia",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "João Pessoa",
+    "uf": "PB",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1280057978",
+     "dado": "OpenStreetMap (way/1280057978): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -7.068104,
+    "lon": -34.8436519
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1280057978,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Maravilha do Contorno - Botafogo Futebol Clube",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "João Pessoa",
+    "uf": "PB",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/224249360",
+     "dado": "OpenStreetMap (way/224249360): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -7.1652238,
+    "lon": -34.878331
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 224249360,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra de Manaíra",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "João Pessoa",
+    "uf": "PB",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "concreto (OSM: surface=concrete)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/191659427",
+     "dado": "OpenStreetMap (way/191659427): sport=soccer;basketball;sepak_takraw;beachvolleyball, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -7.1057046,
+    "lon": -34.8289594
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 191659427,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra I - Parque Parahyba",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "João Pessoa",
+    "uf": "PB",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "concreto (OSM: surface=concrete)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/635764312",
+     "dado": "OpenStreetMap (way/635764312): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -7.0851951,
+    "lon": -34.8382338
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 635764312,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra II - Parque Parahyba",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "João Pessoa",
+    "uf": "PB",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/635764313",
+     "dado": "OpenStreetMap (way/635764313): sport=soccer;volleyball, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -7.0856212,
+    "lon": -34.8384881
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 635764313,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra Poilesportiva da Praça do Cajú",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "João Pessoa",
+    "uf": "PB",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "concreto (OSM: surface=concrete)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1081274798",
+     "dado": "OpenStreetMap (way/1081274798): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -7.0682923,
+    "lon": -34.8439219
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1081274798,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra Poliesportiva",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "João Pessoa",
+    "uf": "PB",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "concreto (OSM: surface=concrete)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1470433494",
+     "dado": "OpenStreetMap (way/1470433494): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -7.1782146,
+    "lon": -34.8991391
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1470433494,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra Poliesportiva do Padre Zé",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "João Pessoa",
+    "uf": "PB",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "concreto (OSM: surface=concrete)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1277903121",
+     "dado": "OpenStreetMap (way/1277903121): sport=baseball;futsal, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -7.1062787,
+    "lon": -34.8695663
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1277903121,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Santos Futebol Clube",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "João Pessoa",
+    "uf": "PB",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/347777446",
+     "dado": "OpenStreetMap (way/347777446): nome=\"Santos Futebol Clube\", sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "baixa",
+   "coordenadas": {
+    "lat": -7.1804492,
+    "lon": -34.8641589
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 347777446,
+    "sinal_futebol": "nome"
+   }
+  },
+  {
+   "nome": "WILSÃO",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "João Pessoa",
+    "uf": "PB",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama natural (OSM: surface=grass)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/relation/5328141",
+     "dado": "OpenStreetMap (relation/5328141): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -7.1715867,
+    "lon": -34.8400891
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "relation",
+    "id": 5328141,
+    "sinal_futebol": "sport"
+   }
+  }
+ ]
+}

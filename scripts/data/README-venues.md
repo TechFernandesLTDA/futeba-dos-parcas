@@ -12,9 +12,13 @@ Datasets curados para o importador `import-venues-dataset.ts`. Tudo entra no app
 | `venues-sao-paulo.json` | R6 (#4195) | São Paulo (capital) | 12 |
 | `venues-florianopolis.json` | R7 (#4195), revisada em 08/10 | Florianópolis (fichas do Maps + site oficial) | 4 |
 | `venues-joinville.json` | R8 (#4195) | Joinville | 13 |
+| `venues-brasilia.json` | R9 (#4186), coleta de 09/10/2026 | Brasília - DF (Real Society, Ases, AABR, Parque Futebol) | 4 |
 | `venues-enriquecimento-r9.json` | R9 (#4195) | enriquecimento não destrutivo (`modo: enriquecimento`, `location_id` exato) de venues já importados | 33 |
 | `venues-rio-de-janeiro.json` | R9 (coletor de cidades novas, #4186) | Rio de Janeiro (capital) | 4 |
 | `venues-recife.json` | R9 (coletor de cidades novas, #4186, execução 8) | Recife | 5 |
+| `venues-teresina.json` | R9 (coletor de cidades novas, #4186, execução 17) | Teresina | 3 |
+| `venues-campo-grande.json` | R9 (coletor de cidades novas, #4186, execução 18) | Campo Grande/MS | 5 |
+| `venues-joao-pessoa.json` | R9 (coletor de cidades novas, #4186, execução 16) | João Pessoa | 8 |
 | `venues-belem.json` | R9 (coletor de cidades novas, #4186) | Belém (capital) | 9 |
 
 ## Regras dos dados

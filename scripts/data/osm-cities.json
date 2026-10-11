@@ -110,6 +110,36 @@
       "observacao": "coletor de cidades novas (Execução 8)"
     },
     {
+      "nome": "Guarulhos",
+      "uf": "SP",
+      "rodada": 10,
+      "slug": "guarulhos",
+      "epic_issue": 4186
+    },
+    {
+      "nome": "Campo Grande",
+      "uf": "MS",
+      "rodada": 10,
+      "slug": "campo-grande",
+      "epic_issue": 4186,
+      "observacao": "coletor de cidades novas (Execução 18)"
+    },
+    {
+      "nome": "Teresina",
+      "uf": "PI",
+      "rodada": 10,
+      "slug": "teresina",
+      "epic_issue": 4186,
+      "observacao": "coletor de cidades novas (Execução 17)"
+    },
+    {
+      "nome": "João Pessoa",
+      "uf": "PB",
+      "rodada": 9,
+      "slug": "joao-pessoa",
+      "epic_issue": 4186
+    },
+    {
       "nome": "Belém",
       "uf": "PA",
       "rodada": 9,
