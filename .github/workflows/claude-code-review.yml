@@ -22,7 +22,9 @@ permissions:
 jobs:
   claude-review:
     # Dependabot não recebe secrets de Actions: a review falharia sempre.
-    if: github.actor != 'dependabot[bot]'
+    # PRs dos agentes (bot/*, data/*) também pulam: o agente de merge (Opus) já revisa,
+    # e cada review aqui consome créditos da API.
+    if: github.actor != 'dependabot[bot]' && !startsWith(github.head_ref, 'bot/') && !startsWith(github.head_ref, 'data/')
     # Optional: Filter by PR author
     # if: |
     #   github.event.pull_request.user.login == 'external-contributor' ||

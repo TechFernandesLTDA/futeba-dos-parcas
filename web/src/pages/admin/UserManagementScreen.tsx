@@ -1,6 +1,7 @@
 import { PageContainer } from '../../components/common/PageContainer';
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
+import i18n from 'i18next';
 import { useNavigate } from 'react-router-dom';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
@@ -120,7 +121,7 @@ interface OwnerProfile {
 
 const parseAdminUser = (data: AdminUserCrmRow): UserWithRole => ({
   id: data.id,
-  name: data.name || 'Sem nome',
+  name: data.name || i18n.t('admin.userManagement.noName'),
   email: data.email || '',
   phone: data.phone || undefined,
   photoUrl: data.photoUrl || undefined,
@@ -153,7 +154,7 @@ const isLikelyQaUser = (user: UserWithRole): boolean => {
 
 const formatAdminDateTime = (date?: Date): string => {
   if (!date || Number.isNaN(date.getTime())) {
-    return 'Não informada';
+    return i18n.t('admin.userManagement.dateNotInformed');
   }
 
   return date.toLocaleString('pt-BR', {
@@ -180,6 +181,8 @@ export const UserManagementScreen: React.FC = () => {
   const { showError, showSuccess } = useToast();
   const showErrorRef = useRef(showError);
   showErrorRef.current = showError;
+  const tRef = useRef(t);
+  tRef.current = t;
 
   const [users, setUsers] = useState<UserWithRole[]>([]);
   const [loading, setLoading] = useState(true);
@@ -299,7 +302,7 @@ export const UserManagementScreen: React.FC = () => {
       } catch (error) {
         if (!cancelled) {
           logger.error('Error fetching admin users:', error);
-          const message = getFunctionsErrorMessage(error, 'searchAdminUsers', 'Erro ao carregar usuários.');
+          const message = getFunctionsErrorMessage(error, 'searchAdminUsers', tRef.current('admin.userManagement.errors.loadUsers'));
           setFetchError(message);
           showErrorRef.current(message);
         }
@@ -328,7 +331,7 @@ export const UserManagementScreen: React.FC = () => {
       applySearchResponse(response.data, true);
     } catch (error) {
       logger.error('Error loading more users:', error);
-      const message = getFunctionsErrorMessage(error, 'searchAdminUsers', 'Erro ao carregar mais usuários.');
+      const message = getFunctionsErrorMessage(error, 'searchAdminUsers', t('feedback.admin.loadMoreUsersError'));
       setFetchError(message);
       showError(message);
     } finally {
@@ -353,9 +356,9 @@ export const UserManagementScreen: React.FC = () => {
       );
       setDialogOpen(false);
       setSelectedUser(null);
-      showSuccess(`Role de ${user.name} atualizado para ${newRole}.`);
+      showSuccess(t('admin.userManagement.success.roleUpdated', { name: user.name, role: newRole }));
     } catch (error) {
-      const message = getFunctionsErrorMessage(error, 'setUserRole', 'Erro ao atualizar role');
+      const message = getFunctionsErrorMessage(error, 'setUserRole', t('admin.userManagement.errors.updateRole'));
       setError(message);
       showError(message);
     } finally {
@@ -388,8 +391,8 @@ export const UserManagementScreen: React.FC = () => {
     setBulkLoading(false);
     setBulkDialogOpen(false);
     setSelectedUsers(new Set());
-    if (successCount > 0) showSuccess(`${successCount} usuário(s) atualizado(s).`);
-    if (errorCount > 0) showError(`${errorCount} falha(s) na atualização.`);
+    if (successCount > 0) showSuccess(t('admin.userManagement.success.bulkUpdated', { count: successCount }));
+    if (errorCount > 0) showError(t('admin.userManagement.errors.bulkFailed', { count: errorCount }));
   };
 
   const toggleSelect = (uid: string) => {
@@ -473,16 +476,16 @@ export const UserManagementScreen: React.FC = () => {
     const normalized = trimmed.replace(',', '.');
     const parsed = Number(normalized);
     if (!Number.isFinite(parsed) || parsed < 0) {
-      throw new Error(`Informe um valor válido para ${fieldLabel}.`);
+      throw new Error(t('admin.userManagement.errors.invalidValue', { field: fieldLabel }));
     }
     return Math.round(parsed * 100);
   };
 
   const getVenueAccountScopeLabel = (scope?: AdminVenueAccountSummary['billingScope'] | null) => {
-    if (scope === 'OWNER') return 'Cobrança por dono';
-    if (scope === 'FIELD_COUNT') return 'Cobrança por campo';
-    if (scope === 'MANUAL_OVERRIDE') return 'Cobrança manual';
-    return 'Cobrança por quadra';
+    if (scope === 'OWNER') return t('admin.userManagement.scope.owner');
+    if (scope === 'FIELD_COUNT') return t('admin.userManagement.scope.fieldCount');
+    if (scope === 'MANUAL_OVERRIDE') return t('admin.userManagement.scope.manual');
+    return t('admin.userManagement.scope.venue');
   };
 
   const getVenueAccountStatusColor = (
@@ -497,12 +500,12 @@ export const UserManagementScreen: React.FC = () => {
   const getVenueAccountStatusLabel = (
     status?: AdminVenueAccountSummary['status'] | null,
   ) => {
-    if (status === 'TRIAL') return 'Teste';
-    if (status === 'ACTIVE') return 'Em dia';
-    if (status === 'OVERDUE') return 'Em atraso';
-    if (status === 'SUSPENDED') return 'Suspensa';
-    if (status === 'CANCELLED') return 'Cancelada';
-    return 'Sem conta';
+    if (status === 'TRIAL') return t('admin.userManagement.accountStatus.trial');
+    if (status === 'ACTIVE') return t('admin.userManagement.accountStatus.active');
+    if (status === 'OVERDUE') return t('admin.userManagement.accountStatus.overdue');
+    if (status === 'SUSPENDED') return t('admin.userManagement.accountStatus.suspended');
+    if (status === 'CANCELLED') return t('admin.userManagement.accountStatus.cancelled');
+    return t('admin.userManagement.accountStatus.none');
   };
 
   const openLocation = (locationId: string, edit = false) => {
@@ -566,24 +569,24 @@ export const UserManagementScreen: React.FC = () => {
       ? Number(venueAccountForm.billingDueDay)
       : null;
     if (billingDueDay !== null && (!Number.isInteger(billingDueDay) || billingDueDay < 1 || billingDueDay > 31)) {
-      showError('Dia de vencimento deve ficar entre 1 e 31.');
+      showError(t('admin.userManagement.errors.dueDayRange'));
       return;
     }
     if (venueAccountForm.billingStartsAt && venueAccountForm.billingExpiresAt) {
       const startsAt = new Date(`${venueAccountForm.billingStartsAt}T00:00:00.000Z`);
       const expiresAt = new Date(`${venueAccountForm.billingExpiresAt}T00:00:00.000Z`);
       if (startsAt > expiresAt) {
-        showError('A data de início deve ser anterior ao fim do contrato.');
+        showError(t('admin.userManagement.errors.dateOrder'));
         return;
       }
     }
 
     setVenueAccountLoading(true);
     try {
-      const billingBaseFeeCents = parseCurrencyCents(venueAccountForm.billingBaseFee, 'valor base');
-      const defaultLocationFeeCents = parseCurrencyCents(venueAccountForm.defaultLocationFee, 'valor por quadra');
-      const pricePerActiveFieldCents = parseCurrencyCents(venueAccountForm.pricePerActiveField, 'valor por campo ativo');
-      const monthlyFeeOverrideCents = parseCurrencyCents(venueAccountForm.monthlyFeeOverride, 'mensalidade final');
+      const billingBaseFeeCents = parseCurrencyCents(venueAccountForm.billingBaseFee, t('admin.userManagement.fields.baseValue'));
+      const defaultLocationFeeCents = parseCurrencyCents(venueAccountForm.defaultLocationFee, t('admin.userManagement.fields.perVenue'));
+      const pricePerActiveFieldCents = parseCurrencyCents(venueAccountForm.pricePerActiveField, t('admin.userManagement.fields.perActiveField'));
+      const monthlyFeeOverrideCents = parseCurrencyCents(venueAccountForm.monthlyFeeOverride, t('admin.userManagement.fields.finalMonthly'));
       await upsertVenueAccount({
         ownerUid: selectedUser.id,
         status: venueAccountForm.status,
@@ -606,12 +609,12 @@ export const UserManagementScreen: React.FC = () => {
         adminNotes: venueAccountForm.adminNotes.trim() || null,
         linkedLocationIds: venueAccountForm.linkedLocationIds,
       });
-      showSuccess('Conta comercial atualizada.');
+      showSuccess(t('admin.userManagement.success.accountUpdated'));
       setVenueAccountDialogOpen(false);
       setRetryCount((count) => count + 1);
     } catch (error) {
       logger.error('Erro ao salvar conta comercial:', error);
-      showError(error instanceof Error ? error.message : getFunctionsErrorMessage(error, 'upsertVenueAccount', 'Não foi possível salvar a conta comercial.'));
+      showError(error instanceof Error ? error.message : getFunctionsErrorMessage(error, 'upsertVenueAccount', t('admin.userManagement.errors.saveAccount')));
     } finally {
       setVenueAccountLoading(false);
     }
@@ -620,11 +623,11 @@ export const UserManagementScreen: React.FC = () => {
   const handleReviewOnboarding = async (decision: 'APPROVED' | 'REJECTED' | 'SUSPENDED' | 'CANCELLED') => {
     if (!selectedUser || !selectedOnboarding) return;
     if (decision === 'APPROVED' && !onboardingCanApprove) {
-      showError('Revise todo o checklist antes de aprovar.');
+      showError(t('admin.userManagement.errors.checklistRequired'));
       return;
     }
     if (decision !== 'APPROVED' && !onboardingReviewReason.trim()) {
-      showError('Informe o motivo da decisão.');
+      showError(t('admin.userManagement.errors.reasonRequired'));
       return;
     }
     setOnboardingReviewLoading(decision);
@@ -661,10 +664,10 @@ export const UserManagementScreen: React.FC = () => {
         termsReviewed: false,
         billingReviewed: false,
       });
-      showSuccess(`Onboarding ${nextStatus.toLowerCase()} para ${selectedUser.name}.`);
+      showSuccess(t('admin.userManagement.success.onboardingReviewed', { status: nextStatus.toLowerCase(), name: selectedUser.name }));
     } catch (error) {
       logger.error('Error reviewing owner onboarding:', error);
-      showError(getFunctionsErrorMessage(error, 'reviewVenueOwnerOnboarding', 'Não foi possível revisar o onboarding.'));
+      showError(getFunctionsErrorMessage(error, 'reviewVenueOwnerOnboarding', t('admin.userManagement.errors.reviewOnboarding')));
     } finally {
       setOnboardingReviewLoading(null);
     }
@@ -692,7 +695,7 @@ export const UserManagementScreen: React.FC = () => {
               <BackIcon />
             </IconButton>
             <Typography variant="h6" sx={{ ml: 1, minWidth: 0 }}>
-              Gerenciar Usuários
+              {t('page.title.userManagement')}
             </Typography>
           </Box>
           {selectedUsers.size > 0 && (
@@ -703,7 +706,7 @@ export const UserManagementScreen: React.FC = () => {
               variant="outlined"
               size="small"
             >
-              Alterar ({selectedUsers.size})
+              {t('admin.userManagement.actions.changeSelected', { count: selectedUsers.size })}
             </Button>
           )}
         </Stack>
@@ -734,11 +737,11 @@ export const UserManagementScreen: React.FC = () => {
           <TextField
             select
             size="small"
-            label="Role"
+            label={t('admin.userManagement.filters.roleLabel')}
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
           >
-            <MenuItem value="ALL">Todos os roles</MenuItem>
+            <MenuItem value="ALL">{t('admin.userManagement.filters.allRoles')}</MenuItem>
             <MenuItem value="ADMIN">Admin</MenuItem>
             <MenuItem value="FIELD_OWNER">Field Owner</MenuItem>
             <MenuItem value="PLAYER">Player</MenuItem>
@@ -746,16 +749,16 @@ export const UserManagementScreen: React.FC = () => {
           <TextField
             select
             size="small"
-            label="Comercial"
+            label={t('admin.userManagement.filters.commercialLabel')}
             value={ownerFilter}
             onChange={(e) => setOwnerFilter(e.target.value as OwnerFilter)}
           >
-            <MenuItem value="ALL">Todos</MenuItem>
-            <MenuItem value="FIELD_OWNER">Donos de quadra</MenuItem>
-            <MenuItem value="HAS_LOCATIONS">Com quadras</MenuItem>
-            <MenuItem value="PUBLISHED">Com publicada</MenuItem>
-            <MenuItem value="OVERDUE">Com pendência</MenuItem>
-            <MenuItem value="INCOMPLETE">Cadastro incompleto</MenuItem>
+            <MenuItem value="ALL">{t('admin.userManagement.filters.all')}</MenuItem>
+            <MenuItem value="FIELD_OWNER">{t('admin.userManagement.filters.fieldOwners')}</MenuItem>
+            <MenuItem value="HAS_LOCATIONS">{t('admin.userManagement.filters.withVenues')}</MenuItem>
+            <MenuItem value="PUBLISHED">{t('admin.userManagement.filters.withPublished')}</MenuItem>
+            <MenuItem value="OVERDUE">{t('admin.userManagement.filters.withPending')}</MenuItem>
+            <MenuItem value="INCOMPLETE">{t('admin.userManagement.filters.incomplete')}</MenuItem>
           </TextField>
         </Box>
       </Box>
@@ -764,7 +767,7 @@ export const UserManagementScreen: React.FC = () => {
         {fetchError ? (
           <Alert severity="error" action={
             <Button color="inherit" size="small" onClick={handleRetry}>
-              Tentar novamente
+              {t('common.retry')}
             </Button>
           }>
             {fetchError}
@@ -776,8 +779,8 @@ export const UserManagementScreen: React.FC = () => {
             <EmptyState
               icon={<SearchOffIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />}
               title={t('empty.noUserFound')}
-              description={t('empty.noUserFoundDesc', { query: searchQuery || 'filtros selecionados' })}
-              actionLabel="Limpar filtros"
+              description={t('empty.noUserFoundDesc', { query: searchQuery || t('admin.userManagement.selectedFilters') })}
+              actionLabel={t('admin.userManagement.actions.clearFilters')}
               onAction={() => {
                 setSearchQuery('');
                 setRoleFilter('ALL');
@@ -794,13 +797,13 @@ export const UserManagementScreen: React.FC = () => {
         ) : (
           <>
             <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
-              {filteredUsers.length} de {searchMeta?.totalMatched ?? filteredUsers.length} usuário{filteredUsers.length !== 1 ? 's' : ''} exibido{filteredUsers.length !== 1 ? 's' : ''}
-              {' · busca server-side em '}
-              {searchMeta?.scannedUsers ?? filteredUsers.length} usuário{(searchMeta?.scannedUsers ?? filteredUsers.length) !== 1 ? 's' : ''}
-              {' e '}
-              {searchMeta?.scannedLocations ?? 0} quadra{(searchMeta?.scannedLocations ?? 0) !== 1 ? 's' : ''}
-              {searchMeta?.scanComplete === false ? ' · limite de varredura atingido' : ''}
-              {hasMore ? ' · mais disponíveis' : ''}
+              {t(filteredUsers.length === 1 ? 'admin.userManagement.summary.shownOne' : 'admin.userManagement.summary.shownOther', { shown: filteredUsers.length, total: searchMeta?.totalMatched ?? filteredUsers.length })}
+              {t('admin.userManagement.summary.serverSearch', {
+                users: t((searchMeta?.scannedUsers ?? filteredUsers.length) === 1 ? 'admin.userManagement.summary.usersOne' : 'admin.userManagement.summary.usersOther', { count: searchMeta?.scannedUsers ?? filteredUsers.length }),
+                venues: t(((searchMeta?.scannedLocations ?? 0)) === 1 ? 'admin.userManagement.summary.venuesOne' : 'admin.userManagement.summary.venuesOther', { count: searchMeta?.scannedLocations ?? 0 }),
+              })}
+              {searchMeta?.scanComplete === false ? t('admin.userManagement.summary.scanLimit') : ''}
+              {hasMore ? t('admin.userManagement.summary.moreAvailable') : ''}
             </Typography>
             {isMdUp ? (
               <TableContainer sx={{ overflowX: 'auto' }}>
@@ -824,26 +827,26 @@ export const UserManagementScreen: React.FC = () => {
                       </TableCell>
                       <TableCell sx={{ fontWeight: 700 }}>
                         <TableSortLabel active={sortField === 'name'} direction={sortField === 'name' ? sortDirection : 'desc'} onClick={() => handleTableSort('name')}>
-                          Nome
+                          {t('admin.userManagement.table.name')}
                         </TableSortLabel>
                       </TableCell>
                       <TableCell sx={{ fontWeight: 700 }}>
                         <TableSortLabel active={sortField === 'email'} direction={sortField === 'email' ? sortDirection : 'desc'} onClick={() => handleTableSort('email')}>
-                          Email
+                          {t('admin.userManagement.table.email')}
                         </TableSortLabel>
                       </TableCell>
                       <TableCell sx={{ fontWeight: 700 }}>
                         <TableSortLabel active={sortField === 'role'} direction={sortField === 'role' ? sortDirection : 'desc'} onClick={() => handleTableSort('role')}>
-                          Role
+                          {t('admin.userManagement.filters.roleLabel')}
                         </TableSortLabel>
                       </TableCell>
-                      <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
+                      <TableCell sx={{ fontWeight: 700 }}>{t('admin.userManagement.table.status')}</TableCell>
                       <TableCell sx={{ fontWeight: 700 }}>
                         <TableSortLabel active={sortField === 'createdAt'} direction={sortField === 'createdAt' ? sortDirection : 'desc'} onClick={() => handleTableSort('createdAt')}>
-                          Criado em
+                          {t('admin.userManagement.table.createdAt')}
                         </TableSortLabel>
                       </TableCell>
-                      <TableCell sx={{ fontWeight: 700 }} align="center">Ações</TableCell>
+                      <TableCell sx={{ fontWeight: 700 }} align="center">{t('common.actions')}</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -868,7 +871,7 @@ export const UserManagementScreen: React.FC = () => {
                                 <Typography variant="body2" fontWeight={600} sx={{ overflowWrap: 'anywhere' }}>
                                   {u.name}
                                 </Typography>
-                                {u.id === currentUser?.id && <Chip label="Você" size="small" color="primary" variant="outlined" sx={{ mt: 0.25, height: 18, fontSize: '0.7rem' }} />}
+                                {u.id === currentUser?.id && <Chip label={t('admin.userManagement.badges.you')} size="small" color="primary" variant="outlined" sx={{ mt: 0.25, height: 18, fontSize: '0.7rem' }} />}
                               </Box>
                             </Box>
                           </TableCell>
@@ -888,13 +891,13 @@ export const UserManagementScreen: React.FC = () => {
                           </TableCell>
                           <TableCell>
                             <Box sx={{ display: 'inline-flex', flexWrap: 'wrap', gap: 0.5 }}>
-                              <Chip label="Ativo" size="small" color="success" variant="outlined" />
-                              {likelyQaUser && <Chip label="QA/teste" size="small" color="warning" variant="outlined" />}
+                              <Chip label={t('admin.userManagement.badges.active')} size="small" color="success" variant="outlined" />
+                              {likelyQaUser && <Chip label={t('admin.userManagement.badges.qaTest')} size="small" color="warning" variant="outlined" />}
                             </Box>
                             {(u.role === 'FIELD_OWNER' || (ownerSummaries[u.id]?.totalLocations || 0) > 0) && (
                               <Box sx={{ display: 'inline-flex', flexWrap: 'wrap', gap: 0.5, ml: 0.5 }}>
                                 <Chip
-                                  label={`${ownerSummaries[u.id]?.totalLocations || 0} quadra(s)`}
+                                  label={t('admin.userManagement.badges.venuesCount', { count: ownerSummaries[u.id]?.totalLocations || 0 })}
                                   size="small"
                                   variant="outlined"
                                   color={(ownerSummaries[u.id]?.overdueLocations || 0) > 0 ? 'warning' : 'default'}
@@ -922,7 +925,7 @@ export const UserManagementScreen: React.FC = () => {
                                     />
                                     {venueAccount.billingPlanLabel && (
                                       <Chip
-                                        label={`Plano ${venueAccount.billingPlanLabel}`}
+                                        label={t('admin.userManagement.badges.plan', { label: venueAccount.billingPlanLabel })}
                                         size="small"
                                         variant="outlined"
                                       />
@@ -930,7 +933,7 @@ export const UserManagementScreen: React.FC = () => {
                                   </>
                                 )}
                                 {(ownerSummaries[u.id]?.incompleteLocations || 0) > 0 && (
-                                  <Chip label="cadastro incompleto" size="small" color="info" variant="outlined" />
+                                  <Chip label={t('admin.userManagement.badges.incompleteRegistration')} size="small" color="info" variant="outlined" />
                                 )}
                               </Box>
                             )}
@@ -1038,11 +1041,11 @@ export const UserManagementScreen: React.FC = () => {
                                   },
                                 }}
                               >
-                                {u.id === currentUser?.id && <Chip label="Você" size="small" color="primary" variant="outlined" />}
-                                {likelyQaUser && <Chip label="QA/teste" size="small" color="warning" variant="outlined" />}
+                                {u.id === currentUser?.id && <Chip label={t('admin.userManagement.badges.you')} size="small" color="primary" variant="outlined" />}
+                                {likelyQaUser && <Chip label={t('admin.userManagement.badges.qaTest')} size="small" color="warning" variant="outlined" />}
                                 <DemoDataChip data={u} />
                                 {u.realDataProtected && (
-                                  <Chip label="Real validado" size="small" color="success" variant="outlined" />
+                                  <Chip label={t('admin.userManagement.badges.realValidated')} size="small" color="success" variant="outlined" />
                                 )}
                                 <Chip
                                   label={u.role}
@@ -1064,14 +1067,14 @@ export const UserManagementScreen: React.FC = () => {
                                   wordBreak: 'break-word',
                                 }}
                               >
-                                {u.email || 'Email não cadastrado'}
+                                {u.email || t('admin.userManagement.fallback.emailNotRegistered')}
                               </Typography>
                               <Typography
                                 variant="caption"
                                 color="text.secondary"
                                 sx={{ display: 'block', mt: 0.25 }}
                               >
-                                {u.gamesPlayed} jogo{u.gamesPlayed !== 1 ? 's' : ''}
+                                {t(u.gamesPlayed === 1 ? 'admin.userManagement.gamesOne' : 'admin.userManagement.gamesOther', { count: u.gamesPlayed })}
                               </Typography>
                             </Box>
                           </ListItemButton>
@@ -1104,8 +1107,8 @@ export const UserManagementScreen: React.FC = () => {
                                 },
                               }}
                             >
-                              <Chip label={`${ownerSummary?.totalLocations || 0} quadra(s)`} size="small" variant="outlined" />
-                              <Chip label={`${ownerSummary?.publishedLocations || 0} publicada(s)`} size="small" color="success" variant="outlined" />
+                              <Chip label={t('admin.userManagement.badges.venuesCount', { count: ownerSummary?.totalLocations || 0 })} size="small" variant="outlined" />
+                              <Chip label={t('admin.userManagement.badges.venuesPublished', { count: ownerSummary?.publishedLocations || 0 })} size="small" color="success" variant="outlined" />
                               {(ownerSummary?.monthlyFeeTotalCents || 0) > 0 && (
                                 <Chip label={formatCurrency(ownerSummary?.monthlyFeeTotalCents)} size="small" color="success" variant="outlined" />
                               )}
@@ -1125,13 +1128,13 @@ export const UserManagementScreen: React.FC = () => {
                                 </>
                               )}
                               {(ownerSummary?.pendingLocations || 0) > 0 && (
-                                <Chip label={`${ownerSummary?.pendingLocations} em revisão`} size="small" color="info" variant="outlined" />
+                                <Chip label={t('admin.userManagement.badges.venuesInReview', { count: ownerSummary?.pendingLocations })} size="small" color="info" variant="outlined" />
                               )}
                               {(ownerSummary?.overdueLocations || 0) > 0 && (
-                                <Chip label={`${ownerSummary?.overdueLocations} com pendência`} size="small" color="warning" />
+                                <Chip label={t('admin.userManagement.badges.venuesOverdue', { count: ownerSummary?.overdueLocations })} size="small" color="warning" />
                               )}
                               {(ownerSummary?.incompleteLocations || 0) > 0 && (
-                                <Chip label={`${ownerSummary?.incompleteLocations} incompleta(s)`} size="small" color="info" />
+                                <Chip label={t('admin.userManagement.badges.venuesIncomplete', { count: ownerSummary?.incompleteLocations })} size="small" color="info" />
                               )}
                             </Box>
                           )}
@@ -1150,7 +1153,7 @@ export const UserManagementScreen: React.FC = () => {
                 disabled={loadingMore}
                 sx={{ mt: 2 }}
               >
-                {loadingMore ? 'Carregando...' : 'Carregar mais'}
+                {loadingMore ? t('common.loading') : t('common.loadMore')}
               </Button>
             )}
           </>
@@ -1158,7 +1161,7 @@ export const UserManagementScreen: React.FC = () => {
       </PageContainer>
 
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} fullScreen={isMobile} fullWidth maxWidth="md" aria-labelledby="manage-user-dialog-title">
-        <DialogTitle id="manage-user-dialog-title">Ficha comercial do usuário</DialogTitle>
+        <DialogTitle id="manage-user-dialog-title">{t('admin.userManagement.sheet.title')}</DialogTitle>
         <DialogContent>
           {selectedUser && (
             <Box sx={{ pt: 1 }}>
@@ -1169,10 +1172,10 @@ export const UserManagementScreen: React.FC = () => {
                     {selectedUser.name}
                   </Typography>
                   <Typography variant="body2" color="text.secondary" noWrap>
-                    {selectedUser.email || 'Email não cadastrado'}
+                    {selectedUser.email || t('admin.userManagement.fallback.emailNotRegistered')}
                   </Typography>
                   <Typography variant="body2" color="text.secondary" noWrap>
-                    {selectedUser.phone || 'Telefone não cadastrado'}
+                    {selectedUser.phone || t('admin.userManagement.fallback.phoneNotRegistered')}
                   </Typography>
                   <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
                     UID: {selectedUser.id}
@@ -1192,22 +1195,22 @@ export const UserManagementScreen: React.FC = () => {
 
               <Card variant="outlined" sx={{ mb: 2 }}>
                 <CardContent>
-                  <Typography variant="subtitle2" gutterBottom>Contato e atividade</Typography>
+                  <Typography variant="subtitle2" gutterBottom>{t('admin.userManagement.sheet.contactActivity')}</Typography>
                   <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' }, gap: 1.5 }}>
                     <Box>
-                      <Typography variant="caption" color="text.secondary">Email</Typography>
-                      <Typography variant="body2" sx={{ wordBreak: 'break-word' }}>{selectedUser.email || 'Não cadastrado'}</Typography>
+                      <Typography variant="caption" color="text.secondary">{t('admin.userManagement.table.email')}</Typography>
+                      <Typography variant="body2" sx={{ wordBreak: 'break-word' }}>{selectedUser.email || t('admin.userManagement.fallback.notRegistered')}</Typography>
                     </Box>
                     <Box>
-                      <Typography variant="caption" color="text.secondary">Telefone</Typography>
-                      <Typography variant="body2">{selectedUser.phone || 'Não cadastrado'}</Typography>
+                      <Typography variant="caption" color="text.secondary">{t('admin.userManagement.sheet.phone')}</Typography>
+                      <Typography variant="body2">{selectedUser.phone || t('admin.userManagement.fallback.notRegistered')}</Typography>
                     </Box>
                     <Box>
-                      <Typography variant="caption" color="text.secondary">Última atualização</Typography>
+                      <Typography variant="caption" color="text.secondary">{t('admin.userManagement.sheet.lastUpdate')}</Typography>
                       <Typography variant="body2">{formatAdminDateTime(selectedUser.updatedAt)}</Typography>
                     </Box>
                     <Box>
-                      <Typography variant="caption" color="text.secondary">Último login</Typography>
+                      <Typography variant="caption" color="text.secondary">{t('admin.userManagement.sheet.lastLogin')}</Typography>
                       <Typography variant="body2">{formatAdminDateTime(selectedUser.lastLoginAt)}</Typography>
                     </Box>
                   </Box>
@@ -1217,9 +1220,9 @@ export const UserManagementScreen: React.FC = () => {
               <Card variant="outlined" sx={{ mb: 2 }}>
                 <CardContent>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                    <Typography variant="subtitle2">Onboarding comercial</Typography>
+                    <Typography variant="subtitle2">{t('admin.userManagement.sheet.onboarding')}</Typography>
                     <Chip
-                      label={selectedOnboarding?.status || 'Sem solicitação'}
+                      label={selectedOnboarding?.status || t('admin.userManagement.sheet.noRequest')}
                       size="small"
                       color={selectedOnboarding?.status === 'APPROVED' ? 'success' : selectedOnboarding?.status === 'IN_REVIEW' ? 'info' : 'default'}
                       variant={selectedOnboarding ? 'filled' : 'outlined'}
@@ -1228,48 +1231,52 @@ export const UserManagementScreen: React.FC = () => {
                   {selectedOnboarding ? (
                     <Box sx={{ display: 'grid', gap: 1.25 }}>
                       <Typography variant="body2" color="text.secondary">
-                        Responsável: {selectedOnboarding.contactName || selectedUser.name} · {selectedOnboarding.contactEmail || selectedUser.email || 'email não informado'} · {selectedOnboarding.phone || selectedUser.phone || 'telefone não informado'}
+                        {t('admin.userManagement.sheet.responsible', {
+                          name: selectedOnboarding.contactName || selectedUser.name,
+                          email: selectedOnboarding.contactEmail || selectedUser.email || t('admin.userManagement.fallback.emailNotInformedLower'),
+                          phone: selectedOnboarding.phone || selectedUser.phone || t('admin.userManagement.fallback.phoneNotInformedLower'),
+                        })}
                       </Typography>
                       {selectedOnboarding.businessName && (
                         <Typography variant="body2" color="text.secondary">
-                          Empresa/quadra: {selectedOnboarding.businessName}
+                          {t('admin.userManagement.sheet.business', { name: selectedOnboarding.businessName })}
                         </Typography>
                       )}
                       {selectedOnboarding.notes && (
                         <Alert severity="info">{selectedOnboarding.notes}</Alert>
                       )}
                       {selectedOnboarding.reviewReason && (
-                        <Alert severity="warning">Motivo anterior: {selectedOnboarding.reviewReason}</Alert>
+                        <Alert severity="warning">{t('admin.userManagement.sheet.previousReason', { reason: selectedOnboarding.reviewReason })}</Alert>
                       )}
                       {onboardingNeedsReview && (
                         <Box sx={{ display: 'grid', gap: 1 }}>
                           <Typography variant="caption" color="text.secondary">
-                            Para aprovar, confirme que contato, quadras, termos e cobrança foram revisados.
+                            {t('admin.userManagement.sheet.approveHint')}
                           </Typography>
                           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 0.5 }}>
                             <FormControlLabel
                               control={<Checkbox checked={onboardingChecklist.contactReviewed} onChange={() => handleOnboardingChecklist('contactReviewed')} sx={{ p: 1.25 }} />}
-                              label="Contato revisado"
+                              label={t('admin.userManagement.sheet.contactReviewed')}
                               sx={{ minHeight: 44 }}
                             />
                             <FormControlLabel
                               control={<Checkbox checked={onboardingChecklist.locationsReviewed} onChange={() => handleOnboardingChecklist('locationsReviewed')} sx={{ p: 1.25 }} />}
-                              label="Quadras revisadas"
+                              label={t('admin.userManagement.sheet.venuesReviewed')}
                               sx={{ minHeight: 44 }}
                             />
                             <FormControlLabel
                               control={<Checkbox checked={onboardingChecklist.termsReviewed} onChange={() => handleOnboardingChecklist('termsReviewed')} sx={{ p: 1.25 }} />}
-                              label="Termos revisados"
+                              label={t('admin.userManagement.sheet.termsReviewed')}
                               sx={{ minHeight: 44 }}
                             />
                             <FormControlLabel
                               control={<Checkbox checked={onboardingChecklist.billingReviewed} onChange={() => handleOnboardingChecklist('billingReviewed')} sx={{ p: 1.25 }} />}
-                              label="Cobrança revisada"
+                              label={t('admin.userManagement.sheet.billingReviewed')}
                               sx={{ minHeight: 44 }}
                             />
                           </Box>
                           <TextField
-                            label="Motivo/observação da revisão"
+                            label={t('admin.userManagement.sheet.reviewReason')}
                             value={onboardingReviewReason}
                             onChange={(event) => setOnboardingReviewReason(event.target.value)}
                             size="small"
@@ -1286,7 +1293,7 @@ export const UserManagementScreen: React.FC = () => {
                               startIcon={onboardingReviewLoading === 'APPROVED' ? <CircularProgress size={16} /> : null}
                               onClick={() => handleReviewOnboarding('APPROVED')}
                             >
-                              Aprovar e promover
+                              {t('admin.userManagement.sheet.approve')}
                             </Button>
                             <Button
                               size="small"
@@ -1295,7 +1302,7 @@ export const UserManagementScreen: React.FC = () => {
                               disabled={!!onboardingReviewLoading}
                               onClick={() => handleReviewOnboarding('REJECTED')}
                             >
-                              Rejeitar
+                              {t('admin.userManagement.sheet.reject')}
                             </Button>
                             <Button
                               size="small"
@@ -1304,7 +1311,7 @@ export const UserManagementScreen: React.FC = () => {
                               disabled={!!onboardingReviewLoading}
                               onClick={() => handleReviewOnboarding('SUSPENDED')}
                             >
-                              Suspender
+                              {t('admin.userManagement.sheet.suspend')}
                             </Button>
                           </Box>
                         </Box>
@@ -1312,7 +1319,7 @@ export const UserManagementScreen: React.FC = () => {
                     </Box>
                   ) : (
                     <Typography variant="body2" color="text.secondary">
-                      Este usuário ainda não abriu solicitação comercial pelo app.
+                      {t('admin.userManagement.sheet.noRequestYet')}
                     </Typography>
                   )}
                 </CardContent>
@@ -1321,14 +1328,14 @@ export const UserManagementScreen: React.FC = () => {
               <Card variant="outlined" sx={{ mb: 2 }}>
                 <CardContent>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1, flexWrap: 'wrap' }}>
-                    <Typography variant="subtitle2">Conta comercial</Typography>
+                    <Typography variant="subtitle2">{t('admin.userManagement.account.title')}</Typography>
                     <Button
                       size="small"
                       variant="outlined"
                       onClick={openVenueAccountDialog}
                       disabled={!selectedUser}
                     >
-                      {selectedVenueAccount ? 'Editar conta' : 'Criar conta'}
+                      {selectedVenueAccount ? t('admin.userManagement.account.edit') : t('admin.userManagement.account.create')}
                     </Button>
                     <Chip
                       label={getVenueAccountStatusLabel(selectedVenueAccount?.status)}
@@ -1345,7 +1352,7 @@ export const UserManagementScreen: React.FC = () => {
                         />
                         {selectedVenueAccount.billingPlanLabel && (
                           <Chip
-                            label={`Plano ${selectedVenueAccount.billingPlanLabel}`}
+                            label={t('admin.userManagement.badges.plan', { label: selectedVenueAccount.billingPlanLabel })}
                             size="small"
                             variant="outlined"
                           />
@@ -1357,43 +1364,45 @@ export const UserManagementScreen: React.FC = () => {
                     <Box sx={{ display: 'grid', gap: 1.25 }}>
                       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, gap: 1.5 }}>
                         <Box>
-                          <Typography variant="caption" color="text.secondary">Mensalidade calculada</Typography>
+                          <Typography variant="caption" color="text.secondary">{t('admin.userManagement.account.computedFee')}</Typography>
                           <Typography variant="body2" fontWeight={700}>
                             {formatCurrency(selectedVenueAccount.computedMonthlyFeeCents)}
                           </Typography>
                           <Typography variant="caption" color="text.secondary">
-                            Legado por quadra: {formatCurrency(selectedVenueAccount.legacyMonthlyFeeTotalCents)}
+                            {t('admin.userManagement.account.legacy', { amount: formatCurrency(selectedVenueAccount.legacyMonthlyFeeTotalCents) })}
                           </Typography>
                         </Box>
                         <Box>
-                          <Typography variant="caption" color="text.secondary">Escopo e vencimento</Typography>
+                          <Typography variant="caption" color="text.secondary">{t('admin.userManagement.account.scopeDue')}</Typography>
                           <Typography variant="body2">
                             {getVenueAccountScopeLabel(selectedVenueAccount.billingScope)}
                             {selectedVenueAccount.billingCycle ? ` · ${selectedVenueAccount.billingCycle.toLowerCase()}` : ''}
-                            {selectedVenueAccount.billingDueDay ? ` · dia ${selectedVenueAccount.billingDueDay}` : ''}
+                            {selectedVenueAccount.billingDueDay ? ` · ${t('admin.userManagement.account.dayN', { day: selectedVenueAccount.billingDueDay })}` : ''}
                           </Typography>
                           <Typography variant="caption" color="text.secondary">
-                            {selectedVenueAccount.linkedLocationsCount} quadra(s) · {selectedVenueAccount.activeFieldCount} campo(s) ativo(s)
+                            {t('admin.userManagement.account.venuesFields', { venues: selectedVenueAccount.linkedLocationsCount, fields: selectedVenueAccount.activeFieldCount })}
                           </Typography>
                         </Box>
                         <Box>
-                          <Typography variant="caption" color="text.secondary">Contato financeiro</Typography>
+                          <Typography variant="caption" color="text.secondary">{t('admin.userManagement.account.billingContact')}</Typography>
                           <Typography variant="body2" sx={{ wordBreak: 'break-word' }}>
                             {selectedVenueAccount.billingContactName || selectedOnboarding?.contactName || selectedUser.name}
                           </Typography>
                           <Typography variant="caption" color="text.secondary" sx={{ wordBreak: 'break-word', display: 'block' }}>
-                            {selectedVenueAccount.billingContactEmail || selectedOnboarding?.contactEmail || selectedUser.email || 'Email não informado'}
+                            {selectedVenueAccount.billingContactEmail || selectedOnboarding?.contactEmail || selectedUser.email || t('admin.userManagement.fallback.emailNotInformed')}
                           </Typography>
                         </Box>
                       </Box>
                       <Alert severity={selectedVenueAccount.status === 'OVERDUE' || selectedVenueAccount.status === 'SUSPENDED' ? 'warning' : 'info'}>
-                        Conta {getVenueAccountStatusLabel(selectedVenueAccount.status).toLowerCase()} com
-                        {' '}{selectedVenueAccount.publishedLocationsCount} quadra(s) publicada(s) vinculada(s).
+                        {t('admin.userManagement.account.statusSummary', {
+                          status: getVenueAccountStatusLabel(selectedVenueAccount.status).toLowerCase(),
+                          count: selectedVenueAccount.publishedLocationsCount,
+                        })}
                       </Alert>
                     </Box>
                   ) : (
                     <Alert severity="info">
-                      Este usuário ainda não tem uma conta comercial agregada em `venue_accounts`. As quadras seguem no modelo legado por quadra até a migração.
+                      {t('admin.userManagement.account.noAggregated')}
                     </Alert>
                   )}
                 </CardContent>
@@ -1402,28 +1411,28 @@ export const UserManagementScreen: React.FC = () => {
               <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, gap: 1.5, mb: 2 }}>
                 <Card variant="outlined">
                   <CardContent>
-                    <Typography variant="overline" color="text.secondary">Receita mensal</Typography>
+                    <Typography variant="overline" color="text.secondary">{t('admin.userManagement.summaryCards.monthlyRevenue')}</Typography>
                     <Typography variant="h6">{formatCurrency(selectedOwnerProfile?.summary.monthlyFeeTotalCents)}</Typography>
                     <Typography variant="caption" color="text.secondary">
-                      {selectedOwnerProfile?.summary.activeSubscriptionLocations || 0} assinatura(s) ativa(s)
+                      {t('admin.userManagement.summaryCards.activeSubscriptions', { count: selectedOwnerProfile?.summary.activeSubscriptionLocations || 0 })}
                     </Typography>
                   </CardContent>
                 </Card>
                 <Card variant="outlined">
                   <CardContent>
-                    <Typography variant="overline" color="text.secondary">Quadras</Typography>
+                    <Typography variant="overline" color="text.secondary">{t('admin.userManagement.summaryCards.venues')}</Typography>
                     <Typography variant="h6">{selectedOwnerProfile?.summary.totalLocations || 0}</Typography>
                     <Typography variant="caption" color="text.secondary">
-                      {selectedOwnerProfile?.summary.publishedLocations || 0} publicadas · {selectedOwnerProfile?.summary.pendingLocations || 0} em revisão
+                      {t('admin.userManagement.summaryCards.venuesDetail', { published: selectedOwnerProfile?.summary.publishedLocations || 0, pending: selectedOwnerProfile?.summary.pendingLocations || 0 })}
                     </Typography>
                   </CardContent>
                 </Card>
                 <Card variant="outlined">
                   <CardContent>
-                    <Typography variant="overline" color="text.secondary">Riscos</Typography>
+                    <Typography variant="overline" color="text.secondary">{t('admin.userManagement.summaryCards.risks')}</Typography>
                     <Typography variant="h6">{(selectedOwnerProfile?.summary.overdueLocations || 0) + (selectedOwnerProfile?.summary.incompleteLocations || 0)}</Typography>
                     <Typography variant="caption" color="text.secondary">
-                      {selectedOwnerProfile?.summary.overdueLocations || 0} pendências · {selectedOwnerProfile?.summary.incompleteLocations || 0} incompletas
+                      {t('admin.userManagement.summaryCards.risksDetail', { overdue: selectedOwnerProfile?.summary.overdueLocations || 0, incomplete: selectedOwnerProfile?.summary.incompleteLocations || 0 })}
                     </Typography>
                   </CardContent>
                 </Card>
@@ -1433,7 +1442,7 @@ export const UserManagementScreen: React.FC = () => {
                 <Box sx={{ mb: 2 }}>
                   <Typography variant="subtitle2" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                     <BusinessIcon fontSize="small" />
-                    Quadras vinculadas e ações comerciais
+                    {t('admin.userManagement.venuesList.title')}
                   </Typography>
                   <List dense disablePadding>
                     {selectedOwnerProfile?.locations.map((location) => (
@@ -1452,14 +1461,14 @@ export const UserManagementScreen: React.FC = () => {
                               endIcon={<OpenInNewIcon fontSize="small" />}
                               onClick={() => openLocation(location.id)}
                             >
-                              Ver
+                              {t('admin.userManagement.venuesList.view')}
                             </Button>
                             <Button
                               size="small"
                               variant="contained"
                               onClick={() => openLocation(location.id, true)}
                             >
-                              Editar
+                              {t('common.edit')}
                             </Button>
                           </Box>
                         }
@@ -1478,10 +1487,10 @@ export const UserManagementScreen: React.FC = () => {
                             </Box>
                           }
                           secondary={[
-                            location.city || location.state ? `${location.city || 'Cidade não informada'}${location.state ? `/${location.state}` : ''}` : 'Endereço comercial incompleto',
-                            `${location.fieldCount} campo(s)`,
-                            `${location.managersCount} gerente(s)`,
-                            location.monthlyFeeCents ? `${formatCurrency(location.monthlyFeeCents)}${location.billingDueDay ? ` · vence dia ${location.billingDueDay}` : ''}` : 'Mensalidade não definida',
+                            location.city || location.state ? `${location.city || t('admin.userManagement.fallback.cityNotInformed')}${location.state ? `/${location.state}` : ''}` : t('admin.userManagement.venuesList.incompleteAddress'),
+                            t('admin.userManagement.accountDialog.fieldCount', { count: location.fieldCount }),
+                            t('admin.userManagement.venuesList.managersCount', { count: location.managersCount }),
+                            location.monthlyFeeCents ? `${formatCurrency(location.monthlyFeeCents)}${location.billingDueDay ? ` · ${t('admin.userManagement.venuesList.dueDay', { day: location.billingDueDay })}` : ''}` : t('admin.userManagement.venuesList.feeNotDefined'),
                           ].join(' · ')}
                         />
                       </ListItem>
@@ -1490,12 +1499,12 @@ export const UserManagementScreen: React.FC = () => {
                 </Box>
               ) : (
                 <Alert severity="info" sx={{ mb: 2 }}>
-                  Este usuário ainda não tem quadras vinculadas. Promover para Field Owner apenas prepara o acesso comercial.
+                  {t('admin.userManagement.venuesList.none')}
                 </Alert>
               )}
 
               <Alert severity={(selectedOwnerProfile?.summary.overdueLocations || 0) > 0 ? 'warning' : 'info'} sx={{ mb: 2 }}>
-                Alterações de role usam a operação auditada de permissões. Rebaixar dono de quadra com cadastros vinculados exige confirmação reforçada.
+                {t('admin.userManagement.roleDialog.auditNote')}
               </Alert>
             </Box>
           )}
@@ -1527,33 +1536,37 @@ export const UserManagementScreen: React.FC = () => {
       </Dialog>
 
       <Dialog open={confirmDialogOpen} onClose={() => setConfirmDialogOpen(false)}>
-        <DialogTitle>Confirmar alteração de role</DialogTitle>
+        <DialogTitle>{t('admin.userManagement.confirm.title')}</DialogTitle>
         <DialogContent>
           {isPendingSelfDemotion ? (
             <Alert severity="warning" sx={{ mb: 2 }}>
-              Você está prestes a remover seu próprio acesso de administrador. Esta ação requer outro admin para reverter.
+              {t('admin.userManagement.confirm.selfDemotion')}
             </Alert>
           ) : isPendingAdminPromotion ? (
             <Alert severity="warning" sx={{ mb: 2 }}>
-              Admins têm acesso total ao sistema. Confirme apenas se este usuário deve administrar a plataforma.
+              {t('admin.userManagement.confirm.adminPromotion')}
             </Alert>
           ) : isPendingFieldOwnerDemotion ? (
             <Alert severity="warning" sx={{ mb: 2 }}>
-              Este dono possui {pendingOwnerSummary?.totalLocations || 0} quadra(s) vinculada(s),
-              {' '}{pendingOwnerSummary?.publishedLocations || 0} publicada(s) e
-              {' '}{formatCurrency(pendingOwnerSummary?.monthlyFeeTotalCents)} de mensalidade agregada.
-              Rebaixar para Player não transfere nem suspende as quadras automaticamente.
+              {t('admin.userManagement.confirm.ownerDemotion', {
+                total: pendingOwnerSummary?.totalLocations || 0,
+                published: pendingOwnerSummary?.publishedLocations || 0,
+                amount: formatCurrency(pendingOwnerSummary?.monthlyFeeTotalCents),
+              })}
             </Alert>
           ) : null}
           <Typography sx={{ mb: 2 }}>
-            Alterar role de <strong>{pendingRoleChange?.user.name}</strong> de{' '}
-            <strong>{pendingRoleChange?.user.role}</strong> para <strong>{pendingRoleChange?.role}</strong>?
+            <Trans
+              i18nKey="admin.userManagement.confirm.changeRoleQuestion"
+              values={{ name: pendingRoleChange?.user.name, from: pendingRoleChange?.user.role, to: pendingRoleChange?.role }}
+              components={{ strong: <strong /> }}
+            />
           </Typography>
           {requiresStrongConfirmation && (
             <TextField
               fullWidth
               size="small"
-              label="Digite ALTERAR para confirmar"
+              label={t('admin.userManagement.confirm.typeToConfirm')}
               value={confirmText}
               onChange={(event) => setConfirmText(event.target.value)}
               sx={{ mb: 2 }}
@@ -1561,7 +1574,7 @@ export const UserManagementScreen: React.FC = () => {
             />
           )}
           <Alert severity="info">
-            O usuário precisará fazer login novamente após a alteração.
+            {t('admin.userManagement.confirm.reloginNote')}
           </Alert>
         </DialogContent>
         <DialogActions>
@@ -1591,46 +1604,46 @@ export const UserManagementScreen: React.FC = () => {
         maxWidth="md"
         fullWidth
       >
-        <DialogTitle>Conta comercial agregada</DialogTitle>
+        <DialogTitle>{t('admin.userManagement.accountDialog.title')}</DialogTitle>
         <DialogContent>
           <Alert severity="info" sx={{ mb: 2 }}>
-            Configure a mensalidade do dono de quadra como contrato único. As alterações usam callable auditada e geram evento comercial.
+            {t('admin.userManagement.accountDialog.intro')}
           </Alert>
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))' }, gap: 2, mt: 1 }}>
             <TextField
               select
-              label="Status"
+              label={t('admin.userManagement.table.status')}
               value={venueAccountForm.status}
               onChange={(event) => setVenueAccountForm((current) => ({ ...current, status: event.target.value as VenueAccountStatus }))}
               fullWidth
             >
-              <MenuItem value="TRIAL">Teste</MenuItem>
-              <MenuItem value="ACTIVE">Ativa</MenuItem>
-              <MenuItem value="OVERDUE">Em atraso</MenuItem>
-              <MenuItem value="SUSPENDED">Suspensa</MenuItem>
-              <MenuItem value="CANCELLED">Cancelada</MenuItem>
+              <MenuItem value="TRIAL">{t('admin.userManagement.accountStatus.trial')}</MenuItem>
+              <MenuItem value="ACTIVE">{t('admin.userManagement.accountDialog.statusActive')}</MenuItem>
+              <MenuItem value="OVERDUE">{t('admin.userManagement.accountStatus.overdue')}</MenuItem>
+              <MenuItem value="SUSPENDED">{t('admin.userManagement.accountStatus.suspended')}</MenuItem>
+              <MenuItem value="CANCELLED">{t('admin.userManagement.accountStatus.cancelled')}</MenuItem>
             </TextField>
             <TextField
               select
-              label="Modelo de cobrança"
+              label={t('admin.userManagement.accountDialog.billingModel')}
               value={venueAccountForm.billingScope}
               onChange={(event) => setVenueAccountForm((current) => ({ ...current, billingScope: event.target.value as VenueAccountBillingScope }))}
               fullWidth
-              helperText="Define como a mensalidade total será calculada."
+              helperText={t('admin.userManagement.accountDialog.billingModelHelp')}
             >
-              <MenuItem value="OWNER">Valor único por dono</MenuItem>
-              <MenuItem value="LOCATION">Valor por quadra</MenuItem>
-              <MenuItem value="FIELD_COUNT">Valor por campo ativo</MenuItem>
-              <MenuItem value="MANUAL_OVERRIDE">Valor manual fechado</MenuItem>
+              <MenuItem value="OWNER">{t('admin.userManagement.accountDialog.modelOwner')}</MenuItem>
+              <MenuItem value="LOCATION">{t('admin.userManagement.accountDialog.modelVenue')}</MenuItem>
+              <MenuItem value="FIELD_COUNT">{t('admin.userManagement.accountDialog.modelField')}</MenuItem>
+              <MenuItem value="MANUAL_OVERRIDE">{t('admin.userManagement.accountDialog.modelManual')}</MenuItem>
             </TextField>
             <TextField
               select
-              label="Plano base"
+              label={t('admin.userManagement.accountDialog.basePlan')}
               value={venueAccountForm.billingPlanCode}
               onChange={(event) => setVenueAccountForm((current) => ({ ...current, billingPlanCode: event.target.value as VenueAccountPlanCode | '' }))}
               fullWidth
             >
-              <MenuItem value="">Sem plano definido</MenuItem>
+              <MenuItem value="">{t('admin.userManagement.accountDialog.noPlan')}</MenuItem>
               <MenuItem value="TRIAL">Trial</MenuItem>
               <MenuItem value="BASIC">Basic</MenuItem>
               <MenuItem value="PRO">Pro</MenuItem>
@@ -1638,68 +1651,68 @@ export const UserManagementScreen: React.FC = () => {
               <MenuItem value="CUSTOM">Custom</MenuItem>
             </TextField>
             <TextField
-              label="Nome comercial do plano"
+              label={t('admin.userManagement.accountDialog.planName')}
               value={venueAccountForm.billingPlanLabel}
               onChange={(event) => setVenueAccountForm((current) => ({ ...current, billingPlanLabel: event.target.value }))}
               fullWidth
-              helperText="Ex.: Fundador 2026, Parceiro Premium, Customizado."
+              helperText={t('admin.userManagement.accountDialog.planNameHelp')}
               inputProps={{ maxLength: 120 }}
             />
             <TextField
               select
-              label="Ciclo"
+              label={t('admin.userManagement.accountDialog.cycle')}
               value={venueAccountForm.billingCycle}
               onChange={(event) => setVenueAccountForm((current) => ({ ...current, billingCycle: event.target.value as VenueAccountBillingCycle | '' }))}
               fullWidth
             >
-              <MenuItem value="">Sem ciclo definido</MenuItem>
-              <MenuItem value="MONTHLY">Mensal</MenuItem>
-              <MenuItem value="QUARTERLY">Trimestral</MenuItem>
-              <MenuItem value="SEMIANNUAL">Semestral</MenuItem>
-              <MenuItem value="ANNUAL">Anual</MenuItem>
-              <MenuItem value="CUSTOM">Customizado</MenuItem>
+              <MenuItem value="">{t('admin.userManagement.accountDialog.noCycle')}</MenuItem>
+              <MenuItem value="MONTHLY">{t('admin.userManagement.accountDialog.cycleMonthly')}</MenuItem>
+              <MenuItem value="QUARTERLY">{t('admin.userManagement.accountDialog.cycleQuarterly')}</MenuItem>
+              <MenuItem value="SEMIANNUAL">{t('admin.userManagement.accountDialog.cycleSemiannual')}</MenuItem>
+              <MenuItem value="ANNUAL">{t('admin.userManagement.accountDialog.cycleAnnual')}</MenuItem>
+              <MenuItem value="CUSTOM">{t('admin.userManagement.accountDialog.cycleCustom')}</MenuItem>
             </TextField>
             <TextField
-              label="Dia de vencimento"
+              label={t('admin.userManagement.accountDialog.dueDay')}
               value={venueAccountForm.billingDueDay}
               onChange={(event) => setVenueAccountForm((current) => ({ ...current, billingDueDay: event.target.value.replace(/\D/g, '').slice(0, 2) }))}
               fullWidth
-              helperText="Use 1 a 31. Pode ficar vazio durante onboarding."
+              helperText={t('admin.userManagement.accountDialog.dueDayHelp')}
             />
             <TextField
-              label="Valor base do plano (R$)"
+              label={t('admin.userManagement.accountDialog.baseFee')}
               value={venueAccountForm.billingBaseFee}
               onChange={(event) => setVenueAccountForm((current) => ({ ...current, billingBaseFee: event.target.value.replace(',', '.').replace(/[^\d.]/g, '') }))}
               inputMode="decimal"
               fullWidth
-              helperText="Preço cheio antes de acordos."
+              helperText={t('admin.userManagement.accountDialog.baseFeeHelp')}
             />
             <TextField
-              label="Mensalidade final manual (R$)"
+              label={t('admin.userManagement.accountDialog.manualFee')}
               value={venueAccountForm.monthlyFeeOverride}
               onChange={(event) => setVenueAccountForm((current) => ({ ...current, monthlyFeeOverride: event.target.value.replace(',', '.').replace(/[^\d.]/g, '') }))}
               inputMode="decimal"
               fullWidth
-              helperText="Usado em cobrança por dono ou override manual."
+              helperText={t('admin.userManagement.accountDialog.manualFeeHelp')}
             />
             <TextField
-              label="Valor por quadra (R$)"
+              label={t('admin.userManagement.accountDialog.venueFee')}
               value={venueAccountForm.defaultLocationFee}
               onChange={(event) => setVenueAccountForm((current) => ({ ...current, defaultLocationFee: event.target.value.replace(',', '.').replace(/[^\d.]/g, '') }))}
               inputMode="decimal"
               fullWidth
-              helperText="Usado quando o modelo for por quadra."
+              helperText={t('admin.userManagement.accountDialog.venueFeeHelp')}
             />
             <TextField
-              label="Valor por campo ativo (R$)"
+              label={t('admin.userManagement.accountDialog.fieldFee')}
               value={venueAccountForm.pricePerActiveField}
               onChange={(event) => setVenueAccountForm((current) => ({ ...current, pricePerActiveField: event.target.value.replace(',', '.').replace(/[^\d.]/g, '') }))}
               inputMode="decimal"
               fullWidth
-              helperText="Usado quando o modelo for por campo ativo."
+              helperText={t('admin.userManagement.accountDialog.fieldFeeHelp')}
             />
             <TextField
-              label="Início da cobrança"
+              label={t('admin.userManagement.accountDialog.billingStart')}
               type="date"
               value={venueAccountForm.billingStartsAt}
               onChange={(event) => setVenueAccountForm((current) => ({ ...current, billingStartsAt: event.target.value }))}
@@ -1707,7 +1720,7 @@ export const UserManagementScreen: React.FC = () => {
               InputLabelProps={{ shrink: true }}
             />
             <TextField
-              label="Fim/renovação do contrato"
+              label={t('admin.userManagement.accountDialog.contractEnd')}
               type="date"
               value={venueAccountForm.billingExpiresAt}
               onChange={(event) => setVenueAccountForm((current) => ({ ...current, billingExpiresAt: event.target.value }))}
@@ -1715,33 +1728,33 @@ export const UserManagementScreen: React.FC = () => {
               InputLabelProps={{ shrink: true }}
             />
             <TextField
-              label="Contato financeiro"
+              label={t('admin.userManagement.account.billingContact')}
               value={venueAccountForm.billingContactName}
               onChange={(event) => setVenueAccountForm((current) => ({ ...current, billingContactName: event.target.value }))}
               fullWidth
             />
             <TextField
-              label="Email financeiro"
+              label={t('admin.userManagement.accountDialog.billingEmail')}
               value={venueAccountForm.billingContactEmail}
               onChange={(event) => setVenueAccountForm((current) => ({ ...current, billingContactEmail: event.target.value }))}
               fullWidth
               inputProps={{ maxLength: 254 }}
             />
             <TextField
-              label="Telefone financeiro"
+              label={t('admin.userManagement.accountDialog.billingPhone')}
               value={venueAccountForm.billingContactPhone}
               onChange={(event) => setVenueAccountForm((current) => ({ ...current, billingContactPhone: event.target.value }))}
               fullWidth
             />
             <TextField
-              label="Documento comercial"
+              label={t('admin.userManagement.accountDialog.document')}
               value={venueAccountForm.billingContactDocument}
               onChange={(event) => setVenueAccountForm((current) => ({ ...current, billingContactDocument: event.target.value }))}
               fullWidth
             />
           </Box>
           <Box sx={{ mt: 2 }}>
-            <Typography variant="subtitle2" sx={{ mb: 1 }}>Quadras vinculadas à conta</Typography>
+            <Typography variant="subtitle2" sx={{ mb: 1 }}>{t('admin.userManagement.accountDialog.linkedVenues')}</Typography>
             {(selectedOwnerProfile?.locations || []).length > 0 ? (
               <Box sx={{ display: 'grid', gap: 1 }}>
                 {selectedOwnerProfile?.locations.map((location) => (
@@ -1754,17 +1767,17 @@ export const UserManagementScreen: React.FC = () => {
                         sx={{ p: 1.25 }}
                       />
                     }
-                    label={`${location.name} · ${location.city || 'Cidade não informada'} · ${location.fieldCount} campo(s)`}
+                    label={`${location.name} · ${location.city || t('admin.userManagement.fallback.cityNotInformed')} · ${t('admin.userManagement.accountDialog.fieldCount', { count: location.fieldCount })}`}
                     sx={{ minHeight: 44 }}
                   />
                 ))}
               </Box>
             ) : (
-              <Alert severity="warning">Este usuário ainda não possui quadras para vincular.</Alert>
+              <Alert severity="warning">{t('admin.userManagement.accountDialog.noVenuesToLink')}</Alert>
             )}
           </Box>
           <TextField
-            label="Observação visível/contratual"
+            label={t('admin.userManagement.accountDialog.publicNote')}
             value={venueAccountForm.notes}
             onChange={(event) => setVenueAccountForm((current) => ({ ...current, notes: event.target.value }))}
             fullWidth
@@ -1774,7 +1787,7 @@ export const UserManagementScreen: React.FC = () => {
             inputProps={{ maxLength: 1000 }}
           />
           <TextField
-            label="Notas internas"
+            label={t('admin.userManagement.accountDialog.internalNotes')}
             value={venueAccountForm.adminNotes}
             onChange={(event) => setVenueAccountForm((current) => ({ ...current, adminNotes: event.target.value }))}
             fullWidth
@@ -1789,24 +1802,23 @@ export const UserManagementScreen: React.FC = () => {
             {t('common.cancel')}
           </Button>
           <Button variant="contained" onClick={handleSaveVenueAccount} disabled={venueAccountLoading || !selectedUser}>
-            {venueAccountLoading ? <CircularProgress size={20} /> : 'Salvar conta comercial'}
+            {venueAccountLoading ? <CircularProgress size={20} /> : t('admin.userManagement.accountDialog.save')}
           </Button>
         </DialogActions>
       </Dialog>
 
       <Dialog open={bulkDialogOpen} onClose={() => !bulkLoading && setBulkDialogOpen(false)}>
-        <DialogTitle>Alterar role em lote</DialogTitle>
+        <DialogTitle>{t('admin.userManagement.bulk.title')}</DialogTitle>
         <DialogContent>
           <Typography sx={{ mb: 2 }}>
-            Alterar role de {selectedUsers.size} usuário(s) selecionado(s) para:
+            {t('admin.userManagement.bulk.prompt', { count: selectedUsers.size })}
           </Typography>
           <Alert severity="info" sx={{ mb: 2 }}>
-            Usuários alterados precisarão fazer login novamente. Seu próprio usuário é ignorado em alterações em lote.
+            {t('admin.userManagement.bulk.note')}
           </Alert>
           {selectedOwnerRiskCount > 0 && (
             <Alert severity="warning" sx={{ mb: 2 }}>
-              {selectedOwnerRiskCount} dono(s) selecionado(s) têm quadras vinculadas. Rebaixamento em lote para Player fica bloqueado;
-              faça a alteração individual pela ficha comercial para revisar impacto.
+              {t('admin.userManagement.bulk.ownerRisk', { count: selectedOwnerRiskCount })}
             </Alert>
           )}
           {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}

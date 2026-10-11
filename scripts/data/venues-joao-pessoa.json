@@ -1,0 +1,305 @@
+{
+  "gerado_em": "2026-10-10",
+  "rodada": 9,
+  "slug": "joao-pessoa",
+  "issue": 4186,
+  "titulo": "João Pessoa (coletor de cidades novas, execução 16)",
+  "coleta": {
+    "data": "2026-10-10",
+    "ferramentas": "pesquisa web + fichas públicas do diretório locaisdobrasil.com.br e listatudo.com.br, GuiaFix (confirmação); OpenStreetMap/Overpass (scripts/data/build-venues-osm.mjs) usado só como lista de candidatos, sem importar candidato só-OSM",
+    "regra": "apenas dados públicos verificáveis; campos sem fonte = null; todo item tem >=1 fonte com URL; entra no app como DRAFT/não verificado"
+  },
+  "cobertura": {
+    "João Pessoa": 8
+  },
+  "venues": [
+    {
+      "nome": "Arena Teles",
+      "endereco": {
+        "rua": "Rua dos Sombreiros",
+        "numero": "79",
+        "bairro": "Muçumagro",
+        "cidade": "João Pessoa",
+        "uf": "PB",
+        "cep": "58066-113"
+      },
+      "telefone": "(83) 98856-7346",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.locaisdobrasil.com.br/encontre/campo-de-futebol/joao-pessoa-pb/arena-teles/62a13e066e1550eac4c73090",
+          "dado": "ficha no diretório Locais do Brasil: endereço, CEP, telefone e descrição da empresa ('ARENA TELES - ALUGUEL DE CAMPO SOCIETY'); horários de funcionamento"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_aluguel",
+      "origem": "web"
+    },
+    {
+      "nome": "Arena Food Park",
+      "endereco": {
+        "rua": "Avenida Espírito Santo",
+        "numero": "410",
+        "bairro": "Estados",
+        "cidade": "João Pessoa",
+        "uf": "PB",
+        "cep": "58030-110"
+      },
+      "telefone": "(83) 98878-2020",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": "campo society para locação e quadra de areia para locação (texto da ficha; número de campos não informado)",
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.locaisdobrasil.com.br/encontre/campo-de-futebol/joao-pessoa-pb/arena-food-park/62a13df06e1550eac4c7307d",
+          "dado": "ficha no diretório Locais do Brasil: endereço, CEP, telefone e descrição 'Campo society para locação'"
+        },
+        {
+          "url": "https://guiafix.com.br/joao-pessoa-pb/futebol",
+          "dado": "listagem GuiaFix de Futebol em João Pessoa com a mesma descrição 'Campo society para locação'"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_aluguel",
+      "origem": "web"
+    },
+    {
+      "nome": "Arena Portal do Sol",
+      "endereco": {
+        "rua": "Rua Dep. José Afonso Gayoso de Sousa",
+        "numero": "60",
+        "bairro": "Portal do Sol",
+        "cidade": "João Pessoa",
+        "uf": "PB",
+        "cep": "58033-455"
+      },
+      "telefone": "(83) 99651-7513",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": "campo society sintético; descrição 'o local perfeito para o seu evento' (texto da ficha)",
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.locaisdobrasil.com.br/encontre/campo-de-futebol/joao-pessoa-pb/arena-portal-do-sol/65a17e547371746ac6516e3d",
+          "dado": "ficha no diretório Locais do Brasil: endereço, CEP, telefone e descrição de campo society para eventos"
+        },
+        {
+          "url": "https://www.locaisdobrasil.com.br/encontre/campo-de-futebol/joao-pessoa-pb",
+          "dado": "listagem do diretório com a mesma ficha (categoria campo de futebol, endereço no Portal do Sol)"
+        }
+      ],
+      "confidence": "baixa",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    },
+    {
+      "nome": "Estação da Bola",
+      "endereco": {
+        "rua": "Rua Abelardo Targino da Fonseca",
+        "numero": "1000",
+        "bairro": "Portal do Sol",
+        "cidade": "João Pessoa",
+        "uf": "PB",
+        "cep": null
+      },
+      "telefone": null,
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://listatudo.com.br/portal-do-sol-joao-pessoa/quadras-esportivas-aluguel-locais/",
+          "dado": "diretório ListaTudo, categoria Quadras Esportivas - Aluguel: endereço e texto 'oferecemos aluguel de quadras esportivas'; telefone truncado na página, por isso null"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_aluguel",
+      "origem": "web"
+    },
+    {
+      "nome": "Arena Opção",
+      "endereco": {
+        "rua": "Rua Comerciante Alvaro A Nascimento",
+        "numero": "855",
+        "bairro": "Gramame",
+        "cidade": "João Pessoa",
+        "uf": "PB",
+        "cep": "58067-201"
+      },
+      "telefone": null,
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.locaisdobrasil.com.br/encontre/campo-de-futebol/joao-pessoa-pb/arena-opcao/62a13e036e1550eac4c7308e",
+          "dado": "ficha no diretório Locais do Brasil: endereço e CEP; empresa classificada como campo de futebol (sem texto explícito de locação)"
+        }
+      ],
+      "confidence": "baixa",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    },
+    {
+      "nome": "Planalto Arena Society",
+      "endereco": {
+        "rua": "Rua Asp. José Evandro de Vasconcelos",
+        "numero": null,
+        "bairro": "Oitizeiro",
+        "cidade": "João Pessoa",
+        "uf": "PB",
+        "cep": "58088-120"
+      },
+      "telefone": null,
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.locaisdobrasil.com.br/encontre/campo-de-futebol/joao-pessoa-pb/planalto-arena-society/62a13df46e1550eac4c73080",
+          "dado": "ficha no diretório Locais do Brasil: endereço (rua e CEP, sem número) e categoria campo de futebol/society (sem texto explícito de locação)"
+        }
+      ],
+      "confidence": "baixa",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    },
+    {
+      "nome": "H2A Arena Campo Society",
+      "endereco": {
+        "rua": "Rua Engenheira Rosa Lúcia Ribeiro Fireman",
+        "numero": null,
+        "bairro": "Jardim Veneza",
+        "cidade": "João Pessoa",
+        "uf": "PB",
+        "cep": "58084-410"
+      },
+      "telefone": null,
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": "dois campos (texto de avaliação da ficha)",
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.locaisdobrasil.com.br/encontre/campo-de-futebol/joao-pessoa-pb/h2a-arena-campo-society/62a13def6e1550eac4c7307c",
+          "dado": "ficha no diretório Locais do Brasil: endereço (rua e CEP, sem número) e categoria campo de futebol society (sem texto explícito de locação)"
+        }
+      ],
+      "confidence": "baixa",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    },
+    {
+      "nome": "Arena Evidence",
+      "endereco": {
+        "rua": "Rua Waldemar Dornelas dos Santos",
+        "numero": "46",
+        "bairro": "Cuiá",
+        "cidade": "João Pessoa",
+        "uf": "PB",
+        "cep": "58077-065"
+      },
+      "telefone": null,
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.locaisdobrasil.com.br/encontre/campo-de-futebol/joao-pessoa-pb/arena-evidence/62a13e0f6e1550eac4c73098",
+          "dado": "ficha no diretório Locais do Brasil: endereço e CEP; categoria campo de futebol (sem texto explícito de locação)"
+        }
+      ],
+      "confidence": "baixa",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    }
+  ]
+}

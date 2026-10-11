@@ -1,5 +1,7 @@
 package com.futebadosparcas.compose
 
+import com.futebadosparcas.compose.di.koinInjectOrNull
+import com.futebadosparcas.compose.di.koinViewModelOrNull
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
@@ -147,7 +149,7 @@ private fun AppContent() {
     // SYSTEM continua sendo o DEFAULT (instalação nova / antes da primeira emissão /
     // repositório ausente), não mais o único valor: o usuário escolhe na rota
     // `AppRoutes.THEME_SETTINGS` (hub de Perfil).
-    val themeRepository: ThemeRepository? = runCatching { koinInject<ThemeRepository>() }.getOrNull()
+    val themeRepository: ThemeRepository? = koinInjectOrNull<ThemeRepository>()
     val themeConfigFlow = remember(themeRepository) {
         themeRepository?.themeConfig ?: flowOf(SharedUiThemeDefaults.config)
     }
@@ -190,8 +192,8 @@ private fun AppContent() {
 fun AppNavigation(
     navController: NavHostController = rememberNavController()
 ) {
-    val authRepository: AuthRepository? = runCatching { koinInject<AuthRepository>() }.getOrNull()
-    val preferencesService: PreferencesService? = runCatching { koinInject<PreferencesService>() }.getOrNull()
+    val authRepository: AuthRepository? = koinInjectOrNull<AuthRepository>()
+    val preferencesService: PreferencesService? = koinInjectOrNull<PreferencesService>()
     val platformShare = remember { runCatching { PlatformShareFactory.create() }.getOrNull() }
     val startDestination = if (authRepository?.isLoggedIn() == true) AppRoutes.HOME else AppRoutes.WELCOME
     val reduceMotion = rememberReduceMotion()
@@ -274,7 +276,7 @@ fun AppNavigation(
 
         // Login
         composable(AppRoutes.LOGIN) {
-            val vm: LoginViewModel? = runCatching { koinViewModel<LoginViewModel>() }.getOrNull()
+            val vm: LoginViewModel? = koinViewModelOrNull<LoginViewModel>()
             val uiState = vm?.loginState?.collectAsStateWithLifecycle()?.value ?: LoginState.Idle
 
             LaunchedEffect(uiState) {
@@ -342,7 +344,7 @@ fun AppNavigation(
 
         composable(AppRoutes.GAME_DETAIL) { entry ->
             val gameId = entry.arguments?.read { getStringOrNull("gameId") }
-            val dataSource = runCatching { koinInject<FirebaseDataSource>() }.getOrNull()
+            val dataSource = koinInjectOrNull<FirebaseDataSource>()
             LaunchedEffect(gameId) { selectedGameId = gameId }
             GameDetailRoute(
                 gameId = gameId,
@@ -372,7 +374,7 @@ fun AppNavigation(
 
         composable(AppRoutes.POST_GAME_REPORT) { entry ->
             val gameId = entry.arguments?.read { getStringOrNull("gameId") }
-            val dataSource = runCatching { koinInject<FirebaseDataSource>() }.getOrNull()
+            val dataSource = koinInjectOrNull<FirebaseDataSource>()
             PostGameReportRoute(
                 gameId = gameId,
                 dataSource = dataSource,
@@ -408,7 +410,7 @@ fun AppNavigation(
 
         composable(AppRoutes.TEAM_FORMATION) { entry ->
             val gameId = entry.arguments?.read { getStringOrNull("gameId") }
-            val dataSource = runCatching { koinInject<FirebaseDataSource>() }.getOrNull()
+            val dataSource = koinInjectOrNull<FirebaseDataSource>()
             TeamFormationRoute(
                 gameId = gameId,
                 dataSource = dataSource,
@@ -434,7 +436,7 @@ fun AppNavigation(
             val groupId = entry.arguments?.read { getStringOrNull("groupId") }
             var retryKey by remember { mutableIntStateOf(0) }
             key(retryKey) {
-                val inviteVm = runCatching { koinViewModel<InviteViewModel>() }.getOrNull()
+                val inviteVm = koinViewModelOrNull<InviteViewModel>()
                 if (inviteVm != null && !groupId.isNullOrBlank()) {
                     InvitePlayersScreen(
                         viewModel = inviteVm,
@@ -619,7 +621,7 @@ fun AppNavigation(
         composable(AppRoutes.THEME_SETTINGS) {
             var retryKey by remember { mutableIntStateOf(0) }
             key(retryKey) {
-                val themeVm = runCatching { koinViewModel<ThemeSettingsViewModel>() }.getOrNull()
+                val themeVm = koinViewModelOrNull<ThemeSettingsViewModel>()
                 if (themeVm != null) {
                     ThemeSettingsScreen(
                         viewModel = themeVm,
