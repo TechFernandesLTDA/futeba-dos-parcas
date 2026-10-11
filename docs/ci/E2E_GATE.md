@@ -70,3 +70,5 @@ que o Stryker ocupe todos os núcleos do host compartilhado com o brazuka-v2.
 ## Merges em sequência (superseded)
 
 No pós-merge (`push` em master), se o run do E2E ficar `stale` (o master avançou) ou for `cancelled` porque um commit mais novo entrou na fila, e o master já estiver em outro SHA, o gate reporta `superseded` (exit 0): quem cobre o código é o gate do commit mais novo. Falha real de teste (`conclusion=failure`) nunca é convertida.
+
+Pushes seguidos no master: o `web-e2e-ci` despachado resolve o head do branch no momento do dispatch, então o gate só acompanha (e só cancela por timeout) o run cujo `head_sha` é o do próprio commit — nunca o run do commit vizinho (#4346). Se o master já avançou antes do dispatch, ou enquanto nenhum run desse SHA existe, o gate reporta `superseded` sem ocupar a fila do runner de emuladores. Timeout com o master avançado também vira `superseded`; timeout com o master parado continua exit 3.

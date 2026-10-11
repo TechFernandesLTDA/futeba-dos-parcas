@@ -5,14 +5,6 @@ plugins {
     id("app.cash.sqldelight") version "2.2.1"
 }
 
-// Forçar Kotlin stdlib 2.2.10 para evitar mismatch com compiler
-configurations.all {
-    resolutionStrategy {
-        force("org.jetbrains.kotlin:kotlin-stdlib:2.2.21")
-        force("org.jetbrains.kotlin:kotlin-stdlib-common:2.2.21")
-    }
-}
-
 kotlin {
     // Opt-in global para APIs experimentais usadas por todo o sourceset
     // Resolve a maioria dos erros de cinterop em iosMain (CoreLocation, CoreCrypto, Security framework, etc)
