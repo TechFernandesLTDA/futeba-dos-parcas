@@ -404,7 +404,6 @@ export const XP_VALUES = {
   GOALKEEPER_GOAL: xpConstants.performanceBonuses.GOALKEEPER_GOAL,
   FAIR_PLAY: xpConstants.performanceBonuses.FAIR_PLAY,
   // Legacy aliases for backward compatibility (web-only concepts)
-  BEST_GK: 25,
   BOLA_MURCHA: xpConstants.xpActions.WORST_PLAYER,
 };
 
