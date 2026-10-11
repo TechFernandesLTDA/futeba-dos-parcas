@@ -1,5 +1,5 @@
 {
-  "observacao": "Manifesto das cidades pesquisadas por OSM/Overpass para os datasets de venues. Cada cidade gera um arquivo venues-<slug>.json em scripts/data/osm-candidates/ (CANDIDATOS: não são importados; servem para cruzar coordenadas/fontes com a pesquisa web nos datasets curados). 'rodada' segue o epic #4186 (R3 = RMC, R4-R8 = novas praças).",
+  "observacao": "Manifesto das cidades pesquisadas por OSM/Overpass para os datasets de venues. Cada cidade gera um arquivo venues-<slug>.json em scripts/data/osm-candidates/ (CANDIDATOS: não são importados; servem para cruzar coordenadas/fontes com a pesquisa web nos datasets curados). 'rodada' segue o epic #4186 (R3 = RMC, R4-R8 = novas praças, R9 = cidades novas do coletor; o validador aceita rodada 1..9).",
   "cidades": [
     {
       "nome": "São José dos Pinhais",
@@ -102,12 +102,80 @@
       "observacao": "capital (município do Rio de Janeiro/RJ); coleta via coletor de cidades novas"
     },
     {
+      "nome": "Campinas",
+      "uf": "SP",
+      "rodada": 9,
+      "slug": "campinas",
+      "epic_issue": 4186
+    },
+    {
       "nome": "Recife",
       "uf": "PE",
       "rodada": 10,
       "slug": "recife",
       "epic_issue": 4186,
       "observacao": "coletor de cidades novas (Execução 8)"
+    },
+    {
+      "nome": "Salvador",
+      "uf": "BA",
+      "rodada": 9,
+      "slug": "salvador",
+      "epic_issue": 4186,
+      "observacao": "capital (município de Salvador/BA); curadoria web sobre candidatos OSM"
+    },
+    {
+      "nome": "Guarulhos",
+      "uf": "SP",
+      "rodada": 10,
+      "slug": "guarulhos",
+      "epic_issue": 4186
+    },
+    {
+      "nome": "Campo Grande",
+      "uf": "MS",
+      "rodada": 10,
+      "slug": "campo-grande",
+      "epic_issue": 4186,
+      "observacao": "coletor de cidades novas (Execução 18)"
+    },
+    {
+      "nome": "Teresina",
+      "uf": "PI",
+      "rodada": 10,
+      "slug": "teresina",
+      "epic_issue": 4186,
+      "observacao": "coletor de cidades novas (Execução 17)"
+    },
+    {
+      "nome": "João Pessoa",
+      "uf": "PB",
+      "rodada": 9,
+      "slug": "joao-pessoa",
+      "epic_issue": 4186
+    },
+    {
+      "nome": "Manaus",
+      "uf": "AM",
+      "rodada": 9,
+      "slug": "manaus",
+      "epic_issue": 4186,
+      "observacao": "capital (município de Manaus/AM); coleta via coletor de cidades novas"
+    },
+    {
+      "nome": "Natal",
+      "uf": "RN",
+      "rodada": 11,
+      "slug": "natal",
+      "epic_issue": 4186,
+      "observacao": "coletor de cidades novas (Execução 15)"
+    },
+    {
+      "nome": "Goiânia",
+      "uf": "GO",
+      "rodada": 9,
+      "slug": "goiania",
+      "epic_issue": 4186
     },
     {
       "nome": "Belo Horizonte",

@@ -1,9 +1,11 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import xpConstants from '../../../shared/xp-constants.json';
 import {
   DIVISION_CONFIG,
   LEAGUE_DIVISIONS,
+  XP_VALUES,
   getDivisionFromRating,
   getDivisionLabel,
   normalizeLeagueDivision,
@@ -57,5 +59,25 @@ describe('league division contract', () => {
     const translate = (key: string) => `translated:${key}`;
     expect(getDivisionLabel('PRATA', translate)).toBe('translated:league.silver');
     expect(getDivisionLabel('GOLD', translate)).toBe('translated:league.gold');
+  });
+});
+
+describe('XP_VALUES single source of truth (#4341)', () => {
+  it('has no numeric literal outside shared/xp-constants.json', () => {
+    const sharedValues = new Set<number>();
+    for (const group of Object.values(xpConstants)) {
+      if (group && typeof group === 'object') {
+        for (const value of Object.values(group)) {
+          if (typeof value === 'number') sharedValues.add(value);
+        }
+      }
+    }
+    for (const [action, value] of Object.entries(XP_VALUES)) {
+      expect(sharedValues.has(value as number), `${action}=${String(value)} não está em shared/xp-constants.json`).toBe(true);
+    }
+  });
+
+  it('does not define BEST_GK, which has no XP award in the backend', () => {
+    expect(XP_VALUES).not.toHaveProperty('BEST_GK');
   });
 });

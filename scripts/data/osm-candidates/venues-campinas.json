@@ -1,0 +1,733 @@
+{
+ "gerado_em": "2026-10-10",
+ "rodada": 9,
+ "cidade": "Campinas",
+ "uf": "SP",
+ "slug": "campinas",
+ "issue": 4186,
+ "fonte": {
+  "provedor": "OpenStreetMap (via Nominatim + Overpass API)",
+  "licenca": "ODbL 1.0 — https://www.openstreetmap.org/copyright",
+  "nominatim_url": "https://www.openstreetmap.org/relation/298227",
+  "nominatim_display_name": "Campinas, São Paulo, Região Sudeste, Brasil",
+  "overpass_mirror": "https://overpass-api.de/api/interpreter",
+  "overpass_query": "[out:json][timeout:180];\narea(3600298227)->.a;\n(\n  node[\"leisure\"=\"pitch\"](area.a);\n  way[\"leisure\"=\"pitch\"](area.a);\n  relation[\"leisure\"=\"pitch\"](area.a);\n  node[\"leisure\"=\"sports_centre\"](area.a);\n  way[\"leisure\"=\"sports_centre\"](area.a);\n);\nout body center meta;",
+  "osm_base_timestamp": "2026-10-10T02:24:20Z"
+ },
+ "coleta": {
+  "data": "2026-10-10",
+  "ferramenta": "scripts/data/build-venues-osm.mjs",
+  "finalidade": "dataset curado de quadras para importação DRAFT (revisão humana antes de publicar)"
+ },
+ "estatisticas": {
+  "candidatos_osm": 688,
+  "sem_nome": 631,
+  "institucional": 1,
+  "acesso_restrito": 0,
+  "amenity_descartada": 0,
+  "sem_sinal_de_futebol": 39,
+  "other_excluded": 0,
+  "sem_coordenada": 0,
+  "mantidos": 17,
+  "duplicatas_removidas": 0
+ },
+ "venues": [
+  {
+   "nome": "Antonio Rodrigues dos Santos",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Campinas",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1054492738",
+     "dado": "OpenStreetMap (way/1054492738): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8866662,
+    "lon": -46.9827555
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1054492738,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Arena Sports",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Campinas",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": "http://instagram.com/arenasportscampinas",
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/977437980",
+     "dado": "OpenStreetMap (way/977437980): sport=soccer;beachvolleyball;multi, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8513467,
+    "lon": -47.0449871
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 977437980,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Boca Juniors",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Campinas",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1238854665",
+     "dado": "OpenStreetMap (way/1238854665): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8200255,
+    "lon": -47.0801101
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1238854665,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campinho de Futebol do Novo Mundo",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Campinas",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1544932435",
+     "dado": "OpenStreetMap (way/1544932435): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.9481721,
+    "lon": -47.1804826
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1544932435,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo da Moradia",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Campinas",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/487023103",
+     "dado": "OpenStreetMap (way/487023103): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8215031,
+    "lon": -47.0887066
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 487023103,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do DIC II",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Campinas",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/149902594",
+     "dado": "OpenStreetMap (way/149902594): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.9749341,
+    "lon": -47.1203948
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 149902594,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Lafayette Álvaro",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Campinas",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/983589330",
+     "dado": "OpenStreetMap (way/983589330): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8815181,
+    "lon": -47.0201878
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 983589330,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo dos Ferroviários",
+   "endereco": {
+    "rua": "Avenida do Ipiranga",
+    "numero": "40",
+    "bairro": "Ponte Preta",
+    "cidade": "Campinas",
+    "uf": "SP",
+    "cep": "13041720"
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1281184908",
+     "dado": "OpenStreetMap (way/1281184908): sport=soccer, Avenida do Ipiranga, 40, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "alta",
+   "coordenadas": {
+    "lat": -22.9152633,
+    "lon": -47.0569545
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1281184908,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Sintentico de futebol",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Campinas",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama sintética (OSM: surface=artificial_turf)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1059030164",
+     "dado": "OpenStreetMap (way/1059030164): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8980097,
+    "lon": -47.0899423
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1059030164,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campos de Futebol",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Campinas",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/520705443",
+     "dado": "OpenStreetMap (way/520705443): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8771462,
+    "lon": -47.0606863
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 520705443,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Cidade Pontepretana - AAPP",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Campinas",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/149939503",
+     "dado": "OpenStreetMap (way/149939503): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8942169,
+    "lon": -47.1101834
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 149939503,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Clube Fonte São Paulo",
+   "endereco": {
+    "rua": "Rua José Paulino",
+    "numero": "2138",
+    "bairro": "Vila Itapura",
+    "cidade": "Campinas",
+    "uf": "SP",
+    "cep": "13023-102"
+   },
+   "telefone": "+55 19 3731 8801",
+   "whatsapp": null,
+   "site": "http://www.fontesaopaulo.com.br/",
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/155580730",
+     "dado": "OpenStreetMap (way/155580730): sport=multi;swimming;gymnastics;tennis;badminton;volleyball;basketball;soccer;yoga, Rua José Paulino, 2138, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "alta",
+   "coordenadas": {
+    "lat": -22.8961841,
+    "lon": -47.0652047
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 155580730,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Futebol Society",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Campinas",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1322472983",
+     "dado": "OpenStreetMap (way/1322472983): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8269642,
+    "lon": -47.0284417
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1322472983,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "PRAÇA DE ESPORTES CARLOS GRIMALDI",
+   "endereco": {
+    "rua": "Rua Maria Bibiana do Carmo",
+    "numero": null,
+    "bairro": "PARQUE INDUSTRIAL",
+    "cidade": "Campinas",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1431179395",
+     "dado": "OpenStreetMap (way/1431179395): sport=swimming;soccer;basketball, Rua Maria Bibiana do Carmo, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.9233056,
+    "lon": -47.0845333
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1431179395,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Praça de Esportes Pompeo de Vitto",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Campinas",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/600923292",
+     "dado": "OpenStreetMap (way/600923292): sport=soccer;swimming, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.9282624,
+    "lon": -47.0619591
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 600923292,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra Poliesportiva do Lafayette Álvaro",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Campinas",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "concreto (OSM: surface=concrete)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/983589329",
+     "dado": "OpenStreetMap (way/983589329): sport=soccer;basketball, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8805051,
+    "lon": -47.0206816
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 983589329,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Society Chácara do Vladimir",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Campinas",
+    "uf": "SP",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/681537159",
+     "dado": "OpenStreetMap (way/681537159): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -22.8445593,
+    "lon": -47.1221953
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 681537159,
+    "sinal_futebol": "sport"
+   }
+  }
+ ]
+}

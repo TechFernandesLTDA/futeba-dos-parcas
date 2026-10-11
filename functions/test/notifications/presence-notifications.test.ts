@@ -989,10 +989,13 @@ describe("Presence Notifications", () => {
     });
 
     it("retoma claim PROCESSING vencida após crash e conclui o evento", async () => {
+      // Valor fixo: um getter relativo a Date.now() vira "ativo" se passar >=2 ms
+      // entre a captura de nowMs no claim e a checagem do lease (flaky #4361).
+      const expiredAt = Date.now() - 60_000;
       dedupDocuments.set("evt-stale-claim", {
         status: "PROCESSING",
         lease_owner: "worker-morto",
-        lease_expires_at: {toMillis: () => Date.now() - 1},
+        lease_expires_at: {toMillis: () => expiredAt},
       });
       mockDocGet
         .mockResolvedValueOnce({exists: true, data: () => ({owner_id: "owner1"})})
