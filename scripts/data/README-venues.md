@@ -12,6 +12,7 @@ Datasets curados para o importador `import-venues-dataset.ts`. Tudo entra no app
 | `venues-sao-paulo.json` | R6 (#4195) | São Paulo (capital) | 12 |
 | `venues-florianopolis.json` | R7 (#4195), revisada em 08/10 | Florianópolis (fichas do Maps + site oficial) | 4 |
 | `venues-joinville.json` | R8 (#4195) | Joinville | 13 |
+| `venues-belo-horizonte.json` | R9 (#4195) | Belo Horizonte (fontes: sites oficiais, Minha Quadra, ListaTudo, Lista Amarela, Guia Fácil) | 6 |
 | `venues-campinas.json` | R9 (venues por cidade, epic #4186) | Campinas/SP (diretórios de aluguel + site Appito + ficha FilmaEu) | 10 |
 | `venues-brasilia.json` | R9 (#4186), coleta de 09/10/2026 | Brasília - DF (Real Society, Ases, AABR, Parque Futebol) | 4 |
 | `venues-enriquecimento-r9.json` | R9 (#4195) | enriquecimento não destrutivo (`modo: enriquecimento`, `location_id` exato) de venues já importados | 33 |

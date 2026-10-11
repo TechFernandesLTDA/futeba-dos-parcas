@@ -176,6 +176,13 @@
       "rodada": 9,
       "slug": "goiania",
       "epic_issue": 4186
+    },
+    {
+      "nome": "Belo Horizonte",
+      "uf": "MG",
+      "rodada": 9,
+      "slug": "belo-horizonte",
+      "epic_issue": 4195
     }
   ]
 }

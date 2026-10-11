@@ -1,0 +1,2045 @@
+{
+ "gerado_em": "2026-10-10",
+ "rodada": 9,
+ "cidade": "Belo Horizonte",
+ "uf": "MG",
+ "slug": "belo-horizonte",
+ "issue": 4195,
+ "fonte": {
+  "provedor": "OpenStreetMap (via Nominatim + Overpass API)",
+  "licenca": "ODbL 1.0 — https://www.openstreetmap.org/copyright",
+  "nominatim_url": "https://www.openstreetmap.org/relation/368782",
+  "nominatim_display_name": "Belo Horizonte, Minas Gerais, Região Sudeste, Brasil",
+  "overpass_mirror": "https://overpass-api.de/api/interpreter",
+  "overpass_query": "[out:json][timeout:180];\narea(3600368782)->.a;\n(\n  node[\"leisure\"=\"pitch\"](area.a);\n  way[\"leisure\"=\"pitch\"](area.a);\n  relation[\"leisure\"=\"pitch\"](area.a);\n  node[\"leisure\"=\"sports_centre\"](area.a);\n  way[\"leisure\"=\"sports_centre\"](area.a);\n);\nout body center meta;",
+  "osm_base_timestamp": "2026-10-10T01:51:00Z"
+ },
+ "coleta": {
+  "data": "2026-10-10",
+  "ferramenta": "scripts/data/build-venues-osm.mjs",
+  "finalidade": "dataset curado de quadras para importação DRAFT (revisão humana antes de publicar)"
+ },
+ "estatisticas": {
+  "candidatos_osm": 841,
+  "sem_nome": 707,
+  "institucional": 2,
+  "acesso_restrito": 9,
+  "amenity_descartada": 0,
+  "sem_sinal_de_futebol": 72,
+  "other_excluded": 0,
+  "sem_coordenada": 0,
+  "mantidos": 49,
+  "duplicatas_removidas": 2
+ },
+ "venues": [
+  {
+   "nome": "arena buraco da coruja",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Belo Horizonte",
+    "uf": "MG",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/829477163",
+     "dado": "OpenStreetMap (way/829477163): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -19.9464508,
+    "lon": -43.997158
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 829477163,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Arena Monte Castelo",
+   "endereco": {
+    "rua": "Rua Mário de Andrade",
+    "numero": "250",
+    "bairro": "Santa Branca",
+    "cidade": "Belo Horizonte",
+    "uf": "MG",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/983442310",
+     "dado": "OpenStreetMap (way/983442310): sport=soccer, Rua Mário de Andrade, 250, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "alta",
+   "coordenadas": {
+    "lat": -19.8365551,
+    "lon": -43.967413
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 983442310,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "ARENA PITANGUI",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Belo Horizonte",
+    "uf": "MG",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/292971983",
+     "dado": "OpenStreetMap (way/292971983): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -19.9041545,
+    "lon": -43.9423116
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 292971983,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Arena Taça de Ouro Futebol Clube",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Belo Horizonte",
+    "uf": "MG",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/706242284",
+     "dado": "OpenStreetMap (way/706242284): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -19.8391043,
+    "lon": -43.9579727
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 706242284,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Associação Esportiva Tupinambás",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Belo Horizonte",
+    "uf": "MG",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/118841908",
+     "dado": "OpenStreetMap (way/118841908): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -19.8986478,
+    "lon": -43.9125329
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 118841908,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Bola de Ouro Futebol Clube",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Belo Horizonte",
+    "uf": "MG",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/87289502",
+     "dado": "OpenStreetMap (way/87289502): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -19.9328123,
+    "lon": -43.9142815
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 87289502,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campinho",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Belo Horizonte",
+    "uf": "MG",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1168148403",
+     "dado": "OpenStreetMap (way/1168148403): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -19.8510968,
+    "lon": -43.8848565
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1168148403,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo de baixo",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Belo Horizonte",
+    "uf": "MG",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/87289503",
+     "dado": "OpenStreetMap (way/87289503): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -19.9320569,
+    "lon": -43.913641
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 87289503,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo de Futebol",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Belo Horizonte",
+    "uf": "MG",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/node/1827624234",
+     "dado": "OpenStreetMap (node/1827624234): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -19.9933261,
+    "lon": -44.0006606
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "node",
+    "id": 1827624234,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo de Futebol Jardim Leblon",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Belo Horizonte",
+    "uf": "MG",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/690775696",
+     "dado": "OpenStreetMap (way/690775696): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -19.8291291,
+    "lon": -43.9870222
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 690775696,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo de Futebol Lajedo",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Belo Horizonte",
+    "uf": "MG",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/960813560",
+     "dado": "OpenStreetMap (way/960813560): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -19.8337535,
+    "lon": -43.9123955
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 960813560,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo de Futebol Society",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Belo Horizonte",
+    "uf": "MG",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/node/1827171844",
+     "dado": "OpenStreetMap (node/1827171844): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -19.9925906,
+    "lon": -44.0063497
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "node",
+    "id": 1827171844,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Aeroporto Carlos Prates",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Belo Horizonte",
+    "uf": "MG",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/335846583",
+     "dado": "OpenStreetMap (way/335846583): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -19.9070616,
+    "lon": -43.9872121
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 335846583,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Do Belmonte",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Belo Horizonte",
+    "uf": "MG",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1205660767",
+     "dado": "OpenStreetMap (way/1205660767): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -19.8471085,
+    "lon": -43.9002999
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1205660767,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Matadouro",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Belo Horizonte",
+    "uf": "MG",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama natural (OSM: surface=grass)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/326999340",
+     "dado": "OpenStreetMap (way/326999340): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -19.8628115,
+    "lon": -43.922135
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 326999340,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Napoli",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Belo Horizonte",
+    "uf": "MG",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/175815873",
+     "dado": "OpenStreetMap (way/175815873): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -19.841026,
+    "lon": -43.9119149
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 175815873,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Saga",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Belo Horizonte",
+    "uf": "MG",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/175817266",
+     "dado": "OpenStreetMap (way/175817266): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -19.8544034,
+    "lon": -43.9129597
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 175817266,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo dos Ciganos",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Belo Horizonte",
+    "uf": "MG",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama natural (OSM: surface=grass)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1203979288",
+     "dado": "OpenStreetMap (way/1203979288): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -19.8479643,
+    "lon": -43.9159327
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1203979288,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo e Futebol",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Belo Horizonte",
+    "uf": "MG",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/176735185",
+     "dado": "OpenStreetMap (way/176735185): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -19.8373194,
+    "lon": -43.9005667
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 176735185,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Novo Aarão Reis",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Belo Horizonte",
+    "uf": "MG",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/176885001",
+     "dado": "OpenStreetMap (way/176885001): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -19.84222,
+    "lon": -43.9087933
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 176885001,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo Society Água Viva",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Belo Horizonte",
+    "uf": "MG",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/598453854",
+     "dado": "OpenStreetMap (way/598453854): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -19.9087239,
+    "lon": -43.9206801
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 598453854,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Centro de Futebol Zico",
+   "endereco": {
+    "rua": "Rua Senador Lima Guimarães",
+    "numero": "40",
+    "bairro": "Buritis",
+    "cidade": "Belo Horizonte",
+    "uf": "MG",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/102410731",
+     "dado": "OpenStreetMap (way/102410731): sport=soccer, Rua Senador Lima Guimarães, 40, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "alta",
+   "coordenadas": {
+    "lat": -19.9675395,
+    "lon": -43.9615412
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 102410731,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "CSCS - Centro Social dos Cabos e Soldados",
+   "endereco": {
+    "rua": "Rua Dom Oscar Romero",
+    "numero": null,
+    "bairro": "Gameleira",
+    "cidade": "Belo Horizonte",
+    "uf": "MG",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/886696480",
+     "dado": "OpenStreetMap (way/886696480): sport=soccer;swimming;basketball, Rua Dom Oscar Romero, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -19.9361676,
+    "lon": -43.9908549
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 886696480,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Escolinha de futebol do Cruzeiro",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Belo Horizonte",
+    "uf": "MG",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama sintética (OSM: surface=artificial_turf)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1125096077",
+     "dado": "OpenStreetMap (way/1125096077): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -19.8876279,
+    "lon": -43.918929
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1125096077,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Estádio Celso Alves Balena",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Belo Horizonte",
+    "uf": "MG",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/218519336",
+     "dado": "OpenStreetMap (way/218519336): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -19.9187599,
+    "lon": -43.9209434
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 218519336,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Estádio Deputado Leopoldo Bessone",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Belo Horizonte",
+    "uf": "MG",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/177218921",
+     "dado": "OpenStreetMap (way/177218921): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -19.8180992,
+    "lon": -43.9593362
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 177218921,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Estádio Municipal Mário Ferreira Guimarães (Baleião)",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Belo Horizonte",
+    "uf": "MG",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/217950016",
+     "dado": "OpenStreetMap (way/217950016): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -19.9282805,
+    "lon": -43.9023763
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 217950016,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Estádio Tadeu Santana de Jesus",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Belo Horizonte",
+    "uf": "MG",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/351921643",
+     "dado": "OpenStreetMap (way/351921643): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -19.8657399,
+    "lon": -43.9434711
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 351921643,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Futsal",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Belo Horizonte",
+    "uf": "MG",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/177027355",
+     "dado": "OpenStreetMap (way/177027355): nome=\"Futsal\", sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "baixa",
+   "coordenadas": {
+    "lat": -19.8072373,
+    "lon": -43.958463
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 177027355,
+    "sinal_futebol": "nome"
+   }
+  },
+  {
+   "nome": "Ginásio Poliesportivo Monsenhor Lydio Murta",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Belo Horizonte",
+    "uf": "MG",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/627670313",
+     "dado": "OpenStreetMap (way/627670313): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -19.8878506,
+    "lon": -43.9077379
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 627670313,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Ginástico Esporte Clube",
+   "endereco": {
+    "rua": "Avenida Afonso Pena",
+    "numero": "3328",
+    "bairro": "Cruzeiro",
+    "cidade": "Belo Horizonte",
+    "uf": "MG",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/86977777",
+     "dado": "OpenStreetMap (way/86977777): sport=soccer;swimming_pool, Avenida Afonso Pena, 3328, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "alta",
+   "coordenadas": {
+    "lat": -19.9401001,
+    "lon": -43.926074
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 86977777,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Minas Tênis Clube I",
+   "endereco": {
+    "rua": "Rua da Bahia",
+    "numero": "2244",
+    "bairro": "Lourdes",
+    "cidade": "Belo Horizonte",
+    "uf": "MG",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/188991918",
+     "dado": "OpenStreetMap (way/188991918): sport=multi;tennis;soccer;swimming;basketball, Rua da Bahia, 2244, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "alta",
+   "coordenadas": {
+    "lat": -19.935506,
+    "lon": -43.9410912
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 188991918,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Nacional Futebol Clube",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Belo Horizonte",
+    "uf": "MG",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/325598967",
+     "dado": "OpenStreetMap (way/325598967): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -19.9234591,
+    "lon": -43.9822767
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 325598967,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Praça de Esportes Louis Braille",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Belo Horizonte",
+    "uf": "MG",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/136554881",
+     "dado": "OpenStreetMap (way/136554881): sport=baseball;soccer;volleyball, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -19.9187626,
+    "lon": -43.9006543
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 136554881,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra da E.M. Maria Modesta Cravo",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Belo Horizonte",
+    "uf": "MG",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/220060018",
+     "dado": "OpenStreetMap (way/220060018): sport=soccer;basketball;volleyball, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -19.8901525,
+    "lon": -43.9209034
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 220060018,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra de esportes",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Belo Horizonte",
+    "uf": "MG",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/node/1814129112",
+     "dado": "OpenStreetMap (node/1814129112): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -19.9830239,
+    "lon": -44.0261117
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "node",
+    "id": 1814129112,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra de futebol",
+   "endereco": {
+    "rua": "Rua Judith Binatti",
+    "numero": "257",
+    "bairro": "Liberdade",
+    "cidade": "Belo Horizonte",
+    "uf": "MG",
+    "cep": "31270-250"
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1064314587",
+     "dado": "OpenStreetMap (way/1064314587): nome=\"Quadra de futebol\", Rua Judith Binatti, 257, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -19.8618243,
+    "lon": -43.9547357
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1064314587,
+    "sinal_futebol": "nome"
+   }
+  },
+  {
+   "nome": "Quadra de Futsal",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Belo Horizonte",
+    "uf": "MG",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/88694492",
+     "dado": "OpenStreetMap (way/88694492): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -19.9220939,
+    "lon": -43.9901987
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 88694492,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra IAP II",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Belo Horizonte",
+    "uf": "MG",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1417654314",
+     "dado": "OpenStreetMap (way/1417654314): sport=futsal, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -19.9018623,
+    "lon": -43.9465802
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1417654314,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra IAPI I",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Belo Horizonte",
+    "uf": "MG",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1417654313",
+     "dado": "OpenStreetMap (way/1417654313): sport=futsal, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -19.9019894,
+    "lon": -43.9468524
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1417654313,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra Mendes Júnior",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Belo Horizonte",
+    "uf": "MG",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/91979800",
+     "dado": "OpenStreetMap (way/91979800): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -19.9366046,
+    "lon": -43.9140228
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 91979800,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra Poliesportiva",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Belo Horizonte",
+    "uf": "MG",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/175816700",
+     "dado": "OpenStreetMap (way/175816700): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -19.8572806,
+    "lon": -43.9164866
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 175816700,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra Society",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Belo Horizonte",
+    "uf": "MG",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/177218923",
+     "dado": "OpenStreetMap (way/177218923): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -19.8176386,
+    "lon": -43.9597432
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 177218923,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadras Celpe",
+   "endereco": {
+    "rua": "Rua Vila Rica",
+    "numero": "687",
+    "bairro": "Padre Eustáquio",
+    "cidade": "Belo Horizonte",
+    "uf": "MG",
+    "cep": "30730-430"
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/840320692",
+     "dado": "OpenStreetMap (way/840320692): sport=soccer, Rua Vila Rica, 687, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "alta",
+   "coordenadas": {
+    "lat": -19.9155261,
+    "lon": -43.9810231
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 840320692,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Social Olímpico Ferroviário",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Belo Horizonte",
+    "uf": "MG",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/74579930",
+     "dado": "OpenStreetMap (way/74579930): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -19.9061019,
+    "lon": -43.9115247
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 74579930,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Sociedade Esportiva Nazaré",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Belo Horizonte",
+    "uf": "MG",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/219588359",
+     "dado": "OpenStreetMap (way/219588359): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -19.8570784,
+    "lon": -43.8931844
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 219588359,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Sportboll",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Belo Horizonte",
+    "uf": "MG",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/715416336",
+     "dado": "OpenStreetMap (way/715416336): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -19.9271449,
+    "lon": -43.9791175
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 715416336,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Toca da Raposa I - Cruzeiro Esporte Clube",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Belo Horizonte",
+    "uf": "MG",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/172095196",
+     "dado": "OpenStreetMap (way/172095196): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -19.8641842,
+    "lon": -43.9970133
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 172095196,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "União Recanto Clube",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Belo Horizonte",
+    "uf": "MG",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/node/1400280276",
+     "dado": "OpenStreetMap (node/1400280276): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -19.8882924,
+    "lon": -43.9077767
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "node",
+    "id": 1400280276,
+    "sinal_futebol": "sport"
+   }
+  }
+ ]
+}
