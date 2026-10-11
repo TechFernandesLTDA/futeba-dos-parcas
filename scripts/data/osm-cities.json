@@ -110,6 +110,14 @@
       "observacao": "coletor de cidades novas (Execução 8)"
     },
     {
+      "nome": "Salvador",
+      "uf": "BA",
+      "rodada": 9,
+      "slug": "salvador",
+      "epic_issue": 4186,
+      "observacao": "capital (município de Salvador/BA); curadoria web sobre candidatos OSM"
+    },
+    {
       "nome": "Guarulhos",
       "uf": "SP",
       "rodada": 10,

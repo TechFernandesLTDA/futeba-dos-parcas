@@ -1,0 +1,228 @@
+{
+  "gerado_em": "2026-10-10",
+  "rodada": 9,
+  "slug": "salvador",
+  "issue": 4186,
+  "titulo": "Salvador (R9)",
+  "coleta": {
+    "data": "2026-10-10",
+    "ferramentas": "OpenStreetMap/Overpass (scripts/data/build-venues-osm.mjs: 46 candidatos, nenhum importado sem fonte) + pesquisa web (Futemais, WebQuadras, Wellhub, Locais do Brasil, sites oficiais)",
+    "regra": "apenas dados públicos verificáveis; campos sem fonte = null; todo item tem >=1 fonte com URL; entra no app como DRAFT/não verificado"
+  },
+  "cobertura": {
+    "Salvador": 5
+  },
+  "venues": [
+    {
+      "nome": "Arena Real Brasil",
+      "endereco": {
+        "rua": "Av. Tancredo Neves",
+        "numero": "148",
+        "bairro": "Caminho das Árvores",
+        "cidade": "Salvador",
+        "uf": "BA",
+        "cep": "41820-020"
+      },
+      "telefone": "(71) 98556-5520",
+      "whatsapp": null,
+      "site": "https://www.arenarealbrasil.com.br/",
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": 2,
+      "detalhe_quadras": "2 campos de futebol society (site oficial da Arena Real Brasil, quem-somos) + quadra de areia (não entra como society)",
+      "tipo_piso": "society",
+      "horarios": {
+        "segunda": "09:00-00:30",
+        "terca": "09:00-00:30",
+        "quarta": "09:00-00:30",
+        "quinta": "09:00-00:30",
+        "sexta": "09:00-00:30",
+        "sabado": "09:00-00:30",
+        "domingo": "09:00-00:30"
+      },
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.arenarealbrasil.com.br/contato/",
+          "dado": "endereço (Shopping da Bahia, estacionamento B4), telefone (71) 98556-5520 e horário de funcionamento na página de contato oficial"
+        },
+        {
+          "url": "https://www.arenarealbrasil.com.br/quem-somos/",
+          "dado": "complexo esportivo com dois campos de futebol society e uma quadra de areia"
+        },
+        {
+          "url": "https://www.futemais.com.br/post/onde-jogar-futebol-em-salvador",
+          "dado": "ficha no guia Futemais (Salvador): endereço, telefone e 2 campos"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    },
+    {
+      "nome": "Champion Multiarena",
+      "endereco": {
+        "rua": "Alameda Euvaldo Luz",
+        "numero": "92",
+        "bairro": "Horto Bela Vista (Shopping Bela Vista, 3º piso)",
+        "cidade": "Salvador",
+        "uf": "BA",
+        "cep": "41098-020"
+      },
+      "telefone": "(71) 99609-1810",
+      "whatsapp": null,
+      "site": "https://championmultiarena.com.br/",
+      "instagram": "@championmultiarena",
+      "preco_hora": null,
+      "qtd_quadras": 3,
+      "detalhe_quadras": "3 campos para Fut 7 e Fut 5 (guia Futemais)",
+      "tipo_piso": "sintético",
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.futemais.com.br/post/onde-jogar-futebol-em-salvador",
+          "dado": "ficha no guia Futemais: endereço (CEP 41098-020), telefone (71) 99609-1810, Instagram e 3 campos para Fut 7 e Fut 5"
+        },
+        {
+          "url": "https://championmultiarena.com.br/",
+          "dado": "site oficial: endereço no rodapé (Alameda Euvaldo Luz, 92, Shopping Bela Vista, Salvador); o CEP do rodapé (41150-125) diverge do guia e não foi adotado"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    },
+    {
+      "nome": "Arena Cidade da Bola",
+      "endereco": {
+        "rua": "Ladeira do Ypiranga",
+        "numero": "40",
+        "bairro": "Cidade Nova",
+        "cidade": "Salvador",
+        "uf": "BA",
+        "cep": "40313-260"
+      },
+      "telefone": "(71) 98467-6767",
+      "whatsapp": null,
+      "site": "https://webquadras.com.br/cidadedabola",
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": 3,
+      "detalhe_quadras": "3 quadras de society sintético descobertas (WebQuadras: \"3 quadras de Futebol Society Sintético\")",
+      "tipo_piso": "sintético",
+      "horarios": {
+        "segunda": "06:30-01:30",
+        "terca": "06:30-01:30",
+        "quarta": "06:30-01:30",
+        "quinta": "06:30-01:30",
+        "sexta": "06:00-01:30",
+        "sabado": "06:00-00:00",
+        "domingo": "06:00-00:00"
+      },
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.futemais.com.br/post/onde-jogar-futebol-em-salvador",
+          "dado": "ficha no guia Futemais: endereço (Ladeira do Ypiranga, 40, CEP 40313-260), telefone (71) 98467-6767 e 3 campos"
+        },
+        {
+          "url": "https://webquadras.com.br/cidadedabola",
+          "dado": "agenda WebQuadras: 3 quadras de futebol society sintético, horários de funcionamento; a página lista Cidade Nova, 40 (CEP 40.301-155) e telefone (71) 31879-809, divergentes do guia"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    },
+    {
+      "nome": "Arena Guanabara",
+      "endereco": {
+        "rua": "Rua do Xareu",
+        "numero": "8010",
+        "bairro": "Pituaçu",
+        "cidade": "Salvador",
+        "uf": "BA",
+        "cep": "41741-070"
+      },
+      "telefone": "(71) 99735-2781",
+      "whatsapp": null,
+      "site": null,
+      "instagram": "@arenaguanabara",
+      "preco_hora": null,
+      "qtd_quadras": 2,
+      "detalhe_quadras": "2 quadras de society sintéticas descobertas (guia Futemais: \"arena society\" com duas quadras sintéticas)",
+      "tipo_piso": "sintético",
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.futemais.com.br/post/onde-jogar-futebol-em-salvador",
+          "dado": "ficha no guia Futemais: endereço (Rua do Xareu, 8010, Pituaçu, CEP 41741-070), telefone (71) 99735-2781, Instagram e 2 quadras sintéticas descobertas"
+        }
+      ],
+      "confidence": "baixa",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    },
+    {
+      "nome": "Arena EsportivaBet Parque Santiago",
+      "endereco": {
+        "rua": "Av. Santiago de Compostela",
+        "numero": null,
+        "bairro": "Parque Bela Vista",
+        "cidade": "Salvador",
+        "uf": "BA",
+        "cep": "40279-150"
+      },
+      "telefone": "(71) 98872-6422",
+      "whatsapp": null,
+      "site": null,
+      "instagram": "@arenaparquesantiago",
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": "campo society (fonte Futemais)",
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.futemais.com.br/post/onde-jogar-futebol-em-salvador",
+          "dado": "guia Futemais: arena society com campo disponível para locação, Parque Bela Vista"
+        },
+        {
+          "url": "https://wellhub.com/pt-br/search/partners/arena-esportivabet-parque-santiago-parque-bela-vista/",
+          "dado": "endereço (Av. Santiago de Compostela, Parque Bela Vista, CEP 40279-150), telefone (71) 98872-6422 e horários; número do imóvel não publicado; horários não publicados em faixa única (Wellhub mostra 2 faixas em terça/quarta/quinta), por isso ficam null"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_aluguel",
+      "origem": "web"
+    }
+  ]
+}
