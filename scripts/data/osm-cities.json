@@ -131,6 +131,13 @@
       "slug": "teresina",
       "epic_issue": 4186,
       "observacao": "coletor de cidades novas (Execução 17)"
+    },
+    {
+      "nome": "João Pessoa",
+      "uf": "PB",
+      "rodada": 9,
+      "slug": "joao-pessoa",
+      "epic_issue": 4186
     }
   ]
 }
