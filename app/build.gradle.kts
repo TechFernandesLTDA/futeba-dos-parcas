@@ -107,10 +107,6 @@ android {
         isCoreLibraryDesugaringEnabled = true
     }
 
-    kotlinOptions {
-        jvmTarget = "17"
-    }
-
     buildFeatures {
         viewBinding = true
         buildConfig = true
@@ -167,6 +163,12 @@ android {
         // Nota: Para strings hardcoded em Compose, usar ktlint ou detekt
     }
 
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+    }
 }
 
 dependencies {
@@ -333,7 +335,7 @@ dependencies {
 
 
     // Room Database
-    val roomVersion = "2.6.1"
+    val roomVersion = "2.8.5"
     implementation("androidx.room:room-runtime:$roomVersion")
     implementation("androidx.room:room-ktx:$roomVersion")
     implementation("androidx.datastore:datastore-preferences:1.2.0")
