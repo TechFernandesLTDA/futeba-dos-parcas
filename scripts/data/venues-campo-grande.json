@@ -103,8 +103,8 @@
       "nome": "Gol de Placa",
       "endereco": {
         "rua": "Avenida Afonso Pena",
-        "numero": "4076",
-        "bairro": null,
+        "numero": "4062",
+        "bairro": "Centro",
         "cidade": "Campo Grande",
         "uf": "MS",
         "cep": null
@@ -125,11 +125,15 @@
       "fontes": [
         {
           "url": "https://esportes.cuiket.com.br/mato-grosso-do-sul/aluguel-quadras-esportivas/campo-grande/",
-          "dado": "listagem Cuiket: Gol de Placa, Av Afonso Pena, 4076, telefone (67) 3384-4860, aluguel de quadras"
+          "dado": "listagem Cuiket: Gol de Placa, Av Afonso Pena, 4076, telefone (67) 3384-4860, aluguel de quadras (número diverge das outras duas fontes, que dão 4062)"
         },
         {
           "url": "https://oggo.com.br/l/gol-de-placa-1433",
-          "dado": "ficha OggO GOL DE PLACA, Campo Grande/MS: telefone (67) 3384-4860, aluguel de quadras esportivas (sem endereço na ficha)"
+          "dado": "ficha OggO GOL DE PLACA: Av Afonso Pena, 4062, Centro, Campo Grande/MS, telefone (67) 3384-4860, aluguel de quadras esportivas"
+        },
+        {
+          "url": "https://www.guiatelefone.com/empresas/campo-grande-ms/praticas-esportivas/aluguel-de-quadras-esportivas",
+          "dado": "listagem Guia Telefone: Gol de Placa, Avenida Afonso Pena, 4062, Centro, Campo Grande/MS, (67) 3384-4860"
         }
       ],
       "confidence": "baixa",
