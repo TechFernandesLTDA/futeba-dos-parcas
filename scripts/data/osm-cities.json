@@ -102,6 +102,13 @@
       "observacao": "capital (município do Rio de Janeiro/RJ); coleta via coletor de cidades novas"
     },
     {
+      "nome": "Campinas",
+      "uf": "SP",
+      "rodada": 9,
+      "slug": "campinas",
+      "epic_issue": 4186
+    },
+    {
       "nome": "Recife",
       "uf": "PE",
       "rodada": 10,
