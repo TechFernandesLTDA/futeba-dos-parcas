@@ -31,8 +31,8 @@ const PROJECT_ID = process.env.VENUES_PROJECT_ID ?? "futebadosparcas";
 if (!admin.apps.length) {
   // --cli-credential: autentica com a sessão do firebase CLI do usuário
   // (refresh_token de ~/.config/configstore/firebase-tools.json + o client
-  // OAuth público do próprio firebase-tools). Escreve com a identidade do
-  // usuário logado — sem service account nova e sem segredos no repo.
+  // OAuth vindo de GOOGLE_OAUTH_CLIENT_ID/_SECRET, nunca escrito no código).
+  // Escreve com a identidade do usuário logado — sem service account nova e sem segredos no repo.
   const args0 = process.argv.slice(2);
   if (args0.includes("--cli-credential")) {
     const cfgPath = path.join(os.homedir(), ".config", "configstore", "firebase-tools.json");
@@ -43,12 +43,23 @@ if (!admin.apps.length) {
           ". Rode `firebase login` primeiro.");
       process.exit(1);
     }
+    // O client OAuth NÃO fica no repo (issue #4343): informe o par usado pelo
+    // login do firebase-tools via variáveis de ambiente.
+    const clientId = process.env.GOOGLE_OAUTH_CLIENT_ID;
+    const clientSecret = process.env.GOOGLE_OAUTH_CLIENT_SECRET;
+    if (!clientId || !clientSecret) {
+      console.error("✗ --cli-credential exige GOOGLE_OAUTH_CLIENT_ID e " +
+          "GOOGLE_OAUTH_CLIENT_SECRET no ambiente (o client OAuth do firebase-tools " +
+          "não é versionado). Alternativa: omita --cli-credential e use ADC " +
+          "(`gcloud auth application-default login`).");
+      process.exit(1);
+    }
     admin.initializeApp({
       projectId: PROJECT_ID,
       credential: admin.credential.refreshToken({
         type: "authorized_user",
-        client_id: "564921029129-p4j63bjwvusvcq5nrpe7j4o85gctione.apps.googleusercontent.com",
-        client_secret: "YSo5NnkNIfoS4bf3FTo5Fop-",
+        client_id: clientId,
+        client_secret: clientSecret,
         refresh_token: refreshToken,
       }),
     });
