@@ -107,10 +107,6 @@ android {
         isCoreLibraryDesugaringEnabled = true
     }
 
-    kotlinOptions {
-        jvmTarget = "17"
-    }
-
     buildFeatures {
         viewBinding = true
         buildConfig = true
@@ -169,12 +165,18 @@ android {
 
 }
 
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+    }
+}
+
 dependencies {
     // Shared KMP Module
     implementation(project(":shared"))
 
     // kotlinx.serialization (migração gradual de Gson)
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
 
     // Core Library Desugaring
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
@@ -225,9 +227,9 @@ dependencies {
     implementation("androidx.viewpager2:viewpager2:1.1.0")
 
     // Coroutines
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.9.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.11.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.11.0")
 
     // Dependency Injection - Koin
     val koinVersion = "4.1.1"
@@ -281,7 +283,7 @@ dependencies {
     implementation("com.patrykandpatrick.vico:core:1.14.0")
 
     // Date/Time
-    implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.5.0") // For shared module interop
+    implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.8.0") // For shared module interop
     // implementation("com.jakewharton.threetenabp:threetenabp:1.4.7") // Migrated to java.time
 
     // Security - Encrypted SharedPreferences
@@ -311,8 +313,8 @@ dependencies {
     testImplementation("app.cash.turbine:turbine:1.2.1")
 
     // Coroutines Test
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
-    androidTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.11.0")
+    androidTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.11.0")
 
     // Truth for better assertions
     testImplementation("com.google.truth:truth:1.4.5")
@@ -333,7 +335,7 @@ dependencies {
 
 
     // Room Database
-    val roomVersion = "2.6.1"
+    val roomVersion = "2.8.5"
     implementation("androidx.room:room-runtime:$roomVersion")
     implementation("androidx.room:room-ktx:$roomVersion")
     implementation("androidx.datastore:datastore-preferences:1.2.0")

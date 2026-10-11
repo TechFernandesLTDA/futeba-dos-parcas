@@ -2,7 +2,7 @@
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { EXIT, evaluateRun, runGate } = require('./e2e-gate');
+const { EXIT, evaluateRun, runGate, applySuperseded } = require('./e2e-gate');
 
 const SHA = 'a'.repeat(40);
 const OTHER = 'b'.repeat(40);
@@ -298,4 +298,93 @@ test('runGate: dispatch com falha transitória é repetido; falha persistente pr
     findRun: async () => null, sleep: async () => {}, dispatchAttempts: 2,
   }), /down/);
   assert.equal(e, 2);
+});
+
+// ---- #4346: gates de pushes seguidos no master não se atropelam ----
+
+test('runGate: repassa expectSha ao findRun (só o run do SHA do gate)', async () => {
+  const seen = [];
+  await runGate({
+    ref: 'master', expectSha: SHA, dispatch: async () => {},
+    findRun: async (args) => {
+      seen.push(args.expectSha);
+      return { id: 1, status: 'completed', conclusion: 'success', head_sha: SHA };
+    },
+    sleep: async () => {},
+  });
+  assert.deepEqual(seen, [SHA]);
+});
+
+test('runGate: master já avançou antes do dispatch -> superseded sem despachar', async () => {
+  let dispatched = 0;
+  const result = await runGate({
+    ref: 'master', expectSha: SHA, allowSuperseded: true,
+    headSha: async () => OTHER,
+    dispatch: async () => { dispatched += 1; },
+    findRun: async () => { throw new Error('não deveria consultar'); },
+    sleep: async () => {},
+  });
+  assert.equal(dispatched, 0);
+  assert.equal(result.verdict, 'superseded');
+  assert.equal(result.exitCode, EXIT.PASS);
+});
+
+test('runGate: sem run do SHA e master avançou durante a espera -> superseded (não infra_blocked)', async () => {
+  const clock = fakeClock();
+  const heads = [SHA, SHA, OTHER];
+  const result = await runGate({
+    ref: 'master', expectSha: SHA, allowSuperseded: true,
+    headSha: async () => heads.shift() ?? OTHER,
+    dispatch: async () => {},
+    findRun: async () => null,
+    sleep: clock.sleep, now: clock.now, pollMs: 10, timeoutMs: 60 * 60 * 1000,
+  });
+  assert.equal(result.verdict, 'superseded');
+  assert.equal(result.exitCode, EXIT.PASS);
+});
+
+test('runGate: master parado e sem run -> continua infra_blocked (nunca verde)', async () => {
+  const clock = fakeClock();
+  const result = await runGate({
+    ref: 'master', expectSha: SHA, allowSuperseded: true,
+    headSha: async () => SHA,
+    dispatch: async () => {},
+    findRun: async () => null,
+    sleep: clock.sleep, now: clock.now, pollMs: 1000, timeoutMs: 60 * 60 * 1000, noRunGraceMs: 5000,
+  });
+  assert.equal(result.verdict, 'infra_blocked');
+  assert.equal(result.exitCode, EXIT.INFRA_BLOCKED);
+});
+
+test('runGate: leitura do head falhando não vira superseded (na dúvida, segue o gate)', async () => {
+  const result = await runGate({
+    ref: 'master', expectSha: SHA, allowSuperseded: true,
+    headSha: async () => { throw new Error('error connecting to api.github.com'); },
+    dispatch: async () => {},
+    findRun: async () => ({ id: 1, status: 'completed', conclusion: 'failure', head_sha: SHA }),
+    sleep: async () => {},
+  });
+  assert.equal(result.verdict, 'fail');
+  assert.equal(result.exitCode, EXIT.FAIL);
+});
+
+test('runGate: sem allowSuperseded (PR) o head nunca é consultado', async () => {
+  let reads = 0;
+  const result = await runGate({
+    ref: 'feat/x', expectSha: SHA,
+    headSha: async () => { reads += 1; return OTHER; },
+    dispatch: async () => {},
+    findRun: async () => ({ id: 1, status: 'completed', conclusion: 'success', head_sha: SHA }),
+    sleep: async () => {},
+  });
+  assert.equal(reads, 0);
+  assert.equal(result.verdict, 'pass');
+});
+
+test('applySuperseded: timeout com master avançado vira superseded; falha real continua falha', () => {
+  const timeout = { verdict: 'timeout', exitCode: EXIT.TIMEOUT, reason: 'sem conclusão após 45 min' };
+  assert.equal(applySuperseded(timeout, { expectSha: 'a', currentHeadSha: 'b' }).verdict, 'superseded');
+  assert.equal(applySuperseded(timeout, { expectSha: 'a', currentHeadSha: 'a' }).verdict, 'timeout');
+  const real = { verdict: 'fail', exitCode: EXIT.FAIL, reason: 'conclusion=failure' };
+  assert.equal(applySuperseded(real, { expectSha: 'a', currentHeadSha: 'b' }).verdict, 'fail');
 });
