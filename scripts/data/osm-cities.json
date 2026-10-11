@@ -138,6 +138,14 @@
       "rodada": 9,
       "slug": "joao-pessoa",
       "epic_issue": 4186
+    },
+    {
+      "nome": "Natal",
+      "uf": "RN",
+      "rodada": 11,
+      "slug": "natal",
+      "epic_issue": 4186,
+      "observacao": "coletor de cidades novas (Execução 15)"
     }
   ]
 }
