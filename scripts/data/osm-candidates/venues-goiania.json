@@ -1,0 +1,979 @@
+{
+ "gerado_em": "2026-10-10",
+ "rodada": 9,
+ "cidade": "Goiânia",
+ "uf": "GO",
+ "slug": "goiania",
+ "issue": 4186,
+ "fonte": {
+  "provedor": "OpenStreetMap (via Nominatim + Overpass API)",
+  "licenca": "ODbL 1.0 — https://www.openstreetmap.org/copyright",
+  "nominatim_url": "https://www.openstreetmap.org/relation/334547",
+  "nominatim_display_name": "Goiânia, Goiás, Região Centro-Oeste, Brasil",
+  "overpass_mirror": "https://overpass-api.de/api/interpreter",
+  "overpass_query": "[out:json][timeout:180];\narea(3600334547)->.a;\n(\n  node[\"leisure\"=\"pitch\"](area.a);\n  way[\"leisure\"=\"pitch\"](area.a);\n  relation[\"leisure\"=\"pitch\"](area.a);\n  node[\"leisure\"=\"sports_centre\"](area.a);\n  way[\"leisure\"=\"sports_centre\"](area.a);\n);\nout body center meta;",
+  "osm_base_timestamp": "2026-10-10T06:52:06Z"
+ },
+ "coleta": {
+  "data": "2026-10-10",
+  "ferramenta": "scripts/data/build-venues-osm.mjs",
+  "finalidade": "dataset curado de quadras para importação DRAFT (revisão humana antes de publicar)"
+ },
+ "estatisticas": {
+  "candidatos_osm": 602,
+  "sem_nome": 547,
+  "institucional": 0,
+  "acesso_restrito": 2,
+  "amenity_descartada": 0,
+  "sem_sinal_de_futebol": 25,
+  "other_excluded": 0,
+  "sem_coordenada": 0,
+  "mantidos": 23,
+  "duplicatas_removidas": 5
+ },
+ "venues": [
+  {
+   "nome": "Bola de Cristal",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Goiânia",
+    "uf": "GO",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/node/10166315023",
+     "dado": "OpenStreetMap (node/10166315023): sport=futsal, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -16.7327457,
+    "lon": -49.3066019
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "node",
+    "id": 10166315023,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campinas Futebol Clube",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Goiânia",
+    "uf": "GO",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/160835158",
+     "dado": "OpenStreetMap (way/160835158): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -16.6585955,
+    "lon": -49.2841037
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 160835158,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campinho Praça T-23",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Goiânia",
+    "uf": "GO",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "grama sintética (OSM: surface=artificial_turf)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1056879866",
+     "dado": "OpenStreetMap (way/1056879866): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -16.7020226,
+    "lon": -49.2686439
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1056879866,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo de futebol Curitiba",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Goiânia",
+    "uf": "GO",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1341974033",
+     "dado": "OpenStreetMap (way/1341974033): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -16.603464,
+    "lon": -49.3334501
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1341974033,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo de Futebol da Vila União",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Goiânia",
+    "uf": "GO",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/160527010",
+     "dado": "OpenStreetMap (way/160527010): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -16.7096042,
+    "lon": -49.3047485
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 160527010,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo de terra da Antiga Olaria",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Goiânia",
+    "uf": "GO",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1426905439",
+     "dado": "OpenStreetMap (way/1426905439): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -16.6549911,
+    "lon": -49.304088
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1426905439,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "CAMPO DO BURACO",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Goiânia",
+    "uf": "GO",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/161491178",
+     "dado": "OpenStreetMap (way/161491178): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -16.7373609,
+    "lon": -49.3225546
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 161491178,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Campo do Osni",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Goiânia",
+    "uf": "GO",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1135444342",
+     "dado": "OpenStreetMap (way/1135444342): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -16.6509724,
+    "lon": -49.1930079
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1135444342,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Centro de Treinamento - Vila Nova Futebol Clube",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Goiânia",
+    "uf": "GO",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/466731195",
+     "dado": "OpenStreetMap (way/466731195): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -16.646397,
+    "lon": -49.2149116
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 466731195,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Centro de Treinamentos e Sede Administrativa do Atlético Goianiense",
+   "endereco": {
+    "rua": "Rua Vitória Régia",
+    "numero": "Qd. 01, Lt. 20",
+    "bairro": "Setor Urias Magalhães",
+    "cidade": "Goiânia",
+    "uf": "GO",
+    "cep": "74565-100"
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/220490139",
+     "dado": "OpenStreetMap (way/220490139): sport=soccer, Rua Vitória Régia, Qd. 01, Lt. 20, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "alta",
+   "coordenadas": {
+    "lat": -16.6408498,
+    "lon": -49.2763252
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 220490139,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Clube Jaime Câmara",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Goiânia",
+    "uf": "GO",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1322475404",
+     "dado": "OpenStreetMap (way/1322475404): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -16.6594809,
+    "lon": -49.2293966
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1322475404,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "CT Flamengo Pré-Equipe",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Goiânia",
+    "uf": "GO",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1039929195",
+     "dado": "OpenStreetMap (way/1039929195): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -16.6839565,
+    "lon": -49.3016988
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1039929195,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Estádio Filostro Machado",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Goiânia",
+    "uf": "GO",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/162393593",
+     "dado": "OpenStreetMap (way/162393593): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -16.7183477,
+    "lon": -49.2448507
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 162393593,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Estádio Serra Dourada",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Goiânia",
+    "uf": "GO",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/130986196",
+     "dado": "OpenStreetMap (way/130986196): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -16.699059,
+    "lon": -49.2341476
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 130986196,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Ginásio do Parque Atheneu",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Goiânia",
+    "uf": "GO",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": "concreto (OSM: surface=concrete)",
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/681298285",
+     "dado": "OpenStreetMap (way/681298285): sport=soccer;basketball;multi, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -16.7473247,
+    "lon": -49.2050793
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 681298285,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Goiânia Society",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Goiânia",
+    "uf": "GO",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1322475353",
+     "dado": "OpenStreetMap (way/1322475353): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -16.7311204,
+    "lon": -49.281815
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1322475353,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Goiás Esporte Clube",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Goiânia",
+    "uf": "GO",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/347738728",
+     "dado": "OpenStreetMap (way/347738728): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -16.7111356,
+    "lon": -49.2621434
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 347738728,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Gol de Placa",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Goiânia",
+    "uf": "GO",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1257346248",
+     "dado": "OpenStreetMap (way/1257346248): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -16.7358851,
+    "lon": -49.3093332
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1257346248,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra Bênnio",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Goiânia",
+    "uf": "GO",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1342462563",
+     "dado": "OpenStreetMap (way/1342462563): sport=futsal;soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -16.5940082,
+    "lon": -49.3342109
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1342462563,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra do Curitiba",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Goiânia",
+    "uf": "GO",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/1342462577",
+     "dado": "OpenStreetMap (way/1342462577): sport=futsal;soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -16.5941555,
+    "lon": -49.3317115
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 1342462577,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra Nossa Senhora da Terra",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Goiânia",
+    "uf": "GO",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/298260889",
+     "dado": "OpenStreetMap (way/298260889): sport=futsal;basketball, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -16.59406,
+    "lon": -49.3328145
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 298260889,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra Poliesportiva",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Goiânia",
+    "uf": "GO",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/339617983",
+     "dado": "OpenStreetMap (way/339617983): sport=soccer, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -16.6777129,
+    "lon": -49.274333
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 339617983,
+    "sinal_futebol": "sport"
+   }
+  },
+  {
+   "nome": "Quadra Socyet",
+   "endereco": {
+    "rua": null,
+    "numero": null,
+    "bairro": null,
+    "cidade": "Goiânia",
+    "uf": "GO",
+    "cep": null
+   },
+   "telefone": null,
+   "whatsapp": null,
+   "site": null,
+   "instagram": null,
+   "preco_hora": null,
+   "qtd_quadras": null,
+   "detalhe_quadras": null,
+   "tipo_piso": null,
+   "horarios": null,
+   "nota_media": null,
+   "contagem_avaliacoes": null,
+   "comentarios": [],
+   "fotos": [],
+   "fontes": [
+    {
+     "url": "https://www.openstreetmap.org/way/298368074",
+     "dado": "OpenStreetMap (way/298368074): sport=soccer;multi, sem rua no OSM, coletado em 2026-10-10"
+    }
+   ],
+   "confidence": "média",
+   "coordenadas": {
+    "lat": -16.5901421,
+    "lon": -49.3774781
+   },
+   "rodada_dados": "R9",
+   "osm": {
+    "type": "way",
+    "id": 298368074,
+    "sinal_futebol": "sport"
+   }
+  }
+ ]
+}

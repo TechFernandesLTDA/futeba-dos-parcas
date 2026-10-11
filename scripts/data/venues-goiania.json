@@ -1,0 +1,223 @@
+{
+  "gerado_em": "2026-10-10",
+  "rodada": 9,
+  "slug": "goiania",
+  "issue": 4186,
+  "titulo": "Goiânia (R9)",
+  "coleta": {
+    "data": "2026-10-10",
+    "ferramentas": "pesquisa web (site oficial, diretórios de aluguel e guia futemais.com.br, Marcafut, CNPJ público) + OpenStreetMap/Overpass (scripts/data/build-venues-osm.mjs, candidatos não importados)",
+    "regra": "apenas dados públicos verificáveis; campos sem fonte = null; todo item tem >=1 fonte com URL; entra no app como DRAFT/não verificado"
+  },
+  "cobertura": {
+    "Goiânia": 5
+  },
+  "venues": [
+    {
+      "nome": "Centro Esportivo Gol de Placa",
+      "endereco": {
+        "rua": "Rua F-57",
+        "numero": "Qd. 159 Lt. 32",
+        "bairro": "Setor Faiçalville",
+        "cidade": "Goiânia",
+        "uf": "GO",
+        "cep": "74350-500"
+      },
+      "telefone": "(62) 99969-0255",
+      "whatsapp": "(62) 99969-0255",
+      "site": "https://www.cegoldeplaca.com.br/",
+      "instagram": null,
+      "preco_hora": 90,
+      "qtd_quadras": 2,
+      "detalhe_quadras": "2 campos society em tamanho oficial, marcação branca e tela superior de proteção",
+      "tipo_piso": "grama sintética",
+      "horarios": {
+        "observacao": "Site oficial lista horários de locação: seg-sex 18h/19h/20h/21h; sábado 16h/17h/18h (início de cada horário, não faixa completa)"
+      },
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.cegoldeplaca.com.br/",
+          "dado": "site oficial: endereço Rua F-57 Qd.159 Lt.32, CEP 74.350-500, telefone/WhatsApp, R$ 90/hora, 2 campos society, horários de locação"
+        },
+        {
+          "url": "https://www.futemais.com.br/post/onde-jogar-futebol-em-goiania",
+          "dado": "guia Futemais: mesmo endereço, telefone (62) 99969-0255 e dois campos society"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_aluguel",
+      "origem": "web"
+    },
+    {
+      "nome": "Arena Fair Play Goiânia",
+      "endereco": {
+        "rua": "Avenida Rio Verde",
+        "numero": "7148",
+        "bairro": "Faiçalville",
+        "cidade": "Goiânia",
+        "uf": "GO",
+        "cep": "74350-785"
+      },
+      "telefone": null,
+      "whatsapp": null,
+      "site": null,
+      "instagram": "@fairplaygoiania",
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": "campo fut7 e fut6 (society) e quadra de areia (futevôlei, vôlei e beach tênis)",
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": 4.6,
+      "contagem_avaliacoes": 475,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://app24.marcafut.com.br/",
+          "dado": "página de reservas Marcafut: 'Fair Play — Campo Fut7 e Fut6, Quadra de Areia, Avenida Madri com Avenida Rio Verde, Qd. 75, Lt. 40, Faiçalville, Goiânia, GO'"
+        },
+        {
+          "url": "https://www.futemais.com.br/post/onde-jogar-futebol-em-goiania",
+          "dado": "guia Futemais: arena society com campo, quadras de areia; avaliação 4,6/5 (475); Instagram @fairplaygoiania"
+        },
+        {
+          "url": "https://juridicoonline.com.br/empresa/60230368000178-arena-fair-play-goiania-ltda",
+          "dado": "cadastro CNPJ público: Arena Fair Play Goiania LTDA, Avenida Rio Verde 7148, Qd 75, Lt 42, Faiçalville, CEP 74350-785 (lote diverge do Marcafut: revisar no local)"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_aluguel",
+      "origem": "web"
+    },
+    {
+      "nome": "Espaço Society",
+      "endereco": {
+        "rua": "Rua Herculina Marques de Abreu",
+        "numero": "s/n",
+        "bairro": "Residencial Sonho Dourado",
+        "cidade": "Goiânia",
+        "uf": "GO",
+        "cep": "74781-001"
+      },
+      "telefone": "(62) 3208-1500",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": "quadra sintética para futebol sete (formato society)",
+      "tipo_piso": "sintético",
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.futemais.com.br/post/onde-jogar-futebol-em-goiania",
+          "dado": "guia Futemais: endereço Rua Herculina Marques de Abreu, s/n, CEP 74781-001, telefone (62) 3208-1500, quadra sintética futebol sete"
+        },
+        {
+          "url": "https://listaamarela.com.br/go-goiania/quadras-esportivas-aluguel",
+          "dado": "diretório Lista Amarela (Quadras Esportivas - Aluguel): ESPACO SOCIETY, (62) 3208-1500"
+        },
+        {
+          "url": "https://michelycoutinho.com.br/tag/esportes-2/",
+          "dado": "diretório de quadras 'Espaço Society – Locação de Quadra': mesmo endereço e telefone comercial"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_aluguel",
+      "origem": "web"
+    },
+    {
+      "nome": "Squash Point",
+      "endereco": {
+        "rua": "Rua Igapó",
+        "numero": "930",
+        "complemento": "Quadra 191 Lote 21",
+        "bairro": "Parque Amazônia",
+        "cidade": "Goiânia",
+        "uf": "GO",
+        "cep": "74835-440"
+      },
+      "telefone": "(62) 3091-7707",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": "quadra de futebol (futebol sete), além das quadras de squash",
+      "tipo_piso": "sintético",
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.futemais.com.br/post/onde-jogar-futebol-em-goiania",
+          "dado": "guia Futemais: Squash Point, Rua Igapó 930, Quadra 191 Lote 21, Parque Amazônia, CEP 74835-440, telefone (62) 3091-7707"
+        },
+        {
+          "url": "https://michelycoutinho.com.br/tag/esportes-2/",
+          "dado": "diretório de quadras: 'Squash Point – Locação de Quadra', mesmo endereço e telefone"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_aluguel",
+      "origem": "web"
+    },
+    {
+      "nome": "Canarinho Sport",
+      "endereco": {
+        "rua": "Alameda das Monções",
+        "numero": "chácara 129",
+        "bairro": "Capuava",
+        "cidade": "Goiânia",
+        "uf": "GO",
+        "cep": "74450-490"
+      },
+      "telefone": null,
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": 4,
+      "detalhe_quadras": "4 campos de campo society sintético em tamanhos diferentes (campos, não quadras poliesportivas)",
+      "tipo_piso": "grama sintética",
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.futemais.com.br/post/onde-jogar-futebol-em-goiania",
+          "dado": "guia Futemais: Canarinho Sport, campo society sintético com quatro campos de tamanhos diferentes, Al das Monções ch 129, Capuava, CEP 74450-490"
+        },
+        {
+          "url": "https://michelycoutinho.com.br/tag/esportes-2/",
+          "dado": "diretório de quadras: 'CANARINHO SPORT CAMPO SOCIETY SINTÉTICO ... em Campos de Futebol – Aluguel', Al das Monções ch 129, Capuava, CEP 74450-490"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_aluguel",
+      "origem": "web"
+    }
+  ]
+}

@@ -154,6 +154,13 @@
       "slug": "natal",
       "epic_issue": 4186,
       "observacao": "coletor de cidades novas (Execução 15)"
+    },
+    {
+      "nome": "Goiânia",
+      "uf": "GO",
+      "rodada": 9,
+      "slug": "goiania",
+      "epic_issue": 4186
     }
   ]
 }
