@@ -1,0 +1,171 @@
+{
+  "gerado_em": "2026-10-09",
+  "rodada": 9,
+  "slug": "belo-horizonte",
+  "issue": 4195,
+  "titulo": "Belo Horizonte (R9)",
+  "coleta": {
+    "data": "2026-10-09",
+    "ferramentas": "pesquisa web (sites oficiais das quadras, Minha Quadra, ListaTudo, Lista Amarela, Guia Fácil) + OpenStreetMap/Overpass (scripts/data/build-venues-osm.mjs: 49 candidatos só-OSM, nenhum importado por serem clubes/praças/campos sem endereço ou telefone)",
+    "regra": "apenas dados públicos verificáveis; campos sem fonte = null; todo item tem >=1 fonte com URL; entra no app como DRAFT/não verificado"
+  },
+  "cobertura": {
+    "Belo Horizonte": 6
+  },
+  "venues": [
+    {
+      "nome": "Arena Palmares Futebol Society",
+      "endereco": {"rua": "Rua Nicolina Pacheco", "numero": "449", "bairro": "Palmares", "cidade": "Belo Horizonte", "uf": "MG", "cep": null},
+      "telefone": "(31) 3658-3944",
+      "whatsapp": null,
+      "site": "https://www.arenapalmares.com.br/",
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": "gramado sintético (society) e areia (quadra de areia)",
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {"url": "https://www.arenapalmares.com.br/", "dado": "site oficial: endereço, telefones, e-mail, texto 'ALUGUEL DE QUADRA SOCIETY E AREIA POR MÊS OU HORA', gramado sintético; tabela de preços sob consulta (não publicada)"},
+        {"url": "https://listaamarela.com.br/mg-belo-horizonte/quadras-esportivas-aluguel", "dado": "diretório Lista Amarela: ARENA PALMARES FUTEBOL SOCIETY, telefone (31) 3658-3944"}
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_aluguel",
+      "origem": "web"
+    },
+    {
+      "nome": "Arena Flyball",
+      "endereco": {"rua": "Rua Barão de Guaxupé", "numero": "775", "bairro": "João Pinheiro", "cidade": "Belo Horizonte", "uf": "MG", "cep": "30530-160"},
+      "telefone": "(31) 98212-7717",
+      "whatsapp": null,
+      "site": "https://arenaflyball.webquadras.com.br/",
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": 5,
+      "detalhe_quadras": "4 society sintético (descobertas) + 1 campo (descoberto)",
+      "tipo_piso": "grama sintética",
+      "horarios": {"segunda": "07:00-00:00", "terca": "07:00-00:00", "quarta": "07:00-00:00", "quinta": "07:00-00:00", "sexta": "07:00-00:00", "sabado": "07:00-22:00", "domingo": "14:00-20:00"},
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {"url": "https://arenaflyball.webquadras.com.br/", "dado": "página WebQuadras: locação de 4 campos de Fut7 ou um CAMPÃO, endereço, CEP, telefone (31) 98212-7717, estrutura (1 campo de futebol + 4 society) e horário de funcionamento"},
+        {"url": "https://www.minhaquadra.com.br/cidades/mg/belo-horizonte/futebol-society/", "dado": "Minha Quadra: 'Arena Flyball Parceira' no mesmo endereço (R. Barão de Guaxupé, 775 - João Pinheiro)"}
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_aluguel",
+      "origem": "web"
+    },
+    {
+      "nome": "Via Futebol Society",
+      "endereco": {"rua": "Rua Francisco Duarte Mendonça", "numero": "2159", "bairro": "Santa Helena", "cidade": "Belo Horizonte", "uf": "MG", "cep": "30642-310"},
+      "telefone": "(31) 3383-7957",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {"url": "https://listatudo.com.br/minas-gerais/belo-horizonte-e-regiao/belo-horizonte/festas-e-eventos/locais/quadras-esportivas-aluguel/via-futebol-socyte/", "dado": "ListaTudo: categoria Quadras Esportivas - Aluguel, endereço e telefone (31) 3383-7957"},
+        {"url": "https://listaamarela.com.br/mg-belo-horizonte/quadras-esportivas-aluguel", "dado": "Lista Amarela: VIA FUTEBOL SOCIETY, aluguel de quadras e escolinha de futebol, telefone (31) 3383-7957"},
+        {"url": "https://guiafacil.com/endereco/rua-francisco-duarte-mendonca/belo-horizonte/mg", "dado": "Guia Fácil: VIA FUTEBOL SOCIETY, aluguel de quadras, Rua Francisco Duarte Mendonça (bairro Santa Helena), CEP 30642-310"}
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_aluguel",
+      "origem": "web"
+    },
+    {
+      "nome": "Arena Betânia",
+      "endereco": {"rua": "Rua Úrsula Paulino", "numero": "2505", "bairro": "Estrela do Oriente", "cidade": "Belo Horizonte", "uf": "MG", "cep": null},
+      "telefone": null,
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": 2,
+      "detalhe_quadras": "2 society",
+      "tipo_piso": "grama sintética",
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {"url": "https://www.minhaquadra.com.br/cidades/mg/belo-horizonte/futebol-society/", "dado": "Minha Quadra (marketplace de reserva): 'Arena Betânia Parceira', R. Úrsula Paulino, 2505 - Estrela do Oriente, duas quadras de futebol society com gramado novo, a partir de R$200/hora"}
+      ],
+      "confidence": "baixa",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    },
+    {
+      "nome": "La Bomboneira",
+      "endereco": {"rua": "Avenida Professor Mário Werneck", "numero": "569", "bairro": "Buritis", "cidade": "Belo Horizonte", "uf": "MG", "cep": null},
+      "telefone": null,
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": "grama sintética",
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {"url": "https://www.minhaquadra.com.br/cidades/mg/belo-horizonte/futebol-society/", "dado": "Minha Quadra: 'La Bomboneira Parceira', Av. Professor Mário Werneck, 569 - Buritis, quadra de futebol society com gramado novo e locação para eventos, a partir de R$150/hora"}
+      ],
+      "confidence": "baixa",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    },
+    {
+      "nome": "Arena Tupinambás",
+      "endereco": {"rua": "Rua Rio Grande do Sul", "numero": "198", "bairro": "Barro Preto", "cidade": "Belo Horizonte", "uf": "MG", "cep": null},
+      "telefone": null,
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": "grama sintética",
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {"url": "https://www.minhaquadra.com.br/cidades/mg/belo-horizonte/futebol-society/", "dado": "Minha Quadra: 'Arena Tupinambás Parceira', R. Rio Grande do Sul, 198 - Barro Preto, quadra de futebol society com bar, churrasqueira e locação para eventos"}
+      ],
+      "confidence": "baixa",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    }
+  ]
+}
