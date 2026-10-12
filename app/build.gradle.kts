@@ -182,7 +182,7 @@ dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
 
     // Core Android
-    implementation("androidx.core:core-ktx:1.17.0")
+    implementation("androidx.core:core-ktx:1.19.1")
     implementation("androidx.exifinterface:exifinterface:1.4.2")
     implementation("androidx.appcompat:appcompat:1.7.1")
     implementation("com.google.android.material:material:1.14.0")
@@ -206,7 +206,7 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.graphics:graphics-shapes:1.0.1")
     implementation("androidx.activity:activity-compose:1.12.3")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.5")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.11.0")
     implementation("androidx.compose.runtime:runtime-livedata") // Interop with LiveData if needed
     implementation("com.google.accompanist:accompanist-themeadapter-material3:0.36.0") // Bridge M3 XML Theme to Compose
     implementation("com.google.accompanist:accompanist-swiperefresh:0.36.0") // Pull-to-refresh para Compose
@@ -217,12 +217,12 @@ dependencies {
 
 
     // Architecture Components
-    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.7")
-    implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.8.7")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
-    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.7") // Para collectAsStateWithLifecycle
-    implementation("androidx.navigation:navigation-fragment-ktx:2.9.7")
-    implementation("androidx.navigation:navigation-ui-ktx:2.9.7")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.11.0")
+    implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.11.0")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.11.0")
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.11.0") // Para collectAsStateWithLifecycle
+    implementation("androidx.navigation:navigation-fragment-ktx:2.10.2")
+    implementation("androidx.navigation:navigation-ui-ktx:2.10.2")
     implementation("androidx.preference:preference-ktx:1.2.1")
     implementation("androidx.viewpager2:viewpager2:1.1.0")
 
