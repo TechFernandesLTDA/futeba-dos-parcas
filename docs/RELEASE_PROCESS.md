@@ -201,6 +201,52 @@ node scripts/release-notes.js publish --platform android --version 1.27.0
 - A coleção `release_notes` é read-only para clientes (escrita só via Admin SDK);
   ver `firestore.rules` + índice composto `platform` ASC / `buildNumber` DESC.
 
+## Requisitos do Google Play
+
+Duas guardas permanentes impedem que suba um build que o Play Console rejeite ou
+sinalize. Ambas rodam no CI sem credenciais.
+
+### 1. targetSdk mínimo (contrato)
+
+A Play só aceita atualizações de apps cujo `targetSdk` seja ao menos o mínimo do ano
+(prazo normalmente em 31/08; política em
+<https://support.google.com/googleplay/android-developer/answer/11926878>).
+`scripts/ci/play-requirements-contract.test.js` define a constante
+`PLAY_MIN_TARGET_SDK` (hoje **36**) e falha se:
+
+- `targetSdk` em `app/`, `baselineprofile/` ou `macrobenchmark/` for menor que ela;
+- `compileSdk` de qualquer módulo for menor que o seu `targetSdk`;
+- o `deploy-production.yml` deixar de rodar a guarda de 16 KB (ou a condicionar a `dry_run`).
+
+Roda no **PR Check** (job Android), no **Validate Patterns** e no `deploy-production.yml`.
+Quando a Play anunciar um novo mínimo: suba `PLAY_MIN_TARGET_SDK`, o `targetSdk` dos
+três módulos e revise as mudanças de comportamento da API alvo no mesmo PR.
+
+### 2. Páginas de 16 KB (artefato real)
+
+Dispositivos Android 15+ podem usar páginas de memória de 16 KB; bibliotecas nativas
+sem alinhamento correto fazem o app travar neles (alerta "Seu app pode falhar em
+dispositivos de 16 KB"). `scripts/ci/check-16kb-alignment.js` abre o AAB/APK de release
+(só Node, sem `unzip`/`readelf`) e, para **todas** as `.so` de `arm64-v8a` e `x86_64`:
+
+- exige `p_align >= 0x4000` e `p_offset % p_align == p_vaddr % p_align` em todo segmento `PT_LOAD`;
+- em APK, exige que `.so` sem compressão comece em offset múltiplo de 16384 (equivale a
+  `zipalign -c -P 16 -v 4`);
+- falha também se nenhuma `.so` for encontrada para uma das duas ABIs (caminho errado).
+
+Onde roda: `deploy-production.yml` (sempre, inclusive em `dry_run`, antes do upload à
+Play, sobre `app-release.aab`) e `release.yml` (AAB e APK). Teste do script:
+`scripts/ci/check-16kb-alignment.test.js`. Uso local:
+
+```bash
+node scripts/ci/check-16kb-alignment.js app/build/outputs/bundle/release/app-release.aab
+```
+
+Se falhar: veja qual `.so` e de qual dependência ela vem (`FAIL arm64-v8a ...!lib/...`),
+atualize a biblioteca para uma versão com alinhamento de 16 KB (NDK r28+ ou flags de
+linker `-Wl,-z,max-page-size=16384`) e confira que o `strip` do AGP não a reescreve
+desalinhada.
+
 ## Notas e limitações conhecidas
 
 - **iOS ainda não publica.** O app iOS não está na App Store. A nota iOS mais

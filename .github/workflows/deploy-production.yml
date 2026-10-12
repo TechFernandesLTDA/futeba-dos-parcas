@@ -52,6 +52,11 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6  # v6.4.0
 
+      - name: Setup Node (guarda de 16 KB)
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+
       - name: Setup Android SDK
         uses: android-actions/setup-android@v4
         with:
@@ -132,6 +137,15 @@ jobs:
         # local.properties (config cache podia estar usando senha velha de
         # tentativas anteriores que tinham bytes corrompidos).
         run: ./gradlew bundleRelease --no-configuration-cache --rerun-tasks
+
+      - name: Guarda Play - contrato de targetSdk e 16 KB (testes)
+        run: node --test scripts/ci/play-requirements-contract.test.js scripts/ci/check-16kb-alignment.test.js
+
+      # Falha o job (inclusive em dry_run, antes de qualquer upload) se alguma .so
+      # arm64-v8a/x86_64 do AAB nao estiver alinhada em 16 KB. Ver docs/RELEASE_PROCESS.md
+      # (secao "Requisitos do Google Play").
+      - name: Guarda Play - alinhamento de 16 KB das bibliotecas nativas (AAB)
+        run: node scripts/ci/check-16kb-alignment.js app/build/outputs/bundle/release/app-release.aab
 
       - name: Verificar assinatura do AAB (dry run)
         if: ${{ inputs.dry_run }}
