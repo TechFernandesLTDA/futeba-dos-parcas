@@ -48,6 +48,9 @@ export interface User {
   preferredPosition?: PreferredPosition;
   preferredFieldTypes: FieldType[];
   favoriteTeam?: string;
+  /** Cidade/UF do perfil (opcional): 2ª fonte para achar as quadras da cidade atual. */
+  city?: string;
+  state?: string;
   
   // Stats
   totalGames: number;

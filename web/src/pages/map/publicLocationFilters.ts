@@ -5,6 +5,7 @@ import {
   isLocationOpenAt,
   locationHasAmenities,
 } from '../../types/location';
+import { locationMatchesVenueQuery } from '../../utils/venueSearch';
 
 export type PublicLocationSort = 'RELEVANCE' | 'BEST_RATED' | 'CHEAPEST' | 'NEAREST' | 'MOST_USED';
 
@@ -48,25 +49,6 @@ export const parseHourlyPriceFilter = (value: string) => {
   const parsed = Number(normalized);
   return Number.isFinite(parsed) && parsed > 0 ? Math.round(parsed * 100) : null;
 };
-
-const normalize = (value?: string | null) =>
-  (value || '')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .trim()
-    .toLowerCase();
-
-const getSearchText = (location: Location) =>
-  [
-    location.name,
-    location.address,
-    location.street,
-    location.district,
-    location.neighborhood,
-    location.region,
-    location.city,
-    location.state,
-  ].map(normalize).join(' ');
 
 export const getLocationAreaLabel = (location: Location) => {
   const area = location.district || location.neighborhood || location.region;
@@ -128,13 +110,14 @@ export const publicLocationMatchesFilters = (
   filters: PublicLocationFilterState,
   metrics: PublicLocationMetrics,
 ) => {
-  const query = normalize(filters.searchQuery);
   const area = getLocationAreaLabel(location);
   const maxPrice = parseHourlyPriceFilter(filters.maxHourlyPrice);
   const locationPrice = metrics.minPriceByLocation[location.id] || null;
   const fieldTypes = getLocationFieldTypes(location, metrics.fieldTypesByLocation);
 
-  const matchesSearch = !query || getSearchText(location).includes(query);
+  // Busca inteligente compartilhada (#4370): sem acento, vários termos, prefixo,
+  // tolerância a 1 erro de digitação e abreviações (soc/fut/jd/vl).
+  const matchesSearch = locationMatchesVenueQuery(location, filters.searchQuery, [...fieldTypes]);
   const matchesArea = filters.areaFilter === 'ALL' || area === filters.areaFilter;
   const matchesType = filters.typeFilter === 'ALL' || fieldTypes.has(filters.typeFilter);
   const matchesPrice = maxPrice === null || (locationPrice !== null && locationPrice <= maxPrice);
