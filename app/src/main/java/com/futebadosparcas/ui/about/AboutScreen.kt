@@ -28,6 +28,7 @@ import com.futebadosparcas.ui.adaptive.adaptiveContentWidth
 import com.futebadosparcas.ui.components.design.AppLogo
 import com.futebadosparcas.ui.components.design.AppLogoShape
 import com.futebadosparcas.ui.components.design.AppLogoSize
+import com.futebadosparcas.util.ExternalIntentHelper
 @Composable
 fun AboutScreen(
     onNavigateBack: () -> Unit,
@@ -157,26 +158,26 @@ fun AboutScreen(
                     val intent = Intent(Intent.ACTION_VIEW).apply {
                         data = Uri.parse("https://play.google.com/store/apps/details?id=${context.packageName}")
                     }
-                    context.startActivity(intent)
+                    ExternalIntentHelper.startActivitySafely(context, intent)
                 },
                 onContactClick = {
                     val intent = Intent(Intent.ACTION_SENDTO).apply {
                         data = Uri.parse("mailto:techfernandesltda@gmail.com")
                         putExtra(Intent.EXTRA_SUBJECT, context.getString(R.string.about_feedback_subject))
                     }
-                    context.startActivity(intent)
+                    ExternalIntentHelper.startActivitySafely(context, intent)
                 },
                 onPrivacyClick = {
                     val intent = Intent(Intent.ACTION_VIEW).apply {
                         data = Uri.parse("https://futebadosparcas.com.br/privacy_policy.html")
                     }
-                    context.startActivity(intent)
+                    ExternalIntentHelper.startActivitySafely(context, intent)
                 },
                 onTermsClick = {
                     val intent = Intent(Intent.ACTION_VIEW).apply {
                         data = Uri.parse("https://futebadosparcas.com.br/terms_of_service.html")
                     }
-                    context.startActivity(intent)
+                    ExternalIntentHelper.startActivitySafely(context, intent)
                 },
                 onDeleteAccountClick = {
                     showFirstStepDialog = true
@@ -185,7 +186,7 @@ fun AboutScreen(
                     val intent = Intent(Intent.ACTION_VIEW).apply {
                         data = Uri.parse("https://futebadosparcas.com.br/child_safety.html")
                     }
-                    context.startActivity(intent)
+                    ExternalIntentHelper.startActivitySafely(context, intent)
                 }
             )
         }
