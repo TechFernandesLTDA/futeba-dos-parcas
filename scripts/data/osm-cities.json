@@ -183,6 +183,14 @@
       "rodada": 9,
       "slug": "belo-horizonte",
       "epic_issue": 4195
+    },
+    {
+      "nome": "Belém",
+      "uf": "PA",
+      "rodada": 9,
+      "slug": "belem",
+      "epic_issue": 4186,
+      "observacao": "capital (município de Belém/PA); coleta via coletor de cidades novas"
     }
   ]
 }

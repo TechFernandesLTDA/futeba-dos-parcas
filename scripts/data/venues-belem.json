@@ -1,0 +1,340 @@
+{
+  "gerado_em": "2026-10-10",
+  "rodada": 9,
+  "slug": "belem",
+  "issue": 4186,
+  "titulo": "Belém/PA (R10 — coletor de cidades novas)",
+  "coleta": {
+    "data": "2026-10-10",
+    "ferramentas": "OpenStreetMap/Overpass (build-venues-osm.mjs, 22 candidatos) + pesquisa web por ficha pública; candidatos só-OSM sem fonte de locação descartados",
+    "regra": "apenas dados públicos verificáveis; campos sem fonte = null; todo item tem >=1 fonte com URL; entra no app como DRAFT/não verificado"
+  },
+  "cobertura": {
+    "Belém": 9
+  },
+  "venues": [
+    {
+      "nome": "Stadium Academia e Futebol Society",
+      "endereco": {
+        "rua": "Avenida Roberto Camelier",
+        "numero": "337",
+        "bairro": "Jurunas",
+        "cidade": "Belém",
+        "uf": "PA",
+        "cep": "66033-420"
+      },
+      "telefone": "(91) 3348-7909",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": 1,
+      "detalhe_quadras": null,
+      "tipo_piso": "sintético",
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.webquadras.com.br/stadiumacademia",
+          "dado": "página de reserva WebQuadras: 'Serviço de Locação de quadra', 1 quadra de futebol society sintética coberta, endereço, CEP e telefone"
+        },
+        {
+          "url": "https://oggo.com.br/cat/aluguel-de-campo-de-futebol",
+          "dado": "diretório OggO (aluguel de campo de futebol) lista Stadium Soccer Futebol Society em Belém; sem confirmar endereço"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_aluguel",
+      "origem": "web"
+    },
+    {
+      "nome": "Complexo Esportivo João Paulo II",
+      "endereco": {
+        "rua": "Avenida João Paulo II",
+        "numero": "3",
+        "bairro": "Marco",
+        "cidade": "Belém",
+        "uf": "PA",
+        "cep": "66095-491"
+      },
+      "telefone": "(91) 98031-5350",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": 3,
+      "detalhe_quadras": null,
+      "tipo_piso": "society coberto",
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.instagram.com/p/DQCJ5mPAIQh/",
+          "dado": "post do Instagram complexoesportivojp: '3 modernas quadras society cobertas', 'marque seu horário', contato (91) 98031-5350, Av. João Paulo II"
+        },
+        {
+          "url": "https://www.achepara.com.br/empresas/belem/complexo-esportivo-joao-paulo-ii-1748495701020",
+          "dado": "diretório Ache Pará: gestão de instalações de esportes, Av. João Paulo II, CEP 66095-491, bairro Marco (número 3 = sede da empresa)"
+        }
+      ],
+      "confidence": "média",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_aluguel",
+      "origem": "web"
+    },
+    {
+      "nome": "Sabino Futebol Society",
+      "endereco": {
+        "rua": "Travessa Monte Alegre",
+        "numero": "361",
+        "bairro": "Cidade Velha",
+        "cidade": "Belém",
+        "uf": "PA",
+        "cep": "66023-040"
+      },
+      "telefone": "+55 91 98149-8393",
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.kupi.com/en-ae/explore/brazil/belem/sabino-futebol-society",
+          "dado": "agregador Kupi: campo society para aluguel, Tv. Monte Alegre 361, Cidade Velha, telefone +55 91 98149-8393, 08:00-00:00 (texto gerado por agregador; não confirmado no site do estabelecimento)"
+        }
+      ],
+      "confidence": "baixa",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    },
+    {
+      "nome": "Arena Elite Soccer",
+      "endereco": {
+        "rua": "Rua Bartolomeu de Gusmão",
+        "numero": "280",
+        "bairro": null,
+        "cidade": "Belém",
+        "uf": "PA",
+        "cep": null
+      },
+      "telefone": null,
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.instagram.com/reel/DQkEkpbASG9/",
+          "dado": "reel do Instagram: 'a melhor arena de Belém', Arena Society, bar, churrasqueira, salão para eventos, Rua Bartolomeu de Gusmão, 280"
+        }
+      ],
+      "confidence": "baixa",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    },
+    {
+      "nome": "Arena Florentina - Complexo Esportivo",
+      "endereco": {
+        "rua": "Travessa Monte Alegre",
+        "numero": "1605",
+        "bairro": "Jurunas",
+        "cidade": "Belém",
+        "uf": "PA",
+        "cep": "66023-040"
+      },
+      "telefone": null,
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.locaisdobrasil.com.br/encontre/campo-de-futebol-perto-de-mim-em-belem-pa",
+          "dado": "diretório Locais do Brasil (categoria campo de futebol): Travessa Monte Alegre, 1605, Jurunas, CEP 66023-040; 16 avaliações"
+        }
+      ],
+      "confidence": "baixa",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    },
+    {
+      "nome": "Soccer 7 Futebol Society",
+      "endereco": {
+        "rua": "Rua Oliveira Belo",
+        "numero": "716",
+        "bairro": "Umarizal",
+        "cidade": "Belém",
+        "uf": "PA",
+        "cep": "66050-380"
+      },
+      "telefone": null,
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.locaisdobrasil.com.br/encontre/campo-de-futebol-perto-de-mim-em-belem-pa",
+          "dado": "diretório Locais do Brasil: Rua Oliveira Belo, 716, Umarizal, CEP 66050-380; 20 avaliações citando preço e quadra de areia"
+        }
+      ],
+      "confidence": "baixa",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    },
+    {
+      "nome": "Arena Piu Soccer",
+      "endereco": {
+        "rua": "Avenida José Bonifácio",
+        "numero": "340",
+        "bairro": "Fátima",
+        "cidade": "Belém",
+        "uf": "PA",
+        "cep": "66090-363"
+      },
+      "telefone": null,
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.locaisdobrasil.com.br/encontre/campo-de-futebol-perto-de-mim-em-belem-pa",
+          "dado": "diretório Locais do Brasil: Av. José Bonifácio, 340, Fátima, CEP 66090-363; 20 avaliações sobre estrutura e preço"
+        }
+      ],
+      "confidence": "baixa",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    },
+    {
+      "nome": "Arena LSC Soccer",
+      "endereco": {
+        "rua": "Avenida Pentecostal",
+        "numero": "85",
+        "bairro": "Coqueiro",
+        "cidade": "Belém",
+        "uf": "PA",
+        "cep": "66670-310"
+      },
+      "telefone": null,
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.locaisdobrasil.com.br/encontre/campo-de-futebol-perto-de-mim-em-belem-pa",
+          "dado": "diretório Locais do Brasil: 'Arena Society de Futebol', Av. Pentecostal, 85, Coqueiro, CEP 66670-310; 4 avaliações"
+        }
+      ],
+      "confidence": "baixa",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    },
+    {
+      "nome": "Enzo Society",
+      "endereco": {
+        "rua": "Passagem das Flôres",
+        "numero": "73",
+        "bairro": "Telégrafo",
+        "cidade": "Belém",
+        "uf": "PA",
+        "cep": "66113-420"
+      },
+      "telefone": null,
+      "whatsapp": null,
+      "site": null,
+      "instagram": null,
+      "preco_hora": null,
+      "qtd_quadras": null,
+      "detalhe_quadras": null,
+      "tipo_piso": null,
+      "horarios": null,
+      "nota_media": null,
+      "contagem_avaliacoes": null,
+      "comentarios": [],
+      "fotos": [],
+      "fontes": [
+        {
+          "url": "https://www.locaisdobrasil.com.br/encontre/campo-de-futebol-perto-de-mim-em-belem-pa",
+          "dado": "diretório Locais do Brasil: Passagem das Flôres, 73, Telégrafo, CEP 66113-420; 9 avaliações citando qualidade do produto e preço"
+        }
+      ],
+      "confidence": "baixa",
+      "coordenadas": null,
+      "rodada_dados": "R9",
+      "finalidade": "comercial_indicado",
+      "origem": "web"
+    }
+  ]
+}
