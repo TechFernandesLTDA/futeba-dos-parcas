@@ -36,3 +36,11 @@ test('workflow exige confirmação e usa a service account da Play', () => {
   assert.match(wf, /scripts\/ci\/play-promote\.js/);
   assert.match(wf, /play-track-status\.js/);
 });
+
+test('requiresManualReview detecta o erro da Play que exige changesNotSentForReview', () => {
+  const { requiresManualReview } = require('./play-promote');
+  const playError = { error: { code: 400, message: 'Changes cannot be sent for review automatically. Please set the query parameter changesNotSentForReview to true.' } };
+  assert.equal(requiresManualReview(playError), true);
+  assert.equal(requiresManualReview({ error: { code: 403, message: 'The caller does not have permission' } }), false);
+  assert.equal(requiresManualReview(undefined), false);
+});

@@ -57,6 +57,12 @@ function buildTrackBody({ track, versionCode, userFraction, name }) {
   return { track, releases: [release] };
 }
 
+/** Pura: a resposta de erro da Play exige commit com changesNotSentForReview=true? */
+function requiresManualReview(data) {
+  const msg = JSON.stringify(data || {});
+  return /changesNotSentForReview/.test(msg);
+}
+
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   const body = buildTrackBody(args);
@@ -71,7 +77,19 @@ async function main() {
   const edit = (await client.request({ url: `${base}/edits`, method: 'POST', data: {} })).data;
   try {
     await client.request({ url: `${base}/edits/${edit.id}/tracks/${args.track}`, method: 'PUT', data: body });
-    const committed = (await client.request({ url: `${base}/edits/${edit.id}:commit`, method: 'POST' })).data;
+    let committed;
+    try {
+      committed = (await client.request({ url: `${base}/edits/${edit.id}:commit`, method: 'POST' })).data;
+    } catch (err) {
+      // Com "publicação gerenciada" ou mudanças pendentes no Console, a Play recusa o envio
+      // automático para revisão. Faz o commit sem enviar; um humano clica em "Enviar para revisão".
+      if (!requiresManualReview(err.response && err.response.data)) throw err;
+      committed = (await client.request({
+        url: `${base}/edits/${edit.id}:commit?changesNotSentForReview=true`, method: 'POST',
+      })).data;
+      console.log('PENDENTE: a release foi gravada mas NÃO enviada para revisão. Abra o Play Console → ' +
+        'Visão geral da publicação → "Enviar alterações para revisão".');
+    }
     console.log(`OK commit do edit ${committed.id}: versionCode ${args.versionCode} em ${args.track}`);
   } catch (err) {
     await client.request({ url: `${base}/edits/${edit.id}`, method: 'DELETE' }).catch(() => {});
@@ -87,4 +105,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { parseArgs, buildTrackBody };
+module.exports = { parseArgs, buildTrackBody, requiresManualReview };
