@@ -293,6 +293,26 @@ class PreferencesManager constructor(
         return stored?.split(",")?.filter { it.isNotBlank() } ?: emptyList()
     }
 
+    // ==================== ULTIMA CIDADE DE QUADRAS ====================
+
+    /**
+     * Salva a ultima cidade escolhida no seletor de quadras (fallback quando nao ha
+     * localizacao do aparelho nem cidade no perfil).
+     */
+    fun setLastVenueCity(city: String, state: String) {
+        sharedPreferences.edit {
+            putString(KEY_LAST_VENUE_CITY, city)
+            putString(KEY_LAST_VENUE_STATE, state)
+        }
+    }
+
+    /** Ultima cidade escolhida no seletor de quadras: (cidade, UF) ou null. */
+    fun getLastVenueCity(): Pair<String, String>? {
+        val city = sharedPreferences.getString(KEY_LAST_VENUE_CITY, null)?.takeIf { it.isNotBlank() } ?: return null
+        val state = sharedPreferences.getString(KEY_LAST_VENUE_STATE, null).orEmpty()
+        return city to state
+    }
+
     companion object {
         private const val PREFS_NAME = "futeba_prefs"
         private const val ENCRYPTED_PREFS_NAME = "futeba_secure_prefs"
@@ -310,6 +330,8 @@ class PreferencesManager constructor(
         private const val KEY_PERMISSION_ONBOARDING_COMPLETED = "permission_onboarding_completed"
         private const val KEY_FAVORITE_LOCATIONS = "favorite_locations"
         private const val KEY_RECENT_LOCATIONS = "recent_locations"
+        private const val KEY_LAST_VENUE_CITY = "last_venue_city"
+        private const val KEY_LAST_VENUE_STATE = "last_venue_state"
 
         // Chaves para EncryptedSharedPreferences (dados sensíveis)
         private const val KEY_LAST_LOGIN_TIME = "last_login_time"
