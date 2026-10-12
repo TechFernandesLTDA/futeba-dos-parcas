@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -23,6 +23,10 @@ import {
   MenuItem,
   Stack,
   Alert,
+  Checkbox,
+  ToggleButton,
+  ToggleButtonGroup,
+  useMediaQuery,
 } from '@mui/material';
 import PageContainer from '../../components/common/PageContainer';
 import {
@@ -38,8 +42,11 @@ import {
   ReceiptLong as ReceiptIcon,
   EmojiEvents as TrophyIcon,
   LocalOffer as OfferIcon,
+  FilterList as FilterIcon,
+  ViewList as TableViewIcon,
+  ViewModule as CardsViewIcon,
 } from '@mui/icons-material';
-import { collection, query, orderBy, where, onSnapshot, limit, Timestamp } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, limit, Timestamp } from 'firebase/firestore';
 import { ref as storageRef, uploadBytes } from 'firebase/storage';
 import { db } from '../../services/firebase';
 import { storage } from '../../services/firebaseStorage';
@@ -74,13 +81,8 @@ import {
   LocationPublicationStatus,
   LocationSubscriptionStatus,
   canManageLocation,
-  AMENITY_LABELS,
-  COMMERCIAL_AMENITIES,
 } from '../../types/location';
 import {
-  LocationBooleanFilter,
-  LocationDueFilter,
-  LocationMonthlyFeeFilter,
   getLocationCommercialIssues,
   getLocationPublicationStatus,
   getLocationSubscriptionStatus,
@@ -96,6 +98,15 @@ import { useToast } from '../../contexts/ToastContext';
 import { createLogger } from '../../utils/logger';
 import { useTranslation } from 'react-i18next';
 import { useHideMobileTopBar } from '../../hooks/useMobileTopBarVisibility';
+import { useManageLocations } from '../../hooks/useManageLocations';
+import { useManageLocationFilters } from './useManageLocationFilters';
+import { buildGeoFacets } from './manageLocationFacets';
+import { buildActiveFilterChips } from './manageLocationChips';
+import { MANAGE_LOCATION_SORTS, ManageLocationSort, sortManageLocations } from './manageLocationSort';
+import { ManageLocationFilterPanel } from './ManageLocationFilterPanel';
+import { ManageLocationActiveChips, ManageLocationFilterSheet } from './ManageLocationFilterSheet';
+import { ManageLocationTable } from './ManageLocationTable';
+import { ManageLocationBatchBar } from './ManageLocationBatchBar';
 
 const logger = createLogger('ManageLocationsScreen');
 const RECEIPT_ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
@@ -218,25 +229,24 @@ export const ManageLocationsScreen: React.FC = () => {
 
   const isAdmin = user?.role === 'ADMIN';
 
-  const [locations, setLocations] = useState<Location[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<Location | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
+  // #4372: todas as quadras (páginas por cursor, sem teto de 200) e filtros na URL.
+  const { locations, loading, loadingMore, truncated, error: loadError } = useManageLocations({
+    isAdmin,
+    userId: user?.id,
+    reloadKey,
+  });
+  const error = loadError ? t('feedback.location.loadAllError') : null;
+  const { filters, update, clearAll, activeCount } = useManageLocationFilters(locations);
+  const isCompact = useMediaQuery('(max-width: 899.95px)');
+  const viewMode = filters.view ?? (isCompact ? 'cards' : 'table');
+  const [filterSheetOpen, setFilterSheetOpen] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
+  const [searchInput, setSearchInput] = useState(filters.searchQuery);
+  const lastPushedSearch = useRef(filters.searchQuery);
   const [commercialActionLoading, setCommercialActionLoading] = useState<string | null>(null);
-  const [publicationFilter, setPublicationFilter] = useState<'ALL' | LocationPublicationStatus>('ALL');
-  const [subscriptionFilter, setSubscriptionFilter] = useState<'ALL' | LocationSubscriptionStatus>('ALL');
-  const [typeFilter, setTypeFilter] = useState<'ALL' | string>('ALL');
-  const [dueFilter, setDueFilter] = useState<LocationDueFilter>('ALL');
-  const [cityFilter, setCityFilter] = useState('ALL');
-  const [ownerFilter, setOwnerFilter] = useState('');
-  const [amenityFilters, setAmenityFilters] = useState<string[]>([]);
-  const [verifiedFilter, setVerifiedFilter] = useState<LocationBooleanFilter>('ALL');
-  const [activeFilter, setActiveFilter] = useState<LocationBooleanFilter>('ALL');
-  const [activeFieldsFilter, setActiveFieldsFilter] = useState<LocationBooleanFilter>('ALL');
-  const [monthlyFeeFilter, setMonthlyFeeFilter] = useState<LocationMonthlyFeeFilter>('ALL');
   const [billingPeriod, setBillingPeriod] = useState(currentPeriodKey());
   const [billingSummary, setBillingSummary] = useState<AdminLocationBillingSummaryResponse | null>(null);
   const [billingSummaryLoading, setBillingSummaryLoading] = useState(false);
@@ -272,32 +282,21 @@ export const ManageLocationsScreen: React.FC = () => {
   const [requestReviewActionLoading, setRequestReviewActionLoading] = useState<string | null>(null);
 
   useEffect(() => {
-    setLoading(true);
-    setError(null);
-    const locRef = collection(db, 'locations');
-    const q = isAdmin
-      ? query(locRef, orderBy('name', 'asc'), limit(200))
-      : query(locRef, where('owner_id', '==', user?.id ?? ''), orderBy('name', 'asc'), limit(200));
+    // Mudou na URL (voltar, limpar tudo, chip): o campo acompanha.
+    if (filters.searchQuery !== lastPushedSearch.current) {
+      lastPushedSearch.current = filters.searchQuery;
+      setSearchInput(filters.searchQuery);
+    }
+  }, [filters.searchQuery]);
 
-    const unsubscribe = onSnapshot(
-      q,
-      (snapshot) => {
-        const locData = snapshot.docs.map((d) => ({
-          ...snakeToCamel<Location>(d.data()),
-          id: d.id,
-        }));
-        setLocations(locData);
-        setLoading(false);
-      },
-      (err) => {
-        logger.error('Erro ao carregar locais:', err);
-        setError(t('feedback.location.loadAllError'));
-        setLoading(false);
-      },
-    );
-
-    return () => unsubscribe();
-  }, [reloadKey, isAdmin, user?.id, t]);
+  useEffect(() => {
+    if (searchInput === lastPushedSearch.current) return undefined;
+    const timer = setTimeout(() => {
+      lastPushedSearch.current = searchInput;
+      update({ searchQuery: searchInput }, { replace: true });
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [searchInput, update]);
 
   useEffect(() => {
     if (!isAdmin) {
@@ -407,42 +406,33 @@ export const ManageLocationsScreen: React.FC = () => {
     return unsubscribe;
   }, [receiptTarget, showError]);
 
-  const filteredLocations = useMemo(() => {
-    return locations.filter((loc) => locationMatchesManageFilters(loc, {
-      searchQuery,
-      ownerFilter,
-      publicationFilter,
-      subscriptionFilter,
-      typeFilter,
-      cityFilter,
-      dueFilter,
-      verifiedFilter,
-      activeFilter,
-      activeFieldsFilter,
-      monthlyFeeFilter,
-      amenityFilters,
-    }));
-  }, [
-    locations,
-    searchQuery,
-    publicationFilter,
-    subscriptionFilter,
-    typeFilter,
-    cityFilter,
-    ownerFilter,
-    dueFilter,
-    verifiedFilter,
-    activeFilter,
-    activeFieldsFilter,
-    monthlyFeeFilter,
-    amenityFilters,
-  ]);
+  const filteredLocations = useMemo(
+    () => sortManageLocations(
+      locations.filter((loc) => locationMatchesManageFilters(loc, filters)),
+      filters.sortBy,
+    ),
+    [locations, filters],
+  );
 
-  const cityOptions = useMemo(() => (
-    Array.from(new Set(locations.map((loc) => loc.city).filter(Boolean) as string[])).sort((a, b) =>
-      a.localeCompare(b, 'pt-BR'),
-    )
-  ), [locations]);
+  const facets = useMemo(() => buildGeoFacets(locations, filters), [locations, filters]);
+  const activeChips = useMemo(
+    () => buildActiveFilterChips(filters, (key, options) => t(key, options) as string),
+    [filters, t],
+  );
+  const selectedLocations = useMemo(
+    () => locations.filter((loc) => selectedIds.has(loc.id)),
+    [locations, selectedIds],
+  );
+
+  const toggleSelected = (id: string) =>
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  const toggleAllFiltered = (checked: boolean) =>
+    setSelectedIds(checked ? new Set(filteredLocations.map((loc) => loc.id)) : new Set());
 
   const billingRowsByLocationId = useMemo(() => new Map(
     (billingSummary?.locations || []).map((row) => [row.id, row]),
@@ -479,7 +469,11 @@ export const ManageLocationsScreen: React.FC = () => {
     }
   };
 
-  const handleClearSearch = () => setSearchQuery('');
+  const handleClearSearch = () => {
+    lastPushedSearch.current = '';
+    setSearchInput('');
+    update({ searchQuery: '' }, { replace: true });
+  };
 
   const handleExportBillingCsv = () => {
     if (!billingSummary) {
@@ -550,12 +544,6 @@ export const ManageLocationsScreen: React.FC = () => {
     link.download = `quadras-financeiro-${billingSummary.periodKey}.csv`;
     link.click();
     URL.revokeObjectURL(url);
-  };
-
-  const handleAmenityFilter = (amenity: string) => {
-    setAmenityFilters((prev) =>
-      prev.includes(amenity) ? prev.filter((item) => item !== amenity) : [...prev, amenity],
-    );
   };
 
   const formatMonthlyFee = (monthlyFeeCents?: number) => {
@@ -1014,130 +1002,113 @@ const getVenueAccountStatusColor = (status?: string | null): 'success' | 'warnin
           }}
         >
           <Stack spacing={1}>
-            <TextField
-              fullWidth
-              size="small"
-              placeholder={t('placeholder.searchGroupNameAddressCity')}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              aria-label={t('a11y.searchLocations')}
-              inputProps={{ maxLength: 200 }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon color="action" />
-                  </InputAdornment>
-                ),
-                endAdornment: searchQuery ? (
-                  <InputAdornment position="end">
-                    <IconButton size="small" onClick={handleClearSearch} aria-label={t('a11y.clearSearch')} edge="end" sx={{ minWidth: 44, minHeight: 44 }}>
-                      <CloseIcon fontSize="small" />
-                    </IconButton>
-                  </InputAdornment>
-                ) : null,
-              }}
-            />
-            {isAdmin && (
-              <>
-                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
-                  <TextField select size="small" label="Publicação" value={publicationFilter} onChange={(e) => setPublicationFilter(e.target.value as 'ALL' | LocationPublicationStatus)} fullWidth>
-                    <MenuItem value="ALL">Todas</MenuItem>
-                    {Object.entries(LOCATION_PUBLICATION_STATUS_LABELS).map(([value, label]) => (
-                      <MenuItem key={value} value={value}>{label}</MenuItem>
-                    ))}
-                  </TextField>
-                  <TextField select size="small" label="Status da mensalidade" value={subscriptionFilter} onChange={(e) => setSubscriptionFilter(e.target.value as 'ALL' | LocationSubscriptionStatus)} fullWidth>
-                    <MenuItem value="ALL">Todas</MenuItem>
-                    {Object.entries(LOCATION_SUBSCRIPTION_STATUS_LABELS).map(([value, label]) => (
-                      <MenuItem key={value} value={value}>{label}</MenuItem>
-                    ))}
-                  </TextField>
-                  <TextField select size="small" label="Tipo" value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} fullWidth>
-                    <MenuItem value="ALL">Todos</MenuItem>
-                    {Object.entries(FIELD_TYPE_CONFIG).map(([value, config]) => (
-                      <MenuItem key={value} value={value}>{config.label}</MenuItem>
-                    ))}
-                  </TextField>
-                </Stack>
-                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
-                  <TextField
-                    size="small"
-                    label="Período financeiro"
-                    value={billingPeriod}
-                    onChange={(e) => setBillingPeriod(e.target.value.replace(/[^\d-]/g, '').slice(0, 7))}
-                    helperText="AAAA-MM"
-                    fullWidth
-                  />
-                  <TextField select size="small" label="Vencimento" value={dueFilter} onChange={(e) => setDueFilter(e.target.value as typeof dueFilter)} fullWidth>
-                    <MenuItem value="ALL">Todos</MenuItem>
-                    <MenuItem value="1_7">Dia 1 a 7</MenuItem>
-                    <MenuItem value="8_14">Dia 8 a 14</MenuItem>
-                    <MenuItem value="15_21">Dia 15 a 21</MenuItem>
-                    <MenuItem value="22_28">Dia 22 a 28</MenuItem>
-                    <MenuItem value="NO_DUE">Sem vencimento</MenuItem>
-                  </TextField>
-                  <TextField select size="small" label="Cidade" value={cityFilter} onChange={(e) => setCityFilter(e.target.value)} fullWidth>
-                    <MenuItem value="ALL">Todas</MenuItem>
-                    {cityOptions.map((city) => (
-                      <MenuItem key={city} value={city}>{city}</MenuItem>
-                    ))}
-                  </TextField>
-                  <TextField
-                    size="small"
-                    label="Dono (UID)"
-                    value={ownerFilter}
-                    onChange={(e) => setOwnerFilter(e.target.value)}
-                    fullWidth
-                    placeholder="Filtrar por UID"
-                  />
-                </Stack>
-                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
-                  <TextField select size="small" label="Verificada" value={verifiedFilter} onChange={(e) => setVerifiedFilter(e.target.value as LocationBooleanFilter)} fullWidth>
-                    <MenuItem value="ALL">Todas</MenuItem>
-                    <MenuItem value="YES">Sim</MenuItem>
-                    <MenuItem value="NO">Não</MenuItem>
-                  </TextField>
-                  <TextField select size="small" label="Ativa" value={activeFilter} onChange={(e) => setActiveFilter(e.target.value as LocationBooleanFilter)} fullWidth>
-                    <MenuItem value="ALL">Todas</MenuItem>
-                    <MenuItem value="YES">Sim</MenuItem>
-                    <MenuItem value="NO">Não</MenuItem>
-                  </TextField>
-                  <TextField select size="small" label="Campos ativos" value={activeFieldsFilter} onChange={(e) => setActiveFieldsFilter(e.target.value as LocationBooleanFilter)} fullWidth>
-                    <MenuItem value="ALL">Todos</MenuItem>
-                    <MenuItem value="YES">Com campos ativos</MenuItem>
-                    <MenuItem value="NO">Sem campos ativos</MenuItem>
-                  </TextField>
-                  <TextField select size="small" label="Valor da mensalidade" value={monthlyFeeFilter} onChange={(e) => setMonthlyFeeFilter(e.target.value as LocationMonthlyFeeFilter)} fullWidth>
-                    <MenuItem value="ALL">Todas</MenuItem>
-                    <MenuItem value="NO_FEE">Sem mensalidade</MenuItem>
-                    <MenuItem value="UP_TO_100">Até R$ 100</MenuItem>
-                    <MenuItem value="100_300">R$ 100 a R$ 300</MenuItem>
-                    <MenuItem value="300_PLUS">Acima de R$ 300</MenuItem>
-                  </TextField>
-                </Stack>
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75, pb: 0.5 }}>
-                  {COMMERCIAL_AMENITIES.map((amenity) => (
-                    <Chip
-                      key={amenity}
-                      label={AMENITY_LABELS[amenity] || amenity}
-                      size="small"
-                      color={amenityFilters.includes(amenity) ? 'primary' : 'default'}
-                      variant={amenityFilters.includes(amenity) ? 'filled' : 'outlined'}
-                      onClick={() => handleAmenityFilter(amenity)}
-                      sx={{
-                        minHeight: { xs: 44, sm: 32 },
-                        px: { xs: 0.5, sm: 0 },
-                      }}
-                    />
+            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+              <TextField
+                fullWidth
+                size="small"
+                placeholder={isAdmin ? t('locations.manageFilters.searchPlaceholder') : t('placeholder.searchGroupNameAddressCity')}
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                inputProps={{ maxLength: 200, 'aria-label': t('a11y.searchLocations') }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon color="action" />
+                    </InputAdornment>
+                  ),
+                  endAdornment: searchInput ? (
+                    <InputAdornment position="end">
+                      <IconButton size="small" onClick={handleClearSearch} aria-label={t('a11y.clearSearch')} edge="end" sx={{ minWidth: 44, minHeight: 44 }}>
+                        <CloseIcon fontSize="small" />
+                      </IconButton>
+                    </InputAdornment>
+                  ) : null,
+                }}
+              />
+              {isAdmin && isCompact && (
+                <Button
+                  variant={activeCount > 0 ? 'contained' : 'outlined'}
+                  startIcon={<FilterIcon />}
+                  onClick={() => setFilterSheetOpen(true)}
+                  sx={{ minHeight: 44, flexShrink: 0, whiteSpace: 'nowrap' }}
+                >
+                  {activeCount > 0
+                    ? t('locations.manageFilters.filtersCount', { count: activeCount })
+                    : t('locations.manageFilters.filters')}
+                </Button>
+              )}
+            </Box>
+            {isAdmin && !isCompact && (
+              <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center', flexWrap: 'wrap' }}>
+                <TextField
+                  select
+                  size="small"
+                  label={t('locations.manageFilters.sortBy')}
+                  value={filters.sortBy}
+                  onChange={(e) => update({ sortBy: e.target.value as ManageLocationSort })}
+                  sx={{ minWidth: 190 }}
+                >
+                  {MANAGE_LOCATION_SORTS.map((sort) => (
+                    <MenuItem key={sort} value={sort} sx={{ minHeight: 44 }}>
+                      {t(`locations.manageFilters.sort.${sort}`)}
+                    </MenuItem>
                   ))}
-                </Box>
-              </>
+                </TextField>
+                <ToggleButtonGroup
+                  size="small"
+                  exclusive
+                  value={viewMode}
+                  onChange={(_event, value) => value && update({ view: value }, { replace: true })}
+                  aria-label={t('locations.manageFilters.view')}
+                >
+                  <ToggleButton value="table" aria-label={t('locations.manageFilters.viewTable')} sx={{ minHeight: 40 }}>
+                    <TableViewIcon fontSize="small" sx={{ mr: 0.5 }} />{t('locations.manageFilters.viewTable')}
+                  </ToggleButton>
+                  <ToggleButton value="cards" aria-label={t('locations.manageFilters.viewCards')} sx={{ minHeight: 40 }}>
+                    <CardsViewIcon fontSize="small" sx={{ mr: 0.5 }} />{t('locations.manageFilters.viewCards')}
+                  </ToggleButton>
+                </ToggleButtonGroup>
+              </Box>
+            )}
+            {isAdmin && (
+              <ManageLocationActiveChips chips={activeChips} onClear={(patch) => update(patch)} onClearAll={clearAll} />
             )}
           </Stack>
         </Box>
       </Box>
 
       <PageContainer maxWidth="list">
+        <Box sx={{ display: 'flex', gap: 3, alignItems: 'flex-start' }}>
+          {isAdmin && !isCompact && (
+            <Box
+              component="aside"
+              aria-label={t('locations.manageFilters.filters')}
+              sx={{
+                width: 300,
+                flexShrink: 0,
+                position: 'sticky',
+                top: 176,
+                maxHeight: 'calc(100vh - 192px)',
+                overflowY: 'auto',
+                pr: 0.5,
+                pt: 1,
+              }}
+            >
+              <ManageLocationFilterPanel
+                filters={filters}
+                facets={facets}
+                onChange={(patch) => update(patch)}
+                extraControls={<TextField
+                size="small"
+                label="Período financeiro"
+                value={billingPeriod}
+                onChange={(e) => setBillingPeriod(e.target.value.replace(/[^\d-]/g, '').slice(0, 7))}
+                helperText="AAAA-MM"
+              />}
+              />
+            </Box>
+          )}
+          <Box sx={{ flex: 1, minWidth: 0 }}>
         {error && (
           <ErrorState message={error} onRetry={() => setReloadKey((k) => k + 1)} />
         )}
@@ -1354,10 +1325,13 @@ const getVenueAccountStatusColor = (status?: string | null): 'success' | 'warnin
                 </CardContent>
               </Card>
             )}
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              {t('locations.localsCount', { count: filteredLocations.length })}
-              {searchQuery && ` ${t('locations.searchingFor', { query: searchQuery })}`}
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }} role="status" aria-live="polite">
+              {t('locations.manageFilters.showing', { shown: filteredLocations.length, total: locations.length })}
+              {loadingMore && ` ${t('locations.manageFilters.loadingMore')}`}
             </Typography>
+            {truncated && (
+              <Alert severity="warning" sx={{ mb: 2 }}>{t('locations.manageFilters.truncated')}</Alert>
+            )}
           </>
         )}
 
@@ -1366,19 +1340,28 @@ const getVenueAccountStatusColor = (status?: string | null): 'success' | 'warnin
         ) : (loading || error) ? null : filteredLocations.length === 0 ? (
           <EmptyState
             icon={<LocationIcon />}
-            title={searchQuery ? t('locations.noLocationsFound') : t('locations.noLocations')}
+            title={activeCount > 0 ? t('locations.noLocationsFound') : t('locations.noLocations')}
             description={
-              searchQuery
+              activeCount > 0
                 ? t('locations.tryDifferentSearch')
                 : t('locations.addLocationsDesc')
             }
-            actionLabel={searchQuery ? t('empty.clearSearch') : t('locations.addFirstLocation')}
-            actionIcon={searchQuery ? undefined : <AddIcon />}
-            onAction={searchQuery ? handleClearSearch : () => navigate('/location/create')}
-            actionVariant={searchQuery ? 'outlined' : 'contained'}
+            actionLabel={activeCount > 0 ? t('locations.manageFilters.clearAll') : t('locations.addFirstLocation')}
+            actionIcon={activeCount > 0 ? undefined : <AddIcon />}
+            onAction={activeCount > 0 ? clearAll : () => navigate('/location/create')}
+            actionVariant={activeCount > 0 ? 'outlined' : 'contained'}
           />
         ) : (
-          !error && (
+          !error && (isAdmin && viewMode === 'table' ? (
+            <ManageLocationTable
+              locations={filteredLocations}
+              selectedIds={selectedIds}
+              onToggle={toggleSelected}
+              onToggleAll={toggleAllFiltered}
+              onOpen={(loc) => navigate(`/location/${loc.id}`)}
+              showSelection
+            />
+          ) : (
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               {isAdmin && filteredLocations.some((location) => location.latestCommercialRequestStatus === 'PENDING_REVIEW') && (
                 <Alert severity="info">
@@ -1420,9 +1403,17 @@ const getVenueAccountStatusColor = (status?: string | null): 'success' | 'warnin
 
                 return (
                   <Card key={location.id} sx={{ position: 'relative' }}>
+                    {isAdmin && (
+                      <Checkbox
+                        checked={selectedIds.has(location.id)}
+                        onChange={() => toggleSelected(location.id)}
+                        inputProps={{ 'aria-label': t('locations.manageFilters.selectRow', { name: location.name }) }}
+                        sx={{ position: 'absolute', top: 2, right: 2, zIndex: 2, p: 1.25 }}
+                      />
+                    )}
                     <CardActionArea onClick={() => navigate(`/location/${location.id}`)}>
                       <CardContent>
-                        <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
+                        <Box sx={{ display: 'flex', flexDirection: 'row', gap: { xs: 1.5, sm: 2 }, pr: isAdmin ? { xs: 4, sm: 5 } : 0 }}>
                           {location.photoUrl ? (
                             <Box
                               component="img"
@@ -1430,8 +1421,8 @@ const getVenueAccountStatusColor = (status?: string | null): 'success' | 'warnin
                               alt={location.name}
                               loading="lazy"
                               sx={{
-                                width: { xs: '100%', sm: 80 },
-                                height: { xs: 148, sm: 80 },
+                                width: { xs: 56, sm: 80 },
+                                height: { xs: 56, sm: 80 },
                                 borderRadius: 1,
                                 objectFit: 'cover',
                                 flexShrink: 0,
@@ -1441,8 +1432,8 @@ const getVenueAccountStatusColor = (status?: string | null): 'success' | 'warnin
                             <Avatar
                               variant="rounded"
                               sx={{
-                                width: { xs: '100%', sm: 80 },
-                                height: { xs: 148, sm: 80 },
+                                width: { xs: 56, sm: 80 },
+                                height: { xs: 56, sm: 80 },
                                 bgcolor: 'primary.main',
                                 flexShrink: 0,
                               }}
@@ -1891,9 +1882,59 @@ const getVenueAccountStatusColor = (status?: string | null): 'success' | 'warnin
                 );
               })}
             </Box>
-          )
+          ))
         )}
+          </Box>
+        </Box>
       </PageContainer>
+
+      {isAdmin && (
+        <>
+          <ManageLocationFilterSheet
+            open={filterSheetOpen && isCompact}
+            onClose={() => setFilterSheetOpen(false)}
+            onClearAll={clearAll}
+            resultCount={filteredLocations.length}
+            activeCount={activeCount}
+          >
+            <Stack spacing={2}>
+              <TextField
+              select
+              size="small"
+              label={t('locations.manageFilters.sortBy')}
+              value={filters.sortBy}
+              onChange={(e) => update({ sortBy: e.target.value as ManageLocationSort })}
+              fullWidth
+                >
+              {MANAGE_LOCATION_SORTS.map((sort) => (
+                <MenuItem key={sort} value={sort} sx={{ minHeight: 44 }}>
+                  {t(`locations.manageFilters.sort.${sort}`)}
+                </MenuItem>
+              ))}
+                </TextField>
+              <ManageLocationFilterPanel
+              filters={filters}
+              facets={facets}
+              onChange={(patch) => update(patch)}
+              extraControls={<TextField
+              size="small"
+              label="Período financeiro"
+              value={billingPeriod}
+              onChange={(e) => setBillingPeriod(e.target.value.replace(/[^\d-]/g, '').slice(0, 7))}
+              helperText="AAAA-MM"
+              />}
+              />
+            </Stack>
+          </ManageLocationFilterSheet>
+          <ManageLocationBatchBar
+            selected={selectedLocations}
+            adminUid={user?.id ?? ''}
+            onClearSelection={() => setSelectedIds(new Set())}
+            onProcessed={(ids) =>
+              setSelectedIds((prev) => new Set([...prev].filter((id) => !ids.includes(id))))}
+          />
+        </>
+      )}
 
       {/* #2178: ScreenFab padronizado — FAB mobile */}
       <ScreenFab
@@ -1901,7 +1942,7 @@ const getVenueAccountStatusColor = (status?: string | null): 'success' | 'warnin
         aria-label={t('a11y.addLocation')}
         onClick={() => navigate('/location/create')}
         sx={{
-          display: { xs: 'flex', md: 'none' },
+          display: selectedIds.size > 0 ? 'none' : { xs: 'flex', md: 'none' },
           bottom: { xs: 80, md: 24 },
           right: { xs: 16, md: 24 },
         }}
