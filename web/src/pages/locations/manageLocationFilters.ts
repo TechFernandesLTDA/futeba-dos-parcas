@@ -6,10 +6,22 @@ import {
   getLocationAmenitySet,
   locationHasAmenities,
 } from '../../types/location';
+import { normalizeUf } from '../../utils/brazilStates';
+import { locationMatchesVenueQuery, normalizeVenueText } from '../../utils/venueSearch';
 
 export type LocationDueFilter = 'ALL' | 'NO_DUE' | '1_7' | '8_14' | '15_21' | '22_28';
 export type LocationBooleanFilter = 'ALL' | 'YES' | 'NO';
 export type LocationMonthlyFeeFilter = 'ALL' | 'NO_FEE' | 'UP_TO_100' | '100_300' | '300_PLUS';
+
+/** Atalhos rápidos do admin (#4372). */
+export type ManageQuickFilter = 'DRAFT_IMPORTED' | 'UNVERIFIED' | 'NO_COORDINATES' | 'NO_PHONE';
+
+export const MANAGE_QUICK_FILTERS: readonly ManageQuickFilter[] = [
+  'DRAFT_IMPORTED',
+  'UNVERIFIED',
+  'NO_COORDINATES',
+  'NO_PHONE',
+];
 
 export interface ManageLocationFilterState {
   searchQuery: string;
@@ -17,7 +29,11 @@ export interface ManageLocationFilterState {
   publicationFilter: 'ALL' | LocationPublicationStatus;
   subscriptionFilter: 'ALL' | LocationSubscriptionStatus;
   typeFilter: 'ALL' | string;
-  cityFilter: string;
+  /** Filtros em cascata Estado (UF) → Cidade → Bairro, com multi-seleção. */
+  stateFilters: string[];
+  cityFilters: string[];
+  neighborhoodFilters: string[];
+  quickFilters: ManageQuickFilter[];
   dueFilter: LocationDueFilter;
   verifiedFilter: LocationBooleanFilter;
   activeFilter: LocationBooleanFilter;
@@ -246,26 +262,83 @@ export const getLocationQualityChecklist = (
   ];
 };
 
+// ---------------------------------------------------------------------------
+// Geografia (Estado → Cidade → Bairro) e atalhos rápidos
+// ---------------------------------------------------------------------------
+
+export const getLocationUf = (location: Pick<Location, 'state'>) => normalizeUf(location.state);
+
+export const getLocationCityName = (location: Pick<Location, 'city'>) => (location.city ?? '').trim();
+
+export const getLocationNeighborhood = (location: Pick<Location, 'neighborhood' | 'district'>) =>
+  (location.neighborhood || location.district || '').trim();
+
+/** Chave de comparação (sem acento/caixa) usada por cidade e bairro. */
+export const geoKey = (value?: string | null) => normalizeVenueText(value);
+
+const hasCoordinates = (location: Pick<Location, 'latitude' | 'longitude'>) =>
+  typeof location.latitude === 'number' && Number.isFinite(location.latitude) &&
+  typeof location.longitude === 'number' && Number.isFinite(location.longitude) &&
+  !(location.latitude === 0 && location.longitude === 0);
+
+/** Rascunho importado: DRAFT e ainda não verificado (entra pelo importador de quadras). */
+export const isImportedDraft = (location: Location) =>
+  getLocationPublicationStatus(location) === 'DRAFT' && location.isVerified !== true;
+
+export const matchesQuickFilter = (location: Location, filter: ManageQuickFilter) => {
+  switch (filter) {
+    case 'DRAFT_IMPORTED': return isImportedDraft(location);
+    case 'UNVERIFIED': return location.isVerified !== true;
+    case 'NO_COORDINATES': return !hasCoordinates(location);
+    case 'NO_PHONE': return !location.phone?.trim();
+    default: return true;
+  }
+};
+
+export type ManageGeoDimension = 'state' | 'city' | 'neighborhood';
+
+const includesKey = (selected: readonly string[], value: string) => {
+  if (selected.length === 0) return true;
+  const key = geoKey(value);
+  return selected.some((item) => geoKey(item) === key);
+};
+
+export const matchesGeoFilters = (
+  location: Location,
+  filters: Pick<ManageLocationFilterState, 'stateFilters' | 'cityFilters' | 'neighborhoodFilters'>,
+  skip: readonly ManageGeoDimension[] = [],
+) =>
+  (skip.includes('state') || filters.stateFilters.length === 0 ||
+    filters.stateFilters.some((uf) => normalizeUf(uf) === getLocationUf(location))) &&
+  (skip.includes('city') || includesKey(filters.cityFilters, getLocationCityName(location))) &&
+  (skip.includes('neighborhood') || includesKey(filters.neighborhoodFilters, getLocationNeighborhood(location)));
+
+/** Campos extras pesquisáveis só no admin: telefone, id e dono. */
+const adminSearchExtras = (location: Location) => [
+  location.id,
+  location.ownerId,
+  location.phone,
+  location.whatsapp,
+];
+
+/**
+ * Aplica todos os filtros. `skipGeo` ignora dimensões geográficas — usado para
+ * montar as contagens em cascata (cada faceta ignora o próprio filtro).
+ */
 export const locationMatchesManageFilters = (
   location: Location,
   filters: ManageLocationFilterState,
+  skipGeo: readonly ManageGeoDimension[] = [],
 ) => {
-  const q = filters.searchQuery.trim().toLowerCase();
   const ownerQuery = filters.ownerFilter.trim().toLowerCase();
   const dueDay = location.billingDueDay ?? null;
 
-  const matchesSearch = !q ||
-    location.name?.toLowerCase().includes(q) ||
-    location.address?.toLowerCase().includes(q) ||
-    location.city?.toLowerCase().includes(q) ||
-    location.district?.toLowerCase().includes(q) ||
-    location.ownerId?.toLowerCase().includes(q);
-
-  return matchesSearch &&
+  return locationMatchesVenueQuery(location, filters.searchQuery, adminSearchExtras(location)) &&
+    matchesGeoFilters(location, filters, skipGeo) &&
+    (filters.quickFilters ?? []).every((quick) => matchesQuickFilter(location, quick)) &&
     (filters.publicationFilter === 'ALL' || getLocationPublicationStatus(location) === filters.publicationFilter) &&
     (filters.subscriptionFilter === 'ALL' || getLocationSubscriptionStatus(location) === filters.subscriptionFilter) &&
     (filters.typeFilter === 'ALL' || location.fieldType === filters.typeFilter || location.primaryFieldType === filters.typeFilter) &&
-    (filters.cityFilter === 'ALL' || location.city === filters.cityFilter) &&
     (!ownerQuery || location.ownerId?.toLowerCase().includes(ownerQuery)) &&
     matchesDueFilter(dueDay, filters.dueFilter) &&
     matchesBooleanFilter(location.isVerified, filters.verifiedFilter) &&

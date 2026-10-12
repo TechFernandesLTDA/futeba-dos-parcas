@@ -55,7 +55,10 @@ const baseFilters = (overrides: Partial<ManageLocationFilterState> = {}): Manage
   publicationFilter: 'ALL',
   subscriptionFilter: 'ALL',
   typeFilter: 'ALL',
-  cityFilter: 'ALL',
+  stateFilters: [],
+  cityFilters: [],
+  neighborhoodFilters: [],
+  quickFilters: [],
   dueFilter: 'ALL',
   verifiedFilter: 'ALL',
   activeFilter: 'ALL',
@@ -101,7 +104,7 @@ describe('manageLocationFilters', () => {
       activeFieldsFilter: 'YES',
       monthlyFeeFilter: '100_300',
       ownerFilter: 'owner',
-      cityFilter: 'São Paulo',
+      cityFilters: ['São Paulo'],
       amenityFilters: ['parking', 'bathroom'],
     }))).toBe(true);
 
@@ -269,5 +272,111 @@ describe('manageLocationFilters', () => {
 
     expect(checklist.find((item) => item.id === 'geolocation')?.complete).toBe(false);
     expect(checklist.find((item) => item.id === 'operating-hours')?.complete).toBe(false);
+  });
+});
+
+describe('busca inteligente do admin (#4372)', () => {
+  const venue = baseLocation({
+    id: 'abc123',
+    name: 'Arena Jardim Society',
+    district: 'Jardim Botânico',
+    neighborhood: 'Jardim Botânico',
+    city: 'Curitiba',
+    state: 'PR',
+    cep: '80210-000',
+    phone: '(41) 99999-1234',
+    ownerId: 'uid-dono-xyz',
+  });
+  const matches = (searchQuery: string) =>
+    locationMatchesManageFilters(venue, baseFilters({ searchQuery }));
+
+  it('ignora acento, caixa e aceita vários termos', () => {
+    expect(matches('ARENA botanico')).toBe(true);
+    expect(matches('arena londrina')).toBe(false);
+  });
+
+  it('aceita prefixo, abreviações e 1 erro de digitação', () => {
+    expect(matches('jd bot')).toBe(true);
+    expect(matches('soc curit')).toBe(true);
+    expect(matches('curtiba')).toBe(true);
+  });
+
+  it('procura por UF, CEP, telefone, id e dono', () => {
+    expect(matches('pr')).toBe(true);
+    expect(matches('80210')).toBe(true);
+    expect(matches('99999-1234')).toBe(true);
+    expect(matches('abc123')).toBe(true);
+    expect(matches('uid-dono')).toBe(true);
+    expect(matches('uid-outro')).toBe(false);
+  });
+});
+
+describe('filtros geográficos e atalhos do admin (#4372)', () => {
+  const curitiba = baseLocation({ id: 'c1', city: 'Curitiba', state: 'PR', neighborhood: 'Água Verde', district: 'Água Verde' });
+  const londrina = baseLocation({ id: 'l1', city: 'Londrina', state: 'PR', neighborhood: 'Centro', district: 'Centro' });
+  const joinville = baseLocation({ id: 'j1', city: 'Joinville', state: 'SC', neighborhood: 'Centro', district: 'Centro' });
+  const ids = (filters: Partial<ManageLocationFilterState>) =>
+    [curitiba, londrina, joinville]
+      .filter((loc) => locationMatchesManageFilters(loc, baseFilters(filters)))
+      .map((loc) => loc.id);
+
+  it('filtra por UF, com multi-seleção e sigla em qualquer caixa', () => {
+    expect(ids({ stateFilters: ['PR'] })).toEqual(['c1', 'l1']);
+    expect(ids({ stateFilters: ['pr', 'SC'] })).toEqual(['c1', 'l1', 'j1']);
+  });
+
+  it('filtra por cidade e bairro sem acento/caixa, com multi-seleção', () => {
+    expect(ids({ cityFilters: ['curitiba', 'JOINVILLE'] })).toEqual(['c1', 'j1']);
+    expect(ids({ neighborhoodFilters: ['agua verde'] })).toEqual(['c1']);
+    expect(ids({ neighborhoodFilters: ['Centro'] })).toEqual(['l1', 'j1']);
+  });
+
+  it('combina UF + bairro (E entre níveis, OU dentro do nível)', () => {
+    expect(ids({ stateFilters: ['SC'], neighborhoodFilters: ['Centro'] })).toEqual(['j1']);
+  });
+
+  it('skipGeo ignora a dimensão pedida', () => {
+    const filters = baseFilters({ stateFilters: ['SC'] });
+    expect(locationMatchesManageFilters(curitiba, filters, ['state'])).toBe(true);
+    expect(locationMatchesManageFilters(curitiba, filters)).toBe(false);
+  });
+
+  it('atalho "Rascunhos importados": DRAFT e não verificada', () => {
+    const draft = baseLocation({ id: 'd', publicationStatus: 'DRAFT', isVerified: false });
+    const published = baseLocation({ id: 'p' });
+    const filters = baseFilters({ quickFilters: ['DRAFT_IMPORTED'] });
+    expect(locationMatchesManageFilters(draft, filters)).toBe(true);
+    expect(locationMatchesManageFilters(published, filters)).toBe(false);
+  });
+
+  it('atalho "Não verificadas"', () => {
+    const filters = baseFilters({ quickFilters: ['UNVERIFIED'] });
+    expect(locationMatchesManageFilters(baseLocation({ isVerified: false }), filters)).toBe(true);
+    expect(locationMatchesManageFilters(baseLocation({ isVerified: true }), filters)).toBe(false);
+  });
+
+  it('atalho "Sem coordenadas": ausentes ou (0, 0)', () => {
+    const filters = baseFilters({ quickFilters: ['NO_COORDINATES'] });
+    expect(locationMatchesManageFilters(baseLocation({ latitude: undefined, longitude: undefined }), filters)).toBe(true);
+    expect(locationMatchesManageFilters(baseLocation({ latitude: 0, longitude: 0 }), filters)).toBe(true);
+    expect(locationMatchesManageFilters(baseLocation(), filters)).toBe(false);
+  });
+
+  it('atalho "Sem telefone"', () => {
+    const filters = baseFilters({ quickFilters: ['NO_PHONE'] });
+    expect(locationMatchesManageFilters(baseLocation({ phone: undefined }), filters)).toBe(true);
+    expect(locationMatchesManageFilters(baseLocation({ phone: '  ' }), filters)).toBe(true);
+    expect(locationMatchesManageFilters(baseLocation({ phone: '(41) 3333-0000' }), filters)).toBe(false);
+  });
+
+  it('atalhos combinam entre si (E)', () => {
+    const filters = baseFilters({ quickFilters: ['UNVERIFIED', 'NO_PHONE'] });
+    expect(locationMatchesManageFilters(baseLocation({ isVerified: false, phone: undefined }), filters)).toBe(true);
+    expect(locationMatchesManageFilters(baseLocation({ isVerified: false, phone: '123' }), filters)).toBe(false);
+  });
+
+  it('os filtros antigos continuam valendo junto com a geografia', () => {
+    expect(ids({ stateFilters: ['PR'], publicationFilter: 'DRAFT' })).toEqual([]);
+    expect(ids({ stateFilters: ['PR'], publicationFilter: 'PUBLISHED' })).toEqual(['c1', 'l1']);
   });
 });
