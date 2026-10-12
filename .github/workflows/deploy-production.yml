@@ -164,4 +164,8 @@ jobs:
           track: internal
           status: completed
           inAppUpdatePriority: 2
-          changesNotSentForReview: true
+          # NAO usar changesNotSentForReview: com a publicacao gerenciada desligada a Play
+          # envia as mudancas para revisao automaticamente e o commit do edit falha com
+          # "Changes are sent for review automatically. The query parameter
+          # changesNotSentForReview must not be set." (run 38276700533, android-v1.41.0).
+          # O upload para a trilha internal nao depende de revisao.
