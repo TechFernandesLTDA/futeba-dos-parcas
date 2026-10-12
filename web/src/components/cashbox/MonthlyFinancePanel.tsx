@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Alert,
   Avatar,
@@ -350,6 +351,7 @@ export function MonthlyFinancePanel({
   onSettleMember,
   onSetGameOverride,
 }: MonthlyFinancePanelProps) {
+  const { t } = useTranslation();
   const theme = useTheme();
   // Perf: cálculo E sorts derivados memoizados — antes sortedMembers/agendaGames
   // eram reordenados a cada render (todo toggle de rateio re-renderiza o painel).
@@ -602,7 +604,7 @@ export function MonthlyFinancePanel({
           </Typography>
         </Stack>
 
-        <List disablePadding aria-label="Mensalistas do grupo">
+        <List disablePadding aria-label={t('a11y.monthlyMembersList')}>
           {sortedMembers.map((member, index) => {
             const isBusy = busyMemberIds.has(member.userId);
             const canSettleMember = canSettle && member.isMonthly &&

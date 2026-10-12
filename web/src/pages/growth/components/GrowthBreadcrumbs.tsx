@@ -1,6 +1,7 @@
 import { Breadcrumbs, Link, Typography, Stack, Container } from '@mui/material';
 import NavigateNext from '@mui/icons-material/NavigateNext';
 import { Link as RouterLink } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 interface BreadcrumbItem {
   label: string;
@@ -12,12 +13,13 @@ interface GrowthBreadcrumbsProps {
 }
 
 export function GrowthBreadcrumbs({ items }: GrowthBreadcrumbsProps) {
+  const { t } = useTranslation();
   return (
     <Container maxWidth="lg" sx={{ pt: 2, pb: 1 }}>
       <Stack direction="row" alignItems="center">
         <Breadcrumbs
           separator={<NavigateNext fontSize="small" sx={{ color: 'text.disabled' }} />}
-          aria-label="Navegação estrutural"
+          aria-label={t('a11y.breadcrumb')}
         >
           <Link
             component={RouterLink}

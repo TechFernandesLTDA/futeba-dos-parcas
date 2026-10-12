@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Button,
   CircularProgress,
@@ -42,6 +43,7 @@ export function MonthlyFinanceConfigDialog({
   onClose,
   onSubmit,
 }: MonthlyFinanceConfigDialogProps) {
+  const { t } = useTranslation();
   const [pricingMode, setPricingMode] = useState<MonthlyCourtPricingMode>('FIXED_MONTHLY');
   const [amount, setAmount] = useState('');
   const [touched, setTouched] = useState(false);
@@ -100,7 +102,7 @@ export function MonthlyFinanceConfigDialog({
             value={pricingMode}
             onChange={handleModeChange}
             disabled={saving}
-            aria-label="Forma de cobrança da quadra"
+            aria-label={t('a11y.courtBillingMode')}
           >
             <ToggleButton value="FIXED_MONTHLY">Valor mensal</ToggleButton>
             <ToggleButton value="PER_GAME">Por jogo</ToggleButton>

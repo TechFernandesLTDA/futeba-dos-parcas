@@ -27,6 +27,7 @@ import { Link as RouterLink } from 'react-router-dom';
 import { trackEvent } from '../../utils/analytics';
 import { useTheme as useAppTheme } from '../../contexts/ThemeContext';
 import { SEO_PARENT_COMPANY_URL } from '../../components/seo/metadata';
+import { useTranslation } from 'react-i18next';
 
 const currentYear = new Date().getFullYear();
 
@@ -100,6 +101,7 @@ const faqs = [
 ];
 
 function LaunchPageContent() {
+  const { t } = useTranslation();
   const theme = useMuiTheme();
 
   useEffect(() => {
@@ -326,7 +328,7 @@ function LaunchPageContent() {
               </Stack>
 
               <Box
-                  aria-label="Exemplo de uma rodada organizada no Futeba dos Parças"
+                  aria-label={t('a11y.launchRoundExample')}
                   sx={{
                     gridArea: 'mock',
                     width: '100%',
