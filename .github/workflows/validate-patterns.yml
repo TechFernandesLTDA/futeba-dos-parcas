@@ -118,7 +118,7 @@ jobs:
         run: node --test scripts/level-table-parity.test.js
 
       - name: Validate CI workflow contracts
-        run: node --test scripts/ci/ci-runner-portability-workflow-contract.test.js
+        run: node --test scripts/ci/ci-runner-portability-workflow-contract.test.js scripts/ci/play-requirements-contract.test.js scripts/ci/check-16kb-alignment.test.js
 
       - name: Upload audit report
         if: always()

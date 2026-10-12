@@ -136,6 +136,17 @@ jobs:
       - name: Build Release APK
         run: ./gradlew assembleRelease
 
+      - name: Setup Node (guarda de 16 KB)
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+
+      # Mesma guarda do deploy-production: AAB (ELF) e APK (ELF + zipalign 16 KB).
+      - name: Guarda Play - alinhamento de 16 KB das bibliotecas nativas (AAB e APK)
+        run: |
+          node scripts/ci/check-16kb-alignment.js app/build/outputs/bundle/release/app-release.aab
+          node scripts/ci/check-16kb-alignment.js app/build/outputs/apk/release/app-release.apk
+
       - name: Resolve version from tag
         id: ver
         run: |

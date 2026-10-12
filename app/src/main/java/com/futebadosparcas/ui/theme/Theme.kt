@@ -12,7 +12,6 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
@@ -98,11 +97,9 @@ fun FutebaTheme(
         SideEffect {
             val window = (view.context as? Activity)?.window
             window?.let {
-                it.statusBarColor = colorScheme.surface.toArgb()
-                it.navigationBarColor = colorScheme.surfaceVariant.toArgb()
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    it.isNavigationBarContrastEnforced = false
-                }
+                // Edge-to-edge: as barras do sistema são transparentes (enableEdgeToEdge nas
+                // Activities) e o conteúdo desenha por trás delas. Definir statusBarColor/
+                // navigationBarColor é API obsoleta (API 35) e ignorada no Android 15+.
                 val insetsController = WindowCompat.getInsetsController(it, view)
                 insetsController.isAppearanceLightStatusBars = !isDark
                 insetsController.isAppearanceLightNavigationBars = !isDark

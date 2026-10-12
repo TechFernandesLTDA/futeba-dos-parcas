@@ -115,7 +115,16 @@ android {
 
     packaging {
         jniLibs {
-            keepDebugSymbols += setOf("**/libandroidx.graphics.path.so")
+            // 16 KB page size (Play Console, 12/10/2026): as .so prebuilt do AndroidX vêm
+            // alinhadas em 16 KB no Maven (datastore 1.0 a 1.2.1 conferidas). O que as
+            // desalinha é o `stripReleaseDebugSymbols` do AGP quando o runner tem um NDK
+            // (strip varia por máquina; no Linux sem NDK ele pula e "empacota como está").
+            // Manter os símbolos garante o mesmo binário alinhado em qualquer runner.
+            // A guarda scripts/ci/check-16kb-alignment.js valida o AAB final no CI.
+            keepDebugSymbols += setOf(
+                "**/libandroidx.graphics.path.so",
+                "**/libdatastore_shared_counter.so"
+            )
         }
     }
 

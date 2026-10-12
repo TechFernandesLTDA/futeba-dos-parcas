@@ -56,12 +56,9 @@
         <item name="appBarLayoutStyle">@style/FutebaAppBar</item>
         <item name="toolbarStyle">@style/FutebaToolbar</item>
 
-        <!-- Status Bar: Pure black, blends with content -->
-        <item name="android:statusBarColor">@color/background_dark</item>
+        <!-- Barras do sistema: edge-to-edge (cor transparente via enableEdgeToEdge()); aqui só o ícone claro/escuro -->
         <item name="android:windowLightStatusBar">false</item>
 
-        <!-- Navigation Bar: Matches app surface variant -->
-        <item name="android:navigationBarColor">@color/surface_variant_dark</item>
 
         <!-- Window background -->
         <item name="android:windowBackground">@color/background_dark</item>
