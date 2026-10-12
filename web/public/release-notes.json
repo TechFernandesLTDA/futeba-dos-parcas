@@ -1,7 +1,36 @@
 {
   "platform": "web",
-  "generatedAt": "2026-10-09T05:11:55.287Z",
+  "generatedAt": "2026-10-12T04:52:10.014Z",
   "notes": [
+    {
+      "version": "1.59.0",
+      "buildNumber": null,
+      "releaseDate": "2026-10-12",
+      "type": "minor",
+      "showPopup": true,
+      "published": true,
+      "headline": "Ao criar um jogo, você vê primeiro as quadras da sua cidade, começando pelas que você já usou, e encontra qualquer quadra com uma busca bem mais esperta.",
+      "highlights": [],
+      "added": [
+        "A lista de quadras abre na cidade em que você está. Dá para trocar de cidade a qualquer momento em \"Trocar cidade\".",
+        "As quadras onde você jogou ou criou jogos aparecem primeiro, da mais recente para a mais antiga. Depois vêm as outras, em ordem alfabética.",
+        "A busca ignora acentos, aceita um erro de digitação e entende abreviações como \"soc\" (society), \"jd\" (jardim) e \"vl\" (vila). Você pode procurar por nome, bairro, endereço, CEP ou tipo de campo.",
+        "Se a quadra não estiver na sua cidade, a busca mostra os resultados de outras cidades.",
+        "Novas quadras de várias capitais e grandes cidades aparecem com o selo \"Não verificada\" até a equipe confirmar os dados."
+      ],
+      "improved": [
+        "Administradores: o gerenciador de quadras ganhou filtros por estado, cidade e bairro, atalhos para quadras não verificadas e sem telefone, busca inteligente e ações em lote, com layout próprio para o celular.",
+        "A tela de gestão de usuários agora está traduzida."
+      ],
+      "fixed": [],
+      "issueRefs": [
+        4370,
+        4372,
+        4339,
+        4341,
+        4327
+      ]
+    },
     {
       "version": "1.58.1",
       "buildNumber": null,
