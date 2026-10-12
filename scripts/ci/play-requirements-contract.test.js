@@ -92,6 +92,11 @@ test('deploy-production.yml verifica 16 KB do AAB sempre (inclusive em dry_run)'
   assert.match(step, /app\/build\/outputs\/bundle\/release\/app-release\.aab/);
 });
 
+test('app/build.gradle.kts mantém símbolos das .so prebuilt (strip do AGP não pode desalinhar 16 KB)', () => {
+  const gradle = read('app/build.gradle.kts');
+  assert.match(gradle, /keepDebugSymbols[\s\S]*?libdatastore_shared_counter\.so/);
+});
+
 test('o script da guarda de 16 KB existe e está coberto por teste', () => {
   assert.ok(fs.existsSync(path.join(root, 'scripts/ci/check-16kb-alignment.js')));
   assert.ok(fs.existsSync(path.join(root, 'scripts/ci/check-16kb-alignment.test.js')));
