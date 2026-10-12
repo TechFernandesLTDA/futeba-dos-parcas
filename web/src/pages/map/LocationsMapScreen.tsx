@@ -372,7 +372,7 @@ export const LocationsMapScreen: React.FC = () => {
                         size="small"
                         onClick={resetFilters}
                         disabled={activeFilterCount === 0}
-                        aria-label="Limpar filtros de quadras"
+                        aria-label={t('a11y.clearCourtFilters')}
                       >
                         <ResetIcon fontSize="small" />
                       </IconButton>

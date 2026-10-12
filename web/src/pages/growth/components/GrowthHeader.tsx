@@ -19,6 +19,7 @@ import MenuIcon from '@mui/icons-material/Menu';
 import CloseIcon from '@mui/icons-material/Close';
 import SportsSoccer from '@mui/icons-material/SportsSoccer';
 import { Link as RouterLink } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { trackEvent, buildUtmUrl } from '../../../utils/analytics';
 
 interface GrowthHeaderProps {
@@ -34,6 +35,7 @@ const navLinks = [
 ];
 
 export function GrowthHeader({ currentPage }: GrowthHeaderProps) {
+  const { t } = useTranslation();
   const theme = useTheme();
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -186,7 +188,7 @@ export function GrowthHeader({ currentPage }: GrowthHeaderProps) {
 
             {/* Mobile Menu Toggle */}
             <IconButton
-              aria-label="Menu principal de navegação"
+              aria-label={t('a11y.mainMenu')}
               onClick={() => setMobileOpen(true)}
               sx={{
                 display: { xs: 'inline-flex', lg: 'none' },
@@ -212,7 +214,7 @@ export function GrowthHeader({ currentPage }: GrowthHeaderProps) {
         <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
           <Typography fontWeight={900}>Menu</Typography>
           <IconButton
-            aria-label="Fechar menu"
+            aria-label={t('a11y.closeMenu')}
             onClick={() => setMobileOpen(false)}
             sx={{ minHeight: 44, minWidth: 44 }}
           >

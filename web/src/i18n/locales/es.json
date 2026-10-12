@@ -1,5 +1,10 @@
 {
   "a11y": {
+    "clearCourtFilters": "Limpiar filtros de canchas",
+    "closeMenu": "Cerrar menú",
+    "courtBillingMode": "Forma de cobro de la cancha",
+    "launchRoundExample": "Ejemplo de una ronda organizada en Futeba dos Parças",
+    "monthlyMembersList": "Mensualistas del grupo",
     "addEvent": "Añadir evento",
     "addLocation": "Añadir lugar",
     "addToCalendar": "Añadir al Calendario",

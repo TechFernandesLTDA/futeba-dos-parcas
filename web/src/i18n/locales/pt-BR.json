@@ -1,5 +1,10 @@
 {
   "a11y": {
+    "clearCourtFilters": "Limpar filtros de quadras",
+    "closeMenu": "Fechar menu",
+    "courtBillingMode": "Forma de cobrança da quadra",
+    "launchRoundExample": "Exemplo de uma rodada organizada no Futeba dos Parças",
+    "monthlyMembersList": "Mensalistas do grupo",
     "addEvent": "Adicionar evento",
     "addLocation": "Adicionar local",
     "addToCalendar": "Adicionar ao Calendário",

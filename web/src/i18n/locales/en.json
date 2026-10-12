@@ -1,5 +1,10 @@
 {
   "a11y": {
+    "clearCourtFilters": "Clear court filters",
+    "closeMenu": "Close menu",
+    "courtBillingMode": "Court billing method",
+    "launchRoundExample": "Example of a round organized in Futeba dos Parças",
+    "monthlyMembersList": "Group monthly members",
     "addEvent": "Add event",
     "addLocation": "Add location",
     "addToCalendar": "Add to Calendar",
