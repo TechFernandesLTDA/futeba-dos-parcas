@@ -18,7 +18,7 @@
  *   Nível 13 (Cruyff)                → level_13.png   [cartoon]
  *   Nível 14 (Beckham)               → level_14.png   [cartoon]
  *   Nível 15 (Ronaldinho)            → level_15.png   [cartoon]
- *   Nível 16 (Ronaldo Fenomeno)      → level_16.png   [cartoon]
+ *   Nível 16 (Ronaldo Fenômeno)      → level_16.png   [cartoon]
  *   Nível 17 (Messi)                 → level_17.png   [cartoon]
  *   Nível 18 (Cristiano Ronaldo)     → level_18.png   [cartoon]
  *   Nível 19 (Diego Maradona)        → level_19.png   [cartoon]

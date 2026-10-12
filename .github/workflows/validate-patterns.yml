@@ -114,6 +114,9 @@ jobs:
       - name: Validate Firestore index manifest contracts
         run: node --test scripts/firestore-index-contract.test.js
 
+      - name: Validate level table parity (JSON x LevelTable.kt)
+        run: node --test scripts/level-table-parity.test.js
+
       - name: Validate CI workflow contracts
         run: node --test scripts/ci/ci-runner-portability-workflow-contract.test.js
 
