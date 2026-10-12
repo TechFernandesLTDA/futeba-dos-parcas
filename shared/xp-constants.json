@@ -116,11 +116,11 @@
       { "level": 13, "xpRequired": 128000, "name": "Cruyff",             "phrase": "Futebol Total! Visao de jogo unica!" },
       { "level": 14, "xpRequired": 160000, "name": "Beckham",            "phrase": "Precisao cirurgica nos passes!" },
       { "level": 15, "xpRequired": 198000, "name": "Ronaldinho",         "phrase": "Joga bonito! O sorriso do futebol!" },
-      { "level": 16, "xpRequired": 242000, "name": "Ronaldo Fenomeno",   "phrase": "Fenomeno! Velocidade e gols!" },
+      { "level": 16, "xpRequired": 242000, "name": "Ronaldo Fenômeno",   "phrase": "Fenomeno! Velocidade e gols!" },
       { "level": 17, "xpRequired": 295000, "name": "Messi",              "phrase": "La Pulga! Genio da bola!" },
       { "level": 18, "xpRequired": 360000, "name": "Cristiano Ronaldo",  "phrase": "CR7! Determinacao e excelencia!" },
       { "level": 19, "xpRequired": 440000, "name": "Diego Maradona",     "phrase": "La Mano de Dios! Pura magia!" },
-      { "level": 20, "xpRequired": 528500, "name": "Pele",               "phrase": "O Rei do Futebol! Nivel maximo!" }
+      { "level": 20, "xpRequired": 528500, "name": "Pelé",               "phrase": "O Rei do Futebol! Nivel maximo!" }
     ],
     "maxLevel": 20
   }

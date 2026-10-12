@@ -933,7 +933,7 @@ describe("Index - Constants", () => {
     expect(LEVELS[0].level).toBe(0);
     expect(LEVELS[10].level).toBe(10);
     expect(LEVELS[20].level).toBe(20);
-    expect(LEVELS[20].name).toBe("Pele");
+    expect(LEVELS[20].name).toBe("Pelé");
   });
 
   test("LEVELS deve estar ordenado por xpRequired", () => {
