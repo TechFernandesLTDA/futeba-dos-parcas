@@ -4764,4 +4764,25 @@ subir no ranking!</string>
     <string name="create_game_step_action">Ir para o passo %1$s</string>
     <string name="hub_open_profile">Abrir perfil de %1$s</string>
 
+    <string name="venue_city_current">Quadras em %1$s</string>
+    <string name="venue_change_city">Trocar cidade</string>
+    <string name="venue_choose_state_title">Trocar cidade</string>
+    <string name="venue_choose_state_hint">Escolha o estado</string>
+    <string name="venue_choose_city_hint">Escolha a cidade em %1$s</string>
+    <string name="venue_no_cities_in_state">Ainda não há quadras cadastradas em %1$s.</string>
+    <string name="venue_picker_back">Voltar para os estados</string>
+    <string name="venue_picker_load_failed">Não foi possível carregar as cidades.</string>
+    <string name="venue_no_city_hint">Não descobrimos a sua cidade. Escolha uma para ver as quadras.</string>
+    <string name="venue_other_cities_title">Resultados em outras cidades</string>
+    <string name="venue_no_results_in_city">Nenhuma quadra encontrada em %1$s.</string>
+    <string name="venue_empty_in_city">Ainda não há quadras cadastradas em %1$s.</string>
+    <string name="venue_unverified_badge">Não verificada</string>
+    <string name="venue_unverified_description">Quadra importada, ainda não verificada pela equipe</string>
+    <string name="venue_search_hint">Buscar por nome, bairro, endereço, CEP ou tipo</string>
+    <string name="venue_load_failed">Não foi possível carregar as quadras.</string>
+    <string name="venue_location_rationale_title">Usar a sua localização?</string>
+    <string name="venue_location_rationale_message">Usamos a localização do aparelho apenas para descobrir a sua cidade e mostrar as quadras de lá. Você pode trocar a cidade a qualquer momento.</string>
+    <string name="venue_location_allow">Permitir</string>
+    <string name="venue_location_not_now">Agora não</string>
+    <string name="venue_sort_recent_use">Últimas utilizações</string>
 </resources>

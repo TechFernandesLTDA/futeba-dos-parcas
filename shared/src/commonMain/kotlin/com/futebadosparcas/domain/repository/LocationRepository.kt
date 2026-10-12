@@ -16,6 +16,24 @@ interface LocationRepository {
     suspend fun getAllLocations(): Result<List<Location>>
 
     /**
+     * Busca os locais de uma cidade (filtro `city`, e `state` quando informado).
+     * Consulta apenas por igualdade (indices single-field), sem carregar a colecao inteira.
+     */
+    suspend fun getLocationsByCity(city: String, state: String? = null): Result<List<Location>>
+
+    /**
+     * Busca os locais de um estado. Aceita mais de um valor porque documentos legados
+     * guardam a UF ("PR") ou o nome por extenso ("Parana").
+     */
+    suspend fun getLocationsByStates(states: List<String>): Result<List<Location>>
+
+    /**
+     * Busca locais cuja latitude esta entre [minLatitude] e [maxLatitude]. Permite achar a
+     * quadra mais proxima do aparelho sem baixar a colecao inteira nem usar API externa.
+     */
+    suspend fun getLocationsInLatitudeBand(minLatitude: Double, maxLatitude: Double): Result<List<Location>>
+
+    /**
      * Busca locais com paginação (PERF FIX: Previne loading 1000+ items)
      * @param limit Número máximo de locais por página (padrão 50)
      * @param lastLocationName Nome do último local da página anterior para cursor-based pagination

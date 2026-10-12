@@ -33,6 +33,27 @@ class MeteredLocationRepository constructor(
         }
     }
 
+    override suspend fun getLocationsByCity(city: String, state: String?): Result<List<Location>> {
+        return LocationQueryMetrics.measureQuerySuspend(LocationQueries.GET_BY_CITY) {
+            delegate.getLocationsByCity(city, state)
+        }
+    }
+
+    override suspend fun getLocationsByStates(states: List<String>): Result<List<Location>> {
+        return LocationQueryMetrics.measureQuerySuspend(LocationQueries.GET_BY_STATES) {
+            delegate.getLocationsByStates(states)
+        }
+    }
+
+    override suspend fun getLocationsInLatitudeBand(
+        minLatitude: Double,
+        maxLatitude: Double
+    ): Result<List<Location>> {
+        return LocationQueryMetrics.measureQuerySuspend(LocationQueries.GET_IN_LATITUDE_BAND) {
+            delegate.getLocationsInLatitudeBand(minLatitude, maxLatitude)
+        }
+    }
+
     override suspend fun getLocationsWithPagination(
         limit: Int,
         lastLocationName: String?

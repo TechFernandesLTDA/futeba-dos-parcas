@@ -35,6 +35,39 @@ class LocationRepositoryImpl(
         }
     }
 
+    override suspend fun getLocationsByCity(city: String, state: String?): Result<List<Location>> {
+        return try {
+            PlatformLogger.d(TAG, "Buscando locais da cidade: $city/$state")
+            firebaseDataSource.getLocationsByCity(city, state)
+        } catch (e: Exception) {
+            PlatformLogger.e(TAG, "Erro ao buscar locais por cidade", e)
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun getLocationsByStates(states: List<String>): Result<List<Location>> {
+        return try {
+            PlatformLogger.d(TAG, "Buscando locais dos estados: $states")
+            firebaseDataSource.getLocationsByStates(states)
+        } catch (e: Exception) {
+            PlatformLogger.e(TAG, "Erro ao buscar locais por estado", e)
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun getLocationsInLatitudeBand(
+        minLatitude: Double,
+        maxLatitude: Double
+    ): Result<List<Location>> {
+        return try {
+            PlatformLogger.d(TAG, "Buscando locais na faixa de latitude: $minLatitude..$maxLatitude")
+            firebaseDataSource.getLocationsInLatitudeBand(minLatitude, maxLatitude)
+        } catch (e: Exception) {
+            PlatformLogger.e(TAG, "Erro ao buscar locais por faixa de latitude", e)
+            Result.failure(e)
+        }
+    }
+
     override suspend fun getLocationsWithPagination(
         limit: Int,
         lastLocationName: String?

@@ -9,6 +9,13 @@ import com.futebadosparcas.domain.model.LocationReview
 import com.futebadosparcas.data.repository.AuthRepository
 import com.futebadosparcas.data.repository.GameRepository
 import com.futebadosparcas.domain.repository.LocationRepository
+import com.futebadosparcas.ui.games.venue.CityPickerState
+import com.futebadosparcas.ui.games.venue.VenueCatalog
+import com.futebadosparcas.ui.games.venue.VenueCity
+import com.futebadosparcas.ui.games.venue.VenueGeoPoint
+import com.futebadosparcas.ui.games.venue.VenueSearch
+import com.futebadosparcas.ui.games.venue.VenueSelectionController
+import com.futebadosparcas.ui.games.venue.VenueSelectionState
 import com.futebadosparcas.util.AppLogger
 import com.futebadosparcas.util.toAndroidLocation
 import com.futebadosparcas.util.toAndroidField
@@ -23,16 +30,13 @@ import com.futebadosparcas.util.toKmpCashboxFilter
 import com.futebadosparcas.util.toKmpCashboxEntry
 import com.futebadosparcas.util.toKmpNotificationType
 import com.google.firebase.firestore.FirebaseFirestoreException
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
-import java.text.Normalizer
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -52,18 +56,20 @@ import kotlin.math.*
  * - Preços de aluguel
  * - Filtro por amenidades
  * - Criação inline de local
+ * - Quadras da cidade atual (aparelho -> perfil -> última cidade), "Trocar cidade",
+ *   ordem por último uso e busca inteligente (#4371) via [VenueSelectionController]
  */
 class LocationSelectorViewModel(
     private val locationRepository: LocationRepository,
     private val gameRepository: GameRepository,
     private val authRepository: AuthRepository,
-    private val preferencesManager: com.futebadosparcas.util.PreferencesManager
+    private val preferencesManager: com.futebadosparcas.util.PreferencesManager,
+    catalog: VenueCatalog
 ) : ViewModel() {
 
     companion object {
         private const val TAG = "LocationSelectorVM"
         private const val MAX_RECENT_LOCATIONS = 5
-        private const val SEARCH_DEBOUNCE_MS = 300L
     }
 
     // Estados principais
@@ -76,6 +82,14 @@ class LocationSelectorViewModel(
     private val _locations = MutableStateFlow<List<LocationWithDistance>>(emptyList())
     val locations: StateFlow<List<LocationWithDistance>> = _locations.asStateFlow()
 
+    // Seção "Resultados em outras cidades" (só quando a busca não acha nada na cidade)
+    private val _otherCityLocations = MutableStateFlow<List<LocationWithDistance>>(emptyList())
+    val otherCityLocations: StateFlow<List<LocationWithDistance>> = _otherCityLocations.asStateFlow()
+
+    private val controller = VenueSelectionController(catalog, viewModelScope)
+    val venueState: StateFlow<VenueSelectionState> = controller.state
+    val cityPicker: StateFlow<CityPickerState> = controller.picker
+
     private val _favoriteLocations = MutableStateFlow<Set<String>>(emptySet())
     val favoriteLocations: StateFlow<Set<String>> = _favoriteLocations.asStateFlow()
 
@@ -85,7 +99,7 @@ class LocationSelectorViewModel(
     private val _userLocation = MutableStateFlow<UserGeoLocation?>(null)
     val userLocation: StateFlow<UserGeoLocation?> = _userLocation.asStateFlow()
 
-    private val _sortMode = MutableStateFlow(LocationSortMode.NAME)
+    private val _sortMode = MutableStateFlow(LocationSortMode.RECENT_USE)
     val sortMode: StateFlow<LocationSortMode> = _sortMode.asStateFlow()
 
     private val _selectedAmenities = MutableStateFlow<Set<String>>(emptySet())
@@ -126,112 +140,98 @@ class LocationSelectorViewModel(
 
     // Cache interno
     private var allLocations: List<Location> = emptyList()
-    private var searchJob: Job? = null
-    private var loadJob: Job? = null
+    private var otherCityPool: List<Location> = emptyList()
 
     init {
-        loadLocations()
+        observeVenueSelection()
         loadFavorites()
         loadRecentLocations()
     }
 
     // ==================== CARREGAR LOCAIS ====================
 
-    fun loadLocations() {
-        loadJob?.cancel()
-        loadJob = viewModelScope.launch {
-            _uiState.value = LocationSelectorUiState.Loading
-            try {
-                val result = locationRepository.getAllLocations()
-                result.fold(
-                    onSuccess = { locations ->
-                        allLocations = locations // Repository já retorna domain.model.Location
-                        applyFiltersAndSort()
-                        _uiState.value = LocationSelectorUiState.Success
-                    },
-                    onFailure = { error ->
-                        AppLogger.e(TAG, "Erro ao carregar locais", error)
-                        _uiState.value = LocationSelectorUiState.Error(
-                            error.message ?: "Erro ao carregar locais"
-                        )
-                    }
-                )
-            } catch (e: Exception) {
-                AppLogger.e(TAG, "Erro inesperado", e)
-                _uiState.value = LocationSelectorUiState.Error("Erro inesperado")
+    /** Sincroniza lista/estado de tela com o controlador (cidade, busca e ordem do produto). */
+    private fun observeVenueSelection() {
+        viewModelScope.launch {
+            controller.state.collect { venue ->
+                allLocations = venue.result.cityVenues
+                otherCityPool = venue.result.otherCityVenues
+                _uiState.value = when {
+                    !venue.started || venue.isLoading -> LocationSelectorUiState.Loading
+                    venue.loadFailed -> LocationSelectorUiState.Error("Erro ao carregar locais")
+                    else -> LocationSelectorUiState.Success
+                }
+                applyFiltersAndSort()
             }
         }
     }
+
+    /** Chamado pela tela quando a posição do aparelho (ou a ausência dela) é conhecida. */
+    fun startSelection(device: VenueGeoPoint?) {
+        if (device != null) _userLocation.value = UserGeoLocation(device.latitude, device.longitude)
+        controller.start(device)
+    }
+
+    /** Recarrega a cidade atual (ou tenta descobri-la de novo). */
+    fun loadLocations() {
+        controller.retry()
+    }
+
+    fun selectCity(city: VenueCity) = controller.selectCity(city)
+
+    fun openStatePicker(uf: String) = controller.openStatePicker(uf)
+
+    fun closeCityPicker() = controller.closePicker()
 
     // ==================== BUSCA ====================
 
     fun onSearchQueryChanged(query: String) {
         _searchQuery.value = query
-        searchJob?.cancel()
-        searchJob = viewModelScope.launch {
-            delay(SEARCH_DEBOUNCE_MS)
-            applyFiltersAndSort()
-        }
+        controller.onQueryChanged(query)
     }
 
+    /** Busca já aplicada pelo controlador; aqui só amenidades, distância e ordenação escolhida. */
     private fun applyFiltersAndSort() {
-        val query = _searchQuery.value
         val amenityFilter = _selectedAmenities.value
         val userLoc = _userLocation.value
         val sortBy = _sortMode.value
 
-        var filtered = allLocations
+        val inCity = withDistance(filterByAmenities(allLocations, amenityFilter), userLoc)
+        _locations.value = sorted(inCity, sortBy)
+        _otherCityLocations.value = sorted(withDistance(filterByAmenities(otherCityPool, amenityFilter), userLoc), sortBy)
+    }
 
-        // Filtrar por busca
-        if (query.length >= 2) {
-            val normalizedQuery = query.normalizeForSearch()
-            filtered = filtered.filter { location ->
-                location.name.normalizeForSearch().contains(normalizedQuery) ||
-                        location.address.normalizeForSearch().contains(normalizedQuery) ||
-                        location.city.normalizeForSearch().contains(normalizedQuery) ||
-                        location.neighborhood.normalizeForSearch().contains(normalizedQuery)
-            }
+    private fun filterByAmenities(locations: List<Location>, amenityFilter: Set<String>): List<Location> {
+        if (amenityFilter.isEmpty()) return locations
+        return locations.filter { location ->
+            amenityFilter.all { amenity -> location.amenities.any { it.equals(amenity, ignoreCase = true) } }
         }
+    }
 
-        // Filtrar por amenidades
-        if (amenityFilter.isNotEmpty()) {
-            filtered = filtered.filter { location ->
-                amenityFilter.all { amenity ->
-                    location.amenities.any { it.equals(amenity, ignoreCase = true) }
-                }
-            }
-        }
-
-        // Calcular distância e ordenar
-        val withDistance = filtered.map { location ->
-            val distance = if (userLoc != null) {
-                val lat = location.latitude
-                val lng = location.longitude
-                if (lat != null && lng != null) {
-                    calculateDistance(userLoc.latitude, userLoc.longitude, lat, lng)
-                } else {
-                    null
-                }
+    private fun withDistance(locations: List<Location>, userLoc: UserGeoLocation?): List<LocationWithDistance> =
+        locations.map { location ->
+            val lat = location.latitude
+            val lng = location.longitude
+            val distance = if (userLoc != null && lat != null && lng != null) {
+                calculateDistance(userLoc.latitude, userLoc.longitude, lat, lng)
             } else {
                 null
             }
             LocationWithDistance(location, distance)
         }
 
-        val sorted = when (sortBy) {
-            LocationSortMode.NAME -> withDistance.sortedBy { it.location.name.lowercase() }
-            LocationSortMode.DISTANCE -> {
-                withDistance.sortedBy { it.distanceKm ?: Double.MAX_VALUE }
-            }
-            LocationSortMode.RATING -> withDistance.sortedByDescending { it.location.rating }
+    private fun sorted(items: List<LocationWithDistance>, sortBy: LocationSortMode): List<LocationWithDistance> =
+        when (sortBy) {
+            // Já vem na ordem do produto: últimos usados primeiro, depois A-Z pt-BR sem acento.
+            LocationSortMode.RECENT_USE -> items
+            LocationSortMode.NAME -> items.sortedBy { VenueSearch.normalize(it.location.name) }
+            LocationSortMode.DISTANCE -> items.sortedBy { it.distanceKm ?: Double.MAX_VALUE }
+            LocationSortMode.RATING -> items.sortedByDescending { it.location.rating }
             LocationSortMode.FAVORITES_FIRST -> {
                 val favs = _favoriteLocations.value
-                withDistance.sortedByDescending { favs.contains(it.location.id) }
+                items.sortedByDescending { favs.contains(it.location.id) }
             }
         }
-
-        _locations.value = sorted
-    }
 
     // ==================== ORDENAÇÃO ====================
 
@@ -498,8 +498,12 @@ class LocationSelectorViewModel(
                     onSuccess = { savedLocation ->
                         // Repository já retorna domain.model.Location
                         _createLocationState.value = CreateLocationState.Success(savedLocation)
-                        // Recarregar lista
-                        loadLocations()
+                        // Recarregar a lista na cidade da nova quadra
+                        if (savedLocation.city.isNotBlank()) {
+                            controller.selectCity(VenueCity(savedLocation.city, savedLocation.state))
+                        } else {
+                            loadLocations()
+                        }
                         // Fechar dialog
                         hideCreateLocationDialog()
                     },
@@ -526,8 +530,6 @@ class LocationSelectorViewModel(
 
     override fun onCleared() {
         super.onCleared()
-        searchJob?.cancel()
-        loadJob?.cancel()
     }
 }
 
@@ -556,6 +558,8 @@ data class UserGeoLocation(
 // ==================== ENUMS ====================
 
 enum class LocationSortMode {
+    /** Últimas utilizações do usuário primeiro, depois A-Z (padrão do produto). */
+    RECENT_USE,
     NAME,
     DISTANCE,
     RATING,
@@ -580,13 +584,4 @@ sealed class CreateLocationState {
     object Loading : CreateLocationState()
     data class Success(val location: Location) : CreateLocationState()
     data class Error(val message: String) : CreateLocationState()
-}
-
-// ==================== EXTENSÕES ====================
-
-private fun String.normalizeForSearch(): String {
-    return Normalizer.normalize(this, Normalizer.Form.NFD)
-        .replace("\\p{InCombiningDiacriticalMarks}+".toRegex(), "")
-        .lowercase()
-        .trim()
 }

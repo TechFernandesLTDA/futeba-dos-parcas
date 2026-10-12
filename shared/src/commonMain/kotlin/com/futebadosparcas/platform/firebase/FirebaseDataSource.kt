@@ -284,6 +284,9 @@ expect class FirebaseDataSource() {
 
     suspend fun getAllLocations(): Result<List<Location>>
     suspend fun getLocationsWithPagination(limit: Int, lastLocationName: String?): Result<List<Location>>
+    suspend fun getLocationsByCity(city: String, state: String?): Result<List<Location>>
+    suspend fun getLocationsByStates(states: List<String>): Result<List<Location>>
+    suspend fun getLocationsInLatitudeBand(minLatitude: Double, maxLatitude: Double): Result<List<Location>>
 
     /**
      * Busca locais com paginação baseada em cursor de DocumentSnapshot.
