@@ -65,10 +65,6 @@ updates:
     update-types:
     - version-update:semver-minor
     - version-update:semver-major
-  - dependency-name: androidx.*
-    update-types:
-    - version-update:semver-minor
-    - version-update:semver-major
   rebase-strategy: disabled
 - package-ecosystem: npm
   directory: /functions
