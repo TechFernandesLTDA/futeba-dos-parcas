@@ -2204,6 +2204,7 @@ subir no ranking!</string>
 
     <!-- About (migrated from moko-resources) -->
     <string name="about_feedback_subject">Feedback Futeba dos Parças</string>
+    <string name="error_no_app_to_handle_action">Nenhum aplicativo encontrado para concluir esta ação</string>
 
     <!-- Additional strings from moko-resources that were missing -->
     <string name="action_ok">OK</string>
