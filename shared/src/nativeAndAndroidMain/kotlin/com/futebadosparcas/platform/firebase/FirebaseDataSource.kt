@@ -43,6 +43,7 @@ actual class FirebaseDataSource actual constructor() {
 
     companion object {
         private const val FUNCTIONS_REGION = "southamerica-east1"
+        private const val LOCATION_SCOPED_QUERY_LIMIT = 500
         private const val COLLECTION_GAMES = "games"
         private const val COLLECTION_CONFIRMATIONS = "confirmations"
         private const val COLLECTION_TEAMS = "teams"
@@ -3214,6 +3215,45 @@ actual class FirebaseDataSource actual constructor() {
             Result.success(firestore.collection("locations").orderBy("name").limit(500).get().documents.mapNotNull { it.toLocationOrNull() })
         } catch (e: Exception) {
             logLocationQueryError("getAllLocations", e)
+            Result.failure(e)
+        }
+    }
+
+    actual suspend fun getLocationsByCity(city: String, state: String?): Result<List<Location>> {
+        return try {
+            var query = firestore.collection("locations").where { "city" equalTo city }
+            if (!state.isNullOrBlank()) query = query.where { "state" equalTo state }
+            Result.success(query.limit(LOCATION_SCOPED_QUERY_LIMIT).get().documents.mapNotNull { it.toLocationOrNull() })
+        } catch (e: Exception) {
+            logLocationQueryError("getLocationsByCity", e, mapOf("city" to city, "state" to (state ?: "")))
+            Result.failure(e)
+        }
+    }
+
+    actual suspend fun getLocationsByStates(states: List<String>): Result<List<Location>> {
+        return try {
+            val values = states.map { it.trim() }.filter { it.isNotEmpty() }.distinct().take(10)
+            if (values.isEmpty()) return Result.success(emptyList())
+            val query = if (values.size == 1) {
+                firestore.collection("locations").where { "state" equalTo values.first() }
+            } else {
+                firestore.collection("locations").where { "state" inArray values }
+            }
+            Result.success(query.limit(LOCATION_SCOPED_QUERY_LIMIT).get().documents.mapNotNull { it.toLocationOrNull() })
+        } catch (e: Exception) {
+            logLocationQueryError("getLocationsByStates", e, mapOf("states" to states.joinToString(",")))
+            Result.failure(e)
+        }
+    }
+
+    actual suspend fun getLocationsInLatitudeBand(minLatitude: Double, maxLatitude: Double): Result<List<Location>> {
+        return try {
+            val query = firestore.collection("locations")
+                .where { "latitude" greaterThanOrEqualTo minLatitude }
+                .where { "latitude" lessThanOrEqualTo maxLatitude }
+            Result.success(query.limit(LOCATION_SCOPED_QUERY_LIMIT).get().documents.mapNotNull { it.toLocationOrNull() })
+        } catch (e: Exception) {
+            logLocationQueryError("getLocationsInLatitudeBand", e, mapOf("min" to minLatitude.toString(), "max" to maxLatitude.toString()))
             Result.failure(e)
         }
     }
