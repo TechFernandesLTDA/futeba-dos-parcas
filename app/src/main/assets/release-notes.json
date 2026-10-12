@@ -1,7 +1,50 @@
 {
   "platform": "android",
-  "generatedAt": "2026-10-09T03:24:31.385Z",
+  "generatedAt": "2026-10-12T15:46:31.269Z",
   "notes": [
+    {
+      "version": "1.41.0",
+      "buildNumber": 82,
+      "releaseDate": "2026-10-12",
+      "type": "minor",
+      "showPopup": true,
+      "published": true,
+      "headline": "Escolha quadras da sua cidade com mais facilidade — e o app fica pronto para o Android 16 e para aparelhos de 16 KB.",
+      "highlights": [
+        {
+          "icon": "location_on",
+          "title": "Quadras da sua cidade",
+          "description": "O seletor de quadras já abre na sua cidade, mostra os últimos jogos primeiro e tem busca inteligente."
+        },
+        {
+          "icon": "phone_android",
+          "title": "Pronto para o Android 16",
+          "description": "O app foi atualizado para a versão mais recente do Android e para aparelhos com páginas de memória de 16 KB."
+        },
+        {
+          "icon": "fullscreen",
+          "title": "Tela cheia de ponta a ponta",
+          "description": "A barra de status e a de navegação deixam o conteúdo ocupar a tela inteira, como nos apps mais novos."
+        }
+      ],
+      "added": [
+        "Seletor de quadras pela cidade atual, com os jogos mais recentes primeiro.",
+        "Busca inteligente de quadras pelo nome, bairro ou cidade."
+      ],
+      "improved": [
+        "Visual em tela cheia (edge-to-edge) no login, no cadastro e no app, com as barras do sistema transparentes.",
+        "Mais estabilidade e desempenho com as bibliotecas do app atualizadas."
+      ],
+      "fixed": [
+        "A tela Sobre não fecha mais o app em aparelhos sem um aplicativo para abrir o link.",
+        "Corrige a possibilidade de o app falhar em aparelhos com páginas de memória de 16 KB."
+      ],
+      "issueRefs": [
+        4265,
+        4371,
+        4376
+      ]
+    },
     {
       "version": "1.40.0",
       "buildNumber": 81,

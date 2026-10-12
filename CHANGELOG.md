@@ -24,6 +24,23 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ## Android
 
+### [1.41.0][android-1.41.0] - 2026-10-12
+
+#### Adicionado
+- Seletor de quadras por cidade atual com ordenação por últimos jogos e busca inteligente (#4371, #4373).
+- Guardas de CI para a Play: `scripts/ci/check-16kb-alignment.js` (ELF/zipalign 16 KB do AAB/APK no `deploy-production.yml` e no `release.yml`) e `scripts/ci/play-requirements-contract.test.js` (`targetSdk` mínimo e `compileSdk >= targetSdk`) (#4384).
+
+#### Mudado
+- targetSdk 36 (Android 16), exigido pela Google Play para publicar atualizações; compileSdk 37 (#4253).
+- Migração da toolchain Android (#4265): Kotlin 2.4.20, KSP2 e Room 2.8.5 (etapa 2, #4357); Ktor 3.6.0, coroutines 1.11, serialization 1.11 e datetime 0.8 (etapa 3, #4366); androidx core 1.19, navigation 2.10 e lifecycle 2.11 (etapa 4a, #4369). A etapa 4b (iOS/CMP) segue bloqueada sem Mac.
+- Edge-to-edge com `enableEdgeToEdge()` em Main/Login/Register; removidos `statusBarColor`/`navigationBarColor` (obsoletos na API 35) do tema Compose e dos `themes.xml` (#4384).
+
+#### Corrigido
+- `libdatastore_shared_counter.so` desalinhada em 16 KB: `keepDebugSymbols` impede o `strip` do AGP de reescrever a biblioteca prebuilt (#4384).
+- Tela Sobre não encerra a Activity quando não há app para tratar o Intent (#4376, #4378).
+
+_Issues: #4265, #4371, #4376 · PRs: #4253, #4357, #4366, #4369, #4373, #4378, #4384_
+
 ### [1.40.0][android-1.40.0] - 2026-10-01
 
 #### Adicionado
@@ -368,6 +385,20 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 - Bump de versão de manutenção após a mega audit wave de 2026-05-11, sem mudanças funcionais no Android nesta tag.
 
 ## Web
+
+### [1.59.0][web-1.59.0] - 2026-10-12
+
+#### Adicionado
+- `utils/venueSearch.ts`: busca compartilhada (normalização sem acento, multi-termo, 1 erro de digitação em palavras com 5+ letras, prefixo, abreviações) usada no seletor, no mapa público e no admin (#4370).
+- Seletor de quadras por cidade atual (geolocalização → quadra mais próxima, cidade do perfil, última cidade salva), consulta por `city`/`state` com cursor, sem o teto de `limit(200)` (#4370).
+- Admin de quadras: cascata UF → cidade → bairro com contagens, filtros/busca/ordenação na URL, carga paginada por cursor, painel lateral (desktop) e bottom sheet (mobile), ações em lote publicar/verificar/desativar (#4372).
+
+#### Corrigido
+- Valor de XP do goleiro vinha fixo fora de `shared/xp-constants.json` (#4341).
+- Rotas inexistentes respondiam com o shell indexável da home; agora saem `noindex` e sem canonical (#4327).
+- i18n da tela de gestão de usuários (#4339).
+
+_Issues: #4370, #4372, #4339, #4341, #4327_
 
 ### [1.58.1][web-1.58.1] - 2026-10-08
 
@@ -3189,6 +3220,7 @@ _Issues: #2981_
 _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 
 
+[android-1.41.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.41.0.md
 [android-1.40.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.40.0.md
 [android-1.39.5]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.39.5.md
 [android-1.39.4]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.39.4.md
@@ -3216,6 +3248,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.59.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.59.0.md
 [web-1.58.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.58.1.md
 [web-1.58.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.58.0.md
 [web-1.57.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.57.0.md
