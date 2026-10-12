@@ -4,6 +4,7 @@ import android.content.Intent
 import android.content.res.Configuration
 import android.os.Bundle
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.focusable
 import androidx.compose.ui.focus.FocusRequester
@@ -26,7 +27,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
-import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -128,7 +128,8 @@ class MainActivityCompose : AppCompatActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        WindowCompat.setDecorFitsSystemWindows(window, false)
+        // Edge-to-edge (substitui setDecorFitsSystemWindows + statusBarColor/navigationBarColor).
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         // Processa extras de notificação apenas em cold start (não em recreate por rotação).
         // onNewIntent cobre o caso hot start (app já em foreground).
