@@ -2,11 +2,6 @@
 
 package com.futebadosparcas.ui.games
 
-import android.Manifest
-import android.annotation.SuppressLint
-import android.content.pm.PackageManager
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
@@ -31,7 +26,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -40,7 +34,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import androidx.core.content.ContextCompat
 import org.koin.compose.viewmodel.koinViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
@@ -50,8 +43,13 @@ import com.futebadosparcas.domain.model.LocationReview
 import com.futebadosparcas.ui.components.CachedFieldImage
 import com.futebadosparcas.ui.components.states.LoadingState
 import com.futebadosparcas.ui.components.states.LoadingItemType
-import com.google.android.gms.location.LocationServices
-import com.google.android.gms.location.Priority
+import com.futebadosparcas.ui.games.venue.VenueChangeCityDialog
+import com.futebadosparcas.ui.games.venue.VenueCity
+import com.futebadosparcas.ui.games.venue.VenueCityBar
+import com.futebadosparcas.ui.games.venue.VenueDeviceLocationGate
+import com.futebadosparcas.ui.games.venue.VenueListBuilder
+import com.futebadosparcas.ui.games.venue.VenueOtherCitiesHeader
+import com.futebadosparcas.ui.games.venue.VenueUnverifiedBadge
 import java.time.LocalDate
 import java.time.LocalTime
 import java.util.Locale
@@ -99,7 +97,6 @@ fun LocationSelectorScreen(
     val createLocationState by viewModel.createLocationState.collectAsStateWithLifecycle()
     val userLocation by viewModel.userLocation.collectAsStateWithLifecycle()
 
-    val context = LocalContext.current
     val keyboardController = LocalSoftwareKeyboardController.current
 
     var showSortMenu by remember { mutableStateOf(false) }
@@ -110,41 +107,33 @@ fun LocationSelectorScreen(
         viewModel.setGameDateTime(selectedDate, selectedTime, selectedEndTime)
     }
 
-    // Solicitar permissão de localização
-    val locationPermissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestMultiplePermissions()
-    ) { permissions ->
-        val fineLocationGranted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] ?: false
-        val coarseLocationGranted = permissions[Manifest.permission.ACCESS_COARSE_LOCATION] ?: false
+    // Cidade atual: aparelho (com rationale antes de pedir permissão) -> perfil -> última cidade
+    val venueState by viewModel.venueState.collectAsStateWithLifecycle()
+    val otherCityLocations by viewModel.otherCityLocations.collectAsStateWithLifecycle()
+    val cityPicker by viewModel.cityPicker.collectAsStateWithLifecycle()
+    var showCityPicker by remember { mutableStateOf(false) }
 
-        if (fineLocationGranted || coarseLocationGranted) {
-            requestUserLocation(context) { lat, lng ->
-                viewModel.setUserLocation(lat, lng)
-            }
-        }
+    if (!venueState.started) {
+        VenueDeviceLocationGate(onResolved = viewModel::startSelection)
     }
-
-    // Verificar e solicitar permissão na inicialização
-    LaunchedEffect(Unit) {
-        val hasFineLocation = ContextCompat.checkSelfPermission(
-            context, Manifest.permission.ACCESS_FINE_LOCATION
-        ) == PackageManager.PERMISSION_GRANTED
-        val hasCoarseLocation = ContextCompat.checkSelfPermission(
-            context, Manifest.permission.ACCESS_COARSE_LOCATION
-        ) == PackageManager.PERMISSION_GRANTED
-
-        if (hasFineLocation || hasCoarseLocation) {
-            requestUserLocation(context) { lat, lng ->
-                viewModel.setUserLocation(lat, lng)
+    LaunchedEffect(venueState.needsCityChoice) {
+        if (venueState.needsCityChoice) showCityPicker = true
+    }
+    if (showCityPicker) {
+        VenueChangeCityDialog(
+            picker = cityPicker,
+            onPickState = viewModel::openStatePicker,
+            onPickCity = { city ->
+                viewModel.selectCity(city)
+                viewModel.closeCityPicker()
+                showCityPicker = false
+            },
+            onBackToStates = viewModel::closeCityPicker,
+            onDismiss = {
+                viewModel.closeCityPicker()
+                showCityPicker = false
             }
-        } else {
-            locationPermissionLauncher.launch(
-                arrayOf(
-                    Manifest.permission.ACCESS_FINE_LOCATION,
-                    Manifest.permission.ACCESS_COARSE_LOCATION
-                )
-            )
-        }
+        )
     }
 
     Dialog(
@@ -254,6 +243,13 @@ fun LocationSelectorScreen(
                         .fillMaxSize()
                         .padding(paddingValues)
                 ) {
+                    // Cidade atual + "Trocar cidade"
+                    VenueCityBar(
+                        city = venueState.city,
+                        onChangeCity = { showCityPicker = true },
+                        modifier = Modifier.padding(start = 16.dp, end = 8.dp)
+                    )
+
                     // Barra de busca
                     SearchBar(
                         query = searchQuery,
@@ -282,7 +278,7 @@ fun LocationSelectorScreen(
 
                         is LocationSelectorUiState.Error -> {
                             ErrorState(
-                                message = (uiState as LocationSelectorUiState.Error).message,
+                                message = stringResource(R.string.venue_load_failed),
                                 onRetry = { viewModel.loadLocations() }
                             )
                         }
@@ -292,7 +288,10 @@ fun LocationSelectorScreen(
                                 LocationViewMode.LIST -> {
                                     LocationListView(
                                         locations = locations,
-                                        recentLocations = recentLocations,
+                                        otherCityLocations = otherCityLocations,
+                                        recentLocations = recentLocations.filter { recent ->
+                                            venueState.city?.sameAs(VenueCity.of(recent)) == true
+                                        },
                                         favoriteLocations = favoriteLocations,
                                         onLocationClick = { location ->
                                             viewModel.selectLocation(location)
@@ -386,7 +385,7 @@ private fun SearchBar(
         value = query,
         onValueChange = onQueryChange,
         modifier = modifier,
-        placeholder = { Text(stringResource(R.string.location_selector_search_hint)) },
+        placeholder = { Text(stringResource(R.string.venue_search_hint)) },
         leadingIcon = {
             Icon(
                 imageVector = Icons.Default.Search,
@@ -431,6 +430,15 @@ private fun SortDropdownMenu(
         expanded = expanded,
         onDismissRequest = onDismiss
     ) {
+        DropdownMenuItem(
+            text = { Text(stringResource(R.string.venue_sort_recent_use)) },
+            onClick = { onSortSelected(LocationSortMode.RECENT_USE) },
+            leadingIcon = {
+                if (currentSort == LocationSortMode.RECENT_USE) {
+                    Icon(Icons.Default.Check, contentDescription = stringResource(R.string.cd_filter_selected))
+                }
+            }
+        )
         DropdownMenuItem(
             text = { Text(stringResource(R.string.location_selector_sort_name)) },
             onClick = { onSortSelected(LocationSortMode.NAME) },
@@ -507,6 +515,7 @@ private fun SelectedAmenitiesRow(
 @Composable
 private fun LocationListView(
     locations: List<LocationWithDistance>,
+    otherCityLocations: List<LocationWithDistance>,
     recentLocations: List<Location>,
     favoriteLocations: Set<String>,
     onLocationClick: (Location) -> Unit,
@@ -555,12 +564,25 @@ private fun LocationListView(
             )
         }
 
-        if (locations.isEmpty()) {
+        if (locations.isEmpty() && otherCityLocations.isEmpty()) {
             item {
                 EmptyLocationsState(hasQuery = searchQuery.isNotEmpty())
             }
         } else {
             items(locations, key = { it.location.id }) { locationWithDistance ->
+                LocationCard(
+                    locationWithDistance = locationWithDistance,
+                    isFavorite = favoriteLocations.contains(locationWithDistance.location.id),
+                    onClick = { onLocationClick(locationWithDistance.location) },
+                    onFavoriteToggle = { onFavoriteToggle(locationWithDistance.location.id) }
+                )
+            }
+        }
+
+        // Sem resultado na cidade: mostra as quadras de outras cidades que batem com a busca
+        if (otherCityLocations.isNotEmpty()) {
+            item(key = "other_cities_header") { VenueOtherCitiesHeader() }
+            items(otherCityLocations, key = { "other_${it.location.id}" }) { locationWithDistance ->
                 LocationCard(
                     locationWithDistance = locationWithDistance,
                     isFavorite = favoriteLocations.contains(locationWithDistance.location.id),
@@ -675,6 +697,9 @@ private fun LocationCard(
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
+                        if (VenueListBuilder.isUnverified(location)) {
+                            VenueUnverifiedBadge(modifier = Modifier.padding(vertical = 4.dp))
+                        }
                         if (location.rating > 0) {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
@@ -1612,23 +1637,5 @@ private fun getAmenityDisplayName(amenity: String): String {
         "wifi" -> stringResource(R.string.location_amenity_wifi)
         "banheiro" -> stringResource(R.string.location_amenity_bathroom)
         else -> amenity.replaceFirstChar { it.uppercase() }
-    }
-}
-
-@SuppressLint("MissingPermission")
-private fun requestUserLocation(
-    context: android.content.Context,
-    onLocationReceived: (Double, Double) -> Unit
-) {
-    try {
-        val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
-        fusedLocationClient.getCurrentLocation(Priority.PRIORITY_BALANCED_POWER_ACCURACY, null)
-            .addOnSuccessListener { location ->
-                location?.let {
-                    onLocationReceived(it.latitude, it.longitude)
-                }
-            }
-    } catch (e: Exception) {
-        // Ignorar erros de localização
     }
 }

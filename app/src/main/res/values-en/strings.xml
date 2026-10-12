@@ -568,4 +568,25 @@
     <string name="create_game_step_action">Go to the %1$s step</string>
     <string name="hub_open_profile">Open %1$s’s profile</string>
     <string name="no_recent_searches">Your recent searches will appear here.</string>
+    <string name="venue_city_current">Venues in %1$s</string>
+    <string name="venue_change_city">Change city</string>
+    <string name="venue_choose_state_title">Change city</string>
+    <string name="venue_choose_state_hint">Choose the state</string>
+    <string name="venue_choose_city_hint">Choose the city in %1$s</string>
+    <string name="venue_no_cities_in_state">There are no venues registered in %1$s yet.</string>
+    <string name="venue_picker_back">Back to states</string>
+    <string name="venue_picker_load_failed">Could not load the cities.</string>
+    <string name="venue_no_city_hint">We could not find your city. Pick one to see its venues.</string>
+    <string name="venue_other_cities_title">Results in other cities</string>
+    <string name="venue_no_results_in_city">No venues found in %1$s.</string>
+    <string name="venue_empty_in_city">There are no venues registered in %1$s yet.</string>
+    <string name="venue_unverified_badge">Unverified</string>
+    <string name="venue_unverified_description">Imported venue, not yet verified by the team</string>
+    <string name="venue_search_hint">Search by name, neighborhood, address, ZIP code or type</string>
+    <string name="venue_load_failed">Could not load the venues.</string>
+    <string name="venue_location_rationale_title">Use your location?</string>
+    <string name="venue_location_rationale_message">We use the device location only to find your city and show the venues there. You can change the city at any time.</string>
+    <string name="venue_location_allow">Allow</string>
+    <string name="venue_location_not_now">Not now</string>
+    <string name="venue_sort_recent_use">Recently used</string>
 </resources>

@@ -568,4 +568,25 @@
     <string name="create_game_step_action">Ir al paso %1$s</string>
     <string name="hub_open_profile">Abrir el perfil de %1$s</string>
     <string name="no_recent_searches">Tus búsquedas recientes aparecerán aquí.</string>
+    <string name="venue_city_current">Canchas en %1$s</string>
+    <string name="venue_change_city">Cambiar ciudad</string>
+    <string name="venue_choose_state_title">Cambiar ciudad</string>
+    <string name="venue_choose_state_hint">Elige el estado</string>
+    <string name="venue_choose_city_hint">Elige la ciudad en %1$s</string>
+    <string name="venue_no_cities_in_state">Aún no hay canchas registradas en %1$s.</string>
+    <string name="venue_picker_back">Volver a los estados</string>
+    <string name="venue_picker_load_failed">No se pudieron cargar las ciudades.</string>
+    <string name="venue_no_city_hint">No encontramos tu ciudad. Elige una para ver sus canchas.</string>
+    <string name="venue_other_cities_title">Resultados en otras ciudades</string>
+    <string name="venue_no_results_in_city">No se encontraron canchas en %1$s.</string>
+    <string name="venue_empty_in_city">Aún no hay canchas registradas en %1$s.</string>
+    <string name="venue_unverified_badge">No verificada</string>
+    <string name="venue_unverified_description">Cancha importada, aún no verificada por el equipo</string>
+    <string name="venue_search_hint">Busca por nombre, barrio, dirección, código postal o tipo</string>
+    <string name="venue_load_failed">No se pudieron cargar las canchas.</string>
+    <string name="venue_location_rationale_title">¿Usar tu ubicación?</string>
+    <string name="venue_location_rationale_message">Usamos la ubicación del dispositivo solo para encontrar tu ciudad y mostrar las canchas de allí. Puedes cambiar la ciudad en cualquier momento.</string>
+    <string name="venue_location_allow">Permitir</string>
+    <string name="venue_location_not_now">Ahora no</string>
+    <string name="venue_sort_recent_use">Últimos usados</string>
 </resources>

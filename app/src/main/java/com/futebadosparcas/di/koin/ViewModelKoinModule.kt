@@ -16,6 +16,11 @@ import com.futebadosparcas.ui.games.FieldSelectionViewModel
 import com.futebadosparcas.ui.games.GameDetailViewModel
 import com.futebadosparcas.ui.games.GamesViewModel
 import com.futebadosparcas.ui.games.LocationSelectionViewModel
+import com.futebadosparcas.ui.games.venue.FirestoreProfileCitySource
+import com.futebadosparcas.ui.games.venue.LastVenueCityStore
+import com.futebadosparcas.ui.games.venue.PreferencesLastVenueCityStore
+import com.futebadosparcas.ui.games.venue.ProfileCitySource
+import com.futebadosparcas.ui.games.venue.VenueCatalog
 import com.futebadosparcas.ui.games.LocationSelectorViewModel
 import com.futebadosparcas.ui.games.teamformation.TeamFormationViewModel
 import com.futebadosparcas.ui.groups.CashboxViewModel
@@ -433,16 +438,29 @@ val viewModelKoinModule = module {
         )
     }
 
+    // Seletor de quadras por cidade (#4371): catalogo novo a cada ViewModel (cache de UF por sessao de tela)
+    factory<ProfileCitySource> { FirestoreProfileCitySource(firestore = get(), auth = get()) }
+    factory<LastVenueCityStore> { PreferencesLastVenueCityStore(get()) }
+    factory {
+        VenueCatalog(
+            locationRepository = get(),
+            gameRepository = get(),
+            profileCitySource = get(),
+            lastCityStore = get()
+        )
+    }
+
     viewModel {
         LocationSelectorViewModel(
             locationRepository = get(),
             gameRepository = get(),
             authRepository = get<AndroidAuthRepository>(),
-            preferencesManager = get()
+            preferencesManager = get(),
+            catalog = get()
         )
     }
 
-    viewModel { LocationSelectionViewModel(get()) }
+    viewModel { LocationSelectionViewModel(catalog = get()) }
 
     viewModel { FieldSelectionViewModel(get()) }
 

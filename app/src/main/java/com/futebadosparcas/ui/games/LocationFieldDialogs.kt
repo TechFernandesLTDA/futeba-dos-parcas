@@ -23,19 +23,30 @@ import com.futebadosparcas.data.model.Field
 import com.futebadosparcas.data.model.FieldType as AndroidFieldType
 import com.futebadosparcas.domain.model.FieldType as KmpFieldType
 import com.futebadosparcas.domain.model.Location
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.domain.repository.LocationRepository
+import com.futebadosparcas.ui.games.venue.CityPickerState
+import com.futebadosparcas.ui.games.venue.VenueCatalog
+import com.futebadosparcas.ui.games.venue.VenueChangeCityDialog
+import com.futebadosparcas.ui.games.venue.VenueCity
+import com.futebadosparcas.ui.games.venue.VenueCityBar
+import com.futebadosparcas.ui.games.venue.VenueDeviceLocationGate
+import com.futebadosparcas.ui.games.venue.VenueGeoPoint
+import com.futebadosparcas.ui.games.venue.VenueListBuilder
+import com.futebadosparcas.ui.games.venue.VenueListResult
+import com.futebadosparcas.ui.games.venue.VenueOtherCitiesHeader
+import com.futebadosparcas.ui.games.venue.VenueSelectionController
+import com.futebadosparcas.ui.games.venue.VenueSelectionState
+import com.futebadosparcas.ui.games.venue.VenueUnverifiedBadge
+import kotlinx.coroutines.flow.StateFlow
 import com.futebadosparcas.util.AppLogger
 import com.google.android.libraries.places.api.Places
 import com.google.android.libraries.places.api.model.Place
 import com.google.android.libraries.places.api.net.FetchPlaceRequest
 import com.google.android.libraries.places.api.net.FindAutocompletePredictionsRequest
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import java.text.Normalizer
 import com.futebadosparcas.R
 import com.futebadosparcas.util.toAndroidLocation
 import com.futebadosparcas.util.toAndroidField
@@ -44,8 +55,8 @@ import com.futebadosparcas.util.toAndroidLocations
 import androidx.compose.ui.res.stringResource
 
 /**
- * Dialog moderno de seleção de local com busca integrada ao Google Places
- * Preparado para KMP/iOS
+ * Dialog de seleção de local: mostra as quadras da cidade atual (aparelho -> perfil -> última escolhida),
+ * com "Trocar cidade", ordem por último uso e busca inteligente (#4371).
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -54,11 +65,34 @@ fun LocationSelectionDialog(
     onLocationSelected: (Location) -> Unit,
     viewModel: LocationSelectionViewModel = org.koin.compose.viewmodel.koinViewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
-    val locations by viewModel.locations.collectAsStateWithLifecycle()
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    val picker by viewModel.picker.collectAsStateWithLifecycle()
+    var showCityPicker by remember { mutableStateOf(false) }
 
     val keyboardController = LocalSoftwareKeyboardController.current
+
+    if (!state.started) {
+        VenueDeviceLocationGate(onResolved = viewModel::start)
+    }
+    LaunchedEffect(state.needsCityChoice) {
+        if (state.needsCityChoice) showCityPicker = true
+    }
+    if (showCityPicker) {
+        VenueChangeCityDialog(
+            picker = picker,
+            onPickState = viewModel::openStatePicker,
+            onPickCity = { city ->
+                viewModel.selectCity(city)
+                viewModel.closePicker()
+                showCityPicker = false
+            },
+            onBackToStates = viewModel::closePicker,
+            onDismiss = {
+                viewModel.closePicker()
+                showCityPicker = false
+            }
+        )
+    }
 
     BasicAlertDialog(
         onDismissRequest = onDismiss,
@@ -94,14 +128,17 @@ fun LocationSelectionDialog(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                VenueCityBar(
+                    city = state.city,
+                    onChangeCity = { showCityPicker = true }
+                )
 
                 // Search field
                 OutlinedTextField(
-                    value = searchQuery,
+                    value = state.query,
                     onValueChange = viewModel::onSearchQueryChanged,
                     modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text(stringResource(R.string.dialog_select_location_hint_2)) },
+                    placeholder = { Text(stringResource(R.string.venue_search_hint)) },
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Default.Search,
@@ -109,7 +146,7 @@ fun LocationSelectionDialog(
                         )
                     },
                     trailingIcon = {
-                        if (searchQuery.isNotEmpty()) {
+                        if (state.query.isNotEmpty()) {
                             IconButton(onClick = { viewModel.onSearchQueryChanged("") }) {
                                 Icon(
                                     imageVector = Icons.Default.Clear,
@@ -129,7 +166,7 @@ fun LocationSelectionDialog(
 
                 // Section title
                 Text(
-                    text = if (searchQuery.length >= 3) {
+                    text = if (state.query.isNotBlank()) {
                         stringResource(R.string.create_game_search_results)
                     } else {
                         stringResource(R.string.dialog_select_location_text_3)
@@ -147,8 +184,8 @@ fun LocationSelectionDialog(
                         .fillMaxWidth()
                         .weight(1f)
                 ) {
-                    when (uiState) {
-                        is LocationSelectionUiState.Loading -> {
+                    when {
+                        !state.started || state.isLoading -> {
                             Box(
                                 modifier = Modifier.fillMaxSize(),
                                 contentAlignment = Alignment.Center
@@ -157,35 +194,31 @@ fun LocationSelectionDialog(
                             }
                         }
 
-                        is LocationSelectionUiState.Success -> {
-                            if (locations.isEmpty()) {
-                                EmptyLocationState(searchQuery = searchQuery)
-                            } else {
-                                LocationList(
-                                    locations = locations,
-                                    onLocationClick = { location ->
-                                        val placeId = location.placeId
-                                        if (location.id.startsWith("places_") && placeId != null) {
-                                            viewModel.fetchAndSavePlace(placeId) { savedLocation ->
-                                                onLocationSelected(savedLocation)
-                                            }
-                                        } else {
-                                            onLocationSelected(location)
-                                        }
-                                    }
-                                )
-                            }
-                        }
-
-                        is LocationSelectionUiState.Error -> {
+                        state.loadFailed -> {
                             ErrorLocationState(
-                                message = (uiState as LocationSelectionUiState.Error).message,
-                                onRetry = viewModel::loadLocations
+                                message = stringResource(R.string.venue_load_failed),
+                                onRetry = viewModel::retry
                             )
                         }
 
-                        LocationSelectionUiState.Idle -> {
-                            // Initial state
+                        state.result.isEmpty -> {
+                            EmptyLocationState(query = state.query, city = state.city)
+                        }
+
+                        else -> {
+                            LocationList(
+                                result = state.result,
+                                onLocationClick = { location ->
+                                    val placeId = location.placeId
+                                    if (location.id.startsWith("places_") && placeId != null) {
+                                        viewModel.fetchAndSavePlace(placeId) { savedLocation ->
+                                            onLocationSelected(savedLocation)
+                                        }
+                                    } else {
+                                        onLocationSelected(location)
+                                    }
+                                }
+                            )
                         }
                     }
                 }
@@ -206,17 +239,26 @@ fun LocationSelectionDialog(
 
 @Composable
 private fun LocationList(
-    locations: List<Location>,
+    result: VenueListResult,
     onLocationClick: (Location) -> Unit
 ) {
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        items(locations, key = { it.id }) { location ->
+        items(result.cityVenues, key = { it.id }) { location ->
             LocationItem(
                 location = location,
                 onClick = { onLocationClick(location) }
             )
+        }
+        if (result.otherCityVenues.isNotEmpty()) {
+            item(key = "other_cities_header") { VenueOtherCitiesHeader() }
+            items(result.otherCityVenues, key = { "other_${it.id}" }) { location ->
+                LocationItem(
+                    location = location,
+                    onClick = { onLocationClick(location) }
+                )
+            }
         }
     }
 }
@@ -260,6 +302,9 @@ private fun LocationItem(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
+                if (VenueListBuilder.isUnverified(location)) {
+                    VenueUnverifiedBadge(modifier = Modifier.padding(top = 4.dp))
+                }
             }
 
             Icon(
@@ -272,7 +317,7 @@ private fun LocationItem(
 }
 
 @Composable
-private fun EmptyLocationState(searchQuery: String) {
+private fun EmptyLocationState(query: String, city: VenueCity?) {
     Column(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -286,13 +331,14 @@ private fun EmptyLocationState(searchQuery: String) {
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = if (searchQuery.length >= 3) {
-                stringResource(R.string.empty_state_no_results_title)
-            } else {
-                stringResource(R.string.dialog_select_location_text_4)
+            text = when {
+                city == null -> stringResource(R.string.venue_no_city_hint)
+                query.isNotBlank() -> stringResource(R.string.venue_no_results_in_city, city.label)
+                else -> stringResource(R.string.venue_empty_in_city, city.label)
             },
             style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center
         )
     }
 }
@@ -634,77 +680,31 @@ private fun ErrorFieldState(
 
 // ViewModels para os dialogs
 
+/**
+ * Seletor de local do "Criar Jogo". Toda a logica (cidade atual, ordem, busca) fica em
+ * [VenueSelectionController]; aqui so a ponte com o ciclo de vida da tela.
+ */
 class LocationSelectionViewModel(
-    private val locationRepository: LocationRepository
+    catalog: VenueCatalog
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow<LocationSelectionUiState>(LocationSelectionUiState.Idle)
-    val uiState: StateFlow<LocationSelectionUiState> = _uiState
+    private val controller = VenueSelectionController(catalog, viewModelScope)
 
-    private val _searchQuery = MutableStateFlow("")
-    val searchQuery: StateFlow<String> = _searchQuery
+    val state: StateFlow<VenueSelectionState> = controller.state
+    val picker: StateFlow<CityPickerState> = controller.picker
 
-    private val _locations = MutableStateFlow<List<Location>>(emptyList())
-    val locations: StateFlow<List<Location>> = _locations
+    /** Chamado pela tela quando a posicao do aparelho (ou sua ausencia) e conhecida. */
+    fun start(device: VenueGeoPoint?) = controller.start(device)
 
-    private var savedLocations: List<Location> = emptyList()
+    fun onSearchQueryChanged(query: String) = controller.onQueryChanged(query)
 
-    init {
-        loadLocations()
-    }
+    fun selectCity(city: VenueCity) = controller.selectCity(city)
 
-    fun loadLocations() {
-        viewModelScope.launch {
-            _uiState.value = LocationSelectionUiState.Loading
-            try {
-                val result = locationRepository.getAllLocations()
-                result.fold(
-                    onSuccess = { locations ->
-                        savedLocations = locations // Repository já retorna domain.model.Location
-                        _locations.value = locations
-                        _uiState.value = LocationSelectionUiState.Success
-                    },
-                    onFailure = { error ->
-                        AppLogger.e("LocationSelectionVM", "Erro ao carregar locais", error)
-                        _uiState.value = LocationSelectionUiState.Error(
-                            error.message ?: "Erro ao carregar locais"
-                        )
-                    }
-                )
-            } catch (e: Exception) {
-                AppLogger.e("LocationSelectionVM", "Erro inesperado", e)
-                _uiState.value = LocationSelectionUiState.Error("Erro inesperado")
-            }
-        }
-    }
+    fun openStatePicker(uf: String) = controller.openStatePicker(uf)
 
-    fun onSearchQueryChanged(query: String) {
-        _searchQuery.value = query
+    fun closePicker() = controller.closePicker()
 
-        if (query.length < 3) {
-            _locations.value = savedLocations
-            return
-        }
-
-        // Debounce e busca
-        viewModelScope.launch {
-            delay(300)
-            searchLocations(query)
-        }
-    }
-
-    private fun searchLocations(query: String) {
-        val normalizedQuery = query.normalizeForSearch()
-
-        val localResults = savedLocations.filter { location ->
-            location.name.normalizeForSearch().contains(normalizedQuery) ||
-                    location.address.normalizeForSearch().contains(normalizedQuery) ||
-                    location.city.normalizeForSearch().contains(normalizedQuery) ||
-                    location.neighborhood.normalizeForSearch().contains(normalizedQuery)
-        }
-
-        _locations.value = localResults
-    }
+    fun retry() = controller.retry()
 
     fun fetchAndSavePlace(placeId: String, onSaved: (Location) -> Unit) {
         // Implementação da busca no Google Places seria aqui
@@ -768,24 +768,9 @@ class FieldSelectionViewModel(
     }
 }
 
-sealed class LocationSelectionUiState {
-    object Idle : LocationSelectionUiState()
-    object Loading : LocationSelectionUiState()
-    object Success : LocationSelectionUiState()
-    data class Error(val message: String) : LocationSelectionUiState()
-}
-
 sealed class FieldSelectionUiState {
     object Idle : FieldSelectionUiState()
     object Loading : FieldSelectionUiState()
     object Success : FieldSelectionUiState()
     data class Error(val message: String) : FieldSelectionUiState()
-}
-
-// Extension function para normalizar strings
-private fun String.normalizeForSearch(): String {
-    return Normalizer.normalize(this, Normalizer.Form.NFD)
-        .replace("\\p{InCombiningDiacriticalMarks}+".toRegex(), "")
-        .lowercase()
-        .trim()
 }
