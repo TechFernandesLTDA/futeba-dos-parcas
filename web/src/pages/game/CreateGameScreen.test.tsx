@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ThemeProvider, createTheme } from '@mui/material';
 import { MemoryRouter } from 'react-router-dom';
@@ -8,7 +8,9 @@ import i18n from 'i18next';
 
 const mockNavigate = vi.fn();
 const mockGetFieldAvailability = vi.fn();
-let mockLocations: Array<Record<string, unknown>> = [];
+let mockLocations: Array<Record<string, unknown> & { id: string }> = [];
+let mockCity: { city: string; state: string } | null = { city: 'Curitiba', state: 'PR' };
+const mockChangeCity = vi.fn();
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom');
   return {
@@ -54,12 +56,31 @@ vi.mock('../../hooks/useGames', () => ({
   }),
 }));
 
+// #4370: o seletor trabalha com a cidade atual; o hook de dados é mockado aqui
+// (a lógica de cidade/ordenação/busca tem testes puros em utils/venue*.test.ts).
 vi.mock('../../hooks/useLocations', () => ({
-  useLocations: () => ({
-    locations: mockLocations,
+  useLocationDetail: (id?: string) => ({
+    location: mockLocations.find((location) => location.id === id) ?? null,
     loading: false,
     error: null,
   }),
+  useLocationsByIds: () => [],
+}));
+
+vi.mock('../../hooks/useVenueSelector', () => ({
+  useVenueSelector: () => ({
+    city: mockCity,
+    citySource: mockCity ? 'geolocation' : null,
+    resolvingCity: false,
+    changeCity: mockChangeCity,
+    cityVenues: mockLocations,
+    inCity: mockLocations,
+    otherCities: [],
+    loading: false,
+    loadingOtherCities: false,
+    error: null,
+  }),
+  useStateCities: () => ({ cities: [], loading: false, error: null }),
 }));
 
 vi.mock('../../hooks/useDocumentTitle', () => ({
@@ -147,6 +168,7 @@ describe('CreateGameScreen', () => {
     vi.clearAllMocks();
     localStorage.clear();
     mockLocations = [];
+    mockCity = { city: 'Curitiba', state: 'PR' };
     mockGetFieldAvailability.mockResolvedValue({ data: { slots: [] } });
     await i18n.changeLanguage('pt-BR');
   });
@@ -189,12 +211,42 @@ describe('CreateGameScreen', () => {
     ).toBeInTheDocument();
   });
 
-  it('avisa quando não há quadras publicadas com mensalidade válida', () => {
+  it('avisa quando a cidade atual ainda não tem quadras', () => {
     renderCreateGameScreen();
     expect(
-      screen.getByText(/nenhuma quadra publicada e com mensalidade válida/i),
+      screen.getByText(/ainda não há quadras cadastradas em curitiba/i),
     ).toBeInTheDocument();
   });
+
+  it('mostra a cidade atual e o botão "Trocar cidade"', () => {
+    renderCreateGameScreen();
+    expect(screen.getByText('Cidade: Curitiba - PR')).toBeInTheDocument();
+    expect(screen.getByText('pela sua localização')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /trocar cidade/i })).toBeInTheDocument();
+  });
+
+  it('sem cidade definida pede para escolher uma cidade', () => {
+    mockCity = null;
+    renderCreateGameScreen();
+    expect(screen.getAllByText(/escolha uma cidade para ver as quadras/i).length).toBeGreaterThan(0);
+    expect(screen.getByRole('button', { name: /trocar cidade/i })).toBeInTheDocument();
+  });
+
+  it('marca quadras importadas em rascunho com o selo "Não verificada"', async () => {
+    mockLocations = [
+      { id: 'loc-draft', name: 'Quadra Importada', city: 'Curitiba', state: 'PR', isVerified: false, publicationStatus: 'DRAFT' },
+      { id: 'loc-ok', name: 'Arena Oficial', city: 'Curitiba', state: 'PR', isVerified: true, publicationStatus: 'PUBLISHED' },
+    ];
+    const user = userEvent.setup();
+    renderCreateGameScreen();
+
+    await user.click(screen.getByRole('combobox', { name: /quadra \/ local/i }));
+
+    const draft = screen.getByRole('option', { name: /quadra importada/i });
+    expect(within(draft).getByText('Não verificada')).toBeInTheDocument();
+    const official = screen.getByRole('option', { name: /arena oficial/i });
+    expect(within(official).queryByText('Não verificada')).not.toBeInTheDocument();
+  }, 15000);
 
   it('expõe nome e estado acessíveis reativos ao favoritar um local', async () => {
     mockLocations = [{

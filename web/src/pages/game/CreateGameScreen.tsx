@@ -74,7 +74,10 @@ import { collection, query, where, getDocs, orderBy, Timestamp } from 'firebase/
 import { db } from '../../services/firebase';
 import { useCreateGame } from '../../hooks/useGames';
 import { useGroupDetail, useGroups } from '../../hooks/useGroups';
-import { useLocations } from '../../hooks/useLocations';
+import { useLocationDetail, useLocationsByIds } from '../../hooks/useLocations';
+import { useVenueSelector } from '../../hooks/useVenueSelector';
+import { VenueSelector } from '../../components/locations/VenueSelector';
+import { isVenueSelectable } from '../../utils/venueSelector';
 import { useGameTemplates } from '../../hooks/useGameTemplates';
 import { usePopularTimes } from '../../hooks/usePopularTimes';
 import { useHabitualTime } from '../../hooks/useHabitualTime';
@@ -168,7 +171,6 @@ interface GameFormData {
   gender: GameGender;
 }
 
-const CUSTOM_LOCATION = '__custom__';
 const MIN_GROUP_MEMBERS_TO_CREATE_GAME = 5;
 
 // Teto inviolável da série recorrente (1 ano de jogos semanais).
@@ -357,11 +359,10 @@ export const CreateGameScreen: React.FC = () => {
   const { group } = useGroupDetail(groupId || null);
   const { groups: userGroups, loading: groupsLoading } = useGroups();
   const { createGame, loading, error } = useCreateGame();
-  const { locations, loading: locationsLoading, error: locationsError } = useLocations();
   const { templates, loading: templatesLoading, saveTemplate, removeTemplate } = useGameTemplates();
   const { autoInvite } = useAutoInviteMembers();
   const { recentGames, loading: duplicateGamesLoading } = useDuplicateGame();
-  const { recentIds, favoriteIds, isFavorite, toggleFavorite } = useRecentLocations();
+  const { recentIds, usedLocationIds, favoriteIds, isFavorite, toggleFavorite } = useRecentLocations();
   const { showSuccess, showError } = useToast();
   const { user, firebaseUser } = useAuth();
   const currentUserId = firebaseUser?.uid || user?.id;
@@ -482,6 +483,31 @@ export const CreateGameScreen: React.FC = () => {
 
   const { popularTimes } = usePopularTimes(formData.fieldId);
   const { habitualTime } = useHabitualTime(formData.locationId);
+
+  // #4370: quadras da cidade atual (GPS → perfil → última escolhida), com
+  // busca inteligente; favoritas/recentes e a quadra escolhida entram por id
+  // mesmo quando são de outra cidade.
+  const [venueQuery, setVenueQuery] = useState('');
+  const venueSelector = useVenueSelector({ searchQuery: venueQuery, recentIds: usedLocationIds });
+  const {
+    location: selectedLocationDetail,
+    loading: selectedLocationLoading,
+    error: selectedLocationError,
+  } = useLocationDetail(formData.locationId || undefined);
+  const quickPickLocations = useLocationsByIds([...favoriteIds, ...localRecentIds, ...recentIds]);
+  const locationsLoading = venueSelector.loading || venueSelector.resolvingCity;
+  const locationsError = venueSelector.error;
+  const locations = useMemo(() => {
+    const byId = new Map<string, FutebaLocation>();
+    const add = (venue?: FutebaLocation | null) => {
+      if (venue && !byId.has(venue.id)) byId.set(venue.id, venue);
+    };
+    venueSelector.cityVenues.forEach(add);
+    venueSelector.otherCities.forEach(add);
+    quickPickLocations.forEach(add);
+    add(selectedLocationDetail);
+    return Array.from(byId.values());
+  }, [venueSelector.cityVenues, venueSelector.otherCities, quickPickLocations, selectedLocationDetail]);
 
   const selectedLocation = useMemo(
     () => locations.find((location) => location.id === formData.locationId),
@@ -636,8 +662,11 @@ export const CreateGameScreen: React.FC = () => {
   }, [formData.locationId, useCustomLocation]);
 
   useEffect(() => {
-    if (useCustomLocation || locationsLoading || !formData.locationId) return;
-    const selectedLocationStillAvailable = locations.some((loc) => loc.id === formData.locationId);
+    if (useCustomLocation || selectedLocationLoading || !formData.locationId) return;
+    // #4370: a quadra escolhida pode ser de outra cidade; vale a leitura direta
+    // do documento (apagada/negada/suspensa/inativa = indisponível).
+    const selectedLocationStillAvailable =
+      !selectedLocationError && !!selectedLocationDetail && isVenueSelectable(selectedLocationDetail);
     if (selectedLocationStillAvailable) return;
 
     setFields([]);
@@ -657,7 +686,7 @@ export const CreateGameScreen: React.FC = () => {
       fieldId: '',
     }));
     showErrorRef.current(tRef.current('games.create.locationUnavailable'));
-  }, [formData.locationId, locations, locationsLoading, useCustomLocation]);
+  }, [formData.locationId, selectedLocationDetail, selectedLocationError, selectedLocationLoading, useCustomLocation]);
 
   // Auto-calculate price per player
   useEffect(() => {
@@ -1412,45 +1441,58 @@ export const CreateGameScreen: React.FC = () => {
 
       {/* Seletor de localização */}
       <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
-        <TextField
-          select
+        <VenueSelector
           label={t('games.create.fieldOrLocation')}
-          value={useCustomLocation ? CUSTOM_LOCATION : formData.locationId}
-          onChange={(e) => {
-            const val = e.target.value;
-            if (val === CUSTOM_LOCATION) {
-              setUseCustomLocation(true);
-              setFormData((prev) => ({
-                ...prev,
-                locationId: '',
-                locationName: '',
-                locationAddress: '',
-                locationLat: undefined,
-                locationLng: undefined,
-                fieldId: '',
-                fieldName: '',
-              }));
-            } else {
-              const loc = locations.find((l) => l.id === val);
-              if (loc) {
-                selectCatalogLocation(loc);
-              }
-            }
+          city={venueSelector.city}
+          citySource={venueSelector.citySource}
+          resolvingCity={venueSelector.resolvingCity}
+          onChangeCity={venueSelector.changeCity}
+          inCity={venueSelector.inCity}
+          otherCities={venueSelector.otherCities}
+          recentIds={usedLocationIds}
+          loading={venueSelector.loading}
+          loadingOtherCities={venueSelector.loadingOtherCities}
+          onSearchQueryChange={setVenueQuery}
+          selectedVenue={useCustomLocation ? null : (selectedLocation ?? null)}
+          customSelected={useCustomLocation}
+          customLabel={t('games.create.otherLocation')}
+          onSelectVenue={selectCatalogLocation}
+          onSelectCustom={() => {
+            setUseCustomLocation(true);
+            setFormData((prev) => ({
+              ...prev,
+              locationId: '',
+              locationName: '',
+              locationAddress: '',
+              locationLat: undefined,
+              locationLng: undefined,
+              fieldId: '',
+              fieldName: '',
+            }));
+          }}
+          onClear={() => {
+            setUseCustomLocation(false);
+            setFormData((prev) => ({
+              ...prev,
+              locationId: '',
+              locationName: '',
+              locationAddress: '',
+              locationLat: undefined,
+              locationLng: undefined,
+              fieldId: '',
+              fieldName: '',
+            }));
           }}
           error={!!formErrors.locationName}
-          helperText={formErrors.locationName || (locationsLoading ? t('games.create.loadingFields') : t('games.create.locationsAvailable', { count: locations.length }))}
-          fullWidth
-          required
-        >
-          {locations.map((loc) => (
-            <MenuItem key={loc.id} value={loc.id}>
-              {loc.name} {loc.city ? `— ${loc.city}` : ''}
-            </MenuItem>
-          ))}
-          <MenuItem value={CUSTOM_LOCATION}>
-            {t('games.create.otherLocation')}
-          </MenuItem>
-        </TextField>
+          helperText={formErrors.locationName || (locationsLoading
+            ? t('games.create.loadingFields')
+            : venueSelector.city
+              ? t('games.create.venueSelector.countInCity', {
+                count: venueSelector.cityVenues.length,
+                city: venueSelector.city.city,
+              })
+              : t('games.create.venueSelector.cityUnknown'))}
+        />
         <IconButton
           onClick={() => setQuickLocationOpen(true)}
           sx={{ mt: 0.5 }}
@@ -1490,9 +1532,10 @@ export const CreateGameScreen: React.FC = () => {
         )}
       </Box>
 
-      {!useCustomLocation && !locationsLoading && !locationsError && locations.length === 0 && (
+      {!useCustomLocation && !locationsLoading && !locationsError && venueSelector.city &&
+        venueSelector.cityVenues.length === 0 && (
         <Alert severity="warning" icon={false}>
-          {t('games.create.noCommercialLocations')}
+          {t('games.create.venueSelector.noVenuesInCity', { city: venueSelector.city.city })}
         </Alert>
       )}
 

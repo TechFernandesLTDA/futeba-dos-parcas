@@ -95,6 +95,23 @@ describe('publicLocationFilters', () => {
     expect(result.map((location) => location.id)).toEqual(['loc-1']);
   });
 
+  it('usa a busca inteligente compartilhada (abreviação, typo, vários termos, CEP, tipo de campo)', () => {
+    const locations = [
+      baseLocation({ id: 'loc-1', name: 'Arena Parças Society', neighborhood: 'Jardim Paulista', district: 'Jardim Paulista' }),
+      baseLocation({ id: 'loc-2', name: 'Ginásio Aurora', fieldType: 'FUTSAL', primaryFieldType: 'FUTSAL', neighborhood: 'Mooca', district: 'Mooca', cep: '03100-000' }),
+    ];
+    const metrics = { minPriceByLocation: {}, fieldTypesByLocation: {} };
+    const ids = (searchQuery: string) =>
+      filterAndSortPublicLocations(locations, baseFilters({ searchQuery }), metrics).map((l) => l.id);
+
+    expect(ids('jd paulista soc')).toEqual(['loc-1']); // abreviações jd/soc
+    expect(ids('PARCAS')).toEqual(['loc-1']); // sem acento/caixa
+    expect(ids('aurorra')).toEqual(['loc-2']); // 1 erro de digitação (6 letras)
+    expect(ids('03100')).toEqual(['loc-2']); // CEP
+    expect(ids('futsal mooca')).toEqual(['loc-2']); // tipo + bairro
+    expect(ids('arena aurora')).toEqual([]); // todos os termos precisam bater
+  });
+
   it('ordena por melhor avaliada, mais barata, mais proxima e mais usada', () => {
     const locations = [
       baseLocation({ id: 'cheap', name: 'Barata', rating: 4.1, averageRating: 4.1, ratingCount: 5, reviewCount: 5, latitude: -23.55, longitude: -46.63 }),
