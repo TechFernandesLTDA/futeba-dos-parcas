@@ -28,6 +28,10 @@ on:
     # Executa diariamente às 5h BRT (8h UTC) para detectar regressões
     - cron: '0 8 * * *'
 
+concurrency:
+  group: firebase-emulator-integration-${{ github.repository }}
+  cancel-in-progress: false
+
 jobs:
   test-harness:
     name: Test Harness — Functions Integration (Emulador)
@@ -52,12 +56,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Configurar Node.js 20
+      - name: Configurar Node.js 22
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
           cache-dependency-path: functions/package-lock.json
+
+      - name: Verificar contrato E2E compartilhado
+        run: node --test scripts/web-e2e-workflow-contract.test.js
 
       - name: Configurar Java 21 (requerido pelo emulador Firestore)
         uses: actions/setup-java@v4

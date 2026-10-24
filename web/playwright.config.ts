@@ -34,11 +34,19 @@ export default defineConfig({
   // Executado uma vez antes de todos os testes:
   // valida emulador + realiza seed dos usuários E2E
   globalSetup: './e2e/globalSetup.ts',
+  // Impede que travas fora do ciclo de timeout de um teste ocupem o runner até
+  // o timeout externo do job. Localmente, 0 preserva a execução sem limite.
+  globalTimeout: process.env.CI ? 15 * 60 * 1000 : 0,
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
-  reporter: process.env.CI ? 'github' : 'html',
+  reporter: process.env.CI
+    ? [
+        ['github'],
+        ['html', { outputFolder: 'playwright-report', open: 'never' }],
+      ]
+    : 'html',
   use: {
     baseURL: 'http://127.0.0.1:5173',
     trace: 'on-first-retry',
