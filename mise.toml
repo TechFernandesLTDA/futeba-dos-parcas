@@ -1,0 +1,4 @@
+# Versões do projeto. Rode `mise install` na raiz.
+[tools]
+node = "22"            # igual ao .nvmrc e functions/package.json
+java = "temurin-21"     # JDK usado no CI para o build Android (bytecode alvo 17)
