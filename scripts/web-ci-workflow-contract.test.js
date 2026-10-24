@@ -58,6 +58,16 @@ function extractActionStep(jobId, job, action) {
     : job.slice(actionIndex, nextStepIndex);
 }
 
+function extractNamedStep(jobId, job, stepName) {
+  const marker = `      - name: ${stepName}\n`;
+  const stepIndex = job.indexOf(marker);
+  assert.notEqual(stepIndex, -1, `${jobId} must contain step ${stepName}`);
+  const nextStepIndex = job.indexOf('\n      - name:', stepIndex + marker.length);
+  return nextStepIndex === -1
+    ? job.slice(stepIndex)
+    : job.slice(stepIndex, nextStepIndex);
+}
+
 function assertEphemeralPrRunner(jobId, job) {
   const runnerLine = job
     .split('\n')
@@ -200,6 +210,16 @@ test('production build remains the TypeScript gate and tests remain Vitest', () 
 
 test('mutation testing stays outside PR and preserves its report artifact', () => {
   const mutation = extractJob('mutation');
+  const mutationTestStep = extractNamedStep(
+    'mutation',
+    mutation,
+    'Run mutation testing'
+  );
+  const uploadStep = extractNamedStep(
+    'mutation',
+    mutation,
+    'Upload mutation report'
+  );
 
   assert.match(workflow, /^\s{2}workflow_dispatch:$/m);
   assert.match(workflow, /^\s{2}schedule:$/m);
@@ -208,10 +228,20 @@ test('mutation testing stays outside PR and preserves its report artifact', () =
     /if: github\.event_name == 'schedule' \|\| github\.event_name == 'workflow_dispatch'/
   );
   assertNodeJobContract('mutation', mutation);
-  assert.match(mutation, /npm run test:mutation/);
-  assert.match(mutation, /uses: actions\/upload-artifact@v4/);
-  assert.match(mutation, /name: mutation-report/);
-  assert.match(mutation, /path: web\/reports\/mutation\//);
+  assert.match(mutationTestStep, /run: npm run test:mutation/);
+  assert.doesNotMatch(
+    mutationTestStep,
+    /continue-on-error/,
+    'Stryker exit code must remain authoritative'
+  );
+  assert.match(uploadStep, /if: always\(\)/);
+  assert.match(uploadStep, /continue-on-error: true/);
+  assert.match(uploadStep, /uses: actions\/upload-artifact@v4/);
+  assert.match(uploadStep, /name: mutation-report/);
+  assert.match(uploadStep, /path: web\/reports\/mutation\//);
+  assert.match(uploadStep, /if-no-files-found: warn/);
+  assert.match(uploadStep, /retention-days: 1/);
+  assert.match(uploadStep, /compression-level: 9/);
 });
 
 test('Lighthouse reads PR metadata on an ephemeral runner with hardened checkout', () => {
