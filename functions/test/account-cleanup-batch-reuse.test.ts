@@ -369,11 +369,12 @@ describe("onUserDeleted — regressão #2323 loop infinito anonimização", () =
       ).resolves.not.toThrow();
 
       // 1ª subcoleção: 2 páginas (500 + 250) → 2 chamadas. Reviews: 1
-      // chamada vazia. Total esperado: 3 (o collectionGroup de activities
+      // chamada vazia. Members (#4391, grupos via collectionGroup): 1
+      // chamada vazia. Total esperado: 4 (o collectionGroup de activities
       // "alvo" do #1968 era código morto e foi removido).
       // O ponto crucial: o loop ENCERROU (chamadas finitas) em vez de repetir
       // a página de 500 para sempre.
-      expect(cgCallCount).toBe(3);
+      expect(cgCallCount).toBe(4);
     },
     10000
   );
@@ -384,9 +385,9 @@ describe("onUserDeleted — regressão #2323 loop infinito anonimização", () =
       await expect(
         onUserDeleted(makeUserRecord(), makeEventContext())
       ).resolves.not.toThrow();
-      // 2 subcoleções (cashbox created_by, reviews) consultadas uma vez cada
-      // (ambas vazias).
-      expect(mockCollectionGroupGet).toHaveBeenCalledTimes(2);
+      // 3 subcoleções (cashbox created_by, reviews, members user_id #4391)
+      // consultadas uma vez cada (todas vazias).
+      expect(mockCollectionGroupGet).toHaveBeenCalledTimes(3);
     }
   );
 
@@ -399,7 +400,7 @@ describe("onUserDeleted — regressão #2323 loop infinito anonimização", () =
       ).resolves.not.toThrow();
 
       expect(mockCollectionGroup.mock.calls.map((call: any[]) => call[0]))
-        .toEqual(["cashbox", "reviews"]);
+        .toEqual(["cashbox", "reviews", "members"]);
     }
   );
 

@@ -55,6 +55,44 @@ lugar a olhar se surgir `permission-denied` em produção.
 
 ---
 
+## 2026-10-31 — Exclusão de conta pelo titular: callable fina + cascata no trigger (#4391)
+
+**Contexto:** web e Android chamam a callable `deleteAccount`, que nunca
+foi exportada (só existia em `rate-limiter.example.ts`); a exclusão
+falhava sempre. A cascata LGPD já existia no `onUserDeleted` (Auth
+`onDelete`, retry por 24h), mas o `recursiveDelete(users/{uid})`
+adicionado no #4139 rodava antes das etapas que leem `users/{uid}/groups`,
+e desde então membros, caixa e pagadores mensais deixaram de ser
+anonimizados.
+
+**Decisão:**
+1. `deleteAccount` (via `secureCallable`: App Check sem consumir o token,
+   login obrigatório, 3 por hora) só valida e decide, e exclui o usuário
+   do Auth **por último**. A limpeza em massa continua no `onUserDeleted`,
+   único dono da cascata. Alternativa descartada: cascata síncrona na
+   callable. Ela estoura o timeout de ~70s dos SDKs e duplicaria o
+   trigger, que também atende exclusões pelo console.
+2. Login recente obrigatório: `auth_time` ≤ 10 min, senão
+   `failed-precondition` com `details.reason = "requires-recent-login"`.
+3. Dono de grupo com outro membro ativo: **bloquear**
+   (`reason = "sole-owner-groups"`, lista de grupos). Não transferimos
+   sozinhos, porque isso passaria caixa e responsabilidade a alguém sem
+   consentimento. Grupos em que só o titular está ativo recebem soft
+   delete antes da exclusão no Auth.
+4. DMs: remetente anonimizado e texto mantido (regra do #4120). A conversa
+   também pertence ao interlocutor.
+5. Confirmações de jogo FINISHED/LIVE são anonimizadas, não apagadas, para
+   preservar súmula e `players_count`. Confirmações futuras são apagadas e
+   liberam a vaga. Membros ficam `INACTIVE` com nome/foto anonimizados.
+6. Auditoria própria sem PII (`uid_sha256`, data, contagens); o audit do
+   wrapper fica desligado porque grava uid cru + IP.
+7. O `recursiveDelete` do subtree passou para o fim do trigger e é pulado
+   quando uma etapa de anonimização falha, para o retry ainda achar os
+   vínculos.
+
+Tabela completa e lacunas conhecidas em
+`specs/BUGFIX_4391_DELETE_ACCOUNT.md`.
+
 ## 2026-10-01 — Streak de participação: janela de 8 dias (#4150)
 
 **Contexto:** o escritor autoritativo de `user_streaks` é o servidor

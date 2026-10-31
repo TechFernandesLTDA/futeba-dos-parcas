@@ -2716,6 +2716,11 @@ export {requestAccountMerge, completeAccountMerge} from "./auth/account-merge";
 // (LGPD Art. 18 VI — direito ao apagamento)
 export {onUserDeleted} from "./auth/account-cleanup";
 
+// #4391: exclusão de conta pelo próprio usuário (web, Android, iOS).
+// Valida login recente e posse de grupos, exclui o Auth por último e deixa a
+// cascata LGPD para o onUserDeleted acima.
+export {deleteAccount} from "./auth/delete-account";
+
 // SECFIX #433: PII denormalization users -> users_private
 // Triggers + callable migration (ADMIN one-shot) + Stage 3 callables
 export {

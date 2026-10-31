@@ -29,9 +29,20 @@
  *   nenhum escritor grava targetUserId/targetUserName em activities (a
  *   query de collectionGroup do #1968 era código morto e foi removida).
  *
- * Grupos que o usuário já DEIXOU não aparecem em users/{uid}/groups, então
- * o financeiro (player_name/payers) desses grupos não é alcançado — cobri-los
- * exigiria collectionGroup em cashbox.player_id / payers.user_id com índice.
+ * - #4391 (etapas em account-deletion-cascade.ts):
+ *   - seguidores: users/{x}/followers/{uid} e users/{y}/following/{uid}
+ *     apagados, contadores corrigidos (lidos ANTES do recursiveDelete);
+ *   - confirmations (user_id; userId legado): jogo FINISHED/LIVE ⇒
+ *     anonimiza user_name/foto; demais ⇒ apaga;
+ *   - grupos também via collectionGroup("members").user_id, alcançando
+ *     grupos que o usuário já DEIXOU; doc de membro vira INACTIVE;
+ *   - games/{id}/waitlist/{uid} dos jogos desses grupos ⇒ apaga;
+ *   - games (owner_id) ⇒ anonimiza owner_name; co_organizers ⇒ tira o uid;
+ *   - notification_settings/{uid} ⇒ apaga.
+ * - O recursiveDelete de users/{uid} roda DEPOIS dessas etapas (#4391).
+ *
+ * A callable `deleteAccount` (delete-account.ts) valida e exclui o Auth;
+ * esta função é a única cascata, inclusive para exclusões pelo console.
  *
  * Os nomes de campo vêm de `uid-owned-collections.ts` (lista canônica
  * compartilhada com account-merge.ts, verificada contra os escritores reais).
@@ -63,6 +74,13 @@ import {
   USER_STREAKS,
   redactNameInText,
 } from "./uid-owned-collections";
+import {
+  cleanupConfirmations,
+  cleanupFollowGraph,
+  detachFromGames,
+  discoverMemberGroupIds,
+  removeWaitlistEntries,
+} from "./account-deletion-cascade";
 
 // Lazy initialization para evitar erro de initializeApp
 const getDb = () => admin.firestore();
@@ -275,28 +293,29 @@ export const onUserDeleted = runWith({
         queuedDeletePaths.add(userRef.path);
         logger.info(`[ACCOUNT_CLEANUP] Deletando users/${uid} (inclui fcm_token)`);
 
-        // FIX #4139 (LGPD art. 18 VI): delete() NÃO apaga subcoleções —
-        // users/{uid}/groups, /badges e /preferences sobreviviam como pai
-        // fantasma (1 uid fantasma em prod com 2 vínculos de grupo). O
-        // recursiveDelete (mesmo padrão do soft-delete-helper #2529) enumera
-        // e apaga as subcoleções; novas subcoleções sob users/{uid} passam a
-        // herdar o cleanup automaticamente.
+        // #4391: o recursiveDelete das subcoleções de users/{uid} (#4139)
+        // foi movido para DEPOIS das etapas que leem essas subcoleções. Antes
+        // ele rodava aqui e apagava users/{uid}/groups, /following e
+        // /followers antes de serem lidos: a anonimização de membros e do
+        // financeiro do grupo (#4113) virou código morto e os espelhos de
+        // seguidores em OUTROS usuários sobreviviam.
+        let anonFailed = false;
+
+        // #4391: grafo de seguidores — remove users/{x}/followers/{uid} e
+        // users/{y}/following/{uid} e corrige os contadores. Só as
+        // subcoleções do próprio titular localizam esses espelhos.
+        let followGraph = {following: 0, followers: 0};
         try {
-          const bulkWriter = db.bulkWriter();
-          bulkWriter.onWriteError((error) => {
-            logger.warn(
-              `[ACCOUNT_CLEANUP] retry subcoleções users/${uid}: ` +
-              `attempt ${error.failedAttempts} — ${error.message}`
-            );
-            return error.failedAttempts <= 3;
-          });
-          await db.recursiveDelete(userRef, bulkWriter);
-          await bulkWriter.close();
-        } catch (recursiveError) {
+          followGraph = await cleanupFollowGraph(db, uid);
+          logger.info(
+            `[ACCOUNT_CLEANUP] Removendo ${followGraph.following} espelhos ` +
+            `followers e ${followGraph.followers} espelhos following de ${uid}`
+          );
+        } catch (followError) {
+          if (isTransientFirestoreError(followError)) anonFailed = true;
           logger.error(
-            `[ACCOUNT_CLEANUP] Falha no recursiveDelete de users/${uid} ` +
-            "(subcoleções podem ter restado — backfill será necessário)",
-            recursiveError
+            `[ACCOUNT_CLEANUP] Falha ao desfazer seguidores de ${uid}`,
+            followError
           );
         }
 
@@ -534,27 +553,29 @@ export const onUserDeleted = runWith({
         // confirmations, mvp_votes, xp_logs, statistics, season_participation,
         // activities, user_badges — dados pessoais que devem ser apagados.
 
-        // 8. FIX #786: confirmations (user_id == uid) — loop to handle >500
+        // 8. FIX #786 + #4391: confirmations (`user_id`; `userId` legado,
+        // que o irmão account-merge.ts já lia). Jogo FINISHED/LIVE ⇒
+        // anonimiza (apagar mudaria a súmula e o players_count de uma
+        // partida de outras pessoas); demais ⇒ apaga (a vaga do jogo futuro
+        // volta pelo onConfirmationWrite).
         let confirmationsTotal = 0;
-        while (true) {
-          const confirmationsSnap = await db
-            .collection("confirmations")
-            .where("user_id", "==", uid)
-            .limit(500)
-            .get();
-          if (confirmationsSnap.empty) break;
-          for (const doc of confirmationsSnap.docs) {
-            await queueDelete(doc.ref);
-          }
-          confirmationsTotal += confirmationsSnap.size;
-          if (confirmationsSnap.size < 500) break;
-        }
-        if (confirmationsTotal > 0) {
-          logger.info(
-            `[ACCOUNT_CLEANUP] Deletando ${confirmationsTotal} ` +
-            `confirmations do usuário ${uid}`
+        let confirmationsAnonymizedTotal = 0;
+        try {
+          const confirmations = await cleanupConfirmations(db, uid);
+          confirmationsTotal = confirmations.deleted;
+          confirmationsAnonymizedTotal = confirmations.anonymized;
+        } catch (confirmationsError) {
+          if (isTransientFirestoreError(confirmationsError)) anonFailed = true;
+          logger.error(
+            `[ACCOUNT_CLEANUP] Falha nas confirmations de ${uid}`,
+            confirmationsError
           );
         }
+        logger.info(
+          `[ACCOUNT_CLEANUP] confirmations de ${uid}: ` +
+          `${confirmationsTotal} apagadas, ` +
+          `${confirmationsAnonymizedTotal} anonimizadas (histórico)`
+        );
 
         // 9. FIX #786: mvp_votes (voter_id == uid) — loop to handle >500
         let mvpVotesTotal = 0;
@@ -840,8 +861,6 @@ export const onUserDeleted = runWith({
         }
 
         await commitBatch();
-
-        let anonFailed = false;
 
         // FIX #1961: cashbox entries — anonymize created_by_name (LGPD Art. 18 VI)
         // Cashbox entries live at groups/{groupId}/cashbox/{entryId}.
@@ -1241,20 +1260,93 @@ export const onUserDeleted = runWith({
 
         // #4113: groups/{id}/members/{uid} — fonte canônica de membership
         // (rules autorizam por ela) e onde a PII real de membro mora:
-        // `user_name` + `user_photo_url` (web) / `user_photo` (KMP). Nunca
-        // era lida. Descobrimos os grupos pelo espelho users/{uid}/groups
-        // (gravado por web/KMP em toda entrada de grupo): custa N leituras
-        // diretas por ID, sem query collectionGroup em members.user_id. O doc
-        // de membro é ANONIMIZADO, não apagado, para não disparar
-        // onMemberLeft/member_count. O link órfão sob o users/{uid} já
-        // apagado é removido no mesmo batch — só depois de o financeiro do
-        // grupo (bloco acima) ter sido anonimizado por completo.
-        // Cada link gera até 2 ops (update do membro + delete do link): a
+        // `user_name` + `user_photo_url` (web) / `user_photo` (KMP).
+        // #4391: os grupos vêm de DUAS fontes — o espelho users/{uid}/groups
+        // e collectionGroup("members") em `user_id` (fieldOverride com
+        // COLLECTION_GROUP em firestore.indexes.json). A segunda alcança
+        // grupos que o usuário já DEIXOU (o financeiro deles ficava fora) e
+        // continua achando os grupos num retry depois do recursiveDelete.
+        // O doc de membro é ANONIMIZADO, não apagado (o financeiro e a
+        // súmula referenciam o uid), e passa a status INACTIVE como no
+        // leaveGroup do KMP: o titular sai do grupo e o onMemberWritten
+        // desconta o member_count uma única vez. O link sob users/{uid} é
+        // removido no mesmo batch — só depois de o financeiro do grupo
+        // (bloco acima) ter sido anonimizado por completo.
+        // Cada grupo gera até 2 ops (update do membro + delete do link): a
         // página de 200 mantém o batch em <= 400 ops, abaixo do teto de 500.
         const GROUP_LINK_PAGE_SIZE = 200;
         let groupMembersTotal = 0;
         let groupLinksTotal = 0;
         let groupLinksKeptTotal = 0;
+        // Grupos do titular (links + collectionGroup), reaproveitados pela
+        // limpeza da fila de espera mais abaixo.
+        const memberGroupIds = new Set<string>();
+
+        /**
+         * Anonimiza o financeiro e o doc de membro de um grupo e, se a
+         * etapa financeira terminou, apaga o link (quando houver).
+         *
+         * @param {string} groupId Grupo
+         * @param {admin.firestore.DocumentReference | null} linkRef Link
+         *   users/{uid}/groups/{groupId}, ou null se veio só do
+         *   collectionGroup
+         * @param {admin.firestore.WriteBatch} membersBatch Batch da página
+         * @return {Promise<number>} operações enfileiradas no batch
+         */
+        const processMemberGroup = async (
+          groupId: string,
+          linkRef: admin.firestore.DocumentReference | null,
+          membersBatch: admin.firestore.WriteBatch
+        ): Promise<number> => {
+          let ops = 0;
+          // Financeiro ANTES de apagar o link: o link é um dos ponteiros que
+          // permitem ao retry reencontrar o grupo.
+          const cashboxDone = await runGroupFinanceStep(
+            "cashbox (player_id)",
+            groupId,
+            anonymizeCashboxPlayer
+          );
+          const payersDone = await runGroupFinanceStep(
+            "payers mensais",
+            groupId,
+            anonymizeMonthlyPayer
+          );
+          const memberRef = db.doc(GROUP_MEMBERS.path(groupId, uid));
+          // Leitura direta: update() em doc inexistente derrubaria o
+          // batch inteiro, e set({merge}) criaria um membro fantasma.
+          const memberSnap = await memberRef.get();
+          if (memberSnap.exists) {
+            const memberData = memberSnap.data() ?? {};
+            const patch: Record<string, unknown> = {};
+            if (memberData[GROUP_MEMBERS.nameField] !== ANONYMIZED_USER_NAME) {
+              patch[GROUP_MEMBERS.nameField] = ANONYMIZED_USER_NAME;
+            }
+            for (const field of GROUP_MEMBERS.photoFields) {
+              if (field in memberData && memberData[field] !== null) {
+                patch[field] = null;
+              }
+            }
+            // Doc legado sem status conta como ativo (member-counter.ts).
+            const status = memberData.status as string | undefined;
+            if (!status || status === "ACTIVE") patch.status = "INACTIVE";
+            if (Object.keys(patch).length > 0) {
+              membersBatch.update(memberRef, patch);
+              ops++;
+              groupMembersTotal++;
+            }
+          }
+          if (linkRef) {
+            if (cashboxDone && payersDone) {
+              membersBatch.delete(linkRef);
+              ops++;
+              groupLinksTotal++;
+            } else {
+              groupLinksKeptTotal++;
+            }
+          }
+          return ops;
+        };
+
         try {
           let linkLastDoc:
             admin.firestore.QueryDocumentSnapshot | null = null;
@@ -1278,46 +1370,32 @@ export const onUserDeleted = runWith({
             const membersBatch = db.batch();
             let batchOps = 0;
             for (const link of linkSnap.docs) {
-              const groupId = link.id;
-              // Financeiro ANTES de apagar o link: o link é o que permite ao
-              // retry reencontrar o grupo.
-              const cashboxDone = await runGroupFinanceStep(
-                "cashbox (player_id)",
-                groupId,
-                anonymizeCashboxPlayer
+              memberGroupIds.add(link.id);
+              batchOps += await processMemberGroup(
+                link.id, link.ref, membersBatch
               );
-              const payersDone = await runGroupFinanceStep(
-                "payers mensais",
-                groupId,
-                anonymizeMonthlyPayer
-              );
-              const memberRef = db.doc(GROUP_MEMBERS.path(groupId, uid));
-              // Leitura direta: update() em doc inexistente derrubaria o
-              // batch inteiro, e set({merge}) criaria um membro fantasma.
-              const memberSnap = await memberRef.get();
-              if (memberSnap.exists) {
-                membersBatch.update(memberRef, {
-                  [GROUP_MEMBERS.nameField]: ANONYMIZED_USER_NAME,
-                  ...Object.fromEntries(
-                    GROUP_MEMBERS.photoFields.map((field) => [field, null])
-                  ),
-                });
-                batchOps++;
-                groupMembersTotal++;
-              }
-              if (cashboxDone && payersDone) {
-                membersBatch.delete(link.ref);
-                batchOps++;
-                groupLinksTotal++;
-              } else {
-                groupLinksKeptTotal++;
-              }
             }
             if (batchOps > 0) {
               await membersBatch.commit();
             }
             linkLastDoc = linkSnap.docs[linkSnap.docs.length - 1];
             if (linkSnap.size < GROUP_LINK_PAGE_SIZE) break;
+          }
+
+          // #4391: grupos sem link (o usuário já saiu, ou o link foi apagado
+          // numa execução anterior) achados pelo collectionGroup.
+          const discovered = (await discoverMemberGroupIds(db, uid))
+            .filter((groupId) => !memberGroupIds.has(groupId));
+          for (let i = 0; i < discovered.length; i += GROUP_LINK_PAGE_SIZE) {
+            const membersBatch = db.batch();
+            let batchOps = 0;
+            for (const groupId of discovered.slice(i, i + GROUP_LINK_PAGE_SIZE)) {
+              memberGroupIds.add(groupId);
+              batchOps += await processMemberGroup(groupId, null, membersBatch);
+            }
+            if (batchOps > 0) {
+              await membersBatch.commit();
+            }
           }
           logger.info(
             `[ACCOUNT_CLEANUP] Anonimizando ${groupMembersTotal} ` +
@@ -1344,6 +1422,38 @@ export const onUserDeleted = runWith({
             );
           }
         }
+
+        // #4391: fila de espera (games/{id}/waitlist/{uid}) dos jogos dos
+        // grupos do titular — não há índice de collectionGroup em
+        // waitlist.user_id. Jogos em que ele é dono ou co-organizador ficam
+        // (são do grupo): sai o owner_name e o uid de co_organizers.
+        let waitlistTotal = 0;
+        let gamesOwnerAnonymizedTotal = 0;
+        let gamesCoOrganizerRemovedTotal = 0;
+        try {
+          waitlistTotal = await removeWaitlistEntries(
+            db, uid, [...memberGroupIds]
+          );
+          const games = await detachFromGames(db, uid);
+          gamesOwnerAnonymizedTotal = games.ownerNameAnonymized;
+          gamesCoOrganizerRemovedTotal = games.coOrganizerRemoved;
+          logger.info(
+            `[ACCOUNT_CLEANUP] ${waitlistTotal} entradas de fila de espera ` +
+            `apagadas; ${gamesOwnerAnonymizedTotal} jogos com owner_name ` +
+            `anonimizado; ${gamesCoOrganizerRemovedTotal} co_organizers ` +
+            `removidos para ${uid}`
+          );
+        } catch (gamesError) {
+          if (isTransientFirestoreError(gamesError)) anonFailed = true;
+          logger.error(
+            `[ACCOUNT_CLEANUP] Falha na fila de espera/jogos de ${uid}`,
+            gamesError
+          );
+        }
+
+        // #4391: notification_settings/{uid} (preferências de notificação do
+        // titular; doc pelo ID, fora de users/{uid}).
+        await db.doc(`notification_settings/${uid}`).delete();
 
         // #4113: group_invites enviados PELO usuário (invited_by_id). O doc
         // pertence ao fluxo do convidado — só o nome de quem convidou
@@ -1512,6 +1622,12 @@ export const onUserDeleted = runWith({
               verification_failures: verifyFailTotal,
               notifications: notificationsTotal,
               confirmations: confirmationsTotal,
+              confirmations_anonymized: confirmationsAnonymizedTotal,
+              follow_edges_following: followGraph.following,
+              follow_edges_followers: followGraph.followers,
+              waitlist_entries: waitlistTotal,
+              games_owner_anonymized: gamesOwnerAnonymizedTotal,
+              games_co_organizer_removed: gamesCoOrganizerRemovedTotal,
               mvp_votes: mvpVotesTotal,
               xp_logs: xpLogsTotal,
               statistics: statisticsTotal,
@@ -1537,6 +1653,36 @@ export const onUserDeleted = runWith({
             anonFailed,
           }
         );
+
+        // FIX #4139 (LGPD art. 18 VI): delete() NÃO apaga subcoleções —
+        // users/{uid}/groups, /badges, /preferences, /following, /followers
+        // sobreviviam como pai fantasma. O recursiveDelete (mesmo padrão do
+        // soft-delete-helper #2529) enumera e apaga as subcoleções; novas
+        // subcoleções sob users/{uid} herdam o cleanup automaticamente.
+        // #4391: roda POR ÚLTIMO entre as etapas de Firestore, porque as
+        // etapas acima LEEM essas subcoleções (grupos, seguidores). Com
+        // anonFailed (falha transitória ⇒ retry), o subtree fica para o
+        // retry reencontrar o que faltou.
+        if (!anonFailed) {
+          try {
+            const bulkWriter = db.bulkWriter();
+            bulkWriter.onWriteError((error) => {
+              logger.warn(
+                `[ACCOUNT_CLEANUP] retry subcoleções users/${uid}: ` +
+                `attempt ${error.failedAttempts} — ${error.message}`
+              );
+              return error.failedAttempts <= 3;
+            });
+            await db.recursiveDelete(userRef, bulkWriter);
+            await bulkWriter.close();
+          } catch (recursiveError) {
+            logger.error(
+              `[ACCOUNT_CLEANUP] Falha no recursiveDelete de users/${uid} ` +
+              "(subcoleções podem ter restado — backfill será necessário)",
+              recursiveError
+            );
+          }
+        }
 
         // 20. Limpar arquivos órfãos do Storage (profile photos + thumbnails)
         try {
