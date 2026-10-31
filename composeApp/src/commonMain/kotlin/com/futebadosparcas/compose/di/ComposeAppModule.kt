@@ -1,5 +1,7 @@
 package com.futebadosparcas.compose.di
 
+import com.futebadosparcas.platform.firebase.FirebaseDataSource
+import com.futebadosparcas.ui.account.DeleteAccountViewModel
 import com.futebadosparcas.ui.core.LoginViewModel
 import com.futebadosparcas.ui.settings.ThemeSettingsViewModel
 import com.futebadosparcas.ui.whatsnew.releaseNotesModule
@@ -33,6 +35,16 @@ val composeAppModule = module {
     // Preferências — tema (#4097). `ThemeRepository` é provido por plataforma em
     // platformComposeAppModules(): iOS = NSUserDefaults; Android harness/wasmJs = memória.
     viewModel { ThemeSettingsViewModel(get()) }
+
+    // Exclusão de conta (#4391/#4401). Depende do Firebase: sem ele (modo smoke-test no
+    // iOS) a resolução falha e a rota mostra o estado "indisponível".
+    viewModel {
+        val dataSource = get<FirebaseDataSource>()
+        DeleteAccountViewModel(
+            deleteAccount = { dataSource.deleteAccount() },
+            authRepository = get()
+        )
+    }
     // viewModel { GamesViewModel(get()) }  // requer GameRepository (plataforma)
     // viewModel { ProfileSetupViewModel(get()) }
 

@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -25,13 +27,17 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Block
+import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.NewReleases
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.QueryStats
 import androidx.compose.material.icons.filled.SportsSoccer
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.CircularProgressIndicator
@@ -43,10 +49,13 @@ import androidx.compose.material3.Text
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.*
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -58,7 +67,45 @@ import androidx.savedstate.read
 import com.futebadosparcas.compose.resources.Res
 import com.futebadosparcas.compose.di.composeAppKoinModules
 import com.futebadosparcas.compose.navigation.AppRoutes
+import com.futebadosparcas.compose.resources.cancel
 import com.futebadosparcas.compose.resources.cd_back
+import com.futebadosparcas.compose.resources.delete_account_title
+import com.futebadosparcas.compose.resources.delete_account_unavailable_env
+import com.futebadosparcas.compose.resources.game_detail_action_team_formation
+import com.futebadosparcas.compose.resources.game_detail_fallback_title
+import com.futebadosparcas.compose.resources.route_post_game_share_text
+import com.futebadosparcas.compose.resources.game_detail_action_voting
+import com.futebadosparcas.compose.resources.group_detail_action_cashbox
+import com.futebadosparcas.compose.resources.group_detail_action_cashbox_body
+import com.futebadosparcas.compose.resources.group_detail_body
+import com.futebadosparcas.compose.resources.group_detail_title
+import com.futebadosparcas.compose.resources.logout_confirm_action
+import com.futebadosparcas.compose.resources.logout_confirm_body
+import com.futebadosparcas.compose.resources.logout_confirm_title
+import com.futebadosparcas.compose.resources.profile_hub_action_delete_account
+import com.futebadosparcas.compose.resources.profile_hub_action_delete_account_body
+import com.futebadosparcas.compose.resources.profile_hub_action_logout
+import com.futebadosparcas.compose.resources.profile_hub_action_logout_body
+import com.futebadosparcas.compose.resources.route_confirmations_load_error
+import com.futebadosparcas.compose.resources.route_game_detail_title
+import com.futebadosparcas.compose.resources.route_game_load_error
+import com.futebadosparcas.compose.resources.route_game_unavailable_env
+import com.futebadosparcas.compose.resources.route_invite_players_missing_group
+import com.futebadosparcas.compose.resources.route_invite_players_title
+import com.futebadosparcas.compose.resources.route_invite_players_unavailable
+import com.futebadosparcas.compose.resources.route_missing_game_id
+import com.futebadosparcas.compose.resources.route_mvp_voting_title
+import com.futebadosparcas.compose.resources.route_mvp_voting_unavailable
+import com.futebadosparcas.compose.resources.route_owner_stats_missing
+import com.futebadosparcas.compose.resources.route_owner_stats_title
+import com.futebadosparcas.compose.resources.route_owner_stats_unavailable
+import com.futebadosparcas.compose.resources.route_post_game_report_title
+import com.futebadosparcas.compose.resources.route_post_game_share_title
+import com.futebadosparcas.compose.resources.route_team_formation_title
+import com.futebadosparcas.compose.resources.route_teams_load_error
+import com.futebadosparcas.compose.resources.route_teams_loaded_readonly
+import com.futebadosparcas.compose.resources.route_unavailable_back
+import com.futebadosparcas.compose.resources.route_unavailable_retry
 import com.futebadosparcas.compose.resources.feature_hub_actions
 import com.futebadosparcas.compose.resources.feature_hub_action_content_description
 import com.futebadosparcas.compose.resources.game_detail_blocked_players
@@ -96,6 +143,8 @@ import com.futebadosparcas.platform.firebase.FirebaseDataSource
 import com.futebadosparcas.platform.PlatformShareFactory
 import com.futebadosparcas.platform.storage.PreferencesService
 import com.futebadosparcas.ui.HomeScreen
+import com.futebadosparcas.ui.account.DeleteAccountScreen
+import com.futebadosparcas.ui.account.DeleteAccountViewModel
 import com.futebadosparcas.ui.adaptive.AdaptiveTopBar
 import com.futebadosparcas.ui.core.BlockedPlayerData
 import com.futebadosparcas.ui.core.BlockedPlayersScreen
@@ -128,6 +177,7 @@ import kotlinx.coroutines.launch
 import org.koin.compose.KoinApplication
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
+import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -375,6 +425,8 @@ fun AppNavigation(
         composable(AppRoutes.POST_GAME_REPORT) { entry ->
             val gameId = entry.arguments?.read { getStringOrNull("gameId") }
             val dataSource = koinInjectOrNull<FirebaseDataSource>()
+            val shareTitle = stringResource(Res.string.route_post_game_share_title)
+            val shareText = stringResource(Res.string.route_post_game_share_text)
             PostGameReportRoute(
                 gameId = gameId,
                 dataSource = dataSource,
@@ -382,8 +434,8 @@ fun AppNavigation(
                 onShare = {
                     shareScope.launch {
                         platformShare?.share(
-                            text = buildPostGameShareText(gameId),
-                            title = "Relatório pós-jogo"
+                            text = shareText,
+                            title = shareTitle
                         )
                     }
                 }
@@ -395,13 +447,12 @@ fun AppNavigation(
             var retryKey by remember { mutableIntStateOf(0) }
             key(retryKey) {
                 UnavailableRouteScreen(
-                    title = "Estatísticas do organizador",
+                    title = stringResource(Res.string.route_owner_stats_title),
                     message = if (ownerId.isNullOrBlank()) {
-                        "Não foi possível identificar o organizador."
+                        stringResource(Res.string.route_owner_stats_missing)
                     } else {
-                        "As estatísticas consolidadas do organizador ainda não estão disponíveis no iOS."
+                        stringResource(Res.string.route_owner_stats_unavailable)
                     },
-                    contextId = ownerId,
                     onRetry = { retryKey += 1 },
                     onNavigateBack = { navController.popBackStack() }
                 )
@@ -423,9 +474,8 @@ fun AppNavigation(
             var retryKey by remember { mutableIntStateOf(0) }
             key(retryKey) {
                 UnavailableRouteScreen(
-                    title = "Votação pós-jogo",
-                    message = "A votação em tempo real ainda não está disponível no iOS.",
-                    contextId = gameId,
+                    title = stringResource(Res.string.route_mvp_voting_title),
+                    message = stringResource(Res.string.route_mvp_voting_unavailable),
                     onRetry = { retryKey += 1 },
                     onNavigateBack = { navController.popBackStack() }
                 )
@@ -445,13 +495,12 @@ fun AppNavigation(
                     )
                 } else {
                     UnavailableRouteScreen(
-                        title = "Convidar jogadores",
+                        title = stringResource(Res.string.route_invite_players_title),
                         message = if (groupId.isNullOrBlank()) {
-                            "Não foi possível identificar o grupo deste jogo."
+                            stringResource(Res.string.route_invite_players_missing_group)
                         } else {
-                            "Convites ainda não estão disponíveis neste ambiente."
+                            stringResource(Res.string.route_invite_players_unavailable)
                         },
-                        contextId = groupId,
                         onRetry = { retryKey += 1 },
                         onNavigateBack = { navController.popBackStack() }
                     )
@@ -515,8 +564,8 @@ fun AppNavigation(
         // Group detail
         composable(AppRoutes.GROUP_DETAIL) {
             FeatureHubScreen(
-                title = "Grupo",
-                body = "Atalhos para jogos, caixa e ferramentas do grupo no composeApp.",
+                title = stringResource(Res.string.group_detail_title),
+                body = stringResource(Res.string.group_detail_body),
                 onNavigateBack = { navController.popBackStack() },
                 actions = listOf(
                     FeatureHubAction(
@@ -532,8 +581,8 @@ fun AppNavigation(
                         onClick = { navController.navigate(AppRoutes.BLOCKED_PLAYERS) }
                     ),
                     FeatureHubAction(
-                        label = "Caixa",
-                        description = "Resumo financeiro e histórico das movimentações.",
+                        label = stringResource(Res.string.group_detail_action_cashbox),
+                        description = stringResource(Res.string.group_detail_action_cashbox_body),
                         icon = Icons.Filled.QueryStats,
                         onClick = {
                             selectedGroupId = selectedGroupId ?: selectedGameId
@@ -552,6 +601,20 @@ fun AppNavigation(
 
         // Profile
         composable(AppRoutes.PROFILE) {
+            var showLogoutDialog by remember { mutableStateOf(false) }
+            val logoutScope = rememberCoroutineScope()
+            if (showLogoutDialog) {
+                LogoutConfirmationDialog(
+                    onDismiss = { showLogoutDialog = false },
+                    onConfirm = {
+                        showLogoutDialog = false
+                        logoutScope.launch {
+                            runCatching { authRepository?.logout() }
+                            navController.navigateToStartClearingBackStack()
+                        }
+                    }
+                )
+            }
             FeatureHubScreen(
                 title = stringResource(Res.string.profile_hub_title),
                 body = stringResource(Res.string.profile_hub_body),
@@ -584,9 +647,50 @@ fun AppNavigation(
                         description = stringResource(Res.string.profile_hub_action_theme_body),
                         icon = Icons.Filled.Palette,
                         onClick = { navController.navigate(AppRoutes.THEME_SETTINGS) }
+                    ),
+                    // Conta (#4401): sair e excluir ficam no fim do hub, como em Ajustes do iOS.
+                    FeatureHubAction(
+                        label = stringResource(Res.string.profile_hub_action_logout),
+                        description = stringResource(Res.string.profile_hub_action_logout_body),
+                        icon = Icons.AutoMirrored.Filled.Logout,
+                        onClick = { showLogoutDialog = true }
+                    ),
+                    FeatureHubAction(
+                        label = stringResource(Res.string.profile_hub_action_delete_account),
+                        description = stringResource(Res.string.profile_hub_action_delete_account_body),
+                        icon = Icons.Filled.DeleteForever,
+                        destructive = true,
+                        onClick = { navController.navigate(AppRoutes.DELETE_ACCOUNT) }
                     )
                 )
             )
+        }
+
+        // Exclusão de conta (#4391/#4401): confirmação dupla e logout ao final.
+        composable(AppRoutes.DELETE_ACCOUNT) {
+            var retryKey by remember { mutableIntStateOf(0) }
+            key(retryKey) {
+                val deleteVm = koinViewModelOrNull<DeleteAccountViewModel>()
+                if (deleteVm != null) {
+                    DeleteAccountScreen(
+                        viewModel = deleteVm,
+                        onNavigateBack = { navController.popBackStack() },
+                        onAccountDeleted = { navController.navigateToStartClearingBackStack() },
+                        onSignedOutForReauthentication = {
+                            navController.navigate(AppRoutes.LOGIN) {
+                                popUpTo(navController.graph.id) { inclusive = true }
+                            }
+                        }
+                    )
+                } else {
+                    UnavailableRouteScreen(
+                        title = stringResource(Res.string.delete_account_title),
+                        message = stringResource(Res.string.delete_account_unavailable_env),
+                        onRetry = { retryKey += 1 },
+                        onNavigateBack = { navController.popBackStack() }
+                    )
+                }
+            }
         }
 
         // Ranking
@@ -631,7 +735,6 @@ fun AppNavigation(
                     UnavailableRouteScreen(
                         title = stringResource(Res.string.theme_settings),
                         message = stringResource(Res.string.theme_settings_unavailable_body),
-                        contextId = null,
                         onRetry = { retryKey += 1 },
                         onNavigateBack = { navController.popBackStack() }
                     )
@@ -666,32 +769,31 @@ private fun GameDetailRoute(
 
     LaunchedEffect(gameId, dataSource, retryKey) {
         if (gameId.isNullOrBlank()) {
-            state = RealtimeRouteState.Error("ID do jogo ausente.")
+            state = RealtimeRouteState.Error(getString(Res.string.route_missing_game_id))
             return@LaunchedEffect
         }
         if (dataSource == null) {
-            state = RealtimeRouteState.Error("Detalhes do jogo indisponíveis neste ambiente.")
+            state = RealtimeRouteState.Error(getString(Res.string.route_game_unavailable_env))
             return@LaunchedEffect
         }
         dataSource.getGameByIdFlow(gameId).collect { result ->
-            state = result.fold(
-                onSuccess = { RealtimeRouteState.Success(it) },
-                onFailure = {
-                    RealtimeRouteState.Error(it.message ?: "Não foi possível carregar o jogo.")
-                }
-            )
+            state = if (result.isSuccess) {
+                RealtimeRouteState.Success(result.getOrThrow())
+            } else {
+                // Mensagem amigável: o texto técnico da exceção não vai para a tela.
+                RealtimeRouteState.Error(getString(Res.string.route_game_load_error))
+            }
         }
     }
 
     when (val current = state) {
         RealtimeRouteState.Loading -> RouteLoadingScreen(
-            title = "Detalhes do jogo",
+            title = stringResource(Res.string.route_game_detail_title),
             onNavigateBack = onNavigateBack
         )
         is RealtimeRouteState.Error -> UnavailableRouteScreen(
-            title = "Detalhes do jogo",
+            title = stringResource(Res.string.route_game_detail_title),
             message = current.message,
-            contextId = gameId,
             onRetry = { retryKey += 1 },
             onNavigateBack = onNavigateBack
         )
@@ -726,23 +828,23 @@ private fun PostGameReportRoute(
 
     LaunchedEffect(gameId, dataSource, retryKey) {
         if (gameId.isNullOrBlank()) {
-            state = RealtimeRouteState.Error("ID do jogo ausente.")
+            state = RealtimeRouteState.Error(getString(Res.string.route_missing_game_id))
             return@LaunchedEffect
         }
         if (dataSource == null) {
-            state = RealtimeRouteState.Error("Relatório indisponível neste ambiente.")
+            state = RealtimeRouteState.Error(getString(Res.string.route_game_unavailable_env))
             return@LaunchedEffect
         }
-        val game = dataSource.getGameById(gameId).getOrElse {
-            state = RealtimeRouteState.Error(it.message ?: "Não foi possível carregar o jogo.")
+        val game = dataSource.getGameById(gameId).getOrNull() ?: run {
+            state = RealtimeRouteState.Error(getString(Res.string.route_game_load_error))
             return@LaunchedEffect
         }
-        val confirmations = dataSource.getGameConfirmations(gameId).getOrElse {
-            state = RealtimeRouteState.Error(it.message ?: "Não foi possível carregar as confirmações.")
+        val confirmations = dataSource.getGameConfirmations(gameId).getOrNull() ?: run {
+            state = RealtimeRouteState.Error(getString(Res.string.route_confirmations_load_error))
             return@LaunchedEffect
         }
-        val teams = dataSource.getGameTeams(gameId).getOrElse {
-            state = RealtimeRouteState.Error(it.message ?: "Não foi possível carregar os times.")
+        val teams = dataSource.getGameTeams(gameId).getOrNull() ?: run {
+            state = RealtimeRouteState.Error(getString(Res.string.route_teams_load_error))
             return@LaunchedEffect
         }
         state = RealtimeRouteState.Success(
@@ -752,13 +854,12 @@ private fun PostGameReportRoute(
 
     when (val current = state) {
         RealtimeRouteState.Loading -> RouteLoadingScreen(
-            title = "Relatório pós-jogo",
+            title = stringResource(Res.string.route_post_game_report_title),
             onNavigateBack = onNavigateBack
         )
         is RealtimeRouteState.Error -> UnavailableRouteScreen(
-            title = "Relatório pós-jogo",
+            title = stringResource(Res.string.route_post_game_report_title),
             message = current.message,
-            contextId = gameId,
             onRetry = { retryKey += 1 },
             onNavigateBack = onNavigateBack
         )
@@ -809,39 +910,36 @@ private fun TeamFormationRoute(
     }
     LaunchedEffect(gameId, dataSource, retryKey) {
         if (gameId.isNullOrBlank()) {
-            state = RealtimeRouteState.Error("ID do jogo ausente.")
+            state = RealtimeRouteState.Error(getString(Res.string.route_missing_game_id))
             return@LaunchedEffect
         }
         if (dataSource == null) {
-            state = RealtimeRouteState.Error("Formação de times indisponível neste ambiente.")
+            state = RealtimeRouteState.Error(getString(Res.string.route_game_unavailable_env))
             return@LaunchedEffect
         }
         dataSource.getGameTeamsFlow(gameId).collect { result ->
-            state = result.fold(
-                onSuccess = { RealtimeRouteState.Success(it) },
-                onFailure = {
-                    RealtimeRouteState.Error(it.message ?: "Não foi possível carregar os times.")
-                }
-            )
+            state = if (result.isSuccess) {
+                RealtimeRouteState.Success(result.getOrThrow())
+            } else {
+                RealtimeRouteState.Error(getString(Res.string.route_teams_load_error))
+            }
         }
     }
 
     when (val current = state) {
         RealtimeRouteState.Loading -> RouteLoadingScreen(
-            title = "Formação dos times",
+            title = stringResource(Res.string.route_team_formation_title),
             onNavigateBack = onNavigateBack
         )
         is RealtimeRouteState.Error -> UnavailableRouteScreen(
-            title = "Formação dos times",
+            title = stringResource(Res.string.route_team_formation_title),
             message = current.message,
-            contextId = gameId,
             onRetry = { retryKey += 1 },
             onNavigateBack = onNavigateBack
         )
         is RealtimeRouteState.Success -> UnavailableRouteScreen(
-            title = "Formação dos times",
-            message = "${current.data.size} time(s) carregado(s). A edição da formação ainda não está disponível no iOS.",
-            contextId = gameId,
+            title = stringResource(Res.string.route_team_formation_title),
+            message = stringResource(Res.string.route_teams_loaded_readonly, current.data.size),
             onRetry = { retryKey += 1 },
             onNavigateBack = onNavigateBack
         )
@@ -857,7 +955,10 @@ private fun RouteLoadingScreen(title: String, onNavigateBack: () -> Unit) {
                 title = title,
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar")
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(Res.string.cd_back)
+                        )
                     }
                 }
             )
@@ -872,12 +973,11 @@ private fun RouteLoadingScreen(title: String, onNavigateBack: () -> Unit) {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 private fun UnavailableRouteScreen(
     title: String,
     message: String,
-    contextId: String?,
     onRetry: () -> Unit,
     onNavigateBack: () -> Unit
 ) {
@@ -887,7 +987,10 @@ private fun UnavailableRouteScreen(
                 title = title,
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar")
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(Res.string.cd_back)
+                        )
                     }
                 }
             )
@@ -901,22 +1004,27 @@ private fun UnavailableRouteScreen(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            // O ID interno (jogo/grupo) não aparece mais na tela: é dado técnico, não ajuda
+            // o usuário e expunha identificadores do Firestore (#4401).
             Text(
                 text = message,
-                style = MaterialTheme.typography.bodyLarge
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }
             )
-            if (!contextId.isNullOrBlank()) {
-                Spacer(modifier = Modifier.padding(top = 8.dp))
-                Text(
-                    text = "Contexto: $contextId",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
             Spacer(modifier = Modifier.padding(top = 16.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                OutlinedButton(onClick = onRetry) { Text("Tentar novamente") }
-                OutlinedButton(onClick = onNavigateBack) { Text("Voltar") }
+            // FlowRow: com Dynamic Type grande os dois botões quebram linha em vez de cortar.
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                OutlinedButton(onClick = onRetry) {
+                    Text(stringResource(Res.string.route_unavailable_retry))
+                }
+                OutlinedButton(onClick = onNavigateBack) {
+                    Text(stringResource(Res.string.route_unavailable_back))
+                }
             }
         }
     }
@@ -974,8 +1082,8 @@ private fun GameDetailHub(
                     onOpenOwnerStats ?: {},
                     onOpenOwnerStats != null
                 ),
-                Triple("Formação dos times", onOpenTeamFormation, true),
-                Triple("Votação pós-jogo", onOpenVoting, true),
+                Triple(stringResource(Res.string.game_detail_action_team_formation), onOpenTeamFormation, true),
+                Triple(stringResource(Res.string.game_detail_action_voting), onOpenVoting, true),
                 Triple(
                     stringResource(Res.string.game_detail_invite_players),
                     onOpenInvitePlayers ?: {},
@@ -989,7 +1097,7 @@ private fun GameDetailHub(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
             Text(
-                text = game.locationName.ifBlank { "Jogo ${game.id}" },
+                text = game.locationName.ifBlank { stringResource(Res.string.game_detail_fallback_title) },
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.semantics { heading() }
@@ -1048,6 +1156,8 @@ private data class FeatureHubAction(
     val label: String,
     val description: String,
     val icon: ImageVector,
+    /** Ação destrutiva (ex.: excluir conta): ícone e rótulo em `colorScheme.error`. */
+    val destructive: Boolean = false,
     val onClick: () -> Unit
 )
 
@@ -1156,7 +1266,11 @@ private fun FeatureHubActionButton(
             Icon(
                 imageVector = action.icon,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary
+                tint = if (action.destructive) {
+                    MaterialTheme.colorScheme.error
+                } else {
+                    MaterialTheme.colorScheme.primary
+                }
             )
             Spacer(modifier = Modifier.width(12.dp))
             Column(
@@ -1167,7 +1281,11 @@ private fun FeatureHubActionButton(
                     text = action.label,
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = if (action.destructive) {
+                        MaterialTheme.colorScheme.error
+                    } else {
+                        MaterialTheme.colorScheme.onSurface
+                    }
                 )
                 Text(
                     text = action.description,
@@ -1179,20 +1297,37 @@ private fun FeatureHubActionButton(
     }
 }
 
+/**
+ * Volta ao início do app (welcome) limpando toda a pilha: usado após o logout e após a
+ * exclusão de conta, para o gesto de voltar não reabrir telas de uma sessão encerrada.
+ */
+private fun NavHostController.navigateToStartClearingBackStack() {
+    navigate(AppRoutes.WELCOME) {
+        popUpTo(graph.id) { inclusive = true }
+        launchSingleTop = true
+    }
+}
+
+@Composable
+private fun LogoutConfirmationDialog(onDismiss: () -> Unit, onConfirm: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(Res.string.logout_confirm_title)) },
+        text = { Text(stringResource(Res.string.logout_confirm_body)) },
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                Text(stringResource(Res.string.logout_confirm_action))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel)) }
+        }
+    )
+}
+
 private const val BLOCKED_PLAYERS_PREF_KEY = "compose_blocked_players"
 private const val BLOCKED_PLAYER_ENTRY_SEPARATOR = "\u001E"
 private const val BLOCKED_PLAYER_FIELD_SEPARATOR = "\u001F"
-
-private fun buildPostGameShareText(gameId: String?): String {
-    return buildString {
-        append("Relatório pós-jogo")
-        gameId?.takeIf { it.isNotBlank() }?.let {
-            append(" • jogo ")
-            append(it)
-        }
-        append("\nResumo compartilhado pelo composeApp do Futeba dos Parças.")
-    }
-}
 
 private fun loadBlockedPlayers(preferencesService: PreferencesService?): List<BlockedPlayerData> {
     val raw = preferencesService?.getString(BLOCKED_PLAYERS_PREF_KEY, null).orEmpty()
