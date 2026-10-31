@@ -188,6 +188,19 @@ kotlin {
     }
 }
 
+// Relatórios do compilador Compose (estabilidade de classes, composables skippable).
+// Desligado por padrão; para gerar: ./gradlew :app:compileReleaseKotlin -PcomposeCompilerReports=true
+// Saída em app/build/compose_compiler/.
+composeCompiler {
+    // Tipos imutáveis de fora do módulo (domínio do :shared, coleções read-only,
+    // java.time) declarados estáveis. Critérios em compose-stability.conf.
+    stabilityConfigurationFiles.add(layout.projectDirectory.file("compose-stability.conf"))
+    if (providers.gradleProperty("composeCompilerReports").orNull == "true") {
+        reportsDestination.set(layout.buildDirectory.dir("compose_compiler"))
+        metricsDestination.set(layout.buildDirectory.dir("compose_compiler"))
+    }
+}
+
 dependencies {
     // Shared KMP Module
     implementation(project(":shared"))
