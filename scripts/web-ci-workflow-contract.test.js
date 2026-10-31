@@ -2,6 +2,7 @@
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const { runsOnRegExp, selfHostedRunsOn } = require('./ci/runner-selector');
 const fs = require('node:fs');
 const path = require('node:path');
 
@@ -75,7 +76,7 @@ function assertSelfHostedRunner(jobId, job) {
 
   assert.equal(
     runnerLine?.trim(),
-    "runs-on: ${{ fromJSON(vars.RUNNER_LABELS_LINUX || '[\"self-hosted\",\"Linux\",\"X64\",\"futeba-general\"]') }}",
+    selfHostedRunsOn('RUNNER_LABELS_LINUX'),
     `${jobId} must use the repository runner selector`
   );
 }
@@ -229,7 +230,8 @@ test('mutation testing stays outside PR and preserves its report artifact', () =
     mutation,
     /if: github\.event_name == 'schedule' \|\| \(github\.event_name == 'workflow_dispatch' && inputs\.run_mutation\)/
   );
-  assert.doesNotMatch(mutation, /pull_request|push/);
+  // A linha runs-on cita push/pull_request no filtro de evento confiável; o que importa são os gatilhos do job.
+  assert.doesNotMatch(mutation.replace(/^\s+runs-on:.*$/m, ''), /pull_request|push/);
   // O threshold continua bloqueando o job de mutation.
   const stryker = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'web', 'stryker.conf.json'), 'utf8'));
   assert.equal(stryker.thresholds.break, 60);
@@ -259,7 +261,7 @@ test('Lighthouse reads PR metadata with a Linux Chromium runner', () => {
     /^permissions:\n\s+contents: read\n\s+pull-requests: read$/m
   );
   assertNodeJobContract('lighthouse', lighthouse);
-  assert.match(lighthouse, /runs-on: \$\{\{ fromJSON\(vars\.RUNNER_LABELS_LINUX \|\| '\[\"self-hosted\",\"Linux\",\"X64\",\"futeba-general\"\]'\) \}\}/);
+  assert.match(lighthouse, runsOnRegExp('RUNNER_LABELS_HEAVY'));
   assert.match(lighthouse, /npx playwright install chromium/);
   assert.doesNotMatch(lighthouse, /--with-deps/);
   assert.match(lighthouse, /CHROME_PATH=.*chromium\.executablePath/);
